@@ -58,6 +58,8 @@ Status labels:
 - Authorizes trip write access server-side and maps the command to
   `itinerary_events` in Supabase Dev.
 - Returns `{ serverId, version, updatedAt, idempotentReplay }`.
+- A first create returns HTTP `201`. An idempotent retry returns HTTP `200` with
+  the original server entity and does not insert a duplicate row.
 
 `PATCH /trips/:id/itinerary-events/:eventId` - `NEEDS_CHANGE`
 
@@ -97,6 +99,8 @@ Status labels:
 - Authorizes trip write access server-side and maps the command to
   `ledger_entries` in Supabase Dev.
 - Returns `{ serverId, version, updatedAt, idempotentReplay }`.
+- A first create returns HTTP `201`. An idempotent retry returns HTTP `200` with
+  the original server entity and does not insert a duplicate row.
 
 ### Phase 3B Transport Status
 

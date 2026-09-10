@@ -4,7 +4,7 @@ import { readLocalSession } from "@/data/auth/authRepository";
 import { openDatabase } from "@/data/db/database";
 import { getSchemaVersion, type MigrationDatabase } from "@/data/db/migrationRunner";
 import { createSyncOperationRepository } from "@/data/sync/syncOperationRepository";
-import { stateFromLocalSession } from "@/domain/auth/localSession";
+import { stateFromSessionAndNetwork } from "@/domain/auth/localSession";
 
 export type FoundationDiagnostics = {
   dbInitialized: boolean;
@@ -24,10 +24,12 @@ export async function readFoundationDiagnostics(): Promise<FoundationDiagnostics
     Network.getNetworkStateAsync(),
   ]);
 
+  const isOnline = network.isInternetReachable === true;
+
   return {
     dbInitialized: true,
     schemaVersion,
-    authState: stateFromLocalSession(session),
+    authState: stateFromSessionAndNetwork(session, isOnline),
     networkState:
       network.isInternetReachable === true
         ? "online"

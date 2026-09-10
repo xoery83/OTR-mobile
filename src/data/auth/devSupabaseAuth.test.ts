@@ -1,9 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { signInToSupabaseDev } from "./devSupabaseAuth";
+import {
+  revalidateStoredSupabaseDevSession,
+  signInToSupabaseDev,
+} from "./devSupabaseAuth";
 
 vi.mock("@/data/auth/authRepository", () => ({
   clearLocalSession: vi.fn(),
+  readLocalSession: vi.fn(),
   writeLocalSession: vi.fn(),
 }));
 
@@ -49,5 +53,40 @@ describe("Supabase Dev Auth adapter", () => {
         persistSession: vi.fn(),
       }),
     ).rejects.toThrow("approved Supabase Dev project");
+  });
+
+  it("silently refreshes a stored Dev session when network is available", async () => {
+    const persistSession = vi.fn();
+    const fetchImplementation = vi.fn(async () =>
+      Response.json({
+        access_token: "renewed-access-token",
+        refresh_token: "renewed-refresh-token",
+        expires_in: 3600,
+      }),
+    );
+
+    await expect(
+      revalidateStoredSupabaseDevSession({
+        url: "https://tuqigdxrvrerfewsxqgm.supabase.co",
+        publishableKey: "publishable-key",
+        readSession: vi.fn().mockResolvedValue({
+          accessToken: "expired",
+          refreshToken: "stored-refresh-token",
+          expiresAt: "2026-09-10T00:00:00.000Z",
+        }),
+        fetchImplementation,
+        persistSession,
+      }),
+    ).resolves.toBe(true);
+
+    expect(fetchImplementation).toHaveBeenCalledWith(
+      expect.stringContaining("grant_type=refresh_token"),
+      expect.objectContaining({
+        body: JSON.stringify({ refresh_token: "stored-refresh-token" }),
+      }),
+    );
+    expect(persistSession).toHaveBeenCalledWith(
+      expect.objectContaining({ accessToken: "renewed-access-token" }),
+    );
   });
 });

@@ -99,3 +99,53 @@ backend returns the original row.
 - Trip access is checked server-side for every request.
 - Server credentials are never imported by Mobile modules.
 - Fake transports remain the default when transport configuration is absent.
+
+## Phase 3B Validation - 2026-09-10
+
+Validated against Hosted Supabase Dev project `tuqigdxrvrerfewsxqgm` with an
+iOS 26.5 Simulator Development Build and a dedicated synthetic `free_user`
+linked to the baseline Journey as `owner`.
+
+- Auth sign-in persisted through SecureStore. An expired access token opened
+  local data as `AUTHENTICATED_OFFLINE`, then background refresh moved the
+  diagnostics state to `AUTHENTICATED_ONLINE` without blocking launch.
+- Online Expense and Itinerary creates reconciled to stable server UUIDs with
+  local `sync_version = 1`; matching operations completed with zero retries.
+- Backend-unavailable creates remained local, survived full app termination,
+  retained retry metadata, and reconciled after the backend returned. Both
+  operations completed with `attempt_count = 1`.
+- A simulated lost Expense response produced a server row and a local retryable
+  operation. The retry returned HTTP `200`, reconciled the original UUID, and
+  left exactly one `ledger_entries` row in Supabase Dev.
+- Expense and Itinerary workers consumed only their own entity operations.
+- Hosted rows were inspected read-only after each scenario; no Production
+  project was contacted and no legacy Web files were modified.
+
+The broad integration suite ran in Simulator for repeatability. The same Phase
+3B Development Build was also compiled, signed, installed, and launched on the
+paired physical iPhone, but the full online/offline matrix was not repeated on
+that device after the user approved Simulator-first validation.
+
+### Observed Timing
+
+The first Hosted Dev create took approximately 1.65 seconds. Subsequent create
+and idempotent replay requests took approximately 0.66-1.34 seconds and 0.49
+seconds respectively. The local row appeared immediately, so transport latency
+did not block creation.
+
+### Environment File Boundary
+
+The server environment file is `.env.backend`. Do not rename it to
+`.env.backend.local`: Metro treats `.local` as a source extension and may parse
+the file during Mobile bundling. An architecture regression test protects this
+filename boundary. Both real environment files remain ignored by Git.
+
+### Dev Secret Rotation
+
+During validation, the original Dev-only server secret was visible in a local
+Metro diagnostic after an incorrectly named environment file was parsed as
+source. On 2026-09-10 it was replaced with a dedicated
+`otr_dev_backend_20260910` secret and the original `default` secret was
+revoked. The replacement was verified against project
+`tuqigdxrvrerfewsxqgm` before revocation. No secret value is recorded in Git or
+this document.

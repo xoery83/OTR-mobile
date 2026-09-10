@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { clearLocalSession, writeLocalSession } from "./authRepository";
+import { clearLocalSession, readLocalSession, writeLocalSession } from "./authRepository";
 
 const approvedDevProjectRef = "tuqigdxrvrerfewsxqgm";
 const tokenResponseSchema = z.object({
@@ -14,6 +14,7 @@ type DevAuthOptions = {
   publishableKey?: string;
   fetchImplementation?: typeof fetch;
   persistSession?: typeof writeLocalSession;
+  readSession?: typeof readLocalSession;
 };
 
 function configuration(options: DevAuthOptions) {
@@ -76,6 +77,14 @@ export function refreshSupabaseDevSession(
   options: DevAuthOptions = {},
 ) {
   return tokenRequest("refresh_token", { refresh_token: refreshToken }, options);
+}
+
+export async function revalidateStoredSupabaseDevSession(options: DevAuthOptions = {}) {
+  const session = await (options.readSession ?? readLocalSession)();
+  if (!session?.refreshToken) return false;
+
+  await refreshSupabaseDevSession(session.refreshToken, options);
+  return true;
 }
 
 export const signOutOfSupabaseDev = clearLocalSession;

@@ -4,7 +4,11 @@ import {
   readFoundationDiagnostics,
   type FoundationDiagnostics,
 } from "@/data/foundation/foundationDiagnostics";
-import { signInToSupabaseDev, signOutOfSupabaseDev } from "@/data/auth/devSupabaseAuth";
+import {
+  revalidateStoredSupabaseDevSession,
+  signInToSupabaseDev,
+  signOutOfSupabaseDev,
+} from "@/data/auth/devSupabaseAuth";
 import { getSyncTransportMode } from "@/data/sync/transportSelection";
 
 export function useFoundationDiagnostics() {
@@ -22,13 +26,29 @@ export function useFoundationDiagnostics() {
 
   useEffect(() => {
     let active = true;
-    void readFoundationDiagnostics()
-      .then((value) => {
-        if (active) setDiagnostics(value);
-      })
-      .catch(() => {
+    void (async () => {
+      try {
+        const initial = await readFoundationDiagnostics();
+        if (active) setDiagnostics(initial);
+
+        if (
+          getSyncTransportMode() === "dev" &&
+          initial.networkState === "online" &&
+          initial.authState === "AUTHENTICATED_OFFLINE"
+        ) {
+          try {
+            if (await revalidateStoredSupabaseDevSession()) {
+              const refreshed = await readFoundationDiagnostics();
+              if (active) setDiagnostics(refreshed);
+            }
+          } catch {
+            // A network failure keeps the valid local session available offline.
+          }
+        }
+      } catch {
         if (active) setError("Diagnostics unavailable.");
-      });
+      }
+    })();
     return () => {
       active = false;
     };
