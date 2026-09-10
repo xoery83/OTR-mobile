@@ -13,7 +13,12 @@
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset --local",
+    "supabase:test": "supabase test db",
+    "supabase:validate": "scripts/supabase/validate-local.sh"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.0.0",
@@ -40,6 +45,7 @@
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.2",
     "prettier": "^3.0.0",
+    "supabase": "^2.117.0",
     "typescript": "~6.0.3",
     "vitest": "^4.0.0"
   }

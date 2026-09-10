@@ -1,0 +1,12 @@
+{
+  "tables": 64,
+  "buckets": 2,
+  "columns": 910,
+  "indexes": 240,
+  "checksum": "319176c04e305e73bf57f6a592fa0aad58610b8d7065ae042224bfabf2b94167",
+  "policies": 178,
+  "triggers": 32,
+  "functions": 29,
+  "rls_tables": 64,
+  "constraints": 329
+}

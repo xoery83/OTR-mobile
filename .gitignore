@@ -15,6 +15,10 @@ yarn-error.log*
 ios/
 android/
 
+# Supabase CLI runtime state (canonical migrations/config remain tracked)
+supabase/.branches/
+supabase/.temp/
+
 # Local databases and native signing/build artifacts
 *.db
 *.db-shm
