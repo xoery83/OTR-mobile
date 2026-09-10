@@ -27,6 +27,6 @@ describe("Phase 2A fake expense transport", () => {
     ).rejects.toThrow("fake transport failure");
     await expect(
       transport.createExpense({ expense, idempotencyKey: "operation-1" }),
-    ).resolves.toEqual({ serverId: "fake_server_expense-1" });
+    ).resolves.toEqual({ serverId: "fake_server_expense-1", version: 1 });
   });
 });

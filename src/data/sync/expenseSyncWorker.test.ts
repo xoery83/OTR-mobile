@@ -52,13 +52,13 @@ describe("expense sync worker", () => {
   it("stores the returned server id and marks the local expense synced", async () => {
     const repository = createRepository();
     const worker = createExpenseSyncWorker(repository, {
-      createExpense: vi.fn().mockResolvedValue({ serverId: "server-1" }),
+      createExpense: vi.fn().mockResolvedValue({ serverId: "server-1", version: 1 }),
     });
 
     await worker.push(operation);
 
     expect(repository.markExpenseSyncing).toHaveBeenCalledWith(expense.id);
-    expect(repository.markExpenseSynced).toHaveBeenCalledWith(expense.id, "server-1");
+    expect(repository.markExpenseSynced).toHaveBeenCalledWith(expense.id, "server-1", 1);
     expect(repository.markExpenseFailed).not.toHaveBeenCalled();
   });
 

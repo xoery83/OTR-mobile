@@ -14,6 +14,7 @@
     "format:write": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "backend:dev": "node --env-file-if-exists=.env.backend --import tsx backend/src/server.ts",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset --local",
@@ -21,6 +22,7 @@
     "supabase:validate": "scripts/supabase/validate-local.sh"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
     "@tanstack/react-query": "^5.0.0",
     "expo": "~57.0.21",
     "expo-constants": "~57.0.17",
@@ -46,6 +48,7 @@
     "eslint-config-expo": "~57.0.2",
     "prettier": "^3.0.0",
     "supabase": "^2.117.0",
+    "tsx": "^4.23.13",
     "typescript": "~6.0.3",
     "vitest": "^4.0.0"
   }

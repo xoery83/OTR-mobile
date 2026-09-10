@@ -50,10 +50,14 @@ Status labels:
 
 - Incremental itinerary sync.
 
-`POST /trips/:id/itinerary-events` - `NEEDS_CHANGE`
+`POST /v1/trips/:id/itinerary-items` - `EXISTING` (Dev only)
 
-- Legacy Web writes `itinerary_events` directly.
-- Mobile needs idempotency and local id mapping.
+- Requires a Supabase Dev bearer token and `Idempotency-Key` header.
+- Accepts only the Phase 2B title, date, optional start time, location, notes,
+  and local id.
+- Authorizes trip write access server-side and maps the command to
+  `itinerary_events` in Supabase Dev.
+- Returns `{ serverId, version, updatedAt, idempotentReplay }`.
 
 `PATCH /trips/:id/itinerary-events/:eventId` - `NEEDS_CHANGE`
 
@@ -85,17 +89,29 @@ Status labels:
 - Legacy computes via Supabase reads and client-side summary.
 - Backend should return entries, participants, rates, balances, settlements, and sync cursor.
 
-`POST /trips/:id/expenses` - `NEEDS_CHANGE`
+`POST /v1/trips/:id/expenses` - `EXISTING` (Dev only)
 
-- Must accept payer, participants, split method, original currency, base currency, exchange rate metadata, attachments, local id, and idempotency key.
+- Requires a Supabase Dev bearer token and `Idempotency-Key` header.
+- Accepts only the Phase 2A local id, title, integer minor-unit amount,
+  three-letter currency, optional payer member id, and occurrence timestamp.
+- Authorizes trip write access server-side and maps the command to
+  `ledger_entries` in Supabase Dev.
+- Returns `{ serverId, version, updatedAt, idempotentReplay }`.
 
-### Phase 2A Transport Status
+### Phase 3B Transport Status
 
-No production mobile `POST /trips/:id/expenses` contract is available yet. Phase 2A therefore uses an isolated development fake transport behind the expense sync worker. It accepts the local id and idempotency key and returns a generated `serverId`; it can deliberately fail one request for retry testing. It is not an API client, does not contact Supabase, and must be replaced by a typed OTR Backend endpoint adapter before production synchronization.
+The Expense and Itinerary workers support two environment-selected adapters.
+`fake` remains the default for local and automated tests. `dev` sends typed,
+authenticated requests to the OTR Dev Backend; it never calls Supabase business
+tables. Both preserve the same SQLite-first queue and reconciliation lifecycle.
 
-### Phase 2B Transport Status
+Create idempotency is defined by the authenticated user, entity type, and Mobile
+operation id/idempotency key. If a successful response is lost, retry returns the
+original row rather than creating another. Create responses currently use
+version `1`; update/conflict versions are outside Phase 3B.
 
-No production itinerary create endpoint is available to Mobile yet. Phase 2B uses the same isolated development-only pattern for `CREATE_ITINERARY`: a fake transport accepts a Journey-scoped local item and idempotency key, then returns a generated `serverId` or a controlled failure. It must be replaced by a typed OTR Backend itinerary endpoint before production use.
+These endpoints are Dev-only and are not approval for production deployment or
+for the broader Ledger/Itinerary contracts below.
 
 `PATCH /trips/:id/expenses/:expenseId` - `NEEDS_CHANGE`
 

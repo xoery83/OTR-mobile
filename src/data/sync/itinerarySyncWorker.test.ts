@@ -52,13 +52,19 @@ describe("itinerary sync worker", () => {
   it("reconciles the original item with the fake server id", async () => {
     const repository = createRepository();
     const worker = createItinerarySyncWorker(repository, {
-      createItineraryItem: vi.fn().mockResolvedValue({ serverId: "server-1" }),
+      createItineraryItem: vi
+        .fn()
+        .mockResolvedValue({ serverId: "server-1", version: 1 }),
     });
 
     await worker.push(operation);
 
     expect(repository.markItineraryItemSyncing).toHaveBeenCalledWith(item.id);
-    expect(repository.markItineraryItemSynced).toHaveBeenCalledWith(item.id, "server-1");
+    expect(repository.markItineraryItemSynced).toHaveBeenCalledWith(
+      item.id,
+      "server-1",
+      1,
+    );
   });
 
   it("keeps the item local and delegates retry metadata on failure", async () => {

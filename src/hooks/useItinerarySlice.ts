@@ -7,8 +7,14 @@ import {
 } from "@/data/sync/itineraryDemoCoordinator";
 import type { CreateItineraryItemInput, ItineraryItem } from "@/domain/itinerary/types";
 
-export const phase2BJourneyAId = "phase-2b-journey-a";
-export const phase2BJourneyBId = "phase-2b-journey-b";
+export const phase2BJourneyAId =
+  process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev"
+    ? (process.env.EXPO_PUBLIC_OTR_DEV_TRIP_ID ?? "")
+    : "phase-2b-journey-a";
+export const phase2BJourneyBId =
+  process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev"
+    ? (process.env.EXPO_PUBLIC_OTR_DEV_TRIP_B_ID ?? "phase-2b-journey-b")
+    : "phase-2b-journey-b";
 
 export function useItinerarySlice(tripId: string) {
   const [items, setItems] = useState<ItineraryItem[]>([]);

@@ -60,12 +60,12 @@ function createInMemoryItineraryDatabase() {
         if (item) item.syncStatus = status as ItineraryItem["syncStatus"];
       }
       if (sql.includes("SET server_id = ?")) {
-        const [serverId, status, , id] = params;
+        const [serverId, status, version, , id] = params;
         const item = items.find((entry) => entry.id === id);
         if (item) {
           item.serverId = serverId as string;
           item.syncStatus = status as ItineraryItem["syncStatus"];
-          item.syncVersion += 1;
+          item.syncVersion = version as number;
         }
       }
       return {} as never;
@@ -131,7 +131,7 @@ describe("itinerary repository", () => {
 
     await repository.markItineraryItemFailed(item.id);
     await repository.markItineraryItemSyncing(item.id);
-    await repository.markItineraryItemSynced(item.id, "server-itinerary-1");
+    await repository.markItineraryItemSynced(item.id, "server-itinerary-1", 1);
 
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({

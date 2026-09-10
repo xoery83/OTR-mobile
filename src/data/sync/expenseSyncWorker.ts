@@ -9,7 +9,7 @@ export type ExpenseCreateTransport = {
   createExpense(input: {
     expense: Expense;
     idempotencyKey: string;
-  }): Promise<{ serverId: string }>;
+  }): Promise<{ serverId: string; version: number }>;
 };
 
 const createExpenseOperationType = "CREATE_EXPENSE";
@@ -37,7 +37,11 @@ export function createExpenseSyncWorker(
           expense,
           idempotencyKey: operation.idempotencyKey,
         });
-        await expenseRepository.markExpenseSynced(expense.id, response.serverId);
+        await expenseRepository.markExpenseSynced(
+          expense.id,
+          response.serverId,
+          response.version,
+        );
       } catch (error) {
         await expenseRepository.markExpenseFailed(expense.id);
         throw error;

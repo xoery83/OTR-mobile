@@ -65,12 +65,12 @@ function createInMemoryExpenseDatabase() {
       }
 
       if (sql.includes("SET server_id = ?")) {
-        const [serverId, status, , id] = params;
+        const [serverId, status, version, , id] = params;
         const expense = expenses.find((entry) => entry.id === id);
         if (expense) {
           expense.serverId = serverId as string;
           expense.syncStatus = status as Expense["syncStatus"];
-          expense.syncVersion += 1;
+          expense.syncVersion = version as number;
         }
       }
 

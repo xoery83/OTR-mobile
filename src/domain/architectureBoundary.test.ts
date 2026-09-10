@@ -41,4 +41,10 @@ describe("foundation architecture boundaries", () => {
       }
     }
   });
+
+  it("keeps server-only environment files out of Metro source extensions", () => {
+    expect(readFileSync(join(projectRoot, "package.json"), "utf8")).not.toContain(
+      ".env.backend.local",
+    );
+  });
 });

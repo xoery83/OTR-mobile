@@ -7,7 +7,10 @@ import {
 } from "@/data/sync/expenseDemoCoordinator";
 import type { Expense } from "@/domain/expense/types";
 
-export const phase2ADemoTripId = "phase-2a-demo-trip";
+export const phase2ADemoTripId =
+  process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev"
+    ? (process.env.EXPO_PUBLIC_OTR_DEV_TRIP_ID ?? "")
+    : "phase-2a-demo-trip";
 
 export function useExpenseSlice() {
   const [expenses, setExpenses] = useState<Expense[]>([]);

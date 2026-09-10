@@ -18,7 +18,7 @@ export function createFakeExpenseTransport(): FakeExpenseTransport {
         throw new Error("Phase 2A fake transport failure.");
       }
 
-      return { serverId: `fake_server_${expense.id}` };
+      return { serverId: `fake_server_${expense.id}`, version: 1 };
     },
   };
 }

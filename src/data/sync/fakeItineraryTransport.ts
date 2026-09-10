@@ -18,7 +18,7 @@ export function createFakeItineraryTransport(): FakeItineraryTransport {
         throw new Error("Phase 2B fake itinerary transport failure.");
       }
 
-      return { serverId: `fake_server_${item.id}` };
+      return { serverId: `fake_server_${item.id}`, version: 1 };
     },
   };
 }

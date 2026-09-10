@@ -28,50 +28,71 @@ export function createApiClient(options: ApiClientOptions = {}) {
   const fetchImplementation = options.fetchImplementation ?? fetch;
   const timeoutMs = options.timeoutMs ?? 15_000;
 
-  return {
-    async get<T>(path: string, responseSchema: z.ZodType<T>): Promise<T> {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  async function request<T>(
+    method: "GET" | "POST",
+    path: string,
+    responseSchema: z.ZodType<T>,
+    body?: unknown,
+    headers?: Record<string, string>,
+  ): Promise<T> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetchImplementation(`${baseUrl}${path}`, {
+        method,
+        headers: {
+          ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+          ...(options.accessToken
+            ? { Authorization: `Bearer ${options.accessToken}` }
+            : {}),
+          ...headers,
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new ApiClientError(
+          `OTR API request failed: ${response.status}`,
+          "http",
+          response.status,
+        );
+      }
 
       try {
-        const response = await fetchImplementation(`${baseUrl}${path}`, {
-          headers: options.accessToken
-            ? { Authorization: `Bearer ${options.accessToken}` }
-            : undefined,
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new ApiClientError(
-            `OTR API request failed: ${response.status}`,
-            "http",
-            response.status,
-          );
-        }
-
-        try {
-          return responseSchema.parse(await response.json());
-        } catch (error) {
-          if (error instanceof z.ZodError) {
-            throw new ApiClientError(
-              "OTR API returned an invalid response.",
-              "validation",
-            );
-          }
-
-          throw error;
-        }
+        return responseSchema.parse(await response.json());
       } catch (error) {
-        if (error instanceof ApiClientError) throw error;
-
-        if (controller.signal.aborted) {
-          throw new ApiClientError("OTR API request timed out.", "timeout");
+        if (error instanceof z.ZodError) {
+          throw new ApiClientError("OTR API returned an invalid response.", "validation");
         }
 
-        throw new ApiClientError("OTR API is unavailable.", "network");
-      } finally {
-        clearTimeout(timeout);
+        throw error;
       }
+    } catch (error) {
+      if (error instanceof ApiClientError) throw error;
+
+      if (controller.signal.aborted) {
+        throw new ApiClientError("OTR API request timed out.", "timeout");
+      }
+
+      throw new ApiClientError("OTR API is unavailable.", "network");
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  return {
+    get<T>(path: string, responseSchema: z.ZodType<T>): Promise<T> {
+      return request("GET", path, responseSchema);
+    },
+    post<T>(
+      path: string,
+      body: unknown,
+      responseSchema: z.ZodType<T>,
+      headers?: Record<string, string>,
+    ): Promise<T> {
+      return request("POST", path, responseSchema, body, headers);
     },
   };
 }

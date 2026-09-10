@@ -20,7 +20,7 @@ export type ItineraryRepository = {
   listItineraryItems(tripId: string): Promise<ItineraryItem[]>;
   getItineraryItem(id: string): Promise<ItineraryItem | null>;
   markItineraryItemSyncing(id: string): Promise<void>;
-  markItineraryItemSynced(id: string, serverId: string): Promise<void>;
+  markItineraryItemSynced(id: string, serverId: string, version: number): Promise<void>;
   markItineraryItemFailed(id: string): Promise<void>;
 };
 
@@ -125,13 +125,14 @@ export function createItineraryRepository(
       await updateSyncStatus(database, id, "SYNCING");
     },
 
-    async markItineraryItemSynced(id, serverId) {
+    async markItineraryItemSynced(id, serverId, version) {
       await database.runAsync(
         `UPDATE itinerary_items
-         SET server_id = ?, sync_status = ?, sync_version = sync_version + 1, updated_at = ?
+         SET server_id = ?, sync_status = ?, sync_version = ?, updated_at = ?
          WHERE id = ?`,
         serverId,
         "SYNCED",
+        version,
         new Date().toISOString(),
         id,
       );

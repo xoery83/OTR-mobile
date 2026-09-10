@@ -1,12 +1,15 @@
+import { readLocalSession } from "@/data/auth/authRepository";
 import { openDatabase } from "@/data/db/database";
 import { createItineraryRepository } from "@/data/repositories/itineraryRepository";
 
-import { createFakeItineraryTransport } from "./fakeItineraryTransport";
 import { createItinerarySyncWorker } from "./itinerarySyncWorker";
 import { createSyncEngine } from "./syncEngine";
 import { createSyncOperationRepository } from "./syncOperationRepository";
-
-const fakeTransport = createFakeItineraryTransport();
+import {
+  fakeItineraryTransport,
+  getItineraryCreateTransport,
+  getSyncTransportMode,
+} from "./transportSelection";
 
 function nextAttemptAt(attemptCount: number) {
   return new Date(Date.now() + attemptCount * 30_000).toISOString();
@@ -16,7 +19,10 @@ export async function runItineraryDemoSync() {
   const database = await openDatabase();
   const itineraryRepository = createItineraryRepository(database);
   const operationRepository = createSyncOperationRepository(database);
-  const worker = createItinerarySyncWorker(itineraryRepository, fakeTransport);
+  const worker = createItinerarySyncWorker(
+    itineraryRepository,
+    getItineraryCreateTransport(),
+  );
   const itineraryEngine = createSyncEngine(
     operationRepository,
     worker,
@@ -27,9 +33,13 @@ export async function runItineraryDemoSync() {
   );
 
   // This is a deliberate development harness, not a production auth bypass.
-  return itineraryEngine.run("AUTHENTICATED_ONLINE");
+  const session =
+    getSyncTransportMode() === "dev" ? await readLocalSession() : { accessToken: "fake" };
+  return itineraryEngine.run(
+    session?.accessToken ? "AUTHENTICATED_ONLINE" : "AUTHENTICATED_OFFLINE",
+  );
 }
 
 export function failNextItineraryDemoSync() {
-  fakeTransport.failNextCreate();
+  if (getSyncTransportMode() === "fake") fakeItineraryTransport.failNextCreate();
 }

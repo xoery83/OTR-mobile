@@ -9,7 +9,7 @@ export type ItineraryCreateTransport = {
   createItineraryItem(input: {
     item: ItineraryItem;
     idempotencyKey: string;
-  }): Promise<{ serverId: string }>;
+  }): Promise<{ serverId: string; version: number }>;
 };
 
 const createItineraryOperationType = "CREATE_ITINERARY";
@@ -37,7 +37,11 @@ export function createItinerarySyncWorker(
           item,
           idempotencyKey: operation.idempotencyKey,
         });
-        await itineraryRepository.markItineraryItemSynced(item.id, response.serverId);
+        await itineraryRepository.markItineraryItemSynced(
+          item.id,
+          response.serverId,
+          response.version,
+        );
       } catch (error) {
         await itineraryRepository.markItineraryItemFailed(item.id);
         throw error;

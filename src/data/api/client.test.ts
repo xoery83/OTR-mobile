@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { ApiClientError, createApiClient } from "./client";
@@ -29,6 +29,32 @@ describe("OTR API client", () => {
     await expect(client.get("/trips", responseSchema)).resolves.toEqual({
       id: "trip-1",
     });
+  });
+
+  it("sends typed JSON posts with auth and idempotency headers", async () => {
+    const fetchImplementation = vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(init).toMatchObject({
+        method: "POST",
+        headers: {
+          Authorization: "Bearer access-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "operation-1",
+        },
+        body: JSON.stringify({ title: "Train" }),
+      });
+      return response(200, { id: "expense-1" });
+    });
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      accessToken: "access-token",
+      fetchImplementation: fetchImplementation as typeof fetch,
+    });
+
+    await expect(
+      client.post("/expenses", { title: "Train" }, responseSchema, {
+        "Idempotency-Key": "operation-1",
+      }),
+    ).resolves.toEqual({ id: "expense-1" });
   });
 
   it("normalizes HTTP and invalid-payload failures", async () => {

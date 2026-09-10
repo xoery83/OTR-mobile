@@ -17,7 +17,7 @@ export type ExpenseRepository = {
   listExpensesForTrip(tripId: string): Promise<Expense[]>;
   getExpense(id: string): Promise<Expense | null>;
   markExpenseSyncing(id: string): Promise<void>;
-  markExpenseSynced(id: string, serverId: string): Promise<void>;
+  markExpenseSynced(id: string, serverId: string, version: number): Promise<void>;
   markExpenseFailed(id: string): Promise<void>;
 };
 
@@ -148,13 +148,14 @@ export function createExpenseRepository(database: ExpenseDatabase): ExpenseRepos
       await updateSyncStatus(database, id, "SYNCING");
     },
 
-    async markExpenseSynced(id, serverId) {
+    async markExpenseSynced(id, serverId, version) {
       await database.runAsync(
         `UPDATE expenses
-         SET server_id = ?, sync_status = ?, sync_version = sync_version + 1, updated_at = ?
+         SET server_id = ?, sync_status = ?, sync_version = ?, updated_at = ?
          WHERE id = ?`,
         serverId,
         "SYNCED",
+        version,
         new Date().toISOString(),
         id,
       );
