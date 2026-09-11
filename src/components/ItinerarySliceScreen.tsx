@@ -160,15 +160,13 @@ export function ItinerarySliceScreen() {
           </View>
         ))}
 
-        {__DEV__ ? (
-          <View style={styles.developmentTools}>
-            <Text style={styles.toolsLabel}>Development sync harness</Text>
-            <Button onPress={() => void runDemoSync()} title="Run itinerary sync" />
-            <Pressable onPress={failNextDemoSync} style={styles.failureButton}>
-              <Text style={styles.failureButtonText}>Fail next itinerary sync</Text>
-            </Pressable>
-          </View>
-        ) : null}
+        <View style={styles.developmentTools}>
+          <Text style={styles.toolsLabel}>Stage 2 sync harness</Text>
+          <Button onPress={() => void runDemoSync()} title="Run itinerary sync" />
+          <Pressable onPress={failNextDemoSync} style={styles.failureButton}>
+            <Text style={styles.failureButtonText}>Fail next itinerary sync</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

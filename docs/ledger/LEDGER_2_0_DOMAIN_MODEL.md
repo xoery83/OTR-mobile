@@ -1,7 +1,7 @@
 # Ledger 2.0 Domain Model
 
-Date: 2026-09-10
-Status: Canonical model proposal; not a migration specification
+Date: 2026-09-11
+Status: Canonical model with travel-feedback revision; not a migration specification
 
 ## Design Goals
 
@@ -9,6 +9,7 @@ Status: Canonical model proposal; not a migration specification
 - One atomic, versioned Expense aggregate.
 - Stable Journey-member identity, including unlinked travellers.
 - Immutable conversion evidence and explainable settlement.
+- Independent merchant, payer-cost, and group-settlement financial truths.
 - Offline mutation intent, idempotency, tombstones, and conflict support.
 - Backend-authorized remote writes with SQLite as Mobile source of truth.
 - No requirement to preserve legacy table shapes.
@@ -23,6 +24,8 @@ An Expense revision consists of:
 - included `ExpenseParticipant` snapshots;
 - one exact `ExpenseSplit` per included member;
 - zero or one active `ExchangeRateSnapshot`;
+- zero or more append-only `PaymentRecord` evidence revisions;
+- one active `SettlementValuationSnapshot` when valuation is resolved;
 - attachment and itinerary link sets;
 - one `ExpenseAuditEvent` describing the accepted change.
 
@@ -36,6 +39,8 @@ A Settlement consists of:
 - an immutable input snapshot of accepted expense revisions;
 - member net balances;
 - a generated set of `SettlementTransfer` records;
+- zero or more independently versioned `SettlementPayment` records against
+  each transfer;
 - lifecycle and audit metadata.
 
 Expense changes never silently mutate a finalized Settlement.
@@ -73,31 +78,30 @@ single deterministic residual allocation step.
 
 ### Expense
 
-| Field                                 | Meaning                                                                     |
-| ------------------------------------- | --------------------------------------------------------------------------- |
-| `id`                                  | Stable client-generated UUID; idempotent server identity may map separately |
-| `serverId`                            | Remote id once reconciled                                                   |
-| `journeyId`                           | Owning Journey                                                              |
-| `title`                               | Merchant or concise purpose; may initially be `Expense`                     |
-| `notes`                               | Optional private-to-Journey notes                                           |
-| `categoryId`                          | Stable category identifier, default `other`                                 |
-| `occurredAt`                          | Zoned timestamp or local date/time plus timezone semantics                  |
-| `originalAmountMinor`                 | Amount paid in original currency                                            |
-| `originalCurrency`                    | ISO code                                                                    |
-| `originalCurrencyScale`               | Captured ISO exponent                                                       |
-| `settlementAmountMinor`               | Converted accepted amount, nullable while rate required                     |
-| `settlementCurrency`                  | Journey currency captured on the revision                                   |
-| `payerMemberId`                       | Single Journey member payer                                                 |
-| `splitMode`                           | `EQUAL`, `EXACT`, `PERCENTAGE`, future `WEIGHTED`                           |
-| `status`                              | `DRAFT`, `ACCEPTED`, `RATE_REQUIRED`, `CONFLICT`, `DELETED`                 |
-| `createdByUserId`                     | Auth actor where linked                                                     |
-| `createdByMemberId`                   | Journey-member actor                                                        |
-| `revision`                            | Monotonic server aggregate revision                                         |
-| `createdAt`, `updatedAt`, `deletedAt` | Lifecycle timestamps                                                        |
-| sync fields                           | Local status, last synced revision/time, error metadata                     |
+| Field                                 | Meaning                                                                      |
+| ------------------------------------- | ---------------------------------------------------------------------------- |
+| `id`                                  | Stable client-generated UUID; idempotent server identity may map separately  |
+| `serverId`                            | Remote id once reconciled                                                    |
+| `journeyId`                           | Owning Journey                                                               |
+| `title`                               | Merchant or concise purpose; may initially be `Expense`                      |
+| `notes`                               | Optional private-to-Journey notes                                            |
+| `categoryId`                          | Stable category identifier, default `other`                                  |
+| `occurredAt`                          | Zoned timestamp or local date/time plus timezone semantics                   |
+| `originalAmountMinor`                 | Immutable merchant/receipt amount                                            |
+| `originalCurrency`                    | ISO code                                                                     |
+| `originalCurrencyScale`               | Captured ISO exponent                                                        |
+| `payerMemberId`                       | Single Journey member payer                                                  |
+| `splitMode`                           | `EQUAL_PERSON`, `EQUAL_HOUSEHOLD`, `HOUSEHOLD_SHARES`, `EXACT`, `PERCENTAGE` |
+| `status`                              | `DRAFT`, `ACCEPTED`, `RATE_REQUIRED`, `CONFLICT`, `DELETED`                  |
+| `createdByUserId`                     | Auth actor where linked                                                      |
+| `createdByMemberId`                   | Journey-member actor                                                         |
+| `revision`                            | Monotonic server aggregate revision                                          |
+| `createdAt`, `updatedAt`, `deletedAt` | Lifecycle timestamps                                                         |
+| sync fields                           | Local status, last synced revision/time, error metadata                      |
 
-`settlementAmountMinor` is a stored outcome of the active rate snapshot, not a
-value repeatedly recomputed from whichever rate is newest.
+Expense owns merchant truth. Payer-cost evidence and group-settlement value are
+linked records so a bank-posted amount can differ from a fair agreed valuation.
+Original merchant amount/currency are never rewritten by either record.
 
 ### ExpenseParticipant
 
@@ -124,7 +128,7 @@ Stores the user's declared rule and exact accepted allocation.
 | `mode`                     | Equal, exact, percentage, or weighted          |
 | `inputAmountMinor`         | Exact original-currency input where applicable |
 | `inputPercentageMicros`    | Fixed-scale percentage input                   |
-| `inputWeight`              | Future positive decimal string                 |
+| `inputWeight`              | Positive household/member share input          |
 | `allocatedOriginalMinor`   | Exact original-currency allocation             |
 | `allocatedSettlementMinor` | Exact settlement-currency allocation or null   |
 | `roundingAdjustmentMinor`  | Explainable residual assigned to this member   |
@@ -132,6 +136,33 @@ Stores the user's declared rule and exact accepted allocation.
 
 Both allocated columns must sum exactly to their respective Expense amounts.
 `input*` values preserve user intent; `allocated*` values are settlement truth.
+
+For Household modes, also capture `householdIdSnapshot` and the household share
+input used to derive the member allocation. Household rows never replace the
+final member-level splits.
+
+### PaymentRecord
+
+Optional evidence for what the payer's instrument actually authorized or
+posted. It is not automatically the group's settlement value.
+
+| Field                                                                     | Meaning                                                        |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `id`, `expenseId`, `expenseRevision`                                      | Stable evidence/revision linkage                               |
+| `payerMemberId`                                                           | Payer whose cost is evidenced                                  |
+| `instrumentLabel`                                                         | User-safe label such as `Visa NZ` or `Cash`; no PAN or secrets |
+| `authorizationAmountMinor`, `authorizationCurrency`, `authorizationScale` | Optional temporary authorization                               |
+| `postedAmountMinor`, `postedCurrency`, `postedScale`                      | Final known bank/card debit                                    |
+| `authorizedAt`, `postedAt`                                                | Evidence lifecycle dates                                       |
+| `bankFxRateNumerator`, `bankFxRateDenominator`                            | Optional exact bank/card conversion evidence                   |
+| `feeAmountMinor`, `feeCurrency`, `feeScale`                               | Explicit known fee; not inferred from rate spread              |
+| `evidenceAssetIds`                                                        | Receipt/statement/document links subject to visibility policy  |
+| `source`, `notes`, `createdBy`, `createdAt`                               | Provenance without sensitive account data                      |
+| `supersedesPaymentRecordId`                                               | Append-only correction chain                                   |
+
+Authorization and posted values may coexist because tips, deposits, and final
+settlement can change the charge. The latest accepted posted record is
+payer-cost truth; older evidence remains auditable.
 
 ### ExchangeRateSnapshot
 
@@ -149,8 +180,31 @@ Both allocated columns must sum exactly to their respective Expense amounts.
 | `stalenessState`                     | Fresh, stale accepted, or review required     |
 | `supersedesSnapshotId`               | Audit chain for explicit conversion revisions |
 
-Snapshots are append-only. A corrected rate creates a new Expense revision and
-new snapshot; it does not rewrite prior evidence.
+Snapshots are append-only reference evidence. Provider/cache entries may change,
+but an accepted snapshot never does. A corrected rate creates a new Expense
+revision and snapshot; it does not rewrite prior evidence.
+
+### SettlementValuationSnapshot
+
+The immutable decision that converts merchant truth into group-settlement
+truth for one Expense revision.
+
+| Field                                                            | Meaning                                                                 |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `id`, `expenseId`, `expenseRevision`                             | Immutable linkage                                                       |
+| `policy`                                                         | `REFERENCE_RATE`, `ACTUAL_PAYER_COST`, `MANUAL_AGREED`, `SAME_CURRENCY` |
+| `merchantAmountMinor`, `merchantCurrency`, `merchantScale`       | Captured source truth                                                   |
+| `settlementAmountMinor`, `settlementCurrency`, `settlementScale` | Accepted group value                                                    |
+| `rateNumerator`, `rateDenominator`, `roundingMode`               | Exact reproducible conversion, when applicable                          |
+| `exchangeRateSnapshotId`                                         | Reference-rate evidence, when used                                      |
+| `paymentRecordId`                                                | Posted-cost evidence, when used                                         |
+| `manualReason`                                                   | Required for manual agreement or policy exception                       |
+| `effectiveAt`, `createdBy`, `createdAt`                          | Decision provenance                                                     |
+| `supersedesValuationId`                                          | Append-only revision chain                                              |
+
+Changing PaymentRecord evidence does not mutate this snapshot. Applying new
+evidence or a different Journey policy creates a new Expense financial revision
+and valuation snapshot.
 
 ### ExpenseLink
 
@@ -189,18 +243,34 @@ when a revision is accepted locally and reconciled by the backend.
 
 ### Household
 
-Optional Phase 2 convenience entity:
+Ledger Phase 1 convenience entity:
 
 | Field                                | Meaning                                               |
 | ------------------------------------ | ----------------------------------------------------- |
 | `id`, `journeyId`, `name`            | Scope and display                                     |
 | `memberIds`                          | Current selection members                             |
-| `defaultSplitStrategy`               | Equal by member, equal by household, or saved weights |
+| `defaultSplitStrategy`               | Equal by member, equal by household, or member shares |
+| `memberShares`                       | Positive values such as adult `1`, child `0.5`        |
 | `createdBy`, `updatedAt`, `revision` | Management metadata                                   |
 
 A Household never owns money or replaces members in settlement. Selecting it
 expands to member participants and exact splits at save time. Historical
 expenses are unaffected when the household later changes.
+
+### ExpenseCorrectionRequest
+
+Lightweight collaborative proposal that never mutates an Expense directly:
+
+- id, Journey/Expense id, and base Expense revision;
+- proposer user/member id;
+- proposed field-group patch and human reason;
+- status: `OPEN`, `ACCEPTED`, `REJECTED`, `WITHDRAWN`, `STALE`;
+- resolver, resolution reason, resulting Expense revision, and timestamps;
+- sync/idempotency metadata.
+
+Accepting a request executes the normal authorized Expense revision command.
+Organizer correction of another member's Expense always requires an audit
+reason even when no request exists.
 
 ### SplitTemplate
 
@@ -218,36 +288,56 @@ participants/splits.
 
 ### Settlement
 
-| Field                                      | Meaning                                                      |
-| ------------------------------------------ | ------------------------------------------------------------ |
-| `id`, `journeyId`                          | Identity/scope                                               |
-| `settlementCurrency`, `currencyScale`      | Calculation unit                                             |
-| `status`                                   | Draft, ready, finalized, partially paid, settled, superseded |
-| `throughTimestamp`                         | Included-ledger cutoff                                       |
-| `inputDigest`                              | Digest of included expense revisions/transfers               |
-| `algorithmVersion`                         | Reproducible calculation version                             |
-| `createdBy`, `finalizedBy`                 | Actors                                                       |
-| `createdAt`, `finalizedAt`, `supersededAt` | Lifecycle                                                    |
-| `revision`                                 | Optimistic concurrency version                               |
+| Field                                 | Meaning                                                      |
+| ------------------------------------- | ------------------------------------------------------------ |
+| `id`, `journeyId`                     | Identity/scope                                               |
+| `settlementCurrency`, `currencyScale` | Calculation unit                                             |
+| `status`                              | Draft, ready, finalized, partially paid, settled, superseded |
+| `throughTimestamp`                    | Included-ledger cutoff                                       |
+| `inputDigest`                         | Digest of included expense revisions/transfers               |
+| `algorithmVersion`                    | Reproducible calculation version                             |
+| `createdBy`, `finalizedBy`            | Actors                                                       |
+| `revision`                            | Optimistic concurrency version                               |
 
 Supporting immutable rows record each included expense id/revision and each
 member's paid, owed, transferred, and net minor-unit totals.
 
 ### SettlementTransfer
 
-| Field                              | Meaning                               |
-| ---------------------------------- | ------------------------------------- |
-| `id`, `settlementId`, `journeyId`  | Identity/scope                        |
-| `fromMemberId`, `toMemberId`       | Direction                             |
-| `amountMinor`, `currency`, `scale` | Exact transfer                        |
-| `status`                           | Suggested, confirmed, paid, cancelled |
-| `recordedBy`, `confirmedBy`        | Actors                                |
-| `paidAt`, `confirmedAt`            | Evidence times                        |
-| `notes`, `evidenceAssetId`         | Optional proof                        |
-| `revision`                         | Conflict/version control              |
+| Field                                                            | Meaning                                                                   |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `id`, `settlementId`, `journeyId`                                | Identity/scope                                                            |
+| `fromMemberId`, `toMemberId`                                     | Debtor and creditor                                                       |
+| `settlementAmountMinor`, `settlementCurrency`, `settlementScale` | Original obligation                                                       |
+| `status`                                                         | Open, partially paid, awaiting confirmation, settled, disputed, cancelled |
+| `revision`                                                       | Conflict/version control                                                  |
 
-A paid transfer contributes to subsequent balance calculation. Duplicate
-payment recording is prevented by idempotent operation id and server identity.
+### SettlementPayment
+
+| Field                                                            | Meaning                                              |
+| ---------------------------------------------------------------- | ---------------------------------------------------- |
+| `id`, `transferId`, `journeyId`                                  | Identity/scope                                       |
+| `paymentAmountMinor`, `paymentCurrency`, `paymentScale`          | Amount the payer reports sending                     |
+| `dischargedAmountMinor`, `settlementCurrency`, `settlementScale` | Agreed obligation reduction                          |
+| `repaymentValuationSnapshotId`                                   | Immutable cross-currency conversion evidence         |
+| `reportedBy`, `paidAt`                                           | Payer-side Paid assertion                            |
+| `status`                                                         | Awaiting confirmation, confirmed, rejected, disputed |
+| `confirmedBy`, `confirmedAt`                                     | Recipient-side Received acknowledgement              |
+| `notes`, `evidenceAssetId`                                       | Optional non-sensitive proof                         |
+| `revision`                                                       | Conflict/version control                             |
+
+A transfer may have many payments. Only confirmed payments reduce its remaining
+obligation; partial confirmed payments set it to `PARTIALLY_PAID`. Reporting a
+payment never impersonates the recipient's confirmation. Duplicate reporting is
+prevented by operation id and server identity. When currencies differ, both
+parties confirm the exact settlement-currency amount discharged.
+
+### PersonalLedgerProjection
+
+This read model groups the signed-in member's spending, paid amounts, and open
+obligations by Journey and reporting period. It may provide converted reporting
+totals with explicit rate provenance, but it is not a new financial aggregate.
+It must never net a credit in one Journey against a debt in another.
 
 ## Supporting Value Objects
 
@@ -256,6 +346,7 @@ payment recording is prevented by idempotent operation id and server identity.
 - Journey id;
 - settlement currency and scale;
 - rate-staleness threshold;
+- valuation policy and allowed exception roles;
 - default participant/template references;
 - settlement lock/finalization policy;
 - revision and updater.
@@ -275,6 +366,31 @@ rows. Category does not alter balances.
 Store display text plus optional place id/coordinates/provenance. Location can
 enrich later without blocking save and does not own the Expense lifecycle.
 
+### CurrencyMetadata And RateQuoteCache
+
+- `CurrencyMetadata` is a versioned ISO 4217 code/exponent/name source used for
+  validation and formatting. UI recents are shortcuts, not an allowlist.
+- `RateQuoteCache` stores mutable provider candidates by currency pair and
+  effective time with fetch/expiry/provenance metadata.
+- Neither object is historical financial truth. Acceptance copies exact evidence
+  into immutable ExchangeRateSnapshot and SettlementValuationSnapshot records.
+
+### LedgerReviewFinding
+
+Stores a deterministic validation result or heuristic observation without
+changing the reviewed records:
+
+- stable finding id/type, Journey and related entity ids/revisions;
+- layer: `DETERMINISTIC` or `HEURISTIC`;
+- severity, confidence where applicable, evidence codes, and generated time;
+- status: open, acknowledged, dismissed, resolved, or stale;
+- actor/reason for acknowledgement or dismissal;
+- detector/ruleset/model version, without storing sensitive prompts by default.
+
+Deterministic errors prevent an invalid aggregate or Settlement from being
+accepted. Heuristic findings only recommend review; resolving one requires a
+separate authorized domain command.
+
 ## Invariants
 
 1. Expense original amount is positive and within safe 64-bit bounds.
@@ -284,12 +400,17 @@ enrich later without blocking save and does not own the Expense lifecycle.
 5. Original split allocations sum exactly to original amount.
 6. Settlement allocations sum exactly when conversion is available.
 7. Exchange snapshot currencies match Expense currencies and revision.
-8. Same-currency rate is exactly one.
-9. Revision increments once per accepted aggregate mutation.
-10. Deleted Expense retains tombstone and audit history.
-11. A finalized Settlement references immutable Expense revisions.
-12. Every Settlement member net and all group nets reconcile exactly to zero.
-13. A sync operation is idempotent by operation id and target aggregate.
+8. Settlement valuation matches merchant truth, Journey settlement currency,
+   selected policy, and referenced ExchangeRateSnapshot/PaymentRecord.
+9. Same-currency rate is exactly one.
+10. Household modes resolve to exact Journey-member splits before acceptance.
+11. Revision increments once per accepted aggregate mutation.
+12. Deleted Expense retains a reversible tombstone and audit history.
+13. A finalized Settlement references immutable Expense revisions.
+14. Every Settlement member net and all group nets reconcile exactly to zero.
+15. A cross-currency transfer records both payment and discharged settlement
+    amounts with immutable conversion evidence.
+16. A sync operation is idempotent by operation id and target aggregate.
 
 ## Rounding Algorithm
 
@@ -307,8 +428,11 @@ backend. The backend recomputes and rejects mismatched client allocations.
 
 ## Settlement Algorithm
 
-1. Load accepted, non-conflicted Expense revisions in the Settlement snapshot.
-2. Credit payer and debit split allocations in settlement minor units.
+1. Load accepted, non-conflicted Expense revisions and their accepted
+   SettlementValuationSnapshots.
+2. Credit payer by group-settlement value and debit exact member allocations in
+   settlement minor units; PaymentRecord cost is informational unless the
+   selected valuation policy references it.
 3. Apply paid transfers that precede the snapshot cutoff.
 4. Verify group net equals zero.
 5. Sort debtors and creditors by amount, then stable member id.
@@ -327,9 +451,15 @@ SQLite should mirror domain ownership rather than the legacy Supabase layout:
 - `expense_participants`;
 - `expense_splits`;
 - `exchange_rate_snapshots`;
+- `payment_records`;
+- `settlement_valuation_snapshots`;
 - `expense_links`;
 - `expense_audit_events`;
+- `expense_correction_requests`;
+- `households` and household-member share definitions;
 - `settlements` and `settlement_transfers`;
+- `settlement_payments`;
+- `ledger_review_findings`;
 - existing durable `sync_operations` and local asset records.
 
 Local repository transactions write the aggregate and queue operation together.
@@ -344,9 +474,11 @@ Commands should operate on aggregates:
 - `PUT /v1/trips/:tripId/expenses/:expenseId` with `baseRevision`
 - `DELETE /v1/trips/:tripId/expenses/:expenseId` with tombstone/base revision
 - `POST /v1/trips/:tripId/expenses/:expenseId/conflict-resolution`
+- correction-request propose/accept/reject commands;
 - `POST /v1/trips/:tripId/settlements/preview`
 - `POST /v1/trips/:tripId/settlements`
 - transfer confirmation/payment commands;
+- personal cross-Journey reporting queries that return Journey-separated rows;
 - incremental Ledger pull returning revisions/tombstones.
 
 All accept an idempotency key. Server responses return canonical revision,
@@ -355,17 +487,20 @@ does not access Ledger Supabase tables directly.
 
 ## Legacy Mapping
 
-| Legacy                                | Ledger 2.0                                       |
-| ------------------------------------- | ------------------------------------------------ |
-| `ledger_entries`                      | Expense header plus aggregate revision           |
-| `ledger_entry_participants`           | Participant snapshot + exact Split               |
-| mutable rate fields on entry          | immutable ExchangeRateSnapshot per revision      |
-| `journey_exchange_rates`              | trusted Journey rate cache, not historical truth |
-| `ledger_exchange_rates`               | retire from client-writable domain               |
-| unused `ledger_settlements`           | replace with Settlement snapshot + transfers     |
-| nullable event/reservation/memory FKs | typed ExpenseLink set                            |
-| numeric amounts / JS numbers          | integer minor units + decimal-rate contract      |
-| hard delete                           | tombstone + audit event                          |
+| Legacy                                | Ledger 2.0                                        |
+| ------------------------------------- | ------------------------------------------------- |
+| `ledger_entries`                      | Expense header plus aggregate revision            |
+| `ledger_entry_participants`           | Participant snapshot + exact Split                |
+| mutable rate fields on entry          | immutable rate + SettlementValuation snapshots    |
+| no payer-cost evidence                | append-only PaymentRecord                         |
+| `journey_exchange_rates`              | trusted Journey rate cache, not historical truth  |
+| `ledger_exchange_rates`               | retire from client-writable domain                |
+| unused `ledger_settlements`           | replace with Settlement snapshot + transfers      |
+| nullable event/reservation/memory FKs | typed ExpenseLink set                             |
+| numeric amounts / JS numbers          | integer minor units + decimal-rate contract       |
+| hard delete                           | tombstone + audit event                           |
+| no household model                    | Phase 1 convenience resolved to member splits     |
+| direct member edits                   | correction request or authorized audited revision |
 
 Production legacy rows will require a separately approved migration strategy.
 Where custom split input is absent or totals do not reconcile, migration must

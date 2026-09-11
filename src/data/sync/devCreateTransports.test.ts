@@ -52,7 +52,7 @@ function dependencies(post = vi.fn().mockResolvedValue(response)) {
     post,
     value: {
       readSession: vi.fn().mockResolvedValue({ accessToken: "access-token" }),
-      createClient: vi.fn(() => ({ get: vi.fn(), post })),
+      createClient: vi.fn(() => ({ get: vi.fn(), post, put: vi.fn(), delete: vi.fn() })),
       simulateResponseLoss: vi.fn(() => false),
     },
   };

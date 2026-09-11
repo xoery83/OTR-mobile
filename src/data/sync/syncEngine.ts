@@ -12,6 +12,7 @@ export type SyncOperationRepository = {
   listPending(): Promise<SyncOperation[]>;
   markProcessing(id: string): Promise<void>;
   markCompleted(id: string): Promise<void>;
+  markConflict?(id: string, error: Error): Promise<void>;
   markRetryable(id: string, error: Error, nextAttemptAt: string): Promise<void>;
 };
 
@@ -23,6 +24,8 @@ export type SyncRunResult = {
   status: SyncEngineStatus;
   processedCount: number;
 };
+
+export class SyncConflictError extends Error {}
 
 export function createSyncEngine(
   repository: SyncOperationRepository,
@@ -45,11 +48,18 @@ export function createSyncEngine(
           await worker.push(operation);
           await repository.markCompleted(operation.id);
         } catch (error) {
-          await repository.markRetryable(
-            operation.id,
-            error instanceof Error ? error : new Error("Sync failed."),
-            calculateNextAttemptAt(operation.attemptCount + 1),
-          );
+          const normalized = error instanceof Error ? error : new Error("Sync failed.");
+          if (normalized instanceof SyncConflictError) {
+            if (!repository.markConflict)
+              throw new Error("Sync repository cannot store conflicts.");
+            await repository.markConflict(operation.id, normalized);
+          } else {
+            await repository.markRetryable(
+              operation.id,
+              normalized,
+              calculateNextAttemptAt(operation.attemptCount + 1),
+            );
+          }
         }
       }
 

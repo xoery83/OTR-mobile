@@ -96,6 +96,17 @@ export function createSyncOperationRepository(database: SyncQueueDatabase) {
       );
     },
 
+    async markConflict(id: string, error: Error) {
+      await database.runAsync(
+        `UPDATE sync_operations
+         SET status = ?, last_error_message = ?, updated_at = ? WHERE id = ?`,
+        "CONFLICT",
+        error.message,
+        new Date().toISOString(),
+        id,
+      );
+    },
+
     async markRetryable(id: string, error: Error, nextAttemptAt: string) {
       await database.runAsync(
         `UPDATE sync_operations

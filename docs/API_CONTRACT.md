@@ -1,5 +1,9 @@
 # OTR Mobile 2.0 API Contract Draft
 
+Ledger 2.0 uses the frozen aggregate contract in
+`docs/ledger/LEDGER_2_0_API_CONTRACT.md`. Existing Expense routes in this file
+remain Phase 3B compatibility routes until each `/v2` vertical slice is ready.
+
 Mobile must communicate through an OTR Backend API. Do not assume endpoints exist until backend is audited or implemented.
 
 Status labels:

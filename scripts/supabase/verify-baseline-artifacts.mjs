@@ -5,24 +5,44 @@ const baselinePath =
   "supabase/migrations/20260910000100_canonical_production_baseline.sql";
 const securityPath =
   "supabase/migrations/20260910000200_canonical_security_hardening.sql";
+const ledgerDomainPath = "supabase/migrations/20260911000100_ledger_2_domain.sql";
+const ledgerSecurityPath = "supabase/migrations/20260911000200_ledger_2_security.sql";
+const ledger4APath = "supabase/migrations/20260912000100_ledger_2_stage_4a_create.sql";
+const ledger4BPath = "supabase/migrations/20260912000200_ledger_2_stage_4b_mutations.sql";
+const ledger4CPath = "supabase/migrations/20260912000300_ledger_2_stage_4c_conflicts.sql";
 const seedPath = "supabase/seed.sql";
 
-const [baseline, security, seed, manifestRaw] = await Promise.all([
+const [
+  baseline,
+  security,
+  ledgerDomain,
+  ledgerSecurity,
+  ledger4A,
+  ledger4B,
+  ledger4C,
+  seed,
+  manifestRaw,
+] = await Promise.all([
   readFile(baselinePath, "utf8"),
   readFile(securityPath, "utf8"),
+  readFile(ledgerDomainPath, "utf8"),
+  readFile(ledgerSecurityPath, "utf8"),
+  readFile(ledger4APath, "utf8"),
+  readFile(ledger4BPath, "utf8"),
+  readFile(ledger4CPath, "utf8"),
   readFile(seedPath, "utf8"),
   readFile("supabase/schema-manifest.json", "utf8"),
 ]);
 
 const manifest = JSON.parse(manifestRaw);
 const expected = {
-  tables: 64,
-  columns: 910,
-  constraints: 329,
-  indexes: 240,
-  functions: 29,
-  triggers: 32,
-  rls_tables: 64,
+  tables: 85,
+  columns: 1163,
+  constraints: 553,
+  indexes: 286,
+  functions: 46,
+  triggers: 64,
+  rls_tables: 85,
   policies: 178,
   buckets: 2,
 };
@@ -61,7 +81,11 @@ const secretPatterns = [
   /@(?:gmail|icloud|outlook|hotmail|kongzhong)\./i,
 ];
 for (const pattern of secretPatterns) {
-  if (pattern.test(`${baseline}\n${security}\n${seed}`)) {
+  if (
+    pattern.test(
+      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${seed}`,
+    )
+  ) {
     throw new Error(`Production identifier or secret-like value found: ${pattern}`);
   }
 }
@@ -71,17 +95,27 @@ if (nonInvalidEmails.some((email) => !email.endsWith("@otr.invalid"))) {
   throw new Error("Seed contains a non-reserved email address.");
 }
 
-const migrationChecksum = createHash("sha256")
+const lineageChecksum = createHash("sha256")
   .update(baseline)
   .update("\0")
   .update(security)
+  .update("\0")
+  .update(ledgerDomain)
+  .update("\0")
+  .update(ledgerSecurity)
+  .update("\0")
+  .update(ledger4A)
+  .update("\0")
+  .update(ledger4B)
+  .update("\0")
+  .update(ledger4C)
   .digest("hex");
 
 console.log(
   JSON.stringify(
     {
       status: "ok",
-      migrationChecksum,
+      lineageChecksum,
       schemaChecksum: manifest.checksum,
       ...expected,
     },

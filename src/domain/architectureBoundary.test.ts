@@ -29,6 +29,7 @@ describe("foundation architecture boundaries", () => {
       join(projectRoot, "app"),
       join(projectRoot, "src/components"),
       join(projectRoot, "src/domain"),
+      join(projectRoot, "src/features"),
     ];
 
     for (const file of directories.flatMap(sourceFiles)) {

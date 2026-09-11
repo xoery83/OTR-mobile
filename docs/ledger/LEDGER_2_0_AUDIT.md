@@ -1,6 +1,6 @@
 # Ledger 2.0 Legacy Audit
 
-Date: 2026-09-10
+Date: 2026-09-11
 
 ## Purpose And Scope
 
@@ -40,6 +40,11 @@ foundation to port directly.
 
 The redesign should retain the useful concepts, replace the transaction and
 precision model, and keep Supabase behind the OTR Backend API.
+
+Real Europe-trip evidence adds four gaps that the legacy model cannot represent
+safely: merchant amount versus actual payer posted cost versus agreed group
+value; household/child shares; receipt-first evidence capture; and collaborative
+correction without broad direct mutation authority.
 
 ## Source Inventory
 
@@ -161,6 +166,8 @@ contract before broader Ledger use.
 
 There is no household/family entity, participant preset, exclusion reason,
 multi-payer support, or participant membership snapshot.
+There is also no way to preserve household/member-share input while resolving
+the final allocation to exact Journey-member minor units.
 
 ## Split Logic
 
@@ -207,6 +214,10 @@ Important behavior and risks:
   preserved original-currency allocation.
 - Historical meaning can change after a base-currency update; there is no
   immutable conversion snapshot revision or audit event.
+- Merchant amount, bank/card posted amount, explicit fees, and group settlement
+  valuation are collapsed into the entry's original/base amount and one rate.
+  The schema therefore cannot explain a legitimate difference between actual
+  payer cost and an agreed fair Journey valuation.
 
 ## Settlement Model
 
@@ -268,6 +279,8 @@ above.
   reservation ids.
 - There is no first-class receipt/document relation. Media is not directly
   linked to an expense, and the memory link is not an adequate replacement.
+- There is no PaymentRecord for authorization/posted evidence and no independent
+  receipt upload/OCR lifecycle.
 - Expense data is consumed by Story/poster/recommendation features. Mobile
   Ledger should expose privacy-safe backend projections rather than inherit
   those direct reads.
@@ -277,7 +290,9 @@ above.
 The Web page provides four views: Expenses, Days, People, and Settlement. It
 supports search, category filtering, needs-review filtering, category totals,
 day allocation, per-member/category reports, and heuristic audit warnings for
-coverage/outliers/unassigned entries.
+coverage/outliers/unassigned entries. These are useful product signals but are
+client-side heuristics without immutable finding identity, detector version,
+acknowledgement, or a hard boundary preventing automated mutation.
 
 No CSV/PDF/final-statement export, share link, immutable closeout, or recorded
 settlement receipt was found. Reports are recomputed in browser memory from
@@ -335,6 +350,9 @@ Reuse or adapt the ideas, with new implementations:
 - deterministic net-balance-to-transfer planning;
 - local-first idempotency already proven by the Mobile vertical slice;
 - Capture parsing as a draft producer, never as an unreviewed financial commit.
+- two-layer Ledger checking: deterministic financial invariants plus advisory,
+  non-mutating heuristic review;
+- explainable personal balance projections from saved member allocations.
 
 Pure date-allocation logic may be adapted for reporting, with timezone and
 residual-rounding tests. Category names can seed the new taxonomy but should not
@@ -355,6 +373,25 @@ be treated as immutable database enums.
 - `stats_only` as a prominent mode until its user need is revalidated;
 - the monolithic Web form/page and Web navigation structure;
 - Ledger data leakage into social/story outputs by default.
+- any model that treats card FX cost and fair group valuation as necessarily
+  identical;
+- a short hard-coded currency picker as the canonical currency definition;
+- broad member mutation as the collaboration model.
+
+## Europe Trip Findings And Design Consequences
+
+| Observed travel reality                                                 | Legacy limitation                                                   | Ledger 2.0 consequence                                                                                                               |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Receipt EUR amount, NZD card posting, and fair NZD group value differ   | One original/base pair and one rate                                 | Separate Expense merchant truth, PaymentRecord payer-cost truth, and SettlementValuationSnapshot group truth                         |
+| Families and children need practical recurring treatment                | No Household; only latent equal/custom/percentage rows              | Household is Ledger Phase 1 and always expands to exact member shares                                                                |
+| Receipts are captured before or after entry                             | No first-class expense evidence lifecycle                           | Support both workflow directions; asset upload/OCR stays independent of financial sync                                               |
+| Group members notice mistakes in others' entries                        | UI creator-only while RLS participant writes are broad              | Add correction requests; creator accepts, organizer may override with reason                                                         |
+| Travellers must trust the final bill                                    | Browser totals lack immutable drill-down                            | Every balance links to expense, own split, merchant amount, valuation, rate/payment evidence, and transfers                          |
+| Real trips cross many currencies                                        | Short UI lists/fallback estimates are insufficient                  | ISO 4217 metadata, provider cache, immutable snapshots, and explicit cross-currency repayment                                        |
+| Mistakes are visible through context and evidence                       | Existing audit is heuristic-only                                    | Add authoritative deterministic validation and advisory versioned heuristic findings; neither AI nor heuristics silently edits money |
+| Each travel period has a different group and financial boundary         | Ledger opens as a page without a robust multi-Journey personal view | Keep every Ledger Journey-scoped, show context persistently, and add a Journey-separated My Ledger projection                        |
+| Spending analysis and debt settlement answer different questions        | Balance and entry views dominate the experience                     | Make Spending and Settlement peer modules over the same accepted records, with search and analysis under Spending                    |
+| Repayment can happen in several instalments and needs both sides' trust | Legacy settlement is only a calculated suggestion                   | Model a transfer obligation with child payments; payer records Paid and recipient confirms Received for each partial payment         |
 
 ## Redesign Constraints
 

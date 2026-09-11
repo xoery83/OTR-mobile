@@ -3,6 +3,7 @@ export type SyncStatus =
   | "PENDING_CREATE"
   | "PENDING_UPDATE"
   | "PENDING_DELETE"
+  | "SYNCING"
   | "CONFLICT"
   | "FAILED";
 

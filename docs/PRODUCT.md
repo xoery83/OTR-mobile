@@ -87,6 +87,10 @@ Phase 2A validates one deliberately narrow business flow before full Ledger work
 
 Phase 2A excludes splits, settlement, exchange rates, receipt capture, categories beyond a placeholder, deletion, and conflict UI.
 
+## Ledger 2.0 Interaction Prototype
+
+The review-only Ledger 2.0 prototype is an approved, isolated product-design surface. It uses in-memory fixture data to validate native navigation, explicit Journey context, personal cross-Journey reporting, separate spending analysis and settlement modes, fast entry, split selection, currency valuation, receipt capture, explainable balances, conflicts, audit history, partial repayment, and bilateral Paid/Received confirmation. It does not replace the Phase 2A repository flow, write SQLite, call the backend, or authorize production Ledger schema work. Its state may be discarded at any time.
+
 ## Phase 2B Itinerary Create Vertical Slice
 
 Phase 2B validates the same local-first lifecycle for a Journey-scoped itinerary item:

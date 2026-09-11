@@ -1,7 +1,7 @@
 # Ledger 2.0 Mobile UX Flow
 
-Date: 2026-09-10
-Status: Interaction proposal; no UI implementation authorized
+Date: 2026-09-11
+Status: Approved interaction base with travel-feedback revision; no UI implementation authorized
 
 ## UX Objective
 
@@ -27,6 +27,26 @@ Target flow:
 - Duplicate/repeat from an existing expense or split template.
 
 All entry points converge on the same Expense draft and repository command.
+
+## Journey Context And Ledger Modes
+
+The Ledger root always displays the selected Journey name, dates, member count,
+and settlement currency. Tapping it opens a native Journey chooser plus **My
+Ledger**. With one active Journey, it opens directly; with multiple active
+Journeys, it restores a valid recent choice or asks the user to choose; with no
+active Journey, it opens My Ledger instead of pretending an arbitrary past trip
+is current.
+
+Within a Journey, a top segmented control separates:
+
+- **Spending**: expense entry, list, search, filters, categories, time trends,
+  payer/member views, receipts, and Mine/Group scope.
+- **Settlement**: personal balance, member balances, blockers, recommended
+  transfers, Paid/Received acknowledgements, and final statement.
+
+My Ledger summarizes the current member across a selected period. Every row
+retains its Journey label and opens that Journey. Debts are never netted across
+Journeys. A reporting-currency total must show its conversion basis.
 
 ## Fast Path
 
@@ -98,7 +118,7 @@ Open by tapping payer/split/currency summaries or **More details**.
 ### Participants And Exclusions
 
 - Start from the visible recent/default set.
-- Provide Everyone, recent presets, and future Household shortcuts.
+- Provide Everyone, recent presets, and Phase 1 Household shortcuts.
 - Show each member as a large selectable row with avatar/name/checkmark.
 - A compact summary says **Everyone except Alex** when clearer.
 - Unlinked members remain selectable and are not shown as lesser participants.
@@ -108,10 +128,13 @@ Open by tapping payer/split/currency summaries or **More details**.
 
 Use a segmented control:
 
-- Equal;
+- Equal per person;
+- Equal per household;
+- Household/member shares, with editable values such as adult `1` and child
+  `0.5`;
 - Exact;
 - Percentage;
-- future Weighted under an Advanced menu.
+- future general Weighted under an Advanced menu.
 
 Equal shows each member's final minor-unit amount, including residual cents.
 
@@ -150,6 +173,16 @@ No rate:
 Manual override requires an explicit action, rate input, converted preview, and
 reason. It must never look like routine amount editing.
 
+The financial summary separates three cards/rows only when evidence exists:
+
+    Merchant: EUR 100.00
+    Card posted: NZD 199.43 (Visa NZ, includes NZD 2.00 known fee)
+    Group value: NZD 197.80 (Journey reference-rate policy)
+
+The fast path shows merchant amount and group value; payer-cost detail remains
+one tap away. Adding posted-cost evidence never silently changes group value.
+The currency picker searches ISO 4217 metadata while prioritizing recent codes.
+
 ### Details And Links
 
 - Date/time defaults to Journey-local now.
@@ -177,10 +210,21 @@ Saving the Expense never waits for transcript/cloud cleanup.
 
 ### Receipt/Photo Capture
 
-Camera/photo/document picker creates a local receipt asset and draft. OCR may
-suggest merchant, amount, currency, date, and category with confidence markers.
-Payer and participants remain user-confirmed. Original image/PDF upload follows
-the durable asset queue and can be Wi-Fi constrained later.
+Receipt is a first-class two-way workflow:
+
+1. **Expense first:** save the Expense immediately, then attach a receipt,
+   statement crop, or payment evidence from detail.
+2. **Receipt first:** camera/photo/document picker saves a local asset, OCR
+   proposes merchant amount/currency/date/category, and the user confirms a
+   prefilled Expense draft.
+
+OCR may also propose authorization/posted amounts and fees when clearly labeled,
+but these populate a reviewable PaymentRecord, never merchant or settlement
+truth silently. Payer and participants remain user-confirmed. Original image/PDF
+upload follows the durable asset queue and can be Wi-Fi constrained later.
+
+Expense sync, receipt upload, and OCR each expose their own status. Failure in
+one never rolls back or deletes the others.
 
 ## Expense List
 
@@ -202,7 +246,8 @@ to quick entry. Pending rows remain fully usable and editable offline.
 
 Detail presents:
 
-- original and settlement amount;
+- immutable merchant amount, optional payer posted cost, and accepted group
+  settlement value as distinct values;
 - payer;
 - member-by-member split;
 - rate provenance;
@@ -210,6 +255,7 @@ Detail presents:
 - itinerary/document links;
 - sync/conflict status;
 - audit timeline.
+- correction requests and their resolution state.
 
 Editing uses the same fast/advanced composer prefilled from a base revision.
 Financial changes show a before/after summary before commit. Organizer edits to
@@ -217,6 +263,11 @@ someone else's expense require a reason.
 
 Delete is a reversible local tombstone until synchronized. A finalized expense
 cannot be deleted as an ordinary action; use correction/adjustment workflow.
+
+For someone else's Expense, an ordinary member sees **Suggest correction**.
+They enter a proposed change and reason; the current financial record remains
+unchanged. The creator may accept/reject, while an organizer may resolve or edit
+directly with a mandatory audit reason.
 
 ## Offline And Sync UX
 
@@ -230,6 +281,8 @@ cannot be deleted as an ordinary action; use correction/adjustment workflow.
 - A persistent failure offers **Try again** and a concise reason.
 - Conflict is a distinct state and opens a comparison/resolution flow.
 - Receipt upload status is separate from Expense data sync status.
+- PaymentRecord, correction request, and heuristic-review operations are durable
+  and remain available offline according to cached permissions.
 
 The development sync harness is not part of product UI.
 
@@ -265,6 +318,14 @@ The Settlement screen answers:
 Do not permit finalization while an included financial conflict or missing rate
 exists. Provide links to resolve each blocker.
 
+Each member can tap their balance and follow this complete explanation path:
+
+    balance -> creditor/debtor -> individual expense -> own exact split
+      -> merchant amount -> settlement valuation -> rate/payment evidence
+
+Show residual-cent adjustments and why the Journey policy selected the displayed
+group value. No result may require organizer-only context to understand.
+
 ### Preview And Finalize
 
 Organizer taps **Prepare settlement**. Show:
@@ -281,10 +342,48 @@ not a screenshot of current calculations.
 
 ### Record Transfers
 
-Each suggested transfer is a stable row with payer, recipient, amount, and
-status. A linked involved member may mark/confirm payment according to policy.
-Organizer may correct with reason. Avoid notifications except when confirmation
-from another member is genuinely required.
+Each suggested transfer is a stable obligation row with payer, recipient,
+original amount, confirmed amount, awaiting amount, remaining amount, and
+status. The payer may record **Paid**, including a partial amount. The recipient
+must separately mark that exact payment **Received** before it reduces the
+confirmed obligation. Repeated partial payments form a visible timeline.
+Rejected, disputed, and organizer-corrected records retain their history and
+reason. Avoid notifications except when confirmation from the other member is
+genuinely required.
+
+The obligation is always shown in Journey settlement currency. When payer and
+debtor agree to repay in another currency, a conversion sheet shows:
+
+- settlement amount being discharged;
+- actual payment amount/currency;
+- rate source/date or manual agreement;
+- any explicit fee and who bears it;
+- confirmation required from both involved linked members.
+
+Recording foreign-currency payment never silently replaces the settlement
+obligation or hides an FX difference.
+
+## Ledger Review UX
+
+### Deterministic Checks
+
+Inline validation blocks an invalid save or settlement and explains the exact
+reconciliation problem: allocations, percentages, invalid members, currency or
+valuation mismatch, non-zero settlement, idempotency collision, or revision
+integrity. Offline-capable rules run before local acceptance and repeat on the
+backend.
+
+### Intelligent Review
+
+A separate **Review** surface groups advisory findings such as likely duplicate,
+unusual amount/currency/rate, participant-context mismatch, receipt/entered or
+posted-cost mismatch, unusually large expense without evidence, and likely
+missing expense. Each finding shows why it was raised and offers View, Suggest
+correction, Acknowledge, or Dismiss.
+
+AI and heuristics never edit, delete, merge, revalue, or settle an Expense. The
+entry fast path is not interrupted by advisory findings unless the user opens
+them; actionable high-severity findings may be listed before final settlement.
 
 ### Final Statement
 
@@ -312,9 +411,12 @@ The statement remains cached for offline access once generated.
 
 Expenses remains a primary tab. Within it:
 
-- list and quick add are the default;
+- Journey identity is always visible and switchable;
+- Spending and Settlement are separate top-level modes;
+- list, analysis/search, and quick add live under Spending;
 - Personal balance is one tap away;
 - Settlement is prominent near trip end or when requested;
+- My Ledger provides date-scoped, Journey-separated personal history;
 - settings/rates/history live in contextual screens, not the primary form.
 
 Do not port the Web four-tab page wholesale. Mobile navigation should optimize
@@ -325,12 +427,18 @@ entry first, explanation second, and administration third.
 1. Equal dinner for four with one residual cent.
 2. Taxi excluding one traveller.
 3. Hotel exact split between two households.
-4. Percentage split that initially totals 99.99%.
-5. Foreign-currency offline entry using a dated saved rate.
-6. Offline entry with no rate, later resolved online.
-7. Organizer correction of another member's synced expense.
-8. Two devices edit amount/split concurrently.
-9. Receipt asset remains pending after Expense data syncs.
-10. Final settlement blocked by one conflict, then finalized and paid.
-11. Older traveller completes fast path with Dynamic Type enabled.
-12. App termination after local save; Expense and queue survive.
+4. Household split using adult `1` and child `0.5`, resolved to exact members.
+5. Percentage split that initially totals 99.99%.
+6. EUR merchant amount, different NZD card-posted cost, and reference-rate group value.
+7. Foreign-currency offline entry using a dated saved rate.
+8. Offline entry with no rate, later resolved online.
+9. Organizer correction of another member's synced expense with reason.
+10. Ordinary member proposes a correction without mutating the Expense.
+11. Two devices edit amount/split concurrently.
+12. Receipt asset remains pending after Expense data syncs.
+13. Receipt-first OCR draft remains local while upload is offline.
+14. Cross-currency repayment shows payment and discharged settlement values.
+15. Heuristic duplicate flag is dismissed without changing either Expense.
+16. Final settlement blocked by one deterministic conflict, then finalized and paid.
+17. Older traveller completes fast path with Dynamic Type enabled.
+18. App termination after local save; Expense and queue survive.

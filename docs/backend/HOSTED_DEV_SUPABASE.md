@@ -2,8 +2,8 @@
 
 ## Status
 
-Hosted validation completed on 2026-09-10. This project is a disposable Dev
-environment and is not connected to OTR Mobile or a backend deployment yet.
+Hosted baseline validation completed on 2026-09-10. Ledger 2.0 Stage 1 was
+deployed and verified on 2026-09-11. This project is Development-only.
 
 | Item              | Value                                      |
 | ----------------- | ------------------------------------------ |
@@ -23,47 +23,51 @@ by the deterministic seed:
 
 1. `20260910000100_canonical_production_baseline.sql`
 2. `20260910000200_canonical_security_hardening.sql`
-3. `supabase/seed.sql`
+3. `20260911000100_ledger_2_domain.sql`
+4. `20260911000200_ledger_2_security.sql`
+5. `supabase/seed.sql` for deterministic local reconstruction
 
 The 76 legacy migrations were not replayed, copied, or renumbered. The hosted
-`supabase_migrations.schema_migrations` ledger contains only the two canonical
-versions above. Because the migrations were initially applied in the Dashboard
-SQL Editor, the ledger was initialized afterward as applied metadata; no schema
-SQL was replayed during that step.
+`supabase_migrations.schema_migrations` ledger contains exactly the four
+repository versions above. The two Ledger migrations were applied in dependency
+order in the Dashboard SQL Editor because the local CLI had no management
+access token; their versions were then recorded as applied metadata.
 
 The project-creation option that automatically enables RLS added an unexpected
 `ensure_rls` event trigger and `public.rls_auto_enable()` function. Both were
 removed from this Dev project after explicit approval. There is no separate
 persistent Dashboard toggle after project creation: those objects implement the
-option. RLS remains explicitly enabled by the canonical migrations on all 64
+option. RLS remains explicitly enabled by repository migrations on all 84
 application tables.
 
 ## Hosted Manifest
 
 | Object                      | Hosted result |
 | --------------------------- | ------------: |
-| Public application tables   |            64 |
-| Public application columns  |           910 |
-| Constraints                 |           329 |
-| Indexes                     |           240 |
-| Public functions            |            29 |
-| Public triggers             |            32 |
-| RLS-enabled public tables   |            64 |
+| Public application tables   |            84 |
+| Public application columns  |         1,148 |
+| Constraints                 |           541 |
+| Indexes                     |           285 |
+| Public functions            |            38 |
+| Public triggers             |            61 |
+| RLS-enabled public tables   |            84 |
 | Public and Storage policies |           178 |
 | Private Storage buckets     |             2 |
 
-Hosted checksum:
+Hosted and local clean-room checksum for the same four-file lineage:
 
 ```text
-319176c04e305e73bf57f6a592fa0aad58610b8d7065ae042224bfabf2b94167
+c492032e70dcca6a76008a7ace239a42394588c6bf497b8a904e1ddda644d15b
 ```
 
-This exactly matches `supabase/schema-manifest.json`.
+This exactly matches `supabase/schema-manifest.json`. Hosted verification also
+confirmed all 20 Ledger tables, forced RLS on all 20, no Ledger user policies,
+and no direct `anon`/`authenticated` grants on the checked financial tables.
 
 ## Security Validation
 
-The hosted RLS matrix completed all 28 assertions with zero failures. It ran in
-a transaction and rolled back its validation writes. The matrix covers anon,
+The canonical RLS matrix completed all 28 assertions locally with zero failures.
+It ran in a transaction and rolled back its validation writes. The matrix covers anon,
 authenticated owner/member/guest/admin, and service-role scenarios, including:
 
 - account-role self-escalation is rejected by
@@ -78,6 +82,11 @@ authenticated owner/member/guest/admin, and service-role scenarios, including:
 - `daily_reports` has no user-facing policy;
 - users may delete only their own itinerary ratings;
 - face and face-embedding mutation remains backend/service controlled.
+
+The Ledger 2.0 database suite adds 26 assertions covering backend-only access,
+valid and invalid Expense aggregates, immutable financial evidence, revisions,
+change feed, settlement net-zero enforcement, overpayment prevention, and
+idempotency uniqueness. Both suites pass on two independent clean resets.
 
 ## Synthetic Seed
 
@@ -154,20 +163,20 @@ This environment can be rebuilt without reading Production:
 2. Leave automatic table exposure and automatic RLS creation disabled.
 3. Authenticate the Supabase CLI locally without committing the access token,
    then link the new project using its reference and Dev database password.
-4. Push the two canonical migrations from `supabase/migrations/` in timestamp
+4. Push the four canonical and forward migrations from `supabase/migrations/` in timestamp
    order.
 5. Apply `supabase/seed.sql` only to the Dev project.
 6. Run `supabase/schema_manifest.sql` and require an exact manifest/checksum
    match.
-7. Run `supabase/tests/rls_matrix.test.sql` in its transaction and require all 28
-   assertions to pass.
+7. Run both database test files in transactions and require all 54 assertions
+   to pass.
 8. Confirm both buckets are private and empty and all Auth identities end in
    `@otr.invalid`.
 
-For the current Dashboard-created project, the two canonical versions are
-already registered in `supabase_migrations.schema_migrations`. Future schema
-changes must be new timestamped forward migrations; do not edit either baseline
-migration after this point.
+For the current Dashboard-created project, all four versions are registered in
+`supabase_migrations.schema_migrations`. Future schema changes must be new
+timestamped forward migrations; do not edit applied migrations after this
+point.
 
 ## Remaining Manual Configuration
 

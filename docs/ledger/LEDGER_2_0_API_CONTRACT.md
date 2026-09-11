@@ -1,0 +1,214 @@
+# Ledger 2.0 API Contract
+
+Date: 2026-09-11
+Status: Stage 0 frozen contract; implementation proceeds by vertical slice
+
+## Boundary
+
+All routes are under `/v2`. They are available only from the OTR Dev Backend
+during implementation. Every request requires a Supabase Dev bearer token.
+Every mutation requires `Idempotency-Key`; updates also require `baseRevision`.
+Mobile never receives or uses Supabase business-table credentials.
+
+All money uses:
+
+```ts
+type MoneyDto = {
+  minor: number; // signed safe integer on the wire
+  currency: string; // ISO 4217 uppercase code
+  scale: number; // captured exponent, 0...4
+};
+```
+
+Rates are decimal strings and optional integer ratios. Timestamps are UTC ISO
+8601 strings. Entity ids are UUIDs; unsynced Mobile records additionally carry a
+local UUID. Responses are runtime validated.
+
+## Common Envelopes
+
+Mutation success:
+
+```ts
+type MutationResult<T> = {
+  entity: T;
+  serverId: string;
+  revision: number;
+  updatedAt: string;
+  idempotentReplay: boolean;
+};
+```
+
+Conflict:
+
+```ts
+type ConflictResult<T> = {
+  error: {
+    code: "REVISION_CONFLICT";
+    conflictId: string;
+    baseRevision: number;
+    currentRevision: number;
+    submitted: T;
+    current: T;
+    changedGroups: Array<"FINANCIAL_CORE" | "DESCRIPTIVE" | "LINKS" | "EVIDENCE">;
+    requestId: string;
+  };
+};
+```
+
+Normalized errors use stable codes: `AUTH_REQUIRED`, `INVALID_SESSION`,
+`TRIP_READ_FORBIDDEN`, `TRIP_WRITE_FORBIDDEN`, `INVALID_PAYLOAD`,
+`INVALID_IDEMPOTENCY_KEY`, `IDEMPOTENCY_CONFLICT`, `REVISION_CONFLICT`,
+`SETTLEMENT_INPUT_STALE`, `FINANCIAL_INVARIANT_FAILED`, `RATE_REQUIRED`,
+`ENTITY_NOT_FOUND`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, and
+`BACKEND_UNAVAILABLE`.
+
+## Expense Aggregate
+
+`ExpenseDto` contains:
+
+- id, Journey id, revision, creator/updater ids and timestamps;
+- business status and optional tombstone;
+- title, description, category, occurred time, and optional location snapshot;
+- payer Journey-member id;
+- immutable original merchant Money;
+- included member snapshots and one exact Split per included member;
+- active immutable SettlementValuationSnapshot when resolved;
+- append-only PaymentRecords and rate snapshots;
+- itinerary/document/receipt links;
+- latest transport-independent audit summaries.
+
+Financial Core is original Money, payer, included participants, exact splits,
+currency, valuation policy, and accepted valuation evidence. Concurrent changes
+to Financial Core never silently merge.
+
+## Read Routes
+
+### `GET /v2/trips/:tripId/ledger/bootstrap`
+
+Returns Journey Ledger settings, member snapshots/capabilities, Expense pages,
+Households, active/open Settlement summary, change cursor, and server time.
+
+### `GET /v2/trips/:tripId/ledger/changes?cursor=&limit=`
+
+Returns ordered aggregate revisions and tombstones plus the next opaque cursor.
+The cursor is scoped to the authenticated user and Journey.
+
+### `GET /v2/trips/:tripId/expenses`
+
+Supports opaque pagination plus date, category, member, currency, status,
+receipt, and text-query filters. This is a backend/export/support route; normal
+Mobile lists read SQLite after bootstrap/pull.
+
+### `GET /v2/trips/:tripId/expenses/:expenseId`
+
+Returns the complete authorized aggregate.
+
+### `GET /v2/trips/:tripId/ledger/analysis`
+
+Returns server-verifiable grouped totals. Mobile may calculate equivalent
+offline projections from SQLite; both must reconcile from the same exact splits.
+
+### `GET /v2/me/ledger?from=&to=&reportingCurrency=`
+
+Returns personal spending and obligations grouped by Journey. It never nets
+debts between Journeys. Reporting conversion includes provenance and is display
+only.
+
+## Expense Commands
+
+### `POST /v2/trips/:tripId/expenses`
+
+Creates one complete aggregate transactionally. The backend recomputes and
+validates exact allocation. Returns canonical rounding and revision `1`.
+
+### `PUT /v2/trips/:tripId/expenses/:expenseId`
+
+Replaces the accepted aggregate using `baseRevision`. Organizer edits to another
+creator's Expense require `auditReason`.
+
+### `DELETE /v2/trips/:tripId/expenses/:expenseId`
+
+Creates a tombstone revision; it never hard-deletes history.
+
+### `POST /v2/trips/:tripId/expenses/:expenseId/restore`
+
+Restores from a tombstone using its current revision and creates an audit event.
+
+### `POST /v2/trips/:tripId/expenses/:expenseId/conflict-resolution`
+
+Accepts a conflict id, current server revision, complete resolved aggregate,
+field-group provenance, and reason.
+
+Stage 4C v1 never auto-merges concurrent Expense branches. Choosing the current
+canonical Journey aggregate unchanged closes and audits the conflict without
+incrementing the Expense revision. Choosing the submitted aggregate or an
+explicitly edited aggregate creates one validated Expense revision. Conflict
+envelopes are immutable; if the server advances during resolution, the prior
+envelope is superseded and a new conflict envelope is returned.
+
+## Correction Commands
+
+- `POST /v2/trips/:tripId/expenses/:expenseId/corrections`
+- `POST /v2/trips/:tripId/corrections/:id/accept`
+- `POST /v2/trips/:tripId/corrections/:id/reject`
+- `POST /v2/trips/:tripId/corrections/:id/withdraw`
+
+An ordinary member proposal never mutates Expense. Acceptance revalidates the
+current Expense revision; stale proposals require review. The Stage 4C proposal
+contains only the complete Stage 4 editable Expense aggregate: title,
+description, category, occurred time, payer, original Money, business status,
+participants, exact splits, and the already-supported valuation snapshot. It
+does not add Stage 5 payment, rate, receipt, or evidence mutation fields.
+
+## Evidence And Receipt Commands
+
+- `POST /v2/trips/:tripId/expenses/:expenseId/payment-records`
+- `POST /v2/trips/:tripId/expenses/:expenseId/valuations`
+- `POST /v2/trips/:tripId/expenses/:expenseId/links`
+- `POST /v2/trips/:tripId/receipts`
+- `POST /v2/trips/:tripId/receipts/:id/upload-complete`
+- `POST /v2/trips/:tripId/receipts/:id/ocr`
+
+Payment/rate evidence is append-only. Receipt metadata, binary upload, OCR, and
+Expense financial sync have separate idempotency and status.
+
+## Settlement Commands
+
+- `POST /v2/trips/:tripId/settlements/preview`
+- `POST /v2/trips/:tripId/settlements`
+- `POST /v2/trips/:tripId/settlements/:id/reopen`
+- `POST /v2/trips/:tripId/transfers/:id/payments`
+- `POST /v2/trips/:tripId/transfer-payments/:id/confirm`
+- `POST /v2/trips/:tripId/transfer-payments/:id/reject`
+- `POST /v2/trips/:tripId/transfer-payments/:id/dispute`
+- `GET /v2/trips/:tripId/settlements/:id/export?format=pdf|csv`
+
+Preview returns an `inputDigest`. Finalize succeeds only when that digest still
+matches all Expense revisions, valuations, members, and confirmed payments.
+Reporting Paid and confirming Received are separate authenticated operations.
+Only confirmed payments discharge an obligation.
+
+## Idempotency And Revisions
+
+The backend stores actor, Journey, command type, key, canonical payload hash,
+status, and canonical response. Same key/same hash returns the original result;
+same key/different hash returns `IDEMPOTENCY_CONFLICT`.
+
+Creates start at revision `1`. Every accepted mutation increments exactly once.
+Append-only child evidence has its own identity/revision and may trigger a new
+Expense audit event without rewriting previous evidence.
+
+## Logging And Privacy
+
+Safe logs include request id, route template, hashed Journey/entity ids, actor
+class, status, duration, and normalized error code. Do not log bearer tokens,
+keys, names, merchant/title, notes, amounts, coordinates, receipt/OCR content,
+payloads, or Supabase responses.
+
+## Stage 0 Compatibility
+
+The existing `/v1/trips/:tripId/expenses` Phase 3B create endpoint remains
+available while Stage 1 is built. It continues to target legacy
+`ledger_entries`. No `/v2` UI may use it. Cutover occurs only when the real
+Expense create aggregate passes repository, backend, Dev, and physical-device
+validation.

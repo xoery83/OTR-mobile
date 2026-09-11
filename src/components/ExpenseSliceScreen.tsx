@@ -112,15 +112,13 @@ export function ExpenseSliceScreen() {
           </View>
         ))}
 
-        {__DEV__ ? (
-          <View style={styles.developmentTools}>
-            <Text style={styles.toolsLabel}>Development sync harness</Text>
-            <Button onPress={() => void runDemoSync()} title="Run pending sync" />
-            <Pressable onPress={failNextDemoSync} style={styles.failureButton}>
-              <Text style={styles.failureButtonText}>Fail next sync</Text>
-            </Pressable>
-          </View>
-        ) : null}
+        <View style={styles.developmentTools}>
+          <Text style={styles.toolsLabel}>Stage 2 sync harness</Text>
+          <Button onPress={() => void runDemoSync()} title="Run pending sync" />
+          <Pressable onPress={failNextDemoSync} style={styles.failureButton}>
+            <Text style={styles.failureButtonText}>Fail next sync</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

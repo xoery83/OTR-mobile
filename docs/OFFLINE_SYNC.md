@@ -144,6 +144,23 @@ The Phase 2A worker marks the expense `SYNCING`, calls its isolated create trans
 
 Itinerary creation follows the same transaction pattern, with `CREATE_ITINERARY` stored in the global queue. Demo workers filter the shared queue by entity and operation type before processing, so an Expense harness cannot consume an Itinerary operation and vice versa. The Itinerary repository always accepts a `tripId`/Journey id and only returns records for that scope.
 
+### Ledger 2.0 Stage 2 Local Foundation
+
+Ledger 2.0 writes use the separate `ledger_*` SQLite family described in ADR 0009. A repository transaction writes the parent Expense, participants, exact
+splits, valuation snapshot, optional payer PaymentRecord evidence, immutable
+local audit event, and one typed generic operation:
+
+- `LEDGER_CREATE_EXPENSE`;
+- `LEDGER_UPDATE_EXPENSE`;
+- `LEDGER_DELETE_EXPENSE`;
+- `LEDGER_RESTORE_EXPENSE`.
+
+The operation payload contains the stable local Expense id and aggregate
+revision. It is intentionally durable but inactive in Stage 2. Stage 3 will
+add an authenticated Ledger worker and incremental pull path. This preserves
+the local-first guarantee without pretending that the Phase 2A compatibility
+worker can synchronize a Ledger 2.0 aggregate.
+
 ## Versioning
 
 Use server versions or revisions for syncable objects. Each mutation includes the base version known at edit time. Backend returns accepted version or conflict payload.

@@ -46,8 +46,9 @@ describe("SQLite migrations", () => {
 
     await runMigrations(database);
 
-    expect(executedSql).toHaveLength(2);
+    expect(executedSql).toHaveLength(migrations.length - 2);
     expect(executedSql[1]).toContain("CREATE TABLE IF NOT EXISTS itinerary_items");
     expect(appliedMigrationIds).toContain(4);
+    expect(appliedMigrationIds).toContain(6);
   });
 });

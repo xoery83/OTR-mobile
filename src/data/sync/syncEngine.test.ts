@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createSyncEngine } from "./syncEngine";
+import { createSyncEngine, SyncConflictError } from "./syncEngine";
 import type { SyncOperation } from "./syncOperationRepository";
 
 const operation: SyncOperation = {
@@ -79,5 +79,27 @@ describe("sync engine", () => {
 
     expect(worker.push).not.toHaveBeenCalled();
     expect(repository.markProcessing).not.toHaveBeenCalled();
+  });
+
+  it("records conflicts as terminal queue state instead of retrying or completing", async () => {
+    const repository = {
+      listPending: vi.fn().mockResolvedValue([operation]),
+      markProcessing: vi.fn(),
+      markCompleted: vi.fn(),
+      markConflict: vi.fn(),
+      markRetryable: vi.fn(),
+    };
+    await createSyncEngine(
+      repository,
+      { push: vi.fn().mockRejectedValue(new SyncConflictError("conflict")) },
+      vi.fn(),
+    ).run("AUTHENTICATED_ONLINE");
+
+    expect(repository.markConflict).toHaveBeenCalledWith(
+      operation.id,
+      expect.objectContaining({ message: "conflict" }),
+    );
+    expect(repository.markCompleted).not.toHaveBeenCalled();
+    expect(repository.markRetryable).not.toHaveBeenCalled();
   });
 });

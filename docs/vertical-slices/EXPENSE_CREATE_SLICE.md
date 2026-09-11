@@ -24,7 +24,7 @@ Save expense
 
 The transport is a development-only fake adapter, isolated under `src/data/sync/`. It is the only mocked portion of this slice. It returns a generated server id on success and exposes a controlled next-request failure for verification. Local persistence, operation queueing, reinitialization, and retries are real SQLite/repository behavior.
 
-In a development build, the Expenses screen includes `Run pending sync` and `Fail next sync`. The latter makes the next fake request fail once; pressing `Run pending sync` again retries the existing queued operation and reconciles the same local row.
+The Stage 2 Expenses validation screen includes `Run pending sync` and `Fail next sync`. The latter makes the next fake request fail once; pressing `Run pending sync` again retries the existing queued operation and reconciles the same local row. The harness is visible in the embedded-bundle Release build used for offline cold-start validation.
 
 ## Restart And Offline Behavior
 
@@ -43,6 +43,18 @@ Validated on Leon's connected iPhone 16 Pro on 2026-09-09.
 ## Development Build Note
 
 The Debug Development Build intentionally sets `SKIP_BUNDLING=1` in its generated Xcode bundle phase and therefore requires Metro to cold-launch JavaScript. It displays `No script URL provided` if launched in airplane mode after termination. This is a development-client limitation, not an offline data failure. The embedded-bundle Release build is the appropriate artifact for verifying offline cold launch; the Debug build remains useful for Metro iteration and the development-only fake sync controls.
+
+## Current Build Revalidation
+
+Revalidated on Leon's connected iPhone 16 Pro on 2026-09-11 with the embedded-bundle Release build.
+
+- Online expense create and `Run pending sync` reconciled local rows to `SYNCED`.
+- Airplane-mode create persisted through force-close and offline cold launch without a login redirect.
+- Controlled `Fail next sync` produced `FAILED`, then the next `Run pending sync` reconciled the same row to `SYNCED` without a duplicate.
+- Read-only SQLite verification reported integrity `ok`, schema version `5`, five expenses, five non-null generated `server_id` values, five sync version `1` rows, and zero non-`SYNCED` expenses.
+- All five `CREATE_EXPENSE` operations were `COMPLETED`; three retained failure-attempt metadata from controlled retry checks. No expense operation remained `PENDING`, `PROCESSING`, or `RETRYABLE`.
+- During revalidation, the Stage 2 harness was fixed to use the fake transport directly even when `.env.local` selects `EXPO_PUBLIC_OTR_SYNC_TRANSPORT=dev`; the Release build also now exposes the harness buttons for offline cold-start testing.
+- The temporary copied database was deleted immediately after read-only verification.
 
 ## Known Limitations
 

@@ -16,6 +16,8 @@ export class ApiClientError extends Error {
     message: string,
     public readonly kind: ApiErrorKind,
     public readonly status?: number,
+    public readonly code?: string,
+    public readonly details?: unknown,
   ) {
     super(message);
   }
@@ -29,7 +31,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
   const timeoutMs = options.timeoutMs ?? 15_000;
 
   async function request<T>(
-    method: "GET" | "POST",
+    method: "GET" | "POST" | "PUT" | "DELETE",
     path: string,
     responseSchema: z.ZodType<T>,
     body?: unknown,
@@ -53,10 +55,15 @@ export function createApiClient(options: ApiClientOptions = {}) {
       });
 
       if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+          error?: { code?: string };
+        } | null;
         throw new ApiClientError(
           `OTR API request failed: ${response.status}`,
           "http",
           response.status,
+          body?.error?.code,
+          body,
         );
       }
 
@@ -93,6 +100,22 @@ export function createApiClient(options: ApiClientOptions = {}) {
       headers?: Record<string, string>,
     ): Promise<T> {
       return request("POST", path, responseSchema, body, headers);
+    },
+    put<T>(
+      path: string,
+      body: unknown,
+      responseSchema: z.ZodType<T>,
+      headers?: Record<string, string>,
+    ): Promise<T> {
+      return request("PUT", path, responseSchema, body, headers);
+    },
+    delete<T>(
+      path: string,
+      body: unknown,
+      responseSchema: z.ZodType<T>,
+      headers?: Record<string, string>,
+    ): Promise<T> {
+      return request("DELETE", path, responseSchema, body, headers);
     },
   };
 }

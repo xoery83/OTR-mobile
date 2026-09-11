@@ -1,6 +1,7 @@
 # OTR Mobile 2.0 Data Model Draft
 
-This is a draft. Do not create migrations until the uncertain fields are confirmed.
+The cross-module sections remain a working draft. Ledger 2.0 Stage 1 Dev schema
+and Stage 2 local SQLite lineage are now implemented; see ADRs 0008 and 0009.
 
 ## Common Sync Fields
 
@@ -128,7 +129,7 @@ Uncertain:
 
 ## Expense
 
-Purpose: travel ledger entry.
+Purpose: Ledger 2.0 aggregate root for a Journey-scoped financial event.
 
 Legacy mapping:
 
@@ -136,18 +137,29 @@ Legacy mapping:
 - Category list: flight, hotel, car, fuel, food, ticket, shopping, transport, insurance, other.
 - Accounting mode: `stats_only`, `shared`.
 
-New fields needed:
+Canonical Ledger 2.0 model:
 
-- Edit history id/version.
-- Exclusion reason.
-- Settlement inclusion flag.
-- Attachment/document ids.
-- Local pending mutation state.
+- `expenses` stores the immutable merchant money identity, Journey, creator,
+  payer, revision, lifecycle status, location snapshot, and tombstone.
+- `expense_participants` records included Journey members. Exclusion is absence
+  from this set.
+- `expense_splits` resolves every convenience choice to exact original and
+  settlement minor-unit allocations per member.
+- `payment_records` stores optional authorization/posted payer cost and fee
+  evidence without sensitive card data.
+- `exchange_rate_snapshots` and `settlement_valuation_snapshots` preserve rate
+  evidence and the independent group valuation accepted for an Expense.
+- `expense_links`, `expense_audit_events`, and
+  `expense_correction_requests` preserve attachments, history, and
+  collaborative correction without silent mutation.
+- `households` and `household_members` are Journey-scoped split conveniences;
+  persisted Expense splits always resolve to individual Journey members.
+- `ledger_changes` is the backend pull cursor source, while
+  `ledger_idempotency_keys` records command replay results.
 
-Uncertain:
-
-- Household/group split representation.
-- Whether exchange rates are trip-wide snapshots, per-expense snapshots, or both.
+The legacy `ledger_entries` family remains untouched for compatibility. It is
+not the Ledger 2.0 write model and will be retired only through a separately
+approved migration plan.
 
 ### Phase 2A Implemented Minimum
 
@@ -159,7 +171,10 @@ The first vertical slice persists a deliberately small local `expenses` record:
 - `paid_by_member_id` and `occurred_at`, both nullable until member/trip selection is implemented.
 - `created_at`, `updated_at`, `sync_status`, and `sync_version`.
 
-Money is always stored as an integer in minor units. The only Phase 2A entity states are `PENDING_CREATE`, `SYNCING`, `SYNCED`, and `FAILED`. Splits, settlements, rates, and edit history remain outside this migration.
+Money is always stored as an integer in minor units. The Phase 2A table remains
+the current Mobile compatibility slice until Stage 2 replaces it with the local
+Ledger 2.0 aggregate schema. See `docs/ledger/LEDGER_2_0_DOMAIN_MODEL.md` and
+ADR 0008 for the frozen canonical model.
 
 ## ExpenseSplit
 
@@ -170,15 +185,10 @@ Legacy mapping:
 - `ledger_entry_participants`: member id, split method, share amount, share percentage, computed base amount.
 - Split methods: `equal`, `custom_amount`, `custom_percentage`.
 
-New fields needed:
-
-- Household/group split source.
-- Rounding adjustment marker.
-- Excluded participants.
-
-Uncertain:
-
-- Whether split records should preserve original currency shares as well as settlement shares.
+Ledger 2.0 stores both original-currency and settlement-currency minor-unit
+shares, the selected method, optional weight or percentage units, and an
+explicit rounding adjustment. Deterministic largest-remainder allocation uses
+stable member-id ordering for ties.
 
 ## Currency
 
@@ -190,15 +200,43 @@ Legacy mapping:
 - `journey_ledgers` stores base/display currencies and exchange rate snapshot metadata.
 - `journey_exchange_rates` stores base, quote, rate, date, source.
 
-New fields needed:
+Ledger 2.0 separates the mutable provider/cache layer from immutable
+per-Expense evidence. Merchant value, payer posted cost, group settlement
+valuation, and final repayment conversion are distinct financial truths.
 
-- Offline exchange rate cache.
-- Source confidence.
-- Manual override flag.
+## Settlement
 
-Uncertain:
+Purpose: immutable, explainable Journey balance snapshot and bilateral payment
+workflow.
 
-- Backend authority for rate refresh and historical rate choice.
+- `settlements` identifies the through-time, input digest, algorithm version,
+  currency, revision, and lifecycle.
+- `settlement_inputs` freezes the exact Expense revisions and valuation
+  snapshots included.
+- `settlement_member_balances` stores each member's paid, owed, transferred,
+  and net values.
+- `settlement_transfers` stores the deterministic minimized transfer plan.
+- `settlement_payments` supports partial repayment in another currency and
+  separate payer-reported versus recipient-confirmed states.
+- Finalized balances must net exactly to zero, transfer members must belong to
+  the Journey, transfer currency must match the Settlement, and confirmed
+  payments cannot exceed their obligation.
+
+### Stage 2 Local SQLite Foundation
+
+Migration 5 adds a separate `ledger_*` local table family rather than changing
+the existing Phase 2A `expenses` compatibility table. The local family includes
+Journey and member metadata, Households, Expense aggregate/root, participants,
+exact splits, active valuation snapshots, payment evidence, audit events,
+correction requests, and pull cursors. Every local Ledger aggregate reserves
+the local id, nullable server id, local revision, server revision, tombstone,
+sync state, and timestamps required by later synchronization.
+
+`LedgerExpenseRepository` is the only Stage 2 writer. It atomically persists an
+Expense aggregate, one append-only local audit event, and one generic durable
+`sync_operations` command. Stage 2 does not run a real Ledger sync worker yet:
+the operations remain pending until Stage 3 introduces authenticated Ledger API
+transport and pull/reconciliation.
 
 ## Capture
 

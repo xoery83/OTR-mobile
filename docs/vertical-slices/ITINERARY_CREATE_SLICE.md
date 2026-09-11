@@ -20,10 +20,10 @@ The shared queue is filtered by entity/operation type before a demo worker proce
 
 ## Manual Procedure
 
-1. In Debug, select Journey A, create an itinerary item, and run fake sync; confirm `SYNCED`.
+1. In the Stage 2 validation build, select Journey A, create an itinerary item, and run fake sync; confirm `SYNCED`.
 2. In airplane mode, create a Journey A item; confirm it is `Pending` and Diagnostics pending sync increases.
 3. Force-close, then use the embedded-bundle Release build to cold-launch offline; confirm the item remains in Journey A.
-4. In Debug, trigger `Fail next sync`, run the item, confirm `FAILED`, then retry and confirm `SYNCED` with no duplicate.
+4. Trigger `Fail next sync`, run the item, confirm `FAILED`, then retry and confirm `SYNCED` with no duplicate.
 5. Select Journey B; confirm Journey A rows are absent, create one B row, then switch back to confirm isolation.
 6. Copy only the approved SQLite file for a read-only check of itinerary `server_id`, `trip_id`, state/version, and queue retry fields; delete the copy immediately after inspection.
 
@@ -44,3 +44,15 @@ Physical validation completed on Leon's iPhone 16 Pro on 2026-09-09:
 - Final typecheck, lint, formatting, and 30 automated tests passed. Expo Doctor's 19 local checks passed; its two online metadata checks could not reach `exp.host` over the cellular hotspot. The same dependency set passed all 21 checks earlier that day.
 
 During validation, the device database was found with migration 3 recorded but without `itinerary_items`. Migration 4 repaired that historical development state without clearing data. A regression test now covers this exact condition.
+
+Current build revalidation completed on Leon's iPhone 16 Pro on 2026-09-11 with the embedded-bundle Release build:
+
+- Online Journey A itinerary create and `Run itinerary sync` reconciled the local row to `SYNCED`.
+- Airplane-mode Journey A create persisted through force-close and offline cold launch without a login redirect.
+- Controlled `Fail next itinerary sync` produced `FAILED`, then the next retry reconciled the same row to `SYNCED` without a duplicate.
+- Journey B initially exposed an empty `EXPO_PUBLIC_OTR_DEV_TRIP_B_ID` environment edge case; the validation hook now falls back when either Journey env value is missing or blank.
+- Journey A/B isolation passed after the fix: Journey B rows were absent from Journey A and Journey A rows were absent from Journey B in the UI.
+- Expense/Itinerary entity isolation passed: SQLite verification found zero expense operations with non-expense operation types and zero itinerary operations with non-itinerary operation types.
+- Read-only SQLite verification reported integrity `ok`, schema version `5`, seven itinerary rows across the current device's Journey ids, all with non-null generated `server_id`, sync version `1`, and `SYNCED` state.
+- All seven `CREATE_ITINERARY` operations were `COMPLETED`; two retained failure-attempt metadata from controlled retry checks. No itinerary operation remained `PENDING`, `PROCESSING`, or `RETRYABLE`.
+- The temporary copied database was deleted immediately after read-only verification.
