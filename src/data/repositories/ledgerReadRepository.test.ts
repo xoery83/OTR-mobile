@@ -20,6 +20,7 @@ const correctionId = "50000000-0000-4000-8000-000000000001";
 function database(
   existingExpenseStatus: string | null = null,
   existingCorrectionStatus: string | null = null,
+  linkedExpenseLocalId: string | null = null,
 ) {
   const writes: { sql: string; params: unknown[] }[] = [];
   let transactions = 0;
@@ -33,6 +34,9 @@ function database(
       return {} as never;
     },
     async getFirstAsync(sql) {
+      if (sql.includes("WHERE journey_id = ? AND server_id = ?")) {
+        return linkedExpenseLocalId ? ({ id: linkedExpenseLocalId } as never) : null;
+      }
       if (sql.includes("FROM ledger_expenses") && existingExpenseStatus) {
         return { id: "local-expense", syncStatus: existingExpenseStatus } as never;
       }
@@ -280,6 +284,65 @@ describe("Ledger read repository", () => {
         .filter((write) => write.sql.includes("INSERT INTO ledger_valuation_snapshots"))
         .every((write) => write.params.at(1) === "local-expense"),
     ).toBe(true);
+  });
+
+  it("maps a pulled receipt link back to the local Expense id", async () => {
+    const { db, writes } = database(null, null, "local-expense");
+    const response: LedgerBootstrapResponse = {
+      journey: {
+        id: journeyId,
+        settlementCurrency: "NZD",
+        settlementScale: 2,
+        valuationPolicy: "REFERENCE_RATE",
+        updatedAt: "2026-09-11T00:00:00.000Z",
+      },
+      members: [],
+      households: [],
+      expenses: [],
+      corrections: [],
+      rateQuotes: [],
+      receipts: [
+        {
+          id: "60000000-0000-4000-8000-000000000001",
+          localId: "local-receipt",
+          journeyId,
+          expenseId,
+          objectPath: `${journeyId}/receipt/original`,
+          mimeType: "image/jpeg",
+          sizeBytes: 4,
+          sha256: "a".repeat(64),
+          uploadStatus: "UPLOADED",
+          ocrStatus: "SUCCEEDED",
+          ocrSuggestion: null,
+          createdAt: "2026-09-11T00:00:00.000Z",
+          updatedAt: "2026-09-11T00:00:00.000Z",
+        },
+      ],
+      actor: {
+        memberId: null,
+        role: null,
+        capabilities: {
+          canRead: false,
+          canCreateExpense: false,
+          canEditOwnExpense: false,
+          canCorrectAnyExpense: false,
+          canSuggestCorrection: false,
+          canResolveOwnExpenseConflict: false,
+          canAddOwnPaymentEvidence: false,
+          canManageExpenseValuation: false,
+          canManageLedgerValuationPolicy: false,
+        },
+      },
+      cursor: "cursor-2",
+      serverTime: "2026-09-11T01:00:00.000Z",
+    };
+
+    await createLedgerReadRepository(db).applyBootstrap(response);
+
+    const receiptWrite = writes.find((write) =>
+      write.sql.includes("INSERT OR REPLACE INTO ledger_receipt_assets"),
+    );
+    expect(receiptWrite?.params[3]).toBe("local-expense");
   });
 
   it("defers correction changes while a local correction command is pending", async () => {

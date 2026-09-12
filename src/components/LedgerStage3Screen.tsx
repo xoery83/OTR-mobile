@@ -1,4 +1,5 @@
 import { Button, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { stage3JourneyId, useLedgerStage3 } from "@/hooks/useLedgerStage3";
@@ -30,6 +31,11 @@ export function LedgerStage3Screen() {
         <Text style={styles.meta}>Cursor {cursor ?? "none"}</Text>
 
         <View style={styles.tools}>
+          <Button
+            disabled={isBusy}
+            onPress={() => router.push("/expenses/receipt")}
+            title="Import receipt first"
+          />
           <Button disabled={isBusy} onPress={bootstrap} title="Bootstrap Journey" />
           <Button disabled={isBusy} onPress={pull} title="Pull changes" />
           <Button disabled={isBusy} onPress={cacheMyLedger} title="Cache My Ledger" />
@@ -62,6 +68,15 @@ export function LedgerStage3Screen() {
             <Text style={styles.amount}>
               {money(expense.original.minor, expense.original.currency)}
             </Text>
+            <Button
+              title="Add receipt"
+              onPress={() =>
+                router.push({
+                  pathname: "/expenses/receipt",
+                  params: { expenseId: expense.id },
+                })
+              }
+            />
           </View>
         ))}
 

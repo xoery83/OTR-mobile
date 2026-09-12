@@ -4,12 +4,14 @@ import { z } from "zod";
 
 import { createDevBackendHandler } from "./app";
 import { createSupabaseDevGateway } from "./supabaseGateway";
+import { createReceiptOcrProvider } from "./receiptOcrProvider";
 
 const environmentSchema = z.object({
   OTR_DEV_SUPABASE_URL: z.url(),
   OTR_DEV_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
   OTR_DEV_SUPABASE_SECRET_KEY: z.string().min(1),
   OTR_DEV_BACKEND_PORT: z.coerce.number().int().positive().default(8787),
+  OTR_DEV_RECEIPT_OCR_ACCEPTANCE_FIXTURE: z.enum(["0", "1"]).default("0"),
 });
 
 const environment = environmentSchema.parse(process.env);
@@ -17,6 +19,9 @@ const gateway = createSupabaseDevGateway({
   url: environment.OTR_DEV_SUPABASE_URL,
   publishableKey: environment.OTR_DEV_SUPABASE_PUBLISHABLE_KEY,
   secretKey: environment.OTR_DEV_SUPABASE_SECRET_KEY,
+  receiptOcrProvider: createReceiptOcrProvider(
+    environment.OTR_DEV_RECEIPT_OCR_ACCEPTANCE_FIXTURE === "1",
+  ),
 });
 const handle = createDevBackendHandler({
   gateway,

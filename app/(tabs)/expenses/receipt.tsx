@@ -1,5 +1,5 @@
-import { ReceiptScreen } from "@/features/ledger-prototype/ReceiptScreen";
+import { ReceiptCaptureScreen } from "@/components/ReceiptCaptureScreen";
 
 export default function ReceiptRoute() {
-  return <ReceiptScreen />;
+  return <ReceiptCaptureScreen />;
 }

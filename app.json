@@ -12,7 +12,9 @@
       "bundleIdentifier": "com.xoery.otrmobile",
       "appleTeamId": "U9D5C58Z94",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Take a photo of a receipt to attach to a trip expense.",
+        "NSPhotoLibraryUsageDescription": "Choose a receipt to attach to a trip expense."
       }
     },
     "android": {
@@ -31,6 +33,15 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a receipt to attach to a trip expense.",
+          "cameraPermission": "Take a photo of a receipt to attach to a trip expense.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-document-picker",
       "./plugins/withUserScriptSandboxing",
       [
         "expo-splash-screen",

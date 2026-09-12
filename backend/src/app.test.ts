@@ -26,6 +26,51 @@ function createGateway(options: { authorized?: boolean } = {}) {
     ),
     canReadTrip: vi.fn(async () => options.authorized ?? true),
     canWriteTrip: vi.fn(async () => options.authorized ?? true),
+    createReceipt: vi.fn(async (_userId, requestedTripId, receiptId, input) => ({
+      entity: {
+        id: receiptId,
+        localId: input.localId,
+        journeyId: requestedTripId,
+        expenseId: null,
+        objectPath: `${requestedTripId}/${receiptId}/original`,
+        mimeType: input.mimeType,
+        sizeBytes: input.sizeBytes,
+        sha256: input.sha256,
+        uploadStatus: "PENDING" as const,
+        ocrStatus: "PENDING" as const,
+        ocrSuggestion: null,
+        createdAt: "2026-09-12T00:00:00.000Z",
+        updatedAt: "2026-09-12T00:00:00.000Z",
+      },
+      idempotentReplay: false,
+    })),
+    uploadReceiptContent: vi.fn(async (_userId, requestedTripId, receiptId) => ({
+      entity: {
+        id: receiptId,
+        localId: "local-receipt",
+        journeyId: requestedTripId,
+        expenseId: null,
+        objectPath: `${requestedTripId}/${receiptId}/original`,
+        mimeType: "image/jpeg" as const,
+        sizeBytes: 3,
+        sha256: "a".repeat(64),
+        uploadStatus: "PENDING" as const,
+        ocrStatus: "PENDING" as const,
+        ocrSuggestion: null,
+        createdAt: "2026-09-12T00:00:00.000Z",
+        updatedAt: "2026-09-12T00:00:00.000Z",
+      },
+      idempotentReplay: false,
+    })),
+    completeReceipt: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    linkReceipt: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    ocrReceipt: vi.fn(async () => {
+      throw new Error("not used");
+    }),
     bootstrapLedger: vi.fn(async () => ({
       journey: {
         id: tripId,
@@ -417,6 +462,48 @@ describe("OTR Dev Backend", () => {
     expect(await bootstrap.json()).toMatchObject({ cursor: "cursor-1" });
     expect(changes.status).toBe(200);
     expect(gateway.pullLedgerChanges).toHaveBeenCalledWith(userId, tripId, "cursor-1");
+  });
+
+  it("keeps receipt metadata and authenticated binary upload on dedicated routes", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const created = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "receipt-create",
+        },
+        body: JSON.stringify({
+          localId: "local-receipt",
+          mimeType: "image/jpeg",
+          sizeBytes: 3,
+          sha256: "a".repeat(64),
+        }),
+      }),
+    );
+    const receipt = (await created.json()) as { entity: { id: string } };
+    expect(created.status).toBe(201);
+
+    const uploaded = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/receipts/${receipt.entity.id}/content`,
+        {
+          method: "PUT",
+          headers: { Authorization: "Bearer valid-token", "Content-Type": "image/jpeg" },
+          body: new Uint8Array([1, 2, 3]),
+        },
+      ),
+    );
+    expect(uploaded.status).toBe(200);
+    expect(gateway.uploadReceiptContent).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      receipt.entity.id,
+      new Uint8Array([1, 2, 3]),
+      "image/jpeg",
+    );
   });
 
   it("creates Ledger 2.0 expenses through the v2 idempotent aggregate route", async () => {

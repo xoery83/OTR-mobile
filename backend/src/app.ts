@@ -34,6 +34,14 @@ import type {
   LedgerPaymentRecordDto,
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
+import {
+  completeReceiptRequestSchema,
+  createReceiptRequestSchema,
+  linkReceiptRequestSchema,
+  type CompleteReceiptRequest,
+  type CreateReceiptRequest,
+  type ReceiptDto,
+} from "../../src/data/api/ledgerReceiptContracts";
 
 import { deriveServerId, type SyncEntityType } from "./serverId";
 
@@ -137,6 +145,39 @@ export type DevBackendGateway = {
     tripId: string,
     expenseId: string,
   ): Promise<{ ok: true }>;
+  createReceipt(
+    userId: string,
+    tripId: string,
+    receiptId: string,
+    input: CreateReceiptRequest,
+  ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
+  uploadReceiptContent(
+    userId: string,
+    tripId: string,
+    receiptId: string,
+    bytes: Uint8Array,
+    mimeType: string,
+  ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
+  completeReceipt(
+    userId: string,
+    tripId: string,
+    receiptId: string,
+    key: string,
+    input: CompleteReceiptRequest,
+  ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
+  linkReceipt(
+    userId: string,
+    tripId: string,
+    receiptId: string,
+    key: string,
+    expenseId: string,
+  ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
+  ocrReceipt(
+    userId: string,
+    tripId: string,
+    receiptId: string,
+    key: string,
+  ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
   findExpense(id: string): Promise<StoredCreate | null>;
   createExpense(
     id: string,
@@ -235,6 +276,69 @@ async function parseBody(request: Request) {
   } catch {
     throw new HttpError(400, "INVALID_JSON", "The request body must be valid JSON.");
   }
+}
+
+async function mutateReceipt(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/receipts(?:\/([^/]+)(?:\/(content|upload-complete|links|ocr))?)?$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, receiptId, action] = match;
+  assertTripId(tripId);
+  const user = await authenticate(request, gateway);
+  if (!(await gateway.canWriteTrip(user.id, tripId)))
+    throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
+  if (!receiptId) {
+    const parsed = createReceiptRequestSchema.safeParse(await parseBody(request));
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    const response = await gateway.createReceipt(
+      user.id,
+      tripId,
+      deriveServerId(user.id, "receipt", getIdempotencyKey(request)),
+      parsed.data,
+    );
+    return json(response.idempotentReplay ? 200 : 201, response);
+  }
+  if (!uuidPattern.test(receiptId))
+    throw new HttpError(400, "INVALID_RECEIPT_ID", "The receipt id is invalid.");
+  if (action === "content" && request.method === "PUT") {
+    const length = Number(request.headers.get("content-length") ?? "0");
+    if (length > 15 * 1024 * 1024)
+      throw new HttpError(413, "PAYLOAD_TOO_LARGE", "The receipt is too large.");
+    return json(
+      200,
+      await gateway.uploadReceiptContent(
+        user.id,
+        tripId,
+        receiptId,
+        new Uint8Array(await request.arrayBuffer()),
+        request.headers.get("content-type") ?? "application/octet-stream",
+      ),
+    );
+  }
+  const key = getIdempotencyKey(request);
+  if (action === "upload-complete") {
+    const parsed = completeReceiptRequestSchema.safeParse(await parseBody(request));
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    return json(
+      200,
+      await gateway.completeReceipt(user.id, tripId, receiptId, key, parsed.data),
+    );
+  }
+  if (action === "links") {
+    const parsed = linkReceiptRequestSchema.safeParse(await parseBody(request));
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    return json(
+      200,
+      await gateway.linkReceipt(user.id, tripId, receiptId, key, parsed.data.expenseId),
+    );
+  }
+  if (action === "ocr")
+    return json(200, await gateway.ocrReceipt(user.id, tripId, receiptId, key));
+  throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
 }
 
 function assertOriginalCreate(stored: StoredCreate, tripId: string, userId: string) {
@@ -629,6 +733,12 @@ export function createDevBackendHandler({
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
         route = url.pathname;
         response = await readEntity(request, gateway);
+      } else if (
+        ["POST", "PUT"].includes(request.method) &&
+        /\/v2\/trips\/[^/]+\/receipts/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/receipts";
+        response = await mutateReceipt(request, gateway);
       } else if (request.method === "POST" && url.pathname.startsWith("/v2/dev/")) {
         route = "/v2/dev/trips/:tripId/expenses/:expenseId/finalized-guard-fixture";
         response = await createFinalizedGuardFixture(request, gateway);

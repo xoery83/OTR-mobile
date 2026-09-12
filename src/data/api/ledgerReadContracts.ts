@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { isIso4217Money } from "@/domain/ledger/currency";
+import { receiptSchema } from "./ledgerReceiptContracts";
 
 const uuidSchema = z.uuid();
 export const ledgerMoneySchema = z
@@ -196,6 +197,7 @@ export const ledgerBootstrapResponseSchema = z.object({
   expenses: z.array(ledgerExpenseSchema),
   corrections: z.array(ledgerCorrectionRequestSchema),
   rateQuotes: z.array(ledgerRateQuoteSchema).default([]),
+  receipts: z.array(receiptSchema).optional(),
   actor: z.object({
     memberId: uuidSchema.nullable(),
     role: z.string().nullable(),
@@ -214,6 +216,7 @@ export const ledgerChangesResponseSchema = z.object({
         "CORRECTION",
         "RATE_QUOTE",
         "PAYMENT_RECORD",
+        "RECEIPT",
       ]),
       entityId: uuidSchema,
       revision: z.number().int().positive(),
@@ -225,6 +228,7 @@ export const ledgerChangesResponseSchema = z.object({
           ledgerCorrectionRequestSchema,
           ledgerRateQuoteSchema,
           ledgerPaymentRecordSchema,
+          receiptSchema,
         ])
         .nullable(),
     }),

@@ -1,7 +1,7 @@
 # Ledger 2.0 iOS And Backend Implementation Plan
 
 Date: 2026-09-12
-Status: Approved; Stage 0 through Stage 4C physically validated; Stage 5.1 complete
+Status: Approved; Stage 0 through Stage 5 physically validated and complete
 
 ## Objective
 
@@ -264,9 +264,20 @@ Expense synchronizes normally as `RATE_REQUIRED`; valuation completeness is
 not transport status. Rate-cache refreshes are candidate updates only and may
 not mutate an Expense or accepted historical snapshots.
 
-Gate status (2026-09-12): 5.1 passed automated, Hosted Dev, cold-restart
-Simulator, two-client conflict, and Stage 4 regression acceptance. Stop before
-5.2 pending explicit approval.
+Gate status (2026-09-12): 5.1 and 5.2 passed automated, Hosted Dev, Simulator,
+and affected Stage 4 regression acceptance. Stage 5.3 then passed integrated
+Release acceptance on Leon's physical iPhone 16 Pro. Stage 5 is complete; stop
+before Stage 6 pending explicit approval.
+
+Physical Stage 5.3 acceptance exercised the real camera, Photos, and document
+pickers; permission denial and recovery; app-owned durable storage; offline
+receipt-first and `RATE_REQUIRED` creation; force-quit/cold launch; independent
+financial and asset queue recovery; authenticated binary upload and failure
+retry; OCR persistence and suggestion-only behavior; explicit confirmation via
+the normal Expense command path; canonical linking/pull/audit; and idempotent
+identity after response-loss retry. Final SQLite v10, file/digest, queue,
+uniqueness, Hosted Dev Storage, canonical link, audit, and structured-log privacy
+checks passed. Merchant, payer, and Journey valuation facts remained independent.
 
 Implement the three independent financial truths:
 

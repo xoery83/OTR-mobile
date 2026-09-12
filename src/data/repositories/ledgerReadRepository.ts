@@ -34,6 +34,8 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
           await applyBootstrapExpense(database, expense);
         }
         for (const quote of response.rateQuotes) await applyRateQuote(database, quote);
+        for (const receipt of response.receipts ?? [])
+          await applyReceipt(database, response.journey.id, receipt);
         for (const correction of response.corrections) {
           if (!(await applyCorrection(database, correction))) {
             await deferChange(database, response.journey.id, {
@@ -81,6 +83,12 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
             "instrumentLabel" in change.aggregate
           ) {
             await applyPaymentChange(database, journeyId, change.aggregate);
+          } else if (
+            change.entityType === "RECEIPT" &&
+            change.aggregate &&
+            "objectPath" in change.aggregate
+          ) {
+            await applyReceipt(database, journeyId, change.aggregate);
           } else {
             await deferChange(database, journeyId, change);
           }
@@ -154,6 +162,47 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
       );
     },
   };
+}
+
+async function applyReceipt(
+  database: LedgerReadDatabase,
+  journeyId: string,
+  receipt: NonNullable<LedgerBootstrapResponse["receipts"]>[number],
+) {
+  const existing = await database.getFirstAsync<{ id: string; localUri: string | null }>(
+    `SELECT id, local_uri AS localUri FROM ledger_receipt_assets WHERE journey_id = ? AND (id = ? OR server_id = ? OR id = ?)`,
+    journeyId,
+    receipt.id,
+    receipt.id,
+    receipt.localId,
+  );
+  const linkedExpense = receipt.expenseId
+    ? await database.getFirstAsync<{ id: string }>(
+        "SELECT id FROM ledger_expenses WHERE journey_id = ? AND server_id = ?",
+        journeyId,
+        receipt.expenseId,
+      )
+    : null;
+  await database.runAsync(
+    `INSERT OR REPLACE INTO ledger_receipt_assets (
+    id, server_id, journey_id, expense_id, local_uri, mime_type, size_bytes, sha256,
+    object_path, upload_status, ocr_status, ocr_suggestion_json, created_at, updated_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    existing?.id ?? receipt.id,
+    receipt.id,
+    journeyId,
+    linkedExpense?.id ?? receipt.expenseId,
+    existing?.localUri ?? null,
+    receipt.mimeType,
+    receipt.sizeBytes,
+    receipt.sha256,
+    receipt.objectPath,
+    receipt.uploadStatus,
+    receipt.ocrStatus,
+    receipt.ocrSuggestion ? JSON.stringify(receipt.ocrSuggestion) : null,
+    receipt.createdAt,
+    receipt.updatedAt,
+  );
 }
 
 async function applyRateQuote(database: LedgerReadDatabase, quote: ServerRateQuote) {

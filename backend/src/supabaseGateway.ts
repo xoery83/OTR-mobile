@@ -28,6 +28,16 @@ import {
 } from "../../src/domain/ledger/conflict";
 import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
 import { previewValuation } from "../../src/domain/ledger/valuation";
+import type {
+  CompleteReceiptRequest,
+  CreateReceiptRequest,
+  ReceiptDto,
+} from "../../src/data/api/ledgerReceiptContracts";
+import {
+  createReceiptOcrProvider,
+  extractReceiptSuggestion,
+  type ReceiptOcrProvider,
+} from "./receiptOcrProvider";
 
 const approvedDevProjectRef = "tuqigdxrvrerfewsxqgm";
 
@@ -35,6 +45,7 @@ export type SupabaseDevConfig = {
   url: string;
   publishableKey: string;
   secretKey: string;
+  receiptOcrProvider?: ReceiptOcrProvider;
 };
 
 function assertApprovedDevUrl(url: string) {
@@ -121,6 +132,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
   assertApprovedDevUrl(config.url);
   const auth = client(config.url, config.publishableKey);
   const service = client(config.url, config.secretKey);
+  const receiptOcrProvider = config.receiptOcrProvider ?? createReceiptOcrProvider();
 
   return {
     async validateAccessToken(token) {
@@ -315,6 +327,26 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return { ok: true };
     },
 
+    createReceipt(userId, tripId, receiptId, input) {
+      return createReceipt(service, userId, tripId, receiptId, input);
+    },
+
+    uploadReceiptContent(userId, tripId, receiptId, bytes, mimeType) {
+      return uploadReceiptContent(service, userId, tripId, receiptId, bytes, mimeType);
+    },
+
+    completeReceipt(userId, tripId, receiptId, key, input) {
+      return completeReceipt(service, userId, tripId, receiptId, key, input);
+    },
+
+    linkReceipt(userId, tripId, receiptId, key, expenseId) {
+      return linkReceipt(service, userId, tripId, receiptId, key, expenseId);
+    },
+
+    ocrReceipt(userId, tripId, receiptId, key) {
+      return ocrReceipt(service, receiptOcrProvider, userId, tripId, receiptId, key);
+    },
+
     findExpense(id) {
       return findOne(service, "ledger_entries", id);
     },
@@ -376,6 +408,341 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return rowToStoredCreate(await requireData(result));
     },
   };
+}
+
+const receiptColumns =
+  "id, journey_id, expense_id, local_id, created_by, object_path, mime_type, size_bytes, sha256, upload_status, ocr_status, ocr_suggestion, created_at, updated_at";
+
+function receiptRowToDto(row: Record<string, unknown>): ReceiptDto {
+  return {
+    id: String(row.id),
+    localId: String(row.local_id),
+    journeyId: String(row.journey_id),
+    expenseId: row.expense_id ? String(row.expense_id) : null,
+    objectPath: String(row.object_path),
+    mimeType: row.mime_type as ReceiptDto["mimeType"],
+    sizeBytes: Number(row.size_bytes),
+    sha256: String(row.sha256),
+    uploadStatus: row.upload_status as ReceiptDto["uploadStatus"],
+    ocrStatus: row.ocr_status as ReceiptDto["ocrStatus"],
+    ocrSuggestion: row.ocr_suggestion as ReceiptDto["ocrSuggestion"],
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+async function readReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+) {
+  const result = await service
+    .from("receipt_assets")
+    .select(`${receiptColumns}, created_by, uploaded_size_bytes, uploaded_sha256`)
+    .eq("id", receiptId)
+    .eq("journey_id", tripId)
+    .eq("created_by", userId)
+    .maybeSingle();
+  if (result.error) throw new Error("Supabase Dev receipt lookup failed.");
+  if (!result.data)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The receipt does not exist.");
+  return result.data as Record<string, unknown>;
+}
+
+async function createReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  input: CreateReceiptRequest,
+) {
+  let existing = await service
+    .from("receipt_assets")
+    .select(receiptColumns)
+    .eq("id", receiptId)
+    .maybeSingle();
+  if (existing.error) throw new Error("Supabase Dev receipt lookup failed.");
+  if (!existing.data) {
+    existing = await service
+      .from("receipt_assets")
+      .select(receiptColumns)
+      .eq("journey_id", tripId)
+      .eq("created_by", userId)
+      .eq("local_id", input.localId)
+      .maybeSingle();
+    if (existing.error) throw new Error("Supabase Dev receipt lookup failed.");
+  }
+  if (existing.data) {
+    const row = existing.data as Record<string, unknown>;
+    if (
+      String(row.journey_id) !== tripId ||
+      String(row.created_by) !== userId ||
+      String(row.local_id) !== input.localId ||
+      String(row.mime_type) !== input.mimeType ||
+      Number(row.size_bytes) !== input.sizeBytes ||
+      String(row.sha256) !== input.sha256
+    )
+      throw new BackendError(
+        409,
+        "IDEMPOTENCY_CONFLICT",
+        "The receipt idempotency key conflicts.",
+      );
+    return { entity: receiptRowToDto(row), idempotentReplay: true };
+  }
+  const objectPath = `${tripId}/${receiptId}/original`;
+  const inserted = await service
+    .from("receipt_assets")
+    .insert({
+      id: receiptId,
+      journey_id: tripId,
+      local_id: input.localId,
+      created_by: userId,
+      object_path: objectPath,
+      mime_type: input.mimeType,
+      size_bytes: input.sizeBytes,
+      sha256: input.sha256,
+    })
+    .select(receiptColumns)
+    .single();
+  if (inserted.error || !inserted.data)
+    throw new Error("Supabase Dev receipt create failed.");
+  return {
+    entity: receiptRowToDto(inserted.data as Record<string, unknown>),
+    idempotentReplay: false,
+  };
+}
+
+async function uploadReceiptContent(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  bytes: Uint8Array,
+  _mimeType: string,
+) {
+  const row = await readReceipt(service, userId, tripId, receiptId);
+  const actual = createHash("sha256").update(bytes).digest("hex");
+  if (bytes.byteLength !== Number(row.size_bytes) || actual !== row.sha256)
+    throw new BackendError(
+      422,
+      "RECEIPT_CONTENT_MISMATCH",
+      "Receipt content does not match its metadata.",
+    );
+  const uploaded = await service.storage
+    .from("ledger-receipts")
+    .upload(String(row.object_path), bytes, {
+      contentType: String(row.mime_type),
+      upsert: true,
+    });
+  if (uploaded.error) throw new Error("Supabase Dev receipt upload failed.");
+  const updated = await service
+    .from("receipt_assets")
+    .update({ uploaded_size_bytes: bytes.byteLength, uploaded_sha256: actual })
+    .eq("id", receiptId)
+    .select(receiptColumns)
+    .single();
+  if (updated.error || !updated.data)
+    throw new Error("Supabase Dev receipt upload record failed.");
+  return {
+    entity: receiptRowToDto(updated.data as Record<string, unknown>),
+    idempotentReplay: false,
+  };
+}
+
+async function completeReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  key: string,
+  input: CompleteReceiptRequest,
+) {
+  const row = await readReceipt(service, userId, tripId, receiptId);
+  if (
+    input.objectPath !== row.object_path ||
+    input.sizeBytes !== Number(row.size_bytes) ||
+    input.sha256 !== row.sha256 ||
+    Number(row.uploaded_size_bytes) !== input.sizeBytes ||
+    row.uploaded_sha256 !== input.sha256
+  )
+    throw new BackendError(
+      422,
+      "RECEIPT_COMPLETION_MISMATCH",
+      "Receipt completion validation failed.",
+    );
+  const replay = await receiptReplay(
+    service,
+    userId,
+    tripId,
+    "COMPLETE_RECEIPT",
+    key,
+    input,
+  );
+  if (replay) return replay;
+  const updated = await service
+    .from("receipt_assets")
+    .update({ upload_status: "UPLOADED" })
+    .eq("id", receiptId)
+    .select(receiptColumns)
+    .single();
+  if (updated.error || !updated.data)
+    throw new Error("Supabase Dev receipt completion failed.");
+  return storeReceiptReplay(
+    service,
+    userId,
+    tripId,
+    "COMPLETE_RECEIPT",
+    key,
+    input,
+    receiptRowToDto(updated.data as Record<string, unknown>),
+  );
+}
+
+async function linkReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  key: string,
+  expenseId: string,
+) {
+  const replay = await receiptReplay(service, userId, tripId, "LINK_RECEIPT", key, {
+    expenseId,
+  });
+  if (replay) return replay;
+  const receipt = await readReceipt(service, userId, tripId, receiptId);
+  if (receipt.expense_id && receipt.expense_id !== expenseId)
+    throw new BackendError(409, "RECEIPT_ALREADY_LINKED", "Receipt is already linked.");
+  const expense = await service
+    .from("expenses")
+    .select("id")
+    .eq("id", expenseId)
+    .eq("journey_id", tripId)
+    .maybeSingle();
+  if (expense.error || !expense.data)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Expense does not exist.");
+  const updated = await service
+    .from("receipt_assets")
+    .update({ expense_id: expenseId })
+    .eq("id", receiptId)
+    .select(receiptColumns)
+    .single();
+  if (updated.error || !updated.data)
+    throw new Error("Supabase Dev receipt link failed.");
+  return storeReceiptReplay(
+    service,
+    userId,
+    tripId,
+    "LINK_RECEIPT",
+    key,
+    { expenseId },
+    receiptRowToDto(updated.data as Record<string, unknown>),
+  );
+}
+
+async function ocrReceipt(
+  service: SupabaseClient,
+  provider: ReceiptOcrProvider,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+  key: string,
+) {
+  const replay = await receiptReplay(service, userId, tripId, "OCR_RECEIPT", key, {});
+  if (replay) return replay;
+  const row = await readReceipt(service, userId, tripId, receiptId);
+  if (row.upload_status !== "UPLOADED")
+    throw new BackendError(
+      409,
+      "RECEIPT_UPLOAD_PENDING",
+      "Receipt upload must complete first.",
+    );
+  await service
+    .from("receipt_assets")
+    .update({ ocr_status: "RUNNING" })
+    .eq("id", receiptId);
+  try {
+    const download = await service.storage
+      .from("ledger-receipts")
+      .download(String(row.object_path));
+    if (download.error) throw download.error;
+    const suggestion = await extractReceiptSuggestion(provider, {
+      bytes: new Uint8Array(await download.data.arrayBuffer()),
+      mimeType: String(row.mime_type),
+    });
+    const updated = await service
+      .from("receipt_assets")
+      .update({ ocr_status: "SUCCEEDED", ocr_suggestion: suggestion })
+      .eq("id", receiptId)
+      .select(receiptColumns)
+      .single();
+    if (updated.error || !updated.data)
+      throw new Error("Supabase Dev OCR persistence failed.");
+    return storeReceiptReplay(
+      service,
+      userId,
+      tripId,
+      "OCR_RECEIPT",
+      key,
+      {},
+      receiptRowToDto(updated.data as Record<string, unknown>),
+    );
+  } catch (error) {
+    await service
+      .from("receipt_assets")
+      .update({ ocr_status: "FAILED", ocr_suggestion: null })
+      .eq("id", receiptId);
+    throw error;
+  }
+}
+
+async function receiptReplay(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  command: string,
+  key: string,
+  payload: unknown,
+) {
+  const found = await service
+    .from("ledger_idempotency_keys")
+    .select("payload_hash, response_body")
+    .eq("actor_user_id", userId)
+    .eq("journey_id", tripId)
+    .eq("command_type", command)
+    .eq("idempotency_key", key)
+    .maybeSingle();
+  if (found.error) throw new Error("Supabase Dev idempotency lookup failed.");
+  if (!found.data) return null;
+  if (found.data.payload_hash !== hashPayload(payload))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  const response = found.data.response_body as { entity: ReceiptDto };
+  return { ...response, idempotentReplay: true };
+}
+
+async function storeReceiptReplay(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  command: string,
+  key: string,
+  payload: unknown,
+  entity: ReceiptDto,
+) {
+  const response = { entity, idempotentReplay: false };
+  const inserted = await service.from("ledger_idempotency_keys").insert({
+    actor_user_id: userId,
+    journey_id: tripId,
+    command_type: command,
+    idempotency_key: key,
+    payload_hash: hashPayload(payload),
+    response_status: 200,
+    response_body: response,
+    completed_at: new Date().toISOString(),
+  });
+  if (inserted.error) throw new Error("Supabase Dev idempotency persistence failed.");
+  return response;
 }
 
 async function createLedgerExpenseAggregate(
@@ -1400,6 +1767,7 @@ async function readLedgerBootstrap(
     expenses,
     corrections,
     rateQuotes,
+    receipts,
   ] = await Promise.all([
     service
       .from("ledger_settings")
@@ -1433,6 +1801,11 @@ async function readLedgerBootstrap(
       .eq("journey_id", tripId)
       .order("updated_at", { ascending: false }),
     readRateQuotes(service, tripId),
+    service
+      .from("receipt_assets")
+      .select(receiptColumns)
+      .eq("journey_id", tripId)
+      .order("created_at", { ascending: false }),
   ]);
 
   if (
@@ -1441,7 +1814,8 @@ async function readLedgerBootstrap(
     households.error ||
     householdMembers.error ||
     expenses.error ||
-    corrections.error
+    corrections.error ||
+    receipts.error
   ) {
     throw new Error("Supabase Dev Ledger bootstrap failed.");
   }
@@ -1493,6 +1867,9 @@ async function readLedgerBootstrap(
     expenses: aggregates,
     corrections: (corrections.data ?? []).map(correctionRowToDto),
     rateQuotes,
+    receipts: (receipts.data ?? []).map((row) =>
+      receiptRowToDto(row as Record<string, unknown>),
+    ),
     actor: {
       memberId: actorRow ? String(actorRow.id) : null,
       role: actorRole,
@@ -1534,6 +1911,9 @@ async function readLedgerChanges(
     .map((row) => String(row.entity_id));
   const paymentIds = rows
     .filter((row) => row.entity_type === "PAYMENT_RECORD")
+    .map((row) => String(row.entity_id));
+  const receiptIds = rows
+    .filter((row) => row.entity_type === "RECEIPT")
     .map((row) => String(row.entity_id));
   const expenses =
     expenseIds.length > 0
@@ -1595,6 +1975,10 @@ async function readLedgerChanges(
           ])
           .in("event_type", ["PAYMENT_RECORD_ADDED", "PAYMENT_RECORD_SUPERSEDED"])
       : { data: [], error: null };
+  const receipts =
+    receiptIds.length > 0
+      ? await service.from("receipt_assets").select(receiptColumns).in("id", receiptIds)
+      : { data: [], error: null };
 
   if (expenses.error) throw new Error("Supabase Dev Ledger change aggregate failed.");
   if (
@@ -1603,7 +1987,8 @@ async function readLedgerChanges(
     corrections.error ||
     rateQuotes.error ||
     paymentRecords.error ||
-    evidenceAudits.error
+    evidenceAudits.error ||
+    receipts.error
   ) {
     throw new Error("Supabase Dev Ledger household aggregate failed.");
   }
@@ -1637,6 +2022,8 @@ async function readLedgerChanges(
     );
     byId.set(String(row.id), paymentRowToDto(row, audit));
   }
+  for (const row of receipts.data ?? [])
+    byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
 
   return {
     changes: rows.map((row) => ({

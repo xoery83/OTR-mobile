@@ -14,6 +14,8 @@ const ledger51Path =
   "supabase/migrations/20260912000400_ledger_2_stage_5_1_financial_evidence.sql";
 const ledger51LinksPath =
   "supabase/migrations/20260912000500_ledger_2_stage_5_1_evidence_links.sql";
+const ledger52Path =
+  "supabase/migrations/20260912000600_ledger_2_stage_5_2_receipt_assets.sql";
 const seedPath = "supabase/seed.sql";
 
 const [
@@ -26,6 +28,7 @@ const [
   ledger4C,
   ledger51,
   ledger51Links,
+  ledger52,
   seed,
   manifestRaw,
 ] = await Promise.all([
@@ -38,21 +41,22 @@ const [
   readFile(ledger4CPath, "utf8"),
   readFile(ledger51Path, "utf8"),
   readFile(ledger51LinksPath, "utf8"),
+  readFile(ledger52Path, "utf8"),
   readFile(seedPath, "utf8"),
   readFile("supabase/schema-manifest.json", "utf8"),
 ]);
 
 const manifest = JSON.parse(manifestRaw);
 const expected = {
-  tables: 86,
-  columns: 1193,
-  constraints: 583,
-  indexes: 288,
+  tables: 87,
+  columns: 1210,
+  constraints: 599,
+  indexes: 292,
   functions: 53,
-  triggers: 72,
-  rls_tables: 86,
+  triggers: 74,
+  rls_tables: 87,
   policies: 178,
-  buckets: 2,
+  buckets: 3,
 };
 
 for (const [key, value] of Object.entries(expected)) {
@@ -91,7 +95,7 @@ const secretPatterns = [
 for (const pattern of secretPatterns) {
   if (
     pattern.test(
-      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${seed}`,
+      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${seed}`,
     )
   ) {
     throw new Error(`Production identifier or secret-like value found: ${pattern}`);
@@ -121,6 +125,8 @@ const lineageChecksum = createHash("sha256")
   .update(ledger51)
   .update("\0")
   .update(ledger51Links)
+  .update("\0")
+  .update(ledger52)
   .digest("hex");
 
 console.log(

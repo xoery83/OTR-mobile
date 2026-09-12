@@ -422,4 +422,45 @@ export const migrations: Migration[] = [
       ALTER TABLE ledger_exchange_rate_snapshots ADD COLUMN server_id TEXT;
     `,
   },
+  {
+    id: 10,
+    name: "ledger_2_stage_5_2_receipt_assets",
+    sql: `
+      CREATE TABLE ledger_receipt_assets (
+        id TEXT PRIMARY KEY NOT NULL,
+        server_id TEXT,
+        journey_id TEXT NOT NULL,
+        expense_id TEXT,
+        local_uri TEXT,
+        mime_type TEXT NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/png', 'application/pdf')),
+        size_bytes INTEGER NOT NULL CHECK (size_bytes > 0 AND size_bytes <= 15728640),
+        sha256 TEXT NOT NULL CHECK (length(sha256) = 64),
+        object_path TEXT,
+        upload_status TEXT NOT NULL CHECK (upload_status IN ('PENDING', 'UPLOADING', 'UPLOADED', 'FAILED')),
+        ocr_status TEXT NOT NULL CHECK (ocr_status IN ('PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED')),
+        ocr_suggestion_json TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX ledger_receipt_assets_journey_expense
+        ON ledger_receipt_assets (journey_id, expense_id, created_at DESC);
+
+      CREATE TABLE ledger_asset_operations (
+        id TEXT PRIMARY KEY NOT NULL,
+        journey_id TEXT NOT NULL,
+        asset_id TEXT NOT NULL,
+        operation_type TEXT NOT NULL CHECK (operation_type IN ('UPLOAD_RECEIPT', 'OCR_RECEIPT', 'LINK_RECEIPT')),
+        idempotency_key TEXT NOT NULL UNIQUE,
+        status TEXT NOT NULL CHECK (status IN ('PENDING', 'PROCESSING', 'RETRYABLE', 'FAILED', 'COMPLETED')),
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        next_attempt_at TEXT,
+        last_error_code TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE (asset_id, operation_type)
+      );
+      CREATE INDEX ledger_asset_operations_pending
+        ON ledger_asset_operations (status, created_at);
+    `,
+  },
 ];

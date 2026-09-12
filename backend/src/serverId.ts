@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export type SyncEntityType = "expense" | "itinerary";
+export type SyncEntityType = "expense" | "itinerary" | "receipt";
 
 export function deriveServerId(
   userId: string,

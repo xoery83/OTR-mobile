@@ -52,12 +52,11 @@ describe("SQLite migrations", () => {
     expect(appliedMigrationIds).toContain(6);
   });
 
-  it("keeps Stage 5.1 local financial evidence at schema version 9", () => {
+  it("adds Stage 5.2 receipt metadata and an independent binary-free asset queue", () => {
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(9);
-    expect(latest.sql).toContain("CREATE TABLE ledger_rate_quotes");
-    expect(latest.sql).toContain("CREATE TABLE ledger_exchange_rate_snapshots");
-    expect(latest.sql).not.toContain("receipt");
-    expect(latest.sql).not.toContain("ocr");
+    expect(latest.id).toBe(10);
+    expect(latest.sql).toContain("CREATE TABLE ledger_receipt_assets");
+    expect(latest.sql).toContain("CREATE TABLE ledger_asset_operations");
+    expect(latest.sql).not.toContain("payload_json");
   });
 });

@@ -41,22 +41,22 @@ The project-creation option that automatically enables RLS added an unexpected
 `ensure_rls` event trigger and `public.rls_auto_enable()` function. Both were
 removed from this Dev project after explicit approval. There is no separate
 persistent Dashboard toggle after project creation: those objects implement the
-option. RLS remains explicitly enabled by repository migrations on all 86
+option. RLS remains explicitly enabled by repository migrations on all 87
 application tables.
 
 ## Hosted Manifest
 
 | Object                      | Hosted result |
 | --------------------------- | ------------: |
-| Public application tables   |            86 |
-| Public application columns  |         1,193 |
-| Constraints                 |           583 |
-| Indexes                     |           288 |
+| Public application tables   |            87 |
+| Public application columns  |         1,210 |
+| Constraints                 |           599 |
+| Indexes                     |           292 |
 | Public functions            |            53 |
-| Public triggers             |            72 |
-| RLS-enabled public tables   |            86 |
+| Public triggers             |            74 |
+| RLS-enabled public tables   |            87 |
 | Public and Storage policies |           178 |
-| Private Storage buckets     |             2 |
+| Private Storage buckets     |             3 |
 
 Hosted and local clean-room checksum for the same four-file lineage:
 

@@ -205,6 +205,34 @@ append-only PaymentRecords. Existing fields remain backward compatible and the
 active `valuation` projection remains singular; historical snapshots remain
 available for audit and explanation.
 
+### Stage 5.2 Receipt Assets
+
+`POST /v2/trips/:tripId/receipts` creates or replays receipt metadata from a
+stable Mobile local id and returns the canonical receipt id and object path.
+The request contains MIME type, byte size and SHA-256 only; it never contains
+receipt bytes or OCR text.
+
+`PUT /v2/trips/:tripId/receipts/:id/content` is an authenticated binary upload
+to the receipt's fixed private object path. Retries overwrite that same object,
+so response loss cannot create another asset. The backend rejects bytes whose
+size or SHA-256 differs from the declared metadata.
+
+`POST /v2/trips/:tripId/receipts/:id/upload-complete` is an idempotent command.
+It validates receipt identity, object path, stored byte size and SHA-256 before
+marking the asset uploaded. Same key/same payload replays; any identity or
+content mismatch fails without linking an Expense.
+
+`POST /v2/trips/:tripId/receipts/:id/links` idempotently links an uploaded or
+locally pending receipt to one Expense in the same Journey. Receipt upload and
+Expense mutation use independent identities and queues.
+
+`POST /v2/trips/:tripId/receipts/:id/ocr` runs the single configured OCR
+adapter and persists `PENDING`, `RUNNING`, `SUCCEEDED`, or `FAILED`. Its response
+contains only structured suggestions for title, merchant amount/currency,
+occurred date, and category. Raw OCR text is neither returned nor stored.
+Suggestions never mutate an Expense or payment/valuation evidence. Mobile must
+apply accepted fields through the existing explicit Expense command path.
+
 ## Settlement Commands
 
 - `POST /v2/trips/:tripId/settlements/preview`
