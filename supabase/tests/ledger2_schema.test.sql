@@ -14,9 +14,10 @@ select is(
       'expense_audit_events', 'expense_correction_requests', 'settlements',
       'settlement_inputs', 'settlement_member_balances', 'settlement_transfers',
       'settlement_payments', 'ledger_review_findings', 'ledger_idempotency_keys',
-      'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes'
+      'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes',
+      'settlement_audit_events'
     )),
-  22,
+  23,
   'all Ledger 2 tables exist'
 );
 
@@ -30,9 +31,10 @@ select is(
       'expense_audit_events', 'expense_correction_requests', 'settlements',
       'settlement_inputs', 'settlement_member_balances', 'settlement_transfers',
       'settlement_payments', 'ledger_review_findings', 'ledger_idempotency_keys',
-      'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes'
+      'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes',
+      'settlement_audit_events'
     ) and c.relrowsecurity and c.relforcerowsecurity),
-  22,
+  23,
   'all Ledger 2 tables enable and force RLS'
 );
 
@@ -45,7 +47,8 @@ select is(
       'expense_audit_events', 'expense_correction_requests', 'settlements',
       'settlement_inputs', 'settlement_member_balances', 'settlement_transfers',
       'settlement_payments', 'ledger_review_findings', 'ledger_idempotency_keys',
-      'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes'
+      'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes',
+      'settlement_audit_events'
     ])),
   0,
   'Ledger 2 exposes no direct user policies'
@@ -70,9 +73,10 @@ select is(
         'expense_audit_events', 'expense_correction_requests', 'settlements',
         'settlement_inputs', 'settlement_member_balances', 'settlement_transfers',
         'settlement_payments', 'ledger_review_findings', 'ledger_idempotency_keys',
-        'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes'
+        'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes',
+        'settlement_audit_events'
       )),
-  22,
+  23,
   'service role has backend access to all Ledger 2 tables'
 );
 

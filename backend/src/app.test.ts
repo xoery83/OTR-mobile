@@ -26,6 +26,54 @@ function createGateway(options: { authorized?: boolean } = {}) {
     ),
     canReadTrip: vi.fn(async () => options.authorized ?? true),
     canWriteTrip: vi.fn(async () => options.authorized ?? true),
+    canFinalizeSettlement: vi.fn(async () => options.authorized ?? true),
+    previewLedgerSettlement: vi.fn(async (_userId, requestedTripId, cutoff) => ({
+      state: "PREVIEW_READY" as const,
+      journeyId: requestedTripId,
+      throughTimestamp: cutoff,
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      settingsRevision: 1,
+      algorithmVersion: "ledger-settlement-greedy-v1" as const,
+      members: [],
+      inputs: [],
+      blockers: [],
+      exclusions: [],
+      balances: [],
+      transfers: [],
+      inputDigest: "a".repeat(64),
+    })),
+    finalizeLedgerSettlement: vi.fn(async (_userId, requestedTripId, _key, input) => ({
+      entity: {
+        id: "70000000-0000-4000-8000-000000000001",
+        journeyId: requestedTripId,
+        status: "FINALIZED" as const,
+        throughTimestamp: input.throughTimestamp,
+        settlementCurrency: "NZD",
+        settlementScale: 2,
+        settingsRevision: 1,
+        algorithmVersion: "ledger-settlement-greedy-v1" as const,
+        inputDigest: input.inputDigest,
+        revision: 1,
+        finalizedBy: userId,
+        finalizedAt: "2026-09-12T00:00:00.000Z",
+        inputs: [],
+        balances: [],
+        transfers: [],
+        auditEvents: [
+          {
+            id: "71000000-0000-4000-8000-000000000001",
+            eventType: "FINALIZED" as const,
+            actorUserId: userId,
+            actorMemberId: memberA,
+            reason: null,
+            revision: 1,
+            createdAt: "2026-09-12T00:00:00.000Z",
+          },
+        ],
+      },
+      idempotentReplay: false,
+    })),
     createReceipt: vi.fn(async (_userId, requestedTripId, receiptId, input) => ({
       entity: {
         id: receiptId,
@@ -74,6 +122,9 @@ function createGateway(options: { authorized?: boolean } = {}) {
     bootstrapLedger: vi.fn(async () => ({
       journey: {
         id: tripId,
+        title: "Europe",
+        startDate: "2026-09-01",
+        endDate: "2026-09-30",
         settlementCurrency: "NZD",
         settlementScale: 2,
         valuationPolicy: "REFERENCE_RATE",
@@ -107,8 +158,24 @@ function createGateway(options: { authorized?: boolean } = {}) {
       cursor: cursor === "cursor-1" ? "cursor-2" : "cursor-1",
       serverTime: "2026-09-11T00:00:00.000Z",
     })),
-    readMyLedger: vi.fn(async () => ({
-      reportingCurrency: "NZD",
+    readLedgerExpenses: vi.fn(async () => ({ expenses: [], nextCursor: null })),
+    readLedgerAnalysis: vi.fn(async (_userId, _tripId, _filters, scope, dimension) => ({
+      scope,
+      dimension,
+      currency: "NZD",
+      summary: {
+        totalMinor: 0,
+        expenseCount: 0,
+        includedExpenseIds: [],
+        unresolvedRateCount: 0,
+        openConflictCount: 0,
+      },
+      buckets: [],
+    })),
+    readMyLedger: vi.fn(async (_userId, period, from, to) => ({
+      period,
+      from,
+      to,
       journeys: [],
       serverTime: "2026-09-11T00:00:00.000Z",
     })),
@@ -462,6 +529,116 @@ describe("OTR Dev Backend", () => {
     expect(await bootstrap.json()).toMatchObject({ cursor: "cursor-1" });
     expect(changes.status).toBe(200);
     expect(gateway.pullLedgerChanges).toHaveBeenCalledWith(userId, tripId, "cursor-1");
+  });
+
+  it("keeps preview non-persistent and finalizes with the preview digest", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const throughTimestamp = "2026-09-12T00:00:00+00:00";
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+    };
+    const preview = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/preview`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ throughTimestamp }),
+      }),
+    );
+    const previewBody = (await preview.json()) as { inputDigest: string };
+    const finalized = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements`, {
+        method: "POST",
+        headers: { ...headers, "Idempotency-Key": "settlement-finalize" },
+        body: JSON.stringify({
+          throughTimestamp,
+          inputDigest: previewBody.inputDigest,
+        }),
+      }),
+    );
+
+    expect(preview.status).toBe(200);
+    expect(gateway.previewLedgerSettlement).toHaveBeenCalledOnce();
+    expect(finalized.status).toBe(201);
+    expect(await finalized.json()).toMatchObject({
+      entity: { status: "FINALIZED", inputDigest: "a".repeat(64) },
+    });
+  });
+
+  it("requires organizer capability for settlement preview", async () => {
+    const { gateway } = createGateway({ authorized: false });
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/preview`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ throughTimestamp: "2026-09-12T00:00:00.000Z" }),
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(gateway.previewLedgerSettlement).not.toHaveBeenCalled();
+  });
+
+  it("validates and authorizes Stage 6 reporting reads", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const headers = { Authorization: "Bearer valid-token" };
+    const list = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/expenses?receipt=HAS&limit=25`, {
+        headers,
+      }),
+    );
+    const analysis = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/analysis?scope=GROUP&dimension=CATEGORY&valuation=VALUED`,
+        { headers },
+      ),
+    );
+    const myLedger = await handle(
+      new Request("http://localhost/v2/me/ledger?period=ALL", { headers }),
+    );
+
+    expect(list.status).toBe(200);
+    expect(analysis.status).toBe(200);
+    expect(myLedger.status).toBe(200);
+    expect(gateway.readLedgerExpenses).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expect.objectContaining({ receipt: "HAS" }),
+      25,
+      0,
+    );
+    expect(gateway.readLedgerAnalysis).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expect.objectContaining({ valuation: "VALUED" }),
+      "GROUP",
+      "CATEGORY",
+    );
+    expect(gateway.readMyLedger).toHaveBeenCalledWith(userId, "ALL", null, null);
+  });
+
+  it("rejects unsupported reporting conversion and invalid filters", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const headers = { Authorization: "Bearer valid-token" };
+    const conversion = await handle(
+      new Request("http://localhost/v2/me/ledger?period=ALL&reportingCurrency=NZD", {
+        headers,
+      }),
+    );
+    const filter = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/expenses?receipt=MAYBE`, {
+        headers,
+      }),
+    );
+    expect(conversion.status).toBe(422);
+    expect(filter.status).toBe(400);
+    expect(gateway.readMyLedger).not.toHaveBeenCalled();
+    expect(gateway.readLedgerExpenses).not.toHaveBeenCalled();
   });
 
   it("keeps receipt metadata and authenticated binary upload on dedicated routes", async () => {

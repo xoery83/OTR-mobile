@@ -88,7 +88,10 @@ export function useLedgerStage3() {
   const cacheMyLedger = useCallback(
     () =>
       run(async () => {
-        const response = await createLedgerReadTransport().myLedger();
+        const response = await createLedgerReadTransport().myLedger("ALL", {
+          from: null,
+          to: null,
+        });
         await (await getDefaultLedgerReadRepository()).cacheMyLedger(response);
         return `Cached ${response.journeys.length} Journey summaries.`;
       }),

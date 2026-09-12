@@ -1,5 +1,5 @@
-import { TransferDetailScreen } from "@/features/ledger-prototype/TransferDetailScreen";
+import { SettlementReadinessScreen } from "@/features/ledger/SettlementReadinessScreen";
 
 export default function TransferDetailRoute() {
-  return <TransferDetailScreen />;
+  return <SettlementReadinessScreen />;
 }

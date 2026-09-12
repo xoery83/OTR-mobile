@@ -1,5 +1,5 @@
-import { LedgerStage3Screen } from "@/components/LedgerStage3Screen";
+import { LedgerStage6Screen } from "@/features/ledger/LedgerStage6Screen";
 
 export default function LedgerRoute() {
-  return <LedgerStage3Screen />;
+  return <LedgerStage6Screen />;
 }

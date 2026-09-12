@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { isIso4217Money } from "@/domain/ledger/currency";
 import { receiptSchema } from "./ledgerReceiptContracts";
+import { finalizedSettlementSchema } from "./ledgerSettlementContracts";
 
 const uuidSchema = z.uuid();
 export const ledgerMoneySchema = z
@@ -80,6 +81,8 @@ export const ledgerCapabilitySchema = z.object({
   canAddOwnPaymentEvidence: z.boolean().default(false),
   canManageExpenseValuation: z.boolean().default(false),
   canManageLedgerValuationPolicy: z.boolean().default(false),
+  canPrepareSettlement: z.boolean().optional(),
+  canFinalizeSettlement: z.boolean().optional(),
 });
 
 export const ledgerRateQuoteSchema = z.object({
@@ -187,6 +190,9 @@ export const ledgerCorrectionRequestSchema = z.object({
 export const ledgerBootstrapResponseSchema = z.object({
   journey: z.object({
     id: uuidSchema,
+    title: z.string(),
+    startDate: z.string().nullable(),
+    endDate: z.string().nullable(),
     settlementCurrency: z.string().regex(/^[A-Z]{3}$/),
     settlementScale: z.number().int().min(0).max(4),
     valuationPolicy: z.string(),
@@ -198,6 +204,7 @@ export const ledgerBootstrapResponseSchema = z.object({
   corrections: z.array(ledgerCorrectionRequestSchema),
   rateQuotes: z.array(ledgerRateQuoteSchema).default([]),
   receipts: z.array(receiptSchema).optional(),
+  settlements: z.array(finalizedSettlementSchema).optional(),
   actor: z.object({
     memberId: uuidSchema.nullable(),
     role: z.string().nullable(),
@@ -217,6 +224,7 @@ export const ledgerChangesResponseSchema = z.object({
         "RATE_QUOTE",
         "PAYMENT_RECORD",
         "RECEIPT",
+        "SETTLEMENT",
       ]),
       entityId: uuidSchema,
       revision: z.number().int().positive(),
@@ -229,6 +237,7 @@ export const ledgerChangesResponseSchema = z.object({
           ledgerRateQuoteSchema,
           ledgerPaymentRecordSchema,
           receiptSchema,
+          finalizedSettlementSchema,
         ])
         .nullable(),
     }),
@@ -237,21 +246,52 @@ export const ledgerChangesResponseSchema = z.object({
   serverTime: z.string(),
 });
 
+export const myLedgerPeriodSchema = z.enum(["30D", "YEAR", "ALL"]);
+
 export const myLedgerResponseSchema = z.object({
-  reportingCurrency: z.string().regex(/^[A-Z]{3}$/),
+  period: myLedgerPeriodSchema,
+  from: z.string().nullable(),
+  to: z.string().nullable(),
   journeys: z.array(
     z.object({
       journeyId: uuidSchema,
       title: z.string(),
+      startDate: z.string().nullable(),
+      endDate: z.string().nullable(),
       currency: z.string().regex(/^[A-Z]{3}$/),
+      scale: z.number().int().min(0).max(4),
+      mySpendMinor: z.number().int(),
       paidMinor: z.number().int(),
-      owedMinor: z.number().int(),
-      receivableMinor: z.number().int(),
-      netMinor: z.number().int(),
+      positionMinor: z.number().int(),
+      unvaluedCount: z.number().int().nonnegative(),
+      conflictCount: z.number().int().nonnegative(),
       updatedAt: z.string(),
     }),
   ),
   serverTime: z.string(),
+});
+
+export const ledgerReportAggregateSchema = z.object({
+  totalMinor: z.number().int(),
+  expenseCount: z.number().int().nonnegative(),
+  includedExpenseIds: z.array(uuidSchema),
+  unresolvedRateCount: z.number().int().nonnegative(),
+  openConflictCount: z.number().int().nonnegative(),
+});
+
+export const ledgerAnalysisResponseSchema = z.object({
+  scope: z.enum(["MINE", "GROUP"]),
+  dimension: z.enum(["CATEGORY", "DAY", "PAYER", "PARTICIPANT", "CURRENCY"]),
+  currency: z.string().regex(/^[A-Z]{3}$/),
+  summary: ledgerReportAggregateSchema,
+  buckets: z.array(
+    ledgerReportAggregateSchema.extend({ key: z.string(), label: z.string() }),
+  ),
+});
+
+export const ledgerExpenseListResponseSchema = z.object({
+  expenses: z.array(ledgerExpenseSchema),
+  nextCursor: z.string().nullable(),
 });
 
 export type LedgerBootstrapResponse = z.infer<typeof ledgerBootstrapResponseSchema>;
@@ -261,3 +301,6 @@ export type LedgerCorrectionRequest = z.infer<typeof ledgerCorrectionRequestSche
 export type LedgerRateQuoteDto = z.infer<typeof ledgerRateQuoteSchema>;
 export type LedgerPaymentRecordDto = z.infer<typeof ledgerPaymentRecordSchema>;
 export type MyLedgerResponse = z.infer<typeof myLedgerResponseSchema>;
+export type MyLedgerPeriod = z.infer<typeof myLedgerPeriodSchema>;
+export type LedgerAnalysisResponse = z.infer<typeof ledgerAnalysisResponseSchema>;
+export type LedgerExpenseListResponse = z.infer<typeof ledgerExpenseListResponseSchema>;

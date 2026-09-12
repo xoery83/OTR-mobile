@@ -4,123 +4,116 @@ Date: 2026-09-12
 
 ## Current Milestone
 
-OTR Mobile 2.0 Ledger 2.0 Stage 5 is complete. Stages 5.1, 5.2, and the integrated
-Stage 5.3 Release acceptance passed on Leon's physical iPhone 16 Pro against the
-approved Hosted Supabase Dev environment.
+OTR Mobile 2.0 Ledger 2.0 Stage 7.1, **Preview & Finalization**, is implemented
+and has passed automated, Hosted Dev, and two-client Simulator acceptance.
+Stages 1 through 6 remain the physically validated stable baseline.
 
-## Stable Baseline
+Stage 7.2 has not started. Paid/Received, partial or cross-currency repayment,
+payment disputes/corrections, adjustment settlement lifecycle, and export remain
+absent.
 
-Stages 1 through 5 are the stable baseline. Ledger bootstrap/pull, local-first
-financial commands, conflicts/corrections, independent evidence/valuation, and
-the receipt asset/OCR pipeline have passed their required automated, Simulator,
-Hosted Dev, and physical iPhone gates.
+Current local SQLite schema version: 12.
 
-Current local SQLite schema version: 10.
+## Stage 7.1 Delivered
 
-## Authoritative Ledger Sources
+- non-persistent canonical-server preview with `PREVIEW_READY` and
+  `PREVIEW_BLOCKED` response states;
+- explicit `RATE_REQUIRED` and open-conflict blockers, with Draft and Deleted
+  Expenses classified as exclusions rather than silently included;
+- deterministic integer-minor-unit paid/owed/net balances with an exact
+  zero-sum invariant;
+- deterministic greedy transfer planning and canonical SHA-256 input digest;
+- organizer-only authoritative finalization that rereads, locks, recomputes,
+  rejects stale input with `SETTLEMENT_INPUT_STALE`, and commits atomically;
+- one canonical active Stage 7.1 Settlement per Journey, idempotent replay, and
+  convergent concurrent identical finalization;
+- immutable normalized input snapshots containing payer/member identity,
+  participant splits, original and settlement values, valuation evidence, and
+  algorithm/settings facts required for exact explanation;
+- immutable finalized member balances, transfer obligations, and one canonical
+  successful `FINALIZED` audit event;
+- finalized-input Expense mutation protection without rewriting the historical
+  Expense or valuation;
+- bootstrap, incremental pull, repository read model, and offline cached
+  finalized history;
+- organizer confirmation UI. No payment action is exposed before Stage 7.2.
 
-- `docs/ledger/LEDGER_2_0_IMPLEMENTATION_PLAN.md`
-- `docs/ledger/LEDGER_2_0_API_CONTRACT.md`
-- `docs/adr/0011-ledger-stage-5-2-receipt-assets.md`
-- `docs/vertical-slices/EXPENSE_CREATE_SLICE.md`
-- `docs/vertical-slices/ITINERARY_CREATE_SLICE.md`
-
-## Latest Completed Checkpoint
-
-Stage 5.3 physically validated the integrated financial evidence and receipt
-path. Real camera capture, Photos selection, PDF document selection, permission
-denial/Settings recovery, offline receipt-first import, offline
-`RATE_REQUIRED`, force-quit/cold launch, reconnect, upload retry, OCR persistence,
-explicit suggestion confirmation, Expense synchronization, receipt linking, and
-canonical pull all passed in the configured Release build.
-
-Three physical-only defects were fixed narrowly: missing iOS camera/Photos usage
-descriptions, dynamic environment-key lookup that Release bundling could not
-inline for the Stage 5.1 harness, and the receipt upload path. Receipt upload now
-uses the installed Expo fetch/File Blob path; app-owned files are also relocated
-by filename when an iOS app update changes the data-container UUID, with the
-current URI written back to SQLite.
-
-Stage 5.2 adds expense-first and receipt-first capture through the native image,
-camera, and document pickers. Selected input is copied into app-owned Documents
-storage and SHA-256 verified before import. Receipt metadata and independent
-UPLOAD/OCR/LINK operations persist in SQLite; binary bytes never enter the
-financial queue, JSON mutations, audit payloads, or structured logs. Upload is
-authenticated and idempotent by stable local identity, fixed object path, byte
-size, and digest. OCR uses one provider boundary, stores structured suggestions
-only, and requires an explicit existing Expense command before domain mutation.
-
-Hosted Dev migration
-`20260912000600_ledger_2_stage_5_2_receipt_assets.sql` is applied to project
-`tuqigdxrvrerfewsxqgm`; local and remote migration ledgers match. Receipt
-metadata is service-role-only and receipt binary is held in the private
-`ledger-receipts` Storage bucket.
+SQLite v12 adds only the Stage 7.1 Settlement header, normalized input, member
+balance, transfer, and Settlement audit tables/indexes. Preview is never stored,
+and no payment or export table was added for this gate.
 
 ## Validation Status
 
-Completed on iOS Simulator: `/stage5-2-acceptance` passed expense-first upload
-failure isolation (`Expense = SYNCED`, `Receipt = FAILED`), receipt-first local
-import, process termination/cold relaunch, app-owned file durability, upload/OCR
-retry, explicit suggestion confirmation through the normal Expense create path,
-two completed server links, and duplicate-create identity replay. Read-only
-SQLite checks passed: `integrity_check = ok`, schema v10, exactly two receipt
-rows/two server ids/two object paths, all six UPLOAD/OCR/LINK operations
-COMPLETED, and no receipt filename or binary marker in financial operation JSON.
+- `npm test`: 36 files / 121 tests pass. `npm run typecheck` and
+  `npm run lint` pass. All Stage 7.1 changed files pass targeted Prettier.
+- Domain/property coverage verifies blocker classification, exact zero-sum,
+  deterministic digest/balances/transfers under input reordering, frozen input
+  copies, and integer rounding including the odd-minor-unit case.
+- Backend coverage verifies authentication/capability, non-persistent preview,
+  request validation, ISO UTC offset round-trip, finalization, and forbidden
+  ordinary-member preview/finalize access.
+- Local Supabase validation passes two clean resets, 7 SQL files / 142 pgTAP
+  assertions per run, deterministic manifest comparison, and zero shadow-schema
+  diff. Manifest: 88 tables, 1,223 columns, 610 constraints, 296 indexes,
+  55 functions, 75 triggers, 88 RLS tables, 178 policies, and 3 private buckets;
+  checksum `dcbc78a84ac4ac2a307784ee73a5390ba30a8a1e4168a4e480b65e3496a6bb82`.
+- Hosted Dev migration lineage matches all 12 repository migrations through
+  `20260912000800_ledger_2_stage_7_1_active_settlement_guard.sql`.
+- Hosted Dev integration verified stale preview rejection after a concurrent
+  canonical Expense change; two concurrent finalizations with distinct
+  idempotency keys returned one Settlement id; repeated finalization did not
+  duplicate Settlement, transfer, input, or audit facts.
+- Hosted Dev integration verified finalized Expense mutation protection and
+  that changing the current member display name leaves the frozen finalized
+  identity/input exactly explainable.
+- Backend-versus-Mobile parity passed on the actual two-client acceptance
+  Settlement: identical Settlement id, digest
+  `f91776eff1e8f3b8e215b860224cb979a2432d7af50fc55e3e971f769b47c1d9`,
+  balances `+5000/-5000`, one NZD 5000 transfer, and one normalized input on
+  Backend and both SQLite databases.
+- Organizer Simulator acceptance passed READY preview, odd-cent deterministic
+  allocation, explicit confirmation, canonical finalization, and finalized UI.
+  A second authenticated member Simulator cold-started, bootstrapped, and read
+  the same obligation. Ordinary-member prepare/finalize was rejected with 403.
+- Simulator blocker acceptance passed nine open-conflict blockers and a separate
+  `RATE_REQUIRED` blocker. Force-quit/restart removed a computed preview, proving
+  it was not persisted.
+- With the business Backend stopped, the member Simulator force-quit/restarted
+  and reconstructed the complete finalized Settlement from SQLite, while clearly
+  reporting cached/offline state.
+- The affected Stage 4B two-identity Simulator suite passed, including creator
+  edit/delete/restore, idempotent response-loss recovery, conflict, canonical
+  audit pull, organizer reason enforcement, and finalized-settlement guard.
+  Full automated Stage 4–6 suites also remain green.
 
-Stage 5.1 `/stage5-1-acceptance` was rerun and passed a real process
-terminate/cold relaunch from an offline EUR 100.00 `RATE_REQUIRED` create,
-successful later sync at r1, independent NZD 199.43 posted evidence, explicit
-NZD 197.80 manual group valuation with canonical reason/audit, append-only NZD
-200.00 payment supersession without revaluation, and a creator/organizer
-valuation race using the existing Stage 4C Financial Core conflict envelope.
-Keep Journey converged to canonical r3 / NZD 200.00 without creating settlement.
+During Simulator acceptance, two 7.1-scoped integration defects were found and
+fixed: PostgreSQL numeric valuation rates are normalized to canonical strings at
+the Backend boundary, and Settlement timestamp validation accepts canonical UTC
+offsets returned by PostgreSQL. Stale preview UI is cleared on Journey change or
+request failure.
 
-The full Stage 4C Simulator conflict/correction acceptance was also rerun and
-passed after the receipt integration changed the shared Ledger bootstrap path.
+`npm run format` remains blocked only by the pre-existing baseline differences
+in `AGENTS.md` and `src/hooks/useStage4BPhysicalSmoke.ts`; Stage 7.1 files pass
+targeted formatting.
 
-Completed on Leon's physical iPhone 16 Pro with the Release build:
-authenticated `/v2` bootstrap and mutation path, creator edit, tombstone/delete,
-restore, canonical audit pull/display cache, Stage 4A create regression,
-organizer override smoke, offline edit with backend stopped, force-quit/cold
-launch reconnect ordered sync to `SYNCED r2`, and read-only SQLite integrity.
+## Authoritative Sources For The Next Checkpoint
 
-Stage 4C physical smoke also passed on that Release iPhone with an iPhone 17 Pro
-Simulator as the second client. A phone-side offline r1 edit survived force-quit
-and cold relaunch; a concurrent Simulator r2 write produced explicit
-`REVISION_CONFLICT` without overwriting either branch. The immutable
-base/submitted/canonical snapshots compared byte-for-byte across another cold
-launch. Creator Keep Mine produced canonical r3 and both clients converged.
-An ordinary-member correction created offline on the phone survived restart,
-reconnected as OPEN, was accepted by the Simulator organizer, and converged on
-both clients as canonical r2 with `CORRECTION_ACCEPTED` audit.
-
-Final Stage 4 physical read-only iPhone SQLite checks passed: `integrity_check = ok`, schema v8,
-one RESOLVED conflict, one ACCEPTED correction, no duplicate Expense/audit/queue
-identities, and zero PENDING/PROCESSING/RETRYABLE operations.
-
-Latest automated validation: typecheck and lint passed; 30 Vitest files / 101
-tests passed. Full Supabase validation passed two clean resets, 6 SQL files / 129
-tests each run, deterministic schema manifest comparison, zero schema diff, and
-baseline/secret guards. Hosted Dev was exercised end-to-end by Simulator.
-
-Final Stage 5.3 read-only iPhone checks passed: `integrity_check = ok`, schema
-v10, no financial or asset operation in PENDING/PROCESSING/RETRYABLE, unique
-idempotency keys, three unique physical receipt assets/server ids/object paths,
-matching local and uploaded byte sizes/SHA-256 digests, one explicitly confirmed
-Expense/link, and a pulled canonical `CREATED` audit event. The two remaining
-receipt suggestions stayed unlinked. Stage 5.1 merchant EUR 100.00, payer NZD
-199.43/NZD 200.00 evidence, and historical/current Journey valuations remained
-independent after OCR confirmation. Ordinary structured backend logs contained
-only request id, normalized route, status, and duration; financial queue payloads
-contained no receipt URI or binary marker.
+- `docs/ledger/LEDGER_2_0_IMPLEMENTATION_PLAN.md`
+- `docs/ledger/LEDGER_2_0_API_CONTRACT.md`
+- `docs/adr/0013-ledger-stage-7-1-settlement-finalization.md`
+- `docs/ledger/LEDGER_2_0_SYNC_CONFLICT_MODEL.md`
+- `docs/ledger/LEDGER_2_0_UX_FLOW.md`
 
 ## Next Checkpoint
 
-Stage 5 is complete. Stop and wait for explicit approval before Stage 6
-analytics/search. Stage 7 settlement/payment remains out of scope.
+Stage 7.1 is complete. Stop and await explicit approval before Stage 7.2 Payment
+Lifecycle & Adjustment. Stage 7.3 owns export and integrated physical-device
+acceptance; no Stage 7.2, Stage 7.3, Stage 8, or Production work is authorized.
 
 ## Safety Notes
 
-Production remains read-only. Legacy OTR Web is reference-only. Mobile UI does
-not access Supabase business tables directly. Hosted Dev still uses the narrow
-Stage 5 acceptance OCR fixture rather than a production OCR service.
+Production and legacy OTR Web remain read-only and were not inspected or
+modified. Mobile UI does not access Supabase business tables directly. SQLite
+remains the Mobile source of truth. Stage 6 pre-settlement position remains a
+reporting projection, not debt; only finalized Stage 7.1 transfers are canonical
+obligations. Finalization does not mutate historical Expense or valuation facts.

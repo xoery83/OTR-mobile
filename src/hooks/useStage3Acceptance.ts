@@ -88,7 +88,7 @@ async function runAcceptance(mode: string) {
         `${hydrated} journey/member rows`,
       );
 
-      const myLedger = await transport.myLedger();
+      const myLedger = await transport.myLedger("ALL", { from: null, to: null });
       await readRepository.cacheMyLedger(myLedger);
       const summaries = await readRepository.listMyLedgerSummaries();
       record("My Ledger cache", summaries.length > 0, `${summaries.length} summaries`);

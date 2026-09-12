@@ -16,6 +16,10 @@ const ledger51LinksPath =
   "supabase/migrations/20260912000500_ledger_2_stage_5_1_evidence_links.sql";
 const ledger52Path =
   "supabase/migrations/20260912000600_ledger_2_stage_5_2_receipt_assets.sql";
+const ledger71Path =
+  "supabase/migrations/20260912000700_ledger_2_stage_7_1_settlements.sql";
+const ledger71GuardPath =
+  "supabase/migrations/20260912000800_ledger_2_stage_7_1_active_settlement_guard.sql";
 const seedPath = "supabase/seed.sql";
 
 const [
@@ -29,6 +33,8 @@ const [
   ledger51,
   ledger51Links,
   ledger52,
+  ledger71,
+  ledger71Guard,
   seed,
   manifestRaw,
 ] = await Promise.all([
@@ -42,19 +48,21 @@ const [
   readFile(ledger51Path, "utf8"),
   readFile(ledger51LinksPath, "utf8"),
   readFile(ledger52Path, "utf8"),
+  readFile(ledger71Path, "utf8"),
+  readFile(ledger71GuardPath, "utf8"),
   readFile(seedPath, "utf8"),
   readFile("supabase/schema-manifest.json", "utf8"),
 ]);
 
 const manifest = JSON.parse(manifestRaw);
 const expected = {
-  tables: 87,
-  columns: 1210,
-  constraints: 599,
-  indexes: 292,
-  functions: 53,
-  triggers: 74,
-  rls_tables: 87,
+  tables: 88,
+  columns: 1223,
+  constraints: 610,
+  indexes: 296,
+  functions: 55,
+  triggers: 75,
+  rls_tables: 88,
   policies: 178,
   buckets: 3,
 };
@@ -95,7 +103,7 @@ const secretPatterns = [
 for (const pattern of secretPatterns) {
   if (
     pattern.test(
-      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${seed}`,
+      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${seed}`,
     )
   ) {
     throw new Error(`Production identifier or secret-like value found: ${pattern}`);
@@ -127,6 +135,10 @@ const lineageChecksum = createHash("sha256")
   .update(ledger51Links)
   .update("\0")
   .update(ledger52)
+  .update("\0")
+  .update(ledger71)
+  .update("\0")
+  .update(ledger71Guard)
   .digest("hex");
 
 console.log(

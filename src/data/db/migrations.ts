@@ -463,4 +463,115 @@ export const migrations: Migration[] = [
         ON ledger_asset_operations (status, created_at);
     `,
   },
+  {
+    id: 11,
+    name: "ledger_2_stage_6_reporting",
+    sql: `
+      ALTER TABLE ledger_journeys ADD COLUMN title TEXT;
+      ALTER TABLE ledger_journeys ADD COLUMN start_date TEXT;
+      ALTER TABLE ledger_journeys ADD COLUMN end_date TEXT;
+
+      CREATE TABLE ledger_preferences (
+        id INTEGER PRIMARY KEY NOT NULL CHECK (id = 1),
+        selected_journey_id TEXT,
+        updated_at TEXT NOT NULL
+      );
+
+      DROP TABLE ledger_my_journey_summaries;
+      CREATE TABLE ledger_my_journey_summaries (
+        journey_id TEXT NOT NULL,
+        period_key TEXT NOT NULL,
+        from_at TEXT,
+        to_at TEXT,
+        title TEXT NOT NULL,
+        start_date TEXT,
+        end_date TEXT,
+        currency TEXT NOT NULL,
+        scale INTEGER NOT NULL,
+        my_spend_minor INTEGER NOT NULL,
+        paid_minor INTEGER NOT NULL,
+        position_minor INTEGER NOT NULL,
+        unvalued_count INTEGER NOT NULL,
+        conflict_count INTEGER NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (journey_id, period_key)
+      );
+
+      CREATE INDEX ledger_expense_participants_member
+        ON ledger_expense_participants (member_id, expense_id);
+      CREATE INDEX ledger_receipt_assets_expense
+        ON ledger_receipt_assets (expense_id);
+    `,
+  },
+  {
+    id: 12,
+    name: "ledger_2_stage_7_1_settlement_finalization",
+    sql: `
+      CREATE TABLE ledger_settlements (
+        id TEXT PRIMARY KEY NOT NULL,
+        journey_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('FINALIZED', 'SUPERSEDED')),
+        through_timestamp TEXT NOT NULL,
+        settlement_currency TEXT NOT NULL,
+        settlement_scale INTEGER NOT NULL,
+        settings_revision INTEGER NOT NULL,
+        algorithm_version TEXT NOT NULL,
+        input_digest TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        finalized_by TEXT NOT NULL,
+        finalized_at TEXT NOT NULL,
+        UNIQUE (journey_id, input_digest)
+      );
+      CREATE INDEX ledger_settlements_journey_finalized
+        ON ledger_settlements (journey_id, finalized_at DESC);
+
+      CREATE TABLE ledger_settlement_inputs (
+        settlement_id TEXT NOT NULL,
+        expense_id TEXT NOT NULL,
+        expense_revision INTEGER NOT NULL,
+        normalized_snapshot_json TEXT NOT NULL,
+        PRIMARY KEY (settlement_id, expense_id)
+      );
+
+      CREATE TABLE ledger_settlement_member_balances (
+        settlement_id TEXT NOT NULL,
+        member_id TEXT NOT NULL,
+        display_name_snapshot TEXT NOT NULL,
+        paid_minor INTEGER NOT NULL,
+        owed_minor INTEGER NOT NULL,
+        transferred_minor INTEGER NOT NULL,
+        net_minor INTEGER NOT NULL,
+        currency TEXT NOT NULL,
+        scale INTEGER NOT NULL,
+        PRIMARY KEY (settlement_id, member_id)
+      );
+
+      CREATE TABLE ledger_settlement_transfers (
+        id TEXT PRIMARY KEY NOT NULL,
+        settlement_id TEXT NOT NULL,
+        from_member_id TEXT NOT NULL,
+        to_member_id TEXT NOT NULL,
+        obligation_amount_minor INTEGER NOT NULL,
+        currency TEXT NOT NULL,
+        scale INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        revision INTEGER NOT NULL
+      );
+      CREATE INDEX ledger_settlement_transfers_settlement
+        ON ledger_settlement_transfers (settlement_id, id);
+
+      CREATE TABLE ledger_settlement_audit_events (
+        id TEXT PRIMARY KEY NOT NULL,
+        settlement_id TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        actor_user_id TEXT NOT NULL,
+        actor_member_id TEXT NOT NULL,
+        reason TEXT,
+        settlement_revision INTEGER NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX ledger_settlement_audit_events_settlement
+        ON ledger_settlement_audit_events (settlement_id, settlement_revision, created_at);
+    `,
+  },
 ];

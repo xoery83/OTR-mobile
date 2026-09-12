@@ -1,5 +1,5 @@
-import { ExpenseDetailScreen } from "@/features/ledger-prototype/ExpenseDetailScreen";
+import { LedgerExpenseDetailScreen } from "@/features/ledger/LedgerExpenseDetailScreen";
 
 export default function ExpenseDetailRoute() {
-  return <ExpenseDetailScreen />;
+  return <LedgerExpenseDetailScreen />;
 }

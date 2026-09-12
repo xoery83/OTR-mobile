@@ -132,6 +132,9 @@ describe("Ledger read repository", () => {
     const response: LedgerBootstrapResponse = {
       journey: {
         id: journeyId,
+        title: "Europe",
+        startDate: "2026-09-01",
+        endDate: "2026-09-30",
         settlementCurrency: "NZD",
         settlementScale: 2,
         valuationPolicy: "REFERENCE_RATE",
@@ -200,6 +203,9 @@ describe("Ledger read repository", () => {
     const response: LedgerBootstrapResponse = {
       journey: {
         id: journeyId,
+        title: "Europe",
+        startDate: "2026-09-01",
+        endDate: "2026-09-30",
         settlementCurrency: "NZD",
         settlementScale: 2,
         valuationPolicy: "REFERENCE_RATE",
@@ -244,6 +250,9 @@ describe("Ledger read repository", () => {
     const response: LedgerBootstrapResponse = {
       journey: {
         id: journeyId,
+        title: "Europe",
+        startDate: "2026-09-01",
+        endDate: "2026-09-30",
         settlementCurrency: "NZD",
         settlementScale: 2,
         valuationPolicy: "REFERENCE_RATE",
@@ -291,6 +300,9 @@ describe("Ledger read repository", () => {
     const response: LedgerBootstrapResponse = {
       journey: {
         id: journeyId,
+        title: "Europe",
+        startDate: "2026-09-01",
+        endDate: "2026-09-30",
         settlementCurrency: "NZD",
         settlementScale: 2,
         valuationPolicy: "REFERENCE_RATE",
@@ -407,16 +419,22 @@ describe("Ledger read repository", () => {
   it("caches narrow My Ledger summaries without Journey detail hydration", async () => {
     const { db, writes } = database();
     const response: MyLedgerResponse = {
-      reportingCurrency: "NZD",
+      period: "YEAR",
+      from: "2026-01-01T00:00:00.000Z",
+      to: "2026-09-12T00:00:00.000Z",
       journeys: [
         {
           journeyId,
           title: "Europe",
+          startDate: "2026-09-01",
+          endDate: "2026-09-30",
           currency: "NZD",
+          scale: 2,
+          mySpendMinor: 250,
           paidMinor: 1000,
-          owedMinor: 250,
-          receivableMinor: 750,
-          netMinor: 750,
+          positionMinor: 750,
+          unvaluedCount: 0,
+          conflictCount: 0,
           updatedAt: "2026-09-11T00:00:00.000Z",
         },
       ],
@@ -425,7 +443,7 @@ describe("Ledger read repository", () => {
 
     await createLedgerReadRepository(db).cacheMyLedger(response);
 
-    expect(writes).toHaveLength(1);
-    expect(writes[0].sql).toContain("ledger_my_journey_summaries");
+    expect(writes).toHaveLength(2);
+    expect(writes[1].sql).toContain("ledger_my_journey_summaries");
   });
 });

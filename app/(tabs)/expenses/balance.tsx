@@ -1,5 +1,5 @@
-import { BalanceScreen } from "@/features/ledger-prototype/BalanceScreen";
+import { SettlementReadinessScreen } from "@/features/ledger/SettlementReadinessScreen";
 
 export default function BalanceRoute() {
-  return <BalanceScreen />;
+  return <SettlementReadinessScreen />;
 }

@@ -1,7 +1,9 @@
 # Ledger 2.0 iOS And Backend Implementation Plan
 
 Date: 2026-09-12
-Status: Approved; Stage 0 through Stage 5 physically validated and complete
+Status: Approved; Stage 0 through Stage 6 physically validated and complete;
+Stage 7.1 passed automated, Hosted Dev, and two-client Simulator acceptance;
+Stage 7.2 has not started
 
 ## Objective
 
@@ -303,6 +305,18 @@ Exit gate:
 
 ## Stage 6: Spending, Search, And My Ledger
 
+Approved semantics: ADR 0012.
+
+Status (2026-09-12): complete. Implementation, automated/backend/Supabase
+validation, Backend-vs-SQLite parity, 10,000-Expense performance, Simulator,
+maximum Dynamic Type, and VoiceOver structure checks passed. Release physical
+acceptance on Leon's iPhone 16 Pro passed offline cache, Journey context,
+reporting/drill-down, My Ledger, readiness-only Settlement, long-list,
+reconnect/convergence, maximum Dynamic Type, and final read-only SQLite v11
+checks. Physical VoiceOver operation was explicitly waived by the user after
+Simulator validation and remains a non-blocking risk. Stage 7.1 is now complete;
+this paragraph records the unchanged Stage 6 exit gate.
+
 Replace the prototype views with repository-backed screens:
 
 - persistent Journey context and zero/one/multiple-current-Journey rules;
@@ -316,6 +330,17 @@ Replace the prototype views with repository-backed screens:
 Cross-Journey reporting may convert display totals using explicit reporting-rate
 provenance. It never cross-nets settlement obligations.
 
+Stage 6 does not enable that optional conversion. My Ledger retains each
+Journey's settlement currency and reports pre-settlement position only.
+`RATE_REQUIRED` and open-conflict Expenses remain visible but are explicit
+exclusions from authoritative settlement-currency totals. Backend and SQLite
+reporting must reconcile totals, counts, and included Expense identities from
+identical fixtures, and every aggregate drill-down must expose exactly the
+components used by the aggregate.
+
+The Stage 6 Settlement mode is structural/readiness UI only; Stage 7 transfers,
+obligations, and Paid/Received behavior remain out of scope.
+
 Exit gate:
 
 - all displayed totals reconcile to their component rows;
@@ -323,6 +348,24 @@ Exit gate:
 - Dynamic Type and VoiceOver do not hide Journey or financial context.
 
 ## Stage 7: Settlement And Repayment
+
+Stage 7 is delivered through three ordered engineering gates. Each gate must
+pass automated and Simulator acceptance before the next begins:
+
+1. **7.1 Preview & Finalization** — non-persistent blocker/ready preview,
+   canonical digest, authoritative transactional finalization, immutable
+   normalized inputs, member balances/transfers, SQLite v12, read/pull, and
+   finalized-Expense protection.
+2. **7.2 Payment Lifecycle & Adjustment** — Paid/Received, partial and
+   cross-currency payments, reject/dispute/correction, and adjustment lineage.
+3. **7.3 Export & Integrated Acceptance** — immutable PDF/structured export and
+   combined recovery, convergence, Simulator, and physical-device acceptance.
+
+Do not begin a later gate until the prior gate passes.
+
+Stage 7.1 passed on 2026-09-12. Its canonical preview/finalization, immutable
+input, SQLite v12, concurrency, blocker, parity, restart, and regression gates
+are complete. Stop before Stage 7.2 pending explicit approval.
 
 Implement deterministic preview, blockers, immutable finalization input digest,
 member balances, and minimized transfer plan. Then implement:

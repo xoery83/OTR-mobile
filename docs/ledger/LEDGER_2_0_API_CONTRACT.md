@@ -108,11 +108,23 @@ Returns the complete authorized aggregate.
 Returns server-verifiable grouped totals. Mobile may calculate equivalent
 offline projections from SQLite; both must reconcile from the same exact splits.
 
+Stage 6 accepts the same explicit `[from,to)` date bounds and category,
+payer/member, currency, business-status, sync-status, conflict, valuation, and
+receipt-presence filters used by Mobile. Each total or bucket returns its exact
+included Expense ids and unresolved-rate/open-conflict counts so its drill-down
+can be verified without changing reporting semantics.
+
 ### `GET /v2/me/ledger?from=&to=&reportingCurrency=`
 
 Returns personal spending and obligations grouped by Journey. It never nets
 debts between Journeys. Reporting conversion includes provenance and is display
 only.
+
+Stage 6 requires explicit UTC `[from,to)` bounds for bounded periods and returns
+Journey-separated settlement-currency rows with personal spend, paid value, and
+pre-settlement position. Cross-Journey reporting-currency conversion is not
+enabled; `reportingCurrency` is rejected unless a later contract supplies
+explicit reporting-rate provenance.
 
 ## Expense Commands
 
@@ -248,6 +260,38 @@ Preview returns an `inputDigest`. Finalize succeeds only when that digest still
 matches all Expense revisions, valuations, members, and confirmed payments.
 Reporting Paid and confirming Received are separate authenticated operations.
 Only confirmed payments discharge an obligation.
+
+Stage 7.1 has no SettlementPayment facts, so its digest contains only the
+Expense/member/settings/valuation and algorithm inputs defined below. Payment
+scope enters the adjustment lineage in Stage 7.2.
+
+### Stage 7.1 Preview And Finalization
+
+`POST /v2/trips/:tripId/settlements/preview` accepts an ISO UTC
+`throughTimestamp`. It returns computed state `PREVIEW_BLOCKED` or
+`PREVIEW_READY`, blockers and exclusions, normalized immutable input candidates,
+member balances, deterministic suggested transfers, `algorithmVersion`, and a
+SHA-256 `inputDigest`. Preview creates no Settlement row or business audit event.
+
+`POST /v2/trips/:tripId/settlements` accepts `throughTimestamp` and the preview
+`inputDigest` with an `Idempotency-Key`. It is organizer-only. The backend locks
+the Journey, rereads and recomputes canonical server state, and returns
+`SETTLEMENT_INPUT_STALE` when it differs. A successful transaction begins at
+`FINALIZED` and atomically persists:
+
+- one canonical Settlement;
+- immutable normalized per-Expense input snapshots;
+- immutable member identity/balance snapshots;
+- deterministic transfer obligations;
+- one append-only `FINALIZED` Settlement audit event;
+- the idempotent canonical response.
+
+Concurrent finalization of the same Journey digest returns the same Settlement.
+Finalizing a different digest while an active Settlement exists returns
+`SETTLEMENT_ALREADY_FINALIZED`; Stage 7.2 owns explicit supersede/adjustment.
+Stage 7.1 bootstrap and pull include finalized Settlements and their immutable
+inputs, balances, transfers, and audit events. They do not include payment or
+export behavior.
 
 ## Idempotency And Revisions
 

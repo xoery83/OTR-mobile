@@ -52,11 +52,16 @@ describe("SQLite migrations", () => {
     expect(appliedMigrationIds).toContain(6);
   });
 
-  it("adds Stage 5.2 receipt metadata and an independent binary-free asset queue", () => {
+  it("adds Stage 5.2 assets before the Stage 6 reporting cache", () => {
+    const stage5 = migrations.find((migration) => migration.id === 10)!;
+    expect(stage5.sql).toContain("CREATE TABLE ledger_receipt_assets");
+    expect(stage5.sql).toContain("CREATE TABLE ledger_asset_operations");
+    expect(stage5.sql).not.toContain("payload_json");
+
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(10);
-    expect(latest.sql).toContain("CREATE TABLE ledger_receipt_assets");
-    expect(latest.sql).toContain("CREATE TABLE ledger_asset_operations");
-    expect(latest.sql).not.toContain("payload_json");
+    expect(latest.id).toBe(12);
+    expect(latest.sql).toContain("CREATE TABLE ledger_settlements");
+    expect(latest.sql).toContain("CREATE TABLE ledger_settlement_inputs");
+    expect(latest.sql).not.toContain("ledger_settlement_payments");
   });
 });

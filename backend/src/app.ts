@@ -28,12 +28,26 @@ import {
   updateLedgerExpenseRequestSchema,
 } from "../../src/data/api/ledgerMutationContracts";
 import type {
+  LedgerAnalysisResponse,
   LedgerBootstrapResponse,
   LedgerChangesResponse,
+  LedgerExpenseListResponse,
   LedgerRateQuoteDto,
   LedgerPaymentRecordDto,
+  MyLedgerPeriod,
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
+import {
+  settlementFinalizeRequestSchema,
+  settlementPreviewRequestSchema,
+  type SettlementFinalizeResponse,
+  type SettlementPreviewResponse,
+} from "../../src/data/api/ledgerSettlementContracts";
+import type {
+  ReportingDimension,
+  ReportingFilters,
+  ReportingScope,
+} from "../../src/domain/ledger/reporting";
 import {
   completeReceiptRequestSchema,
   createReceiptRequestSchema,
@@ -58,19 +72,50 @@ export type DevBackendGateway = {
   validateAccessToken(token: string): Promise<AuthenticatedUser | null>;
   canReadTrip(userId: string, tripId: string): Promise<boolean>;
   canWriteTrip(userId: string, tripId: string): Promise<boolean>;
+  canFinalizeSettlement(userId: string, tripId: string): Promise<boolean>;
   bootstrapLedger(userId: string, tripId: string): Promise<LedgerBootstrapResponse>;
   pullLedgerChanges(
     userId: string,
     tripId: string,
     cursor: string | null,
   ): Promise<LedgerChangesResponse>;
-  readMyLedger(userId: string): Promise<MyLedgerResponse>;
+  readLedgerExpenses(
+    userId: string,
+    tripId: string,
+    filters: ReportingFilters,
+    limit: number,
+    offset: number,
+  ): Promise<LedgerExpenseListResponse>;
+  readLedgerAnalysis(
+    userId: string,
+    tripId: string,
+    filters: ReportingFilters,
+    scope: ReportingScope,
+    dimension: ReportingDimension,
+  ): Promise<LedgerAnalysisResponse>;
+  readMyLedger(
+    userId: string,
+    period: MyLedgerPeriod,
+    from: string | null,
+    to: string | null,
+  ): Promise<MyLedgerResponse>;
   readLedgerRateQuotes(
     userId: string,
     tripId: string,
     quoteCurrency: string | null,
     baseCurrency: string | null,
   ): Promise<LedgerRateQuoteDto[]>;
+  previewLedgerSettlement(
+    userId: string,
+    tripId: string,
+    throughTimestamp: string,
+  ): Promise<SettlementPreviewResponse>;
+  finalizeLedgerSettlement(
+    userId: string,
+    tripId: string,
+    idempotencyKey: string,
+    input: { throughTimestamp: string; inputDigest: string },
+  ): Promise<SettlementFinalizeResponse>;
   createLedgerExpense(
     userId: string,
     tripId: string,
@@ -680,11 +725,123 @@ async function createLedgerEvidence(request: Request, gateway: DevBackendGateway
   );
 }
 
+async function mutateLedgerSettlement(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/settlements(?:\/(preview))?$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, action] = match;
+  assertTripId(tripId);
+  const user = await authenticate(request, gateway);
+  if (!(await gateway.canFinalizeSettlement(user.id, tripId))) {
+    throw new HttpError(
+      403,
+      "TRIP_WRITE_FORBIDDEN",
+      "Organizer settlement access is required.",
+    );
+  }
+  const body = await parseBody(request);
+  if (action === "preview") {
+    const parsed = settlementPreviewRequestSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    return json(
+      200,
+      await gateway.previewLedgerSettlement(
+        user.id,
+        tripId,
+        parsed.data.throughTimestamp,
+      ),
+    );
+  }
+  const parsed = settlementFinalizeRequestSchema.safeParse(body);
+  if (!parsed.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  const response = await gateway.finalizeLedgerSettlement(
+    user.id,
+    tripId,
+    getIdempotencyKey(request),
+    parsed.data,
+  );
+  return json(response.idempotentReplay ? 200 : 201, response);
+}
+
 async function readEntity(request: Request, gateway: DevBackendGateway) {
   const url = new URL(request.url);
   if (url.pathname === "/v2/me/ledger") {
     const user = await authenticate(request, gateway);
-    return json(200, await gateway.readMyLedger(user.id));
+    if (url.searchParams.has("reportingCurrency")) {
+      throw new HttpError(
+        422,
+        "REPORTING_CURRENCY_UNSUPPORTED",
+        "Stage 6 does not convert across Journey currencies.",
+      );
+    }
+    const period = url.searchParams.get("period") as MyLedgerPeriod | null;
+    if (!period || !["30D", "YEAR", "ALL"].includes(period)) {
+      throw new HttpError(400, "INVALID_PERIOD", "A valid My Ledger period is required.");
+    }
+    const from = url.searchParams.get("from");
+    const to = url.searchParams.get("to");
+    if (period !== "ALL" && (!validDate(from) || !validDate(to))) {
+      throw new HttpError(400, "INVALID_PERIOD", "Bounded periods need UTC from/to.");
+    }
+    return json(
+      200,
+      await gateway.readMyLedger(
+        user.id,
+        period,
+        period === "ALL" ? null : from,
+        period === "ALL" ? null : to,
+      ),
+    );
+  }
+
+  const expenses = url.pathname.match(/^\/v2\/trips\/([^/]+)\/expenses$/);
+  if (expenses) {
+    const [, tripId] = expenses;
+    const user = await authorizeRead(request, gateway, tripId);
+    const requestedLimit = Number(url.searchParams.get("limit") ?? 50);
+    if (!Number.isInteger(requestedLimit) || requestedLimit < 1) {
+      throw new HttpError(400, "INVALID_LIMIT", "The page limit is invalid.");
+    }
+    return json(
+      200,
+      await gateway.readLedgerExpenses(
+        user.id,
+        tripId,
+        reportingFilters(url),
+        Math.min(requestedLimit, 100),
+        decodePageCursor(url.searchParams.get("cursor")),
+      ),
+    );
+  }
+
+  const analysis = url.pathname.match(/^\/v2\/trips\/([^/]+)\/ledger\/analysis$/);
+  if (analysis) {
+    const [, tripId] = analysis;
+    const user = await authorizeRead(request, gateway, tripId);
+    const scope = url.searchParams.get("scope") as ReportingScope | null;
+    const dimension = url.searchParams.get("dimension") as ReportingDimension | null;
+    if (!scope || !["MINE", "GROUP"].includes(scope)) {
+      throw new HttpError(400, "INVALID_SCOPE", "The reporting scope is invalid.");
+    }
+    if (
+      !dimension ||
+      !["CATEGORY", "DAY", "PAYER", "PARTICIPANT", "CURRENCY"].includes(dimension)
+    ) {
+      throw new HttpError(400, "INVALID_DIMENSION", "The analysis dimension is invalid.");
+    }
+    return json(
+      200,
+      await gateway.readLedgerAnalysis(
+        user.id,
+        tripId,
+        reportingFilters(url),
+        scope,
+        dimension,
+      ),
+    );
   }
 
   const match = url.pathname.match(
@@ -714,6 +871,89 @@ async function readEntity(request: Request, gateway: DevBackendGateway) {
   );
 }
 
+function validDate(value: string | null): value is string {
+  return Boolean(value && Number.isFinite(Date.parse(value)));
+}
+
+function decodePageCursor(cursor: string | null) {
+  if (!cursor) return 0;
+  try {
+    const value = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as {
+      sequence?: unknown;
+    };
+    if (typeof value.sequence !== "number" || value.sequence < 0) throw new Error();
+    return value.sequence;
+  } catch {
+    throw new HttpError(400, "INVALID_CURSOR", "The page cursor is invalid.");
+  }
+}
+
+function reportingFilters(url: URL): ReportingFilters {
+  const value = (name: string) => url.searchParams.get(name) || undefined;
+  const from = value("from");
+  const to = value("to");
+  const query = value("query");
+  const category = value("category");
+  const payerMemberId = value("payerMemberId");
+  const participantMemberId = value("participantMemberId");
+  const currency = value("currency");
+  const businessStatus = value("businessStatus");
+  const syncStatus = value("syncStatus");
+  const conflict = value("conflict");
+  const valuation = value("valuation");
+  const receipt = value("receipt");
+  if ((from && !validDate(from)) || (to && !validDate(to)) || (from && to && from >= to))
+    throw new HttpError(400, "INVALID_FILTER", "The date filter is invalid.");
+  if (query && query.length > 200)
+    throw new HttpError(400, "INVALID_FILTER", "The search query is too long.");
+  if (category && category.length > 100)
+    throw new HttpError(400, "INVALID_FILTER", "The category filter is too long.");
+  if (
+    (payerMemberId && !uuidPattern.test(payerMemberId)) ||
+    (participantMemberId && !uuidPattern.test(participantMemberId))
+  )
+    throw new HttpError(400, "INVALID_FILTER", "The member filter is invalid.");
+  if (currency && !/^[A-Z]{3}$/.test(currency))
+    throw new HttpError(400, "INVALID_FILTER", "The currency filter is invalid.");
+  if (
+    businessStatus &&
+    !["DRAFT", "ACCEPTED", "RATE_REQUIRED", "DELETED"].includes(businessStatus)
+  )
+    throw new HttpError(400, "INVALID_FILTER", "The business status filter is invalid.");
+  if (
+    syncStatus &&
+    ![
+      "SYNCED",
+      "PENDING_CREATE",
+      "PENDING_UPDATE",
+      "PENDING_DELETE",
+      "FAILED",
+      "CONFLICT",
+    ].includes(syncStatus)
+  )
+    throw new HttpError(400, "INVALID_FILTER", "The sync status filter is invalid.");
+  if (conflict && !["OPEN", "NONE"].includes(conflict))
+    throw new HttpError(400, "INVALID_FILTER", "The conflict filter is invalid.");
+  if (valuation && !["VALUED", "RATE_REQUIRED"].includes(valuation))
+    throw new HttpError(400, "INVALID_FILTER", "The valuation filter is invalid.");
+  if (receipt && !["HAS", "HAS_NOT"].includes(receipt))
+    throw new HttpError(400, "INVALID_FILTER", "The receipt filter is invalid.");
+  return {
+    from,
+    to,
+    query,
+    category,
+    payerMemberId,
+    participantMemberId,
+    currency,
+    businessStatus,
+    syncStatus,
+    conflict: conflict as ReportingFilters["conflict"],
+    valuation: valuation as ReportingFilters["valuation"],
+    receipt: receipt as ReportingFilters["receipt"],
+  };
+}
+
 export function createDevBackendHandler({
   gateway,
   log,
@@ -739,6 +979,12 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/receipts";
         response = await mutateReceipt(request, gateway);
+      } else if (
+        request.method === "POST" &&
+        /^\/v2\/trips\/[^/]+\/settlements(?:\/preview)?$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/settlements";
+        response = await mutateLedgerSettlement(request, gateway);
       } else if (request.method === "POST" && url.pathname.startsWith("/v2/dev/")) {
         route = "/v2/dev/trips/:tripId/expenses/:expenseId/finalized-guard-fixture";
         response = await createFinalizedGuardFixture(request, gateway);

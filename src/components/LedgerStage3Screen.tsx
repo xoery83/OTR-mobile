@@ -89,11 +89,13 @@ export function LedgerStage3Screen() {
             <View style={styles.grow}>
               <Text style={styles.rowTitle}>{summary.title}</Text>
               <Text style={styles.meta}>
-                Paid {money(summary.paidMinor, summary.currency)} · Owed{" "}
-                {money(summary.owedMinor, summary.currency)}
+                Paid {money(summary.paidMinor, summary.currency)} · My spend{" "}
+                {money(summary.mySpendMinor, summary.currency)}
               </Text>
             </View>
-            <Text style={styles.amount}>{money(summary.netMinor, summary.currency)}</Text>
+            <Text style={styles.amount}>
+              {money(summary.positionMinor, summary.currency)}
+            </Text>
           </View>
         ))}
       </ScrollView>

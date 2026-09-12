@@ -2,9 +2,8 @@
 
 ## Status
 
-Hosted baseline validation completed on 2026-09-10. Ledger 2.0 Stage 1 was
-deployed on 2026-09-11; Stage 5.1 was deployed and verified on 2026-09-12. This
-project is Development-only.
+Hosted baseline validation completed on 2026-09-10. Ledger 2.0 Stage 7.1 was
+deployed and verified on 2026-09-12. This project is Development-only.
 
 | Item              | Value                                      |
 | ----------------- | ------------------------------------------ |
@@ -31,42 +30,46 @@ by the deterministic seed:
 7. `20260912000300_ledger_2_stage_4c_conflicts.sql`
 8. `20260912000400_ledger_2_stage_5_1_financial_evidence.sql`
 9. `20260912000500_ledger_2_stage_5_1_evidence_links.sql`
-10. `supabase/seed.sql` for deterministic local reconstruction
+10. `20260912000600_ledger_2_stage_5_2_receipt_assets.sql`
+11. `20260912000700_ledger_2_stage_7_1_settlements.sql`
+12. `20260912000800_ledger_2_stage_7_1_active_settlement_guard.sql`
+13. `supabase/seed.sql` for deterministic local reconstruction
 
 The 76 legacy migrations were not replayed, copied, or renumbered. The hosted
-`supabase_migrations.schema_migrations` ledger matches all nine repository
+`supabase_migrations.schema_migrations` ledger matches all 12 repository
 versions above.
 
 The project-creation option that automatically enables RLS added an unexpected
 `ensure_rls` event trigger and `public.rls_auto_enable()` function. Both were
 removed from this Dev project after explicit approval. There is no separate
 persistent Dashboard toggle after project creation: those objects implement the
-option. RLS remains explicitly enabled by repository migrations on all 87
+option. RLS remains explicitly enabled by repository migrations on all 88
 application tables.
 
 ## Hosted Manifest
 
 | Object                      | Hosted result |
 | --------------------------- | ------------: |
-| Public application tables   |            87 |
-| Public application columns  |         1,210 |
-| Constraints                 |           599 |
-| Indexes                     |           292 |
-| Public functions            |            53 |
-| Public triggers             |            74 |
-| RLS-enabled public tables   |            87 |
+| Public application tables   |            88 |
+| Public application columns  |         1,223 |
+| Constraints                 |           610 |
+| Indexes                     |           296 |
+| Public functions            |            55 |
+| Public triggers             |            75 |
+| RLS-enabled public tables   |            88 |
 | Public and Storage policies |           178 |
 | Private Storage buckets     |             3 |
 
-Hosted and local clean-room checksum for the same four-file lineage:
+Canonical clean-room checksum for the 12-migration lineage:
 
 ```text
-63b7320d47bdc974d6e047d62ccd45454ef1e0bf3e1b8ce3649f38265132dd29
+dcbc78a84ac4ac2a307784ee73a5390ba30a8a1e4168a4e480b65e3496a6bb82
 ```
 
-This exactly matches `supabase/schema-manifest.json`. Hosted verification also
-confirmed all 21 Ledger tables, forced RLS on all 21, no Ledger user policies,
-and no direct `anon`/`authenticated` grants on the checked financial tables.
+This exactly matches `supabase/schema-manifest.json`. Hosted integration also
+confirmed Stage 7.1 service-only source/finalization RPCs, append-only Settlement
+history, and no direct `anon`/`authenticated` grants on the checked financial
+tables.
 
 ## Security Validation
 
@@ -87,10 +90,10 @@ authenticated owner/member/guest/admin, and service-role scenarios, including:
 - users may delete only their own itinerary ratings;
 - face and face-embedding mutation remains backend/service controlled.
 
-The database suite currently runs five files and 121 assertions covering the
-baseline RLS matrix, Ledger aggregates, Stage 4 mutations/conflicts, Stage 5.1
-financial evidence, trusted rates, audit, revisions, and idempotency. It passes
-on two independent clean resets with zero schema diff.
+The database suite currently runs seven files and 142 assertions covering the
+baseline RLS matrix, Ledger aggregates, Stage 4 mutations/conflicts, Stage 5
+financial evidence/assets, Stage 7.1 finalization, audit, revisions, and
+idempotency. It passes on two independent clean resets with zero schema diff.
 
 ## Synthetic Seed
 

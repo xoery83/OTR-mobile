@@ -1,5 +1,8 @@
-import { SettlementScreen } from "@/features/ledger-prototype/SettlementScreen";
+import { useLocalSearchParams } from "expo-router";
+
+import { SettlementReadinessScreen } from "@/features/ledger/SettlementReadinessScreen";
 
 export default function SettlementRoute() {
-  return <SettlementScreen />;
+  const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
+  return <SettlementReadinessScreen journeyId={journeyId} />;
 }

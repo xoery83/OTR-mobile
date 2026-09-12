@@ -5,6 +5,7 @@ import type {
   LedgerChangesResponse,
   MyLedgerResponse,
 } from "@/data/api/ledgerReadContracts";
+import { applyFinalizedSettlement } from "./ledgerSettlementRepository";
 
 export type LedgerReadDatabase = Pick<
   SQLite.SQLiteDatabase,
@@ -36,6 +37,8 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
         for (const quote of response.rateQuotes) await applyRateQuote(database, quote);
         for (const receipt of response.receipts ?? [])
           await applyReceipt(database, response.journey.id, receipt);
+        for (const settlement of response.settlements ?? [])
+          await applyFinalizedSettlement(database, settlement);
         for (const correction of response.corrections) {
           if (!(await applyCorrection(database, correction))) {
             await deferChange(database, response.journey.id, {
@@ -89,6 +92,12 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
             "objectPath" in change.aggregate
           ) {
             await applyReceipt(database, journeyId, change.aggregate);
+          } else if (
+            change.entityType === "SETTLEMENT" &&
+            change.aggregate &&
+            "inputDigest" in change.aggregate
+          ) {
+            await applyFinalizedSettlement(database, change.aggregate);
           } else {
             await deferChange(database, journeyId, change);
           }
@@ -99,44 +108,62 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
 
     async cacheMyLedger(response: MyLedgerResponse) {
       await database.withTransactionAsync(async () => {
+        await database.runAsync(
+          "DELETE FROM ledger_my_journey_summaries WHERE period_key = ?",
+          response.period,
+        );
         for (const journey of response.journeys) {
           await database.runAsync(
             `INSERT OR REPLACE INTO ledger_my_journey_summaries (
-              journey_id, title, reporting_currency, currency, paid_minor,
-              owed_minor, receivable_minor, net_minor, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              journey_id, period_key, from_at, to_at, title, start_date, end_date,
+              currency, scale, my_spend_minor, paid_minor, position_minor,
+              unvalued_count, conflict_count, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             journey.journeyId,
+            response.period,
+            response.from,
+            response.to,
             journey.title,
-            response.reportingCurrency,
+            journey.startDate,
+            journey.endDate,
             journey.currency,
+            journey.scale,
+            journey.mySpendMinor,
             journey.paidMinor,
-            journey.owedMinor,
-            journey.receivableMinor,
-            journey.netMinor,
+            journey.positionMinor,
+            journey.unvaluedCount,
+            journey.conflictCount,
             journey.updatedAt,
           );
         }
       });
     },
 
-    listMyLedgerSummaries() {
+    listMyLedgerSummaries(period = "YEAR") {
       return database.getAllAsync<{
         journeyId: string;
+        period: string;
         title: string;
-        reportingCurrency: string;
+        startDate: string | null;
+        endDate: string | null;
         currency: string;
+        scale: number;
+        mySpendMinor: number;
         paidMinor: number;
-        owedMinor: number;
-        receivableMinor: number;
-        netMinor: number;
+        positionMinor: number;
+        unvaluedCount: number;
+        conflictCount: number;
         updatedAt: string;
       }>(
-        `SELECT journey_id AS journeyId, title, reporting_currency AS reportingCurrency,
-          currency, paid_minor AS paidMinor, owed_minor AS owedMinor,
-          receivable_minor AS receivableMinor, net_minor AS netMinor,
-          updated_at AS updatedAt
+        `SELECT journey_id AS journeyId, period_key AS period, title,
+          start_date AS startDate, end_date AS endDate, currency, scale,
+          my_spend_minor AS mySpendMinor, paid_minor AS paidMinor,
+          position_minor AS positionMinor, unvalued_count AS unvaluedCount,
+          conflict_count AS conflictCount, updated_at AS updatedAt
          FROM ledger_my_journey_summaries
+         WHERE period_key = ?
          ORDER BY updated_at DESC`,
+        period,
       );
     },
 
@@ -247,9 +274,13 @@ async function applyJourney(
 ) {
   await database.runAsync(
     `INSERT OR REPLACE INTO ledger_journeys (
-      journey_id, settlement_currency, settlement_scale, valuation_policy, updated_at
-    ) VALUES (?, ?, ?, ?, ?)`,
+      journey_id, title, start_date, end_date, settlement_currency,
+      settlement_scale, valuation_policy, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     response.journey.id,
+    response.journey.title,
+    response.journey.startDate,
+    response.journey.endDate,
     response.journey.settlementCurrency,
     response.journey.settlementScale,
     response.journey.valuationPolicy,

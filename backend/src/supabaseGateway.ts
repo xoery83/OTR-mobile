@@ -15,18 +15,38 @@ import type {
   UpdateLedgerExpenseRequest,
 } from "../../src/data/api/ledgerMutationContracts";
 import type {
+  LedgerAnalysisResponse,
   LedgerBootstrapResponse,
   LedgerChangesResponse,
+  LedgerExpenseListResponse,
   LedgerExpenseDto,
   LedgerPaymentRecordDto,
   LedgerRateQuoteDto,
+  MyLedgerPeriod,
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
+import type {
+  FinalizedSettlementDto,
+  SettlementFinalizeResponse,
+  SettlementPreviewResponse,
+} from "../../src/data/api/ledgerSettlementContracts";
+import {
+  analyzeReporting,
+  matchesReportingFilters,
+  summarizeReporting,
+  type ReportingFilters,
+  type ReportingRecord,
+} from "../../src/domain/ledger/reporting";
 import {
   changedExpenseGroups,
   sameStage4Expense,
 } from "../../src/domain/ledger/conflict";
 import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
+import {
+  buildSettlementPreview,
+  canonicalSettlementJson,
+  type SettlementPreviewInput,
+} from "../../src/domain/ledger/settlement";
 import { previewValuation } from "../../src/domain/ledger/valuation";
 import type {
   CompleteReceiptRequest,
@@ -103,6 +123,8 @@ function capabilities(role: string | null, status: string | null) {
     canAddOwnPaymentEvidence: linked && (organizer || role === "group_member"),
     canManageExpenseValuation: linked && (organizer || role === "group_member"),
     canManageLedgerValuationPolicy: linked && organizer,
+    canPrepareSettlement: linked && organizer,
+    canFinalizeSettlement: linked && organizer,
   };
 }
 
@@ -203,6 +225,19 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       );
     },
 
+    async canFinalizeSettlement(userId, tripId) {
+      const result = await service
+        .from("journey_members")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", userId)
+        .eq("status", "linked")
+        .eq("role", "owner")
+        .limit(1);
+      if (result.error) throw new Error("Supabase Dev settlement authorization failed.");
+      return result.data.length > 0;
+    },
+
     async bootstrapLedger(userId, tripId) {
       return readLedgerBootstrap(service, tripId, userId);
     },
@@ -211,12 +246,29 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return readLedgerChanges(service, tripId, cursor);
     },
 
-    async readMyLedger(userId) {
-      return readMyLedger(service, userId);
+    async readLedgerExpenses(userId, tripId, filters, limit, offset) {
+      return readLedgerExpenses(service, userId, tripId, filters, limit, offset);
+    },
+
+    async readLedgerAnalysis(userId, tripId, filters, scope, dimension) {
+      return readLedgerAnalysis(service, userId, tripId, filters, scope, dimension);
+    },
+
+    async readMyLedger(userId, period, from, to) {
+      return readMyLedger(service, userId, period, from, to);
     },
 
     async readLedgerRateQuotes(_userId, tripId, quoteCurrency, baseCurrency) {
       return readRateQuotes(service, tripId, quoteCurrency, baseCurrency);
+    },
+
+    async previewLedgerSettlement(_userId, tripId, throughTimestamp) {
+      return (await calculateSettlementPreview(service, tripId, throughTimestamp))
+        .response;
+    },
+
+    async finalizeLedgerSettlement(userId, tripId, idempotencyKey, input) {
+      return finalizeLedgerSettlement(service, userId, tripId, idempotencyKey, input);
     },
 
     async createLedgerExpense(userId, tripId, idempotencyKey, input) {
@@ -1753,6 +1805,240 @@ async function readOneExpenseAggregate(service: SupabaseClient, expenseId: strin
   return expense ?? null;
 }
 
+async function calculateSettlementPreview(
+  service: SupabaseClient,
+  tripId: string,
+  throughTimestamp: string,
+) {
+  const result = await service.rpc("ledger_settlement_source_7_1", {
+    target_journey: tripId,
+    through_timestamp_value: throughTimestamp,
+  });
+  if (result.error || !result.data)
+    throw new Error("Supabase Dev settlement preview failed.");
+  const source = normalizeSettlementSource(result.data as SettlementPreviewInput);
+  const preview = buildSettlementPreview(source);
+  const inputDigest = createHash("sha256")
+    .update(canonicalSettlementJson(preview))
+    .digest("hex");
+  return {
+    source,
+    preview,
+    response: { ...preview, inputDigest } satisfies SettlementPreviewResponse,
+  };
+}
+
+export function normalizeSettlementSource(
+  source: SettlementPreviewInput,
+): SettlementPreviewInput {
+  return {
+    ...source,
+    expenses: source.expenses.map((expense) => ({
+      ...expense,
+      valuation: expense.valuation
+        ? {
+            ...expense.valuation,
+            decimalRate:
+              expense.valuation.decimalRate === null
+                ? null
+                : String(expense.valuation.decimalRate),
+          }
+        : null,
+    })),
+  };
+}
+
+async function finalizeLedgerSettlement(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  idempotencyKey: string,
+  input: { throughTimestamp: string; inputDigest: string },
+): Promise<SettlementFinalizeResponse> {
+  const calculated = await calculateSettlementPreview(
+    service,
+    tripId,
+    input.throughTimestamp,
+  );
+  if (calculated.response.state === "PREVIEW_BLOCKED") {
+    throw new BackendError(
+      409,
+      "FINANCIAL_INVARIANT_FAILED",
+      "Settlement blockers must be resolved before finalization.",
+      { blockers: calculated.response.blockers },
+    );
+  }
+  if (calculated.response.inputDigest !== input.inputDigest) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The settlement preview is stale.",
+    );
+  }
+
+  const result = await service.rpc("ledger_finalize_settlement_7_1", {
+    actor_user: userId,
+    target_journey: tripId,
+    through_timestamp_value: input.throughTimestamp,
+    input_digest_value: input.inputDigest,
+    expected_source_value: calculated.source,
+    inputs_value: calculated.preview.inputs,
+    balances_value: calculated.preview.balances,
+    transfers_value: calculated.preview.transfers,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+  });
+  const message = result.error?.message ?? "";
+  if (message.includes("SETTLEMENT_INPUT_STALE"))
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The settlement preview is stale.",
+    );
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(403, "TRIP_WRITE_FORBIDDEN", "Organizer access is required.");
+  if (message.includes("settlements_one_active_7_1"))
+    throw new BackendError(
+      409,
+      "SETTLEMENT_ALREADY_FINALIZED",
+      "This Journey already has an active finalized Settlement.",
+    );
+  if (result.error || !result.data)
+    throw new Error("Supabase Dev settlement finalization failed.");
+  const finalized = result.data as {
+    settlementId: string;
+    idempotentReplay: boolean;
+  };
+  const entity = await readOneFinalizedSettlement(
+    service,
+    tripId,
+    finalized.settlementId,
+  );
+  if (!entity) throw new Error("Canonical Settlement was not found after finalization.");
+  return { entity, idempotentReplay: finalized.idempotentReplay };
+}
+
+async function readOneFinalizedSettlement(
+  service: SupabaseClient,
+  tripId: string,
+  settlementId: string,
+) {
+  const settlements = await readFinalizedSettlements(service, tripId, [settlementId]);
+  return settlements[0] ?? null;
+}
+
+async function readFinalizedSettlements(
+  service: SupabaseClient,
+  tripId: string,
+  settlementIds?: string[],
+): Promise<FinalizedSettlementDto[]> {
+  if (settlementIds?.length === 0) return [];
+  let settlementQuery = service
+    .from("settlements")
+    .select(
+      "id, journey_id, status, through_timestamp, settlement_currency, settlement_scale, settings_revision, algorithm_version, input_digest, revision, finalized_by, finalized_at",
+    )
+    .eq("journey_id", tripId)
+    .eq("algorithm_version", "ledger-settlement-greedy-v1")
+    .order("finalized_at", { ascending: false });
+  if (settlementIds) settlementQuery = settlementQuery.in("id", settlementIds);
+  const settlements = await settlementQuery;
+  if (settlements.error) throw new Error("Supabase Dev Settlement read failed.");
+  const ids = (settlements.data ?? []).map((row) => String(row.id));
+  if (!ids.length) return [];
+  const [inputs, balances, transfers, audits] = await Promise.all([
+    service
+      .from("settlement_inputs")
+      .select("settlement_id, normalized_snapshot")
+      .in("settlement_id", ids),
+    service
+      .from("settlement_member_balances")
+      .select(
+        "settlement_id, member_id, display_name_snapshot, paid_minor, owed_minor, transferred_minor, net_minor",
+      )
+      .in("settlement_id", ids),
+    service
+      .from("settlement_transfers")
+      .select(
+        "id, settlement_id, from_member_id, to_member_id, obligation_amount_minor, settlement_currency, settlement_scale, status, revision",
+      )
+      .in("settlement_id", ids),
+    service
+      .from("settlement_audit_events")
+      .select(
+        "id, settlement_id, event_type, actor_user_id, actor_member_id, reason, settlement_revision, created_at",
+      )
+      .in("settlement_id", ids),
+  ]);
+  if (inputs.error || balances.error || transfers.error || audits.error)
+    throw new Error("Supabase Dev Settlement aggregate read failed.");
+
+  return (settlements.data ?? []).map((row) => {
+    const id = String(row.id);
+    return {
+      id,
+      journeyId: String(row.journey_id),
+      status: "FINALIZED",
+      throughTimestamp: String(row.through_timestamp),
+      settlementCurrency: String(row.settlement_currency),
+      settlementScale: Number(row.settlement_scale),
+      settingsRevision: Number(row.settings_revision),
+      algorithmVersion: "ledger-settlement-greedy-v1",
+      inputDigest: String(row.input_digest),
+      revision: Number(row.revision),
+      finalizedBy: String(row.finalized_by),
+      finalizedAt: String(row.finalized_at),
+      inputs: (inputs.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map(
+          (item) => item.normalized_snapshot as FinalizedSettlementDto["inputs"][number],
+        )
+        .sort((left, right) => left.expenseId.localeCompare(right.expenseId)),
+      balances: (balances.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map((item) => ({
+          memberId: String(item.member_id),
+          displayNameSnapshot: String(item.display_name_snapshot),
+          paidMinor: Number(item.paid_minor),
+          owedMinor: Number(item.owed_minor),
+          transferredMinor: 0 as const,
+          netMinor: Number(item.net_minor),
+          currency: String(row.settlement_currency),
+          scale: Number(row.settlement_scale),
+        }))
+        .sort((left, right) => left.memberId.localeCompare(right.memberId)),
+      transfers: (transfers.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map((item) => ({
+          id: String(item.id),
+          fromMemberId: String(item.from_member_id),
+          toMemberId: String(item.to_member_id),
+          amount: {
+            minor: Number(item.obligation_amount_minor),
+            currency: String(item.settlement_currency),
+            scale: Number(item.settlement_scale),
+          },
+          status: "OPEN" as const,
+          revision: Number(item.revision),
+        }))
+        .sort((left, right) => left.id.localeCompare(right.id)),
+      auditEvents: (audits.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map((item) => ({
+          id: String(item.id),
+          eventType: "FINALIZED" as const,
+          actorUserId: String(item.actor_user_id),
+          actorMemberId: String(item.actor_member_id),
+          reason: item.reason ? String(item.reason) : null,
+          revision: Number(item.settlement_revision),
+          createdAt: String(item.created_at),
+        })),
+    };
+  });
+}
+
 async function readLedgerBootstrap(
   service: SupabaseClient,
   tripId: string,
@@ -1760,6 +2046,7 @@ async function readLedgerBootstrap(
 ): Promise<LedgerBootstrapResponse> {
   const now = new Date().toISOString();
   const [
+    trip,
     settings,
     members,
     households,
@@ -1769,6 +2056,11 @@ async function readLedgerBootstrap(
     rateQuotes,
     receipts,
   ] = await Promise.all([
+    service
+      .from("trips")
+      .select("name, start_date, end_date")
+      .eq("id", tripId)
+      .maybeSingle(),
     service
       .from("ledger_settings")
       .select("settlement_currency, settlement_scale, valuation_policy, updated_at")
@@ -1809,6 +2101,7 @@ async function readLedgerBootstrap(
   ]);
 
   if (
+    trip.error ||
     settings.error ||
     members.error ||
     households.error ||
@@ -1821,8 +2114,10 @@ async function readLedgerBootstrap(
   }
 
   const aggregates = await readExpenseAggregates(service, expenses.data ?? []);
+  const finalizedSettlements = await readFinalizedSettlements(service, tripId);
   const lastSequence = await latestLedgerSequence(service, tripId);
   const setting = settings.data as Record<string, unknown> | null;
+  const tripRow = trip.data as Record<string, unknown> | null;
 
   const actorRow = (members.data ?? []).find(
     (member) => String(member.user_id ?? "") === userId,
@@ -1834,6 +2129,9 @@ async function readLedgerBootstrap(
   return {
     journey: {
       id: tripId,
+      title: String(tripRow?.name ?? "Journey"),
+      startDate: tripRow?.start_date ? String(tripRow.start_date) : null,
+      endDate: tripRow?.end_date ? String(tripRow.end_date) : null,
       settlementCurrency: String(setting?.settlement_currency ?? "NZD"),
       settlementScale: Number(setting?.settlement_scale ?? 2),
       valuationPolicy: String(setting?.valuation_policy ?? "REFERENCE_RATE"),
@@ -1870,6 +2168,7 @@ async function readLedgerBootstrap(
     receipts: (receipts.data ?? []).map((row) =>
       receiptRowToDto(row as Record<string, unknown>),
     ),
+    settlements: finalizedSettlements,
     actor: {
       memberId: actorRow ? String(actorRow.id) : null,
       role: actorRole,
@@ -1897,6 +2196,7 @@ async function readLedgerChanges(
   if (result.error) throw new Error("Supabase Dev Ledger changes failed.");
 
   const rows = result.data ?? [];
+  const visibleRows = rows.filter((row) => row.entity_type !== "TRANSFER");
   const expenseIds = rows
     .filter((row) => row.entity_type === "EXPENSE" && !row.is_tombstone)
     .map((row) => String(row.entity_id));
@@ -1914,6 +2214,9 @@ async function readLedgerChanges(
     .map((row) => String(row.entity_id));
   const receiptIds = rows
     .filter((row) => row.entity_type === "RECEIPT")
+    .map((row) => String(row.entity_id));
+  const settlementIds = rows
+    .filter((row) => row.entity_type === "SETTLEMENT")
     .map((row) => String(row.entity_id));
   const expenses =
     expenseIds.length > 0
@@ -1979,6 +2282,7 @@ async function readLedgerChanges(
     receiptIds.length > 0
       ? await service.from("receipt_assets").select(receiptColumns).in("id", receiptIds)
       : { data: [], error: null };
+  const settlements = await readFinalizedSettlements(service, tripId, settlementIds);
 
   if (expenses.error) throw new Error("Supabase Dev Ledger change aggregate failed.");
   if (
@@ -2024,9 +2328,10 @@ async function readLedgerChanges(
   }
   for (const row of receipts.data ?? [])
     byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
+  for (const settlement of settlements) byId.set(settlement.id, settlement);
 
   return {
-    changes: rows.map((row) => ({
+    changes: visibleRows.map((row) => ({
       entityType:
         row.entity_type as LedgerChangesResponse["changes"][number]["entityType"],
       entityId: String(row.entity_id),
@@ -2217,6 +2522,9 @@ async function latestLedgerSequence(service: SupabaseClient, tripId: string) {
 async function readMyLedger(
   service: SupabaseClient,
   userId: string,
+  period: MyLedgerPeriod,
+  from: string | null,
+  to: string | null,
 ): Promise<MyLedgerResponse> {
   const memberResult = await service
     .from("journey_members")
@@ -2229,73 +2537,168 @@ async function readMyLedger(
   const tripIds = [...new Set(members.map((member) => String(member.trip_id)))];
   if (tripIds.length === 0) {
     return {
-      reportingCurrency: "NZD",
+      period,
+      from,
+      to,
       journeys: [],
       serverTime: new Date().toISOString(),
     };
   }
 
-  const [trips, settings] = await Promise.all([
-    service.from("trips").select("id, name").in("id", tripIds),
-    service
-      .from("ledger_settings")
-      .select("journey_id, settlement_currency")
-      .in("journey_id", tripIds),
-  ]);
-  if (trips.error || settings.error)
-    throw new Error("Supabase Dev My Ledger read failed.");
-
   const summaries = [];
   for (const member of members) {
     const journeyId = String(member.trip_id);
     const memberId = String(member.id);
-    const expenseResult = await service
-      .from("expenses")
-      .select("id, payer_member_id, original_amount_minor, updated_at")
-      .eq("journey_id", journeyId)
-      .neq("business_status", "DELETED");
-    if (expenseResult.error) throw new Error("Supabase Dev My Ledger expenses failed.");
-
-    const expenses = expenseResult.data ?? [];
-    const expenseIds = expenses.map((expense) => String(expense.id));
-    const splitResult =
-      expenseIds.length > 0
-        ? await service
-            .from("expense_splits")
-            .select("expense_id, settlement_amount_minor, original_amount_minor")
-            .eq("member_id", memberId)
-            .in("expense_id", expenseIds)
-        : { data: [], error: null };
-    if (splitResult.error) throw new Error("Supabase Dev My Ledger splits failed.");
-
-    const paidMinor = expenses
-      .filter((expense) => String(expense.payer_member_id) === memberId)
-      .reduce((sum, expense) => sum + Number(expense.original_amount_minor), 0);
-    const owedMinor = (splitResult.data ?? []).reduce(
-      (sum, split) =>
-        sum + Number(split.settlement_amount_minor ?? split.original_amount_minor),
-      0,
-    );
-    const trip = (trips.data ?? []).find((item) => String(item.id) === journeyId);
-    const setting = (settings.data ?? []).find(
-      (item) => String(item.journey_id) === journeyId,
-    );
-    const netMinor = paidMinor - owedMinor;
+    const reporting = await readServerReporting(service, userId, journeyId);
+    const filters: ReportingFilters = {
+      ...(from ? { from } : {}),
+      ...(to ? { to } : {}),
+    };
+    const mine = summarizeReporting(reporting.records, "MINE", memberId, filters);
+    const paidMinor = reporting.records
+      .filter(
+        (record) =>
+          matchesReportingFilters(record, filters) &&
+          record.businessStatus === "ACCEPTED" &&
+          record.settlementMinor !== null &&
+          !record.hasOpenConflict &&
+          record.payerMemberId === memberId,
+      )
+      .reduce((sum, record) => sum + record.settlementMinor!, 0);
     summaries.push({
       journeyId,
-      title: String(trip?.name ?? "Journey"),
-      currency: String(setting?.settlement_currency ?? "NZD"),
+      title: reporting.bootstrap.journey.title,
+      startDate: reporting.bootstrap.journey.startDate,
+      endDate: reporting.bootstrap.journey.endDate,
+      currency: reporting.bootstrap.journey.settlementCurrency,
+      scale: reporting.bootstrap.journey.settlementScale,
+      mySpendMinor: mine.totalMinor,
       paidMinor,
-      owedMinor,
-      receivableMinor: Math.max(netMinor, 0),
-      netMinor,
-      updatedAt: String(expenses[0]?.updated_at ?? new Date().toISOString()),
+      positionMinor: paidMinor - mine.totalMinor,
+      unvaluedCount: mine.unresolvedRateCount,
+      conflictCount: mine.openConflictCount,
+      updatedAt: reporting.bootstrap.journey.updatedAt,
     });
   }
 
   return {
-    reportingCurrency: "NZD",
+    period,
+    from,
+    to,
     journeys: summaries,
     serverTime: new Date().toISOString(),
+  };
+}
+
+async function readServerReporting(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+) {
+  const bootstrap = await readLedgerBootstrap(service, tripId, userId);
+  const conflicts = await service
+    .from("ledger_idempotency_keys")
+    .select("id, response_body")
+    .eq("journey_id", tripId)
+    .eq("response_status", 409);
+  if (conflicts.error) throw new Error("Supabase Dev Ledger conflicts failed.");
+  const conflictIds = (conflicts.data ?? []).map((row) => String(row.id));
+  const resolutions =
+    conflictIds.length > 0
+      ? await service
+          .from("expense_conflict_resolutions")
+          .select("conflict_id")
+          .in("conflict_id", conflictIds)
+      : { data: [], error: null };
+  if (resolutions.error)
+    throw new Error("Supabase Dev Ledger conflict resolutions failed.");
+  const resolved = new Set(
+    (resolutions.data ?? []).map((row) => String(row.conflict_id)),
+  );
+  const openExpenseIds = new Set(
+    (conflicts.data ?? [])
+      .filter((row) => !resolved.has(String(row.id)))
+      .map((row) => {
+        const body = row.response_body as { error?: { expenseId?: unknown } } | null;
+        return typeof body?.error?.expenseId === "string" ? body.error.expenseId : "";
+      })
+      .filter(Boolean),
+  );
+  const receiptExpenseIds = new Set(
+    (bootstrap.receipts ?? []).map((receipt) => receipt.expenseId).filter(Boolean),
+  );
+  const memberNames = new Map(
+    bootstrap.members.map((member) => [member.id, member.displayName]),
+  );
+  const records: ReportingRecord[] = bootstrap.expenses.map((expense) => ({
+    id: expense.id,
+    title: expense.title,
+    description: expense.description,
+    category: expense.category,
+    occurredAt: expense.occurredAt,
+    payerMemberId: expense.payerMemberId,
+    payerName: memberNames.get(expense.payerMemberId) ?? "Traveller",
+    originalMinor: expense.original.minor,
+    originalCurrency: expense.original.currency,
+    businessStatus: expense.businessStatus,
+    syncStatus: "SYNCED",
+    settlementMinor: expense.valuation?.settlement.minor ?? null,
+    settlementCurrency: bootstrap.journey.settlementCurrency,
+    hasOpenConflict: openExpenseIds.has(expense.id),
+    hasReceipt: receiptExpenseIds.has(expense.id),
+    splits: expense.splits.map((split) => ({
+      memberId: split.memberId,
+      memberName:
+        expense.participants.find(
+          (participant) => participant.memberId === split.memberId,
+        )?.displayNameSnapshot ??
+        memberNames.get(split.memberId) ??
+        "Traveller",
+      settlementMinor: split.settlementMinor,
+    })),
+  }));
+  return { bootstrap, records };
+}
+
+async function readLedgerExpenses(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  filters: ReportingFilters,
+  limit: number,
+  offset: number,
+): Promise<LedgerExpenseListResponse> {
+  const reporting = await readServerReporting(service, userId, tripId);
+  const included = new Set(
+    reporting.records
+      .filter((record) => matchesReportingFilters(record, filters))
+      .map((record) => record.id),
+  );
+  const expenses = reporting.bootstrap.expenses
+    .filter((expense) => included.has(expense.id))
+    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
+  const page = expenses.slice(offset, offset + limit);
+  return {
+    expenses: page,
+    nextCursor: offset + limit < expenses.length ? encodeCursor(offset + limit) : null,
+  };
+}
+
+async function readLedgerAnalysis(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  filters: ReportingFilters,
+  scope: LedgerAnalysisResponse["scope"],
+  dimension: LedgerAnalysisResponse["dimension"],
+): Promise<LedgerAnalysisResponse> {
+  const reporting = await readServerReporting(service, userId, tripId);
+  const memberId = reporting.bootstrap.actor.memberId ?? "";
+  return {
+    scope,
+    dimension,
+    currency: reporting.bootstrap.journey.settlementCurrency,
+    summary: summarizeReporting(reporting.records, scope, memberId, filters),
+    buckets: analyzeReporting(reporting.records, dimension, scope, memberId, filters),
   };
 }

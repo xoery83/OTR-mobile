@@ -1,5 +1,5 @@
-import { SpendingAnalysisScreen } from "@/features/ledger-prototype/SpendingAnalysisScreen";
+import { LedgerAnalysisScreen } from "@/features/ledger/LedgerAnalysisScreen";
 
 export default function AnalysisRoute() {
-  return <SpendingAnalysisScreen />;
+  return <LedgerAnalysisScreen />;
 }

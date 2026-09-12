@@ -1,5 +1,5 @@
-import { ExpenseSearchScreen } from "@/features/ledger-prototype/ExpenseSearchScreen";
+import { LedgerSearchScreen } from "@/features/ledger/LedgerSearchScreen";
 
 export default function SearchRoute() {
-  return <ExpenseSearchScreen />;
+  return <LedgerSearchScreen />;
 }
