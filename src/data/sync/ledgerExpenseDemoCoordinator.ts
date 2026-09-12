@@ -32,8 +32,12 @@ export async function runLedgerExpenseSync(options: Options = {}) {
     worker,
     nextAttemptAt,
     (operation) =>
-      ["ledger_expense", "ledger_correction"].includes(operation.entityType) &&
-      (!options.entityId || operation.entityId === options.entityId),
+      ["ledger_expense", "ledger_correction", "ledger_payment_record"].includes(
+        operation.entityType,
+      ) &&
+      (!options.entityId ||
+        operation.entityId === options.entityId ||
+        operation.payloadJson.includes(`"expenseId":"${options.entityId}"`)),
   );
 
   return engine.run("AUTHENTICATED_ONLINE");

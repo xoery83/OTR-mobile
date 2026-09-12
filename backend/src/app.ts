@@ -9,12 +9,16 @@ import {
 } from "../../src/data/api/devSyncContracts";
 import {
   createLedgerCorrectionRequestSchema,
+  createLedgerPaymentRecordRequestSchema,
+  applyLedgerValuationRequestSchema,
   createLedgerExpenseRequestSchema,
   ledgerCorrectionActionRequestSchema,
   lifecycleLedgerExpenseRequestSchema,
   resolveLedgerExpenseConflictRequestSchema,
   type CreateLedgerCorrectionRequest,
   type CreateLedgerExpenseRequest,
+  type CreateLedgerPaymentRecordRequest,
+  type ApplyLedgerValuationRequest,
   type LedgerCorrectionActionRequest,
   type LedgerCorrectionMutationResponse,
   type LifecycleLedgerExpenseRequest,
@@ -26,6 +30,8 @@ import {
 import type {
   LedgerBootstrapResponse,
   LedgerChangesResponse,
+  LedgerRateQuoteDto,
+  LedgerPaymentRecordDto,
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
 
@@ -51,6 +57,12 @@ export type DevBackendGateway = {
     cursor: string | null,
   ): Promise<LedgerChangesResponse>;
   readMyLedger(userId: string): Promise<MyLedgerResponse>;
+  readLedgerRateQuotes(
+    userId: string,
+    tripId: string,
+    quoteCurrency: string | null,
+    baseCurrency: string | null,
+  ): Promise<LedgerRateQuoteDto[]>;
   createLedgerExpense(
     userId: string,
     tripId: string,
@@ -100,6 +112,26 @@ export type DevBackendGateway = {
     idempotencyKey: string,
     input: LedgerCorrectionActionRequest,
   ): Promise<LedgerCorrectionMutationResponse>;
+  addLedgerPaymentRecord(
+    userId: string,
+    tripId: string,
+    expenseId: string,
+    idempotencyKey: string,
+    input: CreateLedgerPaymentRecordRequest,
+  ): Promise<{
+    entity: LedgerPaymentRecordDto;
+    serverId: string;
+    revision: 1;
+    updatedAt: string;
+    idempotentReplay: boolean;
+  }>;
+  applyLedgerValuation(
+    userId: string,
+    tripId: string,
+    expenseId: string,
+    idempotencyKey: string,
+    input: ApplyLedgerValuationRequest,
+  ): Promise<LedgerExpenseMutationResponse>;
   createFinalizedSettlementGuardFixture(
     userId: string,
     tripId: string,
@@ -502,6 +534,48 @@ async function createFinalizedGuardFixture(request: Request, gateway: DevBackend
   );
 }
 
+async function createLedgerEvidence(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/expenses\/([^/]+)\/(payment-records|valuations)$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, expenseId, resource] = match;
+  assertTripId(tripId);
+  if (!uuidPattern.test(expenseId))
+    throw new HttpError(400, "INVALID_EXPENSE_ID", "The expense id is invalid.");
+  const user = await authenticate(request, gateway);
+  if (!(await gateway.canWriteTrip(user.id, tripId)))
+    throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
+  const body = await parseBody(request);
+  const idempotencyKey = getIdempotencyKey(request);
+  if (resource === "payment-records") {
+    const parsed = createLedgerPaymentRecordRequestSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    const response = await gateway.addLedgerPaymentRecord(
+      user.id,
+      tripId,
+      expenseId,
+      idempotencyKey,
+      parsed.data,
+    );
+    return json(response.idempotentReplay ? 200 : 201, response);
+  }
+  const parsed = applyLedgerValuationRequestSchema.safeParse(body);
+  if (!parsed.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  return json(
+    200,
+    await gateway.applyLedgerValuation(
+      user.id,
+      tripId,
+      expenseId,
+      idempotencyKey,
+      parsed.data,
+    ),
+  );
+}
+
 async function readEntity(request: Request, gateway: DevBackendGateway) {
   const url = new URL(request.url);
   if (url.pathname === "/v2/me/ledger") {
@@ -509,13 +583,26 @@ async function readEntity(request: Request, gateway: DevBackendGateway) {
     return json(200, await gateway.readMyLedger(user.id));
   }
 
-  const match = url.pathname.match(/^\/v2\/trips\/([^/]+)\/ledger\/(bootstrap|changes)$/);
+  const match = url.pathname.match(
+    /^\/v2\/trips\/([^/]+)\/ledger\/(bootstrap|changes|rate-quotes)$/,
+  );
   if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
 
   const [, tripId, resource] = match;
   const user = await authorizeRead(request, gateway, tripId);
   if (resource === "bootstrap") {
     return json(200, await gateway.bootstrapLedger(user.id, tripId));
+  }
+  if (resource === "rate-quotes") {
+    return json(
+      200,
+      await gateway.readLedgerRateQuotes(
+        user.id,
+        tripId,
+        url.searchParams.get("quoteCurrency"),
+        url.searchParams.get("baseCurrency"),
+      ),
+    );
   }
   return json(
     200,
@@ -545,6 +632,12 @@ export function createDevBackendHandler({
       } else if (request.method === "POST" && url.pathname.startsWith("/v2/dev/")) {
         route = "/v2/dev/trips/:tripId/expenses/:expenseId/finalized-guard-fixture";
         response = await createFinalizedGuardFixture(request, gateway);
+      } else if (
+        request.method === "POST" &&
+        /\/expenses\/[^/]+\/(payment-records|valuations)$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/expenses/:expenseId/evidence";
+        response = await createLedgerEvidence(request, gateway);
       } else if (
         request.method === "POST" &&
         url.pathname.endsWith("/conflict-resolution")

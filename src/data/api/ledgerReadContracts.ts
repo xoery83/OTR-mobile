@@ -1,11 +1,17 @@
 import { z } from "zod";
 
+import { isIso4217Money } from "@/domain/ledger/currency";
+
 const uuidSchema = z.uuid();
-export const ledgerMoneySchema = z.object({
-  minor: z.number().int(),
-  currency: z.string().regex(/^[A-Z]{3}$/),
-  scale: z.number().int().min(0).max(4),
-});
+export const ledgerMoneySchema = z
+  .object({
+    minor: z.number().int(),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    scale: z.number().int().min(0).max(4),
+  })
+  .refine((money) => isIso4217Money(money.currency, money.scale), {
+    message: "Currency scale does not match ISO 4217 metadata.",
+  });
 
 export const ledgerParticipantSchema = z.object({
   memberId: uuidSchema,
@@ -43,6 +49,10 @@ export const ledgerEditableValuationSchema = z
     rateSnapshotId: uuidSchema.nullable(),
     paymentRecordId: uuidSchema.nullable(),
     reason: z.string().nullable(),
+    decimalRate: z.string().nullable().optional(),
+    roundingMode: z.literal("HALF_UP").optional(),
+    effectiveAt: z.string().optional(),
+    supersedesValuationId: uuidSchema.nullable().optional(),
   })
   .nullable();
 
@@ -66,6 +76,52 @@ export const ledgerCapabilitySchema = z.object({
   canCorrectAnyExpense: z.boolean(),
   canSuggestCorrection: z.boolean(),
   canResolveOwnExpenseConflict: z.boolean(),
+  canAddOwnPaymentEvidence: z.boolean().default(false),
+  canManageExpenseValuation: z.boolean().default(false),
+  canManageLedgerValuationPolicy: z.boolean().default(false),
+});
+
+export const ledgerRateQuoteSchema = z.object({
+  id: uuidSchema,
+  journeyId: uuidSchema,
+  quoteCurrency: z.string(),
+  baseCurrency: z.string(),
+  decimalRate: z.string(),
+  effectiveDate: z.string(),
+  observedAt: z.string(),
+  provider: z.string(),
+  providerReference: z.string().nullable(),
+  expiresAt: z.string(),
+});
+
+export const ledgerAuditEventSchema = z.object({
+  id: uuidSchema,
+  expenseId: uuidSchema,
+  actorUserId: uuidSchema.nullable(),
+  actorMemberId: uuidSchema.nullable(),
+  eventType: z.string(),
+  reason: z.string().nullable(),
+  changedGroups: z.array(z.string()),
+  revision: z.number().int().positive(),
+  createdAt: z.string(),
+});
+
+export const ledgerPaymentRecordSchema = z.object({
+  id: uuidSchema,
+  expenseId: uuidSchema.optional(),
+  expenseRevision: z.number().int().positive().optional(),
+  payerMemberId: uuidSchema.optional(),
+  instrumentLabel: z.string().nullable(),
+  authorization: ledgerMoneySchema.nullable(),
+  posted: ledgerMoneySchema.nullable(),
+  authorizedAt: z.string().nullable().optional(),
+  postedAt: z.string().nullable(),
+  fee: ledgerMoneySchema.nullable(),
+  bankFxRate: z.string().nullable().optional(),
+  source: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  supersedesPaymentRecordId: uuidSchema.nullable(),
+  auditEvent: ledgerAuditEventSchema.optional(),
 });
 
 export const ledgerMemberSchema = z.object({
@@ -103,30 +159,8 @@ export const ledgerExpenseSchema = z.object({
   participants: z.array(ledgerParticipantSchema),
   splits: z.array(ledgerSplitSchema),
   valuation: ledgerEditableValuationSchema.and(z.object({ id: uuidSchema })).nullable(),
-  paymentRecords: z.array(
-    z.object({
-      id: uuidSchema,
-      instrumentLabel: z.string().nullable(),
-      authorization: ledgerMoneySchema.nullable(),
-      posted: ledgerMoneySchema.nullable(),
-      postedAt: z.string().nullable(),
-      fee: ledgerMoneySchema.nullable(),
-      supersedesPaymentRecordId: uuidSchema.nullable(),
-    }),
-  ),
-  auditEvents: z.array(
-    z.object({
-      id: uuidSchema,
-      expenseId: uuidSchema,
-      actorUserId: uuidSchema.nullable(),
-      actorMemberId: uuidSchema.nullable(),
-      eventType: z.string(),
-      reason: z.string().nullable(),
-      changedGroups: z.array(z.string()),
-      revision: z.number().int().positive(),
-      createdAt: z.string(),
-    }),
-  ),
+  paymentRecords: z.array(ledgerPaymentRecordSchema),
+  auditEvents: z.array(ledgerAuditEventSchema),
 });
 
 export const ledgerCorrectionRequestSchema = z.object({
@@ -161,6 +195,7 @@ export const ledgerBootstrapResponseSchema = z.object({
   households: z.array(ledgerHouseholdSchema),
   expenses: z.array(ledgerExpenseSchema),
   corrections: z.array(ledgerCorrectionRequestSchema),
+  rateQuotes: z.array(ledgerRateQuoteSchema).default([]),
   actor: z.object({
     memberId: uuidSchema.nullable(),
     role: z.string().nullable(),
@@ -173,7 +208,13 @@ export const ledgerBootstrapResponseSchema = z.object({
 export const ledgerChangesResponseSchema = z.object({
   changes: z.array(
     z.object({
-      entityType: z.enum(["EXPENSE", "HOUSEHOLD", "CORRECTION"]),
+      entityType: z.enum([
+        "EXPENSE",
+        "HOUSEHOLD",
+        "CORRECTION",
+        "RATE_QUOTE",
+        "PAYMENT_RECORD",
+      ]),
       entityId: uuidSchema,
       revision: z.number().int().positive(),
       isTombstone: z.boolean(),
@@ -182,6 +223,8 @@ export const ledgerChangesResponseSchema = z.object({
           ledgerExpenseSchema,
           ledgerHouseholdSchema,
           ledgerCorrectionRequestSchema,
+          ledgerRateQuoteSchema,
+          ledgerPaymentRecordSchema,
         ])
         .nullable(),
     }),
@@ -211,4 +254,6 @@ export type LedgerBootstrapResponse = z.infer<typeof ledgerBootstrapResponseSche
 export type LedgerChangesResponse = z.infer<typeof ledgerChangesResponseSchema>;
 export type LedgerExpenseDto = z.infer<typeof ledgerExpenseSchema>;
 export type LedgerCorrectionRequest = z.infer<typeof ledgerCorrectionRequestSchema>;
+export type LedgerRateQuoteDto = z.infer<typeof ledgerRateQuoteSchema>;
+export type LedgerPaymentRecordDto = z.infer<typeof ledgerPaymentRecordSchema>;
 export type MyLedgerResponse = z.infer<typeof myLedgerResponseSchema>;

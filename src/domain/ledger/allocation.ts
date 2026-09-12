@@ -166,3 +166,17 @@ export function validateExactAllocation(totalMinor: number, amounts: number[]): 
     throw new Error("Exact allocation must reconcile to the total minor units.");
   }
 }
+
+export function allocateSettlementFromOriginal(
+  settlementMinor: number,
+  splits: ExpenseSplit[],
+): ExpenseSplit[] {
+  const values = allocate(
+    settlementMinor,
+    splits.map((split) => ({ memberId: split.memberId, units: split.originalMinor })),
+  );
+  return splits.map((split, index) => ({
+    ...split,
+    settlementMinor: values[index],
+  }));
+}

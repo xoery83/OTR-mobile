@@ -362,4 +362,64 @@ export const migrations: Migration[] = [
       );
     `,
   },
+  {
+    id: 9,
+    name: "ledger_2_stage_5_1_financial_evidence",
+    sql: `
+      CREATE TABLE ledger_rate_quotes (
+        id TEXT PRIMARY KEY NOT NULL,
+        journey_id TEXT NOT NULL,
+        quote_currency TEXT NOT NULL,
+        base_currency TEXT NOT NULL,
+        decimal_rate TEXT NOT NULL,
+        effective_date TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        provider_reference TEXT,
+        expires_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX ledger_rate_quotes_pair_observed
+        ON ledger_rate_quotes (journey_id, quote_currency, base_currency, observed_at DESC);
+
+      CREATE TABLE ledger_exchange_rate_snapshots (
+        id TEXT PRIMARY KEY NOT NULL,
+        expense_id TEXT NOT NULL,
+        expense_revision INTEGER NOT NULL,
+        quote_currency TEXT NOT NULL,
+        base_currency TEXT NOT NULL,
+        decimal_rate TEXT NOT NULL,
+        effective_date TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        provider_reference TEXT,
+        manual_reason TEXT,
+        staleness_state TEXT NOT NULL,
+        supersedes_rate_snapshot_id TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX ledger_exchange_rate_snapshots_expense_revision
+        ON ledger_exchange_rate_snapshots (expense_id, expense_revision DESC);
+
+      ALTER TABLE ledger_payment_records ADD COLUMN expense_revision INTEGER;
+      ALTER TABLE ledger_payment_records ADD COLUMN payer_member_id TEXT;
+      ALTER TABLE ledger_payment_records ADD COLUMN authorized_at TEXT;
+      ALTER TABLE ledger_payment_records ADD COLUMN bank_fx_rate TEXT;
+      ALTER TABLE ledger_payment_records ADD COLUMN source TEXT;
+      ALTER TABLE ledger_payment_records ADD COLUMN notes TEXT;
+      ALTER TABLE ledger_payment_records ADD COLUMN server_id TEXT;
+      ALTER TABLE ledger_payment_records ADD COLUMN revision INTEGER NOT NULL DEFAULT 1;
+      ALTER TABLE ledger_payment_records ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'SYNCED';
+      ALTER TABLE ledger_payment_records ADD COLUMN last_synced_at TEXT;
+      CREATE INDEX ledger_payment_records_expense_created
+        ON ledger_payment_records (expense_id, created_at ASC);
+
+      ALTER TABLE ledger_valuation_snapshots ADD COLUMN decimal_rate TEXT;
+      ALTER TABLE ledger_valuation_snapshots ADD COLUMN server_id TEXT;
+      ALTER TABLE ledger_valuation_snapshots ADD COLUMN rounding_mode TEXT NOT NULL DEFAULT 'HALF_UP';
+      ALTER TABLE ledger_valuation_snapshots ADD COLUMN effective_at TEXT;
+      ALTER TABLE ledger_valuation_snapshots ADD COLUMN supersedes_valuation_id TEXT;
+      ALTER TABLE ledger_exchange_rate_snapshots ADD COLUMN server_id TEXT;
+    `,
+  },
 ];

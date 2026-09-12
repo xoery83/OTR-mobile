@@ -4,6 +4,10 @@ import type {
 } from "@/data/repositories/ledgerExpenseRepository";
 import { ApiClientError } from "@/data/api/client";
 import { ledgerExpenseConflictResponseSchema } from "@/data/api/ledgerMutationContracts";
+import type {
+  ApplyLedgerValuationRequest,
+  CreateLedgerPaymentRecordRequest,
+} from "@/data/api/ledgerMutationContracts";
 import type { createLedgerCollaborationRepository } from "@/data/repositories/ledgerCollaborationRepository";
 
 import { SyncConflictError, type SyncWorker } from "./syncEngine";
@@ -76,6 +80,22 @@ export type LedgerExpenseCreateTransport = {
     >[1];
     expense: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1] | null;
   }>;
+  addPaymentRecord?(input: {
+    journeyId: string;
+    expenseServerId: string;
+    idempotencyKey: string;
+    payment: CreateLedgerPaymentRecordRequest;
+  }): Promise<{ serverId: string }>;
+  applyValuation?(input: {
+    journeyId: string;
+    expenseServerId: string;
+    idempotencyKey: string;
+    valuation: ApplyLedgerValuationRequest;
+  }): Promise<{
+    entity: Parameters<LedgerExpenseRepository["reconcileCanonicalExpense"]>[1];
+    serverId: string;
+    revision: number;
+  }>;
 };
 
 const createOperation = "LEDGER_CREATE_EXPENSE";
@@ -96,6 +116,10 @@ export function createLedgerExpenseSyncWorker(
 ): SyncWorker {
   return {
     async push(operation: SyncOperation) {
+      if (operation.entityType === "ledger_payment_record") {
+        await pushPaymentRecordOperation(operation, repository, transport);
+        return;
+      }
       if (operation.entityType === "ledger_correction") {
         if (!collaboration)
           throw new Error("Ledger collaboration repository is missing.");
@@ -131,6 +155,27 @@ export function createLedgerExpenseSyncWorker(
           });
           await repository.reconcileCanonicalExpense(expense.id, response.entity);
           await collaboration.resolveConflict(resolution.conflictId);
+        } else if (operation.operationType === "LEDGER_APPLY_VALUATION") {
+          if (!transport.applyValuation)
+            throw new Error("Valuation transport is missing.");
+          if (!expense.serverId)
+            throw new Error("Ledger Expense create must sync before valuation.");
+          const payload = JSON.parse(
+            operation.payloadJson,
+          ) as ApplyLedgerValuationRequest;
+          const response = await transport.applyValuation({
+            journeyId: expense.journeyId,
+            expenseServerId: expense.serverId,
+            idempotencyKey: operation.idempotencyKey,
+            valuation: { ...payload, baseRevision: expense.serverRevision },
+          });
+          await repository.markValuationSynced(
+            payload.localValuationId,
+            response.entity.valuation!.id,
+            payload.localRateSnapshotId,
+            response.entity.valuation!.rateSnapshotId,
+          );
+          await repository.reconcileCanonicalExpense(expense.id, response.entity);
         } else {
           const response = await pushExpenseOperation(expense, operation, transport);
           await repository.markExpenseSynced(
@@ -158,6 +203,50 @@ export function createLedgerExpenseSyncWorker(
       }
     },
   };
+}
+
+async function pushPaymentRecordOperation(
+  operation: SyncOperation,
+  repository: LedgerExpenseRepository,
+  transport: LedgerExpenseCreateTransport,
+) {
+  if (
+    operation.operationType !== "LEDGER_ADD_PAYMENT_RECORD" ||
+    !transport.addPaymentRecord
+  )
+    throw new Error("Payment evidence transport is missing.");
+  const payload = JSON.parse(operation.payloadJson) as Omit<
+    CreateLedgerPaymentRecordRequest,
+    "localId"
+  > & {
+    expenseId: string;
+    id: string;
+  };
+  const expense = await repository.getExpense(payload.expenseId);
+  if (!expense?.serverId)
+    throw new Error("Ledger Expense create must sync before payment evidence.");
+  const supersedesPaymentRecordId = payload.supersedesPaymentRecordId
+    ? await repository.getPaymentRecordServerId(payload.supersedesPaymentRecordId)
+    : null;
+  if (payload.supersedesPaymentRecordId && !supersedesPaymentRecordId)
+    throw new Error("Superseded payment evidence must sync first.");
+  const {
+    expenseId: _expenseId,
+    id,
+    expenseRevision: _expenseRevision,
+    payerMemberId: _payerMemberId,
+    ...payment
+  } = payload as typeof payload & {
+    expenseRevision?: number;
+    payerMemberId?: string;
+  };
+  const response = await transport.addPaymentRecord({
+    journeyId: expense.journeyId,
+    expenseServerId: expense.serverId,
+    idempotencyKey: operation.idempotencyKey,
+    payment: { ...payment, localId: id, supersedesPaymentRecordId },
+  });
+  await repository.markPaymentRecordSynced(operation.entityId, response.serverId);
 }
 
 async function pushCorrectionOperation(

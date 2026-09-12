@@ -1,12 +1,17 @@
 import { createApiClient } from "@/data/api/client";
 import {
   createLedgerCorrectionRequestSchema,
+  createLedgerPaymentRecordRequestSchema,
+  applyLedgerValuationRequestSchema,
   ledgerCorrectionActionRequestSchema,
   ledgerCorrectionMutationResponseSchema,
+  ledgerPaymentRecordMutationResponseSchema,
   ledgerExpenseMutationResponseSchema,
   resolveLedgerExpenseConflictRequestSchema,
   type CreateLedgerCorrectionRequest,
   type CreateLedgerExpenseRequest,
+  type CreateLedgerPaymentRecordRequest,
+  type ApplyLedgerValuationRequest,
   type LifecycleLedgerExpenseRequest,
   type UpdateLedgerExpenseRequest,
   type LedgerCorrectionActionRequest,
@@ -153,6 +158,32 @@ export function createLedgerExpenseMutationTransport(dependencies: Dependencies 
         `/v2/trips/${input.journeyId}/corrections/${input.correctionServerId}/${input.action}`,
         ledgerCorrectionActionRequestSchema.parse(input.request),
         ledgerCorrectionMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async addPaymentRecord(input: {
+      journeyId: string;
+      expenseServerId: string;
+      idempotencyKey: string;
+      payment: CreateLedgerPaymentRecordRequest;
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.expenseServerId}/payment-records`,
+        createLedgerPaymentRecordRequestSchema.parse(input.payment),
+        ledgerPaymentRecordMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async applyValuation(input: {
+      journeyId: string;
+      expenseServerId: string;
+      idempotencyKey: string;
+      valuation: ApplyLedgerValuationRequest;
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.expenseServerId}/valuations`,
+        applyLedgerValuationRequestSchema.parse(input.valuation),
+        ledgerExpenseMutationResponseSchema,
         { "Idempotency-Key": input.idempotencyKey },
       );
     },

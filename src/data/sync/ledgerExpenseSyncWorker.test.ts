@@ -83,6 +83,13 @@ function repository(): LedgerExpenseRepository {
     reconcileCanonicalExpense: vi.fn(),
     markExpenseConflict: vi.fn(),
     markExpenseFailed: vi.fn(),
+    cacheRateQuote: vi.fn(),
+    listRateQuotes: vi.fn(),
+    addPaymentRecord: vi.fn(),
+    markPaymentRecordSynced: vi.fn(),
+    getPaymentRecordServerId: vi.fn(),
+    markValuationSynced: vi.fn(),
+    applyValuation: vi.fn(),
   };
 }
 
@@ -200,5 +207,101 @@ describe("Ledger Expense sync worker", () => {
 
     expect(repo.markExpenseConflict).toHaveBeenCalledWith(expense.id);
     expect(repo.markExpenseFailed).not.toHaveBeenCalled();
+  });
+
+  it("syncs payment evidence independently without changing Expense transport state", async () => {
+    const repo = repository();
+    vi.mocked(repo.getExpense).mockResolvedValue({
+      ...expense,
+      serverId: "40000000-0000-4000-8000-000000000001",
+      serverRevision: 1,
+      status: "RATE_REQUIRED",
+    });
+    const addPaymentRecord = vi.fn(async () => ({
+      serverId: "53000000-0000-4000-8000-000000000001",
+    }));
+    await createLedgerExpenseSyncWorker(repo, {
+      createExpense: vi.fn(),
+      updateExpense: vi.fn(),
+      deleteExpense: vi.fn(),
+      restoreExpense: vi.fn(),
+      addPaymentRecord,
+    }).push({
+      ...operation,
+      entityType: "ledger_payment_record",
+      entityId: "payment-local-1",
+      operationType: "LEDGER_ADD_PAYMENT_RECORD",
+      payloadJson: JSON.stringify({
+        id: "payment-local-1",
+        expenseId: expense.id,
+        instrumentLabel: "Visa NZ",
+        authorization: null,
+        posted: { minor: 19_943, currency: "NZD", scale: 2 },
+        authorizedAt: null,
+        postedAt: "2026-09-12T00:00:00.000Z",
+        fee: null,
+        bankFxRate: null,
+        source: "manual",
+        notes: null,
+        supersedesPaymentRecordId: null,
+      }),
+    });
+
+    expect(addPaymentRecord).toHaveBeenCalledOnce();
+    expect(repo.markPaymentRecordSynced).toHaveBeenCalledWith(
+      "payment-local-1",
+      "53000000-0000-4000-8000-000000000001",
+    );
+    expect(repo.markExpenseSyncing).not.toHaveBeenCalled();
+    expect(repo.markExpenseSynced).not.toHaveBeenCalled();
+  });
+
+  it("replays offline valuation against the latest synchronized base revision", async () => {
+    const repo = repository();
+    const synced = {
+      ...expense,
+      serverId: "40000000-0000-4000-8000-000000000001",
+      serverRevision: 1,
+      status: "ACCEPTED" as const,
+    };
+    vi.mocked(repo.getExpense).mockResolvedValue(synced);
+    const applyValuation = vi.fn(async () => ({
+      entity: {
+        valuation: {
+          id: "55000000-0000-4000-8000-000000000001",
+          rateSnapshotId: "54000000-0000-4000-8000-000000000001",
+        },
+      } as never,
+      serverId: synced.serverId!,
+      revision: 2,
+    }));
+    await createLedgerExpenseSyncWorker(repo, {
+      createExpense: vi.fn(),
+      updateExpense: vi.fn(),
+      deleteExpense: vi.fn(),
+      restoreExpense: vi.fn(),
+      applyValuation,
+    }).push({
+      ...operation,
+      operationType: "LEDGER_APPLY_VALUATION",
+      payloadJson: JSON.stringify({
+        localValuationId: "valuation-local-1",
+        localRateSnapshotId: "rate-local-1",
+        baseRevision: 0,
+        policy: "MANUAL_AGREED",
+        rateQuoteId: null,
+        paymentRecordId: null,
+        manualRate: "1.95",
+        reason: "Group agreed",
+        previewSettlement: { minor: 19_500, currency: "NZD", scale: 2 },
+      }),
+    });
+
+    expect(applyValuation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        valuation: expect.objectContaining({ baseRevision: 1 }),
+      }),
+    );
+    expect(repo.reconcileCanonicalExpense).toHaveBeenCalledOnce();
   });
 });

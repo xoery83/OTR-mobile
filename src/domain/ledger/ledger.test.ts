@@ -7,11 +7,14 @@ import {
   allocateEqual,
   PERCENTAGE_TOTAL_UNITS,
   validateExactAllocation,
+  allocateSettlementFromOriginal,
 } from "./allocation";
+import { currencyScale, ISO_4217_METADATA_VERSION } from "./currency";
 import { convertMoney, parseDecimalRatio } from "./money";
 import { buildTransferPlan, calculateMemberBalances } from "./settlement";
 import type { ExpenseAggregate } from "./types";
 import { validateExpenseAggregate } from "./validation";
+import { previewValuation } from "./valuation";
 
 function expense(overrides: Partial<ExpenseAggregate> = {}): ExpenseAggregate {
   return {
@@ -54,6 +57,22 @@ function expense(overrides: Partial<ExpenseAggregate> = {}): ExpenseAggregate {
 }
 
 describe("Ledger 2.0 money and allocation", () => {
+  it("validates ISO 4217 currency exponents from versioned metadata", () => {
+    expect(ISO_4217_METADATA_VERSION).toBe("CLDR-48.0");
+    expect([
+      currencyScale("EUR"),
+      currencyScale("NZD"),
+      currencyScale("JPY"),
+      currencyScale("BHD"),
+    ]).toEqual([2, 2, 0, 3]);
+    expect(() =>
+      convertMoney({ minor: 100, currency: "ZZZ", scale: 2 }, "NZD", 2, "1"),
+    ).toThrow(/invalid/);
+    expect(() =>
+      convertMoney({ minor: 100, currency: "JPY", scale: 2 }, "NZD", 2, "1"),
+    ).toThrow(/invalid/);
+  });
+
   it("converts decimal rates with integer rounding", () => {
     expect(parseDecimalRatio("1.9780")).toEqual({
       numerator: 19_780n,
@@ -113,6 +132,65 @@ describe("Ledger 2.0 aggregate and settlement", () => {
     expect(value.paymentRecords[0].posted?.minor).toBe(19_943);
     expect(value.valuation?.settlement.minor).toBe(19_780);
     expect(validateExpenseAggregate(value, new Set(["leon", "may", "mia"]))).toEqual([]);
+  });
+
+  it("previews every explicit valuation policy without mutating payer evidence", () => {
+    const original = { minor: 10_000, currency: "EUR", scale: 2 };
+    const paymentRecord = expense().paymentRecords[0];
+    const reference = previewValuation({
+      policy: "REFERENCE_RATE",
+      original,
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      rateQuote: {
+        id: "quote-1",
+        journeyId: "journey-1",
+        quoteCurrency: "EUR",
+        baseCurrency: "NZD",
+        decimalRate: "1.978",
+        effectiveDate: "2026-09-10",
+        observedAt: "2026-09-10T00:00:00.000Z",
+        provider: "test",
+        providerReference: null,
+        expiresAt: "2026-09-11T00:00:00.000Z",
+      },
+    });
+    expect(reference.settlement.minor).toBe(19_780);
+    expect(
+      previewValuation({
+        policy: "ACTUAL_PAYER_COST",
+        original,
+        settlementCurrency: "NZD",
+        settlementScale: 2,
+        paymentRecord,
+      }).settlement.minor,
+    ).toBe(19_943);
+    expect(
+      previewValuation({
+        policy: "MANUAL_AGREED",
+        original,
+        settlementCurrency: "NZD",
+        settlementScale: 2,
+        manualRate: "1.95",
+        reason: "Agreed by group",
+      }).settlement.minor,
+    ).toBe(19_500);
+    expect(() =>
+      previewValuation({
+        policy: "MANUAL_AGREED",
+        original,
+        settlementCurrency: "NZD",
+        settlementScale: 2,
+        manualRate: "1.95",
+      }),
+    ).toThrow(/reason/);
+    expect(paymentRecord.posted?.minor).toBe(19_943);
+    expect(
+      allocateSettlementFromOriginal(19_780, expense().splits).reduce(
+        (sum, split) => sum + split.settlementMinor!,
+        0,
+      ),
+    ).toBe(19_780);
   });
 
   it("rejects participant and split inconsistencies", () => {

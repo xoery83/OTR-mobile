@@ -103,9 +103,10 @@ function createInMemoryLedgerDatabase() {
             roundingAdjustmentMinor,
           },
         ]);
-      } else if (sql.includes("INSERT INTO ledger_valuation_snapshots")) {
+      } else if (sql.includes("INTO ledger_valuation_snapshots")) {
         const [
           id,
+          ,
           expenseId,
           ,
           policy,
@@ -132,10 +133,13 @@ function createInMemoryLedgerDatabase() {
           paymentRecordId,
           reason,
         });
-      } else if (sql.includes("INSERT INTO ledger_payment_records")) {
+      } else if (sql.includes("INTO ledger_payment_records")) {
         const [
           id,
+          serverId,
           expenseId,
+          expenseRevision,
+          payerMemberId,
           instrumentLabel,
           authorizationMinor,
           authorizationCurrency,
@@ -143,16 +147,23 @@ function createInMemoryLedgerDatabase() {
           postedMinor,
           postedCurrency,
           postedScale,
+          authorizedAt,
           postedAt,
           feeMinor,
           feeCurrency,
           feeScale,
+          bankFxRate,
+          source,
+          notes,
           supersedesPaymentRecordId,
         ] = params;
         payments.set(expenseId as string, [
           ...(payments.get(expenseId as string) ?? []),
           {
             id,
+            serverId,
+            expenseRevision,
+            payerMemberId,
             instrumentLabel,
             authorizationMinor,
             authorizationCurrency,
@@ -160,10 +171,14 @@ function createInMemoryLedgerDatabase() {
             postedMinor,
             postedCurrency,
             postedScale,
+            authorizedAt,
             postedAt,
             feeMinor,
             feeCurrency,
             feeScale,
+            bankFxRate,
+            source,
+            notes,
             supersedesPaymentRecordId,
           },
         ]);
@@ -311,17 +326,6 @@ const command: LedgerExpenseCommand = {
     paymentRecordId: "payment-a",
     reason: "Agreed Journey rate",
   },
-  paymentRecords: [
-    {
-      id: "payment-a",
-      instrumentLabel: "Travel card",
-      authorization: null,
-      posted: { minor: 19_943, currency: "NZD", scale: 2 },
-      postedAt: "2026-09-12T00:00:00.000Z",
-      fee: null,
-      supersedesPaymentRecordId: null,
-    },
-  ],
   status: "ACCEPTED",
 };
 
@@ -338,7 +342,7 @@ describe("Ledger Expense repository", () => {
       journeyId: "journey-a",
       title: "Lisbon dinner",
       syncStatus: "PENDING_CREATE",
-      paymentRecords: [{ posted: { minor: 19_943, currency: "NZD" } }],
+      paymentRecords: [],
     });
     expect(operations).toEqual([
       expect.objectContaining({
@@ -362,6 +366,14 @@ describe("Ledger Expense repository", () => {
     const { database } = createInMemoryLedgerDatabase();
     const writer = createLedgerExpenseRepository(database);
     const created = await writer.createExpense(command);
+    await writer.addPaymentRecord(created.id, {
+      instrumentLabel: "Travel card",
+      authorization: null,
+      posted: { minor: 19_943, currency: "NZD", scale: 2 },
+      postedAt: "2026-09-12T00:00:00.000Z",
+      fee: null,
+      supersedesPaymentRecordId: null,
+    });
     await writer.createExpense({ ...command, journeyId: "journey-b", title: "B only" });
 
     const restartedReader = createLedgerExpenseRepository(database);
@@ -407,6 +419,38 @@ describe("Ledger Expense repository", () => {
       "UPDATED",
       "TOMBSTONED",
       "RESTORED",
+    ]);
+  });
+
+  it("queues append-only PaymentRecord evidence without revising the Expense", async () => {
+    const { database, operations } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database);
+    const created = await repository.createExpense(command);
+    const payment = await repository.addPaymentRecord(created.id, {
+      instrumentLabel: "Visa NZ",
+      authorization: null,
+      posted: { minor: 19_943, currency: "NZD", scale: 2 },
+      authorizedAt: null,
+      postedAt: "2026-09-12T00:00:00.000Z",
+      fee: { minor: 200, currency: "NZD", scale: 2 },
+      bankFxRate: "1.9943",
+      source: "manual",
+      notes: null,
+      supersedesPaymentRecordId: null,
+    });
+
+    expect(payment).toMatchObject({
+      expenseRevision: 1,
+      payerMemberId: "member-a",
+      posted: { minor: 19_943 },
+    });
+    await expect(repository.getExpense(created.id)).resolves.toMatchObject({
+      revision: 1,
+      valuation: { settlement: { minor: 19_800 } },
+    });
+    expect(operations.map((item) => item.operationType)).toEqual([
+      "LEDGER_CREATE_EXPENSE",
+      "LEDGER_ADD_PAYMENT_RECORD",
     ]);
   });
 });

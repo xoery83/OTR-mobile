@@ -1,17 +1,24 @@
 import { z } from "zod";
 
+import { isIso4217Money } from "@/domain/ledger/currency";
+
 import {
   ledgerCorrectionRequestSchema,
   ledgerExpenseSchema,
+  ledgerPaymentRecordSchema,
   ledgerStage4EditableExpenseSchema,
 } from "./ledgerReadContracts";
 
 const localIdSchema = z.string().trim().min(1).max(200);
-const moneySchema = z.object({
-  minor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-  currency: z.string().regex(/^[A-Z]{3}$/),
-  scale: z.number().int().min(0).max(4),
-});
+const moneySchema = z
+  .object({
+    minor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    scale: z.number().int().min(0).max(4),
+  })
+  .refine((money) => isIso4217Money(money.currency, money.scale), {
+    message: "Currency scale does not match ISO 4217 metadata.",
+  });
 const participantSchema = z.object({
   memberId: z.uuid(),
   displayNameSnapshot: z.string().trim().min(1).max(200),
@@ -49,8 +56,7 @@ const valuationSchema = z
   })
   .nullable();
 
-export const createLedgerExpenseRequestSchema = z.object({
-  localId: localIdSchema,
+const expenseFields = {
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().max(5000).nullable(),
   category: z.string().trim().min(1).max(80),
@@ -61,14 +67,39 @@ export const createLedgerExpenseRequestSchema = z.object({
   participants: z.array(participantSchema).min(1).max(200),
   splits: z.array(splitSchema).min(1).max(200),
   valuation: valuationSchema,
-});
+};
 
-export const updateLedgerExpenseRequestSchema = createLedgerExpenseRequestSchema
-  .omit({ localId: true })
-  .extend({
+function validateValuationState(
+  value: {
+    businessStatus: string;
+    valuation: unknown;
+    splits: { settlementMinor: number | null }[];
+  },
+  context: z.RefinementCtx,
+) {
+  if (value.businessStatus === "ACCEPTED" && !value.valuation)
+    context.addIssue({ code: "custom", message: "Accepted Expense needs valuation." });
+  if (
+    value.businessStatus === "RATE_REQUIRED" &&
+    (value.valuation || value.splits.some((split) => split.settlementMinor !== null))
+  )
+    context.addIssue({
+      code: "custom",
+      message: "RATE_REQUIRED cannot contain settlement value.",
+    });
+}
+
+export const createLedgerExpenseRequestSchema = z
+  .object({ localId: localIdSchema, ...expenseFields })
+  .superRefine(validateValuationState);
+
+export const updateLedgerExpenseRequestSchema = z
+  .object({
+    ...expenseFields,
     baseRevision: z.number().int().nonnegative(),
     auditReason: z.string().trim().max(2000).nullable(),
-  });
+  })
+  .superRefine(validateValuationState);
 
 export const ledgerConflictFieldGroupSchema = z.enum([
   "FINANCIAL_CORE",
@@ -137,6 +168,64 @@ export const ledgerExpenseMutationResponseSchema = z.object({
   idempotentReplay: z.boolean(),
 });
 
+export const createLedgerPaymentRecordRequestSchema = z
+  .object({
+    localId: localIdSchema,
+    instrumentLabel: z.string().trim().max(200).nullable(),
+    authorization: moneySchema.nullable(),
+    posted: moneySchema.nullable(),
+    authorizedAt: z.string().nullable().default(null),
+    postedAt: z.string().nullable(),
+    fee: moneySchema.nullable(),
+    bankFxRate: z.string().trim().max(100).nullable().default(null),
+    source: z.string().trim().max(100).nullable().default(null),
+    notes: z.string().trim().max(2000).nullable().default(null),
+    supersedesPaymentRecordId: z.uuid().nullable(),
+  })
+  .refine((value) => value.authorization || value.posted, {
+    message: "Payment evidence needs an authorization or posted cost.",
+  });
+
+export const ledgerPaymentRecordMutationResponseSchema = z.object({
+  entity: ledgerPaymentRecordSchema,
+  serverId: z.uuid(),
+  revision: z.literal(1),
+  updatedAt: z.string(),
+  idempotentReplay: z.boolean(),
+});
+
+export const applyLedgerValuationRequestSchema = z
+  .object({
+    localValuationId: localIdSchema,
+    localRateSnapshotId: localIdSchema.nullable(),
+    baseRevision: z.number().int().positive(),
+    policy: z.enum([
+      "REFERENCE_RATE",
+      "ACTUAL_PAYER_COST",
+      "MANUAL_AGREED",
+      "SAME_CURRENCY",
+    ]),
+    rateQuoteId: z.uuid().nullable(),
+    paymentRecordId: z.uuid().nullable(),
+    manualRate: z.string().trim().max(100).nullable(),
+    reason: z.string().trim().max(2000).nullable(),
+    previewSettlement: moneySchema,
+  })
+  .superRefine((value, context) => {
+    if (value.policy === "REFERENCE_RATE" && !value.rateQuoteId)
+      context.addIssue({ code: "custom", message: "REFERENCE_RATE needs a quote." });
+    if (value.policy === "ACTUAL_PAYER_COST" && !value.paymentRecordId)
+      context.addIssue({
+        code: "custom",
+        message: "ACTUAL_PAYER_COST needs payment evidence.",
+      });
+    if (value.policy === "MANUAL_AGREED" && (!value.manualRate || !value.reason))
+      context.addIssue({
+        code: "custom",
+        message: "Manual valuation needs rate and reason.",
+      });
+  });
+
 export type CreateLedgerExpenseRequest = z.infer<typeof createLedgerExpenseRequestSchema>;
 export type UpdateLedgerExpenseRequest = z.infer<typeof updateLedgerExpenseRequestSchema>;
 export type LifecycleLedgerExpenseRequest = z.infer<
@@ -159,4 +248,10 @@ export type LedgerCorrectionActionRequest = z.infer<
 >;
 export type LedgerCorrectionMutationResponse = z.infer<
   typeof ledgerCorrectionMutationResponseSchema
+>;
+export type CreateLedgerPaymentRecordRequest = z.infer<
+  typeof createLedgerPaymentRecordRequestSchema
+>;
+export type ApplyLedgerValuationRequest = z.infer<
+  typeof applyLedgerValuationRequestSchema
 >;

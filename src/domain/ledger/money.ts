@@ -1,14 +1,11 @@
 import type { Money } from "./types";
-
-const currencyPattern = /^[A-Z]{3}$/;
+import { isIso4217Money } from "./currency";
 
 export function isValidMoney(value: Money): boolean {
   return (
     Number.isSafeInteger(value.minor) &&
-    currencyPattern.test(value.currency) &&
     Number.isInteger(value.scale) &&
-    value.scale >= 0 &&
-    value.scale <= 4
+    isIso4217Money(value.currency, value.scale)
   );
 }
 

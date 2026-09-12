@@ -2,6 +2,9 @@ import type * as SQLite from "expo-sqlite";
 
 import type { LedgerExpenseDto } from "@/data/api/ledgerReadContracts";
 import { createLocalId } from "@/domain/localId";
+import { allocateSettlementFromOriginal } from "@/domain/ledger/allocation";
+import { assertMoney } from "@/domain/ledger/money";
+import { previewValuation } from "@/domain/ledger/valuation";
 import { validateExpenseAggregate } from "@/domain/ledger/validation";
 import type {
   ExpenseAggregate,
@@ -10,7 +13,9 @@ import type {
   ExpenseSplit,
   Money,
   PaymentRecord,
+  RateQuote,
   SettlementValuationSnapshot,
+  ValuationPolicy,
 } from "@/domain/ledger/types";
 import type { SyncStatus } from "@/domain/sync/syncStatus";
 
@@ -31,7 +36,6 @@ export type LedgerExpenseCommand = {
   participants: ExpenseParticipant[];
   splits: ExpenseSplit[];
   valuation: SettlementValuationSnapshot | null;
-  paymentRecords?: PaymentRecord[];
   status: Exclude<ExpenseBusinessStatus, "DELETED">;
 };
 
@@ -70,6 +74,34 @@ export type LedgerExpenseRepository = {
   reconcileCanonicalExpense(id: string, expense: LedgerExpenseDto): Promise<void>;
   markExpenseConflict(id: string): Promise<void>;
   markExpenseFailed(id: string): Promise<void>;
+  cacheRateQuote(quote: RateQuote): Promise<void>;
+  listRateQuotes(
+    journeyId: string,
+    quoteCurrency: string,
+    baseCurrency: string,
+  ): Promise<RateQuote[]>;
+  addPaymentRecord(
+    expenseId: string,
+    input: Omit<PaymentRecord, "id" | "expenseRevision" | "payerMemberId">,
+  ): Promise<PaymentRecord>;
+  markPaymentRecordSynced(id: string, serverId: string): Promise<void>;
+  getPaymentRecordServerId(id: string): Promise<string | null>;
+  markValuationSynced(
+    localValuationId: string,
+    serverValuationId: string,
+    localRateSnapshotId: string | null,
+    serverRateSnapshotId: string | null,
+  ): Promise<void>;
+  applyValuation(
+    expenseId: string,
+    input: {
+      policy: Exclude<ValuationPolicy, "LEGACY_IMPORTED">;
+      rateQuoteId?: string;
+      paymentRecordId?: string;
+      manualRate?: string;
+      reason?: string;
+    },
+  ): Promise<LedgerExpense>;
 };
 
 type LedgerExpenseRow = {
@@ -106,6 +138,10 @@ type ValuationRow = {
   rateSnapshotId: string | null;
   paymentRecordId: string | null;
   reason: string | null;
+  decimalRate?: string | null;
+  roundingMode?: "HALF_UP";
+  effectiveAt?: string | null;
+  supersedesValuationId?: string | null;
 };
 
 type PaymentRecordRow = {
@@ -122,6 +158,12 @@ type PaymentRecordRow = {
   feeCurrency: string | null;
   feeScale: number | null;
   supersedesPaymentRecordId: string | null;
+  expenseRevision?: number | null;
+  payerMemberId?: string | null;
+  authorizedAt?: string | null;
+  bankFxRate?: string | null;
+  source?: string | null;
+  notes?: string | null;
 };
 
 const createOperation = "LEDGER_CREATE_EXPENSE";
@@ -345,6 +387,274 @@ export function createLedgerExpenseRepository(
     async markExpenseConflict(id) {
       await setExpenseSyncStatus(database, id, "CONFLICT");
     },
+
+    async cacheRateQuote(quote) {
+      await database.runAsync(
+        `INSERT OR REPLACE INTO ledger_rate_quotes (
+          id, journey_id, quote_currency, base_currency, decimal_rate,
+          effective_date, observed_at, provider, provider_reference, expires_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        quote.id,
+        quote.journeyId,
+        quote.quoteCurrency,
+        quote.baseCurrency,
+        quote.decimalRate,
+        quote.effectiveDate,
+        quote.observedAt,
+        quote.provider,
+        quote.providerReference,
+        quote.expiresAt,
+        new Date().toISOString(),
+      );
+    },
+
+    async listRateQuotes(journeyId, quoteCurrency, baseCurrency) {
+      return database.getAllAsync<RateQuote>(
+        `SELECT id, journey_id AS journeyId, quote_currency AS quoteCurrency,
+          base_currency AS baseCurrency, decimal_rate AS decimalRate,
+          effective_date AS effectiveDate, observed_at AS observedAt, provider,
+          provider_reference AS providerReference, expires_at AS expiresAt
+         FROM ledger_rate_quotes
+         WHERE journey_id = ? AND quote_currency = ? AND base_currency = ?
+         ORDER BY observed_at DESC`,
+        journeyId,
+        quoteCurrency,
+        baseCurrency,
+      );
+    },
+
+    async addPaymentRecord(expenseId, input) {
+      const expense = await requireExpense(database, expenseId);
+      if (!input.authorization && !input.posted) {
+        throw new Error("Payment evidence needs an authorization or posted cost.");
+      }
+      for (const [label, money] of [
+        ["Authorization", input.authorization],
+        ["Posted cost", input.posted],
+        ["Fee", input.fee],
+      ] as const) {
+        if (money) assertMoney(money, label);
+      }
+      if (input.supersedesPaymentRecordId) {
+        const superseded = await database.getFirstAsync<{ id: string }>(
+          `SELECT p.id FROM ledger_payment_records p
+           WHERE p.id = ? AND p.expense_id = ?
+             AND NOT EXISTS (
+               SELECT 1 FROM ledger_payment_records next
+               WHERE next.supersedes_payment_record_id = p.id
+             )`,
+          input.supersedesPaymentRecordId,
+          expenseId,
+        );
+        if (!superseded) throw new Error("Superseded payment evidence was not found.");
+      }
+      const now = new Date().toISOString();
+      const payment: PaymentRecord = {
+        ...input,
+        id: createLocalId("ledger-payment"),
+        expenseRevision: expense.revision,
+        payerMemberId: expense.payerMemberId,
+      };
+      await database.withTransactionAsync(async () => {
+        await insertPaymentRecord(database, expense, payment, now, "PENDING_CREATE");
+        await insertAuditEvent(
+          database,
+          expense.id,
+          expense.revision,
+          input.supersedesPaymentRecordId
+            ? "PAYMENT_RECORD_SUPERSEDED"
+            : "PAYMENT_RECORD_ADDED",
+          input.notes ?? null,
+          now,
+        );
+        await enqueueEvidenceOperation(
+          database,
+          expense,
+          payment.id,
+          "LEDGER_ADD_PAYMENT_RECORD",
+          payment,
+        );
+      });
+      return payment;
+    },
+
+    async markPaymentRecordSynced(id, serverId) {
+      await database.runAsync(
+        `UPDATE ledger_payment_records
+         SET server_id = ?, sync_status = 'SYNCED', last_synced_at = ? WHERE id = ?`,
+        serverId,
+        new Date().toISOString(),
+        id,
+      );
+    },
+
+    async getPaymentRecordServerId(id) {
+      const row = await database.getFirstAsync<{ serverId: string | null }>(
+        "SELECT server_id AS serverId FROM ledger_payment_records WHERE id = ?",
+        id,
+      );
+      return row?.serverId ?? null;
+    },
+
+    async markValuationSynced(
+      localValuationId,
+      serverValuationId,
+      localRateSnapshotId,
+      serverRateSnapshotId,
+    ) {
+      await database.runAsync(
+        "UPDATE ledger_valuation_snapshots SET server_id = ? WHERE id = ?",
+        serverValuationId,
+        localValuationId,
+      );
+      if (localRateSnapshotId && serverRateSnapshotId) {
+        await database.runAsync(
+          "UPDATE ledger_exchange_rate_snapshots SET server_id = ? WHERE id = ?",
+          serverRateSnapshotId,
+          localRateSnapshotId,
+        );
+      }
+    },
+
+    async applyValuation(expenseId, input) {
+      const current = await requireExpense(database, expenseId);
+      if (current.status === "DELETED")
+        throw new Error("Deleted expenses cannot be valued.");
+      const journey = await database.getFirstAsync<{
+        settlementCurrency: string;
+        settlementScale: number;
+      }>(
+        `SELECT settlement_currency AS settlementCurrency,
+          settlement_scale AS settlementScale FROM ledger_journeys WHERE journey_id = ?`,
+        current.journeyId,
+      );
+      if (!journey) throw new Error("Journey valuation settings were not found.");
+      const rateQuote = input.rateQuoteId
+        ? await database.getFirstAsync<RateQuote>(
+            `SELECT id, journey_id AS journeyId, quote_currency AS quoteCurrency,
+              base_currency AS baseCurrency, decimal_rate AS decimalRate,
+              effective_date AS effectiveDate, observed_at AS observedAt, provider,
+              provider_reference AS providerReference, expires_at AS expiresAt
+             FROM ledger_rate_quotes WHERE id = ? AND journey_id = ?`,
+            input.rateQuoteId,
+            current.journeyId,
+          )
+        : undefined;
+      const paymentRecord = input.paymentRecordId
+        ? current.paymentRecords.find((record) => record.id === input.paymentRecordId)
+        : undefined;
+      if (
+        paymentRecord &&
+        current.paymentRecords.some(
+          (record) => record.supersedesPaymentRecordId === paymentRecord.id,
+        )
+      ) {
+        throw new Error("Superseded payment evidence cannot be applied.");
+      }
+      const preview = previewValuation({
+        ...input,
+        original: current.original,
+        settlementCurrency: journey.settlementCurrency,
+        settlementScale: journey.settlementScale,
+        rateQuote: rateQuote ?? undefined,
+        paymentRecord,
+      });
+      const now = new Date().toISOString();
+      const revision = current.revision + 1;
+      const active = current.valuation;
+      const rateSnapshotId =
+        input.policy === "ACTUAL_PAYER_COST" ? null : createLocalId("ledger-rate");
+      const valuation: SettlementValuationSnapshot = {
+        id: createLocalId("ledger-valuation"),
+        policy: input.policy,
+        original: current.original,
+        settlement: preview.settlement,
+        rateSnapshotId,
+        paymentRecordId: preview.paymentRecordId,
+        reason: preview.reason,
+        decimalRate: preview.decimalRate,
+        roundingMode: "HALF_UP",
+        effectiveAt: now,
+        supersedesValuationId: active?.id ?? null,
+      };
+      const next: LedgerExpense = {
+        ...current,
+        revision,
+        status: "ACCEPTED",
+        splits: allocateSettlementFromOriginal(preview.settlement.minor, current.splits),
+        valuation,
+        syncStatus: "PENDING_UPDATE",
+        updatedAt: now,
+      };
+      assertCommand(next);
+      await database.withTransactionAsync(async () => {
+        await database.runAsync(
+          `UPDATE ledger_expenses SET business_status = 'ACCEPTED', revision = ?,
+            sync_status = 'PENDING_UPDATE', updated_at = ? WHERE id = ?`,
+          revision,
+          now,
+          current.id,
+        );
+        for (const split of next.splits) {
+          await database.runAsync(
+            `UPDATE ledger_expense_splits SET settlement_amount_minor = ?
+             WHERE expense_id = ? AND member_id = ?`,
+            split.settlementMinor,
+            current.id,
+            split.memberId,
+          );
+        }
+        await database.runAsync(
+          "UPDATE ledger_valuation_snapshots SET is_active = 0 WHERE expense_id = ? AND is_active = 1",
+          current.id,
+        );
+        if (rateSnapshotId) {
+          await insertRateSnapshot(
+            database,
+            current,
+            revision,
+            rateSnapshotId,
+            preview.decimalRate!,
+            preview.settlement.currency,
+            rateQuote ?? null,
+            input.reason ?? null,
+            active?.rateSnapshotId ?? null,
+            now,
+          );
+        }
+        await insertValuation(database, current.id, revision, valuation, now);
+        await insertAuditEvent(
+          database,
+          current.id,
+          revision,
+          "VALUATION_APPLIED",
+          preview.reason,
+          now,
+          next,
+        );
+        await enqueueEvidenceOperation(
+          database,
+          current,
+          current.id,
+          "LEDGER_APPLY_VALUATION",
+          {
+            localValuationId: valuation.id,
+            localRateSnapshotId: rateSnapshotId,
+            baseRevision: current.serverRevision,
+            policy: input.policy,
+            rateQuoteId: input.rateQuoteId ?? null,
+            paymentRecordId: input.paymentRecordId ?? null,
+            manualRate: input.manualRate ?? null,
+            reason: preview.reason,
+            previewSettlement: preview.settlement,
+            baseExpense: toOperationSnapshot(current),
+          },
+          "ledger_expense",
+          current.serverRevision,
+        );
+      });
+      return next;
+    },
   };
 }
 
@@ -372,7 +682,7 @@ function buildLocalExpense(
     participants: command.participants,
     splits: command.splits,
     valuation: command.valuation,
-    paymentRecords: command.paymentRecords ?? [],
+    paymentRecords: [],
     status: command.status,
     revision,
     deletedAt: null,
@@ -503,11 +813,7 @@ async function replaceExpenseData(
     expense.id,
   );
   await database.runAsync(
-    "DELETE FROM ledger_valuation_snapshots WHERE expense_id = ?",
-    expense.id,
-  );
-  await database.runAsync(
-    "DELETE FROM ledger_payment_records WHERE expense_id = ?",
+    "UPDATE ledger_valuation_snapshots SET is_active = 0 WHERE expense_id = ?",
     expense.id,
   );
   await insertExpenseChildren(database, expense);
@@ -546,13 +852,20 @@ async function insertExpenseChildren(
     );
   }
   if (expense.valuation) {
-    await database.runAsync(
-      `INSERT INTO ledger_valuation_snapshots (
-        id, expense_id, expense_revision, policy, original_amount_minor, original_currency,
-        original_scale, settlement_amount_minor, settlement_currency, settlement_scale,
-        rate_snapshot_id, payment_record_id, reason, is_active, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    const existingValuation = await database.getFirstAsync<{ id: string }>(
+      "SELECT id FROM ledger_valuation_snapshots WHERE id = ? OR server_id = ?",
       expense.valuation.id,
+      expense.valuation.id,
+    );
+    await database.runAsync(
+      `INSERT OR REPLACE INTO ledger_valuation_snapshots (
+        id, server_id, expense_id, expense_revision, policy, original_amount_minor, original_currency,
+        original_scale, settlement_amount_minor, settlement_currency, settlement_scale,
+        rate_snapshot_id, payment_record_id, reason, is_active, created_at, decimal_rate,
+        rounding_mode, effective_at, supersedes_valuation_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      existingValuation?.id ?? expense.valuation.id,
+      expense.serverId ? expense.valuation.id : null,
       expense.id,
       expense.revision,
       expense.valuation.policy,
@@ -567,33 +880,167 @@ async function insertExpenseChildren(
       expense.valuation.reason,
       1,
       expense.updatedAt,
+      expense.valuation.decimalRate ?? null,
+      expense.valuation.roundingMode ?? "HALF_UP",
+      expense.valuation.effectiveAt ?? expense.updatedAt,
+      expense.valuation.supersedesValuationId ?? null,
+    );
+    await database.runAsync(
+      "UPDATE ledger_valuation_snapshots SET is_active = 1 WHERE id = ?",
+      existingValuation?.id ?? expense.valuation.id,
     );
   }
   for (const payment of expense.paymentRecords) {
-    await database.runAsync(
-      `INSERT INTO ledger_payment_records (
-        id, expense_id, instrument_label, authorization_amount_minor,
-        authorization_currency, authorization_scale, posted_amount_minor,
-        posted_currency, posted_scale, posted_at, fee_amount_minor, fee_currency,
-        fee_scale, supersedes_payment_record_id, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      payment.id,
-      expense.id,
-      payment.instrumentLabel,
-      payment.authorization?.minor ?? null,
-      payment.authorization?.currency ?? null,
-      payment.authorization?.scale ?? null,
-      payment.posted?.minor ?? null,
-      payment.posted?.currency ?? null,
-      payment.posted?.scale ?? null,
-      payment.postedAt,
-      payment.fee?.minor ?? null,
-      payment.fee?.currency ?? null,
-      payment.fee?.scale ?? null,
-      payment.supersedesPaymentRecordId,
-      expense.updatedAt,
-    );
+    await insertPaymentRecord(database, expense, payment, expense.updatedAt, "SYNCED");
   }
+}
+
+async function insertPaymentRecord(
+  database: LedgerExpenseDatabase,
+  expense: Pick<LedgerExpense, "id" | "revision" | "payerMemberId">,
+  payment: PaymentRecord,
+  createdAt: string,
+  syncStatus: "PENDING_CREATE" | "SYNCED",
+) {
+  const existing = await database.getFirstAsync<{ id: string }>(
+    "SELECT id FROM ledger_payment_records WHERE id = ? OR server_id = ?",
+    payment.id,
+    payment.id,
+  );
+  await database.runAsync(
+    `INSERT OR REPLACE INTO ledger_payment_records (
+      id, server_id, expense_id, expense_revision, payer_member_id, instrument_label,
+      authorization_amount_minor, authorization_currency, authorization_scale,
+      posted_amount_minor, posted_currency, posted_scale, authorized_at, posted_at,
+      fee_amount_minor, fee_currency, fee_scale, bank_fx_rate, source, notes,
+      supersedes_payment_record_id, revision, sync_status, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    existing?.id ?? payment.id,
+    syncStatus === "SYNCED" ? payment.id : null,
+    expense.id,
+    payment.expenseRevision ?? expense.revision,
+    payment.payerMemberId ?? expense.payerMemberId,
+    payment.instrumentLabel,
+    payment.authorization?.minor ?? null,
+    payment.authorization?.currency ?? null,
+    payment.authorization?.scale ?? null,
+    payment.posted?.minor ?? null,
+    payment.posted?.currency ?? null,
+    payment.posted?.scale ?? null,
+    payment.authorizedAt ?? null,
+    payment.postedAt,
+    payment.fee?.minor ?? null,
+    payment.fee?.currency ?? null,
+    payment.fee?.scale ?? null,
+    payment.bankFxRate ?? null,
+    payment.source ?? null,
+    payment.notes ?? null,
+    payment.supersedesPaymentRecordId,
+    1,
+    syncStatus,
+    createdAt,
+  );
+}
+
+async function insertValuation(
+  database: LedgerExpenseDatabase,
+  expenseId: string,
+  revision: number,
+  valuation: SettlementValuationSnapshot,
+  createdAt: string,
+) {
+  await database.runAsync(
+    `INSERT INTO ledger_valuation_snapshots (
+      id, server_id, expense_id, expense_revision, policy, original_amount_minor, original_currency,
+      original_scale, settlement_amount_minor, settlement_currency, settlement_scale,
+      rate_snapshot_id, payment_record_id, reason, is_active, created_at, decimal_rate,
+      rounding_mode, effective_at, supersedes_valuation_id
+    ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`,
+    valuation.id,
+    expenseId,
+    revision,
+    valuation.policy,
+    valuation.original.minor,
+    valuation.original.currency,
+    valuation.original.scale,
+    valuation.settlement.minor,
+    valuation.settlement.currency,
+    valuation.settlement.scale,
+    valuation.rateSnapshotId,
+    valuation.paymentRecordId,
+    valuation.reason,
+    createdAt,
+    valuation.decimalRate ?? null,
+    valuation.roundingMode ?? "HALF_UP",
+    valuation.effectiveAt ?? createdAt,
+    valuation.supersedesValuationId ?? null,
+  );
+}
+
+async function insertRateSnapshot(
+  database: LedgerExpenseDatabase,
+  expense: Pick<LedgerExpense, "id" | "original">,
+  revision: number,
+  id: string,
+  decimalRate: string,
+  baseCurrency: string,
+  quote: RateQuote | null,
+  manualReason: string | null,
+  supersedesRateSnapshotId: string | null,
+  createdAt: string,
+) {
+  await database.runAsync(
+    `INSERT INTO ledger_exchange_rate_snapshots (
+      id, server_id, expense_id, expense_revision, quote_currency, base_currency, decimal_rate,
+      effective_date, observed_at, provider, provider_reference, manual_reason,
+      staleness_state, supersedes_rate_snapshot_id, created_at
+    ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    id,
+    expense.id,
+    revision,
+    expense.original.currency,
+    quote?.baseCurrency ?? baseCurrency,
+    decimalRate,
+    quote?.effectiveDate ?? createdAt.slice(0, 10),
+    quote?.observedAt ?? createdAt,
+    quote?.provider ?? (manualReason ? "manual" : "same_currency"),
+    quote?.providerReference ?? null,
+    manualReason,
+    quote && Date.parse(quote.expiresAt) < Date.parse(createdAt)
+      ? "STALE_ACCEPTED"
+      : "FRESH",
+    supersedesRateSnapshotId,
+    createdAt,
+  );
+}
+
+async function enqueueEvidenceOperation(
+  database: LedgerExpenseDatabase,
+  expense: Pick<LedgerExpense, "id" | "journeyId">,
+  entityId: string,
+  operationType: string,
+  payload: unknown,
+  entityType = "ledger_payment_record",
+  baseVersion: number | null = null,
+) {
+  const now = new Date().toISOString();
+  await database.runAsync(
+    `INSERT INTO sync_operations (
+      id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
+      base_version, payload_json, status, attempt_count, next_attempt_at,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
+    createLocalId("ledger-operation"),
+    expense.journeyId,
+    entityType,
+    entityId,
+    operationType,
+    createLocalId("ledger-idempotency"),
+    baseVersion,
+    JSON.stringify({ expenseId: expense.id, ...((payload as object) ?? {}) }),
+    now,
+    now,
+  );
 }
 
 async function insertAuditEvent(
@@ -705,7 +1152,9 @@ async function hydrateExpense(
         original_amount_minor AS originalMinor, original_currency AS originalCurrency,
         original_scale AS originalScale, settlement_amount_minor AS settlementMinor,
         settlement_currency AS settlementCurrency, settlement_scale AS settlementScale,
-        rate_snapshot_id AS rateSnapshotId, payment_record_id AS paymentRecordId, reason
+        rate_snapshot_id AS rateSnapshotId, payment_record_id AS paymentRecordId, reason,
+        decimal_rate AS decimalRate, rounding_mode AS roundingMode,
+        effective_at AS effectiveAt, supersedes_valuation_id AS supersedesValuationId
        FROM ledger_valuation_snapshots WHERE expense_id = ? AND is_active = 1`,
       row.id,
     ),
@@ -715,8 +1164,10 @@ async function hydrateExpense(
         authorization_currency AS authorizationCurrency,
         authorization_scale AS authorizationScale,
         posted_amount_minor AS postedMinor, posted_currency AS postedCurrency,
-        posted_scale AS postedScale, posted_at AS postedAt,
+        posted_scale AS postedScale, authorized_at AS authorizedAt, posted_at AS postedAt,
         fee_amount_minor AS feeMinor, fee_currency AS feeCurrency, fee_scale AS feeScale,
+        expense_revision AS expenseRevision, payer_member_id AS payerMemberId,
+        bank_fx_rate AS bankFxRate, source, notes,
         supersedes_payment_record_id AS supersedesPaymentRecordId
        FROM ledger_payment_records WHERE expense_id = ? ORDER BY created_at ASC`,
       row.id,
@@ -768,6 +1219,10 @@ function normalizeValuation(value: ValuationRow): SettlementValuationSnapshot {
     rateSnapshotId: value.rateSnapshotId,
     paymentRecordId: value.paymentRecordId,
     reason: value.reason,
+    decimalRate: value.decimalRate ?? null,
+    roundingMode: value.roundingMode ?? "HALF_UP",
+    effectiveAt: value.effectiveAt ?? undefined,
+    supersedesValuationId: value.supersedesValuationId ?? null,
   };
 }
 
@@ -782,7 +1237,13 @@ function normalizePaymentRecord(value: PaymentRecordRow): PaymentRecord {
     ),
     posted: toNullableMoney(value.postedMinor, value.postedCurrency, value.postedScale),
     postedAt: value.postedAt,
+    authorizedAt: value.authorizedAt ?? null,
     fee: toNullableMoney(value.feeMinor, value.feeCurrency, value.feeScale),
+    expenseRevision: value.expenseRevision ?? undefined,
+    payerMemberId: value.payerMemberId ?? undefined,
+    bankFxRate: value.bankFxRate ?? null,
+    source: value.source ?? null,
+    notes: value.notes ?? null,
     supersedesPaymentRecordId: value.supersedesPaymentRecordId,
   };
 }

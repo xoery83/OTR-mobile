@@ -5,8 +5,11 @@ import { BackendError, type DevBackendGateway, type StoredCreate } from "./app";
 import type {
   CreateLedgerCorrectionRequest,
   CreateLedgerExpenseRequest,
+  CreateLedgerPaymentRecordRequest,
+  ApplyLedgerValuationRequest,
   LedgerCorrectionActionRequest,
   LedgerCorrectionMutationResponse,
+  LedgerExpenseMutationResponse,
   LifecycleLedgerExpenseRequest,
   ResolveLedgerExpenseConflictRequest,
   UpdateLedgerExpenseRequest,
@@ -15,12 +18,16 @@ import type {
   LedgerBootstrapResponse,
   LedgerChangesResponse,
   LedgerExpenseDto,
+  LedgerPaymentRecordDto,
+  LedgerRateQuoteDto,
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
 import {
   changedExpenseGroups,
   sameStage4Expense,
 } from "../../src/domain/ledger/conflict";
+import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
+import { previewValuation } from "../../src/domain/ledger/valuation";
 
 const approvedDevProjectRef = "tuqigdxrvrerfewsxqgm";
 
@@ -82,6 +89,9 @@ function capabilities(role: string | null, status: string | null) {
     canCorrectAnyExpense: linked && organizer,
     canSuggestCorrection: linked && (organizer || role === "group_member"),
     canResolveOwnExpenseConflict: linked && (organizer || role === "group_member"),
+    canAddOwnPaymentEvidence: linked && (organizer || role === "group_member"),
+    canManageExpenseValuation: linked && (organizer || role === "group_member"),
+    canManageLedgerValuationPolicy: linked && organizer,
   };
 }
 
@@ -193,6 +203,10 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return readMyLedger(service, userId);
     },
 
+    async readLedgerRateQuotes(_userId, tripId, quoteCurrency, baseCurrency) {
+      return readRateQuotes(service, tripId, quoteCurrency, baseCurrency);
+    },
+
     async createLedgerExpense(userId, tripId, idempotencyKey, input) {
       return createLedgerExpenseAggregate(service, userId, tripId, idempotencyKey, input);
     },
@@ -269,6 +283,28 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         tripId,
         correctionId,
         action,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async addLedgerPaymentRecord(userId, tripId, expenseId, idempotencyKey, input) {
+      return addLedgerPaymentRecord(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async applyLedgerValuation(userId, tripId, expenseId, idempotencyKey, input) {
+      return applyLedgerValuation(
+        service,
+        userId,
+        tripId,
+        expenseId,
         idempotencyKey,
         input,
       );
@@ -647,6 +683,314 @@ async function mutateLedgerExpenseAggregate(
   }
 
   return result.data as typeof response;
+}
+
+async function readRateQuotes(
+  service: SupabaseClient,
+  tripId: string,
+  quoteCurrency: string | null = null,
+  baseCurrency: string | null = null,
+): Promise<LedgerRateQuoteDto[]> {
+  let query = service
+    .from("ledger_rate_quotes")
+    .select(
+      "id, journey_id, quote_currency, base_currency, decimal_rate, effective_date, observed_at, provider, provider_reference, expires_at",
+    )
+    .eq("journey_id", tripId)
+    .order("observed_at", { ascending: false });
+  if (quoteCurrency) query = query.eq("quote_currency", quoteCurrency);
+  if (baseCurrency) query = query.eq("base_currency", baseCurrency);
+  const result = await query;
+  if (result.error) throw new Error("Supabase Dev rate quote read failed.");
+  return (result.data ?? []).map(rateQuoteRowToDto);
+}
+
+function rateQuoteRowToDto(row: Record<string, unknown>): LedgerRateQuoteDto {
+  return {
+    id: String(row.id),
+    journeyId: String(row.journey_id),
+    quoteCurrency: String(row.quote_currency),
+    baseCurrency: String(row.base_currency),
+    decimalRate: String(row.decimal_rate),
+    effectiveDate: String(row.effective_date),
+    observedAt: String(row.observed_at),
+    provider: String(row.provider),
+    providerReference: row.provider_reference ? String(row.provider_reference) : null,
+    expiresAt: String(row.expires_at),
+  };
+}
+
+function paymentRowToDto(
+  row: Record<string, unknown>,
+  audit?: Record<string, unknown>,
+): LedgerPaymentRecordDto {
+  return {
+    id: String(row.id),
+    expenseId: row.expense_id ? String(row.expense_id) : undefined,
+    expenseRevision:
+      row.expense_revision === null || row.expense_revision === undefined
+        ? undefined
+        : Number(row.expense_revision),
+    payerMemberId: row.payer_member_id ? String(row.payer_member_id) : undefined,
+    instrumentLabel: row.instrument_label ? String(row.instrument_label) : null,
+    authorization: moneyOrNull(row, "authorization"),
+    posted: moneyOrNull(row, "posted"),
+    authorizedAt: row.authorized_at ? String(row.authorized_at) : null,
+    postedAt: row.posted_at ? String(row.posted_at) : null,
+    fee: moneyOrNull(row, "fee"),
+    bankFxRate: row.bank_fx_rate ? String(row.bank_fx_rate) : null,
+    source: row.source ? String(row.source) : null,
+    notes: row.notes ? String(row.notes) : null,
+    supersedesPaymentRecordId: row.supersedes_payment_record_id
+      ? String(row.supersedes_payment_record_id)
+      : null,
+    auditEvent: audit ? auditRowToDto(audit) : undefined,
+  };
+}
+
+function auditRowToDto(row: Record<string, unknown>) {
+  return {
+    id: String(row.id),
+    expenseId: String(row.expense_id),
+    actorUserId: row.actor_user_id ? String(row.actor_user_id) : null,
+    actorMemberId: row.actor_member_id ? String(row.actor_member_id) : null,
+    eventType: String(row.event_type),
+    reason: row.reason ? String(row.reason) : null,
+    changedGroups: Array.isArray(row.changed_groups)
+      ? row.changed_groups.map(String)
+      : [],
+    revision: Number(row.expense_revision),
+    createdAt: String(row.created_at),
+  };
+}
+
+async function addLedgerPaymentRecord(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: CreateLedgerPaymentRecordRequest,
+) {
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  const now = new Date().toISOString();
+  const entity: LedgerPaymentRecordDto = {
+    id: randomUUID(),
+    expenseRevision: current.revision,
+    payerMemberId: current.payerMemberId,
+    instrumentLabel: input.instrumentLabel,
+    authorization: input.authorization,
+    posted: input.posted,
+    authorizedAt: input.authorizedAt,
+    postedAt: input.postedAt,
+    fee: input.fee,
+    bankFxRate: input.bankFxRate,
+    source: input.source,
+    notes: input.notes,
+    supersedesPaymentRecordId: input.supersedesPaymentRecordId,
+  };
+  const response = {
+    entity,
+    serverId: entity.id,
+    revision: 1 as const,
+    updatedAt: now,
+    idempotentReplay: false,
+  };
+  const result = await service.rpc("ledger_add_payment_record_5_1", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    payment_value: input,
+    response_body_value: response,
+  });
+  mapFinancialEvidenceError(result.error?.message);
+  return result.data as typeof response;
+}
+
+async function applyLedgerValuation(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: ApplyLedgerValuationRequest,
+): Promise<LedgerExpenseMutationResponse> {
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  const settingResult = await service
+    .from("ledger_settings")
+    .select("settlement_currency, settlement_scale")
+    .eq("journey_id", tripId)
+    .single();
+  if (settingResult.error) throw new Error("Supabase Dev valuation settings failed.");
+  const quote = input.rateQuoteId
+    ? (await readRateQuotes(service, tripId)).find(
+        (item) => item.id === input.rateQuoteId,
+      )
+    : undefined;
+  const payment = input.paymentRecordId
+    ? current.paymentRecords.find((item) => item.id === input.paymentRecordId)
+    : undefined;
+  let preview;
+  try {
+    preview = previewValuation({
+      policy: input.policy,
+      original: current.original,
+      settlementCurrency: String(settingResult.data.settlement_currency),
+      settlementScale: Number(settingResult.data.settlement_scale),
+      rateQuote: quote,
+      paymentRecord: payment,
+      manualRate: input.manualRate ?? undefined,
+      reason: input.reason ?? undefined,
+    });
+  } catch {
+    throw new BackendError(400, "INVALID_PAYLOAD", "The valuation evidence is invalid.");
+  }
+  if (JSON.stringify(preview.settlement) !== JSON.stringify(input.previewSettlement))
+    throw new BackendError(400, "INVALID_PAYLOAD", "The valuation preview is stale.");
+
+  const now = new Date().toISOString();
+  const nextRevision = current.revision + 1;
+  const rateSnapshotId = input.policy === "ACTUAL_PAYER_COST" ? null : randomUUID();
+  const valuation = {
+    id: randomUUID(),
+    policy: input.policy,
+    original: current.original,
+    settlement: preview.settlement,
+    rateSnapshotId,
+    paymentRecordId: preview.paymentRecordId,
+    reason: preview.reason,
+    decimalRate: preview.decimalRate,
+    roundingMode: "HALF_UP" as const,
+    effectiveAt: now,
+    supersedesValuationId: current.valuation?.id ?? null,
+  };
+  const entity: LedgerExpenseDto = {
+    ...current,
+    businessStatus: "ACCEPTED",
+    revision: nextRevision,
+    splits: allocateSettlementFromOriginal(preview.settlement.minor, current.splits),
+    valuation,
+    updatedAt: now,
+    auditEvents: current.auditEvents.concat({
+      id: randomUUID(),
+      expenseId,
+      actorUserId: userId,
+      actorMemberId: null,
+      eventType: "VALUATION_APPLIED",
+      reason: preview.reason,
+      changedGroups: ["FINANCIAL_CORE"],
+      revision: nextRevision,
+      createdAt: now,
+    }),
+  };
+  const response: LedgerExpenseMutationResponse = {
+    entity,
+    serverId: expenseId,
+    revision: nextRevision,
+    updatedAt: now,
+    idempotentReplay: false,
+  };
+  const rateSnapshot = rateSnapshotId
+    ? {
+        id: rateSnapshotId,
+        decimalRate: preview.decimalRate,
+        effectiveDate: quote?.effectiveDate ?? now.slice(0, 10),
+        observedAt: quote?.observedAt ?? now,
+        provider:
+          quote?.provider ??
+          (input.policy === "SAME_CURRENCY" ? "same_currency" : "manual"),
+        providerReference: quote?.providerReference ?? null,
+        stalenessState:
+          quote && Date.parse(quote.expiresAt) < Date.parse(now)
+            ? "STALE_ACCEPTED"
+            : "FRESH",
+        supersedesRateSnapshotId: current.valuation?.rateSnapshotId ?? null,
+      }
+    : null;
+  const result = await service.rpc("ledger_apply_valuation_5_1", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    valuation_value: input,
+    rate_snapshot_value: rateSnapshot,
+    response_body_value: response,
+  });
+  if (result.error?.message.includes("REVISION_CONFLICT")) {
+    const canonical = await readOneExpenseAggregate(service, expenseId);
+    if (!canonical) throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
+    const submitted = editableExpense(entity);
+    const conflictBody = {
+      error: {
+        code: "REVISION_CONFLICT",
+        conflictId: "00000000-0000-4000-8000-000000000000",
+        expenseId,
+        baseRevision: input.baseRevision,
+        currentRevision: canonical.revision,
+        submitted,
+        current: canonical,
+        changedGroups: changedExpenseGroups(submitted, editableExpense(canonical)),
+        auditSummaries: canonical.auditEvents.filter(
+          (event) => event.revision > input.baseRevision,
+        ),
+      },
+    };
+    const recorded = await service.rpc("ledger_record_conflict_4c", {
+      actor_user: userId,
+      target_journey: tripId,
+      target_expense: expenseId,
+      command_type_value: "APPLY_VALUATION",
+      idempotency_key_value: idempotencyKey,
+      payload_hash_value: hashPayload(input),
+      conflict_body_value: conflictBody,
+    });
+    if (recorded.error)
+      throw new Error("Supabase Dev valuation conflict persistence failed.");
+    throw new BackendError(
+      409,
+      "REVISION_CONFLICT",
+      "The base revision is stale.",
+      recorded.data,
+    );
+  }
+  mapFinancialEvidenceError(result.error?.message);
+  return result.data as LedgerExpenseMutationResponse;
+}
+
+function mapFinancialEvidenceError(message?: string) {
+  if (!message) return;
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("ENTITY_NOT_FOUND"))
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(
+      403,
+      "TRIP_WRITE_FORBIDDEN",
+      "The financial command is forbidden.",
+    );
+  if (message.includes("FINALIZED_SETTLEMENT_PROTECTED"))
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "A finalized settlement protects this mutation.",
+    );
+  if (
+    message.includes("INVALID_") ||
+    message.includes("REASON_REQUIRED") ||
+    message.includes("PREVIEW_MISMATCH")
+  )
+    throw new BackendError(400, "INVALID_PAYLOAD", "The financial evidence is invalid.");
+  if (message.includes("RATE_REQUIRED"))
+    throw new BackendError(409, "RATE_REQUIRED", "No trusted rate is available.");
+  throw new Error("Supabase Dev financial evidence operation failed.");
 }
 
 function editableExpense(expense: LedgerExpenseDto) {
@@ -1048,40 +1392,48 @@ async function readLedgerBootstrap(
   userId: string,
 ): Promise<LedgerBootstrapResponse> {
   const now = new Date().toISOString();
-  const [settings, members, households, householdMembers, expenses, corrections] =
-    await Promise.all([
-      service
-        .from("ledger_settings")
-        .select("settlement_currency, settlement_scale, valuation_policy, updated_at")
-        .eq("journey_id", tripId)
-        .maybeSingle(),
-      service
-        .from("journey_members")
-        .select("id, user_id, display_name, role, status, updated_at")
-        .eq("trip_id", tripId)
-        .order("display_name"),
-      service
-        .from("households")
-        .select("id, name, display_order, updated_at")
-        .eq("journey_id", tripId)
-        .order("display_order"),
-      service
-        .from("household_members")
-        .select("household_id, member_id")
-        .eq("journey_id", tripId),
-      service
-        .from("expenses")
-        .select(
-          "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, revision, deleted_at, created_at, updated_at",
-        )
-        .eq("journey_id", tripId)
-        .order("occurred_at", { ascending: false }),
-      service
-        .from("expense_correction_requests")
-        .select("*")
-        .eq("journey_id", tripId)
-        .order("updated_at", { ascending: false }),
-    ]);
+  const [
+    settings,
+    members,
+    households,
+    householdMembers,
+    expenses,
+    corrections,
+    rateQuotes,
+  ] = await Promise.all([
+    service
+      .from("ledger_settings")
+      .select("settlement_currency, settlement_scale, valuation_policy, updated_at")
+      .eq("journey_id", tripId)
+      .maybeSingle(),
+    service
+      .from("journey_members")
+      .select("id, user_id, display_name, role, status, updated_at")
+      .eq("trip_id", tripId)
+      .order("display_name"),
+    service
+      .from("households")
+      .select("id, name, display_order, updated_at")
+      .eq("journey_id", tripId)
+      .order("display_order"),
+    service
+      .from("household_members")
+      .select("household_id, member_id")
+      .eq("journey_id", tripId),
+    service
+      .from("expenses")
+      .select(
+        "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, revision, deleted_at, created_at, updated_at",
+      )
+      .eq("journey_id", tripId)
+      .order("occurred_at", { ascending: false }),
+    service
+      .from("expense_correction_requests")
+      .select("*")
+      .eq("journey_id", tripId)
+      .order("updated_at", { ascending: false }),
+    readRateQuotes(service, tripId),
+  ]);
 
   if (
     settings.error ||
@@ -1140,6 +1492,7 @@ async function readLedgerBootstrap(
     }),
     expenses: aggregates,
     corrections: (corrections.data ?? []).map(correctionRowToDto),
+    rateQuotes,
     actor: {
       memberId: actorRow ? String(actorRow.id) : null,
       role: actorRole,
@@ -1176,6 +1529,12 @@ async function readLedgerChanges(
   const correctionIds = rows
     .filter((row) => row.entity_type === "CORRECTION")
     .map((row) => String(row.entity_id));
+  const rateQuoteIds = rows
+    .filter((row) => row.entity_type === "RATE_QUOTE")
+    .map((row) => String(row.entity_id));
+  const paymentIds = rows
+    .filter((row) => row.entity_type === "PAYMENT_RECORD")
+    .map((row) => String(row.entity_id));
   const expenses =
     expenseIds.length > 0
       ? await service
@@ -1206,9 +1565,46 @@ async function readLedgerChanges(
           .select("*")
           .in("id", correctionIds)
       : { data: [], error: null };
+  const rateQuotes =
+    rateQuoteIds.length > 0
+      ? await service
+          .from("ledger_rate_quotes")
+          .select(
+            "id, journey_id, quote_currency, base_currency, decimal_rate, effective_date, observed_at, provider, provider_reference, expires_at",
+          )
+          .in("id", rateQuoteIds)
+      : { data: [], error: null };
+  const paymentRecords =
+    paymentIds.length > 0
+      ? await service
+          .from("payment_records")
+          .select(
+            "id, expense_id, expense_revision, payer_member_id, instrument_label, authorization_amount_minor, authorization_currency, authorization_scale, posted_amount_minor, posted_currency, posted_scale, authorized_at, posted_at, fee_amount_minor, fee_currency, fee_scale, bank_fx_rate, source, notes, supersedes_payment_record_id",
+          )
+          .in("id", paymentIds)
+      : { data: [], error: null };
+  const evidenceAudits =
+    paymentIds.length > 0
+      ? await service
+          .from("expense_audit_events")
+          .select(
+            "id, expense_id, expense_revision, event_type, actor_user_id, actor_member_id, reason, changed_groups, metadata, created_at",
+          )
+          .in("expense_id", [
+            ...new Set((paymentRecords.data ?? []).map((row) => String(row.expense_id))),
+          ])
+          .in("event_type", ["PAYMENT_RECORD_ADDED", "PAYMENT_RECORD_SUPERSEDED"])
+      : { data: [], error: null };
 
   if (expenses.error) throw new Error("Supabase Dev Ledger change aggregate failed.");
-  if (households.error || householdMembers.error || corrections.error) {
+  if (
+    households.error ||
+    householdMembers.error ||
+    corrections.error ||
+    rateQuotes.error ||
+    paymentRecords.error ||
+    evidenceAudits.error
+  ) {
     throw new Error("Supabase Dev Ledger household aggregate failed.");
   }
   const aggregates = await readExpenseAggregates(service, expenses.data ?? []);
@@ -1229,15 +1625,23 @@ async function readLedgerChanges(
   for (const row of corrections.data ?? []) {
     byId.set(String(row.id), correctionRowToDto(row));
   }
+  for (const row of rateQuotes.data ?? []) {
+    byId.set(String(row.id), rateQuoteRowToDto(row));
+  }
+  for (const row of paymentRecords.data ?? []) {
+    const audit = (evidenceAudits.data ?? []).find(
+      (item) =>
+        String(
+          (item.metadata as Record<string, unknown> | null)?.paymentRecordId ?? "",
+        ) === String(row.id),
+    );
+    byId.set(String(row.id), paymentRowToDto(row, audit));
+  }
 
   return {
     changes: rows.map((row) => ({
       entityType:
-        row.entity_type === "EXPENSE"
-          ? "EXPENSE"
-          : row.entity_type === "CORRECTION"
-            ? "CORRECTION"
-            : "HOUSEHOLD",
+        row.entity_type as LedgerChangesResponse["changes"][number]["entityType"],
       entityId: String(row.entity_id),
       revision: Number(row.revision),
       isTombstone: Boolean(row.is_tombstone),
@@ -1271,14 +1675,14 @@ async function readExpenseAggregates(
     service
       .from("settlement_valuation_snapshots")
       .select(
-        "id, expense_id, policy, original_amount_minor, original_currency, original_scale, settlement_amount_minor, settlement_currency, settlement_scale, rate_snapshot_id, payment_record_id, reason",
+        "id, expense_id, policy, original_amount_minor, original_currency, original_scale, settlement_amount_minor, settlement_currency, settlement_scale, rate_snapshot_id, payment_record_id, reason, decimal_rate, rounding_mode, effective_at, supersedes_valuation_id",
       )
       .eq("is_active", true)
       .in("expense_id", ids),
     service
       .from("payment_records")
       .select(
-        "id, expense_id, instrument_label, authorization_amount_minor, authorization_currency, authorization_scale, posted_amount_minor, posted_currency, posted_scale, posted_at, fee_amount_minor, fee_currency, fee_scale, supersedes_payment_record_id",
+        "id, expense_id, expense_revision, payer_member_id, instrument_label, authorization_amount_minor, authorization_currency, authorization_scale, posted_amount_minor, posted_currency, posted_scale, authorized_at, posted_at, fee_amount_minor, fee_currency, fee_scale, bank_fx_rate, source, notes, supersedes_payment_record_id",
       )
       .in("expense_id", ids),
     service
@@ -1371,21 +1775,19 @@ async function readExpenseAggregates(
               ? String(valuation.payment_record_id)
               : null,
             reason: valuation.reason ? String(valuation.reason) : null,
+            decimalRate: valuation.decimal_rate ? String(valuation.decimal_rate) : null,
+            roundingMode: "HALF_UP" as const,
+            effectiveAt: valuation.effective_at
+              ? String(valuation.effective_at)
+              : undefined,
+            supersedesValuationId: valuation.supersedes_valuation_id
+              ? String(valuation.supersedes_valuation_id)
+              : null,
           }
         : null,
       paymentRecords: (payments.data ?? [])
         .filter((item) => String(item.expense_id) === id)
-        .map((item) => ({
-          id: String(item.id),
-          instrumentLabel: item.instrument_label ? String(item.instrument_label) : null,
-          authorization: moneyOrNull(item, "authorization"),
-          posted: moneyOrNull(item, "posted"),
-          postedAt: item.posted_at ? String(item.posted_at) : null,
-          fee: moneyOrNull(item, "fee"),
-          supersedesPaymentRecordId: item.supersedes_payment_record_id
-            ? String(item.supersedes_payment_record_id)
-            : null,
-        })),
+        .map((item) => paymentRowToDto(item)),
       auditEvents: (audits.data ?? [])
         .filter((item) => String(item.expense_id) === id)
         .map((item) => ({

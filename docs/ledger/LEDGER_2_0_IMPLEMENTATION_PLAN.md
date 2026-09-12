@@ -1,7 +1,7 @@
 # Ledger 2.0 iOS And Backend Implementation Plan
 
 Date: 2026-09-12
-Status: Approved; Stage 0 through Stage 4C completed and physically validated
+Status: Approved; Stage 0 through Stage 4C physically validated; Stage 5.1 complete
 
 ## Objective
 
@@ -244,6 +244,29 @@ Each sub-slice must pass offline create/edit/restart/reconnect and two-client
 concurrency tests before the next begins.
 
 ## Stage 5: Currency, Payment Evidence, And Receipts
+
+Stage 5 is delivered through three ordered engineering gates. A gate must pass
+its automated and Simulator acceptance before work begins on the next:
+
+1. **5.1 Financial Evidence & Valuation** — ISO 4217 validation, independent
+   merchant/payer/settlement facts, append-only PaymentRecords and valuation
+   evidence, trusted server rate candidates, `RATE_REQUIRED`, explicit
+   valuation commands, authorization, audit, SQLite v9, API, and pull.
+2. **5.2 Receipt / Asset / OCR Pipeline** — receipt assets, an asset-specific
+   durable operation path, upload, narrow replaceable OCR provider, suggestion,
+   and explicit user confirmation.
+3. **5.3 Integrated Acceptance** — combined recovery, convergence, Simulator,
+   and physical-device acceptance.
+
+Stage 5.1 does not implement receipt selection, binary upload, OCR, settlement,
+payment execution, reopening, or settlement grouping. A valid unresolved-rate
+Expense synchronizes normally as `RATE_REQUIRED`; valuation completeness is
+not transport status. Rate-cache refreshes are candidate updates only and may
+not mutate an Expense or accepted historical snapshots.
+
+Gate status (2026-09-12): 5.1 passed automated, Hosted Dev, cold-restart
+Simulator, two-client conflict, and Stage 4 regression acceptance. Stop before
+5.2 pending explicit approval.
 
 Implement the three independent financial truths:
 

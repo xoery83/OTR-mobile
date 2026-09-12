@@ -181,7 +181,6 @@ async function createPendingLocalAggregate() {
       paymentRecordId: null,
       reason: "Stage 3 acceptance",
     },
-    paymentRecords: [],
     status: "ACCEPTED",
   };
   const created = await repository.createExpense(command);

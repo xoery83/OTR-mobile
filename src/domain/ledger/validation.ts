@@ -70,5 +70,12 @@ export function validateExpenseAggregate(
   } else if (expense.status === "ACCEPTED") {
     issues.push({ code: "VALUATION_REQUIRED", field: "valuation" });
   }
+  if (
+    expense.status === "RATE_REQUIRED" &&
+    (expense.valuation !== null ||
+      expense.splits.some((split) => split.settlementMinor !== null))
+  ) {
+    issues.push({ code: "RATE_REQUIRED_HAS_VALUATION", field: "valuation" });
+  }
   return issues;
 }

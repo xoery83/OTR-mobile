@@ -4,9 +4,10 @@ Date: 2026-09-12
 
 ## Current Milestone
 
-OTR Mobile 2.0 Ledger 2.0 Stage 4C is complete. It is implemented,
-automated-validated, deployed to Hosted Supabase Dev, accepted on iOS Simulator
-with two authenticated identities, and physically validated on a Release build.
+OTR Mobile 2.0 Ledger 2.0 Stage 5.1 Financial Evidence & Valuation is complete.
+It is implemented, automated-validated, deployed to Hosted Supabase Dev, and
+accepted on iOS Simulator with two authenticated identities. Stage 5.2 has not
+started.
 
 ## Stable Baseline
 
@@ -15,7 +16,7 @@ embedded-bundle Release build. Expense and Itinerary local-first creates,
 offline cold launch, retry, Journey isolation, entity isolation, SQLite
 integrity, typecheck, and tests passed.
 
-Current local SQLite schema version: 8.
+Current local SQLite schema version: 9.
 
 ## Authoritative Ledger Sources
 
@@ -26,38 +27,36 @@ Current local SQLite schema version: 8.
 
 ## Latest Completed Checkpoint
 
-Stage 4C Conflict And Correction Request is complete. Concurrent Expense writes
-produce a stable explicit conflict envelope with immutable base, submitted, and
-canonical-at-conflict snapshots. Resolution supports Keep Mine, Keep Journey,
-and explicit edited aggregates; Keep Journey
-adds canonical resolution history without incrementing the Expense revision.
-Resolution races supersede the prior local envelope and persist a new OPEN one.
+Stage 5.1 adds ISO 4217 code/exponent validation; independent merchant amount,
+payer evidence, and Journey valuation; append-only PaymentRecord supersession;
+server-controlled rate-quote candidates; `RATE_REQUIRED`; and immutable active
+SettlementValuationSnapshot history for SAME_CURRENCY, REFERENCE_RATE,
+ACTUAL_PAYER_COST, and MANUAL_AGREED. Only an explicit valuation command changes
+group value and the Expense revision. Manual valuation requires a preview and
+reason. Payment evidence has its own durable operation and canonical audit.
 
-Ordinary members use a separate durable correction-request command path. The
-complete Stage-4 editable aggregate supports OPEN, ACCEPTED, REJECTED,
-WITHDRAWN, and STALE transitions. Acceptance atomically creates the canonical
-Expense revision and audit event. Backend commands re-read current canonical
-membership and capabilities; cached Mobile capabilities are UI context only.
-
-Hosted Dev migration `20260912000300_ledger_2_stage_4c_conflicts.sql` is applied
-to project `tuqigdxrvrerfewsxqgm`; local and remote migration ledgers match.
-Stage 4C RPCs and canonical resolution storage remain backend/service-role only.
+Hosted Dev migrations
+`20260912000400_ledger_2_stage_5_1_financial_evidence.sql` and
+`20260912000500_ledger_2_stage_5_1_evidence_links.sql` are applied to project
+`tuqigdxrvrerfewsxqgm`; local and remote migration ledgers match. Trusted rate
+quotes are service-role-only and the external provider remains behind one narrow
+replaceable boundary.
 
 ## Validation Status
 
-Completed on iOS Simulator: `/stage4c-acceptance` passed creator/organizer
-concurrency, explicit Financial Core conflict, immutable envelope persistence,
-Keep Journey without a revision bump, Keep Mine with one revision, a resolution
-race producing SUPERSEDED then a new OPEN envelope, ordinary-member direct-write
-rejection, and correction create/accept/reject/withdraw/stale behavior.
+Completed on iOS Simulator: `/stage5-1-acceptance` passed a real process
+terminate/cold relaunch from an offline EUR 100.00 `RATE_REQUIRED` create,
+successful later sync at r1, independent NZD 199.43 posted evidence, explicit
+NZD 197.80 manual group valuation with canonical reason/audit, append-only NZD
+200.00 payment supersession without revaluation, and a creator/organizer
+valuation race using the existing Stage 4C Financial Core conflict envelope.
+Keep Journey converged to canonical r3 / NZD 200.00 without creating settlement.
 
-A real app force-quit/cold relaunch preserved SQLite schema v8 and all inspected
-conflict/correction rows. Read-only counts before and after restart matched.
-
-Stage 4A and Stage 4B Simulator regression gates were rerun after Stage 4C.
-Both passed in full, including ambiguous create recovery, dependent replay,
-edit/tombstone/restore, canonical audit pull, organizer reasons, stale revision,
-and finalized-settlement protection.
+Read-only Simulator SQLite validation passed: `integrity_check = ok`, schema v9,
+all successful 5.1 operations completed, both PaymentRecords synced, immutable
+valuation/audit history present, and no PENDING/PROCESSING/RETRYABLE 5.1 work.
+Stage 4A and Stage 4B Simulator regression gates were rerun and passed. Stage
+5.1 itself exercised the Stage 4C conflict and resolution path.
 
 Completed on Leon's physical iPhone 16 Pro with the Release build:
 authenticated `/v2` bootstrap and mutation path, creator edit, tombstone/delete,
@@ -75,21 +74,21 @@ An ordinary-member correction created offline on the phone survived restart,
 reconnected as OPEN, was accepted by the Simulator organizer, and converged on
 both clients as canonical r2 with `CORRECTION_ACCEPTED` audit.
 
-Final read-only iPhone SQLite checks passed: `integrity_check = ok`, schema v8,
+Final Stage 4 physical read-only iPhone SQLite checks passed: `integrity_check = ok`, schema v8,
 one RESOLVED conflict, one ACCEPTED correction, no duplicate Expense/audit/queue
 identities, and zero PENDING/PROCESSING/RETRYABLE operations.
 
-Latest automated validation: typecheck and lint passed; 27 Vitest files / 87
-tests passed. Full Supabase validation passed two clean resets, 4 SQL files / 90
+Latest automated validation: typecheck and lint passed; 28 Vitest files / 96
+tests passed. Full Supabase validation passed two clean resets, 5 SQL files / 121
 tests each run, deterministic schema manifest comparison, zero schema diff, and
-baseline/secret guards. Stage 4C's Hosted Dev migration is deployed.
+baseline/secret guards. Hosted Dev was exercised end-to-end by Simulator.
 
 ## Next Checkpoint
 
-Stage 4A, 4B, and 4C are complete. Stop at the Stage 4C gate and wait for
-explicit direction. Do not begin Stage 5 or Stage 7.
+Stage 5.1 is complete. Stop at the 5.1 gate and wait for explicit approval before
+beginning Stage 5.2 Receipt / Asset / OCR Pipeline. Stage 7 remains out of scope.
 
 ## Safety Notes
 
 Production remains read-only. Legacy OTR Web is reference-only. Mobile UI reads
-through repositories and does not access Supabase business tables directly.
+No receipt picker, upload, asset operation, or OCR implementation exists yet.

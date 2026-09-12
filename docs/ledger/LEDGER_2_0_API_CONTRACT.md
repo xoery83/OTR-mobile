@@ -172,6 +172,39 @@ does not add Stage 5 payment, rate, receipt, or evidence mutation fields.
 Payment/rate evidence is append-only. Receipt metadata, binary upload, OCR, and
 Expense financial sync have separate idempotency and status.
 
+### Stage 5.1 Financial Evidence
+
+`GET /v2/trips/:tripId/ledger/rate-quotes?quoteCurrency=&baseCurrency=` returns
+service-role-managed rate candidates with provider provenance, effective date,
+observation time, and freshness. It never accepts a Mobile write. Quote refresh
+does not change an Expense, revision, audit history, or conflict state.
+
+Creating a PaymentRecord accepts a local id, optional authorization and posted
+Money, evidence times, fee, instrument label, source/notes, and an optional
+`supersedesPaymentRecordId`. It is an independent append-only evidence command:
+it has its own idempotency and revision, creates an `EVIDENCE` audit event, and
+never changes Expense valuation, group amount, business revision, or status.
+
+Creating a valuation requires `baseRevision`, an explicit policy, and a client
+preview of settlement Money. `REFERENCE_RATE` references one trusted candidate;
+`ACTUAL_PAYER_COST` references a non-superseded posted PaymentRecord;
+`MANUAL_AGREED` supplies a positive decimal rate and non-blank reason; and
+`SAME_CURRENCY` requires identical merchant and Journey settlement currencies.
+Accepting a valuation atomically creates immutable rate/valuation snapshots,
+reallocates settlement splits, advances the Expense revision once, and records
+`FINANCIAL_CORE` audit. Stale reference evidence requires an explicit reason.
+
+Missing trusted rate data is not an API or synchronization error. The Expense
+may be accepted and pulled with business status `RATE_REQUIRED`, no active
+valuation, and null settlement splits. A later valuation uses the normal
+optimistic revision check; concurrent valuation produces the established
+`REVISION_CONFLICT` envelope and resolution lifecycle.
+
+Stage 5.1 bootstrap and incremental pull include authorized rate candidates and
+append-only PaymentRecords. Existing fields remain backward compatible and the
+active `valuation` projection remains singular; historical snapshots remain
+available for audit and explanation.
+
 ## Settlement Commands
 
 - `POST /v2/trips/:tripId/settlements/preview`

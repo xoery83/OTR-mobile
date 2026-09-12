@@ -38,6 +38,7 @@ function createGateway(options: { authorized?: boolean } = {}) {
       households: [],
       expenses: [],
       corrections: [],
+      rateQuotes: [],
       actor: {
         memberId: memberA,
         role: "group_member",
@@ -48,6 +49,9 @@ function createGateway(options: { authorized?: boolean } = {}) {
           canCorrectAnyExpense: false,
           canSuggestCorrection: true,
           canResolveOwnExpenseConflict: true,
+          canAddOwnPaymentEvidence: true,
+          canManageExpenseValuation: true,
+          canManageLedgerValuationPolicy: false,
         },
       },
       cursor: "cursor-1",
@@ -63,6 +67,31 @@ function createGateway(options: { authorized?: boolean } = {}) {
       journeys: [],
       serverTime: "2026-09-11T00:00:00.000Z",
     })),
+    readLedgerRateQuotes: vi.fn(async () => []),
+    addLedgerPaymentRecord: vi.fn(async (_userId, _tripId, _expenseId, _key, input) => ({
+      entity: {
+        id: "53000000-0000-4000-8000-000000000001",
+        expenseRevision: 1,
+        payerMemberId: memberA,
+        instrumentLabel: input.instrumentLabel,
+        authorization: input.authorization,
+        posted: input.posted,
+        authorizedAt: input.authorizedAt,
+        postedAt: input.postedAt,
+        fee: input.fee,
+        bankFxRate: input.bankFxRate,
+        source: input.source,
+        notes: input.notes,
+        supersedesPaymentRecordId: input.supersedesPaymentRecordId,
+      },
+      serverId: "53000000-0000-4000-8000-000000000001",
+      revision: 1 as const,
+      updatedAt: "2026-09-12T01:00:00.000Z",
+      idempotentReplay: false,
+    })),
+    applyLedgerValuation: vi.fn(async () => {
+      throw new BackendError(409, "REVISION_CONFLICT", "stale");
+    }),
     createLedgerExpense: vi.fn(async (_userId, requestedTripId, key, input) => {
       const hash = JSON.stringify(input);
       const existing = ledgerCreates.get(key);
@@ -94,10 +123,12 @@ function createGateway(options: { authorized?: boolean } = {}) {
           updatedAt: "2026-09-10T00:00:00.000Z",
           participants: input.participants,
           splits: input.splits,
-          valuation: {
-            id: "50000000-0000-4000-8000-000000000001",
-            ...input.valuation!,
-          },
+          valuation: input.valuation
+            ? {
+                id: "50000000-0000-4000-8000-000000000001",
+                ...input.valuation,
+              }
+            : null,
           paymentRecords: [],
           auditEvents: [
             {
@@ -438,6 +469,100 @@ describe("OTR Dev Backend", () => {
     expect(await conflict.json()).toMatchObject({
       error: { code: "IDEMPOTENCY_CONFLICT" },
     });
+  });
+
+  it("accepts RATE_REQUIRED as synchronized business state and rejects invented value", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const request = (body: unknown) =>
+      new Request(`http://localhost/v2/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "rate-required",
+        },
+        body: JSON.stringify(body),
+      });
+    const unresolved = {
+      ...ledgerExpenseBody,
+      original: { minor: 10_000, currency: "EUR", scale: 2 },
+      businessStatus: "RATE_REQUIRED",
+      splits: ledgerExpenseBody.splits.map((split) => ({
+        ...split,
+        originalMinor: 5_000,
+        settlementMinor: null,
+      })),
+      valuation: null,
+    };
+
+    expect((await handle(request(unresolved))).status).toBe(201);
+    expect(
+      (await handle(request({ ...unresolved, valuation: ledgerExpenseBody.valuation })))
+        .status,
+    ).toBe(400);
+  });
+
+  it("routes payment evidence independently and requires manual valuation reason", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+      "Idempotency-Key": "financial-evidence",
+    };
+    const payment = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/expenses/40000000-0000-4000-8000-000000000001/payment-records`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            localId: "payment-local-1",
+            instrumentLabel: "Visa NZ",
+            authorization: null,
+            posted: { minor: 19_943, currency: "NZD", scale: 2 },
+            postedAt: "2026-09-12T01:00:00.000Z",
+            fee: { minor: 200, currency: "NZD", scale: 2 },
+            source: "manual",
+            notes: null,
+            supersedesPaymentRecordId: null,
+          }),
+        },
+      ),
+    );
+    const manualWithoutReason = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/expenses/40000000-0000-4000-8000-000000000001/valuations`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            localValuationId: "valuation-local-1",
+            localRateSnapshotId: "rate-local-1",
+            baseRevision: 1,
+            policy: "MANUAL_AGREED",
+            rateQuoteId: null,
+            paymentRecordId: null,
+            manualRate: "1.95",
+            reason: null,
+            previewSettlement: { minor: 19_500, currency: "NZD", scale: 2 },
+          }),
+        },
+      ),
+    );
+
+    expect(payment.status).toBe(201);
+    expect(await payment.json()).toMatchObject({
+      entity: {
+        posted: { minor: 19_943, currency: "NZD" },
+        authorizedAt: null,
+        bankFxRate: null,
+      },
+    });
+    expect(gateway.addLedgerPaymentRecord).toHaveBeenCalledOnce();
+    expect(manualWithoutReason.status).toBe(400);
+    expect(gateway.applyLedgerValuation).not.toHaveBeenCalled();
   });
 
   it("updates Ledger expenses through the v2 aggregate route", async () => {

@@ -39,15 +39,40 @@ export type ExchangeRateSnapshot = {
   decimalRate: string;
   effectiveDate: string;
   source: string;
+  observedAt?: string;
+  providerReference?: string | null;
+  manualReason?: string | null;
+  stalenessState?: "FRESH" | "STALE_ACCEPTED" | "REVIEW_REQUIRED";
+  supersedesRateSnapshotId?: string | null;
+};
+
+export type RateQuote = {
+  id: string;
+  journeyId: string;
+  quoteCurrency: CurrencyCode;
+  baseCurrency: CurrencyCode;
+  decimalRate: string;
+  effectiveDate: string;
+  observedAt: string;
+  provider: string;
+  providerReference: string | null;
+  expiresAt: string;
 };
 
 export type PaymentRecord = {
   id: string;
+  expenseId?: string;
+  expenseRevision?: number;
+  payerMemberId?: string;
   instrumentLabel: string | null;
   authorization: Money | null;
   posted: Money | null;
   postedAt: string | null;
+  authorizedAt?: string | null;
   fee: Money | null;
+  bankFxRate?: string | null;
+  source?: string | null;
+  notes?: string | null;
   supersedesPaymentRecordId: string | null;
 };
 
@@ -59,6 +84,10 @@ export type SettlementValuationSnapshot = {
   rateSnapshotId: string | null;
   paymentRecordId: string | null;
   reason: string | null;
+  decimalRate?: string | null;
+  roundingMode?: "HALF_UP";
+  effectiveAt?: string;
+  supersedesValuationId?: string | null;
 };
 
 export type ExpenseAggregate = {
