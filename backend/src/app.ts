@@ -38,9 +38,16 @@ import type {
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
 import {
+  correctSettlementPaymentRequestSchema,
+  recordSettlementPaymentRequestSchema,
+  settlementPaymentActionRequestSchema,
   settlementFinalizeRequestSchema,
   settlementPreviewRequestSchema,
+  type CorrectSettlementPaymentRequest,
+  type RecordSettlementPaymentRequest,
   type SettlementFinalizeResponse,
+  type SettlementPaymentActionRequest,
+  type SettlementPaymentMutationResponse,
   type SettlementPreviewResponse,
 } from "../../src/data/api/ledgerSettlementContracts";
 import type {
@@ -116,6 +123,28 @@ export type DevBackendGateway = {
     idempotencyKey: string,
     input: { throughTimestamp: string; inputDigest: string },
   ): Promise<SettlementFinalizeResponse>;
+  recordSettlementPayment(
+    userId: string,
+    tripId: string,
+    transferId: string,
+    idempotencyKey: string,
+    input: RecordSettlementPaymentRequest,
+  ): Promise<SettlementPaymentMutationResponse>;
+  actOnSettlementPayment(
+    userId: string,
+    tripId: string,
+    paymentId: string,
+    action: "confirm" | "reject" | "dispute",
+    idempotencyKey: string,
+    input: SettlementPaymentActionRequest,
+  ): Promise<SettlementPaymentMutationResponse>;
+  correctSettlementPayment(
+    userId: string,
+    tripId: string,
+    paymentId: string,
+    idempotencyKey: string,
+    input: CorrectSettlementPaymentRequest,
+  ): Promise<SettlementPaymentMutationResponse>;
   createLedgerExpense(
     userId: string,
     tripId: string,
@@ -766,6 +795,64 @@ async function mutateLedgerSettlement(request: Request, gateway: DevBackendGatew
   return json(response.idempotentReplay ? 200 : 201, response);
 }
 
+async function mutateSettlementPayment(request: Request, gateway: DevBackendGateway) {
+  const pathname = new URL(request.url).pathname;
+  const record = pathname.match(/^\/v2\/trips\/([^/]+)\/transfers\/([^/]+)\/payments$/);
+  const action = pathname.match(
+    /^\/v2\/trips\/([^/]+)\/transfer-payments\/([^/]+)\/(confirm|reject|dispute|correct)$/,
+  );
+  if (!record && !action)
+    throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const tripId = (record ?? action)![1];
+  assertTripId(tripId);
+  const user = await authenticate(request, gateway);
+  const body = await parseBody(request);
+  const idempotencyKey = getIdempotencyKey(request);
+
+  if (record) {
+    const parsed = recordSettlementPaymentRequestSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    const response = await gateway.recordSettlementPayment(
+      user.id,
+      tripId,
+      record[2],
+      idempotencyKey,
+      parsed.data,
+    );
+    return json(response.idempotentReplay ? 200 : 201, response);
+  }
+
+  if (action![3] === "correct") {
+    const parsed = correctSettlementPaymentRequestSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    const response = await gateway.correctSettlementPayment(
+      user.id,
+      tripId,
+      action![2],
+      idempotencyKey,
+      parsed.data,
+    );
+    return json(response.idempotentReplay ? 200 : 201, response);
+  }
+
+  const parsed = settlementPaymentActionRequestSchema.safeParse(body);
+  if (!parsed.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  return json(
+    200,
+    await gateway.actOnSettlementPayment(
+      user.id,
+      tripId,
+      action![2],
+      action![3] as "confirm" | "reject" | "dispute",
+      idempotencyKey,
+      parsed.data,
+    ),
+  );
+}
+
 async function readEntity(request: Request, gateway: DevBackendGateway) {
   const url = new URL(request.url);
   if (url.pathname === "/v2/me/ledger") {
@@ -985,6 +1072,25 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/settlements";
         response = await mutateLedgerSettlement(request, gateway);
+      } else if (
+        request.method === "POST" &&
+        (/^\/v2\/trips\/[^/]+\/transfers\/[^/]+\/payments$/.test(url.pathname) ||
+          /^\/v2\/trips\/[^/]+\/transfer-payments\/[^/]+\/(confirm|reject|dispute|correct)$/.test(
+            url.pathname,
+          ))
+      ) {
+        route = "/v2/trips/:tripId/transfer-payments";
+        response = await mutateSettlementPayment(request, gateway);
+      } else if (
+        request.method === "POST" &&
+        /^\/v2\/trips\/[^/]+\/settlements\/[^/]+\/reopen$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/settlements/:id/reopen";
+        throw new HttpError(
+          409,
+          "SETTLEMENT_REOPEN_NOT_ALLOWED",
+          "Finalized Settlements are never reopened.",
+        );
       } else if (request.method === "POST" && url.pathname.startsWith("/v2/dev/")) {
         route = "/v2/dev/trips/:tripId/expenses/:expenseId/finalized-guard-fixture";
         response = await createFinalizedGuardFixture(request, gateway);

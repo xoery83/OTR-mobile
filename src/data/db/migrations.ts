@@ -574,4 +574,93 @@ export const migrations: Migration[] = [
         ON ledger_settlement_audit_events (settlement_id, settlement_revision, created_at);
     `,
   },
+  {
+    id: 13,
+    name: "ledger_2_stage_7_2a_payment_lifecycle",
+    sql: `
+      ALTER TABLE ledger_settlements RENAME TO ledger_settlements_v12;
+      CREATE TABLE ledger_settlements (
+        id TEXT PRIMARY KEY NOT NULL,
+        journey_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (
+          status IN ('FINALIZED', 'PARTIALLY_PAID', 'SETTLED', 'SUPERSEDED')
+        ),
+        through_timestamp TEXT NOT NULL,
+        settlement_currency TEXT NOT NULL,
+        settlement_scale INTEGER NOT NULL,
+        settings_revision INTEGER NOT NULL,
+        algorithm_version TEXT NOT NULL,
+        input_digest TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        finalized_by TEXT NOT NULL,
+        finalized_at TEXT NOT NULL,
+        UNIQUE (journey_id, input_digest)
+      );
+      INSERT INTO ledger_settlements SELECT * FROM ledger_settlements_v12;
+      DROP TABLE ledger_settlements_v12;
+      CREATE INDEX ledger_settlements_journey_finalized
+        ON ledger_settlements (journey_id, finalized_at DESC);
+
+      CREATE TABLE ledger_repayment_valuation_snapshots (
+        id TEXT PRIMARY KEY NOT NULL,
+        transfer_id TEXT NOT NULL,
+        decimal_rate TEXT NOT NULL,
+        source TEXT NOT NULL,
+        source_label TEXT NOT NULL,
+        effective_at TEXT NOT NULL,
+        reason TEXT
+      );
+
+      CREATE TABLE ledger_settlement_payments (
+        id TEXT PRIMARY KEY NOT NULL,
+        transfer_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN (
+          'AWAITING_CONFIRMATION', 'CONFIRMED', 'REJECTED', 'DISPUTED', 'CORRECTED'
+        )),
+        payment_amount_minor INTEGER NOT NULL,
+        payment_currency TEXT NOT NULL,
+        payment_scale INTEGER NOT NULL,
+        asserted_discharge_minor INTEGER NOT NULL,
+        settlement_currency TEXT NOT NULL,
+        settlement_scale INTEGER NOT NULL,
+        repayment_valuation_snapshot_id TEXT,
+        fee_amount_minor INTEGER,
+        fee_currency TEXT,
+        fee_scale INTEGER,
+        fee_borne_by TEXT,
+        reported_by_user_id TEXT,
+        reported_by_member_id TEXT,
+        reporting_authority TEXT NOT NULL,
+        reporting_reason TEXT,
+        paid_at TEXT NOT NULL,
+        evidence_asset_id TEXT,
+        notes TEXT,
+        supersedes_payment_id TEXT,
+        revision INTEGER NOT NULL,
+        sync_status TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX ledger_settlement_payments_transfer
+        ON ledger_settlement_payments (transfer_id, created_at, id);
+
+      CREATE TABLE ledger_settlement_payment_discharges (
+        id TEXT PRIMARY KEY NOT NULL,
+        payment_id TEXT NOT NULL UNIQUE,
+        amount_minor INTEGER NOT NULL,
+        settlement_currency TEXT NOT NULL,
+        settlement_scale INTEGER NOT NULL,
+        confirmation_authority TEXT NOT NULL,
+        confirmed_by_user_id TEXT NOT NULL,
+        confirmed_by_member_id TEXT NOT NULL,
+        reason TEXT,
+        confirmed_at TEXT NOT NULL
+      );
+
+      ALTER TABLE ledger_settlement_audit_events ADD COLUMN transfer_id TEXT;
+      ALTER TABLE ledger_settlement_audit_events ADD COLUMN payment_id TEXT;
+      ALTER TABLE ledger_settlement_audit_events ADD COLUMN discharge_id TEXT;
+      ALTER TABLE ledger_settlement_audit_events ADD COLUMN authority TEXT;
+      ALTER TABLE ledger_actor_context ADD COLUMN user_id TEXT;
+    `,
+  },
 ];

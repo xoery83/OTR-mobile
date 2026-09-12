@@ -314,23 +314,26 @@ member's paid, owed, transferred, and net minor-unit totals.
 
 ### SettlementPayment
 
-| Field                                                            | Meaning                                              |
-| ---------------------------------------------------------------- | ---------------------------------------------------- |
-| `id`, `transferId`, `journeyId`                                  | Identity/scope                                       |
-| `paymentAmountMinor`, `paymentCurrency`, `paymentScale`          | Amount the payer reports sending                     |
-| `dischargedAmountMinor`, `settlementCurrency`, `settlementScale` | Agreed obligation reduction                          |
-| `repaymentValuationSnapshotId`                                   | Immutable cross-currency conversion evidence         |
-| `reportedBy`, `paidAt`                                           | Payer-side Paid assertion                            |
-| `status`                                                         | Awaiting confirmation, confirmed, rejected, disputed |
-| `confirmedBy`, `confirmedAt`                                     | Recipient-side Received acknowledgement              |
-| `notes`, `evidenceAssetId`                                       | Optional non-sensitive proof                         |
-| `revision`                                                       | Conflict/version control                             |
+| Field                                                             | Meaning                                              |
+| ----------------------------------------------------------------- | ---------------------------------------------------- |
+| `id`, `transferId`, `journeyId`                                   | Identity/scope                                       |
+| `paymentAmountMinor`, `paymentCurrency`, `paymentScale`           | Immutable amount the payer reports sending           |
+| `assertedDischargeMinor`, `settlementCurrency`, `settlementScale` | Proposed obligation reduction awaiting Received      |
+| `repaymentValuationSnapshotId`                                    | Immutable cross-currency conversion evidence         |
+| `reportedBy`, `paidAt`                                            | Payer-side Paid assertion                            |
+| `status`                                                          | Awaiting confirmation, confirmed, rejected, disputed |
+| `confirmedBy`, `confirmedAt`                                      | Recipient-side Received acknowledgement              |
+| `notes`, `evidenceAssetId`                                        | Optional non-sensitive proof                         |
+| `revision`                                                        | Conflict/version control                             |
 
-A transfer may have many payments. Only confirmed payments reduce its remaining
-obligation; partial confirmed payments set it to `PARTIALLY_PAID`. Reporting a
-payment never impersonates the recipient's confirmation. Duplicate reporting is
-prevented by operation id and server identity. When currencies differ, both
-parties confirm the exact settlement-currency amount discharged.
+A transfer may have many payments. Received confirms the entire immutable
+repayment proposition and creates a separate immutable discharge fact. Only
+those discharge facts reduce remaining obligation; awaiting value is only an
+overbooking reservation. `CONFIRMED`, `REJECTED`, `DISPUTED`, and `CORRECTED`
+are terminal for the original Payment. Reporting a payment never impersonates
+the recipient's confirmation. Duplicate reporting is prevented by operation id
+and server identity. When currencies differ, both parties confirm the exact
+Payment Money, valuation, fee treatment, and settlement-currency discharge.
 
 ### PersonalLedgerProjection
 
@@ -433,11 +436,11 @@ backend. The backend recomputes and rejects mismatched client allocations.
 2. Credit payer by group-settlement value and debit exact member allocations in
    settlement minor units; PaymentRecord cost is informational unless the
    selected valuation policy references it.
-3. Apply paid transfers that precede the snapshot cutoff.
-4. Verify group net equals zero.
-5. Sort debtors and creditors by amount, then stable member id.
-6. Match largest debtor to largest creditor until all balances are zero.
-7. Persist inputs, outputs, algorithm version, and digest.
+3. Verify group net equals zero; Payment and discharge facts do not alter this
+   frozen financial balance vector.
+4. Sort debtors and creditors by amount, then stable member id.
+5. Match largest debtor to largest creditor until all balances are zero.
+6. Persist inputs, outputs, algorithm version, and digest.
 
 The practical plan uses at most `n - 1` transfers for non-zero members. Exact
 global minimization of transfer count can be a future algorithm version if real

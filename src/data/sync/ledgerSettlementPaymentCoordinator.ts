@@ -1,0 +1,27 @@
+import { openDatabase } from "@/data/db/database";
+import { createLedgerSettlementRepository } from "@/data/repositories/ledgerSettlementRepository";
+
+import { createSyncEngine } from "./syncEngine";
+import { createSyncOperationRepository } from "./syncOperationRepository";
+import { createLedgerSettlementTransport } from "./ledgerSettlementTransport";
+import { createLedgerSettlementPaymentSyncWorker } from "./ledgerSettlementPaymentSyncWorker";
+import type { AuthState } from "@/domain/auth/authState";
+
+function nextAttemptAt(attempt: number) {
+  return new Date(Date.now() + attempt * 30_000).toISOString();
+}
+
+export async function runLedgerSettlementPaymentSync(
+  authState: AuthState = "AUTHENTICATED_ONLINE",
+) {
+  const database = await openDatabase();
+  return createSyncEngine(
+    createSyncOperationRepository(database),
+    createLedgerSettlementPaymentSyncWorker(
+      createLedgerSettlementRepository(database),
+      createLedgerSettlementTransport(),
+    ),
+    nextAttemptAt,
+    (operation) => operation.entityType === "ledger_settlement_payment",
+  ).run(authState);
+}

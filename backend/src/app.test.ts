@@ -67,6 +67,10 @@ function createGateway(options: { authorized?: boolean } = {}) {
             actorUserId: userId,
             actorMemberId: memberA,
             reason: null,
+            transferId: null,
+            paymentId: null,
+            dischargeId: null,
+            authority: null,
             revision: 1,
             createdAt: "2026-09-12T00:00:00.000Z",
           },
@@ -74,6 +78,15 @@ function createGateway(options: { authorized?: boolean } = {}) {
       },
       idempotentReplay: false,
     })),
+    recordSettlementPayment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    actOnSettlementPayment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    correctSettlementPayment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
     createReceipt: vi.fn(async (_userId, requestedTripId, receiptId, input) => ({
       entity: {
         id: receiptId,
@@ -580,6 +593,89 @@ describe("OTR Dev Backend", () => {
     );
     expect(response.status).toBe(403);
     expect(gateway.previewLedgerSettlement).not.toHaveBeenCalled();
+  });
+
+  it("routes typed Paid and Received commands separately", async () => {
+    const { gateway } = createGateway();
+    const base = await gateway.finalizeLedgerSettlement(userId, tripId, "fixture", {
+      throughTimestamp: "2026-09-12T00:00:00.000Z",
+      inputDigest: "a".repeat(64),
+    });
+    gateway.recordSettlementPayment = vi.fn(async () => ({
+      entity: base.entity,
+      paymentId: "73000000-0000-4000-8000-000000000001",
+      idempotentReplay: false,
+    }));
+    gateway.actOnSettlementPayment = vi.fn(async () => ({
+      entity: base.entity,
+      paymentId: "73000000-0000-4000-8000-000000000001",
+      idempotentReplay: false,
+    }));
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+      "Idempotency-Key": "payment-key",
+    };
+    const paid = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/transfers/72000000-0000-4000-8000-000000000001/payments`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            localId: "73000000-0000-4000-8000-000000000001",
+            baseTransferRevision: 1,
+            payment: { minor: 500, currency: "NZD", scale: 2 },
+            assertedDischarge: { minor: 500, currency: "NZD", scale: 2 },
+            repaymentValuation: null,
+            feeTreatment: null,
+            paidAt: "2026-09-12T01:00:00.000Z",
+            evidenceAssetId: null,
+            notes: null,
+            reportingAuthority: "PAYER",
+            reason: null,
+          }),
+        },
+      ),
+    );
+    const received = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/transfer-payments/73000000-0000-4000-8000-000000000001/confirm`,
+        {
+          method: "POST",
+          headers: { ...headers, "Idempotency-Key": "received-key" },
+          body: JSON.stringify({
+            basePaymentRevision: 1,
+            authority: "RECIPIENT",
+            reason: null,
+          }),
+        },
+      ),
+    );
+
+    expect(paid.status).toBe(201);
+    expect(received.status).toBe(200);
+    expect(gateway.recordSettlementPayment).toHaveBeenCalledOnce();
+    expect(gateway.actOnSettlementPayment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      "73000000-0000-4000-8000-000000000001",
+      "confirm",
+      "received-key",
+      { basePaymentRevision: 1, authority: "RECIPIENT", reason: null },
+    );
+  });
+
+  it("rejects reopen with one stable lifecycle error", async () => {
+    const { gateway } = createGateway();
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/settlements/70000000-0000-4000-8000-000000000001/reopen`,
+        { method: "POST", headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    expect(response.status).toBe(409);
+    expect((await response.json()).error.code).toBe("SETTLEMENT_REOPEN_NOT_ALLOWED");
   });
 
   it("validates and authorizes Stage 6 reporting reads", async () => {

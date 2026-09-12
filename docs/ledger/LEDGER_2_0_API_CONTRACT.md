@@ -254,16 +254,46 @@ apply accepted fields through the existing explicit Expense command path.
 - `POST /v2/trips/:tripId/transfer-payments/:id/confirm`
 - `POST /v2/trips/:tripId/transfer-payments/:id/reject`
 - `POST /v2/trips/:tripId/transfer-payments/:id/dispute`
+- `POST /v2/trips/:tripId/transfer-payments/:id/correct`
 - `GET /v2/trips/:tripId/settlements/:id/export?format=pdf|csv`
 
 Preview returns an `inputDigest`. Finalize succeeds only when that digest still
-matches all Expense revisions, valuations, members, and confirmed payments.
+matches all normalized Expense revisions, valuations, members, settings, and
+algorithm inputs.
 Reporting Paid and confirming Received are separate authenticated operations.
 Only confirmed payments discharge an obligation.
 
-Stage 7.1 has no SettlementPayment facts, so its digest contains only the
-Expense/member/settings/valuation and algorithm inputs defined below. Payment
-scope enters the adjustment lineage in Stage 7.2.
+Stage 7.2A freezes a Payment as the complete immutable repayment proposition:
+Payment Money, asserted settlement-currency discharge, repayment valuation,
+fee treatment, and Payment identity. Received accepts that exact proposition
+and creates a separate immutable discharge fact; it cannot modify the Payment.
+Rejected, disputed, corrected, and confirmed states are terminal for the
+original Payment. A later resolution creates a replacement Payment.
+
+Paid accepts a client-generated Payment id, `baseTransferRevision`, actual
+Payment Money, asserted discharge Money, optional repayment valuation, optional
+fee treatment/evidence/notes, and `paidAt`. Same-currency payment requires exact
+Payment/discharge equality. Cross-currency payment requires an immutable
+valuation whose decimal rate deterministically reproduces asserted discharge.
+
+Confirm/reject/dispute/correct accept `basePaymentRevision`. Reject, dispute,
+correction, and organizer override require a reason where applicable. Recipient
+confirmation cannot alter financial fields. Organizer receipt confirmation for
+an unlinked recipient records `ORGANIZER_OVERRIDE`, the real actor, and the
+reason; it never records the recipient as actor.
+
+The Transfer read model returns `obligation`, `confirmedDischarge`,
+`confirmedRemaining`, `awaitingAmount`, and `availableToReport` separately.
+Confirmed plus active awaiting cannot exceed obligation, but only confirmed
+discharge reduces debt.
+
+`POST /v2/trips/:tripId/settlements/:id/reopen` always returns HTTP 409
+`SETTLEMENT_REOPEN_NOT_ALLOWED`. Finalized Settlements are never rebuilt.
+Adjustment endpoints remain absent until Stage 7.2B approval.
+
+SettlementPayment and discharge facts never rewrite the frozen finalization
+digest. They affect the outstanding read state; Stage 7.2B compares current
+canonical financial inputs with the frozen lineage inputs.
 
 ### Stage 7.1 Preview And Finalization
 
@@ -288,7 +318,7 @@ the Journey, rereads and recomputes canonical server state, and returns
 
 Concurrent finalization of the same Journey digest returns the same Settlement.
 Finalizing a different digest while an active Settlement exists returns
-`SETTLEMENT_ALREADY_FINALIZED`; Stage 7.2 owns explicit supersede/adjustment.
+`SETTLEMENT_ALREADY_FINALIZED`; Stage 7.2B owns explicit Adjustment lineage.
 Stage 7.1 bootstrap and pull include finalized Settlements and their immutable
 inputs, balances, transfers, and audit events. They do not include payment or
 export behavior.

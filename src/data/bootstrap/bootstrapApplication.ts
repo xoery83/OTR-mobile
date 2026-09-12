@@ -10,6 +10,7 @@ export type FoundationBootstrapState = {
 export type FoundationBootstrapDependencies = {
   openDatabase: () => Promise<unknown>;
   readLocalSession: () => Promise<LocalSession | null>;
+  resumeSync?: () => Promise<unknown>;
 };
 
 export async function bootstrapApplication(
@@ -18,6 +19,9 @@ export async function bootstrapApplication(
   await dependencies.openDatabase();
   const session = await dependencies.readLocalSession();
   const authState = stateFromLocalSession(session);
+  await dependencies.resumeSync?.().catch(() => {
+    // Startup and cached reads never depend on network sync success.
+  });
 
   return {
     authState,

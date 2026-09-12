@@ -31,4 +31,21 @@ describe("foundation bootstrap", () => {
       syncStatus: "paused_auth",
     });
   });
+
+  it("replays durable sync on restart without blocking cached access on failure", async () => {
+    const resumeSync = vi.fn().mockRejectedValue(new Error("offline"));
+
+    await expect(
+      bootstrapApplication({
+        openDatabase: vi.fn().mockResolvedValue(undefined),
+        readLocalSession: vi.fn().mockResolvedValue({
+          accessToken: "valid-access-token",
+          refreshToken: "refresh-token",
+          expiresAt: "2099-09-09T00:00:00.000Z",
+        }),
+        resumeSync,
+      }),
+    ).resolves.toMatchObject({ authState: "AUTHENTICATED_OFFLINE" });
+    expect(resumeSync).toHaveBeenCalledOnce();
+  });
 });

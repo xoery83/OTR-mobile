@@ -71,7 +71,8 @@ Supported command direction:
 - UPDATE_EXPENSE;
 - DELETE_EXPENSE;
 - RESOLVE_EXPENSE_CONFLICT;
-- CREATE/FINALIZE/REOPEN_SETTLEMENT;
+- CREATE/FINALIZE_SETTLEMENT;
+- CREATE/FINALIZE_ADJUSTMENT_SETTLEMENT;
 - RECORD_TRANSFER_PAYMENT;
 - CONFIRM/REJECT/DISPUTE_TRANSFER_PAYMENT;
 - CANCEL_TRANSFER;
@@ -186,8 +187,8 @@ financial truth.
 | Correction request   | Append as independent proposal                          | Revision conflict if accepted against stale Expense           | Proposal never mutates Expense directly               |
 
 Occurred date/time and location follow descriptive three-way merge, except a
-date change that alters an included finalized settlement requires reopening or
-adjustment review.
+date change that alters an included finalized settlement requires adjustment
+review.
 
 ## Create/Create Collision
 
@@ -205,8 +206,8 @@ Delete is a tombstone command with base revision.
 - Delete versus Financial Core edit: explicit financial conflict.
 - Edit versus existing tombstone: show deleted version and permit organizer or
   authorized creator to restore as a new revision.
-- Finalized Settlement reference: ordinary delete is rejected; use adjustment or
-  reopen flow.
+- Finalized Settlement reference: ordinary delete is rejected; use the
+  Adjustment flow.
 
 Tombstones remain in incremental sync long enough for every active device and
 retention policy. Audit history is retained according to financial policy.
@@ -263,7 +264,6 @@ A Settlement has an input digest over:
 - conversion snapshot ids;
 - accepted SettlementValuationSnapshot ids;
 - PaymentRecord ids used by `ACTUAL_PAYER_COST` valuations;
-- paid transfers applied;
 - member identities;
 - algorithm version and currency.
 
@@ -271,10 +271,8 @@ Finalization is accepted only if the preview digest still matches current
 server inputs. Otherwise return STALE_SETTLEMENT_PREVIEW and regenerate; do not
 silently finalize a different set.
 
-Expense changes after finalization either:
-
-- reopen/supersede the Settlement with organizer confirmation; or
-- create an explicit adjustment in a later Settlement.
+Expense changes after finalization create an explicit Adjustment Settlement;
+the finalized Settlement is never reopened, rebuilt, or superseded in place.
 
 Transfer obligations and each SettlementPayment use separate revisions.
 `RECORD_TRANSFER_PAYMENT` is the payer-side Paid assertion;
@@ -283,6 +281,16 @@ Each has its own idempotency key. Only confirmed payments affect the discharged
 amount. Multiple partial payments may sync independently and are folded in a
 stable order. Conflicting confirmation/rejection/cancellation updates require
 explicit resolution and retain all audit events.
+
+`CONFIRMED`, `REJECTED`, `DISPUTED`, and `CORRECTED` are terminal for the
+original Payment. A resolution creates a replacement Payment rather than
+returning an old Payment to awaiting. Received confirms the entire immutable
+repayment proposition and creates a separate discharge fact. Awaiting discharge
+is reserved only to prevent overbooking; it never reduces authoritative debt.
+
+Once finalized, a Settlement is never reopened or rebuilt. All later accepted
+financial corrections belong to Stage 7.2B Adjustment lineage. This conservative
+rule avoids a race with Paid assertions queued on an offline client.
 
 For cross-currency repayment, the transfer's settlement obligation, actual
 payment Money, and repayment valuation snapshot are one financial group.

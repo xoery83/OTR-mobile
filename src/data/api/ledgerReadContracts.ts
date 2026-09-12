@@ -206,6 +206,7 @@ export const ledgerBootstrapResponseSchema = z.object({
   receipts: z.array(receiptSchema).optional(),
   settlements: z.array(finalizedSettlementSchema).optional(),
   actor: z.object({
+    userId: uuidSchema.optional(),
     memberId: uuidSchema.nullable(),
     role: z.string().nullable(),
     capabilities: ledgerCapabilitySchema,

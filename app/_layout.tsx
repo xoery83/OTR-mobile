@@ -20,7 +20,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     void bootstrapApplication(defaultBootstrapDependencies).catch(() => {
-      // The shell remains available while a future diagnostics layer records startup errors.
+      // The shell remains available while durable operations wait for a later retry.
     });
   }, []);
 

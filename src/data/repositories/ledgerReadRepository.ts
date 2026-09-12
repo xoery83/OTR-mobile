@@ -306,13 +306,14 @@ async function applyJourney(
   }
   await database.runAsync(
     `INSERT OR REPLACE INTO ledger_actor_context (
-      journey_id, member_id, role, capabilities_json, updated_at
-    ) VALUES (?, ?, ?, ?, ?)`,
+      journey_id, member_id, role, capabilities_json, updated_at, user_id
+    ) VALUES (?, ?, ?, ?, ?, ?)`,
     response.journey.id,
     response.actor.memberId,
     response.actor.role,
     JSON.stringify(response.actor.capabilities),
     response.serverTime,
+    response.actor.userId ?? response.actor.memberId,
   );
 }
 

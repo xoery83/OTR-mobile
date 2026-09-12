@@ -315,7 +315,7 @@ select is(
 
 insert into public.settlement_payments (
   id, transfer_id, journey_id, payment_amount_minor, payment_currency,
-  payment_scale, discharged_amount_minor, settlement_currency,
+  payment_scale, asserted_discharge_amount_minor, settlement_currency,
   settlement_scale, status, reported_by, paid_at, confirmed_by, confirmed_at
 ) values (
   '30000000-0000-4000-8000-000000000032',
@@ -324,9 +324,21 @@ insert into public.settlement_payments (
   'NZD', 2, 'CONFIRMED', '00000000-0000-4000-8000-000000000003', now(),
   '00000000-0000-4000-8000-000000000002', now()
 );
+insert into public.settlement_payment_discharges (
+  id, payment_id, transfer_id, journey_id, amount_minor, settlement_currency,
+  settlement_scale, confirmation_authority, confirmed_by_user_id,
+  confirmed_by_member_id
+) values (
+  '30000000-0000-4000-8000-000000000033',
+  '30000000-0000-4000-8000-000000000032',
+  '30000000-0000-4000-8000-000000000031',
+  '10000000-0000-4000-8000-000000000001', 10000, 'NZD', 2, 'RECIPIENT',
+  '00000000-0000-4000-8000-000000000002',
+  '12000000-0000-4000-8000-000000000002'
+);
 select throws_ok(
   $$select public.ledger_validate_settlement('30000000-0000-4000-8000-000000000030')$$,
-  '23514', 'Confirmed payments cannot exceed their transfer obligation',
+  '23514', 'TRANSFER_OVERPAYMENT',
   'confirmed partial payments cannot over-discharge a transfer'
 );
 

@@ -58,10 +58,14 @@ describe("SQLite migrations", () => {
     expect(stage5.sql).toContain("CREATE TABLE ledger_asset_operations");
     expect(stage5.sql).not.toContain("payload_json");
 
+    const stage7Finalization = migrations.find((migration) => migration.id === 12)!;
+    expect(stage7Finalization.sql).toContain("CREATE TABLE ledger_settlements");
+    expect(stage7Finalization.sql).toContain("CREATE TABLE ledger_settlement_inputs");
+    expect(stage7Finalization.sql).not.toContain("ledger_settlement_payments");
+
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(12);
-    expect(latest.sql).toContain("CREATE TABLE ledger_settlements");
-    expect(latest.sql).toContain("CREATE TABLE ledger_settlement_inputs");
-    expect(latest.sql).not.toContain("ledger_settlement_payments");
+    expect(latest.id).toBe(13);
+    expect(latest.sql).toContain("CREATE TABLE ledger_settlement_payments");
+    expect(latest.sql).toContain("CREATE TABLE ledger_settlement_payment_discharges");
   });
 });

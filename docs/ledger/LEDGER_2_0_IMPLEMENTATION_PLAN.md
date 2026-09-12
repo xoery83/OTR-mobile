@@ -1,9 +1,10 @@
 # Ledger 2.0 iOS And Backend Implementation Plan
 
-Date: 2026-09-12
+Date: 2026-09-13
 Status: Approved; Stage 0 through Stage 6 physically validated and complete;
 Stage 7.1 passed automated, Hosted Dev, and two-client Simulator acceptance;
-Stage 7.2 has not started
+Stage 7.2A gate approved after automated, Hosted Dev, and two-client Simulator acceptance;
+Stage 7.2B has not started
 
 ## Objective
 
@@ -261,7 +262,7 @@ its automated and Simulator acceptance before work begins on the next:
    and physical-device acceptance.
 
 Stage 5.1 does not implement receipt selection, binary upload, OCR, settlement,
-payment execution, reopening, or settlement grouping. A valid unresolved-rate
+payment execution, Adjustment Settlement, or settlement grouping. A valid unresolved-rate
 Expense synchronizes normally as `RATE_REQUIRED`; valuation completeness is
 not transport status. Rate-cache refreshes are candidate updates only and may
 not mutate an Expense or accepted historical snapshots.
@@ -356,16 +357,19 @@ pass automated and Simulator acceptance before the next begins:
    canonical digest, authoritative transactional finalization, immutable
    normalized inputs, member balances/transfers, SQLite v12, read/pull, and
    finalized-Expense protection.
-2. **7.2 Payment Lifecycle & Adjustment** — Paid/Received, partial and
-   cross-currency payments, reject/dispute/correction, and adjustment lineage.
+2. **7.2 Payment Lifecycle & Adjustment** — two separately approved gates:
+   **7.2A** Paid/Received, partial and cross-currency payment,
+   reject/dispute/correction, offline durability, idempotency, concurrency and
+   canonical audit; then **7.2B** immutable adjustment lineage and
+   post-finalization Expense correction.
 3. **7.3 Export & Integrated Acceptance** — immutable PDF/structured export and
    combined recovery, convergence, Simulator, and physical-device acceptance.
 
 Do not begin a later gate until the prior gate passes.
 
-Stage 7.1 passed on 2026-09-12. Its canonical preview/finalization, immutable
-input, SQLite v12, concurrency, blocker, parity, restart, and regression gates
-are complete. Stop before Stage 7.2 pending explicit approval.
+Stages 7.1 and 7.2A passed on 2026-09-12. Payment lifecycle, canonical audit,
+Hosted Dev concurrency, and two-client offline/restart gates are complete. Stop
+before Stage 7.2B pending explicit approval.
 
 Implement deterministic preview, blockers, immutable finalization input digest,
 member balances, and minimized transfer plan. Then implement:
@@ -375,12 +379,19 @@ member balances, and minimized transfer plan. Then implement:
 - payer-side Paid report and recipient-side Received confirmation;
 - cross-currency payment plus immutable discharged-settlement valuation;
 - rejection/dispute and organizer correction with reason;
-- supersede/reopen/adjustment behavior after a financial correction;
+- adjustment behavior after a post-finalization financial correction;
 - shareable final statement and structured export.
 
 Only confirmed SettlementPayments reduce obligations. Preview finalization fails
 if its digest is stale or if any included Expense has unresolved financial
 conflict/rate state.
+
+Stage 7.2A uses immutable Payment propositions and separate immutable discharge
+facts. Payment terminal states never return to awaiting. Awaiting amount is only
+an overbooking reservation; confirmed remaining debt excludes it. Once a
+Settlement is finalized it is never rebuilt or reopened, and `/reopen` returns
+`SETTLEMENT_REOPEN_NOT_ALLOWED`. Stage 7.2B owns all later financial correction
+through Adjustment Settlements and must not begin before a separate approval.
 
 Exit gate:
 

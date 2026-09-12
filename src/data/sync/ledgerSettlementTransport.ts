@@ -1,7 +1,14 @@
 import { createApiClient } from "@/data/api/client";
 import {
+  correctSettlementPaymentRequestSchema,
+  recordSettlementPaymentRequestSchema,
+  settlementPaymentActionRequestSchema,
+  settlementPaymentMutationResponseSchema,
   settlementFinalizeResponseSchema,
   settlementPreviewSchema,
+  type CorrectSettlementPaymentRequest,
+  type RecordSettlementPaymentRequest,
+  type SettlementPaymentActionRequest,
 } from "@/data/api/ledgerSettlementContracts";
 import { readLocalSession } from "@/data/auth/authRepository";
 
@@ -38,6 +45,49 @@ export function createLedgerSettlementTransport(dependencies: Dependencies = {})
         `/v2/trips/${journeyId}/settlements`,
         { throughTimestamp, inputDigest },
         settlementFinalizeResponseSchema,
+        { "Idempotency-Key": idempotencyKey },
+      );
+    },
+
+    async recordPayment(
+      journeyId: string,
+      transferId: string,
+      input: RecordSettlementPaymentRequest,
+      idempotencyKey: string,
+    ) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${journeyId}/transfers/${transferId}/payments`,
+        recordSettlementPaymentRequestSchema.parse(input),
+        settlementPaymentMutationResponseSchema,
+        { "Idempotency-Key": idempotencyKey },
+      );
+    },
+
+    async actOnPayment(
+      journeyId: string,
+      paymentId: string,
+      action: "confirm" | "reject" | "dispute",
+      input: SettlementPaymentActionRequest,
+      idempotencyKey: string,
+    ) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${journeyId}/transfer-payments/${paymentId}/${action}`,
+        settlementPaymentActionRequestSchema.parse(input),
+        settlementPaymentMutationResponseSchema,
+        { "Idempotency-Key": idempotencyKey },
+      );
+    },
+
+    async correctPayment(
+      journeyId: string,
+      paymentId: string,
+      input: CorrectSettlementPaymentRequest,
+      idempotencyKey: string,
+    ) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${journeyId}/transfer-payments/${paymentId}/correct`,
+        correctSettlementPaymentRequestSchema.parse(input),
+        settlementPaymentMutationResponseSchema,
         { "Idempotency-Key": idempotencyKey },
       );
     },

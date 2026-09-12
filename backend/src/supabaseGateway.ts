@@ -26,8 +26,12 @@ import type {
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
 import type {
+  CorrectSettlementPaymentRequest,
   FinalizedSettlementDto,
+  RecordSettlementPaymentRequest,
   SettlementFinalizeResponse,
+  SettlementPaymentActionRequest,
+  SettlementPaymentMutationResponse,
   SettlementPreviewResponse,
 } from "../../src/data/api/ledgerSettlementContracts";
 import {
@@ -48,6 +52,7 @@ import {
   type SettlementPreviewInput,
 } from "../../src/domain/ledger/settlement";
 import { previewValuation } from "../../src/domain/ledger/valuation";
+import { deriveTransferPaymentState } from "../../src/domain/ledger/paymentLifecycle";
 import type {
   CompleteReceiptRequest,
   CreateReceiptRequest,
@@ -269,6 +274,47 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     async finalizeLedgerSettlement(userId, tripId, idempotencyKey, input) {
       return finalizeLedgerSettlement(service, userId, tripId, idempotencyKey, input);
+    },
+
+    async recordSettlementPayment(userId, tripId, transferId, idempotencyKey, input) {
+      return recordSettlementPayment(
+        service,
+        userId,
+        tripId,
+        transferId,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async actOnSettlementPayment(
+      userId,
+      tripId,
+      paymentId,
+      action,
+      idempotencyKey,
+      input,
+    ) {
+      return actOnSettlementPayment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        action,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async correctSettlementPayment(userId, tripId, paymentId, idempotencyKey, input) {
+      return correctSettlementPayment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        idempotencyKey,
+        input,
+      );
     },
 
     async createLedgerExpense(userId, tripId, idempotencyKey, input) {
@@ -1920,6 +1966,152 @@ async function finalizeLedgerSettlement(
   return { entity, idempotentReplay: finalized.idempotentReplay };
 }
 
+function throwSettlementPaymentError(message: string): never {
+  const known: Record<string, [number, string]> = {
+    IDEMPOTENCY_CONFLICT: [409, "The idempotency key conflicts."],
+    PAYMENT_IDENTITY_CONFLICT: [409, "The Payment identity conflicts."],
+    PAYMENT_REVISION_CONFLICT: [409, "The Payment or Transfer revision is stale."],
+    PAYMENT_STATE_CONFLICT: [409, "The Payment is no longer awaiting confirmation."],
+    TRANSFER_OVERPAYMENT: [409, "The Payment would exceed the Transfer obligation."],
+    PAYMENT_ACTION_FORBIDDEN: [403, "This member cannot perform the Payment action."],
+    PAYMENT_PROPOSITION_INVALID: [422, "The repayment proposition is invalid."],
+    REPAYMENT_VALUATION_INVALID: [422, "The repayment valuation is invalid."],
+    REASON_REQUIRED: [422, "A reason is required."],
+    ENTITY_NOT_FOUND: [404, "The Payment or Transfer was not found."],
+  };
+  for (const [code, [status, text]] of Object.entries(known)) {
+    if (message.includes(code)) throw new BackendError(status, code, text);
+  }
+  throw new Error("Supabase Dev Settlement Payment command failed.");
+}
+
+async function settlementForTransfer(
+  service: SupabaseClient,
+  tripId: string,
+  transferId: string,
+) {
+  const result = await service
+    .from("settlement_transfers")
+    .select("settlement_id")
+    .eq("journey_id", tripId)
+    .eq("id", transferId)
+    .maybeSingle();
+  if (result.error || !result.data) throwSettlementPaymentError("ENTITY_NOT_FOUND");
+  const entity = await readOneFinalizedSettlement(
+    service,
+    tripId,
+    String(result.data.settlement_id),
+  );
+  if (!entity) throwSettlementPaymentError("ENTITY_NOT_FOUND");
+  return entity;
+}
+
+async function transferForPayment(
+  service: SupabaseClient,
+  tripId: string,
+  paymentId: string,
+) {
+  const result = await service
+    .from("settlement_payments")
+    .select("transfer_id")
+    .eq("journey_id", tripId)
+    .eq("id", paymentId)
+    .maybeSingle();
+  if (result.error || !result.data) throwSettlementPaymentError("ENTITY_NOT_FOUND");
+  return String(result.data.transfer_id);
+}
+
+async function recordSettlementPayment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  transferId: string,
+  idempotencyKey: string,
+  input: RecordSettlementPaymentRequest,
+): Promise<SettlementPaymentMutationResponse> {
+  const result = await service.rpc("ledger_record_settlement_payment_7_2a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_transfer: transferId,
+    payment_value: input,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    supersedes_payment_value: null,
+  });
+  if (result.error || !result.data)
+    throwSettlementPaymentError(result.error?.message ?? "ENTITY_NOT_FOUND");
+  const response = result.data as { paymentId: string; idempotentReplay: boolean };
+  return {
+    entity: await settlementForTransfer(service, tripId, transferId),
+    paymentId: response.paymentId,
+    idempotentReplay: response.idempotentReplay,
+  };
+}
+
+async function actOnSettlementPayment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  action: "confirm" | "reject" | "dispute",
+  idempotencyKey: string,
+  input: SettlementPaymentActionRequest,
+): Promise<SettlementPaymentMutationResponse> {
+  const result = await service.rpc("ledger_act_on_settlement_payment_7_2a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_payment: paymentId,
+    action_value: action,
+    base_revision_value: input.basePaymentRevision,
+    authority_value: input.authority ?? (action === "dispute" ? "PAYER" : "RECIPIENT"),
+    reason_value: input.reason,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+  });
+  if (result.error || !result.data)
+    throwSettlementPaymentError(result.error?.message ?? "ENTITY_NOT_FOUND");
+  const response = result.data as { paymentId: string; idempotentReplay: boolean };
+  const transferId = await transferForPayment(service, tripId, paymentId);
+  return {
+    entity: await settlementForTransfer(service, tripId, transferId),
+    paymentId: response.paymentId,
+    idempotentReplay: response.idempotentReplay,
+  };
+}
+
+async function correctSettlementPayment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  idempotencyKey: string,
+  input: CorrectSettlementPaymentRequest,
+): Promise<SettlementPaymentMutationResponse> {
+  const transferId = await transferForPayment(service, tripId, paymentId);
+  const payment = {
+    ...input,
+    localId: input.replacementLocalId,
+    reportingAuthority: "ORGANIZER_OVERRIDE" as const,
+  };
+  const result = await service.rpc("ledger_record_settlement_payment_7_2a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_transfer: transferId,
+    payment_value: payment,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    supersedes_payment_value: paymentId,
+  });
+  if (result.error || !result.data)
+    throwSettlementPaymentError(result.error?.message ?? "ENTITY_NOT_FOUND");
+  const response = result.data as { paymentId: string; idempotentReplay: boolean };
+  return {
+    entity: await settlementForTransfer(service, tripId, transferId),
+    paymentId: response.paymentId,
+    idempotentReplay: response.idempotentReplay,
+  };
+}
+
 async function readOneFinalizedSettlement(
   service: SupabaseClient,
   tripId: string,
@@ -1968,19 +2160,52 @@ async function readFinalizedSettlements(
     service
       .from("settlement_audit_events")
       .select(
-        "id, settlement_id, event_type, actor_user_id, actor_member_id, reason, settlement_revision, created_at",
+        "id, settlement_id, event_type, actor_user_id, actor_member_id, reason, settlement_revision, transfer_id, payment_id, discharge_id, authority, created_at",
       )
       .in("settlement_id", ids),
   ]);
   if (inputs.error || balances.error || transfers.error || audits.error)
     throw new Error("Supabase Dev Settlement aggregate read failed.");
 
+  const transferIds = (transfers.data ?? []).map((row) => String(row.id));
+  const payments = transferIds.length
+    ? await service
+        .from("settlement_payments")
+        .select(
+          "id, transfer_id, status, payment_amount_minor, payment_currency, payment_scale, asserted_discharge_amount_minor, settlement_currency, settlement_scale, repayment_valuation_snapshot_id, fee_amount_minor, fee_currency, fee_scale, fee_borne_by, reported_by, reported_by_member_id, reporting_authority, reporting_reason, paid_at, evidence_asset_id, notes, supersedes_payment_id, revision, created_at",
+        )
+        .in("transfer_id", transferIds)
+    : { data: [], error: null };
+  if (payments.error) throw new Error("Supabase Dev Settlement Payment read failed.");
+  const valuationIds = (payments.data ?? [])
+    .map((row) => row.repayment_valuation_snapshot_id)
+    .filter((id): id is string => Boolean(id));
+  const paymentIds = (payments.data ?? []).map((row) => String(row.id));
+  const [valuations, discharges] = await Promise.all([
+    valuationIds.length
+      ? service
+          .from("repayment_valuation_snapshots")
+          .select("id, decimal_rate, source, source_label, effective_at, reason")
+          .in("id", valuationIds)
+      : Promise.resolve({ data: [], error: null }),
+    paymentIds.length
+      ? service
+          .from("settlement_payment_discharges")
+          .select(
+            "id, payment_id, amount_minor, settlement_currency, settlement_scale, confirmation_authority, confirmed_by_user_id, confirmed_by_member_id, reason, confirmed_at",
+          )
+          .in("payment_id", paymentIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (valuations.error || discharges.error)
+    throw new Error("Supabase Dev Settlement Payment evidence read failed.");
+
   return (settlements.data ?? []).map((row) => {
     const id = String(row.id);
     return {
       id,
       journeyId: String(row.journey_id),
-      status: "FINALIZED",
+      status: row.status as FinalizedSettlementDto["status"],
       throughTimestamp: String(row.through_timestamp),
       settlementCurrency: String(row.settlement_currency),
       settlementScale: Number(row.settlement_scale),
@@ -2011,27 +2236,138 @@ async function readFinalizedSettlements(
         .sort((left, right) => left.memberId.localeCompare(right.memberId)),
       transfers: (transfers.data ?? [])
         .filter((item) => String(item.settlement_id) === id)
-        .map((item) => ({
-          id: String(item.id),
-          fromMemberId: String(item.from_member_id),
-          toMemberId: String(item.to_member_id),
-          amount: {
-            minor: Number(item.obligation_amount_minor),
+        .map((item) => {
+          const transferPayments = (payments.data ?? [])
+            .filter((payment) => String(payment.transfer_id) === String(item.id))
+            .map((payment) => {
+              const valuation = (valuations.data ?? []).find(
+                (value) =>
+                  String(value.id) ===
+                  String(payment.repayment_valuation_snapshot_id ?? ""),
+              );
+              const discharge = (discharges.data ?? []).find(
+                (value) => String(value.payment_id) === String(payment.id),
+              );
+              return {
+                id: String(payment.id),
+                transferId: String(payment.transfer_id),
+                status:
+                  payment.status as FinalizedSettlementDto["transfers"][number]["payments"][number]["status"],
+                payment: {
+                  minor: Number(payment.payment_amount_minor),
+                  currency: String(payment.payment_currency),
+                  scale: Number(payment.payment_scale),
+                },
+                assertedDischarge: {
+                  minor: Number(payment.asserted_discharge_amount_minor),
+                  currency: String(payment.settlement_currency),
+                  scale: Number(payment.settlement_scale),
+                },
+                repaymentValuation: valuation
+                  ? {
+                      id: String(valuation.id),
+                      decimalRate: String(valuation.decimal_rate),
+                      source: valuation.source as "REFERENCE_RATE" | "MANUAL_AGREED",
+                      sourceLabel: String(valuation.source_label),
+                      effectiveAt: String(valuation.effective_at),
+                      reason: valuation.reason ? String(valuation.reason) : null,
+                    }
+                  : null,
+                feeTreatment:
+                  payment.fee_amount_minor === null
+                    ? null
+                    : {
+                        fee: {
+                          minor: Number(payment.fee_amount_minor),
+                          currency: String(payment.fee_currency),
+                          scale: Number(payment.fee_scale),
+                        },
+                        borneBy: payment.fee_borne_by as "DEBTOR" | "CREDITOR" | "SHARED",
+                      },
+                reportedByUserId: String(payment.reported_by),
+                reportedByMemberId: String(payment.reported_by_member_id),
+                reportingAuthority: payment.reporting_authority as
+                  "PAYER" | "ORGANIZER_OVERRIDE",
+                reportingReason: payment.reporting_reason
+                  ? String(payment.reporting_reason)
+                  : null,
+                paidAt: String(payment.paid_at),
+                evidenceAssetId: payment.evidence_asset_id
+                  ? String(payment.evidence_asset_id)
+                  : null,
+                notes: payment.notes ? String(payment.notes) : null,
+                supersedesPaymentId: payment.supersedes_payment_id
+                  ? String(payment.supersedes_payment_id)
+                  : null,
+                revision: Number(payment.revision),
+                createdAt: String(payment.created_at),
+                syncStatus: "SYNCED" as const,
+                discharge: discharge
+                  ? {
+                      id: String(discharge.id),
+                      amount: {
+                        minor: Number(discharge.amount_minor),
+                        currency: String(discharge.settlement_currency),
+                        scale: Number(discharge.settlement_scale),
+                      },
+                      confirmationAuthority: discharge.confirmation_authority as
+                        "RECIPIENT" | "ORGANIZER_OVERRIDE",
+                      confirmedByUserId: String(discharge.confirmed_by_user_id),
+                      confirmedByMemberId: String(discharge.confirmed_by_member_id),
+                      reason: discharge.reason ? String(discharge.reason) : null,
+                      confirmedAt: String(discharge.confirmed_at),
+                    }
+                  : null,
+              };
+            })
+            .sort(
+              (left, right) =>
+                left.createdAt.localeCompare(right.createdAt) ||
+                left.id.localeCompare(right.id),
+            );
+          const amounts = deriveTransferPaymentState(
+            Number(item.obligation_amount_minor),
+            transferPayments.map((payment) => ({
+              status: payment.status,
+              assertedDischargeMinor: payment.assertedDischarge.minor,
+              dischargeMinor: payment.discharge?.amount.minor ?? null,
+            })),
+          );
+          const money = (minor: number) => ({
+            minor,
             currency: String(item.settlement_currency),
             scale: Number(item.settlement_scale),
-          },
-          status: "OPEN" as const,
-          revision: Number(item.revision),
-        }))
+          });
+          return {
+            id: String(item.id),
+            fromMemberId: String(item.from_member_id),
+            toMemberId: String(item.to_member_id),
+            amount: money(Number(item.obligation_amount_minor)),
+            confirmedDischarge: money(amounts.confirmedDischargeMinor),
+            confirmedRemaining: money(amounts.confirmedRemainingMinor),
+            awaitingAmount: money(amounts.awaitingAmountMinor),
+            availableToReport: money(amounts.availableToReportMinor),
+            status: amounts.status,
+            revision: Number(item.revision),
+            payments: transferPayments,
+          };
+        })
         .sort((left, right) => left.id.localeCompare(right.id)),
       auditEvents: (audits.data ?? [])
         .filter((item) => String(item.settlement_id) === id)
         .map((item) => ({
           id: String(item.id),
-          eventType: "FINALIZED" as const,
+          eventType:
+            item.event_type as FinalizedSettlementDto["auditEvents"][number]["eventType"],
           actorUserId: String(item.actor_user_id),
           actorMemberId: String(item.actor_member_id),
           reason: item.reason ? String(item.reason) : null,
+          transferId: item.transfer_id ? String(item.transfer_id) : null,
+          paymentId: item.payment_id ? String(item.payment_id) : null,
+          dischargeId: item.discharge_id ? String(item.discharge_id) : null,
+          authority: item.authority
+            ? (String(item.authority) as "PAYER" | "RECIPIENT" | "ORGANIZER_OVERRIDE")
+            : null,
           revision: Number(item.settlement_revision),
           createdAt: String(item.created_at),
         })),
@@ -2170,6 +2506,7 @@ async function readLedgerBootstrap(
     ),
     settlements: finalizedSettlements,
     actor: {
+      userId,
       memberId: actorRow ? String(actorRow.id) : null,
       role: actorRole,
       capabilities: capabilities(actorRole, actorStatus),
@@ -2196,7 +2533,9 @@ async function readLedgerChanges(
   if (result.error) throw new Error("Supabase Dev Ledger changes failed.");
 
   const rows = result.data ?? [];
-  const visibleRows = rows.filter((row) => row.entity_type !== "TRANSFER");
+  const visibleRows = rows.filter(
+    (row) => !["TRANSFER", "TRANSFER_PAYMENT"].includes(row.entity_type),
+  );
   const expenseIds = rows
     .filter((row) => row.entity_type === "EXPENSE" && !row.is_tombstone)
     .map((row) => String(row.entity_id));

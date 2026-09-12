@@ -4,8 +4,10 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
+import { useState } from "react";
 import { router } from "expo-router";
 
 import {
@@ -15,10 +17,19 @@ import {
 } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney } from "./format";
+import { currencyScale } from "@/domain/ledger/currency";
+import type { RepaymentProposition } from "@/domain/ledger/paymentLifecycle";
 
 export function SettlementReadinessScreen({ journeyId }: { journeyId?: string }) {
   const settlement = useStage7Settlement(journeyId);
-  const { busy, finalized, message, preview } = settlement;
+  const { actorMemberId, busy, finalized, isOrganizer, message, preview } = settlement;
+  const [payingTransferId, setPayingTransferId] = useState<string | null>(null);
+  const [correctingPaymentId, setCorrectingPaymentId] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentCurrency, setPaymentCurrency] = useState("");
+  const [dischargeAmount, setDischargeAmount] = useState("");
+  const [repaymentRate, setRepaymentRate] = useState("");
+  const [paymentReason, setPaymentReason] = useState("");
 
   const confirmFinalize = () => {
     if (!preview || preview.state !== "PREVIEW_READY") return;
@@ -140,24 +151,345 @@ export function SettlementReadinessScreen({ journeyId }: { journeyId?: string })
             {finalized.inputs.length} frozen Expenses · {finalized.transfers.length}{" "}
             obligations
           </Text>
-          {finalized.transfers.map((transfer) => (
-            <Text key={transfer.id} style={styles.body}>
-              {memberName(finalized, transfer.fromMemberId)} →{" "}
-              {memberName(finalized, transfer.toMemberId)} ·{" "}
-              {formatLedgerMoney(
-                transfer.amount.minor,
-                transfer.amount.currency,
-                transfer.amount.scale,
-              )}
-            </Text>
-          ))}
-          <Text style={styles.note}>
-            Paid and Received begin in Stage 7.2. No payment action is available yet.
-          </Text>
+          {finalized.transfers.map((transfer) => {
+            const isPayer = actorMemberId === transfer.fromMemberId;
+            const isRecipient = actorMemberId === transfer.toMemberId;
+            return (
+              <View key={transfer.id} style={styles.transferCard}>
+                <Text style={styles.rowTitle}>
+                  {memberName(finalized, transfer.fromMemberId)} →{" "}
+                  {memberName(finalized, transfer.toMemberId)}
+                </Text>
+                <Text style={styles.body}>
+                  Remaining{" "}
+                  {formatLedgerMoney(
+                    transfer.confirmedRemaining.minor,
+                    transfer.confirmedRemaining.currency,
+                    transfer.confirmedRemaining.scale,
+                  )}
+                </Text>
+                <Text style={styles.meta}>
+                  Confirmed{" "}
+                  {formatLedgerMoney(
+                    transfer.confirmedDischarge.minor,
+                    transfer.confirmedDischarge.currency,
+                    transfer.confirmedDischarge.scale,
+                  )}{" "}
+                  · Awaiting{" "}
+                  {formatLedgerMoney(
+                    transfer.awaitingAmount.minor,
+                    transfer.awaitingAmount.currency,
+                    transfer.awaitingAmount.scale,
+                  )}{" "}
+                  · Available{" "}
+                  {formatLedgerMoney(
+                    transfer.availableToReport.minor,
+                    transfer.availableToReport.currency,
+                    transfer.availableToReport.scale,
+                  )}
+                </Text>
+                <Text style={styles.status}>{transfer.status.replaceAll("_", " ")}</Text>
+
+                {isPayer && transfer.availableToReport.minor > 0 ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setPayingTransferId(transfer.id);
+                      setPaymentCurrency(transfer.amount.currency);
+                      setPaymentAmount(
+                        amountInput(
+                          transfer.availableToReport.minor,
+                          transfer.amount.scale,
+                        ),
+                      );
+                      setDischargeAmount(
+                        amountInput(
+                          transfer.availableToReport.minor,
+                          transfer.amount.scale,
+                        ),
+                      );
+                    }}
+                    style={styles.secondary}
+                  >
+                    <Text style={styles.secondaryText}>Record Paid</Text>
+                  </Pressable>
+                ) : null}
+
+                {payingTransferId === transfer.id ? (
+                  <View style={styles.form}>
+                    <TextInput
+                      accessibilityLabel="Payment currency"
+                      autoCapitalize="characters"
+                      maxLength={3}
+                      onChangeText={(value) => setPaymentCurrency(value.toUpperCase())}
+                      placeholder="Currency"
+                      style={styles.input}
+                      value={paymentCurrency}
+                    />
+                    <TextInput
+                      accessibilityLabel="Actual payment amount"
+                      keyboardType="decimal-pad"
+                      onChangeText={setPaymentAmount}
+                      placeholder="Actual payment amount"
+                      style={styles.input}
+                      value={paymentAmount}
+                    />
+                    {paymentCurrency !== transfer.amount.currency ? (
+                      <>
+                        <TextInput
+                          accessibilityLabel="Settlement amount discharged"
+                          keyboardType="decimal-pad"
+                          onChangeText={setDischargeAmount}
+                          placeholder={`${transfer.amount.currency} discharged`}
+                          style={styles.input}
+                          value={dischargeAmount}
+                        />
+                        <TextInput
+                          accessibilityLabel="Repayment exchange rate"
+                          keyboardType="decimal-pad"
+                          onChangeText={setRepaymentRate}
+                          placeholder="Settlement currency per payment currency"
+                          style={styles.input}
+                          value={repaymentRate}
+                        />
+                      </>
+                    ) : null}
+                    {paymentCurrency !== transfer.amount.currency ||
+                    correctingPaymentId ? (
+                      <TextInput
+                        accessibilityLabel="Payment reason"
+                        onChangeText={setPaymentReason}
+                        placeholder={
+                          correctingPaymentId ? "Correction reason" : "Agreement reason"
+                        }
+                        style={styles.input}
+                        value={paymentReason}
+                      />
+                    ) : null}
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={busy}
+                      onPress={() => {
+                        const paymentScale = currencyScale(paymentCurrency);
+                        const paymentMinor = parseAmount(paymentAmount, paymentScale);
+                        const dischargeMinor = parseAmount(
+                          paymentCurrency === transfer.amount.currency
+                            ? paymentAmount
+                            : dischargeAmount,
+                          transfer.amount.scale,
+                        );
+                        if (paymentScale === null || !paymentMinor || !dischargeMinor) {
+                          Alert.alert("Check payment amounts");
+                          return;
+                        }
+                        const proposition: RepaymentProposition & {
+                          paidAt: string;
+                          evidenceAssetId: string | null;
+                          notes: string | null;
+                        } = {
+                          payment: {
+                            minor: paymentMinor,
+                            currency: paymentCurrency,
+                            scale: paymentScale,
+                          },
+                          assertedDischarge: {
+                            minor: dischargeMinor,
+                            currency: transfer.amount.currency,
+                            scale: transfer.amount.scale,
+                          },
+                          repaymentValuation:
+                            paymentCurrency === transfer.amount.currency
+                              ? null
+                              : {
+                                  decimalRate: repaymentRate,
+                                  source: "MANUAL_AGREED",
+                                  sourceLabel: "Traveller agreement",
+                                  effectiveAt: new Date().toISOString(),
+                                  reason: paymentReason,
+                                },
+                          feeTreatment: null,
+                          paidAt: new Date().toISOString(),
+                          evidenceAssetId: null,
+                          notes: null,
+                        };
+                        if (correctingPaymentId) {
+                          if (!paymentReason.trim()) {
+                            Alert.alert("A correction reason is required");
+                            return;
+                          }
+                          void settlement.correctPayment(
+                            correctingPaymentId,
+                            proposition,
+                            paymentReason.trim(),
+                          );
+                        } else {
+                          void settlement.recordPayment(transfer.id, proposition);
+                        }
+                        setPayingTransferId(null);
+                        setCorrectingPaymentId(null);
+                      }}
+                      style={styles.primary}
+                    >
+                      <Text style={styles.primaryText}>
+                        {correctingPaymentId ? "Save correction" : "Save Paid"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+
+                {transfer.payments.map((payment) => (
+                  <View key={payment.id} style={styles.paymentRow}>
+                    <Text style={styles.body}>
+                      Paid{" "}
+                      {formatLedgerMoney(
+                        payment.payment.minor,
+                        payment.payment.currency,
+                        payment.payment.scale,
+                      )}{" "}
+                      · Discharge{" "}
+                      {formatLedgerMoney(
+                        payment.assertedDischarge.minor,
+                        payment.assertedDischarge.currency,
+                        payment.assertedDischarge.scale,
+                      )}
+                    </Text>
+                    <Text style={styles.meta}>
+                      {payment.status.replaceAll("_", " ")}
+                      {payment.syncStatus !== "SYNCED" ? " · Saved on this device" : ""}
+                      {payment.discharge?.confirmationAuthority === "ORGANIZER_OVERRIDE"
+                        ? " · Organizer recorded receipt"
+                        : ""}
+                    </Text>
+                    {payment.status === "AWAITING_CONFIRMATION" && isRecipient ? (
+                      <View style={styles.actions}>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() =>
+                            void settlement.actOnPayment(
+                              payment.id,
+                              "confirm",
+                              null,
+                              "RECIPIENT",
+                            )
+                          }
+                          style={styles.secondary}
+                        >
+                          <Text style={styles.secondaryText}>Received</Text>
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() =>
+                            promptReason("Reject payment", (reason) =>
+                              settlement.actOnPayment(
+                                payment.id,
+                                "reject",
+                                reason,
+                                "RECIPIENT",
+                              ),
+                            )
+                          }
+                          style={styles.secondary}
+                        >
+                          <Text style={styles.secondaryText}>Reject</Text>
+                        </Pressable>
+                      </View>
+                    ) : null}
+                    {payment.status === "AWAITING_CONFIRMATION" &&
+                    isOrganizer &&
+                    !isRecipient ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() =>
+                          promptReason("Organizer receipt override", (reason) =>
+                            settlement.actOnPayment(
+                              payment.id,
+                              "confirm",
+                              reason,
+                              "ORGANIZER_OVERRIDE",
+                            ),
+                          )
+                        }
+                        style={styles.secondary}
+                      >
+                        <Text style={styles.secondaryText}>
+                          Organizer receipt override
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                    {payment.status === "AWAITING_CONFIRMATION" &&
+                    (isPayer || isRecipient) ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() =>
+                          promptReason("Dispute payment", (reason) =>
+                            settlement.actOnPayment(
+                              payment.id,
+                              "dispute",
+                              reason,
+                              isPayer ? "PAYER" : "RECIPIENT",
+                            ),
+                          )
+                        }
+                        style={styles.linkButton}
+                      >
+                        <Text style={styles.linkText}>Dispute</Text>
+                      </Pressable>
+                    ) : null}
+                    {isOrganizer && payment.status !== "CONFIRMED" ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() => {
+                          setPayingTransferId(transfer.id);
+                          setCorrectingPaymentId(payment.id);
+                          setPaymentCurrency(payment.payment.currency);
+                          setPaymentAmount(
+                            amountInput(payment.payment.minor, payment.payment.scale),
+                          );
+                          setDischargeAmount(
+                            amountInput(
+                              payment.assertedDischarge.minor,
+                              payment.assertedDischarge.scale,
+                            ),
+                          );
+                          setRepaymentRate(payment.repaymentValuation?.decimalRate ?? "");
+                          setPaymentReason("");
+                        }}
+                        style={styles.linkButton}
+                      >
+                        <Text style={styles.linkText}>Organizer correction</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            );
+          })}
         </View>
       ) : null}
     </View>
   );
+}
+
+function parseAmount(value: string, scale: number | null) {
+  if (scale === null) return null;
+  const match = new RegExp(`^(\\d+)(?:\\.(\\d{1,${scale}}))?$`).exec(value.trim());
+  if (!match) return null;
+  const minor =
+    Number(match[1]) * 10 ** scale + Number((match[2] ?? "").padEnd(scale, "0"));
+  return Number.isSafeInteger(minor) && minor > 0 ? minor : null;
+}
+
+function amountInput(minor: number, scale: number) {
+  const divisor = 10 ** scale;
+  return scale === 0
+    ? String(minor)
+    : `${Math.floor(minor / divisor)}.${String(minor % divisor).padStart(scale, "0")}`;
+}
+
+function promptReason(title: string, action: (reason: string) => void) {
+  Alert.prompt(title, "A reason is required and will be audited.", (reason) => {
+    if (reason?.trim()) void action(reason.trim());
+  });
 }
 
 function name(preview: Stage7Preview, memberId: string) {
@@ -207,4 +539,35 @@ const styles = StyleSheet.create({
   },
   primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
   disabled: { opacity: 0.5 },
+  transferCard: {
+    borderTopColor: "#E2E8F0",
+    borderTopWidth: 1,
+    gap: 8,
+    paddingTop: 12,
+  },
+  status: { color: "#0F766E", fontSize: 12, fontWeight: "800" },
+  secondary: {
+    alignItems: "center",
+    borderColor: "#0F766E",
+    borderRadius: 9,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
+  secondaryText: { color: "#0F766E", fontSize: 15, fontWeight: "800" },
+  form: { gap: 8 },
+  input: {
+    borderColor: "#CBD5E1",
+    borderRadius: 9,
+    borderWidth: 1,
+    color: "#0F172A",
+    fontSize: 16,
+    minHeight: 48,
+    paddingHorizontal: 12,
+  },
+  paymentRow: { backgroundColor: "#F8FAFC", borderRadius: 9, gap: 6, padding: 10 },
+  actions: { flexDirection: "row", gap: 8 },
+  linkButton: { minHeight: 44, justifyContent: "center" },
+  linkText: { color: "#B45309", fontSize: 14, fontWeight: "800" },
 });
