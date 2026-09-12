@@ -167,6 +167,17 @@ export const finalizedSettlementTransferSchema = z.object({
 export const finalizedSettlementSchema = z.object({
   id: uuid,
   journeyId: uuid,
+  kind: z.enum(["ROOT", "ADJUSTMENT"]).optional(),
+  rootSettlementId: uuid.nullable().optional(),
+  parentAdjustmentId: uuid.nullable().optional(),
+  lineageSequence: z.number().int().nonnegative().optional(),
+  priorInputDigest: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .nullable()
+    .optional(),
+  adjustmentReason: z.string().nullable().optional(),
+  eligibilityVersion: z.string().optional(),
   status: z.enum(["FINALIZED", "PARTIALLY_PAID", "SETTLED", "SUPERSEDED"]),
   throughTimestamp: z.string(),
   settlementCurrency: z.string().regex(/^[A-Z]{3}$/),
@@ -179,6 +190,30 @@ export const finalizedSettlementSchema = z.object({
   finalizedAt: z.string(),
   inputs: z.array(input),
   balances: z.array(balance),
+  adjustmentDeltas: z
+    .array(
+      z.object({
+        memberId: uuid,
+        displayNameSnapshot: z.string().min(1).max(200),
+        deltaMinor: z.number().int(),
+        currency: z.string().regex(/^[A-Z]{3}$/),
+        scale: z.number().int().min(0).max(4),
+      }),
+    )
+    .optional(),
+  adjustmentState: z
+    .enum(["CURRENT", "ADJUSTMENT_REQUIRED", "ADJUSTMENT_BLOCKED"])
+    .optional(),
+  lineageHeadId: uuid.nullable().optional(),
+  outstandingBalances: z
+    .array(
+      z.object({
+        memberId: uuid,
+        displayNameSnapshot: z.string().min(1).max(200),
+        amount: settlementMoneySchema,
+      }),
+    )
+    .optional(),
   transfers: z.array(finalizedSettlementTransferSchema),
   auditEvents: z.array(
     z.object({
@@ -191,6 +226,7 @@ export const finalizedSettlementSchema = z.object({
         "DISPUTED",
         "CORRECTED",
         "ORGANIZER_OVERRIDE",
+        "ADJUSTED",
       ]),
       actorUserId: uuid,
       actorMemberId: uuid,
@@ -206,6 +242,55 @@ export const finalizedSettlementSchema = z.object({
 });
 
 export const settlementFinalizeResponseSchema = z.object({
+  entity: finalizedSettlementSchema,
+  idempotentReplay: z.boolean(),
+});
+
+const adjustmentVector = z.object({
+  memberId: uuid,
+  displayNameSnapshot: z.string().min(1).max(200),
+  currency: z.string().regex(/^[A-Z]{3}$/),
+  scale: z.number().int().min(0).max(4),
+  sealedMinor: z.number().int(),
+  currentMinor: z.number().int(),
+  deltaMinor: z.number().int(),
+});
+
+export const settlementAdjustmentPreviewSchema = z.object({
+  state: z.enum(["PREVIEW_BLOCKED", "PREVIEW_UNCHANGED", "PREVIEW_READY"]),
+  rootSettlementId: uuid,
+  expectedHeadId: uuid.nullable(),
+  priorInputDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  zeroTransfer: z.boolean(),
+  inputs: z.array(input),
+  balances: z.array(adjustmentVector),
+  transfers: z.array(transfer),
+  blockers: z.array(
+    z.object({
+      expenseId: uuid,
+      reason: z.enum(["OPEN_CONFLICT", "RATE_REQUIRED"]),
+    }),
+  ),
+  exclusions: z.array(
+    z.object({ expenseId: uuid, reason: z.enum(["DELETED", "DRAFT"]) }),
+  ),
+  changedExpenses: z.array(
+    z.object({
+      expenseId: uuid,
+      change: z.enum(["NEW", "CHANGED", "DELETED"]),
+    }),
+  ),
+});
+
+export const settlementAdjustmentFinalizeRequestSchema = z.object({
+  expectedHeadId: uuid.nullable(),
+  inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  reason: z.string().trim().min(1).max(2000),
+  allowZeroTransfer: z.boolean(),
+});
+
+export const settlementAdjustmentMutationResponseSchema = z.object({
   entity: finalizedSettlementSchema,
   idempotentReplay: z.boolean(),
 });
@@ -254,6 +339,15 @@ export const settlementPaymentMutationResponseSchema = z.object({
 export type SettlementPreviewResponse = z.infer<typeof settlementPreviewSchema>;
 export type FinalizedSettlementDto = z.infer<typeof finalizedSettlementSchema>;
 export type SettlementFinalizeResponse = z.infer<typeof settlementFinalizeResponseSchema>;
+export type SettlementAdjustmentPreviewResponse = z.infer<
+  typeof settlementAdjustmentPreviewSchema
+>;
+export type SettlementAdjustmentFinalizeRequest = z.infer<
+  typeof settlementAdjustmentFinalizeRequestSchema
+>;
+export type SettlementAdjustmentMutationResponse = z.infer<
+  typeof settlementAdjustmentMutationResponseSchema
+>;
 export type SettlementPaymentDto = z.infer<typeof settlementPaymentSchema>;
 export type RecordSettlementPaymentRequest = z.infer<
   typeof recordSettlementPaymentRequestSchema

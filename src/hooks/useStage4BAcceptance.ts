@@ -331,20 +331,18 @@ async function runOrganizerChecks(
     {},
     z.object({ ok: z.literal(true) }),
   );
-  let protectedBySettlement = false;
-  try {
-    await transport.deleteExpense({
-      journeyId,
-      serverId: target.serverId!,
-      idempotencyKey: createLocalId("stage4b-finalized-guard"),
-      baseRevision: restored.revision,
-      auditReason: "Stage 4B finalized guard",
-    });
-  } catch (error) {
-    protectedBySettlement =
-      error instanceof ApiClientError && error.code === "SETTLEMENT_INPUT_STALE";
-  }
-  record("finalized-settlement guard", protectedBySettlement, "SETTLEMENT_INPUT_STALE");
+  const changedAfterFinalization = await transport.deleteExpense({
+    journeyId,
+    serverId: target.serverId!,
+    idempotencyKey: createLocalId("stage4b-post-finalized-change"),
+    baseRevision: restored.revision,
+    auditReason: "Stage 7.2B Adjustment-required change",
+  });
+  record(
+    "post-finalization mutation requires Adjustment",
+    changedAfterFinalization.revision === 5,
+    `r${changedAfterFinalization.revision}`,
+  );
 }
 
 async function canonicalAuditCount(serverId: string) {

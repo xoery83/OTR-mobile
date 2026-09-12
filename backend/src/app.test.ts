@@ -78,6 +78,23 @@ function createGateway(options: { authorized?: boolean } = {}) {
       },
       idempotentReplay: false,
     })),
+    previewSettlementAdjustment: vi.fn(async (_userId, _tripId, rootSettlementId) => ({
+      state: "PREVIEW_UNCHANGED" as const,
+      rootSettlementId,
+      expectedHeadId: null,
+      priorInputDigest: "a".repeat(64),
+      inputDigest: "a".repeat(64),
+      zeroTransfer: true,
+      inputs: [],
+      balances: [],
+      transfers: [],
+      blockers: [],
+      exclusions: [],
+      changedExpenses: [],
+    })),
+    finalizeSettlementAdjustment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
     recordSettlementPayment: vi.fn(async () => {
       throw new Error("not used");
     }),
@@ -593,6 +610,67 @@ describe("OTR Dev Backend", () => {
     );
     expect(response.status).toBe(403);
     expect(gateway.previewLedgerSettlement).not.toHaveBeenCalled();
+  });
+
+  it("allows Adjustment preview to readers and requires a reason to finalize", async () => {
+    const { gateway } = createGateway();
+    const rootId = "70000000-0000-4000-8000-000000000001";
+    const root = await gateway.finalizeLedgerSettlement(userId, tripId, "fixture", {
+      throughTimestamp: "2026-09-12T00:00:00.000Z",
+      inputDigest: "a".repeat(64),
+    });
+    gateway.finalizeSettlementAdjustment = vi.fn(async () => ({
+      entity: { ...root.entity, id: "70000000-0000-4000-8000-000000000002" },
+      idempotentReplay: false,
+    }));
+    const handle = createDevBackendHandler({ gateway });
+    const url = `http://localhost/v2/trips/${tripId}/settlements/${rootId}/adjustments`;
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+      "Idempotency-Key": "adjustment-key",
+    };
+    const preview = await handle(
+      new Request(`${url}/preview`, {
+        method: "POST",
+        headers,
+        body: "{}",
+      }),
+    );
+    const missingReason = await handle(
+      new Request(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          expectedHeadId: null,
+          inputDigest: "a".repeat(64),
+          reason: "",
+          allowZeroTransfer: false,
+        }),
+      }),
+    );
+    const finalized = await handle(
+      new Request(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          expectedHeadId: null,
+          inputDigest: "a".repeat(64),
+          reason: "Corrected expense",
+          allowZeroTransfer: false,
+        }),
+      }),
+    );
+
+    expect(preview.status).toBe(200);
+    expect(gateway.previewSettlementAdjustment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      rootId,
+    );
+    expect(missingReason.status).toBe(400);
+    expect(finalized.status).toBe(201);
+    expect(gateway.finalizeSettlementAdjustment).toHaveBeenCalledOnce();
   });
 
   it("routes typed Paid and Received commands separately", async () => {

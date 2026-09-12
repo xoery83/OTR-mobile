@@ -253,7 +253,7 @@ insert into public.settlement_inputs (
     where expense_id = '41000000-0000-4000-8000-000000000001' and is_active)
 );
 
-select throws_ok($$
+select lives_ok($$
   select public.ledger_mutate_expense_4b(
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
@@ -263,9 +263,18 @@ select throws_ok($$
     'Organizer deleted after settlement',
     'guard-hash',
     'guard-key',
-    (select response_body from public.ledger_idempotency_keys where idempotency_key = 'restore-key')
+    jsonb_set(
+      jsonb_set(
+        jsonb_set(
+          (select response_body from public.ledger_idempotency_keys where idempotency_key = 'restore-key'),
+          '{entity,deletedAt}', '"2026-01-10T18:04:00.000Z"'
+        ),
+        '{entity,auditEvents,0,id}', '"43000000-0000-4000-8000-000000000007"'
+      ),
+      '{entity,auditEvents,0,eventType}', '"DELETED"'
+    )
   )
-$$, 'P0001', 'FINALIZED_SETTLEMENT_PROTECTED', 'finalized settlement protects mutation');
+$$, 'post-finalization Expense mutation is allowed and requires Adjustment');
 
 select * from finish();
 rollback;

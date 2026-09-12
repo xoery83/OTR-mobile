@@ -93,6 +93,40 @@ export type SettlementPreviewInput = {
   expenses: SettlementExpenseCandidate[];
 };
 
+export type SettlementAdjustmentDelta = {
+  memberId: string;
+  displayNameSnapshot: string;
+  currency: string;
+  scale: number;
+  sealedMinor: number;
+  currentMinor: number;
+  deltaMinor: number;
+};
+
+export type SettlementAdjustmentVectorsInput = {
+  currency: string;
+  scale: number;
+  rootBalances: Pick<
+    SettlementMemberBalanceSnapshot,
+    "memberId" | "displayNameSnapshot" | "netMinor"
+  >[];
+  priorDeltaVectors: {
+    memberId: string;
+    displayNameSnapshot: string;
+    deltaMinor: number;
+  }[][];
+  currentBalances: Pick<
+    SettlementMemberBalanceSnapshot,
+    "memberId" | "displayNameSnapshot" | "netMinor"
+  >[];
+};
+
+export type ConfirmedDischargeVectorInput = {
+  fromMemberId: string;
+  toMemberId: string;
+  amountMinor: number;
+};
+
 function stableIdCompare(left: string, right: string) {
   return left < right ? -1 : left > right ? 1 : 0;
 }
@@ -356,6 +390,154 @@ export function buildSettlementPreview(input: SettlementPreviewInput): Settlemen
 
 export function canonicalSettlementJson(preview: SettlementPreview) {
   return JSON.stringify(sortJson(preview));
+}
+
+export function canonicalAdjustmentInputJson(input: {
+  rootSettlementId: string;
+  journeyId: string;
+  throughTimestamp: string;
+  settlementCurrency: string;
+  settlementScale: number;
+  eligibilityVersion: string;
+  algorithmVersion: string;
+  inputs: SettlementInputSnapshot[];
+}) {
+  return JSON.stringify(
+    sortJson({
+      rootSettlementId: input.rootSettlementId,
+      journeyId: input.journeyId,
+      throughTimestamp: input.throughTimestamp,
+      settlementCurrency: input.settlementCurrency,
+      settlementScale: input.settlementScale,
+      eligibilityVersion: input.eligibilityVersion,
+      algorithmVersion: input.algorithmVersion,
+      inputs: input.inputs.map(({ expenseRevision: _revision, ...expense }) => {
+        const { id: _valuationId, ...valuation } = expense.valuation;
+        return {
+          ...expense,
+          valuation,
+          payer: { memberId: expense.payer.memberId },
+          splits: expense.splits.map((split) => ({
+            ...split,
+            member: { memberId: split.member.memberId },
+          })),
+        };
+      }),
+    }),
+  );
+}
+
+export function buildSettlementAdjustmentVectors(
+  input: SettlementAdjustmentVectorsInput,
+) {
+  const names = new Map<string, string>();
+  const root = new Map<string, number>();
+  const current = new Map<string, number>();
+  const prior = new Map<string, number>();
+
+  for (const balance of input.rootBalances) {
+    names.set(balance.memberId, balance.displayNameSnapshot);
+    root.set(balance.memberId, balance.netMinor);
+  }
+  for (const vector of input.priorDeltaVectors) {
+    assertZeroSum(
+      vector.map(({ memberId, deltaMinor }) => ({ memberId, minor: deltaMinor })),
+      "Adjustment delta",
+    );
+    for (const delta of vector) {
+      names.set(delta.memberId, delta.displayNameSnapshot);
+      prior.set(
+        delta.memberId,
+        safeAdd(prior.get(delta.memberId) ?? 0, delta.deltaMinor),
+      );
+    }
+  }
+  for (const balance of input.currentBalances) {
+    names.set(balance.memberId, balance.displayNameSnapshot);
+    current.set(balance.memberId, balance.netMinor);
+  }
+
+  assertZeroSum(
+    input.rootBalances.map(({ memberId, netMinor }) => ({ memberId, minor: netMinor })),
+    "Root balance",
+  );
+  assertZeroSum(
+    input.currentBalances.map(({ memberId, netMinor }) => ({
+      memberId,
+      minor: netMinor,
+    })),
+    "Current balance",
+  );
+
+  const balances = [...new Set([...root.keys(), ...prior.keys(), ...current.keys()])]
+    .sort(stableIdCompare)
+    .map((memberId): SettlementAdjustmentDelta => {
+      const sealedMinor = safeAdd(root.get(memberId) ?? 0, prior.get(memberId) ?? 0);
+      const currentMinor = current.get(memberId) ?? 0;
+      return {
+        memberId,
+        displayNameSnapshot: names.get(memberId) ?? memberId,
+        currency: input.currency,
+        scale: input.scale,
+        sealedMinor,
+        currentMinor,
+        deltaMinor: safeAdd(currentMinor, -sealedMinor),
+      };
+    });
+
+  assertZeroSum(
+    balances.map(({ memberId, sealedMinor }) => ({ memberId, minor: sealedMinor })),
+    "Sealed balance",
+  );
+  assertZeroSum(
+    balances.map(({ memberId, deltaMinor }) => ({ memberId, minor: deltaMinor })),
+    "Adjustment delta",
+  );
+
+  return {
+    balances,
+    transfers: buildTransferPlan(
+      balances.map(({ memberId, deltaMinor }) => ({
+        memberId,
+        minor: deltaMinor,
+        currency: input.currency,
+        scale: input.scale,
+      })),
+    ),
+  };
+}
+
+export function buildOutstandingBalanceVector(
+  sealed: Pick<SettlementAdjustmentDelta, "memberId" | "sealedMinor">[],
+  discharges: ConfirmedDischargeVectorInput[],
+) {
+  const outstanding = new Map(sealed.map((item) => [item.memberId, item.sealedMinor]));
+  for (const discharge of discharges) {
+    if (!Number.isSafeInteger(discharge.amountMinor) || discharge.amountMinor <= 0) {
+      throw new Error("Confirmed discharge amount is invalid.");
+    }
+    outstanding.set(
+      discharge.fromMemberId,
+      safeAdd(outstanding.get(discharge.fromMemberId) ?? 0, discharge.amountMinor),
+    );
+    outstanding.set(
+      discharge.toMemberId,
+      safeAdd(outstanding.get(discharge.toMemberId) ?? 0, -discharge.amountMinor),
+    );
+  }
+  const result = [...outstanding]
+    .map(([memberId, minor]) => ({ memberId, minor }))
+    .sort((left, right) => stableIdCompare(left.memberId, right.memberId));
+  assertZeroSum(result, "Outstanding balance");
+  return result;
+}
+
+function assertZeroSum(balances: { memberId: string; minor: number }[], label: string) {
+  const total = balances.reduce((sum, balance) => {
+    if (!Number.isSafeInteger(balance.minor)) throw new Error(`${label} is unsafe.`);
+    return safeAdd(sum, balance.minor);
+  }, 0);
+  if (total !== 0) throw new Error(`${label} vector does not net to zero.`);
 }
 
 function sortJson(value: unknown): unknown {

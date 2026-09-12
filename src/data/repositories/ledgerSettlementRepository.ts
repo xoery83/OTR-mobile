@@ -3,6 +3,7 @@ import type * as SQLite from "expo-sqlite";
 import type {
   FinalizedSettlementDto,
   RecordSettlementPaymentRequest,
+  SettlementAdjustmentFinalizeRequest,
 } from "@/data/api/ledgerSettlementContracts";
 import {
   assertRepaymentProposition,
@@ -37,7 +38,10 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
       const row = await database.getFirstAsync<{ count: number }>(
         `SELECT COUNT(*) AS count FROM sync_operations
          WHERE trip_id = ?
-           AND entity_type IN ('ledger_expense', 'ledger_payment_record', 'ledger_correction')
+           AND entity_type IN (
+             'ledger_expense', 'ledger_payment_record', 'ledger_correction',
+             'ledger_settlement_adjustment'
+           )
            AND status <> 'COMPLETED'`,
         journeyId,
       );
@@ -289,6 +293,24 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
       );
     },
 
+    async queueAdjustment(
+      journeyId: string,
+      rootSettlementId: string,
+      input: SettlementAdjustmentFinalizeRequest,
+    ) {
+      if (!(await this.isOrganizer(journeyId)))
+        throw new Error("Organizer Adjustment access is required.");
+      await enqueueSettlementOperation(
+        database,
+        journeyId,
+        rootSettlementId,
+        "LEDGER_FINALIZE_SETTLEMENT_ADJUSTMENT",
+        { rootSettlementId, ...input },
+        0,
+        "ledger_settlement_adjustment",
+      );
+    },
+
     async getActorMemberId(journeyId: string) {
       const row = await database.getFirstAsync<{ memberId: string | null }>(
         `SELECT member_id AS memberId FROM ledger_actor_context WHERE journey_id = ?`,
@@ -314,6 +336,7 @@ async function enqueueSettlementOperation(
   operationType: string,
   payload: unknown,
   baseVersion: number,
+  entityType = "ledger_settlement_payment",
 ) {
   const now = new Date().toISOString();
   await database.runAsync(
@@ -321,9 +344,10 @@ async function enqueueSettlementOperation(
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
       base_version, payload_json, status, attempt_count, next_attempt_at,
       created_at, updated_at
-    ) VALUES (?, ?, 'ledger_settlement_payment', ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
     createLocalId("ledger-operation"),
     journeyId,
+    entityType,
     entityId,
     operationType,
     createLocalId("ledger-idempotency"),
@@ -396,8 +420,11 @@ export async function applyFinalizedSettlement(
     `INSERT OR REPLACE INTO ledger_settlements (
       id, journey_id, status, through_timestamp, settlement_currency,
       settlement_scale, settings_revision, algorithm_version, input_digest,
-      revision, finalized_by, finalized_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      revision, finalized_by, finalized_at, settlement_kind, root_settlement_id,
+      parent_adjustment_id, lineage_sequence, prior_input_digest,
+      adjustment_reason, eligibility_version, adjustment_state,
+      lineage_head_id, outstanding_balances_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     settlement.id,
     settlement.journeyId,
     settlement.status,
@@ -410,10 +437,23 @@ export async function applyFinalizedSettlement(
     settlement.revision,
     settlement.finalizedBy,
     settlement.finalizedAt,
+    settlement.kind ?? "ROOT",
+    settlement.rootSettlementId ?? null,
+    settlement.parentAdjustmentId ?? null,
+    settlement.lineageSequence ?? 0,
+    settlement.priorInputDigest ?? null,
+    settlement.adjustmentReason ?? null,
+    settlement.eligibilityVersion ?? "ledger-settlement-eligibility-v1",
+    settlement.adjustmentState ?? null,
+    settlement.lineageHeadId ?? null,
+    settlement.outstandingBalances
+      ? JSON.stringify(settlement.outstandingBalances)
+      : null,
   );
   for (const table of [
     "ledger_settlement_inputs",
     "ledger_settlement_member_balances",
+    "ledger_settlement_adjustment_deltas",
     "ledger_settlement_transfers",
     "ledger_settlement_audit_events",
   ]) {
@@ -448,6 +488,19 @@ export async function applyFinalizedSettlement(
       balance.netMinor,
       balance.currency,
       balance.scale,
+    );
+  }
+  for (const delta of settlement.adjustmentDeltas ?? []) {
+    await database.runAsync(
+      `INSERT INTO ledger_settlement_adjustment_deltas (
+        settlement_id, member_id, display_name_snapshot, delta_minor, currency, scale
+      ) VALUES (?, ?, ?, ?, ?, ?)`,
+      settlement.id,
+      delta.memberId,
+      delta.displayNameSnapshot,
+      delta.deltaMinor,
+      delta.currency,
+      delta.scale,
     );
   }
   for (const transfer of settlement.transfers) {
@@ -590,6 +643,16 @@ async function readSettlement(
     revision: number;
     finalizedBy: string;
     finalizedAt: string;
+    kind: "ROOT" | "ADJUSTMENT";
+    rootSettlementId: string | null;
+    parentAdjustmentId: string | null;
+    lineageSequence: number;
+    priorInputDigest: string | null;
+    adjustmentReason: string | null;
+    eligibilityVersion: string;
+    adjustmentState: FinalizedSettlementDto["adjustmentState"] | null;
+    lineageHeadId: string | null;
+    outstandingBalancesJson: string | null;
   }>(
     `SELECT id, journey_id AS journeyId, status,
       through_timestamp AS throughTimestamp,
@@ -598,12 +661,18 @@ async function readSettlement(
       settings_revision AS settingsRevision,
       algorithm_version AS algorithmVersion,
       input_digest AS inputDigest, revision,
-      finalized_by AS finalizedBy, finalized_at AS finalizedAt
+      finalized_by AS finalizedBy, finalized_at AS finalizedAt,
+      settlement_kind AS kind, root_settlement_id AS rootSettlementId,
+      parent_adjustment_id AS parentAdjustmentId,
+      lineage_sequence AS lineageSequence, prior_input_digest AS priorInputDigest,
+      adjustment_reason AS adjustmentReason, eligibility_version AS eligibilityVersion,
+      adjustment_state AS adjustmentState, lineage_head_id AS lineageHeadId,
+      outstanding_balances_json AS outstandingBalancesJson
      FROM ledger_settlements WHERE id = ?`,
     id,
   );
   if (!settlement) throw new Error("Finalized Settlement is missing.");
-  const [inputs, balances, transfers, auditEvents] = await Promise.all([
+  const [inputs, balances, adjustmentDeltas, transfers, auditEvents] = await Promise.all([
     database.getAllAsync<{ snapshot: string }>(
       `SELECT normalized_snapshot_json AS snapshot
        FROM ledger_settlement_inputs WHERE settlement_id = ? ORDER BY expense_id`,
@@ -615,6 +684,13 @@ async function readSettlement(
         transferred_minor AS transferredMinor, net_minor AS netMinor,
         currency, scale
        FROM ledger_settlement_member_balances
+       WHERE settlement_id = ? ORDER BY member_id`,
+      id,
+    ),
+    database.getAllAsync<NonNullable<FinalizedSettlementDto["adjustmentDeltas"]>[number]>(
+      `SELECT member_id AS memberId, display_name_snapshot AS displayNameSnapshot,
+        delta_minor AS deltaMinor, currency, scale
+       FROM ledger_settlement_adjustment_deltas
        WHERE settlement_id = ? ORDER BY member_id`,
       id,
     ),
@@ -818,8 +894,13 @@ async function readSettlement(
   });
   return {
     ...settlement,
+    adjustmentState: settlement.adjustmentState ?? undefined,
+    outstandingBalances: settlement.outstandingBalancesJson
+      ? JSON.parse(settlement.outstandingBalancesJson)
+      : undefined,
     inputs: inputs.map((row) => JSON.parse(row.snapshot)),
     balances,
+    adjustmentDeltas,
     transfers: mappedTransfers,
     auditEvents,
   };

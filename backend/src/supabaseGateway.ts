@@ -29,6 +29,9 @@ import type {
   CorrectSettlementPaymentRequest,
   FinalizedSettlementDto,
   RecordSettlementPaymentRequest,
+  SettlementAdjustmentFinalizeRequest,
+  SettlementAdjustmentMutationResponse,
+  SettlementAdjustmentPreviewResponse,
   SettlementFinalizeResponse,
   SettlementPaymentActionRequest,
   SettlementPaymentMutationResponse,
@@ -47,8 +50,12 @@ import {
 } from "../../src/domain/ledger/conflict";
 import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
 import {
+  buildOutstandingBalanceVector,
+  buildSettlementAdjustmentVectors,
   buildSettlementPreview,
+  canonicalAdjustmentInputJson,
   canonicalSettlementJson,
+  type SettlementInputSnapshot,
   type SettlementPreviewInput,
 } from "../../src/domain/ledger/settlement";
 import { previewValuation } from "../../src/domain/ledger/valuation";
@@ -274,6 +281,29 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     async finalizeLedgerSettlement(userId, tripId, idempotencyKey, input) {
       return finalizeLedgerSettlement(service, userId, tripId, idempotencyKey, input);
+    },
+
+    async previewSettlementAdjustment(_userId, tripId, rootSettlementId) {
+      return (
+        await calculateSettlementAdjustmentPreview(service, tripId, rootSettlementId)
+      ).response;
+    },
+
+    async finalizeSettlementAdjustment(
+      userId,
+      tripId,
+      rootSettlementId,
+      idempotencyKey,
+      input,
+    ) {
+      return finalizeSettlementAdjustment(
+        service,
+        userId,
+        tripId,
+        rootSettlementId,
+        idempotencyKey,
+        input,
+      );
     },
 
     async recordSettlementPayment(userId, tripId, transferId, idempotencyKey, input) {
@@ -1945,7 +1975,10 @@ async function finalizeLedgerSettlement(
     throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
   if (message.includes("TRIP_WRITE_FORBIDDEN"))
     throw new BackendError(403, "TRIP_WRITE_FORBIDDEN", "Organizer access is required.");
-  if (message.includes("settlements_one_active_7_1"))
+  if (
+    message.includes("settlements_one_active_7_1") ||
+    message.includes("settlements_one_root_7_2b")
+  )
     throw new BackendError(
       409,
       "SETTLEMENT_ALREADY_FINALIZED",
@@ -1963,6 +1996,200 @@ async function finalizeLedgerSettlement(
     finalized.settlementId,
   );
   if (!entity) throw new Error("Canonical Settlement was not found after finalization.");
+  return { entity, idempotentReplay: finalized.idempotentReplay };
+}
+
+const SETTLEMENT_ELIGIBILITY_VERSION = "ledger-settlement-eligibility-v1";
+
+async function calculateSettlementAdjustmentPreview(
+  service: SupabaseClient,
+  tripId: string,
+  rootSettlementId: string,
+) {
+  const root = await readOneFinalizedSettlement(service, tripId, rootSettlementId);
+  if (!root || root.kind === "ADJUSTMENT") {
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The root Settlement was not found.");
+  }
+  const sourceResult = await service.rpc("ledger_adjustment_source_7_2b", {
+    target_root: rootSettlementId,
+  });
+  if (sourceResult.error || !sourceResult.data) {
+    throw new Error("Supabase Dev Adjustment source failed.");
+  }
+  const source = normalizeSettlementSource(sourceResult.data as SettlementPreviewInput);
+  const current = buildSettlementPreview(source);
+  const adjustmentRows = await service
+    .from("settlements")
+    .select("id, input_digest, lineage_sequence")
+    .eq("root_settlement_id", rootSettlementId)
+    .eq("settlement_kind", "ADJUSTMENT")
+    .order("lineage_sequence", { ascending: true });
+  if (adjustmentRows.error) throw new Error("Supabase Dev Adjustment lineage failed.");
+  const adjustmentIds = (adjustmentRows.data ?? []).map((row) => String(row.id));
+  const deltaRows = adjustmentIds.length
+    ? await service
+        .from("settlement_adjustment_deltas")
+        .select("settlement_id, member_id, display_name_snapshot, delta_minor")
+        .in("settlement_id", adjustmentIds)
+    : { data: [], error: null };
+  if (deltaRows.error) throw new Error("Supabase Dev Adjustment delta read failed.");
+
+  const priorDeltaVectors = (adjustmentRows.data ?? []).map((adjustment) =>
+    (deltaRows.data ?? [])
+      .filter((row) => String(row.settlement_id) === String(adjustment.id))
+      .map((row) => ({
+        memberId: String(row.member_id),
+        displayNameSnapshot: String(row.display_name_snapshot),
+        deltaMinor: Number(row.delta_minor),
+      })),
+  );
+  const vectors = buildSettlementAdjustmentVectors({
+    currency: root.settlementCurrency,
+    scale: root.settlementScale,
+    rootBalances: root.balances,
+    priorDeltaVectors,
+    currentBalances: current.balances,
+  });
+  const headRow = adjustmentRows.data?.at(-1) ?? null;
+  const head = headRow
+    ? await readOneFinalizedSettlement(service, tripId, String(headRow.id))
+    : null;
+  if (headRow && !head) throw new Error("Canonical Adjustment head is missing.");
+  const priorInputs = head?.inputs ?? root.inputs;
+  const digestValue = (inputs: SettlementInputSnapshot[]) =>
+    createHash("sha256")
+      .update(
+        canonicalAdjustmentInputJson({
+          rootSettlementId,
+          journeyId: tripId,
+          throughTimestamp: root.throughTimestamp,
+          settlementCurrency: root.settlementCurrency,
+          settlementScale: root.settlementScale,
+          eligibilityVersion: root.eligibilityVersion ?? SETTLEMENT_ELIGIBILITY_VERSION,
+          algorithmVersion: root.algorithmVersion,
+          inputs,
+        }),
+      )
+      .digest("hex");
+  const priorInputDigest = head?.inputDigest ?? digestValue(root.inputs);
+  const inputDigest = digestValue(current.inputs);
+  const previousById = new Map(priorInputs.map((item) => [item.expenseId, item]));
+  const currentById = new Map(current.inputs.map((item) => [item.expenseId, item]));
+  const changedExpenses: SettlementAdjustmentPreviewResponse["changedExpenses"] = [
+    ...new Set([...previousById.keys(), ...currentById.keys()]),
+  ]
+    .sort()
+    .flatMap<SettlementAdjustmentPreviewResponse["changedExpenses"][number]>(
+      (expenseId) => {
+        const previous = previousById.get(expenseId);
+        const next = currentById.get(expenseId);
+        if (!previous) return [{ expenseId, change: "NEW" }];
+        if (!next) return [{ expenseId, change: "DELETED" }];
+        return digestValue([previous]) === digestValue([next])
+          ? []
+          : [{ expenseId, change: "CHANGED" }];
+      },
+    );
+  const state = current.blockers.length
+    ? "PREVIEW_BLOCKED"
+    : inputDigest === priorInputDigest
+      ? "PREVIEW_UNCHANGED"
+      : "PREVIEW_READY";
+  return {
+    source,
+    response: {
+      state,
+      rootSettlementId,
+      expectedHeadId: head?.id ?? null,
+      priorInputDigest,
+      inputDigest,
+      zeroTransfer: vectors.transfers.length === 0,
+      inputs: current.inputs,
+      balances: vectors.balances,
+      transfers: vectors.transfers,
+      blockers: current.blockers,
+      exclusions: current.exclusions,
+      changedExpenses,
+    } satisfies SettlementAdjustmentPreviewResponse,
+  };
+}
+
+async function finalizeSettlementAdjustment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  rootSettlementId: string,
+  idempotencyKey: string,
+  input: SettlementAdjustmentFinalizeRequest,
+): Promise<SettlementAdjustmentMutationResponse> {
+  const calculated = await calculateSettlementAdjustmentPreview(
+    service,
+    tripId,
+    rootSettlementId,
+  );
+  const preview = calculated.response;
+  const result = await service.rpc("ledger_finalize_adjustment_7_2b", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_root: rootSettlementId,
+    expected_head: input.expectedHeadId,
+    input_digest_value: input.inputDigest,
+    computed_input_digest_value: preview.inputDigest,
+    prior_input_digest_value: preview.priorInputDigest,
+    expected_source_value: calculated.source,
+    inputs_value: preview.inputs,
+    deltas_value: preview.balances,
+    transfers_value: preview.transfers,
+    changed_expenses_value: preview.changedExpenses,
+    reason_value: input.reason,
+    allow_zero_transfer: input.allowZeroTransfer,
+    blocked_value: preview.state === "PREVIEW_BLOCKED",
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+  });
+  const message = result.error?.message ?? "";
+  if (message.includes("SETTLEMENT_INPUT_STALE"))
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The Adjustment preview is stale.",
+    );
+  if (message.includes("ADJUSTMENT_NOT_REQUIRED"))
+    throw new BackendError(
+      409,
+      "ADJUSTMENT_NOT_REQUIRED",
+      "The Settlement lineage already matches canonical financial input.",
+    );
+  if (message.includes("ZERO_TRANSFER_ACK_REQUIRED"))
+    throw new BackendError(
+      422,
+      "INVALID_PAYLOAD",
+      "A zero-transfer Adjustment requires explicit acknowledgement.",
+    );
+  if (message.includes("FINANCIAL_INVARIANT_FAILED"))
+    throw new BackendError(
+      409,
+      "FINANCIAL_INVARIANT_FAILED",
+      "Adjustment blockers must be resolved before finalization.",
+      { blockers: preview.blockers },
+    );
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(403, "TRIP_WRITE_FORBIDDEN", "Organizer access is required.");
+  if (message.includes("REASON_REQUIRED"))
+    throw new BackendError(422, "INVALID_PAYLOAD", "An Adjustment reason is required.");
+  if (message.includes("ENTITY_NOT_FOUND"))
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The root Settlement was not found.");
+  if (result.error || !result.data)
+    throw new Error("Supabase Dev Adjustment finalization failed.");
+  const finalized = result.data as { settlementId: string; idempotentReplay: boolean };
+  const entity = await readOneFinalizedSettlement(
+    service,
+    tripId,
+    finalized.settlementId,
+  );
+  if (!entity) throw new Error("Canonical Adjustment was not found after finalization.");
   return { entity, idempotentReplay: finalized.idempotentReplay };
 }
 
@@ -2130,7 +2357,7 @@ async function readFinalizedSettlements(
   let settlementQuery = service
     .from("settlements")
     .select(
-      "id, journey_id, status, through_timestamp, settlement_currency, settlement_scale, settings_revision, algorithm_version, input_digest, revision, finalized_by, finalized_at",
+      "id, journey_id, settlement_kind, root_settlement_id, parent_adjustment_id, lineage_sequence, prior_input_digest, adjustment_reason, eligibility_version, status, through_timestamp, settlement_currency, settlement_scale, settings_revision, algorithm_version, input_digest, revision, finalized_by, finalized_at",
     )
     .eq("journey_id", tripId)
     .eq("algorithm_version", "ledger-settlement-greedy-v1")
@@ -2140,7 +2367,7 @@ async function readFinalizedSettlements(
   if (settlements.error) throw new Error("Supabase Dev Settlement read failed.");
   const ids = (settlements.data ?? []).map((row) => String(row.id));
   if (!ids.length) return [];
-  const [inputs, balances, transfers, audits] = await Promise.all([
+  const [inputs, balances, transfers, audits, adjustmentDeltas] = await Promise.all([
     service
       .from("settlement_inputs")
       .select("settlement_id, normalized_snapshot")
@@ -2163,8 +2390,20 @@ async function readFinalizedSettlements(
         "id, settlement_id, event_type, actor_user_id, actor_member_id, reason, settlement_revision, transfer_id, payment_id, discharge_id, authority, created_at",
       )
       .in("settlement_id", ids),
+    service
+      .from("settlement_adjustment_deltas")
+      .select(
+        "settlement_id, member_id, display_name_snapshot, delta_minor, settlement_currency, settlement_scale",
+      )
+      .in("settlement_id", ids),
   ]);
-  if (inputs.error || balances.error || transfers.error || audits.error)
+  if (
+    inputs.error ||
+    balances.error ||
+    transfers.error ||
+    audits.error ||
+    adjustmentDeltas.error
+  )
     throw new Error("Supabase Dev Settlement aggregate read failed.");
 
   const transferIds = (transfers.data ?? []).map((row) => String(row.id));
@@ -2205,6 +2444,17 @@ async function readFinalizedSettlements(
     return {
       id,
       journeyId: String(row.journey_id),
+      kind: (row.settlement_kind ?? "ROOT") as "ROOT" | "ADJUSTMENT",
+      rootSettlementId: row.root_settlement_id ? String(row.root_settlement_id) : null,
+      parentAdjustmentId: row.parent_adjustment_id
+        ? String(row.parent_adjustment_id)
+        : null,
+      lineageSequence: Number(row.lineage_sequence ?? 0),
+      priorInputDigest: row.prior_input_digest ? String(row.prior_input_digest) : null,
+      adjustmentReason: row.adjustment_reason ? String(row.adjustment_reason) : null,
+      eligibilityVersion: String(
+        row.eligibility_version ?? SETTLEMENT_ELIGIBILITY_VERSION,
+      ),
       status: row.status as FinalizedSettlementDto["status"],
       throughTimestamp: String(row.through_timestamp),
       settlementCurrency: String(row.settlement_currency),
@@ -2232,6 +2482,16 @@ async function readFinalizedSettlements(
           netMinor: Number(item.net_minor),
           currency: String(row.settlement_currency),
           scale: Number(row.settlement_scale),
+        }))
+        .sort((left, right) => left.memberId.localeCompare(right.memberId)),
+      adjustmentDeltas: (adjustmentDeltas.data ?? [])
+        .filter((item) => String(item.settlement_id) === id)
+        .map((item) => ({
+          memberId: String(item.member_id),
+          displayNameSnapshot: String(item.display_name_snapshot),
+          deltaMinor: Number(item.delta_minor),
+          currency: String(item.settlement_currency),
+          scale: Number(item.settlement_scale),
         }))
         .sort((left, right) => left.memberId.localeCompare(right.memberId)),
       transfers: (transfers.data ?? [])
@@ -2375,6 +2635,73 @@ async function readFinalizedSettlements(
   });
 }
 
+async function decorateSettlementLineages(
+  service: SupabaseClient,
+  tripId: string,
+  settlements: FinalizedSettlementDto[],
+) {
+  const roots = settlements.filter((settlement) => settlement.kind !== "ADJUSTMENT");
+  const previews = new Map(
+    await Promise.all(
+      roots.map(
+        async (root) =>
+          [
+            root.id,
+            (await calculateSettlementAdjustmentPreview(service, tripId, root.id))
+              .response,
+          ] as const,
+      ),
+    ),
+  );
+  return settlements.map((settlement) => {
+    const preview = previews.get(settlement.id);
+    if (!preview) return settlement;
+    const lineage = settlements.filter(
+      (item) => item.id === settlement.id || item.rootSettlementId === settlement.id,
+    );
+    const discharges = lineage.flatMap((item) =>
+      item.transfers.flatMap((transfer) =>
+        transfer.payments.flatMap((payment) =>
+          payment.discharge
+            ? [
+                {
+                  fromMemberId: transfer.fromMemberId,
+                  toMemberId: transfer.toMemberId,
+                  amountMinor: payment.discharge.amount.minor,
+                },
+              ]
+            : [],
+        ),
+      ),
+    );
+    const names = new Map(
+      preview.balances.map((balance) => [balance.memberId, balance.displayNameSnapshot]),
+    );
+    return {
+      ...settlement,
+      adjustmentState:
+        preview.state === "PREVIEW_BLOCKED"
+          ? ("ADJUSTMENT_BLOCKED" as const)
+          : preview.state === "PREVIEW_READY"
+            ? ("ADJUSTMENT_REQUIRED" as const)
+            : ("CURRENT" as const),
+      lineageHeadId: preview.expectedHeadId ?? settlement.id,
+      outstandingBalances: buildOutstandingBalanceVector(
+        preview.balances,
+        discharges,
+      ).map(({ memberId, minor }) => ({
+        memberId,
+        displayNameSnapshot: names.get(memberId) ?? memberId,
+        amount: {
+          minor,
+          currency: settlement.settlementCurrency,
+          scale: settlement.settlementScale,
+        },
+      })),
+    };
+  });
+}
+
 async function readLedgerBootstrap(
   service: SupabaseClient,
   tripId: string,
@@ -2450,7 +2777,11 @@ async function readLedgerBootstrap(
   }
 
   const aggregates = await readExpenseAggregates(service, expenses.data ?? []);
-  const finalizedSettlements = await readFinalizedSettlements(service, tripId);
+  const finalizedSettlements = await decorateSettlementLineages(
+    service,
+    tripId,
+    await readFinalizedSettlements(service, tripId),
+  );
   const lastSequence = await latestLedgerSequence(service, tripId);
   const setting = settings.data as Record<string, unknown> | null;
   const tripRow = trip.data as Record<string, unknown> | null;
@@ -2539,6 +2870,7 @@ async function readLedgerChanges(
   const expenseIds = rows
     .filter((row) => row.entity_type === "EXPENSE" && !row.is_tombstone)
     .map((row) => String(row.entity_id));
+  const hasExpenseChanges = rows.some((row) => row.entity_type === "EXPENSE");
   const householdIds = rows
     .filter((row) => row.entity_type === "HOUSEHOLD" && !row.is_tombstone)
     .map((row) => String(row.entity_id));
@@ -2621,7 +2953,14 @@ async function readLedgerChanges(
     receiptIds.length > 0
       ? await service.from("receipt_assets").select(receiptColumns).in("id", receiptIds)
       : { data: [], error: null };
-  const settlements = await readFinalizedSettlements(service, tripId, settlementIds);
+  const includeLineageProjection = hasExpenseChanges || settlementIds.length > 0;
+  const settlements = includeLineageProjection
+    ? await decorateSettlementLineages(
+        service,
+        tripId,
+        await readFinalizedSettlements(service, tripId),
+      )
+    : [];
 
   if (expenses.error) throw new Error("Supabase Dev Ledger change aggregate failed.");
   if (
@@ -2669,15 +3008,32 @@ async function readLedgerChanges(
     byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
   for (const settlement of settlements) byId.set(settlement.id, settlement);
 
+  const changes = visibleRows.map((row) => ({
+    entityType: row.entity_type as LedgerChangesResponse["changes"][number]["entityType"],
+    entityId: String(row.entity_id),
+    revision: Number(row.revision),
+    isTombstone: Boolean(row.is_tombstone),
+    aggregate: byId.get(String(row.entity_id)) ?? null,
+  }));
+  const changedSettlementIds = new Set(
+    changes
+      .filter((change) => change.entityType === "SETTLEMENT")
+      .map((change) => change.entityId),
+  );
+  for (const root of settlements.filter((item) => item.kind !== "ADJUSTMENT")) {
+    if (!changedSettlementIds.has(root.id)) {
+      changes.push({
+        entityType: "SETTLEMENT",
+        entityId: root.id,
+        revision: root.revision,
+        isTombstone: false,
+        aggregate: root,
+      });
+    }
+  }
+
   return {
-    changes: visibleRows.map((row) => ({
-      entityType:
-        row.entity_type as LedgerChangesResponse["changes"][number]["entityType"],
-      entityId: String(row.entity_id),
-      revision: Number(row.revision),
-      isTombstone: Boolean(row.is_tombstone),
-      aggregate: byId.get(String(row.entity_id)) ?? null,
-    })),
+    changes,
     cursor: rows.length ? encodeCursor(Number(rows[rows.length - 1].sequence)) : cursor,
     serverTime: new Date().toISOString(),
   };

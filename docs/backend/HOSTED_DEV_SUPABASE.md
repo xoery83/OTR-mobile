@@ -2,8 +2,8 @@
 
 ## Status
 
-Hosted baseline validation completed on 2026-09-10. Ledger 2.0 Stage 7.1 was
-deployed and verified on 2026-09-12. This project is Development-only.
+Hosted baseline validation completed on 2026-09-10. Ledger 2.0 through Stage
+7.2B was deployed and verified on 2026-09-13. This project is Development-only.
 
 | Item              | Value                                      |
 | ----------------- | ------------------------------------------ |
@@ -33,43 +33,48 @@ by the deterministic seed:
 10. `20260912000600_ledger_2_stage_5_2_receipt_assets.sql`
 11. `20260912000700_ledger_2_stage_7_1_settlements.sql`
 12. `20260912000800_ledger_2_stage_7_1_active_settlement_guard.sql`
-13. `supabase/seed.sql` for deterministic local reconstruction
+13. `20260912000900_ledger_2_stage_7_2a_payments.sql`
+14. `20260912001000_ledger_2_stage_7_2a_internal_rpc_grants.sql`
+15. `20260912001100_ledger_2_stage_7_2a_payment_lineage_guard.sql`
+16. `20260913000100_ledger_2_stage_7_2b_adjustments.sql`
+17. `20260913000200_hosted_dev_lineage_reconciliation.sql`
+18. `supabase/seed.sql` for deterministic local reconstruction
 
 The 76 legacy migrations were not replayed, copied, or renumbered. The hosted
-`supabase_migrations.schema_migrations` ledger matches all 12 repository
+`supabase_migrations.schema_migrations` ledger matches all 17 repository
 versions above.
 
 The project-creation option that automatically enables RLS added an unexpected
 `ensure_rls` event trigger and `public.rls_auto_enable()` function. Both were
 removed from this Dev project after explicit approval. There is no separate
 persistent Dashboard toggle after project creation: those objects implement the
-option. RLS remains explicitly enabled by repository migrations on all 88
+option. RLS remains explicitly enabled by repository migrations on all 91
 application tables.
 
 ## Hosted Manifest
 
 | Object                      | Hosted result |
 | --------------------------- | ------------: |
-| Public application tables   |            88 |
-| Public application columns  |         1,223 |
-| Constraints                 |           610 |
-| Indexes                     |           296 |
-| Public functions            |            55 |
-| Public triggers             |            75 |
-| RLS-enabled public tables   |            88 |
+| Public application tables   |            91 |
+| Public application columns  |         1,279 |
+| Constraints                 |           670 |
+| Indexes                     |           305 |
+| Public functions            |            65 |
+| Public triggers             |            83 |
+| RLS-enabled public tables   |            91 |
 | Public and Storage policies |           178 |
 | Private Storage buckets     |             3 |
 
-Canonical clean-room checksum for the 12-migration lineage:
+Canonical schema checksum for the 17-migration lineage:
 
 ```text
-dcbc78a84ac4ac2a307784ee73a5390ba30a8a1e4168a4e480b65e3496a6bb82
+fa48bf7673064210e198d918a6ee3bf7a6b15ff4891b966ca841dc44ccbd9824
 ```
 
 This exactly matches `supabase/schema-manifest.json`. Hosted integration also
-confirmed Stage 7.1 service-only source/finalization RPCs, append-only Settlement
-history, and no direct `anon`/`authenticated` grants on the checked financial
-tables.
+confirmed Stage 7.2B service-only Adjustment RPCs, append-only non-forking
+Settlement lineage, and no direct `anon`/`authenticated` grants on the checked
+financial tables. Hosted Dev and clean-room public schema diffs are empty.
 
 ## Security Validation
 
@@ -90,10 +95,11 @@ authenticated owner/member/guest/admin, and service-role scenarios, including:
 - users may delete only their own itinerary ratings;
 - face and face-embedding mutation remains backend/service controlled.
 
-The database suite currently runs seven files and 142 assertions covering the
+The database suite currently runs nine files and 189 assertions covering the
 baseline RLS matrix, Ledger aggregates, Stage 4 mutations/conflicts, Stage 5
-financial evidence/assets, Stage 7.1 finalization, audit, revisions, and
-idempotency. It passes on two independent clean resets with zero schema diff.
+financial evidence/assets, Stage 7.1 finalization, Stage 7.2 Payment/Discharge
+and Adjustment lineage, audit, revisions, and idempotency. It passes on two
+independent clean resets with zero schema diff.
 
 ## Synthetic Seed
 
@@ -111,6 +117,7 @@ The following buckets exist and are private:
 
 - `trip-media`: 0 objects
 - `memory-shot-renders`: 0 objects
+- `ledger-receipts`: private Stage 5.2 receipt evidence
 
 Bucket access remains governed by the canonical Storage policies. No production
 Storage object was imported.
@@ -170,13 +177,13 @@ This environment can be rebuilt without reading Production:
 2. Leave automatic table exposure and automatic RLS creation disabled.
 3. Authenticate the Supabase CLI locally without committing the access token,
    then link the new project using its reference and Dev database password.
-4. Push the four canonical and forward migrations from `supabase/migrations/` in timestamp
-   order.
+4. Push every canonical forward migration from `supabase/migrations/` in
+   timestamp order.
 5. Apply `supabase/seed.sql` only to the Dev project.
 6. Run `supabase/schema_manifest.sql` and require an exact manifest/checksum
    match.
-7. Run both database test files in transactions and require all 54 assertions
-   to pass.
+7. Run all database test files in transactions and require the current assertion
+   count to pass.
 8. Confirm both buckets are private and empty and all Auth identities end in
    `@otr.invalid`.
 

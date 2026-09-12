@@ -120,8 +120,8 @@ select throws_ok($$
     ), '[]'::jsonb, '[]'::jsonb, '[]'::jsonb,
     'stage7-second-active', 'stage7-second-active-payload'
   )
-$$, '23505', 'duplicate key value violates unique constraint "settlements_one_active_7_1"',
-'a Journey cannot acquire a second active Settlement before Stage 7.2');
+$$, '23505', 'duplicate key value violates unique constraint "settlements_one_root_7_2b"',
+'a Journey cannot acquire a second root Settlement');
 
 select ok(
   not has_function_privilege(

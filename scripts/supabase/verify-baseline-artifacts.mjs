@@ -26,6 +26,10 @@ const ledger72AGrantsPath =
   "supabase/migrations/20260912001000_ledger_2_stage_7_2a_internal_rpc_grants.sql";
 const ledger72ALineagePath =
   "supabase/migrations/20260912001100_ledger_2_stage_7_2a_payment_lineage_guard.sql";
+const ledger72BPath =
+  "supabase/migrations/20260913000100_ledger_2_stage_7_2b_adjustments.sql";
+const hostedParityPath =
+  "supabase/migrations/20260913000200_hosted_dev_lineage_reconciliation.sql";
 const seedPath = "supabase/seed.sql";
 
 const [
@@ -44,6 +48,8 @@ const [
   ledger72A,
   ledger72AGrants,
   ledger72ALineage,
+  ledger72B,
+  hostedParity,
   seed,
   manifestRaw,
 ] = await Promise.all([
@@ -62,19 +68,21 @@ const [
   readFile(ledger72APath, "utf8"),
   readFile(ledger72AGrantsPath, "utf8"),
   readFile(ledger72ALineagePath, "utf8"),
+  readFile(ledger72BPath, "utf8"),
+  readFile(hostedParityPath, "utf8"),
   readFile(seedPath, "utf8"),
   readFile("supabase/schema-manifest.json", "utf8"),
 ]);
 
 const manifest = JSON.parse(manifestRaw);
 const expected = {
-  tables: 90,
-  columns: 1264,
-  constraints: 655,
-  indexes: 301,
-  functions: 59,
-  triggers: 77,
-  rls_tables: 90,
+  tables: 91,
+  columns: 1279,
+  constraints: 670,
+  indexes: 305,
+  functions: 65,
+  triggers: 83,
+  rls_tables: 91,
   policies: 178,
   buckets: 3,
 };
@@ -115,7 +123,7 @@ const secretPatterns = [
 for (const pattern of secretPatterns) {
   if (
     pattern.test(
-      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${seed}`,
+      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${seed}`,
     )
   ) {
     throw new Error(`Production identifier or secret-like value found: ${pattern}`);
@@ -157,6 +165,10 @@ const lineageChecksum = createHash("sha256")
   .update(ledger72AGrants)
   .update("\0")
   .update(ledger72ALineage)
+  .update("\0")
+  .update(ledger72B)
+  .update("\0")
+  .update(hostedParity)
   .digest("hex");
 
 console.log(

@@ -62,6 +62,10 @@ Normalized errors use stable codes: `AUTH_REQUIRED`, `INVALID_SESSION`,
 `ENTITY_NOT_FOUND`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, and
 `BACKEND_UNAVAILABLE`.
 
+Stage 7.2B additionally uses `ADJUSTMENT_NOT_REQUIRED` when the current normalized
+financial input digest equals the lineage head. `SETTLEMENT_INPUT_STALE` covers a
+changed Adjustment lineage head or changed current financial input.
+
 ## Expense Aggregate
 
 `ExpenseDto` contains:
@@ -289,11 +293,47 @@ discharge reduces debt.
 
 `POST /v2/trips/:tripId/settlements/:id/reopen` always returns HTTP 409
 `SETTLEMENT_REOPEN_NOT_ALLOWED`. Finalized Settlements are never rebuilt.
-Adjustment endpoints remain absent until Stage 7.2B approval.
+Post-finalization financial changes are represented only through the Stage 7.2B
+Adjustment endpoints below; reopening remains forbidden.
 
 SettlementPayment and discharge facts never rewrite the frozen finalization
 digest. They affect the outstanding read state; Stage 7.2B compares current
 canonical financial inputs with the frozen lineage inputs.
+
+### Stage 7.2B Adjustment
+
+- `POST /v2/trips/:tripId/settlements/:rootId/adjustments/preview`
+- `POST /v2/trips/:tripId/settlements/:rootId/adjustments`
+
+Preview is Journey-readable and non-persistent. It returns the root and current
+head identities, prior/current normalized financial-input digests, immutable
+sealed balances, current canonical balances, `delta = current - sealed`, changed
+Expense identities/classifications, blockers/exclusions, the deterministic delta
+transfer plan, and one of `PREVIEW_BLOCKED`, `PREVIEW_UNCHANGED`, or
+`PREVIEW_READY`.
+
+The root fixes Journey, cutoff, settlement currency/scale, eligibility semantics
+version, and algorithm version for every descendant. Positive member balance is
+receivable and negative is payable. Root, every delta, sealed, current, and delta
+vectors must each net to zero.
+
+Finalize requires `expectedHeadId` (null only before the first Adjustment),
+`inputDigest`, a non-empty `reason`, `allowZeroTransfer`, and an
+`Idempotency-Key`. It is organizer-only. The backend locks the root lineage,
+recomputes canonical state, rejects a changed head/input as
+`SETTLEMENT_INPUT_STALE`, and atomically persists one immutable Adjustment,
+current normalized inputs, delta vector, Transfers, audit event, and idempotent
+response. One database successor is allowed per head.
+
+A zero-transfer Adjustment is accepted only when its digest differs from the
+head, `allowZeroTransfer` is true, and reason is non-empty. Equal digest returns
+`ADJUSTMENT_NOT_REQUIRED`. Root and Adjustment Transfers are never rewritten or
+netted; each retains its own Payment and Discharge lineage.
+
+Settlement reads additionally return derived lineage readiness
+`CURRENT`, `ADJUSTMENT_REQUIRED`, or `ADJUSTMENT_BLOCKED`, plus member-level
+outstanding balances. Confirmed Discharge vectors are subtracted from sealed
+balances; awaiting Payments remain separate reservations.
 
 ### Stage 7.1 Preview And Finalization
 

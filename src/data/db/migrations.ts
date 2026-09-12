@@ -663,4 +663,65 @@ export const migrations: Migration[] = [
       ALTER TABLE ledger_actor_context ADD COLUMN user_id TEXT;
     `,
   },
+  {
+    id: 14,
+    name: "ledger_2_stage_7_2b_settlement_adjustments",
+    sql: `
+      ALTER TABLE ledger_settlements RENAME TO ledger_settlements_v13;
+      CREATE TABLE ledger_settlements (
+        id TEXT PRIMARY KEY NOT NULL,
+        journey_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (
+          status IN ('FINALIZED', 'PARTIALLY_PAID', 'SETTLED', 'SUPERSEDED')
+        ),
+        through_timestamp TEXT NOT NULL,
+        settlement_currency TEXT NOT NULL,
+        settlement_scale INTEGER NOT NULL,
+        settings_revision INTEGER NOT NULL,
+        algorithm_version TEXT NOT NULL,
+        input_digest TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        finalized_by TEXT NOT NULL,
+        finalized_at TEXT NOT NULL,
+        settlement_kind TEXT NOT NULL DEFAULT 'ROOT',
+        root_settlement_id TEXT,
+        parent_adjustment_id TEXT,
+        lineage_sequence INTEGER NOT NULL DEFAULT 0,
+        prior_input_digest TEXT,
+        adjustment_reason TEXT,
+        eligibility_version TEXT NOT NULL DEFAULT 'ledger-settlement-eligibility-v1',
+        adjustment_state TEXT,
+        lineage_head_id TEXT,
+        outstanding_balances_json TEXT
+      );
+      INSERT INTO ledger_settlements (
+        id, journey_id, status, through_timestamp, settlement_currency,
+        settlement_scale, settings_revision, algorithm_version, input_digest,
+        revision, finalized_by, finalized_at
+      ) SELECT
+        id, journey_id, status, through_timestamp, settlement_currency,
+        settlement_scale, settings_revision, algorithm_version, input_digest,
+        revision, finalized_by, finalized_at
+      FROM ledger_settlements_v13;
+      DROP TABLE ledger_settlements_v13;
+      CREATE INDEX ledger_settlements_journey_finalized
+        ON ledger_settlements (journey_id, finalized_at DESC);
+      CREATE UNIQUE INDEX ledger_settlement_root_per_journey
+        ON ledger_settlements (journey_id)
+        WHERE settlement_kind = 'ROOT' AND status <> 'SUPERSEDED';
+      CREATE UNIQUE INDEX ledger_settlement_adjustment_sequence
+        ON ledger_settlements (root_settlement_id, lineage_sequence)
+        WHERE settlement_kind = 'ADJUSTMENT';
+
+      CREATE TABLE ledger_settlement_adjustment_deltas (
+        settlement_id TEXT NOT NULL,
+        member_id TEXT NOT NULL,
+        display_name_snapshot TEXT NOT NULL,
+        delta_minor INTEGER NOT NULL,
+        currency TEXT NOT NULL,
+        scale INTEGER NOT NULL,
+        PRIMARY KEY (settlement_id, member_id)
+      );
+    `,
+  },
 ];

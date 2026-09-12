@@ -33,3 +33,34 @@ export async function finalizeSettlement(
   await repository.applyFinalized(response.entity);
   return response;
 }
+
+export async function previewSettlementAdjustment(
+  journeyId: string,
+  rootSettlementId: string,
+) {
+  const repository = await getDefaultLedgerSettlementRepository();
+  if (await repository.hasPendingFinancialOperations(journeyId)) {
+    throw new Error("Sync pending Ledger changes before preparing Adjustment.");
+  }
+  return createLedgerSettlementTransport().previewAdjustment(journeyId, rootSettlementId);
+}
+
+export async function queueSettlementAdjustment(
+  journeyId: string,
+  rootSettlementId: string,
+  expectedHeadId: string | null,
+  inputDigest: string,
+  reason: string,
+  allowZeroTransfer: boolean,
+) {
+  const repository = await getDefaultLedgerSettlementRepository();
+  if (await repository.hasPendingFinancialOperations(journeyId)) {
+    throw new Error("Sync pending Ledger changes before finalizing Adjustment.");
+  }
+  await repository.queueAdjustment(journeyId, rootSettlementId, {
+    expectedHeadId,
+    inputDigest,
+    reason,
+    allowZeroTransfer,
+  });
+}

@@ -4,11 +4,15 @@ import {
   recordSettlementPaymentRequestSchema,
   settlementPaymentActionRequestSchema,
   settlementPaymentMutationResponseSchema,
+  settlementAdjustmentFinalizeRequestSchema,
+  settlementAdjustmentMutationResponseSchema,
+  settlementAdjustmentPreviewSchema,
   settlementFinalizeResponseSchema,
   settlementPreviewSchema,
   type CorrectSettlementPaymentRequest,
   type RecordSettlementPaymentRequest,
   type SettlementPaymentActionRequest,
+  type SettlementAdjustmentFinalizeRequest,
 } from "@/data/api/ledgerSettlementContracts";
 import { readLocalSession } from "@/data/auth/authRepository";
 
@@ -45,6 +49,28 @@ export function createLedgerSettlementTransport(dependencies: Dependencies = {})
         `/v2/trips/${journeyId}/settlements`,
         { throughTimestamp, inputDigest },
         settlementFinalizeResponseSchema,
+        { "Idempotency-Key": idempotencyKey },
+      );
+    },
+
+    async previewAdjustment(journeyId: string, rootSettlementId: string) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${journeyId}/settlements/${rootSettlementId}/adjustments/preview`,
+        {},
+        settlementAdjustmentPreviewSchema,
+      );
+    },
+
+    async finalizeAdjustment(
+      journeyId: string,
+      rootSettlementId: string,
+      input: SettlementAdjustmentFinalizeRequest,
+      idempotencyKey: string,
+    ) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${journeyId}/settlements/${rootSettlementId}/adjustments`,
+        settlementAdjustmentFinalizeRequestSchema.parse(input),
+        settlementAdjustmentMutationResponseSchema,
         { "Idempotency-Key": idempotencyKey },
       );
     },

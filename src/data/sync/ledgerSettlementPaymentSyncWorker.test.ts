@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createLedgerSettlementPaymentSyncWorker } from "./ledgerSettlementPaymentSyncWorker";
+import { ApiClientError } from "@/data/api/client";
+import { SyncConflictError } from "./syncEngine";
 
 const operation = {
   id: "operation-1",
@@ -69,5 +71,39 @@ describe("Settlement Payment sync worker", () => {
       operation.idempotencyKey,
     );
     expect(applyPaymentMutation).toHaveBeenCalledOnce();
+  });
+
+  it("replays durable Adjustment identity and makes a stale head terminal", async () => {
+    const applyPaymentMutation = vi.fn();
+    const finalizeAdjustment = vi.fn(async () => ({ entity: { id: "adjustment" } }));
+    const worker = createLedgerSettlementPaymentSyncWorker(
+      { applyPaymentMutation } as never,
+      { finalizeAdjustment } as never,
+    );
+    const adjustment = {
+      ...operation,
+      entityType: "ledger_settlement_adjustment",
+      entityId: "70000000-0000-4000-8000-000000000001",
+      operationType: "LEDGER_FINALIZE_SETTLEMENT_ADJUSTMENT",
+      payloadJson: JSON.stringify({
+        rootSettlementId: "70000000-0000-4000-8000-000000000001",
+        expectedHeadId: null,
+        inputDigest: "a".repeat(64),
+        reason: "Corrected expense",
+        allowZeroTransfer: false,
+      }),
+    };
+
+    await worker.push(adjustment);
+    expect(finalizeAdjustment).toHaveBeenCalledWith(
+      operation.tripId,
+      adjustment.entityId,
+      expect.objectContaining({ reason: "Corrected expense" }),
+      operation.idempotencyKey,
+    );
+    finalizeAdjustment.mockRejectedValueOnce(
+      new ApiClientError("stale", "http", 409, "SETTLEMENT_INPUT_STALE") as never,
+    );
+    await expect(worker.push(adjustment)).rejects.toBeInstanceOf(SyncConflictError);
   });
 });

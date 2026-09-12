@@ -22,6 +22,9 @@ export async function runLedgerSettlementPaymentSync(
       createLedgerSettlementTransport(),
     ),
     nextAttemptAt,
-    (operation) => operation.entityType === "ledger_settlement_payment",
+    (operation) =>
+      ["ledger_settlement_payment", "ledger_settlement_adjustment"].includes(
+        operation.entityType,
+      ),
   ).run(authState);
 }

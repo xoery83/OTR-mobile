@@ -4,7 +4,7 @@ Date: 2026-09-13
 Status: Approved; Stage 0 through Stage 6 physically validated and complete;
 Stage 7.1 passed automated, Hosted Dev, and two-client Simulator acceptance;
 Stage 7.2A gate approved after automated, Hosted Dev, and two-client Simulator acceptance;
-Stage 7.2B has not started
+Stage 7.2B gate approved after automated, Hosted Dev, and two-client Simulator acceptance
 
 ## Objective
 
@@ -368,8 +368,10 @@ pass automated and Simulator acceptance before the next begins:
 Do not begin a later gate until the prior gate passes.
 
 Stages 7.1 and 7.2A passed on 2026-09-12. Payment lifecycle, canonical audit,
-Hosted Dev concurrency, and two-client offline/restart gates are complete. Stop
-before Stage 7.2B pending explicit approval.
+Hosted Dev concurrency, and two-client offline/restart gates are complete.
+Stage 7.2B passed on 2026-09-13 with immutable non-forking Adjustment lineage,
+root-frozen scope, explicit Adjustment readiness, independent historical
+obligations, Hosted Dev schema parity, and two-client offline/restart convergence.
 
 Implement deterministic preview, blockers, immutable finalization input digest,
 member balances, and minimized transfer plan. Then implement:
@@ -391,7 +393,7 @@ facts. Payment terminal states never return to awaiting. Awaiting amount is only
 an overbooking reservation; confirmed remaining debt excludes it. Once a
 Settlement is finalized it is never rebuilt or reopened, and `/reopen` returns
 `SETTLEMENT_REOPEN_NOT_ALLOWED`. Stage 7.2B owns all later financial correction
-through Adjustment Settlements and must not begin before a separate approval.
+through Adjustment Settlements. Stage 7.3 still requires separate approval.
 
 Exit gate:
 

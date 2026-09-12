@@ -292,6 +292,30 @@ Once finalized, a Settlement is never reopened or rebuilt. All later accepted
 financial corrections belong to Stage 7.2B Adjustment lineage. This conservative
 rule avoids a race with Paid assertions queued on an offline client.
 
+Stage 7.2B replaces the temporary finalized-Expense mutation rejection with an
+explicit derived Adjustment readiness state. Post-finalization Expense writes use
+their existing local-first queue and conflict rules. No draft Settlement is
+created: the canonical read compares the current normalized financial digest with
+the immutable root/Adjustment head and reports `ADJUSTMENT_REQUIRED`, or
+`ADJUSTMENT_BLOCKED` when current in-scope facts have an open conflict or missing
+valuation.
+
+Adjustment preview requires canonical online state and waits for preceding local
+Journey financial operations. Once confirmed, finalization is stored as a durable
+operation with its fixed idempotency key before transport. Restart and response
+loss replay the same command. A stale head/input is terminal for that command and
+requires a new preview.
+
+The backend serializes finalization on the root lineage and checks the expected
+head after taking the lock. One partial unique index permits only one first
+Adjustment per root; another permits only one successor per Adjustment. Thus two
+commands from the same head produce one canonical successor and one stable stale
+result rather than a fork.
+
+Payment and Discharge operations remain ordered by their own Transfer/Payment
+revisions. They do not wait for, mutate, or enter Adjustment delta. Root and
+Adjustment obligations are retained independently even when directions oppose.
+
 For cross-currency repayment, the transfer's settlement obligation, actual
 payment Money, and repayment valuation snapshot are one financial group.
 Conflicting amounts/rates require both-party or organizer resolution and cannot
