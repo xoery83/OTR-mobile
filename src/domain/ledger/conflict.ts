@@ -1,6 +1,7 @@
 import type {
   ExpenseBusinessStatus,
   ExpenseParticipant,
+  ExpenseSettlementParticipation,
   ExpenseSplit,
   Money,
   SettlementValuationSnapshot,
@@ -17,6 +18,7 @@ export type Stage4EditableExpense = {
   payerMemberId: string;
   original: Money;
   businessStatus: Exclude<ExpenseBusinessStatus, "DELETED">;
+  settlementParticipation?: ExpenseSettlementParticipation;
   participants: ExpenseParticipant[];
   splits: ExpenseSplit[];
   valuation: Omit<SettlementValuationSnapshot, "id"> | null;
@@ -33,13 +35,21 @@ export function changedExpenseGroups(
   const groups: LedgerConflictFieldGroup[] = [];
   if (
     !same(
-      [left.original, left.payerMemberId, left.participants, left.splits, left.valuation],
+      [
+        left.original,
+        left.payerMemberId,
+        left.participants,
+        left.splits,
+        left.valuation,
+        left.settlementParticipation ?? "INCLUDED",
+      ],
       [
         right.original,
         right.payerMemberId,
         right.participants,
         right.splits,
         right.valuation,
+        right.settlementParticipation ?? "INCLUDED",
       ],
     )
   ) {

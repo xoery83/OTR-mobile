@@ -135,12 +135,14 @@ Legacy mapping:
 
 - `ledger_entries`: title, description, category, accounting mode, date range, original/base amount, currency, exchange rate metadata, payer, location, status, created_by.
 - Category list: flight, hotel, car, fuel, food, ticket, shopping, transport, insurance, other.
-- Accounting mode: `stats_only`, `shared`.
+- Legacy accounting mode: `stats_only`, `shared`; retained only as import
+  provenance.
 
 Canonical Ledger 2.0 model:
 
 - `expenses` stores the immutable merchant money identity, Journey, creator,
-  payer, revision, lifecycle status, location snapshot, and tombstone.
+  payer, revision, lifecycle status, `settlement_participation` (`INCLUDED` or
+  `EXCLUDED`), location snapshot, and tombstone. The default is `INCLUDED`.
 - `expense_participants` records included Journey members. Exclusion is absence
   from this set.
 - `expense_splits` resolves every convenience choice to exact original and
@@ -212,7 +214,7 @@ workflow.
 - `settlements` identifies the through-time, input digest, algorithm version,
   currency, revision, and lifecycle.
 - `settlement_inputs` freezes the exact Expense revisions and valuation
-  snapshots included.
+  snapshots included, including the `INCLUDED` participation fact.
 - `settlement_member_balances` stores each member's paid, owed, transferred,
   and net values.
 - `settlement_transfers` stores the deterministic minimized transfer plan.
@@ -221,6 +223,9 @@ workflow.
 - Finalized balances must net exactly to zero, transfer members must belong to
   the Journey, transfer currency must match the Settlement, and confirmed
   payments cannot exceed their obligation.
+- `EXCLUDED` Expenses remain authoritative Spending/consumption records but do
+  not enter Settlement or Adjustment financial vectors. Preview explains them
+  with `EXCLUDED_FROM_SETTLEMENT` rather than treating them as blockers.
 
 ### Stage 2 Local SQLite Foundation
 

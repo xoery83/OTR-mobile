@@ -211,6 +211,7 @@ async function createPendingLocalAggregate() {
           occurredAt: command.occurredAt,
           original: command.original,
           businessStatus: "ACCEPTED",
+          settlementParticipation: "INCLUDED",
           revision: 2,
           deletedAt: null,
           createdAt: command.occurredAt,

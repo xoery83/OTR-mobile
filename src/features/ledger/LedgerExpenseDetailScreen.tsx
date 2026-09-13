@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
@@ -13,6 +20,8 @@ export function LedgerExpenseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
   const [hasOpenConflict, setHasOpenConflict] = useState(false);
+  const [participationError, setParticipationError] = useState<string | null>(null);
+  const [savingParticipation, setSavingParticipation] = useState(false);
   useEffect(() => {
     if (id) {
       void Promise.all([
@@ -39,6 +48,37 @@ export function LedgerExpenseDetailScreen() {
     expense.participants.map((item) => [item.memberId, item.displayNameSnapshot]),
   );
   const excluded = expense.status !== "ACCEPTED" || hasOpenConflict || !valuation;
+  const setIncluded = async (included: boolean) => {
+    setSavingParticipation(true);
+    setParticipationError(null);
+    try {
+      const repository = await getDefaultLedgerExpenseRepository();
+      const updated = await repository.updateExpense(
+        expense.id,
+        {
+          journeyId: expense.journeyId,
+          creatorMemberId: expense.creatorMemberId,
+          payerMemberId: expense.payerMemberId,
+          title: expense.title,
+          description: expense.description,
+          category: expense.category,
+          occurredAt: expense.occurredAt,
+          original: expense.original,
+          participants: expense.participants,
+          splits: expense.splits,
+          valuation: expense.valuation,
+          status: expense.status === "DELETED" ? "DRAFT" : expense.status,
+          settlementParticipation: included ? "INCLUDED" : "EXCLUDED",
+        },
+        "Changed settlement participation.",
+      );
+      setExpense(updated);
+    } catch {
+      setParticipationError("Settlement participation could not be saved.");
+    } finally {
+      setSavingParticipation(false);
+    }
+  };
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Text accessibilityRole="header" style={styles.title}>
@@ -108,6 +148,32 @@ export function LedgerExpenseDetailScreen() {
           </View>
         ))}
       </Section>
+      {expense.status !== "DELETED" ? (
+        <Section label="GROUP SETTLEMENT">
+          <View style={styles.participationRow}>
+            <View style={styles.participationCopy}>
+              <Text style={styles.splitName}>Include in group settlement</Text>
+              {expense.settlementParticipation === "EXCLUDED" ? (
+                <Text style={styles.meta}>
+                  This expense is included in Spending and analysis but does not affect
+                  who owes whom.
+                </Text>
+              ) : null}
+            </View>
+            <Switch
+              accessibilityLabel="Include in group settlement"
+              disabled={savingParticipation}
+              onValueChange={(value) => void setIncluded(value)}
+              value={expense.settlementParticipation === "INCLUDED"}
+            />
+          </View>
+          {participationError ? (
+            <Text accessibilityLiveRegion="polite" style={styles.error}>
+              {participationError}
+            </Text>
+          ) : null}
+        </Section>
+      ) : null}
       <Section label="PAYER EVIDENCE">
         {expense.paymentRecords.length ? (
           expense.paymentRecords.map((record) => (
@@ -173,5 +239,8 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   identity: { color: "#334155", fontSize: 12 },
+  participationRow: { alignItems: "center", flexDirection: "row", gap: 12 },
+  participationCopy: { flex: 1, gap: 4 },
+  error: { color: "#B91C1C", fontSize: 13 },
   stack: { alignItems: "flex-start", flexDirection: "column", paddingVertical: 8 },
 });

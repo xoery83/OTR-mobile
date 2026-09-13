@@ -20,6 +20,7 @@ function expense(id: string, payerMemberId: string): SettlementExpenseCandidate 
     revision: 3,
     occurredAt: "2026-09-10T00:00:00.000Z",
     businessStatus: "ACCEPTED",
+    settlementParticipation: "INCLUDED",
     hasOpenConflict: false,
     payerMemberId,
     original: { minor: 100, currency: "NZD", scale: 2 },
@@ -101,6 +102,20 @@ describe("Stage 7.1 settlement preview", () => {
     expect(result.exclusions).toEqual([
       { expenseId: "deleted", reason: "DELETED" },
       { expenseId: "draft", reason: "DRAFT" },
+    ]);
+  });
+
+  it("excludes ACCEPTED expenses from debt with a stable non-blocking reason", () => {
+    const result = preview([
+      { ...expense("excluded", "a"), settlementParticipation: "EXCLUDED" },
+    ]);
+    expect(result.state).toBe("PREVIEW_READY");
+    expect(result.inputs).toEqual([]);
+    expect(result.balances.every((balance) => balance.netMinor === 0)).toBe(true);
+    expect(result.transfers).toEqual([]);
+    expect(result.blockers).toEqual([]);
+    expect(result.exclusions).toEqual([
+      { expenseId: "excluded", reason: "EXCLUDED_FROM_SETTLEMENT" },
     ]);
   });
 

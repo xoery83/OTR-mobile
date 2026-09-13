@@ -32,6 +32,7 @@ const transfer = z.object({
 const input = z.object({
   expenseId: uuid,
   expenseRevision: z.number().int().positive(),
+  settlementParticipation: z.literal("INCLUDED").default("INCLUDED"),
   payer: member,
   original: settlementMoneySchema,
   settlement: settlementMoneySchema,
@@ -84,7 +85,10 @@ export const settlementPreviewSchema = z.object({
     }),
   ),
   exclusions: z.array(
-    z.object({ expenseId: uuid, reason: z.enum(["DELETED", "DRAFT"]) }),
+    z.object({
+      expenseId: uuid,
+      reason: z.enum(["DELETED", "DRAFT", "EXCLUDED_FROM_SETTLEMENT"]),
+    }),
   ),
   balances: z.array(balance),
   transfers: z.array(transfer),
@@ -273,7 +277,10 @@ export const settlementAdjustmentPreviewSchema = z.object({
     }),
   ),
   exclusions: z.array(
-    z.object({ expenseId: uuid, reason: z.enum(["DELETED", "DRAFT"]) }),
+    z.object({
+      expenseId: uuid,
+      reason: z.enum(["DELETED", "DRAFT", "EXCLUDED_FROM_SETTLEMENT"]),
+    }),
   ),
   changedExpenses: z.array(
     z.object({

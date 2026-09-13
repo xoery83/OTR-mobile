@@ -47,6 +47,7 @@ import {
 import {
   changedExpenseGroups,
   sameStage4Expense,
+  type Stage4EditableExpense,
 } from "../../src/domain/ledger/conflict";
 import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
 import {
@@ -355,7 +356,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       const expenseRows = await service
         .from("expenses")
         .select(
-          "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, revision, deleted_at, created_at, updated_at",
+          "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
         )
         .eq("journey_id", tripId);
       if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
@@ -1171,6 +1172,7 @@ async function createLedgerExpenseAggregate(
     occurredAt: input.occurredAt,
     original: input.original,
     businessStatus: input.businessStatus,
+    settlementParticipation: input.settlementParticipation ?? "INCLUDED",
     revision: 1,
     deletedAt: null,
     createdAt: now,
@@ -1317,6 +1319,8 @@ async function mutateLedgerExpenseAggregate(
           occurredAt: updateInput.occurredAt,
           original: updateInput.original,
           businessStatus: updateInput.businessStatus,
+          settlementParticipation:
+            updateInput.settlementParticipation ?? current.settlementParticipation,
           revision: nextRevision,
           deletedAt: null,
           createdAt: current.createdAt,
@@ -1799,6 +1803,7 @@ function editableExpense(expense: LedgerExpenseDto) {
       expense.businessStatus === "DELETED"
         ? ("ACCEPTED" as const)
         : expense.businessStatus,
+    settlementParticipation: expense.settlementParticipation,
     participants: expense.participants,
     splits: expense.splits,
     valuation: expense.valuation
@@ -1816,7 +1821,7 @@ function editableExpense(expense: LedgerExpenseDto) {
 
 function mutationResponse(
   current: LedgerExpenseDto,
-  editable: ReturnType<typeof editableExpense>,
+  editable: Stage4EditableExpense,
   actorUserId: string,
   eventType: string,
   reason: string | null,
@@ -1828,6 +1833,8 @@ function mutationResponse(
   const entity: LedgerExpenseDto = {
     ...current,
     ...editable,
+    settlementParticipation:
+      editable.settlementParticipation ?? current.settlementParticipation,
     revision,
     deletedAt: null,
     updatedAt: incrementRevision ? now : current.updatedAt,
@@ -2168,7 +2175,7 @@ async function readOneExpenseAggregate(service: SupabaseClient, expenseId: strin
   const result = await service
     .from("expenses")
     .select(
-      "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, revision, deleted_at, created_at, updated_at",
+      "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
     )
     .eq("id", expenseId)
     .maybeSingle();
@@ -3045,7 +3052,7 @@ async function readLedgerBootstrap(
     service
       .from("expenses")
       .select(
-        "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, revision, deleted_at, created_at, updated_at",
+        "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
       )
       .eq("journey_id", tripId)
       .order("occurred_at", { ascending: false }),
@@ -3203,7 +3210,7 @@ async function readLedgerChanges(
       ? await service
           .from("expenses")
           .select(
-            "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, revision, deleted_at, created_at, updated_at",
+            "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
           )
           .in("id", expenseIds)
       : { data: [], error: null };
@@ -3434,6 +3441,7 @@ async function readExpenseAggregates(
       },
       businessStatus: row.business_status as
         "DRAFT" | "ACCEPTED" | "RATE_REQUIRED" | "DELETED",
+      settlementParticipation: row.settlement_participation as "INCLUDED" | "EXCLUDED",
       revision: Number(row.revision),
       deletedAt: row.deleted_at ? String(row.deleted_at) : null,
       createdAt: String(row.created_at),
@@ -3572,11 +3580,18 @@ async function readMyLedger(
       ...(to ? { to } : {}),
     };
     const mine = summarizeReporting(reporting.records, "MINE", memberId, filters);
+    const settlementMine = summarizeReporting(
+      reporting.records.filter((record) => record.settlementParticipation === "INCLUDED"),
+      "MINE",
+      memberId,
+      filters,
+    );
     const paidMinor = reporting.records
       .filter(
         (record) =>
           matchesReportingFilters(record, filters) &&
           record.businessStatus === "ACCEPTED" &&
+          record.settlementParticipation === "INCLUDED" &&
           record.settlementMinor !== null &&
           !record.hasOpenConflict &&
           record.payerMemberId === memberId,
@@ -3591,7 +3606,7 @@ async function readMyLedger(
       scale: reporting.bootstrap.journey.settlementScale,
       mySpendMinor: mine.totalMinor,
       paidMinor,
-      positionMinor: paidMinor - mine.totalMinor,
+      positionMinor: paidMinor - settlementMine.totalMinor,
       unvaluedCount: mine.unresolvedRateCount,
       conflictCount: mine.openConflictCount,
       updatedAt: reporting.bootstrap.journey.updatedAt,
@@ -3658,6 +3673,7 @@ async function readServerReporting(
     originalMinor: expense.original.minor,
     originalCurrency: expense.original.currency,
     businessStatus: expense.businessStatus,
+    settlementParticipation: expense.settlementParticipation,
     syncStatus: "SYNCED",
     settlementMinor: expense.valuation?.settlement.minor ?? null,
     settlementCurrency: bootstrap.journey.settlementCurrency,

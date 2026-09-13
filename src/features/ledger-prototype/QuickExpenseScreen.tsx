@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  Switch,
   View,
 } from "react-native";
 import { type Href, router } from "expo-router";
@@ -107,6 +108,26 @@ export function QuickExpenseScreen() {
             onPress={() => router.push("/expenses/receipt" as Href)}
             value={draft.receiptAttached ? "Attached" : "Add"}
           />
+          <View style={styles.settlementRow}>
+            <View style={styles.settlementCopy}>
+              <Text style={styles.settlementLabel}>Include in group settlement</Text>
+              {draft.settlementParticipation === "EXCLUDED" ? (
+                <Text style={styles.hint}>
+                  This expense is included in Spending and analysis but does not affect
+                  who owes whom.
+                </Text>
+              ) : null}
+            </View>
+            <Switch
+              accessibilityLabel="Include in group settlement"
+              onValueChange={(included) =>
+                updateDraft({
+                  settlementParticipation: included ? "INCLUDED" : "EXCLUDED",
+                })
+              }
+              value={draft.settlementParticipation === "INCLUDED"}
+            />
+          </View>
         </Section>
 
         <Text style={styles.hint}>
@@ -148,6 +169,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   error: { color: colors.danger, fontSize: 14 },
+  settlementRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  settlementCopy: { flex: 1, gap: 3 },
+  settlementLabel: { color: colors.label, fontSize: 16, fontWeight: "600" },
   hint: {
     color: colors.secondaryLabel,
     fontSize: 14,

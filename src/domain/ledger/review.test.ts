@@ -37,6 +37,7 @@ const expense = (id: string, minor: number): ExpenseAggregate => ({
   },
   paymentRecords: [],
   status: "ACCEPTED",
+  settlementParticipation: "INCLUDED",
 });
 
 describe("Ledger Review v1", () => {
@@ -57,5 +58,12 @@ describe("Ledger Review v1", () => {
       findings.every((item) => item.rulesetVersion === ledgerReviewRulesetVersion),
     ).toBe(true);
     expect(JSON.stringify(values)).toBe(before);
+  });
+
+  it("does not downgrade an otherwise valid settlement-excluded expense", () => {
+    const included = expense("excluded", 100);
+    expect(
+      reviewExpenses([{ ...included, settlementParticipation: "EXCLUDED" }]),
+    ).toEqual(reviewExpenses([included]));
   });
 });

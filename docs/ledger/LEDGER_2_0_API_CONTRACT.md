@@ -74,6 +74,7 @@ changed Adjustment lineage head or changed current financial input.
 - business status and optional tombstone;
 - title, description, category, occurred time, and optional location snapshot;
 - payer Journey-member id;
+- `settlementParticipation: INCLUDED | EXCLUDED`, defaulting to `INCLUDED`;
 - immutable original merchant Money;
 - included member snapshots and one exact Split per included member;
 - active immutable SettlementValuationSnapshot when resolved;
@@ -82,8 +83,8 @@ changed Adjustment lineage head or changed current financial input.
 - latest transport-independent audit summaries.
 
 Financial Core is original Money, payer, included participants, exact splits,
-currency, valuation policy, and accepted valuation evidence. Concurrent changes
-to Financial Core never silently merge.
+currency, settlement participation, valuation policy, and accepted valuation
+evidence. Concurrent changes to Financial Core never silently merge.
 
 ## Read Routes
 
@@ -153,17 +154,20 @@ debts between Journeys. Reporting conversion includes provenance and is display
 only.
 
 Stage 6 requires explicit UTC `[from,to)` bounds for bounded periods and returns
-Journey-separated settlement-currency rows with personal spend, paid value, and
-pre-settlement position. Cross-Journey reporting-currency conversion is not
-enabled; `reportingCurrency` is rejected unless a later contract supplies
-explicit reporting-rate provenance.
+Journey-separated settlement-currency rows. `mySpendMinor` is participant
+consumption and includes accepted `EXCLUDED` Expenses; `paidMinor` and
+`positionMinor` are settlement projections and use only accepted `INCLUDED`
+Expenses. Cross-Journey reporting-currency conversion is not enabled;
+`reportingCurrency` is rejected unless a later contract supplies explicit
+reporting-rate provenance.
 
 ## Expense Commands
 
 ### `POST /v2/trips/:tripId/expenses`
 
 Creates one complete aggregate transactionally. The backend recomputes and
-validates exact allocation. Returns canonical rounding and revision `1`.
+validates exact allocation. Omitted `settlementParticipation` defaults to
+`INCLUDED`. Returns canonical rounding and revision `1`.
 
 ### `PUT /v2/trips/:tripId/expenses/:expenseId`
 
@@ -295,8 +299,10 @@ repository-backed `SettlementStatement`. Existing digest-keyed files may be
 viewed or shared offline. See ADR 0015.
 
 Preview returns an `inputDigest`. Finalize succeeds only when that digest still
-matches all normalized Expense revisions, valuations, members, settings, and
-algorithm inputs.
+matches all normalized Expense revisions, valuations, participation, members,
+settings, and algorithm inputs. Accepted `EXCLUDED` Expenses appear only in the
+exclusion summary with `EXCLUDED_FROM_SETTLEMENT`; they are non-blocking and do
+not enter balances or Transfers.
 Reporting Paid and confirming Received are separate authenticated operations.
 Only confirmed payments discharge an obligation.
 
@@ -344,6 +350,11 @@ sealed balances, current canonical balances, `delta = current - sealed`, changed
 Expense identities/classifications, blockers/exclusions, the deterministic delta
 transfer plan, and one of `PREVIEW_BLOCKED`, `PREVIEW_UNCHANGED`, or
 `PREVIEW_READY`.
+
+Changing participation after root finalization changes the canonical current
+input: `INCLUDED -> EXCLUDED` removes that obligation and
+`EXCLUDED -> INCLUDED` adds it. The resulting member delta is represented by
+the existing immutable Adjustment lineage.
 
 The root fixes Journey, cutoff, settlement currency/scale, eligibility semantics
 version, and algorithm version for every descendant. Positive member balance is

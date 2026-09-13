@@ -48,7 +48,11 @@ Today / Itinerary:
 
 Ledger / Expenses:
 
-- Payer, participants, equal split, custom split, group/household split, exclusions, multi-currency, base settlement currency, exchange rate snapshot, edit history, permissions, settlement, and export.
+- Payer, participants, equal split, custom split, group/household split,
+  explicit settlement participation, multi-currency, base settlement currency,
+  exchange rate snapshot, edit history, permissions, settlement, and export.
+- An accepted Expense may be excluded from group settlement while remaining in
+  Spending, search, receipts, history, and consumption analysis.
 
 Travel Documents / Tickets:
 

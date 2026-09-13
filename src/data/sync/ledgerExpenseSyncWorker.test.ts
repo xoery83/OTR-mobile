@@ -47,6 +47,7 @@ const expense = {
   },
   paymentRecords: [],
   status: "ACCEPTED" as const,
+  settlementParticipation: "INCLUDED" as const,
   revision: 1,
   deletedAt: null,
   syncStatus: "PENDING_CREATE" as const,

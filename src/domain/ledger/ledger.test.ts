@@ -52,6 +52,7 @@ function expense(overrides: Partial<ExpenseAggregate> = {}): ExpenseAggregate {
       },
     ],
     status: "ACCEPTED",
+    settlementParticipation: "INCLUDED",
     ...overrides,
   };
 }

@@ -2,6 +2,7 @@ import { assertMoney } from "./money";
 import type {
   ExpenseAggregate,
   ExpenseBusinessStatus,
+  ExpenseSettlementParticipation,
   MemberBalance,
   Money,
   SettlementValuationSnapshot,
@@ -20,6 +21,7 @@ export type SettlementExpenseCandidate = {
   revision: number;
   occurredAt: string;
   businessStatus: ExpenseBusinessStatus;
+  settlementParticipation: ExpenseSettlementParticipation;
   hasOpenConflict: boolean;
   payerMemberId: string;
   original: Money;
@@ -34,6 +36,7 @@ export type SettlementExpenseCandidate = {
 export type SettlementInputSnapshot = {
   expenseId: string;
   expenseRevision: number;
+  settlementParticipation: "INCLUDED";
   payer: SettlementMemberSnapshot;
   original: Money;
   settlement: Money;
@@ -78,7 +81,10 @@ export type SettlementPreview = {
     expenseId: string;
     reason: "OPEN_CONFLICT" | "RATE_REQUIRED";
   }[];
-  exclusions: { expenseId: string; reason: "DELETED" | "DRAFT" }[];
+  exclusions: {
+    expenseId: string;
+    reason: "DELETED" | "DRAFT" | "EXCLUDED_FROM_SETTLEMENT";
+  }[];
   balances: SettlementMemberBalanceSnapshot[];
   transfers: SettlementTransferPlan[];
 };
@@ -145,7 +151,12 @@ export function calculateMemberBalances(
 ): MemberBalance[] {
   const values = new Map(memberIds.map((memberId) => [memberId, 0]));
   for (const expense of expenses) {
-    if (expense.status !== "ACCEPTED" || !expense.valuation) continue;
+    if (
+      expense.status !== "ACCEPTED" ||
+      expense.settlementParticipation !== "INCLUDED" ||
+      !expense.valuation
+    )
+      continue;
     const settlement = expense.valuation.settlement;
     assertMoney(settlement, "Settlement valuation");
     if (settlement.currency !== currency || settlement.scale !== scale) {
@@ -250,6 +261,13 @@ export function buildSettlementPreview(input: SettlementPreviewInput): Settlemen
       exclusions.push({ expenseId: expense.id, reason: "DRAFT" });
       continue;
     }
+    if (expense.settlementParticipation === "EXCLUDED") {
+      exclusions.push({
+        expenseId: expense.id,
+        reason: "EXCLUDED_FROM_SETTLEMENT",
+      });
+      continue;
+    }
     if (expense.hasOpenConflict)
       blockers.push({ expenseId: expense.id, reason: "OPEN_CONFLICT" });
     if (expense.businessStatus === "RATE_REQUIRED" || !expense.valuation)
@@ -299,6 +317,7 @@ export function buildSettlementPreview(input: SettlementPreviewInput): Settlemen
     inputs.push({
       expenseId: expense.id,
       expenseRevision: expense.revision,
+      settlementParticipation: "INCLUDED",
       payer: {
         memberId: expense.payerMemberId,
         displayNameSnapshot: payerName,
@@ -335,6 +354,7 @@ export function buildSettlementPreview(input: SettlementPreviewInput): Settlemen
       },
       paymentRecords: [],
       status: "ACCEPTED",
+      settlementParticipation: "INCLUDED",
     });
   }
 

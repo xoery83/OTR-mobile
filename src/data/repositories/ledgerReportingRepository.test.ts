@@ -23,7 +23,7 @@ function database() {
     CREATE TABLE ledger_expenses (id TEXT PRIMARY KEY, journey_id TEXT, payer_member_id TEXT,
       title TEXT, description TEXT, category TEXT, occurred_at TEXT,
       original_amount_minor INTEGER, original_currency TEXT, original_scale INTEGER,
-      business_status TEXT, sync_status TEXT, deleted_at TEXT);
+      business_status TEXT, settlement_participation TEXT, sync_status TEXT, deleted_at TEXT);
     CREATE INDEX ledger_expenses_journey_occurred ON ledger_expenses(journey_id, occurred_at DESC, id);
     CREATE TABLE ledger_expense_participants (expense_id TEXT, member_id TEXT,
       display_name_snapshot TEXT, PRIMARY KEY(expense_id, member_id));
@@ -66,9 +66,9 @@ function insertFixture(sqlite: DatabaseSync) {
     INSERT INTO ledger_journeys VALUES ('journey', 'Europe', '2026-09-01', '2026-09-30', 'NZD', 2);
     INSERT INTO ledger_members VALUES ('a', 'journey', 'Alex'), ('b', 'journey', 'Bea');
     INSERT INTO ledger_expenses VALUES
-      ('valued', 'journey', 'a', 'Dinner', NULL, 'food', '2026-09-10T08:00:00.000Z', 1000, 'EUR', 2, 'ACCEPTED', 'PENDING_CREATE', NULL),
-      ('rate', 'journey', 'b', 'Taxi', NULL, 'transport', '2026-09-11T08:00:00.000Z', 500, 'EUR', 2, 'RATE_REQUIRED', 'SYNCED', NULL),
-      ('conflict', 'journey', 'a', 'Hotel', NULL, 'hotel', '2026-09-12T08:00:00.000Z', 4000, 'NZD', 2, 'ACCEPTED', 'CONFLICT', NULL);
+      ('valued', 'journey', 'a', 'Dinner', NULL, 'food', '2026-09-10T08:00:00.000Z', 1000, 'EUR', 2, 'ACCEPTED', 'INCLUDED', 'PENDING_CREATE', NULL),
+      ('rate', 'journey', 'b', 'Taxi', NULL, 'transport', '2026-09-11T08:00:00.000Z', 500, 'EUR', 2, 'RATE_REQUIRED', 'INCLUDED', 'SYNCED', NULL),
+      ('conflict', 'journey', 'a', 'Hotel', NULL, 'hotel', '2026-09-12T08:00:00.000Z', 4000, 'NZD', 2, 'ACCEPTED', 'INCLUDED', 'CONFLICT', NULL);
     INSERT INTO ledger_expense_participants VALUES
       ('valued', 'a', 'Alex'), ('valued', 'b', 'Bea'), ('rate', 'a', 'Alex'), ('conflict', 'a', 'Alex');
     INSERT INTO ledger_expense_splits VALUES
@@ -92,6 +92,7 @@ const records: ReportingRecord[] = [
     originalMinor: 1000,
     originalCurrency: "EUR",
     businessStatus: "ACCEPTED",
+    settlementParticipation: "INCLUDED",
     syncStatus: "PENDING_CREATE",
     settlementMinor: 2000,
     settlementCurrency: "NZD",
@@ -113,6 +114,7 @@ const records: ReportingRecord[] = [
     originalMinor: 500,
     originalCurrency: "EUR",
     businessStatus: "RATE_REQUIRED",
+    settlementParticipation: "INCLUDED",
     syncStatus: "SYNCED",
     settlementMinor: null,
     settlementCurrency: "NZD",
@@ -131,6 +133,7 @@ const records: ReportingRecord[] = [
     originalMinor: 4000,
     originalCurrency: "NZD",
     businessStatus: "ACCEPTED",
+    settlementParticipation: "INCLUDED",
     syncStatus: "CONFLICT",
     settlementMinor: 4000,
     settlementCurrency: "NZD",
@@ -243,7 +246,7 @@ describe("Ledger reporting repository", () => {
       "INSERT INTO ledger_journeys VALUES ('journey', 'Europe', NULL, NULL, 'NZD', 2); INSERT INTO ledger_members VALUES ('a', 'journey', 'Alex');",
     );
     const insertExpense = sqlite.prepare(
-      "INSERT INTO ledger_expenses VALUES (?, 'journey', 'a', ?, NULL, ?, ?, 100, 'NZD', 2, 'ACCEPTED', 'SYNCED', NULL)",
+      "INSERT INTO ledger_expenses VALUES (?, 'journey', 'a', ?, NULL, ?, ?, 100, 'NZD', 2, 'ACCEPTED', 'INCLUDED', 'SYNCED', NULL)",
     );
     const insertParticipant = sqlite.prepare(
       "INSERT INTO ledger_expense_participants VALUES (?, 'a', 'Alex')",

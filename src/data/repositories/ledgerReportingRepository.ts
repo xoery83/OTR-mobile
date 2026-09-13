@@ -39,6 +39,7 @@ export type LedgerReportListItem = {
   settlementScale: number;
   componentMinor: number | null;
   businessStatus: string;
+  settlementParticipation: "INCLUDED" | "EXCLUDED";
   syncStatus: string;
   hasReceipt: boolean;
   hasOpenConflict: boolean;
@@ -227,6 +228,7 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
           COALESCE(v.settlement_currency, j.settlement_currency) AS settlementCurrency,
           COALESCE(v.settlement_scale, j.settlement_scale) AS settlementScale,
           ${component} AS componentMinor, e.business_status AS businessStatus,
+          e.settlement_participation AS settlementParticipation,
           e.sync_status AS syncStatus, ${receiptSql} AS hasReceipt,
           ${conflictSql} AS hasOpenConflict, ${authoritativeSql} AS isAuthoritative
          FROM ledger_expenses e

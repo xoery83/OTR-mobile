@@ -13,6 +13,7 @@ const editable = {
   payerMemberId: "30000000-0000-4000-8000-000000000001",
   original: { minor: 1200, currency: "NZD", scale: 2 },
   businessStatus: "ACCEPTED" as const,
+  settlementParticipation: "INCLUDED" as const,
   participants: [
     {
       memberId: "30000000-0000-4000-8000-000000000001",

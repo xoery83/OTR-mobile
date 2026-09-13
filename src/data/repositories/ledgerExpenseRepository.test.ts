@@ -39,6 +39,7 @@ function createInMemoryLedgerDatabase() {
           originalCurrency,
           originalScale,
           businessStatus,
+          settlementParticipation,
           revision,
           serverRevision,
           deletedAt,
@@ -61,6 +62,7 @@ function createInMemoryLedgerDatabase() {
           originalCurrency,
           originalScale,
           businessStatus,
+          settlementParticipation,
           revision,
           serverRevision,
           deletedAt,
@@ -200,7 +202,7 @@ function createInMemoryLedgerDatabase() {
           status: params[8],
         });
       } else if (sql.includes("UPDATE ledger_expenses SET\n      journey_id")) {
-        const id = params[18] as string;
+        const id = params[19] as string;
         const row = expenses.get(id);
         if (row) {
           Object.assign(row, {
@@ -215,12 +217,13 @@ function createInMemoryLedgerDatabase() {
             originalCurrency: params[8],
             originalScale: params[9],
             businessStatus: params[10],
-            revision: params[11],
-            serverId: params[12],
-            serverRevision: params[13],
-            deletedAt: params[14],
-            syncStatus: params[15],
-            updatedAt: params[17],
+            settlementParticipation: params[11],
+            revision: params[12],
+            serverId: params[13],
+            serverRevision: params[14],
+            deletedAt: params[15],
+            syncStatus: params[16],
+            updatedAt: params[18],
           });
         }
       } else if (sql.includes("business_status = ?, deleted_at = ?")) {
@@ -341,6 +344,7 @@ describe("Ledger Expense repository", () => {
     expect(created).toMatchObject({
       journeyId: "journey-a",
       title: "Lisbon dinner",
+      settlementParticipation: "INCLUDED",
       syncStatus: "PENDING_CREATE",
       paymentRecords: [],
     });
@@ -400,14 +404,26 @@ describe("Ledger Expense repository", () => {
 
     const updated = await repository.updateExpense(
       created.id,
-      { ...command, title: "Lisbon dinner corrected" },
-      "Corrected receipt title",
+      {
+        ...command,
+        title: "Lisbon dinner corrected",
+        settlementParticipation: "EXCLUDED",
+      },
+      "Corrected receipt title and settlement participation",
     );
     await repository.tombstoneExpense(created.id, "Duplicate entry");
     await repository.restoreExpense(created.id, "ACCEPTED", "Not a duplicate");
 
     expect(expenses.size).toBe(1);
-    expect(updated).toMatchObject({ revision: 2, syncStatus: "PENDING_UPDATE" });
+    expect(updated).toMatchObject({
+      revision: 2,
+      settlementParticipation: "EXCLUDED",
+      syncStatus: "PENDING_UPDATE",
+    });
+    expect(JSON.parse(operations[1]!.payloadJson as string)).toMatchObject({
+      expense: { settlementParticipation: "EXCLUDED" },
+      baseExpense: { settlementParticipation: "INCLUDED" },
+    });
     expect(operations.map((operation) => operation.operationType)).toEqual([
       "LEDGER_CREATE_EXPENSE",
       "LEDGER_UPDATE_EXPENSE",

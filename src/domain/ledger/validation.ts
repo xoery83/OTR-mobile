@@ -27,6 +27,12 @@ export function validateExpenseAggregate(
   journeyMemberIds: ReadonlySet<string>,
 ): ExpenseValidationIssue[] {
   const issues: ExpenseValidationIssue[] = [];
+  if (!(["INCLUDED", "EXCLUDED"] as const).includes(expense.settlementParticipation)) {
+    issues.push({
+      code: "INVALID_SETTLEMENT_PARTICIPATION",
+      field: "settlementParticipation",
+    });
+  }
   try {
     assertMoney(expense.original, "Original amount");
   } catch {

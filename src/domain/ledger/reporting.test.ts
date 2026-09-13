@@ -19,6 +19,7 @@ const records: ReportingRecord[] = [
     originalMinor: 1000,
     originalCurrency: "EUR",
     businessStatus: "ACCEPTED",
+    settlementParticipation: "INCLUDED",
     syncStatus: "PENDING_CREATE",
     settlementMinor: 2000,
     settlementCurrency: "NZD",
@@ -40,6 +41,7 @@ const records: ReportingRecord[] = [
     originalMinor: 500,
     originalCurrency: "EUR",
     businessStatus: "RATE_REQUIRED",
+    settlementParticipation: "INCLUDED",
     syncStatus: "SYNCED",
     settlementMinor: null,
     settlementCurrency: "NZD",
@@ -58,6 +60,7 @@ const records: ReportingRecord[] = [
     originalMinor: 4000,
     originalCurrency: "NZD",
     businessStatus: "ACCEPTED",
+    settlementParticipation: "INCLUDED",
     syncStatus: "CONFLICT",
     settlementMinor: 4000,
     settlementCurrency: "NZD",
@@ -83,6 +86,24 @@ describe("Stage 6 reporting semantics", () => {
     const [bucket] = analyzeReporting(records, "CATEGORY", "GROUP", "a");
     expect(bucket.totalMinor).toBe(2000);
     expect(bucket.includedExpenseIds).toEqual(["valued"]);
+  });
+
+  it("keeps settlement-excluded ACCEPTED expenses in Spending and consumption analysis", () => {
+    const excluded: ReportingRecord = {
+      ...records[0]!,
+      id: "excluded",
+      settlementParticipation: "EXCLUDED",
+    };
+    expect(summarizeReporting([excluded], "GROUP", "a")).toMatchObject({
+      totalMinor: 2000,
+      expenseCount: 1,
+      includedExpenseIds: ["excluded"],
+    });
+    expect(summarizeReporting([excluded], "MINE", "a").totalMinor).toBe(1200);
+    expect(analyzeReporting([excluded], "CATEGORY", "GROUP", "a")[0]).toMatchObject({
+      totalMinor: 2000,
+      includedExpenseIds: ["excluded"],
+    });
   });
 
   it("matches SQLite's ASCII-only case folding for text search", () => {

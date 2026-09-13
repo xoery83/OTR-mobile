@@ -342,4 +342,5 @@ export const initialPrototypeDraft: PrototypeDraft = {
   splitMode: "EQUAL_PERSON",
   valuationPolicy: "REFERENCE_RATE",
   receiptAttached: false,
+  settlementParticipation: "INCLUDED",
 };

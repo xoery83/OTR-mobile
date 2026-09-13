@@ -10,6 +10,7 @@ const expense = {
   payerMemberId: "30000000-0000-4000-8000-000000000001",
   original: { minor: 1200, currency: "NZD", scale: 2 },
   businessStatus: "ACCEPTED" as const,
+  settlementParticipation: "INCLUDED" as const,
   participants: [
     {
       memberId: "30000000-0000-4000-8000-000000000001",
@@ -40,5 +41,14 @@ describe("Ledger conflict groups", () => {
         original: { ...expense.original, minor: 1300 },
       }),
     ).toEqual(["FINANCIAL_CORE", "DESCRIPTIVE"]);
+  });
+
+  it("treats settlement participation as Financial Core", () => {
+    expect(
+      changedExpenseGroups(expense, {
+        ...expense,
+        settlementParticipation: "EXCLUDED",
+      }),
+    ).toEqual(["FINANCIAL_CORE"]);
   });
 });

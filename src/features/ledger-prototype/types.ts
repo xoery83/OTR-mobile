@@ -64,6 +64,7 @@ export type PrototypeExpense = {
   location?: string;
   notes?: string;
   status: PrototypeExpenseStatus;
+  settlementParticipation?: "INCLUDED" | "EXCLUDED";
   audit: PrototypeAuditEvent[];
 };
 
@@ -105,4 +106,5 @@ export type PrototypeDraft = {
   splitMode: PrototypeDraftSplitMode;
   valuationPolicy: "REFERENCE_RATE" | "ACTUAL_PAYER_COST" | "SAME_CURRENCY";
   receiptAttached: boolean;
+  settlementParticipation: "INCLUDED" | "EXCLUDED";
 };

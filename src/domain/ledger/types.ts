@@ -7,6 +7,7 @@ export type Money = {
 };
 
 export type ExpenseBusinessStatus = "DRAFT" | "ACCEPTED" | "RATE_REQUIRED" | "DELETED";
+export type ExpenseSettlementParticipation = "INCLUDED" | "EXCLUDED";
 export type ExpenseSplitMethod =
   "EQUAL_PERSON" | "EQUAL_HOUSEHOLD" | "HOUSEHOLD_SHARES" | "EXACT" | "PERCENTAGE";
 export type ValuationPolicy =
@@ -103,10 +104,17 @@ export type ExpenseAggregate = {
   valuation: SettlementValuationSnapshot | null;
   paymentRecords: PaymentRecord[];
   status: ExpenseBusinessStatus;
+  settlementParticipation: ExpenseSettlementParticipation;
 };
 
 export type LedgerConflictField =
-  "amount" | "payer" | "currency" | "participants" | "splits" | "valuation";
+  | "amount"
+  | "payer"
+  | "currency"
+  | "participants"
+  | "splits"
+  | "valuation"
+  | "settlementParticipation";
 
 export type MemberBalance = {
   memberId: string;

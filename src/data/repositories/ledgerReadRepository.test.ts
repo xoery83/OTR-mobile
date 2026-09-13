@@ -64,6 +64,7 @@ const expense = {
   occurredAt: "2026-09-11T00:00:00.000Z",
   original: { minor: 1200, currency: "NZD", scale: 2 },
   businessStatus: "ACCEPTED",
+  settlementParticipation: "INCLUDED",
   revision: 1,
   deletedAt: null,
   createdAt: "2026-09-11T00:00:00.000Z",

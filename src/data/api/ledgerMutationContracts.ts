@@ -64,6 +64,7 @@ const expenseFields = {
   payerMemberId: z.uuid(),
   original: moneySchema,
   businessStatus: z.enum(["DRAFT", "ACCEPTED", "RATE_REQUIRED"]),
+  settlementParticipation: z.enum(["INCLUDED", "EXCLUDED"]).optional(),
   participants: z.array(participantSchema).min(1).max(200),
   splits: z.array(splitSchema).min(1).max(200),
   valuation: valuationSchema,

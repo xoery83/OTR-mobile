@@ -172,8 +172,8 @@ Mobile Foundation and vertical-slice phase names.
 
 ### Legacy Features To Remove Or Defer
 
-- Web `stats_only` mode as a primary user choice. Reintroduce only as a clearly
-  named personal/non-settling expense if research confirms the need.
+- Web `accounting_mode` as a primary user choice. Ledger 2.0 instead exposes
+  the explicit Expense-level `Include in group settlement` control.
 - One-time Journey exchange-rate refresh restriction.
 - Destructive base-currency rebasing of historical expenses.
 - Global writable exchange-rate table.
@@ -213,6 +213,8 @@ review, not treated as a failed save.
   currency.
 - Date/time: current local Journey time.
 - Category: inferred only when confidence is high; otherwise Other.
+- Settlement participation: `INCLUDED`. Turning it off keeps the Expense in
+  Spending and analysis but removes it from who-owes-whom calculations.
 
 Defaults must remain visible in the confirmation summary. A hidden participant
 default is unacceptable because it changes balances.
@@ -315,12 +317,16 @@ affected settlement run, or creates an explicit adjustment in a later run.
 
 ### Calculation
 
-For each accepted shared expense:
+For each accepted `INCLUDED` expense:
 
 - credit payer by converted settlement minor units;
 - debit each participant by their saved converted allocation;
 - include recorded settlement transfers as separate balance movements;
 - exclude deleted, conflicted, rate-required, and non-settling entries.
+
+Accepted `EXCLUDED` Expenses remain in Spending and participant-consumption
+views. Settlement preview lists them as `EXCLUDED_FROM_SETTLEMENT`; they are
+intentional non-blocking exclusions and never enter the debt vector.
 
 Every total must reconcile to zero in settlement minor units. The transfer plan
 matches largest debtors and creditors deterministically, producing at most

@@ -793,4 +793,12 @@ export const migrations: Migration[] = [
         ON ledger_review_finding_actions (finding_id, created_at);
     `,
   },
+  {
+    id: 17,
+    name: "ledger_2_settlement_participation",
+    sql: `
+      ALTER TABLE ledger_expenses ADD COLUMN settlement_participation TEXT NOT NULL
+        DEFAULT 'INCLUDED' CHECK (settlement_participation IN ('INCLUDED', 'EXCLUDED'));
+    `,
+  },
 ];

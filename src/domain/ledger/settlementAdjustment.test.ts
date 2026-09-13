@@ -15,6 +15,7 @@ function normalizedInput(overrides: Partial<SettlementInputSnapshot> = {}) {
   return {
     expenseId: "expense",
     expenseRevision: 1,
+    settlementParticipation: "INCLUDED" as const,
     payer: { memberId: "a", displayNameSnapshot: "A" },
     original: money,
     settlement: money,
@@ -132,6 +133,25 @@ describe("Stage 7.2B settlement adjustment", () => {
       currentBalances: root,
     });
     expect(restored.balances.map((row) => row.deltaMinor)).toEqual([100, -100]);
+  });
+
+  it("creates the full reversing delta when a finalized expense becomes excluded", () => {
+    const result = buildSettlementAdjustmentVectors({
+      currency: "NZD",
+      scale: 2,
+      rootBalances: [
+        { memberId: "a", displayNameSnapshot: "A", netMinor: 100 },
+        { memberId: "b", displayNameSnapshot: "B", netMinor: -100 },
+      ],
+      priorDeltaVectors: [],
+      currentBalances: [],
+    });
+    expect(
+      result.balances.map(({ memberId, deltaMinor }) => [memberId, deltaMinor]),
+    ).toEqual([
+      ["a", -100],
+      ["b", 100],
+    ]);
   });
 
   it("ignores descriptive revision/display changes but hashes financial changes", () => {

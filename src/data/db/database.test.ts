@@ -67,10 +67,13 @@ describe("SQLite migrations", () => {
     expect(stage7Finalization.sql).toContain("CREATE TABLE ledger_settlement_inputs");
     expect(stage7Finalization.sql).not.toContain("ledger_settlement_payments");
 
+    const review = migrations.find((migration) => migration.id === 16)!;
+    expect(review.sql).toContain("CREATE TABLE ledger_review_findings");
+    expect(review.sql).toContain("CREATE TABLE ledger_review_finding_actions");
+
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(16);
-    expect(latest.sql).toContain("CREATE TABLE ledger_review_findings");
-    expect(latest.sql).toContain("CREATE TABLE ledger_review_finding_actions");
+    expect(latest.id).toBe(17);
+    expect(latest.sql).toContain("settlement_participation");
   });
 
   it("migrates a v13 Settlement through a cold v14 restart", () => {
@@ -134,6 +137,39 @@ describe("SQLite migrations", () => {
           )
           .get(),
       ).toEqual({ count: 1 });
+    } finally {
+      database.close();
+    }
+  });
+
+  it("defaults existing v16 expenses to INCLUDED in v17", () => {
+    const database = new DatabaseSync(":memory:");
+    try {
+      for (const migration of migrations.filter(({ id }) => id <= 16))
+        database.exec(migration.sql);
+      database.exec(`INSERT INTO ledger_expenses (
+        id, journey_id, payer_member_id, title, category, occurred_at,
+        original_amount_minor, original_currency, original_scale,
+        business_status, revision, sync_status, created_at, updated_at
+      ) VALUES (
+        'expense', 'journey', 'member', 'Lunch', 'food', '2026-09-12T00:00:00Z',
+        100, 'NZD', 2, 'ACCEPTED', 1, 'SYNCED',
+        '2026-09-12T00:00:00Z', '2026-09-12T00:00:00Z'
+      )`);
+      database.exec(migrations.find(({ id }) => id === 17)!.sql);
+
+      expect(
+        database
+          .prepare(
+            "SELECT settlement_participation AS participation FROM ledger_expenses WHERE id = 'expense'",
+          )
+          .get(),
+      ).toEqual({ participation: "INCLUDED" });
+      expect(() =>
+        database.exec(
+          "UPDATE ledger_expenses SET settlement_participation = 'INVALID' WHERE id = 'expense'",
+        ),
+      ).toThrow();
     } finally {
       database.close();
     }

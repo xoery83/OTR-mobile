@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(9);
+select plan(11);
 
 set local role service_role;
 
@@ -101,6 +101,7 @@ select lives_ok($$
         "occurredAt":"2026-01-10T18:00:00.000Z",
         "original":{"minor":1200,"currency":"NZD","scale":2},
         "businessStatus":"ACCEPTED",
+        "settlementParticipation":"EXCLUDED",
         "revision":2,
         "deletedAt":null,
         "createdAt":"2026-01-10T18:00:00.000Z",
@@ -118,6 +119,21 @@ select lives_ok($$
     }'::jsonb
   )
 $$, 'creator can edit own expense without override reason');
+
+select is(
+  (select settlement_participation from public.expenses
+    where id = '41000000-0000-4000-8000-000000000001'),
+  'EXCLUDED',
+  'settlement participation is persisted by the revisioned mutation path'
+);
+
+select ok(
+  (select 'FINANCIAL_CORE' = any(changed_groups)
+    from public.expense_audit_events
+    where expense_id = '41000000-0000-4000-8000-000000000001'
+      and expense_revision = 2),
+  'settlement participation mutation is canonical Financial Core audit'
+);
 
 select throws_ok($$
   select public.ledger_mutate_expense_4b(
@@ -171,9 +187,12 @@ select throws_ok($$
     null,
     'stale-hash',
     'stale-key',
-    (select response_body from public.ledger_idempotency_keys where idempotency_key = 'organizer-edit-key')
+    jsonb_set(
+      (select response_body from public.ledger_idempotency_keys where idempotency_key = 'organizer-edit-key'),
+      '{entity,settlementParticipation}', '"INCLUDED"'
+    )
   )
-$$, 'P0001', 'REVISION_CONFLICT', 'stale base revision is rejected');
+$$, 'P0001', 'REVISION_CONFLICT', 'a concurrent stale participation toggle is rejected');
 
 select lives_ok($$
   select public.ledger_mutate_expense_4b(

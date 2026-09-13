@@ -19,7 +19,13 @@
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset --local",
     "supabase:test": "supabase test db",
-    "supabase:validate": "scripts/supabase/validate-local.sh"
+    "supabase:validate": "scripts/supabase/validate-local.sh",
+    "stage9:synthetic": "tsx scripts/stage9/synthetic-dry-run.ts",
+    "stage9:synthetic-http": "vitest run backend/src/stage9RestExtractor.test.ts",
+    "stage9:extract:production": "tsx scripts/stage9/extract-production.ts",
+    "stage9:transform:private": "tsx scripts/stage9/transform-private.ts",
+    "stage9:verify:restore": "tsx scripts/stage9/verify-hosted-restore.ts",
+    "stage9:load:hosted-dev": "tsx scripts/stage9/load-hosted-dev.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

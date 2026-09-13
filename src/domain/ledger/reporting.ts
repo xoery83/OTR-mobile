@@ -28,6 +28,7 @@ export type ReportingRecord = {
   originalMinor: number;
   originalCurrency: string;
   businessStatus: string;
+  settlementParticipation: "INCLUDED" | "EXCLUDED";
   syncStatus: string;
   settlementMinor: number | null;
   settlementCurrency: string;

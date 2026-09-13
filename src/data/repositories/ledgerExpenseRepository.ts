@@ -10,6 +10,7 @@ import type {
   ExpenseAggregate,
   ExpenseBusinessStatus,
   ExpenseParticipant,
+  ExpenseSettlementParticipation,
   ExpenseSplit,
   Money,
   PaymentRecord,
@@ -37,6 +38,7 @@ export type LedgerExpenseCommand = {
   splits: ExpenseSplit[];
   valuation: SettlementValuationSnapshot | null;
   status: Exclude<ExpenseBusinessStatus, "DELETED">;
+  settlementParticipation?: ExpenseSettlementParticipation;
 };
 
 export type LedgerExpense = ExpenseAggregate & {
@@ -118,6 +120,7 @@ type LedgerExpenseRow = {
   originalCurrency: string;
   originalScale: number;
   businessStatus: ExpenseBusinessStatus;
+  settlementParticipation: ExpenseSettlementParticipation;
   revision: number;
   serverRevision: number;
   deletedAt: string | null;
@@ -192,12 +195,22 @@ export function createLedgerExpenseRepository(
         throw new Error("A deleted expense must be restored before it can be edited.");
       }
       const now = new Date().toISOString();
-      const expense = buildLocalExpense(command, id, current.revision + 1, now, {
-        serverId: current.serverId,
-        serverRevision: current.serverRevision,
-        createdAt: current.createdAt,
-        syncStatus: "PENDING_UPDATE",
-      });
+      const expense = buildLocalExpense(
+        {
+          ...command,
+          settlementParticipation:
+            command.settlementParticipation ?? current.settlementParticipation,
+        },
+        id,
+        current.revision + 1,
+        now,
+        {
+          serverId: current.serverId,
+          serverRevision: current.serverRevision,
+          createdAt: current.createdAt,
+          syncStatus: "PENDING_UPDATE",
+        },
+      );
       assertCommand(expense);
       await database.withTransactionAsync(async () => {
         await replaceExpenseAggregate(database, expense, "UPDATED", reason);
@@ -223,7 +236,8 @@ export function createLedgerExpenseRepository(
           title, description, category, occurred_at AS occurredAt,
           original_amount_minor AS originalAmountMinor,
           original_currency AS originalCurrency, original_scale AS originalScale,
-          business_status AS businessStatus, revision,
+          business_status AS businessStatus,
+          settlement_participation AS settlementParticipation, revision,
           server_revision AS serverRevision, deleted_at AS deletedAt,
           sync_status AS syncStatus, created_at AS createdAt, updated_at AS updatedAt
         FROM ledger_expenses
@@ -243,7 +257,8 @@ export function createLedgerExpenseRepository(
           title, description, category, occurred_at AS occurredAt,
           original_amount_minor AS originalAmountMinor,
           original_currency AS originalCurrency, original_scale AS originalScale,
-          business_status AS businessStatus, revision,
+          business_status AS businessStatus,
+          settlement_participation AS settlementParticipation, revision,
           server_revision AS serverRevision, deleted_at AS deletedAt,
           sync_status AS syncStatus, created_at AS createdAt, updated_at AS updatedAt
         FROM ledger_expenses WHERE id = ?`,
@@ -347,6 +362,7 @@ export function createLedgerExpenseRepository(
         valuation: canonical.valuation,
         paymentRecords: canonical.paymentRecords,
         status: canonical.businessStatus,
+        settlementParticipation: canonical.settlementParticipation,
         revision: canonical.revision,
         deletedAt: canonical.deletedAt,
         syncStatus: "SYNCED",
@@ -684,6 +700,7 @@ function buildLocalExpense(
     valuation: command.valuation,
     paymentRecords: [],
     status: command.status,
+    settlementParticipation: command.settlementParticipation ?? "INCLUDED",
     revision,
     deletedAt: null,
     syncStatus:
@@ -714,9 +731,9 @@ async function insertExpenseAggregate(
     `INSERT INTO ledger_expenses (
       id, server_id, journey_id, creator_member_id, payer_member_id, title, description,
       category, occurred_at, original_amount_minor, original_currency, original_scale,
-      business_status, revision, server_revision, deleted_at, sync_status, last_synced_at,
-      created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      business_status, settlement_participation, revision, server_revision, deleted_at,
+      sync_status, last_synced_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     expense.id,
     expense.serverId,
     expense.journeyId,
@@ -730,6 +747,7 @@ async function insertExpenseAggregate(
     expense.original.currency,
     expense.original.scale,
     expense.status,
+    expense.settlementParticipation,
     expense.revision,
     expense.serverRevision,
     expense.deletedAt,
@@ -776,7 +794,7 @@ async function replaceExpenseData(
     `UPDATE ledger_expenses SET
       journey_id = ?, creator_member_id = ?, payer_member_id = ?, title = ?, description = ?,
       category = ?, occurred_at = ?, original_amount_minor = ?, original_currency = ?,
-      original_scale = ?, business_status = ?, revision = ?, server_id = ?,
+      original_scale = ?, business_status = ?, settlement_participation = ?, revision = ?, server_id = ?,
       server_revision = ?, deleted_at = ?, sync_status = ?, last_synced_at = ?, updated_at = ?
      WHERE id = ?`,
     expense.journeyId,
@@ -790,6 +808,7 @@ async function replaceExpenseData(
     expense.original.currency,
     expense.original.scale,
     expense.status,
+    expense.settlementParticipation,
     expense.revision,
     expense.serverId,
     expense.serverRevision,
@@ -1108,6 +1127,7 @@ function toOperationSnapshot(expense: LedgerExpense) {
     payerMemberId: expense.payerMemberId,
     original: expense.original,
     businessStatus: expense.status === "DELETED" ? "DRAFT" : expense.status,
+    settlementParticipation: expense.settlementParticipation,
     participants: expense.participants,
     splits: expense.splits,
     valuation: expense.valuation
@@ -1189,6 +1209,7 @@ async function hydrateExpense(
     valuation: valuation ? normalizeValuation(valuation) : null,
     paymentRecords: paymentRecords.map(normalizePaymentRecord),
     status: row.businessStatus,
+    settlementParticipation: row.settlementParticipation,
     revision: row.revision,
     deletedAt: row.deletedAt,
     syncStatus: row.syncStatus,

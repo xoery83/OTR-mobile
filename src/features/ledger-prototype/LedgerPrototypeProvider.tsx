@@ -201,6 +201,7 @@ export function LedgerPrototypeProvider({ children }: PropsWithChildren) {
           splits: createPrototypeSplits(draft, merchantMinor, settlementMinor),
           receiptAttached: draft.receiptAttached,
           status: "PENDING",
+          settlementParticipation: draft.settlementParticipation,
           audit: [
             {
               id: `audit-${Date.now()}`,

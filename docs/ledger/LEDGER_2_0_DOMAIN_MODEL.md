@@ -91,6 +91,7 @@ single deterministic residual allocation step.
 | `originalCurrency`                    | ISO code                                                                     |
 | `originalCurrencyScale`               | Captured ISO exponent                                                        |
 | `payerMemberId`                       | Single Journey member payer                                                  |
+| `settlementParticipation`             | `INCLUDED` or `EXCLUDED`; defaults to `INCLUDED`                             |
 | `splitMode`                           | `EQUAL_PERSON`, `EQUAL_HOUSEHOLD`, `HOUSEHOLD_SHARES`, `EXACT`, `PERCENTAGE` |
 | `status`                              | `DRAFT`, `ACCEPTED`, `RATE_REQUIRED`, `CONFLICT`, `DELETED`                  |
 | `createdByUserId`                     | Auth actor where linked                                                      |
@@ -102,6 +103,11 @@ single deterministic residual allocation step.
 Expense owns merchant truth. Payer-cost evidence and group-settlement value are
 linked records so a bank-posted amount can differ from a fair agreed valuation.
 Original merchant amount/currency are never rewritten by either record.
+
+Settlement participation is independent of consumption allocation. An
+`EXCLUDED` accepted Expense keeps exact participant splits for Spending and
+analysis, but those splits create no member debt. Participation is Financial
+Core and changes through the normal revision/conflict/audit path.
 
 ### ExpenseParticipant
 
@@ -431,8 +437,9 @@ backend. The backend recomputes and rejects mismatched client allocations.
 
 ## Settlement Algorithm
 
-1. Load accepted, non-conflicted Expense revisions and their accepted
-   SettlementValuationSnapshots.
+1. Load accepted, non-conflicted, `INCLUDED` Expense revisions and their
+   accepted SettlementValuationSnapshots. Explain accepted `EXCLUDED` rows as
+   `EXCLUDED_FROM_SETTLEMENT` without blocking preview.
 2. Credit payer by group-settlement value and debit exact member allocations in
    settlement minor units; PaymentRecord cost is informational unless the
    selected valuation policy references it.

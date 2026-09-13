@@ -1,12 +1,12 @@
 {
   "tables": 92,
   "buckets": 3,
-  "columns": 1292,
+  "columns": 1293,
   "indexes": 308,
-  "checksum": "a507b7fa5b4cd93069410f9f584213942928885eb68730cc3425f0043655a449",
+  "checksum": "d449fc82e9991b0d5a055cdf0ce3cfd94fafff5f0ae04dc7a530fdec7c4b8772",
   "policies": 178,
-  "triggers": 85,
-  "functions": 67,
+  "triggers": 86,
+  "functions": 73,
   "rls_tables": 92,
-  "constraints": 680
+  "constraints": 681
 }
