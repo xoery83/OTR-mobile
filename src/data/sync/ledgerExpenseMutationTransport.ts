@@ -1,4 +1,4 @@
-import { createApiClient } from "@/data/api/client";
+import { ApiClientError, createApiClient } from "@/data/api/client";
 import {
   createLedgerCorrectionRequestSchema,
   createLedgerPaymentRecordRequestSchema,
@@ -40,7 +40,13 @@ function configuredResponseLoss() {
 
 async function client(dependencies: Dependencies) {
   const session = await (dependencies.readSession ?? readLocalSession)();
-  if (!session?.accessToken) throw new Error("A Supabase Dev session is required.");
+  if (!session?.accessToken)
+    throw new ApiClientError(
+      "Authentication is unavailable.",
+      "http",
+      401,
+      "AUTH_REQUIRED",
+    );
   return (
     dependencies.createClient ?? ((token) => createApiClient({ accessToken: token }))
   )(session.accessToken);

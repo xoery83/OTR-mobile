@@ -6,6 +6,7 @@ import type {
   MyLedgerResponse,
 } from "@/data/api/ledgerReadContracts";
 import { applyFinalizedSettlement } from "./ledgerSettlementRepository";
+import { applyReviewAction, applyReviewFinding } from "./ledgerReviewRepository";
 
 export type LedgerReadDatabase = Pick<
   SQLite.SQLiteDatabase,
@@ -39,6 +40,10 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
           await applyReceipt(database, response.journey.id, receipt);
         for (const settlement of response.settlements ?? [])
           await applyFinalizedSettlement(database, settlement);
+        for (const finding of response.reviewFindings ?? [])
+          await applyReviewFinding(database, finding);
+        for (const action of response.reviewActions ?? [])
+          await applyReviewAction(database, action);
         for (const correction of response.corrections) {
           if (!(await applyCorrection(database, correction))) {
             await deferChange(database, response.journey.id, {
@@ -98,6 +103,12 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
             "inputDigest" in change.aggregate
           ) {
             await applyFinalizedSettlement(database, change.aggregate);
+          } else if (
+            change.entityType === "REVIEW_FINDING" &&
+            change.aggregate &&
+            "findingType" in change.aggregate
+          ) {
+            await applyReviewFinding(database, change.aggregate);
           } else {
             await deferChange(database, journeyId, change);
           }

@@ -7,6 +7,9 @@
     "icon": "./assets/icon.png",
     "scheme": "otrmobile",
     "userInterfaceStyle": "automatic",
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.xoery.otrmobile",

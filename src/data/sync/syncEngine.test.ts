@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createSyncEngine, SyncConflictError } from "./syncEngine";
+import { createSyncEngine, nextSyncAttemptAt, SyncConflictError } from "./syncEngine";
+import { ApiClientError } from "@/data/api/client";
 import type { SyncOperation } from "./syncOperationRepository";
 
 const operation: SyncOperation = {
@@ -46,7 +47,7 @@ describe("sync engine", () => {
     const nextAttemptAt = "2026-09-09T00:01:00.000Z";
     const engine = createSyncEngine(
       repository,
-      { push: vi.fn().mockRejectedValue(new Error("offline")) },
+      { push: vi.fn().mockRejectedValue(new ApiClientError("offline", "network")) },
       () => nextAttemptAt,
     );
 
@@ -100,6 +101,36 @@ describe("sync engine", () => {
       expect.objectContaining({ message: "conflict" }),
     );
     expect(repository.markCompleted).not.toHaveBeenCalled();
+    expect(repository.markRetryable).not.toHaveBeenCalled();
+  });
+
+  it("uses bounded exponential backoff with jitter", () => {
+    const now = Date.parse("2026-09-13T00:00:00.000Z");
+    expect(Date.parse(nextSyncAttemptAt(1, now, 0.5)) - now).toBe(30_000);
+    expect(Date.parse(nextSyncAttemptAt(2, now, 0.5)) - now).toBe(60_000);
+    expect(Date.parse(nextSyncAttemptAt(20, now, 0.5)) - now).toBe(30 * 60_000);
+  });
+
+  it("claims once across concurrent wake-ups and terminally fails validation", async () => {
+    let claimed = false;
+    const repository = {
+      listPending: vi.fn().mockResolvedValue([operation]),
+      markProcessing: vi.fn(),
+      claim: vi.fn(async () => (claimed ? false : (claimed = true))),
+      markCompleted: vi.fn(),
+      markRetryable: vi.fn(),
+      markFailed: vi.fn(),
+    };
+    const worker = {
+      push: vi.fn().mockRejectedValue(new ApiClientError("bad", "http", 422)),
+    };
+    const engine = createSyncEngine(repository, worker);
+    await Promise.all([
+      engine.run("AUTHENTICATED_ONLINE"),
+      engine.run("AUTHENTICATED_ONLINE"),
+    ]);
+    expect(worker.push).toHaveBeenCalledOnce();
+    expect(repository.markFailed).toHaveBeenCalledOnce();
     expect(repository.markRetryable).not.toHaveBeenCalled();
   });
 });

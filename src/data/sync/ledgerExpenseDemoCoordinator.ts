@@ -13,10 +13,6 @@ type Options = {
   simulateResponseLoss?: () => boolean;
 };
 
-function nextAttemptAt(attemptCount: number) {
-  return new Date(Date.now() + attemptCount * 30_000).toISOString();
-}
-
 export async function runLedgerExpenseSync(options: Options = {}) {
   const database = await openDatabase();
   const operationRepository = createSyncOperationRepository(database);
@@ -31,7 +27,7 @@ export async function runLedgerExpenseSync(options: Options = {}) {
   const engine = createSyncEngine(
     operationRepository,
     worker,
-    nextAttemptAt,
+    undefined,
     (operation) =>
       ["ledger_expense", "ledger_correction", "ledger_payment_record"].includes(
         operation.entityType,

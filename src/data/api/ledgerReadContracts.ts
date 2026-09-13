@@ -3,6 +3,10 @@ import { z } from "zod";
 import { isIso4217Money } from "@/domain/ledger/currency";
 import { receiptSchema } from "./ledgerReceiptContracts";
 import { finalizedSettlementSchema } from "./ledgerSettlementContracts";
+import {
+  ledgerReviewActionSchema,
+  ledgerReviewFindingSchema,
+} from "./ledgerReviewContracts";
 
 const uuidSchema = z.uuid();
 export const ledgerMoneySchema = z
@@ -205,6 +209,8 @@ export const ledgerBootstrapResponseSchema = z.object({
   rateQuotes: z.array(ledgerRateQuoteSchema).default([]),
   receipts: z.array(receiptSchema).optional(),
   settlements: z.array(finalizedSettlementSchema).optional(),
+  reviewFindings: z.array(ledgerReviewFindingSchema).optional(),
+  reviewActions: z.array(ledgerReviewActionSchema).optional(),
   actor: z.object({
     userId: uuidSchema.optional(),
     memberId: uuidSchema.nullable(),
@@ -226,6 +232,7 @@ export const ledgerChangesResponseSchema = z.object({
         "PAYMENT_RECORD",
         "RECEIPT",
         "SETTLEMENT",
+        "REVIEW_FINDING",
       ]),
       entityId: uuidSchema,
       revision: z.number().int().positive(),
@@ -239,11 +246,13 @@ export const ledgerChangesResponseSchema = z.object({
           ledgerPaymentRecordSchema,
           receiptSchema,
           finalizedSettlementSchema,
+          ledgerReviewFindingSchema,
         ])
         .nullable(),
     }),
   ),
   cursor: z.string().nullable(),
+  hasMore: z.boolean().optional(),
   serverTime: z.string(),
 });
 

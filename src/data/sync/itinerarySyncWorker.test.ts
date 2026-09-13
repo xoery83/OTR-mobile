@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { ItineraryItem } from "@/domain/itinerary/types";
+import { ApiClientError } from "@/data/api/client";
 
 import { createItinerarySyncWorker } from "./itinerarySyncWorker";
 import { createSyncEngine } from "./syncEngine";
@@ -70,7 +71,9 @@ describe("itinerary sync worker", () => {
   it("keeps the item local and delegates retry metadata on failure", async () => {
     const repository = createRepository();
     const worker = createItinerarySyncWorker(repository, {
-      createItineraryItem: vi.fn().mockRejectedValue(new Error("offline")),
+      createItineraryItem: vi
+        .fn()
+        .mockRejectedValue(new ApiClientError("offline", "network")),
     });
     const queue = {
       listPending: vi.fn().mockResolvedValue([operation]),

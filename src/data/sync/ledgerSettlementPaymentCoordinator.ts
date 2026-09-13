@@ -7,10 +7,6 @@ import { createLedgerSettlementTransport } from "./ledgerSettlementTransport";
 import { createLedgerSettlementPaymentSyncWorker } from "./ledgerSettlementPaymentSyncWorker";
 import type { AuthState } from "@/domain/auth/authState";
 
-function nextAttemptAt(attempt: number) {
-  return new Date(Date.now() + attempt * 30_000).toISOString();
-}
-
 export async function runLedgerSettlementPaymentSync(
   authState: AuthState = "AUTHENTICATED_ONLINE",
   journeyId?: string,
@@ -22,7 +18,7 @@ export async function runLedgerSettlementPaymentSync(
       createLedgerSettlementRepository(database),
       createLedgerSettlementTransport(),
     ),
-    nextAttemptAt,
+    undefined,
     (operation) =>
       ["ledger_settlement_payment", "ledger_settlement_adjustment"].includes(
         operation.entityType,

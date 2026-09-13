@@ -3,6 +3,7 @@ import { createLedgerExpenseRepository } from "@/data/repositories/ledgerExpense
 import { createLedgerReceiptRepository } from "@/data/repositories/ledgerReceiptRepository";
 import { createLedgerReceiptTransport } from "./ledgerReceiptTransport";
 import { pushReceiptOperation } from "./ledgerReceiptSyncWorker";
+import { nextSyncAttemptAt, syncFailureClass } from "./syncEngine";
 
 export async function runLedgerReceiptSync(
   options: { transport?: ReturnType<typeof createLedgerReceiptTransport> } = {},
@@ -14,15 +15,23 @@ export async function runLedgerReceiptSync(
   await receipts.recoverInterruptedOperations();
   const operations = await receipts.listPendingOperations();
   for (const operation of operations) {
-    await receipts.markOperation(operation.id, "PROCESSING");
+    if (!(await receipts.claimOperation(operation.id))) continue;
     try {
       await pushReceiptOperation(operation, receipts, expenses, transport);
       await receipts.markOperation(operation.id, "COMPLETED");
     } catch (error) {
+      const normalized =
+        error instanceof Error ? error : new Error("Receipt operation failed.");
+      const kind = syncFailureClass(normalized);
       await receipts.markOperation(
         operation.id,
-        "RETRYABLE",
-        error instanceof Error ? error.message : "Receipt operation failed.",
+        kind === "retryable" ? "RETRYABLE" : kind === "auth" ? "PENDING" : "FAILED",
+        kind === "retryable"
+          ? "RETRYABLE_TRANSPORT"
+          : kind === "auth"
+            ? "AUTH_PAUSED"
+            : "TERMINAL",
+        kind === "retryable" ? nextSyncAttemptAt(operation.attemptCount + 1) : null,
       );
     }
   }

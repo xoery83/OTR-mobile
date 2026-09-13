@@ -68,8 +68,9 @@ describe("SQLite migrations", () => {
     expect(stage7Finalization.sql).not.toContain("ledger_settlement_payments");
 
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(15);
-    expect(latest.sql).toContain("CREATE TABLE ledger_settlement_exports");
+    expect(latest.id).toBe(16);
+    expect(latest.sql).toContain("CREATE TABLE ledger_review_findings");
+    expect(latest.sql).toContain("CREATE TABLE ledger_review_finding_actions");
   });
 
   it("migrates a v13 Settlement through a cold v14 restart", () => {

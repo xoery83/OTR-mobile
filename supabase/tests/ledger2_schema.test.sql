@@ -15,9 +15,9 @@ select is(
       'settlement_inputs', 'settlement_member_balances', 'settlement_transfers',
       'settlement_payments', 'ledger_review_findings', 'ledger_idempotency_keys',
       'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes',
-      'settlement_audit_events'
+      'settlement_audit_events', 'ledger_review_finding_actions'
     )),
-  23,
+  24,
   'all Ledger 2 tables exist'
 );
 
@@ -32,9 +32,9 @@ select is(
       'settlement_inputs', 'settlement_member_balances', 'settlement_transfers',
       'settlement_payments', 'ledger_review_findings', 'ledger_idempotency_keys',
       'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes',
-      'settlement_audit_events'
+      'settlement_audit_events', 'ledger_review_finding_actions'
     ) and c.relrowsecurity and c.relforcerowsecurity),
-  23,
+  24,
   'all Ledger 2 tables enable and force RLS'
 );
 
@@ -48,7 +48,7 @@ select is(
       'settlement_inputs', 'settlement_member_balances', 'settlement_transfers',
       'settlement_payments', 'ledger_review_findings', 'ledger_idempotency_keys',
       'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes',
-      'settlement_audit_events'
+      'settlement_audit_events', 'ledger_review_finding_actions'
     ])),
   0,
   'Ledger 2 exposes no direct user policies'
@@ -74,9 +74,9 @@ select is(
         'settlement_inputs', 'settlement_member_balances', 'settlement_transfers',
         'settlement_payments', 'ledger_review_findings', 'ledger_idempotency_keys',
         'ledger_changes', 'expense_conflict_resolutions', 'ledger_rate_quotes',
-        'settlement_audit_events'
+        'settlement_audit_events', 'ledger_review_finding_actions'
       )),
-  23,
+  24,
   'service role has backend access to all Ledger 2 tables'
 );
 

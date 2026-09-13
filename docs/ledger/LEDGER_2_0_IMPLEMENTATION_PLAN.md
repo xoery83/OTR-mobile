@@ -5,7 +5,8 @@ Status: Approved; Stage 0 through Stage 6 physically validated and complete;
 Stage 7.1 passed automated, Hosted Dev, and two-client Simulator acceptance;
 Stage 7.2A gate approved after automated, Hosted Dev, and two-client Simulator acceptance;
 Stage 7.2B gate approved after automated, Hosted Dev, and two-client Simulator acceptance;
-Stage 7.3 and Stage 7 physically validated and complete on 2026-09-13
+Stage 7.3 and Stage 7 physically validated and complete on 2026-09-13;
+Stage 8 physically validated and complete on 2026-09-13
 
 ## Objective
 
@@ -420,6 +421,10 @@ Exit gate:
 
 ## Stage 8: Ledger Review And Operational Hardening
 
+Status: Complete. Implementation, automated/Hosted Dev validation, two-client
+Release Simulator acceptance, and physical iPhone Release acceptance passed on
+2026-09-13.
+
 Add authoritative deterministic validation and advisory review findings.
 Heuristics may flag duplicates, amount/rate outliers, evidence mismatch, or
 participant anomalies but cannot mutate financial records.
@@ -434,6 +439,12 @@ Exit gate:
 - heuristic findings can be acknowledged without changing money;
 - corrupted cursors and interrupted batches recover without loss or duplication;
 - logs contain no tokens, receipt contents, names, notes, or amounts.
+
+Physical acceptance on Leon's iPhone 16 Pro (iOS 26.6) covered authenticated
+Review actions, offline cached cold start without Metro, restart-safe backoff,
+single-claim foreground/background convergence, guarded receipt cleanup,
+Dynamic Type, VoiceOver, diagnostics redaction, and final read-only SQLite and
+financial-lineage verification. All exit-gate checks passed.
 
 ## Stage 9: Europe Journey Replay Import
 

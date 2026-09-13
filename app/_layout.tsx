@@ -3,7 +3,10 @@ import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 
 import { bootstrapApplication } from "@/data/bootstrap/bootstrapApplication";
-import { defaultBootstrapDependencies } from "@/data/bootstrap/defaultBootstrapDependencies";
+import {
+  defaultBootstrapDependencies,
+  subscribeOperationalSyncLifecycle,
+} from "@/data/bootstrap/defaultBootstrapDependencies";
 
 export default function RootLayout() {
   const [queryClient] = useState(
@@ -22,6 +25,11 @@ export default function RootLayout() {
     void bootstrapApplication(defaultBootstrapDependencies).catch(() => {
       // The shell remains available while durable operations wait for a later retry.
     });
+  }, []);
+
+  useEffect(() => {
+    const subscription = subscribeOperationalSyncLifecycle();
+    return () => subscription.remove();
   }, []);
 
   return (

@@ -19,7 +19,7 @@ export async function bootstrapApplication(
   await dependencies.openDatabase();
   const session = await dependencies.readLocalSession();
   const authState = stateFromLocalSession(session);
-  await dependencies.resumeSync?.().catch(() => {
+  void dependencies.resumeSync?.().catch(() => {
     // Startup and cached reads never depend on network sync success.
   });
 

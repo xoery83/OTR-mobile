@@ -3,6 +3,8 @@ import type * as SQLite from "expo-sqlite";
 import type { ReceiptDto, ReceiptSuggestion } from "@/data/api/ledgerReceiptContracts";
 import { createLocalId } from "@/domain/localId";
 
+const processClaimOwner = createLocalId("receipt-process");
+
 export type ReceiptAsset = {
   id: string;
   serverId: string | null;
@@ -99,24 +101,42 @@ export function createLedgerReceiptRepository(database: Database) {
       return rows.map(mapReceipt);
     },
     async listPendingOperations() {
-      return database.getAllAsync<AssetOperation>(`SELECT id, journey_id AS journeyId, asset_id AS assetId,
+      return database.getAllAsync<AssetOperation>(
+        `SELECT id, journey_id AS journeyId, asset_id AS assetId,
         operation_type AS operationType, idempotency_key AS idempotencyKey, status,
         attempt_count AS attemptCount, next_attempt_at AS nextAttemptAt
-        FROM ledger_asset_operations WHERE status IN ('PENDING', 'RETRYABLE') ORDER BY created_at`);
+        FROM ledger_asset_operations WHERE status IN ('PENDING', 'RETRYABLE')
+          AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
+        ORDER BY created_at`,
+        new Date().toISOString(),
+      );
+    },
+    async claimOperation(id: string) {
+      const now = new Date().toISOString();
+      const result = await database.runAsync(
+        `UPDATE ledger_asset_operations SET status = 'PROCESSING', claim_owner = ?,
+          lease_expires_at = ?, updated_at = ?
+         WHERE id = ? AND status IN ('PENDING', 'RETRYABLE')
+           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)`,
+        processClaimOwner,
+        new Date(Date.now() + 5 * 60_000).toISOString(),
+        now,
+        id,
+        now,
+      );
+      return result.changes === 1;
     },
     async recoverInterruptedOperations() {
       const now = new Date().toISOString();
       await database.withTransactionAsync(async () => {
         await database.runAsync(
-          "UPDATE ledger_asset_operations SET status = 'RETRYABLE', attempt_count = attempt_count + 1, updated_at = ? WHERE status = 'PROCESSING'",
+          `UPDATE ledger_asset_operations SET status = 'RETRYABLE',
+            attempt_count = attempt_count + 1, next_attempt_at = ?, claim_owner = NULL,
+            lease_expires_at = NULL, updated_at = ? WHERE status = 'PROCESSING'
+            AND (claim_owner IS NULL OR claim_owner <> ? OR lease_expires_at <= ?)`,
           now,
-        );
-        await database.runAsync(
-          "UPDATE ledger_receipt_assets SET upload_status = 'FAILED', updated_at = ? WHERE upload_status = 'UPLOADING'",
           now,
-        );
-        await database.runAsync(
-          "UPDATE ledger_receipt_assets SET ocr_status = 'FAILED', updated_at = ? WHERE ocr_status = 'RUNNING'",
+          processClaimOwner,
           now,
         );
       });
@@ -125,13 +145,16 @@ export function createLedgerReceiptRepository(database: Database) {
       id: string,
       status: AssetOperation["status"],
       error: string | null = null,
+      nextAttemptAt: string | null = null,
     ) {
       await database.runAsync(
         `UPDATE ledger_asset_operations SET status = ?, attempt_count = attempt_count + CASE WHEN ? = 'RETRYABLE' THEN 1 ELSE 0 END,
-        last_error_code = ?, updated_at = ? WHERE id = ?`,
+        last_error_code = ?, next_attempt_at = ?, claim_owner = NULL,
+        lease_expires_at = NULL, updated_at = ? WHERE id = ?`,
         status,
         status,
         error,
+        nextAttemptAt,
         new Date().toISOString(),
         id,
       );

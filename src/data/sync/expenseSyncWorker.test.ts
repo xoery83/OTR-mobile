@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { Expense } from "@/domain/expense/types";
+import { ApiClientError } from "@/data/api/client";
 
 import { createExpenseSyncWorker } from "./expenseSyncWorker";
 import { createSyncEngine } from "./syncEngine";
@@ -65,7 +66,7 @@ describe("expense sync worker", () => {
   it("keeps the local expense and creates retry metadata after a transport failure", async () => {
     const repository = createRepository();
     const worker = createExpenseSyncWorker(repository, {
-      createExpense: vi.fn().mockRejectedValue(new Error("offline")),
+      createExpense: vi.fn().mockRejectedValue(new ApiClientError("offline", "network")),
     });
     const queue = {
       listPending: vi.fn().mockResolvedValue([operation]),

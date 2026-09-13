@@ -5,7 +5,7 @@ import { createLocalId } from "@/domain/localId";
 import { allocateSettlementFromOriginal } from "@/domain/ledger/allocation";
 import { assertMoney } from "@/domain/ledger/money";
 import { previewValuation } from "@/domain/ledger/valuation";
-import { validateExpenseAggregate } from "@/domain/ledger/validation";
+import { assertValidExpenseAggregate } from "@/domain/ledger/validation";
 import type {
   ExpenseAggregate,
   ExpenseBusinessStatus,
@@ -696,17 +696,12 @@ function buildLocalExpense(
 function assertCommand(expense: LedgerExpense) {
   if (!expense.journeyId.trim()) throw new Error("A Ledger expense needs a Journey.");
   if (!expense.title) throw new Error("A Ledger expense needs a title.");
-  const issues = validateExpenseAggregate(
+  assertValidExpenseAggregate(
     expense,
     new Set(
       expense.participants.map((item) => item.memberId).concat(expense.payerMemberId),
     ),
   );
-  if (issues.length > 0) {
-    throw new Error(
-      `Invalid Ledger expense: ${issues.map((issue) => issue.code).join(", ")}`,
-    );
-  }
 }
 
 async function insertExpenseAggregate(

@@ -67,6 +67,12 @@ import {
   type CreateReceiptRequest,
   type ReceiptDto,
 } from "../../src/data/api/ledgerReceiptContracts";
+import {
+  ledgerReviewActionRequestSchema,
+  type LedgerReviewActionDto,
+  type LedgerReviewActionRequest,
+  type LedgerReviewFindingDto,
+} from "../../src/data/api/ledgerReviewContracts";
 
 import { deriveServerId, type SyncEntityType } from "./serverId";
 
@@ -116,6 +122,31 @@ export type DevBackendGateway = {
     quoteCurrency: string | null,
     baseCurrency: string | null,
   ): Promise<LedgerRateQuoteDto[]>;
+  readLedgerReview(
+    userId: string,
+    tripId: string,
+  ): Promise<{
+    findings: LedgerReviewFindingDto[];
+    actions: LedgerReviewActionDto[];
+  }>;
+  refreshLedgerReview(
+    userId: string,
+    tripId: string,
+  ): Promise<{
+    findings: LedgerReviewFindingDto[];
+    actions: LedgerReviewActionDto[];
+  }>;
+  actOnLedgerReviewFinding(
+    userId: string,
+    tripId: string,
+    findingId: string,
+    idempotencyKey: string,
+    input: LedgerReviewActionRequest,
+  ): Promise<{
+    finding: LedgerReviewFindingDto;
+    action: LedgerReviewActionDto;
+    idempotentReplay: boolean;
+  }>;
   previewLedgerSettlement(
     userId: string,
     tripId: string,
@@ -248,6 +279,11 @@ export type DevBackendGateway = {
     bytes: Uint8Array,
     mimeType: string,
   ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
+  downloadReceiptContent(
+    userId: string,
+    tripId: string,
+    receiptId: string,
+  ): Promise<{ bytes: Uint8Array; mimeType: string }>;
   completeReceipt(
     userId: string,
     tripId: string,
@@ -323,6 +359,13 @@ const idempotencyKeyPattern = /^[A-Za-z0-9._:-]{1,200}$/;
 const routePattern = /^\/v1\/trips\/([^/]+)\/(expenses|itinerary-items)$/;
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function redactLogRoute(pathname: string) {
+  return pathname
+    .split("/")
+    .map((part) => (uuidPattern.test(part) ? ":id" : part))
+    .join("/");
+}
 
 function json(status: number, body: unknown) {
   return Response.json(body, {
@@ -429,6 +472,56 @@ async function mutateReceipt(request: Request, gateway: DevBackendGateway) {
   if (action === "ocr")
     return json(200, await gateway.ocrReceipt(user.id, tripId, receiptId, key));
   throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+}
+
+async function readReceiptContent(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/receipts\/([^/]+)\/content$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, receiptId] = match;
+  const user = await authorizeRead(request, gateway, tripId);
+  if (!uuidPattern.test(receiptId))
+    throw new HttpError(400, "INVALID_RECEIPT_ID", "The receipt id is invalid.");
+  const content = await gateway.downloadReceiptContent(user.id, tripId, receiptId);
+  return new Response(content.bytes as BodyInit, {
+    status: 200,
+    headers: { "Cache-Control": "no-store", "Content-Type": content.mimeType },
+  });
+}
+
+async function mutateLedgerReview(request: Request, gateway: DevBackendGateway) {
+  const refresh = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/ledger\/review\/refresh$/,
+  );
+  if (refresh) {
+    const user = await authorizeRead(request, gateway, refresh[1]);
+    return json(200, await gateway.refreshLedgerReview(user.id, refresh[1]));
+  }
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/review-findings\/([^/]+)\/actions$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, findingId] = match;
+  assertTripId(tripId);
+  if (!uuidPattern.test(findingId))
+    throw new HttpError(400, "INVALID_FINDING_ID", "The finding id is invalid.");
+  const user = await authenticate(request, gateway);
+  if (!(await gateway.canReadTrip(user.id, tripId)))
+    throw new HttpError(403, "TRIP_READ_FORBIDDEN", "Trip read access is required.");
+  const parsed = ledgerReviewActionRequestSchema.safeParse(await parseBody(request));
+  if (!parsed.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  return json(
+    200,
+    await gateway.actOnLedgerReviewFinding(
+      user.id,
+      tripId,
+      findingId,
+      getIdempotencyKey(request),
+      parsed.data,
+    ),
+  );
 }
 
 function assertOriginalCreate(stored: StoredCreate, tripId: string, userId: string) {
@@ -932,6 +1025,12 @@ async function readEntity(request: Request, gateway: DevBackendGateway) {
     );
   }
 
+  const review = url.pathname.match(/^\/v2\/trips\/([^/]+)\/ledger\/review$/);
+  if (review) {
+    const user = await authorizeRead(request, gateway, review[1]);
+    return json(200, await gateway.readLedgerReview(user.id, review[1]));
+  }
+
   const expenses = url.pathname.match(/^\/v2\/trips\/([^/]+)\/expenses$/);
   if (expenses) {
     const [, tripId] = expenses;
@@ -1105,9 +1204,22 @@ export function createDevBackendHandler({
       if (request.method === "GET" && url.pathname === "/health") {
         route = "health";
         response = json(200, { status: "ok", environment: "development" });
+      } else if (
+        request.method === "GET" &&
+        /\/v2\/trips\/[^/]+\/receipts\/[^/]+\/content$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/receipts/:receiptId/content";
+        response = await readReceiptContent(request, gateway);
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
-        route = url.pathname;
+        route = redactLogRoute(url.pathname);
         response = await readEntity(request, gateway);
+      } else if (
+        request.method === "POST" &&
+        (/\/v2\/trips\/[^/]+\/review-findings\/[^/]+\/actions$/.test(url.pathname) ||
+          /\/v2\/trips\/[^/]+\/ledger\/review\/refresh$/.test(url.pathname))
+      ) {
+        route = "/v2/trips/:tripId/review-findings/:findingId/actions";
+        response = await mutateLedgerReview(request, gateway);
       } else if (
         ["POST", "PUT"].includes(request.method) &&
         /\/v2\/trips\/[^/]+\/receipts/.test(url.pathname)

@@ -60,11 +60,21 @@ import {
 } from "../../src/domain/ledger/settlement";
 import { previewValuation } from "../../src/domain/ledger/valuation";
 import { deriveTransferPaymentState } from "../../src/domain/ledger/paymentLifecycle";
+import { reviewExpenses } from "../../src/domain/ledger/review";
+import {
+  assertValidExpenseAggregate,
+  LedgerValidationError,
+  validateExpenseAggregate,
+} from "../../src/domain/ledger/validation";
 import type {
   CompleteReceiptRequest,
   CreateReceiptRequest,
   ReceiptDto,
 } from "../../src/data/api/ledgerReceiptContracts";
+import type {
+  LedgerReviewActionDto,
+  LedgerReviewFindingDto,
+} from "../../src/data/api/ledgerReviewContracts";
 import {
   createReceiptOcrProvider,
   extractReceiptSuggestion,
@@ -102,24 +112,111 @@ function rowToStoredCreate(row: Record<string, unknown>): StoredCreate {
   };
 }
 
-function encodeCursor(sequence: number) {
-  return Buffer.from(JSON.stringify({ sequence })).toString("base64url");
+const ledgerCursorVersion = 1;
+
+export function encodeLedgerCursor(sequence: number, tripId: string, userId: string) {
+  return Buffer.from(
+    JSON.stringify({ version: ledgerCursorVersion, sequence, tripId, userId }),
+  ).toString("base64url");
 }
 
-function decodeCursor(cursor: string | null) {
+export function decodeLedgerCursor(
+  cursor: string | null,
+  tripId: string,
+  userId: string,
+) {
   if (!cursor) return 0;
   try {
     const decoded = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as {
+      version?: unknown;
       sequence?: unknown;
+      tripId?: unknown;
+      userId?: unknown;
     };
-    return typeof decoded.sequence === "number" ? decoded.sequence : 0;
+    if (
+      decoded.version !== ledgerCursorVersion ||
+      !Number.isSafeInteger(decoded.sequence) ||
+      Number(decoded.sequence) < 0 ||
+      decoded.tripId !== tripId ||
+      decoded.userId !== userId
+    )
+      throw new Error();
+    return Number(decoded.sequence);
   } catch {
-    return 0;
+    throw new BackendError(400, "INVALID_CURSOR", "The Ledger cursor is invalid.");
   }
+}
+
+export function assertLedgerCursorContinuation(sequence: number, latest: number) {
+  if (sequence > latest)
+    throw new BackendError(
+      400,
+      "INVALID_CURSOR",
+      "The Ledger cursor continuation is invalid.",
+    );
+}
+
+function encodePageCursor(sequence: number) {
+  return Buffer.from(JSON.stringify({ sequence })).toString("base64url");
+}
+
+function stableReviewId(value: string) {
+  const hash = createHash("sha256").update(value).digest("hex");
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-5${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
 }
 
 function hashPayload(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+function reviewFindingRowToDto(row: Record<string, unknown>): LedgerReviewFindingDto {
+  return {
+    id: String(row.id),
+    journeyId: String(row.journey_id),
+    expenseId: row.expense_id ? String(row.expense_id) : null,
+    settlementId: row.settlement_id ? String(row.settlement_id) : null,
+    layer: row.layer as LedgerReviewFindingDto["layer"],
+    findingType: String(row.finding_type),
+    severity: row.severity as LedgerReviewFindingDto["severity"],
+    confidence: row.confidence === null ? null : Number(row.confidence),
+    evidenceCodes: (row.evidence_codes ?? []) as string[],
+    status: row.status as LedgerReviewFindingDto["status"],
+    rulesetVersion: String(row.ruleset_version),
+    entityRevision: row.entity_revision === null ? null : Number(row.entity_revision),
+    revision: Number(row.revision),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+function reviewActionRowToDto(row: Record<string, unknown>): LedgerReviewActionDto {
+  return {
+    id: String(row.id),
+    findingId: String(row.finding_id),
+    action: row.action as LedgerReviewActionDto["action"],
+    actorUserId: String(row.actor_user_id),
+    actorMemberId: String(row.actor_member_id),
+    actorRole: String(row.actor_role),
+    reason: String(row.reason),
+    findingRevision: Number(row.finding_revision),
+    entityRevision: row.entity_revision === null ? null : Number(row.entity_revision),
+    rulesetVersion: String(row.ruleset_version),
+    operationId: String(row.operation_id),
+    createdAt: String(row.created_at),
+  };
+}
+
+async function readLedgerReviewData(service: SupabaseClient, tripId: string) {
+  const [findings, actions] = await Promise.all([
+    service.from("ledger_review_findings").select("*").eq("journey_id", tripId),
+    service.from("ledger_review_finding_actions").select("*").eq("journey_id", tripId),
+  ]);
+  if (findings.error || actions.error)
+    throw new Error("Supabase Dev Ledger Review read failed.");
+  return {
+    findings: (findings.data ?? []).map((row) => reviewFindingRowToDto(row)),
+    actions: (actions.data ?? []).map((row) => reviewActionRowToDto(row)),
+  };
 }
 
 function capabilities(role: string | null, status: string | null) {
@@ -250,12 +347,165 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return result.data.length > 0;
     },
 
+    async readLedgerReview(_userId, tripId) {
+      return readLedgerReviewData(service, tripId);
+    },
+
+    async refreshLedgerReview(_userId, tripId) {
+      const expenseRows = await service
+        .from("expenses")
+        .select(
+          "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, revision, deleted_at, created_at, updated_at",
+        )
+        .eq("journey_id", tripId);
+      if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
+      const expenses = await readExpenseAggregates(service, expenseRows.data ?? []);
+      const heuristic = reviewExpenses(
+        expenses.map((expense) => ({ ...expense, status: expense.businessStatus })),
+      );
+      const memberRows = await service
+        .from("journey_members")
+        .select("id")
+        .eq("trip_id", tripId);
+      if (memberRows.error) throw new Error("Supabase Dev Review member read failed.");
+      const memberIds = new Set((memberRows.data ?? []).map((row) => String(row.id)));
+      const observations = [
+        ...heuristic.map((item) => ({ ...item, layer: "HEURISTIC" as const })),
+        ...expenses.flatMap((expense) =>
+          validateExpenseAggregate(
+            { ...expense, status: expense.businessStatus },
+            memberIds,
+          ).map((issue) => ({
+            expenseId: expense.id,
+            entityRevision: expense.revision,
+            rulesetVersion: "ledger-validation-v1",
+            findingType: issue.code,
+            severity: "BLOCKING" as const,
+            confidence: null,
+            evidenceCodes: [issue.code, `FIELD:${issue.field}`],
+            layer: "DETERMINISTIC" as const,
+          })),
+        ),
+      ];
+      const current = await service
+        .from("ledger_review_findings")
+        .select(
+          "id, expense_id, entity_revision, ruleset_version, finding_type, layer, evidence_codes, status",
+        )
+        .eq("journey_id", tripId)
+        .neq("status", "STALE");
+      if (current.error) throw new Error("Supabase Dev Review state read failed.");
+      const activeKeys = new Set(
+        observations.map(
+          (item) =>
+            `${item.layer}:${item.expenseId}:${item.entityRevision}:${item.rulesetVersion}:${item.findingType}:${item.evidenceCodes.join(",")}`,
+        ),
+      );
+      const staleIds = (current.data ?? [])
+        .filter(
+          (row) =>
+            !activeKeys.has(
+              `${String(row.layer)}:${String(row.expense_id)}:${Number(row.entity_revision)}:${String(row.ruleset_version)}:${String(row.finding_type)}:${((row.evidence_codes ?? []) as string[]).join(",")}`,
+            ),
+        )
+        .map((row) => String(row.id));
+      if (staleIds.length) {
+        const stale = await service
+          .from("ledger_review_findings")
+          .update({ status: "STALE" })
+          .in("id", staleIds);
+        if (stale.error) throw new Error("Supabase Dev Review stale update failed.");
+      }
+      if (observations.length) {
+        const inserted = await service.from("ledger_review_findings").upsert(
+          observations.map((item) => ({
+            id: stableReviewId(
+              `${tripId}:${item.layer}:${item.expenseId}:${item.entityRevision}:${item.rulesetVersion}:${item.findingType}:${item.evidenceCodes.join(",")}`,
+            ),
+            journey_id: tripId,
+            expense_id: item.expenseId,
+            layer: item.layer,
+            finding_type: item.findingType,
+            severity: item.severity,
+            confidence: item.confidence,
+            evidence_codes: item.evidenceCodes,
+            status: "OPEN",
+            ruleset_version: item.rulesetVersion,
+            entity_revision: item.entityRevision,
+          })),
+          { onConflict: "id", ignoreDuplicates: true },
+        );
+        if (inserted.error) throw new Error("Supabase Dev Review generation failed.");
+      }
+      return readLedgerReviewData(service, tripId);
+    },
+
+    async actOnLedgerReviewFinding(userId, tripId, findingId, idempotencyKey, input) {
+      if (input.operationId !== idempotencyKey)
+        throw new BackendError(
+          409,
+          "IDEMPOTENCY_CONFLICT",
+          "Review operation identity differs.",
+        );
+      const result = await service.rpc("act_on_ledger_review_finding", {
+        p_actor_user_id: userId,
+        p_journey_id: tripId,
+        p_finding_id: findingId,
+        p_action: input.action,
+        p_base_revision: input.baseRevision,
+        p_reason: input.reason,
+        p_operation_id: input.operationId,
+      });
+      if (result.error) {
+        const message = result.error.message;
+        if (message.includes("IDEMPOTENCY_CONFLICT"))
+          throw new BackendError(
+            409,
+            "IDEMPOTENCY_CONFLICT",
+            "The Review idempotency key conflicts.",
+          );
+        if (message.includes("REVIEW_ACTION_FORBIDDEN"))
+          throw new BackendError(
+            403,
+            "REVIEW_ACTION_FORBIDDEN",
+            "Review action is not authorized.",
+          );
+        if (message.includes("REVIEW_FINDING_STALE"))
+          throw new BackendError(
+            409,
+            "REVIEW_FINDING_STALE",
+            "Review finding revision is stale.",
+          );
+        if (message.includes("DETERMINISTIC_REVIEW_ACTION_FORBIDDEN"))
+          throw new BackendError(
+            422,
+            "DETERMINISTIC_REVIEW_ACTION_FORBIDDEN",
+            "Deterministic validation cannot be bypassed.",
+          );
+        throw new BackendError(
+          422,
+          "INVALID_REVIEW_ACTION",
+          "Review action was rejected.",
+        );
+      }
+      const value = result.data as {
+        finding: Record<string, unknown>;
+        action: Record<string, unknown>;
+        idempotentReplay: boolean;
+      };
+      return {
+        finding: reviewFindingRowToDto(value.finding),
+        action: reviewActionRowToDto(value.action),
+        idempotentReplay: Boolean(value.idempotentReplay),
+      };
+    },
+
     async bootstrapLedger(userId, tripId) {
       return readLedgerBootstrap(service, tripId, userId);
     },
 
-    async pullLedgerChanges(_userId, tripId, cursor) {
-      return readLedgerChanges(service, tripId, cursor);
+    async pullLedgerChanges(userId, tripId, cursor) {
+      return readLedgerChanges(service, userId, tripId, cursor);
     },
 
     async readLedgerExpenses(userId, tripId, filters, limit, offset) {
@@ -461,6 +711,23 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     uploadReceiptContent(userId, tripId, receiptId, bytes, mimeType) {
       return uploadReceiptContent(service, userId, tripId, receiptId, bytes, mimeType);
+    },
+    async downloadReceiptContent(userId, tripId, receiptId) {
+      const row = await readReceipt(service, userId, tripId, receiptId);
+      if (row.upload_status !== "UPLOADED" || !row.object_path)
+        throw new BackendError(
+          409,
+          "RECEIPT_NOT_DOWNLOADABLE",
+          "Receipt content is not canonical.",
+        );
+      const result = await service.storage
+        .from("ledger-receipts")
+        .download(String(row.object_path));
+      if (result.error) throw new Error("Supabase Dev receipt download failed.");
+      return {
+        bytes: new Uint8Array(await result.data.arrayBuffer()),
+        mimeType: String(row.mime_type),
+      };
     },
 
     completeReceipt(userId, tripId, receiptId, key, input) {
@@ -926,6 +1193,10 @@ async function createLedgerExpenseAggregate(
       },
     ],
   };
+  await validateCanonicalExpense(service, tripId, {
+    ...entity,
+    status: entity.businessStatus,
+  });
   const response = {
     entity,
     serverId,
@@ -1080,6 +1351,10 @@ async function mutateLedgerExpenseAggregate(
     revision: nextRevision,
     createdAt: now,
   });
+  await validateCanonicalExpense(service, tripId, {
+    ...entity,
+    status: entity.businessStatus,
+  });
   const response = {
     entity,
     serverId: expenseId,
@@ -1178,6 +1453,30 @@ async function mutateLedgerExpenseAggregate(
   }
 
   return result.data as typeof response;
+}
+
+async function validateCanonicalExpense(
+  service: SupabaseClient,
+  tripId: string,
+  expense: Parameters<typeof assertValidExpenseAggregate>[0],
+) {
+  const members = await service
+    .from("journey_members")
+    .select("id")
+    .eq("trip_id", tripId);
+  if (members.error) throw new Error("Supabase Dev member validation failed.");
+  try {
+    assertValidExpenseAggregate(
+      expense,
+      new Set((members.data ?? []).map((member) => String(member.id))),
+    );
+  } catch (error) {
+    if (error instanceof LedgerValidationError)
+      throw new BackendError(422, error.code, error.message, {
+        error: { issues: error.issues },
+      });
+    throw error;
+  }
 }
 
 async function readRateQuotes(
@@ -2782,6 +3081,7 @@ async function readLedgerBootstrap(
     tripId,
     await readFinalizedSettlements(service, tripId),
   );
+  const review = await readLedgerReviewData(service, tripId);
   const lastSequence = await latestLedgerSequence(service, tripId);
   const setting = settings.data as Record<string, unknown> | null;
   const tripRow = trip.data as Record<string, unknown> | null;
@@ -2836,34 +3136,40 @@ async function readLedgerBootstrap(
       receiptRowToDto(row as Record<string, unknown>),
     ),
     settlements: finalizedSettlements,
+    reviewFindings: review.findings,
+    reviewActions: review.actions,
     actor: {
       userId,
       memberId: actorRow ? String(actorRow.id) : null,
       role: actorRole,
       capabilities: capabilities(actorRole, actorStatus),
     },
-    cursor: lastSequence ? encodeCursor(lastSequence) : null,
+    cursor: lastSequence ? encodeLedgerCursor(lastSequence, tripId, userId) : null,
     serverTime: now,
   };
 }
 
 async function readLedgerChanges(
   service: SupabaseClient,
+  userId: string,
   tripId: string,
   cursor: string | null,
 ): Promise<LedgerChangesResponse> {
-  const after = decodeCursor(cursor);
+  const after = decodeLedgerCursor(cursor, tripId, userId);
+  assertLedgerCursorContinuation(after, await latestLedgerSequence(service, tripId));
   const result = await service
     .from("ledger_changes")
     .select("sequence, entity_type, entity_id, revision, is_tombstone")
     .eq("journey_id", tripId)
     .gt("sequence", after)
     .order("sequence", { ascending: true })
-    .limit(100);
+    .limit(101);
 
   if (result.error) throw new Error("Supabase Dev Ledger changes failed.");
 
-  const rows = result.data ?? [];
+  const allRows = result.data ?? [];
+  const hasMore = allRows.length > 100;
+  const rows = allRows.slice(0, 100);
   const visibleRows = rows.filter(
     (row) => !["TRANSFER", "TRANSFER_PAYMENT"].includes(row.entity_type),
   );
@@ -2888,6 +3194,9 @@ async function readLedgerChanges(
     .map((row) => String(row.entity_id));
   const settlementIds = rows
     .filter((row) => row.entity_type === "SETTLEMENT")
+    .map((row) => String(row.entity_id));
+  const reviewFindingIds = rows
+    .filter((row) => row.entity_type === "REVIEW_FINDING")
     .map((row) => String(row.entity_id));
   const expenses =
     expenseIds.length > 0
@@ -2953,6 +3262,13 @@ async function readLedgerChanges(
     receiptIds.length > 0
       ? await service.from("receipt_assets").select(receiptColumns).in("id", receiptIds)
       : { data: [], error: null };
+  const reviewFindings =
+    reviewFindingIds.length > 0
+      ? await service
+          .from("ledger_review_findings")
+          .select("*")
+          .in("id", reviewFindingIds)
+      : { data: [], error: null };
   const includeLineageProjection = hasExpenseChanges || settlementIds.length > 0;
   const settlements = includeLineageProjection
     ? await decorateSettlementLineages(
@@ -2970,7 +3286,8 @@ async function readLedgerChanges(
     rateQuotes.error ||
     paymentRecords.error ||
     evidenceAudits.error ||
-    receipts.error
+    receipts.error ||
+    reviewFindings.error
   ) {
     throw new Error("Supabase Dev Ledger household aggregate failed.");
   }
@@ -3006,6 +3323,8 @@ async function readLedgerChanges(
   }
   for (const row of receipts.data ?? [])
     byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
+  for (const row of reviewFindings.data ?? [])
+    byId.set(String(row.id), reviewFindingRowToDto(row as Record<string, unknown>));
   for (const settlement of settlements) byId.set(settlement.id, settlement);
 
   const changes = visibleRows.map((row) => ({
@@ -3034,7 +3353,10 @@ async function readLedgerChanges(
 
   return {
     changes,
-    cursor: rows.length ? encodeCursor(Number(rows[rows.length - 1].sequence)) : cursor,
+    cursor: rows.length
+      ? encodeLedgerCursor(Number(rows[rows.length - 1].sequence), tripId, userId)
+      : cursor,
+    hasMore,
     serverTime: new Date().toISOString(),
   };
 }
@@ -3375,7 +3697,8 @@ async function readLedgerExpenses(
   const page = expenses.slice(offset, offset + limit);
   return {
     expenses: page,
-    nextCursor: offset + limit < expenses.length ? encodeCursor(offset + limit) : null,
+    nextCursor:
+      offset + limit < expenses.length ? encodePageCursor(offset + limit) : null,
   };
 }
 

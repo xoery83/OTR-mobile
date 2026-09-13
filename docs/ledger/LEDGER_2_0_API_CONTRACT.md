@@ -97,6 +97,34 @@ Households, active/open Settlement summary, change cursor, and server time.
 Returns ordered aggregate revisions and tombstones plus the next opaque cursor.
 The cursor is scoped to the authenticated user and Journey.
 
+Stage 8 cursors are versioned and validate Journey, authenticated user, and
+continuation sequence. Decode, version, or scope failure returns
+`INVALID_CURSOR`; it is never interpreted as sequence zero. Responses include
+`hasMore`. Mobile commits each page and its cursor in one SQLite transaction.
+
+### Ledger Review
+
+- `GET /v2/trips/:tripId/ledger/review` returns authorized findings and their
+  append-only action history.
+- `POST /v2/trips/:tripId/ledger/review/refresh` runs deterministic validation
+  against existing canonical revisions and versioned advisory Review rules.
+- `POST /v2/trips/:tripId/review-findings/:findingId/actions` accepts
+  `ACKNOWLEDGED` or `DISMISSED`, base finding revision, non-empty reason, and an
+  operation id equal to `Idempotency-Key`.
+
+Deterministic validation of uncommitted input returns
+`LEDGER_VALIDATION_FAILED` with `{ issues: [{ code, field }] }`; it creates no
+cloud finding. Deterministic findings cannot accept human actions. Expense
+findings may be acted on by their creator or an organizer; Settlement findings
+require an organizer. Actions never edit financial records or finding evidence.
+
+### Receipt Cache Recovery
+
+`GET /v2/trips/:tripId/receipts/:receiptId/content` returns canonical receipt
+bytes only to an authorized Journey reader and only after upload completion.
+Mobile may evict an uploaded local copy only after this route returns bytes whose
+length and SHA-256 match canonical metadata.
+
 ### `GET /v2/trips/:tripId/expenses`
 
 Supports opaque pagination plus date, category, member, currency, status,

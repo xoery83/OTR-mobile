@@ -1,4 +1,5 @@
 import type * as SQLite from "expo-sqlite";
+import { createLocalId } from "@/domain/localId";
 
 export type SyncOperationStatus =
   "PENDING" | "PROCESSING" | "RETRYABLE" | "FAILED" | "CONFLICT" | "COMPLETED";
@@ -27,9 +28,23 @@ export type EnqueueSyncOperation = Omit<
 export type SyncQueueDatabase = Pick<SQLite.SQLiteDatabase, "getAllAsync" | "runAsync">;
 
 const pendingStatuses: SyncOperationStatus[] = ["PENDING", "RETRYABLE"];
+const processClaimOwner = createLocalId("sync-process");
 
 export function createSyncOperationRepository(database: SyncQueueDatabase) {
   return {
+    async recoverInterrupted() {
+      const now = new Date().toISOString();
+      await database.runAsync(
+        `UPDATE sync_operations SET status = 'RETRYABLE', next_attempt_at = ?,
+          last_error_message = 'INTERRUPTED', claim_owner = NULL,
+          lease_expires_at = NULL, updated_at = ? WHERE status = 'PROCESSING'
+          AND (claim_owner IS NULL OR claim_owner <> ? OR lease_expires_at <= ?)`,
+        now,
+        now,
+        processClaimOwner,
+        now,
+      );
+    },
     async enqueue(operation: EnqueueSyncOperation) {
       const now = new Date().toISOString();
 
@@ -73,14 +88,32 @@ export function createSyncOperationRepository(database: SyncQueueDatabase) {
           updated_at AS updatedAt
         FROM sync_operations
         WHERE status IN (?, ?)
+          AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
         ORDER BY created_at ASC`,
         ...pendingStatuses,
+        new Date().toISOString(),
       );
+    },
+
+    async claim(id: string) {
+      const now = new Date().toISOString();
+      const result = await database.runAsync(
+        `UPDATE sync_operations SET status = 'PROCESSING', claim_owner = ?,
+          lease_expires_at = ?, updated_at = ?
+         WHERE id = ? AND status IN ('PENDING', 'RETRYABLE')
+           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)`,
+        processClaimOwner,
+        new Date(Date.now() + 5 * 60_000).toISOString(),
+        now,
+        id,
+        now,
+      );
+      return result.changes === 1;
     },
 
     async markProcessing(id: string) {
       await database.runAsync(
-        "UPDATE sync_operations SET status = ?, updated_at = ? WHERE id = ?",
+        "UPDATE sync_operations SET status = ?, claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ?",
         "PROCESSING",
         new Date().toISOString(),
         id,
@@ -89,7 +122,7 @@ export function createSyncOperationRepository(database: SyncQueueDatabase) {
 
     async markCompleted(id: string) {
       await database.runAsync(
-        "UPDATE sync_operations SET status = ?, updated_at = ? WHERE id = ?",
+        "UPDATE sync_operations SET status = ?, next_attempt_at = NULL, claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ?",
         "COMPLETED",
         new Date().toISOString(),
         id,
@@ -99,9 +132,9 @@ export function createSyncOperationRepository(database: SyncQueueDatabase) {
     async markConflict(id: string, error: Error) {
       await database.runAsync(
         `UPDATE sync_operations
-         SET status = ?, last_error_message = ?, updated_at = ? WHERE id = ?`,
+         SET status = ?, last_error_message = ?, claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ?`,
         "CONFLICT",
-        error.message,
+        safeErrorCode(error),
         new Date().toISOString(),
         id,
       );
@@ -111,14 +144,42 @@ export function createSyncOperationRepository(database: SyncQueueDatabase) {
       await database.runAsync(
         `UPDATE sync_operations
          SET status = ?, attempt_count = attempt_count + 1, next_attempt_at = ?,
-             last_error_message = ?, updated_at = ?
+             last_error_message = ?, claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
          WHERE id = ?`,
         "RETRYABLE",
         nextAttemptAt,
-        error.message,
+        safeErrorCode(error),
+        new Date().toISOString(),
+        id,
+      );
+    },
+    async markFailed(id: string, error: Error) {
+      await database.runAsync(
+        `UPDATE sync_operations SET status = 'FAILED', last_error_message = ?,
+          next_attempt_at = NULL, claim_owner = NULL, lease_expires_at = NULL,
+          updated_at = ? WHERE id = ?`,
+        safeErrorCode(error),
+        new Date().toISOString(),
+        id,
+      );
+    },
+    async markPending(id: string) {
+      await database.runAsync(
+        `UPDATE sync_operations SET status = 'PENDING', next_attempt_at = NULL,
+          last_error_message = 'AUTH_PAUSED', claim_owner = NULL,
+          lease_expires_at = NULL, updated_at = ? WHERE id = ?`,
         new Date().toISOString(),
         id,
       );
     },
   };
+}
+
+function safeErrorCode(error: Error) {
+  const code = (error as Error & { code?: unknown }).code;
+  return typeof code === "string" && /^[A-Z0-9_:-]{1,100}$/.test(code)
+    ? code
+    : error.name === "SyncConflictError"
+      ? "SYNC_CONFLICT"
+      : "SYNC_FAILED";
 }

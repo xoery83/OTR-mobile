@@ -30,6 +30,10 @@ const ledger72BPath =
   "supabase/migrations/20260913000100_ledger_2_stage_7_2b_adjustments.sql";
 const hostedParityPath =
   "supabase/migrations/20260913000200_hosted_dev_lineage_reconciliation.sql";
+const ledger8ReviewPath =
+  "supabase/migrations/20260913000300_ledger_2_stage_8_review_actions.sql";
+const ledger8FeedPath =
+  "supabase/migrations/20260913000400_ledger_2_stage_8_review_change_feed.sql";
 const seedPath = "supabase/seed.sql";
 
 const [
@@ -50,6 +54,8 @@ const [
   ledger72ALineage,
   ledger72B,
   hostedParity,
+  ledger8Review,
+  ledger8Feed,
   seed,
   manifestRaw,
 ] = await Promise.all([
@@ -70,19 +76,21 @@ const [
   readFile(ledger72ALineagePath, "utf8"),
   readFile(ledger72BPath, "utf8"),
   readFile(hostedParityPath, "utf8"),
+  readFile(ledger8ReviewPath, "utf8"),
+  readFile(ledger8FeedPath, "utf8"),
   readFile(seedPath, "utf8"),
   readFile("supabase/schema-manifest.json", "utf8"),
 ]);
 
 const manifest = JSON.parse(manifestRaw);
 const expected = {
-  tables: 91,
-  columns: 1279,
-  constraints: 670,
-  indexes: 305,
-  functions: 65,
-  triggers: 83,
-  rls_tables: 91,
+  tables: 92,
+  columns: 1292,
+  constraints: 680,
+  indexes: 308,
+  functions: 67,
+  triggers: 85,
+  rls_tables: 92,
   policies: 178,
   buckets: 3,
 };
@@ -123,7 +131,7 @@ const secretPatterns = [
 for (const pattern of secretPatterns) {
   if (
     pattern.test(
-      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${seed}`,
+      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${ledger8Review}\n${ledger8Feed}\n${seed}`,
     )
   ) {
     throw new Error(`Production identifier or secret-like value found: ${pattern}`);
@@ -169,6 +177,10 @@ const lineageChecksum = createHash("sha256")
   .update(ledger72B)
   .update("\0")
   .update(hostedParity)
+  .update("\0")
+  .update(ledger8Review)
+  .update("\0")
+  .update(ledger8Feed)
   .digest("hex");
 
 console.log(

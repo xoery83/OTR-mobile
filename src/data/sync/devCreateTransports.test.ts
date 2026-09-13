@@ -115,6 +115,6 @@ describe("Supabase Dev create transports", () => {
         expense,
         idempotencyKey: "operation-1",
       }),
-    ).rejects.toThrow("Supabase Dev session");
+    ).rejects.toMatchObject({ status: 401, code: "AUTH_REQUIRED" });
   });
 });

@@ -745,4 +745,52 @@ export const migrations: Migration[] = [
         ON ledger_settlement_exports (journey_id, generated_at DESC);
     `,
   },
+  {
+    id: 16,
+    name: "ledger_2_stage_8_review_and_operations",
+    sql: `
+      ALTER TABLE sync_operations ADD COLUMN claim_owner TEXT;
+      ALTER TABLE sync_operations ADD COLUMN lease_expires_at TEXT;
+      ALTER TABLE ledger_asset_operations ADD COLUMN claim_owner TEXT;
+      ALTER TABLE ledger_asset_operations ADD COLUMN lease_expires_at TEXT;
+
+      CREATE TABLE ledger_review_findings (
+        id TEXT PRIMARY KEY NOT NULL,
+        journey_id TEXT NOT NULL,
+        expense_id TEXT,
+        settlement_id TEXT,
+        layer TEXT NOT NULL CHECK (layer IN ('DETERMINISTIC', 'HEURISTIC')),
+        finding_type TEXT NOT NULL,
+        severity TEXT NOT NULL CHECK (severity IN ('INFO', 'WARNING', 'BLOCKING')),
+        confidence REAL,
+        evidence_codes_json TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('OPEN', 'ACKNOWLEDGED', 'DISMISSED', 'RESOLVED', 'STALE')),
+        ruleset_version TEXT NOT NULL,
+        entity_revision INTEGER,
+        revision INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX ledger_review_findings_journey_status
+        ON ledger_review_findings (journey_id, status, severity, updated_at DESC);
+
+      CREATE TABLE ledger_review_finding_actions (
+        id TEXT PRIMARY KEY NOT NULL,
+        finding_id TEXT NOT NULL,
+        action TEXT NOT NULL CHECK (action IN ('ACKNOWLEDGED', 'DISMISSED')),
+        actor_user_id TEXT NOT NULL,
+        actor_member_id TEXT NOT NULL,
+        actor_role TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        finding_revision INTEGER NOT NULL,
+        entity_revision INTEGER,
+        ruleset_version TEXT NOT NULL,
+        operation_id TEXT NOT NULL UNIQUE,
+        sync_status TEXT NOT NULL CHECK (sync_status IN ('PENDING', 'SYNCED', 'FAILED')),
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX ledger_review_actions_finding
+        ON ledger_review_finding_actions (finding_id, created_at);
+    `,
+  },
 ];

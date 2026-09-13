@@ -1,6 +1,6 @@
 import { fetch } from "expo/fetch";
 
-import { createApiClient } from "@/data/api/client";
+import { ApiClientError, createApiClient } from "@/data/api/client";
 import {
   completeReceiptRequestSchema,
   createReceiptRequestSchema,
@@ -14,7 +14,13 @@ import { resolveReceiptFile } from "@/data/files/receiptFileStore";
 
 async function authenticated() {
   const session = await readLocalSession();
-  if (!session?.accessToken) throw new Error("A Supabase Dev session is required.");
+  if (!session?.accessToken)
+    throw new ApiClientError(
+      "Authentication is unavailable.",
+      "http",
+      401,
+      "AUTH_REQUIRED",
+    );
   return {
     client: createApiClient({ accessToken: session.accessToken }),
     token: session.accessToken,
@@ -23,6 +29,23 @@ async function authenticated() {
 
 export function createLedgerReceiptTransport() {
   return {
+    async download(journeyId: string, receiptId: string) {
+      const { token } = await authenticated();
+      const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
+      if (!baseUrl) throw new Error("OTR API base URL is required.");
+      try {
+        const response = await fetch(
+          `${baseUrl}/v2/trips/${journeyId}/receipts/${receiptId}/content`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (response.status < 200 || response.status >= 300)
+          throw new ApiClientError("Receipt download failed.", "http", response.status);
+        return new Uint8Array(await response.arrayBuffer());
+      } catch (error) {
+        if (error instanceof ApiClientError) throw error;
+        throw new ApiClientError("Receipt download is unavailable.", "network");
+      }
+    },
     async create(journeyId: string, key: string, input: CreateReceiptRequest) {
       const { client } = await authenticated();
       return client.post(
@@ -42,17 +65,22 @@ export function createLedgerReceiptTransport() {
       const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
       if (!baseUrl) throw new Error("OTR API base URL is required.");
       const file = resolveReceiptFile(localUri);
-      const response = await fetch(
-        `${baseUrl}/v2/trips/${journeyId}/receipts/${receiptId}/content`,
-        {
-          method: "PUT",
-          body: file,
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": mimeType },
-        },
-      );
-      if (response.status < 200 || response.status >= 300)
-        throw new Error(`Receipt upload failed: ${response.status}`);
-      return file.uri;
+      try {
+        const response = await fetch(
+          `${baseUrl}/v2/trips/${journeyId}/receipts/${receiptId}/content`,
+          {
+            method: "PUT",
+            body: file,
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": mimeType },
+          },
+        );
+        if (response.status < 200 || response.status >= 300)
+          throw new ApiClientError("Receipt upload failed.", "http", response.status);
+        return file.uri;
+      } catch (error) {
+        if (error instanceof ApiClientError) throw error;
+        throw new ApiClientError("Receipt upload is unavailable.", "network");
+      }
     },
     async complete(
       journeyId: string,

@@ -324,6 +324,15 @@ export function LedgerStage6Screen() {
                       Search & Filter
                     </Text>
                   </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => router.push("/expenses/review" as never)}
+                    style={styles.action}
+                  >
+                    <Text maxFontSizeMultiplier={2} style={styles.actionText}>
+                      Review
+                    </Text>
+                  </Pressable>
                 </View>
                 <Text maxFontSizeMultiplier={2} style={styles.section}>
                   RECENT EXPENSES

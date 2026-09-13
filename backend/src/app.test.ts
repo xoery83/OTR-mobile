@@ -140,6 +140,10 @@ function createGateway(options: { authorized?: boolean } = {}) {
       },
       idempotentReplay: false,
     })),
+    downloadReceiptContent: vi.fn(async () => ({
+      bytes: new Uint8Array([1, 2, 3]),
+      mimeType: "image/jpeg",
+    })),
     completeReceipt: vi.fn(async () => {
       throw new Error("not used");
     }),
@@ -210,6 +214,11 @@ function createGateway(options: { authorized?: boolean } = {}) {
       serverTime: "2026-09-11T00:00:00.000Z",
     })),
     readLedgerRateQuotes: vi.fn(async () => []),
+    readLedgerReview: vi.fn(async () => ({ findings: [], actions: [] })),
+    refreshLedgerReview: vi.fn(async () => ({ findings: [], actions: [] })),
+    actOnLedgerReviewFinding: vi.fn(async () => {
+      throw new Error("not used");
+    }),
     addLedgerPaymentRecord: vi.fn(async (_userId, _tripId, _expenseId, _key, input) => ({
       entity: {
         id: "53000000-0000-4000-8000-000000000001",
@@ -1246,5 +1255,79 @@ describe("OTR Dev Backend", () => {
 
     expect(response.status).toBe(403);
     expect(gateway.bootstrapLedger).not.toHaveBeenCalled();
+  });
+
+  it("authorizes Review refresh/actions and receipt re-download", async () => {
+    const { gateway } = createGateway();
+    const findingId = "60000000-0000-4000-8000-000000000001";
+    const actionId = "60000000-0000-4000-8000-000000000002";
+    vi.mocked(gateway.actOnLedgerReviewFinding).mockResolvedValue({
+      finding: {
+        id: findingId,
+        journeyId: tripId,
+        expenseId: "60000000-0000-4000-8000-000000000003",
+        settlementId: null,
+        layer: "HEURISTIC",
+        findingType: "POSSIBLE_DUPLICATE",
+        severity: "WARNING",
+        confidence: 0.9,
+        evidenceCodes: ["SAME_PAYER_AMOUNT_CURRENCY_TITLE"],
+        status: "DISMISSED",
+        rulesetVersion: "ledger-review-v1",
+        entityRevision: 1,
+        revision: 2,
+        createdAt: "2026-09-13T00:00:00.000Z",
+        updatedAt: "2026-09-13T00:00:01.000Z",
+      },
+      action: {
+        id: actionId,
+        findingId,
+        action: "DISMISSED",
+        actorUserId: userId,
+        actorMemberId: memberA,
+        actorRole: "owner",
+        reason: "False positive",
+        findingRevision: 1,
+        entityRevision: 1,
+        rulesetVersion: "ledger-review-v1",
+        operationId: actionId,
+        createdAt: "2026-09-13T00:00:01.000Z",
+      },
+      idempotentReplay: false,
+    });
+    const handle = createDevBackendHandler({ gateway });
+    const refresh = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/review/refresh`, {
+        method: "POST",
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    const action = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/review-findings/${findingId}/actions`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": actionId,
+          },
+          body: JSON.stringify({
+            action: "DISMISSED",
+            baseRevision: 1,
+            reason: "False positive",
+            operationId: actionId,
+          }),
+        },
+      ),
+    );
+    const content = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts/${findingId}/content`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+
+    expect([refresh.status, action.status, content.status]).toEqual([200, 200, 200]);
+    expect(await content.arrayBuffer()).toEqual(new Uint8Array([1, 2, 3]).buffer);
   });
 });

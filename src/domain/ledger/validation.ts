@@ -6,6 +6,22 @@ export type ExpenseValidationIssue = {
   field: string;
 };
 
+export class LedgerValidationError extends Error {
+  readonly code = "LEDGER_VALIDATION_FAILED";
+
+  constructor(readonly issues: ExpenseValidationIssue[]) {
+    super("Ledger validation failed.");
+  }
+}
+
+export function assertValidExpenseAggregate(
+  expense: ExpenseAggregate,
+  journeyMemberIds: ReadonlySet<string>,
+) {
+  const issues = validateExpenseAggregate(expense, journeyMemberIds);
+  if (issues.length) throw new LedgerValidationError(issues);
+}
+
 export function validateExpenseAggregate(
   expense: ExpenseAggregate,
   journeyMemberIds: ReadonlySet<string>,
