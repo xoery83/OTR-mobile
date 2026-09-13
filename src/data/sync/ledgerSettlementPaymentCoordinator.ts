@@ -13,6 +13,7 @@ function nextAttemptAt(attempt: number) {
 
 export async function runLedgerSettlementPaymentSync(
   authState: AuthState = "AUTHENTICATED_ONLINE",
+  journeyId?: string,
 ) {
   const database = await openDatabase();
   return createSyncEngine(
@@ -25,6 +26,7 @@ export async function runLedgerSettlementPaymentSync(
     (operation) =>
       ["ledger_settlement_payment", "ledger_settlement_adjustment"].includes(
         operation.entityType,
-      ),
+      ) &&
+      (!journeyId || operation.tripId === journeyId),
   ).run(authState);
 }

@@ -14,6 +14,12 @@ export async function refreshJourneyLedger(journeyId: string) {
   await repository.applyChanges(journeyId, response);
 }
 
+export async function revalidateJourneyLedger(journeyId: string) {
+  const response = await createLedgerReadTransport().bootstrap(journeyId);
+  await (await getDefaultLedgerReadRepository()).applyBootstrap(response);
+  return response;
+}
+
 export async function refreshMyLedger(
   period: MyLedgerPeriod,
   bounds: { from: string | null; to: string | null },

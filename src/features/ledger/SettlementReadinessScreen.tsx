@@ -2,6 +2,7 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -20,12 +21,19 @@ import { formatLedgerMoney } from "./format";
 import { currencyScale } from "@/domain/ledger/currency";
 import type { RepaymentProposition } from "@/domain/ledger/paymentLifecycle";
 
-export function SettlementReadinessScreen({ journeyId }: { journeyId?: string }) {
+export function SettlementReadinessScreen({
+  journeyId,
+  embedded = false,
+}: {
+  journeyId?: string;
+  embedded?: boolean;
+}) {
   const settlement = useStage7Settlement(journeyId);
   const {
     actorMemberId,
     adjustmentPreview,
     busy,
+    exports,
     finalized,
     isOrganizer,
     lineage,
@@ -40,6 +48,18 @@ export function SettlementReadinessScreen({ journeyId }: { journeyId?: string })
   const [repaymentRate, setRepaymentRate] = useState("");
   const [paymentReason, setPaymentReason] = useState("");
   const [adjustmentReason, setAdjustmentReason] = useState("");
+  const [showStatement, setShowStatement] = useState(false);
+  const canExport =
+    isOrganizer &&
+    finalized?.adjustmentState === "CURRENT" &&
+    lineage
+      .flatMap((row) => row.transfers)
+      .every(
+        (transfer) =>
+          transfer.status === "SETTLED" &&
+          transfer.confirmedRemaining.minor === 0 &&
+          transfer.awaitingAmount.minor === 0,
+      );
 
   const confirmFinalize = () => {
     if (!preview || preview.state !== "PREVIEW_READY") return;
@@ -57,8 +77,8 @@ export function SettlementReadinessScreen({ journeyId }: { journeyId?: string })
     return <Text style={styles.body}>Choose a Journey to prepare settlement.</Text>;
   }
 
-  return (
-    <View style={styles.content}>
+  const content = (
+    <>
       <Text accessibilityRole="header" style={styles.title}>
         Settlement
       </Text>
@@ -571,9 +591,174 @@ export function SettlementReadinessScreen({ journeyId }: { journeyId?: string })
                 </View>
               );
             })}
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setShowStatement((visible) => !visible)}
+            style={styles.secondary}
+          >
+            <Text style={styles.secondaryText}>
+              {showStatement ? "Hide statement basis" : "View explainable statement"}
+            </Text>
+          </Pressable>
+          {showStatement ? (
+            <View style={styles.adjustmentCard}>
+              {(finalized.outstandingBalances ?? []).map((balance) => (
+                <Text key={balance.memberId} style={styles.body}>
+                  {balance.displayNameSnapshot} · outstanding{" "}
+                  {formatLedgerMoney(
+                    balance.amount.minor,
+                    balance.amount.currency,
+                    balance.amount.scale,
+                  )}
+                </Text>
+              ))}
+              {(lineage.length ? lineage : [finalized]).map((row) => (
+                <View key={row.id} style={styles.statementSection}>
+                  <Text style={styles.rowTitle}>
+                    {row.kind === "ADJUSTMENT"
+                      ? `Adjustment ${row.lineageSequence}`
+                      : "Root Settlement"}
+                  </Text>
+                  <Text selectable style={styles.meta}>
+                    Input digest {row.inputDigest}
+                  </Text>
+                  {row.balances.map((balance) => (
+                    <Text key={balance.memberId} style={styles.body}>
+                      {balance.displayNameSnapshot}: covered{" "}
+                      {formatLedgerMoney(
+                        balance.paidMinor,
+                        balance.currency,
+                        balance.scale,
+                      )}
+                      {" · share "}
+                      {formatLedgerMoney(
+                        balance.owedMinor,
+                        balance.currency,
+                        balance.scale,
+                      )}
+                      {" · net "}
+                      {formatLedgerMoney(
+                        balance.netMinor,
+                        balance.currency,
+                        balance.scale,
+                      )}
+                    </Text>
+                  ))}
+                  {row.inputs.map((input) => (
+                    <View key={input.expenseId} style={styles.paymentRow}>
+                      <Pressable
+                        accessibilityRole="link"
+                        onPress={() =>
+                          router.push(`/expenses/expense/${input.expenseId}`)
+                        }
+                      >
+                        <Text selectable style={styles.linkText}>
+                          Expense {input.expenseId} · revision {input.expenseRevision}
+                        </Text>
+                      </Pressable>
+                      <Text style={styles.body}>
+                        {input.payer.displayNameSnapshot} paid{" "}
+                        {formatLedgerMoney(
+                          input.original.minor,
+                          input.original.currency,
+                          input.original.scale,
+                        )}
+                        {" → settlement "}
+                        {formatLedgerMoney(
+                          input.settlement.minor,
+                          input.settlement.currency,
+                          input.settlement.scale,
+                        )}
+                      </Text>
+                      <Text style={styles.meta}>
+                        {input.valuation.policy}
+                        {input.valuation.decimalRate
+                          ? ` · rate ${input.valuation.decimalRate}`
+                          : ""}
+                        {` · ${input.valuation.roundingMode}`}
+                      </Text>
+                      {input.splits.map((split) => (
+                        <Text key={split.member.memberId} style={styles.meta}>
+                          {split.member.displayNameSnapshot} ·{" "}
+                          {formatLedgerMoney(
+                            split.settlementMinor,
+                            input.settlement.currency,
+                            input.settlement.scale,
+                          )}
+                          {split.roundingAdjustmentMinor
+                            ? ` · rounding ${split.roundingAdjustmentMinor}`
+                            : ""}
+                        </Text>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          <Text style={styles.section}>FINAL REPORTS</Text>
+          {canExport ? (
+            <View style={styles.actions}>
+              {(["PDF", "CSV"] as const).map((format) => (
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={busy}
+                  key={format}
+                  onPress={() => choosePrivacy(format, settlement.generateExport)}
+                  style={styles.secondary}
+                >
+                  <Text style={styles.secondaryText}>Generate {format}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.meta}>
+              A new current report requires organizer access, online canonical validation,
+              CURRENT lineage and fully settled Transfers.
+            </Text>
+          )}
+          {exports.map((item) => (
+            <View
+              key={`${item.statementDigest}-${item.privacyMode}-${item.format}`}
+              style={styles.exportRow}
+            >
+              <View style={styles.grow}>
+                <Text style={styles.rowTitle}>
+                  {item.format} ·{" "}
+                  {item.privacyMode === "MEMBER" ? "Member" : "De-identified"}
+                </Text>
+                <Text style={item.isCurrent ? styles.status : styles.warning}>
+                  {item.isCurrent ? "Current" : "Historical"} ·{" "}
+                  {item.statementDigest.slice(0, 12)}
+                </Text>
+              </View>
+              {isOrganizer ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void settlement.shareExport(item)}
+                  style={styles.secondary}
+                >
+                  <Text style={styles.secondaryText}>Open / Share</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ))}
         </View>
       ) : null}
-    </View>
+    </>
+  );
+  return embedded ? (
+    <View style={styles.content}>{content}</View>
+  ) : (
+    <ScrollView
+      contentContainerStyle={styles.screenContent}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
+    >
+      {content}
+    </ScrollView>
   );
 }
 
@@ -599,6 +784,21 @@ function promptReason(title: string, action: (reason: string) => void) {
   });
 }
 
+function choosePrivacy(
+  format: "PDF" | "CSV",
+  generate: (format: "PDF" | "CSV", privacy: "MEMBER" | "DE_IDENTIFIED") => void,
+) {
+  Alert.alert(
+    `Generate ${format}`,
+    "Member exports contain names and financial amounts. Once shared, the recipient controls the file.",
+    [
+      { text: "Cancel", style: "cancel" },
+      { text: "De-identified", onPress: () => void generate(format, "DE_IDENTIFIED") },
+      { text: "Member", onPress: () => void generate(format, "MEMBER") },
+    ],
+  );
+}
+
 function name(preview: Stage7Preview, memberId: string) {
   return (
     preview.members.find((member) => member.memberId === memberId)?.displayNameSnapshot ??
@@ -618,6 +818,7 @@ function memberName(settlement: Stage7Finalized, memberId: string) {
 
 const styles = StyleSheet.create({
   content: { gap: 12 },
+  screenContent: { gap: 12, padding: 16, paddingBottom: 32 },
   title: { color: "#111827", fontSize: 24, fontWeight: "800" },
   body: { color: "#334155", fontSize: 16, lineHeight: 23 },
   note: { color: "#64748B", fontSize: 14, lineHeight: 20 },
@@ -678,6 +879,8 @@ const styles = StyleSheet.create({
   },
   paymentRow: { backgroundColor: "#F8FAFC", borderRadius: 9, gap: 6, padding: 10 },
   adjustmentCard: { backgroundColor: "#F8FAFC", borderRadius: 9, gap: 8, padding: 12 },
+  statementSection: { gap: 8 },
+  exportRow: { alignItems: "center", flexDirection: "row", gap: 8 },
   actions: { flexDirection: "row", gap: 8 },
   linkButton: { minHeight: 44, justifyContent: "center" },
   linkText: { color: "#B45309", fontSize: 14, fontWeight: "800" },

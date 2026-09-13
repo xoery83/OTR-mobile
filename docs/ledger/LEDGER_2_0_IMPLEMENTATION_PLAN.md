@@ -4,7 +4,8 @@ Date: 2026-09-13
 Status: Approved; Stage 0 through Stage 6 physically validated and complete;
 Stage 7.1 passed automated, Hosted Dev, and two-client Simulator acceptance;
 Stage 7.2A gate approved after automated, Hosted Dev, and two-client Simulator acceptance;
-Stage 7.2B gate approved after automated, Hosted Dev, and two-client Simulator acceptance
+Stage 7.2B gate approved after automated, Hosted Dev, and two-client Simulator acceptance;
+Stage 7.3 and Stage 7 physically validated and complete on 2026-09-13
 
 ## Objective
 
@@ -365,6 +366,12 @@ pass automated and Simulator acceptance before the next begins:
 3. **7.3 Export & Integrated Acceptance** — immutable PDF/structured export and
    combined recovery, convergence, Simulator, and physical-device acceptance.
 
+Stage 7.3 generates PDF and long-form CSV on-device from one normalized
+repository-backed `SettlementStatement`; the formerly reserved server binary
+export endpoint is retired. New current-final exports require canonical online
+lineage validation. Digest-keyed files and a non-financial local manifest live
+in durable app-owned storage and remain available offline. See ADR 0015.
+
 Do not begin a later gate until the prior gate passes.
 
 Stages 7.1 and 7.2A passed on 2026-09-12. Payment lifecycle, canonical audit,
@@ -372,6 +379,13 @@ Hosted Dev concurrency, and two-client offline/restart gates are complete.
 Stage 7.2B passed on 2026-09-13 with immutable non-forking Adjustment lineage,
 root-frozen scope, explicit Adjustment readiness, independent historical
 obligations, Hosted Dev schema parity, and two-client offline/restart convergence.
+Stage 7.3 implementation and two-client Simulator acceptance passed on 2026-09-13.
+Physical iPhone Release acceptance passed on Leon's iPhone 16 Pro running iOS
+26.6 on 2026-09-13. Current-final online validation, four privacy/format exports,
+durable reopen, Save to Files, practical AirDrop/system share, offline cached
+share, current/history transition, Dynamic Type, VoiceOver, SQLite integrity,
+manifest/hash/privacy checks, and no-Ledger-mutation checks passed. Stage 7.3 and
+Stage 7 are complete.
 
 Implement deterministic preview, blockers, immutable finalization input digest,
 member balances, and minimized transfer plan. Then implement:
@@ -393,7 +407,8 @@ facts. Payment terminal states never return to awaiting. Awaiting amount is only
 an overbooking reservation; confirmed remaining debt excludes it. Once a
 Settlement is finalized it is never rebuilt or reopened, and `/reopen` returns
 `SETTLEMENT_REOPEN_NOT_ALLOWED`. Stage 7.2B owns all later financial correction
-through Adjustment Settlements. Stage 7.3 still requires separate approval.
+through Adjustment Settlements. Stage 7.3 export/reporting passed physical
+iPhone Release acceptance; Stage 7 is complete.
 
 Exit gate:
 

@@ -40,7 +40,7 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
          WHERE trip_id = ?
            AND entity_type IN (
              'ledger_expense', 'ledger_payment_record', 'ledger_correction',
-             'ledger_settlement_adjustment'
+             'ledger_settlement_payment', 'ledger_settlement_adjustment'
            )
            AND status <> 'COMPLETED'`,
         journeyId,

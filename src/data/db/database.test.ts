@@ -68,9 +68,8 @@ describe("SQLite migrations", () => {
     expect(stage7Finalization.sql).not.toContain("ledger_settlement_payments");
 
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(14);
-    expect(latest.sql).toContain("settlement_kind");
-    expect(latest.sql).toContain("CREATE TABLE ledger_settlement_adjustment_deltas");
+    expect(latest.id).toBe(15);
+    expect(latest.sql).toContain("CREATE TABLE ledger_settlement_exports");
   });
 
   it("migrates a v13 Settlement through a cold v14 restart", () => {
@@ -113,6 +112,29 @@ describe("SQLite migrations", () => {
     } finally {
       database?.close();
       rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("adds only local export metadata in v15", () => {
+    const database = new DatabaseSync(":memory:");
+    try {
+      for (const migration of migrations) database.exec(migration.sql);
+      expect(
+        database
+          .prepare(
+            "SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'ledger_settlement_exports'",
+          )
+          .get(),
+      ).toEqual({ count: 1 });
+      expect(
+        database
+          .prepare(
+            "SELECT count(*) AS count FROM pragma_table_info('ledger_settlement_exports') WHERE name = 'file_sha256'",
+          )
+          .get(),
+      ).toEqual({ count: 1 });
+    } finally {
+      database.close();
     }
   });
 });

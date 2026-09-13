@@ -133,9 +133,8 @@ for the broader Ledger/Itinerary contracts below.
 
 - Records settlement payments or settlement acknowledgement.
 
-`GET /trips/:id/ledger/export` - `NEW`
-
-- Export CSV/PDF once MVP needs it.
+Ledger PDF/CSV export is device-generated from synchronized SQLite facts. There
+is no server binary-export endpoint; see ADR 0015.
 
 ## Documents / Tickets
 

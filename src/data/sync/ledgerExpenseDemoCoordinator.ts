@@ -9,6 +9,7 @@ import { createSyncOperationRepository } from "./syncOperationRepository";
 
 type Options = {
   entityId?: string;
+  journeyId?: string;
   simulateResponseLoss?: () => boolean;
 };
 
@@ -35,6 +36,7 @@ export async function runLedgerExpenseSync(options: Options = {}) {
       ["ledger_expense", "ledger_correction", "ledger_payment_record"].includes(
         operation.entityType,
       ) &&
+      (!options.journeyId || operation.tripId === options.journeyId) &&
       (!options.entityId ||
         operation.entityId === options.entityId ||
         operation.payloadJson.includes(`"expenseId":"${options.entityId}"`)),

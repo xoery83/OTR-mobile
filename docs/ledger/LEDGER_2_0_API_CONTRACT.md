@@ -259,7 +259,12 @@ apply accepted fields through the existing explicit Expense command path.
 - `POST /v2/trips/:tripId/transfer-payments/:id/reject`
 - `POST /v2/trips/:tripId/transfer-payments/:id/dispute`
 - `POST /v2/trips/:tripId/transfer-payments/:id/correct`
-- `GET /v2/trips/:tripId/settlements/:id/export?format=pdf|csv`
+
+Stage 7.3 intentionally has no server binary-export endpoint. Mobile performs an
+authenticated canonical bootstrap, verifies exact local/server lineage-head
+agreement and final-settlement readiness, then generates PDF/CSV from the single
+repository-backed `SettlementStatement`. Existing digest-keyed files may be
+viewed or shared offline. See ADR 0015.
 
 Preview returns an `inputDigest`. Finalize succeeds only when that digest still
 matches all normalized Expense revisions, valuations, members, settings, and

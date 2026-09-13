@@ -377,7 +377,7 @@ export function LedgerStage6Screen() {
                 </View>
               </>
             ) : (
-              <SettlementReadinessScreen journeyId={journey.journeyId} />
+              <SettlementReadinessScreen embedded journeyId={journey.journeyId} />
             )}
           </>
         ) : (

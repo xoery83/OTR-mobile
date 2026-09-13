@@ -724,4 +724,25 @@ export const migrations: Migration[] = [
       );
     `,
   },
+  {
+    id: 15,
+    name: "ledger_2_stage_7_3_export_manifest",
+    sql: `
+      CREATE TABLE ledger_settlement_exports (
+        statement_digest TEXT NOT NULL,
+        journey_id TEXT NOT NULL,
+        root_settlement_id TEXT NOT NULL,
+        head_settlement_id TEXT NOT NULL,
+        export_schema_version INTEGER NOT NULL,
+        privacy_mode TEXT NOT NULL CHECK (privacy_mode IN ('MEMBER', 'DE_IDENTIFIED')),
+        format TEXT NOT NULL CHECK (format IN ('PDF', 'CSV')),
+        file_uri TEXT NOT NULL,
+        file_sha256 TEXT NOT NULL,
+        generated_at TEXT NOT NULL,
+        PRIMARY KEY (statement_digest, privacy_mode, format)
+      );
+      CREATE INDEX ledger_settlement_exports_journey_generated
+        ON ledger_settlement_exports (journey_id, generated_at DESC);
+    `,
+  },
 ];

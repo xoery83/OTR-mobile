@@ -9,6 +9,16 @@ import { getDefaultLedgerReportingRepository } from "@/data/repositories/default
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";
 import { runLedgerSettlementPaymentSync } from "@/data/sync/ledgerSettlementPaymentCoordinator";
+import {
+  generateCurrentSettlementExport,
+  listSettlementExports,
+  shareSettlementExport,
+} from "@/data/sync/ledgerExportCoordinator";
+import type {
+  SettlementExportFormat,
+  SettlementExportManifest,
+} from "@/data/repositories/ledgerExportRepository";
+import type { SettlementExportPrivacy } from "@/domain/ledger/settlementExport";
 import type { RepaymentProposition } from "@/domain/ledger/paymentLifecycle";
 import {
   finalizeSettlement,
@@ -32,6 +42,9 @@ export function useStage7Settlement(journeyId?: string) {
   const [message, setMessage] = useState<string | null>(null);
   const [actorMemberId, setActorMemberId] = useState<string | null>(null);
   const [isOrganizer, setIsOrganizer] = useState(false);
+  const [exports, setExports] = useState<
+    (SettlementExportManifest & { isCurrent: boolean })[]
+  >([]);
   const applyFinalizedRows = (rows: Stage7Finalized[]) => {
     const root = rows.find((row) => row.kind !== "ADJUSTMENT") ?? rows[0] ?? null;
     setFinalized(root);
@@ -73,6 +86,10 @@ export function useStage7Settlement(journeyId?: string) {
           setPreview(null);
           setMessage(null);
           applyFinalizedRows(rows);
+          if (activeJourneyId)
+            void listSettlementExports(activeJourneyId).then((items) => {
+              if (active) setExports(items);
+            });
         }
         if (activeJourneyId)
           void getDefaultLedgerSettlementRepository()
@@ -92,6 +109,9 @@ export function useStage7Settlement(journeyId?: string) {
             .then((refreshed) => {
               if (active) {
                 applyFinalizedRows(refreshed);
+                void listSettlementExports(activeJourneyId).then((items) => {
+                  if (active) setExports(items);
+                });
               }
             });
       })
@@ -107,12 +127,39 @@ export function useStage7Settlement(journeyId?: string) {
     busy,
     actorMemberId,
     isOrganizer,
+    exports,
     finalized,
     lineage,
     adjustmentPreview,
     message,
     preview,
     journeyId: activeJourneyId,
+    async generateExport(
+      format: SettlementExportFormat,
+      privacyMode: SettlementExportPrivacy,
+    ) {
+      if (!activeJourneyId) return;
+      setBusy(true);
+      setMessage(null);
+      try {
+        await generateCurrentSettlementExport(activeJourneyId, format, privacyMode);
+        const repository = await getDefaultLedgerSettlementRepository();
+        applyFinalizedRows(await repository.listFinalized(activeJourneyId));
+        setExports(await listSettlementExports(activeJourneyId));
+        setMessage(`${format} saved for offline use.`);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Export failed.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    async shareExport(manifest: SettlementExportManifest) {
+      try {
+        await shareSettlementExport(manifest);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Share failed.");
+      }
+    },
     async prepare() {
       if (!activeJourneyId) return;
       setBusy(true);
