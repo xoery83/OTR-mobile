@@ -1,16 +1,162 @@
 # Current Implementation State
 
-Date: 2026-09-14
+Date: 2026-09-15
 
 ## Current Milestone
 
-Ledger 2.0 Stage 9 is complete in Hosted Dev. The explicit Expense
-settlement-participation vertical slice, v3 transformation, private recovery
-rehearsal, guarded transactional Europe Replay load, independent verification,
-idempotent replay, and two-client Mobile Release acceptance all passed.
-Production remains disconnected and unchanged. Stage 10 has not begun.
+Ledger UI/UX Polish P1-P6 is complete and fully accepted. Automated checks, final
+Release Simulator acceptance, signed physical-iPhone interaction / Accessibility XXXL,
+and direct unmirrored physical-device VoiceOver checks pass with no blocking issue.
+The final Release is installed on both booted target simulators and the physical iPhone
+16 Pro. Ledger 2.0 Stage 9 remains complete in Hosted Dev. Production remains
+disconnected and unchanged, and Production work has not started.
 
 Current Mobile SQLite schema version: 17.
+
+## Ledger UI/UX Polish P6
+
+- Ledger-wide Dynamic Type fixes replace aggressive shrinking and crowded horizontal
+  layouts with wrapping, flexible height and large-text stacking across dashboard,
+  Search/Filter, Expense/member/split, Settlement/transfer and Review surfaces.
+- Touched actions now meet the 44-point target baseline and expose explicit labels,
+  roles and selected/disabled state. Ordinary UI copy no longer exposes the audited
+  SQLite, canonical/authoritative or deterministic-validation terminology.
+- Existing Stage 2 controls are isolated as Development-only Developer Diagnostics.
+  Release Settings has no diagnostic entry and the direct Release route redirects to
+  normal Ledger Settings. No new diagnostic or financial mutation path was added.
+- TypeScript, targeted ESLint, all 59 test files / 204 tests, the architecture boundary,
+  Stage 10 prototype-removability guard and final iOS Release builds pass. Normal runtime
+  remains free of `ledger-prototype`.
+- Final Release Simulator and Leon's iPhone 16 Pro accepted the representative P1-P5
+  flows. Physical Accessibility XXXL found and narrowly fixed clipped Add Expense
+  chooser actions and a mid-word Settlement label; final device revalidation passes.
+- Direct physical iPhone VoiceOver verification completed without iPhone Mirroring.
+  Labels, roles, selected state, focus order, actionable controls and modal focus return
+  passed across the required Ledger flows with no blocking issue.
+- The final Simulator Release is installed on iPhone 17 Pro and iPhone 17 Pro Max with
+  identical installed/build bundle hashes. The final signed Release is reinstalled on
+  the physical iPhone 16 Pro and confirmed as `com.xoery.otrmobile` `0.1.0 (1)`.
+- P6 and Ledger UI/UX Polish P1-P6 are fully accepted. See
+  `docs/ledger/LEDGER_UI_UX_POLISH_P6_ACCEPTANCE.md`. Stop before Production.
+
+## Ledger UI/UX Polish P5
+
+- Settlement is transfer-first: state/readiness and the personal position lead into a
+  scannable `X pays Y` list with original amount and human status. Transfer detail owns
+  original/paid/remaining amounts, the human payment timeline, explanation disclosure
+  and one actor-valid primary action.
+- Payment entry uses a focused native sheet while preserving the existing partial,
+  cross-currency, queued-offline, confirmation, reject/dispute, correction, permission
+  and overpayment semantics. Settlement update and Statement / Export are separate
+  focused routes over the existing Stage 7 data and coordinators.
+- Review is a virtualized task list with human copy, focused finding detail, contextual
+  action reasons and direct related-Expense navigation. A final acceptance fix carries
+  the selected Journey key through list/detail instead of reading the Stage 3 fallback.
+- TypeScript, targeted ESLint, 14 targeted test files / 32 tests, the Stage 10
+  prototype-removability guard, iOS export, Release Simulator and signed device builds
+  pass. Final Release Simulator and Leon's iPhone 16 Pro accepted the transfer hierarchy,
+  focused routes, received-payment timeline, offline wording and Dynamic Type spot check.
+- The physical cache had no open transfer for which the signed-in member was payer, so
+  actor-valid payment-sheet variants and no-write Cancel used an equivalent Release
+  Simulator synthetic payer; the physical device covered final Settlement, transfer
+  selection, payment history and invalid-action suppression.
+- Acceptance found and narrowly fixed two P5 defects: Review was reading the wrong
+  Journey, and settled overview rows displayed zero remaining instead of original
+  transfer amount. No financial, Backend, schema, Supabase or payment-lifecycle semantic
+  change was made.
+- P5 is accepted. Its deferred VoiceOver/accessibility-wide follow-up was completed and
+  accepted in P6. See `docs/ledger/LEDGER_UI_UX_POLISH_P5_ACCEPTANCE.md`.
+
+## Ledger UI/UX Polish P4
+
+- Add Expense now starts with Add manually or Scan receipt; neither navigation choice
+  creates a financial record. New and Edit Expense use the real local repository and
+  durable queue rather than prototype or in-memory state.
+- Manual entry provides the approved short field order, Today/current-member defaults,
+  searchable existing ISO currencies with scale-aware money parsing, native date
+  selection, virtualized members, compact allocation, all existing split modes,
+  explicit multi-person settlement confirmation, and progressive More Details.
+- Existing true datetime, allocation snapshots, valuation, and business status are
+  preserved when unrelated fields are edited. Household modes require valid existing
+  membership and continue to use the established deterministic domain allocators.
+- Receipt import now carries explicit OCR intent inside the existing repository/worker
+  abstraction. Scan queues OCR; manual attachment only queues required upload/link
+  work. Assets remain durable and OCR suggestions never become financial facts before
+  Save.
+- TypeScript, ESLint, all 58 test files / 203 tests, iOS export, and arm64 Release
+  Simulator build pass. UI Polish Release smoke opens intent, manual, and edit screens
+  without the former unavailable page; intent navigation preserved the 134-row count.
+- Signed Release on Leon's iPhone 16 Pro (iOS 26.6) passed intent/manual, camera,
+  Photo Library, Files/PDF, OCR-intent separation, offline local Save, attachment
+  persistence, duplicate prevention, queued-sync wording, interaction feel and maximum
+  Accessibility Dynamic Type. Final device SQLite integrity was `ok` with 349 Expenses
+  and 12 receipt assets.
+- Physical testing found and narrowly fixed dirty-Cancel bypass, same-frame double Save,
+  non-scrollable maximum-text intent content, cramped large-text form/allocation rows,
+  clipped amount/header text and missing selected/disabled accessibility state. The
+  final Release build, typecheck, lint and focused 4-file / 9-test regression pass.
+- Normal runtime remains free of `ledger-prototype`. P4 initially deferred direct,
+  unmirrored VoiceOver verification to P6; that physical-device check is now complete
+  with no blocking issue.
+- Functional gaps remain deliberate: no persisted Settings split default (use
+  `EQUAL_PERSON`), no recent-currency preference (use Journey settlement currency), no
+  approved Activity read query, and no Household management.
+- The deferred direct physical-device VoiceOver spot-check was completed in P6.
+
+## Ledger UI/UX Polish P3
+
+- Search is one dedicated repository-backed filtered-results screen shared by the
+  top-right Search action, Dashboard category drill-down, Analysis drill-down and
+  See All. It keeps a 200 ms debounce and keyed stale-response rejection.
+- The Filter page sheet holds drafts until Apply, supports specific/custom dates,
+  Today, Yesterday, This Trip, category, payer, participant, currency and supported
+  actionable states, and shows committed filters through tint/count/removable labels.
+- Expense results use `FlatList`, stable IDs and 50-row repository pagination; the
+  touched Review list is also virtualized. Search fetches an exact matching count
+  without changing reporting totals or financial semantics.
+- Analysis keeps scope/dimension/range atomic, orders Time chronologically, uses exact
+  localized drill-down dates and correct singular/plural wording. Stack preservation
+  retains Search and Analysis state on push/back.
+- A narrow post-P3 follow-up found that the Add Expense crash fix had remounted the old
+  review prototype's in-memory business-state provider because `/expenses/new` still
+  rendered `QuickExpenseScreen`. The provider and all normal-route prototype imports
+  are removed again. Add Expense and title editing use a narrow repository-backed
+  pre-P4 bridge; the P4 intent choice and full Expense-form redesign were not started.
+- TypeScript, ESLint, iOS export and targeted regressions pass (9 files / 20 tests).
+  The combined 10,000-Expense first-page/count/summary query completed in 69 ms,
+  below the existing 250 ms baseline.
+  Release Simulator accepted UI Polish 133-row windowing, filters, multilingual long
+  rows, exact drill-down sets and state restoration. Signed Release on the connected
+  iPhone accepted Search/Filter ergonomics and one-time maximum Dynamic Type; that
+  pass found and fixed Filter-header overlap and Search amount wrapping.
+- P3 is accepted. Stop before P4.
+
+## Ledger UI/UX Polish P2
+
+- Ledger opens as a Journey dashboard with navigation-bar Ledger menu, Search and
+  Add Expense actions; sticky Journey plus Spending/Settlement context; subordinate
+  Mine/Group scope; primary total; top-five category drill-down; conservative local
+  Settlement snapshot; actionable attention; and 12 Recent Expenses with See All.
+- Journey selection is a searchable native sheet with title, localized dates,
+  selected state and only date-unambiguous Active/Upcoming/Past labels. The current
+  model has no reliable lifecycle or test-Journey classification, so ambiguous
+  lifecycle labels and title-based hiding were deliberately omitted.
+- Settlement preview is never calculated or implied on Spending. The dashboard shows
+  signed position only from an existing local finalized Settlement; otherwise it
+  offers a clearly labelled readiness/preview entry.
+- Receipt rows expose a quiet paperclip and accessible receipt label. Healthy
+  ACCEPTED/SYNCED states remain silent. Category and See All navigation reuse the
+  existing Search results route.
+- TypeScript, ESLint, iOS Expo export and targeted reporting/navigation/domain tests
+  pass (8 files / 18 tests). Release Simulator verified UI Polish multilingual
+  density, Journey lifecycle presentation, menu/Search/category/Settlement routes,
+  receipt indication, attention state, and the Replay read-only Mine total of
+  CNY 46,379.79 with exactly 12 recent rows.
+- The signed Release built, installed and launched on Leon's iPhone 16 Pro.
+  Mirrored-device acceptance passed top-bar reachability, icon clarity, Journey
+  selection, sticky scrolling and a process-scoped maximum Dynamic Type check. The
+  check found and fixed a Journey-sheet header overlap; revalidation passed without
+  changing the device's persistent text-size setting. P2 is accepted; stop before P3.
 
 ## Settlement Participation And Stage 9 v3 Gate Delivered
 
@@ -183,6 +329,11 @@ or new architecture framework was added.
 
 ## Authoritative Sources
 
+- `docs/ledger/LEDGER_UI_UX_POLISH_PLAN_V1.md`
+- `docs/ledger/LEDGER_UI_UX_POLISH_P6_ACCEPTANCE.md`
+- `docs/ledger/LEDGER_UI_UX_POLISH_P5_ACCEPTANCE.md`
+- `docs/ledger/LEDGER_UI_UX_POLISH_P4_ACCEPTANCE.md`
+- `docs/ledger/LEDGER_UI_UX_POLISH_P3_ACCEPTANCE.md`
 - `docs/ledger/LEDGER_2_0_IMPLEMENTATION_PLAN.md`
 - `docs/ledger/LEDGER_2_0_API_CONTRACT.md`
 - `docs/adr/0016-ledger-stage-8-review-and-hardening.md`
@@ -192,10 +343,10 @@ or new architecture framework was added.
 
 ## Next Checkpoint
 
-Stage 9 is finished. Retain the private raw, mapping, transformed, backup,
-manifest, and acceptance receipts until the approved rollback window expires;
-cleanup requires the existing retention review. The next product milestone is
-Stage 10 and requires separate explicit approval.
+Stop after the fully accepted Ledger UI/UX Polish P1-P6 milestone. Do not begin
+Production planning or deployment automatically. Stage 9 retention and rollback rules
+remain unchanged, and any additional Stage 10 or Production work requires separate
+explicit approval.
 
 ## Safety Notes
 

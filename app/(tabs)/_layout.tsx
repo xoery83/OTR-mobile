@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 
-import { Icon } from "@/features/ledger-prototype/ui";
+import { AppIcon } from "@/components/AppIcon";
 
 export default function TabsLayout() {
   return (
@@ -14,7 +14,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          tabBarIcon: ({ color }) => <Icon color={color} name="calendar" />,
+          tabBarIcon: ({ color }) => <AppIcon color={color} name="calendar" />,
           title: "Today",
         }}
       />
@@ -22,21 +22,23 @@ export default function TabsLayout() {
         name="expenses"
         options={{
           headerShown: false,
-          tabBarIcon: ({ color }) => <Icon color={color} name="list.bullet.rectangle" />,
+          tabBarIcon: ({ color }) => (
+            <AppIcon color={color} name="list.bullet.rectangle" />
+          ),
           title: "Ledger",
         }}
       />
       <Tabs.Screen
         name="capture"
         options={{
-          tabBarIcon: ({ color }) => <Icon color={color} name="viewfinder" />,
+          tabBarIcon: ({ color }) => <AppIcon color={color} name="viewfinder" />,
           title: "Capture",
         }}
       />
       <Tabs.Screen
         name="trip"
         options={{
-          tabBarIcon: ({ color }) => <Icon color={color} name="suitcase" />,
+          tabBarIcon: ({ color }) => <AppIcon color={color} name="suitcase" />,
           title: "Trip",
         }}
       />

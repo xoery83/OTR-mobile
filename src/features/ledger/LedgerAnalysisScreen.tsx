@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActionSheetIOS,
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -7,7 +9,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type {
@@ -16,7 +18,9 @@ import type {
   ReportingScope,
 } from "@/domain/ledger/reporting";
 
-import { formatLedgerMoney } from "./format";
+import { formatLedgerDateFilter, formatLedgerMoney } from "./format";
+import { createLatestRequest } from "./latestRequest";
+import { formatExpenseCount, ledgerDateFilter } from "./searchFilters";
 
 const dimensions: { key: ReportingDimension; label: string }[] = [
   { key: "CATEGORY", label: "Category" },
@@ -33,31 +37,117 @@ export function LedgerAnalysisScreen() {
     memberId: string;
     scope?: ReportingScope;
   }>();
-  const [scope, setScope] = useState<ReportingScope>(
-    params.scope === "GROUP" ? "GROUP" : "MINE",
-  );
-  const [dimension, setDimension] = useState<ReportingDimension>("CATEGORY");
-  const [buckets, setBuckets] = useState<ReportingBucket[]>([]);
-  const [currency, setCurrency] = useState("NZD");
-  const [scale, setScale] = useState(2);
+  const initialScope: ReportingScope = params.scope === "GROUP" ? "GROUP" : "MINE";
+  const [view, setView] = useState<{
+    scope: ReportingScope;
+    dimension: ReportingDimension;
+    buckets: ReportingBucket[];
+    currency: string;
+    scale: number;
+    filters: { from?: string; to?: string };
+    journey:
+      | Awaited<
+          ReturnType<
+            Awaited<
+              ReturnType<typeof getDefaultLedgerReportingRepository>
+            >["listJourneys"]
+          >
+        >[number]
+      | null;
+  } | null>(null);
+  const [updating, setUpdating] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [request] = useState(createLatestRequest);
+  const metadata = useRef<Promise<{
+    currency: string;
+    scale: number;
+    journey:
+      | Awaited<
+          ReturnType<
+            Awaited<
+              ReturnType<typeof getDefaultLedgerReportingRepository>
+            >["listJourneys"]
+          >
+        >[number]
+      | null;
+  }> | null>(null);
 
-  const load = useCallback(async () => {
-    if (!params.journeyId || !params.memberId) return;
-    const repository = await getDefaultLedgerReportingRepository();
-    const journeys = await repository.listJourneys();
-    const journey = journeys.find((item) => item.journeyId === params.journeyId);
-    setCurrency(journey?.settlementCurrency ?? "NZD");
-    setScale(journey?.settlementScale ?? 2);
-    setBuckets(
-      await repository.analyze(
-        { journeyId: params.journeyId, memberId: params.memberId, scope },
-        dimension,
-      ),
-    );
-  }, [dimension, params.journeyId, params.memberId, scope]);
+  const load = useCallback(
+    async (
+      scope: ReportingScope,
+      dimension: ReportingDimension,
+      filters: { from?: string; to?: string } = {},
+    ) => {
+      if (!params.journeyId || !params.memberId) return;
+      const id = request.begin();
+      setUpdating(true);
+      setError(null);
+      try {
+        const repository = await getDefaultLedgerReportingRepository();
+        metadata.current ??= repository.listJourneys().then((journeys) => {
+          const journey = journeys.find((item) => item.journeyId === params.journeyId);
+          return {
+            currency: journey?.settlementCurrency ?? "NZD",
+            scale: journey?.settlementScale ?? 2,
+            journey: journey ?? null,
+          };
+        });
+        const [money, buckets] = await Promise.all([
+          metadata.current,
+          repository.analyze(
+            {
+              journeyId: params.journeyId,
+              memberId: params.memberId,
+              scope,
+              ...filters,
+            },
+            dimension,
+          ),
+        ]);
+        if (!request.isCurrent(id)) return;
+        setView({ scope, dimension, buckets, filters, ...money });
+      } catch {
+        metadata.current = null;
+        if (request.isCurrent(id)) setError("Analysis could not be updated.");
+      } finally {
+        if (request.isCurrent(id)) setUpdating(false);
+      }
+    },
+    [params.journeyId, params.memberId, request],
+  );
   useEffect(() => {
-    void Promise.resolve().then(load);
-  }, [load]);
+    void Promise.resolve().then(() => load(initialScope, "CATEGORY"));
+    return () => {
+      request.cancel();
+    };
+  }, [initialScope, load, request]);
+
+  const scope = view?.scope ?? initialScope;
+  const dimension = view?.dimension ?? "CATEGORY";
+  const filters = view?.filters ?? {};
+
+  const chooseRange = () => {
+    const values = [
+      { label: "All trip", preset: "ANY" as const },
+      { label: "Today", preset: "TODAY" as const },
+      { label: "Yesterday", preset: "YESTERDAY" as const },
+      { label: "This Trip", preset: "TRIP" as const },
+      { label: "Last 30 days", preset: "LAST_30" as const },
+    ];
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title: "Analysis range",
+        options: [...values.map((item) => item.label), "Cancel"],
+        cancelButtonIndex: values.length,
+      },
+      (index) => {
+        const selected = values[index];
+        if (!selected) return;
+        const next = ledgerDateFilter(selected.preset, view?.journey ?? null, "", "", "");
+        if (next) void load(scope, dimension, next);
+      },
+    );
+  };
 
   const openBucket = (bucket: ReportingBucket) => {
     const key =
@@ -72,6 +162,7 @@ export function LedgerAnalysisScreen() {
               : null;
     const nextDay = new Date(`${bucket.key}T00:00:00.000Z`);
     if (dimension === "DAY") nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+    const label = bucketLabel(dimension, bucket);
     router.push({
       pathname: "/expenses/search",
       params: {
@@ -80,6 +171,8 @@ export function LedgerAnalysisScreen() {
           dimension === "PARTICIPANT" && scope === "GROUP" ? bucket.key : params.memberId,
         scope: dimension === "PARTICIPANT" && scope === "GROUP" ? "MINE" : scope,
         authoritative: "1",
+        origin: label,
+        ...filters,
         ...(key ? { [key]: bucket.key } : {}),
         ...(dimension === "DAY"
           ? { from: `${bucket.key}T00:00:00.000Z`, to: nextDay.toISOString() }
@@ -89,66 +182,109 @@ export function LedgerAnalysisScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <View accessibilityRole="tablist" style={styles.segment}>
-        {(["MINE", "GROUP"] as const).map((item) => (
+    <>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              onPress={chooseRange}
+              style={styles.rangeButton}
+            >
+              <Text style={styles.rangeAction}>Range</Text>
+            </Pressable>
+          ),
+        }}
+      />
+      <ScrollView contentContainerStyle={styles.content}>
+        <View accessibilityRole="tablist" style={styles.segment}>
+          {(["MINE", "GROUP"] as const).map((item) => (
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: scope === item }}
+              key={item}
+              onPress={() => void load(item, dimension, filters)}
+              style={[styles.segmentItem, scope === item && styles.selected]}
+            >
+              <Text style={styles.segmentText}>{item === "MINE" ? "Mine" : "Group"}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.tabScroller}
+          contentContainerStyle={styles.tabs}
+        >
+          {dimensions.map((item) => (
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: dimension === item.key }}
+              key={item.key}
+              onPress={() => void load(scope, item.key, filters)}
+              style={[styles.tab, dimension === item.key && styles.tabSelected]}
+            >
+              <Text style={styles.tabText}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+        <Text style={styles.note}>
+          {filters.from ? formatLedgerDateFilter(filters.from, filters.to) : "All trip"}
+          {" · Every bucket opens its exact Expenses."}
+        </Text>
+        {updating ? (
+          <View style={styles.progress}>
+            <ActivityIndicator />
+            <Text accessibilityLiveRegion="polite" style={styles.note}>
+              Updating analysis…
+            </Text>
+          </View>
+        ) : null}
+        {error ? (
           <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: scope === item }}
-            key={item}
-            onPress={() => setScope(item)}
-            style={[styles.segmentItem, scope === item && styles.selected]}
-          >
-            <Text style={styles.segmentText}>{item === "MINE" ? "Mine" : "Group"}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.tabScroller}
-        contentContainerStyle={styles.tabs}
-      >
-        {dimensions.map((item) => (
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: dimension === item.key }}
-            key={item.key}
-            onPress={() => setDimension(item.key)}
-            style={[styles.tab, dimension === item.key && styles.tabSelected]}
-          >
-            <Text style={styles.tabText}>{item.label}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-      <Text style={styles.note}>
-        Every bucket opens the exact Expense set used to calculate it.
-      </Text>
-      <View style={styles.surface}>
-        {buckets.map((bucket) => (
-          <Pressable
-            accessibilityLabel={`${bucket.label}, ${formatLedgerMoney(bucket.totalMinor, currency, scale)}, ${bucket.expenseCount} Expenses`}
             accessibilityRole="button"
-            key={bucket.key}
-            onPress={() => openBucket(bucket)}
-            style={[styles.row, largeText && styles.stack]}
+            onPress={() => void load(scope, dimension, filters)}
           >
-            <View style={styles.grow}>
-              <Text style={styles.title}>{bucket.label}</Text>
-              <Text style={styles.meta}>{bucket.expenseCount} Expenses</Text>
-            </View>
-            <Text style={styles.amount}>
-              {formatLedgerMoney(bucket.totalMinor, currency, scale)}
+            <Text accessibilityLiveRegion="polite" style={styles.error}>
+              {error} Tap to try again.
             </Text>
           </Pressable>
-        ))}
-        {buckets.length === 0 ? (
-          <Text style={styles.empty}>
-            No authoritative valued Expenses for this view.
-          </Text>
         ) : null}
-      </View>
-    </ScrollView>
+        <View style={styles.surface}>
+          {(view?.buckets ?? []).map((bucket) => {
+            const label = bucketLabel(dimension, bucket, false);
+            return (
+              <Pressable
+                accessibilityLabel={`${label}, ${formatLedgerMoney(bucket.totalMinor, view?.currency ?? "NZD", view?.scale ?? 2)}, ${formatExpenseCount(bucket.expenseCount)}`}
+                accessibilityRole="button"
+                key={bucket.key}
+                onPress={() => openBucket(bucket)}
+                style={[styles.row, largeText && styles.stack]}
+              >
+                <View style={styles.grow}>
+                  <Text style={styles.title}>{label}</Text>
+                  <Text style={styles.meta}>
+                    {formatExpenseCount(bucket.expenseCount)}
+                  </Text>
+                </View>
+                <Text style={styles.amount}>
+                  {formatLedgerMoney(
+                    bucket.totalMinor,
+                    view?.currency ?? "NZD",
+                    view?.scale ?? 2,
+                  )}
+                </Text>
+              </Pressable>
+            );
+          })}
+          {!updating && (view?.buckets.length ?? 0) === 0 ? (
+            <Text style={styles.empty}>
+              No Expenses with a confirmed exchange value for this view.
+            </Text>
+          ) : null}
+        </View>
+      </ScrollView>
+    </>
   );
 }
 
@@ -200,6 +336,25 @@ const styles = StyleSheet.create({
   title: { color: "#111827", fontSize: 16, fontWeight: "600" },
   meta: { color: "#64748B", fontSize: 12, marginTop: 3 },
   amount: { color: "#111827", fontWeight: "700" },
+  progress: { alignItems: "center", flexDirection: "row", gap: 8 },
+  error: { color: "#B91C1C", fontWeight: "600" },
   stack: { alignItems: "flex-start", flexDirection: "column" },
   empty: { color: "#64748B", padding: 30, textAlign: "center" },
+  rangeAction: { color: "#0F766E", fontWeight: "700" },
+  rangeButton: { justifyContent: "center", minHeight: 44, paddingHorizontal: 8 },
 });
+
+function bucketLabel(
+  dimension: ReportingDimension,
+  bucket: ReportingBucket,
+  includeDimension = true,
+) {
+  if (dimension === "DAY") {
+    const nextDay = new Date(`${bucket.key}T00:00:00.000Z`);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+    return formatLedgerDateFilter(`${bucket.key}T00:00:00.000Z`, nextDay.toISOString());
+  }
+  return includeDimension
+    ? `${dimensions.find((item) => item.key === dimension)?.label}: ${bucket.label}`
+    : bucket.label;
+}

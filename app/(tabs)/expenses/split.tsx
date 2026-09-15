@@ -1,5 +1,5 @@
-import { SplitScreen } from "@/features/ledger-prototype/SplitScreen";
+import { Redirect } from "expo-router";
 
 export default function SplitRoute() {
-  return <SplitScreen />;
+  return <Redirect href="/expenses/new" />;
 }

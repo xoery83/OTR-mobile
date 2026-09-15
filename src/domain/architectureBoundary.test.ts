@@ -48,4 +48,19 @@ describe("foundation architecture boundaries", () => {
       ".env.backend.local",
     );
   });
+
+  it("keeps the removable Ledger prototype out of normal runtime composition", () => {
+    const prototypeDirectory = join(projectRoot, "src/features/ledger-prototype");
+    const files = [join(projectRoot, "app"), join(projectRoot, "src")]
+      .flatMap(sourceFiles)
+      .filter(
+        (file) =>
+          !file.startsWith(prototypeDirectory) &&
+          !file.endsWith("architectureBoundary.test.ts"),
+      );
+
+    for (const file of files) {
+      expect(readFileSync(file, "utf8"), file).not.toContain("ledger-prototype");
+    }
+  });
 });

@@ -199,6 +199,32 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
         journeyId,
       );
     },
+    async listHouseholds(journeyId: string) {
+      const rows = await database.getAllAsync<{
+        id: string;
+        name: string;
+        memberId: string;
+        shareUnits: number;
+      }>(
+        `SELECT h.id, h.name, hm.member_id AS memberId, hm.share_units AS shareUnits
+         FROM ledger_households h
+         JOIN ledger_household_members hm ON hm.household_id = h.id
+         WHERE h.journey_id = ?
+         ORDER BY h.display_order, h.name, hm.member_id`,
+        journeyId,
+      );
+      return rows.reduce<
+        { id: string; name: string; members: { id: string; shareUnits: number }[] }[]
+      >((households, row) => {
+        let household = households.find((item) => item.id === row.id);
+        if (!household) {
+          household = { id: row.id, name: row.name, members: [] };
+          households.push(household);
+        }
+        household.members.push({ id: row.memberId, shareUnits: row.shareUnits });
+        return households;
+      }, []);
+    },
   };
 }
 

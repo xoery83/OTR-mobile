@@ -241,6 +241,7 @@ async function importFixture(
     journeyId: stage3JourneyId,
     expenseId,
     mimeType: "image/jpeg",
+    requestOcr: true,
     ...copied,
   });
 }

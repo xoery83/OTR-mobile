@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type {
   FinalizedSettlementDto,
@@ -33,6 +33,9 @@ export type Stage7Finalized = FinalizedSettlementDto;
 export function useStage7Settlement(journeyId?: string) {
   const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(null);
   const activeJourneyId = journeyId ?? selectedJourneyId ?? undefined;
+  const activeJourneyRef = useRef(activeJourneyId);
+  const [loadedJourneyId, setLoadedJourneyId] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
   const [preview, setPreview] = useState<Stage7Preview | null>(null);
   const [finalized, setFinalized] = useState<Stage7Finalized | null>(null);
   const [lineage, setLineage] = useState<Stage7Finalized[]>([]);
@@ -45,19 +48,28 @@ export function useStage7Settlement(journeyId?: string) {
   const [exports, setExports] = useState<
     (SettlementExportManifest & { isCurrent: boolean })[]
   >([]);
-  const applyFinalizedRows = (rows: Stage7Finalized[]) => {
-    const root = rows.find((row) => row.kind !== "ADJUSTMENT") ?? rows[0] ?? null;
-    setFinalized(root);
-    setLineage(
-      root
-        ? rows
-            .filter((row) => row.id === root.id || row.rootSettlementId === root.id)
-            .sort(
-              (left, right) => (left.lineageSequence ?? 0) - (right.lineageSequence ?? 0),
-            )
-        : [],
-    );
-  };
+  const applyFinalizedRows = useCallback(
+    (rows: Stage7Finalized[], forJourney = activeJourneyId) => {
+      if (forJourney !== activeJourneyRef.current) return;
+      const root = rows.find((row) => row.kind !== "ADJUSTMENT") ?? rows[0] ?? null;
+      setFinalized(root);
+      setLineage(
+        root
+          ? rows
+              .filter((row) => row.id === root.id || row.rootSettlementId === root.id)
+              .sort(
+                (left, right) =>
+                  (left.lineageSequence ?? 0) - (right.lineageSequence ?? 0),
+              )
+          : [],
+      );
+    },
+    [activeJourneyId],
+  );
+
+  useEffect(() => {
+    activeJourneyRef.current = activeJourneyId;
+  }, [activeJourneyId]);
 
   useEffect(() => {
     if (journeyId) return;
@@ -74,79 +86,87 @@ export function useStage7Settlement(journeyId?: string) {
 
   useEffect(() => {
     let active = true;
-    const load = () =>
-      activeJourneyId
-        ? getDefaultLedgerSettlementRepository().then((repository) =>
-            repository.listFinalized(activeJourneyId),
-          )
-        : Promise.resolve([]);
-    void load()
-      .then((rows) => {
-        if (active) {
-          setPreview(null);
-          setMessage(null);
-          applyFinalizedRows(rows);
-          if (activeJourneyId)
-            void listSettlementExports(activeJourneyId).then((items) => {
-              if (active) setExports(items);
-            });
-        }
-        if (activeJourneyId)
-          void getDefaultLedgerSettlementRepository()
-            .then(async (repository) => ({
-              memberId: await repository.getActorMemberId(activeJourneyId),
-              isOrganizer: await repository.isOrganizer(activeJourneyId),
-            }))
-            .then((actor) => {
-              if (active) {
-                setActorMemberId(actor.memberId);
-                setIsOrganizer(actor.isOrganizer);
-              }
-            });
-        if (activeJourneyId)
-          return refreshJourneyLedger(activeJourneyId)
-            .then(load)
-            .then((refreshed) => {
-              if (active) {
-                applyFinalizedRows(refreshed);
-                void listSettlementExports(activeJourneyId).then((items) => {
-                  if (active) setExports(items);
-                });
-              }
-            });
-      })
-      .catch(() => {
+    void Promise.resolve().then(async () => {
+      if (!active) return;
+      setUpdating(Boolean(activeJourneyId));
+      setMessage(null);
+      if (!activeJourneyId) {
+        setLoadedJourneyId(null);
+        setUpdating(false);
+        return;
+      }
+      const load = async () => {
+        const repository = await getDefaultLedgerSettlementRepository();
+        const [rows, items, memberId, organizer] = await Promise.all([
+          repository.listFinalized(activeJourneyId),
+          listSettlementExports(activeJourneyId),
+          repository.getActorMemberId(activeJourneyId),
+          repository.isOrganizer(activeJourneyId),
+        ]);
+        return { rows, items, memberId, organizer };
+      };
+      try {
+        const cached = await load();
+        if (!active) return;
+        setPreview(null);
+        setAdjustmentPreview(null);
+        applyFinalizedRows(cached.rows);
+        setExports(cached.items);
+        setActorMemberId(cached.memberId);
+        setIsOrganizer(cached.organizer);
+        setLoadedJourneyId(activeJourneyId);
+        await refreshJourneyLedger(activeJourneyId);
+        const refreshed = await load();
+        if (!active) return;
+        applyFinalizedRows(refreshed.rows);
+        setExports(refreshed.items);
+        setActorMemberId(refreshed.memberId);
+        setIsOrganizer(refreshed.organizer);
+      } catch {
         if (active) setMessage("Offline · showing cached Settlement data");
-      });
+      } finally {
+        if (active) setUpdating(false);
+      }
+    });
     return () => {
       active = false;
     };
-  }, [activeJourneyId]);
+  }, [activeJourneyId, applyFinalizedRows]);
+
+  const matchesActiveJourney = loadedJourneyId === activeJourneyId;
 
   return {
     busy,
-    actorMemberId,
-    isOrganizer,
-    exports,
-    finalized,
-    lineage,
-    adjustmentPreview,
+    updating,
+    actorMemberId: matchesActiveJourney ? actorMemberId : null,
+    isOrganizer: matchesActiveJourney && isOrganizer,
+    exports: matchesActiveJourney ? exports : [],
+    finalized: matchesActiveJourney ? finalized : null,
+    lineage: matchesActiveJourney ? lineage : [],
+    adjustmentPreview: matchesActiveJourney ? adjustmentPreview : null,
     message,
-    preview,
+    preview: matchesActiveJourney ? preview : null,
     journeyId: activeJourneyId,
     async generateExport(
       format: SettlementExportFormat,
       privacyMode: SettlementExportPrivacy,
     ) {
       if (!activeJourneyId) return;
+      const operationJourneyId = activeJourneyId;
       setBusy(true);
       setMessage(null);
       try {
         await generateCurrentSettlementExport(activeJourneyId, format, privacyMode);
         const repository = await getDefaultLedgerSettlementRepository();
-        applyFinalizedRows(await repository.listFinalized(activeJourneyId));
-        setExports(await listSettlementExports(activeJourneyId));
-        setMessage(`${format} saved for offline use.`);
+        applyFinalizedRows(
+          await repository.listFinalized(operationJourneyId),
+          operationJourneyId,
+        );
+        const items = await listSettlementExports(operationJourneyId);
+        if (operationJourneyId === activeJourneyRef.current) {
+          setExports(items);
+          setMessage(`${format} saved for offline use.`);
+        }
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Export failed.");
       } finally {
@@ -162,10 +182,15 @@ export function useStage7Settlement(journeyId?: string) {
     },
     async prepare() {
       if (!activeJourneyId) return;
+      const operationJourneyId = activeJourneyId;
       setBusy(true);
       setMessage(null);
       try {
-        setPreview(await previewSettlement(activeJourneyId, new Date().toISOString()));
+        const next = await previewSettlement(
+          operationJourneyId,
+          new Date().toISOString(),
+        );
+        if (operationJourneyId === activeJourneyRef.current) setPreview(next);
       } catch (error) {
         setPreview(null);
         setMessage(error instanceof Error ? error.message : "Settlement preview failed.");
@@ -174,6 +199,7 @@ export function useStage7Settlement(journeyId?: string) {
       }
     },
     async finalize(ready: Stage7Preview) {
+      const operationJourneyId = ready.journeyId;
       setBusy(true);
       setMessage(null);
       try {
@@ -182,10 +208,12 @@ export function useStage7Settlement(journeyId?: string) {
           ready.throughTimestamp,
           ready.inputDigest,
         );
-        setFinalized(response.entity);
-        setLineage([response.entity]);
-        setPreview(null);
-        setMessage("Settlement finalized from canonical server state.");
+        if (operationJourneyId === activeJourneyRef.current) {
+          setFinalized(response.entity);
+          setLineage([response.entity]);
+          setPreview(null);
+          setMessage("Final settlement saved from the latest group record.");
+        }
       } catch (error) {
         setMessage(
           error instanceof Error ? error.message : "Settlement finalization failed.",
@@ -196,12 +224,12 @@ export function useStage7Settlement(journeyId?: string) {
     },
     async prepareAdjustment() {
       if (!activeJourneyId || !finalized) return;
+      const operationJourneyId = activeJourneyId;
       setBusy(true);
       setMessage(null);
       try {
-        setAdjustmentPreview(
-          await previewSettlementAdjustment(activeJourneyId, finalized.id),
-        );
+        const next = await previewSettlementAdjustment(operationJourneyId, finalized.id);
+        if (operationJourneyId === activeJourneyRef.current) setAdjustmentPreview(next);
       } catch (error) {
         setAdjustmentPreview(null);
         setMessage(error instanceof Error ? error.message : "Adjustment preview failed.");
@@ -211,11 +239,12 @@ export function useStage7Settlement(journeyId?: string) {
     },
     async finalizeAdjustment(ready: SettlementAdjustmentPreviewResponse, reason: string) {
       if (!activeJourneyId || !finalized) return;
+      const operationJourneyId = activeJourneyId;
       setBusy(true);
       setMessage(null);
       try {
         await queueSettlementAdjustment(
-          activeJourneyId,
+          operationJourneyId,
           finalized.id,
           ready.expectedHeadId,
           ready.inputDigest,
@@ -223,13 +252,15 @@ export function useStage7Settlement(journeyId?: string) {
           ready.zeroTransfer,
         );
         await runLedgerSettlementPaymentSync();
-        await refreshJourneyLedger(activeJourneyId);
+        await refreshJourneyLedger(operationJourneyId);
         const rows = await (
           await getDefaultLedgerSettlementRepository()
-        ).listFinalized(activeJourneyId);
-        applyFinalizedRows(rows);
-        setAdjustmentPreview(null);
-        setMessage("Adjustment saved; pending operations remain durable if offline.");
+        ).listFinalized(operationJourneyId);
+        applyFinalizedRows(rows, operationJourneyId);
+        if (operationJourneyId === activeJourneyRef.current) {
+          setAdjustmentPreview(null);
+          setMessage("Settlement update saved; offline work will sync later.");
+        }
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Adjustment failed.");
       } finally {
@@ -245,14 +276,23 @@ export function useStage7Settlement(journeyId?: string) {
         reason?: string | null;
       },
     ) {
+      const operationJourneyId = activeJourneyId;
+      if (!operationJourneyId) return;
       setBusy(true);
       try {
         const repository = await getDefaultLedgerSettlementRepository();
         await repository.recordPayment(transferId, proposition);
-        applyFinalizedRows(await repository.listFinalized(activeJourneyId!));
+        applyFinalizedRows(
+          await repository.listFinalized(operationJourneyId),
+          operationJourneyId,
+        );
         await runLedgerSettlementPaymentSync();
-        applyFinalizedRows(await repository.listFinalized(activeJourneyId!));
-        setMessage("Paid saved. Debt changes only after Received confirmation.");
+        applyFinalizedRows(
+          await repository.listFinalized(operationJourneyId),
+          operationJourneyId,
+        );
+        if (operationJourneyId === activeJourneyRef.current)
+          setMessage("Paid saved. Debt changes only after Received confirmation.");
       } catch (error) {
         setMessage(
           error instanceof Error ? error.message : "Payment could not be saved.",
@@ -267,17 +307,23 @@ export function useStage7Settlement(journeyId?: string) {
       reason: string | null,
       authority?: "PAYER" | "RECIPIENT" | "ORGANIZER_OVERRIDE",
     ) {
+      const operationJourneyId = activeJourneyId;
+      if (!operationJourneyId) return;
       setBusy(true);
       try {
         const repository = await getDefaultLedgerSettlementRepository();
         await repository.queuePaymentAction(paymentId, action, reason, authority);
         await runLedgerSettlementPaymentSync();
-        applyFinalizedRows(await repository.listFinalized(activeJourneyId!));
-        setMessage(
-          action === "confirm"
-            ? "Received confirmation saved."
-            : `${action === "reject" ? "Rejection" : "Dispute"} saved.`,
+        applyFinalizedRows(
+          await repository.listFinalized(operationJourneyId),
+          operationJourneyId,
         );
+        if (operationJourneyId === activeJourneyRef.current)
+          setMessage(
+            action === "confirm"
+              ? "Received confirmation saved."
+              : `${action === "reject" ? "Rejection" : "Dispute"} saved.`,
+          );
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Payment action failed.");
       } finally {
@@ -293,14 +339,23 @@ export function useStage7Settlement(journeyId?: string) {
       },
       reason: string,
     ) {
+      const operationJourneyId = activeJourneyId;
+      if (!operationJourneyId) return;
       setBusy(true);
       try {
         const repository = await getDefaultLedgerSettlementRepository();
         await repository.correctPayment(paymentId, proposition, reason);
-        applyFinalizedRows(await repository.listFinalized(activeJourneyId!));
+        applyFinalizedRows(
+          await repository.listFinalized(operationJourneyId),
+          operationJourneyId,
+        );
         await runLedgerSettlementPaymentSync();
-        applyFinalizedRows(await repository.listFinalized(activeJourneyId!));
-        setMessage("Organizer correction saved as a new Payment fact.");
+        applyFinalizedRows(
+          await repository.listFinalized(operationJourneyId),
+          operationJourneyId,
+        );
+        if (operationJourneyId === activeJourneyRef.current)
+          setMessage("Organizer correction saved as a new payment record.");
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Correction failed.");
       } finally {

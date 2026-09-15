@@ -1,58 +1,189 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionSheetIOS,
   ActivityIndicator,
+  FlatList,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
 import { router, Stack } from "expo-router";
 
+import { AppIcon } from "@/components/AppIcon";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
+import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import {
   chooseJourneyEntry,
   type LedgerJourneyContext,
 } from "@/domain/ledger/journeyContext";
-import type { ReportingAggregate, ReportingScope } from "@/domain/ledger/reporting";
+import type {
+  ReportingAggregate,
+  ReportingBucket,
+  ReportingScope,
+} from "@/domain/ledger/reporting";
+import { buildSettlementStatement } from "@/domain/ledger/settlementStatement";
 import { stage3JourneyId } from "@/hooks/useLedgerStage3";
 import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
 
-import { formatLedgerMoney } from "./format";
+import {
+  formatLedgerDate,
+  formatLedgerDateRange,
+  formatLedgerMoney,
+  ledgerExpenseAttention,
+} from "./format";
 import { SettlementReadinessScreen } from "./SettlementReadinessScreen";
+import { journeyLifecycleLabel, settlementPositionLabel } from "./dashboardPresentation";
+import { createLatestRequest } from "./latestRequest";
 
 type Mode = "SPENDING" | "SETTLEMENT";
+type FinalizedRows = Awaited<
+  ReturnType<
+    Awaited<ReturnType<typeof getDefaultLedgerSettlementRepository>>["listFinalized"]
+  >
+>;
+type SettlementSnapshot =
+  | { kind: "PREVIEW" }
+  | {
+      kind: "FINAL";
+      positionMinor: number | null;
+      currency: string;
+      scale: number;
+      needsUpdate: boolean;
+    };
+type SpendingProjection = {
+  journey: LedgerJourneyContext;
+  memberId: string;
+  scope: ReportingScope;
+  summary: ReportingAggregate;
+  categories: ReportingBucket[];
+  expenses: LedgerReportListItem[];
+  settlement: SettlementSnapshot;
+};
 
 function localToday() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
+function summarizeSettlement(rows: FinalizedRows, memberId: string): SettlementSnapshot {
+  if (!rows.length) return { kind: "PREVIEW" };
+  const root = rows.find((row) => row.kind !== "ADJUSTMENT") ?? rows[0];
+  const statement = buildSettlementStatement(
+    rows.filter((row) => row.id === root.id || row.rootSettlementId === root.id),
+  );
+  const current = statement.outstandingBalances.find(
+    (item) => item.memberId === memberId,
+  );
+  const finalized = statement.lineage
+    .at(-1)
+    ?.balances.find((item) => item.memberId === memberId);
+  return {
+    kind: "FINAL",
+    positionMinor: current?.amount.minor ?? finalized?.netMinor ?? null,
+    currency:
+      current?.amount.currency ?? finalized?.currency ?? statement.settlementCurrency,
+    scale: current?.amount.scale ?? finalized?.scale ?? statement.settlementScale,
+    needsUpdate:
+      statement.adjustmentState !== null && statement.adjustmentState !== "CURRENT",
+  };
+}
+
 export function LedgerStage6Screen() {
   const largeText = useWindowDimensions().fontScale > 2;
   const { refreshJourney, refreshPersonal } = useLedgerReportingRefresh();
   const manualJourneyId = useRef<string | undefined>(undefined);
+  const [request] = useState(createLatestRequest);
+  const scopeRef = useRef<ReportingScope>("MINE");
   const [journeys, setJourneys] = useState<LedgerJourneyContext[]>([]);
-  const [journey, setJourney] = useState<LedgerJourneyContext | null>(null);
-  const [memberId, setMemberId] = useState<string | null>(null);
-  const [scope, setScope] = useState<ReportingScope>("MINE");
+  const [projection, setProjection] = useState<SpendingProjection | null>(null);
   const [mode, setMode] = useState<Mode>("SPENDING");
-  const [summary, setSummary] = useState<ReportingAggregate | null>(null);
-  const [expenses, setExpenses] = useState<LedgerReportListItem[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [journeyPickerOpen, setJourneyPickerOpen] = useState(false);
+  const [journeyQuery, setJourneyQuery] = useState("");
+  const [selectingJourneyId, setSelectingJourneyId] = useState<string | null>(null);
+  const journey = projection?.journey ?? null;
+  const memberId = projection?.memberId ?? null;
+  const scope = projection?.scope ?? "MINE";
+  const summary = projection?.summary ?? null;
+  const categories = projection?.categories ?? [];
+  const expenses = projection?.expenses ?? [];
+  const settlement = projection?.settlement ?? ({ kind: "PREVIEW" } as const);
   const fallbackJourneyId =
     journeys.length === 0 || journeys.some((item) => item.journeyId === stage3JourneyId)
       ? stage3JourneyId
       : "";
+  const visibleJourneys = useMemo(() => {
+    const query = journeyQuery.trim().toLocaleLowerCase();
+    return query
+      ? journeys.filter((item) => item.title.toLocaleLowerCase().includes(query))
+      : journeys;
+  }, [journeyQuery, journeys]);
+
+  const loadProjection = useCallback(
+    async (nextJourney: LedgerJourneyContext, nextScope: ReportingScope) => {
+      const id = request.begin();
+      setUpdating(true);
+      setMessage(null);
+      try {
+        const repository = await getDefaultLedgerReportingRepository();
+        const actor = await repository.getActorMemberId(nextJourney.journeyId);
+        const nextMemberId = actor?.memberId ?? null;
+        if (!nextMemberId)
+          throw new Error(
+            "This Journey needs an authenticated bootstrap before reporting is available.",
+          );
+        const query = {
+          journeyId: nextJourney.journeyId,
+          memberId: nextMemberId,
+          scope: nextScope,
+        };
+        const settlementRepository = await getDefaultLedgerSettlementRepository();
+        const [nextSummary, nextCategories, nextExpenses, settlements] =
+          await Promise.all([
+            repository.summarize(query),
+            repository.analyze(query, "CATEGORY"),
+            repository.listExpenses(query, 12),
+            settlementRepository.listFinalized(nextJourney.journeyId),
+          ]);
+        if (!request.isCurrent(id)) return false;
+        scopeRef.current = nextScope;
+        setProjection({
+          journey: nextJourney,
+          memberId: nextMemberId,
+          scope: nextScope,
+          summary: nextSummary,
+          categories: nextCategories.slice(0, 5),
+          expenses: nextExpenses,
+          settlement: summarizeSettlement(settlements, nextMemberId),
+        });
+        return true;
+      } catch (error) {
+        if (request.isCurrent(id))
+          setMessage(
+            error instanceof Error ? error.message : "Ledger could not be updated.",
+          );
+        return false;
+      } finally {
+        if (request.isCurrent(id)) setUpdating(false);
+      }
+    },
+    [request],
+  );
 
   const loadContext = useCallback(async () => {
     const repository = await getDefaultLedgerReportingRepository();
-    const available = await repository.listJourneys();
-    const selected = await repository.getSelectedJourneyId();
+    const [available, selected] = await Promise.all([
+      repository.listJourneys(),
+      repository.getSelectedJourneyId(),
+    ]);
     const entry = chooseJourneyEntry(
       available,
       localToday(),
@@ -64,49 +195,16 @@ export function LedgerStage6Screen() {
       entry.kind === "JOURNEY"
         ? (available.find((item) => item.journeyId === entry.journeyId) ?? null)
         : null;
-    setJourney((current) =>
-      current?.journeyId === nextJourney?.journeyId &&
-      current?.title === nextJourney?.title &&
-      current?.startDate === nextJourney?.startDate &&
-      current?.endDate === nextJourney?.endDate &&
-      current?.settlementCurrency === nextJourney?.settlementCurrency &&
-      current?.settlementScale === nextJourney?.settlementScale
-        ? current
-        : nextJourney,
-    );
-    if (manualJourneyId.current && nextJourney) setMessage(null);
-    else if (entry.kind === "CHOOSE") setMessage("Choose a current Journey to continue.");
-    else if (entry.kind === "MY_LEDGER")
-      setMessage("No Journey is current today. My Ledger remains available.");
+    if (nextJourney) await loadProjection(nextJourney, scopeRef.current);
+    else {
+      request.cancel();
+      setProjection(null);
+      setUpdating(false);
+      if (entry.kind === "CHOOSE") setMessage("Choose a current Journey to continue.");
+      else setMessage("No Journey is current today. My Ledger remains available.");
+    }
     setLoading(false);
-  }, []);
-
-  const loadReport = useCallback(async () => {
-    if (!journey) {
-      setSummary(null);
-      setExpenses([]);
-      return;
-    }
-    const repository = await getDefaultLedgerReportingRepository();
-    const actor = await repository.getActorMemberId(journey.journeyId);
-    const currentMemberId = actor?.memberId ?? null;
-    setMemberId(currentMemberId);
-    if (!currentMemberId) {
-      setSummary(null);
-      setExpenses([]);
-      setMessage(
-        "This Journey needs an authenticated bootstrap before reporting is available.",
-      );
-      return;
-    }
-    const query = { journeyId: journey.journeyId, memberId: currentMemberId, scope };
-    const [nextSummary, nextExpenses] = await Promise.all([
-      repository.summarize(query),
-      repository.listExpenses(query, 30),
-    ]);
-    setSummary(nextSummary);
-    setExpenses(nextExpenses);
-  }, [journey, scope]);
+  }, [loadProjection, request]);
 
   useEffect(() => {
     void Promise.resolve()
@@ -118,112 +216,154 @@ export function LedgerStage6Screen() {
   }, [loadContext]);
 
   useEffect(() => {
-    void Promise.resolve()
-      .then(loadReport)
-      .catch(() => setMessage("Ledger reporting cache is unavailable."));
-  }, [loadReport]);
-
-  useEffect(() => {
     const id = journey?.journeyId ?? fallbackJourneyId;
     if (!id) return;
     void refreshJourney(id)
       .then(async () => {
         await refreshPersonal("ALL", { from: null, to: null });
         await loadContext();
-        await loadReport();
       })
-      .catch(() => setMessage((current) => current ?? "Offline · showing SQLite data"));
+      .catch(() =>
+        setMessage((current) => current ?? "Offline · showing saved Ledger data"),
+      );
   }, [
     journey?.journeyId,
     fallbackJourneyId,
     loadContext,
-    loadReport,
     refreshJourney,
     refreshPersonal,
   ]);
 
-  const choose = () => {
-    const labels = journeys.map((item) => {
-      const dates = [item.startDate, item.endDate].filter(Boolean).join(" – ");
-      return `${item.title}${dates ? ` · ${dates}` : ""}`;
-    });
+  useEffect(
+    () => () => {
+      request.cancel();
+    },
+    [request],
+  );
+
+  const chooseJourney = async (selected: LedgerJourneyContext) => {
+    const previous = projection;
+    setSelectingJourneyId(selected.journeyId);
+    const loaded = await loadProjection(selected, scopeRef.current);
+    if (!loaded) {
+      setSelectingJourneyId(null);
+      return;
+    }
+    try {
+      const repository = await getDefaultLedgerReportingRepository();
+      await repository.selectJourney(selected.journeyId);
+      manualJourneyId.current = selected.journeyId;
+      setJourneyPickerOpen(false);
+      setJourneyQuery("");
+    } catch {
+      request.cancel();
+      setProjection(previous);
+      setMessage("Journey selection could not be saved.");
+    } finally {
+      setSelectingJourneyId(null);
+    }
+  };
+
+  const openLedgerMenu = () => {
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        title: "Choose Ledger",
-        options: [...labels, "My Ledger", "Cancel"],
-        cancelButtonIndex: labels.length + 1,
+        title: "Ledger",
+        options: ["My Ledger", "Review", "Ledger Settings", "Cancel"],
+        cancelButtonIndex: 3,
       },
       (index) => {
-        if (index === labels.length) {
-          router.push("/expenses/all-journeys");
-          return;
-        }
-        const selected = journeys[index];
-        if (!selected) return;
-        manualJourneyId.current = selected.journeyId;
-        void getDefaultLedgerReportingRepository().then(async (repository) => {
-          await repository.selectJourney(selected.journeyId);
-          setJourney(selected);
-          setMessage(null);
-        });
+        if (index === 0) router.push("/expenses/all-journeys");
+        if (index === 1)
+          router.push({
+            pathname: "/expenses/review",
+            params: journey ? { journeyId: journey.journeyId } : {},
+          } as never);
+        if (index === 2) router.push("/expenses/settings" as never);
       },
     );
   };
 
+  const openSearch = (extra: Record<string, string> = {}) => {
+    if (!journey || !memberId) return;
+    router.push({
+      pathname: "/expenses/search",
+      params: { journeyId: journey.journeyId, memberId, scope, ...extra },
+    });
+  };
+
+  const openNewExpense = () =>
+    router.push({
+      pathname: "/expenses/new",
+      params: journey ? { journeyId: journey.journeyId } : {},
+    });
+
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTitle: "Ledger",
+          headerLeft: () => (
+            <HeaderButton
+              label="Ledger menu"
+              name="line.3.horizontal"
+              onPress={openLedgerMenu}
+            />
+          ),
+          headerRight: () => (
+            <View style={styles.headerActions}>
+              <HeaderButton
+                disabled={!journey}
+                label="Search Expenses"
+                name="magnifyingglass"
+                onPress={() => openSearch()}
+              />
+              <HeaderButton label="Add Expense" name="plus" onPress={openNewExpense} />
+            </View>
+          ),
+        }}
+      />
       <ScrollView
         contentContainerStyle={[styles.content, largeText && styles.largeContent]}
         contentInsetAdjustmentBehavior="automatic"
+        stickyHeaderIndices={[0]}
       >
-        <View style={[styles.header, largeText && styles.stack]}>
-          <Text
-            accessibilityRole="header"
-            adjustsFontSizeToFit
-            minimumFontScale={0.5}
-            numberOfLines={1}
-            style={styles.title}
-          >
-            Ledger
-          </Text>
+        <View style={styles.stickyContext}>
           <Pressable
+            accessibilityHint="Choose a Journey"
+            accessibilityLabel={
+              journey
+                ? `${journey.title}, ${formatLedgerDateRange(journey.startDate, journey.endDate)}`
+                : "No current Journey selected"
+            }
             accessibilityRole="button"
-            onPress={() => router.push("/expenses/new")}
-            style={styles.add}
+            onPress={() => setJourneyPickerOpen(true)}
+            style={styles.context}
           >
-            <Text
-              adjustsFontSizeToFit
-              maxFontSizeMultiplier={2}
-              minimumFontScale={0.5}
-              numberOfLines={1}
-              style={styles.addText}
-            >
-              + Expense
-            </Text>
+            <View style={styles.grow}>
+              <Text
+                maxFontSizeMultiplier={2}
+                numberOfLines={largeText ? undefined : 1}
+                style={styles.contextTitle}
+              >
+                {journey?.title ?? "Choose Journey"}
+              </Text>
+              <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                {journey
+                  ? formatLedgerDateRange(journey.startDate, journey.endDate)
+                  : "Select a Journey Ledger"}
+              </Text>
+            </View>
+            <AppIcon color="#64748B" name="chevron.up.chevron.down" size={16} />
           </Pressable>
+          {journey ? (
+            <Segment
+              value={mode}
+              options={["SPENDING", "SETTLEMENT"]}
+              onChange={setMode}
+            />
+          ) : null}
         </View>
-
-        <Pressable
-          accessibilityHint="Choose a Journey or open My Ledger"
-          accessibilityLabel={
-            journey
-              ? `${journey.title}, ${journey.startDate ?? "no start date"} to ${journey.endDate ?? "no end date"}, settlement currency ${journey.settlementCurrency}`
-              : "No current Journey selected"
-          }
-          accessibilityRole="button"
-          onPress={choose}
-          style={styles.context}
-        >
-          <Text maxFontSizeMultiplier={2} style={styles.contextTitle}>
-            {journey?.title ?? "Choose Journey"}
-          </Text>
-          <Text maxFontSizeMultiplier={2} style={styles.meta}>
-            {journey
-              ? `${journey.startDate ?? "Open start"} – ${journey.endDate ?? "Open end"} · ${journey.settlementCurrency}`
-              : "My Ledger and manually selectable Journeys are still available"}
-          </Text>
-        </Pressable>
 
         {message ? (
           <Text
@@ -235,140 +375,229 @@ export function LedgerStage6Screen() {
           </Text>
         ) : null}
         {loading ? <ActivityIndicator /> : null}
+        {updating && !loading ? (
+          <View style={styles.updating}>
+            <ActivityIndicator />
+            <Text accessibilityLiveRegion="polite" style={styles.meta}>
+              Updating Ledger…
+            </Text>
+          </View>
+        ) : null}
 
         {journey ? (
-          <>
-            <Segment
-              stacked={largeText}
-              value={mode}
-              options={["SPENDING", "SETTLEMENT"]}
-              onChange={setMode}
-            />
-            {mode === "SPENDING" ? (
-              <>
-                <Segment
-                  stacked={largeText}
-                  value={scope}
-                  options={["MINE", "GROUP"]}
-                  onChange={setScope}
-                />
-                <View style={styles.total}>
+          mode === "SPENDING" ? (
+            <>
+              <View style={styles.total}>
+                <View style={[styles.totalHeader, largeText && styles.stack]}>
                   <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
-                    {scope === "MINE" ? "MY SPENDING" : "GROUP SPENDING"}
+                    {scope === "MINE" ? "YOU SPENT" : "GROUP SPENT"}
                   </Text>
-                  <Text
-                    accessibilityLabel={`${scope === "MINE" ? "My" : "Group"} authoritative spending ${summary ? formatLedgerMoney(summary.totalMinor, journey.settlementCurrency, journey.settlementScale) : "unavailable"}`}
-                    adjustsFontSizeToFit
-                    maxFontSizeMultiplier={2}
-                    minimumFontScale={0.5}
-                    numberOfLines={1}
-                    style={styles.totalValue}
-                  >
-                    {summary
+                  <Segment
+                    compact
+                    value={scope}
+                    options={["MINE", "GROUP"]}
+                    onChange={(nextScope) => void loadProjection(journey, nextScope)}
+                  />
+                </View>
+                <Text
+                  accessibilityLabel={`${
+                    scope === "MINE" ? "You spent" : "Group spent"
+                  } ${
+                    summary
                       ? formatLedgerMoney(
                           summary.totalMinor,
                           journey.settlementCurrency,
                           journey.settlementScale,
                         )
-                      : "—"}
+                      : "unavailable"
+                  }`}
+                  maxFontSizeMultiplier={2}
+                  style={styles.totalValue}
+                >
+                  {summary
+                    ? formatLedgerMoney(
+                        summary.totalMinor,
+                        journey.settlementCurrency,
+                        journey.settlementScale,
+                      )
+                    : "—"}
+                </Text>
+                <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                  {summary?.expenseCount ?? 0} valued Expenses
+                </Text>
+              </View>
+
+              <DashboardSection
+                action="See analysis"
+                onAction={() =>
+                  router.push({
+                    pathname: "/expenses/analysis",
+                    params: {
+                      journeyId: journey.journeyId,
+                      memberId: memberId ?? "",
+                      scope,
+                    },
+                  })
+                }
+                title="Categories"
+              >
+                {categories.map((category, index) => (
+                  <Pressable
+                    accessibilityLabel={`${category.label}, ${formatLedgerMoney(
+                      category.totalMinor,
+                      journey.settlementCurrency,
+                      journey.settlementScale,
+                    )}`}
+                    accessibilityRole="button"
+                    key={category.key}
+                    onPress={() =>
+                      openSearch({
+                        authoritative: "1",
+                        category: category.key,
+                        origin: `Category: ${category.label}`,
+                      })
+                    }
+                    style={[styles.categoryRow, largeText && styles.stack]}
+                  >
+                    <Text
+                      maxFontSizeMultiplier={2}
+                      numberOfLines={2}
+                      style={styles.rowTitle}
+                    >
+                      {index + 1}. {category.label}
+                    </Text>
+                      <Text
+                        style={[styles.rowAmount, largeText && styles.largeRowAmount]}
+                      >
+                      {formatLedgerMoney(
+                        category.totalMinor,
+                        journey.settlementCurrency,
+                        journey.settlementScale,
+                      )}
+                    </Text>
+                  </Pressable>
+                ))}
+                {categories.length === 0 ? (
+                  <Text style={styles.empty}>No category totals yet.</Text>
+                ) : null}
+              </DashboardSection>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: "/expenses/settlement",
+                    params: { journeyId: journey.journeyId },
+                  })
+                }
+                style={styles.snapshot}
+              >
+                <View style={styles.grow}>
+                  <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
+                    SETTLEMENT
+                  </Text>
+                  {settlement.kind === "FINAL" ? (
+                    <>
+                      <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
+                        {settlement.positionMinor === null
+                          ? "Final settlement available"
+                          : settlementPositionLabel(settlement.positionMinor)}
+                      </Text>
+                      {settlement.positionMinor !== null ? (
+                        <Text maxFontSizeMultiplier={2} style={styles.snapshotAmount}>
+                          {formatLedgerMoney(
+                            Math.abs(settlement.positionMinor),
+                            settlement.currency,
+                            settlement.scale,
+                          )}
+                        </Text>
+                      ) : null}
+                      <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                        {settlement.needsUpdate
+                          ? "Final settlement needs an update"
+                          : "Final settlement snapshot"}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
+                        Settlement preview
+                      </Text>
+                      <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                        Check readiness and prepare a preview
+                      </Text>
+                    </>
+                  )}
+                </View>
+                <AppIcon color="#0F766E" name="chevron.right" size={16} />
+              </Pressable>
+
+              {summary?.unresolvedRateCount || summary?.openConflictCount ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() =>
+                    summary.openConflictCount
+                      ? router.push("/expenses/review" as never)
+                      : openSearch({ valuation: "RATE_REQUIRED" })
+                  }
+                  style={styles.attention}
+                >
+                  <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
+                    Needs attention
                   </Text>
                   <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                    {summary?.expenseCount ?? 0} valued Expenses
+                    {summary.unresolvedRateCount} need an exchange rate ·{" "}
+                    {summary.openConflictCount} conflicts need review
                   </Text>
-                </View>
-                {summary?.unresolvedRateCount || summary?.openConflictCount ? (
-                  <View style={styles.attention}>
-                    <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
-                      Excluded from authoritative total
-                    </Text>
-                    <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                      {summary.unresolvedRateCount} rate required ·{" "}
-                      {summary.openConflictCount} open conflict
-                    </Text>
-                  </View>
-                ) : null}
-                <View style={[styles.actions, largeText && styles.stack]}>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() =>
-                      router.push({
-                        pathname: "/expenses/analysis",
-                        params: {
-                          journeyId: journey.journeyId,
-                          memberId: memberId ?? "",
-                          scope,
-                        },
-                      })
-                    }
-                    style={styles.action}
-                  >
-                    <Text maxFontSizeMultiplier={2} style={styles.actionText}>
-                      Analysis
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() =>
-                      router.push({
-                        pathname: "/expenses/search",
-                        params: {
-                          journeyId: journey.journeyId,
-                          memberId: memberId ?? "",
-                          scope,
-                        },
-                      })
-                    }
-                    style={styles.action}
-                  >
-                    <Text maxFontSizeMultiplier={2} style={styles.actionText}>
-                      Search & Filter
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => router.push("/expenses/review" as never)}
-                    style={styles.action}
-                  >
-                    <Text maxFontSizeMultiplier={2} style={styles.actionText}>
-                      Review
-                    </Text>
-                  </Pressable>
-                </View>
-                <Text maxFontSizeMultiplier={2} style={styles.section}>
-                  RECENT EXPENSES
-                </Text>
-                <View style={styles.surface}>
-                  {expenses.map((expense) => (
+                </Pressable>
+              ) : null}
+
+              <DashboardSection
+                action="See All"
+                onAction={() => openSearch({ origin: "All Expenses" })}
+                title="Recent Expenses"
+              >
+                {expenses.map((expense) => {
+                  const attention = ledgerExpenseAttention(expense, scope);
+                  return (
                     <Pressable
-                      accessibilityLabel={`${expense.title}, ${formatLedgerMoney(expense.originalMinor, expense.originalCurrency, expense.originalScale)}${expense.isAuthoritative ? "" : ", excluded from authoritative total"}`}
+                      accessibilityLabel={`${expense.title}, ${formatLedgerMoney(
+                        expense.originalMinor,
+                        expense.originalCurrency,
+                        expense.originalScale,
+                      )}${expense.hasReceipt ? ", receipt attached" : ""}${
+                        attention ? `, ${attention}` : ""
+                      }`}
                       accessibilityRole="button"
                       key={expense.id}
                       onPress={() => router.push(`/expenses/expense/${expense.id}`)}
                       style={[styles.row, largeText && styles.stack]}
                     >
                       <View style={styles.grow}>
-                        <Text maxFontSizeMultiplier={2} style={styles.rowTitle}>
-                          {expense.title}
-                        </Text>
+                        <View style={styles.rowTitleLine}>
+                          <Text
+                            maxFontSizeMultiplier={2}
+                            numberOfLines={2}
+                            style={styles.rowTitle}
+                          >
+                            {expense.title}
+                          </Text>
+                          {expense.hasReceipt ? (
+                            <AppIcon color="#64748B" name="paperclip" size={14} />
+                          ) : null}
+                        </View>
                         <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                          {expense.payerName} paid · {expense.category}
+                          {expense.category} · {formatLedgerDate(expense.occurredAt)} ·{" "}
+                          {expense.payerName} paid
                         </Text>
-                        {!expense.isAuthoritative ? (
+                        {attention ? (
                           <Text maxFontSizeMultiplier={2} style={styles.warning}>
-                            {expense.hasOpenConflict
-                              ? "Conflict"
-                              : expense.businessStatus === "RATE_REQUIRED"
-                                ? "Rate required"
-                                : expense.businessStatus}
+                            {attention}
                           </Text>
                         ) : null}
                       </View>
                       <Text
-                        adjustsFontSizeToFit
-                        maxFontSizeMultiplier={2}
-                        minimumFontScale={0.5}
-                        numberOfLines={1}
-                        style={styles.rowAmount}
+                        style={[styles.rowAmount, largeText && styles.largeRowAmount]}
                       >
                         {formatLedgerMoney(
                           expense.originalMinor,
@@ -377,18 +606,29 @@ export function LedgerStage6Screen() {
                         )}
                       </Text>
                     </Pressable>
-                  ))}
-                  {expenses.length === 0 ? (
+                  );
+                })}
+                {expenses.length === 0 ? (
+                  <View style={styles.emptyState}>
                     <Text maxFontSizeMultiplier={2} style={styles.empty}>
-                      No cached Expenses.
+                      No Expenses yet.
                     </Text>
-                  ) : null}
-                </View>
-              </>
-            ) : (
-              <SettlementReadinessScreen embedded journeyId={journey.journeyId} />
-            )}
-          </>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={openNewExpense}
+                      style={styles.primary}
+                    >
+                      <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
+                        Add Expense
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+              </DashboardSection>
+            </>
+          ) : (
+            <SettlementReadinessScreen embedded journeyId={journey.journeyId} />
+          )
         ) : (
           <Pressable
             accessibilityRole="button"
@@ -401,36 +641,179 @@ export function LedgerStage6Screen() {
           </Pressable>
         )}
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setJourneyPickerOpen(false)}
+        presentationStyle="pageSheet"
+        visible={journeyPickerOpen}
+      >
+        <View style={styles.picker}>
+          <View style={[styles.pickerHeader, largeText && styles.pickerHeaderLarge]}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setJourneyPickerOpen(false)}
+              style={styles.headerButton}
+            >
+              <Text style={styles.link}>Cancel</Text>
+            </Pressable>
+            <Text accessibilityRole="header" style={styles.pickerTitle}>
+              Choose Journey
+            </Text>
+            {largeText ? null : <View style={styles.headerButton} />}
+          </View>
+          <TextInput
+            accessibilityLabel="Search Journeys"
+            autoCapitalize="none"
+            autoCorrect={false}
+            onChangeText={setJourneyQuery}
+            placeholder="Search Journeys"
+            returnKeyType="search"
+            style={styles.search}
+            value={journeyQuery}
+          />
+          <FlatList
+            contentContainerStyle={styles.pickerList}
+            data={visibleJourneys}
+            keyExtractor={(item) => item.journeyId}
+            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={<Text style={styles.empty}>No matching Journeys.</Text>}
+            renderItem={({ item }) => {
+              const lifecycle = journeyLifecycleLabel(item, localToday());
+              const selected = item.journeyId === journey?.journeyId;
+              const selecting = item.journeyId === selectingJourneyId;
+              return (
+                <Pressable
+                  accessibilityLabel={`${item.title}, ${formatLedgerDateRange(
+                    item.startDate,
+                    item.endDate,
+                  )}${lifecycle ? `, ${lifecycle}` : ""}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected, busy: selecting }}
+                  disabled={selectingJourneyId !== null}
+                  onPress={() => void chooseJourney(item)}
+                  style={styles.journeyRow}
+                >
+                  <View style={styles.grow}>
+                    <Text
+                      maxFontSizeMultiplier={2}
+                      numberOfLines={2}
+                      style={styles.rowTitle}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                      {formatLedgerDateRange(item.startDate, item.endDate)}
+                      {lifecycle ? ` · ${lifecycle}` : ""}
+                    </Text>
+                  </View>
+                  {selecting ? (
+                    <ActivityIndicator />
+                  ) : selected ? (
+                    <AppIcon color="#0F766E" name="checkmark" />
+                  ) : null}
+                </Pressable>
+              );
+            }}
+          />
+        </View>
+      </Modal>
     </>
   );
 }
 
+function HeaderButton({
+  disabled,
+  label,
+  name,
+  onPress,
+}: {
+  disabled?: boolean;
+  label: string;
+  name: "line.3.horizontal" | "magnifyingglass" | "plus";
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      hitSlop={6}
+      onPress={onPress}
+      style={[styles.headerButton, disabled && styles.disabled]}
+    >
+      <AppIcon color="#0F766E" name={name} />
+    </Pressable>
+  );
+}
+
+function DashboardSection({
+  action,
+  children,
+  onAction,
+  title,
+}: {
+  action: string;
+  children: React.ReactNode;
+  onAction: () => void;
+  title: string;
+}) {
+  return (
+    <View style={styles.sectionBlock}>
+      <View style={styles.sectionHeader}>
+        <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={styles.section}>
+          {title}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onAction}
+          style={styles.sectionAction}
+        >
+          <Text maxFontSizeMultiplier={2} style={styles.link}>
+            {action}
+          </Text>
+        </Pressable>
+      </View>
+      <View style={styles.surface}>{children}</View>
+    </View>
+  );
+}
+
 function Segment<T extends string>({
-  stacked,
+  compact,
   value,
   options,
   onChange,
 }: {
-  stacked?: boolean;
+  compact?: boolean;
   value: T;
   options: T[];
   onChange: (value: T) => void;
 }) {
+  const largeText = useWindowDimensions().fontScale > 2;
   return (
-    <View accessibilityRole="tablist" style={[styles.segment, stacked && styles.stack]}>
+    <View
+      accessibilityRole="tablist"
+      style={[
+        styles.segment,
+        compact && styles.compactSegment,
+        largeText && styles.segmentLarge,
+      ]}
+    >
       {options.map((option) => (
         <Pressable
           accessibilityRole="tab"
           accessibilityState={{ selected: value === option }}
           key={option}
           onPress={() => onChange(option)}
-          style={[styles.segmentItem, value === option && styles.segmentSelected]}
+          style={[
+            styles.segmentItem,
+            compact && styles.compactSegmentItem,
+            value === option && styles.segmentSelected,
+          ]}
         >
           <Text
-            adjustsFontSizeToFit
-            maxFontSizeMultiplier={2}
-            minimumFontScale={0.5}
-            numberOfLines={1}
             style={[styles.segmentText, value === option && styles.segmentTextSelected]}
           >
             {option === "MINE"
@@ -456,59 +839,107 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   largeContent: { paddingBottom: 140 },
-  header: {
+  stickyContext: { backgroundColor: "#F6F7F9", gap: 8, paddingBottom: 8 },
+  headerActions: { alignItems: "center", flexDirection: "row", gap: 2 },
+  headerButton: {
     alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 44,
   },
-  title: { color: "#111827", fontSize: 32, fontWeight: "800" },
-  add: { minHeight: 44, justifyContent: "center" },
-  addText: { color: "#087E68", fontSize: 16, fontWeight: "700" },
+  disabled: { opacity: 0.35 },
   context: {
+    alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    gap: 4,
-    minHeight: 68,
-    padding: 14,
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 62,
+    padding: 12,
   },
-  contextTitle: { color: "#111827", fontSize: 18, fontWeight: "700" },
+  contextTitle: { color: "#111827", fontSize: 17, fontWeight: "700" },
   meta: { color: "#64748B", fontSize: 13 },
   message: { color: "#7C5B00", fontSize: 14 },
+  updating: { alignItems: "center", flexDirection: "row", gap: 8 },
   segment: {
     backgroundColor: "#E5E7EB",
     borderRadius: 9,
     flexDirection: "row",
     padding: 2,
   },
+  segmentLarge: { alignSelf: "stretch", flexDirection: "column" },
+  compactSegment: { alignSelf: "flex-start", minWidth: 146 },
   segmentItem: {
     alignItems: "center",
+    borderRadius: 7,
     flex: 1,
     justifyContent: "center",
-    minHeight: 44,
+    minHeight: 42,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 7,
   },
+  compactSegmentItem: { minHeight: 34, paddingHorizontal: 10, paddingVertical: 5 },
   segmentSelected: { backgroundColor: "#FFFFFF" },
   segmentText: { color: "#64748B", fontWeight: "600" },
   segmentTextSelected: { color: "#111827" },
-  total: { backgroundColor: "#FFFFFF", borderRadius: 12, padding: 16 },
-  eyebrow: { color: "#64748B", fontSize: 12, fontWeight: "700" },
-  totalValue: { color: "#111827", fontSize: 30, fontWeight: "800", marginVertical: 4 },
-  attention: { backgroundColor: "#FFF7DB", borderRadius: 10, padding: 13 },
-  attentionTitle: { color: "#7C5B00", fontWeight: "700" },
-  actions: { flexDirection: "row", gap: 10 },
-  action: {
+  total: { backgroundColor: "#FFFFFF", borderRadius: 14, padding: 18 },
+  totalHeader: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 48,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
-  actionText: { color: "#087E68", fontWeight: "700" },
-  section: { color: "#64748B", fontSize: 12, fontWeight: "700", marginTop: 4 },
+  eyebrow: { color: "#64748B", fontSize: 12, fontWeight: "700" },
+  totalValue: {
+    color: "#111827",
+    fontSize: 34,
+    fontWeight: "800",
+    marginVertical: 6,
+  },
+  sectionBlock: { gap: 8 },
+  sectionHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 32,
+  },
+  section: { color: "#334155", fontSize: 17, fontWeight: "700" },
+  sectionAction: { justifyContent: "center", minHeight: 44, paddingLeft: 16 },
+  link: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
   surface: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
+  categoryRow: {
+    alignItems: "center",
+    borderBottomColor: "#E5E7EB",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    minHeight: 50,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  snapshot: {
+    alignItems: "center",
+    backgroundColor: "#E7F5F1",
+    borderRadius: 12,
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 96,
+    padding: 16,
+  },
+  snapshotTitle: {
+    color: "#111827",
+    fontSize: 19,
+    fontWeight: "700",
+    marginTop: 4,
+  },
+  snapshotAmount: {
+    color: "#0F766E",
+    fontSize: 24,
+    fontWeight: "800",
+    marginVertical: 2,
+  },
+  attention: { backgroundColor: "#FFF7DB", borderRadius: 10, minHeight: 64, padding: 13 },
+  attentionTitle: { color: "#7C5B00", fontWeight: "700" },
   row: {
     alignItems: "center",
     borderBottomColor: "#E5E7EB",
@@ -518,22 +949,57 @@ const styles = StyleSheet.create({
     minHeight: 72,
     padding: 14,
   },
+  rowTitleLine: { alignItems: "center", flexDirection: "row", gap: 6 },
   grow: { flex: 1 },
-  rowTitle: { color: "#111827", fontSize: 16, fontWeight: "600" },
+  rowTitle: { color: "#111827", flexShrink: 1, fontSize: 16, fontWeight: "600" },
   rowAmount: { color: "#111827", fontSize: 15, fontWeight: "700" },
+  largeRowAmount: { alignSelf: "flex-start" },
   warning: { color: "#B45309", fontSize: 12, fontWeight: "700", marginTop: 3 },
-  empty: { color: "#64748B", padding: 24, textAlign: "center" },
-  readiness: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 10, padding: 18 },
-  readinessTitle: { color: "#111827", fontSize: 20, fontWeight: "700" },
-  body: { color: "#334155", fontSize: 15, lineHeight: 22 },
+  emptyState: { alignItems: "center", gap: 12, padding: 20 },
+  empty: { color: "#64748B", padding: 20, textAlign: "center" },
   stack: { alignItems: "stretch", flexDirection: "column" },
   primary: {
     alignItems: "center",
-    backgroundColor: "#087E68",
+    backgroundColor: "#0F766E",
     borderRadius: 10,
     justifyContent: "center",
     minHeight: 50,
+    paddingHorizontal: 18,
     paddingVertical: 12,
   },
   primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  picker: { backgroundColor: "#F6F7F9", flex: 1, paddingTop: 12 },
+  pickerHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 8,
+  },
+  pickerHeaderLarge: {
+    alignItems: "flex-start",
+    flexDirection: "column",
+    paddingHorizontal: 16,
+  },
+  pickerTitle: { color: "#111827", fontSize: 17, fontWeight: "700" },
+  search: {
+    backgroundColor: "#E5E7EB",
+    borderRadius: 10,
+    color: "#111827",
+    fontSize: 16,
+    marginHorizontal: 16,
+    marginVertical: 10,
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
+  pickerList: { padding: 16, paddingBottom: 40 },
+  journeyRow: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderBottomColor: "#E5E7EB",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 68,
+    padding: 14,
+  },
 });

@@ -187,5 +187,9 @@ export function analyzeReporting(
       unresolvedRateCount: 0,
       openConflictCount: 0,
     }))
-    .sort((a, b) => b.totalMinor - a.totalMinor || a.label.localeCompare(b.label));
+    .sort((a, b) =>
+      dimension === "DAY"
+        ? a.key.localeCompare(b.key)
+        : b.totalMinor - a.totalMinor || a.label.localeCompare(b.label),
+    );
 }

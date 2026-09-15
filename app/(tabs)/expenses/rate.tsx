@@ -1,5 +1,5 @@
-import { RateReviewScreen } from "@/features/ledger-prototype/RateReviewScreen";
+import { Redirect } from "expo-router";
 
 export default function RateRoute() {
-  return <RateReviewScreen />;
+  return <Redirect href="/expenses/new" />;
 }

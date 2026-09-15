@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,7 +17,8 @@ import {
 } from "@/domain/ledger/journeyContext";
 import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
 
-import { formatLedgerMoney } from "./format";
+import { formatLedgerDateRange, formatLedgerMoney } from "./format";
+import { createLatestRequest } from "./latestRequest";
 
 type Row = Awaited<
   ReturnType<
@@ -27,28 +29,52 @@ type Row = Awaited<
 export function MyLedgerScreen() {
   const largeText = useWindowDimensions().fontScale > 2;
   const { refreshPersonal } = useLedgerReportingRefresh();
-  const [period, setPeriod] = useState<MyLedgerPeriod>("YEAR");
-  const [rows, setRows] = useState<Row[]>([]);
+  const [view, setView] = useState<{ period: MyLedgerPeriod; rows: Row[] } | null>(null);
   const [offline, setOffline] = useState(false);
+  const [updating, setUpdating] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [request] = useState(createLatestRequest);
 
-  const load = useCallback(async () => {
-    const repository = await getDefaultLedgerReportingRepository();
-    setRows(await repository.listMyLedger(period));
-  }, [period]);
+  const load = useCallback(
+    async (period: MyLedgerPeriod) => {
+      const id = request.begin();
+      setUpdating(true);
+      setError(null);
+      try {
+        const repository = await getDefaultLedgerReportingRepository();
+        const rows = await repository.listMyLedger(period);
+        if (!request.isCurrent(id)) return;
+        setView({ period, rows });
+        setUpdating(false);
+        const bounds = myLedgerPeriodBounds(period, new Date());
+        try {
+          await refreshPersonal(period, bounds);
+          const refreshed = await repository.listMyLedger(period);
+          if (!request.isCurrent(id)) return;
+          setView({ period, rows: refreshed });
+          setOffline(false);
+        } catch {
+          if (request.isCurrent(id)) setOffline(true);
+        }
+      } catch {
+        if (request.isCurrent(id)) {
+          setError("My Ledger could not be loaded. Tap to try again.");
+          setUpdating(false);
+        }
+      }
+    },
+    [refreshPersonal, request],
+  );
 
   useEffect(() => {
-    void Promise.resolve()
-      .then(load)
-      .then(() => {
-        const bounds = myLedgerPeriodBounds(period, new Date());
-        void refreshPersonal(period, bounds)
-          .then(() => {
-            setOffline(false);
-            return load();
-          })
-          .catch(() => setOffline(true));
-      });
-  }, [load, period, refreshPersonal]);
+    void Promise.resolve().then(() => load("YEAR"));
+    return () => {
+      request.cancel();
+    };
+  }, [load, request]);
+
+  const period = view?.period ?? "YEAR";
+  const rows = view?.rows ?? [];
 
   const openJourney = async (journeyId: string) => {
     await (await getDefaultLedgerReportingRepository()).selectJourney(journeyId);
@@ -63,7 +89,7 @@ export function MyLedgerScreen() {
             accessibilityRole="tab"
             accessibilityState={{ selected: period === item }}
             key={item}
-            onPress={() => setPeriod(item)}
+            onPress={() => void load(item)}
             style={[styles.segmentItem, period === item && styles.selected]}
           >
             <Text style={styles.segmentText}>
@@ -73,13 +99,32 @@ export function MyLedgerScreen() {
         ))}
       </View>
       <Text style={styles.note}>
-        Journey currencies stay separate. Position means paid value minus your exact
-        allocated shares before settlement.
+        Journey currencies stay separate. Before settling, a positive amount means you
+        paid more than your share; a negative amount means you paid less.
       </Text>
       {offline ? (
         <Text accessibilityLiveRegion="polite" style={styles.offline}>
-          Offline · showing the last SQLite snapshot
+          Offline · showing saved Ledger data
         </Text>
+      ) : null}
+      {updating ? (
+        <View style={styles.progress}>
+          <ActivityIndicator />
+          <Text accessibilityLiveRegion="polite" style={styles.note}>
+            Updating My Ledger…
+          </Text>
+        </View>
+      ) : null}
+      {error ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void load(period)}
+          style={styles.retry}
+        >
+          <Text accessibilityLiveRegion="polite" style={styles.error}>
+            {error}
+          </Text>
+        </Pressable>
       ) : null}
       <View style={styles.surface}>
         {rows.map((row) => (
@@ -93,7 +138,7 @@ export function MyLedgerScreen() {
             <View style={styles.grow}>
               <Text style={styles.title}>{row.title}</Text>
               <Text style={styles.meta}>
-                {row.startDate ?? "Open start"} – {row.endDate ?? "Open end"}
+                {formatLedgerDateRange(row.startDate, row.endDate)}
               </Text>
               <Text style={styles.meta}>
                 My spending {formatLedgerMoney(row.mySpendMinor, row.currency, row.scale)}{" "}
@@ -113,8 +158,8 @@ export function MyLedgerScreen() {
             </View>
           </Pressable>
         ))}
-        {rows.length === 0 ? (
-          <Text style={styles.empty}>No cached Journey history for this period.</Text>
+        {!updating && rows.length === 0 ? (
+          <Text style={styles.empty}>No Journey history for this period.</Text>
         ) : null}
       </View>
     </ScrollView>
@@ -146,6 +191,9 @@ const styles = StyleSheet.create({
   segmentText: { color: "#111827", fontWeight: "600", textAlign: "center" },
   note: { color: "#475569", fontSize: 14, lineHeight: 20 },
   offline: { color: "#7C5B00", fontWeight: "600" },
+  progress: { alignItems: "center", flexDirection: "row", gap: 8 },
+  error: { color: "#B91C1C", fontWeight: "600" },
+  retry: { justifyContent: "center", minHeight: 44 },
   surface: { backgroundColor: "#FFFFFF", borderRadius: 10, overflow: "hidden" },
   row: {
     alignItems: "center",

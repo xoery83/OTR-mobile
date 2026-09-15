@@ -88,6 +88,19 @@ describe("Stage 6 reporting semantics", () => {
     expect(bucket.includedExpenseIds).toEqual(["valued"]);
   });
 
+  it("orders Time buckets chronologically instead of by amount", () => {
+    const earlier = { ...records[0]!, id: "earlier", occurredAt: "2026-09-01" };
+    const later = {
+      ...records[0]!,
+      id: "later",
+      occurredAt: "2026-09-20",
+      settlementMinor: 9999,
+    };
+    expect(
+      analyzeReporting([later, earlier], "DAY", "GROUP", "a").map((bucket) => bucket.key),
+    ).toEqual(["2026-09-01", "2026-09-20"]);
+  });
+
   it("keeps settlement-excluded ACCEPTED expenses in Spending and consumption analysis", () => {
     const excluded: ReportingRecord = {
       ...records[0]!,

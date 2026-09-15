@@ -252,6 +252,21 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
       }));
     },
 
+    async countExpenses(query: LedgerReportQuery) {
+      const filtered = where(query);
+      const row = await database.getFirstAsync<{ count: number }>(
+        `SELECT COUNT(*) AS count
+         FROM ledger_expenses e
+         JOIN ledger_journeys j ON j.journey_id = e.journey_id
+         LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
+         LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
+         WHERE ${filtered.sql}`,
+        query.memberId,
+        ...filtered.params,
+      );
+      return row?.count ?? 0;
+    },
+
     async summarize(query: LedgerReportQuery): Promise<ReportingAggregate> {
       const filtered = where(query);
       const component =
@@ -323,7 +338,7 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
          ${participantJoin}
          WHERE ${filtered.sql} AND ${authoritativeSql} AND ${amount} IS NOT NULL ${ownParticipant}
          GROUP BY ${dimensionSql[0]}, ${dimensionSql[1]}
-         ORDER BY totalMinor DESC, label`,
+         ORDER BY ${dimension === "DAY" ? "key ASC" : "totalMinor DESC, label"}`,
         ...params,
       );
       return rows.map((row) => ({

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import * as FileSystem from "expo-file-system/legacy";
 
 import type { LedgerReviewFindingDto } from "@/data/api/ledgerReviewContracts";
+import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import { openDatabase } from "@/data/db/database";
 import { readLedgerSupportDiagnostics } from "@/data/operations/ledgerMaintenance";
@@ -10,19 +11,31 @@ import { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";
 import { createLedgerReviewTransport } from "@/data/sync/ledgerReviewTransport";
 import { stage3JourneyId } from "./useLedgerStage3";
 
-export function useLedgerReview() {
+export type LedgerReviewFinding = LedgerReviewFindingDto;
+
+export function useLedgerReview(journeyId = stage3JourneyId) {
   const [findings, setFindings] = useState<LedgerReviewFindingDto[]>([]);
+  const [expenseTitles, setExpenseTitles] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const load = useCallback(async () => {
-    if (stage3JourneyId)
-      setFindings(await (await getDefaultLedgerReviewRepository()).list(stage3JourneyId));
-  }, []);
+    if (!journeyId) return;
+    const [nextFindings, expenses] = await Promise.all([
+      getDefaultLedgerReviewRepository().then((repository) => repository.list(journeyId)),
+      getDefaultLedgerExpenseRepository().then((repository) =>
+        repository.listExpensesForJourney(journeyId),
+      ),
+    ]);
+    setFindings(nextFindings);
+    setExpenseTitles(
+      Object.fromEntries(expenses.map((expense) => [expense.id, expense.title])),
+    );
+  }, [journeyId]);
   const refresh = useCallback(async () => {
-    if (!stage3JourneyId) return;
+    if (!journeyId) return;
     try {
-      await refreshJourneyLedger(stage3JourneyId);
-      await runLedgerReviewSync(stage3JourneyId);
-      const response = await createLedgerReviewTransport().refresh(stage3JourneyId);
+      await refreshJourneyLedger(journeyId);
+      await runLedgerReviewSync(journeyId);
+      const response = await createLedgerReviewTransport().refresh(journeyId);
       await (
         await getDefaultLedgerReviewRepository()
       ).apply(response.findings, response.actions);
@@ -31,13 +44,14 @@ export function useLedgerReview() {
       setMessage("Offline · showing cached Review");
     }
     await load();
-  }, [load]);
+  }, [journeyId, load]);
   useEffect(() => {
     void Promise.resolve().then(load);
     void Promise.resolve().then(refresh);
   }, [load, refresh]);
   return {
     findings,
+    expenseTitles,
     message,
     generateDiagnostics: async () => {
       if (!FileSystem.documentDirectory) throw new Error("Diagnostics unavailable.");
@@ -58,7 +72,7 @@ export function useLedgerReview() {
       try {
         await (await getDefaultLedgerReviewRepository()).act(findingId, action, reason);
         await load();
-        void runLedgerReviewSync(stage3JourneyId)
+        void runLedgerReviewSync(journeyId)
           .then(load)
           .catch(() => setMessage("Offline · Review action queued for sync"));
       } catch (error) {

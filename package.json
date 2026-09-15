@@ -28,6 +28,7 @@
     "stage9:load:hosted-dev": "tsx scripts/stage9/load-hosted-dev.ts"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "9.1.0",
     "@supabase/supabase-js": "^2.116.0",
     "@tanstack/react-query": "^5.0.0",
     "expo": "~57.0.21",

@@ -1,5 +1,5 @@
-import { QuickExpenseScreen } from "@/features/ledger-prototype/QuickExpenseScreen";
+import { LedgerExpenseEntryScreen } from "@/features/ledger/LedgerExpenseEntryScreen";
 
 export default function NewExpenseRoute() {
-  return <QuickExpenseScreen />;
+  return <LedgerExpenseEntryScreen />;
 }

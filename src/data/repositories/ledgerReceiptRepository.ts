@@ -48,6 +48,7 @@ export function createLedgerReceiptRepository(database: Database) {
       mimeType: ReceiptAsset["mimeType"];
       sizeBytes: number;
       sha256: string;
+      requestOcr: boolean;
     }) {
       if (!/^file:\/\//.test(input.localUri) || !/^[a-f0-9]{64}$/.test(input.sha256))
         throw new Error("Receipt must be copied and hashed before import.");
@@ -69,7 +70,8 @@ export function createLedgerReceiptRepository(database: Database) {
           now,
         );
         await enqueue(database, input.journeyId, input.id, "UPLOAD_RECEIPT", now);
-        await enqueue(database, input.journeyId, input.id, "OCR_RECEIPT", now);
+        if (input.requestOcr)
+          await enqueue(database, input.journeyId, input.id, "OCR_RECEIPT", now);
         if (input.expenseId)
           await enqueue(database, input.journeyId, input.id, "LINK_RECEIPT", now);
       });

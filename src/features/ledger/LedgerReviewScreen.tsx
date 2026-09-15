@@ -1,139 +1,113 @@
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { Stack } from "expo-router";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { useLedgerReview } from "@/hooks/useLedgerReview";
 
+import { reviewFindingCopy, reviewStatusLabel } from "./settlementPresentation";
+
 export function LedgerReviewScreen() {
-  const { findings, message, act, generateDiagnostics } = useLedgerReview();
-  const [reason, setReason] = useState("");
+  const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
+  const { expenseTitles, findings, message } = useLedgerReview(journeyId);
+  const actionableCount = findings.filter(
+    (finding) => finding.status === "OPEN" || finding.status === "ACKNOWLEDGED",
+  ).length;
 
   return (
     <>
-      <Stack.Screen options={{ title: "Ledger Review" }} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>
-          Ledger Review
-        </Text>
-        <Text style={styles.subtitle}>
-          Advisory findings never change financial records.
-        </Text>
-        <Pressable
-          accessibilityLabel="Generate redacted support diagnostics"
-          accessibilityRole="button"
-          onPress={() => void generateDiagnostics()}
-          style={styles.diagnosticsButton}
-        >
-          <Text style={styles.diagnosticsText}>Generate support diagnostics</Text>
-        </Pressable>
-        {message ? (
-          <Text accessibilityLiveRegion="polite" style={styles.message}>
-            {message}
-          </Text>
-        ) : null}
-        {findings.length === 0 ? (
-          <Text style={styles.empty}>No review findings.</Text>
-        ) : null}
-        {findings.some(
-          (finding) =>
-            finding.layer === "HEURISTIC" &&
-            finding.status !== "STALE" &&
-            finding.status !== "RESOLVED",
-        ) ? (
-          <TextInput
-            accessibilityLabel="Review action reason"
-            multiline
-            onChangeText={setReason}
-            placeholder="Reason for acknowledge or dismiss"
-            style={styles.reason}
-            value={reason}
-          />
-        ) : null}
-        {findings.map((finding) => (
-          <View
-            accessible
-            accessibilityLabel={`${finding.findingType.replaceAll("_", " ")}, ${finding.severity}, ${finding.layer}, ${finding.expenseId ? `Expense revision ${finding.entityRevision ?? "unknown"}` : "Journey context"}, status ${finding.status}`}
-            key={finding.id}
-            style={styles.card}
-          >
-            <Text style={styles.cardTitle}>
-              {finding.findingType.replaceAll("_", " ")}
+      <Stack.Screen options={{ title: "Review" }} />
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={findings}
+        initialNumToRender={12}
+        keyExtractor={(finding) => finding.id}
+        ListEmptyComponent={
+          <View style={styles.emptyCard}>
+            <Text accessibilityRole="header" style={styles.emptyTitle}>
+              Nothing needs review
             </Text>
-            <Text>
-              {finding.severity} · {finding.layer}
+            <Text style={styles.meta}>Your cached Ledger findings are clear.</Text>
+          </View>
+        }
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.subtitle}>
+              {actionableCount
+                ? `${actionableCount} item${actionableCount === 1 ? "" : "s"} need a decision.`
+                : "No current findings need a decision."}
             </Text>
-            <Text>
-              {finding.expenseId
-                ? `Expense · revision ${finding.entityRevision ?? "unknown"}`
-                : "Journey context"}
+            <Text style={styles.meta}>
+              Review actions record your decision but never change an Expense by
+              themselves.
             </Text>
-            <Text>{finding.evidenceCodes.join(" · ")}</Text>
-            <Text>Status: {finding.status}</Text>
-            {finding.layer === "HEURISTIC" &&
-            finding.status !== "STALE" &&
-            finding.status !== "RESOLVED" ? (
-              <View style={styles.actions}>
-                <Pressable
-                  accessibilityLabel="Acknowledge finding"
-                  accessibilityRole="button"
-                  accessibilityState={{
-                    disabled: !reason.trim(),
-                    selected: finding.status === "ACKNOWLEDGED",
-                  }}
-                  disabled={!reason.trim()}
-                  onPress={() => void act(finding.id, "ACKNOWLEDGED", reason.trim())}
-                  style={[styles.button, !reason.trim() && styles.buttonDisabled]}
-                >
-                  <Text style={styles.buttonText}>Acknowledge</Text>
-                </Pressable>
-                <Pressable
-                  accessibilityLabel="Dismiss finding"
-                  accessibilityRole="button"
-                  accessibilityState={{
-                    disabled: !reason.trim(),
-                    selected: finding.status === "DISMISSED",
-                  }}
-                  disabled={!reason.trim()}
-                  onPress={() => void act(finding.id, "DISMISSED", reason.trim())}
-                  style={[styles.button, !reason.trim() && styles.buttonDisabled]}
-                >
-                  <Text style={styles.buttonText}>Dismiss</Text>
-                </Pressable>
-              </View>
+            {message ? (
+              <Text accessibilityLiveRegion="polite" style={styles.message}>
+                {message}
+              </Text>
             ) : null}
           </View>
-        ))}
-      </ScrollView>
+        }
+        renderItem={({ item: finding }) => {
+          const copy = reviewFindingCopy(finding);
+          const expenseTitle = finding.expenseId
+            ? (expenseTitles[finding.expenseId] ?? "Expense")
+            : "Current Journey";
+          return (
+            <Pressable
+              accessibilityLabel={`${copy.title}, ${expenseTitle}, ${reviewStatusLabel(finding.status)}`}
+              accessibilityRole="button"
+              onPress={() =>
+                router.push({
+                  pathname: "/expenses/review/[id]",
+                  params: { id: finding.id, journeyId },
+                } as never)
+              }
+              style={styles.card}
+            >
+              <View style={styles.grow}>
+                <Text style={styles.cardTitle}>{copy.title}</Text>
+                <Text style={styles.expenseTitle}>{expenseTitle}</Text>
+                <Text numberOfLines={2} style={styles.meta}>
+                  {copy.why}
+                </Text>
+                <Text
+                  style={finding.status === "OPEN" ? styles.needsReview : styles.resolved}
+                >
+                  {reviewStatusLabel(finding.status)}
+                </Text>
+              </View>
+              <Text importantForAccessibility="no" style={styles.chevron}>
+                ›
+              </Text>
+            </Pressable>
+          );
+        }}
+        windowSize={7}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { gap: 12, padding: 20, paddingBottom: 48 },
-  title: { fontSize: 30, fontWeight: "800" },
-  subtitle: { color: "#475569", fontSize: 16 },
-  message: { color: "#92400e" },
-  empty: { paddingVertical: 24 },
-  card: { backgroundColor: "#f8fafc", borderRadius: 16, gap: 6, padding: 16 },
-  reason: {
-    backgroundColor: "white",
-    borderColor: "#94A3B8",
-    borderRadius: 10,
-    borderWidth: 1,
-    minHeight: 72,
-    padding: 12,
+  content: { gap: 10, padding: 16, paddingBottom: 40 },
+  header: { gap: 7, paddingBottom: 6 },
+  subtitle: { color: "#334155", fontSize: 17, fontWeight: "700" },
+  message: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
+  meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
+  emptyCard: { backgroundColor: "#E7F5F2", borderRadius: 14, gap: 6, padding: 18 },
+  emptyTitle: { color: "#0F766E", fontSize: 19, fontWeight: "800" },
+  card: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    flexDirection: "row",
+    gap: 10,
+    minHeight: 116,
+    padding: 14,
   },
-  cardTitle: { fontSize: 17, fontWeight: "700" },
-  diagnosticsButton: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center" },
-  diagnosticsText: { color: "#0F766E", fontWeight: "700" },
-  actions: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 8 },
-  button: {
-    backgroundColor: "#0f172a",
-    borderRadius: 10,
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  buttonDisabled: { opacity: 0.45 },
-  buttonText: { color: "white", fontWeight: "700" },
+  grow: { flex: 1 },
+  cardTitle: { color: "#0F172A", fontSize: 17, fontWeight: "800" },
+  expenseTitle: { color: "#334155", fontSize: 15, fontWeight: "700", marginTop: 2 },
+  needsReview: { color: "#9A3412", fontSize: 13, fontWeight: "800", marginTop: 5 },
+  resolved: { color: "#0F766E", fontSize: 13, fontWeight: "800", marginTop: 5 },
+  chevron: { color: "#64748B", fontSize: 26 },
 });

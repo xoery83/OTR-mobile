@@ -1,61 +1,75 @@
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 
-import { copyReceiptIntoAppStorage } from "@/data/files/receiptFileStore";
-import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
-import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
+import { importReceiptAsset } from "@/data/operations/importReceiptAsset";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
 import { runLedgerReceiptSync } from "@/data/sync/ledgerReceiptCoordinator";
-import { allocateEqual } from "@/domain/ledger/allocation";
-import { currencyScale } from "@/domain/ledger/currency";
-import { createLocalId } from "@/domain/localId";
 import { stage3JourneyId } from "./useLedgerStage3";
 
 export function useReceiptCapture() {
-  const { expenseId } = useLocalSearchParams<{ expenseId?: string }>();
+  const params = useLocalSearchParams<{
+    expenseId?: string;
+    journeyId?: string;
+    mode?: "scan" | "attach";
+  }>();
+  const journeyId = params.journeyId ?? stage3JourneyId;
+  const scan = params.mode === "scan";
   const [receipts, setReceipts] = useState<ReceiptAsset[]>([]);
-  const [members, setMembers] = useState<{ id: string; displayName: string }[]>([]);
+  const [sessionReceiptId, setSessionReceiptId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const refresh = useCallback(
-    async () =>
-      setReceipts(
-        await (await getDefaultLedgerReceiptRepository()).listReceipts(stage3JourneyId),
-      ),
-    [],
-  );
+  const refresh = useCallback(async () => {
+    if (!journeyId) return setReceipts([]);
+    const rows = await (
+      await getDefaultLedgerReceiptRepository()
+    ).listReceipts(journeyId);
+    setReceipts(scan ? rows.filter((receipt) => receipt.id === sessionReceiptId) : rows);
+  }, [journeyId, scan, sessionReceiptId]);
+
   useEffect(() => {
-    void Promise.resolve().then(async () => {
-      await refresh();
-      setMembers(
-        await (await getDefaultLedgerReadRepository()).listMembers(stage3JourneyId),
-      );
-    });
+    void Promise.resolve().then(refresh);
   }, [refresh]);
 
   const importUri = useCallback(
-    async (sourceUri: string, mimeType: string) => {
+    async (sourceUri: string, mimeType: ReceiptAsset["mimeType"]) => {
       try {
-        const id = createLocalId("ledger-receipt");
-        const copied = await copyReceiptIntoAppStorage({ id, sourceUri, mimeType });
-        await (
-          await getDefaultLedgerReceiptRepository()
-        ).importReceipt({
-          id,
-          journeyId: stage3JourneyId,
-          expenseId,
-          mimeType: mimeType as ReceiptAsset["mimeType"],
-          ...copied,
+        if (!journeyId) throw new Error("Choose a Journey before adding a receipt.");
+        const receipt = await importReceiptAsset({
+          journeyId,
+          expenseId: params.expenseId,
+          sourceUri,
+          mimeType,
+          requestOcr: scan,
         });
-        setMessage("Receipt saved locally. Upload and OCR can resume after restart.");
-        await refresh();
+        setMessage(
+          scan
+            ? "Receipt saved on this iPhone. Upload and scan can resume after restart."
+            : "Receipt attached on this iPhone—will sync.",
+        );
+        if (scan) {
+          setSessionReceiptId(receipt?.id ?? null);
+          setReceipts(receipt ? [receipt] : []);
+          if (receipt)
+            void runLedgerReceiptSync()
+              .then(async () => {
+                const refreshed = await (
+                  await getDefaultLedgerReceiptRepository()
+                ).getReceipt(receipt.id);
+                if (refreshed) setReceipts([refreshed]);
+              })
+              .catch(() =>
+                setMessage("Receipt is safe. Upload and scan will retry later."),
+              );
+        } else {
+          await refresh();
+        }
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Receipt import failed.");
       }
     },
-    [expenseId, refresh],
+    [journeyId, params.expenseId, refresh, scan],
   );
 
   const pickPhoto = useCallback(
@@ -72,7 +86,10 @@ export function useReceiptCapture() {
             quality: 1,
           });
       if (!result.canceled)
-        await importUri(result.assets[0].uri, result.assets[0].mimeType ?? "image/jpeg");
+        await importUri(
+          result.assets[0].uri,
+          (result.assets[0].mimeType ?? "image/jpeg") as ReceiptAsset["mimeType"],
+        );
     },
     [importUri],
   );
@@ -85,66 +102,32 @@ export function useReceiptCapture() {
     if (!result.canceled)
       await importUri(
         result.assets[0].uri,
-        result.assets[0].mimeType ?? "application/pdf",
+        (result.assets[0].mimeType ?? "application/pdf") as ReceiptAsset["mimeType"],
       );
   }, [importUri]);
 
-  const confirmSuggestion = useCallback(
-    async (receipt: ReceiptAsset, payerMemberId: string) => {
-      const suggestion = receipt.ocrSuggestion;
-      if (!suggestion?.title || !suggestion.amountMinor || !suggestion.currency)
-        return setMessage("OCR has no complete Expense suggestion to confirm.");
-      const actor = members.find((member) => member.id === payerMemberId);
-      if (!actor) return setMessage("Choose a Journey member as payer.");
-      const scale = currencyScale(suggestion.currency);
-      if (scale === null) return setMessage("OCR suggested an unsupported currency.");
-      const original = {
-        minor: suggestion.amountMinor,
-        currency: suggestion.currency,
-        scale,
-      };
-      const expense = await (
-        await getDefaultLedgerExpenseRepository()
-      ).createExpense({
-        journeyId: stage3JourneyId,
-        creatorMemberId: actor.id,
-        payerMemberId: actor.id,
-        title: suggestion.title,
-        description: null,
-        category: suggestion.category ?? "other",
-        occurredAt: suggestion.occurredAt ?? new Date().toISOString(),
-        original,
-        participants: [
-          {
-            memberId: actor.id,
-            displayNameSnapshot: actor.displayName,
-            householdIdSnapshot: null,
-          },
-        ],
-        splits: allocateEqual(original.minor, null, [actor.id]),
-        valuation: null,
-        status: "DRAFT",
-      });
-      await (
-        await getDefaultLedgerReceiptRepository()
-      ).attachExpense(receipt.id, expense.id);
-      setMessage("Suggestion confirmed through the normal Expense command path.");
-      await refresh();
-    },
-    [members, refresh],
-  );
-
   return {
-    expenseId,
+    expenseId: params.expenseId,
+    journeyId,
+    scan,
     receipts,
-    members,
     message,
     pickPhoto,
     pickDocument,
-    confirmSuggestion,
+    review: (receipt: ReceiptAsset) =>
+      router.replace({
+        pathname: "/expenses/new",
+        params: { journeyId, mode: "manual", receiptId: receipt.id },
+      }),
     retry: async () => {
-      await runLedgerReceiptSync();
-      await refresh();
+      try {
+        await runLedgerReceiptSync();
+        await refresh();
+      } catch (error) {
+        setMessage(
+          error instanceof Error ? error.message : "Receipt scan remains queued.",
+        );
+      }
     },
   };
 }

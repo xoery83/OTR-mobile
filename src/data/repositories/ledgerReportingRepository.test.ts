@@ -183,6 +183,9 @@ describe("Ledger reporting repository", () => {
         const query = { journeyId, memberId, scope, ...filters };
         const summary = await repository.summarize(query);
         expect(summary).toEqual(summarizeReporting(records, scope, memberId, filters));
+        expect(await repository.countExpenses(query)).toBe(
+          (await repository.listExpenses(query, 1000)).length,
+        );
         const drilldown = (await repository.listExpenses(query, 1000)).filter(
           (row) => row.isAuthoritative,
         );
@@ -272,16 +275,23 @@ describe("Ledger reporting repository", () => {
     }
     sqlite.exec("COMMIT");
     const repository = createLedgerReportingRepository(adapter);
-    const started = performance.now();
-    const result = await repository.summarize({
+    const query = {
       journeyId,
       memberId,
-      scope: "MINE",
+      scope: "MINE" as const,
       category: "food",
-      receipt: "HAS_NOT",
-    });
+      receipt: "HAS_NOT" as const,
+    };
+    const started = performance.now();
+    const [result, count, firstPage] = await Promise.all([
+      repository.summarize(query),
+      repository.countExpenses(query),
+      repository.listExpenses(query, 50),
+    ]);
     const elapsedMs = performance.now() - started;
     expect(result).toMatchObject({ totalMinor: 500_000, expenseCount: 5000 });
+    expect(count).toBe(5000);
+    expect(firstPage).toHaveLength(50);
     expect(elapsedMs).toBeLessThan(250);
     sqlite.close();
   });

@@ -1,46 +1,93 @@
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
-  Switch,
+  Pressable,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
+import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
+import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 
-import { formatLedgerMoney } from "./format";
+import { formatLedgerDate, formatLedgerMoney, formatValuationPolicy } from "./format";
 
 export function LedgerExpenseDetailScreen() {
   const largeText = useWindowDimensions().fontScale > 2;
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, saved } = useLocalSearchParams<{ id: string; saved?: string }>();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
+  const [payerName, setPayerName] = useState("Traveller");
+  const [receiptCount, setReceiptCount] = useState(0);
   const [hasOpenConflict, setHasOpenConflict] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [participationError, setParticipationError] = useState<string | null>(null);
   const [savingParticipation, setSavingParticipation] = useState(false);
   useEffect(() => {
+    let active = true;
     if (id) {
-      void Promise.all([
-        getDefaultLedgerExpenseRepository().then((repository) =>
-          repository.getExpense(id),
-        ),
-        getDefaultLedgerReportingRepository().then((repository) =>
-          repository.hasOpenConflict(id),
-        ),
-      ]).then(([nextExpense, nextHasOpenConflict]) => {
-        setExpense(nextExpense);
-        setHasOpenConflict(nextHasOpenConflict);
-      });
+      void getDefaultLedgerExpenseRepository()
+        .then((repository) => repository.getExpense(id))
+        .then(async (nextExpense) => {
+          if (!nextExpense) return [null, false, "Traveller", 0] as const;
+          const [nextHasOpenConflict, members, receipts] = await Promise.all([
+            getDefaultLedgerReportingRepository().then((repository) =>
+              repository.hasOpenConflict(id),
+            ),
+            getDefaultLedgerReadRepository().then((repository) =>
+              repository.listMembers(nextExpense.journeyId),
+            ),
+            getDefaultLedgerReceiptRepository().then((repository) =>
+              repository.listReceipts(nextExpense.journeyId),
+            ),
+          ]);
+          return [
+            nextExpense,
+            nextHasOpenConflict,
+            members.find((member) => member.id === nextExpense.payerMemberId)
+              ?.displayName ?? "Traveller",
+            receipts.filter((receipt) => receipt.expenseId === nextExpense.id).length,
+          ] as const;
+        })
+        .then(([nextExpense, nextHasOpenConflict, nextPayerName, nextReceiptCount]) => {
+          if (!active) return;
+          setExpense(nextExpense);
+          setHasOpenConflict(nextHasOpenConflict);
+          setPayerName(nextPayerName);
+          setReceiptCount(nextReceiptCount);
+        })
+        .catch(() => {
+          if (active) setLoadError(true);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
     }
+    return () => {
+      active = false;
+    };
   }, [id]);
+  if (loading)
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator accessibilityLabel="Loading Expense" />
+      </View>
+    );
   if (!expense)
     return (
       <View style={styles.center}>
-        <Text style={styles.meta}>Expense not found in the local Ledger.</Text>
+        <Text style={styles.meta}>
+          {loadError
+            ? "Expense could not be loaded from this iPhone."
+            : "Expense is not available in the local Ledger."}
+        </Text>
       </View>
     );
   const valuation = expense.valuation;
@@ -48,6 +95,21 @@ export function LedgerExpenseDetailScreen() {
     expense.participants.map((item) => [item.memberId, item.displayNameSnapshot]),
   );
   const excluded = expense.status !== "ACCEPTED" || hasOpenConflict || !valuation;
+  const warning = hasOpenConflict
+    ? {
+        title: "Conflict—review required",
+        detail: "Choose the correct version before relying on this Expense in totals.",
+      }
+    : expense.status === "RATE_REQUIRED"
+      ? {
+          title: "Needs exchange rate",
+          detail:
+            "Add or confirm a rate before including this Expense in converted totals.",
+        }
+      : {
+          title: "Not included in totals",
+          detail: "This Expense is not yet part of the accepted Spending totals.",
+        };
   const setIncluded = async (included: boolean) => {
     setSavingParticipation(true);
     setParticipationError(null);
@@ -79,24 +141,66 @@ export function LedgerExpenseDetailScreen() {
       setSavingParticipation(false);
     }
   };
+  const confirmParticipation = () => {
+    const include = expense.settlementParticipation === "EXCLUDED";
+    Alert.alert(
+      include ? "Include in group settlement?" : "Remove from group settlement?",
+      include
+        ? "Participant shares will affect who owes whom."
+        : "The Expense stays in Spending and analysis, but will not create debt between travellers.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: include ? "Include" : "Remove",
+          style: include ? "default" : "destructive",
+          onPress: () => void setIncluded(include),
+        },
+      ],
+    );
+  };
   return (
     <ScrollView contentContainerStyle={styles.content}>
+      {saved === "1" ? (
+        <Text accessibilityLiveRegion="polite" style={styles.saved}>
+          Saved on this iPhone—will sync.
+        </Text>
+      ) : null}
       <Text accessibilityRole="header" style={styles.title}>
         {expense.title}
       </Text>
       <Text style={styles.meta}>
-        {expense.category} · {expense.occurredAt}
+        {expense.category} · {formatLedgerDate(expense.occurredAt)}
       </Text>
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({
+              pathname: "/expenses/new",
+              params: { expenseId: expense.id, journeyId: expense.journeyId },
+            })
+          }
+          style={styles.action}
+        >
+          <Text style={styles.actionText}>Edit Expense</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({
+              pathname: "/expenses/receipt",
+              params: { expenseId: expense.id, journeyId: expense.journeyId },
+            })
+          }
+          style={styles.action}
+        >
+          <Text style={styles.actionText}>Attach Receipt</Text>
+        </Pressable>
+      </View>
       {excluded ? (
         <View style={styles.warning}>
-          <Text style={styles.warningTitle}>
-            Excluded from authoritative settlement-currency totals
-          </Text>
-          <Text style={styles.meta}>
-            {hasOpenConflict
-              ? "An open conflict requires explicit resolution."
-              : "A valid settlement valuation is required."}
-          </Text>
+          <Text style={styles.warningTitle}>{warning.title}</Text>
+          <Text style={styles.meta}>{warning.detail}</Text>
         </View>
       ) : null}
       <Section label="MERCHANT VALUE">
@@ -106,6 +210,20 @@ export function LedgerExpenseDetailScreen() {
             expense.original.currency,
             expense.original.scale,
           )}
+        </Text>
+      </Section>
+      <Section label="DETAILS">
+        <Text style={styles.splitName}>Paid by {payerName}</Text>
+        <Text style={styles.meta}>
+          {formatLedgerDate(expense.occurredAt)} · {expense.category}
+        </Text>
+        {expense.description ? (
+          <Text style={styles.meta}>{expense.description}</Text>
+        ) : null}
+        <Text style={styles.meta}>
+          {receiptCount
+            ? `${receiptCount} ${receiptCount === 1 ? "receipt" : "receipts"} attached`
+            : "No receipt attached"}
         </Text>
       </Section>
       <Section label="JOURNEY VALUATION">
@@ -119,7 +237,7 @@ export function LedgerExpenseDetailScreen() {
               )}
             </Text>
             <Text style={styles.meta}>
-              {valuation.policy}
+              {formatValuationPolicy(valuation.policy)}
               {valuation.decimalRate ? ` · rate ${valuation.decimalRate}` : ""}
             </Text>
             {valuation.reason ? (
@@ -127,7 +245,7 @@ export function LedgerExpenseDetailScreen() {
             ) : null}
           </>
         ) : (
-          <Text style={styles.meta}>No accepted valuation</Text>
+          <Text style={styles.meta}>No exchange value yet</Text>
         )}
       </Section>
       <Section label="EXACT SPLITS">
@@ -150,23 +268,35 @@ export function LedgerExpenseDetailScreen() {
       </Section>
       {expense.status !== "DELETED" ? (
         <Section label="GROUP SETTLEMENT">
-          <View style={styles.participationRow}>
+          <Pressable
+            accessibilityHint="Opens a confirmation before changing who owes whom"
+            accessibilityLabel={`Group settlement, ${
+              expense.settlementParticipation === "INCLUDED"
+                ? "included"
+                : "not included"
+            }`}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: savingParticipation }}
+            disabled={savingParticipation}
+            onPress={confirmParticipation}
+            style={[styles.participationRow, largeText && styles.stack]}
+          >
             <View style={styles.participationCopy}>
-              <Text style={styles.splitName}>Include in group settlement</Text>
-              {expense.settlementParticipation === "EXCLUDED" ? (
-                <Text style={styles.meta}>
-                  This expense is included in Spending and analysis but does not affect
-                  who owes whom.
-                </Text>
-              ) : null}
+              <Text style={styles.splitName}>
+                {expense.settlementParticipation === "INCLUDED"
+                  ? "Included in group settlement"
+                  : "Not included in group settlement"}
+              </Text>
+              <Text style={styles.meta}>
+                {expense.settlementParticipation === "INCLUDED"
+                  ? "Participant shares affect who owes whom."
+                  : "This Expense remains in Spending and analysis but creates no inter-member debt."}
+              </Text>
             </View>
-            <Switch
-              accessibilityLabel="Include in group settlement"
-              disabled={savingParticipation}
-              onValueChange={(value) => void setIncluded(value)}
-              value={expense.settlementParticipation === "INCLUDED"}
-            />
-          </View>
+            <Text style={styles.change}>
+              {savingParticipation ? "Saving…" : "Change"}
+            </Text>
+          </Pressable>
           {participationError ? (
             <Text accessibilityLiveRegion="polite" style={styles.error}>
               {participationError}
@@ -192,14 +322,6 @@ export function LedgerExpenseDetailScreen() {
           <Text style={styles.meta}>No payer evidence recorded.</Text>
         )}
       </Section>
-      <Section label="REPORTING IDENTITY">
-        <Text selectable style={styles.identity}>
-          {expense.id}
-        </Text>
-        <Text style={styles.meta}>
-          Revision {expense.revision} · {expense.syncStatus} · {expense.status}
-        </Text>
-      </Section>
     </ScrollView>
   );
 }
@@ -217,8 +339,25 @@ const styles = StyleSheet.create({
   content: { backgroundColor: "#F6F7F9", gap: 14, padding: 16, paddingBottom: 40 },
   title: { color: "#111827", fontSize: 28, fontWeight: "800" },
   meta: { color: "#64748B", fontSize: 13, lineHeight: 19 },
+  actions: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  action: {
+    backgroundColor: "#CCFBF1",
+    borderRadius: 9,
+    justifyContent: "center",
+    minHeight: 44,
+    padding: 11,
+  },
+  actionText: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
   warning: { backgroundColor: "#FFF7DB", borderRadius: 10, gap: 4, padding: 13 },
   warningTitle: { color: "#7C5B00", fontWeight: "700" },
+  saved: {
+    backgroundColor: "#CCFBF1",
+    borderRadius: 9,
+    color: "#0F766E",
+    fontSize: 14,
+    fontWeight: "700",
+    padding: 12,
+  },
   section: { backgroundColor: "#FFFFFF", borderRadius: 10, gap: 8, padding: 14 },
   label: { color: "#64748B", fontSize: 12, fontWeight: "700" },
   value: { color: "#111827", fontSize: 23, fontWeight: "800" },
@@ -238,9 +377,14 @@ const styles = StyleSheet.create({
     gap: 3,
     paddingTop: 8,
   },
-  identity: { color: "#334155", fontSize: 12 },
-  participationRow: { alignItems: "center", flexDirection: "row", gap: 12 },
+  participationRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 44,
+  },
   participationCopy: { flex: 1, gap: 4 },
+  change: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
   error: { color: "#B91C1C", fontSize: 13 },
   stack: { alignItems: "flex-start", flexDirection: "column", paddingVertical: 8 },
 });
