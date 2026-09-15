@@ -40,7 +40,12 @@ import {
   ledgerExpenseAttention,
 } from "./format";
 import { SettlementReadinessScreen } from "./SettlementReadinessScreen";
-import { journeyLifecycleLabel, settlementPositionLabel } from "./dashboardPresentation";
+import {
+  expenseAmountPresentation,
+  journeyLifecycleLabel,
+  settlementPositionLabel,
+  spendingPercentage,
+} from "./dashboardPresentation";
 import { createLatestRequest } from "./latestRequest";
 
 type Mode = "SPENDING" | "SETTLEMENT";
@@ -80,6 +85,23 @@ function localToday() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
+const categoryIcons: Record<string, Parameters<typeof AppIcon>[0]["name"]> = {
+  car: "car.fill",
+  flight: "airplane",
+  food: "fork.knife",
+  fuel: "fuelpump.fill",
+  hotel: "bed.double.fill",
+  insurance: "shield.fill",
+  shopping: "bag.fill",
+  ticket: "ticket.fill",
+  tickets: "ticket.fill",
+  transport: "car.fill",
+};
+
+function categoryIcon(category: string) {
+  return categoryIcons[category.toLowerCase()] ?? "tag.fill";
+}
+
 function summarizeSettlement(rows: FinalizedRows, memberId: string): SettlementSnapshot {
   if (!rows.length) return { kind: "PREVIEW" };
   const root = rows.find((row) => row.kind !== "ADJUSTMENT") ?? rows[0];
@@ -114,7 +136,6 @@ export function LedgerStage6Screen() {
   const [mode, setMode] = useState<Mode>("SPENDING");
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
   const [journeyPickerOpen, setJourneyPickerOpen] = useState(false);
   const [journeyQuery, setJourneyQuery] = useState("");
   const [selectingJourneyId, setSelectingJourneyId] = useState<string | null>(null);
@@ -139,7 +160,6 @@ export function LedgerStage6Screen() {
   const loadProjection = useCallback(
     async (nextJourney: LedgerJourneyContext, nextScope: ReportingScope) => {
       const id = request.begin();
-      setUpdating(true);
       setMessage(null);
       try {
         const repository = await getDefaultLedgerReportingRepository();
@@ -180,8 +200,6 @@ export function LedgerStage6Screen() {
             error instanceof Error ? error.message : "Ledger could not be updated.",
           );
         return false;
-      } finally {
-        if (request.isCurrent(id)) setUpdating(false);
       }
     },
     [request],
@@ -208,7 +226,6 @@ export function LedgerStage6Screen() {
     else {
       request.cancel();
       setProjection(null);
-      setUpdating(false);
       if (entry.kind === "CHOOSE") setMessage("Choose a current Journey to continue.");
       else setMessage("No Journey is current today. My Ledger remains available.");
     }
@@ -352,30 +369,19 @@ export function LedgerStage6Screen() {
             onPress={() => setJourneyPickerOpen(true)}
             style={styles.context}
           >
-            <View style={styles.grow}>
-              <Text
-                maxFontSizeMultiplier={2}
-                numberOfLines={largeText ? undefined : 1}
-                style={styles.contextTitle}
-              >
-                {journey?.title ?? "Choose Journey"}
-              </Text>
-              <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                {journey
-                  ? formatLedgerDateRange(journey.startDate, journey.endDate)
-                  : "Select a Journey Ledger"}
-              </Text>
+            <View style={styles.tripBadge}>
+              <Text style={styles.tripBadgeText}>TRIP</Text>
             </View>
-            <AppIcon color="#64748B" name="chevron.up.chevron.down" size={16} />
+            <Text maxFontSizeMultiplier={2} numberOfLines={1} style={styles.contextTitle}>
+              {journey?.title ?? "Choose Trip"}
+            </Text>
+            <AppIcon color="#64748B" name="chevron.right" size={15} />
           </Pressable>
-          {journey ? (
-            <Segment
-              value={mode}
-              options={["SPENDING", "SETTLEMENT"]}
-              onChange={setMode}
-            />
-          ) : null}
         </View>
+
+        {journey ? (
+          <Segment value={mode} options={["SPENDING", "SETTLEMENT"]} onChange={setMode} />
+        ) : null}
 
         {syncStatus ? (
           <Text
@@ -401,15 +407,6 @@ export function LedgerStage6Screen() {
           </Text>
         ) : null}
         {loading ? <ActivityIndicator /> : null}
-        {updating && !loading ? (
-          <View style={styles.updating}>
-            <ActivityIndicator />
-            <Text accessibilityLiveRegion="polite" style={styles.meta}>
-              Updating Ledger…
-            </Text>
-          </View>
-        ) : null}
-
         {journey ? (
           mode === "SPENDING" ? (
             <>
@@ -467,40 +464,56 @@ export function LedgerStage6Screen() {
                 }
                 title="Categories"
               >
-                {categories.map((category, index) => (
-                  <Pressable
-                    accessibilityLabel={`${category.label}, ${formatLedgerMoney(
-                      category.totalMinor,
-                      journey.settlementCurrency,
-                      journey.settlementScale,
-                    )}`}
-                    accessibilityRole="button"
-                    key={category.key}
-                    onPress={() =>
-                      openSearch({
-                        authoritative: "1",
-                        category: category.key,
-                        origin: `Category: ${category.label}`,
-                      })
-                    }
-                    style={[styles.categoryRow, largeText && styles.stack]}
-                  >
-                    <Text
-                      maxFontSizeMultiplier={2}
-                      numberOfLines={2}
-                      style={styles.rowTitle}
-                    >
-                      {index + 1}. {category.label}
-                    </Text>
-                    <Text style={[styles.rowAmount, largeText && styles.largeRowAmount]}>
-                      {formatLedgerMoney(
+                {categories.map((category) => {
+                  const percentage = spendingPercentage(
+                    category.totalMinor,
+                    summary?.totalMinor ?? 0,
+                  );
+                  return (
+                    <Pressable
+                      accessibilityLabel={`${category.label}, ${formatLedgerMoney(
                         category.totalMinor,
                         journey.settlementCurrency,
                         journey.settlementScale,
-                      )}
-                    </Text>
-                  </Pressable>
-                ))}
+                      )}, ${percentage} percent`}
+                      accessibilityRole="button"
+                      key={category.key}
+                      onPress={() =>
+                        openSearch({
+                          authoritative: "1",
+                          category: category.key,
+                          origin: `Category: ${category.label}`,
+                        })
+                      }
+                      style={styles.categoryRow}
+                    >
+                      <View style={styles.categoryHeading}>
+                        <Text
+                          maxFontSizeMultiplier={2}
+                          numberOfLines={1}
+                          style={styles.rowTitle}
+                        >
+                          {category.label}
+                        </Text>
+                        <Text style={styles.categoryAmount}>
+                          {formatLedgerMoney(
+                            category.totalMinor,
+                            journey.settlementCurrency,
+                            journey.settlementScale,
+                          )}
+                          <Text style={styles.categoryPercentage}>
+                            {` · ${percentage}%`}
+                          </Text>
+                        </Text>
+                      </View>
+                      <View style={styles.categoryTrack}>
+                        <View
+                          style={[styles.categoryFill, { width: `${percentage}%` }]}
+                        />
+                      </View>
+                    </Pressable>
+                  );
+                })}
                 {categories.length === 0 ? (
                   <Text style={styles.empty}>No category totals yet.</Text>
                 ) : null}
@@ -556,23 +569,22 @@ export function LedgerStage6Screen() {
                 <AppIcon color="#0F766E" name="chevron.right" size={16} />
               </Pressable>
 
-              {summary?.unresolvedRateCount || summary?.openConflictCount ? (
+              {summary?.openConflictCount ? (
                 <Pressable
+                  accessibilityLabel={`${summary.openConflictCount} conflicts need review`}
                   accessibilityRole="button"
-                  onPress={() =>
-                    summary.openConflictCount
-                      ? router.push("/expenses/review" as never)
-                      : openSearch({ valuation: "RATE_REQUIRED" })
-                  }
+                  onPress={() => router.push("/expenses/review" as never)}
                   style={styles.attention}
                 >
-                  <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
-                    Needs attention
-                  </Text>
-                  <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                    {summary.unresolvedRateCount} need an exchange rate ·{" "}
-                    {summary.openConflictCount} conflicts need review
-                  </Text>
+                  <View style={styles.grow}>
+                    <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
+                      Needs attention
+                    </Text>
+                    <Text maxFontSizeMultiplier={2} style={styles.attentionMeta}>
+                      {summary.openConflictCount} conflicts need review
+                    </Text>
+                  </View>
+                  <AppIcon color="#A16207" name="chevron.right" size={16} />
                 </Pressable>
               ) : null}
 
@@ -583,13 +595,10 @@ export function LedgerStage6Screen() {
               >
                 {expenses.map((expense) => {
                   const attention = ledgerExpenseAttention(expense, scope);
+                  const amounts = expenseAmountPresentation(expense, scope);
                   return (
                     <Pressable
-                      accessibilityLabel={`${expense.title}, ${formatLedgerMoney(
-                        expense.originalMinor,
-                        expense.originalCurrency,
-                        expense.originalScale,
-                      )}${expense.hasReceipt ? ", receipt attached" : ""}${
+                      accessibilityLabel={`${expense.title}, ${amounts.primary}${amounts.total ? `, ${amounts.total}` : ""}${amounts.original ? `, ${amounts.original}` : ""}${amounts.splitLabel ? ", split expense" : ""}${expense.hasReceipt ? ", receipt attached" : ""}${
                         attention ? `, ${attention}` : ""
                       }`}
                       accessibilityRole="button"
@@ -597,6 +606,13 @@ export function LedgerStage6Screen() {
                       onPress={() => router.push(`/expenses/expense/${expense.id}`)}
                       style={[styles.row, largeText && styles.stack]}
                     >
+                      <View style={styles.categoryIcon}>
+                        <AppIcon
+                          color="#0F766E"
+                          name={categoryIcon(expense.category)}
+                          size={18}
+                        />
+                      </View>
                       <View style={styles.grow}>
                         <View style={styles.rowTitleLine}>
                           <Text
@@ -610,25 +626,33 @@ export function LedgerStage6Screen() {
                             <AppIcon color="#64748B" name="paperclip" size={14} />
                           ) : null}
                         </View>
-                        <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                          {expense.category} · {formatLedgerDate(expense.occurredAt)} ·{" "}
-                          {expense.payerName} paid
-                        </Text>
+                        <View style={styles.rowMetaLine}>
+                          <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                            {formatLedgerDate(expense.occurredAt)}
+                            {amounts.total ? ` · ${amounts.total}` : ""}
+                          </Text>
+                          {amounts.splitLabel ? (
+                            <View style={styles.splitTag}>
+                              <Text maxFontSizeMultiplier={2} style={styles.splitTagText}>
+                                {amounts.splitLabel}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
                         {attention ? (
                           <Text maxFontSizeMultiplier={2} style={styles.warning}>
                             {attention}
                           </Text>
                         ) : null}
                       </View>
-                      <Text
-                        style={[styles.rowAmount, largeText && styles.largeRowAmount]}
+                      <View
+                        style={[styles.amountColumn, largeText && styles.largeRowAmount]}
                       >
-                        {formatLedgerMoney(
-                          expense.originalMinor,
-                          expense.originalCurrency,
-                          expense.originalScale,
-                        )}
-                      </Text>
+                        <Text style={styles.rowAmount}>{amounts.primary}</Text>
+                        {amounts.original ? (
+                          <Text style={styles.amountMeta}>{amounts.original}</Text>
+                        ) : null}
+                      </View>
                     </Pressable>
                   );
                 })}
@@ -647,6 +671,18 @@ export function LedgerStage6Screen() {
                       </Text>
                     </Pressable>
                   </View>
+                ) : null}
+                {expenses.length ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => openSearch({ origin: "All Expenses" })}
+                    style={styles.viewMore}
+                  >
+                    <Text maxFontSizeMultiplier={2} style={styles.link}>
+                      View more
+                    </Text>
+                    <AppIcon color="#0F766E" name="chevron.right" size={15} />
+                  </Pressable>
                 ) : null}
               </DashboardSection>
             </>
@@ -861,9 +897,14 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 16,
     paddingBottom: 40,
+    paddingTop: 0,
   },
   largeContent: { paddingBottom: 140 },
-  stickyContext: { backgroundColor: "#F6F7F9", gap: 8, paddingBottom: 8 },
+  stickyContext: {
+    backgroundColor: "#EEF2F5",
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+  },
   headerActions: { alignItems: "center", flexDirection: "row", gap: 2 },
   headerButton: {
     alignItems: "center",
@@ -874,19 +915,24 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.35 },
   context: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
     flexDirection: "row",
-    gap: 12,
-    minHeight: 62,
-    padding: 12,
+    gap: 8,
+    minHeight: 48,
+    paddingVertical: 10,
   },
-  contextTitle: { color: "#111827", fontSize: 17, fontWeight: "700" },
+  contextTitle: { color: "#111827", flex: 1, fontSize: 15, fontWeight: "700" },
+  tripBadge: {
+    borderColor: "#94A3B8",
+    borderRadius: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  tripBadgeText: { color: "#64748B", fontSize: 10, fontWeight: "800" },
   meta: { color: "#64748B", fontSize: 13 },
   syncStatus: { color: "#64748B", fontSize: 12, paddingHorizontal: 2 },
   syncStatusAttention: { color: "#7C5B00" },
   message: { color: "#7C5B00", fontSize: 14 },
-  updating: { alignItems: "center", flexDirection: "row", gap: 8 },
   segment: {
     backgroundColor: "#E5E7EB",
     borderRadius: 9,
@@ -933,16 +979,28 @@ const styles = StyleSheet.create({
   link: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
   surface: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
   categoryRow: {
-    alignItems: "center",
     borderBottomColor: "#E5E7EB",
     borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
-    minHeight: 50,
+    gap: 7,
+    minHeight: 58,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
+  categoryHeading: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+    justifyContent: "space-between",
+  },
+  categoryAmount: { color: "#111827", fontSize: 14, fontWeight: "700" },
+  categoryPercentage: { color: "#64748B", fontSize: 12, fontWeight: "600" },
+  categoryTrack: {
+    backgroundColor: "#E5E7EB",
+    borderRadius: 2,
+    height: 4,
+    overflow: "hidden",
+  },
+  categoryFill: { backgroundColor: "#0F766E", borderRadius: 2, height: 4 },
   snapshot: {
     alignItems: "center",
     backgroundColor: "#E7F5F1",
@@ -964,8 +1022,17 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginVertical: 2,
   },
-  attention: { backgroundColor: "#FFF7DB", borderRadius: 10, minHeight: 64, padding: 13 },
+  attention: {
+    alignItems: "center",
+    backgroundColor: "#FFF7DB",
+    borderRadius: 10,
+    flexDirection: "row",
+    gap: 10,
+    minHeight: 64,
+    padding: 13,
+  },
   attentionTitle: { color: "#7C5B00", fontWeight: "700" },
+  attentionMeta: { color: "#8A6500", fontSize: 13, marginTop: 2 },
   row: {
     alignItems: "center",
     borderBottomColor: "#E5E7EB",
@@ -976,11 +1043,45 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   rowTitleLine: { alignItems: "center", flexDirection: "row", gap: 6 },
+  rowMetaLine: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 5,
+    marginTop: 1,
+  },
   grow: { flex: 1 },
   rowTitle: { color: "#111827", flexShrink: 1, fontSize: 16, fontWeight: "600" },
   rowAmount: { color: "#111827", fontSize: 15, fontWeight: "700" },
   largeRowAmount: { alignSelf: "flex-start" },
+  categoryIcon: {
+    alignItems: "center",
+    backgroundColor: "#E7F5F1",
+    borderRadius: 17,
+    height: 34,
+    justifyContent: "center",
+    width: 34,
+  },
+  amountColumn: { alignItems: "flex-end", flexShrink: 0, maxWidth: "48%" },
+  amountMeta: { color: "#64748B", fontSize: 12, marginTop: 2, textAlign: "right" },
+  splitTag: {
+    backgroundColor: "#EEF2F5",
+    borderColor: "#CBD5E1",
+    borderRadius: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  splitTagText: { color: "#64748B", fontSize: 10, fontWeight: "700" },
   warning: { color: "#B45309", fontSize: 12, fontWeight: "700", marginTop: 3 },
+  viewMore: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 4,
+    justifyContent: "center",
+    minHeight: 48,
+    paddingHorizontal: 14,
+  },
   emptyState: { alignItems: "center", gap: 12, padding: 20 },
   empty: { color: "#64748B", padding: 20, textAlign: "center" },
   stack: { alignItems: "stretch", flexDirection: "column" },

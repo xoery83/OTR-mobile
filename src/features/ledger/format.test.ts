@@ -28,7 +28,7 @@ describe("Ledger product formatting", () => {
     expect(singleDay).not.toContain("–");
   });
 
-  it("separates the four actionable financial meanings", () => {
+  it("shows actionable financial states and keeps settlement exclusion silent", () => {
     expect(ledgerExpenseAttention({ ...base, componentMinor: null }, "MINE")).toBe(
       "Not in your share",
     );
@@ -38,8 +38,7 @@ describe("Ledger product formatting", () => {
     expect(ledgerExpenseAttention({ ...base, hasOpenConflict: true }, "GROUP")).toBe(
       "Conflict—review required",
     );
-    expect(
-      ledgerExpenseAttention({ ...base, settlementParticipation: "EXCLUDED" }, "GROUP"),
-    ).toBe("Not included in settlement");
+    const excluded = { ...base, settlementParticipation: "EXCLUDED" as const };
+    expect(ledgerExpenseAttention(excluded, "GROUP")).toBeNull();
   });
 });

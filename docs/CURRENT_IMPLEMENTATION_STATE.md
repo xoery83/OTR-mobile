@@ -4,13 +4,38 @@ Date: 2026-09-15
 
 ## Current Milestone
 
-The narrow Mobile Sync Trigger implementation is complete and accepted on two
-Simulators plus Leon's physical iPhone on `integration/ledger-polish-canonical`.
-Same-account automatic receive, phone edit propagation, offline reconnect, foreground
-pull, restart, Journey isolation, and conflict preservation passed. Production remains
-disconnected and unchanged, and Round 2 Polish has not started.
+The Ledger Entry Page / Spending dashboard portion of UI Polish Round 2 is complete on
+`integration/ledger-polish-canonical`. The narrow Mobile Sync Trigger remains accepted
+on two Simulators plus Leon's physical iPhone. Production remains disconnected and
+unchanged; stop before polishing another page.
 
 Current Mobile SQLite schema version: 17.
+
+## Ledger UI Polish Round 2 — Entry Page
+
+- The fixed full-width Trip bar now sits directly below the native top bar, uses a
+  compact `TRIP` badge and single-line ellipsized title, and keeps the existing Journey
+  selector. Spending / Settlement scrolls with page content.
+- Mine / Group replaces one complete local projection in place; the layout-shifting
+  update indicator is removed. Categories show compact percentage bars without a chart
+  dependency.
+- Need Attention is a warning-toned clickable conflict row with a chevron. Exchange-rate
+  maintenance is no longer presented there as a user task.
+- Recent Expenses use category symbols, default-currency primary amounts, optional
+  original currency beneath the primary amount, conditional Mine totals after the date,
+  compact split tags, silent settlement exclusions, dates without payer copy, and a
+  bottom View more action. Mine lists omit absent and zero personal shares while retaining
+  unresolved shares that still need valuation.
+- Currency follow-up: a future Currency Module must own online retrieval, cached rates,
+  offline fallback, missing-rate reconciliation, and background refresh. It was not
+  implemented in this UI-only round.
+- TypeScript, ESLint, all 66 test files / 227 tests, and the arm64 Release Simulator build
+  pass. iPhone 17 Pro and 17 Pro Max visual checks cover long Trip names, Mine / Group,
+  category counts, conflicts, split rows and compact layouts. The app has no established
+  dark-theme token system, so this screen remains consistent with its existing light UI.
+- The final Release is installed and launched on iPhone 17 Pro and 17 Pro Max Simulators
+  plus Leon's physical iPhone 16 Pro (`com.xoery.otrmobile` `0.1.0 (1)`). The LAN Dev
+  Backend health endpoint returns `status: ok`, `environment: development`.
 
 ## Mobile Sync Trigger And Multi-Device Dev Validation
 

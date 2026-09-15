@@ -98,10 +98,12 @@ Twelve Recent Expenses is recommended. With the observed long multilingual title
 
 ### Expense-row scan order
 
+- Mine lists omit Expenses when the current member has no split or an explicit zero share;
+  unresolved personal shares remain visible until their amount can be valued.
 - Primary: merchant/title and amount.
 - Secondary: category and user-friendly Expense date.
 - Tertiary when useful: payer and participant count/context.
-- Exceptional and only when actionable: `Needs exchange rate`, `Conflict—review required`, `Not included in settlement`, `Waiting to sync`.
+- Exceptional and only when actionable: `Needs exchange rate`, `Conflict—review required`, `Waiting to sync`.
 - Receipt: subtle paperclip plus VoiceOver label when `hasReceipt` is true; no list thumbnail.
 - Silent healthy states: accepted, synced, normal inclusion, raw rate source, revision.
 
@@ -466,7 +468,7 @@ English meanings are defined first. Localized strings are not finalized in this 
 Additional terminology rules:
 
 - Never collapse all `isAuthoritative=false` cases into `Excluded`. Show the actual user meaning: `Not in your share`, `Needs exchange rate`, or `Conflict—review required`.
-- `Not included in settlement` is reserved for settlement participation and must not imply deletion or invalidity.
+- Settlement participation remains available in its dedicated control/detail context; excluded Expenses do not carry a warning in list rows.
 - Healthy normal states remain silent. Show state only when it explains a limitation, an unresolved action, or an offline guarantee.
 - Preview and final must be explicit: `Settlement preview` versus `Final settlement`.
 

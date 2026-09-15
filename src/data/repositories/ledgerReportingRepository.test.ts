@@ -243,6 +243,38 @@ describe("Ledger reporting repository", () => {
     sqlite.close();
   });
 
+  it("hides zero and absent personal shares from Mine lists", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    sqlite.exec(`
+      INSERT INTO ledger_expenses VALUES
+        ('zero', 'journey', 'b', 'Zero share', NULL, 'food', '2026-09-13T08:00:00.000Z', 100, 'NZD', 2, 'ACCEPTED', 'INCLUDED', 'SYNCED', NULL),
+        ('absent', 'journey', 'b', 'Not participating', NULL, 'food', '2026-09-14T08:00:00.000Z', 100, 'NZD', 2, 'ACCEPTED', 'EXCLUDED', 'SYNCED', NULL);
+      INSERT INTO ledger_expense_participants VALUES ('zero', 'a', 'Alex');
+      INSERT INTO ledger_expense_splits VALUES ('zero', 'a', 0);
+      INSERT INTO ledger_valuation_snapshots VALUES
+        ('v-zero', 'zero', 100, 'NZD', 2, 1), ('v-absent', 'absent', 100, 'NZD', 2, 1);
+    `);
+    const repository = createLedgerReportingRepository(adapter);
+    const mine = { journeyId, memberId, scope: "MINE" as const };
+    const group = { journeyId, memberId, scope: "GROUP" as const };
+
+    expect((await repository.listExpenses(mine)).map((item) => item.id)).toEqual([
+      "conflict",
+      "rate",
+      "valued",
+    ]);
+    expect(await repository.countExpenses(mine)).toBe(3);
+    expect((await repository.listExpenses(group)).map((item) => item.id)).toEqual([
+      "absent",
+      "zero",
+      "conflict",
+      "rate",
+      "valued",
+    ]);
+    sqlite.close();
+  });
+
   it("keeps a representative 10,000 Expense filter query near the 250 ms target", async () => {
     const { adapter, sqlite } = database();
     sqlite.exec(

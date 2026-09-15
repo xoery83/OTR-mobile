@@ -68,13 +68,11 @@ export function ledgerExpenseAttention(
     componentMinor: number | null;
     hasOpenConflict: boolean;
     isAuthoritative: boolean;
-    settlementParticipation: "INCLUDED" | "EXCLUDED";
   },
   scope: ReportingScope,
 ) {
   if (expense.hasOpenConflict) return "Conflict—review required";
   if (expense.businessStatus === "RATE_REQUIRED") return "Needs exchange rate";
-  if (expense.settlementParticipation === "EXCLUDED") return "Not included in settlement";
   if (scope === "MINE" && expense.componentMinor === null) return "Not in your share";
   return expense.isAuthoritative ? null : "Not included in totals";
 }

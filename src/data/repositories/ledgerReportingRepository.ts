@@ -38,6 +38,7 @@ export type LedgerReportListItem = {
   settlementCurrency: string;
   settlementScale: number;
   componentMinor: number | null;
+  participantCount: number;
   businessStatus: string;
   settlementParticipation: "INCLUDED" | "EXCLUDED";
   syncStatus: string;
@@ -128,6 +129,12 @@ function where(query: LedgerReportQuery, alias = "e") {
 
 function ids(value: string | null) {
   return value ? value.split(",").sort() : [];
+}
+
+function visibleExpenseSql(scope: ReportingScope) {
+  return scope === "GROUP"
+    ? "1"
+    : "mine.expense_id IS NOT NULL AND (mine.settlement_amount_minor IS NULL OR mine.settlement_amount_minor <> 0)";
 }
 
 export function createLedgerReportingRepository(database: LedgerReportingDatabase) {
@@ -227,7 +234,10 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
           e.original_scale AS originalScale, v.settlement_amount_minor AS settlementMinor,
           COALESCE(v.settlement_currency, j.settlement_currency) AS settlementCurrency,
           COALESCE(v.settlement_scale, j.settlement_scale) AS settlementScale,
-          ${component} AS componentMinor, e.business_status AS businessStatus,
+          ${component} AS componentMinor,
+          (SELECT COUNT(*) FROM ledger_expense_participants participants
+            WHERE participants.expense_id = e.id) AS participantCount,
+          e.business_status AS businessStatus,
           e.settlement_participation AS settlementParticipation,
           e.sync_status AS syncStatus, ${receiptSql} AS hasReceipt,
           ${conflictSql} AS hasOpenConflict, ${authoritativeSql} AS isAuthoritative
@@ -236,7 +246,7 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
          LEFT JOIN ledger_members payer ON payer.id = e.payer_member_id
          LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
          LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
-         WHERE ${filtered.sql}
+         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope)}
          ORDER BY e.occurred_at DESC, e.id
          LIMIT ? OFFSET ?`,
         query.memberId,
@@ -260,7 +270,7 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
          JOIN ledger_journeys j ON j.journey_id = e.journey_id
          LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
          LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
-         WHERE ${filtered.sql}`,
+         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope)}`,
         query.memberId,
         ...filtered.params,
       );
