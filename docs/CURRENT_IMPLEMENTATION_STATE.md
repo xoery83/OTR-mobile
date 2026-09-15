@@ -1,15 +1,33 @@
 # Current Implementation State
 
-Date: 2026-09-15
+Date: 2026-09-16
 
 ## Current Milestone
 
-The Ledger Entry Page / Spending dashboard portion of UI Polish Round 2 is complete on
-`integration/ledger-polish-canonical`. The narrow Mobile Sync Trigger remains accepted
-on two Simulators plus Leon's physical iPhone. Production remains disconnected and
-unchanged; stop before polishing another page.
+The Ledger Entry Page Part 2 portion of UI Polish Round 2 is complete on
+`integration/ledger-polish-canonical`. The reusable app menu, initial Ledger settings,
+grouped Journey selector and opt-in Debug Information are implemented. Production
+remains disconnected and unchanged; stop before polishing another page.
 
-Current Mobile SQLite schema version: 17.
+Current Mobile SQLite schema version: 18.
+
+## Ledger UI Polish Round 2 — Entry Page Part 2
+
+- Ledger uses a reusable, icon-anchored compact navigation menu with full-row links,
+  selected state, persistent Settings/Language entries and outside-tap dismissal.
+- Settings persist Default Currency and Debug Mode in SQLite. Exchange Rates has a
+  truthful future Currency Module entry; no provider or unverified conversion was added.
+- Choose Journey groups selectable records Active → Upcoming → Past, sorts each group,
+  displays date/member/status and a distinct selected state, and hides incomplete or
+  development/test records from normal mode without deleting data.
+- Existing sync/network/environment copy now appears only in a low-priority Debug
+  Information section when Debug Mode is enabled; disabled mode leaves no section gap.
+- TypeScript, ESLint, all 66 test files / 230 tests and signed iOS Release builds pass.
+  A dedicated `OTR Part2 QA` iPhone 17 Pro Simulator covered menu/settings/debug
+  interaction without competing for the two shared Simulators. The same signed Release
+  is installed and launched on Leon's physical iPhone 16 Pro. The online Dev Backend
+  health endpoint returns `status: ok`, `environment: development`.
+- Detailed evidence: `docs/ledger/LEDGER_UI_UX_POLISH_ENTRY_PART2_ACCEPTANCE.md`.
 
 ## Ledger UI Polish Round 2 — Entry Page
 

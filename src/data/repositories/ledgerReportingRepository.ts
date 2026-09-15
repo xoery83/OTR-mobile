@@ -24,6 +24,16 @@ export type LedgerReportQuery = ReportingFilters & {
   authoritativeOnly?: boolean;
 };
 
+export type LedgerJourneyOption = LedgerJourneyContext & {
+  hasActor: boolean;
+  memberCount: number;
+};
+
+export type LedgerPreferences = {
+  defaultCurrency: string;
+  debugMode: boolean;
+};
+
 export type LedgerReportListItem = {
   id: string;
   title: string;
@@ -139,9 +149,16 @@ function visibleExpenseSql(scope: ReportingScope) {
 
 export function createLedgerReportingRepository(database: LedgerReportingDatabase) {
   return {
-    listJourneys() {
-      return database.getAllAsync<LedgerJourneyContext>(
-        `SELECT * FROM (
+    async listJourneys() {
+      const rows = await database.getAllAsync<
+        Omit<LedgerJourneyOption, "hasActor"> & { hasActor: number }
+      >(
+        `SELECT source.*,
+           (SELECT COUNT(*) FROM ledger_members member
+             WHERE member.journey_id = source.journeyId) AS memberCount,
+           EXISTS (SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.journey_id = source.journeyId AND actor.member_id IS NOT NULL) AS hasActor
+         FROM (
            SELECT journey_id AS journeyId, COALESCE(title, 'Journey') AS title,
              start_date AS startDate, end_date AS endDate,
              settlement_currency AS settlementCurrency, settlement_scale AS settlementScale
@@ -151,8 +168,9 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
            FROM ledger_my_journey_summaries s
            WHERE NOT EXISTS (SELECT 1 FROM ledger_journeys j WHERE j.journey_id = s.journey_id)
              AND s.period_key = 'ALL'
-         ) ORDER BY COALESCE(startDate, endDate, '') DESC, title`,
+         ) source ORDER BY COALESCE(startDate, endDate, '') DESC, title`,
       );
+      return rows.map((row) => ({ ...row, hasActor: Boolean(row.hasActor) }));
     },
 
     getActorMemberId(journeyId: string) {
@@ -194,10 +212,54 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
       );
     },
 
+    async getPreferences(): Promise<LedgerPreferences> {
+      const row = await database.getFirstAsync<{
+        defaultCurrency: string;
+        debugMode: number;
+      }>(
+        `SELECT default_currency AS defaultCurrency, debug_mode AS debugMode
+         FROM ledger_preferences WHERE id = 1`,
+      );
+      return {
+        defaultCurrency: row?.defaultCurrency ?? "NZD",
+        debugMode: Boolean(row?.debugMode),
+      };
+    },
+
+    async setDefaultCurrency(defaultCurrency: string) {
+      await database.runAsync(
+        `INSERT INTO ledger_preferences
+           (id, selected_journey_id, default_currency, debug_mode, updated_at)
+         VALUES (1, NULL, ?, 0, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           default_currency = excluded.default_currency,
+           updated_at = excluded.updated_at`,
+        defaultCurrency,
+        new Date().toISOString(),
+      );
+    },
+
+    async setDebugMode(debugMode: boolean) {
+      await database.runAsync(
+        `INSERT INTO ledger_preferences
+           (id, selected_journey_id, default_currency, debug_mode, updated_at)
+         VALUES (1, NULL, 'NZD', ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           debug_mode = excluded.debug_mode,
+           updated_at = excluded.updated_at`,
+        debugMode ? 1 : 0,
+        new Date().toISOString(),
+      );
+    },
+
     async selectJourney(journeyId: string | null) {
       await database.runAsync(
-        `INSERT OR REPLACE INTO ledger_preferences (id, selected_journey_id, updated_at)
-         VALUES (1, ?, ?)`,
+        `INSERT INTO ledger_preferences
+           (id, selected_journey_id, default_currency, debug_mode, updated_at)
+         VALUES (1, ?, 'NZD', 0, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           selected_journey_id = excluded.selected_journey_id,
+           updated_at = excluded.updated_at`,
         journeyId,
         new Date().toISOString(),
       );

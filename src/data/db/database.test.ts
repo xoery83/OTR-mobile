@@ -72,8 +72,9 @@ describe("SQLite migrations", () => {
     expect(review.sql).toContain("CREATE TABLE ledger_review_finding_actions");
 
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(17);
-    expect(latest.sql).toContain("settlement_participation");
+    expect(latest.id).toBe(18);
+    expect(latest.sql).toContain("default_currency");
+    expect(latest.sql).toContain("debug_mode");
   });
 
   it("migrates a v13 Settlement through a cold v14 restart", () => {
@@ -170,6 +171,28 @@ describe("SQLite migrations", () => {
           "UPDATE ledger_expenses SET settlement_participation = 'INVALID' WHERE id = 'expense'",
         ),
       ).toThrow();
+    } finally {
+      database.close();
+    }
+  });
+
+  it("adds persisted UI preferences in v18", () => {
+    const database = new DatabaseSync(":memory:");
+    try {
+      for (const migration of migrations.filter(({ id }) => id <= 17))
+        database.exec(migration.sql);
+      database.exec(
+        "INSERT INTO ledger_preferences (id, selected_journey_id, updated_at) VALUES (1, 'journey', '2026-09-16T00:00:00Z')",
+      );
+      database.exec(migrations.find(({ id }) => id === 18)!.sql);
+
+      expect(
+        database
+          .prepare(
+            "SELECT default_currency AS currency, debug_mode AS debugMode FROM ledger_preferences WHERE id = 1",
+          )
+          .get(),
+      ).toEqual({ currency: "NZD", debugMode: 0 });
     } finally {
       database.close();
     }

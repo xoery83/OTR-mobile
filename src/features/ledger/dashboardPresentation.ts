@@ -3,6 +3,16 @@ import type { ReportingScope } from "@/domain/ledger/reporting";
 
 import { formatLedgerMoney } from "./format";
 
+export type JourneyPickerItem = LedgerJourneyContext & {
+  hasActor: boolean;
+  memberCount: number;
+};
+
+export type JourneyPickerSection = {
+  data: (JourneyPickerItem & { status: "ACTIVE" | "UPCOMING" | "PAST" })[];
+  title: "Active" | "Upcoming" | "Past";
+};
+
 export function journeyLifecycleLabel(
   journey: Pick<LedgerJourneyContext, "startDate" | "endDate">,
   today: string,
@@ -13,6 +23,57 @@ export function journeyLifecycleLabel(
   if (end && end < today) return "Past";
   if (start && end && start <= today && today <= end) return "Active";
   return null;
+}
+
+const developmentJourneyPattern =
+  /\b(test|fixture|synthetic|simulator|acceptance|compatibility|blocker|smoke|prototype|legacy|replay)\b|^stage\s*\d/i;
+
+export function journeyPickerSections(
+  journeys: JourneyPickerItem[],
+  today: string,
+  selectedJourneyId: string | null,
+  query = "",
+  includeDevelopment = false,
+): JourneyPickerSection[] {
+  const needle = query.trim().toLocaleLowerCase();
+  const groups: Record<JourneyPickerSection["title"], JourneyPickerSection["data"]> = {
+    Active: [],
+    Upcoming: [],
+    Past: [],
+  };
+  for (const journey of journeys) {
+    const lifecycle = journeyLifecycleLabel(journey, today);
+    if (
+      !lifecycle ||
+      !journey.hasActor ||
+      journey.memberCount < 1 ||
+      (!includeDevelopment && developmentJourneyPattern.test(journey.title)) ||
+      (needle && !journey.title.toLocaleLowerCase().includes(needle))
+    )
+      continue;
+    const status = lifecycle.toUpperCase() as "ACTIVE" | "UPCOMING" | "PAST";
+    groups[lifecycle].push({ ...journey, status });
+  }
+  groups.Active.sort(
+    (left, right) =>
+      Number(right.journeyId === selectedJourneyId) -
+        Number(left.journeyId === selectedJourneyId) ||
+      (left.endDate ?? "9999").localeCompare(right.endDate ?? "9999") ||
+      left.title.localeCompare(right.title),
+  );
+  groups.Upcoming.sort(
+    (left, right) =>
+      (left.startDate ?? "9999").localeCompare(right.startDate ?? "9999") ||
+      left.title.localeCompare(right.title),
+  );
+  groups.Past.sort(
+    (left, right) =>
+      (right.endDate ?? "").localeCompare(left.endDate ?? "") ||
+      left.title.localeCompare(right.title),
+  );
+  return (["Active", "Upcoming", "Past"] as const)
+    .filter((title) => groups[title].length)
+    .map((title) => ({ title, data: groups[title] }));
 }
 
 export function settlementPositionLabel(minor: number) {

@@ -20,6 +20,7 @@ function database() {
     CREATE TABLE ledger_journeys (journey_id TEXT PRIMARY KEY, title TEXT, start_date TEXT,
       end_date TEXT, settlement_currency TEXT, settlement_scale INTEGER);
     CREATE TABLE ledger_members (id TEXT PRIMARY KEY, journey_id TEXT, display_name TEXT);
+    CREATE TABLE ledger_actor_context (journey_id TEXT PRIMARY KEY, member_id TEXT);
     CREATE TABLE ledger_expenses (id TEXT PRIMARY KEY, journey_id TEXT, payer_member_id TEXT,
       title TEXT, description TEXT, category TEXT, occurred_at TEXT,
       original_amount_minor INTEGER, original_currency TEXT, original_scale INTEGER,
@@ -37,7 +38,9 @@ function database() {
     CREATE INDEX ledger_conflicts_expense ON ledger_expense_conflicts(expense_id, status);
     CREATE TABLE ledger_receipt_assets (expense_id TEXT);
     CREATE INDEX ledger_receipts_expense ON ledger_receipt_assets(expense_id);
-    CREATE TABLE ledger_preferences (id INTEGER PRIMARY KEY, selected_journey_id TEXT, updated_at TEXT);
+    CREATE TABLE ledger_preferences (id INTEGER PRIMARY KEY, selected_journey_id TEXT,
+      default_currency TEXT NOT NULL DEFAULT 'NZD', debug_mode INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT);
     CREATE TABLE ledger_my_journey_summaries (journey_id TEXT, period_key TEXT, title TEXT,
       start_date TEXT, end_date TEXT, currency TEXT, scale INTEGER, my_spend_minor INTEGER,
       paid_minor INTEGER, position_minor INTEGER, unvalued_count INTEGER,
@@ -65,6 +68,7 @@ function insertFixture(sqlite: DatabaseSync) {
   sqlite.exec(`
     INSERT INTO ledger_journeys VALUES ('journey', 'Europe', '2026-09-01', '2026-09-30', 'NZD', 2);
     INSERT INTO ledger_members VALUES ('a', 'journey', 'Alex'), ('b', 'journey', 'Bea');
+    INSERT INTO ledger_actor_context VALUES ('journey', 'a');
     INSERT INTO ledger_expenses VALUES
       ('valued', 'journey', 'a', 'Dinner', NULL, 'food', '2026-09-10T08:00:00.000Z', 1000, 'EUR', 2, 'ACCEPTED', 'INCLUDED', 'PENDING_CREATE', NULL),
       ('rate', 'journey', 'b', 'Taxi', NULL, 'transport', '2026-09-11T08:00:00.000Z', 500, 'EUR', 2, 'RATE_REQUIRED', 'INCLUDED', 'SYNCED', NULL),
@@ -144,6 +148,26 @@ const records: ReportingRecord[] = [
 ];
 
 describe("Ledger reporting repository", () => {
+  it("persists UI preferences without resetting them when the Journey changes", async () => {
+    const { adapter, sqlite } = database();
+    const repository = createLedgerReportingRepository(adapter);
+
+    expect(await repository.getPreferences()).toEqual({
+      defaultCurrency: "NZD",
+      debugMode: false,
+    });
+    await repository.setDefaultCurrency("EUR");
+    await repository.setDebugMode(true);
+    await repository.selectJourney("journey");
+
+    expect(await repository.getPreferences()).toEqual({
+      defaultCurrency: "EUR",
+      debugMode: true,
+    });
+    expect(await repository.getSelectedJourneyId()).toBe("journey");
+    sqlite.close();
+  });
+
   it("migrates the v10 reporting cache to v11 without touching financial or asset rows", () => {
     const sqlite = new DatabaseSync(":memory:");
     sqlite.exec(`

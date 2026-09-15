@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   expenseAmountPresentation,
   journeyLifecycleLabel,
+  journeyPickerSections,
   settlementPositionLabel,
   spendingPercentage,
 } from "./dashboardPresentation";
@@ -24,6 +25,57 @@ describe("Ledger dashboard presentation", () => {
     expect(
       journeyLifecycleLabel({ startDate: "2026-01-01", endDate: null }, "2026-09-14"),
     ).toBeNull();
+  });
+
+  it("groups selectable Journeys and hides development records by default", () => {
+    const journey = {
+      endDate: "2026-09-30",
+      hasActor: true,
+      journeyId: "active",
+      memberCount: 8,
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      startDate: "2026-09-01",
+      title: "Iceland",
+    };
+    expect(
+      journeyPickerSections(
+        [
+          journey,
+          {
+            ...journey,
+            journeyId: "upcoming",
+            startDate: "2026-10-01",
+            endDate: "2026-10-20",
+            title: "Japan",
+          },
+          {
+            ...journey,
+            journeyId: "past",
+            startDate: "2026-07-01",
+            endDate: "2026-07-20",
+            title: "France",
+          },
+          { ...journey, journeyId: "test", title: "Stage 9 Acceptance" },
+          { ...journey, journeyId: "broken", hasActor: false, title: "Broken" },
+        ],
+        "2026-09-16",
+        "active",
+      ).map((section) => [section.title, section.data.map((item) => item.journeyId)]),
+    ).toEqual([
+      ["Active", ["active"]],
+      ["Upcoming", ["upcoming"]],
+      ["Past", ["past"]],
+    ]);
+    expect(
+      journeyPickerSections(
+        [{ ...journey, journeyId: "test", title: "Stage 9 Acceptance" }],
+        "2026-09-16",
+        null,
+        "",
+        true,
+      )[0].data[0].journeyId,
+    ).toBe("test");
   });
 
   it("uses the signed settlement position without implying a new calculation", () => {

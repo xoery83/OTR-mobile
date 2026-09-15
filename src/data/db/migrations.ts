@@ -801,4 +801,13 @@ export const migrations: Migration[] = [
         DEFAULT 'INCLUDED' CHECK (settlement_participation IN ('INCLUDED', 'EXCLUDED'));
     `,
   },
+  {
+    id: 18,
+    name: "ledger_ui_preferences",
+    sql: `
+      ALTER TABLE ledger_preferences ADD COLUMN default_currency TEXT NOT NULL DEFAULT 'NZD';
+      ALTER TABLE ledger_preferences ADD COLUMN debug_mode INTEGER NOT NULL DEFAULT 0
+        CHECK (debug_mode IN (0, 1));
+    `,
+  },
 ];

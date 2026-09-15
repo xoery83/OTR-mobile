@@ -1,24 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActionSheetIOS,
   ActivityIndicator,
-  FlatList,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
-import { router, Stack } from "expo-router";
+import { router, Stack, useFocusEffect } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
+import { AppNavigationMenu } from "@/components/AppNavigationMenu";
 import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
-import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
+import type {
+  LedgerJourneyOption,
+  LedgerReportListItem,
+} from "@/data/repositories/ledgerReportingRepository";
 import {
   chooseJourneyEntry,
   type LedgerJourneyContext,
@@ -42,7 +46,7 @@ import {
 import { SettlementReadinessScreen } from "./SettlementReadinessScreen";
 import {
   expenseAmountPresentation,
-  journeyLifecycleLabel,
+  journeyPickerSections,
   settlementPositionLabel,
   spendingPercentage,
 } from "./dashboardPresentation";
@@ -131,7 +135,7 @@ export function LedgerStage6Screen() {
   const manualJourneyId = useRef<string | undefined>(undefined);
   const [request] = useState(createLatestRequest);
   const scopeRef = useRef<ReportingScope>("MINE");
-  const [journeys, setJourneys] = useState<LedgerJourneyContext[]>([]);
+  const [journeys, setJourneys] = useState<LedgerJourneyOption[]>([]);
   const [projection, setProjection] = useState<SpendingProjection | null>(null);
   const [mode, setMode] = useState<Mode>("SPENDING");
   const [message, setMessage] = useState<string | null>(null);
@@ -139,6 +143,7 @@ export function LedgerStage6Screen() {
   const [journeyPickerOpen, setJourneyPickerOpen] = useState(false);
   const [journeyQuery, setJourneyQuery] = useState("");
   const [selectingJourneyId, setSelectingJourneyId] = useState<string | null>(null);
+  const [debugMode, setDebugMode] = useState(false);
   const journey = projection?.journey ?? null;
   const memberId = projection?.memberId ?? null;
   const scope = projection?.scope ?? "MINE";
@@ -150,12 +155,17 @@ export function LedgerStage6Screen() {
     journeys.length === 0 || journeys.some((item) => item.journeyId === stage3JourneyId)
       ? stage3JourneyId
       : "";
-  const visibleJourneys = useMemo(() => {
-    const query = journeyQuery.trim().toLocaleLowerCase();
-    return query
-      ? journeys.filter((item) => item.title.toLocaleLowerCase().includes(query))
-      : journeys;
-  }, [journeyQuery, journeys]);
+  const journeySections = useMemo(
+    () =>
+      journeyPickerSections(
+        journeys,
+        localToday(),
+        journey?.journeyId ?? null,
+        journeyQuery,
+        debugMode,
+      ),
+    [debugMode, journey?.journeyId, journeyQuery, journeys],
+  );
 
   const loadProjection = useCallback(
     async (nextJourney: LedgerJourneyContext, nextScope: ReportingScope) => {
@@ -241,6 +251,21 @@ export function LedgerStage6Screen() {
     handleLedgerChanged,
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void getDefaultLedgerReportingRepository()
+        .then((repository) => repository.getPreferences())
+        .then((preferences) => {
+          if (active) setDebugMode(preferences.debugMode);
+        })
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
   useEffect(() => {
     void Promise.resolve()
       .then(() => loadContext())
@@ -293,25 +318,6 @@ export function LedgerStage6Screen() {
     }
   };
 
-  const openLedgerMenu = () => {
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title: "Ledger",
-        options: ["My Ledger", "Review", "Ledger Settings", "Cancel"],
-        cancelButtonIndex: 3,
-      },
-      (index) => {
-        if (index === 0) router.push("/expenses/all-journeys");
-        if (index === 1)
-          router.push({
-            pathname: "/expenses/review",
-            params: journey ? { journeyId: journey.journeyId } : {},
-          } as never);
-        if (index === 2) router.push("/expenses/settings" as never);
-      },
-    );
-  };
-
   const openSearch = (extra: Record<string, string> = {}) => {
     if (!journey || !memberId) return;
     router.push({
@@ -333,10 +339,43 @@ export function LedgerStage6Screen() {
           headerShown: true,
           headerTitle: "Ledger",
           headerLeft: () => (
-            <HeaderButton
-              label="Ledger menu"
-              name="line.3.horizontal"
-              onPress={openLedgerMenu}
+            <AppNavigationMenu
+              sections={[
+                [
+                  {
+                    icon: "suitcase",
+                    label: "Trip",
+                    onPress: () => router.navigate("/trip" as never),
+                  },
+                  {
+                    icon: "list.bullet.rectangle",
+                    label: "Ledger",
+                    onPress: () => undefined,
+                    selected: true,
+                  },
+                  {
+                    icon: "viewfinder",
+                    label: "Capture",
+                    onPress: () => router.navigate("/capture" as never),
+                  },
+                ],
+                [
+                  {
+                    icon: "gearshape",
+                    label: "Settings",
+                    onPress: () => router.push("/expenses/settings" as never),
+                  },
+                  {
+                    icon: "globe",
+                    label: "Language",
+                    onPress: () =>
+                      Alert.alert(
+                        "Language",
+                        "OTR currently follows your iPhone language settings.",
+                      ),
+                  },
+                ],
+              ]}
             />
           ),
           headerRight: () => (
@@ -381,20 +420,6 @@ export function LedgerStage6Screen() {
 
         {journey ? (
           <Segment value={mode} options={["SPENDING", "SETTLEMENT"]} onChange={setMode} />
-        ) : null}
-
-        {syncStatus ? (
-          <Text
-            accessibilityLiveRegion="polite"
-            maxFontSizeMultiplier={2}
-            style={[
-              styles.syncStatus,
-              (syncStatus === "OFFLINE" || syncStatus === "CHANGES_WAITING") &&
-                styles.syncStatusAttention,
-            ]}
-          >
-            {syncStatusCopy[syncStatus]}
-          </Text>
         ) : null}
 
         {message ? (
@@ -700,6 +725,39 @@ export function LedgerStage6Screen() {
             </Text>
           </Pressable>
         )}
+        {debugMode ? (
+          <View style={styles.debugSection}>
+            <Text accessibilityRole="header" style={styles.debugTitle}>
+              Debug Information
+            </Text>
+            <View style={styles.debugSurface}>
+              <DebugRow
+                label="Network"
+                value={
+                  syncStatus
+                    ? syncStatus === "OFFLINE"
+                      ? "Offline"
+                      : "Online"
+                    : "Checking"
+                }
+              />
+              <DebugRow
+                attention={syncStatus === "OFFLINE" || syncStatus === "CHANGES_WAITING"}
+                label="Sync"
+                value={syncStatus ? syncStatusCopy[syncStatus] : "Starting"}
+              />
+              <DebugRow
+                label="Environment"
+                value={
+                  process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev"
+                    ? "Development"
+                    : "Local"
+                }
+              />
+              {journey ? <DebugRow label="Journey" value={journey.title} /> : null}
+            </View>
+          </View>
+        ) : null}
       </ScrollView>
 
       <Modal
@@ -715,7 +773,7 @@ export function LedgerStage6Screen() {
               onPress={() => setJourneyPickerOpen(false)}
               style={styles.headerButton}
             >
-              <Text style={styles.link}>Cancel</Text>
+              <Text style={styles.pickerCancelText}>Cancel</Text>
             </Pressable>
             <Text accessibilityRole="header" style={styles.pickerTitle}>
               Choose Journey
@@ -732,14 +790,16 @@ export function LedgerStage6Screen() {
             style={styles.search}
             value={journeyQuery}
           />
-          <FlatList
+          <SectionList
             contentContainerStyle={styles.pickerList}
-            data={visibleJourneys}
+            sections={journeySections}
             keyExtractor={(item) => item.journeyId}
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={<Text style={styles.empty}>No matching Journeys.</Text>}
+            renderSectionHeader={({ section }) => (
+              <Text style={styles.journeySectionTitle}>{section.title}</Text>
+            )}
             renderItem={({ item }) => {
-              const lifecycle = journeyLifecycleLabel(item, localToday());
               const selected = item.journeyId === journey?.journeyId;
               const selecting = item.journeyId === selectingJourneyId;
               return (
@@ -747,12 +807,16 @@ export function LedgerStage6Screen() {
                   accessibilityLabel={`${item.title}, ${formatLedgerDateRange(
                     item.startDate,
                     item.endDate,
-                  )}${lifecycle ? `, ${lifecycle}` : ""}`}
+                  )}, ${item.memberCount} members, ${item.status}${selected ? ", selected" : ""}`}
                   accessibilityRole="button"
                   accessibilityState={{ selected, busy: selecting }}
                   disabled={selectingJourneyId !== null}
                   onPress={() => void chooseJourney(item)}
-                  style={styles.journeyRow}
+                  style={[
+                    styles.journeyRow,
+                    selected && styles.selectedJourneyRow,
+                    largeText && styles.stack,
+                  ]}
                 >
                   <View style={styles.grow}>
                     <Text
@@ -762,23 +826,77 @@ export function LedgerStage6Screen() {
                     >
                       {item.title}
                     </Text>
-                    <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                      {formatLedgerDateRange(item.startDate, item.endDate)}
-                      {lifecycle ? ` · ${lifecycle}` : ""}
-                    </Text>
+                    <View style={styles.journeyMetaLine}>
+                      <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                        {formatLedgerDateRange(item.startDate, item.endDate)}
+                      </Text>
+                      <AppIcon color="#64748B" name="person.2.fill" size={12} />
+                      <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                        {item.memberCount}
+                      </Text>
+                    </View>
                   </View>
-                  {selecting ? (
-                    <ActivityIndicator />
-                  ) : selected ? (
-                    <AppIcon color="#0F766E" name="checkmark" />
-                  ) : null}
+                  <View style={styles.journeyStatusColumn}>
+                    <JourneyStatusTag status={item.status} />
+                    {selecting ? (
+                      <ActivityIndicator />
+                    ) : selected ? (
+                      <AppIcon color="#0F766E" name="checkmark" />
+                    ) : null}
+                  </View>
                 </Pressable>
               );
             }}
+            stickySectionHeadersEnabled={false}
           />
         </View>
       </Modal>
     </>
+  );
+}
+
+function JourneyStatusTag({ status }: { status: "ACTIVE" | "UPCOMING" | "PAST" }) {
+  return (
+    <View
+      style={[
+        styles.journeyStatusTag,
+        status === "ACTIVE"
+          ? styles.activeStatus
+          : status === "UPCOMING"
+            ? styles.upcomingStatus
+            : styles.pastStatus,
+      ]}
+    >
+      <Text
+        style={[
+          styles.journeyStatusText,
+          status === "ACTIVE"
+            ? styles.activeStatusText
+            : status === "UPCOMING"
+              ? styles.upcomingStatusText
+              : styles.pastStatusText,
+        ]}
+      >
+        {status}
+      </Text>
+    </View>
+  );
+}
+
+function DebugRow({
+  attention,
+  label,
+  value,
+}: {
+  attention?: boolean;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.debugRow}>
+      <Text style={styles.debugLabel}>{label}</Text>
+      <Text style={[styles.debugValue, attention && styles.debugAttention]}>{value}</Text>
+    </View>
   );
 }
 
@@ -930,8 +1048,6 @@ const styles = StyleSheet.create({
   },
   tripBadgeText: { color: "#64748B", fontSize: 10, fontWeight: "800" },
   meta: { color: "#64748B", fontSize: 13 },
-  syncStatus: { color: "#64748B", fontSize: 12, paddingHorizontal: 2 },
-  syncStatusAttention: { color: "#7C5B00" },
   message: { color: "#7C5B00", fontSize: 14 },
   segment: {
     backgroundColor: "#E5E7EB",
@@ -1095,6 +1211,25 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  debugSection: { gap: 6, marginTop: 14 },
+  debugTitle: { color: "#64748B", fontSize: 13, fontWeight: "700" },
+  debugSurface: {
+    backgroundColor: "#EEF2F5",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  debugRow: {
+    alignItems: "center",
+    borderBottomColor: "#DCE2E8",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    minHeight: 38,
+  },
+  debugLabel: { color: "#64748B", fontSize: 12 },
+  debugValue: { color: "#475569", flex: 1, fontSize: 12, textAlign: "right" },
+  debugAttention: { color: "#7C5B00" },
   picker: { backgroundColor: "#F6F7F9", flex: 1, paddingTop: 12 },
   pickerHeader: {
     alignItems: "center",
@@ -1108,6 +1243,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   pickerTitle: { color: "#111827", fontSize: 17, fontWeight: "700" },
+  pickerCancelText: { color: "#0F766E", fontSize: 17, fontWeight: "700" },
   search: {
     backgroundColor: "#E5E7EB",
     borderRadius: 10,
@@ -1119,6 +1255,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   pickerList: { padding: 16, paddingBottom: 40 },
+  journeySectionTitle: {
+    backgroundColor: "#F6F7F9",
+    color: "#64748B",
+    fontSize: 12,
+    fontWeight: "800",
+    paddingBottom: 7,
+    paddingTop: 12,
+    textTransform: "uppercase",
+  },
   journeyRow: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
@@ -1129,4 +1274,20 @@ const styles = StyleSheet.create({
     minHeight: 68,
     padding: 14,
   },
+  selectedJourneyRow: { backgroundColor: "#ECFDF9" },
+  journeyMetaLine: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 5,
+    marginTop: 4,
+  },
+  journeyStatusColumn: { alignItems: "flex-end", gap: 8 },
+  journeyStatusTag: { borderRadius: 5, paddingHorizontal: 7, paddingVertical: 3 },
+  journeyStatusText: { fontSize: 10, fontWeight: "800" },
+  activeStatus: { backgroundColor: "#DCFCE7" },
+  activeStatusText: { color: "#166534" },
+  upcomingStatus: { backgroundColor: "#DBEAFE" },
+  upcomingStatusText: { color: "#1D4ED8" },
+  pastStatus: { backgroundColor: "#E2E8F0" },
+  pastStatusText: { color: "#64748B" },
 });
