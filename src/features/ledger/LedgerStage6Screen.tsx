@@ -15,6 +15,7 @@ import {
 import { router, Stack } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
+import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
@@ -29,6 +30,7 @@ import type {
 } from "@/domain/ledger/reporting";
 import { buildSettlementStatement } from "@/domain/ledger/settlementStatement";
 import { stage3JourneyId } from "@/hooks/useLedgerStage3";
+import { useLedgerActiveSync } from "@/hooks/useLedgerActiveSync";
 import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
 
 import {
@@ -66,6 +68,13 @@ type SpendingProjection = {
   settlement: SettlementSnapshot;
 };
 
+const syncStatusCopy = {
+  SYNCING: "Syncing",
+  UP_TO_DATE: "Up to date",
+  OFFLINE: "Offline · saved data is available",
+  CHANGES_WAITING: "Changes waiting · saved on this device",
+} as const;
+
 function localToday() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -96,7 +105,7 @@ function summarizeSettlement(rows: FinalizedRows, memberId: string): SettlementS
 
 export function LedgerStage6Screen() {
   const largeText = useWindowDimensions().fontScale > 2;
-  const { refreshJourney, refreshPersonal } = useLedgerReportingRefresh();
+  const { refreshPersonal } = useLedgerReportingRefresh();
   const manualJourneyId = useRef<string | undefined>(undefined);
   const [request] = useState(createLatestRequest);
   const scopeRef = useRef<ReportingScope>("MINE");
@@ -206,6 +215,15 @@ export function LedgerStage6Screen() {
     setLoading(false);
   }, [loadProjection, request]);
 
+  const handleLedgerChanged = useCallback(async () => {
+    await loadContext();
+  }, [loadContext]);
+
+  const syncStatus = useLedgerActiveSync(
+    (journey?.journeyId ?? fallbackJourneyId) || null,
+    handleLedgerChanged,
+  );
+
   useEffect(() => {
     void Promise.resolve()
       .then(() => loadContext())
@@ -218,21 +236,8 @@ export function LedgerStage6Screen() {
   useEffect(() => {
     const id = journey?.journeyId ?? fallbackJourneyId;
     if (!id) return;
-    void refreshJourney(id)
-      .then(async () => {
-        await refreshPersonal("ALL", { from: null, to: null });
-        await loadContext();
-      })
-      .catch(() =>
-        setMessage((current) => current ?? "Offline · showing saved Ledger data"),
-      );
-  }, [
-    journey?.journeyId,
-    fallbackJourneyId,
-    loadContext,
-    refreshJourney,
-    refreshPersonal,
-  ]);
+    void refreshPersonal("ALL", { from: null, to: null }).catch(() => undefined);
+  }, [journey?.journeyId, fallbackJourneyId, refreshPersonal]);
 
   useEffect(
     () => () => {
@@ -243,19 +248,26 @@ export function LedgerStage6Screen() {
 
   const chooseJourney = async (selected: LedgerJourneyContext) => {
     const previous = projection;
+    const previousManualJourneyId = manualJourneyId.current;
+    manualJourneyId.current = selected.journeyId;
     setSelectingJourneyId(selected.journeyId);
-    const loaded = await loadProjection(selected, scopeRef.current);
+    let loaded = await loadProjection(selected, scopeRef.current);
     if (!loaded) {
+      await refreshJourneyLedger(selected.journeyId).catch(() => false);
+      loaded = await loadProjection(selected, scopeRef.current);
+    }
+    if (!loaded) {
+      manualJourneyId.current = previousManualJourneyId;
       setSelectingJourneyId(null);
       return;
     }
     try {
       const repository = await getDefaultLedgerReportingRepository();
       await repository.selectJourney(selected.journeyId);
-      manualJourneyId.current = selected.journeyId;
       setJourneyPickerOpen(false);
       setJourneyQuery("");
     } catch {
+      manualJourneyId.current = previousManualJourneyId;
       request.cancel();
       setProjection(previous);
       setMessage("Journey selection could not be saved.");
@@ -364,6 +376,20 @@ export function LedgerStage6Screen() {
             />
           ) : null}
         </View>
+
+        {syncStatus ? (
+          <Text
+            accessibilityLiveRegion="polite"
+            maxFontSizeMultiplier={2}
+            style={[
+              styles.syncStatus,
+              (syncStatus === "OFFLINE" || syncStatus === "CHANGES_WAITING") &&
+                styles.syncStatusAttention,
+            ]}
+          >
+            {syncStatusCopy[syncStatus]}
+          </Text>
+        ) : null}
 
         {message ? (
           <Text
@@ -857,6 +883,8 @@ const styles = StyleSheet.create({
   },
   contextTitle: { color: "#111827", fontSize: 17, fontWeight: "700" },
   meta: { color: "#64748B", fontSize: 13 },
+  syncStatus: { color: "#64748B", fontSize: 12, paddingHorizontal: 2 },
+  syncStatusAttention: { color: "#7C5B00" },
   message: { color: "#7C5B00", fontSize: 14 },
   updating: { alignItems: "center", flexDirection: "row", gap: 8 },
   segment: {

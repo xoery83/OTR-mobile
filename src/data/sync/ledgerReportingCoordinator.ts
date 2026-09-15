@@ -3,20 +3,34 @@ import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedge
 import { createLedgerReadTransport } from "@/data/sync/ledgerReadTransport";
 import { ApiClientError } from "@/data/api/client";
 
-export async function refreshJourneyLedger(journeyId: string) {
+const activePulls = new Map<string, Promise<boolean>>();
+
+export function refreshJourneyLedger(journeyId: string) {
+  const active = activePulls.get(journeyId);
+  if (active) return active;
+  const pull = pullJourneyLedger(journeyId).finally(() => {
+    if (activePulls.get(journeyId) === pull) activePulls.delete(journeyId);
+  });
+  activePulls.set(journeyId, pull);
+  return pull;
+}
+
+async function pullJourneyLedger(journeyId: string) {
   const repository = await getDefaultLedgerReadRepository();
   const cursor = (await repository.getCursor(journeyId))?.cursor ?? null;
   if (!cursor) {
     const response = await createLedgerReadTransport().bootstrap(journeyId);
     await repository.applyBootstrap(response);
-    return;
+    return true;
   }
   const transport = createLedgerReadTransport();
   let nextCursor: string | null = cursor;
+  let changed = false;
   try {
     do {
       const response = await transport.pull(journeyId, nextCursor);
       await repository.applyChanges(journeyId, response);
+      changed ||= response.changes.length > 0;
       nextCursor = response.cursor;
       if (!response.hasMore) break;
     } while (true);
@@ -25,7 +39,9 @@ export async function refreshJourneyLedger(journeyId: string) {
       throw error;
     const response = await transport.bootstrap(journeyId);
     await repository.applyBootstrap(response);
+    return true;
   }
+  return changed;
 }
 
 export async function revalidateJourneyLedger(journeyId: string) {

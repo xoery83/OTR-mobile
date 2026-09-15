@@ -4,14 +4,32 @@ Date: 2026-09-15
 
 ## Current Milestone
 
-Ledger UI/UX Polish P1-P6, Europe Replay recovery/protection, and the approved
-Europe 2026 UI Polish Settlement fixture are complete. Their previously divergent
-working states have been recovered into `integration/ledger-polish-canonical`, with
-P6 as the UI baseline and the later Replay/fixture safeguards preserved. Canonical
-integration validation is complete; no canonical Release has been installed.
-Production remains disconnected and unchanged, and Round 2 Polish has not started.
+The narrow Mobile Sync Trigger implementation is complete and accepted on two
+Simulators plus Leon's physical iPhone on `integration/ledger-polish-canonical`.
+Same-account automatic receive, phone edit propagation, offline reconnect, foreground
+pull, restart, Journey isolation, and conflict preservation passed. Production remains
+disconnected and unchanged, and Round 2 Polish has not started.
 
 Current Mobile SQLite schema version: 17.
+
+## Mobile Sync Trigger And Multi-Device Dev Validation
+
+- Expense Save now asynchronously kicks the existing durable worker after the local
+  write; it never blocks navigation or creates another queue path.
+- Ledger focus, foreground, Journey change and reconnect reconcile immediately. An
+  active visible online Ledger also performs cursor-based pulls every 8 seconds.
+- Active polling reuses the existing refresh-before-sync lifecycle path, so an expired
+  Dev access token refreshes silently before push/pull. Concurrent foreground and
+  Ledger triggers coalesce into one refresh/sync run.
+- Per-Journey pull coalescing, one queued rerun and visibility/Journey generation
+  checks prevent overlapping or stale projection updates.
+- User-visible status is limited to Syncing, Up to date, Offline with saved-data
+  reassurance, and Changes waiting; an unresolved conflict counts as waiting.
+- Simulator A/B and the physical iPhone passed automatic propagation, offline durable
+  convergence, foreground refresh, restart, Journey isolation and revision-conflict
+  preservation. The final credential-free signed Release is installed on all three.
+- Evidence and the remaining multi-account coverage gap are in
+  `docs/ledger/LEDGER_MULTI_DEVICE_SYNC_ACCEPTANCE.md`.
 
 ## Canonical Workspace Recovery Validation
 

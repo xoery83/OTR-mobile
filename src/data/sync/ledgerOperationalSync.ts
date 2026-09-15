@@ -38,3 +38,9 @@ export function runLedgerOperationalSync() {
   }
   return running;
 }
+
+export function kickLedgerOperationalSync(
+  run: () => Promise<unknown> = runLedgerOperationalSync,
+) {
+  void run().catch(() => undefined);
+}

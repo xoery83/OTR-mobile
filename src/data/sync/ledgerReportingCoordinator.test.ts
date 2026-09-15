@@ -37,7 +37,7 @@ describe("Ledger pull recovery", () => {
         hasMore: false,
         serverTime: "now",
       });
-    await refreshJourneyLedger("journey");
+    await expect(refreshJourneyLedger("journey")).resolves.toBe(true);
     expect(transport.pull.mock.calls.map((call) => call[1])).toEqual(["c0", "c1"]);
     expect(repository.applyChanges).toHaveBeenCalledTimes(2);
   });
@@ -65,7 +65,43 @@ describe("Ledger pull recovery", () => {
       .mockResolvedValueOnce(undefined);
 
     await expect(refreshJourneyLedger("journey")).rejects.toThrow("interrupted");
-    await expect(refreshJourneyLedger("journey")).resolves.toBeUndefined();
+    await expect(refreshJourneyLedger("journey")).resolves.toBe(true);
     expect(transport.pull.mock.calls.map((call) => call[1])).toEqual(["c0", "c0"]);
+  });
+
+  it("coalesces concurrent pulls per Journey and reports an empty cursor page", async () => {
+    let resolve!: (value: unknown) => void;
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockReturnValue(new Promise((done) => (resolve = done)));
+    const first = refreshJourneyLedger("journey");
+    const second = refreshJourneyLedger("journey");
+    await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledOnce());
+    resolve({ changes: [], cursor: "c0", hasMore: false, serverTime: "now" });
+    await expect(Promise.all([first, second])).resolves.toEqual([false, false]);
+    expect(repository.applyChanges).toHaveBeenCalledOnce();
+  });
+
+  it("keeps concurrent Journey pulls isolated", async () => {
+    repository.getCursor.mockImplementation(async (journeyId: string) => ({
+      cursor: `${journeyId}-c0`,
+    }));
+    transport.pull.mockImplementation(async (journeyId: string) => ({
+      changes: [],
+      cursor: `${journeyId}-c1`,
+      hasMore: false,
+      serverTime: "now",
+    }));
+    await Promise.all([
+      refreshJourneyLedger("journey-a"),
+      refreshJourneyLedger("journey-b"),
+    ]);
+    expect(transport.pull.mock.calls).toEqual([
+      ["journey-a", "journey-a-c0"],
+      ["journey-b", "journey-b-c0"],
+    ]);
+    expect(repository.applyChanges.mock.calls.map((call) => call[0])).toEqual([
+      "journey-a",
+      "journey-b",
+    ]);
   });
 });

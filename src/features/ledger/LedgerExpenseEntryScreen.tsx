@@ -21,6 +21,7 @@ import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
 
 import { importReceiptAsset } from "@/data/operations/importReceiptAsset";
+import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import type {
   LedgerExpense,
@@ -413,6 +414,7 @@ export function LedgerExpenseEntryScreen() {
         pathname: "/expenses/expense/[id]",
         params: { id: saved.id, saved: "1" },
       });
+      kickLedgerOperationalSync();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Expense could not be saved.");
     } finally {

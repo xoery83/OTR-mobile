@@ -13,13 +13,23 @@ export const defaultBootstrapDependencies: FoundationBootstrapDependencies = {
   resumeSync: resumeOperationalSync,
 };
 
+let resuming: Promise<void> | null = null;
+
 export function subscribeOperationalSyncLifecycle() {
   return AppState.addEventListener("change", (state) => {
     if (state === "active") void resumeOperationalSync().catch(() => undefined);
   });
 }
 
-async function resumeOperationalSync() {
+export function resumeOperationalSync() {
+  if (resuming) return resuming;
+  resuming = refreshThenSync().finally(() => {
+    resuming = null;
+  });
+  return resuming;
+}
+
+async function refreshThenSync() {
   const session = await readLocalSession();
   const expired =
     !session?.accessToken ||
