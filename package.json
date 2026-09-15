@@ -25,7 +25,10 @@
     "stage9:extract:production": "tsx scripts/stage9/extract-production.ts",
     "stage9:transform:private": "tsx scripts/stage9/transform-private.ts",
     "stage9:verify:restore": "tsx scripts/stage9/verify-hosted-restore.ts",
-    "stage9:load:hosted-dev": "tsx scripts/stage9/load-hosted-dev.ts"
+    "stage9:load:hosted-dev": "tsx scripts/stage9/load-hosted-dev.ts",
+    "stage9:recover:replay": "tsx scripts/stage9/recover-hosted-dev-replay.ts",
+    "fixture:ui-polish": "node --env-file=.env.backend --import tsx scripts/dev/create-ui-polish-journey.ts",
+    "fixture:settlement": "node --env-file=.env.backend --import tsx scripts/dev/enable-settlement-test-fixture.ts"
   },
   "dependencies": {
     "@react-native-community/datetimepicker": "9.1.0",

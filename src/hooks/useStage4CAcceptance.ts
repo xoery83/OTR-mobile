@@ -521,15 +521,18 @@ async function requireExpense(
 }
 
 async function signInFor(role: "creator" | "organizer") {
-  const key = role === "creator" ? "CREATOR" : "ORGANIZER";
   const email =
-    process.env[`EXPO_PUBLIC_OTR_STAGE4C_${key}_EMAIL`] ??
-    process.env[`EXPO_PUBLIC_OTR_STAGE4B_${key}_EMAIL`] ??
-    "";
+    role === "creator"
+      ? (process.env.EXPO_PUBLIC_OTR_STAGE4C_CREATOR_EMAIL ??
+        process.env.EXPO_PUBLIC_OTR_STAGE4B_CREATOR_EMAIL)
+      : (process.env.EXPO_PUBLIC_OTR_STAGE4C_ORGANIZER_EMAIL ??
+        process.env.EXPO_PUBLIC_OTR_STAGE4B_ORGANIZER_EMAIL);
   const password =
-    process.env[`EXPO_PUBLIC_OTR_STAGE4C_${key}_PASSWORD`] ??
-    process.env[`EXPO_PUBLIC_OTR_STAGE4B_${key}_PASSWORD`] ??
-    "";
+    role === "creator"
+      ? (process.env.EXPO_PUBLIC_OTR_STAGE4C_CREATOR_PASSWORD ??
+        process.env.EXPO_PUBLIC_OTR_STAGE4B_CREATOR_PASSWORD)
+      : (process.env.EXPO_PUBLIC_OTR_STAGE4C_ORGANIZER_PASSWORD ??
+        process.env.EXPO_PUBLIC_OTR_STAGE4B_ORGANIZER_PASSWORD);
   if (!email || !password) throw new Error(`Missing Stage 4C ${role} credentials.`);
   await signInToSupabaseDev(email, password);
 }

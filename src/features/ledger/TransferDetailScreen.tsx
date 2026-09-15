@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack } from "expo-router";
 
 import { currencyScale } from "@/domain/ledger/currency";
 import type { RepaymentProposition } from "@/domain/ledger/paymentLifecycle";
@@ -26,15 +26,29 @@ import {
   type FinalizedTransfer,
 } from "./settlementPresentation";
 
-export function TransferDetailScreen() {
-  const { id, journeyId } = useLocalSearchParams<{ id: string; journeyId?: string }>();
+export function TransferDetailScreen({
+  journeyId,
+  transferId,
+}: {
+  journeyId: string;
+  transferId: string;
+}) {
   const settlement = useStage7Settlement(journeyId);
   const row = useMemo(
     () =>
-      settlementTransferRows(settlement.finalized, settlement.lineage).find(
-        (item) => item.transfer.id === id,
-      ) ?? null,
-    [id, settlement.finalized, settlement.lineage],
+      settlement.journeyId === journeyId
+        ? (settlementTransferRows(settlement.finalized, settlement.lineage).find(
+            (item) =>
+              item.settlement.journeyId === journeyId && item.transfer.id === transferId,
+          ) ?? null)
+        : null,
+    [
+      journeyId,
+      settlement.finalized,
+      settlement.journeyId,
+      settlement.lineage,
+      transferId,
+    ],
   );
   const [showExplanation, setShowExplanation] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -42,14 +56,7 @@ export function TransferDetailScreen() {
     FinalizedTransfer["payments"][number] | null
   >(null);
 
-  if (!row)
-    return (
-      <View style={styles.center}>
-        <Text style={styles.meta}>
-          {settlement.updating ? "Loading transfer…" : "Transfer is not available."}
-        </Text>
-      </View>
-    );
+  if (!row) return <TransferNotFound loading={settlement.updating} />;
 
   const { transfer } = row;
   const from = settlementMemberName(row.settlement, transfer.fromMemberId);
@@ -300,6 +307,16 @@ export function TransferDetailScreen() {
         transfer={transfer}
       />
     </>
+  );
+}
+
+export function TransferNotFound({ loading = false }: { loading?: boolean }) {
+  return (
+    <View style={styles.center}>
+      <Text style={styles.meta}>
+        {loading ? "Loading transfer…" : "Transfer is not available."}
+      </Text>
+    </View>
   );
 }
 

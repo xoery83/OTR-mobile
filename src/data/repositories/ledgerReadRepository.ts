@@ -191,11 +191,16 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
         displayName: string;
         role: string | null;
         status: string | null;
+        householdId: string | null;
+        shareUnits: number | null;
       }>(
-        `SELECT id, display_name AS displayName, role, status
-         FROM ledger_members
-         WHERE journey_id = ?
-         ORDER BY display_name ASC`,
+        `SELECT m.id, m.display_name AS displayName, m.role, m.status,
+           hm.household_id AS householdId, hm.share_units AS shareUnits
+         FROM ledger_members m
+         LEFT JOIN ledger_household_members hm
+           ON hm.journey_id = m.journey_id AND hm.member_id = m.id
+         WHERE m.journey_id = ?
+         ORDER BY m.display_name ASC`,
         journeyId,
       );
     },

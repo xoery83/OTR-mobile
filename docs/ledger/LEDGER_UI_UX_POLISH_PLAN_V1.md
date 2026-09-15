@@ -111,14 +111,14 @@ Twelve Recent Expenses is recommended. With the observed long multilingual title
 
 The problem is state ownership and commit order, not slow arithmetic.
 
-| Flow | Current ownership/query behavior | Visible risk |
-|---|---|---|
-| Spending Mine/Group | `scope`, `memberId`, `summary`, and `expenses` are independent state. The segment commits immediately; `summarize` and `listExpenses` then complete and commit separately from the selection. | New Mine/Group selection can display old totals and rows. No request identity check means an older request may finish last and overwrite a newer selection. |
-| Journey switch | Selected Journey is stored and displayed before actor, summary, and recent Expenses are loaded. Background `refreshJourney`/`refreshPersonal`, `loadContext`, and `loadReport` can overlap the selection-triggered query. | New Journey title can display the previous Journey's financial projection; overlapping refreshes can cause a second jump. |
-| Analysis | `scope`, `dimension`, buckets, currency, and scale are independent. Each scope/dimension change starts an uncancelled query. | New controls with old buckets; rapid changes can accept stale completion order. |
-| Search | Every text/filter change re-runs rows, summary, filter options, and Journeys. Results and filter/query state commit independently; there is no debounce or stale-response protection. | Excess work while typing, old result overwrite, and active controls that do not match totals/rows. |
-| My Ledger | Period changes before its rows reload and remote refresh can trigger another reload. | New period can briefly show old cross-Journey positions. |
-| Settlement | The hook has an effect-level `active` guard, so obsolete effects are less likely to commit after cleanup. However, prior Journey `finalized`, lineage, actor, and exports remain visible until the new Journey cache read resolves. | New Journey context can briefly contain the old Journey settlement. Remote refresh can make content jump without a clear updating state. |
+| Flow                | Current ownership/query behavior                                                                                                                                                                                                    | Visible risk                                                                                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Spending Mine/Group | `scope`, `memberId`, `summary`, and `expenses` are independent state. The segment commits immediately; `summarize` and `listExpenses` then complete and commit separately from the selection.                                       | New Mine/Group selection can display old totals and rows. No request identity check means an older request may finish last and overwrite a newer selection. |
+| Journey switch      | Selected Journey is stored and displayed before actor, summary, and recent Expenses are loaded. Background `refreshJourney`/`refreshPersonal`, `loadContext`, and `loadReport` can overlap the selection-triggered query.           | New Journey title can display the previous Journey's financial projection; overlapping refreshes can cause a second jump.                                   |
+| Analysis            | `scope`, `dimension`, buckets, currency, and scale are independent. Each scope/dimension change starts an uncancelled query.                                                                                                        | New controls with old buckets; rapid changes can accept stale completion order.                                                                             |
+| Search              | Every text/filter change re-runs rows, summary, filter options, and Journeys. Results and filter/query state commit independently; there is no debounce or stale-response protection.                                               | Excess work while typing, old result overwrite, and active controls that do not match totals/rows.                                                          |
+| My Ledger           | Period changes before its rows reload and remote refresh can trigger another reload.                                                                                                                                                | New period can briefly show old cross-Journey positions.                                                                                                    |
+| Settlement          | The hook has an effect-level `active` guard, so obsolete effects are less likely to commit after cleanup. However, prior Journey `finalized`, lineage, actor, and exports remain visible until the new Journey cache read resolves. | New Journey context can briefly contain the old Journey settlement. Remote refresh can make content jump without a clear updating state.                    |
 
 The existing repository performance evidence rules out a new data architecture as the first response:
 
@@ -164,18 +164,18 @@ Recommended interaction semantics:
 
 ### 5.3 Loading, caching, list, and navigation policy
 
-| Situation | Presentation | Data behavior |
-|---|---|---|
-| First local render | Screen-shaped skeleton only for sections with no matching cached result. Navigation and context remain usable. | Read SQLite first. Do not wait for network authentication/refresh. |
-| Warm tab return | Restore matching cached projection and scroll immediately; small refresh indicator only if updating. | Avoid redundant metadata/options reads; refresh through existing coordinator. |
-| Journey switch | New Journey header plus matching skeleton, or keep prior committed context until cache is ready. Never cross-pair context and money. | Cancel/ignore stale work; local repository projection first, network second. |
-| Search typing | Immediate text; results update after 200 ms debounce. | Query rows/summary only; ignore older completions. No FTS until measured substring search fails its target. |
-| Filter application | Draft in sheet; one atomic apply. Active count and removable chips remain visible on result screen. | One keyed query after Apply; retain options for Journey. |
-| Analysis scope/dimension | Local progress in selected control; bucket skeleton if no matching cache; retain scroll only for the committed view. | Ignore stale completions; prefetch only the directly likely category drill-down if instrumentation later proves useful. |
-| Settlement cached view | Immediate matching SQLite settlement; `Updating…` for remote refresh. | Keep current-key content. Never show another Journey's cached settlement. |
-| Settlement remote preview | Transfer-row skeleton/local progress for the observed ~669 ms request; actions disabled only where their result depends on preview. | Use existing preview endpoint/coordinator; no speculative cache layer. |
-| Long Expense/Review lists | `FlatList`/existing native virtualized list, stable keys, repository pagination, empty/footer components. | Do not request/render the whole history. Dashboard stays at 12; results page paginates. |
-| Push → back | Preserve query, applied filters, scope/dimension, and list scroll. | Keep screen in navigation stack; no global store needed. |
+| Situation                 | Presentation                                                                                                                         | Data behavior                                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| First local render        | Screen-shaped skeleton only for sections with no matching cached result. Navigation and context remain usable.                       | Read SQLite first. Do not wait for network authentication/refresh.                                                      |
+| Warm tab return           | Restore matching cached projection and scroll immediately; small refresh indicator only if updating.                                 | Avoid redundant metadata/options reads; refresh through existing coordinator.                                           |
+| Journey switch            | New Journey header plus matching skeleton, or keep prior committed context until cache is ready. Never cross-pair context and money. | Cancel/ignore stale work; local repository projection first, network second.                                            |
+| Search typing             | Immediate text; results update after 200 ms debounce.                                                                                | Query rows/summary only; ignore older completions. No FTS until measured substring search fails its target.             |
+| Filter application        | Draft in sheet; one atomic apply. Active count and removable chips remain visible on result screen.                                  | One keyed query after Apply; retain options for Journey.                                                                |
+| Analysis scope/dimension  | Local progress in selected control; bucket skeleton if no matching cache; retain scroll only for the committed view.                 | Ignore stale completions; prefetch only the directly likely category drill-down if instrumentation later proves useful. |
+| Settlement cached view    | Immediate matching SQLite settlement; `Updating…` for remote refresh.                                                                | Keep current-key content. Never show another Journey's cached settlement.                                               |
+| Settlement remote preview | Transfer-row skeleton/local progress for the observed ~669 ms request; actions disabled only where their result depends on preview.  | Use existing preview endpoint/coordinator; no speculative cache layer.                                                  |
+| Long Expense/Review lists | `FlatList`/existing native virtualized list, stable keys, repository pagination, empty/footer components.                            | Do not request/render the whole history. Dashboard stays at 12; results page paginates.                                 |
+| Push → back               | Preserve query, applied filters, scope/dimension, and list scroll.                                                                   | Keep screen in navigation stack; no global store needed.                                                                |
 
 Prefetch is not part of the first implementation slice. Add only a narrow prefetch for a demonstrated high-frequency next screen, such as the current Journey's filter options, after measuring navigation latency. Never prefetch remote Settlement previews because they have meaning, freshness, and potential authorization implications.
 
@@ -289,14 +289,14 @@ Quick entry uses current Journey/Ledger defaults and existing domain validation.
 
 Current implementation gaps to account for in P4:
 
-| Area | Current behavior | P4 constraint |
-|---|---|---|
-| Entry | `+ Expense` opens the form directly | Add the intent choice before either path; no financial record is created by choosing a path. |
-| Participants | A new Expense selects all active Journey members | Change UI draft initialization to current member only; do not alter stored split semantics. |
-| Split default | New draft hard-codes equal per person; no implemented Ledger Settings source was found | Use an existing approved settings source if one exists by implementation time; otherwise stop for the narrow product/config decision rather than invent persistence. |
-| Currency default | New draft currently uses Journey settlement currency; supported ISO metadata supplies code/scale validation | Keep Journey currency as the safe fallback. Use recent currency only if an approved existing preference/precedence source exists; do not infer one heuristically. |
-| Date | New draft starts from the current instant and validates an ISO date-time | Present Today as calendar-date input while preserving a contract-compatible stored value without claiming fabricated time precision in UI. |
-| Settlement participation | Domain/form default is already `INCLUDED` | Preserve it. Conditional control visibility changes comprehension only. |
+| Area                     | Current behavior                                                                                            | P4 constraint                                                                                                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entry                    | `+ Expense` opens the form directly                                                                         | Add the intent choice before either path; no financial record is created by choosing a path.                                                                         |
+| Participants             | A new Expense selects all active Journey members                                                            | Change UI draft initialization to current member only; do not alter stored split semantics.                                                                          |
+| Split default            | New draft hard-codes equal per person; no implemented Ledger Settings source was found                      | Use an existing approved settings source if one exists by implementation time; otherwise stop for the narrow product/config decision rather than invent persistence. |
+| Currency default         | New draft currently uses Journey settlement currency; supported ISO metadata supplies code/scale validation | Keep Journey currency as the safe fallback. Use recent currency only if an approved existing preference/precedence source exists; do not infer one heuristically.    |
+| Date                     | New draft starts from the current instant and validates an ISO date-time                                    | Present Today as calendar-date input while preserving a contract-compatible stored value without claiming fabricated time precision in UI.                           |
+| Settlement participation | Domain/form default is already `INCLUDED`                                                                   | Preserve it. Conditional control visibility changes comprehension only.                                                                                              |
 
 ### 6.9 Participant and split editor
 
@@ -425,43 +425,43 @@ Therefore P4 may expose `Equal per household` only for valid Household data alre
 
 ## 7. Native interaction decisions
 
-| Interaction | Recommended semantic pattern | OTR-specific element | Why |
-|---|---|---|---|
-| Journey switcher | Searchable sheet + native list/checkmark | Journey row with dates and lifecycle | Scales beyond an Action Sheet and disambiguates same-title/test Journeys. |
-| Global Ledger menu | System Menu; sheet/list only if badges/descriptions outgrow it | Review badge and conditional Diagnostics entry | Fast access without a custom drawer or dashboard clutter. |
-| Search | Dedicated pushed screen with native search-field behavior | Repository-backed Expense result row | Search belongs to the list task and preserves back-stack state. |
-| Filter | Toolbar button + grouped sheet/Form + Apply | Active count and removable filter chips | Separates draft from applied state and makes filtering unmistakable. |
-| Mine/Group | Small system segmented control | Scope phrase in summary | Binary, frequent, one-tap comparison; subordinate styling preserves hierarchy. |
-| `+ Expense` intent | Compact system action sheet/menu | `Add manually` / `Scan receipt` | Makes capture-first a peer entry path without building a custom launcher. |
-| Expense create/edit | Native modal/Form, Cancel/Save in navigation | Split summary and offline save message | Matches iOS editing semantics and keeps the 80% path short. |
-| Participants/split | Sheet/push, checkbox rows, picker/Menu for split mode | Allocated/remaining money summary | Preserves exact financial confirmation without expanding all advanced controls. |
-| Date/currency/category | DatePicker, searchable selection sheet, Menu/Picker | Existing supported values/defaults | Reduces invalid free text and respects locale. |
-| Scan receipt | System camera/photo/file source → reviewable draft | Existing Stage 5 OCR suggestion card | Separates evidence capture from explicit financial confirmation. |
-| Settlement transfer | Overview list → focused push | OTR transfer status timeline | Makes payer/receiver/amount primary while retaining full lifecycle evidence. |
-| Payment | Focused sheet with one actor-valid action | Offline queued-state copy | Prevents ambiguous competing actions and false confirmation. |
-| Review | Virtualized task list → detail → Expense | Human finding explanation/actions | Turns diagnostics into a resolvable workflow and fixes nested accessibility. |
-| Settings | Grouped native Form | Ledger/Journey configuration sections | Keeps configuration separate from daily money tasks. |
+| Interaction            | Recommended semantic pattern                                   | OTR-specific element                           | Why                                                                             |
+| ---------------------- | -------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------- |
+| Journey switcher       | Searchable sheet + native list/checkmark                       | Journey row with dates and lifecycle           | Scales beyond an Action Sheet and disambiguates same-title/test Journeys.       |
+| Global Ledger menu     | System Menu; sheet/list only if badges/descriptions outgrow it | Review badge and conditional Diagnostics entry | Fast access without a custom drawer or dashboard clutter.                       |
+| Search                 | Dedicated pushed screen with native search-field behavior      | Repository-backed Expense result row           | Search belongs to the list task and preserves back-stack state.                 |
+| Filter                 | Toolbar button + grouped sheet/Form + Apply                    | Active count and removable filter chips        | Separates draft from applied state and makes filtering unmistakable.            |
+| Mine/Group             | Small system segmented control                                 | Scope phrase in summary                        | Binary, frequent, one-tap comparison; subordinate styling preserves hierarchy.  |
+| `+ Expense` intent     | Compact system action sheet/menu                               | `Add manually` / `Scan receipt`                | Makes capture-first a peer entry path without building a custom launcher.       |
+| Expense create/edit    | Native modal/Form, Cancel/Save in navigation                   | Split summary and offline save message         | Matches iOS editing semantics and keeps the 80% path short.                     |
+| Participants/split     | Sheet/push, checkbox rows, picker/Menu for split mode          | Allocated/remaining money summary              | Preserves exact financial confirmation without expanding all advanced controls. |
+| Date/currency/category | DatePicker, searchable selection sheet, Menu/Picker            | Existing supported values/defaults             | Reduces invalid free text and respects locale.                                  |
+| Scan receipt           | System camera/photo/file source → reviewable draft             | Existing Stage 5 OCR suggestion card           | Separates evidence capture from explicit financial confirmation.                |
+| Settlement transfer    | Overview list → focused push                                   | OTR transfer status timeline                   | Makes payer/receiver/amount primary while retaining full lifecycle evidence.    |
+| Payment                | Focused sheet with one actor-valid action                      | Offline queued-state copy                      | Prevents ambiguous competing actions and false confirmation.                    |
+| Review                 | Virtualized task list → detail → Expense                       | Human finding explanation/actions              | Turns diagnostics into a resolvable workflow and fixes nested accessibility.    |
+| Settings               | Grouped native Form                                            | Ledger/Journey configuration sections          | Keeps configuration separate from daily money tasks.                            |
 
 ## 8. Product language policy
 
 English meanings are defined first. Localized strings are not finalized in this plan.
 
-| Raw/domain term | Normal user language | Advanced explanation | Debug-only raw |
-|---|---|---|---|
-| `ACCEPTED` | Silent; show the Expense normally | `Included in Ledger totals` only when explaining eligibility | `ACCEPTED` |
-| `SYNCED` | Silent | `Saved to the group` if the user asks about availability | `SYNCED`, cursor/queue state |
-| `RATE_REQUIRED` | `Needs exchange rate` | `Add or confirm a rate before this Expense can be included in converted totals` | `RATE_REQUIRED` |
-| `MANUAL_AGREED` | `Agreed exchange rate` | `A traveller or organizer confirmed this rate` | `MANUAL_AGREED`, raw provenance |
-| `REFERENCE_RATE` | `Reference exchange rate` | `An informational rate was used according to the Journey's valuation settings` | `REFERENCE_RATE`, provider payload |
-| canonical | Avoid; state the concrete result | `The latest group-confirmed server record used for settlement` | `canonical` |
-| authoritative | Avoid as a badge; say `Included in this total` or the actual exception | Explain whether split, rate, conflict, and settlement criteria are satisfied | `isAuthoritative` |
-| revision | `Updated` or a human Activity event | `Version used to preserve edit history` | revision number |
-| conflict | `Conflict—review required` | `Two edits cannot be safely combined; choose the correct version` | conflict enum/payload |
-| settlement participation | `Included in settlement` / `Not included in settlement` | `Controls whether this Expense changes who owes whom; it does not delete the Expense` | participation enum |
-| adjustment | `Settlement update` | `A traceable change after final settlement; original records remain intact` | `ADJUSTMENT`, lineage/root IDs |
-| awaiting confirmation | `Waiting for [receiver] to confirm` | `The payer marked it paid; the receiver has not confirmed receipt` | raw lifecycle state |
-| discharge | `Payment credited` or `Amount settled` | `The amount that reduces the outstanding transfer after valid confirmation` | discharge records/IDs |
-| pre-settlement position | `Before settling, you paid [more/less] than your share` | `Payments made minus allocated shares before transfers are applied` | raw balance/position fields |
+| Raw/domain term          | Normal user language                                                   | Advanced explanation                                                                  | Debug-only raw                     |
+| ------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------- |
+| `ACCEPTED`               | Silent; show the Expense normally                                      | `Included in Ledger totals` only when explaining eligibility                          | `ACCEPTED`                         |
+| `SYNCED`                 | Silent                                                                 | `Saved to the group` if the user asks about availability                              | `SYNCED`, cursor/queue state       |
+| `RATE_REQUIRED`          | `Needs exchange rate`                                                  | `Add or confirm a rate before this Expense can be included in converted totals`       | `RATE_REQUIRED`                    |
+| `MANUAL_AGREED`          | `Agreed exchange rate`                                                 | `A traveller or organizer confirmed this rate`                                        | `MANUAL_AGREED`, raw provenance    |
+| `REFERENCE_RATE`         | `Reference exchange rate`                                              | `An informational rate was used according to the Journey's valuation settings`        | `REFERENCE_RATE`, provider payload |
+| canonical                | Avoid; state the concrete result                                       | `The latest group-confirmed server record used for settlement`                        | `canonical`                        |
+| authoritative            | Avoid as a badge; say `Included in this total` or the actual exception | Explain whether split, rate, conflict, and settlement criteria are satisfied          | `isAuthoritative`                  |
+| revision                 | `Updated` or a human Activity event                                    | `Version used to preserve edit history`                                               | revision number                    |
+| conflict                 | `Conflict—review required`                                             | `Two edits cannot be safely combined; choose the correct version`                     | conflict enum/payload              |
+| settlement participation | `Included in settlement` / `Not included in settlement`                | `Controls whether this Expense changes who owes whom; it does not delete the Expense` | participation enum                 |
+| adjustment               | `Settlement update`                                                    | `A traceable change after final settlement; original records remain intact`           | `ADJUSTMENT`, lineage/root IDs     |
+| awaiting confirmation    | `Waiting for [receiver] to confirm`                                    | `The payer marked it paid; the receiver has not confirmed receipt`                    | raw lifecycle state                |
+| discharge                | `Payment credited` or `Amount settled`                                 | `The amount that reduces the outstanding transfer after valid confirmation`           | discharge records/IDs              |
+| pre-settlement position  | `Before settling, you paid [more/less] than your share`                | `Payments made minus allocated shares before transfers are applied`                   | raw balance/position fields        |
 
 Additional terminology rules:
 
@@ -474,19 +474,19 @@ Additional terminology rules:
 
 Store and query dates exactly as current domain contracts require; this section changes display only. Use locale-aware formatters and source precision. Never show raw ISO in ordinary UI and never invent a time for date-only input.
 
-| Source/use | Rule | Example output in an English locale |
-|---|---|---|
-| Expense today | Relative day; include time only if source has meaningful time and the screen benefits from it | `Today` or `Today, 14:32` |
-| Expense yesterday | Relative day; same precision rule | `Yesterday` or `Yesterday, 19:05` |
-| Normal trip Expense, same year | Localized short date, no fabricated time | `25 Jul` |
-| Expense in another year | Include year | `25 Jul 2025` |
-| True date-time Expense | Convert instant to the chosen display timezone and show time where task-relevant | `25 Jul, 14:32` |
-| Audit/activity instant | Relative when recent plus exact accessible/secondary value; otherwise date and time | `Today, 14:32` or `25 Jul 2026, 14:32` |
-| Imported SQL `DATE` precision | Treat as calendar date, not UTC midnight | `25 Jul 2026`, never `25 Jul 2026, 00:00` |
-| Single-date filter | Exact localized label | `25 Jul 2026` |
-| Same-month range | Compact localized range | `20–25 Jul 2026` |
-| Cross-month/year range | Show both unambiguously | `28 Dec 2025 – 3 Jan 2026` |
-| Preset filter | Human preset plus optional exact range in sheet | `This Trip`; sheet may show `12–28 Jul 2026` |
+| Source/use                     | Rule                                                                                          | Example output in an English locale          |
+| ------------------------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Expense today                  | Relative day; include time only if source has meaningful time and the screen benefits from it | `Today` or `Today, 14:32`                    |
+| Expense yesterday              | Relative day; same precision rule                                                             | `Yesterday` or `Yesterday, 19:05`            |
+| Normal trip Expense, same year | Localized short date, no fabricated time                                                      | `25 Jul`                                     |
+| Expense in another year        | Include year                                                                                  | `25 Jul 2025`                                |
+| True date-time Expense         | Convert instant to the chosen display timezone and show time where task-relevant              | `25 Jul, 14:32`                              |
+| Audit/activity instant         | Relative when recent plus exact accessible/secondary value; otherwise date and time           | `Today, 14:32` or `25 Jul 2026, 14:32`       |
+| Imported SQL `DATE` precision  | Treat as calendar date, not UTC midnight                                                      | `25 Jul 2026`, never `25 Jul 2026, 00:00`    |
+| Single-date filter             | Exact localized label                                                                         | `25 Jul 2026`                                |
+| Same-month range               | Compact localized range                                                                       | `20–25 Jul 2026`                             |
+| Cross-month/year range         | Show both unambiguously                                                                       | `28 Dec 2025 – 3 Jan 2026`                   |
+| Preset filter                  | Human preset plus optional exact range in sheet                                               | `This Trip`; sheet may show `12–28 Jul 2026` |
 
 Timezone decision for true instants remains the existing domain behavior unless separately approved. The UI must not reinterpret date-only values through device timezone conversion.
 
@@ -604,26 +604,26 @@ Tests: execute the P4 acceptance matrix below using UI Polish for eight-member/l
 
 #### P4 acceptance matrix
 
-| Case | Fixture/device | Acceptance result |
-|---|---|---|
-| Entry intent | UI Polish; Release Simulator and physical iPhone | `+ Expense` offers Add manually and Scan receipt; neither path creates an Expense before explicit Save/Confirm. |
-| Manual defaults | UI Polish, authenticated current member | New form starts with Today at date precision, current member as payer and sole participant, approved currency/default split source, and canonical settlement participation `INCLUDED`. |
-| Manual hierarchy | UI Polish; largest Dynamic Type | Core fields appear in the approved order; category, attachment, and Notes remain optional under More Details; full member/split controls are absent from quick entry. |
-| Currency | UI Polish multi-currency data | Searchable picker permits only existing supported ISO metadata; correct scale is used; Journey/recent default follows approved existing precedence. |
-| Date | Simulator across timezone/day boundary | New ordinary Expense displays and saves the selected calendar date without requiring or fabricating a user-visible time. |
-| Paid by/participants | UI Polish eight long multilingual names | Current member defaults for both; long names reflow/truncate accessibly; adding people occurs in the dedicated sheet and the quick form shows a compact summary. |
-| Settlement participation, one participant | Synthetic single-person Expense | Domain value remains `INCLUDED`; quick form does not force an irrelevant debt decision; Spending/analysis remain correct. |
-| Settlement participation, multiple participants | Synthetic two-plus-person Expense | Human choices explain debt impact; `Not included` retains Expense/consumption in Spending/analysis and creates no inter-member debt under existing semantics; changing value requires explicit confirmation. |
-| Split default and editor | UI Polish and synthetic split defaults | Ledger Settings default is applied without displaying all modes; summary allocations equal the Expense total; tapping opens the editor with existing modes. |
-| Equal household—different sizes | Synthetic: Household A has two selected members, Household B one | Households receive equal shares, then each Household share resolves to its selected members; exact stored member allocations sum to the Expense total. Example baseline remains 1,200 → 300/300/600. |
-| Equal household—partial participation | Synthetic: only a subset of members from one or more configured Households selected | Only selected participants consume each selected Household's share; unselected Household members receive no allocation; displayed and stored member totals remain exact. This matches the current domain allocator's selected-member input. |
-| Equal household—missing Household | Synthetic selected member without Household | Mode is unavailable with a human explanation; UI does not invent membership or silently fall back to another split method. |
-| Equal household—deterministic residual | Synthetic odd minor-unit totals, different Household sizes/order | Original and settlement allocations sum exactly; repeated runs with stable inputs produce the same residual recipients according to existing deterministic domain ordering. |
-| Scan receipt success | UI Polish receipt fixture; physical iPhone | Image is selected/captured first; OCR suggestions are visibly suggestions and editable; no payer/participant/split/rate/settlement fact changes until explicit confirmation. |
-| Scan receipt offline/failure | Offline synthetic receipt | Local asset/draft remains recoverable; OCR failure permits manual completion; Retry appears only for the failed lifecycle step; Expense financial save and asset/OCR status remain independent. |
-| Manual attachment without OCR | Manual Expense, image/file attached under More Details | Attachment queues only required upload/link work; no OCR operation is created or run, and no Expense field changes. |
-| Notes/category | Manual and OCR-prefilled drafts | Notes remain optional; approved category picker is used; no title-based automatic category inference is introduced. |
-| Dirty dismiss/local save | Offline Simulator and physical iPhone | Dismissal confirms only when dirty; local Save returns promptly, prevents duplicate submit, and communicates queued synchronization without blocking access. |
+| Case                                            | Fixture/device                                                                      | Acceptance result                                                                                                                                                                                                                           |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entry intent                                    | UI Polish; Release Simulator and physical iPhone                                    | `+ Expense` offers Add manually and Scan receipt; neither path creates an Expense before explicit Save/Confirm.                                                                                                                             |
+| Manual defaults                                 | UI Polish, authenticated current member                                             | New form starts with Today at date precision, current member as payer and sole participant, approved currency/default split source, and canonical settlement participation `INCLUDED`.                                                      |
+| Manual hierarchy                                | UI Polish; largest Dynamic Type                                                     | Core fields appear in the approved order; category, attachment, and Notes remain optional under More Details; full member/split controls are absent from quick entry.                                                                       |
+| Currency                                        | UI Polish multi-currency data                                                       | Searchable picker permits only existing supported ISO metadata; correct scale is used; Journey/recent default follows approved existing precedence.                                                                                         |
+| Date                                            | Simulator across timezone/day boundary                                              | New ordinary Expense displays and saves the selected calendar date without requiring or fabricating a user-visible time.                                                                                                                    |
+| Paid by/participants                            | UI Polish eight long multilingual names                                             | Current member defaults for both; long names reflow/truncate accessibly; adding people occurs in the dedicated sheet and the quick form shows a compact summary.                                                                            |
+| Settlement participation, one participant       | Synthetic single-person Expense                                                     | Domain value remains `INCLUDED`; quick form does not force an irrelevant debt decision; Spending/analysis remain correct.                                                                                                                   |
+| Settlement participation, multiple participants | Synthetic two-plus-person Expense                                                   | Human choices explain debt impact; `Not included` retains Expense/consumption in Spending/analysis and creates no inter-member debt under existing semantics; changing value requires explicit confirmation.                                |
+| Split default and editor                        | UI Polish and synthetic split defaults                                              | Ledger Settings default is applied without displaying all modes; summary allocations equal the Expense total; tapping opens the editor with existing modes.                                                                                 |
+| Equal household—different sizes                 | Synthetic: Household A has two selected members, Household B one                    | Households receive equal shares, then each Household share resolves to its selected members; exact stored member allocations sum to the Expense total. Example baseline remains 1,200 → 300/300/600.                                        |
+| Equal household—partial participation           | Synthetic: only a subset of members from one or more configured Households selected | Only selected participants consume each selected Household's share; unselected Household members receive no allocation; displayed and stored member totals remain exact. This matches the current domain allocator's selected-member input. |
+| Equal household—missing Household               | Synthetic selected member without Household                                         | Mode is unavailable with a human explanation; UI does not invent membership or silently fall back to another split method.                                                                                                                  |
+| Equal household—deterministic residual          | Synthetic odd minor-unit totals, different Household sizes/order                    | Original and settlement allocations sum exactly; repeated runs with stable inputs produce the same residual recipients according to existing deterministic domain ordering.                                                                 |
+| Scan receipt success                            | UI Polish receipt fixture; physical iPhone                                          | Image is selected/captured first; OCR suggestions are visibly suggestions and editable; no payer/participant/split/rate/settlement fact changes until explicit confirmation.                                                                |
+| Scan receipt offline/failure                    | Offline synthetic receipt                                                           | Local asset/draft remains recoverable; OCR failure permits manual completion; Retry appears only for the failed lifecycle step; Expense financial save and asset/OCR status remain independent.                                             |
+| Manual attachment without OCR                   | Manual Expense, image/file attached under More Details                              | Attachment queues only required upload/link work; no OCR operation is created or run, and no Expense field changes.                                                                                                                         |
+| Notes/category                                  | Manual and OCR-prefilled drafts                                                     | Notes remain optional; approved category picker is used; no title-based automatic category inference is introduced.                                                                                                                         |
+| Dirty dismiss/local save                        | Offline Simulator and physical iPhone                                               | Dismissal confirms only when dirty; local Save returns promptly, prevents duplicate submit, and communicates queued synchronization without blocking access.                                                                                |
 
 ### P5 — Settlement and Review
 
@@ -656,14 +656,14 @@ Tests: UI Polish multilingual and largest accessibility sizes; Replay read-only 
 
 ## 12. Finding coverage
 
-| Audit findings | Planned slice |
-|---|---|
-| LUX-02, LUX-07, LUX-08, LUX-15, LUX-25 plus cross-screen stale projection | P1 |
-| LUX-01, LUX-03, LUX-04, LUX-05, LUX-27 | P2 |
-| LUX-06, LUX-09, LUX-10, LUX-24 | P3 |
-| LUX-11, LUX-12, LUX-13, LUX-14, LUX-16, LUX-17, LUX-18 | P4 |
-| LUX-19, LUX-20, LUX-21, LUX-22, LUX-23 | P5 |
-| LUX-26 and final cross-screen debug/accessibility consistency | P6 |
+| Audit findings                                                            | Planned slice |
+| ------------------------------------------------------------------------- | ------------- |
+| LUX-02, LUX-07, LUX-08, LUX-15, LUX-25 plus cross-screen stale projection | P1            |
+| LUX-01, LUX-03, LUX-04, LUX-05, LUX-27                                    | P2            |
+| LUX-06, LUX-09, LUX-10, LUX-24                                            | P3            |
+| LUX-11, LUX-12, LUX-13, LUX-14, LUX-16, LUX-17, LUX-18                    | P4            |
+| LUX-19, LUX-20, LUX-21, LUX-22, LUX-23                                    | P5            |
+| LUX-26 and final cross-screen debug/accessibility consistency             | P6            |
 
 All 27 audit findings are assigned. P1 deliberately pulls the state-trust parts of LUX-25 forward; P6 performs the final cross-screen verification rather than postponing critical accessibility fixes already touched in P4/P5.
 

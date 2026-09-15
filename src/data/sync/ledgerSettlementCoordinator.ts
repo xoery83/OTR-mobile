@@ -1,5 +1,6 @@
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import { createLocalId } from "@/domain/localId";
+import { assertReplayFixtureWritable } from "@/data/repositories/replayFixtureGuard";
 
 import { createLedgerSettlementTransport } from "./ledgerSettlementTransport";
 
@@ -17,6 +18,7 @@ export async function finalizeSettlement(
   inputDigest: string,
   idempotencyKey = createLocalId("settlement-finalize"),
 ) {
+  assertReplayFixtureWritable(journeyId);
   const repository = await getDefaultLedgerSettlementRepository();
   if (await repository.hasPendingFinancialOperations(journeyId)) {
     throw new Error("Sync pending Ledger changes before finalizing settlement.");
@@ -53,6 +55,7 @@ export async function queueSettlementAdjustment(
   reason: string,
   allowZeroTransfer: boolean,
 ) {
+  assertReplayFixtureWritable(journeyId);
   const repository = await getDefaultLedgerSettlementRepository();
   if (await repository.hasPendingFinancialOperations(journeyId)) {
     throw new Error("Sync pending Ledger changes before finalizing Adjustment.");

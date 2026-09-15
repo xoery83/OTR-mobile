@@ -7,7 +7,9 @@ Stage 7.2A gate approved after automated, Hosted Dev, and two-client Simulator a
 Stage 7.2B gate approved after automated, Hosted Dev, and two-client Simulator acceptance;
 Stage 7.3 and Stage 7 physically validated and complete on 2026-09-13;
 Stage 8 physically validated and complete on 2026-09-13;
-Stage 9 Hosted Dev replay and Mobile acceptance complete on 2026-09-14
+Stage 9 Hosted Dev replay and Mobile acceptance complete on 2026-09-14;
+Stage 10 matrix and Prototype Exit gate completed on 2026-09-14; final DoD PASS
+(see `LEDGER_2_0_STAGE_10_ACCEPTANCE.md`)
 
 ## Objective
 
@@ -452,8 +454,8 @@ financial-lineage verification. All exit-gate checks passed.
 Status: Complete in Hosted Dev. Private recovery rehearsal, v3 transactional
 load, independent read-back, idempotent replay, and two-client Release
 bootstrap/pull plus offline cold-start acceptance passed. Private artifacts are
-retained until the approved rollback window expires; Stage 10 remains blocked
-on separate approval.
+retained until the approved rollback window expires; Stage 10 subsequently
+completed without modifying the replay.
 
 This happens after the destination schema and read path are stable and before
 formal functional acceptance. Automated tests continue throughout earlier

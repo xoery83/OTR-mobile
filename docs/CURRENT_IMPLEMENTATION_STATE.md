@@ -4,14 +4,70 @@ Date: 2026-09-15
 
 ## Current Milestone
 
-Ledger UI/UX Polish P1-P6 is complete and fully accepted. Automated checks, final
-Release Simulator acceptance, signed physical-iPhone interaction / Accessibility XXXL,
-and direct unmirrored physical-device VoiceOver checks pass with no blocking issue.
-The final Release is installed on both booted target simulators and the physical iPhone
-16 Pro. Ledger 2.0 Stage 9 remains complete in Hosted Dev. Production remains
-disconnected and unchanged, and Production work has not started.
+Ledger UI/UX Polish P1-P6, Europe Replay recovery/protection, and the approved
+Europe 2026 UI Polish Settlement fixture are complete. Their previously divergent
+working states have been recovered into `integration/ledger-polish-canonical`, with
+P6 as the UI baseline and the later Replay/fixture safeguards preserved. Canonical
+integration validation is complete; no canonical Release has been installed.
+Production remains disconnected and unchanged, and Round 2 Polish has not started.
 
 Current Mobile SQLite schema version: 17.
+
+## Canonical Workspace Recovery Validation
+
+- The two divergent source workspaces are preserved by verified filesystem snapshots
+  and recovery commits. The canonical integration is isolated at
+  `/Users/xoery/Project/otr-mobile-canonical` on
+  `integration/ledger-polish-canonical`.
+- TypeScript, ESLint, all 64 test files / 215 tests, and the focused 23-file / 62-test
+  recovery suite pass. The repository-wide Prettier check reports only the two
+  pre-existing unrelated files `AGENTS.md` and
+  `src/hooks/useStage4BPhysicalSmoke.ts`.
+- Prototype-disabled Expo export and a non-signing Release Simulator build pass. The
+  export bundle SHA-256 is
+  `f3182a31a07c6cc8dd1bc5858b785c0c441db7fa7321549b9efc6b05644b619b`; the native
+  Release `main.jsbundle` SHA-256 is
+  `e836bc0ad4a69077c8be736195c05c342822e676198d7b6d7944135caced566a`.
+- Both bundles exclude `ledger-prototype`, `LedgerPrototypeProvider`,
+  `QuickExpenseScreen`, `Search & Filter`, and `RECENT EXPENSES`. The native Release
+  bundle contains the P4 `Add manually` / `Scan receipt` entry and P2
+  `Recent Expenses` presentation.
+- No app was installed, no Hosted Dev command was run, and Production was not accessed
+  during recovery. Stop before installation or Round 2 Polish.
+
+## Europe Replay Recovery And Protection
+
+- The retired Replay Journey is
+  `ae2fb30d-6e31-8ff9-8b14-f8a1b275cf65`; its terminal documented fingerprint is
+  `d69866ea72293f80d9201cd7020f3ae58e8ca0651db64f2daa41e81d9f8d797d`.
+- The active immutable Replay Journey is
+  `ec3ae448-3fa5-84a9-a986-655a243cf3ad`, with approved fingerprint
+  `97fa314b965dd6af0f1337147301bdfb345e8a0060e1de0c56c6b421dcd83ce2`.
+- The active fixture remains 126 ACCEPTED Expenses, 68 INCLUDED, 58 EXCLUDED,
+  531 participants/splits, 126 rate/active valuations, and zero Settlement,
+  Payment, Adjustment, Receipt, Household, Review or Expense-audit lifecycle facts.
+- Exact-ID guards protect both Replay identities at Expense and Settlement
+  repositories, coordinators, and queued Expense/Payment workers. Read-only
+  reporting and preview remain available.
+- Recovery evidence is in
+  `docs/ledger/LEDGER_REPLAY_RECOVERY_ACCEPTANCE.md`.
+
+## Europe 2026 UI Polish Settlement Fixture
+
+- Journey `41076e49-0005-599f-af68-5062fd5695f8` was finalized through existing
+  Backend/domain commands at approved preview digest
+  `0fea678fa1dec0053de71b65b6449ff076204fd088aeab924f4013d9596e8aaa`.
+- Hosted Dev contains exactly one root Settlement, seven persisted transfers,
+  four Payments and two discharges. Transfer coverage is three OPEN, one SETTLED,
+  one PARTIALLY_PAID, one AWAITING_CONFIRMATION and one DISPUTED.
+- Fixture commands and idempotency keys are stable; the accepted rerun created no
+  duplicate lifecycle facts. The five pre-existing terminal FAILED local operations
+  were preserved and remain ineligible for automatic retry.
+- The canonical focused-transfer route retains the P5 `TransferDetailScreen`, validates
+  both persisted transfer and Journey UUIDs, checks Journey ownership, and renders a
+  focused not-found state instead of falling back to the Settlement overview.
+- Fixture evidence is in
+  `docs/ledger/LEDGER_SETTLEMENT_TEST_FIXTURE_ACCEPTANCE.md`.
 
 ## Ledger UI/UX Polish P6
 
@@ -334,6 +390,9 @@ or new architecture framework was added.
 - `docs/ledger/LEDGER_UI_UX_POLISH_P5_ACCEPTANCE.md`
 - `docs/ledger/LEDGER_UI_UX_POLISH_P4_ACCEPTANCE.md`
 - `docs/ledger/LEDGER_UI_UX_POLISH_P3_ACCEPTANCE.md`
+- `docs/ledger/LEDGER_REPLAY_RECOVERY_ACCEPTANCE.md`
+- `docs/ledger/LEDGER_SETTLEMENT_TEST_FIXTURE_ACCEPTANCE.md`
+- `docs/ledger/LEDGER_WORKSPACE_RECOVERY_INTEGRATION.md`
 - `docs/ledger/LEDGER_2_0_IMPLEMENTATION_PLAN.md`
 - `docs/ledger/LEDGER_2_0_API_CONTRACT.md`
 - `docs/adr/0016-ledger-stage-8-review-and-hardening.md`
@@ -343,10 +402,10 @@ or new architecture framework was added.
 
 ## Next Checkpoint
 
-Stop after the fully accepted Ledger UI/UX Polish P1-P6 milestone. Do not begin
-Production planning or deployment automatically. Stage 9 retention and rollback rules
-remain unchanged, and any additional Stage 10 or Production work requires separate
-explicit approval.
+Stop after canonical integration, static validation and commit. Do not install a
+Simulator or physical-device Release without separate explicit approval. Do not begin
+Round 2 Polish, Production planning or deployment. Stage 9 retention and rollback
+rules remain unchanged.
 
 ## Safety Notes
 

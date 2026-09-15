@@ -95,6 +95,23 @@ function repository(): LedgerExpenseRepository {
 }
 
 describe("Ledger Expense sync worker", () => {
+  it("does not replay stale queued mutations for an immutable Replay", async () => {
+    const repo = repository();
+    const createExpense = vi.fn();
+    await expect(
+      createLedgerExpenseSyncWorker(repo, {
+        createExpense,
+        updateExpense: vi.fn(),
+        deleteExpense: vi.fn(),
+        restoreExpense: vi.fn(),
+      }).push({
+        ...operation,
+        tripId: "ae2fb30d-6e31-8ff9-8b14-f8a1b275cf65",
+      }),
+    ).rejects.toThrow("immutable read-only fixture");
+    expect(createExpense).not.toHaveBeenCalled();
+  });
+
   it("pushes create with the durable idempotency key and reconciles canonical id", async () => {
     const repo = repository();
     const transport = {

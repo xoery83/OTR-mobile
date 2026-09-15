@@ -20,6 +20,8 @@ import type {
 } from "@/domain/ledger/types";
 import type { SyncStatus } from "@/domain/sync/syncStatus";
 
+import { assertReplayFixtureWritable } from "./replayFixtureGuard";
+
 export type LedgerExpenseDatabase = Pick<
   SQLite.SQLiteDatabase,
   "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
@@ -179,6 +181,7 @@ export function createLedgerExpenseRepository(
 ): LedgerExpenseRepository {
   return {
     async createExpense(command) {
+      assertReplayFixtureWritable(command.journeyId);
       const now = new Date().toISOString();
       const expense = buildLocalExpense(command, createLocalId("ledger-expense"), 1, now);
       assertCommand(expense);
@@ -191,6 +194,7 @@ export function createLedgerExpenseRepository(
 
     async updateExpense(id, command, reason) {
       const current = await requireExpense(database, id);
+      assertReplayFixtureWritable(current.journeyId);
       if (current.status === "DELETED") {
         throw new Error("A deleted expense must be restored before it can be edited.");
       }
@@ -269,6 +273,7 @@ export function createLedgerExpenseRepository(
 
     async tombstoneExpense(id, reason) {
       const current = await requireExpense(database, id);
+      assertReplayFixtureWritable(current.journeyId);
       if (current.status === "DELETED") return;
       const now = new Date().toISOString();
       const nextRevision = current.revision + 1;
@@ -299,6 +304,7 @@ export function createLedgerExpenseRepository(
 
     async restoreExpense(id, status, reason) {
       const current = await requireExpense(database, id);
+      assertReplayFixtureWritable(current.journeyId);
       if (current.status !== "DELETED") return;
       const now = new Date().toISOString();
       const nextRevision = current.revision + 1;
@@ -441,6 +447,7 @@ export function createLedgerExpenseRepository(
 
     async addPaymentRecord(expenseId, input) {
       const expense = await requireExpense(database, expenseId);
+      assertReplayFixtureWritable(expense.journeyId);
       if (!input.authorization && !input.posted) {
         throw new Error("Payment evidence needs an authorization or posted cost.");
       }
@@ -534,6 +541,7 @@ export function createLedgerExpenseRepository(
 
     async applyValuation(expenseId, input) {
       const current = await requireExpense(database, expenseId);
+      assertReplayFixtureWritable(current.journeyId);
       if (current.status === "DELETED")
         throw new Error("Deleted expenses cannot be valued.");
       const journey = await database.getFirstAsync<{

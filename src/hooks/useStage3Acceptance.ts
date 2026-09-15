@@ -41,8 +41,14 @@ async function runAcceptance(mode: string) {
   }
 
   try {
-    const email = process.env.EXPO_PUBLIC_OTR_STAGE3_ACCEPTANCE_EMAIL ?? "";
-    const password = process.env.EXPO_PUBLIC_OTR_STAGE3_ACCEPTANCE_PASSWORD ?? "";
+    const email =
+      process.env.EXPO_PUBLIC_OTR_STAGE3_ACCEPTANCE_EMAIL ??
+      process.env.EXPO_PUBLIC_OTR_STAGE4B_ORGANIZER_EMAIL ??
+      "";
+    const password =
+      process.env.EXPO_PUBLIC_OTR_STAGE3_ACCEPTANCE_PASSWORD ??
+      process.env.EXPO_PUBLIC_OTR_STAGE4B_ORGANIZER_PASSWORD ??
+      "";
     const readRepository = await getDefaultLedgerReadRepository();
     const transport = createLedgerReadTransport();
 
@@ -90,7 +96,7 @@ async function runAcceptance(mode: string) {
 
       const myLedger = await transport.myLedger("ALL", { from: null, to: null });
       await readRepository.cacheMyLedger(myLedger);
-      const summaries = await readRepository.listMyLedgerSummaries();
+      const summaries = await readRepository.listMyLedgerSummaries("ALL");
       record("My Ledger cache", summaries.length > 0, `${summaries.length} summaries`);
     }
 
@@ -133,7 +139,7 @@ async function inspectSqlite(
   const schemaVersion = await getSchemaVersion(database as unknown as MigrationDatabase);
   const readRepository = await getDefaultLedgerReadRepository();
   const cursor = await readRepository.getCursor(journeyId);
-  const summaries = await readRepository.listMyLedgerSummaries();
+  const summaries = await readRepository.listMyLedgerSummaries("ALL");
   record(
     "SQLite integrity/schema/cursor/cache state",
     integrity?.integrity_check === "ok" &&

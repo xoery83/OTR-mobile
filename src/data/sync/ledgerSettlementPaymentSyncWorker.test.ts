@@ -25,6 +25,20 @@ const operation = {
 };
 
 describe("Settlement Payment sync worker", () => {
+  it("does not replay stale queued Payment mutations for an immutable Replay", async () => {
+    const recordPayment = vi.fn();
+    await expect(
+      createLedgerSettlementPaymentSyncWorker(
+        { applyPaymentMutation: vi.fn() } as never,
+        { recordPayment } as never,
+      ).push({
+        ...operation,
+        tripId: "ec3ae448-3fa5-84a9-a986-655a243cf3ad",
+      }),
+    ).rejects.toThrow("immutable read-only fixture");
+    expect(recordPayment).not.toHaveBeenCalled();
+  });
+
   it("reuses the durable operation identity and reconciles the canonical aggregate", async () => {
     const applyPaymentMutation = vi.fn();
     const recordPayment = vi.fn(async () => ({ entity: { id: "settlement" } }));

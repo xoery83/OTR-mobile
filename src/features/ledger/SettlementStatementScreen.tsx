@@ -70,10 +70,7 @@ export function SettlementStatementScreen() {
             Outstanding
           </Text>
           {(finalized.outstandingBalances ?? []).map((balance) => (
-            <View
-              key={balance.memberId}
-              style={[styles.row, largeText && styles.stack]}
-            >
+            <View key={balance.memberId} style={[styles.row, largeText && styles.stack]}>
               <Text style={[styles.rowTitle, styles.grow]}>
                 {balance.displayNameSnapshot}
               </Text>

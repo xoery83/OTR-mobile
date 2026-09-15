@@ -63,4 +63,20 @@ describe("foundation architecture boundaries", () => {
       expect(readFileSync(file, "utf8"), file).not.toContain("ledger-prototype");
     }
   });
+
+  it("routes validated persisted ids into the focused Transfer detail", () => {
+    const route = readFileSync(
+      join(projectRoot, "app/(tabs)/expenses/transfer/[id].tsx"),
+      "utf8",
+    );
+    const detail = readFileSync(
+      join(projectRoot, "src/features/ledger/TransferDetailScreen.tsx"),
+      "utf8",
+    );
+
+    expect(route).toContain("focusedTransferParams(id, journeyId)");
+    expect(route).toContain("<TransferDetailScreen");
+    expect(detail).toContain("item.settlement.journeyId === journeyId");
+    expect(detail).not.toContain("SettlementReadinessScreen");
+  });
 });

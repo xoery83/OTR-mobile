@@ -933,7 +933,11 @@ function SheetHeader({ title, onDone }: { title: string; onDone: () => void }) {
   const largeText = useWindowDimensions().fontScale > 2;
   return (
     <View style={[styles.sheetHeader, largeText && styles.sheetHeaderLarge]}>
-      <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={styles.sheetTitle}>
+      <Text
+        accessibilityRole="header"
+        maxFontSizeMultiplier={2}
+        style={styles.sheetTitle}
+      >
         {title}
       </Text>
       <HeaderAction label="Done" onPress={onDone} />

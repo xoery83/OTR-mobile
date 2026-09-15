@@ -3570,48 +3570,51 @@ async function readMyLedger(
     };
   }
 
-  const summaries = [];
-  for (const member of members) {
-    const journeyId = String(member.trip_id);
-    const memberId = String(member.id);
-    const reporting = await readServerReporting(service, userId, journeyId);
-    const filters: ReportingFilters = {
-      ...(from ? { from } : {}),
-      ...(to ? { to } : {}),
-    };
-    const mine = summarizeReporting(reporting.records, "MINE", memberId, filters);
-    const settlementMine = summarizeReporting(
-      reporting.records.filter((record) => record.settlementParticipation === "INCLUDED"),
-      "MINE",
-      memberId,
-      filters,
-    );
-    const paidMinor = reporting.records
-      .filter(
-        (record) =>
-          matchesReportingFilters(record, filters) &&
-          record.businessStatus === "ACCEPTED" &&
-          record.settlementParticipation === "INCLUDED" &&
-          record.settlementMinor !== null &&
-          !record.hasOpenConflict &&
-          record.payerMemberId === memberId,
-      )
-      .reduce((sum, record) => sum + record.settlementMinor!, 0);
-    summaries.push({
-      journeyId,
-      title: reporting.bootstrap.journey.title,
-      startDate: reporting.bootstrap.journey.startDate,
-      endDate: reporting.bootstrap.journey.endDate,
-      currency: reporting.bootstrap.journey.settlementCurrency,
-      scale: reporting.bootstrap.journey.settlementScale,
-      mySpendMinor: mine.totalMinor,
-      paidMinor,
-      positionMinor: paidMinor - settlementMine.totalMinor,
-      unvaluedCount: mine.unresolvedRateCount,
-      conflictCount: mine.openConflictCount,
-      updatedAt: reporting.bootstrap.journey.updatedAt,
-    });
-  }
+  const summaries = await Promise.all(
+    members.map(async (member) => {
+      const journeyId = String(member.trip_id);
+      const memberId = String(member.id);
+      const reporting = await readServerReporting(service, userId, journeyId);
+      const filters: ReportingFilters = {
+        ...(from ? { from } : {}),
+        ...(to ? { to } : {}),
+      };
+      const mine = summarizeReporting(reporting.records, "MINE", memberId, filters);
+      const settlementMine = summarizeReporting(
+        reporting.records.filter(
+          (record) => record.settlementParticipation === "INCLUDED",
+        ),
+        "MINE",
+        memberId,
+        filters,
+      );
+      const paidMinor = reporting.records
+        .filter(
+          (record) =>
+            matchesReportingFilters(record, filters) &&
+            record.businessStatus === "ACCEPTED" &&
+            record.settlementParticipation === "INCLUDED" &&
+            record.settlementMinor !== null &&
+            !record.hasOpenConflict &&
+            record.payerMemberId === memberId,
+        )
+        .reduce((sum, record) => sum + record.settlementMinor!, 0);
+      return {
+        journeyId,
+        title: reporting.bootstrap.journey.title,
+        startDate: reporting.bootstrap.journey.startDate,
+        endDate: reporting.bootstrap.journey.endDate,
+        currency: reporting.bootstrap.journey.settlementCurrency,
+        scale: reporting.bootstrap.journey.settlementScale,
+        mySpendMinor: mine.totalMinor,
+        paidMinor,
+        positionMinor: paidMinor - settlementMine.totalMinor,
+        unvaluedCount: mine.unresolvedRateCount,
+        conflictCount: mine.openConflictCount,
+        updatedAt: reporting.bootstrap.journey.updatedAt,
+      };
+    }),
+  );
 
   return {
     period,

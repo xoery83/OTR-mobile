@@ -12,6 +12,8 @@ import {
 } from "@/domain/ledger/paymentLifecycle";
 import { createLocalId } from "@/domain/localId";
 
+import { assertReplayFixtureWritable } from "./replayFixtureGuard";
+
 export type LedgerSettlementDatabase = Pick<
   SQLite.SQLiteDatabase,
   "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
@@ -71,6 +73,7 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
       },
     ) {
       const context = await requireLocalTransferContext(database, transferId);
+      assertReplayFixtureWritable(context.journeyId);
       assertRepaymentProposition(proposition, context.transfer.amount);
       if (
         proposition.assertedDischarge.minor > context.transfer.availableToReport.minor
@@ -161,6 +164,7 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
       authority?: "PAYER" | "RECIPIENT" | "ORGANIZER_OVERRIDE",
     ) {
       const context = await requireLocalPaymentContext(database, paymentId);
+      assertReplayFixtureWritable(context.journeyId);
       if (context.payment.status !== "AWAITING_CONFIRMATION")
         throw new Error("Payment is no longer awaiting confirmation.");
       const normalizedReason = reason?.trim() || null;
@@ -197,6 +201,7 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
       reason: string,
     ) {
       const context = await requireLocalPaymentContext(database, paymentId);
+      assertReplayFixtureWritable(context.journeyId);
       const normalizedReason = reason.trim();
       if (context.actor.role !== "owner" || !normalizedReason)
         throw new Error("Organizer Payment correction requires a reason.");
@@ -298,6 +303,7 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
       rootSettlementId: string,
       input: SettlementAdjustmentFinalizeRequest,
     ) {
+      assertReplayFixtureWritable(journeyId);
       if (!(await this.isOrganizer(journeyId)))
         throw new Error("Organizer Adjustment access is required.");
       await enqueueSettlementOperation(

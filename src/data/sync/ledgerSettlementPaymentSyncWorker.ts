@@ -1,5 +1,6 @@
 import type { createLedgerSettlementRepository } from "@/data/repositories/ledgerSettlementRepository";
 import { ApiClientError } from "@/data/api/client";
+import { assertReplayFixtureWritable } from "@/data/repositories/replayFixtureGuard";
 
 import type { SyncOperation } from "./syncOperationRepository";
 import { SyncConflictError, type SyncWorker } from "./syncEngine";
@@ -14,6 +15,7 @@ export function createLedgerSettlementPaymentSyncWorker(
 ): SyncWorker {
   return {
     async push(operation: SyncOperation) {
+      if (operation.tripId) assertReplayFixtureWritable(operation.tripId);
       if (
         !["ledger_settlement_payment", "ledger_settlement_adjustment"].includes(
           operation.entityType,

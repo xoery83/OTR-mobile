@@ -271,9 +271,7 @@ export function LedgerExpenseDetailScreen() {
           <Pressable
             accessibilityHint="Opens a confirmation before changing who owes whom"
             accessibilityLabel={`Group settlement, ${
-              expense.settlementParticipation === "INCLUDED"
-                ? "included"
-                : "not included"
+              expense.settlementParticipation === "INCLUDED" ? "included" : "not included"
             }`}
             accessibilityRole="button"
             accessibilityState={{ disabled: savingParticipation }}

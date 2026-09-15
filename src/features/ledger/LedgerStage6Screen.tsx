@@ -466,9 +466,7 @@ export function LedgerStage6Screen() {
                     >
                       {index + 1}. {category.label}
                     </Text>
-                      <Text
-                        style={[styles.rowAmount, largeText && styles.largeRowAmount]}
-                      >
+                    <Text style={[styles.rowAmount, largeText && styles.largeRowAmount]}>
                       {formatLedgerMoney(
                         category.totalMinor,
                         journey.settlementCurrency,

@@ -9,8 +9,9 @@ import type {
   CreateLedgerPaymentRecordRequest,
 } from "@/data/api/ledgerMutationContracts";
 import type { createLedgerCollaborationRepository } from "@/data/repositories/ledgerCollaborationRepository";
+import { assertReplayFixtureWritable } from "@/data/repositories/replayFixtureGuard";
 
-import { SyncConflictError, type SyncWorker } from "./syncEngine";
+import { SyncConflictError, SyncDependencyError, type SyncWorker } from "./syncEngine";
 import type { SyncOperation } from "./syncOperationRepository";
 
 export type LedgerExpenseCreateTransport = {
@@ -116,6 +117,7 @@ export function createLedgerExpenseSyncWorker(
 ): SyncWorker {
   return {
     async push(operation: SyncOperation) {
+      if (operation.tripId) assertReplayFixtureWritable(operation.tripId);
       if (operation.entityType === "ledger_payment_record") {
         await pushPaymentRecordOperation(operation, repository, transport);
         return;
@@ -159,7 +161,9 @@ export function createLedgerExpenseSyncWorker(
           if (!transport.applyValuation)
             throw new Error("Valuation transport is missing.");
           if (!expense.serverId)
-            throw new Error("Ledger Expense create must sync before valuation.");
+            throw new SyncDependencyError(
+              "Ledger Expense create must sync before valuation.",
+            );
           const payload = JSON.parse(
             operation.payloadJson,
           ) as ApplyLedgerValuationRequest;
@@ -224,12 +228,14 @@ async function pushPaymentRecordOperation(
   };
   const expense = await repository.getExpense(payload.expenseId);
   if (!expense?.serverId)
-    throw new Error("Ledger Expense create must sync before payment evidence.");
+    throw new SyncDependencyError(
+      "Ledger Expense create must sync before payment evidence.",
+    );
   const supersedesPaymentRecordId = payload.supersedesPaymentRecordId
     ? await repository.getPaymentRecordServerId(payload.supersedesPaymentRecordId)
     : null;
   if (payload.supersedesPaymentRecordId && !supersedesPaymentRecordId)
-    throw new Error("Superseded payment evidence must sync first.");
+    throw new SyncDependencyError("Superseded payment evidence must sync first.");
   const {
     expenseId: _expenseId,
     id,

@@ -17,8 +17,22 @@ import {
   scanStage9Privacy,
   transformLegacyExtract,
 } from "./stage9Import";
+import { loadStage9Dataset } from "./stage9Loader";
 
 describe("Stage 9 synthetic transformation", () => {
+  test("loader rejects a Production target before any network access", async () => {
+    await expect(
+      loadStage9Dataset({
+        target: "hosted-dev",
+        url: "https://bobwhxjxqpehzecwmwqe.supabase.co",
+        secretKey: "synthetic",
+        actorUserId: "00000000-0000-4000-8000-000000000001",
+        dataset: {} as never,
+        manifest: {} as never,
+      }),
+    ).rejects.toThrow("STAGE9_TARGET_REJECTED");
+  });
+
   test("is deterministic, exact, classified, private, and repo-safe", () => {
     const first = transformLegacyExtract(syntheticLegacyExtract(), syntheticStage9Config);
     const second = transformLegacyExtract(

@@ -20,11 +20,11 @@ import {
 import { loadStage9Dataset } from "../../backend/src/stage9Loader";
 import { readCommittedStage9Raw } from "./transform-private";
 
-const expectedDatasetSha256 =
+export const expectedDatasetSha256 =
   "be1fce8c0a4a681e2f520484401317a9ba3611cab1d0636f1c07bee754268a49";
-const expectedRawSha256 =
+export const expectedRawSha256 =
   "7376dbac22830d05689c3ea1626395c03b4857ba2877d1360c600d5e7ef0f578";
-const expectedCounts = {
+export const expectedCounts = {
   members: 8,
   expenses: 126,
   participants: 531,
@@ -78,7 +78,7 @@ async function rows(
   return result.data as unknown as Row[];
 }
 
-const snapshotTables = [
+export const snapshotTables = [
   ["trips", "id"],
   ["journey_members", "trip_id"],
   ["ledger_settings", "journey_id"],
@@ -88,11 +88,10 @@ const snapshotTables = [
   ["exchange_rate_snapshots", "journey_id"],
   ["payment_records", "journey_id"],
   ["settlement_valuation_snapshots", "journey_id"],
+  ["receipt_assets", "journey_id"],
   ["expense_links", "journey_id"],
   ["expense_audit_events", "journey_id"],
   ["expense_correction_requests", "journey_id"],
-  ["households", "journey_id"],
-  ["household_members", "journey_id"],
   ["settlements", "journey_id"],
   ["settlement_inputs", "journey_id"],
   ["settlement_member_balances", "journey_id"],
@@ -104,14 +103,17 @@ const snapshotTables = [
   ["ledger_changes", "journey_id"],
 ] as const;
 
-async function targetSnapshot(client: SupabaseClient, journeyId: string) {
+export async function targetSnapshot(client: SupabaseClient, journeyId: string) {
   const snapshot: Record<string, unknown[]> = {};
   for (const [table, column] of snapshotTables)
     snapshot[table] = await rows(client, table, column, journeyId);
   return { snapshot, digest: stage9Sha256(snapshot) };
 }
 
-function verifyPayload(dataset: Stage9Dataset, manifest: Stage9PrivateApprovalManifest) {
+export function verifyPayload(
+  dataset: Stage9Dataset,
+  manifest: Stage9PrivateApprovalManifest,
+) {
   assert(stage9Sha256(dataset) === expectedDatasetSha256, "DATASET_DIGEST_REJECTED");
   assert(
     manifest.transformedDatasetSha256 === expectedDatasetSha256,
@@ -220,7 +222,11 @@ function verifyPayload(dataset: Stage9Dataset, manifest: Stage9PrivateApprovalMa
   );
 }
 
-async function verifyHostedRows(client: SupabaseClient, dataset: Stage9Dataset) {
+export async function verifyHostedRows(
+  client: SupabaseClient,
+  dataset: Stage9Dataset,
+  expectedPayloadSha256 = expectedDatasetSha256,
+) {
   const journeyId = dataset.journey.id;
   const [trips, members, settings, expenses, participants, splits, rates, valuations] =
     await Promise.all([
@@ -431,7 +437,7 @@ async function verifyHostedRows(client: SupabaseClient, dataset: Stage9Dataset) 
   assert(
     receipts[0].actor_user_id === dataset.journey.createdByUserId &&
       receipts[0].command_type === "STAGE9_IMPORT_V1" &&
-      receipts[0].payload_hash === expectedDatasetSha256 &&
+      receipts[0].payload_hash === expectedPayloadSha256 &&
       receipts[0].response_status === 201,
     "IMPORT_RECEIPT_REJECTED",
   );

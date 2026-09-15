@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createSyncEngine, nextSyncAttemptAt, SyncConflictError } from "./syncEngine";
+import {
+  createSyncEngine,
+  nextSyncAttemptAt,
+  SyncConflictError,
+  SyncDependencyError,
+} from "./syncEngine";
 import { ApiClientError } from "@/data/api/client";
 import type { SyncOperation } from "./syncOperationRepository";
 
@@ -59,6 +64,24 @@ describe("sync engine", () => {
       expect.objectContaining({ message: "offline" }),
       nextAttemptAt,
     );
+  });
+
+  it("retries local dependency ordering instead of terminally failing it", async () => {
+    const repository = {
+      listPending: vi.fn().mockResolvedValue([operation]),
+      markProcessing: vi.fn(),
+      markCompleted: vi.fn(),
+      markRetryable: vi.fn(),
+      markFailed: vi.fn(),
+    };
+    await createSyncEngine(
+      repository,
+      { push: vi.fn().mockRejectedValue(new SyncDependencyError("create first")) },
+      () => "2026-09-09T00:01:00.000Z",
+    ).run("AUTHENTICATED_ONLINE");
+
+    expect(repository.markRetryable).toHaveBeenCalledOnce();
+    expect(repository.markFailed).not.toHaveBeenCalled();
   });
 
   it("leaves operations for another entity untouched", async () => {

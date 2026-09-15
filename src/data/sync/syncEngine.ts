@@ -31,6 +31,7 @@ export type SyncRunResult = {
 };
 
 export class SyncConflictError extends Error {}
+export class SyncDependencyError extends Error {}
 
 export function nextSyncAttemptAt(
   attempt: number,
@@ -42,6 +43,7 @@ export function nextSyncAttemptAt(
 }
 
 export function syncFailureClass(error: Error) {
+  if (error instanceof SyncDependencyError) return "retryable" as const;
   if (!(error instanceof ApiClientError)) return "terminal" as const;
   if (error.status === 401) return "auth" as const;
   if (
