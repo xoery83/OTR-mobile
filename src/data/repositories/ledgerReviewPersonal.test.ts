@@ -83,6 +83,28 @@ describe("Review personal SQLite projection", () => {
     expect(await b.counts(journeyId)).toEqual({ pending: 1, reviewed: 0 });
   });
 
+  it("does not queue repeated taps on the same personal decision", async () => {
+    const { db, api } = database();
+    const a = createLedgerReviewRepository(api as never, async () => userA);
+    await a.apply(journeyId, [finding], []);
+    const first = await a.act(findingId, "ACKNOWLEDGED");
+    expect(await a.act(findingId, "ACKNOWLEDGED")).toBe(first);
+    expect(
+      db
+        .prepare(
+          "SELECT count(*) AS count FROM sync_operations WHERE entity_type='ledger_review'",
+        )
+        .get(),
+    ).toEqual({ count: 1 });
+    expect(
+      db
+        .prepare(
+          "SELECT revision FROM ledger_review_decisions WHERE user_id=? AND finding_id=?",
+        )
+        .get(userA, findingId),
+    ).toEqual({ revision: 1 });
+  });
+
   it("removes eligibility and excludes resolved history from active counts", async () => {
     const { api } = database();
     const a = createLedgerReviewRepository(api as never, async () => userA);

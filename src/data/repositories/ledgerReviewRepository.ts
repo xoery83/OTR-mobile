@@ -120,7 +120,21 @@ export function createLedgerReviewRepository(
       const now = new Date().toISOString();
       const trimmed = reason.trim();
       if (trimmed.length > 2000) throw new Error("Review reason is too long.");
+      let resultId = id;
       await database.withTransactionAsync(async () => {
+        const current = await database.getFirstAsync<{
+          decision: string;
+          lastActionId: string;
+        }>(
+          `SELECT decision, last_action_id AS lastActionId FROM ledger_review_decisions
+           WHERE user_id = ? AND finding_id = ?`,
+          userId,
+          finding.id,
+        );
+        if (current?.decision === action && !trimmed) {
+          resultId = current.lastActionId;
+          return;
+        }
         const decision = await database.getFirstAsync<{ revision: number }>(
           `INSERT INTO ledger_review_decisions
             (user_id, finding_id, decision, revision, last_action_id, acted_at)
@@ -178,7 +192,7 @@ export function createLedgerReviewRepository(
           now,
         );
       });
-      return id;
+      return resultId;
     },
 
     async markActionSynced(

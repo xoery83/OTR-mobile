@@ -77,18 +77,24 @@ export function LedgerReviewFindingScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: finding.status === "ACKNOWLEDGED" }}
+              disabled={finding.status === "ACKNOWLEDGED"}
               onPress={() => void act(finding.id, "ACKNOWLEDGED", "")}
               style={styles.secondary}
             >
-              <Text style={styles.secondaryText}>Acknowledge</Text>
+              <Text style={styles.secondaryText}>
+                {finding.status === "ACKNOWLEDGED" ? "Acknowledged" : "Acknowledge"}
+              </Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: finding.status === "DISMISSED" }}
+              disabled={finding.status === "DISMISSED"}
               onPress={() => void act(finding.id, "DISMISSED", "")}
               style={styles.secondary}
             >
-              <Text style={styles.secondaryText}>Dismiss</Text>
+              <Text style={styles.secondaryText}>
+                {finding.status === "DISMISSED" ? "Dismissed" : "Dismiss"}
+              </Text>
             </Pressable>
           </View>
         ) : (
