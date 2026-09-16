@@ -2,7 +2,9 @@
 
 Date: 2026-09-17
 
-## Review 2.0 Phase 1+2 — Hosted Dev deployed and accepted
+## Review 2.0 Phase 1+2 — Accepted/Complete
+
+Status: **Accepted/Complete** for Hosted Dev Phase 1+2 implementation, deployment, and multi-account/device acceptance. Phase 2 is not blocked. Phase 3 has not started and remains a separate scope.
 
 - On 2026-09-17, approved Hosted Dev migration versions `20260916000100` then `20260917000100` were applied exactly once to Supabase `tuqigdxrvrerfewsxqgm`. The compatible Backend from implementation commit `179d2808234659dd1b196c99a24d9aa092110b70` was deployed to the existing `api-dev.xoery.art` Compose service; image digest `sha256:46d2d893ec1e0b5eb11ff5f88e26207ef423d685bb3e2fd438fa0ec09ad6e5b5`. Local and remote `server.mjs` SHA-256 match. Remote configuration points only to Hosted Dev Supabase; Production was not touched.
 - Compatible Release Mobile installed on two simulators and a physical iPhone. Real Owner/Member/Guest Dev Auth → remote Backend checks passed for personal decision isolation, private reasons, owner/member/zero-allocation guest visibility, 403 exclusion, correction/reappearance generations, concurrent/no-reason actions, counts, idempotency, old-client gate and Review-free old pull. Simulator Owner ACK synced to Hosted Dev. See the Hosted Dev acceptance section in `docs/ledger/REVIEW_2_0_PHASE_2_PERSONAL_DECISIONS_AND_VISIBILITY.md` and `scripts/supabase/validate-review-v2-hosted.mjs`.
