@@ -1,0 +1,12 @@
+**
+!package.json
+!package-lock.json
+!backend/
+!backend/**
+!src/
+!src/data/
+!src/data/api/
+!src/data/api/**
+!src/domain/
+!src/domain/ledger/
+!src/domain/ledger/**

@@ -4,12 +4,38 @@ Date: 2026-09-16
 
 ## Current Milestone
 
-The Ledger Entry Page Part 2 portion of UI Polish Round 2 is complete on
-`integration/ledger-polish-canonical`. The reusable app menu, initial Ledger settings,
-grouped Journey selector and opt-in Debug Information are implemented. Production
-remains disconnected and unchanged; stop before polishing another page.
+The public Dev Backend deployment is complete on `integration/ledger-polish-canonical`.
+Mobile Dev Release traffic now uses `https://api-dev.xoery.art`; the backend runs as the
+isolated `otr-dev-backend` Docker service behind the server's existing Caddy instance.
+Production remains disconnected and unchanged. Stop before UI Polish Round 2 work.
 
 Current Mobile SQLite schema version: 18.
+
+## Public Dev Backend
+
+- `api-dev.xoery.art` resolves to the existing Hetzner host and serves the Node backend
+  through Caddy-managed HTTPS. HTTP redirects to HTTPS and port 8787 is bound only to
+  `127.0.0.1`.
+- `/opt/otr/dev-backend/source` holds the deployable source snapshot;
+  `/opt/otr/dev-backend/env/backend.env` is root-owned mode 0600 and remains outside Git.
+- `otr-dev-backend` runs as non-root with a read-only filesystem, 384 MiB memory limit,
+  bounded JSON logs, healthcheck, and `unless-stopped` restart policy.
+- Container-only restart recovery, public/local health, TLS, direct-port isolation,
+  existing `ai.xoery.art` / `media.xoery.art` health, log redaction, and unchanged Replay
+  counts passed. The shared server and Docker daemon were not restarted.
+- Canonical ignored Mobile config points Release builds to the public Dev domain with
+  the real `dev` sync transport. Release bundle checks exclude test credentials and
+  server-side secrets.
+- Credential-free Release builds are installed on Simulator A, Simulator B, and the
+  physical iPhone. Public-Backend acceptance passed for Dev Auth/token refresh,
+  bootstrap/incremental pull, Journey switching, active polling, iPhone edit,
+  background/foreground reconciliation, offline durable retry, Settlement, and focused
+  Transfer detail.
+- The explicit UI Polish acceptance Expense leaves final Hosted Dev counts at 134
+  Expenses, 1 Settlement, 7 Transfers, 4 Payments, and 2 Discharges. Replay remained
+  read-only at 126 Expenses and zero Settlement lifecycle rows.
+- Operational documentation: `docs/ops/DEV_BACKEND_DEPLOYMENT.md` and
+  `docs/ops/DEV_BACKEND_RUNBOOK.md`.
 
 ## Ledger UI Polish Round 2 — Entry Page Part 2
 
