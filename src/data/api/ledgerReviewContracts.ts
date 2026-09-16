@@ -33,6 +33,10 @@ export const ledgerReviewFindingSchema = z.object({
   resolutionReason: z.string().nullable().optional(),
   supersededAt: z.string().nullable().optional(),
   supersededByFindingId: uuid.nullable().optional(),
+  personalDecision: z.enum(["NEEDS_REVIEW", "ACKNOWLEDGED", "DISMISSED"]).optional(),
+  decisionRevision: z.number().int().nonnegative().optional(),
+  lastActionId: uuid.nullable().optional(),
+  decisionActedAt: z.string().nullable().optional(),
 });
 
 export const ledgerReviewActionSchema = z.object({
@@ -42,7 +46,7 @@ export const ledgerReviewActionSchema = z.object({
   actorUserId: uuid,
   actorMemberId: uuid,
   actorRole: z.string(),
-  reason: z.string().trim().min(1).max(2000),
+  reason: z.string().trim().max(2000).nullable(),
   findingRevision: z.number().int().positive(),
   entityRevision: z.number().int().positive().nullable(),
   rulesetVersion: z.string(),
@@ -51,6 +55,7 @@ export const ledgerReviewActionSchema = z.object({
 });
 
 export const ledgerReviewResponseSchema = z.object({
+  reviewProtocol: z.literal(2).optional(),
   findings: z.array(ledgerReviewFindingSchema),
   actions: z.array(ledgerReviewActionSchema),
 });
@@ -58,7 +63,8 @@ export const ledgerReviewResponseSchema = z.object({
 export const ledgerReviewActionRequestSchema = z.object({
   action: z.enum(["ACKNOWLEDGED", "DISMISSED"]),
   baseRevision: z.number().int().positive(),
-  reason: z.string().trim().min(1).max(2000),
+  reason: z.string().trim().max(2000).nullable().optional(),
+  decisionRevision: z.number().int().nonnegative().default(0),
   operationId: z.string().min(1).max(200),
 });
 

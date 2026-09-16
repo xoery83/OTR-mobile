@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import * as FileSystem from "expo-file-system/legacy";
 
 import type { LedgerReviewFindingDto } from "@/data/api/ledgerReviewContracts";
+import { ApiClientError } from "@/data/api/client";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import { openDatabase } from "@/data/db/database";
@@ -15,17 +16,22 @@ export type LedgerReviewFinding = LedgerReviewFindingDto;
 
 export function useLedgerReview(journeyId = stage3JourneyId) {
   const [findings, setFindings] = useState<LedgerReviewFindingDto[]>([]);
+  const [counts, setCounts] = useState({ pending: 0, reviewed: 0 });
   const [expenseTitles, setExpenseTitles] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const load = useCallback(async () => {
     if (!journeyId) return;
-    const [nextFindings, expenses] = await Promise.all([
+    const [nextFindings, nextCounts, expenses] = await Promise.all([
       getDefaultLedgerReviewRepository().then((repository) => repository.list(journeyId)),
+      getDefaultLedgerReviewRepository().then((repository) =>
+        repository.counts(journeyId),
+      ),
       getDefaultLedgerExpenseRepository().then((repository) =>
         repository.listExpensesForJourney(journeyId),
       ),
     ]);
     setFindings(nextFindings);
+    setCounts(nextCounts);
     setExpenseTitles(
       Object.fromEntries(expenses.map((expense) => [expense.id, expense.title])),
     );
@@ -38,10 +44,15 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
       const response = await createLedgerReviewTransport().refresh(journeyId);
       await (
         await getDefaultLedgerReviewRepository()
-      ).apply(response.findings, response.actions);
+      ).apply(journeyId, response.findings, response.actions);
       setMessage(null);
-    } catch {
-      setMessage("Offline · showing cached Review");
+    } catch (error) {
+      if (error instanceof ApiClientError && error.status === 403) {
+        await (await getDefaultLedgerReviewRepository()).invalidate(journeyId);
+        setMessage("Review access is no longer available for this Journey.");
+      } else {
+        setMessage("Offline · showing cached Review");
+      }
     }
     await load();
   }, [journeyId, load]);
@@ -51,6 +62,7 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
   }, [load, refresh]);
   return {
     findings,
+    counts,
     expenseTitles,
     message,
     generateDiagnostics: async () => {

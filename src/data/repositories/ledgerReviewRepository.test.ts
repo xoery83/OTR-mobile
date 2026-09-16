@@ -17,6 +17,7 @@ describe("Ledger Review repository", () => {
         return [] as never;
       },
       async getFirstAsync(sql: string) {
+        if (sql.includes("RETURNING revision")) return { revision: 1 } as never;
         if (sql.includes("ledger_review_findings"))
           return {
             id: "10000000-0000-4000-8000-000000000001",
@@ -24,6 +25,7 @@ describe("Ledger Review repository", () => {
             expenseId: "30000000-0000-4000-8000-000000000001",
             layer: "HEURISTIC",
             status: "OPEN",
+            lifecycle: "ACTIVE",
             revision: 1,
             entityRevision: 4,
             rulesetVersion: "ledger-review-v1",
@@ -44,7 +46,8 @@ describe("Ledger Review repository", () => {
       async () => "40000000-0000-4000-8000-000000000001",
     ).act("10000000-0000-4000-8000-000000000001", "DISMISSED", "False positive");
 
-    expect(writes).toHaveLength(3);
+    expect(writes).toHaveLength(2);
+    expect(writes.join("\n")).not.toMatch(/UPDATE ledger_review_findings SET status/);
     expect(writes.join("\n")).not.toMatch(
       /UPDATE\s+(ledger_expenses|ledger_expense_splits|ledger_settlements|ledger_settlement_payments)/i,
     );

@@ -106,7 +106,7 @@ export function reviewStatusLabel(status: LedgerReviewFinding["status"]) {
 export function canActOnFinding(finding: LedgerReviewFinding) {
   return (
     finding.layer === "HEURISTIC" &&
-    finding.status !== "STALE" &&
-    finding.status !== "RESOLVED"
+    finding.ruleId != null &&
+    finding.lifecycle === "ACTIVE"
   );
 }

@@ -2,7 +2,7 @@
 
 日期：2026-09-16。范围：当前仓库静态、只读审计；本文不是实施授权，不修改数据库、运行时或 Hosted Dev/Production。规则真相以所列代码为准。Review 指面向用户的财务注意事项收件箱；确定性财务校验仍是不可绕过的校验，不因改名而变成可确认的提醒。
 
-实施进展（同日）：Phase 1 引擎基础已按单独的 `REVIEW_2_0_PHASE_1_ENGINE_FOUNDATION.md` 在源代码中实现；本文第 2–8 节仍是实施前 v1 基线，不将它误写成当前 v2 行为。新迁移尚未在 PostgreSQL 验证/部署，后续逐用户与授权阶段未实施。
+实施进展（2026-09-17）：Phase 1 引擎基础已按 `REVIEW_2_0_PHASE_1_ENGINE_FOUNDATION.md` 完成；Phase 2 逐用户决策与精确可见性本地基础已按 `REVIEW_2_0_PHASE_2_PERSONAL_DECISIONS_AND_VISIBILITY.md` 实现并在本地 Supabase 验证。本文第 2–8 节仍是实施前 v1 基线。Phase 1/2 迁移均未部署 Hosted Dev/Production；Phase 3 UI 未开始。
 
 ## 1. Executive Summary
 

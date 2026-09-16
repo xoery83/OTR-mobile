@@ -21,6 +21,7 @@ async function client() {
 }
 
 const actionResponse = z.object({
+  reviewProtocol: z.literal(2).optional(),
   finding: ledgerReviewFindingSchema,
   action: ledgerReviewActionSchema,
   idempotentReplay: z.boolean(),
@@ -29,11 +30,17 @@ const actionResponse = z.object({
 export function createLedgerReviewTransport() {
   return {
     async refresh(journeyId: string) {
-      return (await client()).post(
+      const response = await (
+        await client()
+      ).post(
         `/v2/trips/${journeyId}/ledger/review/refresh`,
         {},
         ledgerReviewResponseSchema,
+        { "X-Review-Protocol": "2" },
       );
+      if (response.reviewProtocol !== 2)
+        throw new ApiClientError("Review 2.0 backend is required.", "validation");
+      return response;
     },
     async act(
       journeyId: string,
@@ -41,12 +48,17 @@ export function createLedgerReviewTransport() {
       idempotencyKey: string,
       input: LedgerReviewActionRequest,
     ) {
-      return (await client()).post(
+      const response = await (
+        await client()
+      ).post(
         `/v2/trips/${journeyId}/review-findings/${findingId}/actions`,
         input,
         actionResponse,
-        { "Idempotency-Key": idempotencyKey },
+        { "Idempotency-Key": idempotencyKey, "X-Review-Protocol": "2" },
       );
+      if (response.reviewProtocol !== 2)
+        throw new ApiClientError("Review 2.0 backend is required.", "validation");
+      return response;
     },
   };
 }

@@ -1,6 +1,31 @@
 # Current Implementation State
 
-Date: 2026-09-16
+Date: 2026-09-17
+
+## Review 2.0 Phase 2 — local foundation
+
+- Phase 2 source now separates shared v2 Finding lifecycle from actor-specific
+  ACK/DISMISS. Supabase migration `20260917000100` adds private decisions and
+  observation-time eligibility snapshots; SQLite v21 adds user-scoped visibility
+  and decision projections. Full specification and rollout boundary are in
+  `docs/ledger/REVIEW_2_0_PHASE_2_PERSONAL_DECISIONS_AND_VISIBILITY.md`.
+- Backend Review reads and normal action history use a linked-user eligibility
+  RPC. Active eligibility is Owner OR creator OR payer OR canonical split with
+  nonzero original/settlement minor; historical v2 uses a frozen snapshot plus
+  current membership. Bootstrap/pull carry a full user-scoped Review snapshot,
+  never Journey-wide `REVIEW_FINDING` change payloads. Old clients without
+  `X-Review-Protocol: 2` get no Review data and Review endpoints return 426.
+- Mobile applies the snapshot atomically per current authenticated user;
+  local actions update only personal decision/count and queue a durable action.
+  403 removes local Review visibility; terminal queue failures converge on the
+  next successful Review projection. UI is minimally compatible, not redesigned.
+- Local Supabase was rebuilt from migrations and seed; 12 pgTAP files / 245
+  assertions pass. TypeScript, ESLint, Backend build and 73 Vitest files / 267
+  tests pass. Hosted Dev and Production
+  have **not** received Phase 1 or Phase 2 Review migrations.
+- Next checkpoint: finish local HTTP integration/real two-account device smoke
+  and obtain explicit approval before any Hosted Dev schema/backend rollout.
+  Phase 3 reactive UI work is not approved or implemented here.
 
 ## Review Engine v2 Phase 1 (local validation)
 
@@ -9,7 +34,8 @@ Date: 2026-09-16
   same-currency amount cohort and same-day duplicate rule are implemented in
   source. Canonical Expense and payment/valuation success paths trigger a
   best-effort full-Journey re-evaluation; explicit refresh repairs missed runs.
-- Global Review decisions, Journey-wide visibility and old UI/counts remain.
+- This paragraph describes the historical Phase 1 state; Phase 2 source now
+  supersedes global human decisions and Journey-wide Review visibility.
   Legacy observation evidence/actions persist; first successful v2 reconciliation
   retires the legacy heuristic global status to STALE. No Hosted Dev/Production
   migration has been applied by this task.
@@ -19,9 +45,9 @@ Date: 2026-09-16
 - TypeScript, ESLint, Backend build and 72 test files / 261 tests pass; the
   Backend create trigger test verifies Review failure cannot misreport a
   committed canonical financial write.
-- Next checkpoint: integration test automatic Backend mutation→Review on local
-  Supabase, then separately approve
-  Hosted Dev rollout; Phase 2 personal state is not begun.
+- Phase 1's next checkpoint was local automatic mutation→Review integration;
+  Phase 2 is now present in source, but that end-to-end integration and the
+  separate Hosted Dev approval remain outstanding.
 
 ## Ledger Entry Page — Review and Member Spending Polish
 

@@ -3,23 +3,23 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(28);
+select plan(32);
 
 select is(
   (select count(*)::integer from information_schema.tables
     where table_schema = 'public' and table_type = 'BASE TABLE'),
-  92,
-  'canonical and Ledger 2 public table count is 92'
+  94,
+  'canonical and Ledger 2 public table count is 94'
 );
 select is(
   (select count(*)::integer from information_schema.columns where table_schema = 'public'),
-  1305,
-  'canonical and Ledger 2 plus Review v2 public column count is 1305'
+  1314,
+  'canonical and Ledger 2 plus Review v2 public column count is 1314'
 );
 select is(
   (select count(*)::integer from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity),
-  92,
+  94,
   'RLS is enabled on every public table'
 );
 select is(
@@ -69,6 +69,18 @@ select is(
   0,
   'daily reports have no user-facing policy'
 );
+select ok(not has_table_privilege('authenticated',
+  'public.ledger_review_decisions', 'SELECT'),
+  'authenticated cannot directly read private Review decisions');
+select ok(not has_table_privilege('authenticated',
+  'public.ledger_review_finding_eligible_users', 'SELECT'),
+  'authenticated cannot directly read Review eligibility snapshots');
+select ok(not has_function_privilege('authenticated',
+  'public.read_ledger_review_projection_v2(uuid,uuid)', 'EXECUTE'),
+  'authenticated cannot call service-only Review projection RPC');
+select ok(has_function_privilege('service_role',
+  'public.read_ledger_review_projection_v2(uuid,uuid)', 'EXECUTE'),
+  'Backend service role can call Review projection RPC');
 select is(
   (select count(*)::integer from pg_policies
     where schemaname = 'public'

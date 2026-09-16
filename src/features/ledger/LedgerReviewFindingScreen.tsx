@@ -1,4 +1,4 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { useLedgerReview } from "@/hooks/useLedgerReview";
@@ -28,16 +28,6 @@ export function LedgerReviewFindingScreen() {
   const expenseTitle = finding.expenseId
     ? (expenseTitles[finding.expenseId] ?? "Expense")
     : "Current Journey";
-
-  const promptAction = (action: "ACKNOWLEDGED" | "DISMISSED") => {
-    Alert.prompt(
-      action === "ACKNOWLEDGED" ? "Acknowledge finding" : "Dismiss finding",
-      "Add a reason for the audit history.",
-      (reason) => {
-        if (reason?.trim()) void act(finding.id, action, reason.trim());
-      },
-    );
-  };
 
   return (
     <>
@@ -81,13 +71,13 @@ export function LedgerReviewFindingScreen() {
               Your decision
             </Text>
             <Text style={styles.body}>
-              Acknowledge keeps this finding visible as reviewed. Dismiss records why it
-              is not useful. Neither action edits the Expense.
+              Acknowledge or dismiss this finding for yourself. Neither action edits the
+              Expense.
             </Text>
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: finding.status === "ACKNOWLEDGED" }}
-              onPress={() => promptAction("ACKNOWLEDGED")}
+              onPress={() => void act(finding.id, "ACKNOWLEDGED", "")}
               style={styles.secondary}
             >
               <Text style={styles.secondaryText}>Acknowledge</Text>
@@ -95,7 +85,7 @@ export function LedgerReviewFindingScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: finding.status === "DISMISSED" }}
-              onPress={() => promptAction("DISMISSED")}
+              onPress={() => void act(finding.id, "DISMISSED", "")}
               style={styles.secondary}
             >
               <Text style={styles.secondaryText}>Dismiss</Text>

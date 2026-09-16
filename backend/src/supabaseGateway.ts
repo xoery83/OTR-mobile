@@ -209,6 +209,11 @@ function reviewFindingRowToDto(row: Record<string, unknown>): LedgerReviewFindin
     supersededByFindingId: row.superseded_by_finding_id
       ? String(row.superseded_by_finding_id)
       : null,
+    personalDecision: (row.personal_decision ??
+      "NEEDS_REVIEW") as LedgerReviewFindingDto["personalDecision"],
+    decisionRevision: Number(row.decision_revision ?? 0),
+    lastActionId: row.last_action_id ? String(row.last_action_id) : null,
+    decisionActedAt: row.decision_acted_at ? String(row.decision_acted_at) : null,
   };
 }
 
@@ -220,7 +225,7 @@ function reviewActionRowToDto(row: Record<string, unknown>): LedgerReviewActionD
     actorUserId: String(row.actor_user_id),
     actorMemberId: String(row.actor_member_id),
     actorRole: String(row.actor_role),
-    reason: String(row.reason),
+    reason: row.reason == null ? null : String(row.reason),
     findingRevision: Number(row.finding_revision),
     entityRevision: row.entity_revision === null ? null : Number(row.entity_revision),
     rulesetVersion: String(row.ruleset_version),
@@ -229,16 +234,31 @@ function reviewActionRowToDto(row: Record<string, unknown>): LedgerReviewActionD
   };
 }
 
-async function readLedgerReviewData(service: SupabaseClient, tripId: string) {
-  const [findings, actions] = await Promise.all([
-    service.from("ledger_review_findings").select("*").eq("journey_id", tripId),
-    service.from("ledger_review_finding_actions").select("*").eq("journey_id", tripId),
-  ]);
-  if (findings.error || actions.error)
+async function readLedgerReviewData(
+  service: SupabaseClient,
+  tripId: string,
+  userId: string,
+) {
+  const result = await service.rpc("read_ledger_review_projection_v2", {
+    p_user_id: userId,
+    p_journey_id: tripId,
+  });
+  if (result.error) {
+    if (result.error.message.includes("REVIEW_READ_FORBIDDEN"))
+      throw new BackendError(
+        403,
+        "REVIEW_READ_FORBIDDEN",
+        "Review read is not authorized.",
+      );
     throw new Error("Supabase Dev Ledger Review read failed.");
+  }
+  const { findings, actions } = result.data as {
+    findings: Record<string, unknown>[];
+    actions: Record<string, unknown>[];
+  };
   return {
-    findings: (findings.data ?? []).map((row) => reviewFindingRowToDto(row)),
-    actions: (actions.data ?? []).map((row) => reviewActionRowToDto(row)),
+    findings: findings.map(reviewFindingRowToDto),
+    actions: actions.map(reviewActionRowToDto),
   };
 }
 
@@ -422,11 +442,11 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return result.data.length > 0;
     },
 
-    async readLedgerReview(_userId, tripId) {
-      return readLedgerReviewData(service, tripId);
+    async readLedgerReview(userId, tripId) {
+      return readLedgerReviewData(service, tripId, userId);
     },
 
-    async refreshLedgerReview(_userId, tripId) {
+    async refreshLedgerReview(userId, tripId) {
       await evaluateLedgerReviewV2(service, tripId);
       const expenseRows = await service
         .from("expenses")
@@ -508,7 +528,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         );
         if (inserted.error) throw new Error("Supabase Dev Review generation failed.");
       }
-      return readLedgerReviewData(service, tripId);
+      return readLedgerReviewData(service, tripId, userId);
     },
 
     async actOnLedgerReviewFinding(userId, tripId, findingId, idempotencyKey, input) {
@@ -518,13 +538,14 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
           "IDEMPOTENCY_CONFLICT",
           "Review operation identity differs.",
         );
-      const result = await service.rpc("act_on_ledger_review_finding", {
+      const result = await service.rpc("act_on_ledger_review_finding_v2", {
         p_actor_user_id: userId,
         p_journey_id: tripId,
         p_finding_id: findingId,
         p_action: input.action,
         p_base_revision: input.baseRevision,
-        p_reason: input.reason,
+        p_decision_revision: input.decisionRevision,
+        p_reason: input.reason ?? null,
         p_operation_id: input.operationId,
       });
       if (result.error) {
@@ -547,6 +568,12 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
             "REVIEW_FINDING_STALE",
             "Review finding revision is stale.",
           );
+        if (message.includes("REVIEW_DECISION_STALE"))
+          throw new BackendError(
+            409,
+            "REVIEW_DECISION_STALE",
+            "Personal Review decision is stale.",
+          );
         if (message.includes("DETERMINISTIC_REVIEW_ACTION_FORBIDDEN"))
           throw new BackendError(
             422,
@@ -563,9 +590,16 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         finding: Record<string, unknown>;
         action: Record<string, unknown>;
         idempotentReplay: boolean;
+        decision: Record<string, unknown>;
       };
       return {
-        finding: reviewFindingRowToDto(value.finding),
+        finding: reviewFindingRowToDto({
+          ...value.finding,
+          personal_decision: value.decision?.decision ?? "NEEDS_REVIEW",
+          decision_revision: value.decision?.revision ?? 0,
+          last_action_id: value.decision?.last_action_id ?? null,
+          decision_acted_at: value.decision?.acted_at ?? null,
+        }),
         action: reviewActionRowToDto(value.action),
         idempotentReplay: Boolean(value.idempotentReplay),
       };
@@ -3178,7 +3212,7 @@ async function readLedgerBootstrap(
     tripId,
     await readFinalizedSettlements(service, tripId),
   );
-  const review = await readLedgerReviewData(service, tripId);
+  const review = await readLedgerReviewData(service, tripId, userId);
   const lastSequence = await latestLedgerSequence(service, tripId);
   const setting = settings.data as Record<string, unknown> | null;
   const tripRow = trip.data as Record<string, unknown> | null;
@@ -3268,7 +3302,8 @@ async function readLedgerChanges(
   const hasMore = allRows.length > 100;
   const rows = allRows.slice(0, 100);
   const visibleRows = rows.filter(
-    (row) => !["TRANSFER", "TRANSFER_PAYMENT"].includes(row.entity_type),
+    (row) =>
+      !["TRANSFER", "TRANSFER_PAYMENT", "REVIEW_FINDING"].includes(row.entity_type),
   );
   const expenseIds = rows
     .filter((row) => row.entity_type === "EXPENSE" && !row.is_tombstone)
@@ -3291,9 +3326,6 @@ async function readLedgerChanges(
     .map((row) => String(row.entity_id));
   const settlementIds = rows
     .filter((row) => row.entity_type === "SETTLEMENT")
-    .map((row) => String(row.entity_id));
-  const reviewFindingIds = rows
-    .filter((row) => row.entity_type === "REVIEW_FINDING")
     .map((row) => String(row.entity_id));
   const expenses =
     expenseIds.length > 0
@@ -3359,13 +3391,6 @@ async function readLedgerChanges(
     receiptIds.length > 0
       ? await service.from("receipt_assets").select(receiptColumns).in("id", receiptIds)
       : { data: [], error: null };
-  const reviewFindings =
-    reviewFindingIds.length > 0
-      ? await service
-          .from("ledger_review_findings")
-          .select("*")
-          .in("id", reviewFindingIds)
-      : { data: [], error: null };
   const includeLineageProjection = hasExpenseChanges || settlementIds.length > 0;
   const settlements = includeLineageProjection
     ? await decorateSettlementLineages(
@@ -3383,8 +3408,7 @@ async function readLedgerChanges(
     rateQuotes.error ||
     paymentRecords.error ||
     evidenceAudits.error ||
-    receipts.error ||
-    reviewFindings.error
+    receipts.error
   ) {
     throw new Error("Supabase Dev Ledger household aggregate failed.");
   }
@@ -3420,8 +3444,6 @@ async function readLedgerChanges(
   }
   for (const row of receipts.data ?? [])
     byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
-  for (const row of reviewFindings.data ?? [])
-    byId.set(String(row.id), reviewFindingRowToDto(row as Record<string, unknown>));
   for (const settlement of settlements) byId.set(settlement.id, settlement);
 
   const changes = visibleRows.map((row) => ({
@@ -3448,7 +3470,10 @@ async function readLedgerChanges(
     }
   }
 
+  const review = await readLedgerReviewData(service, tripId, userId);
   return {
+    reviewFindings: review.findings,
+    reviewActions: review.actions,
     changes,
     cursor: rows.length
       ? encodeLedgerCursor(Number(rows[rows.length - 1].sequence), tripId, userId)

@@ -194,6 +194,7 @@ export const ledgerCorrectionRequestSchema = z.object({
 });
 
 export const ledgerBootstrapResponseSchema = z.object({
+  reviewProtocol: z.literal(2).optional(),
   journey: z.object({
     id: uuidSchema,
     title: z.string(),
@@ -224,6 +225,9 @@ export const ledgerBootstrapResponseSchema = z.object({
 });
 
 export const ledgerChangesResponseSchema = z.object({
+  reviewProtocol: z.literal(2).optional(),
+  reviewFindings: z.array(ledgerReviewFindingSchema).optional(),
+  reviewActions: z.array(ledgerReviewActionSchema).optional(),
   changes: z.array(
     z.object({
       entityType: z.enum([

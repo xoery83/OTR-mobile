@@ -921,4 +921,32 @@ export const migrations: Migration[] = [
         (journey_id, lifecycle, rule_id);
     `,
   },
+  {
+    id: 21,
+    name: "ledger_review_v2_personal_decisions",
+    sql: `
+      CREATE TABLE ledger_review_visibility (
+        user_id TEXT NOT NULL,
+        finding_id TEXT NOT NULL,
+        journey_id TEXT NOT NULL,
+        PRIMARY KEY (user_id, finding_id)
+      );
+      CREATE INDEX ledger_review_visibility_journey ON ledger_review_visibility
+        (user_id, journey_id);
+      CREATE TABLE ledger_review_decisions (
+        user_id TEXT NOT NULL,
+        finding_id TEXT NOT NULL,
+        decision TEXT NOT NULL CHECK (decision IN ('ACKNOWLEDGED', 'DISMISSED')),
+        revision INTEGER NOT NULL CHECK (revision >= 0),
+        last_action_id TEXT,
+        acted_at TEXT,
+        PRIMARY KEY (user_id, finding_id)
+      );
+      INSERT OR IGNORE INTO ledger_review_decisions
+        (user_id, finding_id, decision, revision, last_action_id, acted_at)
+      SELECT actor_user_id, finding_id, action, 1, id, created_at
+      FROM ledger_review_finding_actions
+      WHERE sync_status = 'PENDING';
+    `,
+  },
 ];

@@ -491,12 +491,16 @@ async function readReceiptContent(request: Request, gateway: DevBackendGateway) 
 }
 
 async function mutateLedgerReview(request: Request, gateway: DevBackendGateway) {
+  requireReviewProtocol(request);
   const refresh = new URL(request.url).pathname.match(
     /^\/v2\/trips\/([^/]+)\/ledger\/review\/refresh$/,
   );
   if (refresh) {
     const user = await authorizeRead(request, gateway, refresh[1]);
-    return json(200, await gateway.refreshLedgerReview(user.id, refresh[1]));
+    return json(200, {
+      ...(await gateway.refreshLedgerReview(user.id, refresh[1])),
+      reviewProtocol: 2,
+    });
   }
   const match = new URL(request.url).pathname.match(
     /^\/v2\/trips\/([^/]+)\/review-findings\/([^/]+)\/actions$/,
@@ -512,16 +516,16 @@ async function mutateLedgerReview(request: Request, gateway: DevBackendGateway) 
   const parsed = ledgerReviewActionRequestSchema.safeParse(await parseBody(request));
   if (!parsed.success)
     throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
-  return json(
-    200,
-    await gateway.actOnLedgerReviewFinding(
+  return json(200, {
+    ...(await gateway.actOnLedgerReviewFinding(
       user.id,
       tripId,
       findingId,
       getIdempotencyKey(request),
       parsed.data,
-    ),
-  );
+    )),
+    reviewProtocol: 2,
+  });
 }
 
 function assertOriginalCreate(stored: StoredCreate, tripId: string, userId: string) {
@@ -1027,8 +1031,12 @@ async function readEntity(request: Request, gateway: DevBackendGateway) {
 
   const review = url.pathname.match(/^\/v2\/trips\/([^/]+)\/ledger\/review$/);
   if (review) {
+    requireReviewProtocol(request);
     const user = await authorizeRead(request, gateway, review[1]);
-    return json(200, await gateway.readLedgerReview(user.id, review[1]));
+    return json(200, {
+      ...(await gateway.readLedgerReview(user.id, review[1])),
+      reviewProtocol: 2,
+    });
   }
 
   const expenses = url.pathname.match(/^\/v2\/trips\/([^/]+)\/expenses$/);
@@ -1086,7 +1094,12 @@ async function readEntity(request: Request, gateway: DevBackendGateway) {
   const [, tripId, resource] = match;
   const user = await authorizeRead(request, gateway, tripId);
   if (resource === "bootstrap") {
-    return json(200, await gateway.bootstrapLedger(user.id, tripId));
+    const response = await gateway.bootstrapLedger(user.id, tripId);
+    if (!supportsReviewProtocol(request)) {
+      const { reviewFindings: _findings, reviewActions: _actions, ...safe } = response;
+      return json(200, safe);
+    }
+    return json(200, { ...response, reviewProtocol: 2 });
   }
   if (resource === "rate-quotes") {
     return json(
@@ -1099,10 +1112,34 @@ async function readEntity(request: Request, gateway: DevBackendGateway) {
       ),
     );
   }
-  return json(
-    200,
-    await gateway.pullLedgerChanges(user.id, tripId, url.searchParams.get("cursor")),
+  const response = await gateway.pullLedgerChanges(
+    user.id,
+    tripId,
+    url.searchParams.get("cursor"),
   );
+  if (!supportsReviewProtocol(request)) {
+    const { reviewFindings: _findings, reviewActions: _actions, ...safe } = response;
+    return json(200, {
+      ...safe,
+      changes: response.changes.filter(
+        (change) => change.entityType !== "REVIEW_FINDING",
+      ),
+    });
+  }
+  return json(200, { ...response, reviewProtocol: 2 });
+}
+
+function supportsReviewProtocol(request: Request) {
+  return request.headers.get("X-Review-Protocol") === "2";
+}
+
+function requireReviewProtocol(request: Request) {
+  if (!supportsReviewProtocol(request))
+    throw new HttpError(
+      426,
+      "REVIEW_PROTOCOL_UPGRADE_REQUIRED",
+      "Update the app to use Review 2.0.",
+    );
 }
 
 function validDate(value: string | null): value is string {

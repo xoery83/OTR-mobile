@@ -90,8 +90,12 @@ export function createApiClient(options: ApiClientOptions = {}) {
   }
 
   return {
-    get<T>(path: string, responseSchema: z.ZodType<T>): Promise<T> {
-      return request("GET", path, responseSchema);
+    get<T>(
+      path: string,
+      responseSchema: z.ZodType<T>,
+      headers?: Record<string, string>,
+    ): Promise<T> {
+      return request("GET", path, responseSchema, undefined, headers);
     },
     post<T>(
       path: string,

@@ -7,10 +7,8 @@ import { reviewFindingCopy, reviewStatusLabel } from "./settlementPresentation";
 
 export function LedgerReviewScreen() {
   const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
-  const { expenseTitles, findings, message } = useLedgerReview(journeyId);
-  const actionableCount = findings.filter(
-    (finding) => finding.status === "OPEN" || finding.status === "ACKNOWLEDGED",
-  ).length;
+  const { expenseTitles, findings, counts, message } = useLedgerReview(journeyId);
+  const actionableCount = counts.pending;
 
   return (
     <>

@@ -557,7 +557,7 @@ describe("OTR Dev Backend", () => {
 
     const bootstrap = await handle(
       new Request(`http://localhost/v2/trips/${tripId}/ledger/bootstrap`, {
-        headers: { Authorization: "Bearer valid-token" },
+        headers: { Authorization: "Bearer valid-token", "X-Review-Protocol": "2" },
       }),
     );
     const changes = await handle(
@@ -1301,7 +1301,7 @@ describe("OTR Dev Backend", () => {
     const refresh = await handle(
       new Request(`http://localhost/v2/trips/${tripId}/ledger/review/refresh`, {
         method: "POST",
-        headers: { Authorization: "Bearer valid-token" },
+        headers: { Authorization: "Bearer valid-token", "X-Review-Protocol": "2" },
       }),
     );
     const action = await handle(
@@ -1313,6 +1313,7 @@ describe("OTR Dev Backend", () => {
             Authorization: "Bearer valid-token",
             "Content-Type": "application/json",
             "Idempotency-Key": actionId,
+            "X-Review-Protocol": "2",
           },
           body: JSON.stringify({
             action: "DISMISSED",
@@ -1331,5 +1332,27 @@ describe("OTR Dev Backend", () => {
 
     expect([refresh.status, action.status, content.status]).toEqual([200, 200, 200]);
     expect(await content.arrayBuffer()).toEqual(new Uint8Array([1, 2, 3]).buffer);
+  });
+
+  it("gates old Review clients without blocking financial bootstrap", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const review = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/review`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(review.status).toBe(426);
+    expect(gateway.readLedgerReview).not.toHaveBeenCalled();
+
+    const bootstrap = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/bootstrap`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(bootstrap.status).toBe(200);
+    const body = (await bootstrap.json()) as Record<string, unknown>;
+    expect(body).not.toHaveProperty("reviewFindings");
+    expect(body).not.toHaveProperty("reviewActions");
   });
 });

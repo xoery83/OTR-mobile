@@ -36,18 +36,36 @@ async function client(dependencies: Dependencies) {
 export function createLedgerReadTransport(dependencies: Dependencies = {}) {
   return {
     async bootstrap(journeyId: string) {
-      return (await client(dependencies)).get(
-        `/v2/trips/${journeyId}/ledger/bootstrap`,
-        ledgerBootstrapResponseSchema,
-      );
+      const response = await (
+        await client(dependencies)
+      ).get(`/v2/trips/${journeyId}/ledger/bootstrap`, ledgerBootstrapResponseSchema, {
+        "X-Review-Protocol": "2",
+      });
+      if (
+        response.reviewProtocol !== 2 ||
+        !response.reviewFindings ||
+        !response.reviewActions
+      )
+        throw new ApiClientError("Review 2.0 backend is required.", "validation");
+      return response;
     },
 
     async pull(journeyId: string, cursor: string | null) {
       const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
-      return (await client(dependencies)).get(
+      const response = await (
+        await client(dependencies)
+      ).get(
         `/v2/trips/${journeyId}/ledger/changes${query}`,
         ledgerChangesResponseSchema,
+        { "X-Review-Protocol": "2" },
       );
+      if (
+        response.reviewProtocol !== 2 ||
+        !response.reviewFindings ||
+        !response.reviewActions
+      )
+        throw new ApiClientError("Review 2.0 backend is required.", "validation");
+      return response;
     },
 
     async expenses(journeyId: string, filters: ReportingFilters = {}) {

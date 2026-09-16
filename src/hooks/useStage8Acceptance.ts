@@ -38,7 +38,7 @@ export function useStage8Acceptance(
 
         const response = await createLedgerReviewTransport().refresh(journeyId);
         const repository = await getDefaultLedgerReviewRepository();
-        await repository.apply(response.findings, response.actions);
+        await repository.apply(journeyId, response.findings, response.actions);
         const local = await repository.list(journeyId);
         record(
           "Review findings converged",
