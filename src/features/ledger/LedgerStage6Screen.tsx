@@ -767,18 +767,28 @@ export function LedgerStage6Screen() {
         visible={journeyPickerOpen}
       >
         <View style={styles.picker}>
-          <View style={[styles.pickerHeader, largeText && styles.pickerHeaderLarge]}>
+          <View style={styles.pickerHeader}>
             <Pressable
+              accessibilityLabel="Cancel Journey selection"
               accessibilityRole="button"
               onPress={() => setJourneyPickerOpen(false)}
-              style={styles.headerButton}
+              style={styles.pickerHeaderAction}
             >
               <Text style={styles.pickerCancelText}>Cancel</Text>
             </Pressable>
             <Text accessibilityRole="header" style={styles.pickerTitle}>
               Choose Journey
             </Text>
-            {largeText ? null : <View style={styles.headerButton} />}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setJourneyPickerOpen(false);
+                router.push("/expenses/all-journeys");
+              }}
+              style={styles.pickerHeaderAction}
+            >
+              <Text style={styles.pickerLedgerText}>My Ledger</Text>
+            </Pressable>
           </View>
           <TextInput
             accessibilityLabel="Search Journeys"
@@ -1234,16 +1244,31 @@ const styles = StyleSheet.create({
   pickerHeader: {
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
+    gap: 8,
+    paddingHorizontal: 12,
   },
-  pickerHeaderLarge: {
-    alignItems: "flex-start",
-    flexDirection: "column",
-    paddingHorizontal: 16,
+  pickerHeaderAction: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 86,
+    paddingHorizontal: 10,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
   },
-  pickerTitle: { color: "#111827", fontSize: 17, fontWeight: "700" },
+  pickerTitle: {
+    color: "#111827",
+    flex: 1,
+    fontSize: 17,
+    fontWeight: "700",
+    textAlign: "center",
+  },
   pickerCancelText: { color: "#0F766E", fontSize: 17, fontWeight: "700" },
+  pickerLedgerText: { color: "#0F766E", fontSize: 17, fontWeight: "700" },
   search: {
     backgroundColor: "#E5E7EB",
     borderRadius: 10,
