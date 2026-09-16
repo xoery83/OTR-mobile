@@ -1227,8 +1227,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
   },
-  pickerCancelText: { color: "#0F766E", fontSize: 17, fontWeight: "700" },
-  pickerLedgerText: { color: "#0F766E", fontSize: 17, fontWeight: "700" },
+  pickerCancelText: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
+  pickerLedgerText: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
   search: {
     backgroundColor: "#E5E7EB",
     borderRadius: 10,
