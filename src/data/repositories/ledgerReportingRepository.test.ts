@@ -306,6 +306,28 @@ describe("Ledger reporting repository", () => {
     sqlite.close();
   });
 
+  it("attributes a member's categories to their split instead of the payer", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    const repository = createLedgerReportingRepository(adapter, activeUser);
+    const member = { journeyId, memberId: "b", scope: "MINE" as const };
+    const group = { journeyId, memberId: "a", scope: "GROUP" as const };
+
+    expect((await repository.summarize(member)).totalMinor).toBe(800);
+    expect((await repository.analyze(member, "CATEGORY"))[0].totalMinor).toBe(800);
+    expect(
+      (
+        await repository.listExpenses({
+          ...member,
+          category: "food",
+          authoritativeOnly: true,
+        })
+      )[0].componentMinor,
+    ).toBe(800);
+    expect((await repository.summarize(group)).totalMinor).toBe(2000);
+    sqlite.close();
+  });
+
   it("shares canonical rows but hides another account's local Ledger changes", async () => {
     const { adapter, sqlite } = database();
     insertFixture(sqlite);

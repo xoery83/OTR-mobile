@@ -17,6 +17,7 @@ import { AppIcon } from "@/components/AppIcon";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
+import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import type {
   LedgerJourneyOption,
@@ -72,6 +73,13 @@ type SpendingProjection = {
   scope: ReportingScope;
   summary: ReportingAggregate;
   categories: ReportingBucket[];
+  members: { id: string; label: string }[];
+  reviewCount: number;
+  selectedMember: {
+    id: string;
+    summary: ReportingAggregate;
+    categories: ReportingBucket[];
+  } | null;
   expenses: LedgerReportListItem[];
   settlement: SettlementSnapshot;
 };
@@ -133,7 +141,10 @@ export function LedgerStage6Screen() {
   const { refreshPersonal } = useLedgerReportingRefresh();
   const manualJourneyId = useRef<string | undefined>(undefined);
   const [request] = useState(createLatestRequest);
+  const [memberRequest] = useState(createLatestRequest);
   const scopeRef = useRef<ReportingScope>("MINE");
+  const selectedMemberIdRef = useRef<string | null>(null);
+  const selectedJourneyIdRef = useRef<string | null>(null);
   const [journeys, setJourneys] = useState<LedgerJourneyOption[]>([]);
   const [projection, setProjection] = useState<SpendingProjection | null>(null);
   const [mode, setMode] = useState<Mode>("SPENDING");
@@ -148,6 +159,9 @@ export function LedgerStage6Screen() {
   const scope = projection?.scope ?? "MINE";
   const summary = projection?.summary ?? null;
   const categories = projection?.categories ?? [];
+  const categorySelection = scope === "GROUP" ? projection?.selectedMember : null;
+  const displayedCategories = categorySelection?.categories ?? categories;
+  const categorySummary = categorySelection?.summary ?? summary;
   const expenses = projection?.expenses ?? [];
   const settlement = projection?.settlement ?? ({ kind: "PREVIEW" } as const);
   const fallbackJourneyId =
@@ -183,22 +197,66 @@ export function LedgerStage6Screen() {
           memberId: nextMemberId,
           scope: nextScope,
         };
+        const selectedMemberId =
+          nextScope === "GROUP" && selectedJourneyIdRef.current === nextJourney.journeyId
+            ? selectedMemberIdRef.current
+            : null;
         const settlementRepository = await getDefaultLedgerSettlementRepository();
-        const [nextSummary, nextCategories, nextExpenses, settlements] =
-          await Promise.all([
-            repository.summarize(query),
-            repository.analyze(query, "CATEGORY"),
-            repository.listExpenses(query, 12),
-            settlementRepository.listFinalized(nextJourney.journeyId),
-          ]);
+        const [
+          nextSummary,
+          nextCategories,
+          nextExpenses,
+          settlements,
+          options,
+          findings,
+          selectedMember,
+        ] = await Promise.all([
+          repository.summarize(query),
+          repository.analyze(query, "CATEGORY"),
+          repository.listExpenses(query, 12),
+          settlementRepository.listFinalized(nextJourney.journeyId),
+          repository.listFilterOptions(nextJourney.journeyId),
+          getDefaultLedgerReviewRepository().then((review) =>
+            review.list(nextJourney.journeyId),
+          ),
+          selectedMemberId
+            ? Promise.all([
+                repository.summarize({
+                  ...query,
+                  memberId: selectedMemberId,
+                  scope: "MINE",
+                }),
+                repository.analyze(
+                  { ...query, memberId: selectedMemberId, scope: "MINE" },
+                  "CATEGORY",
+                ),
+              ]).then(([summary, categories]) => ({
+                id: selectedMemberId,
+                summary,
+                categories: categories.slice(0, 5),
+              }))
+            : Promise.resolve(null),
+        ]);
         if (!request.isCurrent(id)) return false;
+        memberRequest.cancel();
         scopeRef.current = nextScope;
+        selectedJourneyIdRef.current = nextJourney.journeyId;
+        selectedMemberIdRef.current =
+          selectedMember &&
+          options.members.some((member) => member.id === selectedMember.id)
+            ? selectedMember.id
+            : null;
         setProjection({
           journey: nextJourney,
           memberId: nextMemberId,
           scope: nextScope,
           summary: nextSummary,
           categories: nextCategories.slice(0, 5),
+          members: options.members,
+          reviewCount: findings.filter(
+            (finding) => finding.status === "OPEN" || finding.status === "ACKNOWLEDGED",
+          ).length,
+          selectedMember: selectedMemberIdRef.current ? selectedMember : null,
           expenses: nextExpenses,
           settlement: summarizeSettlement(settlements, nextMemberId),
         });
@@ -211,8 +269,53 @@ export function LedgerStage6Screen() {
         return false;
       }
     },
-    [request],
+    [memberRequest, request],
   );
+
+  const selectCategoryMember = async (selectedId: string | null) => {
+    if (!journey || scope !== "GROUP" || !projection) return;
+    request.cancel();
+    const id = memberRequest.begin();
+    const previousId = selectedMemberIdRef.current;
+    selectedMemberIdRef.current = selectedId;
+    if (!selectedId) {
+      setProjection((current) =>
+        current ? { ...current, selectedMember: null } : current,
+      );
+      return;
+    }
+    try {
+      const repository = await getDefaultLedgerReportingRepository();
+      const query = {
+        journeyId: journey.journeyId,
+        memberId: selectedId,
+        scope: "MINE" as const,
+      };
+      const [memberSummary, memberCategories] = await Promise.all([
+        repository.summarize(query),
+        repository.analyze(query, "CATEGORY"),
+      ]);
+      if (!memberRequest.isCurrent(id)) return;
+      selectedMemberIdRef.current = selectedId;
+      setProjection((current) =>
+        current?.journey.journeyId === journey.journeyId && current.scope === "GROUP"
+          ? {
+              ...current,
+              selectedMember: {
+                id: selectedId,
+                summary: memberSummary,
+                categories: memberCategories.slice(0, 5),
+              },
+            }
+          : current,
+      );
+    } catch {
+      if (memberRequest.isCurrent(id)) {
+        selectedMemberIdRef.current = previousId;
+        setMessage("Member spending could not be updated.");
+      }
+    }
+  };
 
   const loadContext = useCallback(async () => {
     const repository = await getDefaultLedgerReportingRepository();
@@ -395,6 +498,24 @@ export function LedgerStage6Screen() {
         {journey ? (
           mode === "SPENDING" ? (
             <>
+              {projection?.reviewCount ? (
+                <Pressable
+                  accessibilityLabel={`${projection.reviewCount} items need review`}
+                  accessibilityRole="button"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/expenses/review",
+                      params: { journeyId: journey.journeyId },
+                    })
+                  }
+                  style={styles.reviewBanner}
+                >
+                  <Text maxFontSizeMultiplier={2} style={styles.reviewBannerText}>
+                    {projection.reviewCount} items need review
+                  </Text>
+                  <AppIcon color="#0F766E" name="chevron.right" size={16} />
+                </Pressable>
+              ) : null}
               <View style={styles.total}>
                 <View style={[styles.totalHeader, largeText && styles.stack]}>
                   <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
@@ -404,7 +525,11 @@ export function LedgerStage6Screen() {
                     compact
                     value={scope}
                     options={["MINE", "GROUP"]}
-                    onChange={(nextScope) => void loadProjection(journey, nextScope)}
+                    onChange={(nextScope) => {
+                      selectedMemberIdRef.current = null;
+                      memberRequest.cancel();
+                      void loadProjection(journey, nextScope);
+                    }}
                   />
                 </View>
                 <Text
@@ -442,65 +567,120 @@ export function LedgerStage6Screen() {
                     pathname: "/expenses/analysis",
                     params: {
                       journeyId: journey.journeyId,
-                      memberId: memberId ?? "",
-                      scope,
+                      memberId: categorySelection?.id ?? memberId ?? "",
+                      scope: categorySelection ? "MINE" : scope,
                     },
                   })
                 }
-                title="Categories"
+                title={scope === "GROUP" ? "Spending by Member" : "Categories"}
               >
-                {categories.map((category) => {
-                  const percentage = spendingPercentage(
-                    category.totalMinor,
-                    summary?.totalMinor ?? 0,
-                  );
-                  return (
-                    <Pressable
-                      accessibilityLabel={`${category.label}, ${formatLedgerMoney(
-                        category.totalMinor,
+                {scope === "GROUP" ? (
+                  <ScrollView
+                    contentContainerStyle={styles.memberSelector}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.memberScroller}
+                  >
+                    {[{ id: "", label: "Group" }, ...(projection?.members ?? [])].map(
+                      (item) => {
+                        const selected = (categorySelection?.id ?? "") === item.id;
+                        return (
+                          <Pressable
+                            accessibilityRole="tab"
+                            accessibilityState={{ selected }}
+                            key={item.id || "group"}
+                            onPress={() => void selectCategoryMember(item.id || null)}
+                            style={[
+                              styles.memberTab,
+                              selected && styles.memberTabSelected,
+                            ]}
+                          >
+                            <Text
+                              numberOfLines={1}
+                              style={[
+                                styles.memberTabText,
+                                selected && styles.memberTabTextSelected,
+                              ]}
+                            >
+                              {item.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      },
+                    )}
+                  </ScrollView>
+                ) : null}
+                <View style={scope === "GROUP" ? styles.groupCategories : undefined}>
+                  {displayedCategories.map((category) => {
+                    const percentage = spendingPercentage(
+                      category.totalMinor,
+                      categorySummary?.totalMinor ?? 0,
+                    );
+                    return (
+                      <Pressable
+                        accessibilityLabel={`${category.label}, ${formatLedgerMoney(
+                          category.totalMinor,
+                          journey.settlementCurrency,
+                          journey.settlementScale,
+                        )}, ${percentage} percent`}
+                        accessibilityRole="button"
+                        key={category.key}
+                        onPress={() =>
+                          openSearch({
+                            authoritative: "1",
+                            category: category.key,
+                            ...(categorySelection
+                              ? { memberId: categorySelection.id, scope: "MINE" }
+                              : {}),
+                            origin: `Category: ${category.label}`,
+                          })
+                        }
+                        style={styles.categoryRow}
+                      >
+                        <View style={styles.categoryHeading}>
+                          <Text
+                            maxFontSizeMultiplier={2}
+                            numberOfLines={1}
+                            style={styles.rowTitle}
+                          >
+                            {category.label}
+                          </Text>
+                          <Text style={styles.categoryAmount}>
+                            {formatLedgerMoney(
+                              category.totalMinor,
+                              journey.settlementCurrency,
+                              journey.settlementScale,
+                            )}
+                            <Text style={styles.categoryPercentage}>
+                              {` · ${percentage}%`}
+                            </Text>
+                          </Text>
+                        </View>
+                        <View style={styles.categoryTrack}>
+                          <View
+                            style={[styles.categoryFill, { width: `${percentage}%` }]}
+                          />
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                  {displayedCategories.length === 0 ? (
+                    <Text style={styles.empty}>No category totals yet.</Text>
+                  ) : null}
+                </View>
+                {scope === "GROUP" ? (
+                  <View style={styles.categoryTotal}>
+                    <Text style={styles.categoryTotalLabel}>
+                      {categorySelection ? "Total Spending" : "Total Group Spending"}
+                    </Text>
+                    <Text style={styles.categoryTotalAmount}>
+                      {formatLedgerMoney(
+                        categorySummary?.totalMinor ?? 0,
                         journey.settlementCurrency,
                         journey.settlementScale,
-                      )}, ${percentage} percent`}
-                      accessibilityRole="button"
-                      key={category.key}
-                      onPress={() =>
-                        openSearch({
-                          authoritative: "1",
-                          category: category.key,
-                          origin: `Category: ${category.label}`,
-                        })
-                      }
-                      style={styles.categoryRow}
-                    >
-                      <View style={styles.categoryHeading}>
-                        <Text
-                          maxFontSizeMultiplier={2}
-                          numberOfLines={1}
-                          style={styles.rowTitle}
-                        >
-                          {category.label}
-                        </Text>
-                        <Text style={styles.categoryAmount}>
-                          {formatLedgerMoney(
-                            category.totalMinor,
-                            journey.settlementCurrency,
-                            journey.settlementScale,
-                          )}
-                          <Text style={styles.categoryPercentage}>
-                            {` · ${percentage}%`}
-                          </Text>
-                        </Text>
-                      </View>
-                      <View style={styles.categoryTrack}>
-                        <View
-                          style={[styles.categoryFill, { width: `${percentage}%` }]}
-                        />
-                      </View>
-                    </Pressable>
-                  );
-                })}
-                {categories.length === 0 ? (
-                  <Text style={styles.empty}>No category totals yet.</Text>
+                      )}
+                    </Text>
+                  </View>
                 ) : null}
               </DashboardSection>
 
@@ -1041,6 +1221,16 @@ const styles = StyleSheet.create({
   segmentText: { color: "#64748B", fontWeight: "600" },
   segmentTextSelected: { color: "#111827" },
   total: { backgroundColor: "#FFFFFF", borderRadius: 14, padding: 18 },
+  reviewBanner: {
+    alignItems: "center",
+    backgroundColor: "#E7F5F1",
+    borderRadius: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 52,
+    paddingHorizontal: 14,
+  },
+  reviewBannerText: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
   totalHeader: {
     alignItems: "center",
     flexDirection: "row",
@@ -1053,7 +1243,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginVertical: 6,
   },
-  sectionBlock: { gap: 8 },
+  sectionBlock: { gap: 8, width: "100%" },
   sectionHeader: {
     alignItems: "center",
     flexDirection: "row",
@@ -1064,6 +1254,30 @@ const styles = StyleSheet.create({
   sectionAction: { justifyContent: "center", minHeight: 44, paddingLeft: 16 },
   link: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
   surface: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
+  memberScroller: { flexGrow: 0, width: "100%" },
+  memberSelector: { gap: 8, paddingHorizontal: 14, paddingVertical: 12 },
+  memberTab: {
+    backgroundColor: "#F1F5F9",
+    borderRadius: 16,
+    justifyContent: "center",
+    minHeight: 38,
+    paddingHorizontal: 14,
+  },
+  memberTabSelected: { backgroundColor: "#E7F5F1" },
+  memberTabText: { color: "#64748B", fontSize: 13, fontWeight: "600" },
+  memberTabTextSelected: { color: "#0F766E", fontWeight: "700" },
+  groupCategories: { minHeight: 290 },
+  categoryTotal: {
+    alignItems: "center",
+    borderTopColor: "#E5E7EB",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 50,
+    paddingHorizontal: 14,
+  },
+  categoryTotalLabel: { color: "#334155", fontSize: 14, fontWeight: "600" },
+  categoryTotalAmount: { color: "#111827", fontSize: 14, fontWeight: "700" },
   categoryRow: {
     borderBottomColor: "#E5E7EB",
     borderBottomWidth: StyleSheet.hairlineWidth,

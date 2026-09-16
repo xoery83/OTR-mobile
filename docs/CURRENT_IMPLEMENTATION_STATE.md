@@ -2,6 +2,29 @@
 
 Date: 2026-09-16
 
+## Ledger Entry Page — Review and Member Spending Polish
+
+- Spending shows a compact Review banner only when the current Journey has
+  open or acknowledged findings; it opens the existing Review List.
+- Mine Categories remain unchanged. Group adds a horizontal Group/member selector
+  and uses the existing category bars for either the full Journey or the selected
+  member's authoritative split-attributed spending. Each view uses its own total
+  for percentages, and category drill-down carries the selected member context.
+- See analysis remains available. Its existing `memberId` plus `MINE` query supports
+  the selected member's data, though the Analysis screen still labels that scope
+  “Mine.” No Analysis redesign is included in this polish.
+- SQLite, Backend, Supabase, sync protocol, and financial rules are unchanged.
+- TypeScript, ESLint, 70 test files / 254 tests, `git diff --check`, and the
+  generic iOS Simulator Release build pass.
+- The final Release was installed on the booted iPhone 17 Pro Simulator and
+  checked through Device Hub. The 31-item Review banner opens the existing
+  Review List; a Journey with zero Review items has no banner or gap. Group
+  defaults to Group, the member selector scrolls horizontally, and Group/member
+  category totals and drill-down lists match their own contexts. See analysis
+  carries the selected member's data, while its existing UI still says “Mine.”
+- Final Mine, Group, Group total, member total and zero-review screenshots were
+  saved outside Git under `/private/tmp/otr-ledger-entry-*-final.png`.
+
 ## Current Milestone
 
 The Account Switching Foundation plus contextual global menu and Dev quick-account
