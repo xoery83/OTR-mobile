@@ -18,6 +18,21 @@ export const ledgerReviewFindingSchema = z.object({
   revision: z.number().int().positive(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  ruleId: z.string().nullable().optional(),
+  ruleVersion: z.number().int().positive().nullable().optional(),
+  ruleCategory: z.string().nullable().optional(),
+  ruleInputFingerprint: z.string().nullable().optional(),
+  comparisonFingerprint: z.string().nullable().optional(),
+  observationContext: z.record(z.string(), z.unknown()).nullable().optional(),
+  lifecycle: z
+    .enum(["ACTIVE", "RESOLVED_BY_EXPENSE_UPDATE", "SUPERSEDED"])
+    .nullable()
+    .optional(),
+  observationGeneration: z.number().int().positive().nullable().optional(),
+  resolvedAt: z.string().nullable().optional(),
+  resolutionReason: z.string().nullable().optional(),
+  supersededAt: z.string().nullable().optional(),
+  supersededByFindingId: uuid.nullable().optional(),
 });
 
 export const ledgerReviewActionSchema = z.object({

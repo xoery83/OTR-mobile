@@ -2,6 +2,27 @@
 
 Date: 2026-09-16
 
+## Review Engine v2 Phase 1 (local validation)
+
+- Additive Supabase Review migration `20260916000100` and Mobile SQLite v20,
+  versioned five-rule observation/evidence, lifecycle/episode reconciliation,
+  same-currency amount cohort and same-day duplicate rule are implemented in
+  source. Canonical Expense and payment/valuation success paths trigger a
+  best-effort full-Journey re-evaluation; explicit refresh repairs missed runs.
+- Global Review decisions, Journey-wide visibility and old UI/counts remain.
+  Legacy observation evidence/actions persist; first successful v2 reconciliation
+  retires the legacy heuristic global status to STALE. No Hosted Dev/Production
+  migration has been applied by this task.
+- The additive migration applied to local Supabase; all 11 pgTAP files / 214
+  checks pass. The pre-existing date-sensitive Stage 5.1 FX fixture was made
+  relative to test time without changing financial rules.
+- TypeScript, ESLint, Backend build and 72 test files / 261 tests pass; the
+  Backend create trigger test verifies Review failure cannot misreport a
+  committed canonical financial write.
+- Next checkpoint: integration test automatic Backend mutation→Review on local
+  Supabase, then separately approve
+  Hosted Dev rollout; Phase 2 personal state is not begun.
+
 ## Ledger Entry Page — Review and Member Spending Polish
 
 - Follow-up member polish: Group member chips use a short first-name label with

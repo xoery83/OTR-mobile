@@ -71,10 +71,47 @@ describe("SQLite migrations", () => {
     expect(review.sql).toContain("CREATE TABLE ledger_review_findings");
     expect(review.sql).toContain("CREATE TABLE ledger_review_finding_actions");
 
+    const account = migrations.find(({ id }) => id === 19)!;
+    expect(account.sql).toContain("owner_user_id");
+    expect(account.sql).toContain("local_owner_user_id");
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(19);
-    expect(latest.sql).toContain("owner_user_id");
-    expect(latest.sql).toContain("local_owner_user_id");
+    expect(latest.id).toBe(20);
+    expect(latest.sql).toContain("observation_context_json");
+  });
+
+  it("adds nullable Review v2 evidence without rewriting v1 history", () => {
+    const database = new DatabaseSync(":memory:");
+    try {
+      for (const migration of migrations.filter(({ id }) => id <= 19))
+        database.exec(migration.sql);
+      database.exec(`INSERT INTO ledger_review_findings (
+        id, journey_id, expense_id, layer, finding_type, severity, confidence,
+        evidence_codes_json, status, ruleset_version, entity_revision, revision,
+        created_at, updated_at
+      ) VALUES ('legacy', 'journey', 'expense', 'HEURISTIC', 'AMOUNT_OUTLIER',
+        'WARNING', 0.75, '["TEN_TIMES_JOURNEY_MEDIAN"]', 'ACKNOWLEDGED',
+        'ledger-review-v1', 1, 2, '2026-09-16', '2026-09-16')`);
+      database.exec(`INSERT INTO ledger_review_finding_actions (
+        id, finding_id, action, actor_user_id, actor_member_id, actor_role,
+        reason, finding_revision, entity_revision, ruleset_version,
+        operation_id, sync_status, created_at
+      ) VALUES ('action', 'legacy', 'ACKNOWLEDGED', 'user', 'member', 'owner',
+        'valid', 1, 1, 'ledger-review-v1', 'operation', 'SYNCED', '2026-09-16')`);
+      database.exec(migrations.find(({ id }) => id === 20)!.sql);
+      expect(
+        database
+          .prepare(
+            `SELECT status, rule_id AS ruleId,
+        observation_context_json AS context FROM ledger_review_findings WHERE id = 'legacy'`,
+          )
+          .get(),
+      ).toEqual({ status: "ACKNOWLEDGED", ruleId: null, context: null });
+      expect(
+        database.prepare("SELECT count(*) AS n FROM ledger_review_finding_actions").get(),
+      ).toEqual({ n: 1 });
+    } finally {
+      database.close();
+    }
   });
 
   it("migrates a v13 Settlement through a cold v14 restart", () => {

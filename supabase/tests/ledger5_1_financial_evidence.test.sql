@@ -27,7 +27,7 @@ select lives_ok($$
   ) values (
     '51000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001', 'EUR', 'NZD', 1.978,
-    '2026-09-12', '2026-09-12T00:00:00Z', '2026-09-15T00:00:00Z',
+    '2026-09-12', '2026-09-12T00:00:00Z', now() + interval '3 days',
     'stage5-test-provider', 'quote-1'
   )
 $$, 'service role can maintain trusted rate candidates');

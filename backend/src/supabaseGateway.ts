@@ -61,7 +61,7 @@ import {
 } from "../../src/domain/ledger/settlement";
 import { previewValuation } from "../../src/domain/ledger/valuation";
 import { deriveTransferPaymentState } from "../../src/domain/ledger/paymentLifecycle";
-import { reviewExpenses } from "../../src/domain/ledger/review";
+import { reviewExpensesV2 } from "../../src/domain/ledger/reviewV2";
 import {
   assertValidExpenseAggregate,
   LedgerValidationError,
@@ -187,6 +187,28 @@ function reviewFindingRowToDto(row: Record<string, unknown>): LedgerReviewFindin
     revision: Number(row.revision),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
+    ruleId: row.rule_id ? String(row.rule_id) : null,
+    ruleVersion: row.rule_version == null ? null : Number(row.rule_version),
+    ruleCategory: row.rule_category ? String(row.rule_category) : null,
+    ruleInputFingerprint: row.rule_input_fingerprint
+      ? String(row.rule_input_fingerprint)
+      : null,
+    comparisonFingerprint: row.comparison_fingerprint
+      ? String(row.comparison_fingerprint)
+      : null,
+    observationContext: (row.observation_context ?? null) as Record<
+      string,
+      unknown
+    > | null,
+    lifecycle: (row.lifecycle ?? null) as LedgerReviewFindingDto["lifecycle"],
+    observationGeneration:
+      row.observation_generation == null ? null : Number(row.observation_generation),
+    resolvedAt: row.resolved_at ? String(row.resolved_at) : null,
+    resolutionReason: row.resolution_reason ? String(row.resolution_reason) : null,
+    supersededAt: row.superseded_at ? String(row.superseded_at) : null,
+    supersededByFindingId: row.superseded_by_finding_id
+      ? String(row.superseded_by_finding_id)
+      : null,
   };
 }
 
@@ -218,6 +240,58 @@ async function readLedgerReviewData(service: SupabaseClient, tripId: string) {
     findings: (findings.data ?? []).map((row) => reviewFindingRowToDto(row)),
     actions: (actions.data ?? []).map((row) => reviewActionRowToDto(row)),
   };
+}
+
+async function evaluateLedgerReviewV2(service: SupabaseClient, tripId: string) {
+  const expenseRows = await service
+    .from("expenses")
+    .select(
+      "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+    )
+    .eq("journey_id", tripId);
+  if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
+  const expenses = await readExpenseAggregates(service, expenseRows.data ?? []);
+  const evaluatedAt = new Date().toISOString();
+  const observations = reviewExpensesV2(
+    expenses.map((expense) => ({ ...expense, status: expense.businessStatus })),
+  ).map((observation) => {
+    const comparisonFingerprint = observation.comparison
+      ? hashPayload(observation.comparison)
+      : null;
+    const inputFingerprint = hashPayload([observation.input, observation.comparison]);
+    return {
+      ...observation,
+      inputFingerprint,
+      comparisonFingerprint,
+      context: {
+        ...observation.context,
+        evaluatedAt,
+        ruleInputFingerprint: inputFingerprint,
+        comparisonFingerprint,
+      },
+    };
+  });
+  const revisions = Object.fromEntries(
+    (expenseRows.data ?? []).map((row) => [String(row.id), Number(row.revision)]),
+  );
+  const result = await service.rpc("reconcile_ledger_review_v2", {
+    p_journey_id: tripId,
+    p_observations: observations,
+    p_expense_revisions: revisions,
+  });
+  if (result.error)
+    throw new Error(
+      `Supabase Dev Review v2 reconciliation failed: ${result.error.message}`,
+    );
+}
+
+async function tryEvaluateLedgerReviewV2(service: SupabaseClient, tripId: string) {
+  // The Expense RPC has already committed. Review failure is repaired by the next refresh.
+  try {
+    await evaluateLedgerReviewV2(service, tripId);
+  } catch {
+    /* best-effort projection */
+  }
 }
 
 function capabilities(role: string | null, status: string | null) {
@@ -353,6 +427,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     },
 
     async refreshLedgerReview(_userId, tripId) {
+      await evaluateLedgerReviewV2(service, tripId);
       const expenseRows = await service
         .from("expenses")
         .select(
@@ -361,39 +436,34 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         .eq("journey_id", tripId);
       if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
       const expenses = await readExpenseAggregates(service, expenseRows.data ?? []);
-      const heuristic = reviewExpenses(
-        expenses.map((expense) => ({ ...expense, status: expense.businessStatus })),
-      );
       const memberRows = await service
         .from("journey_members")
         .select("id")
         .eq("trip_id", tripId);
       if (memberRows.error) throw new Error("Supabase Dev Review member read failed.");
       const memberIds = new Set((memberRows.data ?? []).map((row) => String(row.id)));
-      const observations = [
-        ...heuristic.map((item) => ({ ...item, layer: "HEURISTIC" as const })),
-        ...expenses.flatMap((expense) =>
-          validateExpenseAggregate(
-            { ...expense, status: expense.businessStatus },
-            memberIds,
-          ).map((issue) => ({
-            expenseId: expense.id,
-            entityRevision: expense.revision,
-            rulesetVersion: "ledger-validation-v1",
-            findingType: issue.code,
-            severity: "BLOCKING" as const,
-            confidence: null,
-            evidenceCodes: [issue.code, `FIELD:${issue.field}`],
-            layer: "DETERMINISTIC" as const,
-          })),
-        ),
-      ];
+      const observations = expenses.flatMap((expense) =>
+        validateExpenseAggregate(
+          { ...expense, status: expense.businessStatus },
+          memberIds,
+        ).map((issue) => ({
+          expenseId: expense.id,
+          entityRevision: expense.revision,
+          rulesetVersion: "ledger-validation-v1",
+          findingType: issue.code,
+          severity: "BLOCKING" as const,
+          confidence: null,
+          evidenceCodes: [issue.code, `FIELD:${issue.field}`],
+          layer: "DETERMINISTIC" as const,
+        })),
+      );
       const current = await service
         .from("ledger_review_findings")
         .select(
           "id, expense_id, entity_revision, ruleset_version, finding_type, layer, evidence_codes, status",
         )
         .eq("journey_id", tripId)
+        .eq("layer", "DETERMINISTIC")
         .neq("status", "STALE");
       if (current.error) throw new Error("Supabase Dev Review state read failed.");
       const activeKeys = new Set(
@@ -599,11 +669,19 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     },
 
     async createLedgerExpense(userId, tripId, idempotencyKey, input) {
-      return createLedgerExpenseAggregate(service, userId, tripId, idempotencyKey, input);
+      const result = await createLedgerExpenseAggregate(
+        service,
+        userId,
+        tripId,
+        idempotencyKey,
+        input,
+      );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
     },
 
     async updateLedgerExpense(userId, tripId, expenseId, idempotencyKey, input) {
-      return mutateLedgerExpenseAggregate(
+      const result = await mutateLedgerExpenseAggregate(
         service,
         userId,
         tripId,
@@ -612,10 +690,12 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         "UPDATE_EXPENSE",
         input,
       );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
     },
 
     async deleteLedgerExpense(userId, tripId, expenseId, idempotencyKey, input) {
-      return mutateLedgerExpenseAggregate(
+      const result = await mutateLedgerExpenseAggregate(
         service,
         userId,
         tripId,
@@ -624,10 +704,12 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         "DELETE_EXPENSE",
         input,
       );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
     },
 
     async restoreLedgerExpense(userId, tripId, expenseId, idempotencyKey, input) {
-      return mutateLedgerExpenseAggregate(
+      const result = await mutateLedgerExpenseAggregate(
         service,
         userId,
         tripId,
@@ -636,10 +718,12 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         "RESTORE_EXPENSE",
         input,
       );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
     },
 
     async resolveLedgerExpenseConflict(userId, tripId, expenseId, idempotencyKey, input) {
-      return resolveLedgerExpenseConflict(
+      const result = await resolveLedgerExpenseConflict(
         service,
         userId,
         tripId,
@@ -647,6 +731,8 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         idempotencyKey,
         input,
       );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
     },
 
     async createLedgerCorrection(userId, tripId, expenseId, idempotencyKey, input) {
@@ -680,7 +766,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     },
 
     async addLedgerPaymentRecord(userId, tripId, expenseId, idempotencyKey, input) {
-      return addLedgerPaymentRecord(
+      const result = await addLedgerPaymentRecord(
         service,
         userId,
         tripId,
@@ -688,10 +774,12 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         idempotencyKey,
         input,
       );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
     },
 
     async applyLedgerValuation(userId, tripId, expenseId, idempotencyKey, input) {
-      return applyLedgerValuation(
+      const result = await applyLedgerValuation(
         service,
         userId,
         tripId,
@@ -699,6 +787,8 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         idempotencyKey,
         input,
       );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
     },
 
     async createFinalizedSettlementGuardFixture(_userId, tripId, expenseId) {

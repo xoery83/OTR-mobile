@@ -901,4 +901,24 @@ export const migrations: Migration[] = [
       ALTER TABLE ledger_receipt_assets ADD COLUMN local_owner_user_id TEXT;
     `,
   },
+  {
+    id: 20,
+    name: "ledger_review_v2_engine_foundation",
+    sql: `
+      ALTER TABLE ledger_review_findings ADD COLUMN rule_id TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN rule_version INTEGER;
+      ALTER TABLE ledger_review_findings ADD COLUMN rule_category TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN rule_input_fingerprint TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN comparison_fingerprint TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN observation_context_json TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN lifecycle TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN observation_generation INTEGER;
+      ALTER TABLE ledger_review_findings ADD COLUMN resolved_at TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN resolution_reason TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN superseded_at TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN superseded_by_finding_id TEXT;
+      CREATE INDEX ledger_review_v2_active ON ledger_review_findings
+        (journey_id, lifecycle, rule_id);
+    `,
+  },
 ];

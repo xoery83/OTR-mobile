@@ -30,6 +30,14 @@ export function createLedgerReviewRepository(
           settlement_id AS settlementId, layer, finding_type AS findingType,
           severity, confidence, evidence_codes_json AS evidenceCodesJson, status,
           ruleset_version AS rulesetVersion, entity_revision AS entityRevision,
+          rule_id AS ruleId, rule_version AS ruleVersion, rule_category AS ruleCategory,
+          rule_input_fingerprint AS ruleInputFingerprint,
+          comparison_fingerprint AS comparisonFingerprint,
+          observation_context_json AS observationContextJson,
+          lifecycle, observation_generation AS observationGeneration,
+          resolved_at AS resolvedAt, resolution_reason AS resolutionReason,
+          superseded_at AS supersededAt,
+          superseded_by_finding_id AS supersededByFindingId,
           revision, created_at AS createdAt, updated_at AS updatedAt
          FROM ledger_review_findings WHERE journey_id = ?
            AND EXISTS (SELECT 1 FROM ledger_actor_context actor
@@ -46,6 +54,15 @@ export function createLedgerReviewRepository(
               (row as LedgerReviewFindingDto & { evidenceCodesJson: string })
                 .evidenceCodesJson,
             ) as string[],
+            observationContext: (row as typeof row & { observationContextJson?: string })
+              .observationContextJson
+              ? (JSON.parse(
+                  String(
+                    (row as typeof row & { observationContextJson: string })
+                      .observationContextJson,
+                  ),
+                ) as Record<string, unknown>)
+              : null,
           })),
         );
     },
@@ -174,8 +191,11 @@ export async function applyReviewFinding(
     `INSERT OR REPLACE INTO ledger_review_findings (
       id, journey_id, expense_id, settlement_id, layer, finding_type, severity,
       confidence, evidence_codes_json, status, ruleset_version, entity_revision,
-      revision, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      revision, created_at, updated_at, rule_id, rule_version, rule_category,
+      rule_input_fingerprint, comparison_fingerprint, observation_context_json,
+      lifecycle, observation_generation, resolved_at, resolution_reason,
+      superseded_at, superseded_by_finding_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     finding.id,
     finding.journeyId,
     finding.expenseId,
@@ -191,6 +211,18 @@ export async function applyReviewFinding(
     finding.revision,
     finding.createdAt,
     finding.updatedAt,
+    finding.ruleId ?? null,
+    finding.ruleVersion ?? null,
+    finding.ruleCategory ?? null,
+    finding.ruleInputFingerprint ?? null,
+    finding.comparisonFingerprint ?? null,
+    finding.observationContext ? JSON.stringify(finding.observationContext) : null,
+    finding.lifecycle ?? null,
+    finding.observationGeneration ?? null,
+    finding.resolvedAt ?? null,
+    finding.resolutionReason ?? null,
+    finding.supersededAt ?? null,
+    finding.supersededByFindingId ?? null,
   );
 }
 

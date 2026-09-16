@@ -53,6 +53,10 @@ Ledger / Expenses:
   exchange rate snapshot, edit history, permissions, settlement, and export.
 - An accepted Expense may be excluded from group settlement while remaining in
   Spending, search, receipts, history, and consumption analysis.
+- Review is a financial attention inbox: shared versioned observations preserve
+  evidence, while a future per-user decision records acknowledgement or dismissal
+  without changing Expense or settlement truth. Review Engine v2 foundation is
+  separate from the later personal-state, eligibility, and inbox UI phases.
 
 Travel Documents / Tickets:
 
