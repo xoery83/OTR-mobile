@@ -24,6 +24,7 @@ const item: ItineraryItem = {
 
 const operation: SyncOperation = {
   id: "operation-1",
+  ownerUserId: "user-a",
   tripId: item.tripId,
   entityType: "itinerary",
   entityId: item.id,

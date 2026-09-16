@@ -16,6 +16,7 @@ const expenseId = "20000000-0000-4000-8000-000000000001";
 const memberId = "30000000-0000-4000-8000-000000000001";
 const householdId = "40000000-0000-4000-8000-000000000001";
 const correctionId = "50000000-0000-4000-8000-000000000001";
+const activeUser = async () => "90000000-0000-4000-8000-000000000001";
 
 function database(
   existingExpenseStatus: string | null = null,
@@ -165,11 +166,15 @@ describe("Ledger read repository", () => {
       serverTime: "2026-09-11T01:00:00.000Z",
     };
 
-    await createLedgerReadRepository(db).applyBootstrap(response);
+    await createLedgerReadRepository(db, activeUser).applyBootstrap(response);
 
     expect(transactions()).toBe(1);
     expect(writes.some((write) => write.sql.includes("ledger_expenses"))).toBe(true);
-    expect(writes.at(-1)?.params.slice(0, 2)).toEqual([journeyId, "cursor-2"]);
+    expect(writes.at(-1)?.params.slice(0, 3)).toEqual([
+      "90000000-0000-4000-8000-000000000001",
+      journeyId,
+      "cursor-2",
+    ]);
   });
 
   it("defers a server change when the local aggregate is pending", async () => {
@@ -188,7 +193,7 @@ describe("Ledger read repository", () => {
       serverTime: "2026-09-11T02:00:00.000Z",
     };
 
-    await createLedgerReadRepository(db).applyChanges(journeyId, response);
+    await createLedgerReadRepository(db, activeUser).applyChanges(journeyId, response);
 
     expect(
       writes.some((write) => write.sql.includes("ledger_deferred_server_changes")),
@@ -196,7 +201,11 @@ describe("Ledger read repository", () => {
     expect(writes.some((write) => write.sql.includes("DELETE FROM ledger_expense"))).toBe(
       false,
     );
-    expect(writes.at(-1)?.params.slice(0, 2)).toEqual([journeyId, "cursor-3"]);
+    expect(writes.at(-1)?.params.slice(0, 3)).toEqual([
+      "90000000-0000-4000-8000-000000000001",
+      journeyId,
+      "cursor-3",
+    ]);
   });
 
   it("defers bootstrap expenses when a matching local aggregate is pending", async () => {
@@ -236,7 +245,7 @@ describe("Ledger read repository", () => {
       serverTime: "2026-09-11T01:00:00.000Z",
     };
 
-    await createLedgerReadRepository(db).applyBootstrap(response);
+    await createLedgerReadRepository(db, activeUser).applyBootstrap(response);
 
     expect(
       writes.some((write) => write.sql.includes("ledger_deferred_server_changes")),
@@ -283,7 +292,7 @@ describe("Ledger read repository", () => {
       serverTime: "2026-09-11T01:00:00.000Z",
     };
 
-    await createLedgerReadRepository(db).applyBootstrap(response);
+    await createLedgerReadRepository(db, activeUser).applyBootstrap(response);
 
     const aggregate = writes.find((write) =>
       write.sql.includes("INSERT OR REPLACE INTO ledger_expenses"),
@@ -350,7 +359,7 @@ describe("Ledger read repository", () => {
       serverTime: "2026-09-11T01:00:00.000Z",
     };
 
-    await createLedgerReadRepository(db).applyBootstrap(response);
+    await createLedgerReadRepository(db, activeUser).applyBootstrap(response);
 
     const receiptWrite = writes.find((write) =>
       write.sql.includes("INSERT OR REPLACE INTO ledger_receipt_assets"),
@@ -374,7 +383,7 @@ describe("Ledger read repository", () => {
       serverTime: "2026-09-11T02:00:00.000Z",
     };
 
-    await createLedgerReadRepository(db).applyChanges(journeyId, response);
+    await createLedgerReadRepository(db, activeUser).applyChanges(journeyId, response);
 
     expect(
       writes.some((write) => write.sql.includes("ledger_deferred_server_changes")),
@@ -408,13 +417,17 @@ describe("Ledger read repository", () => {
       serverTime: "2026-09-11T02:00:00.000Z",
     };
 
-    await createLedgerReadRepository(db).applyChanges(journeyId, response);
+    await createLedgerReadRepository(db, activeUser).applyChanges(journeyId, response);
 
     expect(writes.some((write) => write.sql.includes("ledger_households"))).toBe(true);
     expect(
       writes.some((write) => write.sql.includes("ledger_deferred_server_changes")),
     ).toBe(false);
-    expect(writes.at(-1)?.params.slice(0, 2)).toEqual([journeyId, "cursor-3"]);
+    expect(writes.at(-1)?.params.slice(0, 3)).toEqual([
+      "90000000-0000-4000-8000-000000000001",
+      journeyId,
+      "cursor-3",
+    ]);
   });
 
   it("caches narrow My Ledger summaries without Journey detail hydration", async () => {
@@ -442,7 +455,7 @@ describe("Ledger read repository", () => {
       serverTime: "2026-09-11T00:00:00.000Z",
     };
 
-    await createLedgerReadRepository(db).cacheMyLedger(response);
+    await createLedgerReadRepository(db, activeUser).cacheMyLedger(response);
 
     expect(writes).toHaveLength(2);
     expect(writes[1].sql).toContain("ledger_my_journey_summaries");

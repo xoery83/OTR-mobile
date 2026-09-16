@@ -42,7 +42,8 @@ Recommended baseline:
 
 ## Navigation
 
-Do not copy OTR Web information architecture. Phase 1 IA is mobile-first:
+Do not copy OTR Web information architecture. The currently implemented Phase
+1 tabs remain:
 
 - Today.
 - Expenses.
@@ -50,6 +51,22 @@ Do not copy OTR Web information architecture. Phase 1 IA is mobile-first:
 - Trip.
 
 Tickets may surface inside Today and Trip before becoming a top-level destination.
+
+The approved long-term bottom-navigation target is Today / Ledger / Trip /
+Album. Capture becomes a global creation action when the current Capture route
+and state dependencies are deliberately migrated. The bottom-tab migration is
+not part of the current Global Menu and Account Switching work.
+
+The global menu is contextual:
+
+- fixed account/global actions: current user, Settings, Language, Log out;
+- current-module secondary actions, such as My Ledger, Review, and Ledger
+  Settings while Ledger is active;
+- Development-only diagnostics and remembered Dev-account switching.
+
+It does not repeat the primary bottom destinations. Missing My Trips, My
+Albums, Trip Settings, or Album Settings routes are omitted rather than
+represented by placeholder screens.
 
 ## State Strategy
 
@@ -139,6 +156,20 @@ Token expiry is not the same as logout. If the access token has expired but the 
 Only explicit server rejection, revoked or invalid refresh session, disabled account, user logout, maximum trust expiry confirmed by the server, or a clear security event may transition the app to `REAUTH_REQUIRED`.
 
 Use secure storage for token material. Face ID or Touch ID may later be used as local device unlock, but it is separate from server authentication.
+
+The local session model includes an explicit stable user identity. Remembered
+accounts store independent secure sessions, and one account is active at a
+time. A switch boundary pauses new synchronization, lets the old account's
+in-flight authenticated work settle, changes the active secure session,
+invalidates in-memory projections, restores only the target account's scoped
+cache, and then resumes synchronization for operations owned by that account.
+
+Device-local `user_id`, `owner_user_id`, and `local_owner_user_id` fields are
+isolation metadata. They do not redefine server ownership, Journey membership,
+financial ownership, or authorization. Server-confirmed Journey records remain
+shared locally for every active account that has a valid cached/Backend actor
+context for that Journey. Local unconfirmed records remain visible only to the
+account that created them.
 
 Internal auth states:
 

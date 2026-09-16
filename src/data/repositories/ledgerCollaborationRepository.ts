@@ -19,6 +19,7 @@ export type LedgerCollaborationDatabase = Pick<
 
 export function createLedgerCollaborationRepository(
   database: LedgerCollaborationDatabase,
+  getActiveUserId: () => Promise<string> = defaultGetActiveUserId,
 ) {
   return {
     async recordConflict(
@@ -26,6 +27,9 @@ export function createLedgerCollaborationRepository(
       operation: SyncOperation,
       response: LedgerExpenseConflictResponse,
     ) {
+      const userId = await getActiveUserId();
+      if (operation.ownerUserId !== userId)
+        throw new Error("Conflict operation belongs to another account.");
       const now = new Date().toISOString();
       const payload = JSON.parse(operation.payloadJson) as {
         baseExpense?: unknown;
@@ -94,6 +98,7 @@ export function createLedgerCollaborationRepository(
       journeyId: string,
       input: ResolveLedgerExpenseConflictRequest,
     ) {
+      const userId = await getActiveUserId();
       const conflict = await database.getFirstAsync<{ canonicalSnapshotJson: string }>(
         `SELECT canonical_snapshot_json AS canonicalSnapshotJson
          FROM ledger_expense_conflicts
@@ -102,7 +107,7 @@ export function createLedgerCollaborationRepository(
         localExpenseId,
       );
       if (!conflict) throw new Error("The conflict is no longer open.");
-      await enqueue(database, {
+      await enqueue(database, userId, {
         journeyId,
         entityType: "ledger_expense",
         entityId: localExpenseId,
@@ -133,6 +138,7 @@ export function createLedgerCollaborationRepository(
       reason: string;
       requestedByMemberId: string;
     }) {
+      const userId = await getActiveUserId();
       const id = createLocalId("ledger-correction");
       const now = new Date().toISOString();
       await database.withTransactionAsync(async () => {
@@ -152,7 +158,7 @@ export function createLedgerCollaborationRepository(
           now,
           now,
         );
-        await enqueue(database, {
+        await enqueue(database, userId, {
           journeyId: input.journeyId,
           entityType: "ledger_correction",
           entityId: id,
@@ -176,6 +182,7 @@ export function createLedgerCollaborationRepository(
       action: "accept" | "reject" | "withdraw",
       input: LedgerCorrectionActionRequest,
     ) {
+      const userId = await getActiveUserId();
       const correction = await database.getFirstAsync<{
         serverId: string | null;
         expenseId: string;
@@ -192,7 +199,7 @@ export function createLedgerCollaborationRepository(
           new Date().toISOString(),
           localCorrectionId,
         );
-        await enqueue(database, {
+        await enqueue(database, userId, {
           journeyId,
           entityType: "ledger_correction",
           entityId: localCorrectionId,
@@ -255,8 +262,13 @@ export function createLedgerCollaborationRepository(
   };
 }
 
+async function defaultGetActiveUserId() {
+  return (await import("@/data/auth/authRepository")).requireActiveUserId();
+}
+
 async function enqueue(
   database: LedgerCollaborationDatabase,
+  userId: string,
   input: {
     journeyId: string;
     entityType: string;
@@ -270,9 +282,9 @@ async function enqueue(
   await database.runAsync(
     `INSERT INTO sync_operations (
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
-      base_version, payload_json, status, attempt_count, next_attempt_at,
+      base_version, payload_json, owner_user_id, status, attempt_count, next_attempt_at,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
     createLocalId("ledger-operation"),
     input.journeyId,
     input.entityType,
@@ -281,6 +293,7 @@ async function enqueue(
     createLocalId("ledger-idempotency"),
     input.baseVersion,
     JSON.stringify(input.payload),
+    userId,
     now,
     now,
   );

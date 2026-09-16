@@ -3,6 +3,7 @@ import { createLedgerSettlementRepository } from "@/data/repositories/ledgerSett
 
 import { createSyncEngine } from "./syncEngine";
 import { createSyncOperationRepository } from "./syncOperationRepository";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 import { createLedgerSettlementTransport } from "./ledgerSettlementTransport";
 import { createLedgerSettlementPaymentSyncWorker } from "./ledgerSettlementPaymentSyncWorker";
 import type { AuthState } from "@/domain/auth/authState";
@@ -13,7 +14,7 @@ export async function runLedgerSettlementPaymentSync(
 ) {
   const database = await openDatabase();
   return createSyncEngine(
-    createSyncOperationRepository(database),
+    createSyncOperationRepository(database, requireActiveUserId),
     createLedgerSettlementPaymentSyncWorker(
       createLedgerSettlementRepository(database),
       createLedgerSettlementTransport(),

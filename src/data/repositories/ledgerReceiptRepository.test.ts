@@ -22,7 +22,10 @@ describe("Ledger receipt import", () => {
   it("queues OCR only when explicitly requested", async () => {
     for (const requestOcr of [false, true]) {
       const database = fakeDatabase();
-      await createLedgerReceiptRepository(database.value as never).importReceipt({
+      await createLedgerReceiptRepository(
+        database.value as never,
+        async () => "user-a",
+      ).importReceipt({
         id: `receipt-${requestOcr}`,
         journeyId: "journey",
         localUri: "file:///receipt.jpg",

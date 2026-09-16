@@ -72,9 +72,9 @@ describe("SQLite migrations", () => {
     expect(review.sql).toContain("CREATE TABLE ledger_review_finding_actions");
 
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(18);
-    expect(latest.sql).toContain("default_currency");
-    expect(latest.sql).toContain("debug_mode");
+    expect(latest.id).toBe(19);
+    expect(latest.sql).toContain("owner_user_id");
+    expect(latest.sql).toContain("local_owner_user_id");
   });
 
   it("migrates a v13 Settlement through a cold v14 restart", () => {
@@ -193,6 +193,111 @@ describe("SQLite migrations", () => {
           )
           .get(),
       ).toEqual({ currency: "NZD", debugMode: 0 });
+    } finally {
+      database.close();
+    }
+  });
+
+  it("adds device-local account isolation in v19 without deleting domain data", () => {
+    const database = new DatabaseSync(":memory:");
+    try {
+      for (const migration of migrations.filter(({ id }) => id <= 18))
+        database.exec(migration.sql);
+      database.exec(`
+        INSERT INTO ledger_actor_context (
+          journey_id, member_id, role, capabilities_json, updated_at, user_id
+        ) VALUES ('journey', 'member-a', 'owner', '{}', '2026-09-16T00:00:00Z', 'user-a');
+        INSERT INTO ledger_my_journey_summaries (
+          journey_id, period_key, title, currency, scale, my_spend_minor,
+          paid_minor, position_minor, unvalued_count, conflict_count, updated_at
+        ) VALUES (
+          'journey', 'YEAR', 'Journey', 'NZD', 2, 100, 100, 0, 0, 0,
+          '2026-09-16T00:00:00Z'
+        );
+        INSERT INTO ledger_sync_cursors (journey_id, cursor, server_time, updated_at)
+        VALUES ('journey', 'cursor-a', '2026-09-16T00:00:00Z', '2026-09-16T00:00:00Z');
+        INSERT INTO sync_operations (
+          id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
+          payload_json, status, attempt_count, created_at, updated_at
+        ) VALUES (
+          'operation', 'journey', 'ledger_expense', 'expense',
+          'LEDGER_CREATE_EXPENSE', 'key', '{}', 'PENDING', 0,
+          '2026-09-16T00:00:00Z', '2026-09-16T00:00:00Z'
+        );
+        INSERT INTO ledger_asset_operations (
+          id, journey_id, asset_id, operation_type, idempotency_key, status,
+          created_at, updated_at
+        ) VALUES (
+          'asset-operation', 'journey', 'asset', 'UPLOAD_RECEIPT', 'asset-key',
+          'PENDING', '2026-09-16T00:00:00Z', '2026-09-16T00:00:00Z'
+        );
+        INSERT INTO ledger_expenses (
+          id, journey_id, payer_member_id, title, category, occurred_at,
+          original_amount_minor, original_currency, original_scale,
+          business_status, revision, sync_status, created_at, updated_at
+        ) VALUES (
+          'expense', 'journey', 'member-a', 'Lunch', 'food',
+          '2026-09-16T00:00:00Z', 100, 'NZD', 2, 'ACCEPTED', 1, 'PENDING_CREATE',
+          '2026-09-16T00:00:00Z', '2026-09-16T00:00:00Z'
+        );
+      `);
+
+      database.exec(migrations.find(({ id }) => id === 19)!.sql);
+      database.exec(`
+        INSERT INTO ledger_actor_context (
+          user_id, journey_id, member_id, role, capabilities_json, updated_at
+        ) VALUES ('user-b', 'journey', 'member-b', 'group_member', '{}', '2026-09-16T00:00:00Z');
+      `);
+
+      expect(
+        database
+          .prepare(
+            "SELECT count(*) AS count FROM ledger_actor_context WHERE journey_id = 'journey'",
+          )
+          .get(),
+      ).toEqual({ count: 2 });
+      expect(
+        database
+          .prepare(
+            "SELECT user_id AS userId FROM ledger_actor_context WHERE member_id = 'member-a'",
+          )
+          .get(),
+      ).toEqual({ userId: "user-a" });
+      expect(
+        database
+          .prepare(
+            "SELECT user_id AS userId FROM ledger_my_journey_summaries WHERE journey_id = 'journey'",
+          )
+          .get(),
+      ).toEqual({ userId: null });
+      expect(
+        database
+          .prepare(
+            "SELECT owner_user_id AS owner FROM sync_operations WHERE id = 'operation'",
+          )
+          .get(),
+      ).toEqual({ owner: null });
+      expect(
+        database
+          .prepare(
+            "SELECT owner_user_id AS owner FROM ledger_asset_operations WHERE id = 'asset-operation'",
+          )
+          .get(),
+      ).toEqual({ owner: null });
+      expect(
+        database
+          .prepare(
+            "SELECT local_owner_user_id AS owner FROM ledger_expenses WHERE id = 'expense'",
+          )
+          .get(),
+      ).toEqual({ owner: null });
+      expect(
+        database
+          .prepare(
+            "SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'account_local_state'",
+          )
+          .get(),
+      ).toEqual({ count: 1 });
     } finally {
       database.close();
     }

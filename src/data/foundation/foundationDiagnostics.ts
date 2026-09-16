@@ -1,6 +1,6 @@
 import * as Network from "expo-network";
 
-import { readLocalSession } from "@/data/auth/authRepository";
+import { readLocalSession, requireActiveUserId } from "@/data/auth/authRepository";
 import { openDatabase } from "@/data/db/database";
 import { getSchemaVersion, type MigrationDatabase } from "@/data/db/migrationRunner";
 import { createSyncOperationRepository } from "@/data/sync/syncOperationRepository";
@@ -21,13 +21,15 @@ export type FoundationDiagnostics = {
 
 export async function readFoundationDiagnostics(): Promise<FoundationDiagnostics> {
   const database = await openDatabase();
-  const [schemaVersion, session, operations, network, support] = await Promise.all([
+  const [schemaVersion, session, network, support] = await Promise.all([
     getSchemaVersion(database as unknown as MigrationDatabase),
     readLocalSession(),
-    createSyncOperationRepository(database).listPending(),
     Network.getNetworkStateAsync(),
     readLedgerSupportDiagnostics(database),
   ]);
+  const operations = session?.identity
+    ? await createSyncOperationRepository(database, requireActiveUserId).listPending()
+    : [];
 
   const isOnline = network.isInternetReachable === true;
 

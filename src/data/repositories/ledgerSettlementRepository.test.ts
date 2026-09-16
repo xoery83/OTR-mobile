@@ -49,6 +49,8 @@ const settlement: FinalizedSettlementDto = {
 };
 
 describe("Stage 7.1 Settlement repository", () => {
+  const activeUser = async () => "user-a";
+
   it("stores one immutable aggregate transaction and checks the financial queue", async () => {
     const statements: string[] = [];
     const database = {
@@ -62,7 +64,7 @@ describe("Stage 7.1 Settlement repository", () => {
       }),
       withTransactionAsync: vi.fn(async (task: () => Promise<void>) => task()),
     };
-    const repository = createLedgerSettlementRepository(database);
+    const repository = createLedgerSettlementRepository(database, activeUser);
     await repository.applyFinalized(settlement);
 
     expect(database.withTransactionAsync).toHaveBeenCalledOnce();
@@ -135,9 +137,10 @@ describe("Stage 7.1 Settlement repository", () => {
       withTransactionAsync: vi.fn(),
     };
 
-    const [local] = await createLedgerSettlementRepository(database).listFinalized(
-      entity.journeyId,
-    );
+    const [local] = await createLedgerSettlementRepository(
+      database,
+      activeUser,
+    ).listFinalized(entity.journeyId);
     expect(local.inputDigest).toBe(entity.inputDigest);
     expect(local.balances).toEqual(entity.balances);
     expect(local.transfers).toEqual(entity.transfers);

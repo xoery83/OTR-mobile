@@ -39,11 +39,10 @@ describe("Ledger Review repository", () => {
     };
 
     const beforeFinancialFingerprint = "expenses|splits|valuations|settlements|payments";
-    await createLedgerReviewRepository(database).act(
-      "10000000-0000-4000-8000-000000000001",
-      "DISMISSED",
-      "False positive",
-    );
+    await createLedgerReviewRepository(
+      database,
+      async () => "40000000-0000-4000-8000-000000000001",
+    ).act("10000000-0000-4000-8000-000000000001", "DISMISSED", "False positive");
 
     expect(writes).toHaveLength(3);
     expect(writes.join("\n")).not.toMatch(

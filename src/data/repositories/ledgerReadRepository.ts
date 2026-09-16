@@ -27,11 +27,15 @@ const pendingStatuses = new Set([
   "CONFLICT",
 ]);
 
-export function createLedgerReadRepository(database: LedgerReadDatabase) {
+export function createLedgerReadRepository(
+  database: LedgerReadDatabase,
+  getActiveUserId: () => Promise<string>,
+) {
   return {
     async applyBootstrap(response: LedgerBootstrapResponse) {
+      const userId = await getActiveUserId();
       await database.withTransactionAsync(async () => {
-        await applyJourney(database, response);
+        await applyJourney(database, response, userId);
         for (const expense of response.expenses) {
           await applyBootstrapExpense(database, expense);
         }
@@ -60,11 +64,13 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
           response.journey.id,
           response.cursor,
           response.serverTime,
+          userId,
         );
       });
     },
 
     async applyChanges(journeyId: string, response: LedgerChangesResponse) {
+      const userId = await getActiveUserId();
       await database.withTransactionAsync(async () => {
         for (const change of response.changes) {
           if (change.entityType === "EXPENSE") {
@@ -113,23 +119,33 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
             await deferChange(database, journeyId, change);
           }
         }
-        await saveCursor(database, journeyId, response.cursor, response.serverTime);
+        await saveCursor(
+          database,
+          journeyId,
+          response.cursor,
+          response.serverTime,
+          userId,
+        );
       });
     },
 
     async cacheMyLedger(response: MyLedgerResponse) {
+      const userId = await getActiveUserId();
       await database.withTransactionAsync(async () => {
         await database.runAsync(
-          "DELETE FROM ledger_my_journey_summaries WHERE period_key = ?",
+          `DELETE FROM ledger_my_journey_summaries
+           WHERE user_id = ? AND period_key = ?`,
+          userId,
           response.period,
         );
         for (const journey of response.journeys) {
           await database.runAsync(
             `INSERT OR REPLACE INTO ledger_my_journey_summaries (
-              journey_id, period_key, from_at, to_at, title, start_date, end_date,
+              user_id, journey_id, period_key, from_at, to_at, title, start_date, end_date,
               currency, scale, my_spend_minor, paid_minor, position_minor,
               unvalued_count, conflict_count, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            userId,
             journey.journeyId,
             response.period,
             response.from,
@@ -150,7 +166,8 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
       });
     },
 
-    listMyLedgerSummaries(period = "YEAR") {
+    async listMyLedgerSummaries(period = "YEAR") {
+      const userId = await getActiveUserId();
       return database.getAllAsync<{
         journeyId: string;
         period: string;
@@ -172,15 +189,19 @@ export function createLedgerReadRepository(database: LedgerReadDatabase) {
           position_minor AS positionMinor, unvalued_count AS unvaluedCount,
           conflict_count AS conflictCount, updated_at AS updatedAt
          FROM ledger_my_journey_summaries
-         WHERE period_key = ?
+         WHERE user_id = ? AND period_key = ?
          ORDER BY updated_at DESC`,
+        userId,
         period,
       );
     },
 
-    getCursor(journeyId: string) {
+    async getCursor(journeyId: string) {
+      const userId = await getActiveUserId();
       return database.getFirstAsync<{ cursor: string | null }>(
-        "SELECT cursor FROM ledger_sync_cursors WHERE journey_id = ?",
+        `SELECT cursor FROM ledger_sync_cursors
+         WHERE user_id = ? AND journey_id = ?`,
+        userId,
         journeyId,
       );
     },
@@ -255,8 +276,9 @@ async function applyReceipt(
   await database.runAsync(
     `INSERT OR REPLACE INTO ledger_receipt_assets (
     id, server_id, journey_id, expense_id, local_uri, mime_type, size_bytes, sha256,
-    object_path, upload_status, ocr_status, ocr_suggestion_json, created_at, updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    object_path, upload_status, ocr_status, ocr_suggestion_json, created_at, updated_at,
+    local_owner_user_id
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
     existing?.id ?? receipt.id,
     receipt.id,
     journeyId,
@@ -313,6 +335,7 @@ async function applyPaymentChange(
 async function applyJourney(
   database: LedgerReadDatabase,
   response: LedgerBootstrapResponse,
+  userId: string,
 ) {
   await database.runAsync(
     `INSERT OR REPLACE INTO ledger_journeys (
@@ -355,7 +378,7 @@ async function applyJourney(
     response.actor.role,
     JSON.stringify(response.actor.capabilities),
     response.serverTime,
-    response.actor.userId ?? response.actor.memberId,
+    userId,
   );
 }
 
@@ -572,8 +595,8 @@ async function applyExpense(database: LedgerReadDatabase, expense: ServerExpense
       id, server_id, journey_id, creator_member_id, payer_member_id, title, description,
       category, occurred_at, original_amount_minor, original_currency, original_scale,
       business_status, settlement_participation, revision, server_revision, deleted_at,
-      sync_status, last_synced_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sync_status, last_synced_at, created_at, updated_at, local_owner_user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
     localId,
     expense.id,
     expense.journeyId,
@@ -792,11 +815,13 @@ async function saveCursor(
   journeyId: string,
   cursor: string | null,
   serverTime: string,
+  userId: string,
 ) {
   await database.runAsync(
     `INSERT OR REPLACE INTO ledger_sync_cursors (
-      journey_id, cursor, server_time, updated_at
-    ) VALUES (?, ?, ?, ?)`,
+      user_id, journey_id, cursor, server_time, updated_at
+    ) VALUES (?, ?, ?, ?, ?)`,
+    userId,
     journeyId,
     cursor,
     serverTime,

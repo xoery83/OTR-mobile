@@ -41,12 +41,14 @@ function validateInput(tripId: string, input: CreateItineraryItemInput) {
 
 export function createItineraryRepository(
   database: ItineraryDatabase,
+  getActiveUserId: () => Promise<string>,
 ): ItineraryRepository {
   return {
     async createItineraryItem(tripId, input) {
       validateInput(tripId, input);
 
       const now = new Date().toISOString();
+      const userId = await getActiveUserId();
       const item: ItineraryItem = {
         id: createLocalId("itinerary"),
         serverId: null,
@@ -67,8 +69,8 @@ export function createItineraryRepository(
         await database.runAsync(
           `INSERT INTO itinerary_items (
             id, server_id, trip_id, title, scheduled_date, start_time, location, notes,
-            created_at, updated_at, sync_status, sync_version
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            created_at, updated_at, sync_status, sync_version, local_owner_user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           item.id,
           item.serverId,
           item.tripId,
@@ -81,13 +83,14 @@ export function createItineraryRepository(
           item.updatedAt,
           item.syncStatus,
           item.syncVersion,
+          userId,
         );
         await database.runAsync(
           `INSERT INTO sync_operations (
             id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
-            base_version, payload_json, status, attempt_count, next_attempt_at,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            base_version, payload_json, owner_user_id, status, attempt_count,
+            next_attempt_at, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           operationId,
           item.tripId,
           "itinerary",
@@ -96,6 +99,7 @@ export function createItineraryRepository(
           operationId,
           null,
           JSON.stringify({ itineraryItemId: item.id }),
+          userId,
           "PENDING",
           0,
           null,
@@ -108,38 +112,49 @@ export function createItineraryRepository(
     },
 
     async listItineraryItems(tripId) {
+      const userId = await getActiveUserId();
       return database.getAllAsync<ItineraryItem>(
-        selectItinerarySql("WHERE trip_id = ?"),
+        selectItinerarySql(
+          "WHERE trip_id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)",
+        ),
         tripId,
+        userId,
       );
     },
 
     async getItineraryItem(id) {
+      const userId = await getActiveUserId();
       return database.getFirstAsync<ItineraryItem>(
-        selectItinerarySql("WHERE id = ?"),
+        selectItinerarySql(
+          "WHERE id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)",
+        ),
         id,
+        userId,
       );
     },
 
     async markItineraryItemSyncing(id) {
-      await updateSyncStatus(database, id, "SYNCING");
+      await updateSyncStatus(database, id, "SYNCING", await getActiveUserId());
     },
 
     async markItineraryItemSynced(id, serverId, version) {
+      const userId = await getActiveUserId();
       await database.runAsync(
         `UPDATE itinerary_items
-         SET server_id = ?, sync_status = ?, sync_version = ?, updated_at = ?
-         WHERE id = ?`,
+         SET server_id = ?, sync_status = ?, sync_version = ?, local_owner_user_id = NULL,
+             updated_at = ?
+         WHERE id = ? AND local_owner_user_id = ?`,
         serverId,
         "SYNCED",
         version,
         new Date().toISOString(),
         id,
+        userId,
       );
     },
 
     async markItineraryItemFailed(id) {
-      await updateSyncStatus(database, id, "FAILED");
+      await updateSyncStatus(database, id, "FAILED", await getActiveUserId());
     },
   };
 }
@@ -167,11 +182,14 @@ async function updateSyncStatus(
   database: ItineraryDatabase,
   id: string,
   status: ItinerarySyncStatus,
+  userId: string,
 ) {
   await database.runAsync(
-    "UPDATE itinerary_items SET sync_status = ?, updated_at = ? WHERE id = ?",
+    `UPDATE itinerary_items SET sync_status = ?, updated_at = ?
+     WHERE id = ? AND local_owner_user_id = ?`,
     status,
     new Date().toISOString(),
     id,
+    userId,
   );
 }

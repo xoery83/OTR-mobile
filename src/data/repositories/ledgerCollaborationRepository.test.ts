@@ -72,6 +72,7 @@ function fixture() {
 
 const operation: SyncOperation = {
   id: "operation-1",
+  ownerUserId: "user-a",
   tripId: current.journeyId,
   entityType: "ledger_expense",
   entityId: "local-expense",
@@ -105,7 +106,7 @@ function conflict(id: string): LedgerExpenseConflictResponse {
 describe("Ledger collaboration repository", () => {
   it("stores immutable conflict snapshots and supersedes instead of rewriting", async () => {
     const { db, writes, transactions } = fixture();
-    const repository = createLedgerCollaborationRepository(db);
+    const repository = createLedgerCollaborationRepository(db, async () => "user-a");
 
     await repository.recordConflict(
       "local-expense",
@@ -132,7 +133,7 @@ describe("Ledger collaboration repository", () => {
 
   it("persists a correction proposal and its separate durable operation atomically", async () => {
     const { db, writes, transactions } = fixture();
-    await createLedgerCollaborationRepository(db).createCorrection({
+    await createLedgerCollaborationRepository(db, async () => "user-a").createCorrection({
       journeyId: current.journeyId,
       expenseId: "local-expense",
       expenseServerId: current.id,

@@ -3,6 +3,7 @@ import { createLedgerReviewRepository } from "@/data/repositories/ledgerReviewRe
 
 import { createSyncEngine } from "./syncEngine";
 import { createSyncOperationRepository } from "./syncOperationRepository";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 import { createLedgerReviewTransport } from "./ledgerReviewTransport";
 import type { SyncOperation } from "./syncOperationRepository";
 
@@ -11,7 +12,7 @@ export async function runLedgerReviewSync(journeyId?: string) {
   const repository = createLedgerReviewRepository(database);
   const transport = createLedgerReviewTransport();
   return createSyncEngine(
-    createSyncOperationRepository(database),
+    createSyncOperationRepository(database, requireActiveUserId),
     {
       async push(operation: SyncOperation) {
         const input = JSON.parse(operation.payloadJson);

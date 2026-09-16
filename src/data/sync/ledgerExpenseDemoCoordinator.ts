@@ -6,6 +6,7 @@ import { createLedgerExpenseMutationTransport } from "./ledgerExpenseMutationTra
 import { createLedgerExpenseSyncWorker } from "./ledgerExpenseSyncWorker";
 import { createSyncEngine } from "./syncEngine";
 import { createSyncOperationRepository } from "./syncOperationRepository";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 
 type Options = {
   entityId?: string;
@@ -15,7 +16,10 @@ type Options = {
 
 export async function runLedgerExpenseSync(options: Options = {}) {
   const database = await openDatabase();
-  const operationRepository = createSyncOperationRepository(database);
+  const operationRepository = createSyncOperationRepository(
+    database,
+    requireActiveUserId,
+  );
   const collaboration = createLedgerCollaborationRepository(database);
   const worker = createLedgerExpenseSyncWorker(
     createLedgerExpenseRepository(database),

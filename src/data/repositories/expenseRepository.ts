@@ -34,12 +34,16 @@ function validateInput(input: CreateExpenseInput) {
   }
 }
 
-export function createExpenseRepository(database: ExpenseDatabase): ExpenseRepository {
+export function createExpenseRepository(
+  database: ExpenseDatabase,
+  getActiveUserId: () => Promise<string>,
+): ExpenseRepository {
   return {
     async createExpense(input) {
       validateInput(input);
 
       const now = new Date().toISOString();
+      const userId = await getActiveUserId();
       const expense: Expense = {
         id: createLocalId("expense"),
         serverId: null,
@@ -60,8 +64,9 @@ export function createExpenseRepository(database: ExpenseDatabase): ExpenseRepos
         await database.runAsync(
           `INSERT INTO expenses (
             id, server_id, trip_id, title, amount_minor, currency_code,
-            paid_by_member_id, occurred_at, created_at, updated_at, sync_status, sync_version
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            paid_by_member_id, occurred_at, created_at, updated_at, sync_status,
+            sync_version, local_owner_user_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           expense.id,
           expense.serverId,
           expense.tripId,
@@ -74,14 +79,15 @@ export function createExpenseRepository(database: ExpenseDatabase): ExpenseRepos
           expense.updatedAt,
           expense.syncStatus,
           expense.syncVersion,
+          userId,
         );
 
         await database.runAsync(
           `INSERT INTO sync_operations (
             id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
-            base_version, payload_json, status, attempt_count, next_attempt_at,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            base_version, payload_json, owner_user_id, status, attempt_count,
+            next_attempt_at, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           operationId,
           expense.tripId,
           "expense",
@@ -90,6 +96,7 @@ export function createExpenseRepository(database: ExpenseDatabase): ExpenseRepos
           operationId,
           null,
           JSON.stringify({ expenseId: expense.id }),
+          userId,
           "PENDING",
           0,
           null,
@@ -102,6 +109,7 @@ export function createExpenseRepository(database: ExpenseDatabase): ExpenseRepos
     },
 
     async listExpensesForTrip(tripId) {
+      const userId = await getActiveUserId();
       return database.getAllAsync<Expense>(
         `SELECT
           id,
@@ -117,13 +125,15 @@ export function createExpenseRepository(database: ExpenseDatabase): ExpenseRepos
           sync_status AS syncStatus,
           sync_version AS syncVersion
         FROM expenses
-        WHERE trip_id = ?
+        WHERE trip_id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)
         ORDER BY created_at DESC`,
         tripId,
+        userId,
       );
     },
 
     async getExpense(id) {
+      const userId = await getActiveUserId();
       return database.getFirstAsync<Expense>(
         `SELECT
           id,
@@ -139,30 +149,34 @@ export function createExpenseRepository(database: ExpenseDatabase): ExpenseRepos
           sync_status AS syncStatus,
           sync_version AS syncVersion
         FROM expenses
-        WHERE id = ?`,
+        WHERE id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)`,
         id,
+        userId,
       );
     },
 
     async markExpenseSyncing(id) {
-      await updateSyncStatus(database, id, "SYNCING");
+      await updateSyncStatus(database, id, "SYNCING", await getActiveUserId());
     },
 
     async markExpenseSynced(id, serverId, version) {
+      const userId = await getActiveUserId();
       await database.runAsync(
         `UPDATE expenses
-         SET server_id = ?, sync_status = ?, sync_version = ?, updated_at = ?
-         WHERE id = ?`,
+         SET server_id = ?, sync_status = ?, sync_version = ?, local_owner_user_id = NULL,
+             updated_at = ?
+         WHERE id = ? AND local_owner_user_id = ?`,
         serverId,
         "SYNCED",
         version,
         new Date().toISOString(),
         id,
+        userId,
       );
     },
 
     async markExpenseFailed(id) {
-      await updateSyncStatus(database, id, "FAILED");
+      await updateSyncStatus(database, id, "FAILED", await getActiveUserId());
     },
   };
 }
@@ -171,11 +185,14 @@ async function updateSyncStatus(
   database: ExpenseDatabase,
   id: string,
   status: ExpenseSyncStatus,
+  userId: string,
 ) {
   await database.runAsync(
-    "UPDATE expenses SET sync_status = ?, updated_at = ? WHERE id = ?",
+    `UPDATE expenses SET sync_status = ?, updated_at = ?
+     WHERE id = ? AND local_owner_user_id = ?`,
     status,
     new Date().toISOString(),
     id,
+    userId,
   );
 }

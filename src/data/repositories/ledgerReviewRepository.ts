@@ -11,7 +11,10 @@ type Database = Pick<
   "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
 >;
 
-export function createLedgerReviewRepository(database: Database) {
+export function createLedgerReviewRepository(
+  database: Database,
+  getActiveUserId: () => Promise<string> = defaultGetActiveUserId,
+) {
   return {
     async apply(findings: LedgerReviewFindingDto[], actions: LedgerReviewActionDto[]) {
       await database.withTransactionAsync(async () => {
@@ -20,6 +23,7 @@ export function createLedgerReviewRepository(database: Database) {
       });
     },
     async list(journeyId: string) {
+      const userId = await getActiveUserId();
       return database
         .getAllAsync<LedgerReviewFindingDto>(
           `SELECT id, journey_id AS journeyId, expense_id AS expenseId,
@@ -28,9 +32,12 @@ export function createLedgerReviewRepository(database: Database) {
           ruleset_version AS rulesetVersion, entity_revision AS entityRevision,
           revision, created_at AS createdAt, updated_at AS updatedAt
          FROM ledger_review_findings WHERE journey_id = ?
+           AND EXISTS (SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.user_id = ? AND actor.journey_id = ledger_review_findings.journey_id)
          ORDER BY CASE severity WHEN 'BLOCKING' THEN 0 WHEN 'WARNING' THEN 1 ELSE 2 END,
           updated_at DESC`,
           journeyId,
+          userId,
         )
         .then((rows) =>
           rows.map((row) => ({
@@ -44,6 +51,7 @@ export function createLedgerReviewRepository(database: Database) {
     },
 
     async act(findingId: string, action: "ACKNOWLEDGED" | "DISMISSED", reason: string) {
+      const userId = await getActiveUserId();
       const finding = await database.getFirstAsync<
         LedgerReviewFindingDto & {
           journeyId: string;
@@ -67,7 +75,8 @@ export function createLedgerReviewRepository(database: Database) {
         role: string;
       }>(
         `SELECT user_id AS userId, member_id AS memberId, role
-         FROM ledger_actor_context WHERE journey_id = ?`,
+         FROM ledger_actor_context WHERE user_id = ? AND journey_id = ?`,
+        userId,
         finding.journeyId,
       );
       if (!actor?.userId || !actor.memberId || !actor.role)
@@ -115,8 +124,8 @@ export function createLedgerReviewRepository(database: Database) {
         await database.runAsync(
           `INSERT INTO sync_operations (
             id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
-            base_version, payload_json, status, attempt_count, created_at, updated_at
-          ) VALUES (?, ?, 'ledger_review', ?, 'LEDGER_REVIEW_ACTION', ?, ?, ?, 'PENDING', 0, ?, ?)`,
+            base_version, payload_json, owner_user_id, status, attempt_count, created_at, updated_at
+          ) VALUES (?, ?, 'ledger_review', ?, 'LEDGER_REVIEW_ACTION', ?, ?, ?, ?, 'PENDING', 0, ?, ?)`,
           id,
           finding.journeyId,
           finding.id,
@@ -128,6 +137,7 @@ export function createLedgerReviewRepository(database: Database) {
             reason: trimmed,
             operationId: id,
           }),
+          userId,
           now,
           now,
         );
@@ -150,6 +160,10 @@ export function createLedgerReviewRepository(database: Database) {
       });
     },
   };
+}
+
+async function defaultGetActiveUserId() {
+  return (await import("@/data/auth/authRepository")).requireActiveUserId();
 }
 
 export async function applyReviewFinding(

@@ -19,7 +19,10 @@ export type LedgerSettlementDatabase = Pick<
   "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
 >;
 
-export function createLedgerSettlementRepository(database: LedgerSettlementDatabase) {
+export function createLedgerSettlementRepository(
+  database: LedgerSettlementDatabase,
+  getActiveUserId: () => Promise<string> = defaultGetActiveUserId,
+) {
   return {
     async applyFinalized(settlement: FinalizedSettlementDto) {
       await database.withTransactionAsync(() =>
@@ -28,32 +31,41 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
     },
 
     async listFinalized(journeyId: string) {
+      const userId = await getActiveUserId();
       const rows = await database.getAllAsync<{ id: string }>(
         `SELECT id FROM ledger_settlements
-         WHERE journey_id = ? ORDER BY finalized_at DESC, id`,
+         WHERE journey_id = ? AND EXISTS (
+           SELECT 1 FROM ledger_actor_context actor
+           WHERE actor.user_id = ? AND actor.journey_id = ledger_settlements.journey_id)
+         ORDER BY finalized_at DESC, id`,
         journeyId,
+        userId,
       );
       return Promise.all(rows.map((row) => readSettlement(database, row.id)));
     },
 
     async hasPendingFinancialOperations(journeyId: string) {
+      const userId = await getActiveUserId();
       const row = await database.getFirstAsync<{ count: number }>(
         `SELECT COUNT(*) AS count FROM sync_operations
-         WHERE trip_id = ?
+         WHERE trip_id = ? AND owner_user_id = ?
            AND entity_type IN (
              'ledger_expense', 'ledger_payment_record', 'ledger_correction',
              'ledger_settlement_payment', 'ledger_settlement_adjustment'
            )
            AND status <> 'COMPLETED'`,
         journeyId,
+        userId,
       );
       return (row?.count ?? 0) > 0;
     },
 
     async canFinalize(journeyId: string) {
+      const userId = await getActiveUserId();
       const row = await database.getFirstAsync<{ capabilitiesJson: string }>(
         `SELECT capabilities_json AS capabilitiesJson
-         FROM ledger_actor_context WHERE journey_id = ?`,
+         FROM ledger_actor_context WHERE user_id = ? AND journey_id = ?`,
+        userId,
         journeyId,
       );
       if (!row) return false;
@@ -72,7 +84,8 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
         reason?: string | null;
       },
     ) {
-      const context = await requireLocalTransferContext(database, transferId);
+      const userId = await getActiveUserId();
+      const context = await requireLocalTransferContext(database, transferId, userId);
       assertReplayFixtureWritable(context.journeyId);
       assertRepaymentProposition(proposition, context.transfer.amount);
       if (
@@ -152,6 +165,7 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
           "LEDGER_RECORD_TRANSFER_PAYMENT",
           { transferId, ...request },
           context.transfer.revision,
+          userId,
         );
       });
       return payment;
@@ -163,7 +177,8 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
       reason: string | null,
       authority?: "PAYER" | "RECIPIENT" | "ORGANIZER_OVERRIDE",
     ) {
-      const context = await requireLocalPaymentContext(database, paymentId);
+      const userId = await getActiveUserId();
+      const context = await requireLocalPaymentContext(database, paymentId, userId);
       assertReplayFixtureWritable(context.journeyId);
       if (context.payment.status !== "AWAITING_CONFIRMATION")
         throw new Error("Payment is no longer awaiting confirmation.");
@@ -188,6 +203,7 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
           reason: normalizedReason,
         },
         context.payment.revision,
+        userId,
       );
     },
 
@@ -200,7 +216,8 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
       },
       reason: string,
     ) {
-      const context = await requireLocalPaymentContext(database, paymentId);
+      const userId = await getActiveUserId();
+      const context = await requireLocalPaymentContext(database, paymentId, userId);
       assertReplayFixtureWritable(context.journeyId);
       const normalizedReason = reason.trim();
       if (context.actor.role !== "owner" || !normalizedReason)
@@ -287,6 +304,7 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
             reason: normalizedReason,
           },
           context.payment.revision,
+          userId,
         );
       });
       return replacement;
@@ -304,6 +322,7 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
       input: SettlementAdjustmentFinalizeRequest,
     ) {
       assertReplayFixtureWritable(journeyId);
+      const userId = await getActiveUserId();
       if (!(await this.isOrganizer(journeyId)))
         throw new Error("Organizer Adjustment access is required.");
       await enqueueSettlementOperation(
@@ -313,26 +332,36 @@ export function createLedgerSettlementRepository(database: LedgerSettlementDatab
         "LEDGER_FINALIZE_SETTLEMENT_ADJUSTMENT",
         { rootSettlementId, ...input },
         0,
+        userId,
         "ledger_settlement_adjustment",
       );
     },
 
     async getActorMemberId(journeyId: string) {
+      const userId = await getActiveUserId();
       const row = await database.getFirstAsync<{ memberId: string | null }>(
-        `SELECT member_id AS memberId FROM ledger_actor_context WHERE journey_id = ?`,
+        `SELECT member_id AS memberId FROM ledger_actor_context
+         WHERE user_id = ? AND journey_id = ?`,
+        userId,
         journeyId,
       );
       return row?.memberId ?? null;
     },
 
     async isOrganizer(journeyId: string) {
+      const userId = await getActiveUserId();
       const row = await database.getFirstAsync<{ role: string | null }>(
-        `SELECT role FROM ledger_actor_context WHERE journey_id = ?`,
+        `SELECT role FROM ledger_actor_context WHERE user_id = ? AND journey_id = ?`,
+        userId,
         journeyId,
       );
       return row?.role === "owner";
     },
   };
+}
+
+async function defaultGetActiveUserId() {
+  return (await import("@/data/auth/authRepository")).requireActiveUserId();
 }
 
 async function enqueueSettlementOperation(
@@ -342,15 +371,16 @@ async function enqueueSettlementOperation(
   operationType: string,
   payload: unknown,
   baseVersion: number,
+  userId: string,
   entityType = "ledger_settlement_payment",
 ) {
   const now = new Date().toISOString();
   await database.runAsync(
     `INSERT INTO sync_operations (
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
-      base_version, payload_json, status, attempt_count, next_attempt_at,
+      base_version, payload_json, owner_user_id, status, attempt_count, next_attempt_at,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
     createLocalId("ledger-operation"),
     journeyId,
     entityType,
@@ -359,6 +389,7 @@ async function enqueueSettlementOperation(
     createLocalId("ledger-idempotency"),
     baseVersion,
     JSON.stringify(payload),
+    userId,
     now,
     now,
   );
@@ -367,6 +398,7 @@ async function enqueueSettlementOperation(
 async function requireLocalTransferContext(
   database: LedgerSettlementDatabase,
   transferId: string,
+  userId: string,
 ) {
   const row = await database.getFirstAsync<{
     settlementId: string;
@@ -391,7 +423,8 @@ async function requireLocalTransferContext(
     role: string | null;
   }>(
     `SELECT member_id AS memberId, user_id AS userId, role
-     FROM ledger_actor_context WHERE journey_id = ?`,
+     FROM ledger_actor_context WHERE user_id = ? AND journey_id = ?`,
+    userId,
     row.journeyId,
   );
   if (!actor?.memberId || !actor.userId) throw new Error("Ledger actor is unavailable.");
@@ -406,13 +439,14 @@ async function requireLocalTransferContext(
 async function requireLocalPaymentContext(
   database: LedgerSettlementDatabase,
   paymentId: string,
+  userId: string,
 ) {
   const row = await database.getFirstAsync<{ transferId: string }>(
     `SELECT transfer_id AS transferId FROM ledger_settlement_payments WHERE id = ?`,
     paymentId,
   );
   if (!row) throw new Error("Settlement Payment was not found.");
-  const context = await requireLocalTransferContext(database, row.transferId);
+  const context = await requireLocalTransferContext(database, row.transferId, userId);
   const payment = context.transfer.payments.find((item) => item.id === paymentId);
   if (!payment) throw new Error("Settlement Payment was not found.");
   return { ...context, payment };

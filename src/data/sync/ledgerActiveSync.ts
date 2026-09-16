@@ -27,17 +27,22 @@ export function deriveLedgerSyncStatus(input: {
 
 export async function getLedgerPendingMutationCount(journeyId: string) {
   const database = await openDatabase();
+  const userId = await (await import("@/data/auth/authRepository")).requireActiveUserId();
   const row = await database.getFirstAsync<{ count: number }>(
     `SELECT
        (SELECT COUNT(*) FROM sync_operations
         WHERE trip_id = ? AND entity_type LIKE 'ledger_%'
+          AND owner_user_id = ?
           AND status IN ('PENDING', 'PROCESSING', 'RETRYABLE', 'CONFLICT'))
        +
        (SELECT COUNT(*) FROM ledger_asset_operations
-        WHERE journey_id = ? AND status IN ('PENDING', 'PROCESSING', 'RETRYABLE'))
+        WHERE journey_id = ? AND owner_user_id = ?
+          AND status IN ('PENDING', 'PROCESSING', 'RETRYABLE'))
        AS count`,
     journeyId,
+    userId,
     journeyId,
+    userId,
   );
   return row?.count ?? 0;
 }

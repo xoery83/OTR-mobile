@@ -47,6 +47,7 @@ function createInMemoryLedgerDatabase() {
           ,
           createdAt,
           updatedAt,
+          localOwnerUserId,
         ] = params;
         expenses.set(id as string, {
           id,
@@ -69,6 +70,7 @@ function createInMemoryLedgerDatabase() {
           syncStatus,
           createdAt,
           updatedAt,
+          localOwnerUserId,
         });
       } else if (sql.includes("INSERT INTO ledger_expense_participants")) {
         const [
@@ -199,10 +201,11 @@ function createInMemoryLedgerDatabase() {
           idempotencyKey: params[5],
           baseVersion: params[6],
           payloadJson: params[7],
-          status: params[8],
+          ownerUserId: params[8],
+          status: params[9],
         });
       } else if (sql.includes("UPDATE ledger_expenses SET\n      journey_id")) {
-        const id = params[19] as string;
+        const id = params[20] as string;
         const row = expenses.get(id);
         if (row) {
           Object.assign(row, {
@@ -223,24 +226,27 @@ function createInMemoryLedgerDatabase() {
             serverRevision: params[14],
             deletedAt: params[15],
             syncStatus: params[16],
-            updatedAt: params[18],
+            localOwnerUserId: params[18],
+            updatedAt: params[19],
           });
         }
       } else if (sql.includes("business_status = ?, deleted_at = ?")) {
-        const row = expenses.get(params[5] as string);
+        const row = expenses.get(params[6] as string);
         if (row) {
           row.businessStatus = params[0];
           row.deletedAt = params[1];
           row.revision = params[2];
           row.syncStatus = params[3];
+          row.localOwnerUserId = params[4];
         }
       } else if (sql.includes("business_status = ?, deleted_at = NULL")) {
-        const row = expenses.get(params[4] as string);
+        const row = expenses.get(params[5] as string);
         if (row) {
           row.businessStatus = params[0];
           row.deletedAt = null;
           row.revision = params[1];
           row.syncStatus = params[2];
+          row.localOwnerUserId = params[3];
         }
       } else if (sql.includes("DELETE FROM ledger_expense_participants")) {
         participants.set(params[0] as string, []);
@@ -255,8 +261,13 @@ function createInMemoryLedgerDatabase() {
     },
     async getFirstAsync<T>(sql: string, ...params: unknown[]) {
       const id = params[0] as string;
-      if (sql.includes("FROM ledger_expenses WHERE id")) {
-        return (expenses.get(id) ?? null) as T | null;
+      if (sql.includes("FROM ledger_expenses")) {
+        const row = expenses.get(id);
+        return (
+          row && (row.syncStatus === "SYNCED" || row.localOwnerUserId === params[1])
+            ? row
+            : null
+        ) as T | null;
       }
       if (sql.includes("FROM ledger_valuation_snapshots")) {
         return (valuations.get(id) ?? null) as T | null;
@@ -266,7 +277,11 @@ function createInMemoryLedgerDatabase() {
     async getAllAsync<T>(sql: string, ...params: unknown[]) {
       const id = params[0] as string;
       if (sql.includes("FROM ledger_expenses")) {
-        return [...expenses.values()].filter((row) => row.journeyId === id) as T[];
+        return [...expenses.values()].filter(
+          (row) =>
+            row.journeyId === id &&
+            (row.syncStatus === "SYNCED" || row.localOwnerUserId === params[1]),
+        ) as T[];
       }
       if (sql.includes("FROM ledger_expense_participants")) {
         return (participants.get(id) ?? []) as T[];
@@ -333,10 +348,12 @@ const command: LedgerExpenseCommand = {
 };
 
 describe("Ledger Expense repository", () => {
+  const activeUser = async () => "user-a";
+
   it("atomically persists the full Expense aggregate and one durable create operation", async () => {
     const { database, operations, auditEvents, transactionCount } =
       createInMemoryLedgerDatabase();
-    const repository = createLedgerExpenseRepository(database);
+    const repository = createLedgerExpenseRepository(database, activeUser);
 
     const created = await repository.createExpense(command);
 
@@ -368,7 +385,7 @@ describe("Ledger Expense repository", () => {
 
   it("rehydrates the same persisted aggregate and keeps Journey lists isolated", async () => {
     const { database } = createInMemoryLedgerDatabase();
-    const writer = createLedgerExpenseRepository(database);
+    const writer = createLedgerExpenseRepository(database, activeUser);
     const created = await writer.createExpense(command);
     await writer.addPaymentRecord(created.id, {
       instrumentLabel: "Travel card",
@@ -380,7 +397,7 @@ describe("Ledger Expense repository", () => {
     });
     await writer.createExpense({ ...command, journeyId: "journey-b", title: "B only" });
 
-    const restartedReader = createLedgerExpenseRepository(database);
+    const restartedReader = createLedgerExpenseRepository(database, activeUser);
 
     await expect(restartedReader.getExpense(created.id)).resolves.toMatchObject({
       id: created.id,
@@ -399,7 +416,7 @@ describe("Ledger Expense repository", () => {
   it("records revisioned update, tombstone, and restore operations without a duplicate row", async () => {
     const { database, expenses, operations, auditEvents } =
       createInMemoryLedgerDatabase();
-    const repository = createLedgerExpenseRepository(database);
+    const repository = createLedgerExpenseRepository(database, activeUser);
     const created = await repository.createExpense(command);
 
     const updated = await repository.updateExpense(
@@ -440,7 +457,7 @@ describe("Ledger Expense repository", () => {
 
   it("queues append-only PaymentRecord evidence without revising the Expense", async () => {
     const { database, operations } = createInMemoryLedgerDatabase();
-    const repository = createLedgerExpenseRepository(database);
+    const repository = createLedgerExpenseRepository(database, activeUser);
     const created = await repository.createExpense(command);
     const payment = await repository.addPaymentRecord(created.id, {
       instrumentLabel: "Visa NZ",

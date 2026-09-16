@@ -1,19 +1,29 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   readFoundationDiagnostics,
   type FoundationDiagnostics,
 } from "@/data/foundation/foundationDiagnostics";
 import {
+  authenticateToSupabaseDev,
   revalidateStoredSupabaseDevSession,
-  signInToSupabaseDev,
-  signOutOfSupabaseDev,
 } from "@/data/auth/devSupabaseAuth";
+import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccountSwitchCoordinator";
 import { getSyncTransportMode } from "@/data/sync/transportSelection";
 
 export function useFoundationDiagnostics() {
+  const queryClient = useQueryClient();
   const [diagnostics, setDiagnostics] = useState<FoundationDiagnostics | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const accountSwitch = useMemo(
+    () =>
+      createDefaultAccountSwitchCoordinator({
+        clearInMemoryState: () => queryClient.clear(),
+        bootstrapAccount: async () => undefined,
+      }),
+    [queryClient],
+  );
 
   const refresh = useCallback(async () => {
     try {
@@ -56,16 +66,18 @@ export function useFoundationDiagnostics() {
 
   const signIn = useCallback(
     async (email: string, password: string) => {
-      await signInToSupabaseDev(email, password);
+      await accountSwitch.activateSession(
+        await authenticateToSupabaseDev(email, password),
+      );
       await refresh();
     },
-    [refresh],
+    [accountSwitch, refresh],
   );
 
   const signOut = useCallback(async () => {
-    await signOutOfSupabaseDev();
+    await accountSwitch.logout();
     await refresh();
-  }, [refresh]);
+  }, [accountSwitch, refresh]);
 
   return {
     diagnostics,

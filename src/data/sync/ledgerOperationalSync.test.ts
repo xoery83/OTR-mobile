@@ -12,8 +12,15 @@ vi.mock("./ledgerSettlementPaymentCoordinator", () => ({
   runLedgerSettlementPaymentSync: vi.fn(),
 }));
 
-// eslint-disable-next-line import/first
-import { kickLedgerOperationalSync } from "./ledgerOperationalSync";
+/* eslint-disable import/first */
+import { runLedgerExpenseSync } from "./ledgerExpenseDemoCoordinator";
+import {
+  allowLedgerOperationalSync,
+  kickLedgerOperationalSync,
+  pauseLedgerOperationalSync,
+  runLedgerOperationalSync,
+} from "./ledgerOperationalSync";
+/* eslint-enable import/first */
 
 describe("Ledger mutation sync kick", () => {
   it("starts asynchronously and harmlessly absorbs an offline failure", async () => {
@@ -21,5 +28,16 @@ describe("Ledger mutation sync kick", () => {
     expect(kickLedgerOperationalSync(run)).toBeUndefined();
     expect(run).toHaveBeenCalledOnce();
     await Promise.resolve();
+  });
+
+  it("blocks direct mutation kicks during an account transition", async () => {
+    vi.mocked(runLedgerExpenseSync).mockClear();
+    await pauseLedgerOperationalSync();
+    await runLedgerOperationalSync();
+    expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+
+    allowLedgerOperationalSync();
+    await runLedgerOperationalSync();
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
   });
 });

@@ -81,9 +81,14 @@ function escapeLike(value: string) {
   return value.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_");
 }
 
-function where(query: LedgerReportQuery, alias = "e") {
-  const clauses = [`${alias}.journey_id = ?`];
-  const params: SQLite.SQLiteBindValue[] = [query.journeyId];
+function where(query: LedgerReportQuery, userId: string, alias = "e") {
+  const clauses = [
+    `${alias}.journey_id = ?`,
+    `(${alias}.sync_status = 'SYNCED' OR ${alias}.local_owner_user_id = ?)`,
+    `EXISTS (SELECT 1 FROM ledger_actor_context actor
+      WHERE actor.user_id = ? AND actor.journey_id = ${alias}.journey_id)`,
+  ];
+  const params: SQLite.SQLiteBindValue[] = [query.journeyId, userId, userId];
   if (query.businessStatus) {
     clauses.push(`${alias}.business_status = ?`);
     params.push(query.businessStatus);
@@ -147,9 +152,13 @@ function visibleExpenseSql(scope: ReportingScope) {
     : "mine.expense_id IS NOT NULL AND (mine.settlement_amount_minor IS NULL OR mine.settlement_amount_minor <> 0)";
 }
 
-export function createLedgerReportingRepository(database: LedgerReportingDatabase) {
+export function createLedgerReportingRepository(
+  database: LedgerReportingDatabase,
+  getActiveUserId: () => Promise<string>,
+) {
   return {
     async listJourneys() {
+      const userId = await getActiveUserId();
       const rows = await database.getAllAsync<
         Omit<LedgerJourneyOption, "hasActor"> & { hasActor: number }
       >(
@@ -157,42 +166,69 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
            (SELECT COUNT(*) FROM ledger_members member
              WHERE member.journey_id = source.journeyId) AS memberCount,
            EXISTS (SELECT 1 FROM ledger_actor_context actor
-             WHERE actor.journey_id = source.journeyId AND actor.member_id IS NOT NULL) AS hasActor
+             WHERE actor.user_id = ? AND actor.journey_id = source.journeyId
+               AND actor.member_id IS NOT NULL) AS hasActor
          FROM (
            SELECT journey_id AS journeyId, COALESCE(title, 'Journey') AS title,
              start_date AS startDate, end_date AS endDate,
              settlement_currency AS settlementCurrency, settlement_scale AS settlementScale
-           FROM ledger_journeys
+           FROM ledger_journeys journey
+           WHERE EXISTS (SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.user_id = ? AND actor.journey_id = journey.journey_id)
            UNION ALL
            SELECT s.journey_id, s.title, s.start_date, s.end_date, s.currency, s.scale
            FROM ledger_my_journey_summaries s
            WHERE NOT EXISTS (SELECT 1 FROM ledger_journeys j WHERE j.journey_id = s.journey_id)
-             AND s.period_key = 'ALL'
+             AND s.user_id = ? AND s.period_key = 'ALL'
          ) source ORDER BY COALESCE(startDate, endDate, '') DESC, title`,
+        userId,
+        userId,
+        userId,
       );
       return rows.map((row) => ({ ...row, hasActor: Boolean(row.hasActor) }));
     },
 
-    getActorMemberId(journeyId: string) {
+    async getActorMemberId(journeyId: string) {
+      const userId = await getActiveUserId();
       return database.getFirstAsync<{ memberId: string | null }>(
-        "SELECT member_id AS memberId FROM ledger_actor_context WHERE journey_id = ?",
+        `SELECT member_id AS memberId FROM ledger_actor_context
+         WHERE user_id = ? AND journey_id = ?`,
+        userId,
         journeyId,
       );
     },
 
     async listFilterOptions(journeyId: string) {
+      const userId = await getActiveUserId();
       const [categories, currencies, members] = await Promise.all([
         database.getAllAsync<{ value: string }>(
-          "SELECT DISTINCT category AS value FROM ledger_expenses WHERE journey_id = ? ORDER BY value",
+          `SELECT DISTINCT category AS value FROM ledger_expenses
+           WHERE journey_id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)
+             AND EXISTS (SELECT 1 FROM ledger_actor_context actor
+               WHERE actor.user_id = ? AND actor.journey_id = ledger_expenses.journey_id)
+           ORDER BY value`,
           journeyId,
+          userId,
+          userId,
         ),
         database.getAllAsync<{ value: string }>(
-          "SELECT DISTINCT original_currency AS value FROM ledger_expenses WHERE journey_id = ? ORDER BY value",
+          `SELECT DISTINCT original_currency AS value FROM ledger_expenses
+           WHERE journey_id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)
+             AND EXISTS (SELECT 1 FROM ledger_actor_context actor
+               WHERE actor.user_id = ? AND actor.journey_id = ledger_expenses.journey_id)
+           ORDER BY value`,
           journeyId,
+          userId,
+          userId,
         ),
         database.getAllAsync<{ id: string; label: string }>(
-          "SELECT id, display_name AS label FROM ledger_members WHERE journey_id = ? ORDER BY label",
+          `SELECT id, display_name AS label FROM ledger_members
+           WHERE journey_id = ? AND EXISTS (
+             SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.user_id = ? AND actor.journey_id = ledger_members.journey_id)
+           ORDER BY label`,
           journeyId,
+          userId,
         ),
       ]);
       return {
@@ -203,37 +239,46 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
     },
 
     async getSelectedJourneyId() {
+      const userId = await getActiveUserId();
       return (
         (
           await database.getFirstAsync<{ selectedJourneyId: string | null }>(
-            "SELECT selected_journey_id AS selectedJourneyId FROM ledger_preferences WHERE id = 1",
+            `SELECT selected_journey_id AS selectedJourneyId
+             FROM account_local_state WHERE user_id = ?`,
+            userId,
           )
         )?.selectedJourneyId ?? null
       );
     },
 
     async getPreferences(): Promise<LedgerPreferences> {
-      const row = await database.getFirstAsync<{
-        defaultCurrency: string;
-        debugMode: number;
-      }>(
-        `SELECT default_currency AS defaultCurrency, debug_mode AS debugMode
-         FROM ledger_preferences WHERE id = 1`,
-      );
+      const userId = await getActiveUserId();
+      const [account, device] = await Promise.all([
+        database.getFirstAsync<{ defaultCurrency: string }>(
+          `SELECT default_currency AS defaultCurrency
+           FROM account_local_state WHERE user_id = ?`,
+          userId,
+        ),
+        database.getFirstAsync<{ debugMode: number }>(
+          "SELECT debug_mode AS debugMode FROM ledger_preferences WHERE id = 1",
+        ),
+      ]);
       return {
-        defaultCurrency: row?.defaultCurrency ?? "NZD",
-        debugMode: Boolean(row?.debugMode),
+        defaultCurrency: account?.defaultCurrency ?? "NZD",
+        debugMode: Boolean(device?.debugMode),
       };
     },
 
     async setDefaultCurrency(defaultCurrency: string) {
+      const userId = await getActiveUserId();
       await database.runAsync(
-        `INSERT INTO ledger_preferences
-           (id, selected_journey_id, default_currency, debug_mode, updated_at)
-         VALUES (1, NULL, ?, 0, ?)
-         ON CONFLICT(id) DO UPDATE SET
+        `INSERT INTO account_local_state
+           (user_id, selected_journey_id, default_currency, updated_at)
+         VALUES (?, NULL, ?, ?)
+         ON CONFLICT(user_id) DO UPDATE SET
            default_currency = excluded.default_currency,
            updated_at = excluded.updated_at`,
+        userId,
         defaultCurrency,
         new Date().toISOString(),
       );
@@ -253,29 +298,37 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
     },
 
     async selectJourney(journeyId: string | null) {
+      const userId = await getActiveUserId();
       await database.runAsync(
-        `INSERT INTO ledger_preferences
-           (id, selected_journey_id, default_currency, debug_mode, updated_at)
-         VALUES (1, ?, 'NZD', 0, ?)
-         ON CONFLICT(id) DO UPDATE SET
+        `INSERT INTO account_local_state
+           (user_id, selected_journey_id, default_currency, updated_at)
+         VALUES (?, ?, 'NZD', ?)
+         ON CONFLICT(user_id) DO UPDATE SET
            selected_journey_id = excluded.selected_journey_id,
            updated_at = excluded.updated_at`,
+        userId,
         journeyId,
         new Date().toISOString(),
       );
     },
 
     async hasOpenConflict(expenseId: string) {
+      const userId = await getActiveUserId();
       return Boolean(
         await database.getFirstAsync(
-          "SELECT 1 FROM ledger_expense_conflicts WHERE expense_id = ? AND status = 'OPEN' LIMIT 1",
+          `SELECT 1 FROM ledger_expense_conflicts conflict
+           JOIN ledger_expenses expense ON expense.id = conflict.expense_id
+           WHERE conflict.expense_id = ? AND conflict.status = 'OPEN'
+             AND (expense.sync_status = 'SYNCED' OR expense.local_owner_user_id = ?)
+           LIMIT 1`,
           expenseId,
+          userId,
         ),
       );
     },
 
     async listExpenses(query: LedgerReportQuery, limit = 50, offset = 0) {
-      const filtered = where(query);
+      const filtered = where(query, await getActiveUserId());
       const component =
         query.scope === "GROUP"
           ? "v.settlement_amount_minor"
@@ -325,7 +378,7 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
     },
 
     async countExpenses(query: LedgerReportQuery) {
-      const filtered = where(query);
+      const filtered = where(query, await getActiveUserId());
       const row = await database.getFirstAsync<{ count: number }>(
         `SELECT COUNT(*) AS count
          FROM ledger_expenses e
@@ -340,7 +393,7 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
     },
 
     async summarize(query: LedgerReportQuery): Promise<ReportingAggregate> {
-      const filtered = where(query);
+      const filtered = where(query, await getActiveUserId());
       const component =
         query.scope === "GROUP"
           ? "v.settlement_amount_minor"
@@ -373,7 +426,7 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
       query: LedgerReportQuery,
       dimension: ReportingDimension,
     ): Promise<ReportingBucket[]> {
-      const filtered = where(query);
+      const filtered = where(query, await getActiveUserId());
       const dimensionSql = {
         CATEGORY: ["e.category", "e.category"],
         DAY: ["substr(e.occurred_at, 1, 10)", "substr(e.occurred_at, 1, 10)"],
@@ -424,7 +477,8 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
       }));
     },
 
-    listMyLedger(period: MyLedgerPeriod) {
+    async listMyLedger(period: MyLedgerPeriod) {
+      const userId = await getActiveUserId();
       return database.getAllAsync<{
         journeyId: string;
         title: string;
@@ -444,8 +498,9 @@ export function createLedgerReportingRepository(database: LedgerReportingDatabas
           paid_minor AS paidMinor, position_minor AS positionMinor,
           unvalued_count AS unvaluedCount, conflict_count AS conflictCount,
           updated_at AS updatedAt
-         FROM ledger_my_journey_summaries WHERE period_key = ?
+         FROM ledger_my_journey_summaries WHERE user_id = ? AND period_key = ?
          ORDER BY COALESCE(start_date, end_date, '') DESC, title`,
+        userId,
         period,
       );
     },

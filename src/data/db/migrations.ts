@@ -810,4 +810,95 @@ export const migrations: Migration[] = [
         CHECK (debug_mode IN (0, 1));
     `,
   },
+  {
+    id: 19,
+    name: "account_switching_local_isolation",
+    sql: `
+      ALTER TABLE ledger_actor_context RENAME TO ledger_actor_context_v18;
+      CREATE TABLE ledger_actor_context (
+        user_id TEXT,
+        journey_id TEXT NOT NULL,
+        member_id TEXT,
+        role TEXT,
+        capabilities_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, journey_id)
+      );
+      INSERT INTO ledger_actor_context (
+        user_id, journey_id, member_id, role, capabilities_json, updated_at
+      ) SELECT user_id, journey_id, member_id, role, capabilities_json, updated_at
+        FROM ledger_actor_context_v18;
+      DROP TABLE ledger_actor_context_v18;
+      CREATE INDEX ledger_actor_context_journey
+        ON ledger_actor_context (journey_id, user_id);
+
+      ALTER TABLE ledger_my_journey_summaries
+        RENAME TO ledger_my_journey_summaries_v18;
+      CREATE TABLE ledger_my_journey_summaries (
+        user_id TEXT,
+        journey_id TEXT NOT NULL,
+        period_key TEXT NOT NULL,
+        from_at TEXT,
+        to_at TEXT,
+        title TEXT NOT NULL,
+        start_date TEXT,
+        end_date TEXT,
+        currency TEXT NOT NULL,
+        scale INTEGER NOT NULL,
+        my_spend_minor INTEGER NOT NULL,
+        paid_minor INTEGER NOT NULL,
+        position_minor INTEGER NOT NULL,
+        unvalued_count INTEGER NOT NULL,
+        conflict_count INTEGER NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, journey_id, period_key)
+      );
+      INSERT INTO ledger_my_journey_summaries (
+        user_id, journey_id, period_key, from_at, to_at, title, start_date,
+        end_date, currency, scale, my_spend_minor, paid_minor, position_minor,
+        unvalued_count, conflict_count, updated_at
+      ) SELECT NULL, journey_id, period_key, from_at, to_at, title, start_date,
+        end_date, currency, scale, my_spend_minor, paid_minor, position_minor,
+        unvalued_count, conflict_count, updated_at
+        FROM ledger_my_journey_summaries_v18;
+      DROP TABLE ledger_my_journey_summaries_v18;
+      CREATE INDEX ledger_my_journey_summaries_user_period
+        ON ledger_my_journey_summaries (user_id, period_key, updated_at DESC);
+
+      ALTER TABLE ledger_sync_cursors RENAME TO ledger_sync_cursors_v18;
+      CREATE TABLE ledger_sync_cursors (
+        user_id TEXT,
+        journey_id TEXT NOT NULL,
+        cursor TEXT,
+        server_time TEXT,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, journey_id)
+      );
+      INSERT INTO ledger_sync_cursors (
+        user_id, journey_id, cursor, server_time, updated_at
+      ) SELECT NULL, journey_id, cursor, server_time, updated_at
+        FROM ledger_sync_cursors_v18;
+      DROP TABLE ledger_sync_cursors_v18;
+
+      ALTER TABLE sync_operations ADD COLUMN owner_user_id TEXT;
+      CREATE INDEX sync_operations_owner_pending
+        ON sync_operations (owner_user_id, status, next_attempt_at, created_at);
+
+      ALTER TABLE ledger_asset_operations ADD COLUMN owner_user_id TEXT;
+      CREATE INDEX ledger_asset_operations_owner_pending
+        ON ledger_asset_operations (owner_user_id, status, next_attempt_at, created_at);
+
+      CREATE TABLE account_local_state (
+        user_id TEXT PRIMARY KEY NOT NULL,
+        selected_journey_id TEXT,
+        default_currency TEXT NOT NULL DEFAULT 'NZD',
+        updated_at TEXT NOT NULL
+      );
+
+      ALTER TABLE ledger_expenses ADD COLUMN local_owner_user_id TEXT;
+      ALTER TABLE expenses ADD COLUMN local_owner_user_id TEXT;
+      ALTER TABLE itinerary_items ADD COLUMN local_owner_user_id TEXT;
+      ALTER TABLE ledger_receipt_assets ADD COLUMN local_owner_user_id TEXT;
+    `,
+  },
 ];

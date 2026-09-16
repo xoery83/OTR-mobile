@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  authenticateToSupabaseDev,
   revalidateStoredSupabaseDevSession,
   signInToSupabaseDev,
 } from "./devSupabaseAuth";
@@ -19,6 +20,11 @@ describe("Supabase Dev Auth adapter", () => {
         access_token: "access-token",
         refresh_token: "refresh-token",
         expires_in: 3600,
+        user: {
+          id: "00000000-0000-4000-8000-000000000001",
+          email: "dev@example.test",
+          user_metadata: { display_name: "Dev User" },
+        },
       }),
     );
 
@@ -40,6 +46,11 @@ describe("Supabase Dev Auth adapter", () => {
       expect.objectContaining({
         accessToken: "access-token",
         refreshToken: "refresh-token",
+        identity: {
+          userId: "00000000-0000-4000-8000-000000000001",
+          displayName: "Dev User",
+          email: "dev@example.test",
+        },
       }),
     );
   });
@@ -53,6 +64,29 @@ describe("Supabase Dev Auth adapter", () => {
         persistSession: vi.fn(),
       }),
     ).rejects.toThrow("approved Supabase Dev project");
+  });
+
+  it("can authenticate without replacing the active session before the switch boundary", async () => {
+    const persistSession = vi.fn();
+    const result = await authenticateToSupabaseDev("dev@example.test", "password", {
+      url: "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      publishableKey: "publishable-key",
+      fetchImplementation: vi.fn(async () =>
+        Response.json({
+          access_token: "access-token",
+          refresh_token: "refresh-token",
+          expires_in: 3600,
+          user: {
+            id: "00000000-0000-4000-8000-000000000001",
+            email: "dev@example.test",
+          },
+        }),
+      ),
+      persistSession,
+    });
+
+    expect(result.identity?.userId).toBe("00000000-0000-4000-8000-000000000001");
+    expect(persistSession).not.toHaveBeenCalled();
   });
 
   it("silently refreshes a stored Dev session when network is available", async () => {
@@ -73,6 +107,11 @@ describe("Supabase Dev Auth adapter", () => {
           accessToken: "expired",
           refreshToken: "stored-refresh-token",
           expiresAt: "2026-09-10T00:00:00.000Z",
+          identity: {
+            userId: "00000000-0000-4000-8000-000000000001",
+            displayName: "Dev User",
+            email: "dev@example.test",
+          },
         }),
         fetchImplementation,
         persistSession,
@@ -86,7 +125,10 @@ describe("Supabase Dev Auth adapter", () => {
       }),
     );
     expect(persistSession).toHaveBeenCalledWith(
-      expect.objectContaining({ accessToken: "renewed-access-token" }),
+      expect.objectContaining({
+        accessToken: "renewed-access-token",
+        identity: expect.objectContaining({ displayName: "Dev User" }),
+      }),
     );
   });
 });

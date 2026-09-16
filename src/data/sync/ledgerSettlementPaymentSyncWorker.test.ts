@@ -6,6 +6,7 @@ import { SyncConflictError } from "./syncEngine";
 
 const operation = {
   id: "operation-1",
+  ownerUserId: "user-a",
   tripId: "10000000-0000-4000-8000-000000000001",
   entityType: "ledger_settlement_payment",
   entityId: "73000000-0000-4000-8000-000000000001",

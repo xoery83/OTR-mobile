@@ -67,6 +67,40 @@ Capture:
 - Future inputs include text, voice, camera, photo, and document.
 - Parser routes captured content to Itinerary, Expense, or Travel Document.
 
+## Approved Long-Term Navigation Direction
+
+The approved primary navigation target is:
+
+- Today.
+- Ledger.
+- Trip.
+- Album.
+
+Today is the daily cross-product dashboard. Ledger, Trip, and Album are the
+three long-term product pillars. Capture remains a global creation/input action
+rather than a permanent primary destination. Migrating the current bottom tabs
+to this structure is a future task and is not part of the Global Menu and
+Account Switching work.
+
+The top-left menu is a contextual utility menu, not a second app launcher. It
+combines fixed account/settings actions with low-frequency actions for the
+current primary module. It must not repeat Today, Ledger, Trip, Album, or
+Capture as navigation destinations.
+
+## Account Switching
+
+Account switching is a future Production capability, not a Dev-only role
+simulation. The same device may remember more than one real authenticated
+account, but each account keeps its own session identity, personal cache,
+permission context, selected Journey, and durable mutation ownership.
+
+Switching accounts must never submit one user's queued mutation with another
+user's token or briefly expose the previous user's personal projection. Shared
+server-confirmed Journey data remains shared for users whom the Backend
+authorizes. Development builds may add a quick selector for remembered Dev
+sessions, but it uses the same account-switching foundation and never changes a
+local role or Journey member mapping.
+
 ## MVP Scope
 
 Phase 1 should validate:

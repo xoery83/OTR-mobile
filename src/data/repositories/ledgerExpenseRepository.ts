@@ -178,22 +178,33 @@ const restoreOperation = "LEDGER_RESTORE_EXPENSE";
 
 export function createLedgerExpenseRepository(
   database: LedgerExpenseDatabase,
+  getActiveUserId: () => Promise<string> = defaultGetActiveUserId,
 ): LedgerExpenseRepository {
   return {
     async createExpense(command) {
       assertReplayFixtureWritable(command.journeyId);
       const now = new Date().toISOString();
+      const userId = await getActiveUserId();
       const expense = buildLocalExpense(command, createLocalId("ledger-expense"), 1, now);
       assertCommand(expense);
       await database.withTransactionAsync(async () => {
-        await insertExpenseAggregate(database, expense, "CREATED", null);
-        await enqueueOperation(database, expense, createOperation, null, null, expense);
+        await insertExpenseAggregate(database, expense, "CREATED", null, userId);
+        await enqueueOperation(
+          database,
+          expense,
+          createOperation,
+          null,
+          null,
+          userId,
+          expense,
+        );
       });
       return expense;
     },
 
     async updateExpense(id, command, reason) {
-      const current = await requireExpense(database, id);
+      const userId = await getActiveUserId();
+      const current = await requireExpense(database, id, userId);
       assertReplayFixtureWritable(current.journeyId);
       if (current.status === "DELETED") {
         throw new Error("A deleted expense must be restored before it can be edited.");
@@ -217,13 +228,14 @@ export function createLedgerExpenseRepository(
       );
       assertCommand(expense);
       await database.withTransactionAsync(async () => {
-        await replaceExpenseAggregate(database, expense, "UPDATED", reason);
+        await replaceExpenseAggregate(database, expense, "UPDATED", reason, userId);
         await enqueueOperation(
           database,
           expense,
           updateOperation,
           current.serverRevision,
           reason,
+          userId,
           expense,
           current,
         );
@@ -233,6 +245,7 @@ export function createLedgerExpenseRepository(
 
     async listExpensesForJourney(journeyId, includeDeleted = false) {
       if (!journeyId.trim()) throw new Error("A Ledger query needs a Journey.");
+      const userId = await getActiveUserId();
       const rows = await database.getAllAsync<LedgerExpenseRow>(
         `SELECT
           id, server_id AS serverId, journey_id AS journeyId,
@@ -245,15 +258,21 @@ export function createLedgerExpenseRepository(
           server_revision AS serverRevision, deleted_at AS deletedAt,
           sync_status AS syncStatus, created_at AS createdAt, updated_at AS updatedAt
         FROM ledger_expenses
-        WHERE journey_id = ? AND (? = 1 OR deleted_at IS NULL)
+        WHERE journey_id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)
+          AND EXISTS (SELECT 1 FROM ledger_actor_context actor
+            WHERE actor.user_id = ? AND actor.journey_id = ledger_expenses.journey_id)
+          AND (? = 1 OR deleted_at IS NULL)
         ORDER BY occurred_at DESC, created_at DESC`,
         journeyId,
+        userId,
+        userId,
         includeDeleted ? 1 : 0,
       );
       return Promise.all(rows.map((row) => hydrateExpense(database, row)));
     },
 
     async getExpense(id) {
+      const userId = await getActiveUserId();
       const row = await database.getFirstAsync<LedgerExpenseRow>(
         `SELECT
           id, server_id AS serverId, journey_id AS journeyId,
@@ -265,14 +284,20 @@ export function createLedgerExpenseRepository(
           settlement_participation AS settlementParticipation, revision,
           server_revision AS serverRevision, deleted_at AS deletedAt,
           sync_status AS syncStatus, created_at AS createdAt, updated_at AS updatedAt
-        FROM ledger_expenses WHERE id = ?`,
+        FROM ledger_expenses
+        WHERE id = ? AND (sync_status = 'SYNCED' OR local_owner_user_id = ?)
+          AND EXISTS (SELECT 1 FROM ledger_actor_context actor
+            WHERE actor.user_id = ? AND actor.journey_id = ledger_expenses.journey_id)`,
         id,
+        userId,
+        userId,
       );
       return row ? hydrateExpense(database, row) : null;
     },
 
     async tombstoneExpense(id, reason) {
-      const current = await requireExpense(database, id);
+      const userId = await getActiveUserId();
+      const current = await requireExpense(database, id, userId);
       assertReplayFixtureWritable(current.journeyId);
       if (current.status === "DELETED") return;
       const now = new Date().toISOString();
@@ -280,12 +305,14 @@ export function createLedgerExpenseRepository(
       await database.withTransactionAsync(async () => {
         await database.runAsync(
           `UPDATE ledger_expenses
-           SET business_status = ?, deleted_at = ?, revision = ?, sync_status = ?, updated_at = ?
+           SET business_status = ?, deleted_at = ?, revision = ?, sync_status = ?,
+             local_owner_user_id = ?, updated_at = ?
            WHERE id = ?`,
           "DELETED",
           now,
           nextRevision,
           "PENDING_DELETE",
+          userId,
           now,
           id,
         );
@@ -296,6 +323,7 @@ export function createLedgerExpenseRepository(
           deleteOperation,
           current.serverRevision,
           reason,
+          userId,
           undefined,
           current,
         );
@@ -303,7 +331,8 @@ export function createLedgerExpenseRepository(
     },
 
     async restoreExpense(id, status, reason) {
-      const current = await requireExpense(database, id);
+      const userId = await getActiveUserId();
+      const current = await requireExpense(database, id, userId);
       assertReplayFixtureWritable(current.journeyId);
       if (current.status !== "DELETED") return;
       const now = new Date().toISOString();
@@ -311,11 +340,13 @@ export function createLedgerExpenseRepository(
       await database.withTransactionAsync(async () => {
         await database.runAsync(
           `UPDATE ledger_expenses
-           SET business_status = ?, deleted_at = NULL, revision = ?, sync_status = ?, updated_at = ?
+           SET business_status = ?, deleted_at = NULL, revision = ?, sync_status = ?,
+             local_owner_user_id = ?, updated_at = ?
            WHERE id = ?`,
           status,
           nextRevision,
           "PENDING_UPDATE",
+          userId,
           now,
           id,
         );
@@ -326,6 +357,7 @@ export function createLedgerExpenseRepository(
           restoreOperation,
           current.serverRevision,
           reason,
+          userId,
           undefined,
           current,
         );
@@ -333,25 +365,29 @@ export function createLedgerExpenseRepository(
     },
 
     async markExpenseSyncing(id) {
-      await setExpenseSyncStatus(database, id, "SYNCING");
+      await setExpenseSyncStatus(database, id, "SYNCING", await getActiveUserId());
     },
 
     async markExpenseSynced(id, serverId, serverRevision) {
+      const userId = await getActiveUserId();
       await database.runAsync(
         `UPDATE ledger_expenses
-         SET server_id = ?, server_revision = ?, sync_status = ?, last_synced_at = ?, updated_at = ?
-         WHERE id = ?`,
+         SET server_id = ?, server_revision = ?, sync_status = ?, local_owner_user_id = NULL,
+             last_synced_at = ?, updated_at = ?
+         WHERE id = ? AND local_owner_user_id = ?`,
         serverId,
         serverRevision,
         "SYNCED",
         new Date().toISOString(),
         new Date().toISOString(),
         id,
+        userId,
       );
     },
 
     async reconcileCanonicalExpense(id, canonical) {
-      const current = await requireExpense(database, id);
+      const userId = await getActiveUserId();
+      const current = await requireExpense(database, id, userId);
       const expense: LedgerExpense = {
         ...current,
         serverId: canonical.id,
@@ -375,7 +411,7 @@ export function createLedgerExpenseRepository(
         updatedAt: canonical.updatedAt,
       };
       await database.withTransactionAsync(async () => {
-        await replaceExpenseData(database, expense);
+        await replaceExpenseData(database, expense, userId);
         await database.runAsync(
           "DELETE FROM ledger_expense_audit_events WHERE expense_id = ?",
           id,
@@ -403,11 +439,11 @@ export function createLedgerExpenseRepository(
     },
 
     async markExpenseFailed(id) {
-      await setExpenseSyncStatus(database, id, "FAILED");
+      await setExpenseSyncStatus(database, id, "FAILED", await getActiveUserId());
     },
 
     async markExpenseConflict(id) {
-      await setExpenseSyncStatus(database, id, "CONFLICT");
+      await setExpenseSyncStatus(database, id, "CONFLICT", await getActiveUserId());
     },
 
     async cacheRateQuote(quote) {
@@ -446,7 +482,8 @@ export function createLedgerExpenseRepository(
     },
 
     async addPaymentRecord(expenseId, input) {
-      const expense = await requireExpense(database, expenseId);
+      const userId = await getActiveUserId();
+      const expense = await requireExpense(database, expenseId, userId);
       assertReplayFixtureWritable(expense.journeyId);
       if (!input.authorization && !input.posted) {
         throw new Error("Payment evidence needs an authorization or posted cost.");
@@ -496,6 +533,7 @@ export function createLedgerExpenseRepository(
           payment.id,
           "LEDGER_ADD_PAYMENT_RECORD",
           payment,
+          userId,
         );
       });
       return payment;
@@ -540,7 +578,8 @@ export function createLedgerExpenseRepository(
     },
 
     async applyValuation(expenseId, input) {
-      const current = await requireExpense(database, expenseId);
+      const userId = await getActiveUserId();
+      const current = await requireExpense(database, expenseId, userId);
       assertReplayFixtureWritable(current.journeyId);
       if (current.status === "DELETED")
         throw new Error("Deleted expenses cannot be valued.");
@@ -614,8 +653,10 @@ export function createLedgerExpenseRepository(
       await database.withTransactionAsync(async () => {
         await database.runAsync(
           `UPDATE ledger_expenses SET business_status = 'ACCEPTED', revision = ?,
-            sync_status = 'PENDING_UPDATE', updated_at = ? WHERE id = ?`,
+            sync_status = 'PENDING_UPDATE', local_owner_user_id = ?, updated_at = ?
+            WHERE id = ?`,
           revision,
+          userId,
           now,
           current.id,
         );
@@ -673,6 +714,7 @@ export function createLedgerExpenseRepository(
             previewSettlement: preview.settlement,
             baseExpense: toOperationSnapshot(current),
           },
+          userId,
           "ledger_expense",
           current.serverRevision,
         );
@@ -680,6 +722,10 @@ export function createLedgerExpenseRepository(
       return next;
     },
   };
+}
+
+async function defaultGetActiveUserId() {
+  return (await import("@/data/auth/authRepository")).requireActiveUserId();
 }
 
 function buildLocalExpense(
@@ -734,14 +780,15 @@ async function insertExpenseAggregate(
   expense: LedgerExpense,
   eventType: string,
   reason: string | null,
+  userId: string,
 ) {
   await database.runAsync(
     `INSERT INTO ledger_expenses (
       id, server_id, journey_id, creator_member_id, payer_member_id, title, description,
       category, occurred_at, original_amount_minor, original_currency, original_scale,
       business_status, settlement_participation, revision, server_revision, deleted_at,
-      sync_status, last_synced_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sync_status, last_synced_at, created_at, updated_at, local_owner_user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     expense.id,
     expense.serverId,
     expense.journeyId,
@@ -763,6 +810,7 @@ async function insertExpenseAggregate(
     null,
     expense.createdAt,
     expense.updatedAt,
+    userId,
   );
   await insertExpenseChildren(database, expense);
   await insertAuditEvent(
@@ -781,8 +829,9 @@ async function replaceExpenseAggregate(
   expense: LedgerExpense,
   eventType: string,
   reason: string,
+  userId: string,
 ) {
-  await replaceExpenseData(database, expense);
+  await replaceExpenseData(database, expense, userId);
   await insertAuditEvent(
     database,
     expense.id,
@@ -797,13 +846,15 @@ async function replaceExpenseAggregate(
 async function replaceExpenseData(
   database: LedgerExpenseDatabase,
   expense: LedgerExpense,
+  userId: string,
 ) {
   await database.runAsync(
     `UPDATE ledger_expenses SET
       journey_id = ?, creator_member_id = ?, payer_member_id = ?, title = ?, description = ?,
       category = ?, occurred_at = ?, original_amount_minor = ?, original_currency = ?,
       original_scale = ?, business_status = ?, settlement_participation = ?, revision = ?, server_id = ?,
-      server_revision = ?, deleted_at = ?, sync_status = ?, last_synced_at = ?, updated_at = ?
+      server_revision = ?, deleted_at = ?, sync_status = ?, last_synced_at = ?,
+      local_owner_user_id = ?, updated_at = ?
      WHERE id = ?`,
     expense.journeyId,
     expense.creatorMemberId,
@@ -823,6 +874,7 @@ async function replaceExpenseData(
     expense.deletedAt,
     expense.syncStatus,
     expense.syncStatus === "SYNCED" ? new Date().toISOString() : null,
+    expense.syncStatus === "SYNCED" ? null : userId,
     expense.updatedAt,
     expense.id,
   );
@@ -1042,6 +1094,7 @@ async function enqueueEvidenceOperation(
   entityId: string,
   operationType: string,
   payload: unknown,
+  userId: string,
   entityType = "ledger_payment_record",
   baseVersion: number | null = null,
 ) {
@@ -1049,9 +1102,9 @@ async function enqueueEvidenceOperation(
   await database.runAsync(
     `INSERT INTO sync_operations (
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
-      base_version, payload_json, status, attempt_count, next_attempt_at,
+      base_version, payload_json, owner_user_id, status, attempt_count, next_attempt_at,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
     createLocalId("ledger-operation"),
     expense.journeyId,
     entityType,
@@ -1060,6 +1113,7 @@ async function enqueueEvidenceOperation(
     createLocalId("ledger-idempotency"),
     baseVersion,
     JSON.stringify({ expenseId: expense.id, ...((payload as object) ?? {}) }),
+    userId,
     now,
     now,
   );
@@ -1094,6 +1148,7 @@ async function enqueueOperation(
   operationType: string,
   baseVersion: number | null,
   reason: string | null,
+  userId: string,
   snapshot?: LedgerExpense,
   baseSnapshot?: LedgerExpense,
 ) {
@@ -1101,9 +1156,9 @@ async function enqueueOperation(
   await database.runAsync(
     `INSERT INTO sync_operations (
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
-      base_version, payload_json, status, attempt_count, next_attempt_at,
+      base_version, payload_json, owner_user_id, status, attempt_count, next_attempt_at,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     createLocalId("ledger-operation"),
     expense.journeyId,
     "ledger_expense",
@@ -1118,6 +1173,7 @@ async function enqueueOperation(
       expense: snapshot ? toOperationSnapshot(snapshot) : null,
       baseExpense: baseSnapshot ? toOperationSnapshot(baseSnapshot) : null,
     }),
+    userId,
     "PENDING",
     0,
     null,
@@ -1282,8 +1338,12 @@ function toNullableMoney(
     : { minor, currency, scale };
 }
 
-async function requireExpense(database: LedgerExpenseDatabase, id: string) {
-  const repository = createLedgerExpenseRepository(database);
+async function requireExpense(
+  database: LedgerExpenseDatabase,
+  id: string,
+  userId: string,
+) {
+  const repository = createLedgerExpenseRepository(database, async () => userId);
   const expense = await repository.getExpense(id);
   if (!expense) throw new Error("Ledger expense was not found.");
   return expense;
@@ -1293,11 +1353,14 @@ async function setExpenseSyncStatus(
   database: LedgerExpenseDatabase,
   id: string,
   syncStatus: SyncStatus,
+  userId: string,
 ) {
   await database.runAsync(
-    "UPDATE ledger_expenses SET sync_status = ?, updated_at = ? WHERE id = ?",
+    `UPDATE ledger_expenses SET sync_status = ?, updated_at = ?
+     WHERE id = ? AND local_owner_user_id = ?`,
     syncStatus,
     new Date().toISOString(),
     id,
+    userId,
   );
 }

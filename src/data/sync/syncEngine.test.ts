@@ -11,6 +11,7 @@ import type { SyncOperation } from "./syncOperationRepository";
 
 const operation: SyncOperation = {
   id: "operation-1",
+  ownerUserId: "user-a",
   tripId: "trip-1",
   entityType: "expense",
   entityId: "expense-1",

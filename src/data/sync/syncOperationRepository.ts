@@ -13,6 +13,7 @@ export type SyncOperation = {
   idempotencyKey: string;
   baseVersion: number | null;
   payloadJson: string;
+  ownerUserId: string;
   status: SyncOperationStatus;
   attemptCount: number;
   nextAttemptAt: string | null;
@@ -22,7 +23,7 @@ export type SyncOperation = {
 
 export type EnqueueSyncOperation = Omit<
   SyncOperation,
-  "attemptCount" | "createdAt" | "updatedAt"
+  "attemptCount" | "createdAt" | "ownerUserId" | "updatedAt"
 >;
 
 export type SyncQueueDatabase = Pick<SQLite.SQLiteDatabase, "getAllAsync" | "runAsync">;
@@ -30,30 +31,37 @@ export type SyncQueueDatabase = Pick<SQLite.SQLiteDatabase, "getAllAsync" | "run
 const pendingStatuses: SyncOperationStatus[] = ["PENDING", "RETRYABLE"];
 const processClaimOwner = createLocalId("sync-process");
 
-export function createSyncOperationRepository(database: SyncQueueDatabase) {
+export function createSyncOperationRepository(
+  database: SyncQueueDatabase,
+  getActiveUserId: () => Promise<string>,
+) {
   return {
     async recoverInterrupted() {
       const now = new Date().toISOString();
+      const userId = await getActiveUserId();
       await database.runAsync(
         `UPDATE sync_operations SET status = 'RETRYABLE', next_attempt_at = ?,
           last_error_message = 'INTERRUPTED', claim_owner = NULL,
           lease_expires_at = NULL, updated_at = ? WHERE status = 'PROCESSING'
+          AND owner_user_id = ?
           AND (claim_owner IS NULL OR claim_owner <> ? OR lease_expires_at <= ?)`,
         now,
         now,
+        userId,
         processClaimOwner,
         now,
       );
     },
     async enqueue(operation: EnqueueSyncOperation) {
       const now = new Date().toISOString();
+      const userId = await getActiveUserId();
 
       await database.runAsync(
         `INSERT INTO sync_operations (
           id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
-          base_version, payload_json, status, attempt_count, next_attempt_at,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          base_version, payload_json, owner_user_id, status, attempt_count,
+          next_attempt_at, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         operation.id,
         operation.tripId,
         operation.entityType,
@@ -62,6 +70,7 @@ export function createSyncOperationRepository(database: SyncQueueDatabase) {
         operation.idempotencyKey,
         operation.baseVersion,
         operation.payloadJson,
+        userId,
         operation.status,
         0,
         operation.nextAttemptAt,
@@ -71,6 +80,7 @@ export function createSyncOperationRepository(database: SyncQueueDatabase) {
     },
 
     async listPending() {
+      const userId = await getActiveUserId();
       return database.getAllAsync<SyncOperation>(
         `SELECT
           id,
@@ -81,15 +91,17 @@ export function createSyncOperationRepository(database: SyncQueueDatabase) {
           idempotency_key AS idempotencyKey,
           base_version AS baseVersion,
           payload_json AS payloadJson,
+          owner_user_id AS ownerUserId,
           status,
           attempt_count AS attemptCount,
           next_attempt_at AS nextAttemptAt,
           created_at AS createdAt,
           updated_at AS updatedAt
         FROM sync_operations
-        WHERE status IN (?, ?)
+        WHERE owner_user_id = ? AND status IN (?, ?)
           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
         ORDER BY created_at ASC`,
+        userId,
         ...pendingStatuses,
         new Date().toISOString(),
       );
@@ -97,15 +109,18 @@ export function createSyncOperationRepository(database: SyncQueueDatabase) {
 
     async claim(id: string) {
       const now = new Date().toISOString();
+      const userId = await getActiveUserId();
       const result = await database.runAsync(
         `UPDATE sync_operations SET status = 'PROCESSING', claim_owner = ?,
           lease_expires_at = ?, updated_at = ?
-         WHERE id = ? AND status IN ('PENDING', 'RETRYABLE')
+         WHERE id = ? AND owner_user_id = ?
+           AND status IN ('PENDING', 'RETRYABLE')
            AND (next_attempt_at IS NULL OR next_attempt_at <= ?)`,
         processClaimOwner,
         new Date(Date.now() + 5 * 60_000).toISOString(),
         now,
         id,
+        userId,
         now,
       );
       return result.changes === 1;

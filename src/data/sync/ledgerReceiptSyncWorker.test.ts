@@ -62,6 +62,7 @@ describe("receipt asset worker", () => {
     await pushReceiptOperation(
       {
         id: "op",
+        ownerUserId: "user-a",
         journeyId: "journey",
         assetId: asset.id,
         operationType: "UPLOAD_RECEIPT",
@@ -100,6 +101,7 @@ describe("receipt asset worker", () => {
       pushReceiptOperation(
         {
           id: "ocr",
+          ownerUserId: "user-a",
           journeyId: "journey",
           assetId: asset.id,
           operationType: "OCR_RECEIPT",

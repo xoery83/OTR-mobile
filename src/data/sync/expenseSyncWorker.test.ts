@@ -24,6 +24,7 @@ const expense: Expense = {
 
 const operation: SyncOperation = {
   id: "operation-1",
+  ownerUserId: "user-a",
   tripId: "trip-1",
   entityType: "expense",
   entityId: expense.id,

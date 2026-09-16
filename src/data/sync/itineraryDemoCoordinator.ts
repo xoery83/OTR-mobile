@@ -4,6 +4,7 @@ import { createItineraryRepository } from "@/data/repositories/itineraryReposito
 import { createItinerarySyncWorker } from "./itinerarySyncWorker";
 import { createSyncEngine } from "./syncEngine";
 import { createSyncOperationRepository } from "./syncOperationRepository";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 import { fakeItineraryTransport } from "./transportSelection";
 
 function nextAttemptAt(attemptCount: number) {
@@ -12,8 +13,11 @@ function nextAttemptAt(attemptCount: number) {
 
 export async function runItineraryDemoSync() {
   const database = await openDatabase();
-  const itineraryRepository = createItineraryRepository(database);
-  const operationRepository = createSyncOperationRepository(database);
+  const itineraryRepository = createItineraryRepository(database, requireActiveUserId);
+  const operationRepository = createSyncOperationRepository(
+    database,
+    requireActiveUserId,
+  );
   const worker = createItinerarySyncWorker(itineraryRepository, fakeItineraryTransport);
   const itineraryEngine = createSyncEngine(
     operationRepository,

@@ -4,12 +4,43 @@ Date: 2026-09-16
 
 ## Current Milestone
 
-The public Dev Backend deployment is complete on `integration/ledger-polish-canonical`.
-Mobile Dev Release traffic now uses `https://api-dev.xoery.art`; the backend runs as the
-isolated `otr-dev-backend` Docker service behind the server's existing Caddy instance.
-Production remains disconnected and unchanged. Stop before UI Polish Round 2 work.
+The Account Switching Foundation is complete through Slice 4 on
+`integration/ledger-polish-canonical`. The automated foundation gate passes. Stop here
+for review before Slice 5 adds account/menu UI.
 
-Current Mobile SQLite schema version: 18.
+Current Mobile SQLite schema version: 19.
+
+## Account Switching Foundation — Slices 0–4
+
+- Account switching is a Production foundation; the Dev quick selector is only a
+  gated convenience layer over real remembered sessions.
+- SecureStore now keeps explicit identity, an account index, and independent sessions;
+  passwords are never stored and the single-session format is adopted safely.
+- SQLite v19 scopes actor context, My Ledger, cursors, selected Journey, both durable
+  queues, and local unconfirmed Expense/Itinerary/receipt state.
+- ADR 0019 defines device-local identity scope. It does not change Backend/Supabase
+  ownership, membership, financial, or authorization semantics.
+- Canonical Backend-confirmed Journey facts remain shared for an authorized active
+  Journey actor. Local unconfirmed rows are visible only to their local owner.
+- Every new authenticated operation records its owner. Both durable workers list and
+  claim only the active user's operations; the negative transport test proves B cannot
+  send A's queued mutation.
+- The switch boundary pauses and drains all sync entry points, clears in-memory state,
+  changes session, adopts only provably owned legacy state, bootstraps the target, then
+  restarts sync. Failure rolls back; logout does not restart sync.
+- Ambiguous legacy operations remain parked. Legacy state is adopted only when the
+  v18 actor cache proves the same auth user.
+- The automated A → B → A gate proves that B sees shared canonical data but neither
+  sees nor sends A's local Expense; returning to A preserves and sends its operation.
+- TypeScript, ESLint, all 69 test files / 249 tests, and `git diff --check` pass.
+- Option A (Today / Ledger / Trip / Album) is the approved long-term bottom navigation;
+  the current tabs remain unchanged in this task.
+- The contextual menu has fixed identity/global actions, Ledger-specific My Ledger /
+  Review / Ledger Settings, gated Development actions, and separated Log out. Missing
+  Trip/Album secondary destinations are omitted.
+- Next checkpoint: review the foundation gate. Slice 5 contextual menu and Slice 6 Dev
+  quick selector have not started. Production, Backend, Hosted Dev data, Supabase schema,
+  current tabs, Replay identities, and Journey member mappings remain unchanged.
 
 ## Public Dev Backend
 

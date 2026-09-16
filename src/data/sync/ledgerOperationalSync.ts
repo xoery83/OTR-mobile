@@ -10,8 +10,10 @@ import { runLedgerReviewSync } from "./ledgerReviewCoordinator";
 import { runLedgerSettlementPaymentSync } from "./ledgerSettlementPaymentCoordinator";
 
 let running: Promise<void> | null = null;
+let paused = false;
 
 export function runLedgerOperationalSync() {
+  if (paused) return Promise.resolve();
   if (!running) {
     running = Promise.allSettled([
       runLedgerExpenseSync(),
@@ -37,6 +39,15 @@ export function runLedgerOperationalSync() {
       });
   }
   return running;
+}
+
+export async function pauseLedgerOperationalSync() {
+  paused = true;
+  await running;
+}
+
+export function allowLedgerOperationalSync() {
+  paused = false;
 }
 
 export function kickLedgerOperationalSync(

@@ -7,6 +7,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/data/db/database", () => ({ openDatabase: mocks.openDatabase }));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: vi.fn(async () => "user-a"),
+}));
 vi.mock("@/data/bootstrap/defaultBootstrapDependencies", () => ({
   resumeOperationalSync: mocks.runOperational,
 }));

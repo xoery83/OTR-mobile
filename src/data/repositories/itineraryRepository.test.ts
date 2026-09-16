@@ -4,10 +4,16 @@ import type { ItineraryItem } from "@/domain/itinerary/types";
 
 import { createItineraryRepository, type ItineraryDatabase } from "./itineraryRepository";
 
-type OperationRow = { entityId: string; operationType: string; status: string };
+type OperationRow = {
+  entityId: string;
+  operationType: string;
+  ownerUserId: string;
+  status: string;
+};
 
 function createInMemoryItineraryDatabase() {
   const items: ItineraryItem[] = [];
+  const owners = new Map<string, string>();
   const operations: OperationRow[] = [];
   let transactionCount = 0;
 
@@ -31,6 +37,7 @@ function createInMemoryItineraryDatabase() {
           updatedAt,
           syncStatus,
           syncVersion,
+          ownerUserId,
         ] = params;
         items.push({
           id: id as string,
@@ -46,12 +53,14 @@ function createInMemoryItineraryDatabase() {
           syncStatus: syncStatus as ItineraryItem["syncStatus"],
           syncVersion: syncVersion as number,
         });
+        owners.set(id as string, ownerUserId as string);
       }
       if (sql.includes("INSERT INTO sync_operations")) {
         operations.push({
           entityId: params[3] as string,
           operationType: params[4] as string,
-          status: params[8] as string,
+          ownerUserId: params[8] as string,
+          status: params[9] as string,
         });
       }
       if (sql.includes("SET sync_status = ?")) {
@@ -66,15 +75,26 @@ function createInMemoryItineraryDatabase() {
           item.serverId = serverId as string;
           item.syncStatus = status as ItineraryItem["syncStatus"];
           item.syncVersion = version as number;
+          owners.delete(item.id);
         }
       }
       return {} as never;
     },
-    async getAllAsync<T>(_sql: string, tripId: unknown) {
-      return items.filter((item) => item.tripId === tripId) as T[];
+    async getAllAsync<T>(_sql: string, ...params: unknown[]) {
+      const [tripId, userId] = params;
+      return items.filter(
+        (item) =>
+          item.tripId === tripId &&
+          (item.syncStatus === "SYNCED" || owners.get(item.id) === userId),
+      ) as T[];
     },
-    async getFirstAsync<T>(_sql: string, id: unknown) {
-      return (items.find((item) => item.id === id) ?? null) as T | null;
+    async getFirstAsync<T>(_sql: string, ...params: unknown[]) {
+      const [id, userId] = params;
+      return (items.find(
+        (item) =>
+          item.id === id &&
+          (item.syncStatus === "SYNCED" || owners.get(item.id) === userId),
+      ) ?? null) as T | null;
     },
   };
 
@@ -82,10 +102,12 @@ function createInMemoryItineraryDatabase() {
 }
 
 describe("itinerary repository", () => {
+  const userA = async () => "user-a";
+
   it("atomically creates a Journey-scoped item and exactly one global operation", async () => {
     const { database, items, operations, transactionCount } =
       createInMemoryItineraryDatabase();
-    const repository = createItineraryRepository(database);
+    const repository = createItineraryRepository(database, userA);
 
     const item = await repository.createItineraryItem("journey-a", {
       title: "Museum",
@@ -96,13 +118,18 @@ describe("itinerary repository", () => {
     expect(transactionCount()).toBe(1);
     expect(items).toMatchObject([{ id: item.id, tripId: "journey-a" }]);
     expect(operations).toEqual([
-      { entityId: item.id, operationType: "CREATE_ITINERARY", status: "PENDING" },
+      {
+        entityId: item.id,
+        operationType: "CREATE_ITINERARY",
+        ownerUserId: "user-a",
+        status: "PENDING",
+      },
     ]);
   });
 
   it("keeps Journey queries isolated across repository reinitialization", async () => {
     const { database } = createInMemoryItineraryDatabase();
-    const writer = createItineraryRepository(database);
+    const writer = createItineraryRepository(database, userA);
     const journeyA = await writer.createItineraryItem("journey-a", {
       title: "A only",
       scheduledDate: "2026-09-10",
@@ -111,7 +138,7 @@ describe("itinerary repository", () => {
       title: "B only",
       scheduledDate: "2026-09-11",
     });
-    const restartedReader = createItineraryRepository(database);
+    const restartedReader = createItineraryRepository(database, userA);
 
     await expect(restartedReader.listItineraryItems("journey-a")).resolves.toMatchObject([
       { id: journeyA.id, title: "A only" },
@@ -123,7 +150,7 @@ describe("itinerary repository", () => {
 
   it("reconciles the same local row without creating a duplicate", async () => {
     const { database, items } = createInMemoryItineraryDatabase();
-    const repository = createItineraryRepository(database);
+    const repository = createItineraryRepository(database, userA);
     const item = await repository.createItineraryItem("journey-a", {
       title: "Ferry",
       scheduledDate: "2026-09-12",
@@ -140,5 +167,19 @@ describe("itinerary repository", () => {
       syncStatus: "SYNCED",
       syncVersion: 1,
     });
+  });
+
+  it("hides another account's unconfirmed local itinerary item", async () => {
+    const { database } = createInMemoryItineraryDatabase();
+    await createItineraryRepository(database, userA).createItineraryItem("journey-a", {
+      title: "A only",
+      scheduledDate: "2026-09-10",
+    });
+
+    await expect(
+      createItineraryRepository(database, async () => "user-b").listItineraryItems(
+        "journey-a",
+      ),
+    ).resolves.toEqual([]);
   });
 });
