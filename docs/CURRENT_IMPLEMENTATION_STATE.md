@@ -2,7 +2,15 @@
 
 Date: 2026-09-17
 
-## Review 2.0 Phase 2 — local foundation
+## Review 2.0 Phase 1+2 — Hosted Dev deployed, acceptance partial
+
+- On 2026-09-17, approved Hosted Dev migration versions `20260916000100` then `20260917000100` were applied exactly once to Supabase `tuqigdxrvrerfewsxqgm`. The compatible Backend from implementation commit `179d2808234659dd1b196c99a24d9aa092110b70` was deployed to the existing `api-dev.xoery.art` Compose service; image digest `sha256:46d2d893ec1e0b5eb11ff5f88e26207ef423d685bb3e2fd438fa0ec09ad6e5b5`. Local and remote `server.mjs` SHA-256 match. Remote configuration points only to Hosted Dev Supabase; Production was not touched.
+- Compatible Release Mobile installed on two simulators and a physical iPhone. Real Owner/Member/Guest Dev Auth → remote Backend checks passed for personal decision isolation, private reasons, owner/member/zero-allocation guest visibility, 403 exclusion, correction/reappearance generations, concurrent/no-reason actions, counts, idempotency, old-client gate and Review-free old pull. Simulator Owner ACK synced to Hosted Dev. See the Hosted Dev acceptance section in `docs/ledger/REVIEW_2_0_PHASE_2_PERSONAL_DECISIONS_AND_VISIBILITY.md` and `scripts/supabase/validate-review-v2-hosted.mjs`.
+- A real test-only Hosted Dev Member `review2-device-member-20260917@otr.invalid` is linked to the synthetic baseline Journey. Its random password is stored only in the local macOS login Keychain service `com.xoery.otrmobile.review2.hosted-dev.20260917` (never in source/logs). Real password Auth → Backend checks passed Owner-no-split, Creator-only, Payer-only, split-eligibility loss, cross-date and cross-currency negatives, and cosmetic edit stability. The corrected repeatable check is `scripts/supabase/validate-review-v2-remaining-hosted.mjs`; eight incomplete first-run Expenses and three completed negative-rule Expenses were recoverably soft-deleted via Backend. Four eligibility fixture pairs are retained for device checks.
+- **Not a full acceptance pass.** Device offline ACK/reconnect remains unrun because a safe Simulator-only network-off control was not found. Same-device A→B→A and local SQLite visibility removal remain unrun: macOS Keychain is not iOS AutoFill, and manual login of the test Member is pending. Physical iPhone installation succeeded, but Device Hub cannot show its iOS 26.6 screen (requires iOS 27); iPhone Mirroring requires personal Mac login. Phase 3 UI work remains gated. Next checkpoint: complete genuine device login and offline convergence, then decide acceptance.
+- Current Mobile SQLite schema version: **21**. Older milestone notes below are retained as historical context, not current rollout status.
+
+## Review 2.0 Phase 2 — foundation detail
 
 - Phase 2 source now separates shared v2 Finding lifecycle from actor-specific
   ACK/DISMISS. Supabase migration `20260917000100` adds private decisions and
@@ -21,11 +29,7 @@ Date: 2026-09-17
   next successful Review projection. UI is minimally compatible, not redesigned.
 - Local Supabase was rebuilt from migrations and seed; 12 pgTAP files / 245
   assertions pass. TypeScript, ESLint, Backend build and 73 Vitest files / 267
-  tests pass. Hosted Dev and Production
-  have **not** received Phase 1 or Phase 2 Review migrations.
-- Next checkpoint: finish local HTTP integration/real two-account device smoke
-  and obtain explicit approval before any Hosted Dev schema/backend rollout.
-  Phase 3 reactive UI work is not approved or implemented here.
+  tests pass. This is the pre-rollout local validation baseline.
 
 ## Review Engine v2 Phase 1 (local validation)
 
@@ -37,17 +41,17 @@ Date: 2026-09-17
 - This paragraph describes the historical Phase 1 state; Phase 2 source now
   supersedes global human decisions and Journey-wide Review visibility.
   Legacy observation evidence/actions persist; first successful v2 reconciliation
-  retires the legacy heuristic global status to STALE. No Hosted Dev/Production
-  migration has been applied by this task.
+  retires the legacy heuristic global status to STALE. At that earlier Phase 1
+  checkpoint no Hosted Dev/Production migration had been applied; see the
+  current Hosted Dev status above.
 - The additive migration applied to local Supabase; all 11 pgTAP files / 214
   checks pass. The pre-existing date-sensitive Stage 5.1 FX fixture was made
   relative to test time without changing financial rules.
 - TypeScript, ESLint, Backend build and 72 test files / 261 tests pass; the
   Backend create trigger test verifies Review failure cannot misreport a
   committed canonical financial write.
-- Phase 1's next checkpoint was local automatic mutation→Review integration;
-  Phase 2 is now present in source, but that end-to-end integration and the
-  separate Hosted Dev approval remain outstanding.
+- This subsection is historical Phase 1 local-validation context. The current
+  rollout and remaining gate are at the top of this file.
 
 ## Ledger Entry Page — Review and Member Spending Polish
 
@@ -86,7 +90,7 @@ The Account Switching Foundation plus contextual global menu and Dev quick-accou
 selector are complete through Slices 5–6 on `integration/ledger-polish-canonical`.
 Stop here for review; the bottom-tab migration remains deferred.
 
-Current Mobile SQLite schema version: 19.
+Mobile SQLite schema version at that earlier checkpoint: 19.
 
 ## Contextual Global Menu And Account Switching — Slices 0–6
 
