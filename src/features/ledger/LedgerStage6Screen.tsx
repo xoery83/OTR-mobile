@@ -48,6 +48,8 @@ import {
   expenseAmountPresentation,
   journeyPickerSections,
   settlementPositionLabel,
+  shortMemberName,
+  spendingMembers,
   spendingPercentage,
 } from "./dashboardPresentation";
 import { createLatestRequest } from "./latestRequest";
@@ -74,6 +76,7 @@ type SpendingProjection = {
   summary: ReportingAggregate;
   categories: ReportingBucket[];
   members: { id: string; label: string }[];
+  memberSpending: ReportingBucket[];
   reviewCount: number;
   selectedMember: {
     id: string;
@@ -208,6 +211,7 @@ export function LedgerStage6Screen() {
           nextExpenses,
           settlements,
           options,
+          memberSpending,
           findings,
           selectedMember,
         ] = await Promise.all([
@@ -216,6 +220,9 @@ export function LedgerStage6Screen() {
           repository.listExpenses(query, 12),
           settlementRepository.listFinalized(nextJourney.journeyId),
           repository.listFilterOptions(nextJourney.journeyId),
+          nextScope === "GROUP"
+            ? repository.analyze({ ...query, scope: "GROUP" }, "PARTICIPANT")
+            : Promise.resolve([]),
           getDefaultLedgerReviewRepository().then((review) =>
             review.list(nextJourney.journeyId),
           ),
@@ -253,6 +260,7 @@ export function LedgerStage6Screen() {
           summary: nextSummary,
           categories: nextCategories.slice(0, 5),
           members: options.members,
+          memberSpending,
           reviewCount: findings.filter(
             (finding) => finding.status === "OPEN" || finding.status === "ACKNOWLEDGED",
           ).length,
@@ -567,8 +575,11 @@ export function LedgerStage6Screen() {
                     pathname: "/expenses/analysis",
                     params: {
                       journeyId: journey.journeyId,
-                      memberId: categorySelection?.id ?? memberId ?? "",
-                      scope: categorySelection ? "MINE" : scope,
+                      memberId: memberId ?? "",
+                      scope,
+                      ...(categorySelection
+                        ? { selectedMemberId: categorySelection.id }
+                        : {}),
                     },
                   })
                 }
@@ -581,33 +592,35 @@ export function LedgerStage6Screen() {
                     showsHorizontalScrollIndicator={false}
                     style={styles.memberScroller}
                   >
-                    {[{ id: "", label: "Group" }, ...(projection?.members ?? [])].map(
-                      (item) => {
-                        const selected = (categorySelection?.id ?? "") === item.id;
-                        return (
-                          <Pressable
-                            accessibilityRole="tab"
-                            accessibilityState={{ selected }}
-                            key={item.id || "group"}
-                            onPress={() => void selectCategoryMember(item.id || null)}
+                    {[
+                      { id: "", label: "Group" },
+                      ...spendingMembers(
+                        projection?.members ?? [],
+                        projection?.memberSpending ?? [],
+                      ),
+                    ].map((item) => {
+                      const selected = (categorySelection?.id ?? "") === item.id;
+                      return (
+                        <Pressable
+                          accessibilityLabel={item.label}
+                          accessibilityRole="tab"
+                          accessibilityState={{ selected }}
+                          key={item.id || "group"}
+                          onPress={() => void selectCategoryMember(item.id || null)}
+                          style={[styles.memberTab, selected && styles.memberTabSelected]}
+                        >
+                          <Text
+                            numberOfLines={1}
                             style={[
-                              styles.memberTab,
-                              selected && styles.memberTabSelected,
+                              styles.memberTabText,
+                              selected && styles.memberTabTextSelected,
                             ]}
                           >
-                            <Text
-                              numberOfLines={1}
-                              style={[
-                                styles.memberTabText,
-                                selected && styles.memberTabTextSelected,
-                              ]}
-                            >
-                              {item.label}
-                            </Text>
-                          </Pressable>
-                        );
-                      },
-                    )}
+                            {item.id ? shortMemberName(item.label) : item.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
                   </ScrollView>
                 ) : null}
                 <View style={scope === "GROUP" ? styles.groupCategories : undefined}>
@@ -630,7 +643,7 @@ export function LedgerStage6Screen() {
                             authoritative: "1",
                             category: category.key,
                             ...(categorySelection
-                              ? { memberId: categorySelection.id, scope: "MINE" }
+                              ? { selectedMemberId: categorySelection.id }
                               : {}),
                             origin: `Category: ${category.label}`,
                           })
@@ -1264,7 +1277,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   memberTabSelected: { backgroundColor: "#E7F5F1" },
-  memberTabText: { color: "#64748B", fontSize: 13, fontWeight: "600" },
+  memberTabText: { color: "#64748B", fontSize: 13, fontWeight: "600", maxWidth: 100 },
   memberTabTextSelected: { color: "#0F766E", fontWeight: "700" },
   groupCategories: { minHeight: 290 },
   categoryTotal: {

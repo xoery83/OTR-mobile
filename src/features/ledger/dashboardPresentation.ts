@@ -1,5 +1,5 @@
 import type { LedgerJourneyContext } from "@/domain/ledger/journeyContext";
-import type { ReportingScope } from "@/domain/ledger/reporting";
+import type { ReportingBucket, ReportingScope } from "@/domain/ledger/reporting";
 
 import { formatLedgerMoney } from "./format";
 
@@ -12,6 +12,21 @@ export type JourneyPickerSection = {
   data: (JourneyPickerItem & { status: "ACTIVE" | "UPCOMING" | "PAST" })[];
   title: "Active" | "Upcoming" | "Past";
 };
+
+export function spendingMembers(
+  members: { id: string; label: string }[],
+  spending: ReportingBucket[],
+) {
+  const totals = new Map(spending.map((bucket) => [bucket.key, bucket.totalMinor]));
+  return [...members].sort(
+    (a, b) =>
+      (totals.get(b.id) ?? 0) - (totals.get(a.id) ?? 0) || a.label.localeCompare(b.label),
+  );
+}
+
+export function shortMemberName(label: string) {
+  return label.trim().split(/\s+/)[0] || "Traveller";
+}
 
 export function journeyLifecycleLabel(
   journey: Pick<LedgerJourneyContext, "startDate" | "endDate">,

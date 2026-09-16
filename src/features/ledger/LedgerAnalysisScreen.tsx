@@ -20,6 +20,7 @@ import type {
 
 import { formatLedgerDateFilter, formatLedgerMoney } from "./format";
 import { createLatestRequest } from "./latestRequest";
+import { shortMemberName, spendingMembers } from "./dashboardPresentation";
 import { formatExpenseCount, ledgerDateFilter } from "./searchFilters";
 
 const dimensions: { key: ReportingDimension; label: string }[] = [
@@ -35,16 +36,20 @@ export function LedgerAnalysisScreen() {
   const params = useLocalSearchParams<{
     journeyId: string;
     memberId: string;
+    selectedMemberId?: string;
     scope?: ReportingScope;
   }>();
   const initialScope: ReportingScope = params.scope === "GROUP" ? "GROUP" : "MINE";
   const [view, setView] = useState<{
     scope: ReportingScope;
+    selectedMemberId: string | null;
     dimension: ReportingDimension;
     buckets: ReportingBucket[];
     currency: string;
     scale: number;
     filters: { from?: string; to?: string };
+    members: { id: string; label: string }[];
+    memberSpending: ReportingBucket[];
     journey:
       | Awaited<
           ReturnType<
@@ -61,6 +66,8 @@ export function LedgerAnalysisScreen() {
   const metadata = useRef<Promise<{
     currency: string;
     scale: number;
+    members: { id: string; label: string }[];
+    memberSpending: ReportingBucket[];
     journey:
       | Awaited<
           ReturnType<
@@ -77,6 +84,7 @@ export function LedgerAnalysisScreen() {
       scope: ReportingScope,
       dimension: ReportingDimension,
       filters: { from?: string; to?: string } = {},
+      selectedMemberId: string | null = null,
     ) => {
       if (!params.journeyId || !params.memberId) return;
       const id = request.begin();
@@ -84,12 +92,21 @@ export function LedgerAnalysisScreen() {
       setError(null);
       try {
         const repository = await getDefaultLedgerReportingRepository();
-        metadata.current ??= repository.listJourneys().then((journeys) => {
+        metadata.current ??= Promise.all([
+          repository.listJourneys(),
+          repository.listFilterOptions(params.journeyId),
+          repository.analyze(
+            { journeyId: params.journeyId, memberId: params.memberId, scope: "GROUP" },
+            "PARTICIPANT",
+          ),
+        ]).then(([journeys, options, memberSpending]) => {
           const journey = journeys.find((item) => item.journeyId === params.journeyId);
           return {
             currency: journey?.settlementCurrency ?? "NZD",
             scale: journey?.settlementScale ?? 2,
             journey: journey ?? null,
+            members: options.members,
+            memberSpending,
           };
         });
         const [money, buckets] = await Promise.all([
@@ -97,15 +114,25 @@ export function LedgerAnalysisScreen() {
           repository.analyze(
             {
               journeyId: params.journeyId,
-              memberId: params.memberId,
-              scope,
+              memberId:
+                scope === "GROUP" && selectedMemberId
+                  ? selectedMemberId
+                  : params.memberId,
+              scope: scope === "GROUP" && selectedMemberId ? "MINE" : scope,
               ...filters,
             },
             dimension,
           ),
         ]);
         if (!request.isCurrent(id)) return;
-        setView({ scope, dimension, buckets, filters, ...money });
+        setView({
+          scope,
+          selectedMemberId: scope === "GROUP" ? selectedMemberId : null,
+          dimension,
+          buckets,
+          filters,
+          ...money,
+        });
       } catch {
         metadata.current = null;
         if (request.isCurrent(id)) setError("Analysis could not be updated.");
@@ -116,15 +143,20 @@ export function LedgerAnalysisScreen() {
     [params.journeyId, params.memberId, request],
   );
   useEffect(() => {
-    void Promise.resolve().then(() => load(initialScope, "CATEGORY"));
+    void Promise.resolve().then(() =>
+      load(initialScope, "CATEGORY", {}, params.selectedMemberId ?? null),
+    );
     return () => {
       request.cancel();
     };
-  }, [initialScope, load, request]);
+  }, [initialScope, load, params.selectedMemberId, request]);
 
   const scope = view?.scope ?? initialScope;
   const dimension = view?.dimension ?? "CATEGORY";
   const filters = view?.filters ?? {};
+  const selectedMemberId = view
+    ? view.selectedMemberId
+    : (params.selectedMemberId ?? null);
 
   const chooseRange = () => {
     const values = [
@@ -144,7 +176,7 @@ export function LedgerAnalysisScreen() {
         const selected = values[index];
         if (!selected) return;
         const next = ledgerDateFilter(selected.preset, view?.journey ?? null, "", "", "");
-        if (next) void load(scope, dimension, next);
+        if (next) void load(scope, dimension, next, selectedMemberId);
       },
     );
   };
@@ -163,13 +195,17 @@ export function LedgerAnalysisScreen() {
     const nextDay = new Date(`${bucket.key}T00:00:00.000Z`);
     if (dimension === "DAY") nextDay.setUTCDate(nextDay.getUTCDate() + 1);
     const label = bucketLabel(dimension, bucket);
+    const targetMemberId =
+      scope === "GROUP"
+        ? (selectedMemberId ?? (dimension === "PARTICIPANT" ? bucket.key : null))
+        : null;
     router.push({
       pathname: "/expenses/search",
       params: {
         journeyId: params.journeyId,
-        memberId:
-          dimension === "PARTICIPANT" && scope === "GROUP" ? bucket.key : params.memberId,
-        scope: dimension === "PARTICIPANT" && scope === "GROUP" ? "MINE" : scope,
+        memberId: params.memberId,
+        scope,
+        ...(targetMemberId ? { selectedMemberId: targetMemberId } : {}),
         authoritative: "1",
         origin: label,
         ...filters,
@@ -203,13 +239,49 @@ export function LedgerAnalysisScreen() {
               accessibilityRole="tab"
               accessibilityState={{ selected: scope === item }}
               key={item}
-              onPress={() => void load(item, dimension, filters)}
+              onPress={() =>
+                void load(
+                  item,
+                  dimension,
+                  filters,
+                  item === "GROUP" ? selectedMemberId : null,
+                )
+              }
               style={[styles.segmentItem, scope === item && styles.selected]}
             >
               <Text style={styles.segmentText}>{item === "MINE" ? "Mine" : "Group"}</Text>
             </Pressable>
           ))}
         </View>
+        {scope === "GROUP" ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabs}
+            style={styles.tabScroller}
+          >
+            {[
+              { id: "", label: "Group" },
+              ...spendingMembers(view?.members ?? [], view?.memberSpending ?? []),
+            ].map((member) => (
+              <Pressable
+                accessibilityLabel={member.label}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: (selectedMemberId ?? "") === member.id }}
+                key={member.id || "group"}
+                onPress={() => void load(scope, dimension, filters, member.id || null)}
+                style={[
+                  styles.tab,
+                  (selectedMemberId ?? "") === member.id && styles.tabSelected,
+                ]}
+              >
+                <Text numberOfLines={1} style={styles.tabText}>
+                  {member.id ? shortMemberName(member.label) : member.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -221,7 +293,7 @@ export function LedgerAnalysisScreen() {
               accessibilityRole="tab"
               accessibilityState={{ selected: dimension === item.key }}
               key={item.key}
-              onPress={() => void load(scope, item.key, filters)}
+              onPress={() => void load(scope, item.key, filters, selectedMemberId)}
               style={[styles.tab, dimension === item.key && styles.tabSelected]}
             >
               <Text style={styles.tabText}>{item.label}</Text>
@@ -229,6 +301,9 @@ export function LedgerAnalysisScreen() {
           ))}
         </ScrollView>
         <Text style={styles.note}>
+          {scope === "GROUP" && selectedMemberId
+            ? `${view?.members.find((member) => member.id === selectedMemberId)?.label ?? "Selected traveller"} · `
+            : ""}
           {filters.from ? formatLedgerDateFilter(filters.from, filters.to) : "All trip"}
           {" · Every bucket opens its exact Expenses."}
         </Text>
@@ -243,7 +318,7 @@ export function LedgerAnalysisScreen() {
         {error ? (
           <Pressable
             accessibilityRole="button"
-            onPress={() => void load(scope, dimension, filters)}
+            onPress={() => void load(scope, dimension, filters, selectedMemberId)}
           >
             <Text accessibilityLiveRegion="polite" style={styles.error}>
               {error} Tap to try again.
@@ -321,7 +396,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   tabSelected: { borderColor: "#087E68", borderWidth: 2 },
-  tabText: { color: "#334155", fontWeight: "600" },
+  tabText: { color: "#334155", fontWeight: "600", maxWidth: 100 },
   note: { color: "#64748B", fontSize: 13 },
   surface: { backgroundColor: "#FFFFFF", borderRadius: 10, overflow: "hidden" },
   row: {

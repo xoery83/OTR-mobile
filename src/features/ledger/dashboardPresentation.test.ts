@@ -5,10 +5,30 @@ import {
   journeyLifecycleLabel,
   journeyPickerSections,
   settlementPositionLabel,
+  shortMemberName,
+  spendingMembers,
   spendingPercentage,
 } from "./dashboardPresentation";
 
 describe("Ledger dashboard presentation", () => {
+  it("orders members by attributed spending and shortens long names", () => {
+    const members = [
+      { id: "a", label: "Alexandra Wellington" },
+      { id: "b", label: "Bo Chen" },
+      { id: "c", label: "Casey Lee" },
+    ];
+    const spending = [
+      { key: "b", totalMinor: 800 },
+      { key: "a", totalMinor: 1200 },
+    ] as Parameters<typeof spendingMembers>[1];
+    expect(spendingMembers(members, spending).map((item) => item.id)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+    expect(shortMemberName(members[0].label)).toBe("Alexandra");
+  });
+
   it("only labels lifecycle when Journey dates make it unambiguous", () => {
     expect(
       journeyLifecycleLabel(

@@ -61,6 +61,7 @@ export function LedgerSearchScreen() {
   const params = useLocalSearchParams<{
     journeyId: string;
     memberId: string;
+    selectedMemberId?: string;
     scope?: ReportingScope;
     category?: string;
     payerMemberId?: string;
@@ -72,7 +73,12 @@ export function LedgerSearchScreen() {
     authoritative?: string;
     origin?: string;
   }>();
-  const scope: ReportingScope = params.scope === "GROUP" ? "GROUP" : "MINE";
+  const scope: ReportingScope = params.selectedMemberId
+    ? "MINE"
+    : params.scope === "GROUP"
+      ? "GROUP"
+      : "MINE";
+  const memberId = params.selectedMemberId || params.memberId;
   const authoritativeOnly = params.authoritative === "1";
   const [initialFilters] = useState<ReportingFilters>(() => ({
     category: params.category,
@@ -102,7 +108,7 @@ export function LedgerSearchScreen() {
 
   const load = useCallback(
     async (filters: ReportingFilters, query: string) => {
-      if (!params.journeyId || !params.memberId) return false;
+      if (!params.journeyId || !memberId) return false;
       const id = request.begin();
       retryRequest.current = { filters, query };
       moreRequest.cancel();
@@ -115,7 +121,7 @@ export function LedgerSearchScreen() {
         const repository = await getDefaultLedgerReportingRepository();
         const reportQuery = {
           journeyId: params.journeyId,
-          memberId: params.memberId,
+          memberId,
           scope,
           authoritativeOnly,
           ...filters,
@@ -144,7 +150,7 @@ export function LedgerSearchScreen() {
         if (request.isCurrent(id)) setUpdating(false);
       }
     },
-    [authoritativeOnly, moreRequest, params.journeyId, params.memberId, request, scope],
+    [authoritativeOnly, memberId, moreRequest, params.journeyId, request, scope],
   );
 
   useEffect(() => {
@@ -211,7 +217,7 @@ export function LedgerSearchScreen() {
   };
 
   const loadMore = async () => {
-    if (!params.journeyId || !params.memberId || !view || updating || loadingMore) return;
+    if (!params.journeyId || !memberId || !view || updating || loadingMore) return;
     const current = view;
     const id = moreRequest.begin();
     setLoadingMore(true);
@@ -221,7 +227,7 @@ export function LedgerSearchScreen() {
       const nextRows = await repository.listExpenses(
         {
           journeyId: params.journeyId,
-          memberId: params.memberId,
+          memberId,
           scope,
           authoritativeOnly,
           ...current.filters,
@@ -408,7 +414,12 @@ export function LedgerSearchScreen() {
               ) : null}
               <View style={styles.summary}>
                 <Text maxFontSizeMultiplier={2} style={styles.origin}>
-                  {scope === "GROUP" ? "Group" : "Mine"}
+                  {params.selectedMemberId
+                    ? (options.members.find((item) => item.id === params.selectedMemberId)
+                        ?.label ?? "Selected traveller")
+                    : scope === "GROUP"
+                      ? "Group"
+                      : "Mine"}
                   {params.origin ? ` · ${params.origin}` : ""}
                 </Text>
                 <Text

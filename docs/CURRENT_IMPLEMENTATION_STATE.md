@@ -4,15 +4,23 @@ Date: 2026-09-16
 
 ## Ledger Entry Page — Review and Member Spending Polish
 
+- Follow-up member polish: Group member chips use a short first-name label with
+  full-name accessibility text and sort by authoritative split-attributed total
+  descending. Members with zero spending remain selectable.
+- Category drill-down carries the selected member explicitly and labels the Search
+  results with the full member name. Analysis retains the Group context, adds the
+  same member selector, and preserves selection across dimensions, date ranges, and
+  bucket drill-down. The report still uses the existing member split query.
+- TypeScript, ESLint, 70 test files / 255 tests, and signed Simulator Release pass.
+  On iPhone 17 Pro, an Élodie food category displays ¥1,429,064.79 in the entry,
+  Search and Analysis drill-down, with 7 matching Expenses and full-name context.
 - Spending shows a compact Review banner only when the current Journey has
   open or acknowledged findings; it opens the existing Review List.
 - Mine Categories remain unchanged. Group adds a horizontal Group/member selector
   and uses the existing category bars for either the full Journey or the selected
   member's authoritative split-attributed spending. Each view uses its own total
   for percentages, and category drill-down carries the selected member context.
-- See analysis remains available. Its existing `memberId` plus `MINE` query supports
-  the selected member's data, though the Analysis screen still labels that scope
-  “Mine.” No Analysis redesign is included in this polish.
+- See analysis remains available with a Group/member selector.
 - SQLite, Backend, Supabase, sync protocol, and financial rules are unchanged.
 - TypeScript, ESLint, 70 test files / 254 tests, `git diff --check`, and the
   generic iOS Simulator Release build pass.
