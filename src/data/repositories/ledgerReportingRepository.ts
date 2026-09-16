@@ -198,6 +198,24 @@ export function createLedgerReportingRepository(
       );
     },
 
+    async getActorContext(journeyId: string) {
+      const userId = await getActiveUserId();
+      return database.getFirstAsync<{
+        displayName: string | null;
+        memberId: string | null;
+        role: string | null;
+      }>(
+        `SELECT actor.member_id AS memberId, actor.role,
+                member.display_name AS displayName
+         FROM ledger_actor_context actor
+         LEFT JOIN ledger_members member
+           ON member.id = actor.member_id AND member.journey_id = actor.journey_id
+         WHERE actor.user_id = ? AND actor.journey_id = ?`,
+        userId,
+        journeyId,
+      );
+    },
+
     async listFilterOptions(journeyId: string) {
       const userId = await getActiveUserId();
       const [categories, currencies, members] = await Promise.all([

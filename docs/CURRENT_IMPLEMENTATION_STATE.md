@@ -4,13 +4,13 @@ Date: 2026-09-16
 
 ## Current Milestone
 
-The Account Switching Foundation is complete through Slice 4 on
-`integration/ledger-polish-canonical`. The automated foundation gate passes. Stop here
-for review before Slice 5 adds account/menu UI.
+The Account Switching Foundation plus contextual global menu and Dev quick-account
+selector are complete through Slices 5–6 on `integration/ledger-polish-canonical`.
+Stop here for review; the bottom-tab migration remains deferred.
 
 Current Mobile SQLite schema version: 19.
 
-## Account Switching Foundation — Slices 0–4
+## Contextual Global Menu And Account Switching — Slices 0–6
 
 - Account switching is a Production foundation; the Dev quick selector is only a
   gated convenience layer over real remembered sessions.
@@ -35,12 +35,33 @@ Current Mobile SQLite schema version: 19.
 - TypeScript, ESLint, all 69 test files / 249 tests, and `git diff --check` pass.
 - Option A (Today / Ledger / Trip / Album) is the approved long-term bottom navigation;
   the current tabs remain unchanged in this task.
-- The contextual menu has fixed identity/global actions, Ledger-specific My Ledger /
-  Review / Ledger Settings, gated Development actions, and separated Log out. Missing
-  Trip/Album secondary destinations are omitted.
-- Next checkpoint: review the foundation gate. Slice 5 contextual menu and Slice 6 Dev
-  quick selector have not started. Production, Backend, Hosted Dev data, Supabase schema,
-  current tabs, Replay identities, and Journey member mappings remain unchanged.
+- The global menu now appears on every current primary root. It shows the real current
+  identity, masked email and current Journey role; Ledger adds My Ledger, Review and
+  Ledger Settings, while modules without real secondary destinations add none.
+- Current User opens Production-shaped account management. Add/login, remembered-session
+  switch, removal and logout all use the same safe account-switch boundary; passwords
+  are never persisted.
+- Switch test account and Diagnostics appear only with Dev transport plus Debug Mode.
+  The quick selector admits only approved remembered Synthetic Owner/Member sessions and
+  never fabricates a local role.
+- Signed Release Simulator UI acceptance covered the Synthetic Owner on Synthetic
+  Baseline Journey, contextual/global sections, Dev gating, accessibility labels and the
+  no-other-remembered-account state. The second approved account was not present in either
+  Simulator Keychain, so UI credentials were not invented; automated A → B → A coverage
+  exercises the same coordinator path.
+- TypeScript, ESLint, the architecture boundary, all 70 test files / 253 tests, focused
+  Prettier, `git diff --check`, and the signed iOS Release Simulator build pass. Public
+  Dev health returns `status: ok`, `environment: development`.
+- Physical Release signing is blocked on this Mac because Xcode has no developer account
+  or provisioning profile for `com.xoery.otrmobile`; no project signing setting changed.
+- Foundation commit `8336e4bc4c85895e18fc498ec8ad465de6237216` has message
+  `Add production account switching foundation`. The contextual UI commit uses message
+  `Add contextual account menu and user switching`; its exact SHA is recorded in the
+  completion report.
+- Next checkpoint: review Slices 5–6. Production data, Backend behavior, Hosted Dev data,
+  Supabase schema, SQLite v19, current tabs, Replay identities and Journey member mappings
+  remain unchanged.
+- Detailed evidence: `docs/ux/GLOBAL_MENU_ACCOUNT_SWITCHING_ACCEPTANCE.md`.
 
 ## Public Dev Backend
 

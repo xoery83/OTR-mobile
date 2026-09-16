@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
+import { GlobalMenu } from "@/components/GlobalMenu";
 
 export default function TabsLayout() {
   return (
@@ -14,6 +15,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
+          headerLeft: () => <GlobalMenu module="TODAY" />,
           tabBarIcon: ({ color }) => <AppIcon color={color} name="calendar" />,
           title: "Today",
         }}
@@ -31,6 +33,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="capture"
         options={{
+          headerLeft: () => <GlobalMenu module="CAPTURE" />,
           tabBarIcon: ({ color }) => <AppIcon color={color} name="viewfinder" />,
           title: "Capture",
         }}
@@ -38,6 +41,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="trip"
         options={{
+          headerLeft: () => <GlobalMenu module="TRIP" />,
           tabBarIcon: ({ color }) => <AppIcon color={color} name="suitcase" />,
           title: "Trip",
         }}

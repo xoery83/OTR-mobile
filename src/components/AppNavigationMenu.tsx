@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -15,17 +16,30 @@ export type AppNavigationMenuItem = {
   label: string;
   onPress: () => void;
   selected?: boolean;
+  destructive?: boolean;
 };
 
-export function AppNavigationMenu({ sections }: { sections: AppNavigationMenuItem[][] }) {
+export type AppNavigationMenuIdentity = {
+  primary: string;
+  secondary?: string | null;
+};
+
+export function AppNavigationMenu({
+  identity,
+  onIdentityPress,
+  sections,
+}: {
+  identity: AppNavigationMenuIdentity;
+  onIdentityPress: () => void;
+  sections: AppNavigationMenuItem[][];
+}) {
   const trigger = useRef<View>(null);
-  const { width } = useWindowDimensions();
+  const { height: windowHeight, width } = useWindowDimensions();
   const [anchor, setAnchor] = useState({ x: 12, y: 80, height: 44 });
   const [visible, setVisible] = useState(false);
-  const menuLeft = Math.max(12, Math.min(anchor.x, width - 232));
+  const menuWidth = Math.min(280, width - 24);
+  const menuLeft = Math.max(12, Math.min(anchor.x, width - menuWidth - 12));
   const menuTop = anchor.y + anchor.height + 4;
-  const menuHeight =
-    sections.flat().length * 44 + Math.max(0, sections.length - 1) * 6 + 12;
   const open = () =>
     trigger.current?.measureInWindow((x, y, _width, height) => {
       setAnchor({ x, y, height });
@@ -54,75 +68,84 @@ export function AppNavigationMenu({ sections }: { sections: AppNavigationMenuIte
           <Pressable
             accessible={false}
             onPress={() => setVisible(false)}
-            style={[styles.dismissArea, { height: menuTop, left: 0, right: 0, top: 0 }]}
-          />
-          <Pressable
-            accessible={false}
-            onPress={() => setVisible(false)}
-            style={[
-              styles.dismissArea,
-              { bottom: 0, left: 0, right: 0, top: menuTop + menuHeight },
-            ]}
-          />
-          <Pressable
-            accessible={false}
-            onPress={() => setVisible(false)}
-            style={[
-              styles.dismissArea,
-              { height: menuHeight, left: 0, top: menuTop, width: menuLeft },
-            ]}
-          />
-          <Pressable
-            accessible={false}
-            onPress={() => setVisible(false)}
-            style={[
-              styles.dismissArea,
-              {
-                height: menuHeight,
-                left: menuLeft + 220,
-                right: 0,
-                top: menuTop,
-              },
-            ]}
+            style={StyleSheet.absoluteFill}
           />
           <View
+            accessibilityLabel="App menu"
             accessibilityRole="menu"
+            accessibilityViewIsModal
             style={[
               styles.menu,
               {
                 left: menuLeft,
+                maxHeight: Math.max(220, windowHeight - menuTop - 12),
                 top: menuTop,
+                width: menuWidth,
               },
             ]}
           >
-            {sections.map((items, sectionIndex) => (
-              <View key={sectionIndex} style={sectionIndex ? styles.section : undefined}>
-                {items.map((item) => (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: Boolean(item.selected) }}
-                    key={item.label}
-                    onPress={() => {
-                      setVisible(false);
-                      item.onPress();
-                    }}
-                    style={[styles.row, item.selected && styles.selectedRow]}
-                  >
-                    <AppIcon
-                      color={item.selected ? "#0F766E" : "#475569"}
-                      name={item.icon}
-                      size={18}
-                    />
-                    <Text style={[styles.label, item.selected && styles.selectedLabel]}>
-                      {item.label}
-                    </Text>
-                    {item.selected ? (
-                      <AppIcon color="#0F766E" name="checkmark" size={14} />
-                    ) : null}
-                  </Pressable>
-                ))}
-              </View>
-            ))}
+            <ScrollView bounces={false} contentContainerStyle={styles.menuContent}>
+              <Pressable
+                accessibilityLabel={[identity.primary, identity.secondary]
+                  .filter(Boolean)
+                  .join(", ")}
+                accessibilityHint="Opens account management"
+                accessibilityRole="button"
+                onPress={() => {
+                  setVisible(false);
+                  onIdentityPress();
+                }}
+                style={styles.identity}
+              >
+                <AppIcon color="#0F766E" name="person.crop.circle" size={24} />
+                <View style={styles.identityCopy}>
+                  <Text accessibilityRole="header" style={styles.identityPrimary}>
+                    {identity.primary}
+                  </Text>
+                  {identity.secondary ? (
+                    <Text style={styles.identitySecondary}>{identity.secondary}</Text>
+                  ) : null}
+                </View>
+                <AppIcon color="#64748B" name="chevron.right" size={14} />
+              </Pressable>
+              {sections.map((items, sectionIndex) => (
+                <View key={sectionIndex} style={styles.section}>
+                  {items.map((item) => {
+                    const color = item.destructive
+                      ? "#B42318"
+                      : item.selected
+                        ? "#0F766E"
+                        : "#475569";
+                    return (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: Boolean(item.selected) }}
+                        key={item.label}
+                        onPress={() => {
+                          setVisible(false);
+                          item.onPress();
+                        }}
+                        style={[styles.row, item.selected && styles.selectedRow]}
+                      >
+                        <AppIcon color={color} name={item.icon} size={18} />
+                        <Text
+                          style={[
+                            styles.label,
+                            item.selected && styles.selectedLabel,
+                            item.destructive && styles.destructiveLabel,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                        {item.selected ? (
+                          <AppIcon color="#0F766E" name="checkmark" size={14} />
+                        ) : null}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -137,22 +160,31 @@ const styles = StyleSheet.create({
     minHeight: 44,
     minWidth: 44,
   },
-  overlay: { flex: 1 },
-  dismissArea: { position: "absolute" },
+  overlay: { backgroundColor: "rgba(15, 23, 42, 0.08)", flex: 1 },
   menu: {
     backgroundColor: "#FFFFFF",
     borderColor: "#D8DEE7",
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 6,
     position: "absolute",
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.16,
     shadowRadius: 14,
-    width: 220,
     zIndex: 1,
   },
+  menuContent: { padding: 6 },
+  identity: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 11,
+    minHeight: 56,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  identityCopy: { flex: 1 },
+  identityPrimary: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
+  identitySecondary: { color: "#64748B", fontSize: 13, marginTop: 2 },
   section: {
     borderTopColor: "#E5E7EB",
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -166,8 +198,10 @@ const styles = StyleSheet.create({
     gap: 11,
     minHeight: 44,
     paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   selectedRow: { backgroundColor: "#E7F5F1" },
   label: { color: "#1E293B", flex: 1, fontSize: 16, fontWeight: "500" },
   selectedLabel: { color: "#0F766E", fontWeight: "700" },
+  destructiveLabel: { color: "#B42318", fontWeight: "600" },
 });

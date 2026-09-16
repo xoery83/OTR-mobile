@@ -35,7 +35,22 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="foundation" options={{ headerShown: true }} />
+        <Stack.Screen
+          name="foundation"
+          options={{ headerShown: true, headerTitle: "Sign In" }}
+        />
+        <Stack.Screen
+          name="account"
+          options={{ headerShown: true, headerTitle: "Account" }}
+        />
+        <Stack.Screen
+          name="settings"
+          options={{ headerShown: true, headerTitle: "Settings" }}
+        />
+        <Stack.Screen
+          name="diagnostics"
+          options={{ headerShown: true, headerTitle: "Diagnostics" }}
+        />
       </Stack>
     </QueryClientProvider>
   );

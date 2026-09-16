@@ -107,4 +107,35 @@ describe("account switch boundary", () => {
     expect(bootstrapAccount).toHaveBeenCalledWith(session("user-a"));
     expect(restartSync).toHaveBeenCalledOnce();
   });
+
+  it("switches from owner to member and back using remembered sessions", async () => {
+    const sessions = new Map([
+      ["owner", session("owner")],
+      ["member", session("member")],
+    ]);
+    let active = sessions.get("owner")!;
+    const coordinator = createAccountSwitchCoordinator({
+      pauseSync: vi.fn(),
+      restartSync: vi.fn(),
+      readSession: async () => active,
+      writeSession: async (next) => {
+        active = next;
+      },
+      clearSession: vi.fn(),
+      selectAccount: async (userId) => {
+        const next = sessions.get(userId);
+        if (!next) return false;
+        active = next;
+        return true;
+      },
+      adoptLocalState: vi.fn(),
+      clearInMemoryState: vi.fn(),
+      bootstrapAccount: vi.fn(),
+    });
+
+    await coordinator.switchAccount("member");
+    expect(active.identity?.userId).toBe("member");
+    await coordinator.switchAccount("owner");
+    expect(active.identity?.userId).toBe("owner");
+  });
 });

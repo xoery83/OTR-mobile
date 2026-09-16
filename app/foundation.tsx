@@ -1,5 +1,5 @@
-import { FoundationDiagnosticsScreen } from "@/components/FoundationDiagnosticsScreen";
+import { AccountManagementScreen } from "@/components/AccountManagementScreen";
 
 export default function FoundationDiagnosticsRoute() {
-  return __DEV__ ? <FoundationDiagnosticsScreen /> : null;
+  return <AccountManagementScreen authBoundary />;
 }

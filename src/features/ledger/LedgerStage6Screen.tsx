@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -15,7 +14,7 @@ import {
 import { router, Stack, useFocusEffect } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
-import { AppNavigationMenu } from "@/components/AppNavigationMenu";
+import { GlobalMenu } from "@/components/GlobalMenu";
 import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
@@ -338,46 +337,7 @@ export function LedgerStage6Screen() {
         options={{
           headerShown: true,
           headerTitle: "Ledger",
-          headerLeft: () => (
-            <AppNavigationMenu
-              sections={[
-                [
-                  {
-                    icon: "suitcase",
-                    label: "Trip",
-                    onPress: () => router.navigate("/trip" as never),
-                  },
-                  {
-                    icon: "list.bullet.rectangle",
-                    label: "Ledger",
-                    onPress: () => undefined,
-                    selected: true,
-                  },
-                  {
-                    icon: "viewfinder",
-                    label: "Capture",
-                    onPress: () => router.navigate("/capture" as never),
-                  },
-                ],
-                [
-                  {
-                    icon: "gearshape",
-                    label: "Settings",
-                    onPress: () => router.push("/expenses/settings" as never),
-                  },
-                  {
-                    icon: "globe",
-                    label: "Language",
-                    onPress: () =>
-                      Alert.alert(
-                        "Language",
-                        "OTR currently follows your iPhone language settings.",
-                      ),
-                  },
-                ],
-              ]}
-            />
-          ),
+          headerLeft: () => <GlobalMenu journeyId={journey?.journeyId} module="LEDGER" />,
           headerRight: () => (
             <View style={styles.headerActions}>
               <HeaderButton
