@@ -601,10 +601,10 @@ async function applyExpense(database: LedgerReadDatabase, expense: ServerExpense
   await database.runAsync(
     `INSERT OR REPLACE INTO ledger_expenses (
       id, server_id, journey_id, creator_member_id, payer_member_id, title, description,
-      category, occurred_at, original_amount_minor, original_currency, original_scale,
+      category, occurred_at, economic_date, original_amount_minor, original_currency, original_scale,
       business_status, settlement_participation, revision, server_revision, deleted_at,
       sync_status, last_synced_at, created_at, updated_at, local_owner_user_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
     localId,
     expense.id,
     expense.journeyId,
@@ -614,6 +614,7 @@ async function applyExpense(database: LedgerReadDatabase, expense: ServerExpense
     expense.description,
     expense.category,
     expense.occurredAt,
+    expense.economicDate ?? null,
     expense.original.minor,
     expense.original.currency,
     expense.original.scale,

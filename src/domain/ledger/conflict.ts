@@ -15,6 +15,7 @@ export type Stage4EditableExpense = {
   description: string | null;
   category: string;
   occurredAt: string;
+  economicDate?: string | null;
   payerMemberId: string;
   original: Money;
   businessStatus: Exclude<ExpenseBusinessStatus, "DELETED">;
@@ -37,6 +38,7 @@ export function changedExpenseGroups(
     !same(
       [
         left.original,
+        left.economicDate ?? null,
         left.payerMemberId,
         left.participants,
         left.splits,
@@ -45,6 +47,7 @@ export function changedExpenseGroups(
       ],
       [
         right.original,
+        right.economicDate ?? null,
         right.payerMemberId,
         right.participants,
         right.splits,

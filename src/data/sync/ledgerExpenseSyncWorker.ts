@@ -380,6 +380,7 @@ export function ledgerExpenseToCreateRequest(expense: LedgerExpense) {
     description: expense.description,
     category: expense.category,
     occurredAt: expense.occurredAt,
+    economicDate: expense.economicDate,
     payerMemberId: expense.payerMemberId,
     original: expense.original,
     businessStatus: expense.status === "DELETED" ? "DRAFT" : expense.status,

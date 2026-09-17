@@ -125,4 +125,26 @@ describe("Expense currency and date correction", () => {
     expect(corrected.minor).toBe(10_000);
     expect(corrected.currency).toBe("NZD");
   });
+
+  it("uses an explicit date independently of UTC and invalidates confirmation", () => {
+    const existing = {
+      original: { minor: 100, currency: "EUR", scale: 2 },
+      occurredAt: "2026-07-14T23:30:00Z",
+      economicDate: "2026-07-15",
+    };
+    expect(
+      preservesExpenseValuation(existing, existing.original, "2026-07-15", "2026-07-15"),
+    ).toBe(true);
+    expect(
+      preservesExpenseValuation(existing, existing.original, "2026-07-16", "2026-07-16"),
+    ).toBe(false);
+    expect(
+      preservesExpenseValuation(
+        { ...existing, economicDate: null },
+        existing.original,
+        "2026-07-14",
+        "2026-07-14",
+      ),
+    ).toBe(false);
+  });
 });

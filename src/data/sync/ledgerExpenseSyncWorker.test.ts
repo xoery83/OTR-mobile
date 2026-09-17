@@ -17,6 +17,7 @@ const expense = {
   description: null,
   category: "food",
   occurredAt: "2026-09-11T19:00:00.000Z",
+  economicDate: "2026-07-15",
   original: { minor: 1200, currency: "NZD", scale: 2 },
   participants: [
     {
@@ -131,6 +132,7 @@ describe("Ledger Expense sync worker", () => {
       expect.objectContaining({
         idempotencyKey: "stable-key-1",
         journeyId: expense.journeyId,
+        expense: expect.objectContaining({ economicDate: "2026-07-15" }),
       }),
     );
     expect(repo.markExpenseSynced).toHaveBeenCalledWith(

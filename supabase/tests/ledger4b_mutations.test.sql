@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(11);
+select plan(13);
 
 set local role service_role;
 
@@ -127,6 +127,13 @@ select is(
   'settlement participation is persisted by the revisioned mutation path'
 );
 
+select is(
+  (select economic_date::text from public.expenses
+    where id = '41000000-0000-4000-8000-000000000001'),
+  null,
+  'old-client update without an explicit date leaves the economic day unknown'
+);
+
 select ok(
   (select 'FINANCIAL_CORE' = any(changed_groups)
     from public.expense_audit_events
@@ -161,13 +168,23 @@ select lives_ok($$
     'organizer-edit-key',
     jsonb_set(
       jsonb_set(
+      jsonb_set(
         jsonb_set((select response_body from public.ledger_idempotency_keys where idempotency_key = 'creator-edit-key'), '{entity,revision}', '3'),
         '{entity,auditEvents,0,id}', '"43000000-0000-4000-8000-000000000004"'
       ),
       '{entity,valuation,id}', '"42000000-0000-4000-8000-000000000003"'
+      ),
+      '{entity,economicDate}', '"2026-07-15"'
     )
   )
 $$, 'organizer can edit another member expense with reason');
+
+select is(
+  (select economic_date::text from public.expenses
+    where id = '41000000-0000-4000-8000-000000000001'),
+  '2026-07-15',
+  'explicit date survives the revisioned Dev RPC without timestamp conversion'
+);
 
 select is(
   (select reason from public.expense_audit_events

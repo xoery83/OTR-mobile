@@ -13,8 +13,8 @@ select is(
 );
 select is(
   (select count(*)::integer from information_schema.columns where table_schema = 'public'),
-  1314,
-  'canonical and Ledger 2 plus Review v2 public column count is 1314'
+  1315,
+  'canonical and Ledger 2 plus Review v2 and economic date column count is 1315'
 );
 select is(
   (select count(*)::integer from pg_class c join pg_namespace n on n.oid = c.relnamespace

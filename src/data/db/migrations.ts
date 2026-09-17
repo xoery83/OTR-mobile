@@ -949,4 +949,14 @@ export const migrations: Migration[] = [
       WHERE sync_status = 'PENDING';
     `,
   },
+  {
+    id: 22,
+    name: "ledger_expense_economic_date",
+    sql: `
+      ALTER TABLE ledger_expenses ADD COLUMN economic_date TEXT
+        CHECK (economic_date IS NULL OR
+          (economic_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND
+           date(economic_date) = economic_date));
+    `,
+  },
 ];

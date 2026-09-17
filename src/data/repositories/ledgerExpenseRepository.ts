@@ -1,6 +1,9 @@
 import type * as SQLite from "expo-sqlite";
 
-import type { LedgerExpenseDto } from "@/data/api/ledgerReadContracts";
+import {
+  economicDateSchema,
+  type LedgerExpenseDto,
+} from "@/data/api/ledgerReadContracts";
 import { createLocalId } from "@/domain/localId";
 import { allocateSettlementFromOriginal } from "@/domain/ledger/allocation";
 import { assertMoney } from "@/domain/ledger/money";
@@ -35,6 +38,7 @@ export type LedgerExpenseCommand = {
   description?: string | null;
   category: string;
   occurredAt: string;
+  economicDate?: string | null;
   original: Money;
   participants: ExpenseParticipant[];
   splits: ExpenseSplit[];
@@ -49,6 +53,7 @@ export type LedgerExpense = ExpenseAggregate & {
   creatorMemberId: string | null;
   description: string | null;
   occurredAt: string;
+  economicDate?: string | null;
   deletedAt: string | null;
   syncStatus: SyncStatus;
   createdAt: string;
@@ -118,6 +123,7 @@ type LedgerExpenseRow = {
   description: string | null;
   category: string;
   occurredAt: string;
+  economicDate?: string | null;
   originalAmountMinor: number;
   originalCurrency: string;
   originalScale: number;
@@ -212,7 +218,8 @@ export function createLedgerExpenseRepository(
       if (
         current.valuation &&
         command.valuation?.id === current.valuation.id &&
-        (command.occurredAt.slice(0, 10) !== current.occurredAt.slice(0, 10) ||
+        ((command.economicDate ?? null) !== (current.economicDate ?? null) ||
+          command.occurredAt.slice(0, 10) !== current.occurredAt.slice(0, 10) ||
           command.original.minor !== current.original.minor ||
           command.original.currency !== current.original.currency ||
           command.original.scale !== current.original.scale)
@@ -262,7 +269,7 @@ export function createLedgerExpenseRepository(
         `SELECT
           id, server_id AS serverId, journey_id AS journeyId,
           creator_member_id AS creatorMemberId, payer_member_id AS payerMemberId,
-          title, description, category, occurred_at AS occurredAt,
+          title, description, category, occurred_at AS occurredAt, economic_date AS economicDate,
           original_amount_minor AS originalAmountMinor,
           original_currency AS originalCurrency, original_scale AS originalScale,
           business_status AS businessStatus,
@@ -289,7 +296,7 @@ export function createLedgerExpenseRepository(
         `SELECT
           id, server_id AS serverId, journey_id AS journeyId,
           creator_member_id AS creatorMemberId, payer_member_id AS payerMemberId,
-          title, description, category, occurred_at AS occurredAt,
+          title, description, category, occurred_at AS occurredAt, economic_date AS economicDate,
           original_amount_minor AS originalAmountMinor,
           original_currency AS originalCurrency, original_scale AS originalScale,
           business_status AS businessStatus,
@@ -410,6 +417,7 @@ export function createLedgerExpenseRepository(
         description: canonical.description,
         category: canonical.category,
         occurredAt: canonical.occurredAt,
+        economicDate: canonical.economicDate ?? null,
         original: canonical.original,
         participants: canonical.participants,
         splits: canonical.splits,
@@ -760,6 +768,7 @@ function buildLocalExpense(
     description: command.description?.trim() || null,
     category: command.category,
     occurredAt: command.occurredAt,
+    economicDate: command.economicDate ?? null,
     original: command.original,
     participants: command.participants,
     splits: command.splits,
@@ -777,6 +786,7 @@ function buildLocalExpense(
 }
 
 function assertCommand(expense: LedgerExpense) {
+  if (expense.economicDate !== null) economicDateSchema.parse(expense.economicDate);
   if (!expense.journeyId.trim()) throw new Error("A Ledger expense needs a Journey.");
   if (!expense.title) throw new Error("A Ledger expense needs a title.");
   assertValidExpenseAggregate(
@@ -797,10 +807,10 @@ async function insertExpenseAggregate(
   await database.runAsync(
     `INSERT INTO ledger_expenses (
       id, server_id, journey_id, creator_member_id, payer_member_id, title, description,
-      category, occurred_at, original_amount_minor, original_currency, original_scale,
+      category, occurred_at, economic_date, original_amount_minor, original_currency, original_scale,
       business_status, settlement_participation, revision, server_revision, deleted_at,
       sync_status, last_synced_at, created_at, updated_at, local_owner_user_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     expense.id,
     expense.serverId,
     expense.journeyId,
@@ -810,6 +820,7 @@ async function insertExpenseAggregate(
     expense.description,
     expense.category,
     expense.occurredAt,
+    expense.economicDate ?? null,
     expense.original.minor,
     expense.original.currency,
     expense.original.scale,
@@ -863,7 +874,7 @@ async function replaceExpenseData(
   await database.runAsync(
     `UPDATE ledger_expenses SET
       journey_id = ?, creator_member_id = ?, payer_member_id = ?, title = ?, description = ?,
-      category = ?, occurred_at = ?, original_amount_minor = ?, original_currency = ?,
+      category = ?, occurred_at = ?, economic_date = ?, original_amount_minor = ?, original_currency = ?,
       original_scale = ?, business_status = ?, settlement_participation = ?, revision = ?, server_id = ?,
       server_revision = ?, deleted_at = ?, sync_status = ?, last_synced_at = ?,
       local_owner_user_id = ?, updated_at = ?
@@ -875,6 +886,7 @@ async function replaceExpenseData(
     expense.description,
     expense.category,
     expense.occurredAt,
+    expense.economicDate ?? null,
     expense.original.minor,
     expense.original.currency,
     expense.original.scale,
@@ -1200,6 +1212,7 @@ function toOperationSnapshot(expense: LedgerExpense) {
     description: expense.description,
     category: expense.category,
     occurredAt: expense.occurredAt,
+    economicDate: expense.economicDate,
     payerMemberId: expense.payerMemberId,
     original: expense.original,
     businessStatus: expense.status === "DELETED" ? "DRAFT" : expense.status,
@@ -1275,6 +1288,7 @@ async function hydrateExpense(
     description: row.description,
     category: row.category,
     occurredAt: row.occurredAt,
+    economicDate: row.economicDate ?? null,
     original: {
       minor: row.originalAmountMinor,
       currency: row.originalCurrency,

@@ -101,11 +101,16 @@ export function LedgerExpenseDetailScreen() {
         detail: "Choose the correct version before relying on this Expense in totals.",
       }
     : expense.status === "RATE_REQUIRED"
-      ? {
-          title: "Needs exchange rate",
-          detail:
-            "Add or confirm a rate before including this Expense in converted totals.",
-        }
+      ? expense.economicDate == null
+        ? {
+            title: "Confirm expense date",
+            detail: "Confirm the date before a historical exchange rate can be used.",
+          }
+        : {
+            title: "Needs exchange rate",
+            detail:
+              "Add or confirm a rate before including this Expense in converted totals.",
+          }
       : {
           title: "Not included in totals",
           detail: "This Expense is not yet part of the accepted Spending totals.",
@@ -169,7 +174,8 @@ export function LedgerExpenseDetailScreen() {
         {expense.title}
       </Text>
       <Text style={styles.meta}>
-        {expense.category} · {formatLedgerDate(expense.occurredAt)}
+        {expense.category} ·{" "}
+        {formatLedgerDate(expense.economicDate ?? expense.occurredAt)}
       </Text>
       <View style={styles.actions}>
         <Pressable
@@ -215,7 +221,8 @@ export function LedgerExpenseDetailScreen() {
       <Section label="DETAILS">
         <Text style={styles.splitName}>Paid by {payerName}</Text>
         <Text style={styles.meta}>
-          {formatLedgerDate(expense.occurredAt)} · {expense.category}
+          {formatLedgerDate(expense.economicDate ?? expense.occurredAt)} ·{" "}
+          {expense.category}
         </Text>
         {expense.description ? (
           <Text style={styles.meta}>{expense.description}</Text>

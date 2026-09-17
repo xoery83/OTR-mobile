@@ -9,6 +9,7 @@ import {
 } from "./ledgerReviewContracts";
 
 const uuidSchema = z.uuid();
+export const economicDateSchema = z.iso.date();
 export const ledgerMoneySchema = z
   .object({
     minor: z.number().int(),
@@ -67,6 +68,7 @@ export const ledgerStage4EditableExpenseSchema = z.object({
   description: z.string().nullable(),
   category: z.string(),
   occurredAt: z.string(),
+  economicDate: economicDateSchema.nullable().optional(),
   payerMemberId: uuidSchema,
   original: ledgerMoneySchema,
   businessStatus: z.enum(["DRAFT", "ACCEPTED", "RATE_REQUIRED"]),
@@ -159,6 +161,7 @@ export const ledgerExpenseSchema = z.object({
   description: z.string().nullable(),
   category: z.string(),
   occurredAt: z.string(),
+  economicDate: economicDateSchema.nullable().optional(),
   original: ledgerMoneySchema,
   businessStatus: z.enum(["DRAFT", "ACCEPTED", "RATE_REQUIRED", "DELETED"]),
   settlementParticipation: z.enum(["INCLUDED", "EXCLUDED"]).default("INCLUDED"),

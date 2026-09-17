@@ -266,7 +266,7 @@ async function evaluateLedgerReviewV2(service: SupabaseClient, tripId: string) {
   const expenseRows = await service
     .from("expenses")
     .select(
-      "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+      "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
     )
     .eq("journey_id", tripId);
   if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
@@ -451,7 +451,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       const expenseRows = await service
         .from("expenses")
         .select(
-          "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+          "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
         )
         .eq("journey_id", tripId);
       if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
@@ -1294,6 +1294,7 @@ async function createLedgerExpenseAggregate(
     description: input.description,
     category: input.category,
     occurredAt: input.occurredAt,
+    economicDate: input.economicDate ?? null,
     original: input.original,
     businessStatus: input.businessStatus,
     settlementParticipation: input.settlementParticipation ?? "INCLUDED",
@@ -1430,6 +1431,8 @@ async function mutateLedgerExpenseAggregate(
         })
       : ["LIFECYCLE"];
   const updateInput = input as UpdateLedgerExpenseRequest;
+  const edited =
+    commandType === "UPDATE_EXPENSE" ? safeEconomicDateEdit(current, updateInput) : null;
   const entity: LedgerExpenseDto =
     commandType === "UPDATE_EXPENSE"
       ? {
@@ -1441,8 +1444,9 @@ async function mutateLedgerExpenseAggregate(
           description: updateInput.description,
           category: updateInput.category,
           occurredAt: updateInput.occurredAt,
+          economicDate: edited!.economicDate ?? null,
           original: updateInput.original,
-          businessStatus: updateInput.businessStatus,
+          businessStatus: edited!.businessStatus,
           settlementParticipation:
             updateInput.settlementParticipation ?? current.settlementParticipation,
           revision: nextRevision,
@@ -1450,9 +1454,9 @@ async function mutateLedgerExpenseAggregate(
           createdAt: current.createdAt,
           updatedAt: now,
           participants: updateInput.participants,
-          splits: updateInput.splits,
-          valuation: updateInput.valuation
-            ? { id: randomUUID(), ...updateInput.valuation }
+          splits: edited!.splits,
+          valuation: edited!.valuation
+            ? { id: randomUUID(), ...edited!.valuation }
             : null,
           paymentRecords: current.paymentRecords,
           auditEvents: [],
@@ -1915,12 +1919,32 @@ function mapFinancialEvidenceError(message?: string) {
   throw new Error("Supabase Dev financial evidence operation failed.");
 }
 
+export function safeEconomicDateEdit(
+  current: LedgerExpenseDto,
+  input: Stage4EditableExpense,
+): Stage4EditableExpense {
+  const economicDate = input.economicDate ?? null;
+  const changed =
+    economicDate !== (current.economicDate ?? null) ||
+    input.occurredAt.slice(0, 10) !== current.occurredAt.slice(0, 10);
+  if (!changed || input.valuation?.policy === "SAME_CURRENCY")
+    return { ...input, economicDate };
+  return {
+    ...input,
+    economicDate,
+    businessStatus: input.businessStatus === "DRAFT" ? "DRAFT" : "RATE_REQUIRED",
+    valuation: null,
+    splits: input.splits.map((split) => ({ ...split, settlementMinor: null })),
+  };
+}
+
 function editableExpense(expense: LedgerExpenseDto) {
   return {
     title: expense.title,
     description: expense.description,
     category: expense.category,
     occurredAt: expense.occurredAt,
+    economicDate: expense.economicDate,
     payerMemberId: expense.payerMemberId,
     original: expense.original,
     businessStatus:
@@ -1954,18 +1978,19 @@ function mutationResponse(
 ) {
   const revision = current.revision + (incrementRevision ? 1 : 0);
   const now = new Date().toISOString();
+  const safeEditable = safeEconomicDateEdit(current, editable);
   const entity: LedgerExpenseDto = {
     ...current,
-    ...editable,
+    ...safeEditable,
     settlementParticipation:
       editable.settlementParticipation ?? current.settlementParticipation,
     revision,
     deletedAt: null,
     updatedAt: incrementRevision ? now : current.updatedAt,
-    valuation: editable.valuation
+    valuation: safeEditable.valuation
       ? {
           id: incrementRevision ? randomUUID() : (current.valuation?.id ?? randomUUID()),
-          ...editable.valuation,
+          ...safeEditable.valuation,
         }
       : null,
     auditEvents: current.auditEvents.concat({
@@ -2299,7 +2324,7 @@ async function readOneExpenseAggregate(service: SupabaseClient, expenseId: strin
   const result = await service
     .from("expenses")
     .select(
-      "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+      "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
     )
     .eq("id", expenseId)
     .maybeSingle();
@@ -3176,7 +3201,7 @@ async function readLedgerBootstrap(
     service
       .from("expenses")
       .select(
-        "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+        "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
       )
       .eq("journey_id", tripId)
       .order("occurred_at", { ascending: false }),
@@ -3332,7 +3357,7 @@ async function readLedgerChanges(
       ? await service
           .from("expenses")
           .select(
-            "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+            "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
           )
           .in("id", expenseIds)
       : { data: [], error: null };
@@ -3549,6 +3574,7 @@ async function readExpenseAggregates(
       description: row.description ? String(row.description) : null,
       category: String(row.category),
       occurredAt: String(row.occurred_at),
+      economicDate: row.economic_date ? String(row.economic_date) : null,
       original: {
         minor: Number(row.original_amount_minor),
         currency: String(row.original_currency),

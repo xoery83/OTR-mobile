@@ -266,6 +266,7 @@ function createGateway(options: { authorized?: boolean } = {}) {
           description: input.description,
           category: input.category,
           occurredAt: input.occurredAt,
+          economicDate: input.economicDate ?? null,
           original: input.original,
           businessStatus: input.businessStatus,
           settlementParticipation: input.settlementParticipation ?? "INCLUDED",
@@ -331,6 +332,7 @@ function createGateway(options: { authorized?: boolean } = {}) {
             description: input.description,
             category: input.category,
             occurredAt: input.occurredAt,
+            economicDate: input.economicDate ?? null,
             original: input.original,
             businessStatus: input.businessStatus,
             settlementParticipation: input.settlementParticipation ?? "INCLUDED",
@@ -895,6 +897,42 @@ describe("OTR Dev Backend", () => {
     });
     expect(gateway.createLedgerExpense).toHaveBeenCalledTimes(2);
     expect(ledgerCreates).toHaveLength(1);
+  });
+
+  it("round-trips a literal economic date and keeps old-client omission unknown", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const submit = (body: unknown, key: string) =>
+      handle(
+        new Request(`http://localhost/v2/trips/${tripId}/expenses`, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": key,
+          },
+          body: JSON.stringify(body),
+        }),
+      );
+    const explicit = await submit(
+      {
+        ...ledgerExpenseBody,
+        occurredAt: "2026-07-14T23:30:00-10:00",
+        economicDate: "2026-07-15",
+      },
+      "date-explicit",
+    );
+    expect(explicit.status).toBe(201);
+    expect(await explicit.json()).toMatchObject({
+      entity: { economicDate: "2026-07-15" },
+    });
+    const oldClient = await submit(ledgerExpenseBody, "date-old-client");
+    expect(oldClient.status).toBe(201);
+    expect(await oldClient.json()).toMatchObject({ entity: { economicDate: null } });
+    expect(
+      (await submit({ ...ledgerExpenseBody, economicDate: "2026-02-30" }, "date-invalid"))
+        .status,
+    ).toBe(400);
   });
 
   it("rejects Ledger create idempotency key reuse with a different payload", async () => {

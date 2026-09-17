@@ -75,8 +75,9 @@ describe("SQLite migrations", () => {
     expect(account.sql).toContain("owner_user_id");
     expect(account.sql).toContain("local_owner_user_id");
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(21);
-    expect(latest.sql).toContain("ledger_review_visibility");
+    expect(latest.id).toBe(22);
+    expect(latest.sql).toContain("economic_date");
+    expect(migrations[20].sql).toContain("ledger_review_visibility");
     expect(migrations[19].sql).toContain("observation_context_json");
   });
 
@@ -110,6 +111,33 @@ describe("SQLite migrations", () => {
       expect(
         database.prepare("SELECT count(*) AS n FROM ledger_review_finding_actions").get(),
       ).toEqual({ n: 1 });
+    } finally {
+      database.close();
+    }
+  });
+
+  it("leaves ambiguous legacy Expense dates unknown in migration 22", () => {
+    const database = new DatabaseSync(":memory:");
+    try {
+      for (const migration of migrations.filter(({ id }) => id <= 21))
+        database.exec(migration.sql);
+      database.exec(`INSERT INTO ledger_expenses (
+        id, journey_id, payer_member_id, title, category, occurred_at,
+        original_amount_minor, original_currency, original_scale, business_status,
+        revision, sync_status, created_at, updated_at
+      ) VALUES ('legacy', 'journey', 'member', 'Old', 'other',
+        '2026-07-15T00:30:00Z', 100, 'EUR', 2, 'RATE_REQUIRED', 1,
+        'SYNCED', '2026-07-15T00:30:00Z', '2026-07-15T00:30:00Z')`);
+      database.exec(migrations.find(({ id }) => id === 22)!.sql);
+      expect(
+        database.prepare("SELECT occurred_at, economic_date FROM ledger_expenses").get(),
+      ).toEqual({ occurred_at: "2026-07-15T00:30:00Z", economic_date: null });
+      database.exec(
+        "UPDATE ledger_expenses SET economic_date = '2026-07-14' WHERE id = 'legacy'",
+      );
+      expect(database.prepare("SELECT economic_date FROM ledger_expenses").get()).toEqual(
+        { economic_date: "2026-07-14" },
+      );
     } finally {
       database.close();
     }

@@ -35,6 +35,7 @@ function createInMemoryLedgerDatabase() {
           description,
           category,
           occurredAt,
+          economicDate,
           originalAmountMinor,
           originalCurrency,
           originalScale,
@@ -59,6 +60,7 @@ function createInMemoryLedgerDatabase() {
           description,
           category,
           occurredAt,
+          economicDate,
           originalAmountMinor,
           originalCurrency,
           originalScale,
@@ -210,7 +212,7 @@ function createInMemoryLedgerDatabase() {
           status: params[9],
         });
       } else if (sql.includes("UPDATE ledger_expenses SET\n      journey_id")) {
-        const id = params[20] as string;
+        const id = params[21] as string;
         const row = expenses.get(id);
         if (row) {
           Object.assign(row, {
@@ -221,18 +223,19 @@ function createInMemoryLedgerDatabase() {
             description: params[4],
             category: params[5],
             occurredAt: params[6],
-            originalAmountMinor: params[7],
-            originalCurrency: params[8],
-            originalScale: params[9],
-            businessStatus: params[10],
-            settlementParticipation: params[11],
-            revision: params[12],
-            serverId: params[13],
-            serverRevision: params[14],
-            deletedAt: params[15],
-            syncStatus: params[16],
-            localOwnerUserId: params[18],
-            updatedAt: params[19],
+            economicDate: params[7],
+            originalAmountMinor: params[8],
+            originalCurrency: params[9],
+            originalScale: params[10],
+            businessStatus: params[11],
+            settlementParticipation: params[12],
+            revision: params[13],
+            serverId: params[14],
+            serverRevision: params[15],
+            deletedAt: params[16],
+            syncStatus: params[17],
+            localOwnerUserId: params[19],
+            updatedAt: params[20],
           });
         }
       } else if (sql.includes("business_status = ?, deleted_at = ?")) {
@@ -317,6 +320,7 @@ const command: LedgerExpenseCommand = {
   title: "Lisbon dinner",
   category: "food",
   occurredAt: "2026-09-11T18:30:00.000Z",
+  economicDate: "2026-09-11",
   original: { minor: 10_000, currency: "EUR", scale: 2 },
   participants: [
     { memberId: "member-a", displayNameSnapshot: "Alex", householdIdSnapshot: null },
@@ -388,6 +392,39 @@ describe("Ledger Expense repository", () => {
         eventType: "CREATED",
       }),
     ]);
+  });
+
+  it("keeps the selected calendar day literal across queue and SQLite restart", async () => {
+    const { database, operations } = createInMemoryLedgerDatabase();
+    const created = await createLedgerExpenseRepository(
+      database,
+      activeUser,
+    ).createExpense({
+      ...command,
+      occurredAt: "2026-07-14T23:30:00-10:00",
+      economicDate: "2026-07-15",
+    });
+    expect(created.economicDate).toBe("2026-07-15");
+    expect(JSON.parse(operations[0]!.payloadJson as string).expense.economicDate).toBe(
+      "2026-07-15",
+    );
+    expect(
+      (await createLedgerExpenseRepository(database, activeUser).getExpense(created.id))
+        ?.economicDate,
+    ).toBe("2026-07-15");
+  });
+
+  it("does not backfill ambiguous UTC or offset legacy dates", async () => {
+    const { database } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    for (const occurredAt of ["2026-07-15T00:30:00Z", "2026-07-14T23:30:00-10:00"]) {
+      const created = await repository.createExpense({
+        ...command,
+        occurredAt,
+        economicDate: null,
+      });
+      expect((await repository.getExpense(created.id))?.economicDate).toBeNull();
+    }
   });
 
   it("rehydrates the same persisted aggregate and keeps Journey lists isolated", async () => {
@@ -470,7 +507,19 @@ describe("Ledger Expense repository", () => {
     await expect(
       repository.updateExpense(
         created.id,
-        { ...command, occurredAt: "2026-09-12", valuation: created.valuation },
+        { ...command, economicDate: "2026-09-12", valuation: created.valuation },
+        "Correct local date without changing timestamp",
+      ),
+    ).rejects.toThrow(/cannot retain/);
+    await expect(
+      repository.updateExpense(
+        created.id,
+        {
+          ...command,
+          occurredAt: "2026-09-12",
+          economicDate: "2026-09-12",
+          valuation: created.valuation,
+        },
         "Wrong date",
       ),
     ).rejects.toThrow(/cannot retain/);
@@ -480,6 +529,7 @@ describe("Ledger Expense repository", () => {
       {
         ...command,
         occurredAt: "2026-09-12",
+        economicDate: "2026-09-12",
         valuation: null,
         status: "RATE_REQUIRED",
         splits: command.splits.map((split) => ({ ...split, settlementMinor: null })),
@@ -492,6 +542,7 @@ describe("Ledger Expense repository", () => {
     expect(JSON.parse(operations[1]!.payloadJson as string)).toMatchObject({
       expense: {
         occurredAt: "2026-09-12",
+        economicDate: "2026-09-12",
         valuation: null,
         businessStatus: "RATE_REQUIRED",
       },

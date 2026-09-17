@@ -3,6 +3,7 @@ import { z } from "zod";
 import { isIso4217Money } from "@/domain/ledger/currency";
 
 import {
+  economicDateSchema,
   ledgerCorrectionRequestSchema,
   ledgerExpenseSchema,
   ledgerPaymentRecordSchema,
@@ -61,6 +62,7 @@ const expenseFields = {
   description: z.string().trim().max(5000).nullable(),
   category: z.string().trim().min(1).max(80),
   occurredAt: z.string().refine((value) => !Number.isNaN(Date.parse(value))),
+  economicDate: economicDateSchema.nullable().optional(),
   payerMemberId: z.uuid(),
   original: moneySchema,
   businessStatus: z.enum(["DRAFT", "ACCEPTED", "RATE_REQUIRED"]),

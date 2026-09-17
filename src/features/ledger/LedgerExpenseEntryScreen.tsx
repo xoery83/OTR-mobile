@@ -66,6 +66,7 @@ type Draft = {
   currency: string;
   title: string;
   date: string;
+  dateConfirmed: boolean;
   payerId: string;
   participantIds: string[];
   splitMode: ExpenseSplitMethod;
@@ -168,6 +169,7 @@ export function LedgerExpenseEntryScreen() {
   const scale = draft ? currencyScale(draft.currency) : null;
   const minor = draft && scale !== null ? parseCurrencyAmount(draft.amount, scale) : null;
   const amountPrecisionError = Boolean(draft?.amount.trim() && minor === null);
+  const selectedEconomicDate = draft?.dateConfirmed ? draft.date : null;
   const settlementMinor =
     minor !== null && context && draft
       ? draft.currency === context.settlementCurrency
@@ -175,7 +177,8 @@ export function LedgerExpenseEntryScreen() {
         : existing &&
             existing.original.minor === minor &&
             existing.original.currency === draft.currency &&
-            existing.occurredAt.slice(0, 10) === draft.date
+            (existing.economicDate ?? existing.occurredAt.slice(0, 10)) === draft.date &&
+            (existing.economicDate ?? null) === selectedEconomicDate
           ? (existing.valuation?.settlement.minor ?? null)
           : null
       : null;
@@ -217,7 +220,8 @@ export function LedgerExpenseEntryScreen() {
     draft &&
     minor === existing.original.minor &&
     draft.currency === existing.original.currency &&
-    draft.date === existing.occurredAt.slice(0, 10) &&
+    draft.date === (existing.economicDate ?? existing.occurredAt.slice(0, 10)) &&
+    selectedEconomicDate === (existing.economicDate ?? null) &&
     draft.splitMode === existing.splits[0]?.method &&
     sameIds(
       draft.participantIds,
@@ -359,7 +363,8 @@ export function LedgerExpenseEntryScreen() {
     try {
       const original = { minor, currency: draft.currency, scale: scale! };
       const preserveValuation = Boolean(
-        existing && preservesExpenseValuation(existing, original, draft.date),
+        existing &&
+        preservesExpenseValuation(existing, original, draft.date, selectedEconomicDate),
       );
       const valuation = preserveValuation
         ? existing!.valuation
@@ -382,9 +387,11 @@ export function LedgerExpenseEntryScreen() {
         description: draft.notes,
         category: draft.category,
         occurredAt:
-          existing && draft.date === existing.occurredAt.slice(0, 10)
+          existing &&
+          draft.date === (existing.economicDate ?? existing.occurredAt.slice(0, 10))
             ? existing.occurredAt
             : draft.date,
+        economicDate: selectedEconomicDate,
         original,
         participants: preservesExistingAllocation
           ? existing!.participants
@@ -396,8 +403,8 @@ export function LedgerExpenseEntryScreen() {
         splits: effectiveSplits,
         valuation,
         status:
-          existing && existing.status !== "DELETED"
-            ? existing.status
+          existing?.status === "DRAFT"
+            ? "DRAFT"
             : valuation
               ? "ACCEPTED"
               : "RATE_REQUIRED",
@@ -555,6 +562,13 @@ export function LedgerExpenseEntryScreen() {
           onPress={() => setDatePicker(true)}
           value={draft.date}
         />
+        {existing && !draft.dateConfirmed ? (
+          <FormRow
+            label="Confirm date"
+            onPress={() => setDraft({ ...draft, dateConfirmed: true })}
+            value="Needed before using a historical exchange rate"
+          />
+        ) : null}
         <FormRow
           label="Paid by"
           onPress={choosePayer}
@@ -771,7 +785,7 @@ export function LedgerExpenseEntryScreen() {
           mode="date"
           onChange={(_, value) => {
             setDatePicker(false);
-            if (value) setDraft({ ...draft, date: dateKey(value) });
+            if (value) setDraft({ ...draft, date: dateKey(value), dateConfirmed: true });
           }}
           value={date}
         />
@@ -832,10 +846,13 @@ async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: str
         : "",
     currency,
     title: existing?.title ?? suggestion?.title ?? "",
-    date: (existing?.occurredAt ?? suggestion?.occurredAt ?? dateKey(new Date())).slice(
-      0,
-      10,
-    ),
+    date: (
+      existing?.economicDate ??
+      existing?.occurredAt ??
+      suggestion?.occurredAt ??
+      dateKey(new Date())
+    ).slice(0, 10),
+    dateConfirmed: existing ? existing.economicDate != null : true,
     payerId: existing?.payerMemberId ?? actorMember.id,
     participantIds,
     splitMode: existing?.splits[0]?.method ?? "EQUAL_PERSON",

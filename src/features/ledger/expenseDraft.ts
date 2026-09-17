@@ -130,14 +130,17 @@ export function preservesExpenseValuation(
   previous: {
     original: { minor: number; currency: string; scale: number };
     occurredAt: string;
+    economicDate?: string | null;
   },
   original: { minor: number; currency: string; scale: number },
   selectedDate: string,
+  selectedEconomicDate: string | null = previous.economicDate ?? null,
 ) {
   return (
     previous.original.minor === original.minor &&
     previous.original.currency === original.currency &&
     previous.original.scale === original.scale &&
-    previous.occurredAt.slice(0, 10) === selectedDate
+    (previous.economicDate ?? previous.occurredAt.slice(0, 10)) === selectedDate &&
+    (previous.economicDate ?? null) === selectedEconomicDate
   );
 }

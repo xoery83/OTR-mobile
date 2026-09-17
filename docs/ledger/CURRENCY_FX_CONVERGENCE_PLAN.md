@@ -1,15 +1,15 @@
 # OTR Mobile 2.0 货币 / FX / 估值收敛实施计划
 
-日期：2026-09-17。状态：**仅 Phase A 获准实施；Phase B–F 停止等待后续批准**。依据 `CURRENCY_FX_DOMAIN_AUDIT.md`、Ledger 2.0 领域/API 契约和当前实现。未批准的建议仍需产品确认；所有迁移仅指未来 Dev 设计，不涉及 Production。保持原始 Money、PaymentRecord、结算估值、还款估值四种事实分立，并复用 Stage 4B/4C/5/7、持久队列和 Review 2.0，不创建平行估值系统。
+日期：2026-09-17。状态：**Phase A 与 Phase B1 经济日期基础获准；B2/C/D/E/F 未授权**。依据 `CURRENCY_FX_DOMAIN_AUDIT.md`、Ledger 2.0 领域/API 契约和当前实现。未批准的建议仍需产品确认；迁移仅指 Dev，不涉及 Production。保持原始 Money、PaymentRecord、结算估值、还款估值四种事实分立，并复用 Stage 4B/4C/5/7、持久队列和 Review 2.0，不创建平行估值系统。
 
-2026-09-17 更新：Phase A 已在源码完成；暂隐 Preferred Currency、未来最多回看 7 个日历日、未来 Phase D 的 Journey Currency A–D 规则（finalized 后永久锁定、无 epochs）、Backend 拥有可替换 provider、Expense Detail 为主要来源说明均已获产品批准。具体 provider **未**批准。Phase A 的日期证据见 `CURRENCY_FX_PHASE_A_DATE_FINDING.md`：既有 `occurred_at` 无法对全部历史记录证明旅行当地经济日；Phase B 接汇率源前必须先批准显式 `economic_date` 契约/迁移及模糊旧记录处理。**Phase B–F 尚未获实施授权。**
+2026-09-17 更新：Phase A 已在源码完成；暂隐 Preferred Currency、未来最多回看 7 个日历日、未来 Phase D 的 Journey Currency A–D 规则（finalized 后永久锁定、无 epochs）、Backend 拥有可替换 provider、Expense Detail 为主要来源说明均已获产品批准。具体 provider **未**批准。Phase A 日期证据见 `CURRENCY_FX_PHASE_A_DATE_FINDING.md`。Phase B1 已获准建立显式可空 `economic_date`；实现与零历史回填政策见 `CURRENCY_FX_PHASE_B1_ECONOMIC_DATE.md`。**B2 历史汇率接入及 C/D/E/F 均未获实施授权。**
 
 ## 明确语义与现有实现冲突
 
 - 原始交易 `Expense.original = {minor,currency,scale}` 是商户金额；更正 `100 NZD → 100 EUR` 保留**显示的数字 100**，按 EUR 的 ISO 小数位重新解析为 minor（并非保留旧 minor，也非换算）。零/二/三位币种切换时，若原数字有目标币种不允许的小数位，阻止保存并要求用户明确修订，绝不偷偷四舍五入。已有审计修订链允许更正；当前表单清空 `amount` 与此产品决定冲突，应更改。EXACT 输入若精度/合计不合法，也须明确重新分配。更正后不兼容活动估值失效，旧快照保留审计；同币种身份估值可重建，跨币种进 `RATE_REQUIRED`，待规范 Stage 5 流程接受报价。
 - Journey 对外叫 **Journey Currency / 旅行结算货币**；说明分别为“Currency used for Journey totals, balances and settlement.” / “用于本次旅行的汇总、成员余额和结算。”；唯一内部事实仍是 `ledger_settings.settlement_currency/settlement_scale`，Mobile 镜像为 `ledger_journeys`。FX 报价字段 `base_currency` 是汇率方向的目标币，不另造 Journey base 字段。
 - 账号本地 `account_local_state.default_currency` 是未来 **Preferred Currency / 偏好货币**，与 Journey Currency 无关。目前不改变任何报表显示，因此 **Phase A 已从普通 Settings 隐藏**，保留已有数据和读取兼容性；待可验证的只读展示换算上线再恢复。新 Expense 默认币种继续从 Journey Currency 取，不能受隐藏偏好影响。
-- 权威经济日期是 Expense 的**旅行当地日历日**，而不是记录或估值时间。Phase A 日期链路核查已证明现有 `occurred_at` 对全部历史记录无法无歧义地恢复这一天；表单用 `slice(0,10)`，新输入可能是仅日期字符串，Dev 则存为 `timestamptz`。Phase B 接历史报价前须先批准并建立显式 `economic_date` 契约及模糊历史记录的迁移/核对策略；不能对任意 UTC 转换直接截日生成报价键。更正 Expense 的已存日期标签同样使旧活动估值失效，即使金额和币种未变。
+- 权威经济日期是 Expense 的**旅行当地日历日**，而不是记录或估值时间。B1 在 canonical Dev Expense 和 Mobile 镜像中增加独立可空 `economic_date`，新表单保存所选 `YYYY-MM-DD`；历史歧义值保持 `NULL`，不从 `occurred_at` 猜测或转换。更正这一日期使不兼容活动估值失效并保留历史证据。B2 必须以显式日期为报价键，未知日期先让用户确认。
 - 重要技术冲突：现有 `previewValuation` 只检查报价币种方向，尚未检查经济日/实际参考日；`insertRateSnapshot` 在无 quote 时以**估值当天**填 `effective_date`（手动/同币种证据也如此）。历史日估值不能靠 UI 约定，需 Backend 权威校验，Mobile 同步预检，并区分经济日、实际参考日和观测/接受时间。
 
 ## 历史日汇率与缓存契约
