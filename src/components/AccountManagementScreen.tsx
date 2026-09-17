@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -29,6 +30,7 @@ import { isApprovedDevIdentity, journeyRoleLabel, maskEmail } from "./globalMenu
 type LocalAccount = AccountIdentity & { active: boolean };
 
 export function AccountManagementScreen({ authBoundary = false }) {
+  const scrollRef = useRef<ScrollView>(null);
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ mode?: string; returnTo?: string }>();
   const devSelector = params.mode === "dev";
@@ -81,6 +83,14 @@ export function AccountManagementScreen({ authBoundary = false }) {
       active = false;
     };
   }, [authBoundary]);
+
+  useEffect(() => {
+    if (!showLogin) return;
+    const listener = Keyboard.addListener("keyboardDidShow", () =>
+      scrollRef.current?.scrollToEnd({ animated: true }),
+    );
+    return () => listener.remove();
+  }, [showLogin]);
 
   const switchAccount = async (account: LocalAccount) => {
     setBusy(true);
@@ -183,6 +193,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        ref={scrollRef}
       >
         <Text accessibilityRole="header" style={styles.title}>
           {devSelector ? "Test accounts" : "Accounts"}
@@ -249,7 +260,10 @@ export function AccountManagementScreen({ authBoundary = false }) {
               accessibilityLabel="Password"
               autoCapitalize="none"
               onChangeText={setPassword}
+              onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
+              onSubmitEditing={Keyboard.dismiss}
               placeholder="Password"
+              returnKeyType="done"
               secureTextEntry
               style={styles.input}
               value={password}
