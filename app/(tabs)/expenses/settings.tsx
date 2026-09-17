@@ -10,9 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { router } from "expo-router";
 
-import { AppIcon } from "@/components/AppIcon";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import { ledgerCurrencyRepository } from "@/data/repositories/ledgerCurrencyRepository";
@@ -187,10 +185,6 @@ export default function LedgerSettingsRoute() {
               <Text style={styles.label}>{journey.settlementCurrency}</Text>
             </Pressable>
           ) : null}
-          <SettingRow
-            label="Exchange Rates"
-            onPress={() => router.push("/expenses/exchange-rates" as never)}
-          />
         </View>
         {working ? <ActivityIndicator /> : null}
         {preview ? (
@@ -314,17 +308,6 @@ export default function LedgerSettingsRoute() {
         />
       </Modal>
     </>
-  );
-}
-
-function SettingRow({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.row}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.rowValue}>
-        <AppIcon color="#94A3B8" name="chevron.right" size={14} />
-      </View>
-    </Pressable>
   );
 }
 

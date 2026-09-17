@@ -79,6 +79,7 @@ function repository(): LedgerExpenseRepository {
     updateExpense: vi.fn(),
     listExpensesForJourney: vi.fn(),
     getExpense: vi.fn(async () => expense),
+    listPreviousValuations: vi.fn(async () => []),
     tombstoneExpense: vi.fn(),
     restoreExpense: vi.fn(),
     markExpenseSyncing: vi.fn(),
@@ -324,5 +325,45 @@ describe("Ledger Expense sync worker", () => {
       }),
     );
     expect(repo.reconcileCanonicalExpense).toHaveBeenCalledOnce();
+  });
+
+  it("sends the canonical posted-payment ID for payer-cost valuation", async () => {
+    const repo = repository();
+    vi.mocked(repo.getExpense).mockResolvedValue({
+      ...expense,
+      serverId: "server-expense",
+      serverRevision: 2,
+    });
+    vi.mocked(repo.getPaymentRecordServerId).mockResolvedValue("server-payment");
+    const applyValuation = vi.fn(async () => ({
+      entity: { valuation: { id: "v", rateSnapshotId: null } } as never,
+      serverId: "server-expense",
+      revision: 3,
+    }));
+    await createLedgerExpenseSyncWorker(repo, {
+      createExpense: vi.fn(),
+      updateExpense: vi.fn(),
+      deleteExpense: vi.fn(),
+      restoreExpense: vi.fn(),
+      applyValuation,
+    }).push({
+      ...operation,
+      operationType: "LEDGER_APPLY_VALUATION",
+      payloadJson: JSON.stringify({
+        policy: "ACTUAL_PAYER_COST",
+        paymentRecordId: "local-payment",
+        localValuationId: "local-v",
+        localRateSnapshotId: null,
+        previewSettlement: { minor: 12450, currency: "NZD", scale: 2 },
+      }),
+    });
+    expect(applyValuation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        valuation: expect.objectContaining({
+          paymentRecordId: "server-payment",
+          baseRevision: 2,
+        }),
+      }),
+    );
   });
 });

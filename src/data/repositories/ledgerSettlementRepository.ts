@@ -35,6 +35,20 @@ export function createLedgerSettlementRepository(
       );
       return Boolean(row?.found);
     },
+    async isExpenseFinalized(journeyId: string, expenseId: string) {
+      const userId = await getActiveUserId();
+      const row = await database.getFirstAsync<{ found: number }>(
+        `SELECT 1 AS found FROM ledger_settlement_inputs input
+         JOIN ledger_settlements settlement ON settlement.id = input.settlement_id
+         JOIN ledger_actor_context actor ON actor.journey_id = settlement.journey_id
+         WHERE settlement.journey_id = ? AND input.expense_id = ?
+           AND actor.user_id = ? LIMIT 1`,
+        journeyId,
+        expenseId,
+        userId,
+      );
+      return Boolean(row?.found);
+    },
     async applyFinalized(settlement: FinalizedSettlementDto) {
       await database.withTransactionAsync(() =>
         applyFinalizedSettlement(database, settlement),

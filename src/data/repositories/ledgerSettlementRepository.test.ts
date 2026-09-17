@@ -51,6 +51,30 @@ const settlement: FinalizedSettlementDto = {
 describe("Stage 7.1 Settlement repository", () => {
   const activeUser = async () => "user-a";
 
+  it("locks only Expenses present in accessible finalized inputs", async () => {
+    const getFirstAsync = vi.fn(
+      async (_sql: string, _journey: string, expenseId: string) =>
+        expenseId === "frozen" ? { found: 1 } : null,
+    );
+    const repository = createLedgerSettlementRepository(
+      {
+        getFirstAsync,
+        getAllAsync: vi.fn(),
+        runAsync: vi.fn(),
+        withTransactionAsync: vi.fn(),
+      } as never,
+      activeUser,
+    );
+    expect(await repository.isExpenseFinalized("journey", "frozen")).toBe(true);
+    expect(await repository.isExpenseFinalized("journey", "new")).toBe(false);
+    expect(getFirstAsync).toHaveBeenCalledWith(
+      expect.stringContaining("ledger_settlement_inputs"),
+      "journey",
+      "frozen",
+      "user-a",
+    );
+  });
+
   it("stores one immutable aggregate transaction and checks the financial queue", async () => {
     const statements: string[] = [];
     const database = {

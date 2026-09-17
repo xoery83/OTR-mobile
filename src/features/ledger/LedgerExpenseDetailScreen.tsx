@@ -16,8 +16,10 @@ import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedge
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
+import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 
-import { formatLedgerDate, formatLedgerMoney, formatValuationPolicy } from "./format";
+import { ExpenseFxDetails } from "./ExpenseFxDetails";
+import { formatLedgerDate, formatLedgerMoney } from "./format";
 
 export function LedgerExpenseDetailScreen() {
   const largeText = useWindowDimensions().fontScale > 2;
@@ -30,6 +32,12 @@ export function LedgerExpenseDetailScreen() {
   const [loadError, setLoadError] = useState(false);
   const [participationError, setParticipationError] = useState<string | null>(null);
   const [savingParticipation, setSavingParticipation] = useState(false);
+  const [fxAccess, setFxAccess] = useState({
+    currency: "",
+    scale: 2,
+    canChange: false,
+    locked: true,
+  });
   useEffect(() => {
     let active = true;
     if (id) {
@@ -37,32 +45,68 @@ export function LedgerExpenseDetailScreen() {
         .then((repository) => repository.getExpense(id))
         .then(async (nextExpense) => {
           if (!nextExpense) return [null, false, "Traveller", 0] as const;
-          const [nextHasOpenConflict, members, receipts] = await Promise.all([
-            getDefaultLedgerReportingRepository().then((repository) =>
-              repository.hasOpenConflict(id),
-            ),
-            getDefaultLedgerReadRepository().then((repository) =>
-              repository.listMembers(nextExpense.journeyId),
-            ),
-            getDefaultLedgerReceiptRepository().then((repository) =>
-              repository.listReceipts(nextExpense.journeyId),
-            ),
-          ]);
+          const [nextHasOpenConflict, members, receipts, actor, journeys, settlement] =
+            await Promise.all([
+              getDefaultLedgerReportingRepository().then((repository) =>
+                repository.hasOpenConflict(id),
+              ),
+              getDefaultLedgerReadRepository().then((repository) =>
+                repository.listMembers(nextExpense.journeyId),
+              ),
+              getDefaultLedgerReceiptRepository().then((repository) =>
+                repository.listReceipts(nextExpense.journeyId),
+              ),
+              getDefaultLedgerReportingRepository().then((repository) =>
+                repository.getActorContext(nextExpense.journeyId),
+              ),
+              getDefaultLedgerReportingRepository().then((repository) =>
+                repository.listJourneys(),
+              ),
+              getDefaultLedgerSettlementRepository().then((repository) =>
+                repository.isExpenseFinalized(nextExpense.journeyId, nextExpense.id),
+              ),
+            ]);
+          const journey = journeys.find(
+            (item) => item.journeyId === nextExpense.journeyId,
+          );
           return [
             nextExpense,
             nextHasOpenConflict,
             members.find((member) => member.id === nextExpense.payerMemberId)
               ?.displayName ?? "Traveller",
             receipts.filter((receipt) => receipt.expenseId === nextExpense.id).length,
+            {
+              currency:
+                journey?.settlementCurrency ??
+                nextExpense.valuation?.settlement.currency ??
+                "",
+              scale:
+                journey?.settlementScale ?? nextExpense.valuation?.settlement.scale ?? 2,
+              canChange: Boolean(
+                actor?.memberId &&
+                (actor.role === "owner" ||
+                  actor.memberId === nextExpense.creatorMemberId),
+              ),
+              locked: settlement,
+            },
           ] as const;
         })
-        .then(([nextExpense, nextHasOpenConflict, nextPayerName, nextReceiptCount]) => {
-          if (!active) return;
-          setExpense(nextExpense);
-          setHasOpenConflict(nextHasOpenConflict);
-          setPayerName(nextPayerName);
-          setReceiptCount(nextReceiptCount);
-        })
+        .then(
+          ([
+            nextExpense,
+            nextHasOpenConflict,
+            nextPayerName,
+            nextReceiptCount,
+            access,
+          ]) => {
+            if (!active) return;
+            setExpense(nextExpense);
+            setHasOpenConflict(nextHasOpenConflict);
+            setPayerName(nextPayerName);
+            setReceiptCount(nextReceiptCount);
+            if (access) setFxAccess(access);
+          },
+        )
         .catch(() => {
           if (active) setLoadError(true);
         })
@@ -91,6 +135,7 @@ export function LedgerExpenseDetailScreen() {
       </View>
     );
   const valuation = expense.valuation;
+  const chinese = Intl.DateTimeFormat().resolvedOptions().locale.startsWith("zh");
   const participantNames = new Map(
     expense.participants.map((item) => [item.memberId, item.displayNameSnapshot]),
   );
@@ -103,13 +148,16 @@ export function LedgerExpenseDetailScreen() {
     : expense.status === "RATE_REQUIRED"
       ? expense.economicDate == null
         ? {
-            title: "Confirm expense date",
-            detail: "Confirm the date before a historical exchange rate can be used.",
+            title: chinese ? "确认消费日期" : "Confirm expense date",
+            detail: chinese
+              ? "确认日期后才能使用历史参考汇率。"
+              : "Confirm the date before a historical reference rate can be used.",
           }
         : {
-            title: "Needs exchange rate",
-            detail:
-              "Add or confirm a rate before including this Expense in converted totals.",
+            title: chinese ? "参考汇率待获取" : "Reference rate pending",
+            detail: chinese
+              ? "正在等待历史参考汇率。可在汇率详情中选择明确的其他方式。"
+              : "Waiting for a historical reference rate. Rate details offers explicit alternatives when available.",
           }
       : {
           title: "Not included in totals",
@@ -209,7 +257,7 @@ export function LedgerExpenseDetailScreen() {
           <Text style={styles.meta}>{warning.detail}</Text>
         </View>
       ) : null}
-      <Section label="MERCHANT VALUE">
+      <Section label={chinese ? "原始金额" : "ORIGINAL AMOUNT"}>
         <Text style={styles.value}>
           {formatLedgerMoney(
             expense.original.minor,
@@ -218,6 +266,16 @@ export function LedgerExpenseDetailScreen() {
           )}
         </Text>
       </Section>
+      {fxAccess.currency ? (
+        <ExpenseFxDetails
+          expense={expense}
+          currency={fxAccess.currency}
+          scale={fxAccess.scale}
+          canChange={fxAccess.canChange && !hasOpenConflict}
+          locked={fxAccess.locked}
+          onChanged={setExpense}
+        />
+      ) : null}
       <Section label="DETAILS">
         <Text style={styles.splitName}>Paid by {payerName}</Text>
         <Text style={styles.meta}>
@@ -232,28 +290,6 @@ export function LedgerExpenseDetailScreen() {
             ? `${receiptCount} ${receiptCount === 1 ? "receipt" : "receipts"} attached`
             : "No receipt attached"}
         </Text>
-      </Section>
-      <Section label="JOURNEY VALUATION">
-        {valuation ? (
-          <>
-            <Text style={styles.value}>
-              {formatLedgerMoney(
-                valuation.settlement.minor,
-                valuation.settlement.currency,
-                valuation.settlement.scale,
-              )}
-            </Text>
-            <Text style={styles.meta}>
-              {formatValuationPolicy(valuation.policy)}
-              {valuation.decimalRate ? ` · rate ${valuation.decimalRate}` : ""}
-            </Text>
-            {valuation.reason ? (
-              <Text style={styles.meta}>Reason: {valuation.reason}</Text>
-            ) : null}
-          </>
-        ) : (
-          <Text style={styles.meta}>No exchange value yet</Text>
-        )}
       </Section>
       <Section label="EXACT SPLITS">
         {expense.splits.map((split) => (
@@ -324,7 +360,9 @@ export function LedgerExpenseDetailScreen() {
             </View>
           ))
         ) : (
-          <Text style={styles.meta}>No payer evidence recorded.</Text>
+          <Text style={styles.meta}>
+            {chinese ? "没有付款凭证。" : "No payer evidence recorded."}
+          </Text>
         )}
       </Section>
     </ScrollView>

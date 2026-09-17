@@ -72,6 +72,7 @@ export type LedgerExpenseRepository = {
     includeDeleted?: boolean,
   ): Promise<LedgerExpense[]>;
   getExpense(id: string): Promise<LedgerExpense | null>;
+  listPreviousValuations(id: string): Promise<SettlementValuationSnapshot[]>;
   tombstoneExpense(id: string, reason: string): Promise<void>;
   restoreExpense(
     id: string,
@@ -607,6 +608,25 @@ export function createLedgerExpenseRepository(
           localRateSnapshotId,
         );
       }
+    },
+
+    async listPreviousValuations(id) {
+      const userId = await getActiveUserId();
+      await requireExpense(database, id, userId);
+      const rows = await database.getAllAsync<ValuationRow>(
+        `SELECT id, policy, original_amount_minor AS originalMinor,
+          original_currency AS originalCurrency, original_scale AS originalScale,
+          settlement_amount_minor AS settlementMinor,
+          settlement_currency AS settlementCurrency, settlement_scale AS settlementScale,
+          rate_snapshot_id AS rateSnapshotId, payment_record_id AS paymentRecordId,
+          reason, decimal_rate AS decimalRate, rounding_mode AS roundingMode,
+          effective_at AS effectiveAt, supersedes_valuation_id AS supersedesValuationId,
+          reference_evidence_json AS referenceEvidenceJson
+         FROM ledger_valuation_snapshots WHERE expense_id = ? AND is_active = 0
+         ORDER BY expense_revision DESC LIMIT 5`,
+        id,
+      );
+      return rows.map(normalizeValuation);
     },
 
     async applyValuation(expenseId, input) {

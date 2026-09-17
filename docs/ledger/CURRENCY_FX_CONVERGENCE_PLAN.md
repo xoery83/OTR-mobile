@@ -75,6 +75,8 @@ Option 1 最少新状态、最易理解，且不会让旧币种的未清偿转�
 
 ### E — 估值来源详情与例外路径 UI
 
+实施进度（源码）：详情页使用现有 SQLite 已接受估值和 ECB 双日期证据；展开可查看来源、原因、本机已有的失活估值。明确的约定汇率、实际付款金额和恢复参考汇率复用 Stage 5 本地队列、预览及确认。普通导航隐藏 Exchange Rates 占位入口。未新增 schema/Backend DTO；全量远端历史读取及设备验收仍待后续闸门，详见 `CURRENCY_FX_PHASE_E_PROVENANCE_AND_EXCEPTIONS.md`。
+
 - 行为/文件：`LedgerExpenseDetailScreen.tsx` 首屏只显示原始 Money、Journey Money（不可用则明确状态）和简短实际 rate/经济日；点开才看 provider/reference、实际参考日与经济日、观测/接受时间、政策/rounding、历史 supersession。`app/(tabs)/expenses/exchange-rates.tsx` 不做常规入口，必要时改为高级历史/诊断视图，否则隐藏。为有权限者提供**显式** MANUAL_AGREED（rate + 必填原因、先预览）和 ACTUAL_PAYER_COST（选择非 superseded posted evidence）流程，复用 Stage 5 命令，不能随市场 quote 刷新覆盖它们。
 - 层级：如详情当前 DTO 缺完整 snapshot provenance，扩展 `backend/src/supabaseGateway.ts` 的授权只读投影、`ledgerReadContracts.ts`、SQLite repository 查询，可能小型 SQLite/Dev 前向迁移仅限双日期/旧数据标记；财务写入继续 Stage 5 既有端点/队列/audit，Review 观察修订并重算，报表/settlement 仅采用新活动估值。离线可看已缓存来源、可提交手工/付款证据待同步；不把缺少来源显示为“市场价”。
 - 检查：测试来源/许可归属、手工理由、付款币种与 Journey 匹配、审计 supersession、权限/冲突、动态文字/VoiceOver。Simulator/实体设备核对示例 `ISK 10,000 ≈ NZ$...` 的小数/真实参考日、离线详情/手动提交→回连、已有 finalized guard。回滚 UI 不删除来源历史；旧客户端忽略扩展只读 DTO。范围外：把付款差额推为市场汇率、实时图表、交易所行情。

@@ -167,11 +167,22 @@ export function createLedgerExpenseSyncWorker(
           const payload = JSON.parse(
             operation.payloadJson,
           ) as ApplyLedgerValuationRequest;
+          const serverPaymentId = payload.paymentRecordId
+            ? await repository.getPaymentRecordServerId(payload.paymentRecordId)
+            : null;
+          if (payload.paymentRecordId && !serverPaymentId)
+            throw new SyncDependencyError(
+              "Posted payer evidence must sync before valuation.",
+            );
           const response = await transport.applyValuation({
             journeyId: expense.journeyId,
             expenseServerId: expense.serverId,
             idempotencyKey: operation.idempotencyKey,
-            valuation: { ...payload, baseRevision: expense.serverRevision },
+            valuation: {
+              ...payload,
+              paymentRecordId: serverPaymentId,
+              baseRevision: expense.serverRevision,
+            },
           });
           await repository.markValuationSynced(
             payload.localValuationId,
