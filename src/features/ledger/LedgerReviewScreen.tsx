@@ -9,11 +9,23 @@ import { reviewFindingCopy, reviewStatusLabel } from "./settlementPresentation";
 
 export function LedgerReviewScreen() {
   const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
-  const { findings, message, loading } = useLedgerReview(journeyId);
+  const { findings, message, loading, rechecking } = useLedgerReview(journeyId);
   const [category, setCategory] = useState<ReviewCategory>("All");
   const [expanded, setExpanded] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const inbox = useMemo(() => reviewInbox(findings, category), [findings, category]);
+
+  if (rechecking)
+    return (
+      <>
+        <Stack.Screen options={{ title: "Review" }} />
+        <View style={styles.content}>
+          <Text accessibilityLiveRegion="polite" style={styles.subtitle}>
+            Updating Review after Expense change…
+          </Text>
+        </View>
+      </>
+    );
 
   return (
     <>

@@ -5,6 +5,7 @@ import { migrations } from "@/data/db/migrations";
 import type { LedgerReviewFindingDto } from "@/data/api/ledgerReviewContracts";
 import {
   createLedgerReviewRepository,
+  notifyLedgerReviewExpenseSaved,
   subscribeLedgerReview,
 } from "./ledgerReviewRepository";
 
@@ -100,6 +101,20 @@ describe("Review personal SQLite projection", () => {
     });
     await repository.act(findingId, "ACKNOWLEDGED");
     expect(await notified).toBe(0);
+    unsubscribe();
+  });
+
+  it("marks an Expense save for Review recheck without changing the projection", async () => {
+    const { api } = database();
+    const repository = createLedgerReviewRepository(api as never, async () => userA);
+    await repository.apply(journeyId, [finding], []);
+    const changes: string[] = [];
+    const unsubscribe = subscribeLedgerReview((id, change) => {
+      if (id === journeyId) changes.push(change);
+    });
+    notifyLedgerReviewExpenseSaved(journeyId);
+    expect(changes).toEqual(["expense_saved"]);
+    expect(await repository.counts(journeyId)).toEqual({ pending: 1, reviewed: 0 });
     unsubscribe();
   });
 

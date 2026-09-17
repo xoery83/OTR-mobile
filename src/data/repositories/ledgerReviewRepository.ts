@@ -11,15 +11,22 @@ type Database = Pick<
   "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
 >;
 
-const listeners = new Set<(journeyId: string) => void>();
-export function subscribeLedgerReview(listener: (journeyId: string) => void) {
+type ReviewChange = "projection" | "expense_saved";
+const listeners = new Set<(journeyId: string, change: ReviewChange) => void>();
+export function subscribeLedgerReview(
+  listener: (journeyId: string, change: ReviewChange) => void,
+) {
   listeners.add(listener);
   return () => {
     listeners.delete(listener);
   };
 }
-function changed(journeyId: string) {
-  for (const listener of listeners) listener(journeyId);
+function changed(journeyId: string, change: ReviewChange = "projection") {
+  for (const listener of listeners) listener(journeyId, change);
+}
+
+export function notifyLedgerReviewExpenseSaved(journeyId: string) {
+  changed(journeyId, "expense_saved");
 }
 
 export function createLedgerReviewRepository(

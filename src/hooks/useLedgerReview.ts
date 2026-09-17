@@ -11,6 +11,7 @@ import { getDefaultLedgerReportingRepository } from "@/data/repositories/default
 import { openDatabase } from "@/data/db/database";
 import { readLedgerSupportDiagnostics } from "@/data/operations/ledgerMaintenance";
 import { runLedgerReviewSync } from "@/data/sync/ledgerReviewCoordinator";
+import { runLedgerOperationalSync } from "@/data/sync/ledgerOperationalSync";
 import { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";
 import { createLedgerReviewTransport } from "@/data/sync/ledgerReviewTransport";
 import { stage3JourneyId } from "./useLedgerStage3";
@@ -24,6 +25,8 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
   const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   const submitting = useRef(false);
+  const recheckRef = useRef(false);
+  const [rechecking, setRechecking] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const load = useCallback(async () => {
@@ -53,6 +56,7 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
   const refresh = useCallback(async () => {
     if (!journeyId) return;
     try {
+      if (recheckRef.current) await runLedgerOperationalSync();
       await refreshJourneyLedger(journeyId);
       await runLedgerReviewSync(journeyId);
       const response = await createLedgerReviewTransport().refresh(journeyId);
@@ -68,7 +72,12 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
         setMessage("Offline · showing cached Review");
       }
     }
-    await load();
+    try {
+      await load();
+    } finally {
+      recheckRef.current = false;
+      setRechecking(false);
+    }
   }, [journeyId, load]);
   useFocusEffect(
     useCallback(() => {
@@ -83,8 +92,14 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
   );
   useEffect(
     () =>
-      subscribeLedgerReview((changedJourneyId) => {
-        if (changedJourneyId === journeyId) void load().catch(() => undefined);
+      subscribeLedgerReview((changedJourneyId, change) => {
+        if (changedJourneyId !== journeyId) return;
+        if (change === "expense_saved") {
+          recheckRef.current = true;
+          setRechecking(true);
+        } else {
+          void load().catch(() => undefined);
+        }
       }),
     [journeyId, load],
   );
@@ -95,6 +110,7 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
     memberNames,
     message,
     loading,
+    rechecking,
     isSubmitting,
     generateDiagnostics: async () => {
       if (!FileSystem.documentDirectory) throw new Error("Diagnostics unavailable.");

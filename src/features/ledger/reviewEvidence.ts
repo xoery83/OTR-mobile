@@ -76,6 +76,9 @@ export function reviewEvidence(
             ? value({ ...original, minor: Math.abs(Number(context.differenceMinor)) })
             : "Unavailable",
         ],
+        ...(context.paymentRecordId
+          ? [["Payment record", String(context.paymentRecordId)]]
+          : []),
       ];
     case "PARTICIPANT_ANOMALY": {
       const names = Array.isArray(context.participantDisplaySnapshots)

@@ -102,10 +102,12 @@ describe("Review inbox personal projection", () => {
           originalMoney: { minor: 8400, currency: "NZD", scale: 2 },
           postedMoney: { minor: 8650, currency: "NZD", scale: 2 },
           differenceMinor: 250,
+          paymentRecordId: "payment-123",
         },
       }),
     );
     expect(evidence[2][1]).toContain("2.50");
+    expect(evidence[3]).toEqual(["Payment record", "payment-123"]);
     const participants = reviewEvidence(
       row("payer", {
         ruleId: "PARTICIPANT_ANOMALY",

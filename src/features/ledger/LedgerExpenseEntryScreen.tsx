@@ -23,6 +23,7 @@ import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router"
 import { importReceiptAsset } from "@/data/operations/importReceiptAsset";
 import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
+import { notifyLedgerReviewExpenseSaved } from "@/data/repositories/ledgerReviewRepository";
 import type {
   LedgerExpense,
   LedgerExpenseCommand,
@@ -409,6 +410,7 @@ export function LedgerExpenseEntryScreen() {
             await getDefaultLedgerReceiptRepository()
           ).attachExpense(receiptId, saved.id);
       }
+      notifyLedgerReviewExpenseSaved(saved.journeyId);
       allowClose.current = true;
       router.replace({
         pathname: "/expenses/expense/[id]",
