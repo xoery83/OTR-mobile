@@ -1,8 +1,8 @@
 # OTR Mobile 2.0 货币 / FX / 估值收敛实施计划
 
-日期：2026-09-17。状态：**Phase A、B1、B2 与 C 参考率自动估值已在 Hosted Dev 实施；D/E/F 未授权**。依据 `CURRENCY_FX_DOMAIN_AUDIT.md`、Ledger 2.0 领域/API 契约和当前实现。未批准的建议仍需产品确认；迁移仅指 Dev，不涉及 Production。保持原始 Money、PaymentRecord、结算估值、还款估值四种事实分立，并复用 Stage 4B/4C/5/7、持久队列和 Review 2.0，不创建平行估值系统。
+日期：2026-09-17。状态：**Phase A、B1、B2 与 C 已在 Hosted Dev 实施；Phase D 已获批准并在本地实现，Hosted Dev/Simulator 验收进行中；E/F 未授权**。依据 `CURRENCY_FX_DOMAIN_AUDIT.md`、Ledger 2.0 领域/API 契约和当前实现。未批准的建议仍需产品确认；迁移仅指 Dev，不涉及 Production。保持原始 Money、PaymentRecord、结算估值、还款估值四种事实分立，并复用 Stage 4B/4C/5/7、持久队列和 Review 2.0，不创建平行估值系统。
 
-2026-09-17 更新：Phase A/B1/B2 已完成；Phase C 获准将固定 ECB 来源候选用作默认 **REFERENCE_RATE 参考估值**，而非实际兑换证据。B2 来源核查见 `CURRENCY_FX_PHASE_B2_PROVIDER_REVIEW.md`，Phase C 自动接受与事务校验见 `CURRENCY_FX_PHASE_C_AUTO_VALUATION.md`。暂隐 Preferred Currency、最多回看 7 个日历日、未来 Phase D 的 Journey Currency A–D 规则（finalized 后永久锁定、无 epochs）、Backend 拥有可替换 provider、Expense Detail 为主要来源说明均已获产品批准。Phase A 日期证据见 `CURRENCY_FX_PHASE_A_DATE_FINDING.md`；B1 的零历史回填政策见 `CURRENCY_FX_PHASE_B1_ECONOMIC_DATE.md`。**D/E/F 均未获实施授权。**
+2026-09-17 更新：Phase A/B1/B2 已完成；Phase C 获准将固定 ECB 来源候选用作默认 **REFERENCE_RATE 参考估值**，而非实际兑换证据。B2 来源核查见 `CURRENCY_FX_PHASE_B2_PROVIDER_REVIEW.md`，Phase C 自动接受与事务校验见 `CURRENCY_FX_PHASE_C_AUTO_VALUATION.md`。暂隐 Preferred Currency、最多回看 7 个日历日、Phase D 的 Journey Currency A–D 规则（finalized 后永久锁定、无 epochs）、Backend 拥有可替换 provider、Expense Detail 为主要来源说明均已获产品批准。Phase A 日期证据见 `CURRENCY_FX_PHASE_A_DATE_FINDING.md`；B1 的零历史回填政策见 `CURRENCY_FX_PHASE_B1_ECONOMIC_DATE.md`。Phase D 实现记录见 `CURRENCY_FX_PHASE_D_JOURNEY_CURRENCY.md`；**E/F 未获实施授权。**
 
 ## 明确语义与现有实现冲突
 
@@ -66,6 +66,8 @@ Option 1 最少新状态、最易理解，且不会让旧币种的未清偿转�
 - 离线/检查：缓存命中可本地完成并排队（需证明本地候选可信/未过期且服务器验证一致）；否则待网恢复。测试离线创建重启、先 create 后 valuation、重复唤醒单一活动快照/单一修订、历史日有效与缺失、服务器另源冲突、Review 代次/类别总计、Settlement readiness。签名 Simulator 和实体设备均跑缓存命中/缺失→回连/两设备竞争及断网冷启动。回滚关闭自动调度而不删除已接受快照；旧客户端仍能读已有估值。范围外：未请求的历史批量重估、手动/付款成本自动覆盖。
 
 ### D — Journey Currency 专用变更命令
+
+实施事实（本地验收）：专用 Preview/Commit API 与单事务 Dev RPC、Journey 审计表、finalized 锁、change-feed bootstrap 屏障及设置页 Currency Picker 已实现。离线不保存待提交意图，重连后重新预览；因此无 SQLite 迁移。手工/实际付款成本/导入估值使用既有修订级 `SEMANTIC` 阻断，防止 Phase C 扫描器静默改写成员证据。本地 reset、pgTAP 及 10,000 Expense 原子切换已验证；Hosted Dev 与 Simulator 结果以 Phase D 文档和当前状态为准。
 
 - 前置：A–C 验收，**另行批准 A–D 状态规则和手动/导入估值迁移策略**。只允许有权限的 Journey 成员，先取 Preview（每笔经济日、参考来源、差额、缺失、人工例外、开放冲突/结算状态），用户明确确认。实现 `ledger_settings` revision + 冻结受影响 Expense revisions/digest 的单一幂等命令；原子更新设置、逐笔 superseding valuation/settlement splits 或 `RATE_REQUIRED`、审计/settings change feed。任何 finalized 历史拒绝；open 预览先废弃；命令时再验成员权限、状态、digest、同币种 identity、rate 日期。不能用逐个 `PATCH Expense` 来模拟 Journey 原子事务。
 - 层级：Mobile `ledger_journeys` 需要 pending/intention、服务器 settings revision/冲突投影（**前向 SQLite 迁移**）；Backend 新 Preview/Commit 授权端点；Dev `ledger_settings`、Journey audit/idempotency/change feed/原子 RPC 与可能的 revision/digest 索引（**前向迁移**）。跨 Journey 无影响，原始 Money/历史快照不变。Review 对新 revision 重算，旧 findings 历史保留；Mine/Group/Analysis/My Ledger 按新 active currency 原子刷新；结算 preview digest 失效、重新预览，finalized 不触碰。

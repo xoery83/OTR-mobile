@@ -24,6 +24,17 @@ export function createLedgerSettlementRepository(
   getActiveUserId: () => Promise<string> = defaultGetActiveUserId,
 ) {
   return {
+    async hasFinalized(journeyId: string) {
+      const userId = await getActiveUserId();
+      const row = await database.getFirstAsync<{ found: number }>(
+        `SELECT 1 AS found FROM ledger_settlements s
+         JOIN ledger_actor_context actor ON actor.journey_id = s.journey_id
+         WHERE s.journey_id = ? AND actor.user_id = ? LIMIT 1`,
+        journeyId,
+        userId,
+      );
+      return Boolean(row?.found);
+    },
     async applyFinalized(settlement: FinalizedSettlementDto) {
       await database.withTransactionAsync(() =>
         applyFinalizedSettlement(database, settlement),

@@ -8,18 +8,18 @@ select plan(32);
 select is(
   (select count(*)::integer from information_schema.tables
     where table_schema = 'public' and table_type = 'BASE TABLE'),
-  96,
-  'canonical and Ledger 2 public table count is 96'
+  97,
+  'canonical and Ledger 2 public table count is 97'
 );
 select is(
   (select count(*)::integer from information_schema.columns where table_schema = 'public'),
-  1334,
-  'canonical and Ledger 2 plus Phase C retry column count is 1334'
+  1347,
+  'canonical and Ledger 2 plus Phase D audit column count is 1347'
 );
 select is(
   (select count(*)::integer from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity),
-  96,
+  97,
   'RLS is enabled on every public table'
 );
 select is(

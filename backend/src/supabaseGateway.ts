@@ -34,6 +34,10 @@ import type {
   MyLedgerPeriod,
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
+import {
+  journeyCurrencyCommitSchema,
+  journeyCurrencyPreviewSchema,
+} from "../../src/data/api/ledgerCurrencyContracts";
 import type {
   CorrectSettlementPaymentRequest,
   FinalizedSettlementDto,
@@ -121,6 +125,32 @@ function rowToStoredCreate(row: Record<string, unknown>): StoredCreate {
     createdByUserId: String(row.created_by_user_id ?? row.created_by),
     updatedAt: String(row.updated_at),
   };
+}
+
+function journeyCurrencyError(message: string): BackendError {
+  for (const code of [
+    "TRIP_WRITE_FORBIDDEN",
+    "JOURNEY_CURRENCY_FINALIZED_LOCK",
+    "JOURNEY_CURRENCY_OPEN_SETTLEMENT",
+    "JOURNEY_CURRENCY_CONFLICT",
+    "JOURNEY_CURRENCY_PREVIEW_STALE",
+    "SETTINGS_REVISION_CONFLICT",
+    "IDEMPOTENCY_CONFLICT",
+    "CURRENCY_UNCHANGED",
+    "INVALID_CURRENCY",
+  ]) {
+    if (message.includes(code))
+      return new BackendError(
+        code === "TRIP_WRITE_FORBIDDEN" ? 403 : code === "INVALID_CURRENCY" ? 400 : 409,
+        code,
+        "Journey Currency change requires a fresh preview or cannot proceed.",
+      );
+  }
+  return new BackendError(
+    500,
+    "JOURNEY_CURRENCY_FAILED",
+    "Journey Currency change failed.",
+  );
 }
 
 const ledgerCursorVersion = 1;
@@ -273,12 +303,7 @@ async function readLedgerReviewData(
 }
 
 async function evaluateLedgerReviewV2(service: SupabaseClient, tripId: string) {
-  const expenseRows = await service
-    .from("expenses")
-    .select(
-      "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
-    )
-    .eq("journey_id", tripId);
+  const expenseRows = await readAllJourneyExpenses(service, tripId);
   if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
   const expenses = await readExpenseAggregates(service, expenseRows.data ?? []);
   const evaluatedAt = new Date().toISOString();
@@ -459,12 +484,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     async refreshLedgerReview(userId, tripId) {
       await evaluateLedgerReviewV2(service, tripId);
-      const expenseRows = await service
-        .from("expenses")
-        .select(
-          "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
-        )
-        .eq("journey_id", tripId);
+      const expenseRows = await readAllJourneyExpenses(service, tripId);
       if (expenseRows.error) throw new Error("Supabase Dev Review expense read failed.");
       const expenses = await readExpenseAggregates(service, expenseRows.data ?? []);
       const memberRows = await service
@@ -638,6 +658,47 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     async readLedgerRateQuotes(_userId, tripId, quoteCurrency, baseCurrency) {
       return readRateQuotes(service, tripId, quoteCurrency, baseCurrency);
+    },
+
+    async previewJourneyCurrency(userId, tripId, proposedCurrency) {
+      const claim = await service.rpc("ledger_claim_currency_preview_demands", {
+        actor_user: userId,
+        target_journey: tripId,
+        target_currency: proposedCurrency,
+        max_requests: 4,
+      });
+      if (claim.error) throw journeyCurrencyError(claim.error.message);
+      await acquirePendingRateQuotes(
+        service,
+        rateQuoteProvider,
+        (claim.data ?? []) as ClaimedRateDemand[],
+      );
+      const result = await service.rpc("ledger_preview_journey_currency", {
+        actor_user: userId,
+        target_journey: tripId,
+        target_currency: proposedCurrency,
+      });
+      if (result.error) throw journeyCurrencyError(result.error.message);
+      return journeyCurrencyPreviewSchema.parse(result.data);
+    },
+
+    async commitJourneyCurrency(userId, tripId, idempotencyKey, input) {
+      const result = await service.rpc("ledger_commit_journey_currency", {
+        actor_user: userId,
+        target_journey: tripId,
+        target_currency: input.proposedCurrency,
+        base_revision: input.baseSettingsRevision,
+        expected_digest: input.previewDigest,
+        operation_id: idempotencyKey,
+      });
+      if (result.error) throw journeyCurrencyError(result.error.message);
+      const committed = journeyCurrencyCommitSchema.parse(result.data);
+      try {
+        await this.refreshLedgerReview(userId, tripId);
+      } catch (error) {
+        console.error("Journey Currency Review refresh failed", error);
+      }
+      return committed;
     },
 
     async acquirePendingRateQuotes() {
@@ -1650,11 +1711,14 @@ function negativeRetryAt(category: RateProviderError["category"], now: Date): st
 export async function acquirePendingRateQuotes(
   service: SupabaseClient,
   provider: RateQuoteProvider,
+  previewDemands?: ClaimedRateDemand[],
 ): Promise<number> {
   // ponytail: four sequential eight-second requests fit the 45-second lease; use bounded concurrency if demand grows.
-  const claimed = await service.rpc("ledger_claim_rate_demands", { max_requests: 4 });
-  if (claimed.error) throw new Error("Supabase Dev rate demand claim failed.");
-  const demands = (claimed.data ?? []) as ClaimedRateDemand[];
+  const claimed = previewDemands
+    ? null
+    : await service.rpc("ledger_claim_rate_demands", { max_requests: 4 });
+  if (claimed?.error) throw new Error("Supabase Dev rate demand claim failed.");
+  const demands = previewDemands ?? ((claimed?.data ?? []) as ClaimedRateDemand[]);
   for (const demand of demands) {
     const key = {
       journey_id: demand.journey_id,
@@ -3473,12 +3537,38 @@ async function decorateSettlementLineages(
   });
 }
 
+export async function readAllJourneyExpenses(service: SupabaseClient, tripId: string) {
+  const rows: Record<string, unknown>[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const page = await service
+      .from("expenses")
+      .select(
+        "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
+      )
+      .eq("journey_id", tripId)
+      .order("id")
+      .range(offset, offset + 499);
+    if (page.error) return { data: null, error: page.error };
+    rows.push(...(page.data ?? []));
+    if ((page.data ?? []).length < 500) break;
+  }
+  return { data: rows, error: null };
+}
+
 async function readLedgerBootstrap(
   service: SupabaseClient,
   tripId: string,
   userId: string,
+  attempt = 0,
 ): Promise<LedgerBootstrapResponse> {
   const now = new Date().toISOString();
+  const initialSettings = await service
+    .from("ledger_settings")
+    .select("revision")
+    .eq("journey_id", tripId)
+    .single();
+  if (initialSettings.error) throw new Error("Supabase Dev settings read failed.");
+  const initialSequence = await latestLedgerSequence(service, tripId);
   const [
     trip,
     settings,
@@ -3514,13 +3604,7 @@ async function readLedgerBootstrap(
       .from("household_members")
       .select("household_id, member_id")
       .eq("journey_id", tripId),
-    service
-      .from("expenses")
-      .select(
-        "id, journey_id, creator_member_id, payer_member_id, title, description, category, occurred_at, economic_date, original_amount_minor, original_currency, original_currency_scale, business_status, settlement_participation, revision, deleted_at, created_at, updated_at",
-      )
-      .eq("journey_id", tripId)
-      .order("occurred_at", { ascending: false }),
+    readAllJourneyExpenses(service, tripId),
     service
       .from("expense_correction_requests")
       .select("*")
@@ -3555,6 +3639,19 @@ async function readLedgerBootstrap(
   );
   const review = await readLedgerReviewData(service, tripId, userId);
   const lastSequence = await latestLedgerSequence(service, tripId);
+  const finalSettings = await service
+    .from("ledger_settings")
+    .select("revision")
+    .eq("journey_id", tripId)
+    .single();
+  if (finalSettings.error) throw new Error("Supabase Dev settings read failed.");
+  if (
+    finalSettings.data.revision !== initialSettings.data.revision ||
+    lastSequence !== initialSequence
+  ) {
+    if (attempt >= 2) throw new Error("Journey Currency changed during bootstrap.");
+    return readLedgerBootstrap(service, tripId, userId, attempt + 1);
+  }
   const setting = settings.data as Record<string, unknown> | null;
   const tripRow = trip.data as Record<string, unknown> | null;
 
@@ -3628,6 +3725,22 @@ async function readLedgerChanges(
   cursor: string | null,
 ): Promise<LedgerChangesResponse> {
   const after = decodeLedgerCursor(cursor, tripId, userId);
+  const currencyBarrier = await service
+    .from("ledger_changes")
+    .select("sequence")
+    .eq("journey_id", tripId)
+    .eq("entity_type", "JOURNEY_CURRENCY")
+    .gt("sequence", after)
+    .order("sequence", { ascending: false })
+    .limit(1);
+  if (currencyBarrier.error)
+    throw new Error("Supabase Dev currency barrier read failed.");
+  if ((currencyBarrier.data ?? []).length)
+    throw new BackendError(
+      400,
+      "INVALID_CURSOR",
+      "Journey Currency changed; bootstrap required.",
+    );
   assertLedgerCursorContinuation(after, await latestLedgerSequence(service, tripId));
   const result = await service
     .from("ledger_changes")
@@ -3828,6 +3941,19 @@ async function readExpenseAggregates(
   service: SupabaseClient,
   rows: Record<string, unknown>[],
 ): Promise<LedgerBootstrapResponse["expenses"]> {
+  if (rows.length > 100) {
+    const result: LedgerBootstrapResponse["expenses"] = [];
+    for (let offset = 0; offset < rows.length; offset += 400) {
+      const batches = await Promise.all(
+        [0, 100, 200, 300]
+          .map((step) => rows.slice(offset + step, offset + step + 100))
+          .filter((batch) => batch.length)
+          .map((batch) => readExpenseAggregates(service, batch)),
+      );
+      result.push(...batches.flat());
+    }
+    return result;
+  }
   const ids = rows.map((row) => String(row.id));
   if (ids.length === 0) return [];
 

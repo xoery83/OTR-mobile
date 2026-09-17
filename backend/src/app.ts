@@ -38,6 +38,12 @@ import type {
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
 import {
+  journeyCurrencyCommitRequestSchema,
+  journeyCurrencyPreviewRequestSchema,
+  type JourneyCurrencyCommit,
+  type JourneyCurrencyPreview,
+} from "../../src/data/api/ledgerCurrencyContracts";
+import {
   correctSettlementPaymentRequestSchema,
   recordSettlementPaymentRequestSchema,
   settlementAdjustmentFinalizeRequestSchema,
@@ -122,6 +128,21 @@ export type DevBackendGateway = {
     quoteCurrency: string | null,
     baseCurrency: string | null,
   ): Promise<LedgerRateQuoteDto[]>;
+  previewJourneyCurrency(
+    userId: string,
+    tripId: string,
+    proposedCurrency: string,
+  ): Promise<JourneyCurrencyPreview>;
+  commitJourneyCurrency(
+    userId: string,
+    tripId: string,
+    idempotencyKey: string,
+    input: {
+      proposedCurrency: string;
+      baseSettingsRevision: number;
+      previewDigest: string;
+    },
+  ): Promise<JourneyCurrencyCommit>;
   acquirePendingRateQuotes?(): Promise<number>;
   readLedgerReview(
     userId: string,
@@ -410,6 +431,40 @@ async function parseBody(request: Request) {
   } catch {
     throw new HttpError(400, "INVALID_JSON", "The request body must be valid JSON.");
   }
+}
+
+async function mutateJourneyCurrency(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/ledger\/journey-currency\/(preview|commit)$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, action] = match;
+  assertTripId(tripId);
+  const user = await authenticate(request, gateway);
+  if (!(await gateway.canFinalizeSettlement(user.id, tripId)))
+    throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Journey owner access is required.");
+  const body = await parseBody(request);
+  if (action === "preview") {
+    const parsed = journeyCurrencyPreviewRequestSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    return json(
+      200,
+      await gateway.previewJourneyCurrency(user.id, tripId, parsed.data.proposedCurrency),
+    );
+  }
+  const parsed = journeyCurrencyCommitRequestSchema.safeParse(body);
+  if (!parsed.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  return json(
+    200,
+    await gateway.commitJourneyCurrency(
+      user.id,
+      tripId,
+      getIdempotencyKey(request),
+      parsed.data,
+    ),
+  );
 }
 
 async function mutateReceipt(request: Request, gateway: DevBackendGateway) {
@@ -1251,6 +1306,14 @@ export function createDevBackendHandler({
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
         route = redactLogRoute(url.pathname);
         response = await readEntity(request, gateway);
+      } else if (
+        request.method === "POST" &&
+        /^\/v2\/trips\/[^/]+\/ledger\/journey-currency\/(preview|commit)$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/ledger/journey-currency/:action";
+        response = await mutateJourneyCurrency(request, gateway);
       } else if (
         request.method === "POST" &&
         (/\/v2\/trips\/[^/]+\/review-findings\/[^/]+\/actions$/.test(url.pathname) ||

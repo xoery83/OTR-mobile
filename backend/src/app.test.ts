@@ -27,6 +27,37 @@ function createGateway(options: { authorized?: boolean } = {}) {
     canReadTrip: vi.fn(async () => options.authorized ?? true),
     canWriteTrip: vi.fn(async () => options.authorized ?? true),
     canFinalizeSettlement: vi.fn(async () => options.authorized ?? true),
+    previewJourneyCurrency: vi.fn(async (_userId, _tripId, proposedCurrency) => ({
+      currentCurrency: "NZD",
+      currentScale: 2,
+      proposedCurrency,
+      proposedScale: 2,
+      settingsRevision: 1,
+      previewDigest: "a".repeat(64),
+      affectedExpenses: 0,
+      sameCurrencyCount: 0,
+      referenceCandidateCount: 0,
+      missingEconomicDateCount: 0,
+      missingHistoricalQuoteCount: 0,
+      manualAgreedCount: 0,
+      actualPayerCostCount: 0,
+      otherPolicyCount: 0,
+      conflictCount: 0,
+      expectedUnresolvedCount: 0,
+      openSettlementCount: 0,
+      finalizedSettlementCount: 0,
+      totalsAvailable: true,
+      requiresAbandonPreview: false,
+    })),
+    commitJourneyCurrency: vi.fn(async (_userId, _tripId, _key, input) => ({
+      changeId: "70000000-0000-4000-8000-000000000009",
+      settlementCurrency: input.proposedCurrency,
+      settlementScale: 2,
+      settingsRevision: 2,
+      affectedExpenses: 0,
+      unresolvedExpenses: 0,
+      idempotentReplay: false,
+    })),
     previewLedgerSettlement: vi.fn(async (_userId, requestedTripId, cutoff) => ({
       state: "PREVIEW_READY" as const,
       journeyId: requestedTripId,
@@ -1392,5 +1423,58 @@ describe("OTR Dev Backend", () => {
     const body = (await bootstrap.json()) as Record<string, unknown>;
     expect(body).not.toHaveProperty("reviewFindings");
     expect(body).not.toHaveProperty("reviewActions");
+  });
+
+  it("requires owner authorization and a revisioned preview for Journey Currency", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const url = `http://localhost/v2/trips/${tripId}/ledger/journey-currency`;
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+    };
+    const preview = await handle(
+      new Request(`${url}/preview`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ proposedCurrency: "EUR" }),
+      }),
+    );
+    expect(preview.status).toBe(200);
+    expect(gateway.previewJourneyCurrency).toHaveBeenCalledWith(userId, tripId, "EUR");
+    const noKey = await handle(
+      new Request(`${url}/commit`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          proposedCurrency: "EUR",
+          baseSettingsRevision: 1,
+          previewDigest: "a".repeat(64),
+        }),
+      }),
+    );
+    expect(noKey.status).toBe(400);
+    const committed = await handle(
+      new Request(`${url}/commit`, {
+        method: "POST",
+        headers: { ...headers, "Idempotency-Key": "currency-1" },
+        body: JSON.stringify({
+          proposedCurrency: "EUR",
+          baseSettingsRevision: 1,
+          previewDigest: "a".repeat(64),
+        }),
+      }),
+    );
+    expect(committed.status).toBe(200);
+    expect(gateway.commitJourneyCurrency).toHaveBeenCalledOnce();
+    const deniedGateway = createGateway({ authorized: false }).gateway;
+    const denied = await createDevBackendHandler({ gateway: deniedGateway })(
+      new Request(`${url}/preview`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ proposedCurrency: "EUR" }),
+      }),
+    );
+    expect(denied.status).toBe(403);
   });
 });

@@ -8,7 +8,14 @@ vi.mock("@supabase/supabase-js", () => ({
       select() {
         return this;
       },
+      order() {
+        return this;
+      },
+      range() {
+        return Promise.resolve({ data: [], error: null });
+      },
       eq() {
+        if (table === "expenses") return this;
         return Promise.resolve({
           data:
             table === "journey_members"

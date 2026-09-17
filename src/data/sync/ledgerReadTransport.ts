@@ -19,7 +19,7 @@ type Dependencies = {
   createClient?: (accessToken: string) => ReturnType<typeof createApiClient>;
 };
 
-async function client(dependencies: Dependencies) {
+async function client(dependencies: Dependencies, timeoutMs = 15_000) {
   const session = await (dependencies.readSession ?? readLocalSession)();
   if (!session?.accessToken)
     throw new ApiClientError(
@@ -29,7 +29,8 @@ async function client(dependencies: Dependencies) {
       "AUTH_REQUIRED",
     );
   return (
-    dependencies.createClient ?? ((token) => createApiClient({ accessToken: token }))
+    dependencies.createClient ??
+    ((token) => createApiClient({ accessToken: token, timeoutMs }))
   )(session.accessToken);
 }
 
@@ -37,7 +38,7 @@ export function createLedgerReadTransport(dependencies: Dependencies = {}) {
   return {
     async bootstrap(journeyId: string) {
       const response = await (
-        await client(dependencies)
+        await client(dependencies, 120_000)
       ).get(`/v2/trips/${journeyId}/ledger/bootstrap`, ledgerBootstrapResponseSchema, {
         "X-Review-Protocol": "2",
       });
