@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(13);
+select plan(15);
 set local role service_role;
 
 update public.journey_members set role = 'owner', status = 'linked'
@@ -130,6 +130,72 @@ select ok(
     'EXECUTE'
   ),
   'authenticated clients cannot call finalization RPC directly'
+);
+
+insert into public.expenses (
+  id, journey_id, creator_member_id, created_by_user_id, updated_by_user_id,
+  payer_member_id, title, occurred_at, original_amount_minor,
+  original_currency, original_currency_scale, business_status
+) select '52000000-0000-4000-8000-000000000071',
+  '10000000-0000-4000-8000-000000000001', id,
+  '00000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001', id,
+  'Finalized valuation guard fixture', '2026-09-11T00:00:00Z', 100,
+  'NZD', 2, 'ACCEPTED'
+from public.journey_members where trip_id = '10000000-0000-4000-8000-000000000001'
+  and user_id = '00000000-0000-4000-8000-000000000001';
+insert into public.settlement_valuation_snapshots (
+  id, expense_id, journey_id, expense_revision, policy,
+  original_amount_minor, original_currency, original_scale,
+  settlement_amount_minor, settlement_currency, settlement_scale
+) values (
+  '55000000-0000-4000-8000-000000000071',
+  '52000000-0000-4000-8000-000000000071',
+  '10000000-0000-4000-8000-000000000001', 1, 'SAME_CURRENCY',
+  100, 'NZD', 2, 100, 'NZD', 2
+);
+insert into public.settlement_inputs (
+  settlement_id, journey_id, expense_id, expense_revision, valuation_snapshot_id
+) select id, journey_id, '52000000-0000-4000-8000-000000000071', 1,
+  '55000000-0000-4000-8000-000000000071'
+from public.settlements where input_digest = repeat('a', 64);
+select throws_ok(
+  format(
+    $sql$select public.ledger_apply_valuation_c(
+      '00000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
+      %L::uuid, 'stage7-finalized-valuation', 'stage7-finalized-valuation',
+      %L::jsonb, 'null'::jsonb, '{}'::jsonb, false
+    )$sql$,
+    (select expense_id::text from public.settlement_inputs
+     where settlement_id = (select id from public.settlements
+       where input_digest = repeat('a', 64)) limit 1),
+    (select jsonb_build_object('baseRevision', expense_revision,
+      'policy', 'MANUAL_AGREED', 'manualRate', '1', 'reason', 'guard probe',
+      'previewSettlement', jsonb_build_object('minor', null, 'currency', 'NZD', 'scale', 2))
+     from public.settlement_inputs where settlement_id =
+       (select id from public.settlements where input_digest = repeat('a', 64)) limit 1)
+  ),
+  'P0001', 'FINALIZED_SETTLEMENT_PROTECTED',
+  'finalized input rejects Stage 5 valuation before evidence write'
+);
+insert into public.ledger_idempotency_keys (
+  actor_user_id, journey_id, command_type, idempotency_key,
+  payload_hash, response_status, response_body, completed_at
+) values (
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001', 'APPLY_VALUATION',
+  'stage7-prior-valuation', 'stage7-prior-valuation', 200, '{"ok":true}', now()
+);
+select is(
+  public.ledger_apply_valuation_c(
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '52000000-0000-4000-8000-000000000071',
+    'stage7-prior-valuation', 'stage7-prior-valuation',
+    '{"baseRevision":0}'::jsonb, 'null'::jsonb, '{}'::jsonb, false
+  ) ->> 'idempotentReplay',
+  'true', 'completed valuation receipt replays after finalization'
 );
 
 select * from finish();

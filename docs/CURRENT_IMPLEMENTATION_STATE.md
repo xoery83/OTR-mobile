@@ -1,12 +1,12 @@
 # Current Implementation State
 
-Date: 2026-09-17
+Date: 2026-09-18
 
-## Currency / FX Phase E — source implementation, acceptance pending
+## Currency / FX Phase E — Simulator/Hosted Dev accepted; device checks pending
 
-- Expense detail now shows compact original/Journey values, ECB reference attribution, exact rate and separate Expense/reference dates for weekend fallback, with bilingual expandable provenance and cached previous valuation summaries. Missing economic date and pending quote have distinct copy. Settings no longer links the nonfunctional Exchange Rates placeholder.
-- Explicit agreed-rate (exact decimal + required reason), eligible posted payer-cost, and current ECB reference restoration preview/confirm through the existing Stage 5 local-first valuation queue. Linked creator/owner and local finalized-input guards control the UI; the server remains authoritative. Worker translates a posted PaymentRecord's local ID to its synced server ID. No schema, new financial model, Phase F or Production change.
-- TypeScript, ESLint, Backend build and 80 Mobile files/316 tests pass. Local Supabase reset reapplied all migrations; 16 pgTAP files/301 checks pass. Formatting flags only pre-existing `AGENTS.md` and `src/hooks/useStage4BPhysicalSmoke.ts`. A Release iPhone 17 Pro Simulator showed same-currency identity, ISK weekend ECB provenance and cached old NZD valuation after restart; agreed-rate preview calculated ISK 10,000 × 0.007 = EUR 70.00 and was canceled without a Dev write. Commit/actual-payer-cost/finalized and offline device interactions remain pending; existing Phase D physical-device acceptance stays pending. See `docs/ledger/CURRENCY_FX_PHASE_E_PROVENANCE_AND_EXCEPTIONS.md`.
+- Normal signed Simulator UI committed `MANUAL_AGREED` (€1,001.00), restored the eligible ECB `REFERENCE_RATE` (€0.01), then committed `ACTUAL_PAYER_COST` (€1.25) on one disposable 1 ISK Dev Expense. Hosted Dev revision 2→3→4→5, immutable supersession, reason, posted PaymentRecord link, audit, idempotency and change feed were verified; cold restart retained the active cost without duplicates. Mine/Group/Category/Analysis totals changed once per active valuation (€220.10 → €1,221.09 → €220.10 → €221.34). Review generated one rate outlier, retained its personal ACK/history after becoming stale, and settlement previews used distinct active-input digests without finalization. Weekend UI separated 12 July Expense from 10 July ECB reference and Frankfurter delivery.
+- Acceptance exposed a proven Stage 7.2B override that had omitted the Stage 5 finalized-input server guard. Minimal forward migrations `20260918000100` and `20260918000200` were applied **only to Hosted Dev** `tuqigdxrvrerfewsxqgm`, restoring the guard and preserving completed-command replay. Direct stale, unauthorized and finalized probes now reject with their expected codes; an accepted command replays idempotently, and the Dev-only frozen DKK→CNY QA snapshot stayed unchanged. Local Supabase reset and 16 pgTAP files/303 checks pass; prior Phase E TypeScript, ESLint, Backend build and 80 Mobile files/316 tests remain valid because Mobile/Backend code is unchanged. Production is untouched.
+- **PASS WITH DEVICE ACCEPTANCE PENDING.** Offline cold start was not claimed because this Simulator offered no reliable network isolation control; physical iOS 26.6 interaction remains blocked by Device Hub. No Phase F work. See `docs/ledger/CURRENCY_FX_PHASE_E_PROVENANCE_AND_EXCEPTIONS.md`.
 
 ## Currency / FX Phase D — Journey Currency change (Hosted Dev)
 
