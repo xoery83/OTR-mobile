@@ -1,0 +1,71 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { describe, expect, it, vi } from "vitest";
+
+import { acquirePendingRateQuotes } from "./supabaseGateway";
+
+const demand = {
+  journey_id: "10000000-0000-4000-8000-000000000001",
+  economic_date: "2026-07-12",
+  quote_currency: "EUR",
+  base_currency: "NZD",
+  policy_version: "ECB_DAILY_V1",
+};
+const candidate = {
+  decimalRate: "1.9808",
+  referenceDate: "2026-07-10",
+  provider: "ECB",
+  providerReference:
+    "https://api.frankfurter.dev/v2/providers/ecb/rate/EUR/NZD?date=2026-07-12",
+  sourceReference: "https://www.ecb.europa.eu/",
+};
+
+function fakeService(demands = [demand]) {
+  const upsert = vi.fn(async () => ({ error: null }));
+  const match = vi.fn(async () => ({ error: null }));
+  const update = vi.fn(() => ({ match }));
+  const from = vi.fn((table: string) => {
+    if (table === "ledger_rate_quotes") return { upsert };
+    if (table === "ledger_rate_quote_attempts") return { update };
+    throw new Error(`Unexpected table ${table}`);
+  });
+  const rpc = vi.fn(async () => ({ data: demands, error: null }));
+  return { client: { from, rpc } as unknown as SupabaseClient, upsert, update, rpc };
+}
+
+describe("historical rate acquisition", () => {
+  it("persists a candidate with both dates without touching Expense or accepted snapshots", async () => {
+    const service = fakeService();
+    const fetch = vi.fn(async () => candidate);
+    expect(await acquirePendingRateQuotes(service.client, { fetch })).toBe(1);
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(service.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        economic_date: "2026-07-12",
+        reference_date: "2026-07-10",
+        decimal_rate: "1.9808",
+        provider: "ECB",
+      }),
+      expect.any(Object),
+    );
+    expect(service.client.from).toHaveBeenCalledWith("ledger_rate_quotes");
+    expect(service.client.from).not.toHaveBeenCalledWith("expenses");
+    expect(service.client.from).not.toHaveBeenCalledWith("exchange_rate_snapshots");
+  });
+
+  it("records a bounded retry and does not persist an invalid candidate", async () => {
+    const service = fakeService();
+    const fetch = vi.fn(async () => ({ ...candidate, referenceDate: "2026-07-03" }));
+    expect(await acquirePendingRateQuotes(service.client, { fetch })).toBe(1);
+    expect(service.upsert).not.toHaveBeenCalled();
+    expect(service.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "NO_REFERENCE_WITHIN_POLICY" }),
+    );
+  });
+
+  it("does nothing when all demands are already cached or leased", async () => {
+    const service = fakeService([]);
+    const fetch = vi.fn(async () => candidate);
+    expect(await acquirePendingRateQuotes(service.client, { fetch })).toBe(0);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});

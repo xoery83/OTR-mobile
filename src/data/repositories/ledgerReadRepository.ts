@@ -308,8 +308,9 @@ async function applyRateQuote(database: LedgerReadDatabase, quote: ServerRateQuo
   await database.runAsync(
     `INSERT OR REPLACE INTO ledger_rate_quotes (
       id, journey_id, quote_currency, base_currency, decimal_rate, effective_date,
-      observed_at, provider, provider_reference, expires_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      observed_at, provider, provider_reference, expires_at, updated_at,
+      economic_date, reference_date, policy_version, source_reference
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     quote.id,
     quote.journeyId,
     quote.quoteCurrency,
@@ -321,6 +322,10 @@ async function applyRateQuote(database: LedgerReadDatabase, quote: ServerRateQuo
     quote.providerReference,
     quote.expiresAt,
     new Date().toISOString(),
+    quote.economicDate ?? null,
+    quote.referenceDate ?? null,
+    quote.policyVersion ?? null,
+    quote.sourceReference ?? null,
   );
 }
 

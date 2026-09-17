@@ -470,8 +470,9 @@ export function createLedgerExpenseRepository(
       await database.runAsync(
         `INSERT OR REPLACE INTO ledger_rate_quotes (
           id, journey_id, quote_currency, base_currency, decimal_rate,
-          effective_date, observed_at, provider, provider_reference, expires_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          effective_date, observed_at, provider, provider_reference, expires_at, updated_at,
+          economic_date, reference_date, policy_version, source_reference
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         quote.id,
         quote.journeyId,
         quote.quoteCurrency,
@@ -483,21 +484,31 @@ export function createLedgerExpenseRepository(
         quote.providerReference,
         quote.expiresAt,
         new Date().toISOString(),
+        quote.economicDate ?? null,
+        quote.referenceDate ?? null,
+        quote.policyVersion ?? null,
+        quote.sourceReference ?? null,
       );
     },
 
     async listRateQuotes(journeyId, quoteCurrency, baseCurrency) {
+      const userId = await getActiveUserId();
       return database.getAllAsync<RateQuote>(
         `SELECT id, journey_id AS journeyId, quote_currency AS quoteCurrency,
           base_currency AS baseCurrency, decimal_rate AS decimalRate,
           effective_date AS effectiveDate, observed_at AS observedAt, provider,
-          provider_reference AS providerReference, expires_at AS expiresAt
+          provider_reference AS providerReference, expires_at AS expiresAt,
+          economic_date AS economicDate, reference_date AS referenceDate,
+          policy_version AS policyVersion, source_reference AS sourceReference
          FROM ledger_rate_quotes
          WHERE journey_id = ? AND quote_currency = ? AND base_currency = ?
+           AND EXISTS (SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.user_id = ? AND actor.journey_id = ledger_rate_quotes.journey_id)
          ORDER BY observed_at DESC`,
         journeyId,
         quoteCurrency,
         baseCurrency,
+        userId,
       );
     },
 

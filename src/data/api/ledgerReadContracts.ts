@@ -99,9 +99,13 @@ export const ledgerRateQuoteSchema = z.object({
   baseCurrency: z.string(),
   decimalRate: z.string(),
   effectiveDate: z.string(),
+  economicDate: economicDateSchema.nullable().optional(),
+  referenceDate: economicDateSchema.nullable().optional(),
+  policyVersion: z.string().nullable().optional(),
   observedAt: z.string(),
   provider: z.string(),
   providerReference: z.string().nullable(),
+  sourceReference: z.string().nullable().optional(),
   expiresAt: z.string(),
 });
 

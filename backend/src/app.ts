@@ -122,6 +122,7 @@ export type DevBackendGateway = {
     quoteCurrency: string | null,
     baseCurrency: string | null,
   ): Promise<LedgerRateQuoteDto[]>;
+  acquirePendingRateQuotes?(): Promise<number>;
   readLedgerReview(
     userId: string,
     tripId: string,

@@ -959,4 +959,16 @@ export const migrations: Migration[] = [
            date(economic_date) = economic_date));
     `,
   },
+  {
+    id: 23,
+    name: "ledger_historical_rate_candidates",
+    sql: `
+      ALTER TABLE ledger_rate_quotes ADD COLUMN economic_date TEXT;
+      ALTER TABLE ledger_rate_quotes ADD COLUMN reference_date TEXT;
+      ALTER TABLE ledger_rate_quotes ADD COLUMN policy_version TEXT;
+      ALTER TABLE ledger_rate_quotes ADD COLUMN source_reference TEXT;
+      CREATE INDEX ledger_rate_quotes_b2_lookup ON ledger_rate_quotes
+        (journey_id, economic_date, quote_currency, base_currency, policy_version);
+    `,
+  },
 ];

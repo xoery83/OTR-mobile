@@ -58,4 +58,24 @@ server.listen(environment.OTR_DEV_BACKEND_PORT, "0.0.0.0", () => {
       environment: "development",
     }),
   );
+  let scanning = false;
+  const acquire = async () => {
+    if (scanning) return;
+    scanning = true;
+    try {
+      await gateway.acquirePendingRateQuotes?.();
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          level: "error",
+          event: "historical_rate_scan_failed",
+          message: error instanceof Error ? error.message : "Unknown failure",
+        }),
+      );
+    } finally {
+      scanning = false;
+    }
+  };
+  void acquire();
+  setInterval(acquire, 30_000).unref();
 });

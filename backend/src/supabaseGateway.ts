@@ -1,6 +1,14 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "node:crypto";
 
+import { createFrankfurterRateProvider } from "./frankfurterRateProvider";
+import {
+  fetchTrustedRateQuote,
+  historicalRatePolicyVersion,
+  RateProviderError,
+  type RateQuoteProvider,
+} from "./rateQuoteProvider";
+
 import { BackendError, type DevBackendGateway, type StoredCreate } from "./app";
 import type {
   CreateLedgerCorrectionRequest,
@@ -89,6 +97,7 @@ export type SupabaseDevConfig = {
   publishableKey: string;
   secretKey: string;
   receiptOcrProvider?: ReceiptOcrProvider;
+  rateQuoteProvider?: RateQuoteProvider;
 };
 
 function assertApprovedDevUrl(url: string) {
@@ -359,6 +368,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
   const auth = client(config.url, config.publishableKey);
   const service = client(config.url, config.secretKey);
   const receiptOcrProvider = config.receiptOcrProvider ?? createReceiptOcrProvider();
+  const rateQuoteProvider = config.rateQuoteProvider ?? createFrankfurterRateProvider();
 
   return {
     async validateAccessToken(token) {
@@ -627,6 +637,10 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     async readLedgerRateQuotes(_userId, tripId, quoteCurrency, baseCurrency) {
       return readRateQuotes(service, tripId, quoteCurrency, baseCurrency);
+    },
+
+    async acquirePendingRateQuotes() {
+      return acquirePendingRateQuotes(service, rateQuoteProvider);
     },
 
     async previewLedgerSettlement(_userId, tripId, throughTimestamp) {
@@ -1611,6 +1625,106 @@ async function validateCanonicalExpense(
   }
 }
 
+type ClaimedRateDemand = {
+  journey_id: string;
+  economic_date: string;
+  quote_currency: string;
+  base_currency: string;
+  policy_version: string;
+};
+
+function negativeRetryAt(category: RateProviderError["category"], now: Date): string {
+  const delay = {
+    TEMPORARY_FAILURE: 5 * 60_000,
+    RATE_LIMITED: 15 * 60_000,
+    NOT_YET_AVAILABLE: 60 * 60_000,
+    NO_REFERENCE_WITHIN_POLICY: 24 * 60 * 60_000,
+    UNSUPPORTED: 7 * 24 * 60 * 60_000,
+  }[category];
+  return new Date(now.getTime() + delay).toISOString();
+}
+
+export async function acquirePendingRateQuotes(
+  service: SupabaseClient,
+  provider: RateQuoteProvider,
+): Promise<number> {
+  // ponytail: four sequential eight-second requests fit the 45-second lease; use bounded concurrency if demand grows.
+  const claimed = await service.rpc("ledger_claim_rate_demands", { max_requests: 4 });
+  if (claimed.error) throw new Error("Supabase Dev rate demand claim failed.");
+  const demands = (claimed.data ?? []) as ClaimedRateDemand[];
+  for (const demand of demands) {
+    const key = {
+      journey_id: demand.journey_id,
+      economic_date: demand.economic_date,
+      quote_currency: demand.quote_currency,
+      base_currency: demand.base_currency,
+      policy_version: demand.policy_version,
+    };
+    const request = {
+      economicDate: demand.economic_date,
+      quoteCurrency: demand.quote_currency,
+      settlementCurrency: demand.base_currency,
+      policyVersion: historicalRatePolicyVersion as typeof historicalRatePolicyVersion,
+    };
+    console.info(JSON.stringify({ event: "historical_rate_cache_miss", ...key }));
+    try {
+      const candidate = await fetchTrustedRateQuote(provider, request);
+      const now = new Date();
+      const saved = await service.from("ledger_rate_quotes").upsert(
+        {
+          journey_id: demand.journey_id,
+          quote_currency: demand.quote_currency,
+          base_currency: demand.base_currency,
+          economic_date: demand.economic_date,
+          reference_date: candidate.referenceDate,
+          policy_version: demand.policy_version,
+          effective_date: candidate.referenceDate,
+          decimal_rate: candidate.decimalRate,
+          observed_at: now.toISOString(),
+          expires_at: new Date(now.getTime() + 30 * 24 * 60 * 60_000).toISOString(),
+          provider: candidate.provider,
+          provider_reference: candidate.providerReference,
+          source_reference: candidate.sourceReference,
+        },
+        {
+          onConflict:
+            "journey_id,economic_date,quote_currency,base_currency,policy_version",
+        },
+      );
+      if (saved.error) throw new Error("Supabase Dev rate candidate cache write failed.");
+      console.info(
+        JSON.stringify({
+          event: "historical_rate_candidate_cached",
+          ...key,
+          reference_date: candidate.referenceDate,
+          fallback_days:
+            (Date.parse(`${demand.economic_date}T00:00:00Z`) -
+              Date.parse(`${candidate.referenceDate}T00:00:00Z`)) /
+            86_400_000,
+        }),
+      );
+    } catch (error) {
+      const category =
+        error instanceof RateProviderError ? error.category : "TEMPORARY_FAILURE";
+      const retryAt = negativeRetryAt(category, new Date());
+      const updated = await service
+        .from("ledger_rate_quote_attempts")
+        .update({ status: category, next_retry_at: retryAt })
+        .match(key);
+      if (updated.error) throw new Error("Supabase Dev rate retry write failed.");
+      console.warn(
+        JSON.stringify({
+          event: "historical_rate_negative_cache",
+          ...key,
+          category,
+          next_retry_at: retryAt,
+        }),
+      );
+    }
+  }
+  return demands.length;
+}
+
 async function readRateQuotes(
   service: SupabaseClient,
   tripId: string,
@@ -1620,7 +1734,7 @@ async function readRateQuotes(
   let query = service
     .from("ledger_rate_quotes")
     .select(
-      "id, journey_id, quote_currency, base_currency, decimal_rate, effective_date, observed_at, provider, provider_reference, expires_at",
+      "id, journey_id, quote_currency, base_currency, decimal_rate_text, effective_date, economic_date, reference_date, policy_version, observed_at, provider, provider_reference, source_reference, expires_at",
     )
     .eq("journey_id", tripId)
     .order("observed_at", { ascending: false });
@@ -1631,17 +1745,21 @@ async function readRateQuotes(
   return (result.data ?? []).map(rateQuoteRowToDto);
 }
 
-function rateQuoteRowToDto(row: Record<string, unknown>): LedgerRateQuoteDto {
+export function rateQuoteRowToDto(row: Record<string, unknown>): LedgerRateQuoteDto {
   return {
     id: String(row.id),
     journeyId: String(row.journey_id),
     quoteCurrency: String(row.quote_currency),
     baseCurrency: String(row.base_currency),
-    decimalRate: String(row.decimal_rate),
+    decimalRate: String(row.decimal_rate_text ?? row.decimal_rate),
     effectiveDate: String(row.effective_date),
+    economicDate: row.economic_date ? String(row.economic_date) : null,
+    referenceDate: row.reference_date ? String(row.reference_date) : null,
+    policyVersion: row.policy_version ? String(row.policy_version) : null,
     observedAt: String(row.observed_at),
     provider: String(row.provider),
     providerReference: row.provider_reference ? String(row.provider_reference) : null,
+    sourceReference: row.source_reference ? String(row.source_reference) : null,
     expiresAt: String(row.expires_at),
   };
 }
@@ -3387,7 +3505,7 @@ async function readLedgerChanges(
       ? await service
           .from("ledger_rate_quotes")
           .select(
-            "id, journey_id, quote_currency, base_currency, decimal_rate, effective_date, observed_at, provider, provider_reference, expires_at",
+            "id, journey_id, quote_currency, base_currency, decimal_rate_text, effective_date, economic_date, reference_date, policy_version, observed_at, provider, provider_reference, source_reference, expires_at",
           )
           .in("id", rateQuoteIds)
       : { data: [], error: null };

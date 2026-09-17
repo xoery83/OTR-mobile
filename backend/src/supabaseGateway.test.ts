@@ -4,9 +4,33 @@ import {
   createSupabaseDevGateway,
   normalizeSettlementSource,
   safeEconomicDateEdit,
+  rateQuoteRowToDto,
 } from "./supabaseGateway";
 
 const productionUrl = "https://bobwhxjxqpehzecwmwqe.supabase.co";
+
+describe("B2 decimal projection", () => {
+  it("takes generated numeric text rather than a rounded PostgREST JSON number", () => {
+    const quote = rateQuoteRowToDto({
+      id: "quote",
+      journey_id: "journey",
+      quote_currency: "EUR",
+      base_currency: "NZD",
+      decimal_rate: 1.9808,
+      decimal_rate_text: "1.980800000000000001",
+      effective_date: "2026-07-15",
+      economic_date: "2026-07-15",
+      reference_date: "2026-07-15",
+      policy_version: "ECB_DAILY_V1",
+      observed_at: "2026-09-17T00:00:00Z",
+      provider: "ECB",
+      provider_reference: "api",
+      source_reference: "source",
+      expires_at: "2026-10-17T00:00:00Z",
+    });
+    expect(quote.decimalRate).toBe("1.980800000000000001");
+  });
+});
 
 describe("normalizeSettlementSource", () => {
   it("keeps PostgreSQL numeric valuation rates canonical as strings", () => {

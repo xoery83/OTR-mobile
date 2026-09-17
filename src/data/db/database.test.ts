@@ -75,8 +75,8 @@ describe("SQLite migrations", () => {
     expect(account.sql).toContain("owner_user_id");
     expect(account.sql).toContain("local_owner_user_id");
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(22);
-    expect(latest.sql).toContain("economic_date");
+    expect(latest.id).toBe(23);
+    expect(latest.sql).toContain("reference_date");
     expect(migrations[20].sql).toContain("ledger_review_visibility");
     expect(migrations[19].sql).toContain("observation_context_json");
   });
@@ -140,6 +140,41 @@ describe("SQLite migrations", () => {
       );
     } finally {
       database.close();
+    }
+  });
+
+  it("keeps B2 candidate request and reference dates through a cold SQLite restart", () => {
+    const directory = mkdtempSync(join(tmpdir(), "otr-b2-"));
+    const path = join(directory, "ledger.db");
+    let database: DatabaseSync | undefined;
+    try {
+      database = new DatabaseSync(path);
+      for (const migration of migrations) database.exec(migration.sql);
+      database.exec(`INSERT INTO ledger_rate_quotes (
+        id, journey_id, quote_currency, base_currency, decimal_rate,
+        effective_date, economic_date, reference_date, policy_version,
+        observed_at, provider, provider_reference, expires_at, updated_at
+      ) VALUES ('quote', 'journey', 'EUR', 'NZD', '1.9808',
+        '2026-07-10', '2026-07-12', '2026-07-10', 'ECB_DAILY_V1',
+        '2026-09-17T00:00:00Z', 'ECB', 'source', '2026-10-17T00:00:00Z',
+        '2026-09-17T00:00:00Z')`);
+      database.close();
+      database = new DatabaseSync(path);
+      expect(
+        database
+          .prepare(
+            `SELECT economic_date, reference_date, decimal_rate
+        FROM ledger_rate_quotes WHERE id = 'quote'`,
+          )
+          .get(),
+      ).toEqual({
+        economic_date: "2026-07-12",
+        reference_date: "2026-07-10",
+        decimal_rate: "1.9808",
+      });
+    } finally {
+      database?.close();
+      rmSync(directory, { recursive: true, force: true });
     }
   });
 

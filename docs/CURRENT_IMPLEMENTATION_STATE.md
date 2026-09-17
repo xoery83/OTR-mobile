@@ -2,6 +2,11 @@
 
 Date: 2026-09-17
 
+## Currency / FX Phase B2 — historical candidate cache (Hosted Dev)
+
+- B2 is implemented without automatic Expense valuation. The Backend scans durable cross-currency Expense demand only when `economic_date` is known; identical Journey/date/pair/policy requests share one leased acquisition. The pinned Frankfurter v2 ECB adapter validates direction, decimal text, actual reference date, and the approved latest-real rate within seven calendar days. A future/unpublished date remains unresolved. Bounded negative-cache retries distinguish unsupported, not-yet-available, no-reference, rate-limit, and temporary failures. See `docs/ledger/CURRENCY_FX_PHASE_B2_PROVIDER_REVIEW.md`, `docs/ledger/CURRENCY_FX_PHASE_B2_HISTORICAL_RATES.md`, and ADR 0021.
+- Hosted Dev project `tuqigdxrvrerfewsxqgm` has forward migrations `20260917000300` and `20260917000400`; Mobile SQLite is v23. Server candidates retain requested `economic_date`, actual `reference_date`, source/provenance, policy, and exact decimal text, and flow through authorized Ledger reads/bootstrap/change feed to isolated local SQLite. A signed iPhone 17 Pro Simulator received the EUR→NZD 2026-07-15 ECB candidate `1.960800000000000000`, retained it after app restart, and its B1 Expense still has no accepted exchange-rate snapshot. Local reset, 13 pgTAP files/259 checks, typecheck, lint, Backend build, and 78 files/298 tests pass. Production was not touched. Phase C remains a separate approval/acceptance gate, including ECB reference-rate suitability for transaction valuation; true offline Simulator cold-start and physical interactive/offline acceptance remain unverified.
+
 ## Currency / FX Phase B1 — economic date foundation
 
 - B1 adds explicit `economic_date` (selected local calendar `YYYY-MM-DD`) across the Ledger 2.0 local Expense, durable queue, `/v2` Backend, canonical Dev `public.expenses`, and bootstrap/pull. SQLite v22 and Dev migration `20260917000200` are forward-only and nullable; no historic rows are backfilled from `occurred_at`. Old-client omissions stay unknown; a date correction is financial-core and invalidates incompatible active FX valuation while retaining evidence. Cross-currency `RATE_REQUIRED` with missing date is explicitly distinguishable as `ECONOMIC_DATE_REQUIRED`; no provider or automatic rate flow was added.

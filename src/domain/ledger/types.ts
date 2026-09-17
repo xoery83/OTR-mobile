@@ -54,9 +54,13 @@ export type RateQuote = {
   baseCurrency: CurrencyCode;
   decimalRate: string;
   effectiveDate: string;
+  economicDate?: string | null;
+  referenceDate?: string | null;
+  policyVersion?: string | null;
   observedAt: string;
   provider: string;
   providerReference: string | null;
+  sourceReference?: string | null;
   expiresAt: string;
 };
 
