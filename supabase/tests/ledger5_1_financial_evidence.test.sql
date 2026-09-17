@@ -82,6 +82,10 @@ select is(
   '53000000-0000-4000-8000-000000000001', 'payment audit links canonical evidence'
 );
 
+-- Historical Stage 5 fixture exercises the pre-C function as migration owner.
+-- service_role can now accept valuations only through the Phase C guarded wrapper.
+reset role;
+
 select lives_ok($$
   select public.ledger_apply_valuation_5_1(
     '00000000-0000-4000-8000-000000000002',

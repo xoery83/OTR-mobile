@@ -93,6 +93,17 @@ export type SettlementValuationSnapshot = {
   roundingMode?: "HALF_UP";
   effectiveAt?: string;
   supersedesValuationId?: string | null;
+  referenceEvidence?: {
+    economicDate: string;
+    referenceDate: string;
+    source: string;
+    sourceReference: string;
+    deliveryProvider: string;
+    providerReference: string;
+    observedAt: string;
+    acceptedAt: string;
+    automatic: boolean;
+  } | null;
 };
 
 export type ExpenseAggregate = {

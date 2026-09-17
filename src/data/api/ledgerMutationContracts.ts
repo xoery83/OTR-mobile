@@ -208,6 +208,8 @@ export const applyLedgerValuationRequestSchema = z
       "MANUAL_AGREED",
       "SAME_CURRENCY",
     ]),
+    economicDate: economicDateSchema.nullable().optional(),
+    settingsRevision: z.number().int().positive().optional(),
     rateQuoteId: z.uuid().nullable(),
     paymentRecordId: z.uuid().nullable(),
     manualRate: z.string().trim().max(100).nullable(),
@@ -215,8 +217,11 @@ export const applyLedgerValuationRequestSchema = z
     previewSettlement: moneySchema,
   })
   .superRefine((value, context) => {
-    if (value.policy === "REFERENCE_RATE" && !value.rateQuoteId)
-      context.addIssue({ code: "custom", message: "REFERENCE_RATE needs a quote." });
+    if (value.policy === "REFERENCE_RATE" && (!value.rateQuoteId || !value.economicDate))
+      context.addIssue({
+        code: "custom",
+        message: "REFERENCE_RATE needs a quote and economic date.",
+      });
     if (value.policy === "ACTUAL_PAYER_COST" && !value.paymentRecordId)
       context.addIssue({
         code: "custom",

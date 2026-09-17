@@ -4,6 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { createFrankfurterRateProvider } from "./frankfurterRateProvider";
 import {
   fetchTrustedRateQuote,
+  calendarDistance,
   historicalRatePolicyVersion,
   RateProviderError,
   type RateQuoteProvider,
@@ -640,7 +641,9 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     },
 
     async acquirePendingRateQuotes() {
-      return acquirePendingRateQuotes(service, rateQuoteProvider);
+      const acquired = await acquirePendingRateQuotes(service, rateQuoteProvider);
+      await applyPendingReferenceValuations(service);
+      return acquired;
     },
 
     async previewLedgerSettlement(_userId, tripId, throughTimestamp) {
@@ -1764,6 +1767,157 @@ export function rateQuoteRowToDto(row: Record<string, unknown>): LedgerRateQuote
   };
 }
 
+export function eligibleReferenceCandidate(
+  expense: LedgerExpenseDto,
+  input: Pick<ApplyLedgerValuationRequest, "economicDate">,
+  quote: LedgerRateQuoteDto | undefined,
+  settlementCurrency: string,
+  now = new Date(),
+): boolean {
+  if (
+    !quote ||
+    !expense.economicDate ||
+    input.economicDate !== expense.economicDate ||
+    quote.economicDate !== expense.economicDate ||
+    quote.quoteCurrency !== expense.original.currency ||
+    quote.baseCurrency !== settlementCurrency ||
+    quote.referenceDate !== quote.effectiveDate ||
+    !quote.referenceDate ||
+    quote.policyVersion !== historicalRatePolicyVersion ||
+    quote.provider !== "ECB" ||
+    quote.sourceReference !==
+      "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" ||
+    quote.providerReference !==
+      `https://api.frankfurter.dev/v2/providers/ecb/rate/${quote.quoteCurrency}/${quote.baseCurrency}?date=${quote.economicDate}` ||
+    quote.economicDate > now.toISOString().slice(0, 10) ||
+    Date.parse(quote.expiresAt) <= now.getTime()
+  )
+    return false;
+  const days = calendarDistance(quote.economicDate, quote.referenceDate);
+  return Number.isInteger(days) && days >= 0 && days <= 7;
+}
+
+type AutoReferenceDemand = {
+  expense_id: string;
+  journey_id: string;
+  actor_user_id: string;
+  economic_date: string;
+  rate_quote_id: string;
+  expense_revision: number;
+};
+
+export async function applyPendingReferenceValuations(service: SupabaseClient) {
+  const listed = await service.rpc("ledger_list_auto_reference_demands", {
+    max_requests: 4,
+  });
+  if (listed.error)
+    throw new Error("Supabase Dev automatic valuation demand read failed.");
+  for (const demand of (listed.data ?? []) as AutoReferenceDemand[]) {
+    try {
+      const expense = await readOneExpenseAggregate(service, demand.expense_id);
+      if (
+        !expense ||
+        expense.revision !== demand.expense_revision ||
+        expense.businessStatus !== "RATE_REQUIRED" ||
+        expense.valuation
+      )
+        continue;
+      const settings = await service
+        .from("ledger_settings")
+        .select("settlement_currency, settlement_scale, revision")
+        .eq("journey_id", demand.journey_id)
+        .single();
+      if (settings.error) throw new Error("Supabase Dev valuation settings failed.");
+      const quote = (await readRateQuotes(service, demand.journey_id)).find(
+        (item) => item.id === demand.rate_quote_id,
+      );
+      if (
+        !eligibleReferenceCandidate(
+          expense,
+          { economicDate: demand.economic_date },
+          quote,
+          String(settings.data.settlement_currency),
+        )
+      )
+        continue;
+      const preview = previewValuation({
+        policy: "REFERENCE_RATE",
+        original: expense.original,
+        settlementCurrency: String(settings.data.settlement_currency),
+        settlementScale: Number(settings.data.settlement_scale),
+        rateQuote: quote,
+      });
+      await applyLedgerValuation(
+        service,
+        demand.actor_user_id,
+        demand.journey_id,
+        demand.expense_id,
+        `auto-reference:${demand.expense_id}:${demand.expense_revision}`,
+        {
+          localValuationId: stableReviewId(
+            `auto-valuation:${demand.expense_id}:${demand.expense_revision}`,
+          ),
+          localRateSnapshotId: stableReviewId(
+            `auto-rate:${demand.expense_id}:${demand.expense_revision}`,
+          ),
+          baseRevision: demand.expense_revision,
+          policy: "REFERENCE_RATE",
+          economicDate: demand.economic_date,
+          settingsRevision: Number(settings.data.revision),
+          rateQuoteId: demand.rate_quote_id,
+          paymentRecordId: null,
+          manualRate: null,
+          reason: "Automatic ECB reference valuation",
+          previewSettlement: preview.settlement,
+        },
+        true,
+      );
+      await tryEvaluateLedgerReviewV2(service, demand.journey_id);
+      console.info(
+        JSON.stringify({
+          event: "automatic_reference_valuation_accepted",
+          expense_id: demand.expense_id,
+          expense_revision: demand.expense_revision,
+          rate_quote_id: demand.rate_quote_id,
+        }),
+      );
+    } catch (error) {
+      const failureClass =
+        error instanceof BackendError
+          ? error.code === "REVISION_CONFLICT"
+            ? "CONFLICT"
+            : "SEMANTIC"
+          : "TRANSIENT";
+      const retryAt =
+        failureClass === "SEMANTIC"
+          ? null
+          : new Date(
+              Date.now() + (failureClass === "CONFLICT" ? 60_000 : 5 * 60_000),
+            ).toISOString();
+      const persisted = await service.from("ledger_auto_valuation_failures").upsert(
+        {
+          expense_id: demand.expense_id,
+          expense_revision: demand.expense_revision,
+          failure_class: failureClass,
+          next_retry_at: retryAt,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "expense_id,expense_revision" },
+      );
+      if (persisted.error) throw new Error("Supabase Dev valuation retry write failed.");
+      console.warn(
+        JSON.stringify({
+          event: "automatic_reference_valuation_deferred",
+          expense_id: demand.expense_id,
+          expense_revision: demand.expense_revision,
+          failure_class: failureClass,
+          next_retry_at: retryAt,
+        }),
+      );
+    }
+  }
+}
+
 function paymentRowToDto(
   row: Record<string, unknown>,
   audit?: Record<string, unknown>,
@@ -1862,6 +2016,7 @@ async function applyLedgerValuation(
   expenseId: string,
   idempotencyKey: string,
   input: ApplyLedgerValuationRequest,
+  automaticReference = false,
 ): Promise<LedgerExpenseMutationResponse> {
   const current = await readOneExpenseAggregate(service, expenseId);
   if (!current || current.journeyId !== tripId)
@@ -1877,6 +2032,20 @@ async function applyLedgerValuation(
         (item) => item.id === input.rateQuoteId,
       )
     : undefined;
+  if (
+    input.policy === "REFERENCE_RATE" &&
+    !eligibleReferenceCandidate(
+      current,
+      input,
+      quote,
+      String(settingResult.data.settlement_currency),
+    )
+  )
+    throw new BackendError(
+      400,
+      "INVALID_PAYLOAD",
+      "The historical reference candidate is incompatible.",
+    );
   const payment = input.paymentRecordId
     ? current.paymentRecords.find((item) => item.id === input.paymentRecordId)
     : undefined;
@@ -1913,6 +2082,20 @@ async function applyLedgerValuation(
     roundingMode: "HALF_UP" as const,
     effectiveAt: now,
     supersedesValuationId: current.valuation?.id ?? null,
+    referenceEvidence:
+      input.policy === "REFERENCE_RATE" && quote
+        ? {
+            economicDate: input.economicDate!,
+            referenceDate: quote.referenceDate!,
+            source: "European Central Bank reference rate",
+            sourceReference: quote.sourceReference!,
+            deliveryProvider: "Frankfurter",
+            providerReference: quote.providerReference!,
+            observedAt: quote.observedAt,
+            acceptedAt: now,
+            automatic: automaticReference,
+          }
+        : null,
   };
   const entity: LedgerExpenseDto = {
     ...current,
@@ -1957,7 +2140,7 @@ async function applyLedgerValuation(
         supersedesRateSnapshotId: current.valuation?.rateSnapshotId ?? null,
       }
     : null;
-  const result = await service.rpc("ledger_apply_valuation_5_1", {
+  const result = await service.rpc("ledger_apply_valuation_c", {
     actor_user: userId,
     target_journey: tripId,
     target_expense: expenseId,
@@ -1966,8 +2149,15 @@ async function applyLedgerValuation(
     valuation_value: input,
     rate_snapshot_value: rateSnapshot,
     response_body_value: response,
+    automatic_reference: automaticReference,
   });
   if (result.error?.message.includes("REVISION_CONFLICT")) {
+    if (automaticReference)
+      throw new BackendError(
+        409,
+        "REVISION_CONFLICT",
+        "The automatic valuation was superseded.",
+      );
     const canonical = await readOneExpenseAggregate(service, expenseId);
     if (!canonical) throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
     const submitted = editableExpense(entity);
@@ -2026,8 +2216,16 @@ function mapFinancialEvidenceError(message?: string) {
       "SETTLEMENT_INPUT_STALE",
       "A finalized settlement protects this mutation.",
     );
+  if (message.includes("SETTINGS_REVISION_CONFLICT"))
+    throw new BackendError(
+      409,
+      "REVISION_CONFLICT",
+      "Journey settings changed during valuation.",
+    );
   if (
     message.includes("INVALID_") ||
+    message.includes("ECONOMIC_DATE_REQUIRED_OR_MISMATCH") ||
+    message.includes("AUTO_VALUATION_NOT_ELIGIBLE") ||
     message.includes("REASON_REQUIRED") ||
     message.includes("PREVIEW_MISMATCH")
   )
@@ -3678,11 +3876,27 @@ async function readExpenseAggregates(
     throw new Error("Supabase Dev Ledger aggregate read failed.");
   }
 
+  const rateIds = (valuations.data ?? [])
+    .map((item) => item.rate_snapshot_id)
+    .filter((id): id is string => typeof id === "string");
+  const rateEvidence = rateIds.length
+    ? await service
+        .from("exchange_rate_snapshots")
+        .select("id, provenance, observed_at, created_at")
+        .in("id", rateIds)
+    : { data: [], error: null };
+  if (rateEvidence.error)
+    throw new Error("Supabase Dev accepted rate evidence read failed.");
+
   return rows.map((row) => {
     const id = String(row.id);
     const valuation = (valuations.data ?? []).find(
       (item) => String(item.expense_id) === id,
     );
+    const evidenceRow = (rateEvidence.data ?? []).find(
+      (item) => String(item.id) === String(valuation?.rate_snapshot_id),
+    );
+    const provenance = evidenceRow?.provenance as Record<string, unknown> | undefined;
     return {
       id,
       journeyId: String(row.journey_id),
@@ -3759,6 +3973,20 @@ async function readExpenseAggregates(
             supersedesValuationId: valuation.supersedes_valuation_id
               ? String(valuation.supersedes_valuation_id)
               : null,
+            referenceEvidence:
+              valuation.policy === "REFERENCE_RATE" && provenance?.economicDate
+                ? {
+                    economicDate: String(provenance.economicDate),
+                    referenceDate: String(provenance.referenceDate),
+                    source: String(provenance.source),
+                    sourceReference: String(provenance.sourceReference),
+                    deliveryProvider: String(provenance.deliveryProvider),
+                    providerReference: String(provenance.providerReference),
+                    observedAt: String(evidenceRow!.observed_at),
+                    acceptedAt: String(evidenceRow!.created_at),
+                    automatic: provenance.automatic === true,
+                  }
+                : null,
           }
         : null,
       paymentRecords: (payments.data ?? [])

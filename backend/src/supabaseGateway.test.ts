@@ -5,7 +5,76 @@ import {
   normalizeSettlementSource,
   safeEconomicDateEdit,
   rateQuoteRowToDto,
+  eligibleReferenceCandidate,
 } from "./supabaseGateway";
+
+describe("Phase C reference candidate eligibility", () => {
+  const expense = {
+    economicDate: "2026-07-12",
+    original: { minor: 10000, currency: "EUR", scale: 2 },
+  } as Parameters<typeof eligibleReferenceCandidate>[0];
+  const quote: NonNullable<Parameters<typeof eligibleReferenceCandidate>[2]> = {
+    id: "quote",
+    journeyId: "journey",
+    economicDate: "2026-07-12",
+    referenceDate: "2026-07-10",
+    effectiveDate: "2026-07-10",
+    quoteCurrency: "EUR",
+    baseCurrency: "NZD",
+    policyVersion: "ECB_DAILY_V1",
+    provider: "ECB",
+    sourceReference:
+      "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+    providerReference:
+      "https://api.frankfurter.dev/v2/providers/ecb/rate/EUR/NZD?date=2026-07-12",
+    expiresAt: "2026-10-17T00:00:00Z",
+    decimalRate: "1.9608",
+    observedAt: "2026-09-17T00:00:00Z",
+  };
+  const now = new Date("2026-09-17T00:00:00Z");
+
+  it("accepts a real Friday reference for a Sunday economic date", () => {
+    expect(
+      eligibleReferenceCandidate(
+        expense,
+        { economicDate: "2026-07-12" },
+        quote,
+        "NZD",
+        now,
+      ),
+    ).toBe(true);
+  });
+  it.each([
+    [{ economicDate: "2026-07-11" }, "request date"],
+    [{ referenceDate: "2026-07-13", effectiveDate: "2026-07-13" }, "future reference"],
+    [{ referenceDate: "2026-07-04", effectiveDate: "2026-07-04" }, "over seven days"],
+    [{ baseCurrency: "USD" }, "old Journey currency"],
+    [{ quoteCurrency: "USD" }, "wrong direction"],
+    [{ provider: "OTHER" }, "unapproved source"],
+    [{ expiresAt: "2026-09-16T00:00:00Z" }, "expired candidate"],
+  ])("rejects %s (%s)", (change, _label) => {
+    expect(
+      eligibleReferenceCandidate(
+        expense,
+        { economicDate: "2026-07-12" },
+        { ...quote, ...change },
+        "NZD",
+        now,
+      ),
+    ).toBe(false);
+  });
+  it("rejects a forged request economic date", () => {
+    expect(
+      eligibleReferenceCandidate(
+        expense,
+        { economicDate: "2026-07-15" },
+        quote,
+        "NZD",
+        now,
+      ),
+    ).toBe(false);
+  });
+});
 
 const productionUrl = "https://bobwhxjxqpehzecwmwqe.supabase.co";
 

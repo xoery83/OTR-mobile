@@ -165,11 +165,51 @@ describe("Ledger read repository", () => {
       cursor: "cursor-2",
       serverTime: "2026-09-11T01:00:00.000Z",
     };
+    response.expenses = [
+      {
+        ...expense,
+        economicDate: "2026-07-12",
+        original: { minor: 10000, currency: "EUR", scale: 2 },
+        splits: [{ ...expense.splits[0]!, originalMinor: 10000, settlementMinor: 19608 }],
+        valuation: {
+          id: "60000000-0000-4000-8000-000000000001",
+          policy: "REFERENCE_RATE",
+          original: { minor: 10000, currency: "EUR", scale: 2 },
+          settlement: { minor: 19608, currency: "NZD", scale: 2 },
+          rateSnapshotId: "60000000-0000-4000-8000-000000000002",
+          paymentRecordId: null,
+          reason: null,
+          referenceEvidence: {
+            economicDate: "2026-07-12",
+            referenceDate: "2026-07-10",
+            source: "European Central Bank reference rate",
+            sourceReference:
+              "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+            deliveryProvider: "Frankfurter",
+            providerReference:
+              "https://api.frankfurter.dev/v2/providers/ecb/rate/EUR/NZD?date=2026-07-12",
+            observedAt: "2026-09-17T00:00:00Z",
+            acceptedAt: "2026-09-17T01:00:00Z",
+            automatic: true,
+          },
+        },
+      },
+    ];
 
     await createLedgerReadRepository(db, activeUser).applyBootstrap(response);
 
     expect(transactions()).toBe(1);
     expect(writes.some((write) => write.sql.includes("ledger_expenses"))).toBe(true);
+    expect(
+      writes.some(
+        (write) =>
+          write.sql.includes("reference_evidence_json") &&
+          write.params.some(
+            (param) =>
+              typeof param === "string" && param.includes('"referenceDate":"2026-07-10"'),
+          ),
+      ),
+    ).toBe(true);
     expect(writes.at(-1)?.params.slice(0, 3)).toEqual([
       "90000000-0000-4000-8000-000000000001",
       journeyId,

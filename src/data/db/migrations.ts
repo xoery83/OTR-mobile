@@ -971,4 +971,9 @@ export const migrations: Migration[] = [
         (journey_id, economic_date, quote_currency, base_currency, policy_version);
     `,
   },
+  {
+    id: 24,
+    name: "ledger_accepted_reference_provenance",
+    sql: `ALTER TABLE ledger_valuation_snapshots ADD COLUMN reference_evidence_json TEXT;`,
+  },
 ];

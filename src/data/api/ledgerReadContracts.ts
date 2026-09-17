@@ -60,6 +60,20 @@ export const ledgerEditableValuationSchema = z
     roundingMode: z.literal("HALF_UP").optional(),
     effectiveAt: z.string().optional(),
     supersedesValuationId: uuidSchema.nullable().optional(),
+    referenceEvidence: z
+      .object({
+        economicDate: economicDateSchema,
+        referenceDate: economicDateSchema,
+        source: z.string(),
+        sourceReference: z.url(),
+        deliveryProvider: z.string(),
+        providerReference: z.url(),
+        observedAt: z.string(),
+        acceptedAt: z.string(),
+        automatic: z.boolean(),
+      })
+      .nullable()
+      .optional(),
   })
   .nullable();
 

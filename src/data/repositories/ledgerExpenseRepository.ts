@@ -153,6 +153,7 @@ type ValuationRow = {
   roundingMode?: "HALF_UP";
   effectiveAt?: string | null;
   supersedesValuationId?: string | null;
+  referenceEvidenceJson?: string | null;
 };
 
 type PaymentRecordRow = {
@@ -628,12 +629,42 @@ export function createLedgerExpenseRepository(
             `SELECT id, journey_id AS journeyId, quote_currency AS quoteCurrency,
               base_currency AS baseCurrency, decimal_rate AS decimalRate,
               effective_date AS effectiveDate, observed_at AS observedAt, provider,
-              provider_reference AS providerReference, expires_at AS expiresAt
+              provider_reference AS providerReference, expires_at AS expiresAt,
+              economic_date AS economicDate, reference_date AS referenceDate,
+              policy_version AS policyVersion, source_reference AS sourceReference
              FROM ledger_rate_quotes WHERE id = ? AND journey_id = ?`,
             input.rateQuoteId,
             current.journeyId,
           )
         : undefined;
+      if (input.policy === "REFERENCE_RATE") {
+        const referenceDate = rateQuote?.referenceDate;
+        const days =
+          referenceDate && current.economicDate
+            ? (Date.parse(`${current.economicDate}T00:00:00Z`) -
+                Date.parse(`${referenceDate}T00:00:00Z`)) /
+              86_400_000
+            : NaN;
+        if (
+          !rateQuote ||
+          !current.economicDate ||
+          rateQuote.economicDate !== current.economicDate ||
+          rateQuote.policyVersion !== "ECB_DAILY_V1" ||
+          rateQuote.provider !== "ECB" ||
+          rateQuote.sourceReference !==
+            "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" ||
+          rateQuote.providerReference !==
+            `https://api.frankfurter.dev/v2/providers/ecb/rate/${rateQuote.quoteCurrency}/${rateQuote.baseCurrency}?date=${rateQuote.economicDate}` ||
+          rateQuote.quoteCurrency !== current.original.currency ||
+          rateQuote.baseCurrency !== journey.settlementCurrency ||
+          rateQuote.effectiveDate !== referenceDate ||
+          !Number.isInteger(days) ||
+          days < 0 ||
+          days > 7 ||
+          Date.parse(rateQuote.expiresAt) <= Date.now()
+        )
+          throw new Error("A matching historical ECB candidate is required.");
+      }
       const paymentRecord = input.paymentRecordId
         ? current.paymentRecords.find((record) => record.id === input.paymentRecordId)
         : undefined;
@@ -738,6 +769,7 @@ export function createLedgerExpenseRepository(
             localRateSnapshotId: rateSnapshotId,
             baseRevision: current.serverRevision,
             policy: input.policy,
+            economicDate: input.policy === "REFERENCE_RATE" ? current.economicDate : null,
             rateQuoteId: input.rateQuoteId ?? null,
             paymentRecordId: input.paymentRecordId ?? null,
             manualRate: input.manualRate ?? null,
@@ -971,8 +1003,8 @@ async function insertExpenseChildren(
         id, server_id, expense_id, expense_revision, policy, original_amount_minor, original_currency,
         original_scale, settlement_amount_minor, settlement_currency, settlement_scale,
         rate_snapshot_id, payment_record_id, reason, is_active, created_at, decimal_rate,
-        rounding_mode, effective_at, supersedes_valuation_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        rounding_mode, effective_at, supersedes_valuation_id, reference_evidence_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       existingValuation?.id ?? expense.valuation.id,
       expense.serverId ? expense.valuation.id : null,
       expense.id,
@@ -993,6 +1025,9 @@ async function insertExpenseChildren(
       expense.valuation.roundingMode ?? "HALF_UP",
       expense.valuation.effectiveAt ?? expense.updatedAt,
       expense.valuation.supersedesValuationId ?? null,
+      expense.valuation.referenceEvidence
+        ? JSON.stringify(expense.valuation.referenceEvidence)
+        : null,
     );
     await database.runAsync(
       "UPDATE ledger_valuation_snapshots SET is_active = 1 WHERE id = ?",
@@ -1269,7 +1304,8 @@ async function hydrateExpense(
         settlement_currency AS settlementCurrency, settlement_scale AS settlementScale,
         rate_snapshot_id AS rateSnapshotId, payment_record_id AS paymentRecordId, reason,
         decimal_rate AS decimalRate, rounding_mode AS roundingMode,
-        effective_at AS effectiveAt, supersedes_valuation_id AS supersedesValuationId
+        effective_at AS effectiveAt, supersedes_valuation_id AS supersedesValuationId,
+        reference_evidence_json AS referenceEvidenceJson
        FROM ledger_valuation_snapshots WHERE expense_id = ? AND is_active = 1`,
       row.id,
     ),
@@ -1340,6 +1376,11 @@ function normalizeValuation(value: ValuationRow): SettlementValuationSnapshot {
     roundingMode: value.roundingMode ?? "HALF_UP",
     effectiveAt: value.effectiveAt ?? undefined,
     supersedesValuationId: value.supersedesValuationId ?? null,
+    referenceEvidence: value.referenceEvidenceJson
+      ? (JSON.parse(
+          value.referenceEvidenceJson,
+        ) as SettlementValuationSnapshot["referenceEvidence"])
+      : null,
   };
 }
 

@@ -689,8 +689,8 @@ async function applyExpense(database: LedgerReadDatabase, expense: ServerExpense
         id, server_id, expense_id, expense_revision, policy, original_amount_minor, original_currency,
         original_scale, settlement_amount_minor, settlement_currency, settlement_scale,
         rate_snapshot_id, payment_record_id, reason, is_active, created_at, decimal_rate,
-        rounding_mode, effective_at, supersedes_valuation_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        rounding_mode, effective_at, supersedes_valuation_id, reference_evidence_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       existingValuation?.id ?? expense.valuation.id,
       expense.valuation.id,
       localId,
@@ -711,9 +711,15 @@ async function applyExpense(database: LedgerReadDatabase, expense: ServerExpense
       expense.valuation.roundingMode ?? "HALF_UP",
       expense.valuation.effectiveAt ?? expense.updatedAt,
       expense.valuation.supersedesValuationId ?? null,
+      expense.valuation.referenceEvidence
+        ? JSON.stringify(expense.valuation.referenceEvidence)
+        : null,
     );
     await database.runAsync(
-      "UPDATE ledger_valuation_snapshots SET is_active = 1 WHERE id = ?",
+      "UPDATE ledger_valuation_snapshots SET is_active = 1, reference_evidence_json = ? WHERE id = ?",
+      expense.valuation.referenceEvidence
+        ? JSON.stringify(expense.valuation.referenceEvidence)
+        : null,
       existingValuation?.id ?? expense.valuation.id,
     );
   }

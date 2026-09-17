@@ -1,8 +1,8 @@
 # OTR Mobile 2.0 货币 / FX / 估值收敛实施计划
 
-日期：2026-09-17。状态：**Phase A、B1 与 B2 候选缓存已获准；C/D/E/F 未授权**。依据 `CURRENCY_FX_DOMAIN_AUDIT.md`、Ledger 2.0 领域/API 契约和当前实现。未批准的建议仍需产品确认；迁移仅指 Dev，不涉及 Production。保持原始 Money、PaymentRecord、结算估值、还款估值四种事实分立，并复用 Stage 4B/4C/5/7、持久队列和 Review 2.0，不创建平行估值系统。
+日期：2026-09-17。状态：**Phase A、B1、B2 与 C 参考率自动估值已在 Hosted Dev 实施；D/E/F 未授权**。依据 `CURRENCY_FX_DOMAIN_AUDIT.md`、Ledger 2.0 领域/API 契约和当前实现。未批准的建议仍需产品确认；迁移仅指 Dev，不涉及 Production。保持原始 Money、PaymentRecord、结算估值、还款估值四种事实分立，并复用 Stage 4B/4C/5/7、持久队列和 Review 2.0，不创建平行估值系统。
 
-2026-09-17 更新：Phase A 与 B1 已完成；B2 获准只获取、校验、缓存历史日候选，固定 ECB 来源的 Dev-only 核查见 `CURRENCY_FX_PHASE_B2_PROVIDER_REVIEW.md`，实现边界见 `CURRENCY_FX_PHASE_B2_HISTORICAL_RATES.md`。ECB 参考率是否可用于后续结算接受仍是 Phase C 门槛。暂隐 Preferred Currency、未来最多回看 7 个日历日、未来 Phase D 的 Journey Currency A–D 规则（finalized 后永久锁定、无 epochs）、Backend 拥有可替换 provider、Expense Detail 为主要来源说明均已获产品批准。Phase A 日期证据见 `CURRENCY_FX_PHASE_A_DATE_FINDING.md`；B1 的零历史回填政策见 `CURRENCY_FX_PHASE_B1_ECONOMIC_DATE.md`。**C/D/E/F 均未获实施授权。**
+2026-09-17 更新：Phase A/B1/B2 已完成；Phase C 获准将固定 ECB 来源候选用作默认 **REFERENCE_RATE 参考估值**，而非实际兑换证据。B2 来源核查见 `CURRENCY_FX_PHASE_B2_PROVIDER_REVIEW.md`，Phase C 自动接受与事务校验见 `CURRENCY_FX_PHASE_C_AUTO_VALUATION.md`。暂隐 Preferred Currency、最多回看 7 个日历日、未来 Phase D 的 Journey Currency A–D 规则（finalized 后永久锁定、无 epochs）、Backend 拥有可替换 provider、Expense Detail 为主要来源说明均已获产品批准。Phase A 日期证据见 `CURRENCY_FX_PHASE_A_DATE_FINDING.md`；B1 的零历史回填政策见 `CURRENCY_FX_PHASE_B1_ECONOMIC_DATE.md`。**D/E/F 均未获实施授权。**
 
 ## 明确语义与现有实现冲突
 
