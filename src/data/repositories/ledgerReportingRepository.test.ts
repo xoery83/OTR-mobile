@@ -31,7 +31,7 @@ function database() {
     CREATE TABLE ledger_expense_participants (expense_id TEXT, member_id TEXT,
       display_name_snapshot TEXT, PRIMARY KEY(expense_id, member_id));
     CREATE TABLE ledger_expense_splits (expense_id TEXT, member_id TEXT,
-      settlement_amount_minor INTEGER, PRIMARY KEY(expense_id, member_id));
+      original_amount_minor INTEGER, settlement_amount_minor INTEGER, PRIMARY KEY(expense_id, member_id));
     CREATE TABLE ledger_valuation_snapshots (id TEXT PRIMARY KEY, expense_id TEXT,
       settlement_amount_minor INTEGER, settlement_currency TEXT, settlement_scale INTEGER,
       is_active INTEGER);
@@ -81,7 +81,7 @@ function insertFixture(sqlite: DatabaseSync) {
     INSERT INTO ledger_expense_participants VALUES
       ('valued', 'a', 'Alex'), ('valued', 'b', 'Bea'), ('rate', 'a', 'Alex'), ('conflict', 'a', 'Alex');
     INSERT INTO ledger_expense_splits VALUES
-      ('valued', 'a', 1200), ('valued', 'b', 800), ('rate', 'a', NULL), ('conflict', 'a', 4000);
+      ('valued', 'a', 600, 1200), ('valued', 'b', 400, 800), ('rate', 'a', 500, NULL), ('conflict', 'a', 4000, 4000);
     INSERT INTO ledger_valuation_snapshots VALUES
       ('v1', 'valued', 2000, 'NZD', 2, 1), ('v2', 'conflict', 4000, 'NZD', 2, 1);
     INSERT INTO ledger_expense_conflicts VALUES ('conflict', 'OPEN');
@@ -204,6 +204,11 @@ describe("Ledger reporting repository", () => {
     const { adapter, sqlite } = database();
     insertFixture(sqlite);
     const repository = createLedgerReportingRepository(adapter, activeUser);
+    expect(
+      (await repository.listExpenses({ journeyId, memberId, scope: "MINE" })).find(
+        (item) => item.id === "valued",
+      )?.originalComponentMinor,
+    ).toBe(600);
     for (const scope of ["MINE", "GROUP"] as const) {
       for (const filters of [
         {},
@@ -282,7 +287,7 @@ describe("Ledger reporting repository", () => {
         ('zero', 'journey', 'b', 'Zero share', NULL, 'food', '2026-09-13T08:00:00.000Z', 100, 'NZD', 2, 'ACCEPTED', 'INCLUDED', 'SYNCED', NULL, NULL),
         ('absent', 'journey', 'b', 'Not participating', NULL, 'food', '2026-09-14T08:00:00.000Z', 100, 'NZD', 2, 'ACCEPTED', 'EXCLUDED', 'SYNCED', NULL, NULL);
       INSERT INTO ledger_expense_participants VALUES ('zero', 'a', 'Alex');
-      INSERT INTO ledger_expense_splits VALUES ('zero', 'a', 0);
+      INSERT INTO ledger_expense_splits VALUES ('zero', 'a', 0, 0);
       INSERT INTO ledger_valuation_snapshots VALUES
         ('v-zero', 'zero', 100, 'NZD', 2, 1), ('v-absent', 'absent', 100, 'NZD', 2, 1);
     `);
@@ -356,7 +361,7 @@ describe("Ledger reporting repository", () => {
       "INSERT INTO ledger_expense_participants VALUES (?, 'a', 'Alex')",
     );
     const insertSplit = sqlite.prepare(
-      "INSERT INTO ledger_expense_splits VALUES (?, 'a', 100)",
+      "INSERT INTO ledger_expense_splits VALUES (?, 'a', 100, 100)",
     );
     const insertValuation = sqlite.prepare(
       "INSERT INTO ledger_valuation_snapshots VALUES (?, ?, 100, 'NZD', 2, 1)",

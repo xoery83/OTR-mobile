@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -174,103 +176,108 @@ export function AccountManagementScreen({ authBoundary = false }) {
     );
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={styles.flex}
     >
-      <Text accessibilityRole="header" style={styles.title}>
-        {devSelector ? "Test accounts" : "Accounts"}
-      </Text>
-
-      {active ? (
-        <AccountSection title="Active account">
-          <AccountRow
-            account={active}
-            active
-            displayName={actorDisplayName}
-            role={role}
-          />
-        </AccountSection>
-      ) : null}
-
-      <AccountSection
-        title={devSelector ? "Approved test accounts" : "Remembered accounts"}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
       >
-        {remembered.length ? (
-          remembered.map((account) => (
-            <AccountRow
-              account={account}
-              disabled={busy}
-              key={account.userId}
-              onPress={() => void switchAccount(account)}
-              onRemove={() => removeAccount(account)}
-            />
-          ))
-        ) : (
-          <Text style={styles.empty}>
-            No other accounts are remembered on this device.
-          </Text>
-        )}
-      </AccountSection>
-
-      <View style={styles.actions}>
-        <ActionRow
-          icon="person.badge.plus"
-          label="Add / Login another account"
-          onPress={() => setShowLogin((visible) => !visible)}
-        />
-        {active ? (
-          <ActionRow destructive icon="arrow.right" label="Sign out" onPress={logout} />
-        ) : null}
-      </View>
-
-      {showLogin ? (
-        <View style={styles.login}>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Login another account
-          </Text>
-          <TextInput
-            accessibilityLabel="Email"
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            onChangeText={setEmail}
-            placeholder="Email"
-            style={styles.input}
-            value={email}
-          />
-          <TextInput
-            accessibilityLabel="Password"
-            autoCapitalize="none"
-            onChangeText={setPassword}
-            placeholder="Password"
-            secureTextEntry
-            style={styles.input}
-            value={password}
-          />
-          <Pressable
-            accessibilityRole="button"
-            disabled={!email.trim() || !password || busy}
-            onPress={() => void authenticate()}
-            style={({ pressed }) => [
-              styles.primaryButton,
-              (!email.trim() || !password || busy) && styles.disabled,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.primaryButtonLabel}>
-              {busy ? "Signing in…" : "Login"}
-            </Text>
-          </Pressable>
-        </View>
-      ) : null}
-
-      {error ? (
-        <Text accessibilityLiveRegion="polite" style={styles.error}>
-          {error}
+        <Text accessibilityRole="header" style={styles.title}>
+          {devSelector ? "Test accounts" : "Accounts"}
         </Text>
-      ) : null}
-    </ScrollView>
+
+        {active ? (
+          <AccountSection title="Active account">
+            <AccountRow
+              account={active}
+              active
+              displayName={actorDisplayName}
+              role={role}
+            />
+          </AccountSection>
+        ) : null}
+
+        <AccountSection
+          title={devSelector ? "Approved test accounts" : "Remembered accounts"}
+        >
+          {remembered.length ? (
+            remembered.map((account) => (
+              <AccountRow
+                account={account}
+                disabled={busy}
+                key={account.userId}
+                onPress={() => void switchAccount(account)}
+                onRemove={() => removeAccount(account)}
+              />
+            ))
+          ) : (
+            <Text style={styles.empty}>
+              No other accounts are remembered on this device.
+            </Text>
+          )}
+        </AccountSection>
+
+        <View style={styles.actions}>
+          <ActionRow
+            icon="person.badge.plus"
+            label="Add / Login another account"
+            onPress={() => setShowLogin((visible) => !visible)}
+          />
+          {active ? (
+            <ActionRow destructive icon="arrow.right" label="Sign out" onPress={logout} />
+          ) : null}
+        </View>
+
+        {showLogin ? (
+          <View style={styles.login}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              Login another account
+            </Text>
+            <TextInput
+              accessibilityLabel="Email"
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              onChangeText={setEmail}
+              placeholder="Email"
+              style={styles.input}
+              value={email}
+            />
+            <TextInput
+              accessibilityLabel="Password"
+              autoCapitalize="none"
+              onChangeText={setPassword}
+              placeholder="Password"
+              secureTextEntry
+              style={styles.input}
+              value={password}
+            />
+            <Pressable
+              accessibilityRole="button"
+              disabled={!email.trim() || !password || busy}
+              onPress={() => void authenticate()}
+              style={({ pressed }) => [
+                styles.primaryButton,
+                (!email.trim() || !password || busy) && styles.disabled,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.primaryButtonLabel}>
+                {busy ? "Signing in…" : "Login"}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {error ? (
+          <Text accessibilityLiveRegion="polite" style={styles.error}>
+            {error}
+          </Text>
+        ) : null}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -399,6 +406,7 @@ async function readAccountView() {
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   center: { alignItems: "center", flex: 1, justifyContent: "center" },
   content: { gap: 22, padding: 20, paddingBottom: 40 },
   title: { color: "#0F172A", fontSize: 28, fontWeight: "800" },

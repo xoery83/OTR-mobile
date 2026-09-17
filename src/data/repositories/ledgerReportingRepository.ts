@@ -42,6 +42,7 @@ export type LedgerReportListItem = {
   payerMemberId: string;
   payerName: string;
   originalMinor: number;
+  originalComponentMinor: number | null;
   originalCurrency: string;
   originalScale: number;
   settlementMinor: number | null;
@@ -364,6 +365,7 @@ export function createLedgerReportingRepository(
         `SELECT e.id, e.title, e.category, e.occurred_at AS occurredAt,
           e.payer_member_id AS payerMemberId, COALESCE(payer.display_name, 'Traveller') AS payerName,
           e.original_amount_minor AS originalMinor, e.original_currency AS originalCurrency,
+          mine.original_amount_minor AS originalComponentMinor,
           e.original_scale AS originalScale, v.settlement_amount_minor AS settlementMinor,
           COALESCE(v.settlement_currency, j.settlement_currency) AS settlementCurrency,
           COALESCE(v.settlement_scale, j.settlement_scale) AS settlementScale,

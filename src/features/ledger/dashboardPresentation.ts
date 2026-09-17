@@ -105,6 +105,7 @@ export function expenseAmountPresentation(
   expense: {
     componentMinor: number | null;
     originalCurrency: string;
+    originalComponentMinor: number | null;
     originalMinor: number;
     originalScale: number;
     participantCount: number;
@@ -125,6 +126,8 @@ export function expenseAmountPresentation(
         );
   const primaryMinor =
     scope === "MINE" ? expense.componentMinor : expense.settlementMinor;
+  const originalMinor =
+    scope === "MINE" ? expense.originalComponentMinor : expense.originalMinor;
   return {
     primary:
       primaryMinor === null
@@ -141,11 +144,13 @@ export function expenseAmountPresentation(
     original:
       expense.originalCurrency === expense.settlementCurrency
         ? null
-        : formatLedgerMoney(
-            expense.originalMinor,
-            expense.originalCurrency,
-            expense.originalScale,
-          ),
+        : originalMinor === null
+          ? "—"
+          : formatLedgerMoney(
+              originalMinor,
+              expense.originalCurrency,
+              expense.originalScale,
+            ),
     splitLabel:
       expense.settlementParticipation === "INCLUDED" && expense.participantCount > 1
         ? "Split"

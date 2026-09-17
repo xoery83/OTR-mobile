@@ -115,6 +115,7 @@ describe("Ledger dashboard presentation", () => {
     const foreignSplit = {
       componentMinor: 2840,
       originalCurrency: "EUR",
+      originalComponentMinor: 770,
       originalMinor: 2310,
       originalScale: 2,
       participantCount: 3,
@@ -126,7 +127,7 @@ describe("Ledger dashboard presentation", () => {
     expect(expenseAmountPresentation(foreignSplit, "MINE")).toEqual({
       primary: "NZ$28.40",
       total: "Total NZ$85.20",
-      original: "€23.10",
+      original: "€7.70",
       splitLabel: "Split",
     });
     expect(expenseAmountPresentation(foreignSplit, "GROUP")).toEqual({
