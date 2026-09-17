@@ -32,7 +32,7 @@ import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedge
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { parseAmountToMinor } from "@/domain/expense/money";
-import { currencyScale, SUPPORTED_CURRENCY_CODES } from "@/domain/ledger/currency";
+import { currencyScale } from "@/domain/ledger/currency";
 import type {
   ExpenseSettlementParticipation,
   ExpenseSplitMethod,
@@ -47,11 +47,14 @@ import {
   parsePercentageUnits,
 } from "./expenseDraft";
 import { formatLedgerMoney } from "./format";
+import { CurrencyPicker } from "./CurrencyPicker";
 
 type EntryContext = {
   journeyId: string;
   settlementCurrency: string;
   settlementScale: number;
+  recentCurrencies: string[];
+  defaultCurrency: string;
   actorId: string;
   members: DraftMember[];
 };
@@ -97,7 +100,6 @@ export function LedgerExpenseEntryScreen() {
   const [error, setError] = useState<string | null>(null);
   const [memberSheet, setMemberSheet] = useState(false);
   const [currencySheet, setCurrencySheet] = useState(false);
-  const [currencyQuery, setCurrencyQuery] = useState("");
   const [splitSheet, setSplitSheet] = useState(false);
   const [datePicker, setDatePicker] = useState(false);
   const [more, setMore] = useState(false);
@@ -488,9 +490,6 @@ export function LedgerExpenseEntryScreen() {
 
   const payer = context.members.find((member) => member.id === draft.payerId);
   const date = dateFromKey(draft.date);
-  const currencyRows = SUPPORTED_CURRENCY_CODES.filter((code) =>
-    code.includes(currencyQuery.trim().toUpperCase()),
-  );
 
   return (
     <KeyboardAvoidingView
@@ -633,28 +632,21 @@ export function LedgerExpenseEntryScreen() {
 
       <Modal animationType="slide" presentationStyle="pageSheet" visible={currencySheet}>
         <SheetHeader title="Currency" onDone={() => setCurrencySheet(false)} />
-        <TextInput
-          accessibilityLabel="Search currencies"
-          autoCapitalize="characters"
-          onChangeText={setCurrencyQuery}
-          placeholder="Search ISO code"
-          style={[styles.textInput, styles.sheetSearch]}
-          value={currencyQuery}
-        />
-        <FlatList
-          data={currencyRows}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => (
-            <SheetRow
-              label={item}
-              selected={draft.currency === item}
-              onPress={() => {
-                setDraft({ ...draft, currency: item, amount: "" });
-                setCurrencySheet(false);
-              }}
-            />
-          )}
-        />
+        {currencySheet ? (
+          <CurrencyPicker
+            selected={draft.currency}
+            suggestions={[
+              ...context.recentCurrencies,
+              draft.currency,
+              context.settlementCurrency,
+              context.defaultCurrency,
+            ]}
+            onSelect={(code) => {
+              setDraft({ ...draft, currency: code, amount: "" });
+              setCurrencySheet(false);
+            }}
+          />
+        ) : null}
       </Modal>
 
       <Modal animationType="slide" presentationStyle="pageSheet" visible={memberSheet}>
@@ -785,15 +777,18 @@ async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: str
   if (!id) throw new Error("Choose a Journey before adding an Expense.");
   const reporting = await getDefaultLedgerReportingRepository();
   const reads = await getDefaultLedgerReadRepository();
-  const [journeys, actor, rawMembers, households, receipt] = await Promise.all([
-    reporting.listJourneys(),
-    reporting.getActorMemberId(id),
-    reads.listMembers(id),
-    reads.listHouseholds(id),
-    receiptId
-      ? (await getDefaultLedgerReceiptRepository()).getReceipt(receiptId)
-      : Promise.resolve(null),
-  ]);
+  const [journeys, actor, rawMembers, households, receipt, expenses, preferences] =
+    await Promise.all([
+      reporting.listJourneys(),
+      reporting.getActorMemberId(id),
+      reads.listMembers(id),
+      reads.listHouseholds(id),
+      receiptId
+        ? (await getDefaultLedgerReceiptRepository()).getReceipt(receiptId)
+        : Promise.resolve(null),
+      expenseRepository.listExpensesForJourney(id),
+      reporting.getPreferences(),
+    ]);
   const journey = journeys.find((item) => item.journeyId === id);
   const actorMember = rawMembers.find((item) => item.id === actor?.memberId);
   if (!journey || !actorMember) throw new Error("Journey context is unavailable.");
@@ -858,6 +853,10 @@ async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: str
       journeyId: id,
       settlementCurrency: journey.settlementCurrency,
       settlementScale: journey.settlementScale,
+      recentCurrencies: [
+        ...new Set(expenses.map((expense) => expense.original.currency)),
+      ],
+      defaultCurrency: preferences.defaultCurrency,
       actorId: actorMember.id,
       members,
     } satisfies EntryContext,
@@ -1077,7 +1076,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   sheetTitle: { color: "#0F172A", fontSize: 20, fontWeight: "800" },
-  sheetSearch: { margin: 16 },
   sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },
   sheetRow: {
     alignItems: "center",

@@ -1,35 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { router } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
-import { SUPPORTED_CURRENCY_CODES } from "@/domain/ledger/currency";
+import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 
 export default function LedgerSettingsRoute() {
   const [currency, setCurrency] = useState("NZD");
   const [debugMode, setDebugMode] = useState(false);
   const [currencySheet, setCurrencySheet] = useState(false);
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
-  const currencies = useMemo(() => {
-    const needle = query.trim().toUpperCase();
-    return needle
-      ? SUPPORTED_CURRENCY_CODES.filter((item) => item.includes(needle))
-      : SUPPORTED_CURRENCY_CODES;
-  }, [query]);
 
   useEffect(() => {
     void getDefaultLedgerReportingRepository()
@@ -46,7 +37,6 @@ export default function LedgerSettingsRoute() {
     const previous = currency;
     setCurrency(nextCurrency);
     setCurrencySheet(false);
-    setQuery("");
     setMessage(null);
     try {
       const repository = await getDefaultLedgerReportingRepository();
@@ -139,33 +129,13 @@ export default function LedgerSettingsRoute() {
             </Text>
             <View style={styles.headerActionButton} />
           </View>
-          <TextInput
-            accessibilityLabel="Search currencies"
-            autoCapitalize="characters"
-            autoCorrect={false}
-            onChangeText={setQuery}
-            placeholder="Search ISO code"
-            style={styles.search}
-            value={query}
-          />
-          <FlatList
-            data={currencies}
-            keyExtractor={(item) => item}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected: currency === item }}
-                onPress={() => void chooseCurrency(item)}
-                style={styles.currencyRow}
-              >
-                <Text style={styles.label}>{item}</Text>
-                {currency === item ? (
-                  <AppIcon color="#0F766E" name="checkmark" size={16} />
-                ) : null}
-              </Pressable>
-            )}
-          />
+          {currencySheet ? (
+            <CurrencyPicker
+              onSelect={(code) => void chooseCurrency(code)}
+              selected={currency}
+              suggestions={[currency]}
+            />
+          ) : null}
         </View>
       </Modal>
     </>
@@ -233,23 +203,4 @@ const styles = StyleSheet.create({
   sheetTitle: { color: "#111827", fontSize: 17, fontWeight: "700" },
   headerAction: { color: "#0F766E", fontSize: 17, fontWeight: "700", padding: 8 },
   headerActionButton: { justifyContent: "center", minHeight: 44, minWidth: 72 },
-  search: {
-    backgroundColor: "#E5E7EB",
-    borderRadius: 10,
-    color: "#111827",
-    fontSize: 16,
-    marginHorizontal: 16,
-    marginVertical: 10,
-    minHeight: 44,
-    paddingHorizontal: 12,
-  },
-  currencyRow: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    minHeight: 50,
-    paddingHorizontal: 18,
-  },
 });
