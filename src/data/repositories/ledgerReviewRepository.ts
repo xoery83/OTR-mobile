@@ -11,6 +11,17 @@ type Database = Pick<
   "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
 >;
 
+const listeners = new Set<(journeyId: string) => void>();
+export function subscribeLedgerReview(listener: (journeyId: string) => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+function changed(journeyId: string) {
+  for (const listener of listeners) listener(journeyId);
+}
+
 export function createLedgerReviewRepository(
   database: Database,
   getActiveUserId: () => Promise<string> = defaultGetActiveUserId,
@@ -25,6 +36,7 @@ export function createLedgerReviewRepository(
       await database.withTransactionAsync(async () => {
         await applyReviewProjection(database, userId, journeyId, findings, actions);
       });
+      changed(journeyId);
     },
     async list(journeyId: string) {
       const userId = await getActiveUserId();
@@ -192,6 +204,7 @@ export function createLedgerReviewRepository(
           now,
         );
       });
+      changed(finding.journeyId);
       return resultId;
     },
 
@@ -228,6 +241,7 @@ export function createLedgerReviewRepository(
           operationId,
         );
       });
+      changed(finding.journeyId);
     },
     async counts(journeyId: string) {
       const userId = await getActiveUserId();
@@ -260,6 +274,7 @@ export function createLedgerReviewRepository(
           journeyId,
         );
       });
+      changed(journeyId);
     },
   };
 }

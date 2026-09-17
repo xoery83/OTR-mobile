@@ -74,8 +74,8 @@ const findingCopy: Record<string, { title: string; why: string }> = {
     why: "The saved exchange rate is outside the expected range and should be checked.",
   },
   EVIDENCE_MISMATCH: {
-    title: "Receipt and Expense differ",
-    why: "The payment evidence does not match the saved Expense amount.",
+    title: "Payment amount differs from Expense",
+    why: "The posted payment amount differs from the saved Expense amount.",
   },
   PARTICIPANT_ANOMALY: {
     title: "Payer is not included",

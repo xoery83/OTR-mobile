@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 
 import { migrations } from "@/data/db/migrations";
 import type { LedgerReviewFindingDto } from "@/data/api/ledgerReviewContracts";
-import { createLedgerReviewRepository } from "./ledgerReviewRepository";
+import {
+  createLedgerReviewRepository,
+  subscribeLedgerReview,
+} from "./ledgerReviewRepository";
 
 const journeyId = "20000000-0000-4000-8000-000000000001";
 const findingId = "10000000-0000-4000-8000-000000000001";
@@ -81,6 +84,23 @@ describe("Review personal SQLite projection", () => {
     expect((await b.list(journeyId))[0].personalDecision).toBe("NEEDS_REVIEW");
     expect(await a.counts(journeyId)).toEqual({ pending: 0, reviewed: 1 });
     expect(await b.counts(journeyId)).toEqual({ pending: 1, reviewed: 0 });
+  });
+
+  it("notifies the mounted inbox after a committed local decision", async () => {
+    const { api } = database();
+    const repository = createLedgerReviewRepository(api as never, async () => userA);
+    await repository.apply(journeyId, [finding], []);
+    let complete!: (pending: number) => void;
+    const notified = new Promise<number>((resolve) => {
+      complete = resolve;
+    });
+    const unsubscribe = subscribeLedgerReview((id) => {
+      if (id === journeyId)
+        void repository.counts(id).then(({ pending }) => complete(pending));
+    });
+    await repository.act(findingId, "ACKNOWLEDGED");
+    expect(await notified).toBe(0);
+    unsubscribe();
   });
 
   it("does not queue repeated taps on the same personal decision", async () => {

@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import * as FileSystem from "expo-file-system/legacy";
 
 import type { LedgerReviewFindingDto } from "@/data/api/ledgerReviewContracts";
 import { ApiClientError } from "@/data/api/client";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
+import { subscribeLedgerReview } from "@/data/repositories/ledgerReviewRepository";
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { openDatabase } from "@/data/db/database";
 import { readLedgerSupportDiagnostics } from "@/data/operations/ledgerMaintenance";
 import { runLedgerReviewSync } from "@/data/sync/ledgerReviewCoordinator";
@@ -18,10 +21,14 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
   const [findings, setFindings] = useState<LedgerReviewFindingDto[]>([]);
   const [counts, setCounts] = useState({ pending: 0, reviewed: 0 });
   const [expenseTitles, setExpenseTitles] = useState<Record<string, string>>({});
+  const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
+  const submitting = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const load = useCallback(async () => {
     if (!journeyId) return;
-    const [nextFindings, nextCounts, expenses] = await Promise.all([
+    const [nextFindings, nextCounts, expenses, options] = await Promise.all([
       getDefaultLedgerReviewRepository().then((repository) => repository.list(journeyId)),
       getDefaultLedgerReviewRepository().then((repository) =>
         repository.counts(journeyId),
@@ -29,12 +36,19 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
       getDefaultLedgerExpenseRepository().then((repository) =>
         repository.listExpensesForJourney(journeyId),
       ),
+      getDefaultLedgerReportingRepository().then((repository) =>
+        repository.listFilterOptions(journeyId),
+      ),
     ]);
     setFindings(nextFindings);
     setCounts(nextCounts);
     setExpenseTitles(
       Object.fromEntries(expenses.map((expense) => [expense.id, expense.title])),
     );
+    setMemberNames(
+      Object.fromEntries(options.members.map((member) => [member.id, member.label])),
+    );
+    setLoading(false);
   }, [journeyId]);
   const refresh = useCallback(async () => {
     if (!journeyId) return;
@@ -56,15 +70,32 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
     }
     await load();
   }, [journeyId, load]);
-  useEffect(() => {
-    void Promise.resolve().then(load);
-    void Promise.resolve().then(refresh);
-  }, [load, refresh]);
+  useFocusEffect(
+    useCallback(() => {
+      void Promise.resolve()
+        .then(load)
+        .then(refresh)
+        .catch(() => {
+          setLoading(false);
+          setMessage("Review cache is unavailable.");
+        });
+    }, [load, refresh]),
+  );
+  useEffect(
+    () =>
+      subscribeLedgerReview((changedJourneyId) => {
+        if (changedJourneyId === journeyId) void load().catch(() => undefined);
+      }),
+    [journeyId, load],
+  );
   return {
     findings,
     counts,
     expenseTitles,
+    memberNames,
     message,
+    loading,
+    isSubmitting,
     generateDiagnostics: async () => {
       if (!FileSystem.documentDirectory) throw new Error("Diagnostics unavailable.");
       await FileSystem.writeAsStringAsync(
@@ -81,6 +112,9 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
       action: "ACKNOWLEDGED" | "DISMISSED",
       reason: string,
     ) => {
+      if (submitting.current) return;
+      submitting.current = true;
+      setIsSubmitting(true);
       try {
         await (await getDefaultLedgerReviewRepository()).act(findingId, action, reason);
         await load();
@@ -89,6 +123,9 @@ export function useLedgerReview(journeyId = stage3JourneyId) {
           .catch(() => setMessage("Offline · Review action queued for sync"));
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Review action failed.");
+      } finally {
+        submitting.current = false;
+        setIsSubmitting(false);
       }
     },
   };

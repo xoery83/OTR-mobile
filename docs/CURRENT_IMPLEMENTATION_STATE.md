@@ -2,6 +2,12 @@
 
 Date: 2026-09-17
 
+## Review 2.0 Phase 3 — implementation underway
+
+- Phase 1 and Phase 2 remain Hosted Dev Accepted/Complete; no underlying Review rules, authorization, migrations or Backend protocol were redesigned. Phase 3 is **not accepted or complete**.
+- Review inbox implementation now separates active personal pending from active personal reviewed, adds six category chips and collapsed Reviewed/History sections. Detail reads immutable v2 observation context for five rules; Ledger attention uses repository pending count. A post-commit local notification and focus reload repair list/detail/banner navigation staleness. See `docs/ledger/REVIEW_2_0_PHASE_3_INBOX_AND_DETAIL_UX.md` for scope and acceptance matrix.
+- TypeScript, ESLint, 74 Vitest files / 271 tests, and signed Simulator/physical Release builds pass. Real Owner UI on iPhone 17 Pro Simulator and physical iPhone 16 Pro verified category filtering, Reviewed, Duplicate/Participants detail, immediate ACK/Dismiss and Ledger banner count, including no stale first frame on return after the notification fix. Remaining categories with no current samples, offline, Expense resolution, zero-banner and same-device physical multi-account acceptance remain open; Phase 3 is **not complete**. Production remains untouched.
+
 ## Review 2.0 Phase 1+2 — Accepted/Complete
 
 Status: **Accepted/Complete** for Hosted Dev Phase 1+2 implementation, deployment, and multi-account/device acceptance. Phase 2 is not blocked. Phase 3 has not started and remains a separate scope.

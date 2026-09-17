@@ -18,6 +18,7 @@ import { GlobalMenu } from "@/components/GlobalMenu";
 import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
+import { subscribeLedgerReview } from "@/data/repositories/ledgerReviewRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import type {
   LedgerJourneyOption,
@@ -212,7 +213,7 @@ export function LedgerStage6Screen() {
           settlements,
           options,
           memberSpending,
-          findings,
+          reviewCounts,
           selectedMember,
         ] = await Promise.all([
           repository.summarize(query),
@@ -224,7 +225,7 @@ export function LedgerStage6Screen() {
             ? repository.analyze({ ...query, scope: "GROUP" }, "PARTICIPANT")
             : Promise.resolve([]),
           getDefaultLedgerReviewRepository().then((review) =>
-            review.list(nextJourney.journeyId),
+            review.counts(nextJourney.journeyId),
           ),
           selectedMemberId
             ? Promise.all([
@@ -261,9 +262,7 @@ export function LedgerStage6Screen() {
           categories: nextCategories.slice(0, 5),
           members: options.members,
           memberSpending,
-          reviewCount: findings.filter(
-            (finding) => finding.status === "OPEN" || finding.status === "ACKNOWLEDGED",
-          ).length,
+          reviewCount: reviewCounts.pending,
           selectedMember: selectedMemberIdRef.current ? selectedMember : null,
           expenses: nextExpenses,
           settlement: summarizeSettlement(settlements, nextMemberId),
@@ -356,6 +355,24 @@ export function LedgerStage6Screen() {
     await loadContext();
   }, [loadContext]);
 
+  useEffect(
+    () =>
+      subscribeLedgerReview((changedJourneyId) => {
+        if (changedJourneyId !== journey?.journeyId) return;
+        void getDefaultLedgerReviewRepository()
+          .then((repository) => repository.counts(changedJourneyId))
+          .then(({ pending }) =>
+            setProjection((current) =>
+              current?.journey.journeyId === changedJourneyId
+                ? { ...current, reviewCount: pending }
+                : current,
+            ),
+          )
+          .catch(() => undefined);
+      }),
+    [journey?.journeyId],
+  );
+
   const syncStatus = useLedgerActiveSync(
     (journey?.journeyId ?? fallbackJourneyId) || null,
     handleLedgerChanged,
@@ -364,6 +381,7 @@ export function LedgerStage6Screen() {
   useFocusEffect(
     useCallback(() => {
       let active = true;
+      void loadContext().catch(() => setMessage("Ledger cache is unavailable."));
       void getDefaultLedgerReportingRepository()
         .then((repository) => repository.getPreferences())
         .then((preferences) => {
@@ -373,17 +391,8 @@ export function LedgerStage6Screen() {
       return () => {
         active = false;
       };
-    }, []),
+    }, [loadContext]),
   );
-
-  useEffect(() => {
-    void Promise.resolve()
-      .then(() => loadContext())
-      .catch(() => {
-        setLoading(false);
-        setMessage("Ledger cache is unavailable.");
-      });
-  }, [loadContext]);
 
   useEffect(() => {
     const id = journey?.journeyId ?? fallbackJourneyId;

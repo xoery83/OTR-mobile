@@ -1,42 +1,60 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { useLedgerReview } from "@/hooks/useLedgerReview";
-
+import { reviewCardEvidence } from "./reviewEvidence";
+import { reviewCategories, reviewInbox, type ReviewCategory } from "./reviewInbox";
 import { reviewFindingCopy, reviewStatusLabel } from "./settlementPresentation";
 
 export function LedgerReviewScreen() {
   const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
-  const { expenseTitles, findings, counts, message } = useLedgerReview(journeyId);
-  const actionableCount = counts.pending;
+  const { findings, message, loading } = useLedgerReview(journeyId);
+  const [category, setCategory] = useState<ReviewCategory>("All");
+  const [expanded, setExpanded] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const inbox = useMemo(() => reviewInbox(findings, category), [findings, category]);
 
   return (
     <>
       <Stack.Screen options={{ title: "Review" }} />
-      <FlatList
+      <SectionList
         contentContainerStyle={styles.content}
-        data={findings}
-        initialNumToRender={12}
+        sections={[
+          { title: "OPEN", data: inbox.pending },
+          { title: "REVIEWED", data: expanded ? inbox.reviewed : [] },
+          { title: "HISTORY", data: historyExpanded ? inbox.history : [] },
+        ]}
         keyExtractor={(finding) => finding.id}
-        ListEmptyComponent={
-          <View style={styles.emptyCard}>
-            <Text accessibilityRole="header" style={styles.emptyTitle}>
-              Nothing needs review
-            </Text>
-            <Text style={styles.meta}>Your cached Ledger findings are clear.</Text>
-          </View>
-        }
+        initialNumToRender={12}
+        windowSize={7}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.subtitle}>
-              {actionableCount
-                ? `${actionableCount} item${actionableCount === 1 ? "" : "s"} need a decision.`
-                : "No current findings need a decision."}
+            <Text accessibilityRole="header" style={styles.subtitle}>
+              {inbox.counts.All} item{inbox.counts.All === 1 ? "" : "s"} need a decision
             </Text>
-            <Text style={styles.meta}>
-              Review actions record your decision but never change an Expense by
-              themselves.
-            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chips}
+            >
+              {reviewCategories.map((name) => (
+                <Pressable
+                  key={name}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${name}, ${inbox.counts[name]} pending`}
+                  accessibilityState={{ selected: category === name }}
+                  onPress={() => setCategory(name)}
+                  style={[styles.chip, category === name && styles.selectedChip]}
+                >
+                  <Text
+                    style={category === name ? styles.selectedChipText : styles.chipText}
+                  >
+                    {name} {inbox.counts[name]}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
             {message ? (
               <Text accessibilityLiveRegion="polite" style={styles.message}>
                 {message}
@@ -44,15 +62,57 @@ export function LedgerReviewScreen() {
             ) : null}
           </View>
         }
+        renderSectionHeader={({ section }) =>
+          section.title === "OPEN" ? (
+            <View>
+              <Text style={styles.section}>OPEN</Text>
+              {!inbox.pending.length ? (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptyTitle}>
+                    {loading
+                      ? "Loading Review…"
+                      : category === "All" && !inbox.counts.All
+                        ? "Nothing needs review"
+                        : "No open items in this category"}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : section.title === "REVIEWED" ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Reviewed ${inbox.reviewedTotal}`}
+              accessibilityState={{ expanded }}
+              onPress={() => setExpanded((value) => !value)}
+              style={styles.accordion}
+            >
+              <Text style={styles.section}>
+                {expanded ? "⌄" : "›"} Reviewed {inbox.reviewedTotal}
+              </Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`History ${inbox.history.length}`}
+              accessibilityState={{ expanded: historyExpanded }}
+              onPress={() => setHistoryExpanded((value) => !value)}
+              style={styles.accordion}
+            >
+              <Text style={styles.section}>
+                {historyExpanded ? "⌄" : "›"} History {inbox.history.length}
+              </Text>
+            </Pressable>
+          )
+        }
         renderItem={({ item: finding }) => {
           const copy = reviewFindingCopy(finding);
-          const expenseTitle = finding.expenseId
-            ? (expenseTitles[finding.expenseId] ?? "Expense")
-            : "Current Journey";
+          const context = finding.observationContext;
+          const title = String(context?.expenseTitleSnapshot ?? "Expense");
+          const date = String(context?.expenseDateSnapshot ?? "");
           return (
             <Pressable
-              accessibilityLabel={`${copy.title}, ${expenseTitle}, ${reviewStatusLabel(finding.status)}`}
               accessibilityRole="button"
+              accessibilityLabel={`${copy.title}, ${title}, ${reviewStatusLabel(finding.status)}`}
               onPress={() =>
                 router.push({
                   pathname: "/expenses/review/[id]",
@@ -62,16 +122,18 @@ export function LedgerReviewScreen() {
               style={styles.card}
             >
               <View style={styles.grow}>
+                <Text style={styles.category}>{finding.ruleCategory}</Text>
                 <Text style={styles.cardTitle}>{copy.title}</Text>
-                <Text style={styles.expenseTitle}>{expenseTitle}</Text>
-                <Text numberOfLines={2} style={styles.meta}>
-                  {copy.why}
+                <Text style={styles.expenseTitle}>
+                  {title}
+                  {date ? ` · ${date}` : ""}
                 </Text>
-                <Text
-                  style={finding.status === "OPEN" ? styles.needsReview : styles.resolved}
-                >
-                  {reviewStatusLabel(finding.status)}
+                <Text numberOfLines={1} style={styles.meta}>
+                  {reviewCardEvidence(finding)}
                 </Text>
+                {finding.personalDecision !== "NEEDS_REVIEW" ? (
+                  <Text style={styles.reviewed}>{reviewStatusLabel(finding.status)}</Text>
+                ) : null}
               </View>
               <Text importantForAccessibility="no" style={styles.chevron}>
                 ›
@@ -79,7 +141,6 @@ export function LedgerReviewScreen() {
             </Pressable>
           );
         }}
-        windowSize={7}
       />
     </>
   );
@@ -87,25 +148,38 @@ export function LedgerReviewScreen() {
 
 const styles = StyleSheet.create({
   content: { gap: 10, padding: 16, paddingBottom: 40 },
-  header: { gap: 7, paddingBottom: 6 },
-  subtitle: { color: "#334155", fontSize: 17, fontWeight: "700" },
-  message: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
-  emptyCard: { backgroundColor: "#E7F5F2", borderRadius: 14, gap: 6, padding: 18 },
-  emptyTitle: { color: "#0F766E", fontSize: 19, fontWeight: "800" },
+  header: { gap: 12, paddingBottom: 8 },
+  subtitle: { color: "#334155", fontSize: 18, fontWeight: "700" },
+  message: { color: "#0F766E", fontSize: 14 },
+  chips: { gap: 8, paddingVertical: 4 },
+  chip: {
+    borderColor: "#CBD5E1",
+    borderRadius: 18,
+    borderWidth: 1,
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  selectedChip: { backgroundColor: "#0F766E", borderColor: "#0F766E" },
+  chipText: { color: "#334155", fontWeight: "700" },
+  selectedChipText: { color: "#FFFFFF", fontWeight: "700" },
+  section: { color: "#64748B", fontSize: 14, fontWeight: "800", paddingVertical: 10 },
+  accordion: { minHeight: 48, justifyContent: "center" },
+  emptyCard: { backgroundColor: "#E7F5F2", borderRadius: 14, padding: 18 },
+  emptyTitle: { color: "#0F766E", fontSize: 18, fontWeight: "700" },
   card: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderRadius: 14,
     flexDirection: "row",
-    gap: 10,
-    minHeight: 116,
+    minHeight: 108,
     padding: 14,
   },
   grow: { flex: 1 },
+  category: { color: "#0F766E", fontSize: 12, fontWeight: "700" },
   cardTitle: { color: "#0F172A", fontSize: 17, fontWeight: "800" },
-  expenseTitle: { color: "#334155", fontSize: 15, fontWeight: "700", marginTop: 2 },
-  needsReview: { color: "#9A3412", fontSize: 13, fontWeight: "800", marginTop: 5 },
-  resolved: { color: "#0F766E", fontSize: 13, fontWeight: "800", marginTop: 5 },
+  expenseTitle: { color: "#334155", fontSize: 15, marginTop: 3 },
+  meta: { color: "#64748B", fontSize: 14, marginTop: 4 },
+  reviewed: { color: "#0F766E", fontSize: 13, fontWeight: "700", marginTop: 5 },
   chevron: { color: "#64748B", fontSize: 26 },
 });
