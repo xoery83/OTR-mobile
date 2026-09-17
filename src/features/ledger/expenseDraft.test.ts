@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { buildDraftSplits, parsePercentageUnits } from "./expenseDraft";
+import {
+  buildDraftSplits,
+  correctedCurrencyDraft,
+  parseCurrencyAmount,
+  parsePercentageUnits,
+  preservesExpenseValuation,
+} from "./expenseDraft";
 
 const members = [
   { id: "a", displayName: "A", householdId: "home-a", shareUnits: 1000 },
@@ -47,5 +53,76 @@ describe("Expense draft allocation", () => {
     ).toEqual([40, 60]);
     expect(parsePercentageUnits("33.3333")).toBe(333_333);
     expect(parsePercentageUnits("100.0001")).toBeNull();
+  });
+});
+
+describe("Expense currency and date correction", () => {
+  it("keeps the visible number, never converts it, and reparses at the new ISO scale", () => {
+    const draft = correctedCurrencyDraft({ amount: "100.00", currency: "NZD" }, "EUR");
+    expect(draft).toEqual({ amount: "100.00", currency: "EUR" });
+    expect(parseCurrencyAmount(draft.amount, 2)).toBe(10_000);
+    expect(parseCurrencyAmount("100.00", 0)).toBe(100);
+    expect(parseCurrencyAmount("100.01", 0)).toBeNull();
+    expect(parseCurrencyAmount("100.12", 3)).toBe(100_120);
+    expect(parseCurrencyAmount("100.120", 2)).toBe(10_012);
+    expect(parseCurrencyAmount("100.121", 2)).toBeNull();
+  });
+
+  it("reparses exact splits under target scale, including zero shares", () => {
+    expect(parseCurrencyAmount("40.00", 0, true)).toBe(40);
+    expect(parseCurrencyAmount("60.00", 0, true)).toBe(60);
+    expect(parseCurrencyAmount("0.00", 0, true)).toBe(0);
+    expect(parseCurrencyAmount("40.50", 0, true)).toBeNull();
+    expect(
+      buildDraftSplits({
+        mode: "EXACT",
+        originalMinor: 100,
+        settlementMinor: null,
+        members: members.slice(0, 2),
+        exactMinor: { a: 40, b: 60 },
+      }).map((split) => split.originalMinor),
+    ).toEqual([40, 60]);
+  });
+
+  it("invalidates an incompatible original or provably changed stored date label", () => {
+    const existing = {
+      original: { minor: 10_000, currency: "NZD", scale: 2 },
+      occurredAt: "2026-07-15T00:30:00Z",
+    };
+    expect(preservesExpenseValuation(existing, existing.original, "2026-07-15")).toBe(
+      true,
+    );
+    expect(
+      preservesExpenseValuation(
+        existing,
+        { ...existing.original, minor: 10_001 },
+        "2026-07-15",
+      ),
+    ).toBe(false);
+    expect(
+      preservesExpenseValuation(
+        existing,
+        { minor: 10_000, currency: "EUR", scale: 2 },
+        "2026-07-15",
+      ),
+    ).toBe(false);
+    expect(preservesExpenseValuation(existing, existing.original, "2026-07-16")).toBe(
+      false,
+    );
+  });
+
+  it("supports same-currency identity after a correction without reusing FX evidence", () => {
+    const existing = {
+      original: { minor: 10_000, currency: "EUR", scale: 2 },
+      occurredAt: "2026-07-15",
+    };
+    const corrected = {
+      minor: parseCurrencyAmount("100.00", 2)!,
+      currency: "NZD",
+      scale: 2,
+    };
+    expect(preservesExpenseValuation(existing, corrected, "2026-07-15")).toBe(false);
+    expect(corrected.minor).toBe(10_000);
+    expect(corrected.currency).toBe("NZD");
   });
 });

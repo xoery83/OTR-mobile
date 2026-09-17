@@ -123,6 +123,7 @@ function createInMemoryLedgerDatabase() {
           rateSnapshotId,
           paymentRecordId,
           reason,
+          isActive,
         ] = params;
         valuations.set(expenseId as string, {
           id,
@@ -136,7 +137,11 @@ function createInMemoryLedgerDatabase() {
           rateSnapshotId,
           paymentRecordId,
           reason,
+          isActive,
         });
+      } else if (sql.includes("UPDATE ledger_valuation_snapshots SET is_active = 0")) {
+        const existing = valuations.get(params[0] as string);
+        if (existing) existing.isActive = 0;
       } else if (sql.includes("INTO ledger_payment_records")) {
         const [
           id,
@@ -270,7 +275,8 @@ function createInMemoryLedgerDatabase() {
         ) as T | null;
       }
       if (sql.includes("FROM ledger_valuation_snapshots")) {
-        return (valuations.get(id) ?? null) as T | null;
+        const value = valuations.get(id);
+        return (value?.isActive ? value : null) as T | null;
       }
       return null;
     },
@@ -299,6 +305,7 @@ function createInMemoryLedgerDatabase() {
     expenses,
     operations,
     auditEvents,
+    valuations,
     transactionCount: () => transactionCount,
   };
 }
@@ -453,6 +460,43 @@ describe("Ledger Expense repository", () => {
       "TOMBSTONED",
       "RESTORED",
     ]);
+  });
+
+  it("retains historical valuation evidence while a date correction becomes RATE_REQUIRED", async () => {
+    const { database, valuations, operations, auditEvents } =
+      createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const created = await repository.createExpense(command);
+    await expect(
+      repository.updateExpense(
+        created.id,
+        { ...command, occurredAt: "2026-09-12", valuation: created.valuation },
+        "Wrong date",
+      ),
+    ).rejects.toThrow(/cannot retain/);
+
+    const corrected = await repository.updateExpense(
+      created.id,
+      {
+        ...command,
+        occurredAt: "2026-09-12",
+        valuation: null,
+        status: "RATE_REQUIRED",
+        splits: command.splits.map((split) => ({ ...split, settlementMinor: null })),
+      },
+      "Corrected date",
+    );
+    expect(corrected.status).toBe("RATE_REQUIRED");
+    expect((await repository.getExpense(created.id))?.valuation).toBeNull();
+    expect(valuations.get(created.id)).toMatchObject({ id: "valuation-a", isActive: 0 });
+    expect(JSON.parse(operations[1]!.payloadJson as string)).toMatchObject({
+      expense: {
+        occurredAt: "2026-09-12",
+        valuation: null,
+        businessStatus: "RATE_REQUIRED",
+      },
+    });
+    expect(auditEvents.map((event) => event.eventType)).toEqual(["CREATED", "UPDATED"]);
   });
 
   it("queues append-only PaymentRecord evidence without revising the Expense", async () => {

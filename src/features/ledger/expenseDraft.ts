@@ -8,6 +8,7 @@ import {
   validateExactAllocation,
 } from "@/domain/ledger/allocation";
 import type { ExpenseSplit, ExpenseSplitMethod } from "@/domain/ledger/types";
+import { parseAmountToMinor } from "@/domain/expense/money";
 
 export const EXPENSE_CATEGORIES = [
   "flight",
@@ -103,4 +104,40 @@ export function parsePercentageUnits(value: string): number | null {
 export function formatMinorInput(minor: number, scale: number) {
   const value = String(minor).padStart(scale + 1, "0");
   return scale === 0 ? value : `${value.slice(0, -scale)}.${value.slice(-scale)}`;
+}
+
+export function parseCurrencyAmount(value: string, scale: number, allowZero = false) {
+  const match = /^(\d+)(?:\.(\d+))?$/.exec(value.trim());
+  if (!match) return null;
+  const fraction = match[2] ?? "";
+  if (fraction.slice(scale).replace(/0/g, "")) return null;
+  const normalized = scale
+    ? `${match[1]}.${fraction.slice(0, scale).padEnd(scale, "0")}`
+    : match[1];
+  if (allowZero && /^0+$/.test(match[1]) && (!fraction || /^0+$/.test(fraction)))
+    return 0;
+  return parseAmountToMinor(normalized, scale);
+}
+
+export function correctedCurrencyDraft<T extends { currency: string; amount: string }>(
+  draft: T,
+  currency: string,
+): T {
+  return { ...draft, currency };
+}
+
+export function preservesExpenseValuation(
+  previous: {
+    original: { minor: number; currency: string; scale: number };
+    occurredAt: string;
+  },
+  original: { minor: number; currency: string; scale: number },
+  selectedDate: string,
+) {
+  return (
+    previous.original.minor === original.minor &&
+    previous.original.currency === original.currency &&
+    previous.original.scale === original.scale &&
+    previous.occurredAt.slice(0, 10) === selectedDate
+  );
 }

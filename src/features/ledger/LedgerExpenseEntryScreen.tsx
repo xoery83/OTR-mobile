@@ -31,7 +31,6 @@ import type {
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
-import { parseAmountToMinor } from "@/domain/expense/money";
 import { currencyScale } from "@/domain/ledger/currency";
 import type {
   ExpenseSettlementParticipation,
@@ -41,10 +40,13 @@ import { createLocalId } from "@/domain/localId";
 
 import {
   buildDraftSplits,
+  correctedCurrencyDraft,
   type DraftMember,
   EXPENSE_CATEGORIES,
   formatMinorInput,
+  parseCurrencyAmount,
   parsePercentageUnits,
+  preservesExpenseValuation,
 } from "./expenseDraft";
 import { formatLedgerMoney } from "./format";
 import { CurrencyPicker } from "./CurrencyPicker";
@@ -164,14 +166,16 @@ export function LedgerExpenseEntryScreen() {
     [context?.members, draft?.participantIds],
   );
   const scale = draft ? currencyScale(draft.currency) : null;
-  const minor = draft && scale !== null ? parseAmountToMinor(draft.amount, scale) : null;
+  const minor = draft && scale !== null ? parseCurrencyAmount(draft.amount, scale) : null;
+  const amountPrecisionError = Boolean(draft?.amount.trim() && minor === null);
   const settlementMinor =
     minor !== null && context && draft
       ? draft.currency === context.settlementCurrency
         ? minor
         : existing &&
             existing.original.minor === minor &&
-            existing.original.currency === draft.currency
+            existing.original.currency === draft.currency &&
+            existing.occurredAt.slice(0, 10) === draft.date
           ? (existing.valuation?.settlement.minor ?? null)
           : null
       : null;
@@ -188,7 +192,7 @@ export function LedgerExpenseEntryScreen() {
           exactMinor: Object.fromEntries(
             selectedMembers.map((member) => [
               member.id,
-              parseAmountToMinor(draft.exact[member.id] ?? "", scale ?? 2) ?? -1,
+              parseCurrencyAmount(draft.exact[member.id] ?? "", scale ?? 2, true) ?? -1,
             ]),
           ),
           percentageUnits: Object.fromEntries(
@@ -213,6 +217,7 @@ export function LedgerExpenseEntryScreen() {
     draft &&
     minor === existing.original.minor &&
     draft.currency === existing.original.currency &&
+    draft.date === existing.occurredAt.slice(0, 10) &&
     draft.splitMode === existing.splits[0]?.method &&
     sameIds(
       draft.participantIds,
@@ -221,9 +226,10 @@ export function LedgerExpenseEntryScreen() {
     (draft.splitMode !== "EXACT" ||
       existing.splits.every(
         (split) =>
-          parseAmountToMinor(
+          parseCurrencyAmount(
             draft.exact[split.memberId] ?? "",
             existing.original.scale,
+            true,
           ) === split.originalMinor,
       )) &&
     (draft.splitMode !== "PERCENTAGE" ||
@@ -241,7 +247,8 @@ export function LedgerExpenseEntryScreen() {
     : draft?.splitMode === "EXACT"
       ? selectedMembers.reduce(
           (sum, member) =>
-            sum + (parseAmountToMinor(draft.exact[member.id] ?? "", scale ?? 2) ?? 0),
+            sum +
+            (parseCurrencyAmount(draft.exact[member.id] ?? "", scale ?? 2, true) ?? 0),
           0,
         )
       : 0;
@@ -352,10 +359,7 @@ export function LedgerExpenseEntryScreen() {
     try {
       const original = { minor, currency: draft.currency, scale: scale! };
       const preserveValuation = Boolean(
-        existing &&
-        existing.original.minor === minor &&
-        existing.original.currency === draft.currency &&
-        existing.original.scale === scale,
+        existing && preservesExpenseValuation(existing, original, draft.date),
       );
       const valuation = preserveValuation
         ? existing!.valuation
@@ -525,11 +529,20 @@ export function LedgerExpenseEntryScreen() {
           style={styles.amountInput}
           value={draft.amount}
         />
+        {amountPrecisionError ? (
+          <Text style={styles.error}>
+            Enter an amount exactly representable in {draft.currency}; it will not be
+            converted or rounded.
+          </Text>
+        ) : null}
         <FormRow
           label="Currency"
           onPress={() => setCurrencySheet(true)}
           value={draft.currency}
         />
+        <Text style={styles.hint}>
+          Correcting the original currency keeps the number; it does not convert it.
+        </Text>
         <TextInput
           accessibilityLabel="Title or merchant"
           onChangeText={(title) => setDraft({ ...draft, title })}
@@ -616,8 +629,8 @@ export function LedgerExpenseEntryScreen() {
             />
             {draft.currency !== context.settlementCurrency ? (
               <Text style={styles.warning}>
-                Exchange rate required. Save locally now, then complete valuation from the
-                Expense detail.
+                Exchange rate required for Journey Currency totals. Save locally now; no
+                converted value will be assumed.
               </Text>
             ) : null}
           </View>
@@ -642,7 +655,7 @@ export function LedgerExpenseEntryScreen() {
               context.defaultCurrency,
             ]}
             onSelect={(code) => {
-              setDraft({ ...draft, currency: code, amount: "" });
+              setDraft(correctedCurrencyDraft(draft, code));
               setCurrencySheet(false);
             }}
           />

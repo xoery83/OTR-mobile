@@ -209,6 +209,18 @@ export function createLedgerExpenseRepository(
       if (current.status === "DELETED") {
         throw new Error("A deleted expense must be restored before it can be edited.");
       }
+      if (
+        current.valuation &&
+        command.valuation?.id === current.valuation.id &&
+        (command.occurredAt.slice(0, 10) !== current.occurredAt.slice(0, 10) ||
+          command.original.minor !== current.original.minor ||
+          command.original.currency !== current.original.currency ||
+          command.original.scale !== current.original.scale)
+      ) {
+        throw new Error(
+          "Changed original Money or date cannot retain its old valuation.",
+        );
+      }
       const now = new Date().toISOString();
       const expense = buildLocalExpense(
         {
