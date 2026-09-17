@@ -127,7 +127,7 @@ export default function LedgerSettingsRoute() {
             <Text accessibilityRole="header" style={styles.sheetTitle}>
               Default Currency
             </Text>
-            <View style={styles.headerActionButton} />
+            <View style={styles.headerSpacer} />
           </View>
           {currencySheet ? (
             <CurrencyPicker
@@ -198,9 +198,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
   sheetTitle: { color: "#111827", fontSize: 17, fontWeight: "700" },
-  headerAction: { color: "#0F766E", fontSize: 17, fontWeight: "700", padding: 8 },
-  headerActionButton: { justifyContent: "center", minHeight: 44, minWidth: 72 },
+  headerAction: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
+  headerActionButton: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 86,
+    paddingHorizontal: 10,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+  },
+  headerSpacer: { minWidth: 86 },
 });
