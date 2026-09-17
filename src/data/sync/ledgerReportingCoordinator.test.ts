@@ -6,8 +6,9 @@ const repository = {
   getCursor: vi.fn(),
   applyBootstrap: vi.fn(),
   applyChanges: vi.fn(),
+  cacheMyLedger: vi.fn(),
 };
-const transport = { bootstrap: vi.fn(), pull: vi.fn() };
+const transport = { bootstrap: vi.fn(), pull: vi.fn(), myLedger: vi.fn() };
 
 vi.mock("@/data/repositories/defaultLedgerReadRepository", () => ({
   getDefaultLedgerReadRepository: vi.fn(async () => repository),
@@ -17,7 +18,7 @@ vi.mock("@/data/sync/ledgerReadTransport", () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { refreshJourneyLedger } from "./ledgerReportingCoordinator";
+import { refreshJourneyLedger, refreshMyLedger } from "./ledgerReportingCoordinator";
 
 describe("Ledger pull recovery", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -103,5 +104,30 @@ describe("Ledger pull recovery", () => {
       "journey-a",
       "journey-b",
     ]);
+  });
+
+  it("bootstraps newly discovered authorized Journeys into the local directory", async () => {
+    transport.myLedger.mockResolvedValue({
+      journeys: [{ journeyId: "new" }, { journeyId: "second" }, { journeyId: "known" }],
+    });
+    repository.getCursor.mockImplementation(async (journeyId: string) =>
+      journeyId === "known" ? { cursor: "saved" } : null,
+    );
+    transport.bootstrap.mockResolvedValue({ journey: { id: "new" } });
+    let writes = 0;
+    let maxWrites = 0;
+    repository.applyBootstrap.mockImplementation(async () => {
+      writes += 1;
+      maxWrites = Math.max(maxWrites, writes);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      writes -= 1;
+    });
+    await refreshMyLedger("ALL", { from: null, to: null });
+    expect(repository.cacheMyLedger).toHaveBeenCalledOnce();
+    expect(transport.bootstrap).toHaveBeenCalledWith("new");
+    expect(transport.bootstrap).toHaveBeenCalledWith("second");
+    expect(transport.bootstrap).toHaveBeenCalledTimes(2);
+    expect(repository.applyBootstrap).toHaveBeenCalledTimes(2);
+    expect(maxWrites).toBe(1);
   });
 });
