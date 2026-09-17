@@ -42,11 +42,12 @@ describe("Review inbox personal projection", () => {
     expect(all.reviewed.map((item) => item.id)).toEqual(["two"]);
     expect(all.history.map((item) => item.id)).toEqual(["four"]);
     expect(all.counts).toMatchObject({ All: 2, Amount: 1, Duplicate: 1 });
+    expect(all.visibleCategories).toEqual(["All", "Amount", "Duplicate"]);
     for (const category of reviewCategories.slice(1)) {
       const selected = reviewInbox(findings, category);
       expect(
         [...selected.pending, ...selected.reviewed].every(
-          (item) => item.ruleCategory === category,
+          (item) => selected.selectedCategory === "All" || item.ruleCategory === category,
         ),
       ).toBe(true);
       expect(selected.counts.All).toBe(2);
@@ -61,6 +62,11 @@ describe("Review inbox personal projection", () => {
       ).pending,
     ).toHaveLength(1);
     expect(reviewInbox([], "All").counts.All).toBe(0);
+    expect(reviewInbox([], "Duplicate")).toMatchObject({
+      selectedCategory: "All",
+      visibleCategories: ["All"],
+      pending: [],
+    });
   });
 
   it("renders immutable rule evidence without market-rate or OCR claims", () => {

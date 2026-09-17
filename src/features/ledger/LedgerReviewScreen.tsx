@@ -4,7 +4,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { useLedgerReview } from "@/hooks/useLedgerReview";
 import { reviewCardEvidence } from "./reviewEvidence";
-import { reviewCategories, reviewInbox, type ReviewCategory } from "./reviewInbox";
+import { reviewInbox, type ReviewCategory } from "./reviewInbox";
 import { reviewFindingCopy, reviewStatusLabel } from "./settlementPresentation";
 
 export function LedgerReviewScreen() {
@@ -38,17 +38,24 @@ export function LedgerReviewScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.chips}
             >
-              {reviewCategories.map((name) => (
+              {inbox.visibleCategories.map((name) => (
                 <Pressable
                   key={name}
                   accessibilityRole="button"
                   accessibilityLabel={`${name}, ${inbox.counts[name]} pending`}
-                  accessibilityState={{ selected: category === name }}
+                  accessibilityState={{ selected: inbox.selectedCategory === name }}
                   onPress={() => setCategory(name)}
-                  style={[styles.chip, category === name && styles.selectedChip]}
+                  style={[
+                    styles.chip,
+                    inbox.selectedCategory === name && styles.selectedChip,
+                  ]}
                 >
                   <Text
-                    style={category === name ? styles.selectedChipText : styles.chipText}
+                    style={
+                      inbox.selectedCategory === name
+                        ? styles.selectedChipText
+                        : styles.chipText
+                    }
                   >
                     {name} {inbox.counts[name]}
                   </Text>
@@ -71,7 +78,7 @@ export function LedgerReviewScreen() {
                   <Text style={styles.emptyTitle}>
                     {loading
                       ? "Loading Review…"
-                      : category === "All" && !inbox.counts.All
+                      : inbox.selectedCategory === "All" && !inbox.counts.All
                         ? "Nothing needs review"
                         : "No open items in this category"}
                   </Text>

@@ -32,9 +32,14 @@ export function reviewInbox(findings: LedgerReviewFinding[], category: ReviewCat
       pending.filter((item) => name === "All" || item.ruleCategory === name).length,
     ]),
   ) as Record<ReviewCategory, number>;
+  const selectedCategory = category !== "All" && !counts[category] ? "All" : category;
   const matches = (item: LedgerReviewFinding) =>
-    category === "All" || item.ruleCategory === category;
+    selectedCategory === "All" || item.ruleCategory === selectedCategory;
   return {
+    selectedCategory,
+    visibleCategories: reviewCategories.filter(
+      (name) => name === "All" || counts[name] > 0,
+    ),
     pending: pending.filter(matches),
     reviewed: reviewed.filter(matches),
     reviewedTotal: reviewed.length,
