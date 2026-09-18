@@ -283,6 +283,9 @@ apply accepted fields through the existing explicit Expense command path.
 
 ## Settlement Commands
 
+- `POST /v2/trips/:tripId/settlements/fx-preflight` (Hosted Dev only;
+  organizer-authenticated, `{ claimed, accepted, unavailableExpenseIds }`; B2/Phase C only, no preview
+  digest or financial estimate input)
 - `POST /v2/trips/:tripId/settlements/preview`
 - `POST /v2/trips/:tripId/settlements`
 - `POST /v2/trips/:tripId/settlements/:id/reopen`

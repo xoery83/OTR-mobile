@@ -32,6 +32,7 @@ import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedge
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { currencyScale } from "@/domain/ledger/currency";
+import { LedgerValidationError } from "@/domain/ledger/validation";
 import type {
   ExpenseSettlementParticipation,
   ExpenseSplitMethod,
@@ -41,12 +42,15 @@ import { createLocalId } from "@/domain/localId";
 import {
   buildDraftSplits,
   correctedCurrencyDraft,
+  currencyAmountHint,
+  currencyAmountInput,
   type DraftMember,
   EXPENSE_CATEGORIES,
   formatMinorInput,
   parseCurrencyAmount,
   parsePercentageUnits,
   preservesExpenseValuation,
+  proposedExpenseDate,
 } from "./expenseDraft";
 import { formatLedgerMoney } from "./format";
 import { CurrencyPicker } from "./CurrencyPicker";
@@ -66,7 +70,6 @@ type Draft = {
   currency: string;
   title: string;
   date: string;
-  dateConfirmed: boolean;
   payerId: string;
   participantIds: string[];
   splitMode: ExpenseSplitMethod;
@@ -91,6 +94,7 @@ export function LedgerExpenseEntryScreen() {
     journeyId?: string;
     mode?: "manual";
     receiptId?: string;
+    focusDate?: string;
   }>();
   const navigation = useNavigation();
   const [context, setContext] = useState<EntryContext | null>(null);
@@ -119,6 +123,7 @@ export function LedgerExpenseEntryScreen() {
         setExisting(value.existing);
         setDraft(value.draft);
         setInitialSnapshot(JSON.stringify(value.draft));
+        if (params.focusDate === "1") setDatePicker(true);
       })
       .catch((cause) => {
         if (active)
@@ -132,7 +137,7 @@ export function LedgerExpenseEntryScreen() {
     return () => {
       active = false;
     };
-  }, [params.expenseId, params.journeyId, params.receiptId]);
+  }, [params.expenseId, params.journeyId, params.receiptId, params.focusDate]);
 
   const dirty = Boolean(
     draft &&
@@ -169,7 +174,7 @@ export function LedgerExpenseEntryScreen() {
   const scale = draft ? currencyScale(draft.currency) : null;
   const minor = draft && scale !== null ? parseCurrencyAmount(draft.amount, scale) : null;
   const amountPrecisionError = Boolean(draft?.amount.trim() && minor === null);
-  const selectedEconomicDate = draft?.dateConfirmed ? draft.date : null;
+  const selectedEconomicDate = draft?.date || null;
   const settlementMinor =
     minor !== null && context && draft
       ? draft.currency === context.settlementCurrency
@@ -357,6 +362,7 @@ export function LedgerExpenseEntryScreen() {
     if (!context || !draft || minor === null || !effectiveSplits || savingRef.current)
       return;
     if (!draft.title.trim()) return setError("Enter a title or merchant.");
+    if (!draft.date) return setError("Add an Expense date.");
     savingRef.current = true;
     setSaving(true);
     setError(null);
@@ -425,13 +431,21 @@ export function LedgerExpenseEntryScreen() {
       }
       notifyLedgerReviewExpenseSaved(saved.journeyId);
       allowClose.current = true;
-      router.replace({
-        pathname: "/expenses/expense/[id]",
-        params: { id: saved.id, saved: "1" },
-      });
+      if (existing) router.back();
+      else
+        router.replace({
+          pathname: "/expenses/expense/[id]",
+          params: { id: saved.id },
+        });
       kickLedgerOperationalSync();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Expense could not be saved.");
+      setError(
+        cause instanceof LedgerValidationError
+          ? "Check the amount and participant shares before saving."
+          : cause instanceof Error
+            ? cause.message
+            : "Expense could not be saved.",
+      );
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -500,7 +514,7 @@ export function LedgerExpenseEntryScreen() {
   }
 
   const payer = context.members.find((member) => member.id === draft.payerId);
-  const date = dateFromKey(draft.date);
+  const date = draft.date ? dateFromKey(draft.date) : new Date();
 
   return (
     <KeyboardAvoidingView
@@ -514,7 +528,7 @@ export function LedgerExpenseEntryScreen() {
           headerLeft: () => <HeaderAction label="Cancel" onPress={close} />,
           headerRight: () => (
             <HeaderAction
-              disabled={!draft.title.trim() || !effectiveSplits || saving}
+              disabled={!draft.title.trim() || !draft.date || !effectiveSplits || saving}
               label={saving ? "Saving…" : "Save"}
               onPress={() => void save()}
             />
@@ -528,18 +542,22 @@ export function LedgerExpenseEntryScreen() {
         <TextInput
           accessibilityLabel="Expense amount"
           autoFocus={!existing}
-          inputMode="decimal"
-          keyboardType="decimal-pad"
+          inputMode={scale === 0 ? "numeric" : "decimal"}
+          keyboardType={scale === 0 ? "number-pad" : "decimal-pad"}
           maxFontSizeMultiplier={2}
-          onChangeText={(amount) => setDraft({ ...draft, amount })}
+          onChangeText={(value) =>
+            setDraft({
+              ...draft,
+              amount: currencyAmountInput(draft.amount, value, scale ?? 2),
+            })
+          }
           placeholder="0"
           style={styles.amountInput}
           value={draft.amount}
         />
         {amountPrecisionError ? (
           <Text style={styles.error}>
-            Enter an amount exactly representable in {draft.currency}; it will not be
-            converted or rounded.
+            {currencyAmountHint(draft.currency, scale ?? 2)}
           </Text>
         ) : null}
         <FormRow
@@ -547,9 +565,6 @@ export function LedgerExpenseEntryScreen() {
           onPress={() => setCurrencySheet(true)}
           value={draft.currency}
         />
-        <Text style={styles.hint}>
-          Correcting the original currency keeps the number; it does not convert it.
-        </Text>
         <TextInput
           accessibilityLabel="Title or merchant"
           onChangeText={(title) => setDraft({ ...draft, title })}
@@ -560,15 +575,8 @@ export function LedgerExpenseEntryScreen() {
         <FormRow
           label="Expense date"
           onPress={() => setDatePicker(true)}
-          value={draft.date}
+          value={draft.date || "Add date"}
         />
-        {existing && !draft.dateConfirmed ? (
-          <FormRow
-            label="Confirm date"
-            onPress={() => setDraft({ ...draft, dateConfirmed: true })}
-            value="Needed before using a historical exchange rate"
-          />
-        ) : null}
         <FormRow
           label="Paid by"
           onPress={choosePayer}
@@ -596,9 +604,9 @@ export function LedgerExpenseEntryScreen() {
               })
               .join(" · ")}
           </Text>
-        ) : (
+        ) : minor !== null ? (
           <Text style={styles.error}>{splitResult.error}</Text>
-        )}
+        ) : null}
         {selectedMembers.length > 1 ? (
           <FormRow
             label="Group settlement"
@@ -641,12 +649,6 @@ export function LedgerExpenseEntryScreen() {
               style={[styles.textInput, styles.notes]}
               value={draft.notes}
             />
-            {draft.currency !== context.settlementCurrency ? (
-              <Text style={styles.warning}>
-                Exchange rate required for Journey Currency totals. Save locally now; no
-                converted value will be assumed.
-              </Text>
-            ) : null}
           </View>
         ) : null}
         {receiptId && params.receiptId ? (
@@ -669,7 +671,17 @@ export function LedgerExpenseEntryScreen() {
               context.defaultCurrency,
             ]}
             onSelect={(code) => {
-              setDraft(correctedCurrencyDraft(draft, code));
+              const corrected = correctedCurrencyDraft(draft, code);
+              setDraft({
+                ...corrected,
+                exact: Object.fromEntries(
+                  Object.entries(draft.exact).map(([id, amount]) => [
+                    id,
+                    correctedCurrencyDraft({ amount, currency: draft.currency }, code)
+                      .amount,
+                  ]),
+                ),
+              });
               setCurrencySheet(false);
             }}
           />
@@ -748,18 +760,28 @@ export function LedgerExpenseEntryScreen() {
                   </Text>
                   <TextInput
                     accessibilityLabel={`${member.displayName} ${draft.splitMode === "EXACT" ? "amount" : "percentage"}`}
-                    keyboardType="decimal-pad"
-                    onChangeText={(value) =>
+                    keyboardType={
+                      draft.splitMode === "EXACT" && scale === 0
+                        ? "number-pad"
+                        : "decimal-pad"
+                    }
+                    onChangeText={(value) => {
+                      const field = draft.splitMode === "EXACT" ? "exact" : "percentages";
                       setDraft({
                         ...draft,
-                        [draft.splitMode === "EXACT" ? "exact" : "percentages"]: {
-                          ...(draft.splitMode === "EXACT"
-                            ? draft.exact
-                            : draft.percentages),
-                          [member.id]: value,
+                        [field]: {
+                          ...draft[field],
+                          [member.id]:
+                            field === "exact"
+                              ? currencyAmountInput(
+                                  draft.exact[member.id] ?? "",
+                                  value,
+                                  scale ?? 2,
+                                )
+                              : value,
                         },
-                      })
-                    }
+                      });
+                    }}
                     placeholder={draft.splitMode === "EXACT" ? draft.currency : "%"}
                     style={[styles.customInput, largeText && styles.customInputLargeText]}
                     value={
@@ -785,7 +807,7 @@ export function LedgerExpenseEntryScreen() {
           mode="date"
           onChange={(_, value) => {
             setDatePicker(false);
-            if (value) setDraft({ ...draft, date: dateKey(value), dateConfirmed: true });
+            if (value) setDraft({ ...draft, date: dateKey(value) });
           }}
           value={date}
         />
@@ -846,13 +868,9 @@ async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: str
         : "",
     currency,
     title: existing?.title ?? suggestion?.title ?? "",
-    date: (
-      existing?.economicDate ??
-      existing?.occurredAt ??
-      suggestion?.occurredAt ??
-      dateKey(new Date())
-    ).slice(0, 10),
-    dateConfirmed: existing ? existing.economicDate != null : true,
+    date: existing
+      ? (proposedExpenseDate(existing) ?? "")
+      : (suggestion?.occurredAt ?? dateKey(new Date())).slice(0, 10),
     payerId: existing?.payerMemberId ?? actorMember.id,
     participantIds,
     splitMode: existing?.splits[0]?.method ?? "EQUAL_PERSON",

@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildDraftSplits,
   correctedCurrencyDraft,
+  currencyAmountHint,
+  currencyAmountInput,
   parseCurrencyAmount,
   parsePercentageUnits,
   preservesExpenseValuation,
+  proposedExpenseDate,
 } from "./expenseDraft";
 
 const members = [
@@ -57,6 +60,15 @@ describe("Expense draft allocation", () => {
 });
 
 describe("Expense currency and date correction", () => {
+  it("proposes a valid legacy day without treating it as confirmed", () => {
+    expect(
+      proposedExpenseDate({ occurredAt: "2026-09-16T23:00:00Z", economicDate: null }),
+    ).toBe("2026-09-16");
+    expect(proposedExpenseDate({ occurredAt: "", economicDate: null })).toBeNull();
+    expect(
+      proposedExpenseDate({ occurredAt: "2026-02-30", economicDate: null }),
+    ).toBeNull();
+  });
   it("keeps the visible number, never converts it, and reparses at the new ISO scale", () => {
     const draft = correctedCurrencyDraft({ amount: "100.00", currency: "NZD" }, "EUR");
     expect(draft).toEqual({ amount: "100.00", currency: "EUR" });
@@ -66,6 +78,26 @@ describe("Expense currency and date correction", () => {
     expect(parseCurrencyAmount("100.12", 3)).toBe(100_120);
     expect(parseCurrencyAmount("100.120", 2)).toBe(10_012);
     expect(parseCurrencyAmount("100.121", 2)).toBeNull();
+    expect(
+      correctedCurrencyDraft({ amount: "2.00", currency: "NZD" }, "ISK").amount,
+    ).toBe("2");
+    expect(
+      correctedCurrencyDraft({ amount: "2.50", currency: "NZD" }, "ISK").amount,
+    ).toBe("2.50");
+    expect(correctedCurrencyDraft({ amount: "2", currency: "ISK" }, "KWD").amount).toBe(
+      "2.000",
+    );
+  });
+
+  it("limits typed precision without trapping an invalid amount after a currency change", () => {
+    expect(currencyAmountInput("2", "2.", 0)).toBe("2");
+    expect(currencyAmountInput("2", "2.5", 0)).toBe("2");
+    expect(currencyAmountInput("2.50", "2.5", 0)).toBe("2.5");
+    expect(currencyAmountInput("12.3", "12.345", 2)).toBe("12.3");
+    expect(currencyAmountInput("12.34", "12.345", 3)).toBe("12.345");
+    expect(currencyAmountInput("12", "12,5", 2)).toBe("12.5");
+    expect(currencyAmountHint("ISK", 0)).toBe("ISK uses whole amounts.");
+    expect(currencyAmountHint("KWD", 3)).toBe("KWD uses up to 3 decimal places.");
   });
 
   it("reparses exact splits under target scale, including zero shares", () => {

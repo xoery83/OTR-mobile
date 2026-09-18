@@ -9,6 +9,19 @@ import {
 } from "@/domain/ledger/allocation";
 import type { ExpenseSplit, ExpenseSplitMethod } from "@/domain/ledger/types";
 import { parseAmountToMinor } from "@/domain/expense/money";
+import { currencyScale } from "@/domain/ledger/currency";
+
+export function proposedExpenseDate(expense: {
+  economicDate?: string | null;
+  occurredAt: string;
+}): string | null {
+  const date = expense.economicDate ?? expense.occurredAt.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return !Number.isNaN(parsed.valueOf()) && parsed.toISOString().slice(0, 10) === date
+    ? date
+    : null;
+}
 
 export const EXPENSE_CATEGORIES = [
   "flight",
@@ -123,7 +136,28 @@ export function correctedCurrencyDraft<T extends { currency: string; amount: str
   draft: T,
   currency: string,
 ): T {
-  return { ...draft, currency };
+  const scale = currencyScale(currency);
+  const minor = scale === null ? null : parseCurrencyAmount(draft.amount, scale);
+  return {
+    ...draft,
+    currency,
+    amount: minor === null ? draft.amount : formatMinorInput(minor, scale!),
+  };
+}
+
+export function currencyAmountInput(previous: string, next: string, scale: number) {
+  const normalized = next.replace(",", ".");
+  const valid =
+    scale === 0
+      ? /^\d*$/.test(normalized)
+      : new RegExp(`^\\d*(?:\\.\\d{0,${scale}})?$`).test(normalized);
+  return normalized.length < previous.length || valid ? normalized : previous;
+}
+
+export function currencyAmountHint(currency: string, scale: number) {
+  return scale === 0
+    ? `${currency} uses whole amounts.`
+    : `${currency} uses up to ${scale} decimal places.`;
 }
 
 export function preservesExpenseValuation(

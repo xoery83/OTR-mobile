@@ -53,6 +53,12 @@ Ledger / Expenses:
   exchange rate snapshot, edit history, permissions, settlement, and export.
 - An accepted Expense may be excluded from group settlement while remaining in
   Spending, search, receipts, history, and consumption analysis.
+- During travel, unresolved FX may have clearly approximate, offline-capable
+  display amounts, spending totals and informational settlement positions from
+  trusted cached reference rates. These never become accepted financial evidence
+  or final payment obligations. Opening Settlement proactively attempts eligible
+  canonical FX resolution; finalization still requires accepted valuations and
+  current authoritative digest, with actionable explanations for true blockers.
 - Review is a financial attention inbox: shared versioned observations preserve
   evidence, while a future per-user decision records acknowledgement or dismissal
   without changing Expense or settlement truth. Review Engine v2 foundation is

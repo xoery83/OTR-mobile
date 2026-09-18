@@ -715,7 +715,7 @@ function FilterSheet({
                 selected={status === "ANY"}
               />
               <Choice
-                label="Needs exchange rate"
+                label="Journey value unavailable"
                 onPress={() =>
                   setDraft(({ conflict: _conflict, ...current }) => ({
                     ...current,

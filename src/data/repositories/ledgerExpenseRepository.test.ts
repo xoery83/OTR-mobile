@@ -427,6 +427,40 @@ describe("Ledger Expense repository", () => {
     }
   });
 
+  it("audits an explicit Save of a displayed legacy date or a changed date, never opening alone", async () => {
+    const { database, operations, auditEvents } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const legacy = {
+      ...command,
+      occurredAt: "2026-09-16T08:30:00Z",
+      economicDate: null,
+      valuation: null,
+      status: "RATE_REQUIRED" as const,
+      splits: command.splits.map((split) => ({ ...split, settlementMinor: null })),
+    };
+    const created = await repository.createExpense(legacy);
+    expect((await repository.getExpense(created.id))?.economicDate).toBeNull();
+    expect(operations).toHaveLength(1);
+    const saved = await repository.updateExpense(
+      created.id,
+      { ...legacy, economicDate: "2026-09-16" },
+      "Edited Expense.",
+    );
+    expect(saved.economicDate).toBe("2026-09-16");
+    expect((await repository.getExpense(created.id))?.economicDate).toBe("2026-09-16");
+    expect(JSON.parse(operations[1]!.payloadJson as string).expense.economicDate).toBe(
+      "2026-09-16",
+    );
+    expect(auditEvents.map((event) => event.eventType)).toEqual(["CREATED", "UPDATED"]);
+
+    const changed = await repository.updateExpense(
+      created.id,
+      { ...legacy, occurredAt: "2026-09-17", economicDate: "2026-09-17" },
+      "Edited Expense.",
+    );
+    expect(changed.economicDate).toBe("2026-09-17");
+  });
+
   it("rehydrates the same persisted aggregate and keeps Journey lists isolated", async () => {
     const { database } = createInMemoryLedgerDatabase();
     const writer = createLedgerExpenseRepository(database, activeUser);

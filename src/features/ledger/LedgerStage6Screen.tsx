@@ -16,6 +16,7 @@ import { router, Stack, useFocusEffect } from "expo-router";
 import { AppIcon } from "@/components/AppIcon";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
+import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import { subscribeLedgerReview } from "@/data/repositories/ledgerReviewRepository";
@@ -44,6 +45,12 @@ import {
   formatLedgerMoney,
   ledgerExpenseAttention,
 } from "./format";
+import {
+  displayTotalProjection,
+  estimatedComponent,
+  type DisplayEstimate,
+} from "./displayEstimate";
+import { loadDisplayEstimates } from "./loadDisplayEstimates";
 import { SettlementReadinessScreen } from "./SettlementReadinessScreen";
 import {
   expenseAmountPresentation,
@@ -85,6 +92,10 @@ type SpendingProjection = {
     categories: ReportingBucket[];
   } | null;
   expenses: LedgerReportListItem[];
+  estimatedMinor: number;
+  estimatedCount: number;
+  estimates: Map<string, DisplayEstimate>;
+  estimateComponents: Map<string, number>;
   settlement: SettlementSnapshot;
 };
 
@@ -245,6 +256,43 @@ export function LedgerStage6Screen() {
               }))
             : Promise.resolve(null),
         ]);
+        const allRows = await repository.listExpenses(
+          query,
+          await repository.countExpenses(query),
+        );
+        const rawExpenses = await (
+          await getDefaultLedgerExpenseRepository()
+        ).listExpensesForJourney(nextJourney.journeyId);
+        const rawById = new Map(rawExpenses.map((expense) => [expense.id, expense]));
+        const estimates = await loadDisplayEstimates(
+          nextJourney.journeyId,
+          nextJourney.settlementCurrency,
+          nextJourney.settlementScale,
+          rawExpenses,
+        );
+        const display = displayTotalProjection(
+          allRows,
+          rawById,
+          estimates,
+          nextScope,
+          nextMemberId,
+        );
+        if (!Number.isSafeInteger(nextSummary.totalMinor + display.estimatedMinor))
+          throw new Error("Display total is unsafe.");
+        const estimateComponents = new Map(
+          nextExpenses.flatMap((row) => {
+            if (row.hasOpenConflict || row.businessStatus !== "RATE_REQUIRED") return [];
+            const raw = rawById.get(row.id);
+            const estimate = estimates.get(row.id);
+            const minor =
+              raw && estimate
+                ? nextScope === "GROUP"
+                  ? estimate.money.minor
+                  : estimatedComponent(raw, estimate, nextMemberId)
+                : null;
+            return minor === null ? [] : [[row.id, minor] as const];
+          }),
+        );
         if (!request.isCurrent(id)) return false;
         memberRequest.cancel();
         scopeRef.current = nextScope;
@@ -265,6 +313,10 @@ export function LedgerStage6Screen() {
           reviewCount: reviewCounts.pending,
           selectedMember: selectedMemberIdRef.current ? selectedMember : null,
           expenses: nextExpenses,
+          estimatedMinor: display.estimatedMinor,
+          estimatedCount: display.estimatedCount,
+          estimates,
+          estimateComponents,
           settlement: summarizeSettlement(settlements, nextMemberId),
         });
         return true;
@@ -552,10 +604,10 @@ export function LedgerStage6Screen() {
                 <Text
                   accessibilityLabel={`${
                     scope === "MINE" ? "You spent" : "Group spent"
-                  } ${
+                  } ${projection?.estimatedCount ? "approximately " : ""}${
                     summary
                       ? formatLedgerMoney(
-                          summary.totalMinor,
+                          summary.totalMinor + (projection?.estimatedMinor ?? 0),
                           journey.settlementCurrency,
                           journey.settlementScale,
                         )
@@ -565,15 +617,18 @@ export function LedgerStage6Screen() {
                   style={styles.totalValue}
                 >
                   {summary
-                    ? formatLedgerMoney(
-                        summary.totalMinor,
+                    ? `${projection?.estimatedCount ? "≈ " : ""}${formatLedgerMoney(
+                        summary.totalMinor + (projection?.estimatedMinor ?? 0),
                         journey.settlementCurrency,
                         journey.settlementScale,
-                      )
+                      )}`
                     : "—"}
                 </Text>
                 <Text maxFontSizeMultiplier={2} style={styles.meta}>
                   {summary?.expenseCount ?? 0} valued Expenses
+                  {projection?.estimatedCount
+                    ? ` · ${projection.estimatedCount} estimated`
+                    : ""}
                 </Text>
               </View>
 
@@ -782,7 +837,11 @@ export function LedgerStage6Screen() {
               >
                 {expenses.map((expense) => {
                   const attention = ledgerExpenseAttention(expense, scope);
-                  const amounts = expenseAmountPresentation(expense, scope);
+                  const amounts = expenseAmountPresentation(
+                    expense,
+                    scope,
+                    projection?.estimateComponents.get(expense.id) ?? null,
+                  );
                   return (
                     <Pressable
                       accessibilityLabel={`${expense.title}, ${amounts.primary}${amounts.total ? `, ${amounts.total}` : ""}${amounts.original ? `, ${amounts.original}` : ""}${amounts.splitLabel ? ", split expense" : ""}${expense.hasReceipt ? ", receipt attached" : ""}${

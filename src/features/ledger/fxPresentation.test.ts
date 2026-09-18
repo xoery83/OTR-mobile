@@ -8,6 +8,7 @@ import { eligibleExpenseQuote, fxStatus } from "./fxPresentation";
 
 const expense = {
   original: { minor: 10000, currency: "EUR", scale: 2 },
+  occurredAt: "2026-07-12T00:00:00Z",
   economicDate: "2026-07-12",
   status: "RATE_REQUIRED",
   valuation: null,
@@ -33,11 +34,22 @@ const quote = {
 
 describe("Expense FX exceptions", () => {
   it("distinguishes unknown economic date, pending reference and accepted valuation in both languages", () => {
-    expect(fxStatus({ ...expense, economicDate: null }, false)).toContain(
-      "Confirm the expense date",
+    expect(fxStatus({ ...expense, economicDate: null }, false)).toBe(
+      "Save Expense date to update Journey value",
     );
-    expect(fxStatus(expense, false)).toBe("Reference rate pending");
-    expect(fxStatus(expense, true)).toBe("参考汇率待获取");
+    expect(
+      fxStatus({ ...expense, economicDate: null, occurredAt: "" }, false),
+    ).toBeNull();
+    expect(fxStatus(expense, false)).toBe("Updating…");
+    expect(fxStatus(expense, true)).toBe("更新中…");
+    expect(fxStatus(expense, false, "MANUAL_AGREED")).toBe("Rate needs review");
+    expect(fxStatus(expense, false, "ACTUAL_PAYER_COST")).toBe("Review payment value");
+    expect(fxStatus(expense, false, "REFERENCE_RATE", true)).toBe(
+      "Resolve expense conflict",
+    );
+    expect(fxStatus({ ...expense, economicDate: null }, false, "MANUAL_AGREED")).toBe(
+      "Save Expense date to update Journey value",
+    );
     expect(
       fxStatus({ ...expense, valuation: { policy: "REFERENCE_RATE" } as never }, false),
     ).toBeNull();

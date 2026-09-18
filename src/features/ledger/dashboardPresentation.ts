@@ -115,6 +115,7 @@ export function expenseAmountPresentation(
     settlementScale: number;
   },
   scope: ReportingScope,
+  estimateMinor: number | null = null,
 ) {
   const settlement =
     expense.settlementMinor === null
@@ -131,7 +132,9 @@ export function expenseAmountPresentation(
   return {
     primary:
       primaryMinor === null
-        ? "—"
+        ? estimateMinor === null
+          ? "—"
+          : `≈ ${formatLedgerMoney(estimateMinor, expense.settlementCurrency, expense.settlementScale)}`
         : formatLedgerMoney(
             primaryMinor,
             expense.settlementCurrency,

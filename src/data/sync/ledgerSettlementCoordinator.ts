@@ -4,6 +4,18 @@ import { assertReplayFixtureWritable } from "@/data/repositories/replayFixtureGu
 
 import { createLedgerSettlementTransport } from "./ledgerSettlementTransport";
 
+export async function preflightSettlementFx(journeyId: string) {
+  const unavailable = new Set<string>();
+  // Each call claims at most four demands on the shared 45-second lease.
+  // ponytail: eight batches cap one foreground action at 32 pairs; paginate further if journeys exceed that.
+  for (let batch = 0; batch < 8; batch++) {
+    const result = await createLedgerSettlementTransport().preflight(journeyId);
+    result.unavailableExpenseIds.forEach((id) => unavailable.add(id));
+    if (result.claimed < 4 && result.accepted < 4) break;
+  }
+  return unavailable;
+}
+
 export async function previewSettlement(journeyId: string, throughTimestamp: string) {
   const repository = await getDefaultLedgerSettlementRepository();
   if (await repository.hasPendingFinancialOperations(journeyId)) {

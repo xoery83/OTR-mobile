@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
@@ -19,14 +19,18 @@ import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository"
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 
 import { ExpenseFxDetails } from "./ExpenseFxDetails";
+import type { DisplayEstimate } from "./displayEstimate";
+import { proposedExpenseDate } from "./expenseDraft";
 import { formatLedgerDate, formatLedgerMoney } from "./format";
+import { journeyValuationPolicy, loadDisplayEstimates } from "./loadDisplayEstimates";
 
 export function LedgerExpenseDetailScreen() {
   const largeText = useWindowDimensions().fontScale > 2;
-  const { id, saved } = useLocalSearchParams<{ id: string; saved?: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
   const [payerName, setPayerName] = useState("Traveller");
   const [receiptCount, setReceiptCount] = useState(0);
+  const [estimate, setEstimate] = useState<DisplayEstimate | null>(null);
   const [hasOpenConflict, setHasOpenConflict] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -37,16 +41,25 @@ export function LedgerExpenseDetailScreen() {
     scale: 2,
     canChange: false,
     locked: true,
+    policy: null as string | null,
   });
-  useEffect(() => {
-    let active = true;
-    if (id) {
-      void getDefaultLedgerExpenseRepository()
-        .then((repository) => repository.getExpense(id))
-        .then(async (nextExpense) => {
-          if (!nextExpense) return [null, false, "Traveller", 0] as const;
-          const [nextHasOpenConflict, members, receipts, actor, journeys, settlement] =
-            await Promise.all([
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      if (id) {
+        void getDefaultLedgerExpenseRepository()
+          .then((repository) => repository.getExpense(id))
+          .then(async (nextExpense) => {
+            if (!nextExpense) return [null, false, "Traveller", 0, null, null] as const;
+            const [
+              nextHasOpenConflict,
+              members,
+              receipts,
+              actor,
+              journeys,
+              settlement,
+              policy,
+            ] = await Promise.all([
               getDefaultLedgerReportingRepository().then((repository) =>
                 repository.hasOpenConflict(id),
               ),
@@ -65,59 +78,90 @@ export function LedgerExpenseDetailScreen() {
               getDefaultLedgerSettlementRepository().then((repository) =>
                 repository.isExpenseFinalized(nextExpense.journeyId, nextExpense.id),
               ),
+              journeyValuationPolicy(nextExpense.journeyId),
             ]);
-          const journey = journeys.find(
-            (item) => item.journeyId === nextExpense.journeyId,
-          );
-          return [
-            nextExpense,
-            nextHasOpenConflict,
-            members.find((member) => member.id === nextExpense.payerMemberId)
-              ?.displayName ?? "Traveller",
-            receipts.filter((receipt) => receipt.expenseId === nextExpense.id).length,
-            {
-              currency:
-                journey?.settlementCurrency ??
-                nextExpense.valuation?.settlement.currency ??
-                "",
-              scale:
-                journey?.settlementScale ?? nextExpense.valuation?.settlement.scale ?? 2,
-              canChange: Boolean(
-                actor?.memberId &&
-                (actor.role === "owner" ||
-                  actor.memberId === nextExpense.creatorMemberId),
-              ),
-              locked: settlement,
+            const journey = journeys.find(
+              (item) => item.journeyId === nextExpense.journeyId,
+            );
+            const currency =
+              journey?.settlementCurrency ??
+              nextExpense.valuation?.settlement.currency ??
+              "";
+            const scale =
+              journey?.settlementScale ?? nextExpense.valuation?.settlement.scale ?? 2;
+            const estimates = currency
+              ? await loadDisplayEstimates(nextExpense.journeyId, currency, scale, [
+                  nextExpense,
+                ])
+              : new Map();
+            return [
+              nextExpense,
+              nextHasOpenConflict,
+              members.find((member) => member.id === nextExpense.payerMemberId)
+                ?.displayName ?? "Traveller",
+              receipts.filter((receipt) => receipt.expenseId === nextExpense.id).length,
+              estimates.get(nextExpense.id) ?? null,
+              {
+                currency,
+                scale,
+                canChange: Boolean(
+                  actor?.memberId &&
+                  (actor.role === "owner" ||
+                    actor.memberId === nextExpense.creatorMemberId),
+                ),
+                locked: settlement,
+                policy,
+              },
+            ] as const;
+          })
+          .then(
+            ([
+              nextExpense,
+              nextHasOpenConflict,
+              nextPayerName,
+              nextReceiptCount,
+              nextEstimate,
+              access,
+            ]) => {
+              if (!active) return;
+              setExpense(nextExpense);
+              setHasOpenConflict(nextHasOpenConflict);
+              setPayerName(nextPayerName);
+              setReceiptCount(nextReceiptCount);
+              setEstimate(nextEstimate);
+              if (access) setFxAccess(access);
             },
-          ] as const;
+          )
+          .catch(() => {
+            if (active) setLoadError(true);
+          })
+          .finally(() => {
+            if (active) setLoading(false);
+          });
+      }
+      return () => {
+        active = false;
+      };
+    }, [id]),
+  );
+  const watchedExpenseId = expense?.id;
+  const watchedSyncStatus = expense?.syncStatus;
+  useEffect(() => {
+    if (!watchedExpenseId || watchedSyncStatus === "SYNCED") return;
+    let active = true;
+    const timer = setInterval(() => {
+      void getDefaultLedgerExpenseRepository()
+        .then((repository) => repository.getExpense(watchedExpenseId))
+        .then((updated) => {
+          if (active && updated) setExpense(updated);
         })
-        .then(
-          ([
-            nextExpense,
-            nextHasOpenConflict,
-            nextPayerName,
-            nextReceiptCount,
-            access,
-          ]) => {
-            if (!active) return;
-            setExpense(nextExpense);
-            setHasOpenConflict(nextHasOpenConflict);
-            setPayerName(nextPayerName);
-            setReceiptCount(nextReceiptCount);
-            if (access) setFxAccess(access);
-          },
-        )
-        .catch(() => {
-          if (active) setLoadError(true);
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-    }
+        .catch(() => undefined);
+    }, 3000);
     return () => {
       active = false;
+      clearInterval(timer);
     };
-  }, [id]);
+  }, [watchedExpenseId, watchedSyncStatus]);
   if (loading)
     return (
       <View style={styles.center}>
@@ -145,24 +189,19 @@ export function LedgerExpenseDetailScreen() {
         title: "Conflict—review required",
         detail: "Choose the correct version before relying on this Expense in totals.",
       }
-    : expense.status === "RATE_REQUIRED"
-      ? expense.economicDate == null
+    : !fxAccess.locked &&
+        expense.status === "RATE_REQUIRED" &&
+        !proposedExpenseDate(expense)
+      ? {
+          title: chinese ? "添加日期" : "Add date",
+          detail: chinese ? "添加消费日期" : "Add an Expense date",
+        }
+      : expense.status !== "RATE_REQUIRED" && expense.status !== "ACCEPTED"
         ? {
-            title: chinese ? "确认消费日期" : "Confirm expense date",
-            detail: chinese
-              ? "确认日期后才能使用历史参考汇率。"
-              : "Confirm the date before a historical reference rate can be used.",
+            title: "Not included in totals",
+            detail: "This Expense is not yet part of the accepted Spending totals.",
           }
-        : {
-            title: chinese ? "参考汇率待获取" : "Reference rate pending",
-            detail: chinese
-              ? "正在等待历史参考汇率。可在汇率详情中选择明确的其他方式。"
-              : "Waiting for a historical reference rate. Rate details offers explicit alternatives when available.",
-          }
-      : {
-          title: "Not included in totals",
-          detail: "This Expense is not yet part of the accepted Spending totals.",
-        };
+        : null;
   const setIncluded = async (included: boolean) => {
     setSavingParticipation(true);
     setParticipationError(null);
@@ -178,6 +217,7 @@ export function LedgerExpenseDetailScreen() {
           description: expense.description,
           category: expense.category,
           occurredAt: expense.occurredAt,
+          economicDate: expense.economicDate,
           original: expense.original,
           participants: expense.participants,
           splits: expense.splits,
@@ -213,9 +253,9 @@ export function LedgerExpenseDetailScreen() {
   };
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      {saved === "1" ? (
+      {expense.syncStatus !== "SYNCED" ? (
         <Text accessibilityLiveRegion="polite" style={styles.saved}>
-          Saved on this iPhone—will sync.
+          {chinese ? "已保存到此 iPhone" : "Saved on this iPhone"}
         </Text>
       ) : null}
       <Text accessibilityRole="header" style={styles.title}>
@@ -226,36 +266,71 @@ export function LedgerExpenseDetailScreen() {
         {formatLedgerDate(expense.economicDate ?? expense.occurredAt)}
       </Text>
       <View style={styles.actions}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() =>
-            router.push({
-              pathname: "/expenses/new",
-              params: { expenseId: expense.id, journeyId: expense.journeyId },
-            })
-          }
-          style={styles.action}
-        >
-          <Text style={styles.actionText}>Edit Expense</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() =>
-            router.push({
-              pathname: "/expenses/receipt",
-              params: { expenseId: expense.id, journeyId: expense.journeyId },
-            })
-          }
-          style={styles.action}
-        >
-          <Text style={styles.actionText}>Attach Receipt</Text>
-        </Pressable>
+        {!fxAccess.locked ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              router.push({
+                pathname: "/expenses/new",
+                params: { expenseId: expense.id, journeyId: expense.journeyId },
+              })
+            }
+            style={styles.action}
+          >
+            <Text style={styles.actionText}>Edit Expense</Text>
+          </Pressable>
+        ) : null}
+        {!fxAccess.locked ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              router.push({
+                pathname: "/expenses/receipt",
+                params: { expenseId: expense.id, journeyId: expense.journeyId },
+              })
+            }
+            style={styles.action}
+          >
+            <Text style={styles.actionText}>Attach Receipt</Text>
+          </Pressable>
+        ) : null}
       </View>
-      {excluded ? (
-        <View style={styles.warning}>
+      {fxAccess.locked ? (
+        <Text style={styles.meta}>
+          {chinese
+            ? "最终结算已完成 · 此账目只读"
+            : "Final settlement completed · read-only"}
+        </Text>
+      ) : null}
+      {excluded && warning ? (
+        <Pressable
+          accessibilityRole={
+            !fxAccess.locked &&
+            expense.status === "RATE_REQUIRED" &&
+            !proposedExpenseDate(expense)
+              ? "button"
+              : undefined
+          }
+          onPress={
+            !fxAccess.locked &&
+            expense.status === "RATE_REQUIRED" &&
+            !proposedExpenseDate(expense)
+              ? () =>
+                  router.push({
+                    pathname: "/expenses/new",
+                    params: {
+                      expenseId: expense.id,
+                      journeyId: expense.journeyId,
+                      focusDate: "1",
+                    },
+                  })
+              : undefined
+          }
+          style={styles.warning}
+        >
           <Text style={styles.warningTitle}>{warning.title}</Text>
           <Text style={styles.meta}>{warning.detail}</Text>
-        </View>
+        </Pressable>
       ) : null}
       <Section label={chinese ? "原始金额" : "ORIGINAL AMOUNT"}>
         <Text style={styles.value}>
@@ -266,13 +341,16 @@ export function LedgerExpenseDetailScreen() {
           )}
         </Text>
       </Section>
-      {fxAccess.currency ? (
+      {fxAccess.currency && expense.original.currency !== fxAccess.currency ? (
         <ExpenseFxDetails
           expense={expense}
           currency={fxAccess.currency}
           scale={fxAccess.scale}
           canChange={fxAccess.canChange && !hasOpenConflict}
           locked={fxAccess.locked}
+          policy={fxAccess.policy}
+          estimate={hasOpenConflict || fxAccess.locked ? null : estimate}
+          blocked={hasOpenConflict}
           onChanged={setExpense}
         />
       ) : null}
@@ -317,8 +395,8 @@ export function LedgerExpenseDetailScreen() {
               expense.settlementParticipation === "INCLUDED" ? "included" : "not included"
             }`}
             accessibilityRole="button"
-            accessibilityState={{ disabled: savingParticipation }}
-            disabled={savingParticipation}
+            accessibilityState={{ disabled: savingParticipation || fxAccess.locked }}
+            disabled={savingParticipation || fxAccess.locked}
             onPress={confirmParticipation}
             style={[styles.participationRow, largeText && styles.stack]}
           >
@@ -335,7 +413,7 @@ export function LedgerExpenseDetailScreen() {
               </Text>
             </View>
             <Text style={styles.change}>
-              {savingParticipation ? "Saving…" : "Change"}
+              {fxAccess.locked ? "Locked" : savingParticipation ? "Saving…" : "Change"}
             </Text>
           </Pressable>
           {participationError ? (
@@ -393,14 +471,7 @@ const styles = StyleSheet.create({
   actionText: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
   warning: { backgroundColor: "#FFF7DB", borderRadius: 10, gap: 4, padding: 13 },
   warningTitle: { color: "#7C5B00", fontWeight: "700" },
-  saved: {
-    backgroundColor: "#CCFBF1",
-    borderRadius: 9,
-    color: "#0F766E",
-    fontSize: 14,
-    fontWeight: "700",
-    padding: 12,
-  },
+  saved: { color: "#64748B", fontSize: 13 },
   section: { backgroundColor: "#FFFFFF", borderRadius: 10, gap: 8, padding: 14 },
   label: { color: "#64748B", fontSize: 12, fontWeight: "700" },
   value: { color: "#111827", fontSize: 23, fontWeight: "800" },

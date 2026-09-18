@@ -15,6 +15,7 @@ import {
   type SettlementAdjustmentFinalizeRequest,
 } from "@/data/api/ledgerSettlementContracts";
 import { readLocalSession } from "@/data/auth/authRepository";
+import { z } from "zod";
 
 type Dependencies = {
   readSession?: typeof readLocalSession;
@@ -37,6 +38,22 @@ async function client(dependencies: Dependencies) {
 
 export function createLedgerSettlementTransport(dependencies: Dependencies = {}) {
   return {
+    async preflight(journeyId: string) {
+      const session = await (dependencies.readSession ?? readLocalSession)();
+      if (!session?.accessToken) throw new Error("Authentication is unavailable.");
+      const api = dependencies.createClient
+        ? dependencies.createClient(session.accessToken)
+        : createApiClient({ accessToken: session.accessToken, timeoutMs: 45_000 });
+      return api.post(
+        `/v2/trips/${journeyId}/settlements/fx-preflight`,
+        {},
+        z.object({
+          claimed: z.number().int(),
+          accepted: z.number().int(),
+          unavailableExpenseIds: z.array(z.string()),
+        }),
+      );
+    },
     async preview(journeyId: string, throughTimestamp: string) {
       return (await client(dependencies)).post(
         `/v2/trips/${journeyId}/settlements/preview`,

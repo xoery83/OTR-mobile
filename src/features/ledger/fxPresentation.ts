@@ -1,6 +1,8 @@
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import type { RateQuote } from "@/domain/ledger/types";
 
+import { proposedExpenseDate } from "./expenseDraft";
+
 export function eligibleExpenseQuote(
   expense: LedgerExpense,
   quotes: RateQuote[],
@@ -31,13 +33,27 @@ export function eligibleExpenseQuote(
 }
 
 export function fxStatus(
-  expense: Pick<LedgerExpense, "status" | "economicDate" | "valuation">,
+  expense: Pick<LedgerExpense, "status" | "economicDate" | "occurredAt" | "valuation">,
   chinese: boolean,
+  policy: string | null = "REFERENCE_RATE",
+  blocked = false,
 ) {
   if (expense.valuation || expense.status !== "RATE_REQUIRED") return null;
+  if (blocked) return chinese ? "需处理账目冲突" : "Resolve expense conflict";
   if (!expense.economicDate)
-    return chinese
-      ? "确认消费日期以计算旅行估值"
-      : "Confirm the expense date to calculate the Journey value";
-  return chinese ? "参考汇率待获取" : "Reference rate pending";
+    return proposedExpenseDate(expense)
+      ? chinese
+        ? "保存消费日期后更新旅行估值"
+        : "Save Expense date to update Journey value"
+      : null;
+  if (policy === "MANUAL_AGREED") return chinese ? "汇率待确认" : "Rate needs review";
+  if (policy === "ACTUAL_PAYER_COST")
+    return chinese ? "付款金额待确认" : "Review payment value";
+  return policy === "REFERENCE_RATE"
+    ? chinese
+      ? "更新中…"
+      : "Updating…"
+    : chinese
+      ? "旅行估值待处理"
+      : "Journey value pending";
 }

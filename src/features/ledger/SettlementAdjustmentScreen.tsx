@@ -90,7 +90,7 @@ export function SettlementAdjustmentScreen() {
                   <View style={styles.grow}>
                     <Text style={styles.rowTitle}>
                       {blocker.reason === "RATE_REQUIRED"
-                        ? "Expense needs an exchange rate"
+                        ? "Journey value needed before settlement"
                         : "Conflicting edit needs review"}
                     </Text>
                     <Text style={styles.meta}>Open Expense</Text>

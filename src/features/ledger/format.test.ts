@@ -34,7 +34,7 @@ describe("Ledger product formatting", () => {
     );
     expect(
       ledgerExpenseAttention({ ...base, businessStatus: "RATE_REQUIRED" }, "GROUP"),
-    ).toBe("Needs exchange rate");
+    ).toBeNull();
     expect(ledgerExpenseAttention({ ...base, hasOpenConflict: true }, "GROUP")).toBe(
       "Conflict—review required",
     );

@@ -144,6 +144,14 @@ export type DevBackendGateway = {
     },
   ): Promise<JourneyCurrencyCommit>;
   acquirePendingRateQuotes?(): Promise<number>;
+  resolveSettlementFx?(
+    userId: string,
+    tripId: string,
+  ): Promise<{
+    claimed: number;
+    accepted: number;
+    unavailableExpenseIds: string[];
+  }>;
   readLedgerReview(
     userId: string,
     tripId: string,
@@ -925,7 +933,7 @@ async function createLedgerEvidence(request: Request, gateway: DevBackendGateway
 
 async function mutateLedgerSettlement(request: Request, gateway: DevBackendGateway) {
   const match = new URL(request.url).pathname.match(
-    /^\/v2\/trips\/([^/]+)\/settlements(?:\/(preview))?$/,
+    /^\/v2\/trips\/([^/]+)\/settlements(?:\/(preview|fx-preflight))?$/,
   );
   if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
   const [, tripId, action] = match;
@@ -937,6 +945,11 @@ async function mutateLedgerSettlement(request: Request, gateway: DevBackendGatew
       "TRIP_WRITE_FORBIDDEN",
       "Organizer settlement access is required.",
     );
+  }
+  if (action === "fx-preflight") {
+    if (!gateway.resolveSettlementFx)
+      throw new HttpError(503, "UNAVAILABLE", "Settlement FX preflight unavailable.");
+    return json(200, await gateway.resolveSettlementFx(user.id, tripId));
   }
   const body = await parseBody(request);
   if (action === "preview") {
@@ -1329,7 +1342,9 @@ export function createDevBackendHandler({
         response = await mutateReceipt(request, gateway);
       } else if (
         request.method === "POST" &&
-        /^\/v2\/trips\/[^/]+\/settlements(?:\/preview)?$/.test(url.pathname)
+        /^\/v2\/trips\/[^/]+\/settlements(?:\/(?:preview|fx-preflight))?$/.test(
+          url.pathname,
+        )
       ) {
         route = "/v2/trips/:tripId/settlements";
         response = await mutateLedgerSettlement(request, gateway);

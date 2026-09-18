@@ -707,6 +707,61 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return acquired;
     },
 
+    async resolveSettlementFx(_userId, tripId) {
+      const claimed = await service.rpc("ledger_claim_settlement_rate_demands", {
+        target_journey: tripId,
+        max_requests: 4,
+      });
+      if (claimed.error) throw new Error("Supabase Dev settlement FX claim failed.");
+      const count = await acquirePendingRateQuotes(
+        service,
+        rateQuoteProvider,
+        (claimed.data ?? []) as ClaimedRateDemand[],
+      );
+      const accepted = await applyPendingReferenceValuations(service, tripId);
+      const [settings, attempts, expenses] = await Promise.all([
+        service
+          .from("ledger_settings")
+          .select("settlement_currency,valuation_policy")
+          .eq("journey_id", tripId)
+          .single(),
+        service
+          .from("ledger_rate_quote_attempts")
+          .select("economic_date,quote_currency,base_currency,status")
+          .eq("journey_id", tripId)
+          .in("status", ["UNSUPPORTED", "NO_REFERENCE_WITHIN_POLICY"]),
+        service
+          .from("expenses")
+          .select("id,economic_date,original_currency")
+          .eq("journey_id", tripId)
+          .eq("business_status", "RATE_REQUIRED")
+          .eq("settlement_participation", "INCLUDED")
+          .is("deleted_at", null),
+      ]);
+      if (settings.error || attempts.error || expenses.error)
+        throw new Error("Supabase Dev settlement FX classification failed.");
+      const currency = String(settings.data.settlement_currency);
+      const unavailable = new Set(
+        (attempts.data ?? []).map(
+          (row) => `${row.economic_date}:${row.quote_currency}:${row.base_currency}`,
+        ),
+      );
+      return {
+        claimed: count,
+        accepted,
+        unavailableExpenseIds:
+          settings.data.valuation_policy === "REFERENCE_RATE"
+            ? (expenses.data ?? [])
+                .filter((row) =>
+                  unavailable.has(
+                    `${row.economic_date}:${row.original_currency}:${currency}`,
+                  ),
+                )
+                .map((row) => String(row.id))
+            : [],
+      };
+    },
+
     async previewLedgerSettlement(_userId, tripId, throughTimestamp) {
       return (await calculateSettlementPreview(service, tripId, throughTimestamp))
         .response;
@@ -1870,12 +1925,19 @@ type AutoReferenceDemand = {
   expense_revision: number;
 };
 
-export async function applyPendingReferenceValuations(service: SupabaseClient) {
-  const listed = await service.rpc("ledger_list_auto_reference_demands", {
-    max_requests: 4,
-  });
+export async function applyPendingReferenceValuations(
+  service: SupabaseClient,
+  journeyId?: string,
+) {
+  const listed = journeyId
+    ? await service.rpc("ledger_list_settlement_auto_reference_demands", {
+        target_journey: journeyId,
+        max_requests: 4,
+      })
+    : await service.rpc("ledger_list_auto_reference_demands", { max_requests: 4 });
   if (listed.error)
     throw new Error("Supabase Dev automatic valuation demand read failed.");
+  let accepted = 0;
   for (const demand of (listed.data ?? []) as AutoReferenceDemand[]) {
     try {
       const expense = await readOneExpenseAggregate(service, demand.expense_id);
@@ -1936,6 +1998,7 @@ export async function applyPendingReferenceValuations(service: SupabaseClient) {
         },
         true,
       );
+      accepted += 1;
       await tryEvaluateLedgerReviewV2(service, demand.journey_id);
       console.info(
         JSON.stringify({
@@ -1980,6 +2043,7 @@ export async function applyPendingReferenceValuations(service: SupabaseClient) {
       );
     }
   }
+  return accepted;
 }
 
 function paymentRowToDto(

@@ -72,7 +72,7 @@ export function ledgerExpenseAttention(
   scope: ReportingScope,
 ) {
   if (expense.hasOpenConflict) return "Conflict—review required";
-  if (expense.businessStatus === "RATE_REQUIRED") return "Needs exchange rate";
+  if (expense.businessStatus === "RATE_REQUIRED") return null;
   if (scope === "MINE" && expense.componentMinor === null) return "Not in your share";
   return expense.isAuthoritative ? null : "Not included in totals";
 }

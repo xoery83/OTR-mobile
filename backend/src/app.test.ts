@@ -27,6 +27,11 @@ function createGateway(options: { authorized?: boolean } = {}) {
     canReadTrip: vi.fn(async () => options.authorized ?? true),
     canWriteTrip: vi.fn(async () => options.authorized ?? true),
     canFinalizeSettlement: vi.fn(async () => options.authorized ?? true),
+    resolveSettlementFx: vi.fn(async () => ({
+      claimed: 2,
+      accepted: 2,
+      unavailableExpenseIds: [],
+    })),
     previewJourneyCurrency: vi.fn(async (_userId, _tripId, proposedCurrency) => ({
       currentCurrency: "NZD",
       currentScale: 2,
@@ -654,6 +659,30 @@ describe("OTR Dev Backend", () => {
     );
     expect(response.status).toBe(403);
     expect(gateway.previewLedgerSettlement).not.toHaveBeenCalled();
+  });
+
+  it("runs settlement FX preflight only for an authorized organizer", async () => {
+    const authorized = createGateway();
+    const denied = createGateway({ authorized: false });
+    const request = () =>
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/fx-preflight`, {
+        method: "POST",
+        headers: { Authorization: "Bearer valid-token" },
+      });
+    const response = await createDevBackendHandler({ gateway: authorized.gateway })(
+      request(),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      claimed: 2,
+      accepted: 2,
+      unavailableExpenseIds: [],
+    });
+    expect(authorized.gateway.resolveSettlementFx).toHaveBeenCalledWith(userId, tripId);
+    expect(
+      (await createDevBackendHandler({ gateway: denied.gateway })(request())).status,
+    ).toBe(403);
+    expect(denied.gateway.resolveSettlementFx).not.toHaveBeenCalled();
   });
 
   it("allows Adjustment preview to readers and requires a reason to finalize", async () => {

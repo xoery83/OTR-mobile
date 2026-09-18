@@ -4,6 +4,17 @@ Ledger 2.0 uses the frozen aggregate contract in
 `docs/ledger/LEDGER_2_0_API_CONTRACT.md`. Existing Expense routes in this file
 remain Phase 3B compatibility routes until each `/v2` vertical slice is ready.
 
+Post-Phase-E Hosted Dev addition: organizer-authenticated
+`POST /v2/trips/:id/settlements/fx-preflight` returns
+`{ claimed: number, accepted: number, unavailableExpenseIds: string[] }`. It claims at most four Journey-scoped
+historical-rate pairs through the existing shared B2 lease, then invokes the
+unchanged guarded Phase C acceptance for up to four eligible Expenses. Mobile
+may repeat bounded batches before requesting a fresh canonical Settlement
+preview. `unavailableExpenseIds` identifies included Expenses whose trusted
+historical provider result is terminally unavailable, for actionable rate review.
+This endpoint creates no Settlement and accepts no display estimate;
+it is unavailable for non-organizers and Production is not deployed.
+
 Mobile must communicate through an OTR Backend API. Do not assume endpoints exist until backend is audited or implemented.
 
 Status labels:

@@ -16,6 +16,8 @@ import type { RateQuote, SettlementValuationSnapshot } from "@/domain/ledger/typ
 import { previewValuation } from "@/domain/ledger/valuation";
 
 import { formatLedgerMoney } from "./format";
+import type { DisplayEstimate } from "./displayEstimate";
+import { proposedExpenseDate } from "./expenseDraft";
 import { eligibleExpenseQuote, fxStatus } from "./fxPresentation";
 
 function fullDate(day: string, chinese: boolean) {
@@ -34,6 +36,9 @@ export function ExpenseFxDetails({
   scale,
   canChange,
   locked,
+  policy,
+  estimate,
+  blocked,
   onChanged,
 }: {
   expense: LedgerExpense;
@@ -41,6 +46,9 @@ export function ExpenseFxDetails({
   scale: number;
   canChange: boolean;
   locked: boolean;
+  policy: string | null;
+  estimate: DisplayEstimate | null;
+  blocked: boolean;
   onChanged: (expense: LedgerExpense) => void;
 }) {
   const chinese = Intl.DateTimeFormat().resolvedOptions().locale.startsWith("zh");
@@ -57,7 +65,12 @@ export function ExpenseFxDetails({
   const crossCurrency = expense.original.currency !== currency;
   const pending = expense.syncStatus !== "SYNCED";
   const editable =
-    crossCurrency && canChange && !locked && !pending && expense.status !== "DELETED";
+    crossCurrency &&
+    canChange &&
+    !locked &&
+    !blocked &&
+    !pending &&
+    expense.status !== "DELETED";
   const quote = eligibleExpenseQuote(expense, quotes, currency);
   const payments = expense.paymentRecords.filter(
     (record) =>
@@ -170,46 +183,20 @@ export function ExpenseFxDetails({
         <Text style={styles.value}>
           {formatLedgerMoney(valuation.settlement.minor, currency, scale)}
         </Text>
+      ) : estimate ? (
+        <Text style={styles.value}>
+          ≈ {formatLedgerMoney(estimate.money.minor, currency, scale)}
+        </Text>
       ) : (
-        <Text style={styles.meta}>
-          {label("Journey value unavailable", "旅行估值暂不可用")}
-        </Text>
+        <Text style={styles.value}>{currency}—</Text>
       )}
-      {crossCurrency && valuation?.policy === "REFERENCE_RATE" ? (
-        <Text style={styles.meta}>
-          {label("Reference rate · European Central Bank", "参考汇率 · 欧洲中央银行")}
-          {valuation.decimalRate
-            ? `\n1 ${expense.original.currency} = ${valuation.decimalRate} ${currency}`
-            : ""}
-        </Text>
-      ) : crossCurrency && valuation?.policy === "MANUAL_AGREED" ? (
-        <Text style={styles.meta}>
-          {label("Agreed rate", "约定汇率")}
-          {valuation.decimalRate
-            ? ` · 1 ${expense.original.currency} = ${valuation.decimalRate} ${currency}`
-            : ""}
-        </Text>
-      ) : crossCurrency && valuation?.policy === "ACTUAL_PAYER_COST" ? (
-        <Text style={styles.meta}>{label("Actual payer cost", "实际付款金额")}</Text>
-      ) : null}
       {crossCurrency &&
-      valuation?.referenceEvidence &&
-      valuation.referenceEvidence.economicDate !==
-        valuation.referenceEvidence.referenceDate ? (
+      !valuation &&
+      expense.status === "RATE_REQUIRED" &&
+      proposedExpenseDate(expense) ? (
         <Text style={styles.meta}>
-          {label("Expense date", "消费日期")}:{" "}
-          {fullDate(valuation.referenceEvidence.economicDate, chinese)}
-          {"\n"}
-          {label("Reference rate date", "参考汇率日期")}:{" "}
-          {fullDate(valuation.referenceEvidence.referenceDate, chinese)}
-        </Text>
-      ) : null}
-      {crossCurrency && !valuation && expense.status === "RATE_REQUIRED" ? (
-        <Text style={styles.meta}>{fxStatus(expense, chinese)}</Text>
-      ) : null}
-      {crossCurrency && pending ? (
-        <Text style={styles.meta}>
-          {label("Saved on this iPhone · awaiting sync", "已保存到此 iPhone · 等待同步")}
+          {estimate ? label("Estimated · ", "估算 · ") : ""}
+          {fxStatus(expense, chinese, policy, blocked)}
         </Text>
       ) : null}
       {crossCurrency ? (
@@ -217,20 +204,30 @@ export function ExpenseFxDetails({
           accessibilityRole="button"
           accessibilityLabel={label("Rate details", "汇率详情")}
           accessibilityState={{ expanded }}
-          style={styles.action}
+          style={styles.detailsToggle}
           onPress={() => setExpanded(!expanded)}
         >
-          <Text style={styles.actionText}>
+          <Text style={styles.detailsToggleText}>
             {label("Rate details", "汇率详情")} {expanded ? "−" : "+"}
           </Text>
         </Pressable>
       ) : null}
       {expanded && crossCurrency ? (
         <View style={styles.details}>
+          <Text style={styles.meta}>
+            {label("Journey value method", "旅行估值方式")}:{" "}
+            {policy === "REFERENCE_RATE"
+              ? label("Reference rate", "参考汇率")
+              : policy === "MANUAL_AGREED"
+                ? label("Agreed rate", "约定汇率")
+                : policy === "ACTUAL_PAYER_COST"
+                  ? label("Actual payer cost", "实际付款金额")
+                  : label("Needs review", "待处理")}
+          </Text>
           {valuation ? (
             <>
               <Text style={styles.meta}>
-                {label("Policy", "估值方式")}:{" "}
+                {label("How calculated", "计算方式")}:{" "}
                 {valuation.policy === "REFERENCE_RATE"
                   ? label("Reference rate", "参考汇率")
                   : valuation.policy === "MANUAL_AGREED"
@@ -284,7 +281,7 @@ export function ExpenseFxDetails({
           {previous.length ? (
             <>
               <Text style={styles.label}>
-                {label("PREVIOUS VALUATIONS ON THIS DEVICE", "本机历史估值")}
+                {label("EARLIER JOURNEY VALUES ON THIS PHONE", "此手机上的以往旅行估值")}
               </Text>
               {previous.map((item) => (
                 <Text key={item.id} style={styles.meta}>
@@ -309,8 +306,8 @@ export function ExpenseFxDetails({
           {locked ? (
             <Text style={styles.meta}>
               {label(
-                "Finalized settlement locks this Expense's valuation.",
-                "最终结算已锁定此消费的估值。",
+                "This Journey value cannot change after final settlement.",
+                "最终结算后，此旅行估值无法更改。",
               )}
             </Text>
           ) : null}
@@ -326,7 +323,9 @@ export function ExpenseFxDetails({
                   }}
                 >
                   <Text style={styles.actionText}>
-                    {label("Use agreed rate", "使用约定汇率")}
+                    {valuation?.policy === "MANUAL_AGREED"
+                      ? label("Edit agreed rate", "修改约定汇率")
+                      : label("Use agreed rate", "使用约定汇率")}
                   </Text>
                 </Pressable>
               ) : (
@@ -444,6 +443,8 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   actionText: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
+  detailsToggle: { minHeight: 44, justifyContent: "center" },
+  detailsToggleText: { color: "#0F766E", fontSize: 14, fontWeight: "600" },
   input: {
     minHeight: 44,
     borderColor: "#94A3B8",

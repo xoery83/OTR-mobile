@@ -22,10 +22,14 @@ import type { SettlementExportPrivacy } from "@/domain/ledger/settlementExport";
 import type { RepaymentProposition } from "@/domain/ledger/paymentLifecycle";
 import {
   finalizeSettlement,
+  preflightSettlementFx,
   previewSettlementAdjustment,
   previewSettlement,
   queueSettlementAdjustment,
 } from "@/data/sync/ledgerSettlementCoordinator";
+import { loadEstimatedSettlement } from "@/features/ledger/loadEstimatedSettlement";
+
+type DisplayPreview = Awaited<ReturnType<typeof loadEstimatedSettlement>>;
 
 export type Stage7Preview = SettlementPreviewResponse;
 export type Stage7Finalized = FinalizedSettlementDto;
@@ -37,6 +41,10 @@ export function useStage7Settlement(journeyId?: string) {
   const [loadedJourneyId, setLoadedJourneyId] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [preview, setPreview] = useState<Stage7Preview | null>(null);
+  const [displayPreview, setDisplayPreview] = useState<DisplayPreview | null>(null);
+  const [unavailableExpenseIds, setUnavailableExpenseIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [finalized, setFinalized] = useState<Stage7Finalized | null>(null);
   const [lineage, setLineage] = useState<Stage7Finalized[]>([]);
   const [adjustmentPreview, setAdjustmentPreview] =
@@ -109,12 +117,20 @@ export function useStage7Settlement(journeyId?: string) {
         const cached = await load();
         if (!active) return;
         setPreview(null);
+        setDisplayPreview(null);
+        setUnavailableExpenseIds(new Set());
         setAdjustmentPreview(null);
         applyFinalizedRows(cached.rows);
         setExports(cached.items);
         setActorMemberId(cached.memberId);
         setIsOrganizer(cached.organizer);
         setLoadedJourneyId(activeJourneyId);
+        const display = await loadEstimatedSettlement(activeJourneyId);
+        if (active) setDisplayPreview(display);
+        if (cached.organizer) {
+          const unavailable = await preflightSettlementFx(activeJourneyId);
+          if (active) setUnavailableExpenseIds(unavailable);
+        }
         await refreshJourneyLedger(activeJourneyId);
         const refreshed = await load();
         if (!active) return;
@@ -122,6 +138,18 @@ export function useStage7Settlement(journeyId?: string) {
         setExports(refreshed.items);
         setActorMemberId(refreshed.memberId);
         setIsOrganizer(refreshed.organizer);
+        setDisplayPreview(await loadEstimatedSettlement(activeJourneyId));
+        if (refreshed.organizer && refreshed.rows.length === 0) {
+          try {
+            const current = await previewSettlement(
+              activeJourneyId,
+              new Date().toISOString(),
+            );
+            if (active) setPreview(current);
+          } catch {
+            // Local informational preview remains available offline or before queue drain.
+          }
+        }
       } catch {
         if (active) setMessage("Offline · showing cached Settlement data");
       } finally {
@@ -146,6 +174,8 @@ export function useStage7Settlement(journeyId?: string) {
     adjustmentPreview: matchesActiveJourney ? adjustmentPreview : null,
     message,
     preview: matchesActiveJourney ? preview : null,
+    displayPreview: matchesActiveJourney ? displayPreview : null,
+    unavailableExpenseIds: matchesActiveJourney ? unavailableExpenseIds : new Set(),
     journeyId: activeJourneyId,
     async generateExport(
       format: SettlementExportFormat,
@@ -186,6 +216,13 @@ export function useStage7Settlement(journeyId?: string) {
       setBusy(true);
       setMessage(null);
       try {
+        if (isOrganizer) {
+          const unavailable = await preflightSettlementFx(operationJourneyId);
+          if (operationJourneyId === activeJourneyRef.current)
+            setUnavailableExpenseIds(unavailable);
+        }
+        await refreshJourneyLedger(operationJourneyId);
+        setDisplayPreview(await loadEstimatedSettlement(operationJourneyId));
         const next = await previewSettlement(
           operationJourneyId,
           new Date().toISOString(),
@@ -203,15 +240,38 @@ export function useStage7Settlement(journeyId?: string) {
       setBusy(true);
       setMessage(null);
       try {
+        const unavailable = await preflightSettlementFx(operationJourneyId);
+        if (operationJourneyId === activeJourneyRef.current)
+          setUnavailableExpenseIds(unavailable);
+        await refreshJourneyLedger(operationJourneyId);
+        const current = await previewSettlement(
+          operationJourneyId,
+          new Date().toISOString(),
+        );
+        if (
+          current.state !== "PREVIEW_READY" ||
+          current.settingsRevision !== ready.settingsRevision ||
+          JSON.stringify(current.inputs) !== JSON.stringify(ready.inputs)
+        ) {
+          if (operationJourneyId === activeJourneyRef.current) {
+            setPreview(current);
+            setDisplayPreview(await loadEstimatedSettlement(operationJourneyId));
+            setMessage(
+              "Settlement values changed. Review the latest preview before finalizing.",
+            );
+          }
+          return;
+        }
         const response = await finalizeSettlement(
-          ready.journeyId,
-          ready.throughTimestamp,
-          ready.inputDigest,
+          current.journeyId,
+          current.throughTimestamp,
+          current.inputDigest,
         );
         if (operationJourneyId === activeJourneyRef.current) {
           setFinalized(response.entity);
           setLineage([response.entity]);
           setPreview(null);
+          setDisplayPreview(null);
           setMessage("Final settlement saved from the latest group record.");
         }
       } catch (error) {

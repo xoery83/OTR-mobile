@@ -37,21 +37,42 @@ export function SettlementReadinessScreen({
 }) {
   const largeText = useWindowDimensions().fontScale > 2;
   const settlement = useStage7Settlement(journeyId);
-  const { actorMemberId, busy, finalized, lineage, message, preview, updating } =
-    settlement;
+  const {
+    actorMemberId,
+    busy,
+    displayPreview,
+    unavailableExpenseIds,
+    finalized,
+    lineage,
+    message,
+    preview,
+    updating,
+  } = settlement;
   const finalRows = useMemo(
     () => settlementTransferRows(finalized, lineage),
     [finalized, lineage],
   );
   const previewRows = useMemo(
     () =>
-      (preview?.transfers ?? []).map((transfer) => ({
+      (preview?.state === "PREVIEW_READY"
+        ? preview.transfers
+        : (displayPreview?.transfers ?? [])
+      ).map((transfer) => ({
         key: `${transfer.fromMemberId}-${transfer.toMemberId}`,
-        from: previewName(preview, transfer.fromMemberId),
-        to: previewName(preview, transfer.toMemberId),
+        from:
+          preview?.state === "PREVIEW_READY"
+            ? previewName(preview, transfer.fromMemberId)
+            : (displayPreview?.members.find(
+                (member) => member.id === transfer.fromMemberId,
+              )?.label ?? "Traveller"),
+        to:
+          preview?.state === "PREVIEW_READY"
+            ? previewName(preview, transfer.toMemberId)
+            : (displayPreview?.members.find((member) => member.id === transfer.toMemberId)
+                ?.label ?? "Traveller"),
         amount: transfer.amount,
       })),
-    [preview],
+    [preview, displayPreview],
   );
   const personal = finalized?.balances.find(
     (balance) => balance.memberId === actorMemberId,
@@ -59,6 +80,36 @@ export function SettlementReadinessScreen({
   const rows: (SettlementTransferRow | PreviewTransferRow)[] = finalized
     ? finalRows
     : previewRows;
+  const attention =
+    finalized || preview?.state === "PREVIEW_READY"
+      ? []
+      : (preview?.blockers.map((blocker) => ({
+          expenseId: blocker.expenseId,
+          reason:
+            (unavailableExpenseIds.has(
+              displayPreview?.serverIds.get(blocker.expenseId) ?? "",
+            )
+              ? "Review agreed rate"
+              : displayPreview?.blockers.find(
+                  (item) => item.expenseId === blocker.expenseId,
+                )?.reason) ??
+            (blocker.reason === "OPEN_CONFLICT"
+              ? "Resolve conflict"
+              : "Journey value needs attention"),
+        })) ??
+        displayPreview?.blockers.map((item) => ({
+          ...item,
+          reason: unavailableExpenseIds.has(
+            displayPreview.serverIds.get(item.expenseId) ?? "",
+          )
+            ? "Review agreed rate"
+            : item.reason,
+        })) ??
+        []);
+  const attentionCounts = [...new Set(attention.map((item) => item.reason))].map(
+    (reason) =>
+      `${attention.filter((item) => item.reason === reason).length} · ${reason}`,
+  );
 
   const confirmFinalize = () => {
     if (!preview || preview.state !== "PREVIEW_READY") return;
@@ -89,15 +140,36 @@ export function SettlementReadinessScreen({
               : "Settlement needs attention"
             : preview?.state === "PREVIEW_READY"
               ? "Ready to settle"
-              : preview?.state === "PREVIEW_BLOCKED"
-                ? "Settlement needs attention"
-                : "Settlement preview"}
+              : displayPreview
+                ? "If settled now"
+                : preview?.state === "PREVIEW_BLOCKED"
+                  ? "Settlement needs attention"
+                  : "Settlement preview"}
         </Text>
         <Text style={styles.body}>
           {finalized
             ? "These are the group’s current transfer obligations."
             : "A preview is not final and does not create a payment obligation."}
         </Text>
+        {!finalized &&
+        preview?.state !== "PREVIEW_READY" &&
+        displayPreview?.estimatedCount ? (
+          <Text style={styles.meta}>
+            Approximate · includes {displayPreview.estimatedCount} estimated values
+          </Text>
+        ) : null}
+        {!finalized &&
+        preview?.state !== "PREVIEW_READY" &&
+        displayPreview?.balances.find((balance) => balance.memberId === actorMemberId) ? (
+          <Text style={styles.personal}>
+            {(() => {
+              const balance = displayPreview.balances.find(
+                (item) => item.memberId === actorMemberId,
+              )!;
+              return `${balance.minor > 0 ? "You should receive" : balance.minor < 0 ? "You should pay" : "Your share is balanced"}${balance.minor === 0 ? "" : ` ${displayPreview.estimatedCount ? "≈ " : ""}${formatLedgerMoney(Math.abs(balance.minor), balance.currency, balance.scale)}`}`;
+            })()}
+          </Text>
+        ) : null}
         {personal ? (
           <Text style={styles.personal}>
             {personal.netMinor > 0
@@ -128,36 +200,36 @@ export function SettlementReadinessScreen({
       ) : null}
       {busy ? <ActivityIndicator accessibilityLabel="Updating Settlement" /> : null}
 
-      {!finalized && !preview ? (
+      {!finalized && (!preview || preview.state === "PREVIEW_BLOCKED") ? (
         <Pressable
           accessibilityRole="button"
           disabled={busy}
           onPress={() => void settlement.prepare()}
           style={[styles.primary, busy && styles.disabled]}
         >
-          <Text style={styles.primaryText}>Preview settlement</Text>
+          <Text style={styles.primaryText}>
+            {preview?.state === "PREVIEW_BLOCKED" ? "Check again" : "Preview settlement"}
+          </Text>
         </Pressable>
       ) : null}
 
-      {preview?.blockers.length ? (
+      {attention.length ? (
         <View style={styles.blockers}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            What needs attention
+            {attention.length} {attention.length === 1 ? "item needs" : "items need"}{" "}
+            attention
           </Text>
-          {preview.blockers.map((blocker) => (
+          <Text style={styles.meta}>{attentionCounts.join("   ")}</Text>
+          {attention.map((blocker) => (
             <Pressable
               accessibilityHint="Opens the affected Expense"
               accessibilityRole="button"
-              key={`${blocker.expenseId}-${blocker.reason}`}
+              key={blocker.expenseId}
               onPress={() => router.push(`/expenses/expense/${blocker.expenseId}`)}
               style={styles.blocker}
             >
               <View style={styles.grow}>
-                <Text style={styles.warningTitle}>
-                  {blocker.reason === "RATE_REQUIRED"
-                    ? "Expense needs an exchange rate"
-                    : "Conflicting edit needs review"}
-                </Text>
+                <Text style={styles.warningTitle}>{blocker.reason}</Text>
                 <Text style={styles.meta}>Open Expense to resolve it</Text>
               </View>
               <Text importantForAccessibility="no" style={styles.chevron}>
@@ -165,7 +237,7 @@ export function SettlementReadinessScreen({
               </Text>
             </Pressable>
           ))}
-          <Text style={styles.warning}>Settlement cannot be finalized yet.</Text>
+          <Text style={styles.warning}>Final settlement needs these values first.</Text>
         </View>
       ) : null}
 
@@ -174,7 +246,9 @@ export function SettlementReadinessScreen({
       </Text>
       {rows.length === 0 ? (
         <Text style={styles.empty}>
-          {preview ? "No transfers are needed." : "Create a preview to see transfers."}
+          {preview || displayPreview
+            ? "No transfers are needed."
+            : "Preparing settlement…"}
         </Text>
       ) : null}
     </View>
@@ -274,9 +348,16 @@ export function SettlementReadinessScreen({
           <Text style={styles.transferTitle}>
             {row.from} pays {row.to}
           </Text>
-          <Text style={styles.meta}>Preview only</Text>
+          <Text style={styles.meta}>
+            {displayPreview?.estimatedCount && preview?.state !== "PREVIEW_READY"
+              ? "Approximate · preview only"
+              : "Preview only"}
+          </Text>
         </View>
         <Text style={styles.amount}>
+          {displayPreview?.estimatedCount && preview?.state !== "PREVIEW_READY"
+            ? "≈ "
+            : ""}
           {formatLedgerMoney(row.amount.minor, row.amount.currency, row.amount.scale)}
         </Text>
       </View>
