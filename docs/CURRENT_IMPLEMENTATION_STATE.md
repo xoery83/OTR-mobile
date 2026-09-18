@@ -2,6 +2,11 @@
 
 Date: 2026-09-18
 
+## Settlement 2.0 Phase 0.5 — final Expense protection verified on Hosted Dev
+
+- Migration `20260918000700_ledger_finalized_expense_mutation_guard.sql` is applied only to Hosted Dev `tuqigdxrvrerfewsxqgm`. A `BEFORE UPDATE OR DELETE` trigger on `public.expenses` now rejects mutation of Expenses in finalized settlement inputs with `FINALIZED_SETTLEMENT_PROTECTED`; completed idempotent replays return without mutating the row. Remote schema inspection confirmed the function and trigger. A rollback-safe Hosted Dev Expense mutation pgTAP run passed 20 assertions, including finalized rejections and non-finalized update.
+- Local migration reset and 5 relevant Ledger pgTAP files/99 assertions passed, including valuation finalized protection, owner correction, splits/participants, audit/revision and replay. The Phase 0 final-protection blocker is cleared. Phase 0's Payment Option B remains a recommendation awaiting product/security decisions; Settlement 2.0 Payment, Review, UI and correction/version workflow remain unimplemented. Production is untouched. See `docs/ledger/SETTLEMENT_2_0_PHASE_0_DECISIONS.md` for the dated remediation record.
+
 ## Ledger local SQLite rollback presentation fix — local validation
 
 - Recurrent raw `finalizeAsync` / `abort due to ROLLBACK` text on the Spending screen traced to concurrent async use of the shared SQLite connection: background Journey/My Ledger writes use non-exclusive Expo transactions while Ledger reads several projections in parallel. A read-only Simulator integrity/foreign-key check was `ok`, and reloading Group cleared the message without data loss.

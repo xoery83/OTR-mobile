@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(13);
+select plan(20);
 
 set local role service_role;
 
@@ -289,7 +289,7 @@ insert into public.settlement_inputs (
     where expense_id = '41000000-0000-4000-8000-000000000001' and is_active)
 );
 
-select lives_ok($$
+select throws_ok($$
   select public.ledger_mutate_expense_4b(
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
@@ -310,7 +310,93 @@ select lives_ok($$
       '{entity,auditEvents,0,eventType}', '"DELETED"'
     )
   )
-$$, 'post-finalization Expense mutation is allowed and requires Adjustment');
+$$, 'P0001', 'FINALIZED_SETTLEMENT_PROTECTED',
+  'finalized Expense delete is rejected');
+
+select throws_ok($$
+  select public.ledger_mutate_expense_4b(
+    '00000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000001',
+    '41000000-0000-4000-8000-000000000001',
+    'UPDATE_EXPENSE', 5, null, 'frozen-update-hash', 'frozen-update-key',
+    (select response_body from public.ledger_idempotency_keys
+     where idempotency_key = 'restore-key')
+  )
+$$, 'P0001', 'FINALIZED_SETTLEMENT_PROTECTED',
+  'creator cannot update a finalized Expense');
+
+select throws_ok($$
+  select public.ledger_mutate_expense_4b(
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '41000000-0000-4000-8000-000000000001',
+    'RESTORE_EXPENSE', 5, 'Restore after final',
+    'frozen-restore-hash', 'frozen-restore-key',
+    (select response_body from public.ledger_idempotency_keys
+     where idempotency_key = 'restore-key')
+  )
+$$, 'P0001', 'FINALIZED_SETTLEMENT_PROTECTED',
+  'finalized Expense restore is rejected');
+
+select throws_ok($$
+  select public.ledger_mutate_expense_4b(
+    '00000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000001',
+    '41000000-0000-4000-8000-000000000001',
+    'UPDATE_EXPENSE', 5, null, 'frozen-split-hash', 'frozen-split-key',
+    jsonb_set(
+      (select response_body from public.ledger_idempotency_keys
+       where idempotency_key = 'restore-key'),
+      '{entity,splits,0,originalMinor}', '1100'
+    )
+  )
+$$, 'P0001', 'FINALIZED_SETTLEMENT_PROTECTED',
+  'finalized Expense split change is rejected');
+
+select throws_ok($$
+  select public.ledger_mutate_expense_4b(
+    '00000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000001',
+    '41000000-0000-4000-8000-000000000001',
+    'UPDATE_EXPENSE', 5, null, 'frozen-participant-hash', 'frozen-participant-key',
+    jsonb_set(
+      (select response_body from public.ledger_idempotency_keys
+       where idempotency_key = 'restore-key'),
+      '{entity,participants}', '[]'::jsonb
+    )
+  )
+$$, 'P0001', 'FINALIZED_SETTLEMENT_PROTECTED',
+  'finalized Expense participant change is rejected');
+
+select throws_ok($$
+  select public.ledger_mutate_expense_4b(
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '41000000-0000-4000-8000-000000000001',
+    'UPDATE_EXPENSE', 5, 'Organizer correction after final',
+    'frozen-owner-hash', 'frozen-owner-key',
+    (select response_body from public.ledger_idempotency_keys
+     where idempotency_key = 'restore-key')
+  )
+$$, 'P0001', 'FINALIZED_SETTLEMENT_PROTECTED',
+  'owner correction cannot bypass finalized protection');
+
+select is(
+  public.ledger_mutate_expense_4b(
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '41000000-0000-4000-8000-000000000001',
+    'RESTORE_EXPENSE', 4, 'Organizer restored duplicate',
+    'restore-hash', 'restore-key', '{}'::jsonb
+  ) ->> 'idempotentReplay',
+  'true', 'completed identical mutation replays after finalization'
+);
+
+select is(
+  (select revision from public.expenses
+   where id = '41000000-0000-4000-8000-000000000001'),
+  5::bigint, 'rejected mutations and replay preserve the final Expense revision'
+);
 
 select * from finish();
 rollback;
