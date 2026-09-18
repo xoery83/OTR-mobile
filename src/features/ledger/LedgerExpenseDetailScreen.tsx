@@ -22,7 +22,7 @@ import { ExpenseFxDetails } from "./ExpenseFxDetails";
 import type { DisplayEstimate } from "./displayEstimate";
 import { proposedExpenseDate } from "./expenseDraft";
 import { formatLedgerDate, formatLedgerMoney } from "./format";
-import { journeyValuationPolicy, loadDisplayEstimates } from "./loadDisplayEstimates";
+import { loadDisplayEstimates } from "./loadDisplayEstimates";
 
 export function LedgerExpenseDetailScreen() {
   const largeText = useWindowDimensions().fontScale > 2;
@@ -41,7 +41,6 @@ export function LedgerExpenseDetailScreen() {
     scale: 2,
     canChange: false,
     locked: true,
-    policy: null as string | null,
   });
   useFocusEffect(
     useCallback(() => {
@@ -51,35 +50,27 @@ export function LedgerExpenseDetailScreen() {
           .then((repository) => repository.getExpense(id))
           .then(async (nextExpense) => {
             if (!nextExpense) return [null, false, "Traveller", 0, null, null] as const;
-            const [
-              nextHasOpenConflict,
-              members,
-              receipts,
-              actor,
-              journeys,
-              settlement,
-              policy,
-            ] = await Promise.all([
-              getDefaultLedgerReportingRepository().then((repository) =>
-                repository.hasOpenConflict(id),
-              ),
-              getDefaultLedgerReadRepository().then((repository) =>
-                repository.listMembers(nextExpense.journeyId),
-              ),
-              getDefaultLedgerReceiptRepository().then((repository) =>
-                repository.listReceipts(nextExpense.journeyId),
-              ),
-              getDefaultLedgerReportingRepository().then((repository) =>
-                repository.getActorContext(nextExpense.journeyId),
-              ),
-              getDefaultLedgerReportingRepository().then((repository) =>
-                repository.listJourneys(),
-              ),
-              getDefaultLedgerSettlementRepository().then((repository) =>
-                repository.isExpenseFinalized(nextExpense.journeyId, nextExpense.id),
-              ),
-              journeyValuationPolicy(nextExpense.journeyId),
-            ]);
+            const [nextHasOpenConflict, members, receipts, actor, journeys, settlement] =
+              await Promise.all([
+                getDefaultLedgerReportingRepository().then((repository) =>
+                  repository.hasOpenConflict(id),
+                ),
+                getDefaultLedgerReadRepository().then((repository) =>
+                  repository.listMembers(nextExpense.journeyId),
+                ),
+                getDefaultLedgerReceiptRepository().then((repository) =>
+                  repository.listReceipts(nextExpense.journeyId),
+                ),
+                getDefaultLedgerReportingRepository().then((repository) =>
+                  repository.getActorContext(nextExpense.journeyId),
+                ),
+                getDefaultLedgerReportingRepository().then((repository) =>
+                  repository.listJourneys(),
+                ),
+                getDefaultLedgerSettlementRepository().then((repository) =>
+                  repository.isExpenseFinalized(nextExpense.journeyId, nextExpense.id),
+                ),
+              ]);
             const journey = journeys.find(
               (item) => item.journeyId === nextExpense.journeyId,
             );
@@ -110,7 +101,6 @@ export function LedgerExpenseDetailScreen() {
                     actor.memberId === nextExpense.creatorMemberId),
                 ),
                 locked: settlement,
-                policy,
               },
             ] as const;
           })
@@ -343,12 +333,12 @@ export function LedgerExpenseDetailScreen() {
       </Section>
       {fxAccess.currency && expense.original.currency !== fxAccess.currency ? (
         <ExpenseFxDetails
+          key={expense.id}
           expense={expense}
           currency={fxAccess.currency}
           scale={fxAccess.scale}
           canChange={fxAccess.canChange && !hasOpenConflict}
           locked={fxAccess.locked}
-          policy={fxAccess.policy}
           estimate={hasOpenConflict || fxAccess.locked ? null : estimate}
           blocked={hasOpenConflict}
           onChanged={setExpense}

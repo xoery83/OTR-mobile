@@ -1,5 +1,4 @@
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
-import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 
 import { displayEstimate, type DisplayEstimate } from "./displayEstimate";
@@ -36,11 +35,5 @@ export async function loadDisplayEstimates(
       );
       return estimate ? [[item.id, estimate] as const] : [];
     }),
-  );
-}
-
-export async function journeyValuationPolicy(journeyId: string) {
-  return (await getDefaultLedgerReportingRepository()).getJourneyValuationPolicy(
-    journeyId,
   );
 }

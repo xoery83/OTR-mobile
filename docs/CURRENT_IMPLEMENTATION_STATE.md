@@ -2,6 +2,12 @@
 
 Date: 2026-09-18
 
+## Cross-currency new-Expense reference default — Hosted Dev and Simulator PASS
+
+- New cross-currency Expenses already persisted `RATE_REQUIRED` without a manual valuation. Two existing CNY Journeys retain legacy `valuation_policy=MANUAL_AGREED`; Detail and the Phase C/foreground selectors wrongly treated this Journey metadata as the method/eligibility of every new Expense. ADR 0025 and forward migration `20260918000500` remove that inheritance while retaining per-Expense accepted manual/actual evidence, Phase D semantic blocks, settings revision and finalized protections. Detail, local estimated Settlement and Backend terminal classification now follow per-Expense evidence/reference eligibility. Only an explicit manual action can create `MANUAL_AGREED`.
+- Hosted Dev `tuqigdxrvrerfewsxqgm` has exactly that new migration applied and zero pending; matching Backend source/bundle deployed only to Dev, public health `ok`. Typecheck, lint, Backend build, 83 Vitest files/332 tests, two local migration rebuilds and 17 pgTAP files/314 tests pass. The aggregate `supabase:validate` script still fails its unrelated checked-in schema-manifest comparison (92 recorded tables vs 97 actual); no historical QA evidence was modified to mask this.
+- Signed Release installed without clearing data on iPhone 17 Pro and Pro Max Simulators. On the Pro Max, an ordinary new NZD Expense in a legacy-manual CNY Journey first showed an estimated Reference rate, then synced and auto-accepted ECB 2026-09-16 rate 3.8649 at ¥3.86 (revision 3). Explicit manual override showed ¥3.50 and a reason (revision 4); restoring Reference rate returned to ¥3.86 (revision 5, `SYNCED`, one active valuation), with prior evidence retained. The older NZD250.40 Expense's manual acceptance predates this deployment and is not a new-default regression. Physical iPhone interaction for this correction remains pending; Phase F and Production were not touched.
+
 ## Post-Phase-E Currency / FX UX convergence — PASS WITH DEVICE ACCEPTANCE PENDING
 
 - Display-only exact/recent trusted B2 quote estimates use exact Money conversion and a 30-calendar-day window; detail, recent list and Mine/Group display totals mark estimated components `≈`. Canonical reporting, Review, Stage 5 evidence and Stage 7 final inputs stay untouched. The normal Expense date Save confirmation, compact policy/actions and edit-navigation fixes are incorporated from the prior uncommitted UX pass; none is Phase F.

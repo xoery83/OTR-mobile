@@ -46,16 +46,16 @@ insert into public.expenses (
   1200, 'USD', 2, 'RATE_REQUIRED', 'EXCLUDED'
 );
 select is((select count(*) from public.ledger_claim_settlement_rate_demands(
-  '10000000-0000-4000-8000-000000000001', 4)), 0::bigint,
-  'manual policy cannot trigger automatic provider acquisition');
+  '10000000-0000-4000-8000-000000000001', 4)), 1::bigint,
+  'legacy manual Journey setting does not block a new Expense reference demand');
 update public.ledger_settings set valuation_policy = 'REFERENCE_RATE'
 where journey_id = '10000000-0000-4000-8000-000000000001';
 select is((select count(*) from public.ledger_claim_settlement_rate_demands(
   '10000000-0000-4000-8000-000000000002', 4)), 0::bigint,
   'other Journey demand cannot leak into target');
 select is((select count(*) from public.ledger_claim_settlement_rate_demands(
-  '10000000-0000-4000-8000-000000000001', 4)), 1::bigint,
-  'selected Journey claims only included pair');
+  '10000000-0000-4000-8000-000000000001', 4)), 0::bigint,
+  'the selected Journey does not reclaim its leased included pair');
 select is((select count(*) from public.ledger_claim_rate_demands(4)
   where quote_currency = 'EUR'), 0::bigint,
   'background scanner does not reclaim foreground lease');

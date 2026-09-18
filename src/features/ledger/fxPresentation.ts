@@ -3,6 +3,10 @@ import type { RateQuote } from "@/domain/ledger/types";
 
 import { proposedExpenseDate } from "./expenseDraft";
 
+export function expenseValuationMethod(expense: Pick<LedgerExpense, "valuation">) {
+  return expense.valuation?.policy ?? "REFERENCE_RATE";
+}
+
 export function eligibleExpenseQuote(
   expense: LedgerExpense,
   quotes: RateQuote[],

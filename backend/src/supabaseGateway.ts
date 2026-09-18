@@ -722,7 +722,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       const [settings, attempts, expenses] = await Promise.all([
         service
           .from("ledger_settings")
-          .select("settlement_currency,valuation_policy")
+          .select("settlement_currency")
           .eq("journey_id", tripId)
           .single(),
         service
@@ -749,16 +749,11 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return {
         claimed: count,
         accepted,
-        unavailableExpenseIds:
-          settings.data.valuation_policy === "REFERENCE_RATE"
-            ? (expenses.data ?? [])
-                .filter((row) =>
-                  unavailable.has(
-                    `${row.economic_date}:${row.original_currency}:${currency}`,
-                  ),
-                )
-                .map((row) => String(row.id))
-            : [],
+        unavailableExpenseIds: (expenses.data ?? [])
+          .filter((row) =>
+            unavailable.has(`${row.economic_date}:${row.original_currency}:${currency}`),
+          )
+          .map((row) => String(row.id)),
       };
     },
 

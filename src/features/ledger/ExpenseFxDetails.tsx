@@ -18,7 +18,7 @@ import { previewValuation } from "@/domain/ledger/valuation";
 import { formatLedgerMoney } from "./format";
 import type { DisplayEstimate } from "./displayEstimate";
 import { proposedExpenseDate } from "./expenseDraft";
-import { eligibleExpenseQuote, fxStatus } from "./fxPresentation";
+import { eligibleExpenseQuote, expenseValuationMethod, fxStatus } from "./fxPresentation";
 
 function fullDate(day: string, chinese: boolean) {
   const [year, month, date] = day.split("-").map(Number);
@@ -36,7 +36,6 @@ export function ExpenseFxDetails({
   scale,
   canChange,
   locked,
-  policy,
   estimate,
   blocked,
   onChanged,
@@ -46,7 +45,6 @@ export function ExpenseFxDetails({
   scale: number;
   canChange: boolean;
   locked: boolean;
-  policy: string | null;
   estimate: DisplayEstimate | null;
   blocked: boolean;
   onChanged: (expense: LedgerExpense) => void;
@@ -62,6 +60,7 @@ export function ExpenseFxDetails({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const valuation = expense.valuation;
+  const policy = expenseValuationMethod(expense);
   const crossCurrency = expense.original.currency !== currency;
   const pending = expense.syncStatus !== "SYNCED";
   const editable =
@@ -378,7 +377,7 @@ export function ExpenseFxDetails({
                   </Text>
                 </Pressable>
               ))}
-              {quote && valuation?.policy !== "REFERENCE_RATE" ? (
+              {quote && valuation && valuation.policy !== "REFERENCE_RATE" ? (
                 <Pressable
                   accessibilityRole="button"
                   style={styles.action}

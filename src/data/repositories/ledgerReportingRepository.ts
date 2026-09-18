@@ -199,19 +199,6 @@ export function createLedgerReportingRepository(
       );
     },
 
-    async getJourneyValuationPolicy(journeyId: string) {
-      const userId = await getActiveUserId();
-      const row = await database.getFirstAsync<{ policy: string }>(
-        `SELECT valuation_policy AS policy FROM ledger_journeys j
-         WHERE j.journey_id = ? AND EXISTS (
-           SELECT 1 FROM ledger_actor_context actor
-           WHERE actor.user_id = ? AND actor.journey_id = j.journey_id)`,
-        journeyId,
-        userId,
-      );
-      return row?.policy ?? null;
-    },
-
     async getActorContext(journeyId: string) {
       const userId = await getActiveUserId();
       return database.getFirstAsync<{

@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(15);
+select plan(17);
 set local role service_role;
 
 select ok(not has_function_privilege('service_role',
@@ -12,7 +12,7 @@ select ok(has_function_privilege('service_role',
   'service role can invoke the guarded Stage 5 command');
 
 insert into public.ledger_settings(journey_id, settlement_currency, settlement_scale, valuation_policy)
-values ('10000000-0000-4000-8000-000000000001', 'NZD', 2, 'REFERENCE_RATE');
+values ('10000000-0000-4000-8000-000000000001', 'NZD', 2, 'MANUAL_AGREED');
 insert into public.expenses (
   id, journey_id, creator_member_id, created_by_user_id, updated_by_user_id,
   payer_member_id, title, occurred_at, economic_date, original_amount_minor,
@@ -56,7 +56,11 @@ insert into public.ledger_rate_quotes (
 
 select is((select count(*) from public.ledger_list_auto_reference_demands(4)
   where expense_id = '65000000-0000-4000-8000-000000000001'), 1::bigint,
-  'canonical RATE_REQUIRED Expense and candidate form a durable auto demand');
+  'new RATE_REQUIRED Expense and candidate form an auto demand despite legacy manual Journey setting');
+select is((select count(*) from public.ledger_list_settlement_auto_reference_demands(
+  '10000000-0000-4000-8000-000000000001', 4)
+  where expense_id = '65000000-0000-4000-8000-000000000001'), 1::bigint,
+  'foreground Settlement sees the same new Expense despite legacy manual Journey setting');
 select is((select business_status from public.expenses
   where id = '65000000-0000-4000-8000-000000000001'), 'RATE_REQUIRED',
   'candidate alone is not financial truth');
@@ -96,7 +100,7 @@ select lives_ok(format($$select public.ledger_apply_valuation_c(
   '10000000-0000-4000-8000-000000000001',
   '65000000-0000-4000-8000-000000000001', 'auto-c-1', 'auto-c-hash-1',
   %L::jsonb, %L::jsonb, %L::jsonb, true)$$, valuation, rate, response),
-  'guarded automatic call accepts the Friday rate for Sunday') from c_payload;
+  'guarded automatic call accepts the Friday rate despite legacy manual Journey setting') from c_payload;
 select is((select settlement_amount_minor from public.settlement_valuation_snapshots
   where expense_id = '65000000-0000-4000-8000-000000000001' and is_active),
   19608::bigint, 'EUR 100 becomes NZD 196.08 with Stage 5 rounding');
@@ -122,6 +126,19 @@ select throws_ok($$update public.exchange_rate_snapshots set provenance = '{}'::
   where id = '65000000-0000-4000-8000-000000000003'$$,
   '23514', 'exchange_rate_snapshots is append-only',
   'accepted provenance is immutable');
+
+insert into public.expenses (
+  id, journey_id, creator_member_id, created_by_user_id, updated_by_user_id,
+  payer_member_id, title, occurred_at, economic_date, original_amount_minor,
+  original_currency, original_currency_scale, business_status
+) select '65000000-0000-4000-8000-000000000006', journey_id,
+  creator_member_id, created_by_user_id, updated_by_user_id, payer_member_id,
+  'Next Expense', occurred_at, economic_date, 25040,
+  original_currency, original_currency_scale, 'RATE_REQUIRED'
+from public.expenses where id = '65000000-0000-4000-8000-000000000001';
+select is((select count(*) from public.ledger_list_auto_reference_demands(4)
+  where expense_id = '65000000-0000-4000-8000-000000000006'), 1::bigint,
+  'accepted evidence on another Expense does not bleed into a new Expense');
 
 select * from finish();
 rollback;

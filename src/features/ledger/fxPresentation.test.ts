@@ -4,7 +4,7 @@ import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository"
 import type { RateQuote } from "@/domain/ledger/types";
 import { previewValuation } from "@/domain/ledger/valuation";
 
-import { eligibleExpenseQuote, fxStatus } from "./fxPresentation";
+import { eligibleExpenseQuote, expenseValuationMethod, fxStatus } from "./fxPresentation";
 
 const expense = {
   original: { minor: 10000, currency: "EUR", scale: 2 },
@@ -33,6 +33,15 @@ const quote = {
 } satisfies RateQuote;
 
 describe("Expense FX exceptions", () => {
+  it("defaults each unresolved Expense to reference independently of other manual/cost evidence", () => {
+    const unresolved = { valuation: null };
+    const manual = { valuation: { policy: "MANUAL_AGREED" } };
+    const cost = { valuation: { policy: "ACTUAL_PAYER_COST" } };
+    expect(expenseValuationMethod(unresolved)).toBe("REFERENCE_RATE");
+    expect(expenseValuationMethod(manual as never)).toBe("MANUAL_AGREED");
+    expect(expenseValuationMethod(cost as never)).toBe("ACTUAL_PAYER_COST");
+    expect(expenseValuationMethod(unresolved)).toBe("REFERENCE_RATE");
+  });
   it("distinguishes unknown economic date, pending reference and accepted valuation in both languages", () => {
     expect(fxStatus({ ...expense, economicDate: null }, false)).toBe(
       "Save Expense date to update Journey value",

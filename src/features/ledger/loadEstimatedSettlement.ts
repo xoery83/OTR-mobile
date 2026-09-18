@@ -6,13 +6,12 @@ import { loadDisplayEstimates } from "./loadDisplayEstimates";
 
 export async function loadEstimatedSettlement(journeyId: string) {
   const reports = await getDefaultLedgerReportingRepository();
-  const [journey, options, actor, policy] = await Promise.all([
+  const [journey, options, actor] = await Promise.all([
     reports
       .listJourneys()
       .then((rows) => rows.find((row) => row.journeyId === journeyId)),
     reports.listFilterOptions(journeyId),
     reports.getActorMemberId(journeyId),
-    reports.getJourneyValuationPolicy(journeyId),
   ]);
   if (!journey || !actor?.memberId) throw new Error("Journey unavailable.");
   const query = { journeyId, memberId: actor.memberId, scope: "GROUP" as const };
@@ -39,7 +38,7 @@ export async function loadEstimatedSettlement(journeyId: string) {
       journey.settlementScale,
       estimates,
       conflicted,
-      policy,
+      "REFERENCE_RATE",
     ),
     members: options.members,
     serverIds: new Map(expenses.map((expense) => [expense.id, expense.serverId])),
