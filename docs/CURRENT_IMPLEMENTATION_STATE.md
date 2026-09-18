@@ -2,6 +2,10 @@
 
 Date: 2026-09-18
 
+## Expense Rate Details history presentation — local validation
+
+- Expanded Rate Details now leads with the active per-Expense method and its own settlement Money; valuation history is a separate, collapsed user action without device-cache wording. Historical rows render the snapshot's original and settlement currencies/amounts, method, time, and available context. A prior CNY→CNY row on the reported NZD Expense was a genuine earlier `SAME_CURRENCY` canonical revision from before the original-currency correction, not a UI-invented NZD pair. Four ¥12.35 rows have distinct canonical IDs/revisions and are retained; only repeated local projections of one canonical snapshot are coalesced for display. Typecheck, lint, 83 Vitest files/334 tests and iPhone 17 Pro Max Simulator Release build pass. The installed UI showed current Reference rate/¥46.38/NZD→CNY first, history collapsed by default, then four distinct earlier CNY→CNY values with original-currency context and different times after expansion. A matching signed physical Release was built, installed over the existing OTR on Leon’s iPhone 16 Pro (iOS 26.6) without clearing data, and launched; physical Rate Details touch interaction remains pending due to Device Hub/iOS 26.6. No financial records, valuation rules, Backend, migration, Hosted Dev or Production changed.
+
 ## Cross-currency new-Expense reference default — Hosted Dev and Simulator PASS
 
 - New cross-currency Expenses already persisted `RATE_REQUIRED` without a manual valuation. Two existing CNY Journeys retain legacy `valuation_policy=MANUAL_AGREED`; Detail and the Phase C/foreground selectors wrongly treated this Journey metadata as the method/eligibility of every new Expense. ADR 0025 and forward migration `20260918000500` remove that inheritance while retaining per-Expense accepted manual/actual evidence, Phase D semantic blocks, settings revision and finalized protections. Detail, local estimated Settlement and Backend terminal classification now follow per-Expense evidence/reference eligibility. Only an explicit manual action can create `MANUAL_AGREED`.

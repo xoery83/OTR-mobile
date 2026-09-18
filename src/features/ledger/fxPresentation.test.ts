@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
-import type { RateQuote } from "@/domain/ledger/types";
+import type { RateQuote, SettlementValuationSnapshot } from "@/domain/ledger/types";
 import { previewValuation } from "@/domain/ledger/valuation";
 
-import { eligibleExpenseQuote, expenseValuationMethod, fxStatus } from "./fxPresentation";
+import {
+  eligibleExpenseQuote,
+  expenseValuationMethod,
+  fxStatus,
+  valuationHistoryPresentation,
+} from "./fxPresentation";
 
 const expense = {
   original: { minor: 10000, currency: "EUR", scale: 2 },
@@ -33,6 +38,74 @@ const quote = {
 } satisfies RateQuote;
 
 describe("Expense FX exceptions", () => {
+  it("presents historical snapshot currencies and evidence, not today's Journey pair", () => {
+    const current = { minor: 1200, currency: "NZD", scale: 2 };
+    const snapshot = {
+      id: "previous",
+      policy: "REFERENCE_RATE",
+      original: current,
+      settlement: { minor: 1235, currency: "CNY", scale: 2 },
+      rateSnapshotId: "rate",
+      paymentRecordId: null,
+      reason: null,
+    } satisfies SettlementValuationSnapshot;
+    const currentReference = {
+      ...snapshot,
+      id: "current",
+      settlement: { minor: 4638, currency: "CNY", scale: 2 },
+    };
+    expect(expenseValuationMethod({ valuation: currentReference })).toBe("REFERENCE_RATE");
+    expect(currentReference.original.currency).toBe("NZD");
+    expect(currentReference.settlement.currency).toBe("CNY");
+    expect(currentReference.settlement.minor).toBe(4638);
+    const reference = valuationHistoryPresentation(snapshot, current, "CNY", false);
+    expect(reference).toMatchObject({
+      title: "Previous reference value",
+      pair: "NZD → CNY",
+      context: [],
+    });
+    expect(reference.value).toContain("12.00");
+    expect(reference.value).toContain("12.35");
+
+    const oldSameCurrency = valuationHistoryPresentation(
+      {
+        ...snapshot,
+        policy: "SAME_CURRENCY",
+        original: { minor: 1235, currency: "CNY", scale: 2 },
+      },
+      current,
+      "CNY",
+      false,
+    );
+    expect(oldSameCurrency.pair).toBe("CNY → CNY");
+    expect(oldSameCurrency.context).toContain("Original currency then: CNY");
+
+    const oldJourneyCurrency = valuationHistoryPresentation(
+      { ...snapshot, policy: "SAME_CURRENCY", settlement: { minor: 1200, currency: "NZD", scale: 2 } },
+      current,
+      "CNY",
+      false,
+    );
+    expect(oldJourneyCurrency.pair).toBe("NZD → NZD");
+    expect(oldJourneyCurrency.context).toContain("Journey currency then: NZD");
+
+    expect(
+      valuationHistoryPresentation(
+        { ...snapshot, policy: "MANUAL_AGREED", reason: "Group agreed" },
+        current,
+        "CNY",
+        false,
+      ),
+    ).toMatchObject({ title: "Previous agreed value", context: ["Group agreed"] });
+    expect(
+      valuationHistoryPresentation(
+        { ...snapshot, policy: "ACTUAL_PAYER_COST" },
+        current,
+        "CNY",
+        false,
+      ).title,
+    ).toBe("Previous payer-cost value");
+  });
   it("defaults each unresolved Expense to reference independently of other manual/cost evidence", () => {
     const unresolved = { valuation: null };
     const manual = { valuation: { policy: "MANUAL_AGREED" } };

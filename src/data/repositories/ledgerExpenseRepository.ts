@@ -140,6 +140,7 @@ type LedgerExpenseRow = {
 
 type ValuationRow = {
   id: string;
+  serverId?: string | null;
   policy: SettlementValuationSnapshot["policy"];
   originalMinor: number;
   originalCurrency: string;
@@ -614,7 +615,7 @@ export function createLedgerExpenseRepository(
       const userId = await getActiveUserId();
       await requireExpense(database, id, userId);
       const rows = await database.getAllAsync<ValuationRow>(
-        `SELECT id, policy, original_amount_minor AS originalMinor,
+        `SELECT id, server_id AS serverId, policy, original_amount_minor AS originalMinor,
           original_currency AS originalCurrency, original_scale AS originalScale,
           settlement_amount_minor AS settlementMinor,
           settlement_currency AS settlementCurrency, settlement_scale AS settlementScale,
@@ -623,10 +624,19 @@ export function createLedgerExpenseRepository(
           effective_at AS effectiveAt, supersedes_valuation_id AS supersedesValuationId,
           reference_evidence_json AS referenceEvidenceJson
          FROM ledger_valuation_snapshots WHERE expense_id = ? AND is_active = 0
-         ORDER BY expense_revision DESC LIMIT 5`,
+         ORDER BY expense_revision DESC`,
         id,
       );
-      return rows.map(normalizeValuation);
+      const seen = new Set<string>();
+      return rows
+        .filter((row) => {
+          const canonicalId = row.serverId ?? row.id;
+          if (seen.has(canonicalId)) return false;
+          seen.add(canonicalId);
+          return true;
+        })
+        .slice(0, 5)
+        .map(normalizeValuation);
     },
 
     async applyValuation(expenseId, input) {

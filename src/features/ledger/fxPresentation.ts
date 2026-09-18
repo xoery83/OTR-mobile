@@ -1,10 +1,53 @@
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
-import type { RateQuote } from "@/domain/ledger/types";
+import type {
+  Money,
+  RateQuote,
+  SettlementValuationSnapshot,
+} from "@/domain/ledger/types";
 
 import { proposedExpenseDate } from "./expenseDraft";
+import { formatLedgerMoney } from "./format";
 
 export function expenseValuationMethod(expense: Pick<LedgerExpense, "valuation">) {
   return expense.valuation?.policy ?? "REFERENCE_RATE";
+}
+
+export function valuationHistoryPresentation(
+  snapshot: SettlementValuationSnapshot,
+  currentOriginal: Money,
+  currentJourneyCurrency: string,
+  chinese: boolean,
+) {
+  const titles = {
+    REFERENCE_RATE: chinese ? "之前的参考汇率估值" : "Previous reference value",
+    MANUAL_AGREED: chinese ? "之前的约定汇率估值" : "Previous agreed value",
+    ACTUAL_PAYER_COST: chinese ? "之前的实际付款估值" : "Previous payer-cost value",
+    SAME_CURRENCY: chinese ? "之前的同币种估值" : "Previous same-currency value",
+    LEGACY_IMPORTED: chinese ? "之前的估值" : "Previous value",
+  };
+  const context = [
+    snapshot.original.currency !== currentOriginal.currency
+      ? chinese
+        ? `当时的原始货币：${snapshot.original.currency}`
+        : `Original currency then: ${snapshot.original.currency}`
+      : null,
+    snapshot.settlement.currency !== currentJourneyCurrency
+      ? chinese
+        ? `当时的旅行货币：${snapshot.settlement.currency}`
+        : `Journey currency then: ${snapshot.settlement.currency}`
+      : null,
+    snapshot.policy === "MANUAL_AGREED" && snapshot.reason ? snapshot.reason : null,
+  ].filter((item): item is string => Boolean(item));
+  return {
+    title: titles[snapshot.policy],
+    pair:
+      snapshot.original.currency !== snapshot.settlement.currency ||
+      snapshot.policy === "SAME_CURRENCY"
+        ? `${snapshot.original.currency} → ${snapshot.settlement.currency}`
+        : null,
+    value: `${formatLedgerMoney(snapshot.original.minor, snapshot.original.currency, snapshot.original.scale)} → ${formatLedgerMoney(snapshot.settlement.minor, snapshot.settlement.currency, snapshot.settlement.scale)}`,
+    context,
+  };
 }
 
 export function eligibleExpenseQuote(

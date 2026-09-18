@@ -13,6 +13,7 @@ function createInMemoryLedgerDatabase() {
   const participants = new Map<string, ExpenseRow[]>();
   const splits = new Map<string, ExpenseRow[]>();
   const valuations = new Map<string, ExpenseRow>();
+  const previousValuations: ExpenseRow[] = [];
   const payments = new Map<string, ExpenseRow[]>();
   const operations: ExpenseRow[] = [];
   const auditEvents: ExpenseRow[] = [];
@@ -299,6 +300,8 @@ function createInMemoryLedgerDatabase() {
         return (splits.get(id) ?? []) as T[];
       if (sql.includes("FROM ledger_payment_records"))
         return (payments.get(id) ?? []) as T[];
+      if (sql.includes("FROM ledger_valuation_snapshots WHERE"))
+        return previousValuations.filter((row) => row.expenseId === id) as T[];
       return [] as T[];
     },
   };
@@ -309,6 +312,7 @@ function createInMemoryLedgerDatabase() {
     operations,
     auditEvents,
     valuations,
+    previousValuations,
     transactionCount: () => transactionCount,
   };
 }
@@ -360,6 +364,38 @@ const command: LedgerExpenseCommand = {
 
 describe("Ledger Expense repository", () => {
   const activeUser = async () => "user-a";
+
+  it("deduplicates only projections of the same canonical valuation", async () => {
+    const { database, previousValuations } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const created = await repository.createExpense(command);
+    const row = {
+      expenseId: created.id,
+      policy: "SAME_CURRENCY",
+      originalMinor: 1235,
+      originalCurrency: "CNY",
+      originalScale: 2,
+      settlementMinor: 1235,
+      settlementCurrency: "CNY",
+      settlementScale: 2,
+      rateSnapshotId: null,
+      paymentRecordId: null,
+      reason: null,
+      decimalRate: null,
+      roundingMode: "HALF_UP",
+      effectiveAt: "2026-09-16T00:20:00Z",
+      supersedesValuationId: null,
+      referenceEvidenceJson: null,
+    };
+    previousValuations.push(
+      { ...row, id: "local-copy", serverId: "canonical-1" },
+      { ...row, id: "canonical-1", serverId: "canonical-1" },
+      { ...row, id: "canonical-2", serverId: "canonical-2" },
+    );
+    const history = await repository.listPreviousValuations(created.id);
+    expect(history.map((item) => item.id)).toEqual(["local-copy", "canonical-2"]);
+    expect(history.every((item) => item.original.currency === "CNY")).toBe(true);
+  });
 
   it("atomically persists the full Expense aggregate and one durable create operation", async () => {
     const { database, operations, auditEvents, transactionCount } =

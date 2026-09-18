@@ -18,7 +18,12 @@ import { previewValuation } from "@/domain/ledger/valuation";
 import { formatLedgerMoney } from "./format";
 import type { DisplayEstimate } from "./displayEstimate";
 import { proposedExpenseDate } from "./expenseDraft";
-import { eligibleExpenseQuote, expenseValuationMethod, fxStatus } from "./fxPresentation";
+import {
+  eligibleExpenseQuote,
+  expenseValuationMethod,
+  fxStatus,
+  valuationHistoryPresentation,
+} from "./fxPresentation";
 
 function fullDate(day: string, chinese: boolean) {
   const [year, month, date] = day.split("-").map(Number);
@@ -52,6 +57,7 @@ export function ExpenseFxDetails({
   const chinese = Intl.DateTimeFormat().resolvedOptions().locale.startsWith("zh");
   const label = (en: string, zh: string) => (chinese ? zh : en);
   const [expanded, setExpanded] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
   const [manual, setManual] = useState(false);
   const [rate, setRate] = useState("");
   const [reason, setReason] = useState("");
@@ -180,7 +186,11 @@ export function ExpenseFxDetails({
       <Text style={styles.label}>{label("JOURNEY VALUE", "旅行估值")}</Text>
       {valuation ? (
         <Text style={styles.value}>
-          {formatLedgerMoney(valuation.settlement.minor, currency, scale)}
+          {formatLedgerMoney(
+            valuation.settlement.minor,
+            valuation.settlement.currency,
+            valuation.settlement.scale,
+          )}
         </Text>
       ) : estimate ? (
         <Text style={styles.value}>
@@ -214,7 +224,7 @@ export function ExpenseFxDetails({
       {expanded && crossCurrency ? (
         <View style={styles.details}>
           <Text style={styles.meta}>
-            {label("Journey value method", "旅行估值方式")}:{" "}
+            {valuation ? label("Current", "当前") : label("Expected method", "预计方式")}:{" "}
             {policy === "REFERENCE_RATE"
               ? label("Reference rate", "参考汇率")
               : policy === "MANUAL_AGREED"
@@ -226,18 +236,17 @@ export function ExpenseFxDetails({
           {valuation ? (
             <>
               <Text style={styles.meta}>
-                {label("How calculated", "计算方式")}:{" "}
-                {valuation.policy === "REFERENCE_RATE"
-                  ? label("Reference rate", "参考汇率")
-                  : valuation.policy === "MANUAL_AGREED"
-                    ? label("Agreed rate", "约定汇率")
-                    : valuation.policy === "ACTUAL_PAYER_COST"
-                      ? label("Actual payer cost", "实际付款金额")
-                      : label("Imported valuation", "导入估值")}
+                {label("Journey value", "旅行估值")}:{" "}
+                {formatLedgerMoney(
+                  valuation.settlement.minor,
+                  valuation.settlement.currency,
+                  valuation.settlement.scale,
+                )}
               </Text>
               {valuation.decimalRate ? (
                 <Text style={styles.meta}>
-                  1 {expense.original.currency} = {valuation.decimalRate} {currency}
+                  1 {valuation.original.currency} = {valuation.decimalRate}{" "}
+                  {valuation.settlement.currency}
                 </Text>
               ) : null}
               {valuation.reason ? (
@@ -275,31 +284,6 @@ export function ExpenseFxDetails({
                   )}
                 </Text>
               ) : null}
-            </>
-          ) : null}
-          {previous.length ? (
-            <>
-              <Text style={styles.label}>
-                {label("EARLIER JOURNEY VALUES ON THIS PHONE", "此手机上的以往旅行估值")}
-              </Text>
-              {previous.map((item) => (
-                <Text key={item.id} style={styles.meta}>
-                  {item.original.currency} → {item.settlement.currency} ·{" "}
-                  {formatLedgerMoney(
-                    item.settlement.minor,
-                    item.settlement.currency,
-                    item.settlement.scale,
-                  )}{" "}
-                  ·{" "}
-                  {item.policy === "REFERENCE_RATE"
-                    ? label("Reference rate", "参考汇率")
-                    : item.policy === "MANUAL_AGREED"
-                      ? label("Agreed rate", "约定汇率")
-                      : item.policy === "ACTUAL_PAYER_COST"
-                        ? label("Actual payer cost", "实际付款金额")
-                        : label("Previous valuation", "历史估值")}
-                </Text>
-              ))}
             </>
           ) : null}
           {locked ? (
@@ -416,6 +400,52 @@ export function ExpenseFxDetails({
             <Text accessibilityLiveRegion="polite" style={styles.error}>
               {error}
             </Text>
+          ) : null}
+          {previous.length ? (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: historyExpanded }}
+                style={styles.detailsToggle}
+                onPress={() => setHistoryExpanded(!historyExpanded)}
+              >
+                <Text style={styles.detailsToggleText}>
+                  {historyExpanded
+                    ? label("Hide valuation history", "收起估值历史")
+                    : label("View valuation history", "查看估值历史")}
+                </Text>
+              </Pressable>
+              {historyExpanded
+                ? previous.map((item) => {
+                    const row = valuationHistoryPresentation(
+                      item,
+                      expense.original,
+                      currency,
+                      chinese,
+                    );
+                    return (
+                      <View key={item.id}>
+                        <Text style={styles.meta}>{row.title}</Text>
+                        {row.pair ? <Text style={styles.meta}>{row.pair}</Text> : null}
+                        <Text style={styles.meta}>{row.value}</Text>
+                        {row.context.map((line) => (
+                          <Text key={line} style={styles.meta}>
+                            {line}
+                          </Text>
+                        ))}
+                        {item.effectiveAt ? (
+                          <Text style={styles.meta}>
+                            {new Intl.DateTimeFormat(chinese ? "zh-CN" : "en-GB", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            }).format(new Date(item.effectiveAt))}
+                          </Text>
+                        ) : null}
+                      </View>
+                    );
+                  })
+                : null}
+            </>
           ) : null}
         </View>
       ) : null}
