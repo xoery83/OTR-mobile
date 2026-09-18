@@ -2,6 +2,11 @@
 
 Date: 2026-09-18
 
+## Ledger local SQLite rollback presentation fix — local validation
+
+- Recurrent raw `finalizeAsync` / `abort due to ROLLBACK` text on the Spending screen traced to concurrent async use of the shared SQLite connection: background Journey/My Ledger writes use non-exclusive Expo transactions while Ledger reads several projections in parallel. A read-only Simulator integrity/foreign-key check was `ok`, and reloading Group cleared the message without data loss.
+- Post-migration shared-connection write transactions are now serialized, including after a failed transaction; Ledger retries one aborted read and otherwise keeps saved data with a plain, nontechnical refresh message. No schema, financial rule, Backend or Production change. TypeScript, ESLint and 84 Vitest files/337 tests pass. Signed Release installed without clearing data on iPhone 17 Pro and Pro Max Simulators and Leon’s iPhone 16 Pro; the physical app launched. The Pro reproduced Journey reloaded and Mine/Group toggled during sync without a raw exception; Pro Max showed its saved Ledger. Physical touch verification remains pending because Device Hub cannot screen-share iOS 26.6.
+
 ## Same-day FX publication pending — Hosted Dev rollout
 
 - A synced, same-day cross-currency Expense with a recent cached quote shows an approximate Journey value marked “Estimated,” not “Updating…”. Without an estimate it waits for the day’s reference rate; genuinely unsynced processing retains “Updating…”. The prior-day quote remains display-only and can never become the canonical economic-date valuation.

@@ -61,6 +61,7 @@ import {
   spendingPercentage,
 } from "./dashboardPresentation";
 import { createLatestRequest } from "./latestRequest";
+import { retrySQLiteRollbackOnce } from "./retryLedgerRead";
 
 type Mode = "SPENDING" | "SETTLEMENT";
 type FinalizedRows = Awaited<
@@ -200,131 +201,133 @@ export function LedgerStage6Screen() {
       const id = request.begin();
       setMessage(null);
       try {
-        const repository = await getDefaultLedgerReportingRepository();
-        const actor = await repository.getActorMemberId(nextJourney.journeyId);
-        const nextMemberId = actor?.memberId ?? null;
-        if (!nextMemberId)
-          throw new Error(
-            "This Journey needs an authenticated bootstrap before reporting is available.",
+        return await retrySQLiteRollbackOnce(async () => {
+          const repository = await getDefaultLedgerReportingRepository();
+          const actor = await repository.getActorMemberId(nextJourney.journeyId);
+          const nextMemberId = actor?.memberId ?? null;
+          if (!nextMemberId)
+            throw new Error(
+              "This Journey needs an authenticated bootstrap before reporting is available.",
+            );
+          const query = {
+            journeyId: nextJourney.journeyId,
+            memberId: nextMemberId,
+            scope: nextScope,
+          };
+          const selectedMemberId =
+            nextScope === "GROUP" &&
+            selectedJourneyIdRef.current === nextJourney.journeyId
+              ? selectedMemberIdRef.current
+              : null;
+          const settlementRepository = await getDefaultLedgerSettlementRepository();
+          const [
+            nextSummary,
+            nextCategories,
+            nextExpenses,
+            settlements,
+            options,
+            memberSpending,
+            reviewCounts,
+            selectedMember,
+          ] = await Promise.all([
+            repository.summarize(query),
+            repository.analyze(query, "CATEGORY"),
+            repository.listExpenses(query, 12),
+            settlementRepository.listFinalized(nextJourney.journeyId),
+            repository.listFilterOptions(nextJourney.journeyId),
+            nextScope === "GROUP"
+              ? repository.analyze({ ...query, scope: "GROUP" }, "PARTICIPANT")
+              : Promise.resolve([]),
+            getDefaultLedgerReviewRepository().then((review) =>
+              review.counts(nextJourney.journeyId),
+            ),
+            selectedMemberId
+              ? Promise.all([
+                  repository.summarize({
+                    ...query,
+                    memberId: selectedMemberId,
+                    scope: "MINE",
+                  }),
+                  repository.analyze(
+                    { ...query, memberId: selectedMemberId, scope: "MINE" },
+                    "CATEGORY",
+                  ),
+                ]).then(([summary, categories]) => ({
+                  id: selectedMemberId,
+                  summary,
+                  categories: categories.slice(0, 5),
+                }))
+              : Promise.resolve(null),
+          ]);
+          const allRows = await repository.listExpenses(
+            query,
+            await repository.countExpenses(query),
           );
-        const query = {
-          journeyId: nextJourney.journeyId,
-          memberId: nextMemberId,
-          scope: nextScope,
-        };
-        const selectedMemberId =
-          nextScope === "GROUP" && selectedJourneyIdRef.current === nextJourney.journeyId
-            ? selectedMemberIdRef.current
-            : null;
-        const settlementRepository = await getDefaultLedgerSettlementRepository();
-        const [
-          nextSummary,
-          nextCategories,
-          nextExpenses,
-          settlements,
-          options,
-          memberSpending,
-          reviewCounts,
-          selectedMember,
-        ] = await Promise.all([
-          repository.summarize(query),
-          repository.analyze(query, "CATEGORY"),
-          repository.listExpenses(query, 12),
-          settlementRepository.listFinalized(nextJourney.journeyId),
-          repository.listFilterOptions(nextJourney.journeyId),
-          nextScope === "GROUP"
-            ? repository.analyze({ ...query, scope: "GROUP" }, "PARTICIPANT")
-            : Promise.resolve([]),
-          getDefaultLedgerReviewRepository().then((review) =>
-            review.counts(nextJourney.journeyId),
-          ),
-          selectedMemberId
-            ? Promise.all([
-                repository.summarize({
-                  ...query,
-                  memberId: selectedMemberId,
-                  scope: "MINE",
-                }),
-                repository.analyze(
-                  { ...query, memberId: selectedMemberId, scope: "MINE" },
-                  "CATEGORY",
-                ),
-              ]).then(([summary, categories]) => ({
-                id: selectedMemberId,
-                summary,
-                categories: categories.slice(0, 5),
-              }))
-            : Promise.resolve(null),
-        ]);
-        const allRows = await repository.listExpenses(
-          query,
-          await repository.countExpenses(query),
-        );
-        const rawExpenses = await (
-          await getDefaultLedgerExpenseRepository()
-        ).listExpensesForJourney(nextJourney.journeyId);
-        const rawById = new Map(rawExpenses.map((expense) => [expense.id, expense]));
-        const estimates = await loadDisplayEstimates(
-          nextJourney.journeyId,
-          nextJourney.settlementCurrency,
-          nextJourney.settlementScale,
-          rawExpenses,
-        );
-        const display = displayTotalProjection(
-          allRows,
-          rawById,
-          estimates,
-          nextScope,
-          nextMemberId,
-        );
-        if (!Number.isSafeInteger(nextSummary.totalMinor + display.estimatedMinor))
-          throw new Error("Display total is unsafe.");
-        const estimateComponents = new Map(
-          nextExpenses.flatMap((row) => {
-            if (row.hasOpenConflict || row.businessStatus !== "RATE_REQUIRED") return [];
-            const raw = rawById.get(row.id);
-            const estimate = estimates.get(row.id);
-            const minor =
-              raw && estimate
-                ? nextScope === "GROUP"
-                  ? estimate.money.minor
-                  : estimatedComponent(raw, estimate, nextMemberId)
-                : null;
-            return minor === null ? [] : [[row.id, minor] as const];
-          }),
-        );
-        if (!request.isCurrent(id)) return false;
-        memberRequest.cancel();
-        scopeRef.current = nextScope;
-        selectedJourneyIdRef.current = nextJourney.journeyId;
-        selectedMemberIdRef.current =
-          selectedMember &&
-          options.members.some((member) => member.id === selectedMember.id)
-            ? selectedMember.id
-            : null;
-        setProjection({
-          journey: nextJourney,
-          memberId: nextMemberId,
-          scope: nextScope,
-          summary: nextSummary,
-          categories: nextCategories.slice(0, 5),
-          members: options.members,
-          memberSpending,
-          reviewCount: reviewCounts.pending,
-          selectedMember: selectedMemberIdRef.current ? selectedMember : null,
-          expenses: nextExpenses,
-          estimatedMinor: display.estimatedMinor,
-          estimatedCount: display.estimatedCount,
-          estimates,
-          estimateComponents,
-          settlement: summarizeSettlement(settlements, nextMemberId),
+          const rawExpenses = await (
+            await getDefaultLedgerExpenseRepository()
+          ).listExpensesForJourney(nextJourney.journeyId);
+          const rawById = new Map(rawExpenses.map((expense) => [expense.id, expense]));
+          const estimates = await loadDisplayEstimates(
+            nextJourney.journeyId,
+            nextJourney.settlementCurrency,
+            nextJourney.settlementScale,
+            rawExpenses,
+          );
+          const display = displayTotalProjection(
+            allRows,
+            rawById,
+            estimates,
+            nextScope,
+            nextMemberId,
+          );
+          if (!Number.isSafeInteger(nextSummary.totalMinor + display.estimatedMinor))
+            throw new Error("Display total is unsafe.");
+          const estimateComponents = new Map(
+            nextExpenses.flatMap((row) => {
+              if (row.hasOpenConflict || row.businessStatus !== "RATE_REQUIRED")
+                return [];
+              const raw = rawById.get(row.id);
+              const estimate = estimates.get(row.id);
+              const minor =
+                raw && estimate
+                  ? nextScope === "GROUP"
+                    ? estimate.money.minor
+                    : estimatedComponent(raw, estimate, nextMemberId)
+                  : null;
+              return minor === null ? [] : [[row.id, minor] as const];
+            }),
+          );
+          if (!request.isCurrent(id)) return false;
+          memberRequest.cancel();
+          scopeRef.current = nextScope;
+          selectedJourneyIdRef.current = nextJourney.journeyId;
+          selectedMemberIdRef.current =
+            selectedMember &&
+            options.members.some((member) => member.id === selectedMember.id)
+              ? selectedMember.id
+              : null;
+          setProjection({
+            journey: nextJourney,
+            memberId: nextMemberId,
+            scope: nextScope,
+            summary: nextSummary,
+            categories: nextCategories.slice(0, 5),
+            members: options.members,
+            memberSpending,
+            reviewCount: reviewCounts.pending,
+            selectedMember: selectedMemberIdRef.current ? selectedMember : null,
+            expenses: nextExpenses,
+            estimatedMinor: display.estimatedMinor,
+            estimatedCount: display.estimatedCount,
+            estimates,
+            estimateComponents,
+            settlement: summarizeSettlement(settlements, nextMemberId),
+          });
+          return true;
         });
-        return true;
-      } catch (error) {
+      } catch {
         if (request.isCurrent(id))
-          setMessage(
-            error instanceof Error ? error.message : "Ledger could not be updated.",
-          );
+          setMessage("Ledger could not refresh. Saved data is still available.");
         return false;
       }
     },
