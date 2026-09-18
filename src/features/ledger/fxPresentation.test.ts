@@ -17,6 +17,7 @@ const expense = {
   economicDate: "2026-07-12",
   status: "RATE_REQUIRED",
   valuation: null,
+  syncStatus: "PENDING_CREATE",
 } as LedgerExpense;
 const quote = {
   id: "quote",
@@ -54,7 +55,9 @@ describe("Expense FX exceptions", () => {
       id: "current",
       settlement: { minor: 4638, currency: "CNY", scale: 2 },
     };
-    expect(expenseValuationMethod({ valuation: currentReference })).toBe("REFERENCE_RATE");
+    expect(expenseValuationMethod({ valuation: currentReference })).toBe(
+      "REFERENCE_RATE",
+    );
     expect(currentReference.original.currency).toBe("NZD");
     expect(currentReference.settlement.currency).toBe("CNY");
     expect(currentReference.settlement.minor).toBe(4638);
@@ -81,7 +84,11 @@ describe("Expense FX exceptions", () => {
     expect(oldSameCurrency.context).toContain("Original currency then: CNY");
 
     const oldJourneyCurrency = valuationHistoryPresentation(
-      { ...snapshot, policy: "SAME_CURRENCY", settlement: { minor: 1200, currency: "NZD", scale: 2 } },
+      {
+        ...snapshot,
+        policy: "SAME_CURRENCY",
+        settlement: { minor: 1200, currency: "NZD", scale: 2 },
+      },
       current,
       "CNY",
       false,
@@ -124,6 +131,27 @@ describe("Expense FX exceptions", () => {
     ).toBeNull();
     expect(fxStatus(expense, false)).toBe("Updating…");
     expect(fxStatus(expense, true)).toBe("更新中…");
+    const syncedToday = {
+      ...expense,
+      economicDate: "2026-09-18",
+      syncStatus: "SYNCED" as const,
+    };
+    expect(
+      fxStatus(syncedToday, false, "REFERENCE_RATE", false, true, "2026-09-18"),
+    ).toBe("Estimated");
+    expect(
+      fxStatus(syncedToday, false, "REFERENCE_RATE", false, false, "2026-09-18"),
+    ).toBe("Waiting for today's reference rate");
+    expect(
+      fxStatus(
+        { ...syncedToday, economicDate: "2026-09-16" },
+        false,
+        "REFERENCE_RATE",
+        false,
+        false,
+        "2026-09-18",
+      ),
+    ).toBe("Reference rate pending");
     expect(fxStatus(expense, false, "MANUAL_AGREED")).toBe("Rate needs review");
     expect(fxStatus(expense, false, "ACTUAL_PAYER_COST")).toBe("Review payment value");
     expect(fxStatus(expense, false, "REFERENCE_RATE", true)).toBe(

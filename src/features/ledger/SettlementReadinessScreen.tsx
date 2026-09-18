@@ -14,6 +14,7 @@ import { router } from "expo-router";
 import { type Stage7Preview, useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney } from "./format";
+import { unpublishedEstimateMessage } from "./estimatedSettlement";
 import {
   settlementMemberName,
   settlementTransferRows,
@@ -42,6 +43,7 @@ export function SettlementReadinessScreen({
     busy,
     displayPreview,
     unavailableExpenseIds,
+    pendingPublicationExpenseIds,
     finalized,
     lineage,
     message,
@@ -77,6 +79,12 @@ export function SettlementReadinessScreen({
   const personal = finalized?.balances.find(
     (balance) => balance.memberId === actorMemberId,
   );
+  const publicationMessage = displayPreview
+    ? unpublishedEstimateMessage(
+        pendingPublicationExpenseIds,
+        displayPreview.estimatedServerIds,
+      )
+    : null;
   const rows: (SettlementTransferRow | PreviewTransferRow)[] = finalized
     ? finalRows
     : previewRows;
@@ -90,9 +98,13 @@ export function SettlementReadinessScreen({
               displayPreview?.serverIds.get(blocker.expenseId) ?? "",
             )
               ? "Review agreed rate"
-              : displayPreview?.blockers.find(
-                  (item) => item.expenseId === blocker.expenseId,
-                )?.reason) ??
+              : pendingPublicationExpenseIds.has(
+                    displayPreview?.serverIds.get(blocker.expenseId) ?? "",
+                  )
+                ? "Reference rate not published yet"
+                : displayPreview?.blockers.find(
+                    (item) => item.expenseId === blocker.expenseId,
+                  )?.reason) ??
             (blocker.reason === "OPEN_CONFLICT"
               ? "Resolve conflict"
               : "Journey value needs attention"),
@@ -103,7 +115,11 @@ export function SettlementReadinessScreen({
             displayPreview.serverIds.get(item.expenseId) ?? "",
           )
             ? "Review agreed rate"
-            : item.reason,
+            : pendingPublicationExpenseIds.has(
+                  displayPreview.serverIds.get(item.expenseId) ?? "",
+                )
+              ? "Reference rate not published yet"
+              : item.reason,
         })) ??
         []);
   const attentionCounts = [...new Set(attention.map((item) => item.reason))].map(
@@ -157,6 +173,9 @@ export function SettlementReadinessScreen({
           <Text style={styles.meta}>
             Approximate · includes {displayPreview.estimatedCount} estimated values
           </Text>
+        ) : null}
+        {!finalized && preview?.state !== "PREVIEW_READY" && publicationMessage ? (
+          <Text style={styles.meta}>{publicationMessage}</Text>
         ) : null}
         {!finalized &&
         preview?.state !== "PREVIEW_READY" &&

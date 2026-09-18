@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 
-import { estimatedSettlement } from "./estimatedSettlement";
+import { estimatedSettlement, unpublishedEstimateMessage } from "./estimatedSettlement";
 import type { DisplayEstimate } from "./displayEstimate";
 
 const expense = {
@@ -24,6 +24,16 @@ const estimate = {
 } satisfies DisplayEstimate;
 
 describe("informational settlement preview", () => {
+  it("keeps unpublished display estimates out of final settlement", () => {
+    expect(
+      unpublishedEstimateMessage(new Set(["server-one"]), new Set(["server-one"])),
+    ).toBe(
+      "1 value is still estimated. Final settlement will be available after the reference rate is published.",
+    );
+    expect(
+      unpublishedEstimateMessage(new Set(["server-one"]), new Set(["other-estimate"])),
+    ).toBeNull();
+  });
   it("allocates estimate deterministically and never edits financial evidence", () => {
     const before = JSON.stringify(expense);
     const result = estimatedSettlement(

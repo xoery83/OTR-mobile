@@ -707,11 +707,16 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return acquired;
     },
 
-    async resolveSettlementFx(_userId, tripId) {
-      const claimed = await service.rpc("ledger_claim_settlement_rate_demands", {
-        target_journey: tripId,
-        max_requests: 4,
-      });
+    async resolveSettlementFx(_userId, tripId, forceRetry) {
+      const claimed = await service.rpc(
+        forceRetry
+          ? "ledger_retry_settlement_unpublished_rates"
+          : "ledger_claim_settlement_rate_demands",
+        {
+          target_journey: tripId,
+          max_requests: 4,
+        },
+      );
       if (claimed.error) throw new Error("Supabase Dev settlement FX claim failed.");
       const count = await acquirePendingRateQuotes(
         service,
@@ -729,7 +734,11 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
           .from("ledger_rate_quote_attempts")
           .select("economic_date,quote_currency,base_currency,status")
           .eq("journey_id", tripId)
-          .in("status", ["UNSUPPORTED", "NO_REFERENCE_WITHIN_POLICY"]),
+          .in("status", [
+            "UNSUPPORTED",
+            "NO_REFERENCE_WITHIN_POLICY",
+            "NOT_YET_AVAILABLE",
+          ]),
         service
           .from("expenses")
           .select("id,economic_date,original_currency")
@@ -742,9 +751,18 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         throw new Error("Supabase Dev settlement FX classification failed.");
       const currency = String(settings.data.settlement_currency);
       const unavailable = new Set(
-        (attempts.data ?? []).map(
-          (row) => `${row.economic_date}:${row.quote_currency}:${row.base_currency}`,
-        ),
+        (attempts.data ?? [])
+          .filter((row) => row.status !== "NOT_YET_AVAILABLE")
+          .map(
+            (row) => `${row.economic_date}:${row.quote_currency}:${row.base_currency}`,
+          ),
+      );
+      const pendingPublication = new Set(
+        (attempts.data ?? [])
+          .filter((row) => row.status === "NOT_YET_AVAILABLE")
+          .map(
+            (row) => `${row.economic_date}:${row.quote_currency}:${row.base_currency}`,
+          ),
       );
       return {
         claimed: count,
@@ -752,6 +770,13 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         unavailableExpenseIds: (expenses.data ?? [])
           .filter((row) =>
             unavailable.has(`${row.economic_date}:${row.original_currency}:${currency}`),
+          )
+          .map((row) => String(row.id)),
+        pendingPublicationExpenseIds: (expenses.data ?? [])
+          .filter((row) =>
+            pendingPublication.has(
+              `${row.economic_date}:${row.original_currency}:${currency}`,
+            ),
           )
           .map((row) => String(row.id)),
       };

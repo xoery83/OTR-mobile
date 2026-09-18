@@ -28,6 +28,7 @@ import {
   queueSettlementAdjustment,
 } from "@/data/sync/ledgerSettlementCoordinator";
 import { loadEstimatedSettlement } from "@/features/ledger/loadEstimatedSettlement";
+import { unpublishedEstimateMessage } from "@/features/ledger/estimatedSettlement";
 
 type DisplayPreview = Awaited<ReturnType<typeof loadEstimatedSettlement>>;
 
@@ -45,6 +46,9 @@ export function useStage7Settlement(journeyId?: string) {
   const [unavailableExpenseIds, setUnavailableExpenseIds] = useState<Set<string>>(
     new Set(),
   );
+  const [pendingPublicationExpenseIds, setPendingPublicationExpenseIds] = useState<
+    Set<string>
+  >(new Set());
   const [finalized, setFinalized] = useState<Stage7Finalized | null>(null);
   const [lineage, setLineage] = useState<Stage7Finalized[]>([]);
   const [adjustmentPreview, setAdjustmentPreview] =
@@ -119,6 +123,7 @@ export function useStage7Settlement(journeyId?: string) {
         setPreview(null);
         setDisplayPreview(null);
         setUnavailableExpenseIds(new Set());
+        setPendingPublicationExpenseIds(new Set());
         setAdjustmentPreview(null);
         applyFinalizedRows(cached.rows);
         setExports(cached.items);
@@ -128,8 +133,11 @@ export function useStage7Settlement(journeyId?: string) {
         const display = await loadEstimatedSettlement(activeJourneyId);
         if (active) setDisplayPreview(display);
         if (cached.organizer) {
-          const unavailable = await preflightSettlementFx(activeJourneyId);
-          if (active) setUnavailableExpenseIds(unavailable);
+          const rates = await preflightSettlementFx(activeJourneyId, true);
+          if (active) {
+            setUnavailableExpenseIds(rates.unavailable);
+            setPendingPublicationExpenseIds(rates.pendingPublication);
+          }
         }
         await refreshJourneyLedger(activeJourneyId);
         const refreshed = await load();
@@ -176,6 +184,9 @@ export function useStage7Settlement(journeyId?: string) {
     preview: matchesActiveJourney ? preview : null,
     displayPreview: matchesActiveJourney ? displayPreview : null,
     unavailableExpenseIds: matchesActiveJourney ? unavailableExpenseIds : new Set(),
+    pendingPublicationExpenseIds: matchesActiveJourney
+      ? pendingPublicationExpenseIds
+      : new Set<string>(),
     journeyId: activeJourneyId,
     async generateExport(
       format: SettlementExportFormat,
@@ -217,9 +228,11 @@ export function useStage7Settlement(journeyId?: string) {
       setMessage(null);
       try {
         if (isOrganizer) {
-          const unavailable = await preflightSettlementFx(operationJourneyId);
-          if (operationJourneyId === activeJourneyRef.current)
-            setUnavailableExpenseIds(unavailable);
+          const rates = await preflightSettlementFx(operationJourneyId, true);
+          if (operationJourneyId === activeJourneyRef.current) {
+            setUnavailableExpenseIds(rates.unavailable);
+            setPendingPublicationExpenseIds(rates.pendingPublication);
+          }
         }
         await refreshJourneyLedger(operationJourneyId);
         setDisplayPreview(await loadEstimatedSettlement(operationJourneyId));
@@ -240,9 +253,11 @@ export function useStage7Settlement(journeyId?: string) {
       setBusy(true);
       setMessage(null);
       try {
-        const unavailable = await preflightSettlementFx(operationJourneyId);
-        if (operationJourneyId === activeJourneyRef.current)
-          setUnavailableExpenseIds(unavailable);
+        const rates = await preflightSettlementFx(operationJourneyId, true);
+        if (operationJourneyId === activeJourneyRef.current) {
+          setUnavailableExpenseIds(rates.unavailable);
+          setPendingPublicationExpenseIds(rates.pendingPublication);
+        }
         await refreshJourneyLedger(operationJourneyId);
         const current = await previewSettlement(
           operationJourneyId,
@@ -255,9 +270,14 @@ export function useStage7Settlement(journeyId?: string) {
         ) {
           if (operationJourneyId === activeJourneyRef.current) {
             setPreview(current);
-            setDisplayPreview(await loadEstimatedSettlement(operationJourneyId));
+            const display = await loadEstimatedSettlement(operationJourneyId);
+            setDisplayPreview(display);
             setMessage(
-              "Settlement values changed. Review the latest preview before finalizing.",
+              unpublishedEstimateMessage(
+                rates.pendingPublication,
+                display.estimatedServerIds,
+              ) ??
+                "Settlement values changed. Review the latest preview before finalizing.",
             );
           }
           return;

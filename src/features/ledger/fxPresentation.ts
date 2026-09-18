@@ -80,10 +80,15 @@ export function eligibleExpenseQuote(
 }
 
 export function fxStatus(
-  expense: Pick<LedgerExpense, "status" | "economicDate" | "occurredAt" | "valuation">,
+  expense: Pick<
+    LedgerExpense,
+    "status" | "economicDate" | "occurredAt" | "valuation" | "syncStatus"
+  >,
   chinese: boolean,
   policy: string | null = "REFERENCE_RATE",
   blocked = false,
+  estimated = false,
+  today = new Date().toISOString().slice(0, 10),
 ) {
   if (expense.valuation || expense.status !== "RATE_REQUIRED") return null;
   if (blocked) return chinese ? "需处理账目冲突" : "Resolve expense conflict";
@@ -96,11 +101,15 @@ export function fxStatus(
   if (policy === "MANUAL_AGREED") return chinese ? "汇率待确认" : "Rate needs review";
   if (policy === "ACTUAL_PAYER_COST")
     return chinese ? "付款金额待确认" : "Review payment value";
-  return policy === "REFERENCE_RATE"
+  if (policy !== "REFERENCE_RATE")
+    return chinese ? "旅行估值待处理" : "Journey value pending";
+  if (expense.syncStatus !== "SYNCED") return chinese ? "更新中…" : "Updating…";
+  if (estimated) return chinese ? "预估" : "Estimated";
+  return expense.economicDate >= today
     ? chinese
-      ? "更新中…"
-      : "Updating…"
+      ? "等待当日参考汇率发布"
+      : "Waiting for today's reference rate"
     : chinese
-      ? "旅行估值待处理"
-      : "Journey value pending";
+      ? "参考汇率待获取"
+      : "Reference rate pending";
 }

@@ -19,14 +19,35 @@ describe("foreground settlement FX preflight", () => {
 
   it("drains bounded Journey batches without polling the global scanner", async () => {
     preflight
-      .mockResolvedValueOnce({ claimed: 4, accepted: 4, unavailableExpenseIds: [] })
-      .mockResolvedValueOnce({ claimed: 2, accepted: 2, unavailableExpenseIds: ["bad"] });
-    await expect(preflightSettlementFx("journey-one")).resolves.toEqual(new Set(["bad"]));
-    expect(preflight.mock.calls).toEqual([["journey-one"], ["journey-one"]]);
+      .mockResolvedValueOnce({
+        claimed: 4,
+        accepted: 4,
+        unavailableExpenseIds: [],
+        pendingPublicationExpenseIds: [],
+      })
+      .mockResolvedValueOnce({
+        claimed: 2,
+        accepted: 2,
+        unavailableExpenseIds: ["bad"],
+        pendingPublicationExpenseIds: ["waiting"],
+      });
+    await expect(preflightSettlementFx("journey-one", true)).resolves.toEqual({
+      unavailable: new Set(["bad"]),
+      pendingPublication: new Set(["waiting"]),
+    });
+    expect(preflight.mock.calls).toEqual([
+      ["journey-one", true],
+      ["journey-one", false],
+    ]);
   });
 
   it("caps a continuously full queue and propagates failure to the caller", async () => {
-    preflight.mockResolvedValue({ claimed: 4, accepted: 4, unavailableExpenseIds: [] });
+    preflight.mockResolvedValue({
+      claimed: 4,
+      accepted: 4,
+      unavailableExpenseIds: [],
+      pendingPublicationExpenseIds: [],
+    });
     await preflightSettlementFx("journey-one");
     expect(preflight).toHaveBeenCalledTimes(8);
     preflight.mockRejectedValue(new Error("offline"));

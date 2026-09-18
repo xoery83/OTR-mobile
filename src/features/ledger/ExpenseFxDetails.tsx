@@ -204,8 +204,16 @@ export function ExpenseFxDetails({
       expense.status === "RATE_REQUIRED" &&
       proposedExpenseDate(expense) ? (
         <Text style={styles.meta}>
-          {estimate ? label("Estimated · ", "估算 · ") : ""}
-          {fxStatus(expense, chinese, policy, blocked)}
+          {fxStatus(expense, chinese, policy, blocked, Boolean(estimate))}
+        </Text>
+      ) : null}
+      {crossCurrency &&
+      !valuation &&
+      estimate &&
+      expense.syncStatus === "SYNCED" &&
+      expense.economicDate === new Date().toISOString().slice(0, 10) ? (
+        <Text style={styles.meta}>
+          {label("Reference rate not published yet", "当日参考汇率尚未发布")}
         </Text>
       ) : null}
       {crossCurrency ? (

@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(9);
+select plan(13);
 set local role service_role;
 
 select ok(has_function_privilege('service_role',
@@ -13,6 +13,12 @@ select ok(not has_function_privilege('authenticated',
 select ok(not has_function_privilege('authenticated',
   'public.ledger_list_settlement_auto_reference_demands(uuid,integer)', 'EXECUTE'),
   'Mobile cannot select canonical acceptance demand');
+select ok(has_function_privilege('service_role',
+  'public.ledger_retry_settlement_unpublished_rates(uuid,integer)', 'EXECUTE'),
+  'service role can request one foreground publication retry');
+select ok(not has_function_privilege('authenticated',
+  'public.ledger_retry_settlement_unpublished_rates(uuid,integer)', 'EXECUTE'),
+  'Mobile cannot bypass the retry lease directly');
 
 insert into public.ledger_settings(journey_id, settlement_currency, settlement_scale, valuation_policy)
 values ('10000000-0000-4000-8000-000000000001', 'NZD', 2, 'MANUAL_AGREED');
@@ -65,6 +71,28 @@ select is((select count(*) from public.ledger_rate_quote_attempts
 select is((select count(*) from public.ledger_claim_settlement_rate_demands(
   '10000000-0000-4000-8000-000000000001', 4)), 0::bigint,
   'foreground retry shares the lease');
+
+insert into public.expenses (
+  id, journey_id, creator_member_id, created_by_user_id, updated_by_user_id,
+  payer_member_id, title, occurred_at, economic_date, original_amount_minor,
+  original_currency, original_currency_scale, business_status
+) select '67000000-0000-4000-8000-000000000003', journey_id,
+  creator_member_id, created_by_user_id, updated_by_user_id, payer_member_id,
+  'Today unpublished', now(), current_date, 2220, 'EUR', 2, 'RATE_REQUIRED'
+from public.expenses where id = '67000000-0000-4000-8000-000000000001';
+insert into public.ledger_rate_quote_attempts (
+  journey_id, economic_date, quote_currency, base_currency, policy_version,
+  status, next_retry_at
+) values (
+  '10000000-0000-4000-8000-000000000001', current_date, 'EUR', 'NZD',
+  'ECB_DAILY_V1', 'NOT_YET_AVAILABLE', now() + interval '1 hour'
+);
+select is((select count(*) from public.ledger_claim_settlement_rate_demands(
+  '10000000-0000-4000-8000-000000000001', 4)), 0::bigint,
+  'periodic claimant respects the one-hour publication retry');
+select is((select count(*) from public.ledger_retry_settlement_unpublished_rates(
+  '10000000-0000-4000-8000-000000000001', 4)), 1::bigint,
+  'explicit foreground refresh retries the unpublished pair immediately');
 
 select * from finish();
 rollback;

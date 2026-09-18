@@ -31,6 +31,7 @@ function createGateway(options: { authorized?: boolean } = {}) {
       claimed: 2,
       accepted: 2,
       unavailableExpenseIds: [],
+      pendingPublicationExpenseIds: [],
     })),
     previewJourneyCurrency: vi.fn(async (_userId, _tripId, proposedCurrency) => ({
       currentCurrency: "NZD",
@@ -677,8 +678,26 @@ describe("OTR Dev Backend", () => {
       claimed: 2,
       accepted: 2,
       unavailableExpenseIds: [],
+      pendingPublicationExpenseIds: [],
     });
-    expect(authorized.gateway.resolveSettlementFx).toHaveBeenCalledWith(userId, tripId);
+    expect(authorized.gateway.resolveSettlementFx).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      false,
+    );
+    const forced = await createDevBackendHandler({ gateway: authorized.gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/fx-preflight`, {
+        method: "POST",
+        headers: { Authorization: "Bearer valid-token" },
+        body: JSON.stringify({ forceRetry: true }),
+      }),
+    );
+    expect(forced.status).toBe(200);
+    expect(authorized.gateway.resolveSettlementFx).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      true,
+    );
     expect(
       (await createDevBackendHandler({ gateway: denied.gateway })(request())).status,
     ).toBe(403);

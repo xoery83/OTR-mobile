@@ -22,8 +22,11 @@ provider or speculative cross-rate is needed.
 ## Presentation
 
 Detail, list and display-only spending totals can combine accepted values and
-marked estimates. Missing estimates show a quiet unavailable state. Automatic
-“Updating…” applies only to a genuinely eligible Journey reference policy;
+marked estimates. Missing estimates show a quiet unavailable state. A synced
+Expense with a trusted display estimate says “Estimated”, not “Updating…”;
+same-day publication waiting is secondary context. “Updating…” is reserved for
+an actual pending local write/sync, while missing or unusable reference evidence
+remains distinct from accepted valuation. The reference default is per Expense;
 manual/payer-cost evidence, conflicts, missing dates and finalization receive
 their own user actions. Rate details name the current policy without exposing
 enums, and retain explicit Stage 5 preview/confirm/supersession actions.
@@ -52,6 +55,13 @@ stale digests remain rejected by Stage 7. The Dev-only service-role migration
 sharing existing rate-attempt leases/negative cache. At most four pair claims
 and four acceptances are processed per request, with eight foreground batches
 as a ceiling; larger Journeys can retry without bypassing the normal scanner.
+`20260918000600` adds a service-role-only, Journey-scoped explicit retry for
+same-day `NOT_YET_AVAILABLE` attempts. Only the first batch of a deliberate
+preflight bypasses that pair's one-hour negative-cache wait; the normal scanner
+still uses the shared lease and hourly publication retry. Pending publication
+is returned separately from terminal provider unavailability. Estimated
+preview remains informational; Finalize repeats canonical preflight and blocks
+with plain publication-waiting copy while an input is only estimated.
 
 Offline preview can reuse trusted local rates within the display window. Offline
 finalization and authorization requirements do not change. No schema or

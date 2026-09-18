@@ -5,6 +5,18 @@ import { buildTransferPlan } from "@/domain/ledger/settlement";
 import type { DisplayEstimate } from "./displayEstimate";
 import { proposedExpenseDate } from "./expenseDraft";
 
+export function unpublishedEstimateMessage(
+  pendingPublicationIds: Set<string>,
+  estimatedServerIds: Set<string>,
+) {
+  const count = [...pendingPublicationIds].filter((id) =>
+    estimatedServerIds.has(id),
+  ).length;
+  return count
+    ? `${count} ${count === 1 ? "value is" : "values are"} still estimated. Final settlement will be available after the reference rate is published.`
+    : null;
+}
+
 export function estimatedSettlement(
   expenses: LedgerExpense[],
   memberIds: string[],

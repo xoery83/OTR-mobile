@@ -42,5 +42,10 @@ export async function loadEstimatedSettlement(journeyId: string) {
     ),
     members: options.members,
     serverIds: new Map(expenses.map((expense) => [expense.id, expense.serverId])),
+    estimatedServerIds: new Set(
+      expenses.flatMap((expense) =>
+        estimates.has(expense.id) && expense.serverId ? [expense.serverId] : [],
+      ),
+    ),
   };
 }

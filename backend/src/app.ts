@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
 
 import {
   createExpenseRequestSchema,
@@ -147,10 +148,12 @@ export type DevBackendGateway = {
   resolveSettlementFx?(
     userId: string,
     tripId: string,
+    forceRetry: boolean,
   ): Promise<{
     claimed: number;
     accepted: number;
     unavailableExpenseIds: string[];
+    pendingPublicationExpenseIds: string[];
   }>;
   readLedgerReview(
     userId: string,
@@ -949,7 +952,15 @@ async function mutateLedgerSettlement(request: Request, gateway: DevBackendGatew
   if (action === "fx-preflight") {
     if (!gateway.resolveSettlementFx)
       throw new HttpError(503, "UNAVAILABLE", "Settlement FX preflight unavailable.");
-    return json(200, await gateway.resolveSettlementFx(user.id, tripId));
+    const body = z
+      .object({ forceRetry: z.boolean().optional() })
+      .safeParse(request.body ? await parseBody(request) : {});
+    if (!body.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    return json(
+      200,
+      await gateway.resolveSettlementFx(user.id, tripId, body.data.forceRetry ?? false),
+    );
   }
   const body = await parseBody(request);
   if (action === "preview") {

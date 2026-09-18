@@ -38,7 +38,7 @@ async function client(dependencies: Dependencies) {
 
 export function createLedgerSettlementTransport(dependencies: Dependencies = {}) {
   return {
-    async preflight(journeyId: string) {
+    async preflight(journeyId: string, forceRetry = false) {
       const session = await (dependencies.readSession ?? readLocalSession)();
       if (!session?.accessToken) throw new Error("Authentication is unavailable.");
       const api = dependencies.createClient
@@ -46,11 +46,12 @@ export function createLedgerSettlementTransport(dependencies: Dependencies = {})
         : createApiClient({ accessToken: session.accessToken, timeoutMs: 45_000 });
       return api.post(
         `/v2/trips/${journeyId}/settlements/fx-preflight`,
-        {},
+        { forceRetry },
         z.object({
           claimed: z.number().int(),
           accepted: z.number().int(),
           unavailableExpenseIds: z.array(z.string()),
+          pendingPublicationExpenseIds: z.array(z.string()).default([]),
         }),
       );
     },
