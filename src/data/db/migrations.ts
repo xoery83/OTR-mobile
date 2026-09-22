@@ -976,4 +976,63 @@ export const migrations: Migration[] = [
     name: "ledger_accepted_reference_provenance",
     sql: `ALTER TABLE ledger_valuation_snapshots ADD COLUMN reference_evidence_json TEXT;`,
   },
+  {
+    id: 25,
+    name: "settlement_2_personal_payment_local_foundation",
+    sql: `
+      CREATE TABLE ledger_personal_payment_records (
+        id TEXT NOT NULL,
+        projection_user_id TEXT NOT NULL,
+        journey_id TEXT NOT NULL,
+        owner_user_id TEXT NOT NULL,
+        owner_member_id TEXT NOT NULL,
+        counterparty_member_id TEXT NOT NULL,
+        direction TEXT NOT NULL CHECK (direction IN ('PAID', 'RECEIVED')),
+        amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+        currency TEXT NOT NULL,
+        scale INTEGER NOT NULL CHECK (scale BETWEEN 0 AND 4),
+        occurred_at TEXT NOT NULL,
+        note TEXT,
+        recorded_equivalent_minor INTEGER,
+        recorded_equivalent_currency TEXT,
+        recorded_equivalent_scale INTEGER,
+        reference_rate_decimal TEXT,
+        reference_rate_date TEXT,
+        reference_source TEXT,
+        reference_provenance_json TEXT,
+        server_revision INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        deleted_at TEXT,
+        sync_status TEXT NOT NULL CHECK (sync_status IN (
+          'SYNCED', 'PENDING_CREATE', 'PENDING_UPDATE', 'PENDING_DELETE',
+          'SYNCING', 'CONFLICT', 'FAILED'
+        )),
+        last_synced_at TEXT,
+        last_error_code TEXT,
+        CHECK (
+          (recorded_equivalent_minor IS NULL AND recorded_equivalent_currency IS NULL
+            AND recorded_equivalent_scale IS NULL) OR
+          (recorded_equivalent_minor > 0 AND recorded_equivalent_currency IS NOT NULL
+            AND recorded_equivalent_scale BETWEEN 0 AND 4)
+        ),
+        PRIMARY KEY (projection_user_id, id)
+      );
+      CREATE INDEX ledger_personal_payments_owner_journey_occurred
+        ON ledger_personal_payment_records
+        (projection_user_id, journey_id, occurred_at DESC, id);
+      CREATE INDEX ledger_personal_payments_owner_sync
+        ON ledger_personal_payment_records
+        (projection_user_id, sync_status, updated_at DESC);
+
+      CREATE TABLE ledger_personal_payment_sync_cursors (
+        user_id TEXT NOT NULL,
+        journey_id TEXT NOT NULL,
+        cursor TEXT,
+        server_time TEXT,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, journey_id)
+      );
+    `,
+  },
 ];

@@ -2,6 +2,7 @@ import type { MyLedgerPeriod } from "@/data/api/ledgerReadContracts";
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
 import { createLedgerReadTransport } from "@/data/sync/ledgerReadTransport";
 import { ApiClientError } from "@/data/api/client";
+import { refreshLedgerPersonalPayments } from "./ledgerPersonalPaymentCoordinator";
 
 const activePulls = new Map<string, Promise<boolean>>();
 
@@ -16,12 +17,31 @@ export function refreshJourneyLedger(journeyId: string) {
 }
 
 async function pullJourneyLedger(journeyId: string) {
+  let personalChanged = false;
+  let personalError: unknown;
+  try {
+    personalChanged = await refreshLedgerPersonalPayments(journeyId);
+  } catch (error) {
+    personalError = error;
+  }
   const repository = await getDefaultLedgerReadRepository();
   const cursor = (await repository.getCursor(journeyId))?.cursor ?? null;
   if (!cursor) {
-    const response = await createLedgerReadTransport().bootstrap(journeyId);
-    await repository.applyBootstrap(response);
-    return true;
+    try {
+      const response = await createLedgerReadTransport().bootstrap(journeyId);
+      await repository.applyBootstrap(response);
+      return true;
+    } catch (error) {
+      if (
+        error instanceof ApiClientError &&
+        error.status === 403 &&
+        error.code === "TRIP_READ_FORBIDDEN"
+      ) {
+        if (personalError) throw personalError;
+        return personalChanged;
+      }
+      throw error;
+    }
   }
   const transport = createLedgerReadTransport();
   let nextCursor: string | null = cursor;
@@ -35,13 +55,21 @@ async function pullJourneyLedger(journeyId: string) {
       if (!response.hasMore) break;
     } while (true);
   } catch (error) {
+    if (
+      error instanceof ApiClientError &&
+      error.status === 403 &&
+      error.code === "TRIP_READ_FORBIDDEN"
+    ) {
+      if (personalError) throw personalError;
+      return personalChanged;
+    }
     if (!(error instanceof ApiClientError) || error.code !== "INVALID_CURSOR")
       throw error;
     const response = await transport.bootstrap(journeyId);
     await repository.applyBootstrap(response);
     return true;
   }
-  return changed;
+  return changed || personalChanged;
 }
 
 export async function revalidateJourneyLedger(journeyId: string) {

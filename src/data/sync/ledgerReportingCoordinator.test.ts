@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "@/data/api/client";
 
+const { refreshPersonal } = vi.hoisted(() => ({
+  refreshPersonal: vi.fn(async () => false),
+}));
+
 const repository = {
   getCursor: vi.fn(),
   applyBootstrap: vi.fn(),
@@ -15,6 +19,9 @@ vi.mock("@/data/repositories/defaultLedgerReadRepository", () => ({
 }));
 vi.mock("@/data/sync/ledgerReadTransport", () => ({
   createLedgerReadTransport: vi.fn(() => transport),
+}));
+vi.mock("./ledgerPersonalPaymentCoordinator", () => ({
+  refreshLedgerPersonalPayments: refreshPersonal,
 }));
 
 // eslint-disable-next-line import/first
@@ -51,6 +58,17 @@ describe("Ledger pull recovery", () => {
     transport.bootstrap.mockResolvedValue({ cursor: "fresh" });
     await refreshJourneyLedger("journey");
     expect(repository.applyBootstrap).toHaveBeenCalledWith({ cursor: "fresh" });
+  });
+
+  it("keeps historical Personal Payments available after shared Journey access is revoked", async () => {
+    refreshPersonal.mockResolvedValueOnce(true);
+    repository.getCursor.mockResolvedValue(null);
+    transport.bootstrap.mockRejectedValue(
+      new ApiClientError("removed", "http", 403, "TRIP_READ_FORBIDDEN"),
+    );
+    await expect(refreshJourneyLedger("journey")).resolves.toBe(true);
+    expect(refreshPersonal).toHaveBeenCalledWith("journey");
+    expect(repository.applyChanges).not.toHaveBeenCalled();
   });
 
   it("replays the same page after an interrupted transactional apply", async () => {

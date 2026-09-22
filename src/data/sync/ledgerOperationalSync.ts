@@ -8,6 +8,7 @@ import { runLedgerExpenseSync } from "./ledgerExpenseDemoCoordinator";
 import { runLedgerReceiptSync } from "./ledgerReceiptCoordinator";
 import { runLedgerReviewSync } from "./ledgerReviewCoordinator";
 import { runLedgerSettlementPaymentSync } from "./ledgerSettlementPaymentCoordinator";
+import { runLedgerPersonalPaymentSync } from "./ledgerPersonalPaymentCoordinator";
 
 let running: Promise<void> | null = null;
 let paused = false;
@@ -19,6 +20,7 @@ export function runLedgerOperationalSync() {
       runLedgerExpenseSync(),
       runLedgerReceiptSync(),
       runLedgerSettlementPaymentSync(),
+      runLedgerPersonalPaymentSync(),
       runLedgerReviewSync(),
     ])
       .then(async () => {

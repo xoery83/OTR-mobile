@@ -7,6 +7,7 @@ import type {
 } from "@/data/api/ledgerReadContracts";
 import { applyFinalizedSettlement } from "./ledgerSettlementRepository";
 import { applyReviewProjection } from "./ledgerReviewRepository";
+import { createLedgerPersonalPaymentRepository } from "./ledgerPersonalPaymentRepository";
 
 export type LedgerReadDatabase = Pick<
   SQLite.SQLiteDatabase,
@@ -44,6 +45,12 @@ export function createLedgerReadRepository(
           await applyReceipt(database, response.journey.id, receipt);
         for (const settlement of response.settlements ?? [])
           await applyFinalizedSettlement(database, settlement);
+        const personalPayments = createLedgerPersonalPaymentRepository(
+          database,
+          async () => userId,
+        );
+        for (const payment of response.personalPayments ?? [])
+          await personalPayments.applyCanonical(payment);
         if (response.reviewFindings)
           await applyReviewProjection(
             database,
@@ -121,6 +128,20 @@ export function createLedgerReadRepository(
             "inputDigest" in change.aggregate
           ) {
             await applyFinalizedSettlement(database, change.aggregate);
+          } else if (change.entityType === "PERSONAL_SETTLEMENT_PAYMENT") {
+            const personalPayments = createLedgerPersonalPaymentRepository(
+              database,
+              async () => userId,
+            );
+            if (change.isTombstone) {
+              await personalPayments.applyTombstone(
+                journeyId,
+                change.entityId,
+                change.revision,
+              );
+            } else if (change.aggregate && "ownerUserId" in change.aggregate) {
+              await personalPayments.applyCanonical(change.aggregate);
+            }
           } else if (change.entityType === "REVIEW_FINDING") {
             // Review is delivered only through the user-scoped snapshot above.
           } else {

@@ -31,7 +31,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
   const timeoutMs = options.timeoutMs ?? 15_000;
 
   async function request<T>(
-    method: "GET" | "POST" | "PUT" | "DELETE",
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
     path: string,
     responseSchema: z.ZodType<T>,
     body?: unknown,
@@ -112,6 +112,14 @@ export function createApiClient(options: ApiClientOptions = {}) {
       headers?: Record<string, string>,
     ): Promise<T> {
       return request("PUT", path, responseSchema, body, headers);
+    },
+    patch<T>(
+      path: string,
+      body: unknown,
+      responseSchema: z.ZodType<T>,
+      headers?: Record<string, string>,
+    ): Promise<T> {
+      return request("PATCH", path, responseSchema, body, headers);
     },
     delete<T>(
       path: string,
