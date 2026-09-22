@@ -75,10 +75,11 @@ describe("SQLite migrations", () => {
     expect(account.sql).toContain("owner_user_id");
     expect(account.sql).toContain("local_owner_user_id");
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(25);
+    expect(latest.id).toBe(26);
     expect(migrations[22].sql).toContain("reference_date");
     expect(migrations[23].sql).toContain("reference_evidence_json");
-    expect(latest.sql).toContain("ledger_personal_payment_records");
+    expect(migrations[24].sql).toContain("ledger_personal_payment_records");
+    expect(latest.sql).toContain("personal_payment_id");
     expect(migrations[20].sql).toContain("ledger_review_visibility");
     expect(migrations[19].sql).toContain("observation_context_json");
   });

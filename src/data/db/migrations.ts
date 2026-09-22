@@ -1035,4 +1035,15 @@ export const migrations: Migration[] = [
       );
     `,
   },
+  {
+    id: 26,
+    name: "settlement_2_personal_payment_evidence",
+    sql: `
+      ALTER TABLE ledger_receipt_assets ADD COLUMN personal_payment_id TEXT;
+      ALTER TABLE ledger_receipt_assets ADD COLUMN personal_payment_link_status TEXT
+        CHECK (personal_payment_link_status IN ('ACTIVE', 'DELETE_PENDING'));
+      CREATE INDEX ledger_receipt_assets_personal_payment
+        ON ledger_receipt_assets (personal_payment_id, created_at DESC);
+    `,
+  },
 ];

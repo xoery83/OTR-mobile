@@ -77,6 +77,7 @@ import type {
 import {
   completeReceiptRequestSchema,
   createReceiptRequestSchema,
+  linkPersonalPaymentAttachmentRequestSchema,
   linkReceiptRequestSchema,
   type CompleteReceiptRequest,
   type CreateReceiptRequest,
@@ -368,6 +369,25 @@ export type DevBackendGateway = {
     key: string,
     expenseId: string,
   ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
+  listPersonalPaymentAttachments(
+    userId: string,
+    tripId: string,
+    paymentId: string,
+  ): Promise<ReceiptDto[]>;
+  linkPersonalPaymentAttachment(
+    userId: string,
+    tripId: string,
+    paymentId: string,
+    receiptId: string,
+    key: string,
+  ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
+  unlinkPersonalPaymentAttachment(
+    userId: string,
+    tripId: string,
+    paymentId: string,
+    receiptId: string,
+    key: string,
+  ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
   ocrReceipt(
     userId: string,
     tripId: string,
@@ -596,7 +616,8 @@ async function readReceiptContent(request: Request, gateway: DevBackendGateway) 
   );
   if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
   const [, tripId, receiptId] = match;
-  const user = await authorizeRead(request, gateway, tripId);
+  assertTripId(tripId);
+  const user = await authenticate(request, gateway);
   if (!uuidPattern.test(receiptId))
     throw new HttpError(400, "INVALID_RECEIPT_ID", "The receipt id is invalid.");
   const content = await gateway.downloadReceiptContent(user.id, tripId, receiptId);
@@ -1100,6 +1121,27 @@ async function readPersonalSettlementPayment(
   gateway: DevBackendGateway,
 ) {
   const url = new URL(request.url);
+  const attachmentMatch = url.pathname.match(
+    /^\/v2\/trips\/([^/]+)\/ledger\/personal-payments\/([^/]+)\/attachments$/,
+  );
+  if (attachmentMatch) {
+    const [, tripId, paymentId] = attachmentMatch;
+    assertTripId(tripId);
+    if (!uuidPattern.test(paymentId))
+      throw new HttpError(
+        400,
+        "INVALID_PAYMENT_ID",
+        "The Personal Payment id is invalid.",
+      );
+    const user = await authenticate(request, gateway);
+    return json(200, {
+      attachments: await gateway.listPersonalPaymentAttachments(
+        user.id,
+        tripId,
+        paymentId,
+      ),
+    });
+  }
   const match = url.pathname.match(
     /^\/v2\/trips\/([^/]+)\/ledger\/personal-payments(?:\/([^/]+))?$/,
   );
@@ -1152,6 +1194,61 @@ async function readPersonalSettlementPayment(
     ),
     serverTime: new Date().toISOString(),
   });
+}
+
+async function linkPersonalPaymentAttachment(
+  request: Request,
+  gateway: DevBackendGateway,
+) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/ledger\/personal-payments\/([^/]+)\/attachments$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, paymentId] = match;
+  assertTripId(tripId);
+  if (!uuidPattern.test(paymentId))
+    throw new HttpError(400, "INVALID_PAYMENT_ID", "The Personal Payment id is invalid.");
+  const parsed = linkPersonalPaymentAttachmentRequestSchema.safeParse(
+    await parseBody(request),
+  );
+  if (!parsed.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  const user = await authenticate(request, gateway);
+  return json(
+    201,
+    await gateway.linkPersonalPaymentAttachment(
+      user.id,
+      tripId,
+      paymentId,
+      parsed.data.receiptId,
+      getIdempotencyKey(request),
+    ),
+  );
+}
+
+async function unlinkPersonalPaymentAttachment(
+  request: Request,
+  gateway: DevBackendGateway,
+) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/ledger\/personal-payments\/([^/]+)\/attachments\/([^/]+)$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, paymentId, receiptId] = match;
+  assertTripId(tripId);
+  if (!uuidPattern.test(paymentId) || !uuidPattern.test(receiptId))
+    throw new HttpError(400, "INVALID_ATTACHMENT_ID", "The attachment id is invalid.");
+  const user = await authenticate(request, gateway);
+  return json(
+    200,
+    await gateway.unlinkPersonalPaymentAttachment(
+      user.id,
+      tripId,
+      paymentId,
+      receiptId,
+      getIdempotencyKey(request),
+    ),
+  );
 }
 
 async function mutatePersonalSettlementPayment(
@@ -1254,7 +1351,11 @@ async function mutateSettlementAdjustment(request: Request, gateway: DevBackendG
 
 async function readEntity(request: Request, gateway: DevBackendGateway) {
   const url = new URL(request.url);
-  if (/^\/v2\/trips\/[^/]+\/ledger\/personal-payments(?:\/[^/]+)?$/.test(url.pathname)) {
+  if (
+    /^\/v2\/trips\/[^/]+\/ledger\/personal-payments(?:\/[^/]+(?:\/attachments)?)?$/.test(
+      url.pathname,
+    )
+  ) {
     return readPersonalSettlementPayment(request, gateway);
   }
   if (url.pathname === "/v2/me/ledger") {
@@ -1507,6 +1608,22 @@ export function createDevBackendHandler({
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
         route = redactLogRoute(url.pathname);
         response = await readEntity(request, gateway);
+      } else if (
+        request.method === "POST" &&
+        /^\/v2\/trips\/[^/]+\/ledger\/personal-payments\/[^/]+\/attachments$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/ledger/personal-payments/:id/attachments";
+        response = await linkPersonalPaymentAttachment(request, gateway);
+      } else if (
+        request.method === "DELETE" &&
+        /^\/v2\/trips\/[^/]+\/ledger\/personal-payments\/[^/]+\/attachments\/[^/]+$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/ledger/personal-payments/:id/attachments/:assetId";
+        response = await unlinkPersonalPaymentAttachment(request, gateway);
       } else if (
         ["POST", "PATCH", "DELETE"].includes(request.method) &&
         /^\/v2\/trips\/[^/]+\/ledger\/personal-payments(?:\/[^/]+)?$/.test(url.pathname)

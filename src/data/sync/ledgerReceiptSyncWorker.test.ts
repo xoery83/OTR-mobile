@@ -6,6 +6,7 @@ const asset = {
   serverId: null,
   journeyId: "journey",
   expenseId: null,
+  personalPaymentId: null,
   localUri: "file:///durable/receipt.jpg",
   mimeType: "image/jpeg" as const,
   sizeBytes: 3,
@@ -116,5 +117,44 @@ describe("receipt asset worker", () => {
       ),
     ).rejects.toThrow("upload must complete");
     expect(transport.ocr).not.toHaveBeenCalled();
+  });
+
+  it("links an uploaded asset to a Personal Payment without an Expense", async () => {
+    const personal = {
+      ...asset,
+      serverId: "40000000-0000-4000-8000-000000000001",
+      personalPaymentId: "50000000-0000-4000-8000-000000000001",
+      uploadStatus: "UPLOADED" as const,
+    };
+    const receipts = { getReceipt: vi.fn(async () => personal) };
+    const transport = {
+      linkPersonalPayment: vi.fn(async () => ({ entity: personal })),
+      link: vi.fn(),
+    };
+
+    await pushReceiptOperation(
+      {
+        id: "link-op",
+        ownerUserId: "user-a",
+        journeyId: "journey",
+        assetId: asset.id,
+        operationType: "LINK_RECEIPT",
+        idempotencyKey: "stable-link",
+        status: "PENDING",
+        attemptCount: 0,
+        nextAttemptAt: null,
+      },
+      receipts as never,
+      { getExpense: vi.fn() } as never,
+      transport as never,
+    );
+
+    expect(transport.linkPersonalPayment).toHaveBeenCalledWith(
+      "journey",
+      personal.serverId,
+      personal.personalPaymentId,
+      "stable-link",
+    );
+    expect(transport.link).not.toHaveBeenCalled();
   });
 });

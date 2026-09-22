@@ -243,6 +243,13 @@ function createGateway(options: { authorized?: boolean } = {}) {
     linkReceipt: vi.fn(async () => {
       throw new Error("not used");
     }),
+    listPersonalPaymentAttachments: vi.fn(async () => []),
+    linkPersonalPaymentAttachment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    unlinkPersonalPaymentAttachment: vi.fn(async () => {
+      throw new Error("not used");
+    }),
     ocrReceipt: vi.fn(async () => {
       throw new Error("not used");
     }),
@@ -1002,6 +1009,84 @@ describe("OTR Dev Backend", () => {
       receipt.entity.id,
       new Uint8Array([1, 2, 3]),
       "image/jpeg",
+    );
+  });
+
+  it("links and lists Personal Payment attachments through authorized private routes", async () => {
+    const { gateway } = createGateway();
+    const paymentId = "50000000-0000-4000-8000-000000000001";
+    const receiptId = "40000000-0000-4000-8000-000000000001";
+    const entity = (
+      await gateway.createReceipt(userId, tripId, receiptId, {
+        localId: "local-attachment",
+        mimeType: "image/jpeg",
+        sizeBytes: 3,
+        sha256: "a".repeat(64),
+      })
+    ).entity;
+    vi.mocked(gateway.linkPersonalPaymentAttachment).mockResolvedValue({
+      entity,
+      idempotentReplay: false,
+    });
+    vi.mocked(gateway.listPersonalPaymentAttachments).mockResolvedValue([entity]);
+    vi.mocked(gateway.unlinkPersonalPaymentAttachment).mockResolvedValue({
+      entity,
+      idempotentReplay: false,
+    });
+    const handle = createDevBackendHandler({ gateway });
+
+    const linked = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/${paymentId}/attachments`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": "50000000-0000-4000-8000-000000000002",
+          },
+          body: JSON.stringify({ receiptId }),
+        },
+      ),
+    );
+    const listed = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/${paymentId}/attachments`,
+        { headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    const removed = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/${paymentId}/attachments/${receiptId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Content-Type": "application/json",
+            "Idempotency-Key": "50000000-0000-4000-8000-000000000003",
+          },
+          body: "{}",
+        },
+      ),
+    );
+
+    expect(linked.status).toBe(201);
+    expect(listed.status).toBe(200);
+    expect(removed.status).toBe(200);
+    expect(gateway.linkPersonalPaymentAttachment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      paymentId,
+      receiptId,
+      "50000000-0000-4000-8000-000000000002",
+    );
+    expect(await listed.json()).toEqual({ attachments: [entity] });
+    expect(gateway.unlinkPersonalPaymentAttachment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      paymentId,
+      receiptId,
+      "50000000-0000-4000-8000-000000000003",
     );
   });
 

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(72);
+select plan(74);
 set local role service_role;
 
 delete from public.journey_members
@@ -354,6 +354,16 @@ select throws_ok($$
     '71000000-0000-4000-8000-000000000031')
 $$, '23505', 'duplicate key value violates unique constraint "personal_settlement_payment_attachments_active_idx"',
   'one active link per record and asset is enforced');
+select lives_ok($$
+  update public.personal_settlement_payment_attachments
+  set deleted_at = now(), revision = revision + 1,
+      last_operation_id = '71000000-0000-4000-8000-000000000033'
+  where id = '73000000-0000-4000-8000-000000000001'
+$$, 'the current owner can soft-delete an attachment link');
+select is((select count(*)::integer
+  from public.personal_settlement_payment_attachments
+  where id = '73000000-0000-4000-8000-000000000001' and deleted_at is not null), 1,
+  'attachment removal preserves the auditable link tombstone');
 
 select lives_ok($$
   update public.journey_members set status = 'unlinked'
@@ -454,7 +464,7 @@ select ok((select reference_rate_decimal is null and recorded_equivalent_minor i
 select is((select count(*)::integer from public.ledger_changes
   where entity_type = 'PERSONAL_SETTLEMENT_PAYMENT_ATTACHMENT'
     and entity_id = '73000000-0000-4000-8000-000000000001'),
-  1, 'attachment link emits its own change-feed event');
+  2, 'attachment link and soft-delete emit change-feed events');
 
 select * from finish();
 rollback;

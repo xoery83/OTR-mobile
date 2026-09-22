@@ -1113,7 +1113,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return uploadReceiptContent(service, userId, tripId, receiptId, bytes, mimeType);
     },
     async downloadReceiptContent(userId, tripId, receiptId) {
-      const row = await readReceipt(service, userId, tripId, receiptId);
+      const row = await readDownloadableReceipt(service, userId, tripId, receiptId);
       if (row.upload_status !== "UPLOADED" || !row.object_path)
         throw new BackendError(
           409,
@@ -1136,6 +1136,32 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     linkReceipt(userId, tripId, receiptId, key, expenseId) {
       return linkReceipt(service, userId, tripId, receiptId, key, expenseId);
+    },
+
+    listPersonalPaymentAttachments(userId, tripId, paymentId) {
+      return listPersonalPaymentAttachments(service, userId, tripId, paymentId);
+    },
+
+    linkPersonalPaymentAttachment(userId, tripId, paymentId, receiptId, key) {
+      return linkPersonalPaymentAttachment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        receiptId,
+        key,
+      );
+    },
+
+    unlinkPersonalPaymentAttachment(userId, tripId, paymentId, receiptId, key) {
+      return unlinkPersonalPaymentAttachment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        receiptId,
+        key,
+      );
     },
 
     ocrReceipt(userId, tripId, receiptId, key) {
@@ -1226,6 +1252,30 @@ function receiptRowToDto(row: Record<string, unknown>): ReceiptDto {
   };
 }
 
+async function filterReadableReceipts(
+  service: SupabaseClient,
+  userId: string,
+  readablePaymentIds: string[],
+  rows: Record<string, unknown>[],
+) {
+  const links = readablePaymentIds.length
+    ? await service
+        .from("personal_settlement_payment_attachments")
+        .select("asset_id")
+        .in("record_id", readablePaymentIds)
+        .is("deleted_at", null)
+    : { data: [], error: null };
+  if (links.error)
+    throw new Error("Supabase Dev Personal Payment attachment projection failed.");
+  const allowed = new Set((links.data ?? []).map((link) => String(link.asset_id)));
+  return rows.filter(
+    (row) =>
+      Boolean(row.expense_id) ||
+      String(row.created_by) === userId ||
+      allowed.has(String(row.id)),
+  );
+}
+
 async function readReceipt(
   service: SupabaseClient,
   userId: string,
@@ -1243,6 +1293,51 @@ async function readReceipt(
   if (!result.data)
     throw new BackendError(404, "ENTITY_NOT_FOUND", "The receipt does not exist.");
   return result.data as Record<string, unknown>;
+}
+
+async function readDownloadableReceipt(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+) {
+  const result = await service
+    .from("receipt_assets")
+    .select(`${receiptColumns}, created_by, uploaded_size_bytes, uploaded_sha256`)
+    .eq("id", receiptId)
+    .eq("journey_id", tripId)
+    .maybeSingle();
+  if (result.error) throw new Error("Supabase Dev receipt lookup failed.");
+  if (!result.data)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The receipt does not exist.");
+  const link = await service
+    .from("personal_settlement_payment_attachments")
+    .select("record_id")
+    .eq("journey_id", tripId)
+    .eq("asset_id", receiptId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (link.error) throw new Error("Supabase Dev attachment lookup failed.");
+  if (link.data) {
+    const allowed = await service.rpc("ledger_can_read_personal_settlement_payment_1a", {
+      actor_user: userId,
+      target_record: link.data.record_id,
+    });
+    if (!allowed.error && allowed.data === true)
+      return result.data as Record<string, unknown>;
+  }
+  if (String(result.data.created_by) === userId) {
+    const current = await service
+      .from("journey_members")
+      .select("id")
+      .eq("trip_id", tripId)
+      .eq("user_id", userId)
+      .eq("status", "linked")
+      .maybeSingle();
+    if (current.error) throw new Error("Supabase Dev receipt membership lookup failed.");
+    if (current.data) return result.data as Record<string, unknown>;
+  }
+  throw new BackendError(403, "RECEIPT_READ_FORBIDDEN", "Receipt access is forbidden.");
 }
 
 async function createReceipt(
@@ -1433,6 +1528,136 @@ async function linkReceipt(
     key,
     { expenseId },
     receiptRowToDto(updated.data as Record<string, unknown>),
+  );
+}
+
+async function listPersonalPaymentAttachments(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+) {
+  const links = await service.rpc(
+    "ledger_list_personal_settlement_payment_attachments_1a",
+    { actor_user: userId, target_journey: tripId, target_record: paymentId },
+  );
+  if (links.error)
+    throw new Error("Supabase Dev Personal Payment attachment read failed.");
+  const ids = (links.data ?? [])
+    .filter((link: Record<string, unknown>) => !link.deleted_at)
+    .map((link: Record<string, unknown>) => String(link.asset_id));
+  if (!ids.length) return [];
+  const assets = await service
+    .from("receipt_assets")
+    .select(receiptColumns)
+    .in("id", ids);
+  if (assets.error) throw new Error("Supabase Dev attachment asset read failed.");
+  return (assets.data ?? []).map((row) =>
+    receiptRowToDto(row as Record<string, unknown>),
+  );
+}
+
+async function linkPersonalPaymentAttachment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  receiptId: string,
+  key: string,
+) {
+  const payload = { paymentId, receiptId };
+  const replay = await receiptReplay(
+    service,
+    userId,
+    tripId,
+    "LINK_PERSONAL_PAYMENT_ATTACHMENT",
+    key,
+    payload,
+  );
+  if (replay) return replay;
+  const receipt = await readReceipt(service, userId, tripId, receiptId);
+  if (receipt.upload_status !== "UPLOADED")
+    throw new BackendError(
+      409,
+      "RECEIPT_UPLOAD_PENDING",
+      "Receipt upload must complete first.",
+    );
+  const inserted = await service.from("personal_settlement_payment_attachments").insert({
+    id: receiptId,
+    journey_id: tripId,
+    record_id: paymentId,
+    asset_id: receiptId,
+    created_by_user_id: userId,
+    last_operation_id: key,
+  });
+  if (inserted.error) {
+    if (inserted.error.message.includes("PERSONAL_PAYMENT_ATTACHMENT_INVALID"))
+      throw new BackendError(
+        403,
+        "PERSONAL_PAYMENT_ATTACHMENT_FORBIDDEN",
+        "Only the current record owner can add an attachment.",
+      );
+    throw new Error("Supabase Dev Personal Payment attachment link failed.");
+  }
+  return storeReceiptReplay(
+    service,
+    userId,
+    tripId,
+    "LINK_PERSONAL_PAYMENT_ATTACHMENT",
+    key,
+    payload,
+    receiptRowToDto(receipt),
+  );
+}
+
+async function unlinkPersonalPaymentAttachment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  receiptId: string,
+  key: string,
+) {
+  const payload = { paymentId, receiptId };
+  const replay = await receiptReplay(
+    service,
+    userId,
+    tripId,
+    "UNLINK_PERSONAL_PAYMENT_ATTACHMENT",
+    key,
+    payload,
+  );
+  if (replay) return replay;
+  const receipt = await readReceipt(service, userId, tripId, receiptId);
+  const updated = await service
+    .from("personal_settlement_payment_attachments")
+    .update({
+      revision: 2,
+      last_operation_id: key,
+      deleted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("journey_id", tripId)
+    .eq("record_id", paymentId)
+    .eq("asset_id", receiptId)
+    .eq("created_by_user_id", userId)
+    .is("deleted_at", null)
+    .select("id")
+    .maybeSingle();
+  if (updated.error || !updated.data)
+    throw new BackendError(
+      403,
+      "PERSONAL_PAYMENT_ATTACHMENT_FORBIDDEN",
+      "Only the current record owner can remove an attachment.",
+    );
+  return storeReceiptReplay(
+    service,
+    userId,
+    tripId,
+    "UNLINK_PERSONAL_PAYMENT_ATTACHMENT",
+    key,
+    payload,
+    receiptRowToDto(receipt),
   );
 }
 
@@ -3938,6 +4163,15 @@ async function readLedgerBootstrap(
   }
 
   const aggregates = await readExpenseAggregates(service, expenses.data ?? []);
+  const personalPaymentDtos = (
+    (personalPayments.data ?? []) as Record<string, unknown>[]
+  ).map(personalPaymentRowToDto);
+  const readableReceipts = await filterReadableReceipts(
+    service,
+    userId,
+    personalPaymentDtos.map((payment) => payment.id),
+    (receipts.data ?? []) as Record<string, unknown>[],
+  );
   const finalizedSettlements = await decorateSettlementLineages(
     service,
     tripId,
@@ -4007,13 +4241,9 @@ async function readLedgerBootstrap(
     expenses: aggregates,
     corrections: (corrections.data ?? []).map(correctionRowToDto),
     rateQuotes,
-    receipts: (receipts.data ?? []).map((row) =>
-      receiptRowToDto(row as Record<string, unknown>),
-    ),
+    receipts: readableReceipts.map(receiptRowToDto),
     settlements: finalizedSettlements,
-    personalPayments: ((personalPayments.data ?? []) as Record<string, unknown>[]).map(
-      personalPaymentRowToDto,
-    ),
+    personalPayments: personalPaymentDtos,
     reviewFindings: review.findings,
     reviewActions: review.actions,
     actor: {
@@ -4081,7 +4311,7 @@ async function readLedgerChanges(
   const readablePersonalPaymentIds = new Set(
     personalPaymentDtos.map((payment) => payment.id),
   );
-  const visibleRows = rows.filter((row) => {
+  let visibleRows = rows.filter((row) => {
     if (
       [
         "TRANSFER",
@@ -4204,6 +4434,17 @@ async function readLedgerChanges(
   ) {
     throw new Error("Supabase Dev Ledger household aggregate failed.");
   }
+  const readableReceipts = await filterReadableReceipts(
+    service,
+    userId,
+    personalPaymentDtos.map((payment) => payment.id),
+    (receipts.data ?? []) as Record<string, unknown>[],
+  );
+  const readableReceiptIds = new Set(readableReceipts.map((row) => String(row.id)));
+  visibleRows = visibleRows.filter(
+    (row) =>
+      row.entity_type !== "RECEIPT" || readableReceiptIds.has(String(row.entity_id)),
+  );
   const aggregates = await readExpenseAggregates(service, expenses.data ?? []);
   const byId = new Map<string, LedgerChangesResponse["changes"][number]["aggregate"]>(
     aggregates.map((expense) => [expense.id, expense]),
@@ -4234,7 +4475,7 @@ async function readLedgerChanges(
     );
     byId.set(String(row.id), paymentRowToDto(row, audit));
   }
-  for (const row of receipts.data ?? [])
+  for (const row of readableReceipts)
     byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
   for (const settlement of settlements) byId.set(settlement.id, settlement);
   for (const payment of personalPaymentDtos) byId.set(payment.id, payment);

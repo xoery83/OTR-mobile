@@ -51,6 +51,12 @@ export const completeReceiptRequestSchema = z.object({
 });
 
 export const linkReceiptRequestSchema = z.object({ expenseId: z.uuid() });
+export const linkPersonalPaymentAttachmentRequestSchema = z.object({
+  receiptId: z.uuid(),
+});
+export const personalPaymentAttachmentListResponseSchema = z.object({
+  attachments: z.array(receiptSchema),
+});
 
 export type ReceiptSuggestion = z.infer<typeof receiptSuggestionSchema>;
 export type ReceiptDto = z.infer<typeof receiptSchema>;

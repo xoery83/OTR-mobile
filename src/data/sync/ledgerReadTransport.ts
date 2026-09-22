@@ -5,8 +5,10 @@ import {
   ledgerChangesResponseSchema,
   ledgerExpenseListResponseSchema,
   myLedgerResponseSchema,
+  ledgerRateQuoteSchema,
   type MyLedgerPeriod,
 } from "@/data/api/ledgerReadContracts";
+import { z } from "zod";
 import type {
   ReportingDimension,
   ReportingFilters,
@@ -95,6 +97,14 @@ export function createLedgerReadTransport(dependencies: Dependencies = {}) {
       return (await client(dependencies)).get(
         `/v2/me/ledger${queryString({ period, ...bounds })}`,
         myLedgerResponseSchema,
+      );
+    },
+
+    async rateQuotes(journeyId: string, quoteCurrency: string, baseCurrency: string) {
+      const query = new URLSearchParams({ quoteCurrency, baseCurrency }).toString();
+      return (await client(dependencies)).get(
+        `/v2/trips/${journeyId}/ledger/rate-quotes?${query}`,
+        z.array(ledgerRateQuoteSchema),
       );
     },
   };

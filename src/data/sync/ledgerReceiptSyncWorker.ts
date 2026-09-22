@@ -71,7 +71,26 @@ export async function pushReceiptOperation(
     }
     return;
   }
-  if (!asset.expenseId) throw new Error("Receipt has no Expense link target.");
+  if (asset.personalPaymentId) {
+    if (asset.personalPaymentLinkStatus === "DELETE_PENDING") {
+      await transport.unlinkPersonalPayment(
+        asset.journeyId,
+        asset.personalPaymentId,
+        asset.serverId,
+        operation.idempotencyKey,
+      );
+      await receipts.markPersonalPaymentUnlinked(asset.id);
+      return;
+    }
+    await transport.linkPersonalPayment(
+      asset.journeyId,
+      asset.serverId,
+      asset.personalPaymentId,
+      operation.idempotencyKey,
+    );
+    return;
+  }
+  if (!asset.expenseId) throw new Error("Receipt has no link target.");
   const expense = await expenses.getExpense(asset.expenseId);
   if (!expense?.serverId) throw new Error("Expense must sync before receipt linking.");
   const response = await transport.link(

@@ -6,6 +6,7 @@ import { createLocalId } from "@/domain/localId";
 export async function importReceiptAsset(input: {
   journeyId: string;
   expenseId?: string | null;
+  personalPaymentId?: string | null;
   sourceUri: string;
   mimeType: ReceiptAsset["mimeType"];
   requestOcr: boolean;
@@ -20,6 +21,7 @@ export async function importReceiptAsset(input: {
     id,
     journeyId: input.journeyId,
     expenseId: input.expenseId,
+    personalPaymentId: input.personalPaymentId,
     mimeType: input.mimeType,
     requestOcr: input.requestOcr,
     ...copied,

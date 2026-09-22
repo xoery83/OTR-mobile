@@ -17,6 +17,7 @@ import type { RepaymentProposition } from "@/domain/ledger/paymentLifecycle";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney, formatValuationPolicy } from "./format";
+import { PersonalPaymentSection } from "./PersonalPaymentSection";
 import {
   paymentStatusLabel,
   primaryTransferAction,
@@ -135,6 +136,18 @@ export function TransferDetailScreen({
           </Text>
         ) : null}
 
+        <PersonalPaymentSection
+          actorMemberId={settlement.actorMemberId}
+          from={{ id: transfer.fromMemberId, name: from }}
+          journeyId={journeyId}
+          settlementCurrency={row.settlement.settlementCurrency}
+          settlementScale={row.settlement.settlementScale}
+          to={{ id: transfer.toMemberId, name: to }}
+        />
+
+        <Text accessibilityRole="header" style={styles.sectionTitle}>
+          Legacy confirmed transfer flow
+        </Text>
         {primaryAction === "MARK_PAID" ? (
           <Pressable
             accessibilityRole="button"

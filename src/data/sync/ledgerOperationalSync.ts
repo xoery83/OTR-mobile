@@ -16,13 +16,16 @@ let paused = false;
 export function runLedgerOperationalSync() {
   if (paused) return Promise.resolve();
   if (!running) {
-    running = Promise.allSettled([
-      runLedgerExpenseSync(),
-      runLedgerReceiptSync(),
-      runLedgerSettlementPaymentSync(),
-      runLedgerPersonalPaymentSync(),
-      runLedgerReviewSync(),
-    ])
+    running = Promise.resolve(runLedgerPersonalPaymentSync())
+      .catch(() => undefined)
+      .then(() =>
+        Promise.allSettled([
+          runLedgerExpenseSync(),
+          runLedgerReceiptSync(),
+          runLedgerSettlementPaymentSync(),
+          runLedgerReviewSync(),
+        ]),
+      )
       .then(async () => {
         try {
           const database = await openDatabase();

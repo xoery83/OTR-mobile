@@ -5,6 +5,8 @@ import {
   completeReceiptRequestSchema,
   createReceiptRequestSchema,
   linkReceiptRequestSchema,
+  linkPersonalPaymentAttachmentRequestSchema,
+  personalPaymentAttachmentListResponseSchema,
   receiptMutationResponseSchema,
   type CompleteReceiptRequest,
   type CreateReceiptRequest,
@@ -110,6 +112,41 @@ export function createLedgerReceiptTransport() {
       return client.post(
         `/v2/trips/${journeyId}/receipts/${receiptId}/links`,
         linkReceiptRequestSchema.parse({ expenseId }),
+        receiptMutationResponseSchema,
+        { "Idempotency-Key": key },
+      );
+    },
+    async linkPersonalPayment(
+      journeyId: string,
+      receiptId: string,
+      paymentId: string,
+      key: string,
+    ) {
+      const { client } = await authenticated();
+      return client.post(
+        `/v2/trips/${journeyId}/ledger/personal-payments/${paymentId}/attachments`,
+        linkPersonalPaymentAttachmentRequestSchema.parse({ receiptId }),
+        receiptMutationResponseSchema,
+        { "Idempotency-Key": key },
+      );
+    },
+    async listPersonalPaymentAttachments(journeyId: string, paymentId: string) {
+      const { client } = await authenticated();
+      return client.get(
+        `/v2/trips/${journeyId}/ledger/personal-payments/${paymentId}/attachments`,
+        personalPaymentAttachmentListResponseSchema,
+      );
+    },
+    async unlinkPersonalPayment(
+      journeyId: string,
+      paymentId: string,
+      receiptId: string,
+      key: string,
+    ) {
+      const { client } = await authenticated();
+      return client.delete(
+        `/v2/trips/${journeyId}/ledger/personal-payments/${paymentId}/attachments/${receiptId}`,
+        {},
         receiptMutationResponseSchema,
         { "Idempotency-Key": key },
       );
