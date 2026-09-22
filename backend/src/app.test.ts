@@ -6,6 +6,7 @@ import {
   type DevBackendGateway,
   type StoredCreate,
 } from "./app";
+import type { PersonalSettlementPaymentDto } from "../../src/data/api/ledgerSettlementContracts";
 
 const tripId = "10000000-0000-4000-8000-000000000001";
 const userId = "20000000-0000-4000-8000-000000000001";
@@ -20,6 +21,7 @@ function createGateway(options: { authorized?: boolean } = {}) {
     typeof ledgerExpenseBody & { revision: number }
   >();
   const itineraryItems = new Map<string, StoredCreate>();
+  const personalPayments = new Map<string, PersonalSettlementPaymentDto>();
   const gateway: DevBackendGateway = {
     validateAccessToken: vi.fn(async (token) =>
       token === "valid-token" ? { id: userId } : null,
@@ -140,6 +142,60 @@ function createGateway(options: { authorized?: boolean } = {}) {
     }),
     correctSettlementPayment: vi.fn(async () => {
       throw new Error("not used");
+    }),
+    readPersonalSettlementPayments: vi.fn(async () => [...personalPayments.values()]),
+    pullPersonalSettlementPaymentChanges: vi.fn(async (_userId, _tripId, cursor) => ({
+      changes: [],
+      cursor,
+      hasMore: false,
+      serverTime: "2026-09-22T00:00:00.000Z",
+    })),
+    createPersonalSettlementPayment: vi.fn(
+      async (_userId, requestedTripId, _operationId, input) => {
+        const { id, auditReason: _auditReason, ...value } = input;
+        const record: PersonalSettlementPaymentDto = {
+          ...value,
+          id,
+          journeyId: requestedTripId,
+          ownerUserId: userId,
+          ownerMemberId: memberA,
+          revision: 1,
+          createdAt: "2026-09-22T00:00:00.000Z",
+          updatedAt: "2026-09-22T00:00:00.000Z",
+          deletedAt: null,
+        };
+        personalPayments.set(id, record);
+        return { record, idempotentReplay: false };
+      },
+    ),
+    updatePersonalSettlementPayment: vi.fn(
+      async (_userId, _tripId, paymentId, _operationId, input) => {
+        const current = personalPayments.get(paymentId)!;
+        const {
+          baseRevision: _baseRevision,
+          auditReason: _auditReason,
+          ...value
+        } = input;
+        const record = {
+          ...current,
+          ...value,
+          revision: current.revision + 1,
+          updatedAt: "2026-09-22T00:01:00.000Z",
+        };
+        personalPayments.set(paymentId, record);
+        return { record, idempotentReplay: false };
+      },
+    ),
+    deletePersonalSettlementPayment: vi.fn(async (_userId, _tripId, paymentId) => {
+      const current = personalPayments.get(paymentId)!;
+      const record = {
+        ...current,
+        revision: current.revision + 1,
+        updatedAt: "2026-09-22T00:02:00.000Z",
+        deletedAt: "2026-09-22T00:02:00.000Z",
+      };
+      personalPayments.set(paymentId, record);
+      return { record, idempotentReplay: false };
     }),
     createReceipt: vi.fn(async (_userId, requestedTripId, receiptId, input) => ({
       entity: {
@@ -444,7 +500,7 @@ function createGateway(options: { authorized?: boolean } = {}) {
     }),
   };
 
-  return { gateway, expenses, itineraryItems, ledgerCreates };
+  return { gateway, expenses, itineraryItems, ledgerCreates, personalPayments };
 }
 
 function post(
@@ -1524,5 +1580,251 @@ describe("OTR Dev Backend", () => {
       }),
     );
     expect(denied.status).toBe(403);
+  });
+
+  it("creates, reads, updates, and soft-deletes Personal Payments", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const paymentId = "74000000-0000-4000-8000-000000000001";
+    const endpoint = `http://localhost/v2/trips/${tripId}/ledger/personal-payments`;
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+    };
+    const value = {
+      counterpartyMemberId: memberB,
+      direction: "PAID",
+      amountMinor: 30_000,
+      currency: "NZD",
+      scale: 2,
+      occurredAt: "2026-09-22T10:00:00+12:00",
+      recordedEquivalentMinor: 17_250,
+      recordedEquivalentCurrency: "AUD",
+      recordedEquivalentScale: 2,
+      referenceRateDecimal: "0.575",
+      referenceRateDate: "2026-09-21",
+      referenceSource: "ECB",
+      referenceProvenance: { informational: true },
+    };
+    const created = await handle(
+      new Request(endpoint, {
+        method: "POST",
+        headers: {
+          ...headers,
+          "Idempotency-Key": "74000000-0000-4000-8000-000000000011",
+        },
+        body: JSON.stringify({ id: paymentId, ...value }),
+      }),
+    );
+    const listed = await handle(
+      new Request(endpoint, { headers: { Authorization: "Bearer valid-token" } }),
+    );
+    const detailed = await handle(
+      new Request(`${endpoint}/${paymentId}`, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    const updated = await handle(
+      new Request(`${endpoint}/${paymentId}`, {
+        method: "PATCH",
+        headers: {
+          ...headers,
+          "Idempotency-Key": "74000000-0000-4000-8000-000000000012",
+        },
+        body: JSON.stringify({
+          ...value,
+          direction: "RECEIVED",
+          amountMinor: 29_500,
+          baseRevision: 1,
+        }),
+      }),
+    );
+    const deleted = await handle(
+      new Request(`${endpoint}/${paymentId}`, {
+        method: "DELETE",
+        headers: {
+          ...headers,
+          "Idempotency-Key": "74000000-0000-4000-8000-000000000013",
+        },
+        body: JSON.stringify({ baseRevision: 2 }),
+      }),
+    );
+
+    expect([
+      created.status,
+      listed.status,
+      detailed.status,
+      updated.status,
+      deleted.status,
+    ]).toEqual([201, 200, 200, 200, 200]);
+    expect(await created.json()).toMatchObject({
+      record: { ownerUserId: userId, amountMinor: 30_000 },
+    });
+    expect(await listed.json()).toMatchObject({ payments: [{ id: paymentId }] });
+    expect(await detailed.json()).toMatchObject({ record: { id: paymentId } });
+    expect(await updated.json()).toMatchObject({
+      record: { direction: "RECEIVED", amountMinor: 29_500, revision: 2 },
+    });
+    expect(await deleted.json()).toMatchObject({
+      record: { id: paymentId, revision: 3, deletedAt: expect.any(String) },
+    });
+    expect(gateway.canReadTrip).not.toHaveBeenCalled();
+    expect(gateway.canWriteTrip).not.toHaveBeenCalled();
+    expect(gateway.resolveSettlementFx).not.toHaveBeenCalled();
+  });
+
+  it("does not pre-reject historical Personal Payment reads on current membership", async () => {
+    const { gateway, personalPayments } = createGateway({ authorized: false });
+    const paymentId = "74000000-0000-4000-8000-000000000002";
+    personalPayments.set(paymentId, {
+      id: paymentId,
+      journeyId: tripId,
+      ownerUserId: userId,
+      ownerMemberId: memberA,
+      counterpartyMemberId: memberB,
+      direction: "RECEIVED",
+      amountMinor: 29_500,
+      currency: "NZD",
+      scale: 2,
+      occurredAt: "2026-09-22T10:00:00+12:00",
+      revision: 1,
+      createdAt: "2026-09-22T00:00:00Z",
+      updatedAt: "2026-09-22T00:00:00Z",
+      deletedAt: null,
+    });
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/${paymentId}`,
+        { headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.canReadTrip).not.toHaveBeenCalled();
+    expect(gateway.readPersonalSettlementPayments).toHaveBeenCalledWith(userId, tripId);
+  });
+
+  it("rejects owner impersonation and non-UUID Personal Payment operation keys", async () => {
+    const { gateway } = createGateway();
+    const endpoint = `http://localhost/v2/trips/${tripId}/ledger/personal-payments`;
+    const body = {
+      id: "74000000-0000-4000-8000-000000000003",
+      ownerUserId: "20000000-0000-4000-8000-000000000099",
+      counterpartyMemberId: memberB,
+      direction: "PAID",
+      amountMinor: 100,
+      currency: "NZD",
+      scale: 2,
+      occurredAt: "2026-09-22T10:00:00+12:00",
+    };
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "not-a-uuid",
+        },
+        body: JSON.stringify(body),
+      }),
+    );
+    expect(response.status).toBe(400);
+    const { ownerUserId: _ownerUserId, ...validBody } = body;
+    const invalidKey = await createDevBackendHandler({ gateway })(
+      new Request(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "not-a-uuid",
+        },
+        body: JSON.stringify(validBody),
+      }),
+    );
+    expect(invalidKey.status).toBe(400);
+    expect(gateway.createPersonalSettlementPayment).not.toHaveBeenCalled();
+  });
+
+  it("routes the historical-safe Personal Payment change feed without trip prechecks", async () => {
+    const { gateway } = createGateway({ authorized: false });
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/ledger/personal-payments/changes?cursor=cursor-1`,
+        { headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.pullPersonalSettlementPaymentChanges).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      "cursor-1",
+    );
+    expect(gateway.canReadTrip).not.toHaveBeenCalled();
+  });
+
+  it("maps Personal Payment replay, stale revision, and write authorization outcomes", async () => {
+    const { gateway } = createGateway();
+    const paymentId = "74000000-0000-4000-8000-000000000004";
+    const endpoint = `http://localhost/v2/trips/${tripId}/ledger/personal-payments`;
+    const headers = {
+      Authorization: "Bearer valid-token",
+      "Content-Type": "application/json",
+      "Idempotency-Key": "74000000-0000-4000-8000-000000000021",
+    };
+    gateway.createPersonalSettlementPayment = vi.fn(
+      async (_userId, requestedTripId, _key, input) => ({
+        record: {
+          ...input,
+          journeyId: requestedTripId,
+          ownerUserId: userId,
+          ownerMemberId: memberA,
+          revision: 1,
+          createdAt: "2026-09-22T00:00:00Z",
+          updatedAt: "2026-09-22T00:00:00Z",
+          deletedAt: null,
+        },
+        idempotentReplay: true,
+      }),
+    );
+    const value = {
+      counterpartyMemberId: memberB,
+      direction: "PAID",
+      amountMinor: 100,
+      currency: "NZD",
+      scale: 2,
+      occurredAt: "2026-09-22T10:00:00+12:00",
+    };
+    const replay = await createDevBackendHandler({ gateway })(
+      new Request(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ id: paymentId, ...value }),
+      }),
+    );
+    gateway.updatePersonalSettlementPayment = vi.fn(async () => {
+      throw new BackendError(409, "REVISION_CONFLICT", "stale");
+    });
+    const stale = await createDevBackendHandler({ gateway })(
+      new Request(`${endpoint}/${paymentId}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ ...value, baseRevision: 1 }),
+      }),
+    );
+    gateway.deletePersonalSettlementPayment = vi.fn(async () => {
+      throw new BackendError(403, "PERSONAL_PAYMENT_WRITE_FORBIDDEN", "owner only");
+    });
+    const forbidden = await createDevBackendHandler({ gateway })(
+      new Request(`${endpoint}/${paymentId}`, {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify({ baseRevision: 1 }),
+      }),
+    );
+
+    expect(replay.status).toBe(200);
+    expect(stale.status).toBe(409);
+    expect((await stale.json()).error.code).toBe("REVISION_CONFLICT");
+    expect(forbidden.status).toBe(403);
+    expect((await forbidden.json()).error.code).toBe("PERSONAL_PAYMENT_WRITE_FORBIDDEN");
   });
 });

@@ -6,6 +6,8 @@ import {
   safeEconomicDateEdit,
   rateQuoteRowToDto,
   eligibleReferenceCandidate,
+  personalPaymentBackendError,
+  personalPaymentRowToDto,
 } from "./supabaseGateway";
 
 describe("Phase C reference candidate eligibility", () => {
@@ -153,5 +155,54 @@ describe("Supabase Dev gateway target guard", () => {
         secretKey: "synthetic",
       }),
     ).toThrow("approved Supabase Dev project");
+  });
+});
+
+describe("Settlement 2.0 Personal Payment gateway projection", () => {
+  it("maps the Phase 1A row without deriving the entered equivalent", () => {
+    expect(
+      personalPaymentRowToDto({
+        id: "74000000-0000-4000-8000-000000000001",
+        journey_id: "10000000-0000-4000-8000-000000000001",
+        owner_user_id: "20000000-0000-4000-8000-000000000001",
+        owner_member_id: "30000000-0000-4000-8000-000000000001",
+        counterparty_member_id: "30000000-0000-4000-8000-000000000002",
+        direction: "PAID",
+        amount_minor: 30_000,
+        currency: "NZD",
+        scale: 2,
+        occurred_at: "2026-09-22T00:00:00Z",
+        note: null,
+        recorded_equivalent_minor: 17_250,
+        recorded_equivalent_currency: "AUD",
+        recorded_equivalent_scale: 2,
+        reference_rate_decimal: "0.575000000000000000",
+        reference_rate_date: "2026-09-21",
+        reference_source: "ECB",
+        reference_provenance: { informational: true },
+        revision: 1,
+        created_at: "2026-09-22T00:00:00Z",
+        updated_at: "2026-09-22T00:00:00Z",
+        deleted_at: null,
+      }),
+    ).toMatchObject({
+      recordedEquivalentMinor: 17_250,
+      recordedEquivalentCurrency: "AUD",
+      referenceRateDecimal: "0.575000000000000000",
+    });
+  });
+
+  it.each([
+    ["REVISION_CONFLICT", 409],
+    ["IDEMPOTENCY_CONFLICT", 409],
+    ["TRIP_WRITE_FORBIDDEN", 403],
+    ["PERSONAL_PAYMENT_WRITE_FORBIDDEN", 403],
+    ["ENTITY_NOT_FOUND", 404],
+    ["PERSONAL_PAYMENT_SELF_COUNTERPARTY", 422],
+  ])("maps %s to stable status %s", (message, status) => {
+    expect(personalPaymentBackendError(message)).toMatchObject({
+      message: expect.any(String),
+      status,
+    });
   });
 });

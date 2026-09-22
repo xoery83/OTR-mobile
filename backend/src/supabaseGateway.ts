@@ -39,8 +39,12 @@ import {
   journeyCurrencyPreviewSchema,
 } from "../../src/data/api/ledgerCurrencyContracts";
 import type {
+  CreatePersonalSettlementPaymentRequest,
   CorrectSettlementPaymentRequest,
+  DeletePersonalSettlementPaymentRequest,
   FinalizedSettlementDto,
+  PersonalSettlementPaymentDto,
+  PersonalSettlementPaymentMutationResponse,
   RecordSettlementPaymentRequest,
   SettlementAdjustmentFinalizeRequest,
   SettlementAdjustmentMutationResponse,
@@ -49,6 +53,7 @@ import type {
   SettlementPaymentActionRequest,
   SettlementPaymentMutationResponse,
   SettlementPreviewResponse,
+  UpdatePersonalSettlementPaymentRequest,
 } from "../../src/data/api/ledgerSettlementContracts";
 import {
   analyzeReporting,
@@ -208,6 +213,76 @@ function stableReviewId(value: string) {
 
 function hashPayload(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+export function personalPaymentRowToDto(
+  row: Record<string, unknown>,
+): PersonalSettlementPaymentDto {
+  return {
+    id: String(row.id),
+    journeyId: String(row.journey_id),
+    ownerUserId: String(row.owner_user_id),
+    ownerMemberId: String(row.owner_member_id),
+    counterpartyMemberId: String(row.counterparty_member_id),
+    direction: row.direction as PersonalSettlementPaymentDto["direction"],
+    amountMinor: Number(row.amount_minor),
+    currency: String(row.currency),
+    scale: Number(row.scale),
+    occurredAt: String(row.occurred_at),
+    note: row.note == null ? null : String(row.note),
+    recordedEquivalentMinor:
+      row.recorded_equivalent_minor == null
+        ? null
+        : Number(row.recorded_equivalent_minor),
+    recordedEquivalentCurrency:
+      row.recorded_equivalent_currency == null
+        ? null
+        : String(row.recorded_equivalent_currency),
+    recordedEquivalentScale:
+      row.recorded_equivalent_scale == null
+        ? null
+        : Number(row.recorded_equivalent_scale),
+    referenceRateDecimal:
+      row.reference_rate_decimal == null ? null : String(row.reference_rate_decimal),
+    referenceRateDate:
+      row.reference_rate_date == null ? null : String(row.reference_rate_date),
+    referenceSource: row.reference_source == null ? null : String(row.reference_source),
+    referenceProvenance:
+      row.reference_provenance == null
+        ? null
+        : (row.reference_provenance as Record<string, unknown>),
+    revision: Number(row.revision),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+    deletedAt: row.deleted_at == null ? null : String(row.deleted_at),
+  };
+}
+
+export function personalPaymentBackendError(message: string) {
+  const known: Record<string, [number, string]> = {
+    ENTITY_NOT_FOUND: [404, "The Personal Payment was not found."],
+    TRIP_WRITE_FORBIDDEN: [403, "Current Journey membership is required."],
+    PERSONAL_PAYMENT_WRITE_FORBIDDEN: [403, "Only the record owner may change it."],
+    IDEMPOTENCY_CONFLICT: [409, "The idempotency key conflicts."],
+    REVISION_CONFLICT: [409, "The Personal Payment revision is stale."],
+    PERSONAL_PAYMENT_IDENTITY_CONFLICT: [409, "The Personal Payment id conflicts."],
+    PERSONAL_PAYMENT_DELETED: [409, "The Personal Payment is deleted."],
+    PERSONAL_PAYMENT_COUNTERPARTY_INVALID: [422, "The counterparty is invalid."],
+    PERSONAL_PAYMENT_SELF_COUNTERPARTY: [422, "The owner cannot be the counterparty."],
+    PERSONAL_PAYMENT_DIRECTION_INVALID: [422, "The payment direction is invalid."],
+    PERSONAL_PAYMENT_AMOUNT_INVALID: [422, "The payment amount is invalid."],
+    PERSONAL_PAYMENT_CURRENCY_INVALID: [422, "The payment currency is invalid."],
+    PERSONAL_PAYMENT_EQUIVALENT_INVALID: [422, "The recorded equivalent is invalid."],
+    PERSONAL_PAYMENT_BASE_REVISION_INVALID: [422, "The base revision is invalid."],
+  };
+  for (const [code, [status, text]] of Object.entries(known)) {
+    if (message.includes(code)) return new BackendError(status, code, text);
+  }
+  return new BackendError(
+    500,
+    "PERSONAL_PAYMENT_FAILED",
+    "The Personal Payment operation failed.",
+  );
 }
 
 function reviewFindingRowToDto(row: Record<string, unknown>): LedgerReviewFindingDto {
@@ -851,6 +926,53 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         tripId,
         paymentId,
         idempotencyKey,
+        input,
+      );
+    },
+
+    async readPersonalSettlementPayments(userId, tripId) {
+      return readPersonalSettlementPayments(service, userId, tripId);
+    },
+
+    async pullPersonalSettlementPaymentChanges(userId, tripId, cursor) {
+      return readPersonalSettlementPaymentChanges(service, userId, tripId, cursor);
+    },
+
+    async createPersonalSettlementPayment(userId, tripId, operationId, input) {
+      return mutatePersonalSettlementPayment(
+        service,
+        userId,
+        tripId,
+        input.id,
+        operationId,
+        "CREATE",
+        null,
+        input,
+      );
+    },
+
+    async updatePersonalSettlementPayment(userId, tripId, paymentId, operationId, input) {
+      return mutatePersonalSettlementPayment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        operationId,
+        "UPDATE",
+        input.baseRevision,
+        input,
+      );
+    },
+
+    async deletePersonalSettlementPayment(userId, tripId, paymentId, operationId, input) {
+      return mutatePersonalSettlementPayment(
+        service,
+        userId,
+        tripId,
+        paymentId,
+        operationId,
+        "DELETE",
+        input.baseRevision,
         input,
       );
     },
@@ -3112,6 +3234,100 @@ async function finalizeSettlementAdjustment(
   return { entity, idempotentReplay: finalized.idempotentReplay };
 }
 
+async function readPersonalSettlementPayments(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+) {
+  const result = await service.rpc("ledger_list_personal_settlement_payments_1a", {
+    actor_user: userId,
+    target_journey: tripId,
+  });
+  if (result.error) throw new Error("Supabase Dev Personal Payment read failed.");
+  return ((result.data ?? []) as Record<string, unknown>[]).map(personalPaymentRowToDto);
+}
+
+async function readPersonalSettlementPaymentChanges(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  cursor: string | null,
+): Promise<LedgerChangesResponse> {
+  const after = decodeLedgerCursor(cursor, tripId, userId);
+  assertLedgerCursorContinuation(after, await latestLedgerSequence(service, tripId));
+  const [result, payments] = await Promise.all([
+    service.rpc("ledger_list_personal_settlement_payment_changes_1a", {
+      actor_user: userId,
+      target_journey: tripId,
+      after_sequence: after,
+      page_size: 101,
+    }),
+    readPersonalSettlementPayments(service, userId, tripId),
+  ]);
+  if (result.error) throw new Error("Supabase Dev Personal Payment changes failed.");
+  const allRows = (result.data ?? []) as Record<string, unknown>[];
+  const hasMore = allRows.length > 100;
+  const rows = allRows.slice(0, 100);
+  const byId = new Map(payments.map((payment) => [payment.id, payment]));
+  return {
+    changes: rows
+      .filter((row) => row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT")
+      .map((row) => ({
+        entityType: "PERSONAL_SETTLEMENT_PAYMENT" as const,
+        entityId: String(row.entity_id),
+        revision: Number(row.revision),
+        isTombstone: Boolean(row.is_tombstone),
+        aggregate: byId.get(String(row.entity_id)) ?? null,
+      })),
+    cursor: rows.length
+      ? encodeLedgerCursor(Number(rows[rows.length - 1].sequence), tripId, userId)
+      : cursor,
+    hasMore,
+    serverTime: new Date().toISOString(),
+  };
+}
+
+async function mutatePersonalSettlementPayment(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  paymentId: string,
+  operationId: string,
+  command: "CREATE" | "UPDATE" | "DELETE",
+  baseRevision: number | null,
+  input:
+    | CreatePersonalSettlementPaymentRequest
+    | UpdatePersonalSettlementPaymentRequest
+    | DeletePersonalSettlementPaymentRequest,
+): Promise<PersonalSettlementPaymentMutationResponse> {
+  const { auditReason = null, ...submitted } = input;
+  const payment = { ...submitted } as Record<string, unknown>;
+  delete payment.id;
+  delete payment.baseRevision;
+  const result = await service.rpc("ledger_mutate_personal_settlement_payment_1a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_record: paymentId,
+    command_type_value: command,
+    base_revision_value: baseRevision,
+    operation_id_value: operationId,
+    payload_hash_value: hashPayload({ paymentId, input }),
+    payment_value: command === "DELETE" ? {} : payment,
+    audit_reason_value: auditReason,
+  });
+  if (result.error || !result.data) {
+    throw personalPaymentBackendError(result.error?.message ?? "PERSONAL_PAYMENT_FAILED");
+  }
+  const response = result.data as {
+    record: Record<string, unknown>;
+    idempotentReplay: boolean;
+  };
+  return {
+    record: personalPaymentRowToDto(response.record),
+    idempotentReplay: Boolean(response.idempotentReplay),
+  };
+}
+
 function throwSettlementPaymentError(message: string): never {
   const known: Record<string, [number, string]> = {
     IDEMPOTENCY_CONFLICT: [409, "The idempotency key conflicts."],
@@ -3663,6 +3879,7 @@ async function readLedgerBootstrap(
     corrections,
     rateQuotes,
     receipts,
+    personalPayments,
   ] = await Promise.all([
     service
       .from("trips")
@@ -3700,6 +3917,10 @@ async function readLedgerBootstrap(
       .select(receiptColumns)
       .eq("journey_id", tripId)
       .order("created_at", { ascending: false }),
+    service.rpc("ledger_list_personal_settlement_payments_1a", {
+      actor_user: userId,
+      target_journey: tripId,
+    }),
   ]);
 
   if (
@@ -3710,7 +3931,8 @@ async function readLedgerBootstrap(
     householdMembers.error ||
     expenses.error ||
     corrections.error ||
-    receipts.error
+    receipts.error ||
+    personalPayments.error
   ) {
     throw new Error("Supabase Dev Ledger bootstrap failed.");
   }
@@ -3789,6 +4011,9 @@ async function readLedgerBootstrap(
       receiptRowToDto(row as Record<string, unknown>),
     ),
     settlements: finalizedSettlements,
+    personalPayments: ((personalPayments.data ?? []) as Record<string, unknown>[]).map(
+      personalPaymentRowToDto,
+    ),
     reviewFindings: review.findings,
     reviewActions: review.actions,
     actor: {
@@ -3839,10 +4064,39 @@ async function readLedgerChanges(
   const allRows = result.data ?? [];
   const hasMore = allRows.length > 100;
   const rows = allRows.slice(0, 100);
-  const visibleRows = rows.filter(
-    (row) =>
-      !["TRANSFER", "TRANSFER_PAYMENT", "REVIEW_FINDING"].includes(row.entity_type),
+  const personalPayments = rows.some(
+    (row) => row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT",
+  )
+    ? await service.rpc("ledger_list_personal_settlement_payments_1a", {
+        actor_user: userId,
+        target_journey: tripId,
+      })
+    : { data: [], error: null };
+  if (personalPayments.error) {
+    throw new Error("Supabase Dev Personal Payment change projection failed.");
+  }
+  const personalPaymentDtos = (
+    (personalPayments.data ?? []) as Record<string, unknown>[]
+  ).map(personalPaymentRowToDto);
+  const readablePersonalPaymentIds = new Set(
+    personalPaymentDtos.map((payment) => payment.id),
   );
+  const visibleRows = rows.filter((row) => {
+    if (
+      [
+        "TRANSFER",
+        "TRANSFER_PAYMENT",
+        "REVIEW_FINDING",
+        "PERSONAL_SETTLEMENT_PAYMENT_ATTACHMENT",
+      ].includes(row.entity_type)
+    ) {
+      return false;
+    }
+    return (
+      row.entity_type !== "PERSONAL_SETTLEMENT_PAYMENT" ||
+      readablePersonalPaymentIds.has(String(row.entity_id))
+    );
+  });
   const expenseIds = rows
     .filter((row) => row.entity_type === "EXPENSE" && !row.is_tombstone)
     .map((row) => String(row.entity_id));
@@ -3983,6 +4237,7 @@ async function readLedgerChanges(
   for (const row of receipts.data ?? [])
     byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
   for (const settlement of settlements) byId.set(settlement.id, settlement);
+  for (const payment of personalPaymentDtos) byId.set(payment.id, payment);
 
   const changes = visibleRows.map((row) => ({
     entityType: row.entity_type as LedgerChangesResponse["changes"][number]["entityType"],

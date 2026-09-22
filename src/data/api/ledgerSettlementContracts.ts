@@ -343,6 +343,115 @@ export const settlementPaymentMutationResponseSchema = z.object({
   idempotentReplay: z.boolean(),
 });
 
+const personalPaymentEquivalentSchema = z.object({
+  recordedEquivalentMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  recordedEquivalentCurrency: z.string().regex(/^[A-Z]{3}$/),
+  recordedEquivalentScale: z.number().int().min(0).max(4),
+});
+
+const personalPaymentReferenceSchema = z.object({
+  referenceRateDecimal: z
+    .string()
+    .regex(/^(?=.*[1-9])\d+(?:\.\d+)?$/)
+    .nullable()
+    .optional(),
+  referenceRateDate: z.iso.date().nullable().optional(),
+  referenceSource: z.string().trim().min(1).max(200).nullable().optional(),
+  referenceProvenance: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+const personalPaymentValueSchema = z
+  .object({
+    counterpartyMemberId: uuid,
+    direction: z.enum(["PAID", "RECEIVED"]),
+    amountMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    scale: z.number().int().min(0).max(4),
+    occurredAt: z.iso.datetime({ offset: true }),
+    note: z.string().max(2000).nullable().optional(),
+    recordedEquivalentMinor: personalPaymentEquivalentSchema.shape.recordedEquivalentMinor
+      .nullable()
+      .optional(),
+    recordedEquivalentCurrency:
+      personalPaymentEquivalentSchema.shape.recordedEquivalentCurrency
+        .nullable()
+        .optional(),
+    recordedEquivalentScale: personalPaymentEquivalentSchema.shape.recordedEquivalentScale
+      .nullable()
+      .optional(),
+    ...personalPaymentReferenceSchema.shape,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const equivalent = [
+      value.recordedEquivalentMinor,
+      value.recordedEquivalentCurrency,
+      value.recordedEquivalentScale,
+    ];
+    if (
+      equivalent.some((item) => item != null) &&
+      equivalent.some((item) => item == null)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Recorded equivalent fields must be supplied together.",
+      });
+    }
+    if (
+      value.recordedEquivalentCurrency &&
+      value.recordedEquivalentScale != null &&
+      !isIso4217Money(value.recordedEquivalentCurrency, value.recordedEquivalentScale)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Recorded equivalent currency is invalid.",
+      });
+    }
+    if (!isIso4217Money(value.currency, value.scale)) {
+      context.addIssue({ code: "custom", message: "Currency scale is invalid." });
+    }
+  });
+
+export const createPersonalSettlementPaymentRequestSchema =
+  personalPaymentValueSchema.safeExtend({
+    id: uuid,
+    auditReason: z.string().trim().min(1).max(2000).nullable().optional(),
+  });
+
+export const updatePersonalSettlementPaymentRequestSchema =
+  personalPaymentValueSchema.safeExtend({
+    baseRevision: z.number().int().positive(),
+    auditReason: z.string().trim().min(1).max(2000).nullable().optional(),
+  });
+
+export const deletePersonalSettlementPaymentRequestSchema = z
+  .object({
+    baseRevision: z.number().int().positive(),
+    auditReason: z.string().trim().min(1).max(2000).nullable().optional(),
+  })
+  .strict();
+
+export const personalSettlementPaymentSchema = personalPaymentValueSchema.safeExtend({
+  id: uuid,
+  journeyId: uuid,
+  ownerUserId: uuid,
+  ownerMemberId: uuid,
+  revision: z.number().int().positive(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+});
+
+export const personalSettlementPaymentMutationResponseSchema = z.object({
+  record: personalSettlementPaymentSchema,
+  idempotentReplay: z.boolean(),
+});
+
+export const personalSettlementPaymentListResponseSchema = z.object({
+  payments: z.array(personalSettlementPaymentSchema),
+  serverTime: z.string(),
+});
+
 export type SettlementPreviewResponse = z.infer<typeof settlementPreviewSchema>;
 export type FinalizedSettlementDto = z.infer<typeof finalizedSettlementSchema>;
 export type SettlementFinalizeResponse = z.infer<typeof settlementFinalizeResponseSchema>;
@@ -367,4 +476,19 @@ export type CorrectSettlementPaymentRequest = z.infer<
 >;
 export type SettlementPaymentMutationResponse = z.infer<
   typeof settlementPaymentMutationResponseSchema
+>;
+export type PersonalSettlementPaymentDto = z.infer<
+  typeof personalSettlementPaymentSchema
+>;
+export type CreatePersonalSettlementPaymentRequest = z.infer<
+  typeof createPersonalSettlementPaymentRequestSchema
+>;
+export type UpdatePersonalSettlementPaymentRequest = z.infer<
+  typeof updatePersonalSettlementPaymentRequestSchema
+>;
+export type DeletePersonalSettlementPaymentRequest = z.infer<
+  typeof deletePersonalSettlementPaymentRequestSchema
+>;
+export type PersonalSettlementPaymentMutationResponse = z.infer<
+  typeof personalSettlementPaymentMutationResponseSchema
 >;

@@ -45,13 +45,20 @@ import {
   type JourneyCurrencyPreview,
 } from "../../src/data/api/ledgerCurrencyContracts";
 import {
+  createPersonalSettlementPaymentRequestSchema,
   correctSettlementPaymentRequestSchema,
+  deletePersonalSettlementPaymentRequestSchema,
   recordSettlementPaymentRequestSchema,
   settlementAdjustmentFinalizeRequestSchema,
   settlementPaymentActionRequestSchema,
   settlementFinalizeRequestSchema,
   settlementPreviewRequestSchema,
+  updatePersonalSettlementPaymentRequestSchema,
+  type CreatePersonalSettlementPaymentRequest,
   type CorrectSettlementPaymentRequest,
+  type DeletePersonalSettlementPaymentRequest,
+  type PersonalSettlementPaymentDto,
+  type PersonalSettlementPaymentMutationResponse,
   type RecordSettlementPaymentRequest,
   type SettlementAdjustmentFinalizeRequest,
   type SettlementAdjustmentMutationResponse,
@@ -60,6 +67,7 @@ import {
   type SettlementPaymentActionRequest,
   type SettlementPaymentMutationResponse,
   type SettlementPreviewResponse,
+  type UpdatePersonalSettlementPaymentRequest,
 } from "../../src/data/api/ledgerSettlementContracts";
 import type {
   ReportingDimension,
@@ -225,6 +233,35 @@ export type DevBackendGateway = {
     idempotencyKey: string,
     input: CorrectSettlementPaymentRequest,
   ): Promise<SettlementPaymentMutationResponse>;
+  readPersonalSettlementPayments(
+    userId: string,
+    tripId: string,
+  ): Promise<PersonalSettlementPaymentDto[]>;
+  pullPersonalSettlementPaymentChanges(
+    userId: string,
+    tripId: string,
+    cursor: string | null,
+  ): Promise<LedgerChangesResponse>;
+  createPersonalSettlementPayment(
+    userId: string,
+    tripId: string,
+    operationId: string,
+    input: CreatePersonalSettlementPaymentRequest,
+  ): Promise<PersonalSettlementPaymentMutationResponse>;
+  updatePersonalSettlementPayment(
+    userId: string,
+    tripId: string,
+    paymentId: string,
+    operationId: string,
+    input: UpdatePersonalSettlementPaymentRequest,
+  ): Promise<PersonalSettlementPaymentMutationResponse>;
+  deletePersonalSettlementPayment(
+    userId: string,
+    tripId: string,
+    paymentId: string,
+    operationId: string,
+    input: DeletePersonalSettlementPaymentRequest,
+  ): Promise<PersonalSettlementPaymentMutationResponse>;
   createLedgerExpense(
     userId: string,
     tripId: string,
@@ -421,6 +458,18 @@ function getIdempotencyKey(request: Request) {
       400,
       "INVALID_IDEMPOTENCY_KEY",
       "A valid Idempotency-Key header is required.",
+    );
+  }
+  return value;
+}
+
+function getPersonalPaymentOperationId(request: Request) {
+  const value = getIdempotencyKey(request);
+  if (!uuidPattern.test(value)) {
+    throw new HttpError(
+      400,
+      "INVALID_IDEMPOTENCY_KEY",
+      "Personal Payment operations require a UUID Idempotency-Key.",
     );
   }
   return value;
@@ -1046,6 +1095,131 @@ async function mutateSettlementPayment(request: Request, gateway: DevBackendGate
   );
 }
 
+async function readPersonalSettlementPayment(
+  request: Request,
+  gateway: DevBackendGateway,
+) {
+  const url = new URL(request.url);
+  const match = url.pathname.match(
+    /^\/v2\/trips\/([^/]+)\/ledger\/personal-payments(?:\/([^/]+))?$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, resource] = match;
+  assertTripId(tripId);
+  const user = await authenticate(request, gateway);
+
+  if (resource === "changes") {
+    return json(
+      200,
+      await gateway.pullPersonalSettlementPaymentChanges(
+        user.id,
+        tripId,
+        url.searchParams.get("cursor"),
+      ),
+    );
+  }
+
+  const payments = await gateway.readPersonalSettlementPayments(user.id, tripId);
+  if (resource) {
+    if (!uuidPattern.test(resource)) {
+      throw new HttpError(
+        400,
+        "INVALID_PAYMENT_ID",
+        "The Personal Payment id is invalid.",
+      );
+    }
+    const record = payments.find((payment) => payment.id === resource);
+    if (!record) {
+      throw new HttpError(404, "ENTITY_NOT_FOUND", "The Personal Payment was not found.");
+    }
+    return json(200, { record });
+  }
+
+  const counterpartyMemberId = url.searchParams.get("counterpartyMemberId");
+  if (counterpartyMemberId && !uuidPattern.test(counterpartyMemberId)) {
+    throw new HttpError(400, "INVALID_FILTER", "The counterparty filter is invalid.");
+  }
+  const deleted = url.searchParams.get("includeDeleted");
+  if (deleted && !["true", "false"].includes(deleted)) {
+    throw new HttpError(400, "INVALID_FILTER", "The deleted filter is invalid.");
+  }
+  return json(200, {
+    payments: payments.filter(
+      (payment) =>
+        (!counterpartyMemberId ||
+          payment.counterpartyMemberId === counterpartyMemberId) &&
+        (deleted === "true" || payment.deletedAt === null),
+    ),
+    serverTime: new Date().toISOString(),
+  });
+}
+
+async function mutatePersonalSettlementPayment(
+  request: Request,
+  gateway: DevBackendGateway,
+) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/ledger\/personal-payments(?:\/([^/]+))?$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, paymentId] = match;
+  assertTripId(tripId);
+  if (paymentId && !uuidPattern.test(paymentId)) {
+    throw new HttpError(400, "INVALID_PAYMENT_ID", "The Personal Payment id is invalid.");
+  }
+  const user = await authenticate(request, gateway);
+  const body = await parseBody(request);
+  const operationId = getPersonalPaymentOperationId(request);
+
+  if (request.method === "POST" && !paymentId) {
+    const parsed = createPersonalSettlementPaymentRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    }
+    const response = await gateway.createPersonalSettlementPayment(
+      user.id,
+      tripId,
+      operationId,
+      parsed.data,
+    );
+    return json(response.idempotentReplay ? 200 : 201, response);
+  }
+  if (!paymentId) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  if (request.method === "PATCH") {
+    const parsed = updatePersonalSettlementPaymentRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    }
+    return json(
+      200,
+      await gateway.updatePersonalSettlementPayment(
+        user.id,
+        tripId,
+        paymentId,
+        operationId,
+        parsed.data,
+      ),
+    );
+  }
+  if (request.method === "DELETE") {
+    const parsed = deletePersonalSettlementPaymentRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    }
+    return json(
+      200,
+      await gateway.deletePersonalSettlementPayment(
+        user.id,
+        tripId,
+        paymentId,
+        operationId,
+        parsed.data,
+      ),
+    );
+  }
+  throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+}
+
 async function mutateSettlementAdjustment(request: Request, gateway: DevBackendGateway) {
   const match = new URL(request.url).pathname.match(
     /^\/v2\/trips\/([^/]+)\/settlements\/([^/]+)\/adjustments(?:\/(preview))?$/,
@@ -1080,6 +1254,9 @@ async function mutateSettlementAdjustment(request: Request, gateway: DevBackendG
 
 async function readEntity(request: Request, gateway: DevBackendGateway) {
   const url = new URL(request.url);
+  if (/^\/v2\/trips\/[^/]+\/ledger\/personal-payments(?:\/[^/]+)?$/.test(url.pathname)) {
+    return readPersonalSettlementPayment(request, gateway);
+  }
   if (url.pathname === "/v2/me/ledger") {
     const user = await authenticate(request, gateway);
     if (url.searchParams.has("reportingCurrency")) {
@@ -1330,6 +1507,12 @@ export function createDevBackendHandler({
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
         route = redactLogRoute(url.pathname);
         response = await readEntity(request, gateway);
+      } else if (
+        ["POST", "PATCH", "DELETE"].includes(request.method) &&
+        /^\/v2\/trips\/[^/]+\/ledger\/personal-payments(?:\/[^/]+)?$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/ledger/personal-payments/:id";
+        response = await mutatePersonalSettlementPayment(request, gateway);
       } else if (
         request.method === "POST" &&
         /^\/v2\/trips\/[^/]+\/ledger\/journey-currency\/(preview|commit)$/.test(
