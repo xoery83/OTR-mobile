@@ -1,6 +1,13 @@
 # Current Implementation State
 
-Date: 2026-09-18
+Date: 2026-09-22
+
+## Settlement 2.0 Phase 1A — personal Payment Supabase foundation complete
+
+- Migration `20260922000100_settlement_2_phase_1a_personal_payments.sql` is applied to local Supabase and Hosted Dev `tuqigdxrvrerfewsxqgm`; Production is untouched. It adds user-owned `PAID` / `RECEIVED` records, durable owner/counterparty historical read grants, append-only revision audit, soft-delete tombstones/change feed, and the attachment link schema over existing private receipt assets. It does not add Backend routes, Mobile SQLite/sync, upload flow, UI, Review, correction workflow, or legacy conversion.
+- Forced RLS and revoked `anon` / `authenticated` table access keep business data behind service-role RPCs. The mutation RPC derives owner identity from the current linked actor, validates Journey/member/counterparty and optimistic revision, and is idempotent. Owner, named counterparty, and current organizer reads are explicit; ordinary membership removal preserves only previously granted record/attachment history while revoking new writes/uploads and later unrelated visibility.
+- Local reset from all migrations passed. The focused Phase 1A pgTAP passed 72 assertions; the complete 18-file database suite passed 397 assertions, including Settlement, legacy Payment/Adjustment, Review, RLS, Journey Currency and Phase 0.5 finalized Expense protection. Schema diff is empty and the generated 101-table manifest passes baseline verification.
+- Hosted Dev rollback-safe validation passed 26 assertions for schema/index/RLS/RPC, independent differing records, owner/counterparty/organizer/IDOR boundaries, replay, tombstone, historical-member access, later-record isolation, canonical/legacy zero-change and the final Expense guard. Post-deploy migration dry-run reports zero pending migrations. Phase 1B is ready for a separate explicit instruction; do not continue automatically.
 
 ## Settlement 2.0 Phase 0.5 — final Expense protection verified on Hosted Dev
 
