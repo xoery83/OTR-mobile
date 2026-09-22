@@ -88,16 +88,15 @@ const insertedTrip = await admin.from("trips").insert({
   created_by: users.owner,
 });
 if (insertedTrip.error) throw insertedTrip.error;
+const ownerMember = await admin
+  .from("journey_members")
+  .select("id")
+  .eq("trip_id", tripId)
+  .eq("user_id", users.owner)
+  .single();
+if (ownerMember.error) throw ownerMember.error;
+members.owner = ownerMember.data.id;
 const insertedMembers = await admin.from("journey_members").insert([
-  {
-    id: members.owner,
-    trip_id: tripId,
-    user_id: users.owner,
-    display_name: "Phase 1B Owner",
-    role: "owner",
-    status: "linked",
-    linked_at: new Date().toISOString(),
-  },
   {
     id: members.member,
     trip_id: tripId,
@@ -313,6 +312,7 @@ const removed = await admin
   .update({ status: "unlinked" })
   .eq("id", members.member);
 if (removed.error) throw removed.error;
+const { id: _receivedId, ...receivedValue } = received;
 assert.equal(
   expectStatus(
     await api(member, "GET", `${endpoint}/${paidId}`),
@@ -331,7 +331,7 @@ expectStatus(
     member,
     "PATCH",
     `${endpoint}/${receivedId}`,
-    { ...received, baseRevision: 1 },
+    { ...receivedValue, baseRevision: 1 },
     randomUUID(),
   ),
   403,
