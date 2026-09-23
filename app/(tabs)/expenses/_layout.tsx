@@ -48,6 +48,10 @@ export default function LedgerLayout() {
       <Stack.Screen name="balance" options={{ headerTitle: "Your Balance" }} />
       <Stack.Screen name="settlement" options={{ headerTitle: "Settlement" }} />
       <Stack.Screen
+        name="personal-settlement-review"
+        options={{ headerTitle: "Your Settlement" }}
+      />
+      <Stack.Screen
         name="settlement-adjustment"
         options={{ headerTitle: "Settlement Update" }}
       />

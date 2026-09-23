@@ -15,8 +15,10 @@ import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLe
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
+import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
+import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
 
 import { ExpenseFxDetails } from "./ExpenseFxDetails";
 import type { DisplayEstimate } from "./displayEstimate";
@@ -36,6 +38,8 @@ export function LedgerExpenseDetailScreen() {
   const [loadError, setLoadError] = useState(false);
   const [participationError, setParticipationError] = useState<string | null>(null);
   const [savingParticipation, setSavingParticipation] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState<string | null>(null);
+  const [raisingReview, setRaisingReview] = useState(false);
   const [fxAccess, setFxAccess] = useState({
     currency: "",
     scale: 2,
@@ -241,6 +245,38 @@ export function LedgerExpenseDetailScreen() {
       ],
     );
   };
+  const raiseConcern = async (targetMemberId?: string) => {
+    if (raisingReview) return;
+    if (!expense.serverRevision) {
+      setReviewMessage("Save this Expense to the Journey before adding it to Review.");
+      return;
+    }
+    setRaisingReview(true);
+    try {
+      await (
+        await getDefaultLedgerReviewRepository()
+      ).raise(expense.journeyId, {
+        targetType: targetMemberId ? "EXPENSE_SHARE" : "EXPENSE",
+        expenseId: expense.serverId ?? expense.id,
+        targetMemberId: targetMemberId ?? null,
+        personalPaymentId: null,
+        settlementId: null,
+        sourceRevision: expense.serverRevision,
+        note: null,
+        targetTitle: targetMemberId
+          ? `${expense.title} · ${participantNames.get(targetMemberId) ?? "Traveller"} share`
+          : expense.title,
+      });
+      setReviewMessage("Added to Review");
+      kickLedgerOperationalSync();
+    } catch (error) {
+      setReviewMessage(
+        error instanceof Error ? error.message : "Could not add this to Review.",
+      );
+    } finally {
+      setRaisingReview(false);
+    }
+  };
   return (
     <ScrollView contentContainerStyle={styles.content}>
       {expense.syncStatus !== "SYNCED" ? (
@@ -284,7 +320,21 @@ export function LedgerExpenseDetailScreen() {
             <Text style={styles.actionText}>Attach Receipt</Text>
           </Pressable>
         ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: raisingReview }}
+          disabled={raisingReview}
+          onPress={() => void raiseConcern()}
+          style={styles.action}
+        >
+          <Text style={styles.actionText}>Something looks wrong</Text>
+        </Pressable>
       </View>
+      {reviewMessage ? (
+        <Text accessibilityLiveRegion="polite" style={styles.saved}>
+          {reviewMessage}
+        </Text>
+      ) : null}
       {fxAccess.locked ? (
         <Text style={styles.meta}>
           {chinese
@@ -361,19 +411,29 @@ export function LedgerExpenseDetailScreen() {
       </Section>
       <Section label="EXACT SPLITS">
         {expense.splits.map((split) => (
-          <View key={split.memberId} style={[styles.split, largeText && styles.stack]}>
-            <Text style={styles.splitName}>
-              {participantNames.get(split.memberId) ?? "Traveller"}
-            </Text>
-            <Text style={styles.splitAmount}>
-              {split.settlementMinor === null || !valuation
-                ? `${expense.original.currency} original ${formatLedgerMoney(split.originalMinor, expense.original.currency, expense.original.scale)}`
-                : formatLedgerMoney(
-                    split.settlementMinor,
-                    valuation.settlement.currency,
-                    valuation.settlement.scale,
-                  )}
-            </Text>
+          <View key={split.memberId}>
+            <View style={[styles.split, largeText && styles.stack]}>
+              <Text style={styles.splitName}>
+                {participantNames.get(split.memberId) ?? "Traveller"}
+              </Text>
+              <Text style={styles.splitAmount}>
+                {split.settlementMinor === null || !valuation
+                  ? `${expense.original.currency} original ${formatLedgerMoney(split.originalMinor, expense.original.currency, expense.original.scale)}`
+                  : formatLedgerMoney(
+                      split.settlementMinor,
+                      valuation.settlement.currency,
+                      valuation.settlement.scale,
+                    )}
+              </Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: raisingReview }}
+              disabled={raisingReview}
+              onPress={() => void raiseConcern(split.memberId)}
+            >
+              <Text style={styles.change}>Something looks wrong</Text>
+            </Pressable>
           </View>
         ))}
       </Section>

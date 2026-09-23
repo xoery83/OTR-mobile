@@ -82,6 +82,51 @@ function createGateway(options: { authorized?: boolean } = {}) {
       transfers: [],
       inputDigest: "a".repeat(64),
     })),
+    readPersonalSettlementReview: vi.fn(async (_userId, requestedTripId) => ({
+      statement: {
+        journeyId: requestedTripId,
+        memberId: memberA,
+        currency: "NZD",
+        scale: 2,
+        settingsRevision: 1,
+        algorithmVersion: "ledger-settlement-greedy-v1",
+        settlementId: null,
+        settlementRevision: null,
+        settlementInputDigest: null,
+        paidMinor: 0,
+        shareMinor: 0,
+        balanceMinor: 0,
+        contributions: [],
+      },
+      statementFingerprint: "b".repeat(64),
+      checkpoint: null,
+      delta: null,
+      coverage: [],
+    })),
+    createPersonalSettlementCheckpoint: vi.fn(
+      async (_userId, requestedTripId, _key, input) => ({
+        statement: {
+          journeyId: requestedTripId,
+          memberId: memberA,
+          currency: "NZD",
+          scale: 2,
+          settingsRevision: 1,
+          algorithmVersion: "ledger-settlement-greedy-v1",
+          settlementId: null,
+          settlementRevision: null,
+          settlementInputDigest: null,
+          paidMinor: 0,
+          shareMinor: 0,
+          balanceMinor: 0,
+          contributions: [],
+        },
+        statementFingerprint: input.statementFingerprint,
+        checkpoint: null,
+        delta: null,
+        coverage: [],
+        idempotentReplay: false,
+      }),
+    ),
     finalizeLedgerSettlement: vi.fn(async (_userId, requestedTripId, _key, input) => ({
       entity: {
         id: "70000000-0000-4000-8000-000000000001",
@@ -316,6 +361,9 @@ function createGateway(options: { authorized?: boolean } = {}) {
     readLedgerRateQuotes: vi.fn(async () => []),
     readLedgerReview: vi.fn(async () => ({ findings: [], actions: [] })),
     refreshLedgerReview: vi.fn(async () => ({ findings: [], actions: [] })),
+    raiseLedgerReviewFinding: vi.fn(async () => {
+      throw new Error("not used");
+    }),
     actOnLedgerReviewFinding: vi.fn(async () => {
       throw new Error("not used");
     }),
@@ -672,6 +720,42 @@ describe("OTR Dev Backend", () => {
     expect(await bootstrap.json()).toMatchObject({ cursor: "cursor-1" });
     expect(changes.status).toBe(200);
     expect(gateway.pullLedgerChanges).toHaveBeenCalledWith(userId, tripId, "cursor-1");
+  });
+
+  it("reads and checkpoints the exact personal Settlement statement", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const operationId = "80000000-0000-4000-8000-000000000001";
+    const headers = { Authorization: "Bearer valid-token" };
+    const read = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/settlement-review`, {
+        headers,
+      }),
+    );
+    const created = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/settlement-review`, {
+        method: "POST",
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+          "Idempotency-Key": operationId,
+        },
+        body: JSON.stringify({
+          id: operationId,
+          operationId,
+          statementFingerprint: "b".repeat(64),
+        }),
+      }),
+    );
+    expect(read.status).toBe(200);
+    expect(created.status).toBe(201);
+    expect(gateway.readPersonalSettlementReview).toHaveBeenCalledWith(userId, tripId);
+    expect(gateway.createPersonalSettlementCheckpoint).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      operationId,
+      expect.objectContaining({ statementFingerprint: "b".repeat(64) }),
+    );
   });
 
   it("keeps preview non-persistent and finalizes with the preview digest", async () => {
@@ -1555,6 +1639,29 @@ describe("OTR Dev Backend", () => {
       },
       idempotentReplay: false,
     });
+    vi.mocked(gateway.raiseLedgerReviewFinding).mockResolvedValue({
+      finding: {
+        id: findingId,
+        journeyId: tripId,
+        expenseId: "60000000-0000-4000-8000-000000000003",
+        settlementId: null,
+        layer: "HEURISTIC",
+        findingType: "HUMAN_CONCERN",
+        severity: "WARNING",
+        confidence: null,
+        evidenceCodes: ["HUMAN_REPORTED"],
+        status: "OPEN",
+        rulesetVersion: "ledger-review-human-v1",
+        entityRevision: 1,
+        revision: 1,
+        createdAt: "2026-09-13T00:00:00.000Z",
+        updatedAt: "2026-09-13T00:00:00.000Z",
+        origin: "HUMAN",
+        targetType: "EXPENSE",
+        targetSourceRevision: 1,
+      },
+      idempotentReplay: false,
+    });
     const handle = createDevBackendHandler({ gateway });
     const refresh = await handle(
       new Request(`http://localhost/v2/trips/${tripId}/ledger/review/refresh`, {
@@ -1582,13 +1689,33 @@ describe("OTR Dev Backend", () => {
         },
       ),
     );
+    const raised = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/review-findings`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": findingId,
+          "X-Review-Protocol": "2",
+        },
+        body: JSON.stringify({
+          id: findingId,
+          targetType: "EXPENSE",
+          expenseId: "60000000-0000-4000-8000-000000000003",
+          sourceRevision: 1,
+          operationId: findingId,
+        }),
+      }),
+    );
     const content = await handle(
       new Request(`http://localhost/v2/trips/${tripId}/receipts/${findingId}/content`, {
         headers: { Authorization: "Bearer valid-token" },
       }),
     );
 
-    expect([refresh.status, action.status, content.status]).toEqual([200, 200, 200]);
+    expect([refresh.status, raised.status, action.status, content.status]).toEqual([
+      200, 201, 200, 200,
+    ]);
     expect(await content.arrayBuffer()).toEqual(new Uint8Array([1, 2, 3]).buffer);
   });
 

@@ -23,6 +23,9 @@ vi.mock("@/data/sync/ledgerReadTransport", () => ({
 vi.mock("./ledgerPersonalPaymentCoordinator", () => ({
   refreshLedgerPersonalPayments: refreshPersonal,
 }));
+vi.mock("./personalSettlementReviewCoordinator", () => ({
+  refreshPersonalSettlementReview: vi.fn(),
+}));
 
 // eslint-disable-next-line import/first
 import { refreshJourneyLedger, refreshMyLedger } from "./ledgerReportingCoordinator";

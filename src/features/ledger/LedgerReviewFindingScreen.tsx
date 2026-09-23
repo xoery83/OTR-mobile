@@ -31,7 +31,9 @@ export function LedgerReviewFindingScreen() {
 
   const copy = reviewFindingCopy(finding);
   const context = finding.observationContext;
-  const expenseTitle = String(context?.expenseTitleSnapshot ?? "Expense");
+  const expenseTitle = String(
+    context?.expenseTitleSnapshot ?? context?.targetTitleSnapshot ?? "Financial item",
+  );
   const money = context?.originalMoney as
     { minor: number; currency: string; scale: number } | undefined;
   const evidence = reviewEvidence(finding, memberNames);
@@ -56,6 +58,9 @@ export function LedgerReviewFindingScreen() {
             What we observed
           </Text>
           <Text style={styles.body}>{copy.why}</Text>
+          {finding.origin === "HUMAN" && finding.humanNote ? (
+            <Text style={styles.body}>{finding.humanNote}</Text>
+          ) : null}
           {evidence.map(([label, description]) => (
             <View key={label} style={styles.evidenceRow}>
               <Text style={styles.meta}>{label}</Text>
@@ -102,8 +107,8 @@ export function LedgerReviewFindingScreen() {
               Your decision
             </Text>
             <Text style={styles.body}>
-              Acknowledge or dismiss this finding for yourself. Neither action edits the
-              Expense.
+              Acknowledge or dismiss this finding for yourself. Neither action edits or
+              resolves the source item.
             </Text>
             <Pressable
               accessibilityRole="button"

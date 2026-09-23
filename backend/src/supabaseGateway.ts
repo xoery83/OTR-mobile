@@ -39,10 +39,12 @@ import {
   journeyCurrencyPreviewSchema,
 } from "../../src/data/api/ledgerCurrencyContracts";
 import type {
+  CreatePersonalSettlementCheckpointRequest,
   CreatePersonalSettlementPaymentRequest,
   CorrectSettlementPaymentRequest,
   DeletePersonalSettlementPaymentRequest,
   FinalizedSettlementDto,
+  PersonalSettlementCheckpointDto,
   PersonalSettlementPaymentDto,
   PersonalSettlementPaymentMutationResponse,
   RecordSettlementPaymentRequest,
@@ -80,6 +82,11 @@ import {
 import { previewValuation } from "../../src/domain/ledger/valuation";
 import { deriveTransferPaymentState } from "../../src/domain/ledger/paymentLifecycle";
 import { reviewExpensesV2 } from "../../src/domain/ledger/reviewV2";
+import {
+  buildPersonalSettlementStatement,
+  comparePersonalSettlementStatements,
+  type PersonalSettlementStatement,
+} from "../../src/domain/ledger/personalSettlementReview";
 import {
   assertValidExpenseAggregate,
   LedgerValidationError,
@@ -329,6 +336,16 @@ function reviewFindingRowToDto(row: Record<string, unknown>): LedgerReviewFindin
     decisionRevision: Number(row.decision_revision ?? 0),
     lastActionId: row.last_action_id ? String(row.last_action_id) : null,
     decisionActedAt: row.decision_acted_at ? String(row.decision_acted_at) : null,
+    origin: (row.origin ?? "SYSTEM") as LedgerReviewFindingDto["origin"],
+    authorUserId: row.author_user_id ? String(row.author_user_id) : null,
+    authorMemberId: row.author_member_id ? String(row.author_member_id) : null,
+    targetType: (row.target_type ?? null) as LedgerReviewFindingDto["targetType"],
+    targetMemberId: row.target_member_id ? String(row.target_member_id) : null,
+    personalPaymentId: row.personal_payment_id ? String(row.personal_payment_id) : null,
+    targetSourceRevision:
+      row.target_source_revision == null ? null : Number(row.target_source_revision),
+    humanNote: row.human_note == null ? null : String(row.human_note),
+    originOperationId: row.origin_operation_id ? String(row.origin_operation_id) : null,
   };
 }
 
@@ -413,6 +430,10 @@ async function evaluateLedgerReviewV2(service: SupabaseClient, tripId: string) {
     throw new Error(
       `Supabase Dev Review v2 reconciliation failed: ${result.error.message}`,
     );
+  const human = await service.rpc("ledger_resolve_human_review_findings_3a", {
+    p_journey_id: tripId,
+  });
+  if (human.error) throw new Error("Supabase Dev human Review reconciliation failed.");
 }
 
 async function tryEvaluateLedgerReviewV2(service: SupabaseClient, tripId: string) {
@@ -635,6 +656,63 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         if (inserted.error) throw new Error("Supabase Dev Review generation failed.");
       }
       return readLedgerReviewData(service, tripId, userId);
+    },
+
+    async raiseLedgerReviewFinding(userId, tripId, idempotencyKey, input) {
+      if (input.operationId !== idempotencyKey || input.id !== input.operationId)
+        throw new BackendError(
+          409,
+          "IDEMPOTENCY_CONFLICT",
+          "Review operation identity differs.",
+        );
+      const result = await service.rpc("ledger_raise_human_review_finding_3a", {
+        p_actor_user_id: userId,
+        p_journey_id: tripId,
+        p_finding_id: input.id,
+        p_target_type: input.targetType,
+        p_expense_id: input.expenseId ?? null,
+        p_target_member_id: input.targetMemberId ?? null,
+        p_personal_payment_id: input.personalPaymentId ?? null,
+        p_settlement_id: input.settlementId ?? null,
+        p_source_revision: input.sourceRevision,
+        p_note: input.note ?? null,
+        p_operation_id: input.operationId,
+      });
+      if (result.error) {
+        const message = result.error.message;
+        if (
+          message.includes("IDEMPOTENCY_CONFLICT") ||
+          message.includes("REVIEW_OPERATION_IDENTITY_CONFLICT")
+        )
+          throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The key conflicts.");
+        if (message.includes("REVIEW_RAISE_FORBIDDEN"))
+          throw new BackendError(
+            403,
+            "REVIEW_RAISE_FORBIDDEN",
+            "This Review concern is not authorized.",
+          );
+        if (message.includes("REVIEW_TARGET_NOT_FOUND"))
+          throw new BackendError(404, "REVIEW_TARGET_NOT_FOUND", "Target not found.");
+        if (message.includes("REVIEW_TARGET_STALE"))
+          throw new BackendError(
+            409,
+            "REVIEW_TARGET_STALE",
+            "The target changed; refresh and try again.",
+          );
+        throw new BackendError(
+          422,
+          "INVALID_HUMAN_REVIEW_FINDING",
+          "The Review concern was rejected.",
+        );
+      }
+      const value = result.data as {
+        finding: Record<string, unknown>;
+        idempotentReplay: boolean;
+      };
+      return {
+        finding: reviewFindingRowToDto(value.finding),
+        idempotentReplay: Boolean(value.idempotentReplay),
+      };
     },
 
     async actOnLedgerReviewFinding(userId, tripId, findingId, idempotencyKey, input) {
@@ -860,6 +938,20 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     async previewLedgerSettlement(_userId, tripId, throughTimestamp) {
       return (await calculateSettlementPreview(service, tripId, throughTimestamp))
         .response;
+    },
+
+    async readPersonalSettlementReview(userId, tripId) {
+      return (await calculatePersonalSettlementReview(service, userId, tripId)).response;
+    },
+
+    async createPersonalSettlementCheckpoint(userId, tripId, idempotencyKey, input) {
+      return createPersonalSettlementCheckpoint(
+        service,
+        userId,
+        tripId,
+        idempotencyKey,
+        input,
+      );
     },
 
     async finalizeLedgerSettlement(userId, tripId, idempotencyKey, input) {
@@ -3170,6 +3262,221 @@ async function calculateSettlementPreview(
   };
 }
 
+function personalSettlementCheckpointRowToDto(
+  row: Record<string, unknown>,
+): PersonalSettlementCheckpointDto {
+  return {
+    id: String(row.id),
+    journeyId: String(row.journey_id),
+    reviewerUserId: String(row.reviewer_user_id),
+    reviewerMemberId: String(row.reviewer_member_id),
+    statementFingerprint: String(row.statement_fingerprint),
+    reviewedStatement: row.reviewed_statement as PersonalSettlementStatement,
+    revision: Number(row.revision),
+    reviewedAt: String(row.reviewed_at),
+  };
+}
+
+async function calculatePersonalSettlementReview(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  checkpointRow?: Record<string, unknown> | null,
+) {
+  const throughTimestamp = new Date().toISOString();
+  const [calculated, actor, lineage, financialSource] = await Promise.all([
+    calculateSettlementPreview(service, tripId, throughTimestamp),
+    service
+      .from("journey_members")
+      .select("id, role")
+      .eq("trip_id", tripId)
+      .eq("user_id", userId)
+      .eq("status", "linked")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    service
+      .from("settlements")
+      .select("id, revision, input_digest")
+      .eq("journey_id", tripId)
+      .eq("status", "FINALIZED")
+      .order("finalized_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    service.rpc("ledger_personal_financial_source_3b", {
+      p_journey_id: tripId,
+      p_through_timestamp: throughTimestamp,
+    }),
+  ]);
+  if (actor.error || !actor.data)
+    throw new BackendError(
+      403,
+      "SETTLEMENT_REVIEW_FORBIDDEN",
+      "Current Journey membership is required.",
+    );
+  if (lineage.error || financialSource.error)
+    throw new Error("Supabase Dev personal Settlement review read failed.");
+  if (calculated.preview.state !== "PREVIEW_READY")
+    throw new BackendError(
+      409,
+      "SETTLEMENT_REVIEW_BLOCKED",
+      "Resolve current Settlement blockers before reviewing.",
+    );
+  const ids = calculated.preview.inputs.map((input) => input.expenseId);
+  const titles = ids.length
+    ? await service.from("expenses").select("id, title").in("id", ids)
+    : { data: [], error: null };
+  if (titles.error) throw new Error("Supabase Dev Expense title read failed.");
+  const statement = buildPersonalSettlementStatement(
+    calculated.preview,
+    String(actor.data.id),
+    new Map((titles.data ?? []).map((row) => [String(row.id), String(row.title)])),
+    lineage.data
+      ? {
+          settlementId: String(lineage.data.id),
+          settlementRevision: Number(lineage.data.revision),
+          settlementInputDigest: String(lineage.data.input_digest),
+        }
+      : null,
+  );
+  const statementFingerprint = hashPayload(statement);
+  let selectedCheckpoint = checkpointRow;
+  if (selectedCheckpoint === undefined) {
+    const latest = await service
+      .from("ledger_settlement_review_checkpoints")
+      .select("*")
+      .eq("journey_id", tripId)
+      .eq("reviewer_user_id", userId)
+      .order("reviewed_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latest.error) throw new Error("Supabase Dev Settlement checkpoint read failed.");
+    selectedCheckpoint = latest.data;
+  }
+  const checkpoint = selectedCheckpoint
+    ? personalSettlementCheckpointRowToDto(selectedCheckpoint)
+    : null;
+  let coverage: { memberId: string; displayName: string; reviewedAt: string | null }[] =
+    [];
+  if (actor.data.role === "owner") {
+    const [members, checkpoints] = await Promise.all([
+      service
+        .from("journey_members")
+        .select("id, display_name")
+        .eq("trip_id", tripId)
+        .eq("status", "linked")
+        .order("created_at", { ascending: true }),
+      service
+        .from("ledger_settlement_review_checkpoints")
+        .select("reviewer_member_id, reviewed_at")
+        .eq("journey_id", tripId)
+        .order("reviewed_at", { ascending: false }),
+    ]);
+    if (members.error || checkpoints.error)
+      throw new Error("Supabase Dev Settlement review coverage failed.");
+    const latest = new Map<string, string>();
+    for (const item of checkpoints.data ?? [])
+      if (!latest.has(String(item.reviewer_member_id)))
+        latest.set(String(item.reviewer_member_id), String(item.reviewed_at));
+    coverage = (members.data ?? []).map((member) => ({
+      memberId: String(member.id),
+      displayName: String(member.display_name),
+      reviewedAt: latest.get(String(member.id)) ?? null,
+    }));
+  }
+  return {
+    throughTimestamp,
+    financialSource: financialSource.data,
+    response: {
+      statement,
+      statementFingerprint,
+      checkpoint,
+      delta: checkpoint
+        ? comparePersonalSettlementStatements(
+            checkpoint.reviewedStatement as PersonalSettlementStatement,
+            statement,
+          )
+        : null,
+      coverage,
+    },
+  };
+}
+
+async function createPersonalSettlementCheckpoint(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  idempotencyKey: string,
+  input: CreatePersonalSettlementCheckpointRequest,
+) {
+  if (input.id !== input.operationId || input.operationId !== idempotencyKey)
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The key conflicts.");
+  const replay = await service
+    .from("ledger_settlement_review_checkpoints")
+    .select("*")
+    .eq("reviewer_user_id", userId)
+    .eq("operation_id", input.operationId)
+    .maybeSingle();
+  if (replay.error) throw new Error("Supabase Dev checkpoint replay read failed.");
+  if (replay.data) {
+    if (
+      replay.data.id !== input.id ||
+      replay.data.journey_id !== tripId ||
+      replay.data.statement_fingerprint !== input.statementFingerprint
+    )
+      throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The key conflicts.");
+    return {
+      ...(await calculatePersonalSettlementReview(service, userId, tripId, replay.data))
+        .response,
+      idempotentReplay: true,
+    };
+  }
+  const current = await calculatePersonalSettlementReview(service, userId, tripId);
+  if (current.response.statementFingerprint !== input.statementFingerprint)
+    throw new BackendError(
+      409,
+      "STALE_REVIEW_CHECKPOINT",
+      "The Settlement changed; review the updated statement.",
+    );
+  const result = await service.rpc("ledger_create_settlement_review_checkpoint_3b", {
+    p_actor_user_id: userId,
+    p_journey_id: tripId,
+    p_checkpoint_id: input.id,
+    p_operation_id: input.operationId,
+    p_statement_fingerprint: input.statementFingerprint,
+    p_reviewed_statement: current.response.statement,
+    p_through_timestamp: current.throughTimestamp,
+    p_expected_financial_source: current.financialSource,
+  });
+  if (result.error) {
+    if (result.error.message.includes("CHECKPOINT_STALE"))
+      throw new BackendError(
+        409,
+        "STALE_REVIEW_CHECKPOINT",
+        "The Settlement changed; review the updated statement.",
+      );
+    if (result.error.message.includes("IDEMPOTENCY_CONFLICT"))
+      throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The key conflicts.");
+    if (result.error.message.includes("CHECKPOINT_FORBIDDEN"))
+      throw new BackendError(
+        403,
+        "SETTLEMENT_REVIEW_FORBIDDEN",
+        "Current Journey membership is required.",
+      );
+    throw new BackendError(
+      422,
+      "INVALID_REVIEW_CHECKPOINT",
+      "The checkpoint was rejected.",
+    );
+  }
+  const row = (result.data as { checkpoint: Record<string, unknown> }).checkpoint;
+  return {
+    ...(await calculatePersonalSettlementReview(service, userId, tripId, row)).response,
+    idempotentReplay: false,
+  };
+}
+
 export function normalizeSettlementSource(
   source: SettlementPreviewInput,
 ): SettlementPreviewInput {
@@ -3547,6 +3854,14 @@ async function mutatePersonalSettlementPayment(
     record: Record<string, unknown>;
     idempotentReplay: boolean;
   };
+  // Payment is committed already; Review is a repairable projection.
+  try {
+    await service.rpc("ledger_resolve_human_review_findings_3a", {
+      p_journey_id: tripId,
+    });
+  } catch {
+    /* best-effort projection */
+  }
   return {
     record: personalPaymentRowToDto(response.record),
     idempotentReplay: Boolean(response.idempotentReplay),

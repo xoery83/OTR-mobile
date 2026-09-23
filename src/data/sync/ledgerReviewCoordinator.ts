@@ -16,6 +16,15 @@ export async function runLedgerReviewSync(journeyId?: string) {
     {
       async push(operation: SyncOperation) {
         const input = JSON.parse(operation.payloadJson);
+        if (operation.operationType === "RAISE_LEDGER_REVIEW_FINDING") {
+          const response = await transport.raise(
+            operation.tripId!,
+            operation.idempotencyKey,
+            input,
+          );
+          await repository.markRaiseSynced(response.finding);
+          return;
+        }
         const response = await transport.act(
           operation.tripId!,
           operation.entityId,
@@ -32,6 +41,9 @@ export async function runLedgerReviewSync(journeyId?: string) {
     undefined,
     (operation) =>
       operation.entityType === "ledger_review" &&
+      ["LEDGER_REVIEW_ACTION", "RAISE_LEDGER_REVIEW_FINDING"].includes(
+        operation.operationType,
+      ) &&
       (!journeyId || operation.tripId === journeyId),
   ).run("AUTHENTICATED_ONLINE");
 }

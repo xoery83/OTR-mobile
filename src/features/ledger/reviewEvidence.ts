@@ -18,6 +18,12 @@ export function reviewEvidence(
 ) {
   const context = finding.observationContext;
   if (!context) return [];
+  if (finding.origin === "HUMAN")
+    return [
+      ["Raised by", "A Journey member"],
+      ["Target", String(context.targetType ?? finding.targetType ?? "Financial item")],
+      ["Source revision", String(context.sourceRevision ?? finding.targetSourceRevision)],
+    ];
   const original = context.originalMoney as Money | undefined;
   switch (finding.ruleId) {
     case "AMOUNT_OUTLIER":
@@ -103,6 +109,7 @@ export function reviewEvidence(
 export function reviewCardEvidence(finding: LedgerReviewFinding) {
   const context = finding.observationContext;
   if (!context) return "Review this Expense";
+  if (finding.origin === "HUMAN") return finding.humanNote || "A member raised this";
   switch (finding.ruleId) {
     case "AMOUNT_OUTLIER":
       return `${value(context.originalMoney)} · ${Number(context.ratio).toFixed(1)}× Journey median`;

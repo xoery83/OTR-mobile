@@ -14,6 +14,9 @@ vi.mock("./ledgerSettlementPaymentCoordinator", () => ({
 vi.mock("./ledgerPersonalPaymentCoordinator", () => ({
   runLedgerPersonalPaymentSync: vi.fn(),
 }));
+vi.mock("./personalSettlementReviewCoordinator", () => ({
+  runPersonalSettlementReviewSync: vi.fn(),
+}));
 
 /* eslint-disable import/first */
 import { runLedgerExpenseSync } from "./ledgerExpenseDemoCoordinator";

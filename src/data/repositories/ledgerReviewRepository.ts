@@ -3,6 +3,7 @@ import type * as SQLite from "expo-sqlite";
 import type {
   LedgerReviewActionDto,
   LedgerReviewFindingDto,
+  LedgerReviewRaiseRequest,
 } from "@/data/api/ledgerReviewContracts";
 import { createLocalId } from "@/domain/localId";
 
@@ -66,6 +67,12 @@ export function createLedgerReviewRepository(
           f.resolved_at AS resolvedAt, f.resolution_reason AS resolutionReason,
           f.superseded_at AS supersededAt,
           f.superseded_by_finding_id AS supersededByFindingId,
+          f.origin, f.author_user_id AS authorUserId,
+          f.author_member_id AS authorMemberId, f.target_type AS targetType,
+          f.target_member_id AS targetMemberId,
+          f.personal_payment_id AS personalPaymentId,
+          f.target_source_revision AS targetSourceRevision,
+          f.human_note AS humanNote, f.origin_operation_id AS originOperationId,
           f.revision, f.created_at AS createdAt, f.updated_at AS updatedAt
          FROM ledger_review_findings f
          JOIN ledger_review_visibility v ON v.finding_id = f.id AND v.user_id = ?
@@ -215,6 +222,124 @@ export function createLedgerReviewRepository(
       return resultId;
     },
 
+    async raise(
+      journeyId: string,
+      target: Omit<LedgerReviewRaiseRequest, "id" | "operationId"> & {
+        targetTitle: string;
+      },
+    ) {
+      const userId = await getActiveUserId();
+      const actor = await database.getFirstAsync<{ memberId: string }>(
+        `SELECT member_id AS memberId FROM ledger_actor_context
+         WHERE user_id = ? AND journey_id = ?`,
+        userId,
+        journeyId,
+      );
+      if (!actor?.memberId)
+        throw new Error("Review requires an authenticated Journey member.");
+      const id = createUuid();
+      const now = new Date().toISOString();
+      const note = target.note?.trim() || null;
+      const request: LedgerReviewRaiseRequest = {
+        id,
+        targetType: target.targetType,
+        expenseId: target.expenseId ?? null,
+        targetMemberId: target.targetMemberId ?? null,
+        personalPaymentId: target.personalPaymentId ?? null,
+        settlementId: target.settlementId ?? null,
+        sourceRevision: target.sourceRevision,
+        note,
+        operationId: id,
+      };
+      const finding: LedgerReviewFindingDto = {
+        id,
+        journeyId,
+        expenseId: request.expenseId ?? null,
+        settlementId: request.settlementId ?? null,
+        layer: "HEURISTIC",
+        findingType: "HUMAN_CONCERN",
+        severity: "WARNING",
+        confidence: null,
+        evidenceCodes: ["HUMAN_REPORTED"],
+        status: "OPEN",
+        rulesetVersion: "ledger-review-human-v1",
+        entityRevision: request.sourceRevision,
+        revision: 1,
+        createdAt: now,
+        updatedAt: now,
+        ruleId: "HUMAN_CONCERN",
+        ruleVersion: 1,
+        ruleCategory: "Human",
+        ruleInputFingerprint: `${request.targetType}:${request.sourceRevision}`,
+        comparisonFingerprint: null,
+        observationContext: {
+          targetType: request.targetType,
+          targetTitleSnapshot: target.targetTitle,
+          targetMemberId: request.targetMemberId ?? null,
+          personalPaymentId: request.personalPaymentId ?? null,
+          sourceRevision: request.sourceRevision,
+          note,
+        },
+        lifecycle: "ACTIVE",
+        observationGeneration: 1,
+        personalDecision: "NEEDS_REVIEW",
+        decisionRevision: 0,
+        origin: "HUMAN",
+        authorUserId: userId,
+        authorMemberId: actor.memberId,
+        targetType: request.targetType,
+        targetMemberId: request.targetMemberId ?? null,
+        personalPaymentId: request.personalPaymentId ?? null,
+        targetSourceRevision: request.sourceRevision,
+        humanNote: note,
+        originOperationId: id,
+      };
+      await database.withTransactionAsync(async () => {
+        await applyReviewFinding(database, finding);
+        await database.runAsync(
+          `INSERT OR REPLACE INTO ledger_review_visibility
+            (user_id, finding_id, journey_id) VALUES (?, ?, ?)`,
+          userId,
+          id,
+          journeyId,
+        );
+        await database.runAsync(
+          `INSERT INTO sync_operations (
+            id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
+            base_version, payload_json, owner_user_id, status, attempt_count,
+            created_at, updated_at
+          ) VALUES (?, ?, 'ledger_review', ?, 'RAISE_LEDGER_REVIEW_FINDING', ?, ?, ?, ?,
+            'PENDING', 0, ?, ?)`,
+          id,
+          journeyId,
+          id,
+          id,
+          request.sourceRevision,
+          JSON.stringify(request),
+          userId,
+          now,
+          now,
+        );
+      });
+      changed(journeyId);
+      return id;
+    },
+
+    async markRaiseSynced(finding: LedgerReviewFindingDto) {
+      const userId = await getActiveUserId();
+      await database.withTransactionAsync(async () => {
+        await applyReviewFinding(database, finding);
+        await database.runAsync(
+          `INSERT OR REPLACE INTO ledger_review_visibility
+            (user_id, finding_id, journey_id) VALUES (?, ?, ?)`,
+          userId,
+          finding.id,
+          finding.journeyId,
+        );
+      });
+      changed(finding.journeyId);
+    },
+
     async markActionSynced(
       operationId: string,
       finding: LedgerReviewFindingDto,
@@ -286,6 +411,14 @@ export function createLedgerReviewRepository(
   };
 }
 
+function createUuid() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (token) => {
+    const value = Math.floor(Math.random() * 16);
+    return (token === "x" ? value : (value & 0x3) | 0x8).toString(16);
+  });
+}
+
 export async function applyReviewProjection(
   database: Database,
   userId: string,
@@ -343,6 +476,15 @@ export async function applyReviewProjection(
   for (const action of actions)
     if (action.actorUserId === userId) await applyReviewAction(database, action);
   await database.runAsync(
+    `INSERT OR IGNORE INTO ledger_review_visibility (user_id, finding_id, journey_id)
+     SELECT owner_user_id, entity_id, trip_id FROM sync_operations
+     WHERE owner_user_id = ? AND trip_id = ?
+       AND operation_type = 'RAISE_LEDGER_REVIEW_FINDING'
+       AND status IN ('PENDING','PROCESSING','RETRYABLE')`,
+    userId,
+    journeyId,
+  );
+  await database.runAsync(
     `DELETE FROM ledger_review_decisions WHERE user_id = ? AND finding_id NOT IN
       (SELECT finding_id FROM ledger_review_visibility WHERE user_id = ?)`,
     userId,
@@ -365,8 +507,11 @@ export async function applyReviewFinding(
       revision, created_at, updated_at, rule_id, rule_version, rule_category,
       rule_input_fingerprint, comparison_fingerprint, observation_context_json,
       lifecycle, observation_generation, resolved_at, resolution_reason,
-      superseded_at, superseded_by_finding_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      superseded_at, superseded_by_finding_id, origin, author_user_id,
+      author_member_id, target_type, target_member_id, personal_payment_id,
+      target_source_revision, human_note, origin_operation_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     finding.id,
     finding.journeyId,
     finding.expenseId,
@@ -394,6 +539,15 @@ export async function applyReviewFinding(
     finding.resolutionReason ?? null,
     finding.supersededAt ?? null,
     finding.supersededByFindingId ?? null,
+    finding.origin ?? "SYSTEM",
+    finding.authorUserId ?? null,
+    finding.authorMemberId ?? null,
+    finding.targetType ?? null,
+    finding.targetMemberId ?? null,
+    finding.personalPaymentId ?? null,
+    finding.targetSourceRevision ?? null,
+    finding.humanNote ?? null,
+    finding.originOperationId ?? null,
   );
 }
 

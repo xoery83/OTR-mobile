@@ -2,8 +2,10 @@ import { ApiClientError, createApiClient } from "@/data/api/client";
 import {
   ledgerReviewActionSchema,
   ledgerReviewFindingSchema,
+  ledgerReviewRaiseResponseSchema,
   ledgerReviewResponseSchema,
   type LedgerReviewActionRequest,
+  type LedgerReviewRaiseRequest,
 } from "@/data/api/ledgerReviewContracts";
 import { readLocalSession } from "@/data/auth/authRepository";
 import { z } from "zod";
@@ -29,6 +31,23 @@ const actionResponse = z.object({
 
 export function createLedgerReviewTransport() {
   return {
+    async raise(
+      journeyId: string,
+      idempotencyKey: string,
+      input: LedgerReviewRaiseRequest,
+    ) {
+      const response = await (
+        await client()
+      ).post(
+        `/v2/trips/${journeyId}/review-findings`,
+        input,
+        ledgerReviewRaiseResponseSchema,
+        { "Idempotency-Key": idempotencyKey, "X-Review-Protocol": "2" },
+      );
+      if (response.reviewProtocol !== 2)
+        throw new ApiClientError("Review 2.0 backend is required.", "validation");
+      return response;
+    },
     async refresh(journeyId: string) {
       const response = await (
         await client()

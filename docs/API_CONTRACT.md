@@ -19,6 +19,27 @@ foreground batch of unpublished same-day attempts without changing the periodic
 one-hour retry or canonical acceptance rule. This endpoint creates no Settlement and accepts no display estimate;
 it is unavailable for non-organizers and Production is not deployed.
 
+Settlement 2.0 Phase 3A extends the existing Review protocol with
+`POST /v2/trips/:id/review-findings`. It requires `X-Review-Protocol: 2` and a
+UUID `Idempotency-Key` equal to both `id` and `operationId`. The request names
+one typed target (`EXPENSE`, exact `EXPENSE_SHARE`, `PERSONAL_PAYMENT`, or
+`SETTLEMENT`), its current positive `sourceRevision`, and an optional note. The
+server derives the reporter, validates current Journey membership and target
+involvement, and returns HTTP `201` for the first durable raise or `200` for an
+identical replay. Human Findings use the existing Review read/action routes;
+personal ACK/DISMISS does not edit or resolve the source. A later source revision
+resolves the human Finding explicitly while retaining it in Review history.
+
+Settlement 2.0 Phase 3B adds `GET /v2/trips/:id/settlement-review` and
+`POST /v2/trips/:id/settlement-review`. GET returns the current server-authoritative
+personal statement, its deterministic fingerprint, the user's latest append-only
+checkpoint, a nullable per-Expense canonical delta, and organizer-only informational
+review coverage (`[]` for ordinary members). POST requires a UUID
+`Idempotency-Key` equal to `id` and `operationId` plus the exact fingerprint the user
+reviewed. A first checkpoint returns `201`, replay returns `200`, and changed financial
+source returns `409 STALE_REVIEW_CHECKPOINT`; the server never substitutes a newer
+unseen statement. Personal Payment is excluded from statement and delta inputs.
+
 Mobile must communicate through an OTR Backend API. Do not assume endpoints exist until backend is audited or implemented.
 
 Status labels:

@@ -12,6 +12,7 @@ import {
 import { router } from "expo-router";
 
 import { type Stage7Preview, useStage7Settlement } from "@/hooks/useStage7Settlement";
+import { usePersonalSettlementReview } from "@/hooks/usePersonalSettlementReview";
 
 import { formatLedgerMoney } from "./format";
 import { unpublishedEstimateMessage } from "./estimatedSettlement";
@@ -38,6 +39,7 @@ export function SettlementReadinessScreen({
 }) {
   const largeText = useWindowDimensions().fontScale > 2;
   const settlement = useStage7Settlement(journeyId);
+  const personalReview = usePersonalSettlementReview(settlement.journeyId ?? journeyId);
   const {
     actorMemberId,
     busy,
@@ -206,6 +208,44 @@ export function SettlementReadinessScreen({
           </Text>
         ) : null}
       </View>
+
+      {personalReview.state?.delta ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({
+              pathname: "/expenses/personal-settlement-review",
+              params: { journeyId: settlement.journeyId },
+            } as never)
+          }
+          style={styles.reviewNotice}
+        >
+          <Text style={styles.warningTitle}>Updated since you reviewed</Text>
+          <Text style={styles.body}>
+            Your balance changed by{" "}
+            {formatLedgerMoney(
+              personalReview.state.delta.netDeltaMinor,
+              personalReview.state.statement.currency,
+              personalReview.state.statement.scale,
+            )}
+          </Text>
+          <Text style={styles.link}>Review changes ›</Text>
+        </Pressable>
+      ) : null}
+      {personalReview.state ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({
+              pathname: "/expenses/personal-settlement-review",
+              params: { journeyId: settlement.journeyId },
+            } as never)
+          }
+          style={styles.secondary}
+        >
+          <Text style={styles.secondaryText}>Review my settlement</Text>
+        </Pressable>
+      ) : null}
 
       {updating ? (
         <Text accessibilityLiveRegion="polite" style={styles.meta}>
@@ -442,6 +482,8 @@ const styles = StyleSheet.create({
   },
   warningTitle: { color: "#9A3412", fontSize: 16, fontWeight: "700" },
   warning: { color: "#9A3412", fontSize: 14, fontWeight: "700" },
+  reviewNotice: { backgroundColor: "#FFF7ED", borderRadius: 12, gap: 6, padding: 14 },
+  link: { color: "#0F766E", fontSize: 14, fontWeight: "800" },
   grow: { flex: 1 },
   transferRow: {
     alignItems: "center",

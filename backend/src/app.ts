@@ -45,6 +45,7 @@ import {
   type JourneyCurrencyPreview,
 } from "../../src/data/api/ledgerCurrencyContracts";
 import {
+  createPersonalSettlementCheckpointRequestSchema,
   createPersonalSettlementPaymentRequestSchema,
   correctSettlementPaymentRequestSchema,
   deletePersonalSettlementPaymentRequestSchema,
@@ -54,11 +55,13 @@ import {
   settlementFinalizeRequestSchema,
   settlementPreviewRequestSchema,
   updatePersonalSettlementPaymentRequestSchema,
+  type CreatePersonalSettlementCheckpointRequest,
   type CreatePersonalSettlementPaymentRequest,
   type CorrectSettlementPaymentRequest,
   type DeletePersonalSettlementPaymentRequest,
   type PersonalSettlementPaymentDto,
   type PersonalSettlementPaymentMutationResponse,
+  type PersonalSettlementReviewResponse,
   type RecordSettlementPaymentRequest,
   type SettlementAdjustmentFinalizeRequest,
   type SettlementAdjustmentMutationResponse,
@@ -85,9 +88,11 @@ import {
 } from "../../src/data/api/ledgerReceiptContracts";
 import {
   ledgerReviewActionRequestSchema,
+  ledgerReviewRaiseRequestSchema,
   type LedgerReviewActionDto,
   type LedgerReviewActionRequest,
   type LedgerReviewFindingDto,
+  type LedgerReviewRaiseRequest,
 } from "../../src/data/api/ledgerReviewContracts";
 
 import { deriveServerId, type SyncEntityType } from "./serverId";
@@ -189,6 +194,25 @@ export type DevBackendGateway = {
     action: LedgerReviewActionDto;
     idempotentReplay: boolean;
   }>;
+  raiseLedgerReviewFinding(
+    userId: string,
+    tripId: string,
+    idempotencyKey: string,
+    input: LedgerReviewRaiseRequest,
+  ): Promise<{
+    finding: LedgerReviewFindingDto;
+    idempotentReplay: boolean;
+  }>;
+  readPersonalSettlementReview(
+    userId: string,
+    tripId: string,
+  ): Promise<PersonalSettlementReviewResponse>;
+  createPersonalSettlementCheckpoint(
+    userId: string,
+    tripId: string,
+    idempotencyKey: string,
+    input: CreatePersonalSettlementCheckpointRequest,
+  ): Promise<PersonalSettlementReviewResponse & { idempotentReplay: boolean }>;
   previewLedgerSettlement(
     userId: string,
     tripId: string,
@@ -629,9 +653,8 @@ async function readReceiptContent(request: Request, gateway: DevBackendGateway) 
 
 async function mutateLedgerReview(request: Request, gateway: DevBackendGateway) {
   requireReviewProtocol(request);
-  const refresh = new URL(request.url).pathname.match(
-    /^\/v2\/trips\/([^/]+)\/ledger\/review\/refresh$/,
-  );
+  const pathname = new URL(request.url).pathname;
+  const refresh = pathname.match(/^\/v2\/trips\/([^/]+)\/ledger\/review\/refresh$/);
   if (refresh) {
     const user = await authorizeRead(request, gateway, refresh[1]);
     return json(200, {
@@ -639,7 +662,24 @@ async function mutateLedgerReview(request: Request, gateway: DevBackendGateway) 
       reviewProtocol: 2,
     });
   }
-  const match = new URL(request.url).pathname.match(
+  const raise = pathname.match(/^\/v2\/trips\/([^/]+)\/review-findings$/);
+  if (raise) {
+    const user = await authorizeRead(request, gateway, raise[1]);
+    const parsed = ledgerReviewRaiseRequestSchema.safeParse(await parseBody(request));
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    const response = await gateway.raiseLedgerReviewFinding(
+      user.id,
+      raise[1],
+      getIdempotencyKey(request),
+      parsed.data,
+    );
+    return json(response.idempotentReplay ? 200 : 201, {
+      ...response,
+      reviewProtocol: 2,
+    });
+  }
+  const match = pathname.match(
     /^\/v2\/trips\/([^/]+)\/review-findings\/([^/]+)\/actions$/,
   );
   if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
@@ -663,6 +703,29 @@ async function mutateLedgerReview(request: Request, gateway: DevBackendGateway) 
     )),
     reviewProtocol: 2,
   });
+}
+
+async function personalSettlementReview(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/settlement-review$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const tripId = match[1];
+  const user = await authorizeRead(request, gateway, tripId);
+  if (request.method === "GET")
+    return json(200, await gateway.readPersonalSettlementReview(user.id, tripId));
+  const parsed = createPersonalSettlementCheckpointRequestSchema.safeParse(
+    await parseBody(request),
+  );
+  if (!parsed.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  const result = await gateway.createPersonalSettlementCheckpoint(
+    user.id,
+    tripId,
+    getIdempotencyKey(request),
+    parsed.data,
+  );
+  return json(result.idempotentReplay ? 200 : 201, result);
 }
 
 function assertOriginalCreate(stored: StoredCreate, tripId: string, userId: string) {
@@ -1605,6 +1668,12 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/receipts/:receiptId/content";
         response = await readReceiptContent(request, gateway);
+      } else if (
+        ["GET", "POST"].includes(request.method) &&
+        /^\/v2\/trips\/[^/]+\/settlement-review$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/settlement-review";
+        response = await personalSettlementReview(request, gateway);
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
         route = redactLogRoute(url.pathname);
         response = await readEntity(request, gateway);
@@ -1640,10 +1709,11 @@ export function createDevBackendHandler({
         response = await mutateJourneyCurrency(request, gateway);
       } else if (
         request.method === "POST" &&
-        (/\/v2\/trips\/[^/]+\/review-findings\/[^/]+\/actions$/.test(url.pathname) ||
+        (/^\/v2\/trips\/[^/]+\/review-findings$/.test(url.pathname) ||
+          /\/v2\/trips\/[^/]+\/review-findings\/[^/]+\/actions$/.test(url.pathname) ||
           /\/v2\/trips\/[^/]+\/ledger\/review\/refresh$/.test(url.pathname))
       ) {
-        route = "/v2/trips/:tripId/review-findings/:findingId/actions";
+        route = "/v2/trips/:tripId/review-findings";
         response = await mutateLedgerReview(request, gateway);
       } else if (
         ["POST", "PUT"].includes(request.method) &&

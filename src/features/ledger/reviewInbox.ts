@@ -12,7 +12,10 @@ export type ReviewCategory = (typeof reviewCategories)[number];
 
 export function reviewInbox(findings: LedgerReviewFinding[], category: ReviewCategory) {
   const active = findings.filter(
-    (item) => item.layer === "HEURISTIC" && item.ruleId && item.lifecycle === "ACTIVE",
+    (item) =>
+      item.layer === "HEURISTIC" &&
+      (item.origin === "HUMAN" || item.ruleId) &&
+      item.lifecycle === "ACTIVE",
   );
   const pending = active.filter((item) => item.personalDecision === "NEEDS_REVIEW");
   const reviewed = active.filter(
@@ -22,7 +25,7 @@ export function reviewInbox(findings: LedgerReviewFinding[], category: ReviewCat
   const history = findings.filter(
     (item) =>
       item.layer === "HEURISTIC" &&
-      item.ruleId &&
+      (item.origin === "HUMAN" || item.ruleId) &&
       item.lifecycle &&
       item.lifecycle !== "ACTIVE",
   );

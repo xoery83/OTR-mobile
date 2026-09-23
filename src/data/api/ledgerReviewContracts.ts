@@ -37,6 +37,18 @@ export const ledgerReviewFindingSchema = z.object({
   decisionRevision: z.number().int().nonnegative().optional(),
   lastActionId: uuid.nullable().optional(),
   decisionActedAt: z.string().nullable().optional(),
+  origin: z.enum(["SYSTEM", "HUMAN"]).optional(),
+  authorUserId: uuid.nullable().optional(),
+  authorMemberId: uuid.nullable().optional(),
+  targetType: z
+    .enum(["EXPENSE", "EXPENSE_SHARE", "PERSONAL_PAYMENT", "SETTLEMENT"])
+    .nullable()
+    .optional(),
+  targetMemberId: uuid.nullable().optional(),
+  personalPaymentId: uuid.nullable().optional(),
+  targetSourceRevision: z.number().int().positive().nullable().optional(),
+  humanNote: z.string().max(2000).nullable().optional(),
+  originOperationId: uuid.nullable().optional(),
 });
 
 export const ledgerReviewActionSchema = z.object({
@@ -68,6 +80,25 @@ export const ledgerReviewActionRequestSchema = z.object({
   operationId: z.string().min(1).max(200),
 });
 
+export const ledgerReviewRaiseRequestSchema = z.object({
+  id: uuid,
+  targetType: z.enum(["EXPENSE", "EXPENSE_SHARE", "PERSONAL_PAYMENT", "SETTLEMENT"]),
+  expenseId: uuid.nullable().optional(),
+  targetMemberId: uuid.nullable().optional(),
+  personalPaymentId: uuid.nullable().optional(),
+  settlementId: uuid.nullable().optional(),
+  sourceRevision: z.number().int().positive(),
+  note: z.string().trim().max(2000).nullable().optional(),
+  operationId: uuid,
+});
+
+export const ledgerReviewRaiseResponseSchema = z.object({
+  reviewProtocol: z.literal(2).optional(),
+  finding: ledgerReviewFindingSchema,
+  idempotentReplay: z.boolean(),
+});
+
 export type LedgerReviewFindingDto = z.infer<typeof ledgerReviewFindingSchema>;
 export type LedgerReviewActionDto = z.infer<typeof ledgerReviewActionSchema>;
 export type LedgerReviewActionRequest = z.infer<typeof ledgerReviewActionRequestSchema>;
+export type LedgerReviewRaiseRequest = z.infer<typeof ledgerReviewRaiseRequestSchema>;

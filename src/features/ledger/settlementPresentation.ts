@@ -61,6 +61,10 @@ export function primaryTransferAction(
 }
 
 const findingCopy: Record<string, { title: string; why: string }> = {
+  HUMAN_CONCERN: {
+    title: "Something looks wrong",
+    why: "A Journey member asked for this financial item to be checked.",
+  },
   POSSIBLE_DUPLICATE: {
     title: "Possible duplicate Expense",
     why: "This looks similar to another Expense and may count the same spending twice.",
@@ -106,7 +110,7 @@ export function reviewStatusLabel(status: LedgerReviewFinding["status"]) {
 export function canActOnFinding(finding: LedgerReviewFinding) {
   return (
     finding.layer === "HEURISTIC" &&
-    finding.ruleId != null &&
+    (finding.origin === "HUMAN" || finding.ruleId != null) &&
     finding.lifecycle === "ACTIVE"
   );
 }

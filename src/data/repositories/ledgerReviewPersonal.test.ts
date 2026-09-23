@@ -74,6 +74,41 @@ const finding: LedgerReviewFindingDto = {
 };
 
 describe("Review personal SQLite projection", () => {
+  it("creates an offline human Finding without leaking it across accounts", async () => {
+    const { db, api } = database();
+    const a = createLedgerReviewRepository(api as never, async () => userA);
+    const b = createLedgerReviewRepository(api as never, async () => userB);
+    const id = await a.raise(journeyId, {
+      targetType: "EXPENSE",
+      expenseId: "30000000-0000-4000-8000-000000000001",
+      targetMemberId: null,
+      personalPaymentId: null,
+      settlementId: null,
+      sourceRevision: 1,
+      note: "Wrong amount",
+      targetTitle: "Dinner",
+    });
+    expect(id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+    expect((await a.list(journeyId))[0]).toMatchObject({
+      id,
+      origin: "HUMAN",
+      humanNote: "Wrong amount",
+      targetType: "EXPENSE",
+    });
+    expect(await b.list(journeyId)).toEqual([]);
+    expect(
+      db
+        .prepare(
+          "SELECT owner_user_id AS owner, operation_type AS operation FROM sync_operations WHERE id=?",
+        )
+        .get(id),
+    ).toEqual({ owner: userA, operation: "RAISE_LEDGER_REVIEW_FINDING" });
+    await a.apply(journeyId, [], []);
+    expect((await a.list(journeyId))[0].id).toBe(id);
+  });
+
   it("isolates ACK, offline count and account switching", async () => {
     const { api } = database();
     const a = createLedgerReviewRepository(api as never, async () => userA);

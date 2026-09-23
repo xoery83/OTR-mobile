@@ -126,7 +126,11 @@ export function LedgerReviewScreen() {
         renderItem={({ item: finding }) => {
           const copy = reviewFindingCopy(finding);
           const context = finding.observationContext;
-          const title = String(context?.expenseTitleSnapshot ?? "Expense");
+          const title = String(
+            context?.expenseTitleSnapshot ??
+              context?.targetTitleSnapshot ??
+              "Financial item",
+          );
           const date = String(context?.expenseDateSnapshot ?? "");
           return (
             <Pressable
@@ -141,7 +145,11 @@ export function LedgerReviewScreen() {
               style={styles.card}
             >
               <View style={styles.grow}>
-                <Text style={styles.category}>{finding.ruleCategory}</Text>
+                <Text style={styles.category}>
+                  {finding.origin === "HUMAN"
+                    ? "Raised by a person"
+                    : finding.ruleCategory}
+                </Text>
                 <Text style={styles.cardTitle}>{copy.title}</Text>
                 <Text style={styles.expenseTitle}>
                   {title}

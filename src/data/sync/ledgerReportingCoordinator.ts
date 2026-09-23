@@ -3,6 +3,7 @@ import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedge
 import { createLedgerReadTransport } from "@/data/sync/ledgerReadTransport";
 import { ApiClientError } from "@/data/api/client";
 import { refreshLedgerPersonalPayments } from "./ledgerPersonalPaymentCoordinator";
+import { refreshPersonalSettlementReview } from "./personalSettlementReviewCoordinator";
 
 const activePulls = new Map<string, Promise<boolean>>();
 
@@ -23,6 +24,11 @@ async function pullJourneyLedger(journeyId: string) {
     personalChanged = await refreshLedgerPersonalPayments(journeyId);
   } catch (error) {
     personalError = error;
+  }
+  try {
+    await refreshPersonalSettlementReview(journeyId);
+  } catch {
+    // A blocked personal statement must not block ordinary Ledger refresh.
   }
   const repository = await getDefaultLedgerReadRepository();
   const cursor = (await repository.getCursor(journeyId))?.cursor ?? null;

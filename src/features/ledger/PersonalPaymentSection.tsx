@@ -15,6 +15,7 @@ import {
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
+import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
 import { importReceiptAsset } from "@/data/operations/importReceiptAsset";
@@ -60,6 +61,7 @@ export function PersonalPaymentSection({
     Record<string, ReceiptAsset[]>
   >({});
   const [editing, setEditing] = useState<LocalPersonalPayment | "new" | null>(null);
+  const [raisingReviewId, setRaisingReviewId] = useState<string | null>(null);
   const load = useCallback(async () => {
     const repository = await getDefaultLedgerPersonalPaymentRepository();
     const next = (await repository.listForJourney(journeyId)).filter(
@@ -181,6 +183,40 @@ export function PersonalPaymentSection({
       },
     ]);
 
+  const raiseConcern = async (record: LocalPersonalPayment) => {
+    if (raisingReviewId) return;
+    if (!record.revision) {
+      setMessage("Sync this payment record before adding it to Review.");
+      return;
+    }
+    setRaisingReviewId(record.id);
+    try {
+      await (
+        await getDefaultLedgerReviewRepository()
+      ).raise(journeyId, {
+        targetType: "PERSONAL_PAYMENT",
+        expenseId: null,
+        targetMemberId: null,
+        personalPaymentId: record.id,
+        settlementId: null,
+        sourceRevision: record.revision,
+        note: null,
+        targetTitle:
+          record.direction === "PAID"
+            ? "Personal payment record"
+            : "Amount received record",
+      });
+      setMessage("Added to Review");
+      kickLedgerOperationalSync();
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Could not add this to Review.",
+      );
+    } finally {
+      setRaisingReviewId(null);
+    }
+  };
+
   return (
     <View style={styles.section}>
       <Text accessibilityRole="header" style={styles.heading}>
@@ -207,6 +243,7 @@ export function PersonalPaymentSection({
         onDelete={remove}
         onEdit={setEditing}
         onAttach={attach}
+        onConcern={raiseConcern}
         attachmentCounts={attachmentCounts}
         attachmentsByPayment={attachmentsByPayment}
         onDetach={detach}
@@ -217,6 +254,7 @@ export function PersonalPaymentSection({
         name={actorMemberId ? "Other person's records" : "Member records"}
         attachmentCounts={attachmentCounts}
         attachmentsByPayment={attachmentsByPayment}
+        onConcern={raiseConcern}
         records={other}
       />
       {action && editing ? (
@@ -245,6 +283,7 @@ function RecordGroup({
   onDelete,
   onEdit,
   onAttach,
+  onConcern,
   attachmentCounts,
   attachmentsByPayment,
   onDetach,
@@ -256,6 +295,7 @@ function RecordGroup({
   onDelete?: (record: LocalPersonalPayment) => void;
   onEdit?: (record: LocalPersonalPayment) => void;
   onAttach?: (record: LocalPersonalPayment) => void;
+  onConcern: (record: LocalPersonalPayment) => void;
   attachmentCounts: Record<string, { count: number; pending: boolean }>;
   attachmentsByPayment: Record<string, ReceiptAsset[]>;
   onDetach?: (record: LocalPersonalPayment, attachment: ReceiptAsset) => void;
@@ -314,6 +354,9 @@ function RecordGroup({
                   ))
               : null}
             <Text style={styles.sync}>{syncLabel(record.syncStatus)}</Text>
+            <Pressable accessibilityRole="button" onPress={() => onConcern(record)}>
+              <Text style={styles.link}>Something looks wrong</Text>
+            </Pressable>
             {editable ? (
               <View style={styles.actions}>
                 <Pressable accessibilityRole="button" onPress={() => onEdit?.(record)}>

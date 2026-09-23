@@ -95,6 +95,87 @@ export const settlementPreviewSchema = z.object({
   inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
 });
 
+export const personalSettlementContributionSchema = z.object({
+  expenseId: uuid,
+  expenseTitleSnapshot: z.string().min(1).max(200),
+  sourceRevision: z.number().int().positive(),
+  valuationSnapshotId: uuid,
+  valuationFingerprint: z.string().min(1),
+  payerMemberId: uuid,
+  expenseSettlementMinor: z.number().int().nonnegative(),
+  payerCreditMinor: z.number().int().nonnegative(),
+  shareMinor: z.number().int().nonnegative(),
+  netMinor: z.number().int(),
+  inclusion: z.literal("INCLUDED"),
+});
+
+export const personalSettlementStatementSchema = z.object({
+  journeyId: uuid,
+  memberId: uuid,
+  currency: z.string().regex(/^[A-Z]{3}$/),
+  scale: z.number().int().min(0).max(4),
+  settingsRevision: z.number().int().positive(),
+  algorithmVersion: z.string().min(1),
+  settlementId: uuid.nullable(),
+  settlementRevision: z.number().int().positive().nullable(),
+  settlementInputDigest: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .nullable(),
+  paidMinor: z.number().int().nonnegative(),
+  shareMinor: z.number().int().nonnegative(),
+  balanceMinor: z.number().int(),
+  contributions: z.array(personalSettlementContributionSchema),
+});
+
+export const personalSettlementCheckpointSchema = z.object({
+  id: uuid,
+  journeyId: uuid,
+  reviewerUserId: uuid,
+  reviewerMemberId: uuid,
+  statementFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+  reviewedStatement: personalSettlementStatementSchema,
+  revision: z.number().int().positive(),
+  reviewedAt: z.string(),
+});
+
+export const personalSettlementDeltaSchema = z.object({
+  previousBalanceMinor: z.number().int(),
+  currentBalanceMinor: z.number().int(),
+  netDeltaMinor: z.number().int(),
+  changedExpenses: z.array(
+    z.object({
+      expenseId: uuid,
+      expenseTitleSnapshot: z.string().min(1).max(200),
+      oldContribution: personalSettlementContributionSchema.nullable(),
+      newContribution: personalSettlementContributionSchema.nullable(),
+      changeGroups: z.array(
+        z.enum(["INCLUSION", "PAYER", "VALUATION_OR_AMOUNT", "SHARE"]),
+      ),
+    }),
+  ),
+});
+
+export const personalSettlementReviewResponseSchema = z.object({
+  statement: personalSettlementStatementSchema,
+  statementFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+  checkpoint: personalSettlementCheckpointSchema.nullable(),
+  delta: personalSettlementDeltaSchema.nullable(),
+  coverage: z.array(
+    z.object({
+      memberId: uuid,
+      displayName: z.string().min(1).max(200),
+      reviewedAt: z.string().nullable(),
+    }),
+  ),
+});
+
+export const createPersonalSettlementCheckpointRequestSchema = z.object({
+  id: uuid,
+  statementFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+  operationId: uuid,
+});
+
 export const repaymentValuationSchema = z.object({
   id: uuid,
   decimalRate: z.string(),
@@ -453,6 +534,18 @@ export const personalSettlementPaymentListResponseSchema = z.object({
 });
 
 export type SettlementPreviewResponse = z.infer<typeof settlementPreviewSchema>;
+export type PersonalSettlementStatementDto = z.infer<
+  typeof personalSettlementStatementSchema
+>;
+export type PersonalSettlementCheckpointDto = z.infer<
+  typeof personalSettlementCheckpointSchema
+>;
+export type PersonalSettlementReviewResponse = z.infer<
+  typeof personalSettlementReviewResponseSchema
+>;
+export type CreatePersonalSettlementCheckpointRequest = z.infer<
+  typeof createPersonalSettlementCheckpointRequestSchema
+>;
 export type FinalizedSettlementDto = z.infer<typeof finalizedSettlementSchema>;
 export type SettlementFinalizeResponse = z.infer<typeof settlementFinalizeResponseSchema>;
 export type SettlementAdjustmentPreviewResponse = z.infer<

@@ -1046,4 +1046,48 @@ export const migrations: Migration[] = [
         ON ledger_receipt_assets (personal_payment_id, created_at DESC);
     `,
   },
+  {
+    id: 27,
+    name: "settlement_2_human_review_findings",
+    sql: `
+      ALTER TABLE ledger_review_findings ADD COLUMN origin TEXT NOT NULL DEFAULT 'SYSTEM';
+      ALTER TABLE ledger_review_findings ADD COLUMN author_user_id TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN author_member_id TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN target_type TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN target_member_id TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN personal_payment_id TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN target_source_revision INTEGER;
+      ALTER TABLE ledger_review_findings ADD COLUMN human_note TEXT;
+      ALTER TABLE ledger_review_findings ADD COLUMN origin_operation_id TEXT;
+      CREATE INDEX ledger_review_human_target ON ledger_review_findings
+        (journey_id, origin, target_type, expense_id, personal_payment_id);
+    `,
+  },
+  {
+    id: 28,
+    name: "settlement_2_personal_review_checkpoint",
+    sql: `
+      CREATE TABLE ledger_personal_settlement_review_state (
+        user_id TEXT NOT NULL,
+        journey_id TEXT NOT NULL,
+        statement_json TEXT NOT NULL,
+        statement_fingerprint TEXT NOT NULL,
+        checkpoint_json TEXT,
+        delta_json TEXT,
+        sync_status TEXT NOT NULL CHECK (sync_status IN (
+          'SYNCED', 'PENDING', 'SYNCING', 'CONFLICT', 'FAILED'
+        )),
+        pending_operation_id TEXT,
+        last_error_code TEXT,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, journey_id)
+      );
+    `,
+  },
+  {
+    id: 29,
+    name: "settlement_2_review_coverage_cache",
+    sql: `ALTER TABLE ledger_personal_settlement_review_state
+      ADD COLUMN coverage_json TEXT NOT NULL DEFAULT '[]';`,
+  },
 ];
