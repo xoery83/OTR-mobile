@@ -28,6 +28,8 @@ export function SettlementUpdateScreen() {
   const currentBalance = settlement.hasPendingFinancialOperations
     ? (estimate?.minor ?? statement?.balanceMinor)
     : (statement?.balanceMinor ?? estimate?.minor);
+  const currentCurrency = statement?.currency ?? estimate?.currency;
+  const currentScale = statement?.scale ?? estimate?.scale;
   const confirmedBalance =
     current?.balances.find((item) => item.memberId === settlement.actorMemberId) ??
     (current && settlement.actorMemberId
@@ -82,14 +84,13 @@ export function SettlementUpdateScreen() {
         <Text accessibilityRole="header" style={styles.lead}>
           CURRENT CHANGES
         </Text>
-        {currentBalance !== undefined && confirmedBalance ? (
+        {currentBalance !== undefined &&
+        currentCurrency &&
+        currentScale !== undefined &&
+        confirmedBalance ? (
           <>
             <Text style={styles.amount}>
-              {formatLedgerMoney(
-                Math.abs(currentBalance),
-                statement!.currency,
-                statement!.scale,
-              )}
+              {formatLedgerMoney(Math.abs(currentBalance), currentCurrency, currentScale)}
             </Text>
             <Text style={styles.meta}>
               Last confirmed{" "}
@@ -101,8 +102,8 @@ export function SettlementUpdateScreen() {
               · Change {currentBalance - confirmedBalance.netMinor >= 0 ? "+" : ""}
               {formatLedgerMoney(
                 currentBalance - confirmedBalance.netMinor,
-                statement!.currency,
-                statement!.scale,
+                currentCurrency,
+                currentScale,
               )}
             </Text>
           </>

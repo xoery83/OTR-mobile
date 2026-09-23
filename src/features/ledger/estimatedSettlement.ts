@@ -29,6 +29,11 @@ export function estimatedSettlement(
   const net = new Map(memberIds.map((id) => [id, 0n]));
   const paid = new Map(memberIds.map((id) => [id, 0n]));
   const owed = new Map(memberIds.map((id) => [id, 0n]));
+  const inputs: {
+    expense: LedgerExpense;
+    settlement: { minor: number; currency: string; scale: number };
+    splits: LedgerExpense["splits"];
+  }[] = [];
   const blockers: { expenseId: string; reason: string }[] = [];
   let estimatedCount = 0;
   for (const expense of expenses) {
@@ -94,6 +99,7 @@ export function estimatedSettlement(
         owed.get(split.memberId)! + BigInt(split.settlementMinor!),
       );
     }
+    inputs.push({ expense, settlement: amount, splits });
     if (expense.status === "RATE_REQUIRED" && estimate) estimatedCount++;
   }
   const balances = memberIds.map((memberId) => ({
@@ -116,6 +122,7 @@ export function estimatedSettlement(
   return {
     balances,
     transfers: buildTransferPlan(balances),
+    inputs,
     estimatedCount,
     blockers,
   };

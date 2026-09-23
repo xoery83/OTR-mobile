@@ -348,6 +348,62 @@ export function buildFinalizedSettlementCategories(
   return buildSettlementCategories(rows, expenses, memberId);
 }
 
+export function buildEstimatedSettlementCategories(
+  inputs: {
+    expense: LedgerExpense;
+    settlement: { minor: number; currency: string; scale: number };
+    splits: LedgerExpense["splits"];
+  }[],
+  members: SettlementMember[],
+  memberId: string | null,
+  kind: "SPENDING" | "SHARES",
+) {
+  const names = new Map(members.map((member) => [member.id, member.label]));
+  const rows = inputs.flatMap<LedgerReportListItem>((input) => {
+    const split = input.splits.find((item) => item.memberId === memberId);
+    const componentMinor =
+      kind === "SPENDING"
+        ? input.expense.payerMemberId === memberId
+          ? input.settlement.minor
+          : null
+        : (split?.settlementMinor ?? null);
+    if (componentMinor === null) return [];
+    return [
+      {
+        id: input.expense.id,
+        title: input.expense.title,
+        category: input.expense.category,
+        occurredAt: input.expense.occurredAt,
+        payerMemberId: input.expense.payerMemberId,
+        payerName: names.get(input.expense.payerMemberId) ?? "Traveller",
+        originalMinor: input.expense.original.minor,
+        originalComponentMinor:
+          kind === "SPENDING"
+            ? input.expense.original.minor
+            : (split?.originalMinor ?? null),
+        originalCurrency: input.expense.original.currency,
+        originalScale: input.expense.original.scale,
+        settlementMinor: input.settlement.minor,
+        settlementCurrency: input.settlement.currency,
+        settlementScale: input.settlement.scale,
+        componentMinor,
+        participantCount: input.splits.length,
+        businessStatus: input.expense.status,
+        settlementParticipation: "INCLUDED",
+        syncStatus: input.expense.syncStatus,
+        hasReceipt: false,
+        hasOpenConflict: false,
+        isAuthoritative: input.expense.status === "ACCEPTED",
+      },
+    ];
+  });
+  return buildSettlementCategories(
+    rows,
+    inputs.map((input) => input.expense),
+    memberId,
+  );
+}
+
 export function currentSettlementTransfers(
   finalized: Stage7Finalized | null,
   preview: Stage7Preview | null,

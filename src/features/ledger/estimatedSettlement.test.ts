@@ -50,6 +50,9 @@ describe("informational settlement preview", () => {
     expect(result.transfers).toMatchObject([
       { fromMemberId: "mary", toMemberId: "leo", amount: { minor: 7_501 } },
     ]);
+    expect(result.inputs).toEqual([
+      { expense, settlement: estimate.money, splits: expect.any(Array) },
+    ]);
     expect(JSON.stringify(expense)).toBe(before);
   });
 

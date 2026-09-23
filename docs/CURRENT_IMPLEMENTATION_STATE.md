@@ -17,12 +17,20 @@ confirmation` when the immutable head is also the current source. Historical val
   reason, then open the successor editor. The immutable source is never directly
   edited; another member may provide corrected facts, but Organizer remains the only
   authority that records the protected successor under the current contract.
-- TypeScript, ESLint, `git diff --check`, and **92 Vitest files / 403 tests** pass. A
-  signed Simulator Release visually verified the searchable correction list and
-  version history. The matching signed Release was installed and launched over the
-  existing physical iPhone app without clearing data.
+- Correction successors now use contract-valid UUIDs instead of prefixed local IDs.
+  The post-Final update screen also tolerates a local Current estimate without a cached
+  personal statement, so `View changes` no longer crashes before sync.
+- Summary, Paid and Shares now derive Current totals and category rows from the same
+  exact local-estimate input set. A signed Simulator Release visually verified Current
+  Paid `¥10,005,160.56`, Share `¥1,455,822.98`, Balance `¥8,549,337.58`, and the exact
+  Added/Changed Expense list behind delta `-¥17.83`.
+- TypeScript, ESLint, `git diff --check`, and **93 Vitest files / 405 tests** pass.
+  Matching signed Releases were installed and launched over the existing Simulator and
+  physical iPhone apps without clearing data. Physical visual confirmation remains
+  manual because iPhone Mirroring requires the user's Mac login.
 - The retained automated clean Trip remains `e6e0955d-7f3c-4919-8801-8e6b4e05ce9f`.
-  Its 49 checks are complete; a separate human two-account walkthrough has not begun.
+  Its 49 checks are complete and both retained test accounts are members; a separate
+  human two-account walkthrough has not begun.
 
 ## Settlement Final-version revision — implementation and Simulator gate complete
 

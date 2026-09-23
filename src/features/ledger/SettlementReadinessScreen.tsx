@@ -82,6 +82,7 @@ export function SettlementReadinessScreen({
     settlement.actorMemberId,
     settlement.isOrganizer,
     displayedFinal,
+    displayedFinal ? null : settlement.displayPreview,
   );
   const [localActive, setLocalActive] = useState<SettlementSectionName>("Summary");
   const active = activeSection ?? localActive;

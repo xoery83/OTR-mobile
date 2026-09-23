@@ -5,6 +5,7 @@ import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRe
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 
 import {
+  buildEstimatedSettlementCategories,
   buildFinalizedSettlementCategories,
   buildSettlementComparison,
   buildSettlementCategories,
@@ -86,6 +87,64 @@ describe("Settlement section selectors", () => {
       ["hotel", 200],
     ]);
     expect(paid[0].rows[0].id).toBe("expense-local-a");
+  });
+
+  it("builds Current paid and shares from the same estimated inputs as Summary", () => {
+    const expense = {
+      id: "expense-a",
+      title: "Estimated meal",
+      category: "food",
+      occurredAt: "2026-09-24",
+      payerMemberId: "member-a",
+      original: { minor: 1_000, currency: "EUR", scale: 2 },
+      status: "RATE_REQUIRED",
+      syncStatus: "PENDING",
+      splits: [
+        {
+          memberId: "member-a",
+          originalMinor: 250,
+          settlementMinor: 300,
+          method: "EXACT",
+        },
+        {
+          memberId: "member-b",
+          originalMinor: 750,
+          settlementMinor: 700,
+          method: "EXACT",
+        },
+      ],
+    } as unknown as LedgerExpense;
+    const inputs = [
+      {
+        expense,
+        settlement: { minor: 1_000, currency: "NZD", scale: 2 },
+        splits: expense.splits,
+      },
+    ];
+    const members = [
+      { id: "member-a", label: "A" },
+      { id: "member-b", label: "B" },
+    ];
+
+    const paid = buildEstimatedSettlementCategories(
+      inputs,
+      members,
+      "member-a",
+      "SPENDING",
+    );
+    const shares = buildEstimatedSettlementCategories(
+      inputs,
+      members,
+      "member-a",
+      "SHARES",
+    );
+
+    expect(paid[0].totalMinor).toBe(1_000);
+    expect(shares[0].totalMinor).toBe(300);
+    expect(paid[0].rows[0]).toMatchObject({
+      syncStatus: "PENDING",
+      isAuthoritative: false,
+    });
   });
 
   it("keeps Mine scoped while allowing organizer-only Everyone", () => {

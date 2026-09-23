@@ -11,6 +11,7 @@ import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPay
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import {
+  buildEstimatedSettlementCategories,
   buildFinalizedSettlementCategories,
   buildSettlementCategories,
   settlementCacheMessage,
@@ -21,6 +22,10 @@ export function useSettlementSections(
   actorMemberId: string | null,
   isOrganizer: boolean,
   finalized: FinalizedSettlementDto | null,
+  estimated: {
+    inputs: Parameters<typeof buildEstimatedSettlementCategories>[0];
+    members: { id: string; label: string }[];
+  } | null,
 ) {
   const network = useNetworkState();
   const online = network.isConnected !== false && network.isInternetReachable !== false;
@@ -49,14 +54,7 @@ export function useSettlementSections(
           getDefaultLedgerReviewRepository(),
         ]);
       const [options, nextExpenses, nextPayments, counts] = await Promise.all([
-        finalized
-          ? Promise.resolve({
-              members: finalized.balances.map((balance) => ({
-                id: balance.memberId,
-                label: balance.displayNameSnapshot,
-              })),
-            })
-          : reporting.listFilterOptions(journeyId),
+        reporting.listFilterOptions(journeyId),
         expenseRepository.listExpensesForJourney(journeyId, Boolean(finalized)),
         paymentRepository.listForJourney(journeyId),
         reviewRepository.counts(journeyId),
@@ -79,7 +77,7 @@ export function useSettlementSections(
       sharesMemberRef.current = sharesId;
       setSpendingMemberId(spendingId);
       setSharesMemberId(sharesId);
-      if (!finalized && (spendingId || sharesId)) {
+      if (!finalized && !estimated && (spendingId || sharesId)) {
         const loadRows = async (kind: "SPENDING" | "SHARES", memberId: string) => {
           const query = {
             journeyId,
@@ -103,11 +101,11 @@ export function useSettlementSections(
     } finally {
       setLoading(false);
     }
-  }, [actorMemberId, finalized, journeyId, online]);
+  }, [actorMemberId, estimated, finalized, journeyId, online]);
 
   const loadMember = useCallback(
     async (kind: "SPENDING" | "SHARES", memberId: string | null) => {
-      if (!journeyId || !memberId || finalized) return;
+      if (!journeyId || !memberId || finalized || estimated) return;
       try {
         const reporting = await getDefaultLedgerReportingRepository();
         const query = {
@@ -127,7 +125,7 @@ export function useSettlementSections(
         setMessage("Saved Settlement details remain available.");
       }
     },
-    [finalized, journeyId],
+    [estimated, finalized, journeyId],
   );
 
   useFocusEffect(
@@ -165,7 +163,14 @@ export function useSettlementSections(
           effectiveSpendingMemberId,
           "SPENDING",
         )
-      : buildSettlementCategories(spendingRows, expenses, effectiveSpendingMemberId),
+      : estimated
+        ? buildEstimatedSettlementCategories(
+            estimated.inputs,
+            estimated.members,
+            effectiveSpendingMemberId,
+            "SPENDING",
+          )
+        : buildSettlementCategories(spendingRows, expenses, effectiveSpendingMemberId),
     shareCategories: finalized
       ? buildFinalizedSettlementCategories(
           finalized.inputs,
@@ -173,7 +178,14 @@ export function useSettlementSections(
           effectiveSharesMemberId,
           "SHARES",
         )
-      : buildSettlementCategories(shareRows, expenses, effectiveSharesMemberId),
+      : estimated
+        ? buildEstimatedSettlementCategories(
+            estimated.inputs,
+            estimated.members,
+            effectiveSharesMemberId,
+            "SHARES",
+          )
+        : buildSettlementCategories(shareRows, expenses, effectiveSharesMemberId),
     setSpendingMemberId: isOrganizer ? selectSpendingMember : () => undefined,
     setSharesMemberId: isOrganizer ? selectSharesMember : () => undefined,
   };

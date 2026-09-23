@@ -37,7 +37,7 @@ import type {
   ExpenseSettlementParticipation,
   ExpenseSplitMethod,
 } from "@/domain/ledger/types";
-import { createLocalId } from "@/domain/localId";
+import { createLocalId, createUuid } from "@/domain/localId";
 import {
   confirmSettlementCorrection,
   previewSettlementCorrection,
@@ -424,7 +424,7 @@ export function LedgerExpenseEntryScreen() {
       };
       if (existing && params.correctionRootId) {
         const successor = {
-          localId: createLocalId("ledger-expense-correction"),
+          localId: createUuid(),
           title: command.title,
           description: command.description ?? null,
           category: command.category,
