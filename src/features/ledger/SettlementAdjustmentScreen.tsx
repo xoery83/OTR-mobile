@@ -1,13 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
@@ -20,7 +12,18 @@ export function SettlementAdjustmentScreen() {
   const [reasonError, setReasonError] = useState(false);
   const reasonRef = useRef<TextInput>(null);
   const [titles, setTitles] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState("");
+  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
   const current = settlement.lineage.at(-1) ?? settlement.finalized;
+  const visibleInputs = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase();
+    if (!needle) return current?.inputs ?? [];
+    return (current?.inputs ?? []).filter((input) =>
+      [titles[input.expenseId], input.payer.displayNameSnapshot]
+        .filter(Boolean)
+        .some((value) => value!.toLocaleLowerCase().includes(needle)),
+    );
+  }, [current, query, titles]);
 
   useEffect(() => {
     let active = true;
@@ -43,6 +46,25 @@ export function SettlementAdjustmentScreen() {
     return <Text style={styles.empty}>No confirmed settlement is available.</Text>;
   }
 
+  const selected = current?.inputs.find((input) => input.expenseId === selectedExpenseId);
+  const openCorrection = () => {
+    if (!selected) return;
+    if (!reason.trim()) {
+      setReasonError(true);
+      reasonRef.current?.focus();
+      return;
+    }
+    router.push({
+      pathname: "/expenses/new",
+      params: {
+        expenseId: selected.expenseId,
+        journeyId: settlement.journeyId,
+        correctionRootId: settlement.finalized!.id,
+        correctionReason: reason.trim(),
+      },
+    } as never);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.warning}>
@@ -54,6 +76,87 @@ export function SettlementAdjustmentScreen() {
           history. Any changes will create an updated settlement.
         </Text>
       </View>
+
+      {settlement.isOrganizer ? (
+        <>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>
+            1. Choose a confirmed expense
+          </Text>
+          <TextInput
+            accessibilityLabel="Search confirmed expenses"
+            onChangeText={setQuery}
+            placeholder="Search by expense or payer"
+            style={styles.search}
+            value={query}
+          />
+          {visibleInputs.map((input) => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: selectedExpenseId === input.expenseId }}
+              key={input.expenseId}
+              onPress={() => setSelectedExpenseId(input.expenseId)}
+              style={[
+                styles.row,
+                selectedExpenseId === input.expenseId && styles.selectedRow,
+              ]}
+            >
+              <View style={styles.grow}>
+                <Text style={styles.rowTitle}>
+                  {titles[input.expenseId] ?? "Expense"}
+                </Text>
+                <Text style={styles.meta}>Paid by {input.payer.displayNameSnapshot}</Text>
+              </View>
+              <Text style={styles.version}>
+                {selectedExpenseId === input.expenseId ? "Selected" : "Choose"}
+              </Text>
+            </Pressable>
+          ))}
+          {!visibleInputs.length ? (
+            <Text style={styles.meta}>No confirmed expenses match this search.</Text>
+          ) : null}
+
+          {selected ? (
+            <>
+              <Text accessibilityRole="header" style={styles.sectionTitle}>
+                2. Add the correction reason
+              </Text>
+              <TextInput
+                accessibilityLabel="Reason for correction"
+                multiline
+                onChangeText={(value) => {
+                  setReason(value);
+                  if (value.trim()) setReasonError(false);
+                }}
+                placeholder="Why is this correction needed?"
+                ref={reasonRef}
+                style={styles.input}
+                value={reason}
+              />
+              {reasonError ? (
+                <Text accessibilityLiveRegion="polite" style={styles.error}>
+                  Add a reason before opening the correction editor.
+                </Text>
+              ) : null}
+
+              <Text accessibilityRole="header" style={styles.sectionTitle}>
+                3. Open and correct
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={openCorrection}
+                style={styles.primary}
+              >
+                <Text style={styles.primaryText}>Open expense to correct</Text>
+              </Pressable>
+              <Text style={styles.meta}>
+                The original confirmed version stays unchanged. If another member has the
+                correct details, ask them to send those details to the organizer, who
+                records the protected successor here.
+              </Text>
+            </>
+          ) : null}
+        </>
+      ) : null}
 
       <Text accessibilityRole="header" style={styles.sectionTitle}>
         Settlement history
@@ -81,80 +184,12 @@ export function SettlementAdjustmentScreen() {
           <Text style={styles.version}>#{(version.lineageSequence ?? 0) + 1}</Text>
         </Pressable>
       ))}
-
-      {settlement.isOrganizer ? (
-        <>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Correct an expense
-          </Text>
-          <TextInput
-            accessibilityLabel="Reason for correction"
-            multiline
-            onChangeText={(value) => {
-              setReason(value);
-              if (value.trim()) setReasonError(false);
-            }}
-            placeholder="Why is this correction needed?"
-            ref={reasonRef}
-            style={styles.input}
-            value={reason}
-          />
-          {reasonError ? (
-            <Text accessibilityLiveRegion="polite" style={styles.error}>
-              Add a reason before choosing the confirmed Expense to correct.
-            </Text>
-          ) : null}
-          {(current?.inputs ?? []).map((input) => (
-            <Pressable
-              accessibilityRole="button"
-              key={input.expenseId}
-              onPress={() => {
-                if (!reason.trim()) {
-                  setReasonError(true);
-                  reasonRef.current?.focus();
-                  return;
-                }
-                Alert.alert(
-                  "Correct this expense?",
-                  "The original confirmed version will stay unchanged.",
-                  [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                      text: "Continue",
-                      onPress: () =>
-                        router.push({
-                          pathname: "/expenses/new",
-                          params: {
-                            expenseId: input.expenseId,
-                            journeyId: settlement.journeyId,
-                            correctionRootId: settlement.finalized!.id,
-                            correctionReason: reason.trim(),
-                          },
-                        } as never),
-                    },
-                  ],
-                );
-              }}
-              style={styles.row}
-            >
-              <View style={styles.grow}>
-                <Text style={styles.rowTitle}>
-                  {titles[input.expenseId] ?? "Expense"}
-                </Text>
-                <Text style={styles.meta}>Original confirmed version</Text>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
-          ))}
-        </>
-      ) : null}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   body: { color: "#7C2D12", fontSize: 15, lineHeight: 22 },
-  chevron: { color: "#0F766E", fontSize: 24 },
   content: { gap: 12, padding: 16, paddingBottom: 40 },
   empty: { color: "#64748B", padding: 20 },
   error: { color: "#B91C1C", fontSize: 14, fontWeight: "700" },
@@ -169,6 +204,15 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   meta: { color: "#64748B", fontSize: 13 },
+  primary: {
+    alignItems: "center",
+    backgroundColor: "#0F766E",
+    borderRadius: 12,
+    justifyContent: "center",
+    minHeight: 50,
+    paddingHorizontal: 16,
+  },
+  primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "900" },
   row: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
@@ -178,6 +222,15 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   rowTitle: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
+  search: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#CBD5E1",
+    borderRadius: 10,
+    borderWidth: 1,
+    minHeight: 48,
+    paddingHorizontal: 12,
+  },
+  selectedRow: { borderColor: "#0F766E", borderWidth: 2 },
   sectionTitle: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 6 },
   title: { color: "#7C2D12", fontSize: 18, fontWeight: "800" },
   version: { color: "#0F766E", fontWeight: "800" },

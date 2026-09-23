@@ -46,6 +46,7 @@ describe("informational settlement preview", () => {
     );
     expect(result.estimatedCount).toBe(1);
     expect(result.balances.map((balance) => balance.minor)).toEqual([7_501, -7_501]);
+    expect(result.balances[0]).toMatchObject({ paidMinor: 10_001, owedMinor: 2_500 });
     expect(result.transfers).toMatchObject([
       { fromMemberId: "mary", toMemberId: "leo", amount: { minor: 7_501 } },
     ]);

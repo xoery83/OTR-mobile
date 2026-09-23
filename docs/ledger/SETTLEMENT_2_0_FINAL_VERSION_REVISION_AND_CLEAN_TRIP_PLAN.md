@@ -1,8 +1,9 @@
 # Settlement 2.0 Final-version revision and clean-Trip acceptance plan
 
 Date: 2026-09-23  
-Status: Slices A–C implemented. Clean Hosted Dev V1/V2/V3 acceptance passed; device
-polish/release gate is in progress. No schema or Production change was required.
+Status: Slices A–C and clean Hosted Dev V1/V2/V3 automated acceptance passed. Signed
+Simulator gate passed; physical follow-up fixes are implemented. The separate human
+two-account walkthrough has not begun. No schema or Production change was required.
 
 ## 1. Outcome
 

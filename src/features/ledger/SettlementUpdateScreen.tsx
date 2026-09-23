@@ -1,35 +1,68 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
+import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
+import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import { usePersonalSettlementReview } from "@/hooks/usePersonalSettlementReview";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney } from "./format";
-import { personalStatementChangesFromFinal } from "./settlementSections";
+import {
+  localExpensesChangesFromFinal,
+  personalBalanceFromFinal,
+  personalStatementChangesFromFinal,
+} from "./settlementSections";
 
 export function SettlementUpdateScreen() {
   const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
   const settlement = useStage7Settlement(journeyId);
   const review = usePersonalSettlementReview(journeyId);
   const [reason, setReason] = useState("");
+  const [expenses, setExpenses] = useState<LedgerExpense[]>([]);
   const current = settlement.lineage.at(-1) ?? settlement.finalized;
   const statement = review.state?.statement;
-  const currentBalance = statement?.balanceMinor;
-  const confirmedBalance = current?.balances.find(
+  const estimate = settlement.displayPreview?.balances.find(
     (item) => item.memberId === settlement.actorMemberId,
   );
+  const currentBalance = settlement.hasPendingFinancialOperations
+    ? (estimate?.minor ?? statement?.balanceMinor)
+    : (statement?.balanceMinor ?? estimate?.minor);
+  const confirmedBalance =
+    current?.balances.find((item) => item.memberId === settlement.actorMemberId) ??
+    (current && settlement.actorMemberId
+      ? personalBalanceFromFinal(current, settlement.actorMemberId)
+      : undefined);
   const personalChanges =
     statement && current && settlement.actorMemberId
       ? personalStatementChangesFromFinal(statement, current, settlement.actorMemberId)
       : [];
+  const localChanges = current ? localExpensesChangesFromFinal(expenses, current) : [];
   const changes = settlement.adjustmentPreview?.changedExpenses.length
     ? settlement.adjustmentPreview.changedExpenses
-    : personalChanges;
+    : settlement.hasPendingFinancialOperations && localChanges.length
+      ? localChanges
+      : personalChanges;
   const ready = settlement.adjustmentPreview?.state === "PREVIEW_READY";
   const titleFor = (expenseId: string) =>
+    expenses.find((expense) => expense.id === expenseId || expense.serverId === expenseId)
+      ?.title ??
     statement?.contributions.find((item) => item.expenseId === expenseId)
-      ?.expenseTitleSnapshot ?? `Expense ${expenseId.slice(0, 8)}`;
+      ?.expenseTitleSnapshot ??
+    `Expense ${expenseId.slice(0, 8)}`;
+
+  useEffect(() => {
+    let active = true;
+    if (!journeyId) return;
+    void getDefaultLedgerExpenseRepository()
+      .then((repository) => repository.listExpensesForJourney(journeyId))
+      .then((rows) => {
+        if (active) setExpenses(rows);
+      });
+    return () => {
+      active = false;
+    };
+  }, [journeyId, settlement.hasPendingFinancialOperations]);
 
   if (!current)
     return <Text style={styles.empty}>No confirmed Settlement is available.</Text>;

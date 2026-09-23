@@ -1,6 +1,28 @@
 # Current Implementation State
 
-Date: 2026-09-23
+Date: 2026-09-24
+
+## Settlement Final-version physical follow-up
+
+- A physical pending-write state exposed two UI projection gaps. Summary now keeps
+  Current Paid, Share, and Balance together from the same local estimate; `≈` is
+  separately explained as estimated valuation rather than being conflated with sync.
+- When the server Adjustment preview cannot exist until local writes sync, Summary and
+  Review Changes compare current local Expense leaves with the latest immutable inputs,
+  so the signed delta has corresponding Added/Changed/Removed Expense rows.
+- Paid and Shares explicitly say `Current calculation`, or `Current · matches last
+confirmation` when the immutable head is also the current source. Historical values
+  remain confined to Summary/Settlement history.
+- Confirmed correction is now a three-step flow: search/select an Expense, enter the
+  reason, then open the successor editor. The immutable source is never directly
+  edited; another member may provide corrected facts, but Organizer remains the only
+  authority that records the protected successor under the current contract.
+- TypeScript, ESLint, `git diff --check`, and **92 Vitest files / 403 tests** pass. A
+  signed Simulator Release visually verified the searchable correction list and
+  version history. The matching signed Release was installed and launched over the
+  existing physical iPhone app without clearing data.
+- The retained automated clean Trip remains `e6e0955d-7f3c-4919-8801-8e6b4e05ce9f`.
+  Its 49 checks are complete; a separate human two-account walkthrough has not begun.
 
 ## Settlement Final-version revision — implementation and Simulator gate complete
 

@@ -151,6 +151,7 @@ export function useSettlementSections(
 
   return {
     members,
+    expenses,
     payments,
     reviewCount,
     loading,

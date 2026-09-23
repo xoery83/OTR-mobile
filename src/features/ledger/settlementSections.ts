@@ -196,6 +196,75 @@ export function personalStatementChangesFromFinal(
     });
 }
 
+export function localExpensesChangesFromFinal(
+  expenses: LedgerExpense[],
+  confirmed: Stage7Finalized,
+) {
+  const finalById = new Map(
+    confirmed.inputs.map((item) => [item.expenseId, finalInputFingerprint(item)]),
+  );
+  const currentById = new Map(
+    expenses
+      .filter(
+        (expense) =>
+          expense.status !== "DELETED" &&
+          expense.status !== "DRAFT" &&
+          expense.settlementParticipation === "INCLUDED",
+      )
+      .map((expense) => [
+        expense.serverId ?? expense.id,
+        localExpenseFingerprint(expense),
+      ]),
+  );
+  return [...new Set([...finalById.keys(), ...currentById.keys()])]
+    .sort()
+    .flatMap((expenseId) => {
+      const before = finalById.get(expenseId);
+      const after = currentById.get(expenseId);
+      if (before === after) return [];
+      return [
+        {
+          expenseId,
+          change: !before
+            ? ("NEW" as const)
+            : !after
+              ? ("DELETED" as const)
+              : ("CHANGED" as const),
+        },
+      ];
+    });
+}
+
+function finalInputFingerprint(input: Stage7Finalized["inputs"][number]) {
+  return JSON.stringify({
+    revision: input.expenseRevision,
+    payer: input.payer.memberId,
+    original: input.original,
+    settlement: input.settlement,
+    valuation: input.valuation.id,
+    splits: input.splits.map((split) => ({
+      memberId: split.member.memberId,
+      originalMinor: split.originalMinor,
+      settlementMinor: split.settlementMinor,
+    })),
+  });
+}
+
+function localExpenseFingerprint(expense: LedgerExpense) {
+  return JSON.stringify({
+    revision: expense.revision,
+    payer: expense.payerMemberId,
+    original: expense.original,
+    settlement: expense.valuation?.settlement ?? null,
+    valuation: expense.valuation?.id ?? null,
+    splits: expense.splits.map((split) => ({
+      memberId: split.memberId,
+      originalMinor: split.originalMinor,
+      settlementMinor: split.settlementMinor,
+    })),
+  });
+}
+
 export function buildSettlementCategories(
   rows: LedgerReportListItem[],
   expenses: LedgerExpense[],

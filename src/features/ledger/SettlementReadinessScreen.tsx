@@ -21,6 +21,7 @@ import { PersonalPaymentSection } from "./PersonalPaymentSection";
 import {
   buildSettlementComparison,
   currentSettlementTransfers,
+  localExpensesChangesFromFinal,
   memberName,
   membersWithActorFirst,
   personalBalanceFromFinal,
@@ -125,6 +126,7 @@ export function SettlementReadinessScreen({
     >
       {active === "Summary" ? (
         <SummarySection
+          expenses={sections.expenses}
           paymentCount={
             sections.payments.filter(
               (record) => record.ownerMemberId === settlement.actorMemberId,
@@ -265,6 +267,7 @@ export function SettlementSectionTabs({
 function SummarySection({
   comparison,
   displayedFinal,
+  expenses,
   paymentCount,
   reviewCount,
   review,
@@ -272,6 +275,7 @@ function SummarySection({
 }: {
   comparison: SettlementComparison;
   displayedFinal: ReturnType<typeof useStage7Settlement>["finalized"];
+  expenses: ReturnType<typeof useSettlementSections>["expenses"];
   paymentCount: number;
   reviewCount: number;
   review: ReturnType<typeof usePersonalSettlementReview>;
@@ -309,12 +313,12 @@ function SummarySection({
   const paidMinor = showingConfirmed
     ? finalizedBalance?.paidMinor
     : comparison.freshness === "CURRENT_LOCAL_PENDING"
-      ? undefined
+      ? estimate?.paidMinor
       : statement?.paidMinor;
   const shareMinor = showingConfirmed
     ? finalizedBalance?.owedMinor
     : comparison.freshness === "CURRENT_LOCAL_PENDING"
-      ? undefined
+      ? estimate?.owedMinor
       : statement?.shareMinor;
   const automaticWaiting = settlement.pendingPublicationExpenseIds.size;
   const unavailableRates = settlement.unavailableExpenseIds.size;
@@ -329,9 +333,14 @@ function SummarySection({
           settlement.actorMemberId,
         )
       : [];
+  const localChanges = currentFinal
+    ? localExpensesChangesFromFinal(expenses, currentFinal)
+    : [];
   const changedExpenses = settlement.adjustmentPreview?.changedExpenses.length
     ? settlement.adjustmentPreview.changedExpenses
-    : personalChanges;
+    : settlement.hasPendingFinancialOperations && localChanges.length
+      ? localChanges
+      : personalChanges;
   const hasChanges = comparison.mode === "CONFIRMED_WITH_PENDING_UPDATE";
   const confirmedBalance =
     currentFinal?.balances.find(
@@ -391,6 +400,12 @@ function SummarySection({
                 ? "Showing saved latest calculation"
                 : "Based on expenses recorded so far"}
         </Text>
+        {!showingConfirmed && settlement.displayPreview?.estimatedCount ? (
+          <Text style={styles.meta}>
+            ≈ includes {settlement.displayPreview.estimatedCount} estimated value
+            {settlement.displayPreview.estimatedCount === 1 ? "" : "s"}
+          </Text>
+        ) : null}
       </View>
       {paidMinor !== undefined &&
       shareMinor !== undefined &&
@@ -710,6 +725,11 @@ function ExpenseSection({
         <Text style={styles.meta}>
           {shares ? "Across" : "From"} {count} valued shared{" "}
           {count === 1 ? "expense" : "expenses"}
+        </Text>
+        <Text style={styles.meta}>
+          {historicalSnapshot
+            ? "Current · matches last confirmation"
+            : "Current calculation"}
         </Text>
       </View>
       {categories.map((category) => {

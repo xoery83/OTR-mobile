@@ -9,6 +9,7 @@ import {
   buildSettlementComparison,
   buildSettlementCategories,
   currentSettlementTransfers,
+  localExpensesChangesFromFinal,
   membersWithActorFirst,
   personalStatementChangesFromFinal,
   personalStatementMatchesFinal,
@@ -293,6 +294,56 @@ describe("Settlement section selectors", () => {
     } as Parameters<typeof personalStatementChangesFromFinal>[0];
 
     expect(personalStatementChangesFromFinal(current, confirmed, "member-a")).toEqual([
+      { expenseId: "expense-a", change: "CHANGED" },
+      { expenseId: "expense-b", change: "NEW" },
+    ]);
+  });
+
+  it("lists local pending Expense changes before a server preview is available", () => {
+    const confirmed = {
+      ...finalized("a".repeat(64)),
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      inputs: [
+        {
+          ...finalInput("expense-a", "member-a", 400, 200),
+          expenseRevision: 1,
+          valuation: { id: "valuation-a" },
+        },
+      ],
+    } as Parameters<typeof localExpensesChangesFromFinal>[1];
+    const expenses = [
+      {
+        id: "local-a",
+        serverId: "expense-a",
+        revision: 2,
+        status: "ACCEPTED",
+        settlementParticipation: "INCLUDED",
+        payerMemberId: "member-a",
+        original: { minor: 500, currency: "NZD", scale: 2 },
+        valuation: {
+          id: "valuation-b",
+          settlement: { minor: 500, currency: "NZD", scale: 2 },
+        },
+        splits: [{ memberId: "member-a", originalMinor: 250, settlementMinor: 250 }],
+      },
+      {
+        id: "expense-b",
+        serverId: null,
+        revision: 1,
+        status: "ACCEPTED",
+        settlementParticipation: "INCLUDED",
+        payerMemberId: "member-a",
+        original: { minor: 300, currency: "NZD", scale: 2 },
+        valuation: {
+          id: "valuation-c",
+          settlement: { minor: 300, currency: "NZD", scale: 2 },
+        },
+        splits: [{ memberId: "member-a", originalMinor: 150, settlementMinor: 150 }],
+      },
+    ] as LedgerExpense[];
+
+    expect(localExpensesChangesFromFinal(expenses, confirmed)).toEqual([
       { expenseId: "expense-a", change: "CHANGED" },
       { expenseId: "expense-b", change: "NEW" },
     ]);

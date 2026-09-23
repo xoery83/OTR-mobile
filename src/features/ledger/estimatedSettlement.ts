@@ -27,6 +27,8 @@ export function estimatedSettlement(
   policy: string | null = null,
 ) {
   const net = new Map(memberIds.map((id) => [id, 0n]));
+  const paid = new Map(memberIds.map((id) => [id, 0n]));
+  const owed = new Map(memberIds.map((id) => [id, 0n]));
   const blockers: { expenseId: string; reason: string }[] = [];
   let estimatedCount = 0;
   for (const expense of expenses) {
@@ -81,17 +83,35 @@ export function estimatedSettlement(
       expense.payerMemberId,
       net.get(expense.payerMemberId)! + BigInt(amount.minor),
     );
-    for (const split of splits)
+    paid.set(
+      expense.payerMemberId,
+      paid.get(expense.payerMemberId)! + BigInt(amount.minor),
+    );
+    for (const split of splits) {
       net.set(split.memberId, net.get(split.memberId)! - BigInt(split.settlementMinor!));
+      owed.set(
+        split.memberId,
+        owed.get(split.memberId)! + BigInt(split.settlementMinor!),
+      );
+    }
     if (expense.status === "RATE_REQUIRED" && estimate) estimatedCount++;
   }
   const balances = memberIds.map((memberId) => ({
     memberId,
     minor: Number(net.get(memberId)!),
+    paidMinor: Number(paid.get(memberId)!),
+    owedMinor: Number(owed.get(memberId)!),
     currency,
     scale,
   }));
-  if (balances.some((balance) => !Number.isSafeInteger(balance.minor)))
+  if (
+    balances.some(
+      (balance) =>
+        !Number.isSafeInteger(balance.minor) ||
+        !Number.isSafeInteger(balance.paidMinor) ||
+        !Number.isSafeInteger(balance.owedMinor),
+    )
+  )
     throw new Error("Preview total is unsafe.");
   return {
     balances,
