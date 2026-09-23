@@ -264,14 +264,22 @@ async function main() {
 
   const [source, successor, link, rootAfter, findingAfter, sourceProjection] =
     await Promise.all([
-      admin.from("expenses").select("id,original_minor").eq("id", sourceId).single(),
-      admin.from("expenses").select("id,original_minor").eq("id", successorId).single(),
+      admin
+        .from("expenses")
+        .select("id,original_amount_minor")
+        .eq("id", sourceId)
+        .single(),
+      admin
+        .from("expenses")
+        .select("id,original_amount_minor")
+        .eq("id", successorId)
+        .single(),
       admin
         .from("expense_correction_successors")
         .select("source_expense_id,successor_expense_id,correction_settlement_id")
         .eq("source_expense_id", sourceId)
         .single(),
-      admin.from("ledger_settlements").select("input_digest").eq("id", root.id).single(),
+      admin.from("settlements").select("input_digest").eq("id", root.id).single(),
       admin
         .from("ledger_review_findings")
         .select("lifecycle,resolution_reason")
@@ -293,16 +301,18 @@ async function main() {
   assert.ok(link.data);
   assert.ok(rootAfter.data);
   assert.ok(findingAfter.data);
-  assert.equal(source.data.original_minor, 2_000);
-  assert.equal(successor.data.original_minor, 2_600);
+  assert.equal(source.data.original_amount_minor, 2_000);
+  assert.equal(successor.data.original_amount_minor, 2_600);
   assert.equal(link.data.successor_expense_id, successorId);
   assert.equal(link.data.correction_settlement_id, confirmedBody.entity.id);
   assert.equal(rootAfter.data.input_digest, root.inputDigest);
   assert.equal(findingAfter.data.lifecycle, "RESOLVED_BY_EXPENSE_UPDATE");
   assert.equal(findingAfter.data.resolution_reason, "CORRECTION_SUCCESSOR_CONFIRMED");
+  const currentExpenses = (sourceProjection.data as { expenses: { id: string }[] })
+    .expenses;
   assert.ok(
-    sourceProjection.data.some((item: { id: string }) => item.id === successorId) &&
-      !sourceProjection.data.some((item: { id: string }) => item.id === sourceId),
+    currentExpenses.some((item) => item.id === successorId) &&
+      !currentExpenses.some((item) => item.id === sourceId),
   );
   assert.equal(await count("settlement_payments"), 0);
   assert.equal(await count("personal_settlement_payment_records"), 0);
