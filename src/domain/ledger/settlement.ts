@@ -99,6 +99,25 @@ export type SettlementPreviewInput = {
   expenses: SettlementExpenseCandidate[];
 };
 
+export function replaceSettlementExpenseSource(
+  input: SettlementPreviewInput,
+  sourceExpenseId: string,
+  successor: SettlementExpenseCandidate,
+): SettlementPreviewInput {
+  if (successor.id === sourceExpenseId)
+    throw new Error("Correction successor must have a new identity.");
+  if (!input.expenses.some((expense) => expense.id === sourceExpenseId))
+    throw new Error("Correction source is stale.");
+  if (input.expenses.some((expense) => expense.id === successor.id))
+    throw new Error("Correction successor already exists.");
+  return {
+    ...input,
+    expenses: input.expenses
+      .filter((expense) => expense.id !== sourceExpenseId)
+      .concat(successor),
+  };
+}
+
 export type SettlementAdjustmentDelta = {
   memberId: string;
   displayNameSnapshot: string;
