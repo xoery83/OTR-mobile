@@ -30,7 +30,11 @@ export type SettlementExpenseCandidate = {
     displayNameSnapshot: string;
   }[];
   splits: ExpenseAggregate["splits"];
-  valuation: SettlementValuationSnapshot | null;
+  valuation:
+    | (Omit<SettlementValuationSnapshot, "effectiveAt"> & {
+        effectiveAt?: string | null;
+      })
+    | null;
 };
 
 export type SettlementInputSnapshot = {
@@ -368,6 +372,7 @@ export function buildSettlementPreview(input: SettlementPreviewInput): Settlemen
       splits: expense.splits.map((split) => ({ ...split })),
       valuation: {
         ...valuation,
+        effectiveAt: valuation.effectiveAt ?? undefined,
         original: { ...valuation.original },
         settlement: { ...valuation.settlement },
       },

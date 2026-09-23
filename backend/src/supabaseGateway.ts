@@ -3849,7 +3849,14 @@ function settlementCorrectionCandidate(
     })),
     splits: successor.splits,
     valuation: successor.valuation
-      ? { id: successor.localId, ...successor.valuation }
+      ? {
+          id: successor.localId,
+          ...successor.valuation,
+          decimalRate: null,
+          roundingMode: "HALF_UP",
+          effectiveAt: null,
+          supersedesValuationId: null,
+        }
       : null,
   };
 }
