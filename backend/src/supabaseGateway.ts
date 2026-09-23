@@ -3895,6 +3895,35 @@ async function finalizeSettlementCorrection(
   idempotencyKey: string,
   input: SettlementCorrectionConfirmRequest,
 ): Promise<SettlementCorrectionMutationResponse> {
+  const payloadHash = hashPayload(input);
+  const replay = await service
+    .from("ledger_idempotency_keys")
+    .select("payload_hash, response_body")
+    .eq("actor_user_id", userId)
+    .eq("journey_id", tripId)
+    .eq("command_type", "FINALIZE_CORRECTION")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+  if (replay.error) throw new Error("Supabase Dev correction replay lookup failed.");
+  if (replay.data) {
+    if (replay.data.payload_hash !== payloadHash)
+      throw new BackendError(
+        409,
+        "IDEMPOTENCY_CONFLICT",
+        "The idempotency key conflicts.",
+      );
+    const stored = replay.data.response_body as {
+      settlementId: string;
+      successorExpenseId: string;
+    };
+    const entity = await readOneFinalizedSettlement(service, tripId, stored.settlementId);
+    if (!entity) throw new Error("Corrected Settlement replay was not found.");
+    return {
+      entity,
+      successorExpenseId: stored.successorExpenseId,
+      idempotentReplay: true,
+    };
+  }
   const calculated = await calculateSettlementAdjustmentPreview(
     service,
     tripId,
@@ -3935,7 +3964,7 @@ async function finalizeSettlementCorrection(
     allow_zero_transfer: input.allowZeroTransfer,
     blocked_value: preview.state === "PREVIEW_BLOCKED",
     idempotency_key_value: idempotencyKey,
-    payload_hash_value: hashPayload(input),
+    payload_hash_value: payloadHash,
   });
   const message = result.error?.message ?? "";
   if (
