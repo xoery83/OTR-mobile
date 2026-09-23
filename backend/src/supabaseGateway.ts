@@ -3834,20 +3834,24 @@ function settlementCorrectionCandidate(
   input: SettlementCorrectionPreviewRequest,
 ): SettlementExpenseCandidate {
   const successor = input.successor;
+  const postgresTimestamp = new Date(successor.occurredAt)
+    .toISOString()
+    .replace(/(?:\.000)?Z$/, "+00:00");
   return {
     id: successor.localId,
     revision: 1,
-    occurredAt: successor.occurredAt,
+    occurredAt: postgresTimestamp,
     businessStatus: successor.businessStatus,
     settlementParticipation: successor.settlementParticipation ?? "INCLUDED",
     hasOpenConflict: false,
     payerMemberId: successor.payerMemberId,
     original: successor.original,
-    participants: successor.participants.map(({ memberId, displayNameSnapshot }) => ({
-      memberId,
-      displayNameSnapshot,
-    })),
-    splits: successor.splits,
+    participants: successor.participants
+      .map(({ memberId, displayNameSnapshot }) => ({ memberId, displayNameSnapshot }))
+      .sort((left, right) => left.memberId.localeCompare(right.memberId)),
+    splits: successor.splits
+      .slice()
+      .sort((left, right) => left.memberId.localeCompare(right.memberId)),
     valuation: successor.valuation
       ? {
           id: successor.localId,

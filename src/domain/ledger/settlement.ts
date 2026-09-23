@@ -118,7 +118,8 @@ export function replaceSettlementExpenseSource(
     ...input,
     expenses: input.expenses
       .filter((expense) => expense.id !== sourceExpenseId)
-      .concat(successor),
+      .concat(successor)
+      .sort((left, right) => left.id.localeCompare(right.id)),
   };
 }
 
