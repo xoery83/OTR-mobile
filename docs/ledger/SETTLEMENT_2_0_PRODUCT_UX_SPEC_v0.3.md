@@ -422,6 +422,17 @@ All four Settlement views use this same pale-green lead-card treatment: rounded
 container, consistent inset, green semantic heading, and any applicable selector
 on the heading row. Lists and secondary detail remain below the lead card.
 
+When a Final Settlement exists, Summary, Paid and Shares must use the same current
+Final-version snapshot. Paid/Share totals, counts, categories and expanded rows are
+derived from that snapshot's immutable inputs, not from the later Current Expense
+projection. Before Finalization, all three use the Current projection. Never mix a
+Final Summary with Current Paid/Shares values without an explicit mode switch.
+
+Offline/cache messaging must follow the current network state. When connectivity
+returns, retry the Settlement refresh and remove the Offline label. If an online
+refresh still fails, describe it as refresh unavailable while continuing to show
+saved data; never show `Offline` alongside an `Online` network status.
+
 Summary is the primary personal settlement dashboard.
 
 It answers immediately:
@@ -521,6 +532,10 @@ Review 2 items >
 ```
 
 `Review 2 items` opens the canonical Ledger Review area, filtered to relevant settlement findings.
+
+On the Spending page, the same yellow **Needs attention** block appears directly
+below the Settlement snapshot. Do not show a separate green Review banner above
+Spending totals.
 
 ### Automatic waiting
 
@@ -723,6 +738,12 @@ Something looks wrong
 This does not create a Settlement-only dispute.
 
 It creates a human-raised finding in the canonical Review system and links it to the source expense/share.
+
+Expense detail exposes one Expense-level action at the bottom of the page, not one
+action per split. Tapping it asks for an optional note; a non-empty note becomes the
+Review title. If an active human finding already targets the Expense, show a compact
+status tag near the Expense heading. Review includes a **Raised by a person** filter,
+and every human-raised row identifies the member who raised it.
 
 ---
 

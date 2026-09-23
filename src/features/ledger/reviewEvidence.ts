@@ -20,7 +20,7 @@ export function reviewEvidence(
   if (!context) return [];
   if (finding.origin === "HUMAN")
     return [
-      ["Raised by", "A Journey member"],
+      ["Raised by", memberNames[finding.authorMemberId ?? ""] ?? "A Journey member"],
       ["Target", String(context.targetType ?? finding.targetType ?? "Financial item")],
       ["Source revision", String(context.sourceRevision ?? finding.targetSourceRevision)],
     ];

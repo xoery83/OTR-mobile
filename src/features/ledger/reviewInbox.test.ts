@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { LedgerReviewFinding } from "@/hooks/useLedgerReview";
 import { reviewInbox, reviewCategories } from "./reviewInbox";
 import { reviewEvidence } from "./reviewEvidence";
+import { reviewFindingCopy } from "./settlementPresentation";
 
 const base = {
   id: "one",
@@ -124,5 +125,22 @@ describe("Review inbox personal projection", () => {
         ["Participants", "Mary"],
       ]),
     );
+  });
+
+  it("filters human findings and uses their note and author", () => {
+    const human = row("human", {
+      origin: "HUMAN",
+      ruleId: "HUMAN_CONCERN",
+      ruleCategory: "Human",
+      humanNote: "Wrong split for dinner",
+      authorMemberId: "member-a",
+    });
+
+    const inbox = reviewInbox([base, human], "Raised by a person");
+
+    expect(inbox.counts["Raised by a person"]).toBe(1);
+    expect(inbox.pending).toEqual([human]);
+    expect(reviewFindingCopy(human).title).toBe("Wrong split for dinner");
+    expect(reviewEvidence(human, { "member-a": "Leo" })[0]).toEqual(["Raised by", "Leo"]);
   });
 });

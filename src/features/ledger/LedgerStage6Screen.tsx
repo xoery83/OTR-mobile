@@ -567,475 +567,491 @@ export function LedgerStage6Screen() {
           </Pressable>
         </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.content, largeText && styles.largeContent]}
-        contentInsetAdjustmentBehavior="automatic"
-        onScroll={(event) => {
-          const hidden = isLedgerModeNavHidden(
-            event.nativeEvent.contentOffset.y,
-            modeNavBottom.current,
-          );
-          setModeNavHidden((current) => (current === hidden ? current : hidden));
-        }}
-        scrollEventThrottle={16}
-        stickyHeaderIndices={journey && mode === "SETTLEMENT" ? [1] : undefined}
-      >
+        <ScrollView
+          contentContainerStyle={[styles.content, largeText && styles.largeContent]}
+          contentInsetAdjustmentBehavior="automatic"
+          onScroll={(event) => {
+            const hidden = isLedgerModeNavHidden(
+              event.nativeEvent.contentOffset.y,
+              modeNavBottom.current,
+            );
+            setModeNavHidden((current) => (current === hidden ? current : hidden));
+          }}
+          scrollEventThrottle={16}
+          stickyHeaderIndices={journey && mode === "SETTLEMENT" ? [1] : undefined}
+        >
+          <View style={styles.topControls}>
+            {journey ? (
+              <View
+                onLayout={(event) => {
+                  modeNavBottom.current = event.nativeEvent.layout.height + 14;
+                }}
+              >
+                <Segment
+                  value={mode}
+                  options={["SPENDING", "SETTLEMENT"]}
+                  onChange={setMode}
+                />
+              </View>
+            ) : null}
 
-        <View style={styles.topControls}>
-          {journey ? (
-            <View
-              onLayout={(event) => {
-                modeNavBottom.current = event.nativeEvent.layout.height + 14;
-              }}
-            >
-              <Segment
-                value={mode}
-                options={["SPENDING", "SETTLEMENT"]}
-                onChange={setMode}
+            {message ? (
+              <Text
+                accessibilityLiveRegion="polite"
+                maxFontSizeMultiplier={2}
+                style={styles.message}
+              >
+                {message}
+              </Text>
+            ) : null}
+            {loading ? <ActivityIndicator /> : null}
+          </View>
+          {journey && mode === "SETTLEMENT" ? (
+            <View style={styles.settlementNavSticky}>
+              <SettlementSectionTabs
+                active={settlementSection}
+                onChange={setSettlementSection}
               />
             </View>
           ) : null}
-
-          {message ? (
-            <Text
-              accessibilityLiveRegion="polite"
-              maxFontSizeMultiplier={2}
-              style={styles.message}
-            >
-              {message}
-            </Text>
-          ) : null}
-          {loading ? <ActivityIndicator /> : null}
-        </View>
-        {journey && mode === "SETTLEMENT" ? (
-          <View style={styles.settlementNavSticky}>
-            <SettlementSectionTabs
-              active={settlementSection}
-              onChange={setSettlementSection}
-            />
-          </View>
-        ) : null}
-        {journey ? (
-          mode === "SPENDING" ? (
-            <>
-              {projection?.reviewCount ? (
-                <Pressable
-                  accessibilityLabel={`${projection.reviewCount} items need review`}
-                  accessibilityRole="button"
-                  onPress={() =>
-                    router.push({
-                      pathname: "/expenses/review",
-                      params: { journeyId: journey.journeyId },
-                    })
-                  }
-                  style={styles.reviewBanner}
-                >
-                  <Text maxFontSizeMultiplier={2} style={styles.reviewBannerText}>
-                    {projection.reviewCount} items need review
-                  </Text>
-                  <AppIcon color="#0F766E" name="chevron.right" size={16} />
-                </Pressable>
-              ) : null}
-              <View style={styles.total}>
-                <View style={[styles.totalHeader, largeText && styles.stack]}>
-                  <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
-                    {scope === "MINE" ? "YOU SPENT" : "GROUP SPENT"}
-                  </Text>
-                  <Segment
-                    compact
-                    value={scope}
-                    options={["MINE", "GROUP"]}
-                    onChange={(nextScope) => {
-                      selectedMemberIdRef.current = null;
-                      memberRequest.cancel();
-                      void loadProjection(journey, nextScope);
-                    }}
-                  />
-                </View>
-                <Text
-                  accessibilityLabel={`${
-                    scope === "MINE" ? "You spent" : "Group spent"
-                  } ${projection?.estimatedCount ? "approximately " : ""}${
-                    summary
-                      ? formatLedgerMoney(
+          {journey ? (
+            mode === "SPENDING" ? (
+              <>
+                <View style={styles.total}>
+                  <View style={[styles.totalHeader, largeText && styles.stack]}>
+                    <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
+                      {scope === "MINE" ? "YOU SPENT" : "GROUP SPENT"}
+                    </Text>
+                    <Segment
+                      compact
+                      value={scope}
+                      options={["MINE", "GROUP"]}
+                      onChange={(nextScope) => {
+                        selectedMemberIdRef.current = null;
+                        memberRequest.cancel();
+                        void loadProjection(journey, nextScope);
+                      }}
+                    />
+                  </View>
+                  <Text
+                    accessibilityLabel={`${
+                      scope === "MINE" ? "You spent" : "Group spent"
+                    } ${projection?.estimatedCount ? "approximately " : ""}${
+                      summary
+                        ? formatLedgerMoney(
+                            summary.totalMinor + (projection?.estimatedMinor ?? 0),
+                            journey.settlementCurrency,
+                            journey.settlementScale,
+                          )
+                        : "unavailable"
+                    }`}
+                    maxFontSizeMultiplier={2}
+                    style={styles.totalValue}
+                  >
+                    {summary
+                      ? `${projection?.estimatedCount ? "≈ " : ""}${formatLedgerMoney(
                           summary.totalMinor + (projection?.estimatedMinor ?? 0),
                           journey.settlementCurrency,
                           journey.settlementScale,
-                        )
-                      : "unavailable"
-                  }`}
-                  maxFontSizeMultiplier={2}
-                  style={styles.totalValue}
-                >
-                  {summary
-                    ? `${projection?.estimatedCount ? "≈ " : ""}${formatLedgerMoney(
-                        summary.totalMinor + (projection?.estimatedMinor ?? 0),
-                        journey.settlementCurrency,
-                        journey.settlementScale,
-                      )}`
-                    : "—"}
-                </Text>
-                <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                  {summary?.expenseCount ?? 0} valued Expenses
-                  {projection?.estimatedCount
-                    ? ` · ${projection.estimatedCount} estimated`
-                    : ""}
-                </Text>
-              </View>
+                        )}`
+                      : "—"}
+                  </Text>
+                  <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                    {summary?.expenseCount ?? 0} valued Expenses
+                    {projection?.estimatedCount
+                      ? ` · ${projection.estimatedCount} estimated`
+                      : ""}
+                  </Text>
+                </View>
 
-              <DashboardSection
-                action="See analysis"
-                onAction={() =>
-                  router.push({
-                    pathname: "/expenses/analysis",
-                    params: {
-                      journeyId: journey.journeyId,
-                      memberId: memberId ?? "",
-                      scope,
-                      ...(categorySelection
-                        ? { selectedMemberId: categorySelection.id }
-                        : {}),
-                    },
-                  })
-                }
-                title={scope === "GROUP" ? "Spending by Member" : "Categories"}
-              >
-                {scope === "GROUP" ? (
-                  <ScrollView
-                    contentContainerStyle={styles.memberSelector}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.memberScroller}
-                  >
-                    {[
-                      { id: "", label: "Group" },
-                      ...spendingMembers(
-                        projection?.members ?? [],
-                        projection?.memberSpending ?? [],
-                      ),
-                    ].map((item) => {
-                      const selected = (categorySelection?.id ?? "") === item.id;
-                      return (
-                        <Pressable
-                          accessibilityLabel={item.label}
-                          accessibilityRole="tab"
-                          accessibilityState={{ selected }}
-                          key={item.id || "group"}
-                          onPress={() => void selectCategoryMember(item.id || null)}
-                          style={[styles.memberTab, selected && styles.memberTabSelected]}
-                        >
-                          <Text
-                            numberOfLines={1}
+                <DashboardSection
+                  action="See analysis"
+                  onAction={() =>
+                    router.push({
+                      pathname: "/expenses/analysis",
+                      params: {
+                        journeyId: journey.journeyId,
+                        memberId: memberId ?? "",
+                        scope,
+                        ...(categorySelection
+                          ? { selectedMemberId: categorySelection.id }
+                          : {}),
+                      },
+                    })
+                  }
+                  title={scope === "GROUP" ? "Spending by Member" : "Categories"}
+                >
+                  {scope === "GROUP" ? (
+                    <ScrollView
+                      contentContainerStyle={styles.memberSelector}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.memberScroller}
+                    >
+                      {[
+                        { id: "", label: "Group" },
+                        ...spendingMembers(
+                          projection?.members ?? [],
+                          projection?.memberSpending ?? [],
+                        ),
+                      ].map((item) => {
+                        const selected = (categorySelection?.id ?? "") === item.id;
+                        return (
+                          <Pressable
+                            accessibilityLabel={item.label}
+                            accessibilityRole="tab"
+                            accessibilityState={{ selected }}
+                            key={item.id || "group"}
+                            onPress={() => void selectCategoryMember(item.id || null)}
                             style={[
-                              styles.memberTabText,
-                              selected && styles.memberTabTextSelected,
+                              styles.memberTab,
+                              selected && styles.memberTabSelected,
                             ]}
                           >
-                            {item.id ? shortMemberName(item.label) : item.label}
-                          </Text>
+                            <Text
+                              numberOfLines={1}
+                              style={[
+                                styles.memberTabText,
+                                selected && styles.memberTabTextSelected,
+                              ]}
+                            >
+                              {item.id ? shortMemberName(item.label) : item.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  ) : null}
+                  <View style={scope === "GROUP" ? styles.groupCategories : undefined}>
+                    {displayedCategories.map((category) => {
+                      const percentage = spendingPercentage(
+                        category.totalMinor,
+                        categorySummary?.totalMinor ?? 0,
+                      );
+                      return (
+                        <Pressable
+                          accessibilityLabel={`${category.label}, ${formatLedgerMoney(
+                            category.totalMinor,
+                            journey.settlementCurrency,
+                            journey.settlementScale,
+                          )}, ${percentage} percent`}
+                          accessibilityRole="button"
+                          key={category.key}
+                          onPress={() =>
+                            openSearch({
+                              authoritative: "1",
+                              category: category.key,
+                              ...(categorySelection
+                                ? { selectedMemberId: categorySelection.id }
+                                : {}),
+                              origin: `Category: ${category.label}`,
+                            })
+                          }
+                          style={styles.categoryRow}
+                        >
+                          <View style={styles.categoryHeading}>
+                            <Text
+                              maxFontSizeMultiplier={2}
+                              numberOfLines={1}
+                              style={styles.rowTitle}
+                            >
+                              {category.label}
+                            </Text>
+                            <Text style={styles.categoryAmount}>
+                              {formatLedgerMoney(
+                                category.totalMinor,
+                                journey.settlementCurrency,
+                                journey.settlementScale,
+                              )}
+                              <Text style={styles.categoryPercentage}>
+                                {` · ${percentage}%`}
+                              </Text>
+                            </Text>
+                          </View>
+                          <View style={styles.categoryTrack}>
+                            <View
+                              style={[styles.categoryFill, { width: `${percentage}%` }]}
+                            />
+                          </View>
                         </Pressable>
                       );
                     })}
-                  </ScrollView>
+                    {displayedCategories.length === 0 ? (
+                      <Text style={styles.empty}>No category totals yet.</Text>
+                    ) : null}
+                  </View>
+                  {scope === "GROUP" ? (
+                    <View style={styles.categoryTotal}>
+                      <Text style={styles.categoryTotalLabel}>
+                        {categorySelection ? "Total Spending" : "Total Group Spending"}
+                      </Text>
+                      <Text style={styles.categoryTotalAmount}>
+                        {formatLedgerMoney(
+                          categorySummary?.totalMinor ?? 0,
+                          journey.settlementCurrency,
+                          journey.settlementScale,
+                        )}
+                      </Text>
+                    </View>
+                  ) : null}
+                </DashboardSection>
+
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/expenses/settlement",
+                      params: { journeyId: journey.journeyId },
+                    })
+                  }
+                  style={styles.snapshot}
+                >
+                  <View style={styles.grow}>
+                    <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
+                      SETTLEMENT
+                    </Text>
+                    {settlement.kind === "FINAL" ? (
+                      <>
+                        <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
+                          {settlement.positionMinor === null
+                            ? "Final settlement available"
+                            : settlementPositionLabel(settlement.positionMinor)}
+                        </Text>
+                        {settlement.positionMinor !== null ? (
+                          <Text maxFontSizeMultiplier={2} style={styles.snapshotAmount}>
+                            {formatLedgerMoney(
+                              Math.abs(settlement.positionMinor),
+                              settlement.currency,
+                              settlement.scale,
+                            )}
+                          </Text>
+                        ) : null}
+                        <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                          {settlement.needsUpdate
+                            ? "Final settlement needs an update"
+                            : "Final settlement snapshot"}
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
+                          Settlement preview
+                        </Text>
+                        <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                          Check readiness and prepare a preview
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                  <AppIcon color="#0F766E" name="chevron.right" size={16} />
+                </Pressable>
+
+                {projection?.reviewCount ? (
+                  <Pressable
+                    accessibilityLabel={`${projection.reviewCount} items need review`}
+                    accessibilityRole="button"
+                    onPress={() =>
+                      router.push({
+                        pathname: "/expenses/review",
+                        params: { journeyId: journey.journeyId },
+                      })
+                    }
+                    style={styles.attention}
+                  >
+                    <View style={styles.grow}>
+                      <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
+                        Needs attention
+                      </Text>
+                      <Text maxFontSizeMultiplier={2} style={styles.attentionMeta}>
+                        {projection.reviewCount} things may affect the final amount
+                      </Text>
+                      <Text maxFontSizeMultiplier={2} style={styles.reviewLink}>
+                        Review {projection.reviewCount} items ›
+                      </Text>
+                    </View>
+                  </Pressable>
                 ) : null}
-                <View style={scope === "GROUP" ? styles.groupCategories : undefined}>
-                  {displayedCategories.map((category) => {
-                    const percentage = spendingPercentage(
-                      category.totalMinor,
-                      categorySummary?.totalMinor ?? 0,
+
+                {summary?.openConflictCount ? (
+                  <Pressable
+                    accessibilityLabel={`${summary.openConflictCount} conflicts need review`}
+                    accessibilityRole="button"
+                    onPress={() => router.push("/expenses/review" as never)}
+                    style={styles.attention}
+                  >
+                    <View style={styles.grow}>
+                      <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
+                        Needs attention
+                      </Text>
+                      <Text maxFontSizeMultiplier={2} style={styles.attentionMeta}>
+                        {summary.openConflictCount} conflicts need review
+                      </Text>
+                    </View>
+                    <AppIcon color="#A16207" name="chevron.right" size={16} />
+                  </Pressable>
+                ) : null}
+
+                <DashboardSection
+                  action="See All"
+                  onAction={() => openSearch({ origin: "All Expenses" })}
+                  title="Recent Expenses"
+                >
+                  {expenses.map((expense) => {
+                    const attention = ledgerExpenseAttention(expense, scope);
+                    const amounts = expenseAmountPresentation(
+                      expense,
+                      scope,
+                      projection?.estimateComponents.get(expense.id) ?? null,
                     );
                     return (
                       <Pressable
-                        accessibilityLabel={`${category.label}, ${formatLedgerMoney(
-                          category.totalMinor,
-                          journey.settlementCurrency,
-                          journey.settlementScale,
-                        )}, ${percentage} percent`}
+                        accessibilityLabel={`${expense.title}, ${amounts.primary}${amounts.total ? `, ${amounts.total}` : ""}${amounts.original ? `, ${amounts.original}` : ""}${amounts.splitLabel ? ", split expense" : ""}${expense.hasReceipt ? ", receipt attached" : ""}${
+                          attention ? `, ${attention}` : ""
+                        }`}
                         accessibilityRole="button"
-                        key={category.key}
-                        onPress={() =>
-                          openSearch({
-                            authoritative: "1",
-                            category: category.key,
-                            ...(categorySelection
-                              ? { selectedMemberId: categorySelection.id }
-                              : {}),
-                            origin: `Category: ${category.label}`,
-                          })
-                        }
-                        style={styles.categoryRow}
+                        key={expense.id}
+                        onPress={() => router.push(`/expenses/expense/${expense.id}`)}
+                        style={[styles.row, largeText && styles.stack]}
                       >
-                        <View style={styles.categoryHeading}>
-                          <Text
-                            maxFontSizeMultiplier={2}
-                            numberOfLines={1}
-                            style={styles.rowTitle}
-                          >
-                            {category.label}
-                          </Text>
-                          <Text style={styles.categoryAmount}>
-                            {formatLedgerMoney(
-                              category.totalMinor,
-                              journey.settlementCurrency,
-                              journey.settlementScale,
-                            )}
-                            <Text style={styles.categoryPercentage}>
-                              {` · ${percentage}%`}
-                            </Text>
-                          </Text>
-                        </View>
-                        <View style={styles.categoryTrack}>
-                          <View
-                            style={[styles.categoryFill, { width: `${percentage}%` }]}
+                        <View style={styles.categoryIcon}>
+                          <AppIcon
+                            color="#0F766E"
+                            name={categoryIcon(expense.category)}
+                            size={18}
                           />
+                        </View>
+                        <View style={styles.grow}>
+                          <View style={styles.rowTitleLine}>
+                            <Text
+                              maxFontSizeMultiplier={2}
+                              numberOfLines={2}
+                              style={styles.rowTitle}
+                            >
+                              {expense.title}
+                            </Text>
+                            {expense.hasReceipt ? (
+                              <AppIcon color="#64748B" name="paperclip" size={14} />
+                            ) : null}
+                          </View>
+                          <View style={styles.rowMetaLine}>
+                            <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                              {formatLedgerDate(expense.occurredAt)}
+                              {amounts.total ? ` · ${amounts.total}` : ""}
+                            </Text>
+                            {amounts.splitLabel ? (
+                              <View style={styles.splitTag}>
+                                <Text
+                                  maxFontSizeMultiplier={2}
+                                  style={styles.splitTagText}
+                                >
+                                  {amounts.splitLabel}
+                                </Text>
+                              </View>
+                            ) : null}
+                          </View>
+                          {attention ? (
+                            <Text maxFontSizeMultiplier={2} style={styles.warning}>
+                              {attention}
+                            </Text>
+                          ) : null}
+                        </View>
+                        <View
+                          style={[
+                            styles.amountColumn,
+                            largeText && styles.largeRowAmount,
+                          ]}
+                        >
+                          <Text style={styles.rowAmount}>{amounts.primary}</Text>
+                          {amounts.original ? (
+                            <Text style={styles.amountMeta}>{amounts.original}</Text>
+                          ) : null}
                         </View>
                       </Pressable>
                     );
                   })}
-                  {displayedCategories.length === 0 ? (
-                    <Text style={styles.empty}>No category totals yet.</Text>
-                  ) : null}
-                </View>
-                {scope === "GROUP" ? (
-                  <View style={styles.categoryTotal}>
-                    <Text style={styles.categoryTotalLabel}>
-                      {categorySelection ? "Total Spending" : "Total Group Spending"}
-                    </Text>
-                    <Text style={styles.categoryTotalAmount}>
-                      {formatLedgerMoney(
-                        categorySummary?.totalMinor ?? 0,
-                        journey.settlementCurrency,
-                        journey.settlementScale,
-                      )}
-                    </Text>
-                  </View>
-                ) : null}
-              </DashboardSection>
-
-              <Pressable
-                accessibilityRole="button"
-                onPress={() =>
-                  router.push({
-                    pathname: "/expenses/settlement",
-                    params: { journeyId: journey.journeyId },
-                  })
-                }
-                style={styles.snapshot}
-              >
-                <View style={styles.grow}>
-                  <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
-                    SETTLEMENT
-                  </Text>
-                  {settlement.kind === "FINAL" ? (
-                    <>
-                      <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
-                        {settlement.positionMinor === null
-                          ? "Final settlement available"
-                          : settlementPositionLabel(settlement.positionMinor)}
+                  {expenses.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <Text maxFontSizeMultiplier={2} style={styles.empty}>
+                        No Expenses yet.
                       </Text>
-                      {settlement.positionMinor !== null ? (
-                        <Text maxFontSizeMultiplier={2} style={styles.snapshotAmount}>
-                          {formatLedgerMoney(
-                            Math.abs(settlement.positionMinor),
-                            settlement.currency,
-                            settlement.scale,
-                          )}
-                        </Text>
-                      ) : null}
-                      <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                        {settlement.needsUpdate
-                          ? "Final settlement needs an update"
-                          : "Final settlement snapshot"}
-                      </Text>
-                    </>
-                  ) : (
-                    <>
-                      <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
-                        Settlement preview
-                      </Text>
-                      <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                        Check readiness and prepare a preview
-                      </Text>
-                    </>
-                  )}
-                </View>
-                <AppIcon color="#0F766E" name="chevron.right" size={16} />
-              </Pressable>
-
-              {summary?.openConflictCount ? (
-                <Pressable
-                  accessibilityLabel={`${summary.openConflictCount} conflicts need review`}
-                  accessibilityRole="button"
-                  onPress={() => router.push("/expenses/review" as never)}
-                  style={styles.attention}
-                >
-                  <View style={styles.grow}>
-                    <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
-                      Needs attention
-                    </Text>
-                    <Text maxFontSizeMultiplier={2} style={styles.attentionMeta}>
-                      {summary.openConflictCount} conflicts need review
-                    </Text>
-                  </View>
-                  <AppIcon color="#A16207" name="chevron.right" size={16} />
-                </Pressable>
-              ) : null}
-
-              <DashboardSection
-                action="See All"
-                onAction={() => openSearch({ origin: "All Expenses" })}
-                title="Recent Expenses"
-              >
-                {expenses.map((expense) => {
-                  const attention = ledgerExpenseAttention(expense, scope);
-                  const amounts = expenseAmountPresentation(
-                    expense,
-                    scope,
-                    projection?.estimateComponents.get(expense.id) ?? null,
-                  );
-                  return (
-                    <Pressable
-                      accessibilityLabel={`${expense.title}, ${amounts.primary}${amounts.total ? `, ${amounts.total}` : ""}${amounts.original ? `, ${amounts.original}` : ""}${amounts.splitLabel ? ", split expense" : ""}${expense.hasReceipt ? ", receipt attached" : ""}${
-                        attention ? `, ${attention}` : ""
-                      }`}
-                      accessibilityRole="button"
-                      key={expense.id}
-                      onPress={() => router.push(`/expenses/expense/${expense.id}`)}
-                      style={[styles.row, largeText && styles.stack]}
-                    >
-                      <View style={styles.categoryIcon}>
-                        <AppIcon
-                          color="#0F766E"
-                          name={categoryIcon(expense.category)}
-                          size={18}
-                        />
-                      </View>
-                      <View style={styles.grow}>
-                        <View style={styles.rowTitleLine}>
-                          <Text
-                            maxFontSizeMultiplier={2}
-                            numberOfLines={2}
-                            style={styles.rowTitle}
-                          >
-                            {expense.title}
-                          </Text>
-                          {expense.hasReceipt ? (
-                            <AppIcon color="#64748B" name="paperclip" size={14} />
-                          ) : null}
-                        </View>
-                        <View style={styles.rowMetaLine}>
-                          <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                            {formatLedgerDate(expense.occurredAt)}
-                            {amounts.total ? ` · ${amounts.total}` : ""}
-                          </Text>
-                          {amounts.splitLabel ? (
-                            <View style={styles.splitTag}>
-                              <Text maxFontSizeMultiplier={2} style={styles.splitTagText}>
-                                {amounts.splitLabel}
-                              </Text>
-                            </View>
-                          ) : null}
-                        </View>
-                        {attention ? (
-                          <Text maxFontSizeMultiplier={2} style={styles.warning}>
-                            {attention}
-                          </Text>
-                        ) : null}
-                      </View>
-                      <View
-                        style={[styles.amountColumn, largeText && styles.largeRowAmount]}
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={openNewExpense}
+                        style={styles.primary}
                       >
-                        <Text style={styles.rowAmount}>{amounts.primary}</Text>
-                        {amounts.original ? (
-                          <Text style={styles.amountMeta}>{amounts.original}</Text>
-                        ) : null}
-                      </View>
-                    </Pressable>
-                  );
-                })}
-                {expenses.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Text maxFontSizeMultiplier={2} style={styles.empty}>
-                      No Expenses yet.
-                    </Text>
+                        <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
+                          Add Expense
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
+                  {expenses.length ? (
                     <Pressable
                       accessibilityRole="button"
-                      onPress={openNewExpense}
-                      style={styles.primary}
+                      onPress={() => openSearch({ origin: "All Expenses" })}
+                      style={styles.viewMore}
                     >
-                      <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
-                        Add Expense
+                      <Text maxFontSizeMultiplier={2} style={styles.link}>
+                        View more
                       </Text>
+                      <AppIcon color="#0F766E" name="chevron.right" size={15} />
                     </Pressable>
-                  </View>
-                ) : null}
-                {expenses.length ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => openSearch({ origin: "All Expenses" })}
-                    style={styles.viewMore}
-                  >
-                    <Text maxFontSizeMultiplier={2} style={styles.link}>
-                      View more
-                    </Text>
-                    <AppIcon color="#0F766E" name="chevron.right" size={15} />
-                  </Pressable>
-                ) : null}
-              </DashboardSection>
-            </>
+                  ) : null}
+                </DashboardSection>
+              </>
+            ) : (
+              <SettlementReadinessScreen
+                activeSection={settlementSection}
+                embedded
+                journeyId={journey.journeyId}
+                showNavigation={false}
+              />
+            )
           ) : (
-            <SettlementReadinessScreen
-              activeSection={settlementSection}
-              embedded
-              journeyId={journey.journeyId}
-              showNavigation={false}
-            />
-          )
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push("/expenses/all-journeys")}
-            style={styles.primary}
-          >
-            <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
-              Open My Ledger
-            </Text>
-          </Pressable>
-        )}
-        {debugMode ? (
-          <View style={styles.debugSection}>
-            <Text accessibilityRole="header" style={styles.debugTitle}>
-              Debug Information
-            </Text>
-            <View style={styles.debugSurface}>
-              <DebugRow
-                label="Network"
-                value={
-                  syncStatus
-                    ? syncStatus === "OFFLINE"
-                      ? "Offline"
-                      : "Online"
-                    : "Checking"
-                }
-              />
-              <DebugRow
-                attention={syncStatus === "OFFLINE" || syncStatus === "CHANGES_WAITING"}
-                label="Sync"
-                value={syncStatus ? syncStatusCopy[syncStatus] : "Starting"}
-              />
-              <DebugRow
-                label="Environment"
-                value={
-                  process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev"
-                    ? "Development"
-                    : "Local"
-                }
-              />
-              {journey ? <DebugRow label="Journey" value={journey.title} /> : null}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push("/expenses/all-journeys")}
+              style={styles.primary}
+            >
+              <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
+                Open My Ledger
+              </Text>
+            </Pressable>
+          )}
+          {debugMode ? (
+            <View style={styles.debugSection}>
+              <Text accessibilityRole="header" style={styles.debugTitle}>
+                Debug Information
+              </Text>
+              <View style={styles.debugSurface}>
+                <DebugRow
+                  label="Network"
+                  value={
+                    syncStatus
+                      ? syncStatus === "OFFLINE"
+                        ? "Offline"
+                        : "Online"
+                      : "Checking"
+                  }
+                />
+                <DebugRow
+                  attention={syncStatus === "OFFLINE" || syncStatus === "CHANGES_WAITING"}
+                  label="Sync"
+                  value={syncStatus ? syncStatusCopy[syncStatus] : "Starting"}
+                />
+                <DebugRow
+                  label="Environment"
+                  value={
+                    process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev"
+                      ? "Development"
+                      : "Local"
+                  }
+                />
+                {journey ? <DebugRow label="Journey" value={journey.title} /> : null}
+              </View>
             </View>
-          </View>
-        ) : null}
-      </ScrollView>
+          ) : null}
+        </ScrollView>
       </View>
 
       <Modal
@@ -1364,16 +1380,6 @@ const styles = StyleSheet.create({
   segmentText: { color: "#64748B", fontWeight: "600" },
   segmentTextSelected: { color: "#111827" },
   total: { backgroundColor: "#FFFFFF", borderRadius: 14, padding: 18 },
-  reviewBanner: {
-    alignItems: "center",
-    backgroundColor: "#E7F5F1",
-    borderRadius: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 52,
-    paddingHorizontal: 14,
-  },
-  reviewBannerText: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
   totalHeader: {
     alignItems: "center",
     flexDirection: "row",
@@ -1476,6 +1482,7 @@ const styles = StyleSheet.create({
   },
   attentionTitle: { color: "#7C5B00", fontWeight: "700" },
   attentionMeta: { color: "#8A6500", fontSize: 13, marginTop: 2 },
+  reviewLink: { color: "#0F766E", fontSize: 14, fontWeight: "700", marginTop: 4 },
   row: {
     alignItems: "center",
     borderBottomColor: "#E5E7EB",

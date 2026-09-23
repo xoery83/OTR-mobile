@@ -58,10 +58,12 @@ export function SettlementReadinessScreen({
 }) {
   const settlement = useStage7Settlement(journeyId);
   const review = usePersonalSettlementReview(settlement.journeyId ?? journeyId);
+  const currentFinal = settlement.lineage.at(-1) ?? settlement.finalized;
   const sections = useSettlementSections(
     settlement.journeyId,
     settlement.actorMemberId,
     settlement.isOrganizer,
+    currentFinal,
   );
   const [localActive, setLocalActive] = useState<SettlementSectionName>("Summary");
   const active = activeSection ?? localActive;
@@ -69,7 +71,6 @@ export function SettlementReadinessScreen({
   const [expandedSpending, setExpandedSpending] = useState<string | null>(null);
   const [expandedShares, setExpandedShares] = useState<string | null>(null);
   const [expandedTransfer, setExpandedTransfer] = useState<string | null>(null);
-  const currentFinal = settlement.lineage.at(-1) ?? settlement.finalized;
   const transfers = useMemo(
     () =>
       currentSettlementTransfers(
@@ -127,6 +128,7 @@ export function SettlementReadinessScreen({
           expanded={expandedSpending}
           journeyId={settlement.journeyId}
           key="Spending"
+          historicalSnapshot={Boolean(currentFinal)}
           memberId={sections.spendingMemberId}
           members={sections.members}
           onExpand={setExpandedSpending}
@@ -142,6 +144,7 @@ export function SettlementReadinessScreen({
           expanded={expandedShares}
           journeyId={settlement.journeyId}
           key="Shares"
+          historicalSnapshot={Boolean(currentFinal)}
           memberId={sections.sharesMemberId}
           members={sections.members}
           onExpand={setExpandedShares}
@@ -462,6 +465,7 @@ function ExpenseSection({
   categories,
   empty,
   expanded,
+  historicalSnapshot,
   journeyId,
   memberId,
   members,
@@ -475,6 +479,7 @@ function ExpenseSection({
   categories: SettlementCategory[];
   empty: string;
   expanded: string | null;
+  historicalSnapshot: boolean;
   journeyId: string;
   memberId: string | null;
   members: { id: string; label: string }[];
@@ -608,7 +613,7 @@ function ExpenseSection({
       })}
       {!categories.length ? <Text style={styles.empty}>{empty}</Text> : null}
       <Action
-        label="View all expenses"
+        label={historicalSnapshot ? "View current expenses" : "View all expenses"}
         onPress={() =>
           router.push({
             pathname: "/expenses/search",

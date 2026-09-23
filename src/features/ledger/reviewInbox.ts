@@ -7,6 +7,7 @@ export const reviewCategories = [
   "Exchange rate",
   "Participants",
   "Evidence",
+  "Raised by a person",
 ] as const;
 export type ReviewCategory = (typeof reviewCategories)[number];
 
@@ -29,15 +30,19 @@ export function reviewInbox(findings: LedgerReviewFinding[], category: ReviewCat
       item.lifecycle &&
       item.lifecycle !== "ACTIVE",
   );
+  const matchesCategory = (item: LedgerReviewFinding, name: ReviewCategory) =>
+    name === "All" ||
+    (name === "Raised by a person"
+      ? item.origin === "HUMAN"
+      : item.ruleCategory === name);
   const counts = Object.fromEntries(
     reviewCategories.map((name) => [
       name,
-      pending.filter((item) => name === "All" || item.ruleCategory === name).length,
+      pending.filter((item) => matchesCategory(item, name)).length,
     ]),
   ) as Record<ReviewCategory, number>;
   const selectedCategory = category !== "All" && !counts[category] ? "All" : category;
-  const matches = (item: LedgerReviewFinding) =>
-    selectedCategory === "All" || item.ruleCategory === selectedCategory;
+  const matches = (item: LedgerReviewFinding) => matchesCategory(item, selectedCategory);
   return {
     selectedCategory,
     visibleCategories: reviewCategories.filter(

@@ -39,6 +39,7 @@ export function LedgerExpenseDetailScreen() {
   const [participationError, setParticipationError] = useState<string | null>(null);
   const [savingParticipation, setSavingParticipation] = useState(false);
   const [reviewMessage, setReviewMessage] = useState<string | null>(null);
+  const [reviewFlagCount, setReviewFlagCount] = useState(0);
   const [raisingReview, setRaisingReview] = useState(false);
   const [fxAccess, setFxAccess] = useState({
     currency: "",
@@ -53,28 +54,39 @@ export function LedgerExpenseDetailScreen() {
         void getDefaultLedgerExpenseRepository()
           .then((repository) => repository.getExpense(id))
           .then(async (nextExpense) => {
-            if (!nextExpense) return [null, false, "Traveller", 0, null, null] as const;
-            const [nextHasOpenConflict, members, receipts, actor, journeys, settlement] =
-              await Promise.all([
-                getDefaultLedgerReportingRepository().then((repository) =>
-                  repository.hasOpenConflict(id),
-                ),
-                getDefaultLedgerReadRepository().then((repository) =>
-                  repository.listMembers(nextExpense.journeyId),
-                ),
-                getDefaultLedgerReceiptRepository().then((repository) =>
-                  repository.listReceipts(nextExpense.journeyId),
-                ),
-                getDefaultLedgerReportingRepository().then((repository) =>
-                  repository.getActorContext(nextExpense.journeyId),
-                ),
-                getDefaultLedgerReportingRepository().then((repository) =>
-                  repository.listJourneys(),
-                ),
-                getDefaultLedgerSettlementRepository().then((repository) =>
-                  repository.isExpenseFinalized(nextExpense.journeyId, nextExpense.id),
-                ),
-              ]);
+            if (!nextExpense)
+              return [null, false, "Traveller", 0, null, 0, null] as const;
+            const [
+              nextHasOpenConflict,
+              members,
+              receipts,
+              actor,
+              journeys,
+              settlement,
+              findings,
+            ] = await Promise.all([
+              getDefaultLedgerReportingRepository().then((repository) =>
+                repository.hasOpenConflict(id),
+              ),
+              getDefaultLedgerReadRepository().then((repository) =>
+                repository.listMembers(nextExpense.journeyId),
+              ),
+              getDefaultLedgerReceiptRepository().then((repository) =>
+                repository.listReceipts(nextExpense.journeyId),
+              ),
+              getDefaultLedgerReportingRepository().then((repository) =>
+                repository.getActorContext(nextExpense.journeyId),
+              ),
+              getDefaultLedgerReportingRepository().then((repository) =>
+                repository.listJourneys(),
+              ),
+              getDefaultLedgerSettlementRepository().then((repository) =>
+                repository.isExpenseFinalized(nextExpense.journeyId, nextExpense.id),
+              ),
+              getDefaultLedgerReviewRepository().then((repository) =>
+                repository.list(nextExpense.journeyId),
+              ),
+            ]);
             const journey = journeys.find(
               (item) => item.journeyId === nextExpense.journeyId,
             );
@@ -96,6 +108,13 @@ export function LedgerExpenseDetailScreen() {
                 ?.displayName ?? "Traveller",
               receipts.filter((receipt) => receipt.expenseId === nextExpense.id).length,
               estimates.get(nextExpense.id) ?? null,
+              findings.filter(
+                (finding) =>
+                  finding.origin === "HUMAN" &&
+                  finding.lifecycle === "ACTIVE" &&
+                  (finding.expenseId === nextExpense.id ||
+                    finding.expenseId === nextExpense.serverId),
+              ).length,
               {
                 currency,
                 scale,
@@ -115,6 +134,7 @@ export function LedgerExpenseDetailScreen() {
               nextPayerName,
               nextReceiptCount,
               nextEstimate,
+              nextReviewFlagCount,
               access,
             ]) => {
               if (!active) return;
@@ -123,6 +143,7 @@ export function LedgerExpenseDetailScreen() {
               setPayerName(nextPayerName);
               setReceiptCount(nextReceiptCount);
               setEstimate(nextEstimate);
+              setReviewFlagCount(nextReviewFlagCount);
               if (access) setFxAccess(access);
             },
           )
@@ -245,7 +266,7 @@ export function LedgerExpenseDetailScreen() {
       ],
     );
   };
-  const raiseConcern = async (targetMemberId?: string) => {
+  const raiseConcern = async (note: string) => {
     if (raisingReview) return;
     if (!expense.serverRevision) {
       setReviewMessage("Save this Expense to the Journey before adding it to Review.");
@@ -256,18 +277,17 @@ export function LedgerExpenseDetailScreen() {
       await (
         await getDefaultLedgerReviewRepository()
       ).raise(expense.journeyId, {
-        targetType: targetMemberId ? "EXPENSE_SHARE" : "EXPENSE",
+        targetType: "EXPENSE",
         expenseId: expense.serverId ?? expense.id,
-        targetMemberId: targetMemberId ?? null,
+        targetMemberId: null,
         personalPaymentId: null,
         settlementId: null,
         sourceRevision: expense.serverRevision,
-        note: null,
-        targetTitle: targetMemberId
-          ? `${expense.title} · ${participantNames.get(targetMemberId) ?? "Traveller"} share`
-          : expense.title,
+        note,
+        targetTitle: expense.title,
       });
       setReviewMessage("Added to Review");
+      setReviewFlagCount((count) => count + 1);
       kickLedgerOperationalSync();
     } catch (error) {
       setReviewMessage(
@@ -277,6 +297,19 @@ export function LedgerExpenseDetailScreen() {
       setRaisingReview(false);
     }
   };
+  const promptForConcern = () =>
+    Alert.prompt(
+      "Something looks wrong",
+      "Add an optional note. It will be used as the Review title.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Add to Review",
+          onPress: (note?: string) => void raiseConcern(note ?? ""),
+        },
+      ],
+      "plain-text",
+    );
   return (
     <ScrollView contentContainerStyle={styles.content}>
       {expense.syncStatus !== "SYNCED" ? (
@@ -291,6 +324,11 @@ export function LedgerExpenseDetailScreen() {
         {expense.category} ·{" "}
         {formatLedgerDate(expense.economicDate ?? expense.occurredAt)}
       </Text>
+      {reviewFlagCount ? (
+        <Text accessibilityLiveRegion="polite" style={styles.reviewFlag}>
+          Flagged for review{reviewFlagCount > 1 ? ` · ${reviewFlagCount} open` : ""}
+        </Text>
+      ) : null}
       <View style={styles.actions}>
         {!fxAccess.locked ? (
           <Pressable
@@ -320,21 +358,7 @@ export function LedgerExpenseDetailScreen() {
             <Text style={styles.actionText}>Attach Receipt</Text>
           </Pressable>
         ) : null}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: raisingReview }}
-          disabled={raisingReview}
-          onPress={() => void raiseConcern()}
-          style={styles.action}
-        >
-          <Text style={styles.actionText}>Something looks wrong</Text>
-        </Pressable>
       </View>
-      {reviewMessage ? (
-        <Text accessibilityLiveRegion="polite" style={styles.saved}>
-          {reviewMessage}
-        </Text>
-      ) : null}
       {fxAccess.locked ? (
         <Text style={styles.meta}>
           {chinese
@@ -411,29 +435,19 @@ export function LedgerExpenseDetailScreen() {
       </Section>
       <Section label="EXACT SPLITS">
         {expense.splits.map((split) => (
-          <View key={split.memberId}>
-            <View style={[styles.split, largeText && styles.stack]}>
-              <Text style={styles.splitName}>
-                {participantNames.get(split.memberId) ?? "Traveller"}
-              </Text>
-              <Text style={styles.splitAmount}>
-                {split.settlementMinor === null || !valuation
-                  ? `${expense.original.currency} original ${formatLedgerMoney(split.originalMinor, expense.original.currency, expense.original.scale)}`
-                  : formatLedgerMoney(
-                      split.settlementMinor,
-                      valuation.settlement.currency,
-                      valuation.settlement.scale,
-                    )}
-              </Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: raisingReview }}
-              disabled={raisingReview}
-              onPress={() => void raiseConcern(split.memberId)}
-            >
-              <Text style={styles.change}>Something looks wrong</Text>
-            </Pressable>
+          <View key={split.memberId} style={[styles.split, largeText && styles.stack]}>
+            <Text style={styles.splitName}>
+              {participantNames.get(split.memberId) ?? "Traveller"}
+            </Text>
+            <Text style={styles.splitAmount}>
+              {split.settlementMinor === null || !valuation
+                ? `${expense.original.currency} original ${formatLedgerMoney(split.originalMinor, expense.original.currency, expense.original.scale)}`
+                : formatLedgerMoney(
+                    split.settlementMinor,
+                    valuation.settlement.currency,
+                    valuation.settlement.scale,
+                  )}
+            </Text>
           </View>
         ))}
       </Section>
@@ -493,6 +507,22 @@ export function LedgerExpenseDetailScreen() {
           </Text>
         )}
       </Section>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: raisingReview }}
+        disabled={raisingReview}
+        onPress={promptForConcern}
+        style={[styles.action, styles.reviewAction]}
+      >
+        <Text style={styles.actionText}>
+          {raisingReview ? "Adding to Review…" : "Something looks wrong"}
+        </Text>
+      </Pressable>
+      {reviewMessage ? (
+        <Text accessibilityLiveRegion="polite" style={styles.saved}>
+          {reviewMessage}
+        </Text>
+      ) : null}
     </ScrollView>
   );
 }
@@ -519,6 +549,18 @@ const styles = StyleSheet.create({
     padding: 11,
   },
   actionText: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
+  reviewAction: { alignItems: "center" },
+  reviewFlag: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FFF7DB",
+    borderRadius: 12,
+    color: "#7C5B00",
+    fontSize: 12,
+    fontWeight: "700",
+    overflow: "hidden",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
   warning: { backgroundColor: "#FFF7DB", borderRadius: 10, gap: 4, padding: 13 },
   warningTitle: { color: "#7C5B00", fontWeight: "700" },
   saved: { color: "#64748B", fontSize: 13 },

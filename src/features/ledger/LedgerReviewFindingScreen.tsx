@@ -58,9 +58,6 @@ export function LedgerReviewFindingScreen() {
             What we observed
           </Text>
           <Text style={styles.body}>{copy.why}</Text>
-          {finding.origin === "HUMAN" && finding.humanNote ? (
-            <Text style={styles.body}>{finding.humanNote}</Text>
-          ) : null}
           {evidence.map(([label, description]) => (
             <View key={label} style={styles.evidenceRow}>
               <Text style={styles.meta}>{label}</Text>

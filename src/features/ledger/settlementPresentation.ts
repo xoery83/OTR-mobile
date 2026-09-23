@@ -88,6 +88,8 @@ const findingCopy: Record<string, { title: string; why: string }> = {
 };
 
 export function reviewFindingCopy(finding: LedgerReviewFinding) {
+  if (finding.origin === "HUMAN" && finding.humanNote?.trim())
+    return { ...findingCopy.HUMAN_CONCERN, title: finding.humanNote.trim() };
   return (
     findingCopy[finding.findingType] ?? {
       title: finding.findingType

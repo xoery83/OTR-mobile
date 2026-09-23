@@ -57,6 +57,58 @@ export function buildSettlementCategories(
   );
 }
 
+export function buildFinalizedSettlementCategories(
+  inputs: Stage7Finalized["inputs"],
+  expenses: LedgerExpense[],
+  memberId: string | null,
+  kind: "SPENDING" | "SHARES",
+) {
+  const expensesById = new Map(
+    expenses.flatMap((expense) => [
+      [expense.id, expense] as const,
+      ...(expense.serverId ? ([[expense.serverId, expense]] as const) : []),
+    ]),
+  );
+  const rows = inputs.flatMap<LedgerReportListItem>((input) => {
+    const expense = expensesById.get(input.expenseId);
+    const split = input.splits.find((item) => item.member.memberId === memberId);
+    const componentMinor =
+      kind === "SPENDING"
+        ? input.payer.memberId === memberId
+          ? input.settlement.minor
+          : null
+        : (split?.settlementMinor ?? null);
+    if (componentMinor === null) return [];
+    return [
+      {
+        id: expense?.id ?? input.expenseId,
+        title: expense?.title ?? "Expense",
+        category: expense?.category ?? "other",
+        occurredAt: expense?.occurredAt ?? "",
+        payerMemberId: input.payer.memberId,
+        payerName: input.payer.displayNameSnapshot,
+        originalMinor: input.original.minor,
+        originalComponentMinor:
+          kind === "SPENDING" ? input.original.minor : (split?.originalMinor ?? null),
+        originalCurrency: input.original.currency,
+        originalScale: input.original.scale,
+        settlementMinor: input.settlement.minor,
+        settlementCurrency: input.settlement.currency,
+        settlementScale: input.settlement.scale,
+        componentMinor,
+        participantCount: input.splits.length,
+        businessStatus: "ACCEPTED",
+        settlementParticipation: "INCLUDED",
+        syncStatus: "SYNCED",
+        hasReceipt: false,
+        hasOpenConflict: false,
+        isAuthoritative: true,
+      },
+    ];
+  });
+  return buildSettlementCategories(rows, expenses, memberId);
+}
+
 export function currentSettlementTransfers(
   finalized: Stage7Finalized | null,
   preview: Stage7Preview | null,
@@ -122,6 +174,12 @@ export function visiblePersonalPayments(
 
 export function memberName(members: SettlementMember[], id: string | null) {
   return members.find((member) => member.id === id)?.label ?? "Traveller";
+}
+
+export function settlementCacheMessage(online: boolean, content: "data" | "details") {
+  return online
+    ? `Settlement refresh unavailable · showing saved ${content}`
+    : `Offline · showing cached Settlement ${content}`;
 }
 
 export function membersWithActorFirst(

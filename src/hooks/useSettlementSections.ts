@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
+import { useNetworkState } from "expo-network";
 
+import type { FinalizedSettlementDto } from "@/data/api/ledgerSettlementContracts";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
@@ -8,13 +10,20 @@ import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLed
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
-import { buildSettlementCategories } from "@/features/ledger/settlementSections";
+import {
+  buildFinalizedSettlementCategories,
+  buildSettlementCategories,
+  settlementCacheMessage,
+} from "@/features/ledger/settlementSections";
 
 export function useSettlementSections(
   journeyId: string | undefined,
   actorMemberId: string | null,
   isOrganizer: boolean,
+  finalized: FinalizedSettlementDto | null,
 ) {
+  const network = useNetworkState();
+  const online = network.isConnected !== false && network.isInternetReachable !== false;
   const [members, setMembers] = useState<{ id: string; label: string }[]>([]);
   const [expenses, setExpenses] = useState<LedgerExpense[]>([]);
   const [payments, setPayments] = useState<LocalPersonalPayment[]>([]);
@@ -40,8 +49,15 @@ export function useSettlementSections(
           getDefaultLedgerReviewRepository(),
         ]);
       const [options, nextExpenses, nextPayments, counts] = await Promise.all([
-        reporting.listFilterOptions(journeyId),
-        expenseRepository.listExpensesForJourney(journeyId),
+        finalized
+          ? Promise.resolve({
+              members: finalized.balances.map((balance) => ({
+                id: balance.memberId,
+                label: balance.displayNameSnapshot,
+              })),
+            })
+          : reporting.listFilterOptions(journeyId),
+        expenseRepository.listExpensesForJourney(journeyId, Boolean(finalized)),
         paymentRepository.listForJourney(journeyId),
         reviewRepository.counts(journeyId),
       ]);
@@ -63,7 +79,7 @@ export function useSettlementSections(
       sharesMemberRef.current = sharesId;
       setSpendingMemberId(spendingId);
       setSharesMemberId(sharesId);
-      if (spendingId || sharesId) {
+      if (!finalized && (spendingId || sharesId)) {
         const loadRows = async (kind: "SPENDING" | "SHARES", memberId: string) => {
           const query = {
             journeyId,
@@ -83,15 +99,15 @@ export function useSettlementSections(
       }
       setMessage(null);
     } catch {
-      setMessage("Offline · showing cached Settlement details");
+      setMessage(settlementCacheMessage(online, "details"));
     } finally {
       setLoading(false);
     }
-  }, [actorMemberId, journeyId]);
+  }, [actorMemberId, finalized, journeyId, online]);
 
   const loadMember = useCallback(
     async (kind: "SPENDING" | "SHARES", memberId: string | null) => {
-      if (!journeyId || !memberId) return;
+      if (!journeyId || !memberId || finalized) return;
       try {
         const reporting = await getDefaultLedgerReportingRepository();
         const query = {
@@ -111,7 +127,7 @@ export function useSettlementSections(
         setMessage("Saved Settlement details remain available.");
       }
     },
-    [journeyId],
+    [finalized, journeyId],
   );
 
   useFocusEffect(
@@ -141,16 +157,22 @@ export function useSettlementSections(
     message,
     spendingMemberId: effectiveSpendingMemberId,
     sharesMemberId: effectiveSharesMemberId,
-    spendingCategories: buildSettlementCategories(
-      spendingRows,
-      expenses,
-      effectiveSpendingMemberId,
-    ),
-    shareCategories: buildSettlementCategories(
-      shareRows,
-      expenses,
-      effectiveSharesMemberId,
-    ),
+    spendingCategories: finalized
+      ? buildFinalizedSettlementCategories(
+          finalized.inputs,
+          expenses,
+          effectiveSpendingMemberId,
+          "SPENDING",
+        )
+      : buildSettlementCategories(spendingRows, expenses, effectiveSpendingMemberId),
+    shareCategories: finalized
+      ? buildFinalizedSettlementCategories(
+          finalized.inputs,
+          expenses,
+          effectiveSharesMemberId,
+          "SHARES",
+        )
+      : buildSettlementCategories(shareRows, expenses, effectiveSharesMemberId),
     setSpendingMemberId: isOrganizer ? selectSpendingMember : () => undefined,
     setSharesMemberId: isOrganizer ? selectSharesMember : () => undefined,
   };

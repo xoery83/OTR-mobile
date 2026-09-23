@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNetworkState } from "expo-network";
 
 import type {
   FinalizedSettlementDto,
@@ -29,6 +30,7 @@ import {
 } from "@/data/sync/ledgerSettlementCoordinator";
 import { loadEstimatedSettlement } from "@/features/ledger/loadEstimatedSettlement";
 import { unpublishedEstimateMessage } from "@/features/ledger/estimatedSettlement";
+import { settlementCacheMessage } from "@/features/ledger/settlementSections";
 
 type DisplayPreview = Awaited<ReturnType<typeof loadEstimatedSettlement>>;
 
@@ -36,6 +38,8 @@ export type Stage7Preview = SettlementPreviewResponse;
 export type Stage7Finalized = FinalizedSettlementDto;
 
 export function useStage7Settlement(journeyId?: string) {
+  const network = useNetworkState();
+  const online = network.isConnected !== false && network.isInternetReachable !== false;
   const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(null);
   const activeJourneyId = journeyId ?? selectedJourneyId ?? undefined;
   const activeJourneyRef = useRef(activeJourneyId);
@@ -159,7 +163,7 @@ export function useStage7Settlement(journeyId?: string) {
           }
         }
       } catch {
-        if (active) setMessage("Offline · showing cached Settlement data");
+        if (active) setMessage(settlementCacheMessage(online, "data"));
       } finally {
         if (active) setUpdating(false);
       }
@@ -167,7 +171,7 @@ export function useStage7Settlement(journeyId?: string) {
     return () => {
       active = false;
     };
-  }, [activeJourneyId, applyFinalizedRows]);
+  }, [activeJourneyId, applyFinalizedRows, online]);
 
   const matchesActiveJourney = loadedJourneyId === activeJourneyId;
 

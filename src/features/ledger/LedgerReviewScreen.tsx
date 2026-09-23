@@ -9,7 +9,8 @@ import { reviewFindingCopy, reviewStatusLabel } from "./settlementPresentation";
 
 export function LedgerReviewScreen() {
   const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
-  const { findings, message, loading, rechecking } = useLedgerReview(journeyId);
+  const { findings, memberNames, message, loading, rechecking } =
+    useLedgerReview(journeyId);
   const [category, setCategory] = useState<ReviewCategory>("All");
   const [expanded, setExpanded] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
@@ -147,7 +148,7 @@ export function LedgerReviewScreen() {
               <View style={styles.grow}>
                 <Text style={styles.category}>
                   {finding.origin === "HUMAN"
-                    ? "Raised by a person"
+                    ? `Raised by ${memberNames[finding.authorMemberId ?? ""] ?? "a member"}`
                     : finding.ruleCategory}
                 </Text>
                 <Text style={styles.cardTitle}>{copy.title}</Text>
