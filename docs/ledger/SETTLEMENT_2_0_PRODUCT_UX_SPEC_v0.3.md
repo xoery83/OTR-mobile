@@ -379,36 +379,48 @@ Do not over-freeze visual details before hands-on testing.
 
 Settlement uses four user-facing sections:
 
-**Summary | Spending | Shares | Payments**
+**Summary | Paid | Shares | Payments**
 
-They appear as a horizontally scrollable secondary navigation strip.
+They appear as four equal-width icon tabs, with a compact label below each icon.
+`Paid` is the member-as-payer view previously labelled `Spending`; the internal
+financial meaning is unchanged.
 
 ## 5.1 Sticky behavior
 
-Recommended mobile behavior:
+Approved mobile behavior after physical-device feedback:
 
-- The primary Ledger selector **Spending | Settlement** remains part of the Ledger header.
-- When the user scrolls down, the secondary strip  
-  **Summary | Spending | Shares | Payments**  
-  becomes sticky beneath the main header.
-- The active section updates as the user scrolls vertically.
-- Tapping a section scrolls to that section.
+- Summary, Paid, Shares and Payments are four independent views; selecting a
+  tab replaces the visible module instead of scrolling one continuous page.
+- The primary Ledger selector **Spending | Settlement** appears above the active
+  view at the top of Ledger.
+- When the user scrolls down, the secondary strip
+  **Summary | Paid | Shares | Payments**
+  becomes sticky beneath the Trip title.
+- Scrolling back to the top reveals **Spending | Settlement** again.
+- When **Spending | Settlement** is outside the viewport, the Ledger header shows
+  the active primary view as a small secondary label.
+- Tapping a Settlement tab replaces the visible module without changing the
+  current vertical scroll position.
 
 ## 5.2 Swipe behavior
 
-Do **not** use full-page left/right swipe gestures to switch between Summary / Spending / Shares / Payments.
+Do **not** use full-page left/right swipe gestures to switch between Summary / Paid / Shares / Payments.
 
-Reason:
-
-- this is one continuous information page;
-- horizontal gestures conflict with charts, category rows and horizontal controls;
-- swipe navigation makes location/context less obvious.
+Reason: horizontal gestures conflict with charts, category rows and horizontal
+controls, and swipe navigation makes location/context less obvious.
 
 Horizontal finger movement should only scroll the navigation strip or controls that visually indicate horizontal scrolling.
 
 ---
 
 # 6. Section 1 — Summary
+
+The page begins directly with the green `FINAL BALANCE` / `CURRENT BALANCE`
+lead inside the balance module. Do not repeat `Summary` as a content heading.
+
+All four Settlement views use this same pale-green lead-card treatment: rounded
+container, consistent inset, green semantic heading, and any applicable selector
+on the heading row. Lists and secondary detail remain below the lead card.
 
 Summary is the primary personal settlement dashboard.
 
@@ -567,6 +579,14 @@ Default:
 
 Organizer may select another member.
 
+The member selector is a dropdown beside the section title. **Me** is always
+the first option; do not use a horizontally scrolling row of member chips.
+
+The content begins directly with the green dynamic lead (`PAID BY ME` or
+`PAID BY {MEMBER}`) and the member dropdown on its right. Do not repeat
+`Spending` or `Paid` as a content heading. The lead, dropdown, total and count
+sit together in the shared pale-green lead card.
+
 ---
 
 ## 7.1 Spending summary
@@ -630,6 +650,14 @@ Default member:
 ```
 
 Organizer may select another member.
+
+The member selector follows the same dropdown behavior as Spending, with
+**Me** first.
+
+The content begins directly with the green dynamic share lead (`MY SHARE` or
+`{MEMBER}'S SHARE`) and the member dropdown on its right. Do not repeat
+`Shares` as a content heading. The lead, dropdown, total and count sit together
+in the shared pale-green lead card.
 
 ---
 

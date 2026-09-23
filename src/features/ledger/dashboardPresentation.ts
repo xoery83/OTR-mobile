@@ -28,6 +28,10 @@ export function shortMemberName(label: string) {
   return label.trim().split(/\s+/)[0] || "Traveller";
 }
 
+export function isLedgerModeNavHidden(scrollY: number, modeNavBottom: number) {
+  return modeNavBottom > 0 && scrollY >= modeNavBottom;
+}
+
 export function journeyLifecycleLabel(
   journey: Pick<LedgerJourneyContext, "startDate" | "endDate">,
   today: string,

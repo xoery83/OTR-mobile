@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 
+import { AppIcon } from "@/components/AppIcon";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import { usePersonalSettlementReview } from "@/hooks/usePersonalSettlementReview";
 import { useSettlementSections } from "@/hooks/useSettlementSections";
@@ -20,23 +21,40 @@ import { PersonalPaymentSection } from "./PersonalPaymentSection";
 import {
   currentSettlementTransfers,
   memberName,
+  membersWithActorFirst,
   splitLabel,
   type SettlementCategory,
   visiblePersonalPayments,
   visibleSettlementTransfers,
 } from "./settlementSections";
 
-const sectionNames = ["Summary", "Spending", "Shares", "Payments"] as const;
-type SectionName = (typeof sectionNames)[number];
+export const settlementSectionNames = [
+  "Summary",
+  "Spending",
+  "Shares",
+  "Payments",
+] as const;
+export type SettlementSectionName = (typeof settlementSectionNames)[number];
+
+const settlementSectionTabs = [
+  { icon: "chart.pie.fill", label: "Summary", name: "Summary" },
+  { icon: "banknote.fill", label: "Paid", name: "Spending" },
+  { icon: "person.2.fill", label: "Shares", name: "Shares" },
+  { icon: "arrow.left.arrow.right", label: "Payments", name: "Payments" },
+] as const;
 
 export function SettlementReadinessScreen({
+  activeSection,
   journeyId,
   embedded = false,
-  onEmbeddedScroll,
+  onSectionChange,
+  showNavigation = true,
 }: {
+  activeSection?: SettlementSectionName;
   journeyId?: string;
   embedded?: boolean;
-  onEmbeddedScroll?: (offset: number) => void;
+  onSectionChange?: (section: SettlementSectionName) => void;
+  showNavigation?: boolean;
 }) {
   const settlement = useStage7Settlement(journeyId);
   const review = usePersonalSettlementReview(settlement.journeyId ?? journeyId);
@@ -45,21 +63,12 @@ export function SettlementReadinessScreen({
     settlement.actorMemberId,
     settlement.isOrganizer,
   );
-  const scroll = useRef<ScrollView>(null);
-  const offsets = useRef<Record<SectionName, number>>({
-    Summary: 0,
-    Spending: 0,
-    Shares: 0,
-    Payments: 0,
-  });
-  const [active, setActive] = useState<SectionName>("Summary");
+  const [localActive, setLocalActive] = useState<SettlementSectionName>("Summary");
+  const active = activeSection ?? localActive;
   const [everyone, setEveryone] = useState(false);
   const [expandedSpending, setExpandedSpending] = useState<string | null>(null);
   const [expandedShares, setExpandedShares] = useState<string | null>(null);
   const [expandedTransfer, setExpandedTransfer] = useState<string | null>(null);
-  const recordOffset = (name: SectionName, offset: number) => {
-    offsets.current = { ...offsets.current, [name]: offset };
-  };
   const currentFinal = settlement.lineage.at(-1) ?? settlement.finalized;
   const transfers = useMemo(
     () =>
@@ -92,38 +101,14 @@ export function SettlementReadinessScreen({
   if (!settlement.journeyId)
     return <Text style={styles.empty}>Choose a Journey to view Settlement.</Text>;
 
-  const nav = (
-    <ScrollView
-      accessibilityRole="tablist"
-      contentContainerStyle={styles.navContent}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.nav}
-    >
-      {sectionNames.map((name) => (
-        <Pressable
-          accessibilityRole="tab"
-          accessibilityState={{ selected: active === name }}
-          key={name}
-          onPress={() => {
-            setActive(name);
-            const offset = Math.max(0, offsets.current[name] - 52);
-            if (embedded) onEmbeddedScroll?.(offset);
-            else scroll.current?.scrollTo({ y: offset });
-          }}
-          style={[styles.navItem, active === name && styles.navItemActive]}
-        >
-          <Text style={[styles.navText, active === name && styles.navTextActive]}>
-            {name}
-          </Text>
-        </Pressable>
-      ))}
-    </ScrollView>
-  );
+  const changeSection = (section: SettlementSectionName) => {
+    if (activeSection === undefined) setLocalActive(section);
+    onSectionChange?.(section);
+  };
 
   const content = (
-    <View style={styles.sections}>
-      <SectionAnchor name="Summary" onLayout={recordOffset}>
+    <View style={[styles.sections, !embedded && styles.standaloneSections]}>
+      {active === "Summary" ? (
         <SummarySection
           paymentCount={
             sections.payments.filter(
@@ -134,45 +119,42 @@ export function SettlementReadinessScreen({
           review={review}
           settlement={settlement}
         />
-      </SectionAnchor>
-      <SectionAnchor name="Spending" onLayout={recordOffset}>
+      ) : active === "Spending" ? (
         <ExpenseSection
           actorMemberId={settlement.actorMemberId}
           categories={sections.spendingCategories}
           empty="No shared expenses paid by this traveller yet."
           expanded={expandedSpending}
           journeyId={settlement.journeyId}
+          key="Spending"
           memberId={sections.spendingMemberId}
           members={sections.members}
           onExpand={setExpandedSpending}
           onMember={sections.setSpendingMemberId}
           organizer={settlement.isOrganizer}
-          title="Spending"
           totalLabel={`Paid by ${sections.spendingMemberId === settlement.actorMemberId ? "me" : memberName(sections.members, sections.spendingMemberId)}`}
         />
-      </SectionAnchor>
-      <SectionAnchor name="Shares" onLayout={recordOffset}>
+      ) : active === "Shares" ? (
         <ExpenseSection
           actorMemberId={settlement.actorMemberId}
           categories={sections.shareCategories}
           empty="No shared expenses are assigned to this traveller yet."
           expanded={expandedShares}
           journeyId={settlement.journeyId}
+          key="Shares"
           memberId={sections.sharesMemberId}
           members={sections.members}
           onExpand={setExpandedShares}
           onMember={sections.setSharesMemberId}
           organizer={settlement.isOrganizer}
           shares
-          title="Shares"
           totalLabel={
             sections.sharesMemberId === settlement.actorMemberId
               ? "My share"
               : `${memberName(sections.members, sections.sharesMemberId)}'s share`
           }
         />
-      </SectionAnchor>
-      <SectionAnchor name="Payments" onLayout={recordOffset}>
+      ) : (
         <PaymentsSection
           actorMemberId={settlement.actorMemberId}
           currency={
@@ -197,7 +179,7 @@ export function SettlementReadinessScreen({
           }
           transfers={visibleTransfers}
         />
-      </SectionAnchor>
+      )}
       {sections.loading ? (
         <ActivityIndicator accessibilityLabel="Loading Settlement" />
       ) : null}
@@ -208,7 +190,9 @@ export function SettlementReadinessScreen({
   if (embedded)
     return (
       <View style={styles.embedded}>
-        {nav}
+        {showNavigation ? (
+          <SettlementSectionTabs active={active} onChange={changeSection} />
+        ) : null}
         {content}
       </View>
     );
@@ -217,35 +201,44 @@ export function SettlementReadinessScreen({
     <ScrollView
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
-      onScroll={(event) => {
-        const y = event.nativeEvent.contentOffset.y + 80;
-        const next = [...sectionNames]
-          .reverse()
-          .find((name) => y >= offsets.current[name]);
-        if (next && next !== active) setActive(next);
-      }}
-      ref={scroll}
-      scrollEventThrottle={100}
-      stickyHeaderIndices={[0]}
+      stickyHeaderIndices={showNavigation ? [0] : undefined}
     >
-      {nav}
+      {showNavigation ? (
+        <SettlementSectionTabs active={active} onChange={changeSection} />
+      ) : null}
       {content}
     </ScrollView>
   );
 }
 
-function SectionAnchor({
-  children,
-  name,
-  onLayout,
+export function SettlementSectionTabs({
+  active,
+  onChange,
 }: {
-  children: React.ReactNode;
-  name: SectionName;
-  onLayout: (name: SectionName, offset: number) => void;
+  active: SettlementSectionName;
+  onChange: (section: SettlementSectionName) => void;
 }) {
   return (
-    <View onLayout={(event) => onLayout(name, event.nativeEvent.layout.y)}>
-      {children}
+    <View accessibilityRole="tablist" style={styles.nav}>
+      {settlementSectionTabs.map(({ icon, label, name }) => (
+        <Pressable
+          accessibilityLabel={label}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: active === name }}
+          key={name}
+          onPress={() => onChange(name)}
+          style={[styles.navItem, active === name && styles.navItemActive]}
+        >
+          <AppIcon
+            color={active === name ? "#0F766E" : "#64748B"}
+            name={icon}
+            size={19}
+          />
+          <Text style={[styles.navText, active === name && styles.navTextActive]}>
+            {label}
+          </Text>
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -298,11 +291,10 @@ function SummarySection({
   };
   return (
     <View style={styles.section}>
-      <Text accessibilityRole="header" style={styles.sectionTitle}>
-        Summary
-      </Text>
       <View style={styles.hero}>
-        <Text style={styles.eyebrow}>{final ? "FINAL BALANCE" : "CURRENT BALANCE"}</Text>
+        <Text accessibilityRole="header" style={styles.sectionLeadText}>
+          {final ? "FINAL BALANCE" : "CURRENT BALANCE"}
+        </Text>
         <Text style={styles.heroLabel}>
           {balanceMinor === undefined
             ? "Preparing your balance"
@@ -477,7 +469,6 @@ function ExpenseSection({
   onMember,
   organizer,
   shares = false,
-  title,
   totalLabel,
 }: {
   actorMemberId: string | null;
@@ -491,9 +482,11 @@ function ExpenseSection({
   onMember: (value: string) => void;
   organizer: boolean;
   shares?: boolean;
-  title: string;
   totalLabel: string;
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const orderedMembers = membersWithActorFirst(members, actorMemberId);
+  const selectedMember = orderedMembers.find((member) => member.id === memberId);
   const first = categories[0]?.rows[0];
   const total = categories.reduce((sum, category) => sum + category.totalMinor, 0);
   const count = categories.reduce((sum, category) => sum + category.rows.length, 0);
@@ -501,20 +494,53 @@ function ExpenseSection({
   const scale = first?.settlementScale ?? 2;
   return (
     <View style={styles.section}>
-      <Text accessibilityRole="header" style={styles.sectionTitle}>
-        {title}
-      </Text>
-      {organizer ? (
-        <MemberSelector
-          actorMemberId={actorMemberId}
-          members={members}
-          selected={memberId}
-          onSelect={onMember}
-        />
-      ) : null}
-      <View style={styles.summaryCard}>
-        <Text style={styles.eyebrow}>{totalLabel.toUpperCase()}</Text>
-        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.summaryAmount}>
+      <View style={styles.hero}>
+        <View style={styles.sectionLeadRow}>
+          <Text accessibilityRole="header" style={styles.sectionLeadText}>
+            {totalLabel.toUpperCase()}
+          </Text>
+          {organizer ? (
+            <Pressable
+              accessibilityLabel={`Selected member: ${memberId === actorMemberId ? "Me" : (selectedMember?.label ?? "Traveller")}`}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: pickerOpen }}
+              onPress={() => setPickerOpen((open) => !open)}
+              style={styles.memberPickerButton}
+            >
+              <Text numberOfLines={1} style={styles.memberPickerButtonText}>
+                {memberId === actorMemberId
+                  ? "Me"
+                  : (selectedMember?.label ?? "Traveller")}
+              </Text>
+              <Text style={styles.memberPickerChevron}>{pickerOpen ? "⌃" : "⌄"}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        {organizer && pickerOpen ? (
+          <View style={styles.memberMenu}>
+            {orderedMembers.map((member) => {
+              const selected = member.id === memberId;
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  key={member.id}
+                  onPress={() => {
+                    onMember(member.id);
+                    setPickerOpen(false);
+                  }}
+                  style={styles.memberMenuItem}
+                >
+                  <Text style={[styles.memberMenuText, selected && styles.bold]}>
+                    {member.id === actorMemberId ? "Me" : member.label}
+                  </Text>
+                  {selected ? <Text style={styles.memberMenuCheck}>✓</Text> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
+        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroAmount}>
           {formatLedgerMoney(total, currency, scale)}
         </Text>
         <Text style={styles.meta}>
@@ -629,17 +655,18 @@ function PaymentsSection({
 }) {
   return (
     <View style={styles.section}>
-      <View style={styles.titleRow}>
-        <Text accessibilityRole="header" style={styles.sectionTitle}>
-          Payments
+      <View style={styles.hero}>
+        <View style={styles.sectionLeadRow}>
+          <Text accessibilityRole="header" style={styles.sectionLeadText}>
+            RECOMMENDED TRANSFERS
+          </Text>
+          {isOrganizer ? <Toggle everyone={everyone} onChange={onEveryone} /> : null}
+        </View>
+        <Text style={styles.secondaryNote}>
+          Calculated from expenses and shares. Personal records below do not change these
+          amounts.
         </Text>
-        {isOrganizer ? <Toggle everyone={everyone} onChange={onEveryone} /> : null}
       </View>
-      <Text style={styles.subheading}>Recommended transfers</Text>
-      <Text style={styles.secondaryNote}>
-        Calculated from expenses and shares. Personal records below do not change these
-        amounts.
-      </Text>
       {transfers.map((transfer, index) => {
         const key =
           transfer.id ?? `${transfer.fromMemberId}-${transfer.toMemberId}-${index}`;
@@ -719,43 +746,6 @@ function PaymentsSection({
         </View>
       ) : null}
     </View>
-  );
-}
-
-function MemberSelector({
-  actorMemberId,
-  members,
-  selected,
-  onSelect,
-}: {
-  actorMemberId: string | null;
-  members: { id: string; label: string }[];
-  selected: string | null;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <ScrollView
-      contentContainerStyle={styles.memberSelector}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-    >
-      {members.map((member) => (
-        <Pressable
-          accessibilityRole="tab"
-          accessibilityState={{ selected: member.id === selected }}
-          key={member.id}
-          onPress={() => onSelect(member.id)}
-          style={[styles.memberChip, member.id === selected && styles.memberChipActive]}
-        >
-          <Text
-            numberOfLines={1}
-            style={[styles.memberText, member.id === selected && styles.memberTextActive]}
-          >
-            {member.id === actorMemberId ? "Me" : member.label}
-          </Text>
-        </Pressable>
-      ))}
-    </ScrollView>
   );
 }
 
@@ -874,7 +864,6 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 14,
   },
-  eyebrow: { color: "#0F766E", fontSize: 12, fontWeight: "900", letterSpacing: 0.8 },
   grow: { flex: 1, gap: 3 },
   hero: { backgroundColor: "#E7F5F2", borderRadius: 18, gap: 6, padding: 18 },
   heroAmount: { color: "#0F172A", fontSize: 36, fontWeight: "900" },
@@ -886,18 +875,37 @@ const styles = StyleSheet.create({
     paddingTop: 14,
   },
   link: { color: "#0F766E", fontSize: 14, fontWeight: "800" },
-  memberChip: {
+  memberMenu: {
+    backgroundColor: "#FFFFFF",
     borderColor: "#CBD5E1",
-    borderRadius: 999,
+    borderRadius: 12,
     borderWidth: 1,
-    maxWidth: 150,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    overflow: "hidden",
   },
-  memberChipActive: { backgroundColor: "#0F766E", borderColor: "#0F766E" },
-  memberSelector: { gap: 8, paddingVertical: 2 },
-  memberText: { color: "#334155", fontWeight: "700" },
-  memberTextActive: { color: "#FFFFFF" },
+  memberMenuCheck: { color: "#0F766E", fontSize: 16, fontWeight: "900" },
+  memberMenuItem: {
+    alignItems: "center",
+    borderBottomColor: "#E2E8F0",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 48,
+    paddingHorizontal: 14,
+  },
+  memberMenuText: { color: "#334155", flex: 1, fontSize: 15 },
+  memberPickerButton: {
+    alignItems: "center",
+    borderColor: "#CBD5E1",
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 6,
+    maxWidth: "55%",
+    minHeight: 40,
+    paddingHorizontal: 12,
+  },
+  memberPickerButtonText: { color: "#334155", flexShrink: 1, fontWeight: "700" },
+  memberPickerChevron: { color: "#64748B", fontSize: 16 },
   message: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
   meta: { color: "#64748B", fontSize: 13, lineHeight: 19 },
   moneyLine: {
@@ -909,17 +917,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     borderBottomColor: "#E2E8F0",
     borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
     zIndex: 2,
   },
-  navContent: { paddingHorizontal: 12 },
   navItem: {
+    alignItems: "center",
     borderBottomColor: "transparent",
     borderBottomWidth: 3,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
+    flex: 1,
+    gap: 3,
+    justifyContent: "center",
+    minHeight: 58,
+    paddingHorizontal: 4,
+    paddingVertical: 7,
   },
   navItemActive: { borderBottomColor: "#0F766E" },
-  navText: { color: "#64748B", fontSize: 15, fontWeight: "700" },
+  navText: { color: "#64748B", fontSize: 11, fontWeight: "700" },
   navTextActive: { color: "#0F766E" },
   notice: { backgroundColor: "#FFF7ED", borderRadius: 12, gap: 6, padding: 14 },
   noticeTitle: { color: "#9A3412", fontSize: 16, fontWeight: "800" },
@@ -927,17 +940,22 @@ const styles = StyleSheet.create({
   rowAmount: { color: "#0F172A", fontSize: 15, fontWeight: "800" },
   rowTitle: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
   secondaryNote: { color: "#64748B", fontSize: 13, lineHeight: 19 },
-  section: { gap: 12, paddingHorizontal: 16, paddingTop: 24 },
-  sectionTitle: { color: "#0F172A", fontSize: 23, fontWeight: "900" },
-  sections: { paddingBottom: 24 },
-  subheading: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 4 },
-  summaryAmount: { color: "#0F172A", fontSize: 28, fontWeight: "900" },
-  summaryCard: { backgroundColor: "#F1F5F9", borderRadius: 14, gap: 5, padding: 16 },
-  titleRow: {
+  section: { gap: 12, paddingTop: 24 },
+  sectionLeadRow: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
   },
+  sectionLeadText: {
+    color: "#0F766E",
+    flexShrink: 1,
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 0.4,
+  },
+  sections: { paddingBottom: 24 },
+  standaloneSections: { paddingHorizontal: 16 },
+  subheading: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 4 },
   toggle: {
     backgroundColor: "#E2E8F0",
     borderRadius: 10,

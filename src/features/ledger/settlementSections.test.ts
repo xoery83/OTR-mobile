@@ -7,6 +7,7 @@ import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository"
 import {
   buildSettlementCategories,
   currentSettlementTransfers,
+  membersWithActorFirst,
   splitLabel,
   visiblePersonalPayments,
   visibleSettlementTransfers,
@@ -77,6 +78,20 @@ describe("Settlement section selectors", () => {
         amount: { minor: 1_234, currency: "NZD", scale: 2 },
         legacyPaymentCount: 0,
       }),
+    ]);
+  });
+
+  it("puts Me first without changing the other member order", () => {
+    const members = [
+      { id: "member-b", label: "B" },
+      { id: "member-a", label: "A" },
+      { id: "member-c", label: "C" },
+    ];
+
+    expect(membersWithActorFirst(members, "member-a")).toEqual([
+      members[1],
+      members[0],
+      members[2],
     ]);
   });
 });

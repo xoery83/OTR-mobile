@@ -124,6 +124,16 @@ export function memberName(members: SettlementMember[], id: string | null) {
   return members.find((member) => member.id === id)?.label ?? "Traveller";
 }
 
+export function membersWithActorFirst(
+  members: SettlementMember[],
+  actorMemberId: string | null,
+) {
+  return [
+    ...members.filter((member) => member.id === actorMemberId),
+    ...members.filter((member) => member.id !== actorMemberId),
+  ];
+}
+
 export function splitLabel(method: SettlementExpenseRow["splitMethod"]) {
   return method?.startsWith("EQUAL") ? "Equal split" : method ? "Custom split" : "Split";
 }

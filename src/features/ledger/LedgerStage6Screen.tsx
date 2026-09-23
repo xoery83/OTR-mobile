@@ -51,9 +51,14 @@ import {
   type DisplayEstimate,
 } from "./displayEstimate";
 import { loadDisplayEstimates } from "./loadDisplayEstimates";
-import { SettlementReadinessScreen } from "./SettlementReadinessScreen";
+import {
+  SettlementReadinessScreen,
+  SettlementSectionTabs,
+  type SettlementSectionName,
+} from "./SettlementReadinessScreen";
 import {
   expenseAmountPresentation,
+  isLedgerModeNavHidden,
   journeyPickerSections,
   settlementPositionLabel,
   shortMemberName,
@@ -154,8 +159,7 @@ function summarizeSettlement(rows: FinalizedRows, memberId: string): SettlementS
 
 export function LedgerStage6Screen() {
   const largeText = useWindowDimensions().fontScale > 2;
-  const pageScroll = useRef<ScrollView>(null);
-  const settlementTop = useRef(0);
+  const modeNavBottom = useRef(0);
   const { refreshPersonal } = useLedgerReportingRefresh();
   const manualJourneyId = useRef<string | undefined>(undefined);
   const [request] = useState(createLatestRequest);
@@ -166,6 +170,9 @@ export function LedgerStage6Screen() {
   const [journeys, setJourneys] = useState<LedgerJourneyOption[]>([]);
   const [projection, setProjection] = useState<SpendingProjection | null>(null);
   const [mode, setMode] = useState<Mode>("SPENDING");
+  const [modeNavHidden, setModeNavHidden] = useState(false);
+  const [settlementSection, setSettlementSection] =
+    useState<SettlementSectionName>("Summary");
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [journeyPickerOpen, setJourneyPickerOpen] = useState(false);
@@ -513,7 +520,16 @@ export function LedgerStage6Screen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: "Ledger",
+          headerTitle: () => (
+            <View style={styles.headerTitleBlock}>
+              <Text style={styles.headerTitleText}>Ledger</Text>
+              {journey && modeNavHidden ? (
+                <Text style={styles.headerSubtitle}>
+                  {mode === "SPENDING" ? "Spending" : "Settlement"}
+                </Text>
+              ) : null}
+            </View>
+          ),
           headerLeft: () => <GlobalMenu journeyId={journey?.journeyId} module="LEDGER" />,
           headerRight: () => (
             <View style={styles.headerActions}>
@@ -528,12 +544,7 @@ export function LedgerStage6Screen() {
           ),
         }}
       />
-      <ScrollView
-        contentContainerStyle={[styles.content, largeText && styles.largeContent]}
-        contentInsetAdjustmentBehavior="automatic"
-        ref={pageScroll}
-        stickyHeaderIndices={[0]}
-      >
+      <View style={styles.page}>
         <View style={styles.stickyContext}>
           <Pressable
             accessibilityHint="Choose a Journey"
@@ -556,20 +567,54 @@ export function LedgerStage6Screen() {
           </Pressable>
         </View>
 
-        {journey ? (
-          <Segment value={mode} options={["SPENDING", "SETTLEMENT"]} onChange={setMode} />
-        ) : null}
+      <ScrollView
+        contentContainerStyle={[styles.content, largeText && styles.largeContent]}
+        contentInsetAdjustmentBehavior="automatic"
+        onScroll={(event) => {
+          const hidden = isLedgerModeNavHidden(
+            event.nativeEvent.contentOffset.y,
+            modeNavBottom.current,
+          );
+          setModeNavHidden((current) => (current === hidden ? current : hidden));
+        }}
+        scrollEventThrottle={16}
+        stickyHeaderIndices={journey && mode === "SETTLEMENT" ? [1] : undefined}
+      >
 
-        {message ? (
-          <Text
-            accessibilityLiveRegion="polite"
-            maxFontSizeMultiplier={2}
-            style={styles.message}
-          >
-            {message}
-          </Text>
+        <View style={styles.topControls}>
+          {journey ? (
+            <View
+              onLayout={(event) => {
+                modeNavBottom.current = event.nativeEvent.layout.height + 14;
+              }}
+            >
+              <Segment
+                value={mode}
+                options={["SPENDING", "SETTLEMENT"]}
+                onChange={setMode}
+              />
+            </View>
+          ) : null}
+
+          {message ? (
+            <Text
+              accessibilityLiveRegion="polite"
+              maxFontSizeMultiplier={2}
+              style={styles.message}
+            >
+              {message}
+            </Text>
+          ) : null}
+          {loading ? <ActivityIndicator /> : null}
+        </View>
+        {journey && mode === "SETTLEMENT" ? (
+          <View style={styles.settlementNavSticky}>
+            <SettlementSectionTabs
+              active={settlementSection}
+              onChange={setSettlementSection}
+            />
+          </View>
         ) : null}
-        {loading ? <ActivityIndicator /> : null}
         {journey ? (
           mode === "SPENDING" ? (
             <>
@@ -939,22 +984,12 @@ export function LedgerStage6Screen() {
               </DashboardSection>
             </>
           ) : (
-            <View
-              onLayout={(event) => {
-                settlementTop.current = event.nativeEvent.layout.y;
-              }}
-            >
-              <SettlementReadinessScreen
-                embedded
-                journeyId={journey.journeyId}
-                onEmbeddedScroll={(offset) =>
-                  pageScroll.current?.scrollTo({
-                    animated: true,
-                    y: settlementTop.current + offset,
-                  })
-                }
-              />
-            </View>
+            <SettlementReadinessScreen
+              activeSection={settlementSection}
+              embedded
+              journeyId={journey.journeyId}
+              showNavigation={false}
+            />
           )
         ) : (
           <Pressable
@@ -1001,6 +1036,7 @@ export function LedgerStage6Screen() {
           </View>
         ) : null}
       </ScrollView>
+      </View>
 
       <Modal
         animationType="slide"
@@ -1261,21 +1297,26 @@ function Segment<T extends string>({
 }
 
 const styles = StyleSheet.create({
+  page: { backgroundColor: "#F6F7F9", flex: 1 },
   content: {
     backgroundColor: "#F6F7F9",
     flexGrow: 1,
     gap: 14,
     padding: 16,
     paddingBottom: 40,
-    paddingTop: 0,
+    paddingTop: 14,
   },
   largeContent: { paddingBottom: 140 },
   stickyContext: {
     backgroundColor: "#EEF2F5",
-    marginHorizontal: -16,
     paddingHorizontal: 16,
   },
+  topControls: { gap: 14 },
+  settlementNavSticky: { marginHorizontal: -16 },
   headerActions: { alignItems: "center", flexDirection: "row", gap: 2 },
+  headerTitleBlock: { alignItems: "center" },
+  headerTitleText: { color: "#111827", fontSize: 17, fontWeight: "700" },
+  headerSubtitle: { color: "#94A3B8", fontSize: 11, fontWeight: "600" },
   headerButton: {
     alignItems: "center",
     justifyContent: "center",

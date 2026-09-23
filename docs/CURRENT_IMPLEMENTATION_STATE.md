@@ -2,6 +2,15 @@
 
 Date: 2026-09-23
 
+## Post-Phase-6 Settlement navigation correction — Simulator accepted; physical recheck pending
+
+- Settlement `Summary | Spending | Shares | Payments` now uses four independent tab views. Selecting a tab replaces the visible module without changing the current vertical scroll position; the previous continuous page, section anchors and scroll-following active-state logic were removed.
+- The Trip title remains fixed below the Ledger header. On Settlement, the four-tab strip sticks directly below the Trip title after `Spending | Settlement` scrolls away; returning to the top reveals the primary selector again. While that selector is off-screen, the Ledger header shows `Spending` or `Settlement` in small gray text.
+- Embedded Settlement content now uses the Ledger page's single horizontal inset instead of adding a second inset. Spending and Shares use a title-row member dropdown, with `Me` first, instead of a horizontal chip list.
+- The secondary tabs are equal-width icon-plus-label controls: `Summary | Paid | Shares | Payments`, where `Paid` is the existing payer view. Content no longer repeats the tab name; all four pages begin with a consistent green semantic lead (`FINAL/CURRENT BALANCE`, `PAID BY…`, `… SHARE`, or `RECOMMENDED TRANSFERS`) and place the applicable member/scope control on that row.
+- All four semantic leads now share the same pale-green rounded Hero container. Paid/Shares keep the member selector, total and count inside it; Payments keeps Recommended Transfers, Mine/Everyone and its explanation inside it. Detail rows remain below.
+- This is UI-only: no repository projection, financial calculation, SQLite schema, API, sync behavior or dependency changed. TypeScript, ESLint, `git diff --check`, and **92 Vitest files / 392 tests** pass. A fresh Release build succeeded and was installed over the existing iPhone 17 Pro Simulator without clearing data. The populated `Europe 2026 UI Polish` Journey visually proved all four independent views, no forced scroll on tab selection, the wider single-inset body, `Me`-first member dropdowns with isolated Spending/Shares open state, the sticky secondary strip below the Trip title, and the gray `Settlement` Ledger subtitle while the primary selector was off-screen. A new physical-device recheck has not been run; the Phase 6 device evidence below describes the preceding accepted physical build.
+
 ## Settlement 2.0 Phase 6 — complete; ready with non-blocking limitations
 
 - Automated validation passes TypeScript, ESLint, Backend build, `git diff --check`, **92 Vitest files / 390 tests**, two clean local Supabase resets, and two complete **21-file pgTAP / 455-assertion** runs. The approved schema remains **103 tables / 1,434 columns** with checksum `c85f4cad34cbdc8ec5bc4c10872db3b4cb0eb73474cd226c66a2974b370fce79`; schema diff is empty. Expo Doctor remains at the documented **20/21** because 13 installed Expo SDK 57 packages are behind expected patch releases. Repository-wide Prettier still reports only the five documented pre-existing files.

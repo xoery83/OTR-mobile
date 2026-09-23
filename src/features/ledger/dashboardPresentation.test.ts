@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   expenseAmountPresentation,
+  isLedgerModeNavHidden,
   journeyLifecycleLabel,
   journeyPickerSections,
   settlementPositionLabel,
@@ -11,6 +12,12 @@ import {
 } from "./dashboardPresentation";
 
 describe("Ledger dashboard presentation", () => {
+  it("shows the compact header label only after the primary Ledger selector leaves", () => {
+    expect(isLedgerModeNavHidden(55, 56)).toBe(false);
+    expect(isLedgerModeNavHidden(56, 56)).toBe(true);
+    expect(isLedgerModeNavHidden(100, 0)).toBe(false);
+  });
+
   it("orders members by attributed spending and shortens long names", () => {
     const members = [
       { id: "a", label: "Alexandra Wellington" },
