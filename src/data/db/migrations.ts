@@ -1090,4 +1090,12 @@ export const migrations: Migration[] = [
     sql: `ALTER TABLE ledger_personal_settlement_review_state
       ADD COLUMN coverage_json TEXT NOT NULL DEFAULT '[]';`,
   },
+  {
+    id: 30,
+    name: "settlement_2_correction_version_lineage",
+    sql: `
+      ALTER TABLE ledger_settlements ADD COLUMN correction_source_expense_id TEXT;
+      ALTER TABLE ledger_settlements ADD COLUMN correction_successor_expense_id TEXT;
+    `,
+  },
 ];

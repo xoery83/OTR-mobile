@@ -7,12 +7,18 @@ import {
   settlementAdjustmentFinalizeRequestSchema,
   settlementAdjustmentMutationResponseSchema,
   settlementAdjustmentPreviewSchema,
+  settlementCorrectionConfirmRequestSchema,
+  settlementCorrectionMutationResponseSchema,
+  settlementCorrectionPreviewRequestSchema,
+  settlementCorrectionPreviewSchema,
   settlementFinalizeResponseSchema,
   settlementPreviewSchema,
   type CorrectSettlementPaymentRequest,
   type RecordSettlementPaymentRequest,
   type SettlementPaymentActionRequest,
   type SettlementAdjustmentFinalizeRequest,
+  type SettlementCorrectionConfirmRequest,
+  type SettlementCorrectionPreviewRequest,
 } from "@/data/api/ledgerSettlementContracts";
 import { readLocalSession } from "@/data/auth/authRepository";
 import { z } from "zod";
@@ -95,6 +101,32 @@ export function createLedgerSettlementTransport(dependencies: Dependencies = {})
         `/v2/trips/${journeyId}/settlements/${rootSettlementId}/adjustments`,
         settlementAdjustmentFinalizeRequestSchema.parse(input),
         settlementAdjustmentMutationResponseSchema,
+        { "Idempotency-Key": idempotencyKey },
+      );
+    },
+
+    async previewCorrection(
+      journeyId: string,
+      rootSettlementId: string,
+      input: SettlementCorrectionPreviewRequest,
+    ) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${journeyId}/settlements/${rootSettlementId}/corrections`,
+        settlementCorrectionPreviewRequestSchema.parse(input),
+        settlementCorrectionPreviewSchema,
+      );
+    },
+
+    async confirmCorrection(
+      journeyId: string,
+      rootSettlementId: string,
+      input: SettlementCorrectionConfirmRequest,
+      idempotencyKey: string,
+    ) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${journeyId}/settlements/${rootSettlementId}/corrections/confirm`,
+        settlementCorrectionConfirmRequestSchema.parse(input),
+        settlementCorrectionMutationResponseSchema,
         { "Idempotency-Key": idempotencyKey },
       );
     },

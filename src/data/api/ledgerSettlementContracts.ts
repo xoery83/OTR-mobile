@@ -262,6 +262,8 @@ export const finalizedSettlementSchema = z.object({
     .nullable()
     .optional(),
   adjustmentReason: z.string().nullable().optional(),
+  correctionSourceExpenseId: uuid.nullable().optional(),
+  correctionSuccessorExpenseId: uuid.nullable().optional(),
   eligibilityVersion: z.string().optional(),
   status: z.enum(["FINALIZED", "PARTIALLY_PAID", "SETTLED", "SUPERSEDED"]),
   throughTimestamp: z.string(),
@@ -380,6 +382,86 @@ export const settlementAdjustmentFinalizeRequestSchema = z.object({
 
 export const settlementAdjustmentMutationResponseSchema = z.object({
   entity: finalizedSettlementSchema,
+  idempotentReplay: z.boolean(),
+});
+
+const correctionMoney = settlementMoneySchema.refine((value) => value.minor > 0);
+const correctionSuccessor = z.object({
+  localId: uuid,
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(5000).nullable(),
+  category: z.string().trim().min(1).max(80),
+  occurredAt: z.string().refine((value) => !Number.isNaN(Date.parse(value))),
+  economicDate: z.iso.date().nullable().optional(),
+  payerMemberId: uuid,
+  original: correctionMoney,
+  businessStatus: z.enum(["DRAFT", "ACCEPTED", "RATE_REQUIRED"]),
+  settlementParticipation: z.enum(["INCLUDED", "EXCLUDED"]).optional(),
+  participants: z.array(
+    z.object({
+      memberId: uuid,
+      displayNameSnapshot: z.string().trim().min(1).max(200),
+      householdIdSnapshot: uuid.nullable(),
+    }),
+  ),
+  splits: z.array(
+    z.object({
+      memberId: uuid,
+      method: z.enum([
+        "EQUAL_PERSON",
+        "EQUAL_HOUSEHOLD",
+        "HOUSEHOLD_SHARES",
+        "EXACT",
+        "PERCENTAGE",
+      ]),
+      originalMinor: z.number().int().nonnegative(),
+      settlementMinor: z.number().int().nonnegative().nullable(),
+      weightUnits: z.number().int().positive().nullable(),
+      percentageUnits: z.number().int().min(0).max(1_000_000).nullable(),
+      roundingAdjustmentMinor: z.number().int().min(-1).max(1),
+    }),
+  ),
+  valuation: z
+    .object({
+      policy: z.enum([
+        "REFERENCE_RATE",
+        "ACTUAL_PAYER_COST",
+        "MANUAL_AGREED",
+        "SAME_CURRENCY",
+        "LEGACY_IMPORTED",
+      ]),
+      original: correctionMoney,
+      settlement: correctionMoney,
+      rateSnapshotId: uuid.nullable(),
+      paymentRecordId: uuid.nullable(),
+      reason: z.string().trim().max(1000).nullable(),
+    })
+    .nullable(),
+});
+
+export const settlementCorrectionPreviewRequestSchema = z.object({
+  sourceExpenseId: uuid,
+  successor: correctionSuccessor,
+  reason: z.string().trim().min(1).max(2000),
+});
+
+export const settlementCorrectionPreviewSchema = settlementAdjustmentPreviewSchema.extend(
+  {
+    sourceExpenseId: uuid,
+    successorExpenseId: uuid,
+  },
+);
+
+export const settlementCorrectionConfirmRequestSchema =
+  settlementCorrectionPreviewRequestSchema.extend({
+    expectedHeadId: uuid.nullable(),
+    inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
+    allowZeroTransfer: z.boolean(),
+  });
+
+export const settlementCorrectionMutationResponseSchema = z.object({
+  entity: finalizedSettlementSchema,
+  successorExpenseId: uuid,
   idempotentReplay: z.boolean(),
 });
 
@@ -556,6 +638,18 @@ export type SettlementAdjustmentFinalizeRequest = z.infer<
 >;
 export type SettlementAdjustmentMutationResponse = z.infer<
   typeof settlementAdjustmentMutationResponseSchema
+>;
+export type SettlementCorrectionPreviewRequest = z.infer<
+  typeof settlementCorrectionPreviewRequestSchema
+>;
+export type SettlementCorrectionPreviewResponse = z.infer<
+  typeof settlementCorrectionPreviewSchema
+>;
+export type SettlementCorrectionConfirmRequest = z.infer<
+  typeof settlementCorrectionConfirmRequestSchema
+>;
+export type SettlementCorrectionMutationResponse = z.infer<
+  typeof settlementCorrectionMutationResponseSchema
 >;
 export type SettlementPaymentDto = z.infer<typeof settlementPaymentSchema>;
 export type RecordSettlementPaymentRequest = z.infer<

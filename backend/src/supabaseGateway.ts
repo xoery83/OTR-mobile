@@ -51,6 +51,10 @@ import type {
   SettlementAdjustmentFinalizeRequest,
   SettlementAdjustmentMutationResponse,
   SettlementAdjustmentPreviewResponse,
+  SettlementCorrectionConfirmRequest,
+  SettlementCorrectionMutationResponse,
+  SettlementCorrectionPreviewRequest,
+  SettlementCorrectionPreviewResponse,
   SettlementFinalizeResponse,
   SettlementPaymentActionRequest,
   SettlementPaymentMutationResponse,
@@ -76,6 +80,8 @@ import {
   buildSettlementPreview,
   canonicalAdjustmentInputJson,
   canonicalSettlementJson,
+  replaceSettlementExpenseSource,
+  type SettlementExpenseCandidate,
   type SettlementInputSnapshot,
   type SettlementPreviewInput,
 } from "../../src/domain/ledger/settlement";
@@ -981,6 +987,32 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       );
     },
 
+    async previewSettlementCorrection(_userId, tripId, rootSettlementId, input) {
+      return calculateSettlementCorrectionPreview(
+        service,
+        tripId,
+        rootSettlementId,
+        input,
+      );
+    },
+
+    async finalizeSettlementCorrection(
+      userId,
+      tripId,
+      rootSettlementId,
+      idempotencyKey,
+      input,
+    ) {
+      return finalizeSettlementCorrection(
+        service,
+        userId,
+        tripId,
+        rootSettlementId,
+        idempotencyKey,
+        input,
+      );
+    },
+
     async recordSettlementPayment(userId, tripId, transferId, idempotencyKey, input) {
       return recordSettlementPayment(
         service,
@@ -1864,11 +1896,45 @@ async function createLedgerExpenseAggregate(
   idempotencyKey: string,
   input: CreateLedgerExpenseRequest,
 ) {
+  const response = buildLedgerExpenseCreateResponse(userId, tripId, input);
+  await validateCanonicalExpense(service, tripId, {
+    ...response.entity,
+    status: response.entity.businessStatus,
+  });
+  const result = await service.rpc("ledger_create_expense_4a", {
+    actor_user: userId,
+    target_journey: tripId,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    response_body_value: response,
+  });
+
+  if (result.error?.message.includes("IDEMPOTENCY_CONFLICT")) {
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  }
+  if (result.error?.message.includes("FINALIZED_SETTLEMENT_PROTECTED")) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "A finalized settlement protects this mutation.",
+    );
+  }
+  if (result.error) throw new Error("Supabase Dev Ledger create failed.");
+
+  return result.data as typeof response;
+}
+
+function buildLedgerExpenseCreateResponse(
+  userId: string,
+  tripId: string,
+  input: CreateLedgerExpenseRequest,
+  serverId: string = randomUUID(),
+  valuationId: string = randomUUID(),
+) {
   const now = new Date().toISOString();
-  const serverId = randomUUID();
   const valuation = input.valuation
     ? {
-        id: randomUUID(),
+        id: valuationId,
         policy: input.valuation.policy,
         original: input.valuation.original,
         settlement: input.valuation.settlement,
@@ -1912,38 +1978,13 @@ async function createLedgerExpenseAggregate(
       },
     ],
   };
-  await validateCanonicalExpense(service, tripId, {
-    ...entity,
-    status: entity.businessStatus,
-  });
-  const response = {
+  return {
     entity,
     serverId,
     revision: 1,
     updatedAt: now,
     idempotentReplay: false,
   };
-  const result = await service.rpc("ledger_create_expense_4a", {
-    actor_user: userId,
-    target_journey: tripId,
-    idempotency_key_value: idempotencyKey,
-    payload_hash_value: hashPayload(input),
-    response_body_value: response,
-  });
-
-  if (result.error?.message.includes("IDEMPOTENCY_CONFLICT")) {
-    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
-  }
-  if (result.error?.message.includes("FINALIZED_SETTLEMENT_PROTECTED")) {
-    throw new BackendError(
-      409,
-      "SETTLEMENT_INPUT_STALE",
-      "A finalized settlement protects this mutation.",
-    );
-  }
-  if (result.error) throw new Error("Supabase Dev Ledger create failed.");
-
-  return result.data as typeof response;
 }
 
 async function createFinalizedSettlementGuardFixture(
@@ -3578,6 +3619,10 @@ async function calculateSettlementAdjustmentPreview(
   service: SupabaseClient,
   tripId: string,
   rootSettlementId: string,
+  correction?: {
+    sourceExpenseId: string;
+    successor: SettlementExpenseCandidate;
+  },
 ) {
   const root = await readOneFinalizedSettlement(service, tripId, rootSettlementId);
   if (!root || root.kind === "ADJUSTMENT") {
@@ -3589,7 +3634,16 @@ async function calculateSettlementAdjustmentPreview(
   if (sourceResult.error || !sourceResult.data) {
     throw new Error("Supabase Dev Adjustment source failed.");
   }
-  const source = normalizeSettlementSource(sourceResult.data as SettlementPreviewInput);
+  const canonicalSource = normalizeSettlementSource(
+    sourceResult.data as SettlementPreviewInput,
+  );
+  const source = correction
+    ? replaceSettlementExpenseSource(
+        canonicalSource,
+        correction.sourceExpenseId,
+        correction.successor,
+      )
+    : canonicalSource;
   const current = buildSettlementPreview(source);
   const adjustmentRows = await service
     .from("settlements")
@@ -3629,6 +3683,16 @@ async function calculateSettlementAdjustmentPreview(
     : null;
   if (headRow && !head) throw new Error("Canonical Adjustment head is missing.");
   const priorInputs = head?.inputs ?? root.inputs;
+  if (
+    correction &&
+    !priorInputs.some((item) => item.expenseId === correction.sourceExpenseId)
+  ) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The correction source is not in the current confirmed version.",
+    );
+  }
   const digestValue = (inputs: SettlementInputSnapshot[]) =>
     createHash("sha256")
       .update(
@@ -3764,6 +3828,133 @@ async function finalizeSettlementAdjustment(
   );
   if (!entity) throw new Error("Canonical Adjustment was not found after finalization.");
   return { entity, idempotentReplay: finalized.idempotentReplay };
+}
+
+function settlementCorrectionCandidate(
+  input: SettlementCorrectionPreviewRequest,
+): SettlementExpenseCandidate {
+  const successor = input.successor;
+  return {
+    id: successor.localId,
+    revision: 1,
+    occurredAt: successor.occurredAt,
+    businessStatus: successor.businessStatus,
+    settlementParticipation: successor.settlementParticipation ?? "INCLUDED",
+    hasOpenConflict: false,
+    payerMemberId: successor.payerMemberId,
+    original: successor.original,
+    participants: successor.participants.map(({ memberId, displayNameSnapshot }) => ({
+      memberId,
+      displayNameSnapshot,
+    })),
+    splits: successor.splits,
+    valuation: successor.valuation
+      ? { id: successor.localId, ...successor.valuation }
+      : null,
+  };
+}
+
+async function calculateSettlementCorrectionPreview(
+  service: SupabaseClient,
+  tripId: string,
+  rootSettlementId: string,
+  input: SettlementCorrectionPreviewRequest,
+): Promise<SettlementCorrectionPreviewResponse> {
+  const calculated = await calculateSettlementAdjustmentPreview(
+    service,
+    tripId,
+    rootSettlementId,
+    {
+      sourceExpenseId: input.sourceExpenseId,
+      successor: settlementCorrectionCandidate(input),
+    },
+  );
+  return {
+    ...calculated.response,
+    sourceExpenseId: input.sourceExpenseId,
+    successorExpenseId: input.successor.localId,
+  };
+}
+
+async function finalizeSettlementCorrection(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  rootSettlementId: string,
+  idempotencyKey: string,
+  input: SettlementCorrectionConfirmRequest,
+): Promise<SettlementCorrectionMutationResponse> {
+  const calculated = await calculateSettlementAdjustmentPreview(
+    service,
+    tripId,
+    rootSettlementId,
+    {
+      sourceExpenseId: input.sourceExpenseId,
+      successor: settlementCorrectionCandidate(input),
+    },
+  );
+  const preview = calculated.response;
+  const successorResponse = buildLedgerExpenseCreateResponse(
+    userId,
+    tripId,
+    input.successor,
+    input.successor.localId,
+    input.successor.localId,
+  );
+  await validateCanonicalExpense(service, tripId, {
+    ...successorResponse.entity,
+    status: successorResponse.entity.businessStatus,
+  });
+  const result = await service.rpc("ledger_finalize_correction_4a", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_root: rootSettlementId,
+    source_expense: input.sourceExpenseId,
+    successor_response: successorResponse,
+    expected_head: input.expectedHeadId,
+    input_digest_value: input.inputDigest,
+    computed_input_digest_value: preview.inputDigest,
+    prior_input_digest_value: preview.priorInputDigest,
+    expected_source_value: calculated.source,
+    inputs_value: preview.inputs,
+    deltas_value: preview.balances,
+    transfers_value: preview.transfers,
+    changed_expenses_value: preview.changedExpenses,
+    reason_value: input.reason,
+    allow_zero_transfer: input.allowZeroTransfer,
+    blocked_value: preview.state === "PREVIEW_BLOCKED",
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+  });
+  const message = result.error?.message ?? "";
+  if (
+    message.includes("SETTLEMENT_INPUT_STALE") ||
+    message.includes("CORRECTION_SOURCE_STALE")
+  )
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "The correction preview is stale.",
+    );
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(403, "TRIP_WRITE_FORBIDDEN", "Organizer access is required.");
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("ZERO_TRANSFER_ACK_REQUIRED"))
+    throw new BackendError(422, "INVALID_PAYLOAD", "Confirm the zero-transfer update.");
+  if (result.error) throw new Error("Supabase Dev Settlement correction failed.");
+  const value = result.data as {
+    settlementId: string;
+    successorExpenseId: string;
+    idempotentReplay: boolean;
+  };
+  const entity = await readOneFinalizedSettlement(service, tripId, value.settlementId);
+  if (!entity) throw new Error("Corrected Settlement version was not found.");
+  return {
+    entity,
+    successorExpenseId: value.successorExpenseId,
+    idempotentReplay: value.idempotentReplay,
+  };
 }
 
 async function readPersonalSettlementPayments(
@@ -4042,42 +4233,48 @@ async function readFinalizedSettlements(
   if (settlements.error) throw new Error("Supabase Dev Settlement read failed.");
   const ids = (settlements.data ?? []).map((row) => String(row.id));
   if (!ids.length) return [];
-  const [inputs, balances, transfers, audits, adjustmentDeltas] = await Promise.all([
-    service
-      .from("settlement_inputs")
-      .select("settlement_id, normalized_snapshot")
-      .in("settlement_id", ids),
-    service
-      .from("settlement_member_balances")
-      .select(
-        "settlement_id, member_id, display_name_snapshot, paid_minor, owed_minor, transferred_minor, net_minor",
-      )
-      .in("settlement_id", ids),
-    service
-      .from("settlement_transfers")
-      .select(
-        "id, settlement_id, from_member_id, to_member_id, obligation_amount_minor, settlement_currency, settlement_scale, status, revision",
-      )
-      .in("settlement_id", ids),
-    service
-      .from("settlement_audit_events")
-      .select(
-        "id, settlement_id, event_type, actor_user_id, actor_member_id, reason, settlement_revision, transfer_id, payment_id, discharge_id, authority, created_at",
-      )
-      .in("settlement_id", ids),
-    service
-      .from("settlement_adjustment_deltas")
-      .select(
-        "settlement_id, member_id, display_name_snapshot, delta_minor, settlement_currency, settlement_scale",
-      )
-      .in("settlement_id", ids),
-  ]);
+  const [inputs, balances, transfers, audits, adjustmentDeltas, correctionLinks] =
+    await Promise.all([
+      service
+        .from("settlement_inputs")
+        .select("settlement_id, normalized_snapshot")
+        .in("settlement_id", ids),
+      service
+        .from("settlement_member_balances")
+        .select(
+          "settlement_id, member_id, display_name_snapshot, paid_minor, owed_minor, transferred_minor, net_minor",
+        )
+        .in("settlement_id", ids),
+      service
+        .from("settlement_transfers")
+        .select(
+          "id, settlement_id, from_member_id, to_member_id, obligation_amount_minor, settlement_currency, settlement_scale, status, revision",
+        )
+        .in("settlement_id", ids),
+      service
+        .from("settlement_audit_events")
+        .select(
+          "id, settlement_id, event_type, actor_user_id, actor_member_id, reason, settlement_revision, transfer_id, payment_id, discharge_id, authority, created_at",
+        )
+        .in("settlement_id", ids),
+      service
+        .from("settlement_adjustment_deltas")
+        .select(
+          "settlement_id, member_id, display_name_snapshot, delta_minor, settlement_currency, settlement_scale",
+        )
+        .in("settlement_id", ids),
+      service
+        .from("expense_correction_successors")
+        .select("correction_settlement_id, source_expense_id, successor_expense_id")
+        .in("correction_settlement_id", ids),
+    ]);
   if (
     inputs.error ||
     balances.error ||
     transfers.error ||
     audits.error ||
-    adjustmentDeltas.error
+    adjustmentDeltas.error ||
+    correctionLinks.error
   )
     throw new Error("Supabase Dev Settlement aggregate read failed.");
 
@@ -4116,6 +4313,9 @@ async function readFinalizedSettlements(
 
   return (settlements.data ?? []).map((row) => {
     const id = String(row.id);
+    const correction = (correctionLinks.data ?? []).find(
+      (item) => String(item.correction_settlement_id) === id,
+    );
     return {
       id,
       journeyId: String(row.journey_id),
@@ -4127,6 +4327,10 @@ async function readFinalizedSettlements(
       lineageSequence: Number(row.lineage_sequence ?? 0),
       priorInputDigest: row.prior_input_digest ? String(row.prior_input_digest) : null,
       adjustmentReason: row.adjustment_reason ? String(row.adjustment_reason) : null,
+      correctionSourceExpenseId: correction ? String(correction.source_expense_id) : null,
+      correctionSuccessorExpenseId: correction
+        ? String(correction.successor_expense_id)
+        : null,
       eligibilityVersion: String(
         row.eligibility_version ?? SETTLEMENT_ELIGIBILITY_VERSION,
       ),

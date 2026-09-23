@@ -29,6 +29,12 @@ function createGateway(options: { authorized?: boolean } = {}) {
     canReadTrip: vi.fn(async () => options.authorized ?? true),
     canWriteTrip: vi.fn(async () => options.authorized ?? true),
     canFinalizeSettlement: vi.fn(async () => options.authorized ?? true),
+    previewSettlementCorrection: vi.fn(async () => {
+      throw new Error("Correction preview is not configured for this test.");
+    }),
+    finalizeSettlementCorrection: vi.fn(async () => {
+      throw new Error("Correction confirmation is not configured for this test.");
+    }),
     resolveSettlementFx: vi.fn(async () => ({
       claimed: 2,
       accepted: 2,
@@ -2038,5 +2044,21 @@ describe("OTR Dev Backend", () => {
     expect((await stale.json()).error.code).toBe("REVISION_CONFLICT");
     expect(forbidden.status).toBe(403);
     expect((await forbidden.json()).error.code).toBe("PERSONAL_PAYMENT_WRITE_FORBIDDEN");
+  });
+
+  it("keeps Settlement correction commands organizer-only", async () => {
+    const { gateway } = createGateway({ authorized: false });
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(
+        `https://api.dev/v2/trips/${tripId}/settlements/70000000-0000-4000-8000-000000000001/corrections`,
+        {
+          method: "POST",
+          headers: { Authorization: "Bearer valid-token" },
+          body: "{}",
+        },
+      ),
+    );
+    expect(response.status).toBe(403);
+    expect((await response.json()).error.code).toBe("TRIP_WRITE_FORBIDDEN");
   });
 });

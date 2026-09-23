@@ -51,6 +51,8 @@ import {
   deletePersonalSettlementPaymentRequestSchema,
   recordSettlementPaymentRequestSchema,
   settlementAdjustmentFinalizeRequestSchema,
+  settlementCorrectionConfirmRequestSchema,
+  settlementCorrectionPreviewRequestSchema,
   settlementPaymentActionRequestSchema,
   settlementFinalizeRequestSchema,
   settlementPreviewRequestSchema,
@@ -66,6 +68,10 @@ import {
   type SettlementAdjustmentFinalizeRequest,
   type SettlementAdjustmentMutationResponse,
   type SettlementAdjustmentPreviewResponse,
+  type SettlementCorrectionConfirmRequest,
+  type SettlementCorrectionMutationResponse,
+  type SettlementCorrectionPreviewRequest,
+  type SettlementCorrectionPreviewResponse,
   type SettlementFinalizeResponse,
   type SettlementPaymentActionRequest,
   type SettlementPaymentMutationResponse,
@@ -236,6 +242,19 @@ export type DevBackendGateway = {
     idempotencyKey: string,
     input: SettlementAdjustmentFinalizeRequest,
   ): Promise<SettlementAdjustmentMutationResponse>;
+  previewSettlementCorrection(
+    userId: string,
+    tripId: string,
+    rootSettlementId: string,
+    input: SettlementCorrectionPreviewRequest,
+  ): Promise<SettlementCorrectionPreviewResponse>;
+  finalizeSettlementCorrection(
+    userId: string,
+    tripId: string,
+    rootSettlementId: string,
+    idempotencyKey: string,
+    input: SettlementCorrectionConfirmRequest,
+  ): Promise<SettlementCorrectionMutationResponse>;
   recordSettlementPayment(
     userId: string,
     tripId: string,
@@ -1412,6 +1431,46 @@ async function mutateSettlementAdjustment(request: Request, gateway: DevBackendG
   return json(response.idempotentReplay ? 200 : 201, response);
 }
 
+async function mutateSettlementCorrection(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/settlements\/([^/]+)\/corrections(?:\/(confirm))?$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, rootSettlementId, action] = match;
+  assertTripId(tripId);
+  assertTripId(rootSettlementId);
+  const user = await authenticate(request, gateway);
+  if (!(await gateway.canFinalizeSettlement(user.id, tripId))) {
+    throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Organizer access is required.");
+  }
+  const body = await parseBody(request);
+  if (!action) {
+    const parsed = settlementCorrectionPreviewRequestSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    return json(
+      200,
+      await gateway.previewSettlementCorrection(
+        user.id,
+        tripId,
+        rootSettlementId,
+        parsed.data,
+      ),
+    );
+  }
+  const parsed = settlementCorrectionConfirmRequestSchema.safeParse(body);
+  if (!parsed.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  const response = await gateway.finalizeSettlementCorrection(
+    user.id,
+    tripId,
+    rootSettlementId,
+    getIdempotencyKey(request),
+    parsed.data,
+  );
+  return json(response.idempotentReplay ? 200 : 201, response);
+}
+
 async function readEntity(request: Request, gateway: DevBackendGateway) {
   const url = new URL(request.url);
   if (
@@ -1729,6 +1788,14 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/settlements";
         response = await mutateLedgerSettlement(request, gateway);
+      } else if (
+        request.method === "POST" &&
+        /^\/v2\/trips\/[^/]+\/settlements\/[^/]+\/corrections(?:\/confirm)?$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/settlements/:rootId/corrections";
+        response = await mutateSettlementCorrection(request, gateway);
       } else if (
         request.method === "POST" &&
         /^\/v2\/trips\/[^/]+\/settlements\/[^/]+\/adjustments(?:\/preview)?$/.test(

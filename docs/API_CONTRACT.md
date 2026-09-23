@@ -40,6 +40,17 @@ reviewed. A first checkpoint returns `201`, replay returns `200`, and changed fi
 source returns `409 STALE_REVIEW_CHECKPOINT`; the server never substitutes a newer
 unseen statement. Personal Payment is excluded from statement and delta inputs.
 
+Settlement 2.0 Phase 4 adds Organizer-only
+`POST /v2/trips/:id/settlements/:rootId/corrections` for a stateless corrected
+source preview and `POST .../corrections/confirm` for authoritative confirmation.
+Both carry the frozen source Expense ID, a new UUID-backed successor aggregate and
+an organizer reason. Preview returns the expected lineage head, new digest, member
+deltas, transfers and blockers. Confirm additionally requires that exact head/digest
+and an idempotency key; one database transaction creates the successor, explicit
+old→new lineage and immutable Adjustment version. Ordinary mutation routes still
+reject finalized inputs with `FINALIZED_SETTLEMENT_PROTECTED`; `/reopen` remains
+rejected.
+
 Mobile must communicate through an OTR Backend API. Do not assume endpoints exist until backend is audited or implemented.
 
 Status labels:

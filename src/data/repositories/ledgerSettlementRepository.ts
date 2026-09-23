@@ -488,8 +488,9 @@ export async function applyFinalizedSettlement(
       revision, finalized_by, finalized_at, settlement_kind, root_settlement_id,
       parent_adjustment_id, lineage_sequence, prior_input_digest,
       adjustment_reason, eligibility_version, adjustment_state,
-      lineage_head_id, outstanding_balances_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      lineage_head_id, outstanding_balances_json,
+      correction_source_expense_id, correction_successor_expense_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     settlement.id,
     settlement.journeyId,
     settlement.status,
@@ -514,6 +515,8 @@ export async function applyFinalizedSettlement(
     settlement.outstandingBalances
       ? JSON.stringify(settlement.outstandingBalances)
       : null,
+    settlement.correctionSourceExpenseId ?? null,
+    settlement.correctionSuccessorExpenseId ?? null,
   );
   for (const table of [
     "ledger_settlement_inputs",
@@ -718,6 +721,8 @@ async function readSettlement(
     adjustmentState: FinalizedSettlementDto["adjustmentState"] | null;
     lineageHeadId: string | null;
     outstandingBalancesJson: string | null;
+    correctionSourceExpenseId: string | null;
+    correctionSuccessorExpenseId: string | null;
   }>(
     `SELECT id, journey_id AS journeyId, status,
       through_timestamp AS throughTimestamp,
@@ -732,7 +737,9 @@ async function readSettlement(
       lineage_sequence AS lineageSequence, prior_input_digest AS priorInputDigest,
       adjustment_reason AS adjustmentReason, eligibility_version AS eligibilityVersion,
       adjustment_state AS adjustmentState, lineage_head_id AS lineageHeadId,
-      outstanding_balances_json AS outstandingBalancesJson
+      outstanding_balances_json AS outstandingBalancesJson,
+      correction_source_expense_id AS correctionSourceExpenseId,
+      correction_successor_expense_id AS correctionSuccessorExpenseId
      FROM ledger_settlements WHERE id = ?`,
     id,
   );
@@ -960,6 +967,8 @@ async function readSettlement(
   return {
     ...settlement,
     adjustmentState: settlement.adjustmentState ?? undefined,
+    correctionSourceExpenseId: settlement.correctionSourceExpenseId,
+    correctionSuccessorExpenseId: settlement.correctionSuccessorExpenseId,
     outstandingBalances: settlement.outstandingBalancesJson
       ? JSON.parse(settlement.outstandingBalancesJson)
       : undefined,

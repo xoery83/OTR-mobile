@@ -1,5 +1,9 @@
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import { createLocalId } from "@/domain/localId";
+import type {
+  SettlementCorrectionConfirmRequest,
+  SettlementCorrectionPreviewRequest,
+} from "@/data/api/ledgerSettlementContracts";
 import { assertReplayFixtureWritable } from "@/data/repositories/replayFixtureGuard";
 
 import { createLedgerSettlementTransport } from "./ledgerSettlementTransport";
@@ -83,4 +87,41 @@ export async function queueSettlementAdjustment(
     reason,
     allowZeroTransfer,
   });
+}
+
+export async function previewSettlementCorrection(
+  journeyId: string,
+  rootSettlementId: string,
+  input: SettlementCorrectionPreviewRequest,
+) {
+  const repository = await getDefaultLedgerSettlementRepository();
+  if (await repository.hasPendingFinancialOperations(journeyId)) {
+    throw new Error("Sync pending Ledger changes before preparing corrections.");
+  }
+  return createLedgerSettlementTransport().previewCorrection(
+    journeyId,
+    rootSettlementId,
+    input,
+  );
+}
+
+export async function confirmSettlementCorrection(
+  journeyId: string,
+  rootSettlementId: string,
+  input: SettlementCorrectionConfirmRequest,
+  idempotencyKey = createLocalId("settlement-correction"),
+) {
+  assertReplayFixtureWritable(journeyId);
+  const repository = await getDefaultLedgerSettlementRepository();
+  if (!(await repository.canFinalize(journeyId))) {
+    throw new Error("Organizer settlement access is required.");
+  }
+  const response = await createLedgerSettlementTransport().confirmCorrection(
+    journeyId,
+    rootSettlementId,
+    input,
+    idempotencyKey,
+  );
+  await repository.applyFinalized(response.entity);
+  return response;
 }
