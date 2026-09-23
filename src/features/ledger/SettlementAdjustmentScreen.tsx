@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -17,6 +17,8 @@ export function SettlementAdjustmentScreen() {
   const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
   const settlement = useStage7Settlement(journeyId);
   const [reason, setReason] = useState("");
+  const [reasonError, setReasonError] = useState(false);
+  const reasonRef = useRef<TextInput>(null);
   const [titles, setTitles] = useState<Record<string, string>>({});
   const current = settlement.lineage.at(-1) ?? settlement.finalized;
 
@@ -63,7 +65,7 @@ export function SettlementAdjustmentScreen() {
           onPress={() =>
             router.push({
               pathname: "/expenses/settlement-statement",
-              params: { journeyId: settlement.journeyId },
+              params: { journeyId: settlement.journeyId, versionId: version.id },
             } as never)
           }
           style={styles.row}
@@ -88,17 +90,30 @@ export function SettlementAdjustmentScreen() {
           <TextInput
             accessibilityLabel="Reason for correction"
             multiline
-            onChangeText={setReason}
+            onChangeText={(value) => {
+              setReason(value);
+              if (value.trim()) setReasonError(false);
+            }}
             placeholder="Why is this correction needed?"
+            ref={reasonRef}
             style={styles.input}
             value={reason}
           />
+          {reasonError ? (
+            <Text accessibilityLiveRegion="polite" style={styles.error}>
+              Add a reason before choosing the confirmed Expense to correct.
+            </Text>
+          ) : null}
           {(current?.inputs ?? []).map((input) => (
             <Pressable
               accessibilityRole="button"
-              disabled={!reason.trim()}
               key={input.expenseId}
-              onPress={() =>
+              onPress={() => {
+                if (!reason.trim()) {
+                  setReasonError(true);
+                  reasonRef.current?.focus();
+                  return;
+                }
                 Alert.alert(
                   "Correct this expense?",
                   "The original confirmed version will stay unchanged.",
@@ -118,9 +133,9 @@ export function SettlementAdjustmentScreen() {
                         } as never),
                     },
                   ],
-                )
-              }
-              style={[styles.row, !reason.trim() && styles.disabled]}
+                );
+              }}
+              style={styles.row}
             >
               <View style={styles.grow}>
                 <Text style={styles.rowTitle}>
@@ -141,8 +156,8 @@ const styles = StyleSheet.create({
   body: { color: "#7C2D12", fontSize: 15, lineHeight: 22 },
   chevron: { color: "#0F766E", fontSize: 24 },
   content: { gap: 12, padding: 16, paddingBottom: 40 },
-  disabled: { opacity: 0.45 },
   empty: { color: "#64748B", padding: 20 },
+  error: { color: "#B91C1C", fontSize: 14, fontWeight: "700" },
   grow: { flex: 1, gap: 3 },
   input: {
     backgroundColor: "#FFFFFF",

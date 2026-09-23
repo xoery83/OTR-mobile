@@ -3285,10 +3285,23 @@ async function calculateSettlementPreview(
   tripId: string,
   throughTimestamp: string,
 ) {
-  const result = await service.rpc("ledger_settlement_source_7_1", {
-    target_journey: tripId,
-    through_timestamp_value: throughTimestamp,
-  });
+  const root = await service
+    .from("settlements")
+    .select("id")
+    .eq("journey_id", tripId)
+    .eq("settlement_kind", "ROOT")
+    .eq("status", "FINALIZED")
+    .limit(1)
+    .maybeSingle();
+  if (root.error) throw new Error("Supabase Dev Settlement root read failed.");
+  const result = root.data
+    ? await service.rpc("ledger_adjustment_source_7_2b", {
+        target_root: String(root.data.id),
+      })
+    : await service.rpc("ledger_settlement_source_7_1", {
+        target_journey: tripId,
+        through_timestamp_value: throughTimestamp,
+      });
   if (result.error || !result.data)
     throw new Error("Supabase Dev settlement preview failed.");
   const source = normalizeSettlementSource(result.data as SettlementPreviewInput);

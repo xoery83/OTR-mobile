@@ -14,6 +14,7 @@ export type LocalPersonalSettlementReview = PersonalSettlementReviewResponse & {
   syncStatus: "SYNCED" | "PENDING" | "SYNCING" | "CONFLICT" | "FAILED";
   pendingOperationId: string | null;
   lastErrorCode: string | null;
+  updatedAt: string;
 };
 
 type Row = {
@@ -25,12 +26,14 @@ type Row = {
   syncStatus: LocalPersonalSettlementReview["syncStatus"];
   pendingOperationId: string | null;
   lastErrorCode: string | null;
+  updatedAt: string;
 };
 
 const selectState = `SELECT statement_json AS statementJson,
   statement_fingerprint AS statementFingerprint, checkpoint_json AS checkpointJson,
   delta_json AS deltaJson, coverage_json AS coverageJson, sync_status AS syncStatus,
-  pending_operation_id AS pendingOperationId, last_error_code AS lastErrorCode
+  pending_operation_id AS pendingOperationId, last_error_code AS lastErrorCode,
+  updated_at AS updatedAt
   FROM ledger_personal_settlement_review_state`;
 
 export function createPersonalSettlementReviewRepository(
@@ -154,6 +157,7 @@ function fromRow(row: Row): LocalPersonalSettlementReview {
     syncStatus: row.syncStatus,
     pendingOperationId: row.pendingOperationId,
     lastErrorCode: row.lastErrorCode,
+    updatedAt: row.updatedAt,
   };
 }
 

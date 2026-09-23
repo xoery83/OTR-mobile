@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
@@ -15,18 +16,28 @@ import { formatLedgerMoney, formatValuationPolicy } from "./format";
 
 export function SettlementStatementScreen() {
   const largeText = useWindowDimensions().fontScale > 2;
-  const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
+  const { journeyId, versionId } = useLocalSearchParams<{
+    journeyId?: string;
+    versionId?: string;
+  }>();
   const settlement = useStage7Settlement(journeyId);
   const finalized = settlement.finalized;
-  const rows = settlement.lineage.length
+  const allRows = settlement.lineage.length
     ? settlement.lineage
     : finalized
       ? [finalized]
       : [];
+  const selected = versionId ? allRows.find((row) => row.id === versionId) : null;
+  const rows = selected ? [selected] : allRows;
+  const selectedIndex = selected
+    ? allRows.findIndex((row) => row.id === selected.id)
+    : -1;
+  const previous = selectedIndex > 0 ? allRows[selectedIndex - 1] : null;
+  const [showComparison, setShowComparison] = useState(false);
   const canExport =
     settlement.isOrganizer &&
     finalized?.adjustmentState === "CURRENT" &&
-    rows
+    allRows
       .flatMap((row) => row.transfers)
       .every(
         (transfer) =>
@@ -52,7 +63,9 @@ export function SettlementStatementScreen() {
       contentInsetAdjustmentBehavior="automatic"
     >
       <Text accessibilityRole="header" style={styles.title}>
-        Settlement statement
+        {selected
+          ? `Settlement version #${(selected.lineageSequence ?? 0) + 1}`
+          : "Settlement statement"}
       </Text>
       <Text style={styles.body}>
         This explains the accepted Expenses, allocated shares and payments behind the
@@ -64,7 +77,7 @@ export function SettlementStatementScreen() {
         </Text>
       ) : null}
 
-      {(finalized.outstandingBalances ?? []).length ? (
+      {!selected && (finalized.outstandingBalances ?? []).length ? (
         <View style={styles.section}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
             Outstanding
@@ -86,10 +99,52 @@ export function SettlementStatementScreen() {
         </View>
       ) : null}
 
+      {selected && previous ? (
+        <View style={styles.section}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setShowComparison((visible) => !visible)}
+            style={styles.secondary}
+          >
+            <Text style={styles.secondaryText}>
+              {showComparison ? "Hide comparison" : "Compare with previous version"}
+            </Text>
+          </Pressable>
+          {showComparison ? (
+            <View style={styles.card}>
+              <Text style={styles.rowTitle}>
+                Version #{(previous.lineageSequence ?? 0) + 1} → version #
+                {(selected.lineageSequence ?? 0) + 1}
+              </Text>
+              {(selected.adjustmentDeltas ?? []).map((delta) => (
+                <Text key={delta.memberId} style={styles.meta}>
+                  {delta.displayNameSnapshot}: {delta.deltaMinor >= 0 ? "+" : ""}
+                  {formatLedgerMoney(delta.deltaMinor, delta.currency, delta.scale)}
+                </Text>
+              ))}
+              {selected.correctionSourceExpenseId ? (
+                <Text style={styles.meta}>
+                  Confirmed Expense {selected.correctionSourceExpenseId.slice(0, 8)} was
+                  replaced by {selected.correctionSuccessorExpenseId?.slice(0, 8)}.
+                </Text>
+              ) : null}
+              {!selected.adjustmentDeltas?.length &&
+              !selected.correctionSourceExpenseId ? (
+                <Text style={styles.meta}>
+                  This version changed the confirmed input set from the previous digest.
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+
       {rows.map((row, index) => (
         <View key={row.id} style={styles.section}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            {index === 0 ? "Final settlement basis" : "Settlement update"}
+            {(row.lineageSequence ?? index) === 0
+              ? "Final settlement basis"
+              : "Settlement update"}
           </Text>
           {row.balances.map((balance) => (
             <View key={balance.memberId} style={styles.card}>
@@ -136,56 +191,58 @@ export function SettlementStatementScreen() {
         </View>
       ))}
 
-      <View style={styles.section}>
-        <Text accessibilityRole="header" style={styles.sectionTitle}>
-          Export
-        </Text>
-        {canExport ? (
-          <View style={styles.actions}>
-            {(["PDF", "CSV"] as const).map((format) => (
-              <Pressable
-                accessibilityRole="button"
-                disabled={settlement.busy}
-                key={format}
-                onPress={() => choosePrivacy(format, settlement.generateExport)}
-                style={styles.secondary}
-              >
-                <Text style={styles.secondaryText}>Generate {format}</Text>
-              </Pressable>
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.meta}>
-            A new export requires organizer access, an online check and all payments to be
-            received. Cached exports remain available offline.
+      {!selected ? (
+        <View style={styles.section}>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>
+            Export
           </Text>
-        )}
-        {settlement.exports.map((item) => (
-          <View
-            key={`${item.statementDigest}-${item.privacyMode}-${item.format}`}
-            style={[styles.row, largeText && styles.stack]}
-          >
-            <View style={styles.grow}>
-              <Text style={styles.rowTitle}>
-                {item.format} ·{" "}
-                {item.privacyMode === "MEMBER" ? "Member names" : "De-identified"}
-              </Text>
-              <Text style={item.isCurrent ? styles.current : styles.earlier}>
-                {item.isCurrent ? "Current" : "Earlier version"}
-              </Text>
+          {canExport ? (
+            <View style={styles.actions}>
+              {(["PDF", "CSV"] as const).map((format) => (
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={settlement.busy}
+                  key={format}
+                  onPress={() => choosePrivacy(format, settlement.generateExport)}
+                  style={styles.secondary}
+                >
+                  <Text style={styles.secondaryText}>Generate {format}</Text>
+                </Pressable>
+              ))}
             </View>
-            {settlement.isOrganizer ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => void settlement.shareExport(item)}
-                style={styles.shareButton}
-              >
-                <Text style={styles.secondaryText}>Share</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        ))}
-      </View>
+          ) : (
+            <Text style={styles.meta}>
+              A new export requires organizer access, an online check and all payments to
+              be received. Cached exports remain available offline.
+            </Text>
+          )}
+          {settlement.exports.map((item) => (
+            <View
+              key={`${item.statementDigest}-${item.privacyMode}-${item.format}`}
+              style={[styles.row, largeText && styles.stack]}
+            >
+              <View style={styles.grow}>
+                <Text style={styles.rowTitle}>
+                  {item.format} ·{" "}
+                  {item.privacyMode === "MEMBER" ? "Member names" : "De-identified"}
+                </Text>
+                <Text style={item.isCurrent ? styles.current : styles.earlier}>
+                  {item.isCurrent ? "Current" : "Earlier version"}
+                </Text>
+              </View>
+              {settlement.isOrganizer ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => void settlement.shareExport(item)}
+                  style={styles.shareButton}
+                >
+                  <Text style={styles.secondaryText}>Share</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ))}
+        </View>
+      ) : null}
     </ScrollView>
   );
 }

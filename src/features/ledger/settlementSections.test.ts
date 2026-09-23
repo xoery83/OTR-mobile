@@ -6,9 +6,12 @@ import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository"
 
 import {
   buildFinalizedSettlementCategories,
+  buildSettlementComparison,
   buildSettlementCategories,
   currentSettlementTransfers,
   membersWithActorFirst,
+  personalStatementChangesFromFinal,
+  personalStatementMatchesFinal,
   settlementCacheMessage,
   splitLabel,
   visiblePersonalPayments,
@@ -148,6 +151,152 @@ describe("Settlement section selectors", () => {
       "Settlement refresh unavailable · showing saved details",
     );
   });
+
+  it("selects one Current snapshot when it differs from the confirmed head", () => {
+    const comparison = buildSettlementComparison({
+      currentDigest: "b".repeat(64),
+      currentFingerprint: "c".repeat(64),
+      currentFreshness: "CURRENT_SERVER",
+      projectionAsOf: "2026-09-23T09:00:00.000Z",
+      confirmed: finalized("a".repeat(64)),
+      hasPendingFinancialOperations: false,
+    });
+
+    expect(comparison).toMatchObject({
+      mode: "CONFIRMED_WITH_PENDING_UPDATE",
+      freshness: "CURRENT_SERVER",
+      currentDigest: "b".repeat(64),
+      confirmedDigest: "a".repeat(64),
+      usesConfirmedSnapshot: false,
+    });
+  });
+
+  it("selects the confirmed snapshot only when the digests converge", () => {
+    const digest = "a".repeat(64);
+    const comparison = buildSettlementComparison({
+      currentDigest: digest,
+      currentFingerprint: "c".repeat(64),
+      currentFreshness: "CURRENT_SERVER",
+      projectionAsOf: "2026-09-23T09:00:00.000Z",
+      confirmed: finalized(digest),
+      hasPendingFinancialOperations: false,
+    });
+
+    expect(comparison).toMatchObject({
+      mode: "CONFIRMED_ONLY",
+      projectionAsOf: "2026-09-14T00:00:00.000Z",
+      usesConfirmedSnapshot: true,
+    });
+  });
+
+  it("trusts an exact Current statement match over a stale preview digest", () => {
+    const comparison = buildSettlementComparison({
+      currentDigest: "b".repeat(64),
+      currentFingerprint: "c".repeat(64),
+      currentFreshness: "CURRENT_SERVER",
+      projectionAsOf: "2026-09-23T09:00:00.000Z",
+      confirmed: finalized("a".repeat(64)),
+      hasPendingFinancialOperations: false,
+      currentMatchesConfirmed: true,
+    });
+
+    expect(comparison).toMatchObject({
+      mode: "CONFIRMED_ONLY",
+      usesConfirmedSnapshot: true,
+    });
+  });
+
+  it("marks a local financial write as the active Current projection", () => {
+    const digest = "a".repeat(64);
+    const comparison = buildSettlementComparison({
+      currentDigest: digest,
+      currentFingerprint: "c".repeat(64),
+      currentFreshness: "CURRENT_CACHED",
+      projectionAsOf: "2026-09-23T09:00:00.000Z",
+      confirmed: finalized(digest),
+      hasPendingFinancialOperations: true,
+    });
+
+    expect(comparison).toMatchObject({
+      mode: "CONFIRMED_WITH_PENDING_UPDATE",
+      freshness: "CURRENT_LOCAL_PENDING",
+      usesConfirmedSnapshot: false,
+    });
+  });
+
+  it("does not treat a Current +9 statement as the confirmed +2 snapshot", () => {
+    const confirmed = {
+      ...finalized("a".repeat(64)),
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      inputs: [
+        {
+          ...finalInput("expense-a", "member-a", 400, 200),
+          expenseRevision: 1,
+          valuation: { id: "valuation-a" },
+        },
+      ],
+    } as Parameters<typeof personalStatementMatchesFinal>[1];
+    const current = {
+      journeyId: "journey-a",
+      memberId: "member-a",
+      currency: "NZD",
+      scale: 2,
+      settingsRevision: 1,
+      algorithmVersion: "ledger-settlement-greedy-v1",
+      settlementId: confirmed.id,
+      settlementRevision: 1,
+      settlementInputDigest: confirmed.inputDigest,
+      paidMinor: 1_100,
+      shareMinor: 200,
+      balanceMinor: 900,
+      contributions: [],
+    } as Parameters<typeof personalStatementMatchesFinal>[0];
+
+    expect(personalStatementMatchesFinal(current, confirmed, "member-a")).toBe(false);
+  });
+
+  it("identifies the exact expenses changed since the confirmed snapshot", () => {
+    const confirmed = {
+      ...finalized("a".repeat(64)),
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      inputs: [
+        {
+          ...finalInput("expense-a", "member-a", 400, 200),
+          expenseRevision: 1,
+          valuation: { id: "valuation-a" },
+        },
+      ],
+    } as Parameters<typeof personalStatementChangesFromFinal>[1];
+    const current = {
+      contributions: [
+        {
+          expenseId: "expense-a",
+          sourceRevision: 2,
+          valuationSnapshotId: "valuation-b",
+          payerMemberId: "member-a",
+          expenseSettlementMinor: 500,
+          payerCreditMinor: 500,
+          shareMinor: 250,
+        },
+        {
+          expenseId: "expense-b",
+          sourceRevision: 1,
+          valuationSnapshotId: "valuation-c",
+          payerMemberId: "member-a",
+          expenseSettlementMinor: 300,
+          payerCreditMinor: 300,
+          shareMinor: 150,
+        },
+      ],
+    } as Parameters<typeof personalStatementChangesFromFinal>[0];
+
+    expect(personalStatementChangesFromFinal(current, confirmed, "member-a")).toEqual([
+      { expenseId: "expense-a", change: "CHANGED" },
+      { expenseId: "expense-b", change: "NEW" },
+    ]);
+  });
 });
 
 function row(category: string, componentMinor: number, id: string) {
@@ -183,4 +332,12 @@ function finalInput(
       },
     ],
   };
+}
+
+function finalized(inputDigest: string) {
+  return {
+    id: "10000000-0000-4000-8000-000000000001",
+    inputDigest,
+    finalizedAt: "2026-09-14T00:00:00.000Z",
+  } as Parameters<typeof buildSettlementComparison>[0]["confirmed"];
 }

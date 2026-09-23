@@ -1,6 +1,7 @@
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
+import type { PersonalSettlementStatement } from "@/domain/ledger/personalSettlementReview";
 import type { Stage7Finalized, Stage7Preview } from "@/hooks/useStage7Settlement";
 
 export type SettlementMember = { id: string; label: string };
@@ -25,6 +26,175 @@ export type SettlementTransferView = {
   scale: number;
   legacyPaymentCount: number;
 };
+
+export type SettlementDisplayMode =
+  "CURRENT_ONLY" | "CONFIRMED_ONLY" | "CONFIRMED_WITH_PENDING_UPDATE" | "HISTORY_VERSION";
+
+export type SettlementProjectionFreshness =
+  "CURRENT_SERVER" | "CURRENT_LOCAL_PENDING" | "CURRENT_CACHED";
+
+export type SettlementComparison = {
+  comparisonId: string;
+  mode: SettlementDisplayMode;
+  freshness: SettlementProjectionFreshness;
+  projectionAsOf: string | null;
+  currentDigest: string | null;
+  confirmedHeadId: string | null;
+  confirmedDigest: string | null;
+  usesConfirmedSnapshot: boolean;
+};
+
+export function buildSettlementComparison(input: {
+  currentDigest: string | null;
+  currentFingerprint: string | null;
+  currentFreshness: Exclude<SettlementProjectionFreshness, "CURRENT_LOCAL_PENDING">;
+  projectionAsOf: string | null;
+  confirmed: Stage7Finalized | null;
+  hasPendingFinancialOperations: boolean;
+  currentMatchesConfirmed?: boolean;
+}): SettlementComparison {
+  const confirmedDigest = input.confirmed?.inputDigest ?? null;
+  const digestDiffers = Boolean(
+    input.currentDigest && confirmedDigest && input.currentDigest !== confirmedDigest,
+  );
+  const hasCurrentChanges =
+    input.hasPendingFinancialOperations ||
+    input.currentMatchesConfirmed === false ||
+    (input.currentMatchesConfirmed === undefined && digestDiffers);
+  const mode: SettlementDisplayMode = !input.confirmed
+    ? "CURRENT_ONLY"
+    : hasCurrentChanges
+      ? "CONFIRMED_WITH_PENDING_UPDATE"
+      : "CONFIRMED_ONLY";
+  const usesConfirmedSnapshot = mode === "CONFIRMED_ONLY";
+  const freshness = input.hasPendingFinancialOperations
+    ? "CURRENT_LOCAL_PENDING"
+    : input.currentFreshness;
+  const projectionAsOf = usesConfirmedSnapshot
+    ? (input.confirmed?.finalizedAt ?? null)
+    : input.projectionAsOf;
+  const currentIdentity = input.currentDigest ?? input.currentFingerprint ?? "none";
+  const confirmedIdentity = input.confirmed
+    ? `${input.confirmed.id}:${input.confirmed.inputDigest}`
+    : "none";
+
+  return {
+    comparisonId: [
+      mode,
+      freshness,
+      projectionAsOf ?? "none",
+      currentIdentity,
+      confirmedIdentity,
+    ].join(":"),
+    mode,
+    freshness,
+    projectionAsOf,
+    currentDigest: input.currentDigest,
+    confirmedHeadId: input.confirmed?.id ?? null,
+    confirmedDigest,
+    usesConfirmedSnapshot,
+  };
+}
+
+export function personalStatementMatchesFinal(
+  statement: PersonalSettlementStatement,
+  confirmed: Stage7Finalized,
+  memberId: string,
+) {
+  const balance = personalBalanceFromFinal(confirmed, memberId);
+  if (
+    statement.currency !== balance.currency ||
+    statement.scale !== balance.scale ||
+    statement.paidMinor !== balance.paidMinor ||
+    statement.shareMinor !== balance.owedMinor ||
+    statement.balanceMinor !== balance.netMinor
+  )
+    return false;
+
+  return personalStatementChangesFromFinal(statement, confirmed, memberId).length === 0;
+}
+
+export function personalBalanceFromFinal(confirmed: Stage7Finalized, memberId: string) {
+  const paidMinor = confirmed.inputs.reduce(
+    (sum, item) => sum + (item.payer.memberId === memberId ? item.settlement.minor : 0),
+    0,
+  );
+  const shareMinor = confirmed.inputs.reduce(
+    (sum, item) =>
+      sum +
+      (item.splits.find((split) => split.member.memberId === memberId)?.settlementMinor ??
+        0),
+    0,
+  );
+  return {
+    memberId,
+    paidMinor,
+    owedMinor: shareMinor,
+    netMinor: paidMinor - shareMinor,
+    currency: confirmed.settlementCurrency,
+    scale: confirmed.settlementScale,
+  };
+}
+
+export function personalStatementChangesFromFinal(
+  statement: PersonalSettlementStatement,
+  confirmed: Stage7Finalized,
+  memberId: string,
+) {
+  const finalContributions = new Map(
+    confirmed.inputs.flatMap((item) => {
+      const payerCreditMinor =
+        item.payer.memberId === memberId ? item.settlement.minor : 0;
+      const share = item.splits.find((split) => split.member.memberId === memberId);
+      if (!payerCreditMinor && !share?.settlementMinor) return [];
+      return [
+        [
+          item.expenseId,
+          [
+            item.expenseId,
+            item.expenseRevision,
+            item.valuation.id,
+            item.payer.memberId,
+            item.settlement.minor,
+            payerCreditMinor,
+            share?.settlementMinor ?? 0,
+          ].join(":"),
+        ] as const,
+      ];
+    }),
+  );
+  const currentContributions = new Map(
+    statement.contributions.map((item) => [
+      item.expenseId,
+      [
+        item.expenseId,
+        item.sourceRevision,
+        item.valuationSnapshotId,
+        item.payerMemberId,
+        item.expenseSettlementMinor,
+        item.payerCreditMinor,
+        item.shareMinor,
+      ].join(":"),
+    ]),
+  );
+  return [...new Set([...finalContributions.keys(), ...currentContributions.keys()])]
+    .sort()
+    .flatMap((expenseId) => {
+      const before = finalContributions.get(expenseId);
+      const after = currentContributions.get(expenseId);
+      if (before === after) return [];
+      return [
+        {
+          expenseId,
+          change: !before
+            ? ("NEW" as const)
+            : !after
+              ? ("DELETED" as const)
+              : ("CHANGED" as const),
+        },
+      ];
+    });
+}
 
 export function buildSettlementCategories(
   rows: LedgerReportListItem[],
@@ -119,20 +289,17 @@ export function currentSettlementTransfers(
       amount: { minor: number; currency: string; scale: number };
     }[];
   } | null,
-  lineage: Stage7Finalized[] = [],
 ): SettlementTransferView[] {
   if (finalized)
-    return (lineage.length ? lineage : [finalized]).flatMap((version) =>
-      version.transfers.map((transfer) => ({
-        id: transfer.id,
-        fromMemberId: transfer.fromMemberId,
-        toMemberId: transfer.toMemberId,
-        amount: transfer.amount,
-        currency: version.settlementCurrency,
-        scale: version.settlementScale,
-        legacyPaymentCount: transfer.payments.length,
-      })),
-    );
+    return finalized.transfers.map((transfer) => ({
+      id: transfer.id,
+      fromMemberId: transfer.fromMemberId,
+      toMemberId: transfer.toMemberId,
+      amount: transfer.amount,
+      currency: finalized.settlementCurrency,
+      scale: finalized.settlementScale,
+      legacyPaymentCount: transfer.payments.length,
+    }));
   const source =
     preview?.state === "PREVIEW_READY" ? preview.transfers : display?.transfers;
   if (!source) return [];

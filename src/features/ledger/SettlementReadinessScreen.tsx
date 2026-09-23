@@ -19,26 +19,26 @@ import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 import { formatLedgerMoney } from "./format";
 import { PersonalPaymentSection } from "./PersonalPaymentSection";
 import {
+  buildSettlementComparison,
   currentSettlementTransfers,
   memberName,
   membersWithActorFirst,
+  personalBalanceFromFinal,
+  personalStatementChangesFromFinal,
+  personalStatementMatchesFinal,
   splitLabel,
+  type SettlementComparison,
   type SettlementCategory,
   visiblePersonalPayments,
   visibleSettlementTransfers,
 } from "./settlementSections";
 
-export const settlementSectionNames = [
-  "Summary",
-  "Spending",
-  "Shares",
-  "Payments",
-] as const;
+export const settlementSectionNames = ["Summary", "Paid", "Shares", "Payments"] as const;
 export type SettlementSectionName = (typeof settlementSectionNames)[number];
 
 const settlementSectionTabs = [
   { icon: "chart.pie.fill", label: "Summary", name: "Summary" },
-  { icon: "banknote.fill", label: "Paid", name: "Spending" },
+  { icon: "banknote.fill", label: "Paid", name: "Paid" },
   { icon: "person.2.fill", label: "Shares", name: "Shares" },
   { icon: "arrow.left.arrow.right", label: "Payments", name: "Payments" },
 ] as const;
@@ -59,11 +59,28 @@ export function SettlementReadinessScreen({
   const settlement = useStage7Settlement(journeyId);
   const review = usePersonalSettlementReview(settlement.journeyId ?? journeyId);
   const currentFinal = settlement.lineage.at(-1) ?? settlement.finalized;
+  const comparison = buildSettlementComparison({
+    currentDigest: settlement.preview?.inputDigest ?? null,
+    currentFingerprint: review.state?.statementFingerprint ?? null,
+    currentFreshness: review.source,
+    projectionAsOf: review.projectionAsOf,
+    confirmed: currentFinal,
+    hasPendingFinancialOperations: settlement.hasPendingFinancialOperations,
+    currentMatchesConfirmed:
+      review.state?.statement && currentFinal && settlement.actorMemberId
+        ? personalStatementMatchesFinal(
+            review.state.statement,
+            currentFinal,
+            settlement.actorMemberId,
+          )
+        : undefined,
+  });
+  const displayedFinal = comparison.usesConfirmedSnapshot ? currentFinal : null;
   const sections = useSettlementSections(
     settlement.journeyId,
     settlement.actorMemberId,
     settlement.isOrganizer,
-    currentFinal,
+    displayedFinal,
   );
   const [localActive, setLocalActive] = useState<SettlementSectionName>("Summary");
   const active = activeSection ?? localActive;
@@ -74,17 +91,11 @@ export function SettlementReadinessScreen({
   const transfers = useMemo(
     () =>
       currentSettlementTransfers(
-        settlement.finalized,
+        displayedFinal,
         settlement.preview,
         settlement.displayPreview,
-        settlement.lineage,
       ),
-    [
-      settlement.displayPreview,
-      settlement.finalized,
-      settlement.lineage,
-      settlement.preview,
-    ],
+    [displayedFinal, settlement.displayPreview, settlement.preview],
   );
   const visibleTransfers = visibleSettlementTransfers(
     transfers,
@@ -108,7 +119,10 @@ export function SettlementReadinessScreen({
   };
 
   const content = (
-    <View style={[styles.sections, !embedded && styles.standaloneSections]}>
+    <View
+      key={comparison.comparisonId}
+      style={[styles.sections, !embedded && styles.standaloneSections]}
+    >
       {active === "Summary" ? (
         <SummarySection
           paymentCount={
@@ -119,16 +133,18 @@ export function SettlementReadinessScreen({
           reviewCount={sections.reviewCount}
           review={review}
           settlement={settlement}
+          comparison={comparison}
+          displayedFinal={displayedFinal}
         />
-      ) : active === "Spending" ? (
+      ) : active === "Paid" ? (
         <ExpenseSection
           actorMemberId={settlement.actorMemberId}
           categories={sections.spendingCategories}
           empty="No shared expenses paid by this traveller yet."
           expanded={expandedSpending}
           journeyId={settlement.journeyId}
-          key="Spending"
-          historicalSnapshot={Boolean(currentFinal)}
+          key="Paid"
+          historicalSnapshot={Boolean(displayedFinal)}
           memberId={sections.spendingMemberId}
           members={sections.members}
           onExpand={setExpandedSpending}
@@ -144,7 +160,7 @@ export function SettlementReadinessScreen({
           expanded={expandedShares}
           journeyId={settlement.journeyId}
           key="Shares"
-          historicalSnapshot={Boolean(currentFinal)}
+          historicalSnapshot={Boolean(displayedFinal)}
           memberId={sections.sharesMemberId}
           members={sections.members}
           onExpand={setExpandedShares}
@@ -161,7 +177,7 @@ export function SettlementReadinessScreen({
         <PaymentsSection
           actorMemberId={settlement.actorMemberId}
           currency={
-            currentFinal?.settlementCurrency ??
+            displayedFinal?.settlementCurrency ??
             settlement.preview?.settlementCurrency ??
             review.state?.statement.currency ??
             "NZD"
@@ -175,7 +191,7 @@ export function SettlementReadinessScreen({
           onExpandTransfer={setExpandedTransfer}
           payments={visiblePayments}
           scale={
-            currentFinal?.settlementScale ??
+            displayedFinal?.settlementScale ??
             settlement.preview?.settlementScale ??
             review.state?.statement.scale ??
             2
@@ -247,37 +263,91 @@ export function SettlementSectionTabs({
 }
 
 function SummarySection({
+  comparison,
+  displayedFinal,
   paymentCount,
   reviewCount,
   review,
   settlement,
 }: {
+  comparison: SettlementComparison;
+  displayedFinal: ReturnType<typeof useStage7Settlement>["finalized"];
   paymentCount: number;
   reviewCount: number;
   review: ReturnType<typeof usePersonalSettlementReview>;
   settlement: ReturnType<typeof useStage7Settlement>;
 }) {
   const statement = review.state?.statement;
-  const current = settlement.lineage.at(-1) ?? settlement.finalized;
-  const finalizedBalance = current?.balances.find(
-    (balance) => balance.memberId === settlement.actorMemberId,
-  );
+  const currentFinal = settlement.lineage.at(-1) ?? settlement.finalized;
+  const finalizedBalance =
+    displayedFinal?.balances.find(
+      (balance) => balance.memberId === settlement.actorMemberId,
+    ) ??
+    (displayedFinal && settlement.actorMemberId
+      ? personalBalanceFromFinal(displayedFinal, settlement.actorMemberId)
+      : undefined);
   const estimate = settlement.displayPreview?.balances.find(
     (balance) => balance.memberId === settlement.actorMemberId,
   );
-  const balanceMinor =
-    statement?.balanceMinor ?? finalizedBalance?.netMinor ?? estimate?.minor;
+  const showingConfirmed = comparison.usesConfirmedSnapshot;
+  const hasConfirmed = Boolean(settlement.finalized);
+  const currentBalanceMinor =
+    comparison.freshness === "CURRENT_LOCAL_PENDING"
+      ? (estimate?.minor ?? statement?.balanceMinor)
+      : (statement?.balanceMinor ?? estimate?.minor);
+  const balanceMinor = showingConfirmed
+    ? finalizedBalance?.netMinor
+    : currentBalanceMinor;
   const currency =
-    statement?.currency ?? finalizedBalance?.currency ?? estimate?.currency ?? "NZD";
-  const scale = statement?.scale ?? finalizedBalance?.scale ?? estimate?.scale ?? 2;
-  const paidMinor = statement?.paidMinor ?? finalizedBalance?.paidMinor;
-  const shareMinor = statement?.shareMinor ?? finalizedBalance?.owedMinor;
-  const final = Boolean(current);
+    (showingConfirmed ? finalizedBalance?.currency : statement?.currency) ??
+    estimate?.currency ??
+    "NZD";
+  const scale =
+    (showingConfirmed ? finalizedBalance?.scale : statement?.scale) ??
+    estimate?.scale ??
+    2;
+  const paidMinor = showingConfirmed
+    ? finalizedBalance?.paidMinor
+    : comparison.freshness === "CURRENT_LOCAL_PENDING"
+      ? undefined
+      : statement?.paidMinor;
+  const shareMinor = showingConfirmed
+    ? finalizedBalance?.owedMinor
+    : comparison.freshness === "CURRENT_LOCAL_PENDING"
+      ? undefined
+      : statement?.shareMinor;
   const automaticWaiting = settlement.pendingPublicationExpenseIds.size;
   const unavailableRates = settlement.unavailableExpenseIds.size;
   const conflicts = settlement.preview?.blockers.filter(
     (blocker) => blocker.reason === "OPEN_CONFLICT",
   ).length;
+  const personalChanges =
+    statement && currentFinal && settlement.actorMemberId
+      ? personalStatementChangesFromFinal(
+          statement,
+          currentFinal,
+          settlement.actorMemberId,
+        )
+      : [];
+  const changedExpenses = settlement.adjustmentPreview?.changedExpenses.length
+    ? settlement.adjustmentPreview.changedExpenses
+    : personalChanges;
+  const hasChanges = comparison.mode === "CONFIRMED_WITH_PENDING_UPDATE";
+  const confirmedBalance =
+    currentFinal?.balances.find(
+      (balance) => balance.memberId === settlement.actorMemberId,
+    ) ??
+    (currentFinal && settlement.actorMemberId
+      ? personalBalanceFromFinal(currentFinal, settlement.actorMemberId)
+      : undefined);
+  const changeTitle = (expenseId: string) =>
+    statement?.contributions.find((item) => item.expenseId === expenseId)
+      ?.expenseTitleSnapshot ??
+    review.state?.delta?.changedExpenses.find((item) => item.expenseId === expenseId)
+      ?.newContribution?.expenseTitleSnapshot ??
+    review.state?.delta?.changedExpenses.find((item) => item.expenseId === expenseId)
+      ?.oldContribution?.expenseTitleSnapshot ??
+    `Expense ${expenseId.slice(0, 8)}`;
   const confirm = () => {
     if (settlement.preview?.state !== "PREVIEW_READY") return;
     Alert.alert(
@@ -296,7 +366,7 @@ function SummarySection({
     <View style={styles.section}>
       <View style={styles.hero}>
         <Text accessibilityRole="header" style={styles.sectionLeadText}>
-          {final ? "FINAL BALANCE" : "CURRENT BALANCE"}
+          CURRENT BALANCE
         </Text>
         <Text style={styles.heroLabel}>
           {balanceMinor === undefined
@@ -310,12 +380,16 @@ function SummarySection({
         <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroAmount}>
           {balanceMinor === undefined
             ? "—"
-            : `${settlement.displayPreview?.estimatedCount && !final ? "≈ " : ""}${formatLedgerMoney(Math.abs(balanceMinor), currency, scale)}`}
+            : `${settlement.displayPreview?.estimatedCount && !showingConfirmed ? "≈ " : ""}${formatLedgerMoney(Math.abs(balanceMinor), currency, scale)}`}
         </Text>
         <Text style={styles.meta}>
-          {final
-            ? `Confirmed ${new Date(current!.finalizedAt).toLocaleDateString()}`
-            : "Based on expenses recorded so far"}
+          {showingConfirmed
+            ? `Matches version #${(displayedFinal!.lineageSequence ?? 0) + 1} confirmed ${new Date(displayedFinal!.finalizedAt).toLocaleDateString()}`
+            : comparison.freshness === "CURRENT_LOCAL_PENDING"
+              ? "Includes changes saved on this device · waiting to sync"
+              : comparison.freshness === "CURRENT_CACHED"
+                ? "Showing saved latest calculation"
+                : "Based on expenses recorded so far"}
         </Text>
       </View>
       {paidMinor !== undefined &&
@@ -337,12 +411,108 @@ function SummarySection({
           <View style={styles.divider} />
           <MoneyLine
             emphasized
-            label={final ? "Final balance" : "Current balance"}
+            label="Current balance"
             minor={balanceMinor}
             currency={currency}
             scale={scale}
             signed
           />
+        </View>
+      ) : null}
+      {hasConfirmed ? (
+        <View style={hasChanges ? styles.notice : styles.card}>
+          <Text style={hasChanges ? styles.noticeTitle : styles.rowTitle}>
+            {hasChanges
+              ? "Changes since last confirmation"
+              : "No changes since last confirmation"}
+          </Text>
+          {hasChanges ? (
+            <>
+              {changedExpenses.slice(0, 3).map((item) => (
+                <Text key={item.expenseId} style={styles.body}>
+                  {item.change === "NEW"
+                    ? "Added"
+                    : item.change === "DELETED"
+                      ? "Removed"
+                      : "Changed"}
+                  : {changeTitle(item.expenseId)}
+                </Text>
+              ))}
+              {balanceMinor !== undefined && confirmedBalance ? (
+                <Text style={styles.body}>
+                  Your change: {balanceMinor - confirmedBalance.netMinor >= 0 ? "+" : ""}
+                  {formatLedgerMoney(
+                    balanceMinor - confirmedBalance.netMinor,
+                    currency,
+                    scale,
+                  )}
+                </Text>
+              ) : null}
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: "/expenses/settlement-update",
+                    params: { journeyId: settlement.journeyId },
+                  } as never)
+                }
+              >
+                <Text style={styles.link}>Review changes ›</Text>
+              </Pressable>
+              {settlement.isOrganizer ? (
+                <Action
+                  primary
+                  label="Review & confirm changes"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/expenses/settlement-update",
+                      params: { journeyId: settlement.journeyId },
+                    } as never)
+                  }
+                />
+              ) : null}
+            </>
+          ) : (
+            <Text style={styles.meta}>Current matches the latest confirmed version.</Text>
+          )}
+        </View>
+      ) : null}
+      {hasConfirmed && confirmedBalance && currentFinal ? (
+        <View style={styles.card}>
+          <Text style={styles.rowTitle}>Last confirmed</Text>
+          <Text style={styles.body}>
+            {formatLedgerMoney(
+              Math.abs(confirmedBalance.netMinor),
+              confirmedBalance.currency,
+              confirmedBalance.scale,
+            )}{" "}
+            · {new Date(currentFinal.finalizedAt).toLocaleDateString()} · version #
+            {(currentFinal.lineageSequence ?? 0) + 1}
+          </Text>
+          {settlement.isOrganizer ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                router.push({
+                  pathname: "/expenses/settlement-adjustment",
+                  params: { journeyId: settlement.journeyId },
+                } as never)
+              }
+            >
+              <Text style={styles.link}>Correct a confirmed expense ›</Text>
+            </Pressable>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              router.push({
+                pathname: "/expenses/settlement-statement",
+                params: { journeyId: settlement.journeyId, versionId: currentFinal.id },
+              } as never)
+            }
+          >
+            <Text style={styles.link}>Settlement history ›</Text>
+          </Pressable>
         </View>
       ) : null}
       {paymentCount ? (
@@ -439,22 +609,11 @@ function SummarySection({
         />
       ) : null}
       {settlement.isOrganizer &&
-      !final &&
+      !hasConfirmed &&
       settlement.preview?.state === "PREVIEW_READY" ? (
         <Action primary label="Confirm final amounts" onPress={confirm} />
-      ) : settlement.isOrganizer && !final ? (
+      ) : settlement.isOrganizer && !hasConfirmed ? (
         <Action label="Check final readiness" onPress={() => void settlement.prepare()} />
-      ) : null}
-      {final ? (
-        <Action
-          label={settlement.isOrganizer ? "Make corrections" : "Settlement history"}
-          onPress={() =>
-            router.push({
-              pathname: "/expenses/settlement-adjustment",
-              params: { journeyId: settlement.journeyId },
-            } as never)
-          }
-        />
       ) : null}
     </View>
   );

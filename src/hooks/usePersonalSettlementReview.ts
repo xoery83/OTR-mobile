@@ -10,6 +10,9 @@ import {
 
 export function usePersonalSettlementReview(journeyId?: string) {
   const [state, setState] = useState<LocalPersonalSettlementReview | null>(null);
+  const [source, setSource] = useState<"CURRENT_SERVER" | "CURRENT_CACHED">(
+    "CURRENT_CACHED",
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -18,8 +21,10 @@ export function usePersonalSettlementReview(journeyId?: string) {
     const repository = await getDefaultPersonalSettlementReviewRepository();
     try {
       await refreshPersonalSettlementReview(journeyId);
+      setSource("CURRENT_SERVER");
     } catch {
       // Cached statement remains useful offline.
+      setSource("CURRENT_CACHED");
     }
     setState(await repository.get(journeyId));
   }, [journeyId]);
@@ -52,5 +57,13 @@ export function usePersonalSettlementReview(journeyId?: string) {
     }
   }, [journeyId]);
 
-  return { state, busy, message, reload: load, looksGood };
+  return {
+    state,
+    source,
+    projectionAsOf: state?.updatedAt ?? null,
+    busy,
+    message,
+    reload: load,
+    looksGood,
+  };
 }

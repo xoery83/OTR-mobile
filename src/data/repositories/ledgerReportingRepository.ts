@@ -77,6 +77,11 @@ const receiptSql = `EXISTS (
 )`;
 const authoritativeSql = `(e.business_status = 'ACCEPTED'
   AND v.id IS NOT NULL AND NOT ${conflictSql})`;
+const currentLeafSql = (alias = "e") => `NOT EXISTS (
+  SELECT 1 FROM ledger_settlements settlement
+  WHERE settlement.journey_id = ${alias}.journey_id
+    AND settlement.correction_source_expense_id IN (${alias}.id, ${alias}.server_id)
+)`;
 
 function escapeLike(value: string) {
   return value.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_");
@@ -88,6 +93,7 @@ function where(query: LedgerReportQuery, userId: string, alias = "e") {
     `(${alias}.sync_status = 'SYNCED' OR ${alias}.local_owner_user_id = ?)`,
     `EXISTS (SELECT 1 FROM ledger_actor_context actor
       WHERE actor.user_id = ? AND actor.journey_id = ${alias}.journey_id)`,
+    currentLeafSql(alias),
   ];
   const params: SQLite.SQLiteBindValue[] = [query.journeyId, userId, userId];
   if (query.businessStatus) {

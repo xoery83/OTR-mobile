@@ -284,10 +284,18 @@ export function createLedgerExpenseRepository(
           AND EXISTS (SELECT 1 FROM ledger_actor_context actor
             WHERE actor.user_id = ? AND actor.journey_id = ledger_expenses.journey_id)
           AND (? = 1 OR deleted_at IS NULL)
+          AND (? = 1 OR NOT EXISTS (
+            SELECT 1 FROM ledger_settlements settlement
+            WHERE settlement.journey_id = ledger_expenses.journey_id
+              AND settlement.correction_source_expense_id IN (
+                ledger_expenses.id, ledger_expenses.server_id
+              )
+          ))
         ORDER BY occurred_at DESC, created_at DESC`,
         journeyId,
         userId,
         userId,
+        includeDeleted ? 1 : 0,
         includeDeleted ? 1 : 0,
       );
       return Promise.all(rows.map((row) => hydrateExpense(database, row)));

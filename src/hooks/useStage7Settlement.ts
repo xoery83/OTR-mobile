@@ -53,6 +53,8 @@ export function useStage7Settlement(journeyId?: string) {
   const [pendingPublicationExpenseIds, setPendingPublicationExpenseIds] = useState<
     Set<string>
   >(new Set());
+  const [hasPendingFinancialOperations, setHasPendingFinancialOperations] =
+    useState(false);
   const [finalized, setFinalized] = useState<Stage7Finalized | null>(null);
   const [lineage, setLineage] = useState<Stage7Finalized[]>([]);
   const [adjustmentPreview, setAdjustmentPreview] =
@@ -113,13 +115,15 @@ export function useStage7Settlement(journeyId?: string) {
       }
       const load = async () => {
         const repository = await getDefaultLedgerSettlementRepository();
-        const [rows, items, memberId, organizer] = await Promise.all([
-          repository.listFinalized(activeJourneyId),
-          listSettlementExports(activeJourneyId),
-          repository.getActorMemberId(activeJourneyId),
-          repository.isOrganizer(activeJourneyId),
-        ]);
-        return { rows, items, memberId, organizer };
+        const [rows, items, memberId, organizer, pendingFinancialOperations] =
+          await Promise.all([
+            repository.listFinalized(activeJourneyId),
+            listSettlementExports(activeJourneyId),
+            repository.getActorMemberId(activeJourneyId),
+            repository.isOrganizer(activeJourneyId),
+            repository.hasPendingFinancialOperations(activeJourneyId),
+          ]);
+        return { rows, items, memberId, organizer, pendingFinancialOperations };
       };
       try {
         const cached = await load();
@@ -133,9 +137,14 @@ export function useStage7Settlement(journeyId?: string) {
         setExports(cached.items);
         setActorMemberId(cached.memberId);
         setIsOrganizer(cached.organizer);
+        setHasPendingFinancialOperations(cached.pendingFinancialOperations);
         setLoadedJourneyId(activeJourneyId);
-        const display = await loadEstimatedSettlement(activeJourneyId);
-        if (active) setDisplayPreview(display);
+        try {
+          const display = await loadEstimatedSettlement(activeJourneyId);
+          if (active) setDisplayPreview(display);
+        } catch {
+          // A newly opened Journey may not exist locally until bootstrap completes below.
+        }
         if (cached.organizer) {
           const rates = await preflightSettlementFx(activeJourneyId, true);
           if (active) {
@@ -150,14 +159,25 @@ export function useStage7Settlement(journeyId?: string) {
         setExports(refreshed.items);
         setActorMemberId(refreshed.memberId);
         setIsOrganizer(refreshed.organizer);
+        setHasPendingFinancialOperations(refreshed.pendingFinancialOperations);
         setDisplayPreview(await loadEstimatedSettlement(activeJourneyId));
-        if (refreshed.organizer && refreshed.rows.length === 0) {
+        if (refreshed.organizer) {
           try {
             const current = await previewSettlement(
               activeJourneyId,
               new Date().toISOString(),
             );
             if (active) setPreview(current);
+            const root =
+              refreshed.rows.find((row) => row.kind !== "ADJUSTMENT") ??
+              refreshed.rows[0];
+            if (root) {
+              const adjustment = await previewSettlementAdjustment(
+                activeJourneyId,
+                root.id,
+              );
+              if (active) setAdjustmentPreview(adjustment);
+            }
           } catch {
             // Local informational preview remains available offline or before queue drain.
           }
@@ -191,6 +211,7 @@ export function useStage7Settlement(journeyId?: string) {
     pendingPublicationExpenseIds: matchesActiveJourney
       ? pendingPublicationExpenseIds
       : new Set<string>(),
+    hasPendingFinancialOperations: matchesActiveJourney && hasPendingFinancialOperations,
     journeyId: activeJourneyId,
     async generateExport(
       format: SettlementExportFormat,
@@ -322,7 +343,7 @@ export function useStage7Settlement(journeyId?: string) {
       }
     },
     async finalizeAdjustment(ready: SettlementAdjustmentPreviewResponse, reason: string) {
-      if (!activeJourneyId || !finalized) return;
+      if (!activeJourneyId || !finalized) return false;
       const operationJourneyId = activeJourneyId;
       setBusy(true);
       setMessage(null);
@@ -345,8 +366,10 @@ export function useStage7Settlement(journeyId?: string) {
           setAdjustmentPreview(null);
           setMessage("Settlement update saved; offline work will sync later.");
         }
+        return true;
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Adjustment failed.");
+        return false;
       } finally {
         setBusy(false);
       }

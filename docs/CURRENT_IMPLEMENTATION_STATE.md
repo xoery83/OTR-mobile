@@ -2,6 +2,87 @@
 
 Date: 2026-09-23
 
+## Settlement Final-version revision — implementation and Simulator gate complete
+
+- Summary is now ordered as Current balance, changes since last confirmation, and Last
+  confirmed. The Organizer's prominent post-Final action is inside the changes module;
+  Last confirmed has only compact correction/history links.
+- Summary, Paid, Shares, and Payments share one comparison identity and one current or
+  confirmed source family. Current values are never labelled Final. Paid is the formal
+  Settlement tab name.
+- The existing Adjustment path now handles newly added/changed post-Final inputs. The
+  focused update screen lists exact changed Expenses, keeps blocker state visible,
+  requires a reason, and creates another immutable lineage version. Protected Expense
+  correction remains the separate successor route.
+- Settlement history opens a selected immutable version and can compare it with the
+  previous version. Payments uses only the selected current head instead of flattening
+  transfers from multiple historical versions.
+- Fresh Hosted Dev Journey `e6e0955d-7f3c-4919-8801-8e6b4e05ce9f` passed 49 assertions:
+  V1 ROOT (+NZ$30/-NZ$30), V2 Adjustment after E4 (+NZ$45/-NZ$45), V3 correction
+  successor (+NZ$55/-NZ$55), exact ordered lineage/digests, protected-edit rejection,
+  human Review attribution, E5 exclusion, and Personal Payment non-interference.
+  Production was not touched. Evidence is in
+  `docs/ledger/SETTLEMENT_FINAL_VERSION_REVISION_ACCEPTANCE.md`.
+- The clean-device run exposed and closed one root defect: post-correction Current
+  preview/personal statements used the initial source and double-counted the protected
+  source plus successor. Hosted Dev Backend now reuses the existing leaf-aware
+  Adjustment source after any Final; cached local Current reporting also excludes
+  correction sources recorded in immutable lineage.
+- Signed Simulator Release bootstrapped the clean Journey and visibly converged to V3:
+  Paid NZ$150, Share NZ$95, balance +NZ$55, no changes since confirmation, and Last
+  confirmed version #3 with compact organizer links. Exact source matching prevents a
+  stale preview digest from creating a false changes banner; immutable Adjustment inputs
+  also supply the confirmed member totals when no duplicate balance rows are cached.
+- The same signed Release was installed over Leon's physical iPhone 16 Pro without
+  uninstalling or clearing data. iOS denied automatic launch because the phone was
+  locked, so physical visual/offline interaction is the only remaining manual gate.
+- TypeScript, ESLint, Backend build, `git diff --check`, and **92 Vitest files / 402
+  tests** pass; Production was not accessed.
+
+## Previous Slice A checkpoint (superseded)
+
+- The reusable Stage 9 compatibility Journey exposed a real source-selection defect:
+  the Final-labelled Summary can prefer a newer Current personal statement while
+  Paid/Shares use an immutable Final head. Device cache/conflict age can therefore
+  present different numbers without identifying their sources.
+- Slice A now selects one lightweight comparison identity for Summary, Paid, Shares,
+  and Payments: `comparisonId`, projection time, Current/confirmed digests, confirmed
+  head, display mode, and Current freshness. The formal secondary tab key is now
+  `Paid`; the existing top-level Ledger area remains `Spending`.
+- A Current server statement, cached Current statement, or local pending financial
+  projection can no longer populate a card labelled `FINAL BALANCE`. When Current
+  differs from the confirmed head, all four tabs use the Current family; they return
+  to the immutable confirmed inputs only after digest/content convergence.
+- Organizer refresh now obtains the Current preview even after a Final exists.
+  Regular-member fallback compares personal contribution identity and totals against
+  the confirmed head. Pending financial operations explicitly produce
+  `CURRENT_LOCAL_PENDING`; successful and failed statement refreshes produce
+  `CURRENT_SERVER` and `CURRENT_CACHED`.
+- Focused regressions cover confirmed `+NZ$2` versus Current `+NZ$9`, digest
+  convergence, local-pending freshness, and cached timestamp persistence. TypeScript,
+  ESLint, `git diff --check`, and **92 Vitest files / 399 tests** pass. No schema,
+  Backend, Hosted Dev fixture, or Production state changed.
+- The approved direction remains immutable versioned Final history. A post-Final included
+  Expense must make an Organizer `Review & confirm changes` action visible;
+  confirmation creates a new Adjustment/version under the existing root. Correcting a protected
+  Expense continues to create a successor Expense plus a new immutable version.
+- Summary, Paid, and Shares will share one explicit Current/confirmed/history mode.
+  When Current differs from latest confirmed they show latest, last confirmed, signed
+  delta, and a `Review changes` path instead of silently mixing projections.
+- Summary is explicitly ordered as Current/latest first, changes since confirmation
+  second, and last confirmed third. The Organizer's prominent
+  `Review & confirm changes` action belongs to the changes module; the last-confirmed
+  module has only a small `Correct a confirmed expense` link instead of the current
+  large correction button.
+- The module-by-module revisions, action matrix, implementation slices, and a clean
+  two-role Hosted Dev Trip with exact V1/V2/V3 arithmetic and two-device acceptance
+  are specified in
+  `docs/ledger/SETTLEMENT_2_0_FINAL_VERSION_REVISION_AND_CLEAN_TRIP_PLAN.md`.
+- Stop before Slice B. The next checkpoint is UI review of Slice A, followed by
+  explicit authorization for the ordered Current / changes / last-confirmed modules
+  and the post-Final `Review & confirm changes` action. Do not create the clean Hosted
+  Dev Trip yet.
+
 ## Post-Phase-6 Settlement navigation correction — Simulator accepted; physical recheck pending
 
 - Settlement `Summary | Spending | Shares | Payments` now uses four independent tab views. Selecting a tab replaces the visible module without changing the current vertical scroll position; the previous continuous page, section anchors and scroll-following active-state logic were removed.
@@ -789,6 +870,7 @@ or new architecture framework was added.
 
 ## Authoritative Sources
 
+- `docs/ledger/SETTLEMENT_2_0_FINAL_VERSION_REVISION_AND_CLEAN_TRIP_PLAN.md`
 - `docs/ledger/LEDGER_UI_UX_POLISH_PLAN_V1.md`
 - `docs/ledger/LEDGER_UI_UX_POLISH_P6_ACCEPTANCE.md`
 - `docs/ledger/LEDGER_UI_UX_POLISH_P5_ACCEPTANCE.md`
@@ -806,10 +888,13 @@ or new architecture framework was added.
 
 ## Next Checkpoint
 
-Stop after canonical integration, static validation and commit. Do not install a
-Simulator or physical-device Release without separate explicit approval. Do not begin
-Round 2 Polish, Production planning or deployment. Stage 9 retention and rollback
-rules remain unchanged.
+Review the Final-version revision and clean-Trip acceptance plan. After explicit
+implementation approval, execute Slice A source-selection consistency only and stop
+for UI review before wiring the post-Final update action. Do not create the clean
+Hosted Dev Journey until Slices A–C are ready for the full acceptance run. Do not
+install another Simulator or physical-device Release without separate explicit
+approval. Production remains out of scope; Stage 9 retention and rollback rules are
+unchanged.
 
 ## Safety Notes
 

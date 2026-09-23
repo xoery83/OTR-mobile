@@ -53,7 +53,11 @@ export default function LedgerLayout() {
       />
       <Stack.Screen
         name="settlement-adjustment"
-        options={{ headerTitle: "Make Corrections" }}
+        options={{ headerTitle: "Correct Confirmed Expense" }}
+      />
+      <Stack.Screen
+        name="settlement-update"
+        options={{ headerTitle: "Review Settlement Changes" }}
       />
       <Stack.Screen
         name="settlement-statement"
