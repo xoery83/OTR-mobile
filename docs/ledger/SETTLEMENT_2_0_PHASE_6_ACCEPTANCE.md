@@ -2,7 +2,7 @@
 
 Date: 2026-09-23
 
-Status: **BLOCKED**
+Status: **READY WITH NON-BLOCKING LIMITATIONS**
 
 Phase 6 performed release validation only. It added no product feature, changed no financial semantics, and did not access Production.
 
@@ -43,19 +43,21 @@ Phase 6 performed release validation only. It added no product feature, changed 
 ## Physical iPhone
 
 - Device: iPhone 16 Pro (`iPhone17,1`), iOS 26.6.
-- Clean workspace Release build: pass; signed with the existing development profile.
-- Installed over `com.xoery.otrmobile` without uninstalling or clearing data; cold restart passed.
+- Clean workspace Release build: pass. The first installed build's development provisioning profile expired during the run; a fresh Xcode-managed profile was generated with `-allowProvisioningUpdates`, trusted on-device, and installed over `com.xoery.otrmobile` without uninstalling or clearing data.
+- The refreshed install retained the same app data container UUID, both remembered accounts, the active login, populated My Ledger history and the first pending Personal Payment. This was a signing/tooling incident, not a product-code defect.
 - Existing login remained valid. Populated My Ledger history remained available, and the cached `Europe 2026 UI Polish` Journey opened after selection.
 - Online UI smoke passed for Ledger Spending, Settlement Summary, final balance, Review attention list, member/category data, large values, long names, and organizer `Make corrections`.
-- The required fresh offline cold-start/mutation/reconnect flow was not completed.
-- The required fresh two-account physical switch/isolation flow was not completed.
-- Therefore physical Payment/FX/evidence, Review checkpoint, and final/correction/history flows are not fully accepted as a Phase 6 device matrix.
+- With OTR-only cellular data disabled, Account A cold-started without forced login, rendered cached Settlement data and showed the explicit offline state.
+- Account A created a CNY 3.00 Personal Payment (`P6 offline 20260923`) locally. It survived an offline force restart as `Saved here · waiting to sync`; reconnect produced exactly one `Synced` record and left canonical Settlement unchanged.
+- Account A then created a separate CNY 4.00 record (`P6 isolation 20260923`) offline. Offline A→B→A switching passed: Account B entered `AUTHENTICATED_OFFLINE`, had zero pending operations and showed only its own `Synthetic Baseline Journey`; Account A's Journey and record did not leak.
+- Returning to Account A offline restored `Europe 2026 UI Polish`, the waiting-change indicator and exactly two Personal Payment records. The final balance remained `¥8,549,355.41`.
+- Final reconnect showed both CNY 3.00 and CNY 4.00 records exactly once as `Synced`. The CNY 4.00 record's canonical transfer remained Received with Paid `¥1,452,930.40` and Remaining `¥0.00`; Personal Payment did not alter canonical transfer math.
 
 ## Security and isolation
 
 - Hosted Dev proves owner/counterparty/organizer access, unrelated-member denial, cross-Journey rejection, historical-member read boundaries, and account/Journey-scoped durable operations.
 - Journey A/B isolation is covered by repository and Hosted Dev assertions; no cross-Journey mutation was observed.
-- Fresh physical account-switch isolation remains unproven in Phase 6 and is a release blocker.
+- Physical offline A→B→A switching proved account-local auth, Journey cache and pending-write isolation. Account B could not see Account A's Journey or Personal Payments, and Account A recovered its pending record after switching back.
 
 ## Financial integrity
 
@@ -70,13 +72,13 @@ Phase 6 performed release validation only. It added no product feature, changed 
 ## Defects and limitations
 
 - No new product defect was found; no product code changed.
-- Blocking gaps: fresh physical offline critical flows and fresh physical two-account switching/isolation.
+- The expired development provisioning profile interrupted one device launch. Re-signing and an over-install restored launchability without data loss; this is resolved release-tooling evidence, not a product blocker.
 - Non-blocking existing limitations: embedded Ledger section strip is tap-driven rather than free-scroll-tracked; Expo Doctor has the documented patch-version warning; repository-wide Prettier reports the same five pre-existing files.
 
 ## Release gate
 
-**BLOCKED**
+**READY WITH NON-BLOCKING LIMITATIONS**
 
-Do not proceed to Production rollout without completing the missing physical-device matrix and obtaining separate explicit authorization.
+Phase 6 acceptance does not authorize Production rollout. Production still requires separate explicit authorization.
 
-**SETTLEMENT 2.0 PHASE 6 BLOCKED**
+**SETTLEMENT 2.0 PHASE 6 COMPLETE**
