@@ -154,6 +154,8 @@ function summarizeSettlement(rows: FinalizedRows, memberId: string): SettlementS
 
 export function LedgerStage6Screen() {
   const largeText = useWindowDimensions().fontScale > 2;
+  const pageScroll = useRef<ScrollView>(null);
+  const settlementTop = useRef(0);
   const { refreshPersonal } = useLedgerReportingRefresh();
   const manualJourneyId = useRef<string | undefined>(undefined);
   const [request] = useState(createLatestRequest);
@@ -529,6 +531,7 @@ export function LedgerStage6Screen() {
       <ScrollView
         contentContainerStyle={[styles.content, largeText && styles.largeContent]}
         contentInsetAdjustmentBehavior="automatic"
+        ref={pageScroll}
         stickyHeaderIndices={[0]}
       >
         <View style={styles.stickyContext}>
@@ -936,7 +939,22 @@ export function LedgerStage6Screen() {
               </DashboardSection>
             </>
           ) : (
-            <SettlementReadinessScreen embedded journeyId={journey.journeyId} />
+            <View
+              onLayout={(event) => {
+                settlementTop.current = event.nativeEvent.layout.y;
+              }}
+            >
+              <SettlementReadinessScreen
+                embedded
+                journeyId={journey.journeyId}
+                onEmbeddedScroll={(offset) =>
+                  pageScroll.current?.scrollTo({
+                    animated: true,
+                    y: settlementTop.current + offset,
+                  })
+                }
+              />
+            </View>
           )
         ) : (
           <Pressable
