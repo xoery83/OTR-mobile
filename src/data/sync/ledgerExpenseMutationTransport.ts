@@ -1,4 +1,5 @@
 import { ApiClientError, createApiClient } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
   createLedgerCorrectionRequestSchema,
   createLedgerPaymentRecordRequestSchema,
@@ -39,6 +40,8 @@ function configuredResponseLoss() {
 }
 
 async function client(dependencies: Dependencies) {
+  if (!dependencies.readSession && !dependencies.createClient)
+    return createAuthenticatedApiClient();
   const session = await (dependencies.readSession ?? readLocalSession)();
   if (!session?.accessToken)
     throw new ApiClientError(

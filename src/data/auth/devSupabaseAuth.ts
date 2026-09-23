@@ -29,6 +29,16 @@ type DevAuthOptions = {
   readSession?: typeof readLocalSession;
 };
 
+export class SupabaseDevAuthError extends Error {
+  constructor(
+    message: string,
+    public readonly kind: "network" | "temporary" | "invalid_session",
+    public readonly status?: number,
+  ) {
+    super(message);
+  }
+}
+
 function configuration(options: DevAuthOptions) {
   const url = z.url().parse(options.url ?? process.env.EXPO_PUBLIC_OTR_DEV_SUPABASE_URL);
   if (new URL(url).hostname !== `${approvedDevProjectRef}.supabase.co`) {
@@ -55,19 +65,34 @@ async function tokenRequest(
   fallbackIdentity?: AccountIdentity,
 ): Promise<LocalSession> {
   const config = configuration(options);
-  const response = await config.fetchImplementation(
-    `${config.url}/auth/v1/token?grant_type=${grantType}`,
-    {
-      method: "POST",
-      headers: {
-        apikey: config.publishableKey,
-        "Content-Type": "application/json",
+  let response: Response;
+  try {
+    response = await config.fetchImplementation(
+      `${config.url}/auth/v1/token?grant_type=${grantType}`,
+      {
+        method: "POST",
+        headers: {
+          apikey: config.publishableKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify(body),
-    },
-  );
+    );
+  } catch {
+    throw new SupabaseDevAuthError(
+      "Supabase Dev authentication is unavailable.",
+      "network",
+    );
+  }
 
-  if (!response.ok) throw new Error("Supabase Dev authentication failed.");
+  if (!response.ok)
+    throw new SupabaseDevAuthError(
+      "Supabase Dev authentication failed.",
+      grantType === "refresh_token" && [400, 401].includes(response.status)
+        ? "invalid_session"
+        : "temporary",
+      response.status,
+    );
   const token = tokenResponseSchema.parse(await response.json());
   const expiresAt = new Date(Date.now() + token.expires_in * 1000).toISOString();
   const identity = identityFromToken(token, fallbackIdentity);

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
-import { ApiClientError, createApiClient } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
+import { ApiClientError } from "@/data/api/client";
 import { signInToSupabaseDev } from "@/data/auth/devSupabaseAuth";
 import { readLocalSession } from "@/data/auth/authRepository";
 import { openDatabase } from "@/data/db/database";
@@ -326,7 +327,7 @@ async function runOrganizerChecks(
 
   const session = await readLocalSession();
   if (!session?.accessToken) throw new Error("missing organizer session");
-  await createApiClient({ accessToken: session.accessToken }).post(
+  await createAuthenticatedApiClient().post(
     `/v2/dev/trips/${journeyId}/expenses/${target.serverId}/finalized-guard-fixture`,
     {},
     z.object({ ok: z.literal(true) }),

@@ -1,15 +1,12 @@
-import { createApiClient } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
   createPersonalSettlementCheckpointRequestSchema,
   personalSettlementReviewResponseSchema,
 } from "@/data/api/ledgerSettlementContracts";
-import { readLocalSession } from "@/data/auth/authRepository";
 import { z } from "zod";
 
 async function client() {
-  const session = await readLocalSession();
-  if (!session?.accessToken) throw new Error("Authentication is unavailable.");
-  return createApiClient({ accessToken: session.accessToken });
+  return createAuthenticatedApiClient();
 }
 
 const createResponse = personalSettlementReviewResponseSchema.extend({

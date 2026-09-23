@@ -2,6 +2,42 @@
 
 Date: 2026-09-24
 
+## Automatic OTR API access-token recovery — implementation complete
+
+- Root cause confirmed: authenticated transports created the shared API client with a
+  one-time SecureStore access-token snapshot. Background/foreground bootstrap refreshed
+  only an already-expired session, while a long-running foreground app kept sending the
+  stale token and exposed the Backend 401 to normal save operations.
+- Authenticated JSON requests now use one shared session token provider. A token within
+  60 seconds of expiry refreshes before the request; the first 401 forces one refresh and
+  replays the same serialized body and headers exactly once. A second 401 is returned and
+  cannot loop. Existing operation IDs, entity UUIDs and idempotency keys are unchanged.
+- Concurrent requests share one account-scoped in-flight refresh. A refresh may persist
+  only while the same user and refresh token remain active, so an Account A refresh cannot
+  overwrite or supply Account B. A request that sees an account switch pauses with the
+  existing auth-required handling.
+- Network, timeout and temporary refresh failures preserve the local session and remain
+  retryable; an invalid/revoked refresh session returns the existing auth-required result.
+  Offline local reads/writes and durable queues are unchanged. Supabase remains the sole
+  token store; successful rotated tokens are persisted through the existing repository.
+- All authenticated JSON Expense, Personal Payment, Review, Settlement/checkpoint,
+  currency and receipt-metadata transports use the shared path. Receipt binary upload and
+  download retain their existing upload lifecycle: they receive a fresh preflight token
+  but are intentionally excluded from generic body replay.
+- TypeScript, ESLint, `git diff --check`, and **94 Vitest files / 416 tests** pass. Focused
+  coverage includes valid/expired/near-expiry tokens, one-shot 401 recovery, second-401
+  stop, identical body/idempotency replay, transient and invalid refresh failures, ten-way
+  refresh coalescing and account-switch isolation.
+- An arm64 Release Simulator build succeeded, was locally signed, installed over the
+  existing iPhone 17 Pro Simulator app without uninstalling it, and launched to Today. A
+  temporary, explicitly enabled Dev-only one-shot 401 injection then verified the real UI
+  flow `Save -> 401 -> refresh -> identical retry -> success` in one running process.
+  `Auth refresh direct UI Save` converged to local `SYNCED` revision 1 with exactly one
+  completed queue operation (attempt count 0); Hosted Dev contains exactly one matching
+  Expense, server id `f68429d7-39e0-4166-87cc-497078686d88`, revision 1. The injection was
+  removed before commit. Physical-device acceptance was not run. No Backend, schema,
+  Settlement semantics, Production environment or login UX changed.
+
 ## Settlement Final-version physical follow-up
 
 - A physical pending-write state exposed two UI projection gaps. Summary now keeps

@@ -8,7 +8,11 @@ import {
   createDevItineraryTransport,
 } from "./devCreateTransports";
 
-vi.mock("@/data/auth/authRepository", () => ({ readLocalSession: vi.fn() }));
+vi.mock("@/data/auth/authRepository", () => ({
+  clearLocalSession: vi.fn(),
+  readLocalSession: vi.fn(),
+  writeLocalSession: vi.fn(),
+}));
 
 const response = {
   serverId: "30000000-0000-4000-8000-000000000001",

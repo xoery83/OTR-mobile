@@ -1,10 +1,9 @@
-import { createApiClient, ApiClientError } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
   journeyCurrencyCommitSchema,
   journeyCurrencyPreviewSchema,
   type JourneyCurrencyPreview,
 } from "@/data/api/ledgerCurrencyContracts";
-import { readLocalSession } from "@/data/auth/authRepository";
 import {
   refreshJourneyLedger,
   revalidateJourneyLedger,
@@ -13,15 +12,7 @@ import {
 export type { JourneyCurrencyPreview } from "@/data/api/ledgerCurrencyContracts";
 
 async function client() {
-  const session = await readLocalSession();
-  if (!session?.accessToken)
-    throw new ApiClientError(
-      "Reconnect to review Journey Currency.",
-      "http",
-      401,
-      "AUTH_REQUIRED",
-    );
-  return createApiClient({ accessToken: session.accessToken });
+  return createAuthenticatedApiClient();
 }
 
 export const ledgerCurrencyRepository = {

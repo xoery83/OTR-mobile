@@ -90,4 +90,63 @@ describe("OTR API client", () => {
       kind: "timeout",
     } satisfies Partial<ApiClientError>);
   });
+
+  it("refreshes after one 401 and replays the identical JSON request once", async () => {
+    const fetchImplementation = vi
+      .fn()
+      .mockResolvedValueOnce(response(401, {}))
+      .mockResolvedValueOnce(response(200, { id: "expense-1" }));
+    const accessTokenProvider = vi
+      .fn()
+      .mockResolvedValueOnce("expired-token")
+      .mockResolvedValueOnce("fresh-token");
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      accessTokenProvider,
+      fetchImplementation,
+    });
+
+    await expect(
+      client.post("/expenses", { id: "stable-id" }, responseSchema, {
+        "Idempotency-Key": "stable-operation",
+      }),
+    ).resolves.toEqual({ id: "expense-1" });
+
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+    expect(fetchImplementation.mock.calls[0]?.[1]).toMatchObject({
+      body: JSON.stringify({ id: "stable-id" }),
+      headers: expect.objectContaining({
+        Authorization: "Bearer expired-token",
+        "Idempotency-Key": "stable-operation",
+      }),
+    });
+    expect(fetchImplementation.mock.calls[1]?.[1]).toMatchObject({
+      body: JSON.stringify({ id: "stable-id" }),
+      headers: expect.objectContaining({
+        Authorization: "Bearer fresh-token",
+        "Idempotency-Key": "stable-operation",
+      }),
+    });
+    expect(accessTokenProvider).toHaveBeenNthCalledWith(1, false);
+    expect(accessTokenProvider).toHaveBeenNthCalledWith(2, true, "expired-token");
+  });
+
+  it("does not retry a second 401", async () => {
+    const fetchImplementation = vi.fn(async () => response(401, {}));
+    const accessTokenProvider = vi
+      .fn()
+      .mockResolvedValueOnce("expired-token")
+      .mockResolvedValueOnce("fresh-token");
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      accessTokenProvider,
+      fetchImplementation,
+    });
+
+    await expect(client.get("/trips", responseSchema)).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+    expect(accessTokenProvider).toHaveBeenCalledTimes(2);
+  });
 });

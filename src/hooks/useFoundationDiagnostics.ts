@@ -5,10 +5,8 @@ import {
   readFoundationDiagnostics,
   type FoundationDiagnostics,
 } from "@/data/foundation/foundationDiagnostics";
-import {
-  authenticateToSupabaseDev,
-  revalidateStoredSupabaseDevSession,
-} from "@/data/auth/devSupabaseAuth";
+import { authenticateToSupabaseDev } from "@/data/auth/devSupabaseAuth";
+import { sessionAccessToken } from "@/data/auth/sessionAccessToken";
 import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccountSwitchCoordinator";
 import { getSyncTransportMode } from "@/data/sync/transportSelection";
 
@@ -47,10 +45,9 @@ export function useFoundationDiagnostics() {
           initial.authState === "AUTHENTICATED_OFFLINE"
         ) {
           try {
-            if (await revalidateStoredSupabaseDevSession()) {
-              const refreshed = await readFoundationDiagnostics();
-              if (active) setDiagnostics(refreshed);
-            }
+            await sessionAccessToken();
+            const refreshed = await readFoundationDiagnostics();
+            if (active) setDiagnostics(refreshed);
           } catch {
             // A network failure keeps the valid local session available offline.
           }

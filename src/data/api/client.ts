@@ -5,6 +5,10 @@ const apiBaseUrlSchema = z.string().url();
 export type ApiClientOptions = {
   baseUrl?: string;
   accessToken?: string | null;
+  accessTokenProvider?: (
+    forceRefresh: boolean,
+    rejectedToken?: string,
+  ) => Promise<string>;
   fetchImplementation?: typeof fetch;
   timeoutMs?: number;
 };
@@ -37,23 +41,47 @@ export function createApiClient(options: ApiClientOptions = {}) {
     body?: unknown,
     headers?: Record<string, string>,
   ): Promise<T> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const serializedBody = body === undefined ? undefined : JSON.stringify(body);
+
+    async function send(accessToken?: string | null) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        return await fetchImplementation(`${baseUrl}${path}`, {
+          method,
+          headers: {
+            ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            ...headers,
+          },
+          body: serializedBody,
+          signal: controller.signal,
+        });
+      } catch (error) {
+        if (controller.signal.aborted)
+          throw new ApiClientError("OTR API request timed out.", "timeout");
+        throw new ApiClientError(
+          "OTR API is unavailable.",
+          "network",
+          undefined,
+          undefined,
+          error,
+        );
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
 
     try {
-      const response = await fetchImplementation(`${baseUrl}${path}`, {
-        method,
-        headers: {
-          ...(body === undefined ? {} : { "Content-Type": "application/json" }),
-          ...(options.accessToken
-            ? { Authorization: `Bearer ${options.accessToken}` }
-            : {}),
-          ...headers,
-        },
-        body: body === undefined ? undefined : JSON.stringify(body),
-        signal: controller.signal,
-      });
-
+      let accessToken = options.accessTokenProvider
+        ? await options.accessTokenProvider(false)
+        : options.accessToken;
+      let response = await send(accessToken);
+      if (response.status === 401 && options.accessTokenProvider) {
+        accessToken = await options.accessTokenProvider(true, accessToken ?? undefined);
+        response = await send(accessToken);
+      }
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as {
           error?: { code?: string };
@@ -79,13 +107,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
     } catch (error) {
       if (error instanceof ApiClientError) throw error;
 
-      if (controller.signal.aborted) {
-        throw new ApiClientError("OTR API request timed out.", "timeout");
-      }
-
       throw new ApiClientError("OTR API is unavailable.", "network");
-    } finally {
-      clearTimeout(timeout);
     }
   }
 

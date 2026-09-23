@@ -1,4 +1,5 @@
 import { ApiClientError, createApiClient } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
   createSyncResponseSchema,
   type CreateExpenseRequest,
@@ -31,6 +32,8 @@ function configuredResponseLoss(entity: "expense" | "itinerary") {
 }
 
 async function authenticatedClient(dependencies: DevTransportDependencies) {
+  if (!dependencies.readSession && !dependencies.createClient)
+    return createAuthenticatedApiClient();
   const session = await (dependencies.readSession ?? readLocalSession)();
   if (!session?.accessToken)
     throw new ApiClientError(

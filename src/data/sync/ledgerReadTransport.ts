@@ -1,4 +1,5 @@
 import { ApiClientError, createApiClient } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
   ledgerAnalysisResponseSchema,
   ledgerBootstrapResponseSchema,
@@ -22,6 +23,8 @@ type Dependencies = {
 };
 
 async function client(dependencies: Dependencies, timeoutMs = 15_000) {
+  if (!dependencies.readSession && !dependencies.createClient)
+    return createAuthenticatedApiClient({ timeoutMs });
   const session = await (dependencies.readSession ?? readLocalSession)();
   if (!session?.accessToken)
     throw new ApiClientError(

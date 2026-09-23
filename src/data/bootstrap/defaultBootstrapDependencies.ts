@@ -1,6 +1,6 @@
 import { readLocalSession } from "@/data/auth/authRepository";
 import { adoptLegacyAccountState } from "@/data/auth/accountLocalState";
-import { revalidateStoredSupabaseDevSession } from "@/data/auth/devSupabaseAuth";
+import { sessionAccessToken } from "@/data/auth/sessionAccessToken";
 import { openDatabase } from "@/data/db/database";
 import {
   allowLedgerOperationalSync,
@@ -51,11 +51,7 @@ export function restartOperationalSync() {
 
 async function refreshThenSync() {
   const session = await readLocalSession();
-  const expired =
-    !session?.accessToken ||
-    !session.expiresAt ||
-    Date.parse(session.expiresAt) <= Date.now();
-  if (getSyncTransportMode() === "dev" && session?.refreshToken && expired)
-    await revalidateStoredSupabaseDevSession();
+  if (getSyncTransportMode() === "dev" && session?.refreshToken)
+    await sessionAccessToken();
   await runLedgerOperationalSync();
 }

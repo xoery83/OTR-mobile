@@ -1,4 +1,5 @@
-import { ApiClientError, createApiClient } from "@/data/api/client";
+import { ApiClientError } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
   ledgerReviewActionSchema,
   ledgerReviewFindingSchema,
@@ -7,19 +8,10 @@ import {
   type LedgerReviewActionRequest,
   type LedgerReviewRaiseRequest,
 } from "@/data/api/ledgerReviewContracts";
-import { readLocalSession } from "@/data/auth/authRepository";
 import { z } from "zod";
 
 async function client() {
-  const session = await readLocalSession();
-  if (!session?.accessToken)
-    throw new ApiClientError(
-      "Authentication is unavailable.",
-      "http",
-      401,
-      "AUTH_REQUIRED",
-    );
-  return createApiClient({ accessToken: session.accessToken });
+  return createAuthenticatedApiClient();
 }
 
 const actionResponse = z.object({

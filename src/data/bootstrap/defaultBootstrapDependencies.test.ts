@@ -10,7 +10,10 @@ vi.mock("@/data/auth/authRepository", () => ({
   readLocalSession: mocks.readLocalSession,
 }));
 vi.mock("@/data/auth/devSupabaseAuth", () => ({
-  revalidateStoredSupabaseDevSession: mocks.refreshSession,
+  revalidateStoredSupabaseDevSession: vi.fn(),
+}));
+vi.mock("@/data/auth/sessionAccessToken", () => ({
+  sessionAccessToken: mocks.refreshSession,
 }));
 vi.mock("@/data/db/database", () => ({ openDatabase: vi.fn() }));
 vi.mock("@/data/sync/ledgerOperationalSync", () => ({

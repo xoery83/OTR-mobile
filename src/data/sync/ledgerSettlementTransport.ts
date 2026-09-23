@@ -1,4 +1,5 @@
 import { ApiClientError, createApiClient } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
   correctSettlementPaymentRequestSchema,
   recordSettlementPaymentRequestSchema,
@@ -28,7 +29,9 @@ type Dependencies = {
   createClient?: (accessToken: string) => ReturnType<typeof createApiClient>;
 };
 
-async function client(dependencies: Dependencies) {
+async function client(dependencies: Dependencies, timeoutMs = 15_000) {
+  if (!dependencies.readSession && !dependencies.createClient)
+    return createAuthenticatedApiClient({ timeoutMs });
   const session = await (dependencies.readSession ?? readLocalSession)();
   if (!session?.accessToken)
     throw new ApiClientError(
@@ -45,12 +48,7 @@ async function client(dependencies: Dependencies) {
 export function createLedgerSettlementTransport(dependencies: Dependencies = {}) {
   return {
     async preflight(journeyId: string, forceRetry = false) {
-      const session = await (dependencies.readSession ?? readLocalSession)();
-      if (!session?.accessToken) throw new Error("Authentication is unavailable.");
-      const api = dependencies.createClient
-        ? dependencies.createClient(session.accessToken)
-        : createApiClient({ accessToken: session.accessToken, timeoutMs: 45_000 });
-      return api.post(
+      return (await client(dependencies, 45_000)).post(
         `/v2/trips/${journeyId}/settlements/fx-preflight`,
         { forceRetry },
         z.object({

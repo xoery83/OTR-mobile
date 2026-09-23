@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { ApiClientError, createApiClient } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
+import { ApiClientError } from "@/data/api/client";
 import {
   ledgerExpenseMutationResponseSchema,
   type CreateLedgerExpenseRequest,
@@ -190,7 +191,7 @@ export function useStage4AAcceptance() {
 
         let conflict = false;
         try {
-          await createApiClient({ accessToken: session.accessToken }).post(
+          await createAuthenticatedApiClient().post(
             `/v2/trips/${journeyId}/expenses`,
             { ...replayRequest, title: `${request.title} changed` },
             ledgerExpenseMutationResponseSchema,

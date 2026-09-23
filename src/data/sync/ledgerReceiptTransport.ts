@@ -1,6 +1,7 @@
 import { fetch } from "expo/fetch";
 
-import { ApiClientError, createApiClient } from "@/data/api/client";
+import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
+import { ApiClientError } from "@/data/api/client";
 import {
   completeReceiptRequestSchema,
   createReceiptRequestSchema,
@@ -11,21 +12,14 @@ import {
   type CompleteReceiptRequest,
   type CreateReceiptRequest,
 } from "@/data/api/ledgerReceiptContracts";
-import { readLocalSession } from "@/data/auth/authRepository";
+import { sessionAccessToken } from "@/data/auth/sessionAccessToken";
 import { resolveReceiptFile } from "@/data/files/receiptFileStore";
 
 async function authenticated() {
-  const session = await readLocalSession();
-  if (!session?.accessToken)
-    throw new ApiClientError(
-      "Authentication is unavailable.",
-      "http",
-      401,
-      "AUTH_REQUIRED",
-    );
+  const session = await sessionAccessToken();
   return {
-    client: createApiClient({ accessToken: session.accessToken }),
-    token: session.accessToken,
+    client: createAuthenticatedApiClient(),
+    token: session.token,
   };
 }
 
