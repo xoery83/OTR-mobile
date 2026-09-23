@@ -338,7 +338,9 @@ export function SettlementReadinessScreen({
             }
             style={styles.secondary}
           >
-            <Text style={styles.secondaryText}>Settlement update</Text>
+            <Text style={styles.secondaryText}>
+              {settlement.isOrganizer ? "Make corrections" : "Settlement history"}
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"

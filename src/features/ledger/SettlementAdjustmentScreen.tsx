@@ -1,251 +1,170 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
+import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
-import { formatLedgerMoney } from "./format";
-
 export function SettlementAdjustmentScreen() {
-  const largeText = useWindowDimensions().fontScale > 2;
   const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
   const settlement = useStage7Settlement(journeyId);
   const [reason, setReason] = useState("");
-  const preview = settlement.adjustmentPreview;
+  const [titles, setTitles] = useState<Record<string, string>>({});
+  const current = settlement.lineage.at(-1) ?? settlement.finalized;
+
+  useEffect(() => {
+    let active = true;
+    void Promise.all(
+      (current?.inputs ?? []).map(async (input) => {
+        const expense = await (
+          await getDefaultLedgerExpenseRepository()
+        ).getExpense(input.expenseId);
+        return [input.expenseId, expense?.title ?? "Expense"] as const;
+      }),
+    ).then((items) => {
+      if (active) setTitles(Object.fromEntries(items));
+    });
+    return () => {
+      active = false;
+    };
+  }, [current]);
+
+  if (!settlement.finalized) {
+    return <Text style={styles.empty}>No confirmed settlement is available.</Text>;
+  }
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.content}
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.intro}>
+    <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.warning}>
+        <Text accessibilityRole="header" style={styles.title}>
+          This settlement has already been confirmed.
+        </Text>
         <Text style={styles.body}>
-          Use this only when accepted Expenses changed after the final settlement. The
-          original settlement stays intact.
+          You can make corrections, but the previous confirmed settlement will remain in
+          history. Any changes will create an updated settlement.
         </Text>
       </View>
-      {settlement.finalized?.adjustmentState === "CURRENT" && !preview ? (
-        <Text style={styles.quiet}>The final settlement is up to date.</Text>
-      ) : null}
-      {!preview ? (
+
+      <Text accessibilityRole="header" style={styles.sectionTitle}>
+        Settlement history
+      </Text>
+      {settlement.lineage.map((version, index) => (
         <Pressable
           accessibilityRole="button"
-          disabled={settlement.busy || !settlement.finalized}
-          onPress={() => void settlement.prepareAdjustment()}
-          style={[
-            styles.primary,
-            (settlement.busy || !settlement.finalized) && styles.disabled,
-          ]}
+          key={version.id}
+          onPress={() =>
+            router.push({
+              pathname: "/expenses/settlement-statement",
+              params: { journeyId: settlement.journeyId },
+            } as never)
+          }
+          style={styles.row}
         >
-          <Text style={styles.primaryText}>Preview settlement update</Text>
-        </Pressable>
-      ) : null}
-      {settlement.message ? (
-        <Text accessibilityLiveRegion="polite" style={styles.message}>
-          {settlement.message}
-        </Text>
-      ) : null}
-      {preview ? (
-        <>
-          <View
-            style={preview.state === "PREVIEW_BLOCKED" ? styles.warningCard : styles.card}
-          >
-            <Text accessibilityRole="header" style={styles.cardTitle}>
-              {preview.state === "PREVIEW_BLOCKED"
-                ? "Settlement update is blocked"
-                : preview.state === "PREVIEW_UNCHANGED"
-                  ? "No update is needed"
-                  : preview.zeroTransfer
-                    ? "Changes do not alter transfers"
-                    : "Settlement update is ready"}
+          <View style={styles.grow}>
+            <Text style={styles.rowTitle}>
+              {index === 0 ? "Previous confirmed settlement" : "Updated settlement"}
             </Text>
-            <Text style={styles.body}>
-              {preview.changedExpenses.length} Expense
-              {preview.changedExpenses.length === 1 ? " has" : "s have"} changed since the
-              final settlement.
+            <Text style={styles.meta}>
+              {new Date(version.finalizedAt).toLocaleDateString()}
             </Text>
           </View>
+          <Text style={styles.version}>#{(version.lineageSequence ?? 0) + 1}</Text>
+        </Pressable>
+      ))}
 
-          {preview.blockers.length ? (
-            <View style={styles.section}>
-              <Text accessibilityRole="header" style={styles.sectionTitle}>
-                Resolve before continuing
-              </Text>
-              {preview.blockers.map((blocker) => (
-                <Pressable
-                  accessibilityRole="button"
-                  key={`${blocker.expenseId}-${blocker.reason}`}
-                  onPress={() => router.push(`/expenses/expense/${blocker.expenseId}`)}
-                  style={[styles.row, largeText && styles.stack]}
-                >
-                  <View style={styles.grow}>
-                    <Text style={styles.rowTitle}>
-                      {blocker.reason === "RATE_REQUIRED"
-                        ? "Journey value needed before settlement"
-                        : "Conflicting edit needs review"}
-                    </Text>
-                    <Text style={styles.meta}>Open Expense</Text>
-                  </View>
-                  <Text importantForAccessibility="no" style={styles.chevron}>
-                    ›
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
-
-          {preview.balances.some((balance) => balance.deltaMinor !== 0) ? (
-            <View style={styles.section}>
-              <Text accessibilityRole="header" style={styles.sectionTitle}>
-                What changed
-              </Text>
-              {preview.balances
-                .filter((balance) => balance.deltaMinor !== 0)
-                .map((balance) => (
-                  <View
-                    key={balance.memberId}
-                    style={[styles.row, largeText && styles.stack]}
-                  >
-                    <Text style={[styles.rowTitle, styles.grow]}>
-                      {balance.displayNameSnapshot}
-                    </Text>
-                    <Text style={styles.amount}>
-                      {balance.deltaMinor > 0 ? "+" : ""}
-                      {formatLedgerMoney(
-                        balance.deltaMinor,
-                        balance.currency,
-                        balance.scale,
-                      )}
-                    </Text>
-                  </View>
-                ))}
-            </View>
-          ) : null}
-
-          {preview.transfers.length ? (
-            <View style={styles.section}>
-              <Text accessibilityRole="header" style={styles.sectionTitle}>
-                Affected transfers
-              </Text>
-              {preview.transfers.map((transfer) => (
-                <View
-                  key={`${transfer.fromMemberId}-${transfer.toMemberId}`}
-                  style={[styles.row, largeText && styles.stack]}
-                >
-                  <Text style={[styles.rowTitle, styles.grow]}>
-                    {memberName(preview.balances, transfer.fromMemberId)} pays{" "}
-                    {memberName(preview.balances, transfer.toMemberId)}
-                  </Text>
-                  <Text style={styles.amount}>
-                    {formatLedgerMoney(
-                      transfer.amount.minor,
-                      transfer.amount.currency,
-                      transfer.amount.scale,
-                    )}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
-
-          {preview.state === "PREVIEW_READY" && settlement.isOrganizer ? (
-            <View style={styles.section}>
-              <TextInput
-                accessibilityLabel="Reason for Settlement update"
-                multiline
-                onChangeText={setReason}
-                placeholder="Why is this update needed?"
-                style={styles.input}
-                value={reason}
-              />
-              <Pressable
-                accessibilityRole="button"
-                disabled={settlement.busy || !reason.trim()}
-                onPress={() => {
-                  void settlement.finalizeAdjustment(preview, reason.trim());
-                  setReason("");
-                }}
-                style={[
-                  styles.primary,
-                  (settlement.busy || !reason.trim()) && styles.disabled,
-                ]}
-              >
-                <Text style={styles.primaryText}>Confirm settlement update</Text>
-              </Pressable>
-            </View>
-          ) : preview.state === "PREVIEW_READY" ? (
-            <Text style={styles.meta}>Only an organizer can confirm this update.</Text>
-          ) : null}
+      {settlement.isOrganizer ? (
+        <>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>
+            Correct an expense
+          </Text>
+          <TextInput
+            accessibilityLabel="Reason for correction"
+            multiline
+            onChangeText={setReason}
+            placeholder="Why is this correction needed?"
+            style={styles.input}
+            value={reason}
+          />
+          {(current?.inputs ?? []).map((input) => (
+            <Pressable
+              accessibilityRole="button"
+              disabled={!reason.trim()}
+              key={input.expenseId}
+              onPress={() =>
+                Alert.alert(
+                  "Correct this expense?",
+                  "The original confirmed version will stay unchanged.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Continue",
+                      onPress: () =>
+                        router.push({
+                          pathname: "/expenses/new",
+                          params: {
+                            expenseId: input.expenseId,
+                            journeyId: settlement.journeyId,
+                            correctionRootId: settlement.finalized!.id,
+                            correctionReason: reason.trim(),
+                          },
+                        } as never),
+                    },
+                  ],
+                )
+              }
+              style={[styles.row, !reason.trim() && styles.disabled]}
+            >
+              <View style={styles.grow}>
+                <Text style={styles.rowTitle}>
+                  {titles[input.expenseId] ?? "Expense"}
+                </Text>
+                <Text style={styles.meta}>Original confirmed version</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
+          ))}
         </>
       ) : null}
     </ScrollView>
   );
 }
 
-function memberName(
-  balances: { memberId: string; displayNameSnapshot: string }[],
-  memberId: string,
-) {
-  return (
-    balances.find((balance) => balance.memberId === memberId)?.displayNameSnapshot ??
-    "Traveller"
-  );
-}
-
 const styles = StyleSheet.create({
-  content: { gap: 14, padding: 16, paddingBottom: 40 },
-  intro: { gap: 8 },
-  body: { color: "#334155", fontSize: 15, lineHeight: 22 },
-  quiet: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
-  message: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  card: { backgroundColor: "#E7F5F2", borderRadius: 14, gap: 6, padding: 14 },
-  warningCard: { backgroundColor: "#FFF7ED", borderRadius: 14, gap: 6, padding: 14 },
-  cardTitle: { color: "#0F172A", fontSize: 18, fontWeight: "800" },
-  section: { gap: 8 },
-  sectionTitle: { color: "#0F172A", fontSize: 18, fontWeight: "800" },
-  row: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    flexDirection: "row",
-    gap: 10,
-    minHeight: 58,
-    padding: 12,
-  },
-  grow: { flex: 1 },
-  rowTitle: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
-  meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
-  amount: { color: "#0F172A", fontSize: 16, fontWeight: "800" },
-  stack: { alignItems: "flex-start", flexDirection: "column" },
-  chevron: { color: "#64748B", fontSize: 24 },
+  body: { color: "#7C2D12", fontSize: 15, lineHeight: 22 },
+  chevron: { color: "#0F766E", fontSize: 24 },
+  content: { gap: 12, padding: 16, paddingBottom: 40 },
+  disabled: { opacity: 0.45 },
+  empty: { color: "#64748B", padding: 20 },
+  grow: { flex: 1, gap: 3 },
   input: {
     backgroundColor: "#FFFFFF",
     borderColor: "#CBD5E1",
     borderRadius: 10,
     borderWidth: 1,
-    color: "#0F172A",
-    fontSize: 16,
-    minHeight: 84,
+    minHeight: 80,
     padding: 12,
     textAlignVertical: "top",
   },
-  primary: {
+  meta: { color: "#64748B", fontSize: 13 },
+  row: {
     alignItems: "center",
-    backgroundColor: "#0F766E",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    justifyContent: "center",
-    minHeight: 50,
-    paddingHorizontal: 16,
+    flexDirection: "row",
+    gap: 10,
+    padding: 14,
   },
-  primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
-  disabled: { opacity: 0.5 },
+  rowTitle: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
+  sectionTitle: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 6 },
+  title: { color: "#7C2D12", fontSize: 18, fontWeight: "800" },
+  version: { color: "#0F766E", fontWeight: "800" },
+  warning: { backgroundColor: "#FFF7ED", borderRadius: 14, gap: 8, padding: 14 },
 });

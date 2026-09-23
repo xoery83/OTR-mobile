@@ -38,6 +38,10 @@ import type {
   ExpenseSplitMethod,
 } from "@/domain/ledger/types";
 import { createLocalId } from "@/domain/localId";
+import {
+  confirmSettlementCorrection,
+  previewSettlementCorrection,
+} from "@/data/operations/settlementCorrectionOperations";
 
 import {
   buildDraftSplits,
@@ -95,6 +99,8 @@ export function LedgerExpenseEntryScreen() {
     mode?: "manual";
     receiptId?: string;
     focusDate?: string;
+    correctionRootId?: string;
+    correctionReason?: string;
   }>();
   const navigation = useNavigation();
   const [context, setContext] = useState<EntryContext | null>(null);
@@ -416,6 +422,84 @@ export function LedgerExpenseEntryScreen() {
               : "RATE_REQUIRED",
         settlementParticipation: draft.settlementParticipation,
       };
+      if (existing && params.correctionRootId) {
+        const successor = {
+          localId: createLocalId("ledger-expense-correction"),
+          title: command.title,
+          description: command.description ?? null,
+          category: command.category,
+          occurredAt: command.occurredAt,
+          economicDate: command.economicDate,
+          payerMemberId: command.payerMemberId,
+          original: command.original,
+          businessStatus: command.status,
+          settlementParticipation: command.settlementParticipation,
+          participants: command.participants,
+          splits: command.splits,
+          valuation: command.valuation
+            ? {
+                policy: command.valuation.policy,
+                original: command.valuation.original,
+                settlement: command.valuation.settlement,
+                rateSnapshotId: command.valuation.rateSnapshotId,
+                paymentRecordId: command.valuation.paymentRecordId,
+                reason: command.valuation.reason,
+              }
+            : null,
+        };
+        const reason = params.correctionReason?.trim() ?? "";
+        const correction = { sourceExpenseId: existing.id, successor, reason };
+        const preview = await previewSettlementCorrection(
+          existing.journeyId,
+          params.correctionRootId,
+          correction,
+        );
+        const changes = preview.balances
+          .filter((balance) => balance.deltaMinor !== 0)
+          .map(
+            (balance) =>
+              `${balance.displayNameSnapshot}: ${balance.deltaMinor > 0 ? "+" : ""}${formatLedgerMoney(
+                balance.deltaMinor,
+                balance.currency,
+                balance.scale,
+              )}`,
+          )
+          .join("\n");
+        Alert.alert(
+          "Settlement changes",
+          `${changes || "No member balance changes."}\n\nThe previous confirmed settlement will remain in history.`,
+          [
+            { text: "Keep editing", style: "cancel" },
+            {
+              text: "Confirm updated amounts",
+              onPress: () =>
+                void confirmSettlementCorrection(
+                  existing.journeyId,
+                  params.correctionRootId!,
+                  {
+                    ...correction,
+                    expectedHeadId: preview.expectedHeadId,
+                    inputDigest: preview.inputDigest,
+                    allowZeroTransfer: preview.zeroTransfer,
+                  },
+                )
+                  .then(() =>
+                    router.replace({
+                      pathname: "/expenses/settlement",
+                      params: { journeyId: existing.journeyId },
+                    } as never),
+                  )
+                  .catch((cause) =>
+                    Alert.alert(
+                      "Correction not confirmed",
+                      cause instanceof Error ? cause.message : "Try again.",
+                    ),
+                  ),
+            },
+          ],
+        );
+        return;
+      }
       const repository = await getDefaultLedgerExpenseRepository();
       const saved = existing
         ? await repository.updateExpense(existing.id, command, "Edited Expense.")

@@ -2,6 +2,13 @@
 
 Date: 2026-09-23
 
+## Settlement 2.0 Phase 4 — implemented locally, Hosted Dev/device acceptance pending
+
+- Phase 4A adds ADR 0029 and migration `20260923000400`. A finalized Expense is never changed: confirmation creates a new Expense identity plus immutable old→successor lineage, and the current source projection excludes predecessors so replacement, reversal/removal and repeated corrections cannot double count. The existing root/Adjustment snapshots remain the version history. Phase 0.5 protection still rejects ordinary update/delete/restore.
+- Phase 4B adds Organizer-only stateless preview and atomic confirm routes under `/settlements/:rootId/corrections`. Confirmation revalidates the lineage head/source/digest and creates the successor plus Adjustment in one idempotent transaction. SQLite is **v30** and caches correction source/successor IDs on each version while retaining every old Settlement row.
+- Phase 4C renames the Organizer action to `Make corrections`, shows the historical-preservation warning, reuses the Expense editor to create a successor, previews affected-member deltas before `Confirm updated amounts`, and exposes Settlement history to all members. Personal Payment, legacy Payment and checkpoint rows are not migrated or rewritten.
+- Local validation currently passes TypeScript, ESLint, Backend build, **91 Vitest files / 387 tests**, one clean Supabase reset, and focused Phase 4A pgTAP (**14 assertions**). The full pgTAP suite is being rerun after updating the Phase 4 schema manifest (**103 tables / 1,434 columns**). Hosted Dev deployment, two-account acceptance, signed Simulator UI acceptance and physical iPhone validation have not yet run. Production has not been accessed.
+
 ## Settlement 2.0 Phase 3 — complete on Hosted Dev and iOS Simulator
 
 - Phase 3A human concerns reuse Review v2 with immutable reporter, typed source/revision and existing personal decisions. Phase 3B derives the exact personal statement from canonical Settlement, stores append-only fingerprinted checkpoints and computes deterministic per-Expense deltas without reading Personal Payment. ADRs 0027 and 0028 remain authoritative.
