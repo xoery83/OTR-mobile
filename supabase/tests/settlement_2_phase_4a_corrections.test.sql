@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(14);
+select plan(16);
 set local role service_role;
 
 update public.journey_members set role = 'owner', status = 'linked'
@@ -142,6 +142,16 @@ select jsonb_set(before.value, '{expenses}', jsonb_build_array(
 )) value from phase4_before before;
 
 select lives_ok($$
+  select public.ledger_raise_human_review_finding_3a(
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '49000000-0000-4000-8000-000000000001', 'EXPENSE',
+    '44000000-0000-4000-8000-000000000001', null, null, null, 1,
+    'Finalized amount is wrong', '49000000-0000-4000-8000-000000000001'
+  )
+$$, 'a Human Finding can target the frozen predecessor');
+
+select lives_ok($$
   select public.ledger_finalize_correction_4a(
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
@@ -180,6 +190,12 @@ select is((select count(*)::integer from public.expense_correction_successors), 
   'one explicit source-successor link is stored');
 select ok((select correction_settlement_id is not null
   from public.expense_correction_successors), 'successor points to its correction version');
+select ok((select lifecycle = 'RESOLVED_BY_EXPENSE_UPDATE'
+    and resolution_reason = 'CORRECTION_SUCCESSOR_CONFIRMED'
+    and observation_context ->> 'note' = 'Finalized amount is wrong'
+  from public.ledger_review_findings
+  where id = '49000000-0000-4000-8000-000000000001'),
+  'correction resolves the Human Finding without rewriting its observation');
 select is((select count(*)::integer
   from jsonb_array_elements(public.ledger_adjustment_source_7_2b(
     '47000000-0000-4000-8000-000000000001') -> 'expenses') expense

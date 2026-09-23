@@ -274,7 +274,7 @@ async function main() {
       admin.from("ledger_settlements").select("input_digest").eq("id", root.id).single(),
       admin
         .from("ledger_review_findings")
-        .select("lifecycle,resolution_context")
+        .select("lifecycle,resolution_reason")
         .eq("id", findingId)
         .single(),
       admin.rpc("ledger_adjustment_source_7_2b", { target_root: root.id }),
@@ -298,8 +298,8 @@ async function main() {
   assert.equal(link.data.successor_expense_id, successorId);
   assert.equal(link.data.correction_settlement_id, confirmedBody.entity.id);
   assert.equal(rootAfter.data.input_digest, root.inputDigest);
-  assert.equal(findingAfter.data.lifecycle, "RESOLVED");
-  assert.equal(findingAfter.data.resolution_context.successorExpenseId, successorId);
+  assert.equal(findingAfter.data.lifecycle, "RESOLVED_BY_EXPENSE_UPDATE");
+  assert.equal(findingAfter.data.resolution_reason, "CORRECTION_SUCCESSOR_CONFIRMED");
   assert.ok(
     sourceProjection.data.some((item: { id: string }) => item.id === successorId) &&
       !sourceProjection.data.some((item: { id: string }) => item.id === sourceId),
