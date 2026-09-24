@@ -1,8 +1,8 @@
 export type GlobalMenuModule = "TODAY" | "LEDGER" | "TRIP" | "CAPTURE";
 
 export type GlobalMenuDestination = {
-  label: "My Ledger" | "Review" | "Ledger Settings";
-  path: "/expenses/all-journeys" | "/expenses/review" | "/expenses/settings";
+  label: "My Ledger" | "Currency";
+  path: "/expenses/all-journeys" | "/expenses/currency";
 };
 
 export function contextualMenuDestinations(
@@ -11,8 +11,7 @@ export function contextualMenuDestinations(
   return module === "LEDGER"
     ? [
         { label: "My Ledger", path: "/expenses/all-journeys" },
-        { label: "Review", path: "/expenses/review" },
-        { label: "Ledger Settings", path: "/expenses/settings" },
+        { label: "Currency", path: "/expenses/currency" },
       ]
     : [];
 }
@@ -34,10 +33,6 @@ export function maskEmail(email: string | null) {
   const [local, domain] = email.split("@");
   if (!local || !domain) return null;
   return `${local[0]}•••@${domain}`;
-}
-
-export function showDevMenu(debugMode: boolean) {
-  return process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" && debugMode;
 }
 
 const APPROVED_DEV_ACCOUNT_IDS = new Set([

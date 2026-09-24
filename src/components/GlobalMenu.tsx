@@ -14,7 +14,6 @@ import {
   journeyRoleLabel,
   maskEmail,
   moduleReturnPath,
-  showDevMenu,
   type GlobalMenuModule,
 } from "./globalMenuModel";
 
@@ -32,7 +31,6 @@ export function GlobalMenu({
     journeyId: string | null;
     role: string | null;
   }>({ displayName: null, journeyId: null, role: null });
-  const [debugMode, setDebugMode] = useState(false);
   const accountSwitch = useMemo(
     () =>
       createDefaultAccountSwitchCoordinator({
@@ -51,17 +49,15 @@ export function GlobalMenu({
         if (!session?.identity) return;
         try {
           const repository = await getDefaultLedgerReportingRepository();
-          const [actorContext, preferences] = await Promise.all([
-            journeyId ? repository.getActorContext(journeyId) : Promise.resolve(null),
-            repository.getPreferences(),
-          ]);
+          const actorContext = journeyId
+            ? await repository.getActorContext(journeyId)
+            : null;
           if (!active) return;
           setActor({
             displayName: actorContext?.displayName ?? null,
             journeyId: journeyId ?? null,
             role: actorContext?.role ?? null,
           });
-          setDebugMode(preferences.debugMode);
         } catch {
           if (active)
             setActor({ displayName: null, journeyId: journeyId ?? null, role: null });
@@ -78,19 +74,12 @@ export function GlobalMenu({
   const contextItems = contextualMenuDestinations(module).map<AppNavigationMenuItem>(
     (destination) => ({
       icon:
-        destination.label === "My Ledger"
-          ? "list.bullet.rectangle"
-          : destination.label === "Review"
-            ? "checkmark"
-            : "gearshape",
+        destination.label === "My Ledger" ? "list.bullet.rectangle" : "dollarsign.circle",
       label: destination.label,
-      onPress: () => {
-        if (destination.label === "Review" && journeyId) {
-          router.push({ pathname: destination.path, params: { journeyId } } as never);
-        } else {
-          router.push(destination.path as never);
-        }
-      },
+      onPress: () =>
+        destination.label === "Currency" && journeyId
+          ? router.push({ pathname: destination.path, params: { journeyId } } as never)
+          : router.push(destination.path as never),
     }),
   );
   const returnTo = moduleReturnPath(module);
@@ -109,26 +98,6 @@ export function GlobalMenu({
           Alert.alert("Language", "OTR currently follows your device language settings."),
       },
     ],
-    ...(showDevMenu(debugMode)
-      ? [
-          [
-            {
-              icon: "person.2",
-              label: "Switch test account",
-              onPress: () =>
-                router.push({
-                  pathname: "/account",
-                  params: { mode: "dev", returnTo },
-                } as never),
-            },
-            {
-              icon: "wrench.and.screwdriver",
-              label: "Diagnostics",
-              onPress: () => router.push("/diagnostics" as never),
-            },
-          ] satisfies AppNavigationMenuItem[],
-        ]
-      : []),
     [
       {
         destructive: true,

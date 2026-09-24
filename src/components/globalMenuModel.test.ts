@@ -6,15 +6,13 @@ import {
   journeyRoleLabel,
   maskEmail,
   moduleReturnPath,
-  showDevMenu,
 } from "./globalMenuModel";
 
 describe("contextual global menu", () => {
   it("shows only real Ledger secondary destinations and never primary tabs", () => {
     expect(contextualMenuDestinations("LEDGER").map((item) => item.label)).toEqual([
       "My Ledger",
-      "Review",
-      "Ledger Settings",
+      "Currency",
     ]);
     expect(contextualMenuDestinations("TODAY")).toEqual([]);
     expect(contextualMenuDestinations("TRIP")).toEqual([]);
@@ -28,15 +26,7 @@ describe("contextual global menu", () => {
     expect(moduleReturnPath("LEDGER")).toBe("/expenses");
   });
 
-  it("shows Dev tools only for diagnostics in the Dev transport", () => {
-    const previous = process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT;
-    process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT = "dev";
-    expect(showDevMenu(true)).toBe(true);
-    expect(showDevMenu(false)).toBe(false);
-    process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT = "production";
-    expect(showDevMenu(true)).toBe(false);
-    process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT = previous;
-
+  it("recognizes only approved Dev identities", () => {
     expect(
       isApprovedDevIdentity({ userId: "00000000-0000-4000-8000-000000000001" }),
     ).toBe(true);
