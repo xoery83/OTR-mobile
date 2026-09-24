@@ -256,6 +256,12 @@ Response shape:
 
 ## Sync
 
+Mobile preserves Backend failure category, stable safe code/message, and request id
+separately. Network, timeout, response-validation, rate-limit, 5xx, missing-code 4xx,
+plain, and unknown failures remain retryable. Only current allow-listed validation or
+permission codes are terminal/actionable; 401 pauses auth and 409 enters conflict.
+Retrying an attempted CREATE reuses its original body and idempotency key.
+
 Personal Payment create/update requests carry `economicDate`; Backend responses
 also expose nullable `economicDateSource = EXPLICIT | LEGACY_DERIVED_UTC`.
 Deprecated

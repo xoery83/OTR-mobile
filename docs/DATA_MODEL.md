@@ -310,7 +310,15 @@ New fields needed:
 - `next_attempt_at`.
 - `last_error_code`.
 - `last_error_message`.
+- `failure_category` and optional safe request correlation id.
+- `last_attempt_at`, `first_failed_at`, and `next_attempt_at`.
+- nullable `dependency_operation_id` for causal blocking and wake-up.
 - `created_at`, `updated_at`.
+
+Phase A adds `DEPENDENCY_BLOCKED` as a durable non-error operation state. Unknown
+failures remain `RETRYABLE`; only allow-listed structured business codes may become
+terminal `FAILED`. Long-lived retry uses sparse due times without deleting the entity or
+operation.
 
 Uncertain:
 

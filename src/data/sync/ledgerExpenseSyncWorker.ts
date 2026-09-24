@@ -11,7 +11,12 @@ import type {
 import type { createLedgerCollaborationRepository } from "@/data/repositories/ledgerCollaborationRepository";
 import { assertReplayFixtureWritable } from "@/data/repositories/replayFixtureGuard";
 
-import { SyncConflictError, SyncDependencyError, type SyncWorker } from "./syncEngine";
+import {
+  SyncConflictError,
+  SyncDependencyError,
+  syncFailureClass,
+  type SyncWorker,
+} from "./syncEngine";
 import type { SyncOperation } from "./syncOperationRepository";
 
 export type LedgerExpenseCreateTransport = {
@@ -197,6 +202,7 @@ export function createLedgerExpenseSyncWorker(
             expense.id,
             response.serverId,
             response.revision,
+            operation.id,
           );
         }
       } catch (error) {
@@ -213,8 +219,14 @@ export function createLedgerExpenseSyncWorker(
           await repository.markExpenseConflict(expense.id);
           throw new SyncConflictError(error.message);
         }
-        await repository.markExpenseFailed(expense.id);
-        throw error;
+        const normalized = error instanceof Error ? error : new Error("Sync failed.");
+        const failure = syncFailureClass(normalized);
+        if (failure === "retryable" || failure === "auth" || failure === "dependency") {
+          await repository.markExpensePending?.(expense.id, operation.operationType);
+        } else {
+          await repository.markExpenseFailed(expense.id);
+        }
+        throw normalized;
       }
     },
   };
@@ -329,7 +341,10 @@ async function pushExpenseOperation(
   }
 
   if (!expense.serverId || expense.serverRevision === 0) {
-    throw new Error("Ledger Expense create must sync before dependent mutations.");
+    throw new SyncDependencyError(
+      "Ledger Expense create must sync before dependent mutations.",
+      operation.dependencyOperationId ?? undefined,
+    );
   }
 
   if (operation.operationType === updateOperation) {

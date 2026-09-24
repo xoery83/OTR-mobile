@@ -108,7 +108,15 @@ Operations should be ordered per entity but may be batched per trip when safe.
 
 Retry with exponential backoff and jitter. Auth, validation, permission, conflict, and network errors should be classified differently.
 
-Network/server failures remain retryable. Validation and permission errors become `FAILED` and require user-visible repair. Conflicts become `CONFLICT`.
+Network/server, response-validation, missing-code, plain, and unknown failures remain
+retryable. After normal exponential backoff, unresolved work moves to sparse long-lived
+retry and may be reactivated by recovery/upgrade/manual health events. Only allow-listed,
+structured validation and permission codes become terminal/actionable `FAILED`;
+conflicts become `CONFLICT`.
+
+Dependent operations persist `dependency_operation_id` and remain
+`DEPENDENCY_BLOCKED` until the causal parent completes. They make no network request and
+consume no error attempt. Completion wakes them durably, including after process death.
 
 ## Idempotency
 
@@ -160,6 +168,11 @@ revision. It is intentionally durable but inactive in Stage 2. Stage 3 will
 add an authenticated Ledger worker and incremental pull path. This preserves
 the local-first guarantee without pretending that the Phase 2A compatibility
 worker can synchronize a Ledger 2.0 aggregate.
+
+Phase A coalesces Expense edits into an unattempted CREATE. Once CREATE was attempted,
+its payload and idempotency key are immutable: the original CREATE replays first, then
+one compacted current UPDATE runs after the remote identity is known. UPDATE, DELETE,
+RESTORE, and evidence that require that identity remain dependency-blocked meanwhile.
 
 ## Versioning
 

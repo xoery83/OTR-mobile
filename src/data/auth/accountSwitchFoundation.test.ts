@@ -25,7 +25,9 @@ describe("Account Switching Foundation gate", () => {
         id TEXT PRIMARY KEY, trip_id TEXT, entity_type TEXT, entity_id TEXT,
         operation_type TEXT, idempotency_key TEXT, base_version INTEGER,
         payload_json TEXT, owner_user_id TEXT, status TEXT, attempt_count INTEGER,
-        next_attempt_at TEXT, last_error_message TEXT, claim_owner TEXT,
+        next_attempt_at TEXT, failure_category TEXT, last_error_code TEXT,
+        last_error_message TEXT, last_attempt_at TEXT, first_failed_at TEXT,
+        dependency_operation_id TEXT, last_request_id TEXT, claim_owner TEXT,
         lease_expires_at TEXT, created_at TEXT, updated_at TEXT
       );
       INSERT INTO expenses VALUES (

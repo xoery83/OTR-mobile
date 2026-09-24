@@ -43,6 +43,7 @@ export function createLedgerPersonalPaymentSyncWorker(
       )
         throw new SyncDependencyError(
           "Personal Payment must be created remotely before later mutations.",
+          operation.dependencyOperationId ?? undefined,
         );
 
       await repository.markSyncing(record.id);
@@ -88,7 +89,7 @@ export function createLedgerPersonalPaymentSyncWorker(
           throw new SyncConflictError(normalized.code);
         }
         const failure = syncFailureClass(normalized);
-        if (failure === "auth" || failure === "retryable") {
+        if (failure === "auth" || failure === "retryable" || failure === "dependency") {
           await repository.markPending(record.id, operation.operationType);
         } else {
           await repository.markFailed(

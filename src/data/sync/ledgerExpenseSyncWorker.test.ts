@@ -84,6 +84,7 @@ function repository(): LedgerExpenseRepository {
     restoreExpense: vi.fn(),
     markExpenseSyncing: vi.fn(),
     markExpenseSynced: vi.fn(),
+    markExpensePending: vi.fn(),
     reconcileCanonicalExpense: vi.fn(),
     markExpenseConflict: vi.fn(),
     markExpenseFailed: vi.fn(),
@@ -140,10 +141,11 @@ describe("Ledger Expense sync worker", () => {
       expense.id,
       "40000000-0000-4000-8000-000000000001",
       1,
+      operation.id,
     );
   });
 
-  it("marks the local aggregate failed when a post-commit response is lost", async () => {
+  it("keeps the local aggregate pending when a post-commit response is lost", async () => {
     const repo = repository();
     const worker = createLedgerExpenseSyncWorker(repo, {
       createExpense: vi.fn(async () => {
@@ -155,7 +157,11 @@ describe("Ledger Expense sync worker", () => {
     });
 
     await expect(worker.push(operation)).rejects.toThrow(/ambiguous/);
-    expect(repo.markExpenseFailed).toHaveBeenCalledWith(expense.id);
+    expect(repo.markExpensePending).toHaveBeenCalledWith(
+      expense.id,
+      "LEDGER_CREATE_EXPENSE",
+    );
+    expect(repo.markExpenseFailed).not.toHaveBeenCalled();
   });
 
   it("uses the queued create payload even when the local aggregate was edited later", async () => {

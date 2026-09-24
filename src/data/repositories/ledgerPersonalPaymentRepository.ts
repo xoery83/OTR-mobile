@@ -165,6 +165,10 @@ export function createLedgerPersonalPaymentRepository(
           current.revision === 0
             ? await findCoalescibleCreate(database, id, userId)
             : null;
+        const causalCreate =
+          current.revision === 0 && !pendingCreate
+            ? await findCausalCreate(database, id, userId)
+            : null;
         if (!pendingCreate) updated.syncStatus = "PENDING_UPDATE";
         await upsert(database, userId, updated);
         if (pendingCreate) {
@@ -177,6 +181,7 @@ export function createLedgerPersonalPaymentRepository(
             current.revision,
             input,
             userId,
+            causalCreate?.id,
           );
         }
       });
@@ -198,6 +203,8 @@ export function createLedgerPersonalPaymentRepository(
       };
       await database.withTransactionAsync(async () => {
         await upsert(database, userId, deleted);
+        const causalCreate =
+          current.revision === 0 ? await findCausalCreate(database, id, userId) : null;
         await enqueue(
           database,
           deleted,
@@ -205,6 +212,7 @@ export function createLedgerPersonalPaymentRepository(
           current.revision,
           { baseRevision: Math.max(1, current.revision), auditReason },
           userId,
+          causalCreate?.id,
         );
       });
       return deleted;
@@ -708,14 +716,15 @@ async function enqueue(
   baseVersion: number | null,
   payload: unknown,
   userId: string,
+  dependencyOperationId?: string,
 ) {
   const now = new Date().toISOString();
   await database.runAsync(
     `INSERT INTO sync_operations (
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
       base_version, payload_json, owner_user_id, status, attempt_count,
-      next_attempt_at, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
+      next_attempt_at, dependency_operation_id, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?)`,
     createUuid(),
     record.journeyId,
     entityType,
@@ -725,8 +734,27 @@ async function enqueue(
     baseVersion,
     JSON.stringify(payload),
     userId,
+    dependencyOperationId ? "DEPENDENCY_BLOCKED" : "PENDING",
+    dependencyOperationId ?? null,
     now,
     now,
+  );
+}
+
+async function findCausalCreate(
+  database: LedgerPersonalPaymentDatabase,
+  id: string,
+  userId: string,
+) {
+  return database.getFirstAsync<{ id: string }>(
+    `SELECT id FROM sync_operations
+     WHERE owner_user_id = ? AND entity_type = ? AND entity_id = ?
+       AND operation_type = ? AND status <> 'COMPLETED'
+     ORDER BY created_at, rowid LIMIT 1`,
+    userId,
+    entityType,
+    id,
+    personalPaymentOperations.create,
   );
 }
 

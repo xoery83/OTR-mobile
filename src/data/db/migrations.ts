@@ -1181,4 +1181,41 @@ export const migrations: Migration[] = [
         ));
     `,
   },
+  {
+    id: 35,
+    name: "data_health_phase_a_failure_fidelity",
+    sql: `
+      ALTER TABLE sync_operations ADD COLUMN failure_category TEXT;
+      ALTER TABLE sync_operations ADD COLUMN last_attempt_at TEXT;
+      ALTER TABLE sync_operations ADD COLUMN first_failed_at TEXT;
+      ALTER TABLE sync_operations ADD COLUMN dependency_operation_id TEXT;
+      ALTER TABLE sync_operations ADD COLUMN last_request_id TEXT;
+      CREATE INDEX sync_operations_owner_due ON sync_operations
+        (owner_user_id, status, next_attempt_at, created_at);
+      CREATE INDEX sync_operations_entity_causal ON sync_operations
+        (owner_user_id, entity_type, entity_id, created_at);
+      CREATE INDEX sync_operations_dependency ON sync_operations
+        (owner_user_id, dependency_operation_id, status);
+      CREATE INDEX sync_operations_long_lived_failure ON sync_operations
+        (owner_user_id, failure_category, first_failed_at, status);
+
+      ALTER TABLE ledger_asset_operations ADD COLUMN failure_category TEXT;
+      ALTER TABLE ledger_asset_operations ADD COLUMN last_error_message TEXT;
+      ALTER TABLE ledger_asset_operations ADD COLUMN last_attempt_at TEXT;
+      ALTER TABLE ledger_asset_operations ADD COLUMN first_failed_at TEXT;
+      ALTER TABLE ledger_asset_operations ADD COLUMN dependency_operation_id TEXT;
+      ALTER TABLE ledger_asset_operations ADD COLUMN last_request_id TEXT;
+      CREATE INDEX ledger_asset_operations_dependency ON ledger_asset_operations
+        (owner_user_id, dependency_operation_id, status);
+      CREATE INDEX ledger_asset_operations_long_lived_failure ON ledger_asset_operations
+        (owner_user_id, failure_category, first_failed_at, status);
+
+      UPDATE sync_operations SET next_attempt_at = NULL
+      WHERE status = 'RETRYABLE'
+        AND failure_category IN ('UNKNOWN', 'RESPONSE_INVALID');
+      UPDATE ledger_asset_operations SET next_attempt_at = NULL
+      WHERE status = 'RETRYABLE'
+        AND failure_category IN ('UNKNOWN', 'RESPONSE_INVALID');
+    `,
+  },
 ];

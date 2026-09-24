@@ -80,7 +80,13 @@ export type LedgerExpenseRepository = {
     reason: string,
   ): Promise<void>;
   markExpenseSyncing(id: string): Promise<void>;
-  markExpenseSynced(id: string, serverId: string, serverRevision: number): Promise<void>;
+  markExpenseSynced(
+    id: string,
+    serverId: string,
+    serverRevision: number,
+    completedOperationId?: string,
+  ): Promise<void>;
+  markExpensePending?(id: string, operationType: string): Promise<void>;
   reconcileCanonicalExpense(id: string, expense: LedgerExpenseDto): Promise<void>;
   markExpenseConflict(id: string): Promise<void>;
   markExpenseFailed(id: string): Promise<void>;
@@ -250,17 +256,37 @@ export function createLedgerExpenseRepository(
       );
       assertCommand(expense);
       await database.withTransactionAsync(async () => {
+        const causalCreate =
+          current.serverRevision === 0
+            ? await findCausalCreate(database, id, userId)
+            : null;
+        if (causalCreate?.attemptCount === 0 && causalCreate.status === "PENDING") {
+          expense.syncStatus = "PENDING_CREATE";
+        }
         await replaceExpenseAggregate(database, expense, "UPDATED", reason, userId);
-        await enqueueOperation(
-          database,
-          expense,
-          updateOperation,
-          current.serverRevision,
-          reason,
-          userId,
-          expense,
-          current,
-        );
+        if (causalCreate?.attemptCount === 0 && causalCreate.status === "PENDING") {
+          await coalesceIntoCreate(database, causalCreate.id, expense, userId);
+        } else if (causalCreate) {
+          await enqueueOrCompactDependentUpdate(
+            database,
+            expense,
+            current,
+            reason,
+            userId,
+            causalCreate.id,
+          );
+        } else {
+          await enqueueOperation(
+            database,
+            expense,
+            updateOperation,
+            current.serverRevision,
+            reason,
+            userId,
+            expense,
+            current,
+          );
+        }
       });
       return expense;
     },
@@ -347,6 +373,7 @@ export function createLedgerExpenseRepository(
           id,
         );
         await insertAuditEvent(database, id, nextRevision, "TOMBSTONED", reason, now);
+        const causalCreate = await findCausalCreate(database, id, userId);
         await enqueueOperation(
           database,
           { ...current, revision: nextRevision },
@@ -356,6 +383,7 @@ export function createLedgerExpenseRepository(
           userId,
           undefined,
           current,
+          causalCreate?.id,
         );
       });
     },
@@ -381,6 +409,7 @@ export function createLedgerExpenseRepository(
           id,
         );
         await insertAuditEvent(database, id, nextRevision, "RESTORED", reason, now);
+        const causalCreate = await findCausalCreate(database, id, userId);
         await enqueueOperation(
           database,
           { ...current, revision: nextRevision },
@@ -390,6 +419,7 @@ export function createLedgerExpenseRepository(
           userId,
           undefined,
           current,
+          causalCreate?.id,
         );
       });
     },
@@ -398,20 +428,42 @@ export function createLedgerExpenseRepository(
       await setExpenseSyncStatus(database, id, "SYNCING", await getActiveUserId());
     },
 
-    async markExpenseSynced(id, serverId, serverRevision) {
+    async markExpenseSynced(id, serverId, serverRevision, completedOperationId) {
       const userId = await getActiveUserId();
+      const dependent = await database.getFirstAsync<{ operationType: string }>(
+        `SELECT operation_type AS operationType FROM sync_operations
+         WHERE owner_user_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
+           AND status NOT IN ('COMPLETED', 'CONFLICT', 'FAILED')
+           AND operation_type <> ? AND id <> ?
+         ORDER BY created_at DESC, rowid DESC LIMIT 1`,
+        userId,
+        id,
+        createOperation,
+        completedOperationId ?? "",
+      );
+      const syncStatus = operationSyncStatus(dependent?.operationType);
       await database.runAsync(
         `UPDATE ledger_expenses
-         SET server_id = ?, server_revision = ?, sync_status = ?, local_owner_user_id = NULL,
+         SET server_id = ?, server_revision = ?, sync_status = ?, local_owner_user_id = ?,
              last_synced_at = ?, updated_at = ?
          WHERE id = ? AND local_owner_user_id = ?`,
         serverId,
         serverRevision,
-        "SYNCED",
+        syncStatus,
+        dependent ? userId : null,
         new Date().toISOString(),
         new Date().toISOString(),
         id,
         userId,
+      );
+    },
+
+    async markExpensePending(id, operationType) {
+      await setExpenseSyncStatus(
+        database,
+        id,
+        operationSyncStatus(operationType),
+        await getActiveUserId(),
       );
     },
 
@@ -1259,14 +1311,15 @@ async function enqueueOperation(
   userId: string,
   snapshot?: LedgerExpense,
   baseSnapshot?: LedgerExpense,
+  dependencyOperationId?: string,
 ) {
   const now = new Date().toISOString();
   await database.runAsync(
     `INSERT INTO sync_operations (
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
       base_version, payload_json, owner_user_id, status, attempt_count, next_attempt_at,
-      created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      dependency_operation_id, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     createLocalId("ledger-operation"),
     expense.journeyId,
     "ledger_expense",
@@ -1282,12 +1335,129 @@ async function enqueueOperation(
       baseExpense: baseSnapshot ? toOperationSnapshot(baseSnapshot) : null,
     }),
     userId,
-    "PENDING",
+    dependencyOperationId ? "DEPENDENCY_BLOCKED" : "PENDING",
     0,
     null,
+    dependencyOperationId ?? null,
     now,
     now,
   );
+}
+
+async function findCausalCreate(
+  database: LedgerExpenseDatabase,
+  entityId: string,
+  userId: string,
+) {
+  return database.getFirstAsync<{
+    id: string;
+    status: string;
+    attemptCount: number;
+  }>(
+    `SELECT id, status, attempt_count AS attemptCount FROM sync_operations
+     WHERE owner_user_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
+       AND operation_type = ? AND status <> 'COMPLETED'
+     ORDER BY created_at, rowid LIMIT 1`,
+    userId,
+    entityId,
+    createOperation,
+  );
+}
+
+async function coalesceIntoCreate(
+  database: LedgerExpenseDatabase,
+  operationId: string,
+  expense: LedgerExpense,
+  userId: string,
+) {
+  const now = new Date().toISOString();
+  await database.runAsync(
+    `UPDATE sync_operations SET payload_json = ?, failure_category = NULL,
+       last_error_code = NULL, last_error_message = NULL, next_attempt_at = NULL,
+       updated_at = ? WHERE id = ? AND owner_user_id = ?`,
+    JSON.stringify(operationPayload(expense, null, expense)),
+    now,
+    operationId,
+    userId,
+  );
+  await database.runAsync(
+    `UPDATE sync_operations SET status = 'COMPLETED', updated_at = ?
+     WHERE owner_user_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
+       AND operation_type = ? AND status <> 'PROCESSING' AND status <> 'COMPLETED'`,
+    now,
+    userId,
+    expense.id,
+    updateOperation,
+  );
+}
+
+async function enqueueOrCompactDependentUpdate(
+  database: LedgerExpenseDatabase,
+  expense: LedgerExpense,
+  baseExpense: LedgerExpense,
+  reason: string | null,
+  userId: string,
+  dependencyOperationId: string,
+) {
+  const existing = await database.getFirstAsync<{ id: string }>(
+    `SELECT id FROM sync_operations
+     WHERE owner_user_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
+       AND operation_type = ? AND dependency_operation_id = ? AND attempt_count = 0
+       AND status <> 'PROCESSING' AND status <> 'COMPLETED'
+     ORDER BY created_at, rowid LIMIT 1`,
+    userId,
+    expense.id,
+    updateOperation,
+    dependencyOperationId,
+  );
+  if (!existing) {
+    await enqueueOperation(
+      database,
+      expense,
+      updateOperation,
+      baseExpense.serverRevision,
+      reason,
+      userId,
+      expense,
+      baseExpense,
+      dependencyOperationId,
+    );
+    return;
+  }
+  await database.runAsync(
+    `UPDATE sync_operations SET payload_json = ?, base_version = ?,
+       status = 'DEPENDENCY_BLOCKED', failure_category = 'DEPENDENCY',
+       last_error_code = 'DEPENDENCY_BLOCKED',
+       last_error_message = 'Waiting for Expense create.', updated_at = ?
+     WHERE id = ? AND owner_user_id = ?`,
+    JSON.stringify(operationPayload(expense, reason, expense, baseExpense)),
+    baseExpense.serverRevision,
+    new Date().toISOString(),
+    existing.id,
+    userId,
+  );
+}
+
+function operationPayload(
+  expense: Pick<LedgerExpense, "id" | "revision">,
+  reason: string | null,
+  snapshot?: LedgerExpense,
+  baseSnapshot?: LedgerExpense,
+) {
+  return {
+    expenseId: expense.id,
+    revision: expense.revision,
+    reason,
+    expense: snapshot ? toOperationSnapshot(snapshot) : null,
+    baseExpense: baseSnapshot ? toOperationSnapshot(baseSnapshot) : null,
+  };
+}
+
+function operationSyncStatus(operationType?: string): SyncStatus {
+  if (!operationType) return "SYNCED";
+  if (operationType === createOperation) return "PENDING_CREATE";
+  if (operationType === deleteOperation) return "PENDING_DELETE";
+  return "PENDING_UPDATE";
 }
 
 function toOperationSnapshot(expense: LedgerExpense) {

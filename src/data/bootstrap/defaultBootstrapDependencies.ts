@@ -5,6 +5,7 @@ import { openDatabase } from "@/data/db/database";
 import {
   allowLedgerOperationalSync,
   pauseLedgerOperationalSync,
+  reactivateLongLivedLedgerFailures,
   runLedgerOperationalSync,
 } from "@/data/sync/ledgerOperationalSync";
 import { getSyncTransportMode } from "@/data/sync/transportSelection";
@@ -43,9 +44,10 @@ export async function pauseOperationalSync() {
   await Promise.all([resuming, pauseLedgerOperationalSync()]);
 }
 
-export function restartOperationalSync() {
+export async function restartOperationalSync() {
   allowLedgerOperationalSync();
   syncPaused = false;
+  await reactivateLongLivedLedgerFailures();
   return resumeOperationalSync();
 }
 

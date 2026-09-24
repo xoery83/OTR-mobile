@@ -3,7 +3,7 @@ import { createLedgerExpenseRepository } from "@/data/repositories/ledgerExpense
 import { createLedgerReceiptRepository } from "@/data/repositories/ledgerReceiptRepository";
 import { createLedgerReceiptTransport } from "./ledgerReceiptTransport";
 import { pushReceiptOperation } from "./ledgerReceiptSyncWorker";
-import { nextSyncAttemptAt, syncFailureClass } from "./syncEngine";
+import { nextSyncAttemptAt, syncFailureClass, syncFailureDetails } from "./syncEngine";
 
 export async function runLedgerReceiptSync(
   options: { transport?: ReturnType<typeof createLedgerReceiptTransport> } = {},
@@ -23,15 +23,13 @@ export async function runLedgerReceiptSync(
       const normalized =
         error instanceof Error ? error : new Error("Receipt operation failed.");
       const kind = syncFailureClass(normalized);
+      const details = syncFailureDetails(normalized);
       await receipts.markOperation(
         operation.id,
         kind === "retryable" ? "RETRYABLE" : kind === "auth" ? "PENDING" : "FAILED",
-        kind === "retryable"
-          ? "RETRYABLE_TRANSPORT"
-          : kind === "auth"
-            ? "AUTH_PAUSED"
-            : "TERMINAL",
+        normalized,
         kind === "retryable" ? nextSyncAttemptAt(operation.attemptCount + 1) : null,
+        details.category,
       );
     }
   }

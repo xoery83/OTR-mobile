@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useNetworkState } from "expo-network";
@@ -11,6 +11,7 @@ import {
   type LedgerActiveSyncResult,
   type LedgerSyncStatus,
 } from "@/data/sync/ledgerActiveSync";
+import { reactivateLongLivedLedgerFailures } from "@/data/sync/ledgerOperationalSync";
 
 export function useLedgerActiveSync(
   journeyId: string | null,
@@ -18,6 +19,7 @@ export function useLedgerActiveSync(
 ) {
   const network = useNetworkState();
   const online = network.isConnected !== false && network.isInternetReachable !== false;
+  const wasOnline = useRef(online);
   const [status, setStatus] = useState<{
     journeyId: string;
     value: LedgerSyncStatus;
@@ -80,7 +82,13 @@ export function useLedgerActiveSync(
   }, [controller]);
 
   useEffect(() => {
-    controller?.setOnline(online);
+    const recovered = online && wasOnline.current === false;
+    wasOnline.current = online;
+    if (recovered)
+      void reactivateLongLivedLedgerFailures()
+        .catch(() => undefined)
+        .then(() => controller?.setOnline(true));
+    else controller?.setOnline(online);
     let current = true;
     if (!online && journeyId)
       void getLedgerPendingMutationCount(journeyId).then((count) => {

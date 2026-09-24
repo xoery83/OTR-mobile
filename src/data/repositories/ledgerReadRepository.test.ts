@@ -22,6 +22,7 @@ function database(
   existingExpenseStatus: string | null = null,
   existingCorrectionStatus: string | null = null,
   linkedExpenseLocalId: string | null = null,
+  deferredExpenseChange: LedgerChangesResponse["changes"][number] | null = null,
 ) {
   const writes: { sql: string; params: unknown[] }[] = [];
   let transactions = 0;
@@ -47,7 +48,16 @@ function database(
       if (sql.includes("ledger_sync_cursors")) return { cursor: "cursor-1" } as never;
       return null;
     },
-    async getAllAsync() {
+    async getAllAsync(sql) {
+      if (sql.includes("FROM ledger_deferred_server_changes") && deferredExpenseChange) {
+        return [
+          {
+            entityId: deferredExpenseChange.entityId,
+            revision: deferredExpenseChange.revision,
+            payloadJson: JSON.stringify(deferredExpenseChange),
+          },
+        ] as never;
+      }
       return [] as never;
     },
   };
@@ -246,6 +256,35 @@ describe("Ledger read repository", () => {
       journeyId,
       "cursor-3",
     ]);
+  });
+
+  it("drains a deferred Expense change after local convergence", async () => {
+    const deferred = {
+      entityType: "EXPENSE" as const,
+      entityId: expenseId,
+      revision: 2,
+      isTombstone: false,
+      aggregate: { ...expense, revision: 2 },
+    };
+    const { db, writes } = database("SYNCED", null, null, deferred);
+    await createLedgerReadRepository(db, activeUser).applyChanges(journeyId, {
+      changes: [],
+      cursor: "cursor-3",
+      serverTime: "2026-09-11T02:00:00.000Z",
+    });
+
+    expect(
+      writes.some((write) =>
+        write.sql.includes("DELETE FROM ledger_deferred_server_changes"),
+      ),
+    ).toBe(true);
+    expect(
+      writes.some(
+        (write) =>
+          write.sql.includes("INSERT OR REPLACE INTO ledger_expenses") &&
+          write.params.includes(2),
+      ),
+    ).toBe(true);
   });
 
   it("defers bootstrap expenses when a matching local aggregate is pending", async () => {

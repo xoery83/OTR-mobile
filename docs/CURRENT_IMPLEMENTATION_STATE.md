@@ -2,6 +2,29 @@
 
 Date: 2026-09-24
 
+## OTR Data Health & Self-Healing — Phase A complete; awaiting acceptance
+
+- SQLite migration 35 adds structured safe failure diagnostics, attempt timestamps,
+  request correlation, causal dependency metadata, and focused queue indexes. It does
+  not add health tables or reclassify historical `FAILED` rows.
+- Unknown/plain, response-invalid, transport, rate-limit, and server failures remain
+  retryable with sparse long-lived backoff. Only allow-listed structured validation or
+  permission codes are terminal; 401 pauses and 409 conflicts.
+- Expense pre-create edits coalesce into an unattempted CREATE. An attempted CREATE keeps
+  its original payload/idempotency key, then wakes one compacted current UPDATE. Other
+  dependent mutations make no request or error attempt until CREATE completes.
+- Entity status now follows operation classification, and converged Ledger reads drain
+  deferred Expense server changes. Personal Payment uses the same explicit dependency
+  wake-up without changing its financial contract. Canonical Settlement is unchanged.
+- TypeScript, ESLint, Backend build, `git diff --check`, and 98 Vitest files / 458 tests
+  pass. A Release iOS simulator build, data-preserving install, launch, and read-only
+  migration check pass; the existing database reached migration 35 with the expected
+  queue fields. Phase A has no Backend/Supabase contract change, so Hosted Dev was not
+  mutated or deployed. Production was not accessed. `guard 915` was not changed,
+  deleted, restored, or used as an automated fixture.
+- Stop after Phase A review. Health tables/retention, scanner/UI, repair coordinator,
+  scheduling, historical recovery, and `guard 915` remain Phases B–E.
+
 ## Personal Payment FX legacy backfill — Slice D accepted on Hosted Dev
 
 - Migration `20260924000300` adds reviewed economic-date provenance and a

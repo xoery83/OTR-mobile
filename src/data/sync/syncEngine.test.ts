@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createSyncEngine,
   nextSyncAttemptAt,
+  syncFailureDetails,
   SyncConflictError,
   SyncDependencyError,
 } from "./syncEngine";
@@ -73,6 +74,7 @@ describe("sync engine", () => {
       markProcessing: vi.fn(),
       markCompleted: vi.fn(),
       markRetryable: vi.fn(),
+      markDependencyBlocked: vi.fn(),
       markFailed: vi.fn(),
     };
     await createSyncEngine(
@@ -81,7 +83,8 @@ describe("sync engine", () => {
       () => "2026-09-09T00:01:00.000Z",
     ).run("AUTHENTICATED_ONLINE");
 
-    expect(repository.markRetryable).toHaveBeenCalledOnce();
+    expect(repository.markDependencyBlocked).toHaveBeenCalledOnce();
+    expect(repository.markRetryable).not.toHaveBeenCalled();
     expect(repository.markFailed).not.toHaveBeenCalled();
   });
 
@@ -132,7 +135,35 @@ describe("sync engine", () => {
     const now = Date.parse("2026-09-13T00:00:00.000Z");
     expect(Date.parse(nextSyncAttemptAt(1, now, 0.5)) - now).toBe(30_000);
     expect(Date.parse(nextSyncAttemptAt(2, now, 0.5)) - now).toBe(60_000);
-    expect(Date.parse(nextSyncAttemptAt(20, now, 0.5)) - now).toBe(30 * 60_000);
+    expect(Date.parse(nextSyncAttemptAt(20, now, 0.5)) - now).toBe(4 * 24 * 60 * 60_000);
+  });
+
+  it.each([
+    [new Error("plain"), "retryable", "UNKNOWN"],
+    [
+      new ApiClientError("invalid response", "validation"),
+      "retryable",
+      "RESPONSE_INVALID",
+    ],
+    [new ApiClientError("offline", "network"), "retryable", "NETWORK"],
+    [new ApiClientError("slow", "timeout"), "retryable", "TIMEOUT"],
+    [new ApiClientError("limited", "http", 429), "retryable", "RATE_LIMIT"],
+    [new ApiClientError("down", "http", 503), "retryable", "SERVER"],
+    [new ApiClientError("refresh", "http", 401), "auth", "AUTH"],
+    [
+      new ApiClientError("invalid", "http", 422, "INVALID_PAYLOAD"),
+      "terminal",
+      "VALIDATION",
+    ],
+    [
+      new ApiClientError("denied", "http", 403, "TRIP_WRITE_FORBIDDEN"),
+      "terminal",
+      "PERMISSION",
+    ],
+    [new ApiClientError("unknown 4xx", "http", 422), "retryable", "UNKNOWN"],
+    [new ApiClientError("conflict", "http", 409), "conflict", "CONFLICT"],
+  ])("classifies %s as %s/%s", (error, classification, category) => {
+    expect(syncFailureDetails(error)).toEqual({ classification, category });
   });
 
   it("claims once across concurrent wake-ups and terminally fails validation", async () => {
@@ -146,7 +177,9 @@ describe("sync engine", () => {
       markFailed: vi.fn(),
     };
     const worker = {
-      push: vi.fn().mockRejectedValue(new ApiClientError("bad", "http", 422)),
+      push: vi
+        .fn()
+        .mockRejectedValue(new ApiClientError("bad", "http", 422, "INVALID_PAYLOAD")),
     };
     const engine = createSyncEngine(repository, worker);
     await Promise.all([

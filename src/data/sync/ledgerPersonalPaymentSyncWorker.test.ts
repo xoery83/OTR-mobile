@@ -135,7 +135,7 @@ describe("Settlement 2.0 Personal Payment sync worker", () => {
       "failed",
     ],
     [new ApiClientError("invalid", "http", 422, "INVALID_PAYLOAD"), "failed"],
-    [new ApiClientError("missing", "http", 404, "ENTITY_NOT_FOUND"), "failed"],
+    [new ApiClientError("missing", "http", 404, "ENTITY_NOT_FOUND"), "pending"],
   ])("classifies %s as %s without pretending success", async (error, outcome) => {
     const repo = repository();
     const api = transport();

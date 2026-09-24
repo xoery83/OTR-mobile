@@ -237,16 +237,28 @@ export function createLedgerReceiptRepository(
         new Date().toISOString(),
       );
     },
+    async reactivateLongLivedFailures() {
+      const userId = await getActiveUserId();
+      await database.runAsync(
+        `UPDATE ledger_asset_operations SET next_attempt_at = NULL, updated_at = ?
+         WHERE owner_user_id = ? AND status = 'RETRYABLE'
+           AND failure_category IN ('UNKNOWN', 'NETWORK', 'TIMEOUT', 'SERVER',
+             'RATE_LIMIT', 'RESPONSE_INVALID')`,
+        new Date().toISOString(),
+        userId,
+      );
+    },
     async claimOperation(id: string) {
       const now = new Date().toISOString();
       const userId = await getActiveUserId();
       const result = await database.runAsync(
         `UPDATE ledger_asset_operations SET status = 'PROCESSING', claim_owner = ?,
-          lease_expires_at = ?, updated_at = ?
+          lease_expires_at = ?, last_attempt_at = ?, updated_at = ?
          WHERE id = ? AND owner_user_id = ? AND status IN ('PENDING', 'RETRYABLE')
            AND (next_attempt_at IS NULL OR next_attempt_at <= ?)`,
         processClaimOwner,
         new Date(Date.now() + 5 * 60_000).toISOString(),
+        now,
         now,
         id,
         userId,
@@ -275,17 +287,28 @@ export function createLedgerReceiptRepository(
     async markOperation(
       id: string,
       status: AssetOperation["status"],
-      error: string | null = null,
+      error: Error | null = null,
       nextAttemptAt: string | null = null,
+      failureCategory: string | null = null,
     ) {
       const userId = await getActiveUserId();
       await database.runAsync(
         `UPDATE ledger_asset_operations SET status = ?, attempt_count = attempt_count + CASE WHEN ? = 'RETRYABLE' THEN 1 ELSE 0 END,
-        last_error_code = ?, next_attempt_at = ?, claim_owner = NULL,
-        lease_expires_at = NULL, updated_at = ? WHERE id = ? AND owner_user_id = ?`,
+        failure_category = ?, last_error_code = ?, last_error_message = ?,
+        last_request_id = ?,
+        first_failed_at = CASE WHEN ? IS NULL THEN first_failed_at ELSE COALESCE(first_failed_at, ?) END,
+        next_attempt_at = ?, claim_owner = NULL, lease_expires_at = NULL,
+        updated_at = ? WHERE id = ? AND owner_user_id = ?`,
         status,
         status,
-        error,
+        error ? failureCategory : null,
+        error ? safeErrorCode(error) : null,
+        error ? safeErrorMessage(error) : null,
+        error && "requestId" in error && typeof error.requestId === "string"
+          ? error.requestId
+          : null,
+        error ? failureCategory : null,
+        new Date().toISOString(),
         nextAttemptAt,
         new Date().toISOString(),
         id,
@@ -330,6 +353,20 @@ export function createLedgerReceiptRepository(
       );
     },
   };
+}
+
+function safeErrorCode(error: Error) {
+  const code = (error as Error & { code?: unknown }).code;
+  return typeof code === "string" && /^[A-Z0-9_:-]{1,100}$/.test(code)
+    ? code
+    : "SYNC_FAILED";
+}
+
+function safeErrorMessage(error: Error) {
+  return error.message
+    .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+    .replace(/[A-Za-z0-9_-]{80,}/g, "[redacted]")
+    .slice(0, 300);
 }
 
 async function defaultGetActiveUserId() {

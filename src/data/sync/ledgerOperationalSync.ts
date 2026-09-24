@@ -1,8 +1,10 @@
 import { openDatabase } from "@/data/db/database";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 import {
   cleanupReconstructibleLedgerData,
   enforceReceiptCacheLimit,
 } from "@/data/operations/ledgerMaintenance";
+import { createLedgerReceiptRepository } from "@/data/repositories/ledgerReceiptRepository";
 
 import { runLedgerExpenseSync } from "./ledgerExpenseDemoCoordinator";
 import { runLedgerReceiptSync } from "./ledgerReceiptCoordinator";
@@ -10,6 +12,7 @@ import { runLedgerReviewSync } from "./ledgerReviewCoordinator";
 import { runLedgerSettlementPaymentSync } from "./ledgerSettlementPaymentCoordinator";
 import { runLedgerPersonalPaymentSync } from "./ledgerPersonalPaymentCoordinator";
 import { runPersonalSettlementReviewSync } from "./personalSettlementReviewCoordinator";
+import { createSyncOperationRepository } from "./syncOperationRepository";
 
 let running: Promise<void> | null = null;
 let paused = false;
@@ -55,6 +58,20 @@ export async function pauseLedgerOperationalSync() {
 
 export function allowLedgerOperationalSync() {
   paused = false;
+}
+
+export async function reactivateLongLivedLedgerFailures() {
+  const database = await openDatabase();
+  await Promise.all([
+    createSyncOperationRepository(
+      database,
+      requireActiveUserId,
+    ).reactivateLongLivedFailures(),
+    createLedgerReceiptRepository(
+      database,
+      requireActiveUserId,
+    ).reactivateLongLivedFailures(),
+  ]);
 }
 
 export function kickLedgerOperationalSync(

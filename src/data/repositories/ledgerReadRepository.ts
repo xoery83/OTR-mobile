@@ -25,7 +25,9 @@ const pendingStatuses = new Set([
   "PENDING_CREATE",
   "PENDING_UPDATE",
   "PENDING_DELETE",
+  "SYNCING",
   "CONFLICT",
+  "FAILED",
 ]);
 
 export function createLedgerReadRepository(
@@ -74,6 +76,7 @@ export function createLedgerReadRepository(
             });
           }
         }
+        await drainDeferredExpenseChanges(database, response.journey.id);
         await saveCursor(
           database,
           response.journey.id,
@@ -146,9 +149,7 @@ export function createLedgerReadRepository(
             } else if (change.aggregate && "ownerUserId" in change.aggregate) {
               await personalPayments.applyCanonical(change.aggregate);
             }
-          } else if (
-            change.entityType === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION"
-          ) {
+          } else if (change.entityType === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION") {
             const personalPayments = createLedgerPersonalPaymentRepository(
               database,
               async () => userId,
@@ -163,6 +164,7 @@ export function createLedgerReadRepository(
             await deferChange(database, journeyId, change);
           }
         }
+        await drainDeferredExpenseChanges(database, journeyId);
         await saveCursor(
           database,
           journeyId,
@@ -864,6 +866,49 @@ async function deferChange(
     JSON.stringify(change),
     new Date().toISOString(),
   );
+}
+
+async function drainDeferredExpenseChanges(
+  database: LedgerReadDatabase,
+  journeyId: string,
+) {
+  const deferred = await database.getAllAsync<{
+    entityId: string;
+    revision: number;
+    payloadJson: string;
+  }>(
+    `SELECT entity_id AS entityId, revision, payload_json AS payloadJson
+     FROM ledger_deferred_server_changes
+     WHERE journey_id = ? AND entity_type = 'EXPENSE'
+     ORDER BY revision, created_at`,
+    journeyId,
+  );
+  for (const row of deferred) {
+    const local = await database.getFirstAsync<{ syncStatus: string }>(
+      `SELECT sync_status AS syncStatus FROM ledger_expenses
+       WHERE journey_id = ? AND (id = ? OR server_id = ?)`,
+      journeyId,
+      row.entityId,
+      row.entityId,
+    );
+    if (local && pendingStatuses.has(local.syncStatus)) continue;
+    try {
+      await applyExpenseChange(
+        database,
+        journeyId,
+        JSON.parse(row.payloadJson) as ServerChange,
+      );
+      await database.runAsync(
+        `DELETE FROM ledger_deferred_server_changes
+         WHERE journey_id = ? AND entity_type = 'EXPENSE' AND entity_id = ? AND revision = ?`,
+        journeyId,
+        row.entityId,
+        row.revision,
+      );
+    } catch {
+      // Keep malformed or currently inapplicable diagnostics for a later health review.
+    }
+  }
 }
 
 async function saveCursor(

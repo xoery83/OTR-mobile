@@ -22,6 +22,7 @@ export class ApiClientError extends Error {
     public readonly status?: number,
     public readonly code?: string,
     public readonly details?: unknown,
+    public readonly requestId?: string,
   ) {
     super(message);
   }
@@ -84,14 +85,16 @@ export function createApiClient(options: ApiClientOptions = {}) {
       }
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as {
-          error?: { code?: string };
+          error?: { code?: string; message?: string; requestId?: string };
         } | null;
         throw new ApiClientError(
-          `OTR API request failed: ${response.status}`,
+          safeServerMessage(body?.error?.message) ??
+            `OTR API request failed: ${response.status}`,
           "http",
           response.status,
           body?.error?.code,
           body,
+          body?.error?.requestId ?? response.headers?.get?.("x-request-id") ?? undefined,
         );
       }
 
@@ -152,4 +155,12 @@ export function createApiClient(options: ApiClientOptions = {}) {
       return request("DELETE", path, responseSchema, body, headers);
     },
   };
+}
+
+function safeServerMessage(message: unknown) {
+  if (typeof message !== "string") return undefined;
+  return message
+    .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+    .replace(/[A-Za-z0-9_-]{80,}/g, "[redacted]")
+    .slice(0, 300);
 }
