@@ -15,7 +15,7 @@ import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository"
 import type { RateQuote, SettlementValuationSnapshot } from "@/domain/ledger/types";
 import { previewValuation } from "@/domain/ledger/valuation";
 
-import { formatLedgerMoney } from "./format";
+import { formatLedgerMoney, formatLedgerRate } from "./format";
 import type { DisplayEstimate } from "./displayEstimate";
 import { proposedExpenseDate } from "./expenseDraft";
 import {
@@ -253,7 +253,8 @@ export function ExpenseFxDetails({
               </Text>
               {valuation.decimalRate ? (
                 <Text style={styles.meta}>
-                  1 {valuation.original.currency} = {valuation.decimalRate}{" "}
+                  1 {valuation.original.currency} ={" "}
+                  {formatLedgerRate(valuation.decimalRate)}{" "}
                   {valuation.settlement.currency}
                 </Text>
               ) : null}
@@ -388,7 +389,7 @@ export function ExpenseFxDetails({
                         reason: "Selected reference rate.",
                       },
                       formatLedgerMoney(result.settlement.minor, currency, scale),
-                      `1 ${expense.original.currency} = ${quote.decimalRate} ${currency}\n${label("Reference date", "参考汇率日期")}: ${fullDate(quote.referenceDate!, chinese)}`,
+                      `1 ${expense.original.currency} = ${formatLedgerRate(quote.decimalRate)} ${currency}\n${label("Reference date", "参考汇率日期")}: ${fullDate(quote.referenceDate!, chinese)}`,
                     );
                   }}
                 >

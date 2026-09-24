@@ -9,6 +9,12 @@ export function formatLedgerMoney(minor: number, currency: string, scale: number
   }).format(minor / 10 ** scale);
 }
 
+export function formatLedgerRate(rate: string) {
+  return new Intl.NumberFormat(undefined, { maximumSignificantDigits: 6 }).format(
+    Number(rate),
+  );
+}
+
 const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 function calendarDate(value: string) {

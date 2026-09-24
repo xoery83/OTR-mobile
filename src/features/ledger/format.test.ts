@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatLedgerDate,
   formatLedgerDateFilter,
+  formatLedgerRate,
   ledgerExpenseAttention,
 } from "./format";
 
@@ -15,6 +16,13 @@ const base = {
 };
 
 describe("Ledger product formatting", () => {
+  it("keeps exchange rates readable without losing small values", () => {
+    expect(formatLedgerRate("1.706900000000000000")).toBe("1.7069");
+    expect(formatLedgerRate("0.000060230000000000")).toBe("0.00006023");
+    expect(formatLedgerRate("0.000000123456789")).toBe("0.000000123457");
+    expect(formatLedgerRate("123456789.123")).toBe("123,457,000");
+  });
+
   it("keeps calendar dates precise without fabricating a time", () => {
     const now = new Date(2026, 8, 14, 23, 55);
     expect(formatLedgerDate("2026-09-14", now)).toBe("Today");

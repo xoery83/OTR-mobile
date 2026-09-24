@@ -14,6 +14,7 @@ import {
   type LedgerRateLookupResult,
 } from "@/data/repositories/ledgerCurrencyRepository";
 import { CurrencyPicker } from "./CurrencyPicker";
+import { formatLedgerRate } from "./format";
 
 export function ExchangeRateLookup({
   journeyId,
@@ -180,7 +181,7 @@ function LookupResult({
     <View accessibilityLiveRegion="polite" style={styles.result}>
       <Text style={styles.rate}>
         1 {result.quoteCurrency} {result.resolution === "SAME_CURRENCY" ? "=" : "≈"}{" "}
-        {result.decimalRate} {result.baseCurrency}
+        {formatLedgerRate(result.decimalRate)} {result.baseCurrency}
       </Text>
       <Text style={styles.detail}>Requested date {formatDate(result.requestedDate)}</Text>
       <Text style={styles.detail}>
