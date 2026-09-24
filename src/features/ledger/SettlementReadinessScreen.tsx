@@ -17,6 +17,7 @@ import { useSettlementSections } from "@/hooks/useSettlementSections";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney } from "./format";
+import { shortMemberName } from "./dashboardPresentation";
 import { PersonalPaymentSection } from "./PersonalPaymentSection";
 import {
   buildSettlementComparison,
@@ -730,7 +731,6 @@ function ExpenseSection({
   const selectedMember = orderedMembers.find((member) => member.id === memberId);
   const first = categories[0]?.rows[0];
   const total = categories.reduce((sum, category) => sum + category.totalMinor, 0);
-  const count = categories.reduce((sum, category) => sum + category.rows.length, 0);
   const currency = first?.settlementCurrency ?? "NZD";
   const scale = first?.settlementScale ?? 2;
   return (
@@ -751,7 +751,7 @@ function ExpenseSection({
               <Text numberOfLines={1} style={styles.memberPickerButtonText}>
                 {memberId === actorMemberId
                   ? "Me"
-                  : (selectedMember?.label ?? "Traveller")}
+                  : shortMemberName(selectedMember?.label ?? "Traveller")}
               </Text>
               <Text style={styles.memberPickerChevron}>{pickerOpen ? "⌃" : "⌄"}</Text>
             </Pressable>
@@ -783,15 +783,6 @@ function ExpenseSection({
         ) : null}
         <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroAmount}>
           {formatLedgerMoney(total, currency, scale)}
-        </Text>
-        <Text style={styles.meta}>
-          {shares ? "Across" : "From"} {count} valued shared{" "}
-          {count === 1 ? "expense" : "expenses"}
-        </Text>
-        <Text style={styles.meta}>
-          {historicalSnapshot
-            ? "Current · matches last confirmation"
-            : "Current calculation"}
         </Text>
       </View>
       {categories.map((category) => {
@@ -1078,14 +1069,25 @@ function GroupReviewStatus({
                     : styles.reviewControlChecking),
               ]}
             >
-              <Text style={[styles.reviewControlText, selected && styles.bold]}>
+              <Text
+                numberOfLines={1}
+                style={[styles.reviewControlText, selected && styles.bold]}
+              >
                 {state === "LOOKS_GOOD" ? "Looks good" : "Still checking"}
               </Text>
             </Pressable>
           );
         })}
         {current === "NOT_REVIEWED" ? (
-          <Text style={[styles.reviewTag, styles.reviewTagNeutral]}>Not reviewed</Text>
+          <View
+            accessibilityRole="button"
+            accessibilityState={{ disabled: true, selected: true }}
+            style={[styles.reviewControl, styles.reviewControlNeutral]}
+          >
+            <Text numberOfLines={1} style={[styles.reviewControlText, styles.bold]}>
+              Not reviewed
+            </Text>
+          </View>
         ) : null}
       </View>
       <Pressable
@@ -1269,7 +1271,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: "row",
     gap: 6,
-    maxWidth: "55%",
+    maxWidth: "38%",
     minHeight: 40,
     paddingHorizontal: 12,
   },
@@ -1326,17 +1328,18 @@ const styles = StyleSheet.create({
     borderColor: "#CBD5E1",
     borderRadius: 10,
     borderWidth: 1,
+    flex: 1,
     justifyContent: "center",
     minHeight: 42,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
   },
   reviewControlChecking: { backgroundColor: "#FEF3C7", borderColor: "#D97706" },
   reviewControlGood: { backgroundColor: "#D1FAE5", borderColor: "#059669" },
-  reviewControlText: { color: "#334155", fontSize: 14, fontWeight: "700" },
+  reviewControlNeutral: { backgroundColor: "#E2E8F0" },
+  reviewControlText: { color: "#334155", fontSize: 13, fontWeight: "700" },
   reviewControls: {
     alignItems: "center",
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 8,
   },
   reviewMemberRow: {
@@ -1376,14 +1379,17 @@ const styles = StyleSheet.create({
   sectionLeadRow: {
     alignItems: "center",
     flexDirection: "row",
+    gap: 12,
     justifyContent: "space-between",
   },
   sectionLeadText: {
     color: "#0F766E",
+    flex: 1,
     flexShrink: 1,
     fontSize: 18,
     fontWeight: "900",
     letterSpacing: 0.4,
+    minWidth: 0,
   },
   sections: { paddingBottom: 24 },
   standaloneSections: { paddingHorizontal: 16 },
