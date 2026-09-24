@@ -1,6 +1,6 @@
 # ADR 0037: Data Health Phase C2 reuses normal convergence
 
-Status: Implemented; awaiting Phase C2 acceptance (2026-09-24)
+Status: Accepted (2026-09-24)
 
 Phase C2 extends the existing `DataHealthCoordinator` after C1 repair. It rebuilds the
 active-account protected-intent manifest before each network phase, requests the existing

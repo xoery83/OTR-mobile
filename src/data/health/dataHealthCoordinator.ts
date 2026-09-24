@@ -1,6 +1,7 @@
 import type * as SQLite from "expo-sqlite";
 
 import { ApiClientError } from "@/data/api/client";
+import { NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT } from "@/data/sync/syncEngine";
 import { createLocalId } from "@/domain/localId";
 
 import {
@@ -25,6 +26,27 @@ export type DataHealthCategory =
 
 export type DataHealthOutcome = "HEALTHY" | "WAITING" | "NEEDS_ATTENTION";
 export type DataHealthTrigger = "CHEAP" | "DEEP" | "MANUAL";
+export type DataHealthAutomaticTrigger =
+  | "COLD_START"
+  | "FOREGROUND"
+  | "PERIODIC"
+  | "CONNECTIVITY_RESTORED"
+  | "AUTH_RECOVERED"
+  | "SYNC_COMPLETED";
+export type DataHealthRunOptions = {
+  journeyIds?: readonly string[];
+  skipOperationalSync?: boolean;
+};
+export type DataHealthAutomaticPlan = {
+  accountId: string;
+  generation: number;
+  shouldRun: boolean;
+  trigger: DataHealthTrigger;
+  interrupted: boolean;
+  hasSuspiciousState: boolean;
+  hasConvergenceWork: boolean;
+  journeyIds: string[];
+};
 export type DataHealthConvergenceState =
   | "UP_TO_DATE"
   | "RECOVERED"
@@ -230,6 +252,18 @@ type RepairEvent = {
   action: DataHealthRepairActionId;
 };
 
+type AutomaticCandidate = {
+  kind: "OPERATION" | "ASSET" | "LOCAL_INTENT" | "DEFERRED" | "CURSOR";
+  journeyId: string | null;
+  status: string | null;
+  attemptCount: number;
+  failureCategory: string | null;
+  nextAttemptAt: string | null;
+  leaseExpiresAt: string | null;
+  dependencyStatus: string | null;
+  updatedAt: string;
+};
+
 export type DataHealthDependencies = {
   database: Database;
   getActiveAccountId(): Promise<string>;
@@ -254,6 +288,8 @@ const ATTENTION = new Set<DataHealthCategory>([
   "UNRECOVERABLE_INPUT",
 ]);
 const VERIFIED_REPAIR_EVENT_LIMIT = 200;
+const CHEAP_SCAN_INTERVAL_MS = 15 * 60_000;
+const DEEP_SCAN_INTERVAL_MS = 24 * 60 * 60_000;
 
 export const dataHealthRules: readonly DataHealthRuleDefinition[] = [
   {
@@ -335,7 +371,10 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
   const now = dependencies.now ?? (() => new Date());
 
   const coordinator = {
-    async run(trigger: DataHealthTrigger = "MANUAL"): Promise<DataHealthReport> {
+    async run(
+      trigger: DataHealthTrigger = "MANUAL",
+      options: DataHealthRunOptions = {},
+    ): Promise<DataHealthReport> {
       const accountId = await dependencies.getActiveAccountId();
       const generation = dependencies.getAccountGeneration();
       const planningTime = now();
@@ -352,7 +391,12 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
           accountId,
         );
         runGeneration = (state?.runGeneration ?? 0) + 1;
-        manifest = await buildManifest(dependencies.database, accountId, generation);
+        manifest = await buildManifest(
+          dependencies.database,
+          accountId,
+          generation,
+          options.journeyIds,
+        );
         await dependencies.database.runAsync(
           `INSERT INTO data_health_state (
              account_id, run_generation, run_state, updated_at
@@ -442,8 +486,11 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       };
     },
 
-    async repair(trigger: DataHealthTrigger = "MANUAL"): Promise<DataHealthReport> {
-      let report = await coordinator.run(trigger);
+    async repair(
+      trigger: DataHealthTrigger = "MANUAL",
+      options: DataHealthRunOptions = {},
+    ): Promise<DataHealthReport> {
+      let report = await coordinator.run(trigger, options);
       try {
         await verifyAppliedRepairEvents(
           dependencies,
@@ -453,11 +500,16 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
         );
         for (const plan of report.repairPlans) {
           if (plan.eligibility !== "ELIGIBLE" || !plan.actionId) continue;
+          if (
+            trigger === "CHEAP" &&
+            plan.actionId === "REACTIVATE_RETRYABLE_OPERATION_V1"
+          )
+            continue;
           if (!(await applyRepairPlan(dependencies, plan, now))) {
-            report = await coordinator.run(trigger);
+            report = await coordinator.run(trigger, options);
             continue;
           }
-          report = await coordinator.run(trigger);
+          report = await coordinator.run(trigger, options);
           await verifyAppliedRepairEvents(
             dependencies,
             report.accountId,
@@ -467,16 +519,20 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
         }
         return report;
       } catch (error) {
-        if (error instanceof DataHealthScopeChangedError) return coordinator.run(trigger);
+        if (error instanceof DataHealthScopeChangedError)
+          return coordinator.run(trigger, options);
         throw error;
       }
     },
 
-    async converge(trigger: DataHealthTrigger = "MANUAL"): Promise<DataHealthReport> {
+    async converge(
+      trigger: DataHealthTrigger = "MANUAL",
+      options: DataHealthRunOptions = {},
+    ): Promise<DataHealthReport> {
       if (!dependencies.runOperationalSync || !dependencies.refreshJourneyLedger)
-        return coordinator.repair(trigger);
+        return coordinator.repair(trigger, options);
 
-      const planned = await coordinator.run(trigger);
+      const planned = await coordinator.run(trigger, options);
       const initialOperationIds = new Set(
         planned.findings
           .filter((finding) =>
@@ -487,7 +543,7 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       const eligiblePlans = planned.repairPlans.filter(
         (plan) => plan.eligibility === "ELIGIBLE" && plan.actionId,
       );
-      let report = await coordinator.repair(trigger);
+      let report = await coordinator.repair(trigger, options);
       if (
         planned.accountId !== report.accountId ||
         planned.generation !== report.generation
@@ -505,22 +561,25 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
         dependencies.database,
         eligiblePlans,
       );
-      const scopes = new Set(
-        [...planned.findings, ...report.findings]
-          .map((finding) => finding.journeyId)
-          .filter((journeyId): journeyId is string => Boolean(journeyId)),
+      const scopes = new Set<string>(
+        options.journeyIds ??
+          [...planned.findings, ...report.findings]
+            .map((finding) => finding.journeyId)
+            .filter((journeyId): journeyId is string => Boolean(journeyId)),
       );
-      const prioritizedScopes = await coordinator.getScopePlan();
-      if (prioritizedScopes[0]) scopes.add(prioritizedScopes[0]);
+      if (!options.journeyIds) {
+        const prioritizedScopes = await coordinator.getScopePlan();
+        if (prioritizedScopes[0]) scopes.add(prioritizedScopes[0]);
+      }
 
       let syncAttempted = false;
       let refreshedJourneyCount = 0;
       let expectedNetworkFailure = false;
       let protectedScope = false;
       try {
-        report = await coordinator.run(trigger);
+        report = await coordinator.run(trigger, options);
         await assertScope(dependencies, accountId, generation);
-        if (hasRunnableQueueWork(report)) {
+        if (!options.skipOperationalSync && hasRunnableQueueWork(report)) {
           if (networkAllowed(report)) {
             syncAttempted = true;
             await dependencies.runOperationalSync();
@@ -532,7 +591,7 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
         }
 
         for (const journeyId of scopes) {
-          report = await coordinator.run(trigger);
+          report = await coordinator.run(trigger, options);
           await assertScope(dependencies, accountId, generation);
           if (!networkAllowed(report, journeyId)) {
             protectedScope ||= hasNetworkBlocker(
@@ -553,10 +612,10 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
             break;
           }
         }
-        report = await coordinator.run(trigger);
+        report = await coordinator.run(trigger, options);
       } catch (error) {
         if (!(error instanceof DataHealthScopeChangedError)) throw error;
-        const changed = await coordinator.run(trigger);
+        const changed = await coordinator.run(trigger, options);
         return withConvergence(changed, {
           state: "PROTECTED",
           localRepairCount,
@@ -610,6 +669,75 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       );
       if ((suspicious?.count ?? 0) > 0) return true;
       return now().getTime() - new Date(state.lastCheapScanAt).getTime() >= maxAgeMs;
+    },
+
+    async planAutomaticRun(input: {
+      trigger: DataHealthAutomaticTrigger;
+      hintedJourneyIds?: readonly string[];
+    }): Promise<DataHealthAutomaticPlan> {
+      const accountId = await dependencies.getActiveAccountId();
+      const generation = dependencies.getAccountGeneration();
+      const timestamp = now();
+      const state = await dependencies.database.getFirstAsync<{
+        lastCheapScanAt: string | null;
+        lastDeepScanAt: string | null;
+        runState: string;
+      }>(
+        `SELECT last_cheap_scan_at AS lastCheapScanAt,
+           last_deep_scan_at AS lastDeepScanAt, run_state AS runState
+         FROM data_health_state WHERE account_id = ?`,
+        accountId,
+      );
+      const candidates = await readAutomaticCandidates(dependencies.database, accountId);
+      await assertScope(dependencies, accountId, generation);
+
+      const cheapDue =
+        !state?.lastCheapScanAt ||
+        timestamp.getTime() - new Date(state.lastCheapScanAt).getTime() >=
+          CHEAP_SCAN_INTERVAL_MS;
+      const deepReference = state?.lastDeepScanAt ?? state?.lastCheapScanAt;
+      const deepDue = Boolean(
+        deepReference &&
+        timestamp.getTime() - new Date(deepReference).getTime() >= DEEP_SCAN_INTERVAL_MS,
+      );
+      const interrupted = state?.runState === "RUNNING";
+      const hintedJourneyIds = input.hintedJourneyIds ?? [];
+      const hasSuspiciousState = candidates.length > 0;
+      const trigger: DataHealthTrigger =
+        deepDue && ["FOREGROUND", "PERIODIC"].includes(input.trigger) ? "DEEP" : "CHEAP";
+      const currentTimestamp = timestamp.toISOString();
+      const hasConvergenceWork = candidates.some((candidate) =>
+        automaticCandidateCanConverge(candidate, trigger, currentTimestamp),
+      );
+      const shouldRun =
+        input.trigger === "COLD_START" ||
+        (input.trigger === "SYNC_COMPLETED" && hintedJourneyIds.length > 0) ||
+        (input.trigger === "CONNECTIVITY_RESTORED" && hasSuspiciousState) ||
+        input.trigger === "AUTH_RECOVERED" ||
+        (["FOREGROUND", "PERIODIC"].includes(input.trigger) &&
+          (cheapDue || deepDue || interrupted || hasConvergenceWork));
+      const scopes = new Set(
+        [...hintedJourneyIds, ...candidates.map((item) => item.journeyId)].filter(
+          (journeyId): journeyId is string => Boolean(journeyId),
+        ),
+      );
+      if (trigger === "DEEP" || interrupted) {
+        const fallback = await readActiveAndRecentScopes(
+          dependencies.database,
+          accountId,
+        );
+        for (const journeyId of fallback) scopes.add(journeyId);
+      }
+      return {
+        accountId,
+        generation,
+        shouldRun,
+        trigger,
+        interrupted,
+        hasSuspiciousState,
+        hasConvergenceWork,
+        journeyIds: [...scopes].sort(),
+      };
     },
 
     async getLatestState() {
@@ -1070,16 +1198,125 @@ async function assertScope(
     throw new DataHealthScopeChangedError();
 }
 
+async function readAutomaticCandidates(database: Database, accountId: string) {
+  return database.getAllAsync<AutomaticCandidate>(
+    `SELECT 'OPERATION' AS kind, operation.trip_id AS journeyId,
+       operation.status, operation.attempt_count AS attemptCount,
+       operation.failure_category AS failureCategory,
+       operation.next_attempt_at AS nextAttemptAt,
+       operation.lease_expires_at AS leaseExpiresAt,
+       dependency.status AS dependencyStatus, operation.updated_at AS updatedAt
+     FROM sync_operations operation
+     LEFT JOIN sync_operations dependency
+       ON dependency.id = operation.dependency_operation_id
+      AND dependency.owner_user_id = operation.owner_user_id
+     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'
+     UNION ALL
+     SELECT 'ASSET', operation.journey_id, operation.status,
+       operation.attempt_count, operation.failure_category,
+       operation.next_attempt_at, operation.lease_expires_at,
+       dependency.status, operation.updated_at
+     FROM ledger_asset_operations operation
+     LEFT JOIN ledger_asset_operations dependency
+       ON dependency.id = operation.dependency_operation_id
+      AND dependency.owner_user_id = operation.owner_user_id
+     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'
+     UNION ALL
+     SELECT 'LOCAL_INTENT', journey_id, sync_status, 0, NULL, NULL, NULL,
+       NULL, updated_at FROM ledger_expenses
+     WHERE local_owner_user_id = ? AND sync_status <> 'SYNCED'
+     UNION ALL
+     SELECT 'LOCAL_INTENT', journey_id, sync_status, 0, NULL, NULL, NULL,
+       NULL, updated_at FROM ledger_personal_payment_records
+     WHERE projection_user_id = ? AND sync_status <> 'SYNCED'
+     UNION ALL
+     SELECT 'LOCAL_INTENT', journey_id, upload_status, 0, NULL, NULL, NULL,
+       NULL, updated_at FROM ledger_receipt_assets
+     WHERE local_owner_user_id = ? AND upload_status <> 'UPLOADED'
+     UNION ALL
+     SELECT 'DEFERRED', change.journey_id, NULL, 0, NULL, NULL, NULL, NULL,
+       change.created_at
+     FROM ledger_deferred_server_changes change
+     JOIN ledger_actor_context actor ON actor.journey_id = change.journey_id
+     WHERE actor.user_id = ?
+     UNION ALL
+     SELECT 'CURSOR', journey_id, NULL, 0, NULL, NULL, NULL, NULL, updated_at
+     FROM ledger_sync_cursors WHERE user_id = ? AND trim(cursor) = ''
+     UNION ALL
+     SELECT 'CURSOR', journey_id, NULL, 0, NULL, NULL, NULL, NULL, updated_at
+     FROM ledger_personal_payment_sync_cursors
+     WHERE user_id = ? AND trim(cursor) = ''`,
+    accountId,
+    accountId,
+    accountId,
+    accountId,
+    accountId,
+    accountId,
+    accountId,
+    accountId,
+  );
+}
+
+async function readActiveAndRecentScopes(database: Database, accountId: string) {
+  const rows = await database.getAllAsync<{ journeyId: string }>(
+    `SELECT actor.journey_id AS journeyId
+     FROM ledger_actor_context actor
+     LEFT JOIN account_local_state selected
+       ON selected.user_id = actor.user_id
+      AND selected.selected_journey_id = actor.journey_id
+     LEFT JOIN ledger_journeys journey
+       ON journey.journey_id = actor.journey_id
+     WHERE actor.user_id = ?
+     ORDER BY (selected.selected_journey_id IS NOT NULL) DESC,
+       journey.updated_at DESC, actor.journey_id
+     LIMIT 2`,
+    accountId,
+  );
+  return rows.map((row) => row.journeyId);
+}
+
+function automaticCandidateCanConverge(
+  candidate: AutomaticCandidate,
+  trigger: DataHealthTrigger,
+  timestamp: string,
+) {
+  if (candidate.kind === "DEFERRED" || candidate.kind === "CURSOR") return true;
+  if (candidate.kind === "LOCAL_INTENT") return false;
+  if (candidate.failureCategory === "AUTH") return false;
+  if (candidate.status === "PENDING") return true;
+  if (candidate.status === "PROCESSING")
+    return Boolean(candidate.leaseExpiresAt && candidate.leaseExpiresAt <= timestamp);
+  if (candidate.status === "DEPENDENCY_BLOCKED")
+    return candidate.dependencyStatus === "COMPLETED";
+  if (candidate.status !== "RETRYABLE") return false;
+  if (!candidate.nextAttemptAt || candidate.nextAttemptAt <= timestamp) return true;
+  return trigger === "DEEP" && candidate.attemptCount > NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT;
+}
+
+function scopeSql(column: string, journeyIds?: readonly string[]) {
+  if (!journeyIds) return { clause: "", values: [] as string[] };
+  if (journeyIds.length === 0) return { clause: " AND 0", values: [] as string[] };
+  return {
+    clause: ` AND ${column} IN (${journeyIds.map(() => "?").join(", ")})`,
+    values: [...journeyIds],
+  };
+}
+
 async function buildManifest(
   database: Database,
   accountId: string,
   generation: number,
+  journeyIds?: readonly string[],
 ): Promise<Manifest> {
+  const scope = (column: string) => scopeSql(column, journeyIds);
+  const journeyScope = scope("journey_id");
   const journeyRows = await database.getAllAsync<{ journeyId: string }>(
     `SELECT journey_id AS journeyId FROM ledger_actor_context
-     WHERE user_id = ? ORDER BY journey_id`,
+     WHERE user_id = ?${journeyScope.clause} ORDER BY journey_id`,
     accountId,
+    ...journeyScope.values,
   );
+  const operationScope = scope("operation.trip_id");
   const operations = await database.getAllAsync<Operation>(
     `SELECT operation.id, operation.trip_id AS journeyId,
        operation.entity_type AS entityType, operation.entity_id AS entityId,
@@ -1114,29 +1351,37 @@ async function buildManifest(
      LEFT JOIN sync_operations dependency
        ON dependency.id = operation.dependency_operation_id
       AND dependency.owner_user_id = operation.owner_user_id
-     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'`,
+     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'
+       ${operationScope.clause}`,
     accountId,
+    ...operationScope.values,
   );
+  const expenseScope = scope("e.journey_id");
   const expenses = await database.getAllAsync<Expense>(
     `SELECT e.id, e.journey_id AS journeyId, e.server_id AS serverId,
        e.revision, e.server_revision AS serverRevision, e.sync_status AS syncStatus,
        e.local_owner_user_id AS localOwnerUserId,
        e.business_status AS businessStatus
      FROM ledger_expenses e
-     WHERE e.local_owner_user_id = ? OR EXISTS (
+     WHERE (e.local_owner_user_id = ? OR EXISTS (
        SELECT 1 FROM ledger_actor_context actor
        WHERE actor.user_id = ? AND actor.journey_id = e.journey_id
-     )`,
+     ))${expenseScope.clause}`,
     accountId,
     accountId,
+    ...expenseScope.values,
   );
+  const personalPaymentScope = scope("journey_id");
   const personalPayments = await database.getAllAsync<PersonalPayment>(
     `SELECT id, journey_id AS journeyId, server_revision AS serverRevision,
        sync_status AS syncStatus, server_revision AS revision,
        amount_minor AS amountMinor, currency, scale, economic_date AS economicDate
-     FROM ledger_personal_payment_records WHERE projection_user_id = ?`,
+     FROM ledger_personal_payment_records WHERE projection_user_id = ?
+       ${personalPaymentScope.clause}`,
     accountId,
+    ...personalPaymentScope.values,
   );
+  const assetOperationScope = scope("operation.journey_id");
   const assetOperations = await database.getAllAsync<AssetOperation>(
     `SELECT operation.id, operation.journey_id AS journeyId,
        operation.asset_id AS assetId, operation.operation_type AS operationType,
@@ -1160,38 +1405,51 @@ async function buildManifest(
      LEFT JOIN ledger_asset_operations dependency
        ON dependency.id = operation.dependency_operation_id
       AND dependency.owner_user_id = operation.owner_user_id
-     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'`,
+     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'
+       ${assetOperationScope.clause}`,
     accountId,
+    ...assetOperationScope.values,
   );
+  const receiptScope = scope("r.journey_id");
   const receipts = await database.getAllAsync<Receipt>(
     `SELECT r.id, r.journey_id AS journeyId, r.server_id AS serverId,
        r.local_uri AS localUri, r.upload_status AS uploadStatus,
        r.local_owner_user_id AS localOwnerUserId
      FROM ledger_receipt_assets r
-     WHERE r.local_owner_user_id = ? OR EXISTS (
+     WHERE (r.local_owner_user_id = ? OR EXISTS (
        SELECT 1 FROM ledger_actor_context actor
        WHERE actor.user_id = ? AND actor.journey_id = r.journey_id
-     )`,
+     ))${receiptScope.clause}`,
     accountId,
     accountId,
+    ...receiptScope.values,
   );
+  const ledgerCursorScope = scope("journey_id");
   const ledgerCursors = await database.getAllAsync<Omit<Cursor, "kind">>(
-    `SELECT journey_id AS journeyId, cursor FROM ledger_sync_cursors WHERE user_id = ?`,
+    `SELECT journey_id AS journeyId, cursor FROM ledger_sync_cursors
+     WHERE user_id = ?${ledgerCursorScope.clause}`,
     accountId,
+    ...ledgerCursorScope.values,
   );
+  const personalCursorScope = scope("journey_id");
   const personalCursors = await database.getAllAsync<Omit<Cursor, "kind">>(
     `SELECT journey_id AS journeyId, cursor
-     FROM ledger_personal_payment_sync_cursors WHERE user_id = ?`,
+     FROM ledger_personal_payment_sync_cursors
+     WHERE user_id = ?${personalCursorScope.clause}`,
     accountId,
+    ...personalCursorScope.values,
   );
+  const deferredScope = scope("change.journey_id");
   const deferredChanges = await database.getAllAsync<DeferredChange>(
     `SELECT change.journey_id AS journeyId, change.entity_id AS entityId,
        change.revision
      FROM ledger_deferred_server_changes change
      JOIN ledger_actor_context actor ON actor.journey_id = change.journey_id
-     WHERE actor.user_id = ?`,
+     WHERE actor.user_id = ?${deferredScope.clause}`,
     accountId,
+    ...deferredScope.values,
   );
+  const valuationScope = scope("expense.journey_id");
   const expenseValuations = await database.getAllAsync<ExpenseValuation>(
     `SELECT valuation.id, expense.journey_id AS journeyId,
        expense.id AS expenseId, valuation.expense_revision AS expenseRevision,
@@ -1210,9 +1468,12 @@ async function buildManifest(
      JOIN ledger_expenses expense ON expense.id = valuation.expense_id
      JOIN ledger_journeys journey ON journey.journey_id = expense.journey_id
      JOIN ledger_actor_context actor ON actor.journey_id = expense.journey_id
-     WHERE actor.user_id = ? AND valuation.is_active = 1`,
+     WHERE actor.user_id = ? AND valuation.is_active = 1
+       ${valuationScope.clause}`,
     accountId,
+    ...valuationScope.values,
   );
+  const projectionScope = scope("projection.journey_id");
   const paymentProjections = await database.getAllAsync<PaymentProjection>(
     `SELECT projection.id, projection.journey_id AS journeyId,
        projection.payment_id AS paymentId, projection.state,
@@ -1232,15 +1493,21 @@ async function buildManifest(
       AND payment.id = projection.payment_id
      JOIN ledger_journeys journey ON journey.journey_id = projection.journey_id
      WHERE projection.projection_user_id = ?
-       AND projection.target_currency = journey.settlement_currency`,
+       AND projection.target_currency = journey.settlement_currency
+       ${projectionScope.clause}`,
     accountId,
+    ...projectionScope.values,
   );
+  const reviewStateScope = scope("journey_id");
   const reviewStates = await database.getAllAsync<ReviewState>(
     `SELECT journey_id AS journeyId, sync_status AS syncStatus,
        pending_operation_id AS pendingOperationId
-     FROM ledger_personal_settlement_review_state WHERE user_id = ?`,
+     FROM ledger_personal_settlement_review_state
+     WHERE user_id = ?${reviewStateScope.clause}`,
     accountId,
+    ...reviewStateScope.values,
   );
+  const reviewFindingScope = scope("finding.journey_id");
   const reviewFindings = await database.getAllAsync<ReviewFinding>(
     `SELECT finding.id, finding.journey_id AS journeyId,
        finding.expense_id AS expenseId,
@@ -1250,8 +1517,10 @@ async function buildManifest(
      FROM ledger_review_findings finding
      JOIN ledger_review_visibility visibility ON visibility.finding_id = finding.id
      LEFT JOIN ledger_expenses expense ON expense.id = finding.expense_id
-     WHERE visibility.user_id = ? AND finding.lifecycle = 'ACTIVE'`,
+     WHERE visibility.user_id = ? AND finding.lifecycle = 'ACTIVE'
+       ${reviewFindingScope.clause}`,
     accountId,
+    ...reviewFindingScope.values,
   );
 
   return {

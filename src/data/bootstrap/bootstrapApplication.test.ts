@@ -48,4 +48,21 @@ describe("foundation bootstrap", () => {
     ).resolves.toMatchObject({ authState: "AUTHENTICATED_OFFLINE" });
     expect(resumeSync).toHaveBeenCalledOnce();
   });
+
+  it("schedules cold-start health without blocking App launch", async () => {
+    let finish!: () => void;
+    const scheduleHealth = vi.fn(
+      () => new Promise<void>((resolve) => (finish = resolve)),
+    );
+
+    await expect(
+      bootstrapApplication({
+        openDatabase: vi.fn().mockResolvedValue(undefined),
+        readLocalSession: vi.fn().mockResolvedValue(null),
+        scheduleHealth,
+      }),
+    ).resolves.toMatchObject({ authState: "SIGNED_OUT" });
+    expect(scheduleHealth).toHaveBeenCalledOnce();
+    finish();
+  });
 });

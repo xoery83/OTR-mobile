@@ -7,12 +7,15 @@ import { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";
 
 import { createDataHealthCoordinator } from "./dataHealthCoordinator";
 
+let coordinator: ReturnType<typeof createDataHealthCoordinator> | null = null;
+
 export async function getDefaultDataHealthCoordinator() {
-  return createDataHealthCoordinator({
+  if (coordinator) return coordinator;
+  coordinator = createDataHealthCoordinator({
     database: await openDatabase(),
     getActiveAccountId: requireActiveUserId,
     getAccountGeneration,
-    runOperationalSync: runLedgerOperationalSync,
+    runOperationalSync: () => runLedgerOperationalSync({ origin: "DATA_HEALTH" }),
     refreshJourneyLedger,
     fileExists: async (uri) => {
       try {
@@ -22,4 +25,5 @@ export async function getDefaultDataHealthCoordinator() {
       }
     },
   });
+  return coordinator;
 }

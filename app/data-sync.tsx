@@ -13,6 +13,7 @@ import type {
   DataHealthReport,
 } from "@/data/health/dataHealthCoordinator";
 import { getDefaultDataHealthCoordinator } from "@/data/health/defaultDataHealthCoordinator";
+import { getDefaultDataHealthScheduler } from "@/data/health/defaultDataHealthScheduler";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 
 export default function DataSyncRoute() {
@@ -48,7 +49,7 @@ export default function DataSyncRoute() {
     setChecking(true);
     setFailed(false);
     try {
-      const next = await (await getDefaultDataHealthCoordinator()).converge("MANUAL");
+      const next = await getDefaultDataHealthScheduler().runManual();
       if (!mounted.current) return;
       setReport(next);
       setOutcome(next.outcome);

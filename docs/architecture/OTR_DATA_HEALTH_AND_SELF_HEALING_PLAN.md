@@ -1,6 +1,6 @@
 # OTR Data Health and Self-Healing Plan
 
-Status: approved; Phases A, B, C0, and C1 accepted; Phase C2 convergence orchestration is implemented awaiting acceptance; later repair and historical recovery remain gated.
+Status: approved; Phases A through C2 accepted; Phase D automatic scheduling is implemented awaiting acceptance; Phase E historical recovery remains gated.
 
 Date: 2026-09-24
 
@@ -572,6 +572,16 @@ repository application, and deferred Expense drain. It refreshes affected scopes
 most the highest-priority active/recent Journey, reports recovery only after a rescan, and
 adds no migration, action classification, worker, queue, Backend endpoint, scheduler,
 cache purge, or historical `FAILED` recovery. `guard 915` remains protected for Phase E.
+
+Phase D implementation note (2026-09-24): App-level cold start, foreground,
+connectivity/auth recovery, periodic-active and normal-sync completion signals share one
+account/generation coalescer. An indexed detector selects suspicious scopes before the
+existing pipeline runs; healthy historical Journeys are not scanned or pulled. Cheap and
+deep windows remain persisted in migration 36 state, while a short in-process network
+cooldown prevents reconnect storms. Normal sync completion performs scoped pull/verify
+without starting another sync, and health-origin completion is ignored. Phase D adds no
+migration, repair action, worker, queue, Backend endpoint, iOS background guarantee, or
+historical `FAILED` recovery.
 
 ## 18. Automated test plan
 

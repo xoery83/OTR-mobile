@@ -1,6 +1,38 @@
 # Current Implementation State
 
-Date: 2026-09-24
+Date: 2026-09-25
+
+## OTR Data Health & Self-Healing — Phase D implemented
+
+- Start from integrated canonical checkpoint `78e8b741955a87cfb542a4f36ba1150296e330f6`.
+- The existing B → C0 → C1 → C2 coordinator now receives non-blocking cold-start,
+  foreground, 15-minute active-use, connectivity-restored, auth-recovered, and scoped
+  post-sync signals through one process-local coalescer. Manual Settings health uses the
+  same coordinator and safety policy.
+- Automatic checks first query indexed account-local suspicious state, then scan only
+  hinted/suspicious or at most two active/recent Journeys. Cheap scans are persisted at a
+  15-minute cadence; deep safety-net scans are limited to a 24-hour cadence. Healthy cold
+  start performs no Backend call, pull, bootstrap, or all-Journey scan.
+- Only due work enters existing C1 repair and existing sync/C2 convergence. A 60-second
+  network cooldown absorbs reconnect flaps, sync-origin suppresses recursive completion,
+  and account/generation validation invalidates stale work. AUTH-paused, protected,
+  conflict, actionable, historical unknown `FAILED`, and sparse-not-due work retain their
+  existing policy.
+- Phase D adds no migration, executable repair action, queue, worker, Backend endpoint,
+  background guarantee, cache reset, or domain mutation authority. Schema remains 36.
+- Automated validation passes 103 Vitest files / 517 tests, TypeScript, ESLint, Backend
+  build, touched-file Prettier, `git diff --check`, and Release Simulator build/install/
+  launch. A signed physical Release completed manual health on the authenticated Dev
+  fixture without a generic failure. With OTR-only cellular access disabled, a disposable
+  Expense became `RETRYABLE/NETWORK`; after connectivity restoration and a cold launch
+  outside Ledger, it automatically reached one Hosted Dev row and local `SYNCED` revision
+  1/`COMPLETED`. A second cold launch stayed converged.
+- Physical before/after SQLite comparison shows zero changes to the `guard 915` Expense
+  and its six-operation causal chain, and zero changes to canonical Settlement root,
+  transfer, or member-balance rows. The retained source snapshot hash remains unchanged.
+- `guard 915` remains reserved for Phase E: it may be detected as protected but must not
+  be replayed, mutated, or reported recovered. Production remains out of scope. Stop for
+  Phase D acceptance; do not start Phase E.
 
 ## OTR Data Health & Self-Healing — Phase C2 implemented
 

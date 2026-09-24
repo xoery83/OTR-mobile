@@ -1118,6 +1118,207 @@ describe("Data Health Phase C2 convergence orchestration", () => {
     expect(syncCount).toBe(0);
     expect(domainFingerprint(fixture.sqlite)).toBe(before);
   });
+
+  it("plans a healthy cold start as one cheap local scan with no scopes", async () => {
+    const fixture = createFixture();
+
+    const cold = await fixture.coordinator.planAutomaticRun({
+      trigger: "COLD_START",
+    });
+    expect(cold).toMatchObject({
+      shouldRun: true,
+      trigger: "CHEAP",
+      hasSuspiciousState: false,
+      hasConvergenceWork: false,
+      journeyIds: [],
+    });
+
+    await fixture.coordinator.run("CHEAP", { journeyIds: cold.journeyIds });
+    await expect(
+      fixture.coordinator.planAutomaticRun({ trigger: "FOREGROUND" }),
+    ).resolves.toMatchObject({ shouldRun: false });
+  });
+
+  it("selects only suspicious scopes for automatic recovery", async () => {
+    const fixture = createFixture();
+    fixture.sqlite.exec(`
+      INSERT INTO ledger_journeys (
+        journey_id, settlement_currency, settlement_scale, valuation_policy,
+        updated_at, title
+      ) VALUES ('journey-b', 'NZD', 2, 'REFERENCE',
+        '2026-09-23T00:00:00Z', 'B');
+      INSERT INTO ledger_actor_context (
+        user_id, journey_id, member_id, role, capabilities_json, updated_at
+      ) VALUES ('user-a', 'journey-b', 'member-a', 'owner', '{}',
+        '2026-09-23T00:00:00Z');
+      INSERT INTO ledger_sync_cursors (user_id, journey_id, cursor, updated_at)
+      VALUES ('user-a', 'journey-b', '', '2026-09-24T00:00:00Z');
+    `);
+
+    const plan = await fixture.coordinator.planAutomaticRun({
+      trigger: "CONNECTIVITY_RESTORED",
+    });
+    expect(plan).toMatchObject({
+      shouldRun: true,
+      hasSuspiciousState: true,
+      hasConvergenceWork: true,
+      journeyIds: ["journey-b"],
+    });
+
+    const scoped = await fixture.coordinator.run("CHEAP", {
+      journeyIds: ["journey-a"],
+    });
+    expect(scoped.findings).toEqual([]);
+  });
+
+  it("reconsiders due convergence work on foreground within the cheap-scan window", async () => {
+    const fixture = createFixture();
+    await fixture.coordinator.run("CHEAP", { journeyIds: [] });
+    insertOperation(fixture.sqlite, {
+      id: "due-after-offline",
+      entityId: "expense-due-after-offline",
+      status: "RETRYABLE",
+      failureCategory: "NETWORK",
+      nextAttemptAt: "2026-09-24T00:59:00Z",
+    });
+
+    await expect(
+      fixture.coordinator.planAutomaticRun({ trigger: "FOREGROUND" }),
+    ).resolves.toMatchObject({
+      shouldRun: true,
+      trigger: "CHEAP",
+      hasConvergenceWork: true,
+      journeyIds: ["journey-a"],
+    });
+  });
+
+  it("detects expired leases and completed dependencies for existing C1 actions", async () => {
+    const fixture = createFixture();
+    insertOperation(fixture.sqlite, {
+      id: "expired",
+      entityId: "expense-expired",
+      status: "PROCESSING",
+      leaseExpiresAt: "2026-09-24T00:00:00Z",
+      claimOwner: "dead-process",
+    });
+    insertOperation(fixture.sqlite, {
+      id: "parent",
+      entityId: "expense-dependent",
+      operationType: "CREATE_LEDGER_EXPENSE",
+      status: "COMPLETED",
+    });
+    insertExpense(fixture.sqlite, {
+      id: "expense-dependent",
+      serverId: "server-expense-dependent",
+      serverRevision: 1,
+      syncStatus: "SYNCED",
+    });
+    insertOperation(fixture.sqlite, {
+      id: "dependent",
+      entityId: "expense-dependent",
+      status: "DEPENDENCY_BLOCKED",
+      failureCategory: "DEPENDENCY",
+      dependencyOperationId: "parent",
+    });
+
+    const automatic = await fixture.coordinator.planAutomaticRun({
+      trigger: "COLD_START",
+    });
+    expect(automatic).toMatchObject({
+      hasSuspiciousState: true,
+      hasConvergenceWork: true,
+      journeyIds: ["journey-a"],
+    });
+    const scan = await fixture.coordinator.run("CHEAP", {
+      journeyIds: automatic.journeyIds,
+    });
+    expect(
+      scan.repairPlans
+        .filter((item) => item.eligibility === "ELIGIBLE")
+        .map((item) => item.actionId),
+    ).toEqual(
+      expect.arrayContaining([
+        "RECOVER_EXPIRED_OPERATION_LEASE_V1",
+        "WAKE_COMPLETED_OPERATION_DEPENDENCY_V1",
+      ]),
+    );
+  });
+
+  it("reconsiders a future sparse retry only in the daily deep window", async () => {
+    const fixture = createFixture();
+    insertOperation(fixture.sqlite, {
+      id: "sparse",
+      entityId: "expense-sparse",
+      status: "RETRYABLE",
+      failureCategory: "NETWORK",
+      nextAttemptAt: "2026-09-25T01:00:00Z",
+      attemptCount: 7,
+    });
+    fixture.sqlite.exec(`
+      INSERT INTO data_health_state (
+        account_id, last_cheap_scan_at, last_deep_scan_at, run_generation,
+        run_state, updated_at
+      ) VALUES ('user-a', '2026-09-23T00:00:00Z', '2026-09-23T00:00:00Z',
+        1, 'COMPLETED', '2026-09-23T00:00:00Z');
+    `);
+
+    const deep = await fixture.coordinator.planAutomaticRun({ trigger: "FOREGROUND" });
+    expect(deep).toMatchObject({
+      shouldRun: true,
+      trigger: "DEEP",
+      hasConvergenceWork: true,
+    });
+
+    await fixture.coordinator.repair("CHEAP", { journeyIds: ["journey-a"] });
+    expect(operationState(fixture.sqlite, "sparse").next_attempt_at).not.toBeNull();
+    await fixture.coordinator.repair("DEEP", { journeyIds: ["journey-a"] });
+    expect(operationState(fixture.sqlite, "sparse").next_attempt_at).toBeNull();
+  });
+
+  it("resumes interrupted automatic state and keeps historical FAILED intent protected", async () => {
+    const fixture = createFixture();
+    insertExpense(fixture.sqlite, {
+      id: "guard-like-expense",
+      revision: 6,
+      syncStatus: "FAILED",
+    });
+    insertOperation(fixture.sqlite, {
+      id: "guard-like-create",
+      entityId: "guard-like-expense",
+      operationType: "CREATE_LEDGER_EXPENSE",
+      status: "FAILED",
+      failureCategory: "UNKNOWN",
+    });
+    fixture.sqlite.exec(`
+      INSERT INTO data_health_state (
+        account_id, last_cheap_scan_at, run_generation, run_state, updated_at
+      ) VALUES ('user-a', '2026-09-24T01:00:00Z', 1, 'RUNNING',
+        '2026-09-24T01:00:00Z');
+    `);
+    const before = domainFingerprint(fixture.sqlite);
+
+    const plan = await fixture.coordinator.planAutomaticRun({ trigger: "FOREGROUND" });
+    expect(plan).toMatchObject({
+      shouldRun: true,
+      interrupted: true,
+      hasConvergenceWork: false,
+    });
+    const scan = await fixture.coordinator.run("CHEAP", {
+      journeyIds: plan.journeyIds,
+    });
+    expect(scan.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          targetId: "guard-like-create",
+          category: "PROTECTED_LOCAL",
+        }),
+      ]),
+    );
+    expect(
+      scan.repairPlans.find((item) => item.targetId === "guard-like-create"),
+    ).toMatchObject({ eligibility: "INELIGIBLE", actionId: null });
+    expect(domainFingerprint(fixture.sqlite)).toBe(before);
+  });
 });
 
 function createFixture(

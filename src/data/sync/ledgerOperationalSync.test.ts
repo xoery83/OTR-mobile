@@ -1,13 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   openDatabase: vi.fn(),
   reactivateOperations: vi.fn(),
   reactivateAssets: vi.fn(),
+  requireActiveUserId: vi.fn(),
+  getAllAsync: vi.fn(),
 }));
 
 vi.mock("@/data/db/database", () => ({ openDatabase: mocks.openDatabase }));
-vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: mocks.requireActiveUserId,
+}));
+vi.mock("@/data/auth/accountGeneration", () => ({ getAccountGeneration: () => 7 }));
 vi.mock("@/data/repositories/ledgerReceiptRepository", () => ({
   createLedgerReceiptRepository: () => ({
     reactivateLongLivedFailures: mocks.reactivateAssets,
@@ -43,12 +48,20 @@ import {
   pauseLedgerOperationalSync,
   reactivateLongLivedLedgerFailures,
   runLedgerOperationalSync,
+  subscribeLedgerOperationalSyncCompletion,
 } from "./ledgerOperationalSync";
 /* eslint-enable import/first */
 
 describe("Ledger mutation sync kick", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    allowLedgerOperationalSync();
+    mocks.openDatabase.mockResolvedValue({ getAllAsync: mocks.getAllAsync });
+    mocks.requireActiveUserId.mockResolvedValue("user-a");
+    mocks.getAllAsync.mockResolvedValue([]);
+  });
+
   it("reactivates sparse user and asset mutations on a recovery event", async () => {
-    mocks.openDatabase.mockResolvedValue({});
     await reactivateLongLivedLedgerFailures();
     expect(mocks.reactivateOperations).toHaveBeenCalledOnce();
     expect(mocks.reactivateAssets).toHaveBeenCalledOnce();
@@ -70,5 +83,31 @@ describe("Ledger mutation sync kick", () => {
     allowLedgerOperationalSync();
     await runLedgerOperationalSync();
     expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+  });
+
+  it("publishes the eligible touched scopes after normal sync", async () => {
+    mocks.getAllAsync.mockResolvedValue([{ journeyId: "journey-a" }]);
+    const listener = vi.fn();
+    const unsubscribe = subscribeLedgerOperationalSyncCompletion(listener);
+
+    await runLedgerOperationalSync();
+
+    expect(listener).toHaveBeenCalledWith({
+      accountId: "user-a",
+      generation: 7,
+      journeyIds: ["journey-a"],
+    });
+    unsubscribe();
+  });
+
+  it("does not recurse from a health-origin operational sync", async () => {
+    mocks.getAllAsync.mockResolvedValue([{ journeyId: "journey-a" }]);
+    const listener = vi.fn();
+    const unsubscribe = subscribeLedgerOperationalSyncCompletion(listener);
+
+    await runLedgerOperationalSync({ origin: "DATA_HEALTH" });
+
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
   });
 });

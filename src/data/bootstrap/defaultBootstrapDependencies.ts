@@ -7,8 +7,13 @@ import {
   pauseLedgerOperationalSync,
   reactivateLongLivedLedgerFailures,
   runLedgerOperationalSync,
+  subscribeLedgerOperationalSyncCompletion,
+  type LedgerOperationalSyncCompletion,
 } from "@/data/sync/ledgerOperationalSync";
 import { getSyncTransportMode } from "@/data/sync/transportSelection";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { getDefaultDataHealthScheduler } from "@/data/health/defaultDataHealthScheduler";
+import * as Network from "expo-network";
 import { AppState } from "react-native";
 
 import type { FoundationBootstrapDependencies } from "./bootstrapApplication";
@@ -19,15 +24,56 @@ export const defaultBootstrapDependencies: FoundationBootstrapDependencies = {
   adoptLegacyState: async (userId) =>
     adoptLegacyAccountState(await openDatabase(), userId),
   resumeSync: resumeOperationalSync,
+  scheduleHealth: () => scheduleAutomaticDataHealth("COLD_START"),
 };
 
 let resuming: Promise<void> | null = null;
 let syncPaused = false;
+let activeHealthTimer: ReturnType<typeof setInterval> | null = null;
+const ACTIVE_HEALTH_INTERVAL_MS = 15 * 60_000;
 
 export function subscribeOperationalSyncLifecycle() {
-  return AppState.addEventListener("change", (state) => {
-    if (state === "active") void resumeOperationalSync().catch(() => undefined);
+  let online: boolean | null = null;
+  const updateActiveTimer = (active: boolean) => {
+    if (activeHealthTimer) clearInterval(activeHealthTimer);
+    activeHealthTimer = active
+      ? setInterval(
+          () => void scheduleAutomaticDataHealth("PERIODIC").catch(() => undefined),
+          ACTIVE_HEALTH_INTERVAL_MS,
+        )
+      : null;
+  };
+  updateActiveTimer(AppState.currentState === "active");
+  void Network.getNetworkStateAsync().then((state) => {
+    online = isOnline(state);
   });
+  const appState = AppState.addEventListener("change", (state) => {
+    const active = state === "active";
+    updateActiveTimer(active);
+    if (!active) return;
+    void resumeOperationalSync().catch(() => undefined);
+    void scheduleAutomaticDataHealth("FOREGROUND").catch(() => undefined);
+  });
+  const network = Network.addNetworkStateListener((state) => {
+    const next = isOnline(state);
+    const restored = next && online === false;
+    online = next;
+    if (restored)
+      void scheduleAutomaticDataHealth("CONNECTIVITY_RESTORED").catch(() => undefined);
+  });
+  const unsubscribeSync = subscribeLedgerOperationalSyncCompletion((event) => {
+    void scheduleAutomaticDataHealth("SYNC_COMPLETED", event.journeyIds, event).catch(
+      () => undefined,
+    );
+  });
+  return {
+    remove() {
+      appState.remove();
+      network.remove();
+      unsubscribeSync();
+      updateActiveTimer(false);
+    },
+  };
 }
 
 export function resumeOperationalSync() {
@@ -48,7 +94,31 @@ export async function restartOperationalSync() {
   allowLedgerOperationalSync();
   syncPaused = false;
   await reactivateLongLivedLedgerFailures();
-  return resumeOperationalSync();
+  await resumeOperationalSync();
+  void scheduleAutomaticDataHealth("AUTH_RECOVERED").catch(() => undefined);
+}
+
+async function scheduleAutomaticDataHealth(
+  trigger:
+    | "COLD_START"
+    | "FOREGROUND"
+    | "PERIODIC"
+    | "CONNECTIVITY_RESTORED"
+    | "AUTH_RECOVERED"
+    | "SYNC_COMPLETED",
+  journeyIds: readonly string[] = [],
+  expected?: LedgerOperationalSyncCompletion,
+) {
+  if (expected) {
+    if (expected.generation !== getAccountGeneration()) return;
+    const session = await readLocalSession();
+    if (session?.identity?.userId !== expected.accountId) return;
+  }
+  await getDefaultDataHealthScheduler().schedule({ trigger, journeyIds });
+}
+
+function isOnline(state: { isConnected?: boolean; isInternetReachable?: boolean }) {
+  return state.isConnected !== false && state.isInternetReachable !== false;
 }
 
 async function refreshThenSync() {

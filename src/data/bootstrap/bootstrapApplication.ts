@@ -12,6 +12,7 @@ export type FoundationBootstrapDependencies = {
   readLocalSession: () => Promise<LocalSession | null>;
   adoptLegacyState?: (userId: string) => Promise<unknown>;
   resumeSync?: () => Promise<unknown>;
+  scheduleHealth?: () => Promise<unknown>;
 };
 
 export async function bootstrapApplication(
@@ -24,6 +25,9 @@ export async function bootstrapApplication(
   const authState = stateFromLocalSession(session);
   void dependencies.resumeSync?.().catch(() => {
     // Startup and cached reads never depend on network sync success.
+  });
+  void dependencies.scheduleHealth?.().catch(() => {
+    // Health is a non-blocking safety net over the already-open local database.
   });
 
   return {

@@ -1,5 +1,6 @@
 import { openDatabase } from "@/data/db/database";
 import { requireActiveUserId } from "@/data/auth/authRepository";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   cleanupReconstructibleLedgerData,
   enforceReceiptCacheLimit,
@@ -17,38 +18,131 @@ import { createSyncOperationRepository } from "./syncOperationRepository";
 let running: Promise<void> | null = null;
 let paused = false;
 
-export function runLedgerOperationalSync() {
+export type LedgerOperationalSyncOrigin = "NORMAL" | "DATA_HEALTH";
+export type LedgerOperationalSyncCompletion = {
+  accountId: string;
+  generation: number;
+  journeyIds: string[];
+};
+
+const completionListeners = new Set<(event: LedgerOperationalSyncCompletion) => void>();
+
+export function subscribeLedgerOperationalSyncCompletion(
+  listener: (event: LedgerOperationalSyncCompletion) => void,
+) {
+  completionListeners.add(listener);
+  return () => completionListeners.delete(listener);
+}
+
+export function runLedgerOperationalSync(
+  input: {
+    origin?: LedgerOperationalSyncOrigin;
+  } = {},
+) {
   if (paused) return Promise.resolve();
-  if (!running) {
-    running = Promise.resolve(runLedgerPersonalPaymentSync())
-      .catch(() => undefined)
-      .then(() =>
-        Promise.allSettled([
-          runLedgerExpenseSync(),
-          runLedgerReceiptSync(),
-          runLedgerSettlementPaymentSync(),
-          runLedgerReviewSync(),
-          runPersonalSettlementReviewSync(),
-        ]),
-      )
-      .then(async () => {
-        try {
-          const database = await openDatabase();
-          await cleanupReconstructibleLedgerData(
-            database,
-            new Date(Date.now() - 30 * 24 * 60 * 60_000).toISOString(),
-          );
-          await enforceReceiptCacheLimit(database, 250 * 1024 * 1024);
-        } catch {
-          // Maintenance is best-effort and must never block cached startup or sync.
-        }
-      })
-      .then(() => undefined)
-      .finally(() => {
-        running = null;
-      });
-  }
+  if (!running)
+    running = runOperationalCycle(input.origin ?? "NORMAL").finally(() => {
+      running = null;
+    });
   return running;
+}
+
+async function runOperationalCycle(origin: LedgerOperationalSyncOrigin) {
+  const completion = await captureEligibleScopes();
+  await Promise.resolve(runLedgerPersonalPaymentSync())
+    .catch(() => undefined)
+    .then(() =>
+      Promise.allSettled([
+        runLedgerExpenseSync(),
+        runLedgerReceiptSync(),
+        runLedgerSettlementPaymentSync(),
+        runLedgerReviewSync(),
+        runPersonalSettlementReviewSync(),
+      ]),
+    )
+    .then(async () => {
+      try {
+        const database = await openDatabase();
+        await cleanupReconstructibleLedgerData(
+          database,
+          new Date(Date.now() - 30 * 24 * 60 * 60_000).toISOString(),
+        );
+        await enforceReceiptCacheLimit(database, 250 * 1024 * 1024);
+      } catch {
+        // Maintenance is best-effort and must never block cached startup or sync.
+      }
+    })
+    .then(() => undefined);
+  if (origin === "DATA_HEALTH" || !completion?.journeyIds.length) return;
+  for (const listener of completionListeners) listener(completion);
+}
+
+async function captureEligibleScopes(): Promise<LedgerOperationalSyncCompletion | null> {
+  try {
+    const [database, accountId] = await Promise.all([
+      openDatabase(),
+      requireActiveUserId(),
+    ]);
+    const timestamp = new Date().toISOString();
+    const rows = await database.getAllAsync<{ journeyId: string }>(
+      `SELECT DISTINCT journeyId FROM (
+         SELECT operation.trip_id AS journeyId
+         FROM sync_operations operation
+         LEFT JOIN sync_operations dependency
+           ON dependency.id = operation.dependency_operation_id
+          AND dependency.owner_user_id = operation.owner_user_id
+         WHERE operation.owner_user_id = ? AND operation.trip_id IS NOT NULL
+           AND operation.failure_category IS NOT 'AUTH'
+           AND (
+             operation.status = 'PENDING'
+             OR (operation.status = 'RETRYABLE' AND (
+               operation.next_attempt_at IS NULL OR operation.next_attempt_at <= ?
+             ))
+             OR (operation.status = 'PROCESSING'
+               AND operation.lease_expires_at IS NOT NULL
+               AND operation.lease_expires_at <= ?)
+             OR (operation.status = 'DEPENDENCY_BLOCKED'
+               AND dependency.status = 'COMPLETED')
+           )
+         UNION
+         SELECT operation.journey_id
+         FROM ledger_asset_operations operation
+         LEFT JOIN ledger_asset_operations dependency
+           ON dependency.id = operation.dependency_operation_id
+          AND dependency.owner_user_id = operation.owner_user_id
+         WHERE operation.owner_user_id = ?
+           AND operation.failure_category IS NOT 'AUTH'
+           AND (
+             operation.status = 'PENDING'
+             OR (operation.status = 'RETRYABLE' AND (
+               operation.next_attempt_at IS NULL OR operation.next_attempt_at <= ?
+             ))
+             OR (operation.status = 'PROCESSING'
+               AND operation.lease_expires_at IS NOT NULL
+               AND operation.lease_expires_at <= ?)
+           )
+         UNION
+         SELECT change.journey_id
+         FROM ledger_deferred_server_changes change
+         JOIN ledger_actor_context actor ON actor.journey_id = change.journey_id
+         WHERE actor.user_id = ?
+       ) WHERE journeyId IS NOT NULL ORDER BY journeyId`,
+      accountId,
+      timestamp,
+      timestamp,
+      accountId,
+      timestamp,
+      timestamp,
+      accountId,
+    );
+    return {
+      accountId,
+      generation: getAccountGeneration(),
+      journeyIds: rows.map((row) => row.journeyId),
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function pauseLedgerOperationalSync() {

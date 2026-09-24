@@ -155,6 +155,24 @@ Payment bootstrap/pull application retain pending, failed, dependency-blocked, c
 Review, and attachment intent through their existing repository protections. Recovery is
 reported only after a final rescan verifies convergence.
 
+## Data Health Phase D lifecycle scheduling
+
+App lifecycle, connectivity, auth recovery, and normal sync completion feed one
+process-local Data Health coalescer. Cold start schedules an indexed local check after
+database bootstrap without blocking launch. Foreground/active-use checks respect the
+persisted 15-minute cheap-scan and 24-hour deep-scan windows, except that indexed work
+already due for convergence may trigger a scoped cheap run. Protected and future-sparse
+work does not bypass the window. Reconnect-driven network convergence also has an
+in-memory cooldown so flapping cannot reset sparse retry policy.
+
+Automatic scans select only hinted or suspicious Journeys, plus at most the active/recent
+fallback scopes for a deep or auth-recovery check. A healthy account stops after the
+indexed detector and empty scoped scan. Normal-sync completion supplies its eligible
+Journey scopes and health-origin sync suppresses another completion signal, preventing a
+health/sync recursion. Every scheduled plan is invalidated by an account or generation
+change. Manual Settings health uses the same coordinator and policy but may bypass the
+ordinary scan cadence.
+
 ## Idempotency
 
 Every create/update/delete sent to the backend must include an idempotency key. Offline creates must include local ids so backend responses can map local records to server ids.
