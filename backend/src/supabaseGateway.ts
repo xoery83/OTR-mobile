@@ -2458,11 +2458,7 @@ export async function lookupLedgerRate(
     .match(key)
     .maybeSingle();
   if (previous.error) throw new Error("Supabase Dev rate lookup attempt read failed.");
-  if (
-    previous.data &&
-    String(previous.data.status) !== "IN_FLIGHT" &&
-    Date.parse(String(previous.data.next_retry_at)) > Date.now()
-  ) {
+  if (previous.data && Date.parse(String(previous.data.next_retry_at)) > Date.now()) {
     return lookupUnavailableResponse(input, String(previous.data.status));
   }
 

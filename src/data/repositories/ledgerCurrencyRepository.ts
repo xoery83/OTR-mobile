@@ -38,16 +38,20 @@ export const ledgerCurrencyRepository = {
     const transport = createLedgerReadTransport();
     const response = await transport.rateLookup(journeyId, input);
     if (response.decimalRate) {
-      const repository = await getDefaultLedgerExpenseRepository();
-      const quotes = await transport.rateQuotes(
-        journeyId,
-        input.quoteCurrency,
-        input.baseCurrency,
-      );
-      for (const quote of quotes.filter(
-        (item) => item.economicDate === input.requestedDate,
-      ))
-        await repository.cacheRateQuote(quote);
+      try {
+        const repository = await getDefaultLedgerExpenseRepository();
+        const quotes = await transport.rateQuotes(
+          journeyId,
+          input.quoteCurrency,
+          input.baseCurrency,
+        );
+        for (const quote of quotes.filter(
+          (item) => item.economicDate === input.requestedDate,
+        ))
+          await repository.cacheRateQuote(quote);
+      } catch {
+        // The fresh result remains useful even if its read-through cache update fails.
+      }
     }
     return response;
   },
