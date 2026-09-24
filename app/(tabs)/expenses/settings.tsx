@@ -19,6 +19,7 @@ import type { JourneyCurrencyPreview } from "@/data/repositories/ledgerCurrencyR
 import { createLocalId } from "@/domain/localId";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { currencyName } from "@/features/ledger/currencyPickerData";
+import { ExchangeRateLookup } from "@/features/ledger/ExchangeRateLookup";
 
 type JourneySetting = { journeyId: string; settlementCurrency: string; title: string };
 
@@ -293,6 +294,14 @@ export default function CurrencyRoute() {
               </Text>
             </Pressable>
           </View>
+        ) : null}
+        {journey ? (
+          <ExchangeRateLookup
+            journeyId={journey.journeyId}
+            key={journey.journeyId}
+            online={online}
+            settlementCurrency={journey.settlementCurrency}
+          />
         ) : null}
         {message ? <Text style={styles.error}>{message}</Text> : null}
       </ScrollView>
