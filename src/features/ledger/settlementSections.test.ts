@@ -172,7 +172,7 @@ describe("Settlement section selectors", () => {
     expect(visiblePersonalPayments(records, "member-a", true, true)).toEqual(records);
   });
 
-  it("summarizes only the current member's matching payment records", () => {
+  it("summarizes only current-member originals and authoritative projections", () => {
     const transfer = {
       fromMemberId: "member-a",
       toMemberId: "member-b",
@@ -207,8 +207,8 @@ describe("Settlement section selectors", () => {
 
     expect(personalPaymentProgress(records, "member-a", transfer)).toEqual({
       direction: "PAID",
-      minor: 900,
-      percentage: 45,
+      minor: 400,
+      percentage: 20,
       provisional: [],
     });
     expect(personalPaymentProgress(records, "member-c", transfer)).toBeNull();
@@ -246,6 +246,36 @@ describe("Settlement section selectors", () => {
         recordedEquivalentMinor: 900,
         recordedEquivalentCurrency: "NZD",
         recordedEquivalentScale: 2,
+        revision: 1,
+        economicDate: "2026-09-23",
+        fxProjections: [
+          {
+            id: "10000000-0000-4000-8000-000000000099",
+            paymentId: "confirmed",
+            journeyId: "journey-a",
+            targetCurrency: "NZD",
+            targetScale: 2,
+            policyVersion: "ECB_DAILY_V1",
+            sourcePaymentRevision: 1,
+            inputDigest: "0123456789abcdef0123456789abcdef",
+            economicDate: "2026-09-23",
+            originalAmountMinor: 500,
+            originalCurrency: "USD",
+            originalScale: 2,
+            state: "CONFIRMED",
+            equivalentMinor: 900,
+            decimalRate: "1.8",
+            rateQuoteId: null,
+            referenceDate: "2026-09-23",
+            provider: "ECB",
+            providerReference: "provider",
+            sourceReference: "source",
+            failureCategory: null,
+            revision: 1,
+            createdAt: "2026-09-24",
+            updatedAt: "2026-09-24",
+          },
+        ],
       },
     ] as LocalPersonalPayment[];
     const snapshots = {

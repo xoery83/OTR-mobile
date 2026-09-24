@@ -545,6 +545,7 @@ const personalPaymentValueSchema = z
     currency: z.string().regex(/^[A-Z]{3}$/),
     scale: z.number().int().min(0).max(4),
     occurredAt: z.iso.datetime({ offset: true }),
+    economicDate: z.iso.date().optional(),
     note: z.string().max(2000).nullable().optional(),
     recordedEquivalentMinor: personalPaymentEquivalentSchema.shape.recordedEquivalentMinor
       .nullable()
@@ -608,11 +609,39 @@ export const deletePersonalSettlementPaymentRequestSchema = z
   })
   .strict();
 
+export const personalSettlementPaymentFxProjectionSchema = z.object({
+  id: uuid,
+  paymentId: uuid,
+  journeyId: uuid,
+  targetCurrency: z.string().regex(/^[A-Z]{3}$/),
+  targetScale: z.number().int().min(0).max(4),
+  policyVersion: z.literal("ECB_DAILY_V1"),
+  sourcePaymentRevision: z.number().int().positive(),
+  inputDigest: z.string().length(32),
+  economicDate: z.iso.date(),
+  originalAmountMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  originalCurrency: z.string().regex(/^[A-Z]{3}$/),
+  originalScale: z.number().int().min(0).max(4),
+  state: z.enum(["PENDING", "CONFIRMED", "UNAVAILABLE", "SUPERSEDED"]),
+  equivalentMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).nullable(),
+  decimalRate: z.string().nullable(),
+  rateQuoteId: uuid.nullable(),
+  referenceDate: z.iso.date().nullable(),
+  provider: z.string().nullable(),
+  providerReference: z.string().nullable(),
+  sourceReference: z.string().nullable(),
+  failureCategory: z.string().nullable(),
+  revision: z.number().int().positive(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
 export const personalSettlementPaymentSchema = personalPaymentValueSchema.safeExtend({
   id: uuid,
   journeyId: uuid,
   ownerUserId: uuid,
   ownerMemberId: uuid,
+  economicDate: z.iso.date().optional(),
   revision: z.number().int().positive(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -621,11 +650,13 @@ export const personalSettlementPaymentSchema = personalPaymentValueSchema.safeEx
 
 export const personalSettlementPaymentMutationResponseSchema = z.object({
   record: personalSettlementPaymentSchema,
+  projections: z.array(personalSettlementPaymentFxProjectionSchema).optional(),
   idempotentReplay: z.boolean(),
 });
 
 export const personalSettlementPaymentListResponseSchema = z.object({
   payments: z.array(personalSettlementPaymentSchema),
+  projections: z.array(personalSettlementPaymentFxProjectionSchema).optional(),
   serverTime: z.string(),
 });
 
@@ -683,6 +714,9 @@ export type SettlementPaymentMutationResponse = z.infer<
 >;
 export type PersonalSettlementPaymentDto = z.infer<
   typeof personalSettlementPaymentSchema
+>;
+export type PersonalSettlementPaymentFxProjectionDto = z.infer<
+  typeof personalSettlementPaymentFxProjectionSchema
 >;
 export type CreatePersonalSettlementPaymentRequest = z.infer<
   typeof createPersonalSettlementPaymentRequestSchema

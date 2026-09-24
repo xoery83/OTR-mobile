@@ -31,6 +31,7 @@ export async function bootstrapLedgerPersonalPayments(journeyId: string) {
   const repository = createLedgerPersonalPaymentRepository(database, requireActiveUserId);
   const response = await createLedgerPersonalPaymentTransport().list(journeyId, true);
   await repository.applyHistoricalList(journeyId, response.payments, response.serverTime);
+  await repository.applyFxProjectionList(journeyId, response.projections ?? []);
   return response;
 }
 

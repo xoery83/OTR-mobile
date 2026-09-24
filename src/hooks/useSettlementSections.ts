@@ -13,6 +13,7 @@ import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPay
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
+import { refreshLedgerPersonalPayments } from "@/data/sync/ledgerPersonalPaymentCoordinator";
 import {
   buildEstimatedSettlementCategories,
   buildFinalizedSettlementCategories,
@@ -153,7 +154,23 @@ export function useSettlementSections(
   useFocusEffect(
     useCallback(() => {
       void loadBase();
-    }, [loadBase]),
+      if (!online || !journeyId) return;
+      let running = false;
+      const timer = setInterval(() => {
+        if (running) return;
+        running = true;
+        void refreshLedgerPersonalPayments(journeyId)
+          .then(async () => {
+            const repository = await getDefaultLedgerPersonalPaymentRepository();
+            setPayments(await repository.listForJourney(journeyId));
+          })
+          .catch(() => undefined)
+          .finally(() => {
+            running = false;
+          });
+      }, 8_000);
+      return () => clearInterval(timer);
+    }, [journeyId, loadBase, online]),
   );
   const selectSpendingMember = (memberId: string) => {
     spendingMemberRef.current = memberId;

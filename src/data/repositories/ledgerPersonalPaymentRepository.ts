@@ -4,6 +4,7 @@ import {
   createPersonalSettlementPaymentRequestSchema,
   updatePersonalSettlementPaymentRequestSchema,
   type PersonalSettlementPaymentDto,
+  type PersonalSettlementPaymentFxProjectionDto,
 } from "@/data/api/ledgerSettlementContracts";
 import type { LedgerChangesResponse } from "@/data/api/ledgerReadContracts";
 import type { SyncStatus } from "@/domain/sync/syncStatus";
@@ -22,9 +23,11 @@ export type PersonalPaymentCommand = Omit<
   | "createdAt"
   | "updatedAt"
   | "deletedAt"
-> & { auditReason?: string | null };
+  | "economicDate"
+> & { auditReason?: string | null; economicDate?: string };
 
 export type LocalPersonalPayment = PersonalSettlementPaymentDto & {
+  fxProjections?: PersonalSettlementPaymentFxProjectionDto[];
   syncStatus: SyncStatus;
   lastSyncedAt: string | null;
   lastErrorCode: string | null;
@@ -44,16 +47,15 @@ export function createLedgerPersonalPaymentRepository(
   return {
     async listForJourney(journeyId: string, includeDeleted = false) {
       const userId = await getActiveUserId();
-      return database
-        .getAllAsync<PersonalPaymentRow>(
-          `${selectPayment} WHERE projection_user_id = ? AND journey_id = ?
+      const rows = await database.getAllAsync<PersonalPaymentRow>(
+        `${selectPayment} WHERE projection_user_id = ? AND journey_id = ?
            AND (? = 1 OR deleted_at IS NULL)
            ORDER BY occurred_at DESC, created_at DESC, id`,
-          userId,
-          journeyId,
-          includeDeleted ? 1 : 0,
-        )
-        .then((rows) => rows.map(fromRow));
+        userId,
+        journeyId,
+        includeDeleted ? 1 : 0,
+      );
+      return attachProjections(database, userId, rows.map(fromRow));
     },
 
     async get(id: string) {
@@ -63,7 +65,7 @@ export function createLedgerPersonalPaymentRepository(
         id,
         userId,
       );
-      return row ? fromRow(row) : null;
+      return row ? (await attachProjections(database, userId, [fromRow(row)]))[0] : null;
     },
 
     async create(command: PersonalPaymentCommand) {
@@ -83,6 +85,7 @@ export function createLedgerPersonalPaymentRepository(
       const now = new Date().toISOString();
       const record: LocalPersonalPayment = {
         ...input,
+        economicDate: input.economicDate ?? compatibilityEconomicDate(command.occurredAt),
         note: input.note ?? null,
         recordedEquivalentMinor: input.recordedEquivalentMinor ?? null,
         recordedEquivalentCurrency: input.recordedEquivalentCurrency ?? null,
@@ -141,6 +144,7 @@ export function createLedgerPersonalPaymentRepository(
       const updated: LocalPersonalPayment = {
         ...current,
         ...input,
+        economicDate: input.economicDate ?? compatibilityEconomicDate(command.occurredAt),
         note: input.note ?? null,
         recordedEquivalentMinor: input.recordedEquivalentMinor ?? null,
         recordedEquivalentCurrency: input.recordedEquivalentCurrency ?? null,
@@ -249,6 +253,36 @@ export function createLedgerPersonalPaymentRepository(
       await upsert(database, userId, canonicalRecord(canonical));
     },
 
+    async applyFxProjections(projections: PersonalSettlementPaymentFxProjectionDto[]) {
+      const userId = await getActiveUserId();
+      for (const projection of projections)
+        await upsertProjection(database, userId, projection);
+    },
+
+    async applyFxProjectionList(
+      journeyId: string,
+      projections: PersonalSettlementPaymentFxProjectionDto[],
+    ) {
+      const userId = await getActiveUserId();
+      await database.runAsync(
+        `DELETE FROM ledger_personal_payment_fx_projections
+         WHERE projection_user_id = ? AND journey_id = ?`,
+        userId,
+        journeyId,
+      );
+      for (const projection of projections)
+        await upsertProjection(database, userId, projection);
+    },
+
+    async applyFxTombstone(id: string) {
+      await database.runAsync(
+        `DELETE FROM ledger_personal_payment_fx_projections
+         WHERE projection_user_id = ? AND id = ?`,
+        await getActiveUserId(),
+        id,
+      );
+    },
+
     async applyTombstone(journeyId: string, id: string, revision: number) {
       const userId = await getActiveUserId();
       const current = await database.getFirstAsync<PersonalPaymentRow>(
@@ -333,6 +367,19 @@ export function createLedgerPersonalPaymentRepository(
       const userId = await getActiveUserId();
       await database.withTransactionAsync(async () => {
         for (const change of response.changes) {
+          if (change.entityType === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION") {
+            if (change.isTombstone) {
+              await database.runAsync(
+                `DELETE FROM ledger_personal_payment_fx_projections
+                 WHERE projection_user_id = ? AND id = ?`,
+                userId,
+                change.entityId,
+              );
+            } else if (change.aggregate && "targetCurrency" in change.aggregate) {
+              await upsertProjection(database, userId, change.aggregate);
+            }
+            continue;
+          }
           if (change.entityType !== "PERSONAL_SETTLEMENT_PAYMENT") continue;
           if (change.isTombstone) {
             const current = await database.getFirstAsync<PersonalPaymentRow>(
@@ -420,6 +467,7 @@ type PersonalPaymentRow = {
   currency: string;
   scale: number;
   occurredAt: string;
+  economicDate: string;
   note: string | null;
   recordedEquivalentMinor: number | null;
   recordedEquivalentCurrency: string | null;
@@ -441,7 +489,8 @@ const selectPayment = `SELECT id, projection_user_id AS projectionUserId,
   journey_id AS journeyId,
   owner_user_id AS ownerUserId, owner_member_id AS ownerMemberId,
   counterparty_member_id AS counterpartyMemberId, direction,
-  amount_minor AS amountMinor, currency, scale, occurred_at AS occurredAt, note,
+  amount_minor AS amountMinor, currency, scale, occurred_at AS occurredAt,
+  economic_date AS economicDate, note,
   recorded_equivalent_minor AS recordedEquivalentMinor,
   recorded_equivalent_currency AS recordedEquivalentCurrency,
   recorded_equivalent_scale AS recordedEquivalentScale,
@@ -480,7 +529,10 @@ function fromRow(row: PersonalPaymentRow): LocalPersonalPayment {
 
 function paymentInput(command: PersonalPaymentCommand) {
   const { journeyId: _journeyId, ...input } = command;
-  return input;
+  return {
+    ...input,
+    economicDate: command.economicDate ?? compatibilityEconomicDate(command.occurredAt),
+  };
 }
 
 function canonicalRecord(record: PersonalSettlementPaymentDto): LocalPersonalPayment {
@@ -500,6 +552,101 @@ function canonicalRecord(record: PersonalSettlementPaymentDto): LocalPersonalPay
   };
 }
 
+async function attachProjections(
+  database: LedgerPersonalPaymentDatabase,
+  userId: string,
+  records: LocalPersonalPayment[],
+) {
+  if (!records.length) return records;
+  const rows = await database.getAllAsync<Record<string, unknown>>(
+    `SELECT * FROM ledger_personal_payment_fx_projections
+     WHERE projection_user_id = ? AND payment_id IN (${records.map(() => "?").join(",")})`,
+    userId,
+    ...records.map((record) => record.id),
+  );
+  const projections = rows.map(projectionFromRow);
+  return records.map((record) => ({
+    ...record,
+    fxProjections: projections.filter(
+      (projection) =>
+        projection.paymentId === record.id && projection.state !== "SUPERSEDED",
+    ),
+  }));
+}
+
+async function upsertProjection(
+  database: LedgerPersonalPaymentDatabase,
+  userId: string,
+  value: PersonalSettlementPaymentFxProjectionDto,
+) {
+  await database.runAsync(
+    `INSERT OR REPLACE INTO ledger_personal_payment_fx_projections (
+      projection_user_id,id,payment_id,journey_id,target_currency,target_scale,
+      policy_version,source_payment_revision,input_digest,economic_date,
+      original_amount_minor,original_currency,original_scale,state,equivalent_minor,
+      decimal_rate,rate_quote_id,reference_date,provider,provider_reference,
+      source_reference,failure_category,revision,created_at,updated_at
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    userId,
+    value.id,
+    value.paymentId,
+    value.journeyId,
+    value.targetCurrency,
+    value.targetScale,
+    value.policyVersion,
+    value.sourcePaymentRevision,
+    value.inputDigest,
+    value.economicDate,
+    value.originalAmountMinor,
+    value.originalCurrency,
+    value.originalScale,
+    value.state,
+    value.equivalentMinor,
+    value.decimalRate,
+    value.rateQuoteId,
+    value.referenceDate,
+    value.provider,
+    value.providerReference,
+    value.sourceReference,
+    value.failureCategory,
+    value.revision,
+    value.createdAt,
+    value.updatedAt,
+  );
+}
+
+function projectionFromRow(
+  row: Record<string, unknown>,
+): PersonalSettlementPaymentFxProjectionDto {
+  return {
+    id: String(row.id),
+    paymentId: String(row.payment_id),
+    journeyId: String(row.journey_id),
+    targetCurrency: String(row.target_currency),
+    targetScale: Number(row.target_scale),
+    policyVersion: "ECB_DAILY_V1",
+    sourcePaymentRevision: Number(row.source_payment_revision),
+    inputDigest: String(row.input_digest),
+    economicDate: String(row.economic_date),
+    originalAmountMinor: Number(row.original_amount_minor),
+    originalCurrency: String(row.original_currency),
+    originalScale: Number(row.original_scale),
+    state: row.state as PersonalSettlementPaymentFxProjectionDto["state"],
+    equivalentMinor: row.equivalent_minor == null ? null : Number(row.equivalent_minor),
+    decimalRate: row.decimal_rate == null ? null : String(row.decimal_rate),
+    rateQuoteId: row.rate_quote_id == null ? null : String(row.rate_quote_id),
+    referenceDate: row.reference_date == null ? null : String(row.reference_date),
+    provider: row.provider == null ? null : String(row.provider),
+    providerReference:
+      row.provider_reference == null ? null : String(row.provider_reference),
+    sourceReference: row.source_reference == null ? null : String(row.source_reference),
+    failureCategory: row.failure_category == null ? null : String(row.failure_category),
+    revision: Number(row.revision),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
 async function upsert(
   database: LedgerPersonalPaymentDatabase,
   projectionUserId: string,
@@ -508,12 +655,12 @@ async function upsert(
   await database.runAsync(
     `INSERT OR REPLACE INTO ledger_personal_payment_records (
       id, projection_user_id, journey_id, owner_user_id, owner_member_id, counterparty_member_id,
-      direction, amount_minor, currency, scale, occurred_at, note,
+      direction, amount_minor, currency, scale, occurred_at, economic_date, note,
       recorded_equivalent_minor, recorded_equivalent_currency,
       recorded_equivalent_scale, reference_rate_decimal, reference_rate_date,
       reference_source, reference_provenance_json, server_revision, created_at,
       updated_at, deleted_at, sync_status, last_synced_at, last_error_code
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     record.id,
     projectionUserId,
     record.journeyId,
@@ -525,6 +672,7 @@ async function upsert(
     record.currency,
     record.scale,
     record.occurredAt,
+    record.economicDate ?? compatibilityEconomicDate(record.occurredAt),
     record.note ?? null,
     record.recordedEquivalentMinor ?? null,
     record.recordedEquivalentCurrency ?? null,
@@ -541,6 +689,10 @@ async function upsert(
     record.lastSyncedAt,
     record.lastErrorCode,
   );
+}
+
+function compatibilityEconomicDate(occurredAt: string) {
+  return new Date(occurredAt).toISOString().slice(0, 10);
 }
 
 async function enqueue(

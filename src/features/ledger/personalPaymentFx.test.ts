@@ -78,6 +78,8 @@ function payment(
     currency,
     scale,
     occurredAt: "2026-09-23T12:00:00.000Z",
+    economicDate: "2026-09-23",
+    revision: 2,
     recordedEquivalentMinor: null,
     recordedEquivalentCurrency: null,
     recordedEquivalentScale: null,
@@ -137,13 +139,41 @@ describe("local Personal Payment FX presentation", () => {
     ).toEqual({ minor: 2_000, currency: "NZD", scale: 2 });
   });
 
-  it("prefers a matching confirmed equivalent and never emits a local estimate", () => {
+  it("prefers a matching server projection and ignores legacy equivalents", () => {
     expect(
       personalPaymentComparable(
         payment("USD", 2, 1_000, {
           recordedEquivalentMinor: 1_701,
           recordedEquivalentCurrency: "NZD",
           recordedEquivalentScale: 2,
+          fxProjections: [
+            {
+              id: "10000000-0000-4000-8000-000000000001",
+              paymentId: "payment",
+              journeyId: "journey-a",
+              targetCurrency: "NZD",
+              targetScale: 2,
+              policyVersion: "ECB_DAILY_V1",
+              sourcePaymentRevision: 2,
+              inputDigest: "0123456789abcdef0123456789abcdef",
+              economicDate: "2026-09-23",
+              originalAmountMinor: 1_000,
+              originalCurrency: "USD",
+              originalScale: 2,
+              state: "CONFIRMED",
+              equivalentMinor: 1_703,
+              decimalRate: "1.703",
+              rateQuoteId: "20000000-0000-4000-8000-000000000001",
+              referenceDate: "2026-09-23",
+              provider: "ECB",
+              providerReference: "provider",
+              sourceReference: "source",
+              failureCategory: null,
+              revision: 1,
+              createdAt: "2026-09-24",
+              updatedAt: "2026-09-24",
+            },
+          ],
         }),
         "NZD",
         2,
@@ -151,7 +181,7 @@ describe("local Personal Payment FX presentation", () => {
         "2026-09-24",
       ),
     ).toMatchObject({
-      money: { minor: 1_701 },
+      money: { minor: 1_703 },
       source: "CONFIRMED_EQUIVALENT",
       estimate: null,
     });

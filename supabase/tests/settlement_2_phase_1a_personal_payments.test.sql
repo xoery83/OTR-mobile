@@ -44,7 +44,7 @@ select is(
   (select count(*)::integer from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relname like 'personal_settlement_payment%'
      and c.relkind = 'r' and c.relrowsecurity and c.relforcerowsecurity),
-  4, 'all Phase 1A tables force RLS'
+  6, 'all Personal Payment tables force RLS'
 );
 select ok(not has_table_privilege('authenticated',
   'public.personal_settlement_payment_records', 'INSERT'),
@@ -195,11 +195,11 @@ select lives_ok($$
     '{"counterpartyMemberId":"12000000-0000-4000-8000-000000000002","direction":"PAID","amountMinor":30000,"currency":"NZD","scale":2,"occurredAt":"2026-09-20T10:02:00Z","recordedEquivalentMinor":8549,"recordedEquivalentCurrency":"CNY","recordedEquivalentScale":0,"referenceRateDecimal":"4.120000000000000000","referenceRateDate":"2026-09-19","referenceSource":"ECB cache","referenceProvenance":{"quoteId":"quote-1"}}', null)
 $$, 'optional equivalent and informational reference metadata are accepted');
 select is((select recorded_equivalent_minor from public.personal_settlement_payment_records
-  where id = '70000000-0000-4000-8000-000000000003'), 8549::bigint,
-  'user-entered equivalent is preserved exactly');
+  where id = '70000000-0000-4000-8000-000000000003'), null::bigint,
+  'deprecated client equivalent is ignored');
 select is((select reference_rate_decimal::text from public.personal_settlement_payment_records
-  where id = '70000000-0000-4000-8000-000000000003'), '4.120000000000000000',
-  'reference rate is preserved exactly');
+  where id = '70000000-0000-4000-8000-000000000003'), null::text,
+  'deprecated client reference rate is ignored');
 select isnt((select recorded_equivalent_minor from public.personal_settlement_payment_records
   where id = '70000000-0000-4000-8000-000000000003'), 123600::bigint,
   'reference metadata never recalculates the recorded equivalent');

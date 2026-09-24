@@ -60,6 +60,16 @@ describe("trusted historical rate boundary", () => {
     ).rejects.toMatchObject({ category: "NOT_YET_AVAILABLE" });
   });
 
+  it("accepts the previous ECB working day when today is a weekend", async () => {
+    await expect(
+      fetchTrustedRateQuote(
+        { fetch: async () => ({ ...candidate, referenceDate: "2026-09-18" }) },
+        { ...request, economicDate: "2026-09-20" },
+        "2026-09-20",
+      ),
+    ).resolves.toMatchObject({ referenceDate: "2026-09-18" });
+  });
+
   it("never requests same-currency or unknown date", async () => {
     const fetch = vi.fn(async () => candidate);
     for (const changed of [{ settlementCurrency: "EUR" }, { economicDate: "" }])

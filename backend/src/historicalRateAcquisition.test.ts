@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 
 import { acquirePendingRateQuotes } from "./supabaseGateway";
+import { RateProviderError } from "./rateQuoteProvider";
 
 const demand = {
   journey_id: "10000000-0000-4000-8000-000000000001",
@@ -59,6 +60,26 @@ describe("historical rate acquisition", () => {
     expect(service.upsert).not.toHaveBeenCalled();
     expect(service.update).toHaveBeenCalledWith(
       expect.objectContaining({ status: "NO_REFERENCE_WITHIN_POLICY" }),
+    );
+    expect(service.rpc).toHaveBeenCalledWith(
+      "ledger_mark_personal_payment_fx_demand_1c",
+      expect.objectContaining({ failure_category_value: "NO_REFERENCE_WITHIN_POLICY" }),
+    );
+  });
+
+  it("keeps a temporary provider failure retryable without editing the payment", async () => {
+    const service = fakeService();
+    const fetch = vi.fn(async () => {
+      throw new RateProviderError("TEMPORARY_FAILURE", "offline");
+    });
+    expect(await acquirePendingRateQuotes(service.client, { fetch })).toBe(1);
+    expect(service.upsert).not.toHaveBeenCalled();
+    expect(service.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "TEMPORARY_FAILURE" }),
+    );
+    expect(service.rpc).toHaveBeenCalledWith(
+      "ledger_mark_personal_payment_fx_demand_1c",
+      expect.objectContaining({ failure_category_value: "TEMPORARY_FAILURE" }),
     );
   });
 

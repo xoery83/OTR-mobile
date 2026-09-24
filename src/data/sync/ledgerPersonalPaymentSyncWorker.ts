@@ -75,6 +75,7 @@ export function createLedgerPersonalPaymentSyncWorker(
                   operation.idempotencyKey,
                 );
         await repository.applyCanonical(response.record, operation.id);
+        await repository.applyFxProjections?.(response.projections ?? []);
       } catch (error) {
         const normalized = error instanceof Error ? error : new Error("Sync failed.");
         if (

@@ -1,2 +1,5 @@
-export { kickLedgerOperationalSync } from "@/data/sync/ledgerOperationalSync";
+export {
+  kickLedgerOperationalSync,
+  runLedgerOperationalSync,
+} from "@/data/sync/ledgerOperationalSync";
 export { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";

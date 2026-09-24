@@ -180,6 +180,12 @@ No successful user write should be lost due to app restart.
 
 ## Account-scoped FX reference cache
 
+Personal Payment FX projections are read-only Mobile mirrors. Offline writes
+persist only original Money and `economicDate`; local estimates remain derived
+from the account-scoped ECB snapshot cache and never enter mutation payloads.
+After reconnect, a matching confirmed projection replaces the estimate without
+changing the original payment or its revision.
+
 Mobile may cache the authenticated ECB reference snapshot bundle in
 `ledger_fx_reference_snapshots`. The cache keeps at most 32 working-day rows per
 account/provider/policy, survives restart, and is never shared across signed-in

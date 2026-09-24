@@ -2,6 +2,37 @@
 
 Date: 2026-09-24
 
+## Personal Payment authoritative FX projections — Slice C accepted
+
+- Hosted Dev migration `20260924000200` adds first-class Personal Payment
+  `economic_date`, Backend-owned current FX projections, immutable projection audit
+  events, and projection change-feed entries. Existing rows deterministically use the
+  UTC date of `occurred_at`; current Mobile writes the user/payment date explicitly.
+- Projection state and revision are independent from the user-owned Payment. The
+  Backend ignores deprecated client `recordedEquivalent*` evidence, performs exact
+  numeric conversion from trusted `ledger_rate_quotes`, and preserves old-target
+  evidence when Journey currency changes. No canonical Settlement table participates.
+- The existing rate-demand claim, attempt/negative cache, 45-second lease, ECB provider
+  and single 30-second scanner now also resolve Personal Payment projections. Current-day
+  weekends accept the prior ECB working day; no holiday library or second worker was
+  added. Unsupported pairs remain durable `UNAVAILABLE` demands with bounded retry.
+- Mobile SQLite migration 33 mirrors account-scoped projections and their tombstones.
+  Bootstrap, Personal Payment mutation responses and incremental changes all converge
+  into the mirror. Matching confirmed projections replace Slice B estimates without
+  changing original Money or double counting; a focused foreground pull makes the
+  transition visible without restarting the app.
+- Hosted Dev Journey `eae06f56-8e4b-4b46-9335-c82fa3a441ed` passed 27 acceptance checks:
+  explicit economic date, ignored client equivalent, same-currency identity, USD cached
+  and asynchronous paths, zero-scale ISK, Sunday-to-Friday fallback, unsupported BHD,
+  edit/reconfirmation without resolver Payment revision, old/new target preservation,
+  bootstrap/change feed, and zero canonical Settlement rows. USD 20.00 confirmed as
+  NZD 34.90; ISK 1,500 confirmed as NZD 21.68.
+- TypeScript, ESLint, Backend build, `git diff --check`, 97 Vitest files / 440 tests,
+  two clean local resets, and the complete 22-file pgTAP / 478-test suite pass. Hosted
+  Dev is migration-current and healthy. Production was not accessed. Slice D backfill
+  has not started; old records receive projections only when an approved current path
+  requests them.
+
 ## Personal Payment offline FX cache — Slice A+B device gate complete
 
 - Hosted Dev now exposes the authenticated 32-working-day pinned-ECB snapshot bundle;

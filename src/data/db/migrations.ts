@@ -1129,4 +1129,46 @@ export const migrations: Migration[] = [
         );
     `,
   },
+  {
+    id: 33,
+    name: "personal_payment_fx_projections",
+    sql: `
+      ALTER TABLE ledger_personal_payment_records ADD COLUMN economic_date TEXT;
+      UPDATE ledger_personal_payment_records
+      SET economic_date = date(occurred_at)
+      WHERE economic_date IS NULL;
+      CREATE TABLE ledger_personal_payment_fx_projections (
+        projection_user_id TEXT NOT NULL,
+        id TEXT NOT NULL,
+        payment_id TEXT NOT NULL,
+        journey_id TEXT NOT NULL,
+        target_currency TEXT NOT NULL,
+        target_scale INTEGER NOT NULL,
+        policy_version TEXT NOT NULL,
+        source_payment_revision INTEGER NOT NULL,
+        input_digest TEXT NOT NULL,
+        economic_date TEXT NOT NULL,
+        original_amount_minor INTEGER NOT NULL,
+        original_currency TEXT NOT NULL,
+        original_scale INTEGER NOT NULL,
+        state TEXT NOT NULL,
+        equivalent_minor INTEGER,
+        decimal_rate TEXT,
+        rate_quote_id TEXT,
+        reference_date TEXT,
+        provider TEXT,
+        provider_reference TEXT,
+        source_reference TEXT,
+        failure_category TEXT,
+        revision INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (projection_user_id, id),
+        UNIQUE (projection_user_id, payment_id, target_currency, policy_version)
+      );
+      CREATE INDEX ledger_personal_payment_fx_projection_lookup
+        ON ledger_personal_payment_fx_projections
+        (projection_user_id, journey_id, payment_id, target_currency, policy_version);
+    `,
+  },
 ];

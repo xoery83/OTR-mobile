@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import {
@@ -13,28 +13,22 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
 import { importReceiptAsset } from "@/data/operations/importReceiptAsset";
-import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
 import {
-  refreshPersonalPaymentPresentation,
-  refreshPersonalPaymentRateQuotes,
-} from "@/data/operations/personalPaymentPresentation";
+  kickLedgerOperationalSync,
+  runLedgerOperationalSync,
+} from "@/data/operations/kickLedgerSync";
+import { refreshPersonalPaymentPresentation } from "@/data/operations/personalPaymentPresentation";
 import { currencyScale } from "@/domain/ledger/currency";
-import { convertMoney } from "@/domain/ledger/money";
 
 import { CurrencyPicker } from "./CurrencyPicker";
 import { formatLedgerMoney } from "./format";
 import { formatMinorInput, parseCurrencyAmount } from "./expenseDraft";
-import {
-  selectPersonalPaymentReference,
-  type PersonalPaymentReference,
-} from "./personalPaymentFx";
 import { chronologicalPersonalPayments } from "./settlementSections";
 
 type Pair = { id: string; name: string };
@@ -45,7 +39,6 @@ export function PersonalPaymentSection({
   journeyId,
   onChanged,
   settlementCurrency,
-  settlementScale,
   to,
 }: {
   actorMemberId: string | null;
@@ -250,36 +243,7 @@ export function PersonalPaymentSection({
     }
     setSavingQuick(true);
     const date = new Date().toISOString().slice(0, 10);
-    let reference: PersonalPaymentReference | null = null;
-    let equivalent: { minor: number; currency: string; scale: number } | null = null;
     try {
-      if (quickCurrency !== settlementCurrency) {
-        const expenseRepository = await getDefaultLedgerExpenseRepository();
-        try {
-          await refreshPersonalPaymentRateQuotes(
-            journeyId,
-            quickCurrency,
-            settlementCurrency,
-          );
-        } catch {
-          // Saving the original amount remains available offline.
-        }
-        reference = selectPersonalPaymentReference(
-          await expenseRepository.listRateQuotes(
-            journeyId,
-            quickCurrency,
-            settlementCurrency,
-          ),
-          date,
-        );
-        if (reference)
-          equivalent = convertMoney(
-            { minor: amountMinor, currency: quickCurrency, scale },
-            settlementCurrency,
-            settlementScale,
-            reference.quote.decimalRate,
-          );
-      }
       await (
         await getDefaultLedgerPersonalPaymentRepository()
       ).create({
@@ -290,20 +254,19 @@ export function PersonalPaymentSection({
         currency: quickCurrency,
         scale,
         occurredAt: `${date}T12:00:00.000Z`,
+        economicDate: date,
         note: null,
-        recordedEquivalentMinor: equivalent?.minor ?? null,
-        recordedEquivalentCurrency: equivalent?.currency ?? null,
-        recordedEquivalentScale: equivalent?.scale ?? null,
-        referenceRateDecimal: reference?.quote.decimalRate ?? null,
-        referenceRateDate: reference?.quote.referenceDate ?? null,
-        referenceSource: reference ? "ECB reference via Frankfurter" : null,
-        referenceProvenance: reference
-          ? { quoteId: reference.quote.id, kind: reference.kind }
-          : null,
+        recordedEquivalentMinor: null,
+        recordedEquivalentCurrency: null,
+        recordedEquivalentScale: null,
+        referenceRateDecimal: null,
+        referenceRateDate: null,
+        referenceSource: null,
+        referenceProvenance: null,
       });
       setQuickAmount("");
       await load();
-      void kickLedgerOperationalSync();
+      void runLedgerOperationalSync().then(load).catch(() => undefined);
     } catch (error) {
       Alert.alert(
         "Could not save",
@@ -396,10 +359,9 @@ export function PersonalPaymentSection({
           onSaved={async () => {
             setEditing(null);
             await load();
-            void kickLedgerOperationalSync();
+            void runLedgerOperationalSync().then(load).catch(() => undefined);
           }}
           settlementCurrency={settlementCurrency}
-          settlementScale={settlementScale}
         />
       ) : null}
       <CurrencyModal
@@ -462,7 +424,6 @@ function PersonalPaymentEditor({
   onClose,
   onSaved,
   settlementCurrency,
-  settlementScale,
 }: {
   action: { label: string; direction: "PAID" | "RECEIVED"; counterparty: Pair };
   existing: LocalPersonalPayment | null;
@@ -470,7 +431,6 @@ function PersonalPaymentEditor({
   onClose: () => void;
   onSaved: () => Promise<void>;
   settlementCurrency: string;
-  settlementScale: number;
 }) {
   const [amount, setAmount] = useState(
     existing ? formatMinorInput(existing.amountMinor, existing.scale) : "",
@@ -480,85 +440,16 @@ function PersonalPaymentEditor({
     existing?.occurredAt.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
   );
   const [note, setNote] = useState(existing?.note ?? "");
-  const [equivalent, setEquivalent] = useState(
-    existing?.recordedEquivalentMinor
-      ? formatMinorInput(
-          existing.recordedEquivalentMinor,
-          existing.recordedEquivalentScale ?? settlementScale,
-        )
-      : "",
-  );
-  const equivalentCurrency = existing?.recordedEquivalentCurrency ?? settlementCurrency;
-  const equivalentScale =
-    existing?.recordedEquivalentScale ??
-    currencyScale(equivalentCurrency) ??
-    settlementScale;
-  const [reference, setReference] = useState<PersonalPaymentReference | null>(null);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    const read = async (refresh: boolean) => {
-      const repository = await getDefaultLedgerExpenseRepository();
-      if (refresh) {
-        try {
-          await refreshPersonalPaymentRateQuotes(journeyId, currency, settlementCurrency);
-        } catch {
-          // Cached data and manual save remain available offline.
-        }
-      }
-      const quotes = await repository.listRateQuotes(
-        journeyId,
-        currency,
-        settlementCurrency,
-      );
-      if (active) setReference(selectPersonalPaymentReference(quotes, date));
-    };
-    if (currency !== settlementCurrency) {
-      void read(false);
-      void read(true);
-    }
-    return () => {
-      active = false;
-    };
-  }, [currency, date, journeyId, settlementCurrency]);
-
   const paymentScale = currencyScale(currency);
-  const activeReference = currency === settlementCurrency ? null : reference;
   const paymentMinor =
     paymentScale === null ? null : parseCurrencyAmount(amount, paymentScale);
-  const referenceEquivalent = useMemo(() => {
-    if (!activeReference || paymentMinor === null || paymentScale === null) return null;
-    try {
-      return convertMoney(
-        { minor: paymentMinor, currency, scale: paymentScale },
-        settlementCurrency,
-        settlementScale,
-        activeReference.quote.decimalRate,
-      );
-    } catch {
-      return null;
-    }
-  }, [
-    currency,
-    paymentMinor,
-    paymentScale,
-    activeReference,
-    settlementCurrency,
-    settlementScale,
-  ]);
 
   const save = async () => {
-    const equivalentMinor = equivalent.trim()
-      ? parseCurrencyAmount(equivalent, equivalentScale)
-      : null;
-    if (
-      paymentScale === null ||
-      paymentMinor === null ||
-      (equivalent.trim() && !equivalentMinor)
-    ) {
+    if (paymentScale === null || paymentMinor === null) {
       Alert.alert("Check the amount");
       return;
     }
@@ -573,16 +464,15 @@ function PersonalPaymentEditor({
         currency,
         scale: paymentScale,
         occurredAt: `${date}T12:00:00.000Z`,
+        economicDate: date,
         note: note.trim() || null,
-        recordedEquivalentMinor: equivalentMinor,
-        recordedEquivalentCurrency: equivalentMinor ? equivalentCurrency : null,
-        recordedEquivalentScale: equivalentMinor ? equivalentScale : null,
-        referenceRateDecimal: activeReference?.quote.decimalRate ?? null,
-        referenceRateDate: activeReference?.quote.referenceDate ?? null,
-        referenceSource: activeReference ? "ECB reference via Frankfurter" : null,
-        referenceProvenance: activeReference
-          ? { quoteId: activeReference.quote.id, kind: activeReference.kind }
-          : null,
+        recordedEquivalentMinor: null,
+        recordedEquivalentCurrency: null,
+        recordedEquivalentScale: null,
+        referenceRateDecimal: null,
+        referenceRateDate: null,
+        referenceSource: null,
+        referenceProvenance: null,
       };
       if (existing) await repository.update(existing.id, command);
       else await repository.create(command);
@@ -644,50 +534,6 @@ function PersonalPaymentEditor({
         >
           <Text style={styles.fieldValue}>{date} · Change date</Text>
         </Pressable>
-        {currency !== settlementCurrency ? (
-          <View style={styles.reference}>
-            <Text style={styles.groupTitle}>
-              {activeReference?.kind === "REQUESTED_DATE"
-                ? "Reference rate"
-                : activeReference
-                  ? "Latest available reference"
-                  : "No reference rate available"}
-            </Text>
-            {activeReference ? (
-              <>
-                <Text style={styles.note}>
-                  1 {currency} ≈ {activeReference.quote.decimalRate} {settlementCurrency}
-                </Text>
-                <Text style={styles.meta}>
-                  {activeReference.quote.referenceDate} · informational market reference
-                </Text>
-                {referenceEquivalent ? (
-                  <Text style={styles.note}>
-                    Reference equivalent ≈{" "}
-                    {formatLedgerMoney(
-                      referenceEquivalent.minor,
-                      referenceEquivalent.currency,
-                      referenceEquivalent.scale,
-                    )}
-                  </Text>
-                ) : null}
-              </>
-            ) : (
-              <Text style={styles.meta}>You can still save the original amount.</Text>
-            )}
-          </View>
-        ) : null}
-        <Text style={styles.label}>
-          Recorded equivalent (optional, {equivalentCurrency})
-        </Text>
-        <TextInput
-          accessibilityLabel="Recorded equivalent"
-          keyboardType="decimal-pad"
-          onChangeText={setEquivalent}
-          placeholder="Leave blank"
-          style={styles.field}
-          value={equivalent}
-        />
         <Text style={styles.label}>Note (optional)</Text>
         <TextInput
           accessibilityLabel="Personal payment note"

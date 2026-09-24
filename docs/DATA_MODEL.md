@@ -318,6 +318,12 @@ Uncertain:
 
 ## Ledger FX reference snapshot cache
 
+Personal Payment FX is stored separately from the user-owned payment. Each
+payment has an explicit economic date; legacy rows use the UTC date of
+`occurred_at`. A projection is unique by payment, target currency, and policy,
+binds to the source payment revision/input digest, and owns an independent
+revision/audit trail. Projection rows are never Settlement inputs.
+
 Migration 32 adds `ledger_fx_reference_snapshots`, a Mobile-only, account-scoped
 cache of validated ECB daily EUR anchors. Its composite key is account,
 provider, policy version, and reference date. `rates_json` retains exact-decimal

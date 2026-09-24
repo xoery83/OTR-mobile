@@ -75,17 +75,43 @@ describe("SQLite migrations", () => {
     expect(account.sql).toContain("owner_user_id");
     expect(account.sql).toContain("local_owner_user_id");
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(32);
+    expect(latest.id).toBe(33);
     expect(migrations[28].sql).toContain("coverage_json");
     expect(migrations[29].sql).toContain("correction_source_expense_id");
     expect(migrations[30].sql).toContain("pending_review_state");
-    expect(latest.sql).toContain("ledger_fx_reference_snapshots");
+    expect(migrations[31].sql).toContain("ledger_fx_reference_snapshots");
+    expect(latest.sql).toContain("ledger_personal_payment_fx_projections");
     expect(migrations[22].sql).toContain("reference_date");
     expect(migrations[23].sql).toContain("reference_evidence_json");
     expect(migrations[24].sql).toContain("ledger_personal_payment_records");
     expect(migrations[26].sql).toContain("personal_payment_id");
     expect(migrations[20].sql).toContain("ledger_review_visibility");
     expect(migrations[19].sql).toContain("observation_context_json");
+  });
+
+  it("backfills old Personal Payment economic dates in UTC", () => {
+    const database = new DatabaseSync(":memory:");
+    try {
+      for (const migration of migrations.filter(({ id }) => id <= 32))
+        database.exec(migration.sql);
+      database.exec(`INSERT INTO ledger_personal_payment_records (
+        id, projection_user_id, journey_id, owner_user_id, owner_member_id,
+        counterparty_member_id, direction, amount_minor, currency, scale,
+        occurred_at, server_revision, created_at, updated_at, sync_status
+      ) VALUES ('payment', 'user', 'journey', 'user', 'owner', 'other', 'PAID',
+        100, 'USD', 2, '2026-09-23T23:30:00-04:00', 1,
+        '2026-09-24T03:30:00Z', '2026-09-24T03:30:00Z', 'SYNCED')`);
+      database.exec(migrations.find(({ id }) => id === 33)!.sql);
+      expect(
+        database
+          .prepare(
+            "SELECT economic_date AS economicDate FROM ledger_personal_payment_records",
+          )
+          .get(),
+      ).toEqual({ economicDate: "2026-09-24" });
+    } finally {
+      database.close();
+    }
   });
 
   it("adds nullable Review v2 evidence without rewriting v1 history", () => {

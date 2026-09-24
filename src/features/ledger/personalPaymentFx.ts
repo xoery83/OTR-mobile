@@ -94,18 +94,24 @@ export function personalPaymentComparable(
       source: "ORIGINAL",
       estimate: null,
     };
-  if (
-    record.recordedEquivalentCurrency === targetCurrency &&
-    record.recordedEquivalentMinor != null &&
-    record.recordedEquivalentScale != null
-  )
+  const confirmed = record.fxProjections?.find(
+    (projection) =>
+      projection.targetCurrency === targetCurrency &&
+      projection.targetScale === targetScale &&
+      projection.policyVersion === "ECB_DAILY_V1" &&
+      projection.state === "CONFIRMED" &&
+      projection.equivalentMinor != null &&
+      projection.sourcePaymentRevision === record.revision &&
+      projection.originalAmountMinor === record.amountMinor &&
+      projection.originalCurrency === record.currency &&
+      projection.originalScale === record.scale &&
+      projection.economicDate ===
+        (record.economicDate ?? compatibilityEconomicDate(record.occurredAt)),
+  );
+  if (confirmed)
     return {
       money: {
-        minor: rescaleMinor(
-          record.recordedEquivalentMinor,
-          record.recordedEquivalentScale,
-          targetScale,
-        ),
+        minor: confirmed.equivalentMinor!,
         currency: targetCurrency,
         scale: targetScale,
       },
@@ -115,7 +121,7 @@ export function personalPaymentComparable(
   if (!bundle || currencyScale(record.currency) !== record.scale) return null;
   const selected = bestSnapshotForEconomicDate(
     bundle.snapshots,
-    record.occurredAt.slice(0, 10),
+    record.economicDate ?? compatibilityEconomicDate(record.occurredAt),
     today,
   );
   const snapshot = selected.snapshot;
@@ -182,4 +188,8 @@ function rescaleMinor(minor: number, fromScale: number, toScale: number) {
   if (!Number.isSafeInteger(value))
     throw new Error("Rescaled amount exceeds safe range.");
   return value;
+}
+
+function compatibilityEconomicDate(occurredAt: string) {
+  return new Date(occurredAt).toISOString().slice(0, 10);
 }

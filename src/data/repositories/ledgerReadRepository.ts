@@ -51,6 +51,10 @@ export function createLedgerReadRepository(
         );
         for (const payment of response.personalPayments ?? [])
           await personalPayments.applyCanonical(payment);
+        await personalPayments.applyFxProjectionList(
+          response.journey.id,
+          response.personalPaymentFxProjections ?? [],
+        );
         if (response.reviewFindings)
           await applyReviewProjection(
             database,
@@ -125,7 +129,7 @@ export function createLedgerReadRepository(
           } else if (
             change.entityType === "SETTLEMENT" &&
             change.aggregate &&
-            "inputDigest" in change.aggregate
+            "throughTimestamp" in change.aggregate
           ) {
             await applyFinalizedSettlement(database, change.aggregate);
           } else if (change.entityType === "PERSONAL_SETTLEMENT_PAYMENT") {
@@ -142,6 +146,17 @@ export function createLedgerReadRepository(
             } else if (change.aggregate && "ownerUserId" in change.aggregate) {
               await personalPayments.applyCanonical(change.aggregate);
             }
+          } else if (
+            change.entityType === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION"
+          ) {
+            const personalPayments = createLedgerPersonalPaymentRepository(
+              database,
+              async () => userId,
+            );
+            if (change.isTombstone)
+              await personalPayments.applyFxTombstone(change.entityId);
+            else if (change.aggregate && "targetCurrency" in change.aggregate)
+              await personalPayments.applyFxProjections([change.aggregate]);
           } else if (change.entityType === "REVIEW_FINDING") {
             // Review is delivered only through the user-scoped snapshot above.
           } else {

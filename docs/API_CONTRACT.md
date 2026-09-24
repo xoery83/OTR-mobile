@@ -256,6 +256,12 @@ Response shape:
 
 ## Sync
 
+Personal Payment create/update requests carry `economicDate`. Deprecated
+`recordedEquivalent*` and reference fields may still parse for compatibility,
+but Backend ignores them. Personal Payment reads and mutation responses include
+authorized Backend-owned FX projections. Incremental Ledger changes include
+`PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION` independently from payment changes.
+
 `GET /trips/:id/sync/bootstrap` - `NEW`
 
 - Initial sync bundle: trip, members, today window, itinerary, ledger, documents, cursors, server clock, capabilities.

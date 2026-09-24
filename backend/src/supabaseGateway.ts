@@ -47,6 +47,7 @@ import type {
   FinalizedSettlementDto,
   PersonalSettlementCheckpointDto,
   PersonalSettlementPaymentDto,
+  PersonalSettlementPaymentFxProjectionDto,
   PersonalSettlementPaymentMutationResponse,
   RecordSettlementPaymentRequest,
   SettlementAdjustmentFinalizeRequest,
@@ -245,6 +246,7 @@ export function personalPaymentRowToDto(
     currency: String(row.currency),
     scale: Number(row.scale),
     occurredAt: String(row.occurred_at),
+    economicDate: String(row.economic_date ?? String(row.occurred_at).slice(0, 10)),
     note: row.note == null ? null : String(row.note),
     recordedEquivalentMinor:
       row.recorded_equivalent_minor == null
@@ -271,6 +273,39 @@ export function personalPaymentRowToDto(
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
     deletedAt: row.deleted_at == null ? null : String(row.deleted_at),
+  };
+}
+
+export function personalPaymentFxProjectionRowToDto(
+  row: Record<string, unknown>,
+): PersonalSettlementPaymentFxProjectionDto {
+  return {
+    id: String(row.id),
+    paymentId: String(row.payment_id),
+    journeyId: String(row.journey_id),
+    targetCurrency: String(row.target_currency),
+    targetScale: Number(row.target_scale),
+    policyVersion: "ECB_DAILY_V1",
+    sourcePaymentRevision: Number(row.source_payment_revision),
+    inputDigest: String(row.input_digest),
+    economicDate: String(row.economic_date),
+    originalAmountMinor: Number(row.original_amount_minor),
+    originalCurrency: String(row.original_currency),
+    originalScale: Number(row.original_scale),
+    state: row.state as PersonalSettlementPaymentFxProjectionDto["state"],
+    equivalentMinor: row.equivalent_minor == null ? null : Number(row.equivalent_minor),
+    decimalRate: row.decimal_rate == null ? null : String(row.decimal_rate),
+    rateQuoteId: row.rate_quote_id == null ? null : String(row.rate_quote_id),
+    referenceDate: row.reference_date == null ? null : String(row.reference_date),
+    provider: row.provider == null ? null : String(row.provider),
+    providerReference:
+      row.provider_reference == null ? null : String(row.provider_reference),
+    sourceReference: row.source_reference == null ? null : String(row.source_reference),
+    failureCategory:
+      row.failure_category == null ? null : String(row.failure_category),
+    revision: Number(row.revision),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
   };
 }
 
@@ -861,6 +896,15 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       });
       if (result.error) throw journeyCurrencyError(result.error.message);
       const committed = journeyCurrencyCommitSchema.parse(result.data);
+      const payments = await readPersonalSettlementPayments(service, userId, tripId);
+      for (const payment of payments.filter((item) => item.deletedAt === null)) {
+        const ensured = await service.rpc(
+          "ledger_ensure_personal_payment_fx_projection_1c",
+          { target_payment: payment.id, requested_target_currency: input.proposedCurrency },
+        );
+        if (ensured.error)
+          throw new Error("Supabase Dev Personal Payment FX retarget failed.");
+      }
       try {
         await this.refreshLedgerReview(userId, tripId);
       } catch (error) {
@@ -1065,6 +1109,10 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     async readPersonalSettlementPayments(userId, tripId) {
       return readPersonalSettlementPayments(service, userId, tripId);
+    },
+
+    async readPersonalPaymentFxProjections(userId, tripId) {
+      return readPersonalPaymentFxProjections(service, userId, tripId);
     },
 
     async pullPersonalSettlementPaymentChanges(userId, tripId, cursor) {
@@ -2343,6 +2391,18 @@ export async function acquirePendingRateQuotes(
         .update({ status: category, next_retry_at: retryAt })
         .match(key);
       if (updated.error) throw new Error("Supabase Dev rate retry write failed.");
+      const marked = await service.rpc(
+        "ledger_mark_personal_payment_fx_demand_1c",
+        {
+          target_journey: demand.journey_id,
+          target_economic_date: demand.economic_date,
+          quote_currency_value: demand.quote_currency,
+          base_currency_value: demand.base_currency,
+          failure_category_value: category,
+        },
+      );
+      if (marked.error)
+        throw new Error("Supabase Dev Personal Payment FX retry state failed.");
       console.warn(
         JSON.stringify({
           event: "historical_rate_negative_cache",
@@ -2353,6 +2413,12 @@ export async function acquirePendingRateQuotes(
       );
     }
   }
+  const resolved = await service.rpc(
+    "ledger_resolve_personal_payment_fx_projections_1c",
+    { target_journey: null },
+  );
+  if (resolved.error)
+    throw new Error("Supabase Dev Personal Payment FX resolution failed.");
   return demands.length;
 }
 
@@ -4058,6 +4124,21 @@ async function readPersonalSettlementPayments(
   return ((result.data ?? []) as Record<string, unknown>[]).map(personalPaymentRowToDto);
 }
 
+async function readPersonalPaymentFxProjections(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+) {
+  const result = await service.rpc("ledger_list_personal_payment_fx_projections_1c", {
+    actor_user: userId,
+    target_journey: tripId,
+  });
+  if (result.error) throw new Error("Supabase Dev Personal Payment FX read failed.");
+  return ((result.data ?? []) as Record<string, unknown>[]).map(
+    personalPaymentFxProjectionRowToDto,
+  );
+}
+
 async function readPersonalSettlementPaymentChanges(
   service: SupabaseClient,
   userId: string,
@@ -4066,7 +4147,7 @@ async function readPersonalSettlementPaymentChanges(
 ): Promise<LedgerChangesResponse> {
   const after = decodeLedgerCursor(cursor, tripId, userId);
   assertLedgerCursorContinuation(after, await latestLedgerSequence(service, tripId));
-  const [result, payments] = await Promise.all([
+  const [result, payments, projections] = await Promise.all([
     service.rpc("ledger_list_personal_settlement_payment_changes_1a", {
       actor_user: userId,
       target_journey: tripId,
@@ -4074,21 +4155,35 @@ async function readPersonalSettlementPaymentChanges(
       page_size: 101,
     }),
     readPersonalSettlementPayments(service, userId, tripId),
+    readPersonalPaymentFxProjections(service, userId, tripId),
   ]);
   if (result.error) throw new Error("Supabase Dev Personal Payment changes failed.");
   const allRows = (result.data ?? []) as Record<string, unknown>[];
   const hasMore = allRows.length > 100;
   const rows = allRows.slice(0, 100);
   const byId = new Map(payments.map((payment) => [payment.id, payment]));
+  const projectionById = new Map(
+    projections.map((projection) => [projection.id, projection]),
+  );
   return {
     changes: rows
-      .filter((row) => row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT")
+      .filter((row) =>
+        [
+          "PERSONAL_SETTLEMENT_PAYMENT",
+          "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
+        ].includes(String(row.entity_type)),
+      )
       .map((row) => ({
-        entityType: "PERSONAL_SETTLEMENT_PAYMENT" as const,
+        entityType: row.entity_type as
+          | "PERSONAL_SETTLEMENT_PAYMENT"
+          | "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
         entityId: String(row.entity_id),
         revision: Number(row.revision),
         isTombstone: Boolean(row.is_tombstone),
-        aggregate: byId.get(String(row.entity_id)) ?? null,
+        aggregate:
+          (row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT"
+            ? byId.get(String(row.entity_id))
+            : projectionById.get(String(row.entity_id))) ?? null,
       })),
     cursor: rows.length
       ? encodeLedgerCursor(Number(rows[rows.length - 1].sequence), tripId, userId)
@@ -4115,6 +4210,13 @@ async function mutatePersonalSettlementPayment(
   const payment = { ...submitted } as Record<string, unknown>;
   delete payment.id;
   delete payment.baseRevision;
+  delete payment.recordedEquivalentMinor;
+  delete payment.recordedEquivalentCurrency;
+  delete payment.recordedEquivalentScale;
+  delete payment.referenceRateDecimal;
+  delete payment.referenceRateDate;
+  delete payment.referenceSource;
+  delete payment.referenceProvenance;
   const result = await service.rpc("ledger_mutate_personal_settlement_payment_1a", {
     actor_user: userId,
     target_journey: tripId,
@@ -4133,6 +4235,20 @@ async function mutatePersonalSettlementPayment(
     record: Record<string, unknown>;
     idempotentReplay: boolean;
   };
+  const invalidated = await service.rpc(
+    "ledger_invalidate_personal_payment_fx_projections_1c",
+    { target_payment: paymentId },
+  );
+  if (invalidated.error)
+    throw new Error("Supabase Dev Personal Payment FX invalidation failed.");
+  if (command !== "DELETE") {
+    const ensured = await service.rpc("ledger_ensure_personal_payment_fx_projection_1c", {
+      target_payment: paymentId,
+      requested_target_currency: null,
+    });
+    if (ensured.error)
+      throw new Error("Supabase Dev Personal Payment FX projection failed.");
+  }
   // Payment is committed already; Review is a repairable projection.
   try {
     await service.rpc("ledger_resolve_human_review_findings_3a", {
@@ -4143,6 +4259,9 @@ async function mutatePersonalSettlementPayment(
   }
   return {
     record: personalPaymentRowToDto(response.record),
+    projections: (await readPersonalPaymentFxProjections(service, userId, tripId)).filter(
+      (projection) => projection.paymentId === paymentId,
+    ),
     idempotentReplay: Boolean(response.idempotentReplay),
   };
 }
@@ -4712,6 +4831,7 @@ async function readLedgerBootstrap(
     rateQuotes,
     receipts,
     personalPayments,
+    personalPaymentFxProjections,
   ] = await Promise.all([
     service
       .from("trips")
@@ -4753,6 +4873,10 @@ async function readLedgerBootstrap(
       actor_user: userId,
       target_journey: tripId,
     }),
+    service.rpc("ledger_list_personal_payment_fx_projections_1c", {
+      actor_user: userId,
+      target_journey: tripId,
+    }),
   ]);
 
   if (
@@ -4764,7 +4888,8 @@ async function readLedgerBootstrap(
     expenses.error ||
     corrections.error ||
     receipts.error ||
-    personalPayments.error
+    personalPayments.error ||
+    personalPaymentFxProjections.error
   ) {
     throw new Error("Supabase Dev Ledger bootstrap failed.");
   }
@@ -4851,6 +4976,9 @@ async function readLedgerBootstrap(
     receipts: readableReceipts.map(receiptRowToDto),
     settlements: finalizedSettlements,
     personalPayments: personalPaymentDtos,
+    personalPaymentFxProjections: (
+      (personalPaymentFxProjections.data ?? []) as Record<string, unknown>[]
+    ).map(personalPaymentFxProjectionRowToDto),
     reviewFindings: review.findings,
     reviewActions: review.actions,
     actor: {
@@ -4902,7 +5030,9 @@ async function readLedgerChanges(
   const hasMore = allRows.length > 100;
   const rows = allRows.slice(0, 100);
   const personalPayments = rows.some(
-    (row) => row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT",
+    (row) =>
+      row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT" ||
+      row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
   )
     ? await service.rpc("ledger_list_personal_settlement_payments_1a", {
         actor_user: userId,
@@ -4912,6 +5042,22 @@ async function readLedgerChanges(
   if (personalPayments.error) {
     throw new Error("Supabase Dev Personal Payment change projection failed.");
   }
+  const personalPaymentFxProjections = rows.some(
+    (row) => row.entity_type === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
+  )
+    ? await service.rpc("ledger_list_personal_payment_fx_projections_1c", {
+        actor_user: userId,
+        target_journey: tripId,
+      })
+    : { data: [], error: null };
+  if (personalPaymentFxProjections.error)
+    throw new Error("Supabase Dev Personal Payment FX change projection failed.");
+  const personalPaymentFxDtos = (
+    (personalPaymentFxProjections.data ?? []) as Record<string, unknown>[]
+  ).map(personalPaymentFxProjectionRowToDto);
+  const readablePersonalPaymentFxIds = new Set(
+    personalPaymentFxDtos.map((projection) => projection.id),
+  );
   const personalPaymentDtos = (
     (personalPayments.data ?? []) as Record<string, unknown>[]
   ).map(personalPaymentRowToDto);
@@ -4930,8 +5076,10 @@ async function readLedgerChanges(
       return false;
     }
     return (
-      row.entity_type !== "PERSONAL_SETTLEMENT_PAYMENT" ||
-      readablePersonalPaymentIds.has(String(row.entity_id))
+      (row.entity_type !== "PERSONAL_SETTLEMENT_PAYMENT" ||
+        readablePersonalPaymentIds.has(String(row.entity_id))) &&
+      (row.entity_type !== "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION" ||
+        readablePersonalPaymentFxIds.has(String(row.entity_id)))
     );
   });
   const expenseIds = rows
@@ -5086,6 +5234,8 @@ async function readLedgerChanges(
     byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
   for (const settlement of settlements) byId.set(settlement.id, settlement);
   for (const payment of personalPaymentDtos) byId.set(payment.id, payment);
+  for (const projection of personalPaymentFxDtos)
+    byId.set(projection.id, projection);
 
   const changes = visibleRows.map((row) => ({
     entityType: row.entity_type as LedgerChangesResponse["changes"][number]["entityType"],

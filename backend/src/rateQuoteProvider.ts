@@ -73,7 +73,7 @@ export async function fetchTrustedRateQuote(
       "NO_REFERENCE_WITHIN_POLICY",
       "Provider reference date is outside the seven-day policy.",
     );
-  if (input.economicDate === today && days > 0)
+  if (input.economicDate === today && days > 0 && !isWeekend(today))
     throw new RateProviderError(
       "NOT_YET_AVAILABLE",
       "The requested day's rate has not been published.",
@@ -81,6 +81,11 @@ export async function fetchTrustedRateQuote(
   if (!quote.provider.trim() || !quote.providerReference || !quote.sourceReference)
     throw new Error("Rate quote provenance is missing or mismatched.");
   return quote;
+}
+
+function isWeekend(date: string) {
+  const day = new Date(`${date}T00:00:00Z`).getUTCDay();
+  return day === 0 || day === 6;
 }
 
 function validDate(value: string): boolean {

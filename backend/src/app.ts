@@ -62,6 +62,7 @@ import {
   type CorrectSettlementPaymentRequest,
   type DeletePersonalSettlementPaymentRequest,
   type PersonalSettlementPaymentDto,
+  type PersonalSettlementPaymentFxProjectionDto,
   type PersonalSettlementPaymentMutationResponse,
   type PersonalSettlementReviewResponse,
   type RecordSettlementPaymentRequest,
@@ -283,6 +284,10 @@ export type DevBackendGateway = {
     userId: string,
     tripId: string,
   ): Promise<PersonalSettlementPaymentDto[]>;
+  readPersonalPaymentFxProjections?(
+    userId: string,
+    tripId: string,
+  ): Promise<PersonalSettlementPaymentFxProjectionDto[]>;
   pullPersonalSettlementPaymentChanges(
     userId: string,
     tripId: string,
@@ -1245,7 +1250,10 @@ async function readPersonalSettlementPayment(
     );
   }
 
-  const payments = await gateway.readPersonalSettlementPayments(user.id, tripId);
+  const [payments, projections] = await Promise.all([
+    gateway.readPersonalSettlementPayments(user.id, tripId),
+    gateway.readPersonalPaymentFxProjections?.(user.id, tripId) ?? Promise.resolve([]),
+  ]);
   if (resource) {
     if (!uuidPattern.test(resource)) {
       throw new HttpError(
@@ -1258,7 +1266,10 @@ async function readPersonalSettlementPayment(
     if (!record) {
       throw new HttpError(404, "ENTITY_NOT_FOUND", "The Personal Payment was not found.");
     }
-    return json(200, { record });
+    return json(200, {
+      record,
+      projections: projections.filter((projection) => projection.paymentId === resource),
+    });
   }
 
   const counterpartyMemberId = url.searchParams.get("counterpartyMemberId");
@@ -1269,12 +1280,17 @@ async function readPersonalSettlementPayment(
   if (deleted && !["true", "false"].includes(deleted)) {
     throw new HttpError(400, "INVALID_FILTER", "The deleted filter is invalid.");
   }
-  return json(200, {
-    payments: payments.filter(
+  const filteredPayments = payments.filter(
       (payment) =>
         (!counterpartyMemberId ||
           payment.counterpartyMemberId === counterpartyMemberId) &&
         (deleted === "true" || payment.deletedAt === null),
+    );
+  const filteredPaymentIds = new Set(filteredPayments.map((payment) => payment.id));
+  return json(200, {
+    payments: filteredPayments,
+    projections: projections.filter((projection) =>
+      filteredPaymentIds.has(projection.paymentId),
     ),
     serverTime: new Date().toISOString(),
   });
