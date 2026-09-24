@@ -67,7 +67,8 @@ export default function LedgerLayout() {
       <Stack.Screen name="search" options={{ headerTitle: "Search Expenses" }} />
       <Stack.Screen name="stage2" options={{ headerTitle: "Developer Diagnostics" }} />
       <Stack.Screen name="all-journeys" options={{ headerTitle: "My Ledger" }} />
-      <Stack.Screen name="settings" options={{ headerTitle: "Settings" }} />
+      <Stack.Screen name="settings" options={{ headerTitle: "Currency" }} />
+      <Stack.Screen name="currency" options={{ headerTitle: "Currency" }} />
       <Stack.Screen name="exchange-rates" options={{ headerTitle: "Exchange Rates" }} />
       <Stack.Screen name="review" options={{ headerTitle: "Review" }} />
       <Stack.Screen name="review/[id]" options={{ headerTitle: "Finding" }} />

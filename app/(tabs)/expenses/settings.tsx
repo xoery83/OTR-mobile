@@ -6,10 +6,11 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import { useNetworkState } from "expo-network";
 
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
@@ -17,11 +18,14 @@ import { ledgerCurrencyRepository } from "@/data/repositories/ledgerCurrencyRepo
 import type { JourneyCurrencyPreview } from "@/data/repositories/ledgerCurrencyRepository";
 import { createLocalId } from "@/domain/localId";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
+import { currencyName } from "@/features/ledger/currencyPickerData";
 
 type JourneySetting = { journeyId: string; settlementCurrency: string; title: string };
 
-export default function LedgerSettingsRoute() {
-  const [debugMode, setDebugMode] = useState(false);
+export default function CurrencyRoute() {
+  const params = useLocalSearchParams<{ journeyId?: string }>();
+  const network = useNetworkState();
+  const online = network.isConnected !== false && network.isInternetReachable !== false;
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [journey, setJourney] = useState<JourneySetting | null>(null);
@@ -37,13 +41,13 @@ export default function LedgerSettingsRoute() {
   useEffect(() => {
     void getDefaultLedgerReportingRepository()
       .then(async (repository) => {
-        const [preferences, selectedId, journeys] = await Promise.all([
-          repository.getPreferences(),
+        const [selectedId, journeys] = await Promise.all([
           repository.getSelectedJourneyId(),
           repository.listJourneys(),
         ]);
-        setDebugMode(preferences.debugMode);
-        const selected = journeys.find((item) => item.journeyId === selectedId) ?? null;
+        const activeJourneyId = params.journeyId ?? selectedId;
+        const selected =
+          journeys.find((item) => item.journeyId === activeJourneyId) ?? null;
         if (selected) {
           setJourney(selected);
           const [actor, settlement] = await Promise.all([
@@ -54,27 +58,15 @@ export default function LedgerSettingsRoute() {
           setLocked(await settlement.hasFinalized(selected.journeyId));
         }
       })
-      .catch(() => setMessage("Settings could not be loaded."))
+      .catch(() => setMessage("Currency could not be loaded."))
       .finally(() => setLoading(false));
-  }, []);
-
-  const toggleDebugMode = async (enabled: boolean) => {
-    setDebugMode(enabled);
-    setMessage(null);
-    try {
-      const repository = await getDefaultLedgerReportingRepository();
-      await repository.setDebugMode(enabled);
-    } catch {
-      setDebugMode(!enabled);
-      setMessage("Debug Mode could not be saved.");
-    }
-  };
+  }, [params.journeyId]);
 
   const selectCurrency = async (currency: string) => {
     setPickerOpen(false);
     setPreview(null);
     setOperationId(null);
-    if (!journey || currency === journey.settlementCurrency) return;
+    if (!journey || !online || currency === journey.settlementCurrency) return;
     setWorking(true);
     setMessage(null);
     try {
@@ -154,25 +146,25 @@ export default function LedgerSettingsRoute() {
     <>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.sectionTitle}>
-          Ledger
+          Journey Currency
         </Text>
         <View style={styles.group}>
           {journey ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityState={{ disabled: locked || !canChange || working }}
-              disabled={locked || !canChange || working}
+              accessibilityState={{
+                disabled: locked || !canChange || !online || working,
+              }}
+              disabled={locked || !canChange || !online || working}
               onPress={() => setPickerOpen(true)}
               style={styles.row}
             >
               <View style={styles.grow}>
-                <Text style={styles.label}>
-                  {chinese ? "旅行结算货币" : "Journey Currency"}
-                </Text>
+                <Text style={styles.label}>{journey.title}</Text>
                 <Text style={styles.detail}>
                   {chinese
                     ? "用于本次旅行的汇总、成员余额和结算。"
-                    : "Currency used for Journey totals, balances and settlement."}
+                    : "Used for totals, balances and settlement."}
                 </Text>
                 {locked ? (
                   <Text style={styles.detail}>
@@ -181,10 +173,40 @@ export default function LedgerSettingsRoute() {
                       : "Finalized settlement permanently locks this Journey Currency."}
                   </Text>
                 ) : null}
+                {!canChange && !locked ? (
+                  <Text style={styles.detail}>
+                    {chinese
+                      ? "只有旅行组织者可以更改此货币。"
+                      : "Only the Journey organizer can change this currency."}
+                  </Text>
+                ) : null}
+                {!online ? (
+                  <Text style={styles.detail}>
+                    {chinese
+                      ? "离线时仍可查看；重新连接后可更改。"
+                      : "Available offline. Reconnect to change it."}
+                  </Text>
+                ) : null}
               </View>
-              <Text style={styles.label}>{journey.settlementCurrency}</Text>
+              <View style={styles.currencyValue}>
+                <Text style={styles.currencyCode}>{journey.settlementCurrency}</Text>
+                <Text style={styles.currencyName}>
+                  {currencyName(journey.settlementCurrency, chinese ? "zh-Hans" : "en")}
+                </Text>
+              </View>
             </Pressable>
-          ) : null}
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.label}>
+                {chinese ? "未选择旅行" : "No Journey selected"}
+              </Text>
+              <Text style={styles.detail}>
+                {chinese
+                  ? "请先在 Ledger 中选择一个旅行。"
+                  : "Choose a Journey in Ledger to view its currency."}
+              </Text>
+            </View>
+          )}
         </View>
         {working ? <ActivityIndicator /> : null}
         {preview ? (
@@ -272,23 +294,6 @@ export default function LedgerSettingsRoute() {
             </Pressable>
           </View>
         ) : null}
-        <Text accessibilityRole="header" style={styles.sectionTitle}>
-          Developer
-        </Text>
-        <View style={styles.group}>
-          <View style={styles.row}>
-            <View style={styles.grow}>
-              <Text style={styles.label}>Debug Mode</Text>
-              <Text style={styles.detail}>Show diagnostic information on Ledger</Text>
-            </View>
-            <Switch
-              accessibilityLabel="Debug Mode"
-              onValueChange={(enabled) => void toggleDebugMode(enabled)}
-              trackColor={{ false: "#CBD5E1", true: "#86CFC4" }}
-              value={debugMode}
-            />
-          </View>
-        </View>
         {message ? <Text style={styles.error}>{message}</Text> : null}
       </ScrollView>
       <Modal
@@ -338,7 +343,10 @@ const styles = StyleSheet.create({
   grow: { flex: 1 },
   label: { color: "#111827", flex: 1, fontSize: 16, fontWeight: "600" },
   detail: { color: "#64748B", fontSize: 12, marginTop: 2 },
-  rowValue: { alignItems: "center", flexDirection: "row", gap: 6 },
+  currencyValue: { alignItems: "flex-end", maxWidth: "42%" },
+  currencyCode: { color: "#111827", fontSize: 16, fontWeight: "700" },
+  currencyName: { color: "#64748B", fontSize: 12, marginTop: 2, textAlign: "right" },
+  emptyState: { minHeight: 82, padding: 14 },
   error: { color: "#B91C1C", fontSize: 14, margin: 8 },
   preview: {
     backgroundColor: "#FFFFFF",
