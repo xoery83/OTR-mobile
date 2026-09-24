@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
@@ -66,98 +75,110 @@ export function SettlementAdjustmentScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.warning}>
-        <Text accessibilityRole="header" style={styles.title}>
-          This settlement has already been confirmed.
-        </Text>
-        <Text style={styles.body}>
-          You can make corrections, but the previous confirmed settlement will remain in
-          history. Any changes will create an updated settlement.
-        </Text>
-      </View>
-
-      {settlement.isOrganizer ? (
-        <>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            1. Choose a confirmed expense
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={styles.flex}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.warning}>
+          <Text accessibilityRole="header" style={styles.title}>
+            This settlement has already been confirmed.
           </Text>
-          <TextInput
-            accessibilityLabel="Search confirmed expenses"
-            onChangeText={setQuery}
-            placeholder="Search by expense or payer"
-            style={styles.search}
-            value={query}
-          />
-          {visibleInputs.map((input) => (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: selectedExpenseId === input.expenseId }}
-              key={input.expenseId}
-              onPress={() => setSelectedExpenseId(input.expenseId)}
-              style={[
-                styles.row,
-                selectedExpenseId === input.expenseId && styles.selectedRow,
-              ]}
-            >
-              <View style={styles.grow}>
-                <Text style={styles.rowTitle}>
-                  {titles[input.expenseId] ?? "Expense"}
-                </Text>
-                <Text style={styles.meta}>Paid by {input.payer.displayNameSnapshot}</Text>
-              </View>
-              <Text style={styles.version}>
-                {selectedExpenseId === input.expenseId ? "Selected" : "Choose"}
-              </Text>
-            </Pressable>
-          ))}
-          {!visibleInputs.length ? (
-            <Text style={styles.meta}>No confirmed expenses match this search.</Text>
-          ) : null}
+          <Text style={styles.body}>
+            You can make corrections, but the previous confirmed settlement will remain in
+            history. Any changes will create an updated settlement.
+          </Text>
+        </View>
 
-          {selected ? (
-            <>
-              <Text accessibilityRole="header" style={styles.sectionTitle}>
-                2. Add the correction reason
-              </Text>
-              <TextInput
-                accessibilityLabel="Reason for correction"
-                multiline
-                onChangeText={(value) => {
-                  setReason(value);
-                  if (value.trim()) setReasonError(false);
-                }}
-                placeholder="Why is this correction needed?"
-                ref={reasonRef}
-                style={styles.input}
-                value={reason}
-              />
-              {reasonError ? (
-                <Text accessibilityLiveRegion="polite" style={styles.error}>
-                  Add a reason before opening the correction editor.
-                </Text>
-              ) : null}
-
-              <Text accessibilityRole="header" style={styles.sectionTitle}>
-                3. Open and correct
-              </Text>
+        {settlement.isOrganizer ? (
+          <>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              1. Choose a confirmed expense
+            </Text>
+            <TextInput
+              accessibilityLabel="Search confirmed expenses"
+              onChangeText={setQuery}
+              placeholder="Search by expense or payer"
+              style={styles.search}
+              value={query}
+            />
+            {visibleInputs.map((input) => (
               <Pressable
                 accessibilityRole="button"
-                onPress={openCorrection}
-                style={styles.primary}
+                accessibilityState={{ selected: selectedExpenseId === input.expenseId }}
+                key={input.expenseId}
+                onPress={() => setSelectedExpenseId(input.expenseId)}
+                style={[
+                  styles.row,
+                  selectedExpenseId === input.expenseId && styles.selectedRow,
+                ]}
               >
-                <Text style={styles.primaryText}>Open expense to correct</Text>
+                <View style={styles.grow}>
+                  <Text style={styles.rowTitle}>
+                    {titles[input.expenseId] ?? "Expense"}
+                  </Text>
+                  <Text style={styles.meta}>
+                    Paid by {input.payer.displayNameSnapshot}
+                  </Text>
+                </View>
+                <Text style={styles.version}>
+                  {selectedExpenseId === input.expenseId ? "Selected" : "Choose"}
+                </Text>
               </Pressable>
-              <Text style={styles.meta}>
-                The original confirmed version stays unchanged. If another member has the
-                correct details, ask them to send those details to the organizer, who
-                records the protected successor here.
-              </Text>
-            </>
-          ) : null}
-        </>
-      ) : null}
-    </ScrollView>
+            ))}
+            {!visibleInputs.length ? (
+              <Text style={styles.meta}>No confirmed expenses match this search.</Text>
+            ) : null}
+
+            {selected ? (
+              <>
+                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                  2. Add the correction reason
+                </Text>
+                <TextInput
+                  accessibilityLabel="Reason for correction"
+                  multiline
+                  onChangeText={(value) => {
+                    setReason(value);
+                    if (value.trim()) setReasonError(false);
+                  }}
+                  placeholder="Why is this correction needed?"
+                  ref={reasonRef}
+                  style={styles.input}
+                  value={reason}
+                />
+                {reasonError ? (
+                  <Text accessibilityLiveRegion="polite" style={styles.error}>
+                    Add a reason before opening the correction editor.
+                  </Text>
+                ) : null}
+
+                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                  3. Open and correct
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={openCorrection}
+                  style={styles.primary}
+                >
+                  <Text style={styles.primaryText}>Open expense to correct</Text>
+                </Pressable>
+                <Text style={styles.meta}>
+                  The original confirmed version stays unchanged. If another member has
+                  the correct details, ask them to send those details to the organizer,
+                  who records the protected successor here.
+                </Text>
+              </>
+            ) : null}
+          </>
+        ) : null}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -166,6 +187,7 @@ const styles = StyleSheet.create({
   content: { gap: 12, padding: 16, paddingBottom: 40 },
   empty: { color: "#64748B", padding: 20 },
   error: { color: "#B91C1C", fontSize: 14, fontWeight: "700" },
+  flex: { flex: 1 },
   grow: { flex: 1, gap: 3 },
   input: {
     backgroundColor: "#FFFFFF",
