@@ -3,6 +3,7 @@ import type * as SQLite from "expo-sqlite";
 import { ApiClientError } from "@/data/api/client";
 import { NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT } from "@/data/sync/syncEngine";
 import { createLocalId } from "@/domain/localId";
+import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 
 import {
   planDataHealthRepairs,
@@ -10,6 +11,14 @@ import {
   type DataHealthRepairActionId,
   type DataHealthRepairPlan,
 } from "./dataHealthRepairPolicy";
+import {
+  HISTORICAL_EXPENSE_RECOVERY_ACTION,
+  HISTORICAL_EXPENSE_RECOVERY_RULE,
+  inspectHistoricalExpenseRecovery,
+  ledgerExpenseUserIntent,
+  ledgerExpenseToUpdateRequest,
+  type HistoricalExpenseOperation,
+} from "./historicalExpenseRecovery";
 
 export type DataHealthCategory =
   | "HEALTHY"
@@ -261,6 +270,8 @@ type AutomaticCandidate = {
   nextAttemptAt: string | null;
   leaseExpiresAt: string | null;
   dependencyStatus: string | null;
+  operationType: string | null;
+  errorMessage: string | null;
   updatedAt: string;
 };
 
@@ -271,6 +282,8 @@ export type DataHealthDependencies = {
   fileExists(uri: string): Promise<boolean | null>;
   runOperationalSync?(): Promise<void>;
   refreshJourneyLedger?(journeyId: string): Promise<boolean>;
+  revalidateJourneyLedger?(journeyId: string): Promise<void>;
+  getExpense?(id: string): Promise<LedgerExpense | null>;
   now?(): Date;
 };
 
@@ -292,6 +305,14 @@ const CHEAP_SCAN_INTERVAL_MS = 15 * 60_000;
 const DEEP_SCAN_INTERVAL_MS = 24 * 60 * 60_000;
 
 export const dataHealthRules: readonly DataHealthRuleDefinition[] = [
+  {
+    id: HISTORICAL_EXPENSE_RECOVERY_RULE,
+    detection: "Proven attempted historical Expense CREATE causal chain",
+    protectedState: "Original CREATE request and current local Expense aggregate",
+    futureDisposition: "Replay the original CREATE, then one current compacted UPDATE",
+    verification: "Normal push and pull prove one current canonical Expense",
+    possibleEscalation: "Structured business rejection or identity conflict",
+  },
   {
     id: "DH_SYNC_OPERATION_STATE_V1",
     detection: "Active-account non-completed operation classification",
@@ -412,6 +433,9 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
 
       await assertScope(dependencies, accountId, generation);
       const findings = await detectFindings(manifest!, dependencies.fileExists);
+      findings.push(
+        ...(await detectHistoricalExpenseRecoveries(dependencies, manifest!)),
+      );
       await assertScope(dependencies, accountId, generation);
 
       const sorted = findings.sort(compareFinding);
@@ -492,6 +516,12 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
     ): Promise<DataHealthReport> {
       let report = await coordinator.run(trigger, options);
       try {
+        await resumeHistoricalExpenseRecoveries(
+          dependencies,
+          report.accountId,
+          report.generation,
+          now,
+        );
         await verifyAppliedRepairEvents(
           dependencies,
           report.accountId,
@@ -574,6 +604,7 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
 
       let syncAttempted = false;
       let refreshedJourneyCount = 0;
+      const refreshedJourneyIds = new Set<string>();
       let expectedNetworkFailure = false;
       let protectedScope = false;
       try {
@@ -603,8 +634,10 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
             continue;
           }
           try {
-            if (await dependencies.refreshJourneyLedger(journeyId))
+            if (await dependencies.refreshJourneyLedger(journeyId)) {
               refreshedJourneyCount += 1;
+              refreshedJourneyIds.add(journeyId);
+            }
             await assertScope(dependencies, accountId, generation);
           } catch (error) {
             if (!(error instanceof ApiClientError)) throw error;
@@ -612,6 +645,32 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
             break;
           }
         }
+        if (dependencies.revalidateJourneyLedger) {
+          const pendingVerificationJourneys =
+            await historicalRecoveryJourneysAwaitingVerification(
+              dependencies.database,
+              accountId,
+            );
+          for (const journeyId of pendingVerificationJourneys) {
+            if (!scopes.has(journeyId) || !networkAllowed(report, journeyId)) continue;
+            try {
+              await dependencies.revalidateJourneyLedger(journeyId);
+              refreshedJourneyIds.add(journeyId);
+              await assertScope(dependencies, accountId, generation);
+            } catch (error) {
+              if (!(error instanceof ApiClientError)) throw error;
+              expectedNetworkFailure = true;
+              break;
+            }
+          }
+        }
+        await resumeHistoricalExpenseRecoveries(
+          dependencies,
+          accountId,
+          generation,
+          now,
+          refreshedJourneyIds,
+        );
         report = await coordinator.run(trigger, options);
       } catch (error) {
         if (!(error instanceof DataHealthScopeChangedError)) throw error;
@@ -792,6 +851,23 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
   return coordinator;
 }
 
+async function historicalRecoveryJourneysAwaitingVerification(
+  database: Database,
+  accountId: string,
+) {
+  const rows = await database.getAllAsync<{ journeyId: string }>(
+    `SELECT DISTINCT event.journey_id AS journeyId
+     FROM data_health_repair_events event
+     JOIN sync_operations operation
+       ON operation.id = event.target_id AND operation.owner_user_id = event.account_id
+     WHERE event.account_id = ? AND event.status = 'APPLIED' AND event.action = ?
+       AND event.journey_id IS NOT NULL AND operation.status = 'COMPLETED'`,
+    accountId,
+    HISTORICAL_EXPENSE_RECOVERY_ACTION,
+  );
+  return rows.map((row) => row.journeyId);
+}
+
 async function countRecordedRepairs(database: Database, plans: DataHealthRepairPlan[]) {
   let count = 0;
   for (const plan of plans) {
@@ -873,7 +949,7 @@ async function applyRepairPlan(
   await dependencies.database.withTransactionAsync(async () => {
     await assertScope(dependencies, plan.accountId, plan.generation);
     const repairTime = now();
-    const current = await currentOperationPlan(dependencies.database, plan, repairTime);
+    const current = await currentOperationPlan(dependencies, plan, repairTime);
     if (!current || !sameRepairPlan(current, plan)) return;
 
     const table =
@@ -885,7 +961,30 @@ async function applyRepairPlan(
     if (!table) return;
     const timestamp = repairTime.toISOString();
     let result: Awaited<ReturnType<Database["runAsync"]>>;
-    if (plan.actionId === "RECOVER_EXPIRED_OPERATION_LEASE_V1") {
+    if (plan.actionId === HISTORICAL_EXPENSE_RECOVERY_ACTION) {
+      result = await dependencies.database.runAsync(
+        `UPDATE sync_operations SET status = 'RETRYABLE', next_attempt_at = NULL,
+           failure_category = 'UNKNOWN',
+           last_error_code = COALESCE(last_error_code, 'SYNC_FAILED'),
+           claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
+         WHERE id = ? AND owner_user_id = ? AND status = 'FAILED'
+           AND entity_type = 'ledger_expense'
+           AND operation_type = 'LEDGER_CREATE_EXPENSE'`,
+        timestamp,
+        plan.targetId,
+        plan.accountId,
+      );
+      if (result.changes === 1)
+        await dependencies.database.runAsync(
+          `UPDATE ledger_expenses SET sync_status = 'PENDING_CREATE', updated_at = ?
+           WHERE id = (SELECT entity_id FROM sync_operations WHERE id = ?)
+             AND local_owner_user_id = ? AND server_id IS NULL
+             AND server_revision = 0 AND sync_status = 'FAILED'`,
+          timestamp,
+          plan.targetId,
+          plan.accountId,
+        );
+    } else if (plan.actionId === "RECOVER_EXPIRED_OPERATION_LEASE_V1") {
       result = await dependencies.database.runAsync(
         `UPDATE ${table} SET status = 'RETRYABLE', next_attempt_at = ?,
            last_error_message = 'INTERRUPTED', claim_owner = NULL,
@@ -950,10 +1049,27 @@ async function applyRepairPlan(
 }
 
 async function currentOperationPlan(
-  database: Database,
+  dependencies: DataHealthDependencies,
   expected: DataHealthRepairPlan,
   now: Date,
 ) {
+  if (expected.actionId === HISTORICAL_EXPENSE_RECOVERY_ACTION) {
+    const finding = await historicalExpenseRecoveryFinding(
+      dependencies,
+      expected.accountId,
+      expected.targetId,
+      true,
+    );
+    if (!finding) return null;
+    return planDataHealthRepairs({
+      accountId: expected.accountId,
+      generation: expected.generation,
+      findings: [finding],
+      operationEvidence: [],
+      now,
+    })[0];
+  }
+  const database = dependencies.database;
   const targetType =
     expected.targetType === "sync_operation"
       ? "sync_operation"
@@ -1084,6 +1200,177 @@ function sameRepairPlan(left: DataHealthRepairPlan, right: DataHealthRepairPlan)
   );
 }
 
+async function resumeHistoricalExpenseRecoveries(
+  dependencies: DataHealthDependencies,
+  accountId: string,
+  generation: number,
+  now: () => Date,
+  refreshedJourneyIds = new Set<string>(),
+) {
+  if (!dependencies.getExpense) return;
+  await assertScope(dependencies, accountId, generation);
+  const events = await dependencies.database.getAllAsync<{
+    id: string;
+    targetId: string;
+    inputDigest: string;
+  }>(
+    `SELECT id, target_id AS targetId, input_digest AS inputDigest
+     FROM data_health_repair_events WHERE account_id = ? AND status = 'APPLIED'
+       AND action = ? ORDER BY created_at, id`,
+    accountId,
+    HISTORICAL_EXPENSE_RECOVERY_ACTION,
+  );
+  for (const event of events) {
+    await assertScope(dependencies, accountId, generation);
+    const create = await dependencies.database.getFirstAsync<{
+      entityId: string;
+      journeyId: string | null;
+      status: string;
+      failureCategory: string | null;
+    }>(
+      `SELECT entity_id AS entityId, trip_id AS journeyId, status,
+         failure_category AS failureCategory
+       FROM sync_operations WHERE id = ? AND owner_user_id = ?`,
+      event.targetId,
+      accountId,
+    );
+    if (!create) continue;
+    if (
+      create.status === "CONFLICT" ||
+      (create.status === "FAILED" &&
+        ["VALIDATION", "PERMISSION", "CONFLICT"].includes(create.failureCategory ?? ""))
+    ) {
+      await markHistoricalRecoveryAttention(
+        dependencies.database,
+        accountId,
+        event.id,
+        "HISTORICAL_CREATE_REJECTED",
+        now(),
+      );
+      continue;
+    }
+    if (create.status !== "COMPLETED") continue;
+
+    const candidates = await dependencies.database.getAllAsync<{
+      id: string;
+      status: string;
+      payloadJson: string;
+      failureCategory: string | null;
+    }>(
+      `SELECT id, status, payload_json AS payloadJson,
+         failure_category AS failureCategory
+       FROM sync_operations WHERE owner_user_id = ?
+         AND entity_type = 'ledger_expense' AND entity_id = ?
+         AND operation_type = 'LEDGER_UPDATE_EXPENSE' ORDER BY created_at, rowid`,
+      accountId,
+      create.entityId,
+    );
+    const recovery = candidates.find((candidate) => {
+      try {
+        return JSON.parse(candidate.payloadJson).historicalRecovery?.eventId === event.id;
+      } catch {
+        return false;
+      }
+    });
+    if (!recovery) continue;
+    if (
+      recovery.status === "CONFLICT" ||
+      (recovery.status === "FAILED" &&
+        ["VALIDATION", "PERMISSION", "CONFLICT"].includes(recovery.failureCategory ?? ""))
+    ) {
+      await markHistoricalRecoveryAttention(
+        dependencies.database,
+        accountId,
+        event.id,
+        "HISTORICAL_UPDATE_REJECTED",
+        now(),
+      );
+      continue;
+    }
+    if (recovery.status !== "COMPLETED") continue;
+
+    const expense = await dependencies.getExpense(create.entityId);
+    const canonicalPull =
+      refreshedJourneyIds.has(create.journeyId ?? "") ||
+      Boolean(
+        await dependencies.database.getFirstAsync(
+          `SELECT 1 FROM ledger_expense_audit_events
+       WHERE expense_id = ? AND server_id IS NOT NULL LIMIT 1`,
+          create.entityId,
+        ),
+      );
+    if (!expense?.serverId || expense.syncStatus !== "SYNCED" || !canonicalPull) continue;
+    let payload: {
+      expense?: unknown;
+      historicalRecovery?: {
+        evidenceDigest?: unknown;
+        supersededOperationIds?: unknown;
+      };
+    };
+    try {
+      payload = JSON.parse(recovery.payloadJson);
+    } catch {
+      continue;
+    }
+    const ids = payload.historicalRecovery?.supersededOperationIds;
+    if (
+      payload.historicalRecovery?.evidenceDigest !== event.inputDigest ||
+      !Array.isArray(ids) ||
+      ids.some((id) => typeof id !== "string") ||
+      JSON.stringify(
+        ledgerExpenseUserIntent(payload.expense as Record<string, unknown>),
+      ) !== JSON.stringify(ledgerExpenseUserIntent(ledgerExpenseToUpdateRequest(expense)))
+    )
+      continue;
+
+    await dependencies.database.withTransactionAsync(async () => {
+      await assertScope(dependencies, accountId, generation);
+      const timestamp = now().toISOString();
+      for (const id of ids)
+        await dependencies.database.runAsync(
+          `UPDATE sync_operations SET status = 'COMPLETED', next_attempt_at = NULL,
+             claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
+           WHERE id = ? AND owner_user_id = ? AND entity_id = ?
+             AND operation_type = 'LEDGER_UPDATE_EXPENSE' AND status = 'FAILED'`,
+          timestamp,
+          id,
+          accountId,
+          create.entityId,
+        );
+      await dependencies.database.runAsync(
+        `UPDATE data_health_repair_events SET status = 'VERIFIED',
+           affected_count = ?, safe_error_code = 'HISTORICAL_CHAIN_CONVERGED',
+           verified_at = ?, updated_at = ?
+         WHERE id = ? AND account_id = ? AND status = 'APPLIED'`,
+        ids.length + 2,
+        timestamp,
+        timestamp,
+        event.id,
+        accountId,
+      );
+      await assertScope(dependencies, accountId, generation);
+    });
+  }
+}
+
+async function markHistoricalRecoveryAttention(
+  database: Database,
+  accountId: string,
+  eventId: string,
+  safeCode: string,
+  timestamp: Date,
+) {
+  await database.runAsync(
+    `UPDATE data_health_repair_events SET status = 'NEEDS_ATTENTION',
+       safe_error_code = ?, updated_at = ?
+     WHERE id = ? AND account_id = ? AND status = 'APPLIED'`,
+    safeCode,
+    timestamp.toISOString(),
+    eventId,
+    accountId,
+  );
+}
+
 async function verifyAppliedRepairEvents(
   dependencies: DataHealthDependencies,
   accountId: string,
@@ -1205,7 +1492,8 @@ async function readAutomaticCandidates(database: Database, accountId: string) {
        operation.failure_category AS failureCategory,
        operation.next_attempt_at AS nextAttemptAt,
        operation.lease_expires_at AS leaseExpiresAt,
-       dependency.status AS dependencyStatus, operation.updated_at AS updatedAt
+       dependency.status AS dependencyStatus, operation.operation_type AS operationType,
+       operation.last_error_message AS errorMessage, operation.updated_at AS updatedAt
      FROM sync_operations operation
      LEFT JOIN sync_operations dependency
        ON dependency.id = operation.dependency_operation_id
@@ -1215,7 +1503,8 @@ async function readAutomaticCandidates(database: Database, accountId: string) {
      SELECT 'ASSET', operation.journey_id, operation.status,
        operation.attempt_count, operation.failure_category,
        operation.next_attempt_at, operation.lease_expires_at,
-       dependency.status, operation.updated_at
+       dependency.status, operation.operation_type, operation.last_error_message,
+       operation.updated_at
      FROM ledger_asset_operations operation
      LEFT JOIN ledger_asset_operations dependency
        ON dependency.id = operation.dependency_operation_id
@@ -1223,27 +1512,29 @@ async function readAutomaticCandidates(database: Database, accountId: string) {
      WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'
      UNION ALL
      SELECT 'LOCAL_INTENT', journey_id, sync_status, 0, NULL, NULL, NULL,
-       NULL, updated_at FROM ledger_expenses
+       NULL, NULL, NULL, updated_at FROM ledger_expenses
      WHERE local_owner_user_id = ? AND sync_status <> 'SYNCED'
      UNION ALL
      SELECT 'LOCAL_INTENT', journey_id, sync_status, 0, NULL, NULL, NULL,
-       NULL, updated_at FROM ledger_personal_payment_records
+       NULL, NULL, NULL, updated_at FROM ledger_personal_payment_records
      WHERE projection_user_id = ? AND sync_status <> 'SYNCED'
      UNION ALL
      SELECT 'LOCAL_INTENT', journey_id, upload_status, 0, NULL, NULL, NULL,
-       NULL, updated_at FROM ledger_receipt_assets
+       NULL, NULL, NULL, updated_at FROM ledger_receipt_assets
      WHERE local_owner_user_id = ? AND upload_status <> 'UPLOADED'
      UNION ALL
      SELECT 'DEFERRED', change.journey_id, NULL, 0, NULL, NULL, NULL, NULL,
-       change.created_at
+       NULL, NULL, change.created_at
      FROM ledger_deferred_server_changes change
      JOIN ledger_actor_context actor ON actor.journey_id = change.journey_id
      WHERE actor.user_id = ?
      UNION ALL
-     SELECT 'CURSOR', journey_id, NULL, 0, NULL, NULL, NULL, NULL, updated_at
+     SELECT 'CURSOR', journey_id, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL,
+       updated_at
      FROM ledger_sync_cursors WHERE user_id = ? AND trim(cursor) = ''
      UNION ALL
-     SELECT 'CURSOR', journey_id, NULL, 0, NULL, NULL, NULL, NULL, updated_at
+     SELECT 'CURSOR', journey_id, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL,
+       updated_at
      FROM ledger_personal_payment_sync_cursors
      WHERE user_id = ? AND trim(cursor) = ''`,
     accountId,
@@ -1288,6 +1579,12 @@ function automaticCandidateCanConverge(
     return Boolean(candidate.leaseExpiresAt && candidate.leaseExpiresAt <= timestamp);
   if (candidate.status === "DEPENDENCY_BLOCKED")
     return candidate.dependencyStatus === "COMPLETED";
+  if (candidate.status === "FAILED")
+    return (
+      candidate.operationType === "LEDGER_CREATE_EXPENSE" &&
+      [null, "UNKNOWN"].includes(candidate.failureCategory) &&
+      candidate.errorMessage === "SYNC_FAILED"
+    );
   if (candidate.status !== "RETRYABLE") return false;
   if (!candidate.nextAttemptAt || candidate.nextAttemptAt <= timestamp) return true;
   return trigger === "DEEP" && candidate.attemptCount > NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT;
@@ -1780,6 +2077,119 @@ async function detectFindings(
       );
 
   return uniqueFindings(findings);
+}
+
+async function detectHistoricalExpenseRecoveries(
+  dependencies: DataHealthDependencies,
+  manifest: Manifest,
+) {
+  if (!dependencies.getExpense) return [];
+  const findings: DataHealthFinding[] = [];
+  for (const expense of manifest.expenses) {
+    if (
+      expense.localOwnerUserId !== manifest.accountId ||
+      expense.serverId !== null ||
+      expense.serverRevision !== 0
+    )
+      continue;
+    const create = manifest.operations.find(
+      (operation) =>
+        operation.entityType === "ledger_expense" &&
+        operation.entityId === expense.id &&
+        operation.operationType === "LEDGER_CREATE_EXPENSE" &&
+        operation.status === "FAILED",
+    );
+    if (!create) continue;
+    const candidate = await historicalExpenseRecoveryFinding(
+      dependencies,
+      manifest.accountId,
+      create.id,
+      true,
+    );
+    if (candidate) findings.push(candidate);
+  }
+  return findings;
+}
+
+async function historicalExpenseRecoveryFinding(
+  dependencies: DataHealthDependencies,
+  accountId: string,
+  createOperationId: string,
+  requireFailedCreate: boolean,
+): Promise<DataHealthFinding | null> {
+  if (!dependencies.getExpense) return null;
+  const root = await dependencies.database.getFirstAsync<{
+    entityId: string;
+    journeyId: string | null;
+  }>(
+    `SELECT entity_id AS entityId, trip_id AS journeyId FROM sync_operations
+     WHERE id = ? AND owner_user_id = ? AND entity_type = 'ledger_expense'
+       AND operation_type = 'LEDGER_CREATE_EXPENSE'`,
+    createOperationId,
+    accountId,
+  );
+  if (!root?.journeyId) return null;
+  const serverEvidence = await dependencies.database.getFirstAsync(
+    `SELECT 1 FROM ledger_expense_audit_events
+       WHERE expense_id = ? AND server_id IS NOT NULL
+     UNION ALL
+     SELECT 1 FROM ledger_deferred_server_changes
+       WHERE journey_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
+     LIMIT 1`,
+    root.entityId,
+    root.journeyId,
+    root.entityId,
+  );
+  if (serverEvidence) return null;
+  const authorized = Boolean(
+    await dependencies.database.getFirstAsync(
+      `SELECT 1 FROM ledger_actor_context WHERE user_id = ? AND journey_id = ?`,
+      accountId,
+      root.journeyId,
+    ),
+  );
+  const operations = await readHistoricalExpenseOperations(
+    dependencies.database,
+    accountId,
+    root.entityId,
+  );
+  const evidence = inspectHistoricalExpenseRecovery({
+    accountId,
+    journeyAuthorized: authorized,
+    expense: await dependencies.getExpense(root.entityId),
+    operations,
+    requireFailedCreate,
+  });
+  if (!evidence || evidence.createOperationId !== createOperationId) return null;
+  return {
+    ruleId: HISTORICAL_EXPENSE_RECOVERY_RULE,
+    category: "RETRYABLE",
+    journeyId: root.journeyId,
+    targetType: "sync_operation",
+    targetId: createOperationId,
+    inputDigest: evidence.inputDigest,
+  };
+}
+
+async function readHistoricalExpenseOperations(
+  database: Database,
+  accountId: string,
+  entityId: string,
+) {
+  return database.getAllAsync<HistoricalExpenseOperation>(
+    `SELECT id, trip_id AS journeyId, entity_id AS entityId,
+       operation_type AS operationType, idempotency_key AS idempotencyKey,
+       payload_json AS payloadJson, status, attempt_count AS attemptCount,
+       failure_category AS failureCategory, last_error_code AS errorCode,
+       last_error_message AS errorMessage, last_attempt_at AS lastAttemptAt,
+       dependency_operation_id AS dependencyOperationId,
+       created_at AS createdAt, updated_at AS updatedAt
+     FROM sync_operations WHERE owner_user_id = ?
+       AND entity_type = 'ledger_expense' AND entity_id = ?
+     ORDER BY created_at, rowid`,
+    accountId,
+    entityId,
+  );
 }
 
 function operationFinding(

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ApiClientError } from "@/data/api/client";
 import { migrations } from "@/data/db/migrations";
+import { createLedgerExpenseRepository } from "@/data/repositories/ledgerExpenseRepository";
 
 import {
   createDataHealthCoordinator,
@@ -188,6 +189,256 @@ describe("Data Health Phase B read-only scanner", () => {
         .prepare("SELECT count(*) AS count FROM data_health_repair_events")
         .get(),
     ).toEqual({ count: 0 });
+  });
+
+  it("recovers one proven historical create and finalizes old edits only after pull proof", async () => {
+    let injectMappingCrash = true;
+    let injectPullKill = true;
+    let killAfterPull = false;
+    const fixture = createFixture(
+      {
+        runOperationalSync: async () => {},
+        refreshJourneyLedger: async () => false,
+        revalidateJourneyLedger: async () => {
+          if (injectPullKill) {
+            injectPullKill = false;
+            killAfterPull = true;
+          }
+        },
+        getAccountGeneration: () => {
+          if (killAfterPull) throw new Error("injected kill after canonical pull");
+          return 1;
+        },
+      },
+      {
+        beforeRun(_sql, params) {
+          if (
+            injectMappingCrash &&
+            params.some(
+              (value) =>
+                typeof value === "string" && value.includes('"historicalRecovery"'),
+            )
+          )
+            throw new Error("injected kill between mapping and compacted update");
+        },
+      },
+    );
+    const expenseId = "historical-expense";
+    const memberId = "00000000-0000-4000-8000-000000000010";
+    insertExpense(fixture.sqlite, {
+      id: expenseId,
+      revision: 2,
+      serverRevision: 0,
+      syncStatus: "FAILED",
+    });
+    fixture.sqlite.exec(`
+      UPDATE ledger_expenses SET payer_member_id = '${memberId}',
+        business_status = 'DRAFT' WHERE id = '${expenseId}';
+      INSERT INTO ledger_expense_participants (
+        expense_id, member_id, display_name_snapshot, household_id_snapshot,
+        display_order
+      ) VALUES ('${expenseId}', '${memberId}', 'Member', NULL, 0);
+      INSERT INTO ledger_expense_splits (
+        expense_id, member_id, original_amount_minor, settlement_amount_minor,
+        split_method, weight_units, percentage_units, rounding_adjustment_minor
+      ) VALUES ('${expenseId}', '${memberId}', 100, NULL, 'EXACT', NULL, NULL, 0);
+    `);
+    const snapshot = {
+      title: "Expense",
+      description: null,
+      category: "other",
+      occurredAt: "2026-09-24T00:00:00Z",
+      economicDate: null,
+      payerMemberId: memberId,
+      original: { minor: 100, currency: "USD", scale: 2 },
+      businessStatus: "DRAFT",
+      settlementParticipation: "INCLUDED",
+      participants: [
+        {
+          memberId,
+          displayNameSnapshot: "Member",
+          householdIdSnapshot: null,
+        },
+      ],
+      splits: [
+        {
+          memberId,
+          method: "EXACT",
+          originalMinor: 100,
+          settlementMinor: null,
+          weightUnits: null,
+          percentageUnits: null,
+          roundingAdjustmentMinor: 0,
+        },
+      ],
+      valuation: null,
+    };
+    insertOperation(fixture.sqlite, {
+      id: "historical-create",
+      entityId: expenseId,
+      operationType: "LEDGER_CREATE_EXPENSE",
+      status: "FAILED",
+      errorMessage: "SYNC_FAILED",
+      payloadJson: JSON.stringify({
+        expenseId,
+        revision: 1,
+        reason: null,
+        expense: { ...snapshot, original: { minor: 200, currency: "CNY", scale: 2 } },
+        baseExpense: null,
+      }),
+      createdAt: "2026-09-23T00:00:00Z",
+      updatedAt: "2026-09-23T00:01:00Z",
+    });
+    insertOperation(fixture.sqlite, {
+      id: "historical-edit",
+      entityId: expenseId,
+      operationType: "LEDGER_UPDATE_EXPENSE",
+      status: "FAILED",
+      errorMessage: "SYNC_FAILED",
+      payloadJson: JSON.stringify({
+        expenseId,
+        revision: 2,
+        reason: "edit",
+        expense: snapshot,
+        baseExpense: null,
+      }),
+      createdAt: "2026-09-23T01:00:00Z",
+      updatedAt: "2026-09-23T01:01:00Z",
+    });
+
+    fixture.sqlite
+      .prepare(
+        `INSERT INTO ledger_expense_audit_events (
+          id, server_id, expense_id, expense_revision, event_type, after_json, created_at
+        ) VALUES ('prior-server-evidence', 'server-expense', ?, 1, 'CREATED', '{}', ?)`,
+      )
+      .run(expenseId, "2026-09-23T02:00:00Z");
+    expect(
+      (await fixture.coordinator.run("MANUAL")).repairPlans.some(
+        (plan) =>
+          plan.targetId === "historical-create" &&
+          plan.actionId === "RECOVER_HISTORICAL_STRANDED_CREATE_V1",
+      ),
+    ).toBe(false);
+    fixture.sqlite
+      .prepare(
+        "DELETE FROM ledger_expense_audit_events WHERE id = 'prior-server-evidence'",
+      )
+      .run();
+
+    const planned = await fixture.coordinator.run("MANUAL");
+    expect(
+      planned.repairPlans.find((plan) => plan.targetId === "historical-create"),
+    ).toMatchObject({
+      actionId: "RECOVER_HISTORICAL_STRANDED_CREATE_V1",
+      eligibility: "ELIGIBLE",
+    });
+
+    await fixture.coordinator.repair("MANUAL");
+    expect(operationState(fixture.sqlite, "historical-create").status).toBe("RETRYABLE");
+    await createDataHealthCoordinator(fixture.dependencies).repair("MANUAL");
+    expect(
+      fixture.sqlite
+        .prepare("SELECT count(*) AS count FROM data_health_repair_events")
+        .get(),
+    ).toEqual({ count: 1 });
+    fixture.sqlite
+      .prepare("UPDATE sync_operations SET status = 'PROCESSING' WHERE id = ?")
+      .run("historical-create");
+    await expect(
+      fixture.expenses.markExpenseSynced(
+        expenseId,
+        "00000000-0000-4000-8000-000000000099",
+        1,
+        "historical-create",
+      ),
+    ).rejects.toThrow("injected kill between mapping and compacted update");
+    expect(
+      fixture.sqlite
+        .prepare("SELECT server_id FROM ledger_expenses WHERE id = ?")
+        .get(expenseId),
+    ).toEqual({ server_id: null });
+    injectMappingCrash = false;
+    await fixture.expenses.markExpenseSynced(
+      expenseId,
+      "00000000-0000-4000-8000-000000000099",
+      1,
+      "historical-create",
+    );
+    const recovery = fixture.sqlite
+      .prepare(
+        `SELECT id, idempotency_key AS idempotencyKey, status, payload_json AS payloadJson
+         FROM sync_operations WHERE entity_id = ?
+           AND json_extract(payload_json, '$.historicalRecovery.eventId') IS NOT NULL`,
+      )
+      .get(expenseId) as {
+      id: string;
+      idempotencyKey: string;
+      status: string;
+      payloadJson: string;
+    };
+    expect(recovery.status).toBe("DEPENDENCY_BLOCKED");
+    expect(JSON.parse(recovery.payloadJson).expense.original).toEqual({
+      minor: 100,
+      currency: "USD",
+      scale: 2,
+    });
+    expect(operationState(fixture.sqlite, "historical-edit").status).toBe("FAILED");
+
+    fixture.sqlite
+      .prepare("UPDATE sync_operations SET status = 'COMPLETED' WHERE id = ?")
+      .run("historical-create");
+    fixture.sqlite
+      .prepare("UPDATE sync_operations SET status = 'COMPLETED' WHERE id = ?")
+      .run(recovery.id);
+    await fixture.expenses.markExpenseSynced(
+      expenseId,
+      "00000000-0000-4000-8000-000000000099",
+      2,
+      recovery.id,
+    );
+    fixture.sqlite
+      .prepare(
+        `UPDATE ledger_expenses SET business_status = 'ACCEPTED',
+           occurred_at = '2026-09-24T00:00:00+00:00' WHERE id = ?`,
+      )
+      .run(expenseId);
+    fixture.sqlite
+      .prepare(
+        "UPDATE ledger_expense_splits SET settlement_amount_minor = 123 WHERE expense_id = ?",
+      )
+      .run(expenseId);
+    expect(operationState(fixture.sqlite, "historical-edit").status).toBe("FAILED");
+
+    await expect(fixture.coordinator.converge("MANUAL")).rejects.toThrow(
+      "injected kill after canonical pull",
+    );
+    expect(operationState(fixture.sqlite, "historical-edit").status).toBe("FAILED");
+    killAfterPull = false;
+    await createDataHealthCoordinator(fixture.dependencies).converge("MANUAL");
+    expect(operationState(fixture.sqlite, "historical-edit").status).toBe("COMPLETED");
+    expect(repairEvents(fixture.sqlite)).toContainEqual({
+      action: "RECOVER_HISTORICAL_STRANDED_CREATE_V1",
+      status: "VERIFIED",
+      affected_count: 3,
+    });
+    const count = fixture.sqlite
+      .prepare(
+        `SELECT count(*) AS count FROM sync_operations
+         WHERE entity_id = ? AND json_extract(payload_json,
+           '$.historicalRecovery.eventId') IS NOT NULL`,
+      )
+      .get(expenseId);
+    await fixture.coordinator.repair("MANUAL");
+    expect(
+      fixture.sqlite
+        .prepare(
+          `SELECT count(*) AS count FROM sync_operations
+           WHERE entity_id = ? AND json_extract(payload_json,
+             '$.historicalRecovery.eventId') IS NOT NULL`,
+        )
+        .get(expenseId),
+    ).toEqual(count);
   });
 
   it("detects locally provable receipt, cursor, deferred, FX, and Review states", async () => {
@@ -1323,7 +1574,10 @@ describe("Data Health Phase C2 convergence orchestration", () => {
 
 function createFixture(
   overrides: Partial<DataHealthDependencies> = {},
-  hooks: { beforeTransaction?(count: number, sqlite: DatabaseSync): void } = {},
+  hooks: {
+    beforeTransaction?(count: number, sqlite: DatabaseSync): void;
+    beforeRun?(sql: string, params: unknown[]): void;
+  } = {},
 ) {
   const sqlite = new DatabaseSync(":memory:");
   openDatabases.push(sqlite);
@@ -1339,20 +1593,30 @@ function createFixture(
       '2026-09-24T00:00:00Z');
   `);
   const database = adapter(sqlite, hooks);
+  const expenses = createLedgerExpenseRepository(database, async () => "user-a");
   const dependencies: DataHealthDependencies = {
     database,
     getActiveAccountId: async () => "user-a",
     getAccountGeneration: () => 1,
     fileExists: async () => true,
+    getExpense: (id) => expenses.getExpense(id),
     now: () => new Date("2026-09-24T01:00:00Z"),
     ...overrides,
   };
-  return { sqlite, coordinator: createDataHealthCoordinator(dependencies) };
+  return {
+    sqlite,
+    coordinator: createDataHealthCoordinator(dependencies),
+    dependencies,
+    expenses,
+  };
 }
 
 function adapter(
   sqlite: DatabaseSync,
-  hooks: { beforeTransaction?(count: number, sqlite: DatabaseSync): void } = {},
+  hooks: {
+    beforeTransaction?(count: number, sqlite: DatabaseSync): void;
+    beforeRun?(sql: string, params: unknown[]): void;
+  } = {},
 ) {
   let transactionCount = 0;
   return {
@@ -1363,6 +1627,7 @@ function adapter(
       return (sqlite.prepare(sql).get(...(params as never[])) as T | undefined) ?? null;
     },
     async runAsync(sql: string, ...params: unknown[]) {
+      hooks.beforeRun?.(sql, params);
       return sqlite.prepare(sql).run(...(params as never[])) as never;
     },
     async withTransactionAsync(task: () => Promise<void>) {
@@ -1425,6 +1690,11 @@ function insertOperation(
     leaseExpiresAt?: string;
     attemptCount?: number;
     claimOwner?: string;
+    payloadJson?: string;
+    errorMessage?: string;
+    lastAttemptAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
   },
 ) {
   sqlite
@@ -1432,10 +1702,16 @@ function insertOperation(
       `INSERT INTO sync_operations (
         id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
         payload_json, status, owner_user_id, failure_category, last_error_code,
+        last_error_message, last_attempt_at,
         dependency_operation_id, next_attempt_at, lease_expires_at, attempt_count,
         claim_owner, created_at, updated_at
-      ) VALUES (?, ?, 'ledger_expense', ?, ?, ?, '{}', ?, 'user-a', ?, ?, ?, ?, ?, ?, ?,
-        '2026-09-24T00:00:00Z', '2026-09-24T00:00:00Z')`,
+      ) VALUES (
+        ?, ?, 'ledger_expense', ?, ?, ?,
+        ?, ?, 'user-a', ?, ?,
+        ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?
+      )`,
     )
     .run(
       input.id,
@@ -1443,14 +1719,19 @@ function insertOperation(
       input.entityId,
       input.operationType ?? "UPDATE_LEDGER_EXPENSE",
       `${input.id}-key`,
+      input.payloadJson ?? "{}",
       input.status,
       input.failureCategory ?? null,
       input.errorCode ?? null,
+      input.errorMessage ?? null,
+      input.lastAttemptAt ?? null,
       input.dependencyOperationId ?? null,
       input.nextAttemptAt ?? null,
       input.leaseExpiresAt ?? null,
       input.attemptCount ?? 0,
       input.claimOwner ?? null,
+      input.createdAt ?? "2026-09-24T00:00:00Z",
+      input.updatedAt ?? "2026-09-24T00:00:00Z",
     );
 }
 

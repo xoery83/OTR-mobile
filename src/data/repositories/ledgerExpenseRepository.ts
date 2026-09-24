@@ -24,6 +24,12 @@ import type {
 import type { SyncStatus } from "@/domain/sync/syncStatus";
 
 import { assertReplayFixtureWritable } from "./replayFixtureGuard";
+import {
+  HISTORICAL_EXPENSE_RECOVERY_ACTION,
+  inspectHistoricalExpenseRecovery,
+  type HistoricalExpenseRecoveryEvidence,
+  type HistoricalExpenseOperation,
+} from "@/data/health/historicalExpenseRecovery";
 
 export type LedgerExpenseDatabase = Pick<
   SQLite.SQLiteDatabase,
@@ -430,32 +436,91 @@ export function createLedgerExpenseRepository(
 
     async markExpenseSynced(id, serverId, serverRevision, completedOperationId) {
       const userId = await getActiveUserId();
-      const dependent = await database.getFirstAsync<{ operationType: string }>(
-        `SELECT operation_type AS operationType FROM sync_operations
-         WHERE owner_user_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
-           AND status NOT IN ('COMPLETED', 'CONFLICT', 'FAILED')
-           AND operation_type <> ? AND id <> ?
-         ORDER BY created_at DESC, rowid DESC LIMIT 1`,
-        userId,
-        id,
-        createOperation,
-        completedOperationId ?? "",
-      );
-      const syncStatus = operationSyncStatus(dependent?.operationType);
-      await database.runAsync(
-        `UPDATE ledger_expenses
-         SET server_id = ?, server_revision = ?, sync_status = ?, local_owner_user_id = ?,
-             last_synced_at = ?, updated_at = ?
-         WHERE id = ? AND local_owner_user_id = ?`,
-        serverId,
-        serverRevision,
-        syncStatus,
-        dependent ? userId : null,
-        new Date().toISOString(),
-        new Date().toISOString(),
-        id,
-        userId,
-      );
+      await database.withTransactionAsync(async () => {
+        if (completedOperationId) {
+          const event = await database.getFirstAsync<{
+            id: string;
+            inputDigest: string;
+          }>(
+            `SELECT id, input_digest AS inputDigest
+             FROM data_health_repair_events
+             WHERE account_id = ? AND target_type = 'sync_operation'
+               AND target_id = ? AND action = ? AND status = 'APPLIED'
+             ORDER BY created_at DESC LIMIT 1`,
+            userId,
+            completedOperationId,
+            HISTORICAL_EXPENSE_RECOVERY_ACTION,
+          );
+          if (event) {
+            const existing = await database.getFirstAsync(
+              `SELECT 1 FROM sync_operations WHERE owner_user_id = ?
+                 AND entity_type = 'ledger_expense' AND entity_id = ?
+                 AND operation_type = ?
+                 AND CASE WHEN json_valid(payload_json)
+                   THEN json_extract(payload_json, '$.historicalRecovery.eventId')
+                 END = ?`,
+              userId,
+              id,
+              updateOperation,
+              event.id,
+            );
+            if (!existing) {
+              const current = await requireExpense(database, id, userId);
+              const operations = await readHistoricalRecoveryOperations(
+                database,
+                userId,
+                id,
+              );
+              const evidence = inspectHistoricalExpenseRecovery({
+                accountId: userId,
+                journeyAuthorized: true,
+                expense: current,
+                operations,
+                requireFailedCreate: false,
+              });
+              if (
+                evidence?.createOperationId === completedOperationId &&
+                evidence.inputDigest === event.inputDigest
+              )
+                await enqueueHistoricalRecoveryUpdate(
+                  database,
+                  current,
+                  userId,
+                  completedOperationId,
+                  serverRevision,
+                  event.id,
+                  evidence,
+                );
+            }
+          }
+        }
+        const dependent = await database.getFirstAsync<{ operationType: string }>(
+          `SELECT operation_type AS operationType FROM sync_operations
+           WHERE owner_user_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
+             AND status NOT IN ('COMPLETED', 'CONFLICT', 'FAILED')
+             AND operation_type <> ? AND id <> ?
+           ORDER BY created_at DESC, rowid DESC LIMIT 1`,
+          userId,
+          id,
+          createOperation,
+          completedOperationId ?? "",
+        );
+        const syncStatus = operationSyncStatus(dependent?.operationType);
+        await database.runAsync(
+          `UPDATE ledger_expenses
+           SET server_id = ?, server_revision = ?, sync_status = ?, local_owner_user_id = ?,
+               last_synced_at = ?, updated_at = ?
+           WHERE id = ? AND local_owner_user_id = ?`,
+          serverId,
+          serverRevision,
+          syncStatus,
+          dependent ? userId : null,
+          new Date().toISOString(),
+          new Date().toISOString(),
+          id,
+          userId,
+        );
+      });
     },
 
     async markExpensePending(id, operationType) {
@@ -1339,6 +1404,65 @@ async function enqueueOperation(
     0,
     null,
     dependencyOperationId ?? null,
+    now,
+    now,
+  );
+}
+
+async function readHistoricalRecoveryOperations(
+  database: LedgerExpenseDatabase,
+  userId: string,
+  expenseId: string,
+) {
+  return database.getAllAsync<HistoricalExpenseOperation>(
+    `SELECT id, trip_id AS journeyId, entity_id AS entityId,
+       operation_type AS operationType, idempotency_key AS idempotencyKey,
+       payload_json AS payloadJson, status, attempt_count AS attemptCount,
+       failure_category AS failureCategory, last_error_code AS errorCode,
+       last_error_message AS errorMessage, last_attempt_at AS lastAttemptAt,
+       dependency_operation_id AS dependencyOperationId,
+       created_at AS createdAt, updated_at AS updatedAt
+     FROM sync_operations WHERE owner_user_id = ?
+       AND entity_type = 'ledger_expense' AND entity_id = ?
+     ORDER BY created_at, rowid`,
+    userId,
+    expenseId,
+  );
+}
+
+async function enqueueHistoricalRecoveryUpdate(
+  database: LedgerExpenseDatabase,
+  expense: LedgerExpense,
+  userId: string,
+  createOperationId: string,
+  serverRevision: number,
+  eventId: string,
+  evidence: HistoricalExpenseRecoveryEvidence,
+) {
+  const now = new Date().toISOString();
+  await database.runAsync(
+    `INSERT INTO sync_operations (
+      id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
+      base_version, payload_json, owner_user_id, status, attempt_count,
+      next_attempt_at, dependency_operation_id, created_at, updated_at
+    ) VALUES (?, ?, 'ledger_expense', ?, ?, ?, ?, ?, ?, 'DEPENDENCY_BLOCKED',
+      0, NULL, ?, ?, ?)`,
+    createLocalId("ledger-operation"),
+    expense.journeyId,
+    expense.id,
+    updateOperation,
+    createLocalId("ledger-idempotency"),
+    serverRevision,
+    JSON.stringify({
+      ...operationPayload(expense, "Recovered protected local edits.", expense),
+      historicalRecovery: {
+        eventId,
+        evidenceDigest: evidence.inputDigest,
+        supersededOperationIds: evidence.historicalUpdateIds,
+      },
+    }),
+    userId,
+    createOperationId,
     now,
     now,
   );

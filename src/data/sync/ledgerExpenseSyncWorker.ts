@@ -10,6 +10,10 @@ import type {
 } from "@/data/api/ledgerMutationContracts";
 import type { createLedgerCollaborationRepository } from "@/data/repositories/ledgerCollaborationRepository";
 import { assertReplayFixtureWritable } from "@/data/repositories/replayFixtureGuard";
+import {
+  ledgerExpenseToCreateRequest,
+  ledgerExpenseToUpdateRequest,
+} from "@/data/health/historicalExpenseRecovery";
 
 import {
   SyncConflictError,
@@ -109,6 +113,8 @@ const updateOperation = "LEDGER_UPDATE_EXPENSE";
 const deleteOperation = "LEDGER_DELETE_EXPENSE";
 const restoreOperation = "LEDGER_RESTORE_EXPENSE";
 
+export { ledgerExpenseToCreateRequest, ledgerExpenseToUpdateRequest };
+
 class LedgerRevisionConflictError extends Error {
   constructor() {
     super("Ledger mutation has a stale base revision.");
@@ -198,6 +204,12 @@ export function createLedgerExpenseSyncWorker(
           await repository.reconcileCanonicalExpense(expense.id, response.entity);
         } else {
           const response = await pushExpenseOperation(expense, operation, transport);
+          if (
+            operation.operationType === createOperation &&
+            expense.serverId &&
+            expense.serverId !== response.serverId
+          )
+            throw new LedgerRevisionConflictError();
           await repository.markExpenseSynced(
             expense.id,
             response.serverId,
@@ -397,35 +409,4 @@ function readOperationSnapshot(operation: SyncOperation) {
   } catch {
     return null;
   }
-}
-
-export function ledgerExpenseToCreateRequest(expense: LedgerExpense) {
-  return {
-    localId: expense.id,
-    title: expense.title,
-    description: expense.description,
-    category: expense.category,
-    occurredAt: expense.occurredAt,
-    economicDate: expense.economicDate,
-    payerMemberId: expense.payerMemberId,
-    original: expense.original,
-    businessStatus: expense.status === "DELETED" ? "DRAFT" : expense.status,
-    participants: expense.participants,
-    splits: expense.splits,
-    valuation: expense.valuation
-      ? {
-          policy: expense.valuation.policy,
-          original: expense.valuation.original,
-          settlement: expense.valuation.settlement,
-          rateSnapshotId: expense.valuation.rateSnapshotId,
-          paymentRecordId: expense.valuation.paymentRecordId,
-          reason: expense.valuation.reason,
-        }
-      : null,
-  };
-}
-
-export function ledgerExpenseToUpdateRequest(expense: LedgerExpense) {
-  const { localId: _localId, ...request } = ledgerExpenseToCreateRequest(expense);
-  return request;
 }

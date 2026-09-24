@@ -1,6 +1,6 @@
 # ADR 0038: Data Health Phase D schedules the existing pipeline
 
-Status: Implemented; awaiting Phase D acceptance (2026-09-24)
+Status: Accepted (2026-09-25)
 
 Phase D adds one process-local coordinator gate around the existing Data Health
 coordinator. Cold start, foreground, connectivity recovery, authentication recovery,

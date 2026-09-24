@@ -1,6 +1,6 @@
 # OTR Data Health and Self-Healing Plan
 
-Status: approved; Phases A through C2 accepted; Phase D automatic scheduling is implemented awaiting acceptance; Phase E historical recovery remains gated.
+Status: approved; Phases A through D accepted; Phase E historical recovery is implemented for acceptance.
 
 Date: 2026-09-24
 
@@ -582,6 +582,16 @@ cooldown prevents reconnect storms. Normal sync completion performs scoped pull/
 without starting another sync, and health-origin completion is ignored. Phase D adds no
 migration, repair action, worker, queue, Backend endpoint, iOS background guarantee, or
 historical `FAILED` recovery.
+
+Phase E implementation note (2026-09-25): One generic
+`RECOVER_HISTORICAL_STRANDED_CREATE_V1` action requires an authorized local-only Expense,
+exactly one previously attempted unknown historical CREATE, a valid unambiguous UPDATE
+chain, intact payload/idempotency evidence, a valid current aggregate, and no local audit
+or deferred evidence of an existing server identity. The repair makes only the original
+CREATE runnable. Existing sync replays its original request/key, creates one durable
+dependency-linked current UPDATE after mapping, and uses a scoped canonical revalidation
+before marking the retained historical operations completed. No migration, Backend
+endpoint, second worker/queue, destructive cleanup, or broader historical replay was added.
 
 ## 18. Automated test plan
 

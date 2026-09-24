@@ -2,7 +2,30 @@
 
 Date: 2026-09-25
 
-## OTR Data Health & Self-Healing — Phase D implemented
+## OTR Data Health & Self-Healing — Phase E implemented
+
+- Started from accepted Phase D checkpoint `8ffa5e7d58cc044fd817c06508c0c215f333e6d1`.
+  Phase E adds only `RECOVER_HISTORICAL_STRANDED_CREATE_V1`; schema remains 36.
+- Eligibility requires one attempted historical unknown Expense CREATE, an unambiguous
+  failed UPDATE chain, valid preserved/current requests, intact identities and
+  idempotency keys, authorized account/Journey scope, and no mapped, audit, deferred,
+  conflict, isolation, competing-operation, or missing-evidence signal.
+- The repair changes queue metadata only. Existing sync replays the original CREATE
+  payload/key, atomically adds one dependency-linked compacted current UPDATE after
+  identity mapping, and uses scoped canonical revalidation before completing the retained
+  historical UPDATEs. Existing errors and the `VERIFIED` repair event remain diagnostic.
+- The retained physical fixture recovered to one Hosted Dev Expense. `guard 915` remains
+  ISK 23,333 with economic date 2026-09-16, its participant/original split and description
+  intact; the server supplied its normal reference valuation. Exactly one CREATE key and
+  one recovery UPDATE key completed, all seven local operations converged, repeated manual
+  health was a no-op, and canonical Settlement rows/transfers/balances stayed byte-stable
+  under primary-key ordering. Production was not accessed.
+- Focused classifier/coordinator/repository/worker tests, full Vitest, TypeScript, ESLint,
+  Backend build, Prettier, `git diff --check`, Release Simulator install/launch, and signed
+  physical Release/manual Data Health verification pass. Stop for Phase E acceptance;
+  do not commit or begin any later rollout without approval.
+
+## OTR Data Health & Self-Healing — Phase D accepted
 
 - Start from integrated canonical checkpoint `78e8b741955a87cfb542a4f36ba1150296e330f6`.
 - The existing B → C0 → C1 → C2 coordinator now receives non-blocking cold-start,

@@ -1,5 +1,9 @@
 import type { DataHealthFinding } from "./dataHealthCoordinator";
 import { NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT } from "@/data/sync/syncEngine";
+import {
+  HISTORICAL_EXPENSE_RECOVERY_ACTION,
+  HISTORICAL_EXPENSE_RECOVERY_RULE,
+} from "./historicalExpenseRecovery";
 
 export type DataHealthRepairDisposition =
   "AUTO_SAFE" | "USER_ACTION_REQUIRED" | "REMOTE_RECONCILIATION_REQUIRED" | "PROTECTED";
@@ -7,12 +11,14 @@ export type DataHealthRepairDisposition =
 export type DataHealthRepairActionId =
   | "RECOVER_EXPIRED_OPERATION_LEASE_V1"
   | "WAKE_COMPLETED_OPERATION_DEPENDENCY_V1"
-  | "REACTIVATE_RETRYABLE_OPERATION_V1";
+  | "REACTIVATE_RETRYABLE_OPERATION_V1"
+  | typeof HISTORICAL_EXPENSE_RECOVERY_ACTION;
 
 export type DataHealthRepairVerifierId =
   | "VERIFY_OPERATION_LEFT_PROCESSING_V1"
   | "VERIFY_DEPENDENT_OPERATION_RUNNABLE_V1"
   | "VERIFY_RETRYABLE_OPERATION_RUNNABLE_V1"
+  | "VERIFY_HISTORICAL_EXPENSE_CONVERGED_V1"
   | "VERIFY_USER_RESOLUTION_V1"
   | "VERIFY_REMOTE_RECONCILIATION_V1"
   | "VERIFY_PROTECTED_STATE_UNCHANGED_V1";
@@ -101,6 +107,10 @@ export const dataHealthRepairActionContracts: Readonly<
     evidenceRequirement: "LONG_LIVED_RETRYABLE_FAILURE_V1",
     verifierId: "VERIFY_RETRYABLE_OPERATION_RUNNABLE_V1",
   },
+  [HISTORICAL_EXPENSE_RECOVERY_ACTION]: {
+    evidenceRequirement: "COMPLETE_LOCAL_OPERATION_EVIDENCE_V1",
+    verifierId: "VERIFY_HISTORICAL_EXPENSE_CONVERGED_V1",
+  },
 };
 
 export const dataHealthRepairVerifiers: Readonly<
@@ -117,6 +127,10 @@ export const dataHealthRepairVerifiers: Readonly<
   VERIFY_RETRYABLE_OPERATION_RUNNABLE_V1: {
     successEvidence:
       "A rescan proves the same retryable operation is runnable without identity changes",
+  },
+  VERIFY_HISTORICAL_EXPENSE_CONVERGED_V1: {
+    successEvidence:
+      "Push, pull, and rescan prove one mapped Expense matches the compacted current intent",
   },
   VERIFY_USER_RESOLUTION_V1: {
     successEvidence:
@@ -142,6 +156,7 @@ const knownRuleIds = new Set([
   "DH_PERSONAL_PAYMENT_FX_BINDING_V1",
   "DH_REVIEW_DERIVED_STATE_V1",
   "DH_ACCOUNT_JOURNEY_ISOLATION_V1",
+  HISTORICAL_EXPENSE_RECOVERY_RULE,
 ]);
 
 export function planDataHealthRepairs(input: {
@@ -165,6 +180,11 @@ export function planDataHealthRepairs(input: {
       findingDigest: finding.inputDigest,
     };
     if (!knownRuleIds.has(finding.ruleId)) return protectedPlan(base);
+    if (
+      finding.ruleId === HISTORICAL_EXPENSE_RECOVERY_RULE &&
+      finding.category === "RETRYABLE"
+    )
+      return executablePlan(base, HISTORICAL_EXPENSE_RECOVERY_ACTION);
     if (
       finding.category === "PROTECTED_LOCAL" ||
       finding.category === "ISOLATION_VIOLATION"
