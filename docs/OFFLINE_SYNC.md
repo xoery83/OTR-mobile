@@ -131,6 +131,15 @@ Results are discarded if either changes. Future automatic scheduling may reuse t
 stored throttle state and scope plan, prioritizing the active/recent Journeys and those
 with suspicious protected work; Phase B adds no lifecycle timer or periodic scan.
 
+## Data Health Phase C1 queue repair
+
+The manual health workflow may make only three existing-operation metadata transitions:
+recover an expired processing lease, wake a dependency whose completed parent and server
+identity are proven, or clear a future sparse due time from an already retryable
+operation. Each transition revalidates the deterministic plan inside its SQLite
+transaction and records `APPLIED`; a rescan records `VERIFIED`. It does not run the
+operation, call the Backend, change domain facts, or bypass normal auth/backoff handling.
+
 ## Idempotency
 
 Every create/update/delete sent to the backend must include an idempotency key. Offline creates must include local ids so backend responses can map local records to server ids.

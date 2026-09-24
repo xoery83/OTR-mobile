@@ -43,6 +43,7 @@ describe("Data Health Phase C0 repair policy", () => {
     const plans = plan(findings, [
       operation("sync", {
         status: "RETRYABLE",
+        attemptCount: 7,
         failureCategory: "NETWORK",
         nextAttemptAt: "2026-10-24T01:00:00Z",
       }),
@@ -84,9 +85,12 @@ describe("Data Health Phase C0 repair policy", () => {
         dependencyOperationId: "parent",
         dependencyStatus: "COMPLETED",
         dependencyJourneyId: "journey-a",
+        dependencyEntityId: "dependency",
+        serverIdentityAvailable: true,
       }),
       operation("retry", {
         status: "RETRYABLE",
+        attemptCount: 7,
         failureCategory: "UNKNOWN",
         nextAttemptAt: "2026-10-24T01:00:00Z",
       }),
@@ -138,6 +142,7 @@ describe("Data Health Phase C0 repair policy", () => {
       operation("failed", { status: "FAILED", failureCategory: "UNKNOWN" }),
       operation("bad-category", {
         status: "RETRYABLE",
+        attemptCount: 7,
         failureCategory: "PERMISSION",
         nextAttemptAt: "2026-10-24T01:00:00Z",
       }),
@@ -189,6 +194,7 @@ describe("Data Health Phase C0 repair policy", () => {
     const evidence = [
       operation("retry", {
         status: "RETRYABLE",
+        attemptCount: 7,
         failureCategory: "TIMEOUT",
         nextAttemptAt: "2026-10-24T01:00:00Z",
       }),
@@ -242,13 +248,18 @@ function operation(
     journeyId: "journey-a",
     targetType: "sync_operation",
     targetId,
+    entityId: targetId,
     status: "PENDING",
+    attemptCount: 0,
     failureCategory: null,
     nextAttemptAt: null,
     leaseExpiresAt: null,
     dependencyOperationId: null,
     dependencyStatus: null,
     dependencyJourneyId: null,
+    dependencyEntityId: null,
+    journeyAuthorized: true,
+    serverIdentityAvailable: false,
     ...overrides,
   };
 }

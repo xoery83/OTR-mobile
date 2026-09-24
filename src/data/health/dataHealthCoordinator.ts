@@ -1,8 +1,11 @@
 import type * as SQLite from "expo-sqlite";
 
+import { createLocalId } from "@/domain/localId";
+
 import {
   planDataHealthRepairs,
   type DataHealthOperationEvidence,
+  type DataHealthRepairActionId,
   type DataHealthRepairPlan,
 } from "./dataHealthRepairPolicy";
 
@@ -73,6 +76,8 @@ type Operation = {
   dependencyOperationId: string | null;
   dependencyStatus: string | null;
   dependencyJourneyId: string | null;
+  dependencyEntityId: string | null;
+  serverIdentityAvailable: number;
 };
 
 type Expense = {
@@ -112,6 +117,8 @@ type AssetOperation = {
   dependencyOperationId: string | null;
   dependencyStatus: string | null;
   dependencyJourneyId: string | null;
+  dependencyEntityId: string | null;
+  serverIdentityAvailable: number;
 };
 
 type Receipt = {
@@ -198,6 +205,13 @@ type Manifest = {
   reviewFindings: ReviewFinding[];
 };
 
+type RepairEvent = {
+  id: string;
+  targetType: string;
+  targetId: string;
+  action: DataHealthRepairActionId;
+};
+
 export type DataHealthDependencies = {
   database: Database;
   getActiveAccountId(): Promise<string>;
@@ -219,6 +233,7 @@ const ATTENTION = new Set<DataHealthCategory>([
   "ISOLATION_VIOLATION",
   "UNRECOVERABLE_INPUT",
 ]);
+const VERIFIED_REPAIR_EVENT_LIMIT = 200;
 
 export const dataHealthRules: readonly DataHealthRuleDefinition[] = [
   {
@@ -299,7 +314,7 @@ export const dataHealthRules: readonly DataHealthRuleDefinition[] = [
 export function createDataHealthCoordinator(dependencies: DataHealthDependencies) {
   const now = dependencies.now ?? (() => new Date());
 
-  return {
+  const coordinator = {
     async run(trigger: DataHealthTrigger = "MANUAL"): Promise<DataHealthReport> {
       const accountId = await dependencies.getActiveAccountId();
       const generation = dependencies.getAccountGeneration();
@@ -407,6 +422,36 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       };
     },
 
+    async repair(trigger: DataHealthTrigger = "MANUAL"): Promise<DataHealthReport> {
+      let report = await coordinator.run(trigger);
+      try {
+        await verifyAppliedRepairEvents(
+          dependencies,
+          report.accountId,
+          report.generation,
+          now,
+        );
+        for (const plan of report.repairPlans) {
+          if (plan.eligibility !== "ELIGIBLE" || !plan.actionId) continue;
+          if (!(await applyRepairPlan(dependencies, plan, now))) {
+            report = await coordinator.run(trigger);
+            continue;
+          }
+          report = await coordinator.run(trigger);
+          await verifyAppliedRepairEvents(
+            dependencies,
+            report.accountId,
+            report.generation,
+            now,
+          );
+        }
+        return report;
+      } catch (error) {
+        if (error instanceof DataHealthScopeChangedError) return coordinator.run(trigger);
+        throw error;
+      }
+    },
+
     async shouldRunCheapScan(maxAgeMs = 15 * 60_000) {
       const accountId = await dependencies.getActiveAccountId();
       const state = await dependencies.database.getFirstAsync<{
@@ -476,6 +521,331 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       return rows.map((row) => row.journeyId);
     },
   };
+  return coordinator;
+}
+
+async function applyRepairPlan(
+  dependencies: DataHealthDependencies,
+  plan: DataHealthRepairPlan,
+  now: () => Date,
+) {
+  if (plan.eligibility !== "ELIGIBLE" || !plan.actionId) return false;
+  await assertScope(dependencies, plan.accountId, plan.generation);
+  let applied = false;
+  await dependencies.database.withTransactionAsync(async () => {
+    await assertScope(dependencies, plan.accountId, plan.generation);
+    const repairTime = now();
+    const current = await currentOperationPlan(dependencies.database, plan, repairTime);
+    if (!current || !sameRepairPlan(current, plan)) return;
+
+    const table =
+      plan.targetType === "sync_operation"
+        ? "sync_operations"
+        : plan.targetType === "asset_operation"
+          ? "ledger_asset_operations"
+          : null;
+    if (!table) return;
+    const timestamp = repairTime.toISOString();
+    let result: Awaited<ReturnType<Database["runAsync"]>>;
+    if (plan.actionId === "RECOVER_EXPIRED_OPERATION_LEASE_V1") {
+      result = await dependencies.database.runAsync(
+        `UPDATE ${table} SET status = 'RETRYABLE', next_attempt_at = ?,
+           last_error_message = 'INTERRUPTED', claim_owner = NULL,
+           lease_expires_at = NULL, updated_at = ?
+         WHERE id = ? AND owner_user_id = ? AND status = 'PROCESSING'
+           AND lease_expires_at IS NOT NULL AND lease_expires_at <= ?`,
+        timestamp,
+        timestamp,
+        plan.targetId,
+        plan.accountId,
+        timestamp,
+      );
+    } else if (plan.actionId === "WAKE_COMPLETED_OPERATION_DEPENDENCY_V1") {
+      result = await dependencies.database.runAsync(
+        `UPDATE ${table} SET status = 'PENDING', failure_category = NULL,
+           last_error_code = NULL, last_error_message = NULL,
+           next_attempt_at = NULL, claim_owner = NULL, lease_expires_at = NULL,
+           updated_at = ?
+         WHERE id = ? AND owner_user_id = ? AND status = 'DEPENDENCY_BLOCKED'`,
+        timestamp,
+        plan.targetId,
+        plan.accountId,
+      );
+    } else if (plan.actionId === "REACTIVATE_RETRYABLE_OPERATION_V1") {
+      result = await dependencies.database.runAsync(
+        `UPDATE ${table} SET next_attempt_at = NULL, updated_at = ?
+         WHERE id = ? AND owner_user_id = ? AND status = 'RETRYABLE'
+           AND next_attempt_at IS NOT NULL AND next_attempt_at > ?
+           AND failure_category IN ('UNKNOWN', 'NETWORK', 'TIMEOUT', 'SERVER',
+             'RATE_LIMIT', 'RESPONSE_INVALID')`,
+        timestamp,
+        plan.targetId,
+        plan.accountId,
+        timestamp,
+      );
+    } else return;
+    if (result.changes !== 1) return;
+    await dependencies.database.runAsync(
+      `INSERT INTO data_health_repair_events (
+         id, account_id, journey_id, rule_id, target_type, target_id,
+         input_digest, action, status, affected_count, created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'APPLIED', 1, ?, ?)
+       ON CONFLICT (
+         account_id, rule_id, target_type, target_id, input_digest, action
+       ) DO NOTHING`,
+      createLocalId("health-repair"),
+      plan.accountId,
+      plan.journeyId,
+      plan.ruleId,
+      plan.targetType,
+      plan.targetId,
+      plan.findingDigest,
+      plan.actionId,
+      timestamp,
+      timestamp,
+    );
+    await assertScope(dependencies, plan.accountId, plan.generation);
+    applied = true;
+  });
+  await assertScope(dependencies, plan.accountId, plan.generation);
+  return applied;
+}
+
+async function currentOperationPlan(
+  database: Database,
+  expected: DataHealthRepairPlan,
+  now: Date,
+) {
+  const targetType =
+    expected.targetType === "sync_operation"
+      ? "sync_operation"
+      : expected.targetType === "asset_operation"
+        ? "asset_operation"
+        : null;
+  if (!targetType) return null;
+  const operation = await readOperationForRepair(
+    database,
+    targetType,
+    expected.targetId,
+    expected.accountId,
+  );
+  if (!operation) return null;
+  const journeyAuthorized =
+    operation.journeyId === null
+      ? true
+      : Boolean(
+          await database.getFirstAsync(
+            `SELECT 1 FROM ledger_actor_context
+           WHERE user_id = ? AND journey_id = ?`,
+            expected.accountId,
+            operation.journeyId,
+          ),
+        );
+  const finding = operationFinding(operation, targetType);
+  return planDataHealthRepairs({
+    accountId: expected.accountId,
+    generation: expected.generation,
+    findings: [finding],
+    operationEvidence: [
+      toOperationEvidence(expected.accountId, targetType, operation, journeyAuthorized),
+    ],
+    now,
+  })[0];
+}
+
+async function readOperationForRepair(
+  database: Database,
+  targetType: string,
+  targetId: string,
+  accountId: string,
+): Promise<Operation | AssetOperation | null> {
+  if (targetType === "sync_operation")
+    return database.getFirstAsync<Operation>(
+      `SELECT operation.id, operation.trip_id AS journeyId,
+         operation.entity_type AS entityType, operation.entity_id AS entityId,
+         operation.operation_type AS operationType, operation.status,
+         operation.attempt_count AS attemptCount,
+         operation.failure_category AS failureCategory,
+         operation.last_error_code AS errorCode,
+         operation.next_attempt_at AS nextAttemptAt,
+         operation.lease_expires_at AS leaseExpiresAt,
+         operation.dependency_operation_id AS dependencyOperationId,
+         dependency.status AS dependencyStatus,
+         dependency.trip_id AS dependencyJourneyId,
+         dependency.entity_id AS dependencyEntityId,
+         CASE
+           WHEN operation.entity_type = 'ledger_expense' THEN EXISTS (
+             SELECT 1 FROM ledger_expenses entity
+             WHERE entity.id = operation.entity_id
+               AND entity.journey_id = operation.trip_id
+               AND entity.local_owner_user_id = operation.owner_user_id
+               AND entity.server_id IS NOT NULL AND entity.server_revision > 0
+           )
+           WHEN operation.entity_type = 'ledger_personal_payment' THEN EXISTS (
+             SELECT 1 FROM ledger_personal_payment_records entity
+             WHERE entity.id = operation.entity_id
+               AND entity.journey_id = operation.trip_id
+               AND entity.projection_user_id = operation.owner_user_id
+               AND entity.server_revision > 0
+           )
+           ELSE 0
+         END AS serverIdentityAvailable
+       FROM sync_operations operation
+       LEFT JOIN sync_operations dependency
+         ON dependency.id = operation.dependency_operation_id
+        AND dependency.owner_user_id = operation.owner_user_id
+       WHERE operation.id = ? AND operation.owner_user_id = ?`,
+      targetId,
+      accountId,
+    );
+  if (targetType === "asset_operation")
+    return database.getFirstAsync<AssetOperation>(
+      `SELECT operation.id, operation.journey_id AS journeyId,
+         operation.asset_id AS assetId, operation.operation_type AS operationType,
+         operation.status, operation.attempt_count AS attemptCount,
+         operation.failure_category AS failureCategory,
+         operation.last_error_code AS errorCode,
+         operation.next_attempt_at AS nextAttemptAt,
+         operation.lease_expires_at AS leaseExpiresAt,
+         operation.dependency_operation_id AS dependencyOperationId,
+         dependency.status AS dependencyStatus,
+         dependency.journey_id AS dependencyJourneyId,
+         dependency.asset_id AS dependencyEntityId,
+         EXISTS (
+           SELECT 1 FROM ledger_receipt_assets asset
+           WHERE asset.id = operation.asset_id
+             AND asset.journey_id = operation.journey_id
+             AND asset.local_owner_user_id = operation.owner_user_id
+             AND asset.server_id IS NOT NULL
+         ) AS serverIdentityAvailable
+       FROM ledger_asset_operations operation
+       LEFT JOIN ledger_asset_operations dependency
+         ON dependency.id = operation.dependency_operation_id
+        AND dependency.owner_user_id = operation.owner_user_id
+       WHERE operation.id = ? AND operation.owner_user_id = ?`,
+      targetId,
+      accountId,
+    );
+  return null;
+}
+
+function sameRepairPlan(left: DataHealthRepairPlan, right: DataHealthRepairPlan) {
+  return (
+    left.accountId === right.accountId &&
+    left.generation === right.generation &&
+    left.journeyId === right.journeyId &&
+    left.ruleId === right.ruleId &&
+    left.targetType === right.targetType &&
+    left.targetId === right.targetId &&
+    left.findingDigest === right.findingDigest &&
+    left.disposition === right.disposition &&
+    left.eligibility === right.eligibility &&
+    left.evidenceRequirement === right.evidenceRequirement &&
+    left.actionId === right.actionId &&
+    left.verifierId === right.verifierId
+  );
+}
+
+async function verifyAppliedRepairEvents(
+  dependencies: DataHealthDependencies,
+  accountId: string,
+  generation: number,
+  now: () => Date,
+) {
+  await assertScope(dependencies, accountId, generation);
+  await dependencies.database.withTransactionAsync(async () => {
+    await assertScope(dependencies, accountId, generation);
+    const events = await dependencies.database.getAllAsync<RepairEvent>(
+      `SELECT id, target_type AS targetType, target_id AS targetId, action
+       FROM data_health_repair_events
+       WHERE account_id = ? AND status = 'APPLIED'
+       ORDER BY created_at, id`,
+      accountId,
+    );
+    const timestamp = now().toISOString();
+    for (const event of events) {
+      const state = await readRepairState(
+        dependencies.database,
+        event.targetType,
+        event.targetId,
+        accountId,
+      );
+      if (!repairVerified(event.action, state, timestamp)) continue;
+      await dependencies.database.runAsync(
+        `UPDATE data_health_repair_events SET status = 'VERIFIED',
+           verified_at = ?, updated_at = ?
+         WHERE id = ? AND account_id = ? AND status = 'APPLIED'`,
+        timestamp,
+        timestamp,
+        event.id,
+        accountId,
+      );
+    }
+    await dependencies.database.runAsync(
+      `DELETE FROM data_health_repair_events
+       WHERE account_id = ? AND status = 'VERIFIED' AND id NOT IN (
+         SELECT id FROM data_health_repair_events
+         WHERE account_id = ? AND status = 'VERIFIED'
+         ORDER BY updated_at DESC, id DESC LIMIT ?
+       )`,
+      accountId,
+      accountId,
+      VERIFIED_REPAIR_EVENT_LIMIT,
+    );
+    await assertScope(dependencies, accountId, generation);
+  });
+}
+
+async function readRepairState(
+  database: Database,
+  targetType: string,
+  targetId: string,
+  accountId: string,
+) {
+  const table =
+    targetType === "sync_operation"
+      ? "sync_operations"
+      : targetType === "asset_operation"
+        ? "ledger_asset_operations"
+        : null;
+  if (!table) return null;
+  return database.getFirstAsync<{
+    status: string;
+    nextAttemptAt: string | null;
+    leaseExpiresAt: string | null;
+  }>(
+    `SELECT status, next_attempt_at AS nextAttemptAt,
+       lease_expires_at AS leaseExpiresAt
+     FROM ${table} WHERE id = ? AND owner_user_id = ?`,
+    targetId,
+    accountId,
+  );
+}
+
+function repairVerified(
+  action: DataHealthRepairActionId,
+  state: {
+    status: string;
+    nextAttemptAt: string | null;
+    leaseExpiresAt: string | null;
+  } | null,
+  timestamp: string,
+) {
+  if (!state) return true;
+  if (action === "RECOVER_EXPIRED_OPERATION_LEASE_V1")
+    return !(
+      state.status === "PROCESSING" &&
+      state.leaseExpiresAt &&
+      state.leaseExpiresAt <= timestamp
+    );
+  if (action === "WAKE_COMPLETED_OPERATION_DEPENDENCY_V1")
+    return ["PENDING", "PROCESSING", "RETRYABLE", "COMPLETED"].includes(state.status);
+  if (action === "REACTIVATE_RETRYABLE_OPERATION_V1")
+    return (
+      (state.status === "RETRYABLE" && state.nextAttemptAt === null) ||
+      ["PENDING", "PROCESSING", "COMPLETED"].includes(state.status)
+    );
+  return false;
 }
 
 async function assertScope(
@@ -511,7 +881,25 @@ async function buildManifest(
        operation.lease_expires_at AS leaseExpiresAt,
        operation.dependency_operation_id AS dependencyOperationId,
        dependency.status AS dependencyStatus,
-       dependency.trip_id AS dependencyJourneyId
+       dependency.trip_id AS dependencyJourneyId,
+       dependency.entity_id AS dependencyEntityId,
+       CASE
+         WHEN operation.entity_type = 'ledger_expense' THEN EXISTS (
+           SELECT 1 FROM ledger_expenses entity
+           WHERE entity.id = operation.entity_id
+             AND entity.journey_id = operation.trip_id
+             AND entity.local_owner_user_id = operation.owner_user_id
+             AND entity.server_id IS NOT NULL AND entity.server_revision > 0
+         )
+         WHEN operation.entity_type = 'ledger_personal_payment' THEN EXISTS (
+           SELECT 1 FROM ledger_personal_payment_records entity
+           WHERE entity.id = operation.entity_id
+             AND entity.journey_id = operation.trip_id
+             AND entity.projection_user_id = operation.owner_user_id
+             AND entity.server_revision > 0
+         )
+         ELSE 0
+       END AS serverIdentityAvailable
      FROM sync_operations operation
      LEFT JOIN sync_operations dependency
        ON dependency.id = operation.dependency_operation_id
@@ -549,7 +937,15 @@ async function buildManifest(
        operation.lease_expires_at AS leaseExpiresAt,
        operation.dependency_operation_id AS dependencyOperationId,
        dependency.status AS dependencyStatus,
-       dependency.journey_id AS dependencyJourneyId
+       dependency.journey_id AS dependencyJourneyId,
+       dependency.asset_id AS dependencyEntityId,
+       EXISTS (
+         SELECT 1 FROM ledger_receipt_assets asset
+         WHERE asset.id = operation.asset_id
+           AND asset.journey_id = operation.journey_id
+           AND asset.local_owner_user_id = operation.owner_user_id
+           AND asset.server_id IS NOT NULL
+       ) AS serverIdentityAvailable
      FROM ledger_asset_operations operation
      LEFT JOIN ledger_asset_operations dependency
        ON dependency.id = operation.dependency_operation_id
@@ -916,7 +1312,13 @@ function operationFinding(
     operation.failureCategory ?? "none",
     operation.errorCode ?? "none",
     operation.attemptCount,
+    operation.nextAttemptAt ?? "none",
+    operation.leaseExpiresAt ?? "none",
     operation.dependencyOperationId ?? "none",
+    operation.dependencyStatus ?? "none",
+    operation.dependencyJourneyId ?? "none",
+    operation.dependencyEntityId ?? "none",
+    operation.serverIdentityAvailable,
   ];
   if (operation.status === "DEPENDENCY_BLOCKED")
     return finding(
@@ -1029,34 +1431,51 @@ function uniqueFindings(findings: DataHealthFinding[]) {
 }
 
 function operationEvidence(manifest: Manifest): DataHealthOperationEvidence[] {
+  const authorized = new Set(manifest.journeyIds);
   return [
-    ...manifest.operations.map((operation) => ({
-      accountId: manifest.accountId,
-      journeyId: operation.journeyId,
-      targetType: "sync_operation" as const,
-      targetId: operation.id,
-      status: operation.status,
-      failureCategory: operation.failureCategory,
-      nextAttemptAt: operation.nextAttemptAt,
-      leaseExpiresAt: operation.leaseExpiresAt,
-      dependencyOperationId: operation.dependencyOperationId,
-      dependencyStatus: operation.dependencyStatus,
-      dependencyJourneyId: operation.dependencyJourneyId,
-    })),
-    ...manifest.assetOperations.map((operation) => ({
-      accountId: manifest.accountId,
-      journeyId: operation.journeyId,
-      targetType: "asset_operation" as const,
-      targetId: operation.id,
-      status: operation.status,
-      failureCategory: operation.failureCategory,
-      nextAttemptAt: operation.nextAttemptAt,
-      leaseExpiresAt: operation.leaseExpiresAt,
-      dependencyOperationId: operation.dependencyOperationId,
-      dependencyStatus: operation.dependencyStatus,
-      dependencyJourneyId: operation.dependencyJourneyId,
-    })),
+    ...manifest.operations.map((operation) =>
+      toOperationEvidence(
+        manifest.accountId,
+        "sync_operation",
+        operation,
+        operation.journeyId === null || authorized.has(operation.journeyId),
+      ),
+    ),
+    ...manifest.assetOperations.map((operation) =>
+      toOperationEvidence(
+        manifest.accountId,
+        "asset_operation",
+        operation,
+        authorized.has(operation.journeyId),
+      ),
+    ),
   ];
+}
+
+function toOperationEvidence(
+  accountId: string,
+  targetType: DataHealthOperationEvidence["targetType"],
+  operation: Operation | AssetOperation,
+  journeyAuthorized: boolean,
+): DataHealthOperationEvidence {
+  return {
+    accountId,
+    journeyId: operation.journeyId,
+    targetType,
+    targetId: operation.id,
+    entityId: "entityId" in operation ? operation.entityId : operation.assetId,
+    status: operation.status,
+    attemptCount: operation.attemptCount,
+    failureCategory: operation.failureCategory,
+    nextAttemptAt: operation.nextAttemptAt,
+    leaseExpiresAt: operation.leaseExpiresAt,
+    dependencyOperationId: operation.dependencyOperationId,
+    dependencyStatus: operation.dependencyStatus,
+    dependencyJourneyId: operation.dependencyJourneyId,
+    dependencyEntityId: operation.dependencyEntityId,
+    journeyAuthorized,
+    serverIdentityAvailable: operation.serverIdentityAvailable === 1,
+  };
 }
 
 function protectedIntentCount(manifest: Manifest) {

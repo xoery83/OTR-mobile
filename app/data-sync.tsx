@@ -48,7 +48,7 @@ export default function DataSyncRoute() {
     setChecking(true);
     setFailed(false);
     try {
-      const next = await (await getDefaultDataHealthCoordinator()).run("MANUAL");
+      const next = await (await getDefaultDataHealthCoordinator()).repair("MANUAL");
       if (!mounted.current) return;
       setReport(next);
       setOutcome(next.outcome);

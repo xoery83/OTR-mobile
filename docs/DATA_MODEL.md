@@ -32,6 +32,12 @@ or raw server messages. Operational history is not immutable financial evidence;
 retention may remove old `VERIFIED` diagnostics while unresolved/`NEEDS_ATTENTION`
 evidence remains available.
 
+Phase C1 activates that existing event shape only for approved queue-metadata repairs.
+The operation update and `APPLIED` event share one SQLite transaction; a rescan promotes
+the event to `VERIFIED`. Verified history is count-bounded per account while unresolved
+events remain retained. No domain payload or user-owned financial fact is copied into a
+health event.
+
 ## Trip
 
 Purpose: top-level journey container.

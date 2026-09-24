@@ -2,6 +2,30 @@
 
 Date: 2026-09-24
 
+## OTR Data Health & Self-Healing — Phase C1 implemented
+
+- Start from accepted C0 checkpoint `07efd9b2e0307c168fc296c28aa68006026e98a4`.
+- C1 executes only the three existing versioned queue-metadata actions for expired
+  leases, completed dependencies with proven server identity, and sparse long-lived retryable
+  operations. The existing sync engine remains the only network/domain executor.
+- Every action must use scan, scope/generation and evidence revalidation, one conditional
+  SQLite repair plus atomic `APPLIED` event, and a rescan verifier before `VERIFIED`.
+- Migration 36 already contains the repair-event model. C1 adds no migration 37,
+  Backend endpoint, worker, queue, pull/bootstrap orchestration, scheduler, or broader UI.
+- `PROTECTED_LOCAL`, historical unknown `FAILED`, conflict, isolation, missing evidence,
+  auth pause, and user-action-required state remain hard vetoes. `guard 915` remains
+  read-only and reserved for Phase E.
+- `APPLIED` commits atomically with the conditional queue repair; restart rescans and
+  promotes it to `VERIFIED`. The newest 200 `VERIFIED` events per account are retained;
+  unresolved `APPLIED` and `NEEDS_ATTENTION` records are never removed by this retention.
+- Validation passes TypeScript, ESLint, Backend build, Prettier, `git diff --check`, and
+  101 Vitest files / 485 tests. Failure injection covers rollback before commit and
+  restart between `APPLIED` and `VERIFIED`.
+- A temporary migration-36 copy of the retained guard 915 device snapshot still reports
+  seven `PROTECTED_LOCAL` findings, zero executable actions and zero repair events, with
+  stable domain/queue fingerprints. The source snapshot remains unchanged at migration 34.
+- Stop for acceptance after C1; do not enter later Phase C work.
+
 ## OTR Data Health & Self-Healing — Phase C0 implemented
 
 - Phase C0 is limited to deterministic repair policy and dry-run planning over the

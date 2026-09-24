@@ -76,6 +76,7 @@ const conflictCodes = new Set([
   "IDEMPOTENCY_CONFLICT",
   "PERSONAL_PAYMENT_IDENTITY_CONFLICT",
 ]);
+export const NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT = 6;
 
 export function nextSyncAttemptAt(
   attempt: number,
@@ -83,7 +84,7 @@ export function nextSyncAttemptAt(
   random = Math.random(),
 ) {
   const base =
-    attempt <= 6
+    attempt <= NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT
       ? Math.min(30_000 * 2 ** Math.max(0, attempt - 1), 30 * 60_000)
       : Math.min(
           6 * 60 * 60_000 * 2 ** Math.floor((attempt - 7) / 3),

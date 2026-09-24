@@ -1,6 +1,6 @@
 # OTR Data Health and Self-Healing Plan
 
-Status: approved; Phases A and B accepted, Phase C0 implemented awaiting acceptance, repair execution and historical recovery remain gated.
+Status: approved; Phases A, B, and C0 accepted, Phase C1 implemented awaiting acceptance for the three queue-metadata actions only; later repair and historical recovery remain gated.
 
 Date: 2026-09-24
 
@@ -530,6 +530,11 @@ Stop and validate offline CREATE/edit/reconnect before proceeding.
 
 - C0 first adds repair eligibility and deterministic dry-run plans only. It executes no
   mutation and treats `PROTECTED_LOCAL` plus historical unknown `FAILED` as hard vetoes.
+- C1 may execute only expired-lease recovery, completed-dependency wake-up, and manual
+  reactivation of a sparse long-lived retryable operation after normal backoff. Every
+  action must revalidate its C0 plan inside the repair transaction, record `APPLIED`
+  atomically, and pass a rescan verifier before `VERIFIED`. It performs no domain mutation
+  or network work.
 - Enable queue/dependency/error-metadata repairs.
 - Reuse operational sync, incremental pull and invalid-cursor bootstrap.
 - Add deferred-change drain and orphan-derived cleanup after verification.

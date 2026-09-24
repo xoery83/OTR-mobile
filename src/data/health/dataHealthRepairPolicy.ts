@@ -1,4 +1,5 @@
 import type { DataHealthFinding } from "./dataHealthCoordinator";
+import { NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT } from "@/data/sync/syncEngine";
 
 export type DataHealthRepairDisposition =
   "AUTO_SAFE" | "USER_ACTION_REQUIRED" | "REMOTE_RECONCILIATION_REQUIRED" | "PROTECTED";
@@ -45,13 +46,18 @@ export type DataHealthOperationEvidence = {
   journeyId: string | null;
   targetType: "sync_operation" | "asset_operation";
   targetId: string;
+  entityId: string;
   status: string;
+  attemptCount: number;
   failureCategory: string | null;
   nextAttemptAt: string | null;
   leaseExpiresAt: string | null;
   dependencyOperationId: string | null;
   dependencyStatus: string | null;
   dependencyJourneyId: string | null;
+  dependencyEntityId: string | null;
+  journeyAuthorized: boolean;
+  serverIdentityAvailable: boolean;
 };
 
 type PlanIdentity = Pick<
@@ -184,7 +190,8 @@ export function planDataHealthRepairs(input: {
     if (!operation) return protectedPlan(base, "COMPLETE_LOCAL_OPERATION_EVIDENCE_V1");
     if (
       operation.accountId !== input.accountId ||
-      operation.journeyId !== finding.journeyId
+      operation.journeyId !== finding.journeyId ||
+      !operation.journeyAuthorized
     )
       return protectedPlan(base, "COMPLETE_LOCAL_OPERATION_EVIDENCE_V1");
     if (
@@ -192,7 +199,9 @@ export function planDataHealthRepairs(input: {
       operation.status === "DEPENDENCY_BLOCKED" &&
       operation.dependencyOperationId &&
       operation.dependencyStatus === "COMPLETED" &&
-      operation.dependencyJourneyId === finding.journeyId
+      operation.dependencyJourneyId === finding.journeyId &&
+      operation.dependencyEntityId === operation.entityId &&
+      operation.serverIdentityAvailable
     )
       return executablePlan(base, "WAKE_COMPLETED_OPERATION_DEPENDENCY_V1");
     if (
@@ -205,8 +214,10 @@ export function planDataHealthRepairs(input: {
     if (
       finding.category === "RETRYABLE" &&
       operation.status === "RETRYABLE" &&
+      operation.attemptCount > NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT &&
       operation.nextAttemptAt &&
       Number.isFinite(Date.parse(operation.nextAttemptAt)) &&
+      Date.parse(operation.nextAttemptAt) > input.now.getTime() &&
       longLivedRetryableCategories.has(operation.failureCategory ?? "")
     )
       return executablePlan(base, "REACTIVATE_RETRYABLE_OPERATION_V1");
