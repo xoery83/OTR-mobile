@@ -8,12 +8,16 @@ import {
   refreshJourneyLedger,
   revalidateJourneyLedger,
 } from "@/data/sync/ledgerReportingCoordinator";
-import { type LedgerRateLookupRequest } from "@/data/api/ledgerFxContracts";
+import type {
+  LedgerRateLookupRequest,
+  LedgerRateLookupResponse,
+} from "@/data/api/ledgerFxContracts";
 import { getDefaultLedgerExpenseRepository } from "./defaultLedgerExpenseRepository";
 import { createLedgerReadTransport } from "@/data/sync/ledgerReadTransport";
 import { cachedRateLookup, identityRateLookup } from "./ledgerRateLookup";
 
 export type { JourneyCurrencyPreview } from "@/data/api/ledgerCurrencyContracts";
+export type LedgerRateLookupResult = LedgerRateLookupResponse;
 
 async function client() {
   return createAuthenticatedApiClient();

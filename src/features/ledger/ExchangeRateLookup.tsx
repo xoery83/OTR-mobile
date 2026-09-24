@@ -9,8 +9,10 @@ import {
   View,
 } from "react-native";
 
-import type { LedgerRateLookupResponse } from "@/data/api/ledgerFxContracts";
-import { ledgerCurrencyRepository } from "@/data/repositories/ledgerCurrencyRepository";
+import {
+  ledgerCurrencyRepository,
+  type LedgerRateLookupResult,
+} from "@/data/repositories/ledgerCurrencyRepository";
 import { CurrencyPicker } from "./CurrencyPicker";
 
 export function ExchangeRateLookup({
@@ -27,7 +29,7 @@ export function ExchangeRateLookup({
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [picker, setPicker] = useState<"FROM" | "TO" | null>(null);
   const [dateOpen, setDateOpen] = useState(false);
-  const [result, setResult] = useState<LedgerRateLookupResponse | null>(null);
+  const [result, setResult] = useState<LedgerRateLookupResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const request = useRef(0);
@@ -160,7 +162,7 @@ function LookupResult({
 }: {
   checking: boolean;
   online: boolean;
-  result: LedgerRateLookupResponse | null;
+  result: LedgerRateLookupResult | null;
 }) {
   if (!result)
     return checking ? <ActivityIndicator accessibilityLabel="Looking up rate" /> : null;
@@ -198,13 +200,13 @@ function LookupResult({
   );
 }
 
-function resolutionCopy(resolution: LedgerRateLookupResponse["resolution"]) {
+function resolutionCopy(resolution: LedgerRateLookupResult["resolution"]) {
   if (resolution === "SAME_CURRENCY") return "No conversion is needed.";
   if (resolution === "EXACT_DATE") return "Exact reference date match.";
   return "Using the nearest available reference rate within the allowed window.";
 }
 
-function unavailableCopy(resolution: LedgerRateLookupResponse["resolution"]) {
+function unavailableCopy(resolution: LedgerRateLookupResult["resolution"]) {
   if (resolution === "PENDING_PUBLICATION")
     return "The requested date's reference rate is not published yet.";
   if (resolution === "UNSUPPORTED") return "This currency pair is not supported by ECB.";
