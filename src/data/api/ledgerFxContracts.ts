@@ -20,6 +20,7 @@ export const ledgerRateLookupResponseSchema = z.object({
   referenceDate: z.iso.date().nullable(),
   decimalRate: positiveDecimal.nullable(),
   resolution: z.enum([
+    "SAME_CURRENCY",
     "EXACT_DATE",
     "NEAREST_AVAILABLE",
     "PENDING_PUBLICATION",

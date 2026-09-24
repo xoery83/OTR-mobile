@@ -16,7 +16,11 @@ import type {
   ReportingScope,
 } from "@/domain/ledger/reporting";
 import { readLocalSession } from "@/data/auth/authRepository";
-import { ledgerFxReferenceSnapshotBundleSchema } from "@/data/api/ledgerFxContracts";
+import {
+  ledgerFxReferenceSnapshotBundleSchema,
+  ledgerRateLookupResponseSchema,
+  type LedgerRateLookupRequest,
+} from "@/data/api/ledgerFxContracts";
 
 type Dependencies = {
   readSession?: typeof readLocalSession;
@@ -116,6 +120,14 @@ export function createLedgerReadTransport(dependencies: Dependencies = {}) {
       return (await client(dependencies)).get(
         "/v2/ledger/reference-rate-snapshots?provider=ECB",
         ledgerFxReferenceSnapshotBundleSchema,
+      );
+    },
+
+    async rateLookup(journeyId: string, input: LedgerRateLookupRequest) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${journeyId}/ledger/rate-lookup`,
+        input,
+        ledgerRateLookupResponseSchema,
       );
     },
   };
