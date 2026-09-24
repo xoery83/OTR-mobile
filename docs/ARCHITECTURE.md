@@ -60,9 +60,16 @@ not part of the current Global Menu and Account Switching work.
 The global menu is contextual:
 
 - fixed account/global actions: current user, Settings, Language, Log out;
-- current-module secondary actions, such as My Ledger, Review, and Ledger
-  Settings while Ledger is active;
-- Development-only diagnostics and remembered Dev-account switching.
+- current-module secondary actions: My Ledger and Currency while Ledger is
+  active;
+- no ordinary-menu entries for Review, diagnostics, or remembered Dev-account
+  switching.
+
+Review remains Journey/Ledger context. Currency owns Journey settlement-currency
+settings and reference-rate lookup while reusing the existing Ledger FX resolver,
+cache, provider, provenance and fallback policy. Settings owns the System Health
+entry and the development-gated Debug Mode control. Account remains reachable
+from the current-user card, and Language remains a first-level menu action.
 
 It does not repeat the primary bottom destinations. Missing My Trips, My
 Albums, Trip Settings, or Album Settings routes are omitted rather than

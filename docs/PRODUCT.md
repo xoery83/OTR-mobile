@@ -108,9 +108,12 @@ to this structure is a future task and is not part of the Global Menu and
 Account Switching work.
 
 The top-left menu is a contextual utility menu, not a second app launcher. It
-combines fixed account/settings actions with low-frequency actions for the
-current primary module. It must not repeat Today, Ledger, Trip, Album, or
-Capture as navigation destinations.
+combines the current account, Settings, Language, Log out, and low-frequency
+actions for the current primary module. While Ledger is active, those actions
+are My Ledger and Currency. Review remains inside the selected Journey's Ledger
+experience. Developer diagnostics and test-account tools do not appear in the
+normal menu. The menu must not repeat Today, Ledger, Trip, Album, or Capture as
+navigation destinations.
 
 ## Account Switching
 
