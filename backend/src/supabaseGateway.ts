@@ -247,6 +247,10 @@ export function personalPaymentRowToDto(
     scale: Number(row.scale),
     occurredAt: String(row.occurred_at),
     economicDate: String(row.economic_date ?? String(row.occurred_at).slice(0, 10)),
+    economicDateSource:
+      row.economic_date_source == null
+        ? null
+        : (String(row.economic_date_source) as PersonalSettlementPaymentDto["economicDateSource"]),
     note: row.note == null ? null : String(row.note),
     recordedEquivalentMinor:
       row.recorded_equivalent_minor == null

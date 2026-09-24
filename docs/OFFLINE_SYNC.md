@@ -183,6 +183,8 @@ No successful user write should be lost due to app restart.
 Personal Payment FX projections are read-only Mobile mirrors. Offline writes
 persist only original Money and `economicDate`; local estimates remain derived
 from the account-scoped ECB snapshot cache and never enter mutation payloads.
+New local Personal Payments also persist `economicDateSource = EXPLICIT`.
+Unreviewed historical rows keep a null source rather than locally inferring one.
 After reconnect, a matching confirmed projection replaces the estimate without
 changing the original payment or its revision.
 

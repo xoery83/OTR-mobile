@@ -24,6 +24,7 @@ export type PersonalPaymentCommand = Omit<
   | "updatedAt"
   | "deletedAt"
   | "economicDate"
+  | "economicDateSource"
 > & { auditReason?: string | null; economicDate?: string };
 
 export type LocalPersonalPayment = PersonalSettlementPaymentDto & {
@@ -86,6 +87,7 @@ export function createLedgerPersonalPaymentRepository(
       const record: LocalPersonalPayment = {
         ...input,
         economicDate: input.economicDate ?? compatibilityEconomicDate(command.occurredAt),
+        economicDateSource: "EXPLICIT",
         note: input.note ?? null,
         recordedEquivalentMinor: input.recordedEquivalentMinor ?? null,
         recordedEquivalentCurrency: input.recordedEquivalentCurrency ?? null,
@@ -145,6 +147,7 @@ export function createLedgerPersonalPaymentRepository(
         ...current,
         ...input,
         economicDate: input.economicDate ?? compatibilityEconomicDate(command.occurredAt),
+        economicDateSource: "EXPLICIT",
         note: input.note ?? null,
         recordedEquivalentMinor: input.recordedEquivalentMinor ?? null,
         recordedEquivalentCurrency: input.recordedEquivalentCurrency ?? null,
@@ -468,6 +471,7 @@ type PersonalPaymentRow = {
   scale: number;
   occurredAt: string;
   economicDate: string;
+  economicDateSource: "EXPLICIT" | "LEGACY_DERIVED_UTC" | null;
   note: string | null;
   recordedEquivalentMinor: number | null;
   recordedEquivalentCurrency: string | null;
@@ -490,7 +494,7 @@ const selectPayment = `SELECT id, projection_user_id AS projectionUserId,
   owner_user_id AS ownerUserId, owner_member_id AS ownerMemberId,
   counterparty_member_id AS counterpartyMemberId, direction,
   amount_minor AS amountMinor, currency, scale, occurred_at AS occurredAt,
-  economic_date AS economicDate, note,
+  economic_date AS economicDate, economic_date_source AS economicDateSource, note,
   recorded_equivalent_minor AS recordedEquivalentMinor,
   recorded_equivalent_currency AS recordedEquivalentCurrency,
   recorded_equivalent_scale AS recordedEquivalentScale,
@@ -655,12 +659,13 @@ async function upsert(
   await database.runAsync(
     `INSERT OR REPLACE INTO ledger_personal_payment_records (
       id, projection_user_id, journey_id, owner_user_id, owner_member_id, counterparty_member_id,
-      direction, amount_minor, currency, scale, occurred_at, economic_date, note,
+      direction, amount_minor, currency, scale, occurred_at, economic_date,
+      economic_date_source, note,
       recorded_equivalent_minor, recorded_equivalent_currency,
       recorded_equivalent_scale, reference_rate_decimal, reference_rate_date,
       reference_source, reference_provenance_json, server_revision, created_at,
       updated_at, deleted_at, sync_status, last_synced_at, last_error_code
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     record.id,
     projectionUserId,
     record.journeyId,
@@ -673,6 +678,7 @@ async function upsert(
     record.scale,
     record.occurredAt,
     record.economicDate ?? compatibilityEconomicDate(record.occurredAt),
+    record.economicDateSource ?? null,
     record.note ?? null,
     record.recordedEquivalentMinor ?? null,
     record.recordedEquivalentCurrency ?? null,

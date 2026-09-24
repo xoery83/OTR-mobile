@@ -92,10 +92,10 @@ const [
 const manifest = JSON.parse(manifestRaw);
 const expected = {
   tables: 105,
-  columns: 1469,
-  constraints: 813,
+  columns: 1470,
+  constraints: 814,
   indexes: 344,
-  functions: 122,
+  functions: 123,
   triggers: 108,
   rls_tables: 105,
   policies: 178,

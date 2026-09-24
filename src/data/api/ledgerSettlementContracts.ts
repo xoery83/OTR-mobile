@@ -642,6 +642,7 @@ export const personalSettlementPaymentSchema = personalPaymentValueSchema.safeEx
   ownerUserId: uuid,
   ownerMemberId: uuid,
   economicDate: z.iso.date().optional(),
+  economicDateSource: z.enum(["EXPLICIT", "LEGACY_DERIVED_UTC"]).nullable().optional(),
   revision: z.number().int().positive(),
   createdAt: z.string(),
   updatedAt: z.string(),

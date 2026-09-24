@@ -172,6 +172,8 @@ describe("Settlement 2.0 Personal Payment gateway projection", () => {
         currency: "NZD",
         scale: 2,
         occurred_at: "2026-09-22T00:00:00Z",
+        economic_date: "2026-09-22",
+        economic_date_source: "LEGACY_DERIVED_UTC",
         note: null,
         recorded_equivalent_minor: 17_250,
         recorded_equivalent_currency: "AUD",
@@ -189,6 +191,7 @@ describe("Settlement 2.0 Personal Payment gateway projection", () => {
       recordedEquivalentMinor: 17_250,
       recordedEquivalentCurrency: "AUD",
       referenceRateDecimal: "0.575000000000000000",
+      economicDateSource: "LEGACY_DERIVED_UTC",
     });
   });
 

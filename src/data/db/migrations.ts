@@ -1171,4 +1171,14 @@ export const migrations: Migration[] = [
         (projection_user_id, journey_id, payment_id, target_currency, policy_version);
     `,
   },
+  {
+    id: 34,
+    name: "personal_payment_economic_date_provenance",
+    sql: `
+      ALTER TABLE ledger_personal_payment_records ADD COLUMN economic_date_source TEXT
+        CHECK (economic_date_source IS NULL OR economic_date_source IN (
+          'EXPLICIT', 'LEGACY_DERIVED_UTC'
+        ));
+    `,
+  },
 ];

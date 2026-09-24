@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(20);
+select plan(22);
 set local role service_role;
 
 delete from public.journey_members
@@ -26,6 +26,8 @@ select has_table('public', 'personal_settlement_payment_fx_projection_audit_even
   'projection audit table exists');
 select has_column('public', 'personal_settlement_payment_records', 'economic_date',
   'payment economic date exists');
+select has_column('public', 'personal_settlement_payment_records', 'economic_date_source',
+  'payment economic-date provenance exists');
 
 select lives_ok($$
   select public.ledger_mutate_personal_settlement_payment_1a(
@@ -38,6 +40,9 @@ $$, 'new payment accepts an explicit economic date');
 select is((select economic_date::text from public.personal_settlement_payment_records
   where id = '74000000-0000-4000-8000-000000000001'), '2026-09-20',
   'economic date does not drift with occurredAt timezone');
+select is((select economic_date_source from public.personal_settlement_payment_records
+  where id = '74000000-0000-4000-8000-000000000001'), 'EXPLICIT',
+  'explicit Mobile economic date persists explicit provenance');
 select ok((select recorded_equivalent_minor is null from public.personal_settlement_payment_records
   where id = '74000000-0000-4000-8000-000000000001'),
   'Backend ignores client-derived equivalent');

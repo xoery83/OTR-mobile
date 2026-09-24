@@ -2,6 +2,21 @@
 
 Date: 2026-09-24
 
+## Personal Payment FX legacy backfill — Slice D accepted on Hosted Dev
+
+- Migration `20260924000300` adds reviewed economic-date provenance and a
+  service-only, manifest/revision/digest/target guarded bounded backfill RPC.
+  New Mobile records persist `EXPLICIT`; approved legacy rows persist
+  `LEGACY_DERIVED_UTC`. Unknown historical provenance is never inferred.
+- Hosted Dev Batch 1 created 28 identity projections with zero demands. Batch 2
+  created 11 cross-currency projections and six deduplicated demands through the
+  existing scanner. Three historical projections confirmed; eight current-day
+  projections correctly remain pending publication.
+- Both immediate batch replays and the final 39-row replay created zero mutations.
+  Payment revisions and canonical Settlement remained unchanged. Seven deleted
+  rows and eleven already-current rows were untouched. Production was not accessed.
+- Full details: `docs/ledger/PERSONAL_PAYMENT_FX_SLICE_D_ACCEPTANCE.md`.
+
 ## Personal Payment authoritative FX projections — Slice C accepted
 
 - Hosted Dev migration `20260924000200` adds first-class Personal Payment

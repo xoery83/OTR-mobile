@@ -78,6 +78,7 @@ function command(journeyId: string, amountMinor: number, direction: "PAID" | "RE
     currency: "NZD",
     scale: 2,
     occurredAt: "2026-09-22T10:00:00+12:00",
+    economicDate: "2026-09-22",
     note: null,
     recordedEquivalentMinor: null,
     recordedEquivalentCurrency: null,
@@ -237,6 +238,7 @@ describe("Settlement 2.0 Personal Payment SQLite repository", () => {
       amountMinor: 30_000,
       ownerUserId: userA,
       syncStatus: "PENDING_CREATE",
+      economicDateSource: "EXPLICIT",
     });
     expect(
       sqlite

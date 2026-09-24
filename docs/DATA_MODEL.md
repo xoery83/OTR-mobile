@@ -319,8 +319,10 @@ Uncertain:
 ## Ledger FX reference snapshot cache
 
 Personal Payment FX is stored separately from the user-owned payment. Each
-payment has an explicit economic date; legacy rows use the UTC date of
-`occurred_at`. A projection is unique by payment, target currency, and policy,
+payment has an economic date plus nullable reviewed provenance: `EXPLICIT`,
+`LEGACY_DERIVED_UTC`, or unknown. New Mobile writes are explicit. Historical
+provenance is assigned only by a reviewed environment manifest and is never
+inferred later from date equality. A projection is unique by payment, target currency, and policy,
 binds to the source payment revision/input digest, and owns an independent
 revision/audit trail. Projection rows are never Settlement inputs.
 

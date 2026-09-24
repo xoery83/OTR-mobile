@@ -256,7 +256,9 @@ Response shape:
 
 ## Sync
 
-Personal Payment create/update requests carry `economicDate`. Deprecated
+Personal Payment create/update requests carry `economicDate`; Backend responses
+also expose nullable `economicDateSource = EXPLICIT | LEGACY_DERIVED_UTC`.
+Deprecated
 `recordedEquivalent*` and reference fields may still parse for compatibility,
 but Backend ignores them. Personal Payment reads and mutation responses include
 authorized Backend-owned FX projections. Incremental Ledger changes include
