@@ -1,6 +1,6 @@
 # OTR Data Health and Self-Healing Plan
 
-Status: approved; Phases A and B accepted, later phases and historical repair remain gated.
+Status: approved; Phases A and B accepted, Phase C0 implemented awaiting acceptance, repair execution and historical recovery remain gated.
 
 Date: 2026-09-24
 
@@ -528,6 +528,8 @@ Stop and validate offline CREATE/edit/reconnect before proceeding.
 
 ### Phase C — deterministic local repair and convergence orchestration
 
+- C0 first adds repair eligibility and deterministic dry-run plans only. It executes no
+  mutation and treats `PROTECTED_LOCAL` plus historical unknown `FAILED` as hard vetoes.
 - Enable queue/dependency/error-metadata repairs.
 - Reuse operational sync, incremental pull and invalid-cursor bootstrap.
 - Add deferred-change drain and orphan-derived cleanup after verification.

@@ -2,6 +2,26 @@
 
 Date: 2026-09-24
 
+## OTR Data Health & Self-Healing — Phase C0 implemented
+
+- Phase C0 is limited to deterministic repair policy and dry-run planning over the
+  existing Phase B findings and protected-intent manifest.
+- Plans bind account, generation, optional Journey, finding digest, disposition,
+  evidence requirement, versioned action ID, and verifier ID. Eligibility comes only
+  from the shared policy layer; UI and callers do not infer it from categories.
+- `PROTECTED_LOCAL` and historical unknown `FAILED` are hard repair vetoes. C0 performs
+  no mutation, sync, pull, bootstrap, remote reconciliation, repair-event write,
+  migration, Backend change, scheduler, or repair UI.
+- All nine Phase B rules have centralized dispositions. The only dry-run `AUTO_SAFE`
+  candidates are expired operation leases, completed same-account/same-Journey causal
+  dependencies, and supported scheduled `RETRYABLE` operations with complete evidence.
+- The copied migration-36 guard 915 device snapshot remains seven `PROTECTED_LOCAL`
+  findings, zero executable actions, stable across repeated planning, with unchanged
+  domain and queue fingerprints and zero repair events.
+- Validation: TypeScript, ESLint, Backend build, Prettier, and 476 Vitest tests pass.
+  No migration 37, Backend endpoint, UI change, Hosted Dev access, or Production access.
+- Stop for Phase C0 acceptance. C1 repair execution remains gated.
+
 ## Global Menu, Settings and Currency integration
 
 - The contextual Global Menu now contains Current User, My Ledger, Currency, Settings,

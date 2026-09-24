@@ -23,7 +23,12 @@ describe("Data Health Phase B read-only scanner", () => {
     const first = await fixture.coordinator.run("MANUAL");
     const second = await fixture.coordinator.run("MANUAL");
 
-    expect(first).toMatchObject({ outcome: "HEALTHY", findings: [] });
+    expect(first).toMatchObject({
+      generation: 1,
+      outcome: "HEALTHY",
+      findings: [],
+      repairPlans: [],
+    });
     expect(second.reportDigest).toBe(first.reportDigest);
     expect(domainFingerprint(fixture.sqlite)).toBe(before);
     expect(
@@ -119,7 +124,68 @@ describe("Data Health Phase B read-only scanner", () => {
     expect(
       report.findings.find((finding) => finding.targetId === "create-failed"),
     ).toMatchObject({ category: "PROTECTED_LOCAL" });
+    expect(
+      report.repairPlans.find((plan) => plan.targetId === "create-failed"),
+    ).toMatchObject({
+      disposition: "PROTECTED",
+      eligibility: "INELIGIBLE",
+      actionId: null,
+    });
     expect(domainFingerprint(fixture.sqlite)).toBe(before);
+  });
+
+  it("keeps the guard 915 causal chain protected and byte-stable across repeated planning", async () => {
+    const fixture = createFixture();
+    insertExpense(fixture.sqlite, {
+      id: "guard-915-expense",
+      revision: 6,
+      serverRevision: 0,
+      syncStatus: "FAILED",
+    });
+    insertOperation(fixture.sqlite, {
+      id: "guard-915-create",
+      entityId: "guard-915-expense",
+      operationType: "CREATE_LEDGER_EXPENSE",
+      status: "FAILED",
+      failureCategory: "UNKNOWN",
+    });
+    for (let index = 1; index <= 5; index += 1)
+      insertOperation(fixture.sqlite, {
+        id: `guard-915-update-${index}`,
+        entityId: "guard-915-expense",
+        status: "FAILED",
+        failureCategory: "UNKNOWN",
+        dependencyOperationId: "guard-915-create",
+      });
+    const domainBefore = domainFingerprint(fixture.sqlite);
+    const queueBefore = queueFingerprint(fixture.sqlite);
+
+    const first = await fixture.coordinator.run("MANUAL");
+    const second = await fixture.coordinator.run("MANUAL");
+
+    expect(first.findings).toHaveLength(7);
+    expect(
+      first.findings.every((finding) => finding.category === "PROTECTED_LOCAL"),
+    ).toBe(true);
+    expect(first.repairPlans).toHaveLength(7);
+    expect(
+      first.repairPlans.every(
+        (plan) =>
+          plan.disposition === "PROTECTED" &&
+          plan.eligibility === "INELIGIBLE" &&
+          plan.actionId === null,
+      ),
+    ).toBe(true);
+    expect(second.reportDigest).toBe(first.reportDigest);
+    expect(second.findings).toEqual(first.findings);
+    expect(second.repairPlans).toEqual(first.repairPlans);
+    expect(domainFingerprint(fixture.sqlite)).toBe(domainBefore);
+    expect(queueFingerprint(fixture.sqlite)).toBe(queueBefore);
+    expect(
+      fixture.sqlite
+        .prepare("SELECT count(*) AS count FROM data_health_repair_events")
+        .get(),
+    ).toEqual({ count: 0 });
   });
 
   it("detects locally provable receipt, cursor, deferred, FX, and Review states", async () => {
@@ -244,6 +310,15 @@ describe("Data Health Phase B read-only scanner", () => {
       }),
     );
     expect(report.findings.some((finding) => finding.targetId === "user-b")).toBe(false);
+    expect(
+      report.repairPlans.find((plan) => plan.targetId === "wrong-journey"),
+    ).toMatchObject({
+      accountId: "user-a",
+      generation: 1,
+      journeyId: "journey-b",
+      disposition: "PROTECTED",
+      eligibility: "INELIGIBLE",
+    });
   });
 
   it("aborts stale results when the account generation changes during a scan", async () => {
@@ -369,6 +444,8 @@ function insertOperation(
     failureCategory?: string;
     errorCode?: string;
     dependencyOperationId?: string;
+    nextAttemptAt?: string;
+    leaseExpiresAt?: string;
   },
 ) {
   sqlite
@@ -376,8 +453,8 @@ function insertOperation(
       `INSERT INTO sync_operations (
         id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
         payload_json, status, owner_user_id, failure_category, last_error_code,
-        dependency_operation_id, created_at, updated_at
-      ) VALUES (?, ?, 'ledger_expense', ?, ?, ?, '{}', ?, 'user-a', ?, ?, ?,
+        dependency_operation_id, next_attempt_at, lease_expires_at, created_at, updated_at
+      ) VALUES (?, ?, 'ledger_expense', ?, ?, ?, '{}', ?, 'user-a', ?, ?, ?, ?, ?,
         '2026-09-24T00:00:00Z', '2026-09-24T00:00:00Z')`,
     )
     .run(
@@ -390,7 +467,16 @@ function insertOperation(
       input.failureCategory ?? null,
       input.errorCode ?? null,
       input.dependencyOperationId ?? null,
+      input.nextAttemptAt ?? null,
+      input.leaseExpiresAt ?? null,
     );
+}
+
+function queueFingerprint(sqlite: DatabaseSync) {
+  return JSON.stringify([
+    rows(sqlite, "sync_operations"),
+    rows(sqlite, "ledger_asset_operations"),
+  ]);
 }
 
 function domainFingerprint(sqlite: DatabaseSync) {

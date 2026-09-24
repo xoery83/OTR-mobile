@@ -1,5 +1,11 @@
 import type * as SQLite from "expo-sqlite";
 
+import {
+  planDataHealthRepairs,
+  type DataHealthOperationEvidence,
+  type DataHealthRepairPlan,
+} from "./dataHealthRepairPolicy";
+
 export type DataHealthCategory =
   | "HEALTHY"
   | "RETRYABLE"
@@ -27,12 +33,14 @@ export type DataHealthFinding = {
 
 export type DataHealthReport = {
   accountId: string;
+  generation: number;
   trigger: DataHealthTrigger;
   outcome: DataHealthOutcome;
   reportDigest: string;
   journeyCount: number;
   protectedIntentCount: number;
   findings: DataHealthFinding[];
+  repairPlans: DataHealthRepairPlan[];
   counts: Partial<Record<DataHealthCategory, number>>;
 };
 
@@ -60,7 +68,11 @@ type Operation = {
   attemptCount: number;
   failureCategory: string | null;
   errorCode: string | null;
+  nextAttemptAt: string | null;
+  leaseExpiresAt: string | null;
   dependencyOperationId: string | null;
+  dependencyStatus: string | null;
+  dependencyJourneyId: string | null;
 };
 
 type Expense = {
@@ -95,7 +107,11 @@ type AssetOperation = {
   attemptCount: number;
   failureCategory: string | null;
   errorCode: string | null;
+  nextAttemptAt: string | null;
+  leaseExpiresAt: string | null;
   dependencyOperationId: string | null;
+  dependencyStatus: string | null;
+  dependencyJourneyId: string | null;
 };
 
 type Receipt = {
@@ -287,7 +303,8 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
     async run(trigger: DataHealthTrigger = "MANUAL"): Promise<DataHealthReport> {
       const accountId = await dependencies.getActiveAccountId();
       const generation = dependencies.getAccountGeneration();
-      const startedAt = now().toISOString();
+      const planningTime = now();
+      const startedAt = planningTime.toISOString();
       let manifest: Manifest | null = null;
       let runGeneration = 1;
 
@@ -319,6 +336,13 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       await assertScope(dependencies, accountId, generation);
 
       const sorted = findings.sort(compareFinding);
+      const repairPlans = planDataHealthRepairs({
+        accountId,
+        generation,
+        findings: sorted,
+        operationEvidence: operationEvidence(manifest!),
+        now: planningTime,
+      });
       const counts: Partial<Record<DataHealthCategory, number>> = {};
       for (const finding of sorted)
         counts[finding.category] = (counts[finding.category] ?? 0) + 1;
@@ -371,12 +395,14 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
 
       return {
         accountId,
+        generation,
         trigger,
         outcome,
         reportDigest,
         journeyCount: manifest!.journeyIds.length,
         protectedIntentCount: protectedIntentCount(manifest!),
         findings: sorted,
+        repairPlans,
         counts,
       };
     },
@@ -475,12 +501,22 @@ async function buildManifest(
     accountId,
   );
   const operations = await database.getAllAsync<Operation>(
-    `SELECT id, trip_id AS journeyId, entity_type AS entityType,
-       entity_id AS entityId, operation_type AS operationType, status,
-       attempt_count AS attemptCount, failure_category AS failureCategory,
-       last_error_code AS errorCode,
-       dependency_operation_id AS dependencyOperationId
-     FROM sync_operations WHERE owner_user_id = ? AND status <> 'COMPLETED'`,
+    `SELECT operation.id, operation.trip_id AS journeyId,
+       operation.entity_type AS entityType, operation.entity_id AS entityId,
+       operation.operation_type AS operationType, operation.status,
+       operation.attempt_count AS attemptCount,
+       operation.failure_category AS failureCategory,
+       operation.last_error_code AS errorCode,
+       operation.next_attempt_at AS nextAttemptAt,
+       operation.lease_expires_at AS leaseExpiresAt,
+       operation.dependency_operation_id AS dependencyOperationId,
+       dependency.status AS dependencyStatus,
+       dependency.trip_id AS dependencyJourneyId
+     FROM sync_operations operation
+     LEFT JOIN sync_operations dependency
+       ON dependency.id = operation.dependency_operation_id
+      AND dependency.owner_user_id = operation.owner_user_id
+     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'`,
     accountId,
   );
   const expenses = await database.getAllAsync<Expense>(
@@ -504,12 +540,21 @@ async function buildManifest(
     accountId,
   );
   const assetOperations = await database.getAllAsync<AssetOperation>(
-    `SELECT id, journey_id AS journeyId, asset_id AS assetId,
-       operation_type AS operationType, status, attempt_count AS attemptCount,
-       failure_category AS failureCategory, last_error_code AS errorCode,
-       dependency_operation_id AS dependencyOperationId
-     FROM ledger_asset_operations
-     WHERE owner_user_id = ? AND status <> 'COMPLETED'`,
+    `SELECT operation.id, operation.journey_id AS journeyId,
+       operation.asset_id AS assetId, operation.operation_type AS operationType,
+       operation.status, operation.attempt_count AS attemptCount,
+       operation.failure_category AS failureCategory,
+       operation.last_error_code AS errorCode,
+       operation.next_attempt_at AS nextAttemptAt,
+       operation.lease_expires_at AS leaseExpiresAt,
+       operation.dependency_operation_id AS dependencyOperationId,
+       dependency.status AS dependencyStatus,
+       dependency.journey_id AS dependencyJourneyId
+     FROM ledger_asset_operations operation
+     LEFT JOIN ledger_asset_operations dependency
+       ON dependency.id = operation.dependency_operation_id
+      AND dependency.owner_user_id = operation.owner_user_id
+     WHERE operation.owner_user_id = ? AND operation.status <> 'COMPLETED'`,
     accountId,
   );
   const receipts = await database.getAllAsync<Receipt>(
@@ -981,6 +1026,37 @@ function uniqueFindings(findings: DataHealthFinding[]) {
     seen.add(key);
     return true;
   });
+}
+
+function operationEvidence(manifest: Manifest): DataHealthOperationEvidence[] {
+  return [
+    ...manifest.operations.map((operation) => ({
+      accountId: manifest.accountId,
+      journeyId: operation.journeyId,
+      targetType: "sync_operation" as const,
+      targetId: operation.id,
+      status: operation.status,
+      failureCategory: operation.failureCategory,
+      nextAttemptAt: operation.nextAttemptAt,
+      leaseExpiresAt: operation.leaseExpiresAt,
+      dependencyOperationId: operation.dependencyOperationId,
+      dependencyStatus: operation.dependencyStatus,
+      dependencyJourneyId: operation.dependencyJourneyId,
+    })),
+    ...manifest.assetOperations.map((operation) => ({
+      accountId: manifest.accountId,
+      journeyId: operation.journeyId,
+      targetType: "asset_operation" as const,
+      targetId: operation.id,
+      status: operation.status,
+      failureCategory: operation.failureCategory,
+      nextAttemptAt: operation.nextAttemptAt,
+      leaseExpiresAt: operation.leaseExpiresAt,
+      dependencyOperationId: operation.dependencyOperationId,
+      dependencyStatus: operation.dependencyStatus,
+      dependencyJourneyId: operation.dependencyJourneyId,
+    })),
+  ];
 }
 
 function protectedIntentCount(manifest: Manifest) {
