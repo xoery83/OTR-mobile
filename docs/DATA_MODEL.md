@@ -16,6 +16,22 @@ Every syncable object should consider:
 - `sync_version`: backend version or monotonically increasing revision.
 - `last_synced_at`.
 
+## Data Health Phase B
+
+SQLite migration 36 adds account-scoped operational metadata only:
+
+- `data_health_state` stores the last cheap/deep/manual scan timestamps, monotonically
+  increasing run generation, run state, aggregate outcome, deterministic report digest,
+  and aggregate finding/attention counts.
+- `data_health_repair_events` reserves the approved append-only repair-evidence shape for
+  Phase C. Phase B inserts no repair events because it performs no repair.
+
+Health diagnostics contain safe IDs, categories, counts, and digests only. They do not
+persist operation payloads, Money, notes, receipt/OCR content, tokens, provider responses,
+or raw server messages. Operational history is not immutable financial evidence; future
+retention may remove old `VERIFIED` diagnostics while unresolved/`NEEDS_ATTENTION`
+evidence remains available.
+
 ## Trip
 
 Purpose: top-level journey container.

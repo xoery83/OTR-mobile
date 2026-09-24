@@ -1,6 +1,6 @@
 # OTR Data Health and Self-Healing Plan
 
-Status: approved; Phase A implemented locally, later phases and historical repair remain gated.
+Status: approved; Phases A and B accepted, later phases and historical repair remain gated.
 
 Date: 2026-09-24
 
@@ -552,6 +552,12 @@ Each phase stops for review. Production rollout is separate.
 Phase A implementation note (2026-09-24): SQLite migration 35 adds only operation
 failure/dependency metadata and indexes. Health state/event tables, scanner, scheduler,
 automatic repair, and `guard 915` recovery remain deferred to their approved phases.
+
+Phase B implementation note (2026-09-24): SQLite migration 36 adds only account-scoped
+health run state and the future-compatible repair-event schema. The static coordinator
+builds an in-memory protected-intent manifest and runs read-only detectors. Phase B never
+writes repair events, changes domain/queue/cursor/file state, invokes sync/bootstrap, or
+schedules automatic scans. Phase C–E and `guard 915` recovery remain gated.
 
 ## 18. Automated test plan
 

@@ -2,7 +2,38 @@
 
 Date: 2026-09-24
 
-## OTR Data Health & Self-Healing — Phase A complete; awaiting acceptance
+## OTR Data Health & Self-Healing — Phase B accepted
+
+- Phase A was accepted and checkpointed at
+  `25d513793191b2e65a8c9a2cc2cf2d80adcde691`.
+- SQLite migration 36 adds only per-account health run/throttle/aggregate state and the
+  future-compatible repair-event schema. Phase B creates no repair events and implements
+  no repair lifecycle or retention job.
+- One static `DataHealthCoordinator` builds a transactionally consistent protected-intent
+  manifest and reports deterministic safe findings across operations, Expenses, Personal
+  Payments, receipts, cursors, deferred changes, FX projections/valuations, Review state,
+  and account/Journey isolation. Account identity and generation changes invalidate a run.
+- Settings now contains `Data & Sync → Check Data Health`. Normal UI says only healthy,
+  waiting, or needs attention; safe rule IDs appear only with Debug Mode enabled.
+- The scan writes only health state. It never runs sync/bootstrap/pull, changes queue or
+  domain rows, repairs/reclassifies operations, resets cursors, deletes files/caches, or
+  contacts Backend specifically for recovery. Scope-priority and throttle APIs exist for
+  future scheduling, but Phase D timers/triggers are not wired.
+- Focused in-memory SQLite coverage passes for healthy/deterministic scans, protected
+  local and historical failed CREATE intent, dependencies, actionable/auth/conflict,
+  missing originals, cursor/deferred/FX/Review evidence, isolation/account switch, zero
+  domain/queue mutations, and unchanged canonical Settlement. TypeScript, ESLint, Backend
+  build, touched-file formatting/diff checks, and 99 Vitest files / 465 tests pass. A Release Simulator
+  build, data-preserving launch, and Data & Sync UI smoke pass; the existing Simulator database reached migration 36. No physical-device install was required for this local-only scanner.
+- Read-only acceptance ran twice against a temporary copy of the retained Phase A device
+  snapshot containing `guard 915`. The scanner reported its local-only Expense plus one
+  FAILED CREATE and five FAILED UPDATEs as seven `PROTECTED_LOCAL` findings. Both report
+  digests matched, the domain/queue fingerprint stayed identical, and no repair event was
+  written. The source snapshot, Hosted Dev, FX state, and Production were not modified.
+- Stop after Phase B acceptance. Phase C repair, Phase D scheduling, Phase E historical
+  recovery, and all `guard 915` mutation remain gated.
+
+## OTR Data Health & Self-Healing — Phase A accepted
 
 - SQLite migration 35 adds structured safe failure diagnostics, attempt timestamps,
   request correlation, causal dependency metadata, and focused queue indexes. It does

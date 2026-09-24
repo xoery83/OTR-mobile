@@ -48,6 +48,10 @@ export default function RootLayout() {
           options={{ headerShown: true, headerTitle: "Settings" }}
         />
         <Stack.Screen
+          name="data-sync"
+          options={{ headerShown: true, headerTitle: "Data & Sync" }}
+        />
+        <Stack.Screen
           name="diagnostics"
           options={{ headerShown: true, headerTitle: "Diagnostics" }}
         />

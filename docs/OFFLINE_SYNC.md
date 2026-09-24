@@ -118,6 +118,19 @@ Dependent operations persist `dependency_operation_id` and remain
 `DEPENDENCY_BLOCKED` until the causal parent completes. They make no network request and
 consume no error attempt. Completion wakes them durably, including after process death.
 
+## Read-only Data Health Scan
+
+Phase B adds one account-scoped `DataHealthCoordinator`. A manual Settings check builds a
+transactionally consistent in-memory manifest of protected local intent and runs a small
+static set of indexed SQLite detectors. It may update only `data_health_state`; it does
+not change domain rows, operation status/metadata, cursors, caches, files, or canonical
+Settlement, and it never invokes sync, bootstrap, pull, repair, or Backend recovery.
+
+The scanner captures both active account identity and in-process account generation.
+Results are discarded if either changes. Future automatic scheduling may reuse the
+stored throttle state and scope plan, prioritizing the active/recent Journeys and those
+with suspicious protected work; Phase B adds no lifecycle timer or periodic scan.
+
 ## Idempotency
 
 Every create/update/delete sent to the backend must include an idempotency key. Offline creates must include local ids so backend responses can map local records to server ids.

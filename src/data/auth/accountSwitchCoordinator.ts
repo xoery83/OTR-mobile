@@ -1,4 +1,5 @@
 import type { LocalSession } from "@/domain/auth/localSession";
+import { advanceAccountGeneration } from "./accountGeneration";
 
 export type AccountSwitchDependencies = {
   pauseSync(): Promise<void>;
@@ -18,6 +19,7 @@ export function createAccountSwitchCoordinator(dependencies: AccountSwitchDepend
   async function begin() {
     if (switching) throw new Error("An account transition is already in progress.");
     switching = true;
+    advanceAccountGeneration();
     try {
       const previous = await dependencies.readSession();
       await dependencies.pauseSync();

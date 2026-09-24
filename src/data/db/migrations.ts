@@ -1218,4 +1218,55 @@ export const migrations: Migration[] = [
         AND failure_category IN ('UNKNOWN', 'RESPONSE_INVALID');
     `,
   },
+  {
+    id: 36,
+    name: "data_health_phase_b_read_only_scanner",
+    sql: `
+      CREATE TABLE data_health_state (
+        account_id TEXT PRIMARY KEY NOT NULL,
+        last_cheap_scan_at TEXT,
+        last_deep_scan_at TEXT,
+        last_manual_scan_at TEXT,
+        run_generation INTEGER NOT NULL DEFAULT 0,
+        run_state TEXT NOT NULL DEFAULT 'IDLE' CHECK (
+          run_state IN ('IDLE', 'RUNNING', 'COMPLETED', 'ABORTED')
+        ),
+        last_aggregate_outcome TEXT CHECK (
+          last_aggregate_outcome IS NULL OR last_aggregate_outcome IN (
+            'HEALTHY', 'WAITING', 'NEEDS_ATTENTION'
+          )
+        ),
+        last_report_digest TEXT,
+        last_finding_count INTEGER NOT NULL DEFAULT 0,
+        last_attention_count INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE data_health_repair_events (
+        id TEXT PRIMARY KEY NOT NULL,
+        account_id TEXT NOT NULL,
+        journey_id TEXT,
+        rule_id TEXT NOT NULL,
+        target_type TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        input_digest TEXT NOT NULL,
+        action TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (
+          status IN ('APPLIED', 'VERIFIED', 'NEEDS_ATTENTION')
+        ),
+        affected_count INTEGER NOT NULL DEFAULT 0,
+        safe_error_code TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        verified_at TEXT,
+        UNIQUE (
+          account_id, rule_id, target_type, target_id, input_digest, action
+        )
+      );
+      CREATE INDEX data_health_repair_events_account_status
+        ON data_health_repair_events (account_id, status, updated_at DESC);
+      CREATE INDEX data_health_repair_events_scope
+        ON data_health_repair_events (account_id, journey_id, rule_id, updated_at DESC);
+    `,
+  },
 ];

@@ -84,6 +84,14 @@ Capture:
 - Future inputs include text, voice, camera, photo, and document.
 - Parser routes captured content to Itinerary, Expense, or Travel Document.
 
+Data & Sync:
+
+- App-level Settings provides one user-safe Data Health check for the active account.
+- Phase B detects protected saved intent, waiting work, stale rebuildable mirrors, and
+  conditions needing attention without repairing, retrying, deleting, or contacting the
+  Backend for recovery.
+- Normal UI shows only aggregate outcomes. Technical rule identifiers remain Debug-only.
+
 ## Approved Long-Term Navigation Direction
 
 The approved primary navigation target is:

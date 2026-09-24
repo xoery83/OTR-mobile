@@ -29,6 +29,16 @@ export default function SettingsRoute() {
           value="Device default"
         />
       </View>
+      <Text accessibilityRole="header" style={styles.sectionTitle}>
+        Data & Sync
+      </Text>
+      <View style={styles.group}>
+        <SettingRow
+          icon="checkmark.shield"
+          label="Check Data Health"
+          onPress={() => router.push("/data-sync")}
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -57,6 +67,7 @@ function SettingRow({
 const styles = StyleSheet.create({
   content: { gap: 20, padding: 20 },
   title: { color: "#0F172A", fontSize: 28, fontWeight: "800" },
+  sectionTitle: { color: "#475569", fontSize: 14, fontWeight: "700" },
   group: {
     backgroundColor: "#FFFFFF",
     borderColor: "#D8DEE7",
