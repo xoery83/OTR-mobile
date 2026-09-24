@@ -1,5 +1,6 @@
 import type * as SQLite from "expo-sqlite";
 
+import { ApiClientError } from "@/data/api/client";
 import { createLocalId } from "@/domain/localId";
 
 import {
@@ -24,6 +25,22 @@ export type DataHealthCategory =
 
 export type DataHealthOutcome = "HEALTHY" | "WAITING" | "NEEDS_ATTENTION";
 export type DataHealthTrigger = "CHEAP" | "DEEP" | "MANUAL";
+export type DataHealthConvergenceState =
+  | "UP_TO_DATE"
+  | "RECOVERED"
+  | "REFRESHED"
+  | "LOCAL_REPAIRED_WAITING"
+  | "WAITING"
+  | "NEEDS_ATTENTION"
+  | "PROTECTED";
+
+export type DataHealthConvergence = {
+  state: DataHealthConvergenceState;
+  localRepairCount: number;
+  recoveredChangeCount: number;
+  refreshedJourneyCount: number;
+  syncAttempted: boolean;
+};
 
 export type DataHealthFinding = {
   ruleId: string;
@@ -45,6 +62,7 @@ export type DataHealthReport = {
   findings: DataHealthFinding[];
   repairPlans: DataHealthRepairPlan[];
   counts: Partial<Record<DataHealthCategory, number>>;
+  convergence?: DataHealthConvergence;
 };
 
 export type DataHealthRuleDefinition = {
@@ -217,6 +235,8 @@ export type DataHealthDependencies = {
   getActiveAccountId(): Promise<string>;
   getAccountGeneration(): number;
   fileExists(uri: string): Promise<boolean | null>;
+  runOperationalSync?(): Promise<void>;
+  refreshJourneyLedger?(journeyId: string): Promise<boolean>;
   now?(): Date;
 };
 
@@ -452,6 +472,126 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       }
     },
 
+    async converge(trigger: DataHealthTrigger = "MANUAL"): Promise<DataHealthReport> {
+      if (!dependencies.runOperationalSync || !dependencies.refreshJourneyLedger)
+        return coordinator.repair(trigger);
+
+      const planned = await coordinator.run(trigger);
+      const initialOperationIds = new Set(
+        planned.findings
+          .filter((finding) =>
+            ["sync_operation", "asset_operation"].includes(finding.targetType),
+          )
+          .map((finding) => `${finding.targetType}:${finding.targetId}`),
+      );
+      const eligiblePlans = planned.repairPlans.filter(
+        (plan) => plan.eligibility === "ELIGIBLE" && plan.actionId,
+      );
+      let report = await coordinator.repair(trigger);
+      if (
+        planned.accountId !== report.accountId ||
+        planned.generation !== report.generation
+      )
+        return withConvergence(report, {
+          state: "PROTECTED",
+          localRepairCount: 0,
+          recoveredChangeCount: 0,
+          refreshedJourneyCount: 0,
+          syncAttempted: false,
+        });
+      const accountId = report.accountId;
+      const generation = report.generation;
+      const localRepairCount = await countRecordedRepairs(
+        dependencies.database,
+        eligiblePlans,
+      );
+      const scopes = new Set(
+        [...planned.findings, ...report.findings]
+          .map((finding) => finding.journeyId)
+          .filter((journeyId): journeyId is string => Boolean(journeyId)),
+      );
+      const prioritizedScopes = await coordinator.getScopePlan();
+      if (prioritizedScopes[0]) scopes.add(prioritizedScopes[0]);
+
+      let syncAttempted = false;
+      let refreshedJourneyCount = 0;
+      let expectedNetworkFailure = false;
+      let protectedScope = false;
+      try {
+        report = await coordinator.run(trigger);
+        await assertScope(dependencies, accountId, generation);
+        if (hasRunnableQueueWork(report)) {
+          if (networkAllowed(report)) {
+            syncAttempted = true;
+            await dependencies.runOperationalSync();
+            await assertScope(dependencies, accountId, generation);
+          } else {
+            protectedScope ||= hasNetworkBlocker(report, "ISOLATION_VIOLATION");
+            expectedNetworkFailure ||= hasNetworkBlocker(report, "AUTH_PAUSED");
+          }
+        }
+
+        for (const journeyId of scopes) {
+          report = await coordinator.run(trigger);
+          await assertScope(dependencies, accountId, generation);
+          if (!networkAllowed(report, journeyId)) {
+            protectedScope ||= hasNetworkBlocker(
+              report,
+              "ISOLATION_VIOLATION",
+              journeyId,
+            );
+            expectedNetworkFailure ||= hasNetworkBlocker(report, "AUTH_PAUSED");
+            continue;
+          }
+          try {
+            if (await dependencies.refreshJourneyLedger(journeyId))
+              refreshedJourneyCount += 1;
+            await assertScope(dependencies, accountId, generation);
+          } catch (error) {
+            if (!(error instanceof ApiClientError)) throw error;
+            expectedNetworkFailure = true;
+            break;
+          }
+        }
+        report = await coordinator.run(trigger);
+      } catch (error) {
+        if (!(error instanceof DataHealthScopeChangedError)) throw error;
+        const changed = await coordinator.run(trigger);
+        return withConvergence(changed, {
+          state: "PROTECTED",
+          localRepairCount,
+          recoveredChangeCount: 0,
+          refreshedJourneyCount,
+          syncAttempted,
+        });
+      }
+
+      const finalOperationIds = new Set(
+        report.findings
+          .filter((finding) =>
+            ["sync_operation", "asset_operation"].includes(finding.targetType),
+          )
+          .map((finding) => `${finding.targetType}:${finding.targetId}`),
+      );
+      const recoveredChangeCount = [...initialOperationIds].filter(
+        (id) => !finalOperationIds.has(id),
+      ).length;
+      return withConvergence(report, {
+        state: convergenceState({
+          report,
+          localRepairCount,
+          recoveredChangeCount,
+          refreshedJourneyCount,
+          expectedNetworkFailure,
+          protectedScope,
+        }),
+        localRepairCount,
+        recoveredChangeCount,
+        refreshedJourneyCount,
+        syncAttempted,
+      });
+    },
+
     async shouldRunCheapScan(maxAgeMs = 15 * 60_000) {
       const accountId = await dependencies.getActiveAccountId();
       const state = await dependencies.database.getFirstAsync<{
@@ -522,6 +662,76 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
     },
   };
   return coordinator;
+}
+
+async function countRecordedRepairs(database: Database, plans: DataHealthRepairPlan[]) {
+  let count = 0;
+  for (const plan of plans) {
+    const event = await database.getFirstAsync(
+      `SELECT 1 FROM data_health_repair_events
+       WHERE account_id = ? AND rule_id = ? AND target_type = ? AND target_id = ?
+         AND input_digest = ? AND action = ?`,
+      plan.accountId,
+      plan.ruleId,
+      plan.targetType,
+      plan.targetId,
+      plan.findingDigest,
+      plan.actionId,
+    );
+    if (event) count += 1;
+  }
+  return count;
+}
+
+function hasRunnableQueueWork(report: DataHealthReport) {
+  return report.findings.some(
+    (finding) =>
+      ["sync_operation", "asset_operation"].includes(finding.targetType) &&
+      finding.category === "RETRYABLE",
+  );
+}
+
+function networkAllowed(report: DataHealthReport, journeyId?: string) {
+  if (hasNetworkBlocker(report, "AUTH_PAUSED")) return false;
+  return !hasNetworkBlocker(report, "ISOLATION_VIOLATION", journeyId);
+}
+
+function hasNetworkBlocker(
+  report: DataHealthReport,
+  category: "AUTH_PAUSED" | "ISOLATION_VIOLATION",
+  journeyId?: string,
+) {
+  return report.findings.some(
+    (finding) =>
+      finding.category === category && (!journeyId || finding.journeyId === journeyId),
+  );
+}
+
+function convergenceState(input: {
+  report: DataHealthReport;
+  localRepairCount: number;
+  recoveredChangeCount: number;
+  refreshedJourneyCount: number;
+  expectedNetworkFailure: boolean;
+  protectedScope: boolean;
+}): DataHealthConvergenceState {
+  if (input.report.outcome === "NEEDS_ATTENTION") return "NEEDS_ATTENTION";
+  const allProtected =
+    input.report.findings.length > 0 &&
+    input.report.findings.every((finding) => finding.category === "PROTECTED_LOCAL");
+  if (input.protectedScope || allProtected) return "PROTECTED";
+  if (input.report.outcome === "WAITING" || input.expectedNetworkFailure)
+    return input.localRepairCount > 0 ? "LOCAL_REPAIRED_WAITING" : "WAITING";
+  if (input.recoveredChangeCount > 0) return "RECOVERED";
+  if (input.refreshedJourneyCount > 0) return "REFRESHED";
+  return "UP_TO_DATE";
+}
+
+function withConvergence(
+  report: DataHealthReport,
+  convergence: DataHealthConvergence,
+): DataHealthReport {
+  return { ...report, convergence };
 }
 
 async function applyRepairPlan(

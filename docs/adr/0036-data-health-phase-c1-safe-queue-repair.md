@@ -1,6 +1,6 @@
 # ADR 0036: Data Health Phase C1 repairs only runnable queue metadata
 
-Status: Implemented; awaiting Phase C1 acceptance (2026-09-24)
+Status: Accepted (2026-09-24)
 
 Phase C1 executes only the three C0-approved versioned actions: expired operation lease
 recovery, completed-dependency wake-up, and manual reactivation of a sparse long-lived retryable

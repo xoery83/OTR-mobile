@@ -1,6 +1,6 @@
 # OTR Data Health and Self-Healing Plan
 
-Status: approved; Phases A, B, and C0 accepted, Phase C1 implemented awaiting acceptance for the three queue-metadata actions only; later repair and historical recovery remain gated.
+Status: approved; Phases A, B, C0, and C1 accepted; Phase C2 convergence orchestration is implemented awaiting acceptance; later repair and historical recovery remain gated.
 
 Date: 2026-09-24
 
@@ -565,6 +565,13 @@ health run state and the future-compatible repair-event schema. The static coord
 builds an in-memory protected-intent manifest and runs read-only detectors. Phase B never
 writes repair events, changes domain/queue/cursor/file state, invokes sync/bootstrap, or
 schedules automatic scans. Phase C–E and `guard 915` recovery remain gated.
+
+Phase C2 implementation note (2026-09-24): manual health reuses the existing operational
+sync, incremental Ledger/Personal Payment pull, scoped invalid-cursor bootstrap, protected
+repository application, and deferred Expense drain. It refreshes affected scopes plus at
+most the highest-priority active/recent Journey, reports recovery only after a rescan, and
+adds no migration, action classification, worker, queue, Backend endpoint, scheduler,
+cache purge, or historical `FAILED` recovery. `guard 915` remains protected for Phase E.
 
 ## 18. Automated test plan
 

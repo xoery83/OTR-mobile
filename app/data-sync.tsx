@@ -48,7 +48,7 @@ export default function DataSyncRoute() {
     setChecking(true);
     setFailed(false);
     try {
-      const next = await (await getDefaultDataHealthCoordinator()).repair("MANUAL");
+      const next = await (await getDefaultDataHealthCoordinator()).converge("MANUAL");
       if (!mounted.current) return;
       setReport(next);
       setOutcome(next.outcome);
@@ -65,8 +65,8 @@ export default function DataSyncRoute() {
         Data & Sync
       </Text>
       <Text style={styles.body}>
-        Check saved changes and local data for this account. This check does not delete or
-        change your travel data.
+        Check saved changes and refresh shared data for this account. This check never
+        deletes your saved travel data.
       </Text>
       <View style={styles.card}>
         <Text accessibilityLiveRegion="polite" style={styles.result}>
@@ -74,7 +74,7 @@ export default function DataSyncRoute() {
             ? "Checking your data…"
             : failed
               ? "Your data could not be checked right now."
-              : outcomeMessage(outcome)}
+              : outcomeMessage(outcome, report)}
         </Text>
         {checking ? <ActivityIndicator color="#0F766E" /> : null}
         <Pressable
@@ -108,7 +108,17 @@ export default function DataSyncRoute() {
   );
 }
 
-function outcomeMessage(outcome: DataHealthOutcome | null) {
+function outcomeMessage(
+  outcome: DataHealthOutcome | null,
+  report: DataHealthReport | null,
+) {
+  if (report?.convergence?.state === "RECOVERED")
+    return `${report.convergence.recoveredChangeCount} unsynced ${report.convergence.recoveredChangeCount === 1 ? "change" : "changes"} recovered`;
+  if (report?.convergence?.state === "REFRESHED") return "Shared data refreshed";
+  if (report?.convergence?.state === "LOCAL_REPAIRED_WAITING")
+    return "Some saved changes were repaired and are still waiting to sync";
+  if (report?.convergence?.state === "PROTECTED")
+    return "Some saved changes are protected and still waiting to sync";
   if (outcome === "HEALTHY") return "Everything is up to date";
   if (outcome === "WAITING") return "Some saved changes are still waiting to sync";
   if (outcome === "NEEDS_ATTENTION") return "Some local data needs attention";

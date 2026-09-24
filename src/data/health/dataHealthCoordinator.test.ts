@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { ApiClientError } from "@/data/api/client";
 import { migrations } from "@/data/db/migrations";
 
 import {
@@ -753,6 +754,369 @@ describe("Data Health Phase C1 safe queue repair", () => {
       { id: "applied-unresolved", status: "APPLIED" },
       { id: "needs-attention", status: "NEEDS_ATTENTION" },
     ]);
+  });
+});
+
+describe("Data Health Phase C2 convergence orchestration", () => {
+  it("repairs, runs the existing sync, pulls, and reports only verified convergence", async () => {
+    let fixture!: ReturnType<typeof createFixture>;
+    fixture = createFixture({
+      runOperationalSync: async () => {
+        fixture.sqlite
+          .prepare("UPDATE sync_operations SET status = 'COMPLETED' WHERE id = ?")
+          .run("c2-retry");
+        fixture.sqlite
+          .prepare(
+            `UPDATE ledger_expenses SET server_id = 'server-c2', server_revision = 1,
+               sync_status = 'SYNCED' WHERE id = 'expense-c2'`,
+          )
+          .run();
+      },
+      refreshJourneyLedger: async (journeyId) => journeyId === "journey-a",
+    });
+    insertExpense(fixture.sqlite, { id: "expense-c2" });
+    insertOperation(fixture.sqlite, {
+      id: "c2-retry",
+      entityId: "expense-c2",
+      status: "RETRYABLE",
+      failureCategory: "NETWORK",
+      nextAttemptAt: "2026-10-24T01:00:00Z",
+      attemptCount: 7,
+    });
+    fixture.sqlite.exec(`
+      INSERT INTO ledger_settlements (
+        id, journey_id, status, through_timestamp, settlement_currency,
+        settlement_scale, settings_revision, algorithm_version, input_digest,
+        revision, finalized_by, finalized_at
+      ) VALUES ('settlement-c2', 'journey-a', 'FINALIZED',
+        '2026-09-24T00:00:00Z', 'NZD', 2, 1, 'v1', 'stable-c2', 1,
+        'member-a', '2026-09-24T00:00:00Z');
+    `);
+    const settlementBefore = rows(fixture.sqlite, "ledger_settlements");
+
+    const report = await fixture.coordinator.converge("MANUAL");
+
+    expect(report.outcome).toBe("HEALTHY");
+    expect(report.convergence).toEqual({
+      state: "RECOVERED",
+      localRepairCount: 1,
+      recoveredChangeCount: 1,
+      refreshedJourneyCount: 1,
+      syncAttempted: true,
+    });
+    expect(operationState(fixture.sqlite, "c2-retry").status).toBe("COMPLETED");
+    expect(rows(fixture.sqlite, "ledger_settlements")).toEqual(settlementBefore);
+  });
+
+  it("reports a local repair as waiting when connectivity disappears before convergence", async () => {
+    const fixture = createFixture({
+      runOperationalSync: async () => undefined,
+      refreshJourneyLedger: async () => {
+        throw new ApiClientError("offline", "network");
+      },
+    });
+    insertExpense(fixture.sqlite, { id: "expense-offline" });
+    insertOperation(fixture.sqlite, {
+      id: "offline-retry",
+      entityId: "expense-offline",
+      status: "RETRYABLE",
+      failureCategory: "NETWORK",
+      nextAttemptAt: "2026-10-24T01:00:00Z",
+      attemptCount: 7,
+    });
+
+    const report = await fixture.coordinator.converge("MANUAL");
+
+    expect(report.convergence).toMatchObject({
+      state: "LOCAL_REPAIRED_WAITING",
+      localRepairCount: 1,
+      recoveredChangeCount: 0,
+      syncAttempted: true,
+    });
+    expect(operationState(fixture.sqlite, "offline-retry")).toMatchObject({
+      status: "RETRYABLE",
+      next_attempt_at: null,
+    });
+  });
+
+  it("cold-restart pull completes after a kill between push and pull", async () => {
+    let fixture!: ReturnType<typeof createFixture>;
+    fixture = createFixture({
+      runOperationalSync: async () => {
+        fixture.sqlite
+          .prepare("UPDATE sync_operations SET status = 'COMPLETED' WHERE id = ?")
+          .run("restart-operation");
+        fixture.sqlite
+          .prepare(
+            `UPDATE ledger_expenses SET server_id = 'server-restart',
+               server_revision = 1, sync_status = 'SYNCED'
+             WHERE id = 'expense-restart'`,
+          )
+          .run();
+      },
+      refreshJourneyLedger: async () => {
+        throw new Error("injected process kill");
+      },
+    });
+    insertExpense(fixture.sqlite, { id: "expense-restart" });
+    insertOperation(fixture.sqlite, {
+      id: "restart-operation",
+      entityId: "expense-restart",
+      status: "PENDING",
+      failureCategory: "NETWORK",
+    });
+
+    await expect(fixture.coordinator.converge("MANUAL")).rejects.toThrow(
+      "injected process kill",
+    );
+    const restarted = createDataHealthCoordinator({
+      database: adapter(fixture.sqlite),
+      getActiveAccountId: async () => "user-a",
+      getAccountGeneration: () => 1,
+      fileExists: async () => true,
+      runOperationalSync: async () => {
+        throw new Error("converged work must not be replayed");
+      },
+      refreshJourneyLedger: async () => true,
+      now: () => new Date("2026-09-24T01:00:00Z"),
+    });
+
+    const report = await restarted.converge("MANUAL");
+    expect(report.convergence).toMatchObject({
+      state: "REFRESHED",
+      syncAttempted: false,
+      refreshedJourneyCount: 1,
+    });
+  });
+
+  it("replays idempotently after a lost response without bypassing normal due time", async () => {
+    let current = new Date("2026-09-24T01:00:00Z");
+    let syncRuns = 0;
+    let fixture!: ReturnType<typeof createFixture>;
+    fixture = createFixture({
+      now: () => current,
+      runOperationalSync: async () => {
+        syncRuns += 1;
+        if (syncRuns === 1) {
+          fixture.sqlite
+            .prepare(
+              `UPDATE sync_operations SET status = 'RETRYABLE', attempt_count = 1,
+                 failure_category = 'NETWORK', next_attempt_at = ? WHERE id = ?`,
+            )
+            .run("2026-09-24T01:05:00Z", "lost-response");
+          return;
+        }
+        fixture.sqlite
+          .prepare("UPDATE sync_operations SET status = 'COMPLETED' WHERE id = ?")
+          .run("lost-response");
+        fixture.sqlite
+          .prepare(
+            `UPDATE ledger_expenses SET server_id = 'server-lost-response',
+               server_revision = 1, sync_status = 'SYNCED'
+             WHERE id = 'expense-lost-response'`,
+          )
+          .run();
+      },
+      refreshJourneyLedger: async () => true,
+    });
+    insertExpense(fixture.sqlite, { id: "expense-lost-response" });
+    insertOperation(fixture.sqlite, {
+      id: "lost-response",
+      entityId: "expense-lost-response",
+      status: "PENDING",
+      failureCategory: "NETWORK",
+    });
+
+    const waiting = await fixture.coordinator.converge("MANUAL");
+    expect(waiting.convergence?.state).toBe("WAITING");
+    expect(operationState(fixture.sqlite, "lost-response").next_attempt_at).toBe(
+      "2026-09-24T01:05:00Z",
+    );
+
+    current = new Date("2026-09-24T01:06:00Z");
+    const converged = await fixture.coordinator.converge("MANUAL");
+    expect(converged.convergence?.state).toBe("RECOVERED");
+    expect(syncRuns).toBe(2);
+    expect(operationState(fixture.sqlite, "lost-response").status).toBe("COMPLETED");
+  });
+
+  it("drains deferred server state only through the existing scoped refresh", async () => {
+    let fixture!: ReturnType<typeof createFixture>;
+    fixture = createFixture({
+      runOperationalSync: async () => {
+        throw new Error("mirror refresh must not invoke mutation sync");
+      },
+      refreshJourneyLedger: async () => {
+        fixture.sqlite
+          .prepare(
+            `DELETE FROM ledger_deferred_server_changes
+             WHERE journey_id = 'journey-a' AND entity_id = 'server-expense'`,
+          )
+          .run();
+        return true;
+      },
+    });
+    fixture.sqlite.exec(`
+      INSERT INTO ledger_deferred_server_changes (
+        journey_id, entity_type, entity_id, revision, payload_json, created_at
+      ) VALUES ('journey-a', 'EXPENSE', 'server-expense', 2, '{}',
+        '2026-09-24T00:00:00Z');
+    `);
+
+    const report = await fixture.coordinator.converge("MANUAL");
+
+    expect(report.convergence).toMatchObject({
+      state: "REFRESHED",
+      refreshedJourneyCount: 1,
+      syncAttempted: false,
+    });
+    expect(rows(fixture.sqlite, "ledger_deferred_server_changes")).toEqual([]);
+  });
+
+  it("refreshes a server-newer clean active Journey without a broad sync", async () => {
+    let fixture!: ReturnType<typeof createFixture>;
+    fixture = createFixture({
+      runOperationalSync: async () => {
+        throw new Error("clean refresh must not invoke mutation sync");
+      },
+      refreshJourneyLedger: async () => {
+        insertExpense(fixture.sqlite, {
+          id: "server-newer",
+          serverId: "server-newer",
+          serverRevision: 2,
+          syncStatus: "SYNCED",
+        });
+        return true;
+      },
+    });
+
+    const report = await fixture.coordinator.converge("MANUAL");
+
+    expect(report.convergence?.state).toBe("REFRESHED");
+    expect(report.findings).toEqual([]);
+    expect(rows(fixture.sqlite, "ledger_expenses")).toHaveLength(1);
+  });
+
+  it("aborts remaining network work after an account generation change", async () => {
+    let accountId = "user-a";
+    let generation = 1;
+    let pullCount = 0;
+    const fixture = createFixture({
+      getActiveAccountId: async () => accountId,
+      getAccountGeneration: () => generation,
+      runOperationalSync: async () => {
+        accountId = "user-b";
+        generation = 2;
+      },
+      refreshJourneyLedger: async () => {
+        pullCount += 1;
+        return true;
+      },
+    });
+    insertOperation(fixture.sqlite, {
+      id: "switch-operation",
+      entityId: "expense-switch",
+      status: "PENDING",
+      failureCategory: "NETWORK",
+    });
+
+    const report = await fixture.coordinator.converge("MANUAL");
+
+    expect(report.accountId).toBe("user-b");
+    expect(report.generation).toBe(2);
+    expect(report.convergence?.state).toBe("PROTECTED");
+    expect(pullCount).toBe(0);
+    expect(operationState(fixture.sqlite, "switch-operation").status).toBe("PENDING");
+  });
+
+  it("does not bypass auth pause and keeps the affected scope waiting", async () => {
+    let fixture!: ReturnType<typeof createFixture>;
+    let pullCount = 0;
+    fixture = createFixture({
+      runOperationalSync: async () => {
+        fixture.sqlite
+          .prepare(
+            `UPDATE sync_operations SET status = 'PENDING', failure_category = 'AUTH',
+               last_error_code = 'AUTH_PAUSED' WHERE id = 'auth-operation'`,
+          )
+          .run();
+      },
+      refreshJourneyLedger: async () => {
+        pullCount += 1;
+        return true;
+      },
+    });
+    insertOperation(fixture.sqlite, {
+      id: "auth-operation",
+      entityId: "expense-auth-c2",
+      status: "PENDING",
+      failureCategory: "NETWORK",
+    });
+
+    const report = await fixture.coordinator.converge("MANUAL");
+
+    expect(report.counts.AUTH_PAUSED).toBe(1);
+    expect(report.convergence?.state).toBe("WAITING");
+    expect(pullCount).toBe(0);
+  });
+
+  it("keeps protected historical intent unchanged during scoped refresh", async () => {
+    const fixture = createFixture({
+      runOperationalSync: async () => {
+        throw new Error("protected work must not be executed");
+      },
+      refreshJourneyLedger: async () => true,
+    });
+    insertExpense(fixture.sqlite, {
+      id: "guard-915-expense",
+      revision: 6,
+      syncStatus: "FAILED",
+    });
+    insertOperation(fixture.sqlite, {
+      id: "guard-915-create",
+      entityId: "guard-915-expense",
+      operationType: "CREATE_LEDGER_EXPENSE",
+      status: "FAILED",
+      failureCategory: "UNKNOWN",
+    });
+    for (let index = 1; index <= 5; index += 1)
+      insertOperation(fixture.sqlite, {
+        id: `guard-915-update-${index}`,
+        entityId: "guard-915-expense",
+        status: "FAILED",
+        failureCategory: "UNKNOWN",
+        dependencyOperationId: "guard-915-create",
+      });
+    const before = domainFingerprint(fixture.sqlite);
+
+    const report = await fixture.coordinator.converge("MANUAL");
+
+    expect(report.convergence).toMatchObject({
+      state: "PROTECTED",
+      recoveredChangeCount: 0,
+      syncAttempted: false,
+    });
+    expect(domainFingerprint(fixture.sqlite)).toBe(before);
+  });
+
+  it("repeated converged runs are stable and never invoke mutation sync", async () => {
+    let syncCount = 0;
+    const fixture = createFixture({
+      runOperationalSync: async () => {
+        syncCount += 1;
+      },
+      refreshJourneyLedger: async () => false,
+    });
+    const before = domainFingerprint(fixture.sqlite);
+
+    const first = await fixture.coordinator.converge("MANUAL");
+    const second = await fixture.coordinator.converge("MANUAL");
+
+    expect(first.convergence?.state).toBe("UP_TO_DATE");
+    expect(second.convergence).toEqual(first.convergence);
+    expect(second.reportDigest).toBe(first.reportDigest);
+    expect(syncCount).toBe(0);
+    expect(domainFingerprint(fixture.sqlite)).toBe(before);
   });
 });
 

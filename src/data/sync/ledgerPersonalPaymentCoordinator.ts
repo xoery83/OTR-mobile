@@ -1,3 +1,4 @@
+import { ApiClientError } from "@/data/api/client";
 import { requireActiveUserId } from "@/data/auth/authRepository";
 import { openDatabase } from "@/data/db/database";
 import { createLedgerPersonalPaymentRepository } from "@/data/repositories/ledgerPersonalPaymentRepository";
@@ -57,5 +58,12 @@ export async function refreshLedgerPersonalPayments(journeyId: string) {
   const repository = createLedgerPersonalPaymentRepository(database, requireActiveUserId);
   const checkpoint = await repository.getCursor(journeyId);
   if (!checkpoint) await bootstrapLedgerPersonalPayments(journeyId);
-  return pullLedgerPersonalPayments(journeyId);
+  try {
+    return await pullLedgerPersonalPayments(journeyId);
+  } catch (error) {
+    if (!(error instanceof ApiClientError) || error.code !== "INVALID_CURSOR")
+      throw error;
+    await bootstrapLedgerPersonalPayments(journeyId);
+    return pullLedgerPersonalPayments(journeyId);
+  }
 }

@@ -140,6 +140,21 @@ operation. Each transition revalidates the deterministic plan inside its SQLite
 transaction and records `APPLIED`; a rescan records `VERIFIED`. It does not run the
 operation, call the Backend, change domain facts, or bypass normal auth/backoff handling.
 
+## Data Health Phase C2 convergence
+
+The manual health workflow now continues from C1 repair through the existing operational
+sync and scoped Ledger refresh. It rebuilds the protected-intent manifest and revalidates
+account generation before every network phase. Known auth pause or isolation stops the
+affected network work; queue due time, sparse retry, conflicts, idempotency, and mutation
+execution remain owned by the normal sync engine.
+
+Incremental pull runs for affected Journeys and at most the highest-priority active/recent
+Journey. Missing or explicitly invalid scoped cursors may use the existing scoped
+bootstrap; a health run never resets all cursors or wipes SQLite. Ledger and Personal
+Payment bootstrap/pull application retain pending, failed, dependency-blocked, conflict,
+Review, and attachment intent through their existing repository protections. Recovery is
+reported only after a final rescan verifies convergence.
+
 ## Idempotency
 
 Every create/update/delete sent to the backend must include an idempotency key. Offline creates must include local ids so backend responses can map local records to server ids.

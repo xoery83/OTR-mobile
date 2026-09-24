@@ -1,6 +1,6 @@
 # ADR 0035: Data Health Phase C0 plans repairs without executing them
 
-Status: Implemented; awaiting Phase C0 acceptance (2026-09-24)
+Status: Accepted (2026-09-24)
 
 Phase C0 adds one pure, deterministic policy layer between Phase B findings and any
 future repair execution. A plan binds the finding digest to the active account,

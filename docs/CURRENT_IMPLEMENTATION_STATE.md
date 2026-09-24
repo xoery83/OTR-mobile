@@ -2,6 +2,32 @@
 
 Date: 2026-09-24
 
+## OTR Data Health & Self-Healing — Phase C2 implemented
+
+- Start from accepted C1 checkpoint `79e3fa9aafbdd166fe99189982ab1360495a871e`.
+- Manual System Health now rebuilds protected intent, applies only the three C1 queue
+  repairs, requests the existing operational sync, refreshes affected Journeys plus at
+  most the highest-priority active/recent Journey, and rescans before reporting recovery.
+- Existing sync retains due-time, sparse retry, auth, conflict, idempotency, dependency,
+  account, and Journey policy. Existing repository transactions protect pending/failed
+  domain state, Review actions and attachment originals and drain deferred Expense changes.
+- Personal Payment now recovers structured `INVALID_CURSOR` with its existing scoped
+  list/change flow. Ledger keeps its existing scoped invalid-cursor bootstrap. No global
+  cursor reset, SQLite wipe, Backend repair endpoint, worker, queue, or migration was added.
+- Settings reports up-to-date, verified recovered changes, shared-data refresh, waiting,
+  attention, or protected outcomes without queue/cursor/bootstrap terminology.
+- `guard 915` remains a protected historical unknown `FAILED` CREATE with zero executable
+  actions and is not replayed or reported recovered. Phase D scheduling and Phase E
+  historical recovery remain gated.
+- Validation passes 102 Vitest files / 497 tests, TypeScript, ESLint, Backend build,
+  touched-file Prettier, `git diff --check`, and a Release iOS Simulator build. Failure
+  injection covers a process stop after push/before pull, lost-response due-time replay,
+  stale generation/auth aborts, transactional bootstrap/pull, and deferred-change drain.
+- A temporary migration-36 copy of the retained `guard 915` snapshot still reports seven
+  `PROTECTED_LOCAL` findings, zero executable actions, and no guard queue/domain changes;
+  its source snapshot remains unchanged at migration 34. Hosted Dev and Production were
+  not accessed. Stop for C2 acceptance; do not enter later Phase C work.
+
 ## OTR Data Health & Self-Healing — Phase C1 implemented
 
 - Start from accepted C0 checkpoint `07efd9b2e0307c168fc296c28aa68006026e98a4`.
