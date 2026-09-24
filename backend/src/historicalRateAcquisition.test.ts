@@ -89,4 +89,14 @@ describe("historical rate acquisition", () => {
     expect(await acquirePendingRateQuotes(service.client, { fetch })).toBe(0);
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it("can fill the shared quote cache without changing Personal Payment state", async () => {
+    const service = fakeService();
+    const fetch = vi.fn(async () => candidate);
+    expect(
+      await acquirePendingRateQuotes(service.client, { fetch }, [demand], false),
+    ).toBe(1);
+    expect(service.upsert).toHaveBeenCalledOnce();
+    expect(service.rpc).not.toHaveBeenCalled();
+  });
 });

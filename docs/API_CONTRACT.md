@@ -223,6 +223,19 @@ Response shape:
 }
 ```
 
+`POST /v2/trips/:id/ledger/rate-lookup`
+
+- Requires current Journey read access.
+- Accepts `{ quoteCurrency, baseCurrency, requestedDate }` for two distinct supported
+  ISO currencies.
+- Adapts the existing `ECB_DAILY_V1` resolver only. It reuses the existing provider,
+  seven-day historical policy, quote cache, negative cache and provenance validation.
+- Returns the requested date, nullable actual reference date/rate, explicit resolution
+  status, policy, observation time and safe provider/source references.
+- It may populate the existing mutable quote cache. It never creates an Expense
+  valuation snapshot or changes Expense, Personal Payment, Settlement or Adjustment
+  state.
+
 ## Documents / Tickets
 
 `GET /trips/:id/documents?since=:cursor` - `NEW`

@@ -40,6 +40,10 @@ import {
   journeyCurrencyPreviewSchema,
 } from "../../src/data/api/ledgerCurrencyContracts";
 import type {
+  LedgerRateLookupRequest,
+  LedgerRateLookupResponse,
+} from "../../src/data/api/ledgerFxContracts";
+import type {
   CreatePersonalSettlementCheckpointRequest,
   CreatePersonalSettlementPaymentRequest,
   CorrectSettlementPaymentRequest,
@@ -915,6 +919,10 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         console.error("Journey Currency Review refresh failed", error);
       }
       return committed;
+    },
+
+    async lookupLedgerRate(_userId, tripId, input) {
+      return lookupLedgerRate(service, rateQuoteProvider, tripId, input);
     },
 
     async acquirePendingRateQuotes() {
@@ -2328,6 +2336,7 @@ export async function acquirePendingRateQuotes(
   service: SupabaseClient,
   provider: RateQuoteProvider,
   previewDemands?: ClaimedRateDemand[],
+  applyPersonalPaymentEffects = true,
 ): Promise<number> {
   // ponytail: four sequential eight-second requests fit the 45-second lease; use bounded concurrency if demand grows.
   const claimed = previewDemands
@@ -2395,18 +2404,17 @@ export async function acquirePendingRateQuotes(
         .update({ status: category, next_retry_at: retryAt })
         .match(key);
       if (updated.error) throw new Error("Supabase Dev rate retry write failed.");
-      const marked = await service.rpc(
-        "ledger_mark_personal_payment_fx_demand_1c",
-        {
+      if (applyPersonalPaymentEffects) {
+        const marked = await service.rpc("ledger_mark_personal_payment_fx_demand_1c", {
           target_journey: demand.journey_id,
           target_economic_date: demand.economic_date,
           quote_currency_value: demand.quote_currency,
           base_currency_value: demand.base_currency,
           failure_category_value: category,
-        },
-      );
-      if (marked.error)
-        throw new Error("Supabase Dev Personal Payment FX retry state failed.");
+        });
+        if (marked.error)
+          throw new Error("Supabase Dev Personal Payment FX retry state failed.");
+      }
       console.warn(
         JSON.stringify({
           event: "historical_rate_negative_cache",
@@ -2417,13 +2425,155 @@ export async function acquirePendingRateQuotes(
       );
     }
   }
-  const resolved = await service.rpc(
-    "ledger_resolve_personal_payment_fx_projections_1c",
-    { target_journey: null },
-  );
-  if (resolved.error)
-    throw new Error("Supabase Dev Personal Payment FX resolution failed.");
+  if (applyPersonalPaymentEffects) {
+    const resolved = await service.rpc(
+      "ledger_resolve_personal_payment_fx_projections_1c",
+      { target_journey: null },
+    );
+    if (resolved.error)
+      throw new Error("Supabase Dev Personal Payment FX resolution failed.");
+  }
   return demands.length;
+}
+
+export async function lookupLedgerRate(
+  service: SupabaseClient,
+  provider: RateQuoteProvider,
+  journeyId: string,
+  input: LedgerRateLookupRequest,
+): Promise<LedgerRateLookupResponse> {
+  const key = {
+    journey_id: journeyId,
+    economic_date: input.requestedDate,
+    quote_currency: input.quoteCurrency,
+    base_currency: input.baseCurrency,
+    policy_version: historicalRatePolicyVersion,
+  };
+  const cached = await lookupCachedRate(service, journeyId, input);
+  if (cached) return lookupAvailableResponse(input, cached);
+
+  const previous = await service
+    .from("ledger_rate_quote_attempts")
+    .select("status,next_retry_at")
+    .match(key)
+    .maybeSingle();
+  if (previous.error) throw new Error("Supabase Dev rate lookup attempt read failed.");
+  if (
+    previous.data &&
+    String(previous.data.status) !== "IN_FLIGHT" &&
+    Date.parse(String(previous.data.next_retry_at)) > Date.now()
+  ) {
+    return lookupUnavailableResponse(input, String(previous.data.status));
+  }
+
+  const claimed = await service.from("ledger_rate_quote_attempts").upsert(
+    {
+      ...key,
+      status: "IN_FLIGHT",
+      next_retry_at: new Date(Date.now() + 45_000).toISOString(),
+      last_attempt_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "journey_id,economic_date,quote_currency,base_currency,policy_version",
+    },
+  );
+  if (claimed.error) throw new Error("Supabase Dev rate lookup claim failed.");
+  await acquirePendingRateQuotes(
+    service,
+    provider,
+    [
+      {
+        journey_id: journeyId,
+        economic_date: input.requestedDate,
+        quote_currency: input.quoteCurrency,
+        base_currency: input.baseCurrency,
+        policy_version: historicalRatePolicyVersion,
+      },
+    ],
+    false,
+  );
+
+  const resolved = await lookupCachedRate(service, journeyId, input);
+  if (resolved) return lookupAvailableResponse(input, resolved);
+  const attempt = await service
+    .from("ledger_rate_quote_attempts")
+    .select("status")
+    .match(key)
+    .maybeSingle();
+  if (attempt.error) throw new Error("Supabase Dev rate lookup result read failed.");
+  return lookupUnavailableResponse(input, String(attempt.data?.status ?? "UNKNOWN"));
+}
+
+async function lookupCachedRate(
+  service: SupabaseClient,
+  journeyId: string,
+  input: LedgerRateLookupRequest,
+) {
+  return (
+    await readRateQuotes(service, journeyId, input.quoteCurrency, input.baseCurrency)
+  )
+    .filter(
+      (quote) =>
+        quote.economicDate === input.requestedDate &&
+        quote.policyVersion === historicalRatePolicyVersion &&
+        quote.provider === "ECB" &&
+        quote.referenceDate &&
+        quote.referenceDate <= input.requestedDate &&
+        calendarDistance(input.requestedDate, quote.referenceDate) <= 7 &&
+        quote.sourceReference ===
+          "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html" &&
+        quote.providerReference ===
+          `https://api.frankfurter.dev/v2/providers/ecb/rate/${input.quoteCurrency}/${input.baseCurrency}?date=${input.requestedDate}` &&
+        Date.parse(quote.expiresAt) > Date.now(),
+    )
+    .sort((left, right) => right.observedAt.localeCompare(left.observedAt))[0];
+}
+
+function lookupAvailableResponse(
+  input: LedgerRateLookupRequest,
+  quote: LedgerRateQuoteDto,
+): LedgerRateLookupResponse {
+  return {
+    quoteCurrency: input.quoteCurrency,
+    baseCurrency: input.baseCurrency,
+    requestedDate: input.requestedDate,
+    referenceDate: quote.referenceDate ?? null,
+    decimalRate: quote.decimalRate,
+    resolution:
+      quote.referenceDate === input.requestedDate ? "EXACT_DATE" : "NEAREST_AVAILABLE",
+    policyVersion: historicalRatePolicyVersion,
+    observedAt: quote.observedAt,
+    provider: "ECB",
+    sourceReference: quote.sourceReference ?? null,
+    providerReference: quote.providerReference ?? null,
+  };
+}
+
+function lookupUnavailableResponse(
+  input: LedgerRateLookupRequest,
+  status: string,
+): LedgerRateLookupResponse {
+  const resolution =
+    status === "NOT_YET_AVAILABLE"
+      ? "PENDING_PUBLICATION"
+      : status === "UNSUPPORTED"
+        ? "UNSUPPORTED"
+        : status === "NO_REFERENCE_WITHIN_POLICY"
+          ? "NO_REFERENCE_WITHIN_POLICY"
+          : "TEMPORARILY_UNAVAILABLE";
+  return {
+    quoteCurrency: input.quoteCurrency,
+    baseCurrency: input.baseCurrency,
+    requestedDate: input.requestedDate,
+    referenceDate: null,
+    decimalRate: null,
+    resolution,
+    policyVersion: historicalRatePolicyVersion,
+    observedAt: null,
+    provider: null,
+    sourceReference: null,
+    providerReference: null,
+  };
 }
 
 async function readRateQuotes(

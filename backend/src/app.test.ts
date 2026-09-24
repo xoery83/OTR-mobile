@@ -41,6 +41,18 @@ function createGateway(options: { authorized?: boolean } = {}) {
       unavailableExpenseIds: [],
       pendingPublicationExpenseIds: [],
     })),
+    lookupLedgerRate: vi.fn(async (_userId, _tripId, input) => ({
+      ...input,
+      referenceDate: "2026-09-14",
+      decimalRate: "0.0578",
+      resolution: "NEAREST_AVAILABLE" as const,
+      policyVersion: "ECB_DAILY_V1" as const,
+      observedAt: "2026-09-15T10:00:00.000Z",
+      provider: "ECB" as const,
+      sourceReference: "https://www.ecb.europa.eu/",
+      providerReference:
+        "https://api.frankfurter.dev/v2/providers/ecb/rate/ISK/CNY?date=2026-09-15",
+    })),
     previewJourneyCurrency: vi.fn(async (_userId, _tripId, proposedCurrency) => ({
       currentCurrency: "NZD",
       currentScale: 2,
@@ -1832,6 +1844,38 @@ describe("OTR Dev Backend", () => {
       }),
     );
     expect(denied.status).toBe(403);
+  });
+
+  it("adapts authenticated rate lookup without requiring owner access", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const response = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/ledger/rate-lookup`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          quoteCurrency: "ISK",
+          baseCurrency: "CNY",
+          requestedDate: "2026-09-15",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      requestedDate: "2026-09-15",
+      referenceDate: "2026-09-14",
+      decimalRate: "0.0578",
+      resolution: "NEAREST_AVAILABLE",
+    });
+    expect(gateway.lookupLedgerRate).toHaveBeenCalledWith(userId, tripId, {
+      quoteCurrency: "ISK",
+      baseCurrency: "CNY",
+      requestedDate: "2026-09-15",
+    });
   });
 
   it("creates, reads, updates, and soft-deletes Personal Payments", async () => {

@@ -101,7 +101,12 @@ import {
   type LedgerReviewFindingDto,
   type LedgerReviewRaiseRequest,
 } from "../../src/data/api/ledgerReviewContracts";
-import type { LedgerFxReferenceSnapshotBundle } from "../../src/data/api/ledgerFxContracts";
+import {
+  ledgerRateLookupRequestSchema,
+  type LedgerFxReferenceSnapshotBundle,
+  type LedgerRateLookupRequest,
+  type LedgerRateLookupResponse,
+} from "../../src/data/api/ledgerFxContracts";
 
 import { deriveServerId, type SyncEntityType } from "./serverId";
 
@@ -152,6 +157,11 @@ export type DevBackendGateway = {
     baseCurrency: string | null,
   ): Promise<LedgerRateQuoteDto[]>;
   readReferenceRateSnapshots(userId: string): Promise<LedgerFxReferenceSnapshotBundle>;
+  lookupLedgerRate(
+    userId: string,
+    tripId: string,
+    input: LedgerRateLookupRequest,
+  ): Promise<LedgerRateLookupResponse>;
   previewJourneyCurrency(
     userId: string,
     tripId: string,
@@ -595,6 +605,19 @@ async function mutateJourneyCurrency(request: Request, gateway: DevBackendGatewa
       parsed.data,
     ),
   );
+}
+
+async function lookupLedgerRate(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/ledger\/rate-lookup$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const tripId = match[1];
+  const user = await authorizeRead(request, gateway, tripId);
+  const input = ledgerRateLookupRequestSchema.safeParse(await parseBody(request));
+  if (!input.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  return json(200, await gateway.lookupLedgerRate(user.id, tripId, input.data));
 }
 
 async function mutateReceipt(request: Request, gateway: DevBackendGateway) {
@@ -1783,6 +1806,12 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/ledger/personal-payments/:id";
         response = await mutatePersonalSettlementPayment(request, gateway);
+      } else if (
+        request.method === "POST" &&
+        /^\/v2\/trips\/[^/]+\/ledger\/rate-lookup$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/ledger/rate-lookup";
+        response = await lookupLedgerRate(request, gateway);
       } else if (
         request.method === "POST" &&
         /^\/v2\/trips\/[^/]+\/ledger\/journey-currency\/(preview|commit)$/.test(

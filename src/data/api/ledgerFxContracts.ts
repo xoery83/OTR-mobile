@@ -3,6 +3,37 @@ import { z } from "zod";
 const positiveDecimal = z.string().regex(/^(?=.*[1-9])\d+(?:\.\d+)?$/);
 const currency = z.string().regex(/^[A-Z]{3}$/);
 
+export const ledgerRateLookupRequestSchema = z
+  .object({
+    quoteCurrency: currency,
+    baseCurrency: currency,
+    requestedDate: z.iso.date(),
+  })
+  .refine((value) => value.quoteCurrency !== value.baseCurrency, {
+    message: "Rate lookup currencies must differ.",
+  });
+
+export const ledgerRateLookupResponseSchema = z.object({
+  quoteCurrency: currency,
+  baseCurrency: currency,
+  requestedDate: z.iso.date(),
+  referenceDate: z.iso.date().nullable(),
+  decimalRate: positiveDecimal.nullable(),
+  resolution: z.enum([
+    "EXACT_DATE",
+    "NEAREST_AVAILABLE",
+    "PENDING_PUBLICATION",
+    "UNSUPPORTED",
+    "NO_REFERENCE_WITHIN_POLICY",
+    "TEMPORARILY_UNAVAILABLE",
+  ]),
+  policyVersion: z.literal("ECB_DAILY_V1"),
+  observedAt: z.iso.datetime({ offset: true }).nullable(),
+  provider: z.literal("ECB").nullable(),
+  sourceReference: z.url().nullable(),
+  providerReference: z.url().nullable(),
+});
+
 export const ledgerFxReferenceSnapshotSchema = z
   .object({
     referenceDate: z.iso.date(),
@@ -38,3 +69,5 @@ export type LedgerFxReferenceSnapshot = z.infer<typeof ledgerFxReferenceSnapshot
 export type LedgerFxReferenceSnapshotBundle = z.infer<
   typeof ledgerFxReferenceSnapshotBundleSchema
 >;
+export type LedgerRateLookupRequest = z.infer<typeof ledgerRateLookupRequestSchema>;
+export type LedgerRateLookupResponse = z.infer<typeof ledgerRateLookupResponseSchema>;

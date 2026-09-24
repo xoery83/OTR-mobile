@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { ledgerFxReferenceSnapshotBundleSchema } from "./ledgerFxContracts";
+import {
+  ledgerFxReferenceSnapshotBundleSchema,
+  ledgerRateLookupRequestSchema,
+  ledgerRateLookupResponseSchema,
+} from "./ledgerFxContracts";
 
 const bundle = {
   provider: "ECB",
@@ -40,5 +44,36 @@ describe("Ledger FX snapshot contract", () => {
       expect(() =>
         ledgerFxReferenceSnapshotBundleSchema.parse({ ...bundle, snapshots }),
       ).toThrow();
+  });
+});
+
+describe("Ledger rate lookup contract", () => {
+  it("keeps the requested date distinct from the provider reference date", () => {
+    expect(
+      ledgerRateLookupResponseSchema.parse({
+        quoteCurrency: "ISK",
+        baseCurrency: "CNY",
+        requestedDate: "2026-09-15",
+        referenceDate: "2026-09-14",
+        decimalRate: "0.0578",
+        resolution: "NEAREST_AVAILABLE",
+        policyVersion: "ECB_DAILY_V1",
+        observedAt: "2026-09-15T10:00:00.000Z",
+        provider: "ECB",
+        sourceReference: "https://www.ecb.europa.eu/",
+        providerReference:
+          "https://api.frankfurter.dev/v2/providers/ecb/rate/ISK/CNY?date=2026-09-15",
+      }),
+    ).toMatchObject({ requestedDate: "2026-09-15", referenceDate: "2026-09-14" });
+  });
+
+  it("rejects identity pairs before they reach the provider", () => {
+    expect(
+      ledgerRateLookupRequestSchema.safeParse({
+        quoteCurrency: "CNY",
+        baseCurrency: "CNY",
+        requestedDate: "2026-09-15",
+      }).success,
+    ).toBe(false);
   });
 });
