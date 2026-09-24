@@ -26,13 +26,13 @@ import {
   memberName,
   membersWithActorFirst,
   personalBalanceFromFinal,
+  personalPaymentProgress,
   personalStatementChangesFromFinal,
   personalStatementMatchesFinal,
   splitLabel,
   summarizeSettlementChanges,
   type SettlementComparison,
   type SettlementCategory,
-  visiblePersonalPayments,
   visibleSettlementTransfers,
 } from "./settlementSections";
 
@@ -112,12 +112,6 @@ export function SettlementReadinessScreen({
     everyone,
     settlement.isOrganizer,
   );
-  const visiblePayments = visiblePersonalPayments(
-    sections.payments,
-    settlement.actorMemberId,
-    everyone,
-    settlement.isOrganizer,
-  );
 
   if (!settlement.journeyId)
     return <Text style={styles.empty}>Choose a Journey to view Settlement.</Text>;
@@ -135,11 +129,6 @@ export function SettlementReadinessScreen({
       {active === "Summary" ? (
         <SummarySection
           expenses={sections.expenses}
-          paymentCount={
-            sections.payments.filter(
-              (record) => record.ownerMemberId === settlement.actorMemberId,
-            ).length
-          }
           reviewCount={sections.reviewCount}
           review={review}
           settlement={settlement}
@@ -200,7 +189,8 @@ export function SettlementReadinessScreen({
           members={sections.members}
           onEveryone={setEveryone}
           onExpandTransfer={setExpandedTransfer}
-          payments={visiblePayments}
+          onPaymentsChanged={sections.updatePayments}
+          payments={sections.payments}
           scale={
             displayedFinal?.settlementScale ??
             settlement.preview?.settlementScale ??
@@ -280,7 +270,6 @@ function SummarySection({
   debugMode,
   displayedFinal,
   expenses,
-  paymentCount,
   reviewCount,
   review,
   settlement,
@@ -289,7 +278,6 @@ function SummarySection({
   debugMode: boolean;
   displayedFinal: ReturnType<typeof useStage7Settlement>["finalized"];
   expenses: ReturnType<typeof useSettlementSections>["expenses"];
-  paymentCount: number;
   reviewCount: number;
   review: ReturnType<typeof usePersonalSettlementReview>;
   settlement: ReturnType<typeof useStage7Settlement>;
@@ -577,12 +565,6 @@ function SummarySection({
             <Text style={styles.link}>Settlement history ›</Text>
           </Pressable>
         </View>
-      ) : null}
-      {debugMode && paymentCount ? (
-        <Text style={styles.secondaryNote}>
-          {paymentCount} personal payment {paymentCount === 1 ? "record" : "records"} ·
-          kept separate from this balance
-        </Text>
       ) : null}
       {review.state ? (
         <GroupReviewStatus
@@ -873,6 +855,7 @@ function PaymentsSection({
   members,
   onEveryone,
   onExpandTransfer,
+  onPaymentsChanged,
   payments,
   scale,
   transfers,
@@ -886,6 +869,7 @@ function PaymentsSection({
   members: { id: string; label: string }[];
   onEveryone: (value: boolean) => void;
   onExpandTransfer: (value: string | null) => void;
+  onPaymentsChanged: (records: LocalPersonalPayment[]) => void;
   payments: LocalPersonalPayment[];
   scale: number;
   transfers: ReturnType<typeof currentSettlementTransfers>;
@@ -893,16 +877,10 @@ function PaymentsSection({
   return (
     <View style={styles.section}>
       <View style={styles.hero}>
-        <View style={styles.sectionLeadRow}>
-          <Text accessibilityRole="header" style={styles.sectionLeadText}>
-            RECOMMENDED TRANSFERS
-          </Text>
-          {isOrganizer ? <Toggle everyone={everyone} onChange={onEveryone} /> : null}
-        </View>
-        <Text style={styles.secondaryNote}>
-          Calculated from expenses and shares. Personal records below do not change these
-          amounts.
+        <Text accessibilityRole="header" style={styles.sectionLeadText}>
+          RECOMMENDED TRANSFERS
         </Text>
+        {isOrganizer ? <Toggle everyone={everyone} onChange={onEveryone} /> : null}
       </View>
       {transfers.map((transfer, index) => {
         const key =
@@ -910,37 +888,51 @@ function PaymentsSection({
         const open = expandedTransfer === key;
         const from = memberName(members, transfer.fromMemberId);
         const to = memberName(members, transfer.toMemberId);
+        const related =
+          transfer.fromMemberId === actorMemberId ||
+          transfer.toMemberId === actorMemberId;
+        const progress = related
+          ? personalPaymentProgress(payments, actorMemberId, transfer)
+          : null;
         return (
           <View key={key} style={styles.transferCard}>
             <Pressable
               accessibilityRole="button"
-              onPress={() =>
-                transfer.id
-                  ? router.push({
-                      pathname: "/expenses/transfer/[id]",
-                      params: { id: transfer.id, journeyId },
-                    } as never)
-                  : onExpandTransfer(open ? null : key)
-              }
+              accessibilityState={{
+                disabled: !related,
+                expanded: related ? open : undefined,
+              }}
+              disabled={!related}
+              onPress={() => onExpandTransfer(open ? null : key)}
               style={styles.transferRow}
             >
               <Text numberOfLines={1} style={styles.transferMember}>
                 {transfer.fromMemberId === actorMemberId ? "You" : from}
               </Text>
               <Text style={styles.arrow}>→</Text>
-              <Text style={styles.transferAmount}>
-                {formatLedgerMoney(transfer.amount.minor, currency, scale)}
-              </Text>
+              <View style={styles.transferAmountBlock}>
+                <Text style={styles.transferAmount}>
+                  {formatLedgerMoney(transfer.amount.minor, currency, scale)}
+                </Text>
+                {progress?.minor ? (
+                  <Text style={styles.transferProgress}>
+                    {progress.direction === "PAID" ? "Paid" : "Received"}{" "}
+                    {formatLedgerMoney(progress.minor, currency, scale)} ·{" "}
+                    {progress.percentage}%
+                  </Text>
+                ) : null}
+              </View>
               <Text style={styles.arrow}>→</Text>
               <Text numberOfLines={1} style={[styles.transferMember, styles.alignRight]}>
                 {transfer.toMemberId === actorMemberId ? "You" : to}
               </Text>
             </Pressable>
-            {open ? (
+            {open && related ? (
               <PersonalPaymentSection
                 actorMemberId={actorMemberId}
                 from={{ id: transfer.fromMemberId, name: from }}
                 journeyId={journeyId}
+                onChanged={onPaymentsChanged}
                 settlementCurrency={currency}
                 settlementScale={scale}
                 to={{ id: transfer.toMemberId, name: to }}
@@ -951,36 +943,6 @@ function PaymentsSection({
       })}
       {!transfers.length ? (
         <Text style={styles.empty}>No recommended transfers.</Text>
-      ) : null}
-      <Text style={styles.subheading}>Personal payment records</Text>
-      {payments.map((record) => (
-        <View key={record.id} style={styles.personalRecord}>
-          <Text style={styles.rowTitle}>
-            {record.ownerMemberId === actorMemberId
-              ? "Your record"
-              : `${memberName(members, record.ownerMemberId)}'s record`}
-          </Text>
-          <Text style={styles.body}>
-            {record.direction === "PAID" ? "Paid" : "Received"}{" "}
-            {formatLedgerMoney(record.amountMinor, record.currency, record.scale)}
-          </Text>
-          <Text style={styles.meta}>
-            With {memberName(members, record.counterpartyMemberId)} ·{" "}
-            {record.occurredAt.slice(0, 10)}
-          </Text>
-        </View>
-      ))}
-      {!payments.length ? (
-        <Text style={styles.empty}>No personal payment records. Nothing is missing.</Text>
-      ) : null}
-      {transfers.some((transfer) => transfer.legacyPaymentCount) ? (
-        <View style={styles.legacy}>
-          <Text style={styles.subheading}>Previous confirmed payment history</Text>
-          <Text style={styles.meta}>
-            Legacy confirmed-transfer records remain separate and are available from
-            Transfer detail.
-          </Text>
-        </View>
       ) : null}
     </View>
   );
@@ -1395,6 +1357,7 @@ const styles = StyleSheet.create({
   standaloneSections: { paddingHorizontal: 16 },
   subheading: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 4 },
   toggle: {
+    alignSelf: "flex-start",
     backgroundColor: "#E2E8F0",
     borderRadius: 10,
     flexDirection: "row",
@@ -1405,6 +1368,8 @@ const styles = StyleSheet.create({
   toggleText: { color: "#64748B", fontSize: 13, fontWeight: "700" },
   toggleTextActive: { color: "#0F172A" },
   transferAmount: { color: "#0F172A", fontSize: 15, fontWeight: "900" },
+  transferAmountBlock: { alignItems: "center", flexShrink: 0 },
+  transferProgress: { color: "#475569", fontSize: 10, marginTop: 2 },
   transferCard: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
   transferMember: { color: "#334155", flex: 1, fontSize: 14, fontWeight: "700" },
   transferRow: {

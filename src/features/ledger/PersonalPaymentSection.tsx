@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
@@ -34,6 +35,7 @@ import {
   selectPersonalPaymentReference,
   type PersonalPaymentReference,
 } from "./personalPaymentFx";
+import { chronologicalPersonalPayments } from "./settlementSections";
 
 type Pair = { id: string; name: string };
 
@@ -41,6 +43,7 @@ export function PersonalPaymentSection({
   actorMemberId,
   from,
   journeyId,
+  onChanged,
   settlementCurrency,
   settlementScale,
   to,
@@ -48,28 +51,32 @@ export function PersonalPaymentSection({
   actorMemberId: string | null;
   from: Pair;
   journeyId: string;
+  onChanged?: (records: LocalPersonalPayment[]) => void;
   settlementCurrency: string;
   settlementScale: number;
   to: Pair;
 }) {
   const [records, setRecords] = useState<LocalPersonalPayment[]>([]);
   const [message, setMessage] = useState<string | null>(null);
-  const [attachmentCounts, setAttachmentCounts] = useState<
-    Record<string, { count: number; pending: boolean }>
-  >({});
   const [attachmentsByPayment, setAttachmentsByPayment] = useState<
     Record<string, ReceiptAsset[]>
   >({});
-  const [editing, setEditing] = useState<LocalPersonalPayment | "new" | null>(null);
+  const [editing, setEditing] = useState<LocalPersonalPayment | null>(null);
   const [raisingReviewId, setRaisingReviewId] = useState<string | null>(null);
+  const [quickAmount, setQuickAmount] = useState("");
+  const [quickCurrency, setQuickCurrency] = useState(settlementCurrency);
+  const [quickCurrencyOpen, setQuickCurrencyOpen] = useState(false);
+  const [savingQuick, setSavingQuick] = useState(false);
   const load = useCallback(async () => {
     const repository = await getDefaultLedgerPersonalPaymentRepository();
-    const next = (await repository.listForJourney(journeyId)).filter(
+    const all = await repository.listForJourney(journeyId);
+    const next = all.filter(
       (item) =>
         (item.ownerMemberId === from.id && item.counterpartyMemberId === to.id) ||
         (item.ownerMemberId === to.id && item.counterpartyMemberId === from.id),
     );
     setRecords(next);
+    onChanged?.(all);
     const receipts = await getDefaultLedgerReceiptRepository();
     const attachmentEntries = await Promise.all(
       next.map(
@@ -78,24 +85,7 @@ export function PersonalPaymentSection({
       ),
     );
     setAttachmentsByPayment(Object.fromEntries(attachmentEntries));
-    setAttachmentCounts(
-      Object.fromEntries(
-        attachmentEntries.map(([id, items]) => [
-          id,
-          {
-            count: items.filter(
-              (item) => item.personalPaymentLinkStatus !== "DELETE_PENDING",
-            ).length,
-            pending: items.some(
-              (item) =>
-                item.uploadStatus !== "UPLOADED" ||
-                item.personalPaymentLinkStatus === "DELETE_PENDING",
-            ),
-          },
-        ]),
-      ),
-    );
-  }, [from.id, journeyId, to.id]);
+  }, [from.id, journeyId, onChanged, to.id]);
 
   useEffect(() => {
     let active = true;
@@ -115,8 +105,7 @@ export function PersonalPaymentSection({
     };
   }, [journeyId, load]);
 
-  const mine = records.filter((item) => item.ownerMemberId === actorMemberId);
-  const other = records.filter((item) => item.ownerMemberId !== actorMemberId);
+  const timeline = chronologicalPersonalPayments(records);
   const action =
     actorMemberId === from.id
       ? { label: "Record payment", direction: "PAID" as const, counterparty: to }
@@ -217,50 +206,191 @@ export function PersonalPaymentSection({
     }
   };
 
+  const manage = (record: LocalPersonalPayment) => {
+    const mine = record.ownerMemberId === actorMemberId;
+    const attachments = (attachmentsByPayment[record.id] ?? []).filter(
+      (attachment) => attachment.personalPaymentLinkStatus !== "DELETE_PENDING",
+    );
+    Alert.alert(
+      mine ? "Manage your record" : "Payment record",
+      `${formatLedgerMoney(record.amountMinor, record.currency, record.scale)} · ${record.occurredAt.slice(0, 10)}`,
+      [
+        ...(mine
+          ? [
+              { text: "Edit", onPress: () => setEditing(record) },
+              { text: "Add attachment", onPress: () => void attach(record) },
+              ...attachments.map((attachment, index) => ({
+                text: `Remove attachment ${index + 1}`,
+                onPress: () => detach(record, attachment),
+              })),
+            ]
+          : []),
+        { text: "Something looks wrong", onPress: () => void raiseConcern(record) },
+        ...(mine
+          ? [
+              {
+                text: "Delete",
+                style: "destructive" as const,
+                onPress: () => remove(record),
+              },
+            ]
+          : []),
+        { text: "Cancel", style: "cancel" },
+      ],
+    );
+  };
+
+  const saveQuick = async () => {
+    if (!action || savingQuick) return;
+    const scale = currencyScale(quickCurrency);
+    const amountMinor = scale === null ? null : parseCurrencyAmount(quickAmount, scale);
+    if (scale === null || amountMinor === null) {
+      Alert.alert("Check the amount");
+      return;
+    }
+    setSavingQuick(true);
+    const date = new Date().toISOString().slice(0, 10);
+    let reference: PersonalPaymentReference | null = null;
+    let equivalent: { minor: number; currency: string; scale: number } | null = null;
+    try {
+      if (quickCurrency !== settlementCurrency) {
+        const expenseRepository = await getDefaultLedgerExpenseRepository();
+        try {
+          await refreshPersonalPaymentRateQuotes(
+            journeyId,
+            quickCurrency,
+            settlementCurrency,
+          );
+        } catch {
+          // Saving the original amount remains available offline.
+        }
+        reference = selectPersonalPaymentReference(
+          await expenseRepository.listRateQuotes(
+            journeyId,
+            quickCurrency,
+            settlementCurrency,
+          ),
+          date,
+        );
+        if (reference)
+          equivalent = convertMoney(
+            { minor: amountMinor, currency: quickCurrency, scale },
+            settlementCurrency,
+            settlementScale,
+            reference.quote.decimalRate,
+          );
+      }
+      await (
+        await getDefaultLedgerPersonalPaymentRepository()
+      ).create({
+        journeyId,
+        counterpartyMemberId: action.counterparty.id,
+        direction: action.direction,
+        amountMinor,
+        currency: quickCurrency,
+        scale,
+        occurredAt: `${date}T12:00:00.000Z`,
+        note: null,
+        recordedEquivalentMinor: equivalent?.minor ?? null,
+        recordedEquivalentCurrency: equivalent?.currency ?? null,
+        recordedEquivalentScale: equivalent?.scale ?? null,
+        referenceRateDecimal: reference?.quote.decimalRate ?? null,
+        referenceRateDate: reference?.quote.referenceDate ?? null,
+        referenceSource: reference ? "ECB reference via Frankfurter" : null,
+        referenceProvenance: reference
+          ? { quoteId: reference.quote.id, kind: reference.kind }
+          : null,
+      });
+      setQuickAmount("");
+      await load();
+      void kickLedgerOperationalSync();
+    } catch (error) {
+      Alert.alert(
+        "Could not save",
+        error instanceof Error ? error.message : "Please try again.",
+      );
+    } finally {
+      setSavingQuick(false);
+    }
+  };
+
   return (
     <View style={styles.section}>
-      <Text accessibilityRole="header" style={styles.heading}>
-        Personal payment records
-      </Text>
-      <Text style={styles.explainer}>
-        Each person keeps their own record. These entries do not change the final
-        Settlement or confirm what the other person received.
-      </Text>
-      {action ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setEditing("new")}
-          style={styles.primary}
-        >
-          <Text style={styles.primaryText}>{action.label}</Text>
-        </Pressable>
+      <View style={styles.timeline}>
+        {timeline.length ? (
+          timeline.map((record) => {
+            const payerSide = record.ownerMemberId === from.id;
+            const mine = record.ownerMemberId === actorMemberId;
+            return (
+              <View
+                key={record.id}
+                style={[styles.timelineRow, payerSide && styles.timelineRowLeft]}
+              >
+                <Pressable
+                  accessibilityHint={mine ? "Opens record actions" : "Reports a concern"}
+                  accessibilityRole="button"
+                  onPress={() => manage(record)}
+                  style={[
+                    styles.timelineRecord,
+                    payerSide ? styles.timelineRecordLeft : styles.timelineRecordRight,
+                  ]}
+                >
+                  <Text style={[styles.timelineText, !payerSide && styles.alignRight]}>
+                    {formatLedgerMoney(record.amountMinor, record.currency, record.scale)}{" "}
+                    · {payerSide ? "paid" : "received"} · {record.occurredAt.slice(0, 10)}
+                  </Text>
+                </Pressable>
+              </View>
+            );
+          })
+        ) : (
+          <Text style={styles.emptyTimeline}>No payment records yet.</Text>
+        )}
+      </View>
+      {message && !message.startsWith("Offline") ? (
+        <Text style={styles.sync}>{message}</Text>
       ) : null}
-      {message ? <Text style={styles.sync}>{message}</Text> : null}
-      <RecordGroup
-        editable
-        empty="You have not recorded anything yet."
-        name="Your records"
-        onDelete={remove}
-        onEdit={setEditing}
-        onAttach={attach}
-        onConcern={raiseConcern}
-        attachmentCounts={attachmentCounts}
-        attachmentsByPayment={attachmentsByPayment}
-        onDetach={detach}
-        records={mine}
-      />
-      <RecordGroup
-        empty="No record from the other person is available."
-        name={actorMemberId ? "Other person's records" : "Member records"}
-        attachmentCounts={attachmentCounts}
-        attachmentsByPayment={attachmentsByPayment}
-        onConcern={raiseConcern}
-        records={other}
-      />
+      {action ? (
+        <View style={styles.quickEntry}>
+          <Text style={styles.quickLabel}>
+            {action.direction === "PAID"
+              ? "Enter a new amount paid"
+              : "Enter a new amount received"}
+          </Text>
+          <View style={styles.quickRow}>
+            <Pressable
+              accessibilityLabel={`Currency ${quickCurrency}`}
+              accessibilityRole="button"
+              onPress={() => setQuickCurrencyOpen(true)}
+              style={styles.currencyButton}
+            >
+              <Text style={styles.currencyButtonText}>{quickCurrency} ⌄</Text>
+            </Pressable>
+            <TextInput
+              accessibilityLabel="Personal payment amount"
+              keyboardType="decimal-pad"
+              onChangeText={setQuickAmount}
+              placeholder="0.00"
+              style={styles.quickInput}
+              value={quickAmount}
+            />
+            <Pressable
+              accessibilityRole="button"
+              disabled={savingQuick}
+              onPress={() => void saveQuick()}
+              style={[styles.quickSubmit, savingQuick && styles.disabled]}
+            >
+              <Text style={styles.quickSubmitText}>
+                {savingQuick ? "Saving…" : "Add"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
       {action && editing ? (
         <PersonalPaymentEditor
           action={action}
-          existing={editing === "new" ? null : editing}
+          existing={editing}
           journeyId={journeyId}
           onClose={() => setEditing(null)}
           onSaved={async () => {
@@ -272,110 +402,56 @@ export function PersonalPaymentSection({
           settlementScale={settlementScale}
         />
       ) : null}
+      <CurrencyModal
+        onClose={() => setQuickCurrencyOpen(false)}
+        onSelect={(value) => {
+          setQuickCurrency(value);
+          setQuickCurrencyOpen(false);
+        }}
+        selected={quickCurrency}
+        suggestions={[settlementCurrency, quickCurrency]}
+        visible={quickCurrencyOpen}
+      />
     </View>
   );
 }
 
-function RecordGroup({
-  editable = false,
-  empty,
-  name,
-  onDelete,
-  onEdit,
-  onAttach,
-  onConcern,
-  attachmentCounts,
-  attachmentsByPayment,
-  onDetach,
-  records,
+function CurrencyModal({
+  onClose,
+  onSelect,
+  selected,
+  suggestions,
+  visible,
 }: {
-  editable?: boolean;
-  empty: string;
-  name: string;
-  onDelete?: (record: LocalPersonalPayment) => void;
-  onEdit?: (record: LocalPersonalPayment) => void;
-  onAttach?: (record: LocalPersonalPayment) => void;
-  onConcern: (record: LocalPersonalPayment) => void;
-  attachmentCounts: Record<string, { count: number; pending: boolean }>;
-  attachmentsByPayment: Record<string, ReceiptAsset[]>;
-  onDetach?: (record: LocalPersonalPayment, attachment: ReceiptAsset) => void;
-  records: LocalPersonalPayment[];
+  onClose: () => void;
+  onSelect: (value: string) => void;
+  selected: string;
+  suggestions: string[];
+  visible: boolean;
 }) {
   return (
-    <View style={styles.group}>
-      <Text style={styles.groupTitle}>{name}</Text>
-      {records.length ? (
-        records.map((record) => (
-          <View key={record.id} style={styles.record}>
-            <Text style={styles.recordAmount}>
-              {record.direction === "PAID" ? "Paid " : "Received "}
-              {formatLedgerMoney(record.amountMinor, record.currency, record.scale)}
-            </Text>
-            <Text style={styles.meta}>{record.occurredAt.slice(0, 10)}</Text>
-            {record.recordedEquivalentMinor && record.recordedEquivalentCurrency ? (
-              <Text style={styles.meta}>
-                Recorded equivalent ·{" "}
-                {formatLedgerMoney(
-                  record.recordedEquivalentMinor,
-                  record.recordedEquivalentCurrency,
-                  record.recordedEquivalentScale!,
-                )}
-              </Text>
-            ) : null}
-            {record.referenceRateDate ? (
-              <Text style={styles.meta}>
-                Informational reference · {record.referenceRateDate}
-              </Text>
-            ) : null}
-            {record.note ? <Text style={styles.note}>{record.note}</Text> : null}
-            {attachmentCounts[record.id]?.count ? (
-              <Text style={styles.meta}>
-                {attachmentCounts[record.id].count} attachment
-                {attachmentCounts[record.id].count === 1 ? "" : "s"}
-                {attachmentCounts[record.id].pending
-                  ? " · upload queued"
-                  : " · available"}
-              </Text>
-            ) : null}
-            {editable
-              ? (attachmentsByPayment[record.id] ?? [])
-                  .filter(
-                    (attachment) =>
-                      attachment.personalPaymentLinkStatus !== "DELETE_PENDING",
-                  )
-                  .map((attachment, index) => (
-                    <Pressable
-                      key={attachment.id}
-                      accessibilityRole="button"
-                      onPress={() => onDetach?.(record, attachment)}
-                    >
-                      <Text style={styles.delete}>Remove attachment {index + 1}</Text>
-                    </Pressable>
-                  ))
-              : null}
-            <Text style={styles.sync}>{syncLabel(record.syncStatus)}</Text>
-            <Pressable accessibilityRole="button" onPress={() => onConcern(record)}>
-              <Text style={styles.link}>Something looks wrong</Text>
-            </Pressable>
-            {editable ? (
-              <View style={styles.actions}>
-                <Pressable accessibilityRole="button" onPress={() => onEdit?.(record)}>
-                  <Text style={styles.link}>Edit</Text>
-                </Pressable>
-                <Pressable accessibilityRole="button" onPress={() => onDelete?.(record)}>
-                  <Text style={styles.delete}>Delete</Text>
-                </Pressable>
-                <Pressable accessibilityRole="button" onPress={() => onAttach?.(record)}>
-                  <Text style={styles.link}>Add attachment</Text>
-                </Pressable>
-              </View>
-            ) : null}
-          </View>
-        ))
-      ) : (
-        <Text style={styles.meta}>{empty}</Text>
-      )}
-    </View>
+    <Modal
+      animationType="slide"
+      onRequestClose={onClose}
+      presentationStyle="pageSheet"
+      visible={visible}
+    >
+      <SafeAreaView edges={["top", "bottom"]} style={styles.currencySheet}>
+        <View style={styles.currencyHeader}>
+          <Text accessibilityRole="header" style={styles.heading}>
+            Choose currency
+          </Text>
+          <Pressable accessibilityRole="button" onPress={onClose}>
+            <Text style={styles.link}>Cancel</Text>
+          </Pressable>
+        </View>
+        <CurrencyPicker
+          onSelect={onSelect}
+          selected={selected}
+          suggestions={suggestions}
+        />
+      </SafeAreaView>
+    </Modal>
   );
 }
 
@@ -625,20 +701,16 @@ function PersonalPaymentEditor({
           Saves immediately on this iPhone. Sync continues in the background.
         </Text>
       </ScrollView>
-      <Modal
-        animationType="slide"
-        onRequestClose={() => setCurrencyOpen(false)}
+      <CurrencyModal
+        onClose={() => setCurrencyOpen(false)}
+        onSelect={(value) => {
+          setCurrency(value);
+          setCurrencyOpen(false);
+        }}
+        selected={currency}
+        suggestions={[settlementCurrency, currency]}
         visible={currencyOpen}
-      >
-        <CurrencyPicker
-          onSelect={(value) => {
-            setCurrency(value);
-            setCurrencyOpen(false);
-          }}
-          selected={currency}
-          suggestions={[settlementCurrency, currency]}
-        />
-      </Modal>
+      />
       {dateOpen ? (
         <DateTimePicker
           display="spinner"
@@ -654,34 +726,38 @@ function PersonalPaymentEditor({
   );
 }
 
-function syncLabel(status: LocalPersonalPayment["syncStatus"]) {
-  if (status === "SYNCED") return "Synced";
-  if (status === "CONFLICT") return "Your local edit is kept · needs attention";
-  if (status === "FAILED") return "Saved here · sync needs attention";
-  return "Saved here · waiting to sync";
-}
-
 const styles = StyleSheet.create({
-  section: { gap: 12 },
+  section: { backgroundColor: "#DDECEA", gap: 12, padding: 12 },
   heading: { color: "#0F172A", fontSize: 18, fontWeight: "800" },
-  explainer: { color: "#475569", fontSize: 14, lineHeight: 20 },
-  primary: {
-    alignItems: "center",
-    backgroundColor: "#0F766E",
-    borderRadius: 12,
-    padding: 14,
-  },
-  primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
-  group: { gap: 8 },
   groupTitle: { color: "#0F172A", fontSize: 15, fontWeight: "800" },
-  record: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 4, padding: 12 },
-  recordAmount: { color: "#0F172A", fontSize: 16, fontWeight: "800" },
   meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
   note: { color: "#334155", fontSize: 15, lineHeight: 21 },
   sync: { color: "#0F766E", fontSize: 13, fontWeight: "700" },
-  actions: { flexDirection: "row", gap: 20, paddingTop: 5 },
   link: { color: "#0F766E", fontSize: 15, fontWeight: "800" },
-  delete: { color: "#B91C1C", fontSize: 15, fontWeight: "800" },
+  alignRight: { textAlign: "right" },
+  currencyButton: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#94A3B8",
+    borderRadius: 9,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 42,
+    paddingHorizontal: 9,
+  },
+  currencyButtonText: { color: "#334155", fontSize: 13, fontWeight: "800" },
+  currencyHeader: {
+    alignItems: "center",
+    borderBottomColor: "#E2E8F0",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 58,
+    paddingHorizontal: 16,
+  },
+  currencySheet: { backgroundColor: "#F6F7F9", flex: 1 },
+  disabled: { opacity: 0.55 },
+  emptyTimeline: { color: "#64748B", fontSize: 13, textAlign: "center" },
   editor: { gap: 12, padding: 16, paddingBottom: 40 },
   editorHeader: {
     alignItems: "center",
@@ -709,5 +785,41 @@ const styles = StyleSheet.create({
   },
   fieldValue: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
   multiline: { minHeight: 90, textAlignVertical: "top" },
+  quickEntry: { gap: 7 },
+  quickInput: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#94A3B8",
+    borderRadius: 9,
+    borderWidth: 1,
+    color: "#0F172A",
+    flex: 1,
+    fontSize: 16,
+    minHeight: 42,
+    paddingHorizontal: 10,
+  },
+  quickLabel: { color: "#334155", fontSize: 13, fontWeight: "700" },
+  quickRow: { alignItems: "center", flexDirection: "row", gap: 7 },
+  quickSubmit: {
+    alignItems: "center",
+    backgroundColor: "#0F766E",
+    borderRadius: 9,
+    justifyContent: "center",
+    minHeight: 42,
+    paddingHorizontal: 12,
+  },
+  quickSubmitText: { color: "#FFFFFF", fontSize: 13, fontWeight: "800" },
   reference: { backgroundColor: "#ECFDF5", borderRadius: 12, gap: 5, padding: 12 },
+  timeline: { gap: 7 },
+  timelineRecord: {
+    backgroundColor: "#C8DEDA",
+    borderRadius: 9,
+    maxWidth: "84%",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  timelineRecordLeft: { alignSelf: "flex-start" },
+  timelineRecordRight: { alignSelf: "flex-end" },
+  timelineRow: { alignItems: "flex-end" },
+  timelineRowLeft: { alignItems: "flex-start" },
+  timelineText: { color: "#334155", fontSize: 12, fontWeight: "600" },
 });

@@ -476,6 +476,68 @@ export function visiblePersonalPayments(
       );
 }
 
+export function personalPaymentProgress(
+  records: LocalPersonalPayment[],
+  actorMemberId: string | null,
+  transfer: Pick<SettlementTransferView, "fromMemberId" | "toMemberId" | "amount">,
+) {
+  const direction =
+    actorMemberId === transfer.fromMemberId
+      ? "PAID"
+      : actorMemberId === transfer.toMemberId
+        ? "RECEIVED"
+        : null;
+  if (!direction) return null;
+  const counterpartyMemberId =
+    direction === "PAID" ? transfer.toMemberId : transfer.fromMemberId;
+  const minor = records
+    .filter(
+      (record) =>
+        record.ownerMemberId === actorMemberId &&
+        record.counterpartyMemberId === counterpartyMemberId &&
+        record.direction === direction,
+    )
+    .reduce((sum, record) => {
+      if (record.currency === transfer.amount.currency)
+        return (
+          sum + rescaleMinor(record.amountMinor, record.scale, transfer.amount.scale)
+        );
+      if (
+        record.recordedEquivalentCurrency === transfer.amount.currency &&
+        record.recordedEquivalentMinor != null &&
+        record.recordedEquivalentScale != null
+      )
+        return (
+          sum +
+          rescaleMinor(
+            record.recordedEquivalentMinor,
+            record.recordedEquivalentScale,
+            transfer.amount.scale,
+          )
+        );
+      return sum;
+    }, 0);
+  return {
+    direction,
+    minor,
+    percentage:
+      transfer.amount.minor > 0 ? Math.round((minor / transfer.amount.minor) * 100) : 0,
+  };
+}
+
+export function chronologicalPersonalPayments(records: LocalPersonalPayment[]) {
+  return [...records].sort(
+    (left, right) =>
+      left.occurredAt.localeCompare(right.occurredAt) ||
+      left.createdAt.localeCompare(right.createdAt) ||
+      left.id.localeCompare(right.id),
+  );
+}
+
+function rescaleMinor(minor: number, fromScale: number, toScale: number) {
+  return Math.round(minor * 10 ** (toScale - fromScale));
+}
+
 export function memberName(members: SettlementMember[], id: string | null) {
   return members.find((member) => member.id === id)?.label ?? "Traveller";
 }

@@ -9,9 +9,11 @@ import {
   buildFinalizedSettlementCategories,
   buildSettlementComparison,
   buildSettlementCategories,
+  chronologicalPersonalPayments,
   currentSettlementTransfers,
   localExpensesChangesFromFinal,
   membersWithActorFirst,
+  personalPaymentProgress,
   personalStatementChangesFromFinal,
   personalStatementMatchesFinal,
   settlementCacheMessage,
@@ -168,6 +170,64 @@ describe("Settlement section selectors", () => {
       records[0],
     ]);
     expect(visiblePersonalPayments(records, "member-a", true, true)).toEqual(records);
+  });
+
+  it("summarizes only the current member's matching payment records", () => {
+    const transfer = {
+      fromMemberId: "member-a",
+      toMemberId: "member-b",
+      amount: { minor: 2_000, currency: "NZD", scale: 2 },
+    };
+    const records = [
+      {
+        ...payment("member-a", "member-b"),
+        direction: "PAID",
+        amountMinor: 400,
+        currency: "NZD",
+        scale: 2,
+      },
+      {
+        ...payment("member-a", "member-b"),
+        direction: "PAID",
+        amountMinor: 300,
+        currency: "USD",
+        scale: 2,
+        recordedEquivalentMinor: 500,
+        recordedEquivalentCurrency: "NZD",
+        recordedEquivalentScale: 2,
+      },
+      {
+        ...payment("member-b", "member-a"),
+        direction: "RECEIVED",
+        amountMinor: 900,
+        currency: "NZD",
+        scale: 2,
+      },
+    ] as LocalPersonalPayment[];
+
+    expect(personalPaymentProgress(records, "member-a", transfer)).toEqual({
+      direction: "PAID",
+      minor: 900,
+      percentage: 45,
+    });
+    expect(personalPaymentProgress(records, "member-c", transfer)).toBeNull();
+  });
+
+  it("orders personal payment records oldest first", () => {
+    const newer = {
+      ...payment("member-a", "member-b"),
+      id: "newer",
+      occurredAt: "2026-09-24T12:00:00.000Z",
+      createdAt: "2026-09-24T12:00:00.000Z",
+    } as LocalPersonalPayment;
+    const older = {
+      ...payment("member-b", "member-a"),
+      id: "older",
+      occurredAt: "2026-09-23T12:00:00.000Z",
+      createdAt: "2026-09-23T12:00:00.000Z",
+    } as LocalPersonalPayment;
+
+    expect(chronologicalPersonalPayments([newer, older])).toEqual([older, newer]);
   });
 
   it("uses the cached canonical preview without consulting personal records", () => {

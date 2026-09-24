@@ -49,6 +49,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
         value={query}
       />
       <FlatList
+        contentContainerStyle={styles.listContent}
         data={rows}
         keyExtractor={(item) => item}
         keyboardShouldPersistTaps="handled"
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 5,
     minHeight: 44,
-    maxWidth: 108,
+    maxWidth: 148,
     paddingHorizontal: 10,
   },
   selectedChip: { backgroundColor: "#E6F5F2", borderColor: "#0F766E" },
@@ -163,5 +164,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   rowName: { color: "#475569", flex: 1, fontSize: 15 },
+  listContent: { paddingBottom: 24 },
   empty: { color: "#64748B", padding: 18 },
 });

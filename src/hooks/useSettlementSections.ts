@@ -42,6 +42,10 @@ export function useSettlementSections(
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  const updatePayments = useCallback((next: LocalPersonalPayment[]) => {
+    setPayments(next);
+  }, []);
+
   const loadBase = useCallback(async () => {
     if (!journeyId) return;
     setLoading(true);
@@ -151,6 +155,7 @@ export function useSettlementSections(
     members,
     expenses,
     payments,
+    updatePayments,
     reviewCount,
     loading,
     message,
