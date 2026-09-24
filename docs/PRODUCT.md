@@ -63,6 +63,13 @@ Ledger / Expenses:
   evidence, while a future per-user decision records acknowledgement or dismissal
   without changing Expense or settlement truth. Review Engine v2 foundation is
   separate from the later personal-state, eligibility, and inbox UI phases.
+- Settlement member review is optional and has three visible states: `Not reviewed`,
+  `Still checking`, and `Looks good`. Every current Journey member may expand the
+  group member names/statuses; it never gates Organizer confirmation. A material
+  personal-statement change turns an earlier `Looks good` into `Still checking`.
+- Approximate Settlement amounts are not marked with `≈`. A compact accessible
+  indicator opens the affected Expense list and explains whether a reference rate is
+  awaiting publication or needs user action.
 
 Travel Documents / Tickets:
 

@@ -207,7 +207,9 @@ export function useStage7Settlement(journeyId?: string) {
     message,
     preview: matchesActiveJourney ? preview : null,
     displayPreview: matchesActiveJourney ? displayPreview : null,
-    unavailableExpenseIds: matchesActiveJourney ? unavailableExpenseIds : new Set(),
+    unavailableExpenseIds: matchesActiveJourney
+      ? unavailableExpenseIds
+      : new Set<string>(),
     pendingPublicationExpenseIds: matchesActiveJourney
       ? pendingPublicationExpenseIds
       : new Set<string>(),

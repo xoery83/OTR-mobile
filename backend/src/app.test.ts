@@ -750,6 +750,7 @@ describe("OTR Dev Backend", () => {
           id: operationId,
           operationId,
           statementFingerprint: "b".repeat(64),
+          reviewState: "LOOKS_GOOD",
         }),
       }),
     );

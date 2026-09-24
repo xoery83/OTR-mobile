@@ -91,6 +91,7 @@ import { reviewExpensesV2 } from "../../src/domain/ledger/reviewV2";
 import {
   buildPersonalSettlementStatement,
   comparePersonalSettlementStatements,
+  projectPersonalSettlementReviewState,
   type PersonalSettlementStatement,
 } from "../../src/domain/ledger/personalSettlementReview";
 import {
@@ -3328,6 +3329,8 @@ function personalSettlementCheckpointRowToDto(
     reviewedStatement: row.reviewed_statement as PersonalSettlementStatement,
     revision: Number(row.revision),
     reviewedAt: String(row.reviewed_at),
+    reviewState: String(row.review_state ?? "LOOKS_GOOD") as
+      "LOOKS_GOOD" | "STILL_CHECKING",
   };
 }
 
@@ -3381,17 +3384,21 @@ async function calculatePersonalSettlementReview(
     ? await service.from("expenses").select("id, title").in("id", ids)
     : { data: [], error: null };
   if (titles.error) throw new Error("Supabase Dev Expense title read failed.");
+  const titleById = new Map(
+    (titles.data ?? []).map((row) => [String(row.id), String(row.title)]),
+  );
+  const settlementIdentity = lineage.data
+    ? {
+        settlementId: String(lineage.data.id),
+        settlementRevision: Number(lineage.data.revision),
+        settlementInputDigest: String(lineage.data.input_digest),
+      }
+    : null;
   const statement = buildPersonalSettlementStatement(
     calculated.preview,
     String(actor.data.id),
-    new Map((titles.data ?? []).map((row) => [String(row.id), String(row.title)])),
-    lineage.data
-      ? {
-          settlementId: String(lineage.data.id),
-          settlementRevision: Number(lineage.data.revision),
-          settlementInputDigest: String(lineage.data.input_digest),
-        }
-      : null,
+    titleById,
+    settlementIdentity,
   );
   const statementFingerprint = hashPayload(statement);
   let selectedCheckpoint = checkpointRow;
@@ -3411,34 +3418,52 @@ async function calculatePersonalSettlementReview(
   const checkpoint = selectedCheckpoint
     ? personalSettlementCheckpointRowToDto(selectedCheckpoint)
     : null;
-  let coverage: { memberId: string; displayName: string; reviewedAt: string | null }[] =
-    [];
-  if (actor.data.role === "owner") {
-    const [members, checkpoints] = await Promise.all([
-      service
-        .from("journey_members")
-        .select("id, display_name")
-        .eq("trip_id", tripId)
-        .eq("status", "linked")
-        .order("created_at", { ascending: true }),
-      service
-        .from("ledger_settlement_review_checkpoints")
-        .select("reviewer_member_id, reviewed_at")
-        .eq("journey_id", tripId)
-        .order("reviewed_at", { ascending: false }),
-    ]);
-    if (members.error || checkpoints.error)
-      throw new Error("Supabase Dev Settlement review coverage failed.");
-    const latest = new Map<string, string>();
-    for (const item of checkpoints.data ?? [])
-      if (!latest.has(String(item.reviewer_member_id)))
-        latest.set(String(item.reviewer_member_id), String(item.reviewed_at));
-    coverage = (members.data ?? []).map((member) => ({
-      memberId: String(member.id),
+  const [members, checkpoints] = await Promise.all([
+    service
+      .from("journey_members")
+      .select("id, display_name")
+      .eq("trip_id", tripId)
+      .eq("status", "linked")
+      .order("created_at", { ascending: true }),
+    service
+      .from("ledger_settlement_review_checkpoints")
+      .select("reviewer_member_id, reviewed_at, statement_fingerprint, review_state")
+      .eq("journey_id", tripId)
+      .order("reviewed_at", { ascending: false }),
+  ]);
+  if (members.error || checkpoints.error)
+    throw new Error("Supabase Dev Settlement review coverage failed.");
+  const latest = new Map<string, (typeof checkpoints.data)[number]>();
+  for (const item of checkpoints.data ?? [])
+    if (!latest.has(String(item.reviewer_member_id)))
+      latest.set(String(item.reviewer_member_id), item);
+  const coverage = (members.data ?? []).map((member) => {
+    const memberId = String(member.id);
+    const checkpoint = latest.get(memberId);
+    const currentFingerprint = hashPayload(
+      buildPersonalSettlementStatement(
+        calculated.preview,
+        memberId,
+        titleById,
+        settlementIdentity,
+      ),
+    );
+    const explicit = checkpoint?.review_state ?? "LOOKS_GOOD";
+    return {
+      memberId,
       displayName: String(member.display_name),
-      reviewedAt: latest.get(String(member.id)) ?? null,
-    }));
-  }
+      reviewedAt: checkpoint ? String(checkpoint.reviewed_at) : null,
+      reviewState: projectPersonalSettlementReviewState(
+        checkpoint
+          ? {
+              reviewState: explicit as "LOOKS_GOOD" | "STILL_CHECKING",
+              statementFingerprint: String(checkpoint.statement_fingerprint),
+            }
+          : null,
+        currentFingerprint,
+      ),
+    };
+  });
   return {
     throughTimestamp,
     financialSource: financialSource.data,
@@ -3477,7 +3502,8 @@ async function createPersonalSettlementCheckpoint(
     if (
       replay.data.id !== input.id ||
       replay.data.journey_id !== tripId ||
-      replay.data.statement_fingerprint !== input.statementFingerprint
+      replay.data.statement_fingerprint !== input.statementFingerprint ||
+      (replay.data.review_state ?? "LOOKS_GOOD") !== input.reviewState
     )
       throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The key conflicts.");
     return {
@@ -3493,12 +3519,13 @@ async function createPersonalSettlementCheckpoint(
       "STALE_REVIEW_CHECKPOINT",
       "The Settlement changed; review the updated statement.",
     );
-  const result = await service.rpc("ledger_create_settlement_review_checkpoint_3b", {
+  const result = await service.rpc("ledger_create_settlement_review_checkpoint_3c", {
     p_actor_user_id: userId,
     p_journey_id: tripId,
     p_checkpoint_id: input.id,
     p_operation_id: input.operationId,
     p_statement_fingerprint: input.statementFingerprint,
+    p_review_state: input.reviewState,
     p_reviewed_statement: current.response.statement,
     p_through_timestamp: current.throughTimestamp,
     p_expected_financial_source: current.financialSource,

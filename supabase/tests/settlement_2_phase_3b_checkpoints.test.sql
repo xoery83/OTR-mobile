@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(13);
+select plan(16);
 set local role service_role;
 
 select has_table('public', 'ledger_settlement_review_checkpoints',
@@ -9,6 +9,11 @@ select has_table('public', 'ledger_settlement_review_checkpoints',
 select has_function('public', 'ledger_create_settlement_review_checkpoint_3b',
   array['uuid','uuid','uuid','uuid','text','jsonb','timestamp with time zone','jsonb'],
   'checkpoint RPC exists');
+select has_column('public', 'ledger_settlement_review_checkpoints', 'review_state',
+  'checkpoint stores an explicit review state');
+select has_function('public', 'ledger_create_settlement_review_checkpoint_3c',
+  array['uuid','uuid','uuid','uuid','text','text','jsonb','timestamp with time zone','jsonb'],
+  'three-state checkpoint RPC exists');
 select ok(not has_function_privilege('authenticated',
   'public.ledger_create_settlement_review_checkpoint_3b(uuid,uuid,uuid,uuid,text,jsonb,timestamp with time zone,jsonb)',
   'EXECUTE'), 'authenticated clients cannot bypass Backend');
@@ -104,6 +109,19 @@ select is((select reviewed_statement ->> 'algorithmVersion'
   from public.ledger_settlement_review_checkpoints
   where id='80000000-0000-4000-8000-00000000f301'),
   'ledger-settlement-greedy-v1', 'algorithm version is auditable');
+select is((public.ledger_create_settlement_review_checkpoint_3c(
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  '80000000-0000-4000-8000-00000000f304',
+  '80000000-0000-4000-8000-00000000f304', repeat('e',64),
+  'STILL_CHECKING', (select statement from phase3b_fixture),
+  (select through_timestamp from phase3b_fixture),
+  public.ledger_personal_financial_source_3b(
+    '10000000-0000-4000-8000-000000000001',
+    (select through_timestamp from phase3b_fixture)
+  )
+) #>> '{checkpoint,review_state}'), 'STILL_CHECKING',
+  'member can explicitly remain still checking');
 
 select * from finish();
 rollback;

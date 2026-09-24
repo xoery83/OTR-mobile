@@ -2,6 +2,34 @@
 
 Date: 2026-09-24
 
+## Settlement Summary noise reduction and three-state member review — implemented
+
+- Summary hides unchanged confirmation, routine source, cached/offline, refresh failure,
+  operation-result and raw-error copy unless Debug Mode is enabled. The entire
+  no-changes module is omitted when there is no delta, and the confirmed-expense
+  correction flow no longer repeats Settlement history.
+- Estimated currency values no longer show `≈` or persistent warning copy. An amber
+  amount indicator expands to the exact affected Expenses and explains whether today's
+  rate is not published yet, a recent reference rate is in use, or automatic rate support
+  is unavailable and manual action is needed.
+- Summary now has an inline group review-status card. Members can set `Looks good` or
+  `Still checking`, expand the full Journey-member list without navigating away, and see
+  `Not reviewed` before first action. A materially changed statement projects an earlier
+  `Looks good` response as `Still checking`.
+- SQLite migration 31 and Hosted Dev migration `20260924000100` carry review state through
+  the existing offline repository, durable queue, API and immutable checkpoint path.
+  Hosted Dev migration and Backend deployment are complete; the scoped acceptance suite
+  passed 40 assertions. Production was not accessed.
+- TypeScript, ESLint, Backend build, `git diff --check`, 94 Vitest files / 417 tests, two
+  clean local database resets, two complete 21-file pgTAP / 458-test runs, empty schema
+  diff and baseline verification all pass. The approved schema is 103 tables / 1,435
+  columns with checksum `61259583b6c0662d2663b6422b071eda7b16c9e0d0b5f4582eaab5fbef38b521`.
+- A signed Release was installed over the existing physical iPhone 16 Pro app without
+  clearing data. The latest retained Trip visually confirmed the reduced Summary, hidden
+  no-change/debug copy, absent FX indicator for an exact valuation, inline member list,
+  colored `Looks good -> Still checking -> Looks good` controls, persisted refresh state,
+  and a correction screen without duplicate Settlement history.
+
 ## Automatic OTR API access-token recovery — implementation complete
 
 - Root cause confirmed: authenticated transports created the shared API client with a

@@ -11,6 +11,14 @@ minor-unit paid, share and balance totals plus the member's per-Expense contribu
 vector, settings revision, Settlement lineage and algorithm version. It is identified
 by a deterministic fingerprint, never by a boolean approval flag.
 
+The same append-only checkpoint records the member's explicit `LOOKS_GOOD` or
+`STILL_CHECKING` state. `NOT_REVIEWED` remains derived from the absence of any
+checkpoint. Existing rows default to `LOOKS_GOOD`. Coverage is readable by every
+current Journey member and exposes only member display name and the three-state
+projection. If a prior `LOOKS_GOOD` fingerprint no longer matches the member's current
+material statement, coverage projects `STILL_CHECKING`; non-financial edits do not
+invalidate it.
+
 Current state is derived again from the existing canonical Settlement preview. Delta
 comparison is personal and per Expense: payer credit, share, inclusion and valuation
 content are compared while descriptions, categories, notes and regenerated-but-equal

@@ -24,6 +24,12 @@ export function PersonalSettlementReviewScreen() {
       </View>
     );
   const statement = state.statement;
+  const currentReviewState =
+    state.pendingReviewState ??
+    state.coverage.find((member) => member.memberId === statement.memberId)
+      ?.reviewState ??
+    state.checkpoint?.reviewState ??
+    "NOT_REVIEWED";
   const money = (minor: number) =>
     formatLedgerMoney(minor, statement.currency, statement.scale);
 
@@ -106,47 +112,35 @@ export function PersonalSettlementReviewScreen() {
         </Pressable>
       </View>
 
-      {state.coverage.length ? (
-        <View style={styles.section}>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Review coverage
-          </Text>
-          <Text style={styles.meta}>
-            Informational only · member review is never required.
-          </Text>
-          {state.coverage.map((member) => (
-            <View key={member.memberId} style={styles.coverageRow}>
-              <Text style={styles.cardTitle}>{member.displayName}</Text>
-              <Text style={styles.meta}>
-                {member.reviewedAt ? "Reviewed" : "Not reviewed"}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
-
-      {review.message ? (
-        <Text accessibilityLiveRegion="polite" style={styles.message}>
-          {review.message}
-        </Text>
-      ) : null}
       {state.syncStatus === "CONFLICT" ? (
         <Text style={styles.message}>
           Settlement changed before sync. Review the updated statement again.
         </Text>
-      ) : state.checkpoint ? (
-        <Text style={styles.meta}>
-          Reviewed {new Date(state.checkpoint.reviewedAt).toLocaleString()}
-        </Text>
       ) : null}
-      <Pressable
-        accessibilityRole="button"
-        disabled={review.busy}
-        onPress={() => void review.looksGood()}
-        style={[styles.primary, review.busy && styles.disabled]}
-      >
-        <Text style={styles.primaryText}>{review.busy ? "Saving…" : "Looks good"}</Text>
-      </Pressable>
+      <View style={styles.section}>
+        <Text accessibilityRole="header" style={styles.sectionTitle}>
+          Review status
+        </Text>
+        <View style={styles.actions}>
+          {(["LOOKS_GOOD", "STILL_CHECKING"] as const).map((reviewState) => {
+            const selected = currentReviewState === reviewState;
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: review.busy, selected }}
+                disabled={review.busy || selected}
+                key={reviewState}
+                onPress={() => void review.setReviewState(reviewState)}
+                style={[styles.secondary, selected && styles.selectedStatus]}
+              >
+                <Text style={styles.secondaryText}>
+                  {reviewState === "LOOKS_GOOD" ? "Looks good" : "Still checking"}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
     </ScrollView>
   );
 }
@@ -199,20 +193,7 @@ const styles = StyleSheet.create({
     borderColor: "#9aabba",
   },
   secondaryText: { fontWeight: "700", color: "#26445f" },
-  coverageRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingVertical: 8,
-  },
-  primary: {
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 14,
-    backgroundColor: "#0b6b54",
-  },
-  primaryText: { color: "white", fontSize: 17, fontWeight: "800" },
-  disabled: { opacity: 0.55 },
+  selectedStatus: { backgroundColor: "#D1FAE5", borderColor: "#059669" },
   message: {
     padding: 12,
     borderRadius: 12,

@@ -157,33 +157,6 @@ export function SettlementAdjustmentScreen() {
           ) : null}
         </>
       ) : null}
-
-      <Text accessibilityRole="header" style={styles.sectionTitle}>
-        Settlement history
-      </Text>
-      {settlement.lineage.map((version, index) => (
-        <Pressable
-          accessibilityRole="button"
-          key={version.id}
-          onPress={() =>
-            router.push({
-              pathname: "/expenses/settlement-statement",
-              params: { journeyId: settlement.journeyId, versionId: version.id },
-            } as never)
-          }
-          style={styles.row}
-        >
-          <View style={styles.grow}>
-            <Text style={styles.rowTitle}>
-              {index === 0 ? "Previous confirmed settlement" : "Updated settlement"}
-            </Text>
-            <Text style={styles.meta}>
-              {new Date(version.finalizedAt).toLocaleDateString()}
-            </Text>
-          </View>
-          <Text style={styles.version}>#{(version.lineageSequence ?? 0) + 1}</Text>
-        </Pressable>
-      ))}
     </ScrollView>
   );
 }

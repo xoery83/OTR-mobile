@@ -2,6 +2,7 @@ import type * as SQLite from "expo-sqlite";
 
 import type {
   PersonalSettlementReviewResponse,
+  PersonalSettlementReviewState,
   PersonalSettlementStatementDto,
 } from "@/data/api/ledgerSettlementContracts";
 
@@ -13,6 +14,7 @@ type Database = Pick<
 export type LocalPersonalSettlementReview = PersonalSettlementReviewResponse & {
   syncStatus: "SYNCED" | "PENDING" | "SYNCING" | "CONFLICT" | "FAILED";
   pendingOperationId: string | null;
+  pendingReviewState: PersonalSettlementReviewState | null;
   lastErrorCode: string | null;
   updatedAt: string;
 };
@@ -25,6 +27,7 @@ type Row = {
   coverageJson: string;
   syncStatus: LocalPersonalSettlementReview["syncStatus"];
   pendingOperationId: string | null;
+  pendingReviewState: PersonalSettlementReviewState | null;
   lastErrorCode: string | null;
   updatedAt: string;
 };
@@ -32,7 +35,8 @@ type Row = {
 const selectState = `SELECT statement_json AS statementJson,
   statement_fingerprint AS statementFingerprint, checkpoint_json AS checkpointJson,
   delta_json AS deltaJson, coverage_json AS coverageJson, sync_status AS syncStatus,
-  pending_operation_id AS pendingOperationId, last_error_code AS lastErrorCode,
+  pending_operation_id AS pendingOperationId, pending_review_state AS pendingReviewState,
+  last_error_code AS lastErrorCode,
   updated_at AS updatedAt
   FROM ledger_personal_settlement_review_state`;
 
@@ -67,11 +71,12 @@ export function createPersonalSettlementReviewRepository(
           ? current.syncStatus
           : "SYNCED",
         current?.pendingOperationId ?? null,
+        current?.pendingReviewState ?? null,
         current?.lastErrorCode ?? null,
       );
     },
 
-    async checkpoint(journeyId: string) {
+    async checkpoint(journeyId: string, reviewState: PersonalSettlementReviewState) {
       const userId = await getActiveUserId();
       const current = await database.getFirstAsync<Row>(
         `${selectState} WHERE user_id = ? AND journey_id = ?`,
@@ -84,14 +89,17 @@ export function createPersonalSettlementReviewRepository(
         id,
         statementFingerprint: current.statementFingerprint,
         operationId: id,
+        reviewState,
       };
       const now = new Date().toISOString();
       await database.withTransactionAsync(async () => {
         await database.runAsync(
           `UPDATE ledger_personal_settlement_review_state SET
-            sync_status = 'PENDING', pending_operation_id = ?, last_error_code = NULL,
+            sync_status = 'PENDING', pending_operation_id = ?, pending_review_state = ?,
+            last_error_code = NULL,
             updated_at = ? WHERE user_id = ? AND journey_id = ?`,
           id,
+          reviewState,
           now,
           userId,
           journeyId,
@@ -122,9 +130,10 @@ export function createPersonalSettlementReviewRepository(
       response: PersonalSettlementReviewResponse,
     ) {
       const userId = await getActiveUserId();
-      await save(database, userId, journeyId, response, "SYNCED", null, null);
+      await save(database, userId, journeyId, response, "SYNCED", null, null, null);
       await database.runAsync(
-        `UPDATE ledger_personal_settlement_review_state SET pending_operation_id = NULL
+        `UPDATE ledger_personal_settlement_review_state SET
+          pending_operation_id = NULL, pending_review_state = NULL
          WHERE user_id = ? AND journey_id = ? AND pending_operation_id = ?`,
         userId,
         journeyId,
@@ -136,7 +145,8 @@ export function createPersonalSettlementReviewRepository(
       const userId = await getActiveUserId();
       await database.runAsync(
         `UPDATE ledger_personal_settlement_review_state SET
-          sync_status = 'CONFLICT', last_error_code = ?, updated_at = ?
+          sync_status = 'CONFLICT', pending_review_state = NULL,
+          last_error_code = ?, updated_at = ?
          WHERE user_id = ? AND journey_id = ?`,
         code,
         new Date().toISOString(),
@@ -148,14 +158,26 @@ export function createPersonalSettlementReviewRepository(
 }
 
 function fromRow(row: Row): LocalPersonalSettlementReview {
+  const statement = JSON.parse(row.statementJson) as PersonalSettlementStatementDto;
+  const coverage = JSON.parse(
+    row.coverageJson,
+  ) as PersonalSettlementReviewResponse["coverage"];
+  const pendingCoverage = row.pendingReviewState
+    ? coverage.map((member) =>
+        member.memberId === statement.memberId
+          ? { ...member, reviewState: row.pendingReviewState! }
+          : member,
+      )
+    : coverage;
   return {
-    statement: JSON.parse(row.statementJson) as PersonalSettlementStatementDto,
+    statement,
     statementFingerprint: row.statementFingerprint,
     checkpoint: row.checkpointJson ? JSON.parse(row.checkpointJson) : null,
     delta: row.deltaJson ? JSON.parse(row.deltaJson) : null,
-    coverage: JSON.parse(row.coverageJson),
+    coverage: pendingCoverage,
     syncStatus: row.syncStatus,
     pendingOperationId: row.pendingOperationId,
+    pendingReviewState: row.pendingReviewState,
     lastErrorCode: row.lastErrorCode,
     updatedAt: row.updatedAt,
   };
@@ -168,14 +190,15 @@ async function save(
   response: PersonalSettlementReviewResponse,
   status: LocalPersonalSettlementReview["syncStatus"],
   operationId: string | null,
+  pendingReviewState: PersonalSettlementReviewState | null,
   errorCode: string | null,
 ) {
   await database.runAsync(
     `INSERT INTO ledger_personal_settlement_review_state (
       user_id, journey_id, statement_json, statement_fingerprint,
       checkpoint_json, delta_json, coverage_json, sync_status, pending_operation_id,
-      last_error_code, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      pending_review_state, last_error_code, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (user_id, journey_id) DO UPDATE SET
       statement_json = excluded.statement_json,
       statement_fingerprint = excluded.statement_fingerprint,
@@ -184,6 +207,7 @@ async function save(
       coverage_json = excluded.coverage_json,
       sync_status = excluded.sync_status,
       pending_operation_id = excluded.pending_operation_id,
+      pending_review_state = excluded.pending_review_state,
       last_error_code = excluded.last_error_code,
       updated_at = excluded.updated_at`,
     userId,
@@ -195,6 +219,7 @@ async function save(
     JSON.stringify(response.coverage),
     status,
     operationId,
+    pendingReviewState,
     errorCode,
     new Date().toISOString(),
   );

@@ -4,6 +4,7 @@ import type { SettlementPreview } from "./settlement";
 import {
   buildPersonalSettlementStatement,
   comparePersonalSettlementStatements,
+  projectPersonalSettlementReviewState,
 } from "./personalSettlementReview";
 
 function preview(): SettlementPreview {
@@ -80,6 +81,28 @@ function preview(): SettlementPreview {
 }
 
 describe("personal Settlement review", () => {
+  it("projects not reviewed, explicit checking and stale looks-good states", () => {
+    expect(projectPersonalSettlementReviewState(null, "current")).toBe("NOT_REVIEWED");
+    expect(
+      projectPersonalSettlementReviewState(
+        { reviewState: "LOOKS_GOOD", statementFingerprint: "current" },
+        "current",
+      ),
+    ).toBe("LOOKS_GOOD");
+    expect(
+      projectPersonalSettlementReviewState(
+        { reviewState: "LOOKS_GOOD", statementFingerprint: "old" },
+        "current",
+      ),
+    ).toBe("STILL_CHECKING");
+    expect(
+      projectPersonalSettlementReviewState(
+        { reviewState: "STILL_CHECKING", statementFingerprint: "current" },
+        "current",
+      ),
+    ).toBe("STILL_CHECKING");
+  });
+
   it("detects material net-zero contribution changes and ignores snapshots alone", () => {
     const original = buildPersonalSettlementStatement(
       preview(),

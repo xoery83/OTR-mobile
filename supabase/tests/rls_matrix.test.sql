@@ -13,8 +13,8 @@ select is(
 );
 select is(
   (select count(*)::integer from information_schema.columns where table_schema = 'public'),
-  1434,
-  'canonical, Ledger 2 and Settlement 2 Phase 4A column count is 1434'
+  1435,
+  'canonical, Ledger 2 and Settlement review-state column count is 1435'
 );
 select is(
   (select count(*)::integer from pg_class c join pg_namespace n on n.oid = c.relnamespace

@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
 import type { LocalPersonalSettlementReview } from "@/data/repositories/personalSettlementReviewRepository";
+import type { PersonalSettlementReviewState } from "@/data/api/ledgerSettlementContracts";
 import { getDefaultPersonalSettlementReviewRepository } from "@/data/repositories/defaultPersonalSettlementReviewRepository";
 import {
   refreshPersonalSettlementReview,
@@ -35,27 +36,30 @@ export function usePersonalSettlementReview(journeyId?: string) {
     }, [load]),
   );
 
-  const looksGood = useCallback(async () => {
-    if (!journeyId) return;
-    setBusy(true);
-    setMessage(null);
-    try {
-      const repository = await getDefaultPersonalSettlementReviewRepository();
-      await repository.checkpoint(journeyId);
-      setState(await repository.get(journeyId));
+  const setReviewState = useCallback(
+    async (reviewState: PersonalSettlementReviewState) => {
+      if (!journeyId) return;
+      setBusy(true);
+      setMessage(null);
       try {
-        await runPersonalSettlementReviewSync(journeyId);
-        await refreshPersonalSettlementReview(journeyId);
+        const repository = await getDefaultPersonalSettlementReviewRepository();
+        await repository.checkpoint(journeyId, reviewState);
+        setState(await repository.get(journeyId));
+        try {
+          await runPersonalSettlementReviewSync(journeyId);
+          await refreshPersonalSettlementReview(journeyId);
+        } catch {
+          setMessage("Saved on this device · Pending sync");
+        }
+        setState(await repository.get(journeyId));
       } catch {
-        setMessage("Saved on this device · Pending sync");
+        setMessage("Open the latest statement and try again.");
+      } finally {
+        setBusy(false);
       }
-      setState(await repository.get(journeyId));
-    } catch {
-      setMessage("Open the latest statement and try again.");
-    } finally {
-      setBusy(false);
-    }
-  }, [journeyId]);
+    },
+    [journeyId],
+  );
 
   return {
     state,
@@ -64,6 +68,7 @@ export function usePersonalSettlementReview(journeyId?: string) {
     busy,
     message,
     reload: load,
-    looksGood,
+    setReviewState,
+    looksGood: () => setReviewState("LOOKS_GOOD"),
   };
 }

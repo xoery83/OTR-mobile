@@ -1098,4 +1098,12 @@ export const migrations: Migration[] = [
       ALTER TABLE ledger_settlements ADD COLUMN correction_successor_expense_id TEXT;
     `,
   },
+  {
+    id: 31,
+    name: "settlement_review_three_state",
+    sql: `ALTER TABLE ledger_personal_settlement_review_state
+      ADD COLUMN pending_review_state TEXT CHECK (
+        pending_review_state IN ('LOOKS_GOOD', 'STILL_CHECKING')
+      );`,
+  },
 ];

@@ -128,6 +128,17 @@ export const personalSettlementStatementSchema = z.object({
   contributions: z.array(personalSettlementContributionSchema),
 });
 
+export const personalSettlementReviewStateSchema = z.enum([
+  "LOOKS_GOOD",
+  "STILL_CHECKING",
+]);
+
+export const personalSettlementCoverageStateSchema = z.enum([
+  "NOT_REVIEWED",
+  "STILL_CHECKING",
+  "LOOKS_GOOD",
+]);
+
 export const personalSettlementCheckpointSchema = z.object({
   id: uuid,
   journeyId: uuid,
@@ -137,6 +148,7 @@ export const personalSettlementCheckpointSchema = z.object({
   reviewedStatement: personalSettlementStatementSchema,
   revision: z.number().int().positive(),
   reviewedAt: z.string(),
+  reviewState: personalSettlementReviewStateSchema,
 });
 
 export const personalSettlementDeltaSchema = z.object({
@@ -166,6 +178,7 @@ export const personalSettlementReviewResponseSchema = z.object({
       memberId: uuid,
       displayName: z.string().min(1).max(200),
       reviewedAt: z.string().nullable(),
+      reviewState: personalSettlementCoverageStateSchema,
     }),
   ),
 });
@@ -174,6 +187,7 @@ export const createPersonalSettlementCheckpointRequestSchema = z.object({
   id: uuid,
   statementFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
   operationId: uuid,
+  reviewState: personalSettlementReviewStateSchema,
 });
 
 export const repaymentValuationSchema = z.object({
@@ -624,6 +638,9 @@ export type PersonalSettlementCheckpointDto = z.infer<
 >;
 export type PersonalSettlementReviewResponse = z.infer<
   typeof personalSettlementReviewResponseSchema
+>;
+export type PersonalSettlementReviewState = z.infer<
+  typeof personalSettlementReviewStateSchema
 >;
 export type CreatePersonalSettlementCheckpointRequest = z.infer<
   typeof createPersonalSettlementCheckpointRequestSchema

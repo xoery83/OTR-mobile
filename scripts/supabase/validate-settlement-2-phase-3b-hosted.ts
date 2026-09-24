@@ -111,17 +111,26 @@ async function review(accessToken: string) {
     statementFingerprint: string;
     checkpoint: { id: string } | null;
     delta: { netDeltaMinor: number; changedExpenses: unknown[] } | null;
-    coverage: { memberId: string; displayName: string; reviewedAt: string | null }[];
+    coverage: {
+      memberId: string;
+      displayName: string;
+      reviewedAt: string | null;
+      reviewState: "NOT_REVIEWED" | "STILL_CHECKING" | "LOOKS_GOOD";
+    }[];
   };
 }
 
-async function checkpoint(accessToken: string, fingerprint: string) {
+async function checkpoint(
+  accessToken: string,
+  fingerprint: string,
+  reviewState: "LOOKS_GOOD" | "STILL_CHECKING" = "LOOKS_GOOD",
+) {
   const id = randomUUID();
   const result = await request(
     accessToken,
     "POST",
     "/settlement-review",
-    { id, operationId: id, statementFingerprint: fingerprint },
+    { id, operationId: id, statementFingerprint: fingerprint, reviewState },
     id,
   );
   assert.equal(result.status, 201, JSON.stringify(result.body));
@@ -130,7 +139,7 @@ async function checkpoint(accessToken: string, fingerprint: string) {
     accessToken,
     "POST",
     "/settlement-review",
-    { id, operationId: id, statementFingerprint: fingerprint },
+    { id, operationId: id, statementFingerprint: fingerprint, reviewState },
     id,
   );
   assert.equal(replay.status, 200);
@@ -222,7 +231,15 @@ async function main() {
   const ownerCoverage = (await review(tokens.owner)).coverage;
   assert.equal(ownerCoverage.length, 3);
   assert.ok(ownerCoverage.every((member) => member.reviewedAt !== null));
-  assert.deepEqual((await review(tokens.member)).coverage, []);
+  assert.ok(ownerCoverage.every((member) => member.reviewState === "LOOKS_GOOD"));
+  assert.equal((await review(tokens.member)).coverage.length, 3);
+  await checkpoint(tokens.member, first.member.statementFingerprint, "STILL_CHECKING");
+  assert.equal(
+    (await review(tokens.guest)).coverage.find((item) => item.memberId === members.member)
+      ?.reviewState,
+    "STILL_CHECKING",
+  );
+  await checkpoint(tokens.member, first.member.statementFingerprint);
 
   await updateExpense(
     tokens.owner,
@@ -238,6 +255,21 @@ async function main() {
   assert.ok(afterAmount.owner.delta);
   assert.ok(afterAmount.member.delta);
   assert.equal(afterAmount.guest.delta, null);
+  assert.equal(
+    afterAmount.guest.coverage.find((item) => item.memberId === members.owner)
+      ?.reviewState,
+    "STILL_CHECKING",
+  );
+  assert.equal(
+    afterAmount.guest.coverage.find((item) => item.memberId === members.member)
+      ?.reviewState,
+    "STILL_CHECKING",
+  );
+  assert.equal(
+    afterAmount.guest.coverage.find((item) => item.memberId === members.guest)
+      ?.reviewState,
+    "LOOKS_GOOD",
+  );
 
   await Promise.all(
     (Object.keys(tokens) as (keyof typeof tokens)[]).map((role) =>
@@ -268,6 +300,7 @@ async function main() {
       id: staleId,
       operationId: staleId,
       statementFingerprint: beforeSplit.statementFingerprint,
+      reviewState: "LOOKS_GOOD",
     },
     staleId,
   );
@@ -334,7 +367,7 @@ async function main() {
 
   console.log(
     JSON.stringify({
-      assertions: 34,
+      assertions: 40,
       exactAuditableCheckpoint: true,
       idempotentReplay: true,
       amountOnlyAffectedMembers: true,
@@ -343,7 +376,9 @@ async function main() {
       cosmeticNoDelta: true,
       staleRejected: true,
       personalPaymentSeparated: true,
-      organizerCoverage: true,
+      memberCoverage: true,
+      explicitStillChecking: true,
+      staleLooksGoodProjectsStillChecking: true,
       retainedQaJourney: tripId,
       productionAccessed: false,
     }),

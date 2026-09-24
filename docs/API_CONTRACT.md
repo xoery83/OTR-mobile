@@ -40,6 +40,13 @@ reviewed. A first checkpoint returns `201`, replay returns `200`, and changed fi
 source returns `409 STALE_REVIEW_CHECKPOINT`; the server never substitutes a newer
 unseen statement. Personal Payment is excluded from statement and delta inputs.
 
+Settlement review status extends that route without another review system. POST
+includes `reviewState = LOOKS_GOOD | STILL_CHECKING`; old checkpoints default to
+`LOOKS_GOOD`. GET returns coverage to every current Journey member with
+`NOT_REVIEWED | STILL_CHECKING | LOOKS_GOOD`. `NOT_REVIEWED` is derived when no
+checkpoint exists. A `LOOKS_GOOD` checkpoint whose personal statement fingerprint no
+longer matches the current material statement is projected as `STILL_CHECKING`.
+
 Settlement 2.0 Phase 4 adds Organizer-only
 `POST /v2/trips/:id/settlements/:rootId/corrections` for a stateless corrected
 source preview and `POST .../corrections/confirm` for authoritative confirmation.

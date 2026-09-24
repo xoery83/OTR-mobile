@@ -1002,6 +1002,7 @@ export function LedgerStage6Screen() {
             ) : (
               <SettlementReadinessScreen
                 activeSection={settlementSection}
+                debugMode={debugMode}
                 embedded
                 journeyId={journey.journeyId}
                 showNavigation={false}

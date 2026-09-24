@@ -43,6 +43,20 @@ export type PersonalSettlementDelta = {
   }[];
 };
 
+export function projectPersonalSettlementReviewState(
+  checkpoint: {
+    reviewState: "LOOKS_GOOD" | "STILL_CHECKING";
+    statementFingerprint: string;
+  } | null,
+  currentFingerprint: string,
+) {
+  if (!checkpoint) return "NOT_REVIEWED" as const;
+  return checkpoint.reviewState === "STILL_CHECKING" ||
+    checkpoint.statementFingerprint !== currentFingerprint
+    ? ("STILL_CHECKING" as const)
+    : ("LOOKS_GOOD" as const);
+}
+
 export function buildPersonalSettlementStatement(
   preview: SettlementPreview,
   memberId: string,

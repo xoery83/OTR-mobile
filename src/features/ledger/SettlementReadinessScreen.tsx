@@ -36,6 +36,9 @@ import {
 
 export const settlementSectionNames = ["Summary", "Paid", "Shares", "Payments"] as const;
 export type SettlementSectionName = (typeof settlementSectionNames)[number];
+type PersonalReviewHook = ReturnType<typeof usePersonalSettlementReview>;
+type PersonalReviewCoverage = NonNullable<PersonalReviewHook["state"]>["coverage"];
+type PersonalReviewState = Parameters<PersonalReviewHook["setReviewState"]>[0];
 
 const settlementSectionTabs = [
   { icon: "chart.pie.fill", label: "Summary", name: "Summary" },
@@ -46,12 +49,14 @@ const settlementSectionTabs = [
 
 export function SettlementReadinessScreen({
   activeSection,
+  debugMode = false,
   journeyId,
   embedded = false,
   onSectionChange,
   showNavigation = true,
 }: {
   activeSection?: SettlementSectionName;
+  debugMode?: boolean;
   journeyId?: string;
   embedded?: boolean;
   onSectionChange?: (section: SettlementSectionName) => void;
@@ -138,6 +143,7 @@ export function SettlementReadinessScreen({
           settlement={settlement}
           comparison={comparison}
           displayedFinal={displayedFinal}
+          debugMode={debugMode}
         />
       ) : active === "Paid" ? (
         <ExpenseSection
@@ -205,7 +211,9 @@ export function SettlementReadinessScreen({
       {sections.loading ? (
         <ActivityIndicator accessibilityLabel="Loading Settlement" />
       ) : null}
-      {sections.message ? <Text style={styles.message}>{sections.message}</Text> : null}
+      {debugMode && sections.message ? (
+        <Text style={styles.message}>{sections.message}</Text>
+      ) : null}
     </View>
   );
 
@@ -267,6 +275,7 @@ export function SettlementSectionTabs({
 
 function SummarySection({
   comparison,
+  debugMode,
   displayedFinal,
   expenses,
   paymentCount,
@@ -275,6 +284,7 @@ function SummarySection({
   settlement,
 }: {
   comparison: SettlementComparison;
+  debugMode: boolean;
   displayedFinal: ReturnType<typeof useStage7Settlement>["finalized"];
   expenses: ReturnType<typeof useSettlementSections>["expenses"];
   paymentCount: number;
@@ -284,6 +294,8 @@ function SummarySection({
 }) {
   const statement = review.state?.statement;
   const currentFinal = settlement.lineage.at(-1) ?? settlement.finalized;
+  const [rateDetailsOpen, setRateDetailsOpen] = useState(false);
+  const [reviewCoverageOpen, setReviewCoverageOpen] = useState(false);
   const finalizedBalance =
     displayedFinal?.balances.find(
       (balance) => balance.memberId === settlement.actorMemberId,
@@ -326,6 +338,19 @@ function SummarySection({
   const conflicts = settlement.preview?.blockers.filter(
     (blocker) => blocker.reason === "OPEN_CONFLICT",
   ).length;
+  const expenseFor = (id: string) =>
+    expenses.find((expense) => expense.id === id || expense.serverId === id);
+  const rateIssues = (settlement.displayPreview?.inputs ?? [])
+    .filter((input) => input.expense.status === "RATE_REQUIRED")
+    .map(({ expense }) => ({
+      id: expense.id,
+      title: expense.title,
+      reason: settlement.pendingPublicationExpenseIds.has(expense.serverId ?? expense.id)
+        ? "Today's reference rate has not been published yet."
+        : settlement.unavailableExpenseIds.has(expense.serverId ?? expense.id)
+          ? "Automatic reference rate is unavailable. Review this Expense."
+          : "Using a recent reference rate. This amount may change.",
+    }));
   const personalChanges =
     statement && currentFinal && settlement.actorMemberId
       ? personalStatementChangesFromFinal(
@@ -387,25 +412,53 @@ function SummarySection({
                 ? "You need to pay"
                 : "You're settled up"}
         </Text>
-        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroAmount}>
-          {balanceMinor === undefined
-            ? "—"
-            : `${settlement.displayPreview?.estimatedCount && !showingConfirmed ? "≈ " : ""}${formatLedgerMoney(Math.abs(balanceMinor), currency, scale)}`}
-        </Text>
-        <Text style={styles.meta}>
-          {showingConfirmed
-            ? `Matches version #${(displayedFinal!.lineageSequence ?? 0) + 1} confirmed ${new Date(displayedFinal!.finalizedAt).toLocaleDateString()}`
-            : comparison.freshness === "CURRENT_LOCAL_PENDING"
+        <View style={styles.heroAmountRow}>
+          <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroAmount}>
+            {balanceMinor === undefined
+              ? "—"
+              : formatLedgerMoney(Math.abs(balanceMinor), currency, scale)}
+          </Text>
+          {!showingConfirmed && rateIssues.length ? (
+            <Pressable
+              accessibilityHint="Shows Expenses whose converted amounts may change"
+              accessibilityLabel="Some amounts may change"
+              accessibilityRole="button"
+              onPress={() => setRateDetailsOpen((open) => !open)}
+              style={styles.estimateIndicatorButton}
+            >
+              <View style={styles.estimateIndicator} />
+            </Pressable>
+          ) : null}
+        </View>
+        {debugMode && !showingConfirmed ? (
+          <Text style={styles.meta}>
+            {comparison.freshness === "CURRENT_LOCAL_PENDING"
               ? "Includes changes saved on this device · waiting to sync"
               : comparison.freshness === "CURRENT_CACHED"
                 ? "Showing saved latest calculation"
-                : "Based on expenses recorded so far"}
-        </Text>
-        {!showingConfirmed && settlement.displayPreview?.estimatedCount ? (
-          <Text style={styles.meta}>
-            ≈ includes {settlement.displayPreview.estimatedCount} estimated value
-            {settlement.displayPreview.estimatedCount === 1 ? "" : "s"}
+                : "Current server calculation"}
           </Text>
+        ) : null}
+        {rateDetailsOpen && rateIssues.length ? (
+          <View style={styles.rateDetails}>
+            <Text style={styles.rowTitle}>Some converted amounts may change</Text>
+            {rateIssues.map((issue) => (
+              <Pressable
+                accessibilityRole="button"
+                key={issue.id}
+                onPress={() =>
+                  router.push(`/expenses/expense/${expenseFor(issue.id)?.id ?? issue.id}`)
+                }
+                style={styles.rateIssue}
+              >
+                <View style={styles.grow}>
+                  <Text style={styles.rowTitle}>{issue.title}</Text>
+                  <Text style={styles.meta}>{issue.reason}</Text>
+                </View>
+                <Text style={styles.chevron}>›</Text>
+              </Pressable>
+            ))}
+          </View>
         ) : null}
       </View>
       {paidMinor !== undefined &&
@@ -435,62 +488,52 @@ function SummarySection({
           />
         </View>
       ) : null}
-      {hasConfirmed ? (
-        <View style={hasChanges ? styles.notice : styles.card}>
-          <Text style={hasChanges ? styles.noticeTitle : styles.rowTitle}>
-            {hasChanges
-              ? "Changes since last confirmation"
-              : "No changes since last confirmation"}
-          </Text>
-          {hasChanges ? (
-            <>
-              {changedExpenses.slice(0, 3).map((item) => (
-                <Text key={item.expenseId} style={styles.body}>
-                  {item.change === "NEW"
-                    ? "Added"
-                    : item.change === "DELETED"
-                      ? "Removed"
-                      : "Changed"}
-                  : {changeTitle(item.expenseId)}
-                </Text>
-              ))}
-              {balanceMinor !== undefined && confirmedBalance ? (
-                <Text style={styles.body}>
-                  Your change: {balanceMinor - confirmedBalance.netMinor >= 0 ? "+" : ""}
-                  {formatLedgerMoney(
-                    balanceMinor - confirmedBalance.netMinor,
-                    currency,
-                    scale,
-                  )}
-                </Text>
-              ) : null}
-              <Pressable
-                accessibilityRole="button"
-                onPress={() =>
-                  router.push({
-                    pathname: "/expenses/settlement-update",
-                    params: { journeyId: settlement.journeyId },
-                  } as never)
-                }
-              >
-                <Text style={styles.link}>Review changes ›</Text>
-              </Pressable>
-              {settlement.isOrganizer ? (
-                <Action
-                  primary
-                  label="Review & confirm changes"
-                  onPress={() =>
-                    router.push({
-                      pathname: "/expenses/settlement-update",
-                      params: { journeyId: settlement.journeyId },
-                    } as never)
-                  }
-                />
-              ) : null}
-            </>
-          ) : (
-            <Text style={styles.meta}>Current matches the latest confirmed version.</Text>
-          )}
+      {hasConfirmed && hasChanges ? (
+        <View style={styles.notice}>
+          <Text style={styles.noticeTitle}>Changes since last confirmation</Text>
+          {changedExpenses.slice(0, 3).map((item) => (
+            <Text key={item.expenseId} style={styles.body}>
+              {item.change === "NEW"
+                ? "Added"
+                : item.change === "DELETED"
+                  ? "Removed"
+                  : "Changed"}
+              : {changeTitle(item.expenseId)}
+            </Text>
+          ))}
+          {balanceMinor !== undefined && confirmedBalance ? (
+            <Text style={styles.body}>
+              Your change: {balanceMinor - confirmedBalance.netMinor >= 0 ? "+" : ""}
+              {formatLedgerMoney(
+                balanceMinor - confirmedBalance.netMinor,
+                currency,
+                scale,
+              )}
+            </Text>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              router.push({
+                pathname: "/expenses/settlement-update",
+                params: { journeyId: settlement.journeyId },
+              } as never)
+            }
+          >
+            <Text style={styles.link}>Review changes ›</Text>
+          </Pressable>
+          {settlement.isOrganizer ? (
+            <Action
+              primary
+              label="Review & confirm changes"
+              onPress={() =>
+                router.push({
+                  pathname: "/expenses/settlement-update",
+                  params: { journeyId: settlement.journeyId },
+                } as never)
+              }
+            />
+          ) : null}
         </View>
       ) : null}
       {hasConfirmed && confirmedBalance && currentFinal ? (
@@ -531,11 +574,22 @@ function SummarySection({
           </Pressable>
         </View>
       ) : null}
-      {paymentCount ? (
+      {debugMode && paymentCount ? (
         <Text style={styles.secondaryNote}>
           {paymentCount} personal payment {paymentCount === 1 ? "record" : "records"} ·
           kept separate from this balance
         </Text>
+      ) : null}
+      {review.state ? (
+        <GroupReviewStatus
+          actorMemberId={settlement.actorMemberId}
+          busy={review.busy}
+          coverage={review.state.coverage}
+          expanded={reviewCoverageOpen}
+          onExpand={() => setReviewCoverageOpen((open) => !open)}
+          onSelect={(state) => void review.setReviewState(state)}
+          pendingReviewState={review.state.pendingReviewState}
+        />
       ) : null}
       {review.state?.delta ? (
         <Pressable
@@ -580,15 +634,30 @@ function SummarySection({
           </Text>
         </Pressable>
       ) : null}
-      {automaticWaiting ? (
-        <View style={styles.waiting}>
-          <Text style={styles.rowTitle}>Waiting for exchange rate</Text>
-          <Text style={styles.body}>
-            Nothing you need to do. We will update this automatically.
-          </Text>
+      {unavailableRates ? (
+        <View style={styles.notice}>
+          <Text style={styles.noticeTitle}>Exchange rates need attention</Text>
+          {[...settlement.unavailableExpenseIds].map((id) => (
+            <Pressable
+              accessibilityRole="button"
+              key={id}
+              onPress={() => router.push(`/expenses/expense/${expenseFor(id)?.id ?? id}`)}
+              style={styles.rateIssue}
+            >
+              <View style={styles.grow}>
+                <Text style={styles.rowTitle}>
+                  {expenseFor(id)?.title ?? `Expense ${id.slice(0, 8)}`}
+                </Text>
+                <Text style={styles.body}>
+                  Automatic reference rate is unavailable. Review or enter the rate.
+                </Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
+          ))}
         </View>
       ) : null}
-      {unavailableRates || conflicts ? (
+      {conflicts ? (
         <Pressable
           accessibilityRole="button"
           onPress={() => void settlement.prepare()}
@@ -596,33 +665,22 @@ function SummarySection({
         >
           <Text style={styles.noticeTitle}>Settlement values need attention</Text>
           <Text style={styles.body}>
-            {unavailableRates
-              ? `${unavailableRates} exchange ${unavailableRates === 1 ? "rate needs" : "rates need"} review.`
-              : `${conflicts} ${conflicts === 1 ? "conflict needs" : "conflicts need"} review.`}
+            {conflicts} {conflicts === 1 ? "conflict needs" : "conflicts need"} review.
           </Text>
           <Text style={styles.link}>Check readiness ›</Text>
         </Pressable>
       ) : null}
-      {review.state?.coverage.length && settlement.isOrganizer ? (
-        <Text style={styles.secondaryNote}>
-          Reviewed · {review.state.coverage.filter((item) => item.reviewedAt).length} of{" "}
-          {review.state.coverage.length} members · informational only
+      {debugMode && automaticWaiting ? (
+        <Text style={styles.meta}>
+          Waiting for {automaticWaiting} reference rate
+          {automaticWaiting === 1 ? "" : "s"} to be published.
         </Text>
       ) : null}
-      {settlement.message ? (
+      {debugMode && settlement.message ? (
         <Text style={styles.message}>{settlement.message}</Text>
       ) : null}
-      {settlement.updating ? <Text style={styles.meta}>Updating…</Text> : null}
-      {review.state ? (
-        <Action
-          label="Review my settlement"
-          onPress={() =>
-            router.push({
-              pathname: "/expenses/personal-settlement-review",
-              params: { journeyId: settlement.journeyId },
-            } as never)
-          }
-        />
+      {debugMode && settlement.updating ? (
+        <Text style={styles.meta}>Updating…</Text>
       ) : null}
       {settlement.isOrganizer &&
       !hasConfirmed &&
@@ -962,6 +1020,116 @@ function Toggle({
   );
 }
 
+function GroupReviewStatus({
+  actorMemberId,
+  busy,
+  coverage,
+  expanded,
+  onExpand,
+  onSelect,
+  pendingReviewState,
+}: {
+  actorMemberId: string | null;
+  busy: boolean;
+  coverage: PersonalReviewCoverage;
+  expanded: boolean;
+  onExpand: () => void;
+  onSelect: (state: PersonalReviewState) => void;
+  pendingReviewState: PersonalReviewState | null;
+}) {
+  const current =
+    pendingReviewState ??
+    coverage.find((member) => member.memberId === actorMemberId)?.reviewState ??
+    "NOT_REVIEWED";
+  const counts = {
+    LOOKS_GOOD: coverage.filter((member) => member.reviewState === "LOOKS_GOOD").length,
+    STILL_CHECKING: coverage.filter((member) => member.reviewState === "STILL_CHECKING")
+      .length,
+    NOT_REVIEWED: coverage.filter((member) => member.reviewState === "NOT_REVIEWED")
+      .length,
+  };
+  return (
+    <View style={styles.reviewStatusCard}>
+      <Text accessibilityRole="header" style={styles.rowTitle}>
+        Group review status
+      </Text>
+      <Text style={styles.meta}>
+        {counts.LOOKS_GOOD} looks good · {counts.STILL_CHECKING} still checking ·{" "}
+        {counts.NOT_REVIEWED} not reviewed
+      </Text>
+      <View style={styles.reviewControls}>
+        {(["LOOKS_GOOD", "STILL_CHECKING"] as const).map((state) => {
+          const selected = current === state;
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: busy, selected }}
+              disabled={busy || selected}
+              key={state}
+              onPress={() => onSelect(state)}
+              style={[
+                styles.reviewControl,
+                selected &&
+                  (state === "LOOKS_GOOD"
+                    ? styles.reviewControlGood
+                    : styles.reviewControlChecking),
+              ]}
+            >
+              <Text style={[styles.reviewControlText, selected && styles.bold]}>
+                {state === "LOOKS_GOOD" ? "Looks good" : "Still checking"}
+              </Text>
+            </Pressable>
+          );
+        })}
+        {current === "NOT_REVIEWED" ? (
+          <Text style={[styles.reviewTag, styles.reviewTagNeutral]}>Not reviewed</Text>
+        ) : null}
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        onPress={onExpand}
+      >
+        <Text style={styles.link}>
+          {expanded ? "Hide member status ⌃" : "View member status ⌄"}
+        </Text>
+      </Pressable>
+      {expanded ? (
+        <View style={styles.reviewMembers}>
+          {coverage.map((member) => (
+            <View key={member.memberId} style={styles.reviewMemberRow}>
+              <Text style={styles.body}>
+                {member.displayName}
+                {member.memberId === actorMemberId ? " (You)" : ""}
+              </Text>
+              <Text
+                style={[
+                  styles.reviewTag,
+                  member.reviewState === "LOOKS_GOOD"
+                    ? styles.reviewTagGood
+                    : member.reviewState === "STILL_CHECKING"
+                      ? styles.reviewTagChecking
+                      : styles.reviewTagNeutral,
+                ]}
+              >
+                {reviewStateLabel(member.reviewState)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function reviewStateLabel(state: PersonalReviewCoverage[number]["reviewState"]) {
+  return state === "LOOKS_GOOD"
+    ? "Looks good"
+    : state === "STILL_CHECKING"
+      ? "Still checking"
+      : "Not reviewed";
+}
+
 function Action({
   label,
   onPress,
@@ -1051,8 +1219,21 @@ const styles = StyleSheet.create({
   },
   grow: { flex: 1, gap: 3 },
   hero: { backgroundColor: "#E7F5F2", borderRadius: 18, gap: 6, padding: 18 },
-  heroAmount: { color: "#0F172A", fontSize: 36, fontWeight: "900" },
+  heroAmount: { color: "#0F172A", flexShrink: 1, fontSize: 36, fontWeight: "900" },
+  heroAmountRow: { alignItems: "flex-start", flexDirection: "row", gap: 4 },
   heroLabel: { color: "#0F172A", fontSize: 18, fontWeight: "800" },
+  estimateIndicator: {
+    backgroundColor: "#D97706",
+    borderRadius: 5,
+    height: 9,
+    width: 9,
+  },
+  estimateIndicatorButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 32,
+    minWidth: 32,
+  },
   legacy: {
     borderTopColor: "#CBD5E1",
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -1122,6 +1303,69 @@ const styles = StyleSheet.create({
   notice: { backgroundColor: "#FFF7ED", borderRadius: 12, gap: 6, padding: 14 },
   noticeTitle: { color: "#9A3412", fontSize: 16, fontWeight: "800" },
   personalRecord: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 4, padding: 14 },
+  rateDetails: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    gap: 4,
+    marginTop: 4,
+    padding: 12,
+  },
+  rateIssue: {
+    alignItems: "center",
+    borderTopColor: "#E2E8F0",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    gap: 8,
+    paddingVertical: 10,
+  },
+  reviewControl: {
+    alignItems: "center",
+    borderColor: "#CBD5E1",
+    borderRadius: 10,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 42,
+    paddingHorizontal: 12,
+  },
+  reviewControlChecking: { backgroundColor: "#FEF3C7", borderColor: "#D97706" },
+  reviewControlGood: { backgroundColor: "#D1FAE5", borderColor: "#059669" },
+  reviewControlText: { color: "#334155", fontSize: 14, fontWeight: "700" },
+  reviewControls: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  reviewMemberRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    minHeight: 40,
+  },
+  reviewMembers: {
+    borderTopColor: "#E2E8F0",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: 4,
+    paddingTop: 8,
+  },
+  reviewStatusCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    gap: 10,
+    padding: 14,
+  },
+  reviewTag: {
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: "800",
+    overflow: "hidden",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  reviewTagChecking: { backgroundColor: "#FEF3C7", color: "#92400E" },
+  reviewTagGood: { backgroundColor: "#D1FAE5", color: "#065F46" },
+  reviewTagNeutral: { backgroundColor: "#E2E8F0", color: "#475569" },
   rowAmount: { color: "#0F172A", fontSize: 15, fontWeight: "800" },
   rowTitle: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
   secondaryNote: { color: "#64748B", fontSize: 13, lineHeight: 19 },

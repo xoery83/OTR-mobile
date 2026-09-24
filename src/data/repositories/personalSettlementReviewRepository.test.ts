@@ -49,7 +49,14 @@ function response(fingerprint = "a".repeat(64)): PersonalSettlementReviewRespons
     statementFingerprint: fingerprint,
     checkpoint: null,
     delta: null,
-    coverage: [],
+    coverage: [
+      {
+        memberId: "50000000-0000-4000-8000-000000000001",
+        displayName: "Member A",
+        reviewedAt: null,
+        reviewState: "NOT_REVIEWED",
+      },
+    ],
   };
 }
 
@@ -60,12 +67,14 @@ describe("personal Settlement review SQLite", () => {
     const b = createPersonalSettlementReviewRepository(api as never, async () => userB);
     await a.applyRemote(journeyId, response());
     await b.applyRemote(journeyId, response("b".repeat(64)));
-    const operationId = await a.checkpoint(journeyId);
+    const operationId = await a.checkpoint(journeyId, "STILL_CHECKING");
     await a.applyRemote(journeyId, response("c".repeat(64)));
     expect(await a.get(journeyId)).toMatchObject({
       syncStatus: "PENDING",
       pendingOperationId: operationId,
+      pendingReviewState: "STILL_CHECKING",
       statementFingerprint: "c".repeat(64),
+      coverage: [expect.objectContaining({ reviewState: "STILL_CHECKING" })],
     });
     expect(await b.get(journeyId)).toMatchObject({
       syncStatus: "SYNCED",
@@ -81,6 +90,15 @@ describe("personal Settlement review SQLite", () => {
       owner: userA,
       operation: "CREATE_SETTLEMENT_REVIEW_CHECKPOINT",
     });
+    expect(
+      JSON.parse(
+        String(
+          db
+            .prepare("SELECT payload_json AS payload FROM sync_operations WHERE id=?")
+            .get(operationId)?.payload,
+        ),
+      ),
+    ).toMatchObject({ reviewState: "STILL_CHECKING" });
     await a.markRejected(journeyId, "STALE_REVIEW_CHECKPOINT");
     expect(await a.get(journeyId)).toMatchObject({
       syncStatus: "CONFLICT",
