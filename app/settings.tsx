@@ -46,12 +46,12 @@ export default function SettingsRoute() {
         Settings
       </Text>
       <Text accessibilityRole="header" style={styles.sectionTitle}>
-        Data & Sync
+        System
       </Text>
       <View style={styles.group}>
         <SettingRow
           icon="checkmark.shield"
-          label="Check Data Health"
+          label="System Health"
           onPress={() => router.push("/data-sync")}
         />
       </View>

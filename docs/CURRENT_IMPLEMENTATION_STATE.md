@@ -2,6 +2,20 @@
 
 Date: 2026-09-24
 
+## Global Menu, Settings and Currency integration
+
+- The contextual Global Menu now contains Current User, My Ledger, Currency, Settings,
+  Language, and Log out. My Ledger keeps `/expenses/all-journeys`; Review remains inside
+  Ledger. Diagnostics and Dev account switching remain available underneath but are not
+  ordinary menu entries.
+- Settings contains only `System → System Health` and the development-gated Debug Mode.
+  System Health opens the existing `/data-sync` Phase B read-only scanner; no Data Health
+  route, coordinator, repair behavior, table, or migration was added.
+- Currency owns Journey Currency preview/commit and local-first Exchange Rate Lookup. The
+  lookup API is a narrow adapter over the existing Stage 5 resolver, cache, provider,
+  seven-day fallback, reference-date and provenance model. It creates no valuation
+  snapshot and changes no Expense, Settlement, or Personal Payment state.
+
 ## OTR Data Health & Self-Healing — Phase B accepted
 
 - Phase A was accepted and checkpointed at
@@ -13,8 +27,9 @@ Date: 2026-09-24
   manifest and reports deterministic safe findings across operations, Expenses, Personal
   Payments, receipts, cursors, deferred changes, FX projections/valuations, Review state,
   and account/Journey isolation. Account identity and generation changes invalidate a run.
-- Settings now contains `Data & Sync → Check Data Health`. Normal UI says only healthy,
-  waiting, or needs attention; safe rule IDs appear only with Debug Mode enabled.
+- Settings now links `System → System Health` to the existing `/data-sync` screen. Normal
+  UI says only healthy, waiting, or needs attention; safe rule IDs appear only with Debug
+  Mode enabled.
 - The scan writes only health state. It never runs sync/bootstrap/pull, changes queue or
   domain rows, repairs/reclassifies operations, resets cursors, deletes files/caches, or
   contacts Backend specifically for recovery. Scope-priority and throttle APIs exist for

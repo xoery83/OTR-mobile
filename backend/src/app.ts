@@ -1304,11 +1304,10 @@ async function readPersonalSettlementPayment(
     throw new HttpError(400, "INVALID_FILTER", "The deleted filter is invalid.");
   }
   const filteredPayments = payments.filter(
-      (payment) =>
-        (!counterpartyMemberId ||
-          payment.counterpartyMemberId === counterpartyMemberId) &&
-        (deleted === "true" || payment.deletedAt === null),
-    );
+    (payment) =>
+      (!counterpartyMemberId || payment.counterpartyMemberId === counterpartyMemberId) &&
+      (deleted === "true" || payment.deletedAt === null),
+  );
   const filteredPaymentIds = new Set(filteredPayments.map((payment) => payment.id));
   return json(200, {
     payments: filteredPayments,

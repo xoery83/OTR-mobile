@@ -254,7 +254,9 @@ export function personalPaymentRowToDto(
     economicDateSource:
       row.economic_date_source == null
         ? null
-        : (String(row.economic_date_source) as PersonalSettlementPaymentDto["economicDateSource"]),
+        : (String(
+            row.economic_date_source,
+          ) as PersonalSettlementPaymentDto["economicDateSource"]),
     note: row.note == null ? null : String(row.note),
     recordedEquivalentMinor:
       row.recorded_equivalent_minor == null
@@ -309,8 +311,7 @@ export function personalPaymentFxProjectionRowToDto(
     providerReference:
       row.provider_reference == null ? null : String(row.provider_reference),
     sourceReference: row.source_reference == null ? null : String(row.source_reference),
-    failureCategory:
-      row.failure_category == null ? null : String(row.failure_category),
+    failureCategory: row.failure_category == null ? null : String(row.failure_category),
     revision: Number(row.revision),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -908,7 +909,10 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       for (const payment of payments.filter((item) => item.deletedAt === null)) {
         const ensured = await service.rpc(
           "ledger_ensure_personal_payment_fx_projection_1c",
-          { target_payment: payment.id, requested_target_currency: input.proposedCurrency },
+          {
+            target_payment: payment.id,
+            requested_target_currency: input.proposedCurrency,
+          },
         );
         if (ensured.error)
           throw new Error("Supabase Dev Personal Payment FX retarget failed.");
@@ -4325,8 +4329,7 @@ async function readPersonalSettlementPaymentChanges(
       )
       .map((row) => ({
         entityType: row.entity_type as
-          | "PERSONAL_SETTLEMENT_PAYMENT"
-          | "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
+          "PERSONAL_SETTLEMENT_PAYMENT" | "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION",
         entityId: String(row.entity_id),
         revision: Number(row.revision),
         isTombstone: Boolean(row.is_tombstone),
@@ -5384,8 +5387,7 @@ async function readLedgerChanges(
     byId.set(String(row.id), receiptRowToDto(row as Record<string, unknown>));
   for (const settlement of settlements) byId.set(settlement.id, settlement);
   for (const payment of personalPaymentDtos) byId.set(payment.id, payment);
-  for (const projection of personalPaymentFxDtos)
-    byId.set(projection.id, projection);
+  for (const projection of personalPaymentFxDtos) byId.set(projection.id, projection);
 
   const changes = visibleRows.map((row) => ({
     entityType: row.entity_type as LedgerChangesResponse["changes"][number]["entityType"],
