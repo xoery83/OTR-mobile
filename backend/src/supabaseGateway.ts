@@ -8,6 +8,7 @@ import {
   historicalRatePolicyVersion,
   RateProviderError,
   type RateQuoteProvider,
+  type RateSnapshotProvider,
 } from "./rateQuoteProvider";
 
 import { BackendError, type DevBackendGateway, type StoredCreate } from "./app";
@@ -122,6 +123,7 @@ export type SupabaseDevConfig = {
   secretKey: string;
   receiptOcrProvider?: ReceiptOcrProvider;
   rateQuoteProvider?: RateQuoteProvider;
+  rateSnapshotProvider?: RateSnapshotProvider;
 };
 
 function assertApprovedDevUrl(url: string) {
@@ -497,7 +499,9 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
   const auth = client(config.url, config.publishableKey);
   const service = client(config.url, config.secretKey);
   const receiptOcrProvider = config.receiptOcrProvider ?? createReceiptOcrProvider();
-  const rateQuoteProvider = config.rateQuoteProvider ?? createFrankfurterRateProvider();
+  const defaultRateProvider = createFrankfurterRateProvider();
+  const rateQuoteProvider = config.rateQuoteProvider ?? defaultRateProvider;
+  const rateSnapshotProvider = config.rateSnapshotProvider ?? defaultRateProvider;
 
   return {
     async validateAccessToken(token) {
@@ -818,6 +822,10 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     async readLedgerRateQuotes(_userId, tripId, quoteCurrency, baseCurrency) {
       return readRateQuotes(service, tripId, quoteCurrency, baseCurrency);
+    },
+
+    async readReferenceRateSnapshots(_userId) {
+      return rateSnapshotProvider.fetchReferenceSnapshots(32);
     },
 
     async previewJourneyCurrency(userId, tripId, proposedCurrency) {

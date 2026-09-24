@@ -58,4 +58,48 @@ describe("Frankfurter ECB adapter", () => {
         createFrankfurterRateProvider(async () => new Response(content)).fetch(request),
       ).rejects.toThrow();
   });
+
+  it("returns a newest-first exact-decimal ECB snapshot bundle and caches it", async () => {
+    const requestedUrls: string[] = [];
+    const fetch = vi.fn(async (input: string | URL | Request) => {
+      requestedUrls.push(input.toString());
+      return new Response(
+        `[{"date":"2026-09-23","base":"EUR","quote":"EUR","rate":1.0},` +
+          `{"date":"2026-09-23","base":"EUR","quote":"ISK","rate":143.500000000000001},` +
+          `{"date":"2026-09-24","base":"EUR","quote":"EUR","rate":1.0},` +
+          `{"date":"2026-09-24","base":"EUR","quote":"ISK","rate":143.6}]`,
+      );
+    });
+    const provider = createFrankfurterRateProvider(
+      fetch,
+      () => new Date("2026-09-24T05:00:00.000Z"),
+    );
+    const result = await provider.fetchReferenceSnapshots();
+    expect(result.snapshots.map((snapshot) => snapshot.referenceDate)).toEqual([
+      "2026-09-24",
+      "2026-09-23",
+    ]);
+    expect(result.snapshots[1].rates.ISK).toBe("143.500000000000001");
+    expect(requestedUrls[0]).toContain(
+      "/v2/providers/ecb/rates?from=2026-07-26&to=2026-09-24",
+    );
+    await provider.fetchReferenceSnapshots();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects malformed snapshot rows and duplicate currency dates", async () => {
+    const now = () => new Date("2026-09-24T05:00:00.000Z");
+    for (const content of [
+      `[{"date":"2026-09-24","base":"USD","quote":"EUR","rate":1.0}]`,
+      `[{"date":"2026-09-24","base":"EUR","quote":"EUR","rate":1.0},` +
+        `{"date":"2026-09-24","base":"EUR","quote":"EUR","rate":1.0}]`,
+      `[{"date":"2026-09-24","base":"EUR","quote":"EUR","rate":1e0}]`,
+    ])
+      await expect(
+        createFrankfurterRateProvider(
+          async () => new Response(content),
+          now,
+        ).fetchReferenceSnapshots(),
+      ).rejects.toThrow();
+  });
 });

@@ -1,10 +1,15 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 
+import { ApiClientError } from "@/data/api/client";
 import type { PersonalSettlementPaymentDto } from "@/data/api/ledgerSettlementContracts";
 import { migrations } from "@/data/db/migrations";
+import { createLedgerPersonalPaymentSyncWorker } from "@/data/sync/ledgerPersonalPaymentSyncWorker";
+import { createSyncEngine } from "@/data/sync/syncEngine";
+import { createSyncOperationRepository } from "@/data/sync/syncOperationRepository";
 import {
   createLedgerPersonalPaymentRepository,
+  personalPaymentOperations,
   type LedgerPersonalPaymentDatabase,
 } from "./ledgerPersonalPaymentRepository";
 
@@ -115,6 +120,83 @@ function canonical(
   };
 }
 
+function fakeTransport(failAfterFirstCreate = false) {
+  const remote = new Map<string, PersonalSettlementPaymentDto>();
+  const responses = new Map<string, PersonalSettlementPaymentDto>();
+  let createCalls = 0;
+  return {
+    remote,
+    transport: {
+      async create(
+        journeyId: string,
+        input: Record<string, unknown>,
+        idempotencyKey: string,
+      ) {
+        createCalls += 1;
+        let record = responses.get(idempotencyKey);
+        if (!record) {
+          const { id, auditReason: _auditReason, ...value } = input;
+          record = {
+            ...value,
+            id,
+            journeyId,
+            ownerUserId: userA,
+            ownerMemberId: memberA,
+            revision: 1,
+            createdAt: "2026-09-24T00:00:00Z",
+            updatedAt: "2026-09-24T00:00:00Z",
+            deletedAt: null,
+          } as PersonalSettlementPaymentDto;
+          responses.set(idempotencyKey, record);
+          remote.set(record.id, record);
+        }
+        if (failAfterFirstCreate && createCalls === 1)
+          throw new ApiClientError("response lost", "network");
+        return { record, idempotentReplay: createCalls > 1 };
+      },
+      async update(_journeyId: string, id: string, input: Record<string, unknown>) {
+        const current = remote.get(id);
+        if (!current) throw new Error("Remote Personal Payment is missing.");
+        const {
+          baseRevision: _baseRevision,
+          auditReason: _auditReason,
+          ...value
+        } = input;
+        const record = {
+          ...current,
+          ...value,
+          revision: current.revision + 1,
+          updatedAt: "2026-09-24T00:01:00Z",
+        } as PersonalSettlementPaymentDto;
+        remote.set(id, record);
+        return { record, idempotentReplay: false };
+      },
+      async remove() {
+        throw new Error("Unexpected DELETE.");
+      },
+      async list() {
+        throw new Error("Unexpected list.");
+      },
+      async changes() {
+        throw new Error("Unexpected changes.");
+      },
+    },
+  };
+}
+
+async function reconcile(
+  api: LedgerPersonalPaymentDatabase,
+  repository: ReturnType<typeof createLedgerPersonalPaymentRepository>,
+  transport: ReturnType<typeof fakeTransport>["transport"],
+) {
+  const queue = createSyncOperationRepository(api, async () => userA);
+  return createSyncEngine(
+    queue,
+    createLedgerPersonalPaymentSyncWorker(repository, transport as never),
+    () => "2026-09-24T23:59:59Z",
+  ).run("AUTHENTICATED_ONLINE");
+}
+
 describe("Settlement 2.0 Personal Payment SQLite repository", () => {
   it("upgrades from migration 24 to 25 without touching existing data", () => {
     const sqlite = new DatabaseSync(":memory:");
@@ -167,6 +249,145 @@ describe("Settlement 2.0 Personal Payment SQLite repository", () => {
       { owner_user_id: userB, operation_type: "CREATE_PERSONAL_PAYMENT" },
     ]);
     expect(received.id).not.toBe(paid.id);
+    sqlite.close();
+  });
+
+  it("coalesces an offline edit into its unresolved CREATE and reconciles cleanly", async () => {
+    const { sqlite, api } = database();
+    const repository = createLedgerPersonalPaymentRepository(api, async () => userA);
+    const created = await repository.create(command(journeyA, 100, "PAID"));
+    await repository.update(created.id, command(journeyA, 250, "PAID"));
+
+    const queued = sqlite
+      .prepare(
+        `SELECT operation_type, idempotency_key, payload_json, status
+         FROM sync_operations WHERE entity_id = ? AND status <> 'COMPLETED'`,
+      )
+      .all(created.id) as Record<string, string>[];
+    expect(queued).toHaveLength(1);
+    expect(queued[0]).toMatchObject({
+      operation_type: personalPaymentOperations.create,
+      status: "PENDING",
+    });
+    expect(JSON.parse(queued[0].payload_json)).toMatchObject({
+      id: created.id,
+      amountMinor: 250,
+    });
+
+    const server = fakeTransport();
+    await reconcile(api, repository, server.transport);
+    expect([...server.remote.values()]).toHaveLength(1);
+    expect(server.remote.get(created.id)?.amountMinor).toBe(250);
+    expect(
+      sqlite
+        .prepare(
+          "SELECT COUNT(*) AS count FROM sync_operations WHERE entity_id = ? AND status <> 'COMPLETED'",
+        )
+        .get(created.id),
+    ).toEqual({ count: 0 });
+    const restarted = createLedgerPersonalPaymentRepository(api, async () => userA);
+    expect(await restarted.get(created.id)).toMatchObject({
+      amountMinor: 250,
+      revision: 1,
+      syncStatus: "SYNCED",
+    });
+    sqlite.close();
+  });
+
+  it("keeps only the latest of multiple offline pre-create edits", async () => {
+    const { sqlite, api } = database();
+    const repository = createLedgerPersonalPaymentRepository(api, async () => userA);
+    const created = await repository.create(command(journeyA, 100, "PAID"));
+    await repository.update(created.id, command(journeyA, 200, "PAID"));
+    await repository.update(created.id, command(journeyA, 350, "PAID"));
+
+    const server = fakeTransport();
+    await reconcile(api, repository, server.transport);
+    expect([...server.remote.values()]).toHaveLength(1);
+    expect(server.remote.get(created.id)?.amountMinor).toBe(350);
+    expect(
+      sqlite
+        .prepare("SELECT operation_type, status FROM sync_operations WHERE entity_id = ?")
+        .all(created.id),
+    ).toEqual([
+      { operation_type: personalPaymentOperations.create, status: "COMPLETED" },
+    ]);
+    sqlite.close();
+  });
+
+  it("preserves CREATE idempotency and latest edits after a lost create response", async () => {
+    const { sqlite, api } = database();
+    const repository = createLedgerPersonalPaymentRepository(api, async () => userA);
+    const created = await repository.create(command(journeyA, 100, "PAID"));
+    const server = fakeTransport(true);
+
+    await reconcile(api, repository, server.transport);
+    const originalKey = (
+      sqlite
+        .prepare("SELECT idempotency_key FROM sync_operations WHERE entity_id = ?")
+        .get(created.id) as { idempotency_key: string }
+    ).idempotency_key;
+    await repository.update(created.id, command(journeyA, 300, "PAID"));
+    sqlite
+      .prepare(
+        `UPDATE sync_operations SET status = 'FAILED', last_error_message = 'SYNC_FAILED'
+         WHERE entity_id = ? AND operation_type = 'UPDATE_PERSONAL_PAYMENT'`,
+      )
+      .run(created.id);
+    await repository.update(created.id, command(journeyA, 450, "PAID"));
+    expect(
+      sqlite
+        .prepare(
+          `SELECT idempotency_key, status, attempt_count FROM sync_operations
+           WHERE entity_id = ? AND operation_type = 'CREATE_PERSONAL_PAYMENT'`,
+        )
+        .get(created.id),
+    ).toEqual({ idempotency_key: originalKey, status: "RETRYABLE", attempt_count: 1 });
+    sqlite
+      .prepare("UPDATE sync_operations SET next_attempt_at = NULL WHERE entity_id = ?")
+      .run(created.id);
+
+    await reconcile(api, repository, server.transport);
+    expect(
+      sqlite
+        .prepare(
+          "SELECT operation_type, status, attempt_count, last_error_message FROM sync_operations WHERE entity_id = ?",
+        )
+        .all(created.id),
+    ).toEqual([
+      {
+        operation_type: personalPaymentOperations.create,
+        status: "COMPLETED",
+        attempt_count: 1,
+        last_error_message: null,
+      },
+      {
+        operation_type: personalPaymentOperations.update,
+        status: "COMPLETED",
+        attempt_count: 0,
+        last_error_message: null,
+      },
+      {
+        operation_type: personalPaymentOperations.update,
+        status: "COMPLETED",
+        attempt_count: 0,
+        last_error_message: null,
+      },
+    ]);
+    expect([...server.remote.values()]).toHaveLength(1);
+    expect(server.remote.get(created.id)?.amountMinor).toBe(450);
+    expect(await repository.get(created.id)).toMatchObject({
+      amountMinor: 450,
+      revision: 2,
+      syncStatus: "SYNCED",
+    });
+    expect(
+      sqlite
+        .prepare(
+          "SELECT COUNT(*) AS count FROM sync_operations WHERE entity_id = ? AND status <> 'COMPLETED'",
+        )
+        .get(created.id),
+    ).toEqual({ count: 0 });
     sqlite.close();
   });
 

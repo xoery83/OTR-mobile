@@ -2,6 +2,30 @@
 
 Date: 2026-09-24
 
+## Personal Payment offline FX cache — Slice A+B device gate complete
+
+- Hosted Dev now exposes the authenticated 32-working-day pinned-ECB snapshot bundle;
+  the physical iPhone cache contains 32 account-scoped snapshots from 2026-08-11 through
+  2026-09-23, including USD and ISK. Production was not accessed.
+- With only OTR Mobile network access disabled, USD 2.50 and zero-scale ISK 1,500 records
+  immediately changed the current transfer progress from NZ$10.87 to NZ$15.26 and then
+  NZ$37.05. The amber detail showed original Money, estimated NZD, reference date and
+  previous-working-day status without a provider call.
+- Offline cold restart reproduced NZ$37.05 from SQLite. A date before cache coverage kept
+  the ISK record but excluded it from progress (`NO_MATCH`); restoring the date restored
+  the estimate. A different Journey did not inherit the records.
+- After reconnect, the USD and ISK creates each reached Hosted Dev revision 1 exactly once;
+  resaving the restored ISK record reached revision 2. Progress stayed NZ$37.05 with the
+  provisional dot, as expected before Slice C, and canonical Summary stayed +NZ$55.00.
+- The Personal Payment sync boundary now coalesces edits into an unattempted pending CREATE;
+  an attempted CREATE instead replays idempotently before its dependent UPDATE. Successful
+  reconciliation clears superseded CREATE/UPDATE queue errors. Physical-device verification
+  reached ISK revision 4 with one remote entity, every related operation COMPLETED, and the
+  same clean state after a cold restart.
+- A physical second-account switch could not be exercised because the device has no other
+  remembered account. Repository/account isolation and the focused automated coverage
+  pass. Slice C has not started; no Production deployment occurred.
+
 ## Settlement Summary noise reduction and three-state member review — implemented
 
 - Summary hides unchanged confirmation, routine source, cached/offline, refresh failure,

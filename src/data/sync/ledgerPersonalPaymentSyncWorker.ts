@@ -9,7 +9,12 @@ import {
   type createLedgerPersonalPaymentRepository,
 } from "@/data/repositories/ledgerPersonalPaymentRepository";
 
-import { SyncConflictError, syncFailureClass, type SyncWorker } from "./syncEngine";
+import {
+  SyncConflictError,
+  SyncDependencyError,
+  syncFailureClass,
+  type SyncWorker,
+} from "./syncEngine";
 import type { SyncOperation } from "./syncOperationRepository";
 import type { createLedgerPersonalPaymentTransport } from "./ledgerPersonalPaymentTransport";
 
@@ -32,6 +37,13 @@ export function createLedgerPersonalPaymentSyncWorker(
       const record = await repository.get(operation.entityId);
       if (!record || record.journeyId !== operation.tripId)
         throw new Error("Personal Payment is missing from local storage.");
+      if (
+        operation.operationType !== personalPaymentOperations.create &&
+        record.revision === 0
+      )
+        throw new SyncDependencyError(
+          "Personal Payment must be created remotely before later mutations.",
+        );
 
       await repository.markSyncing(record.id);
       try {

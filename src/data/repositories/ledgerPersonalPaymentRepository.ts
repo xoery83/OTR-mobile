@@ -134,6 +134,10 @@ export function createLedgerPersonalPaymentRepository(
         ...paymentInput(command),
         baseRevision: Math.max(1, current.revision),
       });
+      const createInput = createPersonalSettlementPaymentRequestSchema.parse({
+        id,
+        ...paymentInput(command),
+      });
       const updated: LocalPersonalPayment = {
         ...current,
         ...input,
@@ -145,20 +149,29 @@ export function createLedgerPersonalPaymentRepository(
         referenceRateDate: input.referenceRateDate ?? null,
         referenceSource: input.referenceSource ?? null,
         referenceProvenance: input.referenceProvenance ?? null,
-        syncStatus: "PENDING_UPDATE",
+        syncStatus: current.revision === 0 ? "PENDING_CREATE" : "PENDING_UPDATE",
         updatedAt: new Date().toISOString(),
         lastErrorCode: null,
       };
       await database.withTransactionAsync(async () => {
+        const pendingCreate =
+          current.revision === 0
+            ? await findCoalescibleCreate(database, id, userId)
+            : null;
+        if (!pendingCreate) updated.syncStatus = "PENDING_UPDATE";
         await upsert(database, userId, updated);
-        await enqueue(
-          database,
-          updated,
-          personalPaymentOperations.update,
-          current.revision,
-          input,
-          userId,
-        );
+        if (pendingCreate) {
+          await coalesceIntoCreate(database, pendingCreate.id, id, userId, createInput);
+        } else {
+          await enqueue(
+            database,
+            updated,
+            personalPaymentOperations.update,
+            current.revision,
+            input,
+            userId,
+          );
+        }
       });
       return updated;
     },
@@ -202,6 +215,12 @@ export function createLedgerPersonalPaymentRepository(
       );
       if (current && pendingStatuses.has(current.syncStatus)) {
         if (!completedOperationId) return;
+        await completeSupersededMutations(
+          database,
+          userId,
+          canonical.id,
+          completedOperationId,
+        );
         const later = await database.getFirstAsync<{ operationType: string }>(
           `SELECT operation_type AS operationType FROM sync_operations
            WHERE owner_user_id = ? AND entity_type = ? AND entity_id = ? AND id <> ?
@@ -550,6 +569,91 @@ async function enqueue(
     userId,
     now,
     now,
+  );
+}
+
+async function findCoalescibleCreate(
+  database: LedgerPersonalPaymentDatabase,
+  id: string,
+  userId: string,
+) {
+  return database.getFirstAsync<{ id: string }>(
+    `SELECT id FROM sync_operations
+     WHERE owner_user_id = ? AND entity_type = ? AND entity_id = ?
+       AND operation_type = ? AND status = 'PENDING' AND attempt_count = 0
+       AND NOT EXISTS (
+         SELECT 1 FROM sync_operations processing
+         WHERE processing.owner_user_id = sync_operations.owner_user_id
+           AND processing.entity_type = sync_operations.entity_type
+           AND processing.entity_id = sync_operations.entity_id
+           AND processing.status = 'PROCESSING'
+       )
+     ORDER BY created_at, rowid LIMIT 1`,
+    userId,
+    entityType,
+    id,
+    personalPaymentOperations.create,
+  );
+}
+
+async function coalesceIntoCreate(
+  database: LedgerPersonalPaymentDatabase,
+  createOperationId: string,
+  entityId: string,
+  userId: string,
+  payload: unknown,
+) {
+  const now = new Date().toISOString();
+  await database.runAsync(
+    `UPDATE sync_operations SET payload_json = ?, status = 'PENDING', attempt_count = 0,
+       next_attempt_at = NULL, last_error_code = NULL, last_error_message = NULL,
+       claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
+     WHERE id = ? AND owner_user_id = ?`,
+    JSON.stringify(payload),
+    now,
+    createOperationId,
+    userId,
+  );
+  await database.runAsync(
+    `UPDATE sync_operations SET status = 'COMPLETED', next_attempt_at = NULL,
+       last_error_code = NULL, last_error_message = NULL, claim_owner = NULL,
+       lease_expires_at = NULL, updated_at = ?
+     WHERE owner_user_id = ? AND entity_type = ? AND entity_id = ?
+       AND operation_type = ? AND status NOT IN ('PROCESSING', 'COMPLETED')`,
+    now,
+    userId,
+    entityType,
+    entityId,
+    personalPaymentOperations.update,
+  );
+}
+
+async function completeSupersededMutations(
+  database: LedgerPersonalPaymentDatabase,
+  userId: string,
+  entityId: string,
+  completedOperationId: string,
+) {
+  const now = new Date().toISOString();
+  await database.runAsync(
+    `UPDATE sync_operations SET status = 'COMPLETED', next_attempt_at = NULL,
+       last_error_code = NULL, last_error_message = NULL, claim_owner = NULL,
+       lease_expires_at = NULL, updated_at = ?
+     WHERE owner_user_id = ? AND entity_type = ? AND entity_id = ?
+       AND operation_type IN (?, ?) AND status IN ('PENDING', 'RETRYABLE', 'FAILED', 'COMPLETED')
+       AND rowid < (
+         SELECT rowid FROM sync_operations WHERE id = ? AND owner_user_id = ?
+           AND operation_type = ?
+       )`,
+    now,
+    userId,
+    entityType,
+    entityId,
+    personalPaymentOperations.create,
+    personalPaymentOperations.update,
+    completedOperationId,
+    userId,
+    personalPaymentOperations.update,
   );
 }
 

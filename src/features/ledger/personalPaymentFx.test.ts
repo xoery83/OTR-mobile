@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { RateQuote } from "@/domain/ledger/types";
-import { selectPersonalPaymentReference } from "./personalPaymentFx";
+import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
+import {
+  bestSnapshotForEconomicDate,
+  personalPaymentComparable,
+  selectPersonalPaymentReference,
+  type FxReferenceSnapshotBundle,
+} from "./personalPaymentFx";
 
 const quote = (date: string, id = date) => ({ id, referenceDate: date }) as RateQuote;
 
@@ -37,5 +43,117 @@ describe("selectPersonalPaymentReference", () => {
       selectPersonalPaymentReference([quote("2026-08-01")], "2026-09-20")?.kind,
     ).toBe("HISTORICAL");
     expect(selectPersonalPaymentReference([], "2026-09-20")).toBeNull();
+  });
+});
+
+const snapshot = (
+  referenceDate: string,
+  rates = { EUR: "1", USD: "1.2", ISK: "150", JPY: "100", NZD: "2" },
+) => ({
+  referenceDate,
+  rates,
+  observedAt: "2026-09-24T05:00:00.000Z",
+  expiresAt: "2026-10-24T05:00:00.000Z",
+});
+
+const bundle = (referenceDate = "2026-09-23") =>
+  ({
+    snapshots: [snapshot(referenceDate)],
+  }) satisfies FxReferenceSnapshotBundle;
+
+function payment(
+  currency: string,
+  scale: number,
+  amountMinor: number,
+  extra: Partial<LocalPersonalPayment> = {},
+) {
+  return {
+    id: "payment",
+    journeyId: "journey-a",
+    ownerUserId: "user-a",
+    ownerMemberId: "member-a",
+    counterpartyMemberId: "member-b",
+    direction: "PAID",
+    amountMinor,
+    currency,
+    scale,
+    occurredAt: "2026-09-23T12:00:00.000Z",
+    recordedEquivalentMinor: null,
+    recordedEquivalentCurrency: null,
+    recordedEquivalentScale: null,
+    ...extra,
+  } as LocalPersonalPayment;
+}
+
+describe("local Personal Payment FX presentation", () => {
+  it("classifies every economic-date selection branch", () => {
+    const snapshots = [
+      snapshot("2026-09-24"),
+      snapshot("2026-09-20"),
+      snapshot("2026-09-10"),
+    ];
+    expect(bestSnapshotForEconomicDate(snapshots, "2026-09-24", "2026-09-24").match).toBe(
+      "EXACT_DATE",
+    );
+    expect(bestSnapshotForEconomicDate(snapshots, "2026-09-22", "2026-09-24").match).toBe(
+      "PREVIOUS_WORKING_DAY",
+    );
+    expect(
+      bestSnapshotForEconomicDate([snapshot("2026-09-10")], "2026-09-18", "2026-09-24")
+        .match,
+    ).toBe("STALE_DATE");
+    expect(
+      bestSnapshotForEconomicDate([snapshot("2026-09-24")], "2026-09-23", "2026-09-24")
+        .match,
+    ).toBe("ROUGH_LATEST");
+    expect(
+      bestSnapshotForEconomicDate([snapshot("2026-09-24")], "2026-08-01", "2026-09-24")
+        .match,
+    ).toBe("NO_MATCH");
+    expect(
+      bestSnapshotForEconomicDate([snapshot("2026-08-01")], "2026-09-23", "2026-09-24")
+        .match,
+    ).toBe("NO_MATCH");
+  });
+
+  it("converts USD and zero-scale ISK using exact EUR cross-rates", () => {
+    expect(
+      personalPaymentComparable(
+        payment("USD", 2, 1_000),
+        "NZD",
+        2,
+        bundle(),
+        "2026-09-24",
+      )?.money,
+    ).toEqual({ minor: 1_667, currency: "NZD", scale: 2 });
+    expect(
+      personalPaymentComparable(
+        payment("ISK", 0, 1_500),
+        "NZD",
+        2,
+        bundle(),
+        "2026-09-24",
+      )?.money,
+    ).toEqual({ minor: 2_000, currency: "NZD", scale: 2 });
+  });
+
+  it("prefers a matching confirmed equivalent and never emits a local estimate", () => {
+    expect(
+      personalPaymentComparable(
+        payment("USD", 2, 1_000, {
+          recordedEquivalentMinor: 1_701,
+          recordedEquivalentCurrency: "NZD",
+          recordedEquivalentScale: 2,
+        }),
+        "NZD",
+        2,
+        bundle(),
+        "2026-09-24",
+      ),
+    ).toMatchObject({
+      money: { minor: 1_701 },
+      source: "CONFIRMED_EQUIVALENT",
+      estimate: null,
+    });
   });
 });

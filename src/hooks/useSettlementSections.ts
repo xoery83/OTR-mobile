@@ -3,13 +3,16 @@ import { useFocusEffect } from "expo-router";
 import { useNetworkState } from "expo-network";
 
 import type { FinalizedSettlementDto } from "@/data/api/ledgerSettlementContracts";
+import type { LedgerFxReferenceSnapshotBundle } from "@/data/api/ledgerFxContracts";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
+import { getDefaultLedgerFxSnapshotRepository } from "@/data/repositories/defaultLedgerFxSnapshotRepository";
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
+import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
 import {
   buildEstimatedSettlementCategories,
   buildFinalizedSettlementCategories,
@@ -32,6 +35,9 @@ export function useSettlementSections(
   const [members, setMembers] = useState<{ id: string; label: string }[]>([]);
   const [expenses, setExpenses] = useState<LedgerExpense[]>([]);
   const [payments, setPayments] = useState<LocalPersonalPayment[]>([]);
+  const [fxSnapshots, setFxSnapshots] = useState<LedgerFxReferenceSnapshotBundle | null>(
+    null,
+  );
   const [reviewCount, setReviewCount] = useState(0);
   const [spendingMemberId, setSpendingMemberId] = useState<string | null>(null);
   const [sharesMemberId, setSharesMemberId] = useState<string | null>(null);
@@ -50,22 +56,30 @@ export function useSettlementSections(
     if (!journeyId) return;
     setLoading(true);
     try {
-      const [reporting, expenseRepository, paymentRepository, reviewRepository] =
-        await Promise.all([
-          getDefaultLedgerReportingRepository(),
-          getDefaultLedgerExpenseRepository(),
-          getDefaultLedgerPersonalPaymentRepository(),
-          getDefaultLedgerReviewRepository(),
-        ]);
-      const [options, nextExpenses, nextPayments, counts] = await Promise.all([
+      const [
+        reporting,
+        expenseRepository,
+        paymentRepository,
+        reviewRepository,
+        fxRepository,
+      ] = await Promise.all([
+        getDefaultLedgerReportingRepository(),
+        getDefaultLedgerExpenseRepository(),
+        getDefaultLedgerPersonalPaymentRepository(),
+        getDefaultLedgerReviewRepository(),
+        getDefaultLedgerFxSnapshotRepository(),
+      ]);
+      const [options, nextExpenses, nextPayments, counts, snapshots] = await Promise.all([
         reporting.listFilterOptions(journeyId),
         expenseRepository.listExpensesForJourney(journeyId, Boolean(finalized)),
         paymentRepository.listForJourney(journeyId),
         reviewRepository.counts(journeyId),
+        fxRepository.list().catch(() => null),
       ]);
       setMembers(options.members);
       setExpenses(nextExpenses);
       setPayments(nextPayments);
+      setFxSnapshots(snapshots);
       setReviewCount(counts.pending);
       const spendingId = options.members.some(
         (member) => member.id === spendingMemberRef.current,
@@ -100,6 +114,10 @@ export function useSettlementSections(
         setShareRows(nextShares);
       }
       setMessage(null);
+      if (online)
+        void refreshLedgerFxSnapshotCache()
+          .then(setFxSnapshots)
+          .catch(() => undefined);
     } catch {
       setMessage(settlementCacheMessage(online, "details"));
     } finally {
@@ -155,6 +173,7 @@ export function useSettlementSections(
     members,
     expenses,
     payments,
+    fxSnapshots,
     updatePayments,
     reviewCount,
     loading,

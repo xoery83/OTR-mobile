@@ -1106,4 +1106,27 @@ export const migrations: Migration[] = [
         pending_review_state IN ('LOOKS_GOOD', 'STILL_CHECKING')
       );`,
   },
+  {
+    id: 32,
+    name: "ledger_fx_reference_snapshot_cache",
+    sql: `
+      CREATE TABLE ledger_fx_reference_snapshots (
+        account_id TEXT NOT NULL,
+        provider TEXT NOT NULL CHECK (provider = 'ECB'),
+        policy_version TEXT NOT NULL,
+        reference_date TEXT NOT NULL,
+        base_currency TEXT NOT NULL CHECK (base_currency = 'EUR'),
+        rates_json TEXT NOT NULL,
+        source_reference TEXT NOT NULL,
+        provider_reference TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        PRIMARY KEY (account_id, provider, policy_version, reference_date)
+      );
+      CREATE INDEX ledger_fx_reference_snapshots_lookup
+        ON ledger_fx_reference_snapshots (
+          account_id, provider, policy_version, reference_date DESC
+        );
+    `,
+  },
 ];

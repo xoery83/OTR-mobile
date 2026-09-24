@@ -100,6 +100,7 @@ import {
   type LedgerReviewFindingDto,
   type LedgerReviewRaiseRequest,
 } from "../../src/data/api/ledgerReviewContracts";
+import type { LedgerFxReferenceSnapshotBundle } from "../../src/data/api/ledgerFxContracts";
 
 import { deriveServerId, type SyncEntityType } from "./serverId";
 
@@ -149,6 +150,7 @@ export type DevBackendGateway = {
     quoteCurrency: string | null,
     baseCurrency: string | null,
   ): Promise<LedgerRateQuoteDto[]>;
+  readReferenceRateSnapshots(userId: string): Promise<LedgerFxReferenceSnapshotBundle>;
   previewJourneyCurrency(
     userId: string,
     tripId: string,
@@ -1473,6 +1475,13 @@ async function mutateSettlementCorrection(request: Request, gateway: DevBackendG
 
 async function readEntity(request: Request, gateway: DevBackendGateway) {
   const url = new URL(request.url);
+  if (url.pathname === "/v2/ledger/reference-rate-snapshots") {
+    const user = await authenticate(request, gateway);
+    const provider = url.searchParams.get("provider");
+    if (provider && provider !== "ECB")
+      throw new HttpError(400, "INVALID_PROVIDER", "The rate provider is invalid.");
+    return json(200, await gateway.readReferenceRateSnapshots(user.id));
+  }
   if (
     /^\/v2\/trips\/[^/]+\/ledger\/personal-payments(?:\/[^/]+(?:\/attachments)?)?$/.test(
       url.pathname,

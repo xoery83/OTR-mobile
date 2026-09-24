@@ -50,6 +50,32 @@ export function convertMoney(
   return { minor, currency: targetCurrency, scale: targetScale };
 }
 
+export function convertMoneyWithCrossRate(
+  source: Money,
+  targetCurrency: string,
+  targetScale: number,
+  sourcePerEuro: string,
+  targetPerEuro: string,
+): Money {
+  assertMoney(source, "Source money");
+  const target: Money = { minor: 0, currency: targetCurrency, scale: targetScale };
+  assertMoney(target, "Target money");
+  const sourceRate = parseDecimalRatio(sourcePerEuro);
+  const targetRate = parseDecimalRatio(targetPerEuro);
+  const numerator =
+    BigInt(source.minor) *
+    targetRate.numerator *
+    sourceRate.denominator *
+    pow10(targetScale);
+  const denominator = targetRate.denominator * sourceRate.numerator * pow10(source.scale);
+  const sign = numerator < 0n ? -1n : 1n;
+  const rounded = sign * ((numerator * sign * 2n + denominator) / (denominator * 2n));
+  const minor = Number(rounded);
+  if (!Number.isSafeInteger(minor))
+    throw new Error("Converted amount exceeds safe range.");
+  return { minor, currency: targetCurrency, scale: targetScale };
+}
+
 export function assertSameCurrency(left: Money, right: Money): void {
   if (left.currency !== right.currency || left.scale !== right.scale) {
     throw new Error("Money currencies or scales do not match.");

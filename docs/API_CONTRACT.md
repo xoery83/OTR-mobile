@@ -190,6 +190,39 @@ for the broader Ledger/Itinerary contracts below.
 Ledger PDF/CSV export is device-generated from synchronized SQLite facts. There
 is no server binary-export endpoint; see ADR 0015.
 
+### Reference FX snapshot bundle
+
+`GET /v2/ledger/reference-rate-snapshots?provider=ECB`
+
+- Requires a valid account session; it is not Journey-scoped.
+- Returns at most 32 newest-first ECB working-day snapshots anchored to EUR.
+- Rates are positive exact-decimal strings. The response includes policy version,
+  observation/expiry timestamps, and source/provider references.
+- `provider` may be omitted or must equal `ECB`; other values return
+  `INVALID_PROVIDER`.
+- The bundle is informational cache input only. It cannot mutate an Expense,
+  Personal Payment, valuation, or canonical Settlement.
+
+Response shape:
+
+```json
+{
+  "provider": "ECB",
+  "policyVersion": "ECB_LOCAL_SNAPSHOT_V1",
+  "baseCurrency": "EUR",
+  "snapshots": [
+    {
+      "referenceDate": "2026-09-23",
+      "rates": { "EUR": "1", "ISK": "143.8", "NZD": "1.9821" },
+      "observedAt": "2026-09-24T00:00:00.000Z",
+      "expiresAt": "2026-10-24T00:00:00.000Z"
+    }
+  ],
+  "sourceReference": "https://www.ecb.europa.eu/",
+  "providerReference": "https://api.frankfurter.dev/v2/providers/ecb/rates"
+}
+```
+
 ## Documents / Tickets
 
 `GET /trips/:id/documents?since=:cursor` - `NEW`

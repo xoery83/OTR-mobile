@@ -209,8 +209,72 @@ describe("Settlement section selectors", () => {
       direction: "PAID",
       minor: 900,
       percentage: 45,
+      provisional: [],
     });
     expect(personalPaymentProgress(records, "member-c", transfer)).toBeNull();
+  });
+
+  it("adds each local FX estimate once without changing canonical transfers", () => {
+    const transfer = {
+      fromMemberId: "member-a",
+      toMemberId: "member-b",
+      amount: { minor: 5_000, currency: "NZD", scale: 2 },
+    };
+    const records = [
+      {
+        ...payment("member-a", "member-b"),
+        id: "usd",
+        journeyId: "journey-a",
+        direction: "PAID",
+        amountMinor: 1_000,
+        currency: "USD",
+        scale: 2,
+        occurredAt: "2026-09-23T12:00:00.000Z",
+        recordedEquivalentMinor: null,
+        recordedEquivalentCurrency: null,
+        recordedEquivalentScale: null,
+      },
+      {
+        ...payment("member-a", "member-b"),
+        id: "confirmed",
+        journeyId: "journey-a",
+        direction: "PAID",
+        amountMinor: 500,
+        currency: "USD",
+        scale: 2,
+        occurredAt: "2026-09-23T12:00:00.000Z",
+        recordedEquivalentMinor: 900,
+        recordedEquivalentCurrency: "NZD",
+        recordedEquivalentScale: 2,
+      },
+    ] as LocalPersonalPayment[];
+    const snapshots = {
+      provider: "ECB" as const,
+      policyVersion: "ECB_LOCAL_SNAPSHOT_V1" as const,
+      baseCurrency: "EUR" as const,
+      snapshots: [
+        {
+          referenceDate: "2026-09-23",
+          rates: { EUR: "1", USD: "1.2", NZD: "2" },
+          observedAt: "2026-09-24T00:00:00.000Z",
+          expiresAt: "2026-10-24T00:00:00.000Z",
+        },
+      ],
+      sourceReference: "https://www.ecb.europa.eu/",
+      providerReference: "https://api.frankfurter.dev/v2/providers/ecb/rates",
+    };
+    const before = currentSettlementTransfers(null, null, { transfers: [transfer] });
+
+    expect(
+      personalPaymentProgress(records, "member-a", transfer, snapshots, "2026-09-24"),
+    ).toMatchObject({
+      minor: 2_567,
+      percentage: 51,
+      provisional: [{ recordId: "usd", equivalent: { minor: 1_667 } }],
+    });
+    expect(currentSettlementTransfers(null, null, { transfers: [transfer] })).toEqual(
+      before,
+    );
   });
 
   it("orders personal payment records oldest first", () => {

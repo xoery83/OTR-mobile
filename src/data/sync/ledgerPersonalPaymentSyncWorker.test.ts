@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "@/data/api/client";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
-import { SyncConflictError } from "./syncEngine";
+import { SyncConflictError, SyncDependencyError } from "./syncEngine";
 import { createLedgerPersonalPaymentSyncWorker } from "./ledgerPersonalPaymentSyncWorker";
 import type { SyncOperation } from "./syncOperationRepository";
 
@@ -114,6 +114,17 @@ describe("Settlement 2.0 Personal Payment sync worker", () => {
       createLedgerPersonalPaymentSyncWorker(repo as never, api as never).push(operation),
     ).rejects.toBeInstanceOf(SyncConflictError);
     expect(repo.markConflict).toHaveBeenCalledWith(record.id, "REVISION_CONFLICT");
+  });
+
+  it("retries an UPDATE whose CREATE has not materialized remotely", async () => {
+    const repo = repository();
+    repo.get.mockResolvedValue({ ...record, revision: 0 });
+    const api = transport();
+    await expect(
+      createLedgerPersonalPaymentSyncWorker(repo as never, api as never).push(operation),
+    ).rejects.toBeInstanceOf(SyncDependencyError);
+    expect(api.update).not.toHaveBeenCalled();
+    expect(repo.markFailed).not.toHaveBeenCalled();
   });
 
   it.each([

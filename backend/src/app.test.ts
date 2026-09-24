@@ -365,6 +365,21 @@ function createGateway(options: { authorized?: boolean } = {}) {
       serverTime: "2026-09-11T00:00:00.000Z",
     })),
     readLedgerRateQuotes: vi.fn(async () => []),
+    readReferenceRateSnapshots: vi.fn(async () => ({
+      provider: "ECB" as const,
+      policyVersion: "ECB_LOCAL_SNAPSHOT_V1" as const,
+      baseCurrency: "EUR" as const,
+      snapshots: [
+        {
+          referenceDate: "2026-09-23",
+          rates: { EUR: "1", ISK: "143.8", NZD: "1.9821" },
+          observedAt: "2026-09-24T00:00:00.000Z",
+          expiresAt: "2026-10-24T00:00:00.000Z",
+        },
+      ],
+      sourceReference: "https://www.ecb.europa.eu/",
+      providerReference: "https://api.frankfurter.dev/v2/providers/ecb/rates",
+    })),
     readLedgerReview: vi.fn(async () => ({ findings: [], actions: [] })),
     refreshLedgerReview: vi.fn(async () => ({ findings: [], actions: [] })),
     raiseLedgerReviewFinding: vi.fn(async () => {
@@ -1039,6 +1054,24 @@ describe("OTR Dev Backend", () => {
       "CATEGORY",
     );
     expect(gateway.readMyLedger).toHaveBeenCalledWith(userId, "ALL", null, null);
+  });
+
+  it("returns the authenticated ECB reference snapshot bundle", async () => {
+    const { gateway } = createGateway();
+    const handle = createDevBackendHandler({ gateway });
+    const response = await handle(
+      new Request("http://localhost/v2/ledger/reference-rate-snapshots?provider=ECB", {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      provider: "ECB",
+      policyVersion: "ECB_LOCAL_SNAPSHOT_V1",
+      snapshots: [{ rates: { ISK: "143.8" } }],
+    });
+    expect(gateway.readReferenceRateSnapshots).toHaveBeenCalledWith(userId);
   });
 
   it("rejects unsupported reporting conversion and invalid filters", async () => {

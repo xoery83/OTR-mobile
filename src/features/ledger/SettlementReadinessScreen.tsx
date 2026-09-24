@@ -184,6 +184,7 @@ export function SettlementReadinessScreen({
           }
           everyone={everyone}
           expandedTransfer={expandedTransfer}
+          fxSnapshots={sections.fxSnapshots}
           isOrganizer={settlement.isOrganizer}
           journeyId={settlement.journeyId}
           members={sections.members}
@@ -850,6 +851,7 @@ function PaymentsSection({
   currency,
   everyone,
   expandedTransfer,
+  fxSnapshots,
   isOrganizer,
   journeyId,
   members,
@@ -864,6 +866,7 @@ function PaymentsSection({
   currency: string;
   everyone: boolean;
   expandedTransfer: string | null;
+  fxSnapshots: ReturnType<typeof useSettlementSections>["fxSnapshots"];
   isOrganizer: boolean;
   journeyId: string;
   members: { id: string; label: string }[];
@@ -874,6 +877,7 @@ function PaymentsSection({
   scale: number;
   transfers: ReturnType<typeof currentSettlementTransfers>;
 }) {
+  const [estimateDetail, setEstimateDetail] = useState<string | null>(null);
   return (
     <View style={styles.section}>
       <View style={styles.hero}>
@@ -895,7 +899,7 @@ function PaymentsSection({
           transfer.fromMemberId === actorMemberId ||
           transfer.toMemberId === actorMemberId;
         const progress = related
-          ? personalPaymentProgress(payments, actorMemberId, transfer)
+          ? personalPaymentProgress(payments, actorMemberId, transfer, fxSnapshots)
           : null;
         return (
           <View key={key} style={styles.transferCard}>
@@ -917,12 +921,29 @@ function PaymentsSection({
                 <Text style={styles.transferAmount}>
                   {formatLedgerMoney(transfer.amount.minor, currency, scale)}
                 </Text>
-                {progress?.minor ? (
-                  <Text style={styles.transferProgress}>
-                    {progress.direction === "PAID" ? "Paid" : "Received"}{" "}
-                    {formatLedgerMoney(progress.minor, currency, scale)} ·{" "}
-                    {progress.percentage}%
-                  </Text>
+                {progress && (progress.minor || progress.provisional.length) ? (
+                  <View style={styles.transferProgressRow}>
+                    <Text style={styles.transferProgress}>
+                      {progress.direction === "PAID" ? "Paid" : "Received"}{" "}
+                      {formatLedgerMoney(progress.minor, currency, scale)} ·{" "}
+                      {progress.percentage}%
+                    </Text>
+                    {progress.provisional.length ? (
+                      <Pressable
+                        accessibilityHint="Shows which payment conversions are provisional"
+                        accessibilityLabel="Some payment conversions may change"
+                        accessibilityRole="button"
+                        hitSlop={8}
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          setEstimateDetail(estimateDetail === key ? null : key);
+                        }}
+                        style={styles.fxDotButton}
+                      >
+                        <View style={styles.fxDot} />
+                      </Pressable>
+                    ) : null}
+                  </View>
                 ) : null}
               </View>
               <Text style={styles.arrow}>→</Text>
@@ -930,6 +951,28 @@ function PaymentsSection({
                 {transfer.toMemberId === actorMemberId ? "You" : to}
               </Text>
             </Pressable>
+            {estimateDetail === key && progress?.provisional.length ? (
+              <View style={styles.fxDetail}>
+                <Text style={styles.fxDetailTitle}>Amounts that may change</Text>
+                {progress.provisional.map((item) => (
+                  <Text key={item.recordId} style={styles.fxDetailText}>
+                    {formatLedgerMoney(
+                      item.original.minor,
+                      item.original.currency,
+                      item.original.scale,
+                    )}{" "}
+                    →{" "}
+                    {formatLedgerMoney(
+                      item.equivalent.minor,
+                      item.equivalent.currency,
+                      item.equivalent.scale,
+                    )}
+                    {" · "}
+                    {paymentEstimateLabel(item.match, item.referenceDate)}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
             {open && related ? (
               <PersonalPaymentSection
                 actorMemberId={actorMemberId}
@@ -949,6 +992,17 @@ function PaymentsSection({
       ) : null}
     </View>
   );
+}
+
+function paymentEstimateLabel(
+  match: "EXACT_DATE" | "PREVIOUS_WORKING_DAY" | "STALE_DATE" | "ROUGH_LATEST",
+  referenceDate: string,
+) {
+  if (match === "EXACT_DATE") return `ECB rate for ${referenceDate}`;
+  if (match === "PREVIOUS_WORKING_DAY")
+    return `previous working-day ECB rate (${referenceDate})`;
+  if (match === "STALE_DATE") return `older ECB rate (${referenceDate})`;
+  return `latest available ECB rate (${referenceDate})`;
 }
 
 function Toggle({
@@ -1373,7 +1427,18 @@ const styles = StyleSheet.create({
   toggleTextActive: { color: "#0F172A" },
   transferAmount: { color: "#0F172A", fontSize: 15, fontWeight: "900" },
   transferAmountBlock: { alignItems: "center", flexShrink: 0 },
-  transferProgress: { color: "#475569", fontSize: 10, marginTop: 2 },
+  transferProgress: { color: "#475569", fontSize: 10 },
+  transferProgressRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 4,
+    marginTop: 2,
+  },
+  fxDotButton: { alignItems: "center", height: 14, justifyContent: "center", width: 14 },
+  fxDot: { backgroundColor: "#D97706", borderRadius: 4, height: 7, width: 7 },
+  fxDetail: { backgroundColor: "#FEF3C7", gap: 5, padding: 10 },
+  fxDetailText: { color: "#78350F", fontSize: 11, lineHeight: 16 },
+  fxDetailTitle: { color: "#92400E", fontSize: 12, fontWeight: "800" },
   transferCard: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
   transferMember: { color: "#334155", flex: 1, fontSize: 14, fontWeight: "700" },
   transferRow: {

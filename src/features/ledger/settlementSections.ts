@@ -3,6 +3,10 @@ import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRe
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import type { PersonalSettlementStatement } from "@/domain/ledger/personalSettlementReview";
 import type { Stage7Finalized, Stage7Preview } from "@/hooks/useStage7Settlement";
+import {
+  personalPaymentComparable,
+  type FxReferenceSnapshotBundle,
+} from "./personalPaymentFx";
 
 export type SettlementMember = { id: string; label: string };
 
@@ -480,6 +484,8 @@ export function personalPaymentProgress(
   records: LocalPersonalPayment[],
   actorMemberId: string | null,
   transfer: Pick<SettlementTransferView, "fromMemberId" | "toMemberId" | "amount">,
+  fxSnapshots: FxReferenceSnapshotBundle | null = null,
+  today = new Date().toISOString().slice(0, 10),
 ) {
   const direction =
     actorMemberId === transfer.fromMemberId
@@ -490,38 +496,52 @@ export function personalPaymentProgress(
   if (!direction) return null;
   const counterpartyMemberId =
     direction === "PAID" ? transfer.toMemberId : transfer.fromMemberId;
-  const minor = records
-    .filter(
-      (record) =>
-        record.ownerMemberId === actorMemberId &&
-        record.counterpartyMemberId === counterpartyMemberId &&
-        record.direction === direction,
+  let minor = 0;
+  const provisional: {
+    recordId: string;
+    original: { minor: number; currency: string; scale: number };
+    equivalent: { minor: number; currency: string; scale: number };
+    occurredAt: string;
+    referenceDate: string;
+    match: "EXACT_DATE" | "PREVIOUS_WORKING_DAY" | "STALE_DATE" | "ROUGH_LATEST";
+  }[] = [];
+  for (const record of records) {
+    if (
+      record.ownerMemberId !== actorMemberId ||
+      record.counterpartyMemberId !== counterpartyMemberId ||
+      record.direction !== direction
     )
-    .reduce((sum, record) => {
-      if (record.currency === transfer.amount.currency)
-        return (
-          sum + rescaleMinor(record.amountMinor, record.scale, transfer.amount.scale)
-        );
-      if (
-        record.recordedEquivalentCurrency === transfer.amount.currency &&
-        record.recordedEquivalentMinor != null &&
-        record.recordedEquivalentScale != null
-      )
-        return (
-          sum +
-          rescaleMinor(
-            record.recordedEquivalentMinor,
-            record.recordedEquivalentScale,
-            transfer.amount.scale,
-          )
-        );
-      return sum;
-    }, 0);
+      continue;
+    const comparable = personalPaymentComparable(
+      record,
+      transfer.amount.currency,
+      transfer.amount.scale,
+      fxSnapshots,
+      today,
+    );
+    if (!comparable) continue;
+    minor += comparable.money.minor;
+    if (!Number.isSafeInteger(minor)) throw new Error("Payment progress is too large.");
+    if (comparable.estimate)
+      provisional.push({
+        recordId: record.id,
+        original: {
+          minor: record.amountMinor,
+          currency: record.currency,
+          scale: record.scale,
+        },
+        equivalent: comparable.money,
+        occurredAt: record.occurredAt,
+        referenceDate: comparable.estimate.referenceDate,
+        match: comparable.estimate.match,
+      });
+  }
   return {
     direction,
     minor,
     percentage:
       transfer.amount.minor > 0 ? Math.round((minor / transfer.amount.minor) * 100) : 0,
+    provisional,
   };
 }
 
@@ -532,10 +552,6 @@ export function chronologicalPersonalPayments(records: LocalPersonalPayment[]) {
       left.createdAt.localeCompare(right.createdAt) ||
       left.id.localeCompare(right.id),
   );
-}
-
-function rescaleMinor(minor: number, fromScale: number, toScale: number) {
-  return Math.round(minor * 10 ** (toScale - fromScale));
 }
 
 export function memberName(members: SettlementMember[], id: string | null) {

@@ -178,6 +178,19 @@ On app launch:
 
 No successful user write should be lost due to app restart.
 
+## Account-scoped FX reference cache
+
+Mobile may cache the authenticated ECB reference snapshot bundle in
+`ledger_fx_reference_snapshots`. The cache keeps at most 32 working-day rows per
+account/provider/policy, survives restart, and is never shared across signed-in
+accounts. Mobile does not contact the public provider directly.
+
+Refreshing this cache is a read-through convenience operation, not a queued
+business mutation. A network/provider failure preserves the previous validated
+bundle and never blocks an offline Personal Payment. Snapshot expiry determines
+when to refresh; it does not rewrite historical rates or canonical Settlement
+facts. Slice B owns selection and provisional display semantics.
+
 ## Auth Expiration
 
 Expired auth must not block local reads. New local writes can continue if the user had prior access to the trip locally. Push sync pauses until auth is repaired. If backend later denies access, local data should be locked or removed according to product/security policy.

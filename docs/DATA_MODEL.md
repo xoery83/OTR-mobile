@@ -315,3 +315,13 @@ New fields needed:
 Uncertain:
 
 - Exact conflict policy per entity.
+
+## Ledger FX reference snapshot cache
+
+Migration 32 adds `ledger_fx_reference_snapshots`, a Mobile-only, account-scoped
+cache of validated ECB daily EUR anchors. Its composite key is account,
+provider, policy version, and reference date. `rates_json` retains exact-decimal
+strings; provenance and observation/expiry timestamps travel with every row.
+The repository retains the newest 32 working-day rows and returns no data after
+an account switch. These rows are informational inputs and are not Ledger
+entities, sync operations, user payment claims, or Settlement valuation facts.

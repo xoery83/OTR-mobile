@@ -1,5 +1,6 @@
 import { currencyScale } from "../../src/domain/ledger/currency";
 import { parseDecimalRatio } from "../../src/domain/ledger/money";
+import type { LedgerFxReferenceSnapshotBundle } from "../../src/data/api/ledgerFxContracts";
 
 export const historicalRatePolicyVersion = "ECB_DAILY_V1";
 
@@ -20,6 +21,10 @@ export type HistoricalRateCandidate = {
 
 export type RateQuoteProvider = {
   fetch(input: HistoricalRateRequest): Promise<HistoricalRateCandidate>;
+};
+
+export type RateSnapshotProvider = {
+  fetchReferenceSnapshots(workingDays?: number): Promise<LedgerFxReferenceSnapshotBundle>;
 };
 
 export class RateProviderError extends Error {

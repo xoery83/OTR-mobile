@@ -100,7 +100,7 @@ export function createSyncOperationRepository(
         FROM sync_operations
         WHERE owner_user_id = ? AND status IN (?, ?)
           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
-        ORDER BY created_at ASC`,
+        ORDER BY created_at ASC, rowid ASC`,
         userId,
         ...pendingStatuses,
         new Date().toISOString(),
@@ -137,7 +137,9 @@ export function createSyncOperationRepository(
 
     async markCompleted(id: string) {
       await database.runAsync(
-        "UPDATE sync_operations SET status = ?, next_attempt_at = NULL, claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ?",
+        `UPDATE sync_operations SET status = ?, next_attempt_at = NULL,
+          last_error_code = NULL, last_error_message = NULL, claim_owner = NULL,
+          lease_expires_at = NULL, updated_at = ? WHERE id = ?`,
         "COMPLETED",
         new Date().toISOString(),
         id,
