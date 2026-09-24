@@ -27,6 +27,11 @@ export type SettlementTransferView = {
   legacyPaymentCount: number;
 };
 
+export type SettlementExpenseChange = {
+  expenseId: string;
+  change: "NEW" | "DELETED" | "CHANGED";
+};
+
 export type SettlementDisplayMode =
   "CURRENT_ONLY" | "CONFIRMED_ONLY" | "CONFIRMED_WITH_PENDING_UPDATE" | "HISTORY_VERSION";
 
@@ -194,6 +199,13 @@ export function personalStatementChangesFromFinal(
         },
       ];
     });
+}
+
+export function summarizeSettlementChanges(changes: SettlementExpenseChange[]) {
+  return {
+    removedCount: changes.filter((item) => item.change === "DELETED").length,
+    visible: changes.filter((item) => item.change !== "DELETED").slice(0, 3),
+  };
 }
 
 export function localExpensesChangesFromFinal(

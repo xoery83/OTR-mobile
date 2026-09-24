@@ -28,6 +28,7 @@ import {
   personalStatementChangesFromFinal,
   personalStatementMatchesFinal,
   splitLabel,
+  summarizeSettlementChanges,
   type SettlementComparison,
   type SettlementCategory,
   visiblePersonalPayments,
@@ -367,6 +368,7 @@ function SummarySection({
     : settlement.hasPendingFinancialOperations && localChanges.length
       ? localChanges
       : personalChanges;
+  const summarizedChanges = summarizeSettlementChanges(changedExpenses);
   const hasChanges = comparison.mode === "CONFIRMED_WITH_PENDING_UPDATE";
   const confirmedBalance =
     currentFinal?.balances.find(
@@ -491,14 +493,15 @@ function SummarySection({
       {hasConfirmed && hasChanges ? (
         <View style={styles.notice}>
           <Text style={styles.noticeTitle}>Changes since last confirmation</Text>
-          {changedExpenses.slice(0, 3).map((item) => (
+          {summarizedChanges.removedCount ? (
+            <Text style={styles.body}>
+              Removed: {summarizedChanges.removedCount} expense
+              {summarizedChanges.removedCount === 1 ? "" : "s"}
+            </Text>
+          ) : null}
+          {summarizedChanges.visible.map((item) => (
             <Text key={item.expenseId} style={styles.body}>
-              {item.change === "NEW"
-                ? "Added"
-                : item.change === "DELETED"
-                  ? "Removed"
-                  : "Changed"}
-              : {changeTitle(item.expenseId)}
+              {item.change === "NEW" ? "Added" : "Changed"}: {changeTitle(item.expenseId)}
             </Text>
           ))}
           {balanceMinor !== undefined && confirmedBalance ? (

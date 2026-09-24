@@ -15,6 +15,7 @@ import {
   personalStatementChangesFromFinal,
   personalStatementMatchesFinal,
   settlementCacheMessage,
+  summarizeSettlementChanges,
   splitLabel,
   visiblePersonalPayments,
   visibleSettlementTransfers,
@@ -210,6 +211,23 @@ describe("Settlement section selectors", () => {
     expect(settlementCacheMessage(true, "details")).toBe(
       "Settlement refresh unavailable · showing saved details",
     );
+  });
+
+  it("summarizes removed Expenses without exposing their ids", () => {
+    expect(
+      summarizeSettlementChanges([
+        { expenseId: "removed-a", change: "DELETED" },
+        { expenseId: "added-a", change: "NEW" },
+        { expenseId: "removed-b", change: "DELETED" },
+        { expenseId: "changed-a", change: "CHANGED" },
+      ]),
+    ).toEqual({
+      removedCount: 2,
+      visible: [
+        { expenseId: "added-a", change: "NEW" },
+        { expenseId: "changed-a", change: "CHANGED" },
+      ],
+    });
   });
 
   it("selects one Current snapshot when it differs from the confirmed head", () => {

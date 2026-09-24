@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
 import type { LocalPersonalSettlementReview } from "@/data/repositories/personalSettlementReviewRepository";
@@ -16,55 +16,78 @@ export function usePersonalSettlementReview(journeyId?: string) {
   );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const requestRef = useRef(0);
 
   const load = useCallback(async () => {
-    if (!journeyId) return;
+    const request = ++requestRef.current;
+    setBusy(false);
+    setMessage(null);
+    if (!journeyId) {
+      setState(null);
+      return;
+    }
     const repository = await getDefaultPersonalSettlementReviewRepository();
+    const cached = await repository.get(journeyId);
+    if (request !== requestRef.current) return;
+    setState(cached);
+    setSource("CURRENT_CACHED");
     try {
       await refreshPersonalSettlementReview(journeyId);
+      const refreshed = await repository.get(journeyId);
+      if (request !== requestRef.current) return;
+      setState(refreshed);
       setSource("CURRENT_SERVER");
     } catch {
       // Cached statement remains useful offline.
-      setSource("CURRENT_CACHED");
+      if (request === requestRef.current) setSource("CURRENT_CACHED");
     }
-    setState(await repository.get(journeyId));
   }, [journeyId]);
 
   useFocusEffect(
     useCallback(() => {
       void load();
+      return () => {
+        requestRef.current += 1;
+      };
     }, [load]),
   );
 
   const setReviewState = useCallback(
     async (reviewState: PersonalSettlementReviewState) => {
       if (!journeyId) return;
+      const request = ++requestRef.current;
       setBusy(true);
       setMessage(null);
       try {
         const repository = await getDefaultPersonalSettlementReviewRepository();
         await repository.checkpoint(journeyId, reviewState);
-        setState(await repository.get(journeyId));
+        const pending = await repository.get(journeyId);
+        if (request === requestRef.current) setState(pending);
         try {
           await runPersonalSettlementReviewSync(journeyId);
           await refreshPersonalSettlementReview(journeyId);
         } catch {
-          setMessage("Saved on this device · Pending sync");
+          if (request === requestRef.current)
+            setMessage("Saved on this device · Pending sync");
         }
-        setState(await repository.get(journeyId));
+        const refreshed = await repository.get(journeyId);
+        if (request === requestRef.current) setState(refreshed);
       } catch {
-        setMessage("Open the latest statement and try again.");
+        if (request === requestRef.current)
+          setMessage("Open the latest statement and try again.");
       } finally {
-        setBusy(false);
+        if (request === requestRef.current) setBusy(false);
       }
     },
     [journeyId],
   );
 
+  const currentState = state?.statement.journeyId === journeyId ? state : null;
+
   return {
-    state,
+    state: currentState,
     source,
-    projectionAsOf: state?.updatedAt ?? null,
+    projectionAsOf: currentState?.updatedAt ?? null,
     busy,
     message,
     reload: load,
