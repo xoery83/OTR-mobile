@@ -877,7 +877,10 @@ function PaymentsSection({
   return (
     <View style={styles.section}>
       <View style={styles.hero}>
-        <Text accessibilityRole="header" style={styles.sectionLeadText}>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionLeadText, styles.paymentsLeadText]}
+        >
           RECOMMENDED TRANSFERS
         </Text>
         {isOrganizer ? <Toggle everyone={everyone} onChange={onEveryone} /> : null}
@@ -1353,6 +1356,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     minWidth: 0,
   },
+  paymentsLeadText: { flex: 0 },
   sections: { paddingBottom: 24 },
   standaloneSections: { paddingHorizontal: 16 },
   subheading: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 4 },
