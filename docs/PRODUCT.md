@@ -70,6 +70,11 @@ Ledger / Expenses:
 - Approximate Settlement amounts are not marked with `≈`. A compact accessible
   indicator opens the affected Expense list and explains whether a reference rate is
   awaiting publication or needs user action.
+- My Ledger is a secondary, local-first portfolio view. Its Spending section shows
+  the user's allocated shares by total, category, and month in a selectable
+  analytical display currency; estimates are marked `≈` and missing local FX
+  excludes only affected expenses. Its Settlements section shows each Journey's
+  existing balance in that Journey's settlement currency.
 
 Travel Documents / Tickets:
 

@@ -1,167 +1,335 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
-import {
-  myLedgerPeriodBounds,
-  type MyLedgerPeriod,
-} from "@/domain/ledger/journeyContext";
+import { myLedgerPeriodBounds } from "@/domain/ledger/journeyContext";
 import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
-
 import { formatLedgerDateRange, formatLedgerMoney } from "./format";
 import { createLatestRequest } from "./latestRequest";
+import { loadMyLedger } from "./loadMyLedger";
+import type { Period } from "./myLedgerAnalytics";
+import { settlementPositionLabel, spendingPercentage } from "./dashboardPresentation";
 
-type Row = Awaited<
-  ReturnType<
-    Awaited<ReturnType<typeof getDefaultLedgerReportingRepository>>["listMyLedger"]
-  >
->[number];
+type ViewData = Awaited<ReturnType<typeof loadMyLedger>>;
+type Section = "SPENDING" | "SETTLEMENTS";
 
 export function MyLedgerScreen() {
-  const largeText = useWindowDimensions().fontScale > 2;
-  const { refreshPersonal } = useLedgerReportingRefresh();
-  const [view, setView] = useState<{ period: MyLedgerPeriod; rows: Row[] } | null>(null);
-  const [offline, setOffline] = useState(false);
-  const [updating, setUpdating] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState<Period>("YEAR");
+  const [section, setSection] = useState<Section>("SPENDING");
+  const [currency, setCurrency] = useState<string | null>(null);
+  const [view, setView] = useState<ViewData | null>(null);
+  const [viewGeneration, setViewGeneration] = useState(getAccountGeneration);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [request] = useState(createLatestRequest);
+  const { refreshPersonal } = useLedgerReportingRefresh();
+  const selection = useRef({ period, currency, section });
+  useEffect(() => {
+    selection.current = { period, currency, section };
+  }, [period, currency, section]);
 
   const load = useCallback(
-    async (period: MyLedgerPeriod) => {
+    async (nextPeriod: Period, nextCurrency: string | null, nextSection: Section) => {
       const id = request.begin();
-      setUpdating(true);
-      setError(null);
+      const generation = getAccountGeneration();
+      setLoading(true);
+      setError(false);
       try {
-        const repository = await getDefaultLedgerReportingRepository();
-        const rows = await repository.listMyLedger(period);
-        if (!request.isCurrent(id)) return;
-        setView({ period, rows });
-        setUpdating(false);
-        const bounds = myLedgerPeriodBounds(period, new Date());
-        try {
-          await refreshPersonal(period, bounds);
-          const refreshed = await repository.listMyLedger(period);
-          if (!request.isCurrent(id)) return;
-          setView({ period, rows: refreshed });
-          setOffline(false);
-        } catch {
-          if (request.isCurrent(id)) setOffline(true);
-        }
+        const next = await loadMyLedger(nextPeriod, nextCurrency, nextSection);
+        if (!request.isCurrent(id) || generation !== getAccountGeneration()) return;
+        setView(next);
+        setViewGeneration(generation);
+        setCurrency(next.currency);
       } catch {
-        if (request.isCurrent(id)) {
-          setError("My Ledger could not be loaded. Tap to try again.");
-          setUpdating(false);
-        }
+        if (request.isCurrent(id)) setError(true);
+      } finally {
+        if (request.isCurrent(id)) setLoading(false);
       }
     },
-    [refreshPersonal, request],
+    [request],
   );
 
-  useEffect(() => {
-    void Promise.resolve().then(() => load("YEAR"));
-    return () => {
-      request.cancel();
-    };
-  }, [load, request]);
+  useFocusEffect(
+    useCallback(() => {
+      void load(period, currency, section);
+      return () => request.cancel();
+    }, [load, period, currency, section, request]),
+  );
 
-  const period = view?.period ?? "YEAR";
-  const rows = view?.rows ?? [];
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      const generation = getAccountGeneration();
+      void refreshPersonal(period, myLedgerPeriodBounds(period, new Date()))
+        .then(() => {
+          if (
+            active &&
+            generation === getAccountGeneration() &&
+            selection.current.period === period
+          )
+            void load(period, selection.current.currency, selection.current.section);
+        })
+        .catch(() => {
+          /* Saved data remains usable offline. */
+        });
+      return () => {
+        active = false;
+      };
+    }, [period, refreshPersonal, load]),
+  );
 
-  const openJourney = async (journeyId: string) => {
-    await (await getDefaultLedgerReportingRepository()).selectJourney(journeyId);
-    router.replace("/expenses");
+  const changePeriod = (next: Period) => {
+    setPeriod(next);
+    setView(null);
   };
+  const changeCurrency = (next: string) => {
+    setCurrencyOpen(false);
+    setCurrency(next);
+    setView(null);
+  };
+  const shown =
+    viewGeneration === getAccountGeneration() &&
+    view?.period === period &&
+    view.currency === currency &&
+    view.section === section
+      ? view
+      : null;
+  const spending = shown?.spending;
+  const maxMonth = Math.max(1, ...(spending?.months.map(([, amount]) => amount) ?? []));
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View accessibilityRole="tablist" style={styles.segment}>
-        {(["30D", "YEAR", "ALL"] as const).map((item) => (
+        {(["SPENDING", "SETTLEMENTS"] as const).map((item) => (
           <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: period === item }}
             key={item}
-            onPress={() => void load(item)}
-            style={[styles.segmentItem, period === item && styles.selected]}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: section === item }}
+            style={[styles.segmentItem, section === item && styles.selected]}
+            onPress={() => {
+              setSection(item);
+              setView(null);
+            }}
           >
             <Text style={styles.segmentText}>
-              {item === "30D" ? "30 Days" : item === "YEAR" ? "This Year" : "All Time"}
+              {item === "SPENDING" ? "Spending" : "Settlements"}
             </Text>
           </Pressable>
         ))}
       </View>
-      <Text style={styles.note}>
-        Journey currencies stay separate. Before settling, a positive amount means you
-        paid more than your share; a negative amount means you paid less.
-      </Text>
-      {offline ? (
-        <Text accessibilityLiveRegion="polite" style={styles.offline}>
-          Offline · showing saved Ledger data
-        </Text>
-      ) : null}
-      {updating ? (
-        <View style={styles.progress}>
-          <ActivityIndicator />
-          <Text accessibilityLiveRegion="polite" style={styles.note}>
-            Updating My Ledger…
-          </Text>
+      <View style={styles.filterRow}>
+        {section === "SPENDING" ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Display currency, ${currency ?? "loading"}`}
+            style={styles.currencyControl}
+            onPress={() => setCurrencyOpen(true)}
+          >
+            <Text style={styles.filterLabel}>Display Currency</Text>
+            <Text style={styles.currency}>{currency ?? "—"} ▾</Text>
+          </Pressable>
+        ) : (
+          <View style={styles.currencyControl}>
+            <Text style={styles.filterLabel}>Settlement Currency</Text>
+            <Text style={styles.currency}>Per Journey</Text>
+          </View>
+        )}
+        <View accessibilityRole="tablist" style={styles.periodGroup}>
+          {(["YEAR", "ALL"] as const).map((item) => (
+            <Pressable
+              key={item}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: period === item }}
+              style={[styles.periodItem, period === item && styles.periodSelected]}
+              onPress={() => changePeriod(item)}
+            >
+              <Text
+                style={[styles.periodText, period === item && styles.periodTextSelected]}
+              >
+                {item === "YEAR" ? "This Year" : "All Time"}
+              </Text>
+            </Pressable>
+          ))}
         </View>
+      </View>
+      {loading && !shown ? (
+        <ActivityIndicator accessibilityLabel="Loading My Ledger" />
       ) : null}
       {error ? (
         <Pressable
           accessibilityRole="button"
-          onPress={() => void load(period)}
-          style={styles.retry}
+          onPress={() => void load(period, currency, section)}
         >
-          <Text accessibilityLiveRegion="polite" style={styles.error}>
-            {error}
+          <Text style={styles.error}>
+            My Ledger could not be loaded. Tap to try again.
           </Text>
         </Pressable>
       ) : null}
-      <View style={styles.surface}>
-        {rows.map((row) => (
-          <Pressable
-            accessibilityLabel={`${row.title}, my spending ${formatLedgerMoney(row.mySpendMinor, row.currency, row.scale)}, pre-settlement position ${formatLedgerMoney(row.positionMinor, row.currency, row.scale)}`}
-            accessibilityRole="button"
-            key={row.journeyId}
-            onPress={() => void openJourney(row.journeyId)}
-            style={[styles.row, largeText && styles.stack]}
-          >
-            <View style={styles.grow}>
-              <Text style={styles.title}>{row.title}</Text>
+      {shown && section === "SPENDING" && spending ? (
+        <>
+          <View style={styles.total}>
+            <Text style={styles.amount}>
+              ≈{" "}
+              {formatLedgerMoney(spending.totalMinor, spending.currency, spending.scale)}
+            </Text>
+            <Text style={styles.label}>Total spending</Text>
+            {spending.unconverted ? (
               <Text style={styles.meta}>
-                {formatLedgerDateRange(row.startDate, row.endDate)}
+                Excludes {spending.unconverted} unconverted{" "}
+                {spending.unconverted === 1 ? "expense" : "expenses"}
               </Text>
+            ) : null}
+            {shown.incompleteJourneyCount ? (
               <Text style={styles.meta}>
-                My spending {formatLedgerMoney(row.mySpendMinor, row.currency, row.scale)}{" "}
-                · Paid {formatLedgerMoney(row.paidMinor, row.currency, row.scale)}
+                Excludes {shown.incompleteJourneyCount}{" "}
+                {shown.incompleteJourneyCount === 1 ? "Journey" : "Journeys"} without
+                saved Expense detail
               </Text>
-              {row.unvaluedCount || row.conflictCount ? (
-                <Text style={styles.warning}>
-                  {row.unvaluedCount} unvalued · {row.conflictCount} conflicts
+            ) : null}
+          </View>
+          <Text style={styles.heading}>By Category</Text>
+          {spending.categories.length ? (
+            spending.categories.map(([name, amount], index) => {
+              const percentage = spendingPercentage(amount, spending.totalMinor);
+              return (
+                <View key={`${name}-${index}`} style={styles.category}>
+                  <View style={styles.inline}>
+                    <Text style={styles.categoryName}>{name}</Text>
+                    <Text>
+                      {formatLedgerMoney(amount, spending.currency, spending.scale)}
+                      <Text style={styles.categoryPercentage}>{` · ${percentage}%`}</Text>
+                    </Text>
+                  </View>
+                  <View style={styles.track}>
+                    <View style={[styles.fill, { width: `${percentage}%` }]} />
+                  </View>
+                </View>
+              );
+            })
+          ) : (
+            <Text style={styles.meta}>No spending in this period.</Text>
+          )}
+          <Text style={styles.heading}>Monthly Spending</Text>
+          <View style={styles.chart} accessibilityLabel="Monthly spending chart">
+            {spending.months.map(([month, amount]) => (
+              <View
+                key={month}
+                style={styles.month}
+                accessible
+                accessibilityLabel={`${month}, ${formatLedgerMoney(amount, spending.currency, spending.scale)}`}
+              >
+                <View style={styles.barArea}>
+                  <View
+                    style={[
+                      styles.bar,
+                      { height: Math.max(2, (Math.max(0, amount) / maxMonth) * 90) },
+                    ]}
+                  />
+                </View>
+                <Text numberOfLines={1} style={styles.monthLabel}>
+                  {spending.months.length <= 12
+                    ? new Date(`${month}-01T12:00:00Z`).toLocaleString(undefined, {
+                        month: "short",
+                      })
+                    : spending.months.length <= 36 && month.endsWith("-01")
+                      ? month.slice(0, 4)
+                      : ""}
                 </Text>
-              ) : null}
-            </View>
-            <View style={largeText ? styles.largePosition : undefined}>
-              <Text style={styles.position}>
-                {formatLedgerMoney(row.positionMinor, row.currency, row.scale)}
-              </Text>
-              <Text style={styles.positionLabel}>Pre-settlement</Text>
-            </View>
-          </Pressable>
-        ))}
-        {!updating && rows.length === 0 ? (
-          <Text style={styles.empty}>No Journey history for this period.</Text>
-        ) : null}
-      </View>
+              </View>
+            ))}
+          </View>
+          {spending.months.length > 12 ? (
+            <Text style={styles.chartRange}>
+              {spending.months[0][0]} – {spending.months.at(-1)![0]}
+            </Text>
+          ) : null}
+        </>
+      ) : null}
+      {shown && section === "SETTLEMENTS" ? (
+        <>
+          {shown.settlements.map(({ journey, projection, status }) => (
+            <Pressable
+              key={journey.journeyId}
+              accessibilityRole="button"
+              accessibilityLabel={`${journey.title}, ${projection ? `${settlementPositionLabel(projection.balanceMinor)}, ${formatLedgerMoney(Math.abs(projection.balanceMinor), projection.currency, projection.scale)}` : "balance unavailable"}`}
+              style={styles.journey}
+              onPress={async () => {
+                await (
+                  await getDefaultLedgerReportingRepository()
+                ).selectJourney(journey.journeyId);
+                router.replace("/expenses");
+              }}
+            >
+              <View style={styles.grow}>
+                <Text style={styles.journeyTitle}>{journey.title}</Text>
+                <Text style={styles.meta}>
+                  {formatLedgerDateRange(journey.startDate, journey.endDate)}
+                </Text>
+                {status ? <Text style={styles.meta}>{status}</Text> : null}
+              </View>
+              <View style={styles.balanceColumn}>
+                <Text style={styles.balance}>
+                  {projection
+                    ? formatLedgerMoney(
+                        Math.abs(projection.balanceMinor),
+                        projection.currency,
+                        projection.scale,
+                      )
+                    : "—"}
+                </Text>
+                {projection ? (
+                  <Text style={styles.balanceMeaning}>
+                    {settlementPositionLabel(projection.balanceMinor)}
+                  </Text>
+                ) : null}
+              </View>
+            </Pressable>
+          ))}
+          {!shown.settlements.length ? (
+            <Text style={styles.meta}>No Journeys in this period.</Text>
+          ) : null}
+        </>
+      ) : null}
+      <Modal
+        visible={currencyOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCurrencyOpen(false)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setCurrencyOpen(false)}>
+          <View style={styles.menu}>
+            <Text style={styles.heading}>Display Currency</Text>
+            {(shown?.options ?? []).map((option) => (
+              <Pressable
+                accessibilityRole="button"
+                key={option}
+                style={styles.option}
+                onPress={() => changeCurrency(option)}
+              >
+                <Text>{option}</Text>
+              </Pressable>
+            ))}
+            <Pressable
+              accessibilityRole="button"
+              style={styles.option}
+              onPress={() => setCurrencyOpen(false)}
+            >
+              <Text>Cancel</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -188,29 +356,84 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   selected: { backgroundColor: "#FFFFFF" },
-  segmentText: { color: "#111827", fontWeight: "600", textAlign: "center" },
-  note: { color: "#475569", fontSize: 14, lineHeight: 20 },
-  offline: { color: "#7C5B00", fontWeight: "600" },
-  progress: { alignItems: "center", flexDirection: "row", gap: 8 },
-  error: { color: "#B91C1C", fontWeight: "600" },
-  retry: { justifyContent: "center", minHeight: 44 },
-  surface: { backgroundColor: "#FFFFFF", borderRadius: 10, overflow: "hidden" },
-  row: {
+  segmentText: { color: "#111827", fontWeight: "600" },
+  filterRow: {
     alignItems: "center",
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  currencyControl: {
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 112,
+  },
+  filterLabel: { color: "#64748B", fontSize: 11 },
+  currency: { color: "#111827", fontSize: 14, fontWeight: "700", marginTop: 2 },
+  periodGroup: { flexDirection: "row", gap: 4, marginLeft: "auto" },
+  periodItem: {
+    borderColor: "#D5DCE6",
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 38,
+    paddingHorizontal: 10,
+  },
+  periodSelected: { backgroundColor: "#E8EDF4", borderColor: "#BFC9D8" },
+  periodText: { color: "#64748B", fontSize: 12 },
+  periodTextSelected: { color: "#1F2937", fontWeight: "700" },
+  label: { color: "#64748B", fontSize: 14 },
+  total: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 3, padding: 20 },
+  amount: { color: "#111827", fontSize: 30, fontWeight: "700" },
+  heading: { color: "#111827", fontSize: 18, fontWeight: "700", marginTop: 8 },
+  meta: { color: "#64748B", fontSize: 13 },
+  error: { color: "#B91C1C" },
+  category: { gap: 6 },
+  inline: { flexDirection: "row", justifyContent: "space-between" },
+  categoryName: { flex: 1, fontWeight: "600" },
+  categoryPercentage: { color: "#64748B", fontSize: 12 },
+  track: { backgroundColor: "#E5E7EB", borderRadius: 4, height: 6 },
+  fill: { backgroundColor: "#64748B", borderRadius: 4, height: 6 },
+  chart: { flexDirection: "row", height: 116, width: "100%" },
+  month: { alignItems: "center", flex: 1, justifyContent: "flex-end", minWidth: 0 },
+  barArea: {
+    alignItems: "center",
+    height: 94,
+    justifyContent: "flex-end",
+    width: "100%",
+  },
+  bar: {
+    backgroundColor: "#64748B",
+    borderRadius: 2,
+    maxWidth: 22,
+    minWidth: 1,
+    width: "68%",
+  },
+  monthLabel: {
+    color: "#64748B",
+    fontSize: 9,
+    height: 15,
+    marginTop: 5,
+    textAlign: "center",
+    width: "100%",
+  },
+  chartRange: { color: "#64748B", fontSize: 11, textAlign: "center" },
+  journey: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
     flexDirection: "row",
     gap: 12,
-    minHeight: 92,
+    minHeight: 72,
     padding: 14,
   },
   grow: { flex: 1 },
-  title: { color: "#111827", fontSize: 17, fontWeight: "700" },
-  meta: { color: "#64748B", fontSize: 12, marginTop: 4 },
-  warning: { color: "#B45309", fontSize: 12, fontWeight: "700", marginTop: 4 },
-  position: { color: "#111827", fontWeight: "700", textAlign: "right" },
-  positionLabel: { color: "#64748B", fontSize: 11, marginTop: 3, textAlign: "right" },
-  stack: { alignItems: "flex-start", flexDirection: "column" },
-  largePosition: { alignSelf: "stretch" },
-  empty: { color: "#64748B", padding: 30, textAlign: "center" },
+  journeyTitle: { color: "#111827", fontSize: 16, fontWeight: "700" },
+  balanceColumn: { alignItems: "flex-end", maxWidth: "46%" },
+  balance: { color: "#111827", fontWeight: "700", textAlign: "right" },
+  balanceMeaning: { color: "#64748B", fontSize: 11, marginTop: 3 },
+  backdrop: { backgroundColor: "#0006", flex: 1, justifyContent: "center", padding: 28 },
+  menu: { backgroundColor: "#FFFFFF", borderRadius: 12, padding: 18 },
+  option: { justifyContent: "center", minHeight: 48 },
 });

@@ -2,6 +2,34 @@
 
 Date: 2026-09-25
 
+## My Ledger simplified portfolio slice implemented — Simulator visual check complete
+
+- UI polish places Spending / Settlements first, then display currency and the
+  compact period selector. Categories show share percentages, monthly bars fit
+  the page width, and every Settlement row names its balance direction. On
+  Settlements, the second row says Settlement Currency / Per Journey instead of
+  showing an inactive Spending currency picker.
+- This Year / All Time, analytical Display Currency, Spending total/category/month,
+  and Journey-currency Settlements render from local repositories before the
+  existing reporting refresh runs in the background. Spending uses
+  original allocated shares and cached ECB cross/direct rates; missing rates omit
+  only those expenses. Settlement reuses the saved Settlement Summary projection.
+- This Year includes Journeys whose date interval overlaps the year or which have
+  an Expense with an economic date in the year. All Time includes all locally
+  accessible Journeys. No schema, API, sync, or remote FX change.
+- A Journey with only the authorized narrow local summary remains listed, but its
+  balance is shown as unavailable and its missing Expense detail is excluded from
+  the Spending total until the ordinary Journey cache is hydrated.
+- Local analytics and projection tests, TypeScript, ESLint, the full Vitest suite,
+  architecture guard, and touched-file Prettier pass. Full-tree Prettier still
+  reports unrelated pre-existing and concurrent-work formatting differences.
+- iPhone 17 Pro / iOS 26.5 Simulator visual check passed for the Spending layout,
+  all 12 monthly columns without horizontal scrolling, and Settlement rows in
+  NZD/EUR/JPY with explicit You owe / You are owed / All settled labels. The
+  unsigned Simulator build needed a temporary preview-only cached account ID
+  because SecureStore requires a Keychain entitlement; that source patch was
+  removed after bundling. No physical-device check was performed for this slice.
+
 ## Coherent Settlement source convergence implemented — awaiting acceptance
 
 - The existing Settlement Preview response now returns balances/inputs, actual source
