@@ -392,7 +392,10 @@ function SummarySection({
   return (
     <View style={styles.section}>
       <View style={styles.hero}>
-        <Text accessibilityRole="header" style={styles.sectionLeadText}>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionLeadText, styles.paymentsLeadText]}
+        >
           CURRENT BALANCE
         </Text>
         <Text style={styles.heroLabel}>
