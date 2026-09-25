@@ -532,9 +532,7 @@ export function LedgerStage6Screen({
               ) : null}
             </View>
           ),
-          headerLeft: scopedJourneyId
-            ? undefined
-            : () => <GlobalMenu journeyId={journey?.journeyId} module="LEDGER" />,
+          headerLeft: () => <GlobalMenu journeyId={journey?.journeyId} module="LEDGER" />,
           headerRight: () => (
             <View style={styles.headerActions}>
               <HeaderButton
