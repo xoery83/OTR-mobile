@@ -77,6 +77,7 @@ function repository(): LedgerExpenseRepository {
   return {
     createExpense: vi.fn(),
     updateExpense: vi.fn(),
+    completeEconomicDate: vi.fn(),
     listExpensesForJourney: vi.fn(),
     getExpense: vi.fn(async () => expense),
     listPreviousValuations: vi.fn(async () => []),
@@ -141,6 +142,54 @@ describe("Ledger Expense sync worker", () => {
       expense.id,
       "40000000-0000-4000-8000-000000000001",
       1,
+      operation.id,
+    );
+  });
+
+  it("pushes date completion without replaying the whole Expense aggregate", async () => {
+    const repo = repository();
+    const current = {
+      ...expense,
+      serverId: "server-expense",
+      serverRevision: 3,
+      revision: 4,
+      economicDate: "2026-07-25",
+      status: "RATE_REQUIRED" as const,
+      valuation: null,
+      syncStatus: "PENDING_UPDATE" as const,
+    };
+    vi.mocked(repo.getExpense).mockResolvedValue(current);
+    const completeEconomicDate = vi.fn(async () => ({
+      serverId: "server-expense",
+      revision: 4,
+    }));
+    await createLedgerExpenseSyncWorker(repo, {
+      createExpense: vi.fn(),
+      updateExpense: vi.fn(),
+      deleteExpense: vi.fn(),
+      restoreExpense: vi.fn(),
+      completeEconomicDate,
+    }).push({
+      ...operation,
+      operationType: "LEDGER_COMPLETE_ECONOMIC_DATE",
+      baseVersion: 3,
+      payloadJson: JSON.stringify({
+        reason: "USER_CONFIRMED_V1",
+        expense: { economicDate: "2026-07-25" },
+      }),
+    });
+    expect(completeEconomicDate).toHaveBeenCalledWith({
+      journeyId: expense.journeyId,
+      serverId: "server-expense",
+      idempotencyKey: "stable-key-1",
+      baseRevision: 3,
+      economicDate: "2026-07-25",
+      source: "USER_CONFIRMED_V1",
+    });
+    expect(repo.markExpenseSynced).toHaveBeenCalledWith(
+      expense.id,
+      "server-expense",
+      4,
       operation.id,
     );
   });

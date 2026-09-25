@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import {
+  balancesFromSettlementInputs,
   buildSettlementPreview,
   buildSettlementConfirmationDiff,
   canonicalSettlementInputsJson,
@@ -77,6 +78,15 @@ function preview(expenses: SettlementExpenseCandidate[], memberOrder = members) 
 }
 
 describe("Stage 7.1 settlement preview", () => {
+  it("reconstructs confirmed balances from immutable inputs after later changes", () => {
+    const confirmed = preview([expense("one", "a")]);
+    const current = preview([expense("one", "a"), expense("two", "b")]);
+    expect(balancesFromSettlementInputs(confirmed.inputs, members, "NZD", 2)).toEqual(
+      confirmed.balances,
+    );
+    expect(confirmed.balances).not.toEqual(current.balances);
+  });
+
   it("retains protected terminal history without treating it as current source", () => {
     const values = [
       { id: "protected", serverId: null, syncStatus: "FAILED" as const },

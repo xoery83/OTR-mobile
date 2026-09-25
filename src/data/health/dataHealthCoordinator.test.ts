@@ -18,6 +18,39 @@ afterEach(() => {
 });
 
 describe("Data Health Phase B read-only scanner", () => {
+  it("classifies a synced cross-currency missing date as user-action-required", async () => {
+    const fixture = createFixture();
+    insertExpense(fixture.sqlite, {
+      id: "missing-date",
+      revision: 3,
+      serverRevision: 3,
+      serverId: "missing-date",
+      syncStatus: "SYNCED",
+    });
+    fixture.sqlite.exec(
+      "UPDATE ledger_expenses SET business_status = 'RATE_REQUIRED' WHERE id = 'missing-date'",
+    );
+    const report = await fixture.coordinator.run("MANUAL");
+    expect(report.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: "RESTORE_MISSING_ECONOMIC_DATE_V1",
+          targetId: "missing-date",
+          category: "ACTIONABLE_INPUT",
+        }),
+      ]),
+    );
+    expect(report.repairPlans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: "RESTORE_MISSING_ECONOMIC_DATE_V1",
+          disposition: "USER_ACTION_REQUIRED",
+          actionId: null,
+        }),
+      ]),
+    );
+  });
+
   it("returns a deterministic healthy report and writes only health metadata", async () => {
     const fixture = createFixture();
     const before = domainFingerprint(fixture.sqlite);

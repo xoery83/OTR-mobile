@@ -38,6 +38,10 @@ export default function LedgerLayout() {
         }}
       />
       <Stack.Screen
+        name="confirm-date"
+        options={{ headerTitle: "Transaction date", presentation: "modal" }}
+      />
+      <Stack.Screen
         name="receipt"
         options={{
           headerTitle: "Receipt",

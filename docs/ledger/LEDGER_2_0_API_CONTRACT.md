@@ -354,6 +354,12 @@ Expense identities/classifications, blockers/exclusions, the deterministic delta
 transfer plan, and one of `PREVIEW_BLOCKED`, `PREVIEW_UNCHANGED`, or
 `PREVIEW_READY`.
 
+For ordinary post-Final updates, Preview receives the current canonical
+Settlement Preview's explicit `throughTimestamp`, returns it, and Confirm carries
+it alongside the head/digest. The new version stores that cutoff; the root and
+its frozen evidence retain their historical cutoff. Omitted cutoff preserves the
+legacy root-scoped correction contract.
+
 Changing participation after root finalization changes the canonical current
 input: `INCLUDED -> EXCLUDED` removes that obligation and
 `EXCLUDED -> INCLUDED` adds it. The resulting member delta is represented by

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(19);
+select plan(23);
 set local role service_role;
 
 update public.journey_members set role = 'owner', status = 'linked'
@@ -198,6 +198,54 @@ select ok(
     'EXECUTE'
   ),
   'authenticated clients cannot call Adjustment finalization directly'
+);
+
+insert into public.expenses (
+  id, journey_id, creator_member_id, created_by_user_id, updated_by_user_id,
+  payer_member_id, title, occurred_at, original_amount_minor,
+  original_currency, original_currency_scale, business_status
+) select
+  '41000000-0000-4000-8000-000000000010',
+  '10000000-0000-4000-8000-000000000001', id,
+  '00000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001', id, 'After root cutoff',
+  '2026-09-16T00:00:00Z', 100, 'NZD', 2, 'ACCEPTED'
+from public.journey_members
+where trip_id = '10000000-0000-4000-8000-000000000001'
+  and user_id = '00000000-0000-4000-8000-000000000001';
+select is(
+  jsonb_array_length(
+    public.ledger_adjustment_source_7_2b('70000000-0000-4000-8000-000000000003')
+      -> 'expenses'
+  ),
+  1, 'historical root-cutoff source still excludes the later Expense'
+);
+select is(
+  jsonb_array_length(
+    public.ledger_adjustment_source_current_7_2c(
+      '70000000-0000-4000-8000-000000000003', '2026-09-25T00:00:00Z'
+    ) -> 'expenses'
+  ),
+  2, 'current Adjustment source includes the later Expense'
+);
+select lives_ok($$
+  select public.ledger_finalize_adjustment_7_2b(
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    '70000000-0000-4000-8000-000000000003',
+    (select id from public.settlements where lineage_sequence = 2),
+    repeat('d', 64), repeat('d', 64), repeat('c', 64),
+    public.ledger_adjustment_source_current_7_2c(
+      '70000000-0000-4000-8000-000000000003', '2026-09-25T00:00:00Z'
+    ),
+    '[]', '[]', '[]', '[]', 'Later Expense update', true, false,
+    'current-cutoff', 'current-cutoff-hash'
+  )
+$$, 'a new immutable version accepts the explicit current cutoff');
+select is(
+  (select through_timestamp from public.settlements where lineage_sequence = 3),
+  '2026-09-25T00:00:00Z'::timestamptz,
+  'new version stores its own cutoff while the root remains frozen'
 );
 
 select * from finish();

@@ -378,6 +378,7 @@ const adjustmentVector = z.object({
 export const settlementAdjustmentPreviewSchema = z.object({
   state: z.enum(["PREVIEW_BLOCKED", "PREVIEW_UNCHANGED", "PREVIEW_READY"]),
   rootSettlementId: uuid,
+  throughTimestamp: z.iso.datetime({ offset: true }),
   expectedHeadId: uuid.nullable(),
   priorInputDigest: z.string().regex(/^[a-f0-9]{64}$/),
   inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
@@ -405,7 +406,12 @@ export const settlementAdjustmentPreviewSchema = z.object({
   ),
 });
 
+export const settlementAdjustmentPreviewRequestSchema = z.object({
+  throughTimestamp: z.iso.datetime({ offset: true }).optional(),
+});
+
 export const settlementAdjustmentFinalizeRequestSchema = z.object({
+  throughTimestamp: z.iso.datetime({ offset: true }).optional(),
   expectedHeadId: uuid.nullable(),
   inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
   reason: z.string().trim().min(1).max(2000),

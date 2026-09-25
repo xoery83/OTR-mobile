@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -8,76 +8,81 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
-import { usePersonalSettlementReview } from "@/hooks/usePersonalSettlementReview";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney } from "./format";
 import {
-  localExpensesChangesFromFinal,
-  personalBalanceFromFinal,
-  personalStatementChangesFromFinal,
-} from "./settlementSections";
+  readSharedSettlementProjection,
+  settlementExpenseIdentity,
+  settlementReviewBlockers,
+} from "./settlementSummaryProjection";
+import { submitSettlementUpdate } from "./settlementUpdateFeedback";
 
 export function SettlementUpdateScreen() {
   const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
-  const settlement = useStage7Settlement(journeyId);
-  const review = usePersonalSettlementReview(journeyId);
+  const settlement = useStage7Settlement(journeyId, true);
+  const refreshSettlement = settlement.refresh;
   const [reason, setReason] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const confirmationInFlight = useRef(false);
   const [expenses, setExpenses] = useState<LedgerExpense[]>([]);
-  const current = settlement.lineage.at(-1) ?? settlement.finalized;
-  const statement = review.state?.statement;
-  const estimate = settlement.displayPreview?.balances.find(
-    (item) => item.memberId === settlement.actorMemberId,
+  const projection = settlement.summaryProjection;
+  const shared = journeyId ? readSharedSettlementProjection(journeyId) : null;
+  const sameSource =
+    projection?.sourceFingerprint === settlement.preview?.sourceFingerprint;
+  const blockers = settlementReviewBlockers(
+    projection?.confirmationDiff ?? [],
+    expenses,
+    sameSource ? settlement.preview?.blockers : undefined,
   );
-  const currentBalance = settlement.hasPendingFinancialOperations
-    ? (estimate?.minor ?? statement?.balanceMinor)
-    : (statement?.balanceMinor ?? estimate?.minor);
-  const currentCurrency = statement?.currency ?? estimate?.currency;
-  const currentScale = statement?.scale ?? estimate?.scale;
-  const confirmedBalance =
-    current?.balances.find((item) => item.memberId === settlement.actorMemberId) ??
-    (current && settlement.actorMemberId
-      ? personalBalanceFromFinal(current, settlement.actorMemberId)
-      : undefined);
-  const personalChanges =
-    statement && current && settlement.actorMemberId
-      ? personalStatementChangesFromFinal(statement, current, settlement.actorMemberId)
-      : [];
-  const localChanges = current ? localExpensesChangesFromFinal(expenses, current) : [];
-  const changes = settlement.adjustmentPreview?.changedExpenses.length
-    ? settlement.adjustmentPreview.changedExpenses
-    : settlement.hasPendingFinancialOperations && localChanges.length
-      ? localChanges
-      : personalChanges;
-  const changesLoading = settlement.isOrganizer
-    ? !settlement.adjustmentPreview && settlement.updating
-    : !review.state && settlement.updating;
-  const ready = settlement.adjustmentPreview?.state === "PREVIEW_READY";
-  const titleFor = (expenseId: string) =>
-    expenses.find((expense) => expense.id === expenseId || expense.serverId === expenseId)
-      ?.title ??
-    statement?.contributions.find((item) => item.expenseId === expenseId)
-      ?.expenseTitleSnapshot ??
-    `Expense ${expenseId.slice(0, 8)}`;
+  const ready =
+    settlement.confirmationVerified &&
+    !settlement.updating &&
+    !settlement.hasPendingFinancialOperations &&
+    blockers.length === 0 &&
+    sameSource &&
+    settlement.adjustmentPreview?.state === "PREVIEW_READY";
+  const refreshedOnFocus = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      if (!journeyId) return;
+      if (refreshedOnFocus.current) refreshSettlement();
+      refreshedOnFocus.current = true;
+      void getDefaultLedgerExpenseRepository()
+        .then((repository) => repository.listExpensesForJourney(journeyId, true))
+        .then((rows) => {
+          if (active) setExpenses(rows);
+        });
+      return () => {
+        active = false;
+      };
+    }, [journeyId, refreshSettlement]),
+  );
+  const identityFor = (id: string) =>
+    settlementExpenseIdentity(id, expenses, shared?.titles);
+  const openRateReview = (id: string, localId: string, removed: boolean) => {
+    const expense = expenses.find((item) => item.id === localId || item.serverId === id);
+    if (expense?.economicDate === null) {
+      router.push({
+        pathname: "/expenses/confirm-date",
+        params: { expenseId: localId },
+      } as never);
+      return;
+    }
+    if (removed && journeyId)
+      router.push({
+        pathname: "/expenses/settlement-adjustment",
+        params: { journeyId, expenseId: id },
+      } as never);
+    else router.push(`/expenses/expense/${localId}`);
+  };
 
-  useEffect(() => {
-    let active = true;
-    if (!journeyId) return;
-    void getDefaultLedgerExpenseRepository()
-      .then((repository) => repository.listExpensesForJourney(journeyId))
-      .then((rows) => {
-        if (active) setExpenses(rows);
-      });
-    return () => {
-      active = false;
-    };
-  }, [journeyId, settlement.hasPendingFinancialOperations]);
-
-  if (!current)
+  if (!projection?.confirmedSettlement)
     return settlement.updating ? (
       <ActivityIndicator style={styles.loading} />
     ) : (
@@ -85,78 +90,136 @@ export function SettlementUpdateScreen() {
     );
 
   const confirm = async () => {
-    if (!ready || !reason.trim()) return;
-    if (await settlement.finalizeAdjustment(settlement.adjustmentPreview!, reason.trim()))
-      router.replace({
-        pathname: "/expenses/settlement",
-        params: { journeyId },
-      } as never);
+    if (!ready || !reason.trim() || !settlement.adjustmentPreview) return;
+    await submitSettlementUpdate(
+      confirmationInFlight,
+      reason,
+      setConfirming,
+      (submittedReason) =>
+        settlement.finalizeAdjustment(settlement.adjustmentPreview!, submittedReason),
+      () =>
+        router.replace({
+          pathname: "/expenses/settlement",
+          params: { journeyId },
+        } as never),
+    );
   };
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.hero}>
         <Text accessibilityRole="header" style={styles.lead}>
-          CURRENT CHANGES
+          CURRENT BALANCE
         </Text>
-        {currentBalance !== undefined &&
-        currentCurrency &&
-        currentScale !== undefined &&
-        confirmedBalance ? (
-          <>
-            <Text style={styles.amount}>
-              {formatLedgerMoney(Math.abs(currentBalance), currentCurrency, currentScale)}
-            </Text>
-            <Text style={styles.meta}>
-              Last confirmed{" "}
-              {formatLedgerMoney(
-                Math.abs(confirmedBalance.netMinor),
-                confirmedBalance.currency,
-                confirmedBalance.scale,
-              )}{" "}
-              · Change {currentBalance - confirmedBalance.netMinor >= 0 ? "+" : ""}
-              {formatLedgerMoney(
-                currentBalance - confirmedBalance.netMinor,
-                currentCurrency,
-                currentScale,
-              )}
-            </Text>
-          </>
-        ) : (
-          <Text style={styles.meta}>Calculating exact change…</Text>
-        )}
+        <Text style={styles.meta}>
+          {projection.balanceMinor > 0
+            ? "You should receive"
+            : projection.balanceMinor < 0
+              ? "You need to pay"
+              : "You're settled up"}
+        </Text>
+        <Text style={styles.amount}>
+          {formatLedgerMoney(
+            Math.abs(projection.balanceMinor),
+            projection.currency,
+            projection.scale,
+          )}
+        </Text>
+        <Text style={styles.meta}>
+          Last confirmed{" "}
+          {formatLedgerMoney(
+            Math.abs(projection.confirmedSettlement.balanceMinor),
+            projection.currency,
+            projection.scale,
+          )}{" "}
+          · Change{" "}
+          {projection.balanceMinor - projection.confirmedSettlement.balanceMinor >= 0
+            ? "+"
+            : ""}
+          {formatLedgerMoney(
+            projection.balanceMinor - projection.confirmedSettlement.balanceMinor,
+            projection.currency,
+            projection.scale,
+          )}
+        </Text>
+        <Text style={styles.meta}>
+          Paid for group{" "}
+          {formatLedgerMoney(projection.paidMinor, projection.currency, projection.scale)}{" "}
+          · Your share{" "}
+          {formatLedgerMoney(
+            projection.shareMinor,
+            projection.currency,
+            projection.scale,
+          )}
+        </Text>
+        {!settlement.confirmationVerified ? (
+          <Text style={styles.meta}>
+            Showing saved changes · confirmation needs a fresh check
+          </Text>
+        ) : null}
       </View>
 
       <View style={styles.section}>
         <Text accessibilityRole="header" style={styles.sectionTitle}>
           Changes since last confirmation
         </Text>
-        {changes.map((item) => (
-          <Pressable
-            accessibilityRole="button"
-            key={item.expenseId}
-            onPress={() => router.push(`/expenses/expense/${item.expenseId}`)}
-            style={styles.row}
-          >
-            <View style={styles.grow}>
-              <Text style={styles.rowTitle}>{titleFor(item.expenseId)}</Text>
-              <Text style={styles.meta}>
-                {item.change === "NEW"
-                  ? "Added"
-                  : item.change === "DELETED"
-                    ? "Removed"
-                    : "Changed"}
-              </Text>
-            </View>
-            <Text style={styles.link}>View ›</Text>
-          </Pressable>
-        ))}
-        {changesLoading ? (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator />
-            <Text style={styles.meta}>Loading changes…</Text>
-          </View>
-        ) : !changes.length && !settlement.message ? (
+        {projection.confirmationDiff.map((item) => {
+          const blocker = blockers.find((value) => value.expenseId === item.expenseId);
+          const identity = identityFor(item.expenseId);
+          const localId = identity.localId;
+          const dateRequired =
+            blocker?.reason === "RATE_REQUIRED" &&
+            expenses.some(
+              (expense) =>
+                (expense.id === localId || expense.serverId === item.expenseId) &&
+                expense.economicDate === null,
+            );
+          return (
+            <Pressable
+              accessibilityRole={localId ? "button" : undefined}
+              key={item.expenseId}
+              onPress={
+                localId
+                  ? () =>
+                      blocker?.reason === "RATE_REQUIRED"
+                        ? openRateReview(
+                            item.expenseId,
+                            localId,
+                            item.change === "REMOVED",
+                          )
+                        : router.push(`/expenses/expense/${localId}`)
+                  : undefined
+              }
+              style={styles.row}
+            >
+              <View style={styles.grow}>
+                <Text style={styles.rowTitle}>{identity.title}</Text>
+                <Text style={styles.meta}>
+                  {item.change === "ADDED"
+                    ? "Added"
+                    : item.change === "REMOVED"
+                      ? "Removed from settlement"
+                      : "Changed"}
+                </Text>
+                {blocker?.reason === "RATE_REQUIRED" ? (
+                  <Text style={styles.warning}>
+                    {dateRequired
+                      ? "Transaction date required"
+                      : "Exchange rate required"}
+                  </Text>
+                ) : blocker?.reason === "OPEN_CONFLICT" ? (
+                  <Text style={styles.warning}>Changes need review</Text>
+                ) : null}
+              </View>
+              {localId ? (
+                <Text style={styles.link}>
+                  {blocker?.reason === "RATE_REQUIRED" ? "Review" : "View"} ›
+                </Text>
+              ) : null}
+            </Pressable>
+          );
+        })}
+        {!projection.confirmationDiff.length ? (
           <Text style={styles.meta}>No financial changes are visible.</Text>
         ) : null}
       </View>
@@ -164,13 +227,14 @@ export function SettlementUpdateScreen() {
       {settlement.isOrganizer ? (
         <View style={styles.section}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Confirm updated amounts
+            Confirm settlement update
           </Text>
           <Text style={styles.meta}>
             This creates a new immutable version under the existing Settlement.
           </Text>
           <TextInput
             accessibilityLabel="Reason for confirming Settlement changes"
+            editable={!confirming}
             maxLength={2000}
             multiline
             onChangeText={setReason}
@@ -179,12 +243,48 @@ export function SettlementUpdateScreen() {
             value={reason}
           />
           {!reason.trim() ? <Text style={styles.meta}>Reason is required.</Text> : null}
-          {settlement.adjustmentPreview?.state === "PREVIEW_BLOCKED" ? (
-            <Text style={styles.warning}>
-              Resolve {settlement.adjustmentPreview.blockers.length} blocker
-              {settlement.adjustmentPreview.blockers.length === 1 ? "" : "s"} before
-              confirming.
-            </Text>
+          {blockers.map((blocker) => {
+            const identity = identityFor(blocker.expenseId);
+            const localId = identity.localId;
+            const dateRequired = expenses.some(
+              (expense) =>
+                (expense.id === localId || expense.serverId === blocker.expenseId) &&
+                expense.economicDate === null,
+            );
+            const removed = projection.confirmationDiff.some(
+              (item) => item.expenseId === blocker.expenseId && item.change === "REMOVED",
+            );
+            return (
+              <Pressable
+                accessibilityRole={
+                  localId && blocker.reason === "RATE_REQUIRED" ? "button" : undefined
+                }
+                key={blocker.expenseId}
+                onPress={
+                  localId && blocker.reason === "RATE_REQUIRED"
+                    ? () => openRateReview(blocker.expenseId, localId, removed)
+                    : undefined
+                }
+                style={styles.row}
+              >
+                <View style={styles.grow}>
+                  <Text style={styles.rowTitle}>{identity.title}</Text>
+                  <Text style={styles.warning}>
+                    {blocker.reason === "RATE_REQUIRED"
+                      ? dateRequired
+                        ? "Transaction date required"
+                        : "Exchange rate required"
+                      : "Changes need review"}
+                  </Text>
+                </View>
+                {localId && blocker.reason === "RATE_REQUIRED" ? (
+                  <Text style={styles.link}>Review ›</Text>
+                ) : null}
+              </Pressable>
+            );
+          })}
+          {settlement.confirmationError ? (
+            <Text style={styles.warning}>{settlement.confirmationError}</Text>
           ) : settlement.hasPendingFinancialOperations ? (
             <Text style={styles.warning}>
               Sync pending financial changes before confirming.
@@ -192,14 +292,25 @@ export function SettlementUpdateScreen() {
           ) : settlement.message ? (
             <Text style={styles.warning}>{settlement.message}</Text>
           ) : null}
+          {!ready ? (
+            <Pressable accessibilityRole="button" onPress={settlement.refresh}>
+              <Text style={styles.link}>Check for latest changes ›</Text>
+            </Pressable>
+          ) : null}
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: !ready || !reason.trim() }}
-            disabled={!ready || !reason.trim() || settlement.busy}
+            accessibilityState={{
+              busy: confirming,
+              disabled: !ready || !reason.trim() || confirming,
+            }}
+            disabled={!ready || !reason.trim() || confirming || settlement.busy}
             onPress={() => void confirm()}
             style={[styles.primary, (!ready || !reason.trim()) && styles.disabled]}
           >
-            <Text style={styles.primaryText}>Confirm updated amounts</Text>
+            {confirming ? <ActivityIndicator color="#FFFFFF" /> : null}
+            <Text style={styles.primaryText}>
+              {confirming ? "Confirming settlement…" : "Confirm settlement update"}
+            </Text>
           </Pressable>
         </View>
       ) : (
@@ -236,6 +347,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#0F766E",
     borderRadius: 12,
+    flexDirection: "row",
+    gap: 8,
     minHeight: 50,
     justifyContent: "center",
     paddingHorizontal: 16,

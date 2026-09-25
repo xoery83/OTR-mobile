@@ -23,6 +23,15 @@ function createGateway(options: { authorized?: boolean } = {}) {
   const itineraryItems = new Map<string, StoredCreate>();
   const personalPayments = new Map<string, PersonalSettlementPaymentDto>();
   const gateway: DevBackendGateway = {
+    completeLedgerEconomicDate: vi.fn(async () => {
+      throw new Error("Date completion is not configured for this test.");
+    }),
+    inspectLedgerEconomicDate: vi.fn(async () => ({
+      disposition: "USER_ACTION_REQUIRED" as const,
+      economicDate: null,
+      source: null,
+      expenseRevision: 1,
+    })),
     validateAccessToken: vi.fn(async (token) =>
       token === "valid-token" ? { id: userId } : null,
     ),
@@ -188,6 +197,7 @@ function createGateway(options: { authorized?: boolean } = {}) {
     previewSettlementAdjustment: vi.fn(async (_userId, _tripId, rootSettlementId) => ({
       state: "PREVIEW_UNCHANGED" as const,
       rootSettlementId,
+      throughTimestamp: "2026-09-12T00:00:00.000Z",
       expectedHeadId: null,
       priorInputDigest: "a".repeat(64),
       inputDigest: "a".repeat(64),
@@ -931,7 +941,7 @@ describe("OTR Dev Backend", () => {
       new Request(`${url}/preview`, {
         method: "POST",
         headers,
-        body: "{}",
+        body: JSON.stringify({ throughTimestamp: "2026-09-25T00:00:00.000Z" }),
       }),
     );
     const missingReason = await handle(
@@ -953,6 +963,7 @@ describe("OTR Dev Backend", () => {
         body: JSON.stringify({
           expectedHeadId: null,
           inputDigest: "a".repeat(64),
+          throughTimestamp: "2026-09-25T00:00:00.000Z",
           reason: "Corrected expense",
           allowZeroTransfer: false,
         }),
@@ -964,10 +975,18 @@ describe("OTR Dev Backend", () => {
       userId,
       tripId,
       rootId,
+      "2026-09-25T00:00:00.000Z",
     );
     expect(missingReason.status).toBe(400);
     expect(finalized.status).toBe(201);
     expect(gateway.finalizeSettlementAdjustment).toHaveBeenCalledOnce();
+    expect(gateway.finalizeSettlementAdjustment).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      rootId,
+      "adjustment-key",
+      expect.objectContaining({ throughTimestamp: "2026-09-25T00:00:00.000Z" }),
+    );
   });
 
   it("routes typed Paid and Received commands separately", async () => {
@@ -2162,5 +2181,96 @@ describe("OTR Dev Backend", () => {
     );
     expect(response.status).toBe(403);
     expect((await response.json()).error.code).toBe("TRIP_WRITE_FORBIDDEN");
+  });
+
+  it("inspects date evidence and accepts only an authenticated date-only command", async () => {
+    const { gateway } = createGateway();
+    const expenseId = "40000000-0000-4000-8000-000000000001";
+    const url = `https://api.dev/v2/trips/${tripId}/expenses/${expenseId}/economic-date`;
+    const handle = createDevBackendHandler({ gateway });
+    const read = await handle(
+      new Request(url, {
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(read.status).toBe(200);
+    expect(gateway.inspectLedgerEconomicDate).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+    );
+    gateway.completeLedgerEconomicDate = vi.fn(
+      async () =>
+        ({
+          serverId: expenseId,
+          revision: 4,
+          idempotentReplay: false,
+        }) as never,
+    );
+    const submit = (body: unknown, headers: Record<string, string> = {}) =>
+      handle(
+        new Request(url, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-token",
+            "Idempotency-Key": "date-command-1",
+            ...headers,
+          },
+          body: JSON.stringify(body),
+        }),
+      );
+    expect(
+      (
+        await submit({
+          baseRevision: 3,
+          source: "USER_CONFIRMED_V1",
+          economicDate: "2026-07-25",
+        })
+      ).status,
+    ).toBe(200);
+    expect(gateway.completeLedgerEconomicDate).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+      "date-command-1",
+      { baseRevision: 3, source: "USER_CONFIRMED_V1", economicDate: "2026-07-25" },
+    );
+    expect(
+      (
+        await submit({
+          baseRevision: 3,
+          source: "USER_CONFIRMED_V1",
+          economicDate: "2026-02-30",
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await submit({
+          baseRevision: 3,
+          source: "STAGE9_DATE_ONLY_V1",
+          economicDate: "2026-07-25",
+        })
+      ).status,
+    ).toBe(400);
+    const denied = createGateway({ authorized: false }).gateway;
+    expect(
+      (
+        await createDevBackendHandler({ gateway: denied })(
+          new Request(url, {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer valid-token",
+              "Idempotency-Key": "date-command-2",
+            },
+            body: JSON.stringify({
+              baseRevision: 3,
+              source: "USER_CONFIRMED_V1",
+              economicDate: "2026-07-25",
+            }),
+          }),
+        )
+      ).status,
+    ).toBe(403);
   });
 });

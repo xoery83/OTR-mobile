@@ -1,4 +1,7 @@
 import { localExpensesChangesFromFinal } from "./settlementSections";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { balancesFromSettlementInputs } from "@/domain/ledger/settlement";
+import type { Stage7Preview } from "@/hooks/useStage7Settlement";
 
 type FinalizedSettlement = Parameters<typeof localExpensesChangesFromFinal>[1];
 type LocalExpense = Parameters<typeof localExpensesChangesFromFinal>[0][number];
@@ -74,6 +77,202 @@ export type SettlementSummaryProjection = {
   }[];
 };
 
+type SharedProjection = {
+  accountGeneration: number;
+  journeyId: string;
+  actorMemberId: string;
+  isOrganizer: boolean;
+  projection: SettlementSummaryProjection;
+  preview: Stage7Preview | null;
+  titles: Record<string, { title: string; localId: string }>;
+};
+
+let sharedProjection: SharedProjection | null = null;
+const confirmedHeads = new Map<string, { accountGeneration: number; headId: string }>();
+
+export function markSettlementConfirmedHead(journeyId: string, headId: string) {
+  confirmedHeads.set(journeyId, { accountGeneration: getAccountGeneration(), headId });
+  clearSharedSettlementProjection(journeyId);
+}
+
+export function isSettlementConfirmationRefreshing(
+  journeyId: string,
+  projection: SettlementSummaryProjection | null,
+) {
+  const pending = confirmedHeads.get(journeyId);
+  return (
+    pending?.accountGeneration === getAccountGeneration() &&
+    projection?.confirmedSettlement?.id !== pending.headId
+  );
+}
+
+export function settlementProjectionAfterConfirmation(
+  journeyId: string,
+  projection: SettlementSummaryProjection | null,
+) {
+  if (!projection) return null;
+  const pending = confirmedHeads.get(journeyId);
+  if (!pending || pending.accountGeneration !== getAccountGeneration()) return projection;
+  if (projection.confirmedSettlement?.id === pending.headId) return projection;
+  return {
+    ...projection,
+    freshness: "SAVED" as const,
+    confirmedSettlement: null,
+    confirmationDiff: [],
+  };
+}
+
+export function readSharedSettlementProjection(journeyId: string) {
+  return sharedProjection?.accountGeneration === getAccountGeneration() &&
+    sharedProjection.journeyId === journeyId
+    ? sharedProjection
+    : null;
+}
+
+export function readSavedSettlementProjection(journeyId: string) {
+  const cached = readSharedSettlementProjection(journeyId)?.projection;
+  return cached
+    ? settlementProjectionAfterConfirmation(journeyId, {
+        ...cached,
+        freshness: cached.freshness === "CURRENT" ? "SAVED" : cached.freshness,
+      })
+    : null;
+}
+
+export function clearSharedSettlementProjection(journeyId: string) {
+  if (readSharedSettlementProjection(journeyId)) sharedProjection = null;
+}
+
+export function shouldPublishSavedSettlementProjection(
+  existing: SettlementSummaryProjection | null | undefined,
+  saved: SettlementSummaryProjection | null,
+  canonicalFingerprint: string | null,
+) {
+  if (!existing) return true;
+  if (existing.freshness === "CURRENT")
+    return (
+      canonicalFingerprint !== existing.sourceFingerprint ||
+      existing.confirmedSettlement?.id !== saved?.confirmedSettlement?.id
+    );
+  return (
+    existing.projectionId !== saved?.projectionId ||
+    existing.freshness !== saved?.freshness ||
+    existing.confirmedSettlement?.id !== saved?.confirmedSettlement?.id
+  );
+}
+
+export function rememberSettlementProjection(
+  journeyId: string,
+  actorMemberId: string,
+  isOrganizer: boolean,
+  projection: SettlementSummaryProjection,
+  preview: Stage7Preview | null,
+) {
+  const previous = readSharedSettlementProjection(journeyId);
+  sharedProjection = {
+    accountGeneration: getAccountGeneration(),
+    journeyId,
+    actorMemberId,
+    isOrganizer,
+    projection: settlementProjectionAfterConfirmation(journeyId, projection)!,
+    preview,
+    titles: previous?.titles ?? {},
+  };
+}
+
+export function rememberSettlementExpenseTitles(
+  journeyId: string,
+  expenses: { id: string; serverId: string | null; title: string }[],
+) {
+  const shared = readSharedSettlementProjection(journeyId);
+  if (!shared) return;
+  shared.titles = Object.fromEntries(
+    expenses.flatMap((expense) =>
+      [expense.id, expense.serverId]
+        .filter((id): id is string => Boolean(id))
+        .map((id) => [id, { title: expense.title, localId: expense.id }]),
+    ),
+  );
+}
+
+export function adjustmentMatchesCurrentProjection(
+  preview: Pick<Stage7Preview, "confirmedSettlement" | "confirmationDiff" | "blockers">,
+  adjustment: {
+    expectedHeadId: string | null;
+    rootSettlementId: string;
+    changedExpenses: { expenseId: string; change: "NEW" | "CHANGED" | "DELETED" }[];
+    blockers: { expenseId: string; reason: string }[];
+  },
+) {
+  const changes = (items: { expenseId: string; change: string }[]) =>
+    items
+      .map((item) => `${item.expenseId}:${item.change}`)
+      .sort()
+      .join("|");
+  const blockers = (items: { expenseId: string; reason: string }[]) =>
+    items
+      .map((item) => `${item.expenseId}:${item.reason}`)
+      .sort()
+      .join("|");
+  return (
+    (adjustment.expectedHeadId ?? adjustment.rootSettlementId) ===
+      preview.confirmedSettlement?.id &&
+    changes(
+      adjustment.changedExpenses.map((item) => ({
+        ...item,
+        change:
+          item.change === "NEW"
+            ? "ADDED"
+            : item.change === "DELETED"
+              ? "REMOVED"
+              : "CHANGED",
+      })),
+    ) === changes(preview.confirmationDiff) &&
+    blockers(adjustment.blockers) === blockers(preview.blockers)
+  );
+}
+
+export function countSettlementChanges(
+  changes: SettlementSummaryProjection["confirmationDiff"],
+) {
+  const counts = { ADDED: 0, CHANGED: 0, REMOVED: 0 };
+  for (const item of changes) counts[item.change] += 1;
+  return counts;
+}
+
+export function settlementReviewBlockers(
+  changes: SettlementSummaryProjection["confirmationDiff"],
+  expenses: { id: string; serverId: string | null; status: string }[],
+  authoritative: Stage7Preview["blockers"] = [],
+) {
+  const blockers = [...authoritative];
+  for (const change of changes) {
+    if (
+      change.change === "REMOVED" &&
+      expenses.some(
+        (expense) =>
+          (expense.id === change.expenseId || expense.serverId === change.expenseId) &&
+          expense.status === "RATE_REQUIRED",
+      ) &&
+      !blockers.some((blocker) => blocker.expenseId === change.expenseId)
+    )
+      blockers.push({ expenseId: change.expenseId, reason: "RATE_REQUIRED" });
+  }
+  return blockers;
+}
+
+export function settlementExpenseIdentity(
+  id: string,
+  expenses: { id: string; serverId: string | null; title: string }[],
+  titles: SharedProjection["titles"] = {},
+) {
+  const expense = expenses.find((item) => item.id === id || item.serverId === id);
+  return {
+    title: expense?.title || titles[id]?.title || "Expense",
+    localId: expense?.id ?? titles[id]?.localId,
+  };
+}
+
 export function currentSettlementSummaryProjection(
   preview: CurrentPreview,
   actorMemberId: string,
@@ -116,7 +315,17 @@ export function savedSettlementSummaryProjection(
 ): SettlementSummaryProjection | null {
   const balance = preview.balances.find((item) => item.memberId === actorMemberId);
   if (!balance) return null;
-  const confirmedBalance = confirmed?.balances.find(
+  const confirmedBalances = confirmed?.balances.length
+    ? confirmed.balances
+    : confirmed
+      ? balancesFromSettlementInputs(
+          confirmed.inputs,
+          [],
+          confirmed.settlementCurrency,
+          confirmed.settlementScale,
+        )
+      : [];
+  const confirmedBalance = confirmedBalances.find(
     (item) => item.memberId === actorMemberId,
   );
   const confirmationDiff = confirmed

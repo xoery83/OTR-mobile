@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNetworkState } from "expo-network";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { recoverMissingSettlementEconomicDates } from "@/data/health/defaultDataHealthCoordinator";
 
 import type {
   FinalizedSettlementDto,
@@ -36,8 +38,15 @@ import { unpublishedEstimateMessage } from "@/features/ledger/estimatedSettlemen
 import { createLatestRequest } from "@/features/ledger/latestRequest";
 import { settlementCacheMessage } from "@/features/ledger/settlementSections";
 import {
+  adjustmentMatchesCurrentProjection,
   currentSettlementSummaryProjection,
+  markSettlementConfirmedHead,
+  readSavedSettlementProjection,
+  readSharedSettlementProjection,
+  rememberSettlementProjection,
   savedSettlementSummaryProjection,
+  settlementProjectionAfterConfirmation,
+  shouldPublishSavedSettlementProjection,
   type SettlementSummaryProjection,
 } from "@/features/ledger/settlementSummaryProjection";
 
@@ -59,18 +68,32 @@ async function verifyCurrentSettlementSource(journeyId: string, preview: Stage7P
   return local;
 }
 
-export function useStage7Settlement(journeyId?: string) {
+export function useStage7Settlement(journeyId?: string, reviewMode = false) {
   const network = useNetworkState();
   const online = network.isConnected !== false && network.isInternetReachable !== false;
   const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(null);
   const activeJourneyId = journeyId ?? selectedJourneyId ?? undefined;
+  const [accountGeneration] = useState(getAccountGeneration);
+  const incoming = journeyId ? readSharedSettlementProjection(journeyId) : null;
+  const savedIncoming =
+    !reviewMode && journeyId ? readSavedSettlementProjection(journeyId) : null;
   const activeJourneyRef = useRef(activeJourneyId);
   const [projectionRequest] = useState(createLatestRequest);
-  const [loadedJourneyId, setLoadedJourneyId] = useState<string | null>(null);
+  const [loadedJourneyId, setLoadedJourneyId] = useState<string | null>(
+    incoming?.journeyId ?? null,
+  );
+  const loadedJourneyRef = useRef(incoming?.journeyId ?? null);
+  const [reloadToken, setReloadToken] = useState(0);
+  const refresh = useCallback(() => setReloadToken((value) => value + 1), []);
+  const [confirmationVerified, setConfirmationVerified] = useState(false);
   const [updating, setUpdating] = useState(Boolean(journeyId));
-  const [preview, setPreview] = useState<Stage7Preview | null>(null);
+  const [preview, setPreview] = useState<Stage7Preview | null>(
+    reviewMode ? (incoming?.preview ?? null) : null,
+  );
   const [summaryProjection, setSummaryProjection] =
-    useState<SettlementSummaryProjection | null>(null);
+    useState<SettlementSummaryProjection | null>(
+      reviewMode ? (incoming?.projection ?? null) : savedIncoming,
+    );
   const [displayPreview, setDisplayPreview] = useState<DisplayPreview | null>(null);
   const [unavailableExpenseIds, setUnavailableExpenseIds] = useState<Set<string>>(
     new Set(),
@@ -86,8 +109,13 @@ export function useStage7Settlement(journeyId?: string) {
     useState<SettlementAdjustmentPreviewResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [actorMemberId, setActorMemberId] = useState<string | null>(null);
-  const [isOrganizer, setIsOrganizer] = useState(false);
+  const [confirmationError, setConfirmationError] = useState<string | null>(null);
+  const [actorMemberId, setActorMemberId] = useState<string | null>(
+    reviewMode ? (incoming?.actorMemberId ?? null) : null,
+  );
+  const [isOrganizer, setIsOrganizer] = useState(
+    reviewMode && (incoming?.isOrganizer ?? false),
+  );
   const [exports, setExports] = useState<
     (SettlementExportManifest & { isCurrent: boolean })[]
   >([]);
@@ -132,6 +160,7 @@ export function useStage7Settlement(journeyId?: string) {
     void Promise.resolve().then(async () => {
       if (!active) return;
       setUpdating(Boolean(activeJourneyId));
+      setConfirmationVerified(false);
       setMessage(null);
       if (!activeJourneyId) {
         setLoadedJourneyId(null);
@@ -144,7 +173,7 @@ export function useStage7Settlement(journeyId?: string) {
         const [rows, items, memberId, organizer, pendingFinancialOperations] =
           await Promise.all([
             repository.listFinalized(activeJourneyId),
-            listSettlementExports(activeJourneyId),
+            reviewMode ? Promise.resolve([]) : listSettlementExports(activeJourneyId),
             repository.getActorMemberId(activeJourneyId),
             repository.isOrganizer(activeJourneyId),
             repository.hasPendingFinancialOperations(activeJourneyId),
@@ -153,10 +182,12 @@ export function useStage7Settlement(journeyId?: string) {
       };
       try {
         const cached = await load();
-        if (!active) return;
-        setPreview(null);
-        setSummaryProjection(null);
-        setDisplayPreview(null);
+        if (!active || accountGeneration !== getAccountGeneration()) return;
+        if (loadedJourneyRef.current !== activeJourneyId) {
+          setPreview(null);
+          setSummaryProjection(null);
+          setDisplayPreview(null);
+        }
         setUnavailableExpenseIds(new Set());
         setPendingPublicationExpenseIds(new Set());
         setAdjustmentPreview(null);
@@ -166,49 +197,62 @@ export function useStage7Settlement(journeyId?: string) {
         setIsOrganizer(cached.organizer);
         setHasPendingFinancialOperations(cached.pendingFinancialOperations);
         setLoadedJourneyId(activeJourneyId);
+        loadedJourneyRef.current = activeJourneyId;
         const root =
           cached.rows.find((row) => row.kind !== "ADJUSTMENT") ?? cached.rows[0];
-        let adjustmentLoaded = false;
+        const confirmed =
+          cached.rows.find((row) => row.rootSettlementId === root?.id) ?? root;
         try {
           const display = await loadEstimatedSettlement(activeJourneyId);
-          if (active && projectionRequest.isCurrent(projectionGeneration)) {
+          if (
+            active &&
+            accountGeneration === getAccountGeneration() &&
+            projectionRequest.isCurrent(projectionGeneration)
+          ) {
             setDisplayPreview(display);
-            setSummaryProjection(
-              cached.memberId
-                ? savedSettlementSummaryProjection(
-                    display,
-                    root ?? null,
-                    cached.memberId,
-                    cached.pendingFinancialOperations,
-                  )
-                : null,
-            );
+            const saved = cached.memberId
+              ? savedSettlementSummaryProjection(
+                  display,
+                  confirmed ?? null,
+                  cached.memberId,
+                  cached.pendingFinancialOperations,
+                )
+              : null;
+            const previous = readSharedSettlementProjection(activeJourneyId)?.projection;
+            if (
+              shouldPublishSavedSettlementProjection(
+                previous,
+                saved,
+                display.canonicalSourceFingerprint,
+              )
+            ) {
+              if (saved && cached.memberId)
+                rememberSettlementProjection(
+                  activeJourneyId,
+                  cached.memberId,
+                  cached.organizer,
+                  saved,
+                  null,
+                );
+              setSummaryProjection(saved);
+            }
           }
         } catch {
           // A newly opened Journey may not exist locally until bootstrap completes below.
         }
-        if (cached.organizer && root && !cached.pendingFinancialOperations) {
-          try {
-            const adjustment = await previewSettlementAdjustment(
-              activeJourneyId,
-              root.id,
-            );
-            adjustmentLoaded = true;
-            if (active) setAdjustmentPreview(adjustment);
-          } catch {
-            // Retry after the normal refresh below.
-          }
-        }
         if (cached.organizer) {
+          await recoverMissingSettlementEconomicDates(activeJourneyId).catch(
+            () => undefined,
+          );
           const rates = await preflightSettlementFx(activeJourneyId, true);
-          if (active) {
+          if (active && accountGeneration === getAccountGeneration()) {
             setUnavailableExpenseIds(rates.unavailable);
             setPendingPublicationExpenseIds(rates.pendingPublication);
           }
         }
         await refreshJourneyLedger(activeJourneyId);
         const refreshed = await load();
-        if (!active) return;
+        if (!active || accountGeneration !== getAccountGeneration()) return;
         applyFinalizedRows(refreshed.rows);
         setExports(refreshed.items);
         setActorMemberId(refreshed.memberId);
@@ -220,17 +264,40 @@ export function useStage7Settlement(journeyId?: string) {
           refreshed.rows.find((row) => row.kind !== "ADJUSTMENT") ??
           refreshed.rows[0] ??
           null;
-        if (projectionRequest.isCurrent(projectionGeneration))
-          setSummaryProjection(
-            refreshed.memberId
-              ? savedSettlementSummaryProjection(
-                  refreshedDisplay,
-                  refreshedRoot,
-                  refreshed.memberId,
-                  refreshed.pendingFinancialOperations,
-                )
-              : null,
-          );
+        const refreshedConfirmed =
+          refreshed.rows.find((row) => row.rootSettlementId === refreshedRoot?.id) ??
+          refreshedRoot;
+        if (
+          accountGeneration === getAccountGeneration() &&
+          projectionRequest.isCurrent(projectionGeneration)
+        ) {
+          const saved = refreshed.memberId
+            ? savedSettlementSummaryProjection(
+                refreshedDisplay,
+                refreshedConfirmed,
+                refreshed.memberId,
+                refreshed.pendingFinancialOperations,
+              )
+            : null;
+          const previous = readSharedSettlementProjection(activeJourneyId)?.projection;
+          if (
+            shouldPublishSavedSettlementProjection(
+              previous,
+              saved,
+              refreshedDisplay.canonicalSourceFingerprint,
+            )
+          ) {
+            if (saved && refreshed.memberId)
+              rememberSettlementProjection(
+                activeJourneyId,
+                refreshed.memberId,
+                refreshed.organizer,
+                saved,
+                null,
+              );
+            setSummaryProjection(saved);
+          }
+        }
         try {
           const current = await previewSettlement(
             activeJourneyId,
@@ -240,27 +307,74 @@ export function useStage7Settlement(journeyId?: string) {
             activeJourneyId,
             current,
           );
-          setDisplayPreview(localSource);
-          if (active && projectionRequest.isCurrent(projectionGeneration)) {
+          if (
+            active &&
+            accountGeneration === getAccountGeneration() &&
+            projectionRequest.isCurrent(projectionGeneration)
+          ) {
+            setDisplayPreview(localSource);
             setPreview(current);
-            setSummaryProjection(
-              refreshed.memberId
-                ? currentSettlementSummaryProjection(current, refreshed.memberId)
-                : null,
-            );
+            const next = refreshed.memberId
+              ? currentSettlementSummaryProjection(current, refreshed.memberId)
+              : null;
+            if (next && refreshed.memberId) {
+              const previous = readSharedSettlementProjection(activeJourneyId);
+              rememberSettlementProjection(
+                activeJourneyId,
+                refreshed.memberId,
+                refreshed.organizer,
+                next,
+                current,
+              );
+              setSummaryProjection((existing) =>
+                existing?.projectionId === next.projectionId &&
+                existing.confirmedSettlement?.id === next.confirmedSettlement?.id &&
+                existing.freshness === next.freshness
+                  ? existing
+                  : next,
+              );
+              if (
+                reviewMode &&
+                previous &&
+                (previous.projection.projectionId !== next.projectionId ||
+                  previous.projection.confirmedSettlement?.id !==
+                    next.confirmedSettlement?.id)
+              )
+                setMessage("Settlement updated with the latest changes.");
+            }
           }
-          if (refreshed.organizer && refreshedRoot && !adjustmentLoaded) {
+          if (refreshed.organizer && refreshedRoot) {
             const adjustment = await previewSettlementAdjustment(
               activeJourneyId,
               refreshedRoot.id,
+              current.sourceAsOf,
             );
-            if (active) setAdjustmentPreview(adjustment);
+            if (
+              active &&
+              accountGeneration === getAccountGeneration() &&
+              projectionRequest.isCurrent(projectionGeneration)
+            ) {
+              if (adjustmentMatchesCurrentProjection(current, adjustment)) {
+                setAdjustmentPreview(adjustment);
+                setConfirmationVerified(true);
+              } else {
+                setAdjustmentPreview(null);
+                setMessage(
+                  "Settlement changed while you were reviewing it. Please review the latest changes.",
+                );
+              }
+            }
           }
         } catch {
           // Coherent saved projection remains available offline or before queue drain.
+          if (active && reviewMode && accountGeneration === getAccountGeneration())
+            setMessage(
+              "Fresh confirmation is temporarily unavailable. Saved changes remain visible.",
+            );
         }
       } catch {
-        if (active) setMessage(settlementCacheMessage(online, "data"));
+        if (active && accountGeneration === getAccountGeneration())
+          setMessage(settlementCacheMessage(online, "data"));
       } finally {
         if (active) setUpdating(false);
       }
@@ -269,13 +383,24 @@ export function useStage7Settlement(journeyId?: string) {
       active = false;
       projectionRequest.cancel();
     };
-  }, [activeJourneyId, applyFinalizedRows, online, projectionRequest]);
+  }, [
+    activeJourneyId,
+    accountGeneration,
+    applyFinalizedRows,
+    online,
+    projectionRequest,
+    reloadToken,
+    reviewMode,
+  ]);
 
-  const matchesActiveJourney = loadedJourneyId === activeJourneyId;
+  const matchesActiveJourney =
+    loadedJourneyId === activeJourneyId && accountGeneration === getAccountGeneration();
 
   return {
     busy,
     updating,
+    confirmationVerified: matchesActiveJourney && confirmationVerified,
+    refresh,
     actorMemberId: matchesActiveJourney ? actorMemberId : null,
     isOrganizer: matchesActiveJourney && isOrganizer,
     exports: matchesActiveJourney ? exports : [],
@@ -283,8 +408,12 @@ export function useStage7Settlement(journeyId?: string) {
     lineage: matchesActiveJourney ? lineage : [],
     adjustmentPreview: matchesActiveJourney ? adjustmentPreview : null,
     message,
+    confirmationError,
     preview: matchesActiveJourney ? preview : null,
-    summaryProjection: matchesActiveJourney ? summaryProjection : null,
+    summaryProjection:
+      matchesActiveJourney && activeJourneyId
+        ? settlementProjectionAfterConfirmation(activeJourneyId, summaryProjection)
+        : null,
     displayPreview: matchesActiveJourney ? displayPreview : null,
     unavailableExpenseIds: matchesActiveJourney
       ? unavailableExpenseIds
@@ -335,6 +464,9 @@ export function useStage7Settlement(journeyId?: string) {
       setMessage(null);
       try {
         if (isOrganizer) {
+          await recoverMissingSettlementEconomicDates(operationJourneyId).catch(
+            () => undefined,
+          );
           const rates = await preflightSettlementFx(operationJourneyId, true);
           if (operationJourneyId === activeJourneyRef.current) {
             setUnavailableExpenseIds(rates.unavailable);
@@ -443,7 +575,11 @@ export function useStage7Settlement(journeyId?: string) {
       setBusy(true);
       setMessage(null);
       try {
-        const next = await previewSettlementAdjustment(operationJourneyId, finalized.id);
+        const next = await previewSettlementAdjustment(
+          operationJourneyId,
+          finalized.id,
+          preview?.sourceAsOf,
+        );
         if (operationJourneyId === activeJourneyRef.current) setAdjustmentPreview(next);
       } catch (error) {
         setAdjustmentPreview(null);
@@ -457,28 +593,76 @@ export function useStage7Settlement(journeyId?: string) {
       const operationJourneyId = activeJourneyId;
       setBusy(true);
       setMessage(null);
+      setConfirmationError(null);
       try {
+        const current = await previewSettlement(
+          operationJourneyId,
+          ready.throughTimestamp,
+        );
+        await verifyCurrentSettlementSource(operationJourneyId, current);
+        const latest = await previewSettlementAdjustment(
+          operationJourneyId,
+          finalized.id,
+          ready.throughTimestamp,
+        );
+        if (
+          !summaryProjection ||
+          current.sourceFingerprint !== summaryProjection.sourceFingerprint ||
+          latest.state !== "PREVIEW_READY" ||
+          latest.throughTimestamp !== ready.throughTimestamp ||
+          latest.expectedHeadId !== ready.expectedHeadId ||
+          latest.inputDigest !== ready.inputDigest ||
+          !adjustmentMatchesCurrentProjection(current, latest)
+        ) {
+          setConfirmationVerified(false);
+          const error =
+            "Settlement changed while you were reviewing it. Please review the latest changes.";
+          setMessage(error);
+          setConfirmationError(error);
+          setReloadToken((value) => value + 1);
+          return false;
+        }
         await queueSettlementAdjustment(
           operationJourneyId,
           finalized.id,
-          ready.expectedHeadId,
-          ready.inputDigest,
+          latest.expectedHeadId,
+          latest.inputDigest,
+          latest.throughTimestamp,
           reason,
-          ready.zeroTransfer,
+          latest.zeroTransfer,
         );
-        await runLedgerSettlementPaymentSync();
-        await refreshJourneyLedger(operationJourneyId);
-        const rows = await (
-          await getDefaultLedgerSettlementRepository()
-        ).listFinalized(operationJourneyId);
+        await runLedgerSettlementPaymentSync("AUTHENTICATED_ONLINE", operationJourneyId);
+        const repository = await getDefaultLedgerSettlementRepository();
+        const rows = await repository.listFinalized(operationJourneyId);
         applyFinalizedRows(rows, operationJourneyId);
+        const knownIds = new Set([finalized.id, ...lineage.map((row) => row.id)]);
+        const confirmed = rows.find(
+          (row) => !knownIds.has(row.id) && row.rootSettlementId === finalized.id,
+        );
+        if (!confirmed) {
+          setConfirmationVerified(false);
+          const error = (await repository.hasPendingFinancialOperations(
+            operationJourneyId,
+          ))
+            ? "Settlement update is saved and waiting to sync. Confirmation is unavailable until it completes."
+            : "Settlement changed while you were reviewing it. Please review the latest changes.";
+          setMessage(error);
+          setConfirmationError(error);
+          setReloadToken((value) => value + 1);
+          return false;
+        }
+        markSettlementConfirmedHead(operationJourneyId, confirmed.id);
         if (operationJourneyId === activeJourneyRef.current) {
           setAdjustmentPreview(null);
-          setMessage("Settlement update saved; offline work will sync later.");
+          setMessage("Settlement update confirmed.");
         }
         return true;
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Adjustment failed.");
+        setConfirmationVerified(false);
+        const safeMessage = error instanceof Error ? error.message : "Adjustment failed.";
+        setMessage(safeMessage);
+        setConfirmationError(safeMessage);
+        setReloadToken((value) => value + 1);
         return false;
       } finally {
         setBusy(false);

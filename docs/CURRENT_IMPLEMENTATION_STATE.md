@@ -2,6 +2,66 @@
 
 Date: 2026-09-25
 
+## Settlement Summary re-entry polish
+
+- Switching from Settlement to Spending and back now immediately reuses the
+  account/Journey-scoped balance projection as saved data, while fresh source
+  verification continues in the background. A reused `CURRENT` projection is
+  not presented as current until a new matching Preview arrives; Review still
+  receives its original coherent preview separately.
+- The physical Release shows version #2 and `¥8,549,363.27` immediately after
+  the switch, without `Preparing your balance`. Full Vitest (111 files / 589
+  tests), TypeScript, ESLint, Prettier and signed physical build pass. The same
+  Release also builds, installs and launches on iPhone 17 Pro Simulator. Its
+  same-Journey cache still shows version #1 because Hosted Dev Supabase Auth
+  currently times out on `/auth/v1/health` and token validation; Dev API
+  unauthenticated requests return promptly, but authenticated refreshes time
+  out. Simulator version #2 verification remains blocked by that external
+  service condition; no local data was manually changed. No Backend,
+  migration, Settlement semantics or Production change.
+
+## Settlement confirmation latency polish — physical saved-state check passed
+
+- Review now locks the confirm action synchronously on tap, shows a spinner and
+  `Confirming settlement…`, retains the reason, and restores interaction plus the
+  user-safe failure message if confirmation does not succeed.
+- Only after a new finalized head is observed locally does the Journey-scoped
+  projection cache invalidate the old confirmation diff. Summary reconstructs
+  the latest local Adjustment balance from its frozen inputs, so a cold start
+  can show saved version #2 immediately even while fresh Preview is pending.
+  If the new head is not locally complete, it shows `Refreshing confirmed
+  Settlement…` instead of the old Changes card.
+- No Settlement semantics, Backend contract, SQL migration, or confirmation
+  precondition changed. Full Vitest (111 files / 588 tests), TypeScript, ESLint,
+  Backend build, `git diff --check`, and signed physical Release build pass. On
+  the installed physical Release, a cold-start Journey entry immediately showed
+  saved Last confirmed version #2 (`¥8,549,363.27`) and no old Changes card,
+  before fresh server calculation completed. No #3, Git commit, or Production
+  access.
+
+## Settlement update source-range repair — Hosted Dev version #2 confirmed
+
+- ADR 0043 and migration `20260925000300` make Review Preview, Adjustment
+  Preview, and Confirm use the same current canonical source cutoff. The Backend
+  rechecks raw source JSONB under the lineage lock; preview-only rate-string
+  normalization no longer causes a false stale-input rejection.
+- On the signed physical Dev fixture, Review showed Bakery Changed, eight later
+  Expenses Added, and zero blockers. Confirm with reason `V2` returned 201 and
+  created immutable Settlement version #2 (`5260457f-8550-449c-8d7b-7e80fcc5447a`).
+  Its stored digest exactly matches the reviewed current source; current Backend
+  Preview reports zero changes and blockers. The user's device eventually removed
+  the Changes list after returning to Summary, but the delayed/silent transition
+  remains a UX issue outside this source-range repair.
+- The latest confirmed balance for an Adjustment is reconstructed from that
+  version's immutable inputs, so Backend Summary now reports version #2 and the
+  same `¥8,549,363.27` current/confirmed balance. Physical visual verification
+  of the updated Last confirmed card is still pending.
+- Root version #1, Bakery's frozen revision-1 input/valuation, and all four
+  existing payment rows retain their pre-confirm byte hashes. Validation passes
+  110 Vitest files / 584 tests, TypeScript, ESLint, Backend build, local pgTAP
+  24 files / 519 assertions, touched-file Prettier, and `git diff --check`.
+  No Git commit or Production access.
+
 ## My Ledger simplified portfolio slice implemented — Simulator visual check complete
 
 - UI polish places Spending / Settlements first, then display currency and the
@@ -29,6 +89,32 @@ Date: 2026-09-25
   unsigned Simulator build needed a temporary preview-only cached account ID
   because SecureStore requires a Keychain entitlement; that source patch was
   removed after bundling. No physical-device check was performed for this slice.
+
+## Revision-aware economic-date recovery — Hosted Dev and physical acceptance complete
+
+- ADR 0042, date-only Backend command/inspection, Data Health finding/recovery,
+  durable Mobile operation, date-confirmation screen and Settlement Review route
+  are implemented. Hosted Dev has migrations `20260925000100` and the forward
+  guard correction `20260925000200`; the matching Dev Backend bundle is healthy.
+- Bakery's normal physical UI confirmation saved `2026-07-25` at revision 4,
+  then the existing automatic scanner accepted revision 5 `REFERENCE_RATE`:
+  ISK 75 → CNY 4.04 using ECB/Frankfurter `0.05388` on July 24. The first
+  attempt exposed an ambiguous SQL variable in the initial guard; the
+  forward-only correction and normal retry resolved it, without a manual rate.
+  Physical Summary reached `CURRENT` and Review shows Bakery as Changed without
+  a date/rate blocker. No Settlement update was confirmed.
+- Settlement #1 remains `PARTIALLY_PAID`; its row, Bakery revision-1 input,
+  frozen valuation and four payments retain their pre-action SHA-256 values.
+  TypeScript, ESLint, Backend build, 110 Vitest files/583 tests, local 24-file
+  pgTAP/515 assertions, Release Simulator and signed physical Release pass.
+  No Git commit or Production access.
+
+## Settlement Changes UX and projection reuse implemented — awaiting acceptance
+
+- Summary now shows bounded ADDED/CHANGED/REMOVED counts and a coherent personal delta, without Expense ID fragments. Review receives the exact account/Journey-scoped Summary projection and known titles on navigation, then refreshes authoritatively in the background without clearing the displayed balance or diff.
+- Review labels the large amount as Current balance, shows paid/share and the complete named change list from that projection, distinguishes removal from deletion, and gives rate-required Expenses an action. Previously confirmed Expenses open the existing protected correction flow; unconfirmed Expenses open normal detail. A saved local rate-required Expense may explain a removed row while fresh verification is unavailable, but never enables Confirm. An `OPEN_CONFLICT` blocker is explained but has no safe conflict-resolution route yet.
+- Adjustment Preview remains only for head/digest/blocker and final confirmation preconditions. Its diff/head/blockers must match the canonical Preview before Confirm enables. Confirmation rechecks the current source and adjustment head/digest; a stale result refreshes in place, and a queued operation is not reported as a completed version.
+- No schema, Backend, financial formula, or Production change. Focused tests, full Vitest (107 files / 568 tests), TypeScript, ESLint, and Backend build pass. Release Simulator build/install/launch and signed physical Release build/install/launch pass. On the physical Dev Journey, Summary and Review immediately show the same saved balance (`¥8,549,360.58`) and named changes (8 added, 1 removed, `+¥5.17`); Bakery's missing-rate row opens the existing confirmed-Expense correction form with Bakery selected, and Confirm stays disabled. Physical fresh `CURRENT` verification, successful Confirm, and stale-write rejection were not exercised on this blocked fixture. `OPEN_CONFLICT` still lacks a safe resolution destination.
 
 ## Coherent Settlement source convergence implemented — awaiting acceptance
 

@@ -60,12 +60,17 @@ export async function finalizeSettlement(
 export async function previewSettlementAdjustment(
   journeyId: string,
   rootSettlementId: string,
+  throughTimestamp?: string,
 ) {
   const repository = await getDefaultLedgerSettlementRepository();
   if (await repository.hasPendingFinancialOperations(journeyId)) {
     throw new Error("Sync pending Ledger changes before preparing Adjustment.");
   }
-  return createLedgerSettlementTransport().previewAdjustment(journeyId, rootSettlementId);
+  return createLedgerSettlementTransport().previewAdjustment(
+    journeyId,
+    rootSettlementId,
+    throughTimestamp,
+  );
 }
 
 export async function queueSettlementAdjustment(
@@ -73,6 +78,7 @@ export async function queueSettlementAdjustment(
   rootSettlementId: string,
   expectedHeadId: string | null,
   inputDigest: string,
+  throughTimestamp: string,
   reason: string,
   allowZeroTransfer: boolean,
 ) {
@@ -84,6 +90,7 @@ export async function queueSettlementAdjustment(
   await repository.queueAdjustment(journeyId, rootSettlementId, {
     expectedHeadId,
     inputDigest,
+    throughTimestamp,
     reason,
     allowZeroTransfer,
   });

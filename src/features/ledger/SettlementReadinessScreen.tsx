@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
@@ -26,10 +26,14 @@ import {
   membersWithActorFirst,
   personalPaymentProgress,
   splitLabel,
-  summarizeSettlementChanges,
   type SettlementCategory,
   visibleSettlementTransfers,
 } from "./settlementSections";
+import {
+  countSettlementChanges,
+  isSettlementConfirmationRefreshing,
+  rememberSettlementExpenseTitles,
+} from "./settlementSummaryProjection";
 
 export const settlementSectionNames = ["Summary", "Paid", "Shares", "Payments"] as const;
 export type SettlementSectionName = (typeof settlementSectionNames)[number];
@@ -60,6 +64,14 @@ export function SettlementReadinessScreen({
   showNavigation?: boolean;
 }) {
   const settlement = useStage7Settlement(journeyId);
+  const refreshSettlement = settlement.refresh;
+  const focusedOnce = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (focusedOnce.current) refreshSettlement();
+      focusedOnce.current = true;
+    }, [refreshSettlement]),
+  );
   const review = usePersonalSettlementReview(settlement.journeyId ?? journeyId);
   const currentFinal = settlement.lineage.at(-1) ?? settlement.finalized;
   const projection = settlement.summaryProjection;
@@ -269,8 +281,10 @@ function SummarySection({
   review: ReturnType<typeof usePersonalSettlementReview>;
   settlement: ReturnType<typeof useStage7Settlement>;
 }) {
-  const statement = review.state?.statement;
   const projection = settlement.summaryProjection;
+  const confirmationRefreshing = settlement.journeyId
+    ? isSettlementConfirmationRefreshing(settlement.journeyId, projection)
+    : false;
   const [rateDetailsOpen, setRateDetailsOpen] = useState(false);
   const [reviewCoverageOpen, setReviewCoverageOpen] = useState(false);
   const hasConfirmed = Boolean(projection?.confirmedSettlement);
@@ -291,32 +305,18 @@ function SummarySection({
     .map(({ expense }) => ({
       id: expense.id,
       title: expense.title,
-      reason: settlement.pendingPublicationExpenseIds.has(expense.serverId ?? expense.id)
-        ? "Today's reference rate has not been published yet."
-        : settlement.unavailableExpenseIds.has(expense.serverId ?? expense.id)
-          ? "Automatic reference rate is unavailable. Review this Expense."
-          : "Using a recent reference rate. This amount may change.",
+      missingDate: !expense.economicDate,
+      reason: !expense.economicDate
+        ? "Confirm transaction date to find the trusted reference rate."
+        : settlement.pendingPublicationExpenseIds.has(expense.serverId ?? expense.id)
+          ? "Today's reference rate has not been published yet."
+          : settlement.unavailableExpenseIds.has(expense.serverId ?? expense.id)
+            ? "Automatic reference rate is unavailable. Review this Expense."
+            : "Using a recent reference rate. This amount may change.",
     }));
-  const changedExpenses = (projection?.confirmationDiff ?? []).map((item) => ({
-    expenseId: item.expenseId,
-    change:
-      item.change === "ADDED"
-        ? ("NEW" as const)
-        : item.change === "REMOVED"
-          ? ("DELETED" as const)
-          : ("CHANGED" as const),
-  }));
-  const summarizedChanges = summarizeSettlementChanges(changedExpenses);
-  const hasChanges = changedExpenses.length > 0;
+  const changeCounts = countSettlementChanges(projection?.confirmationDiff ?? []);
+  const hasChanges = (projection?.confirmationDiff.length ?? 0) > 0;
   const confirmedBalance = projection?.confirmedSettlement;
-  const changeTitle = (expenseId: string) =>
-    statement?.contributions.find((item) => item.expenseId === expenseId)
-      ?.expenseTitleSnapshot ??
-    review.state?.delta?.changedExpenses.find((item) => item.expenseId === expenseId)
-      ?.newContribution?.expenseTitleSnapshot ??
-    review.state?.delta?.changedExpenses.find((item) => item.expenseId === expenseId)
-      ?.oldContribution?.expenseTitleSnapshot ??
-    `Expense ${expenseId.slice(0, 8)}`;
   const confirm = () => {
     if (settlement.preview?.state !== "PREVIEW_READY") return;
     Alert.alert(
@@ -367,7 +367,9 @@ function SummarySection({
             </Pressable>
           ) : null}
         </View>
-        {projection && (debugMode || projection.freshness !== "CURRENT") ? (
+        {confirmationRefreshing ? (
+          <Text style={styles.meta}>Refreshing confirmed Settlement…</Text>
+        ) : projection && (debugMode || projection.freshness !== "CURRENT") ? (
           <Text style={styles.meta}>
             {projection.freshness === "LOCAL_PENDING"
               ? "Includes changes saved on this device · waiting to sync"
@@ -383,9 +385,15 @@ function SummarySection({
               <Pressable
                 accessibilityRole="button"
                 key={issue.id}
-                onPress={() =>
-                  router.push(`/expenses/expense/${expenseFor(issue.id)?.id ?? issue.id}`)
-                }
+                onPress={() => {
+                  const expenseId = expenseFor(issue.id)?.id ?? issue.id;
+                  if (issue.missingDate)
+                    router.push({
+                      pathname: "/expenses/confirm-date",
+                      params: { expenseId },
+                    } as never);
+                  else router.push(`/expenses/expense/${expenseId}`);
+                }}
                 style={styles.rateIssue}
               >
                 <View style={styles.grow}>
@@ -428,17 +436,18 @@ function SummarySection({
       {hasConfirmed && hasChanges ? (
         <View style={styles.notice}>
           <Text style={styles.noticeTitle}>Changes since last confirmation</Text>
-          {summarizedChanges.removedCount ? (
-            <Text style={styles.body}>
-              Removed: {summarizedChanges.removedCount} expense
-              {summarizedChanges.removedCount === 1 ? "" : "s"}
-            </Text>
-          ) : null}
-          {summarizedChanges.visible.map((item) => (
-            <Text key={item.expenseId} style={styles.body}>
-              {item.change === "NEW" ? "Added" : "Changed"}: {changeTitle(item.expenseId)}
-            </Text>
-          ))}
+          {(["ADDED", "CHANGED", "REMOVED"] as const).map((change) =>
+            changeCounts[change] ? (
+              <Text key={change} style={styles.body}>
+                {change === "ADDED"
+                  ? "Added"
+                  : change === "REMOVED"
+                    ? "Removed"
+                    : "Changed"}
+                : {changeCounts[change]} expense{changeCounts[change] === 1 ? "" : "s"}
+              </Text>
+            ) : null,
+          )}
           {balanceMinor !== undefined && confirmedBalance ? (
             <Text style={styles.body}>
               Your change: {balanceMinor - confirmedBalance.balanceMinor >= 0 ? "+" : ""}
@@ -451,12 +460,14 @@ function SummarySection({
           ) : null}
           <Pressable
             accessibilityRole="button"
-            onPress={() =>
+            onPress={() => {
+              if (settlement.journeyId)
+                rememberSettlementExpenseTitles(settlement.journeyId, expenses);
               router.push({
                 pathname: "/expenses/settlement-update",
                 params: { journeyId: settlement.journeyId },
-              } as never)
-            }
+              } as never);
+            }}
           >
             <Text style={styles.link}>Review changes ›</Text>
           </Pressable>
@@ -564,9 +575,7 @@ function SummarySection({
               style={styles.rateIssue}
             >
               <View style={styles.grow}>
-                <Text style={styles.rowTitle}>
-                  {expenseFor(id)?.title ?? `Expense ${id.slice(0, 8)}`}
-                </Text>
+                <Text style={styles.rowTitle}>{expenseFor(id)?.title ?? "Expense"}</Text>
                 <Text style={styles.body}>
                   Automatic reference rate is unavailable. Review or enter the rate.
                 </Text>

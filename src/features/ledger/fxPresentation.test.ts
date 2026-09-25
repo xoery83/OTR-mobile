@@ -124,7 +124,7 @@ describe("Expense FX exceptions", () => {
   });
   it("distinguishes unknown economic date, pending reference and accepted valuation in both languages", () => {
     expect(fxStatus({ ...expense, economicDate: null }, false)).toBe(
-      "Save Expense date to update Journey value",
+      "Confirm transaction date to resolve Journey value automatically",
     );
     expect(
       fxStatus({ ...expense, economicDate: null, occurredAt: "" }, false),
@@ -158,7 +158,7 @@ describe("Expense FX exceptions", () => {
       "Resolve expense conflict",
     );
     expect(fxStatus({ ...expense, economicDate: null }, false, "MANUAL_AGREED")).toBe(
-      "Save Expense date to update Journey value",
+      "Confirm transaction date to resolve Journey value automatically",
     );
     expect(
       fxStatus({ ...expense, valuation: { policy: "REFERENCE_RATE" } as never }, false),

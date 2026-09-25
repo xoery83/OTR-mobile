@@ -212,6 +212,18 @@ function createInMemoryLedgerDatabase() {
           ownerUserId: params[8],
           status: params[9],
         });
+      } else if (
+        sql.includes("UPDATE ledger_expenses SET economic_date = ?, revision = ?")
+      ) {
+        const row = expenses.get(params[4] as string);
+        if (!row || row.revision !== params[5] || row.economicDate !== null)
+          return { changes: 0 } as never;
+        row.economicDate = params[0];
+        row.revision = params[1];
+        row.syncStatus = "PENDING_UPDATE";
+        row.localOwnerUserId = params[2];
+        row.updatedAt = params[3];
+        return { changes: 1 } as never;
       } else if (sql.includes("UPDATE ledger_expenses SET\n      journey_id")) {
         const id = params[21] as string;
         const row = expenses.get(id);
@@ -309,6 +321,8 @@ function createInMemoryLedgerDatabase() {
   return {
     database,
     expenses,
+    participants,
+    splits,
     operations,
     auditEvents,
     valuations,
@@ -448,6 +462,59 @@ describe("Ledger Expense repository", () => {
       (await createLedgerExpenseRepository(database, activeUser).getExpense(created.id))
         ?.economicDate,
     ).toBe("2026-07-15");
+  });
+
+  it("completes only missing date evidence on a later synced revision", async () => {
+    const {
+      database,
+      expenses,
+      operations,
+      auditEvents,
+      participants,
+      splits,
+      valuations,
+    } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const created = await repository.createExpense(command);
+    const row = expenses.get(created.id)!;
+    Object.assign(row, {
+      serverId: "server-bakery",
+      serverRevision: 3,
+      revision: 3,
+      syncStatus: "SYNCED",
+      localOwnerUserId: null,
+      economicDate: null,
+      businessStatus: "RATE_REQUIRED",
+      originalCurrency: "ISK",
+    });
+    valuations.delete(created.id);
+    operations.length = 0;
+    const beforeParticipants = structuredClone(participants.get(created.id));
+    const beforeSplits = structuredClone(splits.get(created.id));
+    const result = await repository.completeEconomicDate(
+      created.id,
+      "2026-07-25",
+      "USER_CONFIRMED_V1",
+    );
+    expect(result).toMatchObject({
+      revision: 4,
+      serverRevision: 3,
+      economicDate: "2026-07-25",
+      status: "RATE_REQUIRED",
+      syncStatus: "PENDING_UPDATE",
+    });
+    expect(participants.get(created.id)).toEqual(beforeParticipants);
+    expect(splits.get(created.id)).toEqual(beforeSplits);
+    expect(operations).toEqual([
+      expect.objectContaining({
+        operationType: "LEDGER_COMPLETE_ECONOMIC_DATE",
+        baseVersion: 3,
+      }),
+    ]);
+    expect(auditEvents.at(-1)).toMatchObject({
+      revision: 4,
+      eventType: "ECONOMIC_DATE_COMPLETED",
+    });
   });
 
   it("does not backfill ambiguous UTC or offset legacy dates", async () => {

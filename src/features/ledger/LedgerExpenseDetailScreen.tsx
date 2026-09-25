@@ -22,7 +22,6 @@ import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
 
 import { ExpenseFxDetails } from "./ExpenseFxDetails";
 import type { DisplayEstimate } from "./displayEstimate";
-import { proposedExpenseDate } from "./expenseDraft";
 import { formatLedgerDate, formatLedgerMoney } from "./format";
 import { loadDisplayEstimates } from "./loadDisplayEstimates";
 
@@ -204,12 +203,12 @@ export function LedgerExpenseDetailScreen() {
         title: "Conflict—review required",
         detail: "Choose the correct version before relying on this Expense in totals.",
       }
-    : !fxAccess.locked &&
-        expense.status === "RATE_REQUIRED" &&
-        !proposedExpenseDate(expense)
+    : expense.status === "RATE_REQUIRED" && expense.economicDate === null
       ? {
-          title: chinese ? "添加日期" : "Add date",
-          detail: chinese ? "添加消费日期" : "Add an Expense date",
+          title: chinese ? "确认交易日期" : "Transaction date required",
+          detail: chinese
+            ? "请确认交易日期。汇率将自动查找。"
+            : "Confirm the transaction date; OTR will find the reference rate.",
         }
       : expense.status !== "RATE_REQUIRED" && expense.status !== "ACCEPTED"
         ? {
@@ -362,32 +361,30 @@ export function LedgerExpenseDetailScreen() {
       {fxAccess.locked ? (
         <Text style={styles.meta}>
           {chinese
-            ? "最终结算已完成 · 此账目只读"
-            : "Final settlement completed · read-only"}
+            ? "历史结算已完成 · 历史版本只读"
+            : "Historical settlement completed · earlier version read-only"}
         </Text>
       ) : null}
       {excluded && warning ? (
         <Pressable
           accessibilityRole={
-            !fxAccess.locked &&
+            fxAccess.canChange &&
             expense.status === "RATE_REQUIRED" &&
-            !proposedExpenseDate(expense)
+            expense.economicDate === null
               ? "button"
               : undefined
           }
           onPress={
-            !fxAccess.locked &&
+            fxAccess.canChange &&
             expense.status === "RATE_REQUIRED" &&
-            !proposedExpenseDate(expense)
+            expense.economicDate === null
               ? () =>
                   router.push({
-                    pathname: "/expenses/new",
+                    pathname: "/expenses/confirm-date",
                     params: {
                       expenseId: expense.id,
-                      journeyId: expense.journeyId,
-                      focusDate: "1",
                     },
-                  })
+                  } as never)
               : undefined
           }
           style={styles.warning}

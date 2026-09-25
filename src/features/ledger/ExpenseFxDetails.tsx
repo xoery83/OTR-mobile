@@ -298,8 +298,12 @@ export function ExpenseFxDetails({
           {locked ? (
             <Text style={styles.meta}>
               {label(
-                "This Journey value cannot change after final settlement.",
-                "最终结算后，此旅行估值无法更改。",
+                expense.economicDate === null
+                  ? "The earlier Settlement value is frozen. Confirm the current transaction date to obtain its own reference valuation."
+                  : "The earlier Settlement value remains frozen.",
+                expense.economicDate === null
+                  ? "历史结算估值已冻结。确认当前交易日期后将自动获取参考估值。"
+                  : "历史结算估值保持冻结。",
               )}
             </Text>
           ) : null}

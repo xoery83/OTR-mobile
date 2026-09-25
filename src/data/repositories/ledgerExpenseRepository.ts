@@ -73,6 +73,11 @@ export type LedgerExpenseRepository = {
     command: LedgerExpenseCommand,
     reason: string,
   ): Promise<LedgerExpense>;
+  completeEconomicDate(
+    id: string,
+    date: string,
+    source: "USER_CONFIRMED_V1" | "STAGE9_DATE_ONLY_V1",
+  ): Promise<LedgerExpense>;
   listExpensesForJourney(
     journeyId: string,
     includeDeleted?: boolean,
@@ -194,6 +199,7 @@ type PaymentRecordRow = {
 
 const createOperation = "LEDGER_CREATE_EXPENSE";
 const updateOperation = "LEDGER_UPDATE_EXPENSE";
+const dateCompletionOperation = "LEDGER_COMPLETE_ECONOMIC_DATE";
 const deleteOperation = "LEDGER_DELETE_EXPENSE";
 const restoreOperation = "LEDGER_RESTORE_EXPENSE";
 
@@ -295,6 +301,85 @@ export function createLedgerExpenseRepository(
         }
       });
       return expense;
+    },
+
+    async completeEconomicDate(id, date, source) {
+      economicDateSchema.parse(date);
+      const userId = await getActiveUserId();
+      const current = await requireExpense(database, id, userId);
+      assertReplayFixtureWritable(current.journeyId);
+      if (
+        current.syncStatus !== "SYNCED" ||
+        !current.serverId ||
+        current.serverRevision !== current.revision ||
+        current.economicDate ||
+        current.status !== "RATE_REQUIRED" ||
+        current.valuation
+      )
+        throw new Error(
+          "Transaction date confirmation needs a current unresolved Expense.",
+        );
+      const outstanding = await database.getFirstAsync<{ found: number }>(
+        `SELECT 1 AS found FROM sync_operations WHERE entity_type = 'ledger_expense'
+         AND entity_id = ? AND owner_user_id = ? AND status <> 'COMPLETED' LIMIT 1`,
+        id,
+        userId,
+      );
+      if (outstanding) throw new Error("Sync this Expense before confirming its date.");
+      const frozen = await database.getFirstAsync<{ revision: number }>(
+        `SELECT MAX(input.expense_revision) AS revision
+         FROM ledger_settlement_inputs input
+         JOIN ledger_settlements settlement ON settlement.id = input.settlement_id
+         WHERE input.expense_id IN (?, ?) AND settlement.status IN
+           ('FINALIZED', 'PARTIALLY_PAID', 'SETTLED')`,
+        id,
+        current.serverId,
+      );
+      if (frozen?.revision && frozen.revision >= current.revision)
+        throw new Error("The current Expense revision is part of a frozen Settlement.");
+      const now = new Date().toISOString();
+      const next: LedgerExpense = {
+        ...current,
+        economicDate: date,
+        revision: current.revision + 1,
+        syncStatus: "PENDING_UPDATE",
+        updatedAt: now,
+      };
+      await database.withTransactionAsync(async () => {
+        const updated = await database.runAsync(
+          `UPDATE ledger_expenses SET economic_date = ?, revision = ?, sync_status = 'PENDING_UPDATE',
+             local_owner_user_id = ?, updated_at = ?
+           WHERE id = ? AND revision = ? AND economic_date IS NULL AND sync_status = 'SYNCED'`,
+          date,
+          next.revision,
+          userId,
+          now,
+          id,
+          current.revision,
+        );
+        if (updated.changes !== 1)
+          throw new Error("The Expense changed while its date was being confirmed.");
+        await insertAuditEvent(
+          database,
+          id,
+          next.revision,
+          "ECONOMIC_DATE_COMPLETED",
+          `Transaction date evidence: ${source}`,
+          now,
+          next,
+        );
+        await enqueueOperation(
+          database,
+          next,
+          dateCompletionOperation,
+          current.serverRevision,
+          source,
+          userId,
+          next,
+          current,
+        );
+      });
+      return next;
     },
 
     async listExpensesForJourney(journeyId, includeDeleted = false) {

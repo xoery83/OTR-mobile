@@ -1,4 +1,5 @@
 import type { DataHealthFinding } from "./dataHealthCoordinator";
+import { missingEconomicDateRule } from "@/domain/ledger/economicDateEvidence";
 import { NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT } from "@/data/sync/syncEngine";
 import {
   HISTORICAL_EXPENSE_RECOVERY_ACTION,
@@ -162,6 +163,7 @@ export const dataHealthRepairVerifiers: Readonly<
 };
 
 const knownRuleIds = new Set([
+  missingEconomicDateRule,
   "DH_SYNC_OPERATION_STATE_V1",
   "DH_LOCAL_ENTITY_INTENT_V1",
   "DH_RECEIPT_ORIGINAL_V1",

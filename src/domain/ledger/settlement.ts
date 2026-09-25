@@ -168,6 +168,56 @@ function safeAdd(left: number, right: number) {
   return result;
 }
 
+export function balancesFromSettlementInputs(
+  inputs: SettlementInputSnapshot[],
+  members: SettlementMemberSnapshot[],
+  currency: string,
+  scale: number,
+): SettlementMemberBalanceSnapshot[] {
+  const names = new Map(
+    members.map(({ memberId, displayNameSnapshot }) => [memberId, displayNameSnapshot]),
+  );
+  for (const input of inputs) {
+    names.set(
+      input.payer.memberId,
+      names.get(input.payer.memberId) ?? input.payer.displayNameSnapshot,
+    );
+    for (const split of input.splits)
+      names.set(
+        split.member.memberId,
+        names.get(split.member.memberId) ?? split.member.displayNameSnapshot,
+      );
+  }
+  const paid = new Map([...names.keys()].map((id) => [id, 0]));
+  const owed = new Map([...names.keys()].map((id) => [id, 0]));
+  for (const input of inputs) {
+    assertMoney(input.settlement, "Settlement input value");
+    if (input.settlement.currency !== currency || input.settlement.scale !== scale)
+      throw new Error("Settlement input currency does not match Journey.");
+    paid.set(
+      input.payer.memberId,
+      safeAdd(paid.get(input.payer.memberId)!, input.settlement.minor),
+    );
+    for (const split of input.splits)
+      owed.set(
+        split.member.memberId,
+        safeAdd(owed.get(split.member.memberId)!, split.settlementMinor),
+      );
+  }
+  return [...names.entries()]
+    .sort(([a], [b]) => stableIdCompare(a, b))
+    .map(([memberId, displayNameSnapshot]) => ({
+      memberId,
+      displayNameSnapshot,
+      currency,
+      scale,
+      paidMinor: paid.get(memberId)!,
+      owedMinor: owed.get(memberId)!,
+      transferredMinor: 0 as const,
+      netMinor: safeAdd(paid.get(memberId)!, -owed.get(memberId)!),
+    }));
+}
+
 export function calculateMemberBalances(
   expenses: ExpenseAggregate[],
   memberIds: string[],
@@ -390,33 +440,12 @@ export function buildSettlementPreview(input: SettlementPreviewInput): Settlemen
     input.settlementCurrency,
     input.settlementScale,
   );
-  const paid = new Map(members.map((member) => [member.memberId, 0]));
-  const owed = new Map(members.map((member) => [member.memberId, 0]));
-  for (const settlementInput of inputs) {
-    paid.set(
-      settlementInput.payer.memberId,
-      safeAdd(
-        paid.get(settlementInput.payer.memberId)!,
-        settlementInput.settlement.minor,
-      ),
-    );
-    for (const split of settlementInput.splits) {
-      owed.set(
-        split.member.memberId,
-        safeAdd(owed.get(split.member.memberId)!, split.settlementMinor),
-      );
-    }
-  }
-  const balances = memberBalances.map((balance) => ({
-    memberId: balance.memberId,
-    currency: balance.currency,
-    scale: balance.scale,
-    displayNameSnapshot: memberNames.get(balance.memberId)!,
-    paidMinor: paid.get(balance.memberId)!,
-    owedMinor: owed.get(balance.memberId)!,
-    transferredMinor: 0 as const,
-    netMinor: balance.minor,
-  }));
+  const balances = balancesFromSettlementInputs(
+    inputs,
+    members,
+    input.settlementCurrency,
+    input.settlementScale,
+  );
   return {
     state: blockers.length ? "PREVIEW_BLOCKED" : "PREVIEW_READY",
     journeyId: input.journeyId,

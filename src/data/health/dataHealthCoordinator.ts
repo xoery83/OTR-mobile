@@ -4,6 +4,7 @@ import { ApiClientError } from "@/data/api/client";
 import { NORMAL_SYNC_BACKOFF_ATTEMPT_LIMIT } from "@/data/sync/syncEngine";
 import { createLocalId } from "@/domain/localId";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
+import { missingEconomicDateRule } from "@/domain/ledger/economicDateEvidence";
 
 import {
   planDataHealthRepairs,
@@ -147,6 +148,9 @@ type Expense = {
   syncStatus: string;
   localOwnerUserId: string | null;
   businessStatus: string;
+  economicDate: string | null;
+  originalCurrency: string;
+  settlementCurrency: string | null;
 };
 
 type PersonalPayment = {
@@ -271,7 +275,7 @@ type RepairEvent = {
 };
 
 type AutomaticCandidate = {
-  kind: "OPERATION" | "ASSET" | "LOCAL_INTENT" | "DEFERRED" | "CURSOR";
+  kind: "OPERATION" | "ASSET" | "LOCAL_INTENT" | "MISSING_DATE" | "DEFERRED" | "CURSOR";
   journeyId: string | null;
   status: string | null;
   attemptCount: number;
@@ -293,6 +297,7 @@ export type DataHealthDependencies = {
   refreshJourneyLedger?(journeyId: string): Promise<boolean>;
   revalidateJourneyLedger?(journeyId: string): Promise<void>;
   getExpense?(id: string): Promise<LedgerExpense | null>;
+  restoreMissingEconomicDate?(journeyId: string, expenseId: string): Promise<boolean>;
   now?(): Date;
 };
 
@@ -314,6 +319,15 @@ const CHEAP_SCAN_INTERVAL_MS = 15 * 60_000;
 const DEEP_SCAN_INTERVAL_MS = 24 * 60 * 60_000;
 
 export const dataHealthRules: readonly DataHealthRuleDefinition[] = [
+  {
+    id: missingEconomicDateRule,
+    detection: "Current cross-currency RATE_REQUIRED Expense has no economic date",
+    protectedState: "Original Money, participation, splits, and frozen Settlement input",
+    futureDisposition:
+      "Use approved date-only evidence or ask to confirm transaction date",
+    verification: "Current canonical Expense has an audited economic date",
+    possibleEscalation: "Ambiguous date or stale current revision needs user attention",
+  },
   {
     id: STALE_EXPENSE_CONFLICT_RULE,
     detection: "Expense conflict metadata whose complete local intent equals canonical",
@@ -644,6 +658,23 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       let expectedNetworkFailure = false;
       let protectedScope = false;
       try {
+        if (dependencies.restoreMissingEconomicDate) {
+          for (const finding of report.findings.filter(
+            (item) => item.ruleId === missingEconomicDateRule && item.journeyId,
+          )) {
+            await assertScope(dependencies, accountId, generation);
+            try {
+              await dependencies.restoreMissingEconomicDate(
+                finding.journeyId!,
+                finding.targetId,
+              );
+            } catch (error) {
+              if (!(error instanceof ApiClientError)) throw error;
+              expectedNetworkFailure = true;
+              break;
+            }
+          }
+        }
         report = await coordinator.run(trigger, options);
         await assertScope(dependencies, accountId, generation);
         if (!options.skipOperationalSync && hasRunnableQueueWork(report)) {
@@ -1639,6 +1670,16 @@ async function readAutomaticCandidates(database: Database, accountId: string) {
        NULL, NULL, NULL, updated_at FROM ledger_expenses
      WHERE local_owner_user_id = ? AND sync_status <> 'SYNCED'
      UNION ALL
+     SELECT 'MISSING_DATE', e.journey_id, e.sync_status, 0, NULL, NULL, NULL,
+       NULL, NULL, NULL, e.updated_at
+     FROM ledger_expenses e
+     JOIN ledger_journeys journey ON journey.journey_id = e.journey_id
+     JOIN ledger_actor_context actor ON actor.journey_id = e.journey_id
+     WHERE actor.user_id = ? AND e.sync_status = 'SYNCED'
+       AND e.business_status = 'RATE_REQUIRED' AND e.economic_date IS NULL
+       AND e.deleted_at IS NULL
+       AND e.original_currency <> journey.settlement_currency
+     UNION ALL
      SELECT 'LOCAL_INTENT', journey_id, sync_status, 0, NULL, NULL, NULL,
        NULL, NULL, NULL, updated_at FROM ledger_personal_payment_records
      WHERE projection_user_id = ? AND sync_status <> 'SYNCED'
@@ -1661,6 +1702,7 @@ async function readAutomaticCandidates(database: Database, accountId: string) {
        updated_at
      FROM ledger_personal_payment_sync_cursors
      WHERE user_id = ? AND trim(cursor) = ''`,
+    accountId,
     accountId,
     accountId,
     accountId,
@@ -1696,6 +1738,7 @@ function automaticCandidateCanConverge(
   timestamp: string,
 ) {
   if (candidate.kind === "DEFERRED" || candidate.kind === "CURSOR") return true;
+  if (candidate.kind === "MISSING_DATE") return trigger === "DEEP";
   if (candidate.kind === "LOCAL_INTENT") return false;
   if (candidate.failureCategory === "AUTH") return false;
   if (candidate.status === "PENDING") return true;
@@ -1782,8 +1825,12 @@ async function buildManifest(
     `SELECT e.id, e.journey_id AS journeyId, e.server_id AS serverId,
        e.revision, e.server_revision AS serverRevision, e.sync_status AS syncStatus,
        e.local_owner_user_id AS localOwnerUserId,
-       e.business_status AS businessStatus
+       e.business_status AS businessStatus,
+       e.economic_date AS economicDate,
+       e.original_currency AS originalCurrency,
+       journey.settlement_currency AS settlementCurrency
      FROM ledger_expenses e
+     LEFT JOIN ledger_journeys journey ON journey.journey_id = e.journey_id
      WHERE (e.local_owner_user_id = ? OR EXISTS (
        SELECT 1 FROM ledger_actor_context actor
        WHERE actor.user_id = ? AND actor.journey_id = e.journey_id
@@ -1979,6 +2026,26 @@ async function detectFindings(
     findings.push(operationFinding(operation, "sync_operation"));
   for (const operation of manifest.assetOperations)
     findings.push(operationFinding(operation, "asset_operation"));
+
+  for (const expense of manifest.expenses)
+    if (
+      authorized.has(expense.journeyId) &&
+      expense.syncStatus === "SYNCED" &&
+      expense.businessStatus === "RATE_REQUIRED" &&
+      expense.economicDate === null &&
+      expense.settlementCurrency &&
+      expense.originalCurrency !== expense.settlementCurrency
+    )
+      findings.push(
+        finding(
+          missingEconomicDateRule,
+          "ACTIONABLE_INPUT",
+          expense.journeyId,
+          "expense",
+          expense.id,
+          [expense.revision, expense.originalCurrency, expense.settlementCurrency],
+        ),
+      );
 
   for (const expense of manifest.expenses)
     if (

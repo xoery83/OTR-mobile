@@ -1,5 +1,18 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## Expense economic-date evidence completion (Dev, V1)
+
+`GET /v2/trips/:tripId/expenses/:expenseId/economic-date` returns
+`AUTO_SAFE` with a date/source/current revision only for approved retained
+date-only evidence; otherwise it returns `USER_ACTION_REQUIRED` with no date.
+`POST` at the same path requires a durable idempotency key and either
+`{source:"USER_CONFIRMED_V1",baseRevision,economicDate}` or
+`{source:"STAGE9_DATE_ONLY_V1",baseRevision}`. The latter derives its date
+server-side. The command fills only a null economic date on an eligible current
+Expense revision, emits an Expense audit/change-feed event, and returns the
+canonical Expense mutation receipt. A frozen exact revision is rejected; a
+later revision may proceed without editing its historical Settlement input.
+
 Ledger 2.0 uses the frozen aggregate contract in
 `docs/ledger/LEDGER_2_0_API_CONTRACT.md`. Existing Expense routes in this file
 remain Phase 3B compatibility routes until each `/v2` vertical slice is ready.
@@ -57,6 +70,14 @@ and an idempotency key; one database transaction creates the successor, explicit
 old→new lineage and immutable Adjustment version. Ordinary mutation routes still
 reject finalized inputs with `FINALIZED_SETTLEMENT_PROTECTED`; `/reopen` remains
 rejected.
+
+Ordinary Settlement Adjustment preview accepts an explicit optional
+`throughTimestamp`; the current Mobile Review supplies the canonical Preview's
+`sourceAsOf`. The response returns that same cutoff, and confirmation includes it
+with the head and digest. Backend recomputes the exact generation under the
+lineage lock, rejects newly changed current input, and stores the cutoff only on
+the new immutable version. Omitted cutoff retains the legacy root-cutoff behavior
+for older clients and the separate correction path.
 
 Mobile must communicate through an OTR Backend API. Do not assume endpoints exist until backend is audited or implemented.
 

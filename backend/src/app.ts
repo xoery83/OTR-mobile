@@ -12,6 +12,7 @@ import {
   createLedgerCorrectionRequestSchema,
   createLedgerPaymentRecordRequestSchema,
   applyLedgerValuationRequestSchema,
+  completeEconomicDateRequestSchema,
   createLedgerExpenseRequestSchema,
   ledgerCorrectionActionRequestSchema,
   lifecycleLedgerExpenseRequestSchema,
@@ -20,6 +21,8 @@ import {
   type CreateLedgerExpenseRequest,
   type CreateLedgerPaymentRecordRequest,
   type ApplyLedgerValuationRequest,
+  type CompleteEconomicDateRequest,
+  type EconomicDateEvidenceResponse,
   type LedgerCorrectionActionRequest,
   type LedgerCorrectionMutationResponse,
   type LifecycleLedgerExpenseRequest,
@@ -51,6 +54,7 @@ import {
   deletePersonalSettlementPaymentRequestSchema,
   recordSettlementPaymentRequestSchema,
   settlementAdjustmentFinalizeRequestSchema,
+  settlementAdjustmentPreviewRequestSchema,
   settlementCorrectionConfirmRequestSchema,
   settlementCorrectionPreviewRequestSchema,
   settlementPaymentActionRequestSchema,
@@ -247,6 +251,7 @@ export type DevBackendGateway = {
     userId: string,
     tripId: string,
     rootSettlementId: string,
+    throughTimestamp?: string,
   ): Promise<SettlementAdjustmentPreviewResponse>;
   finalizeSettlementAdjustment(
     userId: string,
@@ -336,6 +341,18 @@ export type DevBackendGateway = {
     idempotencyKey: string,
     input: UpdateLedgerExpenseRequest,
   ): Promise<LedgerExpenseMutationResponse>;
+  completeLedgerEconomicDate(
+    userId: string,
+    tripId: string,
+    expenseId: string,
+    idempotencyKey: string,
+    input: CompleteEconomicDateRequest,
+  ): Promise<LedgerExpenseMutationResponse>;
+  inspectLedgerEconomicDate(
+    userId: string,
+    tripId: string,
+    expenseId: string,
+  ): Promise<EconomicDateEvidenceResponse>;
   deleteLedgerExpense(
     userId: string,
     tripId: string,
@@ -961,6 +978,37 @@ async function mutateLedgerExpense(request: Request, gateway: DevBackendGateway)
   throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
 }
 
+async function completeLedgerEconomicDate(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/expenses\/([^/]+)\/economic-date$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, expenseId] = match;
+  assertTripId(tripId);
+  if (!uuidPattern.test(expenseId))
+    throw new HttpError(400, "INVALID_EXPENSE_ID", "The expense id is invalid.");
+  if (request.method === "GET") {
+    const user = await authorizeRead(request, gateway, tripId);
+    return json(200, await gateway.inspectLedgerEconomicDate(user.id, tripId, expenseId));
+  }
+  const parsed = completeEconomicDateRequestSchema.safeParse(await parseBody(request));
+  if (!parsed.success)
+    throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  const user = await authenticate(request, gateway);
+  if (!(await gateway.canWriteTrip(user.id, tripId)))
+    throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
+  return json(
+    200,
+    await gateway.completeLedgerEconomicDate(
+      user.id,
+      tripId,
+      expenseId,
+      getIdempotencyKey(request),
+      parsed.data,
+    ),
+  );
+}
+
 async function resolveLedgerExpenseConflict(
   request: Request,
   gateway: DevBackendGateway,
@@ -1456,9 +1504,17 @@ async function mutateSettlementAdjustment(request: Request, gateway: DevBackendG
   }
   const body = await parseBody(request);
   if (action === "preview") {
+    const parsed = settlementAdjustmentPreviewRequestSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
     return json(
       200,
-      await gateway.previewSettlementAdjustment(user.id, tripId, rootSettlementId),
+      await gateway.previewSettlementAdjustment(
+        user.id,
+        tripId,
+        rootSettlementId,
+        parsed.data.throughTimestamp,
+      ),
     );
   }
   const parsed = settlementAdjustmentFinalizeRequestSchema.safeParse(body);
@@ -1783,6 +1839,12 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/settlement-review";
         response = await personalSettlementReview(request, gateway);
+      } else if (
+        ["GET", "POST"].includes(request.method) &&
+        /^\/v2\/trips\/[^/]+\/expenses\/[^/]+\/economic-date$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/expenses/:expenseId/economic-date";
+        response = await completeLedgerEconomicDate(request, gateway);
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
         route = redactLogRoute(url.pathname);
         response = await readEntity(request, gateway);

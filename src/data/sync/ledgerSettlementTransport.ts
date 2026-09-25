@@ -8,6 +8,7 @@ import {
   settlementAdjustmentFinalizeRequestSchema,
   settlementAdjustmentMutationResponseSchema,
   settlementAdjustmentPreviewSchema,
+  settlementAdjustmentPreviewRequestSchema,
   settlementCorrectionConfirmRequestSchema,
   settlementCorrectionMutationResponseSchema,
   settlementCorrectionPreviewRequestSchema,
@@ -81,10 +82,14 @@ export function createLedgerSettlementTransport(dependencies: Dependencies = {})
       );
     },
 
-    async previewAdjustment(journeyId: string, rootSettlementId: string) {
+    async previewAdjustment(
+      journeyId: string,
+      rootSettlementId: string,
+      throughTimestamp?: string,
+    ) {
       return (await client(dependencies)).post(
         `/v2/trips/${journeyId}/settlements/${rootSettlementId}/adjustments/preview`,
-        {},
+        settlementAdjustmentPreviewRequestSchema.parse({ throughTimestamp }),
         settlementAdjustmentPreviewSchema,
       );
     },

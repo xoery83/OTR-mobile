@@ -8,6 +8,7 @@ import {
   ledgerCorrectionMutationResponseSchema,
   ledgerPaymentRecordMutationResponseSchema,
   ledgerExpenseMutationResponseSchema,
+  economicDateEvidenceResponseSchema,
   resolveLedgerExpenseConflictRequestSchema,
   type CreateLedgerCorrectionRequest,
   type CreateLedgerExpenseRequest,
@@ -57,6 +58,12 @@ async function client(dependencies: Dependencies) {
 
 export function createLedgerExpenseMutationTransport(dependencies: Dependencies = {}) {
   return {
+    async inspectEconomicDate(journeyId: string, serverId: string) {
+      return (await client(dependencies)).get(
+        `/v2/trips/${journeyId}/expenses/${serverId}/economic-date`,
+        economicDateEvidenceResponseSchema,
+      );
+    },
     async createExpense(input: {
       journeyId: string;
       idempotencyKey: string;
@@ -90,6 +97,27 @@ export function createLedgerExpenseMutationTransport(dependencies: Dependencies 
           baseRevision: input.baseRevision,
           auditReason: input.auditReason,
         } satisfies UpdateLedgerExpenseRequest,
+        ledgerExpenseMutationResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+    },
+    async completeEconomicDate(input: {
+      journeyId: string;
+      serverId: string;
+      idempotencyKey: string;
+      baseRevision: number;
+      economicDate: string;
+      source: "USER_CONFIRMED_V1" | "STAGE9_DATE_ONLY_V1";
+    }) {
+      return (await client(dependencies)).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.serverId}/economic-date`,
+        input.source === "USER_CONFIRMED_V1"
+          ? {
+              source: input.source,
+              baseRevision: input.baseRevision,
+              economicDate: input.economicDate,
+            }
+          : { source: input.source, baseRevision: input.baseRevision },
         ledgerExpenseMutationResponseSchema,
         { "Idempotency-Key": input.idempotencyKey },
       );

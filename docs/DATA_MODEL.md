@@ -1,5 +1,14 @@
 # OTR Mobile 2.0 Data Model Draft
 
+Current cross-currency `RATE_REQUIRED` Expenses with null `economic_date` use
+`RESTORE_MISSING_ECONOMIC_DATE_V1`: proven Stage 9 date-only import metadata is
+`AUTO_SAFE`; timestamp-only or conflicting evidence requires explicit user
+confirmation. Completion advances only the current Expense revision and records
+source, rule version, expected revision, date, and digest in its immutable audit.
+The earlier `(expense_id, expense_revision, valuation_snapshot_id)` Settlement
+input remains frozen. Later automatic `REFERENCE_RATE` valuation is guarded by
+the new current revision, not Journey `valuation_policy` metadata.
+
 The cross-module sections remain a working draft. Ledger 2.0 Stage 1 Dev schema
 and Stage 2 local SQLite lineage are now implemented; see ADRs 0008 and 0009.
 

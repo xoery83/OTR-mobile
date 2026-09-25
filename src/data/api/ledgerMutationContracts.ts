@@ -104,6 +104,38 @@ export const updateLedgerExpenseRequestSchema = z
   })
   .superRefine(validateValuationState);
 
+export const completeEconomicDateRequestSchema = z.discriminatedUnion("source", [
+  z.strictObject({
+    source: z.literal("USER_CONFIRMED_V1"),
+    baseRevision: z.number().int().positive(),
+    economicDate: economicDateSchema,
+  }),
+  z.strictObject({
+    source: z.literal("STAGE9_DATE_ONLY_V1"),
+    baseRevision: z.number().int().positive(),
+  }),
+]);
+export type CompleteEconomicDateRequest = z.infer<
+  typeof completeEconomicDateRequestSchema
+>;
+export const economicDateEvidenceResponseSchema = z.discriminatedUnion("disposition", [
+  z.object({
+    disposition: z.literal("AUTO_SAFE"),
+    economicDate: economicDateSchema,
+    source: z.literal("STAGE9_DATE_ONLY_V1"),
+    expenseRevision: z.number().int().positive(),
+  }),
+  z.object({
+    disposition: z.literal("USER_ACTION_REQUIRED"),
+    economicDate: z.null(),
+    source: z.null(),
+    expenseRevision: z.number().int().positive(),
+  }),
+]);
+export type EconomicDateEvidenceResponse = z.infer<
+  typeof economicDateEvidenceResponseSchema
+>;
+
 export const ledgerConflictFieldGroupSchema = z.enum([
   "FINANCIAL_CORE",
   "DESCRIPTIVE",

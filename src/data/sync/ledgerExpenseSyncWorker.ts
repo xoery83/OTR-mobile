@@ -37,6 +37,14 @@ export type LedgerExpenseCreateTransport = {
     auditReason: string | null;
     expense: ReturnType<typeof ledgerExpenseToUpdateRequest>;
   }): Promise<{ serverId: string; revision: number }>;
+  completeEconomicDate?(input: {
+    journeyId: string;
+    serverId: string;
+    idempotencyKey: string;
+    baseRevision: number;
+    economicDate: string;
+    source: "USER_CONFIRMED_V1" | "STAGE9_DATE_ONLY_V1";
+  }): Promise<{ serverId: string; revision: number }>;
   deleteExpense(input: {
     journeyId: string;
     serverId: string;
@@ -110,6 +118,7 @@ export type LedgerExpenseCreateTransport = {
 
 const createOperation = "LEDGER_CREATE_EXPENSE";
 const updateOperation = "LEDGER_UPDATE_EXPENSE";
+const dateCompletionOperation = "LEDGER_COMPLETE_ECONOMIC_DATE";
 const deleteOperation = "LEDGER_DELETE_EXPENSE";
 const restoreOperation = "LEDGER_RESTORE_EXPENSE";
 
@@ -367,6 +376,23 @@ async function pushExpenseOperation(
       baseRevision: expense.serverRevision,
       auditReason: reason,
       expense: snapshot ?? ledgerExpenseToUpdateRequest(expense),
+    });
+  }
+  if (operation.operationType === dateCompletionOperation) {
+    if (!transport.completeEconomicDate)
+      throw new Error("Economic-date completion transport is missing.");
+    if (
+      !snapshot?.economicDate ||
+      !["USER_CONFIRMED_V1", "STAGE9_DATE_ONLY_V1"].includes(reason ?? "")
+    )
+      throw new Error("Economic-date completion evidence is missing.");
+    return transport.completeEconomicDate({
+      journeyId: expense.journeyId,
+      serverId: expense.serverId,
+      idempotencyKey: operation.idempotencyKey,
+      baseRevision: expense.serverRevision,
+      economicDate: snapshot.economicDate,
+      source: reason as "USER_CONFIRMED_V1" | "STAGE9_DATE_ONLY_V1",
     });
   }
   if (operation.operationType === deleteOperation) {

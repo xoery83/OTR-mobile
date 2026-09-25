@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "node:crypto";
+import { classifyMissingEconomicDate } from "../../src/domain/ledger/economicDateEvidence";
 
 import { createFrankfurterRateProvider } from "./frankfurterRateProvider";
 import {
@@ -15,6 +16,8 @@ import { BackendError, type DevBackendGateway, type StoredCreate } from "./app";
 import type {
   CreateLedgerCorrectionRequest,
   CreateLedgerExpenseRequest,
+  CompleteEconomicDateRequest,
+  EconomicDateEvidenceResponse,
   CreateLedgerPaymentRecordRequest,
   ApplyLedgerValuationRequest,
   LedgerCorrectionActionRequest,
@@ -81,6 +84,7 @@ import {
 } from "../../src/domain/ledger/conflict";
 import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
 import {
+  balancesFromSettlementInputs,
   buildOutstandingBalanceVector,
   buildSettlementConfirmationDiff,
   buildSettlementAdjustmentVectors,
@@ -1036,9 +1040,20 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return finalizeLedgerSettlement(service, userId, tripId, idempotencyKey, input);
     },
 
-    async previewSettlementAdjustment(_userId, tripId, rootSettlementId) {
+    async previewSettlementAdjustment(
+      _userId,
+      tripId,
+      rootSettlementId,
+      throughTimestamp,
+    ) {
       return (
-        await calculateSettlementAdjustmentPreview(service, tripId, rootSettlementId)
+        await calculateSettlementAdjustmentPreview(
+          service,
+          tripId,
+          rootSettlementId,
+          undefined,
+          throughTimestamp,
+        )
       ).response;
     },
 
@@ -1201,6 +1216,21 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       );
       await tryEvaluateLedgerReviewV2(service, tripId);
       return result;
+    },
+
+    async completeLedgerEconomicDate(userId, tripId, expenseId, idempotencyKey, input) {
+      return completeLedgerEconomicDate(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        idempotencyKey,
+        input,
+      );
+    },
+
+    async inspectLedgerEconomicDate(_userId, tripId, expenseId) {
+      return inspectLedgerEconomicDate(service, tripId, expenseId);
     },
 
     async deleteLedgerExpense(userId, tripId, expenseId, idempotencyKey, input) {
@@ -2294,6 +2324,190 @@ async function mutateLedgerExpenseAggregate(
   }
 
   return result.data as typeof response;
+}
+
+async function inspectLedgerEconomicDate(
+  service: SupabaseClient,
+  tripId: string,
+  expenseId: string,
+): Promise<EconomicDateEvidenceResponse> {
+  const [expense, settings, audits, valuations, frozenInputs] = await Promise.all([
+    service
+      .from("expenses")
+      .select(
+        "id,journey_id,revision,occurred_at,economic_date,original_currency,business_status,deleted_at,import_provenance",
+      )
+      .eq("id", expenseId)
+      .eq("journey_id", tripId)
+      .single(),
+    service
+      .from("ledger_settings")
+      .select("settlement_currency")
+      .eq("journey_id", tripId)
+      .single(),
+    service
+      .from("expense_audit_events")
+      .select("expense_revision,changed_groups")
+      .eq("expense_id", expenseId)
+      .gt("expense_revision", 1),
+    service
+      .from("settlement_valuation_snapshots")
+      .select("id")
+      .eq("expense_id", expenseId)
+      .eq("is_active", true)
+      .limit(1),
+    service
+      .from("settlement_inputs")
+      .select("expense_revision,settlement_id")
+      .eq("expense_id", expenseId),
+  ]);
+  if (expense.error || !expense.data)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  if (settings.error || audits.error || valuations.error || frozenInputs.error)
+    throw new Error("Supabase Dev date evidence read failed.");
+  const row = expense.data;
+  const revision = Number(row.revision);
+  const unavailable: EconomicDateEvidenceResponse = {
+    disposition: "USER_ACTION_REQUIRED",
+    economicDate: null,
+    source: null,
+    expenseRevision: revision,
+  };
+  if (
+    row.economic_date ||
+    row.deleted_at ||
+    row.business_status !== "RATE_REQUIRED" ||
+    row.original_currency === settings.data.settlement_currency ||
+    (valuations.data ?? []).length > 0
+  )
+    return unavailable;
+  const relevantInputs = (frozenInputs.data ?? []).filter(
+    (input) => Number(input.expense_revision) >= revision,
+  );
+  if (relevantInputs.length) {
+    const settlements = await service
+      .from("settlements")
+      .select("id,status")
+      .in(
+        "id",
+        relevantInputs.map((input) => input.settlement_id),
+      );
+    if (settlements.error) throw new Error("Supabase Dev finalized input read failed.");
+    if (
+      (settlements.data ?? []).some((item) =>
+        ["FINALIZED", "PARTIALLY_PAID", "SETTLED"].includes(item.status),
+      )
+    )
+      return unavailable;
+  }
+  const evidence = classifyMissingEconomicDate({
+    occurredAt: String(row.occurred_at),
+    importProvenance: row.import_provenance as Record<string, unknown> | null,
+    conflictingDateEvidence: (audits.data ?? []).some((audit) =>
+      (audit.changed_groups as string[]).includes("FINANCIAL_CORE"),
+    ),
+  });
+  return evidence.disposition === "AUTO_SAFE"
+    ? {
+        disposition: "AUTO_SAFE",
+        economicDate: evidence.date,
+        source: evidence.source,
+        expenseRevision: revision,
+      }
+    : unavailable;
+}
+
+async function completeLedgerEconomicDate(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: CompleteEconomicDateRequest,
+): Promise<LedgerExpenseMutationResponse> {
+  const prior = await service
+    .from("ledger_idempotency_keys")
+    .select("payload_hash,response_body")
+    .eq("actor_user_id", userId)
+    .eq("journey_id", tripId)
+    .eq("command_type", "COMPLETE_ECONOMIC_DATE_V1")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+  if (prior.error) throw new Error("Supabase Dev date replay read failed.");
+  if (prior.data) {
+    if (prior.data.payload_hash !== hashPayload(input))
+      throw new BackendError(
+        409,
+        "IDEMPOTENCY_CONFLICT",
+        "The idempotency key conflicts.",
+      );
+    return {
+      ...(prior.data.response_body as LedgerExpenseMutationResponse),
+      idempotentReplay: true,
+    };
+  }
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
+  let economicDate: string;
+  if (input.source === "USER_CONFIRMED_V1") {
+    economicDate = input.economicDate;
+  } else {
+    const evidence = await inspectLedgerEconomicDate(service, tripId, expenseId);
+    if (evidence.disposition !== "AUTO_SAFE")
+      throw new BackendError(
+        409,
+        "ECONOMIC_DATE_EVIDENCE_REJECTED",
+        "Transaction date needs confirmation.",
+      );
+    economicDate = evidence.economicDate;
+  }
+  const response = mutationResponse(
+    current,
+    { ...editableExpense(current), economicDate },
+    userId,
+    "ECONOMIC_DATE_COMPLETED",
+    "Completed missing transaction date evidence.",
+    ["FINANCIAL_CORE"],
+  );
+  // This command fills evidence only; the generic date-edit helper also clears
+  // derived split values, which this narrow RPC intentionally does not edit.
+  response.entity.splits = current.splits;
+  const result = await service.rpc("ledger_complete_expense_economic_date_v1", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    expected_revision: input.baseRevision,
+    confirmed_date: economicDate,
+    evidence_source: input.source,
+    idempotency_key_value: idempotencyKey,
+    payload_hash_value: hashPayload(input),
+    response_body_value: response,
+  });
+  const message = result.error?.message ?? "";
+  if (message.includes("IDEMPOTENCY_CONFLICT"))
+    throw new BackendError(409, "IDEMPOTENCY_CONFLICT", "The idempotency key conflicts.");
+  if (message.includes("REVISION_CONFLICT"))
+    throw new BackendError(409, "REVISION_CONFLICT", "The Expense changed; refresh it.");
+  if (message.includes("FINALIZED_SETTLEMENT_PROTECTED"))
+    throw new BackendError(409, "SETTLEMENT_INPUT_STALE", "This revision is protected.");
+  if (
+    message.includes("ECONOMIC_DATE_NOT_ELIGIBLE") ||
+    message.includes("ECONOMIC_DATE_EVIDENCE_REJECTED")
+  )
+    throw new BackendError(
+      409,
+      "ECONOMIC_DATE_EVIDENCE_REJECTED",
+      "Date evidence changed; refresh it.",
+    );
+  if (message.includes("TRIP_WRITE_FORBIDDEN"))
+    throw new BackendError(
+      403,
+      "TRIP_WRITE_FORBIDDEN",
+      "Expense write access is required.",
+    );
+  if (result.error) throw new Error("Supabase Dev date completion failed.");
+  return result.data as LedgerExpenseMutationResponse;
 }
 
 async function validateCanonicalExpense(
@@ -3547,6 +3761,15 @@ async function calculateSettlementPreview(
     confirmed?.inputs ?? [],
     preview.inputs,
   );
+  const confirmedBalances =
+    confirmed?.kind === "ADJUSTMENT"
+      ? balancesFromSettlementInputs(
+          confirmed.inputs,
+          source.members,
+          confirmed.settlementCurrency,
+          confirmed.settlementScale,
+        )
+      : (confirmed?.balances ?? []);
   return {
     source,
     preview,
@@ -3562,7 +3785,7 @@ async function calculateSettlementPreview(
             inputDigest: confirmed.inputDigest,
             finalizedAt: confirmed.finalizedAt,
             lineageSequence: confirmed.lineageSequence ?? 0,
-            balances: confirmed.balances,
+            balances: confirmedBalances,
           }
         : null,
       confirmationDiff,
@@ -3916,14 +4139,20 @@ async function calculateSettlementAdjustmentPreview(
     sourceExpenseId: string;
     successor: SettlementExpenseCandidate;
   },
+  throughTimestamp?: string,
 ) {
   const root = await readOneFinalizedSettlement(service, tripId, rootSettlementId);
   if (!root || root.kind === "ADJUSTMENT") {
     throw new BackendError(404, "ENTITY_NOT_FOUND", "The root Settlement was not found.");
   }
-  const sourceResult = await service.rpc("ledger_adjustment_source_7_2b", {
-    target_root: rootSettlementId,
-  });
+  const sourceResult = throughTimestamp
+    ? await service.rpc("ledger_adjustment_source_current_7_2c", {
+        target_root: rootSettlementId,
+        source_cutoff: throughTimestamp,
+      })
+    : await service.rpc("ledger_adjustment_source_7_2b", {
+        target_root: rootSettlementId,
+      });
   if (sourceResult.error || !sourceResult.data) {
     throw new Error("Supabase Dev Adjustment source failed.");
   }
@@ -4026,10 +4255,12 @@ async function calculateSettlementAdjustmentPreview(
       ? "PREVIEW_UNCHANGED"
       : "PREVIEW_READY";
   return {
-    source,
+    // SQL rechecks raw JSONB; valuation decimalRate stringification is preview-only.
+    source: correction ? source : (sourceResult.data as SettlementPreviewInput),
     response: {
       state,
       rootSettlementId,
+      throughTimestamp: source.throughTimestamp,
       expectedHeadId: head?.id ?? null,
       priorInputDigest,
       inputDigest,
@@ -4056,6 +4287,8 @@ async function finalizeSettlementAdjustment(
     service,
     tripId,
     rootSettlementId,
+    undefined,
+    input.throughTimestamp,
   );
   const preview = calculated.response;
   const result = await service.rpc("ledger_finalize_adjustment_7_2b", {

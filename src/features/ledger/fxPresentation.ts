@@ -95,8 +95,8 @@ export function fxStatus(
   if (!expense.economicDate)
     return proposedExpenseDate(expense)
       ? chinese
-        ? "保存消费日期后更新旅行估值"
-        : "Save Expense date to update Journey value"
+        ? "确认交易日期后自动获取参考汇率"
+        : "Confirm transaction date to resolve Journey value automatically"
       : null;
   if (policy === "MANUAL_AGREED") return chinese ? "汇率待确认" : "Rate needs review";
   if (policy === "ACTUAL_PAYER_COST")

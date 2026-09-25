@@ -15,24 +15,32 @@ import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLe
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 export function SettlementAdjustmentScreen() {
-  const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
+  const { journeyId, expenseId } = useLocalSearchParams<{
+    journeyId?: string;
+    expenseId?: string;
+  }>();
   const settlement = useStage7Settlement(journeyId);
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState(false);
   const reasonRef = useRef<TextInput>(null);
   const [titles, setTitles] = useState<Record<string, string>>({});
   const [query, setQuery] = useState("");
-  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
+  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(
+    expenseId ?? null,
+  );
   const current = settlement.lineage.at(-1) ?? settlement.finalized;
   const visibleInputs = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
-    if (!needle) return current?.inputs ?? [];
+    if (!needle)
+      return expenseId
+        ? (current?.inputs ?? []).filter((input) => input.expenseId === expenseId)
+        : (current?.inputs ?? []);
     return (current?.inputs ?? []).filter((input) =>
       [titles[input.expenseId], input.payer.displayNameSnapshot]
         .filter(Boolean)
         .some((value) => value!.toLocaleLowerCase().includes(needle)),
     );
-  }, [current, query, titles]);
+  }, [current, expenseId, query, titles]);
 
   useEffect(() => {
     let active = true;
