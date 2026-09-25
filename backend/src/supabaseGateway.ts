@@ -82,11 +82,14 @@ import {
 import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
 import {
   buildOutstandingBalanceVector,
+  buildSettlementConfirmationDiff,
   buildSettlementAdjustmentVectors,
   buildSettlementPreview,
   canonicalAdjustmentInputJson,
   canonicalSettlementJson,
+  canonicalSettlementSourceJson,
   replaceSettlementExpenseSource,
+  SETTLEMENT_SOURCE_FINGERPRINT_POLICY,
   type SettlementExpenseCandidate,
   type SettlementInputSnapshot,
   type SettlementPreviewInput,
@@ -3514,23 +3517,10 @@ async function calculateSettlementPreview(
   tripId: string,
   throughTimestamp: string,
 ) {
-  const root = await service
-    .from("settlements")
-    .select("id")
-    .eq("journey_id", tripId)
-    .eq("settlement_kind", "ROOT")
-    .eq("status", "FINALIZED")
-    .limit(1)
-    .maybeSingle();
-  if (root.error) throw new Error("Supabase Dev Settlement root read failed.");
-  const result = root.data
-    ? await service.rpc("ledger_adjustment_source_7_2b", {
-        target_root: String(root.data.id),
-      })
-    : await service.rpc("ledger_settlement_source_7_1", {
-        target_journey: tripId,
-        through_timestamp_value: throughTimestamp,
-      });
+  const result = await service.rpc("ledger_settlement_source_7_1", {
+    target_journey: tripId,
+    through_timestamp_value: throughTimestamp,
+  });
   if (result.error || !result.data)
     throw new Error("Supabase Dev settlement preview failed.");
   const source = normalizeSettlementSource(result.data as SettlementPreviewInput);
@@ -3538,10 +3528,45 @@ async function calculateSettlementPreview(
   const inputDigest = createHash("sha256")
     .update(canonicalSettlementJson(preview))
     .digest("hex");
+  const sourceFingerprint = createHash("sha256")
+    .update(canonicalSettlementSourceJson(source))
+    .digest("hex");
+  const latest = await service
+    .from("settlements")
+    .select("id")
+    .eq("journey_id", tripId)
+    .in("status", ["FINALIZED", "PARTIALLY_PAID", "SETTLED"])
+    .order("finalized_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latest.error) throw new Error("Supabase Dev Settlement reference read failed.");
+  const confirmed = latest.data
+    ? await readOneFinalizedSettlement(service, tripId, String(latest.data.id))
+    : null;
+  const confirmationDiff = buildSettlementConfirmationDiff(
+    confirmed?.inputs ?? [],
+    preview.inputs,
+  );
   return {
     source,
     preview,
-    response: { ...preview, inputDigest } satisfies SettlementPreviewResponse,
+    response: {
+      ...preview,
+      inputDigest,
+      sourceAsOf: source.throughTimestamp,
+      sourceFingerprintPolicy: SETTLEMENT_SOURCE_FINGERPRINT_POLICY,
+      sourceFingerprint,
+      confirmedSettlement: confirmed
+        ? {
+            id: confirmed.id,
+            inputDigest: confirmed.inputDigest,
+            finalizedAt: confirmed.finalizedAt,
+            lineageSequence: confirmed.lineageSequence ?? 0,
+            balances: confirmed.balances,
+          }
+        : null,
+      confirmationDiff,
+    } satisfies SettlementPreviewResponse,
   };
 }
 

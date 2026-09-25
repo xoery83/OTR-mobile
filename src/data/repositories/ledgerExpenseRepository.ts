@@ -1630,7 +1630,7 @@ async function hydrateExpense(
       row.id,
     ),
     database.getFirstAsync<ValuationRow>(
-      `SELECT id, policy,
+      `SELECT COALESCE(server_id, id) AS id, policy,
         original_amount_minor AS originalMinor, original_currency AS originalCurrency,
         original_scale AS originalScale, settlement_amount_minor AS settlementMinor,
         settlement_currency AS settlementCurrency, settlement_scale AS settlementScale,

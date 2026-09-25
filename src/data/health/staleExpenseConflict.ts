@@ -110,7 +110,7 @@ export async function inspectStaleExpenseConflict(input: {
   )
     return null;
 
-  const localIntent = expenseUserOwnedFields(expense);
+  const localIntent = ledgerExpenseUserOwnedFields(expense);
   let canonical: Record<string, unknown> | null = null;
   let canonicalRevision = 0;
   let deferredRevision: number | null = null;
@@ -126,8 +126,8 @@ export async function inspectStaleExpenseConflict(input: {
       !canonical ||
       !submitted ||
       canonicalRevision <= 0 ||
-      !sameUserOwnedFields(localIntent, canonical) ||
-      !sameUserOwnedFields(localIntent, submitted)
+      !sameLedgerExpenseUserOwnedFields(localIntent, canonical) ||
+      !sameLedgerExpenseUserOwnedFields(localIntent, submitted)
     )
       return null;
     const deferred = await input.database.getFirstAsync<{
@@ -149,7 +149,7 @@ export async function inspectStaleExpenseConflict(input: {
       !aggregate ||
       payload?.entityId !== expense.serverId ||
       payload?.revision !== canonicalRevision ||
-      !sameUserOwnedFields(localIntent, aggregate)
+      !sameLedgerExpenseUserOwnedFields(localIntent, aggregate)
     )
       return null;
     deferredRevision = deferred.revision;
@@ -161,7 +161,7 @@ export async function inspectStaleExpenseConflict(input: {
         conflict.status !== "OPEN" &&
         readRevision(snapshot) === expense.revision &&
         readRevision(snapshot) === expense.serverRevision &&
-        sameUserOwnedFields(localIntent, snapshot)
+        sameLedgerExpenseUserOwnedFields(localIntent, snapshot)
       );
     });
     canonical = canonicalConflict
@@ -198,7 +198,7 @@ export async function inspectStaleExpenseConflict(input: {
         !payload ||
         payload.conflictId !== target.conflictId ||
         payload.currentRevision !== target.currentRevision ||
-        !sameUserOwnedFields(localIntent, resolvedExpense) ||
+        !sameLedgerExpenseUserOwnedFields(localIntent, resolvedExpense) ||
         !audit ||
         expense.serverRevision !== expense.revision ||
         expense.syncStatus !== "SYNCED"
@@ -257,17 +257,19 @@ export async function inspectStaleExpenseConflict(input: {
   };
 }
 
-function sameUserOwnedFields(
-  local: ReturnType<typeof expenseUserOwnedFields>,
+export function sameLedgerExpenseUserOwnedFields(
+  local: ReturnType<typeof ledgerExpenseUserOwnedFields>,
   candidate: Record<string, unknown> | null,
 ) {
   return (
     candidate !== null &&
-    JSON.stringify(local) === JSON.stringify(expenseUserOwnedFields(candidate))
+    JSON.stringify(local) === JSON.stringify(ledgerExpenseUserOwnedFields(candidate))
   );
 }
 
-function expenseUserOwnedFields(expense: LedgerExpense | Record<string, unknown>) {
+export function ledgerExpenseUserOwnedFields(
+  expense: LedgerExpense | Record<string, unknown>,
+) {
   const value = expense as Record<string, unknown>;
   const participants = Array.isArray(value.participants) ? value.participants : [];
   const splits = Array.isArray(value.splits) ? value.splits : [];

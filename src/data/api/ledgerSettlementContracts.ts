@@ -93,6 +93,24 @@ export const settlementPreviewSchema = z.object({
   balances: z.array(balance),
   transfers: z.array(transfer),
   inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  sourceAsOf: z.iso.datetime({ offset: true }),
+  sourceFingerprintPolicy: z.literal("SETTLEMENT_SOURCE_V1"),
+  sourceFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+  confirmedSettlement: z
+    .object({
+      id: uuid,
+      inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
+      finalizedAt: z.string(),
+      lineageSequence: z.number().int().nonnegative(),
+      balances: z.array(balance),
+    })
+    .nullable(),
+  confirmationDiff: z.array(
+    z.object({
+      expenseId: uuid,
+      change: z.enum(["ADDED", "CHANGED", "REMOVED"]),
+    }),
+  ),
 });
 
 export const personalSettlementContributionSchema = z.object({

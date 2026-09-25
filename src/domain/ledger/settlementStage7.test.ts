@@ -4,9 +4,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSettlementPreview,
+  buildSettlementConfirmationDiff,
+  canonicalSettlementInputsJson,
   canonicalSettlementJson,
+  canonicalSettlementSourceJson,
   type SettlementExpenseCandidate,
 } from "./settlement";
+import {
+  canonicalLocalSettlementSourceJson,
+  currentSettlementExpenses,
+} from "./settlementSource";
 
 const members = [
   { memberId: "b", displayNameSnapshot: "B" },
@@ -70,6 +77,20 @@ function preview(expenses: SettlementExpenseCandidate[], memberOrder = members) 
 }
 
 describe("Stage 7.1 settlement preview", () => {
+  it("retains protected terminal history without treating it as current source", () => {
+    const values = [
+      { id: "protected", serverId: null, syncStatus: "FAILED" as const },
+      { id: "pending", serverId: null, syncStatus: "PENDING_CREATE" as const },
+      { id: "stale-server", serverId: "server-id", syncStatus: "FAILED" as const },
+      { id: "server", serverId: "server-id", syncStatus: "SYNCED" as const },
+    ];
+    expect(currentSettlementExpenses(values).map(({ id }) => id)).toEqual([
+      "pending",
+      "server",
+    ]);
+    expect(values[0].syncStatus).toBe("FAILED");
+  });
+
   it("is zero-sum and deterministic under input reordering", () => {
     const first = preview([expense("two", "b"), expense("one", "a")]);
     const second = preview(
@@ -82,6 +103,145 @@ describe("Stage 7.1 settlement preview", () => {
     expect(
       createHash("sha256").update(canonicalSettlementJson(first)).digest("hex"),
     ).toHaveLength(64);
+  });
+
+  it("fingerprints normalized eligible source records independent of source order", () => {
+    const first = {
+      journeyId: "journey",
+      throughTimestamp: "2026-09-12T00:00:00.000Z",
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      settingsRevision: 4,
+      members,
+      expenses: [expense("two", "b"), expense("one", "a")],
+    };
+    expect(canonicalSettlementSourceJson(first)).toBe(
+      canonicalSettlementSourceJson({
+        ...first,
+        expenses: [...first.expenses].reverse(),
+      }),
+    );
+    expect(
+      createHash("sha256").update(canonicalSettlementSourceJson(first)).digest("hex"),
+    ).toHaveLength(64);
+  });
+
+  it("detects a divergent local source even when cursors are otherwise unchanged", () => {
+    const canonical = expense("server-one", "a");
+    const local = {
+      ...canonical,
+      id: "local-one",
+      serverId: canonical.id,
+      serverRevision: canonical.revision,
+      creatorMemberId: null,
+      title: "Server one",
+      description: null,
+      category: "transport",
+      economicDate: null,
+      deletedAt: null,
+      syncStatus: "SYNCED" as const,
+      createdAt: canonical.occurredAt,
+      updatedAt: canonical.occurredAt,
+      status: canonical.businessStatus,
+      journeyId: "journey",
+      paymentRecords: [],
+      participants: canonical.participants.map((participant) => ({
+        ...participant,
+        householdIdSnapshot: null,
+      })),
+      valuation: canonical.valuation
+        ? {
+            ...canonical.valuation,
+            effectiveAt: canonical.valuation.effectiveAt ?? undefined,
+          }
+        : null,
+    };
+    const source = {
+      journeyId: "journey",
+      throughTimestamp: "2026-09-12T00:00:00.000Z",
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      settingsRevision: 4,
+      members,
+      expenses: [canonical],
+    };
+    expect(
+      canonicalLocalSettlementSourceJson(
+        "journey",
+        source.throughTimestamp,
+        [local],
+        new Set(),
+      ),
+    ).toBe(canonicalSettlementSourceJson(source));
+    expect(
+      canonicalLocalSettlementSourceJson(
+        "journey",
+        source.throughTimestamp,
+        [{ ...local, original: { ...local.original, minor: 101 } }],
+        new Set(),
+      ),
+    ).not.toBe(canonicalSettlementSourceJson(source));
+  });
+
+  it("classifies financial input equality without revision-only noise", () => {
+    const [input] = preview([expense("one", "a")]).inputs;
+    expect(canonicalSettlementInputsJson([input])).toBe(
+      canonicalSettlementInputsJson([{ ...input, expenseRevision: 99 }]),
+    );
+    expect(canonicalSettlementInputsJson([input])).not.toBe(
+      canonicalSettlementInputsJson([
+        { ...input, settlement: { ...input.settlement, minor: 101 } },
+      ]),
+    );
+  });
+
+  it("classifies confirmation changes by source eligibility, not deletion", () => {
+    const one = preview([expense("one", "a")]).inputs[0];
+    const two = preview([expense("two", "b")]).inputs[0];
+    expect(
+      buildSettlementConfirmationDiff(
+        [one, two],
+        [
+          { ...one, expenseRevision: 99 },
+          {
+            ...preview([expense("three", "a")]).inputs[0],
+            settlement: { ...one.settlement, minor: 101 },
+          },
+        ],
+      ),
+    ).toEqual([
+      { expenseId: "three", change: "ADDED" },
+      { expenseId: "two", change: "REMOVED" },
+    ]);
+    expect(
+      buildSettlementConfirmationDiff(
+        [one],
+        [{ ...one, settlement: { ...one.settlement, minor: 101 } }],
+      ),
+    ).toEqual([{ expenseId: "one", change: "CHANGED" }]);
+  });
+
+  it("reports an accepted valued Expense becoming rate-required as removed", () => {
+    const accepted = expense("one", "a");
+    const confirmed = preview([accepted]).inputs;
+    const current = buildSettlementPreview({
+      journeyId: "journey",
+      throughTimestamp: "2026-09-12T00:00:00.000Z",
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      settingsRevision: 4,
+      members,
+      expenses: [
+        {
+          ...accepted,
+          businessStatus: "RATE_REQUIRED",
+          valuation: null,
+        },
+      ],
+    }).inputs;
+    expect(buildSettlementConfirmationDiff(confirmed, current)).toEqual([
+      { expenseId: "one", change: "REMOVED" },
+    ]);
   });
 
   it("blocks unresolved rates and conflicts while excluding drafts and deletes", () => {

@@ -2,6 +2,33 @@
 
 Date: 2026-09-25
 
+## Coherent Settlement source convergence implemented — awaiting acceptance
+
+- The existing Settlement Preview response now returns balances/inputs, actual source
+  cutoff, `SETTLEMENT_SOURCE_V1` fingerprint, latest confirmed reference, and
+  `ADDED | CHANGED | REMOVED` confirmation diff from one
+  `ledger_settlement_source_7_1` generation. `REMOVED` means no longer eligible, not
+  necessarily deleted. No endpoint or parallel calculation was added.
+- Mobile publishes one atomic `SettlementSummaryProjection`. Balance, paid/share,
+  confirmation diff and `Your change` cannot mix generations. A coherent offline value
+  is explicitly `SAVED`/`LOCAL_PENDING`; confirmed balance is never presented as current.
+  Review/attention refresh remains independent.
+- A `CURRENT` projection is published only after the synchronized local canonical source
+  matches the Backend fingerprint under the same policy. Mismatch invokes the existing
+  scoped bootstrap regardless of cursor position. Fresh canonical reads re-materialize
+  only fully equal failed UPDATE mirrors; differing or terminal protected intent remains
+  untouched and excluded from authoritative Settlement.
+- Hosted Dev, Simulator and physical device each produce 79 canonical inputs and fingerprint
+  `c0eafc9077d07a73853636dd463188250e6e42fd4eee6caba16847a95935188c`.
+  Both devices render CURRENT `¥8,549,360.58`, `Removed: 1 expense`, and
+  `Your change: +¥5.17`. Simulator `Good` and physical `4p hysical offline` remain
+  protected `FAILED`; `guard 915` remains healthy `SYNCED` revision 3.
+- Validation passes 107 Vitest files / 563 tests, TypeScript, ESLint, Backend build,
+  touched-file Prettier, `git diff --check`, Release Simulator build/install/launch, and
+  signed physical Release build/install/launch. Full Prettier still reports only the six
+  pre-existing unrelated files. Schema remains 36; no migration, new worker, queue, or
+  Production access.
+
 ## Ledger no-context destination landing implemented — awaiting acceptance
 
 - With no selected/current Journey, Ledger now renders local destinations instead of an

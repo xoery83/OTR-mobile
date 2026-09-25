@@ -313,3 +313,22 @@ authorized Backend-owned FX projections. Incremental Ledger changes include
 ## Legacy API Notes
 
 Existing Web routes are mostly AI, media, background jobs, i18n, maps/routes, Google Drive, and memory-shot/story/poster flows. They are useful reference for backend capabilities but are not a clean mobile API surface.
+
+# Settlement Preview coherent source projection
+
+`POST /v2/trips/:tripId/settlements/preview` calculates the complete response from
+one `ledger_settlement_source_7_1` generation. In addition to the existing preview
+fields it returns:
+
+- `sourceAsOf`: the canonical source cutoff used by the calculation;
+- `sourceFingerprintPolicy: "SETTLEMENT_SOURCE_V1"` and a SHA-256
+  `sourceFingerprint` over the normalized eligible source records;
+- `confirmedSettlement`: the latest finalized Settlement reference, or `null`;
+- `confirmationDiff`: changes from that confirmed input set to the current source,
+  classified as `ADDED`, `CHANGED`, or `REMOVED`.
+
+`REMOVED` means the Expense no longer participates in the current Settlement source;
+it does not imply deletion. Balances, inputs, fingerprint, and diff are one atomic
+financial projection. Review and needs-attention coverage remain separate responses.
+The read-only Preview requires Journey read access; FX preflight and finalization retain
+their existing organizer capability checks.

@@ -5,6 +5,11 @@ import type {
   LedgerChangesResponse,
   MyLedgerResponse,
 } from "@/data/api/ledgerReadContracts";
+import {
+  ledgerExpenseUserOwnedFields,
+  sameLedgerExpenseUserOwnedFields,
+} from "@/data/health/staleExpenseConflict";
+import { createLedgerExpenseRepository } from "./ledgerExpenseRepository";
 import { applyFinalizedSettlement } from "./ledgerSettlementRepository";
 import { applyReviewProjection } from "./ledgerReviewRepository";
 import { createLedgerPersonalPaymentRepository } from "./ledgerPersonalPaymentRepository";
@@ -40,7 +45,7 @@ export function createLedgerReadRepository(
       await database.withTransactionAsync(async () => {
         await applyJourney(database, response, userId);
         for (const expense of response.expenses) {
-          await applyBootstrapExpense(database, expense);
+          await applyBootstrapExpense(database, expense, userId);
         }
         for (const quote of response.rateQuotes) await applyRateQuote(database, quote);
         for (const receipt of response.receipts ?? [])
@@ -76,7 +81,7 @@ export function createLedgerReadRepository(
             });
           }
         }
-        await drainDeferredExpenseChanges(database, response.journey.id);
+        await drainDeferredExpenseChanges(database, response.journey.id, userId);
         await saveCursor(
           database,
           response.journey.id,
@@ -100,7 +105,7 @@ export function createLedgerReadRepository(
           );
         for (const change of response.changes) {
           if (change.entityType === "EXPENSE") {
-            await applyExpenseChange(database, journeyId, change);
+            await applyExpenseChange(database, journeyId, change, userId);
           } else if (change.entityType === "HOUSEHOLD") {
             await applyHouseholdChange(database, journeyId, change);
           } else if (change.entityType === "CORRECTION") {
@@ -164,7 +169,7 @@ export function createLedgerReadRepository(
             await deferChange(database, journeyId, change);
           }
         }
-        await drainDeferredExpenseChanges(database, journeyId);
+        await drainDeferredExpenseChanges(database, journeyId, userId);
         await saveCursor(
           database,
           journeyId,
@@ -487,6 +492,7 @@ async function applyExpenseChange(
   database: LedgerReadDatabase,
   journeyId: string,
   change: ServerChange,
+  userId: string,
 ) {
   const existing = await database.getFirstAsync<{ syncStatus: string }>(
     `SELECT sync_status AS syncStatus
@@ -497,6 +503,17 @@ async function applyExpenseChange(
     change.entityId,
   );
   if (existing && pendingStatuses.has(existing.syncStatus)) {
+    if (
+      change.aggregate &&
+      "creatorMemberId" in change.aggregate &&
+      (await reconcileEqualFailedExpenseMirror(
+        database,
+        userId,
+        journeyId,
+        change.aggregate,
+      ))
+    )
+      return;
     await deferChange(database, journeyId, change);
     return;
   }
@@ -584,6 +601,7 @@ async function applyHousehold(
 async function applyBootstrapExpense(
   database: LedgerReadDatabase,
   expense: ServerExpense,
+  userId: string,
 ) {
   const existing = await database.getFirstAsync<{ syncStatus: string }>(
     `SELECT sync_status AS syncStatus
@@ -594,6 +612,15 @@ async function applyBootstrapExpense(
     expense.id,
   );
   if (existing && pendingStatuses.has(existing.syncStatus)) {
+    if (
+      await reconcileEqualFailedExpenseMirror(
+        database,
+        userId,
+        expense.journeyId,
+        expense,
+      )
+    )
+      return;
     await deferChange(database, expense.journeyId, {
       entityType: "EXPENSE",
       entityId: expense.id,
@@ -604,6 +631,116 @@ async function applyBootstrapExpense(
     return;
   }
   await applyExpense(database, expense);
+}
+
+async function reconcileEqualFailedExpenseMirror(
+  database: LedgerReadDatabase,
+  userId: string,
+  journeyId: string,
+  canonical: ServerExpense,
+) {
+  const local = await database.getFirstAsync<{
+    id: string;
+    serverId: string | null;
+    syncStatus: string;
+    localOwnerUserId: string | null;
+  }>(
+    `SELECT id, server_id AS serverId, sync_status AS syncStatus,
+       local_owner_user_id AS localOwnerUserId
+     FROM ledger_expenses
+     WHERE journey_id = ? AND (id = ? OR server_id = ?)`,
+    journeyId,
+    canonical.id,
+    canonical.id,
+  );
+  if (
+    !local ||
+    local.syncStatus !== "FAILED" ||
+    local.serverId !== canonical.id ||
+    local.localOwnerUserId !== userId
+  )
+    return false;
+  if (
+    !(await database.getFirstAsync(
+      `SELECT 1 FROM ledger_actor_context WHERE user_id = ? AND journey_id = ?`,
+      userId,
+      journeyId,
+    ))
+  )
+    return false;
+  const operations = await database.getAllAsync<{
+    id: string;
+    operationType: string;
+    status: string;
+    payloadJson: string;
+  }>(
+    `SELECT id, operation_type AS operationType, status,
+       payload_json AS payloadJson
+     FROM sync_operations
+     WHERE owner_user_id = ? AND trip_id = ?
+       AND entity_type = 'ledger_expense' AND entity_id = ?
+       AND status <> 'COMPLETED'`,
+    userId,
+    journeyId,
+    local.id,
+  );
+  if (
+    !operations.length ||
+    operations.some(
+      (operation) =>
+        operation.status !== "FAILED" ||
+        operation.operationType !== "LEDGER_UPDATE_EXPENSE",
+    )
+  )
+    return false;
+  const expense = await createLedgerExpenseRepository(
+    database,
+    async () => userId,
+  ).getExpense(local.id);
+  if (!expense) return false;
+  const localIntent = ledgerExpenseUserOwnedFields(expense);
+  if (!sameLedgerExpenseUserOwnedFields(localIntent, canonical)) return false;
+  for (const operation of operations) {
+    const payload = parseObject(operation.payloadJson);
+    const submitted = payload ? parseObjectValue(payload.expense) : null;
+    if (!sameLedgerExpenseUserOwnedFields(localIntent, submitted)) return false;
+  }
+
+  await applyExpense(database, canonical);
+  await database.runAsync(
+    `UPDATE sync_operations SET status = 'COMPLETED', next_attempt_at = NULL,
+       claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
+     WHERE owner_user_id = ? AND trip_id = ? AND entity_type = 'ledger_expense'
+       AND entity_id = ? AND status = 'FAILED'
+       AND operation_type = 'LEDGER_UPDATE_EXPENSE'`,
+    new Date().toISOString(),
+    userId,
+    journeyId,
+    local.id,
+  );
+  await database.runAsync(
+    `DELETE FROM ledger_deferred_server_changes
+     WHERE journey_id = ? AND entity_type = 'EXPENSE' AND entity_id = ?
+       AND revision <= ?`,
+    journeyId,
+    canonical.id,
+    canonical.revision,
+  );
+  return true;
+}
+
+function parseObject(value: string) {
+  try {
+    return parseObjectValue(JSON.parse(value));
+  } catch {
+    return null;
+  }
+}
+
+function parseObjectValue(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 async function applyExpense(database: LedgerReadDatabase, expense: ServerExpense) {
@@ -747,14 +884,38 @@ async function applyExpense(database: LedgerReadDatabase, expense: ServerExpense
       expense.updatedAt,
       expense.valuation.decimalRate ?? null,
       expense.valuation.roundingMode ?? "HALF_UP",
-      expense.valuation.effectiveAt ?? expense.updatedAt,
+      expense.valuation.effectiveAt ?? null,
       expense.valuation.supersedesValuationId ?? null,
       expense.valuation.referenceEvidence
         ? JSON.stringify(expense.valuation.referenceEvidence)
         : null,
     );
     await database.runAsync(
-      "UPDATE ledger_valuation_snapshots SET is_active = 1, reference_evidence_json = ? WHERE id = ?",
+      `UPDATE ledger_valuation_snapshots SET
+         server_id = ?, expense_id = ?, expense_revision = ?, policy = ?,
+         original_amount_minor = ?, original_currency = ?, original_scale = ?,
+         settlement_amount_minor = ?, settlement_currency = ?, settlement_scale = ?,
+         rate_snapshot_id = ?, payment_record_id = ?, reason = ?, is_active = 1,
+         decimal_rate = ?, rounding_mode = ?, effective_at = ?,
+         supersedes_valuation_id = ?, reference_evidence_json = ?
+       WHERE id = ?`,
+      expense.valuation.id,
+      localId,
+      expense.revision,
+      expense.valuation.policy,
+      expense.valuation.original.minor,
+      expense.valuation.original.currency,
+      expense.valuation.original.scale,
+      expense.valuation.settlement.minor,
+      expense.valuation.settlement.currency,
+      expense.valuation.settlement.scale,
+      expense.valuation.rateSnapshotId,
+      expense.valuation.paymentRecordId,
+      expense.valuation.reason,
+      expense.valuation.decimalRate ?? null,
+      expense.valuation.roundingMode ?? "HALF_UP",
+      expense.valuation.effectiveAt ?? null,
+      expense.valuation.supersedesValuationId ?? null,
       expense.valuation.referenceEvidence
         ? JSON.stringify(expense.valuation.referenceEvidence)
         : null,
@@ -871,6 +1032,7 @@ async function deferChange(
 async function drainDeferredExpenseChanges(
   database: LedgerReadDatabase,
   journeyId: string,
+  userId: string,
 ) {
   const deferred = await database.getAllAsync<{
     entityId: string;
@@ -897,6 +1059,7 @@ async function drainDeferredExpenseChanges(
         database,
         journeyId,
         JSON.parse(row.payloadJson) as ServerChange,
+        userId,
       );
       await database.runAsync(
         `DELETE FROM ledger_deferred_server_changes

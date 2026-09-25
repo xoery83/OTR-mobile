@@ -1124,6 +1124,22 @@ async function mutateLedgerSettlement(request: Request, gateway: DevBackendGatew
   const [, tripId, action] = match;
   assertTripId(tripId);
   const user = await authenticate(request, gateway);
+  if (action === "preview") {
+    if (!(await gateway.canReadTrip(user.id, tripId))) {
+      throw new HttpError(403, "TRIP_READ_FORBIDDEN", "Trip read access is required.");
+    }
+    const parsed = settlementPreviewRequestSchema.safeParse(await parseBody(request));
+    if (!parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    return json(
+      200,
+      await gateway.previewLedgerSettlement(
+        user.id,
+        tripId,
+        parsed.data.throughTimestamp,
+      ),
+    );
+  }
   if (!(await gateway.canFinalizeSettlement(user.id, tripId))) {
     throw new HttpError(
       403,
@@ -1145,19 +1161,6 @@ async function mutateLedgerSettlement(request: Request, gateway: DevBackendGatew
     );
   }
   const body = await parseBody(request);
-  if (action === "preview") {
-    const parsed = settlementPreviewRequestSchema.safeParse(body);
-    if (!parsed.success)
-      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
-    return json(
-      200,
-      await gateway.previewLedgerSettlement(
-        user.id,
-        tripId,
-        parsed.data.throughTimestamp,
-      ),
-    );
-  }
   const parsed = settlementFinalizeRequestSchema.safeParse(body);
   if (!parsed.success)
     throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");

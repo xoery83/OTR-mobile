@@ -99,6 +99,11 @@ function createGateway(options: { authorized?: boolean } = {}) {
       balances: [],
       transfers: [],
       inputDigest: "a".repeat(64),
+      sourceAsOf: cutoff,
+      sourceFingerprintPolicy: "SETTLEMENT_SOURCE_V1" as const,
+      sourceFingerprint: "b".repeat(64),
+      confirmedSettlement: null,
+      confirmationDiff: [],
     })),
     readPersonalSettlementReview: vi.fn(async (_userId, requestedTripId) => ({
       statement: {
@@ -827,7 +832,7 @@ describe("OTR Dev Backend", () => {
     });
   });
 
-  it("requires organizer capability for settlement preview", async () => {
+  it("requires Journey read access for settlement preview", async () => {
     const { gateway } = createGateway({ authorized: false });
     const response = await createDevBackendHandler({ gateway })(
       new Request(`http://localhost/v2/trips/${tripId}/settlements/preview`, {
@@ -840,7 +845,26 @@ describe("OTR Dev Backend", () => {
       }),
     );
     expect(response.status).toBe(403);
+    expect(gateway.canReadTrip).toHaveBeenCalledWith(userId, tripId);
     expect(gateway.previewLedgerSettlement).not.toHaveBeenCalled();
+  });
+
+  it("keeps read-only preview available without organizer mutation authority", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.canFinalizeSettlement).mockResolvedValue(false);
+    const response = await createDevBackendHandler({ gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/settlements/preview`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ throughTimestamp: "2026-09-12T00:00:00.000Z" }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.canReadTrip).toHaveBeenCalledWith(userId, tripId);
+    expect(gateway.canFinalizeSettlement).not.toHaveBeenCalled();
   });
 
   it("runs settlement FX preflight only for an authorized organizer", async () => {

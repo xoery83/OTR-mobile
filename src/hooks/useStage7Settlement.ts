@@ -8,7 +8,10 @@ import type {
 } from "@/data/api/ledgerSettlementContracts";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
-import { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";
+import {
+  refreshJourneyLedger,
+  revalidateJourneyLedger,
+} from "@/data/sync/ledgerReportingCoordinator";
 import { runLedgerSettlementPaymentSync } from "@/data/sync/ledgerSettlementPaymentCoordinator";
 import {
   generateCurrentSettlementExport,
@@ -30,12 +33,31 @@ import {
 } from "@/data/sync/ledgerSettlementCoordinator";
 import { loadEstimatedSettlement } from "@/features/ledger/loadEstimatedSettlement";
 import { unpublishedEstimateMessage } from "@/features/ledger/estimatedSettlement";
+import { createLatestRequest } from "@/features/ledger/latestRequest";
 import { settlementCacheMessage } from "@/features/ledger/settlementSections";
+import {
+  currentSettlementSummaryProjection,
+  savedSettlementSummaryProjection,
+  type SettlementSummaryProjection,
+} from "@/features/ledger/settlementSummaryProjection";
 
 type DisplayPreview = Awaited<ReturnType<typeof loadEstimatedSettlement>>;
 
 export type Stage7Preview = SettlementPreviewResponse;
 export type Stage7Finalized = FinalizedSettlementDto;
+
+async function verifyCurrentSettlementSource(journeyId: string, preview: Stage7Preview) {
+  let local = await loadEstimatedSettlement(journeyId, preview.sourceAsOf);
+  if (local.canonicalSourceFingerprint !== preview.sourceFingerprint) {
+    await revalidateJourneyLedger(journeyId);
+    local = await loadEstimatedSettlement(journeyId, preview.sourceAsOf);
+  }
+  if (local.canonicalSourceFingerprint !== preview.sourceFingerprint)
+    throw new Error(
+      "Saved Ledger data does not yet match the current Settlement source.",
+    );
+  return local;
+}
 
 export function useStage7Settlement(journeyId?: string) {
   const network = useNetworkState();
@@ -43,9 +65,12 @@ export function useStage7Settlement(journeyId?: string) {
   const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(null);
   const activeJourneyId = journeyId ?? selectedJourneyId ?? undefined;
   const activeJourneyRef = useRef(activeJourneyId);
+  const [projectionRequest] = useState(createLatestRequest);
   const [loadedJourneyId, setLoadedJourneyId] = useState<string | null>(null);
   const [updating, setUpdating] = useState(Boolean(journeyId));
   const [preview, setPreview] = useState<Stage7Preview | null>(null);
+  const [summaryProjection, setSummaryProjection] =
+    useState<SettlementSummaryProjection | null>(null);
   const [displayPreview, setDisplayPreview] = useState<DisplayPreview | null>(null);
   const [unavailableExpenseIds, setUnavailableExpenseIds] = useState<Set<string>>(
     new Set(),
@@ -113,6 +138,7 @@ export function useStage7Settlement(journeyId?: string) {
         setUpdating(false);
         return;
       }
+      const projectionGeneration = projectionRequest.begin();
       const load = async () => {
         const repository = await getDefaultLedgerSettlementRepository();
         const [rows, items, memberId, organizer, pendingFinancialOperations] =
@@ -129,6 +155,7 @@ export function useStage7Settlement(journeyId?: string) {
         const cached = await load();
         if (!active) return;
         setPreview(null);
+        setSummaryProjection(null);
         setDisplayPreview(null);
         setUnavailableExpenseIds(new Set());
         setPendingPublicationExpenseIds(new Set());
@@ -144,7 +171,19 @@ export function useStage7Settlement(journeyId?: string) {
         let adjustmentLoaded = false;
         try {
           const display = await loadEstimatedSettlement(activeJourneyId);
-          if (active) setDisplayPreview(display);
+          if (active && projectionRequest.isCurrent(projectionGeneration)) {
+            setDisplayPreview(display);
+            setSummaryProjection(
+              cached.memberId
+                ? savedSettlementSummaryProjection(
+                    display,
+                    root ?? null,
+                    cached.memberId,
+                    cached.pendingFinancialOperations,
+                  )
+                : null,
+            );
+          }
         } catch {
           // A newly opened Journey may not exist locally until bootstrap completes below.
         }
@@ -175,27 +214,50 @@ export function useStage7Settlement(journeyId?: string) {
         setActorMemberId(refreshed.memberId);
         setIsOrganizer(refreshed.organizer);
         setHasPendingFinancialOperations(refreshed.pendingFinancialOperations);
-        setDisplayPreview(await loadEstimatedSettlement(activeJourneyId));
-        if (refreshed.organizer) {
-          try {
-            const current = await previewSettlement(
-              activeJourneyId,
-              new Date().toISOString(),
+        const refreshedDisplay = await loadEstimatedSettlement(activeJourneyId);
+        setDisplayPreview(refreshedDisplay);
+        const refreshedRoot =
+          refreshed.rows.find((row) => row.kind !== "ADJUSTMENT") ??
+          refreshed.rows[0] ??
+          null;
+        if (projectionRequest.isCurrent(projectionGeneration))
+          setSummaryProjection(
+            refreshed.memberId
+              ? savedSettlementSummaryProjection(
+                  refreshedDisplay,
+                  refreshedRoot,
+                  refreshed.memberId,
+                  refreshed.pendingFinancialOperations,
+                )
+              : null,
+          );
+        try {
+          const current = await previewSettlement(
+            activeJourneyId,
+            new Date().toISOString(),
+          );
+          const localSource = await verifyCurrentSettlementSource(
+            activeJourneyId,
+            current,
+          );
+          setDisplayPreview(localSource);
+          if (active && projectionRequest.isCurrent(projectionGeneration)) {
+            setPreview(current);
+            setSummaryProjection(
+              refreshed.memberId
+                ? currentSettlementSummaryProjection(current, refreshed.memberId)
+                : null,
             );
-            if (active) setPreview(current);
-            const refreshedRoot =
-              refreshed.rows.find((row) => row.kind !== "ADJUSTMENT") ??
-              refreshed.rows[0];
-            if (refreshedRoot && !adjustmentLoaded) {
-              const adjustment = await previewSettlementAdjustment(
-                activeJourneyId,
-                refreshedRoot.id,
-              );
-              if (active) setAdjustmentPreview(adjustment);
-            }
-          } catch {
-            // Local informational preview remains available offline or before queue drain.
           }
+          if (refreshed.organizer && refreshedRoot && !adjustmentLoaded) {
+            const adjustment = await previewSettlementAdjustment(
+              activeJourneyId,
+              refreshedRoot.id,
+            );
+            if (active) setAdjustmentPreview(adjustment);
+          }
+        } catch {
+          // Coherent saved projection remains available offline or before queue drain.
         }
       } catch {
         if (active) setMessage(settlementCacheMessage(online, "data"));
@@ -205,8 +267,9 @@ export function useStage7Settlement(journeyId?: string) {
     });
     return () => {
       active = false;
+      projectionRequest.cancel();
     };
-  }, [activeJourneyId, applyFinalizedRows, online]);
+  }, [activeJourneyId, applyFinalizedRows, online, projectionRequest]);
 
   const matchesActiveJourney = loadedJourneyId === activeJourneyId;
 
@@ -221,6 +284,7 @@ export function useStage7Settlement(journeyId?: string) {
     adjustmentPreview: matchesActiveJourney ? adjustmentPreview : null,
     message,
     preview: matchesActiveJourney ? preview : null,
+    summaryProjection: matchesActiveJourney ? summaryProjection : null,
     displayPreview: matchesActiveJourney ? displayPreview : null,
     unavailableExpenseIds: matchesActiveJourney
       ? unavailableExpenseIds
@@ -266,6 +330,7 @@ export function useStage7Settlement(journeyId?: string) {
     async prepare() {
       if (!activeJourneyId) return;
       const operationJourneyId = activeJourneyId;
+      const projectionGeneration = projectionRequest.begin();
       setBusy(true);
       setMessage(null);
       try {
@@ -277,12 +342,25 @@ export function useStage7Settlement(journeyId?: string) {
           }
         }
         await refreshJourneyLedger(operationJourneyId);
-        setDisplayPreview(await loadEstimatedSettlement(operationJourneyId));
+        const display = await loadEstimatedSettlement(operationJourneyId);
+        setDisplayPreview(display);
         const next = await previewSettlement(
           operationJourneyId,
           new Date().toISOString(),
         );
-        if (operationJourneyId === activeJourneyRef.current) setPreview(next);
+        const currentDisplay = await verifyCurrentSettlementSource(
+          operationJourneyId,
+          next,
+        );
+        if (
+          operationJourneyId === activeJourneyRef.current &&
+          projectionRequest.isCurrent(projectionGeneration)
+        ) {
+          setPreview(next);
+          setDisplayPreview(currentDisplay);
+          if (actorMemberId)
+            setSummaryProjection(currentSettlementSummaryProjection(next, actorMemberId));
+        }
       } catch (error) {
         setPreview(null);
         setMessage(error instanceof Error ? error.message : "Settlement preview failed.");
@@ -292,6 +370,7 @@ export function useStage7Settlement(journeyId?: string) {
     },
     async finalize(ready: Stage7Preview) {
       const operationJourneyId = ready.journeyId;
+      const projectionGeneration = projectionRequest.begin();
       setBusy(true);
       setMessage(null);
       try {
@@ -305,19 +384,29 @@ export function useStage7Settlement(journeyId?: string) {
           operationJourneyId,
           new Date().toISOString(),
         );
+        const currentDisplay = await verifyCurrentSettlementSource(
+          operationJourneyId,
+          current,
+        );
         if (
           current.state !== "PREVIEW_READY" ||
           current.settingsRevision !== ready.settingsRevision ||
           JSON.stringify(current.inputs) !== JSON.stringify(ready.inputs)
         ) {
-          if (operationJourneyId === activeJourneyRef.current) {
+          if (
+            operationJourneyId === activeJourneyRef.current &&
+            projectionRequest.isCurrent(projectionGeneration)
+          ) {
             setPreview(current);
-            const display = await loadEstimatedSettlement(operationJourneyId);
-            setDisplayPreview(display);
+            setDisplayPreview(currentDisplay);
+            if (actorMemberId)
+              setSummaryProjection(
+                currentSettlementSummaryProjection(current, actorMemberId),
+              );
             setMessage(
               unpublishedEstimateMessage(
                 rates.pendingPublication,
-                display.estimatedServerIds,
+                currentDisplay.estimatedServerIds,
               ) ??
                 "Settlement values changed. Review the latest preview before finalizing.",
             );
@@ -329,11 +418,15 @@ export function useStage7Settlement(journeyId?: string) {
           current.throughTimestamp,
           current.inputDigest,
         );
-        if (operationJourneyId === activeJourneyRef.current) {
+        if (
+          operationJourneyId === activeJourneyRef.current &&
+          projectionRequest.isCurrent(projectionGeneration)
+        ) {
           setFinalized(response.entity);
           setLineage([response.entity]);
           setPreview(null);
           setDisplayPreview(null);
+          setSummaryProjection(null);
           setMessage("Final settlement saved from the latest group record.");
         }
       } catch (error) {

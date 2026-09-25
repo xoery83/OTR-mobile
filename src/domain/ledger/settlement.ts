@@ -10,6 +10,7 @@ import type {
 } from "./types";
 
 export const SETTLEMENT_ALGORITHM_VERSION = "ledger-settlement-greedy-v1";
+export const SETTLEMENT_SOURCE_FINGERPRINT_POLICY = "SETTLEMENT_SOURCE_V1";
 
 export type SettlementMemberSnapshot = {
   memberId: string;
@@ -435,6 +436,123 @@ export function buildSettlementPreview(input: SettlementPreviewInput): Settlemen
 
 export function canonicalSettlementJson(preview: SettlementPreview) {
   return JSON.stringify(sortJson(preview));
+}
+
+export function canonicalSettlementSourceJson(source: SettlementPreviewInput) {
+  return JSON.stringify(
+    source.expenses
+      .filter(
+        (expense) =>
+          expense.occurredAt <= source.throughTimestamp &&
+          expense.businessStatus === "ACCEPTED" &&
+          expense.settlementParticipation === "INCLUDED" &&
+          !expense.hasOpenConflict &&
+          expense.valuation,
+      )
+      .sort((left, right) => stableIdCompare(left.id, right.id))
+      .map((expense) => ({
+        id: expense.id,
+        revision: Number(expense.revision),
+        occurredAt: new Date(expense.occurredAt).toISOString(),
+        businessStatus: expense.businessStatus,
+        settlementParticipation: expense.settlementParticipation,
+        payerMemberId: expense.payerMemberId,
+        original: {
+          minor: Number(expense.original.minor),
+          currency: expense.original.currency,
+          scale: Number(expense.original.scale),
+        },
+        valuation: expense.valuation
+          ? {
+              id: expense.valuation.id,
+              policy: expense.valuation.policy,
+              original: {
+                minor: Number(expense.valuation.original.minor),
+                currency: expense.valuation.original.currency,
+                scale: Number(expense.valuation.original.scale),
+              },
+              settlement: {
+                minor: Number(expense.valuation.settlement.minor),
+                currency: expense.valuation.settlement.currency,
+                scale: Number(expense.valuation.settlement.scale),
+              },
+              rateSnapshotId: expense.valuation.rateSnapshotId,
+              paymentRecordId: expense.valuation.paymentRecordId,
+              reason: expense.valuation.reason,
+              decimalRate: expense.valuation.decimalRate ?? null,
+              roundingMode: expense.valuation.roundingMode ?? null,
+              effectiveAt: expense.valuation.effectiveAt
+                ? new Date(expense.valuation.effectiveAt).toISOString()
+                : null,
+              supersedesValuationId: expense.valuation.supersedesValuationId ?? null,
+            }
+          : null,
+        participants: [...expense.participants]
+          .sort((left, right) => stableIdCompare(left.memberId, right.memberId))
+          .map((participant) => ({
+            memberId: participant.memberId,
+            displayNameSnapshot: participant.displayNameSnapshot,
+          })),
+        splits: [...expense.splits]
+          .sort((left, right) => stableIdCompare(left.memberId, right.memberId))
+          .map((split) => ({
+            memberId: split.memberId,
+            method: split.method,
+            originalMinor: Number(split.originalMinor),
+            settlementMinor:
+              split.settlementMinor === null ? null : Number(split.settlementMinor),
+            weightUnits: split.weightUnits === null ? null : Number(split.weightUnits),
+            percentageUnits:
+              split.percentageUnits === null ? null : Number(split.percentageUnits),
+            roundingAdjustmentMinor: Number(split.roundingAdjustmentMinor),
+          })),
+      })),
+  );
+}
+
+export function canonicalSettlementInputsJson(inputs: SettlementInputSnapshot[]) {
+  return JSON.stringify(
+    sortJson(
+      [...inputs]
+        .sort((left, right) => stableIdCompare(left.expenseId, right.expenseId))
+        .map(({ expenseRevision: _revision, ...input }) => ({
+          ...input,
+          valuation: { ...input.valuation, id: undefined },
+          payer: { memberId: input.payer.memberId },
+          splits: input.splits.map((split) => ({
+            ...split,
+            member: { memberId: split.member.memberId },
+          })),
+        })),
+    ),
+  );
+}
+
+export function buildSettlementConfirmationDiff(
+  confirmed: SettlementInputSnapshot[],
+  current: SettlementInputSnapshot[],
+) {
+  const previousById = new Map(
+    confirmed.map((item) => [item.expenseId, canonicalSettlementInputsJson([item])]),
+  );
+  const currentById = new Map(
+    current.map((item) => [item.expenseId, canonicalSettlementInputsJson([item])]),
+  );
+  return [...new Set([...previousById.keys(), ...currentById.keys()])]
+    .sort(stableIdCompare)
+    .flatMap<{ expenseId: string; change: "ADDED" | "CHANGED" | "REMOVED" }>(
+      (expenseId) => {
+        const before = previousById.get(expenseId);
+        const after = currentById.get(expenseId);
+        if (before === after) return [];
+        return [
+          {
+            expenseId,
+            change: !before ? "ADDED" : !after ? "REMOVED" : "CHANGED",
+          },
+        ];
+      },
+    );
 }
 
 export function canonicalAdjustmentInputJson(input: {
