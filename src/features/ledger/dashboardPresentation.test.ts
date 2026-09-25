@@ -105,6 +105,74 @@ describe("Ledger dashboard presentation", () => {
     ).toBe("test");
   });
 
+  it("orders Active, Upcoming, and Past Journeys canonically", () => {
+    const journey = {
+      hasActor: true,
+      memberCount: 2,
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+    };
+    const sections = journeyPickerSections(
+      [
+        {
+          ...journey,
+          journeyId: "active-later",
+          title: "Active Later",
+          startDate: "2026-09-10",
+          endDate: "2026-09-30",
+        },
+        {
+          ...journey,
+          journeyId: "active-selected",
+          title: "Active Selected",
+          startDate: "2026-09-01",
+          endDate: "2026-09-28",
+        },
+        {
+          ...journey,
+          journeyId: "upcoming-later",
+          title: "Upcoming Later",
+          startDate: "2026-11-01",
+          endDate: "2026-11-10",
+        },
+        {
+          ...journey,
+          journeyId: "upcoming-sooner",
+          title: "Upcoming Sooner",
+          startDate: "2026-10-01",
+          endDate: "2026-10-10",
+        },
+        {
+          ...journey,
+          journeyId: "past-older",
+          title: "Past Older",
+          startDate: "2026-07-01",
+          endDate: "2026-07-10",
+        },
+        {
+          ...journey,
+          journeyId: "past-newer",
+          title: "Past Newer",
+          startDate: "2026-08-01",
+          endDate: "2026-08-10",
+        },
+      ],
+      "2026-09-25",
+      "active-selected",
+    );
+
+    expect(
+      sections.map((section) => [
+        section.title,
+        section.data.map((item) => item.journeyId),
+      ]),
+    ).toEqual([
+      ["Active", ["active-selected", "active-later"]],
+      ["Upcoming", ["upcoming-sooner", "upcoming-later"]],
+      ["Past", ["past-newer", "past-older"]],
+    ]);
+  });
+
   it("uses the signed settlement position without implying a new calculation", () => {
     expect(settlementPositionLabel(-1)).toBe("You owe");
     expect(settlementPositionLabel(1)).toBe("You are owed");

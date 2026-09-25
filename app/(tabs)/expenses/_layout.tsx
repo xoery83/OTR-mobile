@@ -45,6 +45,7 @@ export default function LedgerLayout() {
         }}
       />
       <Stack.Screen name="expense/[id]" options={{ headerTitle: "Expense" }} />
+      <Stack.Screen name="journey/[journeyId]" options={{ headerShown: false }} />
       <Stack.Screen name="balance" options={{ headerTitle: "Your Balance" }} />
       <Stack.Screen name="settlement" options={{ headerTitle: "Settlement" }} />
       <Stack.Screen

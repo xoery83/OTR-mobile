@@ -2,6 +2,19 @@
 
 Date: 2026-09-25
 
+## Ledger no-context destination landing implemented — awaiting acceptance
+
+- With no selected/current Journey, Ledger now renders local destinations instead of an
+  empty state: compact My Ledger first, then non-empty Active, Upcoming and Past sections
+  using the existing canonical Journey classifier, ordering, metadata and status tags.
+- Header search exposes and focuses local Journey filtering. Journey rows open a scoped
+  Spending route with a normal back path and do not write the app-wide selected Journey;
+  the existing Choose Journey modal retains its explicit selection semantics.
+- The landing search control toggles open/closed, Add Expense is absent without a Journey,
+  and Currency uses the same current-Journey resolution instead of a stale historical ID.
+- The normal Ledger surface no longer contains Debug Information. No repository, schema,
+  sync, Settlement, Backend or Journey lifecycle behavior changed.
+
 ## Data Health UX Polish and final stale-state cleanup implemented — awaiting acceptance
 
 - The System Health screen now shows real coordinator phases for saved-data scanning,

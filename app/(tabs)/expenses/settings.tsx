@@ -16,6 +16,7 @@ import { getDefaultLedgerReportingRepository } from "@/data/repositories/default
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import { ledgerCurrencyRepository } from "@/data/repositories/ledgerCurrencyRepository";
 import type { JourneyCurrencyPreview } from "@/data/repositories/ledgerCurrencyRepository";
+import { chooseJourneyEntry } from "@/domain/ledger/journeyContext";
 import { createLocalId } from "@/domain/localId";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { currencyName } from "@/features/ledger/currencyPickerData";
@@ -46,11 +47,14 @@ export default function CurrencyRoute() {
           repository.getSelectedJourneyId(),
           repository.listJourneys(),
         ]);
-        const activeJourneyId = params.journeyId ?? selectedId;
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        const entry = chooseJourneyEntry(journeys, today, selectedId, params.journeyId);
+        const activeJourneyId = entry.kind === "JOURNEY" ? entry.journeyId : null;
         const selected =
           journeys.find((item) => item.journeyId === activeJourneyId) ?? null;
+        setJourney(selected);
         if (selected) {
-          setJourney(selected);
           const [actor, settlement] = await Promise.all([
             repository.getActorContext(selected.journeyId),
             getDefaultLedgerSettlementRepository(),
