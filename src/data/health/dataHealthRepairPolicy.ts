@@ -4,6 +4,10 @@ import {
   HISTORICAL_EXPENSE_RECOVERY_ACTION,
   HISTORICAL_EXPENSE_RECOVERY_RULE,
 } from "./historicalExpenseRecovery";
+import {
+  STALE_EXPENSE_CONFLICT_ACTION,
+  STALE_EXPENSE_CONFLICT_RULE,
+} from "./staleExpenseConflict";
 
 export type DataHealthRepairDisposition =
   "AUTO_SAFE" | "USER_ACTION_REQUIRED" | "REMOTE_RECONCILIATION_REQUIRED" | "PROTECTED";
@@ -12,13 +16,15 @@ export type DataHealthRepairActionId =
   | "RECOVER_EXPIRED_OPERATION_LEASE_V1"
   | "WAKE_COMPLETED_OPERATION_DEPENDENCY_V1"
   | "REACTIVATE_RETRYABLE_OPERATION_V1"
-  | typeof HISTORICAL_EXPENSE_RECOVERY_ACTION;
+  | typeof HISTORICAL_EXPENSE_RECOVERY_ACTION
+  | typeof STALE_EXPENSE_CONFLICT_ACTION;
 
 export type DataHealthRepairVerifierId =
   | "VERIFY_OPERATION_LEFT_PROCESSING_V1"
   | "VERIFY_DEPENDENT_OPERATION_RUNNABLE_V1"
   | "VERIFY_RETRYABLE_OPERATION_RUNNABLE_V1"
   | "VERIFY_HISTORICAL_EXPENSE_CONVERGED_V1"
+  | "VERIFY_STALE_CONFLICT_RECONCILED_V1"
   | "VERIFY_USER_RESOLUTION_V1"
   | "VERIFY_REMOTE_RECONCILIATION_V1"
   | "VERIFY_PROTECTED_STATE_UNCHANGED_V1";
@@ -30,7 +36,8 @@ export type DataHealthRepairEvidenceId =
   | "USER_PROVIDED_CANONICAL_INPUT_V1"
   | "AUTHORIZED_REMOTE_CANONICAL_STATE_V1"
   | "PROTECTED_LOCAL_INTENT_V1"
-  | "COMPLETE_LOCAL_OPERATION_EVIDENCE_V1";
+  | "COMPLETE_LOCAL_OPERATION_EVIDENCE_V1"
+  | "AUTHORIZED_CANONICAL_EQUALITY_V1";
 
 export type DataHealthRepairPlan = {
   accountId: string;
@@ -111,6 +118,10 @@ export const dataHealthRepairActionContracts: Readonly<
     evidenceRequirement: "COMPLETE_LOCAL_OPERATION_EVIDENCE_V1",
     verifierId: "VERIFY_HISTORICAL_EXPENSE_CONVERGED_V1",
   },
+  [STALE_EXPENSE_CONFLICT_ACTION]: {
+    evidenceRequirement: "AUTHORIZED_CANONICAL_EQUALITY_V1",
+    verifierId: "VERIFY_STALE_CONFLICT_RECONCILED_V1",
+  },
 };
 
 export const dataHealthRepairVerifiers: Readonly<
@@ -131,6 +142,10 @@ export const dataHealthRepairVerifiers: Readonly<
   VERIFY_HISTORICAL_EXPENSE_CONVERGED_V1: {
     successEvidence:
       "Push, pull, and rescan prove one mapped Expense matches the compacted current intent",
+  },
+  VERIFY_STALE_CONFLICT_RECONCILED_V1: {
+    successEvidence:
+      "A rescan proves the stale operation and equal canonical Expense no longer conflict",
   },
   VERIFY_USER_RESOLUTION_V1: {
     successEvidence:
@@ -157,6 +172,7 @@ const knownRuleIds = new Set([
   "DH_REVIEW_DERIVED_STATE_V1",
   "DH_ACCOUNT_JOURNEY_ISOLATION_V1",
   HISTORICAL_EXPENSE_RECOVERY_RULE,
+  STALE_EXPENSE_CONFLICT_RULE,
 ]);
 
 export function planDataHealthRepairs(input: {
@@ -185,6 +201,11 @@ export function planDataHealthRepairs(input: {
       finding.category === "RETRYABLE"
     )
       return executablePlan(base, HISTORICAL_EXPENSE_RECOVERY_ACTION);
+    if (
+      finding.ruleId === STALE_EXPENSE_CONFLICT_RULE &&
+      finding.category === "MIRROR_STALE"
+    )
+      return executablePlan(base, STALE_EXPENSE_CONFLICT_ACTION);
     if (
       finding.category === "PROTECTED_LOCAL" ||
       finding.category === "ISOLATION_VIOLATION"

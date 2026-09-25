@@ -1,6 +1,7 @@
 import type {
   DataHealthAutomaticPlan,
   DataHealthAutomaticTrigger,
+  DataHealthProgressStage,
   DataHealthReport,
   DataHealthRunOptions,
   DataHealthTrigger,
@@ -51,6 +52,14 @@ export function createDataHealthScheduler(dependencies: {
   const lastNetworkRun = new Map<string, number>();
   let running = false;
   let pending: QueueItem | null = null;
+  let lastManualReport: DataHealthReport | null = null;
+  let manualProgress: DataHealthProgressStage | null = null;
+  const progressListeners = new Set<(stage: DataHealthProgressStage | null) => void>();
+
+  const publishProgress = (stage: DataHealthProgressStage | null) => {
+    manualProgress = stage;
+    for (const listener of progressListeners) listener(stage);
+  };
 
   const enqueue = (request: QueueRequest) =>
     new Promise<DataHealthReport | null>((resolve, reject) => {
@@ -69,7 +78,8 @@ export function createDataHealthScheduler(dependencies: {
 
   const execute = async (request: QueueRequest) => {
     const coordinator = await dependencies.getCoordinator();
-    if (request.trigger === "MANUAL") return coordinator.converge("MANUAL");
+    if (request.trigger === "MANUAL")
+      return coordinator.converge("MANUAL", { onProgress: publishProgress });
 
     const plan = await coordinator.planAutomaticRun({
       trigger: request.trigger,
@@ -133,10 +143,25 @@ export function createDataHealthScheduler(dependencies: {
       });
     },
     runManual() {
-      return enqueue({ trigger: "MANUAL", journeyIds: [] }).then((report) => {
-        if (!report) throw new Error("Manual data health did not produce a report.");
-        return report;
-      });
+      const startedAt = now().toISOString();
+      return enqueue({ trigger: "MANUAL", journeyIds: [] })
+        .then((report) => {
+          if (!report) throw new Error("Manual data health did not produce a report.");
+          lastManualReport = {
+            ...report,
+            runTiming: { startedAt, completedAt: now().toISOString() },
+          };
+          return lastManualReport;
+        })
+        .finally(() => publishProgress(null));
+    },
+    subscribeProgress(listener: (stage: DataHealthProgressStage | null) => void) {
+      progressListeners.add(listener);
+      listener(manualProgress);
+      return () => progressListeners.delete(listener);
+    },
+    getLastManualReport() {
+      return lastManualReport;
     },
   };
 }

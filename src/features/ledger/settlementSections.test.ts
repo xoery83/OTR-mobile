@@ -528,6 +528,16 @@ describe("Settlement section selectors", () => {
       { expenseId: "expense-a", change: "CHANGED" },
       { expenseId: "expense-b", change: "NEW" },
     ]);
+    expect(
+      buildSettlementComparison({
+        currentDigest: "b".repeat(64),
+        currentFingerprint: "c".repeat(64),
+        currentFreshness: "CURRENT_SERVER",
+        projectionAsOf: "2026-09-24T00:00:00.000Z",
+        confirmed: finalized("a".repeat(64)),
+        hasPendingFinancialOperations: false,
+      }).freshness,
+    ).toBe("CURRENT_SERVER");
   });
 
   it("lists local pending Expense changes before a server preview is available", () => {

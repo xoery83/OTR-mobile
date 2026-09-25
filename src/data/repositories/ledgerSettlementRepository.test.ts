@@ -1,3 +1,4 @@
+import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it, vi } from "vitest";
 
 import type { FinalizedSettlementDto } from "@/data/api/ledgerSettlementContracts";
@@ -102,6 +103,49 @@ describe("Stage 7.1 Settlement repository", () => {
     expect(await repository.hasPendingFinancialOperations(settlement.journeyId)).toBe(
       true,
     );
+  });
+
+  it("counts only financial operations with an active synchronization path", async () => {
+    const sqlite = new DatabaseSync(":memory:");
+    sqlite.exec(`
+      CREATE TABLE sync_operations (
+        trip_id TEXT, owner_user_id TEXT, entity_type TEXT, status TEXT,
+        failure_category TEXT
+      );
+    `);
+    const database = {
+      getFirstAsync: async <T>(sql: string, ...params: unknown[]) =>
+        (sqlite.prepare(sql).get(...(params as never[])) as T | undefined) ?? null,
+      getAllAsync: vi.fn(),
+      runAsync: vi.fn(),
+      withTransactionAsync: vi.fn(),
+    };
+    const repository = createLedgerSettlementRepository(database, activeUser);
+    const insert = sqlite.prepare(
+      `INSERT INTO sync_operations
+       (trip_id, owner_user_id, entity_type, status, failure_category)
+       VALUES (?, 'user-a', 'ledger_expense', ?, ?)`,
+    );
+
+    for (const status of ["FAILED", "CONFLICT", "COMPLETED"])
+      insert.run(settlement.journeyId, status, status === "FAILED" ? "UNKNOWN" : null);
+    expect(await repository.hasPendingFinancialOperations(settlement.journeyId)).toBe(
+      false,
+    );
+
+    for (const [status, category] of [
+      ["PENDING", "AUTH"],
+      ["RETRYABLE", "NETWORK"],
+      ["PROCESSING", null],
+      ["DEPENDENCY_BLOCKED", "DEPENDENCY"],
+    ] as const) {
+      insert.run(settlement.journeyId, status, category);
+      expect(await repository.hasPendingFinancialOperations(settlement.journeyId)).toBe(
+        true,
+      );
+      sqlite.prepare("DELETE FROM sync_operations WHERE status = ?").run(status);
+    }
+    sqlite.close();
   });
 
   it("reads the same digest, balances and transfers written by Backend", async () => {

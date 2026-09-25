@@ -593,6 +593,16 @@ dependency-linked current UPDATE after mapping, and uses a scoped canonical reva
 before marking the retained historical operations completed. No migration, Backend
 endpoint, second worker/queue, destructive cleanup, or broader historical replay was added.
 
+Final cleanup implementation note (2026-09-25):
+`RECONCILE_STALE_CONFLICT_V1` closes only Expense conflict metadata whose fresh
+account/Journey scope, server identity, complete user-owned aggregate, authoritative
+canonical snapshot, revision proof, and absence of newer active mutation all agree.
+Resolved/superseded history requires a later completed resolution; an OPEN historical
+conflict requires an equal deferred canonical revision. Any difference remains a genuine
+conflict. The Ledger pending predicate now counts only operations with an active sync path
+(`PENDING`, `PROCESSING`, `RETRYABLE`, or `DEPENDENCY_BLOCKED`); protected historical
+`FAILED` rows remain intact and Settlement confirmation-change reporting is unchanged.
+
 ## 18. Automated test plan
 
 At minimum:

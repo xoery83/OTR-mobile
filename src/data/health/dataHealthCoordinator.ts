@@ -19,6 +19,11 @@ import {
   ledgerExpenseToUpdateRequest,
   type HistoricalExpenseOperation,
 } from "./historicalExpenseRecovery";
+import {
+  inspectStaleExpenseConflict,
+  STALE_EXPENSE_CONFLICT_ACTION,
+  STALE_EXPENSE_CONFLICT_RULE,
+} from "./staleExpenseConflict";
 
 export type DataHealthCategory =
   | "HEALTHY"
@@ -35,6 +40,8 @@ export type DataHealthCategory =
 
 export type DataHealthOutcome = "HEALTHY" | "WAITING" | "NEEDS_ATTENTION";
 export type DataHealthTrigger = "CHEAP" | "DEEP" | "MANUAL";
+export type DataHealthProgressStage =
+  "CHECKING_SAVED" | "SYNCING_REPAIRING" | "CHECKING_SHARED" | "VERIFYING";
 export type DataHealthAutomaticTrigger =
   | "COLD_START"
   | "FOREGROUND"
@@ -45,6 +52,7 @@ export type DataHealthAutomaticTrigger =
 export type DataHealthRunOptions = {
   journeyIds?: readonly string[];
   skipOperationalSync?: boolean;
+  onProgress?(stage: DataHealthProgressStage): void;
 };
 export type DataHealthAutomaticPlan = {
   accountId: string;
@@ -94,6 +102,7 @@ export type DataHealthReport = {
   repairPlans: DataHealthRepairPlan[];
   counts: Partial<Record<DataHealthCategory, number>>;
   convergence?: DataHealthConvergence;
+  runTiming?: { startedAt: string; completedAt: string };
 };
 
 export type DataHealthRuleDefinition = {
@@ -306,6 +315,15 @@ const DEEP_SCAN_INTERVAL_MS = 24 * 60 * 60_000;
 
 export const dataHealthRules: readonly DataHealthRuleDefinition[] = [
   {
+    id: STALE_EXPENSE_CONFLICT_RULE,
+    detection: "Expense conflict metadata whose complete local intent equals canonical",
+    protectedState: "Current Expense aggregate and every unresolved conflict difference",
+    futureDisposition: "Close only stale metadata after fresh canonical equality proof",
+    verification:
+      "Rescan finds no stale operation, open conflict, or matched deferred row",
+    possibleEscalation: "Any user-owned difference remains an ordinary conflict",
+  },
+  {
     id: HISTORICAL_EXPENSE_RECOVERY_RULE,
     detection: "Proven attempted historical Expense CREATE causal chain",
     protectedState: "Original CREATE request and current local Expense aggregate",
@@ -432,7 +450,17 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       });
 
       await assertScope(dependencies, accountId, generation);
-      const findings = await detectFindings(manifest!, dependencies.fileExists);
+      let findings = await detectFindings(manifest!, dependencies.fileExists);
+      const staleConflicts = await detectStaleExpenseConflicts(dependencies, manifest!);
+      if (staleConflicts.length) {
+        const staleTargets = new Set(staleConflicts.map((item) => item.targetId));
+        findings = findings.filter(
+          (item) =>
+            item.ruleId !== "DH_SYNC_OPERATION_STATE_V1" ||
+            !staleTargets.has(item.targetId),
+        );
+        findings.push(...staleConflicts);
+      }
       findings.push(
         ...(await detectHistoricalExpenseRecoveries(dependencies, manifest!)),
       );
@@ -559,8 +587,13 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       trigger: DataHealthTrigger = "MANUAL",
       options: DataHealthRunOptions = {},
     ): Promise<DataHealthReport> {
-      if (!dependencies.runOperationalSync || !dependencies.refreshJourneyLedger)
-        return coordinator.repair(trigger, options);
+      options.onProgress?.("CHECKING_SAVED");
+      if (!dependencies.runOperationalSync || !dependencies.refreshJourneyLedger) {
+        options.onProgress?.("SYNCING_REPAIRING");
+        const repaired = await coordinator.repair(trigger, options);
+        options.onProgress?.("VERIFYING");
+        return repaired;
+      }
 
       const planned = await coordinator.run(trigger, options);
       const initialOperationIds = new Set(
@@ -573,11 +606,13 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
       const eligiblePlans = planned.repairPlans.filter(
         (plan) => plan.eligibility === "ELIGIBLE" && plan.actionId,
       );
+      options.onProgress?.("SYNCING_REPAIRING");
       let report = await coordinator.repair(trigger, options);
       if (
         planned.accountId !== report.accountId ||
         planned.generation !== report.generation
-      )
+      ) {
+        options.onProgress?.("VERIFYING");
         return withConvergence(report, {
           state: "PROTECTED",
           localRepairCount: 0,
@@ -585,6 +620,7 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
           refreshedJourneyCount: 0,
           syncAttempted: false,
         });
+      }
       const accountId = report.accountId;
       const generation = report.generation;
       const localRepairCount = await countRecordedRepairs(
@@ -621,6 +657,7 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
           }
         }
 
+        options.onProgress?.("CHECKING_SHARED");
         for (const journeyId of scopes) {
           report = await coordinator.run(trigger, options);
           await assertScope(dependencies, accountId, generation);
@@ -664,6 +701,7 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
             }
           }
         }
+        options.onProgress?.("VERIFYING");
         await resumeHistoricalExpenseRecoveries(
           dependencies,
           accountId,
@@ -674,6 +712,7 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
         report = await coordinator.run(trigger, options);
       } catch (error) {
         if (!(error instanceof DataHealthScopeChangedError)) throw error;
+        options.onProgress?.("VERIFYING");
         const changed = await coordinator.run(trigger, options);
         return withConvergence(changed, {
           state: "PROTECTED",
@@ -806,10 +845,11 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
         outcome: DataHealthOutcome | null;
         findingCount: number;
         attentionCount: number;
+        lastManualScanAt: string | null;
         updatedAt: string;
       }>(
         `SELECT run_state AS runState, last_aggregate_outcome AS outcome,
-           last_finding_count AS findingCount,
+           last_finding_count AS findingCount, last_manual_scan_at AS lastManualScanAt,
            last_attention_count AS attentionCount, updated_at AS updatedAt
          FROM data_health_state WHERE account_id = ?`,
         accountId,
@@ -984,6 +1024,74 @@ async function applyRepairPlan(
           plan.targetId,
           plan.accountId,
         );
+    } else if (plan.actionId === STALE_EXPENSE_CONFLICT_ACTION) {
+      if (!dependencies.getExpense) return;
+      const evidence = await inspectStaleExpenseConflict({
+        database: dependencies.database,
+        accountId: plan.accountId,
+        targetOperationId: plan.targetId,
+        getExpense: dependencies.getExpense,
+      });
+      if (!evidence || evidence.inputDigest !== plan.findingDigest) return;
+      result = await dependencies.database.runAsync(
+        `UPDATE sync_operations SET status = 'COMPLETED', next_attempt_at = NULL,
+           claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
+         WHERE id = ? AND owner_user_id = ? AND entity_type = 'ledger_expense'
+           AND entity_id = ? AND trip_id = ? AND status = 'CONFLICT'`,
+        timestamp,
+        plan.targetId,
+        plan.accountId,
+        evidence.entityId,
+        evidence.journeyId,
+      );
+      if (result.changes !== 1) return;
+      if (evidence.conflictStatus === "OPEN") {
+        const conflict = await dependencies.database.runAsync(
+          `UPDATE ledger_expense_conflicts SET status = 'RESOLVED', resolved_at = ?
+           WHERE conflict_id = ? AND journey_id = ? AND expense_id = ?
+             AND operation_id = ? AND status = 'OPEN'`,
+          timestamp,
+          evidence.conflictId,
+          evidence.journeyId,
+          evidence.entityId,
+          evidence.operationId,
+        );
+        if (conflict.changes !== 1)
+          throw new Error("Stale conflict evidence changed during repair.");
+      }
+      if (
+        evidence.serverRevision !== evidence.canonicalRevision ||
+        evidence.syncStatus !== "SYNCED"
+      ) {
+        const expense = await dependencies.database.runAsync(
+          `UPDATE ledger_expenses SET server_revision = ?, sync_status = 'SYNCED',
+             last_synced_at = ?
+           WHERE id = ? AND journey_id = ? AND server_id = ? AND revision = ?
+             AND server_revision = ? AND sync_status = ?`,
+          evidence.canonicalRevision,
+          timestamp,
+          evidence.entityId,
+          evidence.journeyId,
+          evidence.serverId,
+          evidence.localRevision,
+          evidence.serverRevision,
+          evidence.syncStatus,
+        );
+        if (expense.changes !== 1)
+          throw new Error("Canonical Expense evidence changed during repair.");
+      }
+      if (evidence.deferredRevision !== null) {
+        const deferred = await dependencies.database.runAsync(
+          `DELETE FROM ledger_deferred_server_changes
+           WHERE journey_id = ? AND entity_type = 'EXPENSE' AND entity_id = ?
+             AND revision = ?`,
+          evidence.journeyId,
+          evidence.serverId,
+          evidence.deferredRevision,
+        );
+        if (deferred.changes !== 1)
+          throw new Error("Deferred canonical evidence changed during repair.");
+      }
     } else if (plan.actionId === "RECOVER_EXPIRED_OPERATION_LEASE_V1") {
       result = await dependencies.database.runAsync(
         `UPDATE ${table} SET status = 'RETRYABLE', next_attempt_at = ?,
@@ -1059,6 +1167,21 @@ async function currentOperationPlan(
       expected.accountId,
       expected.targetId,
       true,
+    );
+    if (!finding) return null;
+    return planDataHealthRepairs({
+      accountId: expected.accountId,
+      generation: expected.generation,
+      findings: [finding],
+      operationEvidence: [],
+      now,
+    })[0];
+  }
+  if (expected.actionId === STALE_EXPENSE_CONFLICT_ACTION) {
+    const finding = await staleExpenseConflictFinding(
+      dependencies,
+      expected.accountId,
+      expected.targetId,
     );
     if (!finding) return null;
     return planDataHealthRepairs({
@@ -1470,6 +1593,7 @@ function repairVerified(
       (state.status === "RETRYABLE" && state.nextAttemptAt === null) ||
       ["PENDING", "PROCESSING", "COMPLETED"].includes(state.status)
     );
+  if (action === STALE_EXPENSE_CONFLICT_ACTION) return state.status === "COMPLETED";
   return false;
 }
 
@@ -2109,6 +2233,48 @@ async function detectHistoricalExpenseRecoveries(
     if (candidate) findings.push(candidate);
   }
   return findings;
+}
+
+async function detectStaleExpenseConflicts(
+  dependencies: DataHealthDependencies,
+  manifest: Manifest,
+) {
+  if (!dependencies.getExpense) return [];
+  const findings: DataHealthFinding[] = [];
+  for (const operation of manifest.operations) {
+    if (operation.status !== "CONFLICT" || operation.entityType !== "ledger_expense")
+      continue;
+    const candidate = await staleExpenseConflictFinding(
+      dependencies,
+      manifest.accountId,
+      operation.id,
+    );
+    if (candidate) findings.push(candidate);
+  }
+  return findings;
+}
+
+async function staleExpenseConflictFinding(
+  dependencies: DataHealthDependencies,
+  accountId: string,
+  operationId: string,
+): Promise<DataHealthFinding | null> {
+  if (!dependencies.getExpense) return null;
+  const evidence = await inspectStaleExpenseConflict({
+    database: dependencies.database,
+    accountId,
+    targetOperationId: operationId,
+    getExpense: dependencies.getExpense,
+  });
+  if (!evidence) return null;
+  return {
+    ruleId: STALE_EXPENSE_CONFLICT_RULE,
+    category: "MIRROR_STALE",
+    journeyId: evidence.journeyId,
+    targetType: "sync_operation",
+    targetId: evidence.operationId,
+    inputDigest: evidence.inputDigest,
+  };
 }
 
 async function historicalExpenseRecoveryFinding(

@@ -1008,6 +1008,188 @@ describe("Data Health Phase C1 safe queue repair", () => {
   });
 });
 
+describe("Data Health stale Expense conflict reconciliation", () => {
+  it("reconciles resolved and OPEN canonically equal conflicts once", async () => {
+    const fixture = createFixture();
+    fixture.sqlite.exec(`
+      INSERT INTO ledger_settlements (
+        id, journey_id, status, through_timestamp, settlement_currency,
+        settlement_scale, settings_revision, algorithm_version, input_digest,
+        revision, finalized_by, finalized_at
+      ) VALUES ('stable-settlement', 'journey-a', 'FINALIZED',
+        '2026-09-24T00:00:00Z', 'NZD', 2, 1, 'v1', 'byte-stable', 1,
+        'member-a', '2026-09-24T00:00:00Z');
+    `);
+    insertExpense(fixture.sqlite, {
+      id: "resolved-expense",
+      revision: 2,
+      serverId: "resolved-server",
+      serverRevision: 2,
+      syncStatus: "SYNCED",
+    });
+    insertOperation(fixture.sqlite, {
+      id: "resolved-conflict-operation",
+      entityId: "resolved-expense",
+      status: "CONFLICT",
+      baseVersion: 1,
+      createdAt: "2026-09-24T00:10:00Z",
+    });
+    insertOperation(fixture.sqlite, {
+      id: "resolved-reconciliation",
+      entityId: "resolved-expense",
+      operationType: "LEDGER_RESOLVE_EXPENSE_CONFLICT",
+      status: "COMPLETED",
+      baseVersion: 1,
+      createdAt: "2026-09-24T00:12:00Z",
+    });
+    insertExpenseConflict(fixture.sqlite, {
+      id: "resolved-conflict",
+      expenseId: "resolved-expense",
+      operationId: "resolved-conflict-operation",
+      serverId: "resolved-server",
+      revision: 2,
+      status: "RESOLVED",
+    });
+    fixture.sqlite
+      .prepare(
+        `UPDATE ledger_expense_conflicts SET current_revision = 1,
+           canonical_snapshot_json = ? WHERE conflict_id = 'resolved-conflict'`,
+      )
+      .run(JSON.stringify(expenseSnapshot("resolved-server", 1)));
+    fixture.sqlite
+      .prepare("UPDATE sync_operations SET payload_json = ? WHERE id = ?")
+      .run(
+        JSON.stringify({
+          conflictId: "resolved-conflict",
+          currentRevision: 1,
+          resolvedExpense: expenseSnapshot("resolved-server", 2),
+        }),
+        "resolved-reconciliation",
+      );
+    fixture.sqlite.exec(`
+      INSERT INTO ledger_expense_audit_events (
+        id, server_id, expense_id, expense_revision, event_type,
+        after_json, created_at
+      ) VALUES ('resolved-audit', 'resolved-audit', 'resolved-expense', 2,
+        'CONFLICT_RESOLVED', '{"revision":2}', '2026-09-24T00:12:00Z');
+    `);
+
+    insertExpense(fixture.sqlite, {
+      id: "open-expense",
+      revision: 2,
+      serverId: "open-server",
+      serverRevision: 1,
+      syncStatus: "CONFLICT",
+    });
+    insertOperation(fixture.sqlite, {
+      id: "open-conflict-operation",
+      entityId: "open-expense",
+      status: "CONFLICT",
+      baseVersion: 1,
+    });
+    insertExpenseConflict(fixture.sqlite, {
+      id: "open-conflict",
+      expenseId: "open-expense",
+      operationId: "open-conflict-operation",
+      serverId: "open-server",
+      revision: 2,
+      status: "OPEN",
+    });
+    insertDeferredExpense(fixture.sqlite, "open-server", 2);
+    const settlementBefore = JSON.stringify(rows(fixture.sqlite, "ledger_settlements"));
+
+    const report = await fixture.coordinator.repair("MANUAL");
+
+    expect(report.findings.filter((item) => item.category === "CONFLICT")).toEqual([]);
+    expect(operationState(fixture.sqlite, "resolved-conflict-operation").status).toBe(
+      "COMPLETED",
+    );
+    expect(operationState(fixture.sqlite, "open-conflict-operation").status).toBe(
+      "COMPLETED",
+    );
+    expect(
+      fixture.sqlite
+        .prepare(
+          "SELECT server_revision, sync_status FROM ledger_expenses WHERE id = 'open-expense'",
+        )
+        .get(),
+    ).toEqual({ server_revision: 2, sync_status: "SYNCED" });
+    expect(
+      fixture.sqlite
+        .prepare(
+          "SELECT status FROM ledger_expense_conflicts WHERE conflict_id = 'open-conflict'",
+        )
+        .get(),
+    ).toEqual({ status: "RESOLVED" });
+    expect(rows(fixture.sqlite, "ledger_deferred_server_changes")).toEqual([]);
+    expect(repairEvents(fixture.sqlite)).toEqual([
+      expect.objectContaining({
+        action: "RECONCILE_STALE_CONFLICT_V1",
+        status: "VERIFIED",
+      }),
+      expect.objectContaining({
+        action: "RECONCILE_STALE_CONFLICT_V1",
+        status: "VERIFIED",
+      }),
+    ]);
+    expect(JSON.stringify(rows(fixture.sqlite, "ledger_settlements"))).toBe(
+      settlementBefore,
+    );
+
+    const afterFirst = queueFingerprint(fixture.sqlite);
+    await fixture.coordinator.repair("MANUAL");
+    expect(queueFingerprint(fixture.sqlite)).toBe(afterFirst);
+    expect(repairEvents(fixture.sqlite)).toHaveLength(2);
+  });
+
+  it("preserves genuine or insufficiently evidenced conflicts", async () => {
+    const fixture = createFixture();
+    for (const id of ["different", "missing-evidence"]) {
+      insertExpense(fixture.sqlite, {
+        id: `${id}-expense`,
+        revision: 2,
+        serverId: `${id}-server`,
+        serverRevision: 1,
+        syncStatus: "CONFLICT",
+      });
+      insertOperation(fixture.sqlite, {
+        id: `${id}-operation`,
+        entityId: `${id}-expense`,
+        status: "CONFLICT",
+        baseVersion: 1,
+      });
+      insertExpenseConflict(fixture.sqlite, {
+        id: `${id}-conflict`,
+        expenseId: `${id}-expense`,
+        operationId: `${id}-operation`,
+        serverId: `${id}-server`,
+        revision: 2,
+        status: "OPEN",
+        title: id === "different" ? "Different canonical title" : undefined,
+      });
+    }
+    insertDeferredExpense(fixture.sqlite, "different-server", 2, {
+      title: "Different canonical title",
+    });
+    const before = domainFingerprint(fixture.sqlite);
+
+    const report = await fixture.coordinator.repair("MANUAL");
+
+    expect(
+      report.findings
+        .filter((item) => item.category === "CONFLICT")
+        .map((item) => item.targetId),
+    ).toEqual(["different-operation", "missing-evidence-operation"]);
+    expect(
+      report.repairPlans
+        .filter((item) => item.targetId.endsWith("-operation"))
+        .every((item) => item.actionId === null && item.eligibility === "INELIGIBLE"),
+    ).toBe(true);
+    expect(domainFingerprint(fixture.sqlite)).toBe(before);
+    expect(repairEvents(fixture.sqlite)).toEqual([]);
+  });
+});
+
 describe("Data Health Phase C2 convergence orchestration", () => {
   it("repairs, runs the existing sync, pulls, and reports only verified convergence", async () => {
     let fixture!: ReturnType<typeof createFixture>;
@@ -1682,6 +1864,7 @@ function insertOperation(
     journeyId?: string;
     entityId: string;
     operationType?: string;
+    baseVersion?: number;
     status: string;
     failureCategory?: string;
     errorCode?: string;
@@ -1701,13 +1884,13 @@ function insertOperation(
     .prepare(
       `INSERT INTO sync_operations (
         id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
-        payload_json, status, owner_user_id, failure_category, last_error_code,
+        base_version, payload_json, status, owner_user_id, failure_category, last_error_code,
         last_error_message, last_attempt_at,
         dependency_operation_id, next_attempt_at, lease_expires_at, attempt_count,
         claim_owner, created_at, updated_at
       ) VALUES (
         ?, ?, 'ledger_expense', ?, ?, ?,
-        ?, ?, 'user-a', ?, ?,
+        ?, ?, ?, 'user-a', ?, ?,
         ?, ?,
         ?, ?, ?, ?,
         ?, ?, ?
@@ -1719,6 +1902,7 @@ function insertOperation(
       input.entityId,
       input.operationType ?? "UPDATE_LEDGER_EXPENSE",
       `${input.id}-key`,
+      input.baseVersion ?? null,
       input.payloadJson ?? "{}",
       input.status,
       input.failureCategory ?? null,
@@ -1733,6 +1917,95 @@ function insertOperation(
       input.createdAt ?? "2026-09-24T00:00:00Z",
       input.updatedAt ?? "2026-09-24T00:00:00Z",
     );
+}
+
+function insertExpenseConflict(
+  sqlite: DatabaseSync,
+  input: {
+    id: string;
+    expenseId: string;
+    operationId: string;
+    serverId: string;
+    revision: number;
+    status: "OPEN" | "RESOLVED" | "SUPERSEDED";
+    title?: string;
+  },
+) {
+  const canonical = expenseSnapshot(input.serverId, input.revision, {
+    title: input.title,
+  });
+  sqlite
+    .prepare(
+      `INSERT INTO ledger_expense_conflicts (
+         conflict_id, journey_id, expense_id, operation_id, base_revision,
+         current_revision, base_snapshot_json, submitted_snapshot_json,
+         canonical_snapshot_json, changed_groups_json, audit_summaries_json,
+         status, created_at, resolved_at
+       ) VALUES (?, 'journey-a', ?, ?, ?, ?, ?, ?, ?, '[]', '[]', ?,
+         '2026-09-24T00:11:00Z', ?)`,
+    )
+    .run(
+      input.id,
+      input.expenseId,
+      input.operationId,
+      input.revision - 1,
+      input.revision,
+      JSON.stringify(expenseSnapshot(input.serverId, input.revision - 1)),
+      JSON.stringify(expenseSnapshot(input.serverId, input.revision)),
+      JSON.stringify(canonical),
+      input.status,
+      input.status === "OPEN" ? null : "2026-09-24T00:12:00Z",
+    );
+}
+
+function insertDeferredExpense(
+  sqlite: DatabaseSync,
+  serverId: string,
+  revision: number,
+  overrides: { title?: string } = {},
+) {
+  sqlite
+    .prepare(
+      `INSERT INTO ledger_deferred_server_changes (
+         journey_id, entity_type, entity_id, revision, payload_json, created_at
+       ) VALUES ('journey-a', 'EXPENSE', ?, ?, ?, '2026-09-24T00:13:00Z')`,
+    )
+    .run(
+      serverId,
+      revision,
+      JSON.stringify({
+        entityType: "EXPENSE",
+        entityId: serverId,
+        revision,
+        isTombstone: false,
+        aggregate: expenseSnapshot(serverId, revision, overrides),
+      }),
+    );
+}
+
+function expenseSnapshot(
+  serverId: string,
+  revision: number,
+  overrides: { title?: string } = {},
+) {
+  return {
+    id: serverId,
+    journeyId: "journey-a",
+    payerMemberId: "member-a",
+    title: overrides.title ?? "Expense",
+    description: null,
+    category: "other",
+    occurredAt: "2026-09-24T00:00:00Z",
+    economicDate: null,
+    original: { minor: 100, currency: "USD", scale: 2 },
+    businessStatus: "ACCEPTED",
+    settlementParticipation: "INCLUDED",
+    revision,
+    deletedAt: null,
+    participants: [],
+    splits: [],
+    valuation: null,
+  };
 }
 
 function queueFingerprint(sqlite: DatabaseSync) {

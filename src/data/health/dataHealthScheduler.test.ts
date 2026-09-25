@@ -250,6 +250,84 @@ describe("Data Health Phase D scheduler", () => {
     await scheduler.schedule({ trigger: "FOREGROUND" });
     await scheduler.runManual();
 
-    expect(coordinator.converge).toHaveBeenCalledWith("MANUAL");
+    expect(coordinator.converge).toHaveBeenCalledWith("MANUAL", {
+      onProgress: expect.any(Function),
+    });
+  });
+
+  it("publishes real manual phases and retains the current run result for reopening", async () => {
+    let clock = 0;
+    const { coordinator, scheduler } = fixture({
+      now: () => new Date(clock),
+    });
+    coordinator.converge.mockImplementation(async (_trigger, options) => {
+      for (const stage of [
+        "CHECKING_SAVED",
+        "SYNCING_REPAIRING",
+        "CHECKING_SHARED",
+        "VERIFYING",
+      ] as const) {
+        clock += 17_000;
+        options?.onProgress?.(stage);
+      }
+      return report();
+    });
+    const progress: unknown[] = [];
+    const unsubscribe = scheduler.subscribeProgress((stage) => progress.push(stage));
+
+    const completed = await scheduler.runManual();
+    unsubscribe();
+
+    expect(progress).toEqual([
+      null,
+      "CHECKING_SAVED",
+      "SYNCING_REPAIRING",
+      "CHECKING_SHARED",
+      "VERIFYING",
+      null,
+    ]);
+    expect(completed.runTiming).toEqual({
+      startedAt: "1970-01-01T00:00:00.000Z",
+      completedAt: "1970-01-01T00:01:08.000Z",
+    });
+    expect(scheduler.getLastManualReport()).toEqual(completed);
+  });
+
+  it("replaces prior manual outcomes instead of accumulating counts", async () => {
+    const { coordinator, scheduler } = fixture();
+    coordinator.converge
+      .mockResolvedValueOnce(
+        report({
+          convergence: {
+            state: "RECOVERED",
+            localRepairCount: 3,
+            recoveredChangeCount: 2,
+            refreshedJourneyCount: 1,
+            syncAttempted: true,
+          },
+        }),
+      )
+      .mockResolvedValueOnce(report());
+
+    await scheduler.runManual();
+    const second = await scheduler.runManual();
+
+    expect(scheduler.getLastManualReport()).toEqual(second);
+    expect(second.convergence).toBeUndefined();
+  });
+
+  it("clears manual progress after an unexpected failure", async () => {
+    const { coordinator, scheduler } = fixture();
+    coordinator.converge.mockImplementation(async (_trigger, options) => {
+      options?.onProgress?.("CHECKING_SAVED");
+      throw new Error("unexpected");
+    });
+    const progress: unknown[] = [];
+    scheduler.subscribeProgress((stage) => progress.push(stage));
+
+    await expect(scheduler.runManual()).rejects.toThrow("unexpected");
+
+    expect(progress).toEqual([null, "CHECKING_SAVED", null]);
+    expect(scheduler.getLastManualReport()).toBeNull();
   });
 });

@@ -2,6 +2,37 @@
 
 Date: 2026-09-25
 
+## Data Health UX Polish and final stale-state cleanup implemented — awaiting acceptance
+
+- The System Health screen now shows real coordinator phases for saved-data scanning,
+  existing sync/repair work, shared-data refresh, and verification. Leaving and reopening
+  the route attaches to the same in-process manual run; no second health run is started.
+- Completion uses only current-run convergence counts already produced by the coordinator:
+  recovered changes, refreshed Journeys, and applied local repairs. Duplicate findings are
+  intentionally summarized qualitatively rather than counted as product objects.
+- Actionable input, genuine conflicts, and a missing receipt original are the only current
+  user-attention mappings. Retryable, dependency-blocked, protected-local, provider-waiting,
+  and sparse work remain automatic; other non-actionable diagnostics remain protected.
+- Debug Mode exposes a collapsed Technical Details section containing only safe rule,
+  category, target ID, and digest fields. It is absent when Debug Mode is off.
+- One final generic `RECONCILE_STALE_CONFLICT_V1` action closes only canonically equal
+  Expense conflict metadata with fresh scope/revision/equality proof. Any user-owned
+  difference or missing canonical evidence retains the genuine-conflict hard veto. The
+  active financial-work predicate now excludes protected historical `FAILED` and stale
+  conflict history while retaining pending, processing, retryable, dependency-blocked and
+  auth-paused work. Schema remains 36; there is no new worker, queue, Backend endpoint or
+  Conflict Resolution UI. Settlement confirmation-change reporting remains independent.
+- Validation passes 105 Vitest files / 549 tests, TypeScript, ESLint, Backend build,
+  touched-file Prettier, and `git diff --check`. Full Prettier still reports only six
+  pre-existing unrelated files. Release Simulator and signed physical-device builds both
+  installed and launched. The five Simulator historical conflict operations satisfy the
+  generic equality proof and reconcile to zero on an isolated copy; the installed Release
+  opens System Health normally. On the physical Dev fixture, automatic health reconciled
+  both stale conflicts to two verified repair events and zero active financial work.
+  `4p hysical offline` remains an unchanged protected historical `FAILED` CREATE, `guard
+915` remains unchanged and healthy, `Bakery receipt ready 📎` remains a server-synced
+  change since confirmation, and canonical Settlement rows remain byte-stable.
+
 ## OTR Data Health & Self-Healing — Phase E implemented
 
 - Started from accepted Phase D checkpoint `8ffa5e7d58cc044fd817c06508c0c215f333e6d1`.

@@ -78,7 +78,8 @@ export function createLedgerSettlementRepository(
              'ledger_expense', 'ledger_payment_record', 'ledger_correction',
              'ledger_settlement_payment', 'ledger_settlement_adjustment'
            )
-           AND status <> 'COMPLETED'`,
+           AND status IN ('PENDING', 'PROCESSING', 'RETRYABLE',
+             'DEPENDENCY_BLOCKED')`,
         journeyId,
         userId,
       );
