@@ -34,7 +34,6 @@ import type {
   ReportingBucket,
   ReportingScope,
 } from "@/domain/ledger/reporting";
-import { buildSettlementStatement } from "@/domain/ledger/settlementStatement";
 import { stage3JourneyId } from "@/hooks/useLedgerStage3";
 import { useLedgerActiveSync } from "@/hooks/useLedgerActiveSync";
 import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
@@ -51,6 +50,8 @@ import {
   type DisplayEstimate,
 } from "./displayEstimate";
 import { loadDisplayEstimates } from "./loadDisplayEstimates";
+import { loadEstimatedSettlement } from "./loadEstimatedSettlement";
+import { savedSettlementSummaryProjection } from "./settlementSummaryProjection";
 import {
   SettlementReadinessScreen,
   SettlementSectionTabs,
@@ -105,6 +106,13 @@ type SpendingProjection = {
   settlement: SettlementSnapshot;
 };
 
+const syncStatusCopy = {
+  SYNCING: "Syncing",
+  UP_TO_DATE: "Up to date",
+  OFFLINE: "Offline · saved data is available",
+  CHANGES_WAITING: "Changes waiting · saved on this device",
+} as const;
+
 function localToday() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -127,26 +135,23 @@ function categoryIcon(category: string) {
   return categoryIcons[category.toLowerCase()] ?? "tag.fill";
 }
 
-function summarizeSettlement(rows: FinalizedRows, memberId: string): SettlementSnapshot {
+function summarizeSettlement(
+  rows: FinalizedRows,
+  memberId: string,
+  preview: Awaited<ReturnType<typeof loadEstimatedSettlement>> | null,
+  pending: boolean,
+): SettlementSnapshot {
   if (!rows.length) return { kind: "PREVIEW" };
   const root = rows.find((row) => row.kind !== "ADJUSTMENT") ?? rows[0];
-  const statement = buildSettlementStatement(
-    rows.filter((row) => row.id === root.id || row.rootSettlementId === root.id),
-  );
-  const current = statement.outstandingBalances.find(
-    (item) => item.memberId === memberId,
-  );
-  const finalized = statement.lineage
-    .at(-1)
-    ?.balances.find((item) => item.memberId === memberId);
+  const current = preview
+    ? savedSettlementSummaryProjection(preview, root, memberId, pending)
+    : null;
   return {
     kind: "FINAL",
-    positionMinor: current?.amount.minor ?? finalized?.netMinor ?? null,
-    currency:
-      current?.amount.currency ?? finalized?.currency ?? statement.settlementCurrency,
-    scale: current?.amount.scale ?? finalized?.scale ?? statement.settlementScale,
-    needsUpdate:
-      statement.adjustmentState !== null && statement.adjustmentState !== "CURRENT",
+    positionMinor: current?.balanceMinor ?? null,
+    currency: current?.currency ?? root.settlementCurrency,
+    scale: current?.scale ?? root.settlementScale,
+    needsUpdate: root.adjustmentState !== null && root.adjustmentState !== "CURRENT",
   };
 }
 
@@ -303,6 +308,10 @@ export function LedgerStage6Screen({
               return minor === null ? [] : [[row.id, minor] as const];
             }),
           );
+          const [settlementPreview, pendingFinancialOperations] = await Promise.all([
+            loadEstimatedSettlement(nextJourney.journeyId).catch(() => null),
+            settlementRepository.hasPendingFinancialOperations(nextJourney.journeyId),
+          ]);
           if (!request.isCurrent(id)) return false;
           memberRequest.cancel();
           scopeRef.current = nextScope;
@@ -327,7 +336,12 @@ export function LedgerStage6Screen({
             estimatedCount: display.estimatedCount,
             estimates,
             estimateComponents,
-            settlement: summarizeSettlement(settlements, nextMemberId),
+            settlement: summarizeSettlement(
+              settlements,
+              nextMemberId,
+              settlementPreview,
+              pendingFinancialOperations,
+            ),
           });
           return true;
         });
@@ -433,7 +447,7 @@ export function LedgerStage6Screen({
     [journey?.journeyId],
   );
 
-  useLedgerActiveSync(
+  const syncStatus = useLedgerActiveSync(
     (journey?.journeyId ?? fallbackJourneyId) || null,
     handleLedgerChanged,
   );
@@ -842,7 +856,7 @@ export function LedgerStage6Screen({
                       <>
                         <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
                           {settlement.positionMinor === null
-                            ? "Final settlement available"
+                            ? "Current balance unavailable"
                             : settlementPositionLabel(settlement.positionMinor)}
                         </Text>
                         {settlement.positionMinor !== null ? (
@@ -855,9 +869,11 @@ export function LedgerStage6Screen({
                           </Text>
                         ) : null}
                         <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                          {settlement.needsUpdate
-                            ? "Final settlement needs an update"
-                            : "Final settlement snapshot"}
+                          {settlement.positionMinor === null
+                            ? "Open Settlement for details"
+                            : settlement.needsUpdate
+                              ? "Final settlement needs an update"
+                              : "Showing saved latest calculation"}
                         </Text>
                       </>
                     ) : (
@@ -1094,6 +1110,39 @@ export function LedgerStage6Screen({
               ) : null}
             </View>
           )}
+          {debugMode ? (
+            <View style={styles.debugSection}>
+              <Text accessibilityRole="header" style={styles.debugTitle}>
+                Debug Information
+              </Text>
+              <View style={styles.debugSurface}>
+                <DebugRow
+                  label="Network"
+                  value={
+                    syncStatus
+                      ? syncStatus === "OFFLINE"
+                        ? "Offline"
+                        : "Online"
+                      : "Checking"
+                  }
+                />
+                <DebugRow
+                  attention={syncStatus === "OFFLINE" || syncStatus === "CHANGES_WAITING"}
+                  label="Sync"
+                  value={syncStatus ? syncStatusCopy[syncStatus] : "Starting"}
+                />
+                <DebugRow
+                  label="Environment"
+                  value={
+                    process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev"
+                      ? "Development"
+                      : "Local"
+                  }
+                />
+                {journey ? <DebugRow label="Journey" value={journey.title} /> : null}
+              </View>
+            </View>
+          ) : null}
         </ScrollView>
       </View>
 
@@ -1249,6 +1298,23 @@ function JourneyStatusTag({ status }: { status: "ACTIVE" | "UPCOMING" | "PAST" }
       >
         {status}
       </Text>
+    </View>
+  );
+}
+
+function DebugRow({
+  attention,
+  label,
+  value,
+}: {
+  attention?: boolean;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.debugRow}>
+      <Text style={styles.debugLabel}>{label}</Text>
+      <Text style={[styles.debugValue, attention && styles.debugAttention]}>{value}</Text>
     </View>
   );
 }
@@ -1612,6 +1678,25 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  debugSection: { gap: 6, marginTop: 14 },
+  debugTitle: { color: "#64748B", fontSize: 13, fontWeight: "700" },
+  debugSurface: {
+    backgroundColor: "#EEF2F5",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  debugRow: {
+    alignItems: "center",
+    borderBottomColor: "#DCE2E8",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    minHeight: 38,
+  },
+  debugLabel: { color: "#64748B", fontSize: 12 },
+  debugValue: { color: "#475569", flex: 1, fontSize: 12, textAlign: "right" },
+  debugAttention: { color: "#7C5B00" },
   myLedgerRow: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
