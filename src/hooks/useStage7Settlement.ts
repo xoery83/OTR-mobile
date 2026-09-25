@@ -44,7 +44,7 @@ export function useStage7Settlement(journeyId?: string) {
   const activeJourneyId = journeyId ?? selectedJourneyId ?? undefined;
   const activeJourneyRef = useRef(activeJourneyId);
   const [loadedJourneyId, setLoadedJourneyId] = useState<string | null>(null);
-  const [updating, setUpdating] = useState(false);
+  const [updating, setUpdating] = useState(Boolean(journeyId));
   const [preview, setPreview] = useState<Stage7Preview | null>(null);
   const [displayPreview, setDisplayPreview] = useState<DisplayPreview | null>(null);
   const [unavailableExpenseIds, setUnavailableExpenseIds] = useState<Set<string>>(
@@ -139,11 +139,26 @@ export function useStage7Settlement(journeyId?: string) {
         setIsOrganizer(cached.organizer);
         setHasPendingFinancialOperations(cached.pendingFinancialOperations);
         setLoadedJourneyId(activeJourneyId);
+        const root =
+          cached.rows.find((row) => row.kind !== "ADJUSTMENT") ?? cached.rows[0];
+        let adjustmentLoaded = false;
         try {
           const display = await loadEstimatedSettlement(activeJourneyId);
           if (active) setDisplayPreview(display);
         } catch {
           // A newly opened Journey may not exist locally until bootstrap completes below.
+        }
+        if (cached.organizer && root && !cached.pendingFinancialOperations) {
+          try {
+            const adjustment = await previewSettlementAdjustment(
+              activeJourneyId,
+              root.id,
+            );
+            adjustmentLoaded = true;
+            if (active) setAdjustmentPreview(adjustment);
+          } catch {
+            // Retry after the normal refresh below.
+          }
         }
         if (cached.organizer) {
           const rates = await preflightSettlementFx(activeJourneyId, true);
@@ -168,13 +183,13 @@ export function useStage7Settlement(journeyId?: string) {
               new Date().toISOString(),
             );
             if (active) setPreview(current);
-            const root =
+            const refreshedRoot =
               refreshed.rows.find((row) => row.kind !== "ADJUSTMENT") ??
               refreshed.rows[0];
-            if (root) {
+            if (refreshedRoot && !adjustmentLoaded) {
               const adjustment = await previewSettlementAdjustment(
                 activeJourneyId,
-                root.id,
+                refreshedRoot.id,
               );
               if (active) setAdjustmentPreview(adjustment);
             }

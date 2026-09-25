@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
@@ -45,6 +53,9 @@ export function SettlementUpdateScreen() {
     : settlement.hasPendingFinancialOperations && localChanges.length
       ? localChanges
       : personalChanges;
+  const changesLoading = settlement.isOrganizer
+    ? !settlement.adjustmentPreview && settlement.updating
+    : !review.state && settlement.updating;
   const ready = settlement.adjustmentPreview?.state === "PREVIEW_READY";
   const titleFor = (expenseId: string) =>
     expenses.find((expense) => expense.id === expenseId || expense.serverId === expenseId)
@@ -67,7 +78,11 @@ export function SettlementUpdateScreen() {
   }, [journeyId, settlement.hasPendingFinancialOperations]);
 
   if (!current)
-    return <Text style={styles.empty}>No confirmed Settlement is available.</Text>;
+    return settlement.updating ? (
+      <ActivityIndicator style={styles.loading} />
+    ) : (
+      <Text style={styles.empty}>No confirmed Settlement is available.</Text>
+    );
 
   const confirm = async () => {
     if (!ready || !reason.trim()) return;
@@ -108,7 +123,7 @@ export function SettlementUpdateScreen() {
             </Text>
           </>
         ) : (
-          <Text style={styles.meta}>Refresh to calculate the exact change.</Text>
+          <Text style={styles.meta}>Calculating exact change…</Text>
         )}
       </View>
 
@@ -136,7 +151,12 @@ export function SettlementUpdateScreen() {
             <Text style={styles.link}>View ›</Text>
           </Pressable>
         ))}
-        {!changes.length ? (
+        {changesLoading ? (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator />
+            <Text style={styles.meta}>Loading changes…</Text>
+          </View>
+        ) : !changes.length && !settlement.message ? (
           <Text style={styles.meta}>No financial changes are visible.</Text>
         ) : null}
       </View>
@@ -181,14 +201,6 @@ export function SettlementUpdateScreen() {
           >
             <Text style={styles.primaryText}>Confirm updated amounts</Text>
           </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            disabled={settlement.busy}
-            onPress={() => void settlement.prepareAdjustment()}
-            style={styles.secondary}
-          >
-            <Text style={styles.link}>Refresh change review</Text>
-          </Pressable>
         </View>
       ) : (
         <Text style={styles.meta}>
@@ -217,6 +229,8 @@ const styles = StyleSheet.create({
   },
   lead: { color: "#0F766E", fontSize: 18, fontWeight: "900" },
   link: { color: "#0F766E", fontSize: 15, fontWeight: "800" },
+  loading: { marginTop: 32 },
+  loadingRow: { alignItems: "center", flexDirection: "row", gap: 8 },
   meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
   primary: {
     alignItems: "center",
@@ -236,7 +250,6 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   rowTitle: { color: "#0F172A", fontSize: 15, fontWeight: "800" },
-  secondary: { alignItems: "center", minHeight: 44, justifyContent: "center" },
   section: { gap: 10 },
   sectionTitle: { color: "#0F172A", fontSize: 20, fontWeight: "900" },
   warning: { color: "#9A3412", fontSize: 14, fontWeight: "700", lineHeight: 20 },

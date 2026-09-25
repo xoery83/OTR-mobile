@@ -518,18 +518,6 @@ function SummarySection({
           >
             <Text style={styles.link}>Review changes ›</Text>
           </Pressable>
-          {settlement.isOrganizer ? (
-            <Action
-              primary
-              label="Review & confirm changes"
-              onPress={() =>
-                router.push({
-                  pathname: "/expenses/settlement-update",
-                  params: { journeyId: settlement.journeyId },
-                } as never)
-              }
-            />
-          ) : null}
         </View>
       ) : null}
       {hasConfirmed && confirmedBalance && currentFinal ? (
