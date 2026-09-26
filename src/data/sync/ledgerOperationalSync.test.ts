@@ -6,13 +6,26 @@ const mocks = vi.hoisted(() => ({
   reactivateAssets: vi.fn(),
   requireActiveUserId: vi.fn(),
   getAllAsync: vi.fn(),
+  getQueueActivity: vi.fn(),
+  queueListeners: new Set<() => void>(),
+  generation: 7,
+}));
+
+vi.mock("./ledgerQueueActivity", () => ({
+  getLedgerQueueActivity: mocks.getQueueActivity,
+  subscribeLedgerQueueWorkAvailable: (listener: () => void) => {
+    mocks.queueListeners.add(listener);
+    return () => mocks.queueListeners.delete(listener);
+  },
 }));
 
 vi.mock("@/data/db/database", () => ({ openDatabase: mocks.openDatabase }));
 vi.mock("@/data/auth/authRepository", () => ({
   requireActiveUserId: mocks.requireActiveUserId,
 }));
-vi.mock("@/data/auth/accountGeneration", () => ({ getAccountGeneration: () => 7 }));
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => mocks.generation,
+}));
 vi.mock("@/data/repositories/ledgerReceiptRepository", () => ({
   createLedgerReceiptRepository: () => ({
     reactivateLongLivedFailures: mocks.reactivateAssets,
@@ -60,6 +73,12 @@ describe("Ledger mutation sync kick", () => {
     mocks.openDatabase.mockResolvedValue({ getAllAsync: mocks.getAllAsync });
     mocks.requireActiveUserId.mockResolvedValue("user-a");
     mocks.getAllAsync.mockResolvedValue([]);
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 0,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
+    mocks.generation = 7;
   });
 
   it("reactivates sparse user and asset mutations on a recovery event", async () => {
@@ -121,5 +140,88 @@ describe("Ledger mutation sync kick", () => {
 
     expect(listener).not.toHaveBeenCalled();
     unsubscribe();
+  });
+
+  it("wakes a due retry independently of foreground reads", async () => {
+    vi.useFakeTimers();
+    const due = Date.now() + 4_000;
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: due,
+    });
+    vi.mocked(runLedgerExpenseSync).mockClear();
+    await runLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(3_999);
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 0,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(runLedgerExpenseSync).toHaveBeenCalledTimes(2);
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
+  });
+
+  it("does not run an old account's due timer after an account switch", async () => {
+    vi.useFakeTimers();
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: Date.now() + 4_000,
+    });
+    vi.mocked(runLedgerExpenseSync).mockClear();
+    await runLedgerOperationalSync();
+    mocks.generation = 8;
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
+  });
+
+  it("cancels a future retry timer while auth is paused", async () => {
+    vi.useFakeTimers();
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: Date.now() + 4_000,
+    });
+    vi.mocked(runLedgerExpenseSync).mockClear();
+    await runLedgerOperationalSync();
+    await pauseLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
+  });
+
+  it("coalesces dependency wakeups while operational work is in flight", async () => {
+    vi.useFakeTimers();
+    let release!: () => void;
+    vi.mocked(runLedgerExpenseSync).mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = () => resolve({ status: "syncing", processedCount: 1 });
+      }) as never,
+    );
+    const first = runLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(0);
+    for (const listener of mocks.queueListeners) {
+      listener();
+      listener();
+    }
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 1,
+      nextActionableAt: null,
+    });
+    release();
+    await first;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(runLedgerExpenseSync).toHaveBeenCalledTimes(2);
+    await pauseLedgerOperationalSync();
+    vi.useRealTimers();
   });
 });

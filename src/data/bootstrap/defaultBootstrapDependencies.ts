@@ -58,8 +58,10 @@ export function subscribeOperationalSyncLifecycle() {
     const next = isOnline(state);
     const restored = next && online === false;
     online = next;
-    if (restored)
+    if (restored) {
+      void resumeOperationalSync().catch(() => undefined);
       void scheduleAutomaticDataHealth("CONNECTIVITY_RESTORED").catch(() => undefined);
+    }
   });
   const unsubscribeSync = subscribeLedgerOperationalSyncCompletion((event) => {
     void scheduleAutomaticDataHealth("SYNC_COMPLETED", event.journeyIds, event).catch(

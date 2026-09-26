@@ -7,6 +7,10 @@ import {
 } from "./syncOperationRepository";
 import { createSyncEngine } from "./syncEngine";
 
+vi.mock("./ledgerQueueActivity", () => ({
+  announceLedgerQueueWorkAvailable: vi.fn(),
+}));
+
 function createInMemoryQueueDatabase() {
   const rows: SyncOperation[] = [];
 

@@ -54,8 +54,49 @@ describe("Ledger pull recovery", () => {
       changed: false,
       incomplete: true,
       pullApiRequestCount: 2,
+      reviewOutcome: "review_error",
     });
     await expect(refreshJourneyLedger("journey")).resolves.toBe(false);
+  });
+
+  it("treats only the exact blocked Review 409 as stable during a background pull", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "c0", hasMore: false });
+    refreshReview.mockRejectedValueOnce(
+      new ApiClientError("blocked", "http", 409, "SETTLEMENT_REVIEW_BLOCKED"),
+    );
+    await expect(refreshJourneyLedgerWithStatus("journey")).resolves.toEqual({
+      changed: false,
+      incomplete: false,
+      pullApiRequestCount: 2,
+      reviewOutcome: "review_blocked_stable",
+    });
+    expect(repository.applyBootstrap).not.toHaveBeenCalled();
+    expect(repository.applyChanges).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    new ApiClientError("conflict", "http", 409, "REVISION_CONFLICT"),
+    new ApiClientError("server", "http", 503),
+    new ApiClientError("timeout", "timeout"),
+    new ApiClientError("network", "network"),
+  ])("keeps other Review failures incomplete: %s", async (error) => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "c0", hasMore: false });
+    refreshReview.mockRejectedValueOnce(error);
+    await expect(refreshJourneyLedgerWithStatus("journey")).resolves.toMatchObject({
+      incomplete: true,
+      reviewOutcome: "review_error",
+    });
+  });
+
+  it("reports ordinary Review success", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "c0", hasMore: false });
+    await expect(refreshJourneyLedgerWithStatus("journey")).resolves.toMatchObject({
+      incomplete: false,
+      reviewOutcome: "review_success",
+    });
   });
 
   it("applies every page transactionally before advancing", async () => {

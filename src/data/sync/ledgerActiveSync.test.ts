@@ -2,19 +2,18 @@ import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  openDatabase: vi.fn(),
-  runOperational: vi.fn(),
+  getQueueActivity: vi.fn(),
+  isOperationalPaused: vi.fn(),
   refreshJourney: vi.fn(),
   refreshJourneyWithStatus: vi.fn(),
   refreshPersonal: vi.fn(),
 }));
 
-vi.mock("@/data/db/database", () => ({ openDatabase: mocks.openDatabase }));
-vi.mock("@/data/auth/authRepository", () => ({
-  requireActiveUserId: vi.fn(async () => "user-a"),
+vi.mock("./ledgerQueueActivity", () => ({
+  getLedgerQueueActivity: mocks.getQueueActivity,
 }));
-vi.mock("@/data/bootstrap/defaultBootstrapDependencies", () => ({
-  resumeOperationalSync: mocks.runOperational,
+vi.mock("./ledgerOperationalSync", () => ({
+  isLedgerOperationalSyncPaused: mocks.isOperationalPaused,
 }));
 vi.mock("./ledgerReportingCoordinator", () => ({
   refreshJourneyLedger: mocks.refreshJourney,
@@ -37,13 +36,20 @@ import {
 const result: LedgerActiveSyncResult = {
   changed: false,
   pendingCount: 0,
+  actionableNow: 0,
+  nextActionableAt: null,
   pullSucceeded: true,
 };
 
 describe("active Ledger sync", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.runOperational.mockResolvedValue(undefined);
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 0,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
+    mocks.isOperationalPaused.mockReturnValue(false);
     mocks.refreshJourney.mockResolvedValue(false);
     mocks.refreshJourneyWithStatus.mockResolvedValue({
       changed: false,
@@ -54,33 +60,49 @@ describe("active Ledger sync", () => {
   afterEach(() => vi.useRealTimers());
 
   it("keeps an offline mutation waiting in the durable queue", async () => {
-    mocks.runOperational.mockRejectedValue(new Error("offline"));
-    mocks.openDatabase.mockResolvedValue({
-      getFirstAsync: vi.fn().mockResolvedValue({ count: 1 }),
+    mocks.refreshJourneyWithStatus.mockRejectedValueOnce(new Error("offline"));
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: null,
     });
     await expect(runLedgerActiveSync("journey")).resolves.toEqual({
       changed: false,
       pendingCount: 1,
+      actionableNow: 0,
+      nextActionableAt: null,
       pullSucceeded: false,
-      personalPaymentRefreshCount: 0,
+      personalPaymentRefreshCount: 1,
       incomplete: false,
       pullApiRequestCount: null,
     });
-    expect(mocks.refreshJourneyWithStatus).not.toHaveBeenCalled();
+    expect(mocks.refreshJourneyWithStatus).toHaveBeenCalledOnce();
   });
 
   it("keeps an unresolved conflict in Changes waiting", async () => {
-    const getFirstAsync = vi.fn().mockResolvedValue({ count: 1 });
-    mocks.openDatabase.mockResolvedValue({ getFirstAsync });
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 0,
+      nextActionableAt: null,
+    });
     await expect(getLedgerPendingMutationCount("journey")).resolves.toBe(1);
-    expect(getFirstAsync.mock.calls[0][0]).toContain("'CONFLICT'");
-    expect(getFirstAsync.mock.calls[0][0]).toContain("'FAILED'");
+    expect(mocks.getQueueActivity).toHaveBeenCalledWith("journey");
+  });
+
+  it("does not keep reads fast while operational sync is auth-paused", async () => {
+    mocks.getQueueActivity.mockResolvedValue({
+      unresolvedCount: 1,
+      actionableNow: 1,
+      nextActionableAt: null,
+    });
+    mocks.isOperationalPaused.mockReturnValue(true);
+    await expect(runLedgerActiveSync("journey")).resolves.toMatchObject({
+      pendingCount: 1,
+      actionableNow: 0,
+    });
   });
 
   it("reports counted pull requests without altering the operational sync result", async () => {
-    mocks.openDatabase.mockResolvedValue({
-      getFirstAsync: vi.fn().mockResolvedValue({ count: 0 }),
-    });
     mocks.refreshJourneyWithStatus.mockResolvedValue({
       changed: false,
       incomplete: false,
@@ -93,7 +115,7 @@ describe("active Ledger sync", () => {
       personalPaymentRefreshCount: 1,
       pullApiRequestCount: 3,
     });
-    expect(mocks.runOperational).toHaveBeenCalledOnce();
+    expect(mocks.getQueueActivity).toHaveBeenCalledWith("journey-a");
     expect(mocks.refreshJourneyWithStatus).toHaveBeenCalledWith("journey-a");
   });
 
@@ -170,7 +192,7 @@ describe("active Ledger sync", () => {
     void controller.trigger();
     expect(run).toHaveBeenCalledOnce();
     controller.stop();
-    resolve({ changed: true, pendingCount: 0, pullSucceeded: true });
+    resolve({ ...result, changed: true });
     await Promise.resolve();
     expect(onSuccess).not.toHaveBeenCalled();
   });
@@ -204,6 +226,37 @@ describe("active Ledger sync", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  it("backs off with three unresolved terminal rows and a stable blocked Review", async () => {
+    vi.useFakeTimers();
+    const run = vi.fn(async () => ({
+      ...result,
+      pendingCount: 3,
+      actionableNow: 0,
+      reviewOutcome: "review_blocked_stable" as const,
+    }));
+    const onCycle = vi.fn();
+    const controller = createLedgerActiveSyncController({
+      run,
+      onStart: vi.fn(),
+      onSuccess: vi.fn(),
+      onError: vi.fn(),
+      onCycle,
+    });
+    controller.start();
+    await vi.advanceTimersByTimeAsync(8_000 + 15_000 + 30_000 + 60_000 + 60_000);
+    expect(onCycle.mock.calls.map(([metric]) => metric.nextIntervalMs)).toEqual([
+      8_000, 15_000, 30_000, 60_000, 60_000, 60_000,
+    ]);
+    expect(onCycle.mock.lastCall?.[0]).toMatchObject({
+      outcome: "idle",
+      pendingCount: 3,
+      actionableNow: 0,
+      reviewOutcome: "review_blocked_stable",
+      failureCycles: 0,
+    });
+    controller.stop();
+  });
+
   it("resets to eight seconds on a remote change and keeps nonempty queues fast", async () => {
     vi.useFakeTimers();
     const run = vi
@@ -211,7 +264,7 @@ describe("active Ledger sync", () => {
       .mockResolvedValueOnce(result)
       .mockResolvedValueOnce(result)
       .mockResolvedValueOnce({ ...result, changed: true })
-      .mockResolvedValueOnce({ ...result, pendingCount: 1 });
+      .mockResolvedValueOnce({ ...result, pendingCount: 1, actionableNow: 1 });
     const onCycle = vi.fn();
     const controller = createLedgerActiveSyncController({
       run,
@@ -343,6 +396,31 @@ describe("active Ledger sync", () => {
     controller.stop();
   });
 
+  it("keeps a genuine Review error incomplete even when another pull changed", async () => {
+    vi.useFakeTimers();
+    const onCycle = vi.fn();
+    const controller = createLedgerActiveSyncController({
+      run: async () => ({
+        ...result,
+        changed: true,
+        incomplete: true,
+        reviewOutcome: "review_error",
+      }),
+      onStart: vi.fn(),
+      onSuccess: vi.fn(),
+      onError: vi.fn(),
+      onCycle,
+    });
+    controller.start();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onCycle.mock.lastCall?.[0]).toMatchObject({
+      outcome: "failure",
+      nextIntervalMs: 15_000,
+      reviewOutcome: "review_error",
+    });
+    controller.stop();
+  });
+
   it("does not publish stale account results or restart an old Journey timer", async () => {
     vi.useFakeTimers();
     let resolveOld!: (value: LedgerActiveSyncResult) => void;
@@ -416,9 +494,6 @@ describe("active Ledger sync", () => {
   });
 
   it("uses a Personal Payment-only pull for standalone Settlement", async () => {
-    mocks.openDatabase.mockResolvedValue({
-      getFirstAsync: vi.fn().mockResolvedValue({ count: 0 }),
-    });
     mocks.refreshPersonal.mockImplementation(
       async (_journeyId: string, onRequest?: () => void) => {
         onRequest?.();

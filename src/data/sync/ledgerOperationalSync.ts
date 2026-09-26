@@ -14,9 +14,74 @@ import { runLedgerSettlementPaymentSync } from "./ledgerSettlementPaymentCoordin
 import { runLedgerPersonalPaymentSync } from "./ledgerPersonalPaymentCoordinator";
 import { runPersonalSettlementReviewSync } from "./personalSettlementReviewCoordinator";
 import { createSyncOperationRepository } from "./syncOperationRepository";
+import {
+  getLedgerQueueActivity,
+  subscribeLedgerQueueWorkAvailable,
+} from "./ledgerQueueActivity";
 
 let running: Promise<void> | null = null;
 let paused = false;
+let queueTimer: ReturnType<typeof setTimeout> | null = null;
+let workSignaledDuringRun = false;
+let queueScheduleVersion = 0;
+
+function clearQueueTimer() {
+  if (queueTimer) clearTimeout(queueTimer);
+  queueTimer = null;
+}
+
+async function scheduleQueueWake() {
+  const generation = getAccountGeneration();
+  const version = ++queueScheduleVersion;
+  try {
+    const activity = await getLedgerQueueActivity();
+    if (
+      paused ||
+      generation !== getAccountGeneration() ||
+      version !== queueScheduleVersion
+    )
+      return;
+    const delay =
+      workSignaledDuringRun && activity.actionableNow > 0
+        ? 0
+        : activity.actionableNow > 0
+          ? Math.min(
+              60_000,
+              activity.nextActionableAt === null
+                ? 60_000
+                : Math.max(0, activity.nextActionableAt - Date.now()),
+            )
+          : activity.nextActionableAt !== null
+            ? Math.max(0, activity.nextActionableAt - Date.now())
+            : null;
+    workSignaledDuringRun = false;
+    clearQueueTimer();
+    if (delay === null) return;
+    queueTimer = setTimeout(() => {
+      queueTimer = null;
+      if (!paused && generation === getAccountGeneration())
+        void runLedgerOperationalSync().catch(() => undefined);
+    }, delay);
+  } catch {
+    // No active account or unavailable SQLite: lifecycle recovery will retry.
+  }
+}
+
+subscribeLedgerQueueWorkAvailable(() => {
+  if (paused) return;
+  if (running) {
+    workSignaledDuringRun = true;
+    return;
+  }
+  queueScheduleVersion += 1;
+  clearQueueTimer();
+  const generation = getAccountGeneration();
+  queueTimer = setTimeout(() => {
+    queueTimer = null;
+    if (!paused && generation === getAccountGeneration())
+      void runLedgerOperationalSync().catch(() => undefined);
+  }, 0);
+});
 
 export type LedgerOperationalSyncOrigin = "NORMAL" | "DATA_HEALTH";
 export type LedgerOperationalSyncCompletion = {
@@ -24,6 +89,10 @@ export type LedgerOperationalSyncCompletion = {
   generation: number;
   journeyIds: string[];
 };
+
+export function isLedgerOperationalSyncPaused() {
+  return paused;
+}
 
 const completionListeners = new Set<(event: LedgerOperationalSyncCompletion) => void>();
 const kickListeners = new Set<(generation: number) => void>();
@@ -50,10 +119,14 @@ export function runLedgerOperationalSync(
   } = {},
 ) {
   if (paused) return Promise.resolve();
-  if (!running)
+  if (!running) {
+    queueScheduleVersion += 1;
+    clearQueueTimer();
     running = runOperationalCycle(input.origin ?? "NORMAL").finally(() => {
       running = null;
+      void scheduleQueueWake();
     });
+  }
   return running;
 }
 
@@ -157,6 +230,9 @@ async function captureEligibleScopes(): Promise<LedgerOperationalSyncCompletion 
 
 export async function pauseLedgerOperationalSync() {
   paused = true;
+  queueScheduleVersion += 1;
+  clearQueueTimer();
+  workSignaledDuringRun = false;
   await running;
 }
 

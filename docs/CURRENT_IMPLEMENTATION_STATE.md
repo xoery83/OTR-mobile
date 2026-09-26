@@ -2,6 +2,20 @@
 
 Date: 2026-09-26
 
+## Performance Guardrails Phase 1B.1 — local correction
+
+- Ordinary background Ledger pulls classify only exact HTTP 409
+  `SETTLEMENT_REVIEW_BLOCKED` as a stable unavailable Review. Other Review
+  errors remain incomplete; explicit Review-page behavior is unchanged.
+- The active read cadence uses executable queue work instead of all unresolved
+  rows. FAILED and CONFLICT remain visible in UI counts. Future RETRYABLE and
+  processing leases have a separate account-scoped operational wake timer;
+  completed dependencies signal the worker. Foreground reads no longer start
+  operational sync on every cycle. See ADR 0045.
+- This correction is local only. Repeat Phase 1B Simulator validation only
+  in a separately approved controlled run. The local gate passed: 8 targeted
+  test files / 58 tests, TypeScript, affected ESLint/Prettier and diff check.
+
 ## My Ledger Reporting 2.0 Slice A+B — local SQL validation passed
 
 - The new account-authorized, single-snapshot summary path replaces N full
@@ -91,7 +105,7 @@ Date: 2026-09-26
   the latest local Adjustment balance from its frozen inputs, so a cold start
   can show saved version #2 immediately even while fresh Preview is pending.
   If the new head is not locally complete, it shows `Refreshing confirmed
-  Settlement…` instead of the old Changes card.
+Settlement…` instead of the old Changes card.
 - No Settlement semantics, Backend contract, SQL migration, or confirmation
   precondition changed. Full Vitest (111 files / 588 tests), TypeScript, ESLint,
   Backend build, `git diff --check`, and signed physical Release build pass. On

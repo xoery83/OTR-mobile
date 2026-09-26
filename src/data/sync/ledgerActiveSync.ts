@@ -1,5 +1,5 @@
-import { openDatabase } from "@/data/db/database";
-import { resumeOperationalSync } from "@/data/bootstrap/defaultBootstrapDependencies";
+import { getLedgerQueueActivity } from "./ledgerQueueActivity";
+import { isLedgerOperationalSyncPaused } from "./ledgerOperationalSync";
 
 import { refreshJourneyLedgerWithStatus } from "./ledgerReportingCoordinator";
 import { refreshLedgerPersonalPayments } from "./ledgerPersonalPaymentCoordinator";
@@ -13,10 +13,13 @@ export type LedgerSyncStatus = "SYNCING" | "UP_TO_DATE" | "OFFLINE" | "CHANGES_W
 export type LedgerActiveSyncResult = {
   changed: boolean;
   pendingCount: number;
+  actionableNow: number;
+  nextActionableAt: number | null;
   pullSucceeded: boolean;
   personalPaymentRefreshCount?: number;
   incomplete?: boolean;
   pullApiRequestCount?: number | null;
+  reviewOutcome?: "review_success" | "review_blocked_stable" | "review_error";
 };
 
 export type LedgerActiveSyncMetric = {
@@ -35,6 +38,10 @@ export type LedgerActiveSyncMetric = {
   wakeups: number;
   coalescedWakeups: number;
   pullApiRequestCount: number | null;
+  pendingCount: number | null;
+  actionableNow: number | null;
+  nextActionableAt: number | null;
+  reviewOutcome: LedgerActiveSyncResult["reviewOutcome"];
 };
 
 export function deriveLedgerSyncStatus(input: {
@@ -50,26 +57,7 @@ export function deriveLedgerSyncStatus(input: {
 }
 
 export async function getLedgerPendingMutationCount(journeyId: string) {
-  const database = await openDatabase();
-  const userId = await (await import("@/data/auth/authRepository")).requireActiveUserId();
-  const row = await database.getFirstAsync<{ count: number }>(
-    `SELECT
-       (SELECT COUNT(*) FROM sync_operations
-        WHERE trip_id = ? AND entity_type LIKE 'ledger_%'
-          AND owner_user_id = ?
-          AND status IN ('PENDING', 'PROCESSING', 'RETRYABLE',
-            'DEPENDENCY_BLOCKED', 'FAILED', 'CONFLICT'))
-       +
-       (SELECT COUNT(*) FROM ledger_asset_operations
-        WHERE journey_id = ? AND owner_user_id = ?
-          AND status IN ('PENDING', 'PROCESSING', 'RETRYABLE', 'FAILED'))
-       AS count`,
-    journeyId,
-    userId,
-    journeyId,
-    userId,
-  );
-  return row?.count ?? 0;
+  return (await getLedgerQueueActivity(journeyId)).unresolvedCount;
 }
 
 export async function runLedgerActiveSync(
@@ -77,15 +65,18 @@ export async function runLedgerActiveSync(
 ): Promise<LedgerActiveSyncResult> {
   let incomplete = false;
   let pullApiRequestCount = 0;
+  let reviewOutcome: LedgerActiveSyncResult["reviewOutcome"];
   const result = await runActiveSync(journeyId, async (id) => {
     const pulled = await refreshJourneyLedgerWithStatus(id);
     incomplete = pulled.incomplete;
     pullApiRequestCount = pulled.pullApiRequestCount;
+    reviewOutcome = pulled.reviewOutcome;
     return pulled.changed;
   });
   return {
     ...result,
     incomplete,
+    reviewOutcome,
     pullApiRequestCount: result.pullSucceeded ? pullApiRequestCount : null,
   };
 }
@@ -113,15 +104,17 @@ async function runActiveSync(
   let pullSucceeded = true;
   let personalPaymentRefreshCount = 0;
   try {
-    await resumeOperationalSync();
     personalPaymentRefreshCount = 1;
     changed = await refresh(journeyId);
   } catch {
     pullSucceeded = false;
   }
+  const activity = await getLedgerQueueActivity(journeyId);
   return {
     changed,
-    pendingCount: await getLedgerPendingMutationCount(journeyId),
+    pendingCount: activity.unresolvedCount,
+    actionableNow: isLedgerOperationalSyncPaused() ? 0 : activity.actionableNow,
+    nextActionableAt: isLedgerOperationalSyncPaused() ? null : activity.nextActionableAt,
     pullSucceeded,
     personalPaymentRefreshCount,
   };
@@ -189,14 +182,22 @@ export function createLedgerActiveSyncController(input: {
     let resetReason = reason;
     let nextIntervalMs: number | null = null;
     let pullApiRequestCount: number | null = null;
+    let pendingCount: number | null = null;
+    let actionableNow: number | null = null;
+    let nextActionableAt: number | null = null;
+    let reviewOutcome: LedgerActiveSyncResult["reviewOutcome"];
     input.onStart();
     try {
       const result = await input.run();
       if (startedGeneration !== generation || !canRun()) return;
       input.onSuccess(result);
       personalPaymentRefreshCount += result.personalPaymentRefreshCount ?? 0;
+      pendingCount = result.pendingCount;
+      actionableNow = result.actionableNow;
+      nextActionableAt = result.nextActionableAt;
+      reviewOutcome = result.reviewOutcome;
       pullApiRequestCount = result.pullApiRequestCount ?? null;
-      if (!result.pullSucceeded || (result.incomplete && !result.changed)) {
+      if (!result.pullSucceeded || result.incomplete) {
         failureCycles += 1;
         failureStreak += 1;
         emptyStreak = 0;
@@ -208,7 +209,7 @@ export function createLedgerActiveSyncController(input: {
         emptyStreak = 0;
         resetReason = "remote_change";
         nextIntervalMs = LEDGER_POLL_INTERVAL_MS;
-      } else if (result.pendingCount > 0) {
+      } else if (result.actionableNow > 0) {
         outcome = "queue_nonempty";
         queueNonemptyCycles += 1;
         failureStreak = 0;
@@ -260,6 +261,10 @@ export function createLedgerActiveSyncController(input: {
         wakeups,
         coalescedWakeups,
         pullApiRequestCount,
+        pendingCount,
+        actionableNow,
+        nextActionableAt,
+        reviewOutcome,
       });
       if (rerun) {
         rerun = false;

@@ -42,8 +42,7 @@ export function useLedgerActiveSync(
       initialOnline: false,
       isCurrent: () => accountGeneration === getAccountGeneration(),
       onCycle: (metric) => {
-        if (__DEV__)
-          console.info(JSON.stringify({ event: "ledger_active_sync", scope, ...metric }));
+        console.info(JSON.stringify({ event: "ledger_active_sync", scope, ...metric }));
       },
       onStart: () =>
         setStatus({

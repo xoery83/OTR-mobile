@@ -10,6 +10,7 @@ type JourneyPullResult = {
   changed: boolean;
   incomplete: boolean;
   pullApiRequestCount: number;
+  reviewOutcome: "review_success" | "review_blocked_stable" | "review_error";
 };
 const activePulls = new Map<string, Promise<JourneyPullResult>>();
 
@@ -32,6 +33,7 @@ async function pullJourneyLedger(journeyId: string) {
   let personalChanged = false;
   let personalError: unknown;
   let reviewError = false;
+  let reviewOutcome: JourneyPullResult["reviewOutcome"] = "review_success";
   let pullApiRequestCount = 0;
   const countRequest = () => {
     pullApiRequestCount += 1;
@@ -44,14 +46,23 @@ async function pullJourneyLedger(journeyId: string) {
   try {
     countRequest();
     await refreshPersonalSettlementReview(journeyId);
-  } catch {
-    // A blocked personal statement must not block ordinary Ledger refresh.
-    reviewError = true;
+  } catch (error) {
+    if (
+      error instanceof ApiClientError &&
+      error.status === 409 &&
+      error.code === "SETTLEMENT_REVIEW_BLOCKED"
+    ) {
+      reviewOutcome = "review_blocked_stable";
+    } else {
+      reviewOutcome = "review_error";
+      reviewError = true;
+    }
   }
   const finish = (changed: boolean): JourneyPullResult => ({
     changed,
     incomplete: Boolean(personalError) || reviewError,
     pullApiRequestCount,
+    reviewOutcome,
   });
   const repository = await getDefaultLedgerReadRepository();
   const cursor = (await repository.getCursor(journeyId))?.cursor ?? null;

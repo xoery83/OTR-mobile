@@ -2,6 +2,7 @@ import type * as SQLite from "expo-sqlite";
 import { createLocalId } from "@/domain/localId";
 import { ApiClientError } from "@/data/api/client";
 import { syncFailureDetails, type SyncFailureCategory } from "./syncEngine";
+import { announceLedgerQueueWorkAvailable } from "./ledgerQueueActivity";
 
 export type SyncOperationStatus =
   | "PENDING"
@@ -291,7 +292,7 @@ async function wakeCompletedDependencies(
   userId: string,
   completedId?: string,
 ) {
-  await database.runAsync(
+  const result = await database.runAsync(
     `UPDATE sync_operations SET status = 'PENDING', failure_category = NULL,
       last_error_code = NULL, last_error_message = NULL, next_attempt_at = NULL,
       updated_at = ?
@@ -307,4 +308,5 @@ async function wakeCompletedDependencies(
     completedId ?? null,
     completedId ?? null,
   );
+  if (result.changes > 0) announceLedgerQueueWorkAvailable();
 }
