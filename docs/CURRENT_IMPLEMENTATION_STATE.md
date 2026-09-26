@@ -2,6 +2,22 @@
 
 Date: 2026-09-26
 
+## Buglist 001 — Ledger navigation and Currency polish (2026-09-27)
+
+- Re-selecting the active Ledger tab preserves its current Journey/page. My Ledger
+  Settlement rows open the matching Journey Settlement directly; owed, owing, and
+  settled labels now use distinct colors and backgrounds.
+- Account and Settings show an arrow-only back button. Currency explains when
+  Journey Currency can change. Exchange Rate Lookup starts with From empty,
+  Journey Currency as To, and the device-local current date; it makes no initial
+  lookup until a From currency is chosen.
+- TypeScript, ESLint, formatting, diff check, and 20 focused tests pass. The full
+  suite passed 648 tests in 114 files; three unrelated suites could not load
+  because Vitest/Rolldown rejected React Native Flow syntax. The corrected
+  Release built, installed, and launched on iPhone 17 Pro Simulator; the paired
+  iPhone 16 Pro verified the navigation, Account/Settings headers, My Ledger
+  Settlement entry, and Currency defaults. No Backend or schema change.
+
 ## Current performance guardrail status
 
 - Phase 1A PASS: the deployed Dev Backend scanner reached its 300-second idle

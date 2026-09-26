@@ -15,6 +15,10 @@ export function formatLedgerRate(rate: string) {
   );
 }
 
+export function localDateKey(value: Date) {
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+}
+
 const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 function calendarDate(value: string) {

@@ -22,6 +22,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="expenses"
+        listeners={({ navigation }) => ({
+          tabPress: (event) => {
+            if (navigation.isFocused()) event.preventDefault();
+          },
+        })}
         options={{
           headerShown: false,
           tabBarIcon: ({ color }) => (

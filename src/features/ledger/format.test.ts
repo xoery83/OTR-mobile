@@ -5,6 +5,7 @@ import {
   formatLedgerDateFilter,
   formatLedgerRate,
   ledgerExpenseAttention,
+  localDateKey,
 } from "./format";
 
 const base = {
@@ -24,6 +25,7 @@ describe("Ledger product formatting", () => {
   });
 
   it("keeps calendar dates precise without fabricating a time", () => {
+    expect(localDateKey(new Date(2026, 8, 27, 0, 15))).toBe("2026-09-27");
     const now = new Date(2026, 8, 14, 23, 55);
     expect(formatLedgerDate("2026-09-14", now)).toBe("Today");
     expect(formatLedgerDate("2026-09-13T00:00:00.000Z", now)).toBe("Yesterday");

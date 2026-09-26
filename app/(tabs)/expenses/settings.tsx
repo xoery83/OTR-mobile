@@ -153,6 +153,11 @@ export default function CurrencyRoute() {
         <Text accessibilityRole="header" style={styles.sectionTitle}>
           Journey Currency
         </Text>
+        <Text style={styles.currencyHelp}>
+          {chinese
+            ? "只有旅行组织者在线时可以更改。更改前须预览并确认；有未完成结算或冲突时不能确认。首次最终结算后，此货币永久锁定。"
+            : "Only the Journey organizer can change this while online. Preview and confirm the change first. Open settlements or conflicts block confirmation; a finalized settlement locks this currency permanently."}
+        </Text>
         <View style={styles.group}>
           {journey ? (
             <Pressable
@@ -302,7 +307,7 @@ export default function CurrencyRoute() {
         {journey ? (
           <ExchangeRateLookup
             journeyId={journey.journeyId}
-            key={journey.journeyId}
+            key={`${journey.journeyId}:${journey.settlementCurrency}`}
             online={online}
             settlementCurrency={journey.settlementCurrency}
           />
@@ -341,6 +346,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     textTransform: "uppercase",
   },
+  currencyHelp: { color: "#475569", fontSize: 13, lineHeight: 19, marginBottom: 10 },
   group: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
   row: {
     alignItems: "center",

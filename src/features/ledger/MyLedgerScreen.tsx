@@ -11,7 +11,6 @@ import {
 import { router, useFocusEffect } from "expo-router";
 
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
-import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { myLedgerPeriodBounds } from "@/domain/ledger/journeyContext";
 import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
 import { formatLedgerDateRange, formatLedgerMoney } from "./format";
@@ -264,12 +263,12 @@ export function MyLedgerScreen() {
               accessibilityRole="button"
               accessibilityLabel={`${journey.title}, ${projection ? `${settlementPositionLabel(projection.balanceMinor)}, ${formatLedgerMoney(Math.abs(projection.balanceMinor), projection.currency, projection.scale)}` : "balance unavailable"}`}
               style={styles.journey}
-              onPress={async () => {
-                await (
-                  await getDefaultLedgerReportingRepository()
-                ).selectJourney(journey.journeyId);
-                router.replace("/expenses");
-              }}
+              onPress={() =>
+                router.push({
+                  pathname: "/expenses/settlement",
+                  params: { journeyId: journey.journeyId },
+                })
+              }
             >
               <View style={styles.grow}>
                 <Text style={styles.journeyTitle}>{journey.title}</Text>
@@ -289,7 +288,16 @@ export function MyLedgerScreen() {
                     : "—"}
                 </Text>
                 {projection ? (
-                  <Text style={styles.balanceMeaning}>
+                  <Text
+                    style={[
+                      styles.balanceMeaning,
+                      projection.balanceMinor > 0
+                        ? styles.owed
+                        : projection.balanceMinor < 0
+                          ? styles.owe
+                          : styles.settled,
+                    ]}
+                  >
                     {settlementPositionLabel(projection.balanceMinor)}
                   </Text>
                 ) : null}
@@ -432,7 +440,18 @@ const styles = StyleSheet.create({
   journeyTitle: { color: "#111827", fontSize: 16, fontWeight: "700" },
   balanceColumn: { alignItems: "flex-end", maxWidth: "46%" },
   balance: { color: "#111827", fontWeight: "700", textAlign: "right" },
-  balanceMeaning: { color: "#64748B", fontSize: 11, marginTop: 3 },
+  balanceMeaning: {
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 3,
+    overflow: "hidden",
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
+  owed: { backgroundColor: "#DCFCE7", color: "#166534" },
+  owe: { backgroundColor: "#FEE2E2", color: "#991B1B" },
+  settled: { backgroundColor: "#E5E7EB", color: "#374151" },
   backdrop: { backgroundColor: "#0006", flex: 1, justifyContent: "center", padding: 28 },
   menu: { backgroundColor: "#FFFFFF", borderRadius: 12, padding: 18 },
   option: { justifyContent: "center", minHeight: 48 },

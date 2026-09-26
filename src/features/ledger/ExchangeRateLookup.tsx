@@ -14,7 +14,7 @@ import {
   type LedgerRateLookupResult,
 } from "@/data/repositories/ledgerCurrencyRepository";
 import { CurrencyPicker } from "./CurrencyPicker";
-import { formatLedgerRate } from "./format";
+import { formatLedgerRate, localDateKey } from "./format";
 
 export function ExchangeRateLookup({
   journeyId,
@@ -25,9 +25,9 @@ export function ExchangeRateLookup({
   online: boolean;
   settlementCurrency: string;
 }) {
-  const [from, setFrom] = useState(settlementCurrency === "USD" ? "EUR" : "USD");
+  const [from, setFrom] = useState("");
   const [to, setTo] = useState(settlementCurrency);
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => localDateKey(new Date()));
   const [picker, setPicker] = useState<"FROM" | "TO" | null>(null);
   const [dateOpen, setDateOpen] = useState(false);
   const [result, setResult] = useState<LedgerRateLookupResult | null>(null);
@@ -42,6 +42,7 @@ export function ExchangeRateLookup({
 
   useEffect(() => {
     const current = ++request.current;
+    if (!from) return;
     const input = { quoteCurrency: from, baseCurrency: to, requestedDate: date };
     void (async () => {
       try {
@@ -127,7 +128,7 @@ export function ExchangeRateLookup({
             setDateOpen(false);
             if (value) {
               reset();
-              setDate(value.toISOString().slice(0, 10));
+              setDate(localDateKey(value));
             }
           }}
           value={new Date(`${date}T12:00:00`)}
@@ -150,7 +151,9 @@ function CurrencyField({
     <View style={styles.currencyField}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <Pressable accessibilityRole="button" onPress={onPress} style={styles.fieldButton}>
-        <Text style={styles.fieldValue}>{value}</Text>
+        <Text style={value ? styles.fieldValue : styles.placeholder}>
+          {value || "Select currency"}
+        </Text>
       </Pressable>
     </View>
   );
@@ -254,6 +257,7 @@ const styles = StyleSheet.create({
     padding: 11,
   },
   fieldValue: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
+  placeholder: { color: "#64748B", fontSize: 16 },
   result: { borderTopColor: "#E5E7EB", borderTopWidth: 1, gap: 5, paddingTop: 14 },
   resultTitle: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
   rate: { color: "#0F172A", fontSize: 22, fontWeight: "800" },
