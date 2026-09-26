@@ -266,7 +266,7 @@ export function PersonalPaymentSection({
       });
       setQuickAmount("");
       await load();
-      void runLedgerOperationalSync().then(load).catch(() => undefined);
+      kickLedgerOperationalSync(() => runLedgerOperationalSync().then(load));
     } catch (error) {
       Alert.alert(
         "Could not save",
@@ -359,7 +359,7 @@ export function PersonalPaymentSection({
           onSaved={async () => {
             setEditing(null);
             await load();
-            void runLedgerOperationalSync().then(load).catch(() => undefined);
+            kickLedgerOperationalSync(() => runLedgerOperationalSync().then(load));
           }}
           settlementCurrency={settlementCurrency}
         />

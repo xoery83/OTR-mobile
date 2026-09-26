@@ -2,7 +2,18 @@
 
 Date: 2026-09-26
 
-## Performance Guardrails Phase 1B.1 — local correction
+## Current performance guardrail status
+
+- Phase 1A PASS: the deployed Dev Backend scanner reached its 300-second idle
+  cadence without destabilizing Hosted Dev.
+- My Ledger Reporting 2.0 PASS: the controlled Hosted Dev YEAR bootstrap used
+  the lightweight path and Hosted Dev remained Healthy.
+- Phase 1B / 1B.1 PASS: Simulator validation and the physical-device short
+  smoke both passed. A disconnected cold start and exhaustive request-level
+  proof of zero duplicate reads were not repeated; both remain non-blocking
+  unverified items for this checkpoint.
+
+## Performance Guardrails Phase 1B — Simulator and physical smoke PASS
 
 - Ordinary background Ledger pulls classify only exact HTTP 409
   `SETTLEMENT_REVIEW_BLOCKED` as a stable unavailable Review. Other Review
@@ -12,9 +23,24 @@ Date: 2026-09-26
   processing leases have a separate account-scoped operational wake timer;
   completed dependencies signal the worker. Foreground reads no longer start
   operational sync on every cycle. See ADR 0045.
-- This correction is local only. Repeat Phase 1B Simulator validation only
-  in a separately approved controlled run. The local gate passed: 8 targeted
-  test files / 58 tests, TypeScript, affected ESLint/Prettier and diff check.
+- Controlled Simulator validation observed immediate, 8, 15, 30, 60 and 60
+  second idle cycles without overlap or an independent Settlement poll.
+  Stable blocked Review and three terminal FAILED rows did not prevent idle
+  backoff. One Expense uploaded promptly, and Hosted Dev stayed Healthy.
+- Final local closure proved that a wake during a pending focused 60-second
+  timer starts a read immediately, cancels the old timer, and resumes adaptive
+  cadence. Embedded Personal Payment create/edit now use the existing kick
+  signal while preserving their upload-completion refresh. Relevant local
+  tests, TypeScript, affected lint/format and diff check pass.
+- A signed Dev Release was overlaid onto the iPhone 16 Pro without clearing
+  local data. The remembered session and cached Ledger opened normally. One
+  CNY 1.00 Personal Payment and one CNY 1.00 Expense each received one Backend
+  201 response; the embedded payment display updated immediately. The selected
+  Settlement remained readable, and the idle window showed no separate fixed
+  8-second payment poll or 409 retry loop. Hosted Dev remained Healthy with
+  low overall CPU and no active Disk IO Budget warning. The App was closed
+  after the smoke. A true disconnected cold launch was not exercised; the new
+  Expense awaits today's CNY→NZD reference rate.
 
 ## My Ledger Reporting 2.0 Slice A+B — local SQL validation passed
 
@@ -27,10 +53,10 @@ Date: 2026-09-26
   metadata, including zero-activity rows, so discovery is retained. Settlement
   still needs its saved local projection and remains explicitly unavailable
   when that material is absent.
-- This is local only. The snapshot SQL migration, Backend and Mobile changes
-  have not been deployed or exercised against Hosted Dev. Phase 1B Simulator
-  validation remains HOLD; Phase 1C, Simulator and physical-device work are
-  outside this checkpoint.
+- The snapshot SQL migration and Backend are deployed to Hosted Dev. A
+  controlled Simulator YEAR read used the lightweight_2_0 path for 53 eligible
+  Journeys with two attributable Gateway requests and a 1.578-second Backend
+  response. Hosted Dev remained Healthy.
 - The pending My Ledger migration now includes a partial 409-conflict index on
   `ledger_idempotency_keys(journey_id)`. Local small-account EXPLAIN changed from
   a 5,501-row global history scan to one eligible-Journey conflict lookup.

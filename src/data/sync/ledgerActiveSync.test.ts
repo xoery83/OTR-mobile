@@ -327,6 +327,64 @@ describe("active Ledger sync", () => {
     controller.stop();
   });
 
+  it("replaces a pending 60-second idle timer with a prompt focused wake", async () => {
+    vi.useFakeTimers();
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const run = vi.fn(async () => {
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await Promise.resolve();
+      inFlight -= 1;
+      return result;
+    });
+    const onCycle = vi.fn();
+    const controller = createLedgerActiveSyncController({
+      run,
+      onStart: vi.fn(),
+      onSuccess: vi.fn(),
+      onError: vi.fn(),
+      onCycle,
+    });
+
+    controller.start();
+    await vi.advanceTimersByTimeAsync(8_000 + 15_000 + 30_000);
+    expect(run).toHaveBeenCalledTimes(4);
+    expect(onCycle.mock.lastCall?.[0]).toMatchObject({
+      outcome: "idle",
+      nextIntervalMs: 60_000,
+    });
+    expect(vi.getTimerCount()).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(20_000);
+    controller.wake();
+    expect(run).toHaveBeenCalledTimes(5);
+    expect(vi.getTimerCount()).toBe(0);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onCycle.mock.lastCall?.[0]).toMatchObject({
+      currentIntervalMs: 0,
+      resetReason: "local_mutation",
+      nextIntervalMs: 8_000,
+      wakeups: 1,
+    });
+    expect(vi.getTimerCount()).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(8_000 + 15_000);
+    expect(run).toHaveBeenCalledTimes(7);
+    await vi.advanceTimersByTimeAsync(17_000);
+    expect(run).toHaveBeenCalledTimes(7); // The canceled 60-second timer was due here.
+    await vi.advanceTimersByTimeAsync(13_000);
+    expect(run).toHaveBeenCalledTimes(8);
+    expect(onCycle.mock.lastCall?.[0]).toMatchObject({
+      outcome: "idle",
+      nextIntervalMs: 60_000,
+      coalescedWakeups: 0,
+    });
+    expect(maxInFlight).toBe(1);
+    controller.stop();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("pauses offline, resumes on reconnect, and resets on foreground return", async () => {
     vi.useFakeTimers();
     const run = vi.fn(async () => result);
