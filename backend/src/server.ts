@@ -49,22 +49,33 @@ const handle = createDevBackendHandler({
 });
 
 const server = createServer(async (incoming, outgoing) => {
-  const chunks: Buffer[] = [];
-  for await (const chunk of incoming) chunks.push(Buffer.from(chunk));
-  const body = Buffer.concat(chunks);
-  const request = new Request(
-    `http://${incoming.headers.host ?? "127.0.0.1"}${incoming.url ?? "/"}`,
-    {
-      method: incoming.method,
-      headers: incoming.headers as HeadersInit,
-      body: body.length ? body : undefined,
-    },
-  );
-  const response = await handle(request);
+  const controller = new AbortController();
+  const onClose = () => {
+    if (!outgoing.writableFinished) controller.abort();
+  };
+  outgoing.on("close", onClose);
+  try {
+    const chunks: Buffer[] = [];
+    for await (const chunk of incoming) chunks.push(Buffer.from(chunk));
+    const body = Buffer.concat(chunks);
+    const request = new Request(
+      `http://${incoming.headers.host ?? "127.0.0.1"}${incoming.url ?? "/"}`,
+      {
+        method: incoming.method,
+        headers: incoming.headers as HeadersInit,
+        body: body.length ? body : undefined,
+        signal: controller.signal,
+      },
+    );
+    const response = await handle(request);
+    if (outgoing.destroyed) return;
 
-  outgoing.statusCode = response.status;
-  response.headers.forEach((value, key) => outgoing.setHeader(key, value));
-  outgoing.end(Buffer.from(await response.arrayBuffer()));
+    outgoing.statusCode = response.status;
+    response.headers.forEach((value, key) => outgoing.setHeader(key, value));
+    outgoing.end(Buffer.from(await response.arrayBuffer()));
+  } finally {
+    outgoing.off("close", onClose);
+  }
 });
 
 server.on("close", () => scanner?.stop());

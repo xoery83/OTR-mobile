@@ -179,7 +179,7 @@ describe("Ledger pull recovery", () => {
     await expect(Promise.all([first, second])).resolves.toEqual([false, false]);
   });
 
-  it("bootstraps newly discovered authorized Journeys into the local directory", async () => {
+  it("caches authorized summaries without automatic Journey bootstrap", async () => {
     transport.myLedger.mockResolvedValue({
       journeys: [{ journeyId: "new" }, { journeyId: "second" }, { journeyId: "known" }],
     });
@@ -197,10 +197,21 @@ describe("Ledger pull recovery", () => {
     });
     await refreshMyLedger("ALL", { from: null, to: null });
     expect(repository.cacheMyLedger).toHaveBeenCalledOnce();
-    expect(transport.bootstrap).toHaveBeenCalledWith("new");
-    expect(transport.bootstrap).toHaveBeenCalledWith("second");
-    expect(transport.bootstrap).toHaveBeenCalledTimes(2);
-    expect(repository.applyBootstrap).toHaveBeenCalledTimes(2);
-    expect(maxWrites).toBe(1);
+    expect(transport.bootstrap).not.toHaveBeenCalled();
+    expect(repository.applyBootstrap).not.toHaveBeenCalled();
+    expect(maxWrites).toBe(0);
   });
+
+  it.each([
+    ["YEAR", { from: "2026-01-01T00:00:00Z", to: "2026-09-26T00:00:00Z" }],
+    ["ALL", { from: null, to: null }],
+  ] as const)(
+    "issues one %s request for the selected My Ledger period",
+    async (period, bounds) => {
+      transport.myLedger.mockResolvedValue({ journeys: [] });
+      await refreshMyLedger(period, bounds);
+      expect(transport.myLedger).toHaveBeenCalledExactlyOnceWith(period, bounds);
+      expect(repository.cacheMyLedger).toHaveBeenCalledOnce();
+    },
+  );
 });

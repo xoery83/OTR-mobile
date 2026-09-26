@@ -75,7 +75,8 @@ describe("SQLite migrations", () => {
     expect(account.sql).toContain("owner_user_id");
     expect(account.sql).toContain("local_owner_user_id");
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(36);
+    expect(latest.id).toBe(37);
+    expect(latest.sql).toContain("ledger_my_spending_facts");
     expect(migrations[28].sql).toContain("coverage_json");
     expect(migrations[29].sql).toContain("correction_source_expense_id");
     expect(migrations[30].sql).toContain("pending_review_state");
@@ -83,8 +84,8 @@ describe("SQLite migrations", () => {
     expect(migrations[32].sql).toContain("ledger_personal_payment_fx_projections");
     expect(migrations[33].sql).toContain("economic_date_source");
     expect(migrations[34].sql).toContain("dependency_operation_id");
-    expect(latest.sql).toContain("CREATE TABLE data_health_state");
-    expect(latest.sql).toContain("CREATE TABLE data_health_repair_events");
+    expect(migrations[35].sql).toContain("CREATE TABLE data_health_state");
+    expect(migrations[35].sql).toContain("CREATE TABLE data_health_repair_events");
     expect(migrations[22].sql).toContain("reference_date");
     expect(migrations[23].sql).toContain("reference_evidence_json");
     expect(migrations[24].sql).toContain("ledger_personal_payment_records");

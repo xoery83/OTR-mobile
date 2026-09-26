@@ -183,6 +183,51 @@ export function createLedgerReadRepository(
     async cacheMyLedger(response: MyLedgerResponse) {
       const userId = await getActiveUserId();
       await database.withTransactionAsync(async () => {
+        const latest = await database.getFirstAsync<{ serverTime: string }>(
+          `SELECT server_time AS serverTime FROM ledger_my_spending_periods
+           WHERE user_id = ? AND period_key = ?`,
+          userId,
+          response.period,
+        );
+        if (latest && latest.serverTime > response.serverTime) return;
+        if (response.spendingFacts) {
+          const eligible = new Set(response.journeys.map((journey) => journey.journeyId));
+          if (response.spendingFacts.some((fact) => !eligible.has(fact.journeyId)))
+            throw new Error("My Ledger spending fact outside authorized response.");
+          await database.runAsync(
+            `INSERT OR REPLACE INTO ledger_my_spending_periods
+             (user_id, period_key, server_time) VALUES (?, ?, ?)`,
+            userId,
+            response.period,
+            response.serverTime,
+          );
+          await database.runAsync(
+            `DELETE FROM ledger_my_spending_facts WHERE user_id = ? AND period_key = ?`,
+            userId,
+            response.period,
+          );
+          for (const fact of response.spendingFacts)
+            await database.runAsync(
+              `INSERT INTO ledger_my_spending_facts (
+                  user_id, period_key, expense_id, revision, journey_id, category,
+                  economic_date, occurred_at, status, has_open_conflict,
+                original_currency, original_scale, personal_split_minor
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              userId,
+              response.period,
+              fact.expenseId,
+              fact.revision,
+              fact.journeyId,
+              fact.category,
+              fact.economicDate,
+              fact.occurredAt,
+              fact.status,
+              fact.hasOpenConflict ? 1 : 0,
+              fact.originalCurrency,
+              fact.originalScale,
+              fact.personalSplitMinor,
+            );
+        }
         await database.runAsync(
           `DELETE FROM ledger_my_journey_summaries
            WHERE user_id = ? AND period_key = ?`,

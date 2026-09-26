@@ -1,5 +1,19 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## My Ledger Reporting 2.0 lightweight read (local implementation)
+
+`GET /v2/me/ledger` retains its existing `period`, `from`, `to`, `journeys`,
+and `serverTime` contract and every existing per-Journey summary field. A new
+optional `spendingFacts` array contains only authenticated personal Expense ID,
+revision, Journey ID, category, economic/occurred dates, business/conflict state,
+original currency/scale, and original-currency personal split minor units.
+Clients that do not recognize the field can ignore it. The summary uses
+occurredAt and Journey settlement currency; Spending facts use economic date
+and original currency. No Settlement balance is inferred from `positionMinor`.
+
+The read requires the read-only `my_ledger_lightweight_snapshot_2_0` database
+function. It must be deployed before the Backend bundle using this route.
+
 ## Expense economic-date evidence completion (Dev, V1)
 
 `GET /v2/trips/:tripId/expenses/:expenseId/economic-date` returns

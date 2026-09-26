@@ -1269,4 +1269,34 @@ export const migrations: Migration[] = [
         ON data_health_repair_events (account_id, journey_id, rule_id, updated_at DESC);
     `,
   },
+  {
+    id: 37,
+    name: "my_ledger_narrow_spending_facts",
+    sql: `
+      CREATE TABLE ledger_my_spending_periods (
+        user_id TEXT NOT NULL,
+        period_key TEXT NOT NULL,
+        server_time TEXT NOT NULL,
+        PRIMARY KEY (user_id, period_key)
+      );
+      CREATE TABLE ledger_my_spending_facts (
+        user_id TEXT NOT NULL,
+        period_key TEXT NOT NULL,
+        expense_id TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        journey_id TEXT NOT NULL,
+        category TEXT NOT NULL,
+        economic_date TEXT,
+        occurred_at TEXT NOT NULL,
+        status TEXT NOT NULL,
+        has_open_conflict INTEGER NOT NULL,
+        original_currency TEXT NOT NULL,
+        original_scale INTEGER NOT NULL,
+        personal_split_minor INTEGER NOT NULL,
+        PRIMARY KEY (user_id, period_key, expense_id)
+      );
+      CREATE INDEX ledger_my_spending_facts_account_journey
+        ON ledger_my_spending_facts (user_id, period_key, journey_id);
+    `,
+  },
 ];

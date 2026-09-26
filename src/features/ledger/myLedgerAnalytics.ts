@@ -7,6 +7,51 @@ import type { FxReferenceSnapshot } from "./personalPaymentFx";
 
 export type Period = "YEAR" | "ALL";
 export type PersonalExpense = { expense: LedgerExpense; memberId: string };
+type NarrowSpendingFact = {
+  expenseId: string;
+  revision: number;
+  journeyId: string;
+  category: string;
+  economicDate: string | null;
+  occurredAt: string;
+  status: string;
+  hasOpenConflict: boolean;
+  personalSplitMinor: number;
+  originalCurrency: string;
+  originalScale: number;
+};
+export type PersonalSpendingRow = PersonalExpense | { fact: NarrowSpendingFact };
+
+export function personalSpendingMaterial(row: PersonalSpendingRow) {
+  if ("fact" in row) {
+    const fact = row.fact;
+    return {
+      id: fact.expenseId,
+      journeyId: fact.journeyId,
+      category: fact.category,
+      date: fact.economicDate ?? fact.occurredAt.slice(0, 10),
+      status: fact.status,
+      deleted: fact.status === "DELETED",
+      conflict: fact.hasOpenConflict,
+      minor: fact.personalSplitMinor,
+      currency: fact.originalCurrency,
+      scale: fact.originalScale,
+    };
+  }
+  const { expense, memberId } = row;
+  return {
+    id: expense.id,
+    journeyId: expense.journeyId,
+    category: expense.category,
+    date: spendingDate(expense),
+    status: expense.status,
+    deleted: Boolean(expense.deletedAt),
+    conflict: false,
+    minor: expense.splits.find((item) => item.memberId === memberId)?.originalMinor ?? 0,
+    currency: expense.original.currency,
+    scale: expense.original.scale,
+  };
+}
 
 export function journeyInPeriod(
   journey: LedgerJourneyOption,
@@ -34,7 +79,7 @@ export function spendingDate(expense: LedgerExpense) {
 }
 
 export function analyticalSpending(
-  rows: PersonalExpense[],
+  rows: PersonalSpendingRow[],
   period: Period,
   year: number,
   currency: string,
@@ -50,19 +95,20 @@ export function analyticalSpending(
   const categories = new Map<string, number>();
   let totalMinor = 0;
   let unconverted = 0;
-  for (const { expense, memberId } of rows) {
+  for (const row of rows) {
+    const item = personalSpendingMaterial(row);
     if (
-      expense.deletedAt ||
-      (expense.status !== "ACCEPTED" && expense.status !== "RATE_REQUIRED") ||
-      (period === "YEAR" && !spendingDate(expense).startsWith(`${year}-`))
+      item.deleted ||
+      item.conflict ||
+      (item.status !== "ACCEPTED" && item.status !== "RATE_REQUIRED") ||
+      (period === "YEAR" && !item.date.startsWith(`${year}-`))
     )
       continue;
-    const split = expense.splits.find((item) => item.memberId === memberId);
-    if (!split || split.originalMinor === 0) continue;
+    if (item.minor === 0) continue;
     const source = {
-      minor: split.originalMinor,
-      currency: expense.original.currency,
-      scale: expense.original.scale,
+      minor: item.minor,
+      currency: item.currency,
+      scale: item.scale,
     };
     let minor: number | null = null;
     try {
@@ -81,7 +127,7 @@ export function analyticalSpending(
           ).minor;
         else {
           const quote = quotes
-            .get(`${expense.journeyId}:${source.currency}:${currency}`)
+            .get(`${item.journeyId}:${source.currency}:${currency}`)
             ?.find(
               (item) => item.provider === "ECB" && item.policyVersion === "ECB_DAILY_V1",
             );
@@ -100,10 +146,10 @@ export function analyticalSpending(
     if (!Number.isSafeInteger(totalMinor))
       throw new Error("Spending total exceeds safe range.");
     categories.set(
-      expense.category || "Other",
-      (categories.get(expense.category || "Other") ?? 0) + minor,
+      item.category || "Other",
+      (categories.get(item.category || "Other") ?? 0) + minor,
     );
-    const month = spendingDate(expense).slice(0, 7);
+    const month = item.date.slice(0, 7);
     months.set(month, (months.get(month) ?? 0) + minor);
   }
   const ranked = [...categories].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));

@@ -297,6 +297,20 @@ export const ledgerChangesResponseSchema = z.object({
 
 export const myLedgerPeriodSchema = z.enum(["30D", "YEAR", "ALL"]);
 
+export const myLedgerSpendingFactSchema = z.object({
+  expenseId: uuidSchema,
+  revision: z.number().int().positive(),
+  journeyId: uuidSchema,
+  category: z.string(),
+  economicDate: economicDateSchema.nullable(),
+  occurredAt: z.string(),
+  status: z.enum(["DRAFT", "ACCEPTED", "RATE_REQUIRED", "DELETED"]),
+  hasOpenConflict: z.boolean(),
+  originalCurrency: z.string().regex(/^[A-Z]{3}$/),
+  originalScale: z.number().int().min(0).max(4),
+  personalSplitMinor: z.number().int(),
+});
+
 export const myLedgerResponseSchema = z.object({
   period: myLedgerPeriodSchema,
   from: z.string().nullable(),
@@ -317,6 +331,7 @@ export const myLedgerResponseSchema = z.object({
       updatedAt: z.string(),
     }),
   ),
+  spendingFacts: z.array(myLedgerSpendingFactSchema).optional(),
   serverTime: z.string(),
 });
 
@@ -350,6 +365,7 @@ export type LedgerCorrectionRequest = z.infer<typeof ledgerCorrectionRequestSche
 export type LedgerRateQuoteDto = z.infer<typeof ledgerRateQuoteSchema>;
 export type LedgerPaymentRecordDto = z.infer<typeof ledgerPaymentRecordSchema>;
 export type MyLedgerResponse = z.infer<typeof myLedgerResponseSchema>;
+export type MyLedgerSpendingFact = z.infer<typeof myLedgerSpendingFactSchema>;
 export type MyLedgerPeriod = z.infer<typeof myLedgerPeriodSchema>;
 export type LedgerAnalysisResponse = z.infer<typeof ledgerAnalysisResponseSchema>;
 export type LedgerExpenseListResponse = z.infer<typeof ledgerExpenseListResponseSchema>;

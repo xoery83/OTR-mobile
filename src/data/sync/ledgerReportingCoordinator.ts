@@ -117,11 +117,4 @@ export async function refreshMyLedger(
   const response = await createLedgerReadTransport().myLedger(period, bounds);
   const repository = await getDefaultLedgerReadRepository();
   await repository.cacheMyLedger(response);
-  for (const { journeyId } of response.journeys) {
-    try {
-      if (!(await repository.getCursor(journeyId))) await refreshJourneyLedger(journeyId);
-    } catch {
-      // Keep the authorized My Ledger summary; retry this Journey on the next refresh.
-    }
-  }
 }

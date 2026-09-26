@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import type { LedgerJourneyOption } from "@/data/repositories/ledgerReportingRepository";
 import { loadMyLedger } from "./loadMyLedger";
+import type { PersonalSpendingRow } from "./myLedgerAnalytics";
 
 const state = vi.hoisted(() => ({
   journeys: [] as LedgerJourneyOption[],
@@ -14,6 +15,8 @@ const state = vi.hoisted(() => ({
     scale: number;
   }[],
   expenses: {} as Record<string, LedgerExpense[]>,
+  facts: [] as Extract<PersonalSpendingRow, { fact: unknown }>["fact"][],
+  hasNarrowSnapshot: false,
   calls: [] as string[],
 }));
 
@@ -21,6 +24,8 @@ vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   getDefaultLedgerReportingRepository: async () => ({
     listJourneys: async () => state.journeys,
     listMyLedger: async () => state.summaries,
+    listMyLedgerSpendingFacts: async () => state.facts,
+    hasMyLedgerSpendingSnapshot: async () => state.hasNarrowSnapshot,
     getPreferences: async () => ({ defaultCurrency: "NZD", debugMode: false }),
     getActorMemberId: async (id: string) => ({
       memberId: state.journeys.some((journey) => journey.journeyId === id) ? "me" : null,
@@ -106,6 +111,8 @@ beforeEach(() => {
   state.journeys = [journey("nz", "NZD"), journey("eu", "EUR")];
   state.expenses = { nz: [expense("nz", "NZD")], eu: [expense("eu", "EUR")] };
   state.summaries = [];
+  state.facts = [];
+  state.hasNarrowSnapshot = false;
   state.calls = [];
 });
 
@@ -185,5 +192,81 @@ describe("My Ledger local loading", () => {
       status: "Saved Journey data unavailable",
       projection: null,
     });
+  });
+
+  it("renders economic-date Spending offline from narrow facts without making Settlement available", async () => {
+    state.journeys = [journey("nz", "NZD")];
+    state.expenses = { nz: [] };
+    state.summaries = [
+      {
+        journeyId: "saved",
+        title: "Saved",
+        startDate: "2025-01-01",
+        endDate: "2025-12-31",
+        currency: "EUR",
+        scale: 2,
+      },
+    ];
+    state.hasNarrowSnapshot = true;
+    state.facts = [
+      {
+        expenseId: "remote",
+        revision: 3,
+        journeyId: "saved",
+        category: "food",
+        economicDate: "2026-07-02",
+        occurredAt: "2025-12-31T23:00:00Z",
+        status: "ACCEPTED",
+        hasOpenConflict: false,
+        originalCurrency: "EUR",
+        originalScale: 2,
+        personalSplitMinor: 50,
+      },
+    ];
+    const result = await loadMyLedger(
+      "YEAR",
+      "NZD",
+      "SETTLEMENTS",
+      new Date("2026-09-25"),
+    );
+    expect(result.spending.totalMinor).toBe(100);
+    expect(result.incompleteJourneyCount).toBe(0);
+    expect(
+      result.settlements.find(({ journey }) => journey.journeyId === "saved"),
+    ).toMatchObject({
+      projection: null,
+      status: "Saved Journey data unavailable",
+    });
+  });
+
+  it("lets a pending full local Expense override its remote narrow fact", async () => {
+    state.journeys = [journey("nz", "NZD")];
+    state.expenses = {
+      nz: [
+        {
+          ...expense("nz", "NZD"),
+          id: "local",
+          serverId: "remote",
+          syncStatus: "PENDING_UPDATE",
+        },
+      ],
+    };
+    state.facts = [
+      {
+        expenseId: "remote",
+        revision: 3,
+        journeyId: "nz",
+        category: "food",
+        economicDate: "2026-07-02",
+        occurredAt: "2026-07-02T00:00:00Z",
+        status: "ACCEPTED",
+        hasOpenConflict: false,
+        originalCurrency: "NZD",
+        originalScale: 2,
+        personalSplitMinor: 999,
+      },
+    ];
+    const result = await loadMyLedger("YEAR", "NZD", "SPENDING", new Date("2026-09-25"));
+    expect(result.spending.totalMinor).toBe(100);
   });
 });

@@ -154,6 +154,7 @@ export type DevBackendGateway = {
     period: MyLedgerPeriod,
     from: string | null,
     to: string | null,
+    signal?: AbortSignal,
   ): Promise<MyLedgerResponse>;
   readLedgerRateQuotes(
     userId: string,
@@ -495,6 +496,8 @@ export type SafeLogEvent = {
   durationMs: number;
   singleFlightLeader?: boolean;
   singleFlightJoinCount?: number;
+  singleFlightCancelCount?: number;
+  requestCancelled?: boolean;
   inFlightKeyCount?: number;
 };
 
@@ -1619,6 +1622,7 @@ async function readEntity(
         period,
         period === "ALL" ? null : from,
         period === "ALL" ? null : to,
+        request.signal,
       ),
     );
   }
@@ -1827,6 +1831,9 @@ export function createDevBackendHandler({
   type MyLedgerFlight = {
     promise: ReturnType<DevBackendGateway["readMyLedger"]>;
     joinCount: number;
+    cancelCount: number;
+    waiterCount: number;
+    controller: AbortController;
   };
   const myLedgerFlights = new Map<string, MyLedgerFlight>();
   const readMyLedgerSingleFlight = (
@@ -1834,26 +1841,61 @@ export function createDevBackendHandler({
     period: MyLedgerPeriod,
     from: string | null,
     to: string | null,
+    signal: AbortSignal,
     observe: (leader: boolean, flight: MyLedgerFlight, keyCount: number) => void,
   ) => {
     const key = JSON.stringify([userId, period, from, to]);
     const existing = myLedgerFlights.get(key);
+    let flight: MyLedgerFlight;
     if (existing) {
       existing.joinCount += 1;
       observe(false, existing, myLedgerFlights.size);
-      return existing.promise;
+      flight = existing;
+    } else {
+      const controller = new AbortController();
+      const promise = Promise.resolve().then(() =>
+        gateway.readMyLedger(userId, period, from, to, controller.signal),
+      );
+      flight = { promise, joinCount: 0, cancelCount: 0, waiterCount: 0, controller };
+      myLedgerFlights.set(key, flight);
+      observe(true, flight, myLedgerFlights.size);
+      const clear = () => {
+        if (myLedgerFlights.get(key) === flight) myLedgerFlights.delete(key);
+      };
+      void promise.then(clear, clear);
     }
-    const promise = Promise.resolve().then(() =>
-      gateway.readMyLedger(userId, period, from, to),
-    );
-    const flight = { promise, joinCount: 0 };
-    myLedgerFlights.set(key, flight);
-    observe(true, flight, myLedgerFlights.size);
-    const clear = () => {
-      if (myLedgerFlights.get(key) === flight) myLedgerFlights.delete(key);
-    };
-    void promise.then(clear, clear);
-    return promise;
+    flight.waiterCount++;
+    return new Promise<MyLedgerResponse>((resolve, reject) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return false;
+        settled = true;
+        signal.removeEventListener("abort", abort);
+        flight.waiterCount--;
+        if (flight.waiterCount === 0 && myLedgerFlights.get(key) === flight) {
+          myLedgerFlights.delete(key);
+          flight.controller.abort();
+        }
+        return true;
+      };
+      const abort = () => {
+        flight.cancelCount++;
+        if (finish()) reject(signal.reason ?? new Error("My Ledger request cancelled."));
+      };
+      signal.addEventListener("abort", abort, { once: true });
+      if (signal.aborted) {
+        abort();
+        return;
+      }
+      void flight.promise.then(
+        (value) => {
+          if (finish()) resolve(value);
+        },
+        (error) => {
+          if (finish()) reject(error);
+        },
+      );
+    });
   };
   return async function handle(request: Request) {
     const startedAt = now();
@@ -1894,6 +1936,7 @@ export function createDevBackendHandler({
             period,
             from,
             to,
+            request.signal,
             (leader, flight, keyCount) => {
               myLedgerFlightLog = { leader, flight, keyCount };
             },
@@ -2069,6 +2112,8 @@ export function createDevBackendHandler({
         ? {
             singleFlightLeader: myLedgerFlightLog.leader,
             singleFlightJoinCount: myLedgerFlightLog.flight.joinCount,
+            singleFlightCancelCount: myLedgerFlightLog.flight.cancelCount,
+            requestCancelled: request.signal.aborted,
             inFlightKeyCount: myLedgerFlightLog.keyCount,
           }
         : {}),

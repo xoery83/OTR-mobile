@@ -9,9 +9,11 @@ import {
   analyticalSpending,
   displayCurrencies,
   journeyInPeriod,
+  personalSpendingMaterial,
   spendingDate,
   type Period,
   type PersonalExpense,
+  type PersonalSpendingRow,
 } from "./myLedgerAnalytics";
 import { savedSettlementSummaryProjection } from "./settlementSummaryProjection";
 
@@ -28,12 +30,21 @@ export async function loadMyLedger(
     getDefaultLedgerSettlementRepository(),
     getDefaultLedgerFxSnapshotRepository(),
   ]);
-  const [localJourneys, summaries, preference, bundle] = await Promise.all([
-    reports.listJourneys(),
-    reports.listMyLedger(period),
-    reports.getPreferences(),
-    snapshotRepo.list(),
-  ]);
+  const [localJourneys, summaries, narrowFacts, hasNarrowSnapshot, preference, bundle] =
+    await Promise.all([
+      reports.listJourneys(),
+      reports.listMyLedger(period),
+      reports.listMyLedgerSpendingFacts(period),
+      reports.hasMyLedgerSpendingSnapshot(period),
+      reports.getPreferences(),
+      snapshotRepo.list(),
+    ]);
+  const factsByJourney = new Map<string, typeof narrowFacts>();
+  for (const fact of narrowFacts) {
+    const rows = factsByJourney.get(fact.journeyId) ?? [];
+    rows.push(fact);
+    factsByJourney.set(fact.journeyId, rows);
+  }
   const known = new Set(localJourneys.map((journey) => journey.journeyId));
   const journeys = [
     ...localJourneys,
@@ -62,6 +73,7 @@ export async function loadMyLedger(
         return {
           journey,
           expenses: [] as PersonalExpense[],
+          facts: factsByJourney.get(journey.journeyId) ?? [],
           memberId: null,
           conflicts: new Set<string>(),
         };
@@ -76,6 +88,13 @@ export async function loadMyLedger(
       return {
         journey,
         expenses: expenses.map((expense) => ({ expense, memberId })),
+        facts: (factsByJourney.get(journey.journeyId) ?? []).filter(
+          (fact) =>
+            !expenses.some(
+              (expense) =>
+                expense.id === fact.expenseId || expense.serverId === fact.expenseId,
+            ),
+        ),
         memberId,
         conflicts: new Set(
           list.filter((item) => item.hasOpenConflict).map((item) => item.id),
@@ -84,10 +103,13 @@ export async function loadMyLedger(
     }),
   );
   const involved = loaded.filter(
-    ({ journey, expenses }) =>
+    ({ journey, expenses, facts }) =>
       journeyInPeriod(journey, period, year) ||
       (period === "YEAR" &&
-        expenses.some(({ expense }) => spendingDate(expense).startsWith(`${year}-`))),
+        (expenses.some(({ expense }) => spendingDate(expense).startsWith(`${year}-`)) ||
+          facts?.some((fact) =>
+            (fact.economicDate ?? fact.occurredAt.slice(0, 10)).startsWith(`${year}-`),
+          ))),
   );
   const options = displayCurrencies(involved.map((item) => item.journey));
   const selected =
@@ -95,14 +117,18 @@ export async function loadMyLedger(
     (options.includes(preference.defaultCurrency)
       ? preference.defaultCurrency
       : (options[0] ?? "NZD"));
-  const spendingRows = involved.flatMap(({ expenses, conflicts }) =>
-    expenses.filter(({ expense }) => !conflicts.has(expense.id)),
+  const spendingRows: PersonalSpendingRow[] = involved.flatMap(
+    ({ expenses, facts, conflicts }) => [
+      ...expenses.filter(({ expense }) => !conflicts.has(expense.id)),
+      ...(facts ?? []).map((fact) => ({ fact })),
+    ],
   );
   const pairs = [
     ...new Set(
-      spendingRows.map(
-        ({ expense }) => `${expense.journeyId}:${expense.original.currency}:${selected}`,
-      ),
+      spendingRows.map((row) => {
+        const item = personalSpendingMaterial(row);
+        return `${item.journeyId}:${item.currency}:${selected}`;
+      }),
     ),
   ].filter((pair) => pair.split(":")[1] !== selected);
   const quotes = new Map<string, RateQuote[]>(
@@ -124,9 +150,9 @@ export async function loadMyLedger(
     bundle?.snapshots ?? [],
     quotes,
   );
-  const incompleteJourneyCount = involved.filter(
-    ({ journey }) => !journey.hasActor,
-  ).length;
+  const incompleteJourneyCount = hasNarrowSnapshot
+    ? 0
+    : involved.filter(({ journey }) => !journey.hasActor).length;
   const settlements =
     section === "SPENDING"
       ? []

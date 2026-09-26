@@ -36,7 +36,6 @@ import type {
 } from "@/domain/ledger/reporting";
 import { stage3JourneyId } from "@/hooks/useLedgerStage3";
 import { useLedgerActiveSync } from "@/hooks/useLedgerActiveSync";
-import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
 
 import {
   formatLedgerDate,
@@ -161,7 +160,6 @@ export function LedgerStage6Screen({
   const largeText = useWindowDimensions().fontScale > 2;
   const modeNavBottom = useRef(0);
   const journeySearch = useRef<TextInput>(null);
-  const { refreshPersonal } = useLedgerReportingRefresh();
   const manualJourneyId = useRef<string | undefined>(undefined);
   const [request] = useState(createLatestRequest);
   const [memberRequest] = useState(createLatestRequest);
@@ -469,12 +467,6 @@ export function LedgerStage6Screen({
       };
     }, [loadContext]),
   );
-
-  useEffect(() => {
-    const id = journey?.journeyId ?? fallbackJourneyId;
-    if (!id) return;
-    void refreshPersonal("ALL", { from: null, to: null }).catch(() => undefined);
-  }, [journey?.journeyId, fallbackJourneyId, refreshPersonal]);
 
   useEffect(
     () => () => {

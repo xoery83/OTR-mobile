@@ -2,6 +2,30 @@
 
 Date: 2026-09-26
 
+## My Ledger Reporting 2.0 Slice A+B — local SQL validation passed
+
+- The new account-authorized, single-snapshot summary path replaces N full
+  Journey reports for `/v2/me/ledger`. Existing summary semantics are reused;
+  optional personal Spending facts feed SQLite v37 by account and period.
+  Full/pending local Expense data wins over narrow facts. See ADR 0047.
+- Normal My Ledger entry no longer issues a preceding ALL request or bootstraps
+  every newly discovered Journey. A YEAR response carries all eligible Journey
+  metadata, including zero-activity rows, so discovery is retained. Settlement
+  still needs its saved local projection and remains explicitly unavailable
+  when that material is absent.
+- This is local only. The snapshot SQL migration, Backend and Mobile changes
+  have not been deployed or exercised against Hosted Dev. Phase 1B Simulator
+  validation remains HOLD; Phase 1C, Simulator and physical-device work are
+  outside this checkpoint.
+- The pending My Ledger migration now includes a partial 409-conflict index on
+  `ledger_idempotency_keys(journey_id)`. Local small-account EXPLAIN changed from
+  a 5,501-row global history scan to one eligible-Journey conflict lookup.
+  Alternatives were larger without a better access path. Local SQL-to-Backend
+  golden checks pass for ALL/YEAR/30D at 50/300, 50/1,000 and 100/3,000;
+  normal reads use one snapshot RPC plus one membership recheck. Revocation,
+  shared cancellation and failure recovery were exercised locally. The local
+  gate is PASS; Hosted Dev deployment still needs its separate controlled step.
+
 ## My Ledger bootstrap safety — local implementation
 
 - A linked Journey enters `/v2/me/ledger` reporting only when a batched
@@ -13,9 +37,9 @@ Date: 2026-09-26
 - The process-global concurrency ceiling of two is a temporary Hosted Dev
   incident-safety guardrail. Re-evaluate per-request and global limits from
   capacity measurements before Production to avoid cross-user queueing.
-- This safety fix is local only. The Phase 1B Simulator incident remains on
-  HOLD; no Hosted Dev access, deployment, Simulator or App run is part of this
-  change. The dedicated lightweight reporting path remains future work.
+- This safety fix is deployed to Dev. The Phase 1B Simulator incident remains
+  on HOLD. The dedicated lightweight reporting path is implemented locally in
+  Slice A+B above and has not been deployed.
 
 ## Performance Guardrails Phase 1B — local implementation
 

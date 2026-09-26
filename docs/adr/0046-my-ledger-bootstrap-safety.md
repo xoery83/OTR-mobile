@@ -1,7 +1,7 @@
 # ADR 0046: My Ledger bootstrap safety
 
 Date: 2026-09-26
-Status: Implemented locally; Dev deployment pending
+Status: Deployed to Dev; retained as temporary safety path
 
 `/v2/me/ledger` reads only linked Journeys with a Ledger settings row. A single
 settings lookup over the linked Journey IDs determines eligibility before any

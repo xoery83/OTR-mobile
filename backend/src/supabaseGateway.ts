@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "node:crypto";
 import { classifyMissingEconomicDate } from "../../src/domain/ledger/economicDateEvidence";
+import { summarizeMyLedgerSnapshot, type LightweightSnapshot } from "./myLedgerSummary";
 
 import { createFrankfurterRateProvider } from "./frankfurterRateProvider";
 import {
@@ -138,7 +139,27 @@ export type SupabaseDevConfig = {
   rateQuoteProvider?: RateQuoteProvider;
   rateSnapshotProvider?: RateSnapshotProvider;
   onRateDemand?: () => void;
-  onMyLedgerRead?: (event: MyLedgerReadEvent) => void;
+  onMyLedgerRead?: (event: MyLedgerReadEvent | MyLedgerSummaryEvent) => void;
+  useLegacyMyLedgerRead?: boolean;
+};
+
+export type MyLedgerSummaryEvent = {
+  path: "lightweight_2_0";
+  linkedJourneyCount: number;
+  ledgerEligibleJourneyCount: number;
+  skippedMissingSettingsCount: number;
+  expenseCount: number;
+  spendingFactCount: number;
+  batchCount: number;
+  queryOperationCount: number;
+  snapshotDurationMs: number;
+  authorizationDurationMs: number;
+  aggregationDurationMs: number;
+  totalDurationMs: number;
+  consistencyRetryCount: number;
+  cancellationCount: number;
+  postDisconnectWorkMs: number;
+  failureClass: string | null;
 };
 
 export type MyLedgerReadEvent = {
@@ -580,7 +601,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
   assertApprovedDevUrl(config.url);
   const auth = client(config.url, config.publishableKey);
   const service = client(config.url, config.secretKey);
-  const runMyLedgerRead = createMyLedgerReadGate();
+  const runLegacyMyLedgerRead = createMyLedgerReadGate();
   const receiptOcrProvider = config.receiptOcrProvider ?? createReceiptOcrProvider();
   const defaultRateProvider = createFrankfurterRateProvider();
   const rateQuoteProvider = config.rateQuoteProvider ?? defaultRateProvider;
@@ -921,11 +942,19 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return readLedgerAnalysis(service, userId, tripId, filters, scope, dimension);
     },
 
-    async readMyLedger(userId, period, from, to) {
-      return runMyLedgerRead(() =>
-        readMyLedger(service, userId, period, from, to, {
-          log: config.onMyLedgerRead,
-        }),
+    async readMyLedger(userId, period, from, to, signal) {
+      if (config.useLegacyMyLedgerRead)
+        return runLegacyMyLedgerRead(() =>
+          readMyLedger(service, userId, period, from, to, { log: config.onMyLedgerRead }),
+        );
+      return readMyLedgerSummary(
+        service,
+        userId,
+        period,
+        from,
+        to,
+        signal,
+        config.onMyLedgerRead,
       );
     },
 
@@ -6151,6 +6180,138 @@ export async function readMyLedger(
       options.log?.(metrics);
     } catch {
       // Observability must not change the read outcome.
+    }
+  }
+}
+
+export async function readMyLedgerSummary(
+  service: SupabaseClient,
+  userId: string,
+  period: MyLedgerPeriod,
+  from: string | null,
+  to: string | null,
+  signal?: AbortSignal,
+  log?: (event: MyLedgerSummaryEvent) => void,
+): Promise<MyLedgerResponse> {
+  const started = performance.now();
+  const metrics: MyLedgerSummaryEvent = {
+    path: "lightweight_2_0",
+    linkedJourneyCount: 0,
+    ledgerEligibleJourneyCount: 0,
+    skippedMissingSettingsCount: 0,
+    expenseCount: 0,
+    spendingFactCount: 0,
+    batchCount: 0,
+    queryOperationCount: 0,
+    snapshotDurationMs: 0,
+    authorizationDurationMs: 0,
+    aggregationDurationMs: 0,
+    totalDurationMs: 0,
+    consistencyRetryCount: 0,
+    cancellationCount: 0,
+    postDisconnectWorkMs: 0,
+    failureClass: null,
+  };
+  let disconnectedAt: number | null = null;
+  const onAbort = () => {
+    disconnectedAt ??= performance.now();
+  };
+  signal?.addEventListener("abort", onAbort, { once: true });
+  try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      signal?.throwIfAborted();
+      const snapshotStart = performance.now();
+      metrics.queryOperationCount++;
+      metrics.batchCount++;
+      const snapshotResult = await (async () => {
+        try {
+          return await service
+            .rpc("my_ledger_lightweight_snapshot_2_0", {
+              actor_user: userId,
+              period_key: period,
+              from_at: from,
+              to_at: to,
+            })
+            .abortSignal(signal ?? new AbortController().signal);
+        } finally {
+          metrics.snapshotDurationMs += performance.now() - snapshotStart;
+        }
+      })();
+      if (snapshotResult.error || !snapshotResult.data)
+        throw new Error("Supabase Dev My Ledger snapshot failed.");
+      signal?.throwIfAborted();
+      const snapshot = snapshotResult.data as LightweightSnapshot;
+      const eligibleIds = new Set(snapshot.journeys.map((journey) => journey.journeyId));
+      if (
+        snapshot.linkedJourneyCount < snapshot.journeys.length ||
+        snapshot.expenses.some((expense) => !eligibleIds.has(expense.journeyId))
+      )
+        throw new Error("My Ledger snapshot scope is invalid.");
+      metrics.linkedJourneyCount = snapshot.linkedJourneyCount;
+      metrics.ledgerEligibleJourneyCount = snapshot.journeys.length;
+      metrics.skippedMissingSettingsCount =
+        snapshot.linkedJourneyCount - snapshot.journeys.length;
+      metrics.expenseCount = snapshot.expenses.length;
+
+      const authStart = performance.now();
+      metrics.queryOperationCount++;
+      const linkedResult = await (async () => {
+        try {
+          return await service
+            .from("journey_members")
+            .select("id, trip_id")
+            .eq("user_id", userId)
+            .eq("status", "linked")
+            .abortSignal(signal ?? new AbortController().signal);
+        } finally {
+          metrics.authorizationDurationMs += performance.now() - authStart;
+        }
+      })();
+      if (linkedResult.error)
+        throw new Error("Supabase Dev My Ledger authorization recheck failed.");
+      signal?.throwIfAborted();
+      const linked = new Set(
+        (linkedResult.data ?? []).map((row) => `${row.trip_id}:${row.id}`),
+      );
+      if (
+        snapshot.journeys.some(
+          (journey) => !linked.has(`${journey.journeyId}:${journey.memberId}`),
+        )
+      )
+        throw new Error("My Ledger access changed during read.");
+      if (linked.size !== snapshot.linkedJourneyCount) {
+        if (attempt === 0) {
+          metrics.consistencyRetryCount++;
+          continue;
+        }
+        throw new Error("My Ledger scope changed during read.");
+      }
+      const aggregationStart = performance.now();
+      const result = summarizeMyLedgerSnapshot(
+        snapshot,
+        period,
+        from,
+        to,
+        new Date().toISOString(),
+      );
+      metrics.aggregationDurationMs += performance.now() - aggregationStart;
+      metrics.spendingFactCount = result.spendingFacts?.length ?? 0;
+      return result;
+    }
+    throw new Error("My Ledger scope changed during read.");
+  } catch (error) {
+    metrics.failureClass = error instanceof Error ? error.name : typeof error;
+    if (signal?.aborted) metrics.cancellationCount++;
+    throw error;
+  } finally {
+    metrics.totalDurationMs = performance.now() - started;
+    if (disconnectedAt !== null)
+      metrics.postDisconnectWorkMs = performance.now() - disconnectedAt;
+    signal?.removeEventListener("abort", onAbort);
+    try {
+      log?.(metrics);
+    } catch {
+      /* Logging cannot change the read outcome. */
     }
   }
 }

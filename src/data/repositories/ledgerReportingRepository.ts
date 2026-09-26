@@ -1,4 +1,5 @@
 import type * as SQLite from "expo-sqlite";
+import type { MyLedgerSpendingFact } from "@/data/api/ledgerReadContracts";
 
 import type {
   LedgerJourneyContext,
@@ -185,9 +186,16 @@ export function createLedgerReportingRepository(
            UNION ALL
            SELECT s.journey_id, s.title, s.start_date, s.end_date, s.currency, s.scale
            FROM ledger_my_journey_summaries s
-           WHERE NOT EXISTS (SELECT 1 FROM ledger_journeys j WHERE j.journey_id = s.journey_id)
-             AND s.user_id = ? AND s.period_key = 'ALL'
+           WHERE NOT EXISTS (SELECT 1 FROM ledger_actor_context actor
+             WHERE actor.user_id = ? AND actor.journey_id = s.journey_id)
+             AND s.user_id = ? AND s.period_key = (
+               SELECT s2.period_key FROM ledger_my_journey_summaries s2
+               WHERE s2.user_id = s.user_id AND s2.journey_id = s.journey_id
+               ORDER BY CASE s2.period_key WHEN 'YEAR' THEN 0 WHEN 'ALL' THEN 1 ELSE 2 END
+               LIMIT 1
+             )
          ) source ORDER BY COALESCE(startDate, endDate, '') DESC, title`,
+        userId,
         userId,
         userId,
         userId,
@@ -528,6 +536,43 @@ export function createLedgerReportingRepository(
          ORDER BY COALESCE(start_date, end_date, '') DESC, title`,
         userId,
         period,
+      );
+    },
+
+    async listMyLedgerSpendingFacts(
+      period: MyLedgerPeriod,
+    ): Promise<MyLedgerSpendingFact[]> {
+      const userId = await getActiveUserId();
+      const rows = await database.getAllAsync<
+        Omit<MyLedgerSpendingFact, "hasOpenConflict"> & {
+          hasOpenConflict: number;
+        }
+      >(
+        `SELECT expense_id AS expenseId, revision, journey_id AS journeyId,
+          category, economic_date AS economicDate, occurred_at AS occurredAt,
+          status, has_open_conflict AS hasOpenConflict,
+          original_currency AS originalCurrency, original_scale AS originalScale,
+          personal_split_minor AS personalSplitMinor
+         FROM ledger_my_spending_facts
+         WHERE user_id = ? AND period_key = ?`,
+        userId,
+        period,
+      );
+      return rows.map((row) => ({
+        ...row,
+        hasOpenConflict: Boolean(row.hasOpenConflict),
+      }));
+    },
+
+    async hasMyLedgerSpendingSnapshot(period: MyLedgerPeriod) {
+      const userId = await getActiveUserId();
+      return Boolean(
+        await database.getFirstAsync(
+          `SELECT 1 FROM ledger_my_spending_periods
+         WHERE user_id = ? AND period_key = ?`,
+          userId,
+          period,
+        ),
       );
     },
   };

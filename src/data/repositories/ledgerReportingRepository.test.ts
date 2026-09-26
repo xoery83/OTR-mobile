@@ -155,6 +155,32 @@ const records: ReportingRecord[] = [
 ];
 
 describe("Ledger reporting repository", () => {
+  it("discovers summary-only linked Journeys from YEAR without needing ALL", async () => {
+    const { adapter, sqlite } = database();
+    sqlite.exec(`
+      INSERT INTO ledger_journeys VALUES
+        ('both', 'Other account cache', NULL, NULL, 'EUR', 2);
+      INSERT INTO ledger_my_journey_summaries (
+        user_id, journey_id, period_key, title, start_date, end_date,
+        currency, scale, my_spend_minor, paid_minor, position_minor,
+        unvalued_count, conflict_count, updated_at
+      ) VALUES
+        ('user-a', 'year-only', 'YEAR', 'Year', NULL, NULL, 'NZD', 2, 0, 0, 0, 0, 0, 'now'),
+        ('user-a', 'both', 'YEAR', 'Both', NULL, NULL, 'EUR', 2, 0, 0, 0, 0, 0, 'now'),
+        ('user-a', 'both', 'ALL', 'Both', NULL, NULL, 'EUR', 2, 0, 0, 0, 0, 0, 'now'),
+        ('user-b', 'private', 'YEAR', 'Private', NULL, NULL, 'NZD', 2, 0, 0, 0, 0, 0, 'now');
+    `);
+    const journeys = await createLedgerReportingRepository(
+      adapter,
+      async () => "user-a",
+    ).listJourneys();
+    expect(journeys.map((journey) => journey.journeyId).sort()).toEqual([
+      "both",
+      "year-only",
+    ]);
+    expect(journeys.every((journey) => !journey.hasActor)).toBe(true);
+    sqlite.close();
+  });
   const activeUser = async () => "user-a";
 
   it("persists UI preferences without resetting them when the Journey changes", async () => {

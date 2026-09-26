@@ -1108,7 +1108,13 @@ describe("OTR Dev Backend", () => {
       "GROUP",
       "CATEGORY",
     );
-    expect(gateway.readMyLedger).toHaveBeenCalledWith(userId, "ALL", null, null);
+    expect(gateway.readMyLedger).toHaveBeenCalledWith(
+      userId,
+      "ALL",
+      null,
+      null,
+      expect.any(AbortSignal),
+    );
   });
 
   it("coalesces identical My Ledger reads and releases the flight after success", async () => {
@@ -1140,6 +1146,37 @@ describe("OTR Dev Backend", () => {
     );
     expect((await handle(request())).status).toBe(200);
     expect(gateway.readMyLedger).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps shared My Ledger work alive until its last waiter aborts", async () => {
+    const { gateway } = createGateway();
+    let sharedSignal!: AbortSignal;
+    vi.mocked(gateway.readMyLedger).mockImplementation(
+      (_user, _period, _from, _to, signal) =>
+        new Promise((_resolve, reject) => {
+          sharedSignal = signal!;
+          signal!.addEventListener("abort", () => reject(new Error("cancelled")), {
+            once: true,
+          });
+        }),
+    );
+    const handle = createDevBackendHandler({ gateway });
+    const first = new AbortController();
+    const second = new AbortController();
+    const request = (controller: AbortController) =>
+      new Request("http://localhost/v2/me/ledger?period=ALL", {
+        headers: { Authorization: "Bearer valid-token" },
+        signal: controller.signal,
+      });
+    const a = handle(request(first));
+    const b = handle(request(second));
+    await vi.waitFor(() => expect(gateway.readMyLedger).toHaveBeenCalledTimes(1));
+    first.abort();
+    expect((await a).status).toBe(503);
+    expect(sharedSignal.aborted).toBe(false);
+    second.abort();
+    expect((await b).status).toBe(503);
+    expect(sharedSignal.aborted).toBe(true);
   });
 
   it("separates My Ledger flights by user, period, and bounds", async () => {
