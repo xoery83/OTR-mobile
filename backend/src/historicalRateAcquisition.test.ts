@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 
-import { acquirePendingRateQuotes } from "./supabaseGateway";
+import {
+  acquirePendingRateQuotes,
+  applyPendingReferenceValuations,
+} from "./supabaseGateway";
 import { RateProviderError } from "./rateQuoteProvider";
 
 const demand = {
@@ -29,7 +32,10 @@ function fakeService(demands = [demand]) {
     if (table === "ledger_rate_quote_attempts") return { update };
     throw new Error(`Unexpected table ${table}`);
   });
-  const rpc = vi.fn(async () => ({ data: demands, error: null }));
+  const rpc = vi.fn(async (name: string) => ({
+    data: name === "ledger_resolve_personal_payment_fx_projections_1c" ? 0 : demands,
+    error: null,
+  }));
   return { client: { from, rpc } as unknown as SupabaseClient, upsert, update, rpc };
 }
 
@@ -88,6 +94,35 @@ describe("historical rate acquisition", () => {
     const fetch = vi.fn(async () => candidate);
     expect(await acquirePendingRateQuotes(service.client, { fetch })).toBe(0);
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("counts Personal Payment FX and automatic reference work without changing the scan calls", async () => {
+    const service = fakeService([]);
+    service.rpc.mockImplementation(async (name: string) => ({
+      data: name === "ledger_resolve_personal_payment_fx_projections_1c" ? 2 : [],
+      error: null,
+    }));
+    const paymentCount = vi.fn();
+    const autoDemandCount = vi.fn();
+    expect(
+      await acquirePendingRateQuotes(
+        service.client,
+        { fetch: vi.fn() },
+        undefined,
+        true,
+        paymentCount,
+      ),
+    ).toBe(0);
+    expect(
+      await applyPendingReferenceValuations(service.client, undefined, autoDemandCount),
+    ).toBe(0);
+    expect(paymentCount).toHaveBeenCalledWith(2);
+    expect(autoDemandCount).toHaveBeenCalledWith(0);
+    expect(service.rpc.mock.calls.map(([name]) => name)).toEqual([
+      "ledger_claim_rate_demands",
+      "ledger_resolve_personal_payment_fx_projections_1c",
+      "ledger_list_auto_reference_demands",
+    ]);
   });
 
   it("can fill the shared quote cache without changing Personal Payment state", async () => {

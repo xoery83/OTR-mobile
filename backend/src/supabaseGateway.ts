@@ -13,6 +13,7 @@ import {
 } from "./rateQuoteProvider";
 
 import { BackendError, type DevBackendGateway, type StoredCreate } from "./app";
+import type { RateDemandScanResult } from "./rateDemandScanner";
 import type {
   CreateLedgerCorrectionRequest,
   CreateLedgerExpenseRequest,
@@ -136,6 +137,7 @@ export type SupabaseDevConfig = {
   receiptOcrProvider?: ReceiptOcrProvider;
   rateQuoteProvider?: RateQuoteProvider;
   rateSnapshotProvider?: RateSnapshotProvider;
+  onRateDemand?: () => void;
 };
 
 function assertApprovedDevUrl(url: string) {
@@ -553,6 +555,28 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
   const defaultRateProvider = createFrankfurterRateProvider();
   const rateQuoteProvider = config.rateQuoteProvider ?? defaultRateProvider;
   const rateSnapshotProvider = config.rateSnapshotProvider ?? defaultRateProvider;
+  const wakeForExpense = (
+    response: LedgerExpenseMutationResponse | LedgerCorrectionMutationResponse,
+  ) => {
+    const expense = "entity" in response ? response.entity : response.expense;
+    if (
+      !response.idempotentReplay &&
+      expense?.businessStatus === "RATE_REQUIRED" &&
+      expense.economicDate
+    )
+      config.onRateDemand?.();
+  };
+  const wakeForPayment = (response: PersonalSettlementPaymentMutationResponse) => {
+    if (
+      !response.idempotentReplay &&
+      response.projections?.some(
+        (projection) =>
+          projection.state === "PENDING" &&
+          projection.originalCurrency !== projection.targetCurrency,
+      )
+    )
+      config.onRateDemand?.();
+  };
 
   return {
     async validateAccessToken(token) {
@@ -913,6 +937,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       if (result.error) throw journeyCurrencyError(result.error.message);
       const committed = journeyCurrencyCommitSchema.parse(result.data);
       const payments = await readPersonalSettlementPayments(service, userId, tripId);
+      let pendingRateDemand = false;
       for (const payment of payments.filter((item) => item.deletedAt === null)) {
         const ensured = await service.rpc(
           "ledger_ensure_personal_payment_fx_projection_1c",
@@ -923,7 +948,17 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         );
         if (ensured.error)
           throw new Error("Supabase Dev Personal Payment FX retarget failed.");
+        pendingRateDemand ||= (ensured.data ?? []).some(
+          (projection: {
+            state: string;
+            original_currency: string;
+            target_currency: string;
+          }) =>
+            projection.state === "PENDING" &&
+            projection.original_currency !== projection.target_currency,
+        );
       }
+      if (pendingRateDemand) config.onRateDemand?.();
       try {
         await this.refreshLedgerReview(userId, tripId);
       } catch (error) {
@@ -937,9 +972,30 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     },
 
     async acquirePendingRateQuotes() {
-      const acquired = await acquirePendingRateQuotes(service, rateQuoteProvider);
-      await applyPendingReferenceValuations(service);
-      return acquired;
+      let personalPaymentFxWork = 0;
+      let autoReferenceDemands = 0;
+      const claimedRateDemands = await acquirePendingRateQuotes(
+        service,
+        rateQuoteProvider,
+        undefined,
+        true,
+        (count) => {
+          personalPaymentFxWork = count;
+        },
+      );
+      const autoReferenceWork = await applyPendingReferenceValuations(
+        service,
+        undefined,
+        (count) => {
+          autoReferenceDemands = count;
+        },
+      );
+      return {
+        claimedRateDemands,
+        personalPaymentFxWork,
+        autoReferenceDemands,
+        autoReferenceWork,
+      } satisfies RateDemandScanResult;
     },
 
     async resolveSettlementFx(_userId, tripId, forceRetry) {
@@ -1154,7 +1210,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     },
 
     async createPersonalSettlementPayment(userId, tripId, operationId, input) {
-      return mutatePersonalSettlementPayment(
+      const response = await mutatePersonalSettlementPayment(
         service,
         userId,
         tripId,
@@ -1164,10 +1220,12 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         null,
         input,
       );
+      wakeForPayment(response);
+      return response;
     },
 
     async updatePersonalSettlementPayment(userId, tripId, paymentId, operationId, input) {
-      return mutatePersonalSettlementPayment(
+      const response = await mutatePersonalSettlementPayment(
         service,
         userId,
         tripId,
@@ -1177,6 +1235,8 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         input.baseRevision,
         input,
       );
+      wakeForPayment(response);
+      return response;
     },
 
     async deletePersonalSettlementPayment(userId, tripId, paymentId, operationId, input) {
@@ -1200,6 +1260,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         idempotencyKey,
         input,
       );
+      wakeForExpense(result);
       await tryEvaluateLedgerReviewV2(service, tripId);
       return result;
     },
@@ -1214,12 +1275,13 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         "UPDATE_EXPENSE",
         input,
       );
+      wakeForExpense(result);
       await tryEvaluateLedgerReviewV2(service, tripId);
       return result;
     },
 
     async completeLedgerEconomicDate(userId, tripId, expenseId, idempotencyKey, input) {
-      return completeLedgerEconomicDate(
+      const response = await completeLedgerEconomicDate(
         service,
         userId,
         tripId,
@@ -1227,6 +1289,8 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         idempotencyKey,
         input,
       );
+      wakeForExpense(response);
+      return response;
     },
 
     async inspectLedgerEconomicDate(_userId, tripId, expenseId) {
@@ -1257,6 +1321,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         "RESTORE_EXPENSE",
         input,
       );
+      wakeForExpense(result);
       await tryEvaluateLedgerReviewV2(service, tripId);
       return result;
     },
@@ -1270,6 +1335,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         idempotencyKey,
         input,
       );
+      wakeForExpense(result);
       await tryEvaluateLedgerReviewV2(service, tripId);
       return result;
     },
@@ -1293,7 +1359,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       idempotencyKey,
       input,
     ) {
-      return actOnLedgerCorrection(
+      const result = await actOnLedgerCorrection(
         service,
         userId,
         tripId,
@@ -1302,6 +1368,8 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         idempotencyKey,
         input,
       );
+      wakeForExpense(result);
+      return result;
     },
 
     async addLedgerPaymentRecord(userId, tripId, expenseId, idempotencyKey, input) {
@@ -1326,6 +1394,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         idempotencyKey,
         input,
       );
+      wakeForExpense(result);
       await tryEvaluateLedgerReviewV2(service, tripId);
       return result;
     },
@@ -2558,6 +2627,7 @@ export async function acquirePendingRateQuotes(
   provider: RateQuoteProvider,
   previewDemands?: ClaimedRateDemand[],
   applyPersonalPaymentEffects = true,
+  onPersonalPaymentFxWork?: (count: number) => void,
 ): Promise<number> {
   // ponytail: four sequential eight-second requests fit the 45-second lease; use bounded concurrency if demand grows.
   const claimed = previewDemands
@@ -2653,6 +2723,7 @@ export async function acquirePendingRateQuotes(
     );
     if (resolved.error)
       throw new Error("Supabase Dev Personal Payment FX resolution failed.");
+    onPersonalPaymentFxWork?.(Number(resolved.data ?? 0));
   }
   return demands.length;
 }
@@ -2874,6 +2945,7 @@ type AutoReferenceDemand = {
 export async function applyPendingReferenceValuations(
   service: SupabaseClient,
   journeyId?: string,
+  onDemandCount?: (count: number) => void,
 ) {
   const listed = journeyId
     ? await service.rpc("ledger_list_settlement_auto_reference_demands", {
@@ -2883,6 +2955,7 @@ export async function applyPendingReferenceValuations(
     : await service.rpc("ledger_list_auto_reference_demands", { max_requests: 4 });
   if (listed.error)
     throw new Error("Supabase Dev automatic valuation demand read failed.");
+  onDemandCount?.((listed.data ?? []).length);
   let accepted = 0;
   for (const demand of (listed.data ?? []) as AutoReferenceDemand[]) {
     try {

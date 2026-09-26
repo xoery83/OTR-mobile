@@ -113,6 +113,7 @@ import {
 } from "../../src/data/api/ledgerFxContracts";
 
 import { deriveServerId, type SyncEntityType } from "./serverId";
+import type { RateDemandScanResult } from "./rateDemandScanner";
 
 export type AuthenticatedUser = { id: string };
 
@@ -181,7 +182,7 @@ export type DevBackendGateway = {
       previewDigest: string;
     },
   ): Promise<JourneyCurrencyCommit>;
-  acquirePendingRateQuotes?(): Promise<number>;
+  acquirePendingRateQuotes?(): Promise<RateDemandScanResult>;
   resolveSettlementFx?(
     userId: string,
     tripId: string,

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createDevBackendHandler } from "./app";
 import { createSupabaseDevGateway } from "./supabaseGateway";
 import { createReceiptOcrProvider } from "./receiptOcrProvider";
+import { createRateDemandScanner } from "./rateDemandScanner";
 
 const environmentSchema = z.object({
   OTR_DEV_SUPABASE_URL: z.url(),
@@ -15,6 +16,7 @@ const environmentSchema = z.object({
 });
 
 const environment = environmentSchema.parse(process.env);
+let scanner: ReturnType<typeof createRateDemandScanner> | null = null;
 const gateway = createSupabaseDevGateway({
   url: environment.OTR_DEV_SUPABASE_URL,
   publishableKey: environment.OTR_DEV_SUPABASE_PUBLISHABLE_KEY,
@@ -22,7 +24,15 @@ const gateway = createSupabaseDevGateway({
   receiptOcrProvider: createReceiptOcrProvider(
     environment.OTR_DEV_RECEIPT_OCR_ACCEPTANCE_FIXTURE === "1",
   ),
+  onRateDemand: () => scanner?.wake(),
 });
+scanner = createRateDemandScanner(
+  () => gateway.acquirePendingRateQuotes!(),
+  (event) =>
+    console.info(
+      JSON.stringify({ level: event.failureClass ? "error" : "info", ...event }),
+    ),
+);
 const handle = createDevBackendHandler({
   gateway,
   log(event) {
@@ -49,6 +59,7 @@ const server = createServer(async (incoming, outgoing) => {
   outgoing.end(Buffer.from(await response.arrayBuffer()));
 });
 
+server.on("close", () => scanner?.stop());
 server.listen(environment.OTR_DEV_BACKEND_PORT, "0.0.0.0", () => {
   console.info(
     JSON.stringify({
@@ -58,24 +69,5 @@ server.listen(environment.OTR_DEV_BACKEND_PORT, "0.0.0.0", () => {
       environment: "development",
     }),
   );
-  let scanning = false;
-  const acquire = async () => {
-    if (scanning) return;
-    scanning = true;
-    try {
-      await gateway.acquirePendingRateQuotes?.();
-    } catch (error) {
-      console.error(
-        JSON.stringify({
-          level: "error",
-          event: "historical_rate_scan_failed",
-          message: error instanceof Error ? error.message : "Unknown failure",
-        }),
-      );
-    } finally {
-      scanning = false;
-    }
-  };
-  void acquire();
-  setInterval(acquire, 30_000).unref();
+  scanner?.start();
 });

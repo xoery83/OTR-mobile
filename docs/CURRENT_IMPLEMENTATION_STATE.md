@@ -1,6 +1,17 @@
 # Current Implementation State
 
-Date: 2026-09-25
+Date: 2026-09-26
+
+## Performance Guardrails Phase 1A — local implementation
+
+- Dev Backend historical rate scanner now runs once at startup, then uses a
+  single-flight timer: empty scans wait 30/60/120/300 seconds, useful work
+  resets to 30 seconds, and failures wait 60/120/300 seconds. Known Expense,
+  Personal Payment, and Journey currency writes can coalesce an early wakeup;
+  a failure retry delay stays in force. Scanner logs count-only work, timing,
+  failure class, and wakeup fields. See ADR 0044.
+- No FX, valuation, Mobile sync, API, schema, or Hosted Dev change. Phase 1B/C
+  remain unimplemented. Local tests and checks are recorded in the Phase 1A task.
 
 ## Settlement Summary re-entry polish
 

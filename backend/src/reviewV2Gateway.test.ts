@@ -97,4 +97,40 @@ describe("Review v2 post-commit trigger", () => {
       p_observations: [],
     });
   });
+
+  it("wakes once for a newly created dated rate demand without changing the mutation response", async () => {
+    const onRateDemand = vi.fn();
+    const gateway = createSupabaseDevGateway({
+      url: "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      publishableKey: "synthetic",
+      secretKey: "synthetic",
+      onRateDemand,
+    });
+    rpc
+      .mockReset()
+      .mockImplementation(async (name: string, args: Record<string, unknown>) =>
+        name === "ledger_create_expense_4a"
+          ? { data: args.response_body_value, error: null }
+          : { data: null, error: { message: "Review unavailable" } },
+      );
+    const result = await gateway.createLedgerExpense(
+      "00000000-0000-4000-8000-000000000002",
+      "10000000-0000-4000-8000-000000000001",
+      "key",
+      {
+        ...input,
+        economicDate: "2026-09-16",
+        original: { minor: 100, currency: "EUR", scale: 2 },
+        businessStatus: "RATE_REQUIRED",
+        valuation: null,
+        splits: input.splits.map((split) => ({ ...split, settlementMinor: null })),
+      } as never,
+    );
+    expect(result.entity.businessStatus).toBe("RATE_REQUIRED");
+    expect(onRateDemand).toHaveBeenCalledOnce();
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual([
+      "ledger_create_expense_4a",
+      "reconcile_ledger_review_v2",
+    ]);
+  });
 });
