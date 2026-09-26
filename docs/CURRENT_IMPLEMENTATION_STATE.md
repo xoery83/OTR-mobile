@@ -2,6 +2,21 @@
 
 Date: 2026-09-26
 
+## My Ledger bootstrap safety — local implementation
+
+- A linked Journey enters `/v2/me/ledger` reporting only when a batched
+  `ledger_settings` lookup finds its Ledger configuration. Reporting is capped
+  at two Journey jobs per Backend process; a failed batch starts no later
+  Journey. Identical in-flight account/period/bounds requests share one read.
+  Structured logs expose counts and failure class without identifiers. The
+  response shape and financial rules are unchanged. See ADR 0046.
+- The process-global concurrency ceiling of two is a temporary Hosted Dev
+  incident-safety guardrail. Re-evaluate per-request and global limits from
+  capacity measurements before Production to avoid cross-user queueing.
+- This safety fix is local only. The Phase 1B Simulator incident remains on
+  HOLD; no Hosted Dev access, deployment, Simulator or App run is part of this
+  change. The dedicated lightweight reporting path remains future work.
+
 ## Performance Guardrails Phase 1B — local implementation
 
 - Foreground Ledger and standalone Settlement Personal Payment pulls now share

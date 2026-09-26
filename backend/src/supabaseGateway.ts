@@ -138,7 +138,36 @@ export type SupabaseDevConfig = {
   rateQuoteProvider?: RateQuoteProvider;
   rateSnapshotProvider?: RateSnapshotProvider;
   onRateDemand?: () => void;
+  onMyLedgerRead?: (event: MyLedgerReadEvent) => void;
 };
+
+export type MyLedgerReadEvent = {
+  linkedJourneyCount: number;
+  ledgerEligibleJourneyCount: number;
+  skippedMissingSettingsCount: number;
+  activeConcurrencyHighWaterMark: number;
+  completedJourneyCount: number;
+  failedJourneyIndex: number | null;
+  failureClass: string | null;
+  queuedWorkSuppressed: boolean;
+};
+
+export function createMyLedgerReadGate() {
+  let previous: Promise<void> = Promise.resolve();
+  return async <T>(task: () => Promise<T>): Promise<T> => {
+    const wait = previous;
+    let release!: () => void;
+    previous = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await wait;
+    try {
+      return await task();
+    } finally {
+      release();
+    }
+  };
+}
 
 function assertApprovedDevUrl(url: string) {
   const parsed = new URL(url);
@@ -551,6 +580,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
   assertApprovedDevUrl(config.url);
   const auth = client(config.url, config.publishableKey);
   const service = client(config.url, config.secretKey);
+  const runMyLedgerRead = createMyLedgerReadGate();
   const receiptOcrProvider = config.receiptOcrProvider ?? createReceiptOcrProvider();
   const defaultRateProvider = createFrankfurterRateProvider();
   const rateQuoteProvider = config.rateQuoteProvider ?? defaultRateProvider;
@@ -892,7 +922,11 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     },
 
     async readMyLedger(userId, period, from, to) {
-      return readMyLedger(service, userId, period, from, to);
+      return runMyLedgerRead(() =>
+        readMyLedger(service, userId, period, from, to, {
+          log: config.onMyLedgerRead,
+        }),
+      );
     },
 
     async readLedgerRateQuotes(_userId, tripId, quoteCurrency, baseCurrency) {
@@ -5977,85 +6011,148 @@ async function latestLedgerSequence(service: SupabaseClient, tripId: string) {
   return result.data[0] ? Number(result.data[0].sequence) : 0;
 }
 
-async function readMyLedger(
+export async function readMyLedger(
   service: SupabaseClient,
   userId: string,
   period: MyLedgerPeriod,
   from: string | null,
   to: string | null,
+  options: {
+    readReporting?: typeof readServerReporting;
+    log?: (event: MyLedgerReadEvent) => void;
+  } = {},
 ): Promise<MyLedgerResponse> {
-  const memberResult = await service
-    .from("journey_members")
-    .select("id, trip_id")
-    .eq("user_id", userId)
-    .eq("status", "linked");
-  if (memberResult.error) throw new Error("Supabase Dev My Ledger member read failed.");
+  const metrics: MyLedgerReadEvent = {
+    linkedJourneyCount: 0,
+    ledgerEligibleJourneyCount: 0,
+    skippedMissingSettingsCount: 0,
+    activeConcurrencyHighWaterMark: 0,
+    completedJourneyCount: 0,
+    failedJourneyIndex: null,
+    failureClass: null,
+    queuedWorkSuppressed: false,
+  };
+  let active = 0;
+  try {
+    const memberResult = await service
+      .from("journey_members")
+      .select("id, trip_id")
+      .eq("user_id", userId)
+      .eq("status", "linked")
+      .order("trip_id");
+    if (memberResult.error) throw new Error("Supabase Dev My Ledger member read failed.");
 
-  const members = memberResult.data ?? [];
-  const tripIds = [...new Set(members.map((member) => String(member.trip_id)))];
-  if (tripIds.length === 0) {
+    const members = memberResult.data ?? [];
+    metrics.linkedJourneyCount = members.length;
+    const tripIds = members.map((member) => String(member.trip_id));
+    const settings = tripIds.length
+      ? await service
+          .from("ledger_settings")
+          .select("journey_id")
+          .in("journey_id", tripIds)
+      : { data: [], error: null };
+    if (settings.error) throw new Error("Supabase Dev My Ledger settings read failed.");
+    const enabled = new Set((settings.data ?? []).map((row) => String(row.journey_id)));
+    const eligible = members.filter((member) => enabled.has(String(member.trip_id)));
+    metrics.ledgerEligibleJourneyCount = eligible.length;
+    metrics.skippedMissingSettingsCount = members.length - eligible.length;
+
+    const summarize = async (member: (typeof members)[number]) => {
+      active += 1;
+      metrics.activeConcurrencyHighWaterMark = Math.max(
+        metrics.activeConcurrencyHighWaterMark,
+        active,
+      );
+      try {
+        const journeyId = String(member.trip_id);
+        const memberId = String(member.id);
+        const reporting = await (options.readReporting ?? readServerReporting)(
+          service,
+          userId,
+          journeyId,
+        );
+        const filters: ReportingFilters = {
+          ...(from ? { from } : {}),
+          ...(to ? { to } : {}),
+        };
+        const mine = summarizeReporting(reporting.records, "MINE", memberId, filters);
+        const settlementMine = summarizeReporting(
+          reporting.records.filter(
+            (record) => record.settlementParticipation === "INCLUDED",
+          ),
+          "MINE",
+          memberId,
+          filters,
+        );
+        const paidMinor = reporting.records
+          .filter(
+            (record) =>
+              matchesReportingFilters(record, filters) &&
+              record.businessStatus === "ACCEPTED" &&
+              record.settlementParticipation === "INCLUDED" &&
+              record.settlementMinor !== null &&
+              !record.hasOpenConflict &&
+              record.payerMemberId === memberId,
+          )
+          .reduce((sum, record) => sum + record.settlementMinor!, 0);
+        const summary = {
+          journeyId,
+          title: reporting.bootstrap.journey.title,
+          startDate: reporting.bootstrap.journey.startDate,
+          endDate: reporting.bootstrap.journey.endDate,
+          currency: reporting.bootstrap.journey.settlementCurrency,
+          scale: reporting.bootstrap.journey.settlementScale,
+          mySpendMinor: mine.totalMinor,
+          paidMinor,
+          positionMinor: paidMinor - settlementMine.totalMinor,
+          unvaluedCount: mine.unresolvedRateCount,
+          conflictCount: mine.openConflictCount,
+          updatedAt: reporting.bootstrap.journey.updatedAt,
+        };
+        metrics.completedJourneyCount += 1;
+        return summary;
+      } finally {
+        active -= 1;
+      }
+    };
+
+    const summaries: MyLedgerResponse["journeys"] = [];
+    for (let index = 0; index < eligible.length; index += 2) {
+      const batch = eligible.slice(index, index + 2);
+      const results = await Promise.allSettled(batch.map(summarize));
+      const failure = results.findIndex((result) => result.status === "rejected");
+      if (failure >= 0) {
+        const reason = (results[failure] as PromiseRejectedResult).reason;
+        metrics.failedJourneyIndex = index + failure;
+        metrics.failureClass = reason instanceof Error ? reason.name : typeof reason;
+        metrics.queuedWorkSuppressed = index + batch.length < eligible.length;
+        throw reason;
+      }
+      summaries.push(
+        ...results.map(
+          (result) =>
+            (result as PromiseFulfilledResult<(typeof summaries)[number]>).value,
+        ),
+      );
+    }
+
     return {
       period,
       from,
       to,
-      journeys: [],
+      journeys: summaries,
       serverTime: new Date().toISOString(),
     };
+  } catch (error) {
+    metrics.failureClass ??= error instanceof Error ? error.name : typeof error;
+    throw error;
+  } finally {
+    try {
+      options.log?.(metrics);
+    } catch {
+      // Observability must not change the read outcome.
+    }
   }
-
-  const summaries = await Promise.all(
-    members.map(async (member) => {
-      const journeyId = String(member.trip_id);
-      const memberId = String(member.id);
-      const reporting = await readServerReporting(service, userId, journeyId);
-      const filters: ReportingFilters = {
-        ...(from ? { from } : {}),
-        ...(to ? { to } : {}),
-      };
-      const mine = summarizeReporting(reporting.records, "MINE", memberId, filters);
-      const settlementMine = summarizeReporting(
-        reporting.records.filter(
-          (record) => record.settlementParticipation === "INCLUDED",
-        ),
-        "MINE",
-        memberId,
-        filters,
-      );
-      const paidMinor = reporting.records
-        .filter(
-          (record) =>
-            matchesReportingFilters(record, filters) &&
-            record.businessStatus === "ACCEPTED" &&
-            record.settlementParticipation === "INCLUDED" &&
-            record.settlementMinor !== null &&
-            !record.hasOpenConflict &&
-            record.payerMemberId === memberId,
-        )
-        .reduce((sum, record) => sum + record.settlementMinor!, 0);
-      return {
-        journeyId,
-        title: reporting.bootstrap.journey.title,
-        startDate: reporting.bootstrap.journey.startDate,
-        endDate: reporting.bootstrap.journey.endDate,
-        currency: reporting.bootstrap.journey.settlementCurrency,
-        scale: reporting.bootstrap.journey.settlementScale,
-        mySpendMinor: mine.totalMinor,
-        paidMinor,
-        positionMinor: paidMinor - settlementMine.totalMinor,
-        unvaluedCount: mine.unresolvedRateCount,
-        conflictCount: mine.openConflictCount,
-        updatedAt: reporting.bootstrap.journey.updatedAt,
-      };
-    }),
-  );
-
-  return {
-    period,
-    from,
-    to,
-    journeys: summaries,
-    serverTime: new Date().toISOString(),
-  };
 }
 
 async function readServerReporting(

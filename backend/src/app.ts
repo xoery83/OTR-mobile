@@ -493,6 +493,9 @@ export type SafeLogEvent = {
   route: string;
   status: number;
   durationMs: number;
+  singleFlightLeader?: boolean;
+  singleFlightJoinCount?: number;
+  inFlightKeyCount?: number;
 };
 
 export type BackendDependencies = {
@@ -1571,7 +1574,11 @@ async function mutateSettlementCorrection(request: Request, gateway: DevBackendG
   return json(response.idempotentReplay ? 200 : 201, response);
 }
 
-async function readEntity(request: Request, gateway: DevBackendGateway) {
+async function readEntity(
+  request: Request,
+  gateway: DevBackendGateway,
+  readMyLedger: DevBackendGateway["readMyLedger"] = gateway.readMyLedger,
+) {
   const url = new URL(request.url);
   if (url.pathname === "/v2/ledger/reference-rate-snapshots") {
     const user = await authenticate(request, gateway);
@@ -1607,7 +1614,7 @@ async function readEntity(request: Request, gateway: DevBackendGateway) {
     }
     return json(
       200,
-      await gateway.readMyLedger(
+      await readMyLedger(
         user.id,
         period,
         period === "ALL" ? null : from,
@@ -1817,11 +1824,44 @@ export function createDevBackendHandler({
   log,
   now = Date.now,
 }: BackendDependencies) {
+  type MyLedgerFlight = {
+    promise: ReturnType<DevBackendGateway["readMyLedger"]>;
+    joinCount: number;
+  };
+  const myLedgerFlights = new Map<string, MyLedgerFlight>();
+  const readMyLedgerSingleFlight = (
+    userId: string,
+    period: MyLedgerPeriod,
+    from: string | null,
+    to: string | null,
+    observe: (leader: boolean, flight: MyLedgerFlight, keyCount: number) => void,
+  ) => {
+    const key = JSON.stringify([userId, period, from, to]);
+    const existing = myLedgerFlights.get(key);
+    if (existing) {
+      existing.joinCount += 1;
+      observe(false, existing, myLedgerFlights.size);
+      return existing.promise;
+    }
+    const promise = Promise.resolve().then(() =>
+      gateway.readMyLedger(userId, period, from, to),
+    );
+    const flight = { promise, joinCount: 0 };
+    myLedgerFlights.set(key, flight);
+    observe(true, flight, myLedgerFlights.size);
+    const clear = () => {
+      if (myLedgerFlights.get(key) === flight) myLedgerFlights.delete(key);
+    };
+    void promise.then(clear, clear);
+    return promise;
+  };
   return async function handle(request: Request) {
     const startedAt = now();
     const requestId = randomUUID();
     let route = "unknown";
     let response: Response;
+    let myLedgerFlightLog:
+      { leader: boolean; flight: MyLedgerFlight; keyCount: number } | undefined;
 
     try {
       const url = new URL(request.url);
@@ -1848,7 +1888,17 @@ export function createDevBackendHandler({
         response = await completeLedgerEconomicDate(request, gateway);
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
         route = redactLogRoute(url.pathname);
-        response = await readEntity(request, gateway);
+        response = await readEntity(request, gateway, (userId, period, from, to) =>
+          readMyLedgerSingleFlight(
+            userId,
+            period,
+            from,
+            to,
+            (leader, flight, keyCount) => {
+              myLedgerFlightLog = { leader, flight, keyCount };
+            },
+          ),
+        );
       } else if (
         request.method === "POST" &&
         /^\/v2\/trips\/[^/]+\/ledger\/personal-payments\/[^/]+\/attachments$/.test(
@@ -2010,7 +2060,19 @@ export function createDevBackendHandler({
     }
 
     response.headers.set("X-Request-Id", requestId);
-    log?.({ requestId, route, status: response.status, durationMs: now() - startedAt });
+    log?.({
+      requestId,
+      route,
+      status: response.status,
+      durationMs: now() - startedAt,
+      ...(myLedgerFlightLog
+        ? {
+            singleFlightLeader: myLedgerFlightLog.leader,
+            singleFlightJoinCount: myLedgerFlightLog.flight.joinCount,
+            inFlightKeyCount: myLedgerFlightLog.keyCount,
+          }
+        : {}),
+    });
     return response;
   };
 }

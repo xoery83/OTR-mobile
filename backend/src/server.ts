@@ -25,6 +25,14 @@ const gateway = createSupabaseDevGateway({
     environment.OTR_DEV_RECEIPT_OCR_ACCEPTANCE_FIXTURE === "1",
   ),
   onRateDemand: () => scanner?.wake(),
+  onMyLedgerRead: (event) =>
+    console.info(
+      JSON.stringify({
+        level: event.failureClass ? "warn" : "info",
+        event: "my_ledger_read",
+        ...event,
+      }),
+    ),
 });
 scanner = createRateDemandScanner(
   () => gateway.acquirePendingRateQuotes!(),

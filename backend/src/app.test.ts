@@ -1111,6 +1111,95 @@ describe("OTR Dev Backend", () => {
     expect(gateway.readMyLedger).toHaveBeenCalledWith(userId, "ALL", null, null);
   });
 
+  it("coalesces identical My Ledger reads and releases the flight after success", async () => {
+    const { gateway } = createGateway();
+    let finish!: (value: Awaited<ReturnType<typeof gateway.readMyLedger>>) => void;
+    const pending = new Promise<Awaited<ReturnType<typeof gateway.readMyLedger>>>(
+      (resolve) => {
+        finish = resolve;
+      },
+    );
+    vi.mocked(gateway.readMyLedger).mockImplementation(() => pending);
+    const log = vi.fn();
+    const handle = createDevBackendHandler({ gateway, log });
+    const request = () =>
+      new Request("http://localhost/v2/me/ledger?period=ALL", {
+        headers: { Authorization: "Bearer valid-token" },
+      });
+    const reads = [handle(request()), handle(request()), handle(request())];
+    await vi.waitFor(() => expect(gateway.readMyLedger).toHaveBeenCalledTimes(1));
+    finish({ period: "ALL", from: null, to: null, journeys: [], serverTime: "now" });
+    expect((await Promise.all(reads)).map((response) => response.status)).toEqual([
+      200, 200, 200,
+    ]);
+    expect(
+      log.mock.calls.filter(([event]) => event.singleFlightLeader === true),
+    ).toHaveLength(1);
+    expect(log.mock.calls.every(([event]) => event.singleFlightJoinCount === 2)).toBe(
+      true,
+    );
+    expect((await handle(request())).status).toBe(200);
+    expect(gateway.readMyLedger).toHaveBeenCalledTimes(2);
+  });
+
+  it("separates My Ledger flights by user, period, and bounds", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.validateAccessToken).mockImplementation(async (token) =>
+      token === "valid-token" ? { id: userId } : { id: memberA },
+    );
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    vi.mocked(gateway.readMyLedger).mockImplementation(
+      async (_user, period, from, to) => {
+        await pending;
+        return { period, from, to, journeys: [], serverTime: "now" };
+      },
+    );
+    const handle = createDevBackendHandler({ gateway });
+    const get = (token: string, query: string) =>
+      handle(
+        new Request(`http://localhost/v2/me/ledger?${query}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      );
+    const reads = [
+      get("valid-token", "period=ALL"),
+      get("other-token", "period=ALL"),
+      get("valid-token", "period=30D&from=2026-09-01&to=2026-10-01"),
+      get("valid-token", "period=30D&from=2026-09-02&to=2026-10-01"),
+    ];
+    await vi.waitFor(() => expect(gateway.readMyLedger).toHaveBeenCalledTimes(4));
+    finish();
+    expect((await Promise.all(reads)).every((response) => response.status === 200)).toBe(
+      true,
+    );
+  });
+
+  it("clears a failed shared My Ledger flight for a later retry", async () => {
+    const { gateway } = createGateway();
+    let fail!: (error: Error) => void;
+    const pending = new Promise<never>((_resolve, reject) => {
+      fail = reject;
+    });
+    vi.mocked(gateway.readMyLedger).mockImplementationOnce(() => pending);
+    const handle = createDevBackendHandler({ gateway });
+    const request = () =>
+      new Request("http://localhost/v2/me/ledger?period=ALL", {
+        headers: { Authorization: "Bearer valid-token" },
+      });
+    const first = handle(request());
+    const joiner = handle(request());
+    await vi.waitFor(() => expect(gateway.readMyLedger).toHaveBeenCalledTimes(1));
+    fail(new Error("report failed"));
+    expect(
+      (await Promise.all([first, joiner])).map((response) => response.status),
+    ).toEqual([503, 503]);
+    expect((await handle(request())).status).toBe(200);
+    expect(gateway.readMyLedger).toHaveBeenCalledTimes(2);
+  });
+
   it("returns the authenticated ECB reference snapshot bundle", async () => {
     const { gateway } = createGateway();
     const handle = createDevBackendHandler({ gateway });
