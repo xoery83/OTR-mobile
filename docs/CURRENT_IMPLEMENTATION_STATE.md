@@ -2,6 +2,17 @@
 
 Date: 2026-09-26
 
+## Performance Guardrails Phase 1B — local implementation
+
+- Foreground Ledger and standalone Settlement Personal Payment pulls now share
+  one adaptive scheduling rule: successful empty cycles wait 8/15/30/60 seconds;
+  changes and local kicks restore 8 seconds; failures wait 15/30/60 seconds.
+  Embedded Settlement no longer owns an independent 8-second payment poll.
+  Partial pull failures, account/Journey switches, offline transitions, and
+  stale results remain guarded. See ADR 0045.
+- Phase 1B is local only. No Dev deployment, Simulator or iPhone launch, schema,
+  backend, Phase 1A or Phase 1C change. Phase 1A remains deployed and healthy.
+
 ## Performance Guardrails Phase 1A — local implementation
 
 - Dev Backend historical rate scanner now runs once at startup, then uses a

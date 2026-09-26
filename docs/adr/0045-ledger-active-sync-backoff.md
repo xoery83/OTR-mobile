@@ -1,0 +1,23 @@
+# ADR 0045: Foreground Ledger sync backoff
+
+Date: 2026-09-26
+Status: Implemented locally for Performance Guardrails Phase 1B
+
+Visible, online Ledger sync schedules its next run only after the current run
+finishes. Successful empty cycles wait 8, 15, 30, then 60 seconds; a remote
+change, nonempty local queue, focus, foreground return, reconnect, or local
+mutation restores the 8-second cadence. Failures wait 15, 30, then 60 seconds.
+Account and Journey context changes invalidate old results and timers.
+Concurrent Journey pulls are keyed by account generation as well as Journey.
+
+Standalone Settlement uses the same scheduler for Personal Payment pulls.
+Settlement embedded in Ledger uses its parent's Journey pull and reloads local
+Personal Payments after a changed result. The independent 8-second Settlement
+timer is removed. Operational mutation kicks wake the active scheduler without
+changing queue status, retry, conflict, or offline rules. A swallowed partial
+Personal Payment or Review pull failure does not count as an idle success.
+
+Development logs contain only cycle counts, cadence and reset reasons, work
+classification, and the number of pull API calls that can be counted locally.
+Operational push calls are not included in that request count. No schema, RPC,
+backend deployment, or business-rule change is part of this decision.

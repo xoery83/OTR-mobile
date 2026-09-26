@@ -15,6 +15,8 @@ import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPay
 import { usePersonalSettlementReview } from "@/hooks/usePersonalSettlementReview";
 import { useSettlementSections } from "@/hooks/useSettlementSections";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
+import { useLedgerActiveSync } from "@/hooks/useLedgerActiveSync";
+import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
 
 import { formatLedgerMoney } from "./format";
 import { shortMemberName } from "./dashboardPresentation";
@@ -55,6 +57,7 @@ export function SettlementReadinessScreen({
   embedded = false,
   onSectionChange,
   showNavigation = true,
+  ledgerChangeSeq,
 }: {
   activeSection?: SettlementSectionName;
   debugMode?: boolean;
@@ -62,6 +65,7 @@ export function SettlementReadinessScreen({
   embedded?: boolean;
   onSectionChange?: (section: SettlementSectionName) => void;
   showNavigation?: boolean;
+  ledgerChangeSeq?: number;
 }) {
   const settlement = useStage7Settlement(journeyId);
   const refreshSettlement = settlement.refresh;
@@ -94,6 +98,21 @@ export function SettlementReadinessScreen({
     settlement.isOrganizer,
     displayedFinal,
     displayedFinal ? null : settlement.displayPreview,
+    embedded ? ledgerChangeSeq : undefined,
+  );
+  const { updatePayments } = sections;
+  const handlePersonalPaymentChange = useCallback(
+    async (changedJourneyId: string) => {
+      if (changedJourneyId !== (settlement.journeyId ?? journeyId)) return;
+      const repository = await getDefaultLedgerPersonalPaymentRepository();
+      updatePayments(await repository.listForJourney(changedJourneyId));
+    },
+    [journeyId, settlement.journeyId, updatePayments],
+  );
+  useLedgerActiveSync(
+    embedded ? null : (settlement.journeyId ?? journeyId ?? null),
+    handlePersonalPaymentChange,
+    "SETTLEMENT",
   );
   const [localActive, setLocalActive] = useState<SettlementSectionName>("Summary");
   const active = activeSection ?? localActive;

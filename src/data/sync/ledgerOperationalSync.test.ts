@@ -49,6 +49,7 @@ import {
   reactivateLongLivedLedgerFailures,
   runLedgerOperationalSync,
   subscribeLedgerOperationalSyncCompletion,
+  subscribeLedgerOperationalSyncKick,
 } from "./ledgerOperationalSync";
 /* eslint-enable import/first */
 
@@ -72,6 +73,17 @@ describe("Ledger mutation sync kick", () => {
     expect(kickLedgerOperationalSync(run)).toBeUndefined();
     expect(run).toHaveBeenCalledOnce();
     await Promise.resolve();
+  });
+
+  it("announces mutation kicks once with the active account generation", async () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeLedgerOperationalSyncKick(listener);
+    kickLedgerOperationalSync(async () => undefined);
+    expect(listener).toHaveBeenCalledOnce();
+    expect(listener).toHaveBeenCalledWith(7);
+    unsubscribe();
+    kickLedgerOperationalSync(async () => undefined);
+    expect(listener).toHaveBeenCalledOnce();
   });
 
   it("blocks direct mutation kicks during an account transition", async () => {

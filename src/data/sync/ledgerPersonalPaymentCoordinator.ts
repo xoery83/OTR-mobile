@@ -27,16 +27,23 @@ export async function runLedgerPersonalPaymentSync(
   ).run(authState);
 }
 
-export async function bootstrapLedgerPersonalPayments(journeyId: string) {
+export async function bootstrapLedgerPersonalPayments(
+  journeyId: string,
+  onRequest?: () => void,
+) {
   const database = await openDatabase();
   const repository = createLedgerPersonalPaymentRepository(database, requireActiveUserId);
+  onRequest?.();
   const response = await createLedgerPersonalPaymentTransport().list(journeyId, true);
   await repository.applyHistoricalList(journeyId, response.payments, response.serverTime);
   await repository.applyFxProjectionList(journeyId, response.projections ?? []);
   return response;
 }
 
-export async function pullLedgerPersonalPayments(journeyId: string) {
+export async function pullLedgerPersonalPayments(
+  journeyId: string,
+  onRequest?: () => void,
+) {
   const database = await openDatabase();
   const repository = createLedgerPersonalPaymentRepository(database, requireActiveUserId);
   const transport = createLedgerPersonalPaymentTransport();
@@ -44,6 +51,7 @@ export async function pullLedgerPersonalPayments(journeyId: string) {
   let hasMore = true;
   let changed = false;
   while (hasMore) {
+    onRequest?.();
     const response = await transport.changes(journeyId, cursor);
     await repository.applyChanges(journeyId, response);
     changed ||= response.changes.length > 0;
@@ -53,17 +61,20 @@ export async function pullLedgerPersonalPayments(journeyId: string) {
   return changed;
 }
 
-export async function refreshLedgerPersonalPayments(journeyId: string) {
+export async function refreshLedgerPersonalPayments(
+  journeyId: string,
+  onRequest?: () => void,
+) {
   const database = await openDatabase();
   const repository = createLedgerPersonalPaymentRepository(database, requireActiveUserId);
   const checkpoint = await repository.getCursor(journeyId);
-  if (!checkpoint) await bootstrapLedgerPersonalPayments(journeyId);
+  if (!checkpoint) await bootstrapLedgerPersonalPayments(journeyId, onRequest);
   try {
-    return await pullLedgerPersonalPayments(journeyId);
+    return await pullLedgerPersonalPayments(journeyId, onRequest);
   } catch (error) {
     if (!(error instanceof ApiClientError) || error.code !== "INVALID_CURSOR")
       throw error;
-    await bootstrapLedgerPersonalPayments(journeyId);
-    return pullLedgerPersonalPayments(journeyId);
+    await bootstrapLedgerPersonalPayments(journeyId, onRequest);
+    return pullLedgerPersonalPayments(journeyId, onRequest);
   }
 }

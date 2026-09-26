@@ -8,15 +8,22 @@ import {
   deriveLedgerSyncStatus,
   getLedgerPendingMutationCount,
   runLedgerActiveSync,
+  runPersonalPaymentActiveSync,
   type LedgerActiveSyncResult,
   type LedgerSyncStatus,
 } from "@/data/sync/ledgerActiveSync";
-import { reactivateLongLivedLedgerFailures } from "@/data/sync/ledgerOperationalSync";
+import {
+  reactivateLongLivedLedgerFailures,
+  subscribeLedgerOperationalSyncKick,
+} from "@/data/sync/ledgerOperationalSync";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 
 export function useLedgerActiveSync(
   journeyId: string | null,
   onChanged: (journeyId: string) => void | Promise<void>,
+  scope: "LEDGER" | "SETTLEMENT" = "LEDGER",
 ) {
+  const accountGeneration = getAccountGeneration();
   const network = useNetworkState();
   const online = network.isConnected !== false && network.isInternetReachable !== false;
   const wasOnline = useRef(online);
@@ -28,7 +35,16 @@ export function useLedgerActiveSync(
   const controller = useMemo(() => {
     if (!journeyId) return null;
     return createLedgerActiveSyncController({
-      run: () => runLedgerActiveSync(journeyId),
+      run: () =>
+        scope === "SETTLEMENT"
+          ? runPersonalPaymentActiveSync(journeyId)
+          : runLedgerActiveSync(journeyId),
+      initialOnline: false,
+      isCurrent: () => accountGeneration === getAccountGeneration(),
+      onCycle: (metric) => {
+        if (__DEV__)
+          console.info(JSON.stringify({ event: "ledger_active_sync", scope, ...metric }));
+      },
       onStart: () =>
         setStatus({
           journeyId,
@@ -63,7 +79,14 @@ export function useLedgerActiveSync(
         });
       },
     });
-  }, [journeyId, onChanged]);
+  }, [accountGeneration, journeyId, onChanged, scope]);
+
+  useEffect(() => {
+    if (!controller) return;
+    return subscribeLedgerOperationalSyncKick((generation) => {
+      if (generation === accountGeneration) controller.wake();
+    });
+  }, [accountGeneration, controller]);
 
   useFocusEffect(
     useCallback(() => {

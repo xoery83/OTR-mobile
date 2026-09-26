@@ -26,6 +26,16 @@ export type LedgerOperationalSyncCompletion = {
 };
 
 const completionListeners = new Set<(event: LedgerOperationalSyncCompletion) => void>();
+const kickListeners = new Set<(generation: number) => void>();
+
+export function subscribeLedgerOperationalSyncKick(
+  listener: (generation: number) => void,
+) {
+  kickListeners.add(listener);
+  return () => {
+    kickListeners.delete(listener);
+  };
+}
 
 export function subscribeLedgerOperationalSyncCompletion(
   listener: (event: LedgerOperationalSyncCompletion) => void,
@@ -172,4 +182,14 @@ export function kickLedgerOperationalSync(
   run: () => Promise<unknown> = runLedgerOperationalSync,
 ) {
   void run().catch(() => undefined);
+  if (!paused) {
+    const generation = getAccountGeneration();
+    for (const listener of kickListeners) {
+      try {
+        listener(generation);
+      } catch {
+        // A polling hint must not turn a durable local write into a failure.
+      }
+    }
+  }
 }

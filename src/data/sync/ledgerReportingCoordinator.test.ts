@@ -2,8 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "@/data/api/client";
 
-const { refreshPersonal } = vi.hoisted(() => ({
+const { refreshPersonal, refreshReview } = vi.hoisted(() => ({
   refreshPersonal: vi.fn(async () => false),
+  refreshReview: vi.fn(async () => undefined),
+}));
+const accountScope = vi.hoisted(() => ({ generation: 0 }));
+
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => accountScope.generation,
 }));
 
 const repository = {
@@ -24,14 +30,33 @@ vi.mock("./ledgerPersonalPaymentCoordinator", () => ({
   refreshLedgerPersonalPayments: refreshPersonal,
 }));
 vi.mock("./personalSettlementReviewCoordinator", () => ({
-  refreshPersonalSettlementReview: vi.fn(),
+  refreshPersonalSettlementReview: refreshReview,
 }));
 
 // eslint-disable-next-line import/first
-import { refreshJourneyLedger, refreshMyLedger } from "./ledgerReportingCoordinator";
+import {
+  refreshJourneyLedger,
+  refreshJourneyLedgerWithStatus,
+  refreshMyLedger,
+} from "./ledgerReportingCoordinator";
 
 describe("Ledger pull recovery", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    accountScope.generation = 0;
+  });
+
+  it("marks a swallowed Personal Review failure as incomplete without changing the boolean read result", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "c0", hasMore: false });
+    refreshReview.mockRejectedValueOnce(new Error("temporary"));
+    await expect(refreshJourneyLedgerWithStatus("journey")).resolves.toEqual({
+      changed: false,
+      incomplete: true,
+      pullApiRequestCount: 2,
+    });
+    await expect(refreshJourneyLedger("journey")).resolves.toBe(false);
+  });
 
   it("applies every page transactionally before advancing", async () => {
     repository.getCursor.mockResolvedValue({ cursor: "c0" });
@@ -70,7 +95,7 @@ describe("Ledger pull recovery", () => {
       new ApiClientError("removed", "http", 403, "TRIP_READ_FORBIDDEN"),
     );
     await expect(refreshJourneyLedger("journey")).resolves.toBe(true);
-    expect(refreshPersonal).toHaveBeenCalledWith("journey");
+    expect(refreshPersonal).toHaveBeenCalledWith("journey", expect.any(Function));
     expect(repository.applyChanges).not.toHaveBeenCalled();
   });
 
@@ -125,6 +150,33 @@ describe("Ledger pull recovery", () => {
       "journey-a",
       "journey-b",
     ]);
+  });
+
+  it("does not coalesce the same Journey pull across account generations", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "c0" });
+    let finishFirst!: (value: unknown) => void;
+    let finishSecond!: (value: unknown) => void;
+    transport.pull
+      .mockImplementationOnce(
+        () =>
+          new Promise((done) => {
+            finishFirst = done;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((done) => {
+            finishSecond = done;
+          }),
+      );
+    const first = refreshJourneyLedger("journey-a");
+    await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledTimes(1));
+    accountScope.generation = 1;
+    const second = refreshJourneyLedger("journey-a");
+    await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledTimes(2));
+    finishFirst({ changes: [], cursor: "c0", hasMore: false });
+    finishSecond({ changes: [], cursor: "c0", hasMore: false });
+    await expect(Promise.all([first, second])).resolves.toEqual([false, false]);
   });
 
   it("bootstraps newly discovered authorized Journeys into the local directory", async () => {

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { useNetworkState } from "expo-network";
 
@@ -13,7 +13,7 @@ import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPay
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
-import { refreshLedgerPersonalPayments } from "@/data/sync/ledgerPersonalPaymentCoordinator";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   buildEstimatedSettlementCategories,
   buildFinalizedSettlementCategories,
@@ -30,7 +30,13 @@ export function useSettlementSections(
     inputs: Parameters<typeof buildEstimatedSettlementCategories>[0];
     members: { id: string; label: string }[];
   } | null,
+  ledgerChangeSeq?: number,
 ) {
+  const accountGeneration = getAccountGeneration();
+  const currentJourney = useRef(journeyId);
+  useEffect(() => {
+    currentJourney.current = journeyId;
+  }, [journeyId]);
   const network = useNetworkState();
   const online = network.isConnected !== false && network.isInternetReachable !== false;
   const [members, setMembers] = useState<{ id: string; label: string }[]>([]);
@@ -49,9 +55,16 @@ export function useSettlementSections(
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const updatePayments = useCallback((next: LocalPersonalPayment[]) => {
-    setPayments(next);
-  }, []);
+  const updatePayments = useCallback(
+    (next: LocalPersonalPayment[]) => {
+      if (
+        accountGeneration === getAccountGeneration() &&
+        currentJourney.current === journeyId
+      )
+        setPayments(next);
+    },
+    [accountGeneration, journeyId],
+  );
 
   const loadBase = useCallback(async () => {
     if (!journeyId) return;
@@ -77,6 +90,11 @@ export function useSettlementSections(
         reviewRepository.counts(journeyId),
         fxRepository.list().catch(() => null),
       ]);
+      if (
+        accountGeneration !== getAccountGeneration() ||
+        currentJourney.current !== journeyId
+      )
+        return;
       setMembers(options.members);
       setExpenses(nextExpenses);
       setPayments(nextPayments);
@@ -111,20 +129,39 @@ export function useSettlementSections(
           spendingId ? loadRows("SPENDING", spendingId) : Promise.resolve([]),
           sharesId ? loadRows("SHARES", sharesId) : Promise.resolve([]),
         ]);
+        if (
+          accountGeneration !== getAccountGeneration() ||
+          currentJourney.current !== journeyId
+        )
+          return;
         setSpendingRows(nextSpending);
         setShareRows(nextShares);
       }
       setMessage(null);
       if (online)
         void refreshLedgerFxSnapshotCache()
-          .then(setFxSnapshots)
+          .then((snapshots) => {
+            if (
+              accountGeneration === getAccountGeneration() &&
+              currentJourney.current === journeyId
+            )
+              setFxSnapshots(snapshots);
+          })
           .catch(() => undefined);
     } catch {
-      setMessage(settlementCacheMessage(online, "details"));
+      if (
+        accountGeneration === getAccountGeneration() &&
+        currentJourney.current === journeyId
+      )
+        setMessage(settlementCacheMessage(online, "details"));
     } finally {
-      setLoading(false);
+      if (
+        accountGeneration === getAccountGeneration() &&
+        currentJourney.current === journeyId
+      )
+        setLoading(false);
     }
-  }, [actorMemberId, estimated, finalized, journeyId, online]);
+  }, [accountGeneration, actorMemberId, estimated, finalized, journeyId, online]);
 
   const loadMember = useCallback(
     async (kind: "SPENDING" | "SHARES", memberId: string | null) => {
@@ -142,36 +179,47 @@ export function useSettlementSections(
           query,
           await reporting.countExpenses(query),
         );
+        if (
+          accountGeneration !== getAccountGeneration() ||
+          currentJourney.current !== journeyId
+        )
+          return;
         if (kind === "SPENDING") setSpendingRows(rows);
         else setShareRows(rows);
       } catch {
-        setMessage("Saved Settlement details remain available.");
+        if (
+          accountGeneration === getAccountGeneration() &&
+          currentJourney.current === journeyId
+        )
+          setMessage("Saved Settlement details remain available.");
       }
     },
-    [estimated, finalized, journeyId],
+    [accountGeneration, estimated, finalized, journeyId],
   );
 
   useFocusEffect(
     useCallback(() => {
       void loadBase();
-      if (!online || !journeyId) return;
-      let running = false;
-      const timer = setInterval(() => {
-        if (running) return;
-        running = true;
-        void refreshLedgerPersonalPayments(journeyId)
-          .then(async () => {
-            const repository = await getDefaultLedgerPersonalPaymentRepository();
-            setPayments(await repository.listForJourney(journeyId));
-          })
-          .catch(() => undefined)
-          .finally(() => {
-            running = false;
-          });
-      }, 8_000);
-      return () => clearInterval(timer);
-    }, [journeyId, loadBase, online]),
+    }, [loadBase]),
   );
+  useEffect(() => {
+    if (ledgerChangeSeq === undefined || !journeyId) return;
+    let current = true;
+    void getDefaultLedgerPersonalPaymentRepository()
+      .then((repository) => repository.listForJourney(journeyId))
+      .then((next) => {
+        if (
+          current &&
+          accountGeneration === getAccountGeneration() &&
+          currentJourney.current === journeyId
+        )
+          setPayments(next);
+      })
+      .catch(() => undefined);
+    return () => {
+      current = false;
+    };
+  }, [accountGeneration, journeyId, ledgerChangeSeq]);
   const selectSpendingMember = (memberId: string) => {
     spendingMemberRef.current = memberId;
     setSpendingMemberId(memberId);

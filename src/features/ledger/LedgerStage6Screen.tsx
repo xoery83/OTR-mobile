@@ -181,6 +181,7 @@ export function LedgerStage6Screen({
   const [journeySearchVisible, setJourneySearchVisible] = useState(false);
   const [selectingJourneyId, setSelectingJourneyId] = useState<string | null>(null);
   const [debugMode, setDebugMode] = useState(false);
+  const [ledgerChangeSeq, setLedgerChangeSeq] = useState(0);
   const journey = projection?.journey ?? null;
   const memberId = projection?.memberId ?? null;
   const scope = projection?.scope ?? "MINE";
@@ -426,6 +427,7 @@ export function LedgerStage6Screen({
   }, [loadProjection, request, scopedJourneyId]);
 
   const handleLedgerChanged = useCallback(async () => {
+    setLedgerChangeSeq((value) => value + 1);
     await loadContext();
   }, [loadContext]);
 
@@ -1049,6 +1051,7 @@ export function LedgerStage6Screen({
                 debugMode={debugMode}
                 embedded
                 journeyId={journey.journeyId}
+                ledgerChangeSeq={ledgerChangeSeq}
                 showNavigation={false}
               />
             )

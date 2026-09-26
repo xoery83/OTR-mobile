@@ -51,7 +51,11 @@ describe("Personal Payment pull recovery", () => {
       serverTime: "now",
     });
 
-    await expect(refreshLedgerPersonalPayments("journey-a")).resolves.toBe(false);
+    const onRequest = vi.fn();
+    await expect(refreshLedgerPersonalPayments("journey-a", onRequest)).resolves.toBe(
+      false,
+    );
+    expect(onRequest).toHaveBeenCalledTimes(3);
 
     expect(transport.list).toHaveBeenCalledWith("journey-a", true);
     expect(repository.applyHistoricalList).toHaveBeenCalledWith("journey-a", [], "now");
