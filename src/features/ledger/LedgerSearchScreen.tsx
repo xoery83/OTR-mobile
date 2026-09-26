@@ -31,6 +31,7 @@ import {
   ledgerExpenseAttention,
 } from "./format";
 import { createLatestRequest } from "./latestRequest";
+import { LedgerSheetHeader } from "./LedgerSheetHeader";
 import {
   countLedgerFilters,
   formatExpenseCount,
@@ -582,41 +583,21 @@ function FilterSheet({
         ? "CONFLICT"
         : "ANY";
   return (
-    <Modal animationType="slide" onRequestClose={onCancel} presentationStyle="pageSheet">
+    <Modal
+      allowSwipeDismissal
+      animationType="slide"
+      onRequestClose={onCancel}
+      presentationStyle="pageSheet"
+    >
       <View style={styles.sheet}>
-        <View style={[styles.sheetHeader, largeText && styles.sheetHeaderLarge]}>
-          {largeText ? (
-            <>
-              <Text
-                accessibilityRole="header"
-                maxFontSizeMultiplier={2}
-                style={styles.sheetTitleLarge}
-              >
-                Filter Expenses
-              </Text>
-              <View style={styles.sheetActionsLarge}>
-                <SheetAction disabled={applying} label="Cancel" onPress={onCancel} />
-                <SheetAction
-                  disabled={applying}
-                  label={applying ? "Applying…" : "Apply"}
-                  onPress={() => void apply()}
-                />
-              </View>
-            </>
-          ) : (
-            <>
-              <SheetAction disabled={applying} label="Cancel" onPress={onCancel} />
-              <Text accessibilityRole="header" style={styles.sheetTitle}>
-                Filter Expenses
-              </Text>
-              <SheetAction
-                disabled={applying}
-                label={applying ? "Applying…" : "Apply"}
-                onPress={() => void apply()}
-              />
-            </>
-          )}
-        </View>
+        <LedgerSheetHeader
+          leftLabel="Cancel"
+          onLeft={onCancel}
+          onRight={() => void apply()}
+          rightDisabled={applying}
+          rightLabel={applying ? "Applying…" : "Apply"}
+          title="Filter Expenses"
+        />
         <ScrollView
           contentContainerStyle={styles.form}
           keyboardShouldPersistTaps="handled"
@@ -752,29 +733,6 @@ function FilterSheet({
         </ScrollView>
       </View>
     </Modal>
-  );
-}
-
-function SheetAction({
-  disabled,
-  label,
-  onPress,
-}: {
-  disabled: boolean;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      disabled={disabled}
-      onPress={onPress}
-      style={styles.headerAction}
-    >
-      <Text maxFontSizeMultiplier={2} style={styles.link}>
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 
@@ -990,32 +948,6 @@ const styles = StyleSheet.create({
   linkButton: { alignSelf: "flex-start", justifyContent: "center", minHeight: 44 },
   footer: { alignItems: "center", justifyContent: "center", minHeight: 56, padding: 14 },
   sheet: { backgroundColor: "#F6F7F9", flex: 1 },
-  sheetHeader: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 58,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-  },
-  sheetTitle: {
-    color: "#111827",
-    flex: 1,
-    fontSize: 17,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  sheetHeaderLarge: { alignItems: "stretch", flexDirection: "column", padding: 16 },
-  sheetTitleLarge: { color: "#111827", fontSize: 22, fontWeight: "700" },
-  sheetActionsLarge: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  headerAction: { justifyContent: "center", minHeight: 44, minWidth: 72 },
   form: { gap: 16, padding: 16, paddingBottom: 40 },
   section: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 10, padding: 14 },
   sectionTitle: { color: "#111827", fontSize: 16, fontWeight: "700" },

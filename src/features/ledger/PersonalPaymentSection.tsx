@@ -11,7 +11,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
@@ -30,6 +29,7 @@ import { CurrencyPicker } from "./CurrencyPicker";
 import { formatLedgerMoney } from "./format";
 import { formatMinorInput, parseCurrencyAmount } from "./expenseDraft";
 import { chronologicalPersonalPayments } from "./settlementSections";
+import { LedgerSheetHeader } from "./LedgerSheetHeader";
 
 type Pair = { id: string; name: string };
 
@@ -393,26 +393,14 @@ function CurrencyModal({
 }) {
   return (
     <Modal
+      allowSwipeDismissal
       animationType="slide"
       onRequestClose={onClose}
       presentationStyle="pageSheet"
       visible={visible}
     >
-      <SafeAreaView edges={["top", "bottom"]} style={styles.currencySheet}>
-        <View style={styles.currencyHeader}>
-          <Text accessibilityRole="header" style={styles.heading}>
-            Choose currency
-          </Text>
-          <Pressable accessibilityRole="button" onPress={onClose}>
-            <Text style={styles.link}>Cancel</Text>
-          </Pressable>
-        </View>
-        <CurrencyPicker
-          onSelect={onSelect}
-          selected={selected}
-          suggestions={suggestions}
-        />
-      </SafeAreaView>
+      <LedgerSheetHeader leftLabel="Cancel" onLeft={onClose} title="Choose currency" />
+      <CurrencyPicker onSelect={onSelect} selected={selected} suggestions={suggestions} />
     </Modal>
   );
 }
@@ -488,26 +476,24 @@ function PersonalPaymentEditor({
   };
 
   return (
-    <Modal animationType="slide" onRequestClose={onClose} presentationStyle="pageSheet">
+    <Modal
+      allowSwipeDismissal
+      animationType="slide"
+      onRequestClose={onClose}
+      presentationStyle="pageSheet"
+    >
+      <LedgerSheetHeader
+        leftLabel="Cancel"
+        onLeft={onClose}
+        onRight={() => void save()}
+        rightDisabled={saving}
+        rightLabel={saving ? "Saving…" : "Save"}
+        title={existing ? "Edit your record" : action.label}
+      />
       <ScrollView
         contentContainerStyle={styles.editor}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.editorHeader}>
-          <Pressable accessibilityRole="button" onPress={onClose}>
-            <Text style={styles.link}>Cancel</Text>
-          </Pressable>
-          <Text accessibilityRole="header" style={styles.heading}>
-            {existing ? "Edit your record" : action.label}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            disabled={saving}
-            onPress={() => void save()}
-          >
-            <Text style={styles.link}>{saving ? "Saving…" : "Save"}</Text>
-          </Pressable>
-        </View>
         <Text style={styles.label}>
           Amount {action.direction === "PAID" ? "paid" : "received"}
         </Text>
@@ -574,12 +560,10 @@ function PersonalPaymentEditor({
 
 const styles = StyleSheet.create({
   section: { backgroundColor: "#DDECEA", gap: 12, padding: 12 },
-  heading: { color: "#0F172A", fontSize: 18, fontWeight: "800" },
   groupTitle: { color: "#0F172A", fontSize: 15, fontWeight: "800" },
   meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
   note: { color: "#334155", fontSize: 15, lineHeight: 21 },
   sync: { color: "#0F766E", fontSize: 13, fontWeight: "700" },
-  link: { color: "#0F766E", fontSize: 15, fontWeight: "800" },
   alignRight: { textAlign: "right" },
   currencyButton: {
     alignItems: "center",
@@ -592,25 +576,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
   },
   currencyButtonText: { color: "#334155", fontSize: 13, fontWeight: "800" },
-  currencyHeader: {
-    alignItems: "center",
-    borderBottomColor: "#E2E8F0",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 58,
-    paddingHorizontal: 16,
-  },
-  currencySheet: { backgroundColor: "#F6F7F9", flex: 1 },
   disabled: { opacity: 0.55 },
   emptyTimeline: { color: "#64748B", fontSize: 13, textAlign: "center" },
   editor: { gap: 12, padding: 16, paddingBottom: 40 },
-  editorHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 48,
-  },
   label: { color: "#334155", fontSize: 14, fontWeight: "700" },
   amountInput: {
     backgroundColor: "#F1F5F9",

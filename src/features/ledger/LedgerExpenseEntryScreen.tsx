@@ -58,6 +58,7 @@ import {
 } from "./expenseDraft";
 import { formatLedgerMoney } from "./format";
 import { CurrencyPicker } from "./CurrencyPicker";
+import { LedgerSheetHeader } from "./LedgerSheetHeader";
 
 type EntryContext = {
   journeyId: string;
@@ -609,6 +610,7 @@ export function LedgerExpenseEntryScreen() {
         options={{
           gestureEnabled: false,
           headerTitle: existing ? "Edit Expense" : "New Expense",
+          headerTitleStyle: { color: "#0F766E" },
           headerLeft: () => <HeaderAction label="Cancel" onPress={close} />,
           headerRight: () => (
             <HeaderAction
@@ -743,8 +745,14 @@ export function LedgerExpenseEntryScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
 
-      <Modal animationType="slide" presentationStyle="pageSheet" visible={currencySheet}>
-        <SheetHeader title="Currency" onDone={() => setCurrencySheet(false)} />
+      <Modal
+        allowSwipeDismissal
+        animationType="slide"
+        onRequestClose={() => setCurrencySheet(false)}
+        presentationStyle="pageSheet"
+        visible={currencySheet}
+      >
+        <LedgerSheetHeader onLeft={() => setCurrencySheet(false)} title="Currency" />
         {currencySheet ? (
           <CurrencyPicker
             selected={draft.currency}
@@ -772,8 +780,14 @@ export function LedgerExpenseEntryScreen() {
         ) : null}
       </Modal>
 
-      <Modal animationType="slide" presentationStyle="pageSheet" visible={memberSheet}>
-        <SheetHeader title="Participants" onDone={() => setMemberSheet(false)} />
+      <Modal
+        allowSwipeDismissal
+        animationType="slide"
+        onRequestClose={() => setMemberSheet(false)}
+        presentationStyle="pageSheet"
+        visible={memberSheet}
+      >
+        <LedgerSheetHeader onLeft={() => setMemberSheet(false)} title="Participants" />
         <FlatList
           data={context.members}
           keyExtractor={(item) => item.id}
@@ -795,8 +809,14 @@ export function LedgerExpenseEntryScreen() {
         />
       </Modal>
 
-      <Modal animationType="slide" presentationStyle="pageSheet" visible={splitSheet}>
-        <SheetHeader title="Split Expense" onDone={() => setSplitSheet(false)} />
+      <Modal
+        allowSwipeDismissal
+        animationType="slide"
+        onRequestClose={() => setSplitSheet(false)}
+        presentationStyle="pageSheet"
+        visible={splitSheet}
+      >
+        <LedgerSheetHeader onLeft={() => setSplitSheet(false)} title="Split Expense" />
         <ScrollView contentContainerStyle={styles.sheetContent}>
           <Text maxFontSizeMultiplier={2} style={styles.amountSummary}>
             Total ·{" "}
@@ -1064,22 +1084,6 @@ function FormRow({
   );
 }
 
-function SheetHeader({ title, onDone }: { title: string; onDone: () => void }) {
-  const largeText = useWindowDimensions().fontScale > 2;
-  return (
-    <View style={[styles.sheetHeader, largeText && styles.sheetHeaderLarge]}>
-      <Text
-        accessibilityRole="header"
-        maxFontSizeMultiplier={2}
-        style={styles.sheetTitle}
-      >
-        {title}
-      </Text>
-      <HeaderAction label="Done" onPress={onDone} />
-    </View>
-  );
-}
-
 function SheetRow({
   label,
   selected,
@@ -1193,21 +1197,6 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   secondaryText: { color: "#0F766E", fontSize: 18, fontWeight: "700" },
-  sheetHeader: {
-    alignItems: "center",
-    borderBottomColor: "#E2E8F0",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 58,
-    paddingHorizontal: 16,
-  },
-  sheetHeaderLarge: {
-    alignItems: "flex-start",
-    flexDirection: "column",
-    paddingVertical: 8,
-  },
-  sheetTitle: { color: "#0F172A", fontSize: 20, fontWeight: "800" },
   sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },
   sheetRow: {
     alignItems: "center",

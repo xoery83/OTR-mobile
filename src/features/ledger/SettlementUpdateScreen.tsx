@@ -15,6 +15,7 @@ import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository"
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney } from "./format";
+import { settlementPositionLabel } from "./dashboardPresentation";
 import {
   readSharedSettlementProjection,
   settlementExpenseIdentity,
@@ -112,11 +113,7 @@ export function SettlementUpdateScreen() {
           CURRENT BALANCE
         </Text>
         <Text style={styles.meta}>
-          {projection.balanceMinor > 0
-            ? "You should receive"
-            : projection.balanceMinor < 0
-              ? "You need to pay"
-              : "You're settled up"}
+          {settlementPositionLabel(projection.balanceMinor)}
         </Text>
         <Text style={styles.amount}>
           {formatLedgerMoney(

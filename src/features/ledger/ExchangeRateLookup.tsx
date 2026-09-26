@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   ledgerCurrencyRepository,
@@ -15,6 +16,7 @@ import {
 } from "@/data/repositories/ledgerCurrencyRepository";
 import { CurrencyPicker } from "./CurrencyPicker";
 import { formatLedgerRate, localDateKey } from "./format";
+import { LedgerSheetHeader } from "./LedgerSheetHeader";
 
 export function ExchangeRateLookup({
   journeyId,
@@ -30,6 +32,7 @@ export function ExchangeRateLookup({
   const [date, setDate] = useState(() => localDateKey(new Date()));
   const [picker, setPicker] = useState<"FROM" | "TO" | null>(null);
   const [dateOpen, setDateOpen] = useState(false);
+  const [pendingDate, setPendingDate] = useState(() => new Date());
   const [result, setResult] = useState<LedgerRateLookupResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -86,7 +89,10 @@ export function ExchangeRateLookup({
         <Pressable
           accessibilityLabel={`Reference date ${date}`}
           accessibilityRole="button"
-          onPress={() => setDateOpen(true)}
+          onPress={() => {
+            setPendingDate(new Date(`${date}T12:00:00`));
+            setDateOpen(true);
+          }}
           style={styles.dateField}
         >
           <Text style={styles.fieldValue}>{formatDate(date)}</Text>
@@ -99,15 +105,16 @@ export function ExchangeRateLookup({
         ) : null}
       </View>
       <Modal
+        allowSwipeDismissal
         animationType="slide"
         onRequestClose={() => setPicker(null)}
+        presentationStyle="pageSheet"
         visible={picker !== null}
       >
-        <View style={styles.pickerHeader}>
-          <Pressable accessibilityRole="button" onPress={() => setPicker(null)}>
-            <Text style={styles.done}>Close</Text>
-          </Pressable>
-        </View>
+        <LedgerSheetHeader
+          onLeft={() => setPicker(null)}
+          title={picker === "FROM" ? "From currency" : "To currency"}
+        />
         <CurrencyPicker
           onSelect={(code) => {
             reset();
@@ -119,21 +126,46 @@ export function ExchangeRateLookup({
           suggestions={[settlementCurrency, from, to, "EUR", "USD"]}
         />
       </Modal>
-      {dateOpen ? (
-        <DateTimePicker
-          display="spinner"
-          maximumDate={new Date()}
-          mode="date"
-          onChange={(_, value) => {
-            setDateOpen(false);
-            if (value) {
-              reset();
-              setDate(localDateKey(value));
-            }
-          }}
-          value={new Date(`${date}T12:00:00`)}
-        />
-      ) : null}
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setDateOpen(false)}
+        transparent
+        visible={dateOpen}
+      >
+        <View style={styles.dateOverlay}>
+          <Pressable
+            accessibilityLabel="Dismiss date picker"
+            accessibilityRole="button"
+            onPress={() => setDateOpen(false)}
+            style={styles.dateBackdrop}
+          />
+          <SafeAreaView edges={["bottom"]} style={styles.datePanel}>
+            <LedgerSheetHeader
+              leftLabel="Cancel"
+              onLeft={() => setDateOpen(false)}
+              onRight={() => {
+                reset();
+                setDate(localDateKey(pendingDate));
+                setDateOpen(false);
+              }}
+              safeTop={false}
+              title="Reference date"
+            />
+            {dateOpen ? (
+              <DateTimePicker
+                display="spinner"
+                maximumDate={new Date()}
+                mode="date"
+                onChange={(_, value) => {
+                  if (value) setPendingDate(value);
+                }}
+                style={styles.dateWheel}
+                value={pendingDate}
+              />
+            ) : null}
+          </SafeAreaView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -266,6 +298,16 @@ const styles = StyleSheet.create({
   offline: { color: "#7C5B00", fontSize: 13, fontWeight: "700" },
   checking: { color: "#0F766E", fontSize: 13, fontWeight: "700" },
   message: { color: "#7C5B00", fontSize: 13, lineHeight: 19 },
-  pickerHeader: { backgroundColor: "#FFFFFF", padding: 16 },
-  done: { color: "#0F766E", fontSize: 16, fontWeight: "700" },
+  dateOverlay: { flex: 1, justifyContent: "flex-end" },
+  dateBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(15, 23, 42, 0.25)",
+  },
+  datePanel: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    overflow: "hidden",
+  },
+  dateWheel: { height: 216, width: "100%" },
 });

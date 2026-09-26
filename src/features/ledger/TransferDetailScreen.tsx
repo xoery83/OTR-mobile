@@ -17,6 +17,7 @@ import type { RepaymentProposition } from "@/domain/ledger/paymentLifecycle";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney, formatValuationPolicy } from "./format";
+import { LedgerSheetHeader } from "./LedgerSheetHeader";
 import { PersonalPaymentSection } from "./PersonalPaymentSection";
 import {
   paymentStatusLabel,
@@ -390,7 +391,6 @@ function PaymentSheet({
   open: boolean;
   transfer: FinalizedTransfer;
 }) {
-  const largeText = useWindowDimensions().fontScale > 2;
   const source = correcting;
   const [currency, setCurrency] = useState(
     source?.payment.currency ?? transfer.amount.currency,
@@ -458,35 +458,24 @@ function PaymentSheet({
 
   return (
     <Modal
+      allowSwipeDismissal
       animationType="slide"
       onRequestClose={onClose}
       presentationStyle="pageSheet"
       visible={open}
     >
+      <LedgerSheetHeader
+        leftLabel="Cancel"
+        onLeft={onClose}
+        onRight={() => void save()}
+        rightLabel="Save"
+        title={source ? "Correct payment" : "Mark as paid"}
+      />
       <ScrollView
         contentContainerStyle={styles.sheet}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.sheetHeader, largeText && styles.sheetHeaderLarge]}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={onClose}
-            style={styles.headerButton}
-          >
-            <Text style={styles.linkText}>Cancel</Text>
-          </Pressable>
-          <Text accessibilityRole="header" style={styles.sheetTitle}>
-            {source ? "Correct payment" : "Mark as paid"}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => void save()}
-            style={styles.headerButton}
-          >
-            <Text style={styles.linkText}>Save</Text>
-          </Pressable>
-        </View>
         <TextInput
           accessibilityLabel="Payment currency"
           autoCapitalize="characters"
@@ -652,14 +641,6 @@ const styles = StyleSheet.create({
   linkText: { color: "#0F766E", fontSize: 15, fontWeight: "800" },
   disabled: { opacity: 0.5 },
   sheet: { gap: 12, padding: 20, paddingBottom: 40 },
-  sheetHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  sheetHeaderLarge: { alignItems: "stretch", flexDirection: "column" },
-  sheetTitle: { color: "#0F172A", fontSize: 20, fontWeight: "800" },
-  headerButton: { justifyContent: "center", minHeight: 44, minWidth: 64 },
   input: {
     borderColor: "#CBD5E1",
     borderRadius: 10,

@@ -67,6 +67,7 @@ import {
 } from "./dashboardPresentation";
 import { createLatestRequest } from "./latestRequest";
 import { retrySQLiteRollbackOnce } from "./retryLedgerRead";
+import { LedgerSheetHeader } from "./LedgerSheetHeader";
 
 type Mode = "SPENDING" | "SETTLEMENT";
 type FinalizedRows = Awaited<
@@ -529,6 +530,7 @@ export function LedgerStage6Screen({
     <>
       <Stack.Screen
         options={{
+          gestureEnabled: !journey,
           headerShown: true,
           headerTitle: () => (
             <View style={styles.headerTitleBlock}>
@@ -655,7 +657,10 @@ export function LedgerStage6Screen({
               <>
                 <View style={styles.total}>
                   <View style={[styles.totalHeader, largeText && styles.stack]}>
-                    <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
+                    <Text
+                      maxFontSizeMultiplier={2}
+                      style={[styles.eyebrow, styles.totalEyebrow]}
+                    >
                       {scope === "MINE" ? "YOU SPENT" : "GROUP SPENT"}
                     </Text>
                     <Segment
@@ -1142,35 +1147,23 @@ export function LedgerStage6Screen({
       </View>
 
       <Modal
+        allowSwipeDismissal
         animationType="slide"
         onRequestClose={() => setJourneyPickerOpen(false)}
         presentationStyle="pageSheet"
         visible={journeyPickerOpen}
       >
         <View style={styles.picker}>
-          <View style={styles.pickerHeader}>
-            <Pressable
-              accessibilityLabel="Cancel Journey selection"
-              accessibilityRole="button"
-              onPress={() => setJourneyPickerOpen(false)}
-              style={styles.pickerHeaderAction}
-            >
-              <Text style={styles.pickerCancelText}>Cancel</Text>
-            </Pressable>
-            <Text accessibilityRole="header" style={styles.pickerTitle}>
-              Choose Journey
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                setJourneyPickerOpen(false);
-                router.push("/expenses/all-journeys");
-              }}
-              style={styles.pickerHeaderAction}
-            >
-              <Text style={styles.pickerLedgerText}>My Ledger</Text>
-            </Pressable>
-          </View>
+          <LedgerSheetHeader
+            leftLabel="Cancel"
+            onLeft={() => setJourneyPickerOpen(false)}
+            onRight={() => {
+              setJourneyPickerOpen(false);
+              router.push("/expenses/all-journeys");
+            }}
+            rightLabel="My Ledger"
+            title="Choose Journey"
+          />
           <TextInput
             accessibilityLabel="Search Journeys"
             autoCapitalize="none"
@@ -1506,6 +1499,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   eyebrow: { color: "#64748B", fontSize: 12, fontWeight: "700" },
+  totalEyebrow: { color: "#0F766E", fontSize: 16, fontWeight: "800" },
   totalValue: {
     color: "#111827",
     fontSize: 34,
@@ -1701,35 +1695,7 @@ const styles = StyleSheet.create({
     minHeight: 72,
     padding: 14,
   },
-  picker: { backgroundColor: "#F6F7F9", flex: 1, paddingTop: 12 },
-  pickerHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 12,
-  },
-  pickerHeaderAction: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 22,
-    justifyContent: "center",
-    minHeight: 44,
-    minWidth: 86,
-    paddingHorizontal: 10,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-  },
-  pickerTitle: {
-    color: "#111827",
-    flex: 1,
-    fontSize: 17,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  pickerCancelText: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
-  pickerLedgerText: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
+  picker: { backgroundColor: "#F6F7F9", flex: 1 },
   search: {
     backgroundColor: "#E5E7EB",
     borderRadius: 10,

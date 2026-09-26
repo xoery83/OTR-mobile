@@ -21,6 +21,7 @@ import { createLocalId } from "@/domain/localId";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { currencyName } from "@/features/ledger/currencyPickerData";
 import { ExchangeRateLookup } from "@/features/ledger/ExchangeRateLookup";
+import { LedgerSheetHeader } from "@/features/ledger/LedgerSheetHeader";
 
 type JourneySetting = { journeyId: string; settlementCurrency: string; title: string };
 
@@ -153,11 +154,6 @@ export default function CurrencyRoute() {
         <Text accessibilityRole="header" style={styles.sectionTitle}>
           Journey Currency
         </Text>
-        <Text style={styles.currencyHelp}>
-          {chinese
-            ? "只有旅行组织者在线时可以更改。更改前须预览并确认；有未完成结算或冲突时不能确认。首次最终结算后，此货币永久锁定。"
-            : "Only the Journey organizer can change this while online. Preview and confirm the change first. Open settlements or conflicts block confirmation; a finalized settlement locks this currency permanently."}
-        </Text>
         <View style={styles.group}>
           {journey ? (
             <Pressable
@@ -172,29 +168,21 @@ export default function CurrencyRoute() {
               <View style={styles.grow}>
                 <Text style={styles.label}>{journey.title}</Text>
                 <Text style={styles.detail}>
-                  {chinese
-                    ? "用于本次旅行的汇总、成员余额和结算。"
-                    : "Used for totals, balances and settlement."}
+                  {chinese ? "汇总、余额和结算货币" : "Totals, balances and settlement"}
                 </Text>
                 {locked ? (
                   <Text style={styles.detail}>
-                    {chinese
-                      ? "已有最终结算，此旅行的结算货币已永久锁定。"
-                      : "Finalized settlement permanently locks this Journey Currency."}
+                    {chinese ? "已最终结算 · 货币锁定" : "Locked after final settlement"}
                   </Text>
                 ) : null}
                 {!canChange && !locked ? (
                   <Text style={styles.detail}>
-                    {chinese
-                      ? "只有旅行组织者可以更改此货币。"
-                      : "Only the Journey organizer can change this currency."}
+                    {chinese ? "仅组织者可更改" : "Organizer only"}
                   </Text>
                 ) : null}
                 {!online ? (
                   <Text style={styles.detail}>
-                    {chinese
-                      ? "离线时仍可查看；重新连接后可更改。"
-                      : "Available offline. Reconnect to change it."}
+                    {chinese ? "连接网络后可更改" : "Reconnect to change"}
                   </Text>
                 ) : null}
               </View>
@@ -218,6 +206,13 @@ export default function CurrencyRoute() {
             </View>
           )}
         </View>
+        {journey ? (
+          <Text style={styles.currencyHelp}>
+            {chinese
+              ? "组织者在线预览并确认后可更改；未完成结算或冲突会阻止更改，最终结算后永久锁定。"
+              : "The organizer can change this online after a preview. Open settlements or conflicts block changes; final settlement locks it."}
+          </Text>
+        ) : null}
         {working ? <ActivityIndicator /> : null}
         {preview ? (
           <View style={styles.preview}>
@@ -315,15 +310,18 @@ export default function CurrencyRoute() {
         {message ? <Text style={styles.error}>{message}</Text> : null}
       </ScrollView>
       <Modal
-        visible={pickerOpen}
+        allowSwipeDismissal
         animationType="slide"
         onRequestClose={() => setPickerOpen(false)}
+        presentationStyle="pageSheet"
+        visible={pickerOpen}
       >
-        <View style={styles.pickerHeader}>
-          <Pressable accessibilityRole="button" onPress={() => setPickerOpen(false)}>
-            <Text style={styles.label}>{chinese ? "关闭" : "Close"}</Text>
-          </Pressable>
-        </View>
+        <LedgerSheetHeader
+          leftLabel={chinese ? "关闭" : "Close"}
+          onLeft={() => setPickerOpen(false)}
+          rightLabel={chinese ? "完成" : "Done"}
+          title={chinese ? "选择货币" : "Choose currency"}
+        />
         <CurrencyPicker
           selected={journey?.settlementCurrency ?? "NZD"}
           suggestions={[journey?.settlementCurrency ?? "NZD", "EUR", "USD"]}
@@ -346,7 +344,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     textTransform: "uppercase",
   },
-  currencyHelp: { color: "#475569", fontSize: 13, lineHeight: 19, marginBottom: 10 },
+  currencyHelp: { color: "#475569", fontSize: 13, lineHeight: 19, marginTop: 9 },
   group: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
   row: {
     alignItems: "center",
@@ -376,5 +374,4 @@ const styles = StyleSheet.create({
   },
   confirm: { backgroundColor: "#0F766E", borderRadius: 10, marginTop: 12, padding: 14 },
   confirmText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700", textAlign: "center" },
-  pickerHeader: { backgroundColor: "#FFFFFF", padding: 16 },
 });

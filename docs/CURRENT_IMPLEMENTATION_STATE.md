@@ -1,6 +1,23 @@
 # Current Implementation State
 
-Date: 2026-09-26
+Date: 2026-09-27
+
+## Buglist 002 — Ledger sheets, gestures and wording (2026-09-27)
+
+- Currency selectors use reachable iOS page sheets. The date wheel uses a compact
+  bottom sheet with Cancel/Done; Journey Currency help is shorter and sits below
+  the currency row. Ledger sheets share bold green titles and white pill action
+  buttons; a downward drag on the header closes them.
+- A selected Journey disables Ledger's back gesture, including after switching
+  Journeys. Spending total labels are larger and green. Spending and Settlement
+  use the same owed/owing/settled wording.
+- No API, schema or repository behavior changed. TypeScript, affected ESLint and
+  Prettier, diff check, and 10 focused tests pass. The full suite runs 648 passing
+  tests; the same three unrelated files cannot load React Native Flow syntax in
+  Vitest. Final Release builds succeeded on iPhone 17 Pro Simulator and iPhone 16
+  Pro; the simulator app launched. On the phone, Currency layout, white pill
+  selector buttons, compact date panel, header swipe dismissal, Settlement wording,
+  and selected-Journey swipe blocking were inspected.
 
 ## Buglist 001 — Ledger navigation and Currency polish (2026-09-27)
 

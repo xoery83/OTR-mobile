@@ -19,7 +19,7 @@ import { useLedgerActiveSync } from "@/hooks/useLedgerActiveSync";
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
 
 import { formatLedgerMoney } from "./format";
-import { shortMemberName } from "./dashboardPresentation";
+import { settlementPositionLabel, shortMemberName } from "./dashboardPresentation";
 import { PersonalPaymentSection } from "./PersonalPaymentSection";
 import {
   buildSettlementComparison,
@@ -362,11 +362,7 @@ function SummarySection({
         <Text style={styles.heroLabel}>
           {balanceMinor === undefined
             ? "Preparing your balance"
-            : balanceMinor > 0
-              ? "You should receive"
-              : balanceMinor < 0
-                ? "You need to pay"
-                : "You're settled up"}
+            : settlementPositionLabel(balanceMinor)}
         </Text>
         <View style={styles.heroAmountRow}>
           <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroAmount}>
