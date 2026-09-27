@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createReceipt,
   downloadReceiptContent,
+  statReceiptContent,
   ocrReceipt,
   uploadReceiptContent,
 } from "./supabaseGateway";
@@ -196,6 +197,43 @@ describe("receipt gateway provider routing", () => {
     await expect(
       downloadReceiptContent(missing.service as never, "reader", "journey", "receipt"),
     ).rejects.toThrow("download failed");
+  });
+
+  it("confirms exact provider bytes and MIME, failing closed on mismatch", async () => {
+    const current = fixture();
+    expect(
+      await statReceiptContent(current.service as never, "reader", "journey", "receipt"),
+    ).toEqual({
+      sizeBytes: 3,
+      sha256,
+      mimeType: "image/jpeg",
+      objectPath: "journey/receipt/original",
+    });
+    const key = "journey/receipt/original";
+    current.objects.set(key, new Blob([Uint8Array.from([1, 2])], { type: "image/jpeg" }));
+    await expect(
+      statReceiptContent(current.service as never, "reader", "journey", "receipt"),
+    ).rejects.toMatchObject({ code: "RECEIPT_REMOTE_MISMATCH" });
+    current.objects.set(
+      key,
+      new Blob([Uint8Array.from([9, 9, 9])], { type: "image/jpeg" }),
+    );
+    await expect(
+      statReceiptContent(current.service as never, "reader", "journey", "receipt"),
+    ).rejects.toMatchObject({ code: "RECEIPT_REMOTE_MISMATCH" });
+    current.objects.set(key, new Blob([bytes], { type: "application/pdf" }));
+    await expect(
+      statReceiptContent(current.service as never, "reader", "journey", "receipt"),
+    ).rejects.toMatchObject({ code: "RECEIPT_REMOTE_MISMATCH" });
+    current.objects.clear();
+    await expect(
+      statReceiptContent(current.service as never, "reader", "journey", "receipt"),
+    ).rejects.toMatchObject({ status: 409 });
+    const unknown = fixture({ provider: "unknown" });
+    await expect(
+      statReceiptContent(unknown.service as never, "reader", "journey", "receipt"),
+    ).rejects.toThrow("Unsupported attachment storage provider.");
+    expect(unknown.download).not.toHaveBeenCalled();
   });
 
   it("preserves Personal Payment historical read grants independently of Expense", async () => {

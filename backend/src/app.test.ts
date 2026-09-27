@@ -319,6 +319,12 @@ function createGateway(
       bytes: new Uint8Array([1, 2, 3]),
       mimeType: "image/jpeg",
     })),
+    statReceiptContent: vi.fn(async () => ({
+      sizeBytes: 3,
+      sha256: "a".repeat(64),
+      mimeType: "image/jpeg",
+      objectPath: "journey/receipt/original",
+    })),
     completeReceipt: vi.fn(async () => {
       throw new Error("not used");
     }),
@@ -1362,6 +1368,21 @@ describe("OTR Dev Backend", () => {
       receipt.entity.id,
       new Uint8Array([1, 2, 3]),
       "image/jpeg",
+    );
+
+    const stat = await handle(
+      new Request(
+        `http://localhost/v2/trips/${tripId}/receipts/${receipt.entity.id}/content`,
+        { method: "HEAD", headers: { Authorization: "Bearer valid-token" } },
+      ),
+    );
+    expect(stat.status).toBe(200);
+    expect(stat.headers.get("x-otr-sha-256")).toBe("a".repeat(64));
+    expect(stat.headers.get("x-otr-object-key")).toBe("journey/receipt/original");
+    expect(gateway.statReceiptContent).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      receipt.entity.id,
     );
   });
 

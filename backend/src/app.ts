@@ -434,6 +434,11 @@ export type DevBackendGateway = {
     tripId: string,
     receiptId: string,
   ): Promise<{ bytes: Uint8Array; mimeType: string }>;
+  statReceiptContent(
+    userId: string,
+    tripId: string,
+    receiptId: string,
+  ): Promise<{ sizeBytes: number; sha256: string; mimeType: string; objectPath: string }>;
   completeReceipt(
     userId: string,
     tripId: string,
@@ -724,6 +729,19 @@ async function readReceiptContent(request: Request, gateway: DevBackendGateway) 
   const user = await authenticate(request, gateway);
   if (!uuidPattern.test(receiptId))
     throw new HttpError(400, "INVALID_RECEIPT_ID", "The receipt id is invalid.");
+  if (request.method === "HEAD") {
+    const stat = await gateway.statReceiptContent(user.id, tripId, receiptId);
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store",
+        "Content-Type": stat.mimeType,
+        "Content-Length": String(stat.sizeBytes),
+        "X-OTR-SHA-256": stat.sha256,
+        "X-OTR-Object-Key": stat.objectPath,
+      },
+    });
+  }
   const content = await gateway.downloadReceiptContent(user.id, tripId, receiptId);
   return new Response(content.bytes as BodyInit, {
     status: 200,
@@ -1918,7 +1936,7 @@ export function createDevBackendHandler({
         route = "health";
         response = json(200, { status: "ok", environment: "development" });
       } else if (
-        request.method === "GET" &&
+        ["GET", "HEAD"].includes(request.method) &&
         /\/v2\/trips\/[^/]+\/receipts\/[^/]+\/content$/.test(url.pathname)
       ) {
         route = "/v2/trips/:tripId/receipts/:receiptId/content";

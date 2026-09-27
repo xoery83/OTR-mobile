@@ -25,6 +25,39 @@ async function authenticated() {
 
 export function createLedgerReceiptTransport() {
   return {
+    async stat(journeyId: string, receiptId: string) {
+      const { token } = await authenticated();
+      const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
+      if (!baseUrl) throw new Error("OTR API base URL is required.");
+      try {
+        const response = await fetch(
+          `${baseUrl}/v2/trips/${journeyId}/receipts/${receiptId}/content`,
+          { method: "HEAD", headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!response.ok)
+          throw new ApiClientError(
+            "Receipt verification failed.",
+            "http",
+            response.status,
+          );
+        const sizeBytes = Number(response.headers.get("content-length"));
+        const sha256 = response.headers.get("x-otr-sha-256");
+        const mimeType = response.headers.get("content-type");
+        const objectPath = response.headers.get("x-otr-object-key");
+        if (
+          !Number.isSafeInteger(sizeBytes) ||
+          sizeBytes <= 0 ||
+          !sha256?.match(/^[a-f0-9]{64}$/) ||
+          !mimeType ||
+          !objectPath
+        )
+          throw new ApiClientError("Receipt verification is incomplete.", "validation");
+        return { sizeBytes, sha256, mimeType, objectPath };
+      } catch (error) {
+        if (error instanceof ApiClientError) throw error;
+        throw new ApiClientError("Receipt verification is unavailable.", "network");
+      }
+    },
     async download(journeyId: string, receiptId: string) {
       const { token } = await authenticated();
       const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;

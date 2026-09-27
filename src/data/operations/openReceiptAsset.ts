@@ -1,6 +1,7 @@
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
+import { ApiClientError } from "@/data/api/client";
 import { receiptBytesSha256, resolveReceiptFile } from "@/data/files/receiptFileStore";
 import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
 import { createLedgerReceiptTransport } from "@/data/sync/ledgerReceiptTransport";
@@ -11,10 +12,17 @@ export async function openReceiptAsset(receipt: ReceiptAsset) {
   if (!file?.exists) {
     if (!receipt.serverId || receipt.uploadStatus !== "UPLOADED")
       throw new Error("This attachment is available after its upload completes.");
-    const bytes = await createLedgerReceiptTransport().download(
-      receipt.journeyId,
-      receipt.serverId,
-    );
+    let bytes: Uint8Array;
+    try {
+      bytes = await createLedgerReceiptTransport().download(
+        receipt.journeyId,
+        receipt.serverId,
+      );
+    } catch (error) {
+      if (error instanceof ApiClientError && error.kind === "network")
+        throw new Error("Connect to the internet to download this attachment again.");
+      throw error;
+    }
     if (
       bytes.byteLength !== receipt.sizeBytes ||
       (await receiptBytesSha256(bytes)) !== receipt.sha256

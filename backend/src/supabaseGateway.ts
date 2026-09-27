@@ -1482,6 +1482,9 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     downloadReceiptContent(userId, tripId, receiptId) {
       return downloadReceiptContent(service, userId, tripId, receiptId);
     },
+    statReceiptContent(userId, tripId, receiptId) {
+      return statReceiptContent(service, userId, tripId, receiptId);
+    },
 
     completeReceipt(userId, tripId, receiptId, key, input) {
       return completeReceipt(service, userId, tripId, receiptId, key, input);
@@ -1749,6 +1752,43 @@ export async function downloadReceiptContent(
   return {
     bytes: await storage.read(String(row.object_path)),
     mimeType: String(row.mime_type),
+  };
+}
+
+export async function statReceiptContent(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+) {
+  const row = await readDownloadableReceipt(service, userId, tripId, receiptId);
+  if (row.upload_status !== "UPLOADED" || !row.object_path)
+    throw new BackendError(
+      409,
+      "RECEIPT_NOT_DOWNLOADABLE",
+      "Receipt content is not canonical.",
+    );
+  const storage = resolveAttachmentStorageProvider(
+    row.storage_provider,
+    createSupabaseAttachmentStorageProvider(service),
+  );
+  const stat = await storage.stat(String(row.object_path));
+  if (
+    !stat ||
+    stat.byteCount !== Number(row.size_bytes) ||
+    stat.sha256 !== row.sha256 ||
+    stat.contentType !== row.mime_type
+  )
+    throw new BackendError(
+      409,
+      "RECEIPT_REMOTE_MISMATCH",
+      "Receipt content is not verified.",
+    );
+  return {
+    sizeBytes: stat.byteCount,
+    sha256: stat.sha256,
+    mimeType: String(row.mime_type),
+    objectPath: String(row.object_path),
   };
 }
 

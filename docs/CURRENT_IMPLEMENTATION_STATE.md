@@ -2,6 +2,37 @@
 
 Date: 2026-09-27
 
+## Device Storage Management 1.0 — Phase 3B safety gate implemented; 3C+ deferred
+
+- Legacy 250 MiB receipt eviction now requires an active uploaded receipt at its
+  exact owned file path, no unfinished asset operation, fresh authenticated
+  Backend provider `stat()` proof of key/size/SHA/MIME, and a matching GET byte
+  hash. The conditional SQLite update clears the URI before deleting the file,
+  so interruption cannot create a newly stale non-null path. Existing online
+  redownload remains verified; offline missing-file error now asks to reconnect.
+- No SQLite/Postgres migration or persistent confirmation: every eviction is
+  independently verified. Hosted Dev Backend only was deployed and healthy
+  (image `sha256:5106284653b9d45993778dbdf236162cead819b6cf3bf100d7bed4762f0bc28f`).
+  An existing synthetic receipt passed authenticated HEAD/GET at 68 B with
+  exact object key, MIME and SHA-256. Production and objects were untouched.
+- Focused 11 files / 102 tests, TypeScript, Backend bundle build, affected
+  ESLint, and formatting passed. Physical iPhone acceptance remains unverified:
+  CoreDeviceService initialization timed out twice. See the Phase 3 plan for
+  the exact gate and limitation. **Stop Device Storage work here; Phase 3C+
+  is temporarily deferred. Next development area: Receipt OCR 1.0.**
+
+## Device Storage Management 1.0 — Phase 3A audit/design drafted
+
+- Read-only source audit and future OTR-wide design are in
+  `docs/DEVICE_STORAGE_MANAGEMENT_1_0_PHASE_3_PLAN.md`. No code, schema,
+  device files, Storage objects, Hosted Dev, or Production were changed.
+- The existing operational cycle already invokes a 250 MiB receipt limit with
+  a fresh authenticated download/hash check before eviction. It has no durable
+  remote-confirmed class or global cache accounting. Treat its safety gate as
+  the first Phase 3 coding checkpoint before adding the new cache manager.
+- Future Album lifecycle and original-storage policy remain undecided. The
+  proposed 500 MiB global disposable-cache budget is a design baseline only.
+
 ## Expense Attachments Phase 2A — ACCEPTED; 2B–2D deferred
 
 - Phase 1 remains accepted. Backend upload, authorized download, and existing

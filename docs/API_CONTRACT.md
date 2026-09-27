@@ -336,6 +336,10 @@ authorized Backend-owned FX projections. Incremental Ledger changes include
 
 ## Files / Uploads
 
+### Receipt eviction verification (Phase 3B, Dev)
+
+`HEAD /v2/trips/:journeyId/receipts/:receiptId/content` uses the same bearer authentication and receipt read authorization as GET. For an active UPLOADED receipt, Backend resolves the canonical `storage_provider` and `object_path`, calls provider `stat()`, and checks the actual object's byte count, SHA-256, and MIME against the canonical row. A successful response has no body and supplies `Content-Length`, `Content-Type`, `X-OTR-SHA-256`, and `X-OTR-Object-Key`. Missing, mismatched, tombstoned, unauthorized, or unsupported-provider objects never produce a successful verification. Mobile still follows HEAD with authenticated GET and independently hashes the downloaded bytes immediately before local eviction. This is a fresh per-eviction proof, not a stored confirmation or a public object URL.
+
 `POST /trips/:id/uploads/create` - `NEEDS_CHANGE`
 
 - Legacy has direct upload creation routes for media.
