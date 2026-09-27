@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ComponentProps, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionSheetIOS,
   ActivityIndicator,
@@ -60,6 +60,7 @@ import {
   preservesExpenseValuation,
   proposedExpenseDate,
   suggestExpenseCategory,
+  shouldShowGroupSettlement,
 } from "./expenseDraft";
 import { formatLedgerMoney } from "./format";
 import { CurrencyPicker } from "./CurrencyPicker";
@@ -98,6 +99,47 @@ const splitLabels: Record<ExpenseSplitMethod, string> = {
   PERCENTAGE: "Percentages",
 };
 
+const categoryGroups: {
+  title: string;
+  items: {
+    id: (typeof EXPENSE_CATEGORIES)[number];
+    icon: ComponentProps<typeof AppIcon>["name"];
+  }[];
+}[] = [
+  {
+    title: "Food & shopping",
+    items: [
+      { id: "food", icon: "fork.knife" },
+      { id: "shopping", icon: "bag" },
+      { id: "groceries", icon: "basket" },
+    ],
+  },
+  {
+    title: "Getting around",
+    items: [
+      { id: "flight", icon: "airplane" },
+      { id: "car", icon: "car" },
+      { id: "fuel", icon: "fuelpump" },
+      { id: "transport", icon: "tram" },
+    ],
+  },
+  {
+    title: "Stay & experiences",
+    items: [
+      { id: "hotel", icon: "bed.double" },
+      { id: "ticket", icon: "ticket" },
+      { id: "activity", icon: "figure.walk" },
+    ],
+  },
+  {
+    title: "Insurance & other",
+    items: [
+      { id: "insurance", icon: "shield" },
+      { id: "other", icon: "square.grid.2x2" },
+    ],
+  },
+];
+
 export function LedgerExpenseEntryScreen() {
   const params = useLocalSearchParams<{
     expenseId?: string;
@@ -119,6 +161,7 @@ export function LedgerExpenseEntryScreen() {
   const [error, setError] = useState<string | null>(null);
   const [memberSheet, setMemberSheet] = useState(false);
   const [currencySheet, setCurrencySheet] = useState(false);
+  const [categorySheet, setCategorySheet] = useState(false);
   const [splitSheet, setSplitSheet] = useState(false);
   const [datePicker, setDatePicker] = useState(false);
   const [pendingDate, setPendingDate] = useState(new Date());
@@ -303,24 +346,6 @@ export function LedgerExpenseEntryScreen() {
       (index) => {
         const member = context.members[index];
         if (member) setDraft({ ...draft, payerId: member.id });
-      },
-    );
-  };
-
-  const chooseCategory = () => {
-    if (!draft) return;
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title: "Category",
-        options: [...EXPENSE_CATEGORIES, "Cancel"],
-        cancelButtonIndex: EXPENSE_CATEGORIES.length,
-      },
-      (index) => {
-        const category = EXPENSE_CATEGORIES[index];
-        if (category) {
-          setCategoryManual(true);
-          setDraft({ ...draft, category });
-        }
       },
     );
   };
@@ -659,7 +684,11 @@ export function LedgerExpenseEntryScreen() {
           style={styles.textInput}
           value={draft.title}
         />
-        <FormRow label="Category" onPress={chooseCategory} value={draft.category} />
+        <FormRow
+          label="Category"
+          onPress={() => setCategorySheet(true)}
+          value={draft.category}
+        />
         <FormRow
           label="Expense date"
           onPress={() => {
@@ -704,8 +733,7 @@ export function LedgerExpenseEntryScreen() {
         ) : selectedMembers.length > 1 && minor !== null ? (
           <Text style={styles.error}>{splitResult.error}</Text>
         ) : null}
-        {selectedMembers.length > 1 ||
-        (selectedMembers.length === 1 && selectedMembers[0].id !== context.actorId) ? (
+        {shouldShowGroupSettlement(draft.participantIds, draft.payerId) ? (
           <View style={styles.settlementRow}>
             <Text style={styles.rowLabel}>Group settlement</Text>
             <View style={styles.settlementChoices}>
@@ -838,6 +866,57 @@ export function LedgerExpenseEntryScreen() {
             }}
           />
         ) : null}
+      </Modal>
+
+      <Modal
+        allowSwipeDismissal
+        animationType="slide"
+        onRequestClose={() => setCategorySheet(false)}
+        presentationStyle="pageSheet"
+        visible={categorySheet}
+      >
+        <LedgerSheetHeader
+          onLeft={() => setCategorySheet(false)}
+          title="Category"
+          titleBold
+        />
+        <ScrollView contentContainerStyle={styles.categoryContent}>
+          {categoryGroups.map((group) => (
+            <View key={group.title}>
+              <Text style={styles.categoryHeading}>{group.title}</Text>
+              <View style={styles.categoryGrid}>
+                {group.items.map(({ id, icon }) => {
+                  const selected = draft.category === id;
+                  return (
+                    <Pressable
+                      accessibilityLabel={id}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      key={id}
+                      onPress={() => {
+                        setCategoryManual(true);
+                        setDraft({ ...draft, category: id });
+                        setCategorySheet(false);
+                      }}
+                      style={[
+                        styles.categoryTile,
+                        selected && styles.categoryTileSelected,
+                      ]}
+                    >
+                      <AppIcon color="#0F766E" name={icon} size={22} />
+                      <Text style={styles.categoryTileText}>
+                        {id[0].toUpperCase() + id.slice(1)}
+                      </Text>
+                      {selected ? (
+                        <AppIcon color="#0F766E" name="checkmark" size={16} />
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ))}
+        </ScrollView>
       </Modal>
 
       <Modal
@@ -1303,6 +1382,28 @@ const styles = StyleSheet.create({
   headerActionButton: { justifyContent: "center", minHeight: 44 },
   disabledText: { opacity: 0.4 },
   sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },
+  categoryContent: { gap: 24, padding: 16, paddingBottom: 48 },
+  categoryHeading: {
+    color: "#64748B",
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 10,
+  },
+  categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  categoryTile: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
+    minHeight: 60,
+    paddingHorizontal: 12,
+    width: "48%",
+  },
+  categoryTileSelected: { backgroundColor: "#E6F5F1", borderColor: "#0F766E" },
+  categoryTileText: { color: "#0F172A", flex: 1, fontSize: 16, fontWeight: "600" },
   sheetRow: {
     alignItems: "center",
     borderBottomColor: "#E2E8F0",

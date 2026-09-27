@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export function LedgerSheetHeader({
   title,
+  titleBold = false,
   leftLabel = "Close",
   onLeft,
   rightLabel = "Done",
@@ -12,6 +13,7 @@ export function LedgerSheetHeader({
   safeTop = true,
 }: {
   title: string;
+  titleBold?: boolean;
   leftLabel?: string;
   onLeft: () => void;
   rightLabel?: string;
@@ -36,7 +38,10 @@ export function LedgerSheetHeader({
       >
         {largeText ? (
           <>
-            <Text accessibilityRole="header" style={styles.largeTitle}>
+            <Text
+              accessibilityRole="header"
+              style={[styles.largeTitle, titleBold && styles.boldTitle]}
+            >
               {title}
             </Text>
             <View style={styles.actions}>
@@ -47,7 +52,11 @@ export function LedgerSheetHeader({
         ) : (
           <>
             {left}
-            <Text accessibilityRole="header" numberOfLines={2} style={styles.title}>
+            <Text
+              accessibilityRole="header"
+              numberOfLines={2}
+              style={[styles.title, titleBold && styles.boldTitle]}
+            >
               {title}
             </Text>
             {right}
@@ -101,6 +110,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   largeTitle: { color: "#0F766E", fontSize: 22, fontWeight: "400" },
+  boldTitle: { fontWeight: "700" },
   actions: { flexDirection: "row", justifyContent: "space-between" },
   button: {
     alignItems: "center",

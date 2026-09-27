@@ -38,6 +38,10 @@ export const EXPENSE_CATEGORIES = [
   "other",
 ] as const;
 
+export function shouldShowGroupSettlement(participantIds: string[], payerId: string) {
+  return participantIds.some((id) => id !== payerId);
+}
+
 type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 
 // Stable category IDs stay separate from language-specific matching words.

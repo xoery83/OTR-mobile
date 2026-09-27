@@ -10,7 +10,15 @@ import {
   preservesExpenseValuation,
   proposedExpenseDate,
   suggestExpenseCategory,
+  shouldShowGroupSettlement,
 } from "./expenseDraft";
+
+it("shows group settlement when anyone other than the payer participates", () => {
+  expect(shouldShowGroupSettlement([], "payer")).toBe(false);
+  expect(shouldShowGroupSettlement(["payer"], "payer")).toBe(false);
+  expect(shouldShowGroupSettlement(["other"], "payer")).toBe(true);
+  expect(shouldShowGroupSettlement(["payer", "other"], "payer")).toBe(true);
+});
 
 it("suggests stable categories from local English and Chinese keywords", () => {
   expect(suggestExpenseCategory("Airport taxi")).toBe("transport");
