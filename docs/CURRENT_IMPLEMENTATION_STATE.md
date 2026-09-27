@@ -1,6 +1,270 @@
 # Current Implementation State
 
-Date: 2026-09-27
+Date: 2026-09-28
+
+## Receipt OCR 1.0 — Phase C4 Confirm integration
+
+- Confirm now validates current Review/session data and capacity, applies the
+  reviewed Title/Amount/Currency to New Expense, and transfers scan images to
+  its existing attachment drafts without file copies. Date and unrelated
+  fields are untouched. Prior nonempty form Title/Amount and current Currency
+  are visible as user-owned Review starting values. Review Cancel remains a
+  separate discard path; Confirm clears OCR/session state without deleting
+  transferred images. A second scan starts a new session if capacity allows.
+- Temporary recovery metadata is changed to ordinary attachment status before
+  the form update, with rollback attempted on write failure. After Confirm,
+  restart restores image drafts but not unsaved form fields, matching existing
+  New Expense recovery. Ordinary Save retains the local Expense/receipt-asset
+  transaction and durable upload/link ordering. No OCR evidence persists.
+- The device owner confirmed Confirm applies reviewed Title/Amount/Currency
+  without changing Date, transfers one/two images, permits later edits, and
+  Cancel leaves no Expense. Offline Save retained one Expense and one image
+  through restart. The first reconnect check showed Upload failed because OTR
+  Mobile cellular data was still disabled: its Expense create reported
+  `AUTH_REFRESH_UNAVAILABLE`. After cellular data was enabled, the existing
+  queue completed Expense create and attachment upload without duplication;
+  the reopened detail showed one attachment as Available and it opened through
+  the existing iOS share sheet. The Dev API health endpoint was healthy.
+- Review now exposes ambiguous `¥` as selectable JPY/CNY candidates, and
+  OCR text offers tentative currency choices without automatic selection:
+  kana suggests JPY; Han-only text offers JPY/CNY/TWD/HKD because the script
+  alone does not identify a country. A same-photo Japanese receipt rescan on
+  the authorized iPhone displayed the JPY hint and JPY in Currency suggestions;
+  its temporary draft was cancelled. Existing manual values remain protected.
+  Later Expense Detail polish should open an image preview before sharing and
+  clarify why prior manual values are retained. No Backend, Production,
+  migration, live scanner or Foundation Models change. C4 is functionally
+  accepted; stop after C4.
+- Final focused regression: 13 files / 200 tests, TypeScript, affected ESLint,
+  Prettier, diff check, and signed physical Release build passed.
+
+## Receipt OCR 1.0 — Phase C3 multi-part Review implementation
+
+- Review now adds up to three image parts within one session, subject to the
+  shared Expense attachment maximum of three. Every add, OCR completion and
+  removal reparses all successful images. User-edited or explicitly selected
+  Title, Amount and Currency stay fixed; system suggestions and candidate
+  lists refresh. Each field can return to the latest suggestion explicitly.
+- Review shows image count and per-part Read/Remove. Removing a failed, blank
+  or bad part and scanning again replaces it. Removed and cancelled scan
+  drafts are cleaned locally; stale OCR cannot restore them. Restart recovery
+  stores only draft session ID/order and offers Resume or Discard, with manual
+  re-read. Confirm still does not apply values or images to the Expense form.
+- Parser/OCR/draft/C1–C3 regression: 11 files and 170 tests passed; TypeScript,
+  affected ESLint, Prettier and diff checks passed. The signed Release build
+  succeeded, was installed over the existing app and launched on the authorized
+  iPhone 16 Pro. The device owner confirmed the C3 main flow passed: a second
+  image updated the same Review with combined amount evidence, a third image
+  did not overwrite the edited Title, edited Amount survived removal and
+  candidate refresh, full capacity blocked another scan, and Cancel preserved
+  the original New Expense form and attachments. A separate force-close/restart
+  offered Resume with both images, per-part Read worked without duplicates, and the
+  two temporary scan drafts were absent after the user later exited/re-entered
+  New Expense. The case with two ordinary attachments passed automated tests
+  but was not separately observed on the device. C3 is functionally accepted.
+  No Backend, cloud, migration, Production or Foundation Models change. C4
+  is the next gate; it has not been implemented.
+
+## Receipt OCR 1.0 — Phase C2 functional Review implemented
+
+- New Expense Scan receipt opens a transient Review Sheet for Title, Amount and
+  Currency only. OCR recognition, no-text and failure states retain manual
+  entry. Ordinary Add Attachment and Edit Expense do not enter Review.
+- Pure review state separates ranked candidates/suggestion classes from
+  editable values. Strong Amount prepopulation requires same-line final label,
+  exact supported currency and no conflicting interpretation; ambiguous
+  amounts stay blank with selectable alternatives. Explicit receipt currency
+  outranks Journey; selecting a candidate or editing any field marks
+  USER_EDITED. Confirm returns typed session/field data without changing the
+  Expense form. Cancel discards only this pending scan draft.
+- Automated parser/C1/C2/A1/A2 tests (11 files, 166 tests), TypeScript,
+  lint, formatting and diff check passed. The final signed Release build
+  succeeded and was installed/launched on the authorized iPhone 16 Pro without
+  clearing app data. The user confirmed all requested non-sensitive device
+  checks: strong and ambiguous receipt suggestions, candidate choice, three
+  editable fields, currency picker/keyboard, no-text manual entry, Cancel
+  restoring the untouched form, and no Review from ordinary Add Attachment or
+  Edit Expense. C2 is functionally accepted. C3 implementation is summarized
+  above; C4 owns Confirm-to-Expense application.
+
+## Receipt OCR 1.0 — Phase C1 foundation complete
+
+- `parseReceiptEvidenceSet` composes one to three Vision documents through
+  B1–B3 with stable document-scoped transient evidence IDs. Document-local
+  geometry/adjacency stays isolated; combined ranked candidates preserve
+  cross-part merchant, amount, currency and date evidence. Overlap does not
+  earn cross-image duplicate points; strong conflicting totals stay ambiguous.
+  `parseReceipt(OcrDocument)` remains the accepted B4.2 entry point.
+- `ReceiptScanSession` keeps verified temporary-draft references, owner/Journey,
+  per-document OCR revisions, a session revision and a derived combined parse
+  only in memory. It supports add/remove/replace/retry, stale-result rejection,
+  background suspension and cancellation. Shared attachment-capacity validation
+  limits session parts plus existing drafts to three. Recovered drafts retain
+  deterministic document identity and need fresh OCR. C1 does not delete
+  returned drafts; C3 owns UI orchestration and cleanup.
+- Focused C1/parser/A1/A2/draft tests, TypeScript, affected lint/format and
+  `git diff --check` passed. No UI, Expense field write, native change,
+  Foundation Models, migration, Backend or Production change. **Next approved
+  checkpoint: C2 Review presentation and suggestion policy only.**
+
+## Receipt OCR 1.0 — Phase C0 design/audit complete
+
+- The approved product direction is a candidate-first Review Sheet for
+  Title, Amount and Currency; no OCR Date field. One to three image parts
+  contribute combined evidence. USER_EDITED review values survive add/remove
+  rescans. Confirm copies values and images into New Expense; ordinary Save
+  remains separate. Cancel discards only this Review session's pending scans.
+- The design and C1–C4 plan are in
+  docs/ledger/RECEIPT_OCR_1_0_PHASE_C0_REVIEW_DESIGN.md; PRODUCT and ADR
+  0050 record the changed scope. C0 changed no code, parser rules, UI,
+  Backend, Production or device state.
+- Apple Foundation Models can provide optional iOS 26+ structured on-device
+  candidate ranking on eligible, ready devices. The app still targets iOS
+  16.4, so Vision plus deterministic candidates and Review is the required
+  iOS baseline; Android still needs its own local OCR adapter. A semantic
+  resolver is not required for C1–C4;
+  remote AI is excluded from OCR 1.0. C1 foundation is now complete.
+
+## Receipt OCR 1.0 — Parser B4.2 fixed-set reevaluation complete
+
+- Version receipt-b4.2 adds bounded Chinese integer extraction after monetary
+  labels, rejects distant same-line label/value associations, requires stronger
+  amount evidence, abstains on a second plausible labeled amount, recognizes
+  French August abbreviations, and excludes common slogan/screenshot control
+  text from merchant candidates. Currency inference was not expanded.
+- Synthetic parser/OCR tests: 126 passed; TypeScript, affected ESLint,
+  Prettier, signed iPhone Release build, and the fixed 14-photo device rerun
+  passed. The bank slip remains excluded from purchase-field metrics.
+- On the same 13 receipts, amount top correct 7, lower correct 5, missing 1,
+  **wrong clear 3** (unchanged); currency clear correct 3, cautious abstention
+  10, wrong clear 0; date top correct 6, no-date abstention 4, known-date
+  candidate missing 3, wrong clear 0; merchant top acceptable 5, lower 4,
+  unknown-name abstention 1, no acceptable candidate 3, wrong clear 2.
+- The amount safety objective was **not met**, so B4.2 is not an automatic
+  amount decision engine. The later C0 product decision permits a
+  candidate-first Review design with explicit user confirmation. The B4.1
+  baseline and B4.2 results remain in the OCR plan. No private receipt text
+  or images were retained; transient app state was cleared.
+
+## Receipt OCR 1.0 — Parser B4.1 blind baseline complete
+
+- Pure `parseReceipt()` composes B1/B2/B3 without changing accepted parser
+  rules. The full B1–B3 synthetic suite now runs through it; 118 focused
+  tests, TypeScript, affected ESLint/Prettier, and device Release build pass.
+- User-approved private iPhone Photos set: 14 items, including 13 purchase
+  receipts and one excluded bank-slip negative control. Visual ground truth
+  preceded parser inspection and uncertain fields were confirmed by the user.
+  The initial OCR pass had 2 repeatable malformed-result failures; native
+  box clipping resolved them, and the frozen parser rerun returned
+  14/14 OCR documents. No real image or recognized text entered Git/logs.
+- On 13 eligible receipts, amount top candidate correct 7, correct lower 5,
+  absent 1, with **3 incorrect confident selections**; currency clear-correct
+  3 and safely abstained 10, with **0 incorrect confident**; date top correct 5,
+  true absent-date abstention 4, known date absent from candidates 4, with
+  **0 incorrect confident**; merchant acceptable top 5, lower 4, unknown-name
+  abstention 1, no acceptable candidate 3, with 2 wrong clear selections.
+- Privacy-safe failure taxonomy and ranked B4.2 proposal are in
+  `docs/ledger/RECEIPT_OCR_1_0_IMPLEMENTATION_PLAN.md`. **Next checkpoint:
+  review/approve B4.2 parser safety tuning before any Phase C suggestions.**
+
+## Receipt OCR 1.0 — Parser B3 date and merchant implemented
+
+- `src/domain/receipt/receiptParserB3.ts` adds pure transaction-date and
+  merchant-display-name candidates over B1 line evidence. Valid calendar dates,
+  ambiguous numeric order, bounded explicit context hints, positive/negative
+  date labels, multilingual name text, generic/header/contact exclusions, and
+  separate field abstention are covered. It does not touch Expense state or
+  native/Backend paths. Structured synthetic evaluation: date 27 fixtures
+  (20 correct clear tops, 7 correct abstentions); merchant 12 fixtures
+  (8 acceptable clear tops, 4 correct abstentions); neither has an incorrect
+  confident selection. Real-receipt quality is not yet measured. **Next
+  isolated slice: B4 language tuning and evaluation only.**
+
+## Receipt OCR 1.0 — Parser B2 total ranking implemented
+
+- `src/domain/receipt/receiptParserB2.ts` ranks B1 monetary occurrences by
+  nearby final-total/payment labels, penalizes non-final monetary lines, merges
+  duplicate exact values with currency-sensitive evidence, and exposes
+  `clear`/`ambiguous`/`none` without touching Expense state. Initial English,
+  Simplified/Traditional Chinese, and Japanese amount labels are covered.
+  The 30 synthetic amount fixtures yield 24 correct clear tops and 6 correct
+  abstentions, with no incorrect confident selections. Split numeric
+  observations and real-receipt accuracy remain unevaluated. **Next isolated
+  slice: B3 date and merchant parsing only.**
+
+## Receipt OCR 1.0 — Parser B1 extraction implemented
+
+- `src/domain/receipt/receiptParserB1.ts` is a pure local parser over the A1
+  `OcrDocument`. It groups transient line/fragment evidence, extracts exact
+  decimal-text numeric alternatives, keeps ambiguous separators, extracts
+  explicit/symbol/context currency evidence, and associates only nearby
+  same-line currency/number tokens. It does not rank totals, convert all
+  values to cents, parse date/merchant, or touch New Expense/Backend/storage.
+- Structured synthetic tests cover EN/ZH/JA/mixed text, US/European grouping,
+  bare symbols and Journey hints, duplicate values, non-money filters,
+  ordering, and empty/noisy input. B1's deliberate limits and reason codes
+  are documented in the OCR implementation plan. B2 now consumes this
+  intermediate representation without changing its extraction semantics.
+
+## Receipt OCR 1.0 — Parser B0 design complete
+
+- The OCR implementation plan now defines the pure, local parser contract,
+  evidence and ambiguity rules, amount/currency/date/merchant ranking, 27
+  structured synthetic fixture cases, privacy-safe real-receipt evaluation,
+  metrics, and B1–B4 stop points. No parser code, UI, native OCR, Backend,
+  database, or Production state changed.
+- **Recommended next coding slice: B1 only** (line grouping and bounded
+  numeric/currency candidates). B0 is a design handoff; no Expense field
+  suggestion or canonical write is authorized by this stage.
+
+## Receipt OCR 1.0 — Phase A2 accepted on physical iPhone
+
+- New Expense Scan receipt invokes local Apple Vision only after a verified
+  temporary image draft exists. The current scan alone owns a transient OCR
+  document; ordinary Attachment and existing Expense paths do not invoke OCR.
+  PDF stays attachable without OCR. Removing/replacing a scan, leaving the form,
+  or backgrounding cancels and invalidates stale results. A recovered draft may
+  be explicitly rescanned without copying it again.
+- Compact status/manual-entry and Debug Mode structural metrics are present.
+  No parser, field prefill, OCR persistence, Backend OCR, or schema change.
+  Focused tests, TypeScript, lint, and signed iPhone Release build passed;
+  the build was installed and launched. The user confirmed a New Expense scan
+  reached an OCR state, manual fields stayed usable, and removing the receipt
+  cleared it. With OTR-only cellular access off and no phone Wi-Fi, the user
+  confirmed offline OCR. After force-close/restart, one attachment recovered
+  and explicit Read rescanned it without a duplicate; cellular was restored.
+  The user also confirmed second-scan completion, removal clearing OCR status,
+  and blank-image no-text/manual entry. Device Hub cannot share the iOS 26.6
+  screen. A2-specific CJK/mixed UI checks were not repeated; A1 direct-provider
+  fixture results stand. Low-contrast/thermal and EXIF-only rotation remain
+  quality checks for later acceptance.
+- **Stop after A2.** Receipt Parser Phase B remains separate.
+
+## Receipt OCR 1.0 — Phase A1 native extraction implemented
+
+- An iOS-only local Expo Module now runs Apple Vision revision 3 on app-owned
+  image files, returning transient structured text observations through a
+  validated TypeScript provider. The New Expense flow does not invoke it yet.
+- Focused tests, TypeScript, affected lint/format, autolinking, CocoaPods,
+  unsigned Release, and signed iPhone 16 Pro Release builds passed. Six bundled
+  synthetic fixtures ran on the physical phone via the isolated A1 test route;
+  results and limits are in the OCR plan. With the user-confirmed OTR Mobile
+  cellular switch off and no phone Wi-Fi, English and mixed-language fixtures
+  also passed on the device; CoreDevice cannot independently inspect that
+  setting. Peak-memory measurement remains open. No Backend, database, or
+  Production change.
+- **Stop after A1.** A2 is the next possible slice after accepting the A1
+  evidence and closing or explicitly carrying its device gaps. Device Storage
+  Phase 3C+ remains deferred.
+
+## Receipt OCR 1.0 — Phase A0 read-only audit complete
+
+- Architecture findings, local Apple Vision contract, privacy/failure policy,
+  tests, and A1–D slices are in
+  `docs/ledger/RECEIPT_OCR_1_0_IMPLEMENTATION_PLAN.md`; ADR 0049 is proposed.
+- No OCR code, SQLite, Backend, Supabase, Hosted Dev, Production, or device
+  state changed. Next coding checkpoint is A1 (native extraction foundation)
+  after this plan is reviewed. Device Storage Phase 3C+ remains deferred.
 
 ## Device Storage Management 1.0 — Phase 3B safety gate implemented; 3C+ deferred
 

@@ -9,6 +9,7 @@ import {
   verifyReceiptFile,
   receiptFileEvidence,
   recordTemporaryReceiptDraft,
+  updateTemporaryReceiptDraftRecord,
   listRecoverableReceiptDrafts,
 } from "./receiptFileStore";
 
@@ -347,5 +348,27 @@ describe("receipt draft files", () => {
     expect(await listRecoverableReceiptDrafts("user-a", "journey-a")).toEqual([draft]);
     deleteTemporaryReceiptDraft(draft);
     expect(await listRecoverableReceiptDrafts("user-a", "journey-a")).toEqual([]);
+  });
+
+  it("recovers a confirmed scan as an ordinary draft without changing its image", async () => {
+    const scan = {
+      ...(await createTemporaryReceiptDraft({
+        id: "confirmed-scan",
+        ownerUserId: "user-a",
+        sourceUri: "file:///picker/receipt.jpg",
+        mimeType: "image/jpeg",
+      })),
+      journeyId: "journey-a",
+      scanSessionId: "scan-1",
+      scanOrder: 0,
+    };
+    recordTemporaryReceiptDraft(scan);
+    const imageBefore = files.get(scan.localUri);
+    const confirmed = { ...scan, scanSessionId: undefined, scanOrder: undefined };
+    updateTemporaryReceiptDraftRecord(confirmed);
+    expect(await listRecoverableReceiptDrafts("user-a", "journey-a")).toEqual([
+      confirmed,
+    ]);
+    expect(files.get(scan.localUri)).toBe(imageBefore);
   });
 });

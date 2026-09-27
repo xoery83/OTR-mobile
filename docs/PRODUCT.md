@@ -57,6 +57,18 @@ Ledger / Expenses:
   multilingual-ready category suggestion; unmatched titles use Other, and a
   manual category choice takes precedence. Receipt scanning remains available
   inside the form, with its original shown under optional attachments.
+- Receipt OCR 1.0 is a quick **Title, Amount, Currency** review and confirmation
+  flow, not automatic Expense entry. One to three scanned images may be
+  combined as evidence; each confirmed image uses one of the existing three
+  attachment slots. The person can edit every reviewed field, and a later
+  scan must not overwrite a field they edited. Confirm copies the three
+  values into New Expense; only the form's later Save creates the Expense.
+  OCR does not change the Expense date in v1. Vision plus deterministic
+  candidates is the offline baseline. Ambiguous currency symbols and
+  Japanese/Chinese text may offer currencies for manual selection; text alone
+  never changes Currency. On-device semantic ranking is optional
+  and remote AI is outside OCR 1.0. The C0 behavior is specified in
+  docs/ledger/RECEIPT_OCR_1_0_PHASE_C0_REVIEW_DESIGN.md.
 - Expense Attachments & Receipt Scan 1.0 is defined in
   `EXPENSE_ATTACHMENTS_RECEIPT_SCAN_1_0_DESIGN.md`. A New Expense may use
   on-device receipt OCR offline to suggest editable draft fields; scanning

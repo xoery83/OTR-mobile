@@ -1,8 +1,16 @@
-import { type ComponentProps, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ComponentProps,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActionSheetIOS,
   ActivityIndicator,
   Alert,
+  AppState,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -31,6 +39,7 @@ import {
   restoreExpenseReceiptDrafts,
   saveExpenseWithReceiptDraft,
   selectExpenseReceiptDraft,
+  transferConfirmedReceiptDrafts,
 } from "@/data/operations/expenseReceiptDraft";
 import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
@@ -50,6 +59,7 @@ import type {
 } from "@/domain/ledger/types";
 import { createLocalId, createUuid } from "@/domain/localId";
 import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
+import { createReceiptOcrProvider } from "@/native/receiptOcr";
 import {
   confirmSettlementCorrection,
   previewSettlementCorrection,
@@ -73,6 +83,29 @@ import {
 import { formatLedgerMoney } from "./format";
 import { CurrencyPicker } from "./CurrencyPicker";
 import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import {
+  createExpenseReceiptOcrSession,
+  idleExpenseReceiptOcr,
+  shouldRunExpenseReceiptOcr,
+} from "./expenseReceiptOcr";
+import {
+  addReceiptScanDocument,
+  beginReceiptScanOcr,
+  cancelReceiptScanSession,
+  completeReceiptScanOcr,
+  createReceiptScanSession,
+  removeReceiptScanDocument,
+  suspendReceiptScanSession,
+  type ReceiptScanSession,
+} from "./receiptScanSession";
+import {
+  createReceiptReviewState,
+  prepareReceiptReviewConfirmation,
+  refreshReceiptReviewState,
+  seedReceiptReviewFromExpense,
+  type ReceiptReviewState,
+} from "./receiptReview";
+import { ReceiptReviewSheet } from "./ReceiptReviewSheet";
 
 type EntryContext = {
   journeyId: string;
@@ -80,6 +113,7 @@ type EntryContext = {
   settlementScale: number;
   recentCurrencies: string[];
   defaultCurrency: string;
+  debugMode: boolean;
   actorId: string;
   members: DraftMember[];
 };
@@ -165,6 +199,16 @@ export function LedgerExpenseEntryScreen() {
   const [initialSnapshot, setInitialSnapshot] = useState("");
   const [receiptId, setReceiptId] = useState(params.receiptId ?? null);
   const [receiptDrafts, setReceiptDrafts] = useState<TemporaryReceiptDraft[]>([]);
+  const [recoveredDraftIds, setRecoveredDraftIds] = useState<Set<string>>(new Set());
+  const [ocrState, setOcrState] = useState(idleExpenseReceiptOcr);
+  const [ocrSession] = useState(() =>
+    createExpenseReceiptOcrSession(createReceiptOcrProvider().recognize, setOcrState),
+  );
+  const scanSessionRef = useRef<ReceiptScanSession | null>(null);
+  const discardedScanDraftIdsRef = useRef(new Set<string>());
+  const [scanSession, setScanSession] = useState<ReceiptScanSession | null>(null);
+  const [receiptReview, setReceiptReview] = useState<ReceiptReviewState | null>(null);
+  const [reviewVisible, setReviewVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -177,17 +221,37 @@ export function LedgerExpenseEntryScreen() {
   const [more, setMore] = useState(false);
   const [categoryManual, setCategoryManual] = useState(false);
   const allowClose = useRef(false);
+  const mountedRef = useRef(true);
   const savingRef = useRef(false);
   const addingReceiptRef = useRef(false);
+  const [selectingReceipt, setSelectingReceipt] = useState(false);
   const expenseDraftId = useRef(createLocalId("ledger-expense"));
   const scrollRef = useRef<ScrollView>(null);
   const notesFocused = useRef(false);
   const largeText = useWindowDimensions().fontScale > 2;
 
+  const discardPendingScan = useCallback(() => {
+    const pending = scanSessionRef.current;
+    if (!pending) return;
+    ocrSession.clear();
+    for (const receiptDraft of cancelReceiptScanSession(pending).draftsToDiscard) {
+      discardedScanDraftIdsRef.current.add(receiptDraft.id);
+      try {
+        discardExpenseReceiptDraft(receiptDraft);
+      } catch {
+        /* retain an orphan candidate for recovery */
+      }
+    }
+    scanSessionRef.current = null;
+    setScanSession(null);
+    setReceiptReview(null);
+    setReviewVisible(false);
+  }, [ocrSession]);
+
   useEffect(() => {
     let active = true;
     void loadEntry(params.expenseId, params.journeyId, params.receiptId)
-      .then((value) => {
+      .then(async (value) => {
         if (!active) return;
         setContext(value.context);
         setExisting(value.existing);
@@ -197,9 +261,76 @@ export function LedgerExpenseEntryScreen() {
         setMore(Boolean(params.receiptId));
         setInitialSnapshot(JSON.stringify(value.draft));
         if (!params.expenseId)
-          void restoreExpenseReceiptDrafts(value.context.journeyId)
+          await restoreExpenseReceiptDrafts(value.context.journeyId)
             .then((recovered) => {
-              if (active) setReceiptDrafts(recovered);
+              if (active) {
+                const available = recovered.filter(
+                  (item) =>
+                    !discardedScanDraftIdsRef.current.has(item.id) &&
+                    !scanSessionRef.current?.documents.some(
+                      (part) => part.draft.id === item.id,
+                    ),
+                );
+                const recoveredSessionId = available.find(
+                  (item) => item.scanSessionId,
+                )?.scanSessionId;
+                const scanParts = available
+                  .filter(
+                    (item) =>
+                      item.scanSessionId === recoveredSessionId && recoveredSessionId,
+                  )
+                  .sort((a, b) => (a.scanOrder ?? 0) - (b.scanOrder ?? 0));
+                const ordinary = available.filter(
+                  (item) => !scanParts.some((part) => part.id === item.id),
+                );
+                setReceiptDrafts((current) => [
+                  ...current,
+                  ...ordinary.filter(
+                    (item) => !current.some((selected) => selected.id === item.id),
+                  ),
+                ]);
+                setRecoveredDraftIds(new Set(ordinary.map((item) => item.id)));
+                if (scanParts.length && !scanSessionRef.current) {
+                  try {
+                    let restored = createReceiptScanSession(recoveredSessionId!, [
+                      ...ordinary.map((item) => item.id),
+                      ...(params.receiptId ? [params.receiptId] : []),
+                    ]);
+                    for (const part of scanParts)
+                      restored = addReceiptScanDocument(restored, part);
+                    scanSessionRef.current = restored;
+                    setScanSession(restored);
+                    setReceiptReview(
+                      createReceiptReviewState(
+                        restored,
+                        value.context.settlementCurrency,
+                        value.context.defaultCurrency,
+                      ),
+                    );
+                    Alert.alert(
+                      "Resume receipt review?",
+                      `${scanParts.length} receipt ${scanParts.length === 1 ? "image" : "images"} recovered.`,
+                      [
+                        {
+                          text: "Discard",
+                          style: "destructive",
+                          onPress: discardPendingScan,
+                        },
+                        { text: "Resume", onPress: () => setReviewVisible(true) },
+                      ],
+                    );
+                  } catch {
+                    // Keep verified files accessible if recovery metadata is invalid.
+                    setReceiptDrafts((current) => [
+                      ...current,
+                      ...scanParts.filter(
+                        (item) => !current.some((saved) => saved.id === item.id),
+                      ),
+                    ]);
+                    setRecoveredDraftIds(new Set(available.map((item) => item.id)));
+                  }
+                }
+              }
             })
             .catch(() => {
               /* retain files for recovery */
@@ -220,8 +351,16 @@ export function LedgerExpenseEntryScreen() {
       });
     return () => {
       active = false;
+      ocrSession.clear();
     };
-  }, [params.expenseId, params.journeyId, params.receiptId, params.focusDate]);
+  }, [
+    ocrSession,
+    params.expenseId,
+    params.journeyId,
+    params.receiptId,
+    params.focusDate,
+    discardPendingScan,
+  ]);
 
   useEffect(() => {
     const subscription = Keyboard.addListener("keyboardDidShow", () => {
@@ -231,11 +370,92 @@ export function LedgerExpenseEntryScreen() {
     return () => subscription.remove();
   }, []);
 
+  useEffect(() => {
+    mountedRef.current = true;
+    const subscription = AppState.addEventListener("change", (next) => {
+      if (next !== "active") {
+        ocrSession.cancel();
+        if (scanSessionRef.current) {
+          const suspended = suspendReceiptScanSession(scanSessionRef.current);
+          scanSessionRef.current = suspended;
+          setScanSession(suspended);
+        }
+      }
+    });
+    return () => {
+      mountedRef.current = false;
+      subscription.remove();
+      ocrSession.clear();
+    };
+  }, [ocrSession]);
+
+  useEffect(() => {
+    const current = scanSessionRef.current;
+    const part = current?.documents.find((item) => item.draft.id === ocrState.draftId);
+    if (!current || !part || ocrState.draftId !== part.draft.id) return;
+    let next = current;
+    if (ocrState.status === "recognizing" && part.status !== "recognizing")
+      next = beginReceiptScanOcr(current, part.documentId);
+    else if (
+      (ocrState.status === "completed" ||
+        ocrState.status === "no-text" ||
+        ocrState.status === "failed") &&
+      (part.status === "pending" || part.status === "recognizing")
+    ) {
+      const ready =
+        part.status === "recognizing"
+          ? current
+          : beginReceiptScanOcr(current, part.documentId);
+      if (
+        (ocrState.status === "completed" || ocrState.status === "no-text") &&
+        ocrState.document
+      )
+        next = completeReceiptScanOcr(
+          ready,
+          part.documentId,
+          ready.documents.find((item) => item.documentId === part.documentId)!.revision,
+          ocrState.document,
+          {
+            journeyCurrency: context?.settlementCurrency,
+          },
+        );
+      else if (ocrState.status === "failed")
+        next = completeReceiptScanOcr(
+          ready,
+          part.documentId,
+          ready.documents.find((item) => item.documentId === part.documentId)!.revision,
+          ocrState.errorCode ?? "CANCELLED",
+        );
+    } else if (ocrState.status === "cancelled" && part.status === "recognizing") {
+      next = completeReceiptScanOcr(current, part.documentId, part.revision, "CANCELLED");
+    }
+    if (next !== current) {
+      scanSessionRef.current = next;
+      setScanSession(next);
+      if (context)
+        setReceiptReview((review) =>
+          review
+            ? refreshReceiptReviewState(
+                review,
+                next,
+                context.settlementCurrency,
+                context.defaultCurrency,
+              )
+            : createReceiptReviewState(
+                next,
+                context.settlementCurrency,
+                context.defaultCurrency,
+              ),
+        );
+    }
+  }, [ocrState, context]);
+
   const dirty = Boolean(
     draft &&
     (JSON.stringify(draft) !== initialSnapshot ||
       receiptId !== (params.receiptId ?? null) ||
-      receiptDrafts.length > 0),
+      receiptDrafts.length > 0 ||
+      scanSession !== null),
   );
 
   useEffect(
@@ -249,6 +469,8 @@ export function LedgerExpenseEntryScreen() {
             text: "Discard",
             style: "destructive",
             onPress: () => {
+              ocrSession.clear();
+              discardPendingScan();
               for (const receiptDraft of receiptDrafts) {
                 try {
                   discardExpenseReceiptDraft(receiptDraft);
@@ -262,7 +484,7 @@ export function LedgerExpenseEntryScreen() {
           },
         ]);
       }),
-    [dirty, navigation, receiptDrafts],
+    [dirty, navigation, ocrSession, receiptDrafts, discardPendingScan],
   );
 
   const selectedMembers = useMemo(
@@ -377,23 +599,43 @@ export function LedgerExpenseEntryScreen() {
     );
   };
 
-  const attach = async (kind: "camera" | "photo" | "file") => {
+  const attach = async (
+    kind: "camera" | "photo" | "file",
+    scan = false,
+    addPart = false,
+  ) => {
     if (!context) return;
     if (addingReceiptRef.current) return;
+    if (scan && scanSessionRef.current && !addPart) {
+      Keyboard.dismiss();
+      setReviewVisible(true);
+      return;
+    }
+    if (
+      addPart &&
+      (!scanSessionRef.current ||
+        scanSessionRef.current.documents.some((part) => part.status === "recognizing"))
+    )
+      return;
     if (
       !existing &&
-      receiptDrafts.length + (receiptId ? 1 : 0) >= MAX_EXPENSE_ATTACHMENTS
+      receiptDrafts.length +
+        (receiptId ? 1 : 0) +
+        (scanSessionRef.current?.documents.length ?? 0) >=
+        MAX_EXPENSE_ATTACHMENTS
     ) {
       setError(`Maximum ${MAX_EXPENSE_ATTACHMENTS} attachments per expense.`);
       return;
     }
     addingReceiptRef.current = true;
+    setSelectingReceipt(true);
+    let selectedDraft: TemporaryReceiptDraft | null = null;
     try {
       let source: { uri: string; mimeType: string; name?: string | null } | null = null;
       if (kind === "file") {
         const result = await DocumentPicker.getDocumentAsync({
           type: [
-            "application/pdf",
+            ...(addPart ? [] : ["application/pdf"]),
             "image/jpeg",
             "image/png",
             "image/heic",
@@ -430,15 +672,74 @@ export function LedgerExpenseEntryScreen() {
       }
       if (!source) return;
       if (!existing) {
+        const currentScan = scanSessionRef.current;
+        const scanSessionId =
+          scan && source.mimeType !== "application/pdf"
+            ? (currentScan?.sessionId ?? createLocalId("receipt-scan"))
+            : null;
         const next = await selectExpenseReceiptDraft(
           source.uri,
           source.mimeType,
           params.expenseId,
-          receiptDrafts.length + (receiptId ? 1 : 0),
+          receiptDrafts.length +
+            (receiptId ? 1 : 0) +
+            (scanSessionRef.current?.documents.length ?? 0),
           source.name,
           context.journeyId,
+          scanSessionId
+            ? { sessionId: scanSessionId, order: currentScan?.usedDraftIds.length ?? 0 }
+            : undefined,
         );
-        setReceiptDrafts((current) => [...current, next]);
+        selectedDraft = next;
+        if (!mountedRef.current) {
+          discardExpenseReceiptDraft(next);
+          selectedDraft = null;
+          return;
+        }
+        if (addPart && next.mimeType === "application/pdf") {
+          throw new Error("Receipt scan parts must be images.");
+        }
+        if (
+          shouldRunExpenseReceiptOcr(scan, Boolean(existing)) &&
+          next.mimeType !== "application/pdf"
+        ) {
+          const pending = addReceiptScanDocument(
+            currentScan ??
+              createReceiptScanSession(scanSessionId!, [
+                ...receiptDrafts.map((item) => item.id),
+                ...(receiptId ? [receiptId] : []),
+              ]),
+            next,
+            { journeyCurrency: context.settlementCurrency },
+          );
+          scanSessionRef.current = pending;
+          selectedDraft = null;
+          setScanSession(pending);
+          setReceiptReview((review) =>
+            review && currentScan
+              ? refreshReceiptReviewState(
+                  review,
+                  pending,
+                  context.settlementCurrency,
+                  context.defaultCurrency,
+                )
+              : seedReceiptReviewFromExpense(
+                  createReceiptReviewState(
+                    pending,
+                    context.settlementCurrency,
+                    context.defaultCurrency,
+                  ),
+                  draft!,
+                ),
+          );
+          Keyboard.dismiss();
+          setReviewVisible(true);
+          ocrSession.start(next);
+        } else {
+          selectedDraft = null;
+          setReceiptDrafts((current) => [...current, next]);
+          if (shouldRunExpenseReceiptOcr(scan, Boolean(existing))) ocrSession.start(next);
+        }
       } else {
         const receipt = await importReceiptAsset({
           journeyId: context.journeyId,
@@ -451,19 +752,27 @@ export function LedgerExpenseEntryScreen() {
         setReceiptId(receipt?.id ?? null);
       }
     } catch (cause) {
+      if (selectedDraft) {
+        try {
+          discardExpenseReceiptDraft(selectedDraft);
+        } catch {
+          /* retain for recovery */
+        }
+      }
       setError(cause instanceof Error ? cause.message : "Receipt could not be attached.");
     } finally {
       addingReceiptRef.current = false;
+      setSelectingReceipt(false);
     }
   };
 
-  const chooseReceipt = () =>
+  const chooseReceipt = (scan = false, addPart = false) =>
     ActionSheetIOS.showActionSheetWithOptions(
       { options: ["Camera", "Photo Library", "Files", "Cancel"], cancelButtonIndex: 3 },
       (index) => {
-        if (index === 0) void attach("camera");
-        if (index === 1) void attach("photo");
-        if (index === 2) void attach("file");
+        if (index === 0) void attach("camera", scan, addPart);
+        if (index === 1) void attach("photo", scan, addPart);
+        if (index === 2) void attach("file", scan, addPart);
       },
     );
 
@@ -622,6 +931,8 @@ export function LedgerExpenseEntryScreen() {
           ).attachExpense(receiptId, saved.id);
       }
       notifyLedgerReviewExpenseSaved(saved.journeyId);
+      ocrSession.clear();
+      discardPendingScan();
       allowClose.current = true;
       if (existing) router.back();
       else
@@ -652,6 +963,8 @@ export function LedgerExpenseEntryScreen() {
         text: "Discard",
         style: "destructive",
         onPress: () => {
+          ocrSession.clear();
+          discardPendingScan();
           for (const receiptDraft of receiptDrafts) {
             try {
               discardExpenseReceiptDraft(receiptDraft);
@@ -681,6 +994,10 @@ export function LedgerExpenseEntryScreen() {
 
   const payer = context.members.find((member) => member.id === draft.payerId);
   const date = draft.date ? dateFromKey(draft.date) : new Date();
+  const selectedReceiptCount = receiptDrafts.length + (receiptId ? 1 : 0);
+  const receiptCapacityFull =
+    selectedReceiptCount + (scanSession?.documents.length ?? 0) >=
+    MAX_EXPENSE_ATTACHMENTS;
 
   return (
     <KeyboardAvoidingView
@@ -740,30 +1057,84 @@ export function LedgerExpenseEntryScreen() {
           {!existing ? (
             <Pressable
               accessibilityLabel={
-                receiptDrafts.length + (receiptId ? 1 : 0) >= MAX_EXPENSE_ATTACHMENTS
-                  ? `Maximum ${MAX_EXPENSE_ATTACHMENTS} attachments selected`
-                  : "Scan receipt"
+                scanSession
+                  ? "Review receipt"
+                  : receiptCapacityFull
+                    ? `Maximum ${MAX_EXPENSE_ATTACHMENTS} attachments selected`
+                    : "Scan receipt"
               }
               accessibilityRole="button"
               accessibilityState={{
-                disabled:
-                  receiptDrafts.length + (receiptId ? 1 : 0) >= MAX_EXPENSE_ATTACHMENTS,
+                disabled: !scanSession && receiptCapacityFull,
               }}
-              disabled={
-                receiptDrafts.length + (receiptId ? 1 : 0) >= MAX_EXPENSE_ATTACHMENTS
-              }
-              onPress={chooseReceipt}
+              disabled={!scanSession && receiptCapacityFull}
+              onPress={() => {
+                if (scanSession) {
+                  Keyboard.dismiss();
+                  setReviewVisible(true);
+                } else chooseReceipt(true);
+              }}
               style={[styles.scanAction, largeText && styles.scanActionLargeText]}
             >
               <AppIcon color="#0F766E" name="doc.text.viewfinder" size={18} />
               <Text style={styles.scanActionText}>
-                {receiptDrafts.length + (receiptId ? 1 : 0) >= MAX_EXPENSE_ATTACHMENTS
-                  ? `Maximum ${MAX_EXPENSE_ATTACHMENTS} attachments`
-                  : "Scan receipt"}
+                {scanSession
+                  ? "Review receipt"
+                  : receiptCapacityFull
+                    ? `Maximum ${MAX_EXPENSE_ATTACHMENTS} attachments`
+                    : "Scan receipt"}
               </Text>
             </Pressable>
           ) : null}
         </View>
+        {!existing && ocrState.status !== "idle" ? (
+          <View>
+            <Text
+              style={styles.hint}
+              accessibilityLabel={`Receipt OCR ${ocrState.status}`}
+            >
+              {ocrState.status === "recognizing"
+                ? "Reading receipt… You can enter details now."
+                : ocrState.status === "completed"
+                  ? "Receipt read. Enter details manually."
+                  : ocrState.status === "no-text"
+                    ? "No text found. Enter details manually."
+                    : ocrState.status === "cancelled"
+                      ? "Receipt reading stopped. Enter details manually."
+                      : ocrState.errorCode === "UNSUPPORTED_IMAGE"
+                        ? "OCR is unavailable for this file. You can still attach it."
+                        : "Receipt could not be read. Enter details manually."}
+            </Text>
+            {ocrState.status !== "recognizing" &&
+            ocrState.draftId &&
+            receiptDrafts.some(
+              (item) =>
+                item.id === ocrState.draftId && item.mimeType !== "application/pdf",
+            ) ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  const active = receiptDrafts.find(
+                    (item) => item.id === ocrState.draftId,
+                  );
+                  if (active) ocrSession.start(active);
+                }}
+              >
+                <Text style={styles.suggestion}>Read again</Text>
+              </Pressable>
+            ) : null}
+            {context.debugMode ? (
+              <Text style={styles.hint}>
+                OCR · {ocrState.status}
+                {ocrState.document
+                  ? ` · ${ocrState.document.observations.length} observations · ${ocrState.document.durationMs} ms · ${ocrState.document.imageWidth}×${ocrState.document.imageHeight} · Apple Vision ${ocrState.document.engineRevision}`
+                  : ocrState.errorCode
+                    ? ` · ${ocrState.errorCode}`
+                    : ""}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
         <TextInput
           accessibilityLabel="Title or merchant"
           onChangeText={(title) =>
@@ -876,11 +1247,8 @@ export function LedgerExpenseEntryScreen() {
           <View style={styles.more}>
             <FormRow
               label="Attachment"
-              onPress={chooseReceipt}
-              disabled={
-                !existing &&
-                receiptDrafts.length + (receiptId ? 1 : 0) >= MAX_EXPENSE_ATTACHMENTS
-              }
+              onPress={() => chooseReceipt(false)}
+              disabled={!existing && receiptCapacityFull}
               value={
                 receiptDrafts.length || receiptId
                   ? `${receiptDrafts.length + (receiptId ? 1 : 0)} selected`
@@ -893,10 +1261,23 @@ export function LedgerExpenseEntryScreen() {
                 <Text style={styles.attachmentText}>
                   {`Receipt ${index + 1} saved temporarily`}
                 </Text>
+                {!existing &&
+                recoveredDraftIds.has(receiptDraft.id) &&
+                receiptDraft.mimeType !== "application/pdf" &&
+                ocrState.draftId !== receiptDraft.id ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Read receipt ${index + 1}`}
+                    onPress={() => ocrSession.start(receiptDraft)}
+                  >
+                    <Text style={styles.suggestion}>Read</Text>
+                  </Pressable>
+                ) : null}
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Remove receipt ${index + 1}`}
                   onPress={() => {
+                    ocrSession.clear(receiptDraft.id);
                     try {
                       discardExpenseReceiptDraft(receiptDraft);
                     } catch {
@@ -914,8 +1295,7 @@ export function LedgerExpenseEntryScreen() {
             {receiptId ? (
               <Text style={styles.attachmentText}>Receipt attachment</Text>
             ) : null}
-            {!existing &&
-            receiptDrafts.length + (receiptId ? 1 : 0) >= MAX_EXPENSE_ATTACHMENTS ? (
+            {!existing && receiptCapacityFull ? (
               <Text>Maximum {MAX_EXPENSE_ATTACHMENTS} attachments selected</Text>
             ) : null}
             <TextInput
@@ -944,6 +1324,97 @@ export function LedgerExpenseEntryScreen() {
         ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
+
+      {scanSession && receiptReview ? (
+        <ReceiptReviewSheet
+          canScanAnother={
+            !receiptCapacityFull &&
+            !selectingReceipt &&
+            !scanSession.documents.some((part) => part.status === "recognizing")
+          }
+          scanBusy={
+            selectingReceipt ||
+            scanSession.documents.some((part) => part.status === "recognizing")
+          }
+          debugMode={context.debugMode}
+          defaultCurrency={context.defaultCurrency}
+          journeyCurrency={context.settlementCurrency}
+          onCancel={() => {
+            discardPendingScan();
+          }}
+          onChange={(next) => {
+            setReceiptReview(next);
+          }}
+          onConfirm={(result, revision) => {
+            const current = scanSessionRef.current;
+            if (!current || !receiptReview || !draft || selectingReceipt)
+              throw new Error("Receipt Review is not ready to confirm.");
+            const prepared = prepareReceiptReviewConfirmation(
+              receiptReview,
+              current,
+              result,
+              revision,
+              draft,
+              receiptDrafts,
+              receiptId,
+            );
+            const transferred = transferConfirmedReceiptDrafts(prepared.scannedDrafts);
+            ocrSession.clear();
+            scanSessionRef.current = null;
+            setDraft(prepared.expense);
+            setReceiptDrafts([...receiptDrafts, ...transferred]);
+            setScanSession(null);
+            setReceiptReview(null);
+            setReviewVisible(false);
+            setMore(true);
+            setError(null);
+          }}
+          onRetry={(documentId) => {
+            const part = scanSessionRef.current?.documents.find(
+              (item) => item.documentId === documentId,
+            );
+            if (
+              !part ||
+              scanSessionRef.current?.documents.some(
+                (item) => item.status === "recognizing",
+              )
+            )
+              return;
+            ocrSession.start(part.draft);
+          }}
+          onRemove={(documentId) => {
+            const current = scanSessionRef.current;
+            if (!current) return;
+            const removed = removeReceiptScanDocument(current, documentId, {
+              journeyCurrency: context.settlementCurrency,
+            });
+            if (!removed.removedDraft) return;
+            scanSessionRef.current = removed.session;
+            setScanSession(removed.session);
+            setReceiptReview((review) =>
+              review
+                ? refreshReceiptReviewState(
+                    review,
+                    removed.session,
+                    context.settlementCurrency,
+                    context.defaultCurrency,
+                  )
+                : null,
+            );
+            ocrSession.clear(removed.removedDraft.id);
+            discardedScanDraftIdsRef.current.add(removed.removedDraft.id);
+            try {
+              discardExpenseReceiptDraft(removed.removedDraft);
+            } catch {
+              /* retain for recovery */
+            }
+          }}
+          onScanAnother={() => chooseReceipt(true, true)}
+          review={receiptReview}
+          session={scanSession}
+          visible={reviewVisible}
+        />
+      ) : null}
 
       <Modal
         allowSwipeDismissal
@@ -1279,6 +1750,7 @@ async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: str
         ...new Set(expenses.map((expense) => expense.original.currency)),
       ],
       defaultCurrency: preferences.defaultCurrency,
+      debugMode: preferences.debugMode,
       actorId: actorMember.id,
       members,
     } satisfies EntryContext,

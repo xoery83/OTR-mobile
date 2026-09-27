@@ -5,6 +5,7 @@ import {
   saveExpenseWithReceiptDraft,
   selectExpenseReceiptDraft,
   restoreExpenseReceiptDrafts,
+  transferConfirmedReceiptDrafts,
 } from "./expenseReceiptDraft";
 
 const mocks = vi.hoisted(() => ({
@@ -16,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   getReceipt: vi.fn(),
   record: vi.fn(),
+  update: vi.fn(),
 }));
 
 vi.mock("@/data/files/receiptFileStore", () => ({
@@ -24,6 +26,7 @@ vi.mock("@/data/files/receiptFileStore", () => ({
   deleteTemporaryReceiptDraft: mocks.remove,
   listRecoverableReceiptDrafts: mocks.list,
   recordTemporaryReceiptDraft: mocks.record,
+  updateTemporaryReceiptDraftRecord: mocks.update,
 }));
 vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: mocks.activeUser }));
 vi.mock("@/data/repositories/defaultLedgerExpenseRepository", () => ({
@@ -130,6 +133,79 @@ describe("New Expense receipt draft", () => {
     expect(await restoreExpenseReceiptDrafts("journey-a")).toEqual([
       { ...draft, id: "receipt-draft-2" },
     ]);
+  });
+
+  it("records stable scan session order for verified restart recovery", async () => {
+    const selected = await selectExpenseReceiptDraft(
+      "file:///picker/part.jpg",
+      "image/jpeg",
+      undefined,
+      1,
+      "part.jpg",
+      "journey-a",
+      { sessionId: "scan-1", order: 2 },
+    );
+    expect(mocks.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: selected.id,
+        journeyId: "journey-a",
+        scanSessionId: "scan-1",
+        scanOrder: 2,
+      }),
+    );
+    mocks.list.mockResolvedValue([
+      { ...selected, scanSessionId: "scan-1", scanOrder: 2 },
+    ]);
+    expect(await restoreExpenseReceiptDrafts("journey-a")).toEqual([
+      expect.objectContaining({ scanSessionId: "scan-1", scanOrder: 2 }),
+    ]);
+  });
+
+  it("reclassifies confirmed scan records without copying or saving, and rolls back failure", () => {
+    const parts = [
+      { ...draft, id: "part-1", scanSessionId: "scan", scanOrder: 0 },
+      { ...draft, id: "part-2", scanSessionId: "scan", scanOrder: 1 },
+    ];
+    const transferred = transferConfirmedReceiptDrafts(parts);
+    expect(transferred.map((item) => item.scanSessionId)).toEqual([undefined, undefined]);
+    expect(mocks.update).toHaveBeenCalledTimes(2);
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.prepare).not.toHaveBeenCalled();
+    expect(mocks.createExpense).not.toHaveBeenCalled();
+    mocks.update.mockReset();
+    mocks.update
+      .mockImplementationOnce(() => undefined)
+      .mockImplementationOnce(() => {
+        throw new Error("record write failed");
+      });
+    expect(() => transferConfirmedReceiptDrafts(parts)).toThrow("record write failed");
+    expect(mocks.update).toHaveBeenLastCalledWith(parts[0]);
+  });
+
+  it("cancels a confirmed but unsaved form without durable receipt work", () => {
+    const confirmed = transferConfirmedReceiptDrafts([
+      { ...draft, scanSessionId: "scan", scanOrder: 0 },
+    ]);
+    discardExpenseReceiptDraft(confirmed[0]);
+    expect(mocks.remove).toHaveBeenCalledWith(confirmed[0]);
+    expect(mocks.prepare).not.toHaveBeenCalled();
+    expect(mocks.createExpense).not.toHaveBeenCalled();
+  });
+
+  it("saves confirmed parts through the existing expense attachment operation", async () => {
+    const confirmed = transferConfirmedReceiptDrafts([
+      { ...draft, id: "part-a", scanSessionId: "scan", scanOrder: 0 },
+      { ...draft, id: "part-b", scanSessionId: "scan", scanOrder: 1 },
+    ]);
+    mocks.prepare.mockImplementation(async (item) => ({ ...prepared, id: item.id }));
+    await saveExpenseWithReceiptDraft({} as never, confirmed, "expense-draft");
+    expect(mocks.createExpense).toHaveBeenCalledOnce();
+    expect(mocks.createExpense).toHaveBeenCalledWith(
+      {},
+      confirmed.map((item) => ({ ...prepared, id: item.id })),
+      "expense-draft",
+    );
+    expect(mocks.remove).toHaveBeenCalledTimes(2);
   });
 
   it("prepares all three before Save and preserves all sources if preparation fails", async () => {

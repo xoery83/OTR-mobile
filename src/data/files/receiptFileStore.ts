@@ -20,6 +20,8 @@ export type TemporaryReceiptDraft = {
   sha256: string;
   originalFilename?: string | null;
   journeyId?: string;
+  scanSessionId?: string;
+  scanOrder?: number;
 };
 
 export function resolveReceiptFile(localUri: string) {
@@ -206,6 +208,20 @@ export function recordTemporaryReceiptDraft(draft: TemporaryReceiptDraft) {
   if (!draft.journeyId) return;
   const record = draftRecord(draft);
   record.create({ overwrite: false, intermediates: true });
+  record.write(JSON.stringify(draft));
+}
+
+export function updateTemporaryReceiptDraftRecord(draft: TemporaryReceiptDraft) {
+  if (!draft.journeyId) throw new Error("Receipt draft requires a Journey.");
+  const source = draftFile(draft.id, draft.ownerUserId, draft.mimeType);
+  const record = draftRecord(draft);
+  if (
+    source.uri !== draft.localUri ||
+    !source.exists ||
+    source.size !== draft.sizeBytes ||
+    !record.exists
+  )
+    throw new Error("Receipt draft is unavailable for transfer.");
   record.write(JSON.stringify(draft));
 }
 

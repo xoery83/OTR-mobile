@@ -5,6 +5,7 @@ import {
   listRecoverableReceiptDrafts,
   prepareReceiptDraft,
   recordTemporaryReceiptDraft,
+  updateTemporaryReceiptDraftRecord,
   type TemporaryReceiptDraft,
 } from "@/data/files/receiptFileStore";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
@@ -21,6 +22,7 @@ export async function selectExpenseReceiptDraft(
   existingCount = 0,
   originalFilename?: string | null,
   journeyId?: string,
+  scan?: { sessionId: string; order: number },
 ) {
   if (existingExpenseId) throw new Error("Receipt drafts are only for New Expense.");
   assertExpenseAttachmentDrafts(
@@ -33,8 +35,14 @@ export async function selectExpenseReceiptDraft(
     mimeType,
     originalFilename,
   });
-  if (journeyId) recordTemporaryReceiptDraft({ ...draft, journeyId });
-  return { ...draft, journeyId };
+  const selected = {
+    ...draft,
+    journeyId,
+    scanSessionId: scan?.sessionId,
+    scanOrder: scan?.order,
+  };
+  if (journeyId) recordTemporaryReceiptDraft(selected);
+  return selected;
 }
 
 export async function restoreExpenseReceiptDrafts(journeyId: string) {
@@ -52,6 +60,31 @@ export async function restoreExpenseReceiptDrafts(journeyId: string) {
 
 export function discardExpenseReceiptDraft(draft: TemporaryReceiptDraft) {
   deleteTemporaryReceiptDraft(draft);
+}
+
+export function transferConfirmedReceiptDrafts(drafts: readonly TemporaryReceiptDraft[]) {
+  const transferred: TemporaryReceiptDraft[] = [];
+  try {
+    for (const draft of drafts) {
+      const ordinary = { ...draft, scanSessionId: undefined, scanOrder: undefined };
+      updateTemporaryReceiptDraftRecord(ordinary);
+      transferred.push(ordinary);
+    }
+  } catch (cause) {
+    for (
+      let index = Math.min(transferred.length, drafts.length - 1);
+      index >= 0;
+      index--
+    ) {
+      try {
+        updateTemporaryReceiptDraftRecord(drafts[index]);
+      } catch {
+        /* verified files remain recoverable even if metadata rollback fails */
+      }
+    }
+    throw cause;
+  }
+  return transferred;
 }
 
 export async function saveExpenseWithReceiptDraft(

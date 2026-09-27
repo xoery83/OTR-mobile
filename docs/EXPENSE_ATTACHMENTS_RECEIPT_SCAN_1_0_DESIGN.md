@@ -1,9 +1,17 @@
 # OTR Mobile 2.0
+
 ## Expense Attachments & Receipt Scan 1.0 — Design Specification
 
 **Status:** Design / Pre-implementation  
 **Scope:** Expense attachments + New Expense receipt OCR  
 **核心原则：** Offline-first、storage-aware、OCR-assisted but user-confirmed、长期成本可控。
+
+> Receipt OCR field flow and cancel behavior in sections 1 and 7–9 are superseded by the
+> user-approved C0 candidate-first Review Sheet design in
+> docs/ledger/RECEIPT_OCR_1_0_PHASE_C0_REVIEW_DESIGN.md. OCR 1.0 now reviews
+> Title, Amount and Currency before copying them into New Expense; it does not
+> prefill the form directly or set Date. Attachment storage and Save lifecycle
+> decisions in this document still apply.
 
 ---
 
@@ -102,13 +110,13 @@ Expense
 
 第一版正式支持：
 
-| 类型 | 输入 | 云端 |
-|---|---|---|
-| JPEG | ✓ | JPEG |
-| HEIC/HEIF | ✓ | 建议转 JPEG |
-| PNG | ✓ | 建议归档 JPEG，特殊透明图片可保留 |
-| PDF | ✓ | PDF |
-| Camera | ✓ | JPEG archive |
+| 类型      | 输入 | 云端                              |
+| --------- | ---- | --------------------------------- |
+| JPEG      | ✓    | JPEG                              |
+| HEIC/HEIF | ✓    | 建议转 JPEG                       |
+| PNG       | ✓    | 建议归档 JPEG，特殊透明图片可保留 |
+| PDF       | ✓    | PDF                               |
+| Camera    | ✓    | JPEG archive                      |
 
 暂不支持：
 
