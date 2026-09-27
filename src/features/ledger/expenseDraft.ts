@@ -38,6 +38,54 @@ export const EXPENSE_CATEGORIES = [
   "other",
 ] as const;
 
+type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+
+// Stable category IDs stay separate from language-specific matching words.
+const CATEGORY_KEYWORDS: Record<string, Partial<Record<ExpenseCategory, string[]>>> = {
+  en: {
+    flight: ["flight", "airline", "airfare"],
+    hotel: ["hotel", "hostel", "accommodation", "lodging"],
+    car: ["rental car", "car rental", "car hire"],
+    fuel: ["fuel", "petrol", "gasoline", "diesel"],
+    food: ["restaurant", "cafe", "coffee", "breakfast", "lunch", "dinner", "meal"],
+    ticket: ["ticket", "admission"],
+    shopping: ["shopping", "souvenir"],
+    transport: ["taxi", "uber", "bus", "train", "metro", "ferry"],
+    insurance: ["insurance"],
+    groceries: ["groceries", "supermarket", "grocery"],
+    activity: ["tour", "excursion", "activity"],
+  },
+  zh: {
+    flight: ["机票", "航班", "航空"],
+    hotel: ["酒店", "旅馆", "住宿", "民宿"],
+    car: ["租车"],
+    fuel: ["加油", "汽油", "柴油"],
+    food: ["餐厅", "餐馆", "咖啡", "早餐", "午餐", "晚餐"],
+    ticket: ["门票", "车票"],
+    shopping: ["购物", "纪念品"],
+    transport: ["出租车", "打车", "公交", "地铁", "火车"],
+    insurance: ["保险"],
+    groceries: ["超市", "杂货"],
+    activity: ["旅行团", "游览", "活动"],
+  },
+};
+
+export function suggestExpenseCategory(title: string): ExpenseCategory {
+  const words = title.toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  const normalized = words.join(" ");
+  for (const language of Object.values(CATEGORY_KEYWORDS))
+    for (const category of EXPENSE_CATEGORIES)
+      if (
+        language[category]?.some((keyword) =>
+          /[\u3400-\u9fff]/u.test(keyword)
+            ? title.includes(keyword)
+            : ` ${normalized} `.includes(` ${keyword} `),
+        )
+      )
+        return category;
+  return "other";
+}
+
 export type DraftMember = {
   id: string;
   displayName: string;

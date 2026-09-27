@@ -2,6 +2,25 @@
 
 Date: 2026-09-27
 
+## Buglist 003 — Ledger form and Currency UI (2026-09-27)
+
+- Currency uses a compact bottom date picker with a centered wheel. Journey
+  Currency explanation opens from an info icon and explains original currency,
+  historical valuation, change conditions, and permanent lock. Ledger sheet
+  titles use regular weight; Spending's Needs attention matches Settlement.
+- New Expense opens directly from Add. Currency and Scan receipt share a row;
+  Category follows the title and suggests a stable category locally from English
+  or Chinese keywords, while manual choice wins. The receipt appears under
+  optional attachments. Split Expense shows only equal and exact amounts and
+  does not report a missing amount before one is entered.
+- No API, schema or repository change. Focused tests, TypeScript, affected lint,
+  formatting, diff check, and signed Release builds passed. Simulator interaction
+  verified the date wheel, scan Cancel return, category suggestion/override and
+  split choices. The final signed app installed and launched on iPhone 16 Pro;
+  New Expense and Currency were visually checked. Device Hub cannot control
+  touch on this iOS 26.6 phone, so physical interaction with the new controls
+  remains unverified. OCR and attachment upload are reserved for the next round.
+
 ## Buglist 002 — Ledger sheets, gestures and wording (2026-09-27)
 
 - Currency selectors use reachable iOS page sheets. The date wheel uses a compact

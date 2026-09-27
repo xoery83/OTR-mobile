@@ -20,6 +20,8 @@ import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
 
+import { AppIcon } from "@/components/AppIcon";
+
 import { importReceiptAsset } from "@/data/operations/importReceiptAsset";
 import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
@@ -55,6 +57,7 @@ import {
   parsePercentageUnits,
   preservesExpenseValuation,
   proposedExpenseDate,
+  suggestExpenseCategory,
 } from "./expenseDraft";
 import { formatLedgerMoney } from "./format";
 import { CurrencyPicker } from "./CurrencyPicker";
@@ -117,6 +120,7 @@ export function LedgerExpenseEntryScreen() {
   const [splitSheet, setSplitSheet] = useState(false);
   const [datePicker, setDatePicker] = useState(false);
   const [more, setMore] = useState(false);
+  const [categoryManual, setCategoryManual] = useState(false);
   const allowClose = useRef(false);
   const savingRef = useRef(false);
   const largeText = useWindowDimensions().fontScale > 2;
@@ -129,6 +133,9 @@ export function LedgerExpenseEntryScreen() {
         setContext(value.context);
         setExisting(value.existing);
         setDraft(value.draft);
+        setReceiptId(params.receiptId ?? null);
+        setCategoryManual(Boolean(value.existing));
+        setMore(Boolean(params.receiptId));
         setInitialSnapshot(JSON.stringify(value.draft));
         if (params.focusDate === "1") setDatePicker(true);
       })
@@ -294,7 +301,10 @@ export function LedgerExpenseEntryScreen() {
       },
       (index) => {
         const category = EXPENSE_CATEGORIES[index];
-        if (category) setDraft({ ...draft, category });
+        if (category) {
+          setCategoryManual(true);
+          setDraft({ ...draft, category });
+        }
       },
     );
   };
@@ -565,39 +575,6 @@ export function LedgerExpenseEntryScreen() {
       </View>
     );
 
-  if (!existing && params.mode !== "manual") {
-    return (
-      <ScrollView
-        contentContainerStyle={[styles.choice, largeText && styles.choiceLargeText]}
-      >
-        <Stack.Screen options={{ headerTitle: "Add Expense" }} />
-        <Text
-          accessibilityRole="header"
-          maxFontSizeMultiplier={2}
-          style={styles.choiceTitle}
-        >
-          Add an Expense
-        </Text>
-        <Text maxFontSizeMultiplier={2} style={styles.hint}>
-          Choose how you want to start. Nothing is saved yet.
-        </Text>
-        <PrimaryAction
-          label="Add manually"
-          onPress={() => router.setParams({ mode: "manual" })}
-        />
-        <SecondaryAction
-          label="Scan receipt"
-          onPress={() =>
-            router.replace({
-              pathname: "/expenses/receipt",
-              params: { journeyId: context.journeyId, mode: "scan" },
-            })
-          }
-        />
-      </ScrollView>
-    );
-  }
-
   const payer = context.members.find((member) => member.id === draft.payerId);
   const date = draft.date ? dateFromKey(draft.date) : new Date();
 
@@ -646,18 +623,43 @@ export function LedgerExpenseEntryScreen() {
             {currencyAmountHint(draft.currency, scale ?? 2)}
           </Text>
         ) : null}
-        <FormRow
-          label="Currency"
-          onPress={() => setCurrencySheet(true)}
-          value={draft.currency}
-        />
+        <View style={styles.currencyActions}>
+          <View style={styles.currencyHalf}>
+            <FormRow
+              label="Currency"
+              onPress={() => setCurrencySheet(true)}
+              value={draft.currency}
+            />
+          </View>
+          <Pressable
+            accessibilityLabel="Scan receipt"
+            accessibilityRole="button"
+            onPress={() =>
+              router.push({
+                pathname: "/expenses/receipt",
+                params: { journeyId: context.journeyId, mode: "scan" },
+              })
+            }
+            style={[styles.scanAction, largeText && styles.scanActionLargeText]}
+          >
+            <AppIcon color="#0F766E" name="doc.text.viewfinder" size={18} />
+            <Text style={styles.scanActionText}>Scan receipt</Text>
+          </Pressable>
+        </View>
         <TextInput
           accessibilityLabel="Title or merchant"
-          onChangeText={(title) => setDraft({ ...draft, title })}
+          onChangeText={(title) =>
+            setDraft({
+              ...draft,
+              title,
+              category: categoryManual ? draft.category : suggestExpenseCategory(title),
+            })
+          }
           placeholder="What was it?"
           style={styles.textInput}
           value={draft.title}
         />
+        <FormRow label="Category" onPress={chooseCategory} value={draft.category} />
         <FormRow
           label="Expense date"
           onPress={() => setDatePicker(true)}
@@ -709,7 +711,6 @@ export function LedgerExpenseEntryScreen() {
         />
         {more ? (
           <View style={styles.more}>
-            <FormRow label="Category" onPress={chooseCategory} value={draft.category} />
             <FormRow
               label="Attachment"
               onPress={() => {
@@ -725,8 +726,16 @@ export function LedgerExpenseEntryScreen() {
                   },
                 );
               }}
-              value={receiptId ? "Attached" : "Optional"}
+              value={receiptId ? "1 receipt attached" : "Optional"}
             />
+            {receiptId ? (
+              <View style={styles.attachmentItem}>
+                <AppIcon color="#0F766E" name="paperclip" size={15} />
+                <Text style={styles.attachmentText}>
+                  {params.receiptId ? "Scanned receipt" : "Receipt attachment"}
+                </Text>
+              </View>
+            ) : null}
             <TextInput
               accessibilityLabel="Expense notes"
               multiline
@@ -829,31 +838,17 @@ export function LedgerExpenseEntryScreen() {
               ? "—"
               : formatLedgerMoney(minor - allocatedMinor, draft.currency, scale ?? 2)}
           </Text>
-          {(Object.keys(splitLabels) as ExpenseSplitMethod[]).map((mode) => {
-            const householdMode =
-              mode === "EQUAL_HOUSEHOLD" || mode === "HOUSEHOLD_SHARES";
-            const available =
-              !householdMode ||
-              selectedMembers.every((member) =>
-                mode === "EQUAL_HOUSEHOLD" ? member.householdId : member.shareUnits,
-              );
+          {(["EQUAL_PERSON", "EXACT"] as const).map((mode) => {
             return (
               <SheetRow
                 key={mode}
-                disabled={!available}
                 label={splitLabels[mode]}
                 selected={draft.splitMode === mode}
                 onPress={() => setDraft({ ...draft, splitMode: mode })}
               />
             );
           })}
-          {selectedMembers.some((member) => !member.householdId) ? (
-            <Text style={styles.warning}>
-              Household modes need configured Household membership for every selected
-              participant.
-            </Text>
-          ) : null}
-          {draft.splitMode === "EXACT" || draft.splitMode === "PERCENTAGE"
+          {draft.splitMode === "EXACT"
             ? selectedMembers.map((member) => (
                 <View
                   key={member.id}
@@ -897,11 +892,13 @@ export function LedgerExpenseEntryScreen() {
                 </View>
               ))
             : null}
-          <Text style={effectiveSplits ? styles.success : styles.error}>
-            {effectiveSplits
-              ? `Allocated exactly · ${formatLedgerMoney(minor!, draft.currency, scale ?? 2)} · Remaining 0`
-              : splitResult.error}
-          </Text>
+          {minor !== null ? (
+            <Text style={effectiveSplits ? styles.success : styles.error}>
+              {effectiveSplits
+                ? `Allocated exactly · ${formatLedgerMoney(minor, draft.currency, scale ?? 2)} · Remaining 0`
+                : splitResult.error}
+            </Text>
+          ) : null}
         </ScrollView>
       </Modal>
 
@@ -995,7 +992,7 @@ async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: str
       existing?.category ??
       (EXPENSE_CATEGORIES.some((category) => category === suggestion?.category)
         ? suggestion!.category!
-        : "other"),
+        : suggestExpenseCategory(suggestion?.title ?? "")),
     notes: existing?.description ?? "",
   };
   return {
@@ -1110,33 +1107,10 @@ function SheetRow({
   );
 }
 
-function PrimaryAction({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.primary}>
-      <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function SecondaryAction({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.secondary}>
-      <Text maxFontSizeMultiplier={2} style={styles.secondaryText}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
   content: { gap: 14, padding: 16, paddingBottom: 48 },
-  choice: { flexGrow: 1, gap: 16, justifyContent: "center", padding: 24 },
-  choiceLargeText: { justifyContent: "flex-start", paddingBottom: 140 },
-  choiceTitle: { color: "#0F172A", fontSize: 30, fontWeight: "800" },
   amountInput: {
     color: "#0F172A",
     fontSize: 48,
@@ -1155,6 +1129,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   notes: { minHeight: 96, paddingTop: 14, textAlignVertical: "top" },
+  currencyActions: { flexDirection: "row", gap: 10 },
+  currencyHalf: { flex: 1, minWidth: 0 },
+  scanAction: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    flex: 1,
+    flexDirection: "row",
+    gap: 6,
+    justifyContent: "center",
+    minHeight: 52,
+    minWidth: 0,
+    paddingHorizontal: 8,
+  },
+  scanActionLargeText: { alignItems: "flex-start", flexDirection: "column" },
+  scanActionText: { color: "#0F766E", fontSize: 15, fontWeight: "600" },
+  attachmentItem: { alignItems: "center", flexDirection: "row", gap: 6, marginLeft: 12 },
+  attachmentText: { color: "#475569", fontSize: 14 },
   row: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
@@ -1179,24 +1171,6 @@ const styles = StyleSheet.create({
   headerAction: { color: "#0F766E", fontSize: 17, fontWeight: "700", padding: 8 },
   headerActionButton: { justifyContent: "center", minHeight: 44 },
   disabledText: { opacity: 0.4 },
-  primary: {
-    alignItems: "center",
-    backgroundColor: "#0F766E",
-    borderRadius: 9,
-    justifyContent: "center",
-    minHeight: 52,
-  },
-  primaryText: { color: "#FFFFFF", fontSize: 18, fontWeight: "700" },
-  secondary: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#0F766E",
-    borderRadius: 9,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 52,
-  },
-  secondaryText: { color: "#0F766E", fontSize: 18, fontWeight: "700" },
   sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },
   sheetRow: {
     alignItems: "center",

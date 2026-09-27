@@ -9,7 +9,15 @@ import {
   parsePercentageUnits,
   preservesExpenseValuation,
   proposedExpenseDate,
+  suggestExpenseCategory,
 } from "./expenseDraft";
+
+it("suggests stable categories from local English and Chinese keywords", () => {
+  expect(suggestExpenseCategory("Airport taxi")).toBe("transport");
+  expect(suggestExpenseCategory("酒店住宿")).toBe("hotel");
+  expect(suggestExpenseCategory("Postcard")).toBe("other");
+  expect(suggestExpenseCategory("Unrecognized expense")).toBe("other");
+});
 
 const members = [
   { id: "a", displayName: "A", householdId: "home-a", shareUnits: 1000 },

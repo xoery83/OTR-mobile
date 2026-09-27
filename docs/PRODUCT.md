@@ -53,6 +53,10 @@ Ledger / Expenses:
   exchange rate snapshot, edit history, permissions, settlement, and export.
 - An accepted Expense may be excluded from group settlement while remaining in
   Spending, search, receipts, history, and consumption analysis.
+- New Expense opens directly in manual entry. Its title offers an offline,
+  multilingual-ready category suggestion; unmatched titles use Other, and a
+  manual category choice takes precedence. Receipt scanning remains available
+  inside the form, with its original shown under optional attachments.
 - During travel, unresolved FX may have clearly approximate, offline-capable
   display amounts, spending totals and informational settlement positions from
   trusted cached reference rates. These never become accepted financial evidence

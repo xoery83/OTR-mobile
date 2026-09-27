@@ -12,6 +12,7 @@ import {
 import { useLocalSearchParams } from "expo-router";
 import { useNetworkState } from "expo-network";
 
+import { AppIcon } from "@/components/AppIcon";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import { ledgerCurrencyRepository } from "@/data/repositories/ledgerCurrencyRepository";
@@ -35,6 +36,7 @@ export default function CurrencyRoute() {
   const [locked, setLocked] = useState(false);
   const [canChange, setCanChange] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [preview, setPreview] = useState<JourneyCurrencyPreview | null>(null);
   const [operationId, setOperationId] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -151,9 +153,29 @@ export default function CurrencyRoute() {
   return (
     <>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.sectionTitle}>
-          Journey Currency
-        </Text>
+        <View style={styles.headingRow}>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>
+            Journey Currency
+          </Text>
+          <Pressable
+            accessibilityLabel="About Journey Currency"
+            accessibilityRole="button"
+            accessibilityState={{ expanded: helpOpen }}
+            onPress={() => setHelpOpen(!helpOpen)}
+            style={styles.infoButton}
+          >
+            <AppIcon color="#0F766E" name="info.circle" size={18} />
+          </Pressable>
+        </View>
+        {helpOpen ? (
+          <View style={styles.helpPopover}>
+            <Text style={styles.helpText}>
+              {chinese
+                ? "旅行结算货币用于汇总消费、成员余额和最终结算。每笔消费保留原始金额和币种；跨币种消费在符合条件的历史参考汇率可用并被接受后，按消费日期估值。没有可用汇率的消费暂不计入已确认的换算汇总。只有组织者在线预览并确认后才能更改；未完成的结算或冲突会阻止更改。只要有最终结算记录，此货币便永久锁定。"
+                : "Journey Currency is used for spending totals, member balances and final settlement. Each Expense keeps its original amount and currency. Eligible cross-currency Expenses are valued using an accepted historical reference rate for the Expense date; those without an available rate remain unresolved. Only the organizer can change this online after preview and confirmation. Open settlements or conflicts block the change. Any finalized settlement locks this currency permanently."}
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.group}>
           {journey ? (
             <Pressable
@@ -206,13 +228,6 @@ export default function CurrencyRoute() {
             </View>
           )}
         </View>
-        {journey ? (
-          <Text style={styles.currencyHelp}>
-            {chinese
-              ? "组织者在线预览并确认后可更改；未完成结算或冲突会阻止更改，最终结算后永久锁定。"
-              : "The organizer can change this online after a preview. Open settlements or conflicts block changes; final settlement locks it."}
-          </Text>
-        ) : null}
         {working ? <ActivityIndicator /> : null}
         {preview ? (
           <View style={styles.preview}>
@@ -344,7 +359,32 @@ const styles = StyleSheet.create({
     marginTop: 18,
     textTransform: "uppercase",
   },
-  currencyHelp: { color: "#475569", fontSize: 13, lineHeight: 19, marginTop: 9 },
+  headingRow: { alignItems: "center", flexDirection: "row", gap: 4 },
+  infoButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 7,
+    minHeight: 36,
+    minWidth: 36,
+  },
+  helpPopover: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#CBD5E1",
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    elevation: 6,
+    left: 16,
+    padding: 14,
+    position: "absolute",
+    right: 16,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    top: 50,
+    zIndex: 10,
+  },
+  helpText: { color: "#334155", fontSize: 14, lineHeight: 21 },
   group: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
   row: {
     alignItems: "center",

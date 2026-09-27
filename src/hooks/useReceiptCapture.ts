@@ -115,7 +115,7 @@ export function useReceiptCapture() {
     pickPhoto,
     pickDocument,
     review: (receipt: ReceiptAsset) =>
-      router.replace({
+      router.dismissTo({
         pathname: "/expenses/new",
         params: { journeyId, mode: "manual", receiptId: receipt.id },
       }),

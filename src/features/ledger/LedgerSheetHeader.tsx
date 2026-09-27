@@ -97,10 +97,10 @@ const styles = StyleSheet.create({
     color: "#0F766E",
     flex: 1,
     fontSize: 20,
-    fontWeight: "800",
+    fontWeight: "400",
     textAlign: "center",
   },
-  largeTitle: { color: "#0F766E", fontSize: 22, fontWeight: "800" },
+  largeTitle: { color: "#0F766E", fontSize: 22, fontWeight: "400" },
   actions: { flexDirection: "row", justifyContent: "space-between" },
   button: {
     alignItems: "center",

@@ -1,3 +1,4 @@
+import { router, Stack } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useReceiptCapture } from "@/hooks/useReceiptCapture";
@@ -10,6 +11,20 @@ export function ReceiptCaptureScreen() {
   );
   return (
     <ScrollView contentContainerStyle={styles.content}>
+      <Stack.Screen
+        options={{
+          headerTitle: scan ? "Scan receipt" : "Receipt",
+          headerLeft: () => (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.back()}
+              style={styles.close}
+            >
+              <Text style={styles.closeText}>Cancel</Text>
+            </Pressable>
+          ),
+        }}
+      />
       <Text accessibilityRole="header" style={styles.title}>
         {scan ? "Scan receipt" : "Attach receipt"}
       </Text>
@@ -59,6 +74,15 @@ function Action({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   content: { gap: 12, padding: 20 },
+  close: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
+  closeText: { color: "#0F766E", fontSize: 16, fontWeight: "700" },
   title: { color: "#0F172A", fontSize: 28, fontWeight: "800" },
   note: { color: "#475569", fontSize: 15, lineHeight: 21 },
   message: { color: "#0F766E", fontSize: 15, fontWeight: "700" },

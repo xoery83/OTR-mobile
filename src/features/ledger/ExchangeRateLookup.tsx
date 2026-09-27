@@ -152,16 +152,20 @@ export function ExchangeRateLookup({
               title="Reference date"
             />
             {dateOpen ? (
-              <DateTimePicker
-                display="spinner"
-                maximumDate={new Date()}
-                mode="date"
-                onChange={(_, value) => {
-                  if (value) setPendingDate(value);
-                }}
-                style={styles.dateWheel}
-                value={pendingDate}
-              />
+              <View style={styles.dateWheelContainer}>
+                <DateTimePicker
+                  display="spinner"
+                  maximumDate={new Date()}
+                  mode="date"
+                  onChange={(_, value) => {
+                    if (value) setPendingDate(value);
+                  }}
+                  style={styles.dateWheel}
+                  textColor="#0F172A"
+                  themeVariant="light"
+                  value={pendingDate}
+                />
+              </View>
             ) : null}
           </SafeAreaView>
         </View>
@@ -309,5 +313,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 22,
     overflow: "hidden",
   },
+  dateWheelContainer: { alignItems: "center", justifyContent: "center", minHeight: 280 },
   dateWheel: { height: 216, width: "100%" },
 });
