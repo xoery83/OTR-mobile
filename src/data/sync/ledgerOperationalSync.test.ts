@@ -55,6 +55,7 @@ vi.mock("./personalSettlementReviewCoordinator", () => ({
 
 /* eslint-disable import/first */
 import { runLedgerExpenseSync } from "./ledgerExpenseDemoCoordinator";
+import { runLedgerReceiptSync } from "./ledgerReceiptCoordinator";
 import {
   allowLedgerOperationalSync,
   kickLedgerOperationalSync,
@@ -69,6 +70,10 @@ import {
 describe("Ledger mutation sync kick", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(runLedgerExpenseSync).mockResolvedValue({
+      status: "syncing",
+      processedCount: 0,
+    });
     allowLedgerOperationalSync();
     mocks.openDatabase.mockResolvedValue({ getAllAsync: mocks.getAllAsync });
     mocks.requireActiveUserId.mockResolvedValue("user-a");
@@ -129,6 +134,22 @@ describe("Ledger mutation sync kick", () => {
       journeyIds: ["journey-a"],
     });
     unsubscribe();
+  });
+
+  it("waits for Expense sync before starting receipt upload", async () => {
+    let release!: () => void;
+    vi.mocked(runLedgerExpenseSync).mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = () => resolve({ status: "syncing", processedCount: 1 });
+      }) as never,
+    );
+
+    const run = runLedgerOperationalSync();
+    await vi.waitFor(() => expect(runLedgerExpenseSync).toHaveBeenCalledOnce());
+    expect(runLedgerReceiptSync).not.toHaveBeenCalled();
+    release();
+    await run;
+    expect(runLedgerReceiptSync).toHaveBeenCalledOnce();
   });
 
   it("does not recurse from a health-origin operational sync", async () => {

@@ -57,6 +57,14 @@ Ledger / Expenses:
   multilingual-ready category suggestion; unmatched titles use Other, and a
   manual category choice takes precedence. Receipt scanning remains available
   inside the form, with its original shown under optional attachments.
+- Expense Attachments & Receipt Scan 1.0 is defined in
+  `EXPENSE_ATTACHMENTS_RECEIPT_SCAN_1_0_DESIGN.md`. A New Expense may use
+  on-device receipt OCR offline to suggest editable draft fields; scanning
+  creates no durable upload before Save. An existing Expense may add, view,
+  and delete attachments but never run OCR. Each Expense supports at most three
+  attachments, including a scanned receipt. Upload failure never blocks the
+  locally saved Expense. Attachment bytes and storage usage belong to the
+  uploading user, while read access follows Expense/Journey authorization.
 - During travel, unresolved FX may have clearly approximate, offline-capable
   display amounts, spending totals and informational settlement positions from
   trusted cached reference rates. These never become accepted financial evidence

@@ -139,6 +139,101 @@ const correction = {
 } satisfies LedgerBootstrapResponse["corrections"][number];
 
 describe("Ledger read repository", () => {
+  it("keeps a pending local receipt tombstone when a stale active server change arrives", async () => {
+    const { db, writes } = database();
+    db.getFirstAsync = async (sql) =>
+      sql.includes("FROM ledger_receipt_assets")
+        ? ({
+            id: "local-receipt",
+            localUri: "file:///only-copy.jpg",
+            deletedAt: "2026-09-27T00:00:00Z",
+            localOwnerUserId: await activeUser(),
+            localDeletedByUserId: await activeUser(),
+            originalFilename: "synthetic.heic",
+            originalMimeType: "image/heic",
+            originalSizeBytes: 930000,
+            width: 2200,
+            height: 1650,
+          } as never)
+        : null;
+    await createLedgerReadRepository(db, activeUser).applyChanges(journeyId, {
+      changes: [
+        {
+          entityType: "RECEIPT",
+          entityId: "server-receipt",
+          revision: 1,
+          isTombstone: false,
+          aggregate: {
+            id: "server-receipt",
+            localId: "local-receipt",
+            journeyId,
+            expenseId,
+            objectPath: "private/path",
+            mimeType: "image/jpeg",
+            sizeBytes: 3,
+            sha256: "a".repeat(64),
+            uploadStatus: "UPLOADED",
+            ocrStatus: "PENDING",
+            ocrSuggestion: null,
+            createdAt: "now",
+            updatedAt: "now",
+            deletedAt: null,
+          },
+        },
+      ],
+      cursor: "cursor-2",
+      serverTime: "now",
+    } as never);
+    const receiptWrite = writes.find((write) =>
+      write.sql.includes("INTO ledger_receipt_assets"),
+    );
+    expect(receiptWrite?.params[15]).toBe("2026-09-27T00:00:00Z");
+    expect(receiptWrite?.params[16]).toBe(await activeUser());
+    expect(receiptWrite?.params[14]).toBe(await activeUser());
+    expect(receiptWrite?.params.slice(-5)).toEqual([
+      "synthetic.heic",
+      "image/heic",
+      930000,
+      2200,
+      1650,
+    ]);
+  });
+  it("applies another account's server tombstone to its local receipt projection", async () => {
+    const { db, writes } = database();
+    await createLedgerReadRepository(db, activeUser).applyChanges(journeyId, {
+      changes: [
+        {
+          entityType: "RECEIPT",
+          entityId: "server-receipt",
+          revision: 2,
+          isTombstone: false,
+          aggregate: {
+            id: "server-receipt",
+            localId: "uploader-local",
+            journeyId,
+            expenseId,
+            objectPath: "private/path",
+            mimeType: "image/jpeg",
+            sizeBytes: 3,
+            sha256: "a".repeat(64),
+            uploadStatus: "UPLOADED",
+            ocrStatus: "PENDING",
+            ocrSuggestion: null,
+            createdAt: "now",
+            updatedAt: "now",
+            deletedAt: "2026-09-27T01:00:00Z",
+          },
+        },
+      ],
+      cursor: "cursor-3",
+      serverTime: "now",
+    } as never);
+    const receiptWrite = writes.find((write) =>
+      write.sql.includes("INTO ledger_receipt_assets"),
+    );
+    expect(receiptWrite?.params[15]).toBe("2026-09-27T01:00:00Z");
+    expect(receiptWrite?.params[16]).toBeNull();
+  });
   it("applies bootstrap data and advances the cursor in one transaction", async () => {
     const { db, transactions, writes } = database();
     const response: LedgerBootstrapResponse = {

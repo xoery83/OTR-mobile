@@ -355,8 +355,25 @@ async function applyReceipt(
   journeyId: string,
   receipt: NonNullable<LedgerBootstrapResponse["receipts"]>[number],
 ) {
-  const existing = await database.getFirstAsync<{ id: string; localUri: string | null }>(
-    `SELECT id, local_uri AS localUri FROM ledger_receipt_assets WHERE journey_id = ? AND (id = ? OR server_id = ? OR id = ?)`,
+  const existing = await database.getFirstAsync<{
+    id: string;
+    localUri: string | null;
+    deletedAt: string | null;
+    localOwnerUserId: string | null;
+    localDeletedByUserId: string | null;
+    originalFilename: string | null;
+    originalMimeType: string | null;
+    originalSizeBytes: number | null;
+    width: number | null;
+    height: number | null;
+  }>(
+    `SELECT id, local_uri AS localUri, deleted_at AS deletedAt,
+      local_owner_user_id AS localOwnerUserId,
+      local_deleted_by_user_id AS localDeletedByUserId,
+      original_filename AS originalFilename, original_mime_type AS originalMimeType,
+      original_size_bytes AS originalSizeBytes, width, height
+      FROM ledger_receipt_assets
+     WHERE journey_id = ? AND (id = ? OR server_id = ? OR id = ?)`,
     journeyId,
     receipt.id,
     receipt.id,
@@ -373,8 +390,9 @@ async function applyReceipt(
     `INSERT OR REPLACE INTO ledger_receipt_assets (
     id, server_id, journey_id, expense_id, local_uri, mime_type, size_bytes, sha256,
     object_path, upload_status, ocr_status, ocr_suggestion_json, created_at, updated_at,
-    local_owner_user_id
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+    local_owner_user_id, deleted_at, local_deleted_by_user_id,
+    original_filename, original_mime_type, original_size_bytes, width, height
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     existing?.id ?? receipt.id,
     receipt.id,
     journeyId,
@@ -389,6 +407,14 @@ async function applyReceipt(
     receipt.ocrSuggestion ? JSON.stringify(receipt.ocrSuggestion) : null,
     receipt.createdAt,
     receipt.updatedAt,
+    existing?.localOwnerUserId ?? null,
+    receipt.deletedAt ?? existing?.deletedAt ?? null,
+    receipt.deletedAt ? null : (existing?.localDeletedByUserId ?? null),
+    existing?.originalFilename ?? null,
+    existing?.originalMimeType ?? null,
+    existing?.originalSizeBytes ?? null,
+    existing?.width ?? null,
+    existing?.height ?? null,
   );
 }
 

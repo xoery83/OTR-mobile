@@ -448,6 +448,11 @@ export type DevBackendGateway = {
     key: string,
     expenseId: string,
   ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
+  deleteExpenseReceipt(
+    userId: string,
+    tripId: string,
+    receiptId: string,
+  ): Promise<{ entity: ReceiptDto; idempotentReplay: boolean }>;
   listPersonalPaymentAttachments(
     userId: string,
     tripId: string,
@@ -668,6 +673,8 @@ async function mutateReceipt(request: Request, gateway: DevBackendGateway) {
   }
   if (!uuidPattern.test(receiptId))
     throw new HttpError(400, "INVALID_RECEIPT_ID", "The receipt id is invalid.");
+  if (!action && request.method === "DELETE")
+    return json(200, await gateway.deleteExpenseReceipt(user.id, tripId, receiptId));
   if (action === "content" && request.method === "PUT") {
     const length = Number(request.headers.get("content-length") ?? "0");
     if (length > 15 * 1024 * 1024)
@@ -1987,7 +1994,7 @@ export function createDevBackendHandler({
         route = "/v2/trips/:tripId/review-findings";
         response = await mutateLedgerReview(request, gateway);
       } else if (
-        ["POST", "PUT"].includes(request.method) &&
+        ["POST", "PUT", "DELETE"].includes(request.method) &&
         /\/v2\/trips\/[^/]+\/receipts/.test(url.pathname)
       ) {
         route = "/v2/trips/:tripId/receipts";

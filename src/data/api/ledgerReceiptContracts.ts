@@ -14,6 +14,7 @@ export const receiptSuggestionSchema = z.object({
 
 export const createReceiptRequestSchema = z.object({
   localId: z.string().trim().min(1).max(200),
+  expenseId: z.uuid().optional(),
   mimeType: z.enum(["image/jpeg", "image/png", "application/pdf"]),
   sizeBytes: z
     .number()
@@ -28,6 +29,7 @@ export const receiptSchema = z.object({
   localId: createReceiptRequestSchema.shape.localId,
   journeyId: z.uuid(),
   expenseId: z.uuid().nullable(),
+  deletedAt: z.string().nullable().optional(),
   objectPath: z.string().min(1),
   mimeType: createReceiptRequestSchema.shape.mimeType,
   sizeBytes: createReceiptRequestSchema.shape.sizeBytes,

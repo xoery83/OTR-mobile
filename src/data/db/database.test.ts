@@ -74,9 +74,12 @@ describe("SQLite migrations", () => {
     const account = migrations.find(({ id }) => id === 19)!;
     expect(account.sql).toContain("owner_user_id");
     expect(account.sql).toContain("local_owner_user_id");
+    expect(migrations.find(({ id }) => id === 37)!.sql).toContain(
+      "ledger_my_spending_facts",
+    );
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(37);
-    expect(latest.sql).toContain("ledger_my_spending_facts");
+    expect(latest.id).toBe(39);
+    expect(latest.sql).toContain("original_mime_type");
     expect(migrations[28].sql).toContain("coverage_json");
     expect(migrations[29].sql).toContain("correction_source_expense_id");
     expect(migrations[30].sql).toContain("pending_review_state");

@@ -15,10 +15,14 @@ import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLe
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
+import { receiptFileEvidence } from "@/data/files/receiptFileStore";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
+import { openReceiptAsset } from "@/data/operations/openReceiptAsset";
+import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
+import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
 
 import { ExpenseFxDetails } from "./ExpenseFxDetails";
 import type { DisplayEstimate } from "./displayEstimate";
@@ -30,7 +34,9 @@ export function LedgerExpenseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
   const [payerName, setPayerName] = useState("Traveller");
-  const [receiptCount, setReceiptCount] = useState(0);
+  const [receipts, setReceipts] = useState<ReceiptAsset[]>([]);
+  const [debugMode, setDebugMode] = useState(false);
+  const [attachmentMessage, setAttachmentMessage] = useState<string | null>(null);
   const [estimate, setEstimate] = useState<DisplayEstimate | null>(null);
   const [hasOpenConflict, setHasOpenConflict] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -44,8 +50,41 @@ export function LedgerExpenseDetailScreen() {
     currency: "",
     scale: 2,
     canChange: false,
+    canAttach: false,
     locked: true,
   });
+  useEffect(() => {
+    void getDefaultLedgerReportingRepository()
+      .then((repository) => repository.getPreferences())
+      .then((preferences) => setDebugMode(preferences.debugMode))
+      .catch(() => undefined);
+  }, []);
+
+  const showReceiptDiagnostic = async (receipt: ReceiptAsset) => {
+    const operation = await (
+      await getDefaultLedgerReceiptRepository()
+    ).getUploadDiagnostic(receipt.id);
+    const file = receipt.localUri
+      ? await receiptFileEvidence(receipt.localUri)
+      : { exists: false as const };
+    const fileLine = file.exists
+      ? `${file.basename} · ${file.mimeType} · ${file.sizeBytes} B · SHA ${file.sha256.slice(0, 16)}`
+      : "Missing local file";
+    Alert.alert(
+      "Receipt upload diagnostic",
+      [
+        `Error ${operation?.failureCategory ?? "none"}/${operation?.errorCode ?? "none"}: ${operation?.errorMessage ?? "none"}`,
+        `Operation ${operation?.id ?? "none"} · ${operation?.status ?? "none"} · attempts ${operation?.attemptCount ?? 0}`,
+        `Asset ${receipt.id}`,
+        `Expense ${receipt.expenseId ?? "none"}`,
+        `Expense sync ${expense?.syncStatus ?? "unknown"} · server ${expense?.serverId ?? "none"}`,
+        `Stored ${receipt.mimeType} · ${receipt.sizeBytes} B · SHA ${receipt.sha256.slice(0, 16)}`,
+        `Source ${receipt.originalMimeType ?? "unknown"} · ${receipt.originalSizeBytes ?? "unknown"} B`,
+        `File ${fileLine}`,
+        `Request ${operation?.requestId ?? "none"}`,
+      ].join("\n"),
+    );
+  };
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -54,7 +93,15 @@ export function LedgerExpenseDetailScreen() {
           .then((repository) => repository.getExpense(id))
           .then(async (nextExpense) => {
             if (!nextExpense)
-              return [null, false, "Traveller", 0, null, 0, null] as const;
+              return [
+                null,
+                false,
+                "Traveller",
+                [] as ReceiptAsset[],
+                null,
+                0,
+                null,
+              ] as const;
             const [
               nextHasOpenConflict,
               members,
@@ -105,7 +152,11 @@ export function LedgerExpenseDetailScreen() {
               nextHasOpenConflict,
               members.find((member) => member.id === nextExpense.payerMemberId)
                 ?.displayName ?? "Traveller",
-              receipts.filter((receipt) => receipt.expenseId === nextExpense.id).length,
+              receipts.filter(
+                (receipt) =>
+                  receipt.expenseId === nextExpense.id ||
+                  receipt.expenseId === nextExpense.serverId,
+              ),
               estimates.get(nextExpense.id) ?? null,
               findings.filter(
                 (finding) =>
@@ -122,6 +173,7 @@ export function LedgerExpenseDetailScreen() {
                   (actor.role === "owner" ||
                     actor.memberId === nextExpense.creatorMemberId),
                 ),
+                canAttach: actor?.role === "owner" || actor?.role === "group_member",
                 locked: settlement,
               },
             ] as const;
@@ -131,7 +183,7 @@ export function LedgerExpenseDetailScreen() {
               nextExpense,
               nextHasOpenConflict,
               nextPayerName,
-              nextReceiptCount,
+              nextReceipts,
               nextEstimate,
               nextReviewFlagCount,
               access,
@@ -140,7 +192,7 @@ export function LedgerExpenseDetailScreen() {
               setExpense(nextExpense);
               setHasOpenConflict(nextHasOpenConflict);
               setPayerName(nextPayerName);
-              setReceiptCount(nextReceiptCount);
+              setReceipts(nextReceipts);
               setEstimate(nextEstimate);
               setReviewFlagCount(nextReviewFlagCount);
               if (access) setFxAccess(access);
@@ -309,6 +361,36 @@ export function LedgerExpenseDetailScreen() {
       ],
       "plain-text",
     );
+  const removeAttachment = (receipt: ReceiptAsset) =>
+    Alert.alert(
+      "Remove attachment?",
+      "The attachment will be hidden immediately. Its stored copy is retained for recovery.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            void getDefaultLedgerReceiptRepository()
+              .then((repository) => repository.deleteExpenseAttachment(receipt.id))
+              .then(() => {
+                setReceipts((current) =>
+                  current.filter((item) => item.id !== receipt.id),
+                );
+                setAttachmentMessage("Attachment removed on this iPhone · sync pending.");
+                kickLedgerOperationalSync();
+              })
+              .catch((error) =>
+                setAttachmentMessage(
+                  error instanceof Error
+                    ? error.message
+                    : "Attachment could not be removed.",
+                ),
+              );
+          },
+        },
+      ],
+    );
   return (
     <ScrollView contentContainerStyle={styles.content}>
       {expense.syncStatus !== "SYNCED" ? (
@@ -343,7 +425,9 @@ export function LedgerExpenseDetailScreen() {
             <Text style={styles.actionText}>Edit Expense</Text>
           </Pressable>
         ) : null}
-        {!fxAccess.locked ? (
+        {!fxAccess.locked &&
+        fxAccess.canAttach &&
+        receipts.length < MAX_EXPENSE_ATTACHMENTS ? (
           <Pressable
             accessibilityRole="button"
             onPress={() =>
@@ -354,7 +438,7 @@ export function LedgerExpenseDetailScreen() {
             }
             style={styles.action}
           >
-            <Text style={styles.actionText}>Attach Receipt</Text>
+            <Text style={styles.actionText}>Add attachment</Text>
           </Pressable>
         ) : null}
       </View>
@@ -425,10 +509,69 @@ export function LedgerExpenseDetailScreen() {
           <Text style={styles.meta}>{expense.description}</Text>
         ) : null}
         <Text style={styles.meta}>
-          {receiptCount
-            ? `${receiptCount} ${receiptCount === 1 ? "receipt" : "receipts"} attached`
+          {receipts.length
+            ? `${receipts.length} ${receipts.length === 1 ? "attachment" : "attachments"}`
             : "No receipt attached"}
         </Text>
+      </Section>
+      <Section label="ATTACHMENTS">
+        {receipts.map((receipt, index) => (
+          <View key={receipt.id} style={styles.evidence}>
+            <Text style={styles.splitName}>Attachment {index + 1}</Text>
+            <Text style={styles.meta}>
+              {receipt.uploadStatus === "UPLOADED"
+                ? "Available"
+                : receipt.uploadStatus === "FAILED"
+                  ? "Upload failed"
+                  : "Saved locally · upload pending"}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              style={styles.action}
+              onPress={() =>
+                void openReceiptAsset(receipt).catch((error) =>
+                  setAttachmentMessage(
+                    error instanceof Error
+                      ? error.message
+                      : "Attachment could not be opened.",
+                  ),
+                )
+              }
+            >
+              <Text style={styles.actionText}>Open attachment {index + 1}</Text>
+            </Pressable>
+            {debugMode ? (
+              <Pressable
+                accessibilityRole="button"
+                style={styles.action}
+                onPress={() =>
+                  void showReceiptDiagnostic(receipt).catch((error) =>
+                    Alert.alert(
+                      "Receipt diagnostic unavailable",
+                      error instanceof Error ? error.message : "Unknown error",
+                    ),
+                  )
+                }
+              >
+                <Text style={styles.actionText}>Upload diagnostic {index + 1}</Text>
+              </Pressable>
+            ) : null}
+            {fxAccess.canAttach && !fxAccess.locked ? (
+              <Pressable
+                accessibilityRole="button"
+                style={styles.action}
+                onPress={() => removeAttachment(receipt)}
+              >
+                <Text style={styles.actionText}>Remove attachment {index + 1}</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ))}
+        {attachmentMessage ? (
+          <Text accessibilityLiveRegion="polite" style={styles.error}>
+            {attachmentMessage}
+          </Text>
+        ) : null}
       </Section>
       <Section label="EXACT SPLITS">
         {expense.splits.map((split) => (

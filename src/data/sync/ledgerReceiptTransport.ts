@@ -110,6 +110,15 @@ export function createLedgerReceiptTransport() {
         { "Idempotency-Key": key },
       );
     },
+    async deleteExpenseReceipt(journeyId: string, receiptId: string, key: string) {
+      const { client } = await authenticated();
+      return client.delete(
+        `/v2/trips/${journeyId}/receipts/${receiptId}`,
+        {},
+        receiptMutationResponseSchema,
+        { "Idempotency-Key": key },
+      );
+    },
     async linkPersonalPayment(
       journeyId: string,
       receiptId: string,

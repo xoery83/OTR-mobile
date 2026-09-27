@@ -5,6 +5,11 @@ import {
   type LedgerExpenseDto,
 } from "@/data/api/ledgerReadContracts";
 import { createLocalId } from "@/domain/localId";
+import { assertExpenseAttachmentDrafts } from "@/domain/ledger/attachments";
+import {
+  insertExpenseReceiptInTransaction,
+  type PreparedExpenseReceipt,
+} from "./ledgerReceiptRepository";
 import { allocateSettlementFromOriginal } from "@/domain/ledger/allocation";
 import { assertMoney } from "@/domain/ledger/money";
 import { previewValuation } from "@/domain/ledger/valuation";
@@ -67,7 +72,11 @@ export type LedgerExpense = ExpenseAggregate & {
 };
 
 export type LedgerExpenseRepository = {
-  createExpense(command: LedgerExpenseCommand): Promise<LedgerExpense>;
+  createExpense(
+    command: LedgerExpenseCommand,
+    receipts?: readonly PreparedExpenseReceipt[],
+    expenseDraftId?: string,
+  ): Promise<LedgerExpense>;
   updateExpense(
     id: string,
     command: LedgerExpenseCommand,
@@ -208,11 +217,69 @@ export function createLedgerExpenseRepository(
   getActiveUserId: () => Promise<string> = defaultGetActiveUserId,
 ): LedgerExpenseRepository {
   return {
-    async createExpense(command) {
+    async createExpense(command, receipts = [], expenseDraftId) {
       assertReplayFixtureWritable(command.journeyId);
+      assertExpenseAttachmentDrafts(receipts.map((receipt) => receipt.id));
       const now = new Date().toISOString();
       const userId = await getActiveUserId();
-      const expense = buildLocalExpense(command, createLocalId("ledger-expense"), 1, now);
+      if (expenseDraftId) {
+        const saved = await this.getExpense(expenseDraftId);
+        if (saved) {
+          if (saved.journeyId !== command.journeyId)
+            throw new Error("Expense draft belongs to another Journey.");
+          const rows = await database.getAllAsync<{ id: string; sha256: string }>(
+            `SELECT id, sha256 FROM ledger_receipt_assets WHERE expense_id = ?`,
+            saved.id,
+          );
+          if (
+            rows.length !== receipts.length ||
+            receipts.some(
+              (receipt) =>
+                !rows.some(
+                  (row) => row.id === receipt.id && row.sha256 === receipt.sha256,
+                ),
+            )
+          )
+            throw new Error("Expense draft attachments changed after Save.");
+          return saved;
+        }
+      }
+      for (const receipt of receipts) {
+        const existing = await database.getFirstAsync<{
+          expenseId: string;
+          journeyId: string;
+          sha256: string;
+          localOwnerUserId: string | null;
+        }>(
+          `SELECT expense_id AS expenseId, journey_id AS journeyId, sha256,
+           local_owner_user_id AS localOwnerUserId FROM ledger_receipt_assets
+           WHERE id = ? AND EXISTS (
+             SELECT 1 FROM ledger_asset_operations op WHERE op.asset_id = ledger_receipt_assets.id
+               AND op.operation_type = 'UPLOAD_RECEIPT' AND op.owner_user_id = ?
+           )`,
+          receipt.id,
+          userId,
+        );
+        if (existing) {
+          if (
+            existing.journeyId !== command.journeyId ||
+            existing.sha256 !== receipt.sha256 ||
+            (existing.localOwnerUserId && existing.localOwnerUserId !== userId)
+          )
+            throw new Error("Receipt draft was already used by another Expense.");
+          if (expenseDraftId && existing.expenseId !== expenseDraftId)
+            throw new Error("Receipt draft was already used by another Expense.");
+          if (!expenseDraftId && receipts.length === 1)
+            return requireExpense(database, existing.expenseId, userId);
+          throw new Error("Receipt draft was already used by another Expense.");
+        }
+      }
+      const expense = buildLocalExpense(
+        command,
+        expenseDraftId ?? createLocalId("ledger-expense"),
+        1,
+        now,
+      );
       assertCommand(expense);
       await database.withTransactionAsync(async () => {
         await insertExpenseAggregate(database, expense, "CREATED", null, userId);
@@ -225,6 +292,15 @@ export function createLedgerExpenseRepository(
           userId,
           expense,
         );
+        for (const receipt of receipts)
+          await insertExpenseReceiptInTransaction(
+            database,
+            receipt,
+            expense.id,
+            command.journeyId,
+            userId,
+            now,
+          );
       });
       return expense;
     },

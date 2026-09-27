@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "@/data/api/client";
 import type { PersonalSettlementPaymentDto } from "@/data/api/ledgerSettlementContracts";
@@ -12,6 +12,10 @@ import {
   personalPaymentOperations,
   type LedgerPersonalPaymentDatabase,
 } from "./ledgerPersonalPaymentRepository";
+
+vi.mock("@/data/sync/ledgerQueueActivity", () => ({
+  announceLedgerQueueWorkAvailable: vi.fn(),
+}));
 
 const journeyA = "10000000-0000-4000-8000-000000000001";
 const journeyB = "10000000-0000-4000-8000-000000000002";

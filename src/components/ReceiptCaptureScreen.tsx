@@ -2,18 +2,17 @@ import { router, Stack } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useReceiptCapture } from "@/hooks/useReceiptCapture";
+import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
 
 export function ReceiptCaptureScreen() {
-  const { scan, receipts, message, pickPhoto, pickDocument, review, retry } =
+  const { expenseId, scan, receipts, message, pickPhoto, pickDocument } =
     useReceiptCapture();
-  const failed = receipts.some(
-    (receipt) => receipt.uploadStatus === "FAILED" || receipt.ocrStatus === "FAILED",
-  );
+  const full = Boolean(expenseId) && receipts.length >= MAX_EXPENSE_ATTACHMENTS;
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Stack.Screen
         options={{
-          headerTitle: scan ? "Scan receipt" : "Receipt",
+          headerTitle: scan ? "Receipt draft" : "Receipt",
           headerLeft: () => (
             <Pressable
               accessibilityRole="button"
@@ -26,47 +25,67 @@ export function ReceiptCaptureScreen() {
         }}
       />
       <Text accessibilityRole="header" style={styles.title}>
-        {scan ? "Scan receipt" : "Attach receipt"}
+        {scan ? "Receipt draft" : "Attach receipt"}
       </Text>
-      <Text style={styles.note}>
-        The original is stored safely on this iPhone before any network work begins.
-      </Text>
-      <Action label="Take photo" onPress={() => void pickPhoto(true)} />
-      <Action label="Choose photo" onPress={() => void pickPhoto(false)} />
-      <Action label="Choose file" onPress={() => void pickDocument()} />
-      {scan && failed ? (
-        <Action label="Retry upload and scan" onPress={() => void retry()} />
-      ) : null}
-      {message ? <Text style={styles.message}>{message}</Text> : null}
-      {receipts.map((receipt) => (
-        <View key={receipt.id} style={styles.card}>
-          <Text style={styles.cardTitle}>
-            {receipt.uploadStatus === "UPLOADED" ? "Receipt uploaded" : "Saved locally"}
+      {scan ? (
+        <>
+          <Text style={styles.note}>Add a temporary receipt from New Expense.</Text>
+          <Action label="Back" onPress={() => router.back()} />
+        </>
+      ) : (
+        <>
+          <Text style={styles.note}>
+            A safe local copy is saved on this iPhone before any network work begins.
           </Text>
-          {scan && receipt.ocrStatus === "FAILED" ? (
-            <Text style={styles.error}>
-              Scan unavailable. The receipt is safe; retry or continue manually.
-            </Text>
-          ) : null}
-          {scan && receipt.ocrSuggestion ? (
-            <>
-              <Text style={styles.note}>
-                Suggested: {receipt.ocrSuggestion.title ?? "Merchant needed"}
+          <Action
+            label="Take photo"
+            disabled={full}
+            onPress={() => void pickPhoto(true)}
+          />
+          <Action
+            label="Choose photo"
+            disabled={full}
+            onPress={() => void pickPhoto(false)}
+          />
+          <Action
+            label="Choose file"
+            disabled={full}
+            onPress={() => void pickDocument()}
+          />
+          {full ? <Text style={styles.note}>Maximum 3 attachments.</Text> : null}
+          {message ? <Text style={styles.message}>{message}</Text> : null}
+          {receipts.map((receipt) => (
+            <View key={receipt.id} style={styles.card}>
+              <Text style={styles.cardTitle}>
+                {receipt.uploadStatus === "UPLOADED"
+                  ? "Receipt uploaded"
+                  : "Saved locally"}
               </Text>
-              <Action label="Review Expense" onPress={() => review(receipt)} />
-            </>
-          ) : scan ? (
-            <Action label="Continue manually" onPress={() => review(receipt)} />
-          ) : null}
-        </View>
-      ))}
+            </View>
+          ))}
+        </>
+      )}
     </ScrollView>
   );
 }
 
-function Action({ label, onPress }: { label: string; onPress: () => void }) {
+function Action({
+  label,
+  onPress,
+  disabled = false,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+}) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.action}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={styles.action}
+    >
       <Text style={styles.actionText}>{label}</Text>
     </Pressable>
   );

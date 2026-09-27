@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { pushReceiptOperation } from "./ledgerReceiptSyncWorker";
+import { verifyReceiptFile } from "@/data/files/receiptFileStore";
+vi.mock("@/data/files/receiptFileStore", () => ({
+  verifyReceiptFile: vi.fn(async () => {}),
+}));
 
 const asset = {
   id: "local-receipt",
@@ -20,6 +24,230 @@ const asset = {
 };
 
 describe("receipt asset worker", () => {
+  it("does not create remote metadata when the local file fails integrity verification", async () => {
+    vi.mocked(verifyReceiptFile).mockRejectedValueOnce(
+      new Error("receipt bytes changed"),
+    );
+    const receipts = {
+      getReceipt: vi.fn(async () => asset),
+      markUploading: vi.fn(),
+      markUploadFailed: vi.fn(),
+    };
+    const transport = { create: vi.fn(), upload: vi.fn() };
+    await expect(
+      pushReceiptOperation(
+        {
+          id: "op",
+          ownerUserId: "user-a",
+          journeyId: "journey",
+          assetId: asset.id,
+          operationType: "UPLOAD_RECEIPT",
+          idempotencyKey: "stable",
+          status: "PENDING",
+          attemptCount: 0,
+          nextAttemptAt: null,
+        },
+        receipts as never,
+        {} as never,
+        transport as never,
+      ),
+    ).rejects.toThrow("receipt bytes changed");
+    expect(transport.create).not.toHaveBeenCalled();
+    expect(transport.upload).not.toHaveBeenCalled();
+    expect(receipts.markUploadFailed).toHaveBeenCalledWith(asset.id);
+  });
+
+  it("does not upload or relink a locally deleted Expense attachment", async () => {
+    const receipts = { getReceipt: vi.fn(async () => ({ ...asset, deletedAt: "now" })) };
+    const transport = { create: vi.fn(), upload: vi.fn(), link: vi.fn() };
+    for (const operationType of ["UPLOAD_RECEIPT", "LINK_RECEIPT"] as const)
+      await pushReceiptOperation(
+        {
+          id: "op",
+          ownerUserId: "user-a",
+          journeyId: "journey",
+          assetId: asset.id,
+          operationType,
+          idempotencyKey: "stable",
+          status: "PENDING",
+          attemptCount: 0,
+          nextAttemptAt: null,
+        },
+        receipts as never,
+        {} as never,
+        transport as never,
+      );
+    expect(transport.create).not.toHaveBeenCalled();
+    expect(transport.upload).not.toHaveBeenCalled();
+    expect(transport.link).not.toHaveBeenCalled();
+  });
+
+  it("retries deletion until an in-flight upload settles, then tombstones remotely", async () => {
+    let processing = true;
+    const receipts = {
+      getReceipt: vi.fn(async () => ({
+        ...asset,
+        deletedAt: "now",
+        serverId: null as string | null,
+      })),
+      isUploadProcessing: vi.fn(async () => processing),
+      reconcileDeletion: vi.fn(),
+    };
+    const transport = {
+      deleteExpenseReceipt: vi.fn(async () => ({ entity: { deletedAt: "now" } })),
+    };
+    const operation = {
+      id: "delete",
+      ownerUserId: "user-a",
+      journeyId: "journey",
+      assetId: asset.id,
+      operationType: "DELETE_RECEIPT" as const,
+      idempotencyKey: "stable",
+      status: "PENDING" as const,
+      attemptCount: 0,
+      nextAttemptAt: null,
+    };
+    await expect(
+      pushReceiptOperation(operation, receipts as never, {} as never, transport as never),
+    ).rejects.toThrow("in progress");
+    processing = false;
+    vi.mocked(receipts.getReceipt).mockResolvedValue({
+      ...asset,
+      deletedAt: "now",
+      serverId: "server-receipt",
+    });
+    await pushReceiptOperation(
+      operation,
+      receipts as never,
+      {} as never,
+      transport as never,
+    );
+    expect(transport.deleteExpenseReceipt).toHaveBeenCalledWith(
+      "journey",
+      "server-receipt",
+      "stable",
+    );
+  });
+  it("waits for the server Expense before creating an attached remote object", async () => {
+    const attached = { ...asset, expenseId: "local-expense" };
+    const receipts = {
+      getReceipt: vi.fn(async () => attached),
+      hasPendingExpenseDeletion: vi.fn(async () => false),
+      markUploading: vi.fn(),
+      markUploadFailed: vi.fn(),
+    };
+    const expenses = { getExpense: vi.fn(async () => ({ serverId: null })) };
+    const transport = { create: vi.fn(), upload: vi.fn() };
+    await expect(
+      pushReceiptOperation(
+        {
+          id: "op",
+          ownerUserId: "user-a",
+          journeyId: "journey",
+          assetId: asset.id,
+          operationType: "UPLOAD_RECEIPT",
+          idempotencyKey: "stable",
+          status: "PENDING",
+          attemptCount: 0,
+          nextAttemptAt: null,
+        },
+        receipts as never,
+        expenses as never,
+        transport as never,
+      ),
+    ).rejects.toThrow("sync before receipt upload");
+    expect(transport.create).not.toHaveBeenCalled();
+    expect(transport.upload).not.toHaveBeenCalled();
+  });
+
+  it("waits for a tombstone before uploading a replacement third attachment", async () => {
+    const receipts = {
+      getReceipt: vi.fn(async () => ({ ...asset, expenseId: "local-expense" })),
+      hasPendingExpenseDeletion: vi.fn(async () => true),
+      markUploading: vi.fn(),
+    };
+    const transport = { create: vi.fn(), upload: vi.fn() };
+    await expect(
+      pushReceiptOperation(
+        {
+          id: "replacement",
+          ownerUserId: "user-a",
+          journeyId: "journey",
+          assetId: asset.id,
+          operationType: "UPLOAD_RECEIPT",
+          idempotencyKey: "stable",
+          status: "PENDING",
+          attemptCount: 0,
+          nextAttemptAt: null,
+        },
+        receipts as never,
+        {} as never,
+        transport as never,
+      ),
+    ).rejects.toThrow("deletion must sync");
+    expect(transport.create).not.toHaveBeenCalled();
+    expect(transport.upload).not.toHaveBeenCalled();
+  });
+
+  it("claims the Expense slot in metadata creation before binary upload", async () => {
+    const attached = {
+      ...asset,
+      expenseId: "local-expense",
+      originalMimeType: "image/heic",
+      originalSizeBytes: 930_000,
+    };
+    let current = {
+      ...attached,
+      serverId: null as string | null,
+      objectPath: null as string | null,
+    };
+    const receipts = {
+      getReceipt: vi.fn(async () => current),
+      hasPendingExpenseDeletion: vi.fn(async () => false),
+      markUploading: vi.fn(),
+      markUploadFailed: vi.fn(),
+      reconcile: vi.fn(async () => {
+        current = { ...current, serverId: "remote-receipt", objectPath: "path" };
+      }),
+      updateLocalUri: vi.fn(),
+    };
+    const expenses = { getExpense: vi.fn(async () => ({ serverId: "remote-expense" })) };
+    const entity = {
+      ...asset,
+      id: "remote-receipt",
+      expenseId: "remote-expense",
+      objectPath: "path",
+    };
+    const transport = {
+      create: vi.fn(async () => ({ entity })),
+      upload: vi.fn(async () => asset.localUri),
+      complete: vi.fn(async () => ({ entity })),
+    };
+    await pushReceiptOperation(
+      {
+        id: "op",
+        ownerUserId: "user-a",
+        journeyId: "journey",
+        assetId: asset.id,
+        operationType: "UPLOAD_RECEIPT",
+        idempotencyKey: "stable",
+        status: "PENDING",
+        attemptCount: 0,
+        nextAttemptAt: null,
+      },
+      receipts as never,
+      expenses as never,
+      transport as never,
+    );
+    expect(transport.create).toHaveBeenCalledWith("journey", "stable", {
+      localId: asset.id,
+      expenseId: "remote-expense",
+      mimeType: "image/jpeg",
+      sizeBytes: asset.sizeBytes,
+      sha256: asset.sha256,
+    });
+    expect(transport.upload).toHaveBeenCalledTimes(1);
+  });
   it("uploads and completes with stable identity without touching Expense mutation", async () => {
     let current = asset as typeof asset & {
       serverId: string | null;

@@ -4,6 +4,7 @@ import type {
   createLedgerReceiptRepository,
 } from "@/data/repositories/ledgerReceiptRepository";
 import type { createLedgerReceiptTransport } from "./ledgerReceiptTransport";
+import { verifyReceiptFile } from "@/data/files/receiptFileStore";
 
 export async function pushReceiptOperation(
   operation: AssetOperation,
@@ -13,14 +14,41 @@ export async function pushReceiptOperation(
 ) {
   const asset = await receipts.getReceipt(operation.assetId);
   if (!asset) throw new Error("Receipt is missing from local storage.");
+  if (operation.operationType === "DELETE_RECEIPT") {
+    if (!asset.serverId && (await receipts.isUploadProcessing(asset.id)))
+      throw new Error("Receipt upload is still in progress.");
+    if (asset.serverId) {
+      const response = await transport.deleteExpenseReceipt(
+        asset.journeyId,
+        asset.serverId,
+        operation.idempotencyKey,
+      );
+      await receipts.reconcileDeletion(asset.id, response.entity.deletedAt ?? null);
+    }
+    return;
+  }
+  if (asset.deletedAt) return;
 
   if (operation.operationType === "UPLOAD_RECEIPT") {
+    if (asset.expenseId && (await receipts.hasPendingExpenseDeletion(asset.expenseId)))
+      throw new Error("Expense attachment deletion must sync before replacement upload.");
     await receipts.markUploading(asset.id);
     try {
+      const expense = asset.expenseId ? await expenses.getExpense(asset.expenseId) : null;
+      if (asset.expenseId && !expense?.serverId)
+        throw new Error("Expense must sync before receipt upload.");
+      if (!asset.localUri) throw new Error("Local receipt file is unavailable.");
+      await verifyReceiptFile({
+        localUri: asset.localUri,
+        mimeType: asset.mimeType,
+        sizeBytes: asset.sizeBytes,
+        sha256: asset.sha256,
+      });
       const created = asset.serverId
         ? null
         : await transport.create(asset.journeyId, operation.idempotencyKey, {
             localId: asset.id,
+            ...(expense?.serverId ? { expenseId: expense.serverId } : {}),
             mimeType: asset.mimeType,
             sizeBytes: asset.sizeBytes,
             sha256: asset.sha256,

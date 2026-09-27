@@ -5,6 +5,11 @@ import { summarizeMyLedgerSnapshot, type LightweightSnapshot } from "./myLedgerS
 
 import { createFrankfurterRateProvider } from "./frankfurterRateProvider";
 import {
+  createSupabaseAttachmentStorageProvider,
+  resolveAttachmentStorageProvider,
+  SUPABASE_ATTACHMENT_PROVIDER,
+} from "./attachmentStorageProvider";
+import {
   fetchTrustedRateQuote,
   calendarDistance,
   historicalRatePolicyVersion,
@@ -1474,22 +1479,8 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
     uploadReceiptContent(userId, tripId, receiptId, bytes, mimeType) {
       return uploadReceiptContent(service, userId, tripId, receiptId, bytes, mimeType);
     },
-    async downloadReceiptContent(userId, tripId, receiptId) {
-      const row = await readDownloadableReceipt(service, userId, tripId, receiptId);
-      if (row.upload_status !== "UPLOADED" || !row.object_path)
-        throw new BackendError(
-          409,
-          "RECEIPT_NOT_DOWNLOADABLE",
-          "Receipt content is not canonical.",
-        );
-      const result = await service.storage
-        .from("ledger-receipts")
-        .download(String(row.object_path));
-      if (result.error) throw new Error("Supabase Dev receipt download failed.");
-      return {
-        bytes: new Uint8Array(await result.data.arrayBuffer()),
-        mimeType: String(row.mime_type),
-      };
+    downloadReceiptContent(userId, tripId, receiptId) {
+      return downloadReceiptContent(service, userId, tripId, receiptId);
     },
 
     completeReceipt(userId, tripId, receiptId, key, input) {
@@ -1498,6 +1489,10 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 
     linkReceipt(userId, tripId, receiptId, key, expenseId) {
       return linkReceipt(service, userId, tripId, receiptId, key, expenseId);
+    },
+
+    deleteExpenseReceipt(userId, tripId, receiptId) {
+      return deleteExpenseReceipt(service, tripId, receiptId);
     },
 
     listPersonalPaymentAttachments(userId, tripId, paymentId) {
@@ -1594,7 +1589,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
 }
 
 const receiptColumns =
-  "id, journey_id, expense_id, local_id, created_by, object_path, mime_type, size_bytes, sha256, upload_status, ocr_status, ocr_suggestion, created_at, updated_at";
+  "id, journey_id, expense_id, deleted_at, local_id, created_by, storage_provider, object_path, mime_type, size_bytes, sha256, upload_status, ocr_status, ocr_suggestion, created_at, updated_at";
 
 function receiptRowToDto(row: Record<string, unknown>): ReceiptDto {
   return {
@@ -1602,6 +1597,7 @@ function receiptRowToDto(row: Record<string, unknown>): ReceiptDto {
     localId: String(row.local_id),
     journeyId: String(row.journey_id),
     expenseId: row.expense_id ? String(row.expense_id) : null,
+    deletedAt: row.deleted_at ? String(row.deleted_at) : null,
     objectPath: String(row.object_path),
     mimeType: row.mime_type as ReceiptDto["mimeType"],
     sizeBytes: Number(row.size_bytes),
@@ -1654,10 +1650,12 @@ async function readReceipt(
   if (result.error) throw new Error("Supabase Dev receipt lookup failed.");
   if (!result.data)
     throw new BackendError(404, "ENTITY_NOT_FOUND", "The receipt does not exist.");
+  if (result.data.deleted_at)
+    throw new BackendError(409, "EXPENSE_ATTACHMENT_DELETED", "Receipt is deleted.");
   return result.data as Record<string, unknown>;
 }
 
-async function readDownloadableReceipt(
+export async function readDownloadableReceipt(
   service: SupabaseClient,
   userId: string,
   tripId: string,
@@ -1671,6 +1669,8 @@ async function readDownloadableReceipt(
     .maybeSingle();
   if (result.error) throw new Error("Supabase Dev receipt lookup failed.");
   if (!result.data)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "The receipt does not exist.");
+  if (result.data.deleted_at)
     throw new BackendError(404, "ENTITY_NOT_FOUND", "The receipt does not exist.");
   const link = await service
     .from("personal_settlement_payment_attachments")
@@ -1688,6 +1688,33 @@ async function readDownloadableReceipt(
     if (!allowed.error && allowed.data === true)
       return result.data as Record<string, unknown>;
   }
+  if (result.data.expense_id) {
+    const [creator, legacy, member] = await Promise.all([
+      service
+        .from("trips")
+        .select("id")
+        .eq("id", tripId)
+        .eq("created_by", userId)
+        .limit(1),
+      service
+        .from("trip_members")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", userId)
+        .limit(1),
+      service
+        .from("journey_members")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", userId)
+        .eq("status", "linked")
+        .limit(1),
+    ]);
+    if (creator.error || legacy.error || member.error)
+      throw new Error("Supabase Dev receipt membership lookup failed.");
+    if (creator.data.length || legacy.data.length || member.data.length)
+      return result.data as Record<string, unknown>;
+  }
   if (String(result.data.created_by) === userId) {
     const current = await service
       .from("journey_members")
@@ -1702,7 +1729,30 @@ async function readDownloadableReceipt(
   throw new BackendError(403, "RECEIPT_READ_FORBIDDEN", "Receipt access is forbidden.");
 }
 
-async function createReceipt(
+export async function downloadReceiptContent(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  receiptId: string,
+) {
+  const row = await readDownloadableReceipt(service, userId, tripId, receiptId);
+  if (row.upload_status !== "UPLOADED" || !row.object_path)
+    throw new BackendError(
+      409,
+      "RECEIPT_NOT_DOWNLOADABLE",
+      "Receipt content is not canonical.",
+    );
+  const storage = resolveAttachmentStorageProvider(
+    row.storage_provider,
+    createSupabaseAttachmentStorageProvider(service),
+  );
+  return {
+    bytes: await storage.read(String(row.object_path)),
+    mimeType: String(row.mime_type),
+  };
+}
+
+export async function createReceipt(
   service: SupabaseClient,
   userId: string,
   tripId: string,
@@ -1727,13 +1777,16 @@ async function createReceipt(
   }
   if (existing.data) {
     const row = existing.data as Record<string, unknown>;
+    if (row.deleted_at)
+      throw new BackendError(409, "EXPENSE_ATTACHMENT_DELETED", "Receipt is deleted.");
     if (
       String(row.journey_id) !== tripId ||
       String(row.created_by) !== userId ||
       String(row.local_id) !== input.localId ||
       String(row.mime_type) !== input.mimeType ||
       Number(row.size_bytes) !== input.sizeBytes ||
-      String(row.sha256) !== input.sha256
+      String(row.sha256) !== input.sha256 ||
+      (input.expenseId && String(row.expense_id) !== input.expenseId)
     )
       throw new BackendError(
         409,
@@ -1743,13 +1796,25 @@ async function createReceipt(
     return { entity: receiptRowToDto(row), idempotentReplay: true };
   }
   const objectPath = `${tripId}/${receiptId}/original`;
+  if (input.expenseId) {
+    const expense = await service
+      .from("expenses")
+      .select("id")
+      .eq("id", input.expenseId)
+      .eq("journey_id", tripId)
+      .maybeSingle();
+    if (expense.error || !expense.data)
+      throw new BackendError(404, "ENTITY_NOT_FOUND", "The Expense does not exist.");
+  }
   const inserted = await service
     .from("receipt_assets")
     .insert({
       id: receiptId,
       journey_id: tripId,
+      expense_id: input.expenseId ?? null,
       local_id: input.localId,
       created_by: userId,
+      storage_provider: SUPABASE_ATTACHMENT_PROVIDER,
       object_path: objectPath,
       mime_type: input.mimeType,
       size_bytes: input.sizeBytes,
@@ -1757,6 +1822,12 @@ async function createReceipt(
     })
     .select(receiptColumns)
     .single();
+  if (inserted.error?.message.includes("EXPENSE_ATTACHMENT_LIMIT_REACHED"))
+    throw new BackendError(
+      409,
+      "EXPENSE_ATTACHMENT_LIMIT_REACHED",
+      "Maximum three attachments per Expense.",
+    );
   if (inserted.error || !inserted.data)
     throw new Error("Supabase Dev receipt create failed.");
   return {
@@ -1765,7 +1836,7 @@ async function createReceipt(
   };
 }
 
-async function uploadReceiptContent(
+export async function uploadReceiptContent(
   service: SupabaseClient,
   userId: string,
   tripId: string,
@@ -1781,13 +1852,11 @@ async function uploadReceiptContent(
       "RECEIPT_CONTENT_MISMATCH",
       "Receipt content does not match its metadata.",
     );
-  const uploaded = await service.storage
-    .from("ledger-receipts")
-    .upload(String(row.object_path), bytes, {
-      contentType: String(row.mime_type),
-      upsert: true,
-    });
-  if (uploaded.error) throw new Error("Supabase Dev receipt upload failed.");
+  const storage = resolveAttachmentStorageProvider(
+    row.storage_provider,
+    createSupabaseAttachmentStorageProvider(service),
+  );
+  await storage.put(String(row.object_path), bytes, String(row.mime_type));
   const updated = await service
     .from("receipt_assets")
     .update({ uploaded_size_bytes: bytes.byteLength, uploaded_sha256: actual })
@@ -1859,11 +1928,11 @@ async function linkReceipt(
   key: string,
   expenseId: string,
 ) {
+  const receipt = await readReceipt(service, userId, tripId, receiptId);
   const replay = await receiptReplay(service, userId, tripId, "LINK_RECEIPT", key, {
     expenseId,
   });
   if (replay) return replay;
-  const receipt = await readReceipt(service, userId, tripId, receiptId);
   if (receipt.expense_id && receipt.expense_id !== expenseId)
     throw new BackendError(409, "RECEIPT_ALREADY_LINKED", "Receipt is already linked.");
   const expense = await service
@@ -1880,6 +1949,12 @@ async function linkReceipt(
     .eq("id", receiptId)
     .select(receiptColumns)
     .single();
+  if (updated.error?.message.includes("EXPENSE_ATTACHMENT_LIMIT_REACHED"))
+    throw new BackendError(
+      409,
+      "EXPENSE_ATTACHMENT_LIMIT_REACHED",
+      "Maximum three attachments per Expense.",
+    );
   if (updated.error || !updated.data)
     throw new Error("Supabase Dev receipt link failed.");
   return storeReceiptReplay(
@@ -1891,6 +1966,48 @@ async function linkReceipt(
     { expenseId },
     receiptRowToDto(updated.data as Record<string, unknown>),
   );
+}
+
+export async function deleteExpenseReceipt(
+  service: SupabaseClient,
+  tripId: string,
+  receiptId: string,
+) {
+  const found = await service
+    .from("receipt_assets")
+    .select(receiptColumns)
+    .eq("id", receiptId)
+    .eq("journey_id", tripId)
+    .maybeSingle();
+  if (found.error) throw new Error("Supabase Dev receipt lookup failed.");
+  if (!found.data?.expense_id)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense attachment does not exist.");
+  const evidence = await service
+    .from("personal_settlement_payment_attachments")
+    .select("id")
+    .eq("asset_id", receiptId)
+    .is("deleted_at", null)
+    .limit(1);
+  if (evidence.error) throw new Error("Supabase Dev receipt evidence lookup failed.");
+  if (evidence.data.length)
+    throw new BackendError(
+      409,
+      "RECEIPT_IS_PAYMENT_EVIDENCE",
+      "Payment evidence is protected.",
+    );
+  if (found.data.deleted_at)
+    return { entity: receiptRowToDto(found.data), idempotentReplay: true };
+  const updated = await service
+    .from("receipt_assets")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", receiptId)
+    .eq("journey_id", tripId)
+    .is("deleted_at", null)
+    .select(receiptColumns)
+    .maybeSingle();
+  if (updated.error) throw new Error("Supabase Dev receipt deletion failed.");
+  if (!updated.data) return deleteExpenseReceipt(service, tripId, receiptId);
+  return { entity: receiptRowToDto(updated.data), idempotentReplay: false };
 }
 
 async function listPersonalPaymentAttachments(
@@ -2023,7 +2140,7 @@ async function unlinkPersonalPaymentAttachment(
   );
 }
 
-async function ocrReceipt(
+export async function ocrReceipt(
   service: SupabaseClient,
   provider: ReceiptOcrProvider,
   userId: string,
@@ -2031,9 +2148,15 @@ async function ocrReceipt(
   receiptId: string,
   key: string,
 ) {
+  const row = await readReceipt(service, userId, tripId, receiptId);
+  if (row.expense_id)
+    throw new BackendError(
+      409,
+      "EXPENSE_SCAN_NOT_AVAILABLE",
+      "Existing Expense attachments cannot request OCR.",
+    );
   const replay = await receiptReplay(service, userId, tripId, "OCR_RECEIPT", key, {});
   if (replay) return replay;
-  const row = await readReceipt(service, userId, tripId, receiptId);
   if (row.upload_status !== "UPLOADED")
     throw new BackendError(
       409,
@@ -2045,12 +2168,12 @@ async function ocrReceipt(
     .update({ ocr_status: "RUNNING" })
     .eq("id", receiptId);
   try {
-    const download = await service.storage
-      .from("ledger-receipts")
-      .download(String(row.object_path));
-    if (download.error) throw download.error;
+    const storage = resolveAttachmentStorageProvider(
+      row.storage_provider,
+      createSupabaseAttachmentStorageProvider(service),
+    );
     const suggestion = await extractReceiptSuggestion(provider, {
-      bytes: new Uint8Array(await download.data.arrayBuffer()),
+      bytes: await storage.read(String(row.object_path)),
       mimeType: String(row.mime_type),
     });
     const updated = await service

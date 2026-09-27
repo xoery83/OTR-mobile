@@ -2,6 +2,198 @@
 
 Date: 2026-09-27
 
+## Expense Attachments Phase 2A — ACCEPTED; 2B–2D deferred
+
+- Phase 1 remains accepted. Backend upload, authorized download, and existing
+  OCR binary read now use the narrow `AttachmentStorageProvider`; the only
+  configured implementation uses the existing private Supabase bucket. Unknown
+  providers fail closed. Mobile routes, SQLite, and object keys are unchanged.
+- Additive Postgres migration `20260927000300_receipt_storage_provider.sql`
+  adds a defaulted `storage_provider = 'supabase_storage'` to old and new
+  `receipt_assets`. Local and Hosted Dev `tuqigdxrvrerfewsxqgm` are migrated.
+  The Hosted Dev Backend image is
+  `sha256:7bd88516063599575e06fe31a13ddb5e8f741030af24ebcd4200d107d43e96ba`
+  and healthy. Production was not accessed; no binary was migrated or
+  physically deleted.
+- Focused Backend/receipt/Personal Payment tests, receipt pgTAP, TypeScript,
+  lint, format, build, and diff checks passed. Hosted Dev synthetic acceptance
+  covered historical read/hash, new upload/download and retry, outsider 403,
+  unknown-provider 503 without bytes, restored read, and tombstone 404. The
+  older Personal Payment pgTAP fixture collided with existing local FK data;
+  focused Personal Payment Vitest passed. See the Phase 2 plan for exact
+  evidence and limitations.
+- Phases 2B, 2C, and 2D are intentionally deferred until OTR Mobile Album /
+  shared object-storage infrastructure development begins. At 2B, evaluate
+  Hetzner Object Storage and a shared low-level S3-compatible adapter for
+  Expense attachments, Personal Payment evidence, and Album media. Attachment
+  and Album domain lifecycles remain separate. Existing attachments stay on
+  `supabase_storage`; no historical migration is needed before 2B, and future
+  mixed-provider reads are the intended transition strategy.
+- Before automatic local attachment cache eviction, Clear Attachment Cache, or
+  switching to a provider whose upload acknowledgement is insufficient, require
+  strong remote-durability confirmation. `provider.stat()` exists, but upload
+  completion does not independently use it to verify remote persistence.
+  This does not block accepted Supabase-backed behavior. Production remains
+  untouched. See the Phase 2 plan for the 2B infrastructure prerequisites.
+
+## Expense Attachments Phase 1 Slice 4.1 — Foundation accepted on synthetic device evidence
+
+- A bounded diagnostic on the physical iPhone showed the synthetic PNG's
+  prepared file and stored metadata matching in MIME, size, and SHA prefix.
+  Its upload operation reported Expo Crypto `ERR_ARGUMENT_CAST`: the shared
+  `receiptBytesSha256` passed an `ArrayBuffer` to native `digest`, which requires
+  a `TypedArray`. This failure happened before Backend metadata creation.
+  A native-compatible `Uint8Array` call fixed the helper; a regression test
+  failed before the fix and passed afterward. The signed Release app with the
+  fix is installed on the iPhone, and a bounded Debug Mode diagnostic is
+  available per attachment. No iPhone Mirroring was used.
+- The user needs the phone hotspot for normal Internet use. Keep offline test
+  windows short. The isolated new synthetic JPEG uploaded on one online
+  launch; its local file, Hosted Dev metadata, and exact Storage object all
+  matched at 385,817 B and SHA-256. A second narrow fix preserves local source
+  metadata through ordinary receipt pulls; its Release build is installed.
+  HEIC→JPEG and transparency-preserving PNG device uploads also passed, with
+  source/stored byte counts retained and exact Hosted Dev object hashes verified.
+  PDF also uploaded and opened successfully, with exact remote bytes verified.
+  The final New Expense draft reappeared after an offline force-close/restart,
+  and the saved Expense/attachment survived another offline restart. On initial
+  reconnect, Expense and receipt sync raced; the receipt retried before Expense
+  had a server ID. The operational cycle now runs Expense sync before receipt
+  sync. Its ordering regression passed, and the same offline receipt became
+  Available without re-entry. Hosted Dev has exactly one active attachment
+  for that Expense, with exact Storage size/SHA matching metadata; the user
+  confirmed preview readability. Twelve focused files/115 tests, TypeScript,
+  affected ESLint, and Prettier passed. Personal Payment device evidence lacks
+  a synthetic fixture and remains a release acceptance item. No Backend/Supabase
+  deploy or Production access. See the Phase 1 foundation plan for evidence.
+
+## Expense Attachments Phase 1 Slice 4 — local media pipeline implemented; acceptance open
+
+- JPEG, PNG, HEIC/HEIF, and PDF inputs now pass file-signature/MIME checks in
+  the shared receipt store. Native image preparation targets a 2200 px long
+  edge and JPEG quality 0.83, retaining PNG when transparency may matter.
+  PDFs remain unchanged with a 10 MiB new-input limit; image sources have a
+  50 MiB/60 MP limit. SHA-256, size, and MIME describe stored bytes and are
+  rechecked before upload. Existing Expense and Personal Payment imports use
+  the same safe temporary-copy path.
+- Additive local SQLite migration 39 stores nullable original filename/MIME/
+  bytes and prepared width/height. Account/Journey-scoped New Expense draft
+  records allow intact drafts to reappear after restart without duplicating
+  committed assets. No Backend/Supabase migration or deploy; Production was
+  not accessed. See the Phase 1 foundation plan for measurements and exact
+  recovery semantics.
+- Focused local tests (11 files, 87 tests), TypeScript, affected ESLint,
+  Prettier, and diff check passed at this checkpoint.
+  An earlier Release build installed on the authorized iPhone 16 Pro; final
+  draft-recovery edits were not rebuilt there. Safe synthetic
+  HEIC, JPEG, and PNG saved locally and previewed, with max-three enforced,
+  but all showed Upload failed. The remote cause, PDF/offline/restart/camera
+  path, and Personal Payment device path remain unverified. iPhone Mirroring
+  crashed twice and device UI testing stopped. Full Slice 4/Phase 1 acceptance
+  remains open; next checkpoint is scoped upload diagnosis and completion of
+  device acceptance without relying on unstable Mirroring.
+
+## Expense Attachments Phase 1 Slice 3.1 — Hosted Dev/iPhone integration accepted
+
+- Backend Slice 3 is deployed only to Hosted Dev `tuqigdxrvrerfewsxqgm`
+  (image `sha256:86c3b06c7a221b261cd8a97f6fedad314eeb79cc2f792c22efd11c4b57795487`).
+  Hosted Dev has migrations through `20260927000200`; Production was not
+  accessed. The signed Release app was installed on the authorized iPhone 16
+  Pro, iOS 26.6. HTTP and device acceptance covered online image add/open,
+  native PDF view, max-three, online/offline deletion, app restarts, offline
+  upload retry, cross-account authorized read, outsider denial, writer/view-only
+  deletion rules, and linked-Expense OCR rejection.
+- Two narrow device defects were fixed: Add attachment now has the actor and
+  max-three guard (Edit Expense remains available), and existing-Expense
+  receipt import wakes the operational sync after local save. An accidental
+  personal-file picker selection was remediated in Dev: Backend tombstone,
+  exact Storage object removal, 404 download verification, and iPhone pull;
+  the original iCloud file was untouched. See the Phase 1 foundation plan for
+  exact evidence and remaining limitations.
+- Final Hosted Dev state: 20 receipt assets, maximum three active per Expense,
+  no duplicate local keys; the device test Expense has two active and three
+  tombstoned. Five historical orphan candidates remain untouched. No Hosted Dev
+  Personal Payment row currently has a linked evidence asset; focused
+  compatibility tests cover that path. Slice 3.1 is complete; Slice 4 requires
+  its own instruction. No HEIC, OCR, cache, storage provider/accounting, or
+  physical deletion work began.
+
+## Expense Attachments Phase 1 Slice 3 — implementation and Hosted Dev database acceptance
+
+- Existing Expense detail lists/opens/adds/removes active attachments; add uses
+  durable offline receipt import without OCR. A local SQLite transaction
+  tombstones an Expense asset and queues `DELETE_RECEIPT`; restart and later sync
+  retain that intent. Pending local deletion is account-scoped, and replacement
+  upload waits for remote deletion. Server `deleted_at` hides the asset and releases its slot
+  without deleting private bytes. Stale receipt pulls cannot clear a local
+  tombstone. Personal Payment evidence retains its separate link/read rules.
+- Supabase migration `20260927000200_expense_attachment_tombstones.sql` is
+  applied to local and Hosted Dev `tuqigdxrvrerfewsxqgm` only. Local SQLite
+  migration 38 preserves prior asset operations while adding the delete type.
+  Hosted Dev pgTAP: new 9/9, prior max-three 9/9, existing receipt 8/8.
+  Local two-session add/delete showed the insert waiting on the Expense lock;
+  both committed and final active count was three. Production was not touched.
+- Backend download now allows a current Journey reader to fetch another
+  uploader's active Expense attachment. Delete uses existing `canWriteTrip`
+  (creator, legacy trip member, or linked owner/group member); local offline
+  mutation requires cached owner/group_member role. Five historical uploaded
+  unlinked orphan candidates remain protected. No physical deletion, OCR,
+  cache, provider, HEIC or storage accounting work was started.
+- At this checkpoint Backend/device acceptance was pending; Slice 3.1 above
+  records its completion. The standalone
+  Personal Payment repository Vitest suite still fails to parse React Native
+  Flow; focused shared receipt and Personal Payment sync tests pass. Next work
+  begins only with a new Slice 4 instruction. Full validation evidence is in
+  `docs/ledger/EXPENSE_ATTACHMENTS_PHASE_1_FOUNDATION_PLAN.md`.
+
+## Expense Attachments Phase 1 Slice 2 — local implementation
+
+- New Expense holds 0–3 temporary receipt drafts with add/remove and a shared
+  domain maximum. Save prepares all copies and commits the Expense, all asset
+  rows, and UPLOAD/LINK intents in one SQLite transaction. Stable draft IDs
+  make retries idempotent. Failure preserves source evidence.
+- Additive Supabase migration `20260927000100_expense_attachment_limit.sql`
+  locks the Expense row before counting attachments. The new upload request
+  binds an Expense ID at metadata creation, so overlimit attempts fail before
+  binary upload. Personal Payment evidence remains outside the Expense limit.
+  No SQLite migration. Migration and two-session concurrency require local DB
+  verification before deployment; no Hosted Dev or Production was touched.
+- Focused tests: 11 files / 112 passing; TypeScript, affected ESLint,
+  Prettier, and diff check passed. Personal Payment repository's standalone
+  suite still cannot parse React Native Flow. Next approved work is
+  Slice 3 only after a new instruction. Canonical design and ADR 0048 remain
+  authoritative; see the Phase 1 foundation plan for failure semantics.
+
+## Expense Attachments Phase 1 Slice 1 — local implementation
+
+- New Expense receipt selection now creates only an account-scoped temporary
+  file. Cancel/Remove attempts safe temporary cleanup; no asset or upload is
+  queued before Save. The existing-Expense form hides the New Expense receipt
+  action; the old Scan deep link cannot upload or request OCR.
+- Save keeps the draft source through file preparation and one SQLite
+  `withTransactionAsync` that commits Expense, receipt metadata, UPLOAD and LINK
+  operations together. No schema migration or Backend change. A failed copy or
+  transaction leaves the draft; an unreferenced prepared copy may remain for
+  later conservative recovery. After commit, duplicate draft cleanup is best
+  effort. Stable draft IDs make re-entry idempotent.
+- Focused tests: 8 files / 49 passing; TypeScript, affected ESLint, and Prettier pass.
+  Personal Payment repository's standalone Vitest suite still cannot parse
+  React Native Flow, while its receipt repository/worker compatibility checks
+  pass. No Simulator/device, Hosted Dev, or Production work was performed.
+  Next approved checkpoint is Phase 1 Slice 2 only after a new instruction.
+
+## Expense Attachments & Receipt Scan 1.0 — Phase 0 documentation complete
+
+- Canonical design: `docs/EXPENSE_ATTACHMENTS_RECEIPT_SCAN_1_0_DESIGN.md`.
+  `docs/PRODUCT.md` and the Ledger product spec now require on-device OCR for
+  New Expense only; existing Expenses may manage attachments without OCR.
+- ADR 0048 fixes reuse of `receipt_assets`, temporary scan drafts, atomic local
+  Save/promotion, three-attachment limit, uploader byte ownership versus
+  Expense/Journey read visibility, and protection of unconfirmed originals.
+- `docs/ledger/EXPENSE_ATTACHMENTS_PHASE_1_FOUNDATION_PLAN.md` defines the
+  additive migration, exact slices, tests, and later-phase exclusions. Phase 0
+  changed documentation only; Slice 1 status is recorded above.
+
 ## Buglist 004 — Currency help and New Expense form (2026-09-27)
 
 - Journey Currency info icon now aligns with its heading; tapping the icon again

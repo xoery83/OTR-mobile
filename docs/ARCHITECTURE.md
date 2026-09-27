@@ -139,6 +139,13 @@ Use local file references for downloaded tickets, PDFs, thumbnails, previews, an
 
 The upload lifecycle belongs to queues and workers, not screens.
 
+Expense Attachments & Receipt Scan 1.0 evolves the existing receipt asset
+repository, worker, and private storage path. A New Expense scan uses a
+temporary draft file until Save; durable attachment metadata and upload intent
+are committed with the Expense locally. Unconfirmed local originals are
+protected. See ADR 0048 for the ownership, visibility, and future storage
+provider boundary; see the Phase 1 plan under `docs/ledger/` for implementation.
+
 ## Auth
 
 Supabase Auth remains the Phase 1 identity provider, wrapped behind a Mobile auth adapter or repository. Mobile feature code must not call Supabase Auth directly. The OTR API validates Supabase-issued identity tokens.

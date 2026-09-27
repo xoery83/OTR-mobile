@@ -1,4 +1,5 @@
-import { File, Paths } from "expo-file-system";
+import { File } from "expo-file-system";
+import * as Print from "expo-print";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -227,23 +228,26 @@ async function importFixture(
   expenseId: string | null,
 ) {
   if (await receipts.getReceipt(id)) return;
-  const source = new File(Paths.cache, `${id}.jpg`);
-  source.create({ overwrite: true, intermediates: true });
-  source.write(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]));
+  const source = new File(
+    (
+      await Print.printToFileAsync({
+        html: "<h1>OTR synthetic receipt</h1><p>Stage 5.2 test evidence</p>",
+      })
+    ).uri,
+  );
   const copied = await copyReceiptIntoAppStorage({
     id,
     sourceUri: source.uri,
-    mimeType: "image/jpeg",
+    mimeType: "application/pdf",
   });
-  source.delete();
   await receipts.importReceipt({
     id,
     journeyId: stage3JourneyId,
     expenseId,
-    mimeType: "image/jpeg",
     requestOcr: true,
     ...copied,
   });
+  source.delete();
 }
 
 async function signInCreator() {

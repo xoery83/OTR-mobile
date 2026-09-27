@@ -163,7 +163,8 @@ Mobile Foundation and vertical-slice phase names.
 - Receipt line-item splitting.
 - Recurring trip templates across Journeys.
 - Policy budgets, spending limits, or approval workflows.
-- Offline OCR models if size, privacy, and accuracy justify them.
+- Optional enhanced OCR models beyond the on-device receipt OCR required by
+  Expense Attachments & Receipt Scan 1.0.
 - Automated rate-provider redundancy and signed rate provenance.
 - Bank feed or statement import. Phase 1 PaymentRecord is manually entered or
   receipt-assisted evidence, not an account connection.
@@ -398,8 +399,15 @@ an accepted shared expense. The receipt can upload later through the file queue.
 Both directions are Phase 1 requirements:
 
 - create Expense, then attach one or more receipt/evidence assets; and
-- scan/import receipt, save the asset locally, run OCR when available, then
-  review a prefilled Expense draft.
+- scan/import a temporary receipt, run on-device OCR, then review a prefilled
+  Expense draft before promoting the file and queuing upload on Save.
+
+Expense Attachments & Receipt Scan 1.0 narrows OCR to New Expense only:
+on-device OCR suggests editable draft fields before Save. A scan remains a
+temporary local draft file until Save promotes it to durable evidence and queues
+upload. Cancel creates no durable upload. Existing Expenses may add, view, and
+delete up to three attachments but do not run OCR. This supersedes the older
+future-optional offline OCR statement for receipt scanning.
 
 Expense financial sync and receipt upload/OCR are independent durable
 lifecycles. A synced Expense may have a pending receipt upload, and an uploaded

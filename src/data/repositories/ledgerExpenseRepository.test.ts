@@ -16,6 +16,8 @@ function createInMemoryLedgerDatabase() {
   const previousValuations: ExpenseRow[] = [];
   const payments = new Map<string, ExpenseRow[]>();
   const operations: ExpenseRow[] = [];
+  const receipts = new Map<string, ExpenseRow>();
+  const assetOperations: ExpenseRow[] = [];
   const auditEvents: ExpenseRow[] = [];
   let transactionCount = 0;
 
@@ -212,6 +214,17 @@ function createInMemoryLedgerDatabase() {
           ownerUserId: params[8],
           status: params[9],
         });
+      } else if (sql.includes("INSERT INTO ledger_receipt_assets")) {
+        receipts.set(params[0] as string, {
+          id: params[0],
+          journeyId: params[1],
+          expenseId: params[2],
+          localUri: params[3],
+          sha256: params[6],
+          localOwnerUserId: params[9],
+        });
+      } else if (sql.includes("INTO ledger_asset_operations")) {
+        assetOperations.push({ assetId: params[2], operationType: params[3] });
       } else if (
         sql.includes("UPDATE ledger_expenses SET economic_date = ?, revision = ?")
       ) {
@@ -282,6 +295,8 @@ function createInMemoryLedgerDatabase() {
     },
     async getFirstAsync<T>(sql: string, ...params: unknown[]) {
       const id = params[0] as string;
+      if (sql.includes("FROM ledger_receipt_assets"))
+        return (receipts.get(id) ?? null) as T | null;
       if (sql.includes("FROM ledger_expenses")) {
         const row = expenses.get(id);
         return (
@@ -298,6 +313,8 @@ function createInMemoryLedgerDatabase() {
     },
     async getAllAsync<T>(sql: string, ...params: unknown[]) {
       const id = params[0] as string;
+      if (sql.includes("FROM ledger_receipt_assets"))
+        return [...receipts.values()].filter((row) => row.expenseId === id) as T[];
       if (sql.includes("FROM ledger_expenses")) {
         return [...expenses.values()].filter(
           (row) =>
@@ -324,6 +341,8 @@ function createInMemoryLedgerDatabase() {
     participants,
     splits,
     operations,
+    receipts,
+    assetOperations,
     auditEvents,
     valuations,
     previousValuations,
@@ -378,6 +397,117 @@ const command: LedgerExpenseCommand = {
 
 describe("Ledger Expense repository", () => {
   const activeUser = async () => "user-a";
+  const preparedReceipt = {
+    id: "receipt-draft-1",
+    localUri: "file:///durable/receipt-draft-1.jpg",
+    mimeType: "image/jpeg" as const,
+    sizeBytes: 3,
+    sha256: "a".repeat(64),
+  };
+
+  it("commits Expense, receipt metadata, upload and link together, then reuses the draft id", async () => {
+    const {
+      database,
+      expenses,
+      receipts,
+      operations,
+      assetOperations,
+      transactionCount,
+    } = createInMemoryLedgerDatabase();
+    const repository = createLedgerExpenseRepository(database, activeUser);
+    const first = await repository.createExpense(command, [preparedReceipt]);
+    expect(transactionCount()).toBe(1);
+    expect(expenses.has(first.id)).toBe(true);
+    expect(receipts.get(preparedReceipt.id)).toMatchObject({ expenseId: first.id });
+    expect(operations).toHaveLength(1);
+    expect(assetOperations.map((row) => row.operationType)).toEqual([
+      "UPLOAD_RECEIPT",
+      "LINK_RECEIPT",
+    ]);
+    expect(await repository.createExpense(command, [preparedReceipt])).toMatchObject({
+      id: first.id,
+    });
+    expect(expenses.size).toBe(1);
+    expect(receipts.size).toBe(1);
+    expect(assetOperations).toHaveLength(2);
+  });
+
+  it("rolls back Expense intent if receipt operation cannot be committed", async () => {
+    const { database, expenses, receipts, operations, assetOperations } =
+      createInMemoryLedgerDatabase();
+    const write = database.runAsync;
+    database.runAsync = async (sql, ...params) => {
+      if (sql.includes("INTO ledger_asset_operations")) throw new Error("disk full");
+      return (write as (...args: unknown[]) => Promise<unknown>)(sql, ...params) as never;
+    };
+    const transaction = database.withTransactionAsync;
+    database.withTransactionAsync = async (task) => {
+      try {
+        await transaction(task);
+      } catch (error) {
+        expenses.clear();
+        receipts.clear();
+        operations.length = 0;
+        assetOperations.length = 0;
+        throw error;
+      }
+    };
+    await expect(
+      createLedgerExpenseRepository(database, activeUser).createExpense(
+        command,
+        Array.from({ length: 3 }, (_, index) => ({
+          ...preparedReceipt,
+          id: `receipt-${index}`,
+        })),
+      ),
+    ).rejects.toThrow("disk full");
+    expect(expenses.size).toBe(0);
+    expect(receipts.size).toBe(0);
+    expect(operations).toHaveLength(0);
+    expect(assetOperations).toHaveLength(0);
+  });
+
+  it("commits zero to three attachments and re-enters the same three without duplication", async () => {
+    for (const count of [0, 1, 2, 3]) {
+      const { database, expenses, receipts, operations, assetOperations } =
+        createInMemoryLedgerDatabase();
+      const repository = createLedgerExpenseRepository(database, activeUser);
+      const selected = Array.from({ length: count }, (_, index) => ({
+        ...preparedReceipt,
+        id: `receipt-${index}`,
+      }));
+      const draftId = `expense-draft-${count}`;
+      const saved = await repository.createExpense(command, selected, draftId);
+      expect(saved.id).toBe(draftId);
+      expect(expenses.size).toBe(1);
+      expect(receipts.size).toBe(count);
+      expect(operations).toHaveLength(1);
+      expect(assetOperations).toHaveLength(count * 2);
+      expect(await repository.createExpense(command, selected, draftId)).toMatchObject({
+        id: draftId,
+      });
+      expect(receipts.size).toBe(count);
+      expect(assetOperations).toHaveLength(count * 2);
+    }
+  });
+
+  it("rejects a fourth draft before durable work", async () => {
+    const { database, expenses, receipts, assetOperations } =
+      createInMemoryLedgerDatabase();
+    const selected = Array.from({ length: 4 }, (_, index) => ({
+      ...preparedReceipt,
+      id: `receipt-${index}`,
+    }));
+    await expect(
+      createLedgerExpenseRepository(database, activeUser).createExpense(
+        command,
+        selected,
+      ),
+    ).rejects.toThrow("Maximum 3");
+    expect(expenses.size).toBe(0);
+    expect(receipts.size).toBe(0);
+    expect(assetOperations).toHaveLength(0);
+  });
 
   it("deduplicates only projections of the same canonical valuation", async () => {
     const { database, previousValuations } = createInMemoryLedgerDatabase();

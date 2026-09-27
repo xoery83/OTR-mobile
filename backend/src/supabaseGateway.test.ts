@@ -8,7 +8,130 @@ import {
   eligibleReferenceCandidate,
   personalPaymentBackendError,
   personalPaymentRowToDto,
+  readDownloadableReceipt,
+  deleteExpenseReceipt,
+  ocrReceipt,
 } from "./supabaseGateway";
+
+describe("Expense attachment read permission", () => {
+  function service(member: boolean, deleted = false) {
+    return {
+      from(table: string) {
+        const builder = {
+          select: () => builder,
+          eq: () => builder,
+          is: () => builder,
+          maybeSingle: async () => ({
+            error: null,
+            data:
+              table === "receipt_assets"
+                ? {
+                    id: "receipt",
+                    expense_id: "expense",
+                    created_by: "uploader",
+                    deleted_at: deleted ? "2026-09-27T00:00:00Z" : null,
+                  }
+                : null,
+          }),
+          limit: async () => ({
+            error: null,
+            data: table === "journey_members" && member ? [{ id: "membership" }] : [],
+          }),
+        };
+        return builder;
+      },
+    };
+  }
+  it("allows a Journey reader who did not upload the active Expense attachment", async () => {
+    await expect(
+      readDownloadableReceipt(service(true) as never, "reader", "journey", "receipt"),
+    ).resolves.toMatchObject({ created_by: "uploader" });
+  });
+  it("denies a nonmember and denies tombstoned content", async () => {
+    await expect(
+      readDownloadableReceipt(service(false) as never, "outsider", "journey", "receipt"),
+    ).rejects.toMatchObject({ status: 403 });
+    await expect(
+      readDownloadableReceipt(
+        service(true, true) as never,
+        "reader",
+        "journey",
+        "receipt",
+      ),
+    ).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe("Expense attachment tombstone mutation", () => {
+  it("is idempotent and preserves the receipt row and object path", async () => {
+    const row = {
+      id: "receipt",
+      local_id: "local",
+      journey_id: "journey",
+      expense_id: "expense",
+      deleted_at: null as string | null,
+      object_path: "private/original",
+      mime_type: "image/jpeg",
+      size_bytes: 3,
+      sha256: "a".repeat(64),
+      upload_status: "UPLOADED",
+      ocr_status: "PENDING",
+      ocr_suggestion: null,
+      created_at: "now",
+      updated_at: "now",
+    };
+    const service = {
+      from(table: string) {
+        const builder = {
+          select: () => builder,
+          eq: () => builder,
+          is: () => builder,
+          update: (patch: { deleted_at: string }) => {
+            row.deleted_at = patch.deleted_at;
+            return builder;
+          },
+          maybeSingle: async () => ({
+            error: null,
+            data: table === "receipt_assets" ? row : null,
+          }),
+          limit: async () => ({ error: null, data: [] }),
+        };
+        return builder;
+      },
+    };
+    const first = await deleteExpenseReceipt(service as never, "journey", "receipt");
+    const retry = await deleteExpenseReceipt(service as never, "journey", "receipt");
+    expect(first.idempotentReplay).toBe(false);
+    expect(retry.idempotentReplay).toBe(true);
+    expect(retry.entity).toMatchObject({
+      deletedAt: row.deleted_at,
+      objectPath: "private/original",
+    });
+  });
+});
+
+it("rejects direct OCR on an already linked Expense attachment", async () => {
+  const service = {
+    from() {
+      const builder = {
+        select: () => builder,
+        eq: () => builder,
+        maybeSingle: async () => ({
+          error: null,
+          data: {
+            id: "receipt",
+            expense_id: "expense",
+            deleted_at: null,
+          },
+        }),
+      };
+      return builder;
+    },
+  };
+  await expect(
+    ocrReceipt(service as never, {} as never, "uploader", "journey", "receipt", "retry"),
+  ).rejects.toMatchObject({ status: 409, code: "EXPENSE_SCAN_NOT_AVAILABLE" });
+});
 
 describe("Phase C reference candidate eligibility", () => {
   const expense = {

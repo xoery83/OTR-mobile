@@ -13,7 +13,9 @@ const userId = "20000000-0000-4000-8000-000000000001";
 const memberA = "30000000-0000-4000-8000-000000000001";
 const memberB = "30000000-0000-4000-8000-000000000002";
 
-function createGateway(options: { authorized?: boolean } = {}) {
+function createGateway(
+  options: { authorized?: boolean; writeAuthorized?: boolean } = {},
+) {
   const expenses = new Map<string, StoredCreate>();
   const ledgerCreates = new Map<string, { hash: string; response: unknown }>();
   const ledgerExpenses = new Map<
@@ -36,7 +38,9 @@ function createGateway(options: { authorized?: boolean } = {}) {
       token === "valid-token" ? { id: userId } : null,
     ),
     canReadTrip: vi.fn(async () => options.authorized ?? true),
-    canWriteTrip: vi.fn(async () => options.authorized ?? true),
+    canWriteTrip: vi.fn(
+      async () => options.writeAuthorized ?? options.authorized ?? true,
+    ),
     canFinalizeSettlement: vi.fn(async () => options.authorized ?? true),
     previewSettlementCorrection: vi.fn(async () => {
       throw new Error("Correction preview is not configured for this test.");
@@ -319,6 +323,9 @@ function createGateway(options: { authorized?: boolean } = {}) {
       throw new Error("not used");
     }),
     linkReceipt: vi.fn(async () => {
+      throw new Error("not used");
+    }),
+    deleteExpenseReceipt: vi.fn(async () => {
       throw new Error("not used");
     }),
     listPersonalPaymentAttachments: vi.fn(async () => []),
@@ -1275,6 +1282,47 @@ describe("OTR Dev Backend", () => {
     expect(gateway.readLedgerExpenses).not.toHaveBeenCalled();
   });
 
+  it("allows receipt deletion only through existing Journey mutation access", async () => {
+    const receiptId = "40000000-0000-4000-8000-000000000001";
+    const viewer = createGateway({ authorized: true, writeAuthorized: false });
+    const denied = await createDevBackendHandler({ gateway: viewer.gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts/${receiptId}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(denied.status).toBe(403);
+    expect(viewer.gateway.deleteExpenseReceipt).not.toHaveBeenCalled();
+
+    const writer = createGateway();
+    const created = await writer.gateway.createReceipt(userId, tripId, receiptId, {
+      localId: "receipt",
+      mimeType: "image/jpeg",
+      sizeBytes: 3,
+      sha256: "a".repeat(64),
+    });
+    vi.mocked(writer.gateway.deleteExpenseReceipt).mockResolvedValue({
+      entity: {
+        ...created.entity,
+        expenseId: receiptId,
+        deletedAt: "2026-09-27T00:00:00Z",
+      },
+      idempotentReplay: false,
+    });
+    const allowed = await createDevBackendHandler({ gateway: writer.gateway })(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts/${receiptId}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer valid-token" },
+      }),
+    );
+    expect(allowed.status).toBe(200);
+    expect(writer.gateway.deleteExpenseReceipt).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      receiptId,
+    );
+  });
+
   it("keeps receipt metadata and authenticated binary upload on dedicated routes", async () => {
     const { gateway } = createGateway();
     const handle = createDevBackendHandler({ gateway });
@@ -1315,6 +1363,40 @@ describe("OTR Dev Backend", () => {
       new Uint8Array([1, 2, 3]),
       "image/jpeg",
     );
+  });
+
+  it("returns the Expense attachment limit before any binary upload", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.createReceipt).mockRejectedValueOnce(
+      new BackendError(
+        409,
+        "EXPENSE_ATTACHMENT_LIMIT_REACHED",
+        "Maximum three attachments per Expense.",
+      ),
+    );
+    const handle = createDevBackendHandler({ gateway });
+    const response = await handle(
+      new Request(`http://localhost/v2/trips/${tripId}/receipts`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": "fourth-receipt",
+        },
+        body: JSON.stringify({
+          localId: "fourth",
+          expenseId: "40000000-0000-4000-8000-000000000001",
+          mimeType: "image/jpeg",
+          sizeBytes: 1,
+          sha256: "a".repeat(64),
+        }),
+      }),
+    );
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: { code: "EXPENSE_ATTACHMENT_LIMIT_REACHED" },
+    });
+    expect(gateway.uploadReceiptContent).not.toHaveBeenCalled();
   });
 
   it("links and lists Personal Payment attachments through authorized private routes", async () => {

@@ -1299,4 +1299,63 @@ export const migrations: Migration[] = [
         ON ledger_my_spending_facts (user_id, period_key, journey_id);
     `,
   },
+  {
+    id: 38,
+    name: "expense_receipt_tombstones",
+    sql: `
+      ALTER TABLE ledger_receipt_assets ADD COLUMN deleted_at TEXT;
+      ALTER TABLE ledger_receipt_assets ADD COLUMN local_deleted_by_user_id TEXT;
+      CREATE INDEX ledger_receipt_assets_active_expense
+        ON ledger_receipt_assets (expense_id, created_at DESC)
+        WHERE expense_id IS NOT NULL AND deleted_at IS NULL;
+
+      CREATE TABLE ledger_asset_operations_v38 (
+        id TEXT PRIMARY KEY NOT NULL,
+        journey_id TEXT NOT NULL,
+        asset_id TEXT NOT NULL,
+        operation_type TEXT NOT NULL CHECK (operation_type IN
+          ('UPLOAD_RECEIPT', 'OCR_RECEIPT', 'LINK_RECEIPT', 'DELETE_RECEIPT')),
+        idempotency_key TEXT NOT NULL UNIQUE,
+        status TEXT NOT NULL CHECK (status IN
+          ('PENDING', 'PROCESSING', 'RETRYABLE', 'FAILED', 'COMPLETED')),
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        next_attempt_at TEXT,
+        last_error_code TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        claim_owner TEXT,
+        lease_expires_at TEXT,
+        owner_user_id TEXT,
+        failure_category TEXT,
+        last_error_message TEXT,
+        last_attempt_at TEXT,
+        first_failed_at TEXT,
+        dependency_operation_id TEXT,
+        last_request_id TEXT,
+        UNIQUE (asset_id, operation_type)
+      );
+      INSERT INTO ledger_asset_operations_v38 SELECT * FROM ledger_asset_operations;
+      DROP TABLE ledger_asset_operations;
+      ALTER TABLE ledger_asset_operations_v38 RENAME TO ledger_asset_operations;
+      CREATE INDEX ledger_asset_operations_pending
+        ON ledger_asset_operations (status, created_at);
+      CREATE INDEX ledger_asset_operations_owner_pending
+        ON ledger_asset_operations (owner_user_id, status, next_attempt_at, created_at);
+      CREATE INDEX ledger_asset_operations_dependency ON ledger_asset_operations
+        (owner_user_id, dependency_operation_id, status);
+      CREATE INDEX ledger_asset_operations_long_lived_failure ON ledger_asset_operations
+        (owner_user_id, failure_category, first_failed_at, status);
+    `,
+  },
+  {
+    id: 39,
+    name: "receipt_media_source_metadata",
+    sql: `
+      ALTER TABLE ledger_receipt_assets ADD COLUMN original_filename TEXT;
+      ALTER TABLE ledger_receipt_assets ADD COLUMN original_mime_type TEXT;
+      ALTER TABLE ledger_receipt_assets ADD COLUMN original_size_bytes INTEGER;
+      ALTER TABLE ledger_receipt_assets ADD COLUMN width INTEGER;
+      ALTER TABLE ledger_receipt_assets ADD COLUMN height INTEGER;
+    `,
+  },
 ];

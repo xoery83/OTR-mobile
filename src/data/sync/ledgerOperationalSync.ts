@@ -136,8 +136,7 @@ async function runOperationalCycle(origin: LedgerOperationalSyncOrigin) {
     .catch(() => undefined)
     .then(() =>
       Promise.allSettled([
-        runLedgerExpenseSync(),
-        runLedgerReceiptSync(),
+        runLedgerExpenseSync().then(() => runLedgerReceiptSync()),
         runLedgerSettlementPaymentSync(),
         runLedgerReviewSync(),
         runPersonalSettlementReviewSync(),
