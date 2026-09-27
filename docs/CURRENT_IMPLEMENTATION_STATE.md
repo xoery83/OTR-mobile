@@ -2,6 +2,24 @@
 
 Date: 2026-09-27
 
+## Buglist 004 — Currency help and New Expense form (2026-09-27)
+
+- Journey Currency info icon now aligns with its heading; tapping the icon again
+  or the surrounding page closes its explanation. New Expense uses the same
+  compact Cancel/Done date wheel as Currency.
+- A sole participant needs no visible Split control; allocation remains automatic.
+  Group settlement appears for multiple participants or one participant other
+  than the current member, with an Include/Exclude segmented choice. More Details
+  uses a disclosure control. Notes scrolls above the software keyboard.
+- No attachment upload, API, schema or repository change. TypeScript, affected
+  lint/format and diff check passed; signed Simulator and iPhone 16 Pro Release
+  builds installed and launched. Simulator verified the date panel, participant
+  conditions, choice state, disclosure, help dismissal and visible Notes above its
+  software keyboard. Physical touch verified the help dismissal, date panel,
+  single-other-participant control and choice state. iPhone Mirroring did not
+  display a software keyboard for the physical Notes focus, so that particular
+  device interaction remains unverified.
+
 ## Buglist 003 — Ledger form and Currency UI (2026-09-27)
 
 - Currency uses a compact bottom date picker with a centered wheel. Journey

@@ -151,10 +151,13 @@ export default function CurrencyRoute() {
     );
 
   return (
-    <>
+    <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headingRow}>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
+          <Text
+            accessibilityRole="header"
+            style={[styles.sectionTitle, styles.inlineTitle]}
+          >
             Journey Currency
           </Text>
           <Pressable
@@ -167,15 +170,6 @@ export default function CurrencyRoute() {
             <AppIcon color="#0F766E" name="info.circle" size={18} />
           </Pressable>
         </View>
-        {helpOpen ? (
-          <View style={styles.helpPopover}>
-            <Text style={styles.helpText}>
-              {chinese
-                ? "旅行结算货币用于汇总消费、成员余额和最终结算。每笔消费保留原始金额和币种；跨币种消费在符合条件的历史参考汇率可用并被接受后，按消费日期估值。没有可用汇率的消费暂不计入已确认的换算汇总。只有组织者在线预览并确认后才能更改；未完成的结算或冲突会阻止更改。只要有最终结算记录，此货币便永久锁定。"
-                : "Journey Currency is used for spending totals, member balances and final settlement. Each Expense keeps its original amount and currency. Eligible cross-currency Expenses are valued using an accepted historical reference rate for the Expense date; those without an available rate remain unresolved. Only the organizer can change this online after preview and confirmation. Open settlements or conflicts block the change. Any finalized settlement locks this currency permanently."}
-            </Text>
-          </View>
-        ) : null}
         <View style={styles.group}>
           {journey ? (
             <Pressable
@@ -324,6 +318,23 @@ export default function CurrencyRoute() {
         ) : null}
         {message ? <Text style={styles.error}>{message}</Text> : null}
       </ScrollView>
+      {helpOpen ? (
+        <View style={styles.helpOverlay}>
+          <Pressable
+            accessibilityLabel="Close Journey Currency explanation"
+            accessibilityRole="button"
+            onPress={() => setHelpOpen(false)}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.helpPopover}>
+            <Text style={styles.helpText}>
+              {chinese
+                ? "旅行结算货币用于汇总消费、成员余额和最终结算。每笔消费保留原始金额和币种；跨币种消费在符合条件的历史参考汇率可用并被接受后，按消费日期估值。没有可用汇率的消费暂不计入已确认的换算汇总。只有组织者在线预览并确认后才能更改；未完成的结算或冲突会阻止更改。只要有最终结算记录，此货币便永久锁定。"
+                : "Journey Currency is used for spending totals, member balances and final settlement. Each Expense keeps its original amount and currency. Eligible cross-currency Expenses are valued using an accepted historical reference rate for the Expense date; those without an available rate remain unresolved. Only the organizer can change this online after preview and confirmation. Open settlements or conflicts block the change. Any finalized settlement locks this currency permanently."}
+            </Text>
+          </View>
+        </View>
+      ) : null}
       <Modal
         allowSwipeDismissal
         animationType="slide"
@@ -343,11 +354,12 @@ export default function CurrencyRoute() {
           onSelect={(code) => void selectCurrency(code)}
         />
       </Modal>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   center: { alignItems: "center", flex: 1, justifyContent: "center" },
   content: { backgroundColor: "#F6F7F9", flexGrow: 1, padding: 16, paddingBottom: 40 },
   sectionTitle: {
@@ -359,14 +371,21 @@ const styles = StyleSheet.create({
     marginTop: 18,
     textTransform: "uppercase",
   },
-  headingRow: { alignItems: "center", flexDirection: "row", gap: 4 },
+  headingRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 4,
+    marginBottom: 7,
+    marginTop: 18,
+  },
+  inlineTitle: { marginBottom: 0, marginTop: 0 },
   infoButton: {
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 7,
     minHeight: 36,
     minWidth: 36,
   },
+  helpOverlay: { ...StyleSheet.absoluteFill, zIndex: 10 },
   helpPopover: {
     backgroundColor: "#FFFFFF",
     borderColor: "#CBD5E1",
@@ -381,7 +400,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.16,
     shadowRadius: 12,
-    top: 50,
+    top: 80,
     zIndex: 10,
   },
   helpText: { color: "#334155", fontSize: 14, lineHeight: 21 },

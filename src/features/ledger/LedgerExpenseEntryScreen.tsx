@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,6 +17,7 @@ import {
   View,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { SafeAreaView } from "react-native-safe-area-context";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
@@ -119,10 +121,13 @@ export function LedgerExpenseEntryScreen() {
   const [currencySheet, setCurrencySheet] = useState(false);
   const [splitSheet, setSplitSheet] = useState(false);
   const [datePicker, setDatePicker] = useState(false);
+  const [pendingDate, setPendingDate] = useState(new Date());
   const [more, setMore] = useState(false);
   const [categoryManual, setCategoryManual] = useState(false);
   const allowClose = useRef(false);
   const savingRef = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const notesFocused = useRef(false);
   const largeText = useWindowDimensions().fontScale > 2;
 
   useEffect(() => {
@@ -137,7 +142,10 @@ export function LedgerExpenseEntryScreen() {
         setCategoryManual(Boolean(value.existing));
         setMore(Boolean(params.receiptId));
         setInitialSnapshot(JSON.stringify(value.draft));
-        if (params.focusDate === "1") setDatePicker(true);
+        if (params.focusDate === "1") {
+          setPendingDate(value.draft.date ? dateFromKey(value.draft.date) : new Date());
+          setDatePicker(true);
+        }
       })
       .catch((cause) => {
         if (active)
@@ -152,6 +160,14 @@ export function LedgerExpenseEntryScreen() {
       active = false;
     };
   }, [params.expenseId, params.journeyId, params.receiptId, params.focusDate]);
+
+  useEffect(() => {
+    const subscription = Keyboard.addListener("keyboardDidShow", () => {
+      if (notesFocused.current)
+        requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+    });
+    return () => subscription.remove();
+  }, []);
 
   const dirty = Boolean(
     draft &&
@@ -207,7 +223,7 @@ export function LedgerExpenseEntryScreen() {
     try {
       return {
         splits: buildDraftSplits({
-          mode: draft.splitMode,
+          mode: selectedMembers.length === 1 ? "EQUAL_PERSON" : draft.splitMode,
           originalMinor: minor,
           settlementMinor,
           members: selectedMembers,
@@ -306,24 +322,6 @@ export function LedgerExpenseEntryScreen() {
           setDraft({ ...draft, category });
         }
       },
-    );
-  };
-
-  const chooseSettlementParticipation = () => {
-    if (!draft) return;
-    const next = draft.settlementParticipation === "INCLUDED" ? "EXCLUDED" : "INCLUDED";
-    Alert.alert(
-      next === "INCLUDED" ? "Include in group settlement?" : "Exclude from settlement?",
-      next === "INCLUDED"
-        ? "Participant shares will affect who owes whom."
-        : "This Expense stays in Spending but will not affect who owes whom.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm",
-          onPress: () => setDraft({ ...draft, settlementParticipation: next }),
-        },
-      ],
     );
   };
 
@@ -599,8 +597,10 @@ export function LedgerExpenseEntryScreen() {
         }}
       />
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        ref={scrollRef}
       >
         <TextInput
           accessibilityLabel="Expense amount"
@@ -662,7 +662,10 @@ export function LedgerExpenseEntryScreen() {
         <FormRow label="Category" onPress={chooseCategory} value={draft.category} />
         <FormRow
           label="Expense date"
-          onPress={() => setDatePicker(true)}
+          onPress={() => {
+            setPendingDate(date);
+            setDatePicker(true);
+          }}
           value={draft.date || "Add date"}
         />
         <FormRow
@@ -674,15 +677,21 @@ export function LedgerExpenseEntryScreen() {
           label="Participants"
           onPress={() => setMemberSheet(true)}
           value={
-            selectedMembers.length === 1 ? "Just you" : `${selectedMembers.length} people`
+            selectedMembers.length === 1
+              ? selectedMembers[0].id === context.actorId
+                ? "Just you"
+                : selectedMembers[0].displayName
+              : `${selectedMembers.length} people`
           }
         />
-        <FormRow
-          label="Split"
-          onPress={() => setSplitSheet(true)}
-          value={`${splitLabels[draft.splitMode]} · ${selectedMembers.length}`}
-        />
-        {effectiveSplits ? (
+        {selectedMembers.length > 1 ? (
+          <FormRow
+            label="Split"
+            onPress={() => setSplitSheet(true)}
+            value={`${splitLabels[draft.splitMode]} · ${selectedMembers.length}`}
+          />
+        ) : null}
+        {selectedMembers.length > 1 && effectiveSplits ? (
           <Text style={styles.hint}>
             {effectiveSplits
               .slice(0, 3)
@@ -692,23 +701,56 @@ export function LedgerExpenseEntryScreen() {
               })
               .join(" · ")}
           </Text>
-        ) : minor !== null ? (
+        ) : selectedMembers.length > 1 && minor !== null ? (
           <Text style={styles.error}>{splitResult.error}</Text>
         ) : null}
-        {selectedMembers.length > 1 ? (
-          <FormRow
-            label="Group settlement"
-            onPress={chooseSettlementParticipation}
-            value={
-              draft.settlementParticipation === "INCLUDED" ? "Included" : "Not included"
-            }
-          />
+        {selectedMembers.length > 1 ||
+        (selectedMembers.length === 1 && selectedMembers[0].id !== context.actorId) ? (
+          <View style={styles.settlementRow}>
+            <Text style={styles.rowLabel}>Group settlement</Text>
+            <View style={styles.settlementChoices}>
+              {(["INCLUDED", "EXCLUDED"] as const).map((value) => (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{
+                    selected: draft.settlementParticipation === value,
+                  }}
+                  key={value}
+                  onPress={() => setDraft({ ...draft, settlementParticipation: value })}
+                  style={[
+                    styles.settlementChoice,
+                    draft.settlementParticipation === value &&
+                      styles.settlementChoiceSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.settlementChoiceText,
+                      draft.settlementParticipation === value &&
+                        styles.settlementChoiceTextSelected,
+                    ]}
+                  >
+                    {value === "INCLUDED" ? "Include" : "Exclude"}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
         ) : null}
-        <FormRow
-          label="More Details"
+        <Pressable
+          accessibilityLabel={more ? "Hide More Details" : "Show More Details"}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: more }}
           onPress={() => setMore(!more)}
-          value={more ? "Hide" : "Show"}
-        />
+          style={styles.moreToggle}
+        >
+          <Text style={styles.moreToggleText}>More Details</Text>
+          <AppIcon
+            color="#0F766E"
+            name={more ? "chevron.up" : "chevron.down"}
+            size={17}
+          />
+        </Pressable>
         {more ? (
           <View style={styles.more}>
             <FormRow
@@ -739,7 +781,16 @@ export function LedgerExpenseEntryScreen() {
             <TextInput
               accessibilityLabel="Expense notes"
               multiline
+              onBlur={() => {
+                notesFocused.current = false;
+              }}
               onChangeText={(notes) => setDraft({ ...draft, notes })}
+              onFocus={() => {
+                notesFocused.current = true;
+                requestAnimationFrame(() =>
+                  scrollRef.current?.scrollToEnd({ animated: true }),
+                );
+              }}
               placeholder="Notes (optional)"
               style={[styles.textInput, styles.notes]}
               value={draft.notes}
@@ -902,17 +953,48 @@ export function LedgerExpenseEntryScreen() {
         </ScrollView>
       </Modal>
 
-      {datePicker ? (
-        <DateTimePicker
-          display="spinner"
-          mode="date"
-          onChange={(_, value) => {
-            setDatePicker(false);
-            if (value) setDraft({ ...draft, date: dateKey(value) });
-          }}
-          value={date}
-        />
-      ) : null}
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setDatePicker(false)}
+        transparent
+        visible={datePicker}
+      >
+        <View style={styles.dateOverlay}>
+          <Pressable
+            accessibilityLabel="Dismiss expense date picker"
+            accessibilityRole="button"
+            onPress={() => setDatePicker(false)}
+            style={styles.dateBackdrop}
+          />
+          <SafeAreaView edges={["bottom"]} style={styles.datePanel}>
+            <LedgerSheetHeader
+              leftLabel="Cancel"
+              onLeft={() => setDatePicker(false)}
+              onRight={() => {
+                setDraft({ ...draft, date: dateKey(pendingDate) });
+                setDatePicker(false);
+              }}
+              safeTop={false}
+              title="Expense date"
+            />
+            {datePicker ? (
+              <View style={styles.dateWheelContainer}>
+                <DateTimePicker
+                  display="spinner"
+                  mode="date"
+                  onChange={(_, value) => {
+                    if (value) setPendingDate(value);
+                  }}
+                  style={styles.dateWheel}
+                  textColor="#0F172A"
+                  themeVariant="light"
+                  value={pendingDate}
+                />
+              </View>
+            ) : null}
+          </SafeAreaView>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -1162,12 +1244,61 @@ const styles = StyleSheet.create({
   rowLabel: { color: "#0F172A", flex: 1, fontSize: 17, fontWeight: "600" },
   rowValue: { color: "#475569", flexShrink: 1, fontSize: 16, textAlign: "right" },
   rowValueLargeText: { textAlign: "left" },
+  settlementRow: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    flexDirection: "row",
+    gap: 8,
+    minHeight: 52,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  settlementChoices: {
+    backgroundColor: "#E5E7EB",
+    borderRadius: 9,
+    flexDirection: "row",
+    padding: 3,
+  },
+  settlementChoice: {
+    alignItems: "center",
+    borderRadius: 7,
+    minHeight: 36,
+    minWidth: 64,
+    justifyContent: "center",
+    paddingHorizontal: 6,
+  },
+  settlementChoiceSelected: { backgroundColor: "#0F766E" },
+  settlementChoiceText: { color: "#475569", fontSize: 13, fontWeight: "600" },
+  settlementChoiceTextSelected: { color: "#FFFFFF" },
+  moreToggle: {
+    alignItems: "center",
+    alignSelf: "center",
+    flexDirection: "row",
+    gap: 8,
+    minHeight: 44,
+    paddingHorizontal: 16,
+  },
+  moreToggleText: { color: "#0F766E", fontSize: 15, fontWeight: "600" },
   hint: { color: "#64748B", fontSize: 14, lineHeight: 20 },
   suggestion: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
   warning: { color: "#92400E", fontSize: 14, lineHeight: 20 },
   error: { color: "#B91C1C", fontSize: 15, lineHeight: 21 },
   success: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
   more: { gap: 12 },
+  dateOverlay: { flex: 1, justifyContent: "flex-end" },
+  dateBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(15, 23, 42, 0.25)",
+  },
+  datePanel: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    overflow: "hidden",
+  },
+  dateWheelContainer: { alignItems: "center", justifyContent: "center", minHeight: 280 },
+  dateWheel: { height: 216, width: "100%" },
   headerAction: { color: "#0F766E", fontSize: 17, fontWeight: "700", padding: 8 },
   headerActionButton: { justifyContent: "center", minHeight: 44 },
   disabledText: { opacity: 0.4 },
