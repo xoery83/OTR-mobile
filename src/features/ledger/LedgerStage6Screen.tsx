@@ -164,6 +164,9 @@ export function LedgerStage6Screen({
   const modeNavBottom = useRef(0);
   const journeySearch = useRef<TextInput>(null);
   const manualJourneyId = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    manualJourneyId.current = undefined;
+  }, [scopedJourneyId]);
   const [request] = useState(createLatestRequest);
   const [memberRequest] = useState(createLatestRequest);
   const scopeRef = useRef<ReportingScope>("MINE");
@@ -411,7 +414,8 @@ export function LedgerStage6Screen({
       available,
       localToday(),
       selected,
-      scopedJourneyId ?? manualJourneyId.current,
+      scopedJourneyId,
+      manualJourneyId.current,
     );
     setJourneys(available);
     const nextJourney =
@@ -507,6 +511,7 @@ export function LedgerStage6Screen({
     try {
       const repository = await getDefaultLedgerReportingRepository();
       await repository.selectJourney(selected.journeyId);
+      if (scopedJourneyId) router.setParams({ journeyId: selected.journeyId });
       setJourneyPickerOpen(false);
       setJourneyQuery("");
     } catch {

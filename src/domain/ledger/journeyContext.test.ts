@@ -60,6 +60,27 @@ describe("Stage 6 Journey context", () => {
     });
   });
 
+  it("keeps a newly selected past Journey over the previous scoped route on refresh", () => {
+    const trips = [
+      journey("Europe", "2026-07-08", "2026-07-25"),
+      journey("test", "2026-09-23", "2026-09-24"),
+    ];
+    expect(chooseJourneyEntry(trips, "2026-09-28", "test", "Europe", "test")).toEqual({
+      kind: "JOURNEY",
+      journeyId: "test",
+    });
+    // Once the route is updated, a remount no longer needs the manual override.
+    expect(chooseJourneyEntry(trips, "2026-09-28", "test", "test")).toEqual({
+      kind: "JOURNEY",
+      journeyId: "test",
+    });
+    // A failed selection retains the original page context.
+    expect(chooseJourneyEntry(trips, "2026-09-28", "Europe", "Europe")).toEqual({
+      kind: "JOURNEY",
+      journeyId: "Europe",
+    });
+  });
+
   it("turns local periods into explicit UTC bounds", () => {
     const now = new Date(2026, 8, 12, 12);
     expect(myLedgerPeriodBounds("30D", now).to).toBe(now.toISOString());

@@ -2,6 +2,17 @@
 
 Date: 2026-09-28
 
+## Journey selection route repair — Simulator PASS
+
+- Manual Journey selection now takes priority over the previous fixed route during
+  refresh; successful selection updates the route parameter. Incoming route changes
+  clear the previous page’s manual override. Failed selection keeps prior context.
+- Two focused suites / 13 tests, TypeScript, scoped ESLint, diff check and signed
+  Simulator Release pass. iPhone 17 Pro: fixed Europe route → first Acceptance Trip
+  → Settlement → Spending and Today → Ledger retain the new Trip; picker agrees.
+  No financial action, physical device access or push. Concurrent Settlement changes
+  remain separate; the other chat was notified to preserve this route repair.
+
 ## Expense Detail & Edit Consolidation — implemented, Simulator smoke passed
 
 - Owner-approved Detail/Edit specification is recorded with the safety audit in

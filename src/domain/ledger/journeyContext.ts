@@ -28,12 +28,14 @@ export function chooseJourneyEntry(
   today: string,
   persistedJourneyId: string | null,
   explicitJourneyId?: string,
+  manualJourneyId?: string,
 ): JourneyEntry {
+  const preferredJourneyId = manualJourneyId ?? explicitJourneyId;
   if (
-    explicitJourneyId &&
-    journeys.some((journey) => journey.journeyId === explicitJourneyId)
+    preferredJourneyId &&
+    journeys.some((journey) => journey.journeyId === preferredJourneyId)
   ) {
-    return { kind: "JOURNEY", journeyId: explicitJourneyId };
+    return { kind: "JOURNEY", journeyId: preferredJourneyId };
   }
   const candidates = journeys.filter((journey) => isJourneyCandidate(journey, today));
   if (
