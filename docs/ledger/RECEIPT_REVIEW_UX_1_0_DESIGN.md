@@ -254,7 +254,15 @@ Do not expose parser scores.
 
 Do not automatically select unsafe ambiguous values merely for presentation.
 
-The existing conservative suggestion policy remains authoritative.
+The existing conservative amount suggestion policy remains authoritative.
+
+Owner-approved currency refinement (2026-09-28): explicit receipt currency wins.
+Without explicit codes or competing currency symbols, kana plus an ambiguous yen
+symbol recommends JPY as a system suggestion. Kana alone or Han plus yen remains
+candidate-only and falls back to Journey currency. This does not resolve parser
+amount ambiguity, convert money or create financial evidence. Form currency is
+protected only after explicit currency selection, accepted receipt Review/Capture,
+or loading an existing Expense; editing title/amount does not protect a default.
 
 If no safe initial amount exists:
 

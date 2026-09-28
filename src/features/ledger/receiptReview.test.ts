@@ -102,6 +102,7 @@ it("shows an explicit receipt currency even when a manual amount preserves the f
   const review = seedReceiptReviewFromExpense(
     createReceiptReviewState(scanned("合計 1,002円"), "NZD", "USD"),
     { title: "", amount: "10.00", currency: "NZD" },
+    true,
   );
   expect(review.currency).toEqual({ value: "NZD", owner: "USER_EDITED" });
   expect(review.suggestions.currencyAlternatives).toEqual(["JPY"]);
@@ -127,6 +128,63 @@ it("offers language-based currency choices without selecting one", () => {
     "TWD",
     "HKD",
   ]);
+});
+
+it("recommends Japanese yen from kana plus yen while retaining ambiguous amount evidence", () => {
+  const session = scanned("かなサンプル店", "合計 ¥1,002");
+  const review = createReceiptReviewState(session, "NZD", "USD");
+  expect(review.currency).toEqual({ value: "JPY", owner: "SYSTEM_SUGGESTED" });
+  expect(review.suggestions.currencySource).toBe("receipt");
+  expect(review.suggestions.currency).toBe("CANDIDATES_AVAILABLE");
+  expect(review.amount.value).toBe("");
+  expect(
+    session.combined?.currencyCandidates.find((item) => item.raw === "¥")?.code,
+  ).toBeNull();
+  expect(
+    createReceiptReviewState(scanned("かな店", "TOTAL US$10", "¥100"), "NZD", "USD")
+      .currency.value,
+  ).toBe("USD");
+  expect(
+    createReceiptReviewState(scanned("かな店", "JPY100", "CNY100"), "NZD", "USD").currency
+      .value,
+  ).toBe("NZD");
+  expect(
+    createReceiptReviewState(scanned("かな店", "¥100", "$100"), "NZD", "USD").currency
+      .value,
+  ).toBe("NZD");
+});
+
+it("does not protect a form default merely because title or amount was edited", () => {
+  const session = scanned("かな店", "合計 ¥1,002");
+  for (const expense of [
+    { title: "Manual title", amount: "", currency: "NZD" },
+    { title: "", amount: "1002", currency: "NZD" },
+  ]) {
+    let review = seedReceiptReviewFromExpense(
+      createReceiptReviewState(pending(), "NZD", "USD"),
+      expense,
+      false,
+    );
+    review = refreshReceiptReviewState(review, session, "NZD", "USD");
+    expect(review.currency).toEqual({ value: "JPY", owner: "SYSTEM_SUGGESTED" });
+    if (expense.title)
+      expect(review.title).toEqual({ value: expense.title, owner: "USER_EDITED" });
+    if (expense.amount)
+      expect(review.amount).toEqual({ value: expense.amount, owner: "USER_EDITED" });
+  }
+});
+
+it("protects an explicitly chosen default currency even with empty title and amount", () => {
+  const session = scanned("かな店", "合計 ¥1,002");
+  const review = seedReceiptReviewFromExpense(
+    createReceiptReviewState(pending(), "NZD", "USD"),
+    { title: "", amount: "", currency: "NZD" },
+    true,
+  );
+  expect(refreshReceiptReviewState(review, session, "NZD", "USD").currency).toEqual({
+    value: "NZD",
+    owner: "USER_EDITED",
+  });
 });
 
 it("leaves competing or weak amounts blank and exposes selectable alternatives", () => {
@@ -318,7 +376,7 @@ it("confirms reviewed fields and two scanned drafts as one prepared form transit
   );
   session = addScannedPart(session, "receipt2", "TOTAL NZ$86.40");
   let review = createReceiptReviewState(session, "AUD", "USD");
-  review = seedReceiptReviewFromExpense(review, original);
+  review = seedReceiptReviewFromExpense(review, original, true);
   expect(review.title).toEqual({ value: original.title, owner: "USER_EDITED" });
   expect(review.amount).toEqual({ value: original.amount, owner: "USER_EDITED" });
   review = editReceiptReviewField(review, "title", "Confirmed title");

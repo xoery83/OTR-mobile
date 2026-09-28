@@ -123,14 +123,35 @@ function suggestions(
       : /\p{Script=Han}/u.test(ocrText)
         ? ["JPY", "CNY", "TWD", "HKD"]
         : [];
+  const inferredJapaneseYen =
+    receiptCodes.length === 0 &&
+    /[\u3040-\u30ff]/u.test(ocrText) &&
+    Boolean(
+      parse?.currencyCandidates.every(
+        (item) => item.source !== "receipt" || item.possibleCodes.includes("JPY"),
+      ),
+    ) &&
+    Boolean(
+      parse?.currencyCandidates.some(
+        (item) =>
+          item.source === "receipt" &&
+          item.strength === "ambiguous-symbol" &&
+          item.possibleCodes.includes("JPY"),
+      ),
+    );
   const currency =
     receiptCurrency ??
-    (currencyScale(journeyCurrency) !== null ? journeyCurrency : defaultCurrency);
-  const currencySource = receiptCurrency
-    ? ("receipt" as const)
-    : currency === journeyCurrency
-      ? ("journey" as const)
-      : ("default" as const);
+    (inferredJapaneseYen
+      ? "JPY"
+      : currencyScale(journeyCurrency) !== null
+        ? journeyCurrency
+        : defaultCurrency);
+  const currencySource =
+    receiptCurrency || inferredJapaneseYen
+      ? ("receipt" as const)
+      : currency === journeyCurrency
+        ? ("journey" as const)
+        : ("default" as const);
   const amountCandidate = parse?.amountCandidates[0];
   const amountStrong =
     strongAmount(amountCandidate, session) && amountCandidate?.currency === currency;
@@ -190,8 +211,9 @@ export function createReceiptReviewState(
 export function seedReceiptReviewFromExpense(
   review: ReceiptReviewState,
   expense: { title: string; amount: string; currency: string },
+  preserveCurrency: boolean,
 ): ReceiptReviewState {
-  if (!expense.title.trim() && !expense.amount.trim()) return review;
+  if (!expense.title.trim() && !expense.amount.trim() && !preserveCurrency) return review;
   return {
     ...review,
     title: expense.title.trim()
@@ -201,7 +223,9 @@ export function seedReceiptReviewFromExpense(
       ? { value: expense.amount, owner: "USER_EDITED" }
       : review.amount,
     selectedAmountCurrency: expense.amount.trim() ? null : review.selectedAmountCurrency,
-    currency: { value: expense.currency, owner: "USER_EDITED" },
+    currency: preserveCurrency
+      ? { value: expense.currency, owner: "USER_EDITED" }
+      : review.currency,
   };
 }
 

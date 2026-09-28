@@ -208,6 +208,7 @@ export function LedgerExpenseEntryScreen() {
   const [context, setContext] = useState<EntryContext | null>(null);
   const [existing, setExisting] = useState<LedgerExpense | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const currencyChosen = useRef(false);
   const [initialSnapshot, setInitialSnapshot] = useState("");
   const [receiptId, setReceiptId] = useState(params.receiptId ?? null);
   const [receiptDrafts, setReceiptDrafts] = useState<TemporaryReceiptDraft[]>([]);
@@ -299,6 +300,7 @@ export function LedgerExpenseEntryScreen() {
         setContext(value.context);
         setExisting(value.existing);
         setDraft(value.draft);
+        currencyChosen.current = value.currencyChosen;
         setReceiptId(params.receiptId ?? null);
         setCategoryManual(Boolean(value.existing));
         setInitialSnapshot(JSON.stringify(value.draft));
@@ -787,6 +789,7 @@ export function LedgerExpenseEntryScreen() {
                       context.defaultCurrency,
                     ),
                     draft!,
+                    currencyChosen.current,
                   ),
             );
             scanOcrQueue.current.push(next.id);
@@ -1576,6 +1579,7 @@ export function LedgerExpenseEntryScreen() {
             ocrSession.clear();
             scanSessionRef.current = null;
             setDraft(prepared.expense);
+            currencyChosen.current = true;
             setReceiptDrafts([...receiptDrafts, ...transferred]);
             setScanSession(null);
             setReceiptReview(null);
@@ -1841,6 +1845,7 @@ export function LedgerExpenseEntryScreen() {
               context.defaultCurrency,
             ]}
             onSelect={(code) => {
+              currencyChosen.current = true;
               const corrected = correctedCurrencyDraft(draft, code);
               setDraft({
                 ...corrected,
@@ -2053,6 +2058,7 @@ async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: str
   return {
     existing,
     draft,
+    currencyChosen: Boolean(existing || suggestion?.currency),
     context: {
       journeyId: id,
       settlementCurrency: journey.settlementCurrency,

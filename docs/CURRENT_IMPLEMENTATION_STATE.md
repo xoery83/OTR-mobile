@@ -2,6 +2,22 @@
 
 Date: 2026-09-28
 
+## Receipt Review — Japanese yen recommendation
+
+- Owner approved explicit currency first, then kana plus yen without competing
+  symbols/codes, then Journey/default fallback. JPY inference remains a system
+  suggestion; amount/parser ambiguity and financial acceptance are unchanged.
+- Entry now tracks actual currency selection/accepted values separately from
+  defaults. Editing title/amount alone does not freeze NZD; explicitly choosing
+  NZD with an otherwise empty form is protected across OCR refresh.
+- Four focused files / 61 tests, TypeScript, affected ESLint, formatting/diff
+  checks, signed Release build and signature verification passed. Release installed
+  on the authorized iPhone 16 Pro. Native checks passed: kana/yen sample recommends
+  JPY while retaining a pre-entered title; re-scanning that sample after explicitly
+  selecting NZD retains NZD. A sample with no extracted currency symbols still
+  falls back to NZD with JPY offered, as specified. Temporary Review/New Expense
+  cancelled, no Expense Save. No backend, dependency, commit or push changes.
+
 ## Receipt Review — split-only gradient suggestions installed
 
 - Split comparison candidate rows fade from a near-opaque text surface at the
