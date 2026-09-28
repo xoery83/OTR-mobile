@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import {
   KeyboardAvoidingView,
   Keyboard,
@@ -44,6 +44,7 @@ type Props = {
   onScanAnother: () => void;
   canScanAnother: boolean;
   scanBusy: boolean;
+  sourceChooser?: ReactNode;
 };
 
 export function ReceiptReviewSheet({
@@ -61,6 +62,7 @@ export function ReceiptReviewSheet({
   onScanAnother,
   canScanAnother,
   scanBusy,
+  sourceChooser,
 }: Props) {
   const [currencyPicker, setCurrencyPicker] = useState(false);
   const [showAllTitles, setShowAllTitles] = useState(false);
@@ -411,6 +413,7 @@ export function ReceiptReviewSheet({
           </>
         )}
       </KeyboardAvoidingView>
+      {sourceChooser}
     </Modal>
   );
 }

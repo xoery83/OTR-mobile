@@ -45,6 +45,38 @@ export async function selectExpenseReceiptDraft(
   return selected;
 }
 
+export async function selectExpenseReceiptDraftBatch(
+  sources: readonly { uri: string; mimeType: string; name?: string | null }[],
+  existingCount: number,
+  journeyId: string,
+): Promise<{ drafts: TemporaryReceiptDraft[]; error: Error | null }> {
+  assertExpenseAttachmentDrafts(
+    Array.from({ length: existingCount + sources.length }, (_, i) => String(i)),
+  );
+  const drafts: TemporaryReceiptDraft[] = [];
+  for (const source of sources) {
+    try {
+      drafts.push(
+        await selectExpenseReceiptDraft(
+          source.uri,
+          source.mimeType,
+          undefined,
+          existingCount + drafts.length,
+          source.name,
+          journeyId,
+        ),
+      );
+    } catch (cause) {
+      return {
+        drafts,
+        error:
+          cause instanceof Error ? cause : new Error("Attachment could not be imported."),
+      };
+    }
+  }
+  return { drafts, error: null };
+}
+
 export async function restoreExpenseReceiptDrafts(journeyId: string) {
   const drafts = await listRecoverableReceiptDrafts(
     await requireActiveUserId(),

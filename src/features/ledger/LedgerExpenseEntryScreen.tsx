@@ -10,12 +10,11 @@ import {
   ActionSheetIOS,
   ActivityIndicator,
   Alert,
+  Animated,
   AppState,
-  FlatList,
+  Image,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -39,6 +38,7 @@ import {
   restoreExpenseReceiptDrafts,
   saveExpenseWithReceiptDraft,
   selectExpenseReceiptDraft,
+  selectExpenseReceiptDraftBatch,
   transferConfirmedReceiptDrafts,
 } from "@/data/operations/expenseReceiptDraft";
 import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
@@ -60,6 +60,7 @@ import type {
 import { createLocalId, createUuid } from "@/domain/localId";
 import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
 import { createReceiptOcrProvider } from "@/native/receiptOcr";
+import { previewReceiptDraftPdf } from "@/native/receiptDraftPreview";
 import {
   confirmSettlementCorrection,
   previewSettlementCorrection,
@@ -106,6 +107,17 @@ import {
   type ReceiptReviewState,
 } from "./receiptReview";
 import { ReceiptReviewSheet } from "./ReceiptReviewSheet";
+import {
+  applyExpenseSharing,
+  compactExpenseDate,
+  exactSharingAllocation,
+  expenseDraftAttachmentLabel,
+  expenseSettlementLabel,
+  expenseSharingSummary,
+  GROUP_SETTLEMENT_EXPLANATION,
+  remainingExpenseAttachmentCapacity,
+} from "./expenseEntryPresentation";
+import { ExpenseSettlementTag } from "./ExpenseSettlementTag";
 
 type EntryContext = {
   journeyId: string;
@@ -199,7 +211,8 @@ export function LedgerExpenseEntryScreen() {
   const [initialSnapshot, setInitialSnapshot] = useState("");
   const [receiptId, setReceiptId] = useState(params.receiptId ?? null);
   const [receiptDrafts, setReceiptDrafts] = useState<TemporaryReceiptDraft[]>([]);
-  const [recoveredDraftIds, setRecoveredDraftIds] = useState<Set<string>>(new Set());
+  const [previewDraft, setPreviewDraft] = useState<TemporaryReceiptDraft | null>(null);
+  const previewTouch = useRef({ x: 0, y: 0 });
   const [ocrState, setOcrState] = useState(idleExpenseReceiptOcr);
   const [ocrSession] = useState(() =>
     createExpenseReceiptOcrSession(createReceiptOcrProvider().recognize, setOcrState),
@@ -212,13 +225,18 @@ export function LedgerExpenseEntryScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [memberSheet, setMemberSheet] = useState(false);
   const [currencySheet, setCurrencySheet] = useState(false);
   const [categorySheet, setCategorySheet] = useState(false);
-  const [splitSheet, setSplitSheet] = useState(false);
   const [datePicker, setDatePicker] = useState(false);
   const [pendingDate, setPendingDate] = useState(new Date());
-  const [more, setMore] = useState(false);
+  const [dateBackdropOpacity] = useState(() => new Animated.Value(0));
+  const { fontScale, height: windowHeight } = useWindowDimensions();
+  const [dateSheetOffset] = useState(() => new Animated.Value(windowHeight));
+  const dateDismissing = useRef(false);
+  const [amountFocused, setAmountFocused] = useState(false);
+  const [sharingSheet, setSharingSheet] = useState(false);
+  const [sharingDraft, setSharingDraft] = useState<Draft | null>(null);
+  const [notesExpanded, setNotesExpanded] = useState(false);
   const [categoryManual, setCategoryManual] = useState(false);
   const allowClose = useRef(false);
   const mountedRef = useRef(true);
@@ -226,11 +244,36 @@ export function LedgerExpenseEntryScreen() {
   const addingReceiptRef = useRef(false);
   const [selectingReceipt, setSelectingReceipt] = useState(false);
   const expenseDraftId = useRef(createLocalId("ledger-expense"));
-  const scrollRef = useRef<ScrollView>(null);
-  const notesFocused = useRef(false);
-  const largeText = useWindowDimensions().fontScale > 2;
+  const scanOcrQueue = useRef<string[]>([]);
+  const [scanSourceVisible, setScanSourceVisible] = useState(false);
+  const scanSourceAddPart = useRef(false);
+  const pendingScanSource = useRef<"camera" | "photo" | "file" | null>(null);
+  const largeText = fontScale > 2;
+
+  const dismissDatePicker = (commit = false) => {
+    if (dateDismissing.current) return;
+    dateDismissing.current = true;
+    Animated.parallel([
+      Animated.timing(dateBackdropOpacity, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(dateSheetOffset, {
+        toValue: windowHeight,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      if (commit)
+        setDraft((current) => current && { ...current, date: dateKey(pendingDate) });
+      setDatePicker(false);
+      dateDismissing.current = false;
+    });
+  };
 
   const discardPendingScan = useCallback(() => {
+    scanOcrQueue.current = [];
     const pending = scanSessionRef.current;
     if (!pending) return;
     ocrSession.clear();
@@ -258,7 +301,6 @@ export function LedgerExpenseEntryScreen() {
         setDraft(value.draft);
         setReceiptId(params.receiptId ?? null);
         setCategoryManual(Boolean(value.existing));
-        setMore(Boolean(params.receiptId));
         setInitialSnapshot(JSON.stringify(value.draft));
         if (!params.expenseId)
           await restoreExpenseReceiptDrafts(value.context.journeyId)
@@ -289,7 +331,6 @@ export function LedgerExpenseEntryScreen() {
                     (item) => !current.some((selected) => selected.id === item.id),
                   ),
                 ]);
-                setRecoveredDraftIds(new Set(ordinary.map((item) => item.id)));
                 if (scanParts.length && !scanSessionRef.current) {
                   try {
                     let restored = createReceiptScanSession(recoveredSessionId!, [
@@ -327,7 +368,6 @@ export function LedgerExpenseEntryScreen() {
                         (item) => !current.some((saved) => saved.id === item.id),
                       ),
                     ]);
-                    setRecoveredDraftIds(new Set(available.map((item) => item.id)));
                   }
                 }
               }
@@ -363,17 +403,10 @@ export function LedgerExpenseEntryScreen() {
   ]);
 
   useEffect(() => {
-    const subscription = Keyboard.addListener("keyboardDidShow", () => {
-      if (notesFocused.current)
-        requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
-    });
-    return () => subscription.remove();
-  }, []);
-
-  useEffect(() => {
     mountedRef.current = true;
     const subscription = AppState.addEventListener("change", (next) => {
       if (next !== "active") {
+        scanOcrQueue.current = [];
         ocrSession.cancel();
         if (scanSessionRef.current) {
           const suspended = suspendReceiptScanSession(scanSessionRef.current);
@@ -449,6 +482,22 @@ export function LedgerExpenseEntryScreen() {
         );
     }
   }, [ocrState, context]);
+
+  useEffect(() => {
+    if (selectingReceipt || ocrState.status === "recognizing") return;
+    if (AppState.currentState !== "active") {
+      scanOcrQueue.current = [];
+      return;
+    }
+    while (scanOcrQueue.current.length) {
+      const id = scanOcrQueue.current.shift();
+      const part = scanSessionRef.current?.documents.find((item) => item.draft.id === id);
+      if (part?.status === "pending") {
+        ocrSession.start(part.draft);
+        break;
+      }
+    }
+  }, [ocrState, scanSession, selectingReceipt, ocrSession]);
 
   const dirty = Boolean(
     draft &&
@@ -573,31 +622,6 @@ export function LedgerExpenseEntryScreen() {
   const effectiveSplits = preservesExistingAllocation
     ? existing!.splits
     : splitResult.splits;
-  const allocatedMinor = effectiveSplits
-    ? effectiveSplits.reduce((sum, split) => sum + split.originalMinor, 0)
-    : draft?.splitMode === "EXACT"
-      ? selectedMembers.reduce(
-          (sum, member) =>
-            sum +
-            (parseCurrencyAmount(draft.exact[member.id] ?? "", scale ?? 2, true) ?? 0),
-          0,
-        )
-      : 0;
-
-  const choosePayer = () => {
-    if (!context || !draft) return;
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title: "Paid by",
-        options: [...context.members.map((member) => member.displayName), "Cancel"],
-        cancelButtonIndex: context.members.length,
-      },
-      (index) => {
-        const member = context.members[index];
-        if (member) setDraft({ ...draft, payerId: member.id });
-      },
-    );
-  };
 
   const attach = async (
     kind: "camera" | "photo" | "file",
@@ -619,10 +643,10 @@ export function LedgerExpenseEntryScreen() {
       return;
     if (
       !existing &&
-      receiptDrafts.length +
-        (receiptId ? 1 : 0) +
-        (scanSessionRef.current?.documents.length ?? 0) >=
-        MAX_EXPENSE_ATTACHMENTS
+      remainingExpenseAttachmentCapacity(
+        receiptDrafts.length + (receiptId ? 1 : 0),
+        scanSessionRef.current?.documents.length ?? 0,
+      ) === 0
     ) {
       setError(`Maximum ${MAX_EXPENSE_ATTACHMENTS} attachments per expense.`);
       return;
@@ -631,24 +655,29 @@ export function LedgerExpenseEntryScreen() {
     setSelectingReceipt(true);
     let selectedDraft: TemporaryReceiptDraft | null = null;
     try {
-      let source: { uri: string; mimeType: string; name?: string | null } | null = null;
+      const remaining = remainingExpenseAttachmentCapacity(
+        receiptDrafts.length + (receiptId ? 1 : 0),
+        scanSessionRef.current?.documents.length ?? 0,
+      );
+      let sources: { uri: string; mimeType: string; name?: string | null }[] = [];
       if (kind === "file") {
         const result = await DocumentPicker.getDocumentAsync({
           type: [
-            ...(addPart ? [] : ["application/pdf"]),
+            ...(scan ? [] : ["application/pdf"]),
             "image/jpeg",
             "image/png",
             "image/heic",
             "image/heif",
           ],
           copyToCacheDirectory: true,
+          multiple: !existing,
         });
         if (!result.canceled)
-          source = {
-            uri: result.assets[0].uri,
-            mimeType: result.assets[0].mimeType ?? "",
-            name: result.assets[0].name,
-          };
+          sources = result.assets.map((asset) => ({
+            uri: asset.uri,
+            mimeType: asset.mimeType ?? "",
+            name: asset.name,
+          }));
       } else {
         const permission =
           kind === "camera"
@@ -662,85 +691,114 @@ export function LedgerExpenseEntryScreen() {
             : await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ["images"],
                 quality: 1,
+                allowsMultipleSelection: !existing,
+                selectionLimit: !existing ? remaining : 1,
               });
         if (!result.canceled)
-          source = {
-            uri: result.assets[0].uri,
-            mimeType: result.assets[0].mimeType ?? "",
-            name: result.assets[0].fileName,
-          };
+          sources = result.assets.map((asset) => ({
+            uri: asset.uri,
+            mimeType: asset.mimeType ?? "",
+            name: asset.fileName,
+          }));
       }
-      if (!source) return;
-      if (!existing) {
-        const currentScan = scanSessionRef.current;
-        const scanSessionId =
-          scan && source.mimeType !== "application/pdf"
-            ? (currentScan?.sessionId ?? createLocalId("receipt-scan"))
-            : null;
-        const next = await selectExpenseReceiptDraft(
-          source.uri,
-          source.mimeType,
-          params.expenseId,
-          receiptDrafts.length +
-            (receiptId ? 1 : 0) +
-            (scanSessionRef.current?.documents.length ?? 0),
-          source.name,
-          context.journeyId,
-          scanSessionId
-            ? { sessionId: scanSessionId, order: currentScan?.usedDraftIds.length ?? 0 }
-            : undefined,
+      if (!sources.length) return;
+      if (!existing && sources.length > remaining)
+        throw new Error(
+          `Select up to ${remaining} attachment${remaining === 1 ? "" : "s"}.`,
         );
-        selectedDraft = next;
+      if (!scan && !existing) {
+        const result = await selectExpenseReceiptDraftBatch(
+          sources,
+          receiptDrafts.length + (receiptId ? 1 : 0),
+          context.journeyId,
+        );
         if (!mountedRef.current) {
-          discardExpenseReceiptDraft(next);
-          selectedDraft = null;
+          for (const imported of result.drafts) discardExpenseReceiptDraft(imported);
           return;
         }
-        if (addPart && next.mimeType === "application/pdf") {
-          throw new Error("Receipt scan parts must be images.");
-        }
-        if (
-          shouldRunExpenseReceiptOcr(scan, Boolean(existing)) &&
-          next.mimeType !== "application/pdf"
-        ) {
-          const pending = addReceiptScanDocument(
-            currentScan ??
-              createReceiptScanSession(scanSessionId!, [
-                ...receiptDrafts.map((item) => item.id),
-                ...(receiptId ? [receiptId] : []),
-              ]),
-            next,
-            { journeyCurrency: context.settlementCurrency },
+        if (result.drafts.length)
+          setReceiptDrafts((current) => [...current, ...result.drafts]);
+        if (result.error)
+          setError(
+            `${result.error.message}${result.drafts.length ? " Earlier attachments were kept." : ""}`,
           );
-          scanSessionRef.current = pending;
-          selectedDraft = null;
-          setScanSession(pending);
-          setReceiptReview((review) =>
-            review && currentScan
-              ? refreshReceiptReviewState(
-                  review,
-                  pending,
-                  context.settlementCurrency,
-                  context.defaultCurrency,
-                )
-              : seedReceiptReviewFromExpense(
-                  createReceiptReviewState(
+        return;
+      }
+      if (!existing) {
+        for (const source of sources) {
+          const currentScan = scanSessionRef.current;
+          const scanSessionId =
+            scan && source.mimeType !== "application/pdf"
+              ? (currentScan?.sessionId ?? createLocalId("receipt-scan"))
+              : null;
+          const next = await selectExpenseReceiptDraft(
+            source.uri,
+            source.mimeType,
+            params.expenseId,
+            receiptDrafts.length +
+              (receiptId ? 1 : 0) +
+              (scanSessionRef.current?.documents.length ?? 0),
+            source.name,
+            context.journeyId,
+            scanSessionId
+              ? { sessionId: scanSessionId, order: currentScan?.usedDraftIds.length ?? 0 }
+              : undefined,
+          );
+          selectedDraft = next;
+          if (
+            !mountedRef.current ||
+            (currentScan && scanSessionRef.current?.sessionId !== currentScan.sessionId)
+          ) {
+            discardExpenseReceiptDraft(next);
+            selectedDraft = null;
+            return;
+          }
+          if (scan && next.mimeType === "application/pdf") {
+            throw new Error("Receipt scan parts must be images.");
+          }
+          if (
+            shouldRunExpenseReceiptOcr(scan, Boolean(existing)) &&
+            next.mimeType !== "application/pdf"
+          ) {
+            const pending = addReceiptScanDocument(
+              scanSessionRef.current ??
+                createReceiptScanSession(scanSessionId!, [
+                  ...receiptDrafts.map((item) => item.id),
+                  ...(receiptId ? [receiptId] : []),
+                ]),
+              next,
+              { journeyCurrency: context.settlementCurrency },
+            );
+            scanSessionRef.current = pending;
+            selectedDraft = null;
+            setScanSession(pending);
+            setReceiptReview((review) =>
+              review && currentScan
+                ? refreshReceiptReviewState(
+                    review,
                     pending,
                     context.settlementCurrency,
                     context.defaultCurrency,
+                  )
+                : seedReceiptReviewFromExpense(
+                    createReceiptReviewState(
+                      pending,
+                      context.settlementCurrency,
+                      context.defaultCurrency,
+                    ),
+                    draft!,
                   ),
-                  draft!,
-                ),
-          );
-          Keyboard.dismiss();
-          setReviewVisible(true);
-          ocrSession.start(next);
-        } else {
-          selectedDraft = null;
-          setReceiptDrafts((current) => [...current, next]);
-          if (shouldRunExpenseReceiptOcr(scan, Boolean(existing))) ocrSession.start(next);
+            );
+            scanOcrQueue.current.push(next.id);
+          } else {
+            selectedDraft = null;
+            setReceiptDrafts((current) => [...current, next]);
+            if (shouldRunExpenseReceiptOcr(scan, Boolean(existing)))
+              ocrSession.start(next);
+          }
         }
       } else {
+        const source = sources[0];
         const receipt = await importReceiptAsset({
           journeyId: context.journeyId,
           expenseId: existing.id,
@@ -759,22 +817,36 @@ export function LedgerExpenseEntryScreen() {
           /* retain for recovery */
         }
       }
-      setError(cause instanceof Error ? cause.message : "Receipt could not be attached.");
+      const message =
+        cause instanceof Error ? cause.message : "Receipt could not be attached.";
+      setError(message);
     } finally {
       addingReceiptRef.current = false;
       setSelectingReceipt(false);
+      if (scan && mountedRef.current && scanSessionRef.current) {
+        Keyboard.dismiss();
+        setReviewVisible(true);
+      }
     }
   };
 
-  const chooseReceipt = (scan = false, addPart = false) =>
+  const chooseReceipt = (scan = false, addPart = false) => {
+    Keyboard.dismiss();
+    if (scan) {
+      scanSourceAddPart.current = addPart;
+      pendingScanSource.current = null;
+      setScanSourceVisible(true);
+      return;
+    }
     ActionSheetIOS.showActionSheetWithOptions(
       { options: ["Camera", "Photo Library", "Files", "Cancel"], cancelButtonIndex: 3 },
       (index) => {
-        if (index === 0) void attach("camera", scan, addPart);
-        if (index === 1) void attach("photo", scan, addPart);
-        if (index === 2) void attach("file", scan, addPart);
+        if (index === 0) void attach("camera");
+        if (index === 1) void attach("photo");
+        if (index === 2) void attach("file");
       },
     );
+  };
 
   const save = async () => {
     if (!context || !draft || minor === null || !effectiveSplits || savingRef.current)
@@ -992,18 +1064,100 @@ export function LedgerExpenseEntryScreen() {
       </View>
     );
 
-  const payer = context.members.find((member) => member.id === draft.payerId);
+  const sharing = expenseSharingSummary(draft, context.members, context.actorId);
+  const sharingEdit = sharingDraft ?? draft;
+  const sharingMembers = context.members.filter((member) =>
+    sharingEdit.participantIds.includes(member.id),
+  );
+  const exactAllocation = exactSharingAllocation(
+    minor,
+    scale ?? 2,
+    sharingMembers.map((member) => member.id),
+    sharingEdit.exact,
+  );
   const date = draft.date ? dateFromKey(draft.date) : new Date();
   const selectedReceiptCount = receiptDrafts.length + (receiptId ? 1 : 0);
-  const receiptCapacityFull =
-    selectedReceiptCount + (scanSession?.documents.length ?? 0) >=
-    MAX_EXPENSE_ATTACHMENTS;
+  const remainingAttachmentSlots = remainingExpenseAttachmentCapacity(
+    selectedReceiptCount,
+    scanSession?.documents.length ?? 0,
+  );
+  const receiptCapacityFull = remainingAttachmentSlots === 0;
+  const scanSourceSheet = (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={scanSourceVisible}
+      onRequestClose={() => setScanSourceVisible(false)}
+      onDismiss={() => {
+        const kind = pendingScanSource.current;
+        pendingScanSource.current = null;
+        if (kind) void attach(kind, true, scanSourceAddPart.current);
+      }}
+    >
+      <View style={styles.scanSourceOverlay}>
+        <Pressable
+          accessibilityLabel="Cancel scan receipt"
+          accessibilityRole="button"
+          style={StyleSheet.absoluteFill}
+          onPress={() => setScanSourceVisible(false)}
+        />
+        <SafeAreaView edges={["bottom"]} style={styles.scanSourcePanel}>
+          <ScrollView
+            style={{ flexGrow: 0 }}
+            contentContainerStyle={styles.scanSourceContent}
+          >
+            <Text accessibilityRole="header" style={styles.scanSourceTitle}>
+              Scan receipt
+            </Text>
+            <Text style={styles.hint}>
+              Scan one receipt, or add multiple parts of a long receipt.
+            </Text>
+            <Text style={styles.hint}>
+              {selectedReceiptCount + (scanSession?.documents.length ?? 0) === 0
+                ? `Up to ${MAX_EXPENSE_ATTACHMENTS} images per expense`
+                : `${remainingAttachmentSlots} attachment slot${remainingAttachmentSlots === 1 ? "" : "s"} remaining`}
+            </Text>
+            {(
+              [
+                ["camera", "Camera", "Take one photo"],
+                ["photo", "Photo Library", "Select one or multiple photos"],
+                ["file", "Files", "Select receipt images"],
+              ] as const
+            ).map(([kind, title, subtitle]) => (
+              <Pressable
+                key={kind}
+                accessibilityRole="button"
+                accessibilityLabel={`${title}. ${subtitle}`}
+                disabled={receiptCapacityFull}
+                style={styles.scanSourceOption}
+                onPress={() => {
+                  pendingScanSource.current = kind;
+                  setScanSourceVisible(false);
+                }}
+              >
+                <Text style={styles.scanActionText}>{title}</Text>
+                <Text style={styles.hint}>{subtitle}</Text>
+              </Pressable>
+            ))}
+            <Pressable
+              accessibilityRole="button"
+              style={styles.scanSourceOption}
+              onPress={() => setScanSourceVisible(false)}
+            >
+              <Text style={styles.scanActionText}>Cancel</Text>
+            </Pressable>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
+    </Modal>
+  );
+  const previewImages = receiptDrafts.filter((item) =>
+    item.mimeType.startsWith("image/"),
+  );
+  const previewIndex = previewImages.findIndex((item) => item.id === previewDraft?.id);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.flex}
-    >
+    <View style={styles.flex}>
       <Stack.Screen
         options={{
           gestureEnabled: false,
@@ -1023,29 +1177,34 @@ export function LedgerExpenseEntryScreen() {
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
-        ref={scrollRef}
+        keyboardDismissMode="interactive"
       >
         <TextInput
           accessibilityLabel="Expense amount"
+          accessibilityHint={
+            amountPrecisionError && !amountFocused
+              ? currencyAmountHint(draft.currency, scale ?? 2)
+              : undefined
+          }
           autoFocus={!existing}
           inputMode={scale === 0 ? "numeric" : "decimal"}
           keyboardType={scale === 0 ? "number-pad" : "decimal-pad"}
           maxFontSizeMultiplier={2}
+          onBlur={() => setAmountFocused(false)}
           onChangeText={(value) =>
             setDraft({
               ...draft,
               amount: currencyAmountInput(draft.amount, value, scale ?? 2),
             })
           }
+          onFocus={() => setAmountFocused(true)}
           placeholder="0"
-          style={styles.amountInput}
+          style={[
+            styles.amountInput,
+            amountPrecisionError && !amountFocused && styles.amountInvalid,
+          ]}
           value={draft.amount}
         />
-        {amountPrecisionError ? (
-          <Text style={styles.error}>
-            {currencyAmountHint(draft.currency, scale ?? 2)}
-          </Text>
-        ) : null}
         <View style={styles.currencyActions}>
           <View style={styles.currencyHalf}>
             <FormRow
@@ -1056,13 +1215,7 @@ export function LedgerExpenseEntryScreen() {
           </View>
           {!existing ? (
             <Pressable
-              accessibilityLabel={
-                scanSession
-                  ? "Review receipt"
-                  : receiptCapacityFull
-                    ? `Maximum ${MAX_EXPENSE_ATTACHMENTS} attachments selected`
-                    : "Scan receipt"
-              }
+              accessibilityLabel={scanSession ? "Review receipt" : "Scan receipt"}
               accessibilityRole="button"
               accessibilityState={{
                 disabled: !scanSession && receiptCapacityFull,
@@ -1074,15 +1227,15 @@ export function LedgerExpenseEntryScreen() {
                   setReviewVisible(true);
                 } else chooseReceipt(true);
               }}
-              style={[styles.scanAction, largeText && styles.scanActionLargeText]}
+              style={[
+                styles.scanAction,
+                largeText && styles.scanActionLargeText,
+                !scanSession && receiptCapacityFull && styles.disabledScanAction,
+              ]}
             >
               <AppIcon color="#0F766E" name="doc.text.viewfinder" size={18} />
               <Text style={styles.scanActionText}>
-                {scanSession
-                  ? "Review receipt"
-                  : receiptCapacityFull
-                    ? `Maximum ${MAX_EXPENSE_ATTACHMENTS} attachments`
-                    : "Scan receipt"}
+                {scanSession ? "Review receipt" : "Scan receipt"}
               </Text>
             </Pressable>
           ) : null}
@@ -1148,134 +1301,124 @@ export function LedgerExpenseEntryScreen() {
           style={styles.textInput}
           value={draft.title}
         />
-        <FormRow
-          label="Category"
-          onPress={() => setCategorySheet(true)}
-          value={draft.category}
-        />
-        <FormRow
-          label="Expense date"
-          onPress={() => {
-            setPendingDate(date);
-            setDatePicker(true);
-          }}
-          value={draft.date || "Add date"}
-        />
-        <FormRow
-          label="Paid by"
-          onPress={choosePayer}
-          value={payer?.displayName ?? "Choose"}
-        />
-        <FormRow
-          label="Participants"
-          onPress={() => setMemberSheet(true)}
-          value={
-            selectedMembers.length === 1
-              ? selectedMembers[0].id === context.actorId
-                ? "Just you"
-                : selectedMembers[0].displayName
-              : `${selectedMembers.length} people`
-          }
-        />
-        {selectedMembers.length > 1 ? (
-          <FormRow
-            label="Split"
-            onPress={() => setSplitSheet(true)}
-            value={`${splitLabels[draft.splitMode]} · ${selectedMembers.length}`}
-          />
-        ) : null}
-        {selectedMembers.length > 1 && effectiveSplits ? (
-          <Text style={styles.hint}>
-            {effectiveSplits
-              .slice(0, 3)
-              .map((split) => {
-                const member = selectedMembers.find((item) => item.id === split.memberId);
-                return `${member?.displayName ?? "Traveller"} ${formatLedgerMoney(split.originalMinor, draft.currency, scale ?? 2)}`;
-              })
-              .join(" · ")}
-          </Text>
-        ) : selectedMembers.length > 1 && minor !== null ? (
+        <View style={styles.compactPair}>
+          <View style={styles.compactHalf}>
+            <FormRow
+              label="Category"
+              onPress={() => setCategorySheet(true)}
+              value={draft.category}
+              stacked
+            />
+          </View>
+          <View style={styles.compactHalf}>
+            <FormRow
+              label="Date"
+              onPress={() => {
+                Keyboard.dismiss();
+                setPendingDate(date);
+                setDatePicker(true);
+              }}
+              value={draft.date ? compactExpenseDate(draft.date) : "Add date"}
+              stacked
+            />
+          </View>
+        </View>
+        <View style={styles.summaryCard}>
+          <View style={styles.sharingTitleRow}>
+            <Text style={styles.rowLabel}>Sharing</Text>
+            <Pressable
+              accessibilityLabel="About group settlement"
+              accessibilityRole="button"
+              onPress={() =>
+                Alert.alert("Group settlement", GROUP_SETTLEMENT_EXPLANATION)
+              }
+              style={styles.infoAction}
+            >
+              <AppIcon color="#0F766E" name="info.circle" size={19} />
+            </Pressable>
+          </View>
+          <Pressable
+            accessibilityLabel={`Sharing, ${sharing.join(", ")}${expenseSettlementLabel(draft) ? `, ${expenseSettlementLabel(draft)}` : ""}`}
+            accessibilityRole="button"
+            onPress={() => {
+              Keyboard.dismiss();
+              setSharingDraft({
+                ...draft,
+                participantIds: [...draft.participantIds],
+                exact: { ...draft.exact },
+                percentages: { ...draft.percentages },
+              });
+              setSharingSheet(true);
+            }}
+            style={styles.sharingSummaryAction}
+          >
+            {sharing.map((line) => (
+              <Text key={line} style={styles.summaryValue}>
+                {line}
+              </Text>
+            ))}
+            {expenseSettlementLabel(draft) ? (
+              <ExpenseSettlementTag value={draft.settlementParticipation} />
+            ) : null}
+          </Pressable>
+        </View>
+        {selectedMembers.length > 1 && minor !== null && !effectiveSplits ? (
           <Text style={styles.error}>{splitResult.error}</Text>
         ) : null}
-        {shouldShowGroupSettlement(draft.participantIds, draft.payerId) ? (
-          <View style={styles.settlementRow}>
-            <Text style={styles.rowLabel}>Group settlement</Text>
-            <View style={styles.settlementChoices}>
-              {(["INCLUDED", "EXCLUDED"] as const).map((value) => (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{
-                    selected: draft.settlementParticipation === value,
-                  }}
-                  key={value}
-                  onPress={() => setDraft({ ...draft, settlementParticipation: value })}
-                  style={[
-                    styles.settlementChoice,
-                    draft.settlementParticipation === value &&
-                      styles.settlementChoiceSelected,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.settlementChoiceText,
-                      draft.settlementParticipation === value &&
-                        styles.settlementChoiceTextSelected,
-                    ]}
-                  >
-                    {value === "INCLUDED" ? "Include" : "Exclude"}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+        <View style={styles.optionalSection}>
+          <View style={styles.sectionHeading}>
+            <Text style={styles.rowLabel}>
+              Attachments{selectedReceiptCount ? ` · ${selectedReceiptCount}` : ""}
+            </Text>
+            {!selectedReceiptCount ? (
+              <Text style={styles.optionalLabel}>Optional</Text>
+            ) : null}
           </View>
-        ) : null}
-        <Pressable
-          accessibilityLabel={more ? "Hide More Details" : "Show More Details"}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: more }}
-          onPress={() => setMore(!more)}
-          style={styles.moreToggle}
-        >
-          <Text style={styles.moreToggleText}>More Details</Text>
-          <AppIcon
-            color="#0F766E"
-            name={more ? "chevron.up" : "chevron.down"}
-            size={17}
-          />
-        </Pressable>
-        {more ? (
-          <View style={styles.more}>
-            <FormRow
-              label="Attachment"
-              onPress={() => chooseReceipt(false)}
-              disabled={!existing && receiptCapacityFull}
-              value={
-                receiptDrafts.length || receiptId
-                  ? `${receiptDrafts.length + (receiptId ? 1 : 0)} selected`
-                  : "Optional"
-              }
-            />
-            {receiptDrafts.map((receiptDraft, index) => (
+          {receiptDrafts.map((receiptDraft, index) => {
+            const display = expenseDraftAttachmentLabel(receiptDraft, index + 1);
+            return (
               <View key={receiptDraft.id} style={styles.attachmentItem}>
-                <AppIcon color="#0F766E" name="paperclip" size={15} />
-                <Text style={styles.attachmentText}>
-                  {`Receipt ${index + 1} saved temporarily`}
-                </Text>
-                {!existing &&
-                recoveredDraftIds.has(receiptDraft.id) &&
-                receiptDraft.mimeType !== "application/pdf" &&
-                ocrState.draftId !== receiptDraft.id ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Read receipt ${index + 1}`}
-                    onPress={() => ocrSession.start(receiptDraft)}
-                  >
-                    <Text style={styles.suggestion}>Read</Text>
-                  </Pressable>
-                ) : null}
+                <Pressable
+                  accessibilityLabel={`Preview ${display.title}, ${display.type}`}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    if (display.thumbnailUri) setPreviewDraft(receiptDraft);
+                    else
+                      try {
+                        previewReceiptDraftPdf(receiptDraft.localUri);
+                      } catch (cause) {
+                        Alert.alert(
+                          "Preview unavailable",
+                          cause instanceof Error
+                            ? cause.message
+                            : "The local file could not be opened.",
+                        );
+                      }
+                  }}
+                  style={styles.attachmentPreview}
+                >
+                  {display.thumbnailUri ? (
+                    <Image
+                      source={{ uri: display.thumbnailUri }}
+                      style={styles.attachmentThumbnail}
+                    />
+                  ) : (
+                    <AppIcon color="#0F766E" name="doc" size={28} />
+                  )}
+                  <View style={styles.attachmentIdentity}>
+                    <Text numberOfLines={1} style={styles.attachmentText}>
+                      {display.title}
+                    </Text>
+                    {display.thumbnailUri ? null : (
+                      <Text style={styles.optionalLabel}>{display.type}</Text>
+                    )}
+                  </View>
+                </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Remove receipt ${index + 1}`}
+                  accessibilityLabel={`Remove attachment ${index + 1}`}
+                  style={styles.attachmentAction}
                   onPress={() => {
                     ocrSession.clear(receiptDraft.id);
                     try {
@@ -1288,35 +1431,54 @@ export function LedgerExpenseEntryScreen() {
                     );
                   }}
                 >
-                  <Text>Remove</Text>
+                  <AppIcon color="#B91C1C" name="trash" size={18} />
                 </Pressable>
               </View>
-            ))}
-            {receiptId ? (
-              <Text style={styles.attachmentText}>Receipt attachment</Text>
-            ) : null}
-            {!existing && receiptCapacityFull ? (
-              <Text>Maximum {MAX_EXPENSE_ATTACHMENTS} attachments selected</Text>
-            ) : null}
+            );
+          })}
+          {receiptId ? (
+            <Text style={styles.attachmentText}>Receipt attachment</Text>
+          ) : null}
+          {!receiptCapacityFull || existing ? (
+            <Pressable
+              accessibilityLabel="Add attachment"
+              accessibilityRole="button"
+              onPress={() => chooseReceipt(false)}
+              style={styles.addAttachment}
+            >
+              <Text style={styles.suggestion}>+ Add attachment</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        <View style={styles.optionalSection}>
+          <View style={styles.sectionHeading}>
+            <Text style={styles.rowLabel}>Notes</Text>
+            <Text style={styles.optionalLabel}>Optional</Text>
+          </View>
+          {notesExpanded || draft.notes ? (
             <TextInput
               accessibilityLabel="Expense notes"
+              autoFocus={notesExpanded && !draft.notes}
               multiline
-              onBlur={() => {
-                notesFocused.current = false;
-              }}
               onChangeText={(notes) => setDraft({ ...draft, notes })}
               onFocus={() => {
-                notesFocused.current = true;
-                requestAnimationFrame(() =>
-                  scrollRef.current?.scrollToEnd({ animated: true }),
-                );
+                setNotesExpanded(true);
               }}
-              placeholder="Notes (optional)"
+              placeholder="Add a note..."
               style={[styles.textInput, styles.notes]}
               value={draft.notes}
             />
-          </View>
-        ) : null}
+          ) : (
+            <Pressable
+              accessibilityLabel="Add a note"
+              accessibilityRole="button"
+              onPress={() => setNotesExpanded(true)}
+              style={styles.addNote}
+            >
+              <Text style={styles.optionalLabel}>Add a note...</Text>
+            </Pressable>
+          )}
+        </View>
         {receiptId && params.receiptId ? (
           <Text style={styles.suggestion}>
             Receipt suggestions are editable until Save.
@@ -1324,6 +1486,58 @@ export function LedgerExpenseEntryScreen() {
         ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setPreviewDraft(null)}
+        presentationStyle="fullScreen"
+        visible={Boolean(previewDraft)}
+      >
+        <SafeAreaView style={styles.imagePreview}>
+          <View style={styles.previewHeader}>
+            <Pressable
+              accessibilityLabel="Close attachment preview"
+              accessibilityRole="button"
+              onPress={() => setPreviewDraft(null)}
+              style={styles.previewClose}
+            >
+              <Text style={styles.previewCloseText}>Close</Text>
+            </Pressable>
+            <Text style={styles.previewCounter}>
+              {previewIndex + 1} of {previewImages.length}
+            </Text>
+          </View>
+          {previewDraft ? (
+            <View
+              onTouchStart={(event) => {
+                previewTouch.current = {
+                  x: event.nativeEvent.pageX,
+                  y: event.nativeEvent.pageY,
+                };
+              }}
+              onTouchEnd={(event) => {
+                const dx = event.nativeEvent.pageX - previewTouch.current.x;
+                const dy = event.nativeEvent.pageY - previewTouch.current.y;
+                if (dy > 100 && Math.abs(dy) > Math.abs(dx)) setPreviewDraft(null);
+                else if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+                  const next = previewImages[previewIndex + (dx < 0 ? 1 : -1)];
+                  if (next) setPreviewDraft(next);
+                }
+              }}
+              style={styles.previewBody}
+            >
+              <Image
+                resizeMode="contain"
+                source={{ uri: previewDraft.localUri }}
+                style={styles.previewImage}
+              />
+            </View>
+          ) : null}
+          {previewImages.length > 1 ? (
+            <Text style={styles.previewHint}>Swipe left or right between images</Text>
+          ) : null}
+        </SafeAreaView>
+      </Modal>
 
       {scanSession && receiptReview ? (
         <ReceiptReviewSheet
@@ -1359,6 +1573,7 @@ export function LedgerExpenseEntryScreen() {
               receiptId,
             );
             const transferred = transferConfirmedReceiptDrafts(prepared.scannedDrafts);
+            scanOcrQueue.current = [];
             ocrSession.clear();
             scanSessionRef.current = null;
             setDraft(prepared.expense);
@@ -1366,7 +1581,6 @@ export function LedgerExpenseEntryScreen() {
             setScanSession(null);
             setReceiptReview(null);
             setReviewVisible(false);
-            setMore(true);
             setError(null);
           }}
           onRetry={(documentId) => {
@@ -1410,11 +1624,205 @@ export function LedgerExpenseEntryScreen() {
             }
           }}
           onScanAnother={() => chooseReceipt(true, true)}
+          sourceChooser={reviewVisible ? scanSourceSheet : null}
           review={receiptReview}
           session={scanSession}
           visible={reviewVisible}
         />
       ) : null}
+
+      {!reviewVisible ? scanSourceSheet : null}
+      <Modal
+        allowSwipeDismissal
+        animationType="slide"
+        onRequestClose={() => setSharingSheet(false)}
+        presentationStyle="pageSheet"
+        visible={sharingSheet}
+      >
+        <LedgerSheetHeader
+          leftLabel="Cancel"
+          onLeft={() => setSharingSheet(false)}
+          onRight={() => {
+            setDraft(applyExpenseSharing(draft, sharingEdit));
+            setSharingSheet(false);
+          }}
+          rightDisabled={
+            sharingMembers.length > 1 &&
+            sharingEdit.splitMode === "EXACT" &&
+            !exactAllocation.valid
+          }
+          title="Sharing"
+        />
+        <ScrollView
+          automaticallyAdjustKeyboardInsets
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          contentContainerStyle={styles.sheetContent}
+        >
+          <Text style={styles.sharingHeading}>Paid by</Text>
+          <View style={styles.chipList}>
+            {context.members.map((member) => (
+              <ChoiceChip
+                key={`payer-${member.id}`}
+                label={member.id === context.actorId ? "You" : member.displayName}
+                selected={sharingEdit.payerId === member.id}
+                onPress={() => setSharingDraft({ ...sharingEdit, payerId: member.id })}
+              />
+            ))}
+          </View>
+          <Text style={styles.sharingHeading}>Participants</Text>
+          <View style={styles.chipList}>
+            {context.members.map((member) => {
+              const selected = sharingEdit.participantIds.includes(member.id);
+              return (
+                <ChoiceChip
+                  key={`participant-${member.id}`}
+                  label={member.id === context.actorId ? "You" : member.displayName}
+                  selected={selected}
+                  onPress={() => {
+                    const ids = selected
+                      ? sharingEdit.participantIds.filter((id) => id !== member.id)
+                      : [...sharingEdit.participantIds, member.id];
+                    if (ids.length)
+                      setSharingDraft({ ...sharingEdit, participantIds: ids });
+                  }}
+                />
+              );
+            })}
+          </View>
+          {sharingMembers.length > 1 ? (
+            <>
+              <Text style={styles.sharingHeading}>Split</Text>
+              <View style={styles.chipList}>
+                {(
+                  [
+                    ...new Set<ExpenseSplitMethod>([
+                      "EQUAL_PERSON",
+                      "EXACT",
+                      sharingEdit.splitMode,
+                    ]),
+                  ] as ExpenseSplitMethod[]
+                ).map((mode) => (
+                  <ChoiceChip
+                    key={mode}
+                    label={splitLabels[mode]}
+                    selected={sharingEdit.splitMode === mode}
+                    onPress={() => setSharingDraft({ ...sharingEdit, splitMode: mode })}
+                  />
+                ))}
+              </View>
+              {sharingEdit.splitMode === "EXACT" ? (
+                <>
+                  <View style={styles.allocationSummary}>
+                    <AllocationLine
+                      label="Expense total"
+                      value={
+                        minor === null
+                          ? "Add an amount"
+                          : formatLedgerMoney(minor, draft.currency, scale ?? 2)
+                      }
+                    />
+                    <AllocationLine
+                      label="Assigned"
+                      value={formatLedgerMoney(
+                        exactAllocation.assignedMinor,
+                        draft.currency,
+                        scale ?? 2,
+                      )}
+                    />
+                    <AllocationLine
+                      label="Remaining"
+                      value={
+                        exactAllocation.remainingMinor === null
+                          ? "—"
+                          : formatLedgerMoney(
+                              exactAllocation.remainingMinor,
+                              draft.currency,
+                              scale ?? 2,
+                            )
+                      }
+                      warning={
+                        exactAllocation.remainingMinor !== null &&
+                        exactAllocation.remainingMinor !== 0
+                      }
+                    />
+                    {!exactAllocation.valid ? (
+                      <Text style={styles.allocationHint}>
+                        {minor === null
+                          ? "Enter an Expense amount before completing Exact amounts."
+                          : exactAllocation.remainingMinor !== null &&
+                              exactAllocation.remainingMinor < 0
+                            ? "Assigned amounts exceed the Expense total."
+                            : "Assign the full Expense total across selected participants."}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {minor !== null
+                    ? sharingMembers.map((member) => (
+                        <View
+                          key={member.id}
+                          style={[
+                            styles.customRow,
+                            largeText && styles.customRowLargeText,
+                          ]}
+                        >
+                          <Text style={styles.rowLabel}>
+                            {member.id === context.actorId ? "You" : member.displayName}
+                          </Text>
+                          <TextInput
+                            accessibilityLabel={`${member.id === context.actorId ? "You" : member.displayName} amount`}
+                            keyboardType={scale === 0 ? "number-pad" : "decimal-pad"}
+                            onChangeText={(value) =>
+                              setSharingDraft({
+                                ...sharingEdit,
+                                exact: {
+                                  ...sharingEdit.exact,
+                                  [member.id]: currencyAmountInput(
+                                    sharingEdit.exact[member.id] ?? "",
+                                    value,
+                                    scale ?? 2,
+                                  ),
+                                },
+                              })
+                            }
+                            placeholder={draft.currency}
+                            style={[
+                              styles.customInput,
+                              largeText && styles.customInputLargeText,
+                            ]}
+                            value={sharingEdit.exact[member.id] ?? ""}
+                          />
+                        </View>
+                      ))
+                    : null}
+                </>
+              ) : null}
+            </>
+          ) : null}
+          {shouldShowGroupSettlement(sharingEdit.participantIds, sharingEdit.payerId) ? (
+            <>
+              <Text style={styles.sharingHeading}>Group settlement</Text>
+              <View style={styles.chipList}>
+                {(["INCLUDED", "EXCLUDED"] as const).map((value) => (
+                  <ChoiceChip
+                    key={value}
+                    label={value === "INCLUDED" ? "Include" : "Exclude"}
+                    selected={sharingEdit.settlementParticipation === value}
+                    onPress={() =>
+                      setSharingDraft({ ...sharingEdit, settlementParticipation: value })
+                    }
+                  />
+                ))}
+              </View>
+              <Text style={styles.hint}>
+                {sharingEdit.settlementParticipation === "INCLUDED"
+                  ? "Included in this trip’s calculation of who owes whom."
+                  : "Saved in Expenses, but excluded from this trip’s calculation of who owes whom."}
+              </Text>
+            </>
+          ) : null}
+        </ScrollView>
+      </Modal>
 
       <Modal
         allowSwipeDismissal
@@ -1503,161 +1911,65 @@ export function LedgerExpenseEntryScreen() {
       </Modal>
 
       <Modal
-        allowSwipeDismissal
-        animationType="slide"
-        onRequestClose={() => setMemberSheet(false)}
-        presentationStyle="pageSheet"
-        visible={memberSheet}
-      >
-        <LedgerSheetHeader onLeft={() => setMemberSheet(false)} title="Participants" />
-        <FlatList
-          data={context.members}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-            const selected = draft.participantIds.includes(item.id);
-            return (
-              <SheetRow
-                label={item.displayName}
-                selected={selected}
-                onPress={() => {
-                  const ids = selected
-                    ? draft.participantIds.filter((id) => id !== item.id)
-                    : [...draft.participantIds, item.id];
-                  if (ids.length) setDraft({ ...draft, participantIds: ids });
-                }}
-              />
-            );
-          }}
-        />
-      </Modal>
-
-      <Modal
-        allowSwipeDismissal
-        animationType="slide"
-        onRequestClose={() => setSplitSheet(false)}
-        presentationStyle="pageSheet"
-        visible={splitSheet}
-      >
-        <LedgerSheetHeader onLeft={() => setSplitSheet(false)} title="Split Expense" />
-        <ScrollView contentContainerStyle={styles.sheetContent}>
-          <Text maxFontSizeMultiplier={2} style={styles.amountSummary}>
-            Total ·{" "}
-            {minor === null ? "—" : formatLedgerMoney(minor, draft.currency, scale ?? 2)}
-          </Text>
-          <Text style={styles.hint}>
-            Allocated · {formatLedgerMoney(allocatedMinor, draft.currency, scale ?? 2)} ·
-            Remaining ·{" "}
-            {minor === null
-              ? "—"
-              : formatLedgerMoney(minor - allocatedMinor, draft.currency, scale ?? 2)}
-          </Text>
-          {(["EQUAL_PERSON", "EXACT"] as const).map((mode) => {
-            return (
-              <SheetRow
-                key={mode}
-                label={splitLabels[mode]}
-                selected={draft.splitMode === mode}
-                onPress={() => setDraft({ ...draft, splitMode: mode })}
-              />
-            );
-          })}
-          {draft.splitMode === "EXACT"
-            ? selectedMembers.map((member) => (
-                <View
-                  key={member.id}
-                  style={[styles.customRow, largeText && styles.customRowLargeText]}
-                >
-                  <Text style={styles.rowLabel} numberOfLines={largeText ? undefined : 2}>
-                    {member.displayName}
-                  </Text>
-                  <TextInput
-                    accessibilityLabel={`${member.displayName} ${draft.splitMode === "EXACT" ? "amount" : "percentage"}`}
-                    keyboardType={
-                      draft.splitMode === "EXACT" && scale === 0
-                        ? "number-pad"
-                        : "decimal-pad"
-                    }
-                    onChangeText={(value) => {
-                      const field = draft.splitMode === "EXACT" ? "exact" : "percentages";
-                      setDraft({
-                        ...draft,
-                        [field]: {
-                          ...draft[field],
-                          [member.id]:
-                            field === "exact"
-                              ? currencyAmountInput(
-                                  draft.exact[member.id] ?? "",
-                                  value,
-                                  scale ?? 2,
-                                )
-                              : value,
-                        },
-                      });
-                    }}
-                    placeholder={draft.splitMode === "EXACT" ? draft.currency : "%"}
-                    style={[styles.customInput, largeText && styles.customInputLargeText]}
-                    value={
-                      (draft.splitMode === "EXACT" ? draft.exact : draft.percentages)[
-                        member.id
-                      ] ?? ""
-                    }
-                  />
-                </View>
-              ))
-            : null}
-          {minor !== null ? (
-            <Text style={effectiveSplits ? styles.success : styles.error}>
-              {effectiveSplits
-                ? `Allocated exactly · ${formatLedgerMoney(minor, draft.currency, scale ?? 2)} · Remaining 0`
-                : splitResult.error}
-            </Text>
-          ) : null}
-        </ScrollView>
-      </Modal>
-
-      <Modal
-        animationType="slide"
-        onRequestClose={() => setDatePicker(false)}
+        animationType="none"
+        onRequestClose={() => dismissDatePicker()}
+        onShow={() => {
+          dateBackdropOpacity.setValue(0);
+          dateSheetOffset.setValue(windowHeight);
+          Animated.parallel([
+            Animated.timing(dateBackdropOpacity, {
+              toValue: 1,
+              duration: 180,
+              useNativeDriver: true,
+            }),
+            Animated.timing(dateSheetOffset, {
+              toValue: 0,
+              duration: 240,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        }}
         transparent
         visible={datePicker}
       >
         <View style={styles.dateOverlay}>
-          <Pressable
-            accessibilityLabel="Dismiss expense date picker"
-            accessibilityRole="button"
-            onPress={() => setDatePicker(false)}
-            style={styles.dateBackdrop}
-          />
-          <SafeAreaView edges={["bottom"]} style={styles.datePanel}>
-            <LedgerSheetHeader
-              leftLabel="Cancel"
-              onLeft={() => setDatePicker(false)}
-              onRight={() => {
-                setDraft({ ...draft, date: dateKey(pendingDate) });
-                setDatePicker(false);
-              }}
-              safeTop={false}
-              title="Expense date"
+          <Animated.View style={[styles.dateBackdrop, { opacity: dateBackdropOpacity }]}>
+            <Pressable
+              accessibilityLabel="Dismiss expense date picker"
+              accessibilityRole="button"
+              onPress={() => dismissDatePicker()}
+              style={styles.flex}
             />
-            {datePicker ? (
-              <View style={styles.dateWheelContainer}>
-                <DateTimePicker
-                  display="spinner"
-                  mode="date"
-                  onChange={(_, value) => {
-                    if (value) setPendingDate(value);
-                  }}
-                  style={styles.dateWheel}
-                  textColor="#0F172A"
-                  themeVariant="light"
-                  value={pendingDate}
-                />
-              </View>
-            ) : null}
-          </SafeAreaView>
+          </Animated.View>
+          <Animated.View style={{ transform: [{ translateY: dateSheetOffset }] }}>
+            <SafeAreaView edges={["bottom"]} style={styles.datePanel}>
+              <LedgerSheetHeader
+                leftLabel="Cancel"
+                onLeft={() => dismissDatePicker()}
+                onRight={() => dismissDatePicker(true)}
+                safeTop={false}
+                title="Expense date"
+              />
+              {datePicker ? (
+                <View style={styles.dateWheelContainer}>
+                  <DateTimePicker
+                    display="spinner"
+                    mode="date"
+                    onChange={(_, value) => {
+                      if (value) setPendingDate(value);
+                    }}
+                    style={styles.dateWheel}
+                    textColor="#0F172A"
+                    themeVariant="light"
+                    value={pendingDate}
+                  />
+                </View>
+              ) : null}
+            </SafeAreaView>
+          </Animated.View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -1803,11 +2115,13 @@ function FormRow({
   value,
   onPress,
   disabled = false,
+  stacked = false,
 }: {
   label: string;
   value: string;
   onPress: () => void;
   disabled?: boolean;
+  stacked?: boolean;
 }) {
   const largeText = useWindowDimensions().fontScale > 2;
   return (
@@ -1817,12 +2131,12 @@ function FormRow({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.row, largeText && styles.rowLargeText]}
+      style={[styles.row, (largeText || stacked) && styles.rowLargeText]}
     >
-      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={[styles.rowLabel, stacked && styles.rowLabelStacked]}>{label}</Text>
       <Text
         numberOfLines={2}
-        style={[styles.rowValue, largeText && styles.rowValueLargeText]}
+        style={[styles.rowValue, (largeText || stacked) && styles.rowValueLargeText]}
       >
         {value}
       </Text>
@@ -1830,43 +2144,60 @@ function FormRow({
   );
 }
 
-function SheetRow({
+function ChoiceChip({
   label,
   selected,
   onPress,
-  disabled = false,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
-  disabled?: boolean;
 }) {
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      accessibilityState={{ disabled, selected }}
-      disabled={disabled}
+      accessibilityState={{ selected }}
       onPress={onPress}
-      style={[styles.sheetRow, disabled && styles.disabledRow]}
+      style={[styles.choiceChip, selected && styles.choiceChipSelected]}
     >
-      <Text style={styles.rowLabel}>{label}</Text>
-      {selected ? <Text style={styles.check}>✓</Text> : null}
+      <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>
+        {label}
+      </Text>
     </Pressable>
+  );
+}
+
+function AllocationLine({
+  label,
+  value,
+  warning = false,
+}: {
+  label: string;
+  value: string;
+  warning?: boolean;
+}) {
+  return (
+    <View style={styles.allocationLine}>
+      <Text style={styles.allocationLabel}>{label}</Text>
+      <Text style={[styles.allocationValue, warning && styles.allocationWarning]}>
+        {value}
+      </Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
-  content: { gap: 14, padding: 16, paddingBottom: 48 },
+  content: { gap: 10, padding: 16, paddingBottom: 48 },
   amountInput: {
     color: "#0F172A",
     fontSize: 48,
     fontWeight: "800",
     minHeight: 68,
   },
-  amountSummary: { color: "#0F172A", fontSize: 24, fontWeight: "800" },
+  amountInvalid: { borderBottomColor: "#B91C1C", borderBottomWidth: 2 },
   textInput: {
     backgroundColor: "#FFFFFF",
     borderColor: "#CBD5E1",
@@ -1893,9 +2224,71 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   scanActionLargeText: { alignItems: "flex-start", flexDirection: "column" },
+  disabledScanAction: { opacity: 0.4 },
   scanActionText: { color: "#0F766E", fontSize: 15, fontWeight: "600" },
-  attachmentItem: { alignItems: "center", flexDirection: "row", gap: 6, marginLeft: 12 },
-  attachmentText: { color: "#475569", fontSize: 14 },
+  attachmentItem: { alignItems: "center", flexDirection: "row", gap: 10, minHeight: 54 },
+  attachmentPreview: {
+    alignItems: "center",
+    flex: 1,
+    flexDirection: "row",
+    gap: 10,
+    minHeight: 54,
+    minWidth: 0,
+  },
+  attachmentThumbnail: { borderRadius: 5, height: 42, width: 42 },
+  attachmentIdentity: { flex: 1, minWidth: 0 },
+  attachmentText: { color: "#475569", fontSize: 15 },
+  attachmentAction: { justifyContent: "center", minHeight: 44 },
+  compactPair: { flexDirection: "row", gap: 10 },
+  compactHalf: { flex: 1, minWidth: 0 },
+  summaryCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    minHeight: 64,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  sharingTitleRow: { alignItems: "center", flexDirection: "row" },
+  infoAction: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 44,
+  },
+  sharingSummaryAction: { minHeight: 44, justifyContent: "center" },
+  summaryValue: { color: "#475569", fontSize: 15, marginTop: 3 },
+  optionalSection: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  sectionHeading: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 30,
+  },
+  optionalLabel: { color: "#64748B", fontSize: 15 },
+  addAttachment: { justifyContent: "center", minHeight: 44 },
+  addNote: { justifyContent: "center", minHeight: 44 },
+  imagePreview: { backgroundColor: "#0F172A", flex: 1 },
+  previewHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  previewClose: {
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 20,
+  },
+  previewCloseText: { color: "#FFFFFF", fontSize: 17, fontWeight: "700" },
+  previewCounter: { color: "#FFFFFF", fontSize: 15, paddingHorizontal: 20 },
+  previewBody: { flex: 1 },
+  previewImage: { flex: 1, width: "100%" },
+  previewHint: { color: "#CBD5E1", fontSize: 13, paddingBottom: 8, textAlign: "center" },
   row: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
@@ -1909,50 +2302,32 @@ const styles = StyleSheet.create({
   },
   rowLargeText: { alignItems: "flex-start", flexDirection: "column" },
   rowLabel: { color: "#0F172A", flex: 1, fontSize: 17, fontWeight: "600" },
+  rowLabelStacked: { flex: 0, fontSize: 14 },
   rowValue: { color: "#475569", flexShrink: 1, fontSize: 16, textAlign: "right" },
   rowValueLargeText: { textAlign: "left" },
-  settlementRow: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    flexDirection: "row",
-    gap: 8,
-    minHeight: 52,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  settlementChoices: {
-    backgroundColor: "#E5E7EB",
-    borderRadius: 9,
-    flexDirection: "row",
-    padding: 3,
-  },
-  settlementChoice: {
-    alignItems: "center",
-    borderRadius: 7,
-    minHeight: 36,
-    minWidth: 64,
-    justifyContent: "center",
-    paddingHorizontal: 6,
-  },
-  settlementChoiceSelected: { backgroundColor: "#0F766E" },
-  settlementChoiceText: { color: "#475569", fontSize: 13, fontWeight: "600" },
-  settlementChoiceTextSelected: { color: "#FFFFFF" },
-  moreToggle: {
-    alignItems: "center",
-    alignSelf: "center",
-    flexDirection: "row",
-    gap: 8,
-    minHeight: 44,
-    paddingHorizontal: 16,
-  },
-  moreToggleText: { color: "#0F766E", fontSize: 15, fontWeight: "600" },
   hint: { color: "#64748B", fontSize: 14, lineHeight: 20 },
   suggestion: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  warning: { color: "#92400E", fontSize: 14, lineHeight: 20 },
   error: { color: "#B91C1C", fontSize: 15, lineHeight: 21 },
-  success: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
-  more: { gap: 12 },
+  scanSourceTitle: { color: "#0F172A", fontSize: 20, fontWeight: "700" },
+  scanSourceOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(15, 23, 42, 0.25)",
+  },
+  scanSourcePanel: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    maxHeight: "90%",
+  },
+  scanSourceContent: { padding: 20, gap: 12 },
+  scanSourceOption: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    padding: 14,
+    gap: 4,
+    minHeight: 44,
+  },
   dateOverlay: { flex: 1, justifyContent: "flex-end" },
   dateBackdrop: {
     ...StyleSheet.absoluteFill,
@@ -1970,6 +2345,25 @@ const styles = StyleSheet.create({
   headerActionButton: { justifyContent: "center", minHeight: 44 },
   disabledText: { opacity: 0.4 },
   sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },
+  sharingHeading: { color: "#475569", fontSize: 15, fontWeight: "700", marginTop: 12 },
+  chipList: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  choiceChip: {
+    borderColor: "#CBD5E1",
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
+  choiceChipSelected: { backgroundColor: "#0F766E", borderColor: "#0F766E" },
+  choiceChipText: { color: "#0F172A", fontSize: 15, fontWeight: "600" },
+  choiceChipTextSelected: { color: "#FFFFFF" },
+  allocationSummary: { backgroundColor: "#F8FAFC", borderRadius: 8, gap: 6, padding: 12 },
+  allocationLine: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
+  allocationLabel: { color: "#475569", fontSize: 14 },
+  allocationValue: { color: "#0F172A", fontSize: 14, fontWeight: "700" },
+  allocationWarning: { color: "#B91C1C" },
+  allocationHint: { color: "#B91C1C", fontSize: 13 },
   categoryContent: { gap: 24, padding: 16, paddingBottom: 48 },
   categoryHeading: {
     color: "#64748B",
@@ -1992,17 +2386,6 @@ const styles = StyleSheet.create({
   },
   categoryTileSelected: { backgroundColor: "#E6F5F1", borderColor: "#0F766E" },
   categoryTileText: { color: "#0F172A", flex: 1, fontSize: 16, fontWeight: "600" },
-  sheetRow: {
-    alignItems: "center",
-    borderBottomColor: "#E2E8F0",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    minHeight: 52,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  disabledRow: { opacity: 0.4 },
-  check: { color: "#0F766E", fontSize: 20, fontWeight: "800" },
   customRow: { alignItems: "center", flexDirection: "row", gap: 12 },
   customRowLargeText: { alignItems: "stretch", flexDirection: "column" },
   customInput: {

@@ -27,6 +27,17 @@ it("suggests stable categories from local English and Chinese keywords", () => {
   expect(suggestExpenseCategory("Unrecognized expense")).toBe("other");
 });
 
+it("allows intermediate decimal typing without weakening committed minor-unit validation", () => {
+  expect(currencyAmountInput("234", "234.", 2)).toBe("234.");
+  expect(currencyAmountInput("234.", "234.5", 2)).toBe("234.5");
+  expect(currencyAmountInput("234.5", "234.50", 2)).toBe("234.50");
+  expect(parseCurrencyAmount("234.", 2)).toBeNull();
+  expect(parseCurrencyAmount("234.50", 2)).toBe(23_450);
+  expect(currencyAmountInput("234.50", "234.501", 2)).toBe("234.50");
+  expect(currencyAmountInput("234", "234.", 0)).toBe("234");
+  expect(parseCurrencyAmount("234", 0)).toBe(234);
+});
+
 const members = [
   { id: "a", displayName: "A", householdId: "home-a", shareUnits: 1000 },
   { id: "b", displayName: "B", householdId: "home-a", shareUnits: 1000 },

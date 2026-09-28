@@ -2,6 +2,26 @@
 
 Date: 2026-09-28
 
+## Expense Capture UX 1.0 — Slice 1.2 owner feedback
+
+- Implemented native keyboard inset handling for Exact/Notes, removed duplicate avoidance/forced end scrolling, separated Group settlement heading/options/explanation, centered attachment filenames, and added an explanatory Scan receipt source sheet with remaining capacity and image-only multi-part selection. Newly selected scan parts read sequentially into the accepted Review; Camera stays single and Scan another part remains available. No parser/backend/schema changes.
+- Seven focused files / 62 tests, TypeScript, affected ESLint, Prettier and diff check passed. Signed Release build succeeded and was installed/launched on the authorized iPhone 16 Pro. Owner checks on Exact/Notes keyboard positioning, settlement explanation, centered filenames, and first/later multi-image scan source selection remain the acceptance gate. Owner authorized a consolidated local Git commit of the UI changes through this checkpoint; no push requested.
+
+## Expense Capture UX 1.0 — Slice 1.2
+
+- Sharing clarity and attachment experience are implemented in Mobile: explicit settlement tag/info, wrapping people/split chips, Exact Total/Assigned/Remaining with the accepted allocator as Done gate, clean size-free attachment rows, closable image/PDF previews, capacity-bound multi-select import, and compact max-three state.
+- `docs/EXPENSE_CAPTURE_UX_1_0_SLICE_1.md` records Slice 1.2 behavior and physical acceptance. Seven focused test files / 59 tests, TypeScript, affected lint, formatting, diff check, and signed Release build passed. The Release was installed and launched on the authorized iPhone 16 Pro. Owner visual interaction review remains the gate. OCR, Expense Detail, backend, Supabase, and Production remain unchanged. Stop after Slice 1.2.
+
+## Expense Capture UX 1.0 — Slice 1.1
+
+- Interaction cleanup implemented: Amount editing no longer inserts a premature validation row; attachment rows use file identity, image thumbnail/local preview and PDF Quick Look; Sharing is one staged inline editor; Date backdrop and sheet animate independently. OCR, receipt draft lifecycle, saved Expense detail, API and backend behavior remain unchanged.
+- `docs/EXPENSE_CAPTURE_UX_1_0_SLICE_1.md` records the new rules and physical acceptance checklist. Seven focused test files / 57 tests, TypeScript, affected lint, formatting, diff check, and signed Release build passed. The final Release was installed and launched on the authorized iPhone 16 Pro. Owner visual interaction review remains the gate. Stop after Slice 1.1.
+
+## Expense Capture UX 1.0 — Slice 1
+
+- New Expense compact information architecture is implemented: Category/Date pair, one Sharing summary and editor, explicit Attachments action/list, and compact Notes. More Details is removed. Existing OCR, draft, save, sync, and backend behavior is unchanged.
+- `docs/EXPENSE_CAPTURE_UX_1_0_SLICE_1.md` records scope and acceptance. Seven focused test files / 54 tests, TypeScript, affected lint, formatting, diff check, and signed Release build passed. Release was installed and launched on the authorized iPhone 16 Pro. Owner visual review is the next gate. Stop after Slice 1.
+
 ## Receipt OCR 1.0 — Phase C4 Confirm integration
 
 - Confirm now validates current Review/session data and capacity, applies the

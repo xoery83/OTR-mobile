@@ -4,6 +4,7 @@ import {
   discardExpenseReceiptDraft,
   saveExpenseWithReceiptDraft,
   selectExpenseReceiptDraft,
+  selectExpenseReceiptDraftBatch,
   restoreExpenseReceiptDrafts,
   transferConfirmedReceiptDrafts,
 } from "./expenseReceiptDraft";
@@ -72,6 +73,34 @@ describe("New Expense receipt draft", () => {
     discardExpenseReceiptDraft(draft);
     expect(mocks.remove).toHaveBeenCalledWith(draft);
     expect(mocks.createExpense).not.toHaveBeenCalled();
+  });
+
+  it("keeps earlier validated drafts when a later multi-import item fails", async () => {
+    mocks.create
+      .mockResolvedValueOnce(draft)
+      .mockRejectedValueOnce(new Error("Invalid second file"));
+    const result = await selectExpenseReceiptDraftBatch(
+      [
+        { uri: "file:///picker/one.jpg", mimeType: "image/jpeg", name: "one.jpg" },
+        { uri: "file:///picker/two.pdf", mimeType: "application/pdf", name: "two.pdf" },
+      ],
+      0,
+      "journey-a",
+    );
+    expect(result.drafts).toEqual([expect.objectContaining({ id: draft.id })]);
+    expect(result.error?.message).toBe("Invalid second file");
+    expect(mocks.record).toHaveBeenCalledTimes(1);
+    expect(mocks.remove).not.toHaveBeenCalled();
+    await expect(
+      selectExpenseReceiptDraftBatch(
+        [
+          { uri: "file:///picker/one.jpg", mimeType: "image/jpeg" },
+          { uri: "file:///picker/two.jpg", mimeType: "image/jpeg" },
+        ],
+        2,
+        "journey-a",
+      ),
+    ).rejects.toThrow();
   });
 
   it("saves offline with the prepared receipt and deletes the draft only after commit", async () => {

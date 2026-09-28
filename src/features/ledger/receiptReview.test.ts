@@ -440,3 +440,45 @@ it("keeps confirmed drafts available for a later separate scan without duplicate
     ).drafts.map((item) => item.id),
   ).toEqual(["receipt1", "receipt2"]);
 });
+
+it("reviews a selected three-image batch as one session without replacing user edits", () => {
+  let session = createReceiptScanSession("batch");
+  for (const id of ["a", "b", "c"]) {
+    session = addReceiptScanDocument(session, {
+      ...draft,
+      id,
+      localUri: `file:///${id}.jpg`,
+      sha256: id,
+    });
+  }
+  let review = createReceiptReviewState(session, "NZD", "USD");
+  review = editReceiptReviewField(review, "title", "My long receipt");
+  review = editReceiptReviewField(review, "amount", "25.00");
+  for (const [id, evidence] of [
+    ["a", "Cafe Maple"],
+    ["b", "Subtotal NZ$20.00"],
+    ["c", "TOTAL NZ$26.00"],
+  ]) {
+    session = beginReceiptScanOcr(session, `d_${id}`);
+    const part = session.documents.find((item) => item.draft.id === id)!;
+    session = completeReceiptScanOcr(
+      session,
+      part.documentId,
+      part.revision,
+      document(evidence),
+      { journeyCurrency: "NZD" },
+    );
+    review = refreshReceiptReviewState(review, session, "NZD", "USD");
+    expect(review.title.value).toBe("My long receipt");
+    expect(review.amount.value).toBe("25.00");
+  }
+  expect(session.documents.map((part) => part.status)).toEqual([
+    "completed",
+    "completed",
+    "completed",
+  ]);
+  expect(session.combined?.amountCandidates.map((item) => item.decimal)).toContain(
+    "26.00",
+  );
+  expect(confirmReceiptReview(review, session).draftIds).toEqual(["a", "b", "c"]);
+});

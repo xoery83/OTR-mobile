@@ -1,6 +1,8 @@
 import ExpoModulesCore
 import Foundation
 import ImageIO
+import QuickLook
+import UIKit
 import UniformTypeIdentifiers
 import Vision
 
@@ -8,6 +10,7 @@ public class ReceiptOcrModule: Module {
   private let lock = NSLock()
   private var running: [String: VNRecognizeTextRequest] = [:]
   private var cancelled: Set<String> = []
+  private var previewSource: DraftPreviewSource?
 
   public func definition() -> ModuleDefinition {
     Name("ReceiptOcr")
@@ -30,6 +33,32 @@ public class ReceiptOcrModule: Module {
         "engineRevision": request.revision,
         "supportedLanguages": (try? request.supportedRecognitionLanguages()) ?? []
       ]
+    }
+
+    Function("previewDraft") { (uri: String) -> Bool in
+      guard let url = URL(string: uri), url.isFileURL,
+        url.pathExtension.lowercased() == "pdf",
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+      else { return false }
+      let file = url.resolvingSymlinksInPath().standardizedFileURL
+      let root = documents.resolvingSymlinksInPath().standardizedFileURL.path
+      guard file.path.hasPrefix(root + "/ledger-receipt-drafts/"),
+        FileManager.default.fileExists(atPath: file.path)
+      else { return false }
+      DispatchQueue.main.async {
+        guard let window = UIApplication.shared.connectedScenes
+          .compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first,
+          let root = window.rootViewController
+        else { return }
+        let source = DraftPreviewSource(file)
+        let preview = DraftPreviewController()
+        self.previewSource = source
+        preview.dataSource = source
+        var presenter = root
+        while let presented = presenter.presentedViewController { presenter = presented }
+        presenter.present(UINavigationController(rootViewController: preview), animated: true)
+      }
+      return true
     }
   }
 
@@ -132,5 +161,26 @@ public class ReceiptOcrModule: Module {
     lock.lock()
     defer { lock.unlock() }
     return cancelled.contains(requestId)
+  }
+}
+
+private final class DraftPreviewSource: NSObject, QLPreviewControllerDataSource {
+  private let file: URL
+  init(_ file: URL) { self.file = file }
+  func numberOfPreviewItems(in controller: QLPreviewController) -> Int { 1 }
+  func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+    file as NSURL
+  }
+}
+
+private final class DraftPreviewController: QLPreviewController {
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    navigationItem.leftBarButtonItem = UIBarButtonItem(
+      title: "Close", style: .plain, target: self, action: #selector(closePreview))
+  }
+
+  @objc private func closePreview() {
+    navigationController?.dismiss(animated: true)
   }
 }
