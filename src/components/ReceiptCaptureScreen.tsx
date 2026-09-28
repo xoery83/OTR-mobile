@@ -1,31 +1,31 @@
 import { router, Stack } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 
 import { useReceiptCapture } from "@/hooks/useReceiptCapture";
 import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
 
 export function ReceiptCaptureScreen() {
-  const { expenseId, scan, receipts, message, pickPhoto, pickDocument } =
+  const { expenseId, scan, receipts, selecting, message, pickPhoto, pickDocument } =
     useReceiptCapture();
   const full = Boolean(expenseId) && receipts.length >= MAX_EXPENSE_ATTACHMENTS;
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Stack.Screen
         options={{
-          headerTitle: scan ? "Receipt draft" : "Receipt",
+          headerTitle: scan ? "Receipt draft" : "Add attachment",
           headerLeft: () => (
             <Pressable
               accessibilityRole="button"
               onPress={() => router.back()}
               style={styles.close}
             >
-              <Text style={styles.closeText}>Cancel</Text>
+              <Text style={styles.closeText}>{scan ? "Cancel" : "Done"}</Text>
             </Pressable>
           ),
         }}
       />
       <Text accessibilityRole="header" style={styles.title}>
-        {scan ? "Receipt draft" : "Attach receipt"}
+        {scan ? "Receipt draft" : "Add attachment"}
       </Text>
       {scan ? (
         <>
@@ -35,34 +35,29 @@ export function ReceiptCaptureScreen() {
       ) : (
         <>
           <Text style={styles.note}>
-            A safe local copy is saved on this iPhone before any network work begins.
+            {Math.max(0, MAX_EXPENSE_ATTACHMENTS - receipts.length)} attachment slots
+            remaining. Choose photos or a PDF.
           </Text>
           <Action
-            label="Take photo"
-            disabled={full}
+            label="Camera"
+            disabled={full || selecting}
             onPress={() => void pickPhoto(true)}
           />
           <Action
-            label="Choose photo"
-            disabled={full}
+            label="Photo Library"
+            disabled={full || selecting}
             onPress={() => void pickPhoto(false)}
           />
           <Action
-            label="Choose file"
-            disabled={full}
+            label="Files"
+            disabled={full || selecting}
             onPress={() => void pickDocument()}
           />
-          {full ? <Text style={styles.note}>Maximum 3 attachments.</Text> : null}
-          {message ? <Text style={styles.message}>{message}</Text> : null}
-          {receipts.map((receipt) => (
-            <View key={receipt.id} style={styles.card}>
-              <Text style={styles.cardTitle}>
-                {receipt.uploadStatus === "UPLOADED"
-                  ? "Receipt uploaded"
-                  : "Saved locally"}
-              </Text>
-            </View>
-          ))}
+          {message ? (
+            <Text accessibilityLiveRegion="polite" style={styles.message}>
+              {message}
+            </Text>
+          ) : null}
         </>
       )}
     </ScrollView>

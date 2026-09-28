@@ -295,6 +295,8 @@ function createInMemoryLedgerDatabase() {
     },
     async getFirstAsync<T>(sql: string, ...params: unknown[]) {
       const id = params[0] as string;
+      if (sql.includes("SELECT role FROM ledger_actor_context"))
+        return { role: "group_member" } as T;
       if (sql.includes("FROM ledger_receipt_assets"))
         return (receipts.get(id) ?? null) as T | null;
       if (sql.includes("FROM ledger_expenses")) {

@@ -19,7 +19,7 @@ const splitSummary: Record<ExpenseSplitMethod, string> = {
   EQUAL_PERSON: "Split equally",
   EQUAL_HOUSEHOLD: "Equal per household",
   HOUSEHOLD_SHARES: "Household shares",
-  EXACT: "Custom split",
+  EXACT: "Exact split",
   PERCENTAGE: "Percentage split",
 };
 

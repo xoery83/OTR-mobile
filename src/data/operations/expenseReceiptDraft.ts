@@ -48,7 +48,7 @@ export async function selectExpenseReceiptDraft(
 export async function selectExpenseReceiptDraftBatch(
   sources: readonly { uri: string; mimeType: string; name?: string | null }[],
   existingCount: number,
-  journeyId: string,
+  journeyId: string | undefined,
 ): Promise<{ drafts: TemporaryReceiptDraft[]; error: Error | null }> {
   assertExpenseAttachmentDrafts(
     Array.from({ length: existingCount + sources.length }, (_, i) => String(i)),
@@ -138,6 +138,36 @@ export async function saveExpenseWithReceiptDraft(
       deleteTemporaryReceiptDraft(draft);
     } catch {
       // The durable copy and SQLite intent are committed; retain this duplicate candidate.
+    }
+  }
+  return saved;
+}
+
+export async function saveExpenseEditWithReceiptDrafts(
+  existing: { id: string; revision: number },
+  command: LedgerExpenseCommand,
+  drafts: readonly TemporaryReceiptDraft[],
+  removedIds: readonly string[],
+  expectedIds: readonly string[],
+) {
+  const activeUserId = await requireActiveUserId();
+  if (drafts.some((draft) => draft.ownerUserId !== activeUserId))
+    throw new Error("Receipt draft belongs to another account.");
+  const prepared: PreparedExpenseReceipt[] = [];
+  for (const draft of drafts) prepared.push(await prepareReceiptDraft(draft));
+  const saved = await (
+    await getDefaultLedgerExpenseRepository()
+  ).updateExpense(existing.id, command, "Edited Expense.", {
+    added: prepared,
+    removedIds,
+    expectedIds,
+    expectedRevision: existing.revision,
+  });
+  for (const draft of drafts) {
+    try {
+      deleteTemporaryReceiptDraft(draft);
+    } catch {
+      /* committed durable copy remains authoritative */
     }
   }
   return saved;

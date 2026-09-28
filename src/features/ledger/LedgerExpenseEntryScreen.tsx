@@ -12,7 +12,6 @@ import {
   Alert,
   Animated,
   AppState,
-  Image,
   Keyboard,
   Modal,
   Pressable,
@@ -31,12 +30,18 @@ import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router"
 
 import { AppIcon } from "@/components/AppIcon";
 
-import { importReceiptAsset } from "@/data/operations/importReceiptAsset";
+import { resolveReceiptAssetUri } from "@/data/operations/openReceiptAsset";
+import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
+import { canEditLedgerExpense } from "@/data/repositories/ledgerExpenseEditAccess";
+import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
+import { ExpenseAttachmentRow } from "./ExpenseAttachmentRow";
+import { ExpenseAttachmentViewer } from "./ExpenseAttachmentViewer";
 import type { TemporaryReceiptDraft } from "@/data/files/receiptFileStore";
 import {
   discardExpenseReceiptDraft,
   restoreExpenseReceiptDrafts,
   saveExpenseWithReceiptDraft,
+  saveExpenseEditWithReceiptDrafts,
   selectExpenseReceiptDraft,
   selectExpenseReceiptDraftBatch,
   transferConfirmedReceiptDrafts,
@@ -111,7 +116,6 @@ import {
   applyExpenseSharing,
   compactExpenseDate,
   exactSharingAllocation,
-  expenseDraftAttachmentLabel,
   expenseSettlementLabel,
   expenseSharingSummary,
   GROUP_SETTLEMENT_EXPLANATION,
@@ -213,7 +217,10 @@ export function LedgerExpenseEntryScreen() {
   const [receiptId, setReceiptId] = useState(params.receiptId ?? null);
   const [receiptDrafts, setReceiptDrafts] = useState<TemporaryReceiptDraft[]>([]);
   const [previewDraft, setPreviewDraft] = useState<TemporaryReceiptDraft | null>(null);
-  const previewTouch = useRef({ x: 0, y: 0 });
+  const [existingReceipts, setExistingReceipts] = useState<ReceiptAsset[]>([]);
+  const [removedReceiptIds, setRemovedReceiptIds] = useState<string[]>([]);
+  const [savedPreviewId, setSavedPreviewId] = useState<string | null>(null);
+  const [savedPreviewUris, setSavedPreviewUris] = useState<Record<string, string>>({});
   const [ocrState, setOcrState] = useState(idleExpenseReceiptOcr);
   const [ocrSession] = useState(() =>
     createExpenseReceiptOcrSession(createReceiptOcrProvider().recognize, setOcrState),
@@ -250,6 +257,13 @@ export function LedgerExpenseEntryScreen() {
   const scanSourceAddPart = useRef(false);
   const pendingScanSource = useRef<"camera" | "photo" | "file" | null>(null);
   const largeText = fontScale > 2;
+  const retainedReceipts = existingReceipts.filter(
+    (item) => !removedReceiptIds.includes(item.id),
+  );
+  const selectedReceiptCount =
+    receiptDrafts.length +
+    retainedReceipts.length +
+    (receiptId && !existingReceipts.some((item) => item.id === receiptId) ? 1 : 0);
 
   const dismissDatePicker = (commit = false) => {
     if (dateDismissing.current) return;
@@ -294,11 +308,18 @@ export function LedgerExpenseEntryScreen() {
 
   useEffect(() => {
     let active = true;
-    void loadEntry(params.expenseId, params.journeyId, params.receiptId)
+    void loadEntry(
+      params.expenseId,
+      params.journeyId,
+      params.receiptId,
+      Boolean(params.correctionRootId),
+    )
       .then(async (value) => {
         if (!active) return;
         setContext(value.context);
         setExisting(value.existing);
+        setExistingReceipts(value.receipts);
+        setRemovedReceiptIds([]);
         setDraft(value.draft);
         currencyChosen.current = value.currencyChosen;
         setReceiptId(params.receiptId ?? null);
@@ -401,6 +422,7 @@ export function LedgerExpenseEntryScreen() {
     params.journeyId,
     params.receiptId,
     params.focusDate,
+    params.correctionRootId,
     discardPendingScan,
   ]);
 
@@ -506,13 +528,19 @@ export function LedgerExpenseEntryScreen() {
     (JSON.stringify(draft) !== initialSnapshot ||
       receiptId !== (params.receiptId ?? null) ||
       receiptDrafts.length > 0 ||
+      removedReceiptIds.length > 0 ||
       scanSession !== null),
   );
 
   useEffect(
     () =>
       navigation.addListener("beforeRemove", (event) => {
-        if (!dirty || allowClose.current) return;
+        if (allowClose.current) return;
+        if (savingRef.current || addingReceiptRef.current) {
+          event.preventDefault();
+          return;
+        }
+        if (!dirty) return;
         event.preventDefault();
         Alert.alert("Discard changes?", "Your unsaved Expense changes will be lost.", [
           { text: "Keep Editing", style: "cancel" },
@@ -630,7 +658,7 @@ export function LedgerExpenseEntryScreen() {
     scan = false,
     addPart = false,
   ) => {
-    if (!context) return;
+    if (!context || (scan && existing)) return;
     if (addingReceiptRef.current) return;
     if (scan && scanSessionRef.current && !addPart) {
       Keyboard.dismiss();
@@ -644,9 +672,8 @@ export function LedgerExpenseEntryScreen() {
     )
       return;
     if (
-      !existing &&
       remainingExpenseAttachmentCapacity(
-        receiptDrafts.length + (receiptId ? 1 : 0),
+        selectedReceiptCount,
         scanSessionRef.current?.documents.length ?? 0,
       ) === 0
     ) {
@@ -658,7 +685,7 @@ export function LedgerExpenseEntryScreen() {
     let selectedDraft: TemporaryReceiptDraft | null = null;
     try {
       const remaining = remainingExpenseAttachmentCapacity(
-        receiptDrafts.length + (receiptId ? 1 : 0),
+        selectedReceiptCount,
         scanSessionRef.current?.documents.length ?? 0,
       );
       let sources: { uri: string; mimeType: string; name?: string | null }[] = [];
@@ -672,7 +699,7 @@ export function LedgerExpenseEntryScreen() {
             "image/heif",
           ],
           copyToCacheDirectory: true,
-          multiple: !existing,
+          multiple: true,
         });
         if (!result.canceled)
           sources = result.assets.map((asset) => ({
@@ -693,8 +720,8 @@ export function LedgerExpenseEntryScreen() {
             : await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ["images"],
                 quality: 1,
-                allowsMultipleSelection: !existing,
-                selectionLimit: !existing ? remaining : 1,
+                allowsMultipleSelection: true,
+                selectionLimit: remaining,
               });
         if (!result.canceled)
           sources = result.assets.map((asset) => ({
@@ -704,15 +731,15 @@ export function LedgerExpenseEntryScreen() {
           }));
       }
       if (!sources.length) return;
-      if (!existing && sources.length > remaining)
+      if (sources.length > remaining)
         throw new Error(
           `Select up to ${remaining} attachment${remaining === 1 ? "" : "s"}.`,
         );
-      if (!scan && !existing) {
+      if (!scan) {
         const result = await selectExpenseReceiptDraftBatch(
           sources,
-          receiptDrafts.length + (receiptId ? 1 : 0),
-          context.journeyId,
+          selectedReceiptCount,
+          existing ? undefined : context.journeyId,
         );
         if (!mountedRef.current) {
           for (const imported of result.drafts) discardExpenseReceiptDraft(imported);
@@ -800,17 +827,6 @@ export function LedgerExpenseEntryScreen() {
               ocrSession.start(next);
           }
         }
-      } else {
-        const source = sources[0];
-        const receipt = await importReceiptAsset({
-          journeyId: context.journeyId,
-          expenseId: existing.id,
-          sourceUri: source.uri,
-          mimeType: source.mimeType,
-          originalFilename: source.name,
-          requestOcr: false,
-        });
-        setReceiptId(receipt?.id ?? null);
       }
     } catch (cause) {
       if (selectedDraft) {
@@ -988,9 +1004,13 @@ export function LedgerExpenseEntryScreen() {
         return;
       }
       const saved = existing
-        ? await (
-            await getDefaultLedgerExpenseRepository()
-          ).updateExpense(existing.id, command, "Edited Expense.")
+        ? await saveExpenseEditWithReceiptDrafts(
+            existing,
+            command,
+            receiptDrafts,
+            removedReceiptIds,
+            existingReceipts.map((item) => item.id),
+          )
         : await saveExpenseWithReceiptDraft(
             command,
             receiptDrafts,
@@ -1031,6 +1051,7 @@ export function LedgerExpenseEntryScreen() {
   };
 
   const close = () => {
+    if (savingRef.current || addingReceiptRef.current) return;
     if (!dirty) return router.back();
     Alert.alert("Discard changes?", "Your unsaved Expense changes will be lost.", [
       { text: "Keep Editing", style: "cancel" },
@@ -1079,7 +1100,6 @@ export function LedgerExpenseEntryScreen() {
     sharingEdit.exact,
   );
   const date = draft.date ? dateFromKey(draft.date) : new Date();
-  const selectedReceiptCount = receiptDrafts.length + (receiptId ? 1 : 0);
   const remainingAttachmentSlots = remainingExpenseAttachmentCapacity(
     selectedReceiptCount,
     scanSession?.documents.length ?? 0,
@@ -1154,10 +1174,78 @@ export function LedgerExpenseEntryScreen() {
       </View>
     </Modal>
   );
-  const previewImages = receiptDrafts.filter((item) =>
-    item.mimeType.startsWith("image/"),
-  );
-  const previewIndex = previewImages.findIndex((item) => item.id === previewDraft?.id);
+  const previewImages = [
+    ...retainedReceipts
+      .filter((item) => item.mimeType.startsWith("image/"))
+      .map((item) => ({
+        id: item.id,
+        localUri: savedPreviewUris[item.id] ?? item.localUri ?? "",
+      })),
+    ...receiptDrafts.filter((item) => item.mimeType.startsWith("image/")),
+  ];
+  const previewExisting = async (receipt: ReceiptAsset) => {
+    try {
+      const uri = await resolveReceiptAssetUri(receipt);
+      if (receipt.mimeType === "application/pdf") previewReceiptDraftPdf(uri);
+      else {
+        setSavedPreviewUris((current) => ({ ...current, [receipt.id]: uri }));
+        setSavedPreviewId(receipt.id);
+        setPreviewDraft(null);
+      }
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Attachment could not be opened.",
+      );
+    }
+  };
+  const deleteExpense = () => {
+    if (!existing || saving || params.correctionRootId) return;
+    Alert.alert(
+      "Delete this expense?",
+      "This expense will be removed from the trip, spending and settlement calculations. Its history and attachments are retained.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Expense",
+          style: "destructive",
+          onPress: () => {
+            if (savingRef.current) return;
+            savingRef.current = true;
+            setSaving(true);
+            void getDefaultLedgerExpenseRepository()
+              .then((repo) => repo.tombstoneExpense(existing.id, "Deleted Expense."))
+              .then(() => {
+                for (const receiptDraft of receiptDrafts) {
+                  try {
+                    discardExpenseReceiptDraft(receiptDraft);
+                  } catch {
+                    /* recovery candidate */
+                  }
+                }
+                allowClose.current = true;
+                notifyLedgerReviewExpenseSaved(existing.journeyId);
+                kickLedgerOperationalSync();
+                router.dismissTo({
+                  pathname: "/expenses/journey/[journeyId]",
+                  params: { journeyId: existing.journeyId },
+                });
+              })
+              .catch((cause) =>
+                setError(
+                  cause instanceof Error
+                    ? cause.message
+                    : "Expense could not be deleted.",
+                ),
+              )
+              .finally(() => {
+                savingRef.current = false;
+                setSaving(false);
+              });
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <View style={styles.flex}>
@@ -1166,7 +1254,13 @@ export function LedgerExpenseEntryScreen() {
           gestureEnabled: false,
           headerTitle: existing ? "Edit Expense" : "New Expense",
           headerTitleStyle: { color: "#0F766E" },
-          headerLeft: () => <HeaderAction label="Cancel" onPress={close} />,
+          headerLeft: () => (
+            <HeaderAction
+              disabled={saving || selectingReceipt}
+              label="Cancel"
+              onPress={close}
+            />
+          ),
           headerRight: () => (
             <HeaderAction
               disabled={!draft.title.trim() || !draft.date || !effectiveSplits || saving}
@@ -1177,6 +1271,7 @@ export function LedgerExpenseEntryScreen() {
         }}
       />
       <ScrollView
+        pointerEvents={saving ? "none" : "auto"}
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -1377,72 +1472,59 @@ export function LedgerExpenseEntryScreen() {
               <Text style={styles.optionalLabel}>Optional</Text>
             ) : null}
           </View>
-          {receiptDrafts.map((receiptDraft, index) => {
-            const display = expenseDraftAttachmentLabel(receiptDraft, index + 1);
-            return (
-              <View key={receiptDraft.id} style={styles.attachmentItem}>
-                <Pressable
-                  accessibilityLabel={`Preview ${display.title}, ${display.type}`}
-                  accessibilityRole="button"
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    if (display.thumbnailUri) setPreviewDraft(receiptDraft);
-                    else
-                      try {
-                        previewReceiptDraftPdf(receiptDraft.localUri);
-                      } catch (cause) {
-                        Alert.alert(
-                          "Preview unavailable",
-                          cause instanceof Error
-                            ? cause.message
-                            : "The local file could not be opened.",
-                        );
-                      }
-                  }}
-                  style={styles.attachmentPreview}
-                >
-                  {display.thumbnailUri ? (
-                    <Image
-                      source={{ uri: display.thumbnailUri }}
-                      style={styles.attachmentThumbnail}
-                    />
-                  ) : (
-                    <AppIcon color="#0F766E" name="doc" size={28} />
-                  )}
-                  <View style={styles.attachmentIdentity}>
-                    <Text numberOfLines={1} style={styles.attachmentText}>
-                      {display.title}
-                    </Text>
-                    {display.thumbnailUri ? null : (
-                      <Text style={styles.optionalLabel}>{display.type}</Text>
-                    )}
-                  </View>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remove attachment ${index + 1}`}
-                  style={styles.attachmentAction}
-                  onPress={() => {
-                    ocrSession.clear(receiptDraft.id);
-                    try {
-                      discardExpenseReceiptDraft(receiptDraft);
-                    } catch {
-                      /* preserve candidate */
-                    }
-                    setReceiptDrafts((current) =>
-                      current.filter((item) => item.id !== receiptDraft.id),
+          {retainedReceipts.map((receipt, index) => (
+            <ExpenseAttachmentRow
+              key={receipt.id}
+              attachment={{
+                ...receipt,
+                localUri: savedPreviewUris[receipt.id] ?? receipt.localUri,
+              }}
+              position={index + 1}
+              onPreview={() => void previewExisting(receipt)}
+              onRemove={
+                params.correctionRootId
+                  ? undefined
+                  : () => setRemovedReceiptIds((current) => [...current, receipt.id])
+              }
+            />
+          ))}
+          {receiptDrafts.map((receiptDraft, index) => (
+            <ExpenseAttachmentRow
+              key={receiptDraft.id}
+              attachment={receiptDraft}
+              position={retainedReceipts.length + index + 1}
+              onPreview={() => {
+                Keyboard.dismiss();
+                if (receiptDraft.mimeType.startsWith("image/")) {
+                  setSavedPreviewId(null);
+                  setPreviewDraft(receiptDraft);
+                } else {
+                  try {
+                    previewReceiptDraftPdf(receiptDraft.localUri);
+                  } catch (cause) {
+                    setError(
+                      cause instanceof Error ? cause.message : "Preview unavailable.",
                     );
-                  }}
-                >
-                  <AppIcon color="#B91C1C" name="trash" size={18} />
-                </Pressable>
-              </View>
-            );
-          })}
-          {receiptId ? (
+                  }
+                }
+              }}
+              onRemove={() => {
+                ocrSession.clear(receiptDraft.id);
+                try {
+                  discardExpenseReceiptDraft(receiptDraft);
+                } catch {
+                  /* recovery candidate */
+                }
+                setReceiptDrafts((current) =>
+                  current.filter((item) => item.id !== receiptDraft.id),
+                );
+              }}
+            />
+          ))}
+          {receiptId && !existingReceipts.some((item) => item.id === receiptId) ? (
             <Text style={styles.attachmentText}>Receipt attachment</Text>
           ) : null}
-          {!receiptCapacityFull || existing ? (
+          {!receiptCapacityFull && !params.correctionRootId ? (
             <Pressable
               accessibilityLabel="Add attachment"
               accessibilityRole="button"
@@ -1487,60 +1569,37 @@ export function LedgerExpenseEntryScreen() {
             Receipt suggestions are editable until Save.
           </Text>
         ) : null}
+        {existing && !params.correctionRootId ? (
+          <Pressable
+            accessibilityRole="button"
+            disabled={saving}
+            onPress={deleteExpense}
+            style={styles.deleteExpense}
+          >
+            <Text style={styles.error}>Delete Expense</Text>
+          </Pressable>
+        ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
 
-      <Modal
-        animationType="fade"
-        onRequestClose={() => setPreviewDraft(null)}
-        presentationStyle="fullScreen"
-        visible={Boolean(previewDraft)}
-      >
-        <SafeAreaView style={styles.imagePreview}>
-          <View style={styles.previewHeader}>
-            <Pressable
-              accessibilityLabel="Close attachment preview"
-              accessibilityRole="button"
-              onPress={() => setPreviewDraft(null)}
-              style={styles.previewClose}
-            >
-              <Text style={styles.previewCloseText}>Close</Text>
-            </Pressable>
-            <Text style={styles.previewCounter}>
-              {previewIndex + 1} of {previewImages.length}
-            </Text>
-          </View>
-          {previewDraft ? (
-            <View
-              onTouchStart={(event) => {
-                previewTouch.current = {
-                  x: event.nativeEvent.pageX,
-                  y: event.nativeEvent.pageY,
-                };
-              }}
-              onTouchEnd={(event) => {
-                const dx = event.nativeEvent.pageX - previewTouch.current.x;
-                const dy = event.nativeEvent.pageY - previewTouch.current.y;
-                if (dy > 100 && Math.abs(dy) > Math.abs(dx)) setPreviewDraft(null);
-                else if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
-                  const next = previewImages[previewIndex + (dx < 0 ? 1 : -1)];
-                  if (next) setPreviewDraft(next);
-                }
-              }}
-              style={styles.previewBody}
-            >
-              <Image
-                resizeMode="contain"
-                source={{ uri: previewDraft.localUri }}
-                style={styles.previewImage}
-              />
-            </View>
-          ) : null}
-          {previewImages.length > 1 ? (
-            <Text style={styles.previewHint}>Swipe left or right between images</Text>
-          ) : null}
-        </SafeAreaView>
-      </Modal>
+      <ExpenseAttachmentViewer
+        images={previewImages}
+        selectedId={savedPreviewId ?? previewDraft?.id ?? null}
+        onClose={() => {
+          setSavedPreviewId(null);
+          setPreviewDraft(null);
+        }}
+        onSelect={(id) => {
+          const next = receiptDrafts.find((item) => item.id === id);
+          if (next) {
+            setPreviewDraft(next);
+            setSavedPreviewId(null);
+          } else {
+            const receipt = retainedReceipts.find((item) => item.id === id);
+            if (receipt) void previewExisting(receipt);
+          }
+        }}
+      />
 
       {scanSession && receiptReview ? (
         <ReceiptReviewSheet
@@ -1977,7 +2036,12 @@ export function LedgerExpenseEntryScreen() {
   );
 }
 
-async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: string) {
+async function loadEntry(
+  expenseId?: string,
+  journeyId?: string,
+  receiptId?: string,
+  correction = false,
+) {
   const expenseRepository = await getDefaultLedgerExpenseRepository();
   const existing = expenseId ? await expenseRepository.getExpense(expenseId) : null;
   if (expenseId && !existing) throw new Error("Expense is not available on this iPhone.");
@@ -2002,6 +2066,24 @@ async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: str
   const journey = journeys.find((item) => item.journeyId === id);
   const actorMember = rawMembers.find((item) => item.id === actor?.memberId);
   if (!journey || !actorMember) throw new Error("Journey context is unavailable.");
+  const access = await reporting.getActorContext(id);
+  if (!canEditLedgerExpense(access?.role, false))
+    throw new Error("Expense write access is required.");
+  if (
+    existing &&
+    !correction &&
+    (await (
+      await getDefaultLedgerSettlementRepository()
+    ).isExpenseFinalized(id, existing.id))
+  )
+    throw new Error("This Expense belongs to a completed settlement and is read-only.");
+  const receipts = existing
+    ? (await (await getDefaultLedgerReceiptRepository()).listReceipts(id)).filter(
+        (item) =>
+          item.expenseId === existing.id ||
+          (existing.serverId && item.expenseId === existing.serverId),
+      )
+    : [];
   const members = rawMembers.map<DraftMember>((member) => {
     const household = households.find((item) =>
       item.members.some((candidate) => candidate.id === member.id),
@@ -2057,6 +2139,7 @@ async function loadEntry(expenseId?: string, journeyId?: string, receiptId?: str
   };
   return {
     existing,
+    receipts,
     draft,
     currencyChosen: Boolean(existing || suggestion?.currency),
     context: {
@@ -2194,6 +2277,12 @@ function AllocationLine({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  deleteExpense: {
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
   center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
   content: { gap: 10, padding: 16, paddingBottom: 48 },
   amountInput: {
@@ -2231,19 +2320,7 @@ const styles = StyleSheet.create({
   scanActionLargeText: { alignItems: "flex-start", flexDirection: "column" },
   disabledScanAction: { opacity: 0.4 },
   scanActionText: { color: "#0F766E", fontSize: 15, fontWeight: "600" },
-  attachmentItem: { alignItems: "center", flexDirection: "row", gap: 10, minHeight: 54 },
-  attachmentPreview: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    gap: 10,
-    minHeight: 54,
-    minWidth: 0,
-  },
-  attachmentThumbnail: { borderRadius: 5, height: 42, width: 42 },
-  attachmentIdentity: { flex: 1, minWidth: 0 },
   attachmentText: { color: "#475569", fontSize: 15 },
-  attachmentAction: { justifyContent: "center", minHeight: 44 },
   compactPair: { flexDirection: "row", gap: 10 },
   compactHalf: { flex: 1, minWidth: 0 },
   summaryCard: {
@@ -2278,22 +2355,6 @@ const styles = StyleSheet.create({
   optionalLabel: { color: "#64748B", fontSize: 15 },
   addAttachment: { justifyContent: "center", minHeight: 44 },
   addNote: { justifyContent: "center", minHeight: 44 },
-  imagePreview: { backgroundColor: "#0F172A", flex: 1 },
-  previewHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  previewClose: {
-    justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 20,
-  },
-  previewCloseText: { color: "#FFFFFF", fontSize: 17, fontWeight: "700" },
-  previewCounter: { color: "#FFFFFF", fontSize: 15, paddingHorizontal: 20 },
-  previewBody: { flex: 1 },
-  previewImage: { flex: 1, width: "100%" },
-  previewHint: { color: "#CBD5E1", fontSize: 13, paddingBottom: 8, textAlign: "center" },
   row: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",

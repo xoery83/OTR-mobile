@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   discardExpenseReceiptDraft,
   saveExpenseWithReceiptDraft,
+  saveExpenseEditWithReceiptDrafts,
   selectExpenseReceiptDraft,
   selectExpenseReceiptDraftBatch,
   restoreExpenseReceiptDrafts,
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   prepare: vi.fn(),
   remove: vi.fn(),
   createExpense: vi.fn(),
+  updateExpense: vi.fn(),
   activeUser: vi.fn(),
   list: vi.fn(),
   getReceipt: vi.fn(),
@@ -31,7 +33,10 @@ vi.mock("@/data/files/receiptFileStore", () => ({
 }));
 vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: mocks.activeUser }));
 vi.mock("@/data/repositories/defaultLedgerExpenseRepository", () => ({
-  getDefaultLedgerExpenseRepository: async () => ({ createExpense: mocks.createExpense }),
+  getDefaultLedgerExpenseRepository: async () => ({
+    createExpense: mocks.createExpense,
+    updateExpense: mocks.updateExpense,
+  }),
 }));
 vi.mock("@/data/repositories/defaultLedgerReceiptRepository", () => ({
   getDefaultLedgerReceiptRepository: async () => ({ getReceipt: mocks.getReceipt }),
@@ -284,5 +289,63 @@ describe("New Expense receipt draft", () => {
       ],
       undefined,
     );
+  });
+});
+
+describe("Edit Expense temporary attachments", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.activeUser.mockResolvedValue("user-a");
+    mocks.prepare.mockResolvedValue(prepared);
+  });
+  it("prepares bytes then submits the entire edit atomically and cleans only after success", async () => {
+    mocks.updateExpense.mockResolvedValue({ id: "expense" });
+    const command = {} as Parameters<typeof saveExpenseEditWithReceiptDrafts>[1];
+    await saveExpenseEditWithReceiptDrafts(
+      { id: "expense", revision: 4 },
+      command,
+      [draft],
+      ["removed"],
+      ["retained", "removed"],
+    );
+    expect(mocks.updateExpense).toHaveBeenCalledWith(
+      "expense",
+      command,
+      "Edited Expense.",
+      {
+        added: [prepared],
+        removedIds: ["removed"],
+        expectedIds: ["retained", "removed"],
+        expectedRevision: 4,
+      },
+    );
+    expect(mocks.remove).toHaveBeenCalledWith(draft);
+    expect(mocks.createExpense).not.toHaveBeenCalled();
+  });
+  it("retains the unsaved draft on rejected Save and refuses another account's bytes", async () => {
+    mocks.updateExpense.mockRejectedValue(new Error("Attachments changed"));
+    const command = {} as Parameters<typeof saveExpenseEditWithReceiptDrafts>[1];
+    await expect(
+      saveExpenseEditWithReceiptDrafts(
+        { id: "expense", revision: 4 },
+        command,
+        [draft],
+        [],
+        [],
+      ),
+    ).rejects.toThrow("Attachments changed");
+    expect(mocks.remove).not.toHaveBeenCalled();
+    mocks.activeUser.mockResolvedValue("other-user");
+    mocks.prepare.mockClear();
+    await expect(
+      saveExpenseEditWithReceiptDrafts(
+        { id: "expense", revision: 4 },
+        command,
+        [draft],
+        [],
+        [],
+      ),
+    ).rejects.toThrow("another account");
+    expect(mocks.prepare).not.toHaveBeenCalled();
   });
 });

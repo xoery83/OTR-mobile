@@ -2,6 +2,44 @@
 
 Date: 2026-09-28
 
+## Expense Detail & Edit Consolidation — implemented, Simulator smoke passed
+
+- Owner-approved Detail/Edit specification is recorded with the safety audit in
+  `docs/ledger/EXPENSE_DETAIL_EDIT_CONSOLIDATION.md`; transaction decision: ADR 0055.
+  Detail has compact Amount/FX sheet, inline Sharing, Notes/attachments, authorized
+  header Edit and secondary Review flagging. New/Edit/Detail share receipt rows and
+  image preview; PDFs retain native Quick Look. Edit reuses the New Expense form,
+  loads linked receipts, stages removals/additions, and offers confirmed bottom
+  Expense tombstone. Existing Expense never runs OCR.
+- Save atomically commits Expense/receipt/queue intent with loaded revision and
+  attachment-set checks. Cancel preserves existing assets and cleans unsaved files.
+  Cached owner/group-member write permissions and finalized protection are checked
+  locally; backend authorization is unchanged. Expense delete retains references
+  and bytes. No backend, schema, dependency, Production, physical-device install, commit or push.
+  Concurrent Settlement screens/calculation/confirmation/sync code was not changed;
+  existing `applyValuation` acceptance changes in the shared Expense repository
+  were preserved. Only Expense update/delete sections and imports/types changed.
+- Fourteen focused suites / 119 tests, TypeScript, affected ESLint, Prettier and
+  diff checks passed. Signed Release build and signature verification passed:
+  `/private/tmp/otr-expense-detail-edit-build/Build/Products/Release-iphoneos/OTRMobile.app`.
+  Full regression has 136 suites / 929 tests passed, with existing Account Switching
+  React Native Flow loading and concurrent LedgerStage6 architecture-import failures
+  left outside scope. Latest signed Release installed/launched on iPhone 17 Pro
+  Simulator with cached accounts preserved. Simulator passed compact Amount, Sharing,
+  FX sheet, image/PDF preview Close, staged remove/Cancel preservation, capacity
+  source sheet and Delete confirmation/Cancel. PDF preview permits only app-owned
+  draft/receipt paths and verified-download preview cache; OCR is unchanged.
+  Final fix passed six suites / 57 tests, TypeScript and scoped ESLint. Large text,
+  image gestures/navigation and native Save offline/reconnect remain open.
+  Physical-device acceptance deferred by owner; no Expense Save/Delete performed.
+  The earlier physical artifact predates the PDF fix. Next: remaining native gates.
+
+- Owner follow-up: rate icon after amount, compact New Expense-style rate sheet,
+  payer/split summary on separate lines, no repeated payer/total in expanded shares
+  and no upload diagnostics. Four suites / 30 tests and Simulator smoke passed.
+  Read-only finding: Journey quote precedence can choose Sep 24 despite an available
+  Sep 25 snapshot; shared FX/Settlement selection code remains unchanged.
+
 ## Receipt Review — Japanese yen recommendation
 
 - Owner approved explicit currency first, then kana plus yen without competing

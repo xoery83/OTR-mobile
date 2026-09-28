@@ -1,4 +1,4 @@
-import { File, Paths } from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
 import { ApiClientError } from "@/data/api/client";
@@ -6,7 +6,7 @@ import { receiptBytesSha256, resolveReceiptFile } from "@/data/files/receiptFile
 import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
 import { createLedgerReceiptTransport } from "@/data/sync/ledgerReceiptTransport";
 
-export async function openReceiptAsset(receipt: ReceiptAsset) {
+export async function resolveReceiptAssetUri(receipt: ReceiptAsset) {
   if (receipt.deletedAt) throw new Error("This attachment was removed.");
   let file = receipt.localUri ? resolveReceiptFile(receipt.localUri) : null;
   if (!file?.exists) {
@@ -34,10 +34,17 @@ export async function openReceiptAsset(receipt: ReceiptAsset) {
         : receipt.mimeType === "image/png"
           ? "png"
           : "jpg";
-    file = new File(Paths.cache, `${receipt.serverId}.${extension}`);
+    const previews = new Directory(Paths.cache, "ledger-receipt-previews");
+    previews.create({ idempotent: true, intermediates: true });
+    file = new File(previews, `${receipt.serverId}.${extension}`);
     file.write(bytes);
   }
+  return file.uri;
+}
+
+export async function openReceiptAsset(receipt: ReceiptAsset) {
+  const uri = await resolveReceiptAssetUri(receipt);
   if (!(await Sharing.isAvailableAsync()))
     throw new Error("Attachment viewer is unavailable on this device.");
-  await Sharing.shareAsync(file.uri, { mimeType: receipt.mimeType });
+  await Sharing.shareAsync(uri, { mimeType: receipt.mimeType });
 }

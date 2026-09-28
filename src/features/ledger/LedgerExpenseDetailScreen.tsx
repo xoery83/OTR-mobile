@@ -1,4 +1,7 @@
-import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
+import {
+  refreshLedgerFxSnapshotCache,
+  kickLedgerOperationalSync,
+} from "@/data/operations/kickLedgerSync";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,20 +13,28 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
-import { receiptFileEvidence } from "@/data/files/receiptFileStore";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
-import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
-import { openReceiptAsset } from "@/data/operations/openReceiptAsset";
+
+import { resolveReceiptAssetUri } from "@/data/operations/openReceiptAsset";
 import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
 import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
+
+import { AppIcon } from "@/components/AppIcon";
+import { canEditLedgerExpense } from "@/data/repositories/ledgerExpenseEditAccess";
+import { previewReceiptDraftPdf } from "@/native/receiptDraftPreview";
+import { ExpenseAttachmentRow } from "./ExpenseAttachmentRow";
+import { ExpenseAttachmentViewer, type AttachmentImage } from "./ExpenseAttachmentViewer";
+import { ExpenseSettlementTag } from "./ExpenseSettlementTag";
+import { shouldShowGroupSettlement } from "./expenseDraft";
+import { expenseSharingSummary } from "./expenseEntryPresentation";
 
 import { ExpenseFxDetails } from "./ExpenseFxDetails";
 import type { DisplayEstimate } from "./displayEstimate";
@@ -36,14 +47,15 @@ export function LedgerExpenseDetailScreen() {
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
   const [payerName, setPayerName] = useState("Traveller");
   const [receipts, setReceipts] = useState<ReceiptAsset[]>([]);
-  const [debugMode, setDebugMode] = useState(false);
   const [attachmentMessage, setAttachmentMessage] = useState<string | null>(null);
   const [estimate, setEstimate] = useState<DisplayEstimate | null>(null);
   const [hasOpenConflict, setHasOpenConflict] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [participationError, setParticipationError] = useState<string | null>(null);
-  const [savingParticipation, setSavingParticipation] = useState(false);
+  const [sharingExpanded, setSharingExpanded] = useState(false);
+  const [actorId, setActorId] = useState<string | null>(null);
+  const [previewImages, setPreviewImages] = useState<AttachmentImage[]>([]);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [reviewMessage, setReviewMessage] = useState<string | null>(null);
   const [reviewFlagCount, setReviewFlagCount] = useState(0);
   const [raisingReview, setRaisingReview] = useState(false);
@@ -54,38 +66,6 @@ export function LedgerExpenseDetailScreen() {
     canAttach: false,
     locked: true,
   });
-  useEffect(() => {
-    void getDefaultLedgerReportingRepository()
-      .then((repository) => repository.getPreferences())
-      .then((preferences) => setDebugMode(preferences.debugMode))
-      .catch(() => undefined);
-  }, []);
-
-  const showReceiptDiagnostic = async (receipt: ReceiptAsset) => {
-    const operation = await (
-      await getDefaultLedgerReceiptRepository()
-    ).getUploadDiagnostic(receipt.id);
-    const file = receipt.localUri
-      ? await receiptFileEvidence(receipt.localUri)
-      : { exists: false as const };
-    const fileLine = file.exists
-      ? `${file.basename} · ${file.mimeType} · ${file.sizeBytes} B · SHA ${file.sha256.slice(0, 16)}`
-      : "Missing local file";
-    Alert.alert(
-      "Receipt upload diagnostic",
-      [
-        `Error ${operation?.failureCategory ?? "none"}/${operation?.errorCode ?? "none"}: ${operation?.errorMessage ?? "none"}`,
-        `Operation ${operation?.id ?? "none"} · ${operation?.status ?? "none"} · attempts ${operation?.attemptCount ?? 0}`,
-        `Asset ${receipt.id}`,
-        `Expense ${receipt.expenseId ?? "none"}`,
-        `Expense sync ${expense?.syncStatus ?? "unknown"} · server ${expense?.serverId ?? "none"}`,
-        `Stored ${receipt.mimeType} · ${receipt.sizeBytes} B · SHA ${receipt.sha256.slice(0, 16)}`,
-        `Source ${receipt.originalMimeType ?? "unknown"} · ${receipt.originalSizeBytes ?? "unknown"} B`,
-        `File ${fileLine}`,
-        `Request ${operation?.requestId ?? "none"}`,
-      ].join("\n"),
-    );
-  };
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -167,13 +147,10 @@ export function LedgerExpenseDetailScreen() {
                     finding.expenseId === nextExpense.serverId),
               ).length,
               {
+                actorId: actor?.memberId ?? null,
                 currency,
                 scale,
-                canChange: Boolean(
-                  actor?.memberId &&
-                  (actor.role === "owner" ||
-                    actor.memberId === nextExpense.creatorMemberId),
-                ),
+                canChange: canEditLedgerExpense(actor?.role, settlement),
                 canAttach: actor?.role === "owner" || actor?.role === "group_member",
                 locked: settlement,
               },
@@ -196,7 +173,10 @@ export function LedgerExpenseDetailScreen() {
               setReceipts(nextReceipts);
               setEstimate(nextEstimate);
               setReviewFlagCount(nextReviewFlagCount);
-              if (access) setFxAccess(access);
+              if (access) {
+                setFxAccess(access);
+                setActorId(access.actorId);
+              }
             },
           )
           .catch(() => {
@@ -292,55 +272,6 @@ export function LedgerExpenseDetailScreen() {
             detail: "This Expense is not yet part of the accepted Spending totals.",
           }
         : null;
-  const setIncluded = async (included: boolean) => {
-    setSavingParticipation(true);
-    setParticipationError(null);
-    try {
-      const repository = await getDefaultLedgerExpenseRepository();
-      const updated = await repository.updateExpense(
-        expense.id,
-        {
-          journeyId: expense.journeyId,
-          creatorMemberId: expense.creatorMemberId,
-          payerMemberId: expense.payerMemberId,
-          title: expense.title,
-          description: expense.description,
-          category: expense.category,
-          occurredAt: expense.occurredAt,
-          economicDate: expense.economicDate,
-          original: expense.original,
-          participants: expense.participants,
-          splits: expense.splits,
-          valuation: expense.valuation,
-          status: expense.status === "DELETED" ? "DRAFT" : expense.status,
-          settlementParticipation: included ? "INCLUDED" : "EXCLUDED",
-        },
-        "Changed settlement participation.",
-      );
-      setExpense(updated);
-    } catch {
-      setParticipationError("Settlement participation could not be saved.");
-    } finally {
-      setSavingParticipation(false);
-    }
-  };
-  const confirmParticipation = () => {
-    const include = expense.settlementParticipation === "EXCLUDED";
-    Alert.alert(
-      include ? "Include in group settlement?" : "Remove from group settlement?",
-      include
-        ? "Participant shares will affect who owes whom."
-        : "The Expense stays in Spending and analysis, but will not create debt between travellers.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: include ? "Include" : "Remove",
-          style: include ? "default" : "destructive",
-          onPress: () => void setIncluded(include),
-        },
-      ],
-    );
-  };
   const raiseConcern = async (note: string) => {
     if (raisingReview) return;
     if (!expense.serverRevision) {
@@ -385,309 +316,282 @@ export function LedgerExpenseDetailScreen() {
       ],
       "plain-text",
     );
-  const removeAttachment = (receipt: ReceiptAsset) =>
-    Alert.alert(
-      "Remove attachment?",
-      "The attachment will be hidden immediately. Its stored copy is retained for recovery.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => {
-            void getDefaultLedgerReceiptRepository()
-              .then((repository) => repository.deleteExpenseAttachment(receipt.id))
-              .then(() => {
-                setReceipts((current) =>
-                  current.filter((item) => item.id !== receipt.id),
-                );
-                setAttachmentMessage("Attachment removed on this iPhone · sync pending.");
-                kickLedgerOperationalSync();
-              })
-              .catch((error) =>
-                setAttachmentMessage(
-                  error instanceof Error
-                    ? error.message
-                    : "Attachment could not be removed.",
-                ),
-              );
-          },
-        },
-      ],
-    );
+  const canEdit = fxAccess.canChange && expense.status !== "DELETED";
+  const sharing = expenseSharingSummary(
+    {
+      payerId: expense.payerMemberId,
+      participantIds: expense.participants.map((item) => item.memberId),
+      splitMode: expense.splits[0]?.method ?? "EQUAL_PERSON",
+      settlementParticipation: expense.settlementParticipation,
+    },
+    [
+      ...expense.participants.map((item) => ({
+        id: item.memberId,
+        displayName: item.displayNameSnapshot,
+        householdId: item.householdIdSnapshot,
+        shareUnits: null,
+      })),
+      {
+        id: expense.payerMemberId,
+        displayName: payerName,
+        householdId: null,
+        shareUnits: null,
+      },
+    ],
+    actorId ?? "",
+  );
+  const previewAttachment = async (receipt: ReceiptAsset) => {
+    try {
+      const uri = await resolveReceiptAssetUri(receipt);
+      if (receipt.mimeType === "application/pdf") previewReceiptDraftPdf(uri);
+      else {
+        setReceipts((current) =>
+          current.map((item) =>
+            item.id === receipt.id ? { ...item, localUri: uri } : item,
+          ),
+        );
+        setPreviewImages(
+          receipts
+            .filter((item) => item.mimeType.startsWith("image/"))
+            .map((item) => ({
+              id: item.id,
+              localUri: item.id === receipt.id ? uri : (item.localUri ?? ""),
+            })),
+        );
+        setPreviewId(receipt.id);
+      }
+    } catch (error) {
+      setAttachmentMessage(
+        error instanceof Error ? error.message : "Attachment could not be opened.",
+      );
+    }
+  };
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      {expense.syncStatus !== "SYNCED" ? (
-        <Text accessibilityLiveRegion="polite" style={styles.saved}>
-          {chinese ? "已保存到此 iPhone" : "Saved on this iPhone"}
-        </Text>
-      ) : null}
-      <Text accessibilityRole="header" style={styles.title}>
-        {expense.title}
-      </Text>
-      <Text style={styles.meta}>
-        {expense.category} ·{" "}
-        {formatLedgerDate(expense.economicDate ?? expense.occurredAt)}
-      </Text>
-      {reviewFlagCount ? (
-        <Text accessibilityLiveRegion="polite" style={styles.reviewFlag}>
-          Flagged for review{reviewFlagCount > 1 ? ` · ${reviewFlagCount} open` : ""}
-        </Text>
-      ) : null}
-      <View style={styles.actions}>
-        {!fxAccess.locked ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() =>
-              router.push({
-                pathname: "/expenses/new",
-                params: { expenseId: expense.id, journeyId: expense.journeyId },
-              })
-            }
-            style={styles.action}
-          >
-            <Text style={styles.actionText}>Edit Expense</Text>
-          </Pressable>
-        ) : null}
-        {!fxAccess.locked &&
-        fxAccess.canAttach &&
-        receipts.length < MAX_EXPENSE_ATTACHMENTS ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() =>
-              router.push({
-                pathname: "/expenses/receipt",
-                params: { expenseId: expense.id, journeyId: expense.journeyId },
-              })
-            }
-            style={styles.action}
-          >
-            <Text style={styles.actionText}>Add attachment</Text>
-          </Pressable>
-        ) : null}
-      </View>
-      {fxAccess.locked ? (
-        <Text style={styles.meta}>
-          {chinese
-            ? "历史结算已完成 · 历史版本只读"
-            : "Historical settlement completed · earlier version read-only"}
-        </Text>
-      ) : null}
-      {excluded && warning ? (
-        <Pressable
-          accessibilityRole={
-            fxAccess.canChange &&
-            expense.status === "RATE_REQUIRED" &&
-            expense.economicDate === null
-              ? "button"
-              : undefined
-          }
-          onPress={
-            fxAccess.canChange &&
-            expense.status === "RATE_REQUIRED" &&
-            expense.economicDate === null
-              ? () =>
-                  router.push({
-                    pathname: "/expenses/confirm-date",
-                    params: {
-                      expenseId: expense.id,
-                    },
-                  } as never)
-              : undefined
-          }
-          style={styles.warning}
-        >
-          <Text style={styles.warningTitle}>{warning.title}</Text>
-          <Text style={styles.meta}>{warning.detail}</Text>
-        </Pressable>
-      ) : null}
-      <Section label={chinese ? "原始金额" : "ORIGINAL AMOUNT"}>
-        <Text style={styles.value}>
-          {formatLedgerMoney(
-            expense.original.minor,
-            expense.original.currency,
-            expense.original.scale,
-          )}
-        </Text>
-      </Section>
-      {fxAccess.currency && expense.original.currency !== fxAccess.currency ? (
-        <ExpenseFxDetails
-          key={expense.id}
-          expense={expense}
-          currency={fxAccess.currency}
-          scale={fxAccess.scale}
-          canChange={fxAccess.canChange && !hasOpenConflict}
-          locked={fxAccess.locked}
-          estimate={hasOpenConflict || fxAccess.locked ? null : estimate}
-          blocked={hasOpenConflict}
-          onChanged={setExpense}
-        />
-      ) : null}
-      <Section label="DETAILS">
-        <Text style={styles.splitName}>Paid by {payerName}</Text>
-        <Text style={styles.meta}>
-          {formatLedgerDate(expense.economicDate ?? expense.occurredAt)} ·{" "}
-          {expense.category}
-        </Text>
-        {expense.description ? (
-          <Text style={styles.meta}>{expense.description}</Text>
-        ) : null}
-        <Text style={styles.meta}>
-          {receipts.length
-            ? `${receipts.length} ${receipts.length === 1 ? "attachment" : "attachments"}`
-            : "No receipt attached"}
-        </Text>
-      </Section>
-      <Section label="ATTACHMENTS">
-        {receipts.map((receipt, index) => (
-          <View key={receipt.id} style={styles.evidence}>
-            <Text style={styles.splitName}>Attachment {index + 1}</Text>
-            <Text style={styles.meta}>
-              {receipt.uploadStatus === "UPLOADED"
-                ? "Available"
-                : receipt.uploadStatus === "FAILED"
-                  ? "Upload failed"
-                  : "Saved locally · upload pending"}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              style={styles.action}
-              onPress={() =>
-                void openReceiptAsset(receipt).catch((error) =>
-                  setAttachmentMessage(
-                    error instanceof Error
-                      ? error.message
-                      : "Attachment could not be opened.",
-                  ),
-                )
-              }
-            >
-              <Text style={styles.actionText}>Open attachment {index + 1}</Text>
-            </Pressable>
-            {debugMode ? (
+    <>
+      <Stack.Screen
+        options={{
+          headerTitle: "Expense",
+          headerRight: () =>
+            canEdit ? (
               <Pressable
                 accessibilityRole="button"
-                style={styles.action}
+                accessibilityLabel="Edit Expense"
+                style={styles.headerAction}
                 onPress={() =>
-                  void showReceiptDiagnostic(receipt).catch((error) =>
-                    Alert.alert(
-                      "Receipt diagnostic unavailable",
-                      error instanceof Error ? error.message : "Unknown error",
-                    ),
-                  )
+                  router.push({
+                    pathname: "/expenses/new",
+                    params: { expenseId: expense.id, journeyId: expense.journeyId },
+                  })
                 }
               >
-                <Text style={styles.actionText}>Upload diagnostic {index + 1}</Text>
+                <AppIcon color="#0F766E" name="square.and.pencil" size={21} />
               </Pressable>
-            ) : null}
-            {fxAccess.canAttach && !fxAccess.locked ? (
-              <Pressable
-                accessibilityRole="button"
-                style={styles.action}
-                onPress={() => removeAttachment(receipt)}
-              >
-                <Text style={styles.actionText}>Remove attachment {index + 1}</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        ))}
-        {attachmentMessage ? (
-          <Text accessibilityLiveRegion="polite" style={styles.error}>
-            {attachmentMessage}
+            ) : null,
+        }}
+      />
+      <ScrollView contentContainerStyle={styles.content}>
+        {expense.syncStatus !== "SYNCED" ? (
+          <Text accessibilityLiveRegion="polite" style={styles.saved}>
+            {chinese ? "已保存到此 iPhone" : "Saved on this iPhone"}
           </Text>
         ) : null}
-      </Section>
-      <Section label="EXACT SPLITS">
-        {expense.splits.map((split) => (
-          <View key={split.memberId} style={[styles.split, largeText && styles.stack]}>
-            <Text style={styles.splitName}>
-              {participantNames.get(split.memberId) ?? "Traveller"}
-            </Text>
-            <Text style={styles.splitAmount}>
-              {split.settlementMinor === null || !valuation
-                ? `${expense.original.currency} original ${formatLedgerMoney(split.originalMinor, expense.original.currency, expense.original.scale)}`
-                : formatLedgerMoney(
-                    split.settlementMinor,
-                    valuation.settlement.currency,
-                    valuation.settlement.scale,
-                  )}
-            </Text>
-          </View>
-        ))}
-      </Section>
-      {expense.status !== "DELETED" ? (
-        <Section label="GROUP SETTLEMENT">
+        <Text accessibilityRole="header" style={styles.title}>
+          {expense.title}
+        </Text>
+        <Text style={styles.meta}>
+          {expense.category} ·{" "}
+          {formatLedgerDate(expense.economicDate ?? expense.occurredAt)}
+        </Text>
+        {reviewFlagCount ? (
+          <Text accessibilityLiveRegion="polite" style={styles.reviewFlag}>
+            Flagged for review{reviewFlagCount > 1 ? ` · ${reviewFlagCount} open` : ""}
+          </Text>
+        ) : null}
+        {fxAccess.locked ? (
+          <Text style={styles.meta}>
+            {chinese
+              ? "历史结算已完成 · 历史版本只读"
+              : "Historical settlement completed · earlier version read-only"}
+          </Text>
+        ) : null}
+        {excluded && warning ? (
           <Pressable
-            accessibilityHint="Opens a confirmation before changing who owes whom"
-            accessibilityLabel={`Group settlement, ${
-              expense.settlementParticipation === "INCLUDED" ? "included" : "not included"
-            }`}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: savingParticipation || fxAccess.locked }}
-            disabled={savingParticipation || fxAccess.locked}
-            onPress={confirmParticipation}
-            style={[styles.participationRow, largeText && styles.stack]}
+            accessibilityRole={
+              fxAccess.canChange &&
+              expense.status === "RATE_REQUIRED" &&
+              expense.economicDate === null
+                ? "button"
+                : undefined
+            }
+            onPress={
+              fxAccess.canChange &&
+              expense.status === "RATE_REQUIRED" &&
+              expense.economicDate === null
+                ? () =>
+                    router.push({
+                      pathname: "/expenses/confirm-date",
+                      params: {
+                        expenseId: expense.id,
+                      },
+                    } as never)
+                : undefined
+            }
+            style={styles.warning}
           >
-            <View style={styles.participationCopy}>
-              <Text style={styles.splitName}>
-                {expense.settlementParticipation === "INCLUDED"
-                  ? "Included in group settlement"
-                  : "Not included in group settlement"}
-              </Text>
-              <Text style={styles.meta}>
-                {expense.settlementParticipation === "INCLUDED"
-                  ? "Participant shares affect who owes whom."
-                  : "This Expense remains in Spending and analysis but creates no inter-member debt."}
-              </Text>
-            </View>
-            <Text style={styles.change}>
-              {fxAccess.locked ? "Locked" : savingParticipation ? "Saving…" : "Change"}
-            </Text>
+            <Text style={styles.warningTitle}>{warning.title}</Text>
+            <Text style={styles.meta}>{warning.detail}</Text>
           </Pressable>
-          {participationError ? (
+        ) : null}
+        <Section label={chinese ? "金额" : "Amount"}>
+          <View style={[styles.amountRow, largeText && styles.stack]}>
+            <View style={styles.amountColumn}>
+              <Text style={styles.value}>
+                {formatLedgerMoney(
+                  expense.original.minor,
+                  expense.original.currency,
+                  expense.original.scale,
+                )}
+              </Text>
+              {fxAccess.currency && expense.original.currency !== fxAccess.currency ? (
+                <Text style={styles.meta}>Original</Text>
+              ) : null}
+            </View>
+            {fxAccess.currency && expense.original.currency !== fxAccess.currency ? (
+              <ExpenseFxDetails
+                key={expense.id}
+                expense={expense}
+                currency={fxAccess.currency}
+                scale={fxAccess.scale}
+                canChange={canEdit && !hasOpenConflict}
+                locked={fxAccess.locked}
+                estimate={hasOpenConflict || fxAccess.locked ? null : estimate}
+                blocked={hasOpenConflict}
+                onChanged={setExpense}
+              />
+            ) : null}
+          </View>
+        </Section>
+        <View style={styles.section}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sharing"
+            accessibilityState={{ expanded: sharingExpanded }}
+            onPress={() => setSharingExpanded((value) => !value)}
+            style={styles.sharingControl}
+          >
+            <View style={styles.sharingHeading}>
+              <Text style={styles.label}>Sharing</Text>
+              {shouldShowGroupSettlement(
+                expense.participants.map((item) => item.memberId),
+                expense.payerMemberId,
+              ) ? (
+                <ExpenseSettlementTag value={expense.settlementParticipation} />
+              ) : null}
+            </View>
+            <Text style={styles.splitName}>
+              {sharing.join(" · ").replace(" paid · ", " paid\n")}
+            </Text>
+            <AppIcon
+              color="#64748B"
+              name={sharingExpanded ? "chevron.up" : "chevron.down"}
+              size={14}
+            />
+          </Pressable>
+          {sharingExpanded ? (
+            <View>
+              {expense.splits.map((split) => (
+                <View
+                  key={split.memberId}
+                  style={[styles.split, largeText && styles.stack]}
+                >
+                  <Text style={styles.splitName}>
+                    {split.memberId === actorId
+                      ? "You"
+                      : (participantNames.get(split.memberId) ?? "Traveller")}
+                  </Text>
+                  <Text style={styles.splitAmount}>
+                    {formatLedgerMoney(
+                      split.originalMinor,
+                      expense.original.currency,
+                      expense.original.scale,
+                    )}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
+        <Section label="Details">
+          {expense.description ? (
+            <View style={styles.notes}>
+              <Text style={styles.label}>Notes</Text>
+              <Text style={styles.splitName}>{expense.description}</Text>
+            </View>
+          ) : null}
+          <View style={styles.sharingHeading}>
+            <Text style={styles.label}>Attachments · {receipts.length}</Text>
+            {expense.status !== "DELETED" &&
+            !fxAccess.locked &&
+            fxAccess.canAttach &&
+            receipts.length < MAX_EXPENSE_ATTACHMENTS ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add attachment"
+                style={styles.headerAction}
+                onPress={() =>
+                  router.push({
+                    pathname: "/expenses/receipt",
+                    params: { expenseId: expense.id, journeyId: expense.journeyId },
+                  })
+                }
+              >
+                <AppIcon color="#0F766E" name="plus" size={20} />
+              </Pressable>
+            ) : null}
+          </View>
+          {receipts.map((receipt, index) => (
+            <View key={receipt.id}>
+              <ExpenseAttachmentRow
+                attachment={receipt}
+                position={index + 1}
+                onPreview={() => void previewAttachment(receipt)}
+              />
+            </View>
+          ))}
+          {attachmentMessage ? (
             <Text accessibilityLiveRegion="polite" style={styles.error}>
-              {participationError}
+              {attachmentMessage}
             </Text>
           ) : null}
         </Section>
-      ) : null}
-      <Section label="PAYER EVIDENCE">
-        {expense.paymentRecords.length ? (
-          expense.paymentRecords.map((record) => (
-            <View key={record.id} style={styles.evidence}>
-              <Text style={styles.splitName}>
-                {record.instrumentLabel ?? "Payment record"}
-              </Text>
-              <Text style={styles.meta}>
-                {record.posted
-                  ? `Posted ${formatLedgerMoney(record.posted.minor, record.posted.currency, record.posted.scale)}`
-                  : "No posted amount"}
-              </Text>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.meta}>
-            {chinese ? "没有付款凭证。" : "No payer evidence recorded."}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: raisingReview }}
+          disabled={raisingReview}
+          onPress={promptForConcern}
+          style={styles.reviewAction}
+        >
+          <Text style={styles.actionText}>
+            {raisingReview ? "Adding to Review…" : "Something looks wrong?"}
           </Text>
-        )}
-      </Section>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: raisingReview }}
-        disabled={raisingReview}
-        onPress={promptForConcern}
-        style={[styles.action, styles.reviewAction]}
-      >
-        <Text style={styles.actionText}>
-          {raisingReview ? "Adding to Review…" : "Something looks wrong"}
-        </Text>
-      </Pressable>
-      {reviewMessage ? (
-        <Text accessibilityLiveRegion="polite" style={styles.saved}>
-          {reviewMessage}
-        </Text>
-      ) : null}
-    </ScrollView>
+          <Text style={styles.meta}>Flag this expense in Review. ›</Text>
+        </Pressable>
+        {reviewMessage ? (
+          <Text accessibilityLiveRegion="polite" style={styles.saved}>
+            {reviewMessage}
+          </Text>
+        ) : null}
+      </ScrollView>
+      <ExpenseAttachmentViewer
+        images={previewImages}
+        selectedId={previewId}
+        onSelect={(id) => {
+          const receipt = receipts.find((item) => item.id === id);
+          if (receipt) void previewAttachment(receipt);
+        }}
+        onClose={() => setPreviewId(null)}
+      />
+    </>
   );
 }
 
@@ -704,16 +608,30 @@ const styles = StyleSheet.create({
   content: { backgroundColor: "#F6F7F9", gap: 14, padding: 16, paddingBottom: 40 },
   title: { color: "#111827", fontSize: 28, fontWeight: "800" },
   meta: { color: "#64748B", fontSize: 13, lineHeight: 19 },
-  actions: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  action: {
-    backgroundColor: "#CCFBF1",
-    borderRadius: 9,
-    justifyContent: "center",
-    minHeight: 44,
-    padding: 11,
-  },
   actionText: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  reviewAction: { alignItems: "center" },
+  reviewAction: { minHeight: 44, gap: 3, paddingVertical: 10 },
+  headerAction: {
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  amountRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  amountColumn: { flexShrink: 1, gap: 4 },
+  sharingControl: { gap: 8, minHeight: 44 },
+  sharingHeading: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  notes: { gap: 6 },
   reviewFlag: {
     alignSelf: "flex-start",
     backgroundColor: "#FFF7DB",
@@ -730,7 +648,7 @@ const styles = StyleSheet.create({
   saved: { color: "#64748B", fontSize: 13 },
   section: { backgroundColor: "#FFFFFF", borderRadius: 10, gap: 8, padding: 14 },
   label: { color: "#64748B", fontSize: 12, fontWeight: "700" },
-  value: { color: "#111827", fontSize: 23, fontWeight: "800" },
+  value: { color: "#111827", fontSize: 23, lineHeight: 44, fontWeight: "800" },
   split: {
     alignItems: "center",
     borderTopColor: "#E5E7EB",
@@ -741,20 +659,6 @@ const styles = StyleSheet.create({
   },
   splitName: { color: "#111827", fontSize: 15, fontWeight: "600" },
   splitAmount: { color: "#111827", fontSize: 14 },
-  evidence: {
-    borderTopColor: "#E5E7EB",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 3,
-    paddingTop: 8,
-  },
-  participationRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 44,
-  },
-  participationCopy: { flex: 1, gap: 4 },
-  change: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
   error: { color: "#B91C1C", fontSize: 13 },
   stack: { alignItems: "flex-start", flexDirection: "column", paddingVertical: 8 },
 });

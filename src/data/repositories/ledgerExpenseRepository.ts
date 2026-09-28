@@ -8,6 +8,8 @@ import { createLocalId } from "@/domain/localId";
 import { assertExpenseAttachmentDrafts } from "@/domain/ledger/attachments";
 import {
   insertExpenseReceiptInTransaction,
+  deleteExpenseAttachmentInTransaction,
+  createLedgerReceiptRepository,
   type PreparedExpenseReceipt,
 } from "./ledgerReceiptRepository";
 import { allocateSettlementFromOriginal } from "@/domain/ledger/allocation";
@@ -27,6 +29,8 @@ import type {
   ValuationPolicy,
 } from "@/domain/ledger/types";
 import type { SyncStatus } from "@/domain/sync/syncStatus";
+
+import { assertLedgerExpenseEditable } from "./ledgerExpenseEditAccess";
 
 import { assertReplayFixtureWritable } from "./replayFixtureGuard";
 import {
@@ -71,6 +75,13 @@ export type LedgerExpense = ExpenseAggregate & {
   updatedAt: string;
 };
 
+export type ExpenseAttachmentEdit = {
+  added: readonly PreparedExpenseReceipt[];
+  removedIds: readonly string[];
+  expectedIds: readonly string[];
+  expectedRevision: number;
+};
+
 export type LedgerExpenseRepository = {
   createExpense(
     command: LedgerExpenseCommand,
@@ -81,6 +92,7 @@ export type LedgerExpenseRepository = {
     id: string,
     command: LedgerExpenseCommand,
     reason: string,
+    attachments?: ExpenseAttachmentEdit,
   ): Promise<LedgerExpense>;
   completeEconomicDate(
     id: string,
@@ -305,7 +317,7 @@ export function createLedgerExpenseRepository(
       return expense;
     },
 
-    async updateExpense(id, command, reason) {
+    async updateExpense(id, command, reason, attachments) {
       const userId = await getActiveUserId();
       const current = await requireExpense(database, id, userId);
       assertReplayFixtureWritable(current.journeyId);
@@ -344,6 +356,56 @@ export function createLedgerExpenseRepository(
       );
       assertCommand(expense);
       await database.withTransactionAsync(async () => {
+        await assertLedgerExpenseEditable(
+          database,
+          userId,
+          current.journeyId,
+          id,
+          current.serverId,
+        );
+        if (command.journeyId !== current.journeyId)
+          throw new Error("Expense cannot move to another Journey.");
+        if (attachments) {
+          const latest = await requireExpense(database, id, userId);
+          if (latest.revision !== attachments.expectedRevision)
+            throw new Error("Expense changed. Reopen Edit before saving.");
+          const receipts = (
+            await createLedgerReceiptRepository(
+              database,
+              async () => userId,
+            ).listReceipts(current.journeyId)
+          ).filter(
+            (receipt) =>
+              receipt.expenseId === id ||
+              (current.serverId && receipt.expenseId === current.serverId),
+          );
+          const activeIds = receipts.map((receipt) => receipt.id);
+          if (
+            activeIds.length !== attachments.expectedIds.length ||
+            activeIds.some((receiptId) => !attachments.expectedIds.includes(receiptId))
+          )
+            throw new Error("Attachments changed. Reopen Edit before saving.");
+          if (attachments.removedIds.some((receiptId) => !activeIds.includes(receiptId)))
+            throw new Error("Attachment does not belong to this Expense.");
+          const retainedIds = activeIds.filter(
+            (receiptId) => !attachments.removedIds.includes(receiptId),
+          );
+          assertExpenseAttachmentDrafts([
+            ...retainedIds,
+            ...attachments.added.map((receipt) => receipt.id),
+          ]);
+          for (const receiptId of attachments.removedIds)
+            await deleteExpenseAttachmentInTransaction(database, receiptId, userId);
+          for (const receipt of attachments.added)
+            await insertExpenseReceiptInTransaction(
+              database,
+              receipt,
+              id,
+              current.journeyId,
+              userId,
+              now,
+            );
+        }
         const causalCreate =
           current.serverRevision === 0
             ? await findCausalCreate(database, id, userId)
@@ -526,6 +588,13 @@ export function createLedgerExpenseRepository(
       const now = new Date().toISOString();
       const nextRevision = current.revision + 1;
       await database.withTransactionAsync(async () => {
+        await assertLedgerExpenseEditable(
+          database,
+          userId,
+          current.journeyId,
+          id,
+          current.serverId,
+        );
         await database.runAsync(
           `UPDATE ledger_expenses
            SET business_status = ?, deleted_at = ?, revision = ?, sync_status = ?,

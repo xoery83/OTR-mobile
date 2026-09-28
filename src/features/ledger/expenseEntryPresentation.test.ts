@@ -52,7 +52,7 @@ describe("New Expense compact presentation", () => {
         members,
         "me",
       ),
-    ).toEqual(["You paid · 3 people", "Custom split"]);
+    ).toEqual(["You paid · 3 people", "Exact split"]);
     expect(
       expenseSharingSummary(
         { ...base, payerId: "a", participantIds: ["me"] },
@@ -112,7 +112,7 @@ describe("New Expense compact presentation", () => {
     });
     expect(expenseSharingSummary(applied, members, "me")).toEqual([
       "Alex paid · 2 people",
-      "Custom split",
+      "Exact split",
     ]);
   });
 
@@ -196,13 +196,26 @@ describe("New Expense compact presentation", () => {
     expect(source).toContain("setDraft(applyExpenseSharing(draft, sharingEdit))");
     expect(source).toContain("onPress={() => chooseReceipt(false)}");
     expect(source).toContain('accessibilityLabel="Add attachment"');
-    expect(source).toContain("!receiptCapacityFull || existing ? (");
+    expect(source).toContain("!receiptCapacityFull && !params.correctionRootId ? (");
     expect(source).toContain("discardExpenseReceiptDraft(receiptDraft)");
     expect(source).toContain("previewReceiptDraftPdf(receiptDraft.localUri)");
     expect(source).toContain("setPreviewDraft(receiptDraft)");
-    expect(source).toContain(
-      "accessibilityLabel={`Preview ${display.title}, ${display.type}`}",
+    expect(source).toContain("<ExpenseAttachmentRow");
+    expect(source).toContain("<ExpenseAttachmentViewer");
+    expect(source).toContain("setExistingReceipts(value.receipts)");
+    expect(source).toContain("setRemovedReceiptIds");
+    expect(source).toContain("saveExpenseEditWithReceiptDrafts(");
+    expect(source).not.toContain("importReceiptAsset(");
+    const detail = readFileSync(
+      new URL("./LedgerExpenseDetailScreen.tsx", import.meta.url),
+      "utf8",
     );
+    expect(detail).toContain("headerRight:");
+    expect(detail).toContain("canEditLedgerExpense(actor?.role, settlement)");
+    expect(detail).toContain("setSharingExpanded");
+    expect(detail).not.toContain("deleteExpenseAttachment(");
+    expect(detail).not.toContain("PAYER EVIDENCE");
+    expect(detail).not.toContain("confirmParticipation");
     expect(source).toContain("setReceiptDrafts([...receiptDrafts, ...transferred])");
     expect(source).toContain("onPress={() => setNotesExpanded(true)}");
     expect(source).toContain("value={draft.notes}");
@@ -211,9 +224,9 @@ describe("New Expense compact presentation", () => {
     expect(source).toContain('animationType="none"');
     expect(source).toContain("opacity: dateBackdropOpacity");
     expect(source).toContain("translateY: dateSheetOffset");
-    expect(source).toContain("allowsMultipleSelection: !existing");
-    expect(source).toContain("multiple: !existing");
-    expect(source).toContain("selectionLimit: !existing ? remaining : 1");
+    expect(source).toContain("allowsMultipleSelection: true");
+    expect(source).toContain("multiple: true");
+    expect(source).toContain("selectionLimit: remaining");
     expect(source).toContain("selectExpenseReceiptDraftBatch(");
     expect(source).toContain(
       "Scan one receipt, or add multiple parts of a long receipt.",

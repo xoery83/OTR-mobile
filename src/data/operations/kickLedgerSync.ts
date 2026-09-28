@@ -3,3 +3,5 @@ export {
   runLedgerOperationalSync,
 } from "@/data/sync/ledgerOperationalSync";
 export { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";
+
+export { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";

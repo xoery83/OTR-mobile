@@ -269,7 +269,7 @@ it("wires only three fields, unified candidate groups, capacity and accepted C4 
     "onConfirm(confirmReceiptReview(review, session), session.revision)",
   );
   expect(sheet).toContain("onCancel()");
-  expect(entry).toContain("selectionLimit: !existing ? remaining : 1");
+  expect(entry).toContain("selectionLimit: remaining");
   expect(entry).toContain("scanOcrQueue.current.push(next.id)");
   expect(entry).toContain("prepareReceiptReviewConfirmation(");
   expect(entry).toContain("transferConfirmedReceiptDrafts(prepared.scannedDrafts)");

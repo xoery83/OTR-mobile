@@ -42,7 +42,11 @@ public class ReceiptOcrModule: Module {
       else { return false }
       let file = url.resolvingSymlinksInPath().standardizedFileURL
       let root = documents.resolvingSymlinksInPath().standardizedFileURL.path
-      guard file.path.hasPrefix(root + "/ledger-receipt-drafts/"),
+      let cache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
+        .resolvingSymlinksInPath().standardizedFileURL.path
+      let allowedRoots = [root + "/ledger-receipt-drafts/", root + "/ledger-receipts/"]
+        + (cache.map { [$0 + "/ledger-receipt-previews/"] } ?? [])
+      guard allowedRoots.contains(where: { file.path.hasPrefix($0) }),
         FileManager.default.fileExists(atPath: file.path)
       else { return false }
       DispatchQueue.main.async {

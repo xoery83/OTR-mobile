@@ -98,6 +98,32 @@ export async function insertExpenseReceiptInTransaction(
   await enqueue(database, journeyId, receipt.id, "LINK_RECEIPT", now, userId);
 }
 
+export async function deleteExpenseAttachmentInTransaction(
+  database: Database,
+  assetId: string,
+  userId: string,
+) {
+  const asset = await requireReceipt(database, assetId, userId);
+  if (!asset.expenseId || asset.personalPaymentId)
+    throw new Error("Only an Expense attachment can be deleted here.");
+  await requireExpenseMutation(database, userId, asset.journeyId, asset.expenseId);
+  if (asset.localDeletedByUserId && asset.localDeletedByUserId !== userId)
+    throw new Error("Another account has an attachment change pending.");
+  if (asset.deletedAt) return;
+  const now = new Date().toISOString();
+  await database.runAsync(
+    `UPDATE ledger_receipt_assets SET deleted_at = ?, updated_at = ?,
+           local_owner_user_id = ?, local_deleted_by_user_id = ?
+           WHERE id = ? AND deleted_at IS NULL`,
+    now,
+    now,
+    userId,
+    userId,
+    assetId,
+  );
+  await enqueue(database, asset.journeyId, assetId, "DELETE_RECEIPT", now, userId);
+}
+
 export function createLedgerReceiptRepository(
   database: Database,
   getActiveUserId: () => Promise<string> = defaultGetActiveUserId,
@@ -314,25 +340,7 @@ export function createLedgerReceiptRepository(
     async deleteExpenseAttachment(assetId: string) {
       const userId = await getActiveUserId();
       await database.withTransactionAsync(async () => {
-        const asset = await requireReceipt(database, assetId, userId);
-        if (!asset.expenseId || asset.personalPaymentId)
-          throw new Error("Only an Expense attachment can be deleted here.");
-        await requireExpenseMutation(database, userId, asset.journeyId, asset.expenseId);
-        if (asset.localDeletedByUserId && asset.localDeletedByUserId !== userId)
-          throw new Error("Another account has an attachment change pending.");
-        if (asset.deletedAt) return;
-        const now = new Date().toISOString();
-        await database.runAsync(
-          `UPDATE ledger_receipt_assets SET deleted_at = ?, updated_at = ?,
-           local_owner_user_id = ?, local_deleted_by_user_id = ?
-           WHERE id = ? AND deleted_at IS NULL`,
-          now,
-          now,
-          userId,
-          userId,
-          assetId,
-        );
-        await enqueue(database, asset.journeyId, assetId, "DELETE_RECEIPT", now, userId);
+        await deleteExpenseAttachmentInTransaction(database, assetId, userId);
       });
     },
     async listReceipts(journeyId: string) {

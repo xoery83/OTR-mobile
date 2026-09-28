@@ -10,6 +10,13 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("expo-file-system", () => ({
   Paths: { cache: { uri: "file:///cache" } },
+  Directory: class {
+    uri: string;
+    constructor(parent: { uri: string }, name: string) {
+      this.uri = `${parent.uri}/${name}`;
+    }
+    create() {}
+  },
   File: class {
     uri: string;
     constructor(parent: string | { uri: string }, name?: string) {
@@ -36,7 +43,7 @@ vi.mock("@/data/sync/ledgerReceiptTransport", () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { openReceiptAsset } from "./openReceiptAsset";
+import { openReceiptAsset, resolveReceiptAssetUri } from "./openReceiptAsset";
 
 const receipt = {
   id: "local",
@@ -61,12 +68,23 @@ describe("opening an evicted receipt", () => {
     state.download.mockResolvedValue(Uint8Array.from([1, 2, 3]));
     await openReceiptAsset(receipt);
     expect(state.download).toHaveBeenCalledWith("journey", "server");
-    expect(state.files.get("file:///cache/server.jpg")).toEqual(
+    expect(state.files.get("file:///cache/ledger-receipt-previews/server.jpg")).toEqual(
       Uint8Array.from([1, 2, 3]),
     );
-    expect(state.share).toHaveBeenCalledWith("file:///cache/server.jpg", {
-      mimeType: "image/jpeg",
-    });
+    expect(state.share).toHaveBeenCalledWith(
+      "file:///cache/ledger-receipt-previews/server.jpg",
+      {
+        mimeType: "image/jpeg",
+      },
+    );
+  });
+
+  it("resolves verified bytes for preview without opening Share", async () => {
+    state.download.mockResolvedValue(Uint8Array.from([1, 2, 3]));
+    expect(await resolveReceiptAssetUri(receipt)).toBe(
+      "file:///cache/ledger-receipt-previews/server.jpg",
+    );
+    expect(state.share).not.toHaveBeenCalled();
   });
 
   it("keeps a missing copy recoverable when offline and refuses tombstones", async () => {
