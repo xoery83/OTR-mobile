@@ -445,3 +445,17 @@ describe("Ledger reporting repository", () => {
     sqlite.close();
   });
 });
+
+it("sorts Recent by update time before limiting, preserving ordinary occurrence sorting", async () => {
+  const { sqlite, adapter } = database();
+  insertFixture(sqlite);
+  sqlite.exec(
+    "ALTER TABLE ledger_expenses ADD COLUMN updated_at TEXT; UPDATE ledger_expenses SET updated_at = occurred_at; UPDATE ledger_expenses SET updated_at = '2026-09-28T08:00:00Z' WHERE id = 'valued';",
+  );
+  const repository = createLedgerReportingRepository(adapter, async () => "user-a");
+  const query = { journeyId, memberId, scope: "GROUP" as const };
+  expect((await repository.listExpenses({ ...query, order: "UPDATED" }, 1))[0].id).toBe(
+    "valued",
+  );
+  expect((await repository.listExpenses(query, 1))[0].id).toBe("conflict");
+});

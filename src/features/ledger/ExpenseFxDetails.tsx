@@ -241,6 +241,15 @@ export function ExpenseFxDetails({
                   ? label("Actual payer cost", "实际付款金额")
                   : label("Needs review", "待处理")}
           </Text>
+          {!valuation && estimate?.referenceDate ? (
+            <Text style={styles.meta}>
+              {label(
+                "Estimated using ECB reference rates from",
+                "预估采用的 ECB 参考汇率日期",
+              )}
+              : {fullDate(estimate.referenceDate, chinese)}
+            </Text>
+          ) : null}
           {valuation ? (
             <>
               <Text style={styles.meta}>

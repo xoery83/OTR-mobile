@@ -68,7 +68,10 @@ Ledger / Expenses:
   Japanese/Chinese text may offer currencies for manual selection; text alone
   never changes Currency. On-device semantic ranking is optional
   and remote AI is outside OCR 1.0. The C0 behavior is specified in
-  docs/ledger/RECEIPT_OCR_1_0_PHASE_C0_REVIEW_DESIGN.md.
+  docs/ledger/RECEIPT_OCR_1_0_PHASE_C0_REVIEW_DESIGN.md. Receipt Review UX 1.0
+  keeps the three editable fields, two-row candidate tags, a right-edge receipt
+  stack and same-surface portrait/landscape comparison workspace; its approved
+  behavior is in `docs/ledger/RECEIPT_REVIEW_UX_1_0_DESIGN.md`.
 - Expense Attachments & Receipt Scan 1.0 is defined in
   `EXPENSE_ATTACHMENTS_RECEIPT_SCAN_1_0_DESIGN.md`. A New Expense may use
   on-device receipt OCR offline to suggest editable draft fields; scanning

@@ -72,19 +72,33 @@ financial contract is weakened by the display projection.
 **PASS WITH DEVICE ACCEPTANCE PENDING.** Phase E retains the same separate
 classification. Neither Production nor Phase F was touched.
 
-| Check | Result / evidence |
-| --- | --- |
-| TypeScript, ESLint, Backend build, application and database tests | PASS: 83 files/331 application tests and 17 files/312 pgTAP tests; local migration-up/reset passed. |
-| Hosted Dev Backend and migrations | PASS: source/runtime hash match, health `ok`; `20260918000300_ledger_settlement_fx_preflight.sql` precedes `20260918000400_ledger_settlement_fx_included_only.sql`, both applied to Hosted Dev, zero pending Dev migrations. |
-| Approximate Expense display, Ledger list and Mine/Group total | PASS: signed iPhone 17 Pro Simulator displayed `≈` on eligible cached ISK/NZD values and totals; stale NOK and unconfirmed dates did not acquire estimates. |
-| Settlement blocker direct navigation and Check again | PASS: blocked Stage 7.1 preview opened its Expense; returning showed Check again. Cancelling Edit did not populate the proposed `economic_date`. |
-| Foreground canonical resolution and restart/idempotency | PASS: normal-UI 2026-09-16 ISK Expense advanced to accepted ECB reference €7.15 on opening Settlement; repeat install/restart retained exactly one active and one total valuation. No final settlement was created. |
-| Signed simulator launch | PASS: latest signed Release installed over both iOS 26.5 Simulators without clearing data and launched. |
-| True offline cold start and simulator offline/reconnect preview | PENDING: Settings exposed no reliable Wi-Fi/airplane control, Device Hub had no network menu, and the Control Center gesture failed. No network setting was changed. |
-| Multi-member recent-cache estimate | PENDING: Device Hub date wheel could not select the cache-supported historical date. The new two-participant Sep 18 QA Expense received `NOT_YET_AVAILABLE` from ECB and the July cache is older than 30 days, so correctly displays `—`. |
-| Full batch foreground FX convergence through normal UI | PENDING: the same date-wheel limitation prevented preparing multiple eligible dated Expenses together; single-Expense preflight and bounded batch tests passed. |
-| Physical iPhone interaction | PENDING: Device Hub/iOS 26.6 interaction limitation prevented reliable acceptance. |
+| Check                                                             | Result / evidence                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript, ESLint, Backend build, application and database tests | PASS: 83 files/331 application tests and 17 files/312 pgTAP tests; local migration-up/reset passed.                                                                                                                                       |
+| Hosted Dev Backend and migrations                                 | PASS: source/runtime hash match, health `ok`; `20260918000300_ledger_settlement_fx_preflight.sql` precedes `20260918000400_ledger_settlement_fx_included_only.sql`, both applied to Hosted Dev, zero pending Dev migrations.              |
+| Approximate Expense display, Ledger list and Mine/Group total     | PASS: signed iPhone 17 Pro Simulator displayed `≈` on eligible cached ISK/NZD values and totals; stale NOK and unconfirmed dates did not acquire estimates.                                                                               |
+| Settlement blocker direct navigation and Check again              | PASS: blocked Stage 7.1 preview opened its Expense; returning showed Check again. Cancelling Edit did not populate the proposed `economic_date`.                                                                                          |
+| Foreground canonical resolution and restart/idempotency           | PASS: normal-UI 2026-09-16 ISK Expense advanced to accepted ECB reference €7.15 on opening Settlement; repeat install/restart retained exactly one active and one total valuation. No final settlement was created.                       |
+| Signed simulator launch                                           | PASS: latest signed Release installed over both iOS 26.5 Simulators without clearing data and launched.                                                                                                                                   |
+| True offline cold start and simulator offline/reconnect preview   | PENDING: Settings exposed no reliable Wi-Fi/airplane control, Device Hub had no network menu, and the Control Center gesture failed. No network setting was changed.                                                                      |
+| Multi-member recent-cache estimate                                | PENDING: Device Hub date wheel could not select the cache-supported historical date. The new two-participant Sep 18 QA Expense received `NOT_YET_AVAILABLE` from ECB and the July cache is older than 30 days, so correctly displays `—`. |
+| Full batch foreground FX convergence through normal UI            | PENDING: the same date-wheel limitation prevented preparing multiple eligible dated Expenses together; single-Expense preflight and bounded batch tests passed.                                                                           |
+| Physical iPhone interaction                                       | PENDING: Device Hub/iOS 26.6 interaction limitation prevented reliable acceptance.                                                                                                                                                        |
 
 An Expense with genuinely no proposed date has an Add date action covered by
 focused logic/repository tests; the available device fixture already has a
 proposed date, so that exact UI branch was not marked as device PASS.
+
+## 2026-09-28 Expense estimate cache correction
+
+Expense estimates also reuse the accepted account-scoped ECB_LOCAL_SNAPSHOT_V1
+cache when no trusted Journey pair candidate is available. Snapshot rates share
+one EUR anchor and use the existing exact integer/decimal cross-rate converter.
+Only dates at or before the confirmed Expense date and current day, within 30
+calendar days of that Expense date, unexpired and with pinned ECB/Frankfurter
+provenance qualify. No future-date rough estimate is allowed for Expenses.
+Accepted valuations retain precedence; no snapshot creates an accepted valuation,
+Ledger write or final settlement input. The reference date is shown in details.
+Ledger/Expense focus starts the existing coalesced 24-hour snapshot refresh in the
+background and recomputes only after a new bundle is cached; cached content stays
+available while offline. No Backend/schema/provider change is needed.

@@ -2,6 +2,107 @@
 
 Date: 2026-09-28
 
+## Receipt Review — split-only gradient suggestions installed
+
+- Split comparison candidate rows fade from a near-opaque text surface at the
+  left to the sheet's transparency at the right. Removed the field heading and
+  placed a solid Close button on the left. Non-comparison suggestions use opaque
+  sheets and rows. Uses existing React Native gradient support; no new dependency.
+- Two focused files / 31 tests, TypeScript, affected ESLint, formatting, diff check,
+  signed Release build and signature verification passed. Artifact:
+  `/private/tmp/otr-receipt-review-build/Build/Products/Release-iphoneos/OTRMobile.app`.
+- Owner confirmed installation after saving/exiting their draft. Release installed
+  and launched on iPhone 16 Pro. Portrait native checks passed for opaque ordinary
+  Title overflow, split Amount gradient with the receipt visible on the right,
+  left solid Close button, no duplicate field heading and candidate selection.
+  Temporary Review/New Expense were cancelled with no Expense Save; app left on
+  Ledger. Prior hand-held rotation/pinch/accessibility gates remain open.
+- Owner approved this installed version for a local Git checkpoint on
+  `integration/ledger-polish-canonical`; remote push was not requested.
+
+## Receipt Review / FX — second owner feedback installed
+
+- Suggestions now use translucent sheets/rows without a dimming scrim. Comparison
+  Currency Suggestions opens only ranked candidates; the Currency field retains
+  the full picker. Hide image is a neutral icon/text control. Re-read remains an
+  OCR recovery action for the same photo, not an enhancement operation.
+- Recent Expenses uses `updated_at` descending before limiting; occurrence-based
+  search/list behavior is unchanged. Saved pending FX values now reuse the trusted
+  account-scoped ECB snapshot cache as an ephemeral fallback after Journey quotes,
+  within the existing 30-day window. Details show the reference date. See ADR 0053.
+  Existing cache refresh runs in the background; financial acceptance is unchanged.
+- Ten focused files / 71 tests, TypeScript, affected ESLint, formatting, diff check,
+  signed Release build and final signature verification passed. Artifact remains
+  `/private/tmp/otr-receipt-review-build/Build/Products/Release-iphoneos/OTRMobile.app`.
+- Latest Release installed/launched on iPhone 16 Pro. Native portrait checks passed
+  for translucent Amount sheet with receipt visible, two-item Currency candidates
+  and selection/close, neutral Hide image appearance, recent-modification ordering,
+  and approximate list/detail amounts on two previously pending JPY entries with
+  the latest published reference date shown in details.
+- Temporary acceptance Review/New Expense were cancelled; no Expense Save was
+  performed and the app is left on Ledger. Prior pinch/rotation/software-keyboard/
+  accessibility gates remain open. No backend/schema/dependency, commit or push
+  changes.
+
+## Receipt Review UX 1.0 — owner feedback installed
+
+- Implemented six requested refinements: clear Hide image/close controls, compact
+  comparison-mode candidate dropdowns retaining parser rank, Currency overlay
+  preserving the mounted native image view, direct Re-read action, removal of OCR
+  diagnostic text, and an actionable currency-mismatch explanation. Existing
+  money validation/manual correction semantics are unchanged; no conversion.
+- Six focused files / 59 tests, TypeScript, affected ESLint, formatting, diff
+  check, signed Release build and final signature verification passed.
+- Final artifact remains
+  `/private/tmp/otr-receipt-review-build/Build/Products/Release-iphoneos/OTRMobile.app`.
+  Owner authorized installation after the unsaved-draft warning. The feedback
+  Release was installed/launched successfully on iPhone 16 Pro, retaining existing
+  app data. Physical portrait checks passed for Title/Amount dropdown selection,
+  Currency selection/return preserving the comparison page, Hide image collapse
+  and reopening, direct Re-read with busy disabling/completion and retained chosen
+  fields, and absence of OCR diagnostics.
+- The temporary one-image comparison Review was subsequently cancelled during the
+  next feedback pass; no Confirm or Expense Save was performed.
+- Next: physical pinch + Currency return to confirm zoom retention. Previous
+  rotation/keyboard/accessibility gates remain open. No backend, dependency,
+  commit or push changes.
+
+## Receipt Review UX 1.0 — installed, portrait acceptance checked
+
+- Approved behavior is captured in `docs/ledger/RECEIPT_REVIEW_UX_1_0_DESIGN.md`.
+  Review now presents only Title/Amount/Currency with shared measured two-row
+  candidate tags, selection matching, compact Title/Amount overflow and the
+  existing full searchable Currency picker. Scan another part stays prominent
+  and remains in place when disabled at the shared three-attachment limit.
+- The right-edge 36 pt receipt stack uses stable draft order/document identity.
+  Same-surface comparison retains an editable left form, numbered receipt tabs,
+  native image zoom/pan, header right-swipe and explicit close/remove/retry.
+  Landscape starts side by side and can still collapse; the image toolbar uses
+  one row where width permits. iOS orientation eligibility is declared in Expo
+  Info.plist config, while the main navigation retains portrait orientation.
+- Existing multi-select source sheet, sequential OCR queue, conservative parser,
+  USER_EDITED protection, offline drafts and C4 Confirm/Cancel transfer are reused.
+  No backend, schema, Supabase, Production, dependency, commit or push changes.
+- Focused regression: 14 files / 213 tests; TypeScript, affected ESLint, formatting
+  and diff checks passed. New UI checks are model/source-wiring checks, not native
+  rendered interaction acceptance. iOS Release compilation and signed Release
+  build passed, and the app signature verified. Build artifact is
+  `/private/tmp/otr-receipt-review-build/Build/Products/Release-iphoneos/OTRMobile.app`.
+- The signed Release was installed/launched on the authorized iPhone 16 Pro,
+  preserving existing app data. Physical portrait checks passed for 1/2/3 images,
+  first/later multi-select, two-row tags and overflow/full currency picker,
+  manual-value protection, capacity disabling, editable comparison, numbered
+  switching, header collapse, retry/removal, Confirm transfer and Cancel cleanup.
+  A removal exposed an ordinal/header mismatch; the header now uses the stable
+  receipt number. The corrected Release was rebuilt, reinstalled and verified.
+  Final fix checks: 3 files / 35 tests, TypeScript and affected ESLint passed.
+- No Expense Save was performed; temporary acceptance drafts were discarded,
+  source Photos remained intact, and the app was left on Ledger. Existing Debug
+  Mode was enabled during observations; normal no-debug display was not checked.
+- Next gate: owner hand-held rotation both ways, pinch/pan, software keyboard,
+  larger text/VoiceOver and narrower-device layout. Mirroring cannot exercise
+  rotation or multi-touch. Overall visual acceptance remains open.
+
 ## Expense Capture UX 1.0 — Slice 1.2 owner feedback
 
 - Implemented native keyboard inset handling for Exact/Notes, removed duplicate avoidance/forced end scrolling, separated Group settlement heading/options/explanation, centered attachment filenames, and added an explanatory Scan receipt source sheet with remaining capacity and image-only multi-part selection. Newly selected scan parts read sequentially into the accepted Review; Camera stays single and Scan another part remains available. No parser/backend/schema changes.

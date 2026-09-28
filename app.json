@@ -17,7 +17,12 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Take a photo of a receipt to attach to a trip expense.",
-        "NSPhotoLibraryUsageDescription": "Choose a receipt to attach to a trip expense."
+        "NSPhotoLibraryUsageDescription": "Choose a receipt to attach to a trip expense.",
+        "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
       }
     },
     "android": {

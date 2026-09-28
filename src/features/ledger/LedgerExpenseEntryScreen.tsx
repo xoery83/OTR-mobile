@@ -1550,7 +1550,6 @@ export function LedgerExpenseEntryScreen() {
             selectingReceipt ||
             scanSession.documents.some((part) => part.status === "recognizing")
           }
-          debugMode={context.debugMode}
           defaultCurrency={context.defaultCurrency}
           journeyCurrency={context.settlementCurrency}
           onCancel={() => {

@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import type { RateQuote } from "@/domain/ledger/types";
 
-import { displayEstimate, displayTotalProjection } from "./displayEstimate";
+import {
+  displayEstimate,
+  displayTotalProjection,
+  snapshotDisplayEstimate,
+} from "./displayEstimate";
 
 const now = new Date("2026-09-18T00:00:00Z");
 const expense = {
@@ -138,4 +142,64 @@ describe("display-only FX estimate", () => {
       ).estimatedCount,
     ).toBe(0);
   });
+});
+
+it("uses trusted recent ECB snapshots for JPY estimates without changing accepted money", () => {
+  const item = {
+    ...expense,
+    economicDate: "2026-09-28",
+    original: { minor: 1002, currency: "JPY", scale: 0 },
+  } as LedgerExpense;
+  const bundle = {
+    provider: "ECB" as const,
+    policyVersion: "ECB_LOCAL_SNAPSHOT_V1" as const,
+    baseCurrency: "EUR" as const,
+    sourceReference: quote.sourceReference!,
+    providerReference:
+      "https://api.frankfurter.dev/v2/providers/ecb/rates?from=2026-08-01&to=2026-09-28",
+    snapshots: [
+      {
+        referenceDate: "2026-09-25",
+        rates: { EUR: "1", JPY: "180", NZD: "2" },
+        observedAt: "2026-09-28T00:00:00Z",
+        expiresAt: "2026-10-28T00:00:00Z",
+      },
+    ],
+  };
+  const clock = new Date("2026-09-28T04:00:00Z");
+  const before = JSON.stringify(item);
+  expect(snapshotDisplayEstimate(item, bundle, "NZD", 2, clock)).toMatchObject({
+    money: { minor: 1113, currency: "NZD", scale: 2 },
+    quoteId: null,
+    referenceDate: "2026-09-25",
+    exactDate: false,
+  });
+  expect(JSON.stringify(item)).toBe(before);
+  for (const bad of [
+    { ...bundle, sourceReference: "https://untrusted.example/rates" },
+    { ...bundle, providerReference: "https://api.frankfurter.dev/v2/rates" },
+    { ...bundle, snapshots: [{ ...bundle.snapshots[0], referenceDate: "2026-09-29" }] },
+    { ...bundle, snapshots: [{ ...bundle.snapshots[0], referenceDate: "2026-08-01" }] },
+    {
+      ...bundle,
+      snapshots: [{ ...bundle.snapshots[0], expiresAt: "2026-09-27T00:00:00Z" }],
+    },
+    {
+      ...bundle,
+      snapshots: [{ ...bundle.snapshots[0], rates: { EUR: "1", JPY: "180" } }],
+    },
+  ])
+    expect(snapshotDisplayEstimate(item, bad, "NZD", 2, clock)).toBeNull();
+  expect(
+    snapshotDisplayEstimate({ ...item, economicDate: null }, bundle, "NZD", 2, clock),
+  ).toBeNull();
+  expect(
+    snapshotDisplayEstimate(
+      { ...item, valuation: { id: "accepted" } } as LedgerExpense,
+      bundle,
+      "NZD",
+      2,
+      clock,
+    ),
+  ).toBeNull();
 });

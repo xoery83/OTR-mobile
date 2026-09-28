@@ -1,12 +1,22 @@
+import {
+  ledgerFxReferenceSnapshotBundleSchema,
+  type LedgerFxReferenceSnapshotBundle,
+} from "@/data/api/ledgerFxContracts";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import { allocateSettlementFromOriginal } from "@/domain/ledger/allocation";
-import { convertMoney } from "@/domain/ledger/money";
+import { convertMoney, convertMoneyWithCrossRate } from "@/domain/ledger/money";
 import type { Money, RateQuote } from "@/domain/ledger/types";
 
 import { eligibleExpenseQuote } from "./fxPresentation";
 
-export type DisplayEstimate = { money: Money; quoteId: string; exactDate: boolean };
+export type DisplayEstimate = {
+  money: Money;
+  quoteId: string | null;
+  exactDate: boolean;
+  referenceDate?: string;
+  observedAt?: string;
+};
 
 export function estimatedComponent(
   expense: LedgerExpense,
@@ -96,6 +106,72 @@ export function displayEstimate(
       money: convertMoney(expense.original, currency, scale, quote.decimalRate),
       quoteId: quote.id,
       exactDate: quote === exact,
+      referenceDate: quote.referenceDate!,
+      observedAt: quote.observedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function snapshotDisplayEstimate(
+  expense: LedgerExpense,
+  bundle: LedgerFxReferenceSnapshotBundle | null,
+  currency: string,
+  scale: number,
+  now = new Date(),
+): DisplayEstimate | null {
+  if (
+    expense.valuation ||
+    expense.status !== "RATE_REQUIRED" ||
+    !expense.economicDate ||
+    expense.original.currency === currency ||
+    !bundle
+  )
+    return null;
+  const parsed = ledgerFxReferenceSnapshotBundleSchema.safeParse(bundle);
+  if (
+    !parsed.success ||
+    bundle.sourceReference !==
+      "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html"
+  )
+    return null;
+  const source = new URL(bundle.providerReference);
+  if (
+    source.origin !== "https://api.frankfurter.dev" ||
+    source.pathname !== "/v2/providers/ecb/rates"
+  )
+    return null;
+  const day = expense.economicDate;
+  const today = now.toISOString().slice(0, 10);
+  const snapshot = bundle.snapshots.find((item) => {
+    const age =
+      (Date.parse(`${day}T00:00:00Z`) - Date.parse(`${item.referenceDate}T00:00:00Z`)) /
+      86_400_000;
+    return (
+      item.referenceDate <= today &&
+      Number.isInteger(age) &&
+      age >= 0 &&
+      age <= 30 &&
+      Date.parse(item.expiresAt) > now.getTime() &&
+      item.rates[expense.original.currency] &&
+      item.rates[currency]
+    );
+  });
+  if (!snapshot) return null;
+  try {
+    return {
+      money: convertMoneyWithCrossRate(
+        expense.original,
+        currency,
+        scale,
+        snapshot.rates[expense.original.currency],
+        snapshot.rates[currency],
+      ),
+      quoteId: null,
+      exactDate: false,
+      referenceDate: snapshot.referenceDate,
+      observedAt: snapshot.observedAt,
     };
   } catch {
     return null;

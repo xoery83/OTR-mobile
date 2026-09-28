@@ -23,6 +23,7 @@ export type LedgerReportQuery = ReportingFilters & {
   memberId: string;
   scope: ReportingScope;
   authoritativeOnly?: boolean;
+  order?: "OCCURRED" | "UPDATED";
 };
 
 export type LedgerJourneyOption = LedgerJourneyContext & {
@@ -396,7 +397,7 @@ export function createLedgerReportingRepository(
          LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
          LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
          WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope)}
-         ORDER BY e.occurred_at DESC, e.id
+         ORDER BY ${query.order === "UPDATED" ? "e.updated_at" : "e.occurred_at"} DESC, e.id
          LIMIT ? OFFSET ?`,
         query.memberId,
         ...filtered.params,

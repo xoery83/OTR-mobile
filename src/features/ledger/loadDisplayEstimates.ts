@@ -1,7 +1,12 @@
+import { getDefaultLedgerFxSnapshotRepository } from "@/data/repositories/defaultLedgerFxSnapshotRepository";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 
-import { displayEstimate, type DisplayEstimate } from "./displayEstimate";
+import {
+  displayEstimate,
+  snapshotDisplayEstimate,
+  type DisplayEstimate,
+} from "./displayEstimate";
 
 export async function loadDisplayEstimates(
   journeyId: string,
@@ -25,14 +30,20 @@ export async function loadDisplayEstimates(
       ),
     ),
   );
+  const snapshots = await (
+    await getDefaultLedgerFxSnapshotRepository()
+  )
+    .list()
+    .catch(() => null);
   return new Map<string, DisplayEstimate>(
     items.flatMap((item) => {
-      const estimate = displayEstimate(
-        item,
-        quotes.get(item.original.currency) ?? [],
-        currency,
-        scale,
-      );
+      const estimate =
+        displayEstimate(
+          item,
+          quotes.get(item.original.currency) ?? [],
+          currency,
+          scale,
+        ) ?? snapshotDisplayEstimate(item, snapshots, currency, scale);
       return estimate ? [[item.id, estimate] as const] : [];
     }),
   );

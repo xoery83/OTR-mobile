@@ -11,6 +11,7 @@ import {
 } from "./receiptScanSession";
 import {
   confirmReceiptReview,
+  receiptAmountCurrencyMismatch,
   createReceiptReviewState,
   editReceiptReviewField,
   refreshReceiptReviewState,
@@ -481,4 +482,22 @@ it("reviews a selected three-image batch as one session without replacing user e
     "26.00",
   );
   expect(confirmReceiptReview(review, session).draftIds).toEqual(["a", "b", "c"]);
+});
+
+it("explains a currency mismatch and allows manual correction without converting money", () => {
+  const session = scanned("TOTAL $86.40");
+  let review = createReceiptReviewState(session, "AUD", "USD");
+  review = editReceiptReviewField(review, "title", "Manual title");
+  review = selectReceiptReviewAmount(review, review.suggestions.amounts[0]);
+  review = editReceiptReviewField(review, "currency", "TWD");
+  expect(receiptAmountCurrencyMismatch(review)).toBe(
+    "Amount suggestion uses AUD; Currency is TWD. Choose AUD, or edit Amount to use TWD.",
+  );
+  expect(() => confirmReceiptReview(review, session)).toThrow(/edit Amount to use TWD/);
+  review = editReceiptReviewField(review, "amount", "86.40");
+  expect(receiptAmountCurrencyMismatch(review)).toBeNull();
+  expect(confirmReceiptReview(review, session)).toMatchObject({
+    amount: "86.40",
+    currency: "TWD",
+  });
 });

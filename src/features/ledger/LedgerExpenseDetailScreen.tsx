@@ -1,3 +1,4 @@
+import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -210,6 +211,29 @@ export function LedgerExpenseDetailScreen() {
       };
     }, [id]),
   );
+  useEffect(() => {
+    if (
+      !expense ||
+      !fxAccess.currency ||
+      expense.valuation ||
+      expense.original.currency === fxAccess.currency
+    )
+      return;
+    let active = true;
+    void refreshLedgerFxSnapshotCache()
+      .then(() =>
+        loadDisplayEstimates(expense.journeyId, fxAccess.currency, fxAccess.scale, [
+          expense,
+        ]),
+      )
+      .then((estimates) => {
+        if (active) setEstimate(estimates.get(expense.id) ?? null);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [expense, fxAccess.currency, fxAccess.scale]);
   const watchedExpenseId = expense?.id;
   const watchedSyncStatus = expense?.syncStatus;
   useEffect(() => {

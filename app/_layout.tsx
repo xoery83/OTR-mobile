@@ -35,7 +35,11 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <Stack
-        screenOptions={{ headerBackButtonDisplayMode: "minimal", headerShown: false }}
+        screenOptions={{
+          headerBackButtonDisplayMode: "minimal",
+          headerShown: false,
+          orientation: "portrait",
+        }}
       >
         <Stack.Screen
           name="foundation"

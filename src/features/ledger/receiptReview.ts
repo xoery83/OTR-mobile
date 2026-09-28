@@ -294,6 +294,15 @@ export function selectReceiptReviewAmount(
   };
 }
 
+export function receiptAmountCurrencyMismatch(review: ReceiptReviewState): string | null {
+  if (
+    !review.selectedAmountCurrency ||
+    review.selectedAmountCurrency === review.currency.value
+  )
+    return null;
+  return `Amount suggestion uses ${review.selectedAmountCurrency}; Currency is ${review.currency.value}. Choose ${review.selectedAmountCurrency}, or edit Amount to use ${review.currency.value}.`;
+}
+
 export function confirmReceiptReview(
   review: ReceiptReviewState,
   session: ReceiptScanSession,
@@ -303,10 +312,11 @@ export function confirmReceiptReview(
   const currency = review.currency.value.toUpperCase();
   const scale = currencyScale(currency);
   if (scale === null) throw new Error("Choose a supported Currency.");
-  if (review.selectedAmountCurrency && review.selectedAmountCurrency !== currency)
-    throw new Error(
-      `Selected amount is marked ${review.selectedAmountCurrency}. Check Currency.`,
-    );
+  const mismatch = receiptAmountCurrencyMismatch({
+    ...review,
+    currency: { ...review.currency, value: currency },
+  });
+  if (mismatch) throw new Error(mismatch);
   const minor = parseCurrencyAmount(review.amount.value, scale);
   if (minor === null)
     throw new Error("Enter a positive Amount with valid decimal places.");

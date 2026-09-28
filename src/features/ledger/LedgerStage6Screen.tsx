@@ -1,3 +1,5 @@
+import { getDefaultLedgerFxSnapshotRepository } from "@/data/repositories/defaultLedgerFxSnapshotRepository";
+import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -243,7 +245,7 @@ export function LedgerStage6Screen({
           ] = await Promise.all([
             repository.summarize(query),
             repository.analyze(query, "CATEGORY"),
-            repository.listExpenses(query, 12),
+            repository.listExpenses({ ...query, order: "UPDATED" }, 12),
             settlementRepository.listFinalized(nextJourney.journeyId),
             repository.listFilterOptions(nextJourney.journeyId),
             nextScope === "GROUP"
@@ -457,6 +459,17 @@ export function LedgerStage6Screen({
     useCallback(() => {
       let active = true;
       void loadContext().catch(() => setMessage("Ledger cache is unavailable."));
+      void getDefaultLedgerFxSnapshotRepository()
+        .then(async (repository) => {
+          const before = await repository.list();
+          const updated = await refreshLedgerFxSnapshotCache();
+          if (
+            active &&
+            updated?.snapshots[0]?.observedAt !== before?.snapshots[0]?.observedAt
+          )
+            await loadContext();
+        })
+        .catch(() => undefined);
       void getDefaultLedgerReportingRepository()
         .then((repository) => repository.getPreferences())
         .then((preferences) => {
