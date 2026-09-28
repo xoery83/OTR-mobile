@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import type { TemporaryReceiptDraft } from "@/data/files/receiptFileStore";
+import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
+import { resolveReceiptAssetUri } from "@/data/operations/openReceiptAsset";
 import { AppIcon } from "@/components/AppIcon";
 import { expenseDraftAttachmentLabel } from "./expenseEntryPresentation";
 
@@ -10,18 +12,43 @@ export function ExpenseAttachmentRow({
   onPreview,
   onRemove,
 }: {
-  attachment: {
-    mimeType: TemporaryReceiptDraft["mimeType"];
-    originalFilename?: string | null;
-    localUri: string | null;
-  };
+  attachment:
+    | ReceiptAsset
+    | {
+        mimeType: TemporaryReceiptDraft["mimeType"];
+        originalFilename?: string | null;
+        localUri: string | null;
+      };
   position: number;
   onPreview: () => void;
   onRemove?: () => void;
 }) {
   const [failedUri, setFailedUri] = useState<string | null>(null);
+  const [resolvedUri, setResolvedUri] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    if ("uploadStatus" in attachment && attachment.mimeType.startsWith("image/")) {
+      void resolveReceiptAssetUri(attachment)
+        .then((uri) => {
+          if (active) {
+            setFailedUri(null);
+            setResolvedUri(uri);
+          }
+        })
+        .catch(() => {
+          if (active) setResolvedUri(null);
+        });
+    }
+    return () => {
+      active = false;
+    };
+  }, [attachment]);
   const display = expenseDraftAttachmentLabel(
-    { ...attachment, localUri: attachment.localUri ?? "" },
+    {
+      ...attachment,
+      localUri:
+        "uploadStatus" in attachment ? (resolvedUri ?? "") : (attachment.localUri ?? ""),
+    },
     position,
   );
   return (

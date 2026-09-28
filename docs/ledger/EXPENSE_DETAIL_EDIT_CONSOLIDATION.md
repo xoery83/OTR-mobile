@@ -113,3 +113,17 @@ Four focused suites / 30 tests, TypeScript, scoped lint, formatting and signed
 Simulator build passed. Simulator verified payer/split line break, individual
 shares without duplicated payer/total, hidden diagnostics and compact matching
 Close/Rate details/Done header. Physical device was not used.
+
+## Attachment repair — 2026-09-28
+
+Saved image rows now resolve current local paths before rendering and reuse
+verified downloaded bytes from the preview cache, including offline. Stale
+container paths are never passed to the saved image thumbnail. The shared image
+Modal has its own SafeAreaProvider, padding and 48-point navigation/Close targets.
+No database, upload lifecycle, financial handler or dependency changed.
+
+Three focused suites / 24 tests, TypeScript, scoped ESLint, formatting and signed
+Simulator Release passed. iPhone 17 Pro / iOS 26.5 verified both thumbnails before
+preview after restart; ordinary coordinate taps passed Next, Previous and Close.
+No financial write or physical-device access. Image pinch/pan and the remaining
+native mutation gates above remain outside this repair's acceptance.

@@ -2,6 +2,18 @@
 
 Date: 2026-09-28
 
+## Expense attachment thumbnail / preview repair — Simulator PASS
+
+- Saved image rows resolve current local files or authenticated verified-download
+  cache before rendering, avoiding stale container paths and failed-image races.
+  Verified preview cache is reused offline; New/Edit/Detail retain shared rows.
+- Fullscreen image Modal owns its SafeAreaProvider; Close/Previous/Next have
+  48-point targets and safe padding. iPhone 17 Pro / iOS 26.5 ordinary point taps
+  passed both directions and Close; app restart restores both thumbnails before
+  opening a preview. Three focused suites / 24 tests, TypeScript, scoped ESLint,
+  formatting and signed Simulator Release pass. No financial write, physical
+  device access or push; concurrent Settlement changes remain separate.
+
 ## Journey selection route repair — Simulator PASS
 
 - Manual Journey selection now takes priority over the previous fixed route during

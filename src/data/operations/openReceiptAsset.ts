@@ -12,6 +12,22 @@ export async function resolveReceiptAssetUri(receipt: ReceiptAsset) {
   if (!file?.exists) {
     if (!receipt.serverId || receipt.uploadStatus !== "UPLOADED")
       throw new Error("This attachment is available after its upload completes.");
+    const extension =
+      receipt.mimeType === "application/pdf"
+        ? "pdf"
+        : receipt.mimeType === "image/png"
+          ? "png"
+          : "jpg";
+    const previews = new Directory(Paths.cache, "ledger-receipt-previews");
+    file = new File(previews, `${receipt.serverId}.${extension}`);
+    if (file.exists) {
+      const cached = await file.bytes();
+      if (
+        cached.byteLength === receipt.sizeBytes &&
+        (await receiptBytesSha256(cached)) === receipt.sha256
+      )
+        return file.uri;
+    }
     let bytes: Uint8Array;
     try {
       bytes = await createLedgerReceiptTransport().download(
@@ -28,15 +44,7 @@ export async function resolveReceiptAssetUri(receipt: ReceiptAsset) {
       (await receiptBytesSha256(bytes)) !== receipt.sha256
     )
       throw new Error("Downloaded attachment failed verification.");
-    const extension =
-      receipt.mimeType === "application/pdf"
-        ? "pdf"
-        : receipt.mimeType === "image/png"
-          ? "png"
-          : "jpg";
-    const previews = new Directory(Paths.cache, "ledger-receipt-previews");
     previews.create({ idempotent: true, intermediates: true });
-    file = new File(previews, `${receipt.serverId}.${extension}`);
     file.write(bytes);
   }
   return file.uri;

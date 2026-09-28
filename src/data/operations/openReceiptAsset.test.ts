@@ -28,6 +28,9 @@ vi.mock("expo-file-system", () => ({
     write(bytes: Uint8Array) {
       state.files.set(this.uri, bytes);
     }
+    async bytes() {
+      return state.files.get(this.uri)!;
+    }
   },
 }));
 vi.mock("expo-sharing", () => ({
@@ -85,6 +88,25 @@ describe("opening an evicted receipt", () => {
       "file:///cache/ledger-receipt-previews/server.jpg",
     );
     expect(state.share).not.toHaveBeenCalled();
+  });
+
+  it("reuses verified preview bytes after returning to the page, including offline", async () => {
+    state.download.mockResolvedValue(Uint8Array.from([1, 2, 3]));
+    const uri = await resolveReceiptAssetUri(receipt);
+    state.download.mockRejectedValue(new ApiClientError("offline", "network"));
+    expect(await resolveReceiptAssetUri(receipt)).toBe(uri);
+    expect(state.download).toHaveBeenCalledTimes(1);
+    expect(state.share).not.toHaveBeenCalled();
+  });
+
+  it("redownloads invalid cached bytes rather than showing them", async () => {
+    state.files.set(
+      "file:///cache/ledger-receipt-previews/server.jpg",
+      Uint8Array.from([1]),
+    );
+    state.download.mockResolvedValue(Uint8Array.from([1, 2, 3]));
+    await resolveReceiptAssetUri(receipt);
+    expect(state.download).toHaveBeenCalledTimes(1);
   });
 
   it("keeps a missing copy recoverable when offline and refuses tombstones", async () => {
