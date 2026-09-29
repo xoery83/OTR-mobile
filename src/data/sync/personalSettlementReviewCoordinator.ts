@@ -42,6 +42,7 @@ export async function runPersonalSettlementReviewSync(journeyId?: string) {
             await repository.markRejected(
               operation.tripId!,
               error.code ?? "STALE_REVIEW_CHECKPOINT",
+              operation.id,
             );
           throw error;
         }

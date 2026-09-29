@@ -8,18 +8,18 @@ select plan(32);
 select is(
   (select count(*)::integer from information_schema.tables
     where table_schema = 'public' and table_type = 'BASE TABLE'),
-  105,
-  'canonical, Ledger 2 and Personal Payment FX public table count is 105'
+  107,
+  'canonical, Ledger 2 and Expense consistency public table count is 107'
 );
 select is(
   (select count(*)::integer from information_schema.columns where table_schema = 'public'),
-  1470,
-  'canonical, Ledger 2 and Personal Payment FX column count is 1470'
+  1488,
+  'canonical, Ledger 2 and Expense consistency column count is 1488'
 );
 select is(
   (select count(*)::integer from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity),
-  105,
+  107,
   'RLS is enabled on every public table'
 );
 select is(

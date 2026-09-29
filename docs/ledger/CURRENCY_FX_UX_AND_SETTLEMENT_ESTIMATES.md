@@ -102,3 +102,21 @@ Ledger write or final settlement input. The reference date is shown in details.
 Ledger/Expense focus starts the existing coalesced 24-hour snapshot refresh in the
 background and recomputes only after a new bundle is cached; cached content stays
 available while offline. No Backend/schema/provider change is needed.
+
+## 2026-09-28 Explicit acceptance at settlement confirmation
+
+Owner-approved exception: an eligible earlier-date display estimate can be
+explicitly accepted on the confirmation page. Until that action, it remains
+informational. The page lists the count, Expense, original and Journey amounts,
+reference date, provider and actual decimal rate. Acceptance reuses the existing
+MANUAL_AGREED policy, records provenance in the reason and freezes an immutable
+valuation; it never silently promotes a display projection or replaces a valid
+accepted valuation. Revision, synced state and exact displayed-amount checks guard
+against concurrent edits and cross-rate rounding differences. Existing durable
+sync and fresh authoritative finalization remain required. See
+[ADR 0054](../adr/0054-settlement-review-and-explicit-estimate-acceptance.md).
+
+Member “Looks good” acknowledgement can be saved while FX remains unresolved; it
+does not accept the rates or finalize a Settlement. Personally relevant unresolved
+source revisions participate in its fingerprint so a later financial change still
+requires review. The review detail labels its accepted-only subtotal.

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { personalSettlementReviewResponseSchema } from "../../src/data/api/ledgerSettlementContracts";
 
 import {
   createSupabaseDevGateway,
@@ -12,6 +13,59 @@ import {
   deleteExpenseReceipt,
   ocrReceipt,
 } from "./supabaseGateway";
+
+it("does not use a Stage 4B guard fixture as the canonical Settlement head", async () => {
+  const id = "10000000-0000-4000-8000-000000000001";
+  const headQueries: URL[] = [];
+  vi.stubGlobal("fetch", async (input: string, init?: RequestInit) => {
+    const url = new URL(input);
+    let body: unknown = [];
+    if (url.pathname.endsWith("/rpc/ledger_settlement_source_7_1")) {
+      body = {
+        journeyId: id,
+        throughTimestamp: JSON.parse(String(init?.body)).through_timestamp_value,
+        settlementCurrency: "NZD",
+        settlementScale: 2,
+        settingsRevision: 1,
+        members: [{ memberId: id, displayNameSnapshot: "Owner" }],
+        expenses: [],
+      };
+    } else if (url.pathname.endsWith("/rpc/ledger_personal_financial_source_3b")) {
+      body = {};
+    } else if (url.pathname.endsWith("/journey_members")) {
+      body = [{ id, role: "owner", display_name: "Owner" }];
+    } else if (url.pathname.endsWith("/settlements")) {
+      if (url.searchParams.has("limit")) headQueries.push(url);
+      body = url.searchParams.has("algorithm_version")
+        ? []
+        : [{ id, revision: 1, input_digest: `stage4b-${id}` }];
+    }
+    return Response.json(body);
+  });
+  try {
+    const gateway = createSupabaseDevGateway({
+      url: "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      secretKey: "dev-test-secret",
+      publishableKey: "dev-test-public",
+    });
+    const review = await gateway.readPersonalSettlementReview(id, id);
+    expect(personalSettlementReviewResponseSchema.safeParse(review).success).toBe(true);
+    expect(review.statement.settlementId).toBeNull();
+    expect(
+      (await gateway.previewLedgerSettlement(id, id, "2026-09-28T00:00:00Z"))
+        .confirmedSettlement,
+    ).toBeNull();
+    expect(headQueries.length).toBeGreaterThanOrEqual(2);
+    expect(
+      headQueries.every(
+        (url) =>
+          url.searchParams.get("algorithm_version") === "eq.ledger-settlement-greedy-v1",
+      ),
+    ).toBe(true);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
 
 describe("Expense attachment read permission", () => {
   function service(member: boolean, deleted = false) {

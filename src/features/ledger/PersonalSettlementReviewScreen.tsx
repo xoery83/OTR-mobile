@@ -46,6 +46,13 @@ export function PersonalSettlementReviewScreen() {
         optional and does not block the organizer.
       </Text>
 
+      {statement.unresolvedSource ? (
+        <Text style={styles.message}>
+          Some expenses still need a confirmed value. Totals below include accepted values
+          only. Looks good acknowledges the current expenses; it does not confirm exchange
+          rates.
+        </Text>
+      ) : null}
       <View style={styles.summary}>
         <Amount label="Paid for group" value={money(statement.paidMinor)} />
         <Amount label="Your share" value={money(statement.shareMinor)} />

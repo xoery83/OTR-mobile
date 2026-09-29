@@ -46,7 +46,7 @@ describe("Ledger product formatting", () => {
       ledgerExpenseAttention({ ...base, businessStatus: "RATE_REQUIRED" }, "GROUP"),
     ).toBeNull();
     expect(ledgerExpenseAttention({ ...base, hasOpenConflict: true }, "GROUP")).toBe(
-      "Conflict—review required",
+      "Review changes",
     );
     const excluded = { ...base, settlementParticipation: "EXCLUDED" as const };
     expect(ledgerExpenseAttention(excluded, "GROUP")).toBeNull();

@@ -106,3 +106,22 @@ describe("personal Settlement review SQLite", () => {
     });
   });
 });
+
+it("does not let an older reply or rejection erase a newer review choice", async () => {
+  const { api } = database();
+  const repo = createPersonalSettlementReviewRepository(api as never, async () => userA);
+  await repo.applyRemote(journeyId, response());
+  const old = await repo.checkpoint(journeyId, "LOOKS_GOOD");
+  const latest = await repo.checkpoint(journeyId, "STILL_CHECKING");
+  await repo.markSynced(journeyId, old, response());
+  expect(await repo.get(journeyId)).toMatchObject({
+    pendingOperationId: latest,
+    pendingReviewState: "STILL_CHECKING",
+  });
+  await repo.markRejected(journeyId, "STALE_REVIEW_CHECKPOINT", old);
+  expect(await repo.get(journeyId)).toMatchObject({
+    pendingOperationId: latest,
+    pendingReviewState: "STILL_CHECKING",
+    lastErrorCode: null,
+  });
+});

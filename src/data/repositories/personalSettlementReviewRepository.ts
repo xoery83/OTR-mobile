@@ -130,28 +130,40 @@ export function createPersonalSettlementReviewRepository(
       response: PersonalSettlementReviewResponse,
     ) {
       const userId = await getActiveUserId();
-      await save(database, userId, journeyId, response, "SYNCED", null, null, null);
-      await database.runAsync(
-        `UPDATE ledger_personal_settlement_review_state SET
-          pending_operation_id = NULL, pending_review_state = NULL
-         WHERE user_id = ? AND journey_id = ? AND pending_operation_id = ?`,
-        userId,
-        journeyId,
-        operationId,
-      );
+      await database.withTransactionAsync(async () => {
+        const current = await database.getFirstAsync<Row>(
+          `${selectState} WHERE user_id = ? AND journey_id = ?`,
+          userId,
+          journeyId,
+        );
+        const newerPending =
+          current?.pendingOperationId && current.pendingOperationId !== operationId;
+        await save(
+          database,
+          userId,
+          journeyId,
+          response,
+          newerPending ? current.syncStatus : "SYNCED",
+          newerPending ? current.pendingOperationId : null,
+          newerPending ? current.pendingReviewState : null,
+          newerPending ? current.lastErrorCode : null,
+        );
+      });
     },
 
-    async markRejected(journeyId: string, code: string) {
+    async markRejected(journeyId: string, code: string, operationId?: string) {
       const userId = await getActiveUserId();
       await database.runAsync(
         `UPDATE ledger_personal_settlement_review_state SET
           sync_status = 'CONFLICT', pending_review_state = NULL,
           last_error_code = ?, updated_at = ?
-         WHERE user_id = ? AND journey_id = ?`,
+         WHERE user_id = ? AND journey_id = ? AND (? IS NULL OR pending_operation_id = ?)`,
         code,
         new Date().toISOString(),
         userId,
         journeyId,
+        operationId ?? null,
+        operationId ?? null,
       );
     },
   };

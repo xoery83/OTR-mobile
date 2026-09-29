@@ -409,7 +409,7 @@ async function applyReceipt(
     object_path, upload_status, ocr_status, ocr_suggestion_json, created_at, updated_at,
     local_owner_user_id, deleted_at, local_deleted_by_user_id,
     original_filename, original_mime_type, original_size_bytes, width, height
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     existing?.id ?? receipt.id,
     receipt.id,
     journeyId,

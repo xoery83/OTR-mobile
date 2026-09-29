@@ -2,6 +2,60 @@
 
 Date: 2026-09-29
 
+## Workspace commit checkpoint
+
+- Owner requested committing all remaining workspace changes. This checkpoint includes
+  Settlement review/feedback, diagnostics, receipt pull binding, correction-aware source,
+  lossless confirmation proof, migrations, regressions and acceptance documentation.
+  Expense Consistency Closure remains separately preserved in `019c389`.
+- Precommit validation: 17 relevant suites / 166 tests, TypeScript, Backend build,
+  changed-file ESLint/format and diff checks PASS. Latest local SQL evidence remains
+  33 suites / 655 assertions PASS. No new deployment or push in this commit step.
+- Post-release owner confirmation on the original iPhone remains unverified; the
+  precision gate below distinguishes read-only acceptance from actual confirmation.
+
+## Settlement confirmation precision — Hosted Dev read-only fix gate PASS
+
+- Owner subsequently pressed Confirm: Simulator confirmed sequence 3 successfully;
+  original iPhone LAWSON Journey was rejected with `SETTLEMENT_INPUT_STALE`, no new
+  confirmed head. This was owner action, not automated acceptance.
+- Read-only evidence identifies SQL numeric `0.011189760712298275` rounding to
+  JS `0.011189760712298274` in the source proof. Preview agreement remains correct;
+  strict transaction JSONB equality rejects this transport precision loss.
+- Minimal prepared fix: migration `20260929000400_adjustment_lossless_source_transport.sql`
+  adds a service-only JSON-text read RPC; Backend sends exact numeric proof with
+  Node 24 standard JSON raw tokens. Existing source/mutation semantics and guards
+  unchanged. No financial/operation data patches or automated Confirm.
+- 8 suites / 106 tests, 33 SQL suites / 655 assertions, TypeScript/build/scoped checks
+  PASS. Owner separately authorized release; Dev tail now 00400 and release
+  `adjustment-lossless-source-20260929` is healthy. Exact numeric proof equality at
+  original/current/root cutoffs PASS; no head/valuation/audit writes during acceptance.
+  Final post-release confirmation remains owner action, untested by the agent.
+  Client contract unchanged; exit/reopen clears the old in-memory rejection message.
+  See `docs/ledger/SETTLEMENT_CONFIRMATION_PRECISION_GATE.md`.
+
+## Settlement current-source follow-up — fix gate PASS
+
+- Expense Consistency Closure checkpoint is commit `019c389`; this separately
+  authorized source/UI fix remains outside it. No push requested.
+- Confirmed-root ordinary Preview now uses the existing correction-aware
+  `ledger_adjustment_source_current_7_2c`; initial settlement retains its prior
+  source. No migration or guard relaxation. Diagnostics require explicit Debug Mode;
+  verification failure copy does not invent an Expense conflict.
+- Local regression: 16 affected suites / 192 tests, 32 SQL suites / 649 assertions,
+  TypeScript, Backend build, scoped lint/format PASS. Generic multiple-chain and
+  cold-refresh coverage included. See `docs/ledger/SETTLEMENT_CURRENT_SOURCE_FIX_GATE.md`.
+- Hosted Dev release `settlement-current-source-20260929` is healthy; migration tail
+  remains `20260929000300`. Both previously affected Journey APIs and exact local
+  sources agree: LAWSON 9/9/9 inputs, Added6/NEW6, net NZ$55.00; ce SHi22 6/6/6,
+  Added3/NEW3, net NZ$34.72. Stored financial/audit identities unchanged.
+- Original iPhone and Simulator formal screens enable Confirm after ordinary refresh
+  and entering a reason. Both cold restart/reopen checks PASS; exact local fingerprints
+  remain stable. No local-only repair or confirmation submission.
+- Stop at this fix gate. No Settlement Confirm or Production access. Existing
+  “Settlement updated with the latest changes” preview-refresh copy is separately
+  recorded as potentially misleading; it does not indicate a confirmation mutation.
+
 ## Expense Consistency Closure — Phase 6 PASS / closure PASS
 
 - Owner accepted Phases 1–5, authorized Hosted Dev real recovery and separately
@@ -202,6 +256,97 @@ Date: 2026-09-29
   and no upload diagnostics. Four suites / 30 tests and Simulator smoke passed.
   Read-only finding: Journey quote precedence can choose Sep 24 despite an available
   Sep 25 snapshot; shared FX/Settlement selection code remains unchanged.
+
+## Settlement review / explicit estimate acceptance — Dev deployed, device gate open
+
+- Owner approved separating connectivity from sync failures, removing the Summary
+  “Updated since you reviewed” card, independent member acknowledgement while FX
+  is unresolved, and accepting earlier reference rates directly in confirmation.
+  See ADR 0054. No schema or dependency change.
+- Review fingerprints include personally relevant unresolved inputs; older queue
+  responses cannot erase a newer choice. Confirmation lists eligible cached rates
+  with dates and amounts and reuses audited MANUAL_AGREED valuations only after
+  explicit acceptance, revision/amount checks, durable sync and fresh final checks.
+- 24 related suites / 216 distinct tests passed, plus TypeScript, affected ESLint,
+  formatting/diff checks, backend build and signed iPhone Release build. Latest
+  Release installed on iPhone 16 Pro. Native checks verified three earlier-rate
+  rows, the acceptance alert (cancelled), removed duplicate Summary card and
+  Online shown separately from unavailable sync. No real FX/settlement submission.
+- Owner explicitly approved deployment to `api-dev.xoery.art` / `178.105.151.143`.
+  Only `otr-dev-backend` updated; health and authenticated GET review passed.
+  Rollback source retained at
+  `/opt/otr/dev-backend/source-before-settlement-review-20260928.tgz`.
+- Follow-up: canonical preview/review head queries now use the same algorithm filter
+  as finalized history; a regression first reproduced the 44-character Stage 4B guard
+  digest and passes after filtering. Dev backend redeployed; public review validates
+  at 64 characters and three consecutive reads have identical fingerprints.
+- Owner's current Journey has no guard fixtures. Its three JPY expenses have no
+  RATE_REQUIRED status; two agreed values reached Dev. LAWSON has an open
+  APPLY_VALUATION revision conflict: local MANUAL_AGREED based on revision 1 versus
+  server REFERENCE_RATE at revision 2 (automatic valuation preceded the stale
+  acceptance by over two hours; see the audited timeline). Both
+  canonical previews report this OPEN_CONFLICT. Do not resolve the financial choice
+  automatically or claim rate acceptance alone permits confirmation.
+- Device diagnostics identified the pull root cause: `applyReceipt` had 23 values
+  for 22 SQLite columns. One placeholder removed in the shared bootstrap/pull path.
+  A real SQLite regression reproduced the exact failure and now passes; signed
+  Release installed with all local data retained. Native pull now completes.
+- Review rejection has a separate numeric precision defect: internal PostgreSQL
+  financial-source JSON rates rounded during JavaScript transport. Owner approved
+  Dev function-only migration `20260928000100`; deployed and verified all four
+  current source rates return exact strings. Original function retained at
+  `/private/tmp/otr-review-source-rollback-20260928.sql`. Three SQL precision checks
+  and 16 isolated checkpoint checks passed (including genuine stale-source rejection).
+  Six focused code suites / 54 tests, TypeScript, scoped lint/format/diff checks passed.
+- Confirmation still requires READY and source verification: LAWSON's financial conflict
+  protects local/server alternatives. The latest signed build exposes authoritative
+  blockers even while the local source differs. Blocked OPEN_CONFLICT previews can
+  be displayed without bootstrap/hash repair; READY previews retain strict source
+  verification, and both finalizers explicitly reject blocked states.
+  Latest signed Release installed with cached data retained. Owner retry and native
+  screenshot both confirm Looks good remains selected with “Review saved”; Summary
+  reports the remaining single financial conflict. Native confirmation-page gate passed: LAWSON is named with a local/server
+  conflict explanation and confirmation stays disabled. Latest signed build also
+  skips adjustment-preview requests for blocked current previews. Owner subsequently
+  deleted LAWSON locally; Dev rejected DELETE with base 1/current 2. Latest user intent
+  is deletion, not preserving the previous manual valuation.
+  No full device database export, conflict resolution, Git commit/push or real
+  Settlement confirmation.
+
+- Owner-requested read-only LAWSON audit is complete:
+  `docs/ledger/LAWSON_SYNC_INCIDENT_AUDIT.md`. Dev timeline: automatic reference
+  valuation seven seconds after CREATE, manual acceptance over two hours later and
+  DELETE both stale at base 1/current 2; two unresolved server conflicts, no
+  resolutions. Audit identified missing product resolution/failed-delete access,
+  dropped DELETE lifecycle in conflict DTOs, local supersession versus independent
+  server conflict closure, and acceptance without per-operation acknowledgement.
+  An additional isolated SQLite check proves old canonical responses can overwrite
+  newer pending tombstones (risk, not proven in this incident). Six existing suites /
+  32 tests and three temporary audit suites / six checks passed. No app code/business
+  records/deployment changed. Await owner review of the convergence/typed conflict
+  proposal before implementation; preserve Journey fix commit `797e789`.
+
+- Uncommitted Settlement patch compatibility review is recorded in the LAWSON
+  report: retain verified pull/precision/review/blocker protections; explicit FX
+  acceptance still lacks per-operation acknowledgement and partial-failure feedback.
+  Second read-only audit `docs/ledger/CE_SHI22_SYNC_INCIDENT_AUDIT.md` covers the
+  Simulator Trip `e6e0955d`: server auto-valued USD23 to NZD40.56, then an unchanged
+  aggregate UPDATE at base 1 conflicted with current 2. Narrow local SQLite queries
+  confirm cached quotes and canonical valuation deferred behind CONFLICT. Additional
+  findings: no-op Save still queues full UPDATE, equal timestamp strings are falsely
+  DESCRIPTIVE, and feed envelope/aggregate revisions differ (not proved causal).
+  Temporary audit now has three suites/eight checks passed. Only documentation
+  changed; no financial writes, repair, install, deployment or Git commit. Preserve
+  concurrent attachment repair `d7e3fff`.
+- Owner approved both audit conclusions and the complete closure scope, including
+  production conflict UI, no-op/attachment-only patch semantics and both formal
+  recoveries. Pre-code checkpoint is recorded in
+  `docs/ledger/EXPENSE_CONSISTENCY_IMPLEMENTATION_CHECKPOINT.md`: operation results,
+  per-Expense causal intents/shared reconciliation, server-atomic typed conflict
+  chains, backward compatibility, migration/API range and six phase gates. It
+  extends existing queue/repositories and tightens ADR 0040 local-only conflict
+  closure; no new sync framework. Await checkpoint confirmation before code. Only
+  design documentation changed; no migration, deployment or business repair.
 
 ## Receipt Review — Japanese yen recommendation
 

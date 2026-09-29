@@ -58,10 +58,10 @@ export function useLedgerActiveSync(
         setStatus({
           journeyId,
           value: deriveLedgerSyncStatus({
-            online: result.pullSucceeded,
+            online,
             syncing: false,
             pendingCount: result.pendingCount,
-            pullSucceeded: result.pullSucceeded,
+            pullSucceeded: result.pullSucceeded && !result.incomplete,
           }),
         });
         if (result.pullSucceeded && result.changed) void onChanged(journeyId);
@@ -70,7 +70,7 @@ export function useLedgerActiveSync(
         setStatus({
           journeyId,
           value: deriveLedgerSyncStatus({
-            online: false,
+            online,
             syncing: false,
             pendingCount: 0,
             pullSucceeded: false,
@@ -78,7 +78,7 @@ export function useLedgerActiveSync(
         });
       },
     });
-  }, [accountGeneration, journeyId, onChanged, scope]);
+  }, [accountGeneration, journeyId, onChanged, scope, online]);
 
   useEffect(() => {
     if (!controller) return;

@@ -103,6 +103,50 @@ describe("personal Settlement review", () => {
     ).toBe("STILL_CHECKING");
   });
 
+  it("allows acknowledgement of unresolved FX and fingerprints the unvalued personal source", () => {
+    const blocked = preview();
+    blocked.state = "PREVIEW_BLOCKED";
+    blocked.blockers = [{ expenseId: "pending", reason: "RATE_REQUIRED" }];
+    const pending = {
+      id: "pending",
+      revision: 1,
+      occurredAt: "2026-09-23T00:00:00Z",
+      businessStatus: "RATE_REQUIRED" as const,
+      settlementParticipation: "INCLUDED" as const,
+      hasOpenConflict: false,
+      payerMemberId: "a",
+      original: { minor: 1000, currency: "JPY", scale: 0 },
+      participants: [],
+      splits: [
+        {
+          memberId: "b",
+          method: "EQUAL_PERSON" as const,
+          weightUnits: null,
+          percentageUnits: null,
+          originalMinor: 1000,
+          settlementMinor: null,
+          roundingAdjustmentMinor: 0,
+        },
+      ],
+      valuation: null,
+    };
+    const statement = buildPersonalSettlementStatement(blocked, "a", new Map(), null, [
+      pending,
+    ]);
+    expect(statement.balanceMinor).toBe(500);
+    expect(statement.unresolvedSource).toContain("pending");
+    expect(
+      buildPersonalSettlementStatement(blocked, "a", new Map(), null, [
+        { ...pending, revision: 2 },
+      ]).unresolvedSource,
+    ).not.toBe(statement.unresolvedSource);
+    blocked.members.push({ memberId: "unrelated", displayNameSnapshot: "Other" });
+    expect(
+      buildPersonalSettlementStatement(blocked, "unrelated", new Map(), null, [pending])
+        .unresolvedSource,
+    ).toBeUndefined();
+  });
+
   it("detects material net-zero contribution changes and ignores snapshots alone", () => {
     const original = buildPersonalSettlementStatement(
       preview(),

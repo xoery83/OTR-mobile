@@ -1,5 +1,13 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## Adjustment confirmation source transport
+
+Confirmation preserves PostgreSQL JSON numeric precision in the source proof.
+Service-only `ledger_adjustment_source_text_7_2c` returns the existing root/current
+source as JSON text. Backend calculations retain the current preview representation;
+the transaction receives lossless numeric JSON tokens. Source equality, cutoff,
+head, digest and permission guards remain unchanged.
+
 ## My Ledger Reporting 2.0 lightweight read (local implementation)
 
 `GET /v2/me/ledger` retains its existing `period`, `from`, `to`, `journeys`,
@@ -66,6 +74,9 @@ review coverage (`[]` for ordinary members). POST requires a UUID
 reviewed. A first checkpoint returns `201`, replay returns `200`, and changed financial
 source returns `409 STALE_REVIEW_CHECKPOINT`; the server never substitutes a newer
 unseen statement. Personal Payment is excluded from statement and delta inputs.
+The internal checkpoint source RPC represents valuation decimal rates as exact
+strings, so JSON/JavaScript transport does not round the financial compare-and-save
+guard. Public statement DTOs and financial change checks are unchanged.
 
 Settlement review status extends that route without another review system. POST
 includes `reviewState = LOOKS_GOOD | STILL_CHECKING`; old checkpoints default to
@@ -372,6 +383,13 @@ financial projection. Review and needs-attention coverage remain separate respon
 The read-only Preview requires Journey read access; FX preflight and finalization retain
 their existing organizer capability checks.
 
+## Settlement review refinement — 2026-09-28
+
+`settlement-review` statements may include optional `unresolvedSource` (a stable
+personal-source snapshot). Member acknowledgements are allowed before FX readiness;
+finalization requirements are unchanged. This additive field participates in the
+review fingerprint and is preserved by the Mobile contract.
+
 ## Approved Expense consistency v2 (implementation in progress)
 
 ADR 0056 and `EXPENSE_CONSISTENCY_IMPLEMENTATION_CHECKPOINT.md` define additive
@@ -464,3 +482,16 @@ remove a newer server REFERENCE_RATE. The chain exposes reason
 ACCEPT_EQUIVALENT. SQL repeats the evidence check inside the existing guarded
 transaction. Legacy mutation writes remain strict CAS; missing evidence and real
 financial/descriptive/valuation changes are not inferred away.
+
+## Settlement current source after confirmed corrections — approved fix
+
+For a Journey with a confirmed Settlement root, ordinary Preview uses the same
+root-scoped `ledger_adjustment_source_current_7_2c` current source as Adjustment.
+Confirmed correction predecessors remain historical records and never contribute
+to current inputs, sourceFingerprint, balances or confirmationDiff. The latest
+confirmed lineage head remains the comparison baseline. Journeys without a
+confirmed root retain the initial `ledger_settlement_source_7_1` path.
+Source/head/digest/cutoff equality and all finalization guards remain mandatory.
+No schema, stored financial evidence or confirmation policy changes. Internal
+refresh diagnostics require explicit Debug Mode; generic verification failure
+does not imply an Expense conflict.

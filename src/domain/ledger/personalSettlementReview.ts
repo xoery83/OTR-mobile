@@ -1,4 +1,8 @@
-import type { SettlementPreview } from "./settlement";
+import {
+  balancesFromSettlementInputs,
+  type SettlementPreview,
+  type SettlementExpenseCandidate,
+} from "./settlement";
 
 export type PersonalSettlementContribution = {
   expenseId: string;
@@ -28,6 +32,7 @@ export type PersonalSettlementStatement = {
   shareMinor: number;
   balanceMinor: number;
   contributions: PersonalSettlementContribution[];
+  unresolvedSource?: string;
 };
 
 export type PersonalSettlementDelta = {
@@ -66,10 +71,31 @@ export function buildPersonalSettlementStatement(
     settlementRevision: number;
     settlementInputDigest: string;
   } | null,
+  expenses: SettlementExpenseCandidate[] = [],
 ): PersonalSettlementStatement {
-  if (preview.state !== "PREVIEW_READY")
-    throw new Error("Personal Settlement review is blocked.");
-  const balance = preview.balances.find((item) => item.memberId === memberId);
+  const balance = balancesFromSettlementInputs(
+    preview.inputs,
+    preview.members,
+    preview.settlementCurrency,
+    preview.settlementScale,
+  ).find((item) => item.memberId === memberId);
+  const blocked = new Set(preview.blockers.map((item) => item.expenseId));
+  const unresolved = expenses
+    .filter(
+      (item) =>
+        blocked.has(item.id) &&
+        (item.payerMemberId === memberId ||
+          item.splits.some((split) => split.memberId === memberId)),
+    )
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((item) => ({
+      id: item.id,
+      revision: item.revision,
+      payerMemberId: item.payerMemberId,
+      original: item.original,
+      hasOpenConflict: item.hasOpenConflict,
+      splits: [...item.splits].sort((a, b) => a.memberId.localeCompare(b.memberId)),
+    }));
   if (!balance) throw new Error("Settlement member is unavailable.");
   const contributions = preview.inputs.flatMap((input) => {
     const payerCreditMinor =
@@ -115,6 +141,7 @@ export function buildPersonalSettlementStatement(
     shareMinor: balance.owedMinor,
     balanceMinor: balance.netMinor,
     contributions,
+    ...(unresolved.length ? { unresolvedSource: JSON.stringify(unresolved) } : {}),
   };
 }
 

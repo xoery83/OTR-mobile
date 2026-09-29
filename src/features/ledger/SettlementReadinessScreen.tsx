@@ -544,27 +544,21 @@ function SummarySection({
           pendingReviewState={review.state.pendingReviewState}
         />
       ) : null}
-      {review.state?.delta ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() =>
-            router.push({
-              pathname: "/expenses/personal-settlement-review",
-              params: { journeyId: settlement.journeyId },
-            } as never)
-          }
-          style={styles.notice}
-        >
-          <Text style={styles.noticeTitle}>Updated since you reviewed</Text>
-          <Text style={styles.body}>
-            Your balance changed by{" "}
-            {formatLedgerMoney(review.state.delta.netDeltaMinor, currency, scale)} ·{" "}
-            {review.state.delta.changedExpenses.length}{" "}
-            {review.state.delta.changedExpenses.length === 1 ? "expense" : "expenses"}{" "}
-            changed
-          </Text>
-          <Text style={styles.link}>Review changes ›</Text>
-        </Pressable>
+      {review.busy ? <Text style={styles.meta}>Saving review…</Text> : null}
+      {review.message ? <Text style={styles.message}>{review.message}</Text> : null}
+      {review.state?.lastErrorCode ? (
+        <Text style={styles.message}>
+          Review was not saved. Open the latest statement and try again.
+        </Text>
+      ) : null}
+      {review.state?.checkpoint?.reviewState === "LOOKS_GOOD" &&
+      review.state.coverage.find((member) => member.memberId === settlement.actorMemberId)
+        ?.reviewState === "STILL_CHECKING" &&
+      !review.state.pendingReviewState ? (
+        <Text style={styles.meta}>
+          Expenses or valuations changed since your review. Please review the current
+          amounts again.
+        </Text>
       ) : null}
       {reviewCount ? (
         <Pressable
@@ -665,11 +659,18 @@ function SummarySection({
       {debugMode && settlement.message ? (
         <Text style={styles.message}>{settlement.message}</Text>
       ) : null}
+      {debugMode && settlement.refreshDiagnostic ? (
+        <Text style={styles.meta}>
+          Refresh diagnostic: {settlement.refreshDiagnostic}
+        </Text>
+      ) : null}
       {debugMode && settlement.updating ? (
         <Text style={styles.meta}>Updating…</Text>
       ) : null}
       {settlement.isOrganizer &&
       !hasConfirmed &&
+      !settlement.updating &&
+      !settlement.hasPendingFinancialOperations &&
       settlement.preview?.state === "PREVIEW_READY" ? (
         <Action primary label="Confirm final amounts" onPress={confirm} />
       ) : settlement.isOrganizer && !hasConfirmed ? (

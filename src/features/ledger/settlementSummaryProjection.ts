@@ -260,6 +260,13 @@ export function settlementReviewBlockers(
   return blockers;
 }
 
+export function hasBlockedSettlementConflict(preview: Stage7Preview) {
+  return (
+    preview.state === "PREVIEW_BLOCKED" &&
+    preview.blockers.some((blocker) => blocker.reason === "OPEN_CONFLICT")
+  );
+}
+
 export function settlementExpenseIdentity(
   id: string,
   expenses: { id: string; serverId: string | null; title: string }[],

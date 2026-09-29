@@ -71,7 +71,21 @@ export function usePersonalSettlementReview(journeyId?: string) {
             setMessage("Saved on this device · Pending sync");
         }
         const refreshed = await repository.get(journeyId);
-        if (request === requestRef.current) setState(refreshed);
+        if (request === requestRef.current) {
+          setState(refreshed);
+          if (refreshed?.lastErrorCode)
+            setMessage(
+              refreshed.lastErrorCode === "STALE_REVIEW_CHECKPOINT"
+                ? "Expenses changed before your review was saved. Review the latest statement and try again."
+                : "Review could not be saved. Check the current statement and try again.",
+            );
+          else
+            setMessage(
+              refreshed?.pendingReviewState
+                ? "Saved on this device · Pending sync"
+                : "Review saved.",
+            );
+        }
       } catch {
         if (request === requestRef.current)
           setMessage("Open the latest statement and try again.");

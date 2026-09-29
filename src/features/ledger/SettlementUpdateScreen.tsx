@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
@@ -30,6 +31,7 @@ export function SettlementUpdateScreen() {
   const settlement = useStage7Settlement(journeyId, true);
   const refreshSettlement = settlement.refresh;
   const [reason, setReason] = useState("");
+  const [debugMode, setDebugMode] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const confirmationInFlight = useRef(false);
   const [expenses, setExpenses] = useState<LedgerExpense[]>([]);
@@ -40,7 +42,7 @@ export function SettlementUpdateScreen() {
   const blockers = settlementReviewBlockers(
     projection?.confirmationDiff ?? [],
     expenses,
-    sameSource ? settlement.preview?.blockers : undefined,
+    settlement.preview?.blockers,
   );
   const rates = settlementRateCandidates(
     settlement.displayPreview?.inputs.map((input) => input.expense) ?? [],
@@ -60,6 +62,12 @@ export function SettlementUpdateScreen() {
       if (!journeyId) return;
       if (refreshedOnFocus.current) refreshSettlement();
       refreshedOnFocus.current = true;
+      void getDefaultLedgerReportingRepository()
+        .then((repository) => repository.getPreferences())
+        .then((preferences) => {
+          if (active) setDebugMode(preferences.debugMode);
+        })
+        .catch(() => undefined);
       void getDefaultLedgerExpenseRepository()
         .then((repository) => repository.listExpensesForJourney(journeyId, true))
         .then((rows) => {
@@ -282,7 +290,7 @@ export function SettlementUpdateScreen() {
                       ? dateRequired
                         ? "Transaction date required"
                         : "Exchange rate required"
-                      : "Changes need review"}
+                      : "Conflicting local and server changes must be resolved before confirming."}
                   </Text>
                 </View>
                 {localId && blocker.reason === "RATE_REQUIRED" ? (
@@ -299,6 +307,25 @@ export function SettlementUpdateScreen() {
             </Text>
           ) : settlement.message ? (
             <Text style={styles.warning}>{settlement.message}</Text>
+          ) : null}
+          {debugMode && settlement.refreshDiagnostic ? (
+            <Text style={styles.meta}>
+              Refresh diagnostic: {settlement.refreshDiagnostic}
+            </Text>
+          ) : null}
+          {!ready &&
+          !settlement.message &&
+          !settlement.confirmationError &&
+          !settlement.hasPendingFinancialOperations ? (
+            <Text style={styles.warning}>
+              {rates.length
+                ? "Accept the earlier reference rates, then check the latest changes before confirming."
+                : settlement.updating
+                  ? "Checking the latest values…"
+                  : blockers.length
+                    ? "Resolve the items above before confirming."
+                    : "Confirmation needs a fresh server check. Check for latest changes."}
+            </Text>
           ) : null}
           {!ready ? (
             <Pressable accessibilityRole="button" onPress={settlement.refresh}>

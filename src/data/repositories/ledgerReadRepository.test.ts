@@ -1,4 +1,6 @@
+import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
+import { migrations } from "@/data/db/migrations";
 
 import type {
   LedgerBootstrapResponse,
@@ -18,6 +20,68 @@ const householdId = "40000000-0000-4000-8000-000000000001";
 const correctionId = "50000000-0000-4000-8000-000000000001";
 const activeUser = async () => "90000000-0000-4000-8000-000000000001";
 
+it("persists pulled receipt changes and advances the cursor in real SQLite", async () => {
+  const sqlite = new DatabaseSync(":memory:");
+  for (const migration of migrations) sqlite.exec(migration.sql);
+  const db: LedgerReadDatabase = {
+    async withTransactionAsync(task) {
+      sqlite.exec("BEGIN");
+      try {
+        await task();
+        sqlite.exec("COMMIT");
+      } catch (error) {
+        sqlite.exec("ROLLBACK");
+        throw error;
+      }
+    },
+    async runAsync(sql: string, ...params: unknown[]) {
+      return sqlite.prepare(sql).run(...(params as never[])) as never;
+    },
+    async getFirstAsync(sql: string, ...params: unknown[]) {
+      return (sqlite.prepare(sql).get(...(params as never[])) ?? null) as never;
+    },
+    async getAllAsync(sql: string, ...params: unknown[]) {
+      return sqlite.prepare(sql).all(...(params as never[])) as never;
+    },
+  };
+  try {
+    const repository = createLedgerReadRepository(db, activeUser);
+    await repository.applyChanges(journeyId, {
+      changes: [
+        {
+          entityType: "RECEIPT",
+          entityId: "server-receipt",
+          revision: 1,
+          isTombstone: false,
+          aggregate: {
+            id: "server-receipt",
+            localId: "local-receipt",
+            journeyId,
+            expenseId: null,
+            objectPath: "receipt/original",
+            mimeType: "image/jpeg",
+            sizeBytes: 3,
+            sha256: "a".repeat(64),
+            uploadStatus: "UPLOADED",
+            ocrStatus: "PENDING",
+            ocrSuggestion: null,
+            createdAt: "2026-09-28T00:00:00Z",
+            updatedAt: "2026-09-28T00:00:00Z",
+          },
+        },
+      ],
+      cursor: "receipt-cursor",
+      serverTime: "2026-09-28T00:00:00Z",
+    });
+    expect(
+      sqlite.prepare("SELECT server_id, height FROM ledger_receipt_assets").get(),
+    ).toMatchObject({ server_id: "server-receipt", height: null });
+    expect(await repository.getCursor(journeyId)).toEqual({ cursor: "receipt-cursor" });
+  } finally {
+    sqlite.close();
+  }
+});
+
 function database(
   existingExpenseStatus: string | null = null,
   existingCorrectionStatus: string | null = null,
@@ -31,7 +95,7 @@ function database(
       transactions += 1;
       await task();
     },
-    async runAsync(sql, ...params) {
+    async runAsync(sql: string, ...params: unknown[]) {
       writes.push({ sql, params });
       return {} as never;
     },

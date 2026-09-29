@@ -1,3 +1,5 @@
+import { ApiClientError } from "@/data/api/client";
+import { databaseErrorDiagnostic } from "@/data/db/databaseErrorDiagnostic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNetworkState } from "expo-network";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
@@ -39,6 +41,7 @@ import { createLatestRequest } from "@/features/ledger/latestRequest";
 import { settlementCacheMessage } from "@/features/ledger/settlementSections";
 import {
   adjustmentMatchesCurrentProjection,
+  hasBlockedSettlementConflict,
   currentSettlementSummaryProjection,
   markSettlementConfirmedHead,
   readSavedSettlementProjection,
@@ -57,6 +60,9 @@ export type Stage7Finalized = FinalizedSettlementDto;
 
 async function verifyCurrentSettlementSource(journeyId: string, preview: Stage7Preview) {
   let local = await loadEstimatedSettlement(journeyId, preview.sourceAsOf);
+  // Open conflicts deliberately preserve different local/server versions. Show
+  // the server's blocked preview; every finalization still requires PREVIEW_READY.
+  if (hasBlockedSettlementConflict(preview)) return local;
   if (local.canonicalSourceFingerprint !== preview.sourceFingerprint) {
     await revalidateJourneyLedger(journeyId);
     local = await loadEstimatedSettlement(journeyId, preview.sourceAsOf);
@@ -109,6 +115,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
     useState<SettlementAdjustmentPreviewResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [refreshDiagnostic, setRefreshDiagnostic] = useState<string | null>(null);
   const [confirmationError, setConfirmationError] = useState<string | null>(null);
   const [actorMemberId, setActorMemberId] = useState<string | null>(
     reviewMode ? (incoming?.actorMemberId ?? null) : null,
@@ -162,6 +169,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
       setUpdating(Boolean(activeJourneyId));
       setConfirmationVerified(false);
       setMessage(null);
+      setRefreshDiagnostic(null);
       if (!activeJourneyId) {
         setLoadedJourneyId(null);
         setUpdating(false);
@@ -180,6 +188,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
           ]);
         return { rows, items, memberId, organizer, pendingFinancialOperations };
       };
+      let refreshPhase = "saved_state";
       try {
         const cached = await load();
         if (!active || accountGeneration !== getAccountGeneration()) return;
@@ -241,6 +250,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
           // A newly opened Journey may not exist locally until bootstrap completes below.
         }
         if (cached.organizer) {
+          refreshPhase = "fx_preflight";
           await recoverMissingSettlementEconomicDates(activeJourneyId).catch(
             () => undefined,
           );
@@ -250,7 +260,9 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
             setPendingPublicationExpenseIds(rates.pendingPublication);
           }
         }
+        refreshPhase = "ledger_pull";
         await refreshJourneyLedger(activeJourneyId);
+        refreshPhase = "refreshed_state";
         const refreshed = await load();
         if (!active || accountGeneration !== getAccountGeneration()) return;
         applyFinalizedRows(refreshed.rows);
@@ -258,6 +270,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
         setActorMemberId(refreshed.memberId);
         setIsOrganizer(refreshed.organizer);
         setHasPendingFinancialOperations(refreshed.pendingFinancialOperations);
+        refreshPhase = "local_projection";
         const refreshedDisplay = await loadEstimatedSettlement(activeJourneyId);
         setDisplayPreview(refreshedDisplay);
         const refreshedRoot =
@@ -298,11 +311,22 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
             setSummaryProjection(saved);
           }
         }
+        refreshPhase = "settlement_preview";
         try {
           const current = await previewSettlement(
             activeJourneyId,
             new Date().toISOString(),
           );
+          // Server blockers remain useful even when a protected local conflict
+          // prevents the source fingerprint from matching. Confirmation still
+          // requires source verification below.
+          if (
+            active &&
+            accountGeneration === getAccountGeneration() &&
+            projectionRequest.isCurrent(projectionGeneration)
+          )
+            setPreview(current);
+          refreshPhase = "source_verification";
           const localSource = await verifyCurrentSettlementSource(
             activeJourneyId,
             current,
@@ -343,7 +367,8 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
                 setMessage("Settlement updated with the latest changes.");
             }
           }
-          if (refreshed.organizer && refreshedRoot) {
+          if (refreshed.organizer && refreshedRoot && current.state === "PREVIEW_READY") {
+            refreshPhase = "adjustment_preview";
             const adjustment = await previewSettlementAdjustment(
               activeJourneyId,
               refreshedRoot.id,
@@ -356,7 +381,10 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
             ) {
               if (adjustmentMatchesCurrentProjection(current, adjustment)) {
                 setAdjustmentPreview(adjustment);
-                setConfirmationVerified(true);
+                setConfirmationVerified(
+                  current.state === "PREVIEW_READY" &&
+                    adjustment.state === "PREVIEW_READY",
+                );
               } else {
                 setAdjustmentPreview(null);
                 setMessage(
@@ -365,16 +393,32 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
               }
             }
           }
-        } catch {
+        } catch (error) {
+          if (active && accountGeneration === getAccountGeneration())
+            setRefreshDiagnostic(
+              `${refreshPhase} · ${error instanceof ApiClientError ? (error.code ?? error.kind) : databaseErrorDiagnostic(error)}`,
+            );
           // Coherent saved projection remains available offline or before queue drain.
           if (active && reviewMode && accountGeneration === getAccountGeneration())
             setMessage(
-              "Fresh confirmation is temporarily unavailable. Saved changes remain visible.",
+              refreshPhase === "source_verification"
+                ? "The latest amounts could not be verified. Check for latest changes before confirming."
+                : "Fresh confirmation is temporarily unavailable. Saved changes remain visible.",
             );
         }
-      } catch {
+      } catch (error) {
         if (active && accountGeneration === getAccountGeneration())
-          setMessage(settlementCacheMessage(online, "data"));
+          setRefreshDiagnostic(
+            `${refreshPhase} · ${error instanceof ApiClientError ? (error.code ?? error.kind) : databaseErrorDiagnostic(error)}`,
+          );
+        if (active && accountGeneration === getAccountGeneration())
+          setMessage(
+            !online
+              ? settlementCacheMessage(false, "data")
+              : error instanceof ApiClientError && error.kind === "timeout"
+                ? "Settlement refresh timed out · showing saved data. Try again."
+                : "Settlement could not refresh · showing saved data. Try again.",
+          );
       } finally {
         if (active) setUpdating(false);
       }
@@ -408,6 +452,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
     lineage: matchesActiveJourney ? lineage : [],
     adjustmentPreview: matchesActiveJourney ? adjustmentPreview : null,
     message,
+    refreshDiagnostic: matchesActiveJourney ? refreshDiagnostic : null,
     confirmationError,
     preview: matchesActiveJourney ? preview : null,
     summaryProjection:
@@ -606,6 +651,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
           ready.throughTimestamp,
         );
         if (
+          current.state !== "PREVIEW_READY" ||
           !summaryProjection ||
           current.sourceFingerprint !== summaryProjection.sourceFingerprint ||
           latest.state !== "PREVIEW_READY" ||

@@ -15,6 +15,20 @@ export type ApiClientOptions = {
 
 export type ApiErrorKind = "http" | "network" | "timeout" | "validation";
 
+export type ApiFailureDiagnostic = {
+  method: string;
+  route: string;
+  kind: ApiErrorKind;
+  status?: number;
+  code?: string;
+  requestId?: string;
+  at: string;
+};
+let lastFailure: ApiFailureDiagnostic | null = null;
+export function readLastApiFailure() {
+  return lastFailure;
+}
+
 export class ApiClientError extends Error {
   constructor(
     message: string,
@@ -98,19 +112,55 @@ export function createApiClient(options: ApiClientOptions = {}) {
         );
       }
 
+      const payload = await response.json();
       try {
-        return responseSchema.parse(await response.json());
+        return responseSchema.parse(payload);
       } catch (error) {
         if (error instanceof z.ZodError) {
-          throw new ApiClientError("OTR API returned an invalid response.", "validation");
+          throw new ApiClientError(
+            "OTR API returned an invalid response.",
+            "validation",
+            response.status,
+            error.issues
+              .slice(0, 3)
+              .map((issue) => {
+                const value = issue.path.reduce<unknown>(
+                  (current, key) =>
+                    current && typeof current === "object"
+                      ? (current as Record<PropertyKey, unknown>)[key]
+                      : undefined,
+                  payload,
+                );
+                const length =
+                  typeof value === "string" && issue.code === "invalid_format"
+                    ? `(${value.length} chars)`
+                    : "";
+                return `${issue.path.join(".")}:${issue.code}${length}`;
+              })
+              .join(","),
+            undefined,
+            response.headers?.get?.("x-request-id") ?? undefined,
+          );
         }
 
         throw error;
       }
     } catch (error) {
-      if (error instanceof ApiClientError) throw error;
-
-      throw new ApiClientError("OTR API is unavailable.", "network");
+      const failure =
+        error instanceof ApiClientError
+          ? error
+          : new ApiClientError("OTR API is unavailable.", "network");
+      lastFailure = {
+        method,
+        route: path.split("?")[0].replace(/[0-9a-f]{8}-[0-9a-f-]{27}/gi, ":id"),
+        kind: failure.kind,
+        status: failure.status,
+        code: failure.code,
+        requestId: failure.requestId,
+        at: new Date().toISOString(),
+      };
+      console.info(JSON.stringify({ event: "api_request_failed", ...lastFailure }));
+      throw failure;
     }
   }
 

@@ -144,6 +144,7 @@ export const personalSettlementStatementSchema = z.object({
   shareMinor: z.number().int().nonnegative(),
   balanceMinor: z.number().int(),
   contributions: z.array(personalSettlementContributionSchema),
+  unresolvedSource: z.string().optional(),
 });
 
 export const personalSettlementReviewStateSchema = z.enum([

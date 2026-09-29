@@ -82,8 +82,10 @@ Ledger / Expenses:
   uploading user, while read access follows Expense/Journey authorization.
 - During travel, unresolved FX may have clearly approximate, offline-capable
   display amounts, spending totals and informational settlement positions from
-  trusted cached reference rates. These never become accepted financial evidence
-  or final payment obligations. Opening Settlement proactively attempts eligible
+  trusted cached reference rates. These remain display-only until the Organizer explicitly accepts the shown
+  non-transaction-date rates on the confirmation page. Accepted rates become
+  immutable MANUAL_AGREED valuations with reference date/source in the reason;
+  normal financial sync and fresh server confirmation still apply. Opening Settlement proactively attempts eligible
   canonical FX resolution; finalization still requires accepted valuations and
   current authoritative digest, with actionable explanations for true blockers.
 - Review is a financial attention inbox: shared versioned observations preserve
@@ -92,7 +94,9 @@ Ledger / Expenses:
   separate from the later personal-state, eligibility, and inbox UI phases.
 - Settlement member review is optional and has three visible states: `Not reviewed`,
   `Still checking`, and `Looks good`. Every current Journey member may expand the
-  group member names/statuses; it never gates Organizer confirmation. A material
+  group member names/statuses; it never gates Organizer confirmation. Looks good
+  acknowledges the current account of expenses even while FX is unresolved; it
+  does not accept rates or finalize obligations. A material
   personal-statement change turns an earlier `Looks good` into `Still checking`.
 - Approximate Settlement amounts are not marked with `≈`. A compact accessible
   indicator opens the affected Expense list and explains whether a reference rate is

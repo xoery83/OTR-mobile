@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createLatestRequest } from "./latestRequest";
 import {
   adjustmentMatchesCurrentProjection,
+  hasBlockedSettlementConflict,
   clearSharedSettlementProjection,
   countSettlementChanges,
   currentSettlementSummaryProjection,
@@ -81,6 +82,15 @@ function preview(
 }
 
 describe("Settlement Summary projection", () => {
+  it("displays blocked conflicts without treating a ready source as exempt from verification", () => {
+    const value = preview(100);
+    value.blockers = [{ expenseId: "expense", reason: "OPEN_CONFLICT" }];
+    expect(hasBlockedSettlementConflict(value)).toBe(false);
+    value.state = "PREVIEW_BLOCKED";
+    expect(hasBlockedSettlementConflict(value)).toBe(true);
+    value.blockers = [{ expenseId: "expense", reason: "RATE_REQUIRED" }];
+    expect(hasBlockedSettlementConflict(value)).toBe(false);
+  });
   it("keeps a saved offline projection internally coherent", () => {
     const value = savedSettlementSummaryProjection(
       {

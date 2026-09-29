@@ -1,4 +1,6 @@
 import { ExpenseConflictList } from "./ExpenseConflictList";
+import { readLastApiFailure } from "@/data/api/client";
+import { useNetworkState } from "expo-network";
 import { getDefaultLedgerFxSnapshotRepository } from "@/data/repositories/defaultLedgerFxSnapshotRepository";
 import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -113,6 +115,7 @@ const syncStatusCopy = {
   SYNCING: "Syncing",
   UP_TO_DATE: "Up to date",
   OFFLINE: "Offline · saved data is available",
+  SYNC_FAILED: "Sync temporarily unavailable · saved data is available",
   CHANGES_WAITING: "Changes waiting · saved on this device",
 } as const;
 
@@ -455,6 +458,7 @@ export function LedgerStage6Screen({
     [journey?.journeyId],
   );
 
+  const network = useNetworkState();
   const syncStatus = useLedgerActiveSync(
     (journey?.journeyId ?? fallbackJourneyId) || null,
     handleLedgerChanged,
@@ -1124,18 +1128,28 @@ export function LedgerStage6Screen({
                 <DebugRow
                   label="Network"
                   value={
-                    syncStatus
-                      ? syncStatus === "OFFLINE"
-                        ? "Offline"
-                        : "Online"
-                      : "Checking"
+                    network.isConnected === false || network.isInternetReachable === false
+                      ? "Offline"
+                      : network.isConnected === true
+                        ? "Online"
+                        : "Checking"
                   }
                 />
                 <DebugRow
-                  attention={syncStatus === "OFFLINE" || syncStatus === "CHANGES_WAITING"}
+                  attention={
+                    syncStatus === "OFFLINE" ||
+                    syncStatus === "SYNC_FAILED" ||
+                    syncStatus === "CHANGES_WAITING"
+                  }
                   label="Sync"
                   value={syncStatus ? syncStatusCopy[syncStatus] : "Starting"}
                 />
+                {readLastApiFailure() ? (
+                  <DebugRow
+                    label="Last API failure"
+                    value={`${readLastApiFailure()!.method} ${readLastApiFailure()!.route} · ${readLastApiFailure()!.code ?? readLastApiFailure()!.kind} · ${readLastApiFailure()!.at}`}
+                  />
+                ) : null}
                 <DebugRow
                   label="Environment"
                   value={

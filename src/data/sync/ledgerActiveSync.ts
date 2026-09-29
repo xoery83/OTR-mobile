@@ -1,3 +1,4 @@
+import { ApiClientError } from "@/data/api/client";
 import { getLedgerQueueActivity } from "./ledgerQueueActivity";
 import { isLedgerOperationalSyncPaused } from "./ledgerOperationalSync";
 
@@ -8,7 +9,8 @@ export const LEDGER_POLL_INTERVAL_MS = 8_000;
 const idleIntervals = [8_000, 15_000, 30_000, 60_000];
 const failureIntervals = [15_000, 30_000, 60_000];
 
-export type LedgerSyncStatus = "SYNCING" | "UP_TO_DATE" | "OFFLINE" | "CHANGES_WAITING";
+export type LedgerSyncStatus =
+  "SYNCING" | "UP_TO_DATE" | "OFFLINE" | "SYNC_FAILED" | "CHANGES_WAITING";
 
 export type LedgerActiveSyncResult = {
   changed: boolean;
@@ -52,7 +54,8 @@ export function deriveLedgerSyncStatus(input: {
 }): LedgerSyncStatus {
   if (input.syncing && input.online) return "SYNCING";
   if (input.pendingCount > 0) return "CHANGES_WAITING";
-  if (!input.online || !input.pullSucceeded) return "OFFLINE";
+  if (!input.online) return "OFFLINE";
+  if (!input.pullSucceeded) return "SYNC_FAILED";
   return "UP_TO_DATE";
 }
 
@@ -106,10 +109,27 @@ async function runActiveSync(
   try {
     personalPaymentRefreshCount = 1;
     changed = await refresh(journeyId);
-  } catch {
+  } catch (error) {
+    console.info(
+      JSON.stringify({
+        event: "ledger_sync_failure",
+        phase: "pull",
+        kind: error instanceof ApiClientError ? error.kind : "local",
+        code: error instanceof ApiClientError ? error.code : undefined,
+      }),
+    );
     pullSucceeded = false;
   }
-  const activity = await getLedgerQueueActivity(journeyId);
+  const activity = await getLedgerQueueActivity(journeyId).catch((error: unknown) => {
+    console.info(
+      JSON.stringify({
+        event: "ledger_sync_failure",
+        phase: "queue_read",
+        kind: "local",
+      }),
+    );
+    throw error;
+  });
   return {
     changed,
     pendingCount: activity.unresolvedCount,

@@ -5,6 +5,7 @@ import {
 } from "@/domain/ledger/rateAcceptance";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "node:crypto";
+import { losslessSourceJson } from "./losslessSourceJson";
 import { classifyMissingEconomicDate } from "../../src/domain/ledger/economicDateEvidence";
 import { summarizeMyLedgerSnapshot, type LightweightSnapshot } from "./myLedgerSummary";
 
@@ -119,6 +120,7 @@ import {
   canonicalSettlementJson,
   canonicalSettlementSourceJson,
   replaceSettlementExpenseSource,
+  SETTLEMENT_ALGORITHM_VERSION,
   SETTLEMENT_SOURCE_FINGERPRINT_POLICY,
   type SettlementExpenseCandidate,
   type SettlementInputSnapshot,
@@ -4593,10 +4595,30 @@ async function calculateSettlementPreview(
   tripId: string,
   throughTimestamp: string,
 ) {
-  const result = await service.rpc("ledger_settlement_source_7_1", {
-    target_journey: tripId,
-    through_timestamp_value: throughTimestamp,
-  });
+  const latest = await service
+    .from("settlements")
+    .select("id")
+    .eq("journey_id", tripId)
+    .eq("algorithm_version", SETTLEMENT_ALGORITHM_VERSION)
+    .in("status", ["FINALIZED", "PARTIALLY_PAID", "SETTLED"])
+    .order("finalized_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latest.error) throw new Error("Supabase Dev Settlement reference read failed.");
+  const confirmed = latest.data
+    ? await readOneFinalizedSettlement(service, tripId, String(latest.data.id))
+    : null;
+  if (latest.data && !confirmed) throw new Error("Canonical Settlement head is missing.");
+  const rootId = confirmed?.rootSettlementId ?? confirmed?.id;
+  const result = rootId
+    ? await service.rpc("ledger_adjustment_source_current_7_2c", {
+        target_root: rootId,
+        source_cutoff: throughTimestamp,
+      })
+    : await service.rpc("ledger_settlement_source_7_1", {
+        target_journey: tripId,
+        through_timestamp_value: throughTimestamp,
+      });
   if (result.error || !result.data)
     throw new Error("Supabase Dev settlement preview failed.");
   const source = normalizeSettlementSource(result.data as SettlementPreviewInput);
@@ -4607,18 +4629,6 @@ async function calculateSettlementPreview(
   const sourceFingerprint = createHash("sha256")
     .update(canonicalSettlementSourceJson(source))
     .digest("hex");
-  const latest = await service
-    .from("settlements")
-    .select("id")
-    .eq("journey_id", tripId)
-    .in("status", ["FINALIZED", "PARTIALLY_PAID", "SETTLED"])
-    .order("finalized_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (latest.error) throw new Error("Supabase Dev Settlement reference read failed.");
-  const confirmed = latest.data
-    ? await readOneFinalizedSettlement(service, tripId, String(latest.data.id))
-    : null;
   const confirmationDiff = buildSettlementConfirmationDiff(
     confirmed?.inputs ?? [],
     preview.inputs,
@@ -4694,7 +4704,8 @@ async function calculatePersonalSettlementReview(
       .from("settlements")
       .select("id, revision, input_digest")
       .eq("journey_id", tripId)
-      .eq("status", "FINALIZED")
+      .eq("algorithm_version", SETTLEMENT_ALGORITHM_VERSION)
+      .in("status", ["FINALIZED", "PARTIALLY_PAID", "SETTLED"])
       .order("finalized_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -4711,12 +4722,6 @@ async function calculatePersonalSettlementReview(
     );
   if (lineage.error || financialSource.error)
     throw new Error("Supabase Dev personal Settlement review read failed.");
-  if (calculated.preview.state !== "PREVIEW_READY")
-    throw new BackendError(
-      409,
-      "SETTLEMENT_REVIEW_BLOCKED",
-      "Resolve current Settlement blockers before reviewing.",
-    );
   const ids = calculated.preview.inputs.map((input) => input.expenseId);
   const titles = ids.length
     ? await service.from("expenses").select("id, title").in("id", ids)
@@ -4737,6 +4742,7 @@ async function calculatePersonalSettlementReview(
     String(actor.data.id),
     titleById,
     settlementIdentity,
+    calculated.source.expenses,
   );
   const statementFingerprint = hashPayload(statement);
   let selectedCheckpoint = checkpointRow;
@@ -4784,6 +4790,7 @@ async function calculatePersonalSettlementReview(
         memberId,
         titleById,
         settlementIdentity,
+        calculated.source.expenses,
       ),
     );
     const explicit = checkpoint?.review_state ?? "LOOKS_GOOD";
@@ -5002,24 +5009,32 @@ async function calculateSettlementAdjustmentPreview(
     successor: SettlementExpenseCandidate;
   },
   throughTimestamp?: string,
+  exactSourceProof = false,
 ) {
   const root = await readOneFinalizedSettlement(service, tripId, rootSettlementId);
   if (!root || root.kind === "ADJUSTMENT") {
     throw new BackendError(404, "ENTITY_NOT_FOUND", "The root Settlement was not found.");
   }
-  const sourceResult = throughTimestamp
-    ? await service.rpc("ledger_adjustment_source_current_7_2c", {
+  const sourceResult = exactSourceProof
+    ? await service.rpc("ledger_adjustment_source_text_7_2c", {
         target_root: rootSettlementId,
-        source_cutoff: throughTimestamp,
+        source_cutoff: throughTimestamp ?? null,
       })
-    : await service.rpc("ledger_adjustment_source_7_2b", {
-        target_root: rootSettlementId,
-      });
+    : throughTimestamp
+      ? await service.rpc("ledger_adjustment_source_current_7_2c", {
+          target_root: rootSettlementId,
+          source_cutoff: throughTimestamp,
+        })
+      : await service.rpc("ledger_adjustment_source_7_2b", {
+          target_root: rootSettlementId,
+        });
   if (sourceResult.error || !sourceResult.data) {
     throw new Error("Supabase Dev Adjustment source failed.");
   }
   const canonicalSource = normalizeSettlementSource(
-    sourceResult.data as SettlementPreviewInput,
+    (exactSourceProof
+      ? JSON.parse(sourceResult.data)
+      : sourceResult.data) as SettlementPreviewInput,
   );
   const source = correction
     ? replaceSettlementExpenseSource(
@@ -5117,8 +5132,12 @@ async function calculateSettlementAdjustmentPreview(
       ? "PREVIEW_UNCHANGED"
       : "PREVIEW_READY";
   return {
-    // SQL rechecks raw JSONB; valuation decimalRate stringification is preview-only.
-    source: correction ? source : (sourceResult.data as SettlementPreviewInput),
+    // Preview calculations are unchanged; SQL receives the exact original numeric tokens.
+    source: correction
+      ? source
+      : exactSourceProof
+        ? losslessSourceJson(sourceResult.data)
+        : sourceResult.data,
     response: {
       state,
       rootSettlementId,
@@ -5151,6 +5170,7 @@ async function finalizeSettlementAdjustment(
     rootSettlementId,
     undefined,
     input.throughTimestamp,
+    true,
   );
   const preview = calculated.response;
   const result = await service.rpc("ledger_finalize_adjustment_7_2b", {
@@ -5706,7 +5726,7 @@ async function readFinalizedSettlements(
       "id, journey_id, settlement_kind, root_settlement_id, parent_adjustment_id, lineage_sequence, prior_input_digest, adjustment_reason, eligibility_version, status, through_timestamp, settlement_currency, settlement_scale, settings_revision, algorithm_version, input_digest, revision, finalized_by, finalized_at",
     )
     .eq("journey_id", tripId)
-    .eq("algorithm_version", "ledger-settlement-greedy-v1")
+    .eq("algorithm_version", SETTLEMENT_ALGORITHM_VERSION)
     .order("finalized_at", { ascending: false });
   if (settlementIds) settlementQuery = settlementQuery.in("id", settlementIds);
   const settlements = await settlementQuery;

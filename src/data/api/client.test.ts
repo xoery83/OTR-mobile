@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { ApiClientError, createApiClient } from "./client";
+import { ApiClientError, createApiClient, readLastApiFailure } from "./client";
 
 const responseSchema = z.object({ id: z.string() });
 
@@ -74,6 +74,52 @@ describe("OTR API client", () => {
     await expect(
       invalidPayloadClient.get("/trips", responseSchema),
     ).rejects.toMatchObject({ kind: "validation" } satisfies Partial<ApiClientError>);
+    expect(readLastApiFailure()).toMatchObject({
+      status: 200,
+      code: "id:invalid_type",
+    });
+    expect(JSON.stringify(readLastApiFailure())).not.toContain("42");
+    const invalidFormatClient = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImplementation: (async () =>
+        response(200, { digest: "not-a-digest" })) as typeof fetch,
+    });
+    await expect(
+      invalidFormatClient.get(
+        "/trips",
+        z.object({ digest: z.string().regex(/^[a-f0-9]{64}$/) }),
+      ),
+    ).rejects.toMatchObject({ kind: "validation" });
+    expect(readLastApiFailure()?.code).toBe("digest:invalid_format(12 chars)");
+    expect(JSON.stringify(readLastApiFailure())).not.toContain("not-a-digest");
+  });
+
+  it("records a failed route without identifiers, query or credentials", async () => {
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      accessToken: "secret-token",
+      fetchImplementation: (async () =>
+        response(409, {
+          error: { code: "STALE_REVIEW_CHECKPOINT", requestId: "trace-1" },
+        })) as typeof fetch,
+    });
+    await expect(
+      client.post(
+        "/v2/trips/10000000-0000-4000-8000-000000000001/settlement-review?private=value",
+        { private: "receipt" },
+        responseSchema,
+      ),
+    ).rejects.toBeInstanceOf(ApiClientError);
+    expect(readLastApiFailure()).toMatchObject({
+      method: "POST",
+      route: "/v2/trips/:id/settlement-review",
+      status: 409,
+      code: "STALE_REVIEW_CHECKPOINT",
+      requestId: "trace-1",
+    });
+    expect(JSON.stringify(readLastApiFailure())).not.toMatch(
+      /secret-token|private|receipt|10000000/,
+    );
   });
 
   it("normalizes timeouts", async () => {

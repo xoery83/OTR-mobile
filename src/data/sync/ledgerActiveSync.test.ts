@@ -146,6 +146,17 @@ describe("active Ledger sync", () => {
     ).toBe("OFFLINE");
   });
 
+  it("keeps server failure separate from platform disconnection", () => {
+    expect(
+      deriveLedgerSyncStatus({
+        online: true,
+        syncing: false,
+        pendingCount: 0,
+        pullSucceeded: false,
+      }),
+    ).toBe("SYNC_FAILED");
+  });
+
   it("runs on focus, foreground, reconnect, and visible polling only", async () => {
     vi.useFakeTimers();
     const run = vi.fn(async () => result);
