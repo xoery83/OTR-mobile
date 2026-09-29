@@ -1,7 +1,8 @@
 # Settlement confirmation source precision
 
 Date: 2026-09-29. Local gate and Hosted Dev read-only precision gate PASS.
-Owner confirmation after this release remains untested; no automated Confirm.
+No automated Confirm. Subsequent read-only follow-up verified the owner's successful
+original-iPhone confirmation; see the Payments projection gate.
 
 ## User-observed confirmation result
 

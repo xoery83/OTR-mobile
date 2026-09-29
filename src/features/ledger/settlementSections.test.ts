@@ -24,6 +24,106 @@ import {
 } from "./settlementSections";
 
 describe("Settlement section selectors", () => {
+  it.each([0, 1000])(
+    "uses the full confirmed inputs after an adjustment with delta transfer %i",
+    (delta) => {
+      const input = finalInput("expense", "member-a", 11000, 5500);
+      input.splits.push({
+        member: { memberId: "member-b", displayNameSnapshot: "B" },
+        originalMinor: 5500,
+        settlementMinor: 5500,
+      });
+      const head = {
+        kind: "ADJUSTMENT",
+        settlementCurrency: "NZD",
+        settlementScale: 2,
+        inputs: [input],
+        transfers: delta ? [{ amount: { minor: delta, currency: "NZD", scale: 2 } }] : [],
+      } as unknown as NonNullable<Parameters<typeof currentSettlementTransfers>[0]>;
+      const records = [
+        {
+          ...payment("member-a", "member-b"),
+          id: "received",
+          direction: "RECEIVED",
+          amountMinor: 500,
+          currency: "NZD",
+          scale: 2,
+          fxProjections: [],
+        },
+      ] as LocalPersonalPayment[];
+      const originalRecords = JSON.stringify(records);
+      for (const current of [head, head, JSON.parse(JSON.stringify(head))]) {
+        const transfers = currentSettlementTransfers(current, null);
+        expect(transfers).toHaveLength(1);
+        expect(transfers[0]).toMatchObject({
+          fromMemberId: "member-b",
+          toMemberId: "member-a",
+          amount: { minor: 5500 },
+          id: null,
+        });
+        expect(visibleSettlementTransfers(transfers, "member-a", false, true)).toEqual(
+          transfers,
+        );
+        expect(visibleSettlementTransfers(transfers, "member-a", true, true)).toEqual(
+          transfers,
+        );
+        expect(personalPaymentProgress(records, "member-a", transfers[0])).toMatchObject({
+          minor: 500,
+          percentage: 9,
+        });
+        expect(JSON.stringify(records)).toBe(originalRecords);
+      }
+      // A later confirmed snapshot replaces the recommendation, rather than adding deltas.
+      const changed = {
+        ...head,
+        inputs: [
+          {
+            ...head.inputs[0],
+            payer: { memberId: "member-b", displayNameSnapshot: "B" },
+          },
+        ],
+      };
+      expect(currentSettlementTransfers(changed, null)[0]).toMatchObject({
+        fromMemberId: "member-a",
+        toMemberId: "member-b",
+        amount: { minor: 5500 },
+      });
+      expect(JSON.stringify(records)).toBe(originalRecords);
+    },
+  );
+
+  it("retains an actually balanced adjustment's empty recommendations", () => {
+    const head = {
+      kind: "ADJUSTMENT",
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      inputs: [],
+      transfers: [],
+    } as unknown as NonNullable<Parameters<typeof currentSettlementTransfers>[0]>;
+    expect(currentSettlementTransfers(head, null)).toEqual([]);
+  });
+
+  it("preserves initial confirmed transfer identity and legacy payment metadata", () => {
+    const head = {
+      kind: "ROOT",
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      transfers: [
+        {
+          id: "transfer",
+          fromMemberId: "member-b",
+          toMemberId: "member-a",
+          amount: { minor: 3000, currency: "NZD", scale: 2 },
+          payments: [{}],
+        },
+      ],
+    } as unknown as NonNullable<Parameters<typeof currentSettlementTransfers>[0]>;
+    expect(currentSettlementTransfers(head, null)[0]).toMatchObject({
+      id: "transfer",
+      amount: { minor: 3000 },
+      legacyPaymentCount: 1,
+    });
+  });
   it("groups authoritative rows once and retains selected-member split context", () => {
     const rows = [row("hotel", 900, "a"), row("food", 300, "b"), row("hotel", 100, "c")];
     const expenses = rows.map(

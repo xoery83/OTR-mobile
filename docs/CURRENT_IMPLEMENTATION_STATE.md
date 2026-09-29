@@ -2,6 +2,23 @@
 
 Date: 2026-09-29
 
+## Settlement Payments current projection — fix gate PASS
+
+- Payments now derives current recommendations from the latest confirmed Adjustment's
+  full immutable inputs using existing balance/transfer helpers. Adjustment delta
+  transfers remain historical; ROOT/legacy transfer identity and personal-payment
+  records/progress are preserved. No Backend, API or migration change.
+- 9 related suites / 65 tests, TypeScript, scoped ESLint/format/diff checks and signed
+  original-iPhone Release build PASS. Regression includes zero/nonzero deltas, latest
+  snapshot replacement, cold snapshot reload and existing payment progress.
+- Original iPhone Mine/Everyone shows NZ$55.00, Received NZ$37.09 / 67%, and existing
+  payment history. Summary → Payments remains stable. Normal pull retains source
+  fingerprint, 9 effective inputs, head sequence 3 and all stored payment financial
+  records. See `docs/ledger/SETTLEMENT_PAYMENTS_PROJECTION_FIX_GATE.md`.
+- Read-only follow-up confirms the owner's post-precision-release confirmation
+  succeeded: head `c9e746e7-f47d-47e0-907c-9159a459b602`, sequence 3. No agent
+  confirmation/payment write or Production access. Owner requested this fix commit.
+
 ## Workspace commit checkpoint
 
 - Owner requested committing all remaining workspace changes. This checkpoint includes
@@ -11,8 +28,8 @@ Date: 2026-09-29
 - Precommit validation: 17 relevant suites / 166 tests, TypeScript, Backend build,
   changed-file ESLint/format and diff checks PASS. Latest local SQL evidence remains
   33 suites / 655 assertions PASS. No new deployment or push in this commit step.
-- Post-release owner confirmation on the original iPhone remains unverified; the
-  precision gate below distinguishes read-only acceptance from actual confirmation.
+- Subsequent read-only Payments investigation verified the owner's post-release
+  original-iPhone confirmation; see the current Payments gate above.
 
 ## Settlement confirmation precision — Hosted Dev read-only fix gate PASS
 

@@ -4,6 +4,10 @@ import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository"
 import type { PersonalSettlementStatement } from "@/domain/ledger/personalSettlementReview";
 import type { Stage7Finalized, Stage7Preview } from "@/hooks/useStage7Settlement";
 import {
+  balancesFromSettlementInputs,
+  buildTransferPlan,
+} from "@/domain/ledger/settlement";
+import {
   personalPaymentComparable,
   type FxReferenceSnapshotBundle,
 } from "./personalPaymentFx";
@@ -431,7 +435,7 @@ export function currentSettlementTransfers(
     }[];
   } | null,
 ): SettlementTransferView[] {
-  if (finalized)
+  if (finalized && finalized.kind !== "ADJUSTMENT")
     return finalized.transfers.map((transfer) => ({
       id: transfer.id,
       fromMemberId: transfer.fromMemberId,
@@ -441,8 +445,20 @@ export function currentSettlementTransfers(
       scale: finalized.settlementScale,
       legacyPaymentCount: transfer.payments.length,
     }));
-  const source =
-    preview?.state === "PREVIEW_READY" ? preview.transfers : display?.transfers;
+  // An Adjustment's transfers are only its delta. Its inputs contain the full
+  // confirmed financial snapshot used for current recommendations.
+  const source = finalized
+    ? buildTransferPlan(
+        balancesFromSettlementInputs(
+          finalized.inputs,
+          [],
+          finalized.settlementCurrency,
+          finalized.settlementScale,
+        ).map((balance) => ({ ...balance, minor: balance.netMinor })),
+      )
+    : preview?.state === "PREVIEW_READY"
+      ? preview.transfers
+      : display?.transfers;
   if (!source) return [];
   return source.map((transfer) => ({
     ...transfer,
