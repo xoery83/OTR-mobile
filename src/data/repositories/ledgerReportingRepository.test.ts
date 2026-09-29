@@ -1,5 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { performance } from "node:perf_hooks";
+import { writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -8,6 +9,10 @@ import {
   type ReportingRecord,
 } from "@/domain/ledger/reporting";
 import { migrations } from "@/data/db/migrations";
+import {
+  buildSpendingAnalysis,
+  analysisDateBounds,
+} from "@/domain/ledger/spendingAnalysis";
 
 import {
   createLedgerReportingRepository,
@@ -20,6 +25,7 @@ function database() {
     CREATE TABLE ledger_journeys (journey_id TEXT PRIMARY KEY, title TEXT, start_date TEXT,
       end_date TEXT, settlement_currency TEXT, settlement_scale INTEGER);
     CREATE TABLE ledger_members (id TEXT PRIMARY KEY, journey_id TEXT, display_name TEXT);
+    CREATE INDEX ledger_members_journey ON ledger_members(journey_id);
     CREATE TABLE ledger_actor_context (user_id TEXT, journey_id TEXT, member_id TEXT,
       PRIMARY KEY(user_id, journey_id));
     CREATE TABLE ledger_expenses (id TEXT PRIMARY KEY, server_id TEXT, journey_id TEXT, payer_member_id TEXT,
@@ -42,6 +48,7 @@ function database() {
     CREATE INDEX ledger_receipts_expense ON ledger_receipt_assets(expense_id);
     CREATE TABLE ledger_settlements (journey_id TEXT,
       correction_source_expense_id TEXT, correction_successor_expense_id TEXT);
+    CREATE INDEX ledger_settlements_journey ON ledger_settlements(journey_id);
     CREATE TABLE ledger_preferences (id INTEGER PRIMARY KEY, selected_journey_id TEXT,
       default_currency TEXT NOT NULL DEFAULT 'NZD', debug_mode INTEGER NOT NULL DEFAULT 0,
       updated_at TEXT);
@@ -155,6 +162,237 @@ const records: ReportingRecord[] = [
 ];
 
 describe("Ledger reporting repository", () => {
+  it("loads all Dashboard inputs in one account-scoped statement and keeps incomplete records", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    let reads = 0;
+    const counted = {
+      ...adapter,
+      async getFirstAsync<T>(sql: string, ...args: unknown[]) {
+        reads++;
+        return adapter.getFirstAsync<T>(sql, ...(args as never[]));
+      },
+    };
+    const repository = createLedgerReportingRepository(counted, async () => "user-a");
+    const data = await repository.loadSpendingAnalysisProjection(journeyId, memberId);
+    expect(reads).toBe(1);
+    expect(data.expenses).toHaveLength(3);
+    expect(data.members).toHaveLength(2);
+    const mine = buildSpendingAnalysis(data, memberId, "MINE", {}, "2026-09-29");
+    expect(mine).toMatchObject({ totalMinor: 1200, expenseCount: 1 });
+    expect(mine.incomplete.map((item) => item.id).sort()).toEqual(["conflict", "rate"]);
+    const group = buildSpendingAnalysis(data, memberId, "GROUP", {}, "2026-09-29");
+    expect(group.totalMinor).toBe(2000);
+    expect(group.travellers.find((member) => member.key === "b")?.totalMinor).toBe(800);
+    expect(group.payers[0]?.totalMinor).toBe(2000);
+    // Toggles, expansions, filters and chart selections have no Repository ownership.
+    expect(reads).toBe(1);
+    await expect(
+      createLedgerReportingRepository(
+        adapter,
+        async () => "other-account",
+      ).loadSpendingAnalysisProjection(journeyId, memberId),
+    ).rejects.toThrow("not available locally");
+    sqlite.close();
+  });
+
+  it("applies range in the consolidated query and refreshes once on Detail return", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    let reads = 0;
+    const counted = {
+      ...adapter,
+      async getFirstAsync<T>(sql: string, ...args: unknown[]) {
+        reads++;
+        return adapter.getFirstAsync<T>(sql, ...(args as never[]));
+      },
+    };
+    const repository = createLedgerReportingRepository(counted, async () => "user-a");
+    const range = analysisDateBounds("2026-09-10", "2026-09-10")!;
+    const data = await repository.loadSpendingAnalysisProjection(
+      journeyId,
+      memberId,
+      range,
+    );
+    expect(data.expenses.map((item) => item.id)).toEqual(["valued"]);
+    expect(reads).toBe(1);
+    sqlite.exec(
+      "UPDATE ledger_expense_splits SET settlement_amount_minor = 1300 WHERE expense_id = 'valued' AND member_id = 'a'",
+    );
+    const refreshed = await repository.loadSpendingAnalysisProjection(
+      journeyId,
+      memberId,
+      range,
+    );
+    expect(
+      buildSpendingAnalysis(refreshed, memberId, "MINE", range, "2026-09-29").totalMinor,
+    ).toBe(1300);
+    expect(reads).toBe(2);
+    const empty = await repository.loadSpendingAnalysisProjection(
+      journeyId,
+      memberId,
+      analysisDateBounds("2026-09-20", "2026-09-21")!,
+    );
+    expect(empty.expenses).toEqual([]);
+    expect(empty.hasExpensesOutsideRange).toBe(true);
+    sqlite.close();
+  });
+
+  it("retains settlement-excluded local accepted spending and rejects deleted/correction predecessors", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    const repository = createLedgerReportingRepository(adapter, async () => "user-a");
+    sqlite.exec(
+      "UPDATE ledger_expenses SET settlement_participation = 'EXCLUDED' WHERE id = 'valued'",
+    );
+    expect(
+      buildSpendingAnalysis(
+        await repository.loadSpendingAnalysisProjection(journeyId, memberId),
+        memberId,
+        "GROUP",
+        {},
+        "2026-09-29",
+      ).totalMinor,
+    ).toBe(2000);
+    sqlite.exec(
+      "INSERT INTO ledger_settlements VALUES ('journey', 'valued', 'successor')",
+    );
+    expect(
+      (
+        await repository.loadSpendingAnalysisProjection(journeyId, memberId)
+      ).expenses.some((expense) => expense.id === "valued"),
+    ).toBe(false);
+    sqlite.exec("UPDATE ledger_expenses SET deleted_at = '2026-09-29' WHERE id = 'rate'");
+    expect(
+      (await repository.loadSpendingAnalysisProjection(journeyId, memberId)).expenses.map(
+        (expense) => expense.id,
+      ),
+    ).toEqual(["conflict"]);
+    sqlite.close();
+  });
+
+  it("matches exact category/member/payer drilldowns including zero shares and incomplete identities", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    sqlite.exec(
+      "UPDATE ledger_expense_splits SET settlement_amount_minor = 0 WHERE expense_id = 'valued' AND member_id = 'a'",
+    );
+    const repository = createLedgerReportingRepository(adapter, async () => "user-a");
+    const query = {
+      journeyId,
+      memberId,
+      scope: "MINE" as const,
+      analysisState: "INCLUDED" as const,
+      categories: ["food", "other"],
+      payerMemberId: "a",
+    };
+    expect((await repository.listExpenses(query)).map((expense) => expense.id)).toEqual([
+      "valued",
+    ]);
+    expect(await repository.countExpenses(query)).toBe(1);
+    expect((await repository.summarize(query)).expenseCount).toBe(1);
+    expect(
+      (
+        await repository.listExpenses({
+          journeyId,
+          memberId,
+          scope: "MINE",
+          analysisState: "INCOMPLETE",
+        })
+      )
+        .map((expense) => expense.id)
+        .sort(),
+    ).toEqual(["conflict", "rate"]);
+    expect(
+      (
+        await repository.listExpenses({
+          ...query,
+          memberId: "b",
+          participantMemberId: "b",
+        })
+      )[0]?.componentMinor,
+    ).toBe(800);
+    sqlite.close();
+  });
+
+  it("bounds a 10k-Expense long Journey projection with one read and indexed scoped query plans", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    sqlite.exec(
+      "UPDATE ledger_journeys SET start_date = '2024-01-01', end_date = '2026-09-30'",
+    );
+    const insert = sqlite.prepare(
+      "INSERT INTO ledger_expenses SELECT ?, ?, journey_id, payer_member_id, title, description, category, ?, original_amount_minor, original_currency, original_scale, business_status, settlement_participation, sync_status, deleted_at, local_owner_user_id FROM ledger_expenses WHERE id='valued'",
+    );
+    const split = sqlite.prepare(
+      "INSERT INTO ledger_expense_splits SELECT ?, member_id, original_amount_minor, settlement_amount_minor FROM ledger_expense_splits WHERE expense_id='valued'",
+    );
+    const valuation = sqlite.prepare(
+      "INSERT INTO ledger_valuation_snapshots SELECT ?, ?, settlement_amount_minor, settlement_currency, settlement_scale, is_active FROM ledger_valuation_snapshots WHERE id='v1'",
+    );
+    sqlite.exec("BEGIN");
+    for (let index = 0; index < 10_000; index++) {
+      const id = `large-${index}`;
+      const date = new Date(Date.UTC(2024, 0, 1 + (index % 900))).toISOString();
+      insert.run(id, id, date);
+      split.run(id);
+      valuation.run(`v-${id}`, id);
+    }
+    sqlite.exec("COMMIT");
+    let reads = 0;
+    let queryPlan: string[] = [];
+    const counted = {
+      ...adapter,
+      async getFirstAsync<T>(sql: string, ...args: unknown[]) {
+        reads++;
+        queryPlan = sqlite
+          .prepare(`EXPLAIN QUERY PLAN ${sql}`)
+          .all(...(args as never[]))
+          .map((row) => String(row.detail));
+        return adapter.getFirstAsync<T>(sql, ...(args as never[]));
+      },
+    };
+    const repository = createLedgerReportingRepository(counted, async () => "user-a");
+    const started = performance.now();
+    const data = await repository.loadSpendingAnalysisProjection(journeyId, memberId);
+    const localReadMs = performance.now() - started;
+    const cpuStart = performance.now();
+    const result = buildSpendingAnalysis(data, memberId, "GROUP", {}, "2026-09-29");
+    const cpuMs = performance.now() - cpuStart;
+    expect(data.expenses).toHaveLength(10_003);
+    expect(result.granularity).toBe("Monthly");
+    expect(result.expenseCount).toBe(10_001);
+    expect(reads).toBe(1);
+    expect(
+      queryPlan.some((line) => line.includes("ledger_expenses_journey_occurred")),
+    ).toBe(true);
+    expect(localReadMs + cpuMs).toBeLessThan(1500);
+    const range = analysisDateBounds("2026-09-10", "2026-09-10")!;
+    const ranged = await repository.loadSpendingAnalysisProjection(
+      journeyId,
+      memberId,
+      range,
+    );
+    expect(ranged.expenses).toHaveLength(1);
+    expect(
+      queryPlan.some(
+        (line) => line.includes("occurred_at>?") && line.includes("occurred_at<?"),
+      ),
+    ).toBe(true);
+    const evidence = JSON.stringify({
+      analysisPerformance: {
+        expenses: data.expenses.length,
+        localReads: 1,
+        localReadMs: Math.round(localReadMs),
+        cpuMs: Math.round(cpuMs),
+        rangeReads: 1,
+        queryPlan,
+      },
+    });
+    if (process.env.OTR_ANALYSIS_PERFORMANCE_OUTPUT)
+      writeFileSync(process.env.OTR_ANALYSIS_PERFORMANCE_OUTPUT, evidence);
+    sqlite.close();
+  });
   it("discovers summary-only linked Journeys from YEAR without needing ALL", async () => {
     const { adapter, sqlite } = database();
     sqlite.exec(`

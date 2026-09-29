@@ -2,6 +2,34 @@
 
 Date: 2026-09-29
 
+## Spending Analysis 2.0 — implementation and iOS Simulator acceptance PASS
+
+- Owner-approved Analysis-only redesign and Performance / Database Guardrails are
+  implemented. Mine/Group dashboards, Category Top 3/union drilldown, zero-filled
+  daily/weekly/monthly Timeline, Top 5 Expenses, traveller/payer breakdown, completeness,
+  range icon, Analysis-only material/sticky scope and tab hiding use existing routes.
+- One local `loadSpendingAnalysisProjection` SQL read supplies every section. Toggle,
+  category filter/expansion/chart renders are memory-only; range/focus return read once.
+  No migrations, new packages, Backend/API changes, polling or financial-rule change.
+- 8 related suites / 59 tests, TypeScript and scoped ESLint PASS. 10,003 Expenses:
+  one projection 39ms, CPU 15ms on this development machine. Full architecture guard
+  retains one existing failure in untouched LedgerStage6Screen's API import.
+- iOS Release and isolated large/one-day/incomplete fixtures passed core visual and
+  interaction checks; local synthetic Expense edit refreshes all sections correctly.
+  375pt iPhone SE checks also pass: wrapped long titles/amounts, sticky scope, range
+  visibility, hidden tabs and no-expenses state. Android fallback is not device-tested.
+  Large-fixture foreground observation for 191 seconds remains visually stable;
+  idle zero-read counts are from the runnable hook harness, not a native SQL profiler.
+- Large fixture QA clone and Small Screen QA use loopback-only acceptance builds;
+  do not install those builds on the owner's phone or treat them as normal Dev releases.
+  Production was not accessed; no Settlement Confirm or Hosted Dev data validation.
+- Owner-requested iPhone 16 Pro update installed and launched successfully using a
+  signed Release with normal `api-dev.xoery.art` configuration. Compiled bundle
+  verifies Analysis 2.0 is present and loopback QA endpoint is absent. Same-bundle
+  update; no uninstall, data clearing or synthetic fixture injection on the phone.
+- Acceptance evidence and limitations: `docs/ledger/SPENDING_ANALYSIS_2_0_IMPLEMENTATION.md`.
+  Original functionality reference: `docs/ledger/SPENDING_ANALYSIS_CURRENT_FUNCTIONS_ZH.md`.
+
 ## Settlement Payments current projection — fix gate PASS
 
 - Payments now derives current recommendations from the latest confirmed Adjustment's

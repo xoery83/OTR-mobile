@@ -65,6 +65,8 @@ export function LedgerSearchScreen() {
     selectedMemberId?: string;
     scope?: ReportingScope;
     category?: string;
+    categories?: string;
+    analysisState?: "INCLUDED" | "INCOMPLETE";
     payerMemberId?: string;
     participantMemberId?: string;
     currency?: string;
@@ -83,6 +85,8 @@ export function LedgerSearchScreen() {
   const authoritativeOnly = params.authoritative === "1";
   const [initialFilters] = useState<ReportingFilters>(() => ({
     category: params.category,
+    categories: parseAnalysisCategories(params.categories),
+    analysisState: params.analysisState,
     payerMemberId: params.payerMemberId,
     participantMemberId: params.participantMemberId,
     currency: params.currency,
@@ -492,6 +496,15 @@ function activeLabels(filters: ReportingFilters, options: Options) {
       key: "category" as const,
       label: `Category: ${filters.category}`,
     },
+    filters.categories?.length && {
+      key: "categories" as const,
+      label: `Categories: ${filters.categories.join(", ")}`,
+    },
+    filters.analysisState && {
+      key: "analysisState" as const,
+      label:
+        filters.analysisState === "INCLUDED" ? "Included spending" : "Not included yet",
+    },
     filters.payerMemberId && {
       key: "payerMemberId" as const,
       label: `Paid by: ${member(filters.payerMemberId)}`,
@@ -517,6 +530,19 @@ function activeLabels(filters: ReportingFilters, options: Options) {
       label: "Conflict needs review",
     },
   ].filter(Boolean) as { key: keyof ReportingFilters; label: string }[];
+}
+
+function parseAnalysisCategories(value?: string): string[] | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) &&
+      parsed.every((category) => typeof category === "string")
+      ? parsed
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function FilterSheet({

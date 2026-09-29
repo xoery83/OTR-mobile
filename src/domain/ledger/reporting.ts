@@ -7,6 +7,8 @@ export type ReportingFilters = {
   to?: string;
   query?: string;
   category?: string;
+  categories?: string[];
+  analysisState?: "INCLUDED" | "INCOMPLETE";
   payerMemberId?: string;
   participantMemberId?: string;
   currency?: string;

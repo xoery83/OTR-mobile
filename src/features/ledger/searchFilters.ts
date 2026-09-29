@@ -66,12 +66,13 @@ export function ledgerDateFilter(
 export function countLedgerFilters(filters: ReportingFilters) {
   return [
     filters.from,
-    filters.category,
+    filters.category || filters.categories?.length,
     filters.payerMemberId,
     filters.participantMemberId,
     filters.currency,
     filters.valuation,
     filters.conflict,
+    filters.analysisState,
   ].filter(Boolean).length;
 }
 

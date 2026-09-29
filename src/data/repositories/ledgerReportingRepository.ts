@@ -1,5 +1,10 @@
 import type * as SQLite from "expo-sqlite";
 import type { MyLedgerSpendingFact } from "@/data/api/ledgerReadContracts";
+import type {
+  AnalysisDataset,
+  AnalysisExpense,
+  AnalysisRange,
+} from "@/domain/ledger/spendingAnalysis";
 
 import type {
   LedgerJourneyContext,
@@ -124,6 +129,18 @@ function where(query: LedgerReportQuery, userId: string, alias = "e") {
       WHERE ep.expense_id = ${alias}.id AND ep.member_id = ?)`);
     params.push(query.participantMemberId);
   }
+  if (query.categories?.length) {
+    clauses.push(`${alias}.category IN (${query.categories.map(() => "?").join(",")})`);
+    params.push(...query.categories);
+  }
+  if (query.analysisState) {
+    const amount =
+      query.scope === "GROUP"
+        ? "v.settlement_amount_minor"
+        : "mine.settlement_amount_minor";
+    const eligible = `(${authoritativeSql} AND ${amount} IS NOT NULL)`;
+    clauses.push(query.analysisState === "INCLUDED" ? eligible : `NOT ${eligible}`);
+  }
   if (query.query?.trim()) {
     clauses.push(`(
       LOWER(${alias}.title || ' ' || COALESCE(${alias}.description, '') || ' ' || ${alias}.category) LIKE ? ESCAPE '\\'
@@ -155,10 +172,12 @@ function ids(value: string | null) {
   return value ? value.split(",").sort() : [];
 }
 
-function visibleExpenseSql(scope: ReportingScope) {
+function visibleExpenseSql(scope: ReportingScope, analysis = false) {
   return scope === "GROUP"
     ? "1"
-    : "mine.expense_id IS NOT NULL AND (mine.settlement_amount_minor IS NULL OR mine.settlement_amount_minor <> 0)";
+    : analysis
+      ? "mine.expense_id IS NOT NULL"
+      : "mine.expense_id IS NOT NULL AND (mine.settlement_amount_minor IS NULL OR mine.settlement_amount_minor <> 0)";
 }
 
 export function createLedgerReportingRepository(
@@ -166,6 +185,80 @@ export function createLedgerReportingRepository(
   getActiveUserId: () => Promise<string>,
 ) {
   return {
+    async loadSpendingAnalysisProjection(
+      journeyId: string,
+      memberId: string,
+      range: AnalysisRange = {},
+    ): Promise<AnalysisDataset> {
+      const userId = await getActiveUserId();
+      const base = where({ journeyId, memberId, scope: "GROUP" }, userId);
+      const filtered = where({ journeyId, memberId, scope: "GROUP", ...range }, userId);
+      const current = `e.id NOT IN (SELECT sourceId FROM predecessors)
+        AND (e.server_id IS NULL OR e.server_id NOT IN (SELECT sourceId FROM predecessors))`;
+      // One SQLite statement is one coherent read snapshot; sections never query separately.
+      const row = await database.getFirstAsync<{
+        journeyId: string;
+        title: string;
+        startDate: string | null;
+        endDate: string | null;
+        settlementCurrency: string;
+        settlementScale: number;
+        membersJson: string;
+        expensesJson: string;
+        hasExpensesOutsideRange: number;
+      }>(
+        `WITH predecessors AS MATERIALIZED (
+            SELECT correction_source_expense_id AS sourceId FROM ledger_settlements
+            WHERE journey_id = ? AND correction_source_expense_id IS NOT NULL
+          ), scoped AS MATERIALIZED (SELECT e.* FROM ledger_expenses e WHERE ${filtered.sql.replace(currentLeafSql(), current)}),
+          split_data AS (
+            SELECT s.expense_id, json_group_array(json_object('memberId', s.member_id,
+              'minor', s.settlement_amount_minor)) AS splitsJson
+            FROM scoped e CROSS JOIN ledger_expense_splits s
+            WHERE s.expense_id = e.id GROUP BY s.expense_id
+          ), open_conflicts AS (
+            SELECT c.expense_id FROM scoped e CROSS JOIN ledger_expense_conflicts c
+            WHERE c.expense_id = e.id AND c.status = 'OPEN' GROUP BY c.expense_id
+          )
+         SELECT j.journey_id AS journeyId, j.title, j.start_date AS startDate,
+          j.end_date AS endDate, j.settlement_currency AS settlementCurrency,
+          j.settlement_scale AS settlementScale,
+          (SELECT json_group_array(json_object('id', m.id, 'label', m.display_name))
+            FROM ledger_members m WHERE m.journey_id = j.journey_id) AS membersJson,
+          EXISTS (SELECT 1 FROM ledger_expenses e WHERE ${base.sql.replace(currentLeafSql(), current)}) AS hasExpensesOutsideRange,
+          (SELECT json_group_array(json_object(
+            'id', e.id, 'title', e.title, 'category', e.category, 'occurredAt', e.occurred_at,
+            'payerMemberId', e.payer_member_id, 'originalMinor', e.original_amount_minor,
+            'originalCurrency', e.original_currency, 'originalScale', e.original_scale,
+            'totalMinor', v.settlement_amount_minor, 'personalMinor', mine.settlement_amount_minor,
+            'businessStatus', e.business_status, 'hasOpenConflict', c.expense_id IS NOT NULL,
+            'splits', json(COALESCE(s.splitsJson, '[]'))
+          )) FROM scoped e
+            LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
+            LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
+            LEFT JOIN split_data s ON s.expense_id = e.id
+            LEFT JOIN open_conflicts c ON c.expense_id = e.id) AS expensesJson
+         FROM ledger_journeys j WHERE j.journey_id = ? AND EXISTS (
+           SELECT 1 FROM ledger_actor_context actor WHERE actor.user_id = ? AND actor.journey_id = j.journey_id)`,
+        journeyId,
+        ...filtered.params,
+        ...base.params,
+        memberId,
+        journeyId,
+        userId,
+      );
+      if (!row) throw new Error("Analysis Journey is not available locally.");
+      const { membersJson, expensesJson, hasExpensesOutsideRange, ...journey } = row;
+      return {
+        journey,
+        members: JSON.parse(membersJson),
+        expenses: (JSON.parse(expensesJson) as AnalysisExpense[]).map((expense) => ({
+          ...expense,
+          hasOpenConflict: Boolean(expense.hasOpenConflict),
+        })),
+        hasExpensesOutsideRange: Boolean(hasExpensesOutsideRange),
+      };
+    },
     async listJourneys() {
       const userId = await getActiveUserId();
       const rows = await database.getAllAsync<
@@ -396,7 +489,7 @@ export function createLedgerReportingRepository(
          LEFT JOIN ledger_members payer ON payer.id = e.payer_member_id
          LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
          LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
-         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope)}
+         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope, Boolean(query.analysisState))}
          ORDER BY ${query.order === "UPDATED" ? "e.updated_at" : "e.occurred_at"} DESC, e.id
          LIMIT ? OFFSET ?`,
         query.memberId,
@@ -420,7 +513,7 @@ export function createLedgerReportingRepository(
          JOIN ledger_journeys j ON j.journey_id = e.journey_id
          LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
          LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
-         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope)}`,
+         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope, Boolean(query.analysisState))}`,
         query.memberId,
         ...filtered.params,
       );

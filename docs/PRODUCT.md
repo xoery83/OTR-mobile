@@ -106,6 +106,13 @@ Ledger / Expenses:
   analytical display currency; estimates are marked `≈` and missing local FX
   excludes only affected expenses. Its Settlements section shows each Journey's
   existing balance in that Journey's settlement currency.
+- Spending Analysis 2.0 is the approved single-Journey, accepted-value dashboard:
+  Mine uses allocated shares; Group uses full Expense values, traveller shares and
+  payer totals. Category expansion, stacked calendar timelines, biggest Expenses,
+  deterministic insights and completeness share one local projection. Only its
+  secondary chrome hides bottom tabs and trials a material header/sticky scope.
+  Long Journeys offer date ranges. Currency grouping stays available underneath.
+  See `docs/ledger/SPENDING_ANALYSIS_2_0_IMPLEMENTATION.md` for date and performance rules.
 
 Travel Documents / Tickets:
 
