@@ -2,6 +2,30 @@
 
 Date: 2026-09-29
 
+## Large Journey Ledger freeze — batch-read fix, iPhone / Simulator PASS
+
+- Owner reported Small Screen QA frozen on Journey switching, Settlement and
+  Spending Group. Captured App at 276% CPU / 1.2GB footprint; Hermes microtasks
+  and GC busy while the native main thread waited. Restart preserved all data.
+- Existing Expense aggregate listing launched 4 child reads per Expense with
+  unbounded Promise.all; Spending/Settlement also reload that dataset. Shared
+  repository hydration now batches participants/splits/active valuations/payments
+  by the authorized parent IDs: one parent + four child reads, independent of N.
+  Journey/account/deletion/correction filtering and child ordering stay intact.
+- Real SQLite regression covers 2001 aggregates, five reads, child data parity,
+  participant/split order, hidden local ownership, deleted inclusion and empty scope.
+  11 affected suites / 120 tests, typecheck, scoped lint/format PASS. No migration,
+  packages, remote access or financial-rule changes.
+- Updated only the isolated 375pt Simulator with existing 2003-record Journey.
+  Large/small/large switching, Spending Group NZ$39,990 and Settlement Summary
+  +NZ$0.78 complete. After repeated navigation CPU 0–1.2%, RSS ~430–452MB;
+  no persistent saturation. Samples are observations, not a formal UI latency test.
+- Normal Dev signed Release installed/launched on owner's iPhone 16 Pro with
+  existing data intact. Europe Mine/Group (146 Group Expenses), Settlement Summary
+  and Europe -> Final Versions Acceptance -> Europe switching PASS. Bundle endpoint
+  and batched SQL verified. Fix included in the owner-requested Git revision.
+  See latest Analysis implementation-report section for evidence.
+
 ## Spending Analysis owner review — iPhone / Simulator acceptance PASS
 
 - Approved refinements implemented: Journey subtitle, fixed inline-icon Mine/Group,

@@ -315,6 +315,23 @@ function createInMemoryLedgerDatabase() {
     },
     async getAllAsync<T>(sql: string, ...params: unknown[]) {
       const id = params[0] as string;
+      if (sql.includes("json_each(?)")) {
+        const ids = JSON.parse(id) as string[];
+        const source = sql.includes("FROM ledger_expense_participants")
+          ? participants
+          : sql.includes("FROM ledger_expense_splits")
+            ? splits
+            : sql.includes("FROM ledger_payment_records")
+              ? payments
+              : null;
+        return ids.flatMap((expenseId) =>
+          source
+            ? (source.get(expenseId) ?? []).map((row) => ({ ...row, expenseId }))
+            : valuations.get(expenseId)?.isActive
+              ? [{ ...valuations.get(expenseId), expenseId }]
+              : [],
+        ) as T[];
+      }
       if (sql.includes("FROM ledger_receipt_assets"))
         return [...receipts.values()].filter((row) => row.expenseId === id) as T[];
       if (sql.includes("FROM ledger_expenses")) {

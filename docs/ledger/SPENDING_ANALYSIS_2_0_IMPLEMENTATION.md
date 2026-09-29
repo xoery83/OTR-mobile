@@ -382,3 +382,47 @@ and `/private/tmp/otr-analysis-review2-device-{install,launch}.json`.
 CUA cannot inject two-finger touch; pinch is event-harness tested. Android was not
 retested. No new Hosted Dev reads, remote analysis, migration or background polling.
 All owner-feedback changes are included in the requested Git revision; no push.
+
+### Large Journey Ledger freeze follow-up — 2026-09-29
+
+Owner acceptance exposed a freeze outside the Analysis-only projection: Small Screen
+QA stuck busy changing Journey, and Spending Group / Settlement were unresponsive.
+App sampling showed 276% CPU and 1.2GB physical footprint; JavaScript spent the
+sample in async microtasks, array work and GC, while native main thread was idle.
+Evidence: `/private/tmp/otr-small-screen-hang.sample.txt`. Restarting only the App
+preserved fixtures and restored navigation; small Journey was responsive.
+
+The existing shared `listExpensesForJourney` aggregate hydration used four child
+queries for every row, launched together by Promise.all. A 2003-record dataset
+therefore spawned 8012 child reads per listing, with several callers repeating it.
+`ledgerExpenseRepository` now reads the four child tables in batches using only IDs
+returned by the existing authorized Journey-scoped parent query, then assembles
+aggregates in memory. `getExpense` shares the hydration implementation. Parent
+filtering, participant display order, split order, active valuation normalization
+and chronological payment ordering are retained. JSON ID binding avoids SQLite
+parameter-count limits; existing indexes/schema and financial calculations unchanged.
+
+- Real SQLite regression: 2001 Expenses require exactly 5 reads; aggregate fields
+  match individual retrieval, hidden local-owner rows and deleted rows handled,
+  includeDeleted preserved, empty/unauthorized Journey requires only 1 read.
+- 4 Expense repository suites / 48 tests and 7 related Settlement/display/Analysis
+  suites / 72 tests PASS; typecheck, scoped lint, Prettier and diff check PASS.
+- Final isolated Release build PASS and installed on Small Screen QA without
+  uninstall, clearing data or reducing fixture size. Big Journey Group displays
+  NZ$39,990.00; Settlement Summary completes +NZ$0.78. Big -> One day -> Big
+  switching while Settlement selected completes. CPU after these interactions
+  observed at 0–1.2% with RSS ~430–452MB, versus sustained pre-fix saturation.
+  Build: `/private/tmp/otr-small-screen-batch-read-build.log`.
+- Native idle after repeated navigation stayed responsive; this is scoped native
+  acceptance, not a proof for every large Journey path or a formal latency benchmark.
+  No Hosted Dev/Production validation, new polling, schema migration or Backend
+  behavior change.
+- Owner-requested normal Dev iPhone 16 Pro update: signed Release build PASS;
+  compiled api-dev.xoery.art present, loopback absent, batched child SQL present.
+  Installed and launched existing bundle without clearing data. Europe Group
+  shows 146 Expenses / ¥10,347,415.15; Settlement Summary loads ¥8,553,464.76.
+  Europe -> Final Versions Acceptance (NZ$55 balance) -> Europe switching while
+  Settlement selected completes normally. Phone data is existing acceptance data;
+  the 2003-record large fixture remains isolated to Simulator.
+  Evidence: `/private/tmp/otr-batch-read-device-{build.log,install.json,launch.json}`.
+- Fix included in owner-requested Git revision; no push.

@@ -664,7 +664,7 @@ export function createLedgerExpenseRepository(
         includeDeleted ? 1 : 0,
         includeDeleted ? 1 : 0,
       );
-      return Promise.all(rows.map((row) => hydrateExpense(database, row)));
+      return hydrateExpenses(database, rows);
     },
 
     async getExpense(id) {
@@ -688,7 +688,7 @@ export function createLedgerExpenseRepository(
         userId,
         userId,
       );
-      return row ? hydrateExpense(database, row) : null;
+      return row ? (await hydrateExpenses(database, [row]))[0]! : null;
     },
 
     async tombstoneExpense(id, reason) {
@@ -2417,27 +2417,40 @@ function toOperationSnapshot(expense: LedgerExpense) {
   };
 }
 
-async function hydrateExpense(
+function groupExpenseChildren<T>(rows: (T & { expenseId: string })[]) {
+  const grouped = new Map<string, T[]>();
+  for (const { expenseId, ...value } of rows) {
+    const values = grouped.get(expenseId) ?? [];
+    values.push(value as T);
+    grouped.set(expenseId, values);
+  }
+  return grouped;
+}
+
+async function hydrateExpenses(
   database: LedgerExpenseDatabase,
-  row: LedgerExpenseRow,
-): Promise<LedgerExpense> {
+  rows: LedgerExpenseRow[],
+): Promise<LedgerExpense[]> {
+  if (!rows.length) return [];
+  // One bounded child read per table; never launch four queries per Expense.
+  const ids = JSON.stringify(rows.map((row) => row.id));
   const [participants, splits, valuation, paymentRecords] = await Promise.all([
-    database.getAllAsync<ExpenseParticipant>(
-      `SELECT member_id AS memberId, display_name_snapshot AS displayNameSnapshot,
+    database.getAllAsync<ExpenseParticipant & { expenseId: string }>(
+      `SELECT expense_id AS expenseId, member_id AS memberId, display_name_snapshot AS displayNameSnapshot,
         household_id_snapshot AS householdIdSnapshot
-       FROM ledger_expense_participants WHERE expense_id = ? ORDER BY display_order ASC`,
-      row.id,
+       FROM ledger_expense_participants WHERE expense_id IN (SELECT value FROM json_each(?)) ORDER BY display_order ASC`,
+      ids,
     ),
-    database.getAllAsync<ExpenseSplit>(
-      `SELECT member_id AS memberId, original_amount_minor AS originalMinor,
+    database.getAllAsync<ExpenseSplit & { expenseId: string }>(
+      `SELECT expense_id AS expenseId, member_id AS memberId, original_amount_minor AS originalMinor,
         settlement_amount_minor AS settlementMinor, split_method AS method,
         weight_units AS weightUnits, percentage_units AS percentageUnits,
         rounding_adjustment_minor AS roundingAdjustmentMinor
-       FROM ledger_expense_splits WHERE expense_id = ? ORDER BY member_id ASC`,
-      row.id,
+       FROM ledger_expense_splits WHERE expense_id IN (SELECT value FROM json_each(?)) ORDER BY member_id ASC`,
+      ids,
     ),
-    database.getFirstAsync<ValuationRow>(
-      `SELECT COALESCE(server_id, id) AS id, policy,
+    database.getAllAsync<ValuationRow & { expenseId: string }>(
+      `SELECT expense_id AS expenseId, COALESCE(server_id, id) AS id, policy,
         original_amount_minor AS originalMinor, original_currency AS originalCurrency,
         original_scale AS originalScale, settlement_amount_minor AS settlementMinor,
         settlement_currency AS settlementCurrency, settlement_scale AS settlementScale,
@@ -2445,11 +2458,11 @@ async function hydrateExpense(
         decimal_rate AS decimalRate, rounding_mode AS roundingMode,
         effective_at AS effectiveAt, supersedes_valuation_id AS supersedesValuationId,
         reference_evidence_json AS referenceEvidenceJson
-       FROM ledger_valuation_snapshots WHERE expense_id = ? AND is_active = 1`,
-      row.id,
+       FROM ledger_valuation_snapshots WHERE expense_id IN (SELECT value FROM json_each(?)) AND is_active = 1`,
+      ids,
     ),
-    database.getAllAsync<PaymentRecordRow>(
-      `SELECT id, instrument_label AS instrumentLabel,
+    database.getAllAsync<PaymentRecordRow & { expenseId: string }>(
+      `SELECT expense_id AS expenseId, id, instrument_label AS instrumentLabel,
         authorization_amount_minor AS authorizationMinor,
         authorization_currency AS authorizationCurrency,
         authorization_scale AS authorizationScale,
@@ -2459,11 +2472,15 @@ async function hydrateExpense(
         expense_revision AS expenseRevision, payer_member_id AS payerMemberId,
         bank_fx_rate AS bankFxRate, source, notes,
         supersedes_payment_record_id AS supersedesPaymentRecordId
-       FROM ledger_payment_records WHERE expense_id = ? ORDER BY created_at ASC`,
-      row.id,
+       FROM ledger_payment_records WHERE expense_id IN (SELECT value FROM json_each(?)) ORDER BY created_at ASC`,
+      ids,
     ),
   ]);
-  return {
+  const participantsById = groupExpenseChildren(participants);
+  const splitsById = groupExpenseChildren(splits);
+  const valuationsById = groupExpenseChildren(valuation);
+  const paymentsById = groupExpenseChildren(paymentRecords);
+  return rows.map((row) => ({
     id: row.id,
     serverId: row.serverId,
     serverRevision: row.serverRevision,
@@ -2480,10 +2497,12 @@ async function hydrateExpense(
       currency: row.originalCurrency,
       scale: row.originalScale,
     },
-    participants,
-    splits,
-    valuation: valuation ? normalizeValuation(valuation) : null,
-    paymentRecords: paymentRecords.map(normalizePaymentRecord),
+    participants: participantsById.get(row.id) ?? [],
+    splits: splitsById.get(row.id) ?? [],
+    valuation: valuationsById.get(row.id)?.[0]
+      ? normalizeValuation(valuationsById.get(row.id)![0]!)
+      : null,
+    paymentRecords: (paymentsById.get(row.id) ?? []).map(normalizePaymentRecord),
     status: row.businessStatus,
     settlementParticipation: row.settlementParticipation,
     revision: row.revision,
@@ -2491,7 +2510,7 @@ async function hydrateExpense(
     syncStatus: row.syncStatus,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-  };
+  }));
 }
 
 function normalizeValuation(value: ValuationRow): SettlementValuationSnapshot {
