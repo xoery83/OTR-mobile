@@ -192,6 +192,19 @@ describe("Settlement section selectors", () => {
     expect(paid[0].rows[0].id).toBe("expense-local-a");
   });
 
+  it("does not count a zero split as the selected member's share", () => {
+    const input = finalInput("expense", "member-a", 1000, 0) as Parameters<
+      typeof buildFinalizedSettlementCategories
+    >[0][number];
+    expect(buildFinalizedSettlementCategories([input], [], "member-a", "SHARES")).toEqual(
+      [],
+    );
+    expect(
+      buildFinalizedSettlementCategories([input], [], "member-a", "SPENDING")[0]
+        .totalMinor,
+    ).toBe(1000);
+  });
+
   it("builds Current paid and shares from the same estimated inputs as Summary", () => {
     const expense = {
       id: "expense-a",

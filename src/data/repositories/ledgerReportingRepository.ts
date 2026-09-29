@@ -29,6 +29,7 @@ export type LedgerReportQuery = ReportingFilters & {
   memberId: string;
   scope: ReportingScope;
   authoritativeOnly?: boolean;
+  shareOnly?: boolean;
   order?: "OCCURRED" | "UPDATED";
 };
 
@@ -166,6 +167,13 @@ function where(query: LedgerReportQuery, userId: string, alias = "e") {
     clauses.push(
       `${authoritativeSql} AND ${query.scope === "GROUP" ? "v.settlement_amount_minor" : "mine.settlement_amount_minor"} IS NOT NULL`,
     );
+  if (query.shareOnly) {
+    clauses.push(`EXISTS (SELECT 1 FROM ledger_expense_splits selected_share
+      WHERE selected_share.expense_id = ${alias}.id
+        AND selected_share.member_id = ?
+        AND selected_share.settlement_amount_minor > 0)`);
+    params.push(query.memberId);
+  }
   return { sql: clauses.join(" AND "), params };
 }
 

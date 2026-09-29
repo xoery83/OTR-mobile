@@ -64,6 +64,7 @@ export function LedgerSearchScreen() {
     journeyId: string;
     memberId: string;
     selectedMemberId?: string;
+    shareOnly?: string;
     scope?: ReportingScope;
     category?: string;
     categories?: string;
@@ -84,6 +85,7 @@ export function LedgerSearchScreen() {
       : "MINE";
   const memberId = params.selectedMemberId || params.memberId;
   const authoritativeOnly = params.authoritative === "1";
+  const shareOnly = params.shareOnly === "1";
   const [initialFilters] = useState<ReportingFilters>(() => ({
     category: params.category,
     categories: parseAnalysisCategories(params.categories),
@@ -119,7 +121,7 @@ export function LedgerSearchScreen() {
       retryRequest.current = { filters, query };
       moreRequest.cancel();
       setLoadingMore(false);
-      const key = JSON.stringify({ filters, query, scope, authoritativeOnly });
+      const key = JSON.stringify({ filters, query, scope, authoritativeOnly, shareOnly });
       setUpdating(true);
       setError(null);
       setMoreError(null);
@@ -130,6 +132,7 @@ export function LedgerSearchScreen() {
           memberId,
           scope,
           authoritativeOnly,
+          shareOnly,
           ...filters,
           query,
         };
@@ -156,7 +159,15 @@ export function LedgerSearchScreen() {
         if (request.isCurrent(id)) setUpdating(false);
       }
     },
-    [authoritativeOnly, memberId, moreRequest, params.journeyId, request, scope],
+    [
+      authoritativeOnly,
+      memberId,
+      moreRequest,
+      params.journeyId,
+      request,
+      scope,
+      shareOnly,
+    ],
   );
 
   useEffect(() => {
@@ -236,6 +247,7 @@ export function LedgerSearchScreen() {
           memberId,
           scope,
           authoritativeOnly,
+          shareOnly,
           ...current.filters,
           query: current.query,
         },
@@ -261,9 +273,16 @@ export function LedgerSearchScreen() {
 
   const renderRow = ({ item }: { item: LedgerReportListItem }) => {
     const attention = ledgerExpenseAttention(item, scope);
+    const amount = shareOnly
+      ? formatLedgerMoney(
+          item.componentMinor ?? 0,
+          item.settlementCurrency,
+          item.settlementScale,
+        )
+      : formatLedgerMoney(item.originalMinor, item.originalCurrency, item.originalScale);
     return (
       <Pressable
-        accessibilityLabel={`${item.title}, ${formatLedgerMoney(item.originalMinor, item.originalCurrency, item.originalScale)}${attention ? `, ${attention}` : ""}`}
+        accessibilityLabel={`${item.title}, ${shareOnly ? "selected share" : "total"} ${amount}${attention ? `, ${attention}` : ""}`}
         accessibilityRole="button"
         onPress={() => router.push(`/expenses/expense/${item.id}`)}
         style={[styles.row, largeText && styles.stack]}
@@ -281,13 +300,7 @@ export function LedgerSearchScreen() {
             </Text>
           ) : null}
         </View>
-        <Text style={[styles.amount, largeText && styles.largeAmount]}>
-          {formatLedgerMoney(
-            item.originalMinor,
-            item.originalCurrency,
-            item.originalScale,
-          )}
-        </Text>
+        <Text style={[styles.amount, largeText && styles.largeAmount]}>{amount}</Text>
       </Pressable>
     );
   };

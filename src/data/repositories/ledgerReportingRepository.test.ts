@@ -646,6 +646,28 @@ describe("Ledger reporting repository", () => {
     sqlite.close();
   });
 
+  it("limits a Shares search to positive splits for the selected member", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    sqlite.exec(
+      "UPDATE ledger_expense_splits SET settlement_amount_minor = 0 WHERE expense_id = 'conflict' AND member_id = 'a'",
+    );
+    const repository = createLedgerReportingRepository(adapter, async () => "user-a");
+    const query = { journeyId, memberId: "a", scope: "MINE" as const, shareOnly: true };
+    expect(
+      (await repository.listExpenses(query)).map((row) => [row.id, row.componentMinor]),
+    ).toEqual([["valued", 1200]]);
+    expect(await repository.countExpenses(query)).toBe(1);
+    expect((await repository.summarize(query)).totalMinor).toBe(1200);
+    expect(
+      (await repository.listExpenses({ ...query, memberId: "b" })).map((row) => row.id),
+    ).toEqual(["valued"]);
+    expect(
+      (await repository.listExpenses({ ...query, memberId: "b" }))[0].componentMinor,
+    ).toBe(800);
+    sqlite.close();
+  });
+
   it("shares canonical rows but hides another account's local Ledger changes", async () => {
     const { adapter, sqlite } = database();
     insertFixture(sqlite);

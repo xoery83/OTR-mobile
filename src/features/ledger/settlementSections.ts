@@ -337,7 +337,7 @@ export function buildFinalizedSettlementCategories(
           ? input.settlement.minor
           : null
         : (split?.settlementMinor ?? null);
-    if (componentMinor === null) return [];
+    if (componentMinor === null || (kind === "SHARES" && componentMinor <= 0)) return [];
     return [
       {
         id: expense?.id ?? input.expenseId,
@@ -387,7 +387,7 @@ export function buildEstimatedSettlementCategories(
           ? input.settlement.minor
           : null
         : (split?.settlementMinor ?? null);
-    if (componentMinor === null) return [];
+    if (componentMinor === null || (kind === "SHARES" && componentMinor <= 0)) return [];
     return [
       {
         id: input.expense.id,

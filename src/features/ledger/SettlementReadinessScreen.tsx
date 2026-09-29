@@ -23,7 +23,8 @@ import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 import { useLedgerActiveSync } from "@/hooks/useLedgerActiveSync";
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
 
-import { formatLedgerMoney } from "./format";
+import { formatLedgerDate, formatLedgerMoney } from "./format";
+import { formatExpenseCount } from "./searchFilters";
 import { settlementPositionLabel, shortMemberName } from "./dashboardPresentation";
 import { PersonalPaymentSection } from "./PersonalPaymentSection";
 import {
@@ -729,6 +730,26 @@ function ExpenseSection({
   const total = categories.reduce((sum, category) => sum + category.totalMinor, 0);
   const currency = first?.settlementCurrency ?? "NZD";
   const scale = first?.settlementScale ?? 2;
+  const openExpenseSearch = (category?: string) =>
+    router.push({
+      pathname: "/expenses/search",
+      params: {
+        journeyId,
+        memberId: memberId ?? "",
+        ...(category ? { category } : {}),
+        ...(shares
+          ? {
+              selectedMemberId: memberId ?? "",
+              shareOnly: "1",
+              ...(historicalSnapshot ? { origin: "Current expenses" } : {}),
+            }
+          : { payerMemberId: memberId ?? "" }),
+      },
+    } as never);
+  const shareOwner =
+    memberId === actorMemberId
+      ? "my"
+      : `${shortMemberName(selectedMember?.label ?? "traveller")}'s`;
   return (
     <View style={styles.section}>
       <View style={styles.hero}>
@@ -787,88 +808,161 @@ function ExpenseSection({
       </View>
       {categories.map((category) => {
         const open = expanded === category.key;
+        const preview = shares
+          ? [...category.rows]
+              .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))
+              .slice(0, 3)
+          : category.rows.slice(0, 8);
         return (
           <View key={category.key} style={styles.category}>
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ expanded: open }}
               onPress={() => onExpand(open ? null : category.key)}
-              style={styles.categoryHeader}
+              style={[styles.categoryHeader, shares && styles.shareCategoryHeader]}
             >
-              <Text numberOfLines={2} style={[styles.rowTitle, styles.grow]}>
-                {category.label}
-              </Text>
-              <Text style={styles.rowAmount}>
-                {formatLedgerMoney(category.totalMinor, currency, scale)}
-              </Text>
-              <AppIcon
-                color={cv.color.secondary}
-                name={open ? "chevron.up" : "chevron.down"}
-                size={14}
-              />
+              {shares ? (
+                <>
+                  <View style={styles.categoryLine}>
+                    <Text numberOfLines={2} style={[styles.rowTitle, styles.grow]}>
+                      {category.label}
+                    </Text>
+                    <Text style={styles.rowAmount}>
+                      {formatLedgerMoney(category.totalMinor, currency, scale)}
+                    </Text>
+                  </View>
+                  <View style={styles.categoryLine}>
+                    <Text style={styles.meta}>
+                      {formatExpenseCount(category.rows.length)}
+                    </Text>
+                    <AppIcon
+                      color={cv.color.secondary}
+                      name={open ? "chevron.up" : "chevron.down"}
+                      size={14}
+                    />
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text numberOfLines={2} style={[styles.rowTitle, styles.grow]}>
+                    {category.label}
+                  </Text>
+                  <Text style={styles.rowAmount}>
+                    {formatLedgerMoney(category.totalMinor, currency, scale)}
+                  </Text>
+                  <AppIcon
+                    color={cv.color.secondary}
+                    name={open ? "chevron.up" : "chevron.down"}
+                    size={14}
+                  />
+                </>
+              )}
             </Pressable>
             {open ? (
-              <View style={styles.expandedBody}>
-                {category.rows.slice(0, 8).map((row) => (
+              <View style={[styles.expandedBody, shares && styles.shareExpandedBody]}>
+                {shares ? (
+                  <Text style={styles.recentHeading}>Recent expenses</Text>
+                ) : null}
+                {preview.map((row, index) => (
                   <Pressable
                     accessibilityHint="Opens Expense detail"
                     accessibilityRole="button"
                     key={row.id}
                     onPress={() => router.push(`/expenses/expense/${row.id}`)}
-                    style={styles.expenseRow}
+                    style={[
+                      styles.expenseRow,
+                      shares && styles.shareExpenseRow,
+                      shares && index === preview.length - 1 && styles.lastExpenseRow,
+                    ]}
                   >
-                    <View style={styles.grow}>
-                      <Text numberOfLines={2} style={styles.rowTitle}>
-                        {row.title}
-                      </Text>
-                      <Text numberOfLines={2} style={styles.meta}>
-                        {formatLedgerMoney(
-                          row.originalMinor,
-                          row.originalCurrency,
-                          row.originalScale,
-                        )}{" "}
-                        total · Paid by {row.payerName}
-                      </Text>
-                      <Text numberOfLines={2} style={styles.meta}>
-                        {row.participantCount}{" "}
-                        {row.participantCount === 1 ? "person" : "people"} ·{" "}
-                        {splitLabel(row.splitMethod)}
-                      </Text>
-                      {shares && row.componentMinor !== null ? (
-                        <Text style={styles.body}>
-                          Selected share ·{" "}
-                          {formatLedgerMoney(
-                            row.componentMinor,
-                            row.settlementCurrency,
-                            row.settlementScale,
-                          )}
+                    {shares ? (
+                      <View style={styles.grow}>
+                        <View style={styles.categoryLine}>
+                          <Text numberOfLines={2} style={[styles.rowTitle, styles.grow]}>
+                            {row.title}
+                          </Text>
+                          <Text style={styles.compactAmount}>
+                            {formatLedgerMoney(
+                              row.componentMinor ?? 0,
+                              row.settlementCurrency,
+                              row.settlementScale,
+                            )}
+                          </Text>
+                        </View>
+                        <View style={styles.categoryLine}>
+                          <Text numberOfLines={1} style={[styles.meta, styles.grow]}>
+                            {formatLedgerDate(row.occurredAt)} · Total{" "}
+                            {formatLedgerMoney(
+                              row.originalMinor,
+                              row.originalCurrency,
+                              row.originalScale,
+                            )}
+                          </Text>
+                          <Text style={styles.meta}>
+                            {memberId === actorMemberId
+                              ? "You"
+                              : shortMemberName(selectedMember?.label ?? "Traveller")}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={styles.grow}>
+                        <Text numberOfLines={2} style={styles.rowTitle}>
+                          {row.title}
                         </Text>
-                      ) : null}
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
+                        <Text numberOfLines={2} style={styles.meta}>
+                          {formatLedgerMoney(
+                            row.originalMinor,
+                            row.originalCurrency,
+                            row.originalScale,
+                          )}{" "}
+                          total · Paid by {row.payerName}
+                        </Text>
+                        <Text numberOfLines={2} style={styles.meta}>
+                          {row.participantCount}{" "}
+                          {row.participantCount === 1 ? "person" : "people"} ·{" "}
+                          {splitLabel(row.splitMethod)}
+                        </Text>
+                      </View>
+                    )}
+                    {!shares ? <Text style={styles.chevron}>›</Text> : null}
                   </Pressable>
                 ))}
+                {shares ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => openExpenseSearch(category.key)}
+                    style={styles.categoryLink}
+                  >
+                    <Text style={styles.categoryLinkText}>
+                      {historicalSnapshot
+                        ? `View current ${category.label} expenses`
+                        : `View all ${formatExpenseCount(category.rows.length).toLowerCase()}`}
+                    </Text>
+                    <AppIcon name="chevron.right" size={14} color="#0F766E" />
+                  </Pressable>
+                ) : null}
               </View>
             ) : null}
           </View>
         );
       })}
       {!categories.length ? <Text style={styles.empty}>{empty}</Text> : null}
-      <Action
-        label={historicalSnapshot ? "View current expenses" : "View all expenses"}
-        onPress={() =>
-          router.push({
-            pathname: "/expenses/search",
-            params: {
-              journeyId,
-              memberId: memberId ?? "",
-              ...(shares
-                ? { selectedMemberId: memberId ?? "" }
-                : { payerMemberId: memberId ?? "" }),
-            },
-          } as never)
-        }
-      />
+      {shares ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => openExpenseSearch()}
+          style={styles.shareAllLink}
+        >
+          <Text style={styles.categoryLinkText}>View all {shareOwner} expenses</Text>
+          <AppIcon name="chevron.right" size={14} color="#0F766E" />
+        </Pressable>
+      ) : (
+        <Action
+          label={historicalSnapshot ? "View current expenses" : "View all expenses"}
+          onPress={() => openExpenseSearch()}
+        />
+      )}
     </View>
   );
 }
@@ -1276,6 +1370,53 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     minHeight: 52,
     gap: 8,
+    paddingHorizontal: 14,
+  },
+  shareCategoryHeader: {
+    alignItems: "stretch",
+    flexDirection: "column",
+    gap: 6,
+    paddingVertical: 14,
+  },
+  categoryLine: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  compactAmount: {
+    color: cv.color.text,
+    fontSize: 14,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+    textAlign: "right",
+    maxWidth: "48%",
+  },
+  recentHeading: { color: "#334155", fontSize: 13, fontWeight: "700" },
+  shareExpandedBody: { gap: 10, padding: cv.space.row },
+  shareExpenseRow: {
+    borderTopWidth: 0,
+    borderBottomColor: cv.color.divider,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 0,
+    paddingVertical: 13,
+    minHeight: 66,
+  },
+  lastExpenseRow: { borderBottomWidth: 0 },
+  categoryLink: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "space-between",
+    minHeight: 44,
+  },
+  categoryLinkText: { color: "#0F766E", flexShrink: 1, fontSize: 14, fontWeight: "600" },
+  shareAllLink: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "space-between",
+    minHeight: 44,
     paddingHorizontal: 14,
   },
   expandedBody: {

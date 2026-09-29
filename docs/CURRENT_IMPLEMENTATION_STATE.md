@@ -2,6 +2,12 @@
 
 Date: 2026-09-30
 
+## Settlement Shares category and search polish — Simulator PASS
+
+- Shares category cards show the selected member's positive-share Expense count. Expanded cards use the Analysis-style compact three-row preview, sorted by Expense date, with a light category search link. The bottom action is a light `View all my expenses` link and follows organizer member selection.
+- Shares search now filters to positive splits for that member. Result-row amounts use the member's settlement share; the summary uses the same query. When a confirmed Final snapshot is shown, category search explicitly says it opens current expenses, since the current browser can contain later changes.
+- iPhone 17 Pro Simulator Release visual review covered collapsed/expanded categories, mixed currencies, long titles, member switching and category-filtered search. Three focused suites / 43 tests, TypeScript, scoped ESLint and diff check pass. No schema, API, sync or dependency changes. Existing unrelated working-tree changes were not included in this checkpoint.
+
 ## Content visual language v1 — Simulator and iPhone visual review PASS
 
 - Ledger content now shares small typography, surface, radius, spacing and amount
