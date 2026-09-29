@@ -335,6 +335,13 @@ describe("Settlement Summary projection", () => {
     expect(
       shouldPublishSavedSettlementProjection(current, saved, source.sourceFingerprint),
     ).toBe(false);
+    expect(
+      shouldPublishSavedSettlementProjection(
+        current,
+        { ...saved, freshness: "LOCAL_PENDING" },
+        source.sourceFingerprint,
+      ),
+    ).toBe(true);
     const newHead = {
       ...saved,
       confirmedSettlement: { ...saved.confirmedSettlement!, id: "new-head" },

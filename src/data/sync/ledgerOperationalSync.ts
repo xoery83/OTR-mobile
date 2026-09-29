@@ -132,16 +132,13 @@ export function runLedgerOperationalSync(
 
 async function runOperationalCycle(origin: LedgerOperationalSyncOrigin) {
   const completion = await captureEligibleScopes();
-  await Promise.resolve(runLedgerPersonalPaymentSync())
-    .catch(() => undefined)
-    .then(() =>
-      Promise.allSettled([
-        runLedgerExpenseSync().then(() => runLedgerReceiptSync()),
-        runLedgerSettlementPaymentSync(),
-        runLedgerReviewSync(),
-        runPersonalSettlementReviewSync(),
-      ]),
-    )
+  await Promise.allSettled([
+    Promise.resolve().then(() => runLedgerPersonalPaymentSync()),
+    runLedgerExpenseSync().then(() => runLedgerReceiptSync()),
+    runLedgerSettlementPaymentSync(),
+    runLedgerReviewSync(),
+    runPersonalSettlementReviewSync(),
+  ])
     .then(async () => {
       try {
         const database = await openDatabase();

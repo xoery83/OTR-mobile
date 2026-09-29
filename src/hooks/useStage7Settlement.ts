@@ -341,7 +341,13 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
             const next = refreshed.memberId
               ? currentSettlementSummaryProjection(current, refreshed.memberId)
               : null;
-            if (next && refreshed.memberId) {
+            if (
+              next &&
+              refreshed.memberId &&
+              !refreshedDisplay.inputs.some(
+                ({ expense }) => expense.syncStatus !== "SYNCED",
+              )
+            ) {
               const previous = readSharedSettlementProjection(activeJourneyId);
               rememberSettlementProjection(
                 activeJourneyId,

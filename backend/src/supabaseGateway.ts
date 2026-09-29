@@ -4050,7 +4050,15 @@ export async function executeExpenseCommand(
         )
           eligibility = "DIRECT";
       }
-      const derivedPatch = !!(intent.patch.financial || intent.patch.participantSplit);
+      const derivedPatch = !!(
+        intent.patch.participantSplit ||
+        Object.keys(intent.patch.financial ?? {}).some(
+          (field) => field !== "settlementParticipation",
+        ) ||
+        (intent.patch.descriptive?.occurredAt &&
+          utcInstant(intent.patch.descriptive.occurredAt).slice(0, 10) !==
+            utcInstant(current.occurredAt).slice(0, 10))
+      );
       if (
         resolution &&
         resolution.choice === "APPLY_PATCH" &&

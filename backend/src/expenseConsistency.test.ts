@@ -50,6 +50,7 @@ function service(
     amount?: number;
     deleted?: boolean;
     automatic?: boolean;
+    participation?: "INCLUDED" | "EXCLUDED";
     replay?: unknown;
     sqlError?: string;
     chain?: unknown;
@@ -73,7 +74,7 @@ function service(
       original_currency: "USD",
       original_currency_scale: 2,
       business_status: options.deleted ? "DELETED" : "ACCEPTED",
-      settlement_participation: "INCLUDED",
+      settlement_participation: options.participation ?? "INCLUDED",
       revision: 2,
       deleted_at: options.deleted ? base.updatedAt : null,
       created_at: base.createdAt,
@@ -213,6 +214,24 @@ const args = (rpc: ReturnType<typeof service>["rpc"]) =>
   rpc.mock.calls.find(([name]) => name === "ledger_execute_expense_v2")![1];
 
 describe("Backend typed Expense evidence gate", () => {
+  it("keeps accepted rate and split evidence for a participation-only edit", async () => {
+    const mocked = service({ history: null, participation: "EXCLUDED" });
+    const input = command({
+      type: "UPDATE",
+      patch: { financial: { settlementParticipation: "INCLUDED" } },
+    });
+    input.envelope.observedServerRevision = 2;
+    input.envelope.boundExecutionRevision = 2;
+    await execute(mocked.client, input);
+    expect(args(mocked.rpc).response_body_value).toMatchObject({
+      entity: {
+        businessStatus: "ACCEPTED",
+        settlementParticipation: "INCLUDED",
+        valuation: { id: expenseId, settlement: { minor: 4056 } },
+        splits: [{ settlementMinor: 4056 }],
+      },
+    });
+  });
   it("omits absent CREATE current evidence rather than passing JSON null to SQL projection", async () => {
     const mocked = service();
     const input = command();

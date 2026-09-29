@@ -56,6 +56,7 @@ vi.mock("./personalSettlementReviewCoordinator", () => ({
 /* eslint-disable import/first */
 import { runLedgerExpenseSync } from "./ledgerExpenseDemoCoordinator";
 import { runLedgerReceiptSync } from "./ledgerReceiptCoordinator";
+import { runLedgerPersonalPaymentSync } from "./ledgerPersonalPaymentCoordinator";
 import {
   allowLedgerOperationalSync,
   kickLedgerOperationalSync,
@@ -150,6 +151,19 @@ describe("Ledger mutation sync kick", () => {
     release();
     await run;
     expect(runLedgerReceiptSync).toHaveBeenCalledOnce();
+  });
+
+  it("starts Expense sync while a Personal Payment batch is still running", async () => {
+    let release!: () => void;
+    vi.mocked(runLedgerPersonalPaymentSync).mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = () => resolve({ status: "syncing", processedCount: 1 });
+      }) as never,
+    );
+    const run = runLedgerOperationalSync();
+    await vi.waitFor(() => expect(runLedgerExpenseSync).toHaveBeenCalledOnce());
+    release();
+    await run;
   });
 
   it("does not recurse from a health-origin operational sync", async () => {

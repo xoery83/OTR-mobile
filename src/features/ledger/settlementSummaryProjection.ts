@@ -184,6 +184,7 @@ export function shouldPublishSavedSettlementProjection(
   if (!existing) return true;
   if (existing.freshness === "CURRENT")
     return (
+      (saved?.freshness === "LOCAL_PENDING" && saved.confirmationDiff.length > 0) ||
       canonicalFingerprint !== existing.sourceFingerprint ||
       existing.confirmedSettlement?.id !== saved?.confirmedSettlement?.id
     );
