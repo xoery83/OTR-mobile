@@ -53,6 +53,39 @@ type LocalPreview = {
   inputs: { expense: LocalExpense }[];
 };
 
+export function hasSettlementUpdate(
+  projection:
+    | Pick<SettlementSummaryProjection, "confirmedSettlement" | "confirmationDiff">
+    | null
+    | undefined,
+) {
+  return Boolean(projection?.confirmedSettlement && projection.confirmationDiff.length);
+}
+
+export function savedSettlementCardProjection(
+  rows: FinalizedSettlement[],
+  memberId: string,
+  preview: LocalPreview | null,
+  pending: boolean,
+) {
+  if (!rows.length) return { kind: "PREVIEW" as const };
+  const root = rows.find((row) => row.kind !== "ADJUSTMENT") ?? rows[0];
+  const confirmed = rows
+    .filter((row) => row.id === root.id || row.rootSettlementId === root.id)
+    .sort((left, right) => (left.lineageSequence ?? 0) - (right.lineageSequence ?? 0))
+    .at(-1)!;
+  const current = preview
+    ? savedSettlementSummaryProjection(preview, confirmed, memberId, pending)
+    : null;
+  return {
+    kind: "FINAL" as const,
+    positionMinor: current?.balanceMinor ?? null,
+    currency: current?.currency ?? root.settlementCurrency,
+    scale: current?.scale ?? root.settlementScale,
+    needsUpdate: hasSettlementUpdate(current),
+  };
+}
+
 export type SettlementSummaryProjection = {
   projectionId: string;
   freshness: "SAVED" | "CURRENT" | "LOCAL_PENDING";

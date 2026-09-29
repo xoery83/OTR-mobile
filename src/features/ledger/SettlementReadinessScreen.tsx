@@ -38,6 +38,7 @@ import {
 } from "./settlementSections";
 import {
   countSettlementChanges,
+  hasSettlementUpdate,
   isSettlementConfirmationRefreshing,
   rememberSettlementExpenseTitles,
 } from "./settlementSummaryProjection";
@@ -347,7 +348,6 @@ function SummarySection({
             : "Using a recent reference rate. This amount may change.",
     }));
   const changeCounts = countSettlementChanges(projection?.confirmationDiff ?? []);
-  const hasChanges = (projection?.confirmationDiff.length ?? 0) > 0;
   const confirmedBalance = projection?.confirmedSettlement;
   const confirm = () => {
     if (
@@ -466,7 +466,7 @@ function SummarySection({
           />
         </View>
       ) : null}
-      {hasConfirmed && hasChanges ? (
+      {hasSettlementUpdate(projection) ? (
         <View style={styles.notice}>
           <Text style={styles.noticeTitle}>Changes since last confirmation</Text>
           {(["ADDED", "CHANGED", "REMOVED"] as const).map((change) =>

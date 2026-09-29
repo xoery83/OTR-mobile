@@ -58,7 +58,7 @@ import {
 } from "./displayEstimate";
 import { loadDisplayEstimates } from "./loadDisplayEstimates";
 import { loadEstimatedSettlement } from "./loadEstimatedSettlement";
-import { savedSettlementSummaryProjection } from "./settlementSummaryProjection";
+import { savedSettlementCardProjection } from "./settlementSummaryProjection";
 import {
   SettlementReadinessScreen,
   SettlementSectionTabs,
@@ -78,20 +78,7 @@ import { retrySQLiteRollbackOnce } from "./retryLedgerRead";
 import { LedgerSheetHeader } from "./LedgerSheetHeader";
 
 type Mode = "SPENDING" | "SETTLEMENT";
-type FinalizedRows = Awaited<
-  ReturnType<
-    Awaited<ReturnType<typeof getDefaultLedgerSettlementRepository>>["listFinalized"]
-  >
->;
-type SettlementSnapshot =
-  | { kind: "PREVIEW" }
-  | {
-      kind: "FINAL";
-      positionMinor: number | null;
-      currency: string;
-      scale: number;
-      needsUpdate: boolean;
-    };
+type SettlementSnapshot = ReturnType<typeof savedSettlementCardProjection>;
 type SpendingProjection = {
   journey: LedgerJourneyContext;
   memberId: string;
@@ -142,26 +129,6 @@ const categoryIcons: Record<string, Parameters<typeof AppIcon>[0]["name"]> = {
 
 function categoryIcon(category: string) {
   return categoryIcons[category.toLowerCase()] ?? "tag.fill";
-}
-
-function summarizeSettlement(
-  rows: FinalizedRows,
-  memberId: string,
-  preview: Awaited<ReturnType<typeof loadEstimatedSettlement>> | null,
-  pending: boolean,
-): SettlementSnapshot {
-  if (!rows.length) return { kind: "PREVIEW" };
-  const root = rows.find((row) => row.kind !== "ADJUSTMENT") ?? rows[0];
-  const current = preview
-    ? savedSettlementSummaryProjection(preview, root, memberId, pending)
-    : null;
-  return {
-    kind: "FINAL",
-    positionMinor: current?.balanceMinor ?? null,
-    currency: current?.currency ?? root.settlementCurrency,
-    scale: current?.scale ?? root.settlementScale,
-    needsUpdate: root.adjustmentState !== null && root.adjustmentState !== "CURRENT",
-  };
 }
 
 export function LedgerStage6Screen({
@@ -348,7 +315,7 @@ export function LedgerStage6Screen({
             estimatedCount: display.estimatedCount,
             estimates,
             estimateComponents,
-            settlement: summarizeSettlement(
+            settlement: savedSettlementCardProjection(
               settlements,
               nextMemberId,
               settlementPreview,

@@ -13,6 +13,7 @@ import {
   readSharedSettlementProjection,
   rememberSettlementExpenseTitles,
   rememberSettlementProjection,
+  savedSettlementCardProjection,
   savedSettlementSummaryProjection,
   settlementExpenseIdentity,
   settlementProjectionAfterConfirmation,
@@ -235,6 +236,41 @@ describe("Settlement Summary projection", () => {
       balanceMinor: 517,
       confirmedSettlement: { id: confirmed.id, balanceMinor: 517 },
       confirmationDiff: [],
+    });
+    const rootId = "00000000-0000-4000-8000-000000000009";
+    const rows = [
+      { ...confirmed, kind: "ADJUSTMENT", rootSettlementId: rootId },
+      {
+        ...confirmed,
+        id: rootId,
+        kind: "ROOT",
+        lineageSequence: 0,
+        adjustmentState: "ADJUSTMENT_BLOCKED",
+        inputs: [],
+      },
+    ] as unknown as Parameters<typeof savedSettlementCardProjection>[0];
+    const local = {
+      balances: [
+        {
+          memberId: actor,
+          minor: 517,
+          paidMinor: 617,
+          owedMinor: 100,
+          currency: "CNY",
+          scale: 2,
+        },
+      ],
+      inputs: [{ expense }],
+    };
+    expect(savedSettlementCardProjection(rows, actor, local, false)).toMatchObject({
+      kind: "FINAL",
+      positionMinor: 517,
+      needsUpdate: false,
+    });
+    expect(
+      savedSettlementCardProjection(rows, actor, { ...local, inputs: [] }, false),
+    ).toMatchObject({
+      needsUpdate: true,
     });
   });
 
