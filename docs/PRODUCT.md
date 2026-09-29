@@ -109,8 +109,10 @@ Ledger / Expenses:
 - Spending Analysis 2.0 is the approved single-Journey, accepted-value dashboard:
   Mine uses allocated shares; Group uses full Expense values, traveller shares and
   payer totals. Category expansion, stacked calendar timelines, biggest Expenses,
-  deterministic insights and completeness share one local projection. Only its
-  secondary chrome hides bottom tabs and trials a material header/sticky scope.
+  deterministic insights and completeness share one local projection. Its
+  secondary chrome trials a material header/sticky scope. Navigation chrome
+  keeps tabs on the primary Journey workspace and hides them on deep, detail,
+  task, and Ledger utility pages without moving routes.
   Long Journeys offer date ranges. Currency grouping stays available underneath.
   Category previews sort by latest modification. Display groups below 3% fold into
   Other categories. Timeline fits the viewport, supports pinch zoom / subsequent
@@ -161,8 +163,9 @@ Account Switching work.
 The top-left menu is a contextual utility menu, not a second app launcher. It
 combines the current account, Settings, Language, Log out, and low-frequency
 actions for the current primary module. While Ledger is active, those actions
-are My Ledger and Currency. Review remains inside the selected Journey's Ledger
-experience. Developer diagnostics and test-account tools do not appear in the
+are My Ledger and Currency. Review remains Journey-scoped but presents as a
+deep page with Back, a Journey subtitle, and no bottom tabs or Journey chooser.
+Developer diagnostics and test-account tools do not appear in the
 normal menu. The menu must not repeat Today, Ledger, Trip, Album, or Capture as
 navigation destinations.
 

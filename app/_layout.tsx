@@ -38,6 +38,8 @@ export default function RootLayout() {
         screenOptions={{
           headerBackButtonDisplayMode: "minimal",
           headerShown: false,
+          headerTitleAlign: "center",
+          headerTintColor: "#0F766E",
           orientation: "portrait",
         }}
       >

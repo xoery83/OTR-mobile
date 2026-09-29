@@ -6,6 +6,7 @@ export default function LedgerLayout() {
       screenOptions={{
         contentStyle: { backgroundColor: "#F6F7F9" },
         headerBackButtonDisplayMode: "minimal",
+        headerTitleAlign: "center",
         headerShadowVisible: false,
         headerTintColor: "#0F766E",
       }}
