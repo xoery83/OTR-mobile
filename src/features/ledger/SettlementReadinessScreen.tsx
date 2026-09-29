@@ -730,7 +730,10 @@ function ExpenseSection({
     <View style={styles.section}>
       <View style={styles.hero}>
         <View style={styles.sectionLeadRow}>
-          <Text accessibilityRole="header" style={styles.sectionLeadText}>
+          <Text
+            accessibilityRole="header"
+            style={[styles.sectionLeadText, styles.sectionLeadGrow]}
+          >
             {totalLabel.toUpperCase()}
           </Text>
           {organizer ? (
@@ -1453,12 +1456,12 @@ const styles = StyleSheet.create({
   },
   sectionLeadText: {
     color: "#0F766E",
-    flex: 1,
     flexShrink: 1,
     ...cv.type.eyebrow,
     letterSpacing: 0.4,
     minWidth: 0,
   },
+  sectionLeadGrow: { flex: 1 },
   sections: { paddingBottom: 24 },
   standaloneSections: { paddingHorizontal: 16 },
   subheading: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 4 },

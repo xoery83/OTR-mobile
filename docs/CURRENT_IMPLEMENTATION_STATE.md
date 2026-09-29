@@ -2,7 +2,7 @@
 
 Date: 2026-09-30
 
-## Content visual language v1 — source implementation, device review pending
+## Content visual language v1 — Simulator and iPhone visual review PASS
 
 - Ledger content now shares small typography, surface, radius, spacing and amount
   tokens. Spending, Analysis and Settlement use a bounded 44/40/36/32pt Hero amount
@@ -12,9 +12,16 @@ Date: 2026-09-30
   Routes, navigator structure, local reads, sync, calculations and decisions are
   unchanged. No schema/API/package changes or Hosted Dev/Production access.
 - TypeScript, affected-file ESLint/Prettier and 10 focused suites / 73 tests pass.
-  CoreSimulatorService is unavailable, so screenshots and device visual acceptance
-  remain pending. Validate short/long locale amounts, multilingual titles, warning
-  and expanded states on a device before finalizing the visual guideline.
+  iPhone 17 Pro Simulator and iPhone 16 Pro signed Release builds installed and
+  launched. Spending, Analysis, Settlement Summary, Paid, Shares and Payments
+  were inspected on Simulator; Spending, Analysis, Settlement Summary and Paid
+  were inspected on iPhone. The device review caught and fixed a tiny short
+  amount in expanded Analysis and a missing Settlement eyebrow. Large JPY
+  totals, mixed-language long titles and expanded rows now display correctly.
+  Simulator access initially failed because the command sandbox could not reach
+  CoreSimulatorService; device-service access resolved it. No direct Hosted Dev
+  or Production access for this visual review. Warning states, Dynamic Type and
+  exact EUR/NZD large-amount fixtures were not visually exercised.
 
 ## Navigation title color rule — implementation and iPhone check PASS
 

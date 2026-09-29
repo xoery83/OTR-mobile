@@ -119,12 +119,7 @@ export function AnalysisExpenseRows({
             >
               {expense.title}
             </Text>
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.65}
-              style={styles.compactAmount}
-            >
+            <Text numberOfLines={2} style={styles.compactAmount}>
               {money(
                 (scope === "MINE" ? expense.personalMinor : expense.totalMinor) ?? 0,
               )}
@@ -865,6 +860,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontVariant: ["tabular-nums"],
     textAlign: "right",
+    flexShrink: 0,
+    minWidth: 64,
     maxWidth: "48%",
   },
   youLabel: { color: "#64748B", fontSize: 12, lineHeight: 18, textAlign: "right" },
