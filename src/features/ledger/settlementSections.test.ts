@@ -311,6 +311,12 @@ describe("Settlement section selectors", () => {
       percentage: 20,
       provisional: [],
     });
+    expect(
+      personalPaymentProgress(records, "member-a", {
+        ...transfer,
+        amount: { ...transfer.amount, minor: 200 },
+      }),
+    ).toMatchObject({ minor: 400, percentage: 100 });
     expect(personalPaymentProgress(records, "member-c", transfer)).toBeNull();
   });
 

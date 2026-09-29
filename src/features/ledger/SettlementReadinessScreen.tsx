@@ -140,12 +140,13 @@ export function SettlementReadinessScreen({
       ),
     [displayedFinal, settlement.displayPreview, settlement.preview],
   );
-  const visibleTransfers = visibleSettlementTransfers(
+  const mineTransfers = visibleSettlementTransfers(
     transfers,
     settlement.actorMemberId,
-    everyone,
+    false,
     settlement.isOrganizer,
   );
+  const visibleTransfers = everyone && settlement.isOrganizer ? transfers : mineTransfers;
 
   if (!settlement.journeyId)
     return <Text style={styles.empty}>Choose a Journey to view Settlement.</Text>;
@@ -218,7 +219,6 @@ export function SettlementReadinessScreen({
           everyone={everyone}
           expandedTransfer={expandedTransfer}
           fxSnapshots={sections.fxSnapshots}
-          isOrganizer={settlement.isOrganizer}
           journeyId={settlement.journeyId ?? null}
           members={sections.members}
           onEveryone={setEveryone}
@@ -230,6 +230,9 @@ export function SettlementReadinessScreen({
             settlement.preview?.settlementScale ??
             review.state?.statement.scale ??
             2
+          }
+          showScopeToggle={
+            settlement.isOrganizer && mineTransfers.length < transfers.length
           }
           transfers={visibleTransfers}
         />
@@ -876,7 +879,6 @@ function PaymentsSection({
   everyone,
   expandedTransfer,
   fxSnapshots,
-  isOrganizer,
   journeyId,
   members,
   onEveryone,
@@ -884,6 +886,7 @@ function PaymentsSection({
   onPaymentsChanged,
   payments,
   scale,
+  showScopeToggle,
   transfers,
 }: {
   actorMemberId: string | null;
@@ -891,7 +894,6 @@ function PaymentsSection({
   everyone: boolean;
   expandedTransfer: string | null;
   fxSnapshots: ReturnType<typeof useSettlementSections>["fxSnapshots"];
-  isOrganizer: boolean;
   journeyId: string;
   members: { id: string; label: string }[];
   onEveryone: (value: boolean) => void;
@@ -899,6 +901,7 @@ function PaymentsSection({
   onPaymentsChanged: (records: LocalPersonalPayment[]) => void;
   payments: LocalPersonalPayment[];
   scale: number;
+  showScopeToggle: boolean;
   transfers: ReturnType<typeof currentSettlementTransfers>;
 }) {
   const [estimateDetail, setEstimateDetail] = useState<string | null>(null);
@@ -908,7 +911,7 @@ function PaymentsSection({
         <Text accessibilityRole="header" style={styles.transferHeadingText}>
           Recommended transfers
         </Text>
-        {isOrganizer ? <Toggle everyone={everyone} onChange={onEveryone} /> : null}
+        {showScopeToggle ? <Toggle everyone={everyone} onChange={onEveryone} /> : null}
       </View>
       {transfers.map((transfer, index) => {
         const key =
@@ -979,6 +982,16 @@ function PaymentsSection({
                 />
               ) : null}
             </Pressable>
+            {progress && (progress.minor || progress.provisional.length) ? (
+              <View style={styles.transferProgressTrack}>
+                <View
+                  style={[
+                    styles.transferProgressFill,
+                    { width: `${progress.percentage}%` },
+                  ]}
+                />
+              </View>
+            ) : null}
             {estimateDetail === key && progress?.provisional.length ? (
               <View style={styles.fxDetail}>
                 <Text style={styles.fxDetailTitle}>Amounts that may change</Text>
@@ -1008,7 +1021,6 @@ function PaymentsSection({
                 journeyId={journeyId}
                 onChanged={onPaymentsChanged}
                 settlementCurrency={currency}
-                settlementScale={scale}
                 to={{ id: transfer.toMemberId, name: to }}
               />
             ) : null}
@@ -1485,6 +1497,15 @@ const styles = StyleSheet.create({
     gap: 4,
     marginTop: 2,
   },
+  transferProgressTrack: {
+    backgroundColor: "#E5E7EB",
+    borderRadius: 2,
+    height: 4,
+    marginBottom: 12,
+    marginHorizontal: 12,
+    overflow: "hidden",
+  },
+  transferProgressFill: { backgroundColor: "#0F766E", borderRadius: 2, height: 4 },
   fxDotButton: { alignItems: "center", height: 14, justifyContent: "center", width: 14 },
   fxDot: { backgroundColor: "#D97706", borderRadius: 4, height: 7, width: 7 },
   fxDetail: { backgroundColor: "#FEF3C7", gap: 5, padding: 10 },

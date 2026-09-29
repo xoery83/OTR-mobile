@@ -556,7 +556,9 @@ export function personalPaymentProgress(
     direction,
     minor,
     percentage:
-      transfer.amount.minor > 0 ? Math.round((minor / transfer.amount.minor) * 100) : 0,
+      transfer.amount.minor > 0
+        ? Math.min(100, Math.round((minor / transfer.amount.minor) * 100))
+        : 0,
     provisional,
   };
 }

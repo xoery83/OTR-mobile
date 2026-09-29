@@ -142,7 +142,6 @@ export function TransferDetailScreen({
           from={{ id: transfer.fromMemberId, name: from }}
           journeyId={journeyId}
           settlementCurrency={row.settlement.settlementCurrency}
-          settlementScale={row.settlement.settlementScale}
           to={{ id: transfer.toMemberId, name: to }}
         />
 
