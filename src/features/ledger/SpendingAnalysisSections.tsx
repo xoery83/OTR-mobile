@@ -11,6 +11,7 @@ import {
 import { router } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
+import { contentVisual as cv } from "./contentVisual";
 import {
   analysisPercentage,
   analysisUsesLogScale,
@@ -112,7 +113,7 @@ export function AnalysisExpenseRows({
         >
           <View style={styles.rowHeading}>
             <Text
-              numberOfLines={1}
+              numberOfLines={2}
               ellipsizeMode="tail"
               style={[styles.rowTitle, styles.expenseMain]}
             >
@@ -175,7 +176,9 @@ export function AnalysisCategories({
               style={styles.categoryRow}
             >
               <View style={[styles.rowHeading, largeText && styles.vertical]}>
-                <Text style={styles.rowTitle}>{category.label}</Text>
+                <Text numberOfLines={2} style={styles.rowTitle}>
+                  {category.label}
+                </Text>
                 <Text style={styles.amount}>
                   {money(category.totalMinor)}
                   {totalCategories > 1 ? (
@@ -793,18 +796,17 @@ export function AnalysisSkeleton() {
 }
 
 export const analysisStyles = StyleSheet.create({
-  body: { padding: 16, gap: 28, paddingBottom: 40 },
+  body: { padding: cv.space.page, gap: cv.space.section, paddingBottom: 40 },
   summary: { gap: 5, paddingVertical: 6 },
-  eyebrow: { color: "#0F766E", fontSize: 12, fontWeight: "700", letterSpacing: 1 },
-  total: { color: "#111827", fontSize: 38, fontWeight: "800", flexShrink: 1 },
+  eyebrow: { color: cv.color.accent, ...cv.type.eyebrow },
   meta: { color: "#64748B", fontSize: 13, lineHeight: 19 },
-  link: { color: "#0F766E", fontSize: 14, fontWeight: "600" },
+  link: { color: cv.color.accent, ...cv.type.action },
   error: { color: "#B91C1C", fontSize: 14 },
   empty: { paddingVertical: 36, gap: 8 },
   emptyTitle: { color: "#334155", fontSize: 21, fontWeight: "600" },
 });
 const styles = StyleSheet.create({
-  section: { gap: 10 },
+  section: { gap: cv.space.heading },
   sectionHeading: {
     alignItems: "center",
     flexDirection: "row",
@@ -812,8 +814,12 @@ const styles = StyleSheet.create({
     gap: 8,
     justifyContent: "space-between",
   },
-  sectionTitle: { color: "#334155", fontSize: 18, fontWeight: "700", flexShrink: 1 },
-  surface: { backgroundColor: "#FFFFFF", borderRadius: 14, overflow: "hidden" },
+  sectionTitle: { color: cv.color.text, ...cv.type.section, flexShrink: 1 },
+  surface: {
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
+    overflow: "hidden",
+  },
   rowHeading: {
     alignItems: "center",
     flexDirection: "row",
@@ -821,36 +827,43 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   vertical: { alignItems: "flex-start", flexDirection: "column" },
-  rowTitle: { color: "#111827", fontSize: 16, fontWeight: "600", flexShrink: 1 },
+  rowTitle: { color: cv.color.text, ...cv.type.row, flexShrink: 1 },
   categoryRow: {
     borderBottomColor: "#E5E7EB",
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 7,
     minHeight: 70,
-    padding: 14,
+    padding: cv.space.row,
   },
-  amount: { color: "#111827", fontSize: 14, fontWeight: "700", flexShrink: 1 },
+  amount: { color: cv.color.text, ...cv.type.rowAmount, flexShrink: 1 },
   meta: { color: "#64748B", fontSize: 13, lineHeight: 19, flexShrink: 1 },
   track: { backgroundColor: "#E5E7EB", borderRadius: 2, height: 4, overflow: "hidden" },
   fill: { backgroundColor: "#0F766E", borderRadius: 2, height: 4 },
-  expanded: { backgroundColor: "#F0F8F5", gap: 10, padding: 14 },
+  expanded: {
+    backgroundColor: cv.color.expanded,
+    gap: 10,
+    padding: cv.space.row,
+    borderTopColor: cv.color.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
   smallHeading: { color: "#334155", fontSize: 13, fontWeight: "700" },
   lastExpenseRow: { borderBottomWidth: 0 },
   expenseRow: {
-    borderBottomColor: "#CBD5E1",
-    borderBottomWidth: 1,
+    borderBottomColor: cv.color.divider,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 4,
     paddingHorizontal: 14,
     paddingVertical: 13,
     minHeight: 66,
   },
   expenseMain: { flex: 1, minWidth: 0, gap: 4 },
-  expenseMeta: { color: "#64748B", fontSize: 12, lineHeight: 18 },
+  expenseMeta: { color: cv.color.secondary, ...cv.type.meta, lineHeight: 18 },
   compactAmount: {
     color: "#111827",
     fontSize: 14,
     lineHeight: 20,
     fontWeight: "700",
+    fontVariant: ["tabular-nums"],
     textAlign: "right",
     maxWidth: "48%",
   },

@@ -19,6 +19,8 @@ import {
 import { router, Stack, useFocusEffect } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
+import { ContentHeroAmount } from "./ContentHeroAmount";
+import { contentVisual as cv } from "./contentVisual";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { HeaderIconAction, NavigationContextTitle } from "@/components/navigationChrome";
 import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
@@ -700,7 +702,7 @@ export function LedgerStage6Screen({
                       }}
                     />
                   </View>
-                  <Text
+                  <ContentHeroAmount
                     accessibilityLabel={`${
                       scope === "MINE" ? "You spent" : "Group spent"
                     } ${projection?.estimatedCount ? "approximately " : ""}${
@@ -714,15 +716,16 @@ export function LedgerStage6Screen({
                     }`}
                     maxFontSizeMultiplier={2}
                     style={styles.totalValue}
-                  >
-                    {summary
-                      ? `${projection?.estimatedCount ? "≈ " : ""}${formatLedgerMoney(
-                          summary.totalMinor + (projection?.estimatedMinor ?? 0),
-                          journey.settlementCurrency,
-                          journey.settlementScale,
-                        )}`
-                      : "—"}
-                  </Text>
+                    value={
+                      summary
+                        ? `${projection?.estimatedCount ? "≈ " : ""}${formatLedgerMoney(
+                            summary.totalMinor + (projection?.estimatedMinor ?? 0),
+                            journey.settlementCurrency,
+                            journey.settlementScale,
+                          )}`
+                        : "—"
+                    }
+                  />
                   <Text maxFontSizeMultiplier={2} style={styles.meta}>
                     {summary?.expenseCount ?? 0} valued Expenses
                     {projection?.estimatedCount
@@ -1439,8 +1442,8 @@ const styles = StyleSheet.create({
   content: {
     backgroundColor: "#F6F7F9",
     flexGrow: 1,
-    gap: 14,
-    padding: 16,
+    gap: cv.space.section,
+    padding: cv.space.page,
     paddingBottom: 40,
     paddingTop: 14,
   },
@@ -1502,30 +1505,27 @@ const styles = StyleSheet.create({
   segmentSelected: { backgroundColor: "#FFFFFF" },
   segmentText: { color: "#64748B", fontWeight: "600" },
   segmentTextSelected: { color: "#111827" },
-  total: { backgroundColor: "#FFFFFF", borderRadius: 14, padding: 18 },
+  total: { backgroundColor: cv.color.card, borderRadius: cv.radius.hero, padding: 18 },
   totalHeader: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
   },
   eyebrow: { color: "#64748B", fontSize: 12, fontWeight: "700" },
-  totalEyebrow: { color: "#0F766E", fontSize: 16, fontWeight: "800" },
+  totalEyebrow: { color: cv.color.accent, ...cv.type.eyebrow },
   totalValue: {
-    color: "#111827",
-    fontSize: 34,
-    fontWeight: "800",
     marginVertical: 6,
   },
-  sectionBlock: { gap: 8, width: "100%" },
+  sectionBlock: { gap: cv.space.heading, width: "100%" },
   sectionHeader: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
     minHeight: 32,
   },
-  section: { color: "#334155", fontSize: 17, fontWeight: "700" },
+  section: { color: cv.color.text, ...cv.type.section },
   sectionAction: { justifyContent: "center", minHeight: 44, paddingLeft: 16 },
-  link: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
+  link: { color: cv.color.accent, ...cv.type.action },
   landingSearch: {
     backgroundColor: "#E5E7EB",
     borderRadius: 10,
@@ -1534,7 +1534,11 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: 12,
   },
-  surface: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
+  surface: {
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
+    overflow: "hidden",
+  },
   memberScroller: { flexGrow: 0, width: "100%" },
   memberSelector: { gap: 8, paddingHorizontal: 14, paddingVertical: 12 },
   memberTab: {
@@ -1573,8 +1577,8 @@ const styles = StyleSheet.create({
     gap: 10,
     justifyContent: "space-between",
   },
-  categoryAmount: { color: "#111827", fontSize: 14, fontWeight: "700" },
-  categoryPercentage: { color: "#64748B", fontSize: 12, fontWeight: "600" },
+  categoryAmount: { color: cv.color.text, ...cv.type.rowAmount },
+  categoryPercentage: { color: cv.color.secondary, ...cv.type.percent },
   categoryTrack: {
     backgroundColor: "#E5E7EB",
     borderRadius: 2,
@@ -1584,8 +1588,8 @@ const styles = StyleSheet.create({
   categoryFill: { backgroundColor: "#0F766E", borderRadius: 2, height: 4 },
   snapshot: {
     alignItems: "center",
-    backgroundColor: "#E7F5F1",
-    borderRadius: 12,
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
     flexDirection: "row",
     gap: 12,
     minHeight: 96,
@@ -1594,27 +1598,26 @@ const styles = StyleSheet.create({
   snapshotTitle: {
     color: "#111827",
     fontSize: 19,
-    fontWeight: "700",
+    fontWeight: "600",
     marginTop: 4,
   },
   snapshotAmount: {
-    color: "#0F766E",
-    fontSize: 24,
-    fontWeight: "800",
+    color: cv.color.text,
+    ...cv.type.metric,
     marginVertical: 2,
   },
   attention: {
     alignItems: "center",
-    backgroundColor: "#FFF7ED",
-    borderRadius: 12,
+    backgroundColor: cv.color.warning,
+    borderRadius: cv.radius.card,
     flexDirection: "row",
     gap: 6,
     minHeight: 64,
     padding: 14,
   },
-  attentionTitle: { color: "#9A3412", fontSize: 16, fontWeight: "800" },
+  attentionTitle: { color: "#9A3412", fontSize: 16, fontWeight: "700" },
   attentionMeta: { color: "#334155", fontSize: 15, lineHeight: 22, marginTop: 2 },
-  reviewLink: { color: "#0F766E", fontSize: 14, fontWeight: "800", marginTop: 4 },
+  reviewLink: { color: cv.color.accent, ...cv.type.action, marginTop: 4 },
   row: {
     alignItems: "center",
     borderBottomColor: "#E5E7EB",
@@ -1622,7 +1625,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     minHeight: 72,
-    padding: 14,
+    padding: cv.space.row,
   },
   rowTitleLine: { alignItems: "center", flexDirection: "row", gap: 6 },
   rowMetaLine: {
@@ -1633,8 +1636,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   grow: { flex: 1 },
-  rowTitle: { color: "#111827", flexShrink: 1, fontSize: 16, fontWeight: "600" },
-  rowAmount: { color: "#111827", fontSize: 15, fontWeight: "700" },
+  rowTitle: { color: cv.color.text, flexShrink: 1, ...cv.type.row },
+  rowAmount: { color: cv.color.text, ...cv.type.rowAmount, textAlign: "right" },
   largeRowAmount: { alignSelf: "flex-start" },
   categoryIcon: {
     alignItems: "center",
@@ -1645,7 +1648,12 @@ const styles = StyleSheet.create({
     width: 34,
   },
   amountColumn: { alignItems: "flex-end", flexShrink: 0, maxWidth: "48%" },
-  amountMeta: { color: "#64748B", fontSize: 12, marginTop: 2, textAlign: "right" },
+  amountMeta: {
+    color: cv.color.secondary,
+    ...cv.type.secondaryAmount,
+    marginTop: 2,
+    textAlign: "right",
+  },
   splitTag: {
     backgroundColor: "#EEF2F5",
     borderColor: "#CBD5E1",

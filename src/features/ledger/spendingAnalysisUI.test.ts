@@ -701,7 +701,12 @@ describe("Analysis UI transitions and request guardrails", () => {
       nodes(element).filter(
         (node) => node.type === "text" && node.props.numberOfLines === 1,
       ),
-    ).toHaveLength(3);
+    ).toHaveLength(2);
+    expect(
+      nodes(element).filter(
+        (node) => node.type === "text" && node.props.numberOfLines === 2,
+      ),
+    ).toHaveLength(1);
     expect(texts(element)).toContain("Total NZ2000");
     const row = nodes(element).find((node) => node.props.onPress)!;
     expect(row.props.style).toContainEqual({ borderBottomWidth: 0 });

@@ -14,6 +14,7 @@ import { useHeaderHeight } from "expo-router/react-navigation";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 
 import { AppIcon } from "@/components/AppIcon";
+import { ContentHeroAmount } from "./ContentHeroAmount";
 import { HeaderIconAction, NavigationContextTitle } from "@/components/navigationChrome";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import {
@@ -328,15 +329,11 @@ export function LedgerAnalysisScreen() {
                 <Text style={shared.eyebrow}>
                   {scope === "MINE" ? "MY SPENDING" : "GROUP SPENDING"}
                 </Text>
-                <Text
-                  style={
-                    dashboard.state === "UNAVAILABLE" ? shared.emptyTitle : shared.total
-                  }
-                >
-                  {dashboard.state === "UNAVAILABLE"
-                    ? "Spending total unavailable"
-                    : money(dashboard.totalMinor)}
-                </Text>
+                {dashboard.state === "UNAVAILABLE" ? (
+                  <Text style={shared.emptyTitle}>Spending total unavailable</Text>
+                ) : (
+                  <ContentHeroAmount value={money(dashboard.totalMinor)} />
+                )}
                 <View style={styles.countLine}>
                   <Text style={shared.meta}>
                     {scope === "MINE"
