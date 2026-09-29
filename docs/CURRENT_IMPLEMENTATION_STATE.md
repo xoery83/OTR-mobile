@@ -2,6 +2,25 @@
 
 Date: 2026-09-29
 
+## Settlement review after confirmation — fix gate PASS
+
+- Europe owner's successful confirmation created version #3, but the subsequent
+  Looks good submitted the prior confirmed head's review fingerprint. Replacing only
+  current statement lineage fields reproduces the failed fingerprint exactly; no
+  financial source divergence. Server `STALE_REVIEW_CHECKPOINT` rejection was correct.
+- Personal review refresh follows confirmed-head changes, waits before enabling
+  selection and binds choices to the displayed fingerprint checked in the queue-write
+  transaction. Late old reads cannot overwrite current hook state; offline review of
+  the matching head remains supported. No Backend/API/migration or financial changes.
+- 7 affected suites / 26 tests, TypeScript, scoped lint/format, signed Release PASS.
+  Original iPhone shows green Looks good / Review saved; Hosted Dev checkpoint matches
+  the current fingerprint, coverage LOOKS_GOOD, delta null. Final reinstall / cold
+  re-entry retains green Looks good and no review errors, observed by owner and agent.
+  See `docs/ledger/SETTLEMENT_REVIEW_HEAD_REFRESH_FIX_GATE.md`.
+- Earlier endless checking cleared after restart, but its exact hung await is still
+  unproven; this fix does not claim to solve it. Independent 28 Review items retained.
+  No automated Settlement Confirm or Production access.
+
 ## Large Journey Ledger freeze — batch-read fix, iPhone / Simulator PASS
 
 - Owner reported Small Screen QA frozen on Journey switching, Settlement and

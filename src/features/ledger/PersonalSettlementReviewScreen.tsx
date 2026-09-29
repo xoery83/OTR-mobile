@@ -134,8 +134,8 @@ export function PersonalSettlementReviewScreen() {
             return (
               <Pressable
                 accessibilityRole="button"
-                accessibilityState={{ disabled: review.busy, selected }}
-                disabled={review.busy || selected}
+                accessibilityState={{ disabled: review.busy || !review.ready, selected }}
+                disabled={review.busy || !review.ready || selected}
                 key={reviewState}
                 onPress={() => void review.setReviewState(reviewState)}
                 style={[styles.secondary, selected && styles.selectedStatus]}

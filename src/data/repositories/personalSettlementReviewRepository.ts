@@ -76,23 +76,32 @@ export function createPersonalSettlementReviewRepository(
       );
     },
 
-    async checkpoint(journeyId: string, reviewState: PersonalSettlementReviewState) {
+    async checkpoint(
+      journeyId: string,
+      reviewState: PersonalSettlementReviewState,
+      observedFingerprint?: string,
+    ) {
       const userId = await getActiveUserId();
-      const current = await database.getFirstAsync<Row>(
-        `${selectState} WHERE user_id = ? AND journey_id = ?`,
-        userId,
-        journeyId,
-      );
-      if (!current) throw new Error("Open the current Settlement statement first.");
       const id = createUuid();
-      const input = {
-        id,
-        statementFingerprint: current.statementFingerprint,
-        operationId: id,
-        reviewState,
-      };
       const now = new Date().toISOString();
       await database.withTransactionAsync(async () => {
+        const current = await database.getFirstAsync<Row>(
+          `${selectState} WHERE user_id = ? AND journey_id = ?`,
+          userId,
+          journeyId,
+        );
+        if (
+          !current ||
+          (observedFingerprint !== undefined &&
+            observedFingerprint !== current.statementFingerprint)
+        )
+          throw new Error("Open the current Settlement statement first.");
+        const input = {
+          id,
+          statementFingerprint: current.statementFingerprint,
+          operationId: id,
+          reviewState,
+        };
         await database.runAsync(
           `UPDATE ledger_personal_settlement_review_state SET
             sync_status = 'PENDING', pending_operation_id = ?, pending_review_state = ?,

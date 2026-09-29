@@ -9,39 +9,48 @@ import {
   runPersonalSettlementReviewSync,
 } from "@/data/sync/personalSettlementReviewCoordinator";
 
-export function usePersonalSettlementReview(journeyId?: string) {
+export function usePersonalSettlementReview(journeyId?: string, settlementId?: string) {
   const [state, setState] = useState<LocalPersonalSettlementReview | null>(null);
   const [source, setSource] = useState<"CURRENT_SERVER" | "CURRENT_CACHED">(
     "CURRENT_CACHED",
   );
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const requestRef = useRef(0);
 
   const load = useCallback(async () => {
     const request = ++requestRef.current;
     setBusy(false);
+    setLoading(true);
     setMessage(null);
     if (!journeyId) {
       setState(null);
+      setLoading(false);
       return;
     }
-    const repository = await getDefaultPersonalSettlementReviewRepository();
-    const cached = await repository.get(journeyId);
-    if (request !== requestRef.current) return;
-    setState(cached);
-    setSource("CURRENT_CACHED");
     try {
+      const repository = await getDefaultPersonalSettlementReviewRepository();
+      const cached = await repository.get(journeyId);
+      if (request !== requestRef.current) return;
+      setState(cached);
+      setSource("CURRENT_CACHED");
       await refreshPersonalSettlementReview(journeyId);
       const refreshed = await repository.get(journeyId);
       if (request !== requestRef.current) return;
       setState(refreshed);
-      setSource("CURRENT_SERVER");
+      setSource(
+        settlementId !== undefined && refreshed?.statement.settlementId !== settlementId
+          ? "CURRENT_CACHED"
+          : "CURRENT_SERVER",
+      );
     } catch {
       // Cached statement remains useful offline.
       if (request === requestRef.current) setSource("CURRENT_CACHED");
+    } finally {
+      if (request === requestRef.current) setLoading(false);
     }
-  }, [journeyId]);
+  }, [journeyId, settlementId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -54,13 +63,20 @@ export function usePersonalSettlementReview(journeyId?: string) {
 
   const setReviewState = useCallback(
     async (reviewState: PersonalSettlementReviewState) => {
-      if (!journeyId) return;
+      if (
+        !journeyId ||
+        busy ||
+        loading ||
+        !state ||
+        (settlementId !== undefined && state.statement.settlementId !== settlementId)
+      )
+        return;
       const request = ++requestRef.current;
       setBusy(true);
       setMessage(null);
       try {
         const repository = await getDefaultPersonalSettlementReviewRepository();
-        await repository.checkpoint(journeyId, reviewState);
+        await repository.checkpoint(journeyId, reviewState, state.statementFingerprint);
         const pending = await repository.get(journeyId);
         if (request === requestRef.current) setState(pending);
         try {
@@ -93,7 +109,7 @@ export function usePersonalSettlementReview(journeyId?: string) {
         if (request === requestRef.current) setBusy(false);
       }
     },
-    [journeyId],
+    [journeyId, busy, loading, state, settlementId],
   );
 
   const currentState = state?.statement.journeyId === journeyId ? state : null;
@@ -103,6 +119,11 @@ export function usePersonalSettlementReview(journeyId?: string) {
     source,
     projectionAsOf: currentState?.updatedAt ?? null,
     busy,
+    ready:
+      !loading &&
+      Boolean(currentState) &&
+      (settlementId === undefined ||
+        currentState?.statement.settlementId === settlementId),
     message,
     reload: load,
     setReviewState,

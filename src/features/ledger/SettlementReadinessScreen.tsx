@@ -79,8 +79,11 @@ export function SettlementReadinessScreen({
       focusedOnce.current = true;
     }, [refreshSettlement]),
   );
-  const review = usePersonalSettlementReview(settlement.journeyId ?? journeyId);
   const currentFinal = settlement.lineage.at(-1) ?? settlement.finalized;
+  const review = usePersonalSettlementReview(
+    settlement.journeyId ?? journeyId,
+    currentFinal?.id,
+  );
   const projection = settlement.summaryProjection;
   const comparison = buildSettlementComparison({
     currentDigest: settlement.preview?.inputDigest ?? null,
@@ -536,7 +539,7 @@ function SummarySection({
       {review.state ? (
         <GroupReviewStatus
           actorMemberId={settlement.actorMemberId}
-          busy={review.busy}
+          busy={review.busy || !review.ready}
           coverage={review.state.coverage}
           expanded={reviewCoverageOpen}
           onExpand={() => setReviewCoverageOpen((open) => !open)}

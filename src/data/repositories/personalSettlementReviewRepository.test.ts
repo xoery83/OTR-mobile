@@ -125,3 +125,24 @@ it("does not let an older reply or rejection erase a newer review choice", async
     lastErrorCode: null,
   });
 });
+
+it("binds a review choice to the displayed fingerprint without silently rebasing it", async () => {
+  const { db, api } = database();
+  const repo = createPersonalSettlementReviewRepository(api as never, async () => userA);
+  await repo.applyRemote(journeyId, response());
+  await repo.applyRemote(journeyId, response("b".repeat(64)));
+  await expect(repo.checkpoint(journeyId, "LOOKS_GOOD", "a".repeat(64))).rejects.toThrow(
+    "Open the current Settlement statement first.",
+  );
+  expect(db.prepare("SELECT count(*) AS n FROM sync_operations").get()?.n).toBe(0);
+  const id = await repo.checkpoint(journeyId, "LOOKS_GOOD", "b".repeat(64));
+  expect(
+    JSON.parse(
+      String(
+        db
+          .prepare("SELECT payload_json AS payload FROM sync_operations WHERE id=?")
+          .get(id)?.payload,
+      ),
+    ),
+  ).toMatchObject({ statementFingerprint: "b".repeat(64) });
+});
