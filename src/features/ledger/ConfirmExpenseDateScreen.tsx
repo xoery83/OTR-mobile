@@ -70,9 +70,6 @@ export function ConfirmExpenseDateScreen() {
     return <Text style={styles.content}>Transaction date is already confirmed.</Text>;
   return (
     <View style={styles.content}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Confirm transaction date
-      </Text>
       <Text style={styles.subtitle}>{expense.title}</Text>
       <Text style={styles.explanation}>
         The saved timestamp suggests this date, but it is not proof of the transaction
@@ -127,7 +124,6 @@ export function ConfirmExpenseDateScreen() {
 const styles = StyleSheet.create({
   loading: { flex: 1 },
   content: { flex: 1, padding: 24, gap: 18, backgroundColor: "#F6F7F9" },
-  title: { color: "#14222C", fontSize: 28, fontWeight: "700" },
   subtitle: { color: "#14222C", fontSize: 20, fontWeight: "600" },
   explanation: { color: "#526273", fontSize: 16, lineHeight: 24 },
   label: { color: "#526273", fontSize: 14, fontWeight: "600" },

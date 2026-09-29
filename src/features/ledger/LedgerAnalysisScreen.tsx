@@ -9,17 +9,12 @@ import {
   TextInput,
   View,
 } from "react-native";
-import {
-  Stack,
-  router,
-  useFocusEffect,
-  useLocalSearchParams,
-  useNavigation,
-} from "expo-router";
+import { Stack, router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 
 import { AppIcon } from "@/components/AppIcon";
+import { HeaderIconAction, NavigationContextTitle } from "@/components/navigationChrome";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import {
   aggregateAnalysisPeople,
@@ -79,7 +74,6 @@ export function LedgerAnalysisScreen() {
     memberId: string;
     scope?: ReportingScope;
   }>();
-  const navigation = useNavigation();
   const headerHeight = useHeaderHeight();
   const [scope, setScope] = useState<ReportingScope>(
     params.scope === "GROUP" ? "GROUP" : "MINE",
@@ -142,14 +136,9 @@ export function LedgerAnalysisScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      const tabs = navigation.getParent();
-      tabs?.setOptions({ tabBarStyle: { display: "none" } });
       void load(rangeRef.current);
-      return () => {
-        request.cancel();
-        tabs?.setOptions({ tabBarStyle: undefined });
-      };
-    }, [load, navigation, request]),
+      return () => request.cancel();
+    }, [load, request]),
   );
 
   const dashboard = useMemo(
@@ -273,16 +262,10 @@ export function LedgerAnalysisScreen() {
       <Stack.Screen
         options={{
           headerTitle: () => (
-            <View style={styles.headerTitleBlock}>
-              <Text numberOfLines={1} style={styles.headerTitle}>
-                Spending Analysis
-              </Text>
-              {view ? (
-                <Text numberOfLines={1} style={styles.headerSubtitle}>
-                  {view.dataset.journey.title}
-                </Text>
-              ) : null}
-            </View>
+            <NavigationContextTitle
+              title="Spending Analysis"
+              subtitle={view?.dataset.journey.title}
+            />
           ),
           headerTransparent: true,
           headerBlurEffect: Platform.OS === "ios" ? "systemMaterial" : undefined,
@@ -293,18 +276,15 @@ export function LedgerAnalysisScreen() {
           headerShadowVisible: true,
           headerRight: () =>
             presets.length ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Change analysis date range"
+              <HeaderIconAction
+                label="Choose date range"
+                name="calendar"
+                active={Boolean(view?.range.from)}
                 onPress={() => {
                   setRangeDraft({ from: "", through: "" });
                   setRangeOpen(true);
                 }}
-                style={styles.iconButton}
-              >
-                <AppIcon name="calendar" color="#0F766E" size={22} />
-                {view?.range.from ? <View style={styles.activeDot} /> : null}
-              </Pressable>
+              />
             ) : null,
         }}
       />
@@ -693,9 +673,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  headerTitleBlock: { alignItems: "center", maxWidth: 250 },
-  headerTitle: { color: "#0F766E", fontSize: 17, fontWeight: "700" },
-  headerSubtitle: { color: "#94A3B8", fontSize: 11, fontWeight: "600" },
   pinnedScope: {
     position: "absolute",
     left: 0,
@@ -722,20 +699,6 @@ const styles = StyleSheet.create({
   segmentSelected: { borderBottomColor: "#0F766E" },
   segmentText: { color: "#64748B", fontSize: 16, fontWeight: "600" },
   segmentTextSelected: { color: "#0F766E" },
-  iconButton: {
-    minHeight: 44,
-    minWidth: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  activeDot: {
-    backgroundColor: "#087E68",
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    position: "absolute",
-    bottom: 5,
-  },
   countLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 5 },
   excludedExpense: { padding: 12, gap: 5, backgroundColor: "#FFFFFF", borderRadius: 10 },
   excludedTitle: { color: "#111827", fontSize: 15, fontWeight: "600" },

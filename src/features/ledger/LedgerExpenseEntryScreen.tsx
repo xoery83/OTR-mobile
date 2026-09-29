@@ -29,6 +29,7 @@ import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
+import { navigationTextActionStyle } from "@/components/navigationChrome";
 
 import { resolveReceiptAssetUri } from "@/data/operations/openReceiptAsset";
 import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
@@ -2407,7 +2408,7 @@ const styles = StyleSheet.create({
   },
   dateWheelContainer: { alignItems: "center", justifyContent: "center", minHeight: 280 },
   dateWheel: { height: 216, width: "100%" },
-  headerAction: { color: "#0F766E", fontSize: 17, fontWeight: "700", padding: 8 },
+  headerAction: { ...navigationTextActionStyle, padding: 8 },
   headerActionButton: { justifyContent: "center", minHeight: 44 },
   disabledText: { opacity: 0.4 },
   sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },

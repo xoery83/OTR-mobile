@@ -42,9 +42,6 @@ export default function SettingsRoute() {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Settings
-      </Text>
       <Text accessibilityRole="header" style={styles.sectionTitle}>
         System
       </Text>
@@ -109,7 +106,6 @@ function SettingRow({
 
 const styles = StyleSheet.create({
   content: { backgroundColor: "#F6F7F9", flexGrow: 1, padding: 20 },
-  title: { color: "#0F172A", fontSize: 28, fontWeight: "800" },
   sectionTitle: {
     color: "#64748B",
     fontSize: 13,

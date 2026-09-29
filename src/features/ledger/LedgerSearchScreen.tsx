@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
-import { AppIcon } from "@/components/AppIcon";
+import { HeaderIconAction } from "@/components/navigationChrome";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerJourneyContext } from "@/domain/ledger/journeyContext";
@@ -297,23 +297,12 @@ export function LedgerSearchScreen() {
         options={{
           headerTitle: "Search",
           headerRight: () => (
-            <Pressable
-              accessibilityLabel={`Filter Expenses${filterCount ? `, ${filterCount} active` : ""}`}
-              accessibilityRole="button"
+            <HeaderIconAction
+              active={filterCount > 0}
+              label={`Filter expenses${filterCount ? `, ${filterCount} active` : ""}`}
+              name="line.3.horizontal.decrease"
               onPress={() => setFilterOpen(true)}
-              style={[styles.filterButton, filterCount > 0 && styles.filterButtonActive]}
-            >
-              <AppIcon
-                color={filterCount ? "#FFFFFF" : "#0F766E"}
-                name="line.3.horizontal.decrease"
-              />
-              <Text
-                maxFontSizeMultiplier={1.5}
-                style={[styles.filterText, filterCount > 0 && styles.filterTextActive]}
-              >
-                Filter{filterCount ? ` ${filterCount}` : ""}
-              </Text>
-            </Pressable>
+            />
           ),
         }}
       />
@@ -905,17 +894,6 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingHorizontal: 16,
   },
-  filterButton: {
-    alignItems: "center",
-    borderRadius: 18,
-    flexDirection: "row",
-    gap: 5,
-    minHeight: 36,
-    paddingHorizontal: 8,
-  },
-  filterButtonActive: { backgroundColor: "#0F766E" },
-  filterText: { color: "#0F766E", fontWeight: "700" },
-  filterTextActive: { color: "#FFFFFF" },
   chipBar: { backgroundColor: "#F6F7F9", flexGrow: 0, maxHeight: 58 },
   chipBarLarge: { maxHeight: 96 },
   chips: { gap: 8, paddingHorizontal: 16, paddingVertical: 7 },

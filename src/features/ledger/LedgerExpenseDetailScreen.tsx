@@ -28,6 +28,7 @@ import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
 import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
 
 import { AppIcon } from "@/components/AppIcon";
+import { HeaderIconAction } from "@/components/navigationChrome";
 import { canEditLedgerExpense } from "@/data/repositories/ledgerExpenseEditAccess";
 import { previewReceiptDraftPdf } from "@/native/receiptDraftPreview";
 import { ExpenseAttachmentRow } from "./ExpenseAttachmentRow";
@@ -374,19 +375,16 @@ export function LedgerExpenseDetailScreen() {
           headerTitle: "Expense",
           headerRight: () =>
             canEdit ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Edit Expense"
-                style={styles.headerAction}
+              <HeaderIconAction
+                label="Edit expense"
+                name="square.and.pencil"
                 onPress={() =>
                   router.push({
                     pathname: "/expenses/new",
                     params: { expenseId: expense.id, journeyId: expense.journeyId },
                   })
                 }
-              >
-                <AppIcon color="#0F766E" name="square.and.pencil" size={21} />
-              </Pressable>
+              />
             ) : null,
         }}
       />

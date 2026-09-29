@@ -72,7 +72,6 @@ export function ItinerarySliceScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Trip</Text>
         <Text style={styles.subtitle}>Itinerary create validation slice</Text>
 
         <View style={styles.journeyControls}>
@@ -175,7 +174,6 @@ export function ItinerarySliceScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#F8FAFC" },
   content: { gap: 16, padding: 20 },
-  title: { color: "#0F172A", fontSize: 28, fontWeight: "800" },
   subtitle: { color: "#475569", fontSize: 15 },
   journeyControls: { flexDirection: "row", gap: 10 },
   journeyButton: {

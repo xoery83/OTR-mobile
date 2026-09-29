@@ -1,17 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type FoundationScreenProps = {
-  title: string;
-  status: string;
-};
+type FoundationScreenProps = { status: string };
 
-export function FoundationScreen({ title, status }: FoundationScreenProps) {
+export function FoundationScreen({ status }: FoundationScreenProps) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.eyebrow}>{status}</Text>
-        <Text style={styles.title}>{title}</Text>
       </View>
     </SafeAreaView>
   );
@@ -32,10 +28,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     marginBottom: 8,
-  },
-  title: {
-    color: "#0F172A",
-    fontSize: 34,
-    fontWeight: "800",
   },
 });

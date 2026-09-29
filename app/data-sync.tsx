@@ -113,9 +113,6 @@ export default function DataSyncRoute() {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Data & Sync
-      </Text>
       <Text style={styles.body}>
         Check saved changes and refresh shared data for this account. This check never
         deletes your saved travel data.
@@ -316,6 +313,5 @@ const styles = StyleSheet.create({
   },
   technicalTitle: { color: "#334155", fontSize: 14, fontWeight: "700" },
   timing: { color: "#64748B", fontSize: 13 },
-  title: { color: "#0F172A", fontSize: 28, fontWeight: "800" },
   upcomingText: { color: "#94A3B8", flex: 1, fontSize: 15 },
 });

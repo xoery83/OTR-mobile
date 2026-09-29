@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
+import { NavigationContextTitle } from "@/components/navigationChrome";
 import { useLedgerReview } from "@/hooks/useLedgerReview";
 import { ExpenseConflictList } from "./ExpenseConflictList";
 import { reviewCardEvidence } from "./reviewEvidence";
@@ -9,7 +10,19 @@ import { reviewInbox, type ReviewCategory } from "./reviewInbox";
 import { reviewFindingCopy, reviewStatusLabel } from "./settlementPresentation";
 
 export function LedgerReviewScreen() {
-  const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
+  const { journeyId, journeyTitle } = useLocalSearchParams<{
+    journeyId?: string;
+    journeyTitle?: string;
+  }>();
+  const header = (
+    <Stack.Screen
+      options={{
+        headerTitle: () => (
+          <NavigationContextTitle title="Review" subtitle={journeyTitle} />
+        ),
+      }}
+    />
+  );
   const { findings, memberNames, message, loading, rechecking } =
     useLedgerReview(journeyId);
   const [category, setCategory] = useState<ReviewCategory>("All");
@@ -20,7 +33,7 @@ export function LedgerReviewScreen() {
   if (rechecking)
     return (
       <>
-        <Stack.Screen options={{ title: "Review" }} />
+        {header}
         <View style={styles.content}>
           <Text accessibilityLiveRegion="polite" style={styles.subtitle}>
             Updating Review after Expense change…
@@ -31,7 +44,7 @@ export function LedgerReviewScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Review" }} />
+      {header}
       <SectionList
         contentContainerStyle={styles.content}
         sections={[

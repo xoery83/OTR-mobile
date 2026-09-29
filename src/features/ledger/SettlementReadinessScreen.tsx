@@ -57,6 +57,7 @@ export function SettlementReadinessScreen({
   activeSection,
   debugMode = false,
   journeyId,
+  journeyTitle,
   embedded = false,
   onSectionChange,
   showNavigation = true,
@@ -65,6 +66,7 @@ export function SettlementReadinessScreen({
   activeSection?: SettlementSectionName;
   debugMode?: boolean;
   journeyId?: string;
+  journeyTitle?: string;
   embedded?: boolean;
   onSectionChange?: (section: SettlementSectionName) => void;
   showNavigation?: boolean;
@@ -158,6 +160,7 @@ export function SettlementReadinessScreen({
       {active === "Summary" ? (
         <SummarySection
           expenses={sections.expenses}
+          journeyTitle={journeyTitle}
           reviewCount={sections.reviewCount}
           review={review}
           settlement={settlement}
@@ -296,12 +299,14 @@ export function SettlementSectionTabs({
 function SummarySection({
   debugMode,
   expenses,
+  journeyTitle,
   reviewCount,
   review,
   settlement,
 }: {
   debugMode: boolean;
   expenses: ReturnType<typeof useSettlementSections>["expenses"];
+  journeyTitle?: string;
   reviewCount: number;
   review: ReturnType<typeof usePersonalSettlementReview>;
   settlement: ReturnType<typeof useStage7Settlement>;
@@ -491,7 +496,7 @@ function SummarySection({
                 rememberSettlementExpenseTitles(settlement.journeyId, expenses);
               router.push({
                 pathname: "/expenses/settlement-update",
-                params: { journeyId: settlement.journeyId },
+                params: { journeyId: settlement.journeyId, journeyTitle },
               } as never);
             }}
           >
@@ -569,7 +574,7 @@ function SummarySection({
           onPress={() =>
             router.push({
               pathname: "/expenses/review",
-              params: { journeyId: settlement.journeyId },
+              params: { journeyId: settlement.journeyId, journeyTitle },
             } as never)
           }
           style={styles.notice}

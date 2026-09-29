@@ -2,6 +2,22 @@
 
 Date: 2026-09-29
 
+## Navigation chrome unification — 2026-09-30 source validation PASS
+
+- Existing Root Stack / Tabs / Ledger Stack and route paths are unchanged. Tabs now
+  derive bottom-bar visibility from the current path: primary destinations and the
+  Journey workspace show it; Ledger deep, detail, task, dashboard and utility routes
+  hide it. Analysis no longer mutates parent tab options on focus.
+- Shared two-line title and 44pt icon action styles cover Ledger, Analysis and
+  Review. Review receives the current local Journey title through its existing
+  navigation entry points; no header read, sync trigger or backend request was added.
+  Search Filter is icon-only with an active indicator. Obvious repeated body titles
+  were removed, and sheets without a distinct right action no longer show Done.
+- Product navigation direction is updated in `docs/PRODUCT.md`. TypeScript, scoped
+  lint/format, navigation/Review/Analysis/Expense/Settlement tests and diff check
+  passed. Simulator visual validation was unavailable because CoreSimulatorService
+  could not be reached. Hosted Dev and Production were not accessed.
+
 ## Settlement review after confirmation — fix gate PASS
 
 - Europe owner's successful confirmation created version #3, but the subsequent

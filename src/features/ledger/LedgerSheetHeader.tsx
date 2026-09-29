@@ -1,6 +1,10 @@
 import { useRef } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  navigationColors,
+  navigationTextActionStyle,
+} from "@/components/navigationChrome";
 
 export function LedgerSheetHeader({
   title,
@@ -8,7 +12,7 @@ export function LedgerSheetHeader({
   leftLabel = "Close",
   onLeft,
   rightLabel = "Done",
-  onRight = onLeft,
+  onRight,
   rightDisabled = false,
   safeTop = true,
 }: {
@@ -24,7 +28,11 @@ export function LedgerSheetHeader({
   const largeText = useWindowDimensions().fontScale > 2;
   const touchY = useRef(0);
   const left = <Action label={leftLabel} onPress={onLeft} />;
-  const right = <Action disabled={rightDisabled} label={rightLabel} onPress={onRight} />;
+  const right = onRight ? (
+    <Action disabled={rightDisabled} label={rightLabel} onPress={onRight} />
+  ) : (
+    <View style={styles.spacer} />
+  );
   return (
     <SafeAreaView edges={safeTop ? ["top"] : []} style={styles.safe}>
       <View
@@ -103,13 +111,13 @@ const styles = StyleSheet.create({
   },
   largeHeader: { alignItems: "stretch", flexDirection: "column" },
   title: {
-    color: "#0F766E",
+    color: navigationColors.action,
     flex: 1,
     fontSize: 20,
     fontWeight: "400",
     textAlign: "center",
   },
-  largeTitle: { color: "#0F766E", fontSize: 22, fontWeight: "400" },
+  largeTitle: { color: navigationColors.action, fontSize: 22, fontWeight: "400" },
   boldTitle: { fontWeight: "700" },
   actions: { flexDirection: "row", justifyContent: "space-between" },
   button: {
@@ -125,6 +133,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
-  buttonText: { color: "#0F766E", fontSize: 16, fontWeight: "700" },
+  buttonText: navigationTextActionStyle,
+  spacer: { minWidth: 72 },
   disabled: { opacity: 0.45 },
 });

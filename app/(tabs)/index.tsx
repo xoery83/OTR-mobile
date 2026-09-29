@@ -6,5 +6,5 @@ export default function TodayRoute() {
     return <Stage4BPhysicalSmokeScreen />;
   }
 
-  return <FoundationScreen title="Today" status="Local data first" />;
+  return <FoundationScreen status="Local data first" />;
 }

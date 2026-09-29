@@ -20,6 +20,7 @@ import { router, Stack, useFocusEffect } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
 import { GlobalMenu } from "@/components/GlobalMenu";
+import { HeaderIconAction, NavigationContextTitle } from "@/components/navigationChrome";
 import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
@@ -556,14 +557,16 @@ export function LedgerStage6Screen({
           gestureEnabled: !journey,
           headerShown: true,
           headerTitle: () => (
-            <View style={styles.headerTitleBlock}>
-              <Text style={styles.headerTitleText}>Ledger</Text>
-              {journey && modeNavHidden ? (
-                <Text style={styles.headerSubtitle}>
-                  {mode === "SPENDING" ? "Spending" : "Settlement"}
-                </Text>
-              ) : null}
-            </View>
+            <NavigationContextTitle
+              title="Ledger"
+              subtitle={
+                journey && modeNavHidden
+                  ? mode === "SPENDING"
+                    ? "Spending"
+                    : "Settlement"
+                  : null
+              }
+            />
           ),
           headerLeft: () => <GlobalMenu journeyId={journey?.journeyId} module="LEDGER" />,
           headerRight: () => (
@@ -865,7 +868,10 @@ export function LedgerStage6Screen({
                   onPress={() =>
                     router.push({
                       pathname: "/expenses/settlement",
-                      params: { journeyId: journey.journeyId },
+                      params: {
+                        journeyId: journey.journeyId,
+                        journeyTitle: journey.title,
+                      },
                     })
                   }
                   style={styles.snapshot}
@@ -919,7 +925,10 @@ export function LedgerStage6Screen({
                     onPress={() =>
                       router.push({
                         pathname: "/expenses/review",
-                        params: { journeyId: journey.journeyId },
+                        params: {
+                          journeyId: journey.journeyId,
+                          journeyTitle: journey.title,
+                        },
                       })
                     }
                     style={styles.attention}
@@ -1057,6 +1066,7 @@ export function LedgerStage6Screen({
                 debugMode={debugMode}
                 embedded
                 journeyId={journey.journeyId}
+                journeyTitle={journey.title}
                 ledgerChangeSeq={ledgerChangeSeq}
                 showNavigation={false}
               />
@@ -1338,17 +1348,7 @@ function HeaderButton({
   onPress: () => void;
 }) {
   return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      hitSlop={6}
-      onPress={onPress}
-      style={[styles.headerButton, disabled && styles.disabled]}
-    >
-      <AppIcon color="#0F766E" name={name} />
-    </Pressable>
+    <HeaderIconAction disabled={disabled} label={label} name={name} onPress={onPress} />
   );
 }
 
@@ -1462,15 +1462,6 @@ const styles = StyleSheet.create({
   topControls: { gap: 14 },
   settlementNavSticky: { marginHorizontal: -16 },
   headerActions: { alignItems: "center", flexDirection: "row", gap: 2 },
-  headerTitleBlock: { alignItems: "center" },
-  headerTitleText: { color: "#111827", fontSize: 17, fontWeight: "700" },
-  headerSubtitle: { color: "#94A3B8", fontSize: 11, fontWeight: "600" },
-  headerButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 44,
-    minWidth: 44,
-  },
   disabled: { opacity: 0.35 },
   context: {
     alignItems: "center",

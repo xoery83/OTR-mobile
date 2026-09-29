@@ -521,7 +521,6 @@ export function ReceiptReviewSheet({
             <LedgerSheetHeader
               leftLabel="Back"
               onLeft={() => setCurrencyPicker(false)}
-              onRight={() => setCurrencyPicker(false)}
               title="Currency"
             />
             <CurrencyPicker

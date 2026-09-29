@@ -266,7 +266,7 @@ export function MyLedgerScreen() {
               onPress={() =>
                 router.push({
                   pathname: "/expenses/settlement",
-                  params: { journeyId: journey.journeyId },
+                  params: { journeyId: journey.journeyId, journeyTitle: journey.title },
                 })
               }
             >

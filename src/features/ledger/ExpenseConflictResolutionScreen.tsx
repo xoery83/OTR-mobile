@@ -219,9 +219,6 @@ export function ExpenseConflictResolutionScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {loading ? <ActivityIndicator accessibilityLabel="Loading changes" /> : null}
-        <Text style={styles.title} accessibilityRole="header">
-          Review changes
-        </Text>
         {message ? (
           <Text accessibilityLiveRegion="polite" style={styles.notice}>
             {message}
@@ -405,7 +402,6 @@ export function ExpenseConflictResolutionScreen() {
 }
 const styles = StyleSheet.create({
   content: { padding: 20, gap: 16, paddingBottom: 44 },
-  title: { fontSize: 24, fontWeight: "700", color: "#17272F" },
   heading: { fontSize: 17, fontWeight: "600", color: "#17272F" },
   choiceRow: { minHeight: 44, justifyContent: "center" },
   body: { fontSize: 16, lineHeight: 23, color: "#475569" },

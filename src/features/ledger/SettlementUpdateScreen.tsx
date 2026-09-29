@@ -27,7 +27,10 @@ import {
 import { submitSettlementUpdate } from "./settlementUpdateFeedback";
 
 export function SettlementUpdateScreen() {
-  const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
+  const { journeyId, journeyTitle } = useLocalSearchParams<{
+    journeyId?: string;
+    journeyTitle?: string;
+  }>();
   const settlement = useStage7Settlement(journeyId, true);
   const refreshSettlement = settlement.refresh;
   const [reason, setReason] = useState("");
@@ -115,7 +118,7 @@ export function SettlementUpdateScreen() {
       () =>
         router.replace({
           pathname: "/expenses/settlement",
-          params: { journeyId },
+          params: { journeyId, journeyTitle },
         } as never),
     );
   };

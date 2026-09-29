@@ -230,7 +230,12 @@ describe("Analysis UI transitions and request guardrails", () => {
         headerTitle: () => unknown;
       }
     ).headerTitle();
-    expect(texts(header)).toContain("Native QA");
+    expect(
+      (header as ReactElement<{ title: string; subtitle: string }>).props,
+    ).toMatchObject({
+      title: "Spending Analysis",
+      subtitle: "Native QA",
+    });
     expect(texts(nodes(screen).find((node) => node.type === "scroll")!)).not.toContain(
       "Entire trip",
     );
@@ -270,7 +275,7 @@ describe("Analysis UI transitions and request guardrails", () => {
     screen = render();
     expect(texts(screen)).toContain("GROUP SPENDING");
     expect(ui.projection).toHaveBeenCalledTimes(1);
-    expect(ui.options).toHaveBeenCalledWith({ tabBarStyle: { display: "none" } });
+    expect(ui.options).not.toHaveBeenCalled();
     vi.useFakeTimers();
     await vi.advanceTimersByTimeAsync(180_000);
     expect(ui.projection).toHaveBeenCalledTimes(1);
@@ -351,7 +356,7 @@ describe("Analysis UI transitions and request guardrails", () => {
         headerRight: () => ReactElement<Record<string, unknown>>;
       }
     ).headerRight();
-    expect(action.props.accessibilityLabel).toBe("Change analysis date range");
+    expect(action.props.label).toBe("Choose date range");
     expect(texts(action)).not.toContain("Range");
   });
   it("uses a structured skeleton, then preserves previous data on local failure", async () => {
@@ -717,7 +722,7 @@ describe("Analysis UI transitions and request guardrails", () => {
     expect(screen).toContain(
       'headerBlurEffect: Platform.OS === "ios" ? "systemMaterial"',
     );
-    expect(screen).toContain('tabBarStyle: { display: "none" }');
+    expect(screen).not.toContain("tabBarStyle");
     expect(screen).not.toContain("selectedMemberId?:");
   });
 });
