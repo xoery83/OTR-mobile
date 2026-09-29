@@ -205,7 +205,6 @@ export function ReceiptReviewSheet({
             onRight={confirm}
             rightLabel="Confirm"
             title="Review receipt"
-            titleBold
           />
           <View style={styles.scanRow}>
             <Pressable

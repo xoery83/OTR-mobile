@@ -1254,7 +1254,6 @@ export function LedgerExpenseEntryScreen() {
         options={{
           gestureEnabled: false,
           headerTitle: existing ? "Edit Expense" : "New Expense",
-          headerTitleStyle: { color: "#0F766E" },
           headerLeft: () => (
             <HeaderAction
               disabled={saving || selectingReceipt}
@@ -1709,6 +1708,7 @@ export function LedgerExpenseEntryScreen() {
             setDraft(applyExpenseSharing(draft, sharingEdit));
             setSharingSheet(false);
           }}
+          rightLabel="Apply"
           rightDisabled={
             sharingMembers.length > 1 &&
             sharingEdit.splitMode === "EXACT" &&
@@ -1930,11 +1930,7 @@ export function LedgerExpenseEntryScreen() {
         presentationStyle="pageSheet"
         visible={categorySheet}
       >
-        <LedgerSheetHeader
-          onLeft={() => setCategorySheet(false)}
-          title="Category"
-          titleBold
-        />
+        <LedgerSheetHeader onLeft={() => setCategorySheet(false)} title="Category" />
         <ScrollView contentContainerStyle={styles.categoryContent}>
           {categoryGroups.map((group) => (
             <View key={group.title}>

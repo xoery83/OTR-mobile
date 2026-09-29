@@ -345,7 +345,6 @@ export default function CurrencyRoute() {
         <LedgerSheetHeader
           leftLabel={chinese ? "关闭" : "Close"}
           onLeft={() => setPickerOpen(false)}
-          rightLabel={chinese ? "完成" : "Done"}
           title={chinese ? "选择货币" : "Choose currency"}
         />
         <CurrencyPicker

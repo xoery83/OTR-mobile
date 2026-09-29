@@ -551,7 +551,6 @@ export function LedgerAnalysisScreen() {
             title="Analysis dates"
             leftLabel="Cancel"
             onLeft={() => setRangeOpen(false)}
-            rightLabel="Done"
           />
           <ScrollView contentContainerStyle={styles.modalContent}>
             {presets.map((preset) => (

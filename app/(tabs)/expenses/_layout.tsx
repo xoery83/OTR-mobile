@@ -1,5 +1,7 @@
 import { Stack } from "expo-router";
 
+import { navigationColors } from "@/components/navigationChrome";
+
 export default function LedgerLayout() {
   return (
     <Stack
@@ -7,6 +9,7 @@ export default function LedgerLayout() {
         contentStyle: { backgroundColor: "#F6F7F9" },
         headerBackButtonDisplayMode: "minimal",
         headerTitleAlign: "center",
+        headerTitleStyle: { color: navigationColors.text },
         headerShadowVisible: false,
         headerTintColor: "#0F766E",
       }}

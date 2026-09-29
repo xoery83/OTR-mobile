@@ -169,6 +169,11 @@ Developer diagnostics and test-account tools do not appear in the
 normal menu. The menu must not repeat Today, Ledger, Trip, Album, or Capture as
 navigation destinations.
 
+Navigation and Sheet/Modal titles use the shared primary text color, including
+ordinary Stack titles and the main line of a two-line Journey header. Subtitles
+use secondary text. Accent green identifies interactive controls, selected
+states, links/CTAs, and deliberate semantic emphasis; it is not a title color.
+
 ## Account Switching
 
 Account switching is a future Production capability, not a Dev-only role

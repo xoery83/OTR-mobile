@@ -236,7 +236,6 @@ export function ExpenseFxDetails({
               <LedgerSheetHeader
                 title={label("Rate details", "汇率详情")}
                 leftLabel={label("Close", "关闭")}
-                rightLabel={label("Done", "完成")}
                 onLeft={() => setExpanded(false)}
                 safeTop={false}
               />

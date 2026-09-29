@@ -4,17 +4,34 @@ import { expect, it, vi } from "vitest";
 
 import { LedgerSheetHeader } from "./LedgerSheetHeader";
 
+const ui = vi.hoisted(() => ({ fontScale: 1 }));
+
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(element: ReactNode): string;
 };
 
-vi.mock("react-native", () => ({
-  Pressable: "button",
-  StyleSheet: { create: (styles: unknown) => styles },
-  Text: "span",
-  View: "div",
-  useWindowDimensions: () => ({ fontScale: 1 }),
-}));
+vi.mock("react-native", async () => {
+  const { createElement } = await import("react");
+  return {
+    Pressable: ({
+      accessibilityState,
+      style,
+      ...props
+    }: {
+      accessibilityState?: { disabled?: boolean };
+      style?: Record<string, unknown> | (Record<string, unknown> | false)[];
+    }) =>
+      createElement("button", {
+        ...props,
+        "aria-disabled": accessibilityState?.disabled,
+        style: Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style,
+      }),
+    StyleSheet: { create: (styles: unknown) => styles },
+    Text: "span",
+    View: "div",
+    useWindowDimensions: () => ({ fontScale: ui.fontScale }),
+  };
+});
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "div" }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: "span" }));
 
@@ -35,4 +52,53 @@ it("renders one dismissal action unless a distinct right action is provided", ()
   );
   expect(apply.match(/<button/g)).toHaveLength(2);
   expect(apply).toContain("Apply");
+});
+
+it("keeps ordinary titles centered, semibold and on one line", () => {
+  const html = renderToStaticMarkup(
+    createElement(LedgerSheetHeader, {
+      title: "A very long category title for a narrow sheet",
+      leftLabel: "Cancel",
+      onLeft: () => undefined,
+      rightLabel: "Confirm",
+      onRight: () => undefined,
+    }),
+  );
+  expect(html).toMatch(/font-size:17px;font-weight:600;text-align:center/);
+  expect(html).toContain('numberOfLines="1"');
+  expect(html).toContain("Confirm");
+});
+
+it("keeps disabled actions in place with the same text style", () => {
+  const html = renderToStaticMarkup(
+    createElement(LedgerSheetHeader, {
+      title: "Filter Expenses",
+      leftLabel: "Cancel",
+      onLeft: () => undefined,
+      rightLabel: "Apply",
+      onRight: () => undefined,
+      rightDisabled: true,
+    }),
+  );
+  expect(html.match(/<button/g)).toHaveLength(2);
+  expect(html).toMatch(/aria-disabled="true"/);
+  expect(html).toMatch(/opacity:0\.45/);
+  expect(html).toMatch(/font-size:16px;font-weight:600/);
+});
+
+it("gives large accessibility text a readable two-line title", () => {
+  ui.fontScale = 2.1;
+  try {
+    const html = renderToStaticMarkup(
+      createElement(LedgerSheetHeader, {
+        title: "Choose currency",
+        onLeft: () => undefined,
+      }),
+    );
+    expect(html).toMatch(/font-size:18px;font-weight:600;text-align:center/);
+    expect(html).toContain('numberOfLines="2"');
+    expect(html.match(/<button/g)).toHaveLength(1);
+  } finally {
+    ui.fontScale = 1;
+  }
 });

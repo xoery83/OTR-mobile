@@ -1,14 +1,10 @@
 import { useRef } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  navigationColors,
-  navigationTextActionStyle,
-} from "@/components/navigationChrome";
+import { navigationColors } from "@/components/navigationChrome";
 
 export function LedgerSheetHeader({
   title,
-  titleBold = false,
   leftLabel = "Close",
   onLeft,
   rightLabel = "Done",
@@ -17,7 +13,6 @@ export function LedgerSheetHeader({
   safeTop = true,
 }: {
   title: string;
-  titleBold?: boolean;
   leftLabel?: string;
   onLeft: () => void;
   rightLabel?: string;
@@ -30,9 +25,8 @@ export function LedgerSheetHeader({
   const left = <Action label={leftLabel} onPress={onLeft} />;
   const right = onRight ? (
     <Action disabled={rightDisabled} label={rightLabel} onPress={onRight} />
-  ) : (
-    <View style={styles.spacer} />
-  );
+  ) : null;
+  // Accessibility exception: large text keeps two title lines above the actions.
   return (
     <SafeAreaView edges={safeTop ? ["top"] : []} style={styles.safe}>
       <View
@@ -46,10 +40,7 @@ export function LedgerSheetHeader({
       >
         {largeText ? (
           <>
-            <Text
-              accessibilityRole="header"
-              style={[styles.largeTitle, titleBold && styles.boldTitle]}
-            >
+            <Text accessibilityRole="header" numberOfLines={2} style={styles.largeTitle}>
               {title}
             </Text>
             <View style={styles.actions}>
@@ -59,15 +50,11 @@ export function LedgerSheetHeader({
           </>
         ) : (
           <>
-            {left}
-            <Text
-              accessibilityRole="header"
-              numberOfLines={2}
-              style={[styles.title, titleBold && styles.boldTitle]}
-            >
+            <View style={styles.side}>{left}</View>
+            <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
               {title}
             </Text>
-            {right}
+            <View style={[styles.side, styles.rightSide]}>{right}</View>
           </>
         )}
       </View>
@@ -105,20 +92,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: 8,
-    minHeight: 62,
+    minHeight: 58,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 6,
   },
   largeHeader: { alignItems: "stretch", flexDirection: "column" },
+  side: { width: 112 },
+  rightSide: { alignItems: "flex-end" },
   title: {
-    color: navigationColors.action,
+    color: navigationColors.text,
     flex: 1,
-    fontSize: 20,
-    fontWeight: "400",
+    fontSize: 17,
+    fontWeight: "600",
     textAlign: "center",
   },
-  largeTitle: { color: navigationColors.action, fontSize: 22, fontWeight: "400" },
-  boldTitle: { fontWeight: "700" },
+  largeTitle: {
+    color: navigationColors.text,
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   actions: { flexDirection: "row", justifyContent: "space-between" },
   button: {
     alignItems: "center",
@@ -133,7 +126,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
   },
-  buttonText: navigationTextActionStyle,
-  spacer: { minWidth: 72 },
+  buttonText: { color: navigationColors.action, fontSize: 16, fontWeight: "600" },
   disabled: { opacity: 0.45 },
 });

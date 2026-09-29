@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 
+import { navigationColors } from "@/components/navigationChrome";
 import { bootstrapApplication } from "@/data/bootstrap/bootstrapApplication";
 import {
   defaultBootstrapDependencies,
@@ -39,6 +40,7 @@ export default function RootLayout() {
           headerBackButtonDisplayMode: "minimal",
           headerShown: false,
           headerTitleAlign: "center",
+          headerTitleStyle: { color: navigationColors.text },
           headerTintColor: "#0F766E",
           orientation: "portrait",
         }}

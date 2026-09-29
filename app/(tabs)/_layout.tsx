@@ -3,6 +3,7 @@ import { Tabs, usePathname } from "expo-router";
 import { AppIcon } from "@/components/AppIcon";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { bottomBarVisible } from "@/components/bottomBarVisibility";
+import { navigationColors } from "@/components/navigationChrome";
 
 export default function TabsLayout() {
   const pathname = usePathname();
@@ -12,6 +13,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: "#0F766E",
         tabBarInactiveTintColor: "#475569",
         headerTitleAlign: "center",
+        headerTitleStyle: { color: navigationColors.text },
         tabBarStyle: bottomBarVisible(pathname) ? undefined : { display: "none" },
       }}
     >

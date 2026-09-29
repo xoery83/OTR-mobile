@@ -1,6 +1,37 @@
 # Current Implementation State
 
-Date: 2026-09-29
+Date: 2026-09-30
+
+## Navigation title color rule — implementation and iPhone check PASS
+
+- Product rule: navigation and Sheet/Modal titles use primary dark text;
+  subtitles use secondary text. Accent green is for actions, selection,
+  links/CTAs and deliberate semantic emphasis.
+- Root, Tabs and Ledger Stack now explicitly set native title color. New/Edit
+  Expense no longer overrides its title to green. Existing custom and Sheet
+  title components already use the primary text token; action tint is unchanged.
+- iPhone 16 Pro Dev Release shows dark Today/Ledger/New Expense titles and green
+  menu, add, Cancel and disabled Save actions. TypeScript, scoped lint/format,
+  nine related suites (74 tests) and diff check passed. iPhone 17 Pro Simulator
+  Release also shows dark New Expense title with green Cancel/disabled Save.
+  No Production access.
+
+## Sheet / modal chrome unification — checks PASS, iPhone visual review partial
+
+- `LedgerSheetHeader` now supplies centered 17pt semibold one-line titles,
+  16pt semibold actions with 44pt hit height, balanced 112pt side slots,
+  and unchanged typography for disabled actions. Large accessibility text
+  retains a deliberate two-line title variant. Native date wheels remain native.
+- Ordinary selector sheets no longer carry per-call-site `titleBold` or unused
+  right-side Done labels; Expense Sharing uses Apply for its existing draft
+  action. Routes, modal lifecycles, data loading, repositories and sync are unchanged.
+- iPhone 16 Pro Dev Release visual checks covered Journey chooser, Expense
+  currency/category/date/sharing, Search Filter and payment-record editing.
+  Simulator Release built, installed and launched; the Simulator UI application
+  is unavailable on this host, so deeper Simulator sheets were not inspected.
+  Remaining data-dependent sheet flows retain the shared header but were not
+  all opened for visual review. Eight focused suites (72 tests), TypeScript,
+  scoped lint/format and diff check passed. No Production access.
 
 ## Navigation chrome unification — 2026-09-30 source validation PASS
 
