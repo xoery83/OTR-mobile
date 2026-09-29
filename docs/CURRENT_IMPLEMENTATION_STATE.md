@@ -2,6 +2,20 @@
 
 Date: 2026-09-30
 
+## Content visual language v1 — source implementation, device review pending
+
+- Ledger content now shares small typography, surface, radius, spacing and amount
+  tokens. Spending, Analysis and Settlement use a bounded 44/40/36/32pt Hero amount
+  ladder. Standard Expense rows, section headings and expandable groups are aligned;
+  Payments keeps transfer-direction arrows and adds a separate expand chevron.
+- Review, Search, Expense Detail and My Ledger received limited presentation alignment.
+  Routes, navigator structure, local reads, sync, calculations and decisions are
+  unchanged. No schema/API/package changes or Hosted Dev/Production access.
+- TypeScript, affected-file ESLint/Prettier and 10 focused suites / 73 tests pass.
+  CoreSimulatorService is unavailable, so screenshots and device visual acceptance
+  remain pending. Validate short/long locale amounts, multilingual titles, warning
+  and expanded states on a device before finalizing the visual guideline.
+
 ## Navigation title color rule — implementation and iPhone check PASS
 
 - Product rule: navigation and Sheet/Modal titles use primary dark text;

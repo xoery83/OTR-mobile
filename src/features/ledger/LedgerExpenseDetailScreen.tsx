@@ -28,6 +28,7 @@ import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
 import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
 
 import { AppIcon } from "@/components/AppIcon";
+import { contentVisual as cv } from "./contentVisual";
 import { HeaderIconAction } from "@/components/navigationChrome";
 import { canEditLedgerExpense } from "@/data/repositories/ledgerExpenseEditAccess";
 import { previewReceiptDraftPdf } from "@/native/receiptDraftPreview";
@@ -503,7 +504,7 @@ export function LedgerExpenseDetailScreen() {
             />
           </Pressable>
           {sharingExpanded ? (
-            <View>
+            <View style={styles.sharingExpanded}>
               {expense.splits.map((split) => (
                 <View
                   key={split.memberId}
@@ -629,6 +630,13 @@ const styles = StyleSheet.create({
   },
   amountColumn: { flexShrink: 1, gap: 4 },
   sharingControl: { gap: 8, minHeight: 44 },
+  sharingExpanded: {
+    backgroundColor: cv.color.expanded,
+    borderTopColor: cv.color.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: -14,
+    paddingHorizontal: 14,
+  },
   sharingHeading: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -650,9 +658,20 @@ const styles = StyleSheet.create({
   },
   warning: { backgroundColor: "#FFF7DB", borderRadius: 10, gap: 4, padding: 13 },
   warningTitle: { color: "#7C5B00", fontWeight: "700" },
-  section: { backgroundColor: "#FFFFFF", borderRadius: 10, gap: 8, padding: 14 },
+  section: {
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
+    gap: 8,
+    padding: 14,
+  },
   label: { color: "#64748B", fontSize: 12, fontWeight: "700" },
-  value: { color: "#111827", fontSize: 23, lineHeight: 44, fontWeight: "800" },
+  value: {
+    color: cv.color.text,
+    fontSize: 23,
+    lineHeight: 44,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+  },
   split: {
     alignItems: "center",
     borderTopColor: "#E5E7EB",

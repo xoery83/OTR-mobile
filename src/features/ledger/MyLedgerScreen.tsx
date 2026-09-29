@@ -14,6 +14,7 @@ import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { myLedgerPeriodBounds } from "@/domain/ledger/journeyContext";
 import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
 import { formatLedgerDateRange, formatLedgerMoney } from "./format";
+import { contentVisual as cv } from "./contentVisual";
 import { createLatestRequest } from "./latestRequest";
 import { loadMyLedger } from "./loadMyLedger";
 import type { Period } from "./myLedgerAnalytics";
@@ -392,9 +393,19 @@ const styles = StyleSheet.create({
   periodText: { color: "#64748B", fontSize: 12 },
   periodTextSelected: { color: "#1F2937", fontWeight: "700" },
   label: { color: "#64748B", fontSize: 14 },
-  total: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 3, padding: 20 },
-  amount: { color: "#111827", fontSize: 30, fontWeight: "700" },
-  heading: { color: "#111827", fontSize: 18, fontWeight: "700", marginTop: 8 },
+  total: {
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
+    gap: 3,
+    padding: 20,
+  },
+  amount: {
+    color: cv.color.text,
+    fontSize: 30,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+  },
+  heading: { color: cv.color.text, ...cv.type.section, marginTop: 8 },
   meta: { color: "#64748B", fontSize: 13 },
   error: { color: "#B91C1C" },
   category: { gap: 6 },
@@ -437,9 +448,9 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   grow: { flex: 1 },
-  journeyTitle: { color: "#111827", fontSize: 16, fontWeight: "700" },
+  journeyTitle: { color: cv.color.text, ...cv.type.row },
   balanceColumn: { alignItems: "flex-end", maxWidth: "46%" },
-  balance: { color: "#111827", fontWeight: "700", textAlign: "right" },
+  balance: { color: cv.color.text, ...cv.type.rowAmount, textAlign: "right" },
   balanceMeaning: {
     borderRadius: 6,
     fontSize: 11,

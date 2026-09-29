@@ -26,6 +26,7 @@ import { refreshPersonalPaymentPresentation } from "@/data/operations/personalPa
 import { currencyScale } from "@/domain/ledger/currency";
 
 import { CurrencyPicker } from "./CurrencyPicker";
+import { contentVisual as cv } from "./contentVisual";
 import { formatLedgerMoney } from "./format";
 import { formatMinorInput, parseCurrencyAmount } from "./expenseDraft";
 import { chronologicalPersonalPayments } from "./settlementSections";
@@ -559,7 +560,7 @@ function PersonalPaymentEditor({
 }
 
 const styles = StyleSheet.create({
-  section: { backgroundColor: "#DDECEA", gap: 12, padding: 12 },
+  section: { backgroundColor: cv.color.expanded, gap: 12, padding: 12 },
   groupTitle: { color: "#0F172A", fontSize: 15, fontWeight: "800" },
   meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
   note: { color: "#334155", fontSize: 15, lineHeight: 21 },

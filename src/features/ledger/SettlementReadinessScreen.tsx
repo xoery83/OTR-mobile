@@ -14,6 +14,8 @@ import {
 import { router, useFocusEffect } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
+import { ContentHeroAmount } from "./ContentHeroAmount";
+import { contentVisual as cv } from "./contentVisual";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import { usePersonalSettlementReview } from "@/hooks/usePersonalSettlementReview";
 import { useSettlementSections } from "@/hooks/useSettlementSections";
@@ -369,10 +371,7 @@ function SummarySection({
   return (
     <View style={styles.section}>
       <View style={styles.hero}>
-        <Text
-          accessibilityRole="header"
-          style={[styles.sectionLeadText, styles.paymentsLeadText]}
-        >
+        <Text accessibilityRole="header" style={styles.sectionLeadText}>
           CURRENT BALANCE
         </Text>
         <Text style={styles.heroLabel}>
@@ -381,11 +380,14 @@ function SummarySection({
             : settlementPositionLabel(balanceMinor)}
         </Text>
         <View style={styles.heroAmountRow}>
-          <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroAmount}>
-            {balanceMinor === undefined
-              ? "—"
-              : formatLedgerMoney(Math.abs(balanceMinor), currency, scale)}
-          </Text>
+          <ContentHeroAmount
+            style={styles.heroAmount}
+            value={
+              balanceMinor === undefined
+                ? "—"
+                : formatLedgerMoney(Math.abs(balanceMinor), currency, scale)
+            }
+          />
           {projection && rateIssues.length ? (
             <Pressable
               accessibilityHint="Shows Expenses whose converted amounts may change"
@@ -772,9 +774,10 @@ function ExpenseSection({
             })}
           </View>
         ) : null}
-        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroAmount}>
-          {formatLedgerMoney(total, currency, scale)}
-        </Text>
+        <ContentHeroAmount
+          style={styles.heroAmount}
+          value={formatLedgerMoney(total, currency, scale)}
+        />
       </View>
       {categories.map((category) => {
         const open = expanded === category.key;
@@ -786,14 +789,21 @@ function ExpenseSection({
               onPress={() => onExpand(open ? null : category.key)}
               style={styles.categoryHeader}
             >
-              <Text style={styles.rowTitle}>{category.label}</Text>
-              <Text style={styles.rowAmount}>
-                {formatLedgerMoney(category.totalMinor, currency, scale)}{" "}
-                {open ? "⌃" : "⌄"}
+              <Text numberOfLines={2} style={[styles.rowTitle, styles.grow]}>
+                {category.label}
               </Text>
+              <Text style={styles.rowAmount}>
+                {formatLedgerMoney(category.totalMinor, currency, scale)}
+              </Text>
+              <AppIcon
+                color={cv.color.secondary}
+                name={open ? "chevron.up" : "chevron.down"}
+                size={14}
+              />
             </Pressable>
-            {open
-              ? category.rows.slice(0, 8).map((row) => (
+            {open ? (
+              <View style={styles.expandedBody}>
+                {category.rows.slice(0, 8).map((row) => (
                   <Pressable
                     accessibilityHint="Opens Expense detail"
                     accessibilityRole="button"
@@ -802,8 +812,10 @@ function ExpenseSection({
                     style={styles.expenseRow}
                   >
                     <View style={styles.grow}>
-                      <Text style={styles.rowTitle}>{row.title}</Text>
-                      <Text style={styles.meta}>
+                      <Text numberOfLines={2} style={styles.rowTitle}>
+                        {row.title}
+                      </Text>
+                      <Text numberOfLines={2} style={styles.meta}>
                         {formatLedgerMoney(
                           row.originalMinor,
                           row.originalCurrency,
@@ -811,7 +823,7 @@ function ExpenseSection({
                         )}{" "}
                         total · Paid by {row.payerName}
                       </Text>
-                      <Text style={styles.meta}>
+                      <Text numberOfLines={2} style={styles.meta}>
                         {row.participantCount}{" "}
                         {row.participantCount === 1 ? "person" : "people"} ·{" "}
                         {splitLabel(row.splitMethod)}
@@ -829,8 +841,9 @@ function ExpenseSection({
                     </View>
                     <Text style={styles.chevron}>›</Text>
                   </Pressable>
-                ))
-              : null}
+                ))}
+              </View>
+            ) : null}
           </View>
         );
       })}
@@ -888,12 +901,9 @@ function PaymentsSection({
   const [estimateDetail, setEstimateDetail] = useState<string | null>(null);
   return (
     <View style={styles.section}>
-      <View style={styles.hero}>
-        <Text
-          accessibilityRole="header"
-          style={[styles.sectionLeadText, styles.paymentsLeadText]}
-        >
-          RECOMMENDED TRANSFERS
+      <View style={styles.transferHeading}>
+        <Text accessibilityRole="header" style={styles.transferHeadingText}>
+          Recommended transfers
         </Text>
         {isOrganizer ? <Toggle everyone={everyone} onChange={onEveryone} /> : null}
       </View>
@@ -921,7 +931,7 @@ function PaymentsSection({
               onPress={() => onExpandTransfer(open ? null : key)}
               style={styles.transferRow}
             >
-              <Text numberOfLines={1} style={styles.transferMember}>
+              <Text numberOfLines={2} style={styles.transferMember}>
                 {transfer.fromMemberId === actorMemberId ? "You" : from}
               </Text>
               <Text style={styles.arrow}>→</Text>
@@ -955,9 +965,16 @@ function PaymentsSection({
                 ) : null}
               </View>
               <Text style={styles.arrow}>→</Text>
-              <Text numberOfLines={1} style={[styles.transferMember, styles.alignRight]}>
+              <Text numberOfLines={2} style={[styles.transferMember, styles.alignRight]}>
                 {transfer.toMemberId === actorMemberId ? "You" : to}
               </Text>
+              {related ? (
+                <AppIcon
+                  color={cv.color.secondary}
+                  name={open ? "chevron.up" : "chevron.down"}
+                  size={14}
+                />
+              ) : null}
             </Pressable>
             {estimateDetail === key && progress?.provisional.length ? (
               <View style={styles.fxDetail}>
@@ -1227,14 +1244,29 @@ const styles = StyleSheet.create({
   arrow: { color: "#94A3B8", fontSize: 16 },
   body: { color: "#334155", fontSize: 15, lineHeight: 22 },
   bold: { color: "#0F172A", fontWeight: "800" },
-  card: { backgroundColor: "#FFFFFF", borderRadius: 14, gap: 10, padding: 14 },
-  category: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
+  card: {
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
+    gap: 10,
+    padding: 14,
+  },
+  category: {
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
+    overflow: "hidden",
+  },
   categoryHeader: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
     minHeight: 52,
+    gap: 8,
     paddingHorizontal: 14,
+  },
+  expandedBody: {
+    backgroundColor: cv.color.expanded,
+    borderTopColor: cv.color.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   chevron: { color: "#64748B", fontSize: 24 },
   content: { paddingBottom: 48 },
@@ -1243,17 +1275,22 @@ const styles = StyleSheet.create({
   empty: { color: "#64748B", fontSize: 15, paddingVertical: 12 },
   expenseRow: {
     alignItems: "center",
-    borderTopColor: "#E2E8F0",
+    borderTopColor: cv.color.divider,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: 10,
     padding: 14,
   },
   grow: { flex: 1, gap: 3 },
-  hero: { backgroundColor: "#E7F5F2", borderRadius: 18, gap: 6, padding: 18 },
-  heroAmount: { color: "#0F172A", flexShrink: 1, fontSize: 36, fontWeight: "900" },
+  hero: {
+    backgroundColor: cv.color.hero,
+    borderRadius: cv.radius.hero,
+    gap: 6,
+    padding: 18,
+  },
+  heroAmount: { flexShrink: 1 },
   heroAmountRow: { alignItems: "flex-start", flexDirection: "row", gap: 4 },
-  heroLabel: { color: "#0F172A", fontSize: 18, fontWeight: "800" },
+  heroLabel: { color: cv.color.text, fontSize: 18, fontWeight: "700" },
   estimateIndicator: {
     backgroundColor: "#D97706",
     borderRadius: 5,
@@ -1332,8 +1369,13 @@ const styles = StyleSheet.create({
   navItemActive: { borderBottomColor: "#0F766E" },
   navText: { color: "#64748B", fontSize: 11, fontWeight: "700" },
   navTextActive: { color: "#0F766E" },
-  notice: { backgroundColor: "#FFF7ED", borderRadius: 12, gap: 6, padding: 14 },
-  noticeTitle: { color: "#9A3412", fontSize: 16, fontWeight: "800" },
+  notice: {
+    backgroundColor: cv.color.warning,
+    borderRadius: cv.radius.card,
+    gap: 6,
+    padding: 14,
+  },
+  noticeTitle: { color: "#9A3412", fontSize: 16, fontWeight: "700" },
   personalRecord: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 4, padding: 14 },
   rateDetails: {
     backgroundColor: "#FFFFFF",
@@ -1399,10 +1441,10 @@ const styles = StyleSheet.create({
   reviewTagChecking: { backgroundColor: "#FEF3C7", color: "#92400E" },
   reviewTagGood: { backgroundColor: "#D1FAE5", color: "#065F46" },
   reviewTagNeutral: { backgroundColor: "#E2E8F0", color: "#475569" },
-  rowAmount: { color: "#0F172A", fontSize: 15, fontWeight: "800" },
-  rowTitle: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
+  rowAmount: { color: cv.color.text, ...cv.type.rowAmount, textAlign: "right" },
+  rowTitle: { color: cv.color.text, ...cv.type.row },
   secondaryNote: { color: "#64748B", fontSize: 13, lineHeight: 19 },
-  section: { gap: 12, paddingTop: 24 },
+  section: { gap: cv.space.card, paddingTop: cv.space.section },
   sectionLeadRow: {
     alignItems: "center",
     flexDirection: "row",
@@ -1413,12 +1455,10 @@ const styles = StyleSheet.create({
     color: "#0F766E",
     flex: 1,
     flexShrink: 1,
-    fontSize: 18,
-    fontWeight: "900",
+    ...cv.type.eyebrow,
     letterSpacing: 0.4,
     minWidth: 0,
   },
-  paymentsLeadText: { flex: 0 },
   sections: { paddingBottom: 24 },
   standaloneSections: { paddingHorizontal: 16 },
   subheading: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 4 },
@@ -1433,7 +1473,7 @@ const styles = StyleSheet.create({
   toggleItem: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
   toggleText: { color: "#64748B", fontSize: 13, fontWeight: "700" },
   toggleTextActive: { color: "#0F172A" },
-  transferAmount: { color: "#0F172A", fontSize: 15, fontWeight: "900" },
+  transferAmount: { color: cv.color.text, ...cv.type.rowAmount },
   transferAmountBlock: { alignItems: "center", flexShrink: 0 },
   transferProgress: { color: "#475569", fontSize: 10 },
   transferProgressRow: {
@@ -1447,7 +1487,19 @@ const styles = StyleSheet.create({
   fxDetail: { backgroundColor: "#FEF3C7", gap: 5, padding: 10 },
   fxDetailText: { color: "#78350F", fontSize: 11, lineHeight: 16 },
   fxDetailTitle: { color: "#92400E", fontSize: 12, fontWeight: "800" },
-  transferCard: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
+  transferCard: {
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
+    overflow: "hidden",
+  },
+  transferHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 44,
+    gap: 12,
+  },
+  transferHeadingText: { color: cv.color.text, ...cv.type.section, flexShrink: 1 },
   transferMember: { color: "#334155", flex: 1, fontSize: 14, fontWeight: "700" },
   transferRow: {
     alignItems: "center",

@@ -15,6 +15,7 @@ import {
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { HeaderIconAction } from "@/components/navigationChrome";
+import { contentVisual as cv } from "./contentVisual";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerJourneyContext } from "@/domain/ledger/journeyContext";
@@ -929,10 +930,16 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   grow: { flex: 1, minWidth: 0 },
-  title: { color: "#111827", fontSize: 16, fontWeight: "600" },
-  meta: { color: "#64748B", fontSize: 12, marginTop: 3 },
+  title: { color: cv.color.text, ...cv.type.row },
+  meta: { color: cv.color.secondary, ...cv.type.meta, marginTop: 3 },
   warning: { color: "#B45309", fontSize: 12, fontWeight: "700", marginTop: 3 },
-  amount: { color: "#111827", flexShrink: 0, fontWeight: "700", maxWidth: "42%" },
+  amount: {
+    color: cv.color.text,
+    ...cv.type.rowAmount,
+    flexShrink: 0,
+    maxWidth: "42%",
+    textAlign: "right",
+  },
   largeAmount: { maxWidth: "100%" },
   stack: { alignItems: "flex-start", flexDirection: "column" },
   statusCard: {

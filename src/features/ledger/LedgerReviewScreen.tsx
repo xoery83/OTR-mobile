@@ -3,6 +3,8 @@ import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "reac
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { NavigationContextTitle } from "@/components/navigationChrome";
+import { AppIcon } from "@/components/AppIcon";
+import { contentVisual as cv } from "./contentVisual";
 import { useLedgerReview } from "@/hooks/useLedgerReview";
 import { ExpenseConflictList } from "./ExpenseConflictList";
 import { reviewCardEvidence } from "./reviewEvidence";
@@ -124,9 +126,12 @@ export function LedgerReviewScreen() {
               onPress={() => setExpanded((value) => !value)}
               style={styles.accordion}
             >
-              <Text style={styles.section}>
-                {expanded ? "⌄" : "›"} Reviewed {inbox.reviewedTotal}
-              </Text>
+              <Text style={styles.section}>Reviewed {inbox.reviewedTotal}</Text>
+              <AppIcon
+                color={cv.color.secondary}
+                name={expanded ? "chevron.up" : "chevron.down"}
+                size={14}
+              />
             </Pressable>
           ) : (
             <Pressable
@@ -136,9 +141,12 @@ export function LedgerReviewScreen() {
               onPress={() => setHistoryExpanded((value) => !value)}
               style={styles.accordion}
             >
-              <Text style={styles.section}>
-                {historyExpanded ? "⌄" : "›"} History {inbox.history.length}
-              </Text>
+              <Text style={styles.section}>History {inbox.history.length}</Text>
+              <AppIcon
+                color={cv.color.secondary}
+                name={historyExpanded ? "chevron.up" : "chevron.down"}
+                size={14}
+              />
             </Pressable>
           )
         }
@@ -209,8 +217,13 @@ const styles = StyleSheet.create({
   selectedChip: { backgroundColor: "#0F766E", borderColor: "#0F766E" },
   chipText: { color: "#334155", fontWeight: "700" },
   selectedChipText: { color: "#FFFFFF", fontWeight: "700" },
-  section: { color: "#64748B", fontSize: 14, fontWeight: "800", paddingVertical: 10 },
-  accordion: { minHeight: 48, justifyContent: "center" },
+  section: { color: cv.color.text, ...cv.type.section, paddingVertical: 10 },
+  accordion: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   emptyCard: { backgroundColor: "#E7F5F2", borderRadius: 14, padding: 18 },
   emptyTitle: { color: "#0F766E", fontSize: 18, fontWeight: "700" },
   card: {
@@ -223,7 +236,7 @@ const styles = StyleSheet.create({
   },
   grow: { flex: 1 },
   category: { color: "#0F766E", fontSize: 12, fontWeight: "700" },
-  cardTitle: { color: "#0F172A", fontSize: 17, fontWeight: "800" },
+  cardTitle: { color: cv.color.text, ...cv.type.row },
   expenseTitle: { color: "#334155", fontSize: 15, marginTop: 3 },
   meta: { color: "#64748B", fontSize: 14, marginTop: 4 },
   reviewed: { color: "#0F766E", fontSize: 13, fontWeight: "700", marginTop: 5 },
