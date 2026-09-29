@@ -267,3 +267,118 @@ member、valuation、split、conflict 使用现有索引；scoped/predecessor CT
 remote analysis 请求、idle 重复数据库读取、toggle 同步扇出、chart 发 Backend 请求、
 相关 Hosted Dev I/O/connection spike、或新增不必要后台 polling。
 本轮针对性测试没有触发这些红线。
+
+## Owner feedback revision — 2026-09-29
+
+Approved: Journey subtitle in native header; fixed inline-icon Mine/Group tabs;
+hide Entire trip; two-line shared Expense rows with right-aligned amount / You,
+Journey-currency total/date and truncated title. Category previews use updated_at
+descending; Biggest remains amount-descending. Stronger separators.
+
+Display categories below 3% of scoped spending fold into the distinct Other
+categories union, also retaining the existing maximum of six display groups.
+Category and timeline reuse that union with a contrasting palette. Source
+categories, money and Search identities remain intact.
+
+Timeline fits viewport initially, supports horizontal two-finger pinch and scroll
+after zoom. Average is its only summary line; tapping opens a floating brief.
+Automatic log1p amount scale is selected when at least three nonzero periods exist,
+the maximum exceeds 60% of total and is at least 10x the nonzero median. Explicit
+Linear / Log scale control permits override. Stacked segment heights use differences
+between transformed cumulative amounts, not linear percentages on a logarithmic
+bar. Scale is marked; briefs always show actual amounts. Monetary transform uses
+Journey major units; zeros remain zero. No change to financial semantics.
+
+updated_at is added to the same local JSON projection, with no extra query, table,
+index, migration, remote fetch or polling. Interactions remain memory-only.
+
+### Revision acceptance
+
+- 8 affected suites / 64 tests, TypeScript, scoped ESLint, Prettier and diff check PASS.
+- 10,003 Expense benchmark: one projection read, 45ms SQL/projection, 64ms domain
+  aggregation (development-machine run with parallel suites); selected range one
+  read and indexed Journey/date query plan. Evidence:
+  `/private/tmp/otr-analysis-polish-performance.json`.
+- Updated UI event harness: entry 1 read; Mine/Group, category previews/filter,
+  pinch/zoom, floating selection/dismissal and re-renders 0 extra reads; 180 seconds
+  simulated idle 0; Detail focus return 1 consolidated read. No remote module reads.
+  These are harness counts, not native SQL instrumentation.
+- iOS Release / 375pt isolated Small Screen QA: Journey subtitle and fixed tabs,
+  expanded recent previews, visibly stronger separators, full-width timeline,
+  palette/Other union, floating brief/dismissal, automatic log and manual linear,
+  zoom buttons and post-zoom horizontal scroll verified. A temporary backed-up
+  synthetic outlier confirms full NZ$9,999,999.99 total and NZ$1,428,571.43 share
+  within two lines with a long French title. Baseline restored after verification.
+  Screenshot: `/private/tmp/otr-analysis-polish-two-line-outlier.png`.
+- Horizontal two-finger pinch grant/move/release and zero read count verified by
+  runnable event test. CUA has no multi-touch injection; physical pinch feel remains
+  owner acceptance. Android and new maximum Dynamic Type checks were not performed.
+- Final normal Dev signed iPhone Release compiled with api-dev.xoery.art (loopback
+  absent); signing verified; installed and launched on owner's iPhone 16 Pro with
+  same bundle ID and no data clearing or fixture injection. Build/install/launch
+  evidence: `/private/tmp/otr-analysis-polish-device-{build.log,install.json,launch.json}`.
+- No commit/push performed for this feedback revision.
+
+### Excluded-record info popup refinement — 2026-09-29
+
+The separate completeness module is removed. When the current Mine/Group and Range
+contains excluded records, the included Expense count is followed immediately by
+same-size gray ⓘ. Its accessible button opens a native sheet listing those records
+from `dashboard.incomplete`, original totals (explicitly labeled), and individual
+review/draft/confirmed-value/share reasons. Selecting a record dismisses the sheet
+and opens existing Expense Detail. No extra repository or remote reads on opening,
+dismissing or selecting; normal Detail focus return retains consolidated refresh.
+Eligibility and financial rules are unchanged.
+
+- 31 focused UI/domain tests, typecheck, scoped ESLint PASS. Tests cover conditional
+  icon, mixed exclusion reasons, exact record subset, original amount labeling,
+  dismissal/navigation, and one entry read across all popup interactions.
+- Isolated 375pt Simulator verifies inline gray icon and all three synthetic records
+  with specific missing-value explanations; original total is not presented as a
+  confirmed analysis value. Both iOS Release builds PASS. Normal Dev device bundle
+  endpoint/signing verified; installed and launched on owner's existing iPhone app.
+- Evidence: `/private/tmp/otr-analysis-info-{simulator-build.log,device-build.log,device-install.json,device-launch.json}`.
+
+### Second owner review and navigation fixes — 2026-09-29
+
+This section supersedes the earlier manual scale override / marked-scale UI.
+
+- Automatic log1p outlier scale retained; manual scale buttons and Log scale label
+  removed. Average and useful zoom controls share one row. Zoom-in reaches 44pt
+  columns; short timelines already meeting that width show no zoom controls.
+- Floating brief fixes date/close in the header and View Expenses in the footer;
+  only summary/category content scrolls. Calendar uses the standard green accent.
+- Traveller ranking removes percentages, progress bars and explanatory text, using
+  distinct #N badges. Filtered traveller clicks directly open the category/member
+  list. Who paid removes its explanatory text and directly opens the payer list.
+- Shared Expense rows omit the final bottom separator. Returning from Search or
+  Detail keeps the prior dashboard during one consolidated refresh: deleting the
+  temporary loading row prevents the visible layout jump. Mine and Group each
+  retain their own scroll offset, without extra reads.
+- Real phone verification exposed calendar-day SQL bounds comparing ISO midnight
+  against date-only occurred_at incorrectly (Jul 7 opened Jul 8 records). Shared
+  reportingDateBoundary normalizes midnight bounds, preserving Journey/date scoped
+  indexed comparisons; repository and in-memory filters agree. Regression verifies
+  projection/list/count/summary on synthetic date-only rows. No schema/data change.
+
+Validation: 8 suites / 72 tests, typecheck, scoped ESLint, format and diff checks PASS.
+The UI harness covers fixed popup regions, 44pt zoom, short-range controls, direct
+member/payer filters, retained dashboard while refresh is pending, independent scroll
+positions, final-row separators and zero-read interactions. Counts are from the
+runnable harness, not native SQL instrumentation.
+
+Final normal Dev iPhone 16 Pro Release installed/launched without data clearing.
+Observed automatic scale without label, usable zoom and brief; Jul 7 brief and
+Search agree on 5 Expenses / ¥8,334.69 and actual Jul 7 rows. Search return retains
+zoom; Museum stop Detail return retains Biggest Expenses position. Final bottom
+separator is absent. Mine at Biggest -> Group at top -> Mine restores Biggest.
+Earlier real phone category-filtered Leo/flight drilldown matches 3 Expenses /
+¥17,831.74. 375pt isolated Simulator final build confirms green calendar, ten-category
+brief with pinned header/footer, Jan 2024 Search matching 93 Expenses / NZ$254.82,
+stable return and independent initial Group position. Signed device and Simulator
+builds PASS. Evidence is under `/private/tmp/otr-analysis-review2-{device,simulator}-build.log`
+and `/private/tmp/otr-analysis-review2-device-{install,launch}.json`.
+
+CUA cannot inject two-finger touch; pinch is event-harness tested. Android was not
+retested. No new Hosted Dev reads, remote analysis, migration or background polling.
+All owner-feedback changes are included in the requested Git revision; no push.

@@ -11,6 +11,7 @@ import {
   AnalysisCategoryMenu,
   AnalysisExpenseRows,
   AnalysisInsights,
+  AnalysisPeople,
   AnalysisSkeleton,
   AnalysisTimeline,
 } from "./SpendingAnalysisSections";
@@ -53,6 +54,14 @@ vi.mock("react", async (importOriginal) => {
         },
       ];
     },
+    useLayoutEffect(callback: () => void, deps: unknown[]) {
+      const index = ui.cursor++;
+      const prior = ui.slots[index] as unknown[] | undefined;
+      if (!prior || deps.some((dep, i) => dep !== prior[i])) {
+        ui.slots[index] = deps;
+        callback();
+      }
+    },
     useRef(initial: unknown) {
       const index = ui.cursor++;
       ui.slots[index] ??= { current: initial };
@@ -84,7 +93,7 @@ vi.mock("react-native", () => ({
   TextInput: "input",
   View: "view",
   StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
-  useWindowDimensions: () => ({ fontScale: ui.fontScale }),
+  useWindowDimensions: () => ({ fontScale: ui.fontScale, width: 375 }),
 }));
 vi.mock("expo-router", () => ({
   Stack: { Screen: "stack" },
@@ -132,6 +141,7 @@ function data(days = 30): AnalysisDataset {
       title: `Expense ${index}`,
       category: "food",
       occurredAt: "2026-09-02T08:00:00.000Z",
+      updatedAt: "2026-09-02T08:00:00.000Z",
       payerMemberId: "a",
       originalMinor: 1000,
       originalCurrency: "EUR",
@@ -190,7 +200,7 @@ beforeEach(() => {
 });
 
 describe("Analysis UI transitions and request guardrails", () => {
-  it("uses full-width insight cards and wider timeline targets with large text", () => {
+  it("uses full-width insight cards and a fitted timeline with large text", () => {
     ui.fontScale = 3.1;
     const dashboard = buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29");
     const insights = AnalysisInsights({ dashboard, money: String });
@@ -205,28 +215,25 @@ describe("Analysis UI transitions and request guardrails", () => {
     ).toHaveLength(dashboard.insights.length);
     ui.cursor = 0;
     const timeline = AnalysisTimeline({ dashboard, money: String, drilldown: vi.fn() });
-    const bar = nodes(timeline).find((node) => node.props.accessibilityState)!;
-    expect(bar.props.style).toContainEqual({ width: 117.8 });
+    const bar = nodes(timeline).find(
+      (node) => node.props.accessibilityHint === "Opens spending brief",
+    )!;
+    expect(bar.props.style).toContainEqual({ width: 343 / 30 });
   });
   it("pins only the scope control and applies one consolidated range read", async () => {
     let screen = await ready(data(400));
-    const layout = nodes(screen).find((node) => node.props.onLayout)!;
-    (layout.props.onLayout as (event: unknown) => void)({
-      nativeEvent: { layout: { y: 140 } },
-    });
-    const scroll = nodes(screen).find(
-      (node) => node.type === "scroll" && node.props.onScroll,
-    )!;
-    (scroll.props.onScroll as (event: unknown) => void)({
-      nativeEvent: { contentOffset: { y: 100 } },
-    });
-    screen = render();
     expect(
       nodes(screen).filter((node) => node.props.accessibilityRole === "tablist"),
-    ).toHaveLength(2);
-    expect(
-      nodes(screen).some((node) => node.props.accessibilityElementsHidden === true),
-    ).toBe(true);
+    ).toHaveLength(1);
+    const header = (
+      nodes(screen).find((node) => node.type === "stack")!.props.options as {
+        headerTitle: () => unknown;
+      }
+    ).headerTitle();
+    expect(texts(header)).toContain("Native QA");
+    expect(texts(nodes(screen).find((node) => node.type === "scroll")!)).not.toContain(
+      "Entire trip",
+    );
     expect(ui.projection).toHaveBeenCalledTimes(1);
     press(
       nodes(screen).find((node) => node.props.onPress && texts(node) === "This month")!,
@@ -273,6 +280,60 @@ describe("Analysis UI transitions and request guardrails", () => {
     await new Promise<void>((resolve) => setImmediate(resolve));
     expect(ui.projection).toHaveBeenCalledTimes(2);
     expect(texts(render())).toContain("GROUP SPENDING");
+  });
+  it("keeps the previous dashboard unchanged during a pending return refresh", async () => {
+    const dataset = data();
+    const before = await ready(dataset);
+    const content = texts(before);
+    let complete!: (value: AnalysisDataset) => void;
+    ui.projection.mockImplementationOnce(
+      () =>
+        new Promise<AnalysisDataset>((resolve) => {
+          complete = resolve;
+        }),
+    );
+    ui.cleanup?.();
+    ui.cleanup = ui.focus?.() ?? null;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    const pending = render();
+    expect(texts(pending)).toBe(content);
+    expect(nodes(pending).some((node) => node.type === AnalysisSkeleton)).toBe(false);
+    expect(
+      nodes(pending).find((node) => node.type === AnalysisTimeline)!.props.dashboard,
+    ).toBe(nodes(before).find((node) => node.type === AnalysisTimeline)!.props.dashboard);
+    complete({ ...dataset, expenses: dataset.expenses.slice(0, 1) });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(texts(render())).toContain("1 expense");
+    expect(ui.projection).toHaveBeenCalledTimes(2);
+  });
+  it("restores independent Mine and Group scroll offsets without reads", async () => {
+    let screen = await ready();
+    const main = () =>
+      nodes(screen).find((node) => node.type === "scroll" && node.props.onScroll)!;
+    const scrollTo = vi.fn();
+    (main().props.ref as { current: unknown }).current = { scrollTo };
+    (main().props.onScroll as (event: unknown) => void)({
+      nativeEvent: { contentOffset: { y: 480 } },
+    });
+    const tab = (label: string) =>
+      nodes(screen).find(
+        (node) => node.props.accessibilityRole === "tab" && texts(node) === label,
+      )!;
+    press(tab("Group"));
+    screen = render();
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: 0, animated: false });
+    (main().props.onScroll as (event: unknown) => void)({
+      nativeEvent: { contentOffset: { y: 900 } },
+    });
+    press(tab("Mine"));
+    screen = render();
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: 480, animated: false });
+    press(tab("Group"));
+    screen = render();
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: 900, animated: false });
+    (main().props.onContentSizeChange as () => void)();
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: 900, animated: false });
+    expect(ui.projection).toHaveBeenCalledTimes(1);
   });
   it("shows only an icon above 30 days and no Range action for short Journeys", async () => {
     const screen = await ready(data(30));
@@ -334,6 +395,59 @@ describe("Analysis UI transitions and request guardrails", () => {
     expect(text).toContain("Spending analysis isn’t ready yet");
     expect(text).not.toContain("NZ$0.00");
     await new Promise<void>((resolve) => setImmediate(resolve));
+  });
+  it("opens excluded records from the count info icon without additional reads", async () => {
+    const dataset = data();
+    dataset.expenses[0].businessStatus = "RATE_REQUIRED";
+    dataset.expenses[0].totalMinor = null;
+    dataset.expenses[0].personalMinor = null;
+    dataset.expenses[1].hasOpenConflict = true;
+    dataset.expenses[2].personalMinor = null;
+    let screen = await ready(dataset);
+    expect(texts(screen)).toContain("2 included expenses");
+    expect(texts(screen)).not.toContain("not included yet");
+    const info = nodes(screen).find(
+      (node) =>
+        node.props.accessibilityLabel === "View 3 expenses not included in the total",
+    )!;
+    expect(texts(info)).toBe("ⓘ");
+    press(info);
+    screen = render();
+    const popup = nodes(screen).find(
+      (node) => node.type === "modal" && node.props.visible === true,
+    )!;
+    expect(texts(popup)).toContain("Waiting for confirmed Journey currency value");
+    expect(texts(popup)).toContain("Changes need review");
+    expect(texts(popup)).toContain("Your share is not available yet");
+    expect(texts(popup)).toMatch(/Original total\s+€10\.00/);
+    expect(texts(popup)).not.toContain("Expense 3");
+    (popup.props.onRequestClose as () => void)();
+    expect(
+      nodes(render()).filter(
+        (node) => node.type === "modal" && node.props.visible === true,
+      ),
+    ).toHaveLength(0);
+    press(
+      nodes(render()).find(
+        (node) => node.props.accessibilityLabel === info.props.accessibilityLabel,
+      )!,
+    );
+    screen = render();
+    press(
+      nodes(screen).find(
+        (node) => node.props.onPress && texts(node).startsWith("Expense 0"),
+      )!,
+    );
+    expect(ui.push).toHaveBeenCalledWith("/expenses/expense/e0");
+    expect(
+      nodes(render()).filter(
+        (node) => node.type === "modal" && node.props.visible === true,
+      ),
+    ).toHaveLength(0);
+    expect(ui.projection).toHaveBeenCalledTimes(1);
+  });
+  it("omits the count info icon when every expense is included", async () => {
+    expect(texts(await ready())).not.toContain("ⓘ");
   });
   it("category expansion shows Top 3 and keeps View all as the Search entry", () => {
     const dashboard = buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29");
@@ -406,6 +520,186 @@ describe("Analysis UI transitions and request guardrails", () => {
       expect.any(String),
     );
     expect(ui.projection).not.toHaveBeenCalled();
+  });
+  it("zooms with horizontal pinch, scrolls only after zoom, opens and closes a floating brief without reads", () => {
+    const dashboard = buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29");
+    const props = { dashboard, money: String, drilldown: vi.fn() };
+    const draw = () => {
+      ui.cursor = 0;
+      return AnalysisTimeline(props);
+    };
+    let element = draw();
+    expect(
+      nodes(element).find(
+        (node) => node.props.accessibilityLabel === "Spending timeline",
+      )!.props.scrollEnabled,
+    ).toBe(false);
+    const frame = nodes(element).find((node) => node.props.onResponderGrant)!;
+    (frame.props.onResponderGrant as (event: unknown) => void)({
+      nativeEvent: { touches: [{ pageX: 100 }, { pageX: 200 }] },
+    });
+    (frame.props.onResponderMove as (event: unknown) => void)({
+      nativeEvent: { touches: [{ pageX: 50 }, { pageX: 250 }] },
+    });
+    (frame.props.onResponderRelease as () => void)();
+    element = draw();
+    expect(
+      nodes(element).find(
+        (node) => node.props.accessibilityLabel === "Spending timeline",
+      )!.props.scrollEnabled,
+    ).toBe(true);
+    expect(
+      nodes(element).find(
+        (node) => node.props.accessibilityHint === "Opens spending brief",
+      )!.props.style,
+    ).toContainEqual({ width: 686 / 30 });
+    press(
+      nodes(element).find(
+        (node) => node.props.accessibilityHint === "Opens spending brief",
+      )!,
+    );
+    element = draw();
+    expect(nodes(element).find((node) => node.type === "modal")!.props.visible).toBe(
+      true,
+    );
+    press(
+      nodes(element).find(
+        (node) => node.props.accessibilityLabel === "Close spending brief",
+      )!,
+    );
+    expect(nodes(draw()).find((node) => node.type === "modal")!.props.visible).toBe(
+      false,
+    );
+    expect(ui.projection).not.toHaveBeenCalled();
+  });
+  it("shows useful zoom actions only and makes each column at least 44pt after zoom", () => {
+    const props = {
+      dashboard: buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29"),
+      money: String,
+      drilldown: vi.fn(),
+    };
+    const draw = () => {
+      ui.cursor = 0;
+      return AnalysisTimeline(props);
+    };
+    const action = (element: unknown, label: string) =>
+      nodes(element).find((node) => node.props.accessibilityLabel === label);
+    let element = draw();
+    expect(action(element, "Zoom out timeline")).toBeUndefined();
+    expect(action(element, "Show entire timeline")).toBeUndefined();
+    expect(texts(element)).not.toMatch(/Linear scale|Log scale/);
+    press(action(element, "Zoom in timeline")!);
+    element = draw();
+    expect(action(element, "Zoom in timeline")).toBeUndefined();
+    expect(action(element, "Zoom out timeline")).toBeDefined();
+    expect(
+      nodes(element).find(
+        (node) => node.props.accessibilityHint === "Opens spending brief",
+      )!.props.style,
+    ).toContainEqual({ width: 44 });
+    press(action(element, "Show entire timeline")!);
+    expect(action(draw(), "Zoom out timeline")).toBeUndefined();
+    props.dashboard = buildSpendingAnalysis(data(3), "a", "MINE", {}, "2026-09-29");
+    expect(action(draw(), "Zoom in timeline")).toBeUndefined();
+    expect(action(draw(), "Zoom out timeline")).toBeUndefined();
+    expect(ui.projection).not.toHaveBeenCalled();
+  });
+  it("keeps the brief date and View expenses outside the scrolling category content", () => {
+    const props = {
+      dashboard: buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29"),
+      money: String,
+      drilldown: vi.fn(),
+    };
+    ui.cursor = 0;
+    press(
+      nodes(AnalysisTimeline(props)).find(
+        (node) => node.props.accessibilityHint === "Opens spending brief",
+      )!,
+    );
+    ui.cursor = 0;
+    const popup = nodes(AnalysisTimeline(props)).find((node) => node.type === "modal")!;
+    const body = nodes(popup).find((node) => node.type === "scroll")!;
+    expect(texts(body)).not.toContain("View");
+    expect(nodes(body).some((node) => node.props.accessibilityRole === "header")).toBe(
+      false,
+    );
+    expect(nodes(popup).some((node) => node.props.accessibilityRole === "header")).toBe(
+      true,
+    );
+    expect(texts(popup)).toMatch(/View\s+0 expenses/);
+  });
+  it("keeps traveller expansion only for all categories and routes filtered travellers and payers directly", () => {
+    const drilldown = vi.fn();
+    const props = {
+      title: "Spending by traveller",
+      rows: [
+        {
+          key: "a",
+          label: "Alex",
+          totalMinor: 1000,
+          expenseCount: 2,
+          rank: 1,
+          categories: [{ key: "food", label: "food", totalMinor: 1000 }],
+        },
+      ],
+      totalMinor: 1000,
+      money: String,
+      drilldown,
+      action: null,
+      traveller: true,
+      category: null as string | null,
+    };
+    const draw = () => {
+      ui.cursor = 0;
+      return AnalysisPeople(props);
+    };
+    let element = draw();
+    expect(texts(element)).toMatch(/#\s*1/);
+    expect(texts(element)).not.toMatch(/percent|%|Each traveller/);
+    const person = () =>
+      nodes(element).find(
+        (node) =>
+          node.props.accessibilityLabel &&
+          String(node.props.accessibilityLabel).includes("Alex"),
+      )!;
+    press(person());
+    element = draw();
+    expect(texts(element)).toMatch(/View\s+Alex/);
+    expect(drilldown).not.toHaveBeenCalled();
+    props.category = "food";
+    element = draw();
+    expect(texts(element)).not.toMatch(/View\s+Alex/);
+    press(person());
+    expect(drilldown).toHaveBeenLastCalledWith(
+      { selectedMemberId: "a", categories: ["food"] },
+      "Alex's spending",
+    );
+    props.traveller = false;
+    element = draw();
+    expect(texts(element)).not.toContain("before any repayments");
+    press(person());
+    expect(drilldown).toHaveBeenLastCalledWith(
+      { payerMemberId: "a", categories: ["food"] },
+      "Paid by Alex",
+    );
+    expect(ui.projection).not.toHaveBeenCalled();
+  });
+  it("keeps shared Expense rows at two lines and removes original currency and repeated share wording", () => {
+    const element = AnalysisExpenseRows({
+      expenses: data().expenses.slice(0, 1),
+      scope: "MINE",
+      money: (amount) => `NZ${amount}`,
+    });
+    expect(texts(element)).toContain("You");
+    expect(texts(element)).not.toMatch(/My share|original|food/);
+    expect(
+      nodes(element).filter(
+        (node) => node.type === "text" && node.props.numberOfLines === 1,
+      ),
+    ).toHaveLength(3);
+    expect(texts(element)).toContain("Total NZ2000");
+    const row = nodes(element).find((node) => node.props.onPress)!;
+    expect(row.props.style).toContainEqual({ borderBottomWidth: 0 });
   });
   it("keeps chrome and section read ownership local and timer-free", () => {
     const screen = readFileSync(

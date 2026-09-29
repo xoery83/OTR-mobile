@@ -19,3 +19,15 @@ Retain common Search/Detail routes and lower-level Currency grouping.
 No new dependency, schema, Backend/API, network lifecycle or financial rule. CPU and
 memory grow with one scoped Journey dataset; query count does not grow with sections,
 categories or members. Large-fixture timing and query-count acceptance are mandatory.
+
+## Owner-approved display refinement
+
+Same projection additionally carries existing Expense updated_at for recent previews.
+Native header holds the Journey subtitle; one fixed scope control replaces the
+scroll-detected duplicate. Timeline zoom, display-category union and automatic
+log1p scaling are local presentation state, with actual money retained in briefs.
+Later owner feedback removes manual scale control and visible scale labels, fixes
+brief headers/footers, and retains independent scope scroll offsets. Return reads
+remain consolidated and no longer insert a loading row into cached content.
+No change to read ownership or schema. Thresholds and acceptance are recorded in
+the implementation report.

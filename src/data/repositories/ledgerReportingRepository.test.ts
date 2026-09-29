@@ -32,7 +32,7 @@ function database() {
       title TEXT, description TEXT, category TEXT, occurred_at TEXT,
       original_amount_minor INTEGER, original_currency TEXT, original_scale INTEGER,
       business_status TEXT, settlement_participation TEXT, sync_status TEXT, deleted_at TEXT,
-      local_owner_user_id TEXT);
+      local_owner_user_id TEXT, updated_at TEXT NOT NULL DEFAULT '2026-09-12T08:00:00.000Z');
     CREATE INDEX ledger_expenses_journey_occurred ON ledger_expenses(journey_id, occurred_at DESC, id);
     CREATE TABLE ledger_expense_participants (expense_id TEXT, member_id TEXT,
       display_name_snapshot TEXT, PRIMARY KEY(expense_id, member_id));
@@ -83,7 +83,7 @@ function insertFixture(sqlite: DatabaseSync) {
     INSERT INTO ledger_journeys VALUES ('journey', 'Europe', '2026-09-01', '2026-09-30', 'NZD', 2);
     INSERT INTO ledger_members VALUES ('a', 'journey', 'Alex'), ('b', 'journey', 'Bea');
     INSERT INTO ledger_actor_context VALUES ('user-a', 'journey', 'a');
-    INSERT INTO ledger_expenses VALUES
+    INSERT INTO ledger_expenses (id, server_id, journey_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_scale, business_status, settlement_participation, sync_status, deleted_at, local_owner_user_id) VALUES
       ('valued', 'valued', 'journey', 'a', 'Dinner', NULL, 'food', '2026-09-10T08:00:00.000Z', 1000, 'EUR', 2, 'ACCEPTED', 'INCLUDED', 'PENDING_CREATE', NULL, 'user-a'),
       ('rate', 'rate', 'journey', 'b', 'Taxi', NULL, 'transport', '2026-09-11T08:00:00.000Z', 500, 'EUR', 2, 'RATE_REQUIRED', 'INCLUDED', 'SYNCED', NULL, NULL),
       ('conflict', 'conflict', 'journey', 'a', 'Hotel', NULL, 'hotel', '2026-09-12T08:00:00.000Z', 4000, 'NZD', 2, 'ACCEPTED', 'INCLUDED', 'CONFLICT', NULL, 'user-a');
@@ -162,6 +162,38 @@ const records: ReportingRecord[] = [
 ];
 
 describe("Ledger reporting repository", () => {
+  it("keeps date-only expenses in the same calendar bucket and drilldown", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    sqlite.exec("UPDATE ledger_expenses SET occurred_at = substr(occurred_at, 1, 10)");
+    const repository = createLedgerReportingRepository(adapter, () =>
+      Promise.resolve("user-a"),
+    );
+    const range = analysisDateBounds("2026-09-10", "2026-09-10")!;
+    const query = {
+      journeyId,
+      memberId,
+      scope: "MINE" as const,
+      analysisState: "INCLUDED" as const,
+      ...range,
+    };
+    const projection = await repository.loadSpendingAnalysisProjection(
+      journeyId,
+      memberId,
+      range,
+    );
+    expect(projection.expenses.map((item) => item.id)).toEqual(["valued"]);
+    expect(
+      buildSpendingAnalysis(projection, memberId, "MINE", range, "2026-09-29")
+        .expenseCount,
+    ).toBe(1);
+    expect((await repository.listExpenses(query)).map((item) => item.id)).toEqual([
+      "valued",
+    ]);
+    expect(await repository.countExpenses(query)).toBe(1);
+    expect((await repository.summarize(query)).totalMinor).toBe(1200);
+    sqlite.close();
+  });
   it("loads all Dashboard inputs in one account-scoped statement and keeps incomplete records", async () => {
     const { adapter, sqlite } = database();
     insertFixture(sqlite);
@@ -322,7 +354,7 @@ describe("Ledger reporting repository", () => {
       "UPDATE ledger_journeys SET start_date = '2024-01-01', end_date = '2026-09-30'",
     );
     const insert = sqlite.prepare(
-      "INSERT INTO ledger_expenses SELECT ?, ?, journey_id, payer_member_id, title, description, category, ?, original_amount_minor, original_currency, original_scale, business_status, settlement_participation, sync_status, deleted_at, local_owner_user_id FROM ledger_expenses WHERE id='valued'",
+      "INSERT INTO ledger_expenses SELECT ?, ?, journey_id, payer_member_id, title, description, category, ?, original_amount_minor, original_currency, original_scale, business_status, settlement_participation, sync_status, deleted_at, local_owner_user_id, updated_at FROM ledger_expenses WHERE id='valued'",
     );
     const split = sqlite.prepare(
       "INSERT INTO ledger_expense_splits SELECT ?, member_id, original_amount_minor, settlement_amount_minor FROM ledger_expense_splits WHERE expense_id='valued'",
@@ -360,6 +392,7 @@ describe("Ledger reporting repository", () => {
     const result = buildSpendingAnalysis(data, memberId, "GROUP", {}, "2026-09-29");
     const cpuMs = performance.now() - cpuStart;
     expect(data.expenses).toHaveLength(10_003);
+    expect(data.expenses[0]?.updatedAt).toBe("2026-09-12T08:00:00.000Z");
     expect(result.granularity).toBe("Monthly");
     expect(result.expenseCount).toBe(10_001);
     expect(reads).toBe(1);
@@ -563,7 +596,7 @@ describe("Ledger reporting repository", () => {
     const { adapter, sqlite } = database();
     insertFixture(sqlite);
     sqlite.exec(`
-      INSERT INTO ledger_expenses VALUES
+      INSERT INTO ledger_expenses (id, server_id, journey_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_scale, business_status, settlement_participation, sync_status, deleted_at, local_owner_user_id) VALUES
         ('zero', 'zero', 'journey', 'b', 'Zero share', NULL, 'food', '2026-09-13T08:00:00.000Z', 100, 'NZD', 2, 'ACCEPTED', 'INCLUDED', 'SYNCED', NULL, NULL),
         ('absent', 'absent', 'journey', 'b', 'Not participating', NULL, 'food', '2026-09-14T08:00:00.000Z', 100, 'NZD', 2, 'ACCEPTED', 'EXCLUDED', 'SYNCED', NULL, NULL);
       INSERT INTO ledger_expense_participants VALUES ('zero', 'a', 'Alex');
@@ -635,7 +668,7 @@ describe("Ledger reporting repository", () => {
       "INSERT INTO ledger_journeys VALUES ('journey', 'Europe', NULL, NULL, 'NZD', 2); INSERT INTO ledger_members VALUES ('a', 'journey', 'Alex'); INSERT INTO ledger_actor_context VALUES ('user-a', 'journey', 'a');",
     );
     const insertExpense = sqlite.prepare(
-      "INSERT INTO ledger_expenses VALUES (?, ?, 'journey', 'a', ?, NULL, ?, ?, 100, 'NZD', 2, 'ACCEPTED', 'INCLUDED', 'SYNCED', NULL, NULL)",
+      "INSERT INTO ledger_expenses (id, server_id, journey_id, payer_member_id, title, description, category, occurred_at, original_amount_minor, original_currency, original_scale, business_status, settlement_participation, sync_status, deleted_at, local_owner_user_id) VALUES (?, ?, 'journey', 'a', ?, NULL, ?, ?, 100, 'NZD', 2, 'ACCEPTED', 'INCLUDED', 'SYNCED', NULL, NULL)",
     );
     const insertParticipant = sqlite.prepare(
       "INSERT INTO ledger_expense_participants VALUES (?, 'a', 'Alex')",
@@ -688,7 +721,7 @@ it("sorts Recent by update time before limiting, preserving ordinary occurrence 
   const { sqlite, adapter } = database();
   insertFixture(sqlite);
   sqlite.exec(
-    "ALTER TABLE ledger_expenses ADD COLUMN updated_at TEXT; UPDATE ledger_expenses SET updated_at = occurred_at; UPDATE ledger_expenses SET updated_at = '2026-09-28T08:00:00Z' WHERE id = 'valued';",
+    "UPDATE ledger_expenses SET updated_at = occurred_at; UPDATE ledger_expenses SET updated_at = '2026-09-28T08:00:00Z' WHERE id = 'valued';",
   );
   const repository = createLedgerReportingRepository(adapter, async () => "user-a");
   const query = { journeyId, memberId, scope: "GROUP" as const };

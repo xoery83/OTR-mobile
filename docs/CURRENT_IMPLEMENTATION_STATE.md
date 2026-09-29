@@ -2,6 +2,32 @@
 
 Date: 2026-09-29
 
+## Spending Analysis owner review — iPhone / Simulator acceptance PASS
+
+- Approved refinements implemented: Journey subtitle, fixed inline-icon Mine/Group,
+  compact Journey-currency rows, recent category previews, contrasting colors / <3%
+  Other union, and excluded-record gray ⓘ popup beside included count.
+- Timeline fits viewport; automatic outlier log scale has no button or label.
+  Useful zoom controls share Average row; zoom-in guarantees 44pt bar columns.
+  Floating brief pins date/close and View Expenses footer around a scrolling body.
+  Calendar is green. Traveller ranks use badges without percentages/progress text;
+  category-filtered traveller and payer clicks open exact existing Search routes.
+- Return refresh keeps the existing dashboard visible with one consolidated local
+  read; no temporary loading row/layout jump. Mine/Group store independent offsets.
+  Final Expense row has no bottom separator. Midnight calendar bounds now match
+  both date-only and ISO occurred_at rows across repository and domain filtering.
+- 8 focused suites / 72 tests, typecheck, scoped lint/format and diff check PASS.
+  Entry/range/return read once; toggles, chart/filter interactions and idle remain
+  zero extra reads in the event harness. No migration/package/API/polling changes.
+- Final signed normal Dev Release updated on iPhone 16 Pro. Real Jul 7 brief and
+  Search both show 5 Expenses / ¥8,334.69; Search/Detail return preserves position,
+  final row separator removed, independent Mine/Group positions verified.
+  375pt isolated Simulator verifies green calendar, fixed 10-category popup/footer,
+  exact Jan 2024 drilldown (93 Expenses / NZ$254.82), stable return and scope switch.
+- Two-finger pinch remains event-harness validated; CUA cannot inject multi-touch.
+  Android untested. No Hosted Dev validation or Production access. Revision included
+  in the owner-requested Git commit; latest implementation report records evidence.
+
 ## Spending Analysis 2.0 — implementation and iOS Simulator acceptance PASS
 
 - Owner-approved Analysis-only redesign and Performance / Database Guardrails are

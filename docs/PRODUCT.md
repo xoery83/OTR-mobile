@@ -112,6 +112,14 @@ Ledger / Expenses:
   deterministic insights and completeness share one local projection. Only its
   secondary chrome hides bottom tabs and trials a material header/sticky scope.
   Long Journeys offer date ranges. Currency grouping stays available underneath.
+  Category previews sort by latest modification. Display groups below 3% fold into
+  Other categories. Timeline fits the viewport, supports pinch zoom / subsequent
+  horizontal scroll and floating briefs with fixed date/close and expense-list footer.
+  Dominant outliers automatically use logarithmic display without a scale control or
+  label. Zoom appears only when useful and expands column hit areas to 44pt. Traveller
+  ranks have separate badges; filtered travellers and payers open exact lists directly.
+  Mine/Group retain separate scroll positions; return refresh preserves visible content.
+  Exact money and category drilldown identities are retained.
   See `docs/ledger/SPENDING_ANALYSIS_2_0_IMPLEMENTATION.md` for date and performance rules.
 
 Travel Documents / Tickets:

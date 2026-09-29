@@ -61,14 +61,19 @@ export function isAuthoritative(record: ReportingRecord) {
   );
 }
 
+// Calendar-day bounds must compare consistently with both date-only and ISO rows.
+export function reportingDateBoundary(value: string) {
+  return value.replace(/T00:00:00(?:\.000)?Z$/, "");
+}
+
 export function matchesReportingFilters(
   record: ReportingRecord,
   filters: ReportingFilters,
 ) {
   const needle = filters.query ? sqliteLower(filters.query.trim()) : undefined;
   return (
-    (!filters.from || record.occurredAt >= filters.from) &&
-    (!filters.to || record.occurredAt < filters.to) &&
+    (!filters.from || record.occurredAt >= reportingDateBoundary(filters.from)) &&
+    (!filters.to || record.occurredAt < reportingDateBoundary(filters.to)) &&
     (!needle ||
       sqliteLower(
         [

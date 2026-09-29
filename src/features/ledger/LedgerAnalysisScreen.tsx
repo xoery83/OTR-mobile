@@ -1,6 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Modal,
   Platform,
   Pressable,
@@ -30,14 +29,15 @@ import {
   analysisRangePresets,
   buildSpendingAnalysis,
   type AnalysisDataset,
+  type AnalysisExpense,
   type AnalysisRange,
   type AnalysisRangePreset,
 } from "@/domain/ledger/spendingAnalysis";
 import type { ReportingScope } from "@/domain/ledger/reporting";
 import { createLatestRequest } from "./latestRequest";
 import {
+  formatLedgerDate,
   formatLedgerDateFilter,
-  formatLedgerDateRange,
   formatLedgerMoney,
   localDateKey,
 } from "./format";
@@ -62,6 +62,16 @@ const rangeLabels: Record<AnalysisRangePreset, string> = {
   YEAR: "This year",
   CUSTOM: "Custom range",
 };
+
+function exclusionReason(expense: AnalysisExpense, scope: ReportingScope) {
+  if (expense.hasOpenConflict) return "Changes need review";
+  if (expense.businessStatus === "DRAFT") return "Draft expense";
+  if (expense.businessStatus === "RATE_REQUIRED" || expense.totalMinor === null)
+    return "Waiting for confirmed Journey currency value";
+  if (scope === "MINE" && expense.personalMinor === null)
+    return "Your share is not available yet";
+  return "Not included in spending total";
+}
 
 export function LedgerAnalysisScreen() {
   const params = useLocalSearchParams<{
@@ -90,14 +100,17 @@ export function LedgerAnalysisScreen() {
   const [categoryMenu, setCategoryMenu] = useState<
     "BIGGEST" | "TRAVELLER" | "PAYER" | null
   >(null);
-  const [pinned, setPinned] = useState(false);
-  const pinnedRef = useRef(false);
-  const scopeY = useRef(0);
+  const [scopeHeight, setScopeHeight] = useState(52);
   const rangeRef = useRef<AnalysisRange>({});
   const repository = useRef<ReturnType<
     typeof getDefaultLedgerReportingRepository
   > | null>(null);
   const [request] = useState(createLatestRequest);
+  const mainScroll = useRef<ScrollView>(null);
+  const scopeOffsets = useRef<Record<ReportingScope, number>>({ MINE: 0, GROUP: 0 });
+  useLayoutEffect(() => {
+    mainScroll.current?.scrollTo({ y: scopeOffsets.current[scope], animated: false });
+  }, [scope]);
   const today = localDateKey(new Date());
 
   const load = useCallback(
@@ -227,7 +240,11 @@ export function LedgerAnalysisScreen() {
     void load(analysisPresetBounds(preset, today));
   };
   const scopeControl = (
-    <View accessibilityRole="tablist" style={styles.segment}>
+    <View
+      accessibilityRole="tablist"
+      style={styles.segment}
+      onLayout={(event) => setScopeHeight(event.nativeEvent.layout.height)}
+    >
       {(["MINE", "GROUP"] as const).map((item) => (
         <Pressable
           accessibilityRole="tab"
@@ -236,6 +253,11 @@ export function LedgerAnalysisScreen() {
           onPress={() => setScope(item)}
           style={[styles.segmentItem, scope === item && styles.segmentSelected]}
         >
+          <AppIcon
+            name={item === "MINE" ? "person.fill" : "person.2.fill"}
+            size={19}
+            color={scope === item ? "#0F766E" : "#64748B"}
+          />
           <Text
             style={[styles.segmentText, scope === item && styles.segmentTextSelected]}
           >
@@ -250,7 +272,18 @@ export function LedgerAnalysisScreen() {
     <View style={styles.page}>
       <Stack.Screen
         options={{
-          headerTitle: "Spending Analysis",
+          headerTitle: () => (
+            <View style={styles.headerTitleBlock}>
+              <Text numberOfLines={1} style={styles.headerTitle}>
+                Spending Analysis
+              </Text>
+              {view ? (
+                <Text numberOfLines={1} style={styles.headerSubtitle}>
+                  {view.dataset.journey.title}
+                </Text>
+              ) : null}
+            </View>
+          ),
           headerTransparent: true,
           headerBlurEffect: Platform.OS === "ios" ? "systemMaterial" : undefined,
           headerStyle: {
@@ -269,43 +302,30 @@ export function LedgerAnalysisScreen() {
                 }}
                 style={styles.iconButton}
               >
-                <AppIcon
-                  name="calendar"
-                  color={view?.range.from ? "#087E68" : "#64748B"}
-                  size={22}
-                />
+                <AppIcon name="calendar" color="#0F766E" size={22} />
                 {view?.range.from ? <View style={styles.activeDot} /> : null}
               </Pressable>
             ) : null,
         }}
       />
       <ScrollView
-        contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: 20 }}
-        scrollEventThrottle={32}
+        ref={mainScroll}
         onScroll={(event) => {
-          const next = event.nativeEvent.contentOffset.y >= scopeY.current - headerHeight;
-          if (scopeY.current > 0 && next !== pinnedRef.current) {
-            pinnedRef.current = next;
-            setPinned(next);
-          }
+          scopeOffsets.current[scope] = Math.max(0, event.nativeEvent.contentOffset.y);
+        }}
+        scrollEventThrottle={16}
+        onContentSizeChange={() => {
+          mainScroll.current?.scrollTo({
+            y: scopeOffsets.current[scope],
+            animated: false,
+          });
+        }}
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={{
+          paddingTop: headerHeight + scopeHeight,
+          paddingBottom: 20,
         }}
       >
-        <Text numberOfLines={1} style={styles.tripContext}>
-          {view
-            ? `${view.dataset.journey.title} · ${formatLedgerDateRange(view.dataset.journey.startDate, view.dataset.journey.endDate)}`
-            : "Spending Analysis"}
-        </Text>
-        <View
-          onLayout={(event) => {
-            scopeY.current = event.nativeEvent.layout.y;
-          }}
-          style={[styles.scopeContainer, pinned && styles.hiddenScope]}
-          accessibilityElementsHidden={pinned}
-          importantForAccessibility={pinned ? "no-hide-descendants" : "auto"}
-        >
-          {scopeControl}
-        </View>
         <View style={shared.body}>
           {!view ? (
             <>
@@ -337,70 +357,35 @@ export function LedgerAnalysisScreen() {
                     ? "Spending total unavailable"
                     : money(dashboard.totalMinor)}
                 </Text>
-                <Text style={shared.meta}>
-                  {scope === "MINE"
-                    ? `${dashboard.expenseCount} ${dashboard.incomplete.length ? "included " : ""}${dashboard.expenseCount === 1 ? "expense" : "expenses"}`
-                    : `${view.dataset.members.length} travellers · ${dashboard.expenseCount} ${dashboard.incomplete.length ? "included " : ""}expenses`}
-                </Text>
+                <View style={styles.countLine}>
+                  <Text style={shared.meta}>
+                    {scope === "MINE"
+                      ? `${dashboard.expenseCount} ${dashboard.incomplete.length ? "included " : ""}${dashboard.expenseCount === 1 ? "expense" : "expenses"}`
+                      : `${view.dataset.members.length} travellers · ${dashboard.expenseCount} ${dashboard.incomplete.length ? "included " : ""}expenses`}
+                  </Text>
+                  {dashboard.incomplete.length ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`View ${dashboard.incomplete.length} expenses not included in the total`}
+                      hitSlop={12}
+                      onPress={() => setCompletenessOpen(true)}
+                    >
+                      <Text style={shared.meta}>ⓘ</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
                 <Text style={shared.meta}>
                   {dashboard.elapsedDays} {dashboard.elapsedDays === 1 ? "day" : "days"}
                   {dashboard.averageMinor !== null && dashboard.state === "READY"
                     ? ` · ${money(dashboard.averageMinor)}/day`
                     : ""}
                 </Text>
-                <Text style={shared.meta}>
-                  {view.range.from
-                    ? formatLedgerDateFilter(view.range.from, view.range.to)
-                    : "Entire trip"}
-                </Text>
-                {dashboard.incomplete.length ? (
-                  <View style={shared.completeness}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityState={{ expanded: completenessOpen }}
-                      onPress={() => setCompletenessOpen(!completenessOpen)}
-                      style={styles.warningRow}
-                    >
-                      <Text style={shared.link}>
-                        {dashboard.incomplete.length}{" "}
-                        {dashboard.incomplete.length === 1
-                          ? "expense is"
-                          : "expenses are"}{" "}
-                        not included yet
-                      </Text>
-                      <AppIcon
-                        name={completenessOpen ? "chevron.up" : "chevron.down"}
-                        size={14}
-                        color="#0F766E"
-                      />
-                    </Pressable>
-                    {completenessOpen ? (
-                      <>
-                        <Text style={shared.meta}>
-                          Some expenses are still waiting for confirmed values or review.
-                        </Text>
-                        <Pressable
-                          accessibilityRole="button"
-                          onPress={() =>
-                            drilldown({ analysisState: "INCOMPLETE" }, "Not included yet")
-                          }
-                          style={styles.retry}
-                        >
-                          <Text style={shared.link}>View these expenses</Text>
-                        </Pressable>
-                      </>
-                    ) : null}
-                  </View>
+                {view.range.from ? (
+                  <Text style={shared.meta}>
+                    {formatLedgerDateFilter(view.range.from, view.range.to)}
+                  </Text>
                 ) : null}
               </View>
-              {updating ? (
-                <View style={styles.warningRow}>
-                  <ActivityIndicator size="small" />
-                  <Text accessibilityLiveRegion="polite" style={shared.meta}>
-                    Refreshing local spending…
-                  </Text>
-                </View>
-              ) : null}
               {error ? (
                 <Pressable
                   accessibilityRole="button"
@@ -463,7 +448,9 @@ export function LedgerAnalysisScreen() {
                     drilldown={drilldown}
                   />
                   <AnalysisTimeline
+                    key={`${scope}:${view.range.from ?? ""}:${view.range.to ?? ""}`}
                     dashboard={dashboard}
+                    currencyScale={view.dataset.journey.settlementScale}
                     money={money}
                     drilldown={drilldown}
                   />
@@ -524,10 +511,54 @@ export function LedgerAnalysisScreen() {
           ) : null}
         </View>
       </ScrollView>
-      {pinned ? (
-        <AnalysisMaterial style={[styles.pinnedScope, { top: headerHeight }]}>
-          {scopeControl}
-        </AnalysisMaterial>
+      <AnalysisMaterial style={[styles.pinnedScope, { top: headerHeight }]}>
+        {scopeControl}
+      </AnalysisMaterial>
+      {completenessOpen && dashboard ? (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setCompletenessOpen(false)}
+        >
+          <View style={styles.modalPage}>
+            <LedgerSheetHeader
+              title="Not included in total"
+              leftLabel="Close"
+              onLeft={() => setCompletenessOpen(false)}
+            />
+            <ScrollView contentContainerStyle={styles.modalContent}>
+              <Text style={shared.meta}>
+                {dashboard.incomplete.length} expenses ·{" "}
+                {scope === "MINE" ? "Mine" : "Group"}
+              </Text>
+              {dashboard.incomplete.map((expense) => (
+                <Pressable
+                  key={expense.id}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setCompletenessOpen(false);
+                    router.push(`/expenses/expense/${expense.id}`);
+                  }}
+                  style={styles.excludedExpense}
+                >
+                  <Text numberOfLines={2} style={styles.excludedTitle}>
+                    {expense.title}
+                  </Text>
+                  <Text style={shared.meta}>
+                    {formatLedgerDate(expense.occurredAt)} · Original total{" "}
+                    {formatLedgerMoney(
+                      expense.originalMinor,
+                      expense.originalCurrency,
+                      expense.originalScale,
+                    )}
+                  </Text>
+                  <Text style={shared.meta}>{exclusionReason(expense, scope)}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </Modal>
       ) : null}
       <Modal
         visible={rangeOpen}
@@ -662,36 +693,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  scopeContainer: { paddingHorizontal: 16, paddingVertical: 8 },
-  hiddenScope: { opacity: 0 },
+  headerTitleBlock: { alignItems: "center", maxWidth: 250 },
+  headerTitle: { color: "#0F766E", fontSize: 17, fontWeight: "700" },
+  headerSubtitle: { color: "#94A3B8", fontSize: 11, fontWeight: "600" },
   pinnedScope: {
     position: "absolute",
     left: 0,
     right: 0,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#DDE3E7",
     zIndex: 2,
   },
   materialFallback: { backgroundColor: "rgba(246,247,249,0.98)", elevation: 3 },
   segment: {
-    backgroundColor: "#E5E7EB",
-    borderRadius: 9,
     flexDirection: "row",
-    padding: 2,
   },
   segmentItem: {
     alignItems: "center",
-    borderRadius: 7,
+    borderBottomWidth: 3,
+    borderBottomColor: "transparent",
+    flexDirection: "row",
+    gap: 7,
     flex: 1,
     justifyContent: "center",
-    minHeight: 48,
-    paddingVertical: 10,
+    minHeight: 52,
+    paddingVertical: 7,
   },
-  segmentSelected: { backgroundColor: "#FFFFFF" },
+  segmentSelected: { borderBottomColor: "#0F766E" },
   segmentText: { color: "#64748B", fontSize: 16, fontWeight: "600" },
-  segmentTextSelected: { color: "#111827" },
+  segmentTextSelected: { color: "#0F766E" },
   iconButton: {
     minHeight: 44,
     minWidth: 44,
@@ -706,7 +736,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 5,
   },
-  warningRow: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44 },
+  countLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 5 },
+  excludedExpense: { padding: 12, gap: 5, backgroundColor: "#FFFFFF", borderRadius: 10 },
+  excludedTitle: { color: "#111827", fontSize: 15, fontWeight: "600" },
   retry: { minHeight: 44, justifyContent: "center" },
   surface: { backgroundColor: "#FFFFFF", borderRadius: 14, overflow: "hidden" },
   modalPage: { flex: 1, backgroundColor: "#F6F7F9" },

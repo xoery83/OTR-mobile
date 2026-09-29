@@ -1,3 +1,4 @@
+import { reportingDateBoundary } from "@/domain/ledger/reporting";
 import type * as SQLite from "expo-sqlite";
 import type { MyLedgerSpendingFact } from "@/data/api/ledgerReadContracts";
 import type {
@@ -121,7 +122,7 @@ function where(query: LedgerReportQuery, userId: string, alias = "e") {
     const value = query[key];
     if (typeof value === "string" && value) {
       clauses.push(sql);
-      params.push(value);
+      params.push(key === "from" || key === "to" ? reportingDateBoundary(value) : value);
     }
   }
   if (query.participantMemberId) {
@@ -228,6 +229,7 @@ export function createLedgerReportingRepository(
           EXISTS (SELECT 1 FROM ledger_expenses e WHERE ${base.sql.replace(currentLeafSql(), current)}) AS hasExpensesOutsideRange,
           (SELECT json_group_array(json_object(
             'id', e.id, 'title', e.title, 'category', e.category, 'occurredAt', e.occurred_at,
+            'updatedAt', e.updated_at,
             'payerMemberId', e.payer_member_id, 'originalMinor', e.original_amount_minor,
             'originalCurrency', e.original_currency, 'originalScale', e.original_scale,
             'totalMinor', v.settlement_amount_minor, 'personalMinor', mine.settlement_amount_minor,

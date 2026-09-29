@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   aggregateAnalysisPeople,
+  analysisUsesLogScale,
+  analysisScaledFraction,
   analysisDateBounds,
   analysisPresetBounds,
   analysisRangePresets,
@@ -15,6 +17,7 @@ function expense(id: string, overrides: Partial<AnalysisExpense> = {}): Analysis
     title: id,
     category: "food",
     occurredAt: "2026-09-02T08:00:00.000Z",
+    updatedAt: "2026-09-02T08:00:00.000Z",
     payerMemberId: "a",
     originalMinor: 1000,
     originalCurrency: "EUR",
@@ -117,6 +120,65 @@ describe("Spending Analysis dashboard", () => {
       view.displayedCategories.reduce((sum, category) => sum + category.totalMinor, 0),
     ).toBe(view.totalMinor);
     expect(build(dataset(data.expenses.slice(0, 6))).displayedCategories).toHaveLength(6);
+  });
+  it("folds sub-3% categories without losing money or original category identities", () => {
+    const view = build(
+      dataset([
+        expense("big", { category: "food", personalMinor: 9800 }),
+        expense("small", { category: "other", personalMinor: 200 }),
+      ]),
+    );
+    expect(view.displayedCategories.map((item) => item.key)).toEqual([
+      "food",
+      "__analysis_other_categories__",
+    ]);
+    expect(view.displayedCategories[1]).toMatchObject({
+      totalMinor: 200,
+      categories: ["other"],
+    });
+    expect(view.categories.map((item) => item.key)).toEqual(["food", "other"]);
+    expect(view.displayedCategories.reduce((sum, item) => sum + item.totalMinor, 0)).toBe(
+      view.totalMinor,
+    );
+    const boundary = build(
+      dataset([
+        expense("big", { personalMinor: 9700 }),
+        expense("edge", { category: "car", personalMinor: 300 }),
+      ]),
+    );
+    expect(boundary.displayedCategories.map((item) => item.key)).toEqual(["food", "car"]);
+  });
+  it("previews recently modified records while keeping Biggest ordered by amount", () => {
+    const view = build(
+      dataset([
+        expense("large", { personalMinor: 9000, updatedAt: "2026-09-01T00:00:00Z" }),
+        expense("recent", { personalMinor: 100, updatedAt: "2026-09-29T00:00:00Z" }),
+      ]),
+    );
+    expect(view.expenses.map((item) => item.id)).toEqual(["large", "recent"]);
+    expect(view.categories[0]!.expenses.map((item) => item.id)).toEqual([
+      "recent",
+      "large",
+    ]);
+  });
+  it("uses log only for a dominant outlier and preserves cumulative stack geometry and currency scale", () => {
+    const periods = [100, 200, 10000].map((totalMinor) => ({ totalMinor })) as Parameters<
+      typeof analysisUsesLogScale
+    >[0];
+    expect(analysisUsesLogScale(periods)).toBe(true);
+    expect(
+      analysisUsesLogScale(periods.map((period) => ({ ...period, totalMinor: 200 }))),
+    ).toBe(false);
+    expect(analysisUsesLogScale(periods.slice(1))).toBe(false);
+    expect(analysisScaledFraction(0, 10000, 2, true)).toBe(0);
+    expect(analysisScaledFraction(10000, 10000, 2, true)).toBe(1);
+    expect(analysisScaledFraction(100, 10000, 2, true)).toBeCloseTo(
+      analysisScaledFraction(1, 100, 0, true),
+    );
+    const lower = analysisScaledFraction(100, 10000, 2, true);
+    const upper = analysisScaledFraction(300, 10000, 2, true);
+    expect(lower + (upper - lower)).toBeCloseTo(upper);
+    expect(analysisScaledFraction(300, 10000, 2, false)).toBe(0.03);
   });
   it("partitions incomplete records once and keeps meaningful unavailable/empty states", () => {
     const bad = [

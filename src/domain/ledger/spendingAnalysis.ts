@@ -1,11 +1,12 @@
 import type { LedgerJourneyContext } from "./journeyContext";
-import type { ReportingScope } from "./reporting";
+import { reportingDateBoundary, type ReportingScope } from "./reporting";
 
 export type AnalysisExpense = {
   id: string;
   title: string;
   category: string;
   occurredAt: string;
+  updatedAt: string;
   payerMemberId: string;
   originalMinor: number;
   originalCurrency: string;
@@ -130,6 +131,33 @@ export function analysisRanks<T extends { totalMinor: number }>(rows: T[]) {
   });
 }
 
+// Display-only scaling: exact money remains in the projection and briefs.
+export function analysisUsesLogScale(periods: AnalysisPeriod[]) {
+  const positive = periods
+    .map((period) => period.totalMinor)
+    .filter((value) => value > 0)
+    .sort((a, b) => a - b);
+  if (positive.length < 3) return false;
+  const middle = Math.floor(positive.length / 2);
+  const median =
+    positive.length % 2
+      ? positive[middle]!
+      : (positive[middle - 1]! + positive[middle]!) / 2;
+  const max = positive.at(-1)!;
+  const total = positive.reduce((sum, value) => sum + value, 0);
+  return max / total > 0.6 && max / median >= 10;
+}
+export function analysisScaledFraction(
+  value: number,
+  maximum: number,
+  scale: number,
+  log: boolean,
+) {
+  if (maximum <= 0 || value <= 0) return 0;
+  const unit = 10 ** scale;
+  return log ? Math.log1p(value / unit) / Math.log1p(maximum / unit) : value / maximum;
+}
+
 export function buildSpendingAnalysis(
   dataset: AnalysisDataset,
   memberId: string,
@@ -140,8 +168,8 @@ export function buildSpendingAnalysis(
   const all = dataset.expenses;
   const scoped = all.filter(
     (expense) =>
-      (!range.from || expense.occurredAt >= range.from) &&
-      (!range.to || expense.occurredAt < range.to),
+      (!range.from || expense.occurredAt >= reportingDateBoundary(range.from)) &&
+      (!range.to || expense.occurredAt < reportingDateBoundary(range.to)),
   );
   const relevant = scoped.filter(
     (expense) =>
@@ -194,10 +222,23 @@ export function buildSpendingAnalysis(
     ...category,
     percentage: analysisPercentage(category.totalMinor, totalMinor),
   }));
-  const remaining = categories.length > 6 ? categories.slice(5) : [];
+  for (const category of categories)
+    category.expenses.sort(
+      (a, b) =>
+        Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || a.id.localeCompare(b.id),
+    );
+  const visible = categories.filter(
+    (category) => totalMinor === 0 || category.totalMinor / totalMinor >= 0.03,
+  );
+  const kept =
+    visible.length > 6 || visible.length < categories.length
+      ? visible.slice(0, 5)
+      : visible;
+  const keptKeys = new Set(kept.map((category) => category.key));
+  const remaining = categories.filter((category) => !keptKeys.has(category.key));
   const displayedCategories = remaining.length
     ? [
-        ...categories.slice(0, 5),
+        ...kept,
         {
           key: "__analysis_other_categories__",
           label: "Other categories",
@@ -207,12 +248,16 @@ export function buildSpendingAnalysis(
             remaining.reduce((sum, item) => plus(sum, item.totalMinor), 0),
             totalMinor,
           ),
-          expenses: expenses.filter((expense) =>
-            remaining.some((category) => category.key === expense.category),
-          ),
+          expenses: remaining
+            .flatMap((category) => category.expenses)
+            .sort(
+              (a, b) =>
+                Date.parse(b.updatedAt) - Date.parse(a.updatedAt) ||
+                a.id.localeCompare(b.id),
+            ),
         },
       ]
-    : categories;
+    : kept;
   const dateKeys = all.map((expense) => analysisDay(expense.occurredAt)).sort();
   const journeyStart = dataset.journey.startDate?.slice(0, 10);
   const journeyEnd = dataset.journey.endDate?.slice(0, 10);
