@@ -1,8 +1,10 @@
+import { storeExpenseCanonical } from "./ledgerExpenseConsistency";
 import type * as SQLite from "expo-sqlite";
 
 import type {
   LedgerCorrectionActionRequest,
   LedgerExpenseConflictResponse,
+  ExpenseTypedConflictResponse,
   ResolveLedgerExpenseConflictRequest,
 } from "@/data/api/ledgerMutationContracts";
 import type { LedgerCorrectionRequest } from "@/data/api/ledgerReadContracts";
@@ -25,7 +27,7 @@ export function createLedgerCollaborationRepository(
     async recordConflict(
       localExpenseId: string,
       operation: SyncOperation,
-      response: LedgerExpenseConflictResponse,
+      response: LedgerExpenseConflictResponse | ExpenseTypedConflictResponse,
     ) {
       const userId = await getActiveUserId();
       if (operation.ownerUserId !== userId)
@@ -33,35 +35,59 @@ export function createLedgerCollaborationRepository(
       const now = new Date().toISOString();
       const payload = JSON.parse(operation.payloadJson) as {
         baseExpense?: unknown;
+        envelope?: { observedBase: unknown };
       };
+      const typed = "submittedIntent" in response.error;
+      const submitted =
+        "submitted" in response.error
+          ? response.error.submitted
+          : response.error.submittedIntent;
       await database.withTransactionAsync(async () => {
-        await database.runAsync(
-          `UPDATE ledger_expense_conflicts
-           SET status = 'SUPERSEDED', resolved_at = ?
-           WHERE expense_id = ? AND status = 'OPEN' AND conflict_id <> ?`,
-          now,
-          localExpenseId,
-          response.error.conflictId,
-        );
         await database.runAsync(
           `INSERT OR IGNORE INTO ledger_expense_conflicts (
             conflict_id, journey_id, expense_id, operation_id, base_revision,
             current_revision, base_snapshot_json, submitted_snapshot_json,
             canonical_snapshot_json, changed_groups_json, audit_summaries_json,
             status, created_at, resolved_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, NULL)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, NULL)
+          ON CONFLICT(conflict_id) DO UPDATE SET operation_id=excluded.operation_id,
+          base_revision=excluded.base_revision,current_revision=excluded.current_revision,
+          base_snapshot_json=excluded.base_snapshot_json,submitted_snapshot_json=excluded.submitted_snapshot_json,
+          canonical_snapshot_json=excluded.canonical_snapshot_json,changed_groups_json=excluded.changed_groups_json,
+          audit_summaries_json=excluded.audit_summaries_json WHERE ledger_expense_conflicts.status='OPEN'`,
           response.error.conflictId,
           operation.tripId,
           localExpenseId,
           operation.id,
           response.error.baseRevision,
           response.error.currentRevision,
-          JSON.stringify(payload.baseExpense ?? response.error.submitted),
-          JSON.stringify(response.error.submitted),
+          JSON.stringify(
+            typed
+              ? (payload.envelope?.observedBase ?? null)
+              : (payload.baseExpense ?? submitted),
+          ),
+          JSON.stringify(submitted),
           JSON.stringify(response.error.current),
           JSON.stringify(response.error.changedGroups),
-          JSON.stringify(response.error.auditSummaries),
+          JSON.stringify(
+            "auditSummaries" in response.error
+              ? response.error.auditSummaries
+              : response.error.current.auditEvents,
+          ),
           now,
+        );
+        await storeExpenseCanonical(
+          database,
+          userId,
+          localExpenseId,
+          response.error.current,
+        );
+        await database.runAsync(
+          `UPDATE sync_operations SET status = 'CONFLICT', failure_category = 'CONFLICT',
+           claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ? AND owner_user_id = ?`,
+          now,
+          operation.id,
+          userId,
         );
         await database.runAsync(
           "UPDATE ledger_expenses SET sync_status = 'CONFLICT', updated_at = ? WHERE id = ?",

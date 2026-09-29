@@ -299,3 +299,37 @@ Every critical item should be able to expose:
 - Available offline.
 
 Use plain language in UI. Older travellers should not need to understand sync internals.
+
+## Expense consistency closure — approved contract
+
+ADR 0056 supersedes local-only server-conflict closure in ADR 0040. New UPDATEs
+express user patches; no-op and attachment-only Save create no Expense command.
+Only a matching receipt plus atomic reconciliation confirms a command. Both pull
+and mutation responses preserve newer unresolved intent/tombstones and monotonic
+canonical baselines. Dependencies use terminal disposition, not COMPLETED alone.
+Deterministic Health evidence may propose equivalent closure through the ordinary
+server-backed resolution path; it cannot declare a server OPEN conflict terminal.
+These changes follow checkpoint Phase gates; Phase 1 does not enable recovery.
+
+Formal v2 resolution reuses the existing worker/queue. The explicit decision has an
+independent immutable request/key, so blocked original commands cannot prevent it.
+Response loss keeps that request for idempotent replay; original-command receipt,
+covered closure, canonical reconciliation and queue completion commit atomically.
+The decision's queue record drives its own UI feedback; ordinary Expense sync status
+is not repurposed for resolution progress. Drift remains CONFLICT and requires a
+fresh read plus a new choice. UI keeps routine reconciliation/FX refresh/retry and
+normal server confirmation silent.
+
+Phase 5 acceptance persists the original displayed-rate binding in the existing typed
+valuation command. Offline explicit choices remain durable; reconnect and response
+loss use the same operation/body/key. Server-verified compatible reference advancement
+does not require a new choice. Financial/rate/Journey drift requires reconfirmation,
+never a replaced revision plus blind retry. Explicit pending/retryable/failure feedback
+is rehydrated from account-scoped commands; routine reference refresh stays silent.
+
+Phase 6 closure reads and receipts use the same repository reconciliation boundary.
+At equal Expense revision, local canonical evidence accumulates audit IDs and retains
+later server aggregate/audit timestamps; an older feed snapshot cannot remove closure
+proof or regress those times. Business fields and pending intent overlays remain
+protected. Closed chains, including legacy equivalent UPDATE, converge through the
+formal API without local-only repair or a second mutation.

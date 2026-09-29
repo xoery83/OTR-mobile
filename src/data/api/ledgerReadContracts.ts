@@ -218,7 +218,14 @@ export const ledgerCorrectionRequestSchema = z.object({
   resolvedAt: z.string().nullable(),
 });
 
+const expenseConflictChainMetadataSchema = z.object({
+  expenseId: uuidSchema,
+  chainDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  conflictIds: z.array(uuidSchema),
+  openConflictIds: z.array(uuidSchema),
+});
 export const ledgerBootstrapResponseSchema = z.object({
+  expenseConflictChains: z.array(expenseConflictChainMetadataSchema).optional(),
   reviewProtocol: z.literal(2).optional(),
   journey: z.object({
     id: uuidSchema,
@@ -254,6 +261,7 @@ export const ledgerBootstrapResponseSchema = z.object({
 });
 
 export const ledgerChangesResponseSchema = z.object({
+  expenseConflictChains: z.array(expenseConflictChainMetadataSchema).optional(),
   reviewProtocol: z.literal(2).optional(),
   reviewFindings: z.array(ledgerReviewFindingSchema).optional(),
   reviewActions: z.array(ledgerReviewActionSchema).optional(),
@@ -272,6 +280,7 @@ export const ledgerChangesResponseSchema = z.object({
         "REVIEW_FINDING",
       ]),
       entityId: uuidSchema,
+      // Feed event revision tracks delivery; Expense canonical version is aggregate.revision.
       revision: z.number().int().positive(),
       isTombstone: z.boolean(),
       aggregate: z

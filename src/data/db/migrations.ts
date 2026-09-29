@@ -1358,4 +1358,71 @@ export const migrations: Migration[] = [
       ALTER TABLE ledger_receipt_assets ADD COLUMN height INTEGER;
     `,
   },
+  {
+    id: 40,
+    name: "expense_causal_commands_and_receipts",
+    sql: `
+      CREATE TABLE ledger_expense_canonical_baselines (
+        account_id TEXT NOT NULL,
+        expense_id TEXT NOT NULL,
+        server_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision > 0),
+        canonical_json TEXT NOT NULL CHECK (json_valid(canonical_json)),
+        PRIMARY KEY (account_id, expense_id)
+      );
+      CREATE TABLE ledger_expense_commands (
+        account_id TEXT NOT NULL,
+        expense_id TEXT NOT NULL,
+        operation_id TEXT NOT NULL REFERENCES sync_operations(id),
+        intent_sequence INTEGER NOT NULL CHECK (intent_sequence > 0),
+        intent_version INTEGER NOT NULL DEFAULT 2 CHECK (intent_version = 2),
+        predecessor_operation_id TEXT,
+        observed_server_revision INTEGER NOT NULL CHECK (observed_server_revision >= 0),
+        observed_base_json TEXT CHECK (observed_base_json IS NULL OR json_valid(observed_base_json)),
+        intent_json TEXT NOT NULL CHECK (json_valid(intent_json)),
+        projection_json TEXT NOT NULL CHECK (json_valid(projection_json)),
+        bound_execution_revision INTEGER,
+        bound_request_json TEXT CHECK (bound_request_json IS NULL OR json_valid(bound_request_json)),
+        PRIMARY KEY (account_id, operation_id),
+        UNIQUE (account_id, expense_id, intent_sequence)
+      );
+      CREATE INDEX ledger_expense_command_chain ON ledger_expense_commands
+        (account_id, expense_id, intent_sequence);
+      CREATE TABLE ledger_expense_operation_receipts (
+        account_id TEXT NOT NULL,
+        operation_id TEXT NOT NULL,
+        expense_id TEXT NOT NULL,
+        receipt_json TEXT NOT NULL CHECK (json_valid(receipt_json)),
+        canonical_json TEXT NOT NULL CHECK (json_valid(canonical_json)),
+        PRIMARY KEY (account_id, operation_id),
+        FOREIGN KEY (account_id, operation_id) REFERENCES ledger_expense_commands(account_id, operation_id)
+      );
+      CREATE TRIGGER ledger_expense_receipt_immutable_update BEFORE UPDATE ON ledger_expense_operation_receipts
+        BEGIN SELECT RAISE(ABORT, 'Expense receipt is immutable'); END;
+      CREATE TRIGGER ledger_expense_receipt_immutable_delete BEFORE DELETE ON ledger_expense_operation_receipts
+        BEGIN SELECT RAISE(ABORT, 'Expense receipt is immutable'); END;
+    `,
+  },
+  {
+    id: 41,
+    name: "expense_authoritative_conflict_chains",
+    sql: `
+      CREATE TABLE ledger_expense_conflict_chains (
+        account_id TEXT NOT NULL, expense_id TEXT NOT NULL, journey_id TEXT NOT NULL,
+        metadata_json TEXT NOT NULL CHECK (json_valid(metadata_json)),
+        chain_json TEXT CHECK (chain_json IS NULL OR json_valid(chain_json)),
+        PRIMARY KEY (account_id, expense_id)
+      );
+      CREATE TABLE ledger_expense_resolution_receipts (
+        account_id TEXT NOT NULL,
+        operation_id TEXT NOT NULL REFERENCES sync_operations(id),
+        response_json TEXT NOT NULL CHECK (json_valid(response_json)),
+        PRIMARY KEY (account_id, operation_id)
+      );
+      CREATE TRIGGER ledger_expense_resolution_no_update BEFORE UPDATE ON ledger_expense_resolution_receipts
+        BEGIN SELECT RAISE(ABORT, 'Expense resolution receipt is immutable'); END;
+      CREATE TRIGGER ledger_expense_resolution_no_delete BEFORE DELETE ON ledger_expense_resolution_receipts
+        BEGIN SELECT RAISE(ABORT, 'Expense resolution receipt is immutable'); END;
+    `,
+  },
 ];

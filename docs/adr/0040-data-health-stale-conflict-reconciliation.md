@@ -23,3 +23,10 @@ Ledger's pending-financial-operation predicate now represents an active synchron
 path: `PENDING`, `PROCESSING`, `RETRYABLE`, or `DEPENDENCY_BLOCKED`. Historical terminal,
 unknown `FAILED`, and conflict history remain preserved but no longer masquerade as work
 currently waiting to sync. Settlement confirmation-change reporting remains independent.
+
+## Superseded local closure rule (ADR 0056, 2026-09-28)
+
+The earlier permission to locally close an equal server OPEN conflict is revoked.
+Equality is deterministic candidate evidence only. A server-backed chain closure
+receipt is required before OPEN becomes terminal. Until the Phase 3 closure path
+is available, Data Health preserves OPEN conflicts and requests user attention.

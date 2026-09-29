@@ -189,7 +189,7 @@ function strandEqualMirror(sqlite: DatabaseSync, title = expense.title) {
 }
 
 describe("Ledger canonical mirror convergence", () => {
-  it("re-materializes an equal failed mirror from fresh canonical bootstrap once", async () => {
+  it("preserves an equal failed command until a matching server-backed closure receipt", async () => {
     const { sqlite, repository } = fixture();
     await repository.applyBootstrap(bootstrap());
     sqlite
@@ -213,37 +213,28 @@ describe("Ledger canonical mirror convergence", () => {
     );
     strandEqualMirror(sqlite);
 
+    const before = JSON.stringify(
+      sqlite.prepare("SELECT * FROM ledger_expenses WHERE id = ?").get(expenseId),
+    );
     await repository.applyBootstrap(bootstrap());
     await repository.applyBootstrap(bootstrap());
-
     expect(
-      sqlite
-        .prepare(
-          `SELECT revision, server_revision AS serverRevision,
-             sync_status AS syncStatus, title
-           FROM ledger_expenses WHERE id = ?`,
-        )
-        .get(expenseId),
-    ).toEqual({
-      revision: 1,
-      serverRevision: 1,
-      syncStatus: "SYNCED",
-      title: "Canonical",
-    });
+      JSON.stringify(
+        sqlite.prepare("SELECT * FROM ledger_expenses WHERE id = ?").get(expenseId),
+      ),
+    ).toBe(before);
     expect(
       sqlite
         .prepare("SELECT status FROM sync_operations WHERE id = 'failed-update'")
         .get(),
-    ).toEqual({ status: "COMPLETED" });
+    ).toEqual({ status: "FAILED" });
     expect(
       sqlite
         .prepare(
-          `SELECT effective_at AS effectiveAt,
-             reference_evidence_json AS evidence
-           FROM ledger_valuation_snapshots WHERE expense_id = ? AND is_active = 1`,
+          "SELECT revision FROM ledger_expense_canonical_baselines WHERE account_id = ? AND expense_id = ?",
         )
-        .get(expenseId),
-    ).toEqual({ effectiveAt: null, evidence: null });
+        .get(userId, expenseId),
+    ).toEqual({ revision: 1 });
     expect(
       JSON.stringify(
         sqlite.prepare("SELECT * FROM ledger_settlements WHERE id = 'root'").get(),

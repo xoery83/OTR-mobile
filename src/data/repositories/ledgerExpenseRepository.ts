@@ -1,3 +1,36 @@
+import {
+  rateBindingMatches,
+  compatibleReferenceValue,
+  type DisplayedRateBinding,
+} from "@/domain/ledger/rateAcceptance";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import {
+  bindExpenseOperation,
+  recordExpenseCommand,
+  localExpenseIntent,
+  storeExpenseCanonical,
+  readExpenseCanonical,
+  readExpenseCommands,
+  storeExpenseReceipt,
+  projectExpenseIntent,
+  getExpenseOperationResult,
+} from "./ledgerExpenseConsistency";
+import type {
+  ExpenseOperationResult,
+  ExpenseOperationReceipt,
+  ExpenseConflictChainResolutionResponse,
+} from "@/data/api/ledgerMutationContracts";
+import {
+  expenseConflictChainResolutionResponseSchema,
+  expenseConflictChainResolutionRequestSchema,
+} from "@/data/api/ledgerMutationContracts";
+import type { ExpenseTypedIntent } from "@/domain/ledger/expenseIntent";
+import {
+  buildExpenseUserPatch,
+  isEmptyExpensePatch,
+  sameExpenseValue,
+  utcInstant,
+} from "@/domain/ledger/expenseIntent";
 import type * as SQLite from "expo-sqlite";
 
 import {
@@ -73,6 +106,7 @@ export type LedgerExpense = ExpenseAggregate & {
   syncStatus: SyncStatus;
   createdAt: string;
   updatedAt: string;
+  operationResult?: ExpenseOperationResult;
 };
 
 export type ExpenseAttachmentEdit = {
@@ -105,12 +139,12 @@ export type LedgerExpenseRepository = {
   ): Promise<LedgerExpense[]>;
   getExpense(id: string): Promise<LedgerExpense | null>;
   listPreviousValuations(id: string): Promise<SettlementValuationSnapshot[]>;
-  tombstoneExpense(id: string, reason: string): Promise<void>;
+  tombstoneExpense(id: string, reason: string): Promise<ExpenseOperationResult>;
   restoreExpense(
     id: string,
     status: Exclude<ExpenseBusinessStatus, "DELETED">,
     reason: string,
-  ): Promise<void>;
+  ): Promise<ExpenseOperationResult>;
   markExpenseSyncing(id: string): Promise<void>;
   markExpenseSynced(
     id: string,
@@ -120,6 +154,33 @@ export type LedgerExpenseRepository = {
   ): Promise<void>;
   markExpensePending?(id: string, operationType: string): Promise<void>;
   reconcileCanonicalExpense(id: string, expense: LedgerExpenseDto): Promise<void>;
+  reconcileCanonicalExpenseInTransaction(
+    id: string,
+    expense: LedgerExpenseDto,
+    operationId?: string,
+    disposition?: ExpenseOperationReceipt["disposition"],
+    receipt?: ExpenseOperationReceipt,
+    authoritativeClosure?: boolean,
+  ): Promise<void>;
+  confirmExpenseOperation(
+    operationId: string,
+    expense: LedgerExpenseDto,
+    disposition?: ExpenseOperationReceipt["disposition"],
+    receipt?: ExpenseOperationReceipt,
+  ): Promise<void>;
+  confirmConflictResolution(
+    operationId: string,
+    response: ExpenseConflictChainResolutionResponse,
+  ): Promise<void>;
+  listRateAcceptanceOperations(
+    journeyId: string,
+  ): Promise<{ title: string; result: ExpenseOperationResult }[]>;
+  getOperationResult(operationId: string): Promise<ExpenseOperationResult | null>;
+  getLatestOperationResult(expenseId: string): Promise<ExpenseOperationResult | null>;
+  bindOperation(
+    operation: import("@/data/sync/syncOperationRepository").SyncOperation,
+    typed?: boolean,
+  ): Promise<import("@/data/sync/syncOperationRepository").SyncOperation>;
   markExpenseConflict(id: string): Promise<void>;
   markExpenseFailed(id: string): Promise<void>;
   cacheRateQuote(quote: RateQuote): Promise<void>;
@@ -148,6 +209,9 @@ export type LedgerExpenseRepository = {
       paymentRecordId?: string;
       manualRate?: string;
       reason?: string;
+      expectedRevision?: number;
+      expectedSettlement?: Money;
+      rateAcceptance?: DisplayedRateBinding;
     },
   ): Promise<LedgerExpense>;
 };
@@ -253,7 +317,7 @@ export function createLedgerExpenseRepository(
             )
           )
             throw new Error("Expense draft attachments changed after Save.");
-          return saved;
+          return { ...saved, operationResult: noOpExpenseResult(saved.id, "CREATE") };
         }
       }
       for (const receipt of receipts) {
@@ -282,7 +346,10 @@ export function createLedgerExpenseRepository(
           if (expenseDraftId && existing.expenseId !== expenseDraftId)
             throw new Error("Receipt draft was already used by another Expense.");
           if (!expenseDraftId && receipts.length === 1)
-            return requireExpense(database, existing.expenseId, userId);
+            return {
+              ...(await requireExpense(database, existing.expenseId, userId)),
+              operationResult: noOpExpenseResult(existing.expenseId, "CREATE"),
+            };
           throw new Error("Receipt draft was already used by another Expense.");
         }
       }
@@ -293,9 +360,10 @@ export function createLedgerExpenseRepository(
         now,
       );
       assertCommand(expense);
+      let savedOperationId: string | null = null;
       await database.withTransactionAsync(async () => {
         await insertExpenseAggregate(database, expense, "CREATED", null, userId);
-        await enqueueOperation(
+        savedOperationId = await enqueueOperation(
           database,
           expense,
           createOperation,
@@ -314,7 +382,12 @@ export function createLedgerExpenseRepository(
             now,
           );
       });
-      return expense;
+      return {
+        ...expense,
+        operationResult:
+          (savedOperationId ? await this.getOperationResult(savedOperationId) : null) ??
+          undefined,
+      };
     },
 
     async updateExpense(id, command, reason, attachments) {
@@ -328,7 +401,8 @@ export function createLedgerExpenseRepository(
         current.valuation &&
         command.valuation?.id === current.valuation.id &&
         ((command.economicDate ?? null) !== (current.economicDate ?? null) ||
-          command.occurredAt.slice(0, 10) !== current.occurredAt.slice(0, 10) ||
+          utcInstant(command.occurredAt).slice(0, 10) !==
+            utcInstant(current.occurredAt).slice(0, 10) ||
           command.original.minor !== current.original.minor ||
           command.original.currency !== current.original.currency ||
           command.original.scale !== current.original.scale)
@@ -355,7 +429,27 @@ export function createLedgerExpenseRepository(
         },
       );
       assertCommand(expense);
+      const userPatch = buildExpenseUserPatch(
+        toOperationSnapshot(current),
+        toOperationSnapshot(expense),
+      );
+      const valuationOrStatusChanged =
+        current.status !== expense.status ||
+        !sameExpenseValue(
+          toOperationSnapshot(current).valuation,
+          toOperationSnapshot(expense).valuation,
+        );
+      if (!userPatch.financial && !userPatch.participantSplit && valuationOrStatusChanged)
+        throw new Error("Valuation changes require an explicit valuation command.");
+      const businessChanged = !isEmptyExpensePatch(userPatch) || valuationOrStatusChanged;
+      let savedOperationId: string | null = null;
       await database.withTransactionAsync(async () => {
+        const latestBeforeWrite = await requireExpense(database, id, userId);
+        if (
+          latestBeforeWrite.revision !== current.revision ||
+          latestBeforeWrite.serverRevision !== current.serverRevision
+        )
+          throw new Error("Expense changed. Review the latest value before saving.");
         await assertLedgerExpenseEditable(
           database,
           userId,
@@ -406,18 +500,28 @@ export function createLedgerExpenseRepository(
               now,
             );
         }
+        if (!businessChanged) return;
         const causalCreate =
           current.serverRevision === 0
             ? await findCausalCreate(database, id, userId)
             : null;
-        if (causalCreate?.attemptCount === 0 && causalCreate.status === "PENDING") {
+        if (
+          causalCreate?.attemptCount === 0 &&
+          causalCreate.status === "PENDING" &&
+          !causalCreate.lastAttemptAt
+        ) {
           expense.syncStatus = "PENDING_CREATE";
         }
         await replaceExpenseAggregate(database, expense, "UPDATED", reason, userId);
-        if (causalCreate?.attemptCount === 0 && causalCreate.status === "PENDING") {
+        if (
+          causalCreate?.attemptCount === 0 &&
+          causalCreate.status === "PENDING" &&
+          !causalCreate.lastAttemptAt
+        ) {
           await coalesceIntoCreate(database, causalCreate.id, expense, userId);
+          savedOperationId = causalCreate.id;
         } else if (causalCreate) {
-          await enqueueOrCompactDependentUpdate(
+          savedOperationId = await enqueueOrCompactDependentUpdate(
             database,
             expense,
             current,
@@ -426,7 +530,7 @@ export function createLedgerExpenseRepository(
             causalCreate.id,
           );
         } else {
-          await enqueueOperation(
+          savedOperationId = await enqueueOperation(
             database,
             expense,
             updateOperation,
@@ -438,7 +542,14 @@ export function createLedgerExpenseRepository(
           );
         }
       });
-      return expense;
+      return {
+        ...(businessChanged ? expense : current),
+        operationResult: businessChanged
+          ? ((savedOperationId
+              ? await this.getOperationResult(savedOperationId)
+              : null) ?? undefined)
+          : noOpExpenseResult(id, "UPDATE"),
+      };
     },
 
     async completeEconomicDate(id, date, source) {
@@ -584,10 +695,17 @@ export function createLedgerExpenseRepository(
       const userId = await getActiveUserId();
       const current = await requireExpense(database, id, userId);
       assertReplayFixtureWritable(current.journeyId);
-      if (current.status === "DELETED") return;
+      if (current.status === "DELETED") return noOpExpenseResult(id, "DELETE");
       const now = new Date().toISOString();
       const nextRevision = current.revision + 1;
+      let savedOperationId: string | null = null;
       await database.withTransactionAsync(async () => {
+        const latest = await requireExpense(database, id, userId);
+        if (
+          latest.revision !== current.revision ||
+          latest.serverRevision !== current.serverRevision
+        )
+          throw new Error("Expense changed. Review the latest value before saving.");
         await assertLedgerExpenseEditable(
           database,
           userId,
@@ -610,7 +728,7 @@ export function createLedgerExpenseRepository(
         );
         await insertAuditEvent(database, id, nextRevision, "TOMBSTONED", reason, now);
         const causalCreate = await findCausalCreate(database, id, userId);
-        await enqueueOperation(
+        savedOperationId = await enqueueOperation(
           database,
           { ...current, revision: nextRevision },
           deleteOperation,
@@ -622,16 +740,27 @@ export function createLedgerExpenseRepository(
           causalCreate?.id,
         );
       });
+      return (
+        (savedOperationId ? await this.getOperationResult(savedOperationId) : null) ??
+        noOpExpenseResult(id, "DELETE")
+      );
     },
 
     async restoreExpense(id, status, reason) {
       const userId = await getActiveUserId();
       const current = await requireExpense(database, id, userId);
       assertReplayFixtureWritable(current.journeyId);
-      if (current.status !== "DELETED") return;
+      if (current.status !== "DELETED") return noOpExpenseResult(id, "RESTORE");
       const now = new Date().toISOString();
       const nextRevision = current.revision + 1;
+      let savedOperationId: string | null = null;
       await database.withTransactionAsync(async () => {
+        const latest = await requireExpense(database, id, userId);
+        if (
+          latest.revision !== current.revision ||
+          latest.serverRevision !== current.serverRevision
+        )
+          throw new Error("Expense changed. Review the latest value before saving.");
         await database.runAsync(
           `UPDATE ledger_expenses
            SET business_status = ?, deleted_at = NULL, revision = ?, sync_status = ?,
@@ -646,7 +775,7 @@ export function createLedgerExpenseRepository(
         );
         await insertAuditEvent(database, id, nextRevision, "RESTORED", reason, now);
         const causalCreate = await findCausalCreate(database, id, userId);
-        await enqueueOperation(
+        savedOperationId = await enqueueOperation(
           database,
           { ...current, revision: nextRevision },
           restoreOperation,
@@ -658,6 +787,10 @@ export function createLedgerExpenseRepository(
           causalCreate?.id,
         );
       });
+      return (
+        (savedOperationId ? await this.getOperationResult(savedOperationId) : null) ??
+        noOpExpenseResult(id, "RESTORE")
+      );
     },
 
     async markExpenseSyncing(id) {
@@ -762,10 +895,285 @@ export function createLedgerExpenseRepository(
       );
     },
 
+    async bindOperation(operation, typed = false) {
+      const accountId = await getActiveUserId();
+      if (operation.ownerUserId !== accountId)
+        throw new Error("Expense operation belongs to another account.");
+      return bindExpenseOperation(database, accountId, operation, typed);
+    },
+
+    async getLatestOperationResult(expenseId) {
+      const accountId = await getActiveUserId();
+      const latest = await database.getFirstAsync<{ operationId: string }>(
+        `SELECT operation_id AS operationId FROM ledger_expense_commands WHERE account_id = ? AND expense_id = ? ORDER BY intent_sequence DESC LIMIT 1`,
+        accountId,
+        expenseId,
+      );
+      return latest
+        ? getExpenseOperationResult(database, accountId, latest.operationId)
+        : null;
+    },
+
+    async listRateAcceptanceOperations(journeyId) {
+      const userId = await getActiveUserId();
+      const rows = await database.getAllAsync<{ operationId: string; title: string }>(
+        `SELECT c.operation_id AS operationId, e.title FROM ledger_expense_commands c
+         JOIN ledger_expenses e ON e.id = c.expense_id
+         JOIN sync_operations o ON o.id = c.operation_id
+         WHERE c.account_id = ? AND e.journey_id = ?
+           AND json_extract(c.intent_json,'$.valuation.rateAcceptance') IS NOT NULL
+           AND o.status <> 'COMPLETED'
+           AND c.intent_sequence = (SELECT MAX(n.intent_sequence) FROM ledger_expense_commands n WHERE n.account_id = c.account_id AND n.expense_id = c.expense_id AND json_extract(n.intent_json,'$.valuation.rateAcceptance') IS NOT NULL)`,
+        userId,
+        journeyId,
+      );
+      const results = await Promise.all(
+        rows.map(async (row) => ({
+          title: row.title,
+          result: await this.getOperationResult(row.operationId),
+        })),
+      );
+      return results.filter(
+        (row): row is { title: string; result: ExpenseOperationResult } =>
+          row.result !== null,
+      );
+    },
+
+    async getOperationResult(operationId) {
+      return getExpenseOperationResult(database, await getActiveUserId(), operationId);
+    },
+
+    async confirmExpenseOperation(
+      operationId,
+      canonical,
+      disposition = "APPLIED",
+      receipt,
+    ) {
+      const accountId = await getActiveUserId();
+      const operation = await database.getFirstAsync<{ expenseId: string }>(
+        `SELECT entity_id AS expenseId FROM sync_operations WHERE id = ? AND owner_user_id = ?`,
+        operationId,
+        accountId,
+      );
+      if (!operation) throw new Error("Expense operation belongs to another account.");
+      await database.withTransactionAsync(async () => {
+        await this.reconcileCanonicalExpenseInTransaction(
+          operation.expenseId,
+          canonical,
+          operationId,
+          disposition,
+          receipt,
+        );
+      });
+    },
+
+    async confirmConflictResolution(operationId, value) {
+      const generation = getAccountGeneration();
+      const accountId = await getActiveUserId();
+      const response = expenseConflictChainResolutionResponseSchema.parse(value);
+      await database.withTransactionAsync(async () => {
+        const op = await database.getFirstAsync<{
+          expenseId: string;
+          key: string;
+          payload: string;
+        }>(
+          `SELECT entity_id AS expenseId,idempotency_key AS key,payload_json AS payload FROM sync_operations WHERE id=? AND owner_user_id=? AND operation_type='LEDGER_RESOLVE_EXPENSE_CONFLICT'`,
+          operationId,
+          accountId,
+        );
+        if (!op) throw new Error("Resolution operation belongs to another account.");
+        const request = expenseConflictChainResolutionRequestSchema.parse(
+          JSON.parse(op.payload),
+        );
+        if (
+          response.resolutionReceipt.idempotencyKey !== op.key ||
+          response.resolutionReceipt.commandId !== request.commandId ||
+          response.resolutionReceipt.commandType !== request.intentType
+        )
+          throw new Error("Resolution receipt does not match the submitted operation.");
+        const previous = await database.getFirstAsync<{ json: string }>(
+          `SELECT response_json AS json FROM ledger_expense_resolution_receipts WHERE account_id=? AND operation_id=?`,
+          accountId,
+          operationId,
+        );
+        if (previous) {
+          if (!sameExpenseValue(JSON.parse(previous.json), response))
+            throw new Error("Immutable resolution replay differs.");
+          return;
+        }
+        const commands = await readExpenseCommands(database, accountId, op.expenseId);
+        for (const outcome of response.conflictOutcomes) {
+          if (outcome.lifecycle === "OPEN") continue;
+          if (!request.coveredConflictIds.includes(outcome.conflictId)) continue;
+          const conflict = await database.getFirstAsync<{ operationId: string }>(
+            `SELECT operation_id AS operationId FROM ledger_expense_conflicts WHERE conflict_id=? AND expense_id=?`,
+            outcome.conflictId,
+            op.expenseId,
+          );
+          const command =
+            commands.find((c) => c.operationId === conflict?.operationId) ??
+            commands.find((c) => c.operationId === outcome.operationReceipt?.operationId);
+          if (command && !outcome.operationReceipt)
+            throw new Error("Covered Expense command is missing its server receipt.");
+          if (command && outcome.operationReceipt)
+            await storeExpenseReceipt(
+              database,
+              accountId,
+              command,
+              response.canonical,
+              outcome.operationReceipt.disposition,
+              outcome.operationReceipt,
+            );
+          else if (conflict?.operationId)
+            await database.runAsync(
+              `UPDATE sync_operations SET status='COMPLETED',failure_category=NULL,claim_owner=NULL,lease_expires_at=NULL,updated_at=? WHERE id=? AND owner_user_id=?`,
+              new Date().toISOString(),
+              conflict.operationId,
+              accountId,
+            );
+          await database.runAsync(
+            `UPDATE ledger_expense_conflicts SET status=?,resolved_at=? WHERE conflict_id=? AND expense_id=?`,
+            outcome.lifecycle,
+            new Date().toISOString(),
+            outcome.conflictId,
+            op.expenseId,
+          );
+        }
+        await database.runAsync(
+          `INSERT INTO ledger_expense_resolution_receipts(account_id,operation_id,response_json) VALUES(?,?,?)`,
+          accountId,
+          operationId,
+          JSON.stringify(response),
+        );
+        await database.runAsync(
+          `UPDATE sync_operations SET status='COMPLETED',failure_category=NULL,last_error_code=NULL,last_error_message=NULL,claim_owner=NULL,lease_expires_at=NULL,updated_at=? WHERE id=? AND owner_user_id=?`,
+          new Date().toISOString(),
+          operationId,
+          accountId,
+        );
+        await this.reconcileCanonicalExpenseInTransaction(
+          op.expenseId,
+          response.canonical,
+          undefined,
+          "APPLIED",
+          undefined,
+          true,
+        );
+        await database.runAsync(
+          `UPDATE ledger_expense_conflict_chains SET chain_json=NULL WHERE account_id=? AND expense_id=?`,
+          accountId,
+          op.expenseId,
+        );
+        await database.runAsync(
+          `UPDATE sync_operations SET status='PENDING',failure_category=NULL,next_attempt_at=NULL WHERE owner_user_id=? AND status='DEPENDENCY_BLOCKED' AND EXISTS(SELECT 1 FROM ledger_expense_operation_receipts r WHERE r.account_id=? AND r.operation_id=sync_operations.dependency_operation_id AND json_extract(r.receipt_json,'$.disposition')='APPLIED')`,
+          accountId,
+          accountId,
+        );
+        if (
+          generation !== getAccountGeneration() ||
+          accountId !== (await getActiveUserId())
+        )
+          throw new Error("Account changed during conflict resolution.");
+      });
+    },
+
     async reconcileCanonicalExpense(id, canonical) {
+      await database.withTransactionAsync(async () => {
+        await this.reconcileCanonicalExpenseInTransaction(id, canonical);
+      });
+    },
+
+    async reconcileCanonicalExpenseInTransaction(
+      id,
+      incoming,
+      operationId,
+      disposition = "APPLIED",
+      receipt,
+      authoritativeClosure = false,
+    ) {
+      const generation = getAccountGeneration();
       const userId = await getActiveUserId();
       const current = await requireExpense(database, id, userId);
-      const expense: LedgerExpense = {
+      if (
+        incoming.journeyId !== current.journeyId ||
+        (current.serverId && incoming.id !== current.serverId)
+      )
+        throw new Error("Canonical Expense identity does not match local operation.");
+      // Pull may discover the remote row before CREATE's acknowledgement maps its local ID.
+      const discovered = await readExpenseCanonical(database, userId, incoming.id);
+      if (discovered) await storeExpenseCanonical(database, userId, id, discovered);
+      const duplicate = await database.getFirstAsync<{ id: string }>(
+        `SELECT id FROM ledger_expenses WHERE journey_id = ? AND (id = ? OR server_id = ?)
+         AND id <> ? AND sync_status = 'SYNCED' AND local_owner_user_id IS NULL
+         AND NOT EXISTS (SELECT 1 FROM sync_operations op WHERE op.entity_id = ledger_expenses.id
+           AND op.entity_type = 'ledger_expense' AND op.status <> 'COMPLETED') LIMIT 1`,
+        current.journeyId,
+        incoming.id,
+        incoming.id,
+        id,
+      );
+      if (duplicate) {
+        await database.runAsync(
+          "UPDATE ledger_valuation_snapshots SET is_active = 0 WHERE expense_id = ?",
+          duplicate.id,
+        );
+        for (const table of ["ledger_expense_participants", "ledger_expense_splits"])
+          await database.runAsync(
+            `DELETE FROM ${table} WHERE expense_id = ?`,
+            duplicate.id,
+          );
+        for (const table of [
+          "ledger_valuation_snapshots",
+          "ledger_payment_records",
+          "ledger_expense_audit_events",
+          "ledger_expense_conflicts",
+          "ledger_correction_requests",
+        ])
+          await database.runAsync(
+            `UPDATE ${table} SET expense_id = ? WHERE expense_id = ?`,
+            id,
+            duplicate.id,
+          );
+        await database.runAsync("DELETE FROM ledger_expenses WHERE id = ?", duplicate.id);
+      }
+      const commands = await readExpenseCommands(database, userId, id);
+      if (operationId) {
+        const command = commands.find((row) => row.operationId === operationId);
+        if (!command) throw new Error("Expense operation has no causal evidence.");
+        const intent = JSON.parse(command.intentJson) as ExpenseTypedIntent;
+        if (intent.type === "APPLY_VALUATION" && incoming.valuation) {
+          await this.markValuationSynced(
+            intent.valuation.localValuationId,
+            incoming.valuation.id,
+            intent.valuation.localRateSnapshotId,
+            incoming.valuation.rateSnapshotId,
+          );
+        }
+        await storeExpenseReceipt(
+          database,
+          userId,
+          command,
+          incoming,
+          disposition,
+          receipt,
+        );
+      }
+      await storeExpenseCanonical(database, userId, id, incoming);
+      const canonical = (await readExpenseCanonical(database, userId, id)) ?? incoming;
+      if (canonical.revision < current.serverRevision) return;
+      const active = commands.filter(
+        (command) => command.operationId !== operationId && !command.receiptJson,
+      );
+      const legacy = await database.getFirstAsync<{ id: string }>(
+        `SELECT op.id FROM sync_operations op WHERE op.owner_user_id = ? AND op.entity_type = 'ledger_expense'
+         AND op.entity_id = ? AND op.status <> 'COMPLETED' AND op.id <> ?
+         AND op.operation_type <> 'LEDGER_RESOLVE_EXPENSE_CONFLICT'
+         AND NOT EXISTS (SELECT 1 FROM ledger_expense_commands command WHERE command.account_id = op.owner_user_id AND command.operation_id = op.id) LIMIT 1`,
+        userId,
+        id,
+        operationId ?? "",
+      );
+      let expense: LedgerExpense = {
         ...current,
         serverId: canonical.id,
         serverRevision: canonical.revision,
@@ -783,37 +1191,74 @@ export function createLedgerExpenseRepository(
         paymentRecords: canonical.paymentRecords,
         status: canonical.businessStatus,
         settlementParticipation: canonical.settlementParticipation,
-        revision: canonical.revision,
+        revision: Math.max(current.revision, canonical.revision),
         deletedAt: canonical.deletedAt,
         syncStatus: "SYNCED",
         updatedAt: canonical.updatedAt,
       };
-      await database.withTransactionAsync(async () => {
-        await replaceExpenseData(database, expense, userId);
-        await database.runAsync(
-          "DELETE FROM ledger_expense_audit_events WHERE expense_id = ?",
-          id,
-        );
-        for (const event of canonical.auditEvents) {
-          await database.runAsync(
-            `INSERT INTO ledger_expense_audit_events (
-              id, server_id, expense_id, expense_revision, event_type, reason,
-              after_json, actor_user_id, actor_member_id, changed_groups_json, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            event.id,
-            event.id,
-            id,
-            event.revision,
-            event.eventType,
-            event.reason,
-            JSON.stringify({ id, revision: event.revision }),
-            event.actorUserId,
-            event.actorMemberId,
-            JSON.stringify(event.changedGroups),
-            event.createdAt,
-          );
+      if (
+        legacy ||
+        (!authoritativeClosure &&
+          !operationId &&
+          !active.length &&
+          current.syncStatus !== "SYNCED")
+      ) {
+        // Historical unresolved intent has no trusted patch: preserve its projection.
+        expense = {
+          ...current,
+          serverId: canonical.id,
+          serverRevision: canonical.revision,
+        };
+      } else {
+        for (const command of active) expense = projectExpenseIntent(expense, command);
+        if (active.length) {
+          const latest = active[active.length - 1]!;
+          expense.syncStatus = active.some((row) => row.status === "CONFLICT")
+            ? "CONFLICT"
+            : active.some((row) => row.status === "FAILED")
+              ? "FAILED"
+              : JSON.parse(latest.intentJson).type === "DELETE"
+                ? "PENDING_DELETE"
+                : JSON.parse(latest.intentJson).type === "CREATE"
+                  ? "PENDING_CREATE"
+                  : "PENDING_UPDATE";
         }
-      });
+      }
+      if (generation !== getAccountGeneration() || userId !== (await getActiveUserId()))
+        throw new Error("Account changed during Expense reconciliation.");
+      await replaceExpenseData(database, expense, userId);
+      for (const event of canonical.auditEvents) {
+        await database.runAsync(
+          `INSERT OR IGNORE INTO ledger_expense_audit_events (
+            id, server_id, expense_id, expense_revision, event_type, reason,
+            after_json, actor_user_id, actor_member_id, changed_groups_json, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          event.id,
+          event.id,
+          id,
+          event.revision,
+          event.eventType,
+          event.reason,
+          JSON.stringify({ id, revision: event.revision }),
+          event.actorUserId,
+          event.actorMemberId,
+          JSON.stringify(event.changedGroups),
+          event.createdAt,
+        );
+      }
+      if (operationId)
+        await database.runAsync(
+          `UPDATE sync_operations SET status = 'PENDING', failure_category = NULL,
+         last_error_code = NULL, last_error_message = NULL, next_attempt_at = NULL
+         WHERE owner_user_id = ? AND dependency_operation_id = ? AND status = 'DEPENDENCY_BLOCKED'
+         AND EXISTS (SELECT 1 FROM ledger_expense_operation_receipts receipt
+           WHERE receipt.account_id = ? AND receipt.operation_id = ?
+             AND json_extract(receipt.receipt_json, '$.disposition') = 'APPLIED')`,
+          userId,
+          operationId,
+          userId,
+          operationId,
+        );
     },
 
     async markExpenseFailed(id) {
@@ -995,7 +1440,13 @@ export function createLedgerExpenseRepository(
     },
 
     async applyValuation(expenseId, input) {
+      const generation = getAccountGeneration();
+      const assertAccount = () => {
+        if (generation !== getAccountGeneration())
+          throw new Error("Account changed. Reopen Settlement.");
+      };
       const userId = await getActiveUserId();
+      assertAccount();
       const current = await requireExpense(database, expenseId, userId);
       assertReplayFixtureWritable(current.journeyId);
       if (current.status === "DELETED")
@@ -1069,6 +1520,38 @@ export function createLedgerExpenseRepository(
         rateQuote: rateQuote ?? undefined,
         paymentRecord,
       });
+      if (
+        input.expectedRevision !== undefined &&
+        (current.revision !== input.expectedRevision ||
+          current.syncStatus !== "SYNCED" ||
+          ((current.status !== "RATE_REQUIRED" || current.valuation) &&
+            !(
+              input.rateAcceptance &&
+              compatibleReferenceValue(input.rateAcceptance, current.valuation)
+            )))
+      )
+        throw new Error("Expense changed. Review the latest rate before accepting.");
+      if (
+        input.expectedSettlement &&
+        (preview.settlement.minor !== input.expectedSettlement.minor ||
+          preview.settlement.currency !== input.expectedSettlement.currency ||
+          preview.settlement.scale !== input.expectedSettlement.scale)
+      )
+        throw new Error(
+          "Journey value changed. Review the latest rate before accepting.",
+        );
+      if (
+        input.rateAcceptance &&
+        !rateBindingMatches(
+          input.rateAcceptance,
+          current,
+          journey.settlementCurrency,
+          journey.settlementScale,
+        )
+      )
+        throw new Error(
+          "Expense or Journey value changed. Review the latest rate before accepting.",
+        );
       const now = new Date().toISOString();
       const revision = current.revision + 1;
       const active = current.valuation;
@@ -1097,7 +1580,43 @@ export function createLedgerExpenseRepository(
         updatedAt: now,
       };
       assertCommand(next);
+      let savedOperationId: string | null = null;
       await database.withTransactionAsync(async () => {
+        assertAccount();
+        const latest = await requireExpense(database, expenseId, userId);
+        if (
+          input.expectedRevision !== undefined &&
+          (latest.syncStatus !== "SYNCED" ||
+            ((latest.status !== "RATE_REQUIRED" || latest.valuation) &&
+              !(
+                input.rateAcceptance &&
+                compatibleReferenceValue(input.rateAcceptance, latest.valuation)
+              )))
+        )
+          throw new Error("Expense changed. Review the latest rate before accepting.");
+        if (latest.revision !== current.revision)
+          throw new Error("Expense changed. Review the latest value before accepting.");
+        if (input.rateAcceptance) {
+          const settings = await database.getFirstAsync<{
+            currency: string;
+            scale: number;
+          }>(
+            "SELECT settlement_currency AS currency, settlement_scale AS scale FROM ledger_journeys WHERE journey_id = ?",
+            current.journeyId,
+          );
+          if (
+            !settings ||
+            !rateBindingMatches(
+              input.rateAcceptance,
+              latest,
+              settings.currency,
+              settings.scale,
+            )
+          )
+            throw new Error(
+              "Expense or Journey value changed. Review the latest rate before accepting.",
+            );
+        }
         await database.runAsync(
           `UPDATE ledger_expenses SET business_status = 'ACCEPTED', revision = ?,
             sync_status = 'PENDING_UPDATE', local_owner_user_id = ?, updated_at = ?
@@ -1144,7 +1663,7 @@ export function createLedgerExpenseRepository(
           now,
           next,
         );
-        await enqueueEvidenceOperation(
+        savedOperationId = await enqueueEvidenceOperation(
           database,
           current,
           current.id,
@@ -1154,6 +1673,7 @@ export function createLedgerExpenseRepository(
             localRateSnapshotId: rateSnapshotId,
             baseRevision: current.serverRevision,
             policy: input.policy,
+            ...(input.rateAcceptance ? { rateAcceptance: input.rateAcceptance } : {}),
             economicDate: input.policy === "REFERENCE_RATE" ? current.economicDate : null,
             rateQuoteId: input.rateQuoteId ?? null,
             paymentRecordId: input.paymentRecordId ?? null,
@@ -1166,8 +1686,14 @@ export function createLedgerExpenseRepository(
           "ledger_expense",
           current.serverRevision,
         );
+        assertAccount();
       });
-      return next;
+      return {
+        ...next,
+        operationResult:
+          (savedOperationId ? await this.getOperationResult(savedOperationId) : null) ??
+          undefined,
+      };
     },
   };
 }
@@ -1554,13 +2080,14 @@ async function enqueueEvidenceOperation(
   baseVersion: number | null = null,
 ) {
   const now = new Date().toISOString();
+  const operationId = createLocalId("ledger-operation");
   await database.runAsync(
     `INSERT INTO sync_operations (
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
       base_version, payload_json, owner_user_id, status, attempt_count, next_attempt_at,
       created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, NULL, ?, ?)`,
-    createLocalId("ledger-operation"),
+    operationId,
     expense.journeyId,
     entityType,
     entityId,
@@ -1572,6 +2099,27 @@ async function enqueueEvidenceOperation(
     now,
     now,
   );
+  if (entityType === "ledger_expense" && operationType === "LEDGER_APPLY_VALUATION") {
+    const {
+      baseRevision: _baseRevision,
+      baseExpense: _baseExpense,
+      ...valuation
+    } = payload as Record<string, unknown>;
+    await recordExpenseCommand(
+      database,
+      userId,
+      operationId,
+      await requireExpense(database, expense.id, userId),
+      {
+        type: "APPLY_VALUATION",
+        valuation: valuation as Extract<
+          ExpenseTypedIntent,
+          { type: "APPLY_VALUATION" }
+        >["valuation"],
+      },
+    );
+  }
+  return operationId;
 }
 
 async function insertAuditEvent(
@@ -1609,13 +2157,14 @@ async function enqueueOperation(
   dependencyOperationId?: string,
 ) {
   const now = new Date().toISOString();
+  const operationId = createLocalId("ledger-operation");
   await database.runAsync(
     `INSERT INTO sync_operations (
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,
       base_version, payload_json, owner_user_id, status, attempt_count, next_attempt_at,
       dependency_operation_id, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    createLocalId("ledger-operation"),
+    operationId,
     expense.journeyId,
     "ledger_expense",
     expense.id,
@@ -1637,6 +2186,19 @@ async function enqueueOperation(
     now,
     now,
   );
+  const projection = snapshot ?? (await requireExpense(database, expense.id, userId));
+  const intent: ExpenseTypedIntent =
+    operationType === restoreOperation
+      ? {
+          type: "RESTORE",
+          businessStatus: projection.status === "DELETED" ? "DRAFT" : projection.status,
+        }
+      : localExpenseIntent(
+          projection,
+          operationType === createOperation ? undefined : baseSnapshot,
+        );
+  await recordExpenseCommand(database, userId, operationId, projection, intent);
+  return operationId;
 }
 
 async function readHistoricalRecoveryOperations(
@@ -1707,8 +2269,9 @@ async function findCausalCreate(
     id: string;
     status: string;
     attemptCount: number;
+    lastAttemptAt: string | null;
   }>(
-    `SELECT id, status, attempt_count AS attemptCount FROM sync_operations
+    `SELECT id, status, attempt_count AS attemptCount, last_attempt_at AS lastAttemptAt FROM sync_operations
      WHERE owner_user_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
        AND operation_type = ? AND status <> 'COMPLETED'
      ORDER BY created_at, rowid LIMIT 1`,
@@ -1734,6 +2297,13 @@ async function coalesceIntoCreate(
     operationId,
     userId,
   );
+  await recordExpenseCommand(
+    database,
+    userId,
+    operationId,
+    expense,
+    localExpenseIntent(expense),
+  );
   await database.runAsync(
     `UPDATE sync_operations SET status = 'COMPLETED', updated_at = ?
      WHERE owner_user_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
@@ -1756,7 +2326,7 @@ async function enqueueOrCompactDependentUpdate(
   const existing = await database.getFirstAsync<{ id: string }>(
     `SELECT id FROM sync_operations
      WHERE owner_user_id = ? AND entity_type = 'ledger_expense' AND entity_id = ?
-       AND operation_type = ? AND dependency_operation_id = ? AND attempt_count = 0
+       AND operation_type = ? AND dependency_operation_id = ? AND attempt_count = 0 AND last_attempt_at IS NULL
        AND status <> 'PROCESSING' AND status <> 'COMPLETED'
      ORDER BY created_at, rowid LIMIT 1`,
     userId,
@@ -1765,7 +2335,7 @@ async function enqueueOrCompactDependentUpdate(
     dependencyOperationId,
   );
   if (!existing) {
-    await enqueueOperation(
+    return enqueueOperation(
       database,
       expense,
       updateOperation,
@@ -1776,7 +2346,6 @@ async function enqueueOrCompactDependentUpdate(
       baseExpense,
       dependencyOperationId,
     );
-    return;
   }
   await database.runAsync(
     `UPDATE sync_operations SET payload_json = ?, base_version = ?,
@@ -1790,6 +2359,14 @@ async function enqueueOrCompactDependentUpdate(
     existing.id,
     userId,
   );
+  await recordExpenseCommand(
+    database,
+    userId,
+    existing.id,
+    expense,
+    localExpenseIntent(expense, baseExpense),
+  );
+  return existing.id;
 }
 
 function operationPayload(
@@ -2003,4 +2580,19 @@ async function setExpenseSyncStatus(
     id,
     userId,
   );
+}
+
+function noOpExpenseResult(
+  expenseId: string,
+  commandType: ExpenseOperationResult["commandType"],
+): ExpenseOperationResult {
+  return {
+    expenseId,
+    commandType,
+    operationId: null,
+    intentSequence: null,
+    changed: false,
+    state: "LOCAL_SAVED",
+    disposition: null,
+  };
 }

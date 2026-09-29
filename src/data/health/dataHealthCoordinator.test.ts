@@ -1042,7 +1042,7 @@ describe("Data Health Phase C1 safe queue repair", () => {
 });
 
 describe("Data Health stale Expense conflict reconciliation", () => {
-  it("reconciles resolved and OPEN canonically equal conflicts once", async () => {
+  it("reconciles proven resolved history but preserves server OPEN equivalent conflicts", async () => {
     const fixture = createFixture();
     fixture.sqlite.exec(`
       INSERT INTO ledger_settlements (
@@ -1133,12 +1133,14 @@ describe("Data Health stale Expense conflict reconciliation", () => {
 
     const report = await fixture.coordinator.repair("MANUAL");
 
-    expect(report.findings.filter((item) => item.category === "CONFLICT")).toEqual([]);
+    expect(
+      report.findings.some((item) => item.targetId === "open-conflict-operation"),
+    ).toBe(true);
     expect(operationState(fixture.sqlite, "resolved-conflict-operation").status).toBe(
       "COMPLETED",
     );
     expect(operationState(fixture.sqlite, "open-conflict-operation").status).toBe(
-      "COMPLETED",
+      "CONFLICT",
     );
     expect(
       fixture.sqlite
@@ -1146,20 +1148,16 @@ describe("Data Health stale Expense conflict reconciliation", () => {
           "SELECT server_revision, sync_status FROM ledger_expenses WHERE id = 'open-expense'",
         )
         .get(),
-    ).toEqual({ server_revision: 2, sync_status: "SYNCED" });
+    ).toEqual({ server_revision: 1, sync_status: "CONFLICT" });
     expect(
       fixture.sqlite
         .prepare(
           "SELECT status FROM ledger_expense_conflicts WHERE conflict_id = 'open-conflict'",
         )
         .get(),
-    ).toEqual({ status: "RESOLVED" });
-    expect(rows(fixture.sqlite, "ledger_deferred_server_changes")).toEqual([]);
+    ).toEqual({ status: "OPEN" });
+    expect(rows(fixture.sqlite, "ledger_deferred_server_changes")).toHaveLength(1);
     expect(repairEvents(fixture.sqlite)).toEqual([
-      expect.objectContaining({
-        action: "RECONCILE_STALE_CONFLICT_V1",
-        status: "VERIFIED",
-      }),
       expect.objectContaining({
         action: "RECONCILE_STALE_CONFLICT_V1",
         status: "VERIFIED",
@@ -1172,7 +1170,7 @@ describe("Data Health stale Expense conflict reconciliation", () => {
     const afterFirst = queueFingerprint(fixture.sqlite);
     await fixture.coordinator.repair("MANUAL");
     expect(queueFingerprint(fixture.sqlite)).toBe(afterFirst);
-    expect(repairEvents(fixture.sqlite)).toHaveLength(2);
+    expect(repairEvents(fixture.sqlite)).toHaveLength(1);
   });
 
   it("preserves genuine or insufficiently evidenced conflicts", async () => {

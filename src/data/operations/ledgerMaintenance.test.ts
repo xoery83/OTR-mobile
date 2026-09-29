@@ -71,7 +71,7 @@ describe("Ledger operational maintenance", () => {
     expect(statements[0]).toContain("status = 'COMPLETED'");
     expect(statements[0]).toContain("next_attempt_at = NULL");
     expect(statements.filter((sql) => sql.startsWith("DELETE"))).toEqual([
-      "DELETE FROM sync_operations WHERE status = 'COMPLETED' AND updated_at < ?",
+      expect.stringContaining("AND NOT EXISTS (SELECT 1 FROM ledger_expense_commands"),
       "DELETE FROM ledger_asset_operations WHERE status = 'COMPLETED' AND updated_at < ?",
     ]);
   });

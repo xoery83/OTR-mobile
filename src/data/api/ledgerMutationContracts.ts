@@ -195,13 +195,27 @@ export const lifecycleLedgerExpenseRequestSchema = z.object({
   businessStatus: z.enum(["DRAFT", "ACCEPTED", "RATE_REQUIRED"]).optional(),
 });
 
-export const ledgerExpenseMutationResponseSchema = z.object({
-  entity: ledgerExpenseSchema,
-  serverId: z.uuid(),
-  revision: z.number().int().positive(),
-  updatedAt: z.string().refine((value) => !Number.isNaN(Date.parse(value))),
-  idempotentReplay: z.boolean(),
-});
+export const ledgerExpenseMutationResponseSchema = z
+  .object({
+    receipt: z.lazy(() => expenseOperationReceiptSchema).optional(),
+    entity: ledgerExpenseSchema,
+    serverId: z.uuid(),
+    revision: z.number().int().positive(),
+    updatedAt: z.string().refine((value) => !Number.isNaN(Date.parse(value))),
+    idempotentReplay: z.boolean(),
+  })
+  .superRefine((value, context) => {
+    if (
+      value.receipt &&
+      (value.receipt.expenseId !== value.entity.id ||
+        value.receipt.canonicalRevision !== value.revision ||
+        value.entity.revision !== value.revision)
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Receipt must match canonical Expense and revision.",
+      });
+  });
 
 export const createLedgerPaymentRecordRequestSchema = z
   .object({
@@ -294,4 +308,298 @@ export type CreateLedgerPaymentRecordRequest = z.infer<
 >;
 export type ApplyLedgerValuationRequest = z.infer<
   typeof applyLedgerValuationRequestSchema
+>;
+
+// Additive v2 contracts. Legacy routes remain strict aggregate CAS until Phase 3.
+const nonemptyPatchGroup = <T extends z.ZodRawShape>(shape: T) =>
+  z
+    .strictObject(shape)
+    .refine((value) => Object.values(value).some((v) => v !== undefined), {
+      message: "Patch group must contain a requested field.",
+    });
+export const expenseUserPatchSchema = z.strictObject({
+  descriptive: nonemptyPatchGroup({
+    title: expenseFields.title.optional(),
+    description: expenseFields.description.optional(),
+    category: expenseFields.category.optional(),
+    occurredAt: expenseFields.occurredAt.optional(),
+  }).optional(),
+  financial: nonemptyPatchGroup({
+    original: moneySchema.optional(),
+    economicDate: economicDateSchema.nullable().optional(),
+    payerMemberId: z.uuid().optional(),
+    settlementParticipation: z.enum(["INCLUDED", "EXCLUDED"]).optional(),
+  }).optional(),
+  participantSplit: nonemptyPatchGroup({
+    participants: z.array(participantSchema).min(1).max(200).optional(),
+    splits: z
+      .array(
+        splitSchema
+          .omit({ settlementMinor: true, roundingAdjustmentMinor: true })
+          .strict(),
+      )
+      .min(1)
+      .max(200)
+      .optional(),
+  }).optional(),
+});
+const { baseRevision: _valuationBaseRevision, ...valuationIntentFields } =
+  applyLedgerValuationRequestSchema.shape;
+const valuationIntentSchema = z
+  .strictObject({
+    ...valuationIntentFields,
+    rateAcceptance: z
+      .strictObject({
+        revision: z.number().int().positive(),
+        serverRevision: z.number().int().nonnegative(),
+        original: moneySchema,
+        economicDate: economicDateSchema,
+        settlement: moneySchema,
+        decimalRate: z.string().regex(/^(?=.*[1-9])\d+(?:\.\d+)?$/),
+        referenceDate: economicDateSchema,
+      })
+      .optional(),
+  })
+  .superRefine((value, context) => {
+    const parsed = applyLedgerValuationRequestSchema.safeParse({
+      ...value,
+      baseRevision: 1,
+    });
+    if (!parsed.success)
+      for (const issue of parsed.error.issues)
+        context.addIssue({ code: "custom", path: issue.path, message: issue.message });
+  });
+export const expenseTypedIntentSchema = z.discriminatedUnion("type", [
+  z.strictObject({
+    type: z.literal("CREATE"),
+    expense: ledgerStage4EditableExpenseSchema,
+  }),
+  z.strictObject({ type: z.literal("UPDATE"), patch: expenseUserPatchSchema }),
+  z.strictObject({
+    type: z.literal("APPLY_VALUATION"),
+    valuation: valuationIntentSchema,
+  }),
+  z.strictObject({ type: z.literal("DELETE") }),
+  z.strictObject({
+    type: z.literal("RESTORE"),
+    businessStatus: expenseFields.businessStatus,
+  }),
+]);
+export const expenseCommandTypeSchema = z.enum([
+  "CREATE",
+  "UPDATE",
+  "APPLY_VALUATION",
+  "DELETE",
+  "RESTORE",
+]);
+export const expenseOperationReceiptSchema = z.strictObject({
+  operationId: localIdSchema,
+  commandId: localIdSchema,
+  idempotencyKey: localIdSchema,
+  expenseId: z.uuid(),
+  commandType: expenseCommandTypeSchema,
+  intentSequence: z.number().int().positive(),
+  disposition: z.enum(["APPLIED", "KEPT_SERVER", "SUPERSEDED"]),
+  canonicalRevision: z.number().int().positive(),
+});
+export const expenseIntentEnvelopeSchema = z
+  .strictObject({
+    commandId: localIdSchema,
+    intentVersion: z.literal(2),
+    intentSequence: z.number().int().positive(),
+    predecessorOperationId: localIdSchema.nullable(),
+    observedServerRevision: z.number().int().nonnegative(),
+    observedBase: ledgerExpenseSchema.nullable(),
+    patchOrIntent: expenseTypedIntentSchema,
+    causalBaseReceipt: expenseOperationReceiptSchema.nullable(),
+    boundExecutionRevision: z.number().int().nonnegative().nullable(),
+    idempotencyKey: localIdSchema,
+  })
+  .superRefine((value, context) => {
+    if (
+      value.observedBase &&
+      value.observedBase.revision !== value.observedServerRevision
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Observed revision must match canonical base.",
+      });
+  });
+const operationResultFields = {
+  expenseId: localIdSchema,
+  commandType: expenseCommandTypeSchema,
+  disposition: z.enum(["APPLIED", "KEPT_SERVER", "SUPERSEDED"]).nullable(),
+  error: z
+    .strictObject({ code: z.string().min(1).max(100), message: z.string().max(300) })
+    .optional(),
+  blockingOperationId: localIdSchema.optional(),
+};
+export const expenseOperationResultSchema = z.discriminatedUnion("state", [
+  z.strictObject({
+    ...operationResultFields,
+    state: z.literal("LOCAL_SAVED"),
+    operationId: z.null(),
+    intentSequence: z.null(),
+    changed: z.literal(false),
+    disposition: z.null(),
+  }),
+  z.strictObject({
+    ...operationResultFields,
+    state: z.enum([
+      "PENDING_SYNC",
+      "CONFLICT_REQUIRES_ACTION",
+      "RETRYABLE_FAILURE",
+      "TERMINAL_FAILURE",
+    ]),
+    operationId: localIdSchema,
+    intentSequence: z.number().int().positive(),
+    changed: z.literal(true),
+    disposition: z.null(),
+  }),
+  z.strictObject({
+    ...operationResultFields,
+    state: z.literal("SERVER_CONFIRMED"),
+    operationId: localIdSchema,
+    intentSequence: z.number().int().positive(),
+    changed: z.literal(true),
+    disposition: expenseOperationReceiptSchema.shape.disposition,
+    confirmedServerRevision: z.number().int().positive(),
+  }),
+]);
+export const expenseConflictChainResolutionRequestSchema = z
+  .strictObject({
+    contractVersion: z.literal(2),
+    commandId: localIdSchema,
+    intentType: expenseCommandTypeSchema,
+    submittedIntent: expenseTypedIntentSchema,
+    observedBaseRevision: z.number().int().nonnegative(),
+    currentServerRevision: z.number().int().positive(),
+    coveredConflictIds: z
+      .array(z.uuid())
+      .min(1)
+      .max(200)
+      .refine((ids) => new Set(ids).size === ids.length),
+    expectedChainDigest: z.string().regex(/^[a-f0-9]{64}$/),
+    choice: z.enum([
+      "KEEP_SERVER",
+      "APPLY_PATCH",
+      "APPLY_VALUATION",
+      "CONFIRM_DELETE",
+      "CONFIRM_RESTORE",
+      "ACCEPT_EQUIVALENT",
+    ]),
+    reason: z.string().trim().min(1).max(2000),
+  })
+  .superRefine((value, context) => {
+    const expected = {
+      APPLY_PATCH: "UPDATE",
+      APPLY_VALUATION: "APPLY_VALUATION",
+      CONFIRM_DELETE: "DELETE",
+      CONFIRM_RESTORE: "RESTORE",
+      ACCEPT_EQUIVALENT: "UPDATE",
+    };
+    if (
+      value.intentType !== value.submittedIntent.type ||
+      (value.choice !== "KEEP_SERVER" && expected[value.choice] !== value.intentType)
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Resolution must preserve typed command semantics.",
+      });
+  });
+export const expenseCommandRequestSchema = z.strictObject({
+  envelope: expenseIntentEnvelopeSchema,
+  auditReason: z.string().trim().min(1).max(2000).nullable(),
+});
+export const expenseTypedConflictResponseSchema = z.object({
+  error: z.object({
+    code: z.literal("REVISION_CONFLICT"),
+    conflictId: z.uuid(),
+    expenseId: z.uuid(),
+    commandId: localIdSchema,
+    commandType: expenseCommandTypeSchema,
+    submittedIntent: expenseTypedIntentSchema,
+    envelope: expenseIntentEnvelopeSchema,
+    baseRevision: z.number().int().nonnegative(),
+    currentRevision: z.number().int().positive(),
+    current: ledgerExpenseSchema,
+    changedGroups: z.array(ledgerConflictFieldGroupSchema),
+  }),
+});
+export type ExpenseTypedConflictResponse = z.infer<
+  typeof expenseTypedConflictResponseSchema
+>;
+export type ExpenseCommandRequest = z.infer<typeof expenseCommandRequestSchema>;
+export const expenseConflictChainResolutionResponseSchema = z
+  .strictObject({
+    resolutionReceipt: expenseOperationReceiptSchema,
+    canonical: ledgerExpenseSchema,
+    openConflictIds: z.array(z.uuid()),
+    conflictOutcomes: z.array(
+      z.strictObject({
+        conflictId: z.uuid(),
+        lifecycle: z.enum(["OPEN", "RESOLVED", "SUPERSEDED"]),
+        reason: z.string().min(1).max(2000),
+        supersededByCommandId: localIdSchema.nullable(),
+        operationReceipt: expenseOperationReceiptSchema.nullable().optional(),
+      }),
+    ),
+  })
+  .superRefine((value, context) => {
+    if (
+      value.resolutionReceipt.expenseId !== value.canonical.id ||
+      value.resolutionReceipt.canonicalRevision !== value.canonical.revision
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Resolution receipt must match canonical Expense.",
+      });
+    const open = value.conflictOutcomes
+      .filter((outcome) => outcome.lifecycle === "OPEN")
+      .map((outcome) => outcome.conflictId);
+    if (
+      new Set(value.conflictOutcomes.map((outcome) => outcome.conflictId)).size !==
+        value.conflictOutcomes.length ||
+      new Set(value.openConflictIds).size !== value.openConflictIds.length ||
+      open.length !== value.openConflictIds.length ||
+      open.some((id) => !value.openConflictIds.includes(id))
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Open IDs must match the immutable conflict outcomes.",
+      });
+  });
+export type ExpenseOperationResult = z.infer<typeof expenseOperationResultSchema>;
+export type ExpenseOperationReceipt = z.infer<typeof expenseOperationReceiptSchema>;
+export type ExpenseIntentEnvelope = z.infer<typeof expenseIntentEnvelopeSchema>;
+export type ExpenseConflictChainResolutionRequest = z.infer<
+  typeof expenseConflictChainResolutionRequestSchema
+>;
+
+export const expenseConflictChainResponseSchema = z.strictObject({
+  contractVersion: z.literal(2),
+  canonical: ledgerExpenseSchema,
+  chainDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  conflicts: z.array(
+    z.strictObject({
+      conflictId: z.uuid(),
+      commandId: localIdSchema,
+      idempotencyKey: localIdSchema,
+      commandType: expenseCommandTypeSchema,
+      submittedIntent: expenseTypedIntentSchema.nullable(),
+      operationReceipt: expenseOperationReceiptSchema.nullable().optional(),
+      observedBaseRevision: z.number().int().nonnegative(),
+      currentServerRevision: z.number().int().positive(),
+      changedGroups: z.array(ledgerConflictFieldGroupSchema),
+      lifecycle: z.enum(["OPEN", "RESOLVED", "SUPERSEDED"]),
+      reason: z.string().nullable(),
+    }),
+  ),
+});
+
+export type ExpenseConflictChainResponse = z.infer<
+  typeof expenseConflictChainResponseSchema
+>;
+export type ExpenseConflictChainResolutionResponse = z.infer<
+  typeof expenseConflictChainResolutionResponseSchema
 >;

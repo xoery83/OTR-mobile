@@ -231,3 +231,14 @@ Future photo architecture should support:
 - Delayed original upload with Wi-Fi-only, charging-only, retry, resume, deduplication, and possible nearby transfer.
 
 Initialization must not block this path, but should not implement it.
+
+## Approved Expense consistency closure
+
+Owner approved the implementation checkpoint under `docs/ledger/`. Ordinary
+Expense Detail, Review/Sync Issues and Settlement blockers will open one conflict
+resolution flow, including locally deleted Expenses. This is a safety net only when
+a human business choice is required. Routine reconciliation, automatic FX refresh,
+compatible merge, retries and ordinary confirmation stay silent; provenance remains
+under Rate details. Explicit choices show their actual waiting, confirmed or failed
+result in business language. No generic Retry/Force Sync for 409. Delivery is gated
+by ADR 0056; later FX/recovery phases remain separately gated.

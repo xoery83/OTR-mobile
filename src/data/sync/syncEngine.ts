@@ -1,3 +1,4 @@
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import type { AuthState } from "@/domain/auth/authState";
 import { ApiClientError } from "@/data/api/client";
 
@@ -72,6 +73,12 @@ const validationCodes = new Set([
 ]);
 const permissionCodes = new Set(["TRIP_READ_FORBIDDEN", "TRIP_WRITE_FORBIDDEN"]);
 const conflictCodes = new Set([
+  "CONFLICT_CHAIN_DRIFT",
+  "UNVERIFIED_OBSERVED_BASE",
+  "EXPENSE_DELETED",
+  "TYPED_RESOLUTION_REQUIRED",
+  "INVALID_RESTORE",
+  "INVALID_CAUSAL_RECEIPT",
   "REVISION_CONFLICT",
   "IDEMPOTENCY_CONFLICT",
   "PERSONAL_PAYMENT_IDENTITY_CONFLICT",
@@ -134,16 +141,21 @@ export function createSyncEngine(
         return { status: "paused_auth", processedCount: 0 };
       }
 
+      const generation = getAccountGeneration();
       await repository.recoverInterrupted?.();
 
       const seen = new Set<string>();
       let processedCount = 0;
       while (true) {
+        if (generation !== getAccountGeneration())
+          return { status: "paused_auth", processedCount };
         const operations = (await repository.listPending()).filter(
           (operation) => shouldProcess(operation) && !seen.has(operation.id),
         );
         if (operations.length === 0) break;
         for (const operation of operations) {
+          if (generation !== getAccountGeneration())
+            return { status: "paused_auth", processedCount };
           seen.add(operation.id);
           if (repository.claim) {
             if (!(await repository.claim(operation.id))) continue;
@@ -154,8 +166,14 @@ export function createSyncEngine(
 
           try {
             await worker.push(operation);
+            if (generation !== getAccountGeneration())
+              return { status: "paused_auth", processedCount };
             await repository.markCompleted(operation.id);
           } catch (error) {
+            if (generation !== getAccountGeneration()) {
+              await repository.markPending?.(operation.id);
+              return { status: "paused_auth", processedCount };
+            }
             const normalized = error instanceof Error ? error : new Error("Sync failed.");
             const failure = syncFailureClass(normalized);
             if (normalized instanceof SyncConflictError) {

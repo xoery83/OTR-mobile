@@ -21,3 +21,9 @@ offline durability, Personal Payment behavior, and canonical Settlement are unch
 Historical generic `FAILED` operations are not reclassified by migration. Health
 persistence/retention, scoped scans/scheduling, automatic repair, and `guard 915` remain
 the separately gated Phases B–E.
+
+## Expense consistency extension (ADR 0056)
+
+Same-Expense commands now use persisted sequence and predecessor metadata.
+Causal wake-up requires an APPLIED receipt; queue COMPLETED alone is insufficient.
+Any recorded network attempt prevents payload/key coalescing.

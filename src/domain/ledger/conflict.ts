@@ -1,3 +1,4 @@
+import { utcInstant } from "./expenseIntent";
 import type {
   ExpenseBusinessStatus,
   ExpenseParticipant,
@@ -60,8 +61,8 @@ export function changedExpenseGroups(
   }
   if (
     !same(
-      [left.title, left.description, left.category, left.occurredAt],
-      [right.title, right.description, right.category, right.occurredAt],
+      [left.title, left.description, left.category, utcInstant(left.occurredAt)],
+      [right.title, right.description, right.category, utcInstant(right.occurredAt)],
     )
   ) {
     groups.push("DESCRIPTIVE");

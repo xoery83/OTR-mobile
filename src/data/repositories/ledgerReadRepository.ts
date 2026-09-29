@@ -1,3 +1,9 @@
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import {
+  storeExpenseCanonical,
+  readExpenseCanonical,
+  storeExpenseConflictMetadata,
+} from "./ledgerExpenseConsistency";
 import type * as SQLite from "expo-sqlite";
 
 import type {
@@ -5,10 +11,6 @@ import type {
   LedgerChangesResponse,
   MyLedgerResponse,
 } from "@/data/api/ledgerReadContracts";
-import {
-  ledgerExpenseUserOwnedFields,
-  sameLedgerExpenseUserOwnedFields,
-} from "@/data/health/staleExpenseConflict";
 import { createLedgerExpenseRepository } from "./ledgerExpenseRepository";
 import { applyFinalizedSettlement } from "./ledgerSettlementRepository";
 import { applyReviewProjection } from "./ledgerReviewRepository";
@@ -41,12 +43,20 @@ export function createLedgerReadRepository(
 ) {
   return {
     async applyBootstrap(response: LedgerBootstrapResponse) {
+      const generation = getAccountGeneration();
       const userId = await getActiveUserId();
       await database.withTransactionAsync(async () => {
         await applyJourney(database, response, userId);
         for (const expense of response.expenses) {
           await applyBootstrapExpense(database, expense, userId);
         }
+        for (const chain of response.expenseConflictChains ?? [])
+          await storeExpenseConflictMetadata(
+            database,
+            userId,
+            response.journey.id,
+            chain,
+          );
         for (const quote of response.rateQuotes) await applyRateQuote(database, quote);
         for (const receipt of response.receipts ?? [])
           await applyReceipt(database, response.journey.id, receipt);
@@ -89,12 +99,17 @@ export function createLedgerReadRepository(
           response.serverTime,
           userId,
         );
+        if (generation !== getAccountGeneration() || userId !== (await getActiveUserId()))
+          throw new Error("Account changed during Ledger pull.");
       });
     },
 
     async applyChanges(journeyId: string, response: LedgerChangesResponse) {
+      const generation = getAccountGeneration();
       const userId = await getActiveUserId();
       await database.withTransactionAsync(async () => {
+        for (const chain of response.expenseConflictChains ?? [])
+          await storeExpenseConflictMetadata(database, userId, journeyId, chain);
         if (response.reviewFindings)
           await applyReviewProjection(
             database,
@@ -177,6 +192,8 @@ export function createLedgerReadRepository(
           response.serverTime,
           userId,
         );
+        if (generation !== getAccountGeneration() || userId !== (await getActiveUserId()))
+          throw new Error("Account changed during Ledger pull.");
       });
     },
 
@@ -565,6 +582,47 @@ async function applyExpenseChange(
   change: ServerChange,
   userId: string,
 ) {
+  if (change.aggregate && "creatorMemberId" in change.aggregate) {
+    const local = await database.getFirstAsync<{ id: string }>(
+      `SELECT id FROM ledger_expenses WHERE journey_id = ? AND (id = ? OR server_id = ?)`,
+      journeyId,
+      change.entityId,
+      change.entityId,
+    );
+    if (
+      local &&
+      (await database.getFirstAsync(
+        `SELECT 1 FROM ledger_expense_commands WHERE account_id = ? AND expense_id = ? LIMIT 1`,
+        userId,
+        local.id,
+      ))
+    ) {
+      await createLedgerExpenseRepository(
+        database,
+        async () => userId,
+      ).reconcileCanonicalExpenseInTransaction(local.id, change.aggregate);
+      return;
+    }
+    const localRevision = local
+      ? await database.getFirstAsync<{ serverRevision: number }>(
+          `SELECT server_revision AS serverRevision FROM ledger_expenses WHERE id = ?`,
+          local.id,
+        )
+      : null;
+    if (localRevision && localRevision.serverRevision > change.aggregate.revision) return;
+    const known = await readExpenseCanonical(
+      database,
+      userId,
+      local?.id ?? change.entityId,
+    );
+    if (known && known.revision > change.aggregate.revision) return;
+    await storeExpenseCanonical(
+      database,
+      userId,
+      local?.id ?? change.entityId,
+      change.aggregate,
+    );
+  }
   const existing = await database.getFirstAsync<{ syncStatus: string }>(
     `SELECT sync_status AS syncStatus
      FROM ledger_expenses
@@ -574,40 +632,15 @@ async function applyExpenseChange(
     change.entityId,
   );
   if (existing && pendingStatuses.has(existing.syncStatus)) {
-    if (
-      change.aggregate &&
-      "creatorMemberId" in change.aggregate &&
-      (await reconcileEqualFailedExpenseMirror(
-        database,
-        userId,
-        journeyId,
-        change.aggregate,
-      ))
-    )
-      return;
     await deferChange(database, journeyId, change);
-    return;
-  }
-  if (change.isTombstone) {
-    await database.runAsync(
-      `UPDATE ledger_expenses
-       SET business_status = ?, deleted_at = COALESCE(deleted_at, ?),
-           server_revision = ?, sync_status = ?, updated_at = ?
-       WHERE journey_id = ? AND (id = ? OR server_id = ?)`,
-      "DELETED",
-      new Date().toISOString(),
-      change.revision,
-      "SYNCED",
-      new Date().toISOString(),
-      journeyId,
-      change.entityId,
-      change.entityId,
-    );
     return;
   }
   if (change.aggregate && "creatorMemberId" in change.aggregate) {
     await applyExpense(database, change.aggregate);
+    return;
   }
+  // A feed event alone is not a canonical aggregate revision, including deletes.
+  if (change.isTombstone) await deferChange(database, journeyId, change);
 }
 
 async function applyHouseholdChange(
@@ -674,6 +707,36 @@ async function applyBootstrapExpense(
   expense: ServerExpense,
   userId: string,
 ) {
+  const local = await database.getFirstAsync<{ id: string }>(
+    `SELECT id FROM ledger_expenses WHERE journey_id = ? AND (id = ? OR server_id = ?)`,
+    expense.journeyId,
+    expense.id,
+    expense.id,
+  );
+  if (
+    local &&
+    (await database.getFirstAsync(
+      `SELECT 1 FROM ledger_expense_commands WHERE account_id = ? AND expense_id = ? LIMIT 1`,
+      userId,
+      local.id,
+    ))
+  ) {
+    await createLedgerExpenseRepository(
+      database,
+      async () => userId,
+    ).reconcileCanonicalExpenseInTransaction(local.id, expense);
+    return;
+  }
+  const localRevision = local
+    ? await database.getFirstAsync<{ serverRevision: number }>(
+        `SELECT server_revision AS serverRevision FROM ledger_expenses WHERE id = ?`,
+        local.id,
+      )
+    : null;
+  if (localRevision && localRevision.serverRevision > expense.revision) return;
+  const known = await readExpenseCanonical(database, userId, local?.id ?? expense.id);
+  if (known && known.revision > expense.revision) return;
+  await storeExpenseCanonical(database, userId, local?.id ?? expense.id, expense);
   const existing = await database.getFirstAsync<{ syncStatus: string }>(
     `SELECT sync_status AS syncStatus
      FROM ledger_expenses
@@ -683,15 +746,6 @@ async function applyBootstrapExpense(
     expense.id,
   );
   if (existing && pendingStatuses.has(existing.syncStatus)) {
-    if (
-      await reconcileEqualFailedExpenseMirror(
-        database,
-        userId,
-        expense.journeyId,
-        expense,
-      )
-    )
-      return;
     await deferChange(database, expense.journeyId, {
       entityType: "EXPENSE",
       entityId: expense.id,
@@ -702,116 +756,6 @@ async function applyBootstrapExpense(
     return;
   }
   await applyExpense(database, expense);
-}
-
-async function reconcileEqualFailedExpenseMirror(
-  database: LedgerReadDatabase,
-  userId: string,
-  journeyId: string,
-  canonical: ServerExpense,
-) {
-  const local = await database.getFirstAsync<{
-    id: string;
-    serverId: string | null;
-    syncStatus: string;
-    localOwnerUserId: string | null;
-  }>(
-    `SELECT id, server_id AS serverId, sync_status AS syncStatus,
-       local_owner_user_id AS localOwnerUserId
-     FROM ledger_expenses
-     WHERE journey_id = ? AND (id = ? OR server_id = ?)`,
-    journeyId,
-    canonical.id,
-    canonical.id,
-  );
-  if (
-    !local ||
-    local.syncStatus !== "FAILED" ||
-    local.serverId !== canonical.id ||
-    local.localOwnerUserId !== userId
-  )
-    return false;
-  if (
-    !(await database.getFirstAsync(
-      `SELECT 1 FROM ledger_actor_context WHERE user_id = ? AND journey_id = ?`,
-      userId,
-      journeyId,
-    ))
-  )
-    return false;
-  const operations = await database.getAllAsync<{
-    id: string;
-    operationType: string;
-    status: string;
-    payloadJson: string;
-  }>(
-    `SELECT id, operation_type AS operationType, status,
-       payload_json AS payloadJson
-     FROM sync_operations
-     WHERE owner_user_id = ? AND trip_id = ?
-       AND entity_type = 'ledger_expense' AND entity_id = ?
-       AND status <> 'COMPLETED'`,
-    userId,
-    journeyId,
-    local.id,
-  );
-  if (
-    !operations.length ||
-    operations.some(
-      (operation) =>
-        operation.status !== "FAILED" ||
-        operation.operationType !== "LEDGER_UPDATE_EXPENSE",
-    )
-  )
-    return false;
-  const expense = await createLedgerExpenseRepository(
-    database,
-    async () => userId,
-  ).getExpense(local.id);
-  if (!expense) return false;
-  const localIntent = ledgerExpenseUserOwnedFields(expense);
-  if (!sameLedgerExpenseUserOwnedFields(localIntent, canonical)) return false;
-  for (const operation of operations) {
-    const payload = parseObject(operation.payloadJson);
-    const submitted = payload ? parseObjectValue(payload.expense) : null;
-    if (!sameLedgerExpenseUserOwnedFields(localIntent, submitted)) return false;
-  }
-
-  await applyExpense(database, canonical);
-  await database.runAsync(
-    `UPDATE sync_operations SET status = 'COMPLETED', next_attempt_at = NULL,
-       claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
-     WHERE owner_user_id = ? AND trip_id = ? AND entity_type = 'ledger_expense'
-       AND entity_id = ? AND status = 'FAILED'
-       AND operation_type = 'LEDGER_UPDATE_EXPENSE'`,
-    new Date().toISOString(),
-    userId,
-    journeyId,
-    local.id,
-  );
-  await database.runAsync(
-    `DELETE FROM ledger_deferred_server_changes
-     WHERE journey_id = ? AND entity_type = 'EXPENSE' AND entity_id = ?
-       AND revision <= ?`,
-    journeyId,
-    canonical.id,
-    canonical.revision,
-  );
-  return true;
-}
-
-function parseObject(value: string) {
-  try {
-    return parseObjectValue(JSON.parse(value));
-  } catch {
-    return null;
-  }
-}
-
-function parseObjectValue(value: unknown): Record<string, unknown> | null {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
 }
 
 async function applyExpense(database: LedgerReadDatabase, expense: ServerExpense) {
@@ -1126,12 +1070,9 @@ async function drainDeferredExpenseChanges(
     );
     if (local && pendingStatuses.has(local.syncStatus)) continue;
     try {
-      await applyExpenseChange(
-        database,
-        journeyId,
-        JSON.parse(row.payloadJson) as ServerChange,
-        userId,
-      );
+      const change = JSON.parse(row.payloadJson) as ServerChange;
+      if (!change.aggregate || !("creatorMemberId" in change.aggregate)) continue;
+      await applyExpenseChange(database, journeyId, change, userId);
       await database.runAsync(
         `DELETE FROM ledger_deferred_server_changes
          WHERE journey_id = ? AND entity_type = 'EXPENSE' AND entity_id = ? AND revision = ?`,

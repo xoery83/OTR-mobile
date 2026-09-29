@@ -170,6 +170,50 @@ describe("Expense Edit attachment transaction", () => {
     ).toHaveLength(1);
   });
 
+  it("no-op and attachment-only Save preserve Expense revision/audit and create zero UPDATEs", async () => {
+    const { sqlite, expenses, receipts, expense, edit } = await fixture();
+    const before = sqlite
+      .prepare("SELECT * FROM ledger_expenses WHERE id = ?")
+      .get(expense.id);
+    const audits = sqlite
+      .prepare("SELECT * FROM ledger_expense_audit_events WHERE expense_id = ?")
+      .all(expense.id);
+    const noOp = await expenses.updateExpense(
+      expense.id,
+      { ...command("original"), occurredAt: "2026-09-24T22:00:00+12:00" },
+      "save",
+    );
+    expect(noOp.revision).toBe(expense.revision);
+    const attachmentOnly = await expenses.updateExpense(
+      expense.id,
+      command("original"),
+      "attachments",
+      edit,
+    );
+    expect(attachmentOnly.revision).toBe(expense.revision);
+    expect(
+      sqlite.prepare("SELECT * FROM ledger_expenses WHERE id = ?").get(expense.id),
+    ).toEqual(before);
+    expect(
+      sqlite
+        .prepare("SELECT * FROM ledger_expense_audit_events WHERE expense_id = ?")
+        .all(expense.id),
+    ).toEqual(audits);
+    expect(
+      sqlite
+        .prepare(
+          "SELECT id FROM sync_operations WHERE entity_id = ? AND operation_type = 'LEDGER_UPDATE_EXPENSE'",
+        )
+        .all(expense.id),
+    ).toEqual([]);
+    expect((await receipts.listReceipts(journeyId)).map((row) => row.id)).toContain(
+      "replacement",
+    );
+    await expect(
+      expenses.updateExpense(expense.id, command("original"), "attachments", edit),
+    ).rejects.toThrow("Attachments changed");
+  });
+
   it("rolls back tombstones, additions and queues if Expense update fails", async () => {
     const { sqlite, expenses, receipts, expense, edit } = await fixture();
     sqlite.exec(

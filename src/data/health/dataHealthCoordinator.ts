@@ -1064,6 +1064,8 @@ async function applyRepairPlan(
         getExpense: dependencies.getExpense,
       });
       if (!evidence || evidence.inputDigest !== plan.findingDigest) return;
+      // ADR 0056: local equality cannot prove server conflict-chain closure.
+      if (evidence.conflictStatus === "OPEN") return;
       result = await dependencies.database.runAsync(
         `UPDATE sync_operations SET status = 'COMPLETED', next_attempt_at = NULL,
            claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
@@ -1076,20 +1078,6 @@ async function applyRepairPlan(
         evidence.journeyId,
       );
       if (result.changes !== 1) return;
-      if (evidence.conflictStatus === "OPEN") {
-        const conflict = await dependencies.database.runAsync(
-          `UPDATE ledger_expense_conflicts SET status = 'RESOLVED', resolved_at = ?
-           WHERE conflict_id = ? AND journey_id = ? AND expense_id = ?
-             AND operation_id = ? AND status = 'OPEN'`,
-          timestamp,
-          evidence.conflictId,
-          evidence.journeyId,
-          evidence.entityId,
-          evidence.operationId,
-        );
-        if (conflict.changes !== 1)
-          throw new Error("Stale conflict evidence changed during repair.");
-      }
       if (
         evidence.serverRevision !== evidence.canonicalRevision ||
         evidence.syncStatus !== "SYNCED"

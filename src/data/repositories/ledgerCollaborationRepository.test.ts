@@ -104,7 +104,7 @@ function conflict(id: string): LedgerExpenseConflictResponse {
 }
 
 describe("Ledger collaboration repository", () => {
-  it("stores immutable conflict snapshots and supersedes instead of rewriting", async () => {
+  it("stores immutable conflict snapshots without locally superseding server OPEN conflicts", async () => {
     const { db, writes, transactions } = fixture();
     const repository = createLedgerCollaborationRepository(db, async () => "user-a");
 
@@ -122,7 +122,7 @@ describe("Ledger collaboration repository", () => {
     expect(transactions()).toBe(2);
     expect(
       writes.filter((write) => write.sql.includes("SET status = 'SUPERSEDED'")),
-    ).toHaveLength(2);
+    ).toHaveLength(0);
     const inserts = writes.filter((write) =>
       write.sql.includes("INSERT OR IGNORE INTO ledger_expense_conflicts"),
     );

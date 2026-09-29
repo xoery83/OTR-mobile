@@ -1,3 +1,4 @@
+import { ExpenseConflictList } from "./ExpenseConflictList";
 import { getDefaultLedgerFxSnapshotRepository } from "@/data/repositories/defaultLedgerFxSnapshotRepository";
 import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -933,24 +934,10 @@ export function LedgerStage6Screen({
                   </Pressable>
                 ) : null}
 
-                {summary?.openConflictCount ? (
-                  <Pressable
-                    accessibilityLabel={`${summary.openConflictCount} conflicts need review`}
-                    accessibilityRole="button"
-                    onPress={() => router.push("/expenses/review" as never)}
-                    style={styles.attention}
-                  >
-                    <View style={styles.grow}>
-                      <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
-                        Needs attention
-                      </Text>
-                      <Text maxFontSizeMultiplier={2} style={styles.attentionMeta}>
-                        {summary.openConflictCount} conflicts need review
-                      </Text>
-                    </View>
-                    <AppIcon color="#A16207" name="chevron.right" size={16} />
-                  </Pressable>
-                ) : null}
+                <ExpenseConflictList
+                  journeyId={journey.journeyId}
+                  title="Needs attention · Review changes"
+                />
 
                 <DashboardSection
                   action="See All"

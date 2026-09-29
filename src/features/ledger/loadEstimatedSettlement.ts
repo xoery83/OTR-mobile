@@ -57,6 +57,7 @@ export async function loadEstimatedSettlement(
       "REFERENCE_RATE",
     ),
     members: options.members,
+    estimates,
     serverIds: new Map(currentExpenses.map((expense) => [expense.id, expense.serverId])),
     estimatedServerIds: new Set(
       currentExpenses.flatMap((expense) =>

@@ -78,8 +78,12 @@ describe("SQLite migrations", () => {
       "ledger_my_spending_facts",
     );
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(39);
-    expect(latest.sql).toContain("original_mime_type");
+    expect(latest.id).toBe(41);
+    expect(migrations.find((migration) => migration.id === 39)?.sql).toContain(
+      "original_mime_type",
+    );
+    expect(migrations.find(m => m.id === 40)!.sql).toContain("ledger_expense_commands");
+    expect(latest.sql).toContain("ledger_expense_resolution_receipts");
     expect(migrations[28].sql).toContain("coverage_json");
     expect(migrations[29].sql).toContain("correction_source_expense_id");
     expect(migrations[30].sql).toContain("pending_review_state");

@@ -4,22 +4,24 @@ import { createLedgerReadTransport } from "./ledgerReadTransport";
 
 const activeRefreshes = new Map<string, Promise<Awaited<ReturnType<typeof refresh>>>>();
 
-export async function refreshLedgerFxSnapshotCache() {
+export async function refreshLedgerFxSnapshotCache(force = false) {
   const accountId = await requireActiveUserId();
-  const active = activeRefreshes.get(accountId);
+  const key = `${accountId}:${force}`;
+  const active = activeRefreshes.get(key);
   if (active) return active;
-  const request = refresh(accountId).finally(() => {
-    if (activeRefreshes.get(accountId) === request) activeRefreshes.delete(accountId);
+  const request = refresh(accountId, force).finally(() => {
+    if (activeRefreshes.get(key) === request) activeRefreshes.delete(key);
   });
-  activeRefreshes.set(accountId, request);
+  activeRefreshes.set(key, request);
   return request;
 }
 
-async function refresh(accountId: string) {
+async function refresh(accountId: string, force: boolean) {
   const repository = await getDefaultLedgerFxSnapshotRepository(accountId);
   const cached = await repository.list();
   const observedAt = cached?.snapshots[0]?.observedAt;
-  if (observedAt && Date.now() - Date.parse(observedAt) < 24 * 60 * 60_000) return cached;
+  if (!force && observedAt && Date.now() - Date.parse(observedAt) < 24 * 60 * 60_000)
+    return cached;
   const bundle = await createLedgerReadTransport().referenceRateSnapshots();
   await repository.cacheBundle(bundle);
   return bundle;

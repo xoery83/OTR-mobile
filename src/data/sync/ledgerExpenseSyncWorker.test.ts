@@ -86,6 +86,13 @@ function repository(): LedgerExpenseRepository {
     markExpenseSyncing: vi.fn(),
     markExpenseSynced: vi.fn(),
     markExpensePending: vi.fn(),
+    reconcileCanonicalExpenseInTransaction: vi.fn(),
+    confirmConflictResolution: vi.fn(),
+    confirmExpenseOperation: vi.fn(),
+    getOperationResult: vi.fn(),
+    listRateAcceptanceOperations: vi.fn(),
+    getLatestOperationResult: vi.fn(),
+    bindOperation: vi.fn(async (operation) => operation),
     reconcileCanonicalExpense: vi.fn(),
     markExpenseConflict: vi.fn(),
     markExpenseFailed: vi.fn(),
@@ -379,7 +386,7 @@ describe("Ledger Expense sync worker", () => {
         valuation: expect.objectContaining({ baseRevision: 1 }),
       }),
     );
-    expect(repo.reconcileCanonicalExpense).toHaveBeenCalledOnce();
+    expect(repo.confirmExpenseOperation).toHaveBeenCalledOnce();
   });
 
   it("sends the canonical posted-payment ID for payer-cost valuation", async () => {

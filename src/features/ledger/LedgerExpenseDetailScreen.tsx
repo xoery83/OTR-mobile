@@ -248,16 +248,17 @@ export function LedgerExpenseDetailScreen() {
         </Text>
       </View>
     );
+  const needsConflictDecision = hasOpenConflict || expense.syncStatus === "CONFLICT";
   const valuation = expense.valuation;
   const chinese = Intl.DateTimeFormat().resolvedOptions().locale.startsWith("zh");
   const participantNames = new Map(
     expense.participants.map((item) => [item.memberId, item.displayNameSnapshot]),
   );
-  const excluded = expense.status !== "ACCEPTED" || hasOpenConflict || !valuation;
-  const warning = hasOpenConflict
+  const excluded = expense.status !== "ACCEPTED" || needsConflictDecision || !valuation;
+  const warning = needsConflictDecision
     ? {
-        title: "Conflict—review required",
-        detail: "Choose the correct version before relying on this Expense in totals.",
+        title: "Review changes",
+        detail: "This Expense has changes that need your decision.",
       }
     : expense.status === "RATE_REQUIRED" && expense.economicDate === null
       ? {
@@ -390,11 +391,6 @@ export function LedgerExpenseDetailScreen() {
         }}
       />
       <ScrollView contentContainerStyle={styles.content}>
-        {expense.syncStatus !== "SYNCED" ? (
-          <Text accessibilityLiveRegion="polite" style={styles.saved}>
-            {chinese ? "已保存到此 iPhone" : "Saved on this iPhone"}
-          </Text>
-        ) : null}
         <Text accessibilityRole="header" style={styles.title}>
           {expense.title}
         </Text>
@@ -417,29 +413,40 @@ export function LedgerExpenseDetailScreen() {
         {excluded && warning ? (
           <Pressable
             accessibilityRole={
-              fxAccess.canChange &&
-              expense.status === "RATE_REQUIRED" &&
-              expense.economicDate === null
+              needsConflictDecision
                 ? "button"
-                : undefined
+                : fxAccess.canChange &&
+                    expense.status === "RATE_REQUIRED" &&
+                    expense.economicDate === null
+                  ? "button"
+                  : undefined
             }
             onPress={
-              fxAccess.canChange &&
-              expense.status === "RATE_REQUIRED" &&
-              expense.economicDate === null
+              needsConflictDecision
                 ? () =>
                     router.push({
-                      pathname: "/expenses/confirm-date",
-                      params: {
-                        expenseId: expense.id,
-                      },
+                      pathname: "/expenses/conflict/[id]",
+                      params: { id: expense.id },
                     } as never)
-                : undefined
+                : fxAccess.canChange &&
+                    expense.status === "RATE_REQUIRED" &&
+                    expense.economicDate === null
+                  ? () =>
+                      router.push({
+                        pathname: "/expenses/confirm-date",
+                        params: {
+                          expenseId: expense.id,
+                        },
+                      } as never)
+                  : undefined
             }
             style={styles.warning}
           >
             <Text style={styles.warningTitle}>{warning.title}</Text>
             <Text style={styles.meta}>{warning.detail}</Text>
+            {needsConflictDecision ? (
+              <Text style={styles.meta}>Review changes ›</Text>
+            ) : null}
           </Pressable>
         ) : null}
         <Section label={chinese ? "金额" : "Amount"}>
@@ -462,10 +469,10 @@ export function LedgerExpenseDetailScreen() {
                 expense={expense}
                 currency={fxAccess.currency}
                 scale={fxAccess.scale}
-                canChange={canEdit && !hasOpenConflict}
+                canChange={canEdit && !needsConflictDecision}
                 locked={fxAccess.locked}
-                estimate={hasOpenConflict || fxAccess.locked ? null : estimate}
-                blocked={hasOpenConflict}
+                estimate={needsConflictDecision || fxAccess.locked ? null : estimate}
+                blocked={needsConflictDecision}
                 onChanged={setExpense}
               />
             ) : null}
@@ -577,7 +584,7 @@ export function LedgerExpenseDetailScreen() {
           <Text style={styles.meta}>Flag this expense in Review. ›</Text>
         </Pressable>
         {reviewMessage ? (
-          <Text accessibilityLiveRegion="polite" style={styles.saved}>
+          <Text accessibilityLiveRegion="polite" style={styles.meta}>
             {reviewMessage}
           </Text>
         ) : null}
@@ -645,7 +652,6 @@ const styles = StyleSheet.create({
   },
   warning: { backgroundColor: "#FFF7DB", borderRadius: 10, gap: 4, padding: 13 },
   warningTitle: { color: "#7C5B00", fontWeight: "700" },
-  saved: { color: "#64748B", fontSize: 13 },
   section: { backgroundColor: "#FFFFFF", borderRadius: 10, gap: 8, padding: 14 },
   label: { color: "#64748B", fontSize: 12, fontWeight: "700" },
   value: { color: "#111827", fontSize: 23, lineHeight: 44, fontWeight: "800" },

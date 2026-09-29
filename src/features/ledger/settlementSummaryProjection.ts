@@ -248,7 +248,6 @@ export function settlementReviewBlockers(
   const blockers = [...authoritative];
   for (const change of changes) {
     if (
-      change.change === "REMOVED" &&
       expenses.some(
         (expense) =>
           (expense.id === change.expenseId || expense.serverId === change.expenseId) &&

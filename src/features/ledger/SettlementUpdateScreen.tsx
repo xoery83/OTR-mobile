@@ -1,3 +1,5 @@
+import { SettlementRateAcceptance } from "./SettlementRateAcceptance";
+import { settlementRateCandidates } from "./settlementRateCandidates";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -39,6 +41,10 @@ export function SettlementUpdateScreen() {
     projection?.confirmationDiff ?? [],
     expenses,
     sameSource ? settlement.preview?.blockers : undefined,
+  );
+  const rates = settlementRateCandidates(
+    settlement.displayPreview?.inputs.map((input) => input.expense) ?? [],
+    settlement.displayPreview?.estimates ?? new Map(),
   );
   const ready =
     settlement.confirmationVerified &&
@@ -240,6 +246,11 @@ export function SettlementUpdateScreen() {
             value={reason}
           />
           {!reason.trim() ? <Text style={styles.meta}>Reason is required.</Text> : null}
+          <SettlementRateAcceptance
+            journeyId={journeyId ?? null}
+            rates={rates}
+            onAccepted={settlement.refresh}
+          />
           {blockers.map((blocker) => {
             const identity = identityFor(blocker.expenseId);
             const localId = identity.localId;

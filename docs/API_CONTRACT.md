@@ -371,3 +371,96 @@ it does not imply deletion. Balances, inputs, fingerprint, and diff are one atom
 financial projection. Review and needs-attention coverage remain separate responses.
 The read-only Preview requires Journey read access; FX preflight and finalization retain
 their existing organizer capability checks.
+
+## Approved Expense consistency v2 (implementation in progress)
+
+ADR 0056 and `EXPENSE_CONSISTENCY_IMPLEMENTATION_CHECKPOINT.md` define additive
+version-2 typed patch/intent, operation receipt and conflict-chain resolution
+contracts. Legacy full-aggregate writes retain strict CAS; missing verified history
+never permits automatic merge. Receipts distinguish APPLIED/KEPT_SERVER/SUPERSEDED.
+Chain requests bind current revision, covered IDs and expected digest; responses
+return canonical, remaining OPEN IDs and every covered conflict outcome. Phase 1
+adds validated DTOs; routes/SQL remain gated by Phase 3, not deployed capability.
+
+## Expense Consistency v2 — Backend/SQL Phase 3
+
+Existing Expense endpoints accept `{ envelope: ExpenseIntentEnvelope, auditReason }`
+as an additive branch (`envelope.intentVersion = 2`). Header Idempotency-Key must
+match the envelope. Route and typed intent must match:
+
+| Endpoint                                                | Typed intent      | Legacy request                       |
+| ------------------------------------------------------- | ----------------- | ------------------------------------ |
+| POST `/v2/trips/:tripId/expenses`                       | CREATE            | Existing full create preserved       |
+| PUT `/v2/trips/:tripId/expenses/:expenseId`             | UPDATE user patch | Full aggregate, strict CAS           |
+| DELETE `/v2/trips/:tripId/expenses/:expenseId`          | DELETE            | Lifecycle, strict CAS                |
+| POST `/v2/trips/:tripId/expenses/:expenseId/restore`    | RESTORE           | Lifecycle, strict CAS                |
+| POST `/v2/trips/:tripId/expenses/:expenseId/valuations` | APPLY_VALUATION   | Existing financial evidence contract |
+
+Typed success preserves the canonical mutation DTO and adds a mandatory correlated
+`receipt`. `observedBase` is a client observation, never merge authority. Backend
+loads historical evidence from immutable SQL success receipts; SQL rechecks that
+record and its normalized digest under the Expense lock. Missing history cannot
+permit a stale automatic merge. Causal execution bases require a verified APPLIED
+receipt for this actor/Expense, or an actual successful legacy CRUD/valuation receipt;
+legacy resolution/KEEP_JOURNEY is never inferred to mean APPLIED.
+
+GET `/v2/trips/:tripId/expenses/:expenseId/conflicts` returns version 2 canonical
+(including tombstone), complete chain digest and all conflict lifecycles. Historical
+unverifiable UPDATE/valuation rows have `submittedIntent: null` and action-required
+reason. DELETE is reconstructed only from the original command type/key. Closed
+rows include their immutable `operationReceipt`; OPEN rows have none.
+
+POST `/v2/trips/:tripId/expenses/:expenseId/conflict-resolution` accepts the approved
+`contractVersion: 2` chain request. The single SQL transaction checks permission,
+frozen inputs, current revision, full chain digest, covered scope/ownership and
+original typed intent, then commits mutation, audit, immutable outcomes and receipt.
+The result has `resolutionReceipt`, `canonical`, `openConflictIds`, `conflictOutcomes`.
+Each covered outcome includes an `operationReceipt` correlated to the **original**
+command/key; the resolution receipt uses the resolution request key. Only APPLIED
+can advance a successor's causal base. Covered earlier intents may be SUPERSEDED;
+uncovered rows remain OPEN. KEEP_SERVER and verified ACCEPT_EQUIVALENT close through
+an audit without advancing Expense revision. Same-key replay returns the stored
+response before head/chain/quote preparation, with no repeated effects.
+
+Legacy resolution remains a single-ID full aggregate contract. It cannot resolve
+DELETE/typed conflicts or reconstruct a tombstone as UPDATE; it returns
+`TYPED_RESOLUTION_REQUIRED`. A full UPDATE cannot revive a tombstone even with a fresh
+CAS. For an unverifiable legacy UPDATE, v2 KEEP_SERVER accepts only an explicit empty
+UPDATE intent as discard evidence and never applies a guessed patch.
+
+Bootstrap and pull include additive `expenseConflictChains` metadata (`expenseId`,
+`chainDigest`, complete `conflictIds`, `openConflictIds`) on every response, including
+empty change pages. Pull now includes the complete canonical Expense for tombstones;
+event revision remains separate from canonical revision. Formal client integration
+and resolution UI use the same Hosted v2 contract in Phase 4. SQLite v41 caches
+account-scoped complete chains and immutable resolution responses. New unattempted
+commands use typed intent; an already-bound or attempted legacy request keeps its
+original body/key and strict CAS behavior. Resolution receipt, covered outcomes,
+projection and queue completion commit in one local transaction. Only APPLIED proof
+wakes successors; response loss retains the same resolution body/key for replay.
+
+### Phase 5 displayed-rate acceptance
+
+Typed APPLY_VALUATION optionally carries `valuation.rateAcceptance` with the displayed
+local/server revisions, original Money, economicDate, Journey settlement Money, exact
+decimalRate and referenceDate. It is retained in the immutable command/audit. Online
+acceptance refreshes Journey reconciliation and the authenticated FX snapshot before
+checking business inputs. A newer automatic REFERENCE_RATE is compatible only with
+verified server history, unchanged financial/split inputs and matching rate/value.
+The existing locked RPC admits `VALUATION_REBASE` for that case; the explicit outcome
+is MANUAL_AGREED. Material drift remains conflict; legacy requests remain strict CAS.
+Batch client operations return one operation result per Expense (including partial
+success); sync-cycle completion is never confirmation. Already-current agreed values
+are reported separately as unchanged, without inventing a new command receipt.
+
+### Phase 6 historical equivalent admission
+
+Migration `20260929000300_legacy_expense_equivalent_resolution.sql` admits a legacy
+UPDATE as an empty typed equivalent only when immutable server successful history
+and the original stored 409 submission prove identical business input. UTC encoding
+is normalized; historical RATE_REQUIRED/null valuation is not an instruction to
+remove a newer server REFERENCE_RATE. The chain exposes reason
+`VERIFIED_LEGACY_EQUIVALENT`; formal UI offers `Use latest value` mapped to
+ACCEPT_EQUIVALENT. SQL repeats the evidence check inside the existing guarded
+transaction. Legacy mutation writes remain strict CAS; missing evidence and real
+financial/descriptive/valuation changes are not inferred away.

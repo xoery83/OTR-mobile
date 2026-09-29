@@ -10,6 +10,12 @@ import {
   ledgerExpenseMutationResponseSchema,
   economicDateEvidenceResponseSchema,
   resolveLedgerExpenseConflictRequestSchema,
+  expenseCommandRequestSchema,
+  expenseConflictChainResponseSchema,
+  expenseConflictChainResolutionRequestSchema,
+  expenseConflictChainResolutionResponseSchema,
+  type ExpenseCommandRequest,
+  type ExpenseConflictChainResolutionRequest,
   type CreateLedgerCorrectionRequest,
   type CreateLedgerExpenseRequest,
   type CreateLedgerPaymentRecordRequest,
@@ -58,6 +64,47 @@ async function client(dependencies: Dependencies) {
 
 export function createLedgerExpenseMutationTransport(dependencies: Dependencies = {}) {
   return {
+    async readConflictChain(journeyId: string, serverId: string) {
+      return (await client(dependencies)).get(
+        `/v2/trips/${journeyId}/expenses/${serverId}/conflicts`,
+        expenseConflictChainResponseSchema,
+      );
+    },
+    async executeCommand(input: {
+      journeyId: string;
+      serverId: string | null;
+      command: ExpenseCommandRequest;
+    }) {
+      const api = await client(dependencies);
+      const body = expenseCommandRequestSchema.parse(input.command);
+      const type = body.envelope.patchOrIntent.type;
+      const path = `/v2/trips/${input.journeyId}/expenses${type === "CREATE" ? "" : `/${input.serverId}`}${type === "RESTORE" ? "/restore" : type === "APPLY_VALUATION" ? "/valuations" : ""}`;
+      const headers = { "Idempotency-Key": body.envelope.idempotencyKey };
+      const response = await (
+        type === "UPDATE" ? api.put : type === "DELETE" ? api.delete : api.post
+      )(path, body, ledgerExpenseMutationResponseSchema, headers);
+      if ((dependencies.simulateResponseLoss ?? configuredResponseLoss)())
+        throw new Error("Simulated ambiguous response loss after Expense command.");
+      return response;
+    },
+    async resolveConflictChain(input: {
+      journeyId: string;
+      serverId: string;
+      idempotencyKey: string;
+      resolution: ExpenseConflictChainResolutionRequest;
+    }) {
+      const response = await (
+        await client(dependencies)
+      ).post(
+        `/v2/trips/${input.journeyId}/expenses/${input.serverId}/conflict-resolution`,
+        expenseConflictChainResolutionRequestSchema.parse(input.resolution),
+        expenseConflictChainResolutionResponseSchema,
+        { "Idempotency-Key": input.idempotencyKey },
+      );
+      if ((dependencies.simulateResponseLoss ?? configuredResponseLoss)())
+        throw new Error("Simulated ambiguous response loss after Expense resolution.");
+      return response;
+    },
     async inspectEconomicDate(journeyId: string, serverId: string) {
       return (await client(dependencies)).get(
         `/v2/trips/${journeyId}/expenses/${serverId}/economic-date`,

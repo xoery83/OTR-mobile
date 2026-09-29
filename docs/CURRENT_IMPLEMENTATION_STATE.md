@@ -1,6 +1,146 @@
 # Current Implementation State
 
-Date: 2026-09-28
+Date: 2026-09-29
+
+## Expense Consistency Closure — Phase 6 PASS / closure PASS
+
+- Owner accepted Phases 1–5, authorized Hosted Dev real recovery and separately
+  authorized generic legacy equivalent admission release. Final gate:
+  `docs/ledger/EXPENSE_CONSISTENCY_PHASE_6_REAL_RECOVERY_GATE.md`; scoped before/after
+  evidence is in `docs/ledger/evidence/expense-consistency-phase6-{before,after}.json`.
+- Actual original iPhone LAWSON recovered through **Continue deletion / CONFIRM_DELETE**:
+  server/local tombstone revision 3, DELETE RESOLVED, earlier valuation SUPERSEDED,
+  OPEN 0, immutable confirmed receipt. No rate acceptance prerequisite.
+- Actual original Simulator ce SHi22 recovered through **Use latest value /
+  ACCEPT_EQUIVALENT**: preserves USD2300 → NZD4056 REFERENCE_RATE, revision 2,
+  legacy UPDATE RESOLVED, OPEN 0, one new closure audit and no new valuation.
+- New migration `20260929000300_legacy_expense_equivalent_resolution.sql` validates
+  original server-stored 409 submission against successful historical evidence;
+  UTC normalization, empty equivalent only. Legacy writes retain strict CAS.
+  No incident data patch, ID/name special case or guard relaxation.
+- Equal-revision canonical metadata now accumulates audit IDs and keeps later server
+  aggregate/audit times; formal chain reads reconcile through the shared boundary.
+  Final full canonical/UTC equality, projection, audit IDs, active valuation identity,
+  receipts, zero deferred/pending/terminal incident operations and restart/pull PASS.
+  Both Settlement Preview and Adjustment Preview return 200 / blockers [].
+  Same original keys replay twice each with exact response and unchanged counts.
+- Final **18 suites / 264 tests**, **31 SQL suites / 640 assertions**, TypeScript,
+  scoped lint/format, Backend build, signed normal original-device Release builds PASS.
+  Reuses accepted Phases 1–5 Hosted fixtures with explicit Phase E/supplement mapping.
+  Neither incident needed Data Health local-only repair. Other old synthetic account
+  attention and previously documented global architecture/RN loading failures remain.
+- Dev project `tuqigdxrvrerfewsxqgm`, healthy `https://api-dev.xoery.art`, tail
+  **20260929000300**, SQLite v41. Release `legacy-equivalent-20260929`; image
+  `sha256:5542e19321def80f8d4e0463af1f5b3a92e3f79cf533651dc86eefd6cbcd19b4`.
+  Exact source/migration/native hashes and rollback are in the Phase 6 gate.
+- macOS iPhone Mirroring scroll input crashed in UniversalHID; stopped mirror
+  scrolling and owner completed phone check/read-only verification. OTR data retained.
+- **Stop at Phase 6 gate. Production untouched; Settlement Confirm not executed.**
+  Owner authorized this Closure checkpoint commit. No push requested; independent
+  pre-existing Settlement changes remain in the working tree.
+
+## Prior checkpoint — Phase 5 automated + Hosted Dev PASS
+
+- Owner accepted Phases 1–4 and authorized Phase 5, then separately authorized its
+  Hosted Dev migration / Backend release / isolated acceptance. Approved checkpoint
+  and ADR 0056 remain authoritative. Latest gate:
+  `docs/ledger/EXPENSE_CONSISTENCY_PHASE_5_LATEST_STATE_RATE_ACCEPTANCE_GATE.md`.
+- Rate choices bind displayed Expense revisions, original Money, economicDate,
+  Journey currency/scale and displayed rate/date. Existing reconciliation and fresh
+  reference reads validate online choices; material drift requires reconfirmation.
+  Compatible newer automatic reference valuation is accepted without an artificial
+  conflict; valid MANUAL_AGREED remains protected from automatic replacement.
+- Offline choices use existing durable commands and receipt reconciliation. Batch
+  outcomes are per Expense, allow partial success and show actual pending / confirmed /
+  conflict / retryable / terminal states. Later local intent and account boundaries
+  remain protected. Routine reference refresh and reconciliation stay silent.
+- Phase 5 Hosted/local migration tail was `20260929000200_latest_state_rate_acceptance`;
+  SQLite remains v41. Additive typed binding and narrow transactional VALUATION_REBASE
+  keep historical evidence, legacy strict CAS, frozen/permission/chain and replay guards.
+- Dev project `tuqigdxrvrerfewsxqgm`, healthy `https://api-dev.xoery.art`; release
+  `latest-state-rates-20260929`. Backend source SHA-256
+  `922832df8d37c33002c8e05fc18d46db4c9c85bbcd86c752356147e1d48aed39`, image
+  `sha256:61339996dcb83503896a91392fe947516f66a30161ef29b853336e85a592997a`.
+  Exact migration, rollback and fixture evidence are in the Phase 5 gate.
+- 11 affected suites / 170 tests, 30 SQL suites / 623 assertions, TypeScript,
+  scoped lint/format, Backend build and signed normal Simulator Release build PASS.
+  Nine Hosted acceptance scenarios PASS. Same-key response-loss replay kept revision
+  3 / audits 3 / valuations 2. No new native UI acceptance claim or device install.
+- Phase 4 formal native entrances remain accepted; its gate records that evidence
+  and pre-existing LedgerStage6 global architecture guard failures. No new dependencies
+  or FX policy changes. Shared pre-existing work retained on HEAD `d7e3fff`.
+- **Stop at Phase 5 gate. Phase 6 recovery requires separate authorization.**
+  At that prior gate LAWSON / ce SHi22 were untouched. Phase 6 authorization and
+  completed recovery supersede that stop; no Settlement Confirm or Production access.
+
+## Expense Consistency Closure — Hosted Phase 3 and formal Phase 4 PASS
+
+- Phase 1/2 accepted by Owner. Approved checkpoint and ADR 0056 remain authoritative;
+  new gate: `docs/ledger/EXPENSE_CONSISTENCY_PHASE_3_BACKEND_SQL_GATE.md`.
+- Forward migration `20260929000100_expense_consistency_v2.sql` adds immutable
+  successful revision evidence, v2 conflict outcomes/original-command receipts,
+  complete chain digest/read metadata, guarded atomic command/resolution RPC and
+  completed v2 receipt immutability. This was the Phase 3 migration tail; the current tail is recorded above.
+- Existing Expense CREATE/PUT/DELETE/RESTORE/valuation and conflict-resolution
+  endpoints accept the additive typed branch. Historical base comes from server
+  evidence; compatible descriptive merge preserves valuation identity. DELETE stays
+  DELETE, only RESTORE revives tombstones, and legacy full aggregates stay strict CAS.
+- Covered closure, mutation, audit and receipt commit in one SQL transaction;
+  uncovered conflicts stay OPEN. Same-key resolution replay returns the original
+  response. Only verified APPLIED proof can advance a causal execution base.
+- Final local SQL gate: 29 suites / 604 assertions PASS, including 60 Phase 3 checks.
+  Backend/HTTP/affected client gate: 9 suites / 136 tests PASS. Clean migration reset,
+  TypeScript, scoped lint/format, Backend build and diff checks PASS.
+- Hosted Dev deployment/acceptance PASS: tail `20260929000100`, Dev project
+  `tuqigdxrvrerfewsxqgm`, healthy `api-dev.xoery.art`. Release
+  `expense-v2-20260929`; exact artifacts/fixture/evidence in Phase 3 gate report.
+  Current v40 contract compatibility verified. Rollback source/image retained.
+- Phase 4 implements all three ordinary entrances, local tombstones, real Hosted
+  typed contract, durable explicit decision and atomic confirmation. SQLite v41
+  adds account chain cache/immutable resolution responses; no extra Hosted migration.
+  10 affected suites / 167 tests, TypeScript, scoped lint/format PASS.
+- Formal native Hosted acceptance PASS after Owner unlock: Detail, Needs Attention
+  (including local deletion), Data & Sync and real Settlement blocker entrances.
+  Explicit decision pending/retryable/confirmed/failure states were observed.
+  Lost-response same-key replay preserved revision/mutation/audit counts; uncovered
+  financial conflict stayed OPEN. Stale choice remained disabled until a fresh read;
+  a new decision confirmed without reviving tombstones or overriding later intent.
+- Final signed normal Release installed only on dedicated simulator, version
+  `0.1.0 (1)`, SQLite v41, response-loss flag absent. JS bundle SHA-256
+  `6574bf12df38acb41c28195583ad83b8e290d23fadf49a03bc1e2085fcc09a75`.
+  Evidence/artifacts and known pre-existing global architecture guard failure:
+  `docs/ledger/EXPENSE_CONSISTENCY_PHASE_4_FORMAL_UI_GATE.md`.
+  Phase 4 accepted; Phase 5 is complete as recorded above. No incident recovery authorized.
+- Normal reconciliation/FX refresh/retry/confirmation remains silent. Only human
+  business choices get attention; explicit decisions show their actual result.
+- LAWSON / ce SHi22 remain untouched until Phase 6; no Settlement Confirm or
+  Production access. Shared pre-existing work retained on HEAD `d7e3fff`.
+
+## Expense Consistency Closure — Phase 1 / Phase 2 local gates PASS
+
+- Owner-approved contract: `docs/ledger/EXPENSE_CONSISTENCY_IMPLEMENTATION_CHECKPOINT.md`.
+  Acceptance/file/test details: `docs/ledger/EXPENSE_CONSISTENCY_PHASE_1_2_ACCEPTANCE.md`;
+  architecture decision: ADR 0056. Existing parallel Settlement, Journey and
+  attachment changes retained on HEAD `d7e3fff`; no commit/push.
+- Phase 1 implements typed intent/result/chain DTOs, user patches, UTC/split/no-op
+  semantics, verified three-way eligibility and conservative legacy candidates.
+  No-op/attachment-only Save creates zero Expense UPDATEs; existing guards remain.
+- Phase 2 adds SQLite v40 account/Expense command sequence, predecessor, observed
+  canonical base, immutable execution binding and receipts. Mutation/pull share
+  protected reconciliation; older responses cannot erase later intent/tombstones.
+  Receipt/projection/completion/dependency wake commit atomically. Only APPLIED
+  receipts wake dependencies; COMPLETED alone never means SERVER_CONFIRMED.
+- Historical missing baselines stay unverified; legacy pending/failed/conflict intent
+  stays protected. Canonical-less feed events are deferred, not canonical versions.
+  Local OPEN conflict supersession and Health-only OPEN closure have been removed.
+- Affected-domain gate: 16 suites / 195 tests, TypeScript, scoped lint/format/diff
+  and Backend build PASS. Full run has 138 suites / 959 tests passed; known Account
+  Switching Flow-loading and LedgerStage6 architecture-import failures remain.
+- Phase 3 Backend/SQL and Phase 4 formal UI are complete as recorded above;
+  Phase 5 is complete above; Phase 6 recovery remains pending. Overall
+  closure is not delivered or recovered yet. LAWSON / ce SHi22 remain untouched.
+  Current Hosted Dev rollout and migration tail are recorded in the Phase 5 section above.
+  No Production access or Settlement confirmation.
 
 ## Expense attachment thumbnail / preview repair — Simulator PASS
 

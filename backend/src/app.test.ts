@@ -25,6 +25,15 @@ function createGateway(
   const itineraryItems = new Map<string, StoredCreate>();
   const personalPayments = new Map<string, PersonalSettlementPaymentDto>();
   const gateway: DevBackendGateway = {
+    executeExpenseCommand: vi.fn(async () => {
+      throw new Error("Typed command test not configured.");
+    }),
+    readExpenseConflictChain: vi.fn(async () => {
+      throw new Error("Chain read test not configured.");
+    }),
+    resolveExpenseConflictChain: vi.fn(async () => {
+      throw new Error("Chain resolution test not configured.");
+    }),
     completeLedgerEconomicDate: vi.fn(async () => {
       throw new Error("Date completion is not configured for this test.");
     }),
@@ -2501,5 +2510,155 @@ describe("OTR Dev Backend", () => {
         )
       ).status,
     ).toBe(403);
+  });
+});
+
+describe("Expense consistency v2 HTTP contract", () => {
+  const expenseId = "89000000-0000-4000-8000-000000000001";
+  const envelope = {
+    commandId: "typed-command",
+    intentVersion: 2,
+    intentSequence: 1,
+    predecessorOperationId: null,
+    observedServerRevision: 1,
+    observedBase: null,
+    patchOrIntent: { type: "DELETE" },
+    causalBaseReceipt: null,
+    boundExecutionRevision: 1,
+    idempotencyKey: "typed-command",
+  };
+  const request = (action: string, body?: unknown, key = "typed-command") =>
+    new Request(
+      `https://backend.test/v2/trips/${tripId}/expenses/${expenseId}${action === "commands" ? "" : action === "conflict-chain-resolution" ? "/conflict-resolution" : `/${action}`}`,
+      {
+        method: action === "commands" ? "DELETE" : body ? "POST" : "GET",
+        headers: {
+          Authorization: "Bearer valid-token",
+          "Content-Type": "application/json",
+          "Idempotency-Key": key,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      },
+    );
+  it("dispatches true DELETE without transforming its intent", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.executeExpenseCommand).mockResolvedValue({
+      entity: { businessStatus: "DELETED" },
+      receipt: { commandType: "DELETE" },
+    } as never);
+    const response = await createDevBackendHandler({ gateway })(
+      request("commands", { envelope, auditReason: null }),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.executeExpenseCommand).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+      "typed-command",
+      { envelope, auditReason: null },
+    );
+    expect(await response.json()).toMatchObject({
+      receipt: { commandType: "DELETE" },
+      entity: { businessStatus: "DELETED" },
+    });
+  });
+  it("rejects a key mismatch before gateway mutation", async () => {
+    const { gateway } = createGateway();
+    const response = await createDevBackendHandler({ gateway })(
+      request("commands", { envelope, auditReason: null }, "different-key"),
+    );
+    expect(response.status).toBe(400);
+    expect(gateway.executeExpenseCommand).not.toHaveBeenCalled();
+  });
+  it("rejects a user patch containing derived valuation/split fields", async () => {
+    const { gateway } = createGateway();
+    const response = await createDevBackendHandler({ gateway })(
+      request("commands", {
+        envelope: {
+          ...envelope,
+          patchOrIntent: {
+            type: "UPDATE",
+            patch: { descriptive: { title: "Title" }, valuation: null },
+          },
+        },
+        auditReason: null,
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(gateway.executeExpenseCommand).not.toHaveBeenCalled();
+  });
+  it("reads a full conflict chain under Journey read authorization", async () => {
+    const { gateway } = createGateway();
+    vi.mocked(gateway.readExpenseConflictChain).mockResolvedValue({
+      contractVersion: 2,
+      canonical: { businessStatus: "DELETED" },
+      conflicts: [{ commandType: "DELETE" }],
+    } as never);
+    const response = await createDevBackendHandler({ gateway })(request("conflicts"));
+    expect(response.status).toBe(200);
+    expect(gateway.readExpenseConflictChain).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+    );
+  });
+  it("requires write authorization for typed resolution", async () => {
+    const { gateway } = createGateway({ writeAuthorized: false });
+    const response = await createDevBackendHandler({ gateway })(
+      request("commands", { envelope, auditReason: null }),
+    );
+    expect(response.status).toBe(403);
+    expect(gateway.executeExpenseCommand).not.toHaveBeenCalled();
+  });
+  it("passes covered IDs and digest together to a single chain resolution", async () => {
+    const { gateway } = createGateway();
+    const body = {
+      contractVersion: 2,
+      commandId: "typed-command",
+      intentType: "DELETE",
+      submittedIntent: { type: "DELETE" },
+      observedBaseRevision: 1,
+      currentServerRevision: 2,
+      coveredConflictIds: [expenseId, memberA],
+      expectedChainDigest: "a".repeat(64),
+      choice: "CONFIRM_DELETE",
+      reason: "Confirm delete",
+    };
+    vi.mocked(gateway.resolveExpenseConflictChain).mockResolvedValue({
+      resolutionReceipt: { commandType: "DELETE" },
+      canonical: { businessStatus: "DELETED" },
+      openConflictIds: [memberB],
+    } as never);
+    const response = await createDevBackendHandler({ gateway })(
+      request("conflict-chain-resolution", body),
+    );
+    expect(response.status).toBe(200);
+    expect(gateway.resolveExpenseConflictChain).toHaveBeenCalledWith(
+      userId,
+      tripId,
+      expenseId,
+      "typed-command",
+      body,
+    );
+  });
+  it("rejects duplicate covered IDs and mismatched lifecycle choices", async () => {
+    const { gateway } = createGateway();
+    const body = {
+      contractVersion: 2,
+      commandId: "typed-command",
+      intentType: "DELETE",
+      submittedIntent: { type: "DELETE" },
+      observedBaseRevision: 1,
+      currentServerRevision: 2,
+      coveredConflictIds: [expenseId, expenseId],
+      expectedChainDigest: "a".repeat(64),
+      choice: "APPLY_PATCH",
+      reason: "Confirm",
+    };
+    const response = await createDevBackendHandler({ gateway })(
+      request("conflict-chain-resolution", body),
+    );
+    expect(response.status).toBe(400);
+    expect(gateway.resolveExpenseConflictChain).not.toHaveBeenCalled();
   });
 });

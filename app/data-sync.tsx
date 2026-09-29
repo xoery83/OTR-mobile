@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import { AppIcon } from "@/components/AppIcon";
+import { ExpenseConflictList } from "@/features/ledger/ExpenseConflictList";
 import type {
   DataHealthOutcome,
   DataHealthProgressStage,
@@ -119,6 +120,7 @@ export default function DataSyncRoute() {
         Check saved changes and refresh shared data for this account. This check never
         deletes your saved travel data.
       </Text>
+      <ExpenseConflictList title="Changes needing a decision" />
 
       <View style={styles.card}>
         {checking ? (

@@ -17,7 +17,9 @@ export async function cleanupReconstructibleLedgerData(
     "UPDATE sync_operations SET next_attempt_at = NULL WHERE status = 'COMPLETED' AND next_attempt_at IS NOT NULL",
   );
   const sync = await database.runAsync(
-    "DELETE FROM sync_operations WHERE status = 'COMPLETED' AND updated_at < ?",
+    `DELETE FROM sync_operations WHERE status = 'COMPLETED' AND updated_at < ?
+     AND NOT EXISTS (SELECT 1 FROM ledger_expense_commands command WHERE command.operation_id = sync_operations.id)
+     AND NOT EXISTS (SELECT 1 FROM ledger_expense_resolution_receipts receipt WHERE receipt.operation_id = sync_operations.id)`,
     completedBefore,
   );
   const assets = await database.runAsync(

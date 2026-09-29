@@ -3,6 +3,7 @@ import { Pressable, ScrollView, SectionList, StyleSheet, Text, View } from "reac
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { useLedgerReview } from "@/hooks/useLedgerReview";
+import { ExpenseConflictList } from "./ExpenseConflictList";
 import { reviewCardEvidence } from "./reviewEvidence";
 import { reviewInbox, type ReviewCategory } from "./reviewInbox";
 import { reviewFindingCopy, reviewStatusLabel } from "./settlementPresentation";
@@ -43,6 +44,10 @@ export function LedgerReviewScreen() {
         windowSize={7}
         ListHeaderComponent={
           <View style={styles.header}>
+            <ExpenseConflictList
+              journeyId={journeyId}
+              title="Changes needing a decision"
+            />
             <Text accessibilityRole="header" style={styles.subtitle}>
               {inbox.counts.All} item{inbox.counts.All === 1 ? "" : "s"} need a decision
             </Text>

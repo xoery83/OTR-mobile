@@ -43,6 +43,15 @@ describe("Ledger conflict groups", () => {
     ).toEqual(["FINANCIAL_CORE", "DESCRIPTIVE"]);
   });
 
+  it("does not classify equivalent UTC encodings as a descriptive edit", () => {
+    expect(
+      changedExpenseGroups(expense, {
+        ...expense,
+        occurredAt: "2026-09-12T12:00:00+12:00",
+      }),
+    ).toEqual([]);
+  });
+
   it("treats settlement participation as Financial Core", () => {
     expect(
       changedExpenseGroups(expense, {

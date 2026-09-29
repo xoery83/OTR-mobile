@@ -1,3 +1,6 @@
+import { SettlementRateAcceptance } from "./SettlementRateAcceptance";
+import { ExpenseConflictList } from "./ExpenseConflictList";
+import { settlementRateCandidates } from "./settlementRateCandidates";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -163,7 +166,7 @@ export function SettlementReadinessScreen({
           categories={sections.spendingCategories}
           empty="No shared expenses paid by this traveller yet."
           expanded={expandedSpending}
-          journeyId={settlement.journeyId}
+          journeyId={settlement.journeyId ?? null}
           key="Paid"
           historicalSnapshot={Boolean(displayedFinal)}
           memberId={sections.spendingMemberId}
@@ -179,7 +182,7 @@ export function SettlementReadinessScreen({
           categories={sections.shareCategories}
           empty="No shared expenses are assigned to this traveller yet."
           expanded={expandedShares}
-          journeyId={settlement.journeyId}
+          journeyId={settlement.journeyId ?? null}
           key="Shares"
           historicalSnapshot={Boolean(displayedFinal)}
           memberId={sections.sharesMemberId}
@@ -207,7 +210,7 @@ export function SettlementReadinessScreen({
           expandedTransfer={expandedTransfer}
           fxSnapshots={sections.fxSnapshots}
           isOrganizer={settlement.isOrganizer}
-          journeyId={settlement.journeyId}
+          journeyId={settlement.journeyId ?? null}
           members={sections.members}
           onEveryone={setEveryone}
           onExpandTransfer={setExpandedTransfer}
@@ -337,7 +340,12 @@ function SummarySection({
   const hasChanges = (projection?.confirmationDiff.length ?? 0) > 0;
   const confirmedBalance = projection?.confirmedSettlement;
   const confirm = () => {
-    if (settlement.preview?.state !== "PREVIEW_READY") return;
+    if (
+      settlement.updating ||
+      settlement.hasPendingFinancialOperations ||
+      settlement.preview?.state !== "PREVIEW_READY"
+    )
+      return;
     Alert.alert(
       "Confirm final amounts?",
       "The confirmed result stays in Settlement history. Later corrections create an updated version.",
@@ -579,6 +587,16 @@ function SummarySection({
           </Text>
         </Pressable>
       ) : null}
+      {settlement.isOrganizer && !hasConfirmed ? (
+        <SettlementRateAcceptance
+          journeyId={settlement.journeyId ?? null}
+          rates={settlementRateCandidates(
+            settlement.displayPreview?.inputs.map((input) => input.expense) ?? [],
+            settlement.displayPreview?.estimates ?? new Map(),
+          )}
+          onAccepted={settlement.refresh}
+        />
+      ) : null}
       {unavailableRates ? (
         <View style={styles.notice}>
           <Text style={styles.noticeTitle}>Exchange rates need attention</Text>
@@ -600,18 +618,43 @@ function SummarySection({
           ))}
         </View>
       ) : null}
+      <ExpenseConflictList
+        journeyId={settlement.journeyId ?? undefined}
+        title="Review changes before Settlement"
+      />
       {conflicts ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void settlement.prepare()}
-          style={styles.notice}
-        >
+        <View style={styles.notice}>
           <Text style={styles.noticeTitle}>Settlement values need attention</Text>
           <Text style={styles.body}>
-            {conflicts} {conflicts === 1 ? "conflict needs" : "conflicts need"} review.
+            {conflicts} {conflicts === 1 ? "change needs" : "changes need"} review.
           </Text>
-          <Text style={styles.link}>Check readiness ›</Text>
-        </Pressable>
+          {settlement.preview?.blockers
+            .filter((b) => b.reason === "OPEN_CONFLICT")
+            .map((blocker) => (
+              <Pressable
+                key={blocker.expenseId}
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: "/expenses/conflict/[id]",
+                    params: {
+                      id: expenseFor(blocker.expenseId)?.id ?? blocker.expenseId,
+                    },
+                  } as never)
+                }
+              >
+                <Text style={styles.link}>
+                  {expenseFor(blocker.expenseId)?.title ?? "Expense"} · Review changes ›
+                </Text>
+              </Pressable>
+            ))}
+        </View>
+      ) : null}
+      {settlement.hasPendingFinancialOperations ? (
+        <Text style={styles.message}>
+          Accepted values or expense changes are saved on this device. Waiting for sync
+          before final confirmation.
+        </Text>
       ) : null}
       {debugMode && automaticWaiting ? (
         <Text style={styles.meta}>

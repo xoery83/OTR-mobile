@@ -372,3 +372,35 @@ strings; provenance and observation/expiry timestamps travel with every row.
 The repository retains the newest 32 working-day rows and returns no data after
 an account switch. These rows are informational inputs and are not Ledger
 entities, sync operations, user payment claims, or Settlement valuation facts.
+
+## Expense causal metadata (SQLite v40 implemented locally)
+
+ADR 0056 extends existing sync operations with account/Expense intent sequence,
+predecessor, observed canonical baseline, typed intent, immutable execution binding
+and operation receipt. Canonical baseline revision is aggregate.revision, independent
+of feed event revision and local revision. Attempted historical payloads/keys are
+preserved. SQLite v40 adds `ledger_expense_commands`,
+`ledger_expense_canonical_baselines` and immutable `ledger_expense_operation_receipts`.
+Command and receipt rows are retained by maintenance. Historical missing canonical
+bases remain unverified. Hosted Phase 3 migration `20260929000100` is deployed to Dev.
+
+Phase 4 SQLite v41 adds `ledger_expense_conflict_chains` keyed by account/Expense,
+with authoritative metadata and nullable complete chain cache. Digest changes
+invalidate the complete cache; metadata alone cannot close a conflict. Immutable
+`ledger_expense_resolution_receipts` binds each account/resolution operation to the
+validated server response; maintenance retains those referenced queue operations.
+Covered outcomes, original-command receipts, projection and resolution completion
+commit together. Uncovered OPEN conflicts and later user intent remain protected.
+
+Phase 5 adds no SQLite tables/version. Optional displayed-rate binding lives in
+`ledger_expense_commands.intent_json` and immutable bound request/audit JSON. Existing
+operation receipts still own confirmation, and pending acceptance feedback can be
+rehydrated without a new UI state table. Hosted forward migration
+`20260929000200_latest_state_rate_acceptance.sql` adds a service-only compatibility
+helper and narrowly extends the existing transaction admission guard.
+
+Phase 6 adds no SQLite version/table. Hosted migration `20260929000300` adds the
+service-only legacy-no-op evidence predicate and narrowly extends guarded equivalent
+resolution admission; no incident data backfill. Equal-revision local canonical
+metadata accumulates immutable audit IDs and monotonic server timestamps because
+an equivalent closure intentionally does not create a new Expense revision.

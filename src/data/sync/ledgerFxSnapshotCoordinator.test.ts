@@ -57,6 +57,13 @@ describe("FX snapshot refresh", () => {
     expect(mocks.referenceRateSnapshots).not.toHaveBeenCalled();
   });
 
+  it("forces an authenticated latest-state read despite the normal 24-hour cache", async () => {
+    mocks.list.mockResolvedValue(bundle);
+    await refreshLedgerFxSnapshotCache(true);
+    expect(mocks.referenceRateSnapshots).toHaveBeenCalledOnce();
+    expect(mocks.cacheBundle).toHaveBeenCalledWith(bundle);
+  });
+
   it("coalesces a stale account refresh and caches the authenticated bundle once", async () => {
     mocks.list.mockResolvedValue(null);
     await Promise.all([refreshLedgerFxSnapshotCache(), refreshLedgerFxSnapshotCache()]);

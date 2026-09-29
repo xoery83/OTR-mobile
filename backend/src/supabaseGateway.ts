@@ -1,3 +1,8 @@
+import {
+  valuationRebaseEligible,
+  rateBindingMatches,
+  sameRate,
+} from "@/domain/ledger/rateAcceptance";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "node:crypto";
 import { classifyMissingEconomicDate } from "../../src/domain/ledger/economicDateEvidence";
@@ -21,6 +26,10 @@ import {
 import { BackendError, type DevBackendGateway, type StoredCreate } from "./app";
 import type { RateDemandScanResult } from "./rateDemandScanner";
 import type {
+  ExpenseCommandRequest,
+  ExpenseIntentEnvelope,
+  ExpenseConflictChainResolutionRequest,
+  ExpenseConflictChainResponse,
   CreateLedgerCorrectionRequest,
   CreateLedgerExpenseRequest,
   CompleteEconomicDateRequest,
@@ -89,6 +98,16 @@ import {
   sameStage4Expense,
   type Stage4EditableExpense,
 } from "../../src/domain/ledger/conflict";
+import {
+  expensePatchEligibility,
+  sameExpenseValue,
+  utcInstant,
+} from "../../src/domain/ledger/expenseIntent";
+import {
+  expenseConflictChainResponseSchema,
+  expenseConflictChainResolutionResponseSchema,
+  ledgerExpenseMutationResponseSchema,
+} from "../../src/data/api/ledgerMutationContracts";
 import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
 import {
   balancesFromSettlementInputs,
@@ -1331,6 +1350,54 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       wakeForExpense(result);
       await tryEvaluateLedgerReviewV2(service, tripId);
       return result;
+    },
+
+    async executeExpenseCommand(userId, tripId, expenseId, key, input) {
+      const result = ledgerExpenseMutationResponseSchema.parse(
+        await executeExpenseCommand(service, userId, tripId, expenseId, key, input),
+      );
+      const receipt = result.receipt;
+      if (
+        !receipt ||
+        receipt.commandId !== input.envelope.commandId ||
+        receipt.operationId !== input.envelope.commandId ||
+        receipt.idempotencyKey !== key ||
+        receipt.commandType !== input.envelope.patchOrIntent.type ||
+        receipt.intentSequence !== input.envelope.intentSequence ||
+        receipt.expenseId !== result.entity.id ||
+        receipt.canonicalRevision !== result.revision
+      )
+        throw new Error("Typed Expense receipt correlation failed.");
+      wakeForExpense(result);
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      return result;
+    },
+    async readExpenseConflictChain(userId, tripId, expenseId) {
+      return readExpenseConflictChain(service, userId, tripId, expenseId);
+    },
+    async resolveExpenseConflictChain(userId, tripId, expenseId, key, input) {
+      const result = await executeExpenseCommand(
+        service,
+        userId,
+        tripId,
+        expenseId,
+        key,
+        {
+          envelope: resolutionEnvelope(key, input),
+          auditReason: input.reason,
+        },
+        input,
+      );
+      await tryEvaluateLedgerReviewV2(service, tripId);
+      const response = expenseConflictChainResolutionResponseSchema.parse(result);
+      if (
+        response.resolutionReceipt.commandId !== input.commandId ||
+        response.resolutionReceipt.operationId !== input.commandId ||
+        response.resolutionReceipt.commandType !== input.intentType ||
+        response.resolutionReceipt.idempotencyKey !== key
+      )
+        throw new Error("Expense resolution receipt correlation failed.");
+      return response;
     },
 
     async updateLedgerExpense(userId, tripId, expenseId, idempotencyKey, input) {
@@ -2604,6 +2671,12 @@ async function mutateLedgerExpenseAggregate(
       "A finalized settlement protects this mutation.",
     );
   }
+  if (result.error?.message.includes("EXPENSE_DELETED"))
+    throw new BackendError(
+      409,
+      "EXPENSE_DELETED",
+      "Only RESTORE can revive a deleted Expense.",
+    );
   if (result.error) throw new Error("Supabase Dev Ledger mutation failed.");
 
   if (
@@ -3382,7 +3455,7 @@ async function addLedgerPaymentRecord(
   return result.data as typeof response;
 }
 
-async function applyLedgerValuation(
+async function prepareLedgerValuation(
   service: SupabaseClient,
   userId: string,
   tripId: string,
@@ -3390,7 +3463,7 @@ async function applyLedgerValuation(
   idempotencyKey: string,
   input: ApplyLedgerValuationRequest,
   automaticReference = false,
-): Promise<LedgerExpenseMutationResponse> {
+) {
   const current = await readOneExpenseAggregate(service, expenseId);
   if (!current || current.journeyId !== tripId)
     throw new BackendError(404, "ENTITY_NOT_FOUND", "The Ledger expense was not found.");
@@ -3513,6 +3586,27 @@ async function applyLedgerValuation(
         supersedesRateSnapshotId: current.valuation?.rateSnapshotId ?? null,
       }
     : null;
+  return { response, rateSnapshot };
+}
+
+async function applyLedgerValuation(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  idempotencyKey: string,
+  input: ApplyLedgerValuationRequest,
+  automaticReference = false,
+): Promise<LedgerExpenseMutationResponse> {
+  const { response, rateSnapshot } = await prepareLedgerValuation(
+    service,
+    userId,
+    tripId,
+    expenseId,
+    idempotencyKey,
+    input,
+    automaticReference,
+  );
   const result = await service.rpc("ledger_apply_valuation_c", {
     actor_user: userId,
     target_journey: tripId,
@@ -3533,7 +3627,7 @@ async function applyLedgerValuation(
       );
     const canonical = await readOneExpenseAggregate(service, expenseId);
     if (!canonical) throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
-    const submitted = editableExpense(entity);
+    const submitted = editableExpense(response.entity);
     const conflictBody = {
       error: {
         code: "REVISION_CONFLICT",
@@ -3703,6 +3797,463 @@ function mutationResponse(
   };
 }
 
+function resolutionEnvelope(
+  key: string,
+  input: ExpenseConflictChainResolutionRequest,
+): ExpenseIntentEnvelope {
+  return {
+    commandId: input.commandId,
+    intentVersion: 2,
+    intentSequence: 1,
+    predecessorOperationId: null,
+    observedServerRevision: input.observedBaseRevision,
+    observedBase: null,
+    patchOrIntent: input.submittedIntent,
+    causalBaseReceipt: null,
+    boundExecutionRevision: null,
+    idempotencyKey: key,
+  };
+}
+
+function typedExpenseError(message?: string) {
+  if (!message) return;
+  for (const code of [
+    "REVISION_CONFLICT",
+    "CONFLICT_CHAIN_DRIFT",
+    "UNVERIFIED_OBSERVED_BASE",
+    "EXPENSE_DELETED",
+    "TYPED_RESOLUTION_REQUIRED",
+  ])
+    if (message.includes(code))
+      throw new BackendError(
+        409,
+        code,
+        "The command requires refreshed verified evidence.",
+      );
+  if (message.includes("INVALID_") || message.includes("RESOLUTION_REASON_REQUIRED"))
+    throw new BackendError(
+      400,
+      "INVALID_PAYLOAD",
+      "The typed command or covered conflict scope is invalid.",
+    );
+  mapFinancialEvidenceError(message);
+}
+
+export async function readExpenseConflictChain(
+  service: SupabaseClient,
+  _userId: string,
+  tripId: string,
+  expenseId: string,
+): Promise<ExpenseConflictChainResponse> {
+  const current = await readOneExpenseAggregate(service, expenseId);
+  if (!current || current.journeyId !== tripId)
+    throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
+  const result = await service.rpc("ledger_expense_chain_v2", {
+    target_journey: tripId,
+    target_expense: expenseId,
+  });
+  if (result.error) throw new Error("Expense conflict chain read failed.");
+  const chain = result.data as {
+    chainDigest: string;
+    records: {
+      conflictId: string;
+      commandType: string;
+      idempotencyKey: string;
+      lifecycle: string;
+      reason: string | null;
+      operationReceipt?: unknown;
+      body: { error: Record<string, unknown> };
+    }[];
+  };
+  return expenseConflictChainResponseSchema.parse({
+    contractVersion: 2,
+    canonical: current,
+    chainDigest: chain.chainDigest,
+    conflicts: await Promise.all(
+      chain.records.map(async (row) => {
+        const error = row.body.error;
+        const commandType = String(
+          error.commandType ??
+            {
+              UPDATE_EXPENSE: "UPDATE",
+              DELETE_EXPENSE: "DELETE",
+              RESTORE_EXPENSE: "RESTORE",
+              APPLY_VALUATION: "APPLY_VALUATION",
+            }[row.commandType] ??
+            "UPDATE",
+        );
+        let submittedIntent =
+          error.submittedIntent ?? (commandType === "DELETE" ? { type: "DELETE" } : null);
+        let equivalent = false;
+        if (!submittedIntent && commandType === "UPDATE" && error.submitted) {
+          const history = await service
+            .from("expense_revision_evidence")
+            .select("canonical")
+            .eq("expense_id", expenseId)
+            .eq("revision", error.baseRevision)
+            .order("created_at", { ascending: true })
+            .limit(1);
+          if (history.error) throw new Error("Legacy Expense evidence read failed.");
+          const base = history.data?.[0]?.canonical as LedgerExpenseDto | undefined;
+          if (base) {
+            const proof = await service.rpc("ledger_legacy_expense_noop_v2", {
+              historical: base,
+              submitted: error.submitted,
+            });
+            if (proof.error) throw new Error("Legacy Expense equivalence read failed.");
+            equivalent =
+              proof.data === true &&
+              expensePatchEligibility({
+                base: mergeEvidence(base),
+                current: mergeEvidence(current),
+                patch: {},
+                verifiedHistoricalBase: true,
+                deleted: current.businessStatus === "DELETED",
+              }) === "EQUIVALENT";
+            if (equivalent) submittedIntent = { type: "UPDATE", patch: {} };
+          }
+        }
+        return {
+          conflictId: row.conflictId,
+          commandId: error.commandId ?? row.idempotencyKey,
+          idempotencyKey: row.idempotencyKey,
+          commandType,
+          submittedIntent,
+          operationReceipt: row.operationReceipt ?? null,
+          observedBaseRevision: error.baseRevision,
+          currentServerRevision: error.currentRevision,
+          changedGroups: equivalent ? [] : (error.changedGroups ?? []),
+          lifecycle: row.lifecycle,
+          reason:
+            row.reason ??
+            (equivalent
+              ? "VERIFIED_LEGACY_EQUIVALENT"
+              : submittedIntent
+                ? null
+                : "LEGACY_INTENT_REQUIRES_ACTION"),
+        };
+      }),
+    ),
+  });
+}
+
+export async function executeExpenseCommand(
+  service: SupabaseClient,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  key: string,
+  input: ExpenseCommandRequest,
+  resolution: ExpenseConflictChainResolutionRequest | null = null,
+): Promise<unknown> {
+  const envelope = input.envelope;
+  if (envelope.idempotencyKey !== key)
+    throw new BackendError(
+      400,
+      "INVALID_PAYLOAD",
+      "The command key must match its header.",
+    );
+  // Replay before history/quote/head preparation: the original receipt survives later drift.
+  const replay = await service.rpc("ledger_replay_expense_v2", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    envelope_value: envelope,
+    reason_value: input.auditReason,
+    resolution_value: resolution,
+  });
+  typedExpenseError(replay.error?.message);
+  if (replay.data) {
+    if (replay.data.error)
+      throw new BackendError(
+        409,
+        replay.data.error.code,
+        "The typed command remains conflicted.",
+        replay.data,
+      );
+    return replay.data;
+  }
+  const intent = envelope.patchOrIntent;
+  let current: LedgerExpenseDto | null = null;
+  let historical: LedgerExpenseDto | null = null;
+  let eligibility = "DIRECT";
+  let response: LedgerExpenseMutationResponse;
+  let rateSnapshot: unknown = null;
+  if (intent.type === "CREATE") {
+    if (resolution)
+      throw new BackendError(
+        400,
+        "INVALID_PAYLOAD",
+        "CREATE cannot resolve an existing Expense conflict.",
+      );
+    response = buildLedgerExpenseCreateResponse(
+      userId,
+      tripId,
+      { ...intent.expense, localId: envelope.commandId },
+      expenseId,
+    );
+  } else {
+    current = await readOneExpenseAggregate(service, expenseId);
+    if (!current || current.journeyId !== tripId)
+      throw new BackendError(404, "ENTITY_NOT_FOUND", "Expense missing.");
+    const history = await service
+      .from("expense_revision_evidence")
+      .select("canonical")
+      .eq("expense_id", expenseId)
+      .eq("revision", envelope.observedServerRevision)
+      .order("created_at", { ascending: true })
+      .limit(1);
+    if (history.error) throw new Error("Expense historical evidence read failed.");
+    historical = (history.data?.[0]?.canonical as LedgerExpenseDto | undefined) ?? null;
+    // Client observedBase is deliberately never used as merge evidence.
+    const causal = resolution
+      ? { data: null, error: null }
+      : await service.rpc("ledger_expense_causal_base_v2", {
+          actor_user: userId,
+          target_journey: tripId,
+          target_expense: expenseId,
+          envelope_value: envelope,
+        });
+    typedExpenseError(causal.error?.message);
+    const serverBase = (causal.data as LedgerExpenseDto | null) ?? historical;
+    const stale =
+      (serverBase?.revision ?? envelope.observedServerRevision) !== current.revision;
+    if (stale) eligibility = "CONFLICT";
+    response = {
+      entity: current,
+      serverId: current.id,
+      revision: current.revision,
+      updatedAt: current.updatedAt,
+      idempotentReplay: false,
+    };
+    if (intent.type === "UPDATE") {
+      if (serverBase || !stale) {
+        eligibility = expensePatchEligibility({
+          base: mergeEvidence(serverBase ?? current),
+          current: mergeEvidence(current),
+          patch: intent.patch,
+          verifiedHistoricalBase: true,
+          deleted: current.businessStatus === "DELETED",
+        });
+        if (
+          !stale &&
+          !intent.patch.descriptive &&
+          (intent.patch.financial || intent.patch.participantSplit)
+        )
+          eligibility = "DIRECT";
+        else if (
+          !stale &&
+          eligibility === "CONFLICT" &&
+          current.businessStatus !== "DELETED"
+        )
+          eligibility = "DIRECT";
+      }
+      const derivedPatch = !!(intent.patch.financial || intent.patch.participantSplit);
+      if (
+        resolution &&
+        resolution.choice === "APPLY_PATCH" &&
+        !derivedPatch &&
+        stale &&
+        !["DESCRIPTIVE_REBASE", "EQUIVALENT"].includes(eligibility)
+      )
+        throw new BackendError(
+          409,
+          "UNVERIFIED_OBSERVED_BASE",
+          "A descriptive rebase requires compatible server history.",
+        );
+      if (
+        eligibility !== "EQUIVALENT" &&
+        (eligibility !== "CONFLICT" || resolution?.choice === "APPLY_PATCH")
+      ) {
+        const editable = {
+          ...editableExpense(current),
+          ...intent.patch.descriptive,
+          ...intent.patch.financial,
+          participants:
+            intent.patch.participantSplit?.participants ?? current.participants,
+          splits:
+            intent.patch.participantSplit?.splits?.map((split) => ({
+              ...split,
+              settlementMinor: null,
+              roundingAdjustmentMinor: 0,
+            })) ?? current.splits,
+        };
+        if (editable.occurredAt) editable.occurredAt = utcInstant(editable.occurredAt);
+        if (derivedPatch) {
+          editable.valuation = null;
+          editable.businessStatus =
+            current.businessStatus === "DRAFT" ? "DRAFT" : "RATE_REQUIRED";
+          editable.splits = editable.splits.map((split) => ({
+            ...split,
+            settlementMinor: null,
+            roundingAdjustmentMinor: 0,
+          }));
+          if (
+            current.valuation?.policy === "SAME_CURRENCY" &&
+            editable.original.currency === current.valuation.settlement.currency
+          ) {
+            editable.businessStatus = "ACCEPTED";
+            editable.valuation = {
+              policy: "SAME_CURRENCY",
+              original: editable.original,
+              settlement: editable.original,
+              rateSnapshotId: null,
+              paymentRecordId: null,
+              reason: null,
+            };
+            editable.splits = allocateSettlementFromOriginal(
+              editable.original.minor,
+              editable.splits,
+            );
+          }
+        }
+        response = mutationResponse(
+          current,
+          editable,
+          userId,
+          "EDITED",
+          input.auditReason,
+          changedExpenseGroups(editableExpense(current), editable),
+        );
+        if (!derivedPatch) response.entity.valuation = current.valuation;
+      }
+    } else if (intent.type === "APPLY_VALUATION") {
+      const binding = intent.valuation.rateAcceptance;
+      if (binding) {
+        const settings = await service
+          .from("ledger_settings")
+          .select("settlement_currency,settlement_scale")
+          .eq("journey_id", tripId)
+          .single();
+        if (settings.error) throw new Error("Rate acceptance settings read failed.");
+        const valid =
+          intent.valuation.policy === "MANUAL_AGREED" &&
+          sameRate(intent.valuation.manualRate, binding.decimalRate) &&
+          sameExpenseValue(intent.valuation.previewSettlement, binding.settlement) &&
+          rateBindingMatches(
+            binding,
+            current,
+            String(settings.data.settlement_currency),
+            Number(settings.data.settlement_scale),
+          );
+        if (!valid) eligibility = "CONFLICT";
+        else if (
+          stale &&
+          serverBase &&
+          valuationRebaseEligible(
+            mergeEvidence(serverBase),
+            mergeEvidence(current),
+            binding,
+          )
+        )
+          eligibility = "VALUATION_REBASE";
+      }
+      if (
+        (eligibility === "CONFLICT" && !resolution) ||
+        (resolution && resolution.choice !== "APPLY_VALUATION")
+      ) {
+        // Return the current aggregate; SQL records the original immutable intent.
+      } else {
+        const prepared = await prepareLedgerValuation(
+          service,
+          userId,
+          tripId,
+          expenseId,
+          key,
+          { ...intent.valuation, baseRevision: current.revision },
+        );
+        response = prepared.response;
+        rateSnapshot = prepared.rateSnapshot;
+      }
+    } else if (intent.type === "DELETE" || intent.type === "RESTORE") {
+      if (!stale || (resolution && resolution.choice !== "KEEP_SERVER")) {
+        const now = new Date().toISOString();
+        response = {
+          entity: {
+            ...current,
+            businessStatus: intent.type === "DELETE" ? "DELETED" : intent.businessStatus,
+            deletedAt: intent.type === "DELETE" ? now : null,
+            revision: current.revision + 1,
+            updatedAt: now,
+            auditEvents: current.auditEvents.concat({
+              id: randomUUID(),
+              expenseId,
+              actorUserId: userId,
+              actorMemberId: null,
+              eventType: intent.type === "DELETE" ? "DELETED" : "RESTORED",
+              reason: input.auditReason,
+              changedGroups: ["LIFECYCLE"],
+              revision: current.revision + 1,
+              createdAt: now,
+            }),
+          },
+          serverId: expenseId,
+          revision: current.revision + 1,
+          updatedAt: now,
+          idempotentReplay: false,
+        };
+      }
+    }
+    if (
+      resolution?.choice === "KEEP_SERVER" ||
+      resolution?.choice === "ACCEPT_EQUIVALENT"
+    )
+      response = {
+        entity: current,
+        serverId: current.id,
+        revision: current.revision,
+        updatedAt: current.updatedAt,
+        idempotentReplay: false,
+      };
+  }
+  if (eligibility !== "CONFLICT" || resolution)
+    await validateCanonicalExpense(service, tripId, {
+      ...response.entity,
+      status: response.entity.businessStatus,
+    });
+  const result = await service.rpc("ledger_execute_expense_v2", {
+    actor_user: userId,
+    target_journey: tripId,
+    target_expense: expenseId,
+    envelope_value: envelope,
+    reason_value: input.auditReason,
+    prepared_revision: current?.revision ?? 0,
+    historical_base_value: historical,
+    eligibility_value: eligibility,
+    response_body_value: {
+      ...response,
+      ...(current ? { _verifiedCurrent: current } : {}),
+    },
+    rate_snapshot_value: rateSnapshot,
+    resolution_value: resolution,
+  });
+  typedExpenseError(result.error?.message);
+  if (result.data?.error)
+    throw new BackendError(
+      409,
+      result.data.error.code,
+      "The typed command requires conflict resolution.",
+      result.data,
+    );
+  return result.data;
+}
+
+function mergeEvidence(expense: LedgerExpenseDto): Stage4EditableExpense {
+  // Strip identity/volatile derived timestamps, retain the server's provenance proof.
+  const value = editableExpense(expense);
+  return {
+    ...value,
+    splits: expense.splits,
+    valuation: expense.valuation
+      ? {
+          ...value.valuation!,
+          decimalRate: expense.valuation.decimalRate ?? null,
+          referenceEvidence: expense.valuation.referenceEvidence ?? null,
+        }
+      : null,
+  };
+}
+
 async function resolveLedgerExpenseConflict(
   service: SupabaseClient,
   userId: string,
@@ -3794,6 +4345,18 @@ async function resolveLedgerExpenseConflict(
       "Conflict resolution is forbidden.",
     );
   }
+  if (result.error?.message.includes("TYPED_RESOLUTION_REQUIRED"))
+    throw new BackendError(
+      409,
+      "TYPED_RESOLUTION_REQUIRED",
+      "This conflict requires typed chain resolution.",
+    );
+  if (result.error?.message.includes("FINALIZED_SETTLEMENT_PROTECTED"))
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "A finalized settlement protects this resolution.",
+    );
   if (result.error?.message.includes("CONFLICT_NOT_FOUND")) {
     throw new BackendError(404, "ENTITY_NOT_FOUND", "The conflict was not found.");
   }
@@ -5516,6 +6079,16 @@ export async function readAllJourneyExpenses(service: SupabaseClient, tripId: st
   return { data: rows, error: null };
 }
 
+async function readExpenseChainMetadata(service: SupabaseClient, tripId: string) {
+  const result = await service.rpc("ledger_list_expense_chain_metadata_v2", {
+    target_journey: tripId,
+  });
+  if (result.error) throw new Error("Expense conflict metadata read failed.");
+  return (result.data ?? []) as NonNullable<
+    LedgerBootstrapResponse["expenseConflictChains"]
+  >;
+}
+
 async function readLedgerBootstrap(
   service: SupabaseClient,
   tripId: string,
@@ -5620,6 +6193,7 @@ async function readLedgerBootstrap(
     await readFinalizedSettlements(service, tripId),
   );
   const review = await readLedgerReviewData(service, tripId, userId);
+  const expenseConflictChains = await readExpenseChainMetadata(service, tripId);
   const lastSequence = await latestLedgerSequence(service, tripId);
   const finalSettings = await service
     .from("ledger_settings")
@@ -5645,6 +6219,7 @@ async function readLedgerBootstrap(
     actorRow?.status === null || !actorRow ? null : String(actorRow.status);
 
   return {
+    expenseConflictChains,
     journey: {
       id: tripId,
       title: String(tripRow?.name ?? "Journey"),
@@ -5793,7 +6368,7 @@ async function readLedgerChanges(
     );
   });
   const expenseIds = rows
-    .filter((row) => row.entity_type === "EXPENSE" && !row.is_tombstone)
+    .filter((row) => row.entity_type === "EXPENSE")
     .map((row) => String(row.entity_id));
   const hasExpenseChanges = rows.some((row) => row.entity_type === "EXPENSE");
   const householdIds = rows
@@ -5972,6 +6547,7 @@ async function readLedgerChanges(
 
   const review = await readLedgerReviewData(service, tripId, userId);
   return {
+    expenseConflictChains: await readExpenseChainMetadata(service, tripId),
     reviewFindings: review.findings,
     reviewActions: review.actions,
     changes,

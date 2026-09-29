@@ -302,7 +302,10 @@ async function wakeCompletedDependencies(
        AND EXISTS (SELECT 1 FROM sync_operations dependency
          WHERE dependency.id = sync_operations.dependency_operation_id
            AND dependency.owner_user_id = sync_operations.owner_user_id
-           AND dependency.status = 'COMPLETED')`,
+           AND dependency.status = 'COMPLETED'
+           AND (NOT EXISTS (SELECT 1 FROM ledger_expense_commands command WHERE command.operation_id = dependency.id)
+             OR EXISTS (SELECT 1 FROM ledger_expense_operation_receipts receipt WHERE receipt.account_id = dependency.owner_user_id
+               AND receipt.operation_id = dependency.id AND json_extract(receipt.receipt_json, '$.disposition') = 'APPLIED')))`,
     new Date().toISOString(),
     userId,
     completedId ?? null,

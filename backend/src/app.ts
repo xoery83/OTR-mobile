@@ -9,6 +9,12 @@ import {
   type CreateSyncResponse,
 } from "../../src/data/api/devSyncContracts";
 import {
+  expenseCommandRequestSchema,
+  expenseConflictChainResolutionRequestSchema,
+  type ExpenseCommandRequest,
+  type ExpenseConflictChainResponse,
+  type ExpenseConflictChainResolutionRequest,
+  type ExpenseConflictChainResolutionResponse,
   createLedgerCorrectionRequestSchema,
   createLedgerPaymentRecordRequestSchema,
   applyLedgerValuationRequestSchema,
@@ -330,6 +336,25 @@ export type DevBackendGateway = {
     operationId: string,
     input: DeletePersonalSettlementPaymentRequest,
   ): Promise<PersonalSettlementPaymentMutationResponse>;
+  executeExpenseCommand(
+    userId: string,
+    tripId: string,
+    expenseId: string,
+    key: string,
+    input: ExpenseCommandRequest,
+  ): Promise<LedgerExpenseMutationResponse>;
+  readExpenseConflictChain(
+    userId: string,
+    tripId: string,
+    expenseId: string,
+  ): Promise<ExpenseConflictChainResponse>;
+  resolveExpenseConflictChain(
+    userId: string,
+    tripId: string,
+    expenseId: string,
+    key: string,
+    input: ExpenseConflictChainResolutionRequest,
+  ): Promise<ExpenseConflictChainResolutionResponse>;
   createLedgerExpense(
     userId: string,
     tripId: string,
@@ -917,6 +942,35 @@ async function createEntity(
   return json(201, createResponse(stored, false));
 }
 
+function isTypedCommandBody(body: unknown): boolean {
+  return !!body && typeof body === "object" && "envelope" in body;
+}
+async function executeTypedExpense(
+  gateway: DevBackendGateway,
+  userId: string,
+  tripId: string,
+  expenseId: string,
+  key: string,
+  body: unknown,
+  expectedType: ExpenseCommandRequest["envelope"]["patchOrIntent"]["type"],
+) {
+  const parsed = expenseCommandRequestSchema.safeParse(body);
+  if (
+    !parsed.success ||
+    parsed.data.envelope.idempotencyKey !== key ||
+    parsed.data.envelope.patchOrIntent.type !== expectedType
+  )
+    throw new HttpError(
+      400,
+      "INVALID_PAYLOAD",
+      "A matching typed intent and idempotency key are required.",
+    );
+  return json(
+    200,
+    await gateway.executeExpenseCommand(userId, tripId, expenseId, key, parsed.data),
+  );
+}
+
 async function createLedgerExpense(request: Request, gateway: DevBackendGateway) {
   const url = new URL(request.url);
   const match = url.pathname.match(/^\/v2\/trips\/([^/]+)\/expenses$/);
@@ -925,6 +979,21 @@ async function createLedgerExpense(request: Request, gateway: DevBackendGateway)
   const [, tripId] = match;
   const user = await authenticate(request, gateway);
   const input = await parseBody(request);
+  if (isTypedCommandBody(input)) {
+    assertTripId(tripId);
+    if (!(await gateway.canWriteTrip(user.id, tripId)))
+      throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
+    const key = getIdempotencyKey(request);
+    return executeTypedExpense(
+      gateway,
+      user.id,
+      tripId,
+      deriveServerId(user.id, "expense", `ledger-v2:${tripId}:${key}`),
+      key,
+      input,
+      "CREATE",
+    );
+  }
   const parsed = createLedgerExpenseRequestSchema.safeParse(input);
   if (!parsed.success) {
     throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
@@ -957,6 +1026,24 @@ async function mutateLedgerExpense(request: Request, gateway: DevBackendGateway)
   }
 
   const input = await parseBody(request);
+  if (isTypedCommandBody(input)) {
+    const user = await authenticate(request, gateway);
+    if (!(await gateway.canWriteTrip(user.id, tripId)))
+      throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
+    return executeTypedExpense(
+      gateway,
+      user.id,
+      tripId,
+      expenseId,
+      getIdempotencyKey(request),
+      input,
+      request.method === "PUT"
+        ? "UPDATE"
+        : request.method === "DELETE"
+          ? "DELETE"
+          : "RESTORE",
+    );
+  }
   const parsed =
     request.method === "PUT"
       ? updateLedgerExpenseRequestSchema.safeParse(input)
@@ -1041,6 +1128,18 @@ async function completeLedgerEconomicDate(request: Request, gateway: DevBackendG
   );
 }
 
+async function readExpenseConflicts(request: Request, gateway: DevBackendGateway) {
+  const match = new URL(request.url).pathname.match(
+    /^\/v2\/trips\/([^/]+)\/expenses\/([^/]+)\/conflicts$/,
+  );
+  if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
+  const [, tripId, expenseId] = match;
+  if (!uuidPattern.test(expenseId))
+    throw new HttpError(400, "INVALID_EXPENSE_ID", "The expense id is invalid.");
+  const user = await authorizeRead(request, gateway, tripId);
+  return json(200, await gateway.readExpenseConflictChain(user.id, tripId, expenseId));
+}
+
 async function resolveLedgerExpenseConflict(
   request: Request,
   gateway: DevBackendGateway,
@@ -1054,9 +1153,35 @@ async function resolveLedgerExpenseConflict(
   if (!uuidPattern.test(expenseId)) {
     throw new HttpError(400, "INVALID_EXPENSE_ID", "The expense id is invalid.");
   }
-  const parsed = resolveLedgerExpenseConflictRequestSchema.safeParse(
-    await parseBody(request),
-  );
+  const body = await parseBody(request);
+  if (
+    body &&
+    typeof body === "object" &&
+    "contractVersion" in body &&
+    body.contractVersion === 2
+  ) {
+    const parsed = expenseConflictChainResolutionRequestSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpError(
+        400,
+        "INVALID_PAYLOAD",
+        "A valid typed chain resolution is required.",
+      );
+    const user = await authenticate(request, gateway);
+    if (!(await gateway.canWriteTrip(user.id, tripId)))
+      throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
+    return json(
+      200,
+      await gateway.resolveExpenseConflictChain(
+        user.id,
+        tripId,
+        expenseId,
+        getIdempotencyKey(request),
+        parsed.data,
+      ),
+    );
+  }
+  const parsed = resolveLedgerExpenseConflictRequestSchema.safeParse(body);
   if (!parsed.success) {
     throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
   }
@@ -1181,6 +1306,16 @@ async function createLedgerEvidence(request: Request, gateway: DevBackendGateway
     );
     return json(response.idempotentReplay ? 200 : 201, response);
   }
+  if (isTypedCommandBody(body))
+    return executeTypedExpense(
+      gateway,
+      user.id,
+      tripId,
+      expenseId,
+      idempotencyKey,
+      body,
+      "APPLY_VALUATION",
+    );
   const parsed = applyLedgerValuationRequestSchema.safeParse(body);
   if (!parsed.success)
     throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
@@ -1953,6 +2088,12 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/expenses/:expenseId/economic-date";
         response = await completeLedgerEconomicDate(request, gateway);
+      } else if (
+        request.method === "GET" &&
+        /\/expenses\/[^/]+\/conflicts$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/expenses/:expenseId/conflicts";
+        response = await readExpenseConflicts(request, gateway);
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
         route = redactLogRoute(url.pathname);
         response = await readEntity(request, gateway, (userId, period, from, to) =>

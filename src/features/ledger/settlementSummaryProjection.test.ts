@@ -444,3 +444,12 @@ describe("Settlement Summary projection", () => {
     });
   });
 });
+
+it("keeps local FX blockers for added and changed expenses when a fresh preview is unavailable", () => {
+  expect(
+    settlementReviewBlockers(
+      [{ expenseId: "server", change: "ADDED" }],
+      [{ id: "local", serverId: "server", status: "RATE_REQUIRED" }],
+    ),
+  ).toEqual([{ expenseId: "server", reason: "RATE_REQUIRED" }]);
+});
