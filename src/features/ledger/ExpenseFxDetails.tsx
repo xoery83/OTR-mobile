@@ -24,6 +24,7 @@ import { previewValuation } from "@/domain/ledger/valuation";
 import { formatLedgerMoney, formatLedgerRate } from "./format";
 import type { DisplayEstimate } from "./displayEstimate";
 import { proposedExpenseDate } from "./expenseDraft";
+import { contentVisual as cv } from "./contentVisual";
 import {
   eligibleExpenseQuote,
   expenseValuationMethod,
@@ -87,6 +88,8 @@ export function ExpenseFxDetails({
     estimate && "decimalRate" in estimate && typeof estimate.decimalRate === "string"
       ? estimate.decimalRate
       : quotes.find((item) => item.id === estimate?.quoteId)?.decimalRate;
+  const referenceDate =
+    valuation?.referenceEvidence?.referenceDate ?? estimate?.referenceDate;
   const payments = expense.paymentRecords.filter(
     (record) =>
       record.posted?.currency === currency &&
@@ -245,120 +248,127 @@ export function ExpenseFxDetails({
                 automaticallyAdjustKeyboardInsets
                 contentContainerStyle={styles.details}
               >
-                {crossCurrency &&
-                !valuation &&
-                expense.status === "RATE_REQUIRED" &&
-                proposedExpenseDate(expense) ? (
-                  <Text style={styles.meta}>
-                    {fxStatus(expense, chinese, policy, blocked, Boolean(estimate))}
+                <View style={styles.summaryCard}>
+                  <Text style={styles.eyebrow}>
+                    {valuation
+                      ? label("JOURNEY VALUE", "旅行估值")
+                      : label("ESTIMATED VALUE", "预估金额")}
                   </Text>
-                ) : null}
-                {crossCurrency &&
-                !valuation &&
-                estimate &&
-                expense.syncStatus === "SYNCED" &&
-                expense.economicDate === new Date().toISOString().slice(0, 10) ? (
-                  <Text style={styles.meta}>
-                    {label("Reference rate not published yet", "当日参考汇率尚未发布")}
-                  </Text>
-                ) : null}
-
-                <Text style={styles.meta}>
-                  {valuation
-                    ? label("Current", "当前")
-                    : label("Expected method", "预计方式")}
-                  :{" "}
-                  {policy === "REFERENCE_RATE"
-                    ? label("Reference rate", "参考汇率")
-                    : policy === "MANUAL_AGREED"
-                      ? label("Agreed rate", "约定汇率")
-                      : policy === "ACTUAL_PAYER_COST"
-                        ? label("Actual payer cost", "实际付款金额")
-                        : label("Needs review", "待处理")}
-                </Text>
-                {!valuation && estimate?.referenceDate ? (
-                  <Text style={styles.meta}>
-                    {label(
-                      "Estimated using ECB reference rates from",
-                      "预估采用的 ECB 参考汇率日期",
-                    )}
-                    : {fullDate(estimate.referenceDate, chinese)}
-                  </Text>
-                ) : null}
-                {!valuation && estimatedRate ? (
-                  <Text style={styles.meta}>
-                    1 {expense.original.currency} = {formatLedgerRate(estimatedRate)}{" "}
-                    {currency}
-                  </Text>
-                ) : null}
-                {!valuation && estimate ? (
-                  <Text style={styles.meta}>
-                    {label(
-                      "≈ is a display estimate, not a recorded Journey value.",
-                      "≈ 表示展示预估，尚未记录为旅行估值。",
-                    )}
-                    {estimate.referenceDate &&
-                    estimate.referenceDate !== expense.economicDate
-                      ? label(
-                          " The cached reference rate is from an earlier date.",
-                          " 当前采用较早日期的缓存参考汇率。",
+                  <Text style={styles.summaryValue}>
+                    {valuation
+                      ? formatLedgerMoney(
+                          valuation.settlement.minor,
+                          valuation.settlement.currency,
+                          valuation.settlement.scale,
                         )
-                      : ""}
+                      : estimate
+                        ? `≈ ${formatLedgerMoney(estimate.money.minor, currency, scale)}`
+                        : `${currency}—`}
                   </Text>
-                ) : null}
-                {valuation ? (
-                  <>
-                    <Text style={styles.meta}>
-                      {label("Journey value", "旅行估值")}:{" "}
-                      {formatLedgerMoney(
-                        valuation.settlement.minor,
-                        valuation.settlement.currency,
-                        valuation.settlement.scale,
+                  <Text style={styles.meta}>
+                    {policy === "REFERENCE_RATE"
+                      ? label("Reference rate", "参考汇率")
+                      : policy === "MANUAL_AGREED"
+                        ? label("Agreed rate", "约定汇率")
+                        : policy === "ACTUAL_PAYER_COST"
+                          ? label("Actual payer cost", "实际付款金额")
+                          : label("Needs review", "待处理")}
+                  </Text>
+                  {!valuation && estimate ? (
+                    <Text style={styles.caption}>
+                      {label(
+                        "Display estimate · not a recorded Journey value",
+                        "仅供展示的预估 · 尚未记录为旅行估值",
                       )}
                     </Text>
-                    {valuation.decimalRate ? (
-                      <Text style={styles.meta}>
-                        1 {valuation.original.currency} ={" "}
-                        {formatLedgerRate(valuation.decimalRate)}{" "}
-                        {valuation.settlement.currency}
-                      </Text>
+                  ) : null}
+                  {!valuation &&
+                  expense.status === "RATE_REQUIRED" &&
+                  proposedExpenseDate(expense) ? (
+                    <Text style={styles.caption}>
+                      {fxStatus(expense, chinese, policy, blocked, Boolean(estimate))}
+                    </Text>
+                  ) : null}
+                  {!valuation &&
+                  estimate &&
+                  expense.syncStatus === "SYNCED" &&
+                  expense.economicDate === new Date().toISOString().slice(0, 10) ? (
+                    <Text style={styles.caption}>
+                      {label("Reference rate not published yet", "当日参考汇率尚未发布")}
+                    </Text>
+                  ) : null}
+                </View>
+                {valuation?.decimalRate || estimatedRate ? (
+                  <View style={styles.infoCard}>
+                    <Text style={styles.cardTitle}>
+                      {label("Exchange rate", "换算汇率")}
+                    </Text>
+                    <Text style={styles.rateText}>
+                      1 {expense.original.currency} ={" "}
+                      {formatLedgerRate(valuation?.decimalRate ?? estimatedRate!)}{" "}
+                      {currency}
+                    </Text>
+                  </View>
+                ) : null}
+                {referenceDate ? (
+                  <View style={styles.infoCard}>
+                    <Text style={styles.cardTitle}>
+                      {label("Rate source", "汇率依据")}
+                    </Text>
+                    {valuation?.referenceEvidence ? (
+                      <DetailRow
+                        label={label("Expense date", "消费日期")}
+                        value={fullDate(
+                          valuation.referenceEvidence.economicDate,
+                          chinese,
+                        )}
+                      />
                     ) : null}
-                    {valuation.reason ? (
-                      <Text style={styles.meta}>
-                        {label("Reason", "原因")}: {valuation.reason}
-                      </Text>
-                    ) : null}
-                    {valuation.referenceEvidence ? (
-                      <>
-                        <Text style={styles.meta}>
-                          {label("Expense date", "消费日期")}:{" "}
-                          {fullDate(valuation.referenceEvidence.economicDate, chinese)}
-                        </Text>
-                        <Text style={styles.meta}>
-                          {label("Reference rate date", "参考汇率日期")}:{" "}
-                          {fullDate(valuation.referenceEvidence.referenceDate, chinese)}
-                        </Text>
-                        <Text style={styles.meta}>
-                          {label("Reference rate source", "参考汇率来源")}:{" "}
-                          {label("European Central Bank", "欧洲中央银行")}
-                        </Text>
-                        <Text style={styles.meta}>
-                          {label(
-                            "Delivered via Frankfurter. Reference rates are for valuation, not proof of card or bank cost.",
-                            "由 Frankfurter 提供数据。参考汇率用于估值，不代表银行卡或银行的实际付款汇率。",
-                          )}
-                        </Text>
-                      </>
-                    ) : null}
-                    {valuation.policy === "ACTUAL_PAYER_COST" ? (
-                      <Text style={styles.meta}>
+                    <DetailRow
+                      label={label("Rate date", "汇率日期")}
+                      value={fullDate(referenceDate, chinese)}
+                    />
+                    <DetailRow
+                      label={label("Source", "来源")}
+                      value={label(
+                        "European Central Bank · via Frankfurter",
+                        "欧洲中央银行 · 经 Frankfurter 提供",
+                      )}
+                    />
+                    {estimate?.referenceDate &&
+                    estimate.referenceDate !== expense.economicDate ? (
+                      <Text style={styles.caption}>
                         {label(
-                          "This reflects posted payer evidence, not a market exchange rate.",
-                          "此金额来自付款人入账凭证，并非市场汇率。",
+                          "Using the latest cached rate available for this date.",
+                          "使用该日期可用的最新缓存汇率。",
                         )}
                       </Text>
                     ) : null}
-                  </>
+                    <Text style={styles.caption}>
+                      {label(
+                        "Reference rates estimate value; they do not prove card or bank cost.",
+                        "参考汇率仅用于估值，不代表银行卡或银行的实际付款金额。",
+                      )}
+                    </Text>
+                  </View>
+                ) : null}
+                {valuation?.reason &&
+                !(
+                  valuation.referenceEvidence &&
+                  valuation.reason.startsWith("Accepted cached ECB reference rate dated ")
+                ) ? (
+                  <View style={styles.infoCard}>
+                    <Text style={styles.cardTitle}>{label("Note", "说明")}</Text>
+                    <Text style={styles.meta}>{valuation.reason}</Text>
+                  </View>
+                ) : null}
+                {valuation?.policy === "ACTUAL_PAYER_COST" ? (
+                  <Text style={styles.caption}>
+                    {label(
+                      "Based on posted payer evidence, not a market exchange rate.",
+                      "依据付款人的入账凭证，而非市场汇率。",
+                    )}
+                  </Text>
                 ) : null}
                 {locked ? (
                   <Text style={styles.meta}>
@@ -373,17 +383,20 @@ export function ExpenseFxDetails({
                   </Text>
                 ) : null}
                 {editable ? (
-                  <>
+                  <View style={styles.actions}>
+                    <Text style={styles.cardTitle}>
+                      {label("Change Journey value", "更改旅行估值")}
+                    </Text>
                     {!manual ? (
                       <Pressable
                         accessibilityRole="button"
-                        style={styles.action}
+                        style={styles.primaryAction}
                         onPress={() => {
                           setManual(true);
                           setError(null);
                         }}
                       >
-                        <Text style={styles.actionText}>
+                        <Text style={styles.primaryActionText}>
                           {valuation?.policy === "MANUAL_AGREED"
                             ? label("Edit agreed rate", "修改约定汇率")
                             : label("Use agreed rate", "使用约定汇率")}
@@ -411,10 +424,10 @@ export function ExpenseFxDetails({
                         />
                         <Pressable
                           accessibilityRole="button"
-                          style={styles.action}
+                          style={styles.primaryAction}
                           onPress={manualPreview}
                         >
-                          <Text style={styles.actionText}>
+                          <Text style={styles.primaryActionText}>
                             {label("Preview agreed rate", "预览约定汇率")}
                           </Text>
                         </Pressable>
@@ -424,7 +437,7 @@ export function ExpenseFxDetails({
                       <Pressable
                         key={payment.id}
                         accessibilityRole="button"
-                        style={styles.action}
+                        style={styles.secondaryAction}
                         onPress={() =>
                           submit(
                             { policy: "ACTUAL_PAYER_COST", paymentRecordId: payment.id },
@@ -433,7 +446,7 @@ export function ExpenseFxDetails({
                           )
                         }
                       >
-                        <Text style={styles.actionText}>
+                        <Text style={styles.secondaryActionText}>
                           {label("Use actual payer cost", "使用实际付款金额")} ·{" "}
                           {formatLedgerMoney(payment.posted!.minor, currency, scale)}
                         </Text>
@@ -442,7 +455,7 @@ export function ExpenseFxDetails({
                     {quote && valuation && valuation.policy !== "REFERENCE_RATE" ? (
                       <Pressable
                         accessibilityRole="button"
-                        style={styles.action}
+                        style={styles.secondaryAction}
                         onPress={() => {
                           const result = previewValuation({
                             policy: "REFERENCE_RATE",
@@ -462,12 +475,12 @@ export function ExpenseFxDetails({
                           );
                         }}
                       >
-                        <Text style={styles.actionText}>
+                        <Text style={styles.secondaryActionText}>
                           {label("Use reference rate", "使用参考汇率")}
                         </Text>
                       </Pressable>
                     ) : null}
-                  </>
+                  </View>
                 ) : null}
                 {busy ? (
                   <ActivityIndicator
@@ -536,6 +549,15 @@ export function ExpenseFxDetails({
   );
 }
 
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailRow}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   section: { flexShrink: 1, gap: 4 },
   overlay: {
@@ -554,7 +576,7 @@ const styles = StyleSheet.create({
   valueRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   label: { color: "#64748B", fontSize: 12, fontWeight: "700" },
   value: {
-    color: "#475569",
+    color: cv.color.accent,
     fontSize: 20,
     lineHeight: 44,
     fontWeight: "700",
@@ -562,20 +584,65 @@ const styles = StyleSheet.create({
   },
   meta: { color: "#475569", fontSize: 14, lineHeight: 21 },
   details: {
-    gap: 9,
+    gap: 14,
     borderTopColor: "#E5E7EB",
     borderTopWidth: StyleSheet.hairlineWidth,
+    backgroundColor: cv.color.page,
     padding: 16,
     paddingBottom: 40,
   },
-  action: {
-    minHeight: 44,
-    justifyContent: "center",
-    padding: 10,
-    backgroundColor: "#CCFBF1",
-    borderRadius: 9,
+  summaryCard: {
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
+    gap: 5,
+    padding: 16,
   },
-  actionText: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
+  eyebrow: {
+    color: cv.color.secondary,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+  },
+  summaryValue: { color: cv.color.accent, fontSize: 28, fontWeight: "700" },
+  infoCard: {
+    backgroundColor: cv.color.card,
+    borderRadius: cv.radius.card,
+    gap: 10,
+    padding: 16,
+  },
+  cardTitle: { color: cv.color.text, fontSize: 15, fontWeight: "700" },
+  rateText: { color: cv.color.text, fontSize: 17, fontWeight: "600" },
+  detailRow: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
+  detailLabel: { color: cv.color.secondary, fontSize: 13, flexShrink: 1 },
+  detailValue: {
+    color: cv.color.text,
+    fontSize: 13,
+    fontWeight: "600",
+    flexShrink: 1,
+    textAlign: "right",
+  },
+  caption: { color: cv.color.secondary, fontSize: 12, lineHeight: 18 },
+  actions: { gap: 10, marginTop: 4 },
+  primaryAction: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    backgroundColor: cv.color.accent,
+    borderRadius: cv.radius.control,
+  },
+  primaryActionText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+  secondaryAction: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    backgroundColor: cv.color.card,
+    borderColor: cv.color.accent,
+    borderWidth: 1,
+    borderRadius: cv.radius.control,
+  },
+  secondaryActionText: { color: cv.color.accent, fontSize: 15, fontWeight: "700" },
   detailsToggle: {
     minHeight: 44,
     minWidth: 32,

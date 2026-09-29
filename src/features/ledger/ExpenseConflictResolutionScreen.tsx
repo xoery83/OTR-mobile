@@ -115,7 +115,7 @@ export function ExpenseConflictResolutionScreen() {
           const [cache, last, locked, actor, options] = await Promise.all([
             repository.readCached(id),
             repository.getResolutionResult(id),
-            settlements.isExpenseFinalized(expense.journeyId, id),
+            settlements.isExpenseFinalized(expense.journeyId, id, expense.serverId),
             reporting.getActorContext(expense.journeyId),
             reporting.listFilterOptions(expense.journeyId),
           ]);

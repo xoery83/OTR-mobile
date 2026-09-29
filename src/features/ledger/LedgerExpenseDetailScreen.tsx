@@ -110,7 +110,11 @@ export function LedgerExpenseDetailScreen() {
                 repository.listJourneys(),
               ),
               getDefaultLedgerSettlementRepository().then((repository) =>
-                repository.isExpenseFinalized(nextExpense.journeyId, nextExpense.id),
+                repository.isExpenseFinalized(
+                  nextExpense.journeyId,
+                  nextExpense.id,
+                  nextExpense.serverId,
+                ),
               ),
               getDefaultLedgerReviewRepository().then((repository) =>
                 repository.list(nextExpense.journeyId),

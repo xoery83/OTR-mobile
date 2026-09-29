@@ -57,10 +57,13 @@ export function useReceiptCapture() {
         const actor = await (
           await getDefaultLedgerReportingRepository()
         ).getActorContext(journeyId);
-        const locked = params.expenseId
+        const expense = params.expenseId
+          ? await (await getDefaultLedgerExpenseRepository()).getExpense(params.expenseId)
+          : null;
+        const locked = expense
           ? await (
               await getDefaultLedgerSettlementRepository()
-            ).isExpenseFinalized(journeyId, params.expenseId)
+            ).isExpenseFinalized(journeyId, expense.id, expense.serverId)
           : false;
         if (!canEditLedgerExpense(actor?.role, locked))
           throw new Error("Expense attachment write access is required.");

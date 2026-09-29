@@ -53,27 +53,34 @@ describe("Stage 7.1 Settlement repository", () => {
   const activeUser = async () => "user-a";
 
   it("locks only Expenses present in accessible finalized inputs", async () => {
-    const getFirstAsync = vi.fn(
-      async (_sql: string, _journey: string, expenseId: string) =>
-        expenseId === "frozen" ? { found: 1 } : null,
-    );
+    const sqlite = new DatabaseSync(":memory:");
+    sqlite.exec(`
+      CREATE TABLE ledger_actor_context (journey_id TEXT, user_id TEXT);
+      CREATE TABLE ledger_settlements (id TEXT, journey_id TEXT, status TEXT);
+      CREATE TABLE ledger_settlement_inputs (settlement_id TEXT, expense_id TEXT);
+      INSERT INTO ledger_actor_context VALUES ('journey', 'user-a');
+      INSERT INTO ledger_settlements VALUES ('confirmed', 'journey', 'FINALIZED');
+      INSERT INTO ledger_settlements VALUES ('draft', 'journey', 'DRAFT');
+      INSERT INTO ledger_settlement_inputs VALUES ('confirmed', 'server-frozen');
+      INSERT INTO ledger_settlement_inputs VALUES ('draft', 'draft-only');
+    `);
     const repository = createLedgerSettlementRepository(
       {
-        getFirstAsync,
+        getFirstAsync: async (sql: string, ...params: unknown[]) =>
+          sqlite.prepare(sql).get(...(params as [])),
         getAllAsync: vi.fn(),
         runAsync: vi.fn(),
         withTransactionAsync: vi.fn(),
       } as never,
       activeUser,
     );
-    expect(await repository.isExpenseFinalized("journey", "frozen")).toBe(true);
-    expect(await repository.isExpenseFinalized("journey", "new")).toBe(false);
-    expect(getFirstAsync).toHaveBeenCalledWith(
-      expect.stringContaining("ledger_settlement_inputs"),
-      "journey",
-      "frozen",
-      "user-a",
+    expect(await repository.isExpenseFinalized("journey", "server-frozen")).toBe(true);
+    expect(await repository.isExpenseFinalized("journey", "local", "server-frozen")).toBe(
+      true,
     );
+    expect(await repository.isExpenseFinalized("journey", "new")).toBe(false);
+    expect(await repository.isExpenseFinalized("journey", "draft-only")).toBe(false);
+    sqlite.close();
   });
 
   it("stores one immutable aggregate transaction and checks the financial queue", async () => {

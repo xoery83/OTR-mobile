@@ -2071,7 +2071,7 @@ async function loadEntry(
     !correction &&
     (await (
       await getDefaultLedgerSettlementRepository()
-    ).isExpenseFinalized(id, existing.id))
+    ).isExpenseFinalized(id, existing.id, existing.serverId))
   )
     throw new Error("This Expense belongs to a completed settlement and is read-only.");
   const receipts = existing
