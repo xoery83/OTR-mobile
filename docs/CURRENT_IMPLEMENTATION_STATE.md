@@ -2,6 +2,18 @@
 
 Date: 2026-09-30
 
+## Expense inclusion sync and Settlement pending changes — Dev deployed, device verification pending
+
+- Commit `f7f3dd4` starts Expense and other Ledger sync workers alongside Personal Payment sync, preserves accepted valuation/splits for participation-only edits, and keeps pending local Settlement changes visible. No Production changes.
+- Hosted Dev migration `20260930000100_expense_participation_preserve_valuation.sql` and backend are deployed and healthy. A signed Release build from the isolated commit was installed over the existing App on the connected iPhone without clearing its data.
+- Isolated typecheck, 49 focused tests, and a rollback-only 63-assertion SQL probe pass. The device is currently locked/black in remote capture; server Expense `f7cbfdfe-9863-4c07-90ef-0b72ec1b4a3b` remains revision 4 / EXCLUDED. Recheck after the user opens the App, then inspect local operation state if it still does not send. Do not claim the reported record has synced yet.
+
+## Settlement Paid category and search polish — Simulator PASS
+
+- Paid now follows the Shares category layout: selected payer's Expense count, a compact three-row recent preview, and light category/all-expenses links. The organizer's member selector updates the totals, counts and action wording.
+- Paid search fixes the selected payer while allowing other filters, includes Expenses the payer paid without taking a split, and shows each full paid amount in the Trip settlement currency. Empty Paid/Shares totals use that currency too. Confirmed Final links explicitly open current expenses.
+- iPhone 17 Pro Simulator Release visual review covered Paid collapsed/expanded cards, mixed currencies, long titles, member switching and category search. Focused reporting tests, TypeScript and scoped lint pass. No schema, API, sync or dependency changes.
+
 ## Settlement Shares category and search polish — Simulator PASS
 
 - Shares category cards show the selected member's positive-share Expense count. Expanded cards use the Analysis-style compact three-row preview, sorted by Expense date, with a light category search link. The bottom action is a light `View all my expenses` link and follows organizer member selection.
