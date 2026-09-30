@@ -21,6 +21,7 @@ import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLe
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
+import type { ExpenseOperationResult } from "@/data/api/ledgerMutationContracts";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 
 import { resolveReceiptAssetUri } from "@/data/operations/openReceiptAsset";
@@ -47,6 +48,10 @@ export function LedgerExpenseDetailScreen() {
   const largeText = useWindowDimensions().fontScale > 2;
   const { id } = useLocalSearchParams<{ id: string }>();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
+  const [syncResult, setSyncResult] = useState<ExpenseOperationResult | null>(null);
+  const [blockingResult, setBlockingResult] = useState<ExpenseOperationResult | null>(
+    null,
+  );
   const [payerName, setPayerName] = useState("Traveller");
   const [receipts, setReceipts] = useState<ReceiptAsset[]>([]);
   const [attachmentMessage, setAttachmentMessage] = useState<string | null>(null);
@@ -225,14 +230,26 @@ export function LedgerExpenseDetailScreen() {
   useEffect(() => {
     if (!watchedExpenseId || watchedSyncStatus === "SYNCED") return;
     let active = true;
-    const timer = setInterval(() => {
+    const refresh = () => {
       void getDefaultLedgerExpenseRepository()
-        .then((repository) => repository.getExpense(watchedExpenseId))
-        .then((updated) => {
-          if (active && updated) setExpense(updated);
+        .then(async (repository) => {
+          const [updated, result] = await Promise.all([
+            repository.getExpense(watchedExpenseId),
+            repository.getLatestOperationResult(watchedExpenseId),
+          ]);
+          const blocker = result?.blockingOperationId
+            ? await repository.getOperationResult(result.blockingOperationId)
+            : null;
+          if (active) {
+            if (updated) setExpense(updated);
+            setSyncResult(result);
+            setBlockingResult(blocker);
+          }
         })
         .catch(() => undefined);
-    }, 3000);
+    };
+    refresh();
+    const timer = setInterval(refresh, 3000);
     return () => {
       active = false;
       clearInterval(timer);
@@ -411,6 +428,19 @@ export function LedgerExpenseDetailScreen() {
             {chinese
               ? "历史结算已完成 · 历史版本只读"
               : "Historical settlement completed · earlier version read-only"}
+          </Text>
+        ) : null}
+        {expense.syncStatus !== "SYNCED" && syncResult ? (
+          <Text accessibilityLiveRegion="polite" style={styles.syncNotice}>
+            {syncResult.state === "TERMINAL_FAILURE" ||
+            syncResult.state === "CONFLICT_REQUIRES_ACTION"
+              ? "This change needs attention"
+              : "Saved on this iPhone · Waiting for sync"}
+            {blockingResult?.error?.code
+              ? ` · Earlier change: ${blockingResult.error.code}`
+              : syncResult.error?.code
+                ? ` · ${syncResult.error.code}`
+                : null}
           </Text>
         ) : null}
         {excluded && warning ? (
@@ -660,6 +690,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
+  syncNotice: { color: "#7C5B00", fontSize: 12, lineHeight: 18 },
   warning: { backgroundColor: "#FFF7DB", borderRadius: 10, gap: 4, padding: 13 },
   warningTitle: { color: "#7C5B00", fontWeight: "700" },
   section: {
