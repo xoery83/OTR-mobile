@@ -178,6 +178,7 @@ export function ExpenseConflictResolutionScreen() {
     : null;
   const staleReview =
     result?.status === "CONFLICT" &&
+    ["REVISION_CONFLICT", "CONFLICT_CHAIN_DRIFT"].includes(result.errorCode ?? "") &&
     lastDecision?.currentServerRevision === chain?.canonical.revision &&
     lastDecision?.expectedChainDigest === chain?.chainDigest;
   const choose = async (choice: ExpenseConflictChainResolutionRequest["choice"]) => {

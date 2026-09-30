@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { executeExpenseCommand, readExpenseConflictChain } from "./supabaseGateway";
+import {
+  executeExpenseCommand,
+  readExpenseConflictChain,
+  resolutionEnvelope,
+} from "./supabaseGateway";
 import type {
   ExpenseCommandRequest,
   ExpenseConflictChainResolutionRequest,
@@ -214,6 +218,31 @@ const args = (rpc: ReturnType<typeof service>["rpc"]) =>
   rpc.mock.calls.find(([name]) => name === "ledger_execute_expense_v2")![1];
 
 describe("Backend typed Expense evidence gate", () => {
+  it("retains the verified predecessor receipt for a conflict decision", () => {
+    const original = command().envelope;
+    original.intentSequence = 3;
+    original.predecessorOperationId = "ledger-operation_prior";
+    original.boundExecutionRevision = 5;
+    original.causalBaseReceipt = {
+      operationId: "ledger-operation_prior",
+      commandId: "ledger-operation_prior",
+      idempotencyKey: "ledger-idempotency_prior",
+      expenseId,
+      commandType: "UPDATE",
+      intentSequence: 2,
+      disposition: "APPLIED",
+      canonicalRevision: 5,
+    };
+    expect(resolutionEnvelope("decision", resolution, original)).toMatchObject({
+      commandId: "command",
+      intentSequence: 3,
+      predecessorOperationId: "ledger-operation_prior",
+      boundExecutionRevision: 5,
+      causalBaseReceipt: { canonicalRevision: 5 },
+      idempotencyKey: "decision",
+      patchOrIntent: resolution.submittedIntent,
+    });
+  });
   it("keeps accepted rate and split evidence for a participation-only edit", async () => {
     const mocked = service({ history: null, participation: "EXCLUDED" });
     const input = command({

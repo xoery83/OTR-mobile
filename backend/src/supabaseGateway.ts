@@ -107,6 +107,7 @@ import {
 import {
   expenseConflictChainResponseSchema,
   expenseConflictChainResolutionResponseSchema,
+  expenseIntentEnvelopeSchema,
   ledgerExpenseMutationResponseSchema,
 } from "../../src/data/api/ledgerMutationContracts";
 import { allocateSettlementFromOriginal } from "../../src/domain/ledger/allocation";
@@ -1378,6 +1379,27 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return readExpenseConflictChain(service, userId, tripId, expenseId);
     },
     async resolveExpenseConflictChain(userId, tripId, expenseId, key, input) {
+      const chain = await service.rpc("ledger_expense_chain_v2", {
+        target_journey: tripId,
+        target_expense: expenseId,
+      });
+      if (chain.error) throw new Error("Expense conflict chain read failed.");
+      const stored = chain.data as {
+        records: {
+          conflictId: string;
+          lifecycle: string;
+          body: { error?: { commandId?: string; envelope?: unknown } };
+        }[];
+      };
+      const primary = stored.records.find(
+        (record) =>
+          record.lifecycle === "OPEN" &&
+          input.coveredConflictIds.includes(record.conflictId) &&
+          record.body.error?.commandId === input.commandId,
+      );
+      const originalEnvelope = expenseIntentEnvelopeSchema.safeParse(
+        primary?.body.error?.envelope,
+      );
       const result = await executeExpenseCommand(
         service,
         userId,
@@ -1385,7 +1407,11 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         expenseId,
         key,
         {
-          envelope: resolutionEnvelope(key, input),
+          envelope: resolutionEnvelope(
+            key,
+            input,
+            originalEnvelope.success ? originalEnvelope.data : null,
+          ),
           auditReason: input.reason,
         },
         input,
@@ -3799,20 +3825,21 @@ function mutationResponse(
   };
 }
 
-function resolutionEnvelope(
+export function resolutionEnvelope(
   key: string,
   input: ExpenseConflictChainResolutionRequest,
+  original: ExpenseIntentEnvelope | null = null,
 ): ExpenseIntentEnvelope {
   return {
     commandId: input.commandId,
     intentVersion: 2,
-    intentSequence: 1,
-    predecessorOperationId: null,
+    intentSequence: original?.intentSequence ?? 1,
+    predecessorOperationId: original?.predecessorOperationId ?? null,
     observedServerRevision: input.observedBaseRevision,
     observedBase: null,
     patchOrIntent: input.submittedIntent,
-    causalBaseReceipt: null,
-    boundExecutionRevision: null,
+    causalBaseReceipt: original?.causalBaseReceipt ?? null,
+    boundExecutionRevision: original?.boundExecutionRevision ?? null,
     idempotencyKey: key,
   };
 }
