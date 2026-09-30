@@ -4026,6 +4026,20 @@ export async function executeExpenseCommand(
           target_expense: expenseId,
           envelope_value: envelope,
         });
+    if (causal.error?.message.includes("INVALID_CAUSAL_RECEIPT"))
+      console.error(
+        JSON.stringify({
+          level: "error",
+          event: "typed_expense_causal_shape",
+          hasPredecessor: !!envelope.predecessorOperationId,
+          hasReceipt: !!envelope.causalBaseReceipt,
+          receiptMatchesPredecessor:
+            envelope.causalBaseReceipt?.operationId === envelope.predecessorOperationId,
+          observedRevision: envelope.observedServerRevision,
+          boundRevision: envelope.boundExecutionRevision,
+          receiptRevision: envelope.causalBaseReceipt?.canonicalRevision ?? null,
+        }),
+      );
     typedExpenseError(causal.error?.message);
     const serverBase = (causal.data as LedgerExpenseDto | null) ?? historical;
     const stale =
