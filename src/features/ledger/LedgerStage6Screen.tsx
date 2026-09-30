@@ -733,7 +733,7 @@ export function LedgerStage6Screen({
               </View>
               {journey ? (
                 <>
-                  <View>
+                  <View style={styles.spendingSections}>
                     <View style={styles.total}>
                       <View style={[styles.totalHeader, largeText && styles.stack]}>
                         <Text
@@ -1787,6 +1787,7 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   sectionBlock: { gap: cv.space.heading, width: "100%" },
+  spendingSections: { gap: cv.space.section },
   sectionHeader: {
     alignItems: "center",
     flexDirection: "row",
