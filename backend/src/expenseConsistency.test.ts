@@ -285,6 +285,49 @@ describe("Backend typed Expense evidence gate", () => {
       },
     });
   });
+  it("uses the verified causal predecessor when resolving a participation conflict", async () => {
+    const historical = {
+      ...base,
+      revision: 0,
+      settlementParticipation: "EXCLUDED" as const,
+      splits: base.splits.map((split) => ({ ...split, method: "EXACT" as const })),
+    };
+    const causal = { ...base, settlementParticipation: "EXCLUDED" as const };
+    const mocked = service({ history: historical, causal, participation: "EXCLUDED" });
+    const input = command({
+      type: "UPDATE",
+      patch: { financial: { settlementParticipation: "INCLUDED" } },
+    });
+    input.envelope.intentSequence = 3;
+    input.envelope.observedServerRevision = 0;
+    input.envelope.observedBase = null;
+    input.envelope.predecessorOperationId = "ledger-operation_prior";
+    input.envelope.boundExecutionRevision = 1;
+    input.envelope.causalBaseReceipt = {
+      operationId: "ledger-operation_prior",
+      commandId: "ledger-operation_prior",
+      idempotencyKey: "ledger-idempotency_prior",
+      expenseId,
+      commandType: "UPDATE",
+      intentSequence: 2,
+      disposition: "APPLIED",
+      canonicalRevision: 1,
+    };
+    await execute(mocked.client, input, {
+      ...resolution,
+      submittedIntent: input.envelope.patchOrIntent,
+    });
+    expect(mocked.rpc).toHaveBeenCalledWith(
+      "ledger_expense_causal_base_v2",
+      expect.objectContaining({ envelope_value: input.envelope }),
+    );
+    expect(args(mocked.rpc)).toMatchObject({
+      eligibility_value: "DESCRIPTIVE_REBASE",
+      response_body_value: {
+        entity: { settlementParticipation: "INCLUDED", businessStatus: "ACCEPTED" },
+      },
+    });
+  });
   it("omits absent CREATE current evidence rather than passing JSON null to SQL projection", async () => {
     const mocked = service();
     const input = command();

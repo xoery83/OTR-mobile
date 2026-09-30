@@ -4045,14 +4045,12 @@ export async function executeExpenseCommand(
     if (history.error) throw new Error("Expense historical evidence read failed.");
     historical = (history.data?.[0]?.canonical as LedgerExpenseDto | undefined) ?? null;
     // Client observedBase is deliberately never used as merge evidence.
-    const causal = resolution
-      ? { data: null, error: null }
-      : await service.rpc("ledger_expense_causal_base_v2", {
-          actor_user: userId,
-          target_journey: tripId,
-          target_expense: expenseId,
-          envelope_value: envelope,
-        });
+    const causal = await service.rpc("ledger_expense_causal_base_v2", {
+      actor_user: userId,
+      target_journey: tripId,
+      target_expense: expenseId,
+      envelope_value: envelope,
+    });
     if (causal.error?.message.includes("INVALID_CAUSAL_RECEIPT"))
       console.error(
         JSON.stringify({
