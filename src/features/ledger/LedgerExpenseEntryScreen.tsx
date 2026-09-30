@@ -976,7 +976,10 @@ export function LedgerExpenseEntryScreen() {
             { text: "Keep editing", style: "cancel" },
             {
               text: "Confirm updated amounts",
-              onPress: () =>
+              onPress: () => {
+                if (savingRef.current) return;
+                savingRef.current = true;
+                setSaving(true);
                 void confirmSettlementCorrection(
                   existing.journeyId,
                   params.correctionRootId!,
@@ -987,18 +990,22 @@ export function LedgerExpenseEntryScreen() {
                     allowZeroTransfer: preview.zeroTransfer,
                   },
                 )
-                  .then(() =>
-                    router.replace({
-                      pathname: "/expenses/settlement",
+                  .then(() => {
+                    allowClose.current = true;
+                    router.dismissTo({
+                      pathname: "/expenses/journey/[journeyId]",
                       params: { journeyId: existing.journeyId },
-                    } as never),
-                  )
-                  .catch((cause) =>
+                    } as never);
+                  })
+                  .catch((cause) => {
+                    savingRef.current = false;
+                    setSaving(false);
                     Alert.alert(
                       "Correction not confirmed",
                       cause instanceof Error ? cause.message : "Try again.",
-                    ),
-                  ),
+                    );
+                  });
+              },
             },
           ],
         );

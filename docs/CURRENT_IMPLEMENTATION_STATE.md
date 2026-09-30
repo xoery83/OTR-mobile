@@ -2,6 +2,14 @@
 
 Date: 2026-09-30
 
+## Repeated confirmed-Expense correction — Dev and Simulator acceptance PASS
+
+- The Dev Journey `e6e0955d` confirmed a NZ$120→NZ$121 successor in version #5 at 05:45 UTC. Three later Expenses were absent from that version because correction preview used the root's September 23 cutoff. Version #6 at 05:52 UTC included all six current inputs; a read-only current preview has no changes since #6. The current version needs no data repair; historical #5 remains immutable.
+- Subsequent Save attempts on the old successor returned 503 because the Backend mapped a stale correction source to a generic unavailable error. The editor's successful correction navigation was blocked by its unsaved-change guard, and Save was enabled again during confirmation.
+- Correction preview/confirmation now use a current source cutoff and preserve exact JSON numeric tokens for the SQL source proof. The simulator exposed a second stale-preview failure when an unrelated FX Expense had a numeric `decimalRate`; a focused regression now covers that proof. Stale sources return 409. Save stays locked during confirmation and dismisses the correction stack to the existing Ledger Journey screen on success.
+- Only the Backend gateway file was updated on `api-dev.xoery.art` (source SHA-256 `076d40198dbc153cb5c694c6d011520b422ca6a588f0e7bb0c353a4de59245ca`). The original gateway and image rollback copies remain at `/opt/otr/dev-backend/releases/settlement-correction-20260930` and `otr-dev-backend:pre-settlement-correction-20260930`. No schema or Production change.
+- iPhone 17 Pro Simulator Release completed three confirmed-Expense corrections in synthetic Dev Journey `e6e0955d`: NZ$121→122→123→124, creating versions #7–#9. The final save returned directly to Ledger Settlement. Version #7 retained all six current inputs including the unrelated FX Expense; previous versions remained immutable. On each save, the local summary briefly showed a missing successor while sync caught up; then the current balance matched the confirmed version and “Changes since last confirmation” disappeared, as expected when no new unconfirmed changes remain. The latest mobile navigation fix was tested only in Simulator; the physical iPhone remains in use by another chat and was not touched in this test. A separate empty synthetic Journey `848893cf` was created for isolation but was not visible in the Simulator's cached picker, so the synthetic acceptance Journey was used.
+
 ## Expense Search convergence — iPhone and Simulator acceptance
 
 - `/expenses/search` remains the sole production Search route and `LedgerSearchScreen` the sole production screen. The unused prototype Search screen was removed. Existing Ledger, Analysis, Settlement Shares and Paid route parameters normalize to Mine, Person, Group or fixed-payer Group in one screen; stack routing is unchanged.

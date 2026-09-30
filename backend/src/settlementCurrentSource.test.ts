@@ -76,6 +76,39 @@ const source = {
   expenses: effective,
 };
 const prior = buildSettlementPreview({ ...source, expenses: effective.slice(0, 3) });
+function correction(sourceExpenseId: string) {
+  const original = all.find((item) => item.id === sourceExpenseId)!;
+  return {
+    sourceExpenseId,
+    successor: {
+      localId: "50000000-0000-4000-8000-000000000001",
+      title: "Corrected Expense",
+      description: null,
+      category: "food",
+      occurredAt: original.occurredAt,
+      payerMemberId: original.payerMemberId,
+      original: original.original,
+      businessStatus: "ACCEPTED" as const,
+      settlementParticipation: original.settlementParticipation,
+      participants: original.participants.map((participant) => ({
+        ...participant,
+        householdIdSnapshot: null,
+      })),
+      splits: original.splits,
+      valuation: original.valuation
+        ? {
+            policy: original.valuation.policy,
+            original: original.valuation.original,
+            settlement: original.valuation.settlement,
+            rateSnapshotId: original.valuation.rateSnapshotId,
+            paymentRecordId: original.valuation.paymentRecordId,
+            reason: original.valuation.reason,
+          }
+        : null,
+    },
+    reason: "Correct the latest version",
+  };
+}
 function fixture(confirmed: "ROOT" | "ADJUSTMENT" | null, fail = false) {
   const calls: { path: string; body: Record<string, unknown> }[] = [];
   vi.stubGlobal("fetch", async (input: string, init?: RequestInit) => {
@@ -86,11 +119,14 @@ function fixture(confirmed: "ROOT" | "ADJUSTMENT" | null, fail = false) {
     if (table.startsWith("ledger_")) {
       if (table === "ledger_adjustment_source_current_7_2c" && fail)
         return Response.json({ message: "SETTLEMENT_INPUT_STALE" }, { status: 400 });
-      return Response.json({
+      const value = {
         ...source,
         throughTimestamp: body.source_cutoff ?? body.through_timestamp_value,
-        expenses: table === "ledger_adjustment_source_current_7_2c" ? effective : all,
-      });
+        expenses: table.includes("adjustment_source") ? effective : all,
+      };
+      return Response.json(
+        table === "ledger_adjustment_source_text_7_2c" ? JSON.stringify(value) : value,
+      );
     }
     if (table === "settlements") {
       if (!confirmed) return Response.json(url.searchParams.has("limit") ? null : []);
@@ -139,6 +175,82 @@ afterEach(() => {
 });
 
 describe("Settlement correction-aware current source", () => {
+  it("reports an already replaced correction source as stale instead of unavailable", async () => {
+    const { gateway } = fixture("ADJUSTMENT");
+    const originalFetch = globalThis.fetch;
+    vi.stubGlobal("fetch", async (input: string, init?: RequestInit) => {
+      if (new URL(input).pathname.endsWith("/ledger_adjustment_source_text_7_2c"))
+        return Response.json(JSON.stringify({ ...source, expenses: effective }));
+      return originalFetch(input, init);
+    });
+    await expect(
+      gateway().previewSettlementCorrection(owner, journey, root, correction(all[0].id)),
+    ).rejects.toMatchObject({
+      status: 409,
+      code: "SETTLEMENT_INPUT_STALE",
+    });
+  });
+
+  it("keeps later confirmed Expenses when previewing a correction", async () => {
+    const { gateway, calls } = fixture("ADJUSTMENT");
+    const preview = await gateway().previewSettlementCorrection(
+      owner,
+      journey,
+      root,
+      correction(effective[0].id),
+    );
+    expect(preview.inputs).toHaveLength(effective.length);
+    expect(preview.inputs.some((item) => item.expenseId === effective.at(-1)!.id)).toBe(
+      true,
+    );
+    expect(calls.some((call) => call.path === "ledger_adjustment_source_7_2b")).toBe(
+      false,
+    );
+    expect(calls.some((call) => call.path === "ledger_adjustment_source_text_7_2c")).toBe(
+      true,
+    );
+  });
+
+  it("preserves an unrelated FX rate as a JSON number in a correction proof", async () => {
+    const { gateway } = fixture("ADJUSTMENT");
+    const originalFetch = globalThis.fetch;
+    const rawSource = JSON.stringify(source).replace(
+      '"decimalRate":null',
+      '"decimalRate":0.011189760712298275',
+    );
+    let proofRequest = "";
+    vi.stubGlobal("fetch", async (input: string, init?: RequestInit) => {
+      const path = new URL(input).pathname;
+      if (path.endsWith("/ledger_adjustment_source_text_7_2c"))
+        return Response.json(rawSource);
+      if (path.endsWith("/journey_members"))
+        return Response.json([{ id: owner }, { id: member }]);
+      if (path.endsWith("/ledger_idempotency_keys")) return Response.json(null);
+      if (path.endsWith("/ledger_finalize_correction_4a")) {
+        proofRequest = String(init?.body);
+        return Response.json({ message: "SETTLEMENT_INPUT_STALE" }, { status: 400 });
+      }
+      return originalFetch(input, init);
+    });
+    const input = correction(effective[1].id);
+    const ready = await gateway().previewSettlementCorrection(
+      owner,
+      journey,
+      root,
+      input,
+    );
+    await expect(
+      gateway().finalizeSettlementCorrection(owner, journey, root, "correction-key", {
+        ...input,
+        expectedHeadId: ready.expectedHeadId,
+        inputDigest: ready.inputDigest,
+        allowZeroTransfer: true,
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(proofRequest).toContain('"decimalRate":0.011189760712298275');
+    expect(proofRequest).not.toContain('"decimalRate":"0.011189760712298275"');
+  });
+
   it("sends an exact numeric SQL source proof at confirmation while retaining head/digest guards", async () => {
     const { gateway } = fixture("ADJUSTMENT");
     const originalFetch = globalThis.fetch;

@@ -5072,15 +5072,18 @@ async function calculateSettlementAdjustmentPreview(
   if (!root || root.kind === "ADJUSTMENT") {
     throw new BackendError(404, "ENTITY_NOT_FOUND", "The root Settlement was not found.");
   }
-  const sourceResult = exactSourceProof
+  const sourceCutoff =
+    throughTimestamp ?? (correction ? new Date().toISOString() : undefined);
+  const needsExactSource = exactSourceProof || !!correction;
+  const sourceResult = needsExactSource
     ? await service.rpc("ledger_adjustment_source_text_7_2c", {
         target_root: rootSettlementId,
-        source_cutoff: throughTimestamp ?? null,
+        source_cutoff: sourceCutoff ?? null,
       })
-    : throughTimestamp
+    : sourceCutoff
       ? await service.rpc("ledger_adjustment_source_current_7_2c", {
           target_root: rootSettlementId,
-          source_cutoff: throughTimestamp,
+          source_cutoff: sourceCutoff,
         })
       : await service.rpc("ledger_adjustment_source_7_2b", {
           target_root: rootSettlementId,
@@ -5089,10 +5092,20 @@ async function calculateSettlementAdjustmentPreview(
     throw new Error("Supabase Dev Adjustment source failed.");
   }
   const canonicalSource = normalizeSettlementSource(
-    (exactSourceProof
+    (needsExactSource
       ? JSON.parse(sourceResult.data)
       : sourceResult.data) as SettlementPreviewInput,
   );
+  if (
+    correction &&
+    !canonicalSource.expenses.some((expense) => expense.id === correction.sourceExpenseId)
+  ) {
+    throw new BackendError(
+      409,
+      "SETTLEMENT_INPUT_STALE",
+      "This Expense is no longer current. Refresh Settlement and choose the latest version.",
+    );
+  }
   const source = correction
     ? replaceSettlementExpenseSource(
         canonicalSource,
@@ -5191,7 +5204,11 @@ async function calculateSettlementAdjustmentPreview(
   return {
     // Preview calculations are unchanged; SQL receives the exact original numeric tokens.
     source: correction
-      ? source
+      ? replaceSettlementExpenseSource(
+          losslessSourceJson(sourceResult.data) as SettlementPreviewInput,
+          correction.sourceExpenseId,
+          correction.successor,
+        )
       : exactSourceProof
         ? losslessSourceJson(sourceResult.data)
         : sourceResult.data,
