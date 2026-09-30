@@ -499,6 +499,30 @@ function operationIds(sqlite: DatabaseSync, expenseId: string) {
 }
 
 describe("Formal typed Expense transport and resolution", () => {
+  it("does not bind an older completed receipt after a newer canonical pull", async () => {
+    const { sqlite, api } = database();
+    const repository = createLedgerExpenseRepository(api, async () => userId);
+    const queue = createSyncOperationRepository(api, async () => userId);
+    const created = await repository.createExpense(command("original"));
+    const [create] = await queue.listPending();
+    await repository.confirmExpenseOperation(create!.id, serverExpense("original", 1));
+    await repository.reconcileCanonicalExpense(created.id, serverExpense("shared", 2));
+    const edited = await repository.updateExpense(created.id, command("local"), "edit");
+    const update = (await queue.listPending()).find(
+      (operation) => operation.id === edited.operationResult?.operationId,
+    )!;
+    const envelope = JSON.parse(
+      (await repository.bindOperation(update, true)).payloadJson,
+    ).envelope;
+    expect(envelope).toMatchObject({
+      predecessorOperationId: null,
+      causalBaseReceipt: null,
+      observedServerRevision: 2,
+      boundExecutionRevision: 2,
+    });
+    sqlite.close();
+  });
+
   it("binds new commands once to verified causal proof and preserves attempted legacy bodies", async () => {
     const { sqlite, api } = database();
     const repository = createLedgerExpenseRepository(api, async () => userId);

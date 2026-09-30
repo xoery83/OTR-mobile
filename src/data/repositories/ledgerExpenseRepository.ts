@@ -917,8 +917,10 @@ export function createLedgerExpenseRepository(
 
     async retryFailedPredecessor(expenseId, operationId) {
       const accountId = await getActiveUserId();
-      const result = await database.runAsync(
-        `UPDATE sync_operations SET status = 'PENDING', failure_category = NULL,
+      let retried = false;
+      await database.withTransactionAsync(async () => {
+        const result = await database.runAsync(
+          `UPDATE sync_operations SET status = 'PENDING', failure_category = NULL,
            last_error_code = NULL, last_error_message = NULL, next_attempt_at = NULL,
            claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
          WHERE id = ? AND owner_user_id = ? AND entity_type = 'ledger_expense'
@@ -929,15 +931,52 @@ export function createLedgerExpenseRepository(
              WHERE dependent.owner_user_id = ? AND dependent.entity_type = 'ledger_expense'
                AND dependent.entity_id = ? AND dependent.dependency_operation_id = sync_operations.id
                AND dependent.status = 'DEPENDENCY_BLOCKED')`,
-        new Date().toISOString(),
-        operationId,
-        accountId,
-        expenseId,
-        accountId,
-        accountId,
-        expenseId,
-      );
-      return result.changes === 1;
+          new Date().toISOString(),
+          operationId,
+          accountId,
+          expenseId,
+          accountId,
+          accountId,
+          expenseId,
+        );
+        if (result.changes !== 1) return;
+        retried = true;
+        const staleReceipt = await database.getFirstAsync<{ id: string }>(
+          `SELECT command.operation_id AS id FROM ledger_expense_commands command
+           JOIN sync_operations predecessor ON predecessor.id = command.predecessor_operation_id
+           JOIN ledger_expense_operation_receipts receipt ON receipt.account_id = command.account_id
+             AND receipt.operation_id = predecessor.id
+           JOIN ledger_expense_canonical_baselines baseline ON baseline.account_id = command.account_id
+             AND baseline.expense_id = command.expense_id
+           WHERE command.account_id = ? AND command.operation_id = ? AND command.expense_id = ?
+             AND predecessor.status = 'COMPLETED'
+             AND baseline.revision >= command.observed_server_revision
+             AND json_extract(receipt.receipt_json, '$.canonicalRevision') < command.observed_server_revision
+             AND json_extract(command.bound_request_json, '$.envelope.causalBaseReceipt.canonicalRevision') =
+               json_extract(receipt.receipt_json, '$.canonicalRevision')
+             AND json_extract(command.bound_request_json, '$.envelope.boundExecutionRevision') =
+               command.observed_server_revision`,
+          accountId,
+          operationId,
+          expenseId,
+        );
+        if (staleReceipt) {
+          await database.runAsync(
+            `UPDATE ledger_expense_commands SET predecessor_operation_id = NULL,
+               bound_execution_revision = NULL, bound_request_json = NULL
+             WHERE account_id = ? AND operation_id = ?`,
+            accountId,
+            operationId,
+          );
+          await database.runAsync(
+            `UPDATE sync_operations SET dependency_operation_id = NULL
+             WHERE id = ? AND owner_user_id = ?`,
+            operationId,
+            accountId,
+          );
+        }
+      });
+      return retried;
     },
 
     async listRateAcceptanceOperations(journeyId) {

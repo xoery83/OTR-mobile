@@ -122,13 +122,19 @@ export async function recordExpenseCommand(
   }
   const canonical = await readExpenseCanonical(database, accountId, projection.id);
   const predecessor = await database.getFirstAsync<{ id: string; status: string }>(
-    `SELECT id, status FROM sync_operations WHERE owner_user_id = ? AND entity_type = 'ledger_expense'
-       AND entity_id = ? AND id <> ?
-       AND (status <> 'COMPLETED' OR EXISTS (SELECT 1 FROM ledger_expense_commands command WHERE command.operation_id = sync_operations.id))
-       ORDER BY created_at DESC, rowid DESC LIMIT 1`,
+    `SELECT operation.id, operation.status FROM sync_operations operation
+       WHERE operation.owner_user_id = ? AND operation.entity_type = 'ledger_expense'
+         AND operation.entity_id = ? AND operation.id <> ?
+         AND (operation.status <> 'COMPLETED' OR EXISTS (
+           SELECT 1 FROM ledger_expense_operation_receipts receipt
+           WHERE receipt.account_id = operation.owner_user_id
+             AND receipt.operation_id = operation.id
+             AND json_extract(receipt.receipt_json, '$.canonicalRevision') >= ?))
+       ORDER BY operation.created_at DESC, operation.rowid DESC LIMIT 1`,
     accountId,
     projection.id,
     operationId,
+    canonical?.revision ?? projection.serverRevision,
   );
   await database.runAsync(
     `INSERT INTO ledger_expense_commands
