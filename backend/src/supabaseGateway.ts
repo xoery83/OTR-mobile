@@ -3832,12 +3832,22 @@ function typedExpenseError(message?: string) {
         code,
         "The command requires refreshed verified evidence.",
       );
-  if (message.includes("INVALID_") || message.includes("RESOLUTION_REASON_REQUIRED"))
+  if (message.includes("INVALID_") || message.includes("RESOLUTION_REASON_REQUIRED")) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "typed_expense_validation",
+        cause:
+          message.match(/\b(?:INVALID_[A-Z_]+|RESOLUTION_REASON_REQUIRED)\b/)?.[0] ??
+          "UNKNOWN",
+      }),
+    );
     throw new BackendError(
       400,
       "INVALID_PAYLOAD",
       "The typed command or covered conflict scope is invalid.",
     );
+  }
   mapFinancialEvidenceError(message);
 }
 
