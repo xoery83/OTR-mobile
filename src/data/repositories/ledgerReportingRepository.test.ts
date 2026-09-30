@@ -631,6 +631,10 @@ describe("Ledger reporting repository", () => {
     const member = { journeyId, memberId: "b", scope: "MINE" as const };
     const group = { journeyId, memberId: "a", scope: "GROUP" as const };
 
+    expect(
+      (await repository.listExpenses(group)).find((row) => row.id === "valued")
+        ?.unevenSplit,
+    ).toBe(true);
     expect((await repository.summarize(member)).totalMinor).toBe(800);
     expect((await repository.analyze(member, "CATEGORY"))[0].totalMinor).toBe(800);
     expect(
@@ -665,6 +669,44 @@ describe("Ledger reporting repository", () => {
     expect(
       (await repository.listExpenses({ ...query, memberId: "b" }))[0].componentMinor,
     ).toBe(800);
+    sqlite.close();
+  });
+
+  it("keeps positive original shares with unavailable Journey value in Search", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    const repository = createLedgerReportingRepository(adapter, activeUser);
+    const query = {
+      journeyId,
+      memberId: "a",
+      scope: "MINE" as const,
+      positiveShare: true,
+    };
+    expect((await repository.listExpenses(query)).map((row) => row.id)).toEqual([
+      "conflict",
+      "rate",
+      "valued",
+    ]);
+    expect(await repository.countExpenses(query)).toBe(3);
+    expect((await repository.summarize(query)).expenseCount).toBe(1);
+    expect(
+      (await repository.listExpenses({ ...query, memberId: "b" })).map((row) => row.id),
+    ).toEqual(["valued"]);
+    sqlite.close();
+  });
+
+  it("matches either selected Needs attention condition", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    const repository = createLedgerReportingRepository(adapter, activeUser);
+    const rows = await repository.listExpenses({
+      journeyId,
+      memberId,
+      scope: "GROUP",
+      conflict: "OPEN",
+      valuation: "RATE_REQUIRED",
+    });
+    expect(rows.map((row) => row.id)).toEqual(["conflict", "rate"]);
     sqlite.close();
   });
 

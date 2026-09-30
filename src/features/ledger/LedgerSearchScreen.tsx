@@ -25,18 +25,15 @@ import type {
   ReportingScope,
 } from "@/domain/ledger/reporting";
 
-import {
-  formatLedgerDate,
-  formatLedgerDateFilter,
-  formatLedgerMoney,
-  ledgerExpenseAttention,
-} from "./format";
+import { formatLedgerDate, formatLedgerMoney, ledgerExpenseAttention } from "./format";
 import { createLatestRequest } from "./latestRequest";
 import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { expenseSearchAmounts, expenseSearchView } from "./expenseSearchModel";
 import {
   countLedgerFilters,
   formatExpenseCount,
   ledgerDateFilter,
+  searchDateLabel,
   type LedgerDatePreset,
 } from "./searchFilters";
 
@@ -79,23 +76,18 @@ export function LedgerSearchScreen() {
     authoritative?: string;
     origin?: string;
   }>();
-  const scope: ReportingScope = params.paidMemberId
-    ? "GROUP"
-    : params.selectedMemberId
-      ? "MINE"
-      : params.scope === "GROUP"
-        ? "GROUP"
-        : "MINE";
-  const memberId = params.selectedMemberId || params.memberId;
+  const searchView = expenseSearchView(params);
+  const scope: ReportingScope = searchView.type === "group" ? "GROUP" : "MINE";
+  const memberId = searchView.memberId;
   const authoritativeOnly = params.authoritative === "1";
-  const shareOnly = params.shareOnly === "1";
-  const paidMemberId = params.paidMemberId;
+  const positiveShare = searchView.type !== "group";
+  const paidMemberId = searchView.type === "group" ? searchView.paidMemberId : undefined;
   const [initialFilters] = useState<ReportingFilters>(() => ({
     category: params.category,
     categories: parseAnalysisCategories(params.categories),
     analysisState: params.analysisState,
     payerMemberId: paidMemberId ? undefined : params.payerMemberId,
-    participantMemberId: params.participantMemberId,
+    participantMemberId: scope === "GROUP" ? params.participantMemberId : undefined,
     currency: params.currency,
     valuation: params.valuation,
     from: params.from,
@@ -130,7 +122,7 @@ export function LedgerSearchScreen() {
         query,
         scope,
         authoritativeOnly,
-        shareOnly,
+        positiveShare,
         paidMemberId,
       });
       setUpdating(true);
@@ -143,7 +135,7 @@ export function LedgerSearchScreen() {
           memberId,
           scope,
           authoritativeOnly,
-          shareOnly,
+          positiveShare,
           ...filters,
           payerMemberId: paidMemberId ?? filters.payerMemberId,
           query,
@@ -179,7 +171,7 @@ export function LedgerSearchScreen() {
       params.journeyId,
       request,
       scope,
-      shareOnly,
+      positiveShare,
     ],
   );
 
@@ -260,7 +252,7 @@ export function LedgerSearchScreen() {
           memberId,
           scope,
           authoritativeOnly,
-          shareOnly,
+          positiveShare,
           ...current.filters,
           payerMemberId: paidMemberId ?? current.filters.payerMemberId,
           query: current.query,
@@ -287,21 +279,15 @@ export function LedgerSearchScreen() {
 
   const renderRow = ({ item }: { item: LedgerReportListItem }) => {
     const attention = ledgerExpenseAttention(item, scope);
-    const amount =
-      shareOnly || paidMemberId
-        ? formatLedgerMoney(
-            (paidMemberId ? item.settlementMinor : item.componentMinor) ?? 0,
-            item.settlementCurrency,
-            item.settlementScale,
-          )
-        : formatLedgerMoney(
-            item.originalMinor,
-            item.originalCurrency,
-            item.originalScale,
-          );
+    const amounts = expenseSearchAmounts(item, searchView);
+    const group = searchView.type === "group";
+    const hasDistinctShare =
+      !group &&
+      item.originalComponentMinor !== null &&
+      item.originalComponentMinor !== item.originalMinor;
     return (
       <Pressable
-        accessibilityLabel={`${item.title}, ${shareOnly ? "selected share" : paidMemberId ? "paid amount" : "total"} ${amount}${attention ? `, ${attention}` : ""}`}
+        accessibilityLabel={`${item.title}, ${group ? "total" : "share"} ${amounts.primary}${amounts.secondary ? `, original ${amounts.secondary}` : ""}${attention ? `, ${attention}` : ""}`}
         accessibilityRole="button"
         onPress={() => router.push(`/expenses/expense/${item.id}`)}
         style={[styles.row, largeText && styles.stack]}
@@ -311,15 +297,37 @@ export function LedgerSearchScreen() {
             {item.title}
           </Text>
           <Text maxFontSizeMultiplier={2} numberOfLines={2} style={styles.meta}>
-            {item.category} · {formatLedgerDate(item.occurredAt)} · {item.payerName}
+            {item.category} · {formatLedgerDate(item.occurredAt)}
+            {group ? ` · ${item.payerName} paid` : ""}
           </Text>
+          {group ? (
+            <Text maxFontSizeMultiplier={2} style={styles.meta}>
+              {item.participantCount} {item.participantCount === 1 ? "person" : "people"}
+              {item.unevenSplit ? " · Uneven split" : ""}
+            </Text>
+          ) : hasDistinctShare ? (
+            <Text maxFontSizeMultiplier={2} style={styles.meta}>
+              Total{" "}
+              {formatLedgerMoney(
+                item.originalMinor,
+                item.originalCurrency,
+                item.originalScale,
+              )}
+              {item.participantCount > 1 ? ` · Split ${item.participantCount}` : ""}
+            </Text>
+          ) : null}
           {attention ? (
             <Text maxFontSizeMultiplier={2} style={styles.warning}>
               {attention}
             </Text>
           ) : null}
         </View>
-        <Text style={[styles.amount, largeText && styles.largeAmount]}>{amount}</Text>
+        <View style={[styles.amountBlock, largeText && styles.largeAmount]}>
+          <Text style={styles.amount}>{amounts.primary}</Text>
+          {amounts.secondary ? (
+            <Text style={styles.secondaryAmount}>{amounts.secondary}</Text>
+          ) : null}
+        </View>
       </Pressable>
     );
   };
@@ -330,12 +338,22 @@ export function LedgerSearchScreen() {
         options={{
           headerTitle: "Search",
           headerRight: () => (
-            <HeaderIconAction
-              active={filterCount > 0}
-              label={`Filter expenses${filterCount ? `, ${filterCount} active` : ""}`}
-              name="line.3.horizontal.decrease"
-              onPress={() => setFilterOpen(true)}
-            />
+            <View>
+              <HeaderIconAction
+                label={`Filter expenses${filterCount ? `, ${filterCount} active` : ""}`}
+                name="line.3.horizontal.decrease"
+                onPress={() => setFilterOpen(true)}
+              />
+              {filterCount ? (
+                <Text
+                  maxFontSizeMultiplier={1}
+                  pointerEvents="none"
+                  style={styles.filterBadge}
+                >
+                  {filterCount}
+                </Text>
+              ) : null}
+            </View>
           ),
         }}
       />
@@ -443,13 +461,11 @@ export function LedgerSearchScreen() {
                 <Text maxFontSizeMultiplier={2} style={styles.origin}>
                   {paidMemberId
                     ? `Paid by ${options.members.find((item) => item.id === paidMemberId)?.label ?? "selected traveller"}`
-                    : params.selectedMemberId
-                      ? (options.members.find(
-                          (item) => item.id === params.selectedMemberId,
-                        )?.label ?? "Selected traveller")
+                    : searchView.type === "person"
+                      ? `${options.members.find((item) => item.id === memberId)?.label ?? "Traveller"}'s spending`
                       : scope === "GROUP"
-                        ? "Group"
-                        : "Mine"}
+                        ? "Group spending"
+                        : "My spending"}
                   {params.origin ? ` · ${params.origin}` : ""}
                 </Text>
                 <Text
@@ -457,10 +473,12 @@ export function LedgerSearchScreen() {
                   maxFontSizeMultiplier={2}
                   style={styles.summaryText}
                 >
-                  {formatExpenseCount(view.resultCount)} found ·{" "}
-                  {formatExpenseCount(view.summary.expenseCount)} included in total
+                  {formatExpenseCount(view.resultCount).toLowerCase()}
+                  {view.resultCount !== view.summary.expenseCount
+                    ? ` · ${view.summary.expenseCount} included`
+                    : ""}
                   {view.summary.unresolvedRateCount
-                    ? ` · ${view.summary.unresolvedRateCount} need ${view.summary.unresolvedRateCount === 1 ? "a rate" : "rates"}`
+                    ? ` · ${view.summary.unresolvedRateCount} without journey value`
                     : ""}
                   {view.summary.openConflictCount
                     ? ` · ${view.summary.openConflictCount} ${view.summary.openConflictCount === 1 ? "conflict" : "conflicts"}`
@@ -499,8 +517,8 @@ export function LedgerSearchScreen() {
       {filterOpen ? (
         <FilterSheet
           initial={filters}
-          journey={journey}
           lockedPayer={Boolean(paidMemberId)}
+          scope={scope}
           onApply={applyFilters}
           onCancel={() => setFilterOpen(false)}
           options={options}
@@ -516,7 +534,7 @@ function activeLabels(filters: ReportingFilters, options: Options) {
   return [
     filters.from && {
       key: "from" as const,
-      label: formatLedgerDateFilter(filters.from, filters.to),
+      label: searchDateLabel(filters.from, filters.to),
     },
     filters.category && {
       key: "category" as const,
@@ -573,15 +591,15 @@ function parseAnalysisCategories(value?: string): string[] | undefined {
 
 function FilterSheet({
   initial,
-  journey,
   lockedPayer,
+  scope,
   onApply,
   onCancel,
   options,
 }: {
   initial: ReportingFilters;
-  journey: LedgerJourneyContext | null;
   lockedPayer: boolean;
+  scope: ReportingScope;
   onApply: (filters: ReportingFilters) => Promise<boolean>;
   onCancel: () => void;
   options: Options;
@@ -591,11 +609,11 @@ function FilterSheet({
   const [dateMode, setDateMode] = useState<LedgerDatePreset>(
     initial.from ? "RANGE" : "ANY",
   );
-  const [exact, setExact] = useState(initial.from?.slice(0, 10) ?? "");
   const [rangeStart, setRangeStart] = useState(initial.from?.slice(0, 10) ?? "");
   const [rangeEnd, setRangeEnd] = useState(() => inclusiveEnd(initial.to));
   const [dateError, setDateError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
+  const [page, setPage] = useState<"main" | "currency" | "attention">("main");
 
   const choose = (
     title: string,
@@ -610,19 +628,20 @@ function FilterSheet({
       },
       (index) => {
         const selected = values[index];
-        if (selected) setDraft((current) => ({ ...current, [key]: selected.value }));
+        if (selected)
+          setDraft((current) => ({
+            ...current,
+            [key]: selected.value,
+            ...(key === "category" ? { categories: undefined } : {}),
+          }));
       },
     );
   };
 
   const apply = async () => {
-    const date = ledgerDateFilter(dateMode, journey, exact, rangeStart, rangeEnd);
+    const date = ledgerDateFilter(dateMode, null, "", rangeStart, rangeEnd);
     if (!date) {
-      setDateError(
-        dateMode === "TRIP"
-          ? "This Journey does not have a complete date range."
-          : "Enter valid dates in YYYY-MM-DD order.",
-      );
+      setDateError("Enter valid dates in YYYY-MM-DD order.");
       return;
     }
     setApplying(true);
@@ -630,12 +649,6 @@ function FilterSheet({
     setApplying(false);
   };
 
-  const status =
-    draft.valuation === "RATE_REQUIRED"
-      ? "RATE"
-      : draft.conflict === "OPEN"
-        ? "CONFLICT"
-        : "ANY";
   return (
     <Modal
       allowSwipeDismissal
@@ -645,135 +658,171 @@ function FilterSheet({
     >
       <View style={styles.sheet}>
         <LedgerSheetHeader
-          leftLabel="Cancel"
-          onLeft={onCancel}
-          onRight={() => void apply()}
+          leftLabel={page === "main" ? "Cancel" : "Back"}
+          onLeft={page === "main" ? onCancel : () => setPage("main")}
+          onRight={page === "main" ? () => void apply() : () => setPage("main")}
           rightDisabled={applying}
-          rightLabel={applying ? "Applying…" : "Apply"}
-          title="Filter Expenses"
+          rightLabel={page === "main" ? (applying ? "Applying…" : "Apply") : "Done"}
+          title={
+            page === "main"
+              ? "Filters"
+              : page === "currency"
+                ? "Currency"
+                : "Needs attention"
+          }
         />
         <ScrollView
           contentContainerStyle={styles.form}
           keyboardShouldPersistTaps="handled"
         >
-          <FilterSection title="Date">
-            <View style={styles.wrap}>
-              {(
-                [
-                  ["ANY", "Any date"],
-                  ["EXACT", "Specific date"],
-                  ["RANGE", "Custom range"],
-                  ["TODAY", "Today"],
-                  ["YESTERDAY", "Yesterday"],
-                  ["TRIP", "This Trip"],
-                  ["LAST_30", "Last 30 days"],
-                ] as [LedgerDatePreset, string][]
-              ).map(([value, label]) => (
-                <Choice
-                  key={value}
-                  label={label}
-                  onPress={() => {
-                    setDateMode(value);
-                    setDateError(null);
-                  }}
-                  selected={dateMode === value}
+          {page === "main" ? (
+            <>
+              <FilterSection title="Time">
+                <View style={styles.wrap}>
+                  {(
+                    [
+                      ["ANY", "All"],
+                      ["TODAY", "Today"],
+                      ["YESTERDAY", "Yesterday"],
+                      ["LAST_30", "Last 30 days"],
+                      ["RANGE", "Custom…"],
+                    ] as [LedgerDatePreset, string][]
+                  ).map(([value, label]) => (
+                    <Choice
+                      key={value}
+                      label={label}
+                      onPress={() => {
+                        setDateMode(value);
+                        setDateError(null);
+                      }}
+                      selected={value !== "ANY" && dateMode === value}
+                    />
+                  ))}
+                </View>
+                {dateMode === "RANGE" ? (
+                  <View style={[styles.dateRow, largeText && styles.dateRowLarge]}>
+                    <DateInput
+                      label="Start"
+                      onChange={setRangeStart}
+                      value={rangeStart}
+                    />
+                    <DateInput label="End" onChange={setRangeEnd} value={rangeEnd} />
+                  </View>
+                ) : null}
+                {dateError ? (
+                  <Text accessibilityLiveRegion="polite" style={styles.error}>
+                    {dateError}
+                  </Text>
+                ) : null}
+              </FilterSection>
+              <FilterSection title="Details">
+                <FilterRow
+                  active={!!draft.category}
+                  label="Category"
+                  onPress={() =>
+                    choose(
+                      "Category",
+                      [
+                        { label: "Any", value: undefined },
+                        ...options.categories.map((value) => ({ label: value, value })),
+                      ],
+                      "category",
+                    )
+                  }
+                  value={draft.category ?? "Any"}
+                />
+                {!lockedPayer ? (
+                  <FilterRow
+                    active={!!draft.payerMemberId}
+                    label="Paid by"
+                    onPress={() =>
+                      choose("Paid by", memberChoices(options), "payerMemberId")
+                    }
+                    value={optionLabel(options, draft.payerMemberId)}
+                  />
+                ) : null}
+                {scope === "GROUP" ? (
+                  <FilterRow
+                    active={!!draft.participantMemberId}
+                    label="Participant"
+                    onPress={() =>
+                      choose("Participant", memberChoices(options), "participantMemberId")
+                    }
+                    value={optionLabel(options, draft.participantMemberId)}
+                  />
+                ) : null}
+              </FilterSection>
+              <FilterSection title="More">
+                <FilterRow
+                  active={!!draft.currency}
+                  label="Currency"
+                  onPress={() => setPage("currency")}
+                  value={draft.currency ?? "Any"}
+                />
+                <FilterRow
+                  active={!!draft.valuation || !!draft.conflict}
+                  label="Needs attention"
+                  onPress={() => setPage("attention")}
+                  value={
+                    [
+                      draft.valuation === "RATE_REQUIRED" ? "Journey value" : null,
+                      draft.conflict === "OPEN" ? "Conflict" : null,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") || "None"
+                  }
+                />
+              </FilterSection>
+            </>
+          ) : page === "currency" ? (
+            <FilterSection title="Currency">
+              {[
+                { label: "Any", value: undefined },
+                ...options.currencies.map((value) => ({ label: value, value })),
+              ].map((item) => (
+                <FilterRow
+                  active={item.value !== undefined && draft.currency === item.value}
+                  key={item.label}
+                  label={item.label}
+                  value={draft.currency === item.value ? "✓" : ""}
+                  onPress={() =>
+                    setDraft((current) => ({ ...current, currency: item.value }))
+                  }
                 />
               ))}
-            </View>
-            {dateMode === "EXACT" ? (
-              <DateInput label="Date" onChange={setExact} value={exact} />
-            ) : null}
-            {dateMode === "RANGE" ? (
-              <View style={[styles.dateRow, largeText && styles.dateRowLarge]}>
-                <DateInput label="Start" onChange={setRangeStart} value={rangeStart} />
-                <DateInput label="End" onChange={setRangeEnd} value={rangeEnd} />
+            </FilterSection>
+          ) : (
+            <FilterSection title="Needs attention">
+              <View style={styles.attentionChoices}>
+                <Choice
+                  label="Journey value unavailable"
+                  checkbox
+                  onPress={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      valuation:
+                        current.valuation === "RATE_REQUIRED"
+                          ? undefined
+                          : "RATE_REQUIRED",
+                    }))
+                  }
+                  selected={draft.valuation === "RATE_REQUIRED"}
+                />
+                <Choice
+                  label="Conflict needs review"
+                  checkbox
+                  onPress={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      conflict: current.conflict === "OPEN" ? undefined : "OPEN",
+                    }))
+                  }
+                  selected={draft.conflict === "OPEN"}
+                />
               </View>
-            ) : null}
-            {dateError ? (
-              <Text accessibilityLiveRegion="polite" style={styles.error}>
-                {dateError}
-              </Text>
-            ) : null}
-          </FilterSection>
-          <FilterSection title="Details">
-            <FilterRow
-              label="Category"
-              onPress={() =>
-                choose(
-                  "Category",
-                  [
-                    { label: "Any", value: undefined },
-                    ...options.categories.map((value) => ({ label: value, value })),
-                  ],
-                  "category",
-                )
-              }
-              value={draft.category ?? "Any"}
-            />
-            {!lockedPayer ? (
-              <FilterRow
-                label="Paid by"
-                onPress={() => choose("Paid by", memberChoices(options), "payerMemberId")}
-                value={optionLabel(options, draft.payerMemberId)}
-              />
-            ) : null}
-            <FilterRow
-              label="Participant"
-              onPress={() =>
-                choose("Participant", memberChoices(options), "participantMemberId")
-              }
-              value={optionLabel(options, draft.participantMemberId)}
-            />
-            <FilterRow
-              label="Currency"
-              onPress={() =>
-                choose(
-                  "Currency",
-                  [
-                    { label: "Any", value: undefined },
-                    ...options.currencies.map((value) => ({ label: value, value })),
-                  ],
-                  "currency",
-                )
-              }
-              value={draft.currency ?? "Any"}
-            />
-          </FilterSection>
-          <FilterSection title="Needs action">
-            <View style={styles.wrap}>
-              <Choice
-                label="Any status"
-                onPress={() =>
-                  setDraft(
-                    ({ valuation: _valuation, conflict: _conflict, ...current }) =>
-                      current,
-                  )
-                }
-                selected={status === "ANY"}
-              />
-              <Choice
-                label="Journey value unavailable"
-                onPress={() =>
-                  setDraft(({ conflict: _conflict, ...current }) => ({
-                    ...current,
-                    valuation: "RATE_REQUIRED",
-                  }))
-                }
-                selected={status === "RATE"}
-              />
-              <Choice
-                label="Conflict needs review"
-                onPress={() =>
-                  setDraft(({ valuation: _valuation, ...current }) => ({
-                    ...current,
-                    conflict: "OPEN",
-                  }))
-                }
-                selected={status === "CONFLICT"}
-              />
-            </View>
-          </FilterSection>
-          {countLedgerFilters(draft) ? (
+            </FilterSection>
+          )}
+          {page === "main" && countLedgerFilters(draft) ? (
             <Pressable
               accessibilityRole="button"
               onPress={() => {
@@ -828,10 +877,12 @@ function FilterSection({
 }
 
 function FilterRow({
+  active = false,
   label,
   onPress,
   value,
 }: {
+  active?: boolean;
   label: string;
   onPress: () => void;
   value: string;
@@ -845,7 +896,13 @@ function FilterRow({
       style={[styles.filterRow, largeText && styles.filterRowLarge]}
     >
       <Text style={styles.filterRowLabel}>{label}</Text>
-      <Text style={[styles.filterRowValue, largeText && styles.filterRowValueLarge]}>
+      <Text
+        style={[
+          styles.filterRowValue,
+          active && styles.filterRowValueActive,
+          largeText && styles.filterRowValueLarge,
+        ]}
+      >
         {value} ›
       </Text>
     </Pressable>
@@ -853,18 +910,20 @@ function FilterRow({
 }
 
 function Choice({
+  checkbox,
   label,
   onPress,
   selected,
 }: {
+  checkbox?: boolean;
   label: string;
   onPress: () => void;
   selected: boolean;
 }) {
   return (
     <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityRole={checkbox ? "checkbox" : "button"}
+      accessibilityState={checkbox ? { checked: selected } : { selected }}
       onPress={onPress}
       style={[styles.choice, selected && styles.choiceSelected]}
     >
@@ -946,6 +1005,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   chipText: { color: "#0F766E", fontWeight: "700" },
+  filterBadge: {
+    backgroundColor: "#0F766E",
+    borderRadius: 10,
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
+    minWidth: 18,
+    overflow: "hidden",
+    position: "absolute",
+    right: 6,
+    textAlign: "center",
+    top: 8,
+  },
   content: { flexGrow: 1, padding: 16, paddingBottom: 40 },
   summary: {
     backgroundColor: "#FFFFFF",
@@ -973,13 +1045,13 @@ const styles = StyleSheet.create({
   title: { color: cv.color.text, ...cv.type.row },
   meta: { color: cv.color.secondary, ...cv.type.meta, marginTop: 3 },
   warning: { color: "#B45309", fontSize: 12, fontWeight: "700", marginTop: 3 },
+  amountBlock: { alignItems: "flex-end", flexShrink: 0, maxWidth: "42%" },
   amount: {
     color: cv.color.text,
     ...cv.type.rowAmount,
-    flexShrink: 0,
-    maxWidth: "42%",
     textAlign: "right",
   },
+  secondaryAmount: { color: cv.color.secondary, ...cv.type.meta, textAlign: "right" },
   largeAmount: { maxWidth: "100%" },
   stack: { alignItems: "flex-start", flexDirection: "column" },
   statusCard: {
@@ -1003,6 +1075,7 @@ const styles = StyleSheet.create({
   section: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 10, padding: 14 },
   sectionTitle: { color: "#111827", fontSize: 16, fontWeight: "700" },
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  attentionChoices: { gap: 8 },
   choice: {
     backgroundColor: "#F1F5F9",
     borderRadius: 18,
@@ -1041,7 +1114,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   filterRowLabel: { color: "#111827", fontWeight: "600" },
-  filterRowValue: { color: "#0F766E", flexShrink: 1, marginLeft: 16 },
+  filterRowValue: { color: "#64748B", flexShrink: 1, marginLeft: 16 },
+  filterRowValueActive: { color: "#0F766E" },
   filterRowValueLarge: { marginLeft: 0 },
   clearButton: { alignItems: "center", justifyContent: "center", minHeight: 48 },
 });

@@ -30,6 +30,7 @@ export type LedgerReportQuery = ReportingFilters & {
   scope: ReportingScope;
   authoritativeOnly?: boolean;
   shareOnly?: boolean;
+  positiveShare?: boolean;
   order?: "OCCURRED" | "UPDATED";
 };
 
@@ -59,6 +60,7 @@ export type LedgerReportListItem = {
   settlementScale: number;
   componentMinor: number | null;
   participantCount: number;
+  unevenSplit?: boolean;
   businessStatus: string;
   settlementParticipation: "INCLUDED" | "EXCLUDED";
   syncStatus: string;
@@ -154,9 +156,14 @@ function where(query: LedgerReportQuery, userId: string, alias = "e") {
     const needle = `%${escapeLike(query.query.trim().replace(/[A-Z]/g, (character) => character.toLowerCase()))}%`;
     params.push(needle, needle, needle);
   }
-  if (query.conflict)
+  if (query.conflict === "OPEN" && query.valuation === "RATE_REQUIRED")
+    clauses.push(`(${conflictSql} OR ${alias}.business_status = 'RATE_REQUIRED')`);
+  else if (query.conflict)
     clauses.push(`${conflictSql} = ${query.conflict === "OPEN" ? 1 : 0}`);
-  if (query.valuation)
+  if (
+    query.valuation &&
+    !(query.conflict === "OPEN" && query.valuation === "RATE_REQUIRED")
+  )
     clauses.push(
       query.valuation === "RATE_REQUIRED"
         ? `${alias}.business_status = 'RATE_REQUIRED'`
@@ -174,6 +181,13 @@ function where(query: LedgerReportQuery, userId: string, alias = "e") {
         AND selected_share.settlement_amount_minor > 0)`);
     params.push(query.memberId);
   }
+  if (query.positiveShare) {
+    clauses.push(`EXISTS (SELECT 1 FROM ledger_expense_splits selected_share
+      WHERE selected_share.expense_id = ${alias}.id
+        AND selected_share.member_id = ?
+        AND (selected_share.original_amount_minor > 0 OR selected_share.settlement_amount_minor > 0))`);
+    params.push(query.memberId);
+  }
   return { sql: clauses.join(" AND "), params };
 }
 
@@ -181,10 +195,14 @@ function ids(value: string | null) {
   return value ? value.split(",").sort() : [];
 }
 
-function visibleExpenseSql(scope: ReportingScope, analysis = false) {
+function visibleExpenseSql(
+  scope: ReportingScope,
+  analysis = false,
+  positiveShare = false,
+) {
   return scope === "GROUP"
     ? "1"
-    : analysis
+    : analysis || positiveShare
       ? "mine.expense_id IS NOT NULL"
       : "mine.expense_id IS NOT NULL AND (mine.settlement_amount_minor IS NULL OR mine.settlement_amount_minor <> 0)";
 }
@@ -473,11 +491,12 @@ export function createLedgerReportingRepository(
       const rows = await database.getAllAsync<
         Omit<
           LedgerReportListItem,
-          "hasReceipt" | "hasOpenConflict" | "isAuthoritative"
+          "hasReceipt" | "hasOpenConflict" | "isAuthoritative" | "unevenSplit"
         > & {
           hasReceipt: number;
           hasOpenConflict: number;
           isAuthoritative: number;
+          unevenSplit: number;
         }
       >(
         `SELECT e.id, e.title, e.category, e.occurred_at AS occurredAt,
@@ -490,6 +509,8 @@ export function createLedgerReportingRepository(
           ${component} AS componentMinor,
           (SELECT COUNT(*) FROM ledger_expense_participants participants
             WHERE participants.expense_id = e.id) AS participantCount,
+          (SELECT MAX(s.original_amount_minor) - MIN(s.original_amount_minor) > 1
+            FROM ledger_expense_splits s WHERE s.expense_id = e.id) AS unevenSplit,
           e.business_status AS businessStatus,
           e.settlement_participation AS settlementParticipation,
           e.sync_status AS syncStatus, ${receiptSql} AS hasReceipt,
@@ -499,7 +520,7 @@ export function createLedgerReportingRepository(
          LEFT JOIN ledger_members payer ON payer.id = e.payer_member_id
          LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
          LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
-         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope, Boolean(query.analysisState))}
+         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope, Boolean(query.analysisState), Boolean(query.positiveShare))}
          ORDER BY ${query.order === "UPDATED" ? "e.updated_at" : "e.occurred_at"} DESC, e.id
          LIMIT ? OFFSET ?`,
         query.memberId,
@@ -511,6 +532,7 @@ export function createLedgerReportingRepository(
         ...row,
         hasReceipt: Boolean(row.hasReceipt),
         hasOpenConflict: Boolean(row.hasOpenConflict),
+        unevenSplit: Boolean(row.unevenSplit),
         isAuthoritative: Boolean(row.isAuthoritative) && row.componentMinor !== null,
       }));
     },
@@ -523,7 +545,7 @@ export function createLedgerReportingRepository(
          JOIN ledger_journeys j ON j.journey_id = e.journey_id
          LEFT JOIN ledger_valuation_snapshots v ON v.expense_id = e.id AND v.is_active = 1
          LEFT JOIN ledger_expense_splits mine ON mine.expense_id = e.id AND mine.member_id = ?
-         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope, Boolean(query.analysisState))}`,
+         WHERE ${filtered.sql} AND ${visibleExpenseSql(query.scope, Boolean(query.analysisState), Boolean(query.positiveShare))}`,
         query.memberId,
         ...filtered.params,
       );

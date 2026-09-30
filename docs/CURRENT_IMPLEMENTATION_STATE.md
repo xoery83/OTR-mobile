@@ -2,6 +2,14 @@
 
 Date: 2026-09-30
 
+## Expense Search convergence — iPhone and Simulator acceptance
+
+- `/expenses/search` remains the sole production Search route and `LedgerSearchScreen` the sole production screen. The unused prototype Search screen was removed. Existing Ledger, Analysis, Settlement Shares and Paid route parameters normalize to Mine, Person, Group or fixed-payer Group in one screen; stack routing is unchanged.
+- Search uses the existing local reporting repository. Positive effective shares select Mine/Person rows, including original shares awaiting Journey value. Rows show Journey-currency share or full Group value first, original amount second only when useful; missing Journey value is explicit and excluded from the summary. The existing Settlement `shareOnly` query retains its prior semantics.
+- Filters have Time, Details and More levels; Participant is Group-only, Needs attention accepts both conditions, and only restrictive conditions count as active. No schema, Backend, API, sync, or dependency change. Decision: `docs/adr/0019-expense-search-scope.md`.
+- Signed Release builds were installed in place on the owner's iPhone 16 Pro and the isolated Local QA iOS 26.5 Simulator. The iPhone verified Ledger Mine/Group, member category, Analysis category, Settlement Shares/Paid, Expense Detail/back, Time/Currency/Needs attention filters, chips, counts and amounts. Two active filters show a fully visible badge inside the Search header button on both devices; default Any/None values are neutral gray. The QA Simulator preserved its local fixtures: a waiting-value Journey showed 3 Expenses, 0 included, 3 without Journey value and NZ$0.00; the no-expenses Journey showed an empty Search state. Large accessibility text remained navigable. No phone data was cleared and Production was not accessed.
+- Six related suites / 53 tests passed for the convergence; after device polish, 3 focused suites / 26 tests, TypeScript, scoped lint, both signed Release builds and diff check passed. Android and an offline mode toggle were not device-tested in this checkpoint.
+
 ## Settlement Summary layout — Simulator PASS (normal state)
 
 - Balance breakdown, Changes since last confirmation, Last confirmed, and Group review status now use captions outside their white cards. Their internals use clearer amount, metadata, count, and action hierarchy. The balance hero and warning card remain distinct. No financial, review, route, API, schema, or dependency change.
