@@ -105,12 +105,46 @@ describe("Expense user intent", () => {
       }),
     ).toBe("CONFLICT");
   });
-  it("keeps Money/date/payer/split/participation and explicit valuation divergence guarded", () => {
+  it("rebases only an unchanged participation field across automatic valuation", () => {
+    const excluded = { ...base, settlementParticipation: "EXCLUDED" as const };
+    const patch = buildExpenseUserPatch(excluded, {
+      ...excluded,
+      settlementParticipation: "INCLUDED",
+    });
+    expect(
+      expensePatchEligibility({
+        base: excluded,
+        current: { ...current, settlementParticipation: "EXCLUDED" },
+        patch,
+        verifiedHistoricalBase: true,
+      }),
+    ).toBe("DESCRIPTIVE_REBASE");
+    expect(
+      expensePatchEligibility({
+        base: excluded,
+        current: { ...current, settlementParticipation: "INCLUDED" },
+        patch,
+        verifiedHistoricalBase: true,
+      }),
+    ).toBe("CONFLICT");
+    expect(
+      expensePatchEligibility({
+        base: excluded,
+        current: {
+          ...current,
+          settlementParticipation: "EXCLUDED",
+          original: { ...current.original, minor: 2400 },
+        },
+        patch,
+        verifiedHistoricalBase: true,
+      }),
+    ).toBe("CONFLICT");
+  });
+  it("keeps Money/date/payer/split and explicit valuation divergence guarded", () => {
     for (const changed of [
       { ...base, original: { ...base.original, minor: 2400 } },
       { ...base, economicDate: "2026-09-25" },
       { ...base, payerMemberId: "other" },
-      { ...base, settlementParticipation: "EXCLUDED" as const },
       { ...base, splits: base.splits.map((split) => ({ ...split, weightUnits: 2 })) },
     ]) {
       expect(eligibility(buildExpenseUserPatch(base, changed))).toBe("CONFLICT");

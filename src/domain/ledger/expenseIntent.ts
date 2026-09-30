@@ -166,7 +166,15 @@ export function expensePatchEligibility(input: {
       ? "EQUIVALENT"
       : "CONFLICT";
   }
-  if (input.patch.financial || input.patch.participantSplit) return "CONFLICT";
+  // Participation does not change rate or split evidence; the SQL rebase path preserves both.
+  const participationPatch = input.patch.financial?.settlementParticipation;
+  if (
+    input.patch.participantSplit ||
+    Object.keys(input.patch.financial ?? {}).some(
+      (key) => key !== "settlementParticipation",
+    )
+  )
+    return "CONFLICT";
   if (
     !sameExpenseValue(
       expenseFinancialInput(input.base),
@@ -186,6 +194,13 @@ export function expensePatchEligibility(input: {
   )
     return "CONFLICT";
   let equivalent = true;
+  if (participationPatch !== undefined) {
+    if (input.current.settlementParticipation !== participationPatch) equivalent = false;
+    if (
+      input.base.settlementParticipation !== input.current.settlementParticipation
+    )
+      return "CONFLICT";
+  }
   for (const key of Object.keys(input.patch.descriptive ?? {}) as (keyof NonNullable<
     ExpenseUserPatch["descriptive"]
   >)[]) {

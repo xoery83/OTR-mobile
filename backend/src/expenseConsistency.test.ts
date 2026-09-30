@@ -232,6 +232,30 @@ describe("Backend typed Expense evidence gate", () => {
       },
     });
   });
+  it("rebases an excluded Expense inclusion over automatic valuation", async () => {
+    const mocked = service({
+      history: { ...base, settlementParticipation: "EXCLUDED" },
+      participation: "EXCLUDED",
+    });
+    await execute(
+      mocked.client,
+      command({
+        type: "UPDATE",
+        patch: { financial: { settlementParticipation: "INCLUDED" } },
+      }),
+    );
+    expect(args(mocked.rpc)).toMatchObject({
+      eligibility_value: "DESCRIPTIVE_REBASE",
+      response_body_value: {
+        entity: {
+          businessStatus: "ACCEPTED",
+          settlementParticipation: "INCLUDED",
+          valuation: { settlement: { minor: 4056 } },
+          splits: [{ settlementMinor: 4056 }],
+        },
+      },
+    });
+  });
   it("omits absent CREATE current evidence rather than passing JSON null to SQL projection", async () => {
     const mocked = service();
     const input = command();
