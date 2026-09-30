@@ -1,6 +1,46 @@
 # Current Implementation State
 
-Date: 2026-09-30
+Date: 2026-10-01
+
+## Global money typography — implemented; physical-device visual pass
+
+- `formatLedgerMoney` and `ledgerMoneyParts` share one canonical Intl formatter
+  factory, locale and explicit scale policy. `MoneyText` owns hero/headline/
+  standard/compact ratios, complete decimal-plus-fraction runs, semantic labels,
+  and the retained bounded hero fitting ladder. `ContentHeroAmount` is removed.
+- Independent Spending, Analysis, My Ledger, Expense original/Journey/split and
+  allocation previews, Search, Settlement Summary/Paid/Shares/Payments/history/
+  statement/update/member-review, personal payment and Review affected-item
+  amounts now use MoneyText. Natural-language evidence, conflict explanations,
+  Alerts, editable inputs, rates/counts/percentages and exports remain unchanged.
+- Device review exposed missing `Intl.NumberFormat.formatToParts` in iOS Hermes:
+  opening Ledger crashed. The shared helper now uses native parts when available,
+  otherwise slices the canonical formatted string using the same formatter's zero
+  for decimal/currency probes. No second formatter policy or dependency was added.
+  Regression checks disable the API and compare text and semantic parts across
+  all supported currencies, seven locales and signed/zero/large amounts.
+- Ten focused suites / 67 tests pass, including fifteen MoneyText checks for
+  0/2/3-place precision, original/Journey pairs, complete accessibility labels and
+  fitting/prop contracts. TypeScript, scoped lint (zero warnings), formatting and
+  diff checks pass. Signed physical Release build and signature verification pass.
+- With owner authorization, the Release was installed in place without clearing
+  app data. DeviceHub visual review on iPhone 16 Pro / iOS 27.0.1 passed Spending,
+  Analysis, Summary, Paid, Shares, Payments, Mine Search, Expense Detail and My
+  Ledger Spending. Examples: ¥1,479,755.63, ¥10,012,309.24, signed balance
+  +¥8,553,464.76 and ≈ NZ$2,911,477.37; integer/fraction/currency hierarchy is
+  consistent and visible amounts fit. NZD original/Journey pairs, ISK zero-place
+  original rows and the empty NZD hero also render normally; Ledger no longer
+  crashes. No financial records were created or edited during review.
+- Remaining visual checks: VoiceOver, largest Dynamic Type, narrower hardware,
+  negative hero, actual JPY/BHD/KWD fixtures, person/Group Search and secondary
+  settlement history/update/review routes. Automated precision coverage passed;
+  these physical cases are not claimed as accepted.
+- Existing LedgerStage6 actor/bootstrap/Journey-selection work is preserved.
+  This task changes only its money imports, Spending hero, category amount/total,
+  settlement preview and independent expense primary/original amount JSX.
+  Financial precision, Backend, DB/API/schema, migration, sync and exports remain
+  unchanged; no Production or Hosted Dev heavy tests were accessed. Other approved
+  checkpoints below are unchanged.
 
 ## Ledger Pager — COMPLETE (iPhone)
 

@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { rateAcceptanceMessage } from "./settlementRateCandidates";
 import { useState, useCallback } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -11,7 +12,6 @@ import {
   type RateAcceptanceResult,
   type SettlementRateAcceptance as Rate,
 } from "@/data/operations/acceptSettlementRates";
-import { formatLedgerMoney } from "./format";
 
 type RateAcceptanceProps = {
   rates: Rate[];
@@ -150,17 +150,21 @@ function RateAcceptanceForm({ rates, journeyId, onAccepted }: RateAcceptanceProp
             {item.settlement.currency}
           </Text>
           <Text style={styles.body}>
-            {formatLedgerMoney(
-              item.original.minor,
-              item.original.currency,
-              item.original.scale,
-            )}{" "}
+            <MoneyText
+              style={styles.body}
+              accessible={false}
+              minor={item.original.minor}
+              currency={item.original.currency}
+              scale={item.original.scale}
+            />{" "}
             →{" "}
-            {formatLedgerMoney(
-              item.settlement.minor,
-              item.settlement.currency,
-              item.settlement.scale,
-            )}
+            <MoneyText
+              style={styles.body}
+              accessible={false}
+              minor={item.settlement.minor}
+              currency={item.settlement.currency}
+              scale={item.settlement.scale}
+            />
           </Text>
         </View>
       ))}

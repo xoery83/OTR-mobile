@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import type { ReactElement } from "react";
@@ -203,7 +204,10 @@ describe("Analysis UI transitions and request guardrails", () => {
   it("uses full-width insight cards and a fitted timeline with large text", () => {
     ui.fontScale = 3.1;
     const dashboard = buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29");
-    const insights = AnalysisInsights({ dashboard, money: String });
+    const insights = AnalysisInsights({
+      dashboard,
+      money: { format: String, currency: "NZD", scale: 2 },
+    });
     expect(
       nodes(insights).filter(
         (node) =>
@@ -214,7 +218,11 @@ describe("Analysis UI transitions and request guardrails", () => {
       ),
     ).toHaveLength(dashboard.insights.length);
     ui.cursor = 0;
-    const timeline = AnalysisTimeline({ dashboard, money: String, drilldown: vi.fn() });
+    const timeline = AnalysisTimeline({
+      dashboard,
+      money: { format: String, currency: "NZD", scale: 2 },
+      drilldown: vi.fn(),
+    });
     const bar = nodes(timeline).find(
       (node) => node.props.accessibilityHint === "Opens spending brief",
     )!;
@@ -461,7 +469,7 @@ describe("Analysis UI transitions and request guardrails", () => {
       categories: dashboard.displayedCategories,
       totalCategories: 1,
       scope: "MINE" as const,
-      money: (amount: number) => `NZ${amount}`,
+      money: { format: (amount: number) => `NZ${amount}`, currency: "NZD", scale: 2 },
       drilldown,
     };
     ui.cursor = 0;
@@ -494,7 +502,11 @@ describe("Analysis UI transitions and request guardrails", () => {
     }));
     const dashboard = buildSpendingAnalysis(dataset, "a", "MINE", {}, "2026-09-29");
     ui.cursor = 0;
-    const element = AnalysisTimeline({ dashboard, money: String, drilldown: vi.fn() });
+    const element = AnalysisTimeline({
+      dashboard,
+      money: { format: String, currency: "NZD", scale: 2 },
+      drilldown: vi.fn(),
+    });
     expect(texts(element)).toContain("Spent this day");
     expect(
       nodes(element).some(
@@ -505,7 +517,11 @@ describe("Analysis UI transitions and request guardrails", () => {
   it("expands a zero timeline period in memory and drills into its exact date bounds", () => {
     const dashboard = buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29");
     const drilldown = vi.fn();
-    const props = { dashboard, money: String, drilldown };
+    const props = {
+      dashboard,
+      money: { format: String, currency: "NZD", scale: 2 },
+      drilldown,
+    };
     ui.cursor = 0;
     let element = AnalysisTimeline(props);
     press(
@@ -528,7 +544,11 @@ describe("Analysis UI transitions and request guardrails", () => {
   });
   it("zooms with horizontal pinch, scrolls only after zoom, opens and closes a floating brief without reads", () => {
     const dashboard = buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29");
-    const props = { dashboard, money: String, drilldown: vi.fn() };
+    const props = {
+      dashboard,
+      money: { format: String, currency: "NZD", scale: 2 },
+      drilldown: vi.fn(),
+    };
     const draw = () => {
       ui.cursor = 0;
       return AnalysisTimeline(props);
@@ -580,7 +600,7 @@ describe("Analysis UI transitions and request guardrails", () => {
   it("shows useful zoom actions only and makes each column at least 44pt after zoom", () => {
     const props = {
       dashboard: buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29"),
-      money: String,
+      money: { format: String, currency: "NZD", scale: 2 },
       drilldown: vi.fn(),
     };
     const draw = () => {
@@ -612,7 +632,7 @@ describe("Analysis UI transitions and request guardrails", () => {
   it("keeps the brief date and View expenses outside the scrolling category content", () => {
     const props = {
       dashboard: buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29"),
-      money: String,
+      money: { format: String, currency: "NZD", scale: 2 },
       drilldown: vi.fn(),
     };
     ui.cursor = 0;
@@ -648,7 +668,7 @@ describe("Analysis UI transitions and request guardrails", () => {
         },
       ],
       totalMinor: 1000,
-      money: String,
+      money: { format: String, currency: "NZD", scale: 2 },
       drilldown,
       action: null,
       traveller: true,
@@ -693,7 +713,7 @@ describe("Analysis UI transitions and request guardrails", () => {
     const element = AnalysisExpenseRows({
       expenses: data().expenses.slice(0, 1),
       scope: "MINE",
-      money: (amount) => `NZ${amount}`,
+      money: { format: (amount: number) => `NZ${amount}`, currency: "NZD", scale: 2 },
     });
     expect(texts(element)).toContain("You");
     expect(texts(element)).not.toMatch(/My share|original|food/);
@@ -704,14 +724,16 @@ describe("Analysis UI transitions and request guardrails", () => {
     ).toHaveLength(1);
     expect(
       nodes(element).filter(
-        (node) => node.type === "text" && node.props.numberOfLines === 2,
+        (node) =>
+          (node.type === "text" || node.type === MoneyText) &&
+          node.props.numberOfLines === 2,
       ),
     ).toHaveLength(2);
     expect(texts(element)).toContain("Total NZ2000");
     expect(
       nodes(element).find(
         (node) =>
-          node.type === "text" &&
+          node.type === MoneyText &&
           (node.props.style as { minWidth?: number } | undefined)?.minWidth === 64,
       )?.props.style,
     ).toMatchObject({ flexShrink: 0, minWidth: 64 });

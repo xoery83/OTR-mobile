@@ -1,8 +1,8 @@
+import { MoneyText } from "./MoneyText";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
 import { useLedgerReview } from "@/hooks/useLedgerReview";
-import { formatLedgerMoney } from "./format";
 import { reviewEvidence } from "./reviewEvidence";
 
 import {
@@ -74,9 +74,13 @@ export function LedgerReviewFindingScreen() {
             <Text style={styles.meta}>{String(context.expenseDateSnapshot)}</Text>
           ) : null}
           {money ? (
-            <Text style={styles.body}>
-              {formatLedgerMoney(money.minor, money.currency, money.scale)}
-            </Text>
+            <MoneyText
+              style={styles.body}
+              variant="standard"
+              minor={money.minor}
+              currency={money.currency}
+              scale={money.scale}
+            />
           ) : null}
           {finding.expenseId ? (
             <Pressable

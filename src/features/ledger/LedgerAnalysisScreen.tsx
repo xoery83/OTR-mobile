@@ -14,7 +14,7 @@ import { useHeaderHeight } from "expo-router/react-navigation";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 
 import { AppIcon } from "@/components/AppIcon";
-import { ContentHeroAmount } from "./ContentHeroAmount";
+import { MoneyText } from "./MoneyText";
 import { HeaderIconAction, NavigationContextTitle } from "@/components/navigationChrome";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import {
@@ -190,12 +190,16 @@ export function LedgerAnalysisScreen() {
     [view],
   );
   const presets = analysisRangePresets(dashboard?.duration ?? 0);
-  const money = (minor: number) =>
-    formatLedgerMoney(
-      minor,
-      view?.dataset.journey.settlementCurrency ?? "NZD",
-      view?.dataset.journey.settlementScale ?? 2,
-    );
+  const money = {
+    currency: view?.dataset.journey.settlementCurrency ?? "NZD",
+    scale: view?.dataset.journey.settlementScale ?? 2,
+    format: (minor: number) =>
+      formatLedgerMoney(
+        minor,
+        view?.dataset.journey.settlementCurrency ?? "NZD",
+        view?.dataset.journey.settlementScale ?? 2,
+      ),
+  };
   const drilldown: AnalysisDrilldown = (filters, origin) => {
     const { categories, ...rest } = filters;
     router.push({
@@ -332,7 +336,12 @@ export function LedgerAnalysisScreen() {
                 {dashboard.state === "UNAVAILABLE" ? (
                   <Text style={shared.emptyTitle}>Spending total unavailable</Text>
                 ) : (
-                  <ContentHeroAmount value={money(dashboard.totalMinor)} />
+                  <MoneyText
+                    variant="hero"
+                    minor={dashboard.totalMinor}
+                    currency={money.currency}
+                    scale={money.scale}
+                  />
                 )}
                 <View style={styles.countLine}>
                   <Text style={shared.meta}>
@@ -354,7 +363,7 @@ export function LedgerAnalysisScreen() {
                 <Text style={shared.meta}>
                   {dashboard.elapsedDays} {dashboard.elapsedDays === 1 ? "day" : "days"}
                   {dashboard.averageMinor !== null && dashboard.state === "READY"
-                    ? ` · ${money(dashboard.averageMinor)}/day`
+                    ? ` · ${money.format(dashboard.averageMinor)}/day`
                     : ""}
                 </Text>
                 {view.range.from ? (

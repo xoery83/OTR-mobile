@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -197,17 +198,15 @@ export function ExpenseFxDetails({
   return (
     <View style={styles.section}>
       <View style={styles.valueRow}>
-        <Text style={styles.value}>
-          {valuation
-            ? formatLedgerMoney(
-                valuation.settlement.minor,
-                valuation.settlement.currency,
-                valuation.settlement.scale,
-              )
-            : estimate
-              ? `≈ ${formatLedgerMoney(estimate.money.minor, currency, scale)}`
-              : `${currency}—`}
-        </Text>
+        <MoneyText
+          variant="headline"
+          style={styles.value}
+          minor={valuation ? valuation.settlement.minor : (estimate?.money.minor ?? null)}
+          currency={valuation?.settlement.currency ?? currency}
+          scale={valuation?.settlement.scale ?? scale}
+          prefix={!valuation && estimate ? "≈ " : ""}
+          placeholder={`${currency}—`}
+        />
         {crossCurrency ? (
           <Pressable
             accessibilityRole="button"
@@ -254,17 +253,19 @@ export function ExpenseFxDetails({
                       ? label("JOURNEY VALUE", "旅行估值")
                       : label("ESTIMATED VALUE", "预估金额")}
                   </Text>
-                  <Text style={styles.summaryValue}>
-                    {valuation
-                      ? formatLedgerMoney(
-                          valuation.settlement.minor,
-                          valuation.settlement.currency,
-                          valuation.settlement.scale,
-                        )
-                      : estimate
-                        ? `≈ ${formatLedgerMoney(estimate.money.minor, currency, scale)}`
-                        : `${currency}—`}
-                  </Text>
+                  <MoneyText
+                    variant="headline"
+                    style={styles.summaryValue}
+                    minor={
+                      valuation
+                        ? valuation.settlement.minor
+                        : (estimate?.money.minor ?? null)
+                    }
+                    currency={valuation?.settlement.currency ?? currency}
+                    scale={valuation?.settlement.scale ?? scale}
+                    prefix={!valuation && estimate ? "≈ " : ""}
+                    placeholder={`${currency}—`}
+                  />
                   <Text style={styles.meta}>
                     {policy === "REFERENCE_RATE"
                       ? label("Reference rate", "参考汇率")
@@ -520,7 +521,25 @@ export function ExpenseFxDetails({
                               {row.pair ? (
                                 <Text style={styles.meta}>{row.pair}</Text>
                               ) : null}
-                              <Text style={styles.meta}>{row.value}</Text>
+                              <Text style={styles.meta} accessibilityLabel={row.value}>
+                                <MoneyText
+                                  variant="compact"
+                                  accessible={false}
+                                  style={styles.meta}
+                                  minor={item.original.minor}
+                                  currency={item.original.currency}
+                                  scale={item.original.scale}
+                                />
+                                {" → "}
+                                <MoneyText
+                                  variant="compact"
+                                  accessible={false}
+                                  style={styles.meta}
+                                  minor={item.settlement.minor}
+                                  currency={item.settlement.currency}
+                                  scale={item.settlement.scale}
+                                />
+                              </Text>
                               {row.context.map((line) => (
                                 <Text key={line} style={styles.meta}>
                                   {line}

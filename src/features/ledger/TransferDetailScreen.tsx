@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { useMemo, useState } from "react";
 import {
   Alert,
@@ -348,14 +349,16 @@ function Amount({
   return (
     <View style={[styles.amountRow, largeText && styles.amountRowLarge]}>
       <Text style={styles.meta}>{label}</Text>
-      <Text
+      <MoneyText
         style={[
           emphasized ? styles.remainingAmount : styles.amount,
           largeText && styles.amountLarge,
         ]}
-      >
-        {formatLedgerMoney(minor, transfer.amount.currency, transfer.amount.scale)}
-      </Text>
+        variant="headline"
+        minor={minor}
+        currency={transfer.amount.currency}
+        scale={transfer.amount.scale}
+      />
     </View>
   );
 }

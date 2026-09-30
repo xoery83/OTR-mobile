@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionSheetIOS,
@@ -323,9 +324,21 @@ export function LedgerSearchScreen() {
           ) : null}
         </View>
         <View style={[styles.amountBlock, largeText && styles.largeAmount]}>
-          <Text style={styles.amount}>{amounts.primary}</Text>
+          <MoneyText
+            style={styles.amount}
+            minor={group ? item.settlementMinor : item.componentMinor}
+            currency={item.settlementCurrency}
+            scale={item.settlementScale}
+            placeholder="Journey value unavailable"
+          />
           {amounts.secondary ? (
-            <Text style={styles.secondaryAmount}>{amounts.secondary}</Text>
+            <MoneyText
+              variant="compact"
+              style={styles.secondaryAmount}
+              minor={group ? item.originalMinor : item.originalComponentMinor}
+              currency={item.originalCurrency}
+              scale={item.originalScale}
+            />
           ) : null}
         </View>
       </Pressable>
@@ -484,16 +497,14 @@ export function LedgerSearchScreen() {
                     ? ` · ${view.summary.openConflictCount} ${view.summary.openConflictCount === 1 ? "conflict" : "conflicts"}`
                     : ""}
                 </Text>
-                <Text
+                <MoneyText
                   maxFontSizeMultiplier={2}
                   style={[styles.total, largeText && styles.largeTotal]}
-                >
-                  {formatLedgerMoney(
-                    view.summary.totalMinor,
-                    journey?.settlementCurrency ?? "NZD",
-                    journey?.settlementScale ?? 2,
-                  )}
-                </Text>
+                  variant="headline"
+                  minor={view.summary.totalMinor}
+                  currency={journey?.settlementCurrency ?? "NZD"}
+                  scale={journey?.settlementScale ?? 2}
+                />
                 {updating ? (
                   <Text accessibilityLiveRegion="polite" style={styles.context}>
                     Updating…

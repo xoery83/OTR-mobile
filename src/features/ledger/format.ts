@@ -1,12 +1,93 @@
 import type { ReportingScope } from "@/domain/ledger/reporting";
 
-export function formatLedgerMoney(minor: number, currency: string, scale: number) {
-  return new Intl.NumberFormat(undefined, {
+// Formatting and visual parts share the same locale and precision policy.
+function ledgerMoneyFormatter(
+  currency: string,
+  scale: number,
+  locale?: string | string[],
+) {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     minimumFractionDigits: scale,
     maximumFractionDigits: scale,
-  }).format(minor / 10 ** scale);
+  });
+}
+
+export function formatLedgerMoney(
+  minor: number,
+  currency: string,
+  scale: number,
+  locale?: string | string[],
+) {
+  return ledgerMoneyFormatter(currency, scale, locale).format(minor / 10 ** scale);
+}
+
+export function ledgerMoneyParts(
+  minor: number,
+  currency: string,
+  scale: number,
+  locale?: string | string[],
+) {
+  const formatter = ledgerMoneyFormatter(currency, scale, locale);
+  const amount = minor / 10 ** scale;
+  if (typeof formatter.formatToParts === "function")
+    return formatter.formatToParts(amount);
+
+  // iOS Hermes lacks formatToParts. Slice only the canonical display string;
+  // the same formatter's zero supplies its decimal separator, not a locale map.
+  const value = formatter.format(amount);
+  const zero = formatter.format(0);
+  const zeroDigits = [...zero.matchAll(/\p{Decimal_Number}+/gu)];
+  const firstZero = zeroDigits[0];
+  const lastZero = zeroDigits[zeroDigits.length - 1];
+  const symbol =
+    firstZero && lastZero
+      ? (
+          zero.slice(0, firstZero.index) + zero.slice(lastZero.index + lastZero[0].length)
+        ).replace(/^[\s\p{Cf}]+|[\s\p{Cf}]+$/gu, "")
+      : "";
+  const decimal =
+    scale > 0 && zeroDigits.length === 2
+      ? zero.slice(zeroDigits[0].index + zeroDigits[0][0].length, zeroDigits[1].index)
+      : null;
+  const chunks = value.match(/\p{Decimal_Number}+|[^\p{Decimal_Number}]+/gu) ?? [];
+  const isDigits = (chunk: string) => /^\p{Decimal_Number}+$/u.test(chunk);
+  const first = chunks.findIndex(isDigits);
+  const last = chunks.map(isDigits).lastIndexOf(true);
+  const affixParts = (text: string): Intl.NumberFormatPart[] =>
+    text
+      .split(/([\s\p{Cf}]+|[-+\u2212])/u)
+      .filter(Boolean)
+      .map((value) => ({
+        type: /^[\s\p{Cf}]+$/u.test(value)
+          ? "literal"
+          : /^[-\u2212]$/u.test(value)
+            ? "minusSign"
+            : value === "+"
+              ? "plusSign"
+              : "currency",
+        value,
+      }));
+  return chunks.flatMap<Intl.NumberFormatPart>((chunk, index) => {
+    if (isDigits(chunk))
+      return [
+        {
+          type: index > first && chunks[index - 1] === decimal ? "fraction" : "integer",
+          value: chunk,
+        },
+      ];
+    if (index > first && index < last)
+      return [{ type: chunk === decimal ? "decimal" : "group", value: chunk }];
+    const symbolIndex = symbol ? chunk.indexOf(symbol) : -1;
+    return symbolIndex < 0
+      ? affixParts(chunk)
+      : [
+          ...affixParts(chunk.slice(0, symbolIndex)),
+          { type: "currency", value: symbol },
+          ...affixParts(chunk.slice(symbolIndex + symbol.length)),
+        ];
+  });
 }
 
 export function formatLedgerRate(rate: string) {

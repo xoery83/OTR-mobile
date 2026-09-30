@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { useMemo, useRef, useState } from "react";
 import {
   Modal,
@@ -26,7 +27,11 @@ import { formatLedgerDate, formatLedgerDateFilter, localDateKey } from "./format
 import { formatExpenseCount } from "./searchFilters";
 
 export type AnalysisDashboard = ReturnType<typeof buildSpendingAnalysis>;
-export type AnalysisMoney = (minor: number) => string;
+export type AnalysisMoney = {
+  format: (minor: number) => string;
+  currency: string;
+  scale: number;
+};
 export type AnalysisDrilldown = (
   filters: {
     categories?: string[];
@@ -104,7 +109,7 @@ export function AnalysisExpenseRows({
         <Pressable
           key={expense.id}
           accessibilityRole="button"
-          accessibilityLabel={`${expense.title}, ${formatLedgerDate(expense.occurredAt)}, total ${money(expense.totalMinor ?? 0)}${scope === "MINE" ? `, your share ${money(expense.personalMinor ?? 0)}` : ""}`}
+          accessibilityLabel={`${expense.title}, ${formatLedgerDate(expense.occurredAt)}, total ${money.format(expense.totalMinor ?? 0)}${scope === "MINE" ? `, your share ${money.format(expense.personalMinor ?? 0)}` : ""}`}
           onPress={() => router.push(`/expenses/expense/${expense.id}`)}
           style={[
             styles.expenseRow,
@@ -119,11 +124,14 @@ export function AnalysisExpenseRows({
             >
               {expense.title}
             </Text>
-            <Text numberOfLines={2} style={styles.compactAmount}>
-              {money(
-                (scope === "MINE" ? expense.personalMinor : expense.totalMinor) ?? 0,
-              )}
-            </Text>
+            <MoneyText
+              numberOfLines={2}
+              style={styles.compactAmount}
+              variant="compact"
+              minor={(scope === "MINE" ? expense.personalMinor : expense.totalMinor) ?? 0}
+              currency={money.currency}
+              scale={money.scale}
+            />
           </View>
           <View style={styles.rowHeading}>
             <Text
@@ -133,7 +141,9 @@ export function AnalysisExpenseRows({
               style={[styles.expenseMeta, styles.expenseMain]}
             >
               {formatLedgerDate(expense.occurredAt)}
-              {scope === "MINE" ? ` · Total ${money(expense.totalMinor ?? 0)}` : ""}
+              {scope === "MINE"
+                ? ` · Total ${money.format(expense.totalMinor ?? 0)}`
+                : ""}
             </Text>
             <Text style={styles.youLabel}>{scope === "MINE" ? "You" : "Total"}</Text>
           </View>
@@ -166,7 +176,7 @@ export function AnalysisCategories({
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ expanded: expanded === category.key }}
-              accessibilityLabel={`${category.label}, ${money(category.totalMinor)}, ${category.percentage} percent of ${scope === "MINE" ? "your" : "group"} spending, ${formatExpenseCount(category.expenses.length)}`}
+              accessibilityLabel={`${category.label}, ${money.format(category.totalMinor)}, ${category.percentage} percent of ${scope === "MINE" ? "your" : "group"} spending, ${formatExpenseCount(category.expenses.length)}`}
               onPress={() => setExpanded(expanded === category.key ? null : category.key)}
               style={styles.categoryRow}
             >
@@ -175,7 +185,12 @@ export function AnalysisCategories({
                   {category.label}
                 </Text>
                 <Text style={styles.amount}>
-                  {money(category.totalMinor)}
+                  <MoneyText
+                    accessible={false}
+                    minor={category.totalMinor}
+                    currency={money.currency}
+                    scale={money.scale}
+                  />
                   {totalCategories > 1 ? (
                     <Text style={styles.meta}> · {category.percentage}%</Text>
                   ) : null}
@@ -294,12 +309,24 @@ export function AnalysisTimeline({
           {periodLabel(item)}
         </Text>
       ) : null}
-      <Text style={styles.amount}>{money(item.totalMinor)}</Text>
+      <MoneyText
+        style={styles.amount}
+        variant="standard"
+        minor={item.totalMinor}
+        currency={money.currency}
+        scale={money.scale}
+      />
       <Text style={styles.meta}>{formatExpenseCount(item.expenseCount)}</Text>
       {item.categories.map((category) => (
         <View key={category.key} style={styles.rowHeading}>
           <Text style={styles.meta}>{category.key}</Text>
-          <Text style={styles.amount}>{money(category.totalMinor)}</Text>
+          <MoneyText
+            style={styles.amount}
+            variant="standard"
+            minor={category.totalMinor}
+            currency={money.currency}
+            scale={money.scale}
+          />
         </View>
       ))}
     </View>
@@ -331,7 +358,7 @@ export function AnalysisTimeline({
           Average{" "}
           {dashboard.averageMinor === null
             ? "unavailable"
-            : `${money(dashboard.averageMinor)}/day`}
+            : `${money.format(dashboard.averageMinor)}/day`}
         </Text>
         {dashboard.calendarDays > 1 && maxZoom > 1 ? (
           <View style={styles.zoomControls}>
@@ -476,7 +503,7 @@ export function AnalysisTimeline({
                     accessibilityRole="button"
                     accessibilityState={{ selected: item.key === selected }}
                     accessibilityHint="Opens spending brief"
-                    accessibilityLabel={`${periodLabel(item)}, ${money(item.totalMinor)} total spending, ${item.categories.map((category) => `${category.key} ${money(category.totalMinor)}`).join(", ") || "No spending"}, ${formatExpenseCount(item.expenseCount)}`}
+                    accessibilityLabel={`${periodLabel(item)}, ${money.format(item.totalMinor)} total spending, ${item.categories.map((category) => `${category.key} ${money.format(category.totalMinor)}`).join(", ") || "No spending"}, ${formatExpenseCount(item.expenseCount)}`}
                     onPress={() => {
                       if (!pinching) setSelected(item.key);
                     }}
@@ -646,7 +673,7 @@ export function AnalysisPeople({
               accessibilityState={
                 traveller && !category ? { expanded: expanded === person.key } : undefined
               }
-              accessibilityLabel={`${traveller ? `Rank ${person.rank}, ` : ""}${person.label}, ${money(person.totalMinor)}, ${formatExpenseCount(person.expenseCount)}`}
+              accessibilityLabel={`${traveller ? `Rank ${person.rank}, ` : ""}${person.label}, ${money.format(person.totalMinor)}, ${formatExpenseCount(person.expenseCount)}`}
               onPress={() => {
                 if (traveller && !category)
                   setExpanded(expanded === person.key ? null : person.key);
@@ -672,14 +699,16 @@ export function AnalysisPeople({
                     {person.label}
                   </Text>
                 </View>
-                <Text
+                <MoneyText
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.7}
                   style={styles.amount}
-                >
-                  {money(person.totalMinor)}
-                </Text>
+                  variant="standard"
+                  minor={person.totalMinor}
+                  currency={money.currency}
+                  scale={money.scale}
+                />
               </View>
               {!traveller ? (
                 <View style={styles.track}>
@@ -699,7 +728,13 @@ export function AnalysisPeople({
                 {person.categories?.map((item) => (
                   <View key={item.key} style={styles.rowHeading}>
                     <Text style={styles.meta}>{item.label}</Text>
-                    <Text style={styles.amount}>{money(item.totalMinor)}</Text>
+                    <MoneyText
+                      style={styles.amount}
+                      variant="standard"
+                      minor={item.totalMinor}
+                      currency={money.currency}
+                      scale={money.scale}
+                    />
                   </View>
                 ))}
                 <Pressable
@@ -752,13 +787,21 @@ export function AnalysisInsights({
             key={insight.label}
             style={[styles.insight, largeText && { width: "100%" }]}
           >
-            <Text style={styles.insightValue}>
-              {insight.money
-                ? money(Number(insight.value))
-                : insight.label === "Biggest spending day"
+            {insight.money ? (
+              <MoneyText
+                variant="headline"
+                style={styles.insightValue}
+                minor={Number(insight.value)}
+                currency={money.currency}
+                scale={money.scale}
+              />
+            ) : (
+              <Text style={styles.insightValue}>
+                {insight.label === "Biggest spending day"
                   ? formatLedgerDate(String(insight.value))
                   : insight.value}
-            </Text>
+              </Text>
+            )}
             <Text style={styles.meta}>{insight.label}</Text>
           </View>
         ))}

@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -179,10 +180,14 @@ export function MyLedgerScreen() {
       {shown && section === "SPENDING" && spending ? (
         <>
           <View style={styles.total}>
-            <Text style={styles.amount}>
-              ≈{" "}
-              {formatLedgerMoney(spending.totalMinor, spending.currency, spending.scale)}
-            </Text>
+            <MoneyText
+              variant="hero"
+              style={styles.amount}
+              prefix="≈ "
+              minor={spending.totalMinor}
+              currency={spending.currency}
+              scale={spending.scale}
+            />
             <Text style={styles.label}>Total spending</Text>
             {spending.unconverted ? (
               <Text style={styles.meta}>
@@ -207,7 +212,12 @@ export function MyLedgerScreen() {
                   <View style={styles.inline}>
                     <Text style={styles.categoryName}>{name}</Text>
                     <Text>
-                      {formatLedgerMoney(amount, spending.currency, spending.scale)}
+                      <MoneyText
+                        accessible={false}
+                        minor={amount}
+                        currency={spending.currency}
+                        scale={spending.scale}
+                      />
                       <Text style={styles.categoryPercentage}>{` · ${percentage}%`}</Text>
                     </Text>
                   </View>
@@ -279,15 +289,12 @@ export function MyLedgerScreen() {
                 {status ? <Text style={styles.meta}>{status}</Text> : null}
               </View>
               <View style={styles.balanceColumn}>
-                <Text style={styles.balance}>
-                  {projection
-                    ? formatLedgerMoney(
-                        Math.abs(projection.balanceMinor),
-                        projection.currency,
-                        projection.scale,
-                      )
-                    : "—"}
-                </Text>
+                <MoneyText
+                  style={styles.balance}
+                  minor={projection ? Math.abs(projection.balanceMinor) : null}
+                  currency={projection?.currency ?? journey.settlementCurrency}
+                  scale={projection?.scale ?? journey.settlementScale}
+                />
                 {projection ? (
                   <Text
                     style={[

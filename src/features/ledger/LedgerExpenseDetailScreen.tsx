@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import {
   refreshLedgerFxSnapshotCache,
   kickLedgerOperationalSync,
@@ -41,7 +42,7 @@ import { expenseSharingSummary } from "./expenseEntryPresentation";
 
 import { ExpenseFxDetails } from "./ExpenseFxDetails";
 import type { DisplayEstimate } from "./displayEstimate";
-import { formatLedgerDate, formatLedgerMoney } from "./format";
+import { formatLedgerDate } from "./format";
 import { loadDisplayEstimates } from "./loadDisplayEstimates";
 
 export function LedgerExpenseDetailScreen() {
@@ -520,13 +521,13 @@ export function LedgerExpenseDetailScreen() {
         <Section label={chinese ? "金额" : "Amount"}>
           <View style={[styles.amountRow, largeText && styles.stack]}>
             <View style={styles.amountColumn}>
-              <Text style={styles.value}>
-                {formatLedgerMoney(
-                  expense.original.minor,
-                  expense.original.currency,
-                  expense.original.scale,
-                )}
-              </Text>
+              <MoneyText
+                style={styles.value}
+                variant="headline"
+                minor={expense.original.minor}
+                currency={expense.original.currency}
+                scale={expense.original.scale}
+              />
               {fxAccess.currency && expense.original.currency !== fxAccess.currency ? (
                 <Text style={styles.meta}>Original</Text>
               ) : null}
@@ -586,13 +587,13 @@ export function LedgerExpenseDetailScreen() {
                       ? "You"
                       : (participantNames.get(split.memberId) ?? "Traveller")}
                   </Text>
-                  <Text style={styles.splitAmount}>
-                    {formatLedgerMoney(
-                      split.originalMinor,
-                      expense.original.currency,
-                      expense.original.scale,
-                    )}
-                  </Text>
+                  <MoneyText
+                    style={styles.splitAmount}
+                    variant="standard"
+                    minor={split.originalMinor}
+                    currency={expense.original.currency}
+                    scale={expense.original.scale}
+                  />
                 </View>
               ))}
             </View>

@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -173,7 +174,13 @@ export function PersonalPaymentSection({
                   ]}
                 >
                   <Text style={[styles.timelineText, !payerSide && styles.alignRight]}>
-                    {formatLedgerMoney(record.amountMinor, record.currency, record.scale)}{" "}
+                    <MoneyText
+                      accessible={false}
+                      style={styles.timelineText}
+                      minor={record.amountMinor}
+                      currency={record.currency}
+                      scale={record.scale}
+                    />{" "}
                     · {payerSide ? "paid" : "received"} · {record.occurredAt.slice(0, 10)}
                   </Text>
                 </Pressable>

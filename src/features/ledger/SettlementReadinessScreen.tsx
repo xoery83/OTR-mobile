@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { SettlementRateAcceptance } from "./SettlementRateAcceptance";
 import { ExpenseConflictList } from "./ExpenseConflictList";
 import { settlementRateCandidates } from "./settlementRateCandidates";
@@ -18,7 +19,6 @@ import { router, useFocusEffect } from "expo-router";
 import { advanceScrollAnchor, restoredScrollY } from "./settlementScrollAnchor";
 
 import { AppIcon } from "@/components/AppIcon";
-import { ContentHeroAmount } from "./ContentHeroAmount";
 import { contentVisual as cv } from "./contentVisual";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import { usePersonalSettlementReview } from "@/hooks/usePersonalSettlementReview";
@@ -597,13 +597,12 @@ function SummarySection({
             : settlementPositionLabel(balanceMinor)}
         </Text>
         <View style={styles.heroAmountRow}>
-          <ContentHeroAmount
+          <MoneyText
+            variant="hero"
             style={styles.heroAmount}
-            value={
-              balanceMinor === undefined
-                ? "—"
-                : formatLedgerMoney(Math.abs(balanceMinor), currency, scale)
-            }
+            minor={balanceMinor === undefined ? null : Math.abs(balanceMinor)}
+            currency={currency}
+            scale={scale}
           />
           {projection && rateIssues.length ? (
             <Pressable
@@ -739,19 +738,17 @@ function SummarySection({
             Last confirmed
           </Text>
           <View style={styles.card}>
-            <Text
+            <MoneyText
               adjustsFontSizeToFit
               maxFontSizeMultiplier={1.35}
               minimumFontScale={0.6}
               numberOfLines={1}
               style={styles.confirmedAmount}
-            >
-              {formatLedgerMoney(
-                Math.abs(confirmedBalance.balanceMinor),
-                currency,
-                scale,
-              )}
-            </Text>
+              variant="headline"
+              minor={Math.abs(confirmedBalance.balanceMinor)}
+              currency={currency}
+              scale={scale}
+            />
             <Text style={styles.meta}>
               {new Date(confirmedBalance.finalizedAt).toLocaleDateString()} · version #
               {confirmedBalance.lineageSequence + 1}
@@ -1043,9 +1040,12 @@ function ExpenseSection({
             })}
           </View>
         ) : null}
-        <ContentHeroAmount
+        <MoneyText
+          variant="hero"
           style={styles.heroAmount}
-          value={formatLedgerMoney(total, currency, scale)}
+          minor={total}
+          currency={currency}
+          scale={scale}
         />
       </View>
       {categories.map((category) => {
@@ -1067,9 +1067,13 @@ function ExpenseSection({
                 <Text numberOfLines={2} style={[styles.rowTitle, styles.grow]}>
                   {category.label}
                 </Text>
-                <Text style={styles.rowAmount}>
-                  {formatLedgerMoney(category.totalMinor, currency, scale)}
-                </Text>
+                <MoneyText
+                  style={styles.rowAmount}
+                  variant="standard"
+                  minor={category.totalMinor}
+                  currency={currency}
+                  scale={scale}
+                />
               </View>
               <View style={styles.categoryLine}>
                 <Text style={styles.meta}>
@@ -1102,13 +1106,13 @@ function ExpenseSection({
                         <Text numberOfLines={2} style={[styles.rowTitle, styles.grow]}>
                           {row.title}
                         </Text>
-                        <Text style={styles.compactAmount}>
-                          {formatLedgerMoney(
-                            row.componentMinor ?? 0,
-                            row.settlementCurrency,
-                            row.settlementScale,
-                          )}
-                        </Text>
+                        <MoneyText
+                          style={styles.compactAmount}
+                          variant="compact"
+                          minor={row.componentMinor ?? 0}
+                          currency={row.settlementCurrency}
+                          scale={row.settlementScale}
+                        />
                       </View>
                       <View style={styles.categoryLine}>
                         <Text numberOfLines={1} style={[styles.meta, styles.grow]}>
@@ -1231,9 +1235,13 @@ function PaymentsSection({
               </Text>
               <Text style={styles.arrow}>→</Text>
               <View style={styles.transferAmountBlock}>
-                <Text style={styles.transferAmount}>
-                  {formatLedgerMoney(transfer.amount.minor, currency, scale)}
-                </Text>
+                <MoneyText
+                  style={styles.transferAmount}
+                  variant="standard"
+                  minor={transfer.amount.minor}
+                  currency={currency}
+                  scale={scale}
+                />
                 {progress && (progress.minor || progress.provisional.length) ? (
                   <View style={styles.transferProgressRow}>
                     <Text style={styles.transferProgress}>
@@ -1537,16 +1545,15 @@ function MoneyLine({
   return (
     <View style={[styles.moneyLine, largeText && styles.moneyLineLarge]}>
       <Text style={[styles.moneyLineLabel, emphasized && styles.bold]}>{label}</Text>
-      <Text
-        adjustsFontSizeToFit
+      <MoneyText
         maxFontSizeMultiplier={1.35}
         minimumFontScale={0.65}
-        numberOfLines={1}
         style={[styles.moneyLineAmount, emphasized && styles.bold]}
-      >
-        {signed && minor > 0 ? "+" : ""}
-        {formatLedgerMoney(minor, currency, scale)}
-      </Text>
+        signed={signed}
+        minor={minor}
+        currency={currency}
+        scale={scale}
+      />
     </View>
   );
 }

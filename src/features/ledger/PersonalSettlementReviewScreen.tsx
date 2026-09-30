@@ -1,3 +1,4 @@
+import { MoneyText, type MoneyTextProps } from "./MoneyText";
 import {
   ActivityIndicator,
   Pressable,
@@ -54,11 +55,24 @@ export function PersonalSettlementReviewScreen() {
         </Text>
       ) : null}
       <View style={styles.summary}>
-        <Amount label="Paid for group" value={money(statement.paidMinor)} />
-        <Amount label="Your share" value={money(statement.shareMinor)} />
+        <Amount
+          label="Paid for group"
+          minor={statement.paidMinor}
+          currency={statement.currency}
+          scale={statement.scale}
+        />
+        <Amount
+          label="Your share"
+          minor={statement.shareMinor}
+          currency={statement.currency}
+          scale={statement.scale}
+        />
         <Amount
           label={statement.settlementId ? "Final balance" : "Current balance"}
-          value={`${statement.balanceMinor > 0 ? "+" : ""}${money(statement.balanceMinor)}`}
+          minor={statement.balanceMinor}
+          currency={statement.currency}
+          scale={statement.scale}
+          signed
         />
       </View>
 
@@ -67,10 +81,14 @@ export function PersonalSettlementReviewScreen() {
           <Text accessibilityRole="header" style={styles.sectionTitle}>
             Updated since you reviewed
           </Text>
-          <Text style={styles.deltaAmount}>
-            {state.delta.netDeltaMinor > 0 ? "+" : ""}
-            {money(state.delta.netDeltaMinor)}
-          </Text>
+          <MoneyText
+            variant="headline"
+            style={styles.deltaAmount}
+            minor={state.delta.netDeltaMinor}
+            currency={statement.currency}
+            scale={statement.scale}
+            signed
+          />
           <Text style={styles.body}>
             {state.delta.changedExpenses.length} expense
             {state.delta.changedExpenses.length === 1 ? "" : "s"} changed
@@ -152,11 +170,11 @@ export function PersonalSettlementReviewScreen() {
   );
 }
 
-function Amount({ label, value }: { label: string; value: string }) {
+function Amount({ label, ...money }: MoneyTextProps & { label: string }) {
   return (
     <View>
       <Text style={styles.meta}>{label}</Text>
-      <Text style={styles.amount}>{value}</Text>
+      <MoneyText variant="headline" style={styles.amount} {...money} />
     </View>
   );
 }

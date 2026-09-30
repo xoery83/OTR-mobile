@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { ExpenseConflictList } from "./ExpenseConflictList";
 import { readLastApiFailure } from "@/data/api/client";
 import { useNetworkState } from "expo-network";
@@ -21,7 +22,6 @@ import { router, Stack, useFocusEffect } from "expo-router";
 import PagerView from "react-native-pager-view";
 
 import { AppIcon } from "@/components/AppIcon";
-import { ContentHeroAmount } from "./ContentHeroAmount";
 import { contentVisual as cv } from "./contentVisual";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { HeaderIconAction, NavigationContextTitle } from "@/components/navigationChrome";
@@ -753,7 +753,8 @@ export function LedgerStage6Screen({
                           }}
                         />
                       </View>
-                      <ContentHeroAmount
+                      <MoneyText
+                        variant="hero"
                         accessibilityLabel={`${
                           scope === "MINE" ? "You spent" : "Group spent"
                         } ${projection?.estimatedCount ? "approximately " : ""}${
@@ -766,15 +767,14 @@ export function LedgerStage6Screen({
                             : "unavailable"
                         }`}
                         style={styles.totalValue}
-                        value={
+                        minor={
                           summary
-                            ? `${projection?.estimatedCount ? "≈ " : ""}${formatLedgerMoney(
-                                summary.totalMinor + (projection?.estimatedMinor ?? 0),
-                                journey.settlementCurrency,
-                                journey.settlementScale,
-                              )}`
-                            : "—"
+                            ? summary.totalMinor + (projection?.estimatedMinor ?? 0)
+                            : null
                         }
+                        currency={journey.settlementCurrency}
+                        scale={journey.settlementScale}
+                        prefix={projection?.estimatedCount ? "≈ " : ""}
                       />
                       <Text maxFontSizeMultiplier={2} style={styles.meta}>
                         {summary?.expenseCount ?? 0} valued Expenses
@@ -891,11 +891,13 @@ export function LedgerStage6Screen({
                                   numberOfLines={1}
                                   style={styles.categoryAmount}
                                 >
-                                  {formatLedgerMoney(
-                                    category.totalMinor,
-                                    journey.settlementCurrency,
-                                    journey.settlementScale,
-                                  )}
+                                  <MoneyText
+                                    accessible={false}
+                                    style={styles.categoryAmount}
+                                    minor={category.totalMinor}
+                                    currency={journey.settlementCurrency}
+                                    scale={journey.settlementScale}
+                                  />
                                   <Text style={styles.categoryPercentage}>
                                     {` · ${percentage}%`}
                                   </Text>
@@ -923,13 +925,13 @@ export function LedgerStage6Screen({
                               ? "Total Spending"
                               : "Total Group Spending"}
                           </Text>
-                          <Text style={styles.categoryTotalAmount}>
-                            {formatLedgerMoney(
-                              categorySummary?.totalMinor ?? 0,
-                              journey.settlementCurrency,
-                              journey.settlementScale,
-                            )}
-                          </Text>
+                          <MoneyText
+                            style={styles.categoryTotalAmount}
+                            variant="standard"
+                            minor={categorySummary?.totalMinor ?? 0}
+                            currency={journey.settlementCurrency}
+                            scale={journey.settlementScale}
+                          />
                         </View>
                       ) : null}
                     </DashboardSection>
@@ -951,16 +953,14 @@ export function LedgerStage6Screen({
                                 : settlementPositionLabel(settlement.positionMinor)}
                             </Text>
                             {settlement.positionMinor !== null ? (
-                              <Text
+                              <MoneyText
                                 maxFontSizeMultiplier={2}
                                 style={styles.snapshotAmount}
-                              >
-                                {formatLedgerMoney(
-                                  Math.abs(settlement.positionMinor),
-                                  settlement.currency,
-                                  settlement.scale,
-                                )}
-                              </Text>
+                                variant="standard"
+                                minor={Math.abs(settlement.positionMinor)}
+                                currency={settlement.currency}
+                                scale={settlement.scale}
+                              />
                             ) : null}
                             <Text maxFontSizeMultiplier={2} style={styles.meta}>
                               {settlement.positionMinor === null
@@ -1088,9 +1088,38 @@ export function LedgerStage6Screen({
                                 largeText && styles.largeRowAmount,
                               ]}
                             >
-                              <Text style={styles.rowAmount}>{amounts.primary}</Text>
+                              <MoneyText
+                                style={styles.rowAmount}
+                                minor={
+                                  (scope === "MINE"
+                                    ? expense.componentMinor
+                                    : expense.settlementMinor) ??
+                                  projection?.estimateComponents.get(expense.id) ??
+                                  null
+                                }
+                                currency={expense.settlementCurrency}
+                                scale={expense.settlementScale}
+                                prefix={
+                                  (scope === "MINE"
+                                    ? expense.componentMinor
+                                    : expense.settlementMinor) === null &&
+                                  projection?.estimateComponents.has(expense.id)
+                                    ? "≈ "
+                                    : ""
+                                }
+                              />
                               {amounts.original ? (
-                                <Text style={styles.amountMeta}>{amounts.original}</Text>
+                                <MoneyText
+                                  variant="compact"
+                                  style={styles.amountMeta}
+                                  minor={
+                                    scope === "MINE"
+                                      ? expense.originalComponentMinor
+                                      : expense.originalMinor
+                                  }
+                                  currency={expense.originalCurrency}
+                                  scale={expense.originalScale}
+                                />
                               ) : null}
                             </View>
                           </Pressable>

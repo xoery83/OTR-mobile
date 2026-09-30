@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import { SettlementRateAcceptance } from "./SettlementRateAcceptance";
 import { settlementRateCandidates } from "./settlementRateCandidates";
 import { useCallback, useRef, useState } from "react";
@@ -132,13 +133,13 @@ export function SettlementUpdateScreen() {
         <Text style={styles.meta}>
           {settlementPositionLabel(projection.balanceMinor)}
         </Text>
-        <Text style={styles.amount}>
-          {formatLedgerMoney(
-            Math.abs(projection.balanceMinor),
-            projection.currency,
-            projection.scale,
-          )}
-        </Text>
+        <MoneyText
+          style={styles.amount}
+          variant="hero"
+          minor={Math.abs(projection.balanceMinor)}
+          currency={projection.currency}
+          scale={projection.scale}
+        />
         <Text style={styles.meta}>
           Last confirmed{" "}
           {formatLedgerMoney(

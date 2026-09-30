@@ -1,3 +1,4 @@
+import { MoneyText } from "./MoneyText";
 import {
   Alert,
   Pressable,
@@ -81,11 +82,6 @@ export function SettlementStatementScreen() {
         {entries.map(({ row, balanceMinor, deltaMinor, isCurrent }) => {
           const version = (row.lineageSequence ?? 0) + 1;
           const label = settlementBalanceLabel(balanceMinor);
-          const amount = formatLedgerMoney(
-            Math.abs(balanceMinor),
-            row.settlementCurrency,
-            row.settlementScale,
-          );
           const date = new Intl.DateTimeFormat(undefined, {
             day: "numeric",
             month: "short",
@@ -105,13 +101,20 @@ export function SettlementStatementScreen() {
               <Text style={styles.meta}>
                 {selectedHistory ? "Your settlement" : label}
               </Text>
-              <Text style={styles.amount}>
-                {selectedHistory && balanceMinor !== 0
-                  ? `${balanceMinor > 0 ? "Receive" : "Pay"} ${amount}`
-                  : selectedHistory && balanceMinor === 0
-                    ? "Settled"
-                    : amount}
-              </Text>
+              {selectedHistory && balanceMinor === 0 ? (
+                <Text style={styles.amount}>Settled</Text>
+              ) : (
+                <MoneyText
+                  variant={selectedHistory ? "headline" : "standard"}
+                  style={styles.amount}
+                  minor={Math.abs(balanceMinor)}
+                  currency={row.settlementCurrency}
+                  scale={row.settlementScale}
+                  prefix={
+                    selectedHistory ? `${balanceMinor > 0 ? "Receive" : "Pay"} ` : ""
+                  }
+                />
+              )}
               {deltaMinor !== null ? (
                 <Text style={styles.meta}>
                   {selectedHistory ? `Compared with version #${version - 1}: ` : ""}
@@ -192,13 +195,13 @@ export function SettlementStatementScreen() {
               <Text style={[styles.rowTitle, styles.grow]}>
                 {balance.displayNameSnapshot}
               </Text>
-              <Text style={styles.amount}>
-                {formatLedgerMoney(
-                  balance.amount.minor,
-                  balance.amount.currency,
-                  balance.amount.scale,
-                )}
-              </Text>
+              <MoneyText
+                style={styles.amount}
+                variant="standard"
+                minor={balance.amount.minor}
+                currency={balance.amount.currency}
+                scale={balance.amount.scale}
+              />
             </View>
           ))}
         </View>

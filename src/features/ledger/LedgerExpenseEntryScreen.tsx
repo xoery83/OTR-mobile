@@ -1,3 +1,4 @@
+import { MoneyText, type MoneyTextProps } from "./MoneyText";
 import {
   type ComponentProps,
   useCallback,
@@ -1786,31 +1787,22 @@ export function LedgerExpenseEntryScreen() {
                   <View style={styles.allocationSummary}>
                     <AllocationLine
                       label="Expense total"
-                      value={
-                        minor === null
-                          ? "Add an amount"
-                          : formatLedgerMoney(minor, draft.currency, scale ?? 2)
-                      }
+                      minor={minor}
+                      currency={draft.currency}
+                      scale={scale ?? 2}
+                      placeholder="Add an amount"
                     />
                     <AllocationLine
                       label="Assigned"
-                      value={formatLedgerMoney(
-                        exactAllocation.assignedMinor,
-                        draft.currency,
-                        scale ?? 2,
-                      )}
+                      minor={exactAllocation.assignedMinor}
+                      currency={draft.currency}
+                      scale={scale ?? 2}
                     />
                     <AllocationLine
                       label="Remaining"
-                      value={
-                        exactAllocation.remainingMinor === null
-                          ? "—"
-                          : formatLedgerMoney(
-                              exactAllocation.remainingMinor,
-                              draft.currency,
-                              scale ?? 2,
-                            )
-                      }
+                      minor={exactAllocation.remainingMinor}
+                      currency={draft.currency}
+                      scale={scale ?? 2}
                       warning={
                         exactAllocation.remainingMinor !== null &&
                         exactAllocation.remainingMinor !== 0
@@ -2262,19 +2254,16 @@ function ChoiceChip({
 
 function AllocationLine({
   label,
-  value,
   warning = false,
-}: {
-  label: string;
-  value: string;
-  warning?: boolean;
-}) {
+  ...money
+}: MoneyTextProps & { label: string; warning?: boolean }) {
   return (
     <View style={styles.allocationLine}>
       <Text style={styles.allocationLabel}>{label}</Text>
-      <Text style={[styles.allocationValue, warning && styles.allocationWarning]}>
-        {value}
-      </Text>
+      <MoneyText
+        style={[styles.allocationValue, warning && styles.allocationWarning]}
+        {...money}
+      />
     </View>
   );
 }
