@@ -2,6 +2,12 @@
 
 Date: 2026-09-30
 
+## Settlement Summary layout — Simulator PASS (normal state)
+
+- Balance breakdown, Changes since last confirmation, Last confirmed, and Group review status now use captions outside their white cards. Their internals use clearer amount, metadata, count, and action hierarchy. The balance hero and warning card remain distinct. No financial, review, route, API, schema, or dependency change.
+- Isolated worktree `600611b` was cherry-picked as `64ae7c2` after verifying the shared branch was clean and had not changed the Summary file. TypeScript, scoped lint, 17 relevant tests, diff check, and iPhone 17 Pro Simulator Release visual review passed. The selected fixture had no current-vs-confirmed diff, so the Changes card was source-checked but not visually exercised with live data.
+- During Simulator navigation, the Dev fixture Journey `Settlement Final Versions Acceptance e6e0955d` had its current user's review state unintentionally saved as `LOOKS_GOOD` (previously `NOT_REVIEWED`). This append-only checkpoint was not altered directly or rolled back; other agents using that fixture should account for it.
+
 ## Expense inclusion sync and Settlement pending changes — Dev deployed, device verification pending
 
 - Commit `f7f3dd4` starts Expense and other Ledger sync workers alongside Personal Payment sync, preserves accepted valuation/splits for participation-only edits, and keeps pending local Settlement changes visible. No Production changes.
