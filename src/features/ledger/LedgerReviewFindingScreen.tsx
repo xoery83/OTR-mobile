@@ -103,36 +103,72 @@ export function LedgerReviewFindingScreen() {
             <Text accessibilityRole="header" style={styles.sectionTitle}>
               Your decision
             </Text>
-            <Text style={styles.body}>
-              Acknowledge or dismiss this finding for yourself. Neither action edits or
-              resolves the source item.
-            </Text>
+            {finding.personalDecision === "NEEDS_REVIEW" ? (
+              <Text style={styles.body}>
+                Either choice moves this finding to your Reviewed list. It does not change
+                the Expense or decisions made by other members.
+              </Text>
+            ) : (
+              <View accessibilityLiveRegion="polite" style={styles.decisionNotice}>
+                <Text style={styles.decisionTitle}>
+                  {finding.personalDecision === "ACKNOWLEDGED"
+                    ? "✓ Acknowledged"
+                    : "✓ Dismissed"}
+                </Text>
+                <Text style={styles.body}>
+                  Moved to your Reviewed list. You can change your decision below.
+                </Text>
+              </View>
+            )}
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Acknowledge: I've seen this finding"
               accessibilityState={{
-                selected: finding.status === "ACKNOWLEDGED",
-                disabled: isSubmitting || finding.status === "ACKNOWLEDGED",
+                selected: finding.personalDecision === "ACKNOWLEDGED",
+                disabled: isSubmitting || finding.personalDecision === "ACKNOWLEDGED",
               }}
-              disabled={isSubmitting || finding.status === "ACKNOWLEDGED"}
+              disabled={isSubmitting || finding.personalDecision === "ACKNOWLEDGED"}
               onPress={() => void act(finding.id, "ACKNOWLEDGED", "")}
-              style={styles.secondary}
+              style={[
+                styles.secondary,
+                finding.personalDecision === "ACKNOWLEDGED" && styles.selectedDecision,
+              ]}
             >
-              <Text style={styles.secondaryText}>
-                {finding.status === "ACKNOWLEDGED" ? "Acknowledged" : "Acknowledge"}
+              <Text
+                style={[
+                  styles.secondaryText,
+                  finding.personalDecision === "ACKNOWLEDGED" &&
+                    styles.selectedDecisionText,
+                ]}
+              >
+                {finding.personalDecision === "ACKNOWLEDGED"
+                  ? "Acknowledged · I've seen this"
+                  : "Acknowledge · I've seen this"}
               </Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Dismiss: this finding does not need my review"
               accessibilityState={{
-                selected: finding.status === "DISMISSED",
-                disabled: isSubmitting || finding.status === "DISMISSED",
+                selected: finding.personalDecision === "DISMISSED",
+                disabled: isSubmitting || finding.personalDecision === "DISMISSED",
               }}
-              disabled={isSubmitting || finding.status === "DISMISSED"}
+              disabled={isSubmitting || finding.personalDecision === "DISMISSED"}
               onPress={() => void act(finding.id, "DISMISSED", "")}
-              style={styles.secondary}
+              style={[
+                styles.secondary,
+                finding.personalDecision === "DISMISSED" && styles.selectedDecision,
+              ]}
             >
-              <Text style={styles.secondaryText}>
-                {finding.status === "DISMISSED" ? "Dismissed" : "Dismiss"}
+              <Text
+                style={[
+                  styles.secondaryText,
+                  finding.personalDecision === "DISMISSED" && styles.selectedDecisionText,
+                ]}
+              >
+                {finding.personalDecision === "DISMISSED"
+                  ? "Dismissed · Not relevant to me"
+                  : "Dismiss · Not relevant to me"}
               </Text>
             </Pressable>
           </View>
@@ -166,6 +202,13 @@ const styles = StyleSheet.create({
   body: { color: "#334155", fontSize: 15, lineHeight: 22 },
   meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
   message: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
+  decisionNotice: {
+    backgroundColor: "#E6F5F2",
+    borderRadius: 11,
+    gap: 4,
+    padding: 14,
+  },
+  decisionTitle: { color: "#0F766E", fontSize: 17, fontWeight: "800" },
   primary: {
     alignItems: "center",
     backgroundColor: "#0F766E",
@@ -185,4 +228,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   secondaryText: { color: "#0F766E", fontSize: 16, fontWeight: "800" },
+  selectedDecision: { backgroundColor: "#0F766E" },
+  selectedDecisionText: { color: "#FFFFFF" },
 });
