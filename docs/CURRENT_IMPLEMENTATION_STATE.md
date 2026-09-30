@@ -8,11 +8,12 @@ Date: 2026-09-30
 - Isolated worktree `600611b` was cherry-picked as `64ae7c2` after verifying the shared branch was clean and had not changed the Summary file. TypeScript, scoped lint, 17 relevant tests, diff check, and iPhone 17 Pro Simulator Release visual review passed. The selected fixture had no current-vs-confirmed diff, so the Changes card was source-checked but not visually exercised with live data.
 - During Simulator navigation, the Dev fixture Journey `Settlement Final Versions Acceptance e6e0955d` had its current user's review state unintentionally saved as `LOOKS_GOOD` (previously `NOT_REVIEWED`). This append-only checkpoint was not altered directly or rolled back; other agents using that fixture should account for it.
 
-## Expense inclusion sync and Settlement pending changes — Dev deployed, device verification pending
+## Expense inclusion sync and Settlement pending changes — Dev/iPhone verified
 
-- Commit `f7f3dd4` starts Expense and other Ledger sync workers alongside Personal Payment sync, preserves accepted valuation/splits for participation-only edits, and keeps pending local Settlement changes visible. No Production changes.
-- Hosted Dev migration `20260930000100_expense_participation_preserve_valuation.sql` and backend are deployed and healthy. A signed Release build from the isolated commit was installed over the existing App on the connected iPhone without clearing its data.
-- Isolated typecheck, 49 focused tests, and a rollback-only 63-assertion SQL probe pass. The device is currently locked/black in remote capture; server Expense `f7cbfdfe-9863-4c07-90ef-0b72ec1b4a3b` remains revision 4 / EXCLUDED. Recheck after the user opens the App, then inspect local operation state if it still does not send. Do not claim the reported record has synced yet.
+- `f7f3dd4` runs Expense sync alongside Personal Payment sync, preserves accepted valuation and splits for participation-only edits, and keeps pending local Settlement changes visible. Dev migration `20260930000100_expense_participation_preserve_valuation.sql` is applied.
+- Subsequent causal receipt fixes (`32e0c89`, `5f9d6b8`, `431f19f`, `8cd682a`, `13c5db3`) recover a failed predecessor, preserve its verified revision during conflict review, and permit a participation-only rebase across automatic valuation. A failed conflict choice can be retried after review. Backend source and signed iPhone Release are updated; existing phone data was preserved.
+- The owner's `安抚` Expense is now Hosted Dev revision 7 / ACCEPTED / INCLUDED. Revision 6→7 kept the same valuation ID, NZ$3.59 accepted amount, and equal splits. The iPhone Settlement Summary shows current NZ$53.20 against confirmed NZ$55.00, “Added: 1 expense”, and −NZ$1.80; Review Settlement Changes names `安抚`. No new Settlement version was confirmed. No Production changes.
+- Focused Expense contract/backend tests (35), TypeScript, scoped lint, and Dev health pass. The temporary safe diagnostic logging used to identify the skipped causal read was removed. The Dev backend is healthy. The iPhone remains on the signed build with the conflict retry UI.
 
 ## Settlement Paid category and search polish — Simulator PASS
 
