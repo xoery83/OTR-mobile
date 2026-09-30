@@ -71,7 +71,7 @@ export default function LedgerLayout() {
       />
       <Stack.Screen
         name="settlement-statement"
-        options={{ headerTitle: "Statement & Export" }}
+        options={{ headerTitle: "Settlement history" }}
       />
       <Stack.Screen name="analysis" options={{ headerTitle: "Spending Analysis" }} />
       <Stack.Screen name="search" options={{ headerTitle: "Search Expenses" }} />

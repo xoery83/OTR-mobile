@@ -562,7 +562,6 @@ function SummarySection({
                     pathname: "/expenses/settlement-statement",
                     params: {
                       journeyId: settlement.journeyId,
-                      versionId: confirmedBalance.id,
                     },
                   } as never)
                 }

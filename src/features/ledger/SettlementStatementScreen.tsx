@@ -13,12 +13,14 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney, formatValuationPolicy } from "./format";
+import { settlementBalanceLabel, settlementHistory } from "./settlementHistory";
 
 export function SettlementStatementScreen() {
   const largeText = useWindowDimensions().fontScale > 2;
-  const { journeyId, versionId } = useLocalSearchParams<{
+  const { journeyId, versionId, view } = useLocalSearchParams<{
     journeyId?: string;
     versionId?: string;
+    view?: string;
   }>();
   const settlement = useStage7Settlement(journeyId);
   const finalized = settlement.finalized;
@@ -28,6 +30,10 @@ export function SettlementStatementScreen() {
       ? [finalized]
       : [];
   const selected = versionId ? allRows.find((row) => row.id === versionId) : null;
+  const history = settlement.actorMemberId
+    ? settlementHistory(allRows, settlement.actorMemberId)
+    : [];
+  const selectedHistory = history.find(({ row }) => row.id === versionId);
   const rows = selected ? [selected] : allRows;
   const selectedIndex = selected
     ? allRows.findIndex((row) => row.id === selected.id)
@@ -51,11 +57,110 @@ export function SettlementStatementScreen() {
       <View style={styles.center}>
         <Text style={styles.meta}>
           {settlement.updating
-            ? "Loading Statement…"
+            ? "Loading settlement history…"
             : "No final settlement is available."}
         </Text>
       </View>
     );
+
+  if (view !== "statement") {
+    const entries = selectedHistory ? [selectedHistory] : [...history].reverse();
+    return (
+      <ScrollView
+        contentContainerStyle={styles.content}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        {selectedHistory ? (
+          <Text accessibilityRole="header" style={styles.title}>
+            Settlement version #{(selectedHistory.row.lineageSequence ?? 0) + 1}
+          </Text>
+        ) : null}
+        {!settlement.actorMemberId ? (
+          <Text style={styles.meta}>Your settlement balance is unavailable.</Text>
+        ) : null}
+        {entries.map(({ row, balanceMinor, deltaMinor, isCurrent }) => {
+          const version = (row.lineageSequence ?? 0) + 1;
+          const label = settlementBalanceLabel(balanceMinor);
+          const amount = formatLedgerMoney(
+            Math.abs(balanceMinor),
+            row.settlementCurrency,
+            row.settlementScale,
+          );
+          const date = new Intl.DateTimeFormat(undefined, {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }).format(new Date(row.finalizedAt));
+          const body = (
+            <>
+              {!selectedHistory ? (
+                <Text style={styles.rowTitle}>
+                  Version #{version}
+                  {isCurrent ? " · Current" : ""}
+                </Text>
+              ) : null}
+              <Text style={styles.meta}>
+                {selectedHistory ? `Confirmed ${date}` : date}
+              </Text>
+              <Text style={styles.meta}>
+                {selectedHistory ? "Your settlement" : label}
+              </Text>
+              <Text style={styles.amount}>
+                {selectedHistory && balanceMinor !== 0
+                  ? `${balanceMinor > 0 ? "Receive" : "Pay"} ${amount}`
+                  : selectedHistory && balanceMinor === 0
+                    ? "Settled"
+                    : amount}
+              </Text>
+              {deltaMinor !== null ? (
+                <Text style={styles.meta}>
+                  {selectedHistory ? `Compared with version #${version - 1}: ` : ""}
+                  {deltaMinor > 0 ? "+" : ""}
+                  {formatLedgerMoney(
+                    deltaMinor,
+                    row.settlementCurrency,
+                    row.settlementScale,
+                  )}
+                  {selectedHistory ? "" : ` since version #${version - 1}`}
+                </Text>
+              ) : null}
+            </>
+          );
+          return selectedHistory ? (
+            <View key={row.id} style={styles.historyItem}>
+              {body}
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: "/expenses/settlement-statement",
+                    params: { journeyId, versionId: row.id, view: "statement" },
+                  } as never)
+                }
+                style={styles.statementLink}
+              >
+                <Text style={styles.secondaryText}>View statement ›</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              key={row.id}
+              onPress={() =>
+                router.push({
+                  pathname: "/expenses/settlement-statement",
+                  params: { journeyId, versionId: row.id },
+                } as never)
+              }
+              style={styles.historyItem}
+            >
+              {body}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView
@@ -158,12 +263,7 @@ export function SettlementStatementScreen() {
             </View>
           ))}
           {row.inputs.map((input) => (
-            <Pressable
-              accessibilityRole="button"
-              key={input.expenseId}
-              onPress={() => router.push(`/expenses/expense/${input.expenseId}`)}
-              style={styles.card}
-            >
+            <View key={input.expenseId} style={styles.card}>
               <Text style={styles.rowTitle}>
                 {input.payer.displayNameSnapshot} paid{" "}
                 {formatLedgerMoney(
@@ -186,63 +286,61 @@ export function SettlementStatementScreen() {
                   )}
                 </Text>
               ))}
-            </Pressable>
+            </View>
           ))}
         </View>
       ))}
 
-      {!selected ? (
-        <View style={styles.section}>
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Export
+      <View style={styles.section}>
+        <Text accessibilityRole="header" style={styles.sectionTitle}>
+          Export
+        </Text>
+        {canExport ? (
+          <View style={styles.actions}>
+            {(["PDF", "CSV"] as const).map((format) => (
+              <Pressable
+                accessibilityRole="button"
+                disabled={settlement.busy}
+                key={format}
+                onPress={() => choosePrivacy(format, settlement.generateExport)}
+                style={styles.secondary}
+              >
+                <Text style={styles.secondaryText}>Generate {format}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.meta}>
+            A new export requires organizer access, an online check and all payments to be
+            received. Cached exports remain available offline.
           </Text>
-          {canExport ? (
-            <View style={styles.actions}>
-              {(["PDF", "CSV"] as const).map((format) => (
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={settlement.busy}
-                  key={format}
-                  onPress={() => choosePrivacy(format, settlement.generateExport)}
-                  style={styles.secondary}
-                >
-                  <Text style={styles.secondaryText}>Generate {format}</Text>
-                </Pressable>
-              ))}
+        )}
+        {settlement.exports.map((item) => (
+          <View
+            key={`${item.statementDigest}-${item.privacyMode}-${item.format}`}
+            style={[styles.row, largeText && styles.stack]}
+          >
+            <View style={styles.grow}>
+              <Text style={styles.rowTitle}>
+                {item.format} ·{" "}
+                {item.privacyMode === "MEMBER" ? "Member names" : "De-identified"}
+              </Text>
+              <Text style={item.isCurrent ? styles.current : styles.earlier}>
+                {item.isCurrent ? "Current" : "Earlier version"}
+              </Text>
             </View>
-          ) : (
-            <Text style={styles.meta}>
-              A new export requires organizer access, an online check and all payments to
-              be received. Cached exports remain available offline.
-            </Text>
-          )}
-          {settlement.exports.map((item) => (
-            <View
-              key={`${item.statementDigest}-${item.privacyMode}-${item.format}`}
-              style={[styles.row, largeText && styles.stack]}
-            >
-              <View style={styles.grow}>
-                <Text style={styles.rowTitle}>
-                  {item.format} ·{" "}
-                  {item.privacyMode === "MEMBER" ? "Member names" : "De-identified"}
-                </Text>
-                <Text style={item.isCurrent ? styles.current : styles.earlier}>
-                  {item.isCurrent ? "Current" : "Earlier version"}
-                </Text>
-              </View>
-              {settlement.isOrganizer ? (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => void settlement.shareExport(item)}
-                  style={styles.shareButton}
-                >
-                  <Text style={styles.secondaryText}>Share</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          ))}
-        </View>
-      ) : null}
+            {settlement.isOrganizer ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void settlement.shareExport(item)}
+                style={styles.shareButton}
+              >
+                <Text style={styles.secondaryText}>Share</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ))}
+      </View>
     </ScrollView>
   );
 }
@@ -305,4 +403,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   secondaryText: { color: "#0F766E", fontSize: 15, fontWeight: "800" },
+  historyItem: {
+    borderBottomColor: "#E2E8F0",
+    borderBottomWidth: 1,
+    gap: 7,
+    minHeight: 100,
+    paddingVertical: 15,
+  },
+  statementLink: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center" },
 });
