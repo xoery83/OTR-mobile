@@ -92,6 +92,7 @@ function repository(): LedgerExpenseRepository {
     getOperationResult: vi.fn(),
     listRateAcceptanceOperations: vi.fn(),
     getLatestOperationResult: vi.fn(),
+    retryFailedPredecessor: vi.fn(),
     bindOperation: vi.fn(async (operation) => operation),
     reconcileCanonicalExpense: vi.fn(),
     markExpenseConflict: vi.fn(),

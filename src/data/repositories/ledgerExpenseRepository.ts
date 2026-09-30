@@ -177,6 +177,7 @@ export type LedgerExpenseRepository = {
   ): Promise<{ title: string; result: ExpenseOperationResult }[]>;
   getOperationResult(operationId: string): Promise<ExpenseOperationResult | null>;
   getLatestOperationResult(expenseId: string): Promise<ExpenseOperationResult | null>;
+  retryFailedPredecessor(expenseId: string, operationId: string): Promise<boolean>;
   bindOperation(
     operation: import("@/data/sync/syncOperationRepository").SyncOperation,
     typed?: boolean,
@@ -912,6 +913,31 @@ export function createLedgerExpenseRepository(
       return latest
         ? getExpenseOperationResult(database, accountId, latest.operationId)
         : null;
+    },
+
+    async retryFailedPredecessor(expenseId, operationId) {
+      const accountId = await getActiveUserId();
+      const result = await database.runAsync(
+        `UPDATE sync_operations SET status = 'PENDING', failure_category = NULL,
+           last_error_code = NULL, last_error_message = NULL, next_attempt_at = NULL,
+           claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
+         WHERE id = ? AND owner_user_id = ? AND entity_type = 'ledger_expense'
+           AND entity_id = ? AND status = 'FAILED' AND last_error_code = 'INVALID_PAYLOAD'
+           AND NOT EXISTS (SELECT 1 FROM ledger_expense_operation_receipts receipt
+             WHERE receipt.account_id = ? AND receipt.operation_id = sync_operations.id)
+           AND EXISTS (SELECT 1 FROM sync_operations dependent
+             WHERE dependent.owner_user_id = ? AND dependent.entity_type = 'ledger_expense'
+               AND dependent.entity_id = ? AND dependent.dependency_operation_id = sync_operations.id
+               AND dependent.status = 'DEPENDENCY_BLOCKED')`,
+        new Date().toISOString(),
+        operationId,
+        accountId,
+        expenseId,
+        accountId,
+        accountId,
+        expenseId,
+      );
+      return result.changes === 1;
     },
 
     async listRateAcceptanceOperations(journeyId) {

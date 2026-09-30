@@ -52,6 +52,8 @@ export function LedgerExpenseDetailScreen() {
   const [blockingResult, setBlockingResult] = useState<ExpenseOperationResult | null>(
     null,
   );
+  const [retryingSync, setRetryingSync] = useState(false);
+  const [syncActionMessage, setSyncActionMessage] = useState<string | null>(null);
   const [payerName, setPayerName] = useState("Traveller");
   const [receipts, setReceipts] = useState<ReceiptAsset[]>([]);
   const [attachmentMessage, setAttachmentMessage] = useState<string | null>(null);
@@ -443,6 +445,39 @@ export function LedgerExpenseDetailScreen() {
                 : null}
           </Text>
         ) : null}
+        {syncResult?.state === "TERMINAL_FAILURE" &&
+        blockingResult?.error?.code === "INVALID_PAYLOAD" &&
+        syncResult.blockingOperationId ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: retryingSync }}
+            disabled={retryingSync}
+            onPress={() => {
+              setRetryingSync(true);
+              void getDefaultLedgerExpenseRepository()
+                .then((repository) =>
+                  repository.retryFailedPredecessor(
+                    expense.id,
+                    syncResult.blockingOperationId!,
+                  ),
+                )
+                .then((queued) => {
+                  setSyncActionMessage(
+                    queued
+                      ? "Retrying the earlier saved change…"
+                      : "This change can no longer be retried here.",
+                  );
+                  if (queued) kickLedgerOperationalSync();
+                })
+                .catch(() => setSyncActionMessage("Could not retry this change."))
+                .finally(() => setRetryingSync(false));
+            }}
+            style={styles.reviewAction}
+          >
+            <Text style={styles.actionText}>Retry earlier saved change ›</Text>
+          </Pressable>
+        ) : null}
+        {syncActionMessage ? <Text style={styles.meta}>{syncActionMessage}</Text> : null}
         {excluded && warning ? (
           <Pressable
             accessibilityRole={
