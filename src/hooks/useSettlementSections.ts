@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { countSettlementLoad } from "./settlementLoadMetrics";
 import { useFocusEffect } from "expo-router";
 import { useNetworkState } from "expo-network";
 
@@ -68,6 +69,7 @@ export function useSettlementSections(
 
   const loadBase = useCallback(async () => {
     if (!journeyId) return;
+    countSettlementLoad("sections");
     setLoading(true);
     try {
       const [

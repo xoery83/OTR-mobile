@@ -11,6 +11,10 @@ function FittedHeroAmount({ value, style, ...props }: TextProps & { value: strin
   const [step, setStep] = useState(0);
   return (
     <Text
+      adjustsFontSizeToFit
+      maxFontSizeMultiplier={1.35}
+      minimumFontScale={0.6}
+      numberOfLines={1}
       {...props}
       onTextLayout={(event) => {
         const next = nextHeroAmountStep(step, event.nativeEvent.lines.length);

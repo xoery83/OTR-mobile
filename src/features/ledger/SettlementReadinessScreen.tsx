@@ -1,17 +1,21 @@
 import { SettlementRateAcceptance } from "./SettlementRateAcceptance";
 import { ExpenseConflictList } from "./ExpenseConflictList";
 import { settlementRateCandidates } from "./settlementRateCandidates";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
+import PagerView from "react-native-pager-view";
 import { router, useFocusEffect } from "expo-router";
+import { advanceScrollAnchor, restoredScrollY } from "./settlementScrollAnchor";
 
 import { AppIcon } from "@/components/AppIcon";
 import { ContentHeroAmount } from "./ContentHeroAmount";
@@ -55,6 +59,8 @@ const settlementSectionTabs = [
   { icon: "person.2.fill", label: "Shares", name: "Shares" },
   { icon: "arrow.left.arrow.right", label: "Payments", name: "Payments" },
 ] as const;
+const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
+type PageProgress = { position: Animated.Value; offset: Animated.Value };
 
 export function SettlementReadinessScreen({
   activeSection,
@@ -62,7 +68,15 @@ export function SettlementReadinessScreen({
   journeyId,
   journeyTitle,
   embedded = false,
+  collapseDistance = 0,
+  headerHeight = 0,
+  viewportHeight = 0,
+  sharedHeaderOffset,
+  sharedCollapseRef,
+  modeTransitionSeq,
+  onCollapseChange,
   onSectionChange,
+  pageProgress,
   showNavigation = true,
   ledgerChangeSeq,
 }: {
@@ -71,7 +85,15 @@ export function SettlementReadinessScreen({
   journeyId?: string;
   journeyTitle?: string;
   embedded?: boolean;
+  collapseDistance?: number;
+  headerHeight?: number;
+  viewportHeight?: number;
+  sharedHeaderOffset?: Animated.Value;
+  sharedCollapseRef?: RefObject<number>;
+  modeTransitionSeq?: number;
+  onCollapseChange?: (collapsed: boolean) => void;
   onSectionChange?: (section: SettlementSectionName) => void;
+  pageProgress?: PageProgress;
   showNavigation?: boolean;
   ledgerChangeSeq?: number;
 }) {
@@ -127,6 +149,48 @@ export function SettlementReadinessScreen({
   );
   const [localActive, setLocalActive] = useState<SettlementSectionName>("Summary");
   const active = activeSection ?? localActive;
+  const pager = useRef<PagerView>(null);
+  const pagerIndex = useRef<number>(settlementSectionNames.indexOf(active));
+  const activePage = useRef(active);
+  const internalCollapse = useRef(0);
+  const sharedCollapse = sharedCollapseRef ?? internalCollapse;
+  const pageAnchors = useRef(
+    Object.fromEntries(
+      settlementSectionNames.map((section) => [section, { y: 0, body: 0 }]),
+    ) as Record<SettlementSectionName, { y: number; body: number }>,
+  );
+  const pageScrolls = useRef<Partial<Record<SettlementSectionName, ScrollView | null>>>(
+    {},
+  );
+  const preparePage = useCallback(
+    (section: SettlementSectionName) => {
+      const scroll = pageScrolls.current[section];
+      if (!scroll) return;
+      const anchor = pageAnchors.current[section];
+      const y = restoredScrollY(sharedCollapse.current, anchor.body);
+      if (Math.abs(anchor.y - y) < 1) return;
+      anchor.y = y;
+      scroll.scrollTo({ y, animated: false });
+    },
+    [sharedCollapse],
+  );
+  useEffect(() => {
+    if (embedded && modeTransitionSeq) preparePage(active);
+  }, [active, embedded, modeTransitionSeq, preparePage]);
+  useEffect(() => {
+    if (!embedded) return;
+    const index = settlementSectionNames.indexOf(active);
+    if (pagerIndex.current !== index) {
+      preparePage(active);
+      pagerIndex.current = index;
+      pager.current?.setPage(index);
+    }
+  }, [active, embedded, preparePage]);
+  useEffect(() => {
+    if (!embedded || !pageProgress) return;
+    pageProgress.position.setValue(pagerIndex.current);
+    pageProgress.offset.setValue(0);
+  }, [embedded, journeyId, pageProgress]);
   const [everyone, setEveryone] = useState(false);
   const [expandedSpending, setExpandedSpending] = useState<string | null>(null);
   const [expandedShares, setExpandedShares] = useState<string | null>(null);
@@ -160,18 +224,19 @@ export function SettlementReadinessScreen({
 
   if (!settlement.journeyId)
     return <Text style={styles.empty}>Choose a Journey to view Settlement.</Text>;
+  const settledJourneyId = settlement.journeyId;
 
   const changeSection = (section: SettlementSectionName) => {
     if (activeSection === undefined) setLocalActive(section);
     onSectionChange?.(section);
   };
 
-  const content = (
+  const content = (section: SettlementSectionName) => (
     <View
       key={projection?.projectionId ?? comparison.comparisonId}
       style={[styles.sections, !embedded && styles.standaloneSections]}
     >
-      {active === "Summary" ? (
+      {section === "Summary" ? (
         <SummarySection
           expenses={sections.expenses}
           journeyTitle={journeyTitle}
@@ -180,14 +245,14 @@ export function SettlementReadinessScreen({
           settlement={settlement}
           debugMode={debugMode}
         />
-      ) : active === "Paid" ? (
+      ) : section === "Paid" ? (
         <ExpenseSection
           actorMemberId={settlement.actorMemberId}
           categories={sections.spendingCategories}
           currency={settlementCurrency}
           empty="No shared expenses paid by this traveller yet."
           expanded={expandedSpending}
-          journeyId={settlement.journeyId ?? null}
+          journeyId={settledJourneyId}
           key="Paid"
           historicalSnapshot={Boolean(displayedFinal)}
           memberId={sections.spendingMemberId}
@@ -198,14 +263,14 @@ export function SettlementReadinessScreen({
           scale={settlementScale}
           totalLabel={`Paid by ${sections.spendingMemberId === settlement.actorMemberId ? "me" : memberName(sections.members, sections.spendingMemberId)}`}
         />
-      ) : active === "Shares" ? (
+      ) : section === "Shares" ? (
         <ExpenseSection
           actorMemberId={settlement.actorMemberId}
           categories={sections.shareCategories}
           currency={settlementCurrency}
           empty="No shared expenses are assigned to this traveller yet."
           expanded={expandedShares}
-          journeyId={settlement.journeyId ?? null}
+          journeyId={settledJourneyId}
           key="Shares"
           historicalSnapshot={Boolean(displayedFinal)}
           memberId={sections.sharesMemberId}
@@ -228,7 +293,7 @@ export function SettlementReadinessScreen({
           everyone={everyone}
           expandedTransfer={expandedTransfer}
           fxSnapshots={sections.fxSnapshots}
-          journeyId={settlement.journeyId ?? null}
+          journeyId={settledJourneyId}
           members={sections.members}
           onEveryone={setEveryone}
           onExpandTransfer={setExpandedTransfer}
@@ -254,9 +319,87 @@ export function SettlementReadinessScreen({
     return (
       <View style={styles.embedded}>
         {showNavigation ? (
-          <SettlementSectionTabs active={active} onChange={changeSection} />
+          <SettlementSectionTabs
+            active={active}
+            onChange={changeSection}
+            progress={pageProgress}
+          />
         ) : null}
-        {content}
+        <AnimatedPagerView
+          initialPage={settlementSectionNames.indexOf(active)}
+          onPageScroll={
+            pageProgress
+              ? Animated.event(
+                  [
+                    {
+                      nativeEvent: {
+                        position: pageProgress.position,
+                        offset: pageProgress.offset,
+                      },
+                    },
+                  ],
+                  { useNativeDriver: true },
+                )
+              : undefined
+          }
+          onPageScrollStateChanged={(event) => {
+            if (event.nativeEvent.pageScrollState !== "dragging") return;
+            const index = settlementSectionNames.indexOf(activePage.current);
+            const before = settlementSectionNames[index - 1];
+            const after = settlementSectionNames[index + 1];
+            if (before) preparePage(before);
+            if (after) preparePage(after);
+          }}
+          onPageSelected={(event) => {
+            const index = event.nativeEvent.position;
+            pagerIndex.current = index;
+            const section = settlementSectionNames[index];
+            if (!section) return;
+            preparePage(section);
+            activePage.current = section;
+            if (section !== active) changeSection(section);
+          }}
+          overdrag={false}
+          ref={pager}
+          style={styles.pager}
+        >
+          {settlementSectionNames.map((section) => (
+            <View collapsable={false} key={section} style={styles.pagerPage}>
+              <ScrollView
+                contentContainerStyle={{
+                  minHeight: viewportHeight + collapseDistance,
+                  paddingBottom: 40,
+                  paddingHorizontal: 16,
+                  paddingTop: headerHeight,
+                }}
+                directionalLockEnabled
+                onScroll={(event) => {
+                  const y = Math.max(0, event.nativeEvent.contentOffset.y);
+                  const anchor = pageAnchors.current[section];
+                  const delta = y - anchor.y;
+                  anchor.y = y;
+                  if (activePage.current !== section || Math.abs(delta) < 0.5) return;
+                  const next = advanceScrollAnchor(
+                    { collapse: sharedCollapse.current, body: anchor.body },
+                    delta,
+                    collapseDistance,
+                  );
+                  anchor.body = next.body;
+                  sharedCollapse.current = next.collapse;
+                  sharedHeaderOffset?.setValue(next.collapse);
+                  onCollapseChange?.(next.collapse >= collapseDistance - 1);
+                }}
+                ref={(node) => {
+                  pageScrolls.current[section] = node;
+                }}
+                scrollEventThrottle={16}
+                style={styles.pagerPage}
+              >
+                {content(section)}
+              </ScrollView>
+            </View>
+          ))}
+        </AnimatedPagerView>
       </View>
     );
 
@@ -269,7 +412,7 @@ export function SettlementReadinessScreen({
       {showNavigation ? (
         <SettlementSectionTabs active={active} onChange={changeSection} />
       ) : null}
-      {content}
+      {content(active)}
     </ScrollView>
   );
 }
@@ -277,31 +420,98 @@ export function SettlementReadinessScreen({
 export function SettlementSectionTabs({
   active,
   onChange,
+  progress,
 }: {
   active: SettlementSectionName;
   onChange: (section: SettlementSectionName) => void;
+  progress?: PageProgress;
 }) {
+  const [width, setWidth] = useState(0);
+  const page = progress ? Animated.add(progress.position, progress.offset) : null;
   return (
-    <View accessibilityRole="tablist" style={styles.nav}>
-      {settlementSectionTabs.map(({ icon, label, name }) => (
+    <View
+      accessibilityRole="tablist"
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+      style={styles.nav}
+    >
+      {settlementSectionTabs.map(({ icon, label, name }, index) => (
         <Pressable
           accessibilityLabel={label}
           accessibilityRole="tab"
           accessibilityState={{ selected: active === name }}
           key={name}
           onPress={() => onChange(name)}
-          style={[styles.navItem, active === name && styles.navItemActive]}
+          style={[styles.navItem, !progress && active === name && styles.navItemActive]}
         >
           <AppIcon
             color={active === name ? "#0F766E" : "#64748B"}
             name={icon}
             size={19}
           />
-          <Text style={[styles.navText, active === name && styles.navTextActive]}>
-            {label}
-          </Text>
+          {page ? (
+            <View style={styles.navLabel}>
+              <Text
+                adjustsFontSizeToFit
+                maxFontSizeMultiplier={1.35}
+                minimumFontScale={0.8}
+                numberOfLines={1}
+                style={styles.navText}
+              >
+                {label}
+              </Text>
+              <Animated.Text
+                adjustsFontSizeToFit
+                maxFontSizeMultiplier={1.35}
+                minimumFontScale={0.8}
+                numberOfLines={1}
+                pointerEvents="none"
+                style={[
+                  styles.navText,
+                  styles.navTextOverlay,
+                  {
+                    opacity: Animated.subtract(page, index).interpolate({
+                      inputRange: [-1, 0, 1],
+                      outputRange: [0, 1, 0],
+                      extrapolate: "clamp",
+                    }),
+                  },
+                ]}
+              >
+                {label}
+              </Animated.Text>
+            </View>
+          ) : (
+            <Text
+              adjustsFontSizeToFit
+              maxFontSizeMultiplier={1.35}
+              minimumFontScale={0.8}
+              numberOfLines={1}
+              style={[styles.navText, active === name && styles.navTextActive]}
+            >
+              {label}
+            </Text>
+          )}
         </Pressable>
       ))}
+      {page && width > 0 ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.navIndicator,
+            {
+              width: width / settlementSectionNames.length,
+              transform: [
+                {
+                  translateX: Animated.multiply(
+                    page,
+                    width / settlementSectionNames.length,
+                  ),
+                },
+              ],
+            },
+          ]}
+        />
+      ) : null}
     </View>
   );
 }
@@ -529,7 +739,13 @@ function SummarySection({
             Last confirmed
           </Text>
           <View style={styles.card}>
-            <Text style={styles.confirmedAmount}>
+            <Text
+              adjustsFontSizeToFit
+              maxFontSizeMultiplier={1.35}
+              minimumFontScale={0.6}
+              numberOfLines={1}
+              style={styles.confirmedAmount}
+            >
               {formatLedgerMoney(
                 Math.abs(confirmedBalance.balanceMinor),
                 currency,
@@ -1317,10 +1533,17 @@ function MoneyLine({
   emphasized?: boolean;
   signed?: boolean;
 }) {
+  const largeText = useWindowDimensions().fontScale > 1.5;
   return (
-    <View style={styles.moneyLine}>
+    <View style={[styles.moneyLine, largeText && styles.moneyLineLarge]}>
       <Text style={[styles.moneyLineLabel, emphasized && styles.bold]}>{label}</Text>
-      <Text style={[styles.moneyLineAmount, emphasized && styles.bold]}>
+      <Text
+        adjustsFontSizeToFit
+        maxFontSizeMultiplier={1.35}
+        minimumFontScale={0.65}
+        numberOfLines={1}
+        style={[styles.moneyLineAmount, emphasized && styles.bold]}
+      >
         {signed && minor > 0 ? "+" : ""}
         {formatLedgerMoney(minor, currency, scale)}
       </Text>
@@ -1425,7 +1648,9 @@ const styles = StyleSheet.create({
   chevron: { color: "#64748B", fontSize: 24 },
   content: { paddingBottom: 48 },
   divider: { backgroundColor: "#E2E8F0", height: StyleSheet.hairlineWidth },
-  embedded: { gap: 12 },
+  embedded: { flex: 1 },
+  pager: { flex: 1 },
+  pagerPage: { flex: 1 },
   empty: { color: "#64748B", fontSize: 15, paddingVertical: 12 },
   expenseRow: {
     alignItems: "center",
@@ -1504,6 +1729,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     minHeight: 28,
   },
+  moneyLineLarge: { alignItems: "stretch", flexDirection: "column" },
   moneyLineLabel: { color: "#334155", flex: 1, fontSize: 15, lineHeight: 22 },
   moneyLineAmount: {
     color: "#334155",
@@ -1518,6 +1744,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E2E8F0",
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
+    position: "relative",
     zIndex: 2,
   },
   navItem: {
@@ -1532,8 +1759,23 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   navItemActive: { borderBottomColor: "#0F766E" },
-  navText: { color: "#64748B", fontSize: 11, fontWeight: "700" },
+  navIndicator: {
+    backgroundColor: "#0F766E",
+    bottom: 0,
+    height: 3,
+    left: 0,
+    position: "absolute",
+  },
+  navLabel: { alignSelf: "stretch" },
+  navText: { color: "#64748B", fontSize: 11, fontWeight: "700", textAlign: "center" },
   navTextActive: { color: "#0F766E" },
+  navTextOverlay: {
+    color: "#0F766E",
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
   notice: {
     backgroundColor: cv.color.warning,
     borderRadius: cv.radius.card,

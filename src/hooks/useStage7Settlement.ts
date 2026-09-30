@@ -1,6 +1,7 @@
 import { ApiClientError } from "@/data/api/client";
 import { databaseErrorDiagnostic } from "@/data/db/databaseErrorDiagnostic";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { countSettlementLoad } from "./settlementLoadMetrics";
 import { useNetworkState } from "expo-network";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { recoverMissingSettlementEconomicDates } from "@/data/health/defaultDataHealthCoordinator";
@@ -175,6 +176,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
         setUpdating(false);
         return;
       }
+      countSettlementLoad("controller");
       const projectionGeneration = projectionRequest.begin();
       const load = async () => {
         const repository = await getDefaultLedgerSettlementRepository();
@@ -261,6 +263,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
           }
         }
         refreshPhase = "ledger_pull";
+        countSettlementLoad("ledgerPull");
         await refreshJourneyLedger(activeJourneyId);
         refreshPhase = "refreshed_state";
         const refreshed = await load();
@@ -313,6 +316,7 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
         }
         refreshPhase = "settlement_preview";
         try {
+          countSettlementLoad("serverPreview");
           const current = await previewSettlement(
             activeJourneyId,
             new Date().toISOString(),

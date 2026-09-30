@@ -2,6 +2,56 @@
 
 Date: 2026-09-30
 
+## Ledger Pager — COMPLETE (iPhone)
+
+- Settlement's shared outer vertical ScrollView has been replaced on the Ledger
+  route by four vertical page ScrollViews under one shared collapsible Journey,
+  mode, and sticky tab header. Each page retains a body anchor; the header has
+  one collapse amount. Short pages have enough extent to retain the collapsed
+  header. The Phase 1 controller and data hooks remain single and mounted.
+- The owner passed iPhone finger checks for independent Summary/Paid/Shares
+  anchors, shared header stability, short Payments, cancelled partial swipes,
+  rapid swipes mixed with tab taps, bottom safe area, and Spending/Settlement
+  return. Five click rounds added zero controller/pull/preview/sections/review
+  loads. The preceding Journey A→B→A, offline, and app lifecycle regression
+  gate passed; account switching was confirmed during later follow-up. TypeScript,
+  scoped lint,
+  formatting, 47 relevant tests, signed iPhone Release build, and diff check
+  passed. ADR 0021 records the design and acceptance.
+- Phase 2B uses an outer native Spending/Settlement Pager around the retained
+  inner four-page Settlement Pager. Outer native scrolling is enabled only when
+  the mode selector is visible. The Spending card now enters embedded Settlement
+  instead of pushing the standalone route. The owner verified expanded
+  Spending⇄Summary finger tracking and cancellation, mode-selection progress,
+  Spending reading-position retention, collapsed Summary's true left boundary,
+  Summary→Paid gesture ownership, rapid swipes, and stable header. Initial mode
+  round trips had zero incremental data loads. Deeper Spending content cannot swipe across modes once the
+  selector is offscreen, per the approved expanded-only rule. ADR 0022 records
+  the implementation and iPhone acceptance. A later source refinement gives
+  Spending its own body anchor under the same animated shared header collapse
+  as Settlement. After the owner restored the Xcode account and development
+  profile, the signed Release was installed without clearing phone data. The
+  owner verified deep Spending→Summary expanded→Spending preserves both body
+  position and expanded header, then repeated slow cancellation, collapsed
+  boundary, four-page swipe, and banner entry checks: all passed. Five further
+  mode round trips left all five load counts unchanged. Phase 3 finalization
+  added an explicit account-generation key/reset alongside the existing Journey
+  key so anchors cannot survive either identity change or component unmount.
+  The owner confirmed account switch, Journey switch, offline use, and
+  foreground/background; finalization did not repeat those scenarios.
+  Forward/reverse paging,
+  cancellation, collapsed edge, deep anchor, Search, Add Expense, and Journey
+  chooser smoke passed. On the final signed build after large-text fixes, the
+  absolute load baseline was `2/2/2/6/3 → 2/2/2/6/3` across the same five
+  mode and five four-page rounds. Metrics remain debug/test-only. TypeScript,
+  scoped
+  lint, 52 relevant tests, formatting, diff check, and signed Release build
+  passed. Large-text iPhone screenshots exposed clipped navigation labels and
+  amounts; focused fitting/stacking fixes were installed and the owner
+  confirmed labels, amounts, Mine/Group, and the Summary selected text are
+  readable. Dedicated VoiceOver review is deferred. No Backend, schema,
+  Supabase, or Production change.
+
 ## Repeated confirmed-Expense correction — Dev and Simulator acceptance PASS
 
 - The Dev Journey `e6e0955d` confirmed a NZ$120→NZ$121 successor in version #5 at 05:45 UTC. Three later Expenses were absent from that version because correction preview used the root's September 23 cutoff. Version #6 at 05:52 UTC included all six current inputs; a read-only current preview has no changes since #6. The current version needs no data repair; historical #5 remains immutable.
@@ -9,6 +59,36 @@ Date: 2026-09-30
 - Correction preview/confirmation now use a current source cutoff and preserve exact JSON numeric tokens for the SQL source proof. The simulator exposed a second stale-preview failure when an unrelated FX Expense had a numeric `decimalRate`; a focused regression now covers that proof. Stale sources return 409. Save stays locked during confirmation and dismisses the correction stack to the existing Ledger Journey screen on success.
 - Only the Backend gateway file was updated on `api-dev.xoery.art` (source SHA-256 `076d40198dbc153cb5c694c6d011520b422ca6a588f0e7bb0c353a4de59245ca`). The original gateway and image rollback copies remain at `/opt/otr/dev-backend/releases/settlement-correction-20260930` and `otr-dev-backend:pre-settlement-correction-20260930`. No schema or Production change.
 - iPhone 17 Pro Simulator Release completed three confirmed-Expense corrections in synthetic Dev Journey `e6e0955d`: NZ$121→122→123→124, creating versions #7–#9. The final save returned directly to Ledger Settlement. Version #7 retained all six current inputs including the unrelated FX Expense; previous versions remained immutable. On each save, the local summary briefly showed a missing successor while sync caught up; then the current balance matched the confirmed version and “Changes since last confirmation” disappeared, as expected when no new unconfirmed changes remain. The latest mobile navigation fix was tested only in Simulator; the physical iPhone remains in use by another chat and was not touched in this test. A separate empty synthetic Journey `848893cf` was created for isolation but was not visible in the Simulator's cached picker, so the synthetic acceptance Journey was used.
+
+## Ledger Settlement pager Phase 1 — iPhone acceptance PASS
+
+- The Ledger route now mounts one Settlement controller on first Settlement entry
+  and retains it across Spending/Settlement UI switches. Summary, Paid, Shares,
+  and Payments render from that controller in one native PagerView; the Ledger
+  section name remains canonical, and a shared indicator follows native page
+  position/offset through React Native Animated's native driver. The existing
+  shared vertical ScrollView remains for Phase 2 anchor work.
+- `react-native-pager-view@8.0.2` is a direct dependency. Simulator and signed
+  iPhone Release builds passed; the app was installed on the iPhone 16 Pro with
+  existing data intact. The existing debug preference exposes five load counts.
+  First Settlement entry measured controller/pull/preview/sections/review as
+  `1/1/1/3/2`. Five Spending↔Settlement switches and five four-tab click rounds
+  added `0/0/0/0/0`. Returning from an Expense detail route correctly caused the
+  existing focus refresh, taking the counts to `2/2/2/6/3`.
+- First direct finger test found page changes required an overly long drag and
+  short pages left the lower screen without a swipe target. The parent ScrollView
+  now uses iOS directional lock and the pager fills the viewport below its tabs.
+  The owner retested the installed signed iPhone Release: short horizontal drags
+  work in content and formerly blank space, Summary outward drag does not expose
+  Spending, a fast flick changes pages, and diagonal vertical drag still scrolls.
+  A slow swipe cancelled mid-way returned both page and indicator; Paid returns
+  to Summary and Payments' outer edge stays bounded. The owner performed these
+  finger checks. Phase 1A–1D is complete. No schema, Backend, Supabase, or
+  Production change.
+- TypeScript, scoped ESLint, five Settlement suites (46 tests), five existing
+  auth/sync/correction suites (45 tests), and diff check passed. The separate
+  `accountSwitchFoundation.test.ts` suite cannot run under this Vitest config:
+  its React Native import reaches Flow source that Rolldown cannot parse.
 
 ## Expense Search convergence — iPhone and Simulator acceptance
 

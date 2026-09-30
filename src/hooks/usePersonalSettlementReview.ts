@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { countSettlementLoad } from "./settlementLoadMetrics";
 import { useFocusEffect } from "expo-router";
 
 import type { LocalPersonalSettlementReview } from "@/data/repositories/personalSettlementReviewRepository";
@@ -29,6 +30,7 @@ export function usePersonalSettlementReview(journeyId?: string, settlementId?: s
       setLoading(false);
       return;
     }
+    countSettlementLoad("personalReview");
     try {
       const repository = await getDefaultPersonalSettlementReviewRepository();
       const cached = await repository.get(journeyId);

@@ -6,6 +6,7 @@ import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordi
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Modal,
   Pressable,
   ScrollView,
@@ -17,6 +18,7 @@ import {
   View,
 } from "react-native";
 import { router, Stack, useFocusEffect } from "expo-router";
+import PagerView from "react-native-pager-view";
 
 import { AppIcon } from "@/components/AppIcon";
 import { ContentHeroAmount } from "./ContentHeroAmount";
@@ -44,6 +46,8 @@ import type {
 } from "@/domain/ledger/reporting";
 import { stage3JourneyId } from "@/hooks/useLedgerStage3";
 import { useLedgerActiveSync } from "@/hooks/useLedgerActiveSync";
+import { settlementLoadMetrics } from "@/hooks/settlementLoadMetrics";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 
 import {
   formatLedgerDate,
@@ -66,7 +70,6 @@ import {
 } from "./SettlementReadinessScreen";
 import {
   expenseAmountPresentation,
-  isLedgerModeNavHidden,
   journeyPickerSections,
   settlementPositionLabel,
   shortMemberName,
@@ -76,8 +79,10 @@ import {
 import { createLatestRequest } from "./latestRequest";
 import { retrySQLiteRollbackOnce } from "./retryLedgerRead";
 import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { advanceScrollAnchor, restoredScrollY } from "./settlementScrollAnchor";
 
 type Mode = "SPENDING" | "SETTLEMENT";
+const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 type SettlementSnapshot = ReturnType<typeof savedSettlementCardProjection>;
 type SpendingProjection = {
   journey: LedgerJourneyContext;
@@ -134,8 +139,12 @@ function categoryIcon(category: string) {
 export function LedgerStage6Screen({
   scopedJourneyId,
 }: { scopedJourneyId?: string } = {}) {
-  const largeText = useWindowDimensions().fontScale > 2;
-  const modeNavBottom = useRef(0);
+  const largeText = useWindowDimensions().fontScale > 1.5;
+  const spendingScroll = useRef<ScrollView>(null);
+  const spendingAnchor = useRef({ y: 0, body: 0 });
+  const sharedCollapse = useRef(0);
+  const [spendingHeaderHeight, setSpendingHeaderHeight] = useState(0);
+  const [modeTransitionSeq, setModeTransitionSeq] = useState(0);
   const journeySearch = useRef<TextInput>(null);
   const manualJourneyId = useRef<string | undefined>(undefined);
   useEffect(() => {
@@ -143,12 +152,33 @@ export function LedgerStage6Screen({
   }, [scopedJourneyId]);
   const [request] = useState(createLatestRequest);
   const [memberRequest] = useState(createLatestRequest);
+  const [accountGeneration, setAccountGeneration] = useState(getAccountGeneration);
+  const accountGenerationRef = useRef(accountGeneration);
   const scopeRef = useRef<ReportingScope>("MINE");
   const selectedMemberIdRef = useRef<string | null>(null);
   const selectedJourneyIdRef = useRef<string | null>(null);
   const [journeys, setJourneys] = useState<LedgerJourneyOption[]>([]);
   const [projection, setProjection] = useState<SpendingProjection | null>(null);
   const [mode, setMode] = useState<Mode>("SPENDING");
+  const modeRef = useRef(mode);
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+  const modePager = useRef<PagerView>(null);
+  const [modePageProgress] = useState(() => ({
+    position: new Animated.Value(0),
+    offset: new Animated.Value(0),
+  }));
+  const [settlementActivatedJourneyId, setSettlementActivatedJourneyId] = useState<
+    string | null
+  >(null);
+  const [settlementPageProgress] = useState(() => ({
+    position: new Animated.Value(0),
+    offset: new Animated.Value(0),
+  }));
+  const [settlementHeaderOffset] = useState(() => new Animated.Value(0));
+  const [settlementHeaderHeight, setSettlementHeaderHeight] = useState(0);
+  const [settlementViewportHeight, setSettlementViewportHeight] = useState(0);
   const [modeNavHidden, setModeNavHidden] = useState(false);
   const [settlementSection, setSettlementSection] =
     useState<SettlementSectionName>("Summary");
@@ -161,6 +191,18 @@ export function LedgerStage6Screen({
   const [debugMode, setDebugMode] = useState(false);
   const [ledgerChangeSeq, setLedgerChangeSeq] = useState(0);
   const journey = projection?.journey ?? null;
+  const collapseDistance = spendingHeaderHeight;
+  useEffect(() => {
+    if (collapseDistance > 0)
+      setModeNavHidden(sharedCollapse.current >= collapseDistance - 1);
+  }, [collapseDistance]);
+  useEffect(() => {
+    settlementHeaderOffset.setValue(0);
+    modePageProgress.position.setValue(modeRef.current === "SPENDING" ? 0 : 1);
+    modePageProgress.offset.setValue(0);
+    sharedCollapse.current = 0;
+    spendingAnchor.current = { y: 0, body: 0 };
+  }, [accountGeneration, journey?.journeyId, modePageProgress, settlementHeaderOffset]);
   const memberId = projection?.memberId ?? null;
   const scope = projection?.scope ?? "MINE";
   const summary = projection?.summary ?? null;
@@ -437,6 +479,26 @@ export function LedgerStage6Screen({
   useFocusEffect(
     useCallback(() => {
       let active = true;
+      const generation = getAccountGeneration();
+      if (generation !== accountGenerationRef.current) {
+        accountGenerationRef.current = generation;
+        request.cancel();
+        memberRequest.cancel();
+        selectedJourneyIdRef.current = null;
+        selectedMemberIdRef.current = null;
+        manualJourneyId.current = undefined;
+        setAccountGeneration(generation);
+        setProjection(null);
+        setJourneys([]);
+        setSettlementActivatedJourneyId(null);
+        setSettlementSection("Summary");
+        setMode("SPENDING");
+        setModeNavHidden(false);
+        setSpendingHeaderHeight(0);
+        setSettlementHeaderHeight(0);
+        setSettlementViewportHeight(0);
+        setLoading(true);
+      }
       void loadContext().catch(() => setMessage("Ledger cache is unavailable."));
       void getDefaultLedgerFxSnapshotRepository()
         .then(async (repository) => {
@@ -458,7 +520,7 @@ export function LedgerStage6Screen({
       return () => {
         active = false;
       };
-    }, [loadContext]),
+    }, [loadContext, memberRequest, request]),
   );
 
   useEffect(
@@ -469,6 +531,8 @@ export function LedgerStage6Screen({
   );
 
   const chooseJourney = async (selected: LedgerJourneyContext) => {
+    setSettlementSection("Summary");
+    setModeNavHidden(false);
     const previous = projection;
     const previousManualJourneyId = manualJourneyId.current;
     manualJourneyId.current = selected.journeyId;
@@ -518,6 +582,19 @@ export function LedgerStage6Screen({
       pathname: "/expenses/new",
       params: journey ? { journeyId: journey.journeyId } : {},
     });
+
+  const changeMode = (nextMode: Mode) => {
+    if (nextMode === "SETTLEMENT" && journey)
+      setSettlementActivatedJourneyId(journey.journeyId);
+    if (nextMode === "SPENDING" && journey) {
+      const y = restoredScrollY(sharedCollapse.current, spendingAnchor.current.body);
+      spendingAnchor.current.y = y;
+      spendingScroll.current?.scrollTo({ y, animated: false });
+    }
+    if (nextMode === "SETTLEMENT") setModeTransitionSeq((value) => value + 1);
+    if (journey) modePager.current?.setPage(nextMode === "SPENDING" ? 0 : 1);
+    else setMode(nextMode);
+  };
 
   return (
     <>
@@ -572,577 +649,723 @@ export function LedgerStage6Screen({
         }}
       />
       <View style={styles.page}>
-        {journey ? (
-          <View style={styles.stickyContext}>
-            <Pressable
-              accessibilityHint="Choose a Journey"
-              accessibilityLabel={
-                journey
-                  ? `${journey.title}, ${formatLedgerDateRange(journey.startDate, journey.endDate)}`
-                  : "No current Journey selected"
-              }
-              accessibilityRole="button"
-              onPress={() => setJourneyPickerOpen(true)}
-              style={styles.context}
-            >
-              <View style={styles.tripBadge}>
-                <Text style={styles.tripBadgeText}>TRIP</Text>
-              </View>
-              <Text
-                maxFontSizeMultiplier={2}
-                numberOfLines={1}
-                style={styles.contextTitle}
-              >
-                {journey?.title ?? "Choose Trip"}
-              </Text>
-              <AppIcon color="#64748B" name="chevron.right" size={15} />
-            </Pressable>
-          </View>
-        ) : null}
-
-        <ScrollView
-          contentContainerStyle={[styles.content, largeText && styles.largeContent]}
-          contentInsetAdjustmentBehavior="automatic"
-          onScroll={(event) => {
-            const hidden = isLedgerModeNavHidden(
-              event.nativeEvent.contentOffset.y,
-              modeNavBottom.current,
-            );
-            setModeNavHidden((current) => (current === hidden ? current : hidden));
+        <AnimatedPagerView
+          initialPage={mode === "SPENDING" ? 0 : 1}
+          key={`${accountGeneration}:${journey?.journeyId ?? "no-journey"}`}
+          onPageScroll={Animated.event(
+            [
+              {
+                nativeEvent: {
+                  position: modePageProgress.position,
+                  offset: modePageProgress.offset,
+                },
+              },
+            ],
+            { useNativeDriver: true },
+          )}
+          onPageScrollStateChanged={(event) => {
+            if (event.nativeEvent.pageScrollState !== "dragging" || !journey) return;
+            if (mode === "SPENDING") {
+              setSettlementActivatedJourneyId(journey.journeyId);
+              setModeTransitionSeq((value) => value + 1);
+            } else {
+              const y = restoredScrollY(
+                sharedCollapse.current,
+                spendingAnchor.current.body,
+              );
+              spendingAnchor.current.y = y;
+              spendingScroll.current?.scrollTo({ y, animated: false });
+            }
           }}
-          scrollEventThrottle={16}
-          stickyHeaderIndices={journey && mode === "SETTLEMENT" ? [1] : undefined}
+          onPageSelected={(event) => {
+            const nextMode = event.nativeEvent.position === 0 ? "SPENDING" : "SETTLEMENT";
+            setMode(nextMode);
+            setModeNavHidden(
+              collapseDistance > 0 && sharedCollapse.current >= collapseDistance - 1,
+            );
+          }}
+          overdrag={false}
+          ref={modePager}
+          scrollEnabled={Boolean(journey) && collapseDistance > 0 && !modeNavHidden}
+          style={styles.modePager}
         >
-          <View style={styles.topControls}>
-            {journey ? (
-              <View
-                onLayout={(event) => {
-                  modeNavBottom.current = event.nativeEvent.layout.height + 14;
-                }}
-              >
-                <Segment
-                  value={mode}
-                  options={["SPENDING", "SETTLEMENT"]}
-                  onChange={setMode}
-                />
-              </View>
-            ) : null}
-
-            {message ? (
-              <Text
-                accessibilityLiveRegion="polite"
-                maxFontSizeMultiplier={2}
-                style={styles.message}
-              >
-                {message}
-              </Text>
-            ) : null}
-            {loading ? <ActivityIndicator /> : null}
-          </View>
-          {journey && mode === "SETTLEMENT" ? (
-            <View style={styles.settlementNavSticky}>
-              <SettlementSectionTabs
-                active={settlementSection}
-                onChange={setSettlementSection}
-              />
-            </View>
-          ) : null}
-          {journey ? (
-            mode === "SPENDING" ? (
-              <>
-                <View style={styles.total}>
-                  <View style={[styles.totalHeader, largeText && styles.stack]}>
-                    <Text
-                      maxFontSizeMultiplier={2}
-                      style={[styles.eyebrow, styles.totalEyebrow]}
-                    >
-                      {scope === "MINE" ? "YOU SPENT" : "GROUP SPENT"}
-                    </Text>
-                    <Segment
-                      compact
-                      value={scope}
-                      options={["MINE", "GROUP"]}
-                      onChange={(nextScope) => {
-                        selectedMemberIdRef.current = null;
-                        memberRequest.cancel();
-                        void loadProjection(journey, nextScope);
-                      }}
-                    />
-                  </View>
-                  <ContentHeroAmount
-                    accessibilityLabel={`${
-                      scope === "MINE" ? "You spent" : "Group spent"
-                    } ${projection?.estimatedCount ? "approximately " : ""}${
-                      summary
-                        ? formatLedgerMoney(
-                            summary.totalMinor + (projection?.estimatedMinor ?? 0),
-                            journey.settlementCurrency,
-                            journey.settlementScale,
-                          )
-                        : "unavailable"
-                    }`}
+          <View collapsable={false} style={styles.modePage}>
+            <ScrollView
+              contentContainerStyle={[
+                styles.content,
+                largeText && styles.largeContent,
+                journey && { paddingTop: spendingHeaderHeight + 14 },
+              ]}
+              contentInsetAdjustmentBehavior="automatic"
+              directionalLockEnabled
+              onScroll={(event) => {
+                const y = Math.max(0, event.nativeEvent.contentOffset.y);
+                const anchor = spendingAnchor.current;
+                const delta = y - anchor.y;
+                anchor.y = y;
+                if (mode !== "SPENDING" || collapseDistance <= 0 || Math.abs(delta) < 0.5)
+                  return;
+                const next = advanceScrollAnchor(
+                  { collapse: sharedCollapse.current, body: anchor.body },
+                  delta,
+                  collapseDistance,
+                );
+                anchor.body = next.body;
+                sharedCollapse.current = next.collapse;
+                settlementHeaderOffset.setValue(next.collapse);
+                setModeNavHidden(next.collapse >= collapseDistance - 1);
+              }}
+              ref={spendingScroll}
+              scrollEventThrottle={16}
+              style={styles.modePage}
+            >
+              <View style={styles.topControls}>
+                {message ? (
+                  <Text
+                    accessibilityLiveRegion="polite"
                     maxFontSizeMultiplier={2}
-                    style={styles.totalValue}
-                    value={
-                      summary
-                        ? `${projection?.estimatedCount ? "≈ " : ""}${formatLedgerMoney(
-                            summary.totalMinor + (projection?.estimatedMinor ?? 0),
-                            journey.settlementCurrency,
-                            journey.settlementScale,
-                          )}`
-                        : "—"
-                    }
-                  />
-                  <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                    {summary?.expenseCount ?? 0} valued Expenses
-                    {projection?.estimatedCount
-                      ? ` · ${projection.estimatedCount} estimated`
-                      : ""}
+                    style={styles.message}
+                  >
+                    {message}
                   </Text>
-                </View>
-
-                <DashboardSection
-                  action="See analysis"
-                  onAction={() =>
-                    router.push({
-                      pathname: "/expenses/analysis",
-                      params: {
-                        journeyId: journey.journeyId,
-                        memberId: memberId ?? "",
-                        scope,
-                        ...(categorySelection
-                          ? { selectedMemberId: categorySelection.id }
-                          : {}),
-                      },
-                    })
-                  }
-                  title={scope === "GROUP" ? "Spending by Member" : "Categories"}
-                >
-                  {scope === "GROUP" ? (
-                    <ScrollView
-                      contentContainerStyle={styles.memberSelector}
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      style={styles.memberScroller}
-                    >
-                      {[
-                        { id: "", label: "Group" },
-                        ...spendingMembers(
-                          projection?.members ?? [],
-                          projection?.memberSpending ?? [],
-                        ),
-                      ].map((item) => {
-                        const selected = (categorySelection?.id ?? "") === item.id;
-                        return (
-                          <Pressable
-                            accessibilityLabel={item.label}
-                            accessibilityRole="tab"
-                            accessibilityState={{ selected }}
-                            key={item.id || "group"}
-                            onPress={() => void selectCategoryMember(item.id || null)}
-                            style={[
-                              styles.memberTab,
-                              selected && styles.memberTabSelected,
-                            ]}
-                          >
-                            <Text
-                              numberOfLines={1}
-                              style={[
-                                styles.memberTabText,
-                                selected && styles.memberTabTextSelected,
-                              ]}
-                            >
-                              {item.id ? shortMemberName(item.label) : item.label}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </ScrollView>
-                  ) : null}
-                  <View style={scope === "GROUP" ? styles.groupCategories : undefined}>
-                    {displayedCategories.map((category) => {
-                      const percentage = spendingPercentage(
-                        category.totalMinor,
-                        categorySummary?.totalMinor ?? 0,
-                      );
-                      return (
-                        <Pressable
-                          accessibilityLabel={`${category.label}, ${formatLedgerMoney(
-                            category.totalMinor,
-                            journey.settlementCurrency,
-                            journey.settlementScale,
-                          )}, ${percentage} percent`}
-                          accessibilityRole="button"
-                          key={category.key}
-                          onPress={() =>
-                            openSearch({
-                              authoritative: "1",
-                              category: category.key,
-                              ...(categorySelection
-                                ? { selectedMemberId: categorySelection.id }
-                                : {}),
-                              origin: `Category: ${category.label}`,
-                            })
-                          }
-                          style={styles.categoryRow}
+                ) : null}
+                {loading ? <ActivityIndicator /> : null}
+              </View>
+              {journey ? (
+                <>
+                  <View>
+                    <View style={styles.total}>
+                      <View style={[styles.totalHeader, largeText && styles.stack]}>
+                        <Text
+                          maxFontSizeMultiplier={2}
+                          style={[styles.eyebrow, styles.totalEyebrow]}
                         >
-                          <View style={styles.categoryHeading}>
-                            <Text
-                              maxFontSizeMultiplier={2}
-                              numberOfLines={1}
-                              style={styles.rowTitle}
-                            >
-                              {category.label}
-                            </Text>
-                            <Text style={styles.categoryAmount}>
-                              {formatLedgerMoney(
+                          {scope === "MINE" ? "YOU SPENT" : "GROUP SPENT"}
+                        </Text>
+                        <Segment
+                          compact
+                          value={scope}
+                          options={["MINE", "GROUP"]}
+                          onChange={(nextScope) => {
+                            selectedMemberIdRef.current = null;
+                            memberRequest.cancel();
+                            void loadProjection(journey, nextScope);
+                          }}
+                        />
+                      </View>
+                      <ContentHeroAmount
+                        accessibilityLabel={`${
+                          scope === "MINE" ? "You spent" : "Group spent"
+                        } ${projection?.estimatedCount ? "approximately " : ""}${
+                          summary
+                            ? formatLedgerMoney(
+                                summary.totalMinor + (projection?.estimatedMinor ?? 0),
+                                journey.settlementCurrency,
+                                journey.settlementScale,
+                              )
+                            : "unavailable"
+                        }`}
+                        style={styles.totalValue}
+                        value={
+                          summary
+                            ? `${projection?.estimatedCount ? "≈ " : ""}${formatLedgerMoney(
+                                summary.totalMinor + (projection?.estimatedMinor ?? 0),
+                                journey.settlementCurrency,
+                                journey.settlementScale,
+                              )}`
+                            : "—"
+                        }
+                      />
+                      <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                        {summary?.expenseCount ?? 0} valued Expenses
+                        {projection?.estimatedCount
+                          ? ` · ${projection.estimatedCount} estimated`
+                          : ""}
+                      </Text>
+                    </View>
+
+                    <DashboardSection
+                      action="See analysis"
+                      onAction={() =>
+                        router.push({
+                          pathname: "/expenses/analysis",
+                          params: {
+                            journeyId: journey.journeyId,
+                            memberId: memberId ?? "",
+                            scope,
+                            ...(categorySelection
+                              ? { selectedMemberId: categorySelection.id }
+                              : {}),
+                          },
+                        })
+                      }
+                      title={scope === "GROUP" ? "Spending by Member" : "Categories"}
+                    >
+                      {scope === "GROUP" ? (
+                        <ScrollView
+                          contentContainerStyle={styles.memberSelector}
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          style={styles.memberScroller}
+                        >
+                          {[
+                            { id: "", label: "Group" },
+                            ...spendingMembers(
+                              projection?.members ?? [],
+                              projection?.memberSpending ?? [],
+                            ),
+                          ].map((item) => {
+                            const selected = (categorySelection?.id ?? "") === item.id;
+                            return (
+                              <Pressable
+                                accessibilityLabel={item.label}
+                                accessibilityRole="tab"
+                                accessibilityState={{ selected }}
+                                key={item.id || "group"}
+                                onPress={() => void selectCategoryMember(item.id || null)}
+                                style={[
+                                  styles.memberTab,
+                                  selected && styles.memberTabSelected,
+                                ]}
+                              >
+                                <Text
+                                  numberOfLines={1}
+                                  style={[
+                                    styles.memberTabText,
+                                    selected && styles.memberTabTextSelected,
+                                  ]}
+                                >
+                                  {item.id ? shortMemberName(item.label) : item.label}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </ScrollView>
+                      ) : null}
+                      <View
+                        style={scope === "GROUP" ? styles.groupCategories : undefined}
+                      >
+                        {displayedCategories.map((category) => {
+                          const percentage = spendingPercentage(
+                            category.totalMinor,
+                            categorySummary?.totalMinor ?? 0,
+                          );
+                          return (
+                            <Pressable
+                              accessibilityLabel={`${category.label}, ${formatLedgerMoney(
                                 category.totalMinor,
                                 journey.settlementCurrency,
                                 journey.settlementScale,
-                              )}
-                              <Text style={styles.categoryPercentage}>
-                                {` · ${percentage}%`}
-                              </Text>
-                            </Text>
-                          </View>
-                          <View style={styles.categoryTrack}>
-                            <View
-                              style={[styles.categoryFill, { width: `${percentage}%` }]}
-                            />
-                          </View>
-                        </Pressable>
-                      );
-                    })}
-                    {displayedCategories.length === 0 ? (
-                      <Text style={styles.empty}>No category totals yet.</Text>
-                    ) : null}
-                  </View>
-                  {scope === "GROUP" ? (
-                    <View style={styles.categoryTotal}>
-                      <Text style={styles.categoryTotalLabel}>
-                        {categorySelection ? "Total Spending" : "Total Group Spending"}
-                      </Text>
-                      <Text style={styles.categoryTotalAmount}>
-                        {formatLedgerMoney(
-                          categorySummary?.totalMinor ?? 0,
-                          journey.settlementCurrency,
-                          journey.settlementScale,
-                        )}
-                      </Text>
-                    </View>
-                  ) : null}
-                </DashboardSection>
-
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() =>
-                    router.push({
-                      pathname: "/expenses/settlement",
-                      params: {
-                        journeyId: journey.journeyId,
-                        journeyTitle: journey.title,
-                      },
-                    })
-                  }
-                  style={styles.snapshot}
-                >
-                  <View style={styles.grow}>
-                    <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
-                      SETTLEMENT
-                    </Text>
-                    {settlement.kind === "FINAL" ? (
-                      <>
-                        <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
-                          {settlement.positionMinor === null
-                            ? "Current balance unavailable"
-                            : settlementPositionLabel(settlement.positionMinor)}
-                        </Text>
-                        {settlement.positionMinor !== null ? (
-                          <Text maxFontSizeMultiplier={2} style={styles.snapshotAmount}>
-                            {formatLedgerMoney(
-                              Math.abs(settlement.positionMinor),
-                              settlement.currency,
-                              settlement.scale,
-                            )}
-                          </Text>
-                        ) : null}
-                        <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                          {settlement.positionMinor === null
-                            ? "Open Settlement for details"
-                            : settlement.needsUpdate
-                              ? "Final settlement needs an update"
-                              : "Showing saved latest calculation"}
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
-                          Settlement preview
-                        </Text>
-                        <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                          Check readiness and prepare a preview
-                        </Text>
-                      </>
-                    )}
-                  </View>
-                  <AppIcon color="#0F766E" name="chevron.right" size={16} />
-                </Pressable>
-
-                {projection?.reviewCount ? (
-                  <Pressable
-                    accessibilityLabel={`${projection.reviewCount} items need review`}
-                    accessibilityRole="button"
-                    onPress={() =>
-                      router.push({
-                        pathname: "/expenses/review",
-                        params: {
-                          journeyId: journey.journeyId,
-                          journeyTitle: journey.title,
-                        },
-                      })
-                    }
-                    style={styles.attention}
-                  >
-                    <View style={styles.grow}>
-                      <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
-                        Needs attention
-                      </Text>
-                      <Text maxFontSizeMultiplier={2} style={styles.attentionMeta}>
-                        {projection.reviewCount} things may affect the final amount
-                      </Text>
-                      <Text maxFontSizeMultiplier={2} style={styles.reviewLink}>
-                        Review {projection.reviewCount} items ›
-                      </Text>
-                    </View>
-                  </Pressable>
-                ) : null}
-
-                <ExpenseConflictList
-                  journeyId={journey.journeyId}
-                  title="Needs attention · Review changes"
-                />
-
-                <DashboardSection
-                  action="See All"
-                  onAction={() => openSearch({ origin: "All Expenses" })}
-                  title="Recent Expenses"
-                >
-                  {expenses.map((expense) => {
-                    const attention = ledgerExpenseAttention(expense, scope);
-                    const amounts = expenseAmountPresentation(
-                      expense,
-                      scope,
-                      projection?.estimateComponents.get(expense.id) ?? null,
-                    );
-                    return (
-                      <Pressable
-                        accessibilityLabel={`${expense.title}, ${amounts.primary}${amounts.total ? `, ${amounts.total}` : ""}${amounts.original ? `, ${amounts.original}` : ""}${amounts.splitLabel ? ", split expense" : ""}${expense.hasReceipt ? ", receipt attached" : ""}${
-                          attention ? `, ${attention}` : ""
-                        }`}
-                        accessibilityRole="button"
-                        key={expense.id}
-                        onPress={() => router.push(`/expenses/expense/${expense.id}`)}
-                        style={[styles.row, largeText && styles.stack]}
-                      >
-                        <View style={styles.categoryIcon}>
-                          <AppIcon
-                            color="#0F766E"
-                            name={categoryIcon(expense.category)}
-                            size={18}
-                          />
-                        </View>
-                        <View style={styles.grow}>
-                          <View style={styles.rowTitleLine}>
-                            <Text
-                              maxFontSizeMultiplier={2}
-                              numberOfLines={2}
-                              style={styles.rowTitle}
+                              )}, ${percentage} percent`}
+                              accessibilityRole="button"
+                              key={category.key}
+                              onPress={() =>
+                                openSearch({
+                                  authoritative: "1",
+                                  category: category.key,
+                                  ...(categorySelection
+                                    ? { selectedMemberId: categorySelection.id }
+                                    : {}),
+                                  origin: `Category: ${category.label}`,
+                                })
+                              }
+                              style={styles.categoryRow}
                             >
-                              {expense.title}
-                            </Text>
-                            {expense.hasReceipt ? (
-                              <AppIcon color="#64748B" name="paperclip" size={14} />
-                            ) : null}
-                          </View>
-                          <View style={styles.rowMetaLine}>
-                            <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                              {formatLedgerDate(expense.occurredAt)}
-                              {amounts.total ? ` · ${amounts.total}` : ""}
-                            </Text>
-                            {amounts.splitLabel ? (
-                              <View style={styles.splitTag}>
+                              <View
+                                style={[
+                                  styles.categoryHeading,
+                                  largeText && styles.stack,
+                                ]}
+                              >
                                 <Text
                                   maxFontSizeMultiplier={2}
-                                  style={styles.splitTagText}
+                                  numberOfLines={2}
+                                  style={styles.rowTitle}
                                 >
-                                  {amounts.splitLabel}
+                                  {category.label}
+                                </Text>
+                                <Text
+                                  adjustsFontSizeToFit
+                                  maxFontSizeMultiplier={1.35}
+                                  minimumFontScale={0.7}
+                                  numberOfLines={1}
+                                  style={styles.categoryAmount}
+                                >
+                                  {formatLedgerMoney(
+                                    category.totalMinor,
+                                    journey.settlementCurrency,
+                                    journey.settlementScale,
+                                  )}
+                                  <Text style={styles.categoryPercentage}>
+                                    {` · ${percentage}%`}
+                                  </Text>
                                 </Text>
                               </View>
-                            ) : null}
-                          </View>
-                          {attention ? (
-                            <Text maxFontSizeMultiplier={2} style={styles.warning}>
-                              {attention}
-                            </Text>
-                          ) : null}
+                              <View style={styles.categoryTrack}>
+                                <View
+                                  style={[
+                                    styles.categoryFill,
+                                    { width: `${percentage}%` },
+                                  ]}
+                                />
+                              </View>
+                            </Pressable>
+                          );
+                        })}
+                        {displayedCategories.length === 0 ? (
+                          <Text style={styles.empty}>No category totals yet.</Text>
+                        ) : null}
+                      </View>
+                      {scope === "GROUP" ? (
+                        <View style={styles.categoryTotal}>
+                          <Text style={styles.categoryTotalLabel}>
+                            {categorySelection
+                              ? "Total Spending"
+                              : "Total Group Spending"}
+                          </Text>
+                          <Text style={styles.categoryTotalAmount}>
+                            {formatLedgerMoney(
+                              categorySummary?.totalMinor ?? 0,
+                              journey.settlementCurrency,
+                              journey.settlementScale,
+                            )}
+                          </Text>
                         </View>
-                        <View
-                          style={[
-                            styles.amountColumn,
-                            largeText && styles.largeRowAmount,
-                          ]}
-                        >
-                          <Text style={styles.rowAmount}>{amounts.primary}</Text>
-                          {amounts.original ? (
-                            <Text style={styles.amountMeta}>{amounts.original}</Text>
-                          ) : null}
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                  {expenses.length === 0 ? (
-                    <View style={styles.emptyState}>
-                      <Text maxFontSizeMultiplier={2} style={styles.empty}>
-                        No Expenses yet.
-                      </Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        onPress={openNewExpense}
-                        style={styles.primary}
-                      >
-                        <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
-                          Add Expense
-                        </Text>
-                      </Pressable>
-                    </View>
-                  ) : null}
-                  {expenses.length ? (
+                      ) : null}
+                    </DashboardSection>
+
                     <Pressable
                       accessibilityRole="button"
-                      onPress={() => openSearch({ origin: "All Expenses" })}
-                      style={styles.viewMore}
+                      onPress={() => changeMode("SETTLEMENT")}
+                      style={styles.snapshot}
                     >
-                      <Text maxFontSizeMultiplier={2} style={styles.link}>
-                        View more
-                      </Text>
-                      <AppIcon color="#0F766E" name="chevron.right" size={15} />
+                      <View style={styles.grow}>
+                        <Text maxFontSizeMultiplier={2} style={styles.eyebrow}>
+                          SETTLEMENT
+                        </Text>
+                        {settlement.kind === "FINAL" ? (
+                          <>
+                            <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
+                              {settlement.positionMinor === null
+                                ? "Current balance unavailable"
+                                : settlementPositionLabel(settlement.positionMinor)}
+                            </Text>
+                            {settlement.positionMinor !== null ? (
+                              <Text
+                                maxFontSizeMultiplier={2}
+                                style={styles.snapshotAmount}
+                              >
+                                {formatLedgerMoney(
+                                  Math.abs(settlement.positionMinor),
+                                  settlement.currency,
+                                  settlement.scale,
+                                )}
+                              </Text>
+                            ) : null}
+                            <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                              {settlement.positionMinor === null
+                                ? "Open Settlement for details"
+                                : settlement.needsUpdate
+                                  ? "Final settlement needs an update"
+                                  : "Showing saved latest calculation"}
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <Text maxFontSizeMultiplier={2} style={styles.snapshotTitle}>
+                              Settlement preview
+                            </Text>
+                            <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                              Check readiness and prepare a preview
+                            </Text>
+                          </>
+                        )}
+                      </View>
+                      <AppIcon color="#0F766E" name="chevron.right" size={16} />
                     </Pressable>
+
+                    {projection?.reviewCount ? (
+                      <Pressable
+                        accessibilityLabel={`${projection.reviewCount} items need review`}
+                        accessibilityRole="button"
+                        onPress={() =>
+                          router.push({
+                            pathname: "/expenses/review",
+                            params: {
+                              journeyId: journey.journeyId,
+                              journeyTitle: journey.title,
+                            },
+                          })
+                        }
+                        style={styles.attention}
+                      >
+                        <View style={styles.grow}>
+                          <Text maxFontSizeMultiplier={2} style={styles.attentionTitle}>
+                            Needs attention
+                          </Text>
+                          <Text maxFontSizeMultiplier={2} style={styles.attentionMeta}>
+                            {projection.reviewCount} things may affect the final amount
+                          </Text>
+                          <Text maxFontSizeMultiplier={2} style={styles.reviewLink}>
+                            Review {projection.reviewCount} items ›
+                          </Text>
+                        </View>
+                      </Pressable>
+                    ) : null}
+
+                    <ExpenseConflictList
+                      journeyId={journey.journeyId}
+                      title="Needs attention · Review changes"
+                    />
+
+                    <DashboardSection
+                      action="See All"
+                      onAction={() => openSearch({ origin: "All Expenses" })}
+                      title="Recent Expenses"
+                    >
+                      {expenses.map((expense) => {
+                        const attention = ledgerExpenseAttention(expense, scope);
+                        const amounts = expenseAmountPresentation(
+                          expense,
+                          scope,
+                          projection?.estimateComponents.get(expense.id) ?? null,
+                        );
+                        return (
+                          <Pressable
+                            accessibilityLabel={`${expense.title}, ${amounts.primary}${amounts.total ? `, ${amounts.total}` : ""}${amounts.original ? `, ${amounts.original}` : ""}${amounts.splitLabel ? ", split expense" : ""}${expense.hasReceipt ? ", receipt attached" : ""}${
+                              attention ? `, ${attention}` : ""
+                            }`}
+                            accessibilityRole="button"
+                            key={expense.id}
+                            onPress={() => router.push(`/expenses/expense/${expense.id}`)}
+                            style={[styles.row, largeText && styles.stack]}
+                          >
+                            <View style={styles.categoryIcon}>
+                              <AppIcon
+                                color="#0F766E"
+                                name={categoryIcon(expense.category)}
+                                size={18}
+                              />
+                            </View>
+                            <View style={styles.grow}>
+                              <View style={styles.rowTitleLine}>
+                                <Text
+                                  maxFontSizeMultiplier={2}
+                                  numberOfLines={2}
+                                  style={styles.rowTitle}
+                                >
+                                  {expense.title}
+                                </Text>
+                                {expense.hasReceipt ? (
+                                  <AppIcon color="#64748B" name="paperclip" size={14} />
+                                ) : null}
+                              </View>
+                              <View style={styles.rowMetaLine}>
+                                <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                                  {formatLedgerDate(expense.occurredAt)}
+                                  {amounts.total ? ` · ${amounts.total}` : ""}
+                                </Text>
+                                {amounts.splitLabel ? (
+                                  <View style={styles.splitTag}>
+                                    <Text
+                                      maxFontSizeMultiplier={2}
+                                      style={styles.splitTagText}
+                                    >
+                                      {amounts.splitLabel}
+                                    </Text>
+                                  </View>
+                                ) : null}
+                              </View>
+                              {attention ? (
+                                <Text maxFontSizeMultiplier={2} style={styles.warning}>
+                                  {attention}
+                                </Text>
+                              ) : null}
+                            </View>
+                            <View
+                              style={[
+                                styles.amountColumn,
+                                largeText && styles.largeRowAmount,
+                              ]}
+                            >
+                              <Text style={styles.rowAmount}>{amounts.primary}</Text>
+                              {amounts.original ? (
+                                <Text style={styles.amountMeta}>{amounts.original}</Text>
+                              ) : null}
+                            </View>
+                          </Pressable>
+                        );
+                      })}
+                      {expenses.length === 0 ? (
+                        <View style={styles.emptyState}>
+                          <Text maxFontSizeMultiplier={2} style={styles.empty}>
+                            No Expenses yet.
+                          </Text>
+                          <Pressable
+                            accessibilityRole="button"
+                            onPress={openNewExpense}
+                            style={styles.primary}
+                          >
+                            <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
+                              Add Expense
+                            </Text>
+                          </Pressable>
+                        </View>
+                      ) : null}
+                      {expenses.length ? (
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => openSearch({ origin: "All Expenses" })}
+                          style={styles.viewMore}
+                        >
+                          <Text maxFontSizeMultiplier={2} style={styles.link}>
+                            View more
+                          </Text>
+                          <AppIcon color="#0F766E" name="chevron.right" size={15} />
+                        </Pressable>
+                      ) : null}
+                    </DashboardSection>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.destinationList}>
+                  <Pressable
+                    accessibilityLabel="My Ledger, all Journeys"
+                    accessibilityRole="button"
+                    onPress={() => router.push("/expenses/all-journeys")}
+                    style={styles.myLedgerRow}
+                  >
+                    <View style={styles.destinationIcon}>
+                      <AppIcon color="#0F766E" name="list.bullet.rectangle" size={20} />
+                    </View>
+                    <View style={styles.grow}>
+                      <Text maxFontSizeMultiplier={2} style={styles.destinationTitle}>
+                        My Ledger
+                      </Text>
+                      <Text maxFontSizeMultiplier={2} style={styles.meta}>
+                        Spending across all Journeys
+                      </Text>
+                    </View>
+                    <AppIcon color="#64748B" name="chevron.right" size={15} />
+                  </Pressable>
+                  {journeySearchVisible ? (
+                    <TextInput
+                      accessibilityLabel="Search Journeys"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      onChangeText={setJourneyQuery}
+                      placeholder="Search Journeys"
+                      ref={journeySearch}
+                      returnKeyType="search"
+                      style={styles.landingSearch}
+                      value={journeyQuery}
+                    />
                   ) : null}
-                </DashboardSection>
-              </>
-            ) : (
-              <SettlementReadinessScreen
-                activeSection={settlementSection}
-                debugMode={debugMode}
-                embedded
-                journeyId={journey.journeyId}
-                journeyTitle={journey.title}
-                ledgerChangeSeq={ledgerChangeSeq}
-                showNavigation={false}
-              />
-            )
-          ) : (
-            <View style={styles.destinationList}>
-              <Pressable
-                accessibilityLabel="My Ledger, all Journeys"
-                accessibilityRole="button"
-                onPress={() => router.push("/expenses/all-journeys")}
-                style={styles.myLedgerRow}
-              >
-                <View style={styles.destinationIcon}>
-                  <AppIcon color="#0F766E" name="list.bullet.rectangle" size={20} />
+                  {journeySections.map((section) => (
+                    <View key={section.title} style={styles.sectionBlock}>
+                      <Text accessibilityRole="header" style={styles.journeySectionTitle}>
+                        {section.title}
+                      </Text>
+                      <View style={styles.surface}>
+                        {section.data.map((item) => (
+                          <JourneyRow
+                            item={item}
+                            key={item.journeyId}
+                            largeText={largeText}
+                            onPress={() => openJourneyLedger(item.journeyId)}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                  {!loading && journeySections.length === 0 ? (
+                    <Text style={styles.empty}>
+                      {journeyQuery ? "No matching Journeys." : "No saved Journeys."}
+                    </Text>
+                  ) : null}
                 </View>
-                <View style={styles.grow}>
-                  <Text maxFontSizeMultiplier={2} style={styles.destinationTitle}>
-                    My Ledger
+              )}
+              {debugMode ? (
+                <View style={styles.debugSection}>
+                  <Text accessibilityRole="header" style={styles.debugTitle}>
+                    Debug Information
                   </Text>
-                  <Text maxFontSizeMultiplier={2} style={styles.meta}>
-                    Spending across all Journeys
-                  </Text>
-                </View>
-                <AppIcon color="#64748B" name="chevron.right" size={15} />
-              </Pressable>
-              {journeySearchVisible ? (
-                <TextInput
-                  accessibilityLabel="Search Journeys"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  onChangeText={setJourneyQuery}
-                  placeholder="Search Journeys"
-                  ref={journeySearch}
-                  returnKeyType="search"
-                  style={styles.landingSearch}
-                  value={journeyQuery}
-                />
-              ) : null}
-              {journeySections.map((section) => (
-                <View key={section.title} style={styles.sectionBlock}>
-                  <Text accessibilityRole="header" style={styles.journeySectionTitle}>
-                    {section.title}
-                  </Text>
-                  <View style={styles.surface}>
-                    {section.data.map((item) => (
-                      <JourneyRow
-                        item={item}
-                        key={item.journeyId}
-                        largeText={largeText}
-                        onPress={() => openJourneyLedger(item.journeyId)}
+                  <View style={styles.debugSurface}>
+                    <DebugRow
+                      label="Settlement loads"
+                      value={`controller ${settlementLoadMetrics.controller} · pull ${settlementLoadMetrics.ledgerPull} · preview ${settlementLoadMetrics.serverPreview} · sections ${settlementLoadMetrics.sections} · review ${settlementLoadMetrics.personalReview}`}
+                    />
+                    <DebugRow
+                      label="Network"
+                      value={
+                        network.isConnected === false ||
+                        network.isInternetReachable === false
+                          ? "Offline"
+                          : network.isConnected === true
+                            ? "Online"
+                            : "Checking"
+                      }
+                    />
+                    <DebugRow
+                      attention={
+                        syncStatus === "OFFLINE" ||
+                        syncStatus === "SYNC_FAILED" ||
+                        syncStatus === "CHANGES_WAITING"
+                      }
+                      label="Sync"
+                      value={syncStatus ? syncStatusCopy[syncStatus] : "Starting"}
+                    />
+                    {readLastApiFailure() ? (
+                      <DebugRow
+                        label="Last API failure"
+                        value={`${readLastApiFailure()!.method} ${readLastApiFailure()!.route} · ${readLastApiFailure()!.code ?? readLastApiFailure()!.kind} · ${readLastApiFailure()!.at}`}
                       />
-                    ))}
+                    ) : null}
+                    <DebugRow
+                      label="Environment"
+                      value={
+                        process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev"
+                          ? "Development"
+                          : "Local"
+                      }
+                    />
+                    {journey ? <DebugRow label="Journey" value={journey.title} /> : null}
                   </View>
                 </View>
-              ))}
-              {!loading && journeySections.length === 0 ? (
-                <Text style={styles.empty}>
-                  {journeyQuery ? "No matching Journeys." : "No saved Journeys."}
-                </Text>
               ) : null}
-            </View>
-          )}
-          {debugMode ? (
-            <View style={styles.debugSection}>
-              <Text accessibilityRole="header" style={styles.debugTitle}>
-                Debug Information
-              </Text>
-              <View style={styles.debugSurface}>
-                <DebugRow
-                  label="Network"
-                  value={
-                    network.isConnected === false || network.isInternetReachable === false
-                      ? "Offline"
-                      : network.isConnected === true
-                        ? "Online"
-                        : "Checking"
-                  }
-                />
-                <DebugRow
-                  attention={
-                    syncStatus === "OFFLINE" ||
-                    syncStatus === "SYNC_FAILED" ||
-                    syncStatus === "CHANGES_WAITING"
-                  }
-                  label="Sync"
-                  value={syncStatus ? syncStatusCopy[syncStatus] : "Starting"}
-                />
-                {readLastApiFailure() ? (
-                  <DebugRow
-                    label="Last API failure"
-                    value={`${readLastApiFailure()!.method} ${readLastApiFailure()!.route} · ${readLastApiFailure()!.code ?? readLastApiFailure()!.kind} · ${readLastApiFailure()!.at}`}
+            </ScrollView>
+            {journey ? (
+              <Animated.View
+                onLayout={(event) =>
+                  setSpendingHeaderHeight(event.nativeEvent.layout.height)
+                }
+                style={[
+                  styles.settlementHeader,
+                  {
+                    transform: [
+                      { translateY: Animated.multiply(settlementHeaderOffset, -1) },
+                    ],
+                  },
+                ]}
+              >
+                <View style={styles.stickyContext}>
+                  <Pressable
+                    accessibilityHint="Choose a Journey"
+                    accessibilityLabel={`${journey.title}, ${formatLedgerDateRange(journey.startDate, journey.endDate)}`}
+                    accessibilityRole="button"
+                    onPress={() => setJourneyPickerOpen(true)}
+                    style={styles.context}
+                  >
+                    <View style={styles.tripBadge}>
+                      <Text style={styles.tripBadgeText}>TRIP</Text>
+                    </View>
+                    <Text
+                      maxFontSizeMultiplier={2}
+                      numberOfLines={1}
+                      style={styles.contextTitle}
+                    >
+                      {journey.title}
+                    </Text>
+                    <AppIcon color="#64748B" name="chevron.right" size={15} />
+                  </Pressable>
+                </View>
+                <View style={styles.settlementModeNav}>
+                  <Segment
+                    value={mode}
+                    options={["SPENDING", "SETTLEMENT"]}
+                    onChange={changeMode}
+                    progress={modePageProgress}
                   />
-                ) : null}
-                <DebugRow
-                  label="Environment"
-                  value={
-                    process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev"
-                      ? "Development"
-                      : "Local"
-                  }
+                </View>
+              </Animated.View>
+            ) : null}
+          </View>
+          <View collapsable={false} style={styles.modePage}>
+            {journey &&
+            (mode === "SETTLEMENT" ||
+              settlementActivatedJourneyId === journey.journeyId) ? (
+              <View
+                key={`${accountGeneration}:${journey.journeyId}`}
+                onLayout={(event) =>
+                  setSettlementViewportHeight(event.nativeEvent.layout.height)
+                }
+                style={styles.settlementShell}
+              >
+                <SettlementReadinessScreen
+                  activeSection={settlementSection}
+                  collapseDistance={collapseDistance}
+                  debugMode={debugMode}
+                  embedded
+                  headerHeight={settlementHeaderHeight}
+                  journeyId={journey.journeyId}
+                  journeyTitle={journey.title}
+                  ledgerChangeSeq={ledgerChangeSeq}
+                  modeTransitionSeq={modeTransitionSeq}
+                  onCollapseChange={(collapsed) => {
+                    if (mode === "SETTLEMENT") setModeNavHidden(collapsed);
+                  }}
+                  onSectionChange={setSettlementSection}
+                  pageProgress={settlementPageProgress}
+                  sharedHeaderOffset={settlementHeaderOffset}
+                  sharedCollapseRef={sharedCollapse}
+                  showNavigation={false}
+                  viewportHeight={settlementViewportHeight}
                 />
-                {journey ? <DebugRow label="Journey" value={journey.title} /> : null}
+                <Animated.View
+                  onLayout={(event) =>
+                    setSettlementHeaderHeight(event.nativeEvent.layout.height)
+                  }
+                  style={[
+                    styles.settlementHeader,
+                    {
+                      transform: [
+                        {
+                          translateY: Animated.multiply(settlementHeaderOffset, -1),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <View style={styles.stickyContext}>
+                    <Pressable
+                      accessibilityLabel={`${journey.title}, ${formatLedgerDateRange(journey.startDate, journey.endDate)}`}
+                      accessibilityRole="button"
+                      onPress={() => setJourneyPickerOpen(true)}
+                      style={styles.context}
+                    >
+                      <View style={styles.tripBadge}>
+                        <Text style={styles.tripBadgeText}>TRIP</Text>
+                      </View>
+                      <Text
+                        maxFontSizeMultiplier={2}
+                        numberOfLines={1}
+                        style={styles.contextTitle}
+                      >
+                        {journey.title}
+                      </Text>
+                      <AppIcon color="#64748B" name="chevron.right" size={15} />
+                    </Pressable>
+                  </View>
+                  <View style={styles.settlementModeNav}>
+                    <Segment
+                      value={mode}
+                      options={["SPENDING", "SETTLEMENT"]}
+                      onChange={changeMode}
+                      progress={modePageProgress}
+                    />
+                  </View>
+                  <View>
+                    <SettlementSectionTabs
+                      active={settlementSection}
+                      onChange={setSettlementSection}
+                      progress={settlementPageProgress}
+                    />
+                  </View>
+                </Animated.View>
               </View>
-            </View>
-          ) : null}
-        </ScrollView>
+            ) : null}
+          </View>
+        </AnimatedPagerView>
       </View>
 
       <Modal
@@ -1333,9 +1556,10 @@ function DashboardSection({
   onAction: () => void;
   title: string;
 }) {
+  const largeText = useWindowDimensions().fontScale > 1.5;
   return (
     <View style={styles.sectionBlock}>
-      <View style={styles.sectionHeader}>
+      <View style={[styles.sectionHeader, largeText && styles.stack]}>
         <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={styles.section}>
           {title}
         </Text>
@@ -1359,13 +1583,17 @@ function Segment<T extends string>({
   value,
   options,
   onChange,
+  progress,
 }: {
   compact?: boolean;
   value: T;
   options: T[];
   onChange: (value: T) => void;
+  progress?: { position: Animated.Value; offset: Animated.Value };
 }) {
-  const largeText = useWindowDimensions().fontScale > 2;
+  const largeText = useWindowDimensions().fontScale > 1.5;
+  const page =
+    progress && !largeText ? Animated.add(progress.position, progress.offset) : null;
   return (
     <View
       accessibilityRole="tablist"
@@ -1375,7 +1603,7 @@ function Segment<T extends string>({
         largeText && styles.segmentLarge,
       ]}
     >
-      {options.map((option) => (
+      {options.map((option, index) => (
         <Pressable
           accessibilityRole="tab"
           accessibilityState={{ selected: value === option }}
@@ -1384,20 +1612,66 @@ function Segment<T extends string>({
           style={[
             styles.segmentItem,
             compact && styles.compactSegmentItem,
-            value === option && styles.segmentSelected,
+            !page && value === option && styles.segmentSelected,
           ]}
         >
-          <Text
-            style={[styles.segmentText, value === option && styles.segmentTextSelected]}
-          >
-            {option === "MINE"
-              ? "Mine"
-              : option === "GROUP"
-                ? "Group"
-                : option === "SPENDING"
-                  ? "Spending"
-                  : "Settlement"}
-          </Text>
+          {page ? (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.segmentSelectedOverlay,
+                {
+                  opacity: Animated.subtract(page, index).interpolate({
+                    inputRange: [-1, 0, 1],
+                    outputRange: [0, 1, 0],
+                    extrapolate: "clamp",
+                  }),
+                },
+              ]}
+            />
+          ) : null}
+          <View style={styles.segmentLabel}>
+            <Text
+              adjustsFontSizeToFit
+              maxFontSizeMultiplier={1.35}
+              minimumFontScale={0.75}
+              numberOfLines={1}
+              style={[
+                styles.segmentText,
+                !page && value === option && styles.segmentTextSelected,
+              ]}
+            >
+              {option === "MINE"
+                ? "Mine"
+                : option === "GROUP"
+                  ? "Group"
+                  : option === "SPENDING"
+                    ? "Spending"
+                    : "Settlement"}
+            </Text>
+            {page ? (
+              <Animated.Text
+                adjustsFontSizeToFit
+                maxFontSizeMultiplier={1.35}
+                minimumFontScale={0.75}
+                numberOfLines={1}
+                pointerEvents="none"
+                style={[
+                  styles.segmentText,
+                  styles.segmentTextOverlay,
+                  {
+                    opacity: Animated.subtract(page, index).interpolate({
+                      inputRange: [-1, 0, 1],
+                      outputRange: [0, 1, 0],
+                      extrapolate: "clamp",
+                    }),
+                  },
+                ]}
+              >
+                {option === "SPENDING" ? "Spending" : "Settlement"}
+              </Animated.Text>
+            ) : null}
+          </View>
         </Pressable>
       ))}
     </View>
@@ -1406,6 +1680,9 @@ function Segment<T extends string>({
 
 const styles = StyleSheet.create({
   page: { backgroundColor: "#F6F7F9", flex: 1 },
+  modePager: { flex: 1 },
+  modePage: { flex: 1 },
+  hiddenPage: { display: "none" },
   content: {
     backgroundColor: "#F6F7F9",
     flexGrow: 1,
@@ -1430,7 +1707,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   topControls: { gap: 14 },
-  settlementNavSticky: { marginHorizontal: -16 },
+  settlementShell: { flex: 1 },
+  settlementHeader: {
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+    zIndex: 2,
+  },
+  settlementModeNav: { backgroundColor: "#F6F7F9", padding: 16 },
   headerActions: { alignItems: "center", flexDirection: "row", gap: 2 },
   disabled: { opacity: 0.35 },
   context: {
@@ -1464,13 +1749,31 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     flex: 1,
     justifyContent: "center",
-    minHeight: 42,
+    minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  compactSegmentItem: { minHeight: 34, paddingHorizontal: 10, paddingVertical: 5 },
+  compactSegmentItem: { minHeight: 44, paddingHorizontal: 10, paddingVertical: 5 },
   segmentSelected: { backgroundColor: "#FFFFFF" },
-  segmentText: { color: "#64748B", fontWeight: "600" },
+  segmentSelectedOverlay: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 7,
+    bottom: 0,
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
+  segmentLabel: { alignSelf: "stretch" },
+  segmentText: { color: "#64748B", fontWeight: "600", textAlign: "center" },
+  segmentTextOverlay: {
+    bottom: 0,
+    color: "#111827",
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
   segmentTextSelected: { color: "#111827" },
   total: { backgroundColor: cv.color.card, borderRadius: cv.radius.hero, padding: 18 },
   totalHeader: {

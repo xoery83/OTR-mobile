@@ -21,7 +21,12 @@ export function NavigationContextTitle({
       accessibilityLabel={[title, subtitle].filter(Boolean).join(", ")}
       style={styles.titleBlock}
     >
-      <Text numberOfLines={1} style={styles.title}>
+      <Text
+        adjustsFontSizeToFit
+        maxFontSizeMultiplier={1.35}
+        numberOfLines={1}
+        style={styles.title}
+      >
         {title}
       </Text>
       {subtitle ? (
