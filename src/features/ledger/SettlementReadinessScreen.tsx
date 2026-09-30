@@ -449,105 +449,129 @@ function SummarySection({
       {paidMinor !== undefined &&
       shareMinor !== undefined &&
       balanceMinor !== undefined ? (
-        <View style={styles.card}>
-          <MoneyLine
-            label="Paid for group"
-            minor={paidMinor}
-            currency={currency}
-            scale={scale}
-          />
-          <MoneyLine
-            label="Your share"
-            minor={shareMinor}
-            currency={currency}
-            scale={scale}
-          />
-          <View style={styles.divider} />
-          <MoneyLine
-            emphasized
-            label="Current balance"
-            minor={balanceMinor}
-            currency={currency}
-            scale={scale}
-            signed
-          />
+        <View style={styles.summaryBlock}>
+          <Text accessibilityRole="header" style={styles.summaryHeading}>
+            Balance breakdown
+          </Text>
+          <View style={styles.card}>
+            <MoneyLine
+              label="Paid for group"
+              minor={paidMinor}
+              currency={currency}
+              scale={scale}
+            />
+            <MoneyLine
+              label="Your share"
+              minor={shareMinor}
+              currency={currency}
+              scale={scale}
+            />
+            <View style={styles.divider} />
+            <MoneyLine
+              emphasized
+              label="Current balance"
+              minor={balanceMinor}
+              currency={currency}
+              scale={scale}
+              signed
+            />
+          </View>
         </View>
       ) : null}
       {hasSettlementUpdate(projection) ? (
-        <View style={styles.notice}>
-          <Text style={styles.noticeTitle}>Changes since last confirmation</Text>
-          {(["ADDED", "CHANGED", "REMOVED"] as const).map((change) =>
-            changeCounts[change] ? (
-              <Text key={change} style={styles.body}>
-                {change === "ADDED"
-                  ? "Added"
-                  : change === "REMOVED"
-                    ? "Removed"
-                    : "Changed"}
-                : {changeCounts[change]} expense{changeCounts[change] === 1 ? "" : "s"}
-              </Text>
-            ) : null,
-          )}
-          {balanceMinor !== undefined && confirmedBalance ? (
+        <View style={styles.summaryBlock}>
+          <Text accessibilityRole="header" style={styles.summaryHeading}>
+            Changes since last confirmation
+          </Text>
+          <View style={styles.card}>
             <Text style={styles.body}>
-              Your change: {balanceMinor - confirmedBalance.balanceMinor >= 0 ? "+" : ""}
+              {(["ADDED", "CHANGED", "REMOVED"] as const)
+                .filter((change) => changeCounts[change])
+                .map(
+                  (change) =>
+                    `${change === "ADDED" ? "Added" : change === "REMOVED" ? "Removed" : "Changed"} ${changeCounts[change]}`,
+                )
+                .join(" · ")}
+            </Text>
+            {balanceMinor !== undefined && confirmedBalance ? (
+              <>
+                <View style={styles.divider} />
+                <MoneyLine
+                  emphasized
+                  label="Your balance change"
+                  minor={balanceMinor - confirmedBalance.balanceMinor}
+                  currency={currency}
+                  scale={scale}
+                  signed
+                />
+              </>
+            ) : null}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                if (settlement.journeyId)
+                  rememberSettlementExpenseTitles(settlement.journeyId, expenses);
+                router.push({
+                  pathname: "/expenses/settlement-update",
+                  params: { journeyId: settlement.journeyId, journeyTitle },
+                } as never);
+              }}
+              style={styles.summaryLink}
+            >
+              <Text style={styles.link}>Review changes ›</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+      {hasConfirmed && confirmedBalance ? (
+        <View style={styles.summaryBlock}>
+          <Text accessibilityRole="header" style={styles.summaryHeading}>
+            Last confirmed
+          </Text>
+          <View style={styles.card}>
+            <Text style={styles.confirmedAmount}>
               {formatLedgerMoney(
-                balanceMinor - confirmedBalance.balanceMinor,
+                Math.abs(confirmedBalance.balanceMinor),
                 currency,
                 scale,
               )}
             </Text>
-          ) : null}
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              if (settlement.journeyId)
-                rememberSettlementExpenseTitles(settlement.journeyId, expenses);
-              router.push({
-                pathname: "/expenses/settlement-update",
-                params: { journeyId: settlement.journeyId, journeyTitle },
-              } as never);
-            }}
-          >
-            <Text style={styles.link}>Review changes ›</Text>
-          </Pressable>
-        </View>
-      ) : null}
-      {hasConfirmed && confirmedBalance ? (
-        <View style={styles.card}>
-          <Text style={styles.rowTitle}>Last confirmed</Text>
-          <Text style={styles.body}>
-            {formatLedgerMoney(Math.abs(confirmedBalance.balanceMinor), currency, scale)}{" "}
-            · {new Date(confirmedBalance.finalizedAt).toLocaleDateString()} · version #
-            {confirmedBalance.lineageSequence + 1}
-          </Text>
-          {settlement.isOrganizer ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() =>
-                router.push({
-                  pathname: "/expenses/settlement-adjustment",
-                  params: { journeyId: settlement.journeyId },
-                } as never)
-              }
-            >
-              <Text style={styles.link}>Correct a confirmed expense ›</Text>
-            </Pressable>
-          ) : null}
-          <Pressable
-            accessibilityRole="button"
-            onPress={() =>
-              router.push({
-                pathname: "/expenses/settlement-statement",
-                params: {
-                  journeyId: settlement.journeyId,
-                  versionId: confirmedBalance.id,
-                },
-              } as never)
-            }
-          >
-            <Text style={styles.link}>Settlement history ›</Text>
-          </Pressable>
+            <Text style={styles.meta}>
+              {new Date(confirmedBalance.finalizedAt).toLocaleDateString()} · version #
+              {confirmedBalance.lineageSequence + 1}
+            </Text>
+            <View style={styles.summaryLinks}>
+              {settlement.isOrganizer ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/expenses/settlement-adjustment",
+                      params: { journeyId: settlement.journeyId },
+                    } as never)
+                  }
+                  style={styles.summaryLink}
+                >
+                  <Text style={styles.link}>Correct a confirmed expense ›</Text>
+                </Pressable>
+              ) : null}
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  router.push({
+                    pathname: "/expenses/settlement-statement",
+                    params: {
+                      journeyId: settlement.journeyId,
+                      versionId: confirmedBalance.id,
+                    },
+                  } as never)
+                }
+                style={styles.summaryLink}
+              >
+                <Text style={styles.link}>Settlement history ›</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
       ) : null}
       {review.state ? (
@@ -1152,86 +1176,99 @@ function GroupReviewStatus({
       .length,
   };
   return (
-    <View style={styles.reviewStatusCard}>
-      <Text accessibilityRole="header" style={styles.rowTitle}>
+    <View style={styles.summaryBlock}>
+      <Text accessibilityRole="header" style={styles.summaryHeading}>
         Group review status
       </Text>
-      <Text style={styles.meta}>
-        {counts.LOOKS_GOOD} looks good · {counts.STILL_CHECKING} still checking ·{" "}
-        {counts.NOT_REVIEWED} not reviewed
-      </Text>
-      <View style={styles.reviewControls}>
-        {(["LOOKS_GOOD", "STILL_CHECKING"] as const).map((state) => {
-          const selected = current === state;
-          return (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: busy, selected }}
-              disabled={busy || selected}
-              key={state}
-              onPress={() => onSelect(state)}
-              style={[
-                styles.reviewControl,
-                selected &&
-                  (state === "LOOKS_GOOD"
-                    ? styles.reviewControlGood
-                    : styles.reviewControlChecking),
-              ]}
-            >
-              <Text
-                numberOfLines={1}
-                style={[styles.reviewControlText, selected && styles.bold]}
-              >
-                {state === "LOOKS_GOOD" ? "Looks good" : "Still checking"}
-              </Text>
-            </Pressable>
-          );
-        })}
-        {current === "NOT_REVIEWED" ? (
-          <View
-            accessibilityRole="button"
-            accessibilityState={{ disabled: true, selected: true }}
-            style={[styles.reviewControl, styles.reviewControlNeutral]}
-          >
-            <Text numberOfLines={1} style={[styles.reviewControlText, styles.bold]}>
-              Not reviewed
-            </Text>
-          </View>
-        ) : null}
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        onPress={onExpand}
-      >
-        <Text style={styles.link}>
-          {expanded ? "Hide member status ⌃" : "View member status ⌄"}
-        </Text>
-      </Pressable>
-      {expanded ? (
-        <View style={styles.reviewMembers}>
-          {coverage.map((member) => (
-            <View key={member.memberId} style={styles.reviewMemberRow}>
-              <Text style={styles.body}>
-                {member.displayName}
-                {member.memberId === actorMemberId ? " (You)" : ""}
-              </Text>
-              <Text
-                style={[
-                  styles.reviewTag,
-                  member.reviewState === "LOOKS_GOOD"
-                    ? styles.reviewTagGood
-                    : member.reviewState === "STILL_CHECKING"
-                      ? styles.reviewTagChecking
-                      : styles.reviewTagNeutral,
-                ]}
-              >
-                {reviewStateLabel(member.reviewState)}
-              </Text>
+      <View style={styles.card}>
+        <View style={styles.reviewCounts}>
+          {(
+            [
+              ["LOOKS_GOOD", "Looks good"],
+              ["STILL_CHECKING", "Still checking"],
+              ["NOT_REVIEWED", "Not reviewed"],
+            ] as const
+          ).map(([state, label]) => (
+            <View key={state} style={styles.reviewCount}>
+              <Text style={styles.reviewCountValue}>{counts[state]}</Text>
+              <Text style={styles.meta}>{label}</Text>
             </View>
           ))}
         </View>
-      ) : null}
+        <View style={styles.reviewControls}>
+          {(["LOOKS_GOOD", "STILL_CHECKING"] as const).map((state) => {
+            const selected = current === state;
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: busy, selected }}
+                disabled={busy || selected}
+                key={state}
+                onPress={() => onSelect(state)}
+                style={[
+                  styles.reviewControl,
+                  selected &&
+                    (state === "LOOKS_GOOD"
+                      ? styles.reviewControlGood
+                      : styles.reviewControlChecking),
+                ]}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={[styles.reviewControlText, selected && styles.bold]}
+                >
+                  {state === "LOOKS_GOOD" ? "Looks good" : "Still checking"}
+                </Text>
+              </Pressable>
+            );
+          })}
+          {current === "NOT_REVIEWED" ? (
+            <View
+              accessibilityRole="button"
+              accessibilityState={{ disabled: true, selected: true }}
+              style={[styles.reviewControl, styles.reviewControlNeutral]}
+            >
+              <Text numberOfLines={1} style={[styles.reviewControlText, styles.bold]}>
+                Not reviewed
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          onPress={onExpand}
+          style={styles.summaryLink}
+        >
+          <Text style={styles.link}>
+            {expanded ? "Hide member status ⌃" : "View member status ⌄"}
+          </Text>
+        </Pressable>
+        {expanded ? (
+          <View style={styles.reviewMembers}>
+            {coverage.map((member) => (
+              <View key={member.memberId} style={styles.reviewMemberRow}>
+                <Text style={styles.body}>
+                  {member.displayName}
+                  {member.memberId === actorMemberId ? " (You)" : ""}
+                </Text>
+                <Text
+                  style={[
+                    styles.reviewTag,
+                    member.reviewState === "LOOKS_GOOD"
+                      ? styles.reviewTagGood
+                      : member.reviewState === "STILL_CHECKING"
+                        ? styles.reviewTagChecking
+                        : styles.reviewTagNeutral,
+                  ]}
+                >
+                  {reviewStateLabel(member.reviewState)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -1283,8 +1320,8 @@ function MoneyLine({
 }) {
   return (
     <View style={styles.moneyLine}>
-      <Text style={[styles.body, emphasized && styles.bold]}>{label}</Text>
-      <Text style={[styles.body, emphasized && styles.bold]}>
+      <Text style={[styles.moneyLineLabel, emphasized && styles.bold]}>{label}</Text>
+      <Text style={[styles.moneyLineAmount, emphasized && styles.bold]}>
         {signed && minor > 0 ? "+" : ""}
         {formatLedgerMoney(minor, currency, scale)}
       </Text>
@@ -1314,6 +1351,12 @@ const styles = StyleSheet.create({
     borderRadius: cv.radius.card,
     gap: 10,
     padding: 14,
+  },
+  confirmedAmount: {
+    color: cv.color.text,
+    fontSize: 20,
+    fontVariant: ["tabular-nums"],
+    fontWeight: "800",
   },
   category: {
     backgroundColor: cv.color.card,
@@ -1458,7 +1501,18 @@ const styles = StyleSheet.create({
   moneyLine: {
     alignItems: "center",
     flexDirection: "row",
+    gap: 8,
     justifyContent: "space-between",
+    minHeight: 28,
+  },
+  moneyLineLabel: { color: "#334155", flex: 1, fontSize: 15, lineHeight: 22 },
+  moneyLineAmount: {
+    color: "#334155",
+    flexShrink: 1,
+    fontSize: 15,
+    fontVariant: ["tabular-nums"],
+    lineHeight: 22,
+    textAlign: "right",
   },
   nav: {
     backgroundColor: "#F8FAFC",
@@ -1523,6 +1577,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
+  reviewCounts: { flexDirection: "row", gap: 8 },
+  reviewCount: { flex: 1, gap: 2 },
+  reviewCountValue: {
+    color: cv.color.text,
+    fontSize: 18,
+    fontVariant: ["tabular-nums"],
+    fontWeight: "800",
+  },
   reviewMemberRow: {
     alignItems: "center",
     flexDirection: "row",
@@ -1535,12 +1597,6 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     gap: 4,
     paddingTop: 8,
-  },
-  reviewStatusCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    gap: 10,
-    padding: 14,
   },
   reviewTag: {
     borderRadius: 999,
@@ -1557,6 +1613,14 @@ const styles = StyleSheet.create({
   rowTitle: { color: cv.color.text, ...cv.type.row },
   secondaryNote: { color: "#64748B", fontSize: 13, lineHeight: 19 },
   section: { gap: cv.space.card, paddingTop: cv.space.section },
+  summaryBlock: { gap: cv.space.heading },
+  summaryHeading: { color: cv.color.text, ...cv.type.section },
+  summaryLink: { justifyContent: "center", minHeight: 36 },
+  summaryLinks: {
+    borderTopColor: cv.color.divider,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 4,
+  },
   sectionLeadRow: {
     alignItems: "center",
     flexDirection: "row",
