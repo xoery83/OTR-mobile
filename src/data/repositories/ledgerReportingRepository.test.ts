@@ -668,6 +668,28 @@ describe("Ledger reporting repository", () => {
     sqlite.close();
   });
 
+  it("finds a member's paid Expenses even when that member has no split", async () => {
+    const { adapter, sqlite } = database();
+    insertFixture(sqlite);
+    sqlite.exec(
+      "DELETE FROM ledger_expense_splits WHERE expense_id = 'valued' AND member_id = 'a'",
+    );
+    const repository = createLedgerReportingRepository(adapter, async () => "user-a");
+    const query = {
+      journeyId,
+      memberId: "a",
+      scope: "GROUP" as const,
+      payerMemberId: "a",
+      authoritativeOnly: true,
+    };
+    expect(
+      (await repository.listExpenses(query)).map((row) => [row.id, row.settlementMinor]),
+    ).toEqual([["valued", 2000]]);
+    expect(await repository.countExpenses(query)).toBe(1);
+    expect((await repository.summarize(query)).totalMinor).toBe(2000);
+    sqlite.close();
+  });
+
   it("shares canonical rows but hides another account's local Ledger changes", async () => {
     const { adapter, sqlite } = database();
     insertFixture(sqlite);

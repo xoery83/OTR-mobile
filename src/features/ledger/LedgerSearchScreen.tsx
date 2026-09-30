@@ -65,6 +65,7 @@ export function LedgerSearchScreen() {
     memberId: string;
     selectedMemberId?: string;
     shareOnly?: string;
+    paidMemberId?: string;
     scope?: ReportingScope;
     category?: string;
     categories?: string;
@@ -78,19 +79,22 @@ export function LedgerSearchScreen() {
     authoritative?: string;
     origin?: string;
   }>();
-  const scope: ReportingScope = params.selectedMemberId
-    ? "MINE"
-    : params.scope === "GROUP"
-      ? "GROUP"
-      : "MINE";
+  const scope: ReportingScope = params.paidMemberId
+    ? "GROUP"
+    : params.selectedMemberId
+      ? "MINE"
+      : params.scope === "GROUP"
+        ? "GROUP"
+        : "MINE";
   const memberId = params.selectedMemberId || params.memberId;
   const authoritativeOnly = params.authoritative === "1";
   const shareOnly = params.shareOnly === "1";
+  const paidMemberId = params.paidMemberId;
   const [initialFilters] = useState<ReportingFilters>(() => ({
     category: params.category,
     categories: parseAnalysisCategories(params.categories),
     analysisState: params.analysisState,
-    payerMemberId: params.payerMemberId,
+    payerMemberId: paidMemberId ? undefined : params.payerMemberId,
     participantMemberId: params.participantMemberId,
     currency: params.currency,
     valuation: params.valuation,
@@ -121,7 +125,14 @@ export function LedgerSearchScreen() {
       retryRequest.current = { filters, query };
       moreRequest.cancel();
       setLoadingMore(false);
-      const key = JSON.stringify({ filters, query, scope, authoritativeOnly, shareOnly });
+      const key = JSON.stringify({
+        filters,
+        query,
+        scope,
+        authoritativeOnly,
+        shareOnly,
+        paidMemberId,
+      });
       setUpdating(true);
       setError(null);
       setMoreError(null);
@@ -134,6 +145,7 @@ export function LedgerSearchScreen() {
           authoritativeOnly,
           shareOnly,
           ...filters,
+          payerMemberId: paidMemberId ?? filters.payerMemberId,
           query,
         };
         const [rows, summary, resultCount] = await Promise.all([
@@ -163,6 +175,7 @@ export function LedgerSearchScreen() {
       authoritativeOnly,
       memberId,
       moreRequest,
+      paidMemberId,
       params.journeyId,
       request,
       scope,
@@ -249,6 +262,7 @@ export function LedgerSearchScreen() {
           authoritativeOnly,
           shareOnly,
           ...current.filters,
+          payerMemberId: paidMemberId ?? current.filters.payerMemberId,
           query: current.query,
         },
         pageSize,
@@ -273,16 +287,21 @@ export function LedgerSearchScreen() {
 
   const renderRow = ({ item }: { item: LedgerReportListItem }) => {
     const attention = ledgerExpenseAttention(item, scope);
-    const amount = shareOnly
-      ? formatLedgerMoney(
-          item.componentMinor ?? 0,
-          item.settlementCurrency,
-          item.settlementScale,
-        )
-      : formatLedgerMoney(item.originalMinor, item.originalCurrency, item.originalScale);
+    const amount =
+      shareOnly || paidMemberId
+        ? formatLedgerMoney(
+            (paidMemberId ? item.settlementMinor : item.componentMinor) ?? 0,
+            item.settlementCurrency,
+            item.settlementScale,
+          )
+        : formatLedgerMoney(
+            item.originalMinor,
+            item.originalCurrency,
+            item.originalScale,
+          );
     return (
       <Pressable
-        accessibilityLabel={`${item.title}, ${shareOnly ? "selected share" : "total"} ${amount}${attention ? `, ${attention}` : ""}`}
+        accessibilityLabel={`${item.title}, ${shareOnly ? "selected share" : paidMemberId ? "paid amount" : "total"} ${amount}${attention ? `, ${attention}` : ""}`}
         accessibilityRole="button"
         onPress={() => router.push(`/expenses/expense/${item.id}`)}
         style={[styles.row, largeText && styles.stack]}
@@ -422,12 +441,15 @@ export function LedgerSearchScreen() {
               ) : null}
               <View style={styles.summary}>
                 <Text maxFontSizeMultiplier={2} style={styles.origin}>
-                  {params.selectedMemberId
-                    ? (options.members.find((item) => item.id === params.selectedMemberId)
-                        ?.label ?? "Selected traveller")
-                    : scope === "GROUP"
-                      ? "Group"
-                      : "Mine"}
+                  {paidMemberId
+                    ? `Paid by ${options.members.find((item) => item.id === paidMemberId)?.label ?? "selected traveller"}`
+                    : params.selectedMemberId
+                      ? (options.members.find(
+                          (item) => item.id === params.selectedMemberId,
+                        )?.label ?? "Selected traveller")
+                      : scope === "GROUP"
+                        ? "Group"
+                        : "Mine"}
                   {params.origin ? ` · ${params.origin}` : ""}
                 </Text>
                 <Text
@@ -478,6 +500,7 @@ export function LedgerSearchScreen() {
         <FilterSheet
           initial={filters}
           journey={journey}
+          lockedPayer={Boolean(paidMemberId)}
           onApply={applyFilters}
           onCancel={() => setFilterOpen(false)}
           options={options}
@@ -551,12 +574,14 @@ function parseAnalysisCategories(value?: string): string[] | undefined {
 function FilterSheet({
   initial,
   journey,
+  lockedPayer,
   onApply,
   onCancel,
   options,
 }: {
   initial: ReportingFilters;
   journey: LedgerJourneyContext | null;
+  lockedPayer: boolean;
   onApply: (filters: ReportingFilters) => Promise<boolean>;
   onCancel: () => void;
   options: Options;
@@ -685,11 +710,13 @@ function FilterSheet({
               }
               value={draft.category ?? "Any"}
             />
-            <FilterRow
-              label="Paid by"
-              onPress={() => choose("Paid by", memberChoices(options), "payerMemberId")}
-              value={optionLabel(options, draft.payerMemberId)}
-            />
+            {!lockedPayer ? (
+              <FilterRow
+                label="Paid by"
+                onPress={() => choose("Paid by", memberChoices(options), "payerMemberId")}
+                value={optionLabel(options, draft.payerMemberId)}
+              />
+            ) : null}
             <FilterRow
               label="Participant"
               onPress={() =>
