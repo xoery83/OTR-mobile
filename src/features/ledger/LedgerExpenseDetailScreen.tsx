@@ -437,7 +437,7 @@ export function LedgerExpenseDetailScreen() {
               ? "This change needs attention"
               : "Saved on this iPhone · Waiting for sync"}
             {blockingResult?.error?.code
-              ? ` · Earlier change: ${blockingResult.error.code}`
+              ? ` · Earlier change: ${blockingResult.error.code} (${blockingResult.error.message})`
               : syncResult.error?.code
                 ? ` · ${syncResult.error.code}`
                 : null}
