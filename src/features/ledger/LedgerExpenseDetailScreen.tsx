@@ -563,14 +563,16 @@ export function LedgerExpenseDetailScreen() {
                 <ExpenseSettlementTag value={expense.settlementParticipation} />
               ) : null}
             </View>
-            <Text style={styles.splitName}>
-              {sharing.join(" · ").replace(" paid · ", " paid\n")}
-            </Text>
-            <AppIcon
-              color="#64748B"
-              name={sharingExpanded ? "chevron.up" : "chevron.down"}
-              size={14}
-            />
+            <View style={styles.sharingSummary}>
+              <Text style={styles.splitName}>
+                {sharing.join(" · ").replace(" paid · ", " paid\n")}
+              </Text>
+              <AppIcon
+                color="#64748B"
+                name={sharingExpanded ? "chevron.up" : "chevron.down"}
+                size={14}
+              />
+            </View>
           </Pressable>
           {sharingExpanded ? (
             <View style={styles.sharingExpanded}>
@@ -596,8 +598,8 @@ export function LedgerExpenseDetailScreen() {
             </View>
           ) : null}
         </View>
-        <Section label="Details">
-          {expense.description ? (
+        <View style={styles.section}>
+          {expense.description?.trim() ? (
             <View style={styles.notes}>
               <Text style={styles.label}>Notes</Text>
               <Text style={styles.splitName}>{expense.description}</Text>
@@ -638,7 +640,7 @@ export function LedgerExpenseDetailScreen() {
               {attachmentMessage}
             </Text>
           ) : null}
-        </Section>
+        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ disabled: raisingReview }}
@@ -699,6 +701,7 @@ const styles = StyleSheet.create({
   },
   amountColumn: { flexShrink: 1, gap: 4 },
   sharingControl: { gap: 8, minHeight: 44 },
+  sharingSummary: { alignItems: "flex-end", flexDirection: "row", gap: 6 },
   sharingExpanded: {
     backgroundColor: cv.color.expanded,
     borderTopColor: cv.color.divider,
