@@ -6,6 +6,12 @@ Run the OTR Mobile Expo development build on a paired physical iPhone. A Simulat
 
 ## Verified Setup
 
+As of 2026-10-01, the owner's iPhone 16 Pro runs iOS 27.0.1 and the selected
+Xcode is 27.0 (27A266a). `app.json` enables official Expo Scene support via
+`expo-build-properties`; retain this setting when prebuilding. Expo >=57.0.23
+and build-properties >=57.0.20 are required. A plain rebuild of the old
+AppDelegate lifecycle crashes on iOS 27. See ADR 0058.
+
 - Full Xcode is selected at `/Applications/Xcode.app/Contents/Developer`.
 - Xcode first-launch tasks have completed.
 - The target uses automatic signing with the `com.xoery.otrmobile` bundle identifier and Apple team `U9D5C58Z94`.

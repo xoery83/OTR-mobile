@@ -132,6 +132,20 @@ Date: 2026-10-01
   unchanged; no Production or Hosted Dev heavy tests were accessed. Other approved
   checkpoints below are unchanged.
 
+## iOS 27 physical Release — startup compatibility fix
+
+- The owner's iPhone 16 Pro on iOS 27.0.1 rejected the old generated lifecycle
+  even after a successful Xcode 27.0 (27A266a) signed rebuild/install. The crash
+  trapped in `UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`.
+- Expo 57.0.26, build-properties 57.0.22, and matching core 57.0.20 enable the
+  official single-scene lifecycle through prebuild. ADR 0058 records the change.
+  Typecheck and scoped formatting pass; 1100 tests pass, with two unchanged
+  React Native Flow-loading failures and one unchanged Expense Detail import
+  architecture guard failure. The signed fixed Release build and signature
+  verification passed; it was installed in place without uninstalling or clearing
+  app data. Startup succeeded and the process remained alive after ten seconds;
+  owner confirmed the app opens, but Ledger reported a refresh failure.
+
 ## Ledger Pager — COMPLETE (iPhone)
 
 - Settlement's shared outer vertical ScrollView has been replaced on the Ledger

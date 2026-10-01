@@ -27,6 +27,12 @@ Feature modules may compose UI, hooks, and repositories. Domain modules must not
 
 ## React Native / Expo Setup
 
+iOS builds with Xcode 27 enable UIKit scene lifecycle through the official
+`expo-build-properties` `ios.enableSceneSupport` setting (Expo >=57.0.23,
+build-properties >=57.0.20). Native output remains prebuild-generated; no custom
+SceneDelegate is maintained. This is an OS startup compatibility change, not a
+change to local auth, repositories, or synchronization.
+
 Use Expo with Development Builds and prebuild support from day one. Expo Go is useful for simple iteration but must not define the architecture because future work may need Swift, Kotlin, Background URLSession, WorkManager, PhotoKit, MediaStore, nearby transfer, and custom file handling.
 
 Recommended baseline:
