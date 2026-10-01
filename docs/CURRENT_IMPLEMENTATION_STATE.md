@@ -145,6 +145,17 @@ Date: 2026-10-01
   verification passed; it was installed in place without uninstalling or clearing
   app data. Startup succeeded and the process remained alive after ten seconds;
   owner confirmed the app opens, but Ledger reported a refresh failure.
+- A temporary local diagnostic identified a missing actor context for a
+  summary-only Journey. All 21 cached actor contexts passed read-only reporting,
+  Settlement, and Review queries; SQLite integrity is OK. The shared projection
+  now uses the existing authorized bootstrap only when its actor is missing,
+  retaining cached offline access and guarding account changes. Manual selection
+  uses the same path. Temporary diagnostics are removed. Four relevant suites /
+  45 tests, typecheck, scoped lint, and diff check pass. The final fixed Release
+  was built, signature-verified, and installed in place. Normal bootstrap added
+  the missing actor context (21→22), with SQLite integrity still OK; owner visual
+  Ledger acceptance is pending. No Backend, schema,
+  Production, financial mutation, or app-data cleanup change.
 
 ## Ledger Pager — COMPLETE (iPhone)
 

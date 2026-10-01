@@ -1,5 +1,6 @@
 import type { MyLedgerPeriod } from "@/data/api/ledgerReadContracts";
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { createLedgerReadTransport } from "@/data/sync/ledgerReadTransport";
 import { ApiClientError } from "@/data/api/client";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
@@ -13,6 +14,17 @@ type JourneyPullResult = {
   reviewOutcome: "review_success" | "review_blocked_stable" | "review_error";
 };
 const activePulls = new Map<string, Promise<JourneyPullResult>>();
+
+export async function ensureJourneyLedgerActor(journeyId: string) {
+  const generation = getAccountGeneration();
+  const repository = await getDefaultLedgerReportingRepository();
+  const cached = await repository.getActorMemberId(journeyId);
+  if (cached?.memberId) return cached;
+  await revalidateJourneyLedger(journeyId);
+  if (generation !== getAccountGeneration())
+    throw new Error("Account changed during Journey bootstrap.");
+  return repository.getActorMemberId(journeyId);
+}
 
 export function refreshJourneyLedger(journeyId: string) {
   return refreshJourneyLedgerWithStatus(journeyId).then((result) => result.changed);

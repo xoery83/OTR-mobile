@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "@/data/api/client";
 
-const { refreshPersonal, refreshReview } = vi.hoisted(() => ({
+const { refreshPersonal, refreshReview, getActor } = vi.hoisted(() => ({
   refreshPersonal: vi.fn(async () => false),
   refreshReview: vi.fn(async () => undefined),
+  getActor: vi.fn(),
 }));
 const accountScope = vi.hoisted(() => ({ generation: 0 }));
 
@@ -23,6 +24,11 @@ const transport = { bootstrap: vi.fn(), pull: vi.fn(), myLedger: vi.fn() };
 vi.mock("@/data/repositories/defaultLedgerReadRepository", () => ({
   getDefaultLedgerReadRepository: vi.fn(async () => repository),
 }));
+vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
+  getDefaultLedgerReportingRepository: vi.fn(async () => ({
+    getActorMemberId: getActor,
+  })),
+}));
 vi.mock("@/data/sync/ledgerReadTransport", () => ({
   createLedgerReadTransport: vi.fn(() => transport),
 }));
@@ -35,6 +41,7 @@ vi.mock("./personalSettlementReviewCoordinator", () => ({
 
 // eslint-disable-next-line import/first
 import {
+  ensureJourneyLedgerActor,
   refreshJourneyLedger,
   refreshJourneyLedgerWithStatus,
   refreshMyLedger,
@@ -44,6 +51,35 @@ describe("Ledger pull recovery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     accountScope.generation = 0;
+    getActor.mockReset();
+  });
+
+  it("reads a cached Journey offline and bootstraps only a missing actor", async () => {
+    getActor.mockResolvedValueOnce({ memberId: "cached" });
+    await expect(ensureJourneyLedgerActor("known")).resolves.toEqual({
+      memberId: "cached",
+    });
+    expect(transport.bootstrap).not.toHaveBeenCalled();
+    getActor.mockResolvedValueOnce(null).mockResolvedValueOnce({ memberId: "hydrated" });
+    transport.bootstrap.mockResolvedValueOnce({ cursor: "fresh" });
+    await expect(ensureJourneyLedgerActor("new")).resolves.toEqual({
+      memberId: "hydrated",
+    });
+    expect(transport.bootstrap).toHaveBeenCalledExactlyOnceWith("new");
+    expect(repository.applyBootstrap).toHaveBeenCalledWith({ cursor: "fresh" });
+  });
+
+  it("does not invent an actor after offline failure or an account switch", async () => {
+    getActor.mockResolvedValue(null);
+    transport.bootstrap.mockRejectedValueOnce(new Error("offline"));
+    await expect(ensureJourneyLedgerActor("new")).rejects.toThrow("offline");
+    expect(repository.applyBootstrap).not.toHaveBeenCalled();
+    transport.bootstrap.mockImplementationOnce(async () => {
+      accountScope.generation += 1;
+      return { cursor: "fresh" };
+    });
+    await expect(ensureJourneyLedgerActor("new")).rejects.toThrow("Account changed");
+    expect(getActor).toHaveBeenCalledTimes(2);
   });
 
   it("marks a swallowed Personal Review failure as incomplete without changing the boolean read result", async () => {

@@ -25,7 +25,7 @@ import { AppIcon } from "@/components/AppIcon";
 import { contentVisual as cv } from "./contentVisual";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { NavigationContextTitle } from "@/components/navigationChrome";
-import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
+import { ensureJourneyLedgerActor } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
@@ -235,7 +235,7 @@ export function LedgerStage6Screen({
       try {
         return await retrySQLiteRollbackOnce(async () => {
           const repository = await getDefaultLedgerReportingRepository();
-          const actor = await repository.getActorMemberId(nextJourney.journeyId);
+          const actor = await ensureJourneyLedgerActor(nextJourney.journeyId);
           const nextMemberId = actor?.memberId ?? null;
           if (!nextMemberId)
             throw new Error(
@@ -537,11 +537,7 @@ export function LedgerStage6Screen({
     const previousManualJourneyId = manualJourneyId.current;
     manualJourneyId.current = selected.journeyId;
     setSelectingJourneyId(selected.journeyId);
-    let loaded = await loadProjection(selected, scopeRef.current);
-    if (!loaded) {
-      await refreshJourneyLedger(selected.journeyId).catch(() => false);
-      loaded = await loadProjection(selected, scopeRef.current);
-    }
+    const loaded = await loadProjection(selected, scopeRef.current);
     if (!loaded) {
       manualJourneyId.current = previousManualJourneyId;
       setSelectingJourneyId(null);
