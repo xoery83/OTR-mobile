@@ -30,7 +30,6 @@ import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
-import { navigationTextActionStyle } from "@/components/navigationChrome";
 
 import { resolveReceiptAssetUri } from "@/data/operations/openReceiptAsset";
 import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
@@ -90,7 +89,7 @@ import {
 } from "./expenseDraft";
 import { formatLedgerMoney } from "./format";
 import { CurrencyPicker } from "./CurrencyPicker";
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 import {
   createExpenseReceiptOcrSession,
   idleExpenseReceiptOcr,
@@ -1262,22 +1261,27 @@ export function LedgerExpenseEntryScreen() {
         options={{
           gestureEnabled: false,
           headerTitle: existing ? "Edit Expense" : "New Expense",
-          headerLeft: () => (
-            <HeaderAction
-              disabled={saving || selectingReceipt}
-              label="Cancel"
-              onPress={close}
-            />
-          ),
-          headerRight: () => (
-            <HeaderAction
-              disabled={!draft.title.trim() || !draft.date || !effectiveSplits || saving}
-              label={saving ? "Saving…" : "Save"}
-              onPress={() => void save()}
-            />
-          ),
         }}
       />
+      <Stack.Toolbar placement="left">
+        <Stack.Toolbar.Button
+          accessibilityLabel="Cancel"
+          disabled={saving || selectingReceipt}
+          onPress={close}
+        >
+          Cancel
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          accessibilityLabel={saving ? "Saving…" : "Save"}
+          disabled={!draft.title.trim() || !draft.date || !effectiveSplits || saving}
+          onPress={() => void save()}
+          variant="done"
+        >
+          {saving ? "Saving…" : "Save"}
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
       <ScrollView
         pointerEvents={saving ? "none" : "auto"}
         automaticallyAdjustKeyboardInsets
@@ -1709,7 +1713,7 @@ export function LedgerExpenseEntryScreen() {
         presentationStyle="pageSheet"
         visible={sharingSheet}
       >
-        <LedgerSheetHeader
+        <SheetHeader
           leftLabel="Cancel"
           onLeft={() => setSharingSheet(false)}
           onRight={() => {
@@ -1893,7 +1897,7 @@ export function LedgerExpenseEntryScreen() {
         presentationStyle="pageSheet"
         visible={currencySheet}
       >
-        <LedgerSheetHeader onLeft={() => setCurrencySheet(false)} title="Currency" />
+        <SheetHeader onLeft={() => setCurrencySheet(false)} title="Currency" />
         {currencySheet ? (
           <CurrencyPicker
             selected={draft.currency}
@@ -1929,7 +1933,7 @@ export function LedgerExpenseEntryScreen() {
         presentationStyle="pageSheet"
         visible={categorySheet}
       >
-        <LedgerSheetHeader onLeft={() => setCategorySheet(false)} title="Category" />
+        <SheetHeader onLeft={() => setCategorySheet(false)} title="Category" />
         <ScrollView contentContainerStyle={styles.categoryContent}>
           {categoryGroups.map((group) => (
             <View key={group.title}>
@@ -2002,7 +2006,7 @@ export function LedgerExpenseEntryScreen() {
           </Animated.View>
           <Animated.View style={{ transform: [{ translateY: dateSheetOffset }] }}>
             <SafeAreaView edges={["bottom"]} style={styles.datePanel}>
-              <LedgerSheetHeader
+              <SheetHeader
                 leftLabel="Cancel"
                 onLeft={() => dismissDatePicker()}
                 onRight={() => dismissDatePicker(true)}
@@ -2164,34 +2168,6 @@ function dateFromKey(value: string) {
 
 function sameIds(left: string[], right: string[]) {
   return left.length === right.length && left.every((id) => right.includes(id));
-}
-
-function HeaderAction({
-  label,
-  onPress,
-  disabled = false,
-}: {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={styles.headerActionButton}
-    >
-      <Text
-        maxFontSizeMultiplier={2}
-        style={[styles.headerAction, disabled && styles.disabledText]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
 }
 
 function FormRow({
@@ -2400,9 +2376,6 @@ const styles = StyleSheet.create({
   },
   dateWheelContainer: { alignItems: "center", justifyContent: "center", minHeight: 280 },
   dateWheel: { height: 216, width: "100%" },
-  headerAction: { ...navigationTextActionStyle, padding: 8 },
-  headerActionButton: { justifyContent: "center", minHeight: 44 },
-  disabledText: { opacity: 0.4 },
   sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },
   sharingHeading: { color: "#475569", fontSize: 15, fontWeight: "700", marginTop: 12 },
   chipList: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

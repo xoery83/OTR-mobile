@@ -30,6 +30,24 @@ const base = {
 };
 
 describe("New Expense compact presentation", () => {
+  it("uses direct native toolbar actions with the existing save and cancel gates", () => {
+    const source = readFileSync(
+      new URL("./LedgerExpenseEntryScreen.tsx", import.meta.url),
+      "utf8",
+    );
+    expect(source).toMatch(
+      /<Stack.Toolbar placement="left">\s*<Stack.Toolbar.Button\s+accessibilityLabel="Cancel"\s+disabled=\{saving \|\| selectingReceipt\}\s+onPress=\{close\}/,
+    );
+    expect(source).toMatch(
+      /<Stack.Toolbar placement="right">\s*<Stack.Toolbar.Button\s+accessibilityLabel=\{saving \? "Saving…" : "Save"\}\s+disabled=\{!draft.title.trim\(\) \|\| !draft.date \|\| !effectiveSplits \|\| saving\}\s+onPress=\{\(\) => void save\(\)\}/,
+    );
+    expect(source).not.toContain("function HeaderAction(");
+    expect(source).not.toContain("headerLeft:");
+    expect(source).not.toContain("headerRight:");
+    expect(source).toContain("gestureEnabled: false");
+    expect(source).toContain('headerTitle: existing ? "Edit Expense" : "New Expense"');
+  });
+
   it("uses local compact dates without changing the stored key", () => {
     expect(compactExpenseDate("2026-09-28", new Date(2026, 0, 1))).not.toContain("2026");
     expect(compactExpenseDate("2025-09-28", new Date(2026, 0, 1))).toContain("2025");
@@ -210,7 +228,8 @@ describe("New Expense compact presentation", () => {
       new URL("./LedgerExpenseDetailScreen.tsx", import.meta.url),
       "utf8",
     );
-    expect(detail).toContain("headerRight:");
+    expect(detail).toContain('<Stack.Toolbar placement="right">');
+    expect(detail).toContain("hidden={!canEdit}");
     expect(detail).toContain("canEditLedgerExpense(actor?.role, settlement)");
     expect(detail).toContain("setSharingExpanded");
     expect(detail).not.toContain("deleteExpenseAttachment(");

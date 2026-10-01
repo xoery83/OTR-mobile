@@ -24,7 +24,7 @@ import PagerView from "react-native-pager-view";
 import { AppIcon } from "@/components/AppIcon";
 import { contentVisual as cv } from "./contentVisual";
 import { GlobalMenu } from "@/components/GlobalMenu";
-import { HeaderIconAction, NavigationContextTitle } from "@/components/navigationChrome";
+import { NavigationContextTitle } from "@/components/navigationChrome";
 import { refreshJourneyLedger } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
@@ -78,7 +78,7 @@ import {
 } from "./dashboardPresentation";
 import { createLatestRequest } from "./latestRequest";
 import { retrySQLiteRollbackOnce } from "./retryLedgerRead";
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 import { advanceScrollAnchor, restoredScrollY } from "./settlementScrollAnchor";
 
 type Mode = "SPENDING" | "SETTLEMENT";
@@ -615,39 +615,40 @@ export function LedgerStage6Screen({
             />
           ),
           headerLeft: () => <GlobalMenu journeyId={journey?.journeyId} module="LEDGER" />,
-          headerRight: () => (
-            <View style={styles.headerActions}>
-              <HeaderButton
-                label={
-                  journey
-                    ? "Search Expenses"
-                    : journeySearchVisible
-                      ? "Hide Journey Search"
-                      : "Search Journeys"
-                }
-                name="magnifyingglass"
-                onPress={() => {
-                  if (journey) {
-                    openSearch();
-                    return;
-                  }
-                  if (journeySearchVisible) {
-                    journeySearch.current?.blur();
-                    setJourneyQuery("");
-                    setJourneySearchVisible(false);
-                    return;
-                  }
-                  setJourneySearchVisible(true);
-                  requestAnimationFrame(() => journeySearch.current?.focus());
-                }}
-              />
-              {journey ? (
-                <HeaderButton label="Add Expense" name="plus" onPress={openNewExpense} />
-              ) : null}
-            </View>
-          ),
         }}
       />
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          accessibilityLabel={
+            journey
+              ? "Search Expenses"
+              : journeySearchVisible
+                ? "Hide Journey Search"
+                : "Search Journeys"
+          }
+          icon="magnifyingglass"
+          onPress={() => {
+            if (journey) {
+              openSearch();
+              return;
+            }
+            if (journeySearchVisible) {
+              journeySearch.current?.blur();
+              setJourneyQuery("");
+              setJourneySearchVisible(false);
+              return;
+            }
+            setJourneySearchVisible(true);
+            requestAnimationFrame(() => journeySearch.current?.focus());
+          }}
+        />
+        <Stack.Toolbar.Button
+          accessibilityLabel="Add Expense"
+          hidden={!journey}
+          icon="plus"
+          onPress={openNewExpense}
+        />
+      </Stack.Toolbar>
       <View style={styles.page}>
         <AnimatedPagerView
           initialPage={mode === "SPENDING" ? 0 : 1}
@@ -1405,7 +1406,7 @@ export function LedgerStage6Screen({
         visible={journeyPickerOpen}
       >
         <View style={styles.picker}>
-          <LedgerSheetHeader
+          <SheetHeader
             leftLabel="Cancel"
             onLeft={() => setJourneyPickerOpen(false)}
             onRight={() => {
@@ -1555,22 +1556,6 @@ function DebugRow({
       <Text style={styles.debugLabel}>{label}</Text>
       <Text style={[styles.debugValue, attention && styles.debugAttention]}>{value}</Text>
     </View>
-  );
-}
-
-function HeaderButton({
-  disabled,
-  label,
-  name,
-  onPress,
-}: {
-  disabled?: boolean;
-  label: string;
-  name: "line.3.horizontal" | "magnifyingglass" | "plus";
-  onPress: () => void;
-}) {
-  return (
-    <HeaderIconAction disabled={disabled} label={label} name={name} onPress={onPress} />
   );
 }
 
@@ -1745,7 +1730,6 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   settlementModeNav: { backgroundColor: "#F6F7F9", padding: 16 },
-  headerActions: { alignItems: "center", flexDirection: "row", gap: 2 },
   disabled: { opacity: 0.35 },
   context: {
     alignItems: "center",

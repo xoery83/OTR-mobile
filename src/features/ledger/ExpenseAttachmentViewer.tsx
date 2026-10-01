@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
+import { OverlayDismissAction } from "@/components/OverlayDismissAction";
+
 export type AttachmentImage = { id: string; localUri: string };
 export function ExpenseAttachmentViewer({
   images,
@@ -41,14 +43,11 @@ export function ExpenseAttachmentViewer({
       <SafeAreaProvider style={styles.root}>
         <SafeAreaView style={styles.root}>
           <View style={styles.header}>
-            <Pressable
-              accessibilityLabel="Close attachment preview"
-              accessibilityRole="button"
+            <OverlayDismissAction
+              label="Close attachment preview"
               onPress={onClose}
-              style={styles.close}
-            >
-              <Text style={styles.text}>Close</Text>
-            </Pressable>
+              color="#FFFFFF"
+            />
             <Text style={styles.text}>
               {index + 1} of {images.length}
             </Text>

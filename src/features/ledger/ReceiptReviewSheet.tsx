@@ -1,3 +1,4 @@
+import { OverlayDismissAction } from "@/components/OverlayDismissAction";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -16,7 +17,7 @@ import {
 import { AppIcon } from "@/components/AppIcon";
 import { currencyScale } from "@/domain/ledger/currency";
 import { CurrencyPicker } from "./CurrencyPicker";
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 import {
   currencyAmountInput,
   currencyAmountHint,
@@ -199,7 +200,7 @@ export function ReceiptReviewSheet({
           accessibilityElementsHidden={currencyPicker}
           importantForAccessibility={currencyPicker ? "no-hide-descendants" : "auto"}
         >
-          <LedgerSheetHeader
+          <SheetHeader
             leftLabel="Cancel"
             onLeft={cancel}
             onRight={confirm}
@@ -479,14 +480,10 @@ export function ReceiptReviewSheet({
                 style={[styles.overflowSheet, compare && styles.compareOverflowSheet]}
               >
                 <View style={styles.overflowHeader}>
-                  <Pressable
-                    accessibilityLabel={`Close ${overflow} options`}
-                    accessibilityRole="button"
+                  <OverlayDismissAction
+                    label={`Close ${overflow} options`}
                     onPress={() => setOverflow(null)}
-                    style={styles.overflowClose}
-                  >
-                    <Text style={styles.actionText}>Close</Text>
-                  </Pressable>
+                  />
                 </View>
                 <ScrollView
                   keyboardShouldPersistTaps="handled"
@@ -517,7 +514,7 @@ export function ReceiptReviewSheet({
         </View>
         {currencyPicker ? (
           <View accessibilityViewIsModal style={styles.currencyOverlay}>
-            <LedgerSheetHeader
+            <SheetHeader
               leftLabel="Back"
               onLeft={() => setCurrencyPicker(false)}
               title="Currency"
@@ -759,13 +756,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
-  },
-  overflowClose: {
-    backgroundColor: "#E3F3F1",
-    borderRadius: 8,
-    minHeight: 44,
-    paddingHorizontal: 16,
-    justifyContent: "center",
   },
   overflowList: { gap: 4 },
   overflowOption: {

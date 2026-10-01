@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-na
 import { SafeAreaView } from "react-native-safe-area-context";
 import { navigationColors } from "@/components/navigationChrome";
 
-export function LedgerSheetHeader({
+export function SheetHeader({
   title,
   leftLabel = "Close",
   onLeft,
@@ -115,16 +115,10 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", justifyContent: "space-between" },
   button: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 22,
     justifyContent: "center",
     minHeight: 44,
     minWidth: 72,
     paddingHorizontal: 10,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
   },
   buttonText: { color: navigationColors.action, fontSize: 16, fontWeight: "600" },
   disabled: { opacity: 0.45 },

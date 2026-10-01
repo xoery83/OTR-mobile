@@ -293,7 +293,9 @@ it("keeps drawer accessible, native zoom separate from collapse, and explicit re
   expect(sheet).toContain("compare && styles.compareOverflowSheet");
   expect(sheet).toContain("compare && styles.compareOverflowOption");
   expect(sheet).toContain("linear-gradient(90deg");
-  expect(sheet).toContain("style={styles.overflowClose}");
+  expect(sheet).toContain("label={`Close ${overflow} options`}");
+  expect(sheet).toContain("<OverlayDismissAction");
+  expect(sheet).not.toContain("styles.overflowClose");
   expect(sheet).not.toContain("{overflow}\n");
   expect(sheet).toContain("Re-read");
   expect(sheet).not.toContain("•••");

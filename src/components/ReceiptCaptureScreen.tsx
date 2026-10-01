@@ -3,7 +3,6 @@ import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 
 import { useReceiptCapture } from "@/hooks/useReceiptCapture";
 import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
-import { navigationTextActionStyle } from "./navigationChrome";
 
 export function ReceiptCaptureScreen() {
   const { expenseId, scan, receipts, selecting, message, pickPhoto, pickDocument } =
@@ -14,17 +13,16 @@ export function ReceiptCaptureScreen() {
       <Stack.Screen
         options={{
           headerTitle: scan ? "Receipt draft" : "Add attachment",
-          headerLeft: () => (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.close}
-            >
-              <Text style={styles.closeText}>{scan ? "Cancel" : "Close"}</Text>
-            </Pressable>
-          ),
         }}
       />
+      <Stack.Toolbar placement="left">
+        <Stack.Toolbar.Button
+          accessibilityLabel={scan ? "Cancel" : "Close"}
+          onPress={() => router.back()}
+        >
+          {scan ? "Cancel" : "Close"}
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
       {scan ? (
         <>
           <Text style={styles.note}>Add a temporary receipt from New Expense.</Text>
@@ -86,15 +84,6 @@ function Action({
 
 const styles = StyleSheet.create({
   content: { gap: 12, padding: 20 },
-  close: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 22,
-    justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 12,
-  },
-  closeText: navigationTextActionStyle,
   note: { color: "#475569", fontSize: 15, lineHeight: 21 },
   message: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
   error: { color: "#B45309", fontSize: 15, lineHeight: 21 },

@@ -18,7 +18,7 @@ import type { RepaymentProposition } from "@/domain/ledger/paymentLifecycle";
 import { useStage7Settlement } from "@/hooks/useStage7Settlement";
 
 import { formatLedgerMoney, formatValuationPolicy } from "./format";
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 import { PersonalPaymentSection } from "./PersonalPaymentSection";
 import {
   paymentStatusLabel,
@@ -466,7 +466,7 @@ function PaymentSheet({
       presentationStyle="pageSheet"
       visible={open}
     >
-      <LedgerSheetHeader
+      <SheetHeader
         leftLabel="Cancel"
         onLeft={onClose}
         onRight={() => void save()}

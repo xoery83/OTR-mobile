@@ -22,7 +22,7 @@ import { createLocalId } from "@/domain/localId";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { currencyName } from "@/features/ledger/currencyPickerData";
 import { ExchangeRateLookup } from "@/features/ledger/ExchangeRateLookup";
-import { LedgerSheetHeader } from "@/features/ledger/LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 
 type JourneySetting = { journeyId: string; settlementCurrency: string; title: string };
 
@@ -342,7 +342,7 @@ export default function CurrencyRoute() {
         presentationStyle="pageSheet"
         visible={pickerOpen}
       >
-        <LedgerSheetHeader
+        <SheetHeader
           leftLabel={chinese ? "关闭" : "Close"}
           onLeft={() => setPickerOpen(false)}
           title={chinese ? "选择货币" : "Choose currency"}

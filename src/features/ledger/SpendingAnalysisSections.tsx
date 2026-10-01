@@ -1,3 +1,4 @@
+import { OverlayDismissAction } from "@/components/OverlayDismissAction";
 import { MoneyText } from "./MoneyText";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -613,14 +614,10 @@ export function AnalysisTimeline({
                   >
                     {period ? periodLabel(period) : ""}
                   </Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Close spending brief"
+                  <OverlayDismissAction
+                    label="Close spending brief"
                     onPress={() => setSelected(null)}
-                    style={styles.closeButton}
-                  >
-                    <AppIcon name="xmark" size={18} color="#334155" />
-                  </Pressable>
+                  />
                 </View>
                 <ScrollView style={styles.briefScroll}>
                   {period ? details(period) : null}
@@ -1000,13 +997,6 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   popup: { backgroundColor: "#FFFFFF", borderRadius: 18, padding: 20, maxHeight: "75%" },
-  closeButton: {
-    alignSelf: "flex-end",
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   timeDetail: { gap: 10, paddingVertical: 12 },
   legend: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   legendItem: { alignItems: "center", flexDirection: "row", gap: 5, maxWidth: "100%" },

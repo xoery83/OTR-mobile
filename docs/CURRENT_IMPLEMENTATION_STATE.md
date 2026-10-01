@@ -2,6 +2,96 @@
 
 Date: 2026-10-01
 
+## iOS 27 System Chrome — IMPLEMENTATION COMPLETE / CORE DEVICE PASS
+
+- Ledger Search/Add, Expense Detail Edit, Search Filter/native count badge,
+  Analysis date range and Receipt Capture Close/Cancel use direct
+  `Stack.Toolbar.Button` declarations. Existing visibility, permission gates,
+  active range, labels and handlers remain. Default native Back is untouched.
+- Shared `src/components/OverlayDismissAction.tsx` provides a neutral labeled
+  44pt icon target for Attachment Preview, Spending brief and Receipt Review
+  overflow Close. Transfer/payment, Rate Details and Receipt Review headers
+  already inherit Phase 1B `SheetHeader`; no navigation host migration.
+- All eight changed screens retain their onPress/onRequestClose handler sets
+  and non-JSX state declarations, compared against the pre-1C source snapshot.
+  Typecheck, scoped lint/format/diff checks and eight suites / 74 tests pass.
+  Signed Release build, host signature verification and in-place installation
+  pass on iPhone 16 Pro / iOS 27.0.1, retaining app data.
+- Physical checks: Ledger Search/Add; Filter Apply activates Yesterday and native
+  badge 1, Cancel discards a replacement draft, Clear Filters removes badge;
+  native Back; editable Expense Edit/Cancel; historical settled Expense hides
+  Edit; Rate Details Close; Spending brief Close; Receipt Capture Close returns
+  with attachment count 0. No financial record or attachment was saved.
+- Original device screenshots: `/private/tmp/otr-system-chrome-1c` contains
+  ledger-toolbar, expense-detail-edit, search-filter-badge, spending-brief-close,
+  rate-details and receipt-capture-close. Restored original QA Journey selection.
+- Owner accepted Phase 1C implementation and closed this workstream. Analysis
+  range visible/active, Receipt Review/overflow, Attachment Preview and
+  Transfer/payment sheet are non-blocking visual spot checks. Confirm when these
+  states occur naturally; do not manufacture data or business states for closure.
+- Final UI architecture: native navigation chrome → native toolbar; Modal/sheet
+  chrome → shared `SheetHeader`; lightweight overlay dismissal → shared
+  `OverlayDismissAction`; default native Back → system implementation. Global
+  Menu/root Tabs are explicitly outside this workstream; B/C/D are not authorized.
+- Bounded cleanup removes unused shared `HeaderIconAction`, text-action style
+  and their obsolete test fragments; no feature-local system chrome remains in
+  the completed target entries. Production remains untouched.
+- Intentional retention: Receipt drawer edge handles and neutral 44pt local
+  controls preserve drawer interactions; native photo/document/QuickLook hosts
+  retain their own dismissal. Scan source action-list Cancel stays in its source
+  chooser. Global Menu/root Tabs and all B/C/D controls remain deferred. No new
+  feature-local HeaderAction, business/data/sync/auth/settlement or route changes.
+- Workstream closed at Phase 1C. Do not enter B/C/D.
+
+## iOS 27 System Chrome Phase 1B — owner visual/function acceptance PASS
+
+- The sole implementation is now `src/components/SheetHeader.tsx`; the Ledger
+  component is removed. All 17 existing instances import the shared component.
+  Only action white backgrounds, radius 22 and shadow are removed. Existing OTR
+  text color, 44pt minimum height / 72pt minimum width, symmetric 112pt title
+  flanks, large-text layout, accessibility state, safe areas and header drag
+  dismissal remain unchanged. No Modal/navigation host migration.
+- AST comparison confirms all 17 call sites retain their original handlers,
+  labels, disabled conditions and safeTop props. Typecheck, scoped ESLint,
+  formatting/diff checks and five suites / 46 tests pass. Signed Release build,
+  host signature verification and in-place physical installation pass with
+  retained app data on iPhone 16 Pro / iOS 27.0.1.
+- DeviceHub checks pass Date Cancel discarding Oct 3 and retaining Oct 1; Done
+  committing Oct 2; Currency Close; Sharing Cancel retaining Just you, Apply
+  committing two participants to the unsaved form, and invalid Exact amounts
+  disabling Apply (taps do not dismiss). Search internal Back returns to the
+  Filter main page and retains its draft; main Cancel discards it, and Apply
+  activates Yesterday and updates results. Filters were cleared afterwards.
+- Five original device screenshots are in `/private/tmp/otr-system-chrome-1b`:
+  expense-date, currency, sharing, search-filter-back, sharing-apply-disabled.
+  Test form drafts were discarded without saving; the existing QA Journey still
+  shows its prior single NZ$1 Expense `2701`. No new financial record was saved.
+- Owner confirmed Phase 1B visual/function acceptance PASS and authorized Phase
+  1C only. Business logic, navigation paths, DB and sync remain unchanged.
+
+## iOS 27 System Chrome Phase 1A — owner visual/function acceptance PASS
+
+- Only New/Edit Expense header actions now use direct `Stack.Toolbar.Button`
+  children: native Cancel and done-style Save/Saving. The private HeaderAction
+  and its styles are removed. Form body, handlers, save gates/ref lock,
+  beforeRemove, gesture policy and all sheet implementations are unchanged.
+- TypeScript, scoped lint/format/diff checks and four suites / 25 tests pass.
+  Source AST comparison confirms save/close/date handlers, beforeRemove and
+  every form/sheet ScrollView are unchanged. Signed physical Release build,
+  signature verification and in-place installation pass on iPhone 16 Pro /
+  iOS 27.0.1 with app data retained.
+- Device Hub checks passed Cancel/Discard without saving, Keep Editing,
+  disabled swipe dismissal, date Cancel retaining Oct 1 and Done committing
+  Oct 2, Create and Edit. Double Save taps left one NZ$1 test Expense in the
+  existing synthetic `Simulator Correction QA 848893cf` Journey; its edited
+  title is `2701`. It remains saved locally/waiting for sync; server convergence
+  was not claimed. Real Journey financial records were not edited.
+- Original screenshots are under `/private/tmp/otr-system-chrome-1a`: normal,
+  save-disabled, date-sheet, and edit-save-transition. Saving is captured during
+  the Edit dismissal animation, not as a stable full New Expense screenshot.
+  Owner confirmed visual/function acceptance PASS and authorized Phase 1B only.
+  Global Menu, root Tabs and B/C/D controls remain out of scope.
+
 ## Global money typography — implemented; physical-device visual pass
 
 - `formatLedgerMoney` and `ledgerMoneyParts` share one canonical Intl formatter

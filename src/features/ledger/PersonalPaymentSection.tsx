@@ -16,7 +16,7 @@ import { contentVisual as cv } from "./contentVisual";
 import { formatLedgerMoney } from "./format";
 import { parseCurrencyAmount } from "./expenseDraft";
 import { chronologicalPersonalPayments } from "./settlementSections";
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 
 type Pair = { id: string; name: string };
 
@@ -266,7 +266,7 @@ function CurrencyModal({
       presentationStyle="pageSheet"
       visible={visible}
     >
-      <LedgerSheetHeader leftLabel="Cancel" onLeft={onClose} title="Choose currency" />
+      <SheetHeader leftLabel="Cancel" onLeft={onClose} title="Choose currency" />
       <CurrencyPicker onSelect={onSelect} selected={selected} suggestions={suggestions} />
     </Modal>
   );

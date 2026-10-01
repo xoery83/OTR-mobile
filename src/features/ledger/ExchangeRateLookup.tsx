@@ -16,7 +16,7 @@ import {
 } from "@/data/repositories/ledgerCurrencyRepository";
 import { CurrencyPicker } from "./CurrencyPicker";
 import { formatLedgerRate, localDateKey } from "./format";
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 
 export function ExchangeRateLookup({
   journeyId,
@@ -111,7 +111,7 @@ export function ExchangeRateLookup({
         presentationStyle="pageSheet"
         visible={picker !== null}
       >
-        <LedgerSheetHeader
+        <SheetHeader
           onLeft={() => setPicker(null)}
           title={picker === "FROM" ? "From currency" : "To currency"}
         />
@@ -140,7 +140,7 @@ export function ExchangeRateLookup({
             style={styles.dateBackdrop}
           />
           <SafeAreaView edges={["bottom"]} style={styles.datePanel}>
-            <LedgerSheetHeader
+            <SheetHeader
               leftLabel="Cancel"
               onLeft={() => setDateOpen(false)}
               onRight={() => {

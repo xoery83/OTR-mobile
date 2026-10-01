@@ -14,7 +14,7 @@ import {
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
@@ -235,7 +235,7 @@ export function ExpenseFxDetails({
               style={StyleSheet.absoluteFill}
             />
             <SafeAreaView edges={["bottom"]} style={styles.sheet}>
-              <LedgerSheetHeader
+              <SheetHeader
                 title={label("Rate details", "汇率详情")}
                 leftLabel={label("Close", "关闭")}
                 onLeft={() => setExpanded(false)}

@@ -15,7 +15,7 @@ import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 
 import { AppIcon } from "@/components/AppIcon";
 import { MoneyText } from "./MoneyText";
-import { HeaderIconAction, NavigationContextTitle } from "@/components/navigationChrome";
+import { NavigationContextTitle } from "@/components/navigationChrome";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import {
   aggregateAnalysisPeople,
@@ -37,7 +37,7 @@ import {
   formatLedgerMoney,
   localDateKey,
 } from "./format";
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 import {
   AnalysisCategories,
   AnalysisCategoryMenu,
@@ -279,20 +279,20 @@ export function LedgerAnalysisScreen() {
               Platform.OS === "ios" ? "transparent" : "rgba(246,247,249,0.97)",
           },
           headerShadowVisible: true,
-          headerRight: () =>
-            presets.length ? (
-              <HeaderIconAction
-                label="Choose date range"
-                name="calendar"
-                active={Boolean(view?.range.from)}
-                onPress={() => {
-                  setRangeDraft({ from: "", through: "" });
-                  setRangeOpen(true);
-                }}
-              />
-            ) : null,
         }}
       />
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          accessibilityLabel="Choose date range"
+          hidden={!presets.length}
+          icon="calendar"
+          selected={Boolean(view?.range.from)}
+          onPress={() => {
+            setRangeDraft({ from: "", through: "" });
+            setRangeOpen(true);
+          }}
+        />
+      </Stack.Toolbar>
       <ScrollView
         ref={mainScroll}
         onScroll={(event) => {
@@ -508,7 +508,7 @@ export function LedgerAnalysisScreen() {
           onRequestClose={() => setCompletenessOpen(false)}
         >
           <View style={styles.modalPage}>
-            <LedgerSheetHeader
+            <SheetHeader
               title="Not included in total"
               leftLabel="Close"
               onLeft={() => setCompletenessOpen(false)}
@@ -553,7 +553,7 @@ export function LedgerAnalysisScreen() {
         onRequestClose={() => setRangeOpen(false)}
       >
         <View style={styles.modalPage}>
-          <LedgerSheetHeader
+          <SheetHeader
             title="Analysis dates"
             leftLabel="Cancel"
             onLeft={() => setRangeOpen(false)}
@@ -623,10 +623,7 @@ export function LedgerAnalysisScreen() {
         onRequestClose={() => setCategoryMenu(null)}
       >
         <View style={styles.modalPage}>
-          <LedgerSheetHeader
-            title="Choose category"
-            onLeft={() => setCategoryMenu(null)}
-          />
+          <SheetHeader title="Choose category" onLeft={() => setCategoryMenu(null)} />
           <ScrollView contentContainerStyle={styles.modalContent}>
             {[null, ...categoryChoices].map((category) => (
               <Pressable

@@ -97,7 +97,10 @@ vi.mock("react-native", () => ({
   useWindowDimensions: () => ({ fontScale: ui.fontScale, width: 375 }),
 }));
 vi.mock("expo-router", () => ({
-  Stack: { Screen: "stack" },
+  Stack: {
+    Screen: "stack",
+    Toolbar: Object.assign("toolbar", { Button: "toolbar-button" }),
+  },
   router: { push: ui.push },
   useLocalSearchParams: () => ui.params,
   useNavigation: () => ui.nav,
@@ -115,7 +118,8 @@ vi.mock("expo-glass-effect", () => ({
   isLiquidGlassAvailable: () => true,
 }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: "icon" }));
-vi.mock("./LedgerSheetHeader", () => ({ LedgerSheetHeader: "sheet-header" }));
+vi.mock("@/components/OverlayDismissAction", () => ({ OverlayDismissAction: "dismiss" }));
+vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "sheet-header" }));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   getDefaultLedgerReportingRepository: async () => ({
     loadSpendingAnalysisProjection: ui.projection,
@@ -350,21 +354,25 @@ describe("Analysis UI transitions and request guardrails", () => {
   });
   it("shows only an icon above 30 days and no Range action for short Journeys", async () => {
     const screen = await ready(data(30));
-    const stack = nodes(screen).find((node) => node.type === "stack")!;
-    expect(
-      (stack.props.options as { headerRight: () => unknown }).headerRight(),
-    ).toBeNull();
+    const findRange = (element: unknown) =>
+      nodes(element).find(
+        (node) => node.props.accessibilityLabel === "Choose date range",
+      )!;
+    expect(findRange(screen).props.hidden).toBe(true);
     ui.projection.mockResolvedValue(data(31));
     ui.cleanup?.();
     ui.cleanup = ui.focus?.() ?? null;
     await new Promise<void>((resolve) => setImmediate(resolve));
-    const longStack = nodes(render()).find((node) => node.type === "stack")!;
-    const action = (
-      longStack.props.options as {
-        headerRight: () => ReactElement<Record<string, unknown>>;
-      }
-    ).headerRight();
-    expect(action.props.label).toBe("Choose date range");
+    const action = findRange(render());
+    expect(action.props.hidden).toBe(false);
+    expect(action.props.icon).toBe("calendar");
+    expect(action.props.selected).toBe(false);
+    press(action);
+    const sheet = nodes(render()).find(
+      (node) => node.type === "sheet-header" && node.props.title === "Analysis dates",
+    );
+    expect(sheet).toBeDefined();
+    expect(ui.projection).toHaveBeenCalledTimes(2);
     expect(texts(action)).not.toContain("Range");
   });
   it("uses a structured skeleton, then preserves previous data on local failure", async () => {
@@ -587,11 +595,7 @@ describe("Analysis UI transitions and request guardrails", () => {
     expect(nodes(element).find((node) => node.type === "modal")!.props.visible).toBe(
       true,
     );
-    press(
-      nodes(element).find(
-        (node) => node.props.accessibilityLabel === "Close spending brief",
-      )!,
-    );
+    press(nodes(element).find((node) => node.props.label === "Close spending brief")!);
     expect(nodes(draw()).find((node) => node.type === "modal")!.props.visible).toBe(
       false,
     );

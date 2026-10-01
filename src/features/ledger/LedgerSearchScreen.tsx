@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
-import { HeaderIconAction } from "@/components/navigationChrome";
 import { contentVisual as cv } from "./contentVisual";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
@@ -28,7 +27,7 @@ import type {
 
 import { formatLedgerDate, formatLedgerMoney, ledgerExpenseAttention } from "./format";
 import { createLatestRequest } from "./latestRequest";
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "@/components/SheetHeader";
 import { expenseSearchAmounts, expenseSearchView } from "./expenseSearchModel";
 import {
   countLedgerFilters,
@@ -350,26 +349,28 @@ export function LedgerSearchScreen() {
       <Stack.Screen
         options={{
           headerTitle: "Search",
-          headerRight: () => (
-            <View>
-              <HeaderIconAction
-                label={`Filter expenses${filterCount ? `, ${filterCount} active` : ""}`}
-                name="line.3.horizontal.decrease"
-                onPress={() => setFilterOpen(true)}
-              />
-              {filterCount ? (
-                <Text
-                  maxFontSizeMultiplier={1}
-                  pointerEvents="none"
-                  style={styles.filterBadge}
-                >
-                  {filterCount}
-                </Text>
-              ) : null}
-            </View>
-          ),
         }}
       />
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          accessibilityLabel={`Filter expenses${filterCount ? `, ${filterCount} active` : ""}`}
+          icon="line.3.horizontal.decrease"
+          onPress={() => setFilterOpen(true)}
+        >
+          {filterCount ? (
+            <Stack.Toolbar.Badge
+              style={{
+                backgroundColor: "#0F766E",
+                color: "#FFFFFF",
+                fontSize: 10,
+                fontWeight: "700",
+              }}
+            >
+              {String(filterCount)}
+            </Stack.Toolbar.Badge>
+          ) : null}
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
       <TextInput
         accessibilityLabel="Search Expenses"
         autoCapitalize="none"
@@ -668,7 +669,7 @@ function FilterSheet({
       presentationStyle="pageSheet"
     >
       <View style={styles.sheet}>
-        <LedgerSheetHeader
+        <SheetHeader
           leftLabel={page === "main" ? "Cancel" : "Back"}
           onLeft={page === "main" ? onCancel : () => setPage("main")}
           onRight={page === "main" ? () => void apply() : () => setPage("main")}
@@ -1016,19 +1017,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   chipText: { color: "#0F766E", fontWeight: "700" },
-  filterBadge: {
-    backgroundColor: "#0F766E",
-    borderRadius: 10,
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "700",
-    minWidth: 18,
-    overflow: "hidden",
-    position: "absolute",
-    right: 6,
-    textAlign: "center",
-    top: 8,
-  },
   content: { flexGrow: 1, padding: 16, paddingBottom: 40 },
   summary: {
     backgroundColor: "#FFFFFF",

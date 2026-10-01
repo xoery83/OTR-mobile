@@ -2,7 +2,7 @@ import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { expect, it, vi } from "vitest";
 
-import { LedgerSheetHeader } from "./LedgerSheetHeader";
+import { SheetHeader } from "./SheetHeader";
 
 const ui = vi.hoisted(() => ({ fontScale: 1 }));
 
@@ -28,7 +28,16 @@ vi.mock("react-native", async () => {
       }),
     StyleSheet: { create: (styles: unknown) => styles },
     Text: "span",
-    View: "div",
+    View: ({
+      style,
+      ...props
+    }: {
+      style?: Record<string, unknown> | (Record<string, unknown> | false)[];
+    }) =>
+      createElement("div", {
+        ...props,
+        style: Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style,
+      }),
     useWindowDimensions: () => ({ fontScale: ui.fontScale }),
   };
 });
@@ -37,12 +46,12 @@ vi.mock("@/components/AppIcon", () => ({ AppIcon: "span" }));
 
 it("renders one dismissal action unless a distinct right action is provided", () => {
   const close = renderToStaticMarkup(
-    createElement(LedgerSheetHeader, { title: "Category", onLeft: () => undefined }),
+    createElement(SheetHeader, { title: "Category", onLeft: () => undefined }),
   );
   expect(close.match(/<button/g)).toHaveLength(1);
   expect(close).not.toContain("Done");
   const apply = renderToStaticMarkup(
-    createElement(LedgerSheetHeader, {
+    createElement(SheetHeader, {
       title: "Filter Expenses",
       leftLabel: "Cancel",
       onLeft: () => undefined,
@@ -56,7 +65,7 @@ it("renders one dismissal action unless a distinct right action is provided", ()
 
 it("keeps ordinary titles centered, semibold and on one line", () => {
   const html = renderToStaticMarkup(
-    createElement(LedgerSheetHeader, {
+    createElement(SheetHeader, {
       title: "A very long category title for a narrow sheet",
       leftLabel: "Cancel",
       onLeft: () => undefined,
@@ -71,7 +80,7 @@ it("keeps ordinary titles centered, semibold and on one line", () => {
 
 it("keeps disabled actions in place with the same text style", () => {
   const html = renderToStaticMarkup(
-    createElement(LedgerSheetHeader, {
+    createElement(SheetHeader, {
       title: "Filter Expenses",
       leftLabel: "Cancel",
       onLeft: () => undefined,
@@ -90,7 +99,7 @@ it("gives large accessibility text a readable two-line title", () => {
   ui.fontScale = 2.1;
   try {
     const html = renderToStaticMarkup(
-      createElement(LedgerSheetHeader, {
+      createElement(SheetHeader, {
         title: "Choose currency",
         onLeft: () => undefined,
       }),
@@ -101,4 +110,24 @@ it("gives large accessibility text a readable two-line title", () => {
   } finally {
     ui.fontScale = 1;
   }
+});
+
+it("uses undecorated actions with adequate targets and equal title flanks", () => {
+  const html = renderToStaticMarkup(
+    createElement(SheetHeader, {
+      title: "Filters",
+      leftLabel: "Back",
+      onLeft: () => undefined,
+      rightLabel: "Applying…",
+      onRight: () => undefined,
+    }),
+  );
+  const actions = html.match(/<button[^>]*>/g)!;
+  expect(actions).toHaveLength(2);
+  for (const action of actions) {
+    expect(action).toContain("min-height:44px");
+    expect(action).toContain("min-width:72px");
+    expect(action).not.toMatch(/background|border|shadow/);
+  }
+  expect(html.match(/width:112px/g)).toHaveLength(2);
 });
