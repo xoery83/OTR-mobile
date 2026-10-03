@@ -25,6 +25,16 @@ src/
 
 Feature modules may compose UI, hooks, and repositories. Domain modules must not import UI, SQLite, Expo APIs, or API clients. Repositories coordinate local reads/writes and enqueue sync operations.
 
+## Canonical Trip Person foundation
+
+A1-I1 uses `journey_members.id` as the Trip-scoped `TripPersonId`, distinct from
+Account identity and access. The minimal domain contract and account-scoped local
+read boundary reuse `ledger_members`; Expense Participant remains Expense-specific.
+Future Booking/Itinerary participation uses the same Person ID. Current permissions,
+linking, roles and persistence are unchanged. See the
+[A1-I1 report](architecture/TRIP_CANONICAL_A1_I1_REPORT.md) for the implementation,
+projection limitations and review gate; the A1-D document remains a design record.
+
 ## React Native / Expo Setup
 
 iOS builds with Xcode 27 enable UIKit scene lifecycle through the official

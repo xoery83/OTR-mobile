@@ -1,5 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it, vi } from "vitest";
+import { migrations } from "@/data/db/migrations";
 
 import {
   createExpenseRepository,
@@ -11,26 +12,29 @@ import {
   type SyncQueueDatabase,
 } from "@/data/sync/syncOperationRepository";
 
+// Queue notifications import native entry points that this injected SQLite gate
+// does not use. Keep the real repositories, notifications and sync engine.
+vi.mock("@/data/db/database", () => ({
+  openDatabase: () => {
+    throw new Error("This gate must use its injected SQLite database.");
+  },
+}));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: () => {
+    throw new Error("This gate must use its injected active account.");
+  },
+}));
+
 describe("Account Switching Foundation gate", () => {
   it("isolates A's local row and queue while preserving shared canonical data", async () => {
     const sqlite = new DatabaseSync(":memory:");
+    for (const migration of migrations) sqlite.exec(migration.sql);
     sqlite.exec(`
-      CREATE TABLE expenses (
-        id TEXT PRIMARY KEY, server_id TEXT, trip_id TEXT, title TEXT,
-        amount_minor INTEGER, currency_code TEXT, paid_by_member_id TEXT,
-        occurred_at TEXT, created_at TEXT, updated_at TEXT, sync_status TEXT,
-        sync_version INTEGER, local_owner_user_id TEXT
-      );
-      CREATE TABLE sync_operations (
-        id TEXT PRIMARY KEY, trip_id TEXT, entity_type TEXT, entity_id TEXT,
-        operation_type TEXT, idempotency_key TEXT, base_version INTEGER,
-        payload_json TEXT, owner_user_id TEXT, status TEXT, attempt_count INTEGER,
-        next_attempt_at TEXT, failure_category TEXT, last_error_code TEXT,
-        last_error_message TEXT, last_attempt_at TEXT, first_failed_at TEXT,
-        dependency_operation_id TEXT, last_request_id TEXT, claim_owner TEXT,
-        lease_expires_at TEXT, created_at TEXT, updated_at TEXT
-      );
-      INSERT INTO expenses VALUES (
+      INSERT INTO expenses (
+        id, server_id, trip_id, title, amount_minor, currency_code,
+        paid_by_member_id, occurred_at, created_at, updated_at, sync_status,
+        sync_version, local_owner_user_id
+      ) VALUES (
         'shared', 'server-shared', 'trip-1', 'Shared', 500, 'NZD', NULL,
         '2026-09-16T00:00:00.000Z', '2026-09-16T00:00:00.000Z',
         '2026-09-16T00:00:00.000Z', 'SYNCED', 1, NULL

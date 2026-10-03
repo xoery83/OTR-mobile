@@ -2,6 +2,29 @@
 
 Date: 2026-10-03
 
+## Trip Canonical A1-I1 — CODE COMPLETE / REVIEW PENDING
+
+- Latest narrow checkpoint: `journey_members.id` is the canonical Trip Person ID.
+  `src/domain/trip/person.ts` exposes Trip ID, Person ID and display name;
+  `tripPersonRepository` reads the existing `ledger_members` projection under the
+  active Account's cached Journey context and rejects reads crossing an account
+  generation/identity change. No link field is inferred from unavailable local data.
+- Account-switch test execution is repaired using unused native-entry mocks and
+  the existing migration-backed in-memory fixture; original assertions remain.
+  TEST GATE PASS occurred before implementation: 7 files / 36 tests.
+- Golden Person/isolation tests: 10 PASS. Final relevant regressions: 30 files /
+  175 tests PASS; TypeScript, scoped zero-warning lint, UI guard, changed-file format
+  and whitespace checks PASS. No schema, permission or financial changes; only
+  additive production domain/read files. Existing SQLite/API versions are unchanged.
+- Authoritative report and next-session entry:
+  `docs/architecture/TRIP_CANONICAL_A1_I1_REPORT.md`; A0/A1-D remain design evidence.
+  Historical sections below do not authorize expansion of this Trip slice.
+- Human review and independent reviewer gate remain PENDING. No commit yet.
+  Next checkpoint is review only; no automatic A1-I2/A2, Invite/Claim, leave/revoke,
+  Viewer, ownership, access migration, device build or remote deployment.
+- Production accessed: NO; Hosted Dev mutated: NO; deployment: NO; new migrations:
+  NONE. Account-scoped queues/private projections and offline launch are preserved.
+
 ## Temporary foundation verification screen
 
 - Dev Settings → Debug Mode → UI Foundation sample opens `/ui-foundation-check`,
