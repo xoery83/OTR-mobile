@@ -90,16 +90,17 @@ const [
 ]);
 
 const manifest = JSON.parse(manifestRaw);
-// Approved full retained-chain replay, not the original 20260910 snapshot.
+// Full retained-chain replay through Trip participation 20261003000100.
+// I2A adds two columns, one constraint, one function and one trigger.
 // Refresh only after independent clean replay and explained object drift.
 const expected = {
-  checksum: "201f6b0f42a50e6185233a07604f06907e71bec0dca372645949100cb95c1897",
+  checksum: "539a75d3cc0d4dc8f7729132f2918a973c80eba8fcbb54b2c1577c01c9d11f89",
   tables: 107,
-  columns: 1488,
-  constraints: 824,
+  columns: 1490,
+  constraints: 825,
   indexes: 349,
-  functions: 141,
-  triggers: 114,
+  functions: 142,
+  triggers: 115,
   rls_tables: 107,
   policies: 178,
   buckets: 3,

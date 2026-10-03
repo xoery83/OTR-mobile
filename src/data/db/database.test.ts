@@ -78,12 +78,14 @@ describe("SQLite migrations", () => {
       "ledger_my_spending_facts",
     );
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(41);
+    expect(latest.id).toBe(42);
     expect(migrations.find((migration) => migration.id === 39)?.sql).toContain(
       "original_mime_type",
     );
-    expect(migrations.find(m => m.id === 40)!.sql).toContain("ledger_expense_commands");
-    expect(latest.sql).toContain("ledger_expense_resolution_receipts");
+    expect(migrations.find((m) => m.id === 40)!.sql).toContain("ledger_expense_commands");
+    expect(migrations.find(({ id }) => id === 41)!.sql).toContain(
+      "ledger_expense_resolution_receipts",
+    );
     expect(migrations[28].sql).toContain("coverage_json");
     expect(migrations[29].sql).toContain("correction_source_expense_id");
     expect(migrations[30].sql).toContain("pending_review_state");
@@ -99,6 +101,45 @@ describe("SQLite migrations", () => {
     expect(migrations[26].sql).toContain("personal_payment_id");
     expect(migrations[20].sql).toContain("ledger_review_visibility");
     expect(migrations[19].sql).toContain("observation_context_json");
+  });
+
+  it("upgrades cached Members to an unobserved pair and enforces both-column invariants", () => {
+    const database = new DatabaseSync(":memory:");
+    try {
+      for (const migration of migrations.filter(({ id }) => id < 42))
+        database.exec(migration.sql);
+      database.exec(`INSERT INTO ledger_members(id,journey_id,display_name,role,status,updated_at)
+        VALUES ('person','trip','Name','owner','linked','2026-10-03')`);
+      const before = database.prepare("SELECT * FROM ledger_members").get();
+      database.exec(migrations.find(({ id }) => id === 42)!.sql);
+      expect(database.prepare("SELECT * FROM ledger_members").get()).toEqual({
+        ...before,
+        participation_active: null,
+        participation_revision: null,
+      });
+      const update = database.prepare(
+        "UPDATE ledger_members SET participation_active=?,participation_revision=?",
+      );
+      for (const [active, revision] of [
+        [null, 0],
+        [1, null],
+        [2, 0],
+        [0, -1],
+        [1, 0.5],
+        [1, "bad"],
+        [1, Number.MAX_SAFE_INTEGER + 1],
+        ["bad", 0],
+      ])
+        expect(() => update.run(active!, revision!)).toThrow(/CHECK/);
+      update.run(0, 7);
+      expect(() =>
+        database.exec("UPDATE ledger_members SET participation_active=NULL"),
+      ).toThrow(/CHECK/);
+      update.run(1, Number.MAX_SAFE_INTEGER);
+      update.run(null, null);
+    } finally {
+      database.close();
+    }
   });
 
   it("backfills old Personal Payment economic dates in UTC", () => {

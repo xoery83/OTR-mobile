@@ -2,19 +2,42 @@
 
 Date: 2026-10-03
 
-## Schema manifest reconciliation — COMPLETE / REVIEW PENDING
+## Trip Canonical A1-I2A — IMPLEMENTATION COMPLETE / REVIEW PENDING
 
-- Full 64-migration replay through `20260930000100` is canonical: 107 RLS-enabled
-  tables, 1,488 columns, checksum
+- Fresh local implementation from clean `0285aced36ca468a955648fc8a651c21c57c8f29`
+  after the owner-confirmed Builder + Independent Review of manifest reconciliation.
+  Draft files from the blocked attempt were not reused. No commit yet.
+- Server migration `20261003000100_trip_person_participation.sql`: protected
+  Boolean/revision baseline true/0 on `journey_members`; ordinary inserts normalize
+  and updates/upserts preserve the pair. Reserved private NOLOGIN writer has no
+  grants, functions or enabled command. Existing permissions/linking remain intact.
+- SQLite migration 42 adds a nullable, validated pair on `ledger_members`.
+  Bootstrap hydration uses preserving upsert; omitted/lower observations retain
+  known state, newer advances it, equal/opposite or malformed observations roll
+  back. `TripPerson.participation` is object/null; the list remains complete.
+- Relevant regression: 42 TS suites / 354 tests PASS; both isolated clean server
+  resets pass 34 SQL files / 705 assertions. Manifests match; schema diff empty.
+  Typecheck, scoped zero-warning lint, UI guard, format/whitespace and strict
+  manifest drift-rejection checks PASS. Before/after migration identity, permission,
+  financial FK and representative financial-source manifests are byte-identical.
+- Retained chain now has 65 migrations, 107 RLS tables, 1,490 columns, 825
+  constraints, 142 functions and 115 triggers. Checksum:
+  `539a75d3cc0d4dc8f7729132f2918a973c80eba8fcbb54b2c1577c01c9d11f89`.
+  Manifest/verifier changes are this migration's explained delta only.
+- Authoritative next entry: `docs/architecture/TRIP_CANONICAL_A1_I2A_REPORT.md`
+  and accepted `TRIP_CANONICAL_A1_I2A_SCHEMA_CONTRACT.md`. Historical blocked
+  attempt is retained in commit `92862af`; it does not describe current runtime.
+- Next checkpoint: human + independent review only. No I2B freshness mechanism,
+  I2C command/API/queue/UI, receipt/audit, device build or automatic continuation.
+  Production accessed: NO; Hosted Dev accessed/mutated: NO; deployment: NO.
+
+## Schema manifest reconciliation — REVIEWED / COMMITTED
+
+- Owner confirmed Builder + Independent Review passed; committed as `0285aced`.
+  Its 64-migration baseline checksum was
   `201f6b0f42a50e6185233a07604f06907e71bec0dca372645949100cb95c1897`.
-- All drift from the prior `20260924000300` snapshot is explained. Two independent
-  proof databases and two final validation databases have identical manifests and
-  complete object inventories. Both native validator runs pass two resets, 33 SQL
-  files / 658 assertions per reset, manifest comparison and empty schema diff.
-- Manifest/verifier reconciled; count and same-count checksum rejection test passes.
-  Report: `docs/architecture/SCHEMA_MANIFEST_RECONCILIATION_REPORT.md`.
-- No migration/application changes, remote environment access or deployment.
-  Human review is pending. Trip I2A remains stopped; do not resume automatically.
+- Current I2A replay matched that baseline before implementation. Historical proof:
+  `docs/architecture/SCHEMA_MANIFEST_RECONCILIATION_REPORT.md`.
 
 ## Trip Canonical A1-I1 — CODE COMPLETE / REVIEW PENDING
 

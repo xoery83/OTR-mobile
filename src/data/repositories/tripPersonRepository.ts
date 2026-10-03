@@ -13,9 +13,17 @@ export function createTripPersonRepository(
       const userId = await getActiveUserId();
       // Shared Member cache is readable only in the current account's hydrated
       // Journey context. Person existence/role/status never grants permission.
-      const persons = await database.getAllAsync<TripPerson>(
+      const persons = await database.getAllAsync<{
+        tripId: TripId;
+        personId: string;
+        displayName: string;
+        participationActive: number | null;
+        participationRevision: number | null;
+      }>(
         `SELECT m.journey_id AS tripId, m.id AS personId,
-           m.display_name AS displayName
+           m.display_name AS displayName,
+           m.participation_active AS participationActive,
+           m.participation_revision AS participationRevision
          FROM ledger_members m
          WHERE m.journey_id = ?
            AND EXISTS (SELECT 1 FROM ledger_actor_context actor
@@ -28,7 +36,18 @@ export function createTripPersonRepository(
       if (generation !== getAccountGeneration() || userId !== currentUserId) {
         throw new Error("Account changed during Trip Person read.");
       }
-      return persons;
+      return persons.map(
+        ({ participationActive, participationRevision, ...person }): TripPerson => ({
+          ...person,
+          participation:
+            participationRevision === null
+              ? null
+              : {
+                  isParticipating: participationActive === 1,
+                  revision: participationRevision,
+                },
+        }),
+      );
     },
   };
 }

@@ -11,6 +11,7 @@ import type {
   LedgerChangesResponse,
   MyLedgerResponse,
 } from "@/data/api/ledgerReadContracts";
+import { ledgerMemberSchema } from "@/data/api/ledgerReadContracts";
 import { createLedgerExpenseRepository } from "./ledgerExpenseRepository";
 import { applyFinalizedSettlement } from "./ledgerSettlementRepository";
 import { applyReviewProjection } from "./ledgerReviewRepository";
@@ -497,16 +498,46 @@ async function applyJourney(
   );
 
   for (const member of response.members) {
+    ledgerMemberSchema.parse(member);
+    const existing = await database.getFirstAsync<{
+      journeyId: string;
+      active: number | null;
+      revision: number | null;
+    }>(
+      `SELECT journey_id AS journeyId, participation_active AS active,
+        participation_revision AS revision FROM ledger_members WHERE id = ?`,
+      member.id,
+    );
+    if (existing && existing.journeyId !== response.journey.id)
+      throw new Error("Member belongs to a different Trip.");
+    let active = existing?.active ?? null;
+    let revision = existing?.revision ?? null;
+    if (member.participationRevision !== undefined) {
+      const incomingActive = member.isParticipating ? 1 : 0;
+      if (revision === member.participationRevision && active !== incomingActive)
+        throw new Error("Inconsistent Member participation observation.");
+      if (revision === null || member.participationRevision > revision) {
+        active = incomingActive;
+        revision = member.participationRevision;
+      }
+    }
     await database.runAsync(
-      `INSERT OR REPLACE INTO ledger_members (
-        id, journey_id, display_name, role, status, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO ledger_members (
+        id, journey_id, display_name, role, status, updated_at,
+        participation_active, participation_revision
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET display_name = excluded.display_name,
+        role = excluded.role, status = excluded.status, updated_at = excluded.updated_at,
+        participation_active = excluded.participation_active,
+        participation_revision = excluded.participation_revision`,
       member.id,
       response.journey.id,
       member.displayName,
       member.role,
       member.status,
       member.updatedAt,
+      active,
+      revision,
     );
   }
 

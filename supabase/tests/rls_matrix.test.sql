@@ -13,8 +13,8 @@ select is(
 );
 select is(
   (select count(*)::integer from information_schema.columns where table_schema = 'public'),
-  1488,
-  'canonical, Ledger 2 and Expense consistency column count is 1488'
+  1490,
+  'canonical, Ledger 2, Expense consistency and Trip participation column count is 1490'
 );
 select is(
   (select count(*)::integer from pg_class c join pg_namespace n on n.oid = c.relnamespace

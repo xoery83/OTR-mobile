@@ -55,6 +55,7 @@ import type {
   MyLedgerPeriod,
   MyLedgerResponse,
 } from "../../src/data/api/ledgerReadContracts";
+import { ledgerMemberSchema } from "../../src/data/api/ledgerReadContracts";
 import {
   journeyCurrencyCommitSchema,
   journeyCurrencyPreviewSchema,
@@ -6222,7 +6223,9 @@ async function readLedgerBootstrap(
       .maybeSingle(),
     service
       .from("journey_members")
-      .select("id, user_id, display_name, role, status, updated_at")
+      .select(
+        "id, user_id, display_name, role, status, updated_at, participation_active, participation_revision",
+      )
       .eq("trip_id", tripId)
       .order("display_name"),
     service
@@ -6328,14 +6331,21 @@ async function readLedgerBootstrap(
       const member = row as Record<string, unknown>;
       const role = member.role === null ? null : String(member.role);
       const status = member.status === null ? null : String(member.status);
-      return {
+      if (
+        member.participation_active === undefined ||
+        member.participation_revision === undefined
+      )
+        throw new Error("Member participation columns missing from bootstrap.");
+      return ledgerMemberSchema.parse({
         id: String(member.id),
         displayName: String(member.display_name),
         role,
         status,
         capabilities: capabilities(role, status),
         updatedAt: String(member.updated_at),
-      };
+        isParticipating: member.participation_active,
+        participationRevision: member.participation_revision,
+      });
     }),
     households: (households.data ?? []).map((row) => {
       const household = row as Record<string, unknown>;

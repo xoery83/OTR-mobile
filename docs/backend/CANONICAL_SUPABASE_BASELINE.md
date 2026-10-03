@@ -77,6 +77,15 @@ npm run supabase:stop
 Local keys printed by the Supabase CLI are disposable development credentials.
 They are not written to this repository.
 
+## Current local Trip I2A replay — review pending
+
+The 65-migration chain through `20261003000100` replays twice in an isolated
+local project with 34 SQL files / 705 assertions passing per reset and an empty
+schema diff. Relative to reviewed `0285aced`, only two columns, one constraint,
+one function and one trigger are added; table/index/policy/bucket counts remain
+unchanged. Manifest and strict verifier track this explicit delta. Proof and
+limitations: `../architecture/TRIP_CANONICAL_A1_I2A_REPORT.md`. No remote deployment.
+
 ## Verified Result — historical 20260910 snapshot
 
 The counts below record the original two-migration baseline, not current full-chain

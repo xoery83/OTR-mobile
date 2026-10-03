@@ -15,4 +15,6 @@ export type TripPerson = {
   tripId: TripId;
   personId: TripPersonId;
   displayName: string;
+  /** null describes unavailable lifecycle observation, not a business state. */
+  participation: { isParticipating: boolean; revision: number } | null;
 };

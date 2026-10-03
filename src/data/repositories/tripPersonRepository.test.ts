@@ -1,7 +1,14 @@
 import { DatabaseSync } from "node:sqlite";
+import { z } from "zod";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { LedgerBootstrapResponse } from "@/data/api/ledgerReadContracts";
+import {
+  ledgerMemberSchema,
+  type LedgerBootstrapResponse,
+} from "@/data/api/ledgerReadContracts";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 import { createAccountSwitchCoordinator } from "@/data/auth/accountSwitchCoordinator";
 import { createAuthRepository } from "@/data/auth/authSessionRepository";
@@ -38,7 +45,12 @@ const capabilities: LedgerBootstrapResponse["actor"]["capabilities"] = {
 
 function bootstrap(
   tripId: string,
-  members: { id: string; displayName: string }[],
+  members: {
+    id: string;
+    displayName: string;
+    isParticipating?: boolean;
+    participationRevision?: number;
+  }[],
   linkedMemberId: string | null = null,
 ): LedgerBootstrapResponse {
   return {
@@ -71,6 +83,8 @@ function bootstrap(
 
 describe("canonical Trip Person read boundary", () => {
   let sqlite: DatabaseSync;
+  let directory: string;
+  let path: string;
   let database: LedgerReadDatabase;
   let userId: string;
   const activeUser = async () => userId;
@@ -80,7 +94,9 @@ describe("canonical Trip Person read boundary", () => {
     createLedgerReadRepository(database, activeUser).applyBootstrap(response);
 
   beforeEach(() => {
-    sqlite = new DatabaseSync(":memory:");
+    directory = mkdtempSync(join(tmpdir(), "otr-trip-person-"));
+    path = join(directory, "cache.db");
+    sqlite = new DatabaseSync(path);
     for (const migration of migrations) sqlite.exec(migration.sql);
     userId = userA;
     database = {
@@ -105,12 +121,15 @@ describe("canonical Trip Person read boundary", () => {
       },
     };
   });
-  afterEach(() => sqlite.close());
+  afterEach(() => {
+    sqlite.close();
+    rmSync(directory, { recursive: true, force: true });
+  });
 
   it("A: reads an unlinked name-only Person without inventing an Account ID", async () => {
     await hydrate(bootstrap(tripA, [{ id: memberA, displayName: "Tina" }]));
     expect(await read(tripA)).toEqual([
-      { tripId: tripA, personId: memberA, displayName: "Tina" },
+      { tripId: tripA, personId: memberA, displayName: "Tina", participation: null },
     ]);
     expect(sqlite.prepare("SELECT status FROM ledger_members").get()).toMatchObject({
       status: "unlinked",
@@ -125,8 +144,8 @@ describe("canonical Trip Person read boundary", () => {
       ]),
     );
     expect(await read(tripA)).toEqual([
-      { tripId: tripA, personId: memberA, displayName: "David" },
-      { tripId: tripA, personId: memberB, displayName: "David" },
+      { tripId: tripA, personId: memberA, displayName: "David", participation: null },
+      { tripId: tripA, personId: memberB, displayName: "David", participation: null },
     ]);
   });
 
@@ -202,6 +221,16 @@ describe("canonical Trip Person read boundary", () => {
     expect(person?.personId).toBe(response.expenses[0]?.participants[0]?.memberId);
     expect(await ledger.listMembers(tripA)).toEqual(membersBefore);
     expect(snapshot()).toEqual(before);
+    const financialBefore = before.slice(0, 3);
+    response.members[0]!.isParticipating = false;
+    response.members[0]!.participationRevision = 7;
+    await hydrate({ ...response, expenses: [] });
+    expect(snapshot().slice(0, 3)).toEqual(financialBefore);
+    expect(await ledger.listMembers(tripA)).toEqual(membersBefore);
+    expect((await read(tripA))[0]?.participation).toEqual({
+      isParticipating: false,
+      revision: 7,
+    });
   });
 
   it("E: account switching hides A-only Persons and preserves shared authorized context", async () => {
@@ -233,7 +262,7 @@ describe("canonical Trip Person read boundary", () => {
     await coordinator.switchAccount(userB);
     expect(await repository.listTripPersons(tripA)).toEqual([]);
     expect(await repository.listTripPersons(tripB)).toEqual([
-      { tripId: tripB, personId: memberB, displayName: "David" },
+      { tripId: tripB, personId: memberB, displayName: "David", participation: null },
     ]);
     await hydrate(bootstrap(tripA, [{ id: memberA, displayName: "Tina" }]));
     expect(await repository.listTripPersons(tripA)).toHaveLength(1);
@@ -243,7 +272,16 @@ describe("canonical Trip Person read boundary", () => {
   });
 
   it("F: reopens cached Persons with a persisted offline expired-token session", async () => {
-    await hydrate(bootstrap(tripA, [{ id: memberA, displayName: "Tina" }]));
+    await hydrate(
+      bootstrap(tripA, [
+        {
+          id: memberA,
+          displayName: "Tina",
+          isParticipating: false,
+          participationRevision: 7,
+        },
+      ]),
+    );
     const storage = new Map<string, string>();
     const adapter = {
       getItem: async (key: string) => storage.get(key) ?? null,
@@ -261,6 +299,8 @@ describe("canonical Trip Person read boundary", () => {
       identity: { userId: userA, displayName: "Account", email: null },
     };
     await createAuthRepository(adapter).writeLocalSession(session);
+    sqlite.close();
+    sqlite = new DatabaseSync(path);
     const restartedAuth = createAuthRepository(adapter);
     const resumeSync = vi.fn().mockRejectedValue(new Error("offline"));
     expect(
@@ -276,7 +316,12 @@ describe("canonical Trip Person read boundary", () => {
       return identity.userId;
     });
     expect(await repository.listTripPersons(tripA)).toEqual([
-      { tripId: tripA, personId: memberA, displayName: "Tina" },
+      {
+        tripId: tripA,
+        personId: memberA,
+        displayName: "Tina",
+        participation: { isParticipating: false, revision: 7 },
+      },
     ]);
     expect(resumeSync).toHaveBeenCalledOnce();
   });
@@ -286,7 +331,7 @@ describe("canonical Trip Person read boundary", () => {
     const before = sqlite.prepare("SELECT * FROM ledger_actor_context").all();
     const changes = sqlite.prepare("SELECT total_changes() AS count").get();
     expect(await read(tripA)).toEqual([
-      { tripId: tripA, personId: memberA, displayName: "Tina" },
+      { tripId: tripA, personId: memberA, displayName: "Tina", participation: null },
     ]);
     expect(sqlite.prepare("SELECT * FROM ledger_actor_context").all()).toEqual(before);
     expect(sqlite.prepare("SELECT total_changes() AS count").get()).toEqual(changes);
@@ -317,6 +362,139 @@ describe("canonical Trip Person read boundary", () => {
       await expect(repository.listTripPersons(tripA)).rejects.toThrow("Account changed");
     },
   );
+
+  it("observes ACTIVE/INACTIVE without filtering the complete canonical list", async () => {
+    await hydrate(
+      bootstrap(tripA, [
+        {
+          id: memberA,
+          displayName: "Tina",
+          isParticipating: true,
+          participationRevision: 0,
+        },
+        {
+          id: memberB,
+          displayName: "David",
+          isParticipating: false,
+          participationRevision: 7,
+        },
+      ]),
+    );
+    expect((await read(tripA)).map((p) => [p.personId, p.participation])).toEqual([
+      [memberB, { isParticipating: false, revision: 7 }],
+      [memberA, { isParticipating: true, revision: 0 }],
+    ]);
+  });
+
+  it("preserves known state through omitted, lower and equal responses, then observes ABA advancement", async () => {
+    const response = (state?: boolean, revision?: number) =>
+      bootstrap(tripA, [
+        {
+          id: memberA,
+          displayName: "Tina",
+          ...(state === undefined
+            ? {}
+            : { isParticipating: state, participationRevision: revision }),
+        },
+      ]);
+    await hydrate(response(false, 7));
+    for (const old of [response(), response(true, 6), response(false, 7)]) {
+      await hydrate(old);
+      expect((await read(tripA))[0]?.participation).toEqual({
+        isParticipating: false,
+        revision: 7,
+      });
+    }
+    await hydrate(response(true, 8));
+    await hydrate(response(false, 9));
+    expect((await read(tripA))[0]?.participation).toEqual({
+      isParticipating: false,
+      revision: 9,
+    });
+  });
+
+  it.each([
+    { isParticipating: true, participationRevision: 7 },
+    { isParticipating: false },
+    { participationRevision: 8 },
+    { isParticipating: null, participationRevision: 8 },
+    { isParticipating: "false", participationRevision: 8 },
+    { isParticipating: true, participationRevision: null },
+    { isParticipating: true, participationRevision: -1 },
+    { isParticipating: true, participationRevision: 1.5 },
+    { isParticipating: true, participationRevision: Number.MAX_SAFE_INTEGER + 1 },
+  ])(
+    "rejects inconsistent or malformed lifecycle evidence atomically: %j",
+    async (pair) => {
+      await hydrate(
+        bootstrap(tripA, [
+          {
+            id: memberA,
+            displayName: "Tina",
+            isParticipating: false,
+            participationRevision: 7,
+          },
+        ]),
+      );
+      const tables = [
+        "ledger_journeys",
+        "ledger_members",
+        "ledger_actor_context",
+        "ledger_sync_cursors",
+      ];
+      const snapshot = () =>
+        tables.map((table) => sqlite.prepare(`SELECT * FROM ${table}`).all());
+      const before = snapshot();
+      const bad = bootstrap(tripA, [
+        {
+          id: memberB,
+          displayName: "Must roll back",
+          isParticipating: true,
+          participationRevision: 8,
+        },
+        { id: memberA, displayName: "Must also roll back", ...pair } as never,
+      ]);
+      bad.journey.title = "Must roll back";
+      bad.cursor = "must-not-advance";
+      await expect(hydrate(bad)).rejects.toThrow();
+      expect(snapshot()).toEqual(before);
+    },
+  );
+
+  it("rejects a Member ID attached to another Trip without moving its observation", async () => {
+    await hydrate(
+      bootstrap(tripA, [
+        {
+          id: memberA,
+          displayName: "Tina",
+          isParticipating: false,
+          participationRevision: 7,
+        },
+      ]),
+    );
+    await expect(
+      hydrate(bootstrap(tripB, [{ id: memberA, displayName: "Tina" }])),
+    ).rejects.toThrow("different Trip");
+    expect((await read(tripA))[0]?.participation).toEqual({
+      isParticipating: false,
+      revision: 7,
+    });
+    expect(await read(tripB)).toEqual([]);
+  });
+
+  it("accepts legacy DTO omission and old non-strict parsers strip additive fields", () => {
+    const legacy = bootstrap(tripA, [{ id: memberA, displayName: "Tina" }]).members[0]!;
+    expect(ledgerMemberSchema.parse(legacy)).toEqual(legacy);
+    const {
+      isParticipating: _state,
+      participationRevision: _revision,
+      ...oldShape
+    } = ledgerMemberSchema.shape;
+    const oldSchema = z.object(oldShape);
+    expect(
+      oldSchema.parse({ ...legacy, isParticipating: false, participationRevision: 7 }),
+    ).toEqual(legacy);
+  });
 
   it("fails closed when there is no authenticated local Account", async () => {
     const getAllAsync = vi.fn();

@@ -1425,4 +1425,21 @@ export const migrations: Migration[] = [
         BEGIN SELECT RAISE(ABORT, 'Expense resolution receipt is immutable'); END;
     `,
   },
+  {
+    id: 42,
+    name: "trip_person_participation_observation",
+    sql: `
+      ALTER TABLE ledger_members ADD COLUMN participation_active INTEGER DEFAULT NULL;
+      ALTER TABLE ledger_members ADD COLUMN participation_revision INTEGER DEFAULT NULL
+        CHECK (
+          (participation_active IS NULL AND participation_revision IS NULL)
+          OR (
+            participation_active IS NOT NULL AND participation_revision IS NOT NULL
+            AND typeof(participation_active) = 'integer' AND participation_active IN (0, 1)
+            AND typeof(participation_revision) = 'integer'
+            AND participation_revision BETWEEN 0 AND 9007199254740991
+          )
+        );
+    `,
+  },
 ];

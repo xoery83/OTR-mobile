@@ -31,9 +31,18 @@ A1-I1 uses `journey_members.id` as the Trip-scoped `TripPersonId`, distinct from
 Account identity and access. The minimal domain contract and account-scoped local
 read boundary reuse `ledger_members`; Expense Participant remains Expense-specific.
 Future Booking/Itinerary participation uses the same Person ID. Current permissions,
-linking, roles and persistence are unchanged. See the
+linking and roles are unchanged. See the
 [A1-I1 report](architecture/TRIP_CANONICAL_A1_I1_REPORT.md) for the implementation,
 projection limitations and review gate; the A1-D document remains a design record.
+
+A1-I2A adds protected server participation state/revision and a nullable observation
+pair in the existing SQLite Member cache (migration 42). Bootstrap emits the pair;
+hydration preserves omitted/older observations and rejects contradictory equal
+revisions atomically. `TripPerson.participation` exposes the observation or `null`
+without filtering the complete list or deriving permissions. The reserved private
+writer has no executable write path; lifecycle commands and freshness remain
+outside this checkpoint. See the [A1-I2A report](architecture/TRIP_CANONICAL_A1_I2A_REPORT.md).
+Implementation is complete with human and independent review pending.
 
 ## React Native / Expo Setup
 

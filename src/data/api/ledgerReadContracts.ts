@@ -157,14 +157,28 @@ export const ledgerPaymentRecordSchema = z.object({
   auditEvent: ledgerAuditEventSchema.optional(),
 });
 
-export const ledgerMemberSchema = z.object({
-  id: uuidSchema,
-  displayName: z.string(),
-  role: z.string().nullable(),
-  status: z.string().nullable(),
-  capabilities: ledgerCapabilitySchema,
-  updatedAt: z.string(),
-});
+export const ledgerMemberSchema = z
+  .object({
+    id: uuidSchema,
+    displayName: z.string(),
+    role: z.string().nullable(),
+    status: z.string().nullable(),
+    capabilities: ledgerCapabilitySchema,
+    updatedAt: z.string(),
+    isParticipating: z.boolean().optional(),
+    participationRevision: z
+      .number()
+      .int()
+      .min(0)
+      .max(Number.MAX_SAFE_INTEGER)
+      .optional(),
+  })
+  .refine(
+    (member) =>
+      (member.isParticipating === undefined) ===
+      (member.participationRevision === undefined),
+    { message: "Member participation observation must contain both fields." },
+  );
 
 export const ledgerHouseholdSchema = z.object({
   id: uuidSchema,
