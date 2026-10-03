@@ -2,6 +2,20 @@
 
 Date: 2026-10-03
 
+## Schema manifest reconciliation — COMPLETE / REVIEW PENDING
+
+- Full 64-migration replay through `20260930000100` is canonical: 107 RLS-enabled
+  tables, 1,488 columns, checksum
+  `201f6b0f42a50e6185233a07604f06907e71bec0dca372645949100cb95c1897`.
+- All drift from the prior `20260924000300` snapshot is explained. Two independent
+  proof databases and two final validation databases have identical manifests and
+  complete object inventories. Both native validator runs pass two resets, 33 SQL
+  files / 658 assertions per reset, manifest comparison and empty schema diff.
+- Manifest/verifier reconciled; count and same-count checksum rejection test passes.
+  Report: `docs/architecture/SCHEMA_MANIFEST_RECONCILIATION_REPORT.md`.
+- No migration/application changes, remote environment access or deployment.
+  Human review is pending. Trip I2A remains stopped; do not resume automatically.
+
 ## Trip Canonical A1-I1 — CODE COMPLETE / REVIEW PENDING
 
 - Latest narrow checkpoint: `journey_members.id` is the canonical Trip Person ID.

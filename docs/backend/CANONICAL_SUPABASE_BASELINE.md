@@ -35,7 +35,9 @@ only return through a separately reviewed future migration.
 - `supabase/seed.sql`: four synthetic `.invalid` users, one synthetic journey,
   membership fixtures, and minimal parser/Capture/RLS fixtures.
 - `supabase/schema_manifest.sql`: canonical object inventory and SHA-256 digest.
-- `supabase/schema-manifest.json`: approved local schema counts and checksum.
+- `supabase/schema-manifest.json`: approved counts and checksum for the **full
+  current retained migration chain**, refreshed only after explained drift and
+  independent clean replay proof. It is not the original 20260910 snapshot.
 - `supabase/tests/rls_matrix.test.sql`: anon, member, owner-derived membership,
   admin, and service-role authorization checks.
 - `scripts/supabase/validate-local.sh`: two resets, two test runs, checksum
@@ -75,7 +77,11 @@ npm run supabase:stop
 Local keys printed by the Supabase CLI are disposable development credentials.
 They are not written to this repository.
 
-## Verified Result
+## Verified Result — historical 20260910 snapshot
+
+The counts below record the original two-migration baseline, not current full-chain
+expectations. See `../architecture/SCHEMA_MANIFEST_RECONCILIATION_REPORT.md` for the
+2026-10-03 full-chain reconciliation.
 
 | Check                       | Result                                                             |
 | --------------------------- | ------------------------------------------------------------------ |

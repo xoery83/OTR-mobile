@@ -90,14 +90,17 @@ const [
 ]);
 
 const manifest = JSON.parse(manifestRaw);
+// Approved full retained-chain replay, not the original 20260910 snapshot.
+// Refresh only after independent clean replay and explained object drift.
 const expected = {
-  tables: 105,
-  columns: 1470,
-  constraints: 814,
-  indexes: 344,
-  functions: 123,
-  triggers: 108,
-  rls_tables: 105,
+  checksum: "201f6b0f42a50e6185233a07604f06907e71bec0dca372645949100cb95c1897",
+  tables: 107,
+  columns: 1488,
+  constraints: 824,
+  indexes: 349,
+  functions: 141,
+  triggers: 114,
+  rls_tables: 107,
   policies: 178,
   buckets: 3,
 };
