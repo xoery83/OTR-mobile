@@ -90,20 +90,21 @@ const [
 ]);
 
 const manifest = JSON.parse(manifestRaw);
-// Full retained-chain replay through Trip participation 20261003000100.
-// I2A adds two columns, one constraint, one function and one trigger.
+// Full retained-chain replay through protected Trip foundation 20261004000100.
+// B-T3B: +1 table, +121 columns, +13 constraints, +1 index, +12 functions,
+// +10 triggers, +1 RLS table and +1 read policy. No historical migration edits.
 // Refresh only after independent clean replay and explained object drift.
 const expected = {
-  checksum: "539a75d3cc0d4dc8f7729132f2918a973c80eba8fcbb54b2c1577c01c9d11f89",
-  tables: 107,
-  columns: 1490,
-  constraints: 825,
-  indexes: 349,
-  functions: 142,
-  triggers: 115,
-  rls_tables: 107,
-  policies: 178,
+  tables: 108,
   buckets: 3,
+  columns: 1611,
+  indexes: 350,
+  checksum: "0f331b4e5f6ed5421c9ddf1a0c70bbe24b30c05977a90281534958374802900b",
+  policies: 179,
+  triggers: 125,
+  functions: 154,
+  rls_tables: 108,
+  constraints: 838,
 };
 
 for (const [key, value] of Object.entries(expected)) {

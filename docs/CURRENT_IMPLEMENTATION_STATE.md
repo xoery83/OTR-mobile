@@ -1,6 +1,28 @@
 # Current Implementation State
 
-Date: 2026-10-03
+Date: 2026-10-04
+
+## Trip Canonical B-T3B — IMPLEMENTATION COMPLETE / REVIEW PENDING
+
+- Temporal worktree `trip/temporal`, clean starting baseline `5537eb6`.
+  One additive server migration `20261004000100_trip_temporal_protected_foundation.sql`
+  adds protected nullable root fields, transport endpoints, structural/aggregate
+  validators, isolated writer reservation, runtime row/bulk guards and read RLS.
+  Legacy values stay literal; canonical commands remain disabled. No commit yet.
+- Populated forward legacy/reservation/Track A/financial snapshots are byte-identical.
+  Two finalized clean 66-migration replays match the updated strict manifest:
+  108 RLS tables, 1,611 columns, 838 constraints, 154 functions, 125 triggers;
+  checksum `0f331b4e5f6ed5421c9ddf1a0c70bbe24b30c05977a90281534958374802900b`.
+  Final SQL: 35 files / 849 assertions PASS; negative manifest drift checks PASS.
+- Typecheck/lint/UI guard pass. Full TS: 1,178 pass, one pre-existing architecture
+  boundary failure (`LedgerExpenseDetailScreen.tsx` imports `@/data/api`); both
+  offending file and test are unchanged. Full-repository green gate remains blocked.
+- Authority/acceptance matrix:
+  `docs/architecture/TRIP_CANONICAL_B_T3B_PROTECTED_SERVER_FOUNDATION_REPORT.md`
+  and `TRIP_CANONICAL_B_T3A_SCHEMA_WRITER_CONTRACT.md`.
+- Next checkpoint: human + independent review only. No B-T3C command activation,
+  Mobile/SQLite changes, Track A/Booking/Source redesign or remote deployment.
+  Production/Hosted Dev accessed: NO; sibling worktrees modified: NO.
 
 ## Trip Canonical A1-I2A — IMPLEMENTATION COMPLETE / REVIEW PENDING
 
