@@ -1,5 +1,17 @@
 # OTR Mobile 2.0 Agent Guide
 
+## Mandatory UI foundation
+
+Before creating or materially modifying user-facing UI, read
+`docs/architecture/ui-foundation.md` and use the canonical OTR UI primitives.
+Before user-facing copy/localization changes, also read
+`docs/architecture/OTR_TERMINOLOGY_GLOSSARY.md`, the normative terminology source.
+Preserve its domain distinctions and contextual exceptions.
+This applies to every module and fresh Codex chat, including Ledger and Trip.
+Do not add hard-coded UI colors, untranslated user-facing strings, ad-hoc
+navigation chrome or duplicate canonical controls. Run `npm run ui:guard`
+and the relevant checks specified there. Nested instructions must retain this rule.
+
 Every agent must read these files before making product or architecture changes:
 
 - `AGENTS.md`
@@ -55,6 +67,7 @@ Only explicit server rejection, revoked or invalid refresh session, disabled acc
 The intended GitHub repository is `https://github.com/xoery83/OTR-mobile`.
 
 At initialization time this local checkout is intentionally documentation-first. Do not start building core Today, Expenses, Tickets, or Capture screens until the architecture decisions listed in the first delivery are confirmed.
+
 # Codex Context & Token Efficiency Rules
 
 These rules exist to reduce unnecessary repository scanning, repeated context reconstruction, and oversized completion reports while preserving correctness.

@@ -1,3 +1,8 @@
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { systemMessage } from "@/ui/domainLabels";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -9,7 +14,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -24,12 +28,16 @@ import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccoun
 import { authenticateDevAccount } from "@/data/auth/devAccountAuthentication";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 
+import { UiTextInput as TextInput } from "@/ui/forms";
+
 import { AppIcon } from "./AppIcon";
-import { isApprovedDevIdentity, journeyRoleLabel, maskEmail } from "./globalMenuModel";
+import { isApprovedDevIdentity, maskEmail } from "./globalMenuModel";
 
 type LocalAccount = AccountIdentity & { active: boolean };
 
 export function AccountManagementScreen({ authBoundary = false }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const scrollRef = useRef<ScrollView>(null);
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ mode?: string; returnTo?: string }>();
@@ -74,7 +82,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
           setShowLogin(true);
       })
       .catch(() => {
-        if (active) setError("Accounts could not be loaded.");
+        if (active) setError(t("account.loadFailed"));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -99,9 +107,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
       await accountSwitch.switchAccount(account.userId);
       router.replace(returnTo as never);
     } catch {
-      setError(
-        "The account could not be switched. Your previous account is still active.",
-      );
+      setError(t("account.switchFailed"));
     } finally {
       setBusy(false);
     }
@@ -109,18 +115,18 @@ export function AccountManagementScreen({ authBoundary = false }) {
 
   const removeAccount = (account: LocalAccount) =>
     Alert.alert(
-      "Remove account from this device?",
-      `${account.displayName} will need to sign in again on this device.`,
+      t("account.removeQuestion"),
+      t("account.removeBody", { name: account.displayName }),
       [
-        { style: "cancel", text: "Cancel" },
+        { style: "cancel", text: t("account.cancel") },
         {
           style: "destructive",
-          text: "Remove",
+          text: t("account.remove"),
           onPress: () => {
             setBusy(true);
             void removeLocalAccount(account.userId)
               .then(load)
-              .catch(() => setError("The remembered account could not be removed."))
+              .catch(() => setError(t("account.removeFailed")))
               .finally(() => setBusy(false));
           },
         },
@@ -129,10 +135,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
 
   const authenticate = async () => {
     if (process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT !== "dev") {
-      Alert.alert(
-        "Sign-in unavailable",
-        "This build does not have an authentication provider configured.",
-      );
+      Alert.alert(t("account.unavailable"), t("account.providerMissing"));
       return;
     }
     setBusy(true);
@@ -140,6 +143,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
     try {
       const session = await authenticateDevAccount(email.trim(), password);
       if (devSelector && (!session.identity || !isApprovedDevIdentity(session.identity)))
+        // ui-foundation-exception: string -- internal authentication sentinel matched below; localized only when rendered
         throw new Error("This is not an approved test account.");
       await accountSwitch.activateSession(session);
       setPassword("");
@@ -149,7 +153,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
       setError(
         caught instanceof Error && caught.message.includes("approved test account")
           ? caught.message
-          : "Sign-in failed. Check the account details and try again.",
+          : t("account.loginFailed"),
       );
     } finally {
       setBusy(false);
@@ -157,17 +161,17 @@ export function AccountManagementScreen({ authBoundary = false }) {
   };
 
   const logout = () =>
-    Alert.alert("Sign out?", "Local trip data will remain available on this device.", [
-      { style: "cancel", text: "Cancel" },
+    Alert.alert(t("account.signoutQuestion"), t("account.localData"), [
+      { style: "cancel", text: t("account.cancel") },
       {
         style: "destructive",
-        text: "Sign out",
+        text: t("account.signout"),
         onPress: () => {
           setBusy(true);
           void accountSwitch
             .logout()
             .then(() => router.replace("/foundation"))
-            .catch(() => setError("Sign out failed. Please try again."))
+            .catch(() => setError(t("account.signoutFailed")))
             .finally(() => setBusy(false));
         },
       },
@@ -181,7 +185,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
   if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator accessibilityLabel="Loading accounts" />
+        <ActivityIndicator accessibilityLabel={t("account.loading")} />
       </View>
     );
 
@@ -196,11 +200,11 @@ export function AccountManagementScreen({ authBoundary = false }) {
         ref={scrollRef}
       >
         <Text accessibilityRole="header" style={styles.title}>
-          {devSelector ? "Test accounts" : "Accounts"}
+          {devSelector ? t("account.testAccounts") : t("account.accounts")}
         </Text>
 
         {active ? (
-          <AccountSection title="Active account">
+          <AccountSection title={t("account.activeAccount")}>
             <AccountRow
               account={active}
               active
@@ -211,7 +215,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
         ) : null}
 
         <AccountSection
-          title={devSelector ? "Approved test accounts" : "Remembered accounts"}
+          title={devSelector ? t("account.approved") : t("account.remembered")}
         >
           {remembered.length ? (
             remembered.map((account) => (
@@ -224,45 +228,48 @@ export function AccountManagementScreen({ authBoundary = false }) {
               />
             ))
           ) : (
-            <Text style={styles.empty}>
-              No other accounts are remembered on this device.
-            </Text>
+            <Text style={styles.empty}>{t("account.empty")}</Text>
           )}
         </AccountSection>
 
         <View style={styles.actions}>
           <ActionRow
             icon="person.badge.plus"
-            label="Add / Login another account"
+            label={t("account.addLogin")}
             onPress={() => setShowLogin((visible) => !visible)}
           />
           {active ? (
-            <ActionRow destructive icon="arrow.right" label="Sign out" onPress={logout} />
+            <ActionRow
+              destructive
+              icon="arrow.right"
+              label={t("account.signout")}
+              onPress={logout}
+            />
           ) : null}
         </View>
 
         {showLogin ? (
           <View style={styles.login}>
             <Text accessibilityRole="header" style={styles.sectionTitle}>
-              Login another account
+              {t("account.loginAnother")}
             </Text>
             <TextInput
-              accessibilityLabel="Email"
+              accessibilityLabel={t("account.email")}
               autoCapitalize="none"
               autoComplete="email"
               keyboardType="email-address"
               onChangeText={setEmail}
-              placeholder="Email"
+              placeholder={t("account.email")}
               style={styles.input}
               value={email}
             />
             <TextInput
-              accessibilityLabel="Password"
+              accessibilityLabel={t("account.password")}
               autoCapitalize="none"
               onChangeText={setPassword}
               onFocus={() => scrollRef.current?.scrollToEnd({ animated: true })}
               onSubmitEditing={Keyboard.dismiss}
-              placeholder="Password"
+              placeholder={t("account.password")}
               returnKeyType="done"
               secureTextEntry
               style={styles.input}
@@ -279,7 +286,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
               ]}
             >
               <Text style={styles.primaryButtonLabel}>
-                {busy ? "Signing in…" : "Login"}
+                {busy ? t("account.signingIn") : t("account.login")}
               </Text>
             </Pressable>
           </View>
@@ -287,7 +294,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
 
         {error ? (
           <Text accessibilityLiveRegion="polite" style={styles.error}>
-            {error}
+            {systemMessage(error)}
           </Text>
         ) : null}
       </ScrollView>
@@ -302,6 +309,8 @@ function AccountSection({
   children: React.ReactNode;
   title: string;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.sectionWrap}>
       <Text accessibilityRole="header" style={styles.sectionTitle}>
@@ -329,14 +338,24 @@ function AccountRow({
   onRemove?: () => void;
   role?: string | null;
 }) {
-  const detail = [journeyRoleLabel(role ?? null), maskEmail(account.email)]
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+  const detail = [
+    role ? t(role === "owner" ? "role.organizer" : "role.member") : null,
+    maskEmail(account.email),
+  ]
     .filter(Boolean)
     .join(" · ");
   const name = displayName ?? account.displayName;
   return (
     <View style={styles.accountRow}>
       <Pressable
-        accessibilityLabel={`${active ? "Active account" : "Switch to"} ${name}${detail ? `, ${detail}` : ""}`}
+        accessibilityLabel={t("account.rowAccessibility", {
+          action: active ? t("account.activeAccount") : t("account.switchTo"),
+          name,
+          detail: detail ? `, ${detail}` : "",
+        })}
         accessibilityRole={active ? "text" : "button"}
         accessibilityState={{ disabled, selected: active }}
         disabled={active || disabled}
@@ -344,7 +363,7 @@ function AccountRow({
         style={styles.accountMain}
       >
         <AppIcon
-          color={active ? "#0F766E" : "#475569"}
+          color={active ? colors.accent : colors.textSecondary}
           name="person.crop.circle"
           size={24}
         />
@@ -353,18 +372,20 @@ function AccountRow({
           {detail ? <Text style={styles.accountDetail}>{detail}</Text> : null}
         </View>
         <Text style={active ? styles.activeLabel : styles.switchLabel}>
-          {active ? "Active" : "Switch"}
+          {active ? t("account.active") : t("account.switch")}
         </Text>
       </Pressable>
       {onRemove ? (
         <Pressable
-          accessibilityLabel={`Remove ${account.displayName} from this device`}
+          accessibilityLabel={t("account.removeAccessibility", {
+            name: account.displayName,
+          })}
           accessibilityRole="button"
           disabled={disabled}
           onPress={onRemove}
           style={styles.removeButton}
         >
-          <Text style={styles.removeLabel}>Remove</Text>
+          <Text style={styles.removeLabel}>{t("account.remove")}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -382,12 +403,15 @@ function ActionRow({
   label: string;
   onPress: () => void;
 }) {
-  const color = destructive ? "#B42318" : "#0F766E";
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+  const color = destructive ? colors.destructive : colors.accent;
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.actionRow}>
       <AppIcon color={color} name={icon} size={20} />
       <Text style={[styles.actionLabel, destructive && styles.destructive]}>{label}</Text>
-      <AppIcon color="#64748B" name="chevron.right" size={14} />
+      <AppIcon color={colors.textTertiary} name="chevron.right" size={14} />
     </Pressable>
   );
 }
@@ -419,85 +443,91 @@ async function readAccountView() {
   }
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  center: { alignItems: "center", flex: 1, justifyContent: "center" },
-  content: { gap: 22, padding: 20, paddingBottom: 40 },
-  title: { color: "#0F172A", fontSize: 28, fontWeight: "800" },
-  sectionWrap: { gap: 8 },
-  sectionTitle: { color: "#475569", fontSize: 14, fontWeight: "700" },
-  group: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#D8DEE7",
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: "hidden",
-  },
-  accountRow: {
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  accountMain: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 64,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  accountCopy: { flex: 1 },
-  accountName: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
-  accountDetail: { color: "#64748B", fontSize: 13, marginTop: 2 },
-  activeLabel: { color: "#0F766E", fontSize: 13, fontWeight: "700" },
-  switchLabel: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  removeButton: {
-    alignItems: "center",
-    borderTopColor: "#E5E7EB",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    justifyContent: "center",
-    minHeight: 44,
-  },
-  removeLabel: { color: "#B42318", fontSize: 14, fontWeight: "600" },
-  empty: { color: "#64748B", fontSize: 15, padding: 14 },
-  actions: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#D8DEE7",
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: "hidden",
-  },
-  actionRow: {
-    alignItems: "center",
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 52,
-    paddingHorizontal: 14,
-  },
-  actionLabel: { color: "#0F766E", flex: 1, fontSize: 16, fontWeight: "600" },
-  destructive: { color: "#B42318" },
-  login: { gap: 12 },
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    borderWidth: 1,
-    color: "#0F172A",
-    fontSize: 16,
-    minHeight: 48,
-    paddingHorizontal: 12,
-  },
-  primaryButton: {
-    alignItems: "center",
-    backgroundColor: "#0F766E",
-    borderRadius: 8,
-    justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 16,
-  },
-  primaryButtonLabel: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
-  disabled: { opacity: 0.45 },
-  pressed: { opacity: 0.75 },
-  error: { color: "#B42318", fontSize: 14 },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    center: {
+      backgroundColor: colors.background,
+      alignItems: "center",
+      flex: 1,
+      justifyContent: "center",
+    },
+    content: { gap: 22, padding: 20, paddingBottom: 40 },
+    title: { color: colors.textPrimary, fontSize: 28, fontWeight: "800" },
+    sectionWrap: { gap: 8 },
+    sectionTitle: { color: colors.textSecondary, fontSize: 14, fontWeight: "700" },
+    group: {
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      overflow: "hidden",
+    },
+    accountRow: {
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    accountMain: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 12,
+      minHeight: 64,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+    },
+    accountCopy: { flex: 1 },
+    accountName: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+    accountDetail: { color: colors.textTertiary, fontSize: 13, marginTop: 2 },
+    activeLabel: { color: colors.accent, fontSize: 13, fontWeight: "700" },
+    switchLabel: { color: colors.accent, fontSize: 14, fontWeight: "700" },
+    removeButton: {
+      alignItems: "center",
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      justifyContent: "center",
+      minHeight: 44,
+    },
+    removeLabel: { color: colors.destructive, fontSize: 14, fontWeight: "600" },
+    empty: { color: colors.textTertiary, fontSize: 15, padding: 14 },
+    actions: {
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      overflow: "hidden",
+    },
+    actionRow: {
+      alignItems: "center",
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 12,
+      minHeight: 52,
+      paddingHorizontal: 14,
+    },
+    actionLabel: { color: colors.accent, flex: 1, fontSize: 16, fontWeight: "600" },
+    destructive: { color: colors.destructive },
+    login: { gap: 12 },
+    input: {
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 8,
+      borderWidth: 1,
+      color: colors.textPrimary,
+      fontSize: 16,
+      minHeight: 48,
+      paddingHorizontal: 12,
+    },
+    primaryButton: {
+      alignItems: "center",
+      backgroundColor: colors.accent,
+      borderRadius: 8,
+      justifyContent: "center",
+      minHeight: 48,
+      paddingHorizontal: 16,
+    },
+    primaryButtonLabel: { color: colors.onAccent, fontSize: 16, fontWeight: "700" },
+    disabled: { opacity: 0.45 },
+    pressed: { opacity: 0.75 },
+    error: { color: colors.destructive, fontSize: 14 },
+  });

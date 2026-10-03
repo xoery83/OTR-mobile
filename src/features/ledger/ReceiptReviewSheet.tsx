@@ -1,3 +1,9 @@
+import { systemMessage, domainLabel } from "@/ui/domainLabels";
+import { t } from "@/ui/locale";
+import { UiTextInput as TextInput } from "@/ui/forms";
+import { useUiTheme, useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { OverlayDismissAction } from "@/components/OverlayDismissAction";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import {
@@ -10,7 +16,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -75,6 +80,10 @@ export function ReceiptReviewSheet({
   scanBusy,
   sourceChooser,
 }: Props) {
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+
   const window = useWindowDimensions();
   const landscape = window.width > window.height;
   const [workspaceWidth, setWorkspaceWidth] = useState(window.width);
@@ -130,7 +139,7 @@ export function ReceiptReviewSheet({
       onConfirm(confirmReceiptReview(review, session), session.revision);
       setError(null);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Check the review fields.");
+      setError(cause instanceof Error ? cause.message : t("ui.checkTheReviewFields"));
     }
   };
   const cancel = () => {
@@ -201,24 +210,26 @@ export function ReceiptReviewSheet({
           importantForAccessibility={currencyPicker ? "no-hide-descendants" : "auto"}
         >
           <SheetHeader
-            leftLabel="Cancel"
+            leftLabel={t("ui.cancel")}
             onLeft={cancel}
             onRight={confirm}
-            rightLabel="Confirm"
-            title="Review receipt"
+            rightLabel={t("ui.confirm")}
+            title={t("ui.reviewReceipt")}
           />
           <View style={styles.scanRow}>
             <Pressable
-              accessibilityLabel="Scan another part"
+              accessibilityLabel={t("ui.scanAnotherPart")}
               accessibilityRole="button"
               accessibilityState={{ disabled: !canScanAnother }}
               disabled={!canScanAnother}
               onPress={onScanAnother}
               style={[styles.scan, !canScanAnother && styles.muted]}
             >
-              <Text style={styles.actionText}>+ Scan another part</Text>
+              <Text style={styles.actionText}>{t("ui.scanAnotherPart2")}</Text>
             </Pressable>
-            <Text style={styles.capacity}>{usedSlots} of 3</Text>
+            <Text style={styles.capacity}>
+              {usedSlots} {t("ui.of3")}
+            </Text>
           </View>
           <View
             onLayout={(event) => setWorkspaceWidth(event.nativeEvent.layout.width)}
@@ -232,25 +243,25 @@ export function ReceiptReviewSheet({
             >
               {compare ? (
                 <Pressable
-                  accessibilityLabel="Close receipt drawer"
+                  accessibilityLabel={t("ui.closeReceiptDrawer")}
                   accessibilityRole="button"
                   onPress={closeReceipt}
                   style={styles.formEdge}
                 >
                   <AppIcon
                     name="rectangle.righthalf.inset.filled.arrow.right"
-                    color="#64748B"
+                    color={colors.textSecondary}
                     size={18}
                   />
-                  <Text style={styles.collapseText}>Hide image</Text>
+                  <Text style={styles.collapseText}>{t("ui.hideImage")}</Text>
                 </Pressable>
               ) : null}
               <View style={styles.field}>
-                <Text style={styles.label}>Title</Text>
+                <Text style={styles.label}>{t("ui.title")}</Text>
                 <TextInput
-                  accessibilityLabel="Receipt Review Title"
+                  accessibilityLabel={t("ui.receiptReviewTitle")}
                   onChangeText={(value) => change("title", value)}
-                  placeholder="What was it?"
+                  placeholder={t("ui.whatWasIt")}
                   style={styles.input}
                   value={review.title.value}
                   multiline={compare}
@@ -258,7 +269,7 @@ export function ReceiptReviewSheet({
                 {compare ? (
                   <CandidateDropdown
                     tags={titleTags}
-                    label="Title"
+                    label={t("ui.title")}
                     onPress={() => {
                       Keyboard.dismiss();
                       setOverflow("Title");
@@ -267,7 +278,7 @@ export function ReceiptReviewSheet({
                 ) : (
                   <ReceiptCandidateTags
                     tags={titleTags}
-                    label="Title"
+                    label={t("ui.title")}
                     onOverflow={() => {
                       Keyboard.dismiss();
                       setOverflow("Title");
@@ -276,9 +287,9 @@ export function ReceiptReviewSheet({
                 )}
               </View>
               <View style={styles.field}>
-                <Text style={styles.label}>Amount</Text>
+                <Text style={styles.label}>{t("ui.amount")}</Text>
                 <TextInput
-                  accessibilityLabel="Receipt Review Amount"
+                  accessibilityLabel={t("ui.receiptReviewAmount")}
                   inputMode={scale === 0 ? "numeric" : "decimal"}
                   keyboardType={scale === 0 ? "number-pad" : "decimal-pad"}
                   onChangeText={(value) =>
@@ -287,7 +298,7 @@ export function ReceiptReviewSheet({
                       currencyAmountInput(review.amount.value, value, scale ?? 2),
                     )
                   }
-                  placeholder="0"
+                  placeholder={t("ui.0")}
                   style={styles.input}
                   value={review.amount.value}
                 />
@@ -298,13 +309,13 @@ export function ReceiptReviewSheet({
                 ) : null}
                 {receiptAmountCurrencyMismatch(review) ? (
                   <Text style={styles.error}>
-                    {receiptAmountCurrencyMismatch(review)}
+                    {systemMessage(receiptAmountCurrencyMismatch(review) ?? "")}
                   </Text>
                 ) : null}
                 {compare ? (
                   <CandidateDropdown
                     tags={amountTags}
-                    label="Amount"
+                    label={t("ui.amount")}
                     onPress={() => {
                       Keyboard.dismiss();
                       setOverflow("Amount");
@@ -313,7 +324,7 @@ export function ReceiptReviewSheet({
                 ) : (
                   <ReceiptCandidateTags
                     tags={amountTags}
-                    label="Amount"
+                    label={t("ui.amount")}
                     onOverflow={() => {
                       Keyboard.dismiss();
                       setOverflow("Amount");
@@ -322,9 +333,11 @@ export function ReceiptReviewSheet({
                 )}
               </View>
               <View style={styles.field}>
-                <Text style={styles.label}>Currency</Text>
+                <Text style={styles.label}>{t("ui.currency")}</Text>
                 <Pressable
-                  accessibilityLabel={`Receipt Review Currency ${review.currency.value}`}
+                  accessibilityLabel={t("receipt.currency", {
+                    currency: review.currency.value,
+                  })}
                   accessibilityRole="button"
                   onPress={openCurrency}
                   style={styles.inputButton}
@@ -335,7 +348,7 @@ export function ReceiptReviewSheet({
                 {compare ? (
                   <CandidateDropdown
                     tags={currencyOptions}
-                    label="Currency"
+                    label={t("ui.currency")}
                     onPress={() => {
                       Keyboard.dismiss();
                       setOverflow("Currency");
@@ -344,7 +357,7 @@ export function ReceiptReviewSheet({
                 ) : (
                   <ReceiptCandidateTags
                     tags={currencyOptions}
-                    label="Currency"
+                    label={t("ui.currency")}
                     onOverflow={openCurrency}
                     alwaysOverflow
                   />
@@ -352,7 +365,7 @@ export function ReceiptReviewSheet({
               </View>
               {error ? (
                 <Text accessibilityRole="alert" style={styles.error}>
-                  {error}
+                  {systemMessage(error)}
                 </Text>
               ) : null}
             </ScrollView>
@@ -361,7 +374,7 @@ export function ReceiptReviewSheet({
                 {[...cards].reverse().map((part, index) => (
                   <Pressable
                     key={part.documentId}
-                    accessibilityLabel={`Open receipt ${part.number}`}
+                    accessibilityLabel={t("receipt.open", { number: part.number })}
                     accessibilityRole="button"
                     hitSlop={{ left: 8 }}
                     onPress={() => openReceipt(part.documentId)}
@@ -412,18 +425,20 @@ export function ReceiptReviewSheet({
                       landscape && styles.landscapeReceiptHeader,
                     ]}
                   >
-                    <Text style={styles.receiptIdentity}>Receipt {active.number}</Text>
+                    <Text style={styles.receiptIdentity}>
+                      {t("expense.receiptNumber", { position: active.number })}
+                    </Text>
                     <Pressable
-                      accessibilityLabel={`Remove receipt ${active.number}`}
+                      accessibilityLabel={t("receipt.remove", { number: active.number })}
                       accessibilityRole="button"
                       onPress={() => onRemove(active.documentId)}
                       style={styles.smallAction}
                     >
-                      <AppIcon name="trash" color="#B91C1C" size={16} />
+                      <AppIcon name="trash" color={colors.destructive} size={16} />
                     </Pressable>
                     {compare ? (
                       <Pressable
-                        accessibilityLabel="Close receipt drawer"
+                        accessibilityLabel={t("ui.closeReceiptDrawer")}
                         accessibilityRole="button"
                         onPress={closeReceipt}
                         style={styles.smallAction}
@@ -436,7 +451,7 @@ export function ReceiptReviewSheet({
                     {cards.map((part) => (
                       <Pressable
                         key={part.documentId}
-                        accessibilityLabel={`Open receipt ${part.number}`}
+                        accessibilityLabel={t("receipt.open", { number: part.number })}
                         accessibilityRole="button"
                         accessibilityState={{ selected: activeId === part.documentId }}
                         onPress={() => openReceipt(part.documentId)}
@@ -449,14 +464,14 @@ export function ReceiptReviewSheet({
                       </Pressable>
                     ))}
                     <Pressable
-                      accessibilityLabel={`Read receipt ${active.number} again`}
+                      accessibilityLabel={t("receipt.reread", { number: active.number })}
                       accessibilityRole="button"
                       accessibilityState={{ disabled: scanBusy }}
                       disabled={scanBusy}
                       onPress={() => onRetry(active.documentId)}
                       style={[styles.smallAction, scanBusy && styles.muted]}
                     >
-                      <Text style={styles.actionText}>Re-read</Text>
+                      <Text style={styles.actionText}>{t("ui.reread")}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -470,7 +485,9 @@ export function ReceiptReviewSheet({
               style={[styles.overflowOverlay, compare && styles.compareOverflowOverlay]}
             >
               <Pressable
-                accessibilityLabel={`Close ${overflow} options`}
+                accessibilityLabel={t("receipt.closeOptions", {
+                  label: domainLabel(overflow ?? ""),
+                })}
                 accessibilityRole="button"
                 onPress={() => setOverflow(null)}
                 style={StyleSheet.absoluteFill}
@@ -481,7 +498,9 @@ export function ReceiptReviewSheet({
               >
                 <View style={styles.overflowHeader}>
                   <OverlayDismissAction
-                    label={`Close ${overflow} options`}
+                    label={t("receipt.closeOptions", {
+                      label: domainLabel(overflow ?? ""),
+                    })}
                     onPress={() => setOverflow(null)}
                   />
                 </View>
@@ -492,7 +511,10 @@ export function ReceiptReviewSheet({
                   {overflowTags.map((tag) => (
                     <Pressable
                       key={tag.key}
-                      accessibilityLabel={`Use ${overflow} ${tag.label}`}
+                      accessibilityLabel={t("receipt.useSuggestion", {
+                        label: domainLabel(overflow ?? ""),
+                        value: tag.label,
+                      })}
                       accessibilityRole="button"
                       accessibilityState={{ selected: tag.selected }}
                       onPress={tag.onPress}
@@ -515,9 +537,9 @@ export function ReceiptReviewSheet({
         {currencyPicker ? (
           <View accessibilityViewIsModal style={styles.currencyOverlay}>
             <SheetHeader
-              leftLabel="Back"
+              leftLabel={t("ui.back")}
               onLeft={() => setCurrencyPicker(false)}
-              title="Currency"
+              title={t("ui.currency")}
             />
             <CurrencyPicker
               selected={review.currency.value}
@@ -544,21 +566,34 @@ function CandidateDropdown({
   label: string;
   onPress: () => void;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   if (!tags.length) return null;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${label} suggestions, ${tags.length} options`}
+      accessibilityLabel={t("receipt.suggestionsDescription", {
+        label: domainLabel(label),
+        count: tags.length,
+      })}
       onPress={onPress}
       style={styles.candidateDropdown}
     >
-      <Text style={styles.dropdownLabel}>Suggestions ({tags.length})</Text>
+      <Text style={styles.dropdownLabel}>
+        {t("receipt.suggestions", { count: tags.length })}
+      </Text>
       <Text style={styles.actionText}>⌄</Text>
     </Pressable>
   );
 }
 
 function ReceiptImage({ uri }: { uri: string }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   const [frame, setFrame] = useState({ width: 0, height: 0 });
   return (
     <View
@@ -580,7 +615,7 @@ function ReceiptImage({ uri }: { uri: string }) {
       >
         <Image
           accessible
-          accessibilityLabel="Receipt image. Pinch to zoom and drag to inspect."
+          accessibilityLabel={t("ui.receiptImagePinchToZoomAndDragToInspect")}
           resizeMode="contain"
           source={{ uri }}
           style={{ width: frame.width, height: frame.height }}
@@ -590,185 +625,189 @@ function ReceiptImage({ uri }: { uri: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: "#F6F7F9" },
-  workspace: { flex: 1, overflow: "hidden" },
-  scanRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  scan: {
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: 12,
-    backgroundColor: "#E6F5F2",
-    borderRadius: 10,
-  },
-  capacity: { color: "#64748B", fontSize: 12 },
-  muted: { opacity: 0.4 },
-  content: { gap: 16, padding: 16, paddingTop: 4, paddingBottom: 40 },
-  compareContent: { paddingHorizontal: 10 },
-  field: { gap: 6 },
-  label: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    color: "#0F172A",
-    fontSize: 17,
-    minHeight: 48,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    textAlign: "left",
-  },
-  inputButton: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 48,
-    paddingHorizontal: 10,
-  },
-  currencyValue: { color: "#0F172A", fontSize: 17 },
-  actionText: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
-  error: { color: "#B91C1C", fontSize: 14 },
-  formEdge: {
-    minHeight: 44,
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#CBD5E1",
-  },
-  collapseText: { color: "#475569", fontSize: 13, fontWeight: "600" },
-  candidateDropdown: {
-    minHeight: 44,
-    padding: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#E6F5F2",
-    borderRadius: 8,
-    gap: 4,
-  },
-  dropdownLabel: { color: "#0F766E", fontSize: 13, flexShrink: 1 },
-  currencyOverlay: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: "#F6F7F9",
-  },
-  stack: { position: "absolute", right: 0, top: 0, bottom: 0, width: 44 },
-  card: {
-    position: "absolute",
-    left: 8,
-    width: 108,
-    height: 170,
-    borderRadius: 8,
-    borderColor: "#CBD5E1",
-    borderWidth: 1,
-    backgroundColor: "#FFFFFF",
-    overflow: "hidden",
-  },
-  cardImage: { width: 108, height: 170, opacity: 0.65 },
-  cardNumber: {
-    position: "absolute",
-    top: 8,
-    left: 0,
-    width: 34,
-    textAlign: "center",
-    paddingVertical: 8,
-    backgroundColor: "#E6F5F2",
-    color: "#0F766E",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  receiptPane: {
-    position: "absolute",
-    right: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: "#E2E8F0",
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderLeftColor: "#94A3B8",
-  },
-  landscapeReceiptToolbar: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  landscapeReceiptHeader: { flex: 1, minWidth: 156 },
-  receiptHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingLeft: 8,
-    justifyContent: "space-between",
-    minHeight: 44,
-  },
-  receiptIdentity: { fontSize: 12, color: "#475569", flexShrink: 1 },
-  receiptTabs: { flexDirection: "row", flexWrap: "wrap", gap: 4, paddingHorizontal: 6 },
-  tab: {
-    width: 44,
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
-  },
-  selectedTab: { borderColor: "#0F766E", borderWidth: 1, backgroundColor: "#E6F5F2" },
-  smallAction: {
-    minWidth: 44,
-    minHeight: 44,
-    paddingHorizontal: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  imageFrame: { flex: 1, margin: 6, overflow: "hidden" },
-  overflowOverlay: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: "rgba(0,0,0,0.2)",
-    justifyContent: "flex-end",
-  },
-  compareOverflowOverlay: { backgroundColor: "transparent" },
-  overflowSheet: {
-    maxHeight: "65%",
-    backgroundColor: "#F6F7F9",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 16,
-    paddingBottom: 32,
-  },
-  compareOverflowSheet: { backgroundColor: "rgba(246,247,249,0.45)" },
-  overflowHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  overflowList: { gap: 4 },
-  overflowOption: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    minHeight: 48,
-    padding: 12,
-    justifyContent: "center",
-  },
-  compareOverflowOption: {
-    backgroundColor: "transparent",
-    experimental_backgroundImage:
-      "linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.96) 28%, rgba(255,255,255,0) 52%, rgba(255,255,255,0) 100%)",
-  },
-  optionText: { color: "#0F766E", fontSize: 16 },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    workspace: { flex: 1, overflow: "hidden" },
+    scanRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      gap: 8,
+    },
+    scan: {
+      minHeight: 44,
+      justifyContent: "center",
+      paddingHorizontal: 12,
+      backgroundColor: colors.accentSurface,
+      borderRadius: 10,
+    },
+    capacity: { color: colors.textSecondary, fontSize: 12 },
+    muted: { opacity: 0.4 },
+    content: { gap: 16, padding: 16, paddingTop: 4, paddingBottom: 40 },
+    compareContent: { paddingHorizontal: 10 },
+    field: { gap: 6 },
+    label: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+    input: {
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 8,
+      borderWidth: StyleSheet.hairlineWidth,
+      color: colors.textPrimary,
+      fontSize: 17,
+      minHeight: 48,
+      paddingHorizontal: 10,
+      paddingVertical: 10,
+      textAlign: "left",
+    },
+    inputButton: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 48,
+      paddingHorizontal: 10,
+    },
+    currencyValue: { color: colors.textPrimary, fontSize: 17 },
+    actionText: { color: colors.accent, fontSize: 15, fontWeight: "700" },
+    error: { color: colors.destructive, fontSize: 14 },
+    formEdge: {
+      minHeight: 44,
+      justifyContent: "center",
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.separator,
+    },
+    collapseText: { color: colors.textTertiary, fontSize: 13, fontWeight: "600" },
+    candidateDropdown: {
+      minHeight: 44,
+      padding: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      backgroundColor: colors.accentSurface,
+      borderRadius: 8,
+      gap: 4,
+    },
+    dropdownLabel: { color: colors.accent, fontSize: 13, flexShrink: 1 },
+    currencyOverlay: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      backgroundColor: colors.background,
+    },
+    stack: { position: "absolute", right: 0, top: 0, bottom: 0, width: 44 },
+    card: {
+      position: "absolute",
+      left: 8,
+      width: 108,
+      height: 170,
+      borderRadius: 8,
+      borderColor: colors.separator,
+      borderWidth: 1,
+      backgroundColor: colors.surface,
+      overflow: "hidden",
+    },
+    cardImage: { width: 108, height: 170, opacity: 0.65 },
+    cardNumber: {
+      position: "absolute",
+      top: 8,
+      left: 0,
+      width: 34,
+      textAlign: "center",
+      paddingVertical: 8,
+      backgroundColor: colors.accentSurface,
+      color: colors.accent,
+      fontSize: 15,
+      fontWeight: "700",
+    },
+    receiptPane: {
+      position: "absolute",
+      right: 0,
+      top: 0,
+      bottom: 0,
+      backgroundColor: colors.separator,
+      borderLeftWidth: StyleSheet.hairlineWidth,
+      borderLeftColor: colors.disabled,
+    },
+    landscapeReceiptToolbar: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+    },
+    landscapeReceiptHeader: { flex: 1, minWidth: 156 },
+    receiptHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingLeft: 8,
+      justifyContent: "space-between",
+      minHeight: 44,
+    },
+    receiptIdentity: { fontSize: 12, color: colors.textTertiary, flexShrink: 1 },
+    receiptTabs: { flexDirection: "row", flexWrap: "wrap", gap: 4, paddingHorizontal: 6 },
+    tab: {
+      width: 44,
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+    },
+    selectedTab: {
+      borderColor: colors.accent,
+      borderWidth: 1,
+      backgroundColor: colors.accentSurface,
+    },
+    smallAction: {
+      minWidth: 44,
+      minHeight: 44,
+      paddingHorizontal: 8,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    imageFrame: { flex: 1, margin: 6, overflow: "hidden" },
+    overflowOverlay: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      backgroundColor: colors.overlay,
+      justifyContent: "flex-end",
+    },
+    compareOverflowOverlay: { backgroundColor: colors.transparent },
+    overflowSheet: {
+      maxHeight: "65%",
+      backgroundColor: colors.background,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      padding: 16,
+      paddingBottom: 32,
+    },
+    compareOverflowSheet: { backgroundColor: colors.overlay },
+    overflowHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 8,
+    },
+    overflowList: { gap: 4 },
+    overflowOption: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      minHeight: 48,
+      padding: 12,
+      justifyContent: "center",
+    },
+    compareOverflowOption: {
+      backgroundColor: colors.transparent,
+      experimental_backgroundImage: `linear-gradient(90deg, ${colors.surface} 0%, ${colors.surface} 28%, ${colors.transparent} 52%, ${colors.transparent} 100%)`,
+    },
+    optionText: { color: colors.accent, fontSize: 16 },
+  });

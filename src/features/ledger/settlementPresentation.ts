@@ -1,3 +1,4 @@
+import { t, type MessageKey } from "@/ui/locale";
 import type { LedgerReviewFinding } from "@/hooks/useLedgerReview";
 import type { Stage7Finalized } from "@/hooks/useStage7Settlement";
 
@@ -23,27 +24,27 @@ export function settlementMemberName(settlement: Stage7Finalized, memberId: stri
       ?.displayNameSnapshot ??
     settlement.adjustmentDeltas?.find((member) => member.memberId === memberId)
       ?.displayNameSnapshot ??
-    "Traveller"
+    t("common.traveller")
   );
 }
 
 export function transferStatusLabel(transfer: FinalizedTransfer) {
-  if (transfer.status === "SETTLED") return "Received";
-  if (transfer.status === "DISPUTED") return "Disputed";
-  if (transfer.awaitingAmount.minor > 0) return "Waiting for confirmation";
-  if (transfer.confirmedDischarge.minor > 0) return "Partly paid";
-  return "Payment needed";
+  if (transfer.status === "SETTLED") return t("settlement.received");
+  if (transfer.status === "DISPUTED") return t("ledgerMigration.copy77");
+  if (transfer.awaitingAmount.minor > 0) return t("ledgerMigration.copy78");
+  if (transfer.confirmedDischarge.minor > 0) return t("ledgerMigration.copy79");
+  return t("ledgerMigration.copy80");
 }
 
 export function paymentStatusLabel(payment: FinalizedTransfer["payments"][number]) {
   if (payment.status === "AWAITING_CONFIRMATION")
     return payment.syncStatus === "SYNCED"
-      ? "Waiting for confirmation"
-      : "Saved on this iPhone—will sync";
-  if (payment.status === "CONFIRMED") return "Received";
-  if (payment.status === "DISPUTED") return "Disputed";
-  if (payment.status === "REJECTED") return "Not received";
-  return "Payment corrected";
+      ? t("ledgerMigration.copy78")
+      : t("ledgerMigration.copy81");
+  if (payment.status === "CONFIRMED") return t("settlement.received");
+  if (payment.status === "DISPUTED") return t("ledgerMigration.copy77");
+  if (payment.status === "REJECTED") return t("ledgerMigration.copy82");
+  return t("ledgerMigration.copy83");
 }
 
 export function primaryTransferAction(
@@ -60,53 +61,53 @@ export function primaryTransferAction(
   return null;
 }
 
-const findingCopy: Record<string, { title: string; why: string }> = {
+const findingCopy: Record<string, { titleKey: MessageKey; whyKey: MessageKey }> = {
   HUMAN_CONCERN: {
-    title: "Something looks wrong",
-    why: "A Journey member asked for this financial item to be checked.",
+    titleKey: "expense.somethingWrong",
+    whyKey: "reviewFlow.label18",
   },
   POSSIBLE_DUPLICATE: {
-    title: "Possible duplicate Expense",
-    why: "This looks similar to another Expense and may count the same spending twice.",
+    titleKey: "reviewFlow.label19",
+    whyKey: "reviewFlow.label20",
   },
   AMOUNT_OUTLIER: {
-    title: "Unusually large amount",
-    why: "This amount is much larger than typical Expenses in this Journey.",
+    titleKey: "reviewFlow.label21",
+    whyKey: "reviewFlow.label22",
   },
   RATE_OUTLIER: {
-    title: "Exchange rate looks unusual",
-    why: "The saved exchange rate is outside the expected range and should be checked.",
+    titleKey: "reviewFlow.label23",
+    whyKey: "reviewFlow.label24",
   },
   EVIDENCE_MISMATCH: {
-    title: "Payment amount differs from Expense",
-    why: "The posted payment amount differs from the saved Expense amount.",
+    titleKey: "reviewFlow.label25",
+    whyKey: "reviewFlow.label26",
   },
   PARTICIPANT_ANOMALY: {
-    title: "Payer is not included",
-    why: "The person who paid is not included among this Expense’s participants.",
+    titleKey: "reviewFlow.label27",
+    whyKey: "reviewFlow.label28",
   },
 };
 
 export function reviewFindingCopy(finding: LedgerReviewFinding) {
   if (finding.origin === "HUMAN" && finding.humanNote?.trim())
-    return { ...findingCopy.HUMAN_CONCERN, title: finding.humanNote.trim() };
-  return (
-    findingCopy[finding.findingType] ?? {
-      title: finding.findingType
-        .toLowerCase()
-        .replaceAll("_", " ")
-        .replace(/^./, (letter) => letter.toUpperCase()),
-      why: "This Expense needs a quick review before the group relies on it.",
-    }
-  );
+    return { title: finding.humanNote.trim(), why: t(findingCopy.HUMAN_CONCERN.whyKey) };
+  const copy = findingCopy[finding.findingType];
+  if (copy) return { title: t(copy.titleKey), why: t(copy.whyKey) };
+  return {
+    title: finding.findingType
+      .toLowerCase()
+      .replaceAll("_", " ")
+      .replace(/^./, (letter) => letter.toUpperCase()),
+    why: t("reviewFlow.label29"),
+  };
 }
 
 export function reviewStatusLabel(status: LedgerReviewFinding["status"]) {
-  if (status === "OPEN") return "Needs review";
-  if (status === "ACKNOWLEDGED") return "Acknowledged";
-  if (status === "DISMISSED") return "Dismissed";
-  if (status === "RESOLVED") return "Resolved";
-  return "No longer current";
+  if (status === "OPEN") return t("ui.needsReview");
+  if (status === "ACKNOWLEDGED") return t("reviewFlow.label13");
+  if (status === "DISMISSED") return t("reviewFlow.label14");
+  if (status === "RESOLVED") return t("reviewFlow.label15");
+  return t("reviewFlow.label16");
 }
 
 export function canActOnFinding(finding: LedgerReviewFinding) {

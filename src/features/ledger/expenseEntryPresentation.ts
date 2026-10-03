@@ -1,3 +1,4 @@
+import { t, getFormatLocale, type MessageKey } from "@/ui/locale";
 import type {
   ExpenseSettlementParticipation,
   ExpenseSplitMethod,
@@ -15,17 +16,21 @@ export function remainingExpenseAttachmentCapacity(selected: number, scanning = 
   return Math.max(0, MAX_EXPENSE_ATTACHMENTS - selected - scanning);
 }
 
-const splitSummary: Record<ExpenseSplitMethod, string> = {
-  EQUAL_PERSON: "Split equally",
-  EQUAL_HOUSEHOLD: "Equal per household",
-  HOUSEHOLD_SHARES: "Household shares",
-  EXACT: "Exact split",
-  PERCENTAGE: "Percentage split",
+const splitSummary: Record<ExpenseSplitMethod, MessageKey> = {
+  EQUAL_PERSON: "expense.splitEqual",
+  EQUAL_HOUSEHOLD: "expense.splitHousehold",
+  HOUSEHOLD_SHARES: "expense.householdShares",
+  EXACT: "expense.exactSplit",
+  PERCENTAGE: "expense.percentageSplit",
 };
+
+export function splitMethodLabel(method: ExpenseSplitMethod) {
+  return t(splitSummary[method]);
+}
 
 export function compactExpenseDate(key: string, today = new Date()): string {
   const [year, month, day] = key.split("-").map(Number);
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getFormatLocale(), {
     month: "short",
     day: "numeric",
     ...(year === today.getFullYear() ? {} : { year: "numeric" }),
@@ -44,17 +49,26 @@ export function expenseSharingSummary(
 ): string[] {
   const name = (id: string) =>
     id === actorId
-      ? "You"
-      : (members.find((member) => member.id === id)?.displayName ?? "Traveller");
+      ? t("common.you")
+      : (members.find((member) => member.id === id)?.displayName ??
+        t("common.traveller"));
   const participants = draft.participantIds;
   if (
     participants.length === 1 &&
     participants[0] === actorId &&
     draft.payerId === actorId
   )
-    return ["Just you"];
-  const first = `${name(draft.payerId)} paid · ${participants.length === 1 ? name(participants[0]) : `${participants.length} people`}`;
-  const details = [...(participants.length > 1 ? [splitSummary[draft.splitMode]] : [])];
+    return [t("expense.justYou")];
+  const first = t("expense.sharingSummary", {
+    payer: name(draft.payerId),
+    participants:
+      participants.length === 1
+        ? name(participants[0])
+        : t("expense.people", { count: participants.length }),
+  });
+  const details = [
+    ...(participants.length > 1 ? [splitMethodLabel(draft.splitMode)] : []),
+  ];
   return details.length ? [first, details.join(" · ")] : [first];
 }
 
@@ -66,8 +80,8 @@ export function expenseSettlementLabel(
 ) {
   if (!shouldShowGroupSettlement(draft.participantIds, draft.payerId)) return null;
   return draft.settlementParticipation === "INCLUDED"
-    ? "Included in settlement"
-    : "Excluded from settlement";
+    ? t("expense.includedSettlement")
+    : t("expense.excludedSettlement");
 }
 
 export const GROUP_SETTLEMENT_EXPLANATION =
@@ -123,8 +137,8 @@ export function expenseDraftAttachmentLabel(
     filename && !generated
       ? filename
       : image
-        ? `Receipt ${position}`
-        : `Document ${position}.pdf`;
+        ? t("expense.receiptNumber", { position })
+        : t("expense.documentNumber", { position });
   const type =
     draft.mimeType === "application/pdf"
       ? "PDF"

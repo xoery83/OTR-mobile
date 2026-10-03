@@ -27,6 +27,7 @@ vi.mock("react-native", async () => {
         style: Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style,
       }),
     StyleSheet: { create: (styles: unknown) => styles },
+    useColorScheme: () => "light",
     Text: "span",
     View: ({
       style,

@@ -1,3 +1,8 @@
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { t, getFormatLocale } from "@/ui/locale";
+import { systemMessage } from "@/ui/domainLabels";
 import { MoneyText } from "./MoneyText";
 import {
   Alert,
@@ -17,6 +22,8 @@ import { formatLedgerMoney, formatValuationPolicy } from "./format";
 import { settlementBalanceLabel, settlementHistory } from "./settlementHistory";
 
 export function SettlementStatementScreen() {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 2;
   const { journeyId, versionId, view } = useLocalSearchParams<{
     journeyId?: string;
@@ -57,9 +64,7 @@ export function SettlementStatementScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.meta}>
-          {settlement.updating
-            ? "Loading settlement history…"
-            : "No final settlement is available."}
+          {settlement.updating ? t("reviewFlow.copy92") : t("reviewFlow.copy93")}
         </Text>
       </View>
     );
@@ -68,21 +73,23 @@ export function SettlementStatementScreen() {
     const entries = selectedHistory ? [selectedHistory] : [...history].reverse();
     return (
       <ScrollView
+        style={styles.viewport}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"
       >
         {selectedHistory ? (
           <Text accessibilityRole="header" style={styles.title}>
-            Settlement version #{(selectedHistory.row.lineageSequence ?? 0) + 1}
+            {t("reviewFlow.copy94")}
+            {(selectedHistory.row.lineageSequence ?? 0) + 1}
           </Text>
         ) : null}
         {!settlement.actorMemberId ? (
-          <Text style={styles.meta}>Your settlement balance is unavailable.</Text>
+          <Text style={styles.meta}>{t("reviewFlow.copy95")}</Text>
         ) : null}
         {entries.map(({ row, balanceMinor, deltaMinor, isCurrent }) => {
           const version = (row.lineageSequence ?? 0) + 1;
           const label = settlementBalanceLabel(balanceMinor);
-          const date = new Intl.DateTimeFormat(undefined, {
+          const date = new Intl.DateTimeFormat(getFormatLocale(), {
             day: "numeric",
             month: "short",
             year: "numeric",
@@ -91,18 +98,19 @@ export function SettlementStatementScreen() {
             <>
               {!selectedHistory ? (
                 <Text style={styles.rowTitle}>
-                  Version #{version}
-                  {isCurrent ? " · Current" : ""}
+                  {t("reviewFlow.copy96")}
+                  {version}
+                  {isCurrent ? t("reviewFlow.copy97") : ""}
                 </Text>
               ) : null}
               <Text style={styles.meta}>
-                {selectedHistory ? `Confirmed ${date}` : date}
+                {selectedHistory ? t("reviewFlow.copy98", { p0: date }) : date}
               </Text>
               <Text style={styles.meta}>
-                {selectedHistory ? "Your settlement" : label}
+                {selectedHistory ? t("reviewFlow.copy99") : systemMessage(label)}
               </Text>
               {selectedHistory && balanceMinor === 0 ? (
-                <Text style={styles.amount}>Settled</Text>
+                <Text style={styles.amount}>{t("reviewFlow.copy100")}</Text>
               ) : (
                 <MoneyText
                   variant={selectedHistory ? "headline" : "standard"}
@@ -111,20 +119,22 @@ export function SettlementStatementScreen() {
                   currency={row.settlementCurrency}
                   scale={row.settlementScale}
                   prefix={
-                    selectedHistory ? `${balanceMinor > 0 ? "Receive" : "Pay"} ` : ""
+                    selectedHistory
+                      ? `${systemMessage(balanceMinor > 0 ? "Receive" : "Pay")} `
+                      : ""
                   }
                 />
               )}
               {deltaMinor !== null ? (
                 <Text style={styles.meta}>
-                  {selectedHistory ? `Compared with version #${version - 1}: ` : ""}
+                  {selectedHistory ? t("reviewFlow.copy101", { p0: version - 1 }) : ""}
                   {deltaMinor > 0 ? "+" : ""}
                   {formatLedgerMoney(
                     deltaMinor,
                     row.settlementCurrency,
                     row.settlementScale,
                   )}
-                  {selectedHistory ? "" : ` since version #${version - 1}`}
+                  {selectedHistory ? "" : t("reviewFlow.copy102", { p0: version - 1 })}
                 </Text>
               ) : null}
             </>
@@ -142,7 +152,7 @@ export function SettlementStatementScreen() {
                 }
                 style={styles.statementLink}
               >
-                <Text style={styles.secondaryText}>View statement ›</Text>
+                <Text style={styles.secondaryText}>{t("reviewFlow.copy103")}</Text>
               </Pressable>
             </View>
           ) : (
@@ -167,28 +177,26 @@ export function SettlementStatementScreen() {
 
   return (
     <ScrollView
+      style={styles.viewport}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
     >
       <Text accessibilityRole="header" style={styles.title}>
         {selected
-          ? `Settlement version #${(selected.lineageSequence ?? 0) + 1}`
-          : "Settlement statement"}
+          ? t("reviewFlow.copy104", { p0: (selected.lineageSequence ?? 0) + 1 })
+          : t("reviewFlow.copy105")}
       </Text>
-      <Text style={styles.body}>
-        This explains the accepted Expenses, allocated shares and payments behind the
-        final settlement.
-      </Text>
+      <Text style={styles.body}>{t("reviewFlow.copy106")}</Text>
       {settlement.message ? (
         <Text accessibilityLiveRegion="polite" style={styles.message}>
-          {settlement.message}
+          {systemMessage(settlement.message)}
         </Text>
       ) : null}
 
       {!selected && (finalized.outstandingBalances ?? []).length ? (
         <View style={styles.section}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Outstanding
+            {t("reviewFlow.copy107")}
           </Text>
           {(finalized.outstandingBalances ?? []).map((balance) => (
             <View key={balance.memberId} style={[styles.row, largeText && styles.stack]}>
@@ -215,14 +223,16 @@ export function SettlementStatementScreen() {
             style={styles.secondary}
           >
             <Text style={styles.secondaryText}>
-              {showComparison ? "Hide comparison" : "Compare with previous version"}
+              {showComparison ? t("reviewFlow.copy108") : t("reviewFlow.copy109")}
             </Text>
           </Pressable>
           {showComparison ? (
             <View style={styles.card}>
               <Text style={styles.rowTitle}>
-                Version #{(previous.lineageSequence ?? 0) + 1} → version #
-                {(selected.lineageSequence ?? 0) + 1}
+                {t("reviewFlow.versionCompare", {
+                  before: (previous.lineageSequence ?? 0) + 1,
+                  after: (selected.lineageSequence ?? 0) + 1,
+                })}
               </Text>
               {(selected.adjustmentDeltas ?? []).map((delta) => (
                 <Text key={delta.memberId} style={styles.meta}>
@@ -232,15 +242,15 @@ export function SettlementStatementScreen() {
               ))}
               {selected.correctionSourceExpenseId ? (
                 <Text style={styles.meta}>
-                  Confirmed Expense {selected.correctionSourceExpenseId.slice(0, 8)} was
-                  replaced by {selected.correctionSuccessorExpenseId?.slice(0, 8)}.
+                  {t("reviewFlow.replaced", {
+                    before: selected.correctionSourceExpenseId.slice(0, 8),
+                    after: selected.correctionSuccessorExpenseId?.slice(0, 8) ?? "",
+                  })}
                 </Text>
               ) : null}
               {!selected.adjustmentDeltas?.length &&
               !selected.correctionSourceExpenseId ? (
-                <Text style={styles.meta}>
-                  This version changed the confirmed input set from the previous digest.
-                </Text>
+                <Text style={styles.meta}>{t("reviewFlow.copy113")}</Text>
               ) : null}
             </View>
           ) : null}
@@ -251,16 +261,16 @@ export function SettlementStatementScreen() {
         <View key={row.id} style={styles.section}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
             {(row.lineageSequence ?? index) === 0
-              ? "Final settlement basis"
-              : "Settlement update"}
+              ? t("reviewFlow.copy114")
+              : t("reviewFlow.copy115")}
           </Text>
           {row.balances.map((balance) => (
             <View key={balance.memberId} style={styles.card}>
               <Text style={styles.rowTitle}>{balance.displayNameSnapshot}</Text>
               <Text style={styles.meta}>
-                Paid{" "}
-                {formatLedgerMoney(balance.paidMinor, balance.currency, balance.scale)} ·
-                Share{" "}
+                {t("settlement.paid")}{" "}
+                {formatLedgerMoney(balance.paidMinor, balance.currency, balance.scale)}{" "}
+                {t("reviewFlow.copy116")}{" "}
                 {formatLedgerMoney(balance.owedMinor, balance.currency, balance.scale)}
               </Text>
             </View>
@@ -268,7 +278,7 @@ export function SettlementStatementScreen() {
           {row.inputs.map((input) => (
             <View key={input.expenseId} style={styles.card}>
               <Text style={styles.rowTitle}>
-                {input.payer.displayNameSnapshot} paid{" "}
+                {input.payer.displayNameSnapshot} {t("ui.paid")}{" "}
                 {formatLedgerMoney(
                   input.original.minor,
                   input.original.currency,
@@ -276,8 +286,15 @@ export function SettlementStatementScreen() {
                 )}
               </Text>
               <Text style={styles.meta}>
-                {formatValuationPolicy(input.valuation.policy)} · {input.splits.length}{" "}
-                share{input.splits.length === 1 ? "" : "s"}
+                {t(
+                  input.splits.length === 1
+                    ? "reviewFlow.sharesOne"
+                    : "reviewFlow.sharesOther",
+                  {
+                    policy: formatValuationPolicy(input.valuation.policy),
+                    count: input.splits.length,
+                  },
+                )}
               </Text>
               {input.splits.map((split) => (
                 <Text key={split.member.memberId} style={styles.meta}>
@@ -296,7 +313,7 @@ export function SettlementStatementScreen() {
 
       <View style={styles.section}>
         <Text accessibilityRole="header" style={styles.sectionTitle}>
-          Export
+          {t("reviewFlow.copy117")}
         </Text>
         {canExport ? (
           <View style={styles.actions}>
@@ -308,15 +325,14 @@ export function SettlementStatementScreen() {
                 onPress={() => choosePrivacy(format, settlement.generateExport)}
                 style={styles.secondary}
               >
-                <Text style={styles.secondaryText}>Generate {format}</Text>
+                <Text style={styles.secondaryText}>
+                  {t("reviewFlow.copy125", { p0: format })}
+                </Text>
               </Pressable>
             ))}
           </View>
         ) : (
-          <Text style={styles.meta}>
-            A new export requires organizer access, an online check and all payments to be
-            received. Cached exports remain available offline.
-          </Text>
+          <Text style={styles.meta}>{t("reviewFlow.copy119")}</Text>
         )}
         {settlement.exports.map((item) => (
           <View
@@ -326,10 +342,12 @@ export function SettlementStatementScreen() {
             <View style={styles.grow}>
               <Text style={styles.rowTitle}>
                 {item.format} ·{" "}
-                {item.privacyMode === "MEMBER" ? "Member names" : "De-identified"}
+                {item.privacyMode === "MEMBER"
+                  ? t("reviewFlow.copy120")
+                  : t("reviewFlow.copy121")}
               </Text>
               <Text style={item.isCurrent ? styles.current : styles.earlier}>
-                {item.isCurrent ? "Current" : "Earlier version"}
+                {item.isCurrent ? t("reviewFlow.copy122") : t("reviewFlow.copy123")}
               </Text>
             </View>
             {settlement.isOrganizer ? (
@@ -338,7 +356,7 @@ export function SettlementStatementScreen() {
                 onPress={() => void settlement.shareExport(item)}
                 style={styles.shareButton}
               >
-                <Text style={styles.secondaryText}>Share</Text>
+                <Text style={styles.secondaryText}>{t("reviewFlow.copy124")}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -352,66 +370,70 @@ function choosePrivacy(
   format: "PDF" | "CSV",
   generate: (format: "PDF" | "CSV", privacy: "MEMBER" | "DE_IDENTIFIED") => void,
 ) {
-  Alert.alert(
-    `Generate ${format}`,
-    "Member exports contain names and financial amounts. Once shared, the recipient controls the file.",
-    [
-      { text: "Cancel", style: "cancel" },
-      { text: "De-identified", onPress: () => generate(format, "DE_IDENTIFIED") },
-      { text: "Member names", onPress: () => generate(format, "MEMBER") },
-    ],
-  );
+  Alert.alert(t("reviewFlow.copy125", { p0: format }), t("reviewFlow.copy126"), [
+    { text: t("account.cancel"), style: "cancel" },
+    { text: t("reviewFlow.copy121"), onPress: () => generate(format, "DE_IDENTIFIED") },
+    { text: t("reviewFlow.copy120"), onPress: () => generate(format, "MEMBER") },
+  ]);
 }
 
-const styles = StyleSheet.create({
-  center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
-  content: { gap: 14, padding: 16, paddingBottom: 40 },
-  title: { color: "#0F172A", fontSize: 26, fontWeight: "800" },
-  body: { color: "#334155", fontSize: 15, lineHeight: 22 },
-  message: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  section: { gap: 8 },
-  sectionTitle: { color: "#0F172A", fontSize: 18, fontWeight: "800" },
-  card: { backgroundColor: "#FFFFFF", borderRadius: 10, gap: 4, padding: 12 },
-  row: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    flexDirection: "row",
-    gap: 10,
-    minHeight: 58,
-    padding: 12,
-  },
-  grow: { flex: 1 },
-  rowTitle: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
-  amount: { color: "#0F172A", fontSize: 16, fontWeight: "800" },
-  stack: { alignItems: "flex-start", flexDirection: "column" },
-  meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
-  current: { color: "#0F766E", fontSize: 13, fontWeight: "700" },
-  earlier: { color: "#9A3412", fontSize: 13, fontWeight: "700" },
-  actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  secondary: {
-    alignItems: "center",
-    borderColor: "#0F766E",
-    borderRadius: 10,
-    borderWidth: 1,
-    flexGrow: 1,
-    justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 14,
-  },
-  shareButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 8,
-  },
-  secondaryText: { color: "#0F766E", fontSize: 15, fontWeight: "800" },
-  historyItem: {
-    borderBottomColor: "#E2E8F0",
-    borderBottomWidth: 1,
-    gap: 7,
-    minHeight: 100,
-    paddingVertical: 15,
-  },
-  statementLink: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    viewport: { flex: 1, backgroundColor: colors.background },
+    center: {
+      backgroundColor: colors.background,
+      alignItems: "center",
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    content: { gap: 14, padding: 16, paddingBottom: 40 },
+    title: { color: colors.textPrimary, fontSize: 26, fontWeight: "800" },
+    body: { color: colors.textSecondary, fontSize: 15, lineHeight: 22 },
+    message: { color: colors.accent, fontSize: 14, fontWeight: "700" },
+    section: { gap: 8 },
+    sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: "800" },
+    card: { backgroundColor: colors.surface, borderRadius: 10, gap: 4, padding: 12 },
+    row: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      flexDirection: "row",
+      gap: 10,
+      minHeight: 58,
+      padding: 12,
+    },
+    grow: { flex: 1 },
+    rowTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: "700" },
+    amount: { color: colors.textPrimary, fontSize: 16, fontWeight: "800" },
+    stack: { alignItems: "flex-start", flexDirection: "column" },
+    meta: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
+    current: { color: colors.accent, fontSize: 13, fontWeight: "700" },
+    earlier: { color: colors.warning, fontSize: 13, fontWeight: "700" },
+    actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    secondary: {
+      alignItems: "center",
+      borderColor: colors.accent,
+      borderRadius: 10,
+      borderWidth: 1,
+      flexGrow: 1,
+      justifyContent: "center",
+      minHeight: 48,
+      paddingHorizontal: 14,
+    },
+    shareButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: 8,
+    },
+    secondaryText: { color: colors.accent, fontSize: 15, fontWeight: "800" },
+    historyItem: {
+      borderBottomColor: colors.separator,
+      borderBottomWidth: 1,
+      gap: 7,
+      minHeight: 100,
+      paddingVertical: 15,
+    },
+    statementLink: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center" },
+  });

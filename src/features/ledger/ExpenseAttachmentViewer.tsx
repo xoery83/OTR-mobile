@@ -1,3 +1,7 @@
+import { t } from "@/ui/locale";
+import { useUiTheme, useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { useEffect, useRef, useState } from "react";
 import {
   Image,
@@ -25,6 +29,10 @@ export function ExpenseAttachmentViewer({
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+
   const index = images.findIndex((item) => item.id === selectedId);
   const selected = images[index];
   const touch = useRef({ x: 0, y: 0, zoom: 1, multiple: false });
@@ -44,12 +52,12 @@ export function ExpenseAttachmentViewer({
         <SafeAreaView style={styles.root}>
           <View style={styles.header}>
             <OverlayDismissAction
-              label="Close attachment preview"
+              label={t("ui.closeAttachmentPreview")}
               onPress={onClose}
-              color="#FFFFFF"
+              color={colors.mediaText}
             />
             <Text style={styles.text}>
-              {index + 1} of {images.length}
+              {t("receipt.position", { position: index + 1, count: images.length })}
             </Text>
           </View>
           <View
@@ -92,7 +100,7 @@ export function ExpenseAttachmentViewer({
               >
                 <Image
                   accessible
-                  accessibilityLabel="Receipt image. Pinch to zoom and drag to inspect."
+                  accessibilityLabel={t("ui.receiptImagePinchToZoomAndDragToInspect")}
                   resizeMode="contain"
                   source={{ uri: selected.localUri }}
                   style={{ width: frame.width, height: frame.height }}
@@ -108,7 +116,9 @@ export function ExpenseAttachmentViewer({
                 onPress={() => onSelect(images[index - 1].id)}
                 style={styles.close}
               >
-                <Text style={[styles.text, index <= 0 && styles.disabled]}>Previous</Text>
+                <Text style={[styles.text, index <= 0 && styles.disabled]}>
+                  {t("ui.previous")}
+                </Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
@@ -119,7 +129,7 @@ export function ExpenseAttachmentViewer({
                 <Text
                   style={[styles.text, index >= images.length - 1 && styles.disabled]}
                 >
-                  Next
+                  {t("ui.next")}
                 </Text>
               </Pressable>
             </View>
@@ -129,32 +139,33 @@ export function ExpenseAttachmentViewer({
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  root: { backgroundColor: "#111827", flex: 1 },
-  header: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  close: {
-    minHeight: 48,
-    minWidth: 88,
-    paddingHorizontal: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 24,
-    backgroundColor: "rgba(255,255,255,0.1)",
-  },
-  text: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
-  body: { flex: 1 },
-  navigation: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
-  },
-  disabled: { color: "#64748B" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    root: { backgroundColor: colors.mediaBackground, flex: 1 },
+    header: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+    },
+    close: {
+      minHeight: 48,
+      minWidth: 88,
+      paddingHorizontal: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 24,
+      backgroundColor: colors.mediaSurface,
+    },
+    text: { color: colors.mediaText, fontSize: 16, fontWeight: "600" },
+    body: { flex: 1 },
+    navigation: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingHorizontal: 20,
+      paddingTop: 8,
+      paddingBottom: 12,
+    },
+    disabled: { color: colors.textSecondary },
+  });

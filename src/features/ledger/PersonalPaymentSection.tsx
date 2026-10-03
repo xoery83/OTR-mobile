@@ -1,6 +1,12 @@
+import { systemMessage } from "@/ui/domainLabels";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { t } from "@/ui/locale";
+import { UiTextInput as TextInput } from "@/ui/forms";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
@@ -12,8 +18,7 @@ import { refreshPersonalPaymentPresentation } from "@/data/operations/personalPa
 import { currencyScale } from "@/domain/ledger/currency";
 
 import { CurrencyPicker } from "./CurrencyPicker";
-import { contentVisual as cv } from "./contentVisual";
-import { formatLedgerMoney } from "./format";
+import { formatLedgerMoney, formatLedgerDate } from "./format";
 import { parseCurrencyAmount } from "./expenseDraft";
 import { chronologicalPersonalPayments } from "./settlementSections";
 import { SheetHeader } from "@/components/SheetHeader";
@@ -35,6 +40,9 @@ export function PersonalPaymentSection({
   settlementCurrency: string;
   to: Pair;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
   const [records, setRecords] = useState<LocalPersonalPayment[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [quickAmount, setQuickAmount] = useState("");
@@ -62,10 +70,10 @@ export function PersonalPaymentSection({
           await refreshPersonalPaymentPresentation(journeyId);
           if (active) await load();
         } catch {
-          if (active) setMessage("Offline · saved records remain available");
+          if (active) setMessage(t("ui.offlineSavedRecordsRemainAvailable"));
         }
       })
-      .catch(() => active && setMessage("Payment records are unavailable."));
+      .catch(() => active && setMessage(t("ui.paymentRecordsAreUnavailable")));
     return () => {
       active = false;
     };
@@ -83,10 +91,10 @@ export function PersonalPaymentSection({
         : null;
 
   const remove = (record: LocalPersonalPayment) =>
-    Alert.alert("Delete your record?", "It will remain in the audit history.", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("ui.deleteYourRecord"), t("ui.itWillRemainInTheAuditHistory"), [
+      { text: t("ui.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("ui.delete"),
         style: "destructive",
         onPress: () =>
           void getDefaultLedgerPersonalPaymentRepository()
@@ -98,11 +106,11 @@ export function PersonalPaymentSection({
 
   const manage = (record: LocalPersonalPayment) => {
     Alert.alert(
-      "Manage your record",
-      `${formatLedgerMoney(record.amountMinor, record.currency, record.scale)} · ${record.occurredAt.slice(0, 10)}`,
+      t("ui.manageYourRecord"),
+      `${formatLedgerMoney(record.amountMinor, record.currency, record.scale)} · ${formatLedgerDate(record.occurredAt)}`,
       [
-        { text: "Delete", style: "destructive", onPress: () => remove(record) },
-        { text: "Cancel", style: "cancel" },
+        { text: t("ui.delete"), style: "destructive", onPress: () => remove(record) },
+        { text: t("ui.cancel"), style: "cancel" },
       ],
     );
   };
@@ -112,7 +120,7 @@ export function PersonalPaymentSection({
     const scale = currencyScale(quickCurrency);
     const amountMinor = scale === null ? null : parseCurrencyAmount(quickAmount, scale);
     if (scale === null || amountMinor === null) {
-      Alert.alert("Check the amount");
+      Alert.alert(t("ui.checkTheAmount"));
       return;
     }
     setSavingQuick(true);
@@ -143,8 +151,8 @@ export function PersonalPaymentSection({
       kickLedgerOperationalSync(() => runLedgerOperationalSync().then(load));
     } catch (error) {
       Alert.alert(
-        "Could not save",
-        error instanceof Error ? error.message : "Please try again.",
+        t("ui.couldNotSave"),
+        error instanceof Error ? error.message : t("ui.pleaseTryAgain"),
       );
     } finally {
       setSavingQuick(false);
@@ -164,7 +172,7 @@ export function PersonalPaymentSection({
                 style={[styles.timelineRow, payerSide && styles.timelineRowLeft]}
               >
                 <Pressable
-                  accessibilityHint={mine ? "Opens record actions" : undefined}
+                  accessibilityHint={mine ? t("ui.opensRecordActions") : undefined}
                   accessibilityRole={mine ? "button" : undefined}
                   disabled={!mine}
                   onPress={() => manage(record)}
@@ -181,29 +189,30 @@ export function PersonalPaymentSection({
                       currency={record.currency}
                       scale={record.scale}
                     />{" "}
-                    · {payerSide ? "paid" : "received"} · {record.occurredAt.slice(0, 10)}
+                    · {payerSide ? t("ui.paid") : t("ui.received")} ·{" "}
+                    {formatLedgerDate(record.occurredAt)}
                   </Text>
                 </Pressable>
               </View>
             );
           })
         ) : (
-          <Text style={styles.emptyTimeline}>No payment records yet.</Text>
+          <Text style={styles.emptyTimeline}>{t("ui.noPaymentRecordsYet")}</Text>
         )}
       </View>
       {message && !message.startsWith("Offline") ? (
-        <Text style={styles.sync}>{message}</Text>
+        <Text style={styles.sync}>{systemMessage(message)}</Text>
       ) : null}
       {action ? (
         <View style={styles.quickEntry}>
           <Text style={styles.quickLabel}>
             {action.direction === "PAID"
-              ? "Enter a new amount paid"
-              : "Enter a new amount received"}
+              ? t("ui.enterANewAmountPaid")
+              : t("ui.enterANewAmountReceived")}
           </Text>
           <View style={styles.quickRow}>
             <Pressable
-              accessibilityLabel={`Currency ${quickCurrency}`}
+              accessibilityLabel={t("payment.currency", { currency: quickCurrency })}
               accessibilityRole="button"
               onPress={() => setQuickCurrencyOpen(true)}
               style={styles.currencyButton}
@@ -211,10 +220,10 @@ export function PersonalPaymentSection({
               <Text style={styles.currencyButtonText}>{quickCurrency} ⌄</Text>
             </Pressable>
             <TextInput
-              accessibilityLabel="Personal payment amount"
+              accessibilityLabel={t("ui.personalPaymentAmount")}
               keyboardType="decimal-pad"
               onChangeText={setQuickAmount}
-              placeholder="0.00"
+              placeholder={t("ui.000")}
               style={styles.quickInput}
               value={quickAmount}
             />
@@ -225,7 +234,7 @@ export function PersonalPaymentSection({
               style={[styles.quickSubmit, savingQuick && styles.disabled]}
             >
               <Text style={styles.quickSubmitText}>
-                {savingQuick ? "Saving…" : "Add"}
+                {savingQuick ? t("ui.saving") : t("ui.add")}
               </Text>
             </Pressable>
           </View>
@@ -258,6 +267,8 @@ function CurrencyModal({
   suggestions: string[];
   visible: boolean;
 }) {
+  useUiLocale();
+
   return (
     <Modal
       allowSwipeDismissal
@@ -266,63 +277,68 @@ function CurrencyModal({
       presentationStyle="pageSheet"
       visible={visible}
     >
-      <SheetHeader leftLabel="Cancel" onLeft={onClose} title="Choose currency" />
+      <SheetHeader
+        leftLabel={t("ui.cancel")}
+        onLeft={onClose}
+        title={t("ui.chooseCurrency")}
+      />
       <CurrencyPicker onSelect={onSelect} selected={selected} suggestions={suggestions} />
     </Modal>
   );
 }
 
-const styles = StyleSheet.create({
-  section: { backgroundColor: cv.color.expanded, gap: 12, padding: 12 },
-  sync: { color: "#0F766E", fontSize: 13, fontWeight: "700" },
-  alignRight: { textAlign: "right" },
-  currencyButton: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#94A3B8",
-    borderRadius: 9,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 42,
-    paddingHorizontal: 9,
-  },
-  currencyButtonText: { color: "#334155", fontSize: 13, fontWeight: "800" },
-  disabled: { opacity: 0.55 },
-  emptyTimeline: { color: "#64748B", fontSize: 13, textAlign: "center" },
-  quickEntry: { gap: 7 },
-  quickInput: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#94A3B8",
-    borderRadius: 9,
-    borderWidth: 1,
-    color: "#0F172A",
-    flex: 1,
-    fontSize: 16,
-    minHeight: 42,
-    paddingHorizontal: 10,
-  },
-  quickLabel: { color: "#334155", fontSize: 13, fontWeight: "700" },
-  quickRow: { alignItems: "center", flexDirection: "row", gap: 7 },
-  quickSubmit: {
-    alignItems: "center",
-    backgroundColor: "#0F766E",
-    borderRadius: 9,
-    justifyContent: "center",
-    minHeight: 42,
-    paddingHorizontal: 12,
-  },
-  quickSubmitText: { color: "#FFFFFF", fontSize: 13, fontWeight: "800" },
-  timeline: { gap: 7 },
-  timelineRecord: {
-    backgroundColor: "#C8DEDA",
-    borderRadius: 9,
-    maxWidth: "84%",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  timelineRecordLeft: { alignSelf: "flex-start" },
-  timelineRecordRight: { alignSelf: "flex-end" },
-  timelineRow: { alignItems: "flex-end" },
-  timelineRowLeft: { alignItems: "flex-start" },
-  timelineText: { color: "#334155", fontSize: 12, fontWeight: "600" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    section: { backgroundColor: colors.expandedSurface, gap: 12, padding: 12 },
+    sync: { color: colors.accent, fontSize: 13, fontWeight: "700" },
+    alignRight: { textAlign: "right" },
+    currencyButton: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderColor: colors.disabled,
+      borderRadius: 9,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 42,
+      paddingHorizontal: 9,
+    },
+    currencyButtonText: { color: colors.textTertiary, fontSize: 13, fontWeight: "800" },
+    disabled: { opacity: 0.55 },
+    emptyTimeline: { color: colors.textSecondary, fontSize: 13, textAlign: "center" },
+    quickEntry: { gap: 7 },
+    quickInput: {
+      backgroundColor: colors.surface,
+      borderColor: colors.disabled,
+      borderRadius: 9,
+      borderWidth: 1,
+      color: colors.textPrimary,
+      flex: 1,
+      fontSize: 16,
+      minHeight: 42,
+      paddingHorizontal: 10,
+    },
+    quickLabel: { color: colors.textTertiary, fontSize: 13, fontWeight: "700" },
+    quickRow: { alignItems: "center", flexDirection: "row", gap: 7 },
+    quickSubmit: {
+      alignItems: "center",
+      backgroundColor: colors.accent,
+      borderRadius: 9,
+      justifyContent: "center",
+      minHeight: 42,
+      paddingHorizontal: 12,
+    },
+    quickSubmitText: { color: colors.onAccent, fontSize: 13, fontWeight: "800" },
+    timeline: { gap: 7 },
+    timelineRecord: {
+      backgroundColor: colors.selected,
+      borderRadius: 9,
+      maxWidth: "84%",
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
+    timelineRecordLeft: { alignSelf: "flex-start" },
+    timelineRecordRight: { alignSelf: "flex-end" },
+    timelineRow: { alignItems: "flex-end" },
+    timelineRowLeft: { alignItems: "flex-start" },
+    timelineText: { color: colors.textTertiary, fontSize: 12, fontWeight: "600" },
+  });

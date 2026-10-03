@@ -1,3 +1,6 @@
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { chooseUiLocale } from "@/native/uiLocalePreference";
 import { useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
@@ -11,7 +14,6 @@ import type { AccountIdentity } from "@/domain/auth/localSession";
 import { AppNavigationMenu, type AppNavigationMenuItem } from "./AppNavigationMenu";
 import {
   contextualMenuDestinations,
-  journeyRoleLabel,
   maskEmail,
   moduleReturnPath,
   type GlobalMenuModule,
@@ -24,6 +26,33 @@ export function GlobalMenu({
   journeyId?: string | null;
   module: GlobalMenuModule;
 }) {
+  const locale = useUiLocale();
+  const changeLanguage = () =>
+    Alert.alert(t("navigation.language"), undefined, [
+      {
+        text:
+          locale === "en"
+            ? t("navigation.selectedLanguage", { language: t("navigation.english") })
+            : t("navigation.english"),
+        onPress: () => {
+          void chooseUiLocale("en").catch(() =>
+            Alert.alert(t("navigation.languageFailed")),
+          );
+        },
+      },
+      {
+        text:
+          locale === "zh-Hans"
+            ? t("navigation.selectedLanguage", { language: t("navigation.chinese") })
+            : t("navigation.chinese"),
+        onPress: () => {
+          void chooseUiLocale("zh-Hans").catch(() =>
+            Alert.alert(t("navigation.languageFailed")),
+          );
+        },
+      },
+      { text: t("common.cancel"), style: "cancel" },
+    ]);
   const queryClient = useQueryClient();
   const [identity, setIdentity] = useState<AccountIdentity | null>(null);
   const [actor, setActor] = useState<{
@@ -75,7 +104,10 @@ export function GlobalMenu({
     (destination) => ({
       icon:
         destination.label === "My Ledger" ? "list.bullet.rectangle" : "dollarsign.circle",
-      label: destination.label,
+      label:
+        destination.label === "My Ledger"
+          ? t("navigation.myLedger")
+          : t("navigation.currency"),
       onPress: () =>
         destination.label === "Currency" && journeyId
           ? router.push({ pathname: destination.path, params: { journeyId } } as never)
@@ -88,32 +120,36 @@ export function GlobalMenu({
     [
       {
         icon: "gearshape",
-        label: "Settings",
+        label: t("navigation.settings"),
         onPress: () => router.push("/settings" as never),
       },
       {
         icon: "globe",
-        label: "Language",
-        onPress: () =>
-          Alert.alert("Language", "OTR currently follows your device language settings."),
+        label: t("navigation.language"),
+        onPress: changeLanguage,
       },
     ],
     [
       {
         destructive: true,
         icon: "arrow.right",
-        label: "Log out",
+        label: t("navigation.logOut"),
         onPress: () =>
-          Alert.alert("Log out?", "Your saved local data will remain on this device.", [
-            { style: "cancel", text: "Cancel" },
+          Alert.alert(t("navigation.logOutQuestion"), t("navigation.localDataRemains"), [
+            { style: "cancel", text: t("common.cancel") },
             {
               style: "destructive",
-              text: "Log out",
+              text: t("navigation.logOut"),
               onPress: () => {
                 void accountSwitch
                   .logout()
                   .then(() => router.replace("/foundation"))
-                  .catch(() => Alert.alert("Log out failed", "Please try again."));
+                  .catch(() =>
+                    Alert.alert(
+                      t("navigation.logOutFailed"),
+                      t("navigation.pleaseTryAgain"),
+                    ),
+                  );
               },
             },
           ]),
@@ -122,14 +158,17 @@ export function GlobalMenu({
   ];
   const role = actor.journeyId === (journeyId ?? null) ? actor.role : null;
   const displayName = actor.journeyId === (journeyId ?? null) ? actor.displayName : null;
-  const detail = [journeyRoleLabel(role), maskEmail(identity?.email ?? null)]
+  const detail = [
+    role ? t(role === "owner" ? "role.organizer" : "role.member") : null,
+    maskEmail(identity?.email ?? null),
+  ]
     .filter(Boolean)
     .join(" · ");
 
   return (
     <AppNavigationMenu
       identity={{
-        primary: displayName ?? identity?.displayName ?? "Current account",
+        primary: displayName ?? identity?.displayName ?? t("common.currentAccount"),
         secondary: detail || null,
       }}
       onIdentityPress={() =>

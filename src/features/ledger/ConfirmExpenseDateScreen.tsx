@@ -1,6 +1,11 @@
+import { systemMessage } from "@/ui/domainLabels";
+import { t } from "@/ui/locale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { UiDatePicker as DateTimePicker } from "@/ui/forms";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import { confirmExpenseEconomicDate } from "@/data/operations/completeEconomicDate";
@@ -19,6 +24,10 @@ function localDate(value: string) {
 }
 
 export function ConfirmExpenseDateScreen() {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   const { expenseId } = useLocalSearchParams<{ expenseId?: string }>();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
   const [date, setDate] = useState<string | null>(null);
@@ -55,36 +64,38 @@ export function ConfirmExpenseDateScreen() {
       else {
         setMessage(
           result.state === "SAVED_WAITING"
-            ? "Date saved on this iPhone. It will sync when possible."
-            : "Date confirmed. The trusted reference rate is still resolving.",
+            ? t("ui.dateSavedOnThisIphoneItWillSyncWhenPossible")
+            : t("ui.dateConfirmedTheTrustedReferenceRateIsStillResolving"),
         );
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Date could not be confirmed.");
+      setMessage(
+        error instanceof Error ? error.message : t("ui.dateCouldNotBeConfirmed"),
+      );
     } finally {
       setBusy(false);
     }
   };
   if (!expense) return <ActivityIndicator style={styles.loading} />;
   if (expense.economicDate)
-    return <Text style={styles.content}>Transaction date is already confirmed.</Text>;
+    return (
+      <Text style={styles.content}>{t("ui.transactionDateIsAlreadyConfirmed")}</Text>
+    );
   return (
     <View style={styles.content}>
       <Text style={styles.subtitle}>{expense.title}</Text>
       <Text style={styles.explanation}>
-        The saved timestamp suggests this date, but it is not proof of the transaction
-        day. Confirm the date shown on your receipt or records. OTR will find the trusted
-        reference rate automatically—no rate entry is needed.
+        {t("ui.theSavedTimestampSuggestsThisDateButItIsNot")}
       </Text>
       {date ? (
         <>
           <Text style={styles.label}>
             {suggested
-              ? "Suggested from saved timestamp · please confirm"
-              : "Select date · please confirm"}
+              ? t("ui.suggestedFromSavedTimestampPleaseConfirm")
+              : t("ui.selectDatePleaseConfirm")}
           </Text>
           <DateTimePicker
-            accessibilityLabel="Transaction date"
+            accessibilityLabel={t("ui.transactionDate")}
             mode="date"
             onChange={(_, value) => {
               if (value) setDate(dateKey(value));
@@ -94,11 +105,11 @@ export function ConfirmExpenseDateScreen() {
           <Text style={styles.date}>{date}</Text>
         </>
       ) : (
-        <Text style={styles.explanation}>Select the transaction date.</Text>
+        <Text style={styles.explanation}>{t("ui.selectTheTransactionDate")}</Text>
       )}
       {message ? (
         <Text accessibilityLiveRegion="polite" style={styles.message}>
-          {message}
+          {systemMessage(message)}
         </Text>
       ) : null}
       <Pressable
@@ -109,33 +120,34 @@ export function ConfirmExpenseDateScreen() {
         style={[styles.button, (!date || busy || saved) && styles.disabled]}
       >
         <Text style={styles.buttonText}>
-          {busy ? "Checking…" : "Confirm transaction date"}
+          {busy ? t("ui.checking") : t("ui.confirmTransactionDate")}
         </Text>
       </Pressable>
       {message ? (
         <Pressable accessibilityRole="button" onPress={() => router.back()}>
-          <Text style={styles.back}>Return to Settlement Review ›</Text>
+          <Text style={styles.back}>{t("ui.returnToSettlementReview")}</Text>
         </Pressable>
       ) : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  loading: { flex: 1 },
-  content: { flex: 1, padding: 24, gap: 18, backgroundColor: "#F6F7F9" },
-  subtitle: { color: "#14222C", fontSize: 20, fontWeight: "600" },
-  explanation: { color: "#526273", fontSize: 16, lineHeight: 24 },
-  label: { color: "#526273", fontSize: 14, fontWeight: "600" },
-  date: { color: "#14222C", fontSize: 20 },
-  message: { color: "#0F766E", fontSize: 15 },
-  button: {
-    backgroundColor: "#0F766E",
-    borderRadius: 14,
-    padding: 16,
-    alignItems: "center",
-  },
-  disabled: { opacity: 0.5 },
-  buttonText: { color: "white", fontSize: 16, fontWeight: "700" },
-  back: { color: "#0F766E", fontSize: 16, fontWeight: "600" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    loading: { flex: 1 },
+    content: { flex: 1, padding: 24, gap: 18, backgroundColor: colors.background },
+    subtitle: { color: colors.textPrimary, fontSize: 20, fontWeight: "600" },
+    explanation: { color: colors.textSecondary, fontSize: 16, lineHeight: 24 },
+    label: { color: colors.textSecondary, fontSize: 14, fontWeight: "600" },
+    date: { color: colors.textPrimary, fontSize: 20 },
+    message: { color: colors.accent, fontSize: 15 },
+    button: {
+      backgroundColor: colors.accent,
+      borderRadius: 14,
+      padding: 16,
+      alignItems: "center",
+    },
+    disabled: { opacity: 0.5 },
+    buttonText: { color: colors.onAccent, fontSize: 16, fontWeight: "700" },
+    back: { color: colors.accent, fontSize: 16, fontWeight: "600" },
+  });

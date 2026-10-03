@@ -1,3 +1,9 @@
+import { systemMessage } from "@/ui/domainLabels";
+import { t, getFormatLocale } from "@/ui/locale";
+import { UiTextInput as TextInput } from "@/ui/forms";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
 import { useEffect, useState } from "react";
 import {
@@ -8,7 +14,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
@@ -25,7 +30,7 @@ import { previewValuation } from "@/domain/ledger/valuation";
 import { formatLedgerMoney, formatLedgerRate } from "./format";
 import type { DisplayEstimate } from "./displayEstimate";
 import { proposedExpenseDate } from "./expenseDraft";
-import { contentVisual as cv } from "./contentVisual";
+import { visual as cv } from "@/ui/visual";
 import {
   eligibleExpenseQuote,
   expenseValuationMethod,
@@ -35,7 +40,7 @@ import {
 
 function fullDate(day: string, chinese: boolean) {
   const [year, month, date] = day.split("-").map(Number);
-  return new Intl.DateTimeFormat(chinese ? "zh-CN" : "en-GB", {
+  return new Intl.DateTimeFormat(getFormatLocale(), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -62,7 +67,9 @@ export function ExpenseFxDetails({
   blocked: boolean;
   onChanged: (expense: LedgerExpense) => void;
 }) {
-  const chinese = Intl.DateTimeFormat().resolvedOptions().locale.startsWith("zh");
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
+  const chinese = useUiLocale() === "zh-Hans";
   const label = (en: string, zh: string) => (chinese ? zh : en);
   const [expanded, setExpanded] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
@@ -117,7 +124,9 @@ export function ExpenseFxDetails({
         })
         .catch(() => {
           if (active)
-            setError(chinese ? "无法读取已缓存汇率。" : "Cached rates unavailable.");
+            setError(
+              chinese ? t("ui.cachedRatesUnavailable") : t("ui.cachedRatesUnavailable"),
+            );
         });
     }
     return () => {
@@ -143,12 +152,12 @@ export function ExpenseFxDetails({
   ) => {
     if (busy || !editable) return;
     Alert.alert(
-      label("Confirm Journey value", "确认旅行估值"),
-      `${label("Original", "原始金额")}: ${formatLedgerMoney(expense.original.minor, expense.original.currency, expense.original.scale)}\n${explanation}\n${label("Journey value", "旅行估值")}: ${amount}${input.reason ? `\n${label("Reason", "原因")}: ${input.reason}` : ""}`,
+      t("ui.confirmJourneyValue"),
+      `${t("ui.original")}: ${formatLedgerMoney(expense.original.minor, expense.original.currency, expense.original.scale)}\n${explanation}\n${label(t("ui.journeyValue"), t("ui.journeyValue2"))}: ${amount}${input.reason ? `\n${t("ui.reason")}: ${input.reason}` : ""}`,
       [
-        { text: label("Cancel", "取消"), style: "cancel" },
+        { text: t("ui.cancel"), style: "cancel" },
         {
-          text: label("Confirm", "确认"),
+          text: t("ui.confirm"),
           onPress: () => {
             setBusy(true);
             setError(null);
@@ -164,8 +173,8 @@ export function ExpenseFxDetails({
               .catch(() =>
                 setError(
                   label(
-                    "Could not save valuation. Check the current evidence and try again.",
-                    "无法保存估值。请检查当前证据后重试。",
+                    t("ui.couldNotSaveValuationCheckTheCurrentEvidenceAndTry"),
+                    t("ui.couldNotSaveValuationCheckTheCurrentEvidenceAndTry"),
                   ),
                 ),
               )
@@ -188,10 +197,10 @@ export function ExpenseFxDetails({
       submit(
         { policy: "MANUAL_AGREED", manualRate: rate.trim(), reason: reason.trim() },
         formatLedgerMoney(result.settlement.minor, currency, scale),
-        `${label("Agreed rate", "约定汇率")}: 1 ${expense.original.currency} = ${rate.trim()} ${currency}`,
+        `${t("fx.copy0")}: 1 ${expense.original.currency} = ${rate.trim()} ${currency}`,
       );
     } catch {
-      setError(label("Enter a positive rate and a reason.", "请输入正数汇率及原因。"));
+      setError(t("ui.enterAPositiveRateAndAReason"));
     }
   };
 
@@ -210,16 +219,16 @@ export function ExpenseFxDetails({
         {crossCurrency ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={label("Rate details", "汇率详情")}
+            accessibilityLabel={t("ui.rateDetails")}
             accessibilityState={{ expanded }}
             style={styles.detailsToggle}
             onPress={() => setExpanded(true)}
           >
-            <AppIcon color="#0F766E" name="info.circle" size={18} />
+            <AppIcon color={colors.accent} name="info.circle" size={18} />
           </Pressable>
         ) : null}
       </View>
-      <Text style={styles.meta}>{label("Journey", "旅行估值")}</Text>
+      <Text style={styles.meta}>{t("common.journey")}</Text>
       {expanded && crossCurrency ? (
         <Modal
           animationType="slide"
@@ -229,15 +238,15 @@ export function ExpenseFxDetails({
         >
           <View style={styles.overlay}>
             <Pressable
-              accessibilityLabel={label("Close rate details", "关闭汇率详情")}
+              accessibilityLabel={t("ui.closeRateDetails")}
               accessibilityRole="button"
               onPress={() => setExpanded(false)}
               style={StyleSheet.absoluteFill}
             />
             <SafeAreaView edges={["bottom"]} style={styles.sheet}>
               <SheetHeader
-                title={label("Rate details", "汇率详情")}
-                leftLabel={label("Close", "关闭")}
+                title={t("ui.rateDetails")}
+                leftLabel={t("ui.close")}
                 onLeft={() => setExpanded(false)}
                 safeTop={false}
               />
@@ -249,9 +258,7 @@ export function ExpenseFxDetails({
               >
                 <View style={styles.summaryCard}>
                   <Text style={styles.eyebrow}>
-                    {valuation
-                      ? label("JOURNEY VALUE", "旅行估值")
-                      : label("ESTIMATED VALUE", "预估金额")}
+                    {valuation ? t("ui.journeyValue2") : t("ui.estimatedValue")}
                   </Text>
                   <MoneyText
                     variant="headline"
@@ -268,18 +275,18 @@ export function ExpenseFxDetails({
                   />
                   <Text style={styles.meta}>
                     {policy === "REFERENCE_RATE"
-                      ? label("Reference rate", "参考汇率")
+                      ? t("ui.referenceRate2")
                       : policy === "MANUAL_AGREED"
-                        ? label("Agreed rate", "约定汇率")
+                        ? t("ui.agreedRate")
                         : policy === "ACTUAL_PAYER_COST"
-                          ? label("Actual payer cost", "实际付款金额")
-                          : label("Needs review", "待处理")}
+                          ? t("ui.actualPayerCost")
+                          : t("ui.needsReview")}
                   </Text>
                   {!valuation && estimate ? (
                     <Text style={styles.caption}>
                       {label(
-                        "Display estimate · not a recorded Journey value",
-                        "仅供展示的预估 · 尚未记录为旅行估值",
+                        t("ui.displayEstimateNotARecordedJourneyValue"),
+                        t("ui.displayEstimateNotARecordedJourneyValue"),
                       )}
                     </Text>
                   ) : null}
@@ -295,17 +302,16 @@ export function ExpenseFxDetails({
                   expense.syncStatus === "SYNCED" &&
                   expense.economicDate === new Date().toISOString().slice(0, 10) ? (
                     <Text style={styles.caption}>
-                      {label("Reference rate not published yet", "当日参考汇率尚未发布")}
+                      {t("ui.referenceRateNotPublishedYet")}
                     </Text>
                   ) : null}
                 </View>
                 {valuation?.decimalRate || estimatedRate ? (
                   <View style={styles.infoCard}>
-                    <Text style={styles.cardTitle}>
-                      {label("Exchange rate", "换算汇率")}
-                    </Text>
+                    <Text style={styles.cardTitle}>{t("ui.exchangeRate")}</Text>
                     <Text style={styles.rateText}>
-                      1 {expense.original.currency} ={" "}
+                      {t("ui.1")}
+                      {expense.original.currency} ={" "}
                       {formatLedgerRate(valuation?.decimalRate ?? estimatedRate!)}{" "}
                       {currency}
                     </Text>
@@ -313,12 +319,10 @@ export function ExpenseFxDetails({
                 ) : null}
                 {referenceDate ? (
                   <View style={styles.infoCard}>
-                    <Text style={styles.cardTitle}>
-                      {label("Rate source", "汇率依据")}
-                    </Text>
+                    <Text style={styles.cardTitle}>{t("ui.rateSource")}</Text>
                     {valuation?.referenceEvidence ? (
                       <DetailRow
-                        label={label("Expense date", "消费日期")}
+                        label={t("ui.expenseDate")}
                         value={fullDate(
                           valuation.referenceEvidence.economicDate,
                           chinese,
@@ -326,29 +330,23 @@ export function ExpenseFxDetails({
                       />
                     ) : null}
                     <DetailRow
-                      label={label("Rate date", "汇率日期")}
+                      label={t("ui.rateDate")}
                       value={fullDate(referenceDate, chinese)}
                     />
-                    <DetailRow
-                      label={label("Source", "来源")}
-                      value={label(
-                        "European Central Bank · via Frankfurter",
-                        "欧洲中央银行 · 经 Frankfurter 提供",
-                      )}
-                    />
+                    <DetailRow label={t("ui.source")} value={t("fx.copy1")} />
                     {estimate?.referenceDate &&
                     estimate.referenceDate !== expense.economicDate ? (
                       <Text style={styles.caption}>
                         {label(
-                          "Using the latest cached rate available for this date.",
-                          "使用该日期可用的最新缓存汇率。",
+                          t("ui.usingTheLatestCachedRateAvailableForThisDate"),
+                          t("ui.usingTheLatestCachedRateAvailableForThisDate"),
                         )}
                       </Text>
                     ) : null}
                     <Text style={styles.caption}>
                       {label(
-                        "Reference rates estimate value; they do not prove card or bank cost.",
-                        "参考汇率仅用于估值，不代表银行卡或银行的实际付款金额。",
+                        t("ui.referenceRatesEstimateValueTheyDoNotProveCardOr"),
+                        t("ui.referenceRatesEstimateValueTheyDoNotProveCardOr"),
                       )}
                     </Text>
                   </View>
@@ -359,15 +357,15 @@ export function ExpenseFxDetails({
                   valuation.reason.startsWith("Accepted cached ECB reference rate dated ")
                 ) ? (
                   <View style={styles.infoCard}>
-                    <Text style={styles.cardTitle}>{label("Note", "说明")}</Text>
+                    <Text style={styles.cardTitle}>{t("ui.note")}</Text>
                     <Text style={styles.meta}>{valuation.reason}</Text>
                   </View>
                 ) : null}
                 {valuation?.policy === "ACTUAL_PAYER_COST" ? (
                   <Text style={styles.caption}>
                     {label(
-                      "Based on posted payer evidence, not a market exchange rate.",
-                      "依据付款人的入账凭证，而非市场汇率。",
+                      t("ui.basedOnPostedPayerEvidenceNotAMarketExchangeRate"),
+                      t("ui.basedOnPostedPayerEvidenceNotAMarketExchangeRate"),
                     )}
                   </Text>
                 ) : null}
@@ -375,19 +373,21 @@ export function ExpenseFxDetails({
                   <Text style={styles.meta}>
                     {label(
                       expense.economicDate === null
-                        ? "The earlier Settlement value is frozen. Confirm the current transaction date to obtain its own reference valuation."
-                        : "The earlier Settlement value remains frozen.",
+                        ? t(
+                            "ui.theEarlierSettlementValueIsFrozenConfirmTheCurrentTransaction",
+                          )
+                        : t("ui.theEarlierSettlementValueRemainsFrozen"),
                       expense.economicDate === null
-                        ? "历史结算估值已冻结。确认当前交易日期后将自动获取参考估值。"
-                        : "历史结算估值保持冻结。",
+                        ? t(
+                            "ui.theEarlierSettlementValueIsFrozenConfirmTheCurrentTransaction",
+                          )
+                        : t("ui.theEarlierSettlementValueRemainsFrozen"),
                     )}
                   </Text>
                 ) : null}
                 {editable ? (
                   <View style={styles.actions}>
-                    <Text style={styles.cardTitle}>
-                      {label("Change Journey value", "更改旅行估值")}
-                    </Text>
+                    <Text style={styles.cardTitle}>{t("ui.changeJourneyValue")}</Text>
                     {!manual ? (
                       <Pressable
                         accessibilityRole="button"
@@ -399,26 +399,29 @@ export function ExpenseFxDetails({
                       >
                         <Text style={styles.primaryActionText}>
                           {valuation?.policy === "MANUAL_AGREED"
-                            ? label("Edit agreed rate", "修改约定汇率")
-                            : label("Use agreed rate", "使用约定汇率")}
+                            ? t("ui.editAgreedRate")
+                            : t("ui.useAgreedRate")}
                         </Text>
                       </Pressable>
                     ) : (
                       <>
                         <Text style={styles.meta}>
-                          1 {expense.original.currency} = X {currency}
+                          {t("entry.conversionPreview", {
+                            original: expense.original.currency,
+                            currency,
+                          })}
                         </Text>
                         <TextInput
-                          accessibilityLabel={label("Agreed rate", "约定汇率")}
+                          accessibilityLabel={t("ui.agreedRate")}
                           keyboardType="decimal-pad"
-                          placeholder={label("Rate", "汇率")}
+                          placeholder={t("ui.rate")}
                           value={rate}
                           onChangeText={setRate}
                           style={styles.input}
                         />
                         <TextInput
-                          accessibilityLabel={label("Reason, required", "原因，必填")}
-                          placeholder={label("Reason (required)", "原因（必填）")}
+                          accessibilityLabel={t("ui.reasonRequired")}
+                          placeholder={t("ui.reasonRequired2")}
                           value={reason}
                           onChangeText={setReason}
                           style={styles.input}
@@ -429,7 +432,7 @@ export function ExpenseFxDetails({
                           onPress={manualPreview}
                         >
                           <Text style={styles.primaryActionText}>
-                            {label("Preview agreed rate", "预览约定汇率")}
+                            {t("ui.previewAgreedRate")}
                           </Text>
                         </Pressable>
                       </>
@@ -443,12 +446,12 @@ export function ExpenseFxDetails({
                           submit(
                             { policy: "ACTUAL_PAYER_COST", paymentRecordId: payment.id },
                             formatLedgerMoney(payment.posted!.minor, currency, scale),
-                            `${label("Posted payer cost", "付款人入账金额")}: ${formatLedgerMoney(payment.posted!.minor, currency, scale)}\n${label("This uses the payer's posted cost, not a market rate.", "使用实际入账金额，而非市场汇率。")}`,
+                            `${t("fx.copy2")}: ${formatLedgerMoney(payment.posted!.minor, currency, scale)}\n${t("fx.copy3")}`,
                           )
                         }
                       >
                         <Text style={styles.secondaryActionText}>
-                          {label("Use actual payer cost", "使用实际付款金额")} ·{" "}
+                          {t("ui.useActualPayerCost")} ·{" "}
                           {formatLedgerMoney(payment.posted!.minor, currency, scale)}
                         </Text>
                       </Pressable>
@@ -472,25 +475,23 @@ export function ExpenseFxDetails({
                               reason: "Selected reference rate.",
                             },
                             formatLedgerMoney(result.settlement.minor, currency, scale),
-                            `1 ${expense.original.currency} = ${formatLedgerRate(quote.decimalRate)} ${currency}\n${label("Reference date", "参考汇率日期")}: ${fullDate(quote.referenceDate!, chinese)}`,
+                            `1 ${expense.original.currency} = ${formatLedgerRate(quote.decimalRate)} ${currency}\n${t("fx.copy4")}: ${fullDate(quote.referenceDate!, chinese)}`,
                           );
                         }}
                       >
                         <Text style={styles.secondaryActionText}>
-                          {label("Use reference rate", "使用参考汇率")}
+                          {t("ui.useReferenceRate")}
                         </Text>
                       </Pressable>
                     ) : null}
                   </View>
                 ) : null}
                 {busy ? (
-                  <ActivityIndicator
-                    accessibilityLabel={label("Saving valuation", "正在保存估值")}
-                  />
+                  <ActivityIndicator accessibilityLabel={t("ui.savingValuation")} />
                 ) : null}
                 {error ? (
                   <Text accessibilityLiveRegion="polite" style={styles.error}>
-                    {error}
+                    {systemMessage(error)}
                   </Text>
                 ) : null}
                 {previous.length ? (
@@ -503,8 +504,8 @@ export function ExpenseFxDetails({
                     >
                       <Text style={styles.detailsToggleText}>
                         {historyExpanded
-                          ? label("Hide valuation history", "收起估值历史")
-                          : label("View valuation history", "查看估值历史")}
+                          ? t("ui.hideValuationHistory")
+                          : t("ui.viewValuationHistory")}
                       </Text>
                     </Pressable>
                     {historyExpanded
@@ -547,7 +548,7 @@ export function ExpenseFxDetails({
                               ))}
                               {item.effectiveAt ? (
                                 <Text style={styles.meta}>
-                                  {new Intl.DateTimeFormat(chinese ? "zh-CN" : "en-GB", {
+                                  {new Intl.DateTimeFormat(getFormatLocale(), {
                                     dateStyle: "medium",
                                     timeStyle: "short",
                                   }).format(new Date(item.effectiveAt))}
@@ -569,6 +570,7 @@ export function ExpenseFxDetails({
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.detailRow}>
       <Text style={styles.detailLabel}>{label}</Text>
@@ -577,105 +579,108 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  section: { flexShrink: 1, gap: 4 },
-  overlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(15, 23, 42, 0.25)",
-  },
-  sheet: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    maxHeight: "85%",
-    overflow: "hidden",
-  },
-  scroll: { flexGrow: 0 },
-  valueRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  label: { color: "#64748B", fontSize: 12, fontWeight: "700" },
-  value: {
-    color: cv.color.accent,
-    fontSize: 20,
-    lineHeight: 44,
-    fontWeight: "700",
-    flexShrink: 1,
-  },
-  meta: { color: "#475569", fontSize: 14, lineHeight: 21 },
-  details: {
-    gap: 14,
-    borderTopColor: "#E5E7EB",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    backgroundColor: cv.color.page,
-    padding: 16,
-    paddingBottom: 40,
-  },
-  summaryCard: {
-    backgroundColor: cv.color.card,
-    borderRadius: cv.radius.card,
-    gap: 5,
-    padding: 16,
-  },
-  eyebrow: {
-    color: cv.color.secondary,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.6,
-  },
-  summaryValue: { color: cv.color.accent, fontSize: 28, fontWeight: "700" },
-  infoCard: {
-    backgroundColor: cv.color.card,
-    borderRadius: cv.radius.card,
-    gap: 10,
-    padding: 16,
-  },
-  cardTitle: { color: cv.color.text, fontSize: 15, fontWeight: "700" },
-  rateText: { color: cv.color.text, fontSize: 17, fontWeight: "600" },
-  detailRow: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
-  detailLabel: { color: cv.color.secondary, fontSize: 13, flexShrink: 1 },
-  detailValue: {
-    color: cv.color.text,
-    fontSize: 13,
-    fontWeight: "600",
-    flexShrink: 1,
-    textAlign: "right",
-  },
-  caption: { color: cv.color.secondary, fontSize: 12, lineHeight: 18 },
-  actions: { gap: 10, marginTop: 4 },
-  primaryAction: {
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-    backgroundColor: cv.color.accent,
-    borderRadius: cv.radius.control,
-  },
-  primaryActionText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
-  secondaryAction: {
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-    backgroundColor: cv.color.card,
-    borderColor: cv.color.accent,
-    borderWidth: 1,
-    borderRadius: cv.radius.control,
-  },
-  secondaryActionText: { color: cv.color.accent, fontSize: 15, fontWeight: "700" },
-  detailsToggle: {
-    minHeight: 44,
-    minWidth: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  detailsToggleText: { color: "#0F766E", fontSize: 14, fontWeight: "600" },
-  input: {
-    minHeight: 44,
-    borderColor: "#94A3B8",
-    borderWidth: 1,
-    borderRadius: 9,
-    padding: 10,
-    fontSize: 16,
-  },
-  error: { color: "#B91C1C", fontSize: 14 },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    section: { flexShrink: 1, gap: 4 },
+    overlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: colors.overlay,
+    },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 22,
+      borderTopRightRadius: 22,
+      maxHeight: "85%",
+      overflow: "hidden",
+    },
+    scroll: { flexGrow: 0 },
+    valueRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+    label: { color: colors.textSecondary, fontSize: 12, fontWeight: "700" },
+    value: {
+      color: colors.accent,
+      fontSize: 20,
+      lineHeight: 44,
+      fontWeight: "700",
+      flexShrink: 1,
+    },
+    meta: { color: colors.textTertiary, fontSize: 14, lineHeight: 21 },
+    details: {
+      gap: 14,
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      backgroundColor: colors.background,
+      padding: 16,
+      paddingBottom: 40,
+    },
+    summaryCard: {
+      backgroundColor: colors.surface,
+      borderRadius: cv.radius.card,
+      gap: 5,
+      padding: 16,
+    },
+    eyebrow: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 0.6,
+    },
+    summaryValue: { color: colors.accent, fontSize: 28, fontWeight: "700" },
+    infoCard: {
+      backgroundColor: colors.surface,
+      borderRadius: cv.radius.card,
+      gap: 10,
+      padding: 16,
+    },
+    cardTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: "700" },
+    rateText: { color: colors.textPrimary, fontSize: 17, fontWeight: "600" },
+    detailRow: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
+    detailLabel: { color: colors.textSecondary, fontSize: 13, flexShrink: 1 },
+    detailValue: {
+      color: colors.textPrimary,
+      fontSize: 13,
+      fontWeight: "600",
+      flexShrink: 1,
+      textAlign: "right",
+    },
+    caption: { color: colors.textSecondary, fontSize: 12, lineHeight: 18 },
+    actions: { gap: 10, marginTop: 4 },
+    primaryAction: {
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 12,
+      backgroundColor: colors.accent,
+      borderRadius: cv.radius.control,
+    },
+    primaryActionText: { color: colors.onAccent, fontSize: 15, fontWeight: "700" },
+    secondaryAction: {
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 12,
+      backgroundColor: colors.surface,
+      borderColor: colors.accent,
+      borderWidth: 1,
+      borderRadius: cv.radius.control,
+    },
+    secondaryActionText: { color: colors.accent, fontSize: 15, fontWeight: "700" },
+    detailsToggle: {
+      minHeight: 44,
+      minWidth: 32,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    detailsToggleText: { color: colors.accent, fontSize: 14, fontWeight: "600" },
+    input: {
+      color: colors.textPrimary,
+      backgroundColor: colors.surface,
+      minHeight: 44,
+      borderColor: colors.disabled,
+      borderWidth: 1,
+      borderRadius: 9,
+      padding: 10,
+      fontSize: 16,
+    },
+    error: { color: colors.destructive, fontSize: 14 },
+  });

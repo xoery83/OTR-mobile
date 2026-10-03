@@ -1,3 +1,10 @@
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { visual } from "@/ui/visual";
+import { UiTextInput } from "@/ui/forms";
+import { systemMessage } from "@/ui/domainLabels";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -5,7 +12,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -35,6 +41,8 @@ type ResolutionResult = Awaited<
   >
 >;
 export function ExpenseConflictResolutionScreen() {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const [chain, setChain] = useState<ExpenseConflictChainResponse | null>(null);
   const [journeyId, setJourneyId] = useState<string | null>(null);
@@ -82,10 +90,7 @@ export function ExpenseConflictResolutionScreen() {
       adopt(next);
       if (current()) setMessage(null);
     } catch {
-      if (current())
-        setMessage(
-          "The latest value is unavailable. Your saved changes remain here; connect to continue reviewing.",
-        );
+      if (current()) setMessage(t("ledgerMigration.copy33"));
     } finally {
       if (current()) {
         setBusy(false);
@@ -108,7 +113,7 @@ export function ExpenseConflictResolutionScreen() {
           if (!current()) return;
           if (!expense) {
             setLoading(false);
-            setMessage("This Expense could not be loaded.");
+            setMessage(t("ledgerMigration.copy34"));
             return;
           }
           setJourneyId(expense.journeyId);
@@ -133,7 +138,7 @@ export function ExpenseConflictResolutionScreen() {
         } catch {
           if (current()) {
             setLoading(false);
-            setMessage("This Expense could not be loaded.");
+            setMessage(t("ledgerMigration.copy34"));
           }
         }
       })();
@@ -205,24 +210,25 @@ export function ExpenseConflictResolutionScreen() {
       kickLedgerOperationalSync();
     } catch (error) {
       if (current())
-        setMessage(
-          error instanceof Error ? error.message : "Your choice could not be saved.",
-        );
+        setMessage(error instanceof Error ? error.message : t("ledgerMigration.copy35"));
     } finally {
       if (current()) setBusy(false);
     }
   };
   return (
     <>
-      <Stack.Screen options={{ title: "Review changes" }} />
+      <Stack.Screen options={{ title: t("ui.reviewChanges") }} />
       <ScrollView
+        style={styles.page}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        {loading ? <ActivityIndicator accessibilityLabel="Loading changes" /> : null}
+        {loading ? (
+          <ActivityIndicator accessibilityLabel={t("ledgerMigration.copy36")} />
+        ) : null}
         {message ? (
           <Text accessibilityLiveRegion="polite" style={styles.notice}>
-            {message}
+            {systemMessage(message)}
           </Text>
         ) : null}
         {result ? (
@@ -231,17 +237,13 @@ export function ExpenseConflictResolutionScreen() {
           </Text>
         ) : null}
         {frozen ? (
-          <Text style={styles.notice}>
-            This Expense belongs to a confirmed Settlement. It cannot be changed here.
-          </Text>
+          <Text style={styles.notice}>{t("ledgerMigration.copy37")}</Text>
         ) : !allowed ? (
-          <Text style={styles.notice}>
-            Only the Expense creator or Journey organizer can make this decision.
-          </Text>
+          <Text style={styles.notice}>{t("ledgerMigration.copy38")}</Text>
         ) : null}
         {chain ? (
           <View style={styles.card}>
-            <Text style={styles.heading}>Latest value</Text>
+            <Text style={styles.heading}>{t("ledgerMigration.copy39")}</Text>
             {canonicalConflictLines(chain.canonical, memberNames).map((line, i) => (
               <Text key={i} style={styles.body}>
                 {line}
@@ -250,12 +252,11 @@ export function ExpenseConflictResolutionScreen() {
           </View>
         ) : null}
         <Text style={styles.heading}>
-          {open.length} saved change{open.length === 1 ? " needs" : "s need"} review
+          {t(open.length === 1 ? "conflict.savedCountOne" : "conflict.savedCountMany", {
+            count: open.length,
+          })}
         </Text>
-        <Text style={styles.body}>
-          Choose the change you want to keep. Include another change only if this decision
-          should replace it.
-        </Text>
+        <Text style={styles.body}>{t("ledgerMigration.copy40")}</Text>
         {chain?.conflicts.map((conflict) => (
           <View
             key={conflict.conflictId}
@@ -279,22 +280,28 @@ export function ExpenseConflictResolutionScreen() {
                 }}
               >
                 <Text style={styles.heading}>
-                  {conflict.commandType === "DELETE"
-                    ? "Deletion"
-                    : conflict.commandType === "RESTORE"
-                      ? "Restore"
-                      : conflict.commandType === "APPLY_VALUATION"
-                        ? "Valuation"
-                        : "Saved changes"}{" "}
-                  · Needs review
-                  {primary?.conflictId === conflict.conflictId ? " · Selected" : ""}
+                  {t(
+                    primary?.conflictId === conflict.conflictId
+                      ? "conflict.needsReviewSelected"
+                      : "conflict.needsReview",
+                    {
+                      kind:
+                        conflict.commandType === "DELETE"
+                          ? t("ledgerMigration.copy41")
+                          : conflict.commandType === "RESTORE"
+                            ? t("conflict.restore")
+                            : conflict.commandType === "APPLY_VALUATION"
+                              ? t("ledgerMigration.copy42")
+                              : t("ledgerMigration.copy43"),
+                    },
+                  )}
                 </Text>
               </Pressable>
             ) : (
               <Text style={styles.heading}>
                 {conflict.lifecycle === "RESOLVED"
-                  ? "Decision saved"
-                  : "Replaced by a decision"}
+                  ? t("ledgerMigration.copy44")
+                  : t("ledgerMigration.copy45")}
               </Text>
             )}
             {conflictIntentLines(conflict, chain.canonical, memberNames).map(
@@ -326,8 +333,8 @@ export function ExpenseConflictResolutionScreen() {
               >
                 <Text style={styles.link}>
                   {covered.includes(conflict.conflictId)
-                    ? "✓ Replace this change with my decision"
-                    : "Also replace this change"}
+                    ? t("ledgerMigration.copy46")
+                    : t("ledgerMigration.copy47")}
                 </Text>
               </Pressable>
             ) : null}
@@ -335,22 +342,22 @@ export function ExpenseConflictResolutionScreen() {
         ))}
         {primary ? (
           <>
-            <Text style={styles.heading}>Note for your group</Text>
-            <TextInput
-              accessibilityLabel="Note for your group"
+            <Text style={styles.heading}>{t("ledgerMigration.copy48")}</Text>
+            <UiTextInput
+              accessibilityLabel={t("ledgerMigration.copy48")}
               multiline
               value={reason}
               onChangeText={(value) => setReasonDraft({ selection: selected, value })}
-              placeholder="Explain the choice for your group"
+              placeholder={t("ledgerMigration.copy49")}
               style={styles.input}
               editable={!pending}
               maxLength={2000}
             />
             <Text style={styles.body}>
-              This decision replaces {new Set([primary.conflictId, ...covered]).size}{" "}
-              saved change(s).{" "}
-              {open.length - new Set([primary.conflictId, ...covered]).size} still need
-              review.
+              {t("conflict.replaceSummary", {
+                count: new Set([primary.conflictId, ...covered]).size,
+                remaining: open.length - new Set([primary.conflictId, ...covered]).size,
+              })}
             </Text>
             {conflictChoices(primary, chain?.canonical).map(({ choice, label }) => (
               <Pressable
@@ -385,7 +392,7 @@ export function ExpenseConflictResolutionScreen() {
             ))}
           </>
         ) : !loading ? (
-          <Text style={styles.body}>These changes no longer need a decision.</Text>
+          <Text style={styles.body}>{t("ledgerMigration.copy50")}</Text>
         ) : null}
         <Pressable
           accessibilityRole="button"
@@ -394,45 +401,52 @@ export function ExpenseConflictResolutionScreen() {
           style={styles.card}
         >
           <Text style={styles.link}>
-            {busy ? "Checking latest value…" : "Check latest value"}
+            {busy ? t("ledgerMigration.copy51") : t("ledgerMigration.copy52")}
           </Text>
         </Pressable>
       </ScrollView>
     </>
   );
 }
-const styles = StyleSheet.create({
-  content: { padding: 20, gap: 16, paddingBottom: 44 },
-  heading: { fontSize: 17, fontWeight: "600", color: "#17272F" },
-  choiceRow: { minHeight: 44, justifyContent: "center" },
-  body: { fontSize: 16, lineHeight: 23, color: "#475569" },
-  card: {
-    padding: 16,
-    gap: 8,
-    backgroundColor: "white",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  selected: { borderColor: "#0F766E" },
-  notice: {
-    fontSize: 16,
-    lineHeight: 23,
-    padding: 14,
-    backgroundColor: "#FEF3C7",
-    borderRadius: 12,
-    color: "#713F12",
-  },
-  link: { fontSize: 16, fontWeight: "600", color: "#0F766E", paddingVertical: 8 },
-  input: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 14,
-    minHeight: 90,
-    fontSize: 16,
-    textAlignVertical: "top",
-  },
-  button: { backgroundColor: "#0F766E", borderRadius: 12, padding: 16 },
-  disabled: { opacity: 0.45 },
-  buttonText: { color: "white", fontSize: 17, fontWeight: "600", textAlign: "center" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    page: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 20, gap: 16, paddingBottom: 44 },
+    heading: { ...visual.type.row, fontSize: 17, color: colors.textPrimary },
+    choiceRow: { minHeight: 44, justifyContent: "center" },
+    body: { fontSize: 16, lineHeight: 23, color: colors.textSecondary },
+    card: {
+      padding: 16,
+      gap: 8,
+      backgroundColor: colors.surface,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.separator,
+    },
+    selected: { borderColor: colors.accent },
+    notice: {
+      fontSize: 16,
+      lineHeight: 23,
+      padding: 14,
+      backgroundColor: colors.warningSurface,
+      borderRadius: 12,
+      color: colors.warning,
+    },
+    link: { fontSize: 16, fontWeight: "600", color: colors.accent, paddingVertical: 8 },
+    input: {
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      padding: 14,
+      minHeight: 90,
+      fontSize: 16,
+      textAlignVertical: "top",
+    },
+    button: { backgroundColor: colors.accent, borderRadius: 12, padding: 16 },
+    disabled: { opacity: 0.45 },
+    buttonText: {
+      color: colors.onAccent,
+      fontSize: 17,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+  });

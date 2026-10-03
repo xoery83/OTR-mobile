@@ -36,16 +36,18 @@ describe("New Expense compact presentation", () => {
       "utf8",
     );
     expect(source).toMatch(
-      /<Stack.Toolbar placement="left">\s*<Stack.Toolbar.Button\s+accessibilityLabel="Cancel"\s+disabled=\{saving \|\| selectingReceipt\}\s+onPress=\{close\}/,
+      /<Stack.Toolbar placement="left">\s*<Stack.Toolbar.Button\s+accessibilityLabel=\{t\("ui.cancel"\)\}\s+disabled=\{saving \|\| selectingReceipt\}\s+onPress=\{close\}/,
     );
     expect(source).toMatch(
-      /<Stack.Toolbar placement="right">\s*<Stack.Toolbar.Button\s+accessibilityLabel=\{saving \? "Saving…" : "Save"\}\s+disabled=\{!draft.title.trim\(\) \|\| !draft.date \|\| !effectiveSplits \|\| saving\}\s+onPress=\{\(\) => void save\(\)\}/,
+      /<Stack.Toolbar placement="right">\s*<Stack.Toolbar.Button\s+accessibilityLabel=\{saving \? t\("ui.saving"\) : t\("ui.save"\)\}\s+disabled=\{!draft.title.trim\(\) \|\| !draft.date \|\| !effectiveSplits \|\| saving\}\s+onPress=\{\(\) => void save\(\)\}/,
     );
     expect(source).not.toContain("function HeaderAction(");
     expect(source).not.toContain("headerLeft:");
     expect(source).not.toContain("headerRight:");
     expect(source).toContain("gestureEnabled: false");
-    expect(source).toContain('headerTitle: existing ? "Edit Expense" : "New Expense"');
+    expect(source).toContain(
+      'headerTitle: existing ? t("ui.editExpense") : t("ui.newExpense")',
+    );
   });
 
   it("uses local compact dates without changing the stored key", () => {
@@ -202,8 +204,10 @@ describe("New Expense compact presentation", () => {
       "utf8",
     );
     expect(source).not.toContain("More Details");
-    expect(source).toMatch(/label="Category"[\s\S]*?setCategorySheet\(true\)/);
-    expect(source).toMatch(/label="Date"[\s\S]*?setDatePicker\(true\)/);
+    expect(source).toMatch(
+      /label=\{t\("ui.category"\)\}[\s\S]*?setCategorySheet\(true\)/,
+    );
+    expect(source).toMatch(/label=\{t\("ui.date"\)\}[\s\S]*?setDatePicker\(true\)/);
     expect(source).toContain("setSharingSheet(true)");
     expect(source).toContain("setSharingDraft({ ...sharingEdit, payerId: member.id })");
     expect(source).toContain("setSharingDraft({ ...sharingEdit, participantIds: ids })");
@@ -213,7 +217,7 @@ describe("New Expense compact presentation", () => {
     );
     expect(source).toContain("setDraft(applyExpenseSharing(draft, sharingEdit))");
     expect(source).toContain("onPress={() => chooseReceipt(false)}");
-    expect(source).toContain('accessibilityLabel="Add attachment"');
+    expect(source).toContain('accessibilityLabel={t("ui.addAttachment")}');
     expect(source).toContain("!receiptCapacityFull && !params.correctionRootId ? (");
     expect(source).toContain("discardExpenseReceiptDraft(receiptDraft)");
     expect(source).toContain("previewReceiptDraftPdf(receiptDraft.localUri)");
@@ -247,12 +251,10 @@ describe("New Expense compact presentation", () => {
     expect(source).toContain("multiple: true");
     expect(source).toContain("selectionLimit: remaining");
     expect(source).toContain("selectExpenseReceiptDraftBatch(");
-    expect(source).toContain(
-      "Scan one receipt, or add multiple parts of a long receipt.",
-    );
-    expect(source).toContain("Take one photo");
-    expect(source).toContain("Select one or multiple photos");
-    expect(source).toContain("Select receipt images");
+    expect(source).toContain('t("ui.scanOneReceiptOrAddMultiplePartsOfALong")');
+    expect(source).toContain('t("extra.copy0")');
+    expect(source).toContain('t("extra.copy1")');
+    expect(source).toContain('t("extra.copy2")');
     expect(source).toContain('...(scan ? [] : ["application/pdf"])');
     expect(source).toContain("scanOcrQueue.current.push(next.id)");
     expect(source).toContain("onScanAnother={() => chooseReceipt(true, true)}");

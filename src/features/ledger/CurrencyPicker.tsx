@@ -1,13 +1,10 @@
+import { UiTextInput as TextInput } from "@/ui/forms";
+import { t, getFormatLocale } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { useMemo, useState } from "react";
-import {
-  FlatList,
-  Pressable,
-  Settings,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { AppIcon } from "@/components/AppIcon";
 import {
@@ -23,13 +20,11 @@ type Props = {
 };
 
 export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const [query, setQuery] = useState("");
-  const languages = Settings.get("AppleLanguages");
-  const locale =
-    Array.isArray(languages) && typeof languages[0] === "string"
-      ? languages[0]
-      : Intl.DateTimeFormat().resolvedOptions().locale;
-  const chinese = locale.startsWith("zh");
+  useUiLocale();
+  const locale = getFormatLocale();
   const rows = useMemo(() => searchCurrencies(query), [query]);
   const suggested = useMemo(() => suggestedCurrencies(suggestions), [suggestions]);
   const searching = query.trim().length > 0;
@@ -38,13 +33,11 @@ export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
   return (
     <View style={styles.container}>
       <TextInput
-        accessibilityLabel={chinese ? "搜索货币" : "Search currencies"}
+        accessibilityLabel={t("currency.search")}
         autoCapitalize="none"
         autoCorrect={false}
         onChangeText={setQuery}
-        placeholder={
-          chinese ? "搜索货币、国家/地区或代码" : "Search currency, country or code"
-        }
+        placeholder={t("currency.placeholder")}
         style={styles.search}
         value={query}
       />
@@ -56,7 +49,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
         ListHeaderComponent={
           searching ? null : (
             <View style={styles.top}>
-              <Text style={styles.heading}>{chinese ? "推荐" : "Suggested"}</Text>
+              <Text style={styles.heading}>{t("currency.suggested")}</Text>
               <View style={styles.chips}>
                 {suggested.map((code) => (
                   <Pressable
@@ -68,7 +61,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
                     style={[styles.chip, selected === code && styles.selectedChip]}
                   >
                     {selected === code ? (
-                      <AppIcon color="#0F766E" name="checkmark" size={14} />
+                      <AppIcon color={colors.accent} name="checkmark" size={14} />
                     ) : null}
                     <Text style={[styles.code, selected === code && styles.selectedText]}>
                       {code}
@@ -82,17 +75,11 @@ export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
                   </Pressable>
                 ))}
               </View>
-              <Text style={[styles.heading, styles.allHeading]}>
-                {chinese ? "所有货币" : "All currencies"}
-              </Text>
+              <Text style={[styles.heading, styles.allHeading]}>{t("currency.all")}</Text>
             </View>
           )
         }
-        ListEmptyComponent={
-          <Text style={styles.empty}>
-            {chinese ? "没有匹配的货币" : "No matching currencies"}
-          </Text>
-        }
+        ListEmptyComponent={<Text style={styles.empty}>{t("currency.noMatches")}</Text>}
         renderItem={({ item }) => (
           <Pressable
             accessibilityLabel={label(item)}
@@ -106,7 +93,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
               {currencyName(item, locale)}
             </Text>
             {selected === item ? (
-              <AppIcon color="#0F766E" name="checkmark" size={16} />
+              <AppIcon color={colors.accent} name="checkmark" size={16} />
             ) : null}
           </Pressable>
         )}
@@ -115,55 +102,56 @@ export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { backgroundColor: "#F6F7F9", flex: 1 },
-  search: {
-    backgroundColor: "#E5E7EB",
-    borderRadius: 10,
-    color: "#111827",
-    fontSize: 16,
-    marginHorizontal: 16,
-    marginVertical: 10,
-    minHeight: 44,
-    paddingHorizontal: 12,
-  },
-  top: { paddingHorizontal: 16, paddingTop: 4 },
-  heading: {
-    color: "#64748B",
-    fontSize: 13,
-    fontWeight: "700",
-    marginBottom: 8,
-    textTransform: "uppercase",
-  },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: 5,
-    minHeight: 44,
-    maxWidth: 148,
-    paddingHorizontal: 10,
-  },
-  selectedChip: { backgroundColor: "#E6F5F2", borderColor: "#0F766E" },
-  code: { color: "#111827", fontSize: 15, fontWeight: "700" },
-  selectedText: { color: "#0F766E" },
-  chipName: { color: "#475569", flexShrink: 1, fontSize: 13, maxWidth: 130 },
-  allHeading: { marginBottom: 0, marginTop: 16 },
-  row: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 52,
-    paddingHorizontal: 18,
-  },
-  rowName: { color: "#475569", flex: 1, fontSize: 15 },
-  listContent: { paddingBottom: 24 },
-  empty: { color: "#64748B", padding: 18 },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    container: { backgroundColor: colors.background, flex: 1 },
+    search: {
+      backgroundColor: colors.separator,
+      borderRadius: 10,
+      color: colors.textPrimary,
+      fontSize: 16,
+      marginHorizontal: 16,
+      marginVertical: 10,
+      minHeight: 44,
+      paddingHorizontal: 12,
+    },
+    top: { paddingHorizontal: 16, paddingTop: 4 },
+    heading: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontWeight: "700",
+      marginBottom: 8,
+      textTransform: "uppercase",
+    },
+    chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    chip: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 12,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 5,
+      minHeight: 44,
+      maxWidth: 148,
+      paddingHorizontal: 10,
+    },
+    selectedChip: { backgroundColor: colors.selected, borderColor: colors.accent },
+    code: { color: colors.textPrimary, fontSize: 15, fontWeight: "700" },
+    selectedText: { color: colors.accent },
+    chipName: { color: colors.textTertiary, flexShrink: 1, fontSize: 13, maxWidth: 130 },
+    allHeading: { marginBottom: 0, marginTop: 16 },
+    row: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 12,
+      minHeight: 52,
+      paddingHorizontal: 18,
+    },
+    rowName: { color: colors.textTertiary, flex: 1, fontSize: 15 },
+    listContent: { paddingBottom: 24 },
+    empty: { color: colors.textSecondary, padding: 18 },
+  });

@@ -27,7 +27,7 @@ it("keeps native header visibility, routes and state contracts", () => {
   const search = read("../features/ledger/LedgerSearchScreen.tsx");
   expect(search).toContain("<Stack.Toolbar.Badge");
   expect(search).toContain("{String(filterCount)}");
-  expect(search).toContain("${filterCount} active");
+  expect(search).toContain('t("search.activeFilters", { count: filterCount })');
   expect(search).toContain("onPress={() => setFilterOpen(true)}");
   const analysis = read("../features/ledger/LedgerAnalysisScreen.tsx");
   expect(analysis).toContain("hidden={!presets.length}");
@@ -56,10 +56,12 @@ it("keeps overlay dismissal lightweight with a labeled 44pt target", () => {
   expect(dismiss).toContain("minHeight: 44");
   expect(dismiss).not.toMatch(/backgroundColor|borderRadius|shadow/);
   const viewer = read("../features/ledger/ExpenseAttachmentViewer.tsx");
-  expect(viewer).toContain('label="Close attachment preview"');
-  expect(viewer).toContain('color="#FFFFFF"');
+  expect(viewer).toContain('label={t("ui.closeAttachmentPreview")}');
+  expect(viewer).toContain("color={colors.mediaText}");
   expect(viewer).toContain("onPress={onClose}");
   const capture = read("./ReceiptCaptureScreen.tsx");
   expect(capture).toContain("onPress={() => router.back()}");
-  expect(capture).toContain('accessibilityLabel={scan ? "Cancel" : "Close"}');
+  expect(capture).toContain(
+    'accessibilityLabel={scan ? t("common.cancel") : t("common.close")}',
+  );
 });

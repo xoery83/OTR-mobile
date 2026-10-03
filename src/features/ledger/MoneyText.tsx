@@ -1,10 +1,10 @@
+import { visual as cv } from "@/ui/visual";
+import { useUiTheme } from "@/ui/theme";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { getFormatLocale } from "@/ui/locale";
 import { useState } from "react";
 import { StyleSheet, Text, useWindowDimensions, type TextProps } from "react-native";
-import {
-  contentVisual as cv,
-  heroAmountSizes,
-  nextHeroAmountStep,
-} from "./contentVisual";
+import { heroAmountSizes, nextHeroAmountStep } from "./contentVisual";
 import { ledgerMoneyParts } from "./format";
 
 export type MoneyVariant = "hero" | "headline" | "standard" | "compact";
@@ -37,11 +37,14 @@ const typography = {
 } as const;
 
 export function MoneyText(props: MoneyTextProps) {
+  useUiLocale();
+  const activeLocale = props.locale ?? getFormatLocale();
   const { width, fontScale } = useWindowDimensions();
   return (
     <FittedMoneyText
-      key={`${props.minor}:${props.currency}:${props.scale}:${props.locale}:${props.variant}:${width}:${fontScale}`}
+      key={`${props.minor}:${props.currency}:${props.scale}:${activeLocale}:${props.variant}:${width}:${fontScale}`}
       {...props}
+      locale={activeLocale}
     />
   );
 }
@@ -60,6 +63,7 @@ function FittedMoneyText({
   accessibilityLabel,
   ...props
 }: MoneyTextProps) {
+  const colors = useUiTheme();
   const [step, setStep] = useState(0);
   const type = typography[variant];
   const size =
@@ -99,7 +103,7 @@ function FittedMoneyText({
       }}
       style={[
         {
-          color: cv.color.text,
+          color: colors.textPrimary,
           fontWeight: type.weight,
           fontVariant: ["tabular-nums"],
           flexShrink: 1,

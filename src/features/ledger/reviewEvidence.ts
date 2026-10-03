@@ -1,3 +1,4 @@
+import { t } from "@/ui/locale";
 import type { LedgerReviewFinding } from "@/hooks/useLedgerReview";
 import { formatLedgerMoney } from "./format";
 
@@ -36,17 +37,31 @@ export function reviewEvidence(
             : "Unavailable",
         ],
         ["Comparable Expenses", String(context.cohortSampleSize ?? "Unavailable")],
-        ["Difference", `${Number(context.ratio).toFixed(1)}× the Journey median`],
+        [
+          "Difference",
+          t("reviewFlow.label37", { ratio: Number(context.ratio).toFixed(1) }),
+        ],
       ];
     case "POSSIBLE_DUPLICATE":
       return [
         [
           "This Expense",
-          `${context.expenseTitleSnapshot ?? "Expense"} · ${value(original)} · ${context.expenseDateSnapshot ?? ""} · ${memberNames[String(context.payerMemberId)] ?? "Traveller"} paid`,
+          t("reviewFlow.duplicateEvidence", {
+            title: String(context.expenseTitleSnapshot ?? t("common.expense")),
+            money: value(original),
+            date: String(context.expenseDateSnapshot ?? ""),
+            payer: memberNames[String(context.payerMemberId)] ?? t("common.traveller"),
+          }),
         ],
         [
           "Matches",
-          `${context.matchedTitleSnapshot ?? "Expense"} · ${value(context.matchedOriginalMoney)} · ${context.matchedDateSnapshot ?? ""} · ${memberNames[String(context.matchedPayerMemberId)] ?? "Traveller"} paid`,
+          t("reviewFlow.duplicateEvidence", {
+            title: String(context.matchedTitleSnapshot ?? t("common.expense")),
+            money: value(context.matchedOriginalMoney),
+            date: String(context.matchedDateSnapshot ?? ""),
+            payer:
+              memberNames[String(context.matchedPayerMemberId)] ?? t("common.traveller"),
+          }),
         ],
       ];
     case "RATE_OUTLIER":
@@ -93,7 +108,7 @@ export function reviewEvidence(
             .join(", ")
         : "Unavailable";
       return [
-        ["Payer", memberNames[String(context.payerMemberId)] ?? "Traveller"],
+        ["Payer", memberNames[String(context.payerMemberId)] ?? t("common.traveller")],
         ["Participants", names || "None"],
         [
           "Why this appeared",
@@ -112,13 +127,19 @@ export function reviewCardEvidence(finding: LedgerReviewFinding) {
   if (finding.origin === "HUMAN") return finding.humanNote || "A member raised this";
   switch (finding.ruleId) {
     case "AMOUNT_OUTLIER":
-      return `${value(context.originalMoney)} · ${Number(context.ratio).toFixed(1)}× Journey median`;
+      return t("reviewFlow.label58", {
+        amount: value(context.originalMoney),
+        ratio: Number(context.ratio).toFixed(1),
+      });
     case "POSSIBLE_DUPLICATE":
       return `${value(context.originalMoney)} · matches ${context.matchedTitleSnapshot ?? "another Expense"} on ${context.matchedDateSnapshot ?? "the same day"}`;
     case "RATE_OUTLIER":
       return `Recorded rate ${context.rateValue ?? "unavailable"} · outside Review bounds`;
     case "EVIDENCE_MISMATCH":
-      return `${value(context.originalMoney)} Expense · ${value(context.postedMoney)} posted payment`;
+      return t("reviewFlow.label61", {
+        expense: value(context.originalMoney),
+        payment: value(context.postedMoney),
+      });
     case "PARTICIPANT_ANOMALY":
       return "Payer is not in the participant list";
     default:

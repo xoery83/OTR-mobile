@@ -1,13 +1,16 @@
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { useRef } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { navigationColors } from "@/components/navigationChrome";
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
 
 export function SheetHeader({
   title,
-  leftLabel = "Close",
+  leftLabel = t("common.close"),
   onLeft,
-  rightLabel = "Done",
+  rightLabel = t("common.done"),
   onRight,
   rightDisabled = false,
   safeTop = true,
@@ -20,6 +23,8 @@ export function SheetHeader({
   rightDisabled?: boolean;
   safeTop?: boolean;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 2;
   const touchY = useRef(0);
   const left = <Action label={leftLabel} onPress={onLeft} />;
@@ -71,6 +76,7 @@ function Action({
   label: string;
   onPress: () => void;
 }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <Pressable
       accessibilityRole="button"
@@ -86,40 +92,41 @@ function Action({
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { backgroundColor: "#FFFFFF" },
-  header: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    minHeight: 58,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  largeHeader: { alignItems: "stretch", flexDirection: "column" },
-  side: { width: 112 },
-  rightSide: { alignItems: "flex-end" },
-  title: {
-    color: navigationColors.text,
-    flex: 1,
-    fontSize: 17,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  largeTitle: {
-    color: navigationColors.text,
-    fontSize: 18,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  actions: { flexDirection: "row", justifyContent: "space-between" },
-  button: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 44,
-    minWidth: 72,
-    paddingHorizontal: 10,
-  },
-  buttonText: { color: navigationColors.action, fontSize: 16, fontWeight: "600" },
-  disabled: { opacity: 0.45 },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    safe: { backgroundColor: colors.surface },
+    header: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+      minHeight: 58,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    largeHeader: { alignItems: "stretch", flexDirection: "column" },
+    side: { width: 112 },
+    rightSide: { alignItems: "flex-end" },
+    title: {
+      color: colors.textPrimary,
+      flex: 1,
+      fontSize: 17,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+    largeTitle: {
+      color: colors.textPrimary,
+      fontSize: 18,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+    actions: { flexDirection: "row", justifyContent: "space-between" },
+    button: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 44,
+      minWidth: 72,
+      paddingHorizontal: 10,
+    },
+    buttonText: { color: colors.accent, fontSize: 16, fontWeight: "600" },
+    disabled: { opacity: 0.45 },
+  });

@@ -1,3 +1,7 @@
+import { useUiLocale } from "@/ui/useUiLocale";
+import { t } from "@/ui/locale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
@@ -6,11 +10,14 @@ import { getDefaultLedgerExpenseConflictRepository } from "@/data/repositories/l
 
 export function ExpenseConflictList({
   journeyId,
-  title = "Changes needing review",
+  title = t("extra.copy28"),
 }: {
   journeyId?: string;
   title?: string;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
   const [items, setItems] = useState<
     Awaited<
       ReturnType<
@@ -47,7 +54,10 @@ export function ExpenseConflictList({
         <Pressable
           key={item.id}
           accessibilityRole="button"
-          accessibilityLabel={`Review changes to ${item.title}${item.deletedAt ? ", deletion needs review" : ""}`}
+          accessibilityLabel={t("conflict.reviewDescription", {
+            title: item.title,
+            deletion: item.deletedAt ? t("conflict.deletionDescription") : "",
+          })}
           onPress={() =>
             router.push({
               pathname: "/expenses/conflict/[id]",
@@ -58,19 +68,26 @@ export function ExpenseConflictList({
         >
           <Text style={styles.heading}>{item.title}</Text>
           <Text style={styles.body}>
-            {item.deletedAt ? "Deletion needs review · " : ""}
-            {item.conflictCount} saved change{item.conflictCount === 1 ? "" : "s"}
+            {t(item.deletedAt ? "conflict.deletionCount" : "conflict.changeCount", {
+              count: item.conflictCount,
+            })}
           </Text>
-          <Text style={styles.link}>Review changes ›</Text>
+          <Text style={styles.link}>{t("ui.reviewChanges2")}</Text>
         </Pressable>
       ))}
     </View>
   );
 }
-const styles = StyleSheet.create({
-  list: { gap: 12 },
-  row: { padding: 16, backgroundColor: "#FFFBEB", borderRadius: 12, gap: 6 },
-  heading: { fontSize: 17, fontWeight: "600", color: "#17272F" },
-  body: { fontSize: 16, lineHeight: 23, color: "#475569" },
-  link: { fontSize: 16, fontWeight: "600", color: "#0F766E" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    list: { gap: 12 },
+    row: {
+      padding: 16,
+      backgroundColor: colors.warningSurface,
+      borderRadius: 12,
+      gap: 6,
+    },
+    heading: { fontSize: 17, fontWeight: "600", color: colors.textPrimary },
+    body: { fontSize: 16, lineHeight: 23, color: colors.textTertiary },
+    link: { fontSize: 16, fontWeight: "600", color: colors.accent },
+  });

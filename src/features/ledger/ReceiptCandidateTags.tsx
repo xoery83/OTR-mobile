@@ -1,3 +1,7 @@
+import { t } from "@/ui/locale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { candidateRows } from "./receiptReviewPresentation";
@@ -20,6 +24,10 @@ export function ReceiptCandidateTags({
   onOverflow: () => void;
   alwaysOverflow?: boolean;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   const [width, setWidth] = useState(0);
   const [measurements, setMeasurements] = useState<Record<string, number>>({});
   if (!tags.length && !alwaysOverflow) return null;
@@ -32,7 +40,7 @@ export function ReceiptCandidateTags({
   const chip = (tag: ReceiptTag, measuring = false) => (
     <Pressable
       key={tag.key}
-      accessibilityLabel={`Use ${label} ${tag.label}`}
+      accessibilityLabel={t("receipt.useSuggestion", { label, value: tag.label })}
       accessibilityRole="button"
       accessibilityState={{ selected: tag.selected }}
       onPress={tag.onPress}
@@ -81,7 +89,7 @@ export function ReceiptCandidateTags({
               {(layout.rows[row] ?? []).map((index) => chip(tags[index]))}
               {layout.overflow && row === layout.overflowRow ? (
                 <Pressable
-                  accessibilityLabel={`More ${label} options`}
+                  accessibilityLabel={t("receipt.moreOptions", { label })}
                   accessibilityRole="button"
                   onPress={onOverflow}
                   style={styles.overflow}
@@ -96,32 +104,33 @@ export function ReceiptCandidateTags({
   );
 }
 
-const styles = StyleSheet.create({
-  group: { gap: 6 },
-  measure: { position: "absolute", opacity: 0, alignItems: "flex-start" },
-  row: { flexDirection: "row", gap: 6 },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#FFFFFF",
-  },
-  selected: { backgroundColor: "#E6F5F2", borderColor: "#0F766E" },
-  check: { width: 14, color: "#0F766E", fontSize: 14 },
-  text: { color: "#0F766E", fontSize: 15, fontWeight: "600", flexShrink: 1 },
-  overflow: {
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-  },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    group: { gap: 6 },
+    measure: { position: "absolute", opacity: 0, alignItems: "flex-start" },
+    row: { flexDirection: "row", gap: 6 },
+    chip: {
+      flexDirection: "row",
+      alignItems: "center",
+      minHeight: 44,
+      minWidth: 44,
+      paddingHorizontal: 8,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.separator,
+      backgroundColor: colors.surface,
+    },
+    selected: { backgroundColor: colors.accentSurface, borderColor: colors.accent },
+    check: { width: 14, color: colors.accent, fontSize: 14 },
+    text: { color: colors.accent, fontSize: 15, fontWeight: "600", flexShrink: 1 },
+    overflow: {
+      minWidth: 44,
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.separator,
+    },
+  });

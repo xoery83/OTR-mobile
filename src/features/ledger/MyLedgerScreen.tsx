@@ -1,3 +1,9 @@
+import { segmentedControlTokens } from "@/ui/segmented";
+import { categoryLabel, domainLabel } from "@/ui/domainLabels";
+import { t, getFormatLocale } from "@/ui/locale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { MoneyText } from "./MoneyText";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -15,7 +21,7 @@ import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { myLedgerPeriodBounds } from "@/domain/ledger/journeyContext";
 import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
 import { formatLedgerDateRange, formatLedgerMoney } from "./format";
-import { contentVisual as cv } from "./contentVisual";
+import { visual as cv } from "@/ui/visual";
 import { createLatestRequest } from "./latestRequest";
 import { loadMyLedger } from "./loadMyLedger";
 import type { Period } from "./myLedgerAnalytics";
@@ -25,6 +31,10 @@ type ViewData = Awaited<ReturnType<typeof loadMyLedger>>;
 type Section = "SPENDING" | "SETTLEMENTS";
 
 export function MyLedgerScreen() {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   const [period, setPeriod] = useState<Period>("YEAR");
   const [section, setSection] = useState<Section>("SPENDING");
   const [currency, setCurrency] = useState<string | null>(null);
@@ -123,8 +133,10 @@ export function MyLedgerScreen() {
               setView(null);
             }}
           >
-            <Text style={styles.segmentText}>
-              {item === "SPENDING" ? "Spending" : "Settlements"}
+            <Text
+              style={[styles.segmentText, section === item && styles.segmentTextSelected]}
+            >
+              {item === "SPENDING" ? t("ui.spending") : t("ui.settlements")}
             </Text>
           </Pressable>
         ))}
@@ -133,17 +145,19 @@ export function MyLedgerScreen() {
         {section === "SPENDING" ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Display currency, ${currency ?? "loading"}`}
+            accessibilityLabel={t("myLedger.currencyDescription", {
+              currency: currency ?? t("common.loading"),
+            })}
             style={styles.currencyControl}
             onPress={() => setCurrencyOpen(true)}
           >
-            <Text style={styles.filterLabel}>Display Currency</Text>
+            <Text style={styles.filterLabel}>{t("ui.displayCurrency")}</Text>
             <Text style={styles.currency}>{currency ?? "—"} ▾</Text>
           </Pressable>
         ) : (
           <View style={styles.currencyControl}>
-            <Text style={styles.filterLabel}>Settlement Currency</Text>
-            <Text style={styles.currency}>Per Journey</Text>
+            <Text style={styles.filterLabel}>{t("ui.settlementCurrency")}</Text>
+            <Text style={styles.currency}>{t("ui.perJourney")}</Text>
           </View>
         )}
         <View accessibilityRole="tablist" style={styles.periodGroup}>
@@ -158,14 +172,14 @@ export function MyLedgerScreen() {
               <Text
                 style={[styles.periodText, period === item && styles.periodTextSelected]}
               >
-                {item === "YEAR" ? "This Year" : "All Time"}
+                {item === "YEAR" ? t("ui.thisYear") : t("ui.allTime")}
               </Text>
             </Pressable>
           ))}
         </View>
       </View>
       {loading && !shown ? (
-        <ActivityIndicator accessibilityLabel="Loading My Ledger" />
+        <ActivityIndicator accessibilityLabel={t("ui.loadingMyLedger")} />
       ) : null}
       {error ? (
         <Pressable
@@ -173,7 +187,7 @@ export function MyLedgerScreen() {
           onPress={() => void load(period, currency, section)}
         >
           <Text style={styles.error}>
-            My Ledger could not be loaded. Tap to try again.
+            {t("ui.myLedgerCouldNotBeLoadedTapToTryAgain")}
           </Text>
         </Pressable>
       ) : null}
@@ -188,29 +202,26 @@ export function MyLedgerScreen() {
               currency={spending.currency}
               scale={spending.scale}
             />
-            <Text style={styles.label}>Total spending</Text>
+            <Text style={styles.label}>{t("ui.totalSpending")}</Text>
             {spending.unconverted ? (
               <Text style={styles.meta}>
-                Excludes {spending.unconverted} unconverted{" "}
-                {spending.unconverted === 1 ? "expense" : "expenses"}
+                {t("myLedger.excludedExpenses", { count: spending.unconverted })}
               </Text>
             ) : null}
             {shown.incompleteJourneyCount ? (
               <Text style={styles.meta}>
-                Excludes {shown.incompleteJourneyCount}{" "}
-                {shown.incompleteJourneyCount === 1 ? "Journey" : "Journeys"} without
-                saved Expense detail
+                {t("myLedger.excludedJourneys", { count: shown.incompleteJourneyCount })}
               </Text>
             ) : null}
           </View>
-          <Text style={styles.heading}>By Category</Text>
+          <Text style={styles.heading}>{t("ui.byCategory")}</Text>
           {spending.categories.length ? (
             spending.categories.map(([name, amount], index) => {
               const percentage = spendingPercentage(amount, spending.totalMinor);
               return (
                 <View key={`${name}-${index}`} style={styles.category}>
                   <View style={styles.inline}>
-                    <Text style={styles.categoryName}>{name}</Text>
+                    <Text style={styles.categoryName}>{categoryLabel(name)}</Text>
                     <Text>
                       <MoneyText
                         accessible={false}
@@ -228,10 +239,10 @@ export function MyLedgerScreen() {
               );
             })
           ) : (
-            <Text style={styles.meta}>No spending in this period.</Text>
+            <Text style={styles.meta}>{t("ui.noSpendingInThisPeriod")}</Text>
           )}
-          <Text style={styles.heading}>Monthly Spending</Text>
-          <View style={styles.chart} accessibilityLabel="Monthly spending chart">
+          <Text style={styles.heading}>{t("ui.monthlySpending")}</Text>
+          <View style={styles.chart} accessibilityLabel={t("ui.monthlySpendingChart")}>
             {spending.months.map(([month, amount]) => (
               <View
                 key={month}
@@ -249,9 +260,12 @@ export function MyLedgerScreen() {
                 </View>
                 <Text numberOfLines={1} style={styles.monthLabel}>
                   {spending.months.length <= 12
-                    ? new Date(`${month}-01T12:00:00Z`).toLocaleString(undefined, {
-                        month: "short",
-                      })
+                    ? new Date(`${month}-01T12:00:00Z`).toLocaleString(
+                        getFormatLocale(),
+                        {
+                          month: "short",
+                        },
+                      )
                     : spending.months.length <= 36 && month.endsWith("-01")
                       ? month.slice(0, 4)
                       : ""}
@@ -272,7 +286,7 @@ export function MyLedgerScreen() {
             <Pressable
               key={journey.journeyId}
               accessibilityRole="button"
-              accessibilityLabel={`${journey.title}, ${projection ? `${settlementPositionLabel(projection.balanceMinor)}, ${formatLedgerMoney(Math.abs(projection.balanceMinor), projection.currency, projection.scale)}` : "balance unavailable"}`}
+              accessibilityLabel={`${journey.title}, ${projection ? `${settlementPositionLabel(projection.balanceMinor)}, ${formatLedgerMoney(Math.abs(projection.balanceMinor), projection.currency, projection.scale)}` : t("ui.balanceUnavailable")}`}
               style={styles.journey}
               onPress={() =>
                 router.push({
@@ -286,7 +300,7 @@ export function MyLedgerScreen() {
                 <Text style={styles.meta}>
                   {formatLedgerDateRange(journey.startDate, journey.endDate)}
                 </Text>
-                {status ? <Text style={styles.meta}>{status}</Text> : null}
+                {status ? <Text style={styles.meta}>{domainLabel(status)}</Text> : null}
               </View>
               <View style={styles.balanceColumn}>
                 <MoneyText
@@ -313,7 +327,7 @@ export function MyLedgerScreen() {
             </Pressable>
           ))}
           {!shown.settlements.length ? (
-            <Text style={styles.meta}>No Journeys in this period.</Text>
+            <Text style={styles.meta}>{t("ui.noJourneysInThisPeriod")}</Text>
           ) : null}
         </>
       ) : null}
@@ -325,7 +339,7 @@ export function MyLedgerScreen() {
       >
         <Pressable style={styles.backdrop} onPress={() => setCurrencyOpen(false)}>
           <View style={styles.menu}>
-            <Text style={styles.heading}>Display Currency</Text>
+            <Text style={styles.heading}>{t("ui.displayCurrency")}</Text>
             {(shown?.options ?? []).map((option) => (
               <Pressable
                 accessibilityRole="button"
@@ -333,7 +347,7 @@ export function MyLedgerScreen() {
                 style={styles.option}
                 onPress={() => changeCurrency(option)}
               >
-                <Text>{option}</Text>
+                <Text style={styles.currency}>{option}</Text>
               </Pressable>
             ))}
             <Pressable
@@ -341,7 +355,7 @@ export function MyLedgerScreen() {
               style={styles.option}
               onPress={() => setCurrencyOpen(false)}
             >
-              <Text>Cancel</Text>
+              <Text style={styles.currency}>{t("ui.cancel")}</Text>
             </Pressable>
           </View>
         </Pressable>
@@ -350,127 +364,144 @@ export function MyLedgerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    backgroundColor: "#F6F7F9",
-    flexGrow: 1,
-    gap: 14,
-    padding: 16,
-    paddingBottom: 40,
-  },
-  segment: {
-    backgroundColor: "#E5E7EB",
-    borderRadius: 9,
-    flexDirection: "row",
-    padding: 2,
-  },
-  segmentItem: {
-    alignItems: "center",
-    borderRadius: 7,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 44,
-  },
-  selected: { backgroundColor: "#FFFFFF" },
-  segmentText: { color: "#111827", fontWeight: "600" },
-  filterRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  currencyControl: {
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 44,
-    minWidth: 112,
-  },
-  filterLabel: { color: "#64748B", fontSize: 11 },
-  currency: { color: "#111827", fontSize: 14, fontWeight: "700", marginTop: 2 },
-  periodGroup: { flexDirection: "row", gap: 4, marginLeft: "auto" },
-  periodItem: {
-    borderColor: "#D5DCE6",
-    borderRadius: 8,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 38,
-    paddingHorizontal: 10,
-  },
-  periodSelected: { backgroundColor: "#E8EDF4", borderColor: "#BFC9D8" },
-  periodText: { color: "#64748B", fontSize: 12 },
-  periodTextSelected: { color: "#1F2937", fontWeight: "700" },
-  label: { color: "#64748B", fontSize: 14 },
-  total: {
-    backgroundColor: cv.color.card,
-    borderRadius: cv.radius.card,
-    gap: 3,
-    padding: 20,
-  },
-  amount: {
-    color: cv.color.text,
-    fontSize: 30,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
-  },
-  heading: { color: cv.color.text, ...cv.type.section, marginTop: 8 },
-  meta: { color: "#64748B", fontSize: 13 },
-  error: { color: "#B91C1C" },
-  category: { gap: 6 },
-  inline: { flexDirection: "row", justifyContent: "space-between" },
-  categoryName: { flex: 1, fontWeight: "600" },
-  categoryPercentage: { color: "#64748B", fontSize: 12 },
-  track: { backgroundColor: "#E5E7EB", borderRadius: 4, height: 6 },
-  fill: { backgroundColor: "#64748B", borderRadius: 4, height: 6 },
-  chart: { flexDirection: "row", height: 116, width: "100%" },
-  month: { alignItems: "center", flex: 1, justifyContent: "flex-end", minWidth: 0 },
-  barArea: {
-    alignItems: "center",
-    height: 94,
-    justifyContent: "flex-end",
-    width: "100%",
-  },
-  bar: {
-    backgroundColor: "#64748B",
-    borderRadius: 2,
-    maxWidth: 22,
-    minWidth: 1,
-    width: "68%",
-  },
-  monthLabel: {
-    color: "#64748B",
-    fontSize: 9,
-    height: 15,
-    marginTop: 5,
-    textAlign: "center",
-    width: "100%",
-  },
-  chartRange: { color: "#64748B", fontSize: 11, textAlign: "center" },
-  journey: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 72,
-    padding: 14,
-  },
-  grow: { flex: 1 },
-  journeyTitle: { color: cv.color.text, ...cv.type.row },
-  balanceColumn: { alignItems: "flex-end", maxWidth: "46%" },
-  balance: { color: cv.color.text, ...cv.type.rowAmount, textAlign: "right" },
-  balanceMeaning: {
-    borderRadius: 6,
-    fontSize: 11,
-    fontWeight: "700",
-    marginTop: 3,
-    overflow: "hidden",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-  },
-  owed: { backgroundColor: "#DCFCE7", color: "#166534" },
-  owe: { backgroundColor: "#FEE2E2", color: "#991B1B" },
-  settled: { backgroundColor: "#E5E7EB", color: "#374151" },
-  backdrop: { backgroundColor: "#0006", flex: 1, justifyContent: "center", padding: 28 },
-  menu: { backgroundColor: "#FFFFFF", borderRadius: 12, padding: 18 },
-  option: { justifyContent: "center", minHeight: 48 },
-});
+const createStyles = (colors: UiColors) => {
+  const segment = segmentedControlTokens(colors);
+  return StyleSheet.create({
+    content: {
+      backgroundColor: colors.background,
+      flexGrow: 1,
+      gap: 14,
+      padding: 16,
+      paddingBottom: 40,
+    },
+    segment: {
+      backgroundColor: segment.trackSurface,
+      borderRadius: 9,
+      flexDirection: "row",
+      padding: 2,
+    },
+    segmentItem: {
+      alignItems: "center",
+      borderRadius: 7,
+      flex: 1,
+      justifyContent: "center",
+      minHeight: 44,
+    },
+    selected: { backgroundColor: segment.selectedSurface },
+    segmentText: { color: segment.label, fontWeight: "600" },
+    segmentTextSelected: { color: segment.selectedLabel },
+    filterRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    currencyControl: {
+      flex: 1,
+      justifyContent: "center",
+      minHeight: 44,
+      minWidth: 112,
+    },
+    filterLabel: { color: colors.textSecondary, fontSize: 11 },
+    currency: {
+      color: colors.textPrimary,
+      fontSize: 14,
+      fontWeight: "700",
+      marginTop: 2,
+    },
+    periodGroup: { flexDirection: "row", gap: 4, marginLeft: "auto" },
+    periodItem: {
+      borderColor: colors.separator,
+      borderRadius: 8,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 38,
+      paddingHorizontal: 10,
+    },
+    periodSelected: {
+      backgroundColor: segment.selectedSurface,
+      borderColor: colors.separator,
+    },
+    periodText: { color: segment.label, fontSize: 12 },
+    periodTextSelected: { color: segment.selectedLabel, fontWeight: "700" },
+    label: { color: colors.textSecondary, fontSize: 14 },
+    total: {
+      backgroundColor: colors.surface,
+      borderRadius: cv.radius.card,
+      gap: 3,
+      padding: 20,
+    },
+    amount: {
+      color: colors.textPrimary,
+      fontSize: 30,
+      fontWeight: "700",
+      fontVariant: ["tabular-nums"],
+    },
+    heading: { color: colors.textPrimary, ...cv.type.section, marginTop: 8 },
+    meta: { color: colors.textSecondary, fontSize: 13 },
+    error: { color: colors.destructive },
+    category: { gap: 6 },
+    inline: { flexDirection: "row", justifyContent: "space-between" },
+    categoryName: { flex: 1, fontWeight: "600" },
+    categoryPercentage: { color: colors.textSecondary, fontSize: 12 },
+    track: { backgroundColor: colors.separator, borderRadius: 4, height: 6 },
+    fill: { backgroundColor: colors.textSecondary, borderRadius: 4, height: 6 },
+    chart: { flexDirection: "row", height: 116, width: "100%" },
+    month: { alignItems: "center", flex: 1, justifyContent: "flex-end", minWidth: 0 },
+    barArea: {
+      alignItems: "center",
+      height: 94,
+      justifyContent: "flex-end",
+      width: "100%",
+    },
+    bar: {
+      backgroundColor: colors.textSecondary,
+      borderRadius: 2,
+      maxWidth: 22,
+      minWidth: 1,
+      width: "68%",
+    },
+    monthLabel: {
+      color: colors.textSecondary,
+      fontSize: 9,
+      height: 15,
+      marginTop: 5,
+      textAlign: "center",
+      width: "100%",
+    },
+    chartRange: { color: colors.textSecondary, fontSize: 11, textAlign: "center" },
+    journey: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      flexDirection: "row",
+      gap: 12,
+      minHeight: 72,
+      padding: 14,
+    },
+    grow: { flex: 1 },
+    journeyTitle: { color: colors.textPrimary, ...cv.type.row },
+    balanceColumn: { alignItems: "flex-end", maxWidth: "46%" },
+    balance: { color: colors.textPrimary, ...cv.type.rowAmount, textAlign: "right" },
+    balanceMeaning: {
+      borderRadius: 6,
+      fontSize: 11,
+      fontWeight: "700",
+      marginTop: 3,
+      overflow: "hidden",
+      paddingHorizontal: 6,
+      paddingVertical: 3,
+    },
+    owed: { backgroundColor: colors.successSurface, color: colors.success },
+    owe: { backgroundColor: colors.destructiveSurface, color: colors.destructive },
+    settled: { backgroundColor: colors.separator, color: colors.textTertiary },
+    backdrop: {
+      backgroundColor: colors.overlay,
+      flex: 1,
+      justifyContent: "center",
+      padding: 28,
+    },
+    menu: { backgroundColor: colors.surface, borderRadius: 12, padding: 18 },
+    option: { justifyContent: "center", minHeight: 48 },
+  });
+};

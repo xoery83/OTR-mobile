@@ -1,57 +1,67 @@
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { visual } from "@/ui/visual";
+import { UiButton } from "@/ui/controls";
+import { systemMessage } from "@/ui/domainLabels";
 import { router, Stack } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { ScrollView, StyleSheet, Text } from "react-native";
 
 import { useReceiptCapture } from "@/hooks/useReceiptCapture";
 import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
 
 export function ReceiptCaptureScreen() {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const { expenseId, scan, receipts, selecting, message, pickPhoto, pickDocument } =
     useReceiptCapture();
   const full = Boolean(expenseId) && receipts.length >= MAX_EXPENSE_ATTACHMENTS;
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView style={styles.page} contentContainerStyle={styles.content}>
       <Stack.Screen
         options={{
-          headerTitle: scan ? "Receipt draft" : "Add attachment",
+          headerTitle: scan ? t("ledgerMigration.copy53") : t("ui.addAttachment"),
         }}
       />
       <Stack.Toolbar placement="left">
         <Stack.Toolbar.Button
-          accessibilityLabel={scan ? "Cancel" : "Close"}
+          accessibilityLabel={scan ? t("common.cancel") : t("common.close")}
           onPress={() => router.back()}
         >
-          {scan ? "Cancel" : "Close"}
+          {scan ? t("common.cancel") : t("common.close")}
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
       {scan ? (
         <>
-          <Text style={styles.note}>Add a temporary receipt from New Expense.</Text>
-          <Action label="Back" onPress={() => router.back()} />
+          <Text style={styles.note}>{t("ledgerMigration.copy54")}</Text>
+          <UiButton label={t("common.back")} onPress={() => router.back()} />
         </>
       ) : (
         <>
           <Text style={styles.note}>
-            {Math.max(0, MAX_EXPENSE_ATTACHMENTS - receipts.length)} attachment slots
-            remaining. Choose photos or a PDF.
+            {t("receipt.slotsRemaining", {
+              count: Math.max(0, MAX_EXPENSE_ATTACHMENTS - receipts.length),
+            })}
           </Text>
-          <Action
-            label="Camera"
+          <UiButton
+            label={t("ui.camera")}
             disabled={full || selecting}
             onPress={() => void pickPhoto(true)}
           />
-          <Action
-            label="Photo Library"
+          <UiButton
+            label={t("ui.photoLibrary")}
             disabled={full || selecting}
             onPress={() => void pickPhoto(false)}
           />
-          <Action
-            label="Files"
+          <UiButton
+            label={t("ui.files")}
             disabled={full || selecting}
             onPress={() => void pickDocument()}
           />
           {message ? (
             <Text accessibilityLiveRegion="polite" style={styles.message}>
-              {message}
+              {systemMessage(message)}
             </Text>
           ) : null}
         </>
@@ -60,50 +70,15 @@ export function ReceiptCaptureScreen() {
   );
 }
 
-function Action({
-  label,
-  onPress,
-  disabled = false,
-}: {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={styles.action}
-    >
-      <Text style={styles.actionText}>{label}</Text>
-    </Pressable>
-  );
-}
-
-const styles = StyleSheet.create({
-  content: { gap: 12, padding: 20 },
-  note: { color: "#475569", fontSize: 15, lineHeight: 21 },
-  message: { color: "#0F766E", fontSize: 15, fontWeight: "700" },
-  error: { color: "#B45309", fontSize: 15, lineHeight: 21 },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    gap: 8,
-    marginTop: 8,
-    padding: 14,
-  },
-  cardTitle: { color: "#0F172A", fontSize: 17, fontWeight: "700" },
-  action: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 14,
-  },
-  actionText: { color: "#0F766E", fontSize: 17, fontWeight: "700" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    page: { flex: 1, backgroundColor: colors.background },
+    content: { gap: 12, padding: 20 },
+    note: {
+      ...visual.type.meta,
+      color: colors.textSecondary,
+      fontSize: 15,
+      lineHeight: 21,
+    },
+    message: { color: colors.accent, fontSize: 15, fontWeight: "700" },
+  });

@@ -1,5 +1,10 @@
+import { systemMessage } from "@/ui/domainLabels";
+import { t, getFormatLocale } from "@/ui/locale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { useEffect, useRef, useState } from "react";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { UiDatePicker as DateTimePicker } from "@/ui/forms";
 import {
   ActivityIndicator,
   Modal,
@@ -27,6 +32,10 @@ export function ExchangeRateLookup({
   online: boolean;
   settlementCurrency: string;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   const [from, setFrom] = useState("");
   const [to, setTo] = useState(settlementCurrency);
   const [date, setDate] = useState(() => localDateKey(new Date()));
@@ -54,12 +63,12 @@ export function ExchangeRateLookup({
         setResult(cached);
         if (!online) {
           setChecking(false);
-          if (!cached) setMessage("No saved reference rate is available offline.");
+          if (!cached) setMessage(t("ui.noSavedReferenceRateIsAvailableOffline"));
           return;
         }
       } catch {
         if (request.current !== current) return;
-        setMessage("Saved reference rates could not be read.");
+        setMessage(t("ui.savedReferenceRatesCouldNotBeRead"));
         if (!online) return;
       }
       setChecking(true);
@@ -68,7 +77,7 @@ export function ExchangeRateLookup({
         if (request.current === current) setResult(fresh);
       } catch {
         if (request.current === current)
-          setMessage("Could not check for a more exact reference rate.");
+          setMessage(t("ui.couldNotCheckForAMoreExactReferenceRate"));
       } finally {
         if (request.current === current) setChecking(false);
       }
@@ -78,16 +87,20 @@ export function ExchangeRateLookup({
   return (
     <View style={styles.section}>
       <Text accessibilityRole="header" style={styles.sectionTitle}>
-        Exchange Rate Lookup
+        {t("ui.exchangeRateLookup")}
       </Text>
       <View style={styles.card}>
         <View style={styles.fields}>
-          <CurrencyField label="From" onPress={() => setPicker("FROM")} value={from} />
-          <CurrencyField label="To" onPress={() => setPicker("TO")} value={to} />
+          <CurrencyField
+            label={t("ui.from")}
+            onPress={() => setPicker("FROM")}
+            value={from}
+          />
+          <CurrencyField label={t("ui.to")} onPress={() => setPicker("TO")} value={to} />
         </View>
-        <Text style={styles.fieldLabel}>Date</Text>
+        <Text style={styles.fieldLabel}>{t("ui.date")}</Text>
         <Pressable
-          accessibilityLabel={`Reference date ${date}`}
+          accessibilityLabel={t("rate.referenceDate", { date })}
           accessibilityRole="button"
           onPress={() => {
             setPendingDate(new Date(`${date}T12:00:00`));
@@ -100,7 +113,7 @@ export function ExchangeRateLookup({
         <LookupResult checking={checking} online={online} result={result} />
         {message ? (
           <Text accessibilityLiveRegion="polite" style={styles.message}>
-            {message}
+            {systemMessage(message)}
           </Text>
         ) : null}
       </View>
@@ -113,7 +126,7 @@ export function ExchangeRateLookup({
       >
         <SheetHeader
           onLeft={() => setPicker(null)}
-          title={picker === "FROM" ? "From currency" : "To currency"}
+          title={picker === "FROM" ? t("ui.fromCurrency") : t("ui.toCurrency")}
         />
         <CurrencyPicker
           onSelect={(code) => {
@@ -134,14 +147,14 @@ export function ExchangeRateLookup({
       >
         <View style={styles.dateOverlay}>
           <Pressable
-            accessibilityLabel="Dismiss date picker"
+            accessibilityLabel={t("ui.dismissDatePicker")}
             accessibilityRole="button"
             onPress={() => setDateOpen(false)}
             style={styles.dateBackdrop}
           />
           <SafeAreaView edges={["bottom"]} style={styles.datePanel}>
             <SheetHeader
-              leftLabel="Cancel"
+              leftLabel={t("ui.cancel")}
               onLeft={() => setDateOpen(false)}
               onRight={() => {
                 reset();
@@ -149,7 +162,7 @@ export function ExchangeRateLookup({
                 setDateOpen(false);
               }}
               safeTop={false}
-              title="Reference date"
+              title={t("ui.referenceDate2")}
             />
             {dateOpen ? (
               <View style={styles.dateWheelContainer}>
@@ -161,8 +174,7 @@ export function ExchangeRateLookup({
                     if (value) setPendingDate(value);
                   }}
                   style={styles.dateWheel}
-                  textColor="#0F172A"
-                  themeVariant="light"
+
                   value={pendingDate}
                 />
               </View>
@@ -183,12 +195,16 @@ function CurrencyField({
   onPress: () => void;
   value: string;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View style={styles.currencyField}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <Pressable accessibilityRole="button" onPress={onPress} style={styles.fieldButton}>
         <Text style={value ? styles.fieldValue : styles.placeholder}>
-          {value || "Select currency"}
+          {value || t("ui.selectCurrency")}
         </Text>
       </Pressable>
     </View>
@@ -204,59 +220,71 @@ function LookupResult({
   online: boolean;
   result: LedgerRateLookupResult | null;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   if (!result)
-    return checking ? <ActivityIndicator accessibilityLabel="Looking up rate" /> : null;
+    return checking ? (
+      <ActivityIndicator accessibilityLabel={t("ui.lookingUpRate")} />
+    ) : null;
   if (!result.decimalRate)
     return (
       <View style={styles.result}>
         <Text style={styles.resultTitle}>{unavailableCopy(result.resolution)}</Text>
         <Text style={styles.detail}>
-          Requested date {formatDate(result.requestedDate)}
+          {t("ui.requestedDate")}
+          {formatDate(result.requestedDate)}
         </Text>
-        {checking ? <Text style={styles.checking}>Checking again…</Text> : null}
+        {checking ? <Text style={styles.checking}>{t("ui.checkingAgain")}</Text> : null}
       </View>
     );
   return (
     <View accessibilityLiveRegion="polite" style={styles.result}>
       <Text style={styles.rate}>
-        1 {result.quoteCurrency} {result.resolution === "SAME_CURRENCY" ? "=" : "≈"}{" "}
+        {t("ui.1")}
+        {result.quoteCurrency} {result.resolution === "SAME_CURRENCY" ? "=" : "≈"}{" "}
         {formatLedgerRate(result.decimalRate)} {result.baseCurrency}
       </Text>
-      <Text style={styles.detail}>Requested date {formatDate(result.requestedDate)}</Text>
       <Text style={styles.detail}>
-        Reference date {formatDate(result.referenceDate ?? result.requestedDate)}
+        {t("ui.requestedDate")}
+        {formatDate(result.requestedDate)}
+      </Text>
+      <Text style={styles.detail}>
+        {t("ui.referenceDate2")}
+        {formatDate(result.referenceDate ?? result.requestedDate)}
       </Text>
       <Text style={styles.detail}>{resolutionCopy(result.resolution)}</Text>
       {result.provider ? (
-        <Text style={styles.source}>{result.provider} reference rate</Text>
+        <Text style={styles.source}>
+          {result.provider} {t("ui.referenceRate")}
+        </Text>
       ) : null}
       {!online ? (
-        <Text style={styles.offline}>Saved reference rate · offline</Text>
+        <Text style={styles.offline}>{t("ui.savedReferenceRateOffline")}</Text>
       ) : null}
       {checking ? (
-        <Text style={styles.checking}>Checking for a more exact rate…</Text>
+        <Text style={styles.checking}>{t("ui.checkingForAMoreExactRate")}</Text>
       ) : null}
     </View>
   );
 }
 
 function resolutionCopy(resolution: LedgerRateLookupResult["resolution"]) {
-  if (resolution === "SAME_CURRENCY") return "No conversion is needed.";
-  if (resolution === "EXACT_DATE") return "Exact reference date match.";
-  return "Using the nearest available reference rate within the allowed window.";
+  if (resolution === "SAME_CURRENCY") return t("rate.noConversion");
+  if (resolution === "EXACT_DATE") return t("rate.exactDate");
+  return t("rate.nearestReference");
 }
 
 function unavailableCopy(resolution: LedgerRateLookupResult["resolution"]) {
-  if (resolution === "PENDING_PUBLICATION")
-    return "The requested date's reference rate is not published yet.";
-  if (resolution === "UNSUPPORTED") return "This currency pair is not supported by ECB.";
-  if (resolution === "NO_REFERENCE_WITHIN_POLICY")
-    return "No reference rate is available within the allowed lookup window.";
-  return "A reference rate is temporarily unavailable.";
+  if (resolution === "PENDING_PUBLICATION") return t("rate.pendingPublication");
+  if (resolution === "UNSUPPORTED") return t("rate.unsupported");
+  if (resolution === "NO_REFERENCE_WITHIN_POLICY") return t("rate.outsidePolicy");
+  return t("rate.unavailable");
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getFormatLocale(), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -264,55 +292,65 @@ function formatDate(value: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-const styles = StyleSheet.create({
-  section: { marginTop: 24 },
-  sectionTitle: {
-    color: "#64748B",
-    fontSize: 13,
-    fontWeight: "700",
-    marginBottom: 7,
-    marginLeft: 4,
-    textTransform: "uppercase",
-  },
-  card: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 12, padding: 14 },
-  fields: { flexDirection: "row", gap: 12 },
-  currencyField: { flex: 1, gap: 5 },
-  fieldLabel: { color: "#64748B", fontSize: 12, fontWeight: "700" },
-  fieldButton: {
-    borderColor: "#CBD5E1",
-    borderRadius: 9,
-    borderWidth: 1,
-    minHeight: 44,
-    padding: 11,
-  },
-  dateField: {
-    borderColor: "#CBD5E1",
-    borderRadius: 9,
-    borderWidth: 1,
-    minHeight: 44,
-    padding: 11,
-  },
-  fieldValue: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
-  placeholder: { color: "#64748B", fontSize: 16 },
-  result: { borderTopColor: "#E5E7EB", borderTopWidth: 1, gap: 5, paddingTop: 14 },
-  resultTitle: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
-  rate: { color: "#0F172A", fontSize: 22, fontWeight: "800" },
-  detail: { color: "#475569", fontSize: 13, lineHeight: 19 },
-  source: { color: "#64748B", fontSize: 12, fontWeight: "700" },
-  offline: { color: "#7C5B00", fontSize: 13, fontWeight: "700" },
-  checking: { color: "#0F766E", fontSize: 13, fontWeight: "700" },
-  message: { color: "#7C5B00", fontSize: 13, lineHeight: 19 },
-  dateOverlay: { flex: 1, justifyContent: "flex-end" },
-  dateBackdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(15, 23, 42, 0.25)",
-  },
-  datePanel: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    overflow: "hidden",
-  },
-  dateWheelContainer: { alignItems: "center", justifyContent: "center", minHeight: 280 },
-  dateWheel: { height: 216, width: "100%" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    section: { marginTop: 24 },
+    sectionTitle: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontWeight: "700",
+      marginBottom: 7,
+      marginLeft: 4,
+      textTransform: "uppercase",
+    },
+    card: { backgroundColor: colors.surface, borderRadius: 12, gap: 12, padding: 14 },
+    fields: { flexDirection: "row", gap: 12 },
+    currencyField: { flex: 1, gap: 5 },
+    fieldLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: "700" },
+    fieldButton: {
+      borderColor: colors.separator,
+      borderRadius: 9,
+      borderWidth: 1,
+      minHeight: 44,
+      padding: 11,
+    },
+    dateField: {
+      borderColor: colors.separator,
+      borderRadius: 9,
+      borderWidth: 1,
+      minHeight: 44,
+      padding: 11,
+    },
+    fieldValue: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+    placeholder: { color: colors.textSecondary, fontSize: 16 },
+    result: {
+      borderTopColor: colors.separator,
+      borderTopWidth: 1,
+      gap: 5,
+      paddingTop: 14,
+    },
+    resultTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+    rate: { color: colors.textPrimary, fontSize: 22, fontWeight: "800" },
+    detail: { color: colors.textTertiary, fontSize: 13, lineHeight: 19 },
+    source: { color: colors.textSecondary, fontSize: 12, fontWeight: "700" },
+    offline: { color: colors.warning, fontSize: 13, fontWeight: "700" },
+    checking: { color: colors.accent, fontSize: 13, fontWeight: "700" },
+    message: { color: colors.warning, fontSize: 13, lineHeight: 19 },
+    dateOverlay: { flex: 1, justifyContent: "flex-end" },
+    dateBackdrop: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: colors.overlay,
+    },
+    datePanel: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 22,
+      borderTopRightRadius: 22,
+      overflow: "hidden",
+    },
+    dateWheelContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 280,
+    },
+    dateWheel: { height: 216, width: "100%" },
+  });

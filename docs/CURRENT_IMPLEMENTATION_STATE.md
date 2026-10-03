@@ -1,6 +1,127 @@
 # Current Implementation State
 
-Date: 2026-10-01
+Date: 2026-10-03
+
+## Temporary foundation verification screen
+
+- Dev Settings → Debug Mode → UI Foundation sample opens `/ui-foundation-check`,
+  a disposable native screen reusing `UiFoundationFixture`. Direct entry also
+  requires Dev transport and persisted Debug Mode. Remove after device acceptance.
+- Typecheck, UI/terminology guard, scoped lint/format and eight focused suites
+  (40 tests) pass. Owner-requested signed embedded-bundle Release built,
+  signature verified and installed in place on the existing iPhone 16 Pro;
+  launched with `otrmobile://ui-foundation-check`. Pre/post-install SQLite file
+  metadata is identical. Fresh-session foundation compliance verified; owner
+  device visual gate passed on 2026-10-03. Fixture remains Dev + Debug only.
+
+## UI Foundation — Phase D / CLOSED, DEVICE VISUAL GATE PASS
+
+- Owner confirmed **Device Visual Gate = PASS** on 2026-10-03. UI Foundation is
+  active; terminology gate accepted; Ledger migration complete; fresh-session
+  compliance verified. Future user-facing UI must follow
+  `docs/architecture/ui-foundation.md` and
+  `docs/architecture/OTR_TERMINOLOGY_GLOSSARY.md`.
+- Owner accepted Terminology Gate and explicitly authorized Phase D. Normative
+  UI Foundation + Owner Decisions v2 glossary remain authoritative. No E/F or Trip
+  authorization. Owner full-Ledger device visual gate passed; Phase D is closed.
+- Remaining Transfer Detail/legacy repayment sheet, conflict resolution and its
+  evidence/choices/status helper, standalone Receipt Capture and debug-only Stage 2
+  slice now inherit theme/localization/forms/financial formatting. Additional
+  receipt validation, member-review/settlement/payment/FX feedback and generic
+  traveller fallback gaps are covered through display adapters. Existing geometry,
+  actions, financial payloads and destinations are retained.
+- Catalogs now have 1,346 populated keys per locale (+195 display messages).
+  All prior 1,151 English/Chinese values and keys are unchanged. Normative glossary
+  retains 47 mappings. Prior 60-core/1,151-key owner review is an accepted snapshot.
+- Strict guard covers 76 files: every Ledger route (including re-exports) and
+  imported TSX trees, two explicit presentation helpers, existing global foundation
+  and diagnostics. Baseline pruned from 663 to 473 (385 strings/88 colors), never
+  regenerated. Product Ledger TSX debt is zero under this scanner. Six remaining
+  Ledger helper candidates are four machine enum values and two missing-record
+  title fallbacks; see Phase D report. Other debt belongs to old prototype/debug
+  harnesses/Itinerary, outside current product Ledger migration.
+- Typecheck, lint/theme/localization/terminology guards and focused 42-suite/264-test
+  regressions pass. Full suite: 163 files pass, two pre-existing failures (1,145
+  tests pass / one fails). Changed-file formatting passes; seven untouched historical
+  formatting failures remain. Details: docs/architecture/UI_FOUNDATION_PHASE_D_REPORT.md.
+- Final signed Release (2026-10-03 16:46:44) installed and launched on the existing
+  iPhone; pre/post-install SQLite file metadata is identical. Owner
+  full-Ledger Light/Dark/en/zh-Hans/large-text device review passed.
+  Business/schema/backend/sync/permissions remain unchanged; no Production access.
+- Owner's initial device gate FAILED: incomplete child-tree theme/localization,
+  duplicate segment labels and forced-light native pickers.
+  Phase B–C fixes were completed; the owner subsequently authorized Phase D.
+- Normative source: `docs/architecture/ui-foundation.md`; root `AGENTS.md` makes it
+  mandatory for fresh sessions. ADR 0059. Current detailed report:
+  `docs/architecture/UI_FOUNDATION_PHASE_B_C_REMEDIATION_REPORT.md`.
+- Shared semantic forms/native picker adapters, system appearance, typography,
+  canonical MoneyText and en/zh-Hans catalogs (1,151 populated keys each) now cover
+  Spending, Settlement, Search/filters, Expense Detail, New/Edit Expense, My Ledger,
+  Spending Analysis, relevant sheets/pickers, Global Menu/Account, Settings/System Health, Currency
+  and Diagnostics. Business/user values
+  remain unchanged. No appearance setting, Trip IA/model or dependency added.
+- Guard recursively checks 46 representative UI files with zero baseline
+  forgiveness and checks new UI files strictly. Animated/configuration copy,
+  embedded gradients, static/fixed appearance and native form bypasses are checked.
+  Baseline only pruned: 663 historical candidates remain (509 string/154 color).
+  Runnable lint enforcement, no CI workflow claim. Register future module roots.
+- Typecheck, lint/guard, latest targeted 9 suites/41 tests
+  pass. Latest full run: 161 suites pass/2 existing fail, 1,139 tests pass/1 fails.
+  Existing blockers are RN Flow parsing in account-switch and the unchanged
+  Expense Detail type-only API-contract import rejected by architectureBoundary.
+  An API timestamp assertion failed once, then isolated/full retries passed.
+  Changed-file formatting passes; seven unrelated whole-repo format failures remain.
+- Signed embedded-bundle Release built and signature verified; reinstalled in place
+  on owner's iPhone 16 Pro, bundle `com.xoery.otrmobile`, preserving app data.
+  Artifact: `/private/tmp/otr-ui-foundation-release/Build/Products/Release-iphoneos/OTRMobile.app`.
+- Follow-up refines Dark palette centrally to three neutral surface levels and
+  subtler separators; teal accent/status/media roles retained. Signed latest
+  Release 2026-10-03 15:24:12 is reinstalled in place, preserving app data.
+- Latest B–C follow-up: shared segmented selection tokens use elevated selected
+  surface/primary label, secondary unselected label; root tabs retain accent.
+  Shared NavigationContentFrame reserves measured native header height once and
+  clips collapsing Journey chrome below it, without local offsets. Analysis/Review
+  context consumers audited; routes/chooser behavior remain. Fixture now requires
+  persisted Debug Mode plus Dev transport, including direct Diagnostics entry.
+- Spending-only spacing follow-up: omit the empty status/loading container when
+  a Journey is loaded with no message, removing its extra 24pt layout gap before
+  the spending summary. No Journey-list/Settlement/shared layout changes.
+- Analysis tabs follow-up: removed redundant scope-container hairline/native
+  header shadow and standalone GlassView edge highlights; pinned scope uses
+  canonical neutral track surface, retaining teal selected indicator. Scoped
+  typecheck/lint/guard and 2 suites/27 tests pass; other pages unchanged.
+- Dark segment-track follow-up: canonical controlTrack keeps Light grouped gray
+  and uses the existing Dark neutral surface, distinct from page background.
+  All segment consumers inherit it; selected elevated/primary, inactive secondary,
+  teal indicator and root-tab accent are unchanged. No new surface color level.
+- Attachment-preview follow-up: count/Previous/Next text uses mediaText on the
+  immersive mediaBackground, correcting the accidental onAccent foreground in
+  Dark Mode. Image pixels, zoom/swipe/navigation and ordinary surfaces unchanged.
+- Category/Sharing sheet follow-up: their ScrollView viewports now use existing
+  semantic flex/background style, preventing native Modal default white from
+  showing around themed content. CurrencyPicker already owns its full viewport.
+  Selection/split values, commit/cancel and picker behavior remain unchanged.
+- Date-wheel backdrop follow-up: its full-screen dismissal hit target uses
+  layout-only absoluteFill instead of the opaque page flex style; semantic
+  translucent overlay remains, restoring the underlying page in both appearances.
+  Date value/Cancel/Done, animations and dismissal handlers unchanged.
+- Review/Settlement operation follow-up: Review inbox/finding, personal settlement
+  preview, Changes/update, correction and history/statement now use reactive semantic
+  surfaces/text/status roles and shared UiTextInput. System copy, domain display labels,
+  evidence/version/count text and dates follow en/zh-Hans; user notes/titles/names stay
+  raw. Six explicit strict guard roots replace four obsolete Review theme exceptions.
+  Baseline was only pruned by 256 resolved occurrences, with no new exemptions.
+- Latest operation-page verification: typecheck, lint/guard and 12 focused suites /
+  44 tests pass, including Dark/Chinese and Light/English rendering and unchanged human
+  notes. Source comparison retains routes, state declarations, effect dependencies and
+  all 28 normalized action handlers. Business hooks/helpers/schema/backend untouched.
+- Owner full-Ledger visual gate passed in both locales and iOS system Light/Dark,
+  including forms/sheets/pickers, segments/charts, native Back/toolbars, money
+  and larger text. Dev Settings → Debug Mode → UI Foundation sample opens the
+  disposable acceptance fixture; direct entry also requires Dev + Debug Mode.
+- Phase D closed. Protected business/schema/backend/sync/
+  permissions remain unchanged; Production was not accessed. Older
+  completed workstream boundaries below do not override this approved B–C scope.
 
 ## iOS 27 System Chrome — IMPLEMENTATION COMPLETE / CORE DEVICE PASS
 

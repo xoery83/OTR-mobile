@@ -84,6 +84,16 @@ vi.mock("react", async (importOriginal) => {
     },
   };
 });
+vi.mock("@/ui/theme", async () => {
+  const { lightPalette } = await import("@/ui/palette");
+  return {
+    useUiTheme: () => lightPalette,
+    useUiAppearance: () => "light",
+    useThemedStyles: (factory: (colors: unknown) => unknown) => factory(lightPalette),
+  };
+});
+vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
+vi.mock("@react-native-community/datetimepicker", () => ({ default: "date-picker" }));
 vi.mock("react-native", () => ({
   ActivityIndicator: "spinner",
   Modal: "modal",
@@ -270,7 +280,7 @@ describe("Analysis UI transitions and request guardrails", () => {
     )!;
     press(menu);
     screen = render();
-    press(nodes(screen).find((node) => node.props.onPress && texts(node) === "hotel")!);
+    press(nodes(screen).find((node) => node.props.onPress && texts(node) === "Hotel")!);
     screen = render();
     const rows = nodes(screen).find((node) => node.type === AnalysisExpenseRows)!;
     expect(rows.props.expenses).toEqual([dataset.expenses[0]]);
@@ -320,7 +330,7 @@ describe("Analysis UI transitions and request guardrails", () => {
     ).toBe(nodes(before).find((node) => node.type === AnalysisTimeline)!.props.dashboard);
     complete({ ...dataset, expenses: dataset.expenses.slice(0, 1) });
     await new Promise<void>((resolve) => setImmediate(resolve));
-    expect(texts(render())).toContain("1 expense");
+    expect(texts(render())).toContain("1 Expense");
     expect(ui.projection).toHaveBeenCalledTimes(2);
   });
   it("restores independent Mine and Group scroll offsets without reads", async () => {
@@ -499,7 +509,7 @@ describe("Analysis UI transitions and request guardrails", () => {
         (node) => /View all\s+5 expenses/.test(texts(node)) && node.props.onPress,
       )!,
     );
-    expect(drilldown).toHaveBeenCalledWith({ categories: ["food"] }, "Category: food");
+    expect(drilldown).toHaveBeenCalledWith({ categories: ["food"] }, "Category: Food");
     expect(ui.projection).not.toHaveBeenCalled();
   });
   it("uses one-day fallback and preserves timeline zero-day click identity", () => {

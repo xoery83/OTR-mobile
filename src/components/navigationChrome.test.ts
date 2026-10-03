@@ -2,10 +2,25 @@ import { describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
 
 import { bottomBarVisible } from "./bottomBarVisibility";
-import { NavigationContextTitle } from "./navigationChrome";
+import {
+  NavigationContextTitle,
+  NavigationContentFrame,
+  navigationContentFrameOptions,
+} from "./navigationChrome";
 
+const chrome = vi.hoisted(() => ({ headerHeight: 91 }));
+vi.mock("expo-router/react-navigation", () => ({
+  useHeaderHeight: () => chrome.headerHeight,
+}));
+
+vi.mock("@/ui/theme", () => ({
+  useUiTheme: () => ({ textPrimary: "foreground", textSecondary: "secondary" }),
+  useThemedStyles: (factory: (colors: unknown) => unknown) =>
+    factory({ textPrimary: "foreground", textSecondary: "secondary" }),
+}));
 vi.mock("react-native", () => ({
   StyleSheet: { create: (styles: unknown) => styles },
+  useColorScheme: () => "light",
   Text: "text",
   View: "view",
 }));
@@ -40,4 +55,15 @@ describe("navigation chrome", () => {
     expect(title.props.accessibilityLabel).toBe("Review, A very long Journey name");
     expect(lines.map((line) => line?.props.numberOfLines)).toEqual([1, 1]);
   });
+});
+
+it("owns the measured native-header inset once and clips collapsing Journey chrome below it", () => {
+  expect(navigationContentFrameOptions.headerTransparent).toBe(true);
+  for (const height of [91, 144]) {
+    chrome.headerHeight = height;
+    const frame = NavigationContentFrame({ children: "Journey context → segment" });
+    expect(frame.props.style[1]).toEqual({ paddingTop: height });
+    expect(frame.props.children.props.style).toEqual({ flex: 1, overflow: "hidden" });
+    expect(frame.props.children.props.children).toBe("Journey context → segment");
+  }
 });

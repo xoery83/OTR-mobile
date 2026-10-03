@@ -1,3 +1,4 @@
+import { translate } from "@/ui/locale";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import type { Money, SettlementValuationSnapshot } from "@/domain/ledger/types";
 
@@ -14,23 +15,28 @@ export function valuationHistoryPresentation(
   currentJourneyCurrency: string,
   chinese: boolean,
 ) {
+  const language = chinese ? "zh-Hans" : "en";
   const titles = {
-    REFERENCE_RATE: chinese ? "之前的参考汇率估值" : "Previous reference value",
-    MANUAL_AGREED: chinese ? "之前的约定汇率估值" : "Previous agreed value",
-    ACTUAL_PAYER_COST: chinese ? "之前的实际付款估值" : "Previous payer-cost value",
-    SAME_CURRENCY: chinese ? "之前的同币种估值" : "Previous same-currency value",
-    LEGACY_IMPORTED: chinese ? "之前的估值" : "Previous value",
+    REFERENCE_RATE: translate("fx.presentation0", {}, language),
+    MANUAL_AGREED: translate("fx.presentation1", {}, language),
+    ACTUAL_PAYER_COST: translate("fx.presentation2", {}, language),
+    SAME_CURRENCY: translate("fx.presentation3", {}, language),
+    LEGACY_IMPORTED: translate("fx.presentation4", {}, language),
   };
   const context = [
     snapshot.original.currency !== currentOriginal.currency
-      ? chinese
-        ? `当时的原始货币：${snapshot.original.currency}`
-        : `Original currency then: ${snapshot.original.currency}`
+      ? translate(
+          "fx.originalCurrencyThen",
+          { currency: snapshot.original.currency },
+          language,
+        )
       : null,
     snapshot.settlement.currency !== currentJourneyCurrency
-      ? chinese
-        ? `当时的旅行货币：${snapshot.settlement.currency}`
-        : `Journey currency then: ${snapshot.settlement.currency}`
+      ? translate(
+          "fx.journeyCurrencyThen",
+          { currency: snapshot.settlement.currency },
+          language,
+        )
       : null,
     snapshot.policy === "MANUAL_AGREED" && snapshot.reason ? snapshot.reason : null,
   ].filter((item): item is string => Boolean(item));
@@ -59,26 +65,20 @@ export function fxStatus(
   estimated = false,
   today = new Date().toISOString().slice(0, 10),
 ) {
+  const language = chinese ? "zh-Hans" : "en";
   if (expense.valuation || expense.status !== "RATE_REQUIRED") return null;
-  if (blocked) return chinese ? "需处理账目冲突" : "Resolve expense conflict";
+  if (blocked) return translate("fx.presentation5", {}, language);
   if (!expense.economicDate)
     return proposedExpenseDate(expense)
-      ? chinese
-        ? "确认交易日期后自动获取参考汇率"
-        : "Confirm transaction date to resolve Journey value automatically"
+      ? translate("fx.presentation6", {}, language)
       : null;
-  if (policy === "MANUAL_AGREED") return chinese ? "汇率待确认" : "Rate needs review";
-  if (policy === "ACTUAL_PAYER_COST")
-    return chinese ? "付款金额待确认" : "Review payment value";
-  if (policy !== "REFERENCE_RATE")
-    return chinese ? "旅行估值待处理" : "Journey value pending";
-  if (expense.syncStatus !== "SYNCED") return chinese ? "更新中…" : "Updating…";
-  if (estimated) return chinese ? "预估" : "Estimated";
+  if (policy === "MANUAL_AGREED") return translate("fx.presentation7", {}, language);
+  if (policy === "ACTUAL_PAYER_COST") return translate("fx.presentation8", {}, language);
+  if (policy !== "REFERENCE_RATE") return translate("fx.presentation9", {}, language);
+  if (expense.syncStatus !== "SYNCED")
+    return translate("fx.presentation10", {}, language);
+  if (estimated) return translate("fx.presentation11", {}, language);
   return expense.economicDate >= today
-    ? chinese
-      ? "等待当日参考汇率发布"
-      : "Waiting for today's reference rate"
-    : chinese
-      ? "参考汇率待获取"
-      : "Reference rate pending";
+    ? translate("fx.presentation12", {}, language)
+    : translate("fx.presentation13", {}, language);
 }

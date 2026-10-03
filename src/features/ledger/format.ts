@@ -1,3 +1,4 @@
+import { t, getFormatLocale } from "@/ui/locale";
 import type { ReportingScope } from "@/domain/ledger/reporting";
 
 // Formatting and visual parts share the same locale and precision policy.
@@ -6,7 +7,7 @@ function ledgerMoneyFormatter(
   scale: number,
   locale?: string | string[],
 ) {
-  return new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat(locale ?? getFormatLocale(), {
     style: "currency",
     currency,
     minimumFractionDigits: scale,
@@ -91,7 +92,7 @@ export function ledgerMoneyParts(
 }
 
 export function formatLedgerRate(rate: string) {
-  return new Intl.NumberFormat(undefined, { maximumSignificantDigits: 6 }).format(
+  return new Intl.NumberFormat(getFormatLocale(), { maximumSignificantDigits: 6 }).format(
     Number(rate),
   );
 }
@@ -114,11 +115,11 @@ function dayNumber(value: Date) {
 
 export function formatLedgerDate(value: string, now = new Date()) {
   const date = calendarDate(value);
-  if (!date) return "Unknown date";
+  if (!date) return t("format.unknownDate");
   const difference = dayNumber(date) - dayNumber(now);
-  if (difference === 0) return "Today";
-  if (difference === -1) return "Yesterday";
-  return new Intl.DateTimeFormat(undefined, {
+  if (difference === 0) return t("search.today");
+  if (difference === -1) return t("search.yesterday");
+  return new Intl.DateTimeFormat(getFormatLocale(), {
     day: "numeric",
     month: "short",
     ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),
@@ -130,27 +131,33 @@ export function formatLedgerDateRange(
   end: string | null,
   now = new Date(),
 ) {
-  if (!start && !end) return "Dates not set";
-  if (!start) return `Until ${formatLedgerDate(end!, now)}`;
+  if (!start && !end) return t("format.datesUnset");
+  if (!start) return t("format.until", { date: formatLedgerDate(end!, now) });
   if (!end || end === start) return formatLedgerDate(start, now);
-  return `${formatLedgerDate(start, now)} – ${formatLedgerDate(end, now)}`;
+  return t("format.range", {
+    start: formatLedgerDate(start, now),
+    end: formatLedgerDate(end, now),
+  });
 }
 
 export function formatLedgerDateFilter(from?: string, to?: string) {
-  if (!from) return "Any date";
+  if (!from) return t("format.anyDate");
   const start = calendarDate(from);
-  if (!start) return "Unknown date";
+  if (!start) return t("format.unknownDate");
   const end = to ? calendarDate(to) : null;
   const exactDate = (value: Date) =>
-    new Intl.DateTimeFormat(undefined, {
+    new Intl.DateTimeFormat(getFormatLocale(), {
       day: "numeric",
       month: "short",
       year: "numeric",
     }).format(value);
   if (start && end && dayNumber(end) - dayNumber(start) === 1) return exactDate(start);
   return end
-    ? `${exactDate(start)} – ${exactDate(new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1))}`
-    : `From ${exactDate(start)}`;
+    ? t("format.range", {
+        start: exactDate(start),
+        end: exactDate(new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1)),
+      })
+    : t("format.from", { date: exactDate(start) });
 }
 
 export function ledgerExpenseAttention(
@@ -162,16 +169,17 @@ export function ledgerExpenseAttention(
   },
   scope: ReportingScope,
 ) {
-  if (expense.hasOpenConflict) return "Review changes";
+  if (expense.hasOpenConflict) return t("expense.reviewChanges");
   if (expense.businessStatus === "RATE_REQUIRED") return null;
-  if (scope === "MINE" && expense.componentMinor === null) return "Not in your share";
-  return expense.isAuthoritative ? null : "Not included in totals";
+  if (scope === "MINE" && expense.componentMinor === null)
+    return t("expense.notYourShare");
+  return expense.isAuthoritative ? null : t("expense.notIncluded");
 }
 
 export function formatValuationPolicy(policy: string) {
-  if (policy === "MANUAL_AGREED") return "Agreed exchange rate";
-  if (policy === "REFERENCE_RATE") return "Reference exchange rate";
-  if (policy === "ACTUAL_PAYER_COST") return "Payer's actual cost";
-  if (policy === "SAME_CURRENCY") return "Same currency";
-  return "Imported exchange rate";
+  if (policy === "MANUAL_AGREED") return t("format.agreedRate");
+  if (policy === "REFERENCE_RATE") return t("format.referenceRate");
+  if (policy === "ACTUAL_PAYER_COST") return t("format.actualCost");
+  if (policy === "SAME_CURRENCY") return t("format.sameCurrency");
+  return t("format.importedRate");
 }

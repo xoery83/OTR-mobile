@@ -7,6 +7,7 @@ import { currencyScale, SUPPORTED_CURRENCY_CODES } from "@/domain/ledger/currenc
 const ui = vi.hoisted(() => ({ step: 0, width: 375, fontScale: 1 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
   useState: () => [
     ui.step,
     (next: number) => {
@@ -21,6 +22,7 @@ vi.mock("react-native", () => {
       : ((style || {}) as Record<string, unknown>);
   return {
     Text: "Text",
+    useColorScheme: () => "light",
     StyleSheet: { flatten },
     useWindowDimensions: () => ({ width: ui.width, fontScale: ui.fontScale }),
   };

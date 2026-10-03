@@ -1,8 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, ThemeProvider, DarkTheme, DefaultTheme } from "expo-router";
+import { useColorScheme } from "react-native";
+import { useUiTheme } from "@/ui/theme";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { t } from "@/ui/locale";
+import { hydrateUiLocale } from "@/native/uiLocalePreference";
 import { useEffect, useState } from "react";
 
-import { navigationColors } from "@/components/navigationChrome";
 import { bootstrapApplication } from "@/data/bootstrap/bootstrapApplication";
 import {
   defaultBootstrapDependencies,
@@ -10,6 +14,13 @@ import {
 } from "@/data/bootstrap/defaultBootstrapDependencies";
 
 export default function RootLayout() {
+  useUiLocale();
+  const colors = useUiTheme();
+  const scheme = useColorScheme();
+  const nativeTheme = scheme === "dark" ? DarkTheme : DefaultTheme;
+  useEffect(() => {
+    void hydrateUiLocale().catch(() => undefined);
+  }, []);
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -35,37 +46,54 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Stack
-        screenOptions={{
-          headerBackButtonDisplayMode: "minimal",
-          headerShown: false,
-          headerTitleAlign: "center",
-          headerTitleStyle: { color: navigationColors.text },
-          headerTintColor: "#0F766E",
-          orientation: "portrait",
+      <ThemeProvider
+        value={{
+          ...nativeTheme,
+          colors: {
+            ...nativeTheme.colors,
+            background: colors.background,
+            card: colors.surface,
+            text: colors.textPrimary,
+            primary: colors.accent,
+            border: colors.separator,
+            notification: colors.destructive,
+          },
         }}
       >
-        <Stack.Screen
-          name="foundation"
-          options={{ headerShown: true, headerTitle: "Sign In" }}
-        />
-        <Stack.Screen
-          name="account"
-          options={{ headerShown: true, headerTitle: "Account" }}
-        />
-        <Stack.Screen
-          name="settings"
-          options={{ headerShown: true, headerTitle: "Settings" }}
-        />
-        <Stack.Screen
-          name="data-sync"
-          options={{ headerShown: true, headerTitle: "Data & Sync" }}
-        />
-        <Stack.Screen
-          name="diagnostics"
-          options={{ headerShown: true, headerTitle: "Diagnostics" }}
-        />
-      </Stack>
+        <Stack
+          screenOptions={{
+            headerBackButtonDisplayMode: "minimal",
+            headerShown: false,
+            headerTitleAlign: "center",
+            headerTitleStyle: { color: colors.textPrimary },
+            headerTintColor: colors.accent,
+            headerStyle: { backgroundColor: colors.surface },
+            contentStyle: { backgroundColor: colors.background },
+            orientation: "portrait",
+          }}
+        >
+          <Stack.Screen
+            name="foundation"
+            options={{ headerShown: true, headerTitle: t("navigation.signIn") }}
+          />
+          <Stack.Screen
+            name="account"
+            options={{ headerShown: true, headerTitle: t("navigation.account") }}
+          />
+          <Stack.Screen
+            name="settings"
+            options={{ headerShown: true, headerTitle: t("navigation.settings") }}
+          />
+          <Stack.Screen
+            name="data-sync"
+            options={{ headerShown: true, headerTitle: t("navigation.dataSync") }}
+          />
+          <Stack.Screen
+            name="diagnostics"
+            options={{ headerShown: true, headerTitle: t("navigation.diagnostics") }}
+          />
+        </Stack>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

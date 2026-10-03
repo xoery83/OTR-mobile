@@ -1,3 +1,10 @@
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { visual } from "@/ui/visual";
+import { UiTextInput } from "@/ui/forms";
+import { systemMessage } from "@/ui/domainLabels";
 import { MoneyText } from "./MoneyText";
 import { useMemo, useState } from "react";
 import {
@@ -7,7 +14,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -36,6 +42,8 @@ export function TransferDetailScreen({
   journeyId: string;
   transferId: string;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const settlement = useStage7Settlement(journeyId);
   const row = useMemo(
     () =>
@@ -72,16 +80,18 @@ export function TransferDetailScreen({
   const confirmReceived = () => {
     if (!awaiting) return;
     Alert.alert(
-      "Confirm received?",
-      `Confirm that ${formatLedgerMoney(
-        awaiting.payment.minor,
-        awaiting.payment.currency,
-        awaiting.payment.scale,
-      )} arrived.`,
+      t("ledgerMigration.copy1"),
+      t("transfer.confirmArrival", {
+        amount: formatLedgerMoney(
+          awaiting.payment.minor,
+          awaiting.payment.currency,
+          awaiting.payment.scale,
+        ),
+      }),
       [
-        { text: "Not yet", style: "cancel" },
+        { text: t("ledgerMigration.copy2"), style: "cancel" },
         {
-          text: "Confirm received",
+          text: t("ledgerMigration.copy3"),
           onPress: () =>
             void settlement.actOnPayment(awaiting.id, "confirm", null, "RECIPIENT"),
         },
@@ -91,32 +101,35 @@ export function TransferDetailScreen({
 
   return (
     <>
-      <Stack.Screen options={{ title: "Transfer" }} />
+      <Stack.Screen options={{ title: t("navigation.transfer") }} />
       <ScrollView
+        style={styles.page}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"
       >
         <View style={styles.directionCard}>
           <Text accessibilityRole="header" style={styles.title}>
-            {from} pays {to}
+            {t("transfer.direction", { from, to })}
           </Text>
-          <Text style={styles.status}>{transferStatusLabel(transfer)}</Text>
+          <Text style={styles.status}>
+            {systemMessage(transferStatusLabel(transfer))}
+          </Text>
         </View>
 
         <View style={styles.amounts}>
           <Amount
-            label="Original amount"
+            label={t("transfer.originalAmount")}
             minor={transfer.amount.minor}
             transfer={transfer}
           />
           <Amount
-            label="Paid"
+            label={t("settlement.paid")}
             minor={transfer.confirmedDischarge.minor}
             transfer={transfer}
           />
           <Amount
             emphasized
-            label="Remaining"
+            label={t("ui.remaining")}
             minor={transfer.confirmedRemaining.minor}
             transfer={transfer}
           />
@@ -124,17 +137,19 @@ export function TransferDetailScreen({
 
         {transfer.awaitingAmount.minor > 0 ? (
           <Text style={styles.notice}>
-            {formatLedgerMoney(
-              transfer.awaitingAmount.minor,
-              transfer.awaitingAmount.currency,
-              transfer.awaitingAmount.scale,
-            )}{" "}
-            was marked as paid and is waiting for {to} to confirm receipt.
+            {t("transfer.awaitingReceipt", {
+              amount: formatLedgerMoney(
+                transfer.awaitingAmount.minor,
+                transfer.awaitingAmount.currency,
+                transfer.awaitingAmount.scale,
+              ),
+              name: to,
+            })}
           </Text>
         ) : null}
         {settlement.message ? (
           <Text accessibilityLiveRegion="polite" style={styles.message}>
-            {settlement.message}
+            {systemMessage(settlement.message)}
           </Text>
         ) : null}
 
@@ -147,7 +162,7 @@ export function TransferDetailScreen({
         />
 
         <Text accessibilityRole="header" style={styles.sectionTitle}>
-          Legacy confirmed transfer flow
+          {t("ledgerMigration.copy4")}
         </Text>
         {primaryAction === "MARK_PAID" ? (
           <Pressable
@@ -159,7 +174,7 @@ export function TransferDetailScreen({
             }}
             style={[styles.primary, settlement.busy && styles.disabled]}
           >
-            <Text style={styles.primaryText}>Mark as paid</Text>
+            <Text style={styles.primaryText}>{t("ledgerMigration.copy5")}</Text>
           </Pressable>
         ) : primaryAction === "CONFIRM_RECEIVED" ? (
           <Pressable
@@ -168,34 +183,36 @@ export function TransferDetailScreen({
             onPress={confirmReceived}
             style={[styles.primary, settlement.busy && styles.disabled]}
           >
-            <Text style={styles.primaryText}>Confirm received</Text>
+            <Text style={styles.primaryText}>{t("ledgerMigration.copy3")}</Text>
           </Pressable>
         ) : null}
 
         <Text accessibilityRole="header" style={styles.sectionTitle}>
-          Payment progress
+          {t("ledgerMigration.copy6")}
         </Text>
-        <TimelineStep complete label="Amount due" />
+        <TimelineStep complete label={t("ledgerMigration.copy7")} />
         {transfer.payments.length ? (
           transfer.payments.map((payment) => (
             <View key={payment.id} style={styles.paymentCard}>
               <TimelineStep
                 complete
-                label={`Marked as paid · ${formatLedgerMoney(
-                  payment.payment.minor,
-                  payment.payment.currency,
-                  payment.payment.scale,
-                )}`}
+                label={t("transfer.markedAmount", {
+                  amount: formatLedgerMoney(
+                    payment.payment.minor,
+                    payment.payment.currency,
+                    payment.payment.scale,
+                  ),
+                })}
               />
               <TimelineStep
                 complete={payment.status === "CONFIRMED"}
-                label={paymentStatusLabel(payment)}
+                label={systemMessage(paymentStatusLabel(payment))}
               />
               {payment.status === "REJECTED" || payment.status === "DISPUTED" ? (
                 <Text style={styles.warning}>
                   {payment.status === "REJECTED"
-                    ? "The receiver did not confirm this payment."
-                    : "This payment is disputed and needs agreement before continuing."}
+                    ? t("ledgerMigration.copy8")
+                    : t("ledgerMigration.copy9")}
                 </Text>
               ) : null}
               {payment.status === "AWAITING_CONFIRMATION" &&
@@ -204,7 +221,7 @@ export function TransferDetailScreen({
                 <Pressable
                   accessibilityRole="button"
                   onPress={() =>
-                    promptReason("Dispute payment", (reason) =>
+                    promptReason(t("ledgerMigration.copy10"), (reason) =>
                       settlement.actOnPayment(
                         payment.id,
                         "dispute",
@@ -217,7 +234,7 @@ export function TransferDetailScreen({
                   }
                   style={styles.linkButton}
                 >
-                  <Text style={styles.linkText}>Dispute this payment</Text>
+                  <Text style={styles.linkText}>{t("ledgerMigration.copy11")}</Text>
                 </Pressable>
               ) : null}
               {payment.status === "AWAITING_CONFIRMATION" &&
@@ -225,13 +242,13 @@ export function TransferDetailScreen({
                 <Pressable
                   accessibilityRole="button"
                   onPress={() =>
-                    promptReason("Payment not received", (reason) =>
+                    promptReason(t("ledgerMigration.copy12"), (reason) =>
                       settlement.actOnPayment(payment.id, "reject", reason, "RECIPIENT"),
                     )
                   }
                   style={styles.linkButton}
                 >
-                  <Text style={styles.linkText}>I did not receive this</Text>
+                  <Text style={styles.linkText}>{t("ledgerMigration.copy13")}</Text>
                 </Pressable>
               ) : null}
               {settlement.isOrganizer && payment.status !== "CONFIRMED" ? (
@@ -241,7 +258,7 @@ export function TransferDetailScreen({
                     <Pressable
                       accessibilityRole="button"
                       onPress={() =>
-                        promptReason("Confirm as organizer", (reason) =>
+                        promptReason(t("ledgerMigration.copy14"), (reason) =>
                           settlement.actOnPayment(
                             payment.id,
                             "confirm",
@@ -252,7 +269,7 @@ export function TransferDetailScreen({
                       }
                       style={styles.linkButton}
                     >
-                      <Text style={styles.linkText}>Organizer confirm received</Text>
+                      <Text style={styles.linkText}>{t("ledgerMigration.copy15")}</Text>
                     </Pressable>
                   ) : null}
                   <Pressable
@@ -263,14 +280,14 @@ export function TransferDetailScreen({
                     }}
                     style={styles.linkButton}
                   >
-                    <Text style={styles.linkText}>Correct payment</Text>
+                    <Text style={styles.linkText}>{t("ledgerMigration.copy16")}</Text>
                   </Pressable>
                 </View>
               ) : null}
             </View>
           ))
         ) : (
-          <Text style={styles.meta}>No payment has been marked yet.</Text>
+          <Text style={styles.meta}>{t("ledgerMigration.copy17")}</Text>
         )}
 
         <Pressable
@@ -280,28 +297,34 @@ export function TransferDetailScreen({
           style={styles.secondary}
         >
           <Text style={styles.secondaryText}>
-            {showExplanation ? "Hide explanation" : "Why does this transfer exist?"}
+            {showExplanation ? t("ledgerMigration.copy18") : t("ledgerMigration.copy19")}
           </Text>
         </Pressable>
         {showExplanation ? (
           <View style={styles.explanation}>
-            <Text style={styles.body}>
-              The group’s finalized Expenses were combined into the fewest transfer
-              obligations. These are the Expenses used for this settlement.
-            </Text>
+            <Text style={styles.body}>{t("ledgerMigration.copy20")}</Text>
             {row.settlement.inputs.map((input) => (
               <View key={input.expenseId} style={styles.expenseBasis}>
                 <Text style={styles.rowTitle}>
-                  {input.payer.displayNameSnapshot} paid{" "}
-                  {formatLedgerMoney(
-                    input.original.minor,
-                    input.original.currency,
-                    input.original.scale,
-                  )}
+                  {t("transfer.basisPaid", {
+                    name: input.payer.displayNameSnapshot,
+                    amount: formatLedgerMoney(
+                      input.original.minor,
+                      input.original.currency,
+                      input.original.scale,
+                    ),
+                  })}
                 </Text>
                 <Text style={styles.meta}>
-                  {formatValuationPolicy(input.valuation.policy)} · {input.splits.length}{" "}
-                  participant{input.splits.length === 1 ? "" : "s"}
+                  {t(
+                    input.splits.length === 1
+                      ? "transfer.basisParticipantsOne"
+                      : "transfer.basisParticipantsMany",
+                    {
+                      policy: formatValuationPolicy(input.valuation.policy),
+                      count: input.splits.length,
+                    },
+                  )}
                 </Text>
               </View>
             ))}
@@ -325,10 +348,12 @@ export function TransferDetailScreen({
 }
 
 export function TransferNotFound({ loading = false }: { loading?: boolean }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.center}>
       <Text style={styles.meta}>
-        {loading ? "Loading transfer…" : "Transfer is not available."}
+        {loading ? t("ledgerMigration.copy21") : t("ledgerMigration.copy22")}
       </Text>
     </View>
   );
@@ -346,6 +371,8 @@ function Amount({
   transfer: FinalizedTransfer;
 }) {
   const largeText = useWindowDimensions().fontScale > 2;
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.amountRow, largeText && styles.amountRowLarge]}>
       <Text style={styles.meta}>{label}</Text>
@@ -364,6 +391,8 @@ function Amount({
 }
 
 function TimelineStep({ complete, label }: { complete: boolean; label: string }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.timelineRow}>
       <Text importantForAccessibility="no" style={complete ? styles.dotDone : styles.dot}>
@@ -394,6 +423,8 @@ function PaymentSheet({
   transfer: FinalizedTransfer;
 }) {
   const source = correcting;
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const [currency, setCurrency] = useState(
     source?.payment.currency ?? transfer.amount.currency,
   );
@@ -420,15 +451,15 @@ function PaymentSheet({
       transfer.amount.scale,
     );
     if (scale === null || !paymentMinor || !countsMinor) {
-      Alert.alert("Check payment amounts");
+      Alert.alert(t("ledgerMigration.copy23"));
       return;
     }
     if (countsMinor > transfer.availableToReport.minor && !correcting) {
-      Alert.alert("Amount is too high", "A payment cannot exceed the remaining amount.");
+      Alert.alert(t("ledgerMigration.copy24"), t("ledgerMigration.copy25"));
       return;
     }
     if ((currency !== transfer.amount.currency || correcting) && !reason.trim()) {
-      Alert.alert("Reason required");
+      Alert.alert(t("ledgerMigration.copy26"));
       return;
     }
     const proposition: RepaymentProposition & PaymentMetadata = {
@@ -444,6 +475,7 @@ function PaymentSheet({
           : {
               decimalRate: rate,
               source: "MANUAL_AGREED",
+              // ui-foundation-exception: string -- Stored payment evidence source; preserve existing financial payload.
               sourceLabel: "Traveller agreement",
               effectiveAt: new Date().toISOString(),
               reason: reason.trim(),
@@ -467,68 +499,72 @@ function PaymentSheet({
       visible={open}
     >
       <SheetHeader
-        leftLabel="Cancel"
+        leftLabel={t("common.cancel")}
         onLeft={onClose}
         onRight={() => void save()}
-        rightLabel="Save"
-        title={source ? "Correct payment" : "Mark as paid"}
+        rightLabel={t("ui.save")}
+        title={source ? t("ledgerMigration.copy16") : t("ledgerMigration.copy5")}
       />
       <ScrollView
+        style={styles.page}
         contentContainerStyle={styles.sheet}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
       >
-        <TextInput
-          accessibilityLabel="Payment currency"
+        <UiTextInput
+          accessibilityLabel={t("ledgerMigration.copy27")}
           autoCapitalize="characters"
           maxLength={3}
           onChangeText={(value) => setCurrency(value.toUpperCase())}
-          placeholder="Currency"
+          placeholder={t("navigation.currency")}
           style={styles.input}
           value={currency}
         />
-        <TextInput
-          accessibilityLabel="Payment amount"
+        <UiTextInput
+          accessibilityLabel={t("ledgerMigration.copy28")}
           autoFocus
           keyboardType="decimal-pad"
           onChangeText={setPaymentAmount}
-          placeholder="Payment amount"
+          placeholder={t("ledgerMigration.copy28")}
           style={styles.largeInput}
           value={paymentAmount}
         />
         {currency !== transfer.amount.currency ? (
           <>
-            <TextInput
-              accessibilityLabel={`Amount counted in ${transfer.amount.currency}`}
+            <UiTextInput
+              accessibilityLabel={t("transfer.countedCurrency", {
+                currency: transfer.amount.currency,
+              })}
               keyboardType="decimal-pad"
               onChangeText={setSettlementAmount}
-              placeholder={`Amount counted in ${transfer.amount.currency}`}
+              placeholder={t("transfer.countedCurrency", {
+                currency: transfer.amount.currency,
+              })}
               style={styles.input}
               value={settlementAmount}
             />
-            <TextInput
-              accessibilityLabel="Agreed exchange rate"
+            <UiTextInput
+              accessibilityLabel={t("format.agreedRate")}
               keyboardType="decimal-pad"
               onChangeText={setRate}
-              placeholder="Agreed exchange rate"
+              placeholder={t("format.agreedRate")}
               style={styles.input}
               value={rate}
             />
           </>
         ) : null}
         {currency !== transfer.amount.currency || correcting ? (
-          <TextInput
-            accessibilityLabel="Payment reason"
+          <UiTextInput
+            accessibilityLabel={t("ledgerMigration.copy29")}
             onChangeText={setReason}
-            placeholder={correcting ? "Why is this correction needed?" : "Agreement note"}
+            placeholder={
+              correcting ? t("reviewFlow.copy87") : t("ledgerMigration.copy30")
+            }
             style={styles.input}
             value={reason}
           />
         ) : null}
-        <Text style={styles.meta}>
-          Marking a payment does not reduce the confirmed balance until the receiver
-          confirms it. Offline actions remain queued on this iPhone.
-        </Text>
+        <Text style={styles.meta}>{t("ledgerMigration.copy31")}</Text>
       </ScrollView>
     </Modal>
   );
@@ -557,109 +593,133 @@ function amountInput(minor: number, scale: number) {
 }
 
 function promptReason(title: string, action: (reason: string) => Promise<void>) {
-  Alert.prompt(
-    title,
-    "A reason is required and will be kept with the action.",
-    (reason) => {
-      if (reason?.trim()) void action(reason.trim());
-    },
-  );
+  Alert.prompt(title, t("ledgerMigration.copy32"), (reason) => {
+    if (reason?.trim()) void action(reason.trim());
+  });
 }
 
-const styles = StyleSheet.create({
-  center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
-  content: { gap: 14, padding: 16, paddingBottom: 40 },
-  directionCard: { backgroundColor: "#E7F5F2", borderRadius: 16, gap: 6, padding: 18 },
-  title: { color: "#0F172A", fontSize: 24, fontWeight: "800" },
-  status: { color: "#0F766E", fontSize: 16, fontWeight: "800" },
-  amounts: { backgroundColor: "#FFFFFF", borderRadius: 14, padding: 14 },
-  amountRow: { alignItems: "center", flexDirection: "row", gap: 12, minHeight: 44 },
-  amountRowLarge: {
-    alignItems: "flex-start",
-    flexDirection: "column",
-    paddingVertical: 8,
-  },
-  amount: { color: "#0F172A", fontSize: 17, fontWeight: "700", marginLeft: "auto" },
-  remainingAmount: {
-    color: "#0F172A",
-    fontSize: 22,
-    fontWeight: "800",
-    marginLeft: "auto",
-  },
-  amountLarge: { marginLeft: 0 },
-  notice: {
-    backgroundColor: "#FFF7ED",
-    borderRadius: 12,
-    color: "#9A3412",
-    fontSize: 15,
-    lineHeight: 21,
-    padding: 12,
-  },
-  message: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  sectionTitle: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 4 },
-  timelineRow: { alignItems: "center", flexDirection: "row", gap: 10, minHeight: 32 },
-  dotDone: { color: "#0F766E", fontSize: 18 },
-  dot: { color: "#94A3B8", fontSize: 18 },
-  timelineDone: { color: "#0F172A", flex: 1, fontSize: 15, fontWeight: "600" },
-  timelinePending: { color: "#64748B", flex: 1, fontSize: 15 },
-  paymentCard: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 6, padding: 12 },
-  warning: { color: "#9A3412", fontSize: 14, lineHeight: 20 },
-  organizerActions: {
-    borderTopColor: "#E2E8F0",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 4,
-    paddingTop: 6,
-  },
-  explanation: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 10, padding: 14 },
-  expenseBasis: {
-    borderTopColor: "#E2E8F0",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 4,
-    paddingTop: 8,
-  },
-  rowTitle: { color: "#0F172A", fontSize: 15, fontWeight: "700" },
-  body: { color: "#334155", fontSize: 15, lineHeight: 21 },
-  meta: { color: "#64748B", flex: 1, fontSize: 14, lineHeight: 20 },
-  primary: {
-    alignItems: "center",
-    backgroundColor: "#0F766E",
-    borderRadius: 12,
-    justifyContent: "center",
-    minHeight: 50,
-    paddingHorizontal: 16,
-  },
-  primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
-  secondary: {
-    alignItems: "center",
-    borderColor: "#0F766E",
-    borderRadius: 12,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 16,
-  },
-  secondaryText: { color: "#0F766E", fontSize: 16, fontWeight: "800" },
-  linkButton: { alignSelf: "flex-start", justifyContent: "center", minHeight: 44 },
-  linkText: { color: "#0F766E", fontSize: 15, fontWeight: "800" },
-  disabled: { opacity: 0.5 },
-  sheet: { gap: 12, padding: 20, paddingBottom: 40 },
-  input: {
-    borderColor: "#CBD5E1",
-    borderRadius: 10,
-    borderWidth: 1,
-    color: "#0F172A",
-    fontSize: 16,
-    minHeight: 50,
-    paddingHorizontal: 12,
-  },
-  largeInput: {
-    borderColor: "#CBD5E1",
-    borderRadius: 10,
-    borderWidth: 1,
-    color: "#0F172A",
-    fontSize: 28,
-    fontWeight: "800",
-    minHeight: 64,
-    paddingHorizontal: 12,
-  },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    page: { flex: 1, backgroundColor: colors.background },
+    center: {
+      backgroundColor: colors.background,
+      alignItems: "center",
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    content: { gap: 14, padding: 16, paddingBottom: 40 },
+    directionCard: {
+      backgroundColor: colors.accentSurface,
+      borderRadius: 16,
+      gap: 6,
+      padding: 18,
+    },
+    title: { color: colors.textPrimary, fontSize: 24, fontWeight: "800" },
+    status: { color: colors.accent, fontSize: 16, fontWeight: "800" },
+    amounts: { backgroundColor: colors.surface, borderRadius: 14, padding: 14 },
+    amountRow: { alignItems: "center", flexDirection: "row", gap: 12, minHeight: 44 },
+    amountRowLarge: {
+      alignItems: "flex-start",
+      flexDirection: "column",
+      paddingVertical: 8,
+    },
+    amount: {
+      color: colors.textPrimary,
+      fontSize: 17,
+      fontWeight: "700",
+      marginLeft: "auto",
+    },
+    remainingAmount: {
+      color: colors.textPrimary,
+      fontSize: 22,
+      fontWeight: "800",
+      marginLeft: "auto",
+    },
+    amountLarge: { marginLeft: 0 },
+    notice: {
+      backgroundColor: colors.warningSurface,
+      borderRadius: 12,
+      color: colors.warning,
+      fontSize: 15,
+      lineHeight: 21,
+      padding: 12,
+    },
+    message: { color: colors.accent, fontSize: 14, fontWeight: "700" },
+    sectionTitle: { color: colors.textPrimary, ...visual.type.section, marginTop: 4 },
+    timelineRow: { alignItems: "center", flexDirection: "row", gap: 10, minHeight: 32 },
+    dotDone: { color: colors.accent, fontSize: 18 },
+    dot: { color: colors.disabled, fontSize: 18 },
+    timelineDone: { color: colors.textPrimary, flex: 1, fontSize: 15, fontWeight: "600" },
+    timelinePending: { color: colors.textSecondary, flex: 1, fontSize: 15 },
+    paymentCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      gap: 6,
+      padding: 12,
+    },
+    warning: { color: colors.warning, fontSize: 14, lineHeight: 20 },
+    organizerActions: {
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      gap: 4,
+      paddingTop: 6,
+    },
+    explanation: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      gap: 10,
+      padding: 14,
+    },
+    expenseBasis: {
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      gap: 4,
+      paddingTop: 8,
+    },
+    rowTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: "700" },
+    body: { color: colors.textSecondary, fontSize: 15, lineHeight: 21 },
+    meta: { color: colors.textSecondary, flex: 1, fontSize: 14, lineHeight: 20 },
+    primary: {
+      alignItems: "center",
+      backgroundColor: colors.accent,
+      borderRadius: 12,
+      justifyContent: "center",
+      minHeight: 50,
+      paddingHorizontal: 16,
+    },
+    primaryText: { color: colors.onAccent, fontSize: 16, fontWeight: "800" },
+    secondary: {
+      alignItems: "center",
+      borderColor: colors.accent,
+      borderRadius: 12,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 48,
+      paddingHorizontal: 16,
+    },
+    secondaryText: { color: colors.accent, fontSize: 16, fontWeight: "800" },
+    linkButton: { alignSelf: "flex-start", justifyContent: "center", minHeight: 44 },
+    linkText: { color: colors.accent, fontSize: 15, fontWeight: "800" },
+    disabled: { opacity: 0.5 },
+    sheet: { gap: 12, padding: 20, paddingBottom: 40 },
+    input: {
+      borderColor: colors.separator,
+      borderRadius: 10,
+      borderWidth: 1,
+      color: colors.textPrimary,
+      fontSize: 16,
+      minHeight: 50,
+      paddingHorizontal: 12,
+    },
+    largeInput: {
+      borderColor: colors.separator,
+      borderRadius: 10,
+      borderWidth: 1,
+      color: colors.textPrimary,
+      fontSize: 28,
+      fontWeight: "800",
+      minHeight: 64,
+      paddingHorizontal: 12,
+    },
+  });

@@ -236,8 +236,12 @@ it("wires only three fields, unified candidate groups, capacity and accepted C4 
     new URL("./LedgerExpenseEntryScreen.tsx", import.meta.url),
     "utf8",
   );
-  for (const label of ["Title", "Amount", "Currency"])
-    expect(sheet).toContain(`Receipt Review ${label}`);
+  for (const key of [
+    "ui.receiptReviewTitle",
+    "ui.receiptReviewAmount",
+    "receipt.currency",
+  ])
+    expect(sheet).toContain(`t("${key}"`);
   expect(sheet).not.toContain("Receipt Review Date");
   for (const old of [
     "Check the detected details",
@@ -255,14 +259,14 @@ it("wires only three fields, unified candidate groups, capacity and accepted C4 
   ])
     expect(sheet).not.toContain(old);
   expect(sheet.match(/<ReceiptCandidateTags/g)).toHaveLength(3);
-  expect(sheet).toContain('label="Currency"');
+  expect(sheet).toContain('label={t("ui.currency")}');
   expect(sheet).toContain("alwaysOverflow");
   expect(sheet).toContain("onOverflow={openCurrency}");
   expect(sheet).toContain("setOverflow(null)");
   expect(sheet).toContain('setOverflow("Title")');
   expect(sheet).toContain('setOverflow("Amount")');
-  expect(sheet.indexOf("+ Scan another part")).toBeLessThan(
-    sheet.indexOf("Receipt Review Title"),
+  expect(sheet.indexOf('t("ui.scanAnotherPart2")')).toBeLessThan(
+    sheet.indexOf('t("ui.receiptReviewTitle")'),
   );
   expect(sheet).toContain("disabled={!canScanAnother}");
   expect(sheet).toContain(
@@ -280,24 +284,24 @@ it("keeps drawer accessible, native zoom separate from collapse, and explicit re
     new URL("./ReceiptReviewSheet.tsx", import.meta.url),
     "utf8",
   );
-  expect(sheet).toContain('accessibilityLabel="Close receipt drawer"');
-  expect(sheet).toContain("Open receipt ${part.number}");
-  expect(sheet).toContain("Receipt {active.number}");
+  expect(sheet).toContain('accessibilityLabel={t("ui.closeReceiptDrawer")}');
+  expect(sheet).toContain('t("receipt.open", { number: part.number })');
+  expect(sheet).toContain('t("expense.receiptNumber",');
   expect(sheet).not.toContain("cards.findIndex");
-  expect(sheet).toContain("Remove receipt ${active.number}");
+  expect(sheet).toContain('t("receipt.remove", { number: active.number })');
   expect(sheet).toContain("onRetry(active.documentId)");
-  expect(sheet).toContain("Hide image");
+  expect(sheet).toContain('t("ui.hideImage")');
   expect(sheet).toContain('setOverflow("Currency")');
-  expect(sheet).toContain('backgroundColor: "rgba(246,247,249,0.45)"');
-  expect(sheet).toContain('backgroundColor: "transparent"');
+  expect(sheet).toContain("backgroundColor: colors.overlay");
+  expect(sheet).toContain("backgroundColor: colors.transparent");
   expect(sheet).toContain("compare && styles.compareOverflowSheet");
   expect(sheet).toContain("compare && styles.compareOverflowOption");
   expect(sheet).toContain("linear-gradient(90deg");
-  expect(sheet).toContain("label={`Close ${overflow} options`}");
+  expect(sheet).toContain('label={t("receipt.closeOptions",');
   expect(sheet).toContain("<OverlayDismissAction");
   expect(sheet).not.toContain("styles.overflowClose");
   expect(sheet).not.toContain("{overflow}\n");
-  expect(sheet).toContain("Re-read");
+  expect(sheet).toContain('t("ui.reread")');
   expect(sheet).not.toContain("•••");
   expect(sheet).not.toContain("debugMode");
   expect(sheet).toContain("currencyOverlay");

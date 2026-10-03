@@ -1,3 +1,7 @@
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { useRef, useState } from "react";
 import {
   Modal,
@@ -33,6 +37,9 @@ export function AppNavigationMenu({
   onIdentityPress: () => void;
   sections: AppNavigationMenuItem[][];
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const trigger = useRef<View>(null);
   const { height: windowHeight, width } = useWindowDimensions();
   const [anchor, setAnchor] = useState({ x: 12, y: 80, height: 44 });
@@ -50,12 +57,12 @@ export function AppNavigationMenu({
     <>
       <View ref={trigger} collapsable={false}>
         <Pressable
-          accessibilityLabel="Open app menu"
+          accessibilityLabel={t("navigation.openMenu")}
           accessibilityRole="button"
           onPress={open}
           style={styles.trigger}
         >
-          <AppIcon color="#0F766E" name="line.3.horizontal" size={20} />
+          <AppIcon color={colors.accent} name="line.3.horizontal" size={20} />
         </Pressable>
       </View>
       <Modal
@@ -71,7 +78,7 @@ export function AppNavigationMenu({
             style={StyleSheet.absoluteFill}
           />
           <View
-            accessibilityLabel="App menu"
+            accessibilityLabel={t("navigation.menu")}
             accessibilityRole="menu"
             accessibilityViewIsModal
             style={[
@@ -89,7 +96,7 @@ export function AppNavigationMenu({
                 accessibilityLabel={[identity.primary, identity.secondary]
                   .filter(Boolean)
                   .join(", ")}
-                accessibilityHint="Opens account management"
+                accessibilityHint={t("navigation.openAccount")}
                 accessibilityRole="button"
                 onPress={() => {
                   setVisible(false);
@@ -97,7 +104,7 @@ export function AppNavigationMenu({
                 }}
                 style={styles.identity}
               >
-                <AppIcon color="#0F766E" name="person.crop.circle" size={24} />
+                <AppIcon color={colors.accent} name="person.crop.circle" size={24} />
                 <View style={styles.identityCopy}>
                   <Text accessibilityRole="header" style={styles.identityPrimary}>
                     {identity.primary}
@@ -106,16 +113,16 @@ export function AppNavigationMenu({
                     <Text style={styles.identitySecondary}>{identity.secondary}</Text>
                   ) : null}
                 </View>
-                <AppIcon color="#64748B" name="chevron.right" size={14} />
+                <AppIcon color={colors.textSecondary} name="chevron.right" size={14} />
               </Pressable>
               {sections.map((items, sectionIndex) => (
                 <View key={sectionIndex} style={styles.section}>
                   {items.map((item) => {
                     const color = item.destructive
-                      ? "#B42318"
+                      ? colors.destructive
                       : item.selected
-                        ? "#0F766E"
-                        : "#475569";
+                        ? colors.accent
+                        : colors.textTertiary;
                     return (
                       <Pressable
                         accessibilityRole="button"
@@ -138,7 +145,7 @@ export function AppNavigationMenu({
                           {item.label}
                         </Text>
                         {item.selected ? (
-                          <AppIcon color="#0F766E" name="checkmark" size={14} />
+                          <AppIcon color={colors.accent} name="checkmark" size={14} />
                         ) : null}
                       </Pressable>
                     );
@@ -153,55 +160,56 @@ export function AppNavigationMenu({
   );
 }
 
-const styles = StyleSheet.create({
-  trigger: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 44,
-    minWidth: 44,
-  },
-  overlay: { backgroundColor: "rgba(15, 23, 42, 0.08)", flex: 1 },
-  menu: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#D8DEE7",
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    position: "absolute",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.16,
-    shadowRadius: 14,
-    zIndex: 1,
-  },
-  menuContent: { padding: 6 },
-  identity: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 11,
-    minHeight: 56,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  identityCopy: { flex: 1 },
-  identityPrimary: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
-  identitySecondary: { color: "#64748B", fontSize: 13, marginTop: 2 },
-  section: {
-    borderTopColor: "#E5E7EB",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    marginTop: 5,
-    paddingTop: 5,
-  },
-  row: {
-    alignItems: "center",
-    borderRadius: 7,
-    flexDirection: "row",
-    gap: 11,
-    minHeight: 44,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  selectedRow: { backgroundColor: "#E7F5F1" },
-  label: { color: "#1E293B", flex: 1, fontSize: 16, fontWeight: "500" },
-  selectedLabel: { color: "#0F766E", fontWeight: "700" },
-  destructiveLabel: { color: "#B42318", fontWeight: "600" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    trigger: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 44,
+      minWidth: 44,
+    },
+    overlay: { backgroundColor: colors.overlay, flex: 1 },
+    menu: {
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 12,
+      borderWidth: StyleSheet.hairlineWidth,
+      position: "absolute",
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.16,
+      shadowRadius: 14,
+      zIndex: 1,
+    },
+    menuContent: { padding: 6 },
+    identity: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 11,
+      minHeight: 56,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
+    identityCopy: { flex: 1 },
+    identityPrimary: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+    identitySecondary: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
+    section: {
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      marginTop: 5,
+      paddingTop: 5,
+    },
+    row: {
+      alignItems: "center",
+      borderRadius: 7,
+      flexDirection: "row",
+      gap: 11,
+      minHeight: 44,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
+    selectedRow: { backgroundColor: colors.selected },
+    label: { color: colors.textPrimary, flex: 1, fontSize: 16, fontWeight: "500" },
+    selectedLabel: { color: colors.accent, fontWeight: "700" },
+    destructiveLabel: { color: colors.destructive, fontWeight: "600" },
+  });

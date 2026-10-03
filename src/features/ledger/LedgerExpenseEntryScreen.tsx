@@ -1,3 +1,14 @@
+import { systemMessage, categoryLabel, domainLabel } from "@/ui/domainLabels";
+import { t, type MessageKey } from "@/ui/locale";
+import {
+  UiFormRow as FormRow,
+  UiChoiceChip as ChoiceChip,
+  UiTextInput as TextInput,
+  UiDatePicker as DateTimePicker,
+} from "@/ui/forms";
+import { useUiTheme, useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { MoneyText, type MoneyTextProps } from "./MoneyText";
 import {
   type ComponentProps,
@@ -19,11 +30,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
@@ -119,7 +128,6 @@ import {
   exactSharingAllocation,
   expenseSettlementLabel,
   expenseSharingSummary,
-  GROUP_SETTLEMENT_EXPLANATION,
   remainingExpenseAttachmentCapacity,
 } from "./expenseEntryPresentation";
 import { ExpenseSettlementTag } from "./ExpenseSettlementTag";
@@ -150,23 +158,23 @@ type Draft = {
   notes: string;
 };
 
-const splitLabels: Record<ExpenseSplitMethod, string> = {
-  EQUAL_PERSON: "Split equally",
-  EQUAL_HOUSEHOLD: "Equal per household",
-  HOUSEHOLD_SHARES: "Household shares",
-  EXACT: "Exact amounts",
-  PERCENTAGE: "Percentages",
+const splitLabels: Record<ExpenseSplitMethod, MessageKey> = {
+  EQUAL_PERSON: "expense.splitEqual",
+  EQUAL_HOUSEHOLD: "expense.splitHousehold",
+  HOUSEHOLD_SHARES: "expense.householdShares",
+  EXACT: "ui.exactAmounts",
+  PERCENTAGE: "ui.percentages",
 };
 
 const categoryGroups: {
-  title: string;
+  titleKey: MessageKey;
   items: {
     id: (typeof EXPENSE_CATEGORIES)[number];
     icon: ComponentProps<typeof AppIcon>["name"];
   }[];
 }[] = [
   {
-    title: "Food & shopping",
+    titleKey: "ui.foodShopping",
     items: [
       { id: "food", icon: "fork.knife" },
       { id: "shopping", icon: "bag" },
@@ -174,7 +182,7 @@ const categoryGroups: {
     ],
   },
   {
-    title: "Getting around",
+    titleKey: "ui.gettingAround",
     items: [
       { id: "flight", icon: "airplane" },
       { id: "car", icon: "car" },
@@ -183,7 +191,7 @@ const categoryGroups: {
     ],
   },
   {
-    title: "Stay & experiences",
+    titleKey: "ui.stayExperiences",
     items: [
       { id: "hotel", icon: "bed.double" },
       { id: "ticket", icon: "ticket" },
@@ -191,7 +199,7 @@ const categoryGroups: {
     ],
   },
   {
-    title: "Insurance & other",
+    titleKey: "ui.insuranceOther",
     items: [
       { id: "insurance", icon: "shield" },
       { id: "other", icon: "square.grid.2x2" },
@@ -200,6 +208,10 @@ const categoryGroups: {
 ];
 
 export function LedgerExpenseEntryScreen() {
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+
   const params = useLocalSearchParams<{
     expenseId?: string;
     journeyId?: string;
@@ -373,15 +385,15 @@ export function LedgerExpenseEntryScreen() {
                       ),
                     );
                     Alert.alert(
-                      "Resume receipt review?",
-                      `${scanParts.length} receipt ${scanParts.length === 1 ? "image" : "images"} recovered.`,
+                      t("ui.resumeReceiptReview"),
+                      t("entry.recovered", { count: scanParts.length }),
                       [
                         {
-                          text: "Discard",
+                          text: t("ui.discard"),
                           style: "destructive",
                           onPress: discardPendingScan,
                         },
-                        { text: "Resume", onPress: () => setReviewVisible(true) },
+                        { text: t("ui.resume"), onPress: () => setReviewVisible(true) },
                       ],
                     );
                   } catch {
@@ -407,7 +419,7 @@ export function LedgerExpenseEntryScreen() {
       .catch((cause) => {
         if (active)
           setError(
-            cause instanceof Error ? cause.message : "Expense could not be opened.",
+            cause instanceof Error ? cause.message : t("ui.expenseCouldNotBeOpened"),
           );
       })
       .finally(() => {
@@ -543,10 +555,10 @@ export function LedgerExpenseEntryScreen() {
         }
         if (!dirty) return;
         event.preventDefault();
-        Alert.alert("Discard changes?", "Your unsaved Expense changes will be lost.", [
-          { text: "Keep Editing", style: "cancel" },
+        Alert.alert(t("ui.discardChanges"), t("ui.yourUnsavedExpenseChangesWillBeLost"), [
+          { text: t("ui.keepEditing"), style: "cancel" },
           {
-            text: "Discard",
+            text: t("ui.discard"),
             style: "destructive",
             onPress: () => {
               ocrSession.clear();
@@ -591,7 +603,7 @@ export function LedgerExpenseEntryScreen() {
       : null;
   const splitResult = useMemo(() => {
     if (!draft || minor === null || selectedMembers.length === 0)
-      return { splits: null, error: "Choose an amount and participant." };
+      return { splits: null, error: t("extra.copy26") };
     try {
       return {
         splits: buildDraftSplits({
@@ -617,7 +629,7 @@ export function LedgerExpenseEntryScreen() {
     } catch (cause) {
       return {
         splits: null,
-        error: cause instanceof Error ? cause.message : "Split is incomplete.",
+        error: cause instanceof Error ? cause.message : t("extra.copy27"),
       };
     }
   }, [draft, minor, scale, selectedMembers, settlementMinor]);
@@ -678,7 +690,7 @@ export function LedgerExpenseEntryScreen() {
         scanSessionRef.current?.documents.length ?? 0,
       ) === 0
     ) {
-      setError(`Maximum ${MAX_EXPENSE_ATTACHMENTS} attachments per expense.`);
+      setError(t("entry.maximumAttachments", { count: MAX_EXPENSE_ATTACHMENTS }));
       return;
     }
     addingReceiptRef.current = true;
@@ -713,8 +725,7 @@ export function LedgerExpenseEntryScreen() {
           kind === "camera"
             ? await ImagePicker.requestCameraPermissionsAsync()
             : await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!permission.granted)
-          throw new Error("Receipt access permission is required.");
+        if (!permission.granted) throw new Error(t("extra.copy3"));
         const result =
           kind === "camera"
             ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 1 })
@@ -750,7 +761,7 @@ export function LedgerExpenseEntryScreen() {
           setReceiptDrafts((current) => [...current, ...result.drafts]);
         if (result.error)
           setError(
-            `${result.error.message}${result.drafts.length ? " Earlier attachments were kept." : ""}`,
+            `${result.error.message}${result.drafts.length ? t("entry.attachmentsKept") : ""}`,
           );
         return;
       }
@@ -784,7 +795,7 @@ export function LedgerExpenseEntryScreen() {
             return;
           }
           if (scan && next.mimeType === "application/pdf") {
-            throw new Error("Receipt scan parts must be images.");
+            throw new Error(t("extra.copy4"));
           }
           if (
             shouldRunExpenseReceiptOcr(scan, Boolean(existing)) &&
@@ -837,8 +848,7 @@ export function LedgerExpenseEntryScreen() {
           /* retain for recovery */
         }
       }
-      const message =
-        cause instanceof Error ? cause.message : "Receipt could not be attached.";
+      const message = cause instanceof Error ? cause.message : t("extra.copy5");
       setError(message);
     } finally {
       addingReceiptRef.current = false;
@@ -859,7 +869,10 @@ export function LedgerExpenseEntryScreen() {
       return;
     }
     ActionSheetIOS.showActionSheetWithOptions(
-      { options: ["Camera", "Photo Library", "Files", "Cancel"], cancelButtonIndex: 3 },
+      {
+        options: [t("ui.camera"), t("ui.photoLibrary"), t("ui.files"), t("ui.cancel")],
+        cancelButtonIndex: 3,
+      },
       (index) => {
         if (index === 0) void attach("camera");
         if (index === 1) void attach("photo");
@@ -871,8 +884,8 @@ export function LedgerExpenseEntryScreen() {
   const save = async () => {
     if (!context || !draft || minor === null || !effectiveSplits || savingRef.current)
       return;
-    if (!draft.title.trim()) return setError("Enter a title or merchant.");
-    if (!draft.date) return setError("Add an Expense date.");
+    if (!draft.title.trim()) return setError(t("ui.enterATitleOrMerchant"));
+    if (!draft.date) return setError(t("ui.addAnExpenseDate"));
     savingRef.current = true;
     setSaving(true);
     setError(null);
@@ -970,12 +983,12 @@ export function LedgerExpenseEntryScreen() {
           )
           .join("\n");
         Alert.alert(
-          "Settlement changes",
-          `${changes || "No member balance changes."}\n\nThe previous confirmed settlement will remain in history.`,
+          t("ui.settlementChanges"),
+          t("entry.correction", { changes: changes || t("ui.noMemberBalanceChanges") }),
           [
-            { text: "Keep editing", style: "cancel" },
+            { text: t("ui.keepEditing2"), style: "cancel" },
             {
-              text: "Confirm updated amounts",
+              text: t("ui.confirmUpdatedAmounts"),
               onPress: () => {
                 if (savingRef.current) return;
                 savingRef.current = true;
@@ -1001,8 +1014,8 @@ export function LedgerExpenseEntryScreen() {
                     savingRef.current = false;
                     setSaving(false);
                     Alert.alert(
-                      "Correction not confirmed",
-                      cause instanceof Error ? cause.message : "Try again.",
+                      t("ui.correctionNotConfirmed"),
+                      cause instanceof Error ? cause.message : t("ui.tryAgain"),
                     );
                   });
               },
@@ -1047,10 +1060,10 @@ export function LedgerExpenseEntryScreen() {
     } catch (cause) {
       setError(
         cause instanceof LedgerValidationError
-          ? "Check the amount and participant shares before saving."
+          ? t("ui.checkTheAmountAndParticipantSharesBeforeSaving")
           : cause instanceof Error
             ? cause.message
-            : "Expense could not be saved.",
+            : t("ui.expenseCouldNotBeSaved"),
       );
     } finally {
       savingRef.current = false;
@@ -1061,10 +1074,10 @@ export function LedgerExpenseEntryScreen() {
   const close = () => {
     if (savingRef.current || addingReceiptRef.current) return;
     if (!dirty) return router.back();
-    Alert.alert("Discard changes?", "Your unsaved Expense changes will be lost.", [
-      { text: "Keep Editing", style: "cancel" },
+    Alert.alert(t("ui.discardChanges"), t("ui.yourUnsavedExpenseChangesWillBeLost"), [
+      { text: t("ui.keepEditing"), style: "cancel" },
       {
-        text: "Discard",
+        text: t("ui.discard"),
         style: "destructive",
         onPress: () => {
           ocrSession.clear();
@@ -1086,13 +1099,15 @@ export function LedgerExpenseEntryScreen() {
   if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator accessibilityLabel="Loading Expense form" />
+        <ActivityIndicator accessibilityLabel={t("ui.loadingExpenseForm")} />
       </View>
     );
   if (!draft || !context)
     return (
       <View style={styles.center}>
-        <Text style={styles.error}>{error ?? "Expense is unavailable."}</Text>
+        <Text style={styles.error}>
+          {error ? systemMessage(error) : t("ui.expenseIsUnavailable")}
+        </Text>
       </View>
     );
 
@@ -1127,7 +1142,7 @@ export function LedgerExpenseEntryScreen() {
     >
       <View style={styles.scanSourceOverlay}>
         <Pressable
-          accessibilityLabel="Cancel scan receipt"
+          accessibilityLabel={t("ui.cancelScanReceipt")}
           accessibilityRole="button"
           style={StyleSheet.absoluteFill}
           onPress={() => setScanSourceVisible(false)}
@@ -1138,21 +1153,21 @@ export function LedgerExpenseEntryScreen() {
             contentContainerStyle={styles.scanSourceContent}
           >
             <Text accessibilityRole="header" style={styles.scanSourceTitle}>
-              Scan receipt
+              {t("ui.scanReceipt")}
             </Text>
             <Text style={styles.hint}>
-              Scan one receipt, or add multiple parts of a long receipt.
+              {t("ui.scanOneReceiptOrAddMultiplePartsOfALong")}
             </Text>
             <Text style={styles.hint}>
               {selectedReceiptCount + (scanSession?.documents.length ?? 0) === 0
-                ? `Up to ${MAX_EXPENSE_ATTACHMENTS} images per expense`
-                : `${remainingAttachmentSlots} attachment slot${remainingAttachmentSlots === 1 ? "" : "s"} remaining`}
+                ? t("entry.upToImages", { count: MAX_EXPENSE_ATTACHMENTS })
+                : t("entry.slots", { count: remainingAttachmentSlots })}
             </Text>
             {(
               [
-                ["camera", "Camera", "Take one photo"],
-                ["photo", "Photo Library", "Select one or multiple photos"],
-                ["file", "Files", "Select receipt images"],
+                ["camera", t("ui.camera"), t("extra.copy0")],
+                ["photo", t("ui.photoLibrary"), t("extra.copy1")],
+                ["file", t("ui.files"), t("extra.copy2")],
               ] as const
             ).map(([kind, title, subtitle]) => (
               <Pressable
@@ -1175,7 +1190,7 @@ export function LedgerExpenseEntryScreen() {
               style={styles.scanSourceOption}
               onPress={() => setScanSourceVisible(false)}
             >
-              <Text style={styles.scanActionText}>Cancel</Text>
+              <Text style={styles.scanActionText}>{t("ui.cancel")}</Text>
             </Pressable>
           </ScrollView>
         </SafeAreaView>
@@ -1202,26 +1217,26 @@ export function LedgerExpenseEntryScreen() {
       }
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Attachment could not be opened.",
+        cause instanceof Error ? cause.message : t("ui.attachmentCouldNotBeOpened"),
       );
     }
   };
   const deleteExpense = () => {
     if (!existing || saving || params.correctionRootId) return;
     Alert.alert(
-      "Delete this expense?",
-      "This expense will be removed from the trip, spending and settlement calculations. Its history and attachments are retained.",
+      t("ui.deleteThisExpense"),
+      t("ui.thisExpenseWillBeRemovedFromTheTripSpendingAnd"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("ui.cancel"), style: "cancel" },
         {
-          text: "Delete Expense",
+          text: t("ui.deleteExpense"),
           style: "destructive",
           onPress: () => {
             if (savingRef.current) return;
             savingRef.current = true;
             setSaving(true);
             void getDefaultLedgerExpenseRepository()
-              .then((repo) => repo.tombstoneExpense(existing.id, "Deleted Expense."))
+              .then((repo) => repo.tombstoneExpense(existing.id, t("extra.copy6")))
               .then(() => {
                 for (const receiptDraft of receiptDrafts) {
                   try {
@@ -1242,7 +1257,7 @@ export function LedgerExpenseEntryScreen() {
                 setError(
                   cause instanceof Error
                     ? cause.message
-                    : "Expense could not be deleted.",
+                    : t("ui.expenseCouldNotBeDeleted"),
                 ),
               )
               .finally(() => {
@@ -1260,26 +1275,26 @@ export function LedgerExpenseEntryScreen() {
       <Stack.Screen
         options={{
           gestureEnabled: false,
-          headerTitle: existing ? "Edit Expense" : "New Expense",
+          headerTitle: existing ? t("ui.editExpense") : t("ui.newExpense"),
         }}
       />
       <Stack.Toolbar placement="left">
         <Stack.Toolbar.Button
-          accessibilityLabel="Cancel"
+          accessibilityLabel={t("ui.cancel")}
           disabled={saving || selectingReceipt}
           onPress={close}
         >
-          Cancel
+          {t("ui.cancel")}
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
-          accessibilityLabel={saving ? "Saving…" : "Save"}
+          accessibilityLabel={saving ? t("ui.saving") : t("ui.save")}
           disabled={!draft.title.trim() || !draft.date || !effectiveSplits || saving}
           onPress={() => void save()}
           variant="done"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("ui.saving") : t("ui.save")}
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
       <ScrollView
@@ -1290,7 +1305,8 @@ export function LedgerExpenseEntryScreen() {
         keyboardDismissMode="interactive"
       >
         <TextInput
-          accessibilityLabel="Expense amount"
+          variant="bare"
+          accessibilityLabel={t("ui.expenseAmount")}
           accessibilityHint={
             amountPrecisionError && !amountFocused
               ? currencyAmountHint(draft.currency, scale ?? 2)
@@ -1308,7 +1324,7 @@ export function LedgerExpenseEntryScreen() {
             })
           }
           onFocus={() => setAmountFocused(true)}
-          placeholder="0"
+          placeholder={t("ui.0")}
           style={[
             styles.amountInput,
             amountPrecisionError && !amountFocused && styles.amountInvalid,
@@ -1318,14 +1334,16 @@ export function LedgerExpenseEntryScreen() {
         <View style={styles.currencyActions}>
           <View style={styles.currencyHalf}>
             <FormRow
-              label="Currency"
+              label={t("ui.currency")}
               onPress={() => setCurrencySheet(true)}
               value={draft.currency}
             />
           </View>
           {!existing ? (
             <Pressable
-              accessibilityLabel={scanSession ? "Review receipt" : "Scan receipt"}
+              accessibilityLabel={
+                scanSession ? t("ui.reviewReceipt") : t("ui.scanReceipt")
+              }
               accessibilityRole="button"
               accessibilityState={{
                 disabled: !scanSession && receiptCapacityFull,
@@ -1343,9 +1361,9 @@ export function LedgerExpenseEntryScreen() {
                 !scanSession && receiptCapacityFull && styles.disabledScanAction,
               ]}
             >
-              <AppIcon color="#0F766E" name="doc.text.viewfinder" size={18} />
+              <AppIcon color={colors.accent} name="doc.text.viewfinder" size={18} />
               <Text style={styles.scanActionText}>
-                {scanSession ? "Review receipt" : "Scan receipt"}
+                {scanSession ? t("ui.reviewReceipt") : t("ui.scanReceipt")}
               </Text>
             </Pressable>
           ) : null}
@@ -1354,19 +1372,21 @@ export function LedgerExpenseEntryScreen() {
           <View>
             <Text
               style={styles.hint}
-              accessibilityLabel={`Receipt OCR ${ocrState.status}`}
+              accessibilityLabel={t("entry.ocrStatus", {
+                status: domainLabel(ocrState.status),
+              })}
             >
               {ocrState.status === "recognizing"
-                ? "Reading receipt… You can enter details now."
+                ? t("ui.readingReceiptYouCanEnterDetailsNow")
                 : ocrState.status === "completed"
-                  ? "Receipt read. Enter details manually."
+                  ? t("ui.receiptReadEnterDetailsManually")
                   : ocrState.status === "no-text"
-                    ? "No text found. Enter details manually."
+                    ? t("ui.noTextFoundEnterDetailsManually")
                     : ocrState.status === "cancelled"
-                      ? "Receipt reading stopped. Enter details manually."
+                      ? t("ui.receiptReadingStoppedEnterDetailsManually")
                       : ocrState.errorCode === "UNSUPPORTED_IMAGE"
-                        ? "OCR is unavailable for this file. You can still attach it."
-                        : "Receipt could not be read. Enter details manually."}
+                        ? t("ui.ocrIsUnavailableForThisFileYouCanStillAttach")
+                        : t("ui.receiptCouldNotBeReadEnterDetailsManually")}
             </Text>
             {ocrState.status !== "recognizing" &&
             ocrState.draftId &&
@@ -1383,14 +1403,21 @@ export function LedgerExpenseEntryScreen() {
                   if (active) ocrSession.start(active);
                 }}
               >
-                <Text style={styles.suggestion}>Read again</Text>
+                <Text style={styles.suggestion}>{t("ui.readAgain")}</Text>
               </Pressable>
             ) : null}
             {context.debugMode ? (
               <Text style={styles.hint}>
-                OCR · {ocrState.status}
+                {t("ui.ocr")}
+                {domainLabel(ocrState.status)}
                 {ocrState.document
-                  ? ` · ${ocrState.document.observations.length} observations · ${ocrState.document.durationMs} ms · ${ocrState.document.imageWidth}×${ocrState.document.imageHeight} · Apple Vision ${ocrState.document.engineRevision}`
+                  ? t("entry.ocrDiagnostics", {
+                      count: ocrState.document.observations.length,
+                      ms: ocrState.document.durationMs,
+                      width: ocrState.document.imageWidth,
+                      height: ocrState.document.imageHeight,
+                      revision: ocrState.document.engineRevision,
+                    })
                   : ocrState.errorCode
                     ? ` · ${ocrState.errorCode}`
                     : ""}
@@ -1399,7 +1426,7 @@ export function LedgerExpenseEntryScreen() {
           </View>
         ) : null}
         <TextInput
-          accessibilityLabel="Title or merchant"
+          accessibilityLabel={t("ui.titleOrMerchant")}
           onChangeText={(title) =>
             setDraft({
               ...draft,
@@ -1407,48 +1434,54 @@ export function LedgerExpenseEntryScreen() {
               category: categoryManual ? draft.category : suggestExpenseCategory(title),
             })
           }
-          placeholder="What was it?"
+          placeholder={t("ui.whatWasIt")}
           style={styles.textInput}
           value={draft.title}
         />
         <View style={styles.compactPair}>
           <View style={styles.compactHalf}>
             <FormRow
-              label="Category"
+              label={t("ui.category")}
               onPress={() => setCategorySheet(true)}
-              value={draft.category}
+              value={categoryLabel(draft.category)}
               stacked
             />
           </View>
           <View style={styles.compactHalf}>
             <FormRow
-              label="Date"
+              label={t("ui.date")}
               onPress={() => {
                 Keyboard.dismiss();
                 setPendingDate(date);
                 setDatePicker(true);
               }}
-              value={draft.date ? compactExpenseDate(draft.date) : "Add date"}
+              value={draft.date ? compactExpenseDate(draft.date) : t("extra.copy7")}
               stacked
             />
           </View>
         </View>
         <View style={styles.summaryCard}>
           <View style={styles.sharingTitleRow}>
-            <Text style={styles.rowLabel}>Sharing</Text>
+            <Text style={styles.rowLabel}>{t("ui.sharing")}</Text>
             <Pressable
-              accessibilityLabel="About group settlement"
+              accessibilityLabel={t("ui.aboutGroupSettlement")}
               accessibilityRole="button"
               onPress={() =>
-                Alert.alert("Group settlement", GROUP_SETTLEMENT_EXPLANATION)
+                Alert.alert(
+                  t("ui.groupSettlement"),
+                  t("entry.groupSettlementExplanation"),
+                )
               }
               style={styles.infoAction}
             >
-              <AppIcon color="#0F766E" name="info.circle" size={19} />
+              <AppIcon color={colors.accent} name="info.circle" size={19} />
             </Pressable>
           </View>
           <Pressable
-            accessibilityLabel={`Sharing, ${sharing.join(", ")}${expenseSettlementLabel(draft) ? `, ${expenseSettlementLabel(draft)}` : ""}`}
+            accessibilityLabel={t("entry.sharingDescription", {
+              sharing: sharing.join(", "),
+              settlement: expenseSettlementLabel(draft) ?? "",
+            })}
             accessibilityRole="button"
             onPress={() => {
               Keyboard.dismiss();
@@ -1473,15 +1506,16 @@ export function LedgerExpenseEntryScreen() {
           </Pressable>
         </View>
         {selectedMembers.length > 1 && minor !== null && !effectiveSplits ? (
-          <Text style={styles.error}>{splitResult.error}</Text>
+          <Text style={styles.error}>{systemMessage(splitResult.error ?? "")}</Text>
         ) : null}
         <View style={styles.optionalSection}>
           <View style={styles.sectionHeading}>
             <Text style={styles.rowLabel}>
-              Attachments{selectedReceiptCount ? ` · ${selectedReceiptCount}` : ""}
+              {t("ui.attachments")}
+              {selectedReceiptCount ? ` · ${selectedReceiptCount}` : ""}
             </Text>
             {!selectedReceiptCount ? (
-              <Text style={styles.optionalLabel}>Optional</Text>
+              <Text style={styles.optionalLabel}>{t("ui.optional")}</Text>
             ) : null}
           </View>
           {retainedReceipts.map((receipt, index) => (
@@ -1515,7 +1549,7 @@ export function LedgerExpenseEntryScreen() {
                     previewReceiptDraftPdf(receiptDraft.localUri);
                   } catch (cause) {
                     setError(
-                      cause instanceof Error ? cause.message : "Preview unavailable.",
+                      cause instanceof Error ? cause.message : t("ui.previewUnavailable"),
                     );
                   }
                 }
@@ -1534,51 +1568,51 @@ export function LedgerExpenseEntryScreen() {
             />
           ))}
           {receiptId && !existingReceipts.some((item) => item.id === receiptId) ? (
-            <Text style={styles.attachmentText}>Receipt attachment</Text>
+            <Text style={styles.attachmentText}>{t("ui.receiptAttachment")}</Text>
           ) : null}
           {!receiptCapacityFull && !params.correctionRootId ? (
             <Pressable
-              accessibilityLabel="Add attachment"
+              accessibilityLabel={t("ui.addAttachment")}
               accessibilityRole="button"
               onPress={() => chooseReceipt(false)}
               style={styles.addAttachment}
             >
-              <Text style={styles.suggestion}>+ Add attachment</Text>
+              <Text style={styles.suggestion}>{t("ui.addAttachment2")}</Text>
             </Pressable>
           ) : null}
         </View>
         <View style={styles.optionalSection}>
           <View style={styles.sectionHeading}>
-            <Text style={styles.rowLabel}>Notes</Text>
-            <Text style={styles.optionalLabel}>Optional</Text>
+            <Text style={styles.rowLabel}>{t("ui.notes")}</Text>
+            <Text style={styles.optionalLabel}>{t("ui.optional")}</Text>
           </View>
           {notesExpanded || draft.notes ? (
             <TextInput
-              accessibilityLabel="Expense notes"
+              accessibilityLabel={t("ui.expenseNotes")}
               autoFocus={notesExpanded && !draft.notes}
               multiline
               onChangeText={(notes) => setDraft({ ...draft, notes })}
               onFocus={() => {
                 setNotesExpanded(true);
               }}
-              placeholder="Add a note..."
+              placeholder={t("ui.addANote")}
               style={[styles.textInput, styles.notes]}
               value={draft.notes}
             />
           ) : (
             <Pressable
-              accessibilityLabel="Add a note"
+              accessibilityLabel={t("ui.addANote2")}
               accessibilityRole="button"
               onPress={() => setNotesExpanded(true)}
               style={styles.addNote}
             >
-              <Text style={styles.optionalLabel}>Add a note...</Text>
+              <Text style={styles.optionalLabel}>{t("ui.addANote")}</Text>
             </Pressable>
           )}
         </View>
         {receiptId && params.receiptId ? (
           <Text style={styles.suggestion}>
-            Receipt suggestions are editable until Save.
+            {t("ui.receiptSuggestionsAreEditableUntilSave")}
           </Text>
         ) : null}
         {existing && !params.correctionRootId ? (
@@ -1588,10 +1622,10 @@ export function LedgerExpenseEntryScreen() {
             onPress={deleteExpense}
             style={styles.deleteExpense}
           >
-            <Text style={styles.error}>Delete Expense</Text>
+            <Text style={styles.error}>{t("ui.deleteExpense")}</Text>
           </Pressable>
         ) : null}
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{systemMessage(error)}</Text> : null}
       </ScrollView>
 
       <ExpenseAttachmentViewer
@@ -1635,7 +1669,7 @@ export function LedgerExpenseEntryScreen() {
           onConfirm={(result, revision) => {
             const current = scanSessionRef.current;
             if (!current || !receiptReview || !draft || selectingReceipt)
-              throw new Error("Receipt Review is not ready to confirm.");
+              throw new Error(t("extra.copy8"));
             const prepared = prepareReceiptReviewConfirmation(
               receiptReview,
               current,
@@ -1714,45 +1748,46 @@ export function LedgerExpenseEntryScreen() {
         visible={sharingSheet}
       >
         <SheetHeader
-          leftLabel="Cancel"
+          leftLabel={t("ui.cancel")}
           onLeft={() => setSharingSheet(false)}
           onRight={() => {
             setDraft(applyExpenseSharing(draft, sharingEdit));
             setSharingSheet(false);
           }}
-          rightLabel="Apply"
+          rightLabel={t("ui.apply")}
           rightDisabled={
             sharingMembers.length > 1 &&
             sharingEdit.splitMode === "EXACT" &&
             !exactAllocation.valid
           }
-          title="Sharing"
+          title={t("ui.sharing")}
         />
         <ScrollView
           automaticallyAdjustKeyboardInsets
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           contentContainerStyle={styles.sheetContent}
+          style={styles.flex}
         >
-          <Text style={styles.sharingHeading}>Paid by</Text>
+          <Text style={styles.sharingHeading}>{t("ui.paidBy")}</Text>
           <View style={styles.chipList}>
             {context.members.map((member) => (
               <ChoiceChip
                 key={`payer-${member.id}`}
-                label={member.id === context.actorId ? "You" : member.displayName}
+                label={member.id === context.actorId ? t("ui.you") : member.displayName}
                 selected={sharingEdit.payerId === member.id}
                 onPress={() => setSharingDraft({ ...sharingEdit, payerId: member.id })}
               />
             ))}
           </View>
-          <Text style={styles.sharingHeading}>Participants</Text>
+          <Text style={styles.sharingHeading}>{t("ui.participants")}</Text>
           <View style={styles.chipList}>
             {context.members.map((member) => {
               const selected = sharingEdit.participantIds.includes(member.id);
               return (
                 <ChoiceChip
                   key={`participant-${member.id}`}
-                  label={member.id === context.actorId ? "You" : member.displayName}
+                  label={member.id === context.actorId ? t("ui.you") : member.displayName}
                   selected={selected}
                   onPress={() => {
                     const ids = selected
@@ -1767,7 +1802,7 @@ export function LedgerExpenseEntryScreen() {
           </View>
           {sharingMembers.length > 1 ? (
             <>
-              <Text style={styles.sharingHeading}>Split</Text>
+              <Text style={styles.sharingHeading}>{t("ui.split")}</Text>
               <View style={styles.chipList}>
                 {(
                   [
@@ -1780,7 +1815,7 @@ export function LedgerExpenseEntryScreen() {
                 ).map((mode) => (
                   <ChoiceChip
                     key={mode}
-                    label={splitLabels[mode]}
+                    label={t(splitLabels[mode])}
                     selected={sharingEdit.splitMode === mode}
                     onPress={() => setSharingDraft({ ...sharingEdit, splitMode: mode })}
                   />
@@ -1790,20 +1825,20 @@ export function LedgerExpenseEntryScreen() {
                 <>
                   <View style={styles.allocationSummary}>
                     <AllocationLine
-                      label="Expense total"
+                      label={t("ui.expenseTotal")}
                       minor={minor}
                       currency={draft.currency}
                       scale={scale ?? 2}
-                      placeholder="Add an amount"
+                      placeholder={t("ui.addAnAmount")}
                     />
                     <AllocationLine
-                      label="Assigned"
+                      label={t("ui.assigned")}
                       minor={exactAllocation.assignedMinor}
                       currency={draft.currency}
                       scale={scale ?? 2}
                     />
                     <AllocationLine
-                      label="Remaining"
+                      label={t("ui.remaining")}
                       minor={exactAllocation.remainingMinor}
                       currency={draft.currency}
                       scale={scale ?? 2}
@@ -1815,11 +1850,11 @@ export function LedgerExpenseEntryScreen() {
                     {!exactAllocation.valid ? (
                       <Text style={styles.allocationHint}>
                         {minor === null
-                          ? "Enter an Expense amount before completing Exact amounts."
+                          ? t("ui.enterAnExpenseAmountBeforeCompletingExactAmounts")
                           : exactAllocation.remainingMinor !== null &&
                               exactAllocation.remainingMinor < 0
-                            ? "Assigned amounts exceed the Expense total."
-                            : "Assign the full Expense total across selected participants."}
+                            ? t("ui.assignedAmountsExceedTheExpenseTotal")
+                            : t("ui.assignTheFullExpenseTotalAcrossSelectedParticipants")}
                       </Text>
                     ) : null}
                   </View>
@@ -1833,10 +1868,17 @@ export function LedgerExpenseEntryScreen() {
                           ]}
                         >
                           <Text style={styles.rowLabel}>
-                            {member.id === context.actorId ? "You" : member.displayName}
+                            {member.id === context.actorId
+                              ? t("ui.you")
+                              : member.displayName}
                           </Text>
                           <TextInput
-                            accessibilityLabel={`${member.id === context.actorId ? "You" : member.displayName} amount`}
+                            accessibilityLabel={t("entry.memberAmount", {
+                              name:
+                                member.id === context.actorId
+                                  ? t("common.you")
+                                  : member.displayName,
+                            })}
                             keyboardType={scale === 0 ? "number-pad" : "decimal-pad"}
                             onChangeText={(value) =>
                               setSharingDraft({
@@ -1867,12 +1909,12 @@ export function LedgerExpenseEntryScreen() {
           ) : null}
           {shouldShowGroupSettlement(sharingEdit.participantIds, sharingEdit.payerId) ? (
             <>
-              <Text style={styles.sharingHeading}>Group settlement</Text>
+              <Text style={styles.sharingHeading}>{t("ui.groupSettlement")}</Text>
               <View style={styles.chipList}>
                 {(["INCLUDED", "EXCLUDED"] as const).map((value) => (
                   <ChoiceChip
                     key={value}
-                    label={value === "INCLUDED" ? "Include" : "Exclude"}
+                    label={value === "INCLUDED" ? t("ui.include") : t("ui.exclude")}
                     selected={sharingEdit.settlementParticipation === value}
                     onPress={() =>
                       setSharingDraft({ ...sharingEdit, settlementParticipation: value })
@@ -1882,8 +1924,8 @@ export function LedgerExpenseEntryScreen() {
               </View>
               <Text style={styles.hint}>
                 {sharingEdit.settlementParticipation === "INCLUDED"
-                  ? "Included in this trip’s calculation of who owes whom."
-                  : "Saved in Expenses, but excluded from this trip’s calculation of who owes whom."}
+                  ? t("ui.includedInThisTripsCalculationOfWhoOwesWhom")
+                  : t("ui.savedInExpensesButExcludedFromThisTripsCalculationOf")}
               </Text>
             </>
           ) : null}
@@ -1897,7 +1939,7 @@ export function LedgerExpenseEntryScreen() {
         presentationStyle="pageSheet"
         visible={currencySheet}
       >
-        <SheetHeader onLeft={() => setCurrencySheet(false)} title="Currency" />
+        <SheetHeader onLeft={() => setCurrencySheet(false)} title={t("ui.currency")} />
         {currencySheet ? (
           <CurrencyPicker
             selected={draft.currency}
@@ -1933,17 +1975,17 @@ export function LedgerExpenseEntryScreen() {
         presentationStyle="pageSheet"
         visible={categorySheet}
       >
-        <SheetHeader onLeft={() => setCategorySheet(false)} title="Category" />
-        <ScrollView contentContainerStyle={styles.categoryContent}>
+        <SheetHeader onLeft={() => setCategorySheet(false)} title={t("ui.category")} />
+        <ScrollView contentContainerStyle={styles.categoryContent} style={styles.flex}>
           {categoryGroups.map((group) => (
-            <View key={group.title}>
-              <Text style={styles.categoryHeading}>{group.title}</Text>
+            <View key={t(group.titleKey)}>
+              <Text style={styles.categoryHeading}>{t(group.titleKey)}</Text>
               <View style={styles.categoryGrid}>
                 {group.items.map(({ id, icon }) => {
                   const selected = draft.category === id;
                   return (
                     <Pressable
-                      accessibilityLabel={id}
+                      accessibilityLabel={categoryLabel(id)}
                       accessibilityRole="button"
                       accessibilityState={{ selected }}
                       key={id}
@@ -1957,12 +1999,10 @@ export function LedgerExpenseEntryScreen() {
                         selected && styles.categoryTileSelected,
                       ]}
                     >
-                      <AppIcon color="#0F766E" name={icon} size={22} />
-                      <Text style={styles.categoryTileText}>
-                        {id[0].toUpperCase() + id.slice(1)}
-                      </Text>
+                      <AppIcon color={colors.accent} name={icon} size={22} />
+                      <Text style={styles.categoryTileText}>{categoryLabel(id)}</Text>
                       {selected ? (
-                        <AppIcon color="#0F766E" name="checkmark" size={16} />
+                        <AppIcon color={colors.accent} name="checkmark" size={16} />
                       ) : null}
                     </Pressable>
                   );
@@ -1998,20 +2038,20 @@ export function LedgerExpenseEntryScreen() {
         <View style={styles.dateOverlay}>
           <Animated.View style={[styles.dateBackdrop, { opacity: dateBackdropOpacity }]}>
             <Pressable
-              accessibilityLabel="Dismiss expense date picker"
+              accessibilityLabel={t("ui.dismissExpenseDatePicker")}
               accessibilityRole="button"
               onPress={() => dismissDatePicker()}
-              style={styles.flex}
+              style={StyleSheet.absoluteFill}
             />
           </Animated.View>
           <Animated.View style={{ transform: [{ translateY: dateSheetOffset }] }}>
             <SafeAreaView edges={["bottom"]} style={styles.datePanel}>
               <SheetHeader
-                leftLabel="Cancel"
+                leftLabel={t("ui.cancel")}
                 onLeft={() => dismissDatePicker()}
                 onRight={() => dismissDatePicker(true)}
                 safeTop={false}
-                title="Expense date"
+                title={t("ui.expenseDate")}
               />
               {datePicker ? (
                 <View style={styles.dateWheelContainer}>
@@ -2022,8 +2062,7 @@ export function LedgerExpenseEntryScreen() {
                       if (value) setPendingDate(value);
                     }}
                     style={styles.dateWheel}
-                    textColor="#0F172A"
-                    themeVariant="light"
+
                     value={pendingDate}
                   />
                 </View>
@@ -2044,11 +2083,10 @@ async function loadEntry(
 ) {
   const expenseRepository = await getDefaultLedgerExpenseRepository();
   const existing = expenseId ? await expenseRepository.getExpense(expenseId) : null;
-  if (expenseId && !existing) throw new Error("Expense is not available on this iPhone.");
-  if (existing?.status === "DELETED")
-    throw new Error("Restore this Expense before editing it.");
+  if (expenseId && !existing) throw new Error(t("extra.copy9"));
+  if (existing?.status === "DELETED") throw new Error(t("extra.copy10"));
   const id = existing?.journeyId ?? journeyId;
-  if (!id) throw new Error("Choose a Journey before adding an Expense.");
+  if (!id) throw new Error(t("entry.chooseJourney"));
   const reporting = await getDefaultLedgerReportingRepository();
   const reads = await getDefaultLedgerReadRepository();
   const [journeys, actor, rawMembers, households, receipt, expenses, preferences] =
@@ -2065,10 +2103,9 @@ async function loadEntry(
     ]);
   const journey = journeys.find((item) => item.journeyId === id);
   const actorMember = rawMembers.find((item) => item.id === actor?.memberId);
-  if (!journey || !actorMember) throw new Error("Journey context is unavailable.");
+  if (!journey || !actorMember) throw new Error(t("entry.contextUnavailable"));
   const access = await reporting.getActorContext(id);
-  if (!canEditLedgerExpense(access?.role, false))
-    throw new Error("Expense write access is required.");
+  if (!canEditLedgerExpense(access?.role, false)) throw new Error(t("extra.copy11"));
   if (
     existing &&
     !correction &&
@@ -2076,7 +2113,7 @@ async function loadEntry(
       await getDefaultLedgerSettlementRepository()
     ).isExpenseFinalized(id, existing.id, existing.serverId))
   )
-    throw new Error("This Expense belongs to a completed settlement and is read-only.");
+    throw new Error(t("extra.copy12"));
   const receipts = existing
     ? (await (await getDefaultLedgerReceiptRepository()).listReceipts(id)).filter(
         (item) =>
@@ -2170,69 +2207,15 @@ function sameIds(left: string[], right: string[]) {
   return left.length === right.length && left.every((id) => right.includes(id));
 }
 
-function FormRow({
-  label,
-  value,
-  onPress,
-  disabled = false,
-  stacked = false,
-}: {
-  label: string;
-  value: string;
-  onPress: () => void;
-  disabled?: boolean;
-  stacked?: boolean;
-}) {
-  const largeText = useWindowDimensions().fontScale > 2;
-  return (
-    <Pressable
-      accessibilityLabel={`${label}, ${value}`}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={[styles.row, (largeText || stacked) && styles.rowLargeText]}
-    >
-      <Text style={[styles.rowLabel, stacked && styles.rowLabelStacked]}>{label}</Text>
-      <Text
-        numberOfLines={2}
-        style={[styles.rowValue, (largeText || stacked) && styles.rowValueLargeText]}
-      >
-        {value}
-      </Text>
-    </Pressable>
-  );
-}
-
-function ChoiceChip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={[styles.choiceChip, selected && styles.choiceChipSelected]}
-    >
-      <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 function AllocationLine({
   label,
   warning = false,
   ...money
 }: MoneyTextProps & { label: string; warning?: boolean }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View style={styles.allocationLine}>
       <Text style={styles.allocationLabel}>{label}</Text>
@@ -2244,193 +2227,221 @@ function AllocationLine({
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  deleteExpense: {
-    minHeight: 44,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 20,
-  },
-  center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
-  content: { gap: 10, padding: 16, paddingBottom: 48 },
-  amountInput: {
-    color: "#0F172A",
-    fontSize: 48,
-    fontWeight: "800",
-    minHeight: 68,
-  },
-  amountInvalid: { borderBottomColor: "#B91C1C", borderBottomWidth: 2 },
-  textInput: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    color: "#0F172A",
-    fontSize: 17,
-    minHeight: 52,
-    paddingHorizontal: 14,
-  },
-  notes: { minHeight: 96, paddingTop: 14, textAlignVertical: "top" },
-  currencyActions: { flexDirection: "row", gap: 10 },
-  currencyHalf: { flex: 1, minWidth: 0 },
-  scanAction: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    flex: 1,
-    flexDirection: "row",
-    gap: 6,
-    justifyContent: "center",
-    minHeight: 52,
-    minWidth: 0,
-    paddingHorizontal: 8,
-  },
-  scanActionLargeText: { alignItems: "flex-start", flexDirection: "column" },
-  disabledScanAction: { opacity: 0.4 },
-  scanActionText: { color: "#0F766E", fontSize: 15, fontWeight: "600" },
-  attachmentText: { color: "#475569", fontSize: 15 },
-  compactPair: { flexDirection: "row", gap: 10 },
-  compactHalf: { flex: 1, minWidth: 0 },
-  summaryCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    minHeight: 64,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  sharingTitleRow: { alignItems: "center", flexDirection: "row" },
-  infoAction: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 44,
-    minWidth: 44,
-  },
-  sharingSummaryAction: { minHeight: 44, justifyContent: "center" },
-  summaryValue: { color: "#475569", fontSize: 15, marginTop: 3 },
-  optionalSection: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    gap: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  sectionHeading: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 30,
-  },
-  optionalLabel: { color: "#64748B", fontSize: 15 },
-  addAttachment: { justifyContent: "center", minHeight: 44 },
-  addNote: { justifyContent: "center", minHeight: 44 },
-  row: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
-    minHeight: 52,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  rowLargeText: { alignItems: "flex-start", flexDirection: "column" },
-  rowLabel: { color: "#0F172A", flex: 1, fontSize: 17, fontWeight: "600" },
-  rowLabelStacked: { flex: 0, fontSize: 14 },
-  rowValue: { color: "#475569", flexShrink: 1, fontSize: 16, textAlign: "right" },
-  rowValueLargeText: { textAlign: "left" },
-  hint: { color: "#64748B", fontSize: 14, lineHeight: 20 },
-  suggestion: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  error: { color: "#B91C1C", fontSize: 15, lineHeight: 21 },
-  scanSourceTitle: { color: "#0F172A", fontSize: 20, fontWeight: "700" },
-  scanSourceOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(15, 23, 42, 0.25)",
-  },
-  scanSourcePanel: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    maxHeight: "90%",
-  },
-  scanSourceContent: { padding: 20, gap: 12 },
-  scanSourceOption: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: 10,
-    padding: 14,
-    gap: 4,
-    minHeight: 44,
-  },
-  dateOverlay: { flex: 1, justifyContent: "flex-end" },
-  dateBackdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(15, 23, 42, 0.25)",
-  },
-  datePanel: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    overflow: "hidden",
-  },
-  dateWheelContainer: { alignItems: "center", justifyContent: "center", minHeight: 280 },
-  dateWheel: { height: 216, width: "100%" },
-  sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },
-  sharingHeading: { color: "#475569", fontSize: 15, fontWeight: "700", marginTop: 12 },
-  chipList: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  choiceChip: {
-    borderColor: "#CBD5E1",
-    borderRadius: 12,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 12,
-  },
-  choiceChipSelected: { backgroundColor: "#0F766E", borderColor: "#0F766E" },
-  choiceChipText: { color: "#0F172A", fontSize: 15, fontWeight: "600" },
-  choiceChipTextSelected: { color: "#FFFFFF" },
-  allocationSummary: { backgroundColor: "#F8FAFC", borderRadius: 8, gap: 6, padding: 12 },
-  allocationLine: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
-  allocationLabel: { color: "#475569", fontSize: 14 },
-  allocationValue: { color: "#0F172A", fontSize: 14, fontWeight: "700" },
-  allocationWarning: { color: "#B91C1C" },
-  allocationHint: { color: "#B91C1C", fontSize: 13 },
-  categoryContent: { gap: 24, padding: 16, paddingBottom: 48 },
-  categoryHeading: {
-    color: "#64748B",
-    fontSize: 14,
-    fontWeight: "700",
-    marginBottom: 10,
-  },
-  categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  categoryTile: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: 8,
-    minHeight: 60,
-    paddingHorizontal: 12,
-    width: "48%",
-  },
-  categoryTileSelected: { backgroundColor: "#E6F5F1", borderColor: "#0F766E" },
-  categoryTileText: { color: "#0F172A", flex: 1, fontSize: 16, fontWeight: "600" },
-  customRow: { alignItems: "center", flexDirection: "row", gap: 12 },
-  customRowLargeText: { alignItems: "stretch", flexDirection: "column" },
-  customInput: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    color: "#0F172A",
-    fontSize: 17,
-    minHeight: 48,
-    paddingHorizontal: 10,
-    textAlign: "right",
-    width: 120,
-  },
-  customInputLargeText: { width: "100%" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    deleteExpense: {
+      minHeight: 44,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 20,
+    },
+    center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
+    content: { gap: 10, padding: 16, paddingBottom: 48 },
+    amountInput: {
+      color: colors.textPrimary,
+      fontSize: 48,
+      fontWeight: "800",
+      minHeight: 68,
+    },
+    amountInvalid: { borderBottomColor: colors.destructive, borderBottomWidth: 2 },
+    textInput: {
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 8,
+      borderWidth: StyleSheet.hairlineWidth,
+      color: colors.textPrimary,
+      fontSize: 17,
+      minHeight: 52,
+      paddingHorizontal: 14,
+    },
+    notes: { minHeight: 96, paddingTop: 14, textAlignVertical: "top" },
+    currencyActions: { flexDirection: "row", gap: 10 },
+    currencyHalf: { flex: 1, minWidth: 0 },
+    scanAction: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      flex: 1,
+      flexDirection: "row",
+      gap: 6,
+      justifyContent: "center",
+      minHeight: 52,
+      minWidth: 0,
+      paddingHorizontal: 8,
+    },
+    scanActionLargeText: { alignItems: "flex-start", flexDirection: "column" },
+    disabledScanAction: { opacity: 0.4 },
+    scanActionText: { color: colors.accent, fontSize: 15, fontWeight: "600" },
+    attachmentText: { color: colors.textTertiary, fontSize: 15 },
+    compactPair: { flexDirection: "row", gap: 10 },
+    compactHalf: { flex: 1, minWidth: 0 },
+    summaryCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      minHeight: 64,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+    sharingTitleRow: { alignItems: "center", flexDirection: "row" },
+    infoAction: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 44,
+      minWidth: 44,
+    },
+    sharingSummaryAction: { minHeight: 44, justifyContent: "center" },
+    summaryValue: { color: colors.textTertiary, fontSize: 15, marginTop: 3 },
+    optionalSection: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      gap: 4,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    sectionHeading: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 30,
+    },
+    optionalLabel: { color: colors.textSecondary, fontSize: 15 },
+    addAttachment: { justifyContent: "center", minHeight: 44 },
+    addNote: { justifyContent: "center", minHeight: 44 },
+    row: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      flexDirection: "row",
+      gap: 12,
+      justifyContent: "space-between",
+      minHeight: 52,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+    rowLargeText: { alignItems: "flex-start", flexDirection: "column" },
+    rowLabel: { color: colors.textPrimary, flex: 1, fontSize: 17, fontWeight: "600" },
+    rowLabelStacked: { flex: 0, fontSize: 14 },
+    rowValue: {
+      color: colors.textTertiary,
+      flexShrink: 1,
+      fontSize: 16,
+      textAlign: "right",
+    },
+    rowValueLargeText: { textAlign: "left" },
+    hint: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
+    suggestion: { color: colors.accent, fontSize: 14, fontWeight: "700" },
+    error: { color: colors.destructive, fontSize: 15, lineHeight: 21 },
+    scanSourceTitle: { color: colors.textPrimary, fontSize: 20, fontWeight: "700" },
+    scanSourceOverlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: colors.overlay,
+    },
+    scanSourcePanel: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 22,
+      borderTopRightRadius: 22,
+      maxHeight: "90%",
+    },
+    scanSourceContent: { padding: 20, gap: 12 },
+    scanSourceOption: {
+      backgroundColor: colors.groupedBackground,
+      borderRadius: 10,
+      padding: 14,
+      gap: 4,
+      minHeight: 44,
+    },
+    dateOverlay: { flex: 1, justifyContent: "flex-end" },
+    dateBackdrop: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: colors.overlay,
+    },
+    datePanel: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 22,
+      borderTopRightRadius: 22,
+      overflow: "hidden",
+    },
+    dateWheelContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 280,
+    },
+    dateWheel: { height: 216, width: "100%" },
+    sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },
+    sharingHeading: {
+      color: colors.textTertiary,
+      fontSize: 15,
+      fontWeight: "700",
+      marginTop: 12,
+    },
+    chipList: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    choiceChip: {
+      borderColor: colors.separator,
+      borderRadius: 12,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: 12,
+    },
+    choiceChipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
+    choiceChipText: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
+    choiceChipTextSelected: { color: colors.onAccent },
+    allocationSummary: {
+      backgroundColor: colors.groupedBackground,
+      borderRadius: 8,
+      gap: 6,
+      padding: 12,
+    },
+    allocationLine: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
+    allocationLabel: { color: colors.textTertiary, fontSize: 14 },
+    allocationValue: { color: colors.textPrimary, fontSize: 14, fontWeight: "700" },
+    allocationWarning: { color: colors.destructive },
+    allocationHint: { color: colors.destructive, fontSize: 13 },
+    categoryContent: { gap: 24, padding: 16, paddingBottom: 48 },
+    categoryHeading: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: "700",
+      marginBottom: 10,
+    },
+    categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    categoryTile: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 12,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 8,
+      minHeight: 60,
+      paddingHorizontal: 12,
+      width: "48%",
+    },
+    categoryTileSelected: {
+      backgroundColor: colors.selected,
+      borderColor: colors.accent,
+    },
+    categoryTileText: {
+      color: colors.textPrimary,
+      flex: 1,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    customRow: { alignItems: "center", flexDirection: "row", gap: 12 },
+    customRowLargeText: { alignItems: "stretch", flexDirection: "column" },
+    customInput: {
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 8,
+      borderWidth: StyleSheet.hairlineWidth,
+      color: colors.textPrimary,
+      fontSize: 17,
+      minHeight: 48,
+      paddingHorizontal: 10,
+      textAlign: "right",
+      width: 120,
+    },
+    customInputLargeText: { width: "100%" },
+  });

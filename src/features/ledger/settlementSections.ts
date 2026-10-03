@@ -1,3 +1,4 @@
+import { t } from "@/ui/locale";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
@@ -573,7 +574,7 @@ export function chronologicalPersonalPayments(records: LocalPersonalPayment[]) {
 }
 
 export function memberName(members: SettlementMember[], id: string | null) {
-  return members.find((member) => member.id === id)?.label ?? "Traveller";
+  return members.find((member) => member.id === id)?.label ?? t("common.traveller");
 }
 
 export function settlementCacheMessage(online: boolean, content: "data" | "details") {

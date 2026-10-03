@@ -1,12 +1,18 @@
+import { UiButton } from "@/ui/controls";
+import { t, type MessageKey } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { UiTextInput } from "@/ui/forms";
+import { MoneyText } from "@/features/ledger/MoneyText";
+import { systemMessage } from "@/ui/domainLabels";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Button,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,14 +21,16 @@ import { parseAmountToMinor } from "@/domain/expense/money";
 import type { ExpenseSyncStatus } from "@/domain/expense/types";
 import { useExpenseSlice } from "@/hooks/useExpenseSlice";
 
-const syncStatusLabels: Record<ExpenseSyncStatus, string> = {
-  PENDING_CREATE: "Pending",
-  SYNCING: "Syncing",
-  SYNCED: "Synced",
-  FAILED: "Failed",
+const syncStatusLabels: Record<ExpenseSyncStatus, MessageKey> = {
+  PENDING_CREATE: "ledgerFeedback.copy57",
+  SYNCING: "ledger.syncing",
+  SYNCED: "ledgerFeedback.copy58",
+  FAILED: "domain.label7",
 };
 
 export function ExpenseSliceScreen() {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("NZD");
@@ -60,29 +68,29 @@ export function ExpenseSliceScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Expenses</Text>
-        <Text style={styles.subtitle}>Local-first validation slice</Text>
+        <Text style={styles.title}>{t("expense.plural")}</Text>
+        <Text style={styles.subtitle}>{t("ledgerFeedback.copy49")}</Text>
 
         <View style={styles.form}>
-          <TextInput
-            accessibilityLabel="Expense description"
+          <UiTextInput
+            accessibilityLabel={t("ledgerFeedback.copy50")}
             onChangeText={setTitle}
-            placeholder="Description"
+            placeholder={t("expense.descriptionLabel")}
             style={styles.input}
             value={title}
           />
           <View style={styles.moneyRow}>
-            <TextInput
-              accessibilityLabel="Expense amount"
+            <UiTextInput
+              accessibilityLabel={t("reviewFlow.label33")}
               inputMode="decimal"
               keyboardType="decimal-pad"
               onChangeText={setAmount}
-              placeholder="Amount"
+              placeholder={t("expense.amount")}
               style={[styles.input, styles.amountInput]}
               value={amount}
             />
-            <TextInput
-              accessibilityLabel="Expense currency"
+            <UiTextInput
+              accessibilityLabel={t("ledgerFeedback.copy51")}
               autoCapitalize="characters"
               maxLength={3}
               onChangeText={setCurrency}
@@ -90,33 +98,43 @@ export function ExpenseSliceScreen() {
               value={currency}
             />
           </View>
-          <Button disabled={!canSave} onPress={() => void save()} title="Save expense" />
+          <UiButton
+            disabled={!canSave}
+            onPress={() => void save()}
+            label={t("ledgerFeedback.copy52")}
+          />
         </View>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={styles.error}>{systemMessage(error)}</Text> : null}
 
         {isLoading ? <ActivityIndicator /> : null}
         {!isLoading && expenses.length === 0 ? (
-          <Text style={styles.empty}>No local expenses yet.</Text>
+          <Text style={styles.empty}>{t("ledgerFeedback.copy53")}</Text>
         ) : null}
 
         {expenses.map((expense) => (
           <View key={expense.id} style={styles.expense}>
             <View>
               <Text style={styles.expenseTitle}>{expense.title}</Text>
-              <Text style={styles.expenseAmount}>
-                {expense.currencyCode} {(expense.amountMinor / 100).toFixed(2)}
-              </Text>
+              <MoneyText
+                style={styles.expenseAmount}
+                minor={expense.amountMinor}
+                currency={expense.currencyCode}
+                scale={2}
+              />
             </View>
-            <Text style={styles.status}>{syncStatusLabels[expense.syncStatus]}</Text>
+            <Text style={styles.status}>{t(syncStatusLabels[expense.syncStatus])}</Text>
           </View>
         ))}
 
         <View style={styles.developmentTools}>
-          <Text style={styles.toolsLabel}>Stage 2 sync harness</Text>
-          <Button onPress={() => void runDemoSync()} title="Run pending sync" />
+          <Text style={styles.toolsLabel}>{t("ledgerFeedback.copy54")}</Text>
+          <UiButton
+            onPress={() => void runDemoSync()}
+            label={t("ledgerFeedback.copy55")}
+          />
           <Pressable onPress={failNextDemoSync} style={styles.failureButton}>
-            <Text style={styles.failureButtonText}>Fail next sync</Text>
+            <Text style={styles.failureButtonText}>{t("ledgerFeedback.copy56")}</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -124,49 +142,50 @@ export function ExpenseSliceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F8FAFC" },
-  content: { gap: 16, padding: 20 },
-  title: { color: "#0F172A", fontSize: 28, fontWeight: "800" },
-  subtitle: { color: "#475569", fontSize: 15 },
-  form: { gap: 12, paddingVertical: 8 },
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#CBD5E1",
-    borderRadius: 6,
-    borderWidth: 1,
-    color: "#0F172A",
-    fontSize: 16,
-    minHeight: 48,
-    paddingHorizontal: 12,
-  },
-  moneyRow: { flexDirection: "row", gap: 12 },
-  amountInput: { flex: 1 },
-  currencyInput: { width: 82 },
-  error: { color: "#B91C1C", fontSize: 14 },
-  empty: { color: "#64748B", fontSize: 15, paddingVertical: 16 },
-  expense: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E2E8F0",
-    borderRadius: 6,
-    borderWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 14,
-  },
-  expenseTitle: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
-  expenseAmount: { color: "#475569", fontSize: 15, marginTop: 4 },
-  status: { color: "#0F766E", fontSize: 13, fontWeight: "700" },
-  developmentTools: {
-    borderColor: "#CBD5E1",
-    borderRadius: 6,
-    borderWidth: 1,
-    gap: 10,
-    marginTop: 12,
-    padding: 12,
-  },
-  toolsLabel: { color: "#475569", fontSize: 13, fontWeight: "700" },
-  failureButton: { alignItems: "center", minHeight: 40, justifyContent: "center" },
-  failureButtonText: { color: "#B45309", fontSize: 15, fontWeight: "700" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    safeArea: { flex: 1, backgroundColor: colors.background },
+    content: { gap: 16, padding: 20 },
+    title: { color: colors.textPrimary, fontSize: 28, fontWeight: "800" },
+    subtitle: { color: colors.textSecondary, fontSize: 15 },
+    form: { gap: 12, paddingVertical: 8 },
+    input: {
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 6,
+      borderWidth: 1,
+      color: colors.textPrimary,
+      fontSize: 16,
+      minHeight: 48,
+      paddingHorizontal: 12,
+    },
+    moneyRow: { flexDirection: "row", gap: 12 },
+    amountInput: { flex: 1 },
+    currencyInput: { width: 82 },
+    error: { color: colors.destructive, fontSize: 14 },
+    empty: { color: colors.textSecondary, fontSize: 15, paddingVertical: 16 },
+    expense: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 6,
+      borderWidth: 1,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      padding: 14,
+    },
+    expenseTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+    expenseAmount: { color: colors.textSecondary, fontSize: 15, marginTop: 4 },
+    status: { color: colors.accent, fontSize: 13, fontWeight: "700" },
+    developmentTools: {
+      borderColor: colors.separator,
+      borderRadius: 6,
+      borderWidth: 1,
+      gap: 10,
+      marginTop: 12,
+      padding: 12,
+    },
+    toolsLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: "700" },
+    failureButton: { alignItems: "center", minHeight: 44, justifyContent: "center" },
+    failureButtonText: { color: colors.warning, fontSize: 15, fontWeight: "700" },
+  });

@@ -1,3 +1,4 @@
+import { t } from "@/ui/locale";
 import type { LedgerJourneyContext } from "@/domain/ledger/journeyContext";
 import type { ReportingFilters } from "@/domain/ledger/reporting";
 import { formatLedgerDateFilter } from "./format";
@@ -79,9 +80,9 @@ export function countLedgerFilters(filters: ReportingFilters) {
 
 export function searchDateLabel(from: string, to?: string, now = new Date()) {
   for (const [preset, label] of [
-    ["TODAY", "Today"],
-    ["YESTERDAY", "Yesterday"],
-    ["LAST_30", "Last 30 days"],
+    ["TODAY", t("search.today")],
+    ["YESTERDAY", t("search.yesterday")],
+    ["LAST_30", t("search.last30")],
   ] as const) {
     const bounds = ledgerDateFilter(preset, null, "", "", "", now);
     if (bounds?.from === from && bounds.to === to) return label;
@@ -90,5 +91,7 @@ export function searchDateLabel(from: string, to?: string, now = new Date()) {
 }
 
 export function formatExpenseCount(count: number) {
-  return `${count} ${count === 1 ? "Expense" : "Expenses"}`;
+  return t(count === 1 ? "search.expenseCountOne" : "search.expenseCountOther", {
+    count,
+  });
 }

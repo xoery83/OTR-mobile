@@ -1,3 +1,8 @@
+import { categoryLabel, domainLabel, analysisInsightValue } from "@/ui/domainLabels";
+import { t, getFormatLocale } from "@/ui/locale";
+import { useUiTheme, useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { OverlayDismissAction } from "@/components/OverlayDismissAction";
 import { MoneyText } from "./MoneyText";
 import { useMemo, useRef, useState } from "react";
@@ -13,7 +18,7 @@ import {
 import { router } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
-import { contentVisual as cv } from "./contentVisual";
+import { visual as cv } from "@/ui/visual";
 import {
   analysisPercentage,
   analysisUsesLogScale,
@@ -44,10 +49,18 @@ export type AnalysisDrilldown = (
   },
   origin: string,
 ) => void;
-const stackColors = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#D55E00", "#6D55B5"];
-function categoryColor(key: string, keys: string[]) {
+const chartColors = (colors: UiColors) => [
+  colors.chart1,
+  colors.chart2,
+  colors.chart3,
+  colors.chart4,
+  colors.chart5,
+  colors.chart6,
+];
+function categoryColor(key: string, keys: string[], colors: UiColors) {
+  const stackColors = chartColors(colors);
   return key === "__analysis_other_categories__"
-    ? "#64748B"
+    ? colors.textSecondary
     : stackColors[Math.max(0, keys.indexOf(key)) % stackColors.length]!;
 }
 
@@ -60,6 +73,10 @@ export function AnalysisSection({
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeading}>
@@ -82,15 +99,24 @@ export function AnalysisCategoryMenu({
   onPress: () => void;
   title: string;
 }) {
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Filter ${title} by category, ${value ?? "All categories"}`}
+      accessibilityLabel={t("analysis.filterCategory", {
+        title,
+        category: value ? categoryLabel(value) : t("ui.allCategories"),
+      })}
       onPress={onPress}
       style={styles.menu}
     >
-      <Text style={styles.meta}>{value ?? "All categories"}</Text>
-      <AppIcon name="line.3.horizontal.decrease" size={18} color="#0F766E" />
+      <Text style={styles.meta}>
+        {value ? categoryLabel(value) : t("ui.allCategories")}
+      </Text>
+      <AppIcon name="line.3.horizontal.decrease" size={18} color={colors.accent} />
     </Pressable>
   );
 }
@@ -104,13 +130,27 @@ export function AnalysisExpenseRows({
   scope: ReportingScope;
   money: AnalysisMoney;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   return (
     <>
       {expenses.map((expense, index) => (
         <Pressable
           key={expense.id}
           accessibilityRole="button"
-          accessibilityLabel={`${expense.title}, ${formatLedgerDate(expense.occurredAt)}, total ${money.format(expense.totalMinor ?? 0)}${scope === "MINE" ? `, your share ${money.format(expense.personalMinor ?? 0)}` : ""}`}
+          accessibilityLabel={t("analysis.expenseDescription", {
+            title: expense.title,
+            date: formatLedgerDate(expense.occurredAt),
+            total: money.format(expense.totalMinor ?? 0),
+            share:
+              scope === "MINE"
+                ? t("analysis.shareDescription", {
+                    amount: money.format(expense.personalMinor ?? 0),
+                  })
+                : "",
+          })}
           onPress={() => router.push(`/expenses/expense/${expense.id}`)}
           style={[
             styles.expenseRow,
@@ -143,10 +183,14 @@ export function AnalysisExpenseRows({
             >
               {formatLedgerDate(expense.occurredAt)}
               {scope === "MINE"
-                ? ` · Total ${money.format(expense.totalMinor ?? 0)}`
+                ? t("analysis.totalCaption", {
+                    amount: money.format(expense.totalMinor ?? 0),
+                  })
                 : ""}
             </Text>
-            <Text style={styles.youLabel}>{scope === "MINE" ? "You" : "Total"}</Text>
+            <Text style={styles.youLabel}>
+              {scope === "MINE" ? t("ui.you") : t("ui.total")}
+            </Text>
           </View>
         </Pressable>
       ))}
@@ -167,23 +211,33 @@ export function AnalysisCategories({
   money: AnalysisMoney;
   drilldown: AnalysisDrilldown;
 }) {
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+
   const [expanded, setExpanded] = useState<string | null>(null);
   const largeText = useWindowDimensions().fontScale > 1.5;
   return (
-    <AnalysisSection title="Spending by category">
+    <AnalysisSection title={t("ui.spendingByCategory")}>
       <View style={styles.surface}>
         {categories.map((category) => (
           <View key={category.key}>
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ expanded: expanded === category.key }}
-              accessibilityLabel={`${category.label}, ${money.format(category.totalMinor)}, ${category.percentage} percent of ${scope === "MINE" ? "your" : "group"} spending, ${formatExpenseCount(category.expenses.length)}`}
+              accessibilityLabel={t("analysis.categoryDescription", {
+                category: categoryLabel(category.label),
+                amount: money.format(category.totalMinor),
+                percent: category.percentage,
+                scope: scope === "MINE" ? t("ledger.mine") : t("ledger.group"),
+                count: formatExpenseCount(category.expenses.length),
+              })}
               onPress={() => setExpanded(expanded === category.key ? null : category.key)}
               style={styles.categoryRow}
             >
               <View style={[styles.rowHeading, largeText && styles.vertical]}>
                 <Text numberOfLines={2} style={styles.rowTitle}>
-                  {category.label}
+                  {categoryLabel(category.label)}
                 </Text>
                 <Text style={styles.amount}>
                   <MoneyText
@@ -204,7 +258,7 @@ export function AnalysisCategories({
                 <AppIcon
                   name={expanded === category.key ? "chevron.up" : "chevron.down"}
                   size={14}
-                  color="#64748B"
+                  color={colors.textSecondary}
                 />
               </View>
               <View style={styles.track}>
@@ -215,6 +269,7 @@ export function AnalysisCategories({
                       backgroundColor: categoryColor(
                         category.key,
                         categories.map((item) => item.key),
+                        colors,
                       ),
                       width: `${Math.max(0, Math.min(100, category.percentage))}%`,
                     },
@@ -224,7 +279,7 @@ export function AnalysisCategories({
             </Pressable>
             {expanded === category.key ? (
               <View style={styles.expanded}>
-                <Text style={styles.smallHeading}>Recently updated</Text>
+                <Text style={styles.smallHeading}>{t("ui.recentlyUpdated")}</Text>
                 <AnalysisExpenseRows
                   expenses={category.expenses.slice(0, 3)}
                   scope={scope}
@@ -235,15 +290,16 @@ export function AnalysisCategories({
                   onPress={() =>
                     drilldown(
                       { categories: category.categories },
-                      `Category: ${category.label}`,
+                      `Category: ${categoryLabel(category.label)}`,
                     )
                   }
                   style={styles.linkRow}
                 >
                   <Text style={styles.link}>
-                    View all {formatExpenseCount(category.expenses.length).toLowerCase()}
+                    {t("ui.viewAll")}
+                    {formatExpenseCount(category.expenses.length).toLowerCase()}
                   </Text>
-                  <AppIcon name="chevron.right" size={14} color="#0F766E" />
+                  <AppIcon name="chevron.right" size={14} color={colors.accent} />
                 </Pressable>
               </View>
             ) : null}
@@ -265,6 +321,10 @@ export function AnalysisTimeline({
   drilldown: AnalysisDrilldown;
   currencyScale?: number;
 }) {
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+
   const { width } = useWindowDimensions();
   const [selected, setSelected] = useState<string | null>(null);
   const [viewport, setViewport] = useState(width - 32);
@@ -320,7 +380,7 @@ export function AnalysisTimeline({
       <Text style={styles.meta}>{formatExpenseCount(item.expenseCount)}</Text>
       {item.categories.map((category) => (
         <View key={category.key} style={styles.rowHeading}>
-          <Text style={styles.meta}>{category.key}</Text>
+          <Text style={styles.meta}>{categoryLabel(category.key)}</Text>
           <MoneyText
             style={styles.amount}
             variant="standard"
@@ -342,9 +402,10 @@ export function AnalysisTimeline({
       style={styles.briefFooter}
     >
       <Text style={styles.link}>
-        View {formatExpenseCount(item.expenseCount).toLowerCase()}
+        {t("ui.view")}
+        {formatExpenseCount(item.expenseCount).toLowerCase()}
       </Text>
-      <AppIcon name="chevron.right" size={14} color="#0F766E" />
+      <AppIcon name="chevron.right" size={14} color={colors.accent} />
     </Pressable>
   );
   const resetZoom = () => {
@@ -353,44 +414,46 @@ export function AnalysisTimeline({
     scroll.current?.scrollTo({ x: 0, animated: false });
   };
   return (
-    <AnalysisSection title="Spending over time">
+    <AnalysisSection title={t("ui.spendingOverTime")}>
       <View style={styles.chartControls}>
         <Text style={[styles.meta, styles.average]}>
-          Average{" "}
-          {dashboard.averageMinor === null
-            ? "unavailable"
-            : `${money.format(dashboard.averageMinor)}/day`}
+          {t("analysis.average", {
+            amount:
+              dashboard.averageMinor === null
+                ? t("ui.unavailable")
+                : t("analysis.perDay", { amount: money.format(dashboard.averageMinor) }),
+          })}
         </Text>
         {dashboard.calendarDays > 1 && maxZoom > 1 ? (
           <View style={styles.zoomControls}>
             {zoom > 1 ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Zoom out timeline"
+                accessibilityLabel={t("ui.zoomOutTimeline")}
                 onPress={() => setZoom(Math.max(1, zoom / 2))}
                 style={styles.zoomButton}
               >
-                <AppIcon name="minus.magnifyingglass" color="#0F766E" size={18} />
+                <AppIcon name="minus.magnifyingglass" color={colors.accent} size={18} />
               </Pressable>
             ) : null}
             {zoom < maxZoom ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Zoom in timeline"
+                accessibilityLabel={t("ui.zoomInTimeline")}
                 onPress={() => setZoom(maxZoom)}
                 style={styles.zoomButton}
               >
-                <AppIcon name="plus.magnifyingglass" color="#0F766E" size={18} />
+                <AppIcon name="plus.magnifyingglass" color={colors.accent} size={18} />
               </Pressable>
             ) : null}
             {zoom > 1 ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Show entire timeline"
+                accessibilityLabel={t("ui.showEntireTimeline")}
                 onPress={resetZoom}
                 style={styles.zoomButton}
               >
-                <AppIcon name="arrow.uturn.backward" color="#0F766E" size={18} />
+                <AppIcon name="arrow.uturn.backward" color={colors.accent} size={18} />
               </Pressable>
             ) : null}
           </View>
@@ -400,8 +463,8 @@ export function AnalysisTimeline({
         <>
           <Text style={styles.smallHeading}>
             {dashboard.periods[0]?.key === localDateKey(new Date())
-              ? "Spent today"
-              : "Spent this day"}
+              ? t("ui.spentToday")
+              : t("ui.spentThisDay")}
           </Text>
           {dashboard.periods[0] ? (
             <>
@@ -467,7 +530,7 @@ export function AnalysisTimeline({
               horizontal
               scrollEnabled={zoom > 1 && !pinching}
               showsHorizontalScrollIndicator={zoom > 1}
-              accessibilityLabel="Spending timeline"
+              accessibilityLabel={t("ui.spendingTimeline")}
               onScroll={(event) => {
                 offset.current = event.nativeEvent.contentOffset.x;
               }}
@@ -503,8 +566,19 @@ export function AnalysisTimeline({
                     key={item.key}
                     accessibilityRole="button"
                     accessibilityState={{ selected: item.key === selected }}
-                    accessibilityHint="Opens spending brief"
-                    accessibilityLabel={`${periodLabel(item)}, ${money.format(item.totalMinor)} total spending, ${item.categories.map((category) => `${category.key} ${money.format(category.totalMinor)}`).join(", ") || "No spending"}, ${formatExpenseCount(item.expenseCount)}`}
+                    accessibilityHint={t("ui.opensSpendingBrief")}
+                    accessibilityLabel={t("analysis.periodDescription", {
+                      period: periodLabel(item),
+                      amount: money.format(item.totalMinor),
+                      categories:
+                        item.categories
+                          .map(
+                            (category) =>
+                              `${categoryLabel(category.key)} ${money.format(category.totalMinor)}`,
+                          )
+                          .join(", ") || t("ui.noSpending"),
+                      count: formatExpenseCount(item.expenseCount),
+                    })}
                     onPress={() => {
                       if (!pinching) setSelected(item.key);
                     }}
@@ -526,7 +600,7 @@ export function AnalysisTimeline({
                               ) * 136,
                             ),
                             borderWidth: item.key === selected ? 1 : 0,
-                            borderColor: "#111827",
+                            borderColor: colors.textPrimary,
                           },
                         ]}
                       >
@@ -534,7 +608,7 @@ export function AnalysisTimeline({
                           <View
                             key={category.key}
                             style={{
-                              backgroundColor: categoryColor(category.key, keys),
+                              backgroundColor: categoryColor(category.key, keys, colors),
                               height: category.height,
                               width: "100%",
                             }}
@@ -568,7 +642,7 @@ export function AnalysisTimeline({
                     >
                       {index % labelStride === 0
                         ? new Intl.DateTimeFormat(
-                            undefined,
+                            getFormatLocale(),
                             dashboard.granularity === "Monthly"
                               ? { month: "short", year: "2-digit", timeZone: "UTC" }
                               : { day: "numeric", month: "short", timeZone: "UTC" },
@@ -586,10 +660,10 @@ export function AnalysisTimeline({
                 <View
                   style={[
                     styles.swatch,
-                    { backgroundColor: categoryColor(category.key, keys) },
+                    { backgroundColor: categoryColor(category.key, keys, colors) },
                   ]}
                 />
-                <Text style={styles.meta}>{category.label}</Text>
+                <Text style={styles.meta}>{categoryLabel(category.label)}</Text>
               </View>
             ))}
           </View>
@@ -602,7 +676,7 @@ export function AnalysisTimeline({
             <View style={styles.popupBackdrop}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Dismiss spending brief"
+                accessibilityLabel={t("ui.dismissSpendingBrief")}
                 style={StyleSheet.absoluteFill}
                 onPress={() => setSelected(null)}
               />
@@ -615,7 +689,7 @@ export function AnalysisTimeline({
                     {period ? periodLabel(period) : ""}
                   </Text>
                   <OverlayDismissAction
-                    label="Close spending brief"
+                    label={t("ui.closeSpendingBrief")}
                     onPress={() => setSelected(null)}
                   />
                 </View>
@@ -658,6 +732,10 @@ export function AnalysisPeople({
   traveller?: boolean;
   category: string | null;
 }) {
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+
   const [expanded, setExpanded] = useState<string | null>(null);
   const largeText = useWindowDimensions().fontScale > 1.5;
   return (
@@ -670,7 +748,14 @@ export function AnalysisPeople({
               accessibilityState={
                 traveller && !category ? { expanded: expanded === person.key } : undefined
               }
-              accessibilityLabel={`${traveller ? `Rank ${person.rank}, ` : ""}${person.label}, ${money.format(person.totalMinor)}, ${formatExpenseCount(person.expenseCount)}`}
+              accessibilityLabel={t("analysis.personDescription", {
+                rank: traveller
+                  ? t("analysis.rankDescription", { rank: person.rank ?? "" })
+                  : "",
+                name: person.label,
+                amount: money.format(person.totalMinor),
+                count: formatExpenseCount(person.expenseCount),
+              })}
               onPress={() => {
                 if (traveller && !category)
                   setExpanded(expanded === person.key ? null : person.key);
@@ -682,7 +767,9 @@ export function AnalysisPeople({
                         : { payerMemberId: person.key }),
                       ...(category ? { categories: [category] } : {}),
                     },
-                    traveller ? `${person.label}'s spending` : `Paid by ${person.label}`,
+                    traveller
+                      ? t("analysis.personSpending", { name: person.label })
+                      : t("analysis.paidBy", { name: person.label }),
                   );
               }}
               style={styles.categoryRow}
@@ -724,7 +811,7 @@ export function AnalysisPeople({
               <View style={styles.expanded}>
                 {person.categories?.map((item) => (
                   <View key={item.key} style={styles.rowHeading}>
-                    <Text style={styles.meta}>{item.label}</Text>
+                    <Text style={styles.meta}>{categoryLabel(item.label)}</Text>
                     <MoneyText
                       style={styles.amount}
                       variant="standard"
@@ -745,21 +832,23 @@ export function AnalysisPeople({
                         ...(category ? { categories: [category] } : {}),
                       },
                       traveller
-                        ? `${person.label}'s spending`
-                        : `Paid by ${person.label}`,
+                        ? t("analysis.personSpending", { name: person.label })
+                        : t("analysis.paidBy", { name: person.label }),
                     )
                   }
                   style={styles.linkRow}
                 >
-                  <Text style={styles.link}>View {person.label}&apos;s expenses</Text>
-                  <AppIcon name="chevron.right" size={14} color="#0F766E" />
+                  <Text style={styles.link}>
+                    {t("analysis.viewPersonExpenses", { name: person.label })}
+                  </Text>
+                  <AppIcon name="chevron.right" size={14} color={colors.accent} />
                 </Pressable>
               </View>
             ) : null}
           </View>
         ))}
         {!rows.length ? (
-          <Text style={styles.empty}>No spending in this category.</Text>
+          <Text style={styles.empty}>{t("ui.noSpendingInThisCategory")}</Text>
         ) : null}
       </View>
     </AnalysisSection>
@@ -773,10 +862,16 @@ export function AnalysisInsights({
   dashboard: AnalysisDashboard;
   money: AnalysisMoney;
 }) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   const largeText = useWindowDimensions().fontScale > 1.5;
   return (
     <AnalysisSection
-      title={dashboard.scope === "MINE" ? "Your trip in numbers" : "Trip in numbers"}
+      title={
+        dashboard.scope === "MINE" ? t("ui.yourTripInNumbers") : t("ui.tripInNumbers")
+      }
     >
       <View style={styles.insights}>
         {dashboard.insights.map((insight) => (
@@ -796,10 +891,10 @@ export function AnalysisInsights({
               <Text style={styles.insightValue}>
                 {insight.label === "Biggest spending day"
                   ? formatLedgerDate(String(insight.value))
-                  : insight.value}
+                  : analysisInsightValue(insight.label, insight.value)}
               </Text>
             )}
-            <Text style={styles.meta}>{insight.label}</Text>
+            <Text style={styles.meta}>{domainLabel(insight.label)}</Text>
           </View>
         ))}
       </View>
@@ -808,9 +903,13 @@ export function AnalysisInsights({
 }
 
 export function AnalysisSkeleton() {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
+
   return (
     <View
-      accessibilityLabel="Loading spending analysis"
+      accessibilityLabel={t("ui.loadingSpendingAnalysis")}
       accessibilityRole="progressbar"
       style={styles.skeleton}
     >
@@ -830,189 +929,217 @@ export function AnalysisSkeleton() {
   );
 }
 
-export const analysisStyles = StyleSheet.create({
-  body: { padding: cv.space.page, gap: cv.space.section, paddingBottom: 40 },
-  summary: { gap: 5, paddingVertical: 6 },
-  eyebrow: { color: cv.color.accent, ...cv.type.eyebrow },
-  meta: { color: "#64748B", fontSize: 13, lineHeight: 19 },
-  link: { color: cv.color.accent, ...cv.type.action },
-  error: { color: "#B91C1C", fontSize: 14 },
-  empty: { paddingVertical: 36, gap: 8 },
-  emptyTitle: { color: "#334155", fontSize: 21, fontWeight: "600" },
-});
-const styles = StyleSheet.create({
-  section: { gap: cv.space.heading },
-  sectionHeading: {
-    alignItems: "center",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    justifyContent: "space-between",
-  },
-  sectionTitle: { color: cv.color.text, ...cv.type.section, flexShrink: 1 },
-  surface: {
-    backgroundColor: cv.color.card,
-    borderRadius: cv.radius.card,
-    overflow: "hidden",
-  },
-  rowHeading: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  vertical: { alignItems: "flex-start", flexDirection: "column" },
-  rowTitle: { color: cv.color.text, ...cv.type.row, flexShrink: 1 },
-  categoryRow: {
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 7,
-    minHeight: 70,
-    padding: cv.space.row,
-  },
-  amount: { color: cv.color.text, ...cv.type.rowAmount, flexShrink: 1 },
-  meta: { color: "#64748B", fontSize: 13, lineHeight: 19, flexShrink: 1 },
-  track: { backgroundColor: "#E5E7EB", borderRadius: 2, height: 4, overflow: "hidden" },
-  fill: { backgroundColor: "#0F766E", borderRadius: 2, height: 4 },
-  expanded: {
-    backgroundColor: cv.color.expanded,
-    gap: 10,
-    padding: cv.space.row,
-    borderTopColor: cv.color.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  smallHeading: { color: "#334155", fontSize: 13, fontWeight: "700" },
-  lastExpenseRow: { borderBottomWidth: 0 },
-  expenseRow: {
-    borderBottomColor: cv.color.divider,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    minHeight: 66,
-  },
-  expenseMain: { flex: 1, minWidth: 0, gap: 4 },
-  expenseMeta: { color: cv.color.secondary, ...cv.type.meta, lineHeight: 18 },
-  compactAmount: {
-    color: "#111827",
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
-    textAlign: "right",
-    flexShrink: 0,
-    minWidth: 64,
-    maxWidth: "48%",
-  },
-  youLabel: { color: "#64748B", fontSize: 12, lineHeight: 18, textAlign: "right" },
-  linkRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 6,
-    minHeight: 44,
-    justifyContent: "space-between",
-  },
-  link: { color: "#0F766E", fontSize: 14, fontWeight: "600", flexShrink: 1 },
-  menu: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 6,
-    minHeight: 44,
-    maxWidth: "100%",
-  },
-  chart: { alignItems: "flex-end", paddingVertical: 8 },
-  chartColumn: {
-    alignItems: "center",
-    width: 38,
-    minHeight: 180,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    borderRightColor: "#FFFFFF",
-    justifyContent: "flex-end",
-  },
-  barSpace: {
-    marginBottom: 26,
-    height: 144,
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "flex-end",
-  },
-  barTarget: {
-    height: 3,
-    backgroundColor: "#0F766E",
-    width: "72%",
-    borderRadius: 2,
-    marginTop: 3,
-  },
-  bar: {
-    backgroundColor: "#E2E8F0",
-    width: 24,
-    borderRadius: 3,
-    overflow: "hidden",
-    justifyContent: "flex-end",
-  },
-  axis: {
-    color: "#64748B",
-    fontSize: 10,
-    marginTop: 8,
-    minHeight: 26,
-    textAlign: "center",
-  },
-  chartFrame: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
-  chartControls: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  average: { flex: 1, flexShrink: 1 },
-  personName: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8 },
-  rankBadge: {
-    color: "#64748B",
-    fontSize: 12,
-    fontWeight: "700",
-    backgroundColor: "#F1F5F9",
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    overflow: "hidden",
-  },
-  briefHeader: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 0 },
-  briefScroll: { flexShrink: 1 },
-  briefFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-    minHeight: 48,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#E5E7EB",
-    flexShrink: 0,
-  },
-  zoomControls: { flexDirection: "row" },
-  zoomButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  popupBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(15,23,42,0.35)",
-    justifyContent: "center",
-    padding: 24,
-  },
-  popup: { backgroundColor: "#FFFFFF", borderRadius: 18, padding: 20, maxHeight: "75%" },
-  timeDetail: { gap: 10, paddingVertical: 12 },
-  legend: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  legendItem: { alignItems: "center", flexDirection: "row", gap: 5, maxWidth: "100%" },
-  swatch: { height: 9, width: 9, borderRadius: 2 },
-  insights: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  insight: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 14,
-    width: "48%",
-    minHeight: 94,
-    gap: 8,
-  },
-  insightValue: { color: "#111827", fontSize: 20, fontWeight: "700", flexShrink: 1 },
-  skeleton: { gap: 18 },
-  placeholder: { backgroundColor: "#E2E8F0", borderRadius: 5, height: 12, width: "90%" },
-  skeletonRow: { gap: 14, padding: 18 },
-  empty: { color: "#64748B", padding: 20 },
-});
+export const useAnalysisStyles = () => useThemedStyles(createSharedStyles);
+const createSharedStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    body: { padding: cv.space.page, gap: cv.space.section, paddingBottom: 40 },
+    summary: { gap: 5, paddingVertical: 6 },
+    eyebrow: { color: colors.accent, ...cv.type.eyebrow },
+    meta: { color: colors.textSecondary, fontSize: 13, lineHeight: 19 },
+    link: { color: colors.accent, ...cv.type.action },
+    error: { color: colors.destructive, fontSize: 14 },
+    empty: { paddingVertical: 36, gap: 8 },
+    emptyTitle: { color: colors.textTertiary, fontSize: 21, fontWeight: "600" },
+  });
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    section: { gap: cv.space.heading },
+    sectionHeading: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+      justifyContent: "space-between",
+    },
+    sectionTitle: { color: colors.textPrimary, ...cv.type.section, flexShrink: 1 },
+    surface: {
+      backgroundColor: colors.surface,
+      borderRadius: cv.radius.card,
+      overflow: "hidden",
+    },
+    rowHeading: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 10,
+    },
+    vertical: { alignItems: "flex-start", flexDirection: "column" },
+    rowTitle: { color: colors.textPrimary, ...cv.type.row, flexShrink: 1 },
+    categoryRow: {
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      gap: 7,
+      minHeight: 70,
+      padding: cv.space.row,
+    },
+    amount: { color: colors.textPrimary, ...cv.type.rowAmount, flexShrink: 1 },
+    meta: { color: colors.textSecondary, fontSize: 13, lineHeight: 19, flexShrink: 1 },
+    track: {
+      backgroundColor: colors.separator,
+      borderRadius: 2,
+      height: 4,
+      overflow: "hidden",
+    },
+    fill: { backgroundColor: colors.accent, borderRadius: 2, height: 4 },
+    expanded: {
+      backgroundColor: colors.expandedSurface,
+      gap: 10,
+      padding: cv.space.row,
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    smallHeading: { color: colors.textTertiary, fontSize: 13, fontWeight: "700" },
+    lastExpenseRow: { borderBottomWidth: 0 },
+    expenseRow: {
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      gap: 4,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
+      minHeight: 66,
+    },
+    expenseMain: { flex: 1, minWidth: 0, gap: 4 },
+    expenseMeta: { color: colors.textTertiary, ...cv.type.meta, lineHeight: 18 },
+    compactAmount: {
+      color: colors.textPrimary,
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: "700",
+      fontVariant: ["tabular-nums"],
+      textAlign: "right",
+      flexShrink: 0,
+      minWidth: 64,
+      maxWidth: "48%",
+    },
+    youLabel: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      lineHeight: 18,
+      textAlign: "right",
+    },
+    linkRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+      minHeight: 44,
+      justifyContent: "space-between",
+    },
+    link: { color: colors.accent, fontSize: 14, fontWeight: "600", flexShrink: 1 },
+    menu: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+      minHeight: 44,
+      maxWidth: "100%",
+    },
+    chart: { alignItems: "flex-end", paddingVertical: 8 },
+    chartColumn: {
+      alignItems: "center",
+      width: 38,
+      minHeight: 180,
+      borderRightWidth: StyleSheet.hairlineWidth,
+      borderRightColor: colors.onAccent,
+      justifyContent: "flex-end",
+    },
+    barSpace: {
+      marginBottom: 26,
+      height: 144,
+      width: "100%",
+      alignItems: "center",
+      justifyContent: "flex-end",
+    },
+    barTarget: {
+      height: 3,
+      backgroundColor: colors.accent,
+      width: "72%",
+      borderRadius: 2,
+      marginTop: 3,
+    },
+    bar: {
+      backgroundColor: colors.separator,
+      width: 24,
+      borderRadius: 3,
+      overflow: "hidden",
+      justifyContent: "flex-end",
+    },
+    axis: {
+      color: colors.textSecondary,
+      fontSize: 10,
+      marginTop: 8,
+      minHeight: 26,
+      textAlign: "center",
+    },
+    chartFrame: { backgroundColor: colors.surface, borderRadius: 12, overflow: "hidden" },
+    chartControls: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    average: { flex: 1, flexShrink: 1 },
+    personName: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8 },
+    rankBadge: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontWeight: "700",
+      backgroundColor: colors.groupedBackground,
+      borderRadius: 6,
+      paddingHorizontal: 6,
+      paddingVertical: 4,
+      overflow: "hidden",
+    },
+    briefHeader: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 0 },
+    briefScroll: { flexShrink: 1 },
+    briefFooter: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      minHeight: 48,
+      paddingTop: 10,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.separator,
+      flexShrink: 0,
+    },
+    zoomControls: { flexDirection: "row" },
+    zoomButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+    popupBackdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: "center",
+      padding: 24,
+    },
+    popup: {
+      backgroundColor: colors.surface,
+      borderRadius: 18,
+      padding: 20,
+      maxHeight: "75%",
+    },
+    timeDetail: { gap: 10, paddingVertical: 12 },
+    legend: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    legendItem: { alignItems: "center", flexDirection: "row", gap: 5, maxWidth: "100%" },
+    swatch: { height: 9, width: 9, borderRadius: 2 },
+    insights: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    insight: {
+      backgroundColor: colors.surface,
+      borderRadius: 14,
+      padding: 14,
+      width: "48%",
+      minHeight: 94,
+      gap: 8,
+    },
+    insightValue: {
+      color: colors.textPrimary,
+      fontSize: 20,
+      fontWeight: "700",
+      flexShrink: 1,
+    },
+    skeleton: { gap: 18 },
+    placeholder: {
+      backgroundColor: colors.separator,
+      borderRadius: 5,
+      height: 12,
+      width: "90%",
+    },
+    skeletonRow: { gap: 14, padding: 18 },
+    empty: { color: colors.textSecondary, padding: 20 },
+  });

@@ -1,3 +1,8 @@
+import { categoryLabel } from "@/ui/domainLabels";
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
 import {
   refreshLedgerFxSnapshotCache,
@@ -30,7 +35,7 @@ import type { ReceiptAsset } from "@/data/repositories/ledgerReceiptRepository";
 import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
 
 import { AppIcon } from "@/components/AppIcon";
-import { contentVisual as cv } from "./contentVisual";
+import { visual as cv } from "@/ui/visual";
 import { canEditLedgerExpense } from "@/data/repositories/ledgerExpenseEditAccess";
 import { previewReceiptDraftPdf } from "@/native/receiptDraftPreview";
 import { ExpenseAttachmentRow } from "./ExpenseAttachmentRow";
@@ -45,6 +50,9 @@ import { formatLedgerDate } from "./format";
 import { loadDisplayEstimates } from "./loadDisplayEstimates";
 
 export function LedgerExpenseDetailScreen() {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const largeText = useWindowDimensions().fontScale > 2;
   const { id } = useLocalSearchParams<{ id: string }>();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
@@ -260,48 +268,43 @@ export function LedgerExpenseDetailScreen() {
   if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator accessibilityLabel="Loading Expense" />
+        <ActivityIndicator accessibilityLabel={t("expense.loading")} />
       </View>
     );
   if (!expense)
     return (
       <View style={styles.center}>
         <Text style={styles.meta}>
-          {loadError
-            ? "Expense could not be loaded from this iPhone."
-            : "Expense is not available in the local Ledger."}
+          {loadError ? t("expense.loadFailed") : t("expense.unavailable")}
         </Text>
       </View>
     );
   const needsConflictDecision = hasOpenConflict || expense.syncStatus === "CONFLICT";
   const valuation = expense.valuation;
-  const chinese = Intl.DateTimeFormat().resolvedOptions().locale.startsWith("zh");
   const participantNames = new Map(
     expense.participants.map((item) => [item.memberId, item.displayNameSnapshot]),
   );
   const excluded = expense.status !== "ACCEPTED" || needsConflictDecision || !valuation;
   const warning = needsConflictDecision
     ? {
-        title: "Review changes",
-        detail: "This Expense has changes that need your decision.",
+        title: t("expense.reviewChanges"),
+        detail: t("expense.needsDecision"),
       }
     : expense.status === "RATE_REQUIRED" && expense.economicDate === null
       ? {
-          title: chinese ? "确认交易日期" : "Transaction date required",
-          detail: chinese
-            ? "请确认交易日期。汇率将自动查找。"
-            : "Confirm the transaction date; OTR will find the reference rate.",
+          title: t("expense.dateRequired"),
+          detail: t("expense.confirmDate"),
         }
       : expense.status !== "RATE_REQUIRED" && expense.status !== "ACCEPTED"
         ? {
-            title: "Not included in totals",
-            detail: "This Expense is not yet part of the accepted Spending totals.",
+            title: t("expense.notIncluded"),
+            detail: t("expense.notAccepted"),
           }
         : null;
   const raiseConcern = async (note: string) => {
     if (raisingReview) return;
     if (!expense.serverRevision) {
-      setReviewMessage("Save this Expense to the Journey before adding it to Review.");
+      setReviewMessage(t("expense.saveBeforeReview"));
       return;
     }
     setRaisingReview(true);
@@ -318,12 +321,12 @@ export function LedgerExpenseDetailScreen() {
         note,
         targetTitle: expense.title,
       });
-      setReviewMessage("Added to Review");
+      setReviewMessage(t("expense.addedToReview"));
       setReviewFlagCount((count) => count + 1);
       kickLedgerOperationalSync();
     } catch (error) {
       setReviewMessage(
-        error instanceof Error ? error.message : "Could not add this to Review.",
+        error instanceof Error ? error.message : t("expense.reviewFailed"),
       );
     } finally {
       setRaisingReview(false);
@@ -331,12 +334,12 @@ export function LedgerExpenseDetailScreen() {
   };
   const promptForConcern = () =>
     Alert.prompt(
-      "Something looks wrong",
-      "Add an optional note. It will be used as the Review title.",
+      t("expense.somethingWrong"),
+      t("expense.optionalNote"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Add to Review",
+          text: t("expense.addToReview"),
           onPress: (note?: string) => void raiseConcern(note ?? ""),
         },
       ],
@@ -388,7 +391,7 @@ export function LedgerExpenseDetailScreen() {
       }
     } catch (error) {
       setAttachmentMessage(
-        error instanceof Error ? error.message : "Attachment could not be opened.",
+        error instanceof Error ? error.message : t("expense.attachmentFailed"),
       );
     }
   };
@@ -396,12 +399,12 @@ export function LedgerExpenseDetailScreen() {
     <>
       <Stack.Screen
         options={{
-          headerTitle: "Expense",
+          headerTitle: t("common.expense"),
         }}
       />
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
-          accessibilityLabel="Edit expense"
+          accessibilityLabel={t("expense.edit")}
           hidden={!canEdit}
           icon="square.and.pencil"
           onPress={() =>
@@ -417,29 +420,31 @@ export function LedgerExpenseDetailScreen() {
           {expense.title}
         </Text>
         <Text style={styles.meta}>
-          {expense.category} ·{" "}
+          {categoryLabel(expense.category)} ·{" "}
           {formatLedgerDate(expense.economicDate ?? expense.occurredAt)}
         </Text>
         {reviewFlagCount ? (
           <Text accessibilityLiveRegion="polite" style={styles.reviewFlag}>
-            Flagged for review{reviewFlagCount > 1 ? ` · ${reviewFlagCount} open` : ""}
+            {t("expense.flagged")}
+            {reviewFlagCount > 1
+              ? t("expense.openFindings", { count: reviewFlagCount })
+              : ""}
           </Text>
         ) : null}
         {fxAccess.locked ? (
-          <Text style={styles.meta}>
-            {chinese
-              ? "历史结算已完成 · 历史版本只读"
-              : "Historical settlement completed · earlier version read-only"}
-          </Text>
+          <Text style={styles.meta}>{t("expense.historical")}</Text>
         ) : null}
         {expense.syncStatus !== "SYNCED" && syncResult ? (
           <Text accessibilityLiveRegion="polite" style={styles.syncNotice}>
             {syncResult.state === "TERMINAL_FAILURE" ||
             syncResult.state === "CONFLICT_REQUIRES_ACTION"
-              ? "This change needs attention"
-              : "Saved on this iPhone · Waiting for sync"}
+              ? t("expense.needsAttention")
+              : t("expense.savedWaiting")}
             {blockingResult?.error?.code
-              ? ` · Earlier change: ${blockingResult.error.code} (${blockingResult.error.message})`
+              ? t("expense.earlierChange", {
+                  code: blockingResult.error.code,
+                  message: blockingResult.error.message,
+                })
               : syncResult.error?.code
                 ? ` · ${syncResult.error.code}`
                 : null}
@@ -463,18 +468,16 @@ export function LedgerExpenseDetailScreen() {
                 )
                 .then((queued) => {
                   setSyncActionMessage(
-                    queued
-                      ? "Retrying the earlier saved change…"
-                      : "This change can no longer be retried here.",
+                    queued ? t("expense.retrying") : t("expense.cannotRetry"),
                   );
                   if (queued) kickLedgerOperationalSync();
                 })
-                .catch(() => setSyncActionMessage("Could not retry this change."))
+                .catch(() => setSyncActionMessage(t("expense.retryFailed")))
                 .finally(() => setRetryingSync(false));
             }}
             style={styles.reviewAction}
           >
-            <Text style={styles.actionText}>Retry earlier saved change ›</Text>
+            <Text style={styles.actionText}>{t("expense.retryEarlier")}</Text>
           </Pressable>
         ) : null}
         {syncActionMessage ? <Text style={styles.meta}>{syncActionMessage}</Text> : null}
@@ -513,11 +516,11 @@ export function LedgerExpenseDetailScreen() {
             <Text style={styles.warningTitle}>{warning.title}</Text>
             <Text style={styles.meta}>{warning.detail}</Text>
             {needsConflictDecision ? (
-              <Text style={styles.meta}>Review changes ›</Text>
+              <Text style={styles.meta}>{t("expense.reviewChangesLink")}</Text>
             ) : null}
           </Pressable>
         ) : null}
-        <Section label={chinese ? "金额" : "Amount"}>
+        <Section label={t("expense.amount")}>
           <View style={[styles.amountRow, largeText && styles.stack]}>
             <View style={styles.amountColumn}>
               <MoneyText
@@ -528,7 +531,7 @@ export function LedgerExpenseDetailScreen() {
                 scale={expense.original.scale}
               />
               {fxAccess.currency && expense.original.currency !== fxAccess.currency ? (
-                <Text style={styles.meta}>Original</Text>
+                <Text style={styles.meta}>{t("expense.original")}</Text>
               ) : null}
             </View>
             {fxAccess.currency && expense.original.currency !== fxAccess.currency ? (
@@ -549,13 +552,13 @@ export function LedgerExpenseDetailScreen() {
         <View style={styles.section}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Sharing"
+            accessibilityLabel={t("expense.sharing")}
             accessibilityState={{ expanded: sharingExpanded }}
             onPress={() => setSharingExpanded((value) => !value)}
             style={styles.sharingControl}
           >
             <View style={styles.sharingHeading}>
-              <Text style={styles.label}>Sharing</Text>
+              <Text style={styles.label}>{t("expense.sharing")}</Text>
               {shouldShowGroupSettlement(
                 expense.participants.map((item) => item.memberId),
                 expense.payerMemberId,
@@ -564,11 +567,9 @@ export function LedgerExpenseDetailScreen() {
               ) : null}
             </View>
             <View style={styles.sharingSummary}>
-              <Text style={styles.splitName}>
-                {sharing.join(" · ").replace(" paid · ", " paid\n")}
-              </Text>
+              <Text style={styles.splitName}>{sharing.join(" · ")}</Text>
               <AppIcon
-                color="#64748B"
+                color={colors.textSecondary}
                 name={sharingExpanded ? "chevron.up" : "chevron.down"}
                 size={14}
               />
@@ -583,8 +584,8 @@ export function LedgerExpenseDetailScreen() {
                 >
                   <Text style={styles.splitName}>
                     {split.memberId === actorId
-                      ? "You"
-                      : (participantNames.get(split.memberId) ?? "Traveller")}
+                      ? t("common.you")
+                      : (participantNames.get(split.memberId) ?? t("common.traveller"))}
                   </Text>
                   <MoneyText
                     style={styles.splitAmount}
@@ -601,19 +602,21 @@ export function LedgerExpenseDetailScreen() {
         <View style={styles.section}>
           {expense.description?.trim() ? (
             <View style={styles.notes}>
-              <Text style={styles.label}>Notes</Text>
+              <Text style={styles.label}>{t("expense.notes")}</Text>
               <Text style={styles.splitName}>{expense.description}</Text>
             </View>
           ) : null}
           <View style={styles.sharingHeading}>
-            <Text style={styles.label}>Attachments · {receipts.length}</Text>
+            <Text style={styles.label}>
+              {t("expense.attachments", { count: receipts.length })}
+            </Text>
             {expense.status !== "DELETED" &&
             !fxAccess.locked &&
             fxAccess.canAttach &&
             receipts.length < MAX_EXPENSE_ATTACHMENTS ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Add attachment"
+                accessibilityLabel={t("expense.addAttachment")}
                 style={styles.headerAction}
                 onPress={() =>
                   router.push({
@@ -622,7 +625,7 @@ export function LedgerExpenseDetailScreen() {
                   })
                 }
               >
-                <AppIcon color="#0F766E" name="plus" size={20} />
+                <AppIcon color={colors.accent} name="plus" size={20} />
               </Pressable>
             ) : null}
           </View>
@@ -649,9 +652,11 @@ export function LedgerExpenseDetailScreen() {
           style={styles.reviewAction}
         >
           <Text style={styles.actionText}>
-            {raisingReview ? "Adding to Review…" : "Something looks wrong?"}
+            {raisingReview
+              ? t("expense.addingReview")
+              : t("expense.somethingWrongQuestion")}
           </Text>
-          <Text style={styles.meta}>Flag this expense in Review. ›</Text>
+          <Text style={styles.meta}>{t("expense.flagLink")}</Text>
         </Pressable>
         {reviewMessage ? (
           <Text accessibilityLiveRegion="polite" style={styles.meta}>
@@ -673,6 +678,7 @@ export function LedgerExpenseDetailScreen() {
 }
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.section}>
       <Text style={styles.label}>{label}</Text>
@@ -680,81 +686,92 @@ function Section({ label, children }: { label: string; children: React.ReactNode
     </View>
   );
 }
-const styles = StyleSheet.create({
-  center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
-  content: { backgroundColor: "#F6F7F9", gap: 14, padding: 16, paddingBottom: 40 },
-  title: { color: "#111827", fontSize: 28, fontWeight: "800" },
-  meta: { color: "#64748B", fontSize: 13, lineHeight: 19 },
-  actionText: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  reviewAction: { minHeight: 44, gap: 3, paddingVertical: 10 },
-  headerAction: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  amountRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  amountColumn: { flexShrink: 1, gap: 4 },
-  sharingControl: { gap: 8, minHeight: 44 },
-  sharingSummary: { alignItems: "flex-end", flexDirection: "row", gap: 6 },
-  sharingExpanded: {
-    backgroundColor: cv.color.expanded,
-    borderTopColor: cv.color.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    marginHorizontal: -14,
-    paddingHorizontal: 14,
-  },
-  sharingHeading: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  notes: { gap: 6 },
-  reviewFlag: {
-    alignSelf: "flex-start",
-    backgroundColor: "#FFF7DB",
-    borderRadius: 12,
-    color: "#7C5B00",
-    fontSize: 12,
-    fontWeight: "700",
-    overflow: "hidden",
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
-  syncNotice: { color: "#7C5B00", fontSize: 12, lineHeight: 18 },
-  warning: { backgroundColor: "#FFF7DB", borderRadius: 10, gap: 4, padding: 13 },
-  warningTitle: { color: "#7C5B00", fontWeight: "700" },
-  section: {
-    backgroundColor: cv.color.card,
-    borderRadius: cv.radius.card,
-    gap: 8,
-    padding: 14,
-  },
-  label: { color: "#64748B", fontSize: 12, fontWeight: "700" },
-  value: {
-    color: cv.color.text,
-    fontSize: 23,
-    lineHeight: 44,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
-  },
-  split: {
-    alignItems: "center",
-    borderTopColor: "#E5E7EB",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 44,
-  },
-  splitName: { color: "#111827", fontSize: 15, fontWeight: "600" },
-  splitAmount: { color: "#111827", fontSize: 14 },
-  error: { color: "#B91C1C", fontSize: 13 },
-  stack: { alignItems: "flex-start", flexDirection: "column", paddingVertical: 8 },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
+    content: {
+      backgroundColor: colors.background,
+      gap: 14,
+      padding: 16,
+      paddingBottom: 40,
+    },
+    title: { color: colors.textPrimary, fontSize: 28, fontWeight: "800" },
+    meta: { color: colors.textSecondary, fontSize: 13, lineHeight: 19 },
+    actionText: { color: colors.accent, fontSize: 14, fontWeight: "700" },
+    reviewAction: { minHeight: 44, gap: 3, paddingVertical: 10 },
+    headerAction: {
+      minWidth: 44,
+      minHeight: 44,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    amountRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      gap: 16,
+    },
+    amountColumn: { flexShrink: 1, gap: 4 },
+    sharingControl: { gap: 8, minHeight: 44 },
+    sharingSummary: { alignItems: "flex-end", flexDirection: "row", gap: 6 },
+    sharingExpanded: {
+      backgroundColor: colors.expandedSurface,
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      marginHorizontal: -14,
+      paddingHorizontal: 14,
+    },
+    sharingHeading: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+    },
+    notes: { gap: 6 },
+    reviewFlag: {
+      alignSelf: "flex-start",
+      backgroundColor: colors.warningSurface,
+      borderRadius: 12,
+      color: colors.warning,
+      fontSize: 12,
+      fontWeight: "700",
+      overflow: "hidden",
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+    },
+    syncNotice: { color: colors.warning, fontSize: 12, lineHeight: 18 },
+    warning: {
+      backgroundColor: colors.warningSurface,
+      borderRadius: 10,
+      gap: 4,
+      padding: 13,
+    },
+    warningTitle: { color: colors.warning, fontWeight: "700" },
+    section: {
+      backgroundColor: colors.surface,
+      borderRadius: cv.radius.card,
+      gap: 8,
+      padding: 14,
+    },
+    label: { color: colors.textSecondary, fontSize: 12, fontWeight: "700" },
+    value: {
+      color: colors.textPrimary,
+      fontSize: 23,
+      lineHeight: 44,
+      fontWeight: "700",
+      fontVariant: ["tabular-nums"],
+    },
+    split: {
+      alignItems: "center",
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 44,
+    },
+    splitName: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
+    splitAmount: { color: colors.textPrimary, fontSize: 14 },
+    error: { color: colors.destructive, fontSize: 13 },
+    stack: { alignItems: "flex-start", flexDirection: "column", paddingVertical: 8 },
+  });

@@ -1,3 +1,10 @@
+import { segmentedControlTokens } from "@/ui/segmented";
+import { categoryLabel, systemMessage } from "@/ui/domainLabels";
+import { UiButton } from "@/ui/controls";
+import { t, formatUiDate } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
 import { SettlementRateAcceptance } from "./SettlementRateAcceptance";
 import { ExpenseConflictList } from "./ExpenseConflictList";
@@ -19,7 +26,7 @@ import { router, useFocusEffect } from "expo-router";
 import { advanceScrollAnchor, restoredScrollY } from "./settlementScrollAnchor";
 
 import { AppIcon } from "@/components/AppIcon";
-import { contentVisual as cv } from "./contentVisual";
+import { visual as cv } from "@/ui/visual";
 import type { LocalPersonalPayment } from "@/data/repositories/ledgerPersonalPaymentRepository";
 import { usePersonalSettlementReview } from "@/hooks/usePersonalSettlementReview";
 import { useSettlementSections } from "@/hooks/useSettlementSections";
@@ -54,10 +61,10 @@ type PersonalReviewCoverage = NonNullable<PersonalReviewHook["state"]>["coverage
 type PersonalReviewState = Parameters<PersonalReviewHook["setReviewState"]>[0];
 
 const settlementSectionTabs = [
-  { icon: "chart.pie.fill", label: "Summary", name: "Summary" },
-  { icon: "banknote.fill", label: "Paid", name: "Paid" },
-  { icon: "person.2.fill", label: "Shares", name: "Shares" },
-  { icon: "arrow.left.arrow.right", label: "Payments", name: "Payments" },
+  { icon: "chart.pie.fill", labelKey: "settlement.summary", name: "Summary" },
+  { icon: "banknote.fill", labelKey: "settlement.paid", name: "Paid" },
+  { icon: "person.2.fill", labelKey: "settlement.shares", name: "Shares" },
+  { icon: "arrow.left.arrow.right", labelKey: "settlement.payments", name: "Payments" },
 ] as const;
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
 type PageProgress = { position: Animated.Value; offset: Animated.Value };
@@ -97,6 +104,8 @@ export function SettlementReadinessScreen({
   showNavigation?: boolean;
   ledgerChangeSeq?: number;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const settlement = useStage7Settlement(journeyId);
   const refreshSettlement = settlement.refresh;
   const focusedOnce = useRef(false);
@@ -223,7 +232,7 @@ export function SettlementReadinessScreen({
     2;
 
   if (!settlement.journeyId)
-    return <Text style={styles.empty}>Choose a Journey to view Settlement.</Text>;
+    return <Text style={styles.empty}>{t("settlement.chooseJourney")}</Text>;
   const settledJourneyId = settlement.journeyId;
 
   const changeSection = (section: SettlementSectionName) => {
@@ -250,7 +259,7 @@ export function SettlementReadinessScreen({
           actorMemberId={settlement.actorMemberId}
           categories={sections.spendingCategories}
           currency={settlementCurrency}
-          empty="No shared expenses paid by this traveller yet."
+          empty={t("settlement.noPaid")}
           expanded={expandedSpending}
           journeyId={settledJourneyId}
           key="Paid"
@@ -261,14 +270,19 @@ export function SettlementReadinessScreen({
           onMember={sections.setSpendingMemberId}
           organizer={settlement.isOrganizer}
           scale={settlementScale}
-          totalLabel={`Paid by ${sections.spendingMemberId === settlement.actorMemberId ? "me" : memberName(sections.members, sections.spendingMemberId)}`}
+          totalLabel={t("search.paidByName", {
+            name:
+              sections.spendingMemberId === settlement.actorMemberId
+                ? t("common.me")
+                : memberName(sections.members, sections.spendingMemberId),
+          })}
         />
       ) : section === "Shares" ? (
         <ExpenseSection
           actorMemberId={settlement.actorMemberId}
           categories={sections.shareCategories}
           currency={settlementCurrency}
-          empty="No shared expenses are assigned to this traveller yet."
+          empty={t("settlement.noShares")}
           expanded={expandedShares}
           journeyId={settledJourneyId}
           key="Shares"
@@ -282,8 +296,10 @@ export function SettlementReadinessScreen({
           shares
           totalLabel={
             sections.sharesMemberId === settlement.actorMemberId
-              ? "My share"
-              : `${memberName(sections.members, sections.sharesMemberId)}'s share`
+              ? t("settlement.myShare")
+              : t("settlement.memberShare", {
+                  name: memberName(sections.members, sections.sharesMemberId),
+                })
           }
         />
       ) : (
@@ -307,7 +323,7 @@ export function SettlementReadinessScreen({
         />
       )}
       {sections.loading ? (
-        <ActivityIndicator accessibilityLabel="Loading Settlement" />
+        <ActivityIndicator accessibilityLabel={t("settlement.loading")} />
       ) : null}
       {debugMode && sections.message ? (
         <Text style={styles.message}>{sections.message}</Text>
@@ -366,6 +382,7 @@ export function SettlementReadinessScreen({
           {settlementSectionNames.map((section) => (
             <View collapsable={false} key={section} style={styles.pagerPage}>
               <ScrollView
+                contentInsetAdjustmentBehavior="never"
                 contentContainerStyle={{
                   minHeight: viewportHeight + collapseDistance,
                   paddingBottom: 40,
@@ -426,6 +443,9 @@ export function SettlementSectionTabs({
   onChange: (section: SettlementSectionName) => void;
   progress?: PageProgress;
 }) {
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
+  useUiLocale();
   const [width, setWidth] = useState(0);
   const page = progress ? Animated.add(progress.position, progress.offset) : null;
   return (
@@ -434,17 +454,25 @@ export function SettlementSectionTabs({
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       style={styles.nav}
     >
-      {settlementSectionTabs.map(({ icon, label, name }, index) => (
+      {settlementSectionTabs.map(({ icon, labelKey, name }, index) => (
         <Pressable
-          accessibilityLabel={label}
+          accessibilityLabel={t(labelKey)}
           accessibilityRole="tab"
           accessibilityState={{ selected: active === name }}
           key={name}
           onPress={() => onChange(name)}
-          style={[styles.navItem, !progress && active === name && styles.navItemActive]}
+          style={[
+            styles.navItem,
+            active === name && styles.navItemSelected,
+            !progress && active === name && styles.navItemActive,
+          ]}
         >
           <AppIcon
-            color={active === name ? "#0F766E" : "#64748B"}
+            color={
+              active === name
+                ? segmentedControlTokens(colors).selectedLabel
+                : segmentedControlTokens(colors).label
+            }
             name={icon}
             size={19}
           />
@@ -457,7 +485,7 @@ export function SettlementSectionTabs({
                 numberOfLines={1}
                 style={styles.navText}
               >
-                {label}
+                {t(labelKey)}
               </Text>
               <Animated.Text
                 adjustsFontSizeToFit
@@ -477,7 +505,7 @@ export function SettlementSectionTabs({
                   },
                 ]}
               >
-                {label}
+                {t(labelKey)}
               </Animated.Text>
             </View>
           ) : (
@@ -488,7 +516,7 @@ export function SettlementSectionTabs({
               numberOfLines={1}
               style={[styles.navText, active === name && styles.navTextActive]}
             >
-              {label}
+              {t(labelKey)}
             </Text>
           )}
         </Pressable>
@@ -531,6 +559,8 @@ function SummarySection({
   review: ReturnType<typeof usePersonalSettlementReview>;
   settlement: ReturnType<typeof useStage7Settlement>;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const projection = settlement.summaryProjection;
   const confirmationRefreshing = settlement.journeyId
     ? isSettlementConfirmationRefreshing(settlement.journeyId, projection)
@@ -557,12 +587,12 @@ function SummarySection({
       title: expense.title,
       missingDate: !expense.economicDate,
       reason: !expense.economicDate
-        ? "Confirm transaction date to find the trusted reference rate."
+        ? t("extra.copy17")
         : settlement.pendingPublicationExpenseIds.has(expense.serverId ?? expense.id)
-          ? "Today's reference rate has not been published yet."
+          ? t("extra.copy18")
           : settlement.unavailableExpenseIds.has(expense.serverId ?? expense.id)
-            ? "Automatic reference rate is unavailable. Review this Expense."
-            : "Using a recent reference rate. This amount may change.",
+            ? t("extra.copy19")
+            : t("extra.copy20"),
     }));
   const changeCounts = countSettlementChanges(projection?.confirmationDiff ?? []);
   const confirmedBalance = projection?.confirmedSettlement;
@@ -573,27 +603,23 @@ function SummarySection({
       settlement.preview?.state !== "PREVIEW_READY"
     )
       return;
-    Alert.alert(
-      "Confirm final amounts?",
-      "The confirmed result stays in Settlement history. Later corrections create an updated version.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm final amounts",
-          onPress: () => void settlement.finalize(settlement.preview!),
-        },
-      ],
-    );
+    Alert.alert(t("settlement.confirmQuestion"), t("settlement.confirmExplanation"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("settlement.confirmAmounts"),
+        onPress: () => void settlement.finalize(settlement.preview!),
+      },
+    ]);
   };
   return (
     <View style={styles.section}>
       <View style={styles.hero}>
         <Text accessibilityRole="header" style={styles.sectionLeadText}>
-          CURRENT BALANCE
+          {t("settlement.balanceHeading")}
         </Text>
         <Text style={styles.heroLabel}>
           {balanceMinor === undefined
-            ? "Preparing your balance"
+            ? t("settlement.preparingBalance")
             : settlementPositionLabel(balanceMinor)}
         </Text>
         <View style={styles.heroAmountRow}>
@@ -606,8 +632,8 @@ function SummarySection({
           />
           {projection && rateIssues.length ? (
             <Pressable
-              accessibilityHint="Shows Expenses whose converted amounts may change"
-              accessibilityLabel="Some amounts may change"
+              accessibilityHint={t("settlement.convertedHint")}
+              accessibilityLabel={t("settlement.amountsMayChange")}
               accessibilityRole="button"
               onPress={() => setRateDetailsOpen((open) => !open)}
               style={styles.estimateIndicatorButton}
@@ -617,19 +643,19 @@ function SummarySection({
           ) : null}
         </View>
         {confirmationRefreshing ? (
-          <Text style={styles.meta}>Refreshing confirmed Settlement…</Text>
+          <Text style={styles.meta}>{t("settlement.refreshingConfirmed")}</Text>
         ) : projection && (debugMode || projection.freshness !== "CURRENT") ? (
           <Text style={styles.meta}>
             {projection.freshness === "LOCAL_PENDING"
-              ? "Includes changes saved on this device · waiting to sync"
+              ? t("settlement.localPending")
               : projection.freshness === "SAVED"
-                ? "Showing saved latest calculation"
-                : "Current server calculation"}
+                ? t("ledger.savedCalculation")
+                : t("settlement.serverCalculation")}
           </Text>
         ) : null}
         {rateDetailsOpen && rateIssues.length ? (
           <View style={styles.rateDetails}>
-            <Text style={styles.rowTitle}>Some converted amounts may change</Text>
+            <Text style={styles.rowTitle}>{t("settlement.convertedMayChange")}</Text>
             {rateIssues.map((issue) => (
               <Pressable
                 accessibilityRole="button"
@@ -647,7 +673,7 @@ function SummarySection({
               >
                 <View style={styles.grow}>
                   <Text style={styles.rowTitle}>{issue.title}</Text>
-                  <Text style={styles.meta}>{issue.reason}</Text>
+                  <Text style={styles.meta}>{systemMessage(issue.reason)}</Text>
                 </View>
                 <Text style={styles.chevron}>›</Text>
               </Pressable>
@@ -660,17 +686,17 @@ function SummarySection({
       balanceMinor !== undefined ? (
         <View style={styles.summaryBlock}>
           <Text accessibilityRole="header" style={styles.summaryHeading}>
-            Balance breakdown
+            {t("settlement.breakdown")}
           </Text>
           <View style={styles.card}>
             <MoneyLine
-              label="Paid for group"
+              label={t("settlement.paidForGroup")}
               minor={paidMinor}
               currency={currency}
               scale={scale}
             />
             <MoneyLine
-              label="Your share"
+              label={t("settlement.yourShare")}
               minor={shareMinor}
               currency={currency}
               scale={scale}
@@ -678,7 +704,7 @@ function SummarySection({
             <View style={styles.divider} />
             <MoneyLine
               emphasized
-              label="Current balance"
+              label={t("settlement.balance")}
               minor={balanceMinor}
               currency={currency}
               scale={scale}
@@ -690,15 +716,21 @@ function SummarySection({
       {hasSettlementUpdate(projection) ? (
         <View style={styles.summaryBlock}>
           <Text accessibilityRole="header" style={styles.summaryHeading}>
-            Changes since last confirmation
+            {t("settlement.sinceConfirmation")}
           </Text>
           <View style={styles.card}>
             <Text style={styles.body}>
               {(["ADDED", "CHANGED", "REMOVED"] as const)
                 .filter((change) => changeCounts[change])
-                .map(
-                  (change) =>
-                    `${change === "ADDED" ? "Added" : change === "REMOVED" ? "Removed" : "Changed"} ${changeCounts[change]}`,
+                .map((change) =>
+                  t(
+                    change === "ADDED"
+                      ? "settlement.addedCount"
+                      : change === "REMOVED"
+                        ? "settlement.removedCount"
+                        : "settlement.changedCount",
+                    { count: changeCounts[change] },
+                  ),
                 )
                 .join(" · ")}
             </Text>
@@ -707,7 +739,7 @@ function SummarySection({
                 <View style={styles.divider} />
                 <MoneyLine
                   emphasized
-                  label="Your balance change"
+                  label={t("settlement.balanceChange")}
                   minor={balanceMinor - confirmedBalance.balanceMinor}
                   currency={currency}
                   scale={scale}
@@ -727,7 +759,7 @@ function SummarySection({
               }}
               style={styles.summaryLink}
             >
-              <Text style={styles.link}>Review changes ›</Text>
+              <Text style={styles.link}>{t("expense.reviewChangesLink")}</Text>
             </Pressable>
           </View>
         </View>
@@ -735,7 +767,7 @@ function SummarySection({
       {hasConfirmed && confirmedBalance ? (
         <View style={styles.summaryBlock}>
           <Text accessibilityRole="header" style={styles.summaryHeading}>
-            Last confirmed
+            {t("settlement.lastConfirmed")}
           </Text>
           <View style={styles.card}>
             <MoneyText
@@ -750,8 +782,10 @@ function SummarySection({
               scale={scale}
             />
             <Text style={styles.meta}>
-              {new Date(confirmedBalance.finalizedAt).toLocaleDateString()} · version #
-              {confirmedBalance.lineageSequence + 1}
+              {formatUiDate(new Date(confirmedBalance.finalizedAt))}
+              {t("settlement.snapshotVersion", {
+                version: confirmedBalance.lineageSequence + 1,
+              })}
             </Text>
             <View style={styles.summaryLinks}>
               {settlement.isOrganizer ? (
@@ -765,7 +799,7 @@ function SummarySection({
                   }
                   style={styles.summaryLink}
                 >
-                  <Text style={styles.link}>Correct a confirmed expense ›</Text>
+                  <Text style={styles.link}>{t("settlement.correctLink")}</Text>
                 </Pressable>
               ) : null}
               <Pressable
@@ -780,7 +814,7 @@ function SummarySection({
                 }
                 style={styles.summaryLink}
               >
-                <Text style={styles.link}>Settlement history ›</Text>
+                <Text style={styles.link}>{t("settlement.historyLink")}</Text>
               </Pressable>
             </View>
           </View>
@@ -797,21 +831,20 @@ function SummarySection({
           pendingReviewState={review.state.pendingReviewState}
         />
       ) : null}
-      {review.busy ? <Text style={styles.meta}>Saving review…</Text> : null}
-      {review.message ? <Text style={styles.message}>{review.message}</Text> : null}
+      {review.busy ? (
+        <Text style={styles.meta}>{t("settlement.savingReview")}</Text>
+      ) : null}
+      {review.message ? (
+        <Text style={styles.message}>{systemMessage(review.message)}</Text>
+      ) : null}
       {review.state?.lastErrorCode ? (
-        <Text style={styles.message}>
-          Review was not saved. Open the latest statement and try again.
-        </Text>
+        <Text style={styles.message}>{t("settlement.reviewNotSaved")}</Text>
       ) : null}
       {review.state?.checkpoint?.reviewState === "LOOKS_GOOD" &&
       review.state.coverage.find((member) => member.memberId === settlement.actorMemberId)
         ?.reviewState === "STILL_CHECKING" &&
       !review.state.pendingReviewState ? (
-        <Text style={styles.meta}>
-          Expenses or valuations changed since your review. Please review the current
-          amounts again.
-        </Text>
+        <Text style={styles.meta}>{t("settlement.changedSinceReview")}</Text>
       ) : null}
       {reviewCount ? (
         <Pressable
@@ -824,13 +857,13 @@ function SummarySection({
           }
           style={styles.notice}
         >
-          <Text style={styles.noticeTitle}>Needs attention</Text>
+          <Text style={styles.noticeTitle}>{t("ledger.needsAttention")}</Text>
           <Text style={styles.body}>
-            {reviewCount} {reviewCount === 1 ? "thing may" : "things may"} affect the
-            final amount
+            {t("settlement.attentionCount", { count: reviewCount })}
           </Text>
           <Text style={styles.link}>
-            Review {reviewCount} {reviewCount === 1 ? "item" : "items"} ›
+            {t("common.review")}
+            {t("settlement.reviewItems", { count: reviewCount })}
           </Text>
         </Pressable>
       ) : null}
@@ -846,7 +879,7 @@ function SummarySection({
       ) : null}
       {unavailableRates ? (
         <View style={styles.notice}>
-          <Text style={styles.noticeTitle}>Exchange rates need attention</Text>
+          <Text style={styles.noticeTitle}>{t("settlement.ratesAttention")}</Text>
           {[...settlement.unavailableExpenseIds].map((id) => (
             <Pressable
               accessibilityRole="button"
@@ -855,10 +888,10 @@ function SummarySection({
               style={styles.rateIssue}
             >
               <View style={styles.grow}>
-                <Text style={styles.rowTitle}>{expenseFor(id)?.title ?? "Expense"}</Text>
-                <Text style={styles.body}>
-                  Automatic reference rate is unavailable. Review or enter the rate.
+                <Text style={styles.rowTitle}>
+                  {expenseFor(id)?.title ?? t("common.expense")}
                 </Text>
+                <Text style={styles.body}>{t("settlement.rateUnavailable")}</Text>
               </View>
               <Text style={styles.chevron}>›</Text>
             </Pressable>
@@ -867,13 +900,13 @@ function SummarySection({
       ) : null}
       <ExpenseConflictList
         journeyId={settlement.journeyId ?? undefined}
-        title="Review changes before Settlement"
+        title={t("settlement.reviewBefore")}
       />
       {conflicts ? (
         <View style={styles.notice}>
-          <Text style={styles.noticeTitle}>Settlement values need attention</Text>
+          <Text style={styles.noticeTitle}>{t("settlement.valuesAttention")}</Text>
           <Text style={styles.body}>
-            {conflicts} {conflicts === 1 ? "change needs" : "changes need"} review.
+            {t("settlement.changesNeedReview", { count: conflicts })}
           </Text>
           {settlement.preview?.blockers
             .filter((b) => b.reason === "OPEN_CONFLICT")
@@ -891,22 +924,19 @@ function SummarySection({
                 }
               >
                 <Text style={styles.link}>
-                  {expenseFor(blocker.expenseId)?.title ?? "Expense"} · Review changes ›
+                  {expenseFor(blocker.expenseId)?.title ?? t("common.expense")}
+                  {t("settlement.snapshotReview")}
                 </Text>
               </Pressable>
             ))}
         </View>
       ) : null}
       {settlement.hasPendingFinancialOperations ? (
-        <Text style={styles.message}>
-          Accepted values or expense changes are saved on this device. Waiting for sync
-          before final confirmation.
-        </Text>
+        <Text style={styles.message}>{t("settlement.waitingConfirmation")}</Text>
       ) : null}
       {debugMode && automaticWaiting ? (
         <Text style={styles.meta}>
-          Waiting for {automaticWaiting} reference rate
-          {automaticWaiting === 1 ? "" : "s"} to be published.
+          {t("settlement.waitingRates", { count: automaticWaiting })}
         </Text>
       ) : null}
       {debugMode && settlement.message ? (
@@ -914,20 +944,29 @@ function SummarySection({
       ) : null}
       {debugMode && settlement.refreshDiagnostic ? (
         <Text style={styles.meta}>
-          Refresh diagnostic: {settlement.refreshDiagnostic}
+          {t("settlement.refreshDiagnostic")}
+          {settlement.refreshDiagnostic}
         </Text>
       ) : null}
       {debugMode && settlement.updating ? (
-        <Text style={styles.meta}>Updating…</Text>
+        <Text style={styles.meta}>{t("common.updating")}</Text>
       ) : null}
       {settlement.isOrganizer &&
       !hasConfirmed &&
       !settlement.updating &&
       !settlement.hasPendingFinancialOperations &&
       settlement.preview?.state === "PREVIEW_READY" ? (
-        <Action primary label="Confirm final amounts" onPress={confirm} />
+        <UiButton
+          variant="primary"
+          label={t("settlement.confirmAmounts")}
+          onPress={confirm}
+        />
       ) : settlement.isOrganizer && !hasConfirmed ? (
-        <Action label="Check final readiness" onPress={() => void settlement.prepare()} />
+        <UiButton
+          variant="text"
+          label={t("settlement.checkReadiness")}
+          onPress={() => void settlement.prepare()}
+        />
       ) : null}
     </View>
   );
@@ -966,6 +1005,9 @@ function ExpenseSection({
   shares?: boolean;
   totalLabel: string;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const [pickerOpen, setPickerOpen] = useState(false);
   const orderedMembers = membersWithActorFirst(members, actorMemberId);
   const selectedMember = orderedMembers.find((member) => member.id === memberId);
@@ -980,15 +1022,17 @@ function ExpenseSection({
         ...(shares
           ? { selectedMemberId: memberId ?? "", shareOnly: "1" }
           : { paidMemberId: memberId ?? "", authoritative: "1" }),
-        ...(historicalSnapshot ? { origin: "Current expenses" } : {}),
+        ...(historicalSnapshot ? { origin: t("extra.copy16") } : {}),
       },
     } as never);
-  const selectedName = shortMemberName(selectedMember?.label ?? "Traveller");
+  const selectedName = shortMemberName(selectedMember?.label ?? t("common.traveller"));
   const actionLabel = shares
-    ? `View all ${memberId === actorMemberId ? "my" : `${selectedName}'s`} expenses`
+    ? memberId === actorMemberId
+      ? t("settlement.allMyShares")
+      : t("settlement.allMemberShares", { name: selectedName })
     : memberId === actorMemberId
-      ? "View all expenses I paid"
-      : `View all expenses paid by ${selectedName}`;
+      ? t("settlement.allMyPaid")
+      : t("settlement.allMemberPaid", { name: selectedName });
   return (
     <View style={styles.section}>
       <View style={styles.hero}>
@@ -1001,7 +1045,12 @@ function ExpenseSection({
           </Text>
           {organizer ? (
             <Pressable
-              accessibilityLabel={`Selected member: ${memberId === actorMemberId ? "Me" : (selectedMember?.label ?? "Traveller")}`}
+              accessibilityLabel={t("settlement.selectedMember", {
+                name:
+                  memberId === actorMemberId
+                    ? t("common.me")
+                    : (selectedMember?.label ?? t("common.traveller")),
+              })}
               accessibilityRole="button"
               accessibilityState={{ expanded: pickerOpen }}
               onPress={() => setPickerOpen((open) => !open)}
@@ -1009,8 +1058,8 @@ function ExpenseSection({
             >
               <Text numberOfLines={1} style={styles.memberPickerButtonText}>
                 {memberId === actorMemberId
-                  ? "Me"
-                  : shortMemberName(selectedMember?.label ?? "Traveller")}
+                  ? t("common.me")
+                  : shortMemberName(selectedMember?.label ?? t("common.traveller"))}
               </Text>
               <Text style={styles.memberPickerChevron}>{pickerOpen ? "⌃" : "⌄"}</Text>
             </Pressable>
@@ -1032,7 +1081,7 @@ function ExpenseSection({
                   style={styles.memberMenuItem}
                 >
                   <Text style={[styles.memberMenuText, selected && styles.bold]}>
-                    {member.id === actorMemberId ? "Me" : member.label}
+                    {member.id === actorMemberId ? t("common.me") : member.label}
                   </Text>
                   {selected ? <Text style={styles.memberMenuCheck}>✓</Text> : null}
                 </Pressable>
@@ -1065,7 +1114,7 @@ function ExpenseSection({
             >
               <View style={styles.categoryLine}>
                 <Text numberOfLines={2} style={[styles.rowTitle, styles.grow]}>
-                  {category.label}
+                  {categoryLabel(category.label)}
                 </Text>
                 <MoneyText
                   style={styles.rowAmount}
@@ -1080,7 +1129,7 @@ function ExpenseSection({
                   {formatExpenseCount(category.rows.length)}
                 </Text>
                 <AppIcon
-                  color={cv.color.secondary}
+                  color={colors.textSecondary}
                   name={open ? "chevron.up" : "chevron.down"}
                   size={14}
                 />
@@ -1088,10 +1137,10 @@ function ExpenseSection({
             </Pressable>
             {open ? (
               <View style={[styles.expandedBody, styles.compactExpandedBody]}>
-                <Text style={styles.recentHeading}>Recent expenses</Text>
+                <Text style={styles.recentHeading}>{t("settlement.recentExpenses")}</Text>
                 {preview.map((row, index) => (
                   <Pressable
-                    accessibilityHint="Opens Expense detail"
+                    accessibilityHint={t("settlement.opensExpense")}
                     accessibilityRole="button"
                     key={row.id}
                     onPress={() => router.push(`/expenses/expense/${row.id}`)}
@@ -1116,21 +1165,23 @@ function ExpenseSection({
                       </View>
                       <View style={styles.categoryLine}>
                         <Text numberOfLines={1} style={[styles.meta, styles.grow]}>
-                          {formatLedgerDate(row.occurredAt)} · Total{" "}
-                          {formatLedgerMoney(
-                            row.originalMinor,
-                            row.originalCurrency,
-                            row.originalScale,
-                          )}
+                          {t("analysis.originalTotal", {
+                            date: formatLedgerDate(row.occurredAt),
+                            amount: formatLedgerMoney(
+                              row.originalMinor,
+                              row.originalCurrency,
+                              row.originalScale,
+                            ),
+                          })}
                         </Text>
                         <Text style={styles.meta}>
                           {shares
                             ? memberId === actorMemberId
-                              ? "You"
+                              ? t("common.you")
                               : selectedName
                             : memberId === actorMemberId
-                              ? "You paid"
-                              : `${selectedName} paid`}
+                              ? t("settlement.youPaid")
+                              : t("settlement.memberPaid", { name: selectedName })}
                         </Text>
                       </View>
                     </View>
@@ -1143,10 +1194,14 @@ function ExpenseSection({
                 >
                   <Text style={styles.categoryLinkText}>
                     {historicalSnapshot
-                      ? `View current ${category.label} expenses`
-                      : `View all ${formatExpenseCount(category.rows.length).toLowerCase()}`}
+                      ? t("settlement.viewCategory", {
+                          category: categoryLabel(category.label),
+                        })
+                      : t("settlement.viewAll", {
+                          count: formatExpenseCount(category.rows.length).toLowerCase(),
+                        })}
                   </Text>
-                  <AppIcon name="chevron.right" size={14} color="#0F766E" />
+                  <AppIcon name="chevron.right" size={14} color={colors.accent} />
                 </Pressable>
               </View>
             ) : null}
@@ -1160,7 +1215,7 @@ function ExpenseSection({
         style={styles.compactAllLink}
       >
         <Text style={styles.categoryLinkText}>{actionLabel}</Text>
-        <AppIcon name="chevron.right" size={14} color="#0F766E" />
+        <AppIcon name="chevron.right" size={14} color={colors.accent} />
       </Pressable>
     </View>
   );
@@ -1197,12 +1252,15 @@ function PaymentsSection({
   showScopeToggle: boolean;
   transfers: ReturnType<typeof currentSettlementTransfers>;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const [estimateDetail, setEstimateDetail] = useState<string | null>(null);
   return (
     <View style={styles.section}>
       <View style={styles.transferHeading}>
         <Text accessibilityRole="header" style={styles.transferHeadingText}>
-          Recommended transfers
+          {t("settlement.recommended")}
         </Text>
         {showScopeToggle ? <Toggle everyone={everyone} onChange={onEveryone} /> : null}
       </View>
@@ -1231,7 +1289,7 @@ function PaymentsSection({
               style={styles.transferRow}
             >
               <Text numberOfLines={2} style={styles.transferMember}>
-                {transfer.fromMemberId === actorMemberId ? "You" : from}
+                {transfer.fromMemberId === actorMemberId ? t("common.you") : from}
               </Text>
               <Text style={styles.arrow}>→</Text>
               <View style={styles.transferAmountBlock}>
@@ -1245,14 +1303,16 @@ function PaymentsSection({
                 {progress && (progress.minor || progress.provisional.length) ? (
                   <View style={styles.transferProgressRow}>
                     <Text style={styles.transferProgress}>
-                      {progress.direction === "PAID" ? "Paid" : "Received"}{" "}
+                      {progress.direction === "PAID"
+                        ? t("settlement.paid")
+                        : t("settlement.received")}{" "}
                       {formatLedgerMoney(progress.minor, currency, scale)} ·{" "}
                       {progress.percentage}%
                     </Text>
                     {progress.provisional.length ? (
                       <Pressable
-                        accessibilityHint="Shows which payment conversions are provisional"
-                        accessibilityLabel="Some payment conversions may change"
+                        accessibilityHint={t("settlement.provisionalHint")}
+                        accessibilityLabel={t("settlement.paymentMayChange")}
                         accessibilityRole="button"
                         hitSlop={8}
                         onPress={(event) => {
@@ -1269,11 +1329,11 @@ function PaymentsSection({
               </View>
               <Text style={styles.arrow}>→</Text>
               <Text numberOfLines={2} style={[styles.transferMember, styles.alignRight]}>
-                {transfer.toMemberId === actorMemberId ? "You" : to}
+                {transfer.toMemberId === actorMemberId ? t("common.you") : to}
               </Text>
               {related ? (
                 <AppIcon
-                  color={cv.color.secondary}
+                  color={colors.textSecondary}
                   name={open ? "chevron.up" : "chevron.down"}
                   size={14}
                 />
@@ -1291,7 +1351,9 @@ function PaymentsSection({
             ) : null}
             {estimateDetail === key && progress?.provisional.length ? (
               <View style={styles.fxDetail}>
-                <Text style={styles.fxDetailTitle}>Amounts that may change</Text>
+                <Text style={styles.fxDetailTitle}>
+                  {t("settlement.changingAmounts")}
+                </Text>
                 {progress.provisional.map((item) => (
                   <Text key={item.recordId} style={styles.fxDetailText}>
                     {formatLedgerMoney(
@@ -1325,7 +1387,7 @@ function PaymentsSection({
         );
       })}
       {!transfers.length ? (
-        <Text style={styles.empty}>No recommended transfers.</Text>
+        <Text style={styles.empty}>{t("settlement.noTransfers")}</Text>
       ) : null}
     </View>
   );
@@ -1349,6 +1411,8 @@ function Toggle({
   everyone: boolean;
   onChange: (value: boolean) => void;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.toggle}>
       {[false, true].map((value) => (
@@ -1362,7 +1426,7 @@ function Toggle({
           <Text
             style={[styles.toggleText, everyone === value && styles.toggleTextActive]}
           >
-            {value ? "Everyone" : "Mine"}
+            {value ? t("settlement.everyone") : t("ledger.mine")}
           </Text>
         </Pressable>
       ))}
@@ -1387,6 +1451,8 @@ function GroupReviewStatus({
   onSelect: (state: PersonalReviewState) => void;
   pendingReviewState: PersonalReviewState | null;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const current =
     pendingReviewState ??
     coverage.find((member) => member.memberId === actorMemberId)?.reviewState ??
@@ -1401,15 +1467,15 @@ function GroupReviewStatus({
   return (
     <View style={styles.summaryBlock}>
       <Text accessibilityRole="header" style={styles.summaryHeading}>
-        Group review status
+        {t("settlement.groupReview")}
       </Text>
       <View style={styles.card}>
         <View style={styles.reviewCounts}>
           {(
             [
-              ["LOOKS_GOOD", "Looks good"],
-              ["STILL_CHECKING", "Still checking"],
-              ["NOT_REVIEWED", "Not reviewed"],
+              ["LOOKS_GOOD", t("settlement.looksGood")],
+              ["STILL_CHECKING", t("settlement.stillChecking")],
+              ["NOT_REVIEWED", t("settlement.notReviewed")],
             ] as const
           ).map(([state, label]) => (
             <View key={state} style={styles.reviewCount}>
@@ -1440,7 +1506,9 @@ function GroupReviewStatus({
                   numberOfLines={1}
                   style={[styles.reviewControlText, selected && styles.bold]}
                 >
-                  {state === "LOOKS_GOOD" ? "Looks good" : "Still checking"}
+                  {state === "LOOKS_GOOD"
+                    ? t("settlement.looksGood")
+                    : t("settlement.stillChecking")}
                 </Text>
               </Pressable>
             );
@@ -1452,7 +1520,7 @@ function GroupReviewStatus({
               style={[styles.reviewControl, styles.reviewControlNeutral]}
             >
               <Text numberOfLines={1} style={[styles.reviewControlText, styles.bold]}>
-                Not reviewed
+                {t("settlement.notReviewed")}
               </Text>
             </View>
           ) : null}
@@ -1464,7 +1532,7 @@ function GroupReviewStatus({
           style={styles.summaryLink}
         >
           <Text style={styles.link}>
-            {expanded ? "Hide member status ⌃" : "View member status ⌄"}
+            {expanded ? t("settlement.hideStatus") : t("settlement.viewStatus")}
           </Text>
         </Pressable>
         {expanded ? (
@@ -1473,7 +1541,7 @@ function GroupReviewStatus({
               <View key={member.memberId} style={styles.reviewMemberRow}>
                 <Text style={styles.body}>
                   {member.displayName}
-                  {member.memberId === actorMemberId ? " (You)" : ""}
+                  {member.memberId === actorMemberId ? t("settlement.youSuffix") : ""}
                 </Text>
                 <Text
                   style={[
@@ -1498,32 +1566,10 @@ function GroupReviewStatus({
 
 function reviewStateLabel(state: PersonalReviewCoverage[number]["reviewState"]) {
   return state === "LOOKS_GOOD"
-    ? "Looks good"
+    ? t("settlement.looksGood")
     : state === "STILL_CHECKING"
-      ? "Still checking"
-      : "Not reviewed";
-}
-
-function Action({
-  label,
-  onPress,
-  primary = false,
-}: {
-  label: string;
-  onPress: () => void;
-  primary?: boolean;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={[styles.action, primary && styles.actionPrimary]}
-    >
-      <Text style={[styles.actionText, primary && styles.actionTextPrimary]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
+      ? t("settlement.stillChecking")
+      : t("settlement.notReviewed");
 }
 
 function MoneyLine({
@@ -1541,6 +1587,7 @@ function MoneyLine({
   emphasized?: boolean;
   signed?: boolean;
 }) {
+  const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 1.5;
   return (
     <View style={[styles.moneyLine, largeText && styles.moneyLineLarge]}>
@@ -1558,388 +1605,442 @@ function MoneyLine({
   );
 }
 
-const styles = StyleSheet.create({
-  action: {
-    alignItems: "center",
-    borderColor: "#0F766E",
-    borderRadius: 12,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 16,
-  },
-  actionPrimary: { backgroundColor: "#0F766E" },
-  actionText: { color: "#0F766E", fontSize: 16, fontWeight: "800" },
-  actionTextPrimary: { color: "#FFFFFF" },
-  alignRight: { textAlign: "right" },
-  arrow: { color: "#94A3B8", fontSize: 16 },
-  body: { color: "#334155", fontSize: 15, lineHeight: 22 },
-  bold: { color: "#0F172A", fontWeight: "800" },
-  card: {
-    backgroundColor: cv.color.card,
-    borderRadius: cv.radius.card,
-    gap: 10,
-    padding: 14,
-  },
-  confirmedAmount: {
-    color: cv.color.text,
-    fontSize: 20,
-    fontVariant: ["tabular-nums"],
-    fontWeight: "800",
-  },
-  category: {
-    backgroundColor: cv.color.card,
-    borderRadius: cv.radius.card,
-    overflow: "hidden",
-  },
-  categoryHeader: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 52,
-    gap: 8,
-    paddingHorizontal: 14,
-  },
-  compactCategoryHeader: {
-    alignItems: "stretch",
-    flexDirection: "column",
-    gap: 6,
-    paddingVertical: 14,
-  },
-  categoryLine: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  compactAmount: {
-    color: cv.color.text,
-    fontSize: 14,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
-    textAlign: "right",
-    maxWidth: "48%",
-  },
-  recentHeading: { color: "#334155", fontSize: 13, fontWeight: "700" },
-  compactExpandedBody: { gap: 10, padding: cv.space.row },
-  compactExpenseRow: {
-    borderTopWidth: 0,
-    borderBottomColor: cv.color.divider,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 0,
-    paddingVertical: 13,
-    minHeight: 66,
-  },
-  lastExpenseRow: { borderBottomWidth: 0 },
-  categoryLink: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    justifyContent: "space-between",
-    minHeight: 44,
-  },
-  categoryLinkText: { color: "#0F766E", flexShrink: 1, fontSize: 14, fontWeight: "600" },
-  compactAllLink: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    justifyContent: "space-between",
-    minHeight: 44,
-    paddingHorizontal: 14,
-  },
-  expandedBody: {
-    backgroundColor: cv.color.expanded,
-    borderTopColor: cv.color.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  chevron: { color: "#64748B", fontSize: 24 },
-  content: { paddingBottom: 48 },
-  divider: { backgroundColor: "#E2E8F0", height: StyleSheet.hairlineWidth },
-  embedded: { flex: 1 },
-  pager: { flex: 1 },
-  pagerPage: { flex: 1 },
-  empty: { color: "#64748B", fontSize: 15, paddingVertical: 12 },
-  expenseRow: {
-    alignItems: "center",
-    borderTopColor: cv.color.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    gap: 10,
-    padding: 14,
-  },
-  grow: { flex: 1, gap: 3 },
-  hero: {
-    backgroundColor: cv.color.hero,
-    borderRadius: cv.radius.hero,
-    gap: 6,
-    padding: 18,
-  },
-  heroAmount: { flexShrink: 1 },
-  heroAmountRow: { alignItems: "flex-start", flexDirection: "row", gap: 4 },
-  heroLabel: { color: cv.color.text, fontSize: 18, fontWeight: "700" },
-  estimateIndicator: {
-    backgroundColor: "#D97706",
-    borderRadius: 5,
-    height: 9,
-    width: 9,
-  },
-  estimateIndicatorButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 32,
-    minWidth: 32,
-  },
-  legacy: {
-    borderTopColor: "#CBD5E1",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 6,
-    paddingTop: 14,
-  },
-  link: { color: "#0F766E", fontSize: 14, fontWeight: "800" },
-  memberMenu: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#CBD5E1",
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  memberMenuCheck: { color: "#0F766E", fontSize: 16, fontWeight: "900" },
-  memberMenuItem: {
-    alignItems: "center",
-    borderBottomColor: "#E2E8F0",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 48,
-    paddingHorizontal: 14,
-  },
-  memberMenuText: { color: "#334155", flex: 1, fontSize: 15 },
-  memberPickerButton: {
-    alignItems: "center",
-    borderColor: "#CBD5E1",
-    borderRadius: 10,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: 6,
-    maxWidth: "38%",
-    minHeight: 40,
-    paddingHorizontal: 12,
-  },
-  memberPickerButtonText: { color: "#334155", flexShrink: 1, fontWeight: "700" },
-  memberPickerChevron: { color: "#64748B", fontSize: 16 },
-  message: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  meta: { color: "#64748B", fontSize: 13, lineHeight: 19 },
-  moneyLine: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    justifyContent: "space-between",
-    minHeight: 28,
-  },
-  moneyLineLarge: { alignItems: "stretch", flexDirection: "column" },
-  moneyLineLabel: { color: "#334155", flex: 1, fontSize: 15, lineHeight: 22 },
-  moneyLineAmount: {
-    color: "#334155",
-    flexShrink: 1,
-    fontSize: 15,
-    fontVariant: ["tabular-nums"],
-    lineHeight: 22,
-    textAlign: "right",
-  },
-  nav: {
-    backgroundColor: "#F8FAFC",
-    borderBottomColor: "#E2E8F0",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    position: "relative",
-    zIndex: 2,
-  },
-  navItem: {
-    alignItems: "center",
-    borderBottomColor: "transparent",
-    borderBottomWidth: 3,
-    flex: 1,
-    gap: 3,
-    justifyContent: "center",
-    minHeight: 58,
-    paddingHorizontal: 4,
-    paddingVertical: 7,
-  },
-  navItemActive: { borderBottomColor: "#0F766E" },
-  navIndicator: {
-    backgroundColor: "#0F766E",
-    bottom: 0,
-    height: 3,
-    left: 0,
-    position: "absolute",
-  },
-  navLabel: { alignSelf: "stretch" },
-  navText: { color: "#64748B", fontSize: 11, fontWeight: "700", textAlign: "center" },
-  navTextActive: { color: "#0F766E" },
-  navTextOverlay: {
-    color: "#0F766E",
-    left: 0,
-    position: "absolute",
-    right: 0,
-    top: 0,
-  },
-  notice: {
-    backgroundColor: cv.color.warning,
-    borderRadius: cv.radius.card,
-    gap: 6,
-    padding: 14,
-  },
-  noticeTitle: { color: "#9A3412", fontSize: 16, fontWeight: "700" },
-  personalRecord: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 4, padding: 14 },
-  rateDetails: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    gap: 4,
-    marginTop: 4,
-    padding: 12,
-  },
-  rateIssue: {
-    alignItems: "center",
-    borderTopColor: "#E2E8F0",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    gap: 8,
-    paddingVertical: 10,
-  },
-  reviewControl: {
-    alignItems: "center",
-    borderColor: "#CBD5E1",
-    borderRadius: 10,
-    borderWidth: 1,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 42,
-    paddingHorizontal: 8,
-  },
-  reviewControlChecking: { backgroundColor: "#FEF3C7", borderColor: "#D97706" },
-  reviewControlGood: { backgroundColor: "#D1FAE5", borderColor: "#059669" },
-  reviewControlNeutral: { backgroundColor: "#E2E8F0" },
-  reviewControlText: { color: "#334155", fontSize: 13, fontWeight: "700" },
-  reviewControls: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-  },
-  reviewCounts: { flexDirection: "row", gap: 8 },
-  reviewCount: { flex: 1, gap: 2 },
-  reviewCountValue: {
-    color: cv.color.text,
-    fontSize: 18,
-    fontVariant: ["tabular-nums"],
-    fontWeight: "800",
-  },
-  reviewMemberRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
-    minHeight: 40,
-  },
-  reviewMembers: {
-    borderTopColor: "#E2E8F0",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 4,
-    paddingTop: 8,
-  },
-  reviewTag: {
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: "800",
-    overflow: "hidden",
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
-  reviewTagChecking: { backgroundColor: "#FEF3C7", color: "#92400E" },
-  reviewTagGood: { backgroundColor: "#D1FAE5", color: "#065F46" },
-  reviewTagNeutral: { backgroundColor: "#E2E8F0", color: "#475569" },
-  rowAmount: { color: cv.color.text, ...cv.type.rowAmount, textAlign: "right" },
-  rowTitle: { color: cv.color.text, ...cv.type.row },
-  secondaryNote: { color: "#64748B", fontSize: 13, lineHeight: 19 },
-  section: { gap: cv.space.card, paddingTop: cv.space.section },
-  summaryBlock: { gap: cv.space.heading },
-  summaryHeading: { color: cv.color.text, ...cv.type.section },
-  summaryLink: { justifyContent: "center", minHeight: 36 },
-  summaryLinks: {
-    borderTopColor: cv.color.divider,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 4,
-  },
-  sectionLeadRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
-  },
-  sectionLeadText: {
-    color: "#0F766E",
-    flexShrink: 1,
-    ...cv.type.eyebrow,
-    letterSpacing: 0.4,
-    minWidth: 0,
-  },
-  sectionLeadGrow: { flex: 1 },
-  sections: { paddingBottom: 24 },
-  standaloneSections: { paddingHorizontal: 16 },
-  subheading: { color: "#0F172A", fontSize: 18, fontWeight: "800", marginTop: 4 },
-  toggle: {
-    alignSelf: "flex-start",
-    backgroundColor: "#E2E8F0",
-    borderRadius: 10,
-    flexDirection: "row",
-    padding: 2,
-  },
-  toggleActive: { backgroundColor: "#FFFFFF" },
-  toggleItem: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
-  toggleText: { color: "#64748B", fontSize: 13, fontWeight: "700" },
-  toggleTextActive: { color: "#0F172A" },
-  transferAmount: { color: cv.color.text, ...cv.type.rowAmount },
-  transferAmountBlock: { alignItems: "center", flexShrink: 0 },
-  transferProgress: { color: "#475569", fontSize: 10 },
-  transferProgressRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 4,
-    marginTop: 2,
-  },
-  transferProgressTrack: {
-    backgroundColor: "#E5E7EB",
-    borderRadius: 2,
-    height: 4,
-    marginBottom: 12,
-    marginHorizontal: 12,
-    overflow: "hidden",
-  },
-  transferProgressFill: { backgroundColor: "#0F766E", borderRadius: 2, height: 4 },
-  fxDotButton: { alignItems: "center", height: 14, justifyContent: "center", width: 14 },
-  fxDot: { backgroundColor: "#D97706", borderRadius: 4, height: 7, width: 7 },
-  fxDetail: { backgroundColor: "#FEF3C7", gap: 5, padding: 10 },
-  fxDetailText: { color: "#78350F", fontSize: 11, lineHeight: 16 },
-  fxDetailTitle: { color: "#92400E", fontSize: 12, fontWeight: "800" },
-  transferCard: {
-    backgroundColor: cv.color.card,
-    borderRadius: cv.radius.card,
-    overflow: "hidden",
-  },
-  transferHeading: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    minHeight: 44,
-    gap: 12,
-  },
-  transferHeadingText: { color: cv.color.text, ...cv.type.section, flexShrink: 1 },
-  transferMember: { color: "#334155", flex: 1, fontSize: 14, fontWeight: "700" },
-  transferRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 6,
-    minHeight: 60,
-    padding: 12,
-  },
-  waiting: { backgroundColor: "#EFF6FF", borderRadius: 12, gap: 6, padding: 14 },
-});
+const createStyles = (colors: UiColors) => {
+  const segment = segmentedControlTokens(colors);
+  return StyleSheet.create({
+    action: {
+      alignItems: "center",
+      borderColor: colors.accent,
+      borderRadius: 12,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 48,
+      paddingHorizontal: 16,
+    },
+    actionPrimary: { backgroundColor: colors.accent },
+    actionText: { color: colors.accent, fontSize: 16, fontWeight: "800" },
+    actionTextPrimary: { color: colors.onAccent },
+    alignRight: { textAlign: "right" },
+    arrow: { color: colors.disabled, fontSize: 16 },
+    body: { color: colors.textTertiary, fontSize: 15, lineHeight: 22 },
+    bold: { color: colors.textPrimary, fontWeight: "800" },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: cv.radius.card,
+      gap: 10,
+      padding: 14,
+    },
+    confirmedAmount: {
+      color: colors.textPrimary,
+      fontSize: 20,
+      fontVariant: ["tabular-nums"],
+      fontWeight: "800",
+    },
+    category: {
+      backgroundColor: colors.surface,
+      borderRadius: cv.radius.card,
+      overflow: "hidden",
+    },
+    categoryHeader: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 52,
+      gap: 8,
+      paddingHorizontal: 14,
+    },
+    compactCategoryHeader: {
+      alignItems: "stretch",
+      flexDirection: "column",
+      gap: 6,
+      paddingVertical: 14,
+    },
+    categoryLine: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 10,
+    },
+    compactAmount: {
+      color: colors.textPrimary,
+      fontSize: 14,
+      fontWeight: "700",
+      fontVariant: ["tabular-nums"],
+      textAlign: "right",
+      maxWidth: "48%",
+    },
+    recentHeading: { color: colors.textTertiary, fontSize: 13, fontWeight: "700" },
+    compactExpandedBody: { gap: 10, padding: cv.space.row },
+    compactExpenseRow: {
+      borderTopWidth: 0,
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      paddingHorizontal: 0,
+      paddingVertical: 13,
+      minHeight: 66,
+    },
+    lastExpenseRow: { borderBottomWidth: 0 },
+    categoryLink: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+      justifyContent: "space-between",
+      minHeight: 44,
+    },
+    categoryLinkText: {
+      color: colors.accent,
+      flexShrink: 1,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    compactAllLink: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+      justifyContent: "space-between",
+      minHeight: 44,
+      paddingHorizontal: 14,
+    },
+    expandedBody: {
+      backgroundColor: colors.expandedSurface,
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    chevron: { color: colors.textSecondary, fontSize: 24 },
+    content: { paddingBottom: 48 },
+    divider: { backgroundColor: colors.separator, height: StyleSheet.hairlineWidth },
+    embedded: { flex: 1 },
+    pager: { flex: 1 },
+    pagerPage: { flex: 1 },
+    empty: { color: colors.textSecondary, fontSize: 15, paddingVertical: 12 },
+    expenseRow: {
+      alignItems: "center",
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 10,
+      padding: 14,
+    },
+    grow: { flex: 1, gap: 3 },
+    hero: {
+      backgroundColor: colors.accentSurface,
+      borderRadius: cv.radius.hero,
+      gap: 6,
+      padding: 18,
+    },
+    heroAmount: { flexShrink: 1 },
+    heroAmountRow: { alignItems: "flex-start", flexDirection: "row", gap: 4 },
+    heroLabel: { color: colors.textPrimary, fontSize: 18, fontWeight: "700" },
+    estimateIndicator: {
+      backgroundColor: colors.warningIndicator,
+      borderRadius: 5,
+      height: 9,
+      width: 9,
+    },
+    estimateIndicatorButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 32,
+      minWidth: 32,
+    },
+    legacy: {
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      gap: 6,
+      paddingTop: 14,
+    },
+    link: { color: colors.accent, fontSize: 14, fontWeight: "800" },
+    memberMenu: {
+      backgroundColor: colors.surface,
+      borderColor: colors.separator,
+      borderRadius: 12,
+      borderWidth: 1,
+      overflow: "hidden",
+    },
+    memberMenuCheck: { color: colors.accent, fontSize: 16, fontWeight: "900" },
+    memberMenuItem: {
+      alignItems: "center",
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 48,
+      paddingHorizontal: 14,
+    },
+    memberMenuText: { color: colors.textTertiary, flex: 1, fontSize: 15 },
+    memberPickerButton: {
+      alignItems: "center",
+      borderColor: colors.separator,
+      borderRadius: 10,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 6,
+      maxWidth: "38%",
+      minHeight: 40,
+      paddingHorizontal: 12,
+    },
+    memberPickerButtonText: {
+      color: colors.textTertiary,
+      flexShrink: 1,
+      fontWeight: "700",
+    },
+    memberPickerChevron: { color: colors.textSecondary, fontSize: 16 },
+    message: { color: colors.accent, fontSize: 14, fontWeight: "700" },
+    meta: { color: colors.textSecondary, fontSize: 13, lineHeight: 19 },
+    moneyLine: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+      justifyContent: "space-between",
+      minHeight: 28,
+    },
+    moneyLineLarge: { alignItems: "stretch", flexDirection: "column" },
+    moneyLineLabel: { color: colors.textTertiary, flex: 1, fontSize: 15, lineHeight: 22 },
+    moneyLineAmount: {
+      color: colors.textTertiary,
+      flexShrink: 1,
+      fontSize: 15,
+      fontVariant: ["tabular-nums"],
+      lineHeight: 22,
+      textAlign: "right",
+    },
+    nav: {
+      backgroundColor: colors.groupedBackground,
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      position: "relative",
+      zIndex: 2,
+    },
+    navItem: {
+      alignItems: "center",
+      borderBottomColor: colors.transparent,
+      borderBottomWidth: 3,
+      flex: 1,
+      gap: 3,
+      justifyContent: "center",
+      minHeight: 58,
+      paddingHorizontal: 4,
+      paddingVertical: 7,
+    },
+    navItemSelected: { backgroundColor: segment.selectedSurface },
+    navItemActive: { borderBottomColor: segment.indicator },
+    navIndicator: {
+      backgroundColor: segment.indicator,
+      bottom: 0,
+      height: 3,
+      left: 0,
+      position: "absolute",
+    },
+    navLabel: { alignSelf: "stretch" },
+    navText: {
+      color: segment.label,
+      fontSize: 11,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+    navTextActive: { color: segment.selectedLabel },
+    navTextOverlay: {
+      color: segment.selectedLabel,
+      left: 0,
+      position: "absolute",
+      right: 0,
+      top: 0,
+    },
+    notice: {
+      backgroundColor: colors.warningSurface,
+      borderRadius: cv.radius.card,
+      gap: 6,
+      padding: 14,
+    },
+    noticeTitle: { color: colors.warning, fontSize: 16, fontWeight: "700" },
+    personalRecord: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      gap: 4,
+      padding: 14,
+    },
+    rateDetails: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      gap: 4,
+      marginTop: 4,
+      padding: 12,
+    },
+    rateIssue: {
+      alignItems: "center",
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 8,
+      paddingVertical: 10,
+    },
+    reviewControl: {
+      alignItems: "center",
+      borderColor: colors.separator,
+      borderRadius: 10,
+      borderWidth: 1,
+      flex: 1,
+      justifyContent: "center",
+      minHeight: 42,
+      paddingHorizontal: 8,
+    },
+    reviewControlChecking: {
+      backgroundColor: colors.warningSurface,
+      borderColor: colors.warningIndicator,
+    },
+    reviewControlGood: {
+      backgroundColor: colors.successSurface,
+      borderColor: colors.success,
+    },
+    reviewControlNeutral: { backgroundColor: colors.separator },
+    reviewControlText: { color: colors.textTertiary, fontSize: 13, fontWeight: "700" },
+    reviewControls: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+    },
+    reviewCounts: { flexDirection: "row", gap: 8 },
+    reviewCount: { flex: 1, gap: 2 },
+    reviewCountValue: {
+      color: colors.textPrimary,
+      fontSize: 18,
+      fontVariant: ["tabular-nums"],
+      fontWeight: "800",
+    },
+    reviewMemberRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 12,
+      justifyContent: "space-between",
+      minHeight: 40,
+    },
+    reviewMembers: {
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      gap: 4,
+      paddingTop: 8,
+    },
+    reviewTag: {
+      borderRadius: 999,
+      fontSize: 12,
+      fontWeight: "800",
+      overflow: "hidden",
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+    },
+    reviewTagChecking: { backgroundColor: colors.warningSurface, color: colors.warning },
+    reviewTagGood: { backgroundColor: colors.successSurface, color: colors.success },
+    reviewTagNeutral: { backgroundColor: colors.separator, color: colors.textTertiary },
+    rowAmount: { color: colors.textPrimary, ...cv.type.rowAmount, textAlign: "right" },
+    rowTitle: { color: colors.textPrimary, ...cv.type.row },
+    secondaryNote: { color: colors.textSecondary, fontSize: 13, lineHeight: 19 },
+    section: { gap: cv.space.card, paddingTop: cv.space.section },
+    summaryBlock: { gap: cv.space.heading },
+    summaryHeading: { color: colors.textPrimary, ...cv.type.section },
+    summaryLink: { justifyContent: "center", minHeight: 36 },
+    summaryLinks: {
+      borderTopColor: colors.separator,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      paddingTop: 4,
+    },
+    sectionLeadRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 12,
+      justifyContent: "space-between",
+    },
+    sectionLeadText: {
+      color: colors.accent,
+      flexShrink: 1,
+      ...cv.type.eyebrow,
+      letterSpacing: 0.4,
+      minWidth: 0,
+    },
+    sectionLeadGrow: { flex: 1 },
+    sections: { paddingBottom: 24 },
+    standaloneSections: { paddingHorizontal: 16 },
+    subheading: {
+      color: colors.textPrimary,
+      fontSize: 18,
+      fontWeight: "800",
+      marginTop: 4,
+    },
+    toggle: {
+      alignSelf: "flex-start",
+      backgroundColor: colors.separator,
+      borderRadius: 10,
+      flexDirection: "row",
+      padding: 2,
+    },
+    toggleActive: { backgroundColor: segment.selectedSurface },
+    toggleItem: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
+    toggleText: { color: segment.label, fontSize: 13, fontWeight: "700" },
+    toggleTextActive: { color: segment.selectedLabel },
+    transferAmount: { color: colors.textPrimary, ...cv.type.rowAmount },
+    transferAmountBlock: { alignItems: "center", flexShrink: 0 },
+    transferProgress: { color: colors.textTertiary, fontSize: 10 },
+    transferProgressRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 4,
+      marginTop: 2,
+    },
+    transferProgressTrack: {
+      backgroundColor: colors.separator,
+      borderRadius: 2,
+      height: 4,
+      marginBottom: 12,
+      marginHorizontal: 12,
+      overflow: "hidden",
+    },
+    transferProgressFill: { backgroundColor: colors.accent, borderRadius: 2, height: 4 },
+    fxDotButton: {
+      alignItems: "center",
+      height: 14,
+      justifyContent: "center",
+      width: 14,
+    },
+    fxDot: {
+      backgroundColor: colors.warningIndicator,
+      borderRadius: 4,
+      height: 7,
+      width: 7,
+    },
+    fxDetail: { backgroundColor: colors.warningSurface, gap: 5, padding: 10 },
+    fxDetailText: { color: colors.warning, fontSize: 11, lineHeight: 16 },
+    fxDetailTitle: { color: colors.warning, fontSize: 12, fontWeight: "800" },
+    transferCard: {
+      backgroundColor: colors.surface,
+      borderRadius: cv.radius.card,
+      overflow: "hidden",
+    },
+    transferHeading: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      minHeight: 44,
+      gap: 12,
+    },
+    transferHeadingText: { color: colors.textPrimary, ...cv.type.section, flexShrink: 1 },
+    transferMember: {
+      color: colors.textTertiary,
+      flex: 1,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    transferRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+      minHeight: 60,
+      padding: 12,
+    },
+    waiting: {
+      backgroundColor: colors.infoSurface,
+      borderRadius: 12,
+      gap: 6,
+      padding: 14,
+    },
+  });
+};

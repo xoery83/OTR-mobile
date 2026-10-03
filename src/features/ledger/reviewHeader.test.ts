@@ -9,6 +9,7 @@ const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/serve
 };
 
 vi.mock("react-native", () => ({
+  useColorScheme: () => "light",
   Pressable: "button",
   ScrollView: "div",
   SectionList: ({ ListHeaderComponent }: { ListHeaderComponent: ReactNode }) =>
@@ -17,6 +18,7 @@ vi.mock("react-native", () => ({
   Text: "span",
   View: "div",
 }));
+vi.mock("expo-router/react-navigation", () => ({ useHeaderHeight: () => 91 }));
 vi.mock("expo-router", () => ({
   Stack: {
     Screen: ({ options }: { options: { headerTitle: () => ReactNode } }) =>

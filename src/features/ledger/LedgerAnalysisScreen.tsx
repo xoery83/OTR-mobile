@@ -1,3 +1,11 @@
+import { segmentedControlTokens } from "@/ui/segmented";
+import { formatExpenseCount } from "./searchFilters";
+import { categoryLabel, systemMessage } from "@/ui/domainLabels";
+import { t } from "@/ui/locale";
+import { UiTextInput as TextInput } from "@/ui/forms";
+import { useUiTheme, useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
@@ -6,12 +14,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { Stack, router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
-import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 
 import { AppIcon } from "@/components/AppIcon";
 import { MoneyText } from "./MoneyText";
@@ -47,29 +53,34 @@ import {
   AnalysisSection,
   AnalysisSkeleton,
   AnalysisTimeline,
-  analysisStyles as shared,
+  useAnalysisStyles,
   type AnalysisDrilldown,
 } from "./SpendingAnalysisSections";
 
-const rangeLabels: Record<AnalysisRangePreset, string> = {
-  ENTIRE: "Entire trip",
-  LAST_30: "Last 30 days",
-  MONTH: "This month",
-  YEAR: "This year",
-  CUSTOM: "Custom range",
-};
+const rangeLabels = (): Record<AnalysisRangePreset, string> => ({
+  ENTIRE: t("extra.copy21"),
+  LAST_30: t("extra.copy22"),
+  MONTH: t("extra.copy23"),
+  YEAR: t("extra.copy24"),
+  CUSTOM: t("extra.copy25"),
+});
 
 function exclusionReason(expense: AnalysisExpense, scope: ReportingScope) {
-  if (expense.hasOpenConflict) return "Changes need review";
-  if (expense.businessStatus === "DRAFT") return "Draft expense";
+  if (expense.hasOpenConflict) return t("ui.changesNeedReview");
+  if (expense.businessStatus === "DRAFT") return t("ui.draftExpense");
   if (expense.businessStatus === "RATE_REQUIRED" || expense.totalMinor === null)
-    return "Waiting for confirmed Journey currency value";
+    return t("ui.waitingForConfirmedJourneyCurrencyValue");
   if (scope === "MINE" && expense.personalMinor === null)
-    return "Your share is not available yet";
-  return "Not included in spending total";
+    return t("ui.yourShareIsNotAvailableYet");
+  return t("ui.notIncludedInSpendingTotal");
 }
 
 export function LedgerAnalysisScreen() {
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+
+  const shared = useAnalysisStyles();
   const params = useLocalSearchParams<{
     journeyId: string;
     memberId: string;
@@ -125,9 +136,7 @@ export function LedgerAnalysisScreen() {
       } catch {
         repository.current = null;
         if (request.isCurrent(id))
-          setError(
-            "Spending analysis could not be refreshed. Your previous view is still available.",
-          );
+          setError(t("ui.spendingAnalysisCouldNotBeRefreshedYourPreviousViewIs"));
       } finally {
         if (request.isCurrent(id)) setUpdating(false);
       }
@@ -250,12 +259,16 @@ export function LedgerAnalysisScreen() {
           <AppIcon
             name={item === "MINE" ? "person.fill" : "person.2.fill"}
             size={19}
-            color={scope === item ? "#0F766E" : "#64748B"}
+            color={
+              scope === item
+                ? segmentedControlTokens(colors).selectedLabel
+                : segmentedControlTokens(colors).label
+            }
           />
           <Text
             style={[styles.segmentText, scope === item && styles.segmentTextSelected]}
           >
-            {item === "MINE" ? "Mine" : "Group"}
+            {item === "MINE" ? t("ui.mine") : t("ui.group")}
           </Text>
         </Pressable>
       ))}
@@ -268,7 +281,7 @@ export function LedgerAnalysisScreen() {
         options={{
           headerTitle: () => (
             <NavigationContextTitle
-              title="Spending Analysis"
+              title={t("ui.spendingAnalysis")}
               subtitle={view?.dataset.journey.title}
             />
           ),
@@ -276,14 +289,14 @@ export function LedgerAnalysisScreen() {
           headerBlurEffect: Platform.OS === "ios" ? "systemMaterial" : undefined,
           headerStyle: {
             backgroundColor:
-              Platform.OS === "ios" ? "transparent" : "rgba(246,247,249,0.97)",
+              Platform.OS === "ios" ? colors.transparent : colors.background,
           },
-          headerShadowVisible: true,
+          headerShadowVisible: false,
         }}
       />
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
-          accessibilityLabel="Choose date range"
+          accessibilityLabel={t("ui.chooseDateRange")}
           hidden={!presets.length}
           icon="calendar"
           selected={Boolean(view?.range.from)}
@@ -322,7 +335,7 @@ export function LedgerAnalysisScreen() {
                   style={styles.retry}
                 >
                   <Text style={shared.error}>
-                    Analysis is unavailable. Tap to try again.
+                    {t("ui.analysisIsUnavailableTapToTryAgain")}
                   </Text>
                 </Pressable>
               ) : null}
@@ -331,10 +344,12 @@ export function LedgerAnalysisScreen() {
             <>
               <View style={shared.summary}>
                 <Text style={shared.eyebrow}>
-                  {scope === "MINE" ? "MY SPENDING" : "GROUP SPENDING"}
+                  {scope === "MINE" ? t("ui.mySpending") : t("ui.groupSpending")}
                 </Text>
                 {dashboard.state === "UNAVAILABLE" ? (
-                  <Text style={shared.emptyTitle}>Spending total unavailable</Text>
+                  <Text style={shared.emptyTitle}>
+                    {t("ui.spendingTotalUnavailable")}
+                  </Text>
                 ) : (
                   <MoneyText
                     variant="hero"
@@ -346,13 +361,24 @@ export function LedgerAnalysisScreen() {
                 <View style={styles.countLine}>
                   <Text style={shared.meta}>
                     {scope === "MINE"
-                      ? `${dashboard.expenseCount} ${dashboard.incomplete.length ? "included " : ""}${dashboard.expenseCount === 1 ? "expense" : "expenses"}`
-                      : `${view.dataset.members.length} travellers · ${dashboard.expenseCount} ${dashboard.incomplete.length ? "included " : ""}expenses`}
+                      ? dashboard.incomplete.length
+                        ? t("analysis.includedCount", { count: dashboard.expenseCount })
+                        : formatExpenseCount(dashboard.expenseCount)
+                      : t("analysis.groupCount", {
+                          members: view.dataset.members.length,
+                          count: dashboard.incomplete.length
+                            ? t("analysis.includedCount", {
+                                count: dashboard.expenseCount,
+                              })
+                            : formatExpenseCount(dashboard.expenseCount),
+                        })}
                   </Text>
                   {dashboard.incomplete.length ? (
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={`View ${dashboard.incomplete.length} expenses not included in the total`}
+                      accessibilityLabel={t("analysis.excludedDescription", {
+                        count: dashboard.incomplete.length,
+                      })}
                       hitSlop={12}
                       onPress={() => setCompletenessOpen(true)}
                     >
@@ -361,10 +387,15 @@ export function LedgerAnalysisScreen() {
                   ) : null}
                 </View>
                 <Text style={shared.meta}>
-                  {dashboard.elapsedDays} {dashboard.elapsedDays === 1 ? "day" : "days"}
-                  {dashboard.averageMinor !== null && dashboard.state === "READY"
-                    ? ` · ${money.format(dashboard.averageMinor)}/day`
-                    : ""}
+                  {t("analysis.elapsed", {
+                    count: dashboard.elapsedDays,
+                    average:
+                      dashboard.averageMinor !== null && dashboard.state === "READY"
+                        ? t("analysis.averageCaption", {
+                            amount: money.format(dashboard.averageMinor),
+                          })
+                        : "",
+                  })}
                 </Text>
                 {view.range.from ? (
                   <Text style={shared.meta}>
@@ -379,7 +410,7 @@ export function LedgerAnalysisScreen() {
                   style={styles.retry}
                 >
                   <Text accessibilityLiveRegion="polite" style={shared.error}>
-                    {error} Tap to try again.
+                    {systemMessage(error)} {t("ui.tapToTryAgain")}
                   </Text>
                 </Pressable>
               ) : null}
@@ -388,7 +419,7 @@ export function LedgerAnalysisScreen() {
                   {scope === "GROUP" ? (
                     <>
                       <AnalysisPeople
-                        title="Spending by traveller"
+                        title={t("ui.spendingByTraveller")}
                         traveller
                         rows={travellers}
                         totalMinor={travellers.reduce(
@@ -400,14 +431,14 @@ export function LedgerAnalysisScreen() {
                         category={travellerCategory}
                         action={
                           <AnalysisCategoryMenu
-                            title="travellers"
+                            title={t("ui.travellers")}
                             value={travellerCategory}
                             onPress={() => setCategoryMenu("TRAVELLER")}
                           />
                         }
                       />
                       <AnalysisPeople
-                        title="Who paid"
+                        title={t("ui.whoPaid")}
                         rows={payers}
                         totalMinor={payers.reduce(
                           (sum, person) => sum + person.totalMinor,
@@ -418,7 +449,7 @@ export function LedgerAnalysisScreen() {
                         category={payerCategory}
                         action={
                           <AnalysisCategoryMenu
-                            title="Who paid"
+                            title={t("ui.whoPaid")}
                             value={payerCategory}
                             onPress={() => setCategoryMenu("PAYER")}
                           />
@@ -442,10 +473,10 @@ export function LedgerAnalysisScreen() {
                   />
                   {scope === "MINE" ? (
                     <AnalysisSection
-                      title="Biggest expenses"
+                      title={t("ui.biggestExpenses")}
                       action={
                         <AnalysisCategoryMenu
-                          title="biggest expenses"
+                          title={t("ui.biggestExpenses2")}
                           value={biggestCategory}
                           onPress={() => setCategoryMenu("BIGGEST")}
                         />
@@ -467,7 +498,7 @@ export function LedgerAnalysisScreen() {
                           (expense) => expense.category === biggestCategory,
                         ) ? (
                           <Text style={styles.tripContext}>
-                            No spending in this category.
+                            {t("ui.noSpendingInThisCategory")}
                           </Text>
                         ) : null}
                       </View>
@@ -479,17 +510,17 @@ export function LedgerAnalysisScreen() {
                 <View style={shared.empty}>
                   <Text style={shared.emptyTitle}>
                     {dashboard.state === "EMPTY"
-                      ? "No spending yet"
+                      ? t("ui.noSpendingYet")
                       : dashboard.state === "EMPTY_RANGE"
-                        ? "No spending in this period"
-                        : "Spending analysis isn’t ready yet"}
+                        ? t("ui.noSpendingInThisPeriod2")
+                        : t("ui.spendingAnalysisIsntReadyYet")}
                   </Text>
                   <Text style={shared.meta}>
                     {dashboard.state === "EMPTY"
-                      ? "Expenses from this trip will appear here."
+                      ? t("ui.expensesFromThisTripWillAppearHere")
                       : dashboard.state === "UNAVAILABLE"
-                        ? "Some expenses are still waiting for confirmed values or review."
-                        : "Try another period to see spending from this trip."}
+                        ? t("ui.someExpensesAreStillWaitingForConfirmedValuesOrReview")
+                        : t("ui.tryAnotherPeriodToSeeSpendingFromThisTrip")}
                   </Text>
                 </View>
               )}
@@ -497,9 +528,7 @@ export function LedgerAnalysisScreen() {
           ) : null}
         </View>
       </ScrollView>
-      <AnalysisMaterial style={[styles.pinnedScope, { top: headerHeight }]}>
-        {scopeControl}
-      </AnalysisMaterial>
+      <View style={[styles.pinnedScope, { top: headerHeight }]}>{scopeControl}</View>
       {completenessOpen && dashboard ? (
         <Modal
           visible
@@ -509,14 +538,14 @@ export function LedgerAnalysisScreen() {
         >
           <View style={styles.modalPage}>
             <SheetHeader
-              title="Not included in total"
-              leftLabel="Close"
+              title={t("ui.notIncludedInTotal")}
+              leftLabel={t("ui.close")}
               onLeft={() => setCompletenessOpen(false)}
             />
             <ScrollView contentContainerStyle={styles.modalContent}>
               <Text style={shared.meta}>
-                {dashboard.incomplete.length} expenses ·{" "}
-                {scope === "MINE" ? "Mine" : "Group"}
+                {formatExpenseCount(dashboard.incomplete.length)} ·{" "}
+                {scope === "MINE" ? t("ledger.mine") : t("ledger.group")}
               </Text>
               {dashboard.incomplete.map((expense) => (
                 <Pressable
@@ -532,12 +561,14 @@ export function LedgerAnalysisScreen() {
                     {expense.title}
                   </Text>
                   <Text style={shared.meta}>
-                    {formatLedgerDate(expense.occurredAt)} · Original total{" "}
-                    {formatLedgerMoney(
-                      expense.originalMinor,
-                      expense.originalCurrency,
-                      expense.originalScale,
-                    )}
+                    {t("analysis.originalTotal", {
+                      date: formatLedgerDate(expense.occurredAt),
+                      amount: formatLedgerMoney(
+                        expense.originalMinor,
+                        expense.originalCurrency,
+                        expense.originalScale,
+                      ),
+                    })}
                   </Text>
                   <Text style={shared.meta}>{exclusionReason(expense, scope)}</Text>
                 </Pressable>
@@ -554,8 +585,8 @@ export function LedgerAnalysisScreen() {
       >
         <View style={styles.modalPage}>
           <SheetHeader
-            title="Analysis dates"
-            leftLabel="Cancel"
+            title={t("ui.analysisDates")}
+            leftLabel={t("ui.cancel")}
             onLeft={() => setRangeOpen(false)}
           />
           <ScrollView contentContainerStyle={styles.modalContent}>
@@ -566,23 +597,23 @@ export function LedgerAnalysisScreen() {
                 onPress={() => changeRange(preset)}
                 style={styles.rangeOption}
               >
-                <Text style={shared.link}>{rangeLabels[preset]}</Text>
+                <Text style={shared.link}>{rangeLabels()[preset]}</Text>
               </Pressable>
             ))}
             {rangeDraft.from ? (
               <>
-                <Text style={shared.meta}>Start date</Text>
+                <Text style={shared.meta}>{t("ui.startDate")}</Text>
                 <TextInput
-                  accessibilityLabel="Analysis start date"
-                  placeholder="YYYY-MM-DD"
+                  accessibilityLabel={t("ui.analysisStartDate")}
+                  placeholder={t("ui.yyyymmdd")}
                   value={rangeDraft.from}
                   onChangeText={(from) => setRangeDraft((draft) => ({ ...draft, from }))}
                   style={styles.dateInput}
                 />
-                <Text style={shared.meta}>End date</Text>
+                <Text style={shared.meta}>{t("ui.endDate")}</Text>
                 <TextInput
-                  accessibilityLabel="Analysis end date"
-                  placeholder="YYYY-MM-DD"
+                  accessibilityLabel={t("ui.analysisEndDate")}
+                  placeholder={t("ui.yyyymmdd")}
                   value={rangeDraft.through}
                   onChangeText={(through) =>
                     setRangeDraft((draft) => ({ ...draft, through }))
@@ -599,9 +630,7 @@ export function LedgerAnalysisScreen() {
                   onPress={() => {
                     const range = analysisDateBounds(rangeDraft.from, rangeDraft.through);
                     if (!range) {
-                      setRangeError(
-                        "Enter valid dates as YYYY-MM-DD, with the end on or after the start.",
-                      );
+                      setRangeError(t("ui.enterValidDatesAsYyyymmddWithTheEndOnOr"));
                       return;
                     }
                     setRangeOpen(false);
@@ -609,7 +638,7 @@ export function LedgerAnalysisScreen() {
                   }}
                   style={styles.rangeOption}
                 >
-                  <Text style={shared.link}>Apply custom range</Text>
+                  <Text style={shared.link}>{t("ui.applyCustomRange")}</Text>
                 </Pressable>
               </>
             ) : null}
@@ -623,7 +652,10 @@ export function LedgerAnalysisScreen() {
         onRequestClose={() => setCategoryMenu(null)}
       >
         <View style={styles.modalPage}>
-          <SheetHeader title="Choose category" onLeft={() => setCategoryMenu(null)} />
+          <SheetHeader
+            title={t("ui.chooseCategory")}
+            onLeft={() => setCategoryMenu(null)}
+          />
           <ScrollView contentContainerStyle={styles.modalContent}>
             {[null, ...categoryChoices].map((category) => (
               <Pressable
@@ -637,7 +669,9 @@ export function LedgerAnalysisScreen() {
                 }}
                 style={styles.rangeOption}
               >
-                <Text style={shared.link}>{category ?? "All categories"}</Text>
+                <Text style={shared.link}>
+                  {category ? categoryLabel(category) : t("ui.allCategories")}
+                </Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -647,82 +681,71 @@ export function LedgerAnalysisScreen() {
   );
 }
 
-function AnalysisMaterial({
-  children,
-  style,
-}: {
-  children: React.ReactNode;
-  style: import("react-native").StyleProp<import("react-native").ViewStyle>;
-}) {
-  return Platform.OS === "ios" && isLiquidGlassAvailable() ? (
-    <GlassView
-      colorScheme="light"
-      glassEffectStyle="regular"
-      tintColor="#F6F7F9"
-      style={style}
-    >
-      {children}
-    </GlassView>
-  ) : (
-    <View style={[style, styles.materialFallback]}>{children}</View>
-  );
-}
-const styles = StyleSheet.create({
-  page: { backgroundColor: "#F6F7F9", flex: 1 },
-  tripContext: {
-    color: "#64748B",
-    fontSize: 13,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  pinnedScope: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#DDE3E7",
-    zIndex: 2,
-  },
-  materialFallback: { backgroundColor: "rgba(246,247,249,0.98)", elevation: 3 },
-  segment: {
-    flexDirection: "row",
-  },
-  segmentItem: {
-    alignItems: "center",
-    borderBottomWidth: 3,
-    borderBottomColor: "transparent",
-    flexDirection: "row",
-    gap: 7,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 52,
-    paddingVertical: 7,
-  },
-  segmentSelected: { borderBottomColor: "#0F766E" },
-  segmentText: { color: "#64748B", fontSize: 16, fontWeight: "600" },
-  segmentTextSelected: { color: "#0F766E" },
-  countLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 5 },
-  excludedExpense: { padding: 12, gap: 5, backgroundColor: "#FFFFFF", borderRadius: 10 },
-  excludedTitle: { color: "#111827", fontSize: 15, fontWeight: "600" },
-  retry: { minHeight: 44, justifyContent: "center" },
-  surface: { backgroundColor: "#FFFFFF", borderRadius: 14, overflow: "hidden" },
-  modalPage: { flex: 1, backgroundColor: "#F6F7F9" },
-  modalContent: { padding: 16, gap: 10 },
-  rangeOption: {
-    minHeight: 48,
-    justifyContent: "center",
-    padding: 12,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-  },
-  dateInput: {
-    minHeight: 48,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
-    color: "#111827",
-    fontSize: 16,
-  },
-});
+const createStyles = (colors: UiColors) => {
+  const segment = segmentedControlTokens(colors);
+  return StyleSheet.create({
+    page: { backgroundColor: colors.background, flex: 1 },
+    tripContext: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+    },
+    pinnedScope: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      backgroundColor: segment.trackSurface,
+      zIndex: 2,
+    },
+    segment: {
+      flexDirection: "row",
+    },
+    segmentItem: {
+      alignItems: "center",
+      borderBottomWidth: 3,
+      borderBottomColor: colors.transparent,
+      flexDirection: "row",
+      gap: 7,
+      flex: 1,
+      justifyContent: "center",
+      minHeight: 52,
+      paddingVertical: 7,
+    },
+    segmentSelected: {
+      backgroundColor: segment.selectedSurface,
+      borderBottomColor: segment.indicator,
+    },
+    segmentText: { color: segment.label, fontSize: 16, fontWeight: "600" },
+    segmentTextSelected: { color: segment.selectedLabel },
+    countLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 5 },
+    excludedExpense: {
+      padding: 12,
+      gap: 5,
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+    },
+    excludedTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
+    retry: { minHeight: 44, justifyContent: "center" },
+    surface: { backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden" },
+    modalPage: { flex: 1, backgroundColor: colors.background },
+    modalContent: { padding: 16, gap: 10 },
+    rangeOption: {
+      minHeight: 48,
+      justifyContent: "center",
+      padding: 12,
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+    },
+    dateInput: {
+      minHeight: 48,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: colors.separator,
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+      color: colors.textPrimary,
+      fontSize: 16,
+    },
+  });
+};

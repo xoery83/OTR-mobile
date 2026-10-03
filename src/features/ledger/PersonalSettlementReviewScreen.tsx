@@ -1,3 +1,7 @@
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { t } from "@/ui/locale";
 import { MoneyText, type MoneyTextProps } from "./MoneyText";
 import {
   ActivityIndicator,
@@ -14,14 +18,16 @@ import { usePersonalSettlementReview } from "@/hooks/usePersonalSettlementReview
 import { formatLedgerMoney } from "./format";
 
 export function PersonalSettlementReviewScreen() {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const { journeyId } = useLocalSearchParams<{ journeyId?: string }>();
   const review = usePersonalSettlementReview(journeyId);
   const state = review.state;
   if (!state)
     return (
       <View style={styles.center}>
-        <ActivityIndicator accessibilityLabel="Loading personal settlement" />
-        <Text style={styles.meta}>Loading your settlement…</Text>
+        <ActivityIndicator accessibilityLabel={t("reviewFlow.copy33")} />
+        <Text style={styles.meta}>{t("reviewFlow.copy34")}</Text>
       </View>
     );
   const statement = state.statement;
@@ -36,39 +42,35 @@ export function PersonalSettlementReviewScreen() {
 
   return (
     <ScrollView
+      style={styles.viewport}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
     >
       <Text accessibilityRole="header" style={styles.title}>
-        Your settlement so far
+        {t("reviewFlow.copy35")}
       </Text>
-      <Text style={styles.body}>
-        This is your personal view of the group’s canonical settlement. Reviewing it is
-        optional and does not block the organizer.
-      </Text>
+      <Text style={styles.body}>{t("reviewFlow.copy36")}</Text>
 
       {statement.unresolvedSource ? (
-        <Text style={styles.message}>
-          Some expenses still need a confirmed value. Totals below include accepted values
-          only. Looks good acknowledges the current expenses; it does not confirm exchange
-          rates.
-        </Text>
+        <Text style={styles.message}>{t("reviewFlow.copy37")}</Text>
       ) : null}
       <View style={styles.summary}>
         <Amount
-          label="Paid for group"
+          label={t("settlement.paidForGroup")}
           minor={statement.paidMinor}
           currency={statement.currency}
           scale={statement.scale}
         />
         <Amount
-          label="Your share"
+          label={t("settlement.yourShare")}
           minor={statement.shareMinor}
           currency={statement.currency}
           scale={statement.scale}
         />
         <Amount
-          label={statement.settlementId ? "Final balance" : "Current balance"}
+          label={
+            statement.settlementId ? t("reviewFlow.copy38") : t("settlement.balance")
+          }
           minor={statement.balanceMinor}
           currency={statement.currency}
           scale={statement.scale}
@@ -79,7 +81,7 @@ export function PersonalSettlementReviewScreen() {
       {state.delta ? (
         <View style={styles.notice}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Updated since you reviewed
+            {t("reviewFlow.copy39")}
           </Text>
           <MoneyText
             variant="headline"
@@ -90,8 +92,12 @@ export function PersonalSettlementReviewScreen() {
             signed
           />
           <Text style={styles.body}>
-            {state.delta.changedExpenses.length} expense
-            {state.delta.changedExpenses.length === 1 ? "" : "s"} changed
+            {t(
+              state.delta.changedExpenses.length === 1
+                ? "reviewFlow.changedOne"
+                : "reviewFlow.changedOther",
+              { count: state.delta.changedExpenses.length },
+            )}
           </Text>
         </View>
       ) : null}
@@ -99,7 +105,7 @@ export function PersonalSettlementReviewScreen() {
       {state.delta ? (
         <View style={styles.section}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Since your last review
+            {t("reviewFlow.copy42")}
           </Text>
           {state.delta.changedExpenses.map((change) => (
             <Pressable
@@ -110,11 +116,13 @@ export function PersonalSettlementReviewScreen() {
             >
               <Text style={styles.cardTitle}>{change.expenseTitleSnapshot}</Text>
               <Text style={styles.meta}>
-                Your share {money(change.oldContribution?.shareMinor ?? 0)} →{" "}
-                {money(change.newContribution?.shareMinor ?? 0)}
+                {t("reviewFlow.shareChange", {
+                  before: money(change.oldContribution?.shareMinor ?? 0),
+                  after: money(change.newContribution?.shareMinor ?? 0),
+                })}
               </Text>
               <Text style={styles.meta}>{changeReason(change.changeGroups)}</Text>
-              <Text style={styles.link}>View Expense · Something looks wrong</Text>
+              <Text style={styles.link}>{t("reviewFlow.copy43")}</Text>
             </Pressable>
           ))}
         </View>
@@ -126,25 +134,23 @@ export function PersonalSettlementReviewScreen() {
           onPress={() => router.push("/expenses")}
           style={styles.secondary}
         >
-          <Text style={styles.secondaryText}>View spending</Text>
+          <Text style={styles.secondaryText}>{t("reviewFlow.copy44")}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
           onPress={() => router.push(`/expenses/review?journeyId=${journeyId}`)}
           style={styles.secondary}
         >
-          <Text style={styles.secondaryText}>Open Review</Text>
+          <Text style={styles.secondaryText}>{t("reviewFlow.copy45")}</Text>
         </Pressable>
       </View>
 
       {state.syncStatus === "CONFLICT" ? (
-        <Text style={styles.message}>
-          Settlement changed before sync. Review the updated statement again.
-        </Text>
+        <Text style={styles.message}>{t("reviewFlow.copy46")}</Text>
       ) : null}
       <View style={styles.section}>
         <Text accessibilityRole="header" style={styles.sectionTitle}>
-          Review status
+          {t("reviewFlow.copy47")}
         </Text>
         <View style={styles.actions}>
           {(["LOOKS_GOOD", "STILL_CHECKING"] as const).map((reviewState) => {
@@ -159,7 +165,9 @@ export function PersonalSettlementReviewScreen() {
                 style={[styles.secondary, selected && styles.selectedStatus]}
               >
                 <Text style={styles.secondaryText}>
-                  {reviewState === "LOOKS_GOOD" ? "Looks good" : "Still checking"}
+                  {reviewState === "LOOKS_GOOD"
+                    ? t("settlement.looksGood")
+                    : t("settlement.stillChecking")}
                 </Text>
               </Pressable>
             );
@@ -171,6 +179,7 @@ export function PersonalSettlementReviewScreen() {
 }
 
 function Amount({ label, ...money }: MoneyTextProps & { label: string }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View>
       <Text style={styles.meta}>{label}</Text>
@@ -180,49 +189,61 @@ function Amount({ label, ...money }: MoneyTextProps & { label: string }) {
 }
 
 function changeReason(groups: string[]) {
-  if (groups.includes("INCLUSION"))
-    return "Included people or settlement participation changed";
-  if (groups.includes("PAYER")) return "Who paid changed";
-  if (groups.includes("SHARE")) return "Your split changed";
-  return "Amount or accepted valuation changed";
+  if (groups.includes("INCLUSION")) return t("reviewFlow.copy48");
+  if (groups.includes("PAYER")) return t("reviewFlow.copy49");
+  if (groups.includes("SHARE")) return t("reviewFlow.copy50");
+  return t("reviewFlow.copy51");
 }
 
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  content: { padding: 20, gap: 18 },
-  title: { fontSize: 28, fontWeight: "800", color: "#102033" },
-  body: { fontSize: 16, lineHeight: 23, color: "#405064" },
-  meta: { fontSize: 14, lineHeight: 20, color: "#66758a" },
-  summary: { gap: 16, padding: 18, borderRadius: 18, backgroundColor: "#f3f6fa" },
-  amount: { fontSize: 24, fontWeight: "800", color: "#102033" },
-  deltaAmount: { fontSize: 24, fontWeight: "800", color: "#9b3d18" },
-  notice: { gap: 6, padding: 18, borderRadius: 18, backgroundColor: "#fff1e8" },
-  section: { gap: 10 },
-  sectionTitle: { fontSize: 20, fontWeight: "800", color: "#102033" },
-  card: {
-    gap: 6,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#dde4ec",
-  },
-  cardTitle: { fontSize: 16, fontWeight: "700", color: "#102033" },
-  link: { fontSize: 14, fontWeight: "700", color: "#1769aa" },
-  actions: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  secondary: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#9aabba",
-  },
-  secondaryText: { fontWeight: "700", color: "#26445f" },
-  selectedStatus: { backgroundColor: "#D1FAE5", borderColor: "#059669" },
-  message: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: "#fff1e8",
-    color: "#7c3519",
-  },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    viewport: { flex: 1, backgroundColor: colors.background },
+    center: {
+      backgroundColor: colors.background,
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 12,
+    },
+    content: { padding: 20, gap: 18 },
+    title: { fontSize: 28, fontWeight: "800", color: colors.textPrimary },
+    body: { fontSize: 16, lineHeight: 23, color: colors.textSecondary },
+    meta: { fontSize: 14, lineHeight: 20, color: colors.textSecondary },
+    summary: { gap: 16, padding: 18, borderRadius: 18, backgroundColor: colors.surface },
+    amount: { fontSize: 24, fontWeight: "800", color: colors.textPrimary },
+    deltaAmount: { fontSize: 24, fontWeight: "800", color: colors.warning },
+    notice: {
+      gap: 6,
+      padding: 18,
+      borderRadius: 18,
+      backgroundColor: colors.warningSurface,
+    },
+    section: { gap: 10 },
+    sectionTitle: { fontSize: 20, fontWeight: "800", color: colors.textPrimary },
+    card: {
+      gap: 6,
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.separator,
+    },
+    cardTitle: { fontSize: 16, fontWeight: "700", color: colors.textPrimary },
+    link: { fontSize: 14, fontWeight: "700", color: colors.accent },
+    actions: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    secondary: {
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.separator,
+    },
+    secondaryText: { fontWeight: "700", color: colors.textPrimary },
+    selectedStatus: { backgroundColor: colors.selected, borderColor: colors.accent },
+    message: {
+      padding: 12,
+      borderRadius: 12,
+      backgroundColor: colors.warningSurface,
+      color: colors.warning,
+    },
+  });

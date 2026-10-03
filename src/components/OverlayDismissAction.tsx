@@ -1,3 +1,4 @@
+import { useUiTheme } from "@/ui/theme";
 import type { ColorValue } from "react-native";
 import { Pressable, StyleSheet } from "react-native";
 
@@ -6,12 +7,13 @@ import { AppIcon } from "./AppIcon";
 export function OverlayDismissAction({
   label,
   onPress,
-  color = "#334155",
+  color,
 }: {
   label: string;
   onPress: () => void;
   color?: ColorValue;
 }) {
+  const colors = useUiTheme();
   return (
     <Pressable
       accessibilityLabel={label}
@@ -19,7 +21,7 @@ export function OverlayDismissAction({
       onPress={onPress}
       style={styles.target}
     >
-      <AppIcon name="xmark" color={color} size={18} />
+      <AppIcon name="xmark" color={color ?? colors.textTertiary} size={18} />
     </Pressable>
   );
 }

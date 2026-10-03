@@ -1,3 +1,9 @@
+import { systemMessage, categoryLabel } from "@/ui/domainLabels";
+import { UiTextInput as TextInput } from "@/ui/forms";
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -9,13 +15,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 
-import { contentVisual as cv } from "./contentVisual";
+import { visual as cv } from "@/ui/visual";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import type { LedgerReportListItem } from "@/data/repositories/ledgerReportingRepository";
 import type { LedgerJourneyContext } from "@/domain/ledger/journeyContext";
@@ -56,6 +61,9 @@ type SearchView = {
 };
 
 export function LedgerSearchScreen() {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const largeText = useWindowDimensions().fontScale > 2;
   const params = useLocalSearchParams<{
     journeyId: string;
@@ -157,7 +165,7 @@ export function LedgerSearchScreen() {
         });
         return true;
       } catch {
-        if (request.isCurrent(id)) setError("Expenses could not be updated.");
+        if (request.isCurrent(id)) setError(t("search.updateFailed"));
         return false;
       } finally {
         if (request.isCurrent(id)) setUpdating(false);
@@ -191,8 +199,7 @@ export function LedgerSearchScreen() {
         setJourney(journeys.find((item) => item.journeyId === params.journeyId) ?? null);
       })
       .catch(() => {
-        if (active)
-          setError("Filters are unavailable. Cached Expenses remain searchable.");
+        if (active) setError(t("search.filtersUnavailable"));
       });
     return () => {
       active = false;
@@ -271,7 +278,7 @@ export function LedgerSearchScreen() {
           : latest,
       );
     } catch {
-      if (moreRequest.isCurrent(id)) setMoreError("More Expenses could not be loaded.");
+      if (moreRequest.isCurrent(id)) setMoreError(t("search.moreFailed"));
     } finally {
       if (moreRequest.isCurrent(id)) setLoadingMore(false);
     }
@@ -287,7 +294,15 @@ export function LedgerSearchScreen() {
       item.originalComponentMinor !== item.originalMinor;
     return (
       <Pressable
-        accessibilityLabel={`${item.title}, ${group ? "total" : "share"} ${amounts.primary}${amounts.secondary ? `, original ${amounts.secondary}` : ""}${attention ? `, ${attention}` : ""}`}
+        accessibilityLabel={t("search.rowDescription", {
+          title: item.title,
+          kind: group ? t("search.totalLower") : t("search.share"),
+          amount: amounts.primary,
+          original: amounts.secondary
+            ? t("search.originalDescription", { amount: amounts.secondary })
+            : "",
+          attention: attention ? `, ${attention}` : "",
+        })}
         accessibilityRole="button"
         onPress={() => router.push(`/expenses/expense/${item.id}`)}
         style={[styles.row, largeText && styles.stack]}
@@ -297,23 +312,26 @@ export function LedgerSearchScreen() {
             {item.title}
           </Text>
           <Text maxFontSizeMultiplier={2} numberOfLines={2} style={styles.meta}>
-            {item.category} · {formatLedgerDate(item.occurredAt)}
-            {group ? ` · ${item.payerName} paid` : ""}
+            {categoryLabel(item.category)} · {formatLedgerDate(item.occurredAt)}
+            {group ? t("search.payerPaid", { name: item.payerName }) : ""}
           </Text>
           {group ? (
             <Text maxFontSizeMultiplier={2} style={styles.meta}>
-              {item.participantCount} {item.participantCount === 1 ? "person" : "people"}
-              {item.unevenSplit ? " · Uneven split" : ""}
+              {item.participantCount}{" "}
+              {item.participantCount === 1 ? t("search.person") : t("search.people")}
+              {item.unevenSplit ? t("search.uneven") : ""}
             </Text>
           ) : hasDistinctShare ? (
             <Text maxFontSizeMultiplier={2} style={styles.meta}>
-              Total{" "}
+              {t("search.total")}{" "}
               {formatLedgerMoney(
                 item.originalMinor,
                 item.originalCurrency,
                 item.originalScale,
               )}
-              {item.participantCount > 1 ? ` · Split ${item.participantCount}` : ""}
+              {item.participantCount > 1
+                ? t("search.splitCount", { count: item.participantCount })
+                : ""}
             </Text>
           ) : null}
           {attention ? (
@@ -328,7 +346,7 @@ export function LedgerSearchScreen() {
             minor={group ? item.settlementMinor : item.componentMinor}
             currency={item.settlementCurrency}
             scale={item.settlementScale}
-            placeholder="Journey value unavailable"
+            placeholder={t("search.journeyValueUnavailable")}
           />
           {amounts.secondary ? (
             <MoneyText
@@ -348,20 +366,22 @@ export function LedgerSearchScreen() {
     <View style={styles.flex}>
       <Stack.Screen
         options={{
-          headerTitle: "Search",
+          headerTitle: t("search.search"),
         }}
       />
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
-          accessibilityLabel={`Filter expenses${filterCount ? `, ${filterCount} active` : ""}`}
+          accessibilityLabel={t("search.filterAction", {
+            active: filterCount ? t("search.activeFilters", { count: filterCount }) : "",
+          })}
           icon="line.3.horizontal.decrease"
           onPress={() => setFilterOpen(true)}
         >
           {filterCount ? (
             <Stack.Toolbar.Badge
               style={{
-                backgroundColor: "#0F766E",
-                color: "#FFFFFF",
+                backgroundColor: colors.accent,
+                color: colors.onAccent,
                 fontSize: 10,
                 fontWeight: "700",
               }}
@@ -372,12 +392,12 @@ export function LedgerSearchScreen() {
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
       <TextInput
-        accessibilityLabel="Search Expenses"
+        accessibilityLabel={t("ledger.searchExpenses")}
         autoCapitalize="none"
         autoCorrect={false}
         clearButtonMode="while-editing"
         onChangeText={setQueryText}
-        placeholder="Search Expenses"
+        placeholder={t("ledger.searchExpenses")}
         returnKeyType="search"
         style={styles.search}
         value={queryText}
@@ -410,7 +430,7 @@ export function LedgerSearchScreen() {
           resultsPending && error ? (
             <View style={styles.errorCard}>
               <Text accessibilityLiveRegion="polite" style={styles.error}>
-                {error}
+                {systemMessage(error)}
               </Text>
               <Pressable
                 accessibilityRole="button"
@@ -419,21 +439,21 @@ export function LedgerSearchScreen() {
                 }
                 style={styles.linkButton}
               >
-                <Text style={styles.link}>Try Again</Text>
+                <Text style={styles.link}>{t("common.tryAgain")}</Text>
               </Pressable>
             </View>
           ) : resultsPending ? (
-            <StatusCard busy text="Updating results…" />
+            <StatusCard busy text={t("search.updatingResults")} />
           ) : (
             <View style={styles.emptyCard}>
-              <Text style={styles.empty}>No matching Expenses.</Text>
+              <Text style={styles.empty}>{t("search.noMatches")}</Text>
               {filterCount ? (
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => void applyFilters({})}
                   style={styles.linkButton}
                 >
-                  <Text style={styles.link}>Clear Filters</Text>
+                  <Text style={styles.link}>{t("search.clearFilters")}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -448,7 +468,9 @@ export function LedgerSearchScreen() {
               onPress={() => void loadMore()}
               style={styles.footer}
             >
-              <Text style={styles.error}>{moreError} Try Again</Text>
+              <Text style={styles.error}>
+                {moreError} {t("common.tryAgain")}
+              </Text>
             </Pressable>
           ) : null
         }
@@ -458,7 +480,7 @@ export function LedgerSearchScreen() {
               {error ? (
                 <View style={[styles.errorCard, styles.headerError]}>
                   <Text accessibilityLiveRegion="polite" style={styles.error}>
-                    {error}
+                    {systemMessage(error)}
                   </Text>
                   <Pressable
                     accessibilityRole="button"
@@ -467,19 +489,27 @@ export function LedgerSearchScreen() {
                     }
                     style={styles.linkButton}
                   >
-                    <Text style={styles.link}>Try Again</Text>
+                    <Text style={styles.link}>{t("common.tryAgain")}</Text>
                   </Pressable>
                 </View>
               ) : null}
               <View style={styles.summary}>
                 <Text maxFontSizeMultiplier={2} style={styles.origin}>
                   {paidMemberId
-                    ? `Paid by ${options.members.find((item) => item.id === paidMemberId)?.label ?? "selected traveller"}`
+                    ? t("search.paidByName", {
+                        name:
+                          options.members.find((item) => item.id === paidMemberId)
+                            ?.label ?? t("search.selectedTraveller"),
+                      })
                     : searchView.type === "person"
-                      ? `${options.members.find((item) => item.id === memberId)?.label ?? "Traveller"}'s spending`
+                      ? t("search.memberSpending", {
+                          name:
+                            options.members.find((item) => item.id === memberId)?.label ??
+                            t("common.traveller"),
+                        })
                       : scope === "GROUP"
-                        ? "Group spending"
-                        : "My spending"}
+                        ? t("search.groupSpending")
+                        : t("search.mySpending")}
                   {params.origin ? ` · ${params.origin}` : ""}
                 </Text>
                 <Text
@@ -489,13 +519,20 @@ export function LedgerSearchScreen() {
                 >
                   {formatExpenseCount(view.resultCount).toLowerCase()}
                   {view.resultCount !== view.summary.expenseCount
-                    ? ` · ${view.summary.expenseCount} included`
+                    ? t("search.includedCount", { count: view.summary.expenseCount })
                     : ""}
                   {view.summary.unresolvedRateCount
-                    ? ` · ${view.summary.unresolvedRateCount} without journey value`
+                    ? t("search.withoutValueCount", {
+                        count: view.summary.unresolvedRateCount,
+                      })
                     : ""}
                   {view.summary.openConflictCount
-                    ? ` · ${view.summary.openConflictCount} ${view.summary.openConflictCount === 1 ? "conflict" : "conflicts"}`
+                    ? t(
+                        view.summary.openConflictCount === 1
+                          ? "search.conflictCountOne"
+                          : "search.conflictCount",
+                        { count: view.summary.openConflictCount },
+                      )
                     : ""}
                 </Text>
                 <MoneyText
@@ -508,11 +545,11 @@ export function LedgerSearchScreen() {
                 />
                 {updating ? (
                   <Text accessibilityLiveRegion="polite" style={styles.context}>
-                    Updating…
+                    {t("common.updating")}
                   </Text>
                 ) : authoritativeOnly ? (
                   <Text maxFontSizeMultiplier={2} style={styles.context}>
-                    Matches the Expenses included in analysis.
+                    {t("search.matchesAnalysis")}
                   </Text>
                 ) : null}
               </View>
@@ -542,7 +579,8 @@ export function LedgerSearchScreen() {
 
 function activeLabels(filters: ReportingFilters, options: Options) {
   const member = (id: string | undefined) =>
-    options.members.find((item) => item.id === id)?.label ?? "Selected traveller";
+    options.members.find((item) => item.id === id)?.label ??
+    t("search.selectedTraveller");
   return [
     filters.from && {
       key: "from" as const,
@@ -550,40 +588,42 @@ function activeLabels(filters: ReportingFilters, options: Options) {
     },
     filters.category && {
       key: "category" as const,
-      label: `Category: ${filters.category}`,
+      label: t("search.categoryLabel", { name: categoryLabel(filters.category!) }),
     },
     filters.categories?.length && {
       key: "categories" as const,
-      label: `Categories: ${filters.categories.join(", ")}`,
+      label: t("search.categoriesLabel", { names: filters.categories!.join(", ") }),
     },
     filters.analysisState && {
       key: "analysisState" as const,
       label:
-        filters.analysisState === "INCLUDED" ? "Included spending" : "Not included yet",
+        filters.analysisState === "INCLUDED"
+          ? t("search.included")
+          : t("search.notIncluded"),
     },
     filters.payerMemberId && {
       key: "payerMemberId" as const,
-      label: `Paid by: ${member(filters.payerMemberId)}`,
+      label: t("search.payerLabel", { name: member(filters.payerMemberId) }),
     },
     filters.participantMemberId && {
       key: "participantMemberId" as const,
-      label: `Includes: ${member(filters.participantMemberId)}`,
+      label: t("search.includesLabel", { name: member(filters.participantMemberId) }),
     },
     filters.currency && {
       key: "currency" as const,
-      label: `Currency: ${filters.currency}`,
+      label: t("search.currencyLabel", { currency: filters.currency! }),
     },
     filters.valuation === "RATE_REQUIRED" && {
       key: "valuation" as const,
-      label: "Needs exchange rate",
+      label: t("search.rateRequired"),
     },
     filters.valuation === "VALUED" && {
       key: "valuation" as const,
-      label: "Has exchange value",
+      label: t("search.hasValue"),
     },
     filters.conflict === "OPEN" && {
       key: "conflict" as const,
-      label: "Conflict needs review",
+      label: t("search.conflictReview"),
     },
   ].filter(Boolean) as { key: keyof ReportingFilters; label: string }[];
 }
@@ -616,6 +656,8 @@ function FilterSheet({
   onCancel: () => void;
   options: Options;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 2;
   const [draft, setDraft] = useState(initial);
   const [dateMode, setDateMode] = useState<LedgerDatePreset>(
@@ -635,7 +677,7 @@ function FilterSheet({
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title,
-        options: [...values.map((item) => item.label), "Cancel"],
+        options: [...values.map((item) => item.label), t("common.cancel")],
         cancelButtonIndex: values.length,
       },
       (index) => {
@@ -653,7 +695,7 @@ function FilterSheet({
   const apply = async () => {
     const date = ledgerDateFilter(dateMode, null, "", rangeStart, rangeEnd);
     if (!date) {
-      setDateError("Enter valid dates in YYYY-MM-DD order.");
+      setDateError(t("search.invalidDates"));
       return;
     }
     setApplying(true);
@@ -670,17 +712,23 @@ function FilterSheet({
     >
       <View style={styles.sheet}>
         <SheetHeader
-          leftLabel={page === "main" ? "Cancel" : "Back"}
+          leftLabel={page === "main" ? t("common.cancel") : t("common.back")}
           onLeft={page === "main" ? onCancel : () => setPage("main")}
           onRight={page === "main" ? () => void apply() : () => setPage("main")}
           rightDisabled={applying}
-          rightLabel={page === "main" ? (applying ? "Applying…" : "Apply") : "Done"}
+          rightLabel={
+            page === "main"
+              ? applying
+                ? t("common.applying")
+                : t("common.apply")
+              : t("common.done")
+          }
           title={
             page === "main"
-              ? "Filters"
+              ? t("search.filters")
               : page === "currency"
-                ? "Currency"
-                : "Needs attention"
+                ? t("navigation.currency")
+                : t("ledger.needsAttention")
           }
         />
         <ScrollView
@@ -689,15 +737,15 @@ function FilterSheet({
         >
           {page === "main" ? (
             <>
-              <FilterSection title="Time">
+              <FilterSection title={t("search.time")}>
                 <View style={styles.wrap}>
                   {(
                     [
-                      ["ANY", "All"],
-                      ["TODAY", "Today"],
-                      ["YESTERDAY", "Yesterday"],
-                      ["LAST_30", "Last 30 days"],
-                      ["RANGE", "Custom…"],
+                      ["ANY", t("search.all")],
+                      ["TODAY", t("search.today")],
+                      ["YESTERDAY", t("search.yesterday")],
+                      ["LAST_30", t("search.last30")],
+                      ["RANGE", t("search.custom")],
                     ] as [LedgerDatePreset, string][]
                   ).map(([value, label]) => (
                     <Choice
@@ -714,11 +762,15 @@ function FilterSheet({
                 {dateMode === "RANGE" ? (
                   <View style={[styles.dateRow, largeText && styles.dateRowLarge]}>
                     <DateInput
-                      label="Start"
+                      label={t("search.start")}
                       onChange={setRangeStart}
                       value={rangeStart}
                     />
-                    <DateInput label="End" onChange={setRangeEnd} value={rangeEnd} />
+                    <DateInput
+                      label={t("search.end")}
+                      onChange={setRangeEnd}
+                      value={rangeEnd}
+                    />
                   </View>
                 ) : null}
                 {dateError ? (
@@ -727,28 +779,31 @@ function FilterSheet({
                   </Text>
                 ) : null}
               </FilterSection>
-              <FilterSection title="Details">
+              <FilterSection title={t("search.details")}>
                 <FilterRow
                   active={!!draft.category}
-                  label="Category"
+                  label={t("search.category")}
                   onPress={() =>
                     choose(
-                      "Category",
+                      t("search.category"),
                       [
-                        { label: "Any", value: undefined },
-                        ...options.categories.map((value) => ({ label: value, value })),
+                        { label: t("common.any"), value: undefined },
+                        ...options.categories.map((value) => ({
+                          label: categoryLabel(value),
+                          value,
+                        })),
                       ],
                       "category",
                     )
                   }
-                  value={draft.category ?? "Any"}
+                  value={draft.category ? categoryLabel(draft.category) : t("common.any")}
                 />
                 {!lockedPayer ? (
                   <FilterRow
                     active={!!draft.payerMemberId}
-                    label="Paid by"
+                    label={t("search.paidBy")}
                     onPress={() =>
-                      choose("Paid by", memberChoices(options), "payerMemberId")
+                      choose(t("search.paidBy"), memberChoices(options), "payerMemberId")
                     }
                     value={optionLabel(options, draft.payerMemberId)}
                   />
@@ -756,40 +811,46 @@ function FilterSheet({
                 {scope === "GROUP" ? (
                   <FilterRow
                     active={!!draft.participantMemberId}
-                    label="Participant"
+                    label={t("search.participant")}
                     onPress={() =>
-                      choose("Participant", memberChoices(options), "participantMemberId")
+                      choose(
+                        t("search.participant"),
+                        memberChoices(options),
+                        "participantMemberId",
+                      )
                     }
                     value={optionLabel(options, draft.participantMemberId)}
                   />
                 ) : null}
               </FilterSection>
-              <FilterSection title="More">
+              <FilterSection title={t("search.more")}>
                 <FilterRow
                   active={!!draft.currency}
-                  label="Currency"
+                  label={t("navigation.currency")}
                   onPress={() => setPage("currency")}
-                  value={draft.currency ?? "Any"}
+                  value={draft.currency ?? t("common.any")}
                 />
                 <FilterRow
                   active={!!draft.valuation || !!draft.conflict}
-                  label="Needs attention"
+                  label={t("ledger.needsAttention")}
                   onPress={() => setPage("attention")}
                   value={
                     [
-                      draft.valuation === "RATE_REQUIRED" ? "Journey value" : null,
-                      draft.conflict === "OPEN" ? "Conflict" : null,
+                      draft.valuation === "RATE_REQUIRED"
+                        ? t("search.journeyValue")
+                        : null,
+                      draft.conflict === "OPEN" ? t("search.conflict") : null,
                     ]
                       .filter(Boolean)
-                      .join(", ") || "None"
+                      .join(", ") || t("search.none")
                   }
                 />
               </FilterSection>
             </>
           ) : page === "currency" ? (
-            <FilterSection title="Currency">
+            <FilterSection title={t("navigation.currency")}>
               {[
-                { label: "Any", value: undefined },
+                { label: t("common.any"), value: undefined },
                 ...options.currencies.map((value) => ({ label: value, value })),
               ].map((item) => (
                 <FilterRow
@@ -804,10 +865,10 @@ function FilterSheet({
               ))}
             </FilterSection>
           ) : (
-            <FilterSection title="Needs attention">
+            <FilterSection title={t("ledger.needsAttention")}>
               <View style={styles.attentionChoices}>
                 <Choice
-                  label="Journey value unavailable"
+                  label={t("search.journeyValueUnavailable")}
                   checkbox
                   onPress={() =>
                     setDraft((current) => ({
@@ -821,7 +882,7 @@ function FilterSheet({
                   selected={draft.valuation === "RATE_REQUIRED"}
                 />
                 <Choice
-                  label="Conflict needs review"
+                  label={t("search.conflictReview")}
                   checkbox
                   onPress={() =>
                     setDraft((current) => ({
@@ -844,7 +905,7 @@ function FilterSheet({
               }}
               style={styles.clearButton}
             >
-              <Text style={styles.error}>Clear All</Text>
+              <Text style={styles.error}>{t("search.clearAll")}</Text>
             </Pressable>
           ) : null}
         </ScrollView>
@@ -862,14 +923,15 @@ function inclusiveEnd(to?: string) {
 
 function memberChoices(options: Options) {
   return [
-    { label: "Any", value: undefined },
+    { label: t("common.any"), value: undefined },
     ...options.members.map((item) => ({ label: item.label, value: item.id })),
   ];
 }
 
 function optionLabel(options: Options, id?: string) {
   return id
-    ? (options.members.find((item) => item.id === id)?.label ?? "Selected traveller")
+    ? (options.members.find((item) => item.id === id)?.label ??
+        t("search.selectedTraveller"))
     : "Any";
 }
 
@@ -880,6 +942,7 @@ function FilterSection({
   children: React.ReactNode;
   title: string;
 }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -899,6 +962,7 @@ function FilterRow({
   onPress: () => void;
   value: string;
 }) {
+  const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 2;
   return (
     <Pressable
@@ -932,6 +996,7 @@ function Choice({
   onPress: () => void;
   selected: boolean;
 }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <Pressable
       accessibilityRole={checkbox ? "checkbox" : "button"}
@@ -955,15 +1020,17 @@ function DateInput({
   onChange: (value: string) => void;
   value: string;
 }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.dateInput}>
       <Text style={styles.inputLabel}>{label}</Text>
       <TextInput
-        accessibilityLabel={`${label}, YYYY-MM-DD`}
+        accessibilityLabel={t("search.dateLabel", { label })}
         autoCapitalize="none"
         keyboardType="numbers-and-punctuation"
         onChangeText={onChange}
-        placeholder="YYYY-MM-DD"
+        placeholder={t("search.dateFormat")}
         style={styles.input}
         value={value}
       />
@@ -972,9 +1039,11 @@ function DateInput({
 }
 
 function Chip({ label, onPress }: { label: string; onPress: () => void }) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   return (
     <Pressable
-      accessibilityHint="Removes this filter"
+      accessibilityHint={t("search.removeFilter")}
       accessibilityRole="button"
       onPress={onPress}
       style={styles.chip}
@@ -985,6 +1054,7 @@ function Chip({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 function StatusCard({ busy, text }: { busy?: boolean; text: string }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.statusCard}>
       {busy ? <ActivityIndicator /> : null}
@@ -995,126 +1065,142 @@ function StatusCard({ busy, text }: { busy?: boolean; text: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { backgroundColor: "#F6F7F9", flex: 1 },
-  search: {
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: 1,
-    color: "#111827",
-    fontSize: 17,
-    minHeight: 54,
-    paddingHorizontal: 16,
-  },
-  chipBar: { backgroundColor: "#F6F7F9", flexGrow: 0, maxHeight: 58 },
-  chipBarLarge: { maxHeight: 96 },
-  chips: { gap: 8, paddingHorizontal: 16, paddingVertical: 7 },
-  chip: {
-    backgroundColor: "#DDF4EF",
-    borderRadius: 18,
-    justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 14,
-  },
-  chipText: { color: "#0F766E", fontWeight: "700" },
-  content: { flexGrow: 1, padding: 16, paddingBottom: 40 },
-  summary: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    gap: 4,
-    marginBottom: 12,
-    padding: 14,
-  },
-  origin: { color: "#0F766E", fontWeight: "700" },
-  summaryText: { color: "#64748B", fontSize: 13 },
-  context: { color: "#64748B", fontSize: 12 },
-  total: { color: "#111827", fontSize: 24, fontWeight: "800" },
-  largeTotal: { fontSize: 20 },
-  row: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    gap: 10,
-    minHeight: 76,
-    padding: 14,
-  },
-  grow: { flex: 1, minWidth: 0 },
-  title: { color: cv.color.text, ...cv.type.row },
-  meta: { color: cv.color.secondary, ...cv.type.meta, marginTop: 3 },
-  warning: { color: "#B45309", fontSize: 12, fontWeight: "700", marginTop: 3 },
-  amountBlock: { alignItems: "flex-end", flexShrink: 0, maxWidth: "42%" },
-  amount: {
-    color: cv.color.text,
-    ...cv.type.rowAmount,
-    textAlign: "right",
-  },
-  secondaryAmount: { color: cv.color.secondary, ...cv.type.meta, textAlign: "right" },
-  largeAmount: { maxWidth: "100%" },
-  stack: { alignItems: "flex-start", flexDirection: "column" },
-  statusCard: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    flexDirection: "row",
-    gap: 8,
-    padding: 18,
-  },
-  errorCard: { backgroundColor: "#FEF2F2", borderRadius: 12, gap: 12, padding: 18 },
-  headerError: { marginBottom: 12 },
-  emptyCard: { alignItems: "center", gap: 12, padding: 40 },
-  empty: { color: "#64748B", textAlign: "center" },
-  error: { color: "#B91C1C", fontWeight: "600" },
-  link: { color: "#0F766E", fontWeight: "700", paddingVertical: 8 },
-  linkButton: { alignSelf: "flex-start", justifyContent: "center", minHeight: 44 },
-  footer: { alignItems: "center", justifyContent: "center", minHeight: 56, padding: 14 },
-  sheet: { backgroundColor: "#F6F7F9", flex: 1 },
-  form: { gap: 16, padding: 16, paddingBottom: 40 },
-  section: { backgroundColor: "#FFFFFF", borderRadius: 12, gap: 10, padding: 14 },
-  sectionTitle: { color: "#111827", fontSize: 16, fontWeight: "700" },
-  wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  attentionChoices: { gap: 8 },
-  choice: {
-    backgroundColor: "#F1F5F9",
-    borderRadius: 18,
-    justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 14,
-  },
-  choiceSelected: { backgroundColor: "#0F766E" },
-  choiceText: { color: "#334155", fontWeight: "600" },
-  choiceTextSelected: { color: "#FFFFFF" },
-  dateRow: { flexDirection: "row", gap: 10 },
-  dateRowLarge: { flexDirection: "column" },
-  dateInput: { flex: 1, gap: 5 },
-  inputLabel: { color: "#475569", fontSize: 13, fontWeight: "600" },
-  input: {
-    backgroundColor: "#F8FAFC",
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    borderWidth: 1,
-    color: "#111827",
-    fontSize: 16,
-    minHeight: 48,
-    paddingHorizontal: 10,
-  },
-  filterRow: {
-    alignItems: "center",
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 48,
-  },
-  filterRowLarge: {
-    alignItems: "flex-start",
-    flexDirection: "column",
-    paddingVertical: 8,
-  },
-  filterRowLabel: { color: "#111827", fontWeight: "600" },
-  filterRowValue: { color: "#64748B", flexShrink: 1, marginLeft: 16 },
-  filterRowValueActive: { color: "#0F766E" },
-  filterRowValueLarge: { marginLeft: 0 },
-  clearButton: { alignItems: "center", justifyContent: "center", minHeight: 48 },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    flex: { backgroundColor: colors.background, flex: 1 },
+    search: {
+      backgroundColor: colors.surface,
+      borderBottomColor: colors.separator,
+      borderBottomWidth: 1,
+      color: colors.textPrimary,
+      fontSize: 17,
+      minHeight: 54,
+      paddingHorizontal: 16,
+    },
+    chipBar: { backgroundColor: colors.background, flexGrow: 0, maxHeight: 58 },
+    chipBarLarge: { maxHeight: 96 },
+    chips: { gap: 8, paddingHorizontal: 16, paddingVertical: 7 },
+    chip: {
+      backgroundColor: colors.selected,
+      borderRadius: 18,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: 14,
+    },
+    chipText: { color: colors.accent, fontWeight: "700" },
+    content: { flexGrow: 1, padding: 16, paddingBottom: 40 },
+    summary: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      gap: 4,
+      marginBottom: 12,
+      padding: 14,
+    },
+    origin: { color: colors.accent, fontWeight: "700" },
+    summaryText: { color: colors.textSecondary, fontSize: 13 },
+    context: { color: colors.textSecondary, fontSize: 12 },
+    total: { color: colors.textPrimary, fontSize: 24, fontWeight: "800" },
+    largeTotal: { fontSize: 20 },
+    row: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 10,
+      minHeight: 76,
+      padding: 14,
+    },
+    grow: { flex: 1, minWidth: 0 },
+    title: { color: colors.textPrimary, ...cv.type.row },
+    meta: { color: colors.textSecondary, ...cv.type.meta, marginTop: 3 },
+    warning: {
+      color: colors.warningIndicator,
+      fontSize: 12,
+      fontWeight: "700",
+      marginTop: 3,
+    },
+    amountBlock: { alignItems: "flex-end", flexShrink: 0, maxWidth: "42%" },
+    amount: {
+      color: colors.textPrimary,
+      ...cv.type.rowAmount,
+      textAlign: "right",
+    },
+    secondaryAmount: { color: colors.textSecondary, ...cv.type.meta, textAlign: "right" },
+    largeAmount: { maxWidth: "100%" },
+    stack: { alignItems: "flex-start", flexDirection: "column" },
+    statusCard: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      flexDirection: "row",
+      gap: 8,
+      padding: 18,
+    },
+    errorCard: {
+      backgroundColor: colors.destructiveSurface,
+      borderRadius: 12,
+      gap: 12,
+      padding: 18,
+    },
+    headerError: { marginBottom: 12 },
+    emptyCard: { alignItems: "center", gap: 12, padding: 40 },
+    empty: { color: colors.textSecondary, textAlign: "center" },
+    error: { color: colors.destructive, fontWeight: "600" },
+    link: { color: colors.accent, fontWeight: "700", paddingVertical: 8 },
+    linkButton: { alignSelf: "flex-start", justifyContent: "center", minHeight: 44 },
+    footer: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 56,
+      padding: 14,
+    },
+    sheet: { backgroundColor: colors.background, flex: 1 },
+    form: { gap: 16, padding: 16, paddingBottom: 40 },
+    section: { backgroundColor: colors.surface, borderRadius: 12, gap: 10, padding: 14 },
+    sectionTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+    wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    attentionChoices: { gap: 8 },
+    choice: {
+      backgroundColor: colors.groupedBackground,
+      borderRadius: 18,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: 14,
+    },
+    choiceSelected: { backgroundColor: colors.accent },
+    choiceText: { color: colors.textTertiary, fontWeight: "600" },
+    choiceTextSelected: { color: colors.onAccent },
+    dateRow: { flexDirection: "row", gap: 10 },
+    dateRowLarge: { flexDirection: "column" },
+    dateInput: { flex: 1, gap: 5 },
+    inputLabel: { color: colors.textTertiary, fontSize: 13, fontWeight: "600" },
+    input: {
+      backgroundColor: colors.groupedBackground,
+      borderColor: colors.separator,
+      borderRadius: 8,
+      borderWidth: 1,
+      color: colors.textPrimary,
+      fontSize: 16,
+      minHeight: 48,
+      paddingHorizontal: 10,
+    },
+    filterRow: {
+      alignItems: "center",
+      borderBottomColor: colors.separator,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 48,
+    },
+    filterRowLarge: {
+      alignItems: "flex-start",
+      flexDirection: "column",
+      paddingVertical: 8,
+    },
+    filterRowLabel: { color: colors.textPrimary, fontWeight: "600" },
+    filterRowValue: { color: colors.textSecondary, flexShrink: 1, marginLeft: 16 },
+    filterRowValueActive: { color: colors.accent },
+    filterRowValueLarge: { marginLeft: 0 },
+    clearButton: { alignItems: "center", justifyContent: "center", minHeight: 48 },
+  });

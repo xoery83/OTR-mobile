@@ -7,14 +7,22 @@ const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/serve
   renderToStaticMarkup(element: ReactNode): string;
 };
 
+vi.mock("@react-native-community/datetimepicker", () => ({ default: "input" }));
+
 vi.mock("react-native", () => ({
+  useColorScheme: () => "light",
+  useWindowDimensions: () => ({ width: 375, fontScale: 1 }),
   ActivityIndicator: "span",
   Pressable: "button",
   ScrollView: "main",
   Text: "span",
   TextInput: "input",
   View: "div",
-  StyleSheet: { create: (value: unknown) => value },
+  StyleSheet: {
+    create: (value: unknown) => value,
+    flatten: (value: unknown) =>
+      Array.isArray(value) ? Object.assign({}, ...value) : value,
+  },
 }));
 vi.mock("expo-router", () => ({
   router: {},

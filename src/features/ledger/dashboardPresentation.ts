@@ -1,3 +1,4 @@
+import { t } from "@/ui/locale";
 import type { LedgerJourneyContext } from "@/domain/ledger/journeyContext";
 import type { ReportingBucket, ReportingScope } from "@/domain/ledger/reporting";
 
@@ -96,9 +97,9 @@ export function journeyPickerSections(
 }
 
 export function settlementPositionLabel(minor: number) {
-  if (minor < 0) return "You owe";
-  if (minor > 0) return "You are owed";
-  return "All settled";
+  if (minor < 0) return t("settlement.youOwe");
+  if (minor > 0) return t("settlement.youAreOwed");
+  return t("settlement.allSettled");
 }
 
 export function spendingPercentage(part: number, total: number) {
@@ -146,7 +147,7 @@ export function expenseAmountPresentation(
           ),
     total:
       scope === "MINE" && settlement && expense.componentMinor !== expense.settlementMinor
-        ? `Total ${settlement}`
+        ? t("ledger.totalAmount", { amount: settlement })
         : null,
     original:
       expense.originalCurrency === expense.settlementCurrency
@@ -160,7 +161,7 @@ export function expenseAmountPresentation(
             ),
     splitLabel:
       expense.settlementParticipation === "INCLUDED" && expense.participantCount > 1
-        ? "Split"
+        ? t("ledger.split")
         : null,
   };
 }

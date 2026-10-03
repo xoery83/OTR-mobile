@@ -1,3 +1,8 @@
+import { systemMessage, domainLabel } from "@/ui/domainLabels";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { t } from "@/ui/locale";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
 import { rateAcceptanceMessage } from "./settlementRateCandidates";
 import { useState, useCallback } from "react";
@@ -19,11 +24,16 @@ type RateAcceptanceProps = {
   onAccepted: () => void;
 };
 export function SettlementRateAcceptance(props: RateAcceptanceProps) {
+  useUiLocale();
+
   return (
     <RateAcceptanceForm key={`${getAccountGeneration()}:${props.journeyId}`} {...props} />
   );
 }
 function RateAcceptanceForm({ rates, journeyId, onAccepted }: RateAcceptanceProps) {
+  useUiLocale();
+
+  const styles = useThemedStyles(createStyles);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -92,12 +102,12 @@ function RateAcceptanceForm({ rates, journeyId, onAccepted }: RateAcceptanceProp
       !results.some((r) => r.state === "RETRYABLE_FAILURE" && !r.operationId));
   const accept = () =>
     Alert.alert(
-      "Accept these exchange rates?",
-      "These reference rates are from an earlier date. Accepting saves them as agreed values for these expenses. Published rates will not automatically replace them. Final confirmation follows a fresh check.",
+      t("ui.acceptTheseExchangeRates"),
+      t("ui.theseReferenceRatesAreFromAnEarlierDateAcceptingSaves"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("ui.cancel"), style: "cancel" },
         {
-          text: "Accept rates",
+          text: t("ui.acceptRates"),
           onPress: () => {
             if (blocked) return;
             setAttempted(signature);
@@ -116,7 +126,7 @@ function RateAcceptanceForm({ rates, journeyId, onAccepted }: RateAcceptanceProp
               .catch(
                 () =>
                   generation === getAccountGeneration() &&
-                  setError("Rates could not be saved. Your expenses remain available."),
+                  setError(t("ui.ratesCouldNotBeSavedYourExpensesRemainAvailable")),
               )
               .finally(() => {
                 if (generation === getAccountGeneration()) {
@@ -132,18 +142,20 @@ function RateAcceptanceForm({ rates, journeyId, onAccepted }: RateAcceptanceProp
     <View style={styles.card}>
       <Text accessibilityRole="header" style={styles.title}>
         {rates.length
-          ? `${rates.length} ${rates.length === 1 ? "expense uses" : "expenses use"} an earlier reference rate`
-          : "Your rate decisions"}
+          ? t("settlement.earlierRates", { count: rates.length })
+          : t("ui.yourRateDecisions")}
       </Text>
-      <Text style={styles.body}>
-        Review and accept these rates here to use them for final settlement.
-      </Text>
+      <Text style={styles.body}>{t("ui.reviewAndAcceptTheseRatesHereToUseThemFor")}</Text>
       {rates.map((item) => (
         <View key={item.expenseId} style={styles.row}>
           <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.body}>Reference date: {item.referenceDate} · ECB</Text>
           <Text style={styles.body}>
-            1 {item.original.currency} ={" "}
+            {t("ui.referenceDate")}
+            {item.referenceDate} {t("ui.ecb")}
+          </Text>
+          <Text style={styles.body}>
+            {t("ui.1")}
+            {item.original.currency} ={" "}
             {item.decimalRate.includes(".")
               ? item.decimalRate.replace(/0+$/, "").replace(/\.$/, "")
               : item.decimalRate}{" "}
@@ -172,7 +184,7 @@ function RateAcceptanceForm({ rates, journeyId, onAccepted }: RateAcceptanceProp
         <View key={item.expenseId} style={styles.row}>
           <Text style={styles.title}>{item.title}</Text>
           <Text accessibilityLiveRegion="polite" style={styles.body}>
-            {rateAcceptanceMessage(item)}
+            {domainLabel(rateAcceptanceMessage(item))}
           </Text>
           {item.state === "CONFLICT_REQUIRES_ACTION" &&
           item.operationResult?.error?.code !== "SETTLEMENT_INPUT_STALE" ? (
@@ -189,7 +201,7 @@ function RateAcceptanceForm({ rates, journeyId, onAccepted }: RateAcceptanceProp
               }
             >
               <Text style={styles.buttonText}>
-                {item.operationId ? "Review changes" : "Review latest rate"}
+                {item.operationId ? t("ui.reviewChanges") : t("ui.reviewLatestRate")}
               </Text>
             </Pressable>
           ) : null}
@@ -197,7 +209,7 @@ function RateAcceptanceForm({ rates, journeyId, onAccepted }: RateAcceptanceProp
       ))}
       {error ? (
         <Text accessibilityRole="alert" style={styles.error}>
-          {error}
+          {systemMessage(error)}
         </Text>
       ) : null}
       <Pressable
@@ -208,30 +220,36 @@ function RateAcceptanceForm({ rates, journeyId, onAccepted }: RateAcceptanceProp
         style={styles.button}
       >
         <Text style={styles.buttonText}>
-          {busy ? "Saving accepted rates…" : "Accept these rates"}
+          {busy ? t("ui.savingAcceptedRates") : t("ui.acceptTheseRates")}
         </Text>
       </Pressable>
     </View>
   );
 }
-const styles = StyleSheet.create({
-  card: { padding: 16, gap: 10, backgroundColor: "#FFF7ED", borderRadius: 16 },
-  title: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
-  body: { color: "#475569", fontSize: 14, lineHeight: 20 },
-  row: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#D6D3D1",
-    paddingTop: 10,
-    gap: 4,
-  },
-  button: {
-    backgroundColor: "#0F766E",
-    borderRadius: 12,
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-  },
-  buttonText: { color: "white", fontWeight: "700", fontSize: 16 },
-  error: { color: "#9A3412", fontSize: 14 },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    card: {
+      padding: 16,
+      gap: 10,
+      backgroundColor: colors.warningSurface,
+      borderRadius: 16,
+    },
+    title: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
+    body: { color: colors.textTertiary, fontSize: 14, lineHeight: 20 },
+    row: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.separator,
+      paddingTop: 10,
+      gap: 4,
+    },
+    button: {
+      backgroundColor: colors.accent,
+      borderRadius: 12,
+      minHeight: 48,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 12,
+    },
+    buttonText: { color: colors.onAccent, fontWeight: "700", fontSize: 16 },
+    error: { color: colors.warning, fontSize: 14 },
+  });

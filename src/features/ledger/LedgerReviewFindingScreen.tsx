@@ -1,3 +1,9 @@
+import { formatLedgerDate } from "./format";
+import { useThemedStyles } from "@/ui/theme";
+import type { UiColors } from "@/ui/palette";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { t } from "@/ui/locale";
+import { systemMessage } from "@/ui/domainLabels";
 import { MoneyText } from "./MoneyText";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -12,6 +18,8 @@ import {
 } from "./settlementPresentation";
 
 export function LedgerReviewFindingScreen() {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
   const { id, journeyId } = useLocalSearchParams<{
     id: string;
     journeyId?: string;
@@ -24,7 +32,7 @@ export function LedgerReviewFindingScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.meta}>
-          {loading ? "Loading finding…" : "This finding is no longer available here."}
+          {loading ? t("reviewFlow.copy15") : t("reviewFlow.copy16")}
         </Text>
       </View>
     );
@@ -32,7 +40,9 @@ export function LedgerReviewFindingScreen() {
   const copy = reviewFindingCopy(finding);
   const context = finding.observationContext;
   const expenseTitle = String(
-    context?.expenseTitleSnapshot ?? context?.targetTitleSnapshot ?? "Financial item",
+    context?.expenseTitleSnapshot ??
+      context?.targetTitleSnapshot ??
+      t("reviewFlow.copy13"),
   );
   const money = context?.originalMoney as
     { minor: number; currency: string; scale: number } | undefined;
@@ -40,38 +50,53 @@ export function LedgerReviewFindingScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Finding" }} />
+      <Stack.Screen options={{ title: t("navigation.finding") }} />
       <ScrollView
+        style={styles.viewport}
         contentContainerStyle={styles.content}
         contentInsetAdjustmentBehavior="automatic"
       >
         <View style={styles.hero}>
           <Text accessibilityRole="header" style={styles.title}>
-            {copy.title}
+            {finding.origin === "HUMAN" && finding.humanNote?.trim()
+              ? copy.title
+              : systemMessage(copy.title)}
           </Text>
           <Text style={finding.status === "OPEN" ? styles.needsReview : styles.status}>
-            {reviewStatusLabel(finding.status)}
+            {systemMessage(reviewStatusLabel(finding.status))}
           </Text>
         </View>
         <View style={styles.card}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            What we observed
+            {t("reviewFlow.copy17")}
           </Text>
-          <Text style={styles.body}>{copy.why}</Text>
+          <Text style={styles.body}>{systemMessage(copy.why)}</Text>
           {evidence.map(([label, description]) => (
             <View key={label} style={styles.evidenceRow}>
-              <Text style={styles.meta}>{label}</Text>
-              <Text style={styles.itemTitle}>{description}</Text>
+              <Text style={styles.meta}>{systemMessage(label)}</Text>
+              <Text style={styles.itemTitle}>
+                {(finding.origin === "HUMAN" &&
+                  label === "Raised by" &&
+                  memberNames[finding.authorMemberId ?? ""]) ||
+                (label === "Payer" && memberNames[String(context?.payerMemberId)]) ||
+                (label === "Participants" &&
+                  Array.isArray(context?.participantDisplaySnapshots) &&
+                  context.participantDisplaySnapshots.length > 0)
+                  ? description
+                  : systemMessage(description)}
+              </Text>
             </View>
           ))}
         </View>
         <View style={styles.card}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Affected item
+            {t("reviewFlow.copy18")}
           </Text>
           <Text style={styles.itemTitle}>{expenseTitle}</Text>
           {context?.expenseDateSnapshot ? (
-            <Text style={styles.meta}>{String(context.expenseDateSnapshot)}</Text>
+            <Text style={styles.meta}>
+              {formatLedgerDate(String(context.expenseDateSnapshot))}
+            </Text>
           ) : null}
           {money ? (
             <MoneyText
@@ -88,7 +113,7 @@ export function LedgerReviewFindingScreen() {
               onPress={() => router.push(`/expenses/expense/${finding.expenseId}`)}
               style={styles.primary}
             >
-              <Text style={styles.primaryText}>Review Expense</Text>
+              <Text style={styles.primaryText}>{t("reviewFlow.copy19")}</Text>
             </Pressable>
           ) : null}
           {finding.ruleId === "POSSIBLE_DUPLICATE" &&
@@ -98,35 +123,30 @@ export function LedgerReviewFindingScreen() {
               onPress={() => router.push(`/expenses/expense/${context.matchedExpenseId}`)}
               style={styles.secondary}
             >
-              <Text style={styles.secondaryText}>Open matching Expense</Text>
+              <Text style={styles.secondaryText}>{t("reviewFlow.copy20")}</Text>
             </Pressable>
           ) : null}
         </View>
         {canActOnFinding(finding) ? (
           <View style={styles.card}>
             <Text accessibilityRole="header" style={styles.sectionTitle}>
-              Your decision
+              {t("reviewFlow.copy21")}
             </Text>
             {finding.personalDecision === "NEEDS_REVIEW" ? (
-              <Text style={styles.body}>
-                Either choice moves this finding to your Reviewed list. It does not change
-                the Expense or decisions made by other members.
-              </Text>
+              <Text style={styles.body}>{t("reviewFlow.copy22")}</Text>
             ) : (
               <View accessibilityLiveRegion="polite" style={styles.decisionNotice}>
                 <Text style={styles.decisionTitle}>
                   {finding.personalDecision === "ACKNOWLEDGED"
-                    ? "✓ Acknowledged"
-                    : "✓ Dismissed"}
+                    ? t("reviewFlow.copy23")
+                    : t("reviewFlow.copy24")}
                 </Text>
-                <Text style={styles.body}>
-                  Moved to your Reviewed list. You can change your decision below.
-                </Text>
+                <Text style={styles.body}>{t("reviewFlow.copy25")}</Text>
               </View>
             )}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Acknowledge: I've seen this finding"
+              accessibilityLabel={t("reviewFlow.copy26")}
               accessibilityState={{
                 selected: finding.personalDecision === "ACKNOWLEDGED",
                 disabled: isSubmitting || finding.personalDecision === "ACKNOWLEDGED",
@@ -146,13 +166,13 @@ export function LedgerReviewFindingScreen() {
                 ]}
               >
                 {finding.personalDecision === "ACKNOWLEDGED"
-                  ? "Acknowledged · I've seen this"
-                  : "Acknowledge · I've seen this"}
+                  ? t("reviewFlow.copy27")
+                  : t("reviewFlow.copy28")}
               </Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Dismiss: this finding does not need my review"
+              accessibilityLabel={t("reviewFlow.copy29")}
               accessibilityState={{
                 selected: finding.personalDecision === "DISMISSED",
                 disabled: isSubmitting || finding.personalDecision === "DISMISSED",
@@ -171,20 +191,17 @@ export function LedgerReviewFindingScreen() {
                 ]}
               >
                 {finding.personalDecision === "DISMISSED"
-                  ? "Dismissed · Not relevant to me"
-                  : "Dismiss · Not relevant to me"}
+                  ? t("reviewFlow.copy30")
+                  : t("reviewFlow.copy31")}
               </Text>
             </Pressable>
           </View>
         ) : (
-          <Text style={styles.meta}>
-            This finding is maintained automatically or is already closed; review the
-            related Expense for the next step.
-          </Text>
+          <Text style={styles.meta}>{t("reviewFlow.copy32")}</Text>
         )}
         {message ? (
           <Text accessibilityLiveRegion="polite" style={styles.message}>
-            {message}
+            {systemMessage(message)}
           </Text>
         ) : null}
       </ScrollView>
@@ -192,46 +209,64 @@ export function LedgerReviewFindingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  center: { alignItems: "center", flex: 1, justifyContent: "center", padding: 24 },
-  content: { gap: 14, padding: 16, paddingBottom: 40 },
-  hero: { backgroundColor: "#FFF7ED", borderRadius: 14, gap: 6, padding: 16 },
-  title: { color: "#0F172A", fontSize: 24, fontWeight: "800" },
-  needsReview: { color: "#9A3412", fontSize: 15, fontWeight: "800" },
-  status: { color: "#0F766E", fontSize: 15, fontWeight: "800" },
-  card: { backgroundColor: "#FFFFFF", borderRadius: 14, gap: 10, padding: 14 },
-  evidenceRow: { borderTopColor: "#E2E8F0", borderTopWidth: 1, gap: 4, paddingTop: 10 },
-  sectionTitle: { color: "#0F172A", fontSize: 18, fontWeight: "800" },
-  itemTitle: { color: "#0F172A", fontSize: 17, fontWeight: "700" },
-  body: { color: "#334155", fontSize: 15, lineHeight: 22 },
-  meta: { color: "#64748B", fontSize: 14, lineHeight: 20 },
-  message: { color: "#0F766E", fontSize: 14, fontWeight: "700" },
-  decisionNotice: {
-    backgroundColor: "#E6F5F2",
-    borderRadius: 11,
-    gap: 4,
-    padding: 14,
-  },
-  decisionTitle: { color: "#0F766E", fontSize: 17, fontWeight: "800" },
-  primary: {
-    alignItems: "center",
-    backgroundColor: "#0F766E",
-    borderRadius: 11,
-    justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 14,
-  },
-  primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
-  secondary: {
-    alignItems: "center",
-    borderColor: "#0F766E",
-    borderRadius: 11,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 14,
-  },
-  secondaryText: { color: "#0F766E", fontSize: 16, fontWeight: "800" },
-  selectedDecision: { backgroundColor: "#0F766E" },
-  selectedDecisionText: { color: "#FFFFFF" },
-});
+const createStyles = (colors: UiColors) =>
+  StyleSheet.create({
+    viewport: { flex: 1, backgroundColor: colors.background },
+    center: {
+      backgroundColor: colors.background,
+      alignItems: "center",
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    content: { gap: 14, padding: 16, paddingBottom: 40 },
+    hero: {
+      backgroundColor: colors.warningSurface,
+      borderRadius: 14,
+      gap: 6,
+      padding: 16,
+    },
+    title: { color: colors.textPrimary, fontSize: 24, fontWeight: "800" },
+    needsReview: { color: colors.warning, fontSize: 15, fontWeight: "800" },
+    status: { color: colors.accent, fontSize: 15, fontWeight: "800" },
+    card: { backgroundColor: colors.surface, borderRadius: 14, gap: 10, padding: 14 },
+    evidenceRow: {
+      borderTopColor: colors.separator,
+      borderTopWidth: 1,
+      gap: 4,
+      paddingTop: 10,
+    },
+    sectionTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: "800" },
+    itemTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: "700" },
+    body: { color: colors.textSecondary, fontSize: 15, lineHeight: 22 },
+    meta: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
+    message: { color: colors.accent, fontSize: 14, fontWeight: "700" },
+    decisionNotice: {
+      backgroundColor: colors.accentSurface,
+      borderRadius: 11,
+      gap: 4,
+      padding: 14,
+    },
+    decisionTitle: { color: colors.accent, fontSize: 17, fontWeight: "800" },
+    primary: {
+      alignItems: "center",
+      backgroundColor: colors.accent,
+      borderRadius: 11,
+      justifyContent: "center",
+      minHeight: 48,
+      paddingHorizontal: 14,
+    },
+    primaryText: { color: colors.onAccent, fontSize: 16, fontWeight: "800" },
+    secondary: {
+      alignItems: "center",
+      borderColor: colors.accent,
+      borderRadius: 11,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 48,
+      paddingHorizontal: 14,
+    },
+    secondaryText: { color: colors.accent, fontSize: 16, fontWeight: "800" },
+    selectedDecision: { backgroundColor: colors.accent },
+    selectedDecisionText: { color: colors.onAccent },
+  });
