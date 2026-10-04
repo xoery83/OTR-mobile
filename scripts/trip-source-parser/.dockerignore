@@ -1,0 +1,8 @@
+*
+!vendor/
+!vendor/pngjs-7.0.0.tgz
+!profile.mjs
+!protocol.mjs
+!png-decode.mjs
+!png-worker.mjs
+!Dockerfile

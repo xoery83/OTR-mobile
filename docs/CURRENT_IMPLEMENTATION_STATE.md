@@ -2,6 +2,38 @@
 
 Date: 2026-10-05
 
+## C-I3G — FULL PASS / ACCEPTED / CLOSED
+
+- Baseline `2c81c54`; test/internal-only credential-free worker and pinned
+  PNG_STATIC_RGB8_RGBA8_V1 profile implemented. Noninterlaced RGB/RGBA8 only;
+  complete bounded chunk/CRC/zlib/scanline validation and full pngjs7 pixel decode.
+  Other PNG profiles and PDF/JPEG/HEIC/HEIF remain BLOCKED; no runtime approval implied.
+- Ownership precedes supplier/staging/hash/parser; concurrent loser does zero payload
+  work. Strict one-result portable IPC is separate from local no-network/nonroot/
+  readonly/resource-limited Docker harness. Parser PASS grants no semantic authority.
+- Both P2 findings corrected: failed early kill cannot release startup ownership;
+  UNKNOWN synchronously hands off an active process-local termination obligation.
+  A real 16s start outlives the ~15s caller wait and is then autonomously killed/
+  joined/inspected; delayed 6/16/32-second starts remain actively owned and terminated.
+  Event-gated arbitrary delay and transport failures retain ownership.
+  Lifecycle events wake capped-backoff reconciliation; input/slot remain protected
+  until exact terminal proof. Concurrent unrelated worker is untouched. Parent-process
+  crash durability is not solved; future durable owner/journal remain PENDING.
+- 87 parser/protocol/adversarial/isolation tests and unchanged C-I3F 23-test regression
+  PASS; teardown proves 0 active termination obligations and 0 parser containers.
+  Typecheck, Backend build, lint/format/byte checks PASS. Containers and
+  temporary synthetic staging/evidence removed; immutable local image retained for review.
+- Provider post-crash terminality and safe IO_UNKNOWN retry remain BLOCKED. Durable
+  runtime owner/journal/staging/quota/provisioning and production isolation remain
+  PENDING; missing pre-dispatch rejection path remains PENDING/BLOCKED.
+  Source commands remain disabled; C-I3D gate CLOSED; no product upload route.
+- Report: `docs/architecture/TRIP_CANONICAL_C_I3G_PARSER_WORKER_REPORT.md`.
+  Human accepted the bounded PNG first slice and both supervision corrections.
+  Local task-only commit authorized; no push. No Source commands/upload route,
+  credentials, purge/redaction, Production/Hosted Dev or sibling edits.
+  Accepted A/B/C foundations below remain intact; prior five-format blockers describe
+  runtime activation and are not upgraded by this accepted test-only slice.
+
 ## B-T3H — FULL PASS / ACCEPTED / CLOSED
 
 - Independent review and float-stability P1 correction accepted; B-T3H is closed.
