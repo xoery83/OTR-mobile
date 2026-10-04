@@ -439,3 +439,16 @@ snapshot. Full roster certification still requires the
 existing central reporting refresh and complete v2 vector.
 
 Evidence: `docs/architecture/TRIP_CANONICAL_A1_I2C2_PROTECTED_PARTICIPATION_COMMAND_REPORT.md`.
+
+## B-T3H server collection observation state
+
+`trip_event_collection_state` has exactly `trip_id` UUID primary/FK, immutable random
+`epoch_id` UUID and `collection_revision` bigint 1..9007199254740991. The protected
+server-only counter is independent of Event semantic revision and A/finance/Source
+cursors. Atomic maintenance covers canonical root membership/read facts, endpoint
+facts, accepted Place-cache loss and participant eligibility/row changes; exact
+no-ops, legacy-only writes and candidate/timestamp-only changes need no increment.
+Overflow rejects the affecting write. Snapshot revision crosses the wire as an
+exact positive decimal string. No Event backfill or SQLite migration is added.
+See the B-T3G contract and B-T3H report for certification/privacy and deferred Mobile
+collection application. No delete command or participant adapter is enabled.

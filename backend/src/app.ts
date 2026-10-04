@@ -1,4 +1,9 @@
 import {
+  eventCollectionPage,
+  parseEventCollectionQuery,
+  EventCollectionError,
+} from "./tripEventCollection";
+import {
   participationIntentCodec,
   participationResultCodec,
 } from "./tripPersonParticipationIntent";
@@ -152,6 +157,7 @@ export type StoredCreate = {
 };
 
 export type DevBackendGateway = {
+  observeCanonicalEventCollection?(userId: string, tripId: string): Promise<unknown>;
   readCanonicalCapabilities?(
     userId: string,
     tripId: string,
@@ -1067,6 +1073,23 @@ async function readCanonicalBoundary(request: Request, gateway: DevBackendGatewa
       "CANONICAL_WRITES_DISABLED",
       "Canonical Event commands are disabled.",
     );
+  if (resource === "canonical-events" && target === "snapshot") {
+    if (
+      request.headers.get("X-OTR-Canonical-Event-Collection-Version") !== "1" ||
+      request.headers.get("X-OTR-Canonical-Event-Read-Version") !== "1"
+    )
+      return json(200, {
+        collectionContractVersion: 1,
+        disposition: "WITHHELD",
+        reason: "UNSUPPORTED_CLIENT",
+      });
+    const cursor = parseEventCollectionQuery(url);
+    const observation = (await gateway.observeCanonicalEventCollection?.(
+      user.id,
+      tripId,
+    )) ?? { disposition: "WITHHELD", reason: "COLLECTION_CERTIFICATION_UNAVAILABLE" };
+    return json(200, eventCollectionPage(observation, user.id, tripId, cursor));
+  }
   if (url.search)
     throw new HttpError(400, "INVALID_PAYLOAD", "Read query parameters are unsupported.");
   if (resource === "canonical-events" && target === "capabilities")
@@ -2493,11 +2516,13 @@ export function createDevBackendHandler({
       }
     } catch (error) {
       const normalized =
-        error instanceof HttpError
-          ? error
-          : error instanceof BackendError
-            ? new HttpError(error.status, error.code, error.message, error.details)
-            : new HttpError(503, "BACKEND_UNAVAILABLE", "The backend is unavailable.");
+        error instanceof EventCollectionError
+          ? new HttpError(error.status, error.code, error.message)
+          : error instanceof HttpError
+            ? error
+            : error instanceof BackendError
+              ? new HttpError(error.status, error.code, error.message, error.details)
+              : new HttpError(503, "BACKEND_UNAVAILABLE", "The backend is unavailable.");
       response = json(normalized.status, {
         error: {
           code: normalized.code,

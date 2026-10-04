@@ -2,6 +2,42 @@
 
 Date: 2026-10-05
 
+## B-T3H — FULL PASS / ACCEPTED / CLOSED
+
+- Independent review and float-stability P1 correction accepted; B-T3H is closed.
+- Baseline: clean `trip/temporal` `2c81c54`; additive server migration
+  `20261005000100_trip_event_collection_foundation.sql` follows the retained
+  71-version chain: the integrated server chain now contains **72 migrations**.
+  SQLite 44/45 and B-T3E/T3F individual reads remain unchanged.
+- Protected independent Trip counter and primary READ COMMITTED single-statement
+  observation cover full canonical scope, admission, endpoints and participant
+  absence. B-T3G snapshot route fingerprints the full eligible set before paging.
+  Unsupported scope/participant/version withholds the entire collection.
+- Only GET `/v2/trips/:tripId/canonical-events/snapshot`, fixed 100-Event pages,
+  strict version/cursor/count/hash limits. Place UUID→null changes collection
+  revision/hash while preserving Event semantic revision; old pages invalidate.
+- Dedicated collection gateway / reader / maintainer roles retain their protected
+  read/maintenance boundaries. Exact complete observation precedes pagination.
+- P1 float stability correction: observation function pins `extra_float_digits=3`
+  with `search_path=pg_catalog`, `TimeZone=UTC`, `DateStyle=ISO, YMD`.
+  Separate EFD 3/0/-15 connections preserve root
+  and both endpoint binary64 values, leaf bytes, identity/hash and continuation.
+  All 11 new float probes PASS; genuine contradiction still fails closed.
+  B-T3G codec/cursor implementation and five independent golden vectors unchanged.
+- Dedicated collection connection/credentials remain unprovisioned; no service-role
+  fallback. Mobile collection apply/certificate/removal/wake integration remain
+  pending; Mobile collection apply remains unimplemented. No UI, timer,
+  Event/deletion command or participant adapter activation.
+- Validation: Backend 28 files / 328 tests; scoped B-T3E/T3F/auth/DB/sync
+  63 files / 527 tests; full SQL twice after independent clean replays, each
+  41 files / 1,428 assertions. Reuse 44 and live integration 7 Node tests PASS.
+  Typecheck/build/lint/UI guard, manifest/drift checks and schema diff PASS.
+  Changed-file format PASS; full format has 17 untouched baseline failures.
+- Evidence and deferred runtime gates:
+  `docs/architecture/TRIP_CANONICAL_B_T3H_COLLECTION_SERVER_FOUNDATION_REPORT.md`.
+  Accepted/closed by user; task-owned commit authorized without push.
+  No remote access or sibling modification by this task.
+
 ## Receipt dependency scheduling fix — 2026-10-05
 
 - New LINK_RECEIPT operations reference their same-account/same-asset upload.
@@ -46,7 +82,7 @@ Date: 2026-10-05
 - Scope: Ledger UI and auth regression tests only; other active Trip development
   is excluded from this checkpoint and commit. No backend/schema/auth-runtime change.
 
-## A1-I2C4 — ACTIVATION / PROVISIONING PREFLIGHT COMPLETE / REVIEW PENDING / CLOSED
+## A1-I2C4 — PREFLIGHT PASS / ACCEPTED / CLOSED
 
 - Baseline `5873c4c` includes integrated Trip `2c81c54`; clean startup and Ledger
   work preserved. Contract-only provisioning/activation plan plus test-only probes;
@@ -59,6 +95,11 @@ Date: 2026-10-05
   discovery/admin fence cannot be bypassed by configuration. Connector/LOGIN secret
   provisioning, enabled contract/dispatch, Trip navigation fencing and device/live
   matrix remain pending; accepted I2C1/C2/C3 and B/C gates are unchanged.
+- Accepted preflight does not activate runtime: SET_PARTICIPATION remains disabled
+  and lifecycle gate CLOSED. Dedicated gateway provisioning and runtime credentials
+  are missing; enabled capability/request-time predicate is not installed. The
+  additive activation migration needs separate review; Trip navigation/authoring
+  generation fencing and live/device acceptance remain pending.
 - Kill switch: HTTP flag OFF then admin-fenced DB CLOSED; preserve receipts,
   committed results and same pending keys. Authorized historic GET stays available;
   owner loss stays 403 without disclosure. No automatic undo/new-key fallback.
@@ -111,8 +152,9 @@ Date: 2026-10-05
 - V1 certifies only when every canonical Event is UNASSIGNED with zero participant
   rows. ASSIGNED, WHOLE_GROUP or any unexpected participant row withholds the entire
   collection; no partial collection or silent participant loss is certified.
-- Participant adapter remains disabled/deferred. Collection implementation, server
-  endpoint, local collection certificate and wake integration remain pending.
+- Participant adapter remains disabled/deferred. Server collection foundation is
+  implemented in B-T3H above (accepted/closed); local collection certificate/apply
+  and wake integration remain pending.
   Event mutation/deletion commands remain disabled; activation gate CLOSED.
 - Authority: `docs/architecture/TRIP_CANONICAL_B_T3G_COLLECTION_SNAPSHOT_CURSOR_CONTRACT.md`.
   This accepted state supersedes historical review-pending wording in the contract.
@@ -140,6 +182,21 @@ Date: 2026-10-05
   adversarial fixtures; provider terminality component must be resolved independently.
   Source commands and product upload route remain disabled; gate CLOSED. No runtime
   credentials, purge/redaction or remote access. Combined accepted A+B+C below remains intact.
+
+## Integration Checkpoint #9 — B-T3H CURRENT-STATE RECONCILED / RUNTIME CLOSED
+
+- Current-state-only conflict resolution replays B-T3H `8b500b1` onto canonical
+  `d2dae20`. A1-I2C4 PREFLIGHT PASS / ACCEPTED / CLOSED and B-T3H FULL PASS /
+  ACCEPTED / CLOSED are retained without runtime activation.
+- Committed Ledger receipt dependency scheduling through `5873c4c`, all accepted
+  Checkpoint #8 A/B/C foundations, SQLite 44/45 and server00600 remain preserved.
+  The server chain is now 72 migrations, ending in `20261005000100`.
+- B-T3H fingerprint/cursor, security roles and function-local float output policy
+  remain unchanged. Runtime collection connector/credentials, Mobile collection
+  apply and all existing provisioning/device requirements stay pending.
+- SET_PARTICIPATION, Event/deletion commands and participant adapter remain disabled;
+  lifecycle gate stays CLOSED. No other file, sibling work, remote environment or
+  push is included in this reconciliation.
 
 ## Integration Checkpoint #8 — COMBINED ACCEPTED A+B+C / RUNTIME CLOSED
 
@@ -185,7 +242,7 @@ Date: 2026-10-05
   accepted Place UUID→null cache loss only clears the scoped cached pointers;
   other equal-revision mismatch handling and older/withheld preservation remain.
 - B-T3G collection completeness/cursor/deletion contract is accepted; collection
-  implementation remains pending. Event
+  server foundation is accepted in B-T3H; Mobile collection apply remains pending. Event
   mutation/edit UI and semantic queue remain disabled; dedicated runtime gateway
   provisioning remains PENDING and canonical Event activation stays CLOSED.
 - B-T3E canonical receipt route remains

@@ -90,29 +90,41 @@ const [
 ]);
 
 const manifest = JSON.parse(manifestRaw);
-// Retained 71-version chain through CLOSED A1-I2C2; immutable A receipts only.
+// Retained 72-version chain through B-T3H; read-only collection counter/snapshot foundation.
 const expected = {
-  tables: 118,
+  tables: 119,
   buckets: 4,
-  columns: 1772,
-  indexes: 369,
-  checksum: "82f91a57ae39c5ed5f04a752c26c5e2d791b711cbe4dd07e536ed67044c32bdb",
-  policies: 199,
-  triggers: 144,
-  functions: 209,
-  rls_tables: 118,
-  constraints: 1024,
+  columns: 1775,
+  indexes: 370,
+  checksum: "cf0f9aa74557cfa256cf583b47c8fbd561f5969a4f7fd299194249a95607b80b",
+  policies: 204,
+  triggers: 148,
+  functions: 212,
+  rls_tables: 119,
+  constraints: 1027,
 };
 const migrationNames = (await readdir("supabase/migrations"))
   .filter((name) => name.endsWith(".sql"))
   .sort();
 if (
-  migrationNames.length !== 71 ||
-  new Set(migrationNames.map((name) => name.slice(0, 14))).size !== 71 ||
-  migrationNames.at(-1) !== "20261004000600_trip_person_command_foundation.sql"
+  migrationNames.length !== 72 ||
+  new Set(migrationNames.map((name) => name.slice(0, 14))).size !== 72 ||
+  migrationNames.at(-1) !== "20261005000100_trip_event_collection_foundation.sql"
 ) {
-  throw new Error("Expected exactly 71 unique migration versions through A1-I2C2.");
+  throw new Error("Expected exactly 72 unique migration versions through B-T3H.");
 }
+const collectionFoundation = await readFile(
+  "supabase/migrations/20261005000100_trip_event_collection_foundation.sql",
+  "utf8",
+);
+if (
+  !collectionFoundation.includes("UNSAFE_TRIP_EVENT_COLLECTION_DEPENDENCY") ||
+  !collectionFoundation.includes("EVENT_COLLECTION_REVISION_UNAVAILABLE_OR_OVERFLOW") ||
+  !collectionFoundation.includes("roots as materialized") ||
+  !collectionFoundation.includes("set extra_float_digits=3") ||
+  !collectionFoundation.includes("participant_scope is distinct from 'UNASSIGNED'")
+)
+  throw new Error("Protected read-only collection foundation missing.");
 const sourceCommand = await readFile(
   "supabase/migrations/20261004000500_trip_source_command_foundation.sql",
   "utf8",
@@ -164,7 +176,7 @@ const secretPatterns = [
 for (const pattern of secretPatterns) {
   if (
     pattern.test(
-      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${ledger8Review}\n${ledger8Feed}\n${ledger9Import}\n${settlementParticipation}\n${sourceCommand}\n${personCommand}\n${seed}`,
+      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${ledger8Review}\n${ledger8Feed}\n${ledger9Import}\n${settlementParticipation}\n${sourceCommand}\n${personCommand}\n${collectionFoundation}\n${seed}`,
     )
   ) {
     throw new Error(`Production identifier or secret-like value found: ${pattern}`);

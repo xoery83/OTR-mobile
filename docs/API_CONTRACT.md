@@ -535,6 +535,33 @@ and rejects stale responses. It performs no SQLite apply, queueing or product ed
 Lossless SQLite mirroring and a reviewed dedicated runtime connection remain
 separate activation prerequisites.
 
+## B-T3H protected canonical Event collection foundation
+
+`GET /v2/trips/:tripId/canonical-events/snapshot` implements B-T3G V1 with no aliases.
+Require both canonical Event collection/read version headers equal to `1`.
+Query is absent or exactly one `cursor`; page size is fixed at 100 aggregates.
+Authenticated Actor and current Trip admission are checked on every request.
+A dedicated collection gateway calls only `trip_event_collection_observe(actor,trip)`
+on the primary in READ COMMITTED. Its single uncapped statement includes admission,
+root/endpoint facts, participant-row absence and independent collection counter.
+Backend validates the entire observation and B-T3G fingerprint before slicing.
+
+The exact B-T3G SNAPSHOT_PAGE envelope binds Account/Trip, epoch/revision, full
+fingerprint/count, ordinal interval and canonical continuation. Only a final page
+has complete=true; callers still need all prior pages and full-set hash validation.
+Empty complete differs from unavailable. ASSIGNED/WHOLE_GROUP, unexpected participant
+rows or unsupported canonical contracts WITHHOLD the entire set, never skip an Event.
+Malformed/stale/scope-invalid tokens return INVALID_EVENT_COLLECTION_CURSOR; equal
+snapshot identity with contradictory bytes returns CANONICAL_EVENT_SNAPSHOT_INVALID.
+Limits are 10,000 Events, 64 MiB canonical read bytes and 4 MiB actual page body.
+No private Source/participant/candidate/financial content is exposed.
+
+No collection runtime connection or credential is provisioned. Missing/wrong gateway
+returns COLLECTION_CERTIFICATION_UNAVAILABLE; there is no service-role list fallback.
+Mobile collection application/certificates/removal and central refresh integration
+remain deferred. Individual reads/receipts/capabilities and all mutation gates stay
+unchanged; snapshot completeness enables no deletion command.
+
 ## A1-I2C3 participation runtime preflight (CLOSED)
 
 Canonical authenticated routes: GET `/v2/trips/:tripId/person-participation-capabilities`,

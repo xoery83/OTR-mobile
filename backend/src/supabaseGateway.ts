@@ -1,3 +1,7 @@
+import {
+  EventCollectionError,
+  type EventCollectionConnection,
+} from "./tripEventCollection";
 import { canonicalEventColumns } from "../../src/data/api/tripCanonicalReadContracts";
 import {
   canonicalCapabilities,
@@ -175,6 +179,7 @@ const approvedDevProjectRef = "tuqigdxrvrerfewsxqgm";
 
 export type SupabaseDevConfig = {
   canonicalReadGateway?: CanonicalReadGatewayConfig;
+  canonicalCollectionConnection?: EventCollectionConnection;
   url: string;
   publishableKey: string;
   secretKey: string;
@@ -680,6 +685,32 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
   };
 
   return {
+    async observeCanonicalEventCollection(userId, tripId) {
+      const connection = config.canonicalCollectionConnection;
+      if (
+        !connection ||
+        (await connection.sessionUser()) !== "otr_trip_event_collection_gateway"
+      )
+        return {
+          disposition: "WITHHELD",
+          reason: "COLLECTION_CERTIFICATION_UNAVAILABLE",
+        };
+      // Fixed primary READ COMMITTED SQL observation; never service-role REST lists.
+      try {
+        return await connection.observe(userId, tripId);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "";
+        if (message === "READ_UNAVAILABLE")
+          throw new EventCollectionError(404, "READ_UNAVAILABLE");
+        if (message === "CANONICAL_EVENT_SNAPSHOT_LIMIT")
+          throw new EventCollectionError(503, message);
+        if (message === "CANONICAL_EVENT_SNAPSHOT_INVALID")
+          throw new EventCollectionError(500, message);
+        if (message === "COLLECTION_CERTIFICATION_UNAVAILABLE")
+          return { disposition: "WITHHELD", reason: message };
+        throw new EventCollectionError(503, "READ_UNAVAILABLE");
+      }
+    },
     async readCanonicalCapabilities(userId, tripId) {
       if (!(await this.canReadTrip(userId, tripId)))
         throw new BackendError(
