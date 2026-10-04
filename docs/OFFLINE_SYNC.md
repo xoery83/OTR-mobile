@@ -366,3 +366,24 @@ Offline reads use the same Account/Trip scope and return full READ_ONLY represen
 There is no canonical Event collection/snapshot seam in the central refresh owner:
 no polling, completeness certification, cursor advancement or absence-as-deletion
 is introduced. Existing legacy itinerary and financial/private sync paths are unchanged.
+
+## A1-I2C3 participation exact recovery preflight (CLOSED)
+
+A normalized participation intent can be explicitly retained in existing
+`sync_operations` with stable Account/Trip/Person/key/body/digest. It is held as
+DEPENDENCY_BLOCKED with null dependency/due time and a closed-capability reason;
+existing pending/claim/dependency wake logic cannot dispatch this held intent.
+No queue announcement, timer, worker, optimistic participation update or certificate
+is created. The helper is not wired to UI or normal authoring/dispatch.
+
+Exact authenticated GET recovery loads the stored body under a fresh Account/Trip/
+generation context, releases the Account gate before network, validates exact
+receipt identity and independently recomputes its result digest, then invokes the
+existing I2C2 result/reporting barrier. Response loss, restart and unavailable GET
+leave the operation unresolved; they never create a new key, POST fallback or
+assumption of failure. Exact own-scoped `OPERATION_NOT_FOUND` / 404 is not proof
+that a concurrent/uncommitted request failed. `REPLAY_UNAVAILABLE` / 503 likewise
+preserves the same key/intent. Current Organizer loss returns
+`PARTICIPATION_FORBIDDEN` / 403 with no disclosure and leaves pending intent intact. A→B→A is fenced. Atomic receipt/queue/row/all-seven certificate
+application and bounded refresh remain owned by I2C2; financial/private cursors
+and offline cached launch are unchanged. No SQLite or server migration is added.

@@ -1,3 +1,10 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createTripPersonParticipationPendingRepository } from "./tripPersonParticipationPendingRepository";
+import { createTripPersonParticipationTransport } from "@/data/api/tripPersonParticipationTransport";
+import { recoverTripPersonParticipationOperation } from "@/data/sync/tripPersonParticipationRecovery";
+import { createSyncOperationRepository } from "@/data/sync/syncOperationRepository";
 import { DatabaseSync } from "node:sqlite";
 import { createHash } from "node:crypto";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
@@ -37,6 +44,10 @@ const state = vi.hoisted(() => ({
   repository: null as ReturnType<typeof createLedgerReadRepository> | null,
 }));
 const transport = vi.hoisted(() => ({ bootstrap: vi.fn(), pull: vi.fn() }));
+vi.mock("@/data/sync/ledgerQueueActivity", () => ({
+  announceLedgerQueueWorkAvailable: vi.fn(),
+}));
+vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 vi.mock("expo-crypto", () => ({
   CryptoDigestAlgorithm: { SHA256: "SHA256" },
   digestStringAsync: async (_: string, s: string) =>
@@ -447,4 +458,261 @@ it("post-command offline failure leaves accepted receipt/cached access and inval
   expect(sqlite.prepare("SELECT count(*) AS n FROM ledger_actor_context").get()).toEqual({
     n: 1,
   });
+});
+
+function pendingRepository() {
+  return createTripPersonParticipationPendingRepository(db, getUser);
+}
+const runtimeToken = async () => ({ userId: actor, token: "test-token" });
+function runtimeTransport(send: typeof fetch, token = runtimeToken) {
+  return createTripPersonParticipationTransport(
+    getUser,
+    { baseUrl: "http://local", fetchImplementation: send },
+    token,
+  );
+}
+it("closed pending seam retains exact key/body without optimistic edit or queue dispatch", async () => {
+  sqlite.exec("DELETE FROM sync_operations");
+  const before = rows();
+  const pending = pendingRepository();
+  await pending.retain(command());
+  await pending.retain(command());
+  expect(await pending.load(trip, op)).toMatchObject({ command: command() });
+  expect(
+    sqlite
+      .prepare(
+        "SELECT status,next_attempt_at,dependency_operation_id FROM sync_operations",
+      )
+      .get(),
+  ).toEqual({
+    status: "DEPENDENCY_BLOCKED",
+    next_attempt_at: null,
+    dependency_operation_id: null,
+  });
+  const queue = createSyncOperationRepository(db, getUser);
+  await queue.recoverInterrupted();
+  expect(await queue.listPending()).toEqual([]);
+  expect(await queue.claim(op)).toBe(false);
+  expect(rows().filter((_, i) => i !== 3)).toEqual(before.filter((_, i) => i !== 3));
+  const send = vi.fn(),
+    token = vi.fn(runtimeToken);
+  await expect(runtimeTransport(send, token).submit(command())).rejects.toMatchObject({
+    code: "PARTICIPATION_COMMANDS_DISABLED",
+  });
+  expect(token).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  const changed = { ...command(), isParticipating: true };
+  changed.intentDigest = hash(participationIntentBytes(changed));
+  await expect(pending.retain(changed)).rejects.toThrow("changed intent");
+  const opposite = { ...changed, operationId: person };
+  opposite.intentDigest = hash(participationIntentBytes(opposite));
+  await expect(pending.retain(opposite)).rejects.toThrow(
+    "prior operation remains unresolved",
+  );
+});
+it("loss/unavailable response survives real SQLite restart then exact recovery/apply/duplicate", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "otr-i2c3-"));
+  try {
+    sqlite.exec("DELETE FROM sync_operations");
+    await pendingRepository().retain(command());
+    sqlite
+      .prepare(
+        "INSERT INTO ledger_personal_payment_sync_cursors(user_id,journey_id,cursor,server_time,updated_at) VALUES(?,?,?,?,?)",
+      )
+      .run(actor, trip, "private-v1", time, time);
+    const financial = sqlite
+      .prepare("SELECT cursor,server_time FROM ledger_sync_cursors")
+      .all();
+    const privateRows = sqlite
+      .prepare("SELECT * FROM ledger_personal_payment_sync_cursors")
+      .all();
+    const unavailable = runtimeTransport(async () => {
+      throw Error("response lost");
+    });
+    await expect(
+      recoverTripPersonParticipationOperation(pendingRepository(), unavailable, trip, op),
+    ).rejects.toBeInstanceOf(ApiClientError);
+    const body = sqlite.prepare("SELECT payload_json FROM sync_operations").get();
+    const path = join(directory, "restart.sqlite");
+    sqlite.prepare("VACUUM INTO ?").run(path);
+    sqlite.close();
+    sqlite = new DatabaseSync(path);
+    const send = vi.fn(async (url: Parameters<typeof fetch>[0], init?: RequestInit) => {
+      expect(url).toBe(
+        `http://local/v2/trips/${trip}/person-participation-operations/${op}`,
+      );
+      expect(init?.method).toBe("GET");
+      expect(init?.headers).toMatchObject({ Authorization: "Bearer test-token" });
+      // Account apply gate must be free throughout network I/O.
+      await import("@/data/auth/accountRequestContext").then((m) =>
+        m.withAccountApplyGate(async () => {}),
+      );
+      return Response.json({ ...result(), idempotentReplay: true });
+    });
+    const transport = runtimeTransport(send);
+    expect(
+      await recoverTripPersonParticipationOperation(
+        pendingRepository(),
+        transport,
+        trip,
+        op,
+      ),
+    ).toMatchObject({ applied: true, refresh: "PENDING" });
+    expect(
+      sqlite.prepare("SELECT status,payload_json FROM sync_operations").get(),
+    ).toEqual({ status: "COMPLETED", ...body });
+    expect(
+      sqlite.prepare("SELECT cursor,server_time FROM ledger_sync_cursors").all(),
+    ).toEqual(financial);
+    expect(
+      sqlite.prepare("SELECT * FROM ledger_personal_payment_sync_cursors").all(),
+    ).toEqual(privateRows);
+    expect(await repo().getParticipationCertificate(trip)).toBeNull();
+    const after = rows();
+    expect(
+      await recoverTripPersonParticipationOperation(
+        pendingRepository(),
+        transport,
+        trip,
+        op,
+      ),
+    ).toMatchObject({ applied: false, refresh: "UNCHANGED" });
+    expect(rows()).toEqual(after);
+    expect(send).toHaveBeenCalledTimes(2);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+it.each([403, 404, 503])(
+  "GET %s is not proof of failure and leaves exact pending intent unresolved",
+  async (status) => {
+    const before = rows();
+    const code =
+      status === 403
+        ? "PARTICIPATION_FORBIDDEN"
+        : status === 404
+          ? "OPERATION_NOT_FOUND"
+          : "REPLAY_UNAVAILABLE";
+    const send = vi.fn<typeof fetch>(async () =>
+      Response.json({ error: { code } }, { status }),
+    );
+    const transport = runtimeTransport(send);
+    await expect(
+      recoverTripPersonParticipationOperation(pendingRepository(), transport, trip, op),
+    ).rejects.toMatchObject({ status, code });
+    expect(rows()).toEqual(before);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0]?.[1]).toMatchObject({ method: "GET" });
+    expect(String(send.mock.calls[0]?.[0])).toContain(
+      `/person-participation-operations/${op}`,
+    );
+  },
+);
+it.each(["credentials", "response"])(
+  "A to B to A at %s rejects exact recovery without applying",
+  async (stage) => {
+    let release!: () => void, entered!: () => void;
+    const wait = new Promise<void>((r) => (release = r)),
+      started = new Promise<void>((r) => (entered = r));
+    const token = async () => {
+      if (stage === "credentials") {
+        entered();
+        await wait;
+      }
+      return runtimeToken();
+    };
+    const send = vi.fn(async () => {
+      if (stage === "response") {
+        entered();
+        await wait;
+      }
+      return Response.json(result());
+    });
+    const before = rows();
+    const recovery = recoverTripPersonParticipationOperation(
+      pendingRepository(),
+      runtimeTransport(send, token),
+      trip,
+      op,
+    );
+    await started;
+    let lease = await beginAccountTransition();
+    state.active = second;
+    endAccountTransition(lease);
+    lease = await beginAccountTransition();
+    state.active = actor;
+    endAccountTransition(lease);
+    release();
+    await expect(recovery).rejects.toThrow("Account changed");
+    expect(rows()).toEqual(before);
+    if (stage === "credentials") expect(send).not.toHaveBeenCalled();
+  },
+);
+it("foreign scope, changed intent or tampered result is rejected before local apply", async () => {
+  const before = rows();
+  const changed = { ...result(), resultDigest: "0".repeat(64) };
+  await expect(
+    recoverTripPersonParticipationOperation(
+      pendingRepository(),
+      runtimeTransport(async () => Response.json(changed)),
+      trip,
+      op,
+    ),
+  ).rejects.toThrow("binding mismatch");
+  const foreign = result();
+  foreign.receipt.tripId = op;
+  foreign.resultDigest = hash(participationResultBytes(foreign.receipt));
+  await expect(
+    recoverTripPersonParticipationOperation(
+      pendingRepository(),
+      runtimeTransport(async () => Response.json(foreign)),
+      trip,
+      op,
+    ),
+  ).rejects.toThrow("binding mismatch");
+  expect(rows()).toEqual(before);
+});
+it("Mobile capability transport authenticates and rejects enabled projection while CLOSED", async () => {
+  const disabled = {
+    contractVersion: 1,
+    activationState: "DISABLED",
+    enabledCommands: [],
+    enabledScopes: [],
+    commandVersion: null,
+    receiptVersion: null,
+    databaseGate: "UNKNOWN",
+    gatewayAvailable: false,
+  };
+  const send = vi.fn(async (url: Parameters<typeof fetch>[0], init?: RequestInit) => {
+    expect(url).toBe(`http://local/v2/trips/${trip}/person-participation-capabilities`);
+    expect(init?.headers).toMatchObject({ Authorization: "Bearer test-token" });
+    return Response.json(disabled);
+  });
+  expect(await runtimeTransport(send).capabilities(trip)).toMatchObject({
+    context: { accountId: actor, tripId: trip },
+    data: disabled,
+  });
+  await expect(
+    runtimeTransport(async () =>
+      Response.json({
+        ...disabled,
+        activationState: "ENABLED",
+        enabledCommands: ["SET_PARTICIPATION"],
+      }),
+    ).capabilities(trip),
+  ).rejects.toMatchObject({ kind: "validation" });
+});
+
+it("pending load refuses changed queue metadata and old-generation retention", async () => {
+  const old = await context(),
+    before = rows();
+  advanceAccountGeneration();
+  await expect(pendingRepository().retain(command(), old)).rejects.toThrow(
+    "Account changed",
+  );
+  expect(rows()).toEqual(before);
+  sqlite.exec("UPDATE sync_operations SET base_version=1");
+  await expect(pendingRepository().load(trip, op)).rejects.toThrow(
+    "stored operation mismatch",
+  );
 });

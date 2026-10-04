@@ -1,3 +1,15 @@
+import {
+  participationIntentCodec,
+  participationResultCodec,
+} from "./tripPersonParticipationIntent";
+import { participationCommandsEnabled } from "../../src/domain/trip/personParticipationCommand";
+import {
+  participationCapabilities,
+  isParticipationLookupForbidden,
+  requireParticipationGateway,
+  recoverParticipationReceipt,
+  type ParticipationGateway,
+} from "./tripPersonParticipationRuntime";
 import { canonicalCapabilities } from "./tripCanonicalRead";
 import {
   canonicalCapabilitiesSchema,
@@ -561,6 +573,7 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  participationGateway?: ParticipationGateway;
   gateway: DevBackendGateway;
   log?: (event: SafeLogEvent) => void;
   now?: () => number;
@@ -913,6 +926,128 @@ async function authorizeRead(
     throw new HttpError(403, "TRIP_READ_FORBIDDEN", "Trip read access is required.");
   }
   return user;
+}
+
+async function participationBoundary(
+  request: Request,
+  gateway: DevBackendGateway,
+  connection?: ParticipationGateway,
+) {
+  const url = new URL(request.url);
+  const match = url.pathname.match(
+    /^\/v2\/trips\/([^/]+)\/(?:persons\/([^/]+)\/participation-commands|person-participation-operations\/([^/]+)|person-participation-capabilities)$/,
+  )!;
+  const [, trip, person, operation] = match;
+  assertTripId(trip);
+  const receiptLookup = !!operation && request.method === "GET";
+  let actor;
+  try {
+    actor = await authenticate(request, gateway);
+  } catch (error) {
+    if (receiptLookup && error instanceof HttpError && error.status === 401)
+      throw new HttpError(401, "UNAUTHENTICATED", "Authentication is required.");
+    throw error;
+  }
+  if (
+    url.search ||
+    ![person, operation].every((id) => id === undefined || uuidPattern.test(id))
+  )
+    throw new HttpError(400, "INVALID_PAYLOAD", "The participation request is invalid.");
+  if (!(await gateway.canReadTrip(actor.id, trip))) {
+    if (receiptLookup)
+      throw new HttpError(
+        403,
+        "PARTICIPATION_FORBIDDEN",
+        "Organizer authority is required.",
+      );
+    throw new HttpError(404, "READ_UNAVAILABLE", "The requested read is unavailable.");
+  }
+  if (!person && !operation && request.method === "GET")
+    return json(200, await participationCapabilities(connection));
+  if (person && request.method === "POST") {
+    let intent;
+    try {
+      intent = participationIntentCodec(await request.text()).command;
+    } catch {
+      throw new HttpError(400, "INVALID_PAYLOAD", "The participation intent is invalid.");
+    }
+    if (
+      intent.actorUserId !== actor.id ||
+      intent.tripId !== trip ||
+      intent.personId !== person ||
+      request.headers.get("Idempotency-Key") !== intent.operationId
+    )
+      throw new HttpError(
+        400,
+        "PARTICIPATION_SCOPE_MISMATCH",
+        "The participation intent scope is invalid.",
+      );
+    // Fixed POST boundary exists, but no execution is reachable before a separately
+    // reviewed activation. An open injected database gate cannot activate HTTP.
+    if (!participationCommandsEnabled)
+      throw new HttpError(
+        503,
+        "PARTICIPATION_COMMANDS_DISABLED",
+        "Participation commands are disabled.",
+      );
+    const admitted = await requireParticipationGateway(connection);
+    if (!admitted || admitted.state.commandVersion !== 1 || admitted.state.gateClosed)
+      throw new HttpError(
+        503,
+        "PARTICIPATION_COMMANDS_DISABLED",
+        "Participation commands are disabled.",
+      );
+    const raw = await admitted.connection.setParticipation(
+      actor.id,
+      JSON.stringify(intent),
+    );
+    return json(
+      200,
+      participationResultCodec(raw, actor.id, trip, intent.operationId, intent).result,
+    );
+  }
+  if (operation && request.method === "GET") {
+    const admitted = await requireParticipationGateway(connection);
+    if (
+      !admitted ||
+      admitted.state.commandVersion !== 1 ||
+      admitted.state.receiptVersion !== 1
+    )
+      throw new HttpError(
+        503,
+        "REPLAY_UNAVAILABLE",
+        "Historic participation recovery is unavailable.",
+      );
+    let result;
+    try {
+      result = await recoverParticipationReceipt(
+        admitted.connection,
+        actor.id,
+        trip,
+        operation,
+      );
+    } catch (error) {
+      if (isParticipationLookupForbidden(error))
+        throw new HttpError(
+          403,
+          "PARTICIPATION_FORBIDDEN",
+          "Organizer authority is required.",
+        );
+      throw new HttpError(
+        503,
+        "REPLAY_UNAVAILABLE",
+        "Historic participation recovery is unavailable.",
+      );
+    }
+    if (!result)
+      throw new HttpError(
+        404,
+        "OPERATION_NOT_FOUND",
+        "The exact operation was not found.",
+      );
+    return json(200, result);
+  }
+  throw new HttpError(405, "METHOD_NOT_ALLOWED", "The method is unsupported.");
 }
 
 async function readCanonicalBoundary(request: Request, gateway: DevBackendGateway) {
@@ -2078,6 +2213,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  participationGateway,
   gateway,
   log,
   now = Date.now,
@@ -2162,6 +2298,13 @@ export function createDevBackendHandler({
     try {
       const url = new URL(request.url);
       if (
+        /^\/v2\/trips\/[^/]+\/(?:persons\/[^/]+\/participation-commands|person-participation-operations\/[^/]+|person-participation-capabilities)$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/participation-runtime";
+        response = await participationBoundary(request, gateway, participationGateway);
+      } else if (
         /^\/v2\/trips\/[^/]+\/(canonical-events|canonical-event-operations)(?:\/[^/]+)?$/.test(
           url.pathname,
         )

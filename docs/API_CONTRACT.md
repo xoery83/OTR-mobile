@@ -534,3 +534,28 @@ activate them. Mobile transport captures Account/Trip/generation before credenti
 and rejects stale responses. It performs no SQLite apply, queueing or product edit.
 Lossless SQLite mirroring and a reviewed dedicated runtime connection remain
 separate activation prerequisites.
+
+## A1-I2C3 participation runtime preflight (CLOSED)
+
+Canonical authenticated routes: GET `/v2/trips/:tripId/person-participation-capabilities`,
+POST `/v2/trips/:tripId/persons/:personId/participation-commands`, and exact GET
+`/v2/trips/:tripId/person-participation-operations/:operationId`. No aliases,
+enumeration or recovery mutation fallback. POST binds verified Actor and exact
+route/body/header identity and independently recomputes the intent digest; it
+returns `PARTICIPATION_COMMANDS_DISABLED` while activation remains CLOSED, even
+with an open test gateway gate. Capability always projects DISABLED and empty
+commands/scopes. GET requires a verified dedicated A gateway session and current
+Organizer authority inside the fixed lookup. Admission order is verified Actor →
+current Trip/Organizer → exact Actor/Trip/operation lookup → receipt scope/hash.
+Unauthenticated lookup returns `UNAUTHENTICATED` / 401. Absent current Organizer
+authority, including a former Organizer who retains Trip read access, returns
+`PARTICIPATION_FORBIDDEN` / 403 without receipt disclosure. An admitted exact
+own-scoped absent operation returns `OPERATION_NOT_FOUND` / 404; foreign Actor/key
+existence is not disclosed. Missing/unknown dedicated gateway or unavailable lookup
+returns `REPLAY_UNAVAILABLE` / 503. Corrupt/malformed or scope/hash-invalid returned
+receipts fail closed as `REPLAY_UNAVAILABLE`, never `OPERATION_NOT_FOUND`.
+Neither 404 nor unavailable recovery proves a concurrent/uncommitted request failed.
+Mobile preserves these HTTP codes and the same pending key/intent; no new key or
+POST is manufactured automatically.
+No dedicated connector or credentials are installed. This preflight does not alter
+server 00600 or activate normal Mobile dispatch.

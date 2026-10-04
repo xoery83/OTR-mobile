@@ -1,6 +1,6 @@
 # Current Implementation State
 
-Date: 2026-10-04
+Date: 2026-10-05
 
 ## Ledger receipt / settlement device polish — 2026-10-05
 
@@ -23,6 +23,38 @@ Date: 2026-10-04
 - Scope: Ledger UI and auth regression tests only; other active Trip development
   is excluded from this checkpoint and commit. No backend/schema/auth-runtime change.
 
+## A1-I2C3 — RECEIPT ERROR-SEMANTICS CORRECTION COMPLETE / REVIEW PENDING / CLOSED
+
+- Focused correction restores exact GET errors: UNAUTHENTICATED/401, current
+  Organizer loss PARTICIPATION_FORBIDDEN/403, own-scoped absence
+  OPERATION_NOT_FOUND/404, gateway unavailable/corrupt receipt REPLAY_UNAVAILABLE/503.
+  Authorization precedes exact lookup; no foreign existence disclosure. Mobile
+  preserves original pending key/intent on 404/503 (also 403), without new key/POST.
+- Baseline: clean canonical `integration/ledger-polish-canonical`, `4dc7095`.
+  Adds fixed authenticated participation capability/POST/exact GET boundaries;
+  POST derives verified Actor and checks route/header/intent digest. Mutation
+  remains disabled even with a mocked-open DB gate. Missing/wrong dedicated A
+  gateway returns recovery unavailable, with no service_role fallback or aliases.
+- Dedicated gateway exposes actual session identity, installed discovery, fixed
+  SET and exact receipt lookup only. Connector/credentials are not provisioned.
+  Backend independently encodes intent/result tuples; Mobile rechecks exact scope,
+  hashes and Account/Trip/generation before credentials/network and after response.
+- Explicit durable seam uses existing sync_operations only, held non-dispatchable
+  while closed. Stable body/key/base survives restart; changed intent and new key
+  with a prior unresolved same-Person operation reject. No optimistic edits.
+  Exact GET recovery uses the unchanged I2C2 apply/reporting owner and all-seven
+  certificate invalidation; no second scheduler, queue, refresh owner or migration.
+- Verification after receipt correction: 22 files / 358 tests, typecheck, build, full lint/UI guard and
+  scoped format/whitespace PASS. Server00600, SQLite44/45 and existing I2C2
+  apply/reporting/B mirror implementation bytes are unchanged. Lifecycle activation,
+  runtime provisioning and physical-device acceptance remain pending; all accepted
+  B/C deferred/provider/collection gates below remain unchanged.
+- No UI, normal dispatch, new timer/worker, credentials, Hosted Dev/Production
+  access or commit by this task. Existing server00600 and SQLite44/45 are intact.
+  Unrelated canonical/sibling work appearing during execution is left untouched.
+- Report: `docs/architecture/TRIP_CANONICAL_A1_I2C3_RUNTIME_TRANSPORT_RECOVERY_REPORT.md`.
+- Next checkpoint: independent review of this disabled preflight. Runtime gateway
+  provisioning/activation, authoring/dispatch and device proof need separate approval.
 
 ## Integration Checkpoint #7 — COMBINED ACCEPTED A+B+C / RUNTIME CLOSED
 
