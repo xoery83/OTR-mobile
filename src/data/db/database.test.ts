@@ -43,6 +43,171 @@ describe("SQLite migrations", () => {
     );
   });
 
+  it("reserves A migration 45 after integration-owned B-T3F version 44", async () => {
+    const prior = migrations.filter(({ id }) => id < 45).map(({ id }) => id);
+    const { appliedMigrationIds, database, executedSql } = createMigrationDatabase([
+      ...prior,
+      44,
+    ]);
+    const participation = migrations.find(
+      ({ name }) => name === "trip_person_participation_results",
+    )!;
+    expect(participation.id).toBe(45);
+    // Both accepted registrations are present in the combined chain.
+    expect(migrations.find(({ id }) => id === 44)?.name).toBe(
+      "trip_canonical_event_read_only_mirror",
+    );
+    expect(migrations.map(({ id }) => id)).toEqual(
+      Array.from({ length: 45 }, (_, i) => i + 1),
+    );
+    await runMigrations(database);
+    await runMigrations(database);
+    expect(executedSql).toEqual([
+      expect.stringContaining("schema_migrations"),
+      participation.sql,
+      expect.stringContaining("schema_migrations"),
+    ]);
+    expect(appliedMigrationIds).toEqual(new Set([...prior, 44, 45]));
+  });
+
+  it("upgrades v43 through B44 then A45 and preserves both mirrors and existing data on restart", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "otr-a45-restart-"));
+    const path = join(directory, "upgrade.sqlite");
+    let sqlite = new DatabaseSync(path);
+    const applied: number[] = [];
+    let mirrorBefore: string;
+    const mirror = () =>
+      JSON.stringify([
+        sqlite.prepare("SELECT * FROM trip_canonical_events").all(),
+        sqlite
+          .prepare("SELECT * FROM trip_canonical_transport_endpoints ORDER BY role")
+          .all(),
+      ]);
+    const adapter = (): MigrationDatabase => ({
+      async execAsync(sql) {
+        const migration = migrations.find((m) => m.sql === sql);
+        if (migration?.id === 45) expect(mirror()).toBe(mirrorBefore);
+        sqlite.exec(sql);
+        if (migration) applied.push(migration.id);
+        if (migration?.id === 44) {
+          sqlite.exec(`INSERT INTO trip_canonical_events
+            (account_id,trip_id,event_id,read_version,read_disposition,legacy_compatible,
+             observation_sequence,observed_generation,temporal_contract_version,temporal_shape,
+             semantic_revision,is_estimated_time,title,event_type,status,participant_scope)
+            VALUES('account','trip','event',1,'READ_ONLY',0,1,0,1,'TRANSPORT',9,0,'Transport','transport','active','ALL');
+            INSERT INTO trip_canonical_transport_endpoints
+            (account_id,trip_id,event_id,role,instant,local_date,local_time)
+            VALUES('account','trip','event','ORIGIN','2026-10-04T01:00:00.123456Z','2026-10-04','01:00'),
+                  ('account','trip','event','DESTINATION','2026-10-04T03:00:00.654321Z','2026-10-04','03:00');`);
+          mirrorBefore = mirror();
+        }
+      },
+      async getFirstAsync<T>(sql: string, ...args: unknown[]) {
+        return (sqlite.prepare(sql).get(...(args as never[])) ?? null) as T | null;
+      },
+      async runAsync(sql, ...args) {
+        return sqlite.prepare(sql).run(...(args as never[]));
+      },
+      async withTransactionAsync(task) {
+        sqlite.exec("BEGIN");
+        try {
+          await task();
+          sqlite.exec("COMMIT");
+        } catch (error) {
+          sqlite.exec("ROLLBACK");
+          throw error;
+        }
+      },
+    });
+    try {
+      // Upgrade the real reviewed 1–43 schema; the runner installs both real 44/45.
+      sqlite.exec(
+        "CREATE TABLE schema_migrations(id INTEGER PRIMARY KEY,name TEXT NOT NULL,applied_at TEXT NOT NULL)",
+      );
+      for (const migration of migrations.filter(({ id }) => id < 44)) {
+        sqlite.exec(migration.sql);
+        sqlite
+          .prepare("INSERT INTO schema_migrations VALUES(?,?,?)")
+          .run(migration.id, migration.name, "2026-10-04");
+      }
+      sqlite.exec(`INSERT INTO expenses(id,trip_id,title,amount_minor,currency_code,created_at,updated_at,sync_status)
+        VALUES('expense','trip','Legacy expense',123,'USD','time','time','SYNCED');
+        INSERT INTO itinerary_items(id,trip_id,title,scheduled_date,created_at,updated_at,sync_status)
+        VALUES('itinerary','trip','Legacy Event','2026-10-04','time','time','SYNCED');
+        INSERT INTO ledger_members(id,journey_id,display_name,role,status,updated_at,participation_active,participation_revision)
+        VALUES('person','trip','Owner','owner','linked','time',1,7);
+        INSERT INTO ledger_sync_cursors(user_id,journey_id,cursor,server_time,updated_at)
+        VALUES('account','trip','financial','time','time');
+        INSERT INTO ledger_personal_payment_sync_cursors(user_id,journey_id,cursor,server_time,updated_at)
+        VALUES('account','trip','private','time','time');
+        INSERT INTO ledger_personal_payment_records(id,projection_user_id,journey_id,owner_user_id,owner_member_id,counterparty_member_id,direction,amount_minor,currency,scale,occurred_at,server_revision,created_at,updated_at,sync_status)
+        VALUES('payment','account','trip','account','person','other','PAID',100,'USD',2,'2026-10-04T00:00:00Z',1,'time','time','SYNCED');`);
+      const oldTables = sqlite
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name<>'schema_migrations' ORDER BY name",
+        )
+        .all()
+        .map((row) => String(row.name));
+      const existing = () =>
+        JSON.stringify(
+          oldTables.map((table) => [
+            table,
+            sqlite.prepare(`SELECT * FROM "${table}"`).all(),
+            sqlite
+              .prepare(
+                "SELECT type,name,sql FROM sqlite_master WHERE tbl_name=? ORDER BY type,name",
+              )
+              .all(table),
+          ]),
+        );
+      const priorData = existing();
+      sqlite.exec("PRAGMA foreign_keys=ON");
+      await runMigrations(adapter());
+      expect(applied).toEqual([44, 45]);
+      expect(existing()).toBe(priorData);
+      expect(mirror()).toBe(mirrorBefore!);
+      expect(() =>
+        sqlite.exec(
+          "INSERT INTO trip_canonical_transport_endpoints(account_id,trip_id,event_id,role) VALUES('account','trip','missing','ORIGIN')",
+        ),
+      ).toThrow(/FOREIGN KEY/);
+      expect(() =>
+        sqlite.exec(
+          "INSERT INTO trip_canonical_transport_endpoints(account_id,trip_id,event_id,role) VALUES('account','trip','event','OTHER')",
+        ),
+      ).toThrow(/CHECK/);
+      sqlite
+        .prepare("INSERT INTO trip_person_participation_results VALUES(?,?,?,?,?,?,?)")
+        .run("account", "trip", "person", "operation", "receipt", "digest", "{}");
+      const before = sqlite.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
+      expect(before.at(-1)).toMatchObject({
+        id: 45,
+        name: "trip_person_participation_results",
+      });
+      expect(before.map((row) => row.id)).toEqual(
+        Array.from({ length: 45 }, (_, i) => i + 1),
+      );
+      sqlite.close();
+      sqlite = new DatabaseSync(path);
+      await runMigrations(adapter());
+      expect(applied).toEqual([44, 45]);
+      expect(existing()).toBe(priorData);
+      expect(mirror()).toBe(mirrorBefore!);
+      expect(sqlite.prepare("SELECT * FROM schema_migrations ORDER BY id").all()).toEqual(
+        before,
+      );
+      expect(
+        sqlite.prepare("SELECT receipt_id FROM trip_person_participation_results").get(),
+      ).toEqual({ receipt_id: "receipt" });
+      expect(() =>
+        sqlite.exec("UPDATE trip_person_participation_results SET receipt_json='{}'"),
+      ).toThrow("PARTICIPATION_RECEIPT_IMMUTABLE");
+    } finally {
+      sqlite.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("repairs a database that recorded migration 3 without creating the itinerary table", async () => {
     const { appliedMigrationIds, database, executedSql } = createMigrationDatabase([
       1, 2, 3,
@@ -78,7 +243,7 @@ describe("SQLite migrations", () => {
       "ledger_my_spending_facts",
     );
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(44);
+    expect(latest.id).toBe(45);
     expect(migrations.find((migration) => migration.id === 39)?.sql).toContain(
       "original_mime_type",
     );

@@ -13,9 +13,9 @@ select ok(not pg_has_role('anon','otr_trip_person_lifecycle_writer','MEMBER') an
 select ok(not has_table_privilege('otr_trip_person_lifecycle_writer','public.journey_members','UPDATE') and not has_column_privilege('otr_trip_person_lifecycle_writer','public.journey_members','participation_active','UPDATE'), 'private role has no executable Member write grant');
 select ok((select not prosecdef and proconfig = array['search_path=pg_catalog'] from pg_proc where oid='public.guard_trip_person_participation()'::regprocedure), 'guard is invoker with trusted search_path');
 select ok(not has_function_privilege('authenticated','public.guard_trip_person_participation()','EXECUTE') and not has_function_privilege('service_role','public.guard_trip_person_participation()','EXECUTE'), 'no public/service callable guard entry');
-select is((select count(*)::integer from pg_proc where proowner=(select oid from pg_roles where rolname='otr_trip_person_lifecycle_writer')), 0, 'no function owned by private writer');
+select is((select count(*)::integer from pg_proc where proowner=(select oid from pg_roles where rolname='otr_trip_person_lifecycle_writer')), 1, 'only protected SET_PARTICIPATION owned by private writer');
 select is((select count(*)::integer from pg_proc where pronamespace='public'::regnamespace and (proname ilike '%deactivate%person%' or proname ilike '%reactivate%person%')), 0, 'no lifecycle command RPC');
-select ok(to_regclass('public.trip_person_participation_receipts') is null, 'no receipt or lifecycle audit table');
+select ok(to_regclass('public.trip_person_participation_receipts') is not null and not (select enabled from public.trip_person_command_gate), 'protected receipt foundation exists with activation CLOSED');
 select ok(exists(select 1 from pg_trigger where tgrelid='public.journey_members'::regclass and tgname='journey_members_touch_updated_at') and exists(select 1 from pg_trigger where tgrelid='public.journey_members'::regclass and tgname='journey_members_personal_payment_history_grant'), 'existing timestamp/private history triggers retained');
 
 insert into public.ledger_settings(journey_id,settlement_currency,settlement_scale,valuation_policy)
@@ -30,10 +30,12 @@ create temporary table lifecycle_financial_before as select
 
 -- Trusted fixture setup only: no callable bypass is installed. Rollback restores everything.
 alter table public.journey_members disable trigger journey_members_participation_guard;
+alter table public.journey_members disable trigger trip_person_transition_evidence_guard;
 select throws_ok($$update public.journey_members set participation_revision=-1 where id='12000000-0000-4000-8000-000000000002'$$, '23514', null, 'lower revision bound enforced independently of normalization');
 select throws_ok($$update public.journey_members set participation_revision=9007199254740992 where id='12000000-0000-4000-8000-000000000002'$$, '23514', null, 'upper revision bound enforced');
 update public.journey_members set participation_active=false,participation_revision=7 where id='12000000-0000-4000-8000-000000000002';
 alter table public.journey_members enable trigger journey_members_participation_guard;
+alter table public.journey_members enable trigger trip_person_transition_evidence_guard;
 
 set local role service_role;
 insert into public.journey_members(id,trip_id,display_name)
@@ -90,8 +92,10 @@ insert into public.journey_members(id,trip_id,display_name,status,invite_email)
 values('89000000-0000-4000-8000-000000000011','89000000-0000-4000-8000-000000000010','Invited Member','invite_pending','member@otr.invalid'),
 ('89000000-0000-4000-8000-000000000012','89000000-0000-4000-8000-000000000010','Email Claim','invite_pending','guest@otr.invalid');
 alter table public.journey_members disable trigger journey_members_participation_guard;
+alter table public.journey_members disable trigger trip_person_transition_evidence_guard;
 update public.journey_members set participation_active=false,participation_revision=7 where id in('89000000-0000-4000-8000-000000000011','89000000-0000-4000-8000-000000000012');
 alter table public.journey_members enable trigger journey_members_participation_guard;
+alter table public.journey_members enable trigger trip_person_transition_evidence_guard;
 insert into public.journey_invites(trip_id,token,role,invited_email,created_by)
 values('89000000-0000-4000-8000-000000000010','i2a-invite','member','member@otr.invalid','00000000-0000-4000-8000-000000000001');
 set local role authenticated;
@@ -107,8 +111,10 @@ insert into public.trips(id,name,created_by) values('89000000-0000-4000-8000-000
 insert into public.trip_members(trip_id,user_id,role) values('89000000-0000-4000-8000-000000000020','00000000-0000-4000-8000-000000000002','member');
 insert into public.journey_members(id,trip_id,display_name) values('89000000-0000-4000-8000-000000000021','89000000-0000-4000-8000-000000000020','Unlinked explicit claim');
 alter table public.journey_members disable trigger journey_members_participation_guard;
+alter table public.journey_members disable trigger trip_person_transition_evidence_guard;
 update public.journey_members set participation_active=false,participation_revision=7 where id='89000000-0000-4000-8000-000000000021';
 alter table public.journey_members enable trigger journey_members_participation_guard;
+alter table public.journey_members enable trigger trip_person_transition_evidence_guard;
 select set_config('request.jwt.claims','{"sub":"00000000-0000-4000-8000-000000000002","role":"authenticated","email":"member@otr.invalid"}',true);
 set local role authenticated;
 select is((select claim_status from public.claim_journey_member('89000000-0000-4000-8000-000000000021')),'claimed','explicit claim reaches real unlinked placeholder');

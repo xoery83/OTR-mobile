@@ -12,8 +12,10 @@ select ok((public.read_trip_person_snapshot_v1('10000000-0000-4000-8000-00000000
 insert into public.journey_members(id,trip_id,display_name,role,status)
 select gen_random_uuid(),'10000000-0000-4000-8000-000000000001','Roster '||lpad(i::text,4,'0'),'guest','unlinked' from generate_series(1,1203) i;
 alter table public.journey_members disable trigger journey_members_participation_guard;
+alter table public.journey_members disable trigger trip_person_transition_evidence_guard;
 update public.journey_members set participation_active=false,participation_revision=7 where id='12000000-0000-4000-8000-000000000002';
 alter table public.journey_members enable trigger journey_members_participation_guard;
+alter table public.journey_members enable trigger trip_person_transition_evidence_guard;
 create temporary table snapshot_read_before as select jsonb_agg(to_jsonb(m) order by m.id) as members from public.journey_members m;
 set local role service_role;
 select is((public.read_trip_person_snapshot_v1('10000000-0000-4000-8000-000000000001')->>'personCount')::integer,(select count(*)::integer from public.journey_members where trip_id='10000000-0000-4000-8000-000000000001'),'roster count includes all rows beyond cap');

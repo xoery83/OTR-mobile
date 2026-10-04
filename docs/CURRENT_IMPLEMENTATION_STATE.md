@@ -2,28 +2,53 @@
 
 Date: 2026-10-04
 
-## B-T3F — PLACE-CACHE CORRECTION COMPLETE / REVIEW PENDING
+## Integration Checkpoint #7 — COMBINED B44 + A45 / RUNTIME CLOSED
 
-- On `trip/temporal`, clean baseline `edd41a4`; SQLite migration 44 adds dedicated
-  Account/Trip/Event root (77 columns) and role-keyed endpoint (40 columns) mirrors.
-  All B-T3E facts round-trip offline without legacy conversion or scheduledDate.
-- Atomic revision reconciliation and existing Account apply gate cover commit;
-  equal-revision B-T3A accepted Place UUID→null loss updates only scoped pointers
-  with all other facts/metadata unchanged. Other mismatches fail closed;
-  older/withheld reads preserve cache.
-  Unknown local versions are withheld. Legacy tables/queue/cursors are unchanged.
-- Individually fetched Events may refresh. Central canonical collection refresh
-  remains deferred pending a reviewed completeness/cursor/deletion contract.
-  No timer, UI, semantic queue, server migration or command activation was added.
-- Evidence: 61 files / 478 scoped B/A/offline regression tests, including 42 real
-  SQLite mirror cases; typecheck/build/full lint/UI guard/changed-file format. Full format reports
-  17 untouched baseline violations.
-  Report: `docs/architecture/TRIP_CANONICAL_B_T3F_LOSSLESS_SQLITE_MIRROR_REPORT.md`.
-- Migration 44 schema is unchanged by this correction.
-- Next checkpoint: review B-T3F and its focused Place-cache correction. All activation gates remain CLOSED; no deploy,
-  Production/Hosted Dev access, sibling modification or commit in this task.
+- Reconcile `0964b31 feat(trip): add protected participation command foundation`
+  onto accepted B-T3F `b7ca2b8`, continuing the paused `git rebase trip/temporal`.
+  Only the four conflicted local migration/test/data-model/current-state files
+  require reconciliation. Both accepted implementations are retained.
+- SQLite order is exactly 1–43 → **44 B-T3F canonical Event read-only mirror** →
+  **45 A1-I2C2 participation result persistence**. No placeholder or duplicate;
+  both reviewed SQL bodies and older migrations remain unchanged.
+- B-T3F: lossless Account/Trip/Event READ_ONLY root (77 columns) and role-keyed
+  TRANSPORT endpoint (40 columns) mirrors provide seven-shape offline reads.
+  Atomic reconciliation and Account apply fencing retain exact temporal/spatial
+  facts, independent semantic revisions and opaque provenance. Equal-revision
+  accepted Place UUID→null cache loss only clears scoped pointers; other mismatch
+  handling and older/withheld preservation remain unchanged. Unknown versions
+  remain withheld. Event editing/mutation and semantic dispatch remain disabled.
+  Collection completeness/cursor/deletion refresh remains deferred.
+- A1-I2C2: protected owner Organizer SET_PARTICIPATION foundation, including self,
+  retains server `20261004000600`, immutable A receipt, Boolean/revision CAS,
+  ABA-safe increments, exact historic replay and current owner admission.
+  SQLite45 result/monotonic target/queue/all-seven certificate invalidation commit
+  under the existing Account apply gate. The existing reporting owner drains
+  earlier reads and performs bounded fresh convergence after releasing the gate.
+  A result is not a complete roster snapshot. Financial/private cursors remain.
+- All lifecycle/Event/Source runtime gates remain CLOSED. Dedicated credentials,
+  runtime activation and physical-device convergence acceptance remain pending;
+  existing PENDING/BLOCKED/deferred items are not promoted by this integration.
+- Authority: `TRIP_CANONICAL_B_T3F_LOSSLESS_SQLITE_MIRROR_REPORT.md` and
+  `TRIP_CANONICAL_A1_I2C2_PROTECTED_PARTICIPATION_COMMAND_REPORT.md` under
+  `docs/architecture/`, plus ADR0060 and the accepted A1-I2C1 contract.
+- Prior accepted evidence: B61 files/478 scoped tests (42 mirror cases); A15 files/
+  264 tests; A two 71-version server replays/1,391 SQL assertions each, deterministic
+  118-table manifest, 111 security cases and empty public/storage diffs.
+- Combined sanity gate: 22 files / 356 tests PASS, including B42 mirror cases,
+  A11 result cases and real 1–43→44→45 upgrade/restart. B root/endpoints and
+  existing legacy/Ledger/Person/financial/private data survive A45; every version
+  applies once. Typecheck, full lint/UI guard and five-file format/whitespace PASS.
+- All A non-conflicting files match `0964b31`; B implementation/docs match
+  `b7ca2b8`; reviewed B44/A45 registrations and 1–43 are byte-identical.
+  User-authorized exception: B repository test's global schema-tail expectation
+  alone moves 44→45. B mirror semantics are unchanged. No server replay is needed
+  for unchanged server artifacts.
+- Next checkpoint: separately approved review/activation work; collection refresh,
+  runtime provisioning and device acceptance remain outside this reconciliation.
+  No Production/Hosted Dev access or push is authorized.
 
-## Integration Checkpoint #6 — COMBINED ACCEPTED A+B+C STATE
+## Integration Checkpoint #6 — ACCEPTED A+B+C BASELINE (before B44/A45)
 
 - Reconcile reviewed C commit `a608f47` onto integrated A+B `ae4ae05` while
   continuing the existing `trip/import` rebase. Only this current-state document
@@ -132,9 +157,9 @@ Date: 2026-10-04
   byte checks and populated 114-table forward non-interference passed. Disposable
   validation containers were stopped. No SQL suite is rerun for this conflict.
 
-## Combined schema and next checkpoint
+## Accepted integration baseline schema and next checkpoint (before I2C2)
 
-- Manifest: 116 RLS tables, 1,746 columns, 1,004 constraints, 365 indexes,
+- Baseline manifest: 116 RLS tables, 1,746 columns, 1,004 constraints, 365 indexes,
   198 functions, 141 triggers, 194 policies and four buckets. Checksum:
   `c7aa6ff4dfa3992f86816b642e94a5cdb66723674710edc66059ec60afc9388f`.
 - Next work requires a separately approved checkpoint. Runtime provisioning,

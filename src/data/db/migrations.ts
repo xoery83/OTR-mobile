@@ -1600,4 +1600,24 @@ export const migrations: Migration[] = [
       );
     `,
   },
+  {
+    id: 45,
+    name: "trip_person_participation_results",
+    sql: `
+      CREATE TABLE trip_person_participation_results (
+        account_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        person_id TEXT NOT NULL,
+        operation_id TEXT NOT NULL,
+        receipt_id TEXT NOT NULL UNIQUE,
+        result_digest TEXT NOT NULL,
+        receipt_json TEXT NOT NULL CHECK (json_valid(receipt_json)),
+        PRIMARY KEY (account_id, operation_id)
+      );
+      CREATE TRIGGER trip_person_result_immutable_update BEFORE UPDATE ON trip_person_participation_results
+        BEGIN SELECT RAISE(ABORT, 'PARTICIPATION_RECEIPT_IMMUTABLE'); END;
+      CREATE TRIGGER trip_person_result_immutable_delete BEFORE DELETE ON trip_person_participation_results
+        BEGIN SELECT RAISE(ABORT, 'PARTICIPATION_RECEIPT_IMMUTABLE'); END;
+    `,
+  },
 ];

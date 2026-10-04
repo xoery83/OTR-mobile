@@ -12,7 +12,17 @@ import {
   validateParticipationPage,
   saveParticipationPage,
   readParticipationCertificate,
+  hashTripPersonBytes,
 } from "./tripPersonCertificate";
+import {
+  participationCommandSchema,
+  participationResultSchema,
+  participationIntentBytes,
+  participationResultBytes,
+  participationOperationType,
+  type ParticipationCommand,
+  type ParticipationResult,
+} from "@/domain/trip/personParticipationCommand";
 import {
   storeExpenseCanonical,
   readExpenseCanonical,
@@ -57,6 +67,142 @@ export function createLedgerReadRepository(
   getActiveUserId: () => Promise<string>,
 ) {
   return {
+    // Foundation seam only. Central reporting cycle must drain earlier reads
+    // before this application; no normal queue authoring/dispatch is installed.
+    async applyParticipationResult(
+      input: ParticipationCommand,
+      response: ParticipationResult,
+      context: AccountRequestContext,
+    ) {
+      const command = participationCommandSchema.parse(input);
+      const result = participationResultSchema.parse(response);
+      const r = result.receipt;
+      if (
+        context.accountId !== command.actorUserId ||
+        context.tripId !== command.tripId ||
+        r.actorUserId !== command.actorUserId ||
+        r.tripId !== command.tripId ||
+        r.personId !== command.personId ||
+        r.operationId !== command.operationId ||
+        r.intentDigest !== command.intentDigest ||
+        (command.actorMemberId !== null && command.actorMemberId !== r.actorMemberId) ||
+        r.expectedParticipation.revision !== command.expectedParticipation.revision ||
+        r.expectedParticipation.isParticipating !==
+          command.expectedParticipation.isParticipating ||
+        r.desiredParticipation !== command.isParticipating ||
+        (await hashTripPersonBytes(participationIntentBytes(command))) !==
+          command.intentDigest ||
+        (await hashTripPersonBytes(participationResultBytes(r))) !== result.resultDigest
+      )
+        throw new Error("Participation result binding mismatch.");
+      await assertAccountRequestContext(context, getActiveUserId);
+      let applied = false;
+      await withAccountApplyGate(() =>
+        database.withTransactionAsync(async () => {
+          await assertAccountRequestContext(context, getActiveUserId);
+          const operation = await database.getFirstAsync<{
+            owner: string;
+            trip: string;
+            person: string;
+            kind: string;
+            entity: string;
+            key: string;
+            payload: string;
+          }>(
+            `SELECT owner_user_id AS owner, trip_id AS trip, entity_id AS person,
+           operation_type AS kind, entity_type AS entity, idempotency_key AS key, payload_json AS payload
+           FROM sync_operations WHERE id=?`,
+            command.operationId,
+          );
+          if (
+            !operation ||
+            operation.owner !== context.accountId ||
+            operation.trip !== context.tripId ||
+            operation.person !== command.personId ||
+            operation.kind !== participationOperationType ||
+            operation.entity !== "TRIP_PERSON" ||
+            participationCommandSchema.parse(JSON.parse(operation.payload))
+              .intentDigest !== command.intentDigest ||
+            operation.key !== command.operationId ||
+            participationIntentBytes(
+              participationCommandSchema.parse(JSON.parse(operation.payload)),
+            ) !== participationIntentBytes(command)
+          )
+            throw new Error("Participation operation binding mismatch.");
+          const previous = await database.getFirstAsync<{ json: string; digest: string }>(
+            "SELECT receipt_json AS json,result_digest AS digest FROM trip_person_participation_results WHERE account_id=? AND operation_id=?",
+            context.accountId,
+            command.operationId,
+          );
+          const json = JSON.stringify(r);
+          if (previous) {
+            if (previous.json !== json || previous.digest !== result.resultDigest)
+              throw new Error("Immutable participation result mismatch.");
+            await assertAccountRequestContext(context, getActiveUserId);
+            return;
+          }
+          const admitted = await database.getFirstAsync<{ user: string }>(
+            "SELECT user_id AS user FROM ledger_actor_context WHERE user_id=? AND journey_id=?",
+            context.accountId,
+            context.tripId,
+          );
+          if (!admitted) throw new Error("Missing cached Trip admission.");
+          const row = await database.getFirstAsync<{
+            trip: string;
+            active: number | null;
+            revision: number | null;
+          }>(
+            "SELECT journey_id AS trip,participation_active AS active,participation_revision AS revision FROM ledger_members WHERE id=?",
+            command.personId,
+          );
+          const pair = r.resultingParticipation;
+          if (row && row.trip !== context.tripId)
+            throw new Error("Participation Person Trip mismatch.");
+          if (
+            row?.revision === pair.revision &&
+            row.active !== Number(pair.isParticipating)
+          )
+            throw new Error("Inconsistent participation result observation.");
+          if (row && (row.revision === null || row.revision < pair.revision))
+            await database.runAsync(
+              "UPDATE ledger_members SET participation_active=?,participation_revision=? WHERE id=? AND journey_id=?",
+              Number(pair.isParticipating),
+              pair.revision,
+              command.personId,
+              context.tripId,
+            );
+          await database.runAsync(
+            `INSERT INTO trip_person_participation_results
+          (account_id,trip_id,person_id,operation_id,receipt_id,result_digest,receipt_json) VALUES(?,?,?,?,?,?,?)`,
+            context.accountId,
+            context.tripId,
+            command.personId,
+            command.operationId,
+            r.receiptId,
+            result.resultDigest,
+            json,
+          );
+          await database.runAsync(
+            `UPDATE ledger_sync_cursors SET
+          participation_snapshot_contract_version=NULL,participation_fingerprint_version=NULL,
+          participation_fingerprint=NULL,participation_person_ids_json=NULL,
+          participation_observed_at=NULL,participation_verified_at=NULL,participation_bound_cursor=NULL
+          WHERE journey_id=?`,
+            context.tripId,
+          );
+          await database.runAsync(
+            `UPDATE sync_operations SET status=?,next_attempt_at=NULL,
+          claim_owner=NULL,lease_expires_at=NULL WHERE id=? AND owner_user_id=?`,
+            r.outcome === "REVISION_CONFLICT" ? "CONFLICT" : "COMPLETED",
+            command.operationId,
+            context.accountId,
+          );
+          await assertAccountRequestContext(context, getActiveUserId);
+          applied = true;
+        }),
+      );
+      return applied;
+    },
     async applyBootstrap(
       response: LedgerBootstrapResponse,
       requestContext?: AccountRequestContext,

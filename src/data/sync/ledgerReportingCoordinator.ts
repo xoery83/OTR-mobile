@@ -12,6 +12,10 @@ import { ApiClientError } from "@/data/api/client";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { refreshLedgerPersonalPayments } from "./ledgerPersonalPaymentCoordinator";
 import { refreshPersonalSettlementReview } from "./personalSettlementReviewCoordinator";
+import type {
+  ParticipationCommand,
+  ParticipationResult,
+} from "@/domain/trip/personParticipationCommand";
 
 type JourneyPullResult = {
   changed: boolean;
@@ -24,10 +28,13 @@ const cycleTails = new Map<string, Promise<void>>();
 function scopedCycle<T>(
   journeyId: string,
   task: (context: AccountRequestContext) => Promise<T>,
+  requestContext?: AccountRequestContext,
 ) {
-  const context = captureAccountRequestContext(journeyId, requireActiveUserId);
+  const context = requestContext
+    ? Promise.resolve(requestContext)
+    : captureAccountRequestContext(journeyId, requireActiveUserId);
   void context.catch(() => undefined);
-  const key = `${getAccountGeneration()}:${journeyId}`;
+  const key = `${requestContext?.generation ?? getAccountGeneration()}:${journeyId}`;
   const previous = cycleTails.get(key) ?? Promise.resolve();
   const run = previous.then(async () => {
     const captured = await context;
@@ -43,6 +50,41 @@ function scopedCycle<T>(
     if (cycleTails.get(key) === tail) cycleTails.delete(key);
   });
   return run;
+}
+
+// No runtime caller/dispatcher is installed. The result barrier and its new
+// refresh share the existing cycle tail, so an older in-flight read drains first.
+export function reconcileTripPersonParticipationResult(
+  command: ParticipationCommand,
+  result: ParticipationResult,
+  context: AccountRequestContext,
+) {
+  if (context.tripId !== command.tripId) throw new Error("Participation Trip mismatch.");
+  return scopedCycle(
+    command.tripId,
+    async (captured) => {
+      const applied = await (
+        await getDefaultLedgerReadRepository()
+      ).applyParticipationResult(command, result, captured);
+      if (!applied) return { applied: false, refresh: "UNCHANGED" as const };
+      // Network runs only after the atomic repository apply has released its gate.
+      try {
+        await pullJourneyLedger(command.tripId, captured);
+        const certificate = await (
+          await getDefaultLedgerReadRepository()
+        ).getParticipationCertificate(command.tripId);
+        await assertAccountRequestContext(captured, requireActiveUserId);
+        return {
+          applied: true,
+          refresh: certificate ? ("COMPLETE" as const) : ("PENDING" as const),
+        };
+      } catch {
+        await assertAccountRequestContext(captured, requireActiveUserId);
+        return { applied: true, refresh: "PENDING" as const };
+      }
+    },
+    context,
+  );
 }
 
 export async function ensureJourneyLedgerActor(journeyId: string) {

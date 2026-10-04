@@ -15,7 +15,9 @@ import type {
 import type { LedgerReadDatabase } from "./ledgerReadRepository";
 
 export async function fingerprintParticipation(rows: readonly unknown[]) {
-  const value = serializeParticipationVector(rows);
+  return hashTripPersonBytes(serializeParticipationVector(rows));
+}
+export async function hashTripPersonBytes(value: string) {
   const crypto = await import("expo-crypto");
   return crypto.digestStringAsync(crypto.CryptoDigestAlgorithm.SHA256, value);
 }

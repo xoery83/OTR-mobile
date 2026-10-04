@@ -410,9 +410,32 @@ an equivalent closure intentionally does not create a new Expense revision.
 SQLite migration 44 adds dedicated Account/Trip/Event-scoped
 `trip_canonical_events` and `trip_canonical_transport_endpoints`. Every B-T3E
 exposed fact has a typed column; endpoints use Account/Trip/Event/role identity.
+B semantic revision is independent of A participation revision.
 Exact temporal/spatial text and opaque provenance maps round-trip without a Date
 conversion or legacy DTO. READ_ONLY/legacy-incompatible markers, read/temporal
 versions, semantic_revision and monotonic observation_sequence are separate from
 existing itinerary sync_version and all financial/private cursors. No legacy data
 is adopted or rewritten. See ADR 0060 and the B-T3F report for the field catalog
 and atomic Account-generation reconciliation. Collection completeness remains deferred.
+
+## Trip A1-I2C2 protected participation foundation (CLOSED)
+
+Server migration `20261004000600` adds `trip_person_command_gate` (enforced false)
+and immutable `trip_person_participation_receipts`. Actor/key is unique across Trips;
+receipts bind exact intent, expected Boolean/revision, observed/result pairs and UTC
+commit time. A semantic flip requires matching same-transaction evidence. Receipt
+retention has no cascading Person/Trip foreign key. The migration grants no Member
+mutation capability and installs no runtime credentials.
+
+SQLite migration 44 is the accepted B-T3F mirror; migration 45 adds
+`trip_person_participation_results`, keyed by Account/operation,
+with immutable receipt JSON/digest and unique server receipt ID. The existing
+`sync_operations` intent/key/status remains the queue boundary; no authoring or
+dispatch is enabled. Under the existing Account apply gate, result retention,
+monotonic target observation, queue reconciliation and clearing all seven Trip
+participation certificate fields share one transaction. Financial and private
+payment cursors remain unchanged. A participation result is not a complete roster
+snapshot. Full roster certification still requires the
+existing central reporting refresh and complete v2 vector.
+
+Evidence: `docs/architecture/TRIP_CANONICAL_A1_I2C2_PROTECTED_PARTICIPATION_COMMAND_REPORT.md`.

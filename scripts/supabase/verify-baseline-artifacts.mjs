@@ -90,35 +90,43 @@ const [
 ]);
 
 const manifest = JSON.parse(manifestRaw);
-// Retained chain through closed C-I3D 20261004000500: two tables, 40 columns,
-// 55 constraints, four indexes, 23 functions, two guards and six private policies.
-// No command activation or historical migration edits.
+// Retained 71-version chain through CLOSED A1-I2C2; immutable A receipts only.
 const expected = {
-  tables: 116,
+  tables: 118,
   buckets: 4,
-  columns: 1746,
-  indexes: 365,
-  checksum: "c7aa6ff4dfa3992f86816b642e94a5cdb66723674710edc66059ec60afc9388f",
-  policies: 194,
-  triggers: 141,
-  functions: 198,
-  rls_tables: 116,
-  constraints: 1004,
+  columns: 1772,
+  indexes: 369,
+  checksum: "82f91a57ae39c5ed5f04a752c26c5e2d791b711cbe4dd07e536ed67044c32bdb",
+  policies: 199,
+  triggers: 144,
+  functions: 209,
+  rls_tables: 118,
+  constraints: 1024,
 };
 const migrationNames = (await readdir("supabase/migrations"))
   .filter((name) => name.endsWith(".sql"))
   .sort();
 if (
-  migrationNames.length !== 70 ||
-  new Set(migrationNames.map((name) => name.slice(0, 14))).size !== 70 ||
-  migrationNames.at(-1) !== "20261004000500_trip_source_command_foundation.sql"
+  migrationNames.length !== 71 ||
+  new Set(migrationNames.map((name) => name.slice(0, 14))).size !== 71 ||
+  migrationNames.at(-1) !== "20261004000600_trip_person_command_foundation.sql"
 ) {
-  throw new Error("Expected exactly 70 unique migration versions through C-I3D.");
+  throw new Error("Expected exactly 71 unique migration versions through A1-I2C2.");
 }
 const sourceCommand = await readFile(
   "supabase/migrations/20261004000500_trip_source_command_foundation.sql",
   "utf8",
 );
+const personCommand = await readFile(
+  "supabase/migrations/20261004000600_trip_person_command_foundation.sql",
+  "utf8",
+);
+if (
+  !personCommand.includes("trip_person_gate_closed check(not enabled)") ||
+  !personCommand.includes("pg_shdepend") ||
+  !personCommand.includes("PARTICIPATION_ISOLATION_UNSUPPORTED")
+)
+  throw new Error("Protected closed participation foundation missing.");
 
 for (const [key, value] of Object.entries(expected)) {
   if (manifest[key] !== value) {
@@ -156,7 +164,7 @@ const secretPatterns = [
 for (const pattern of secretPatterns) {
   if (
     pattern.test(
-      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${ledger8Review}\n${ledger8Feed}\n${ledger9Import}\n${settlementParticipation}\n${sourceCommand}\n${seed}`,
+      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${ledger8Review}\n${ledger8Feed}\n${ledger9Import}\n${settlementParticipation}\n${sourceCommand}\n${personCommand}\n${seed}`,
     )
   ) {
     throw new Error(`Production identifier or secret-like value found: ${pattern}`);
