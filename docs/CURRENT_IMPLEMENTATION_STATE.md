@@ -2,6 +2,27 @@
 
 Date: 2026-10-04
 
+## B-T3F — PLACE-CACHE CORRECTION COMPLETE / REVIEW PENDING
+
+- On `trip/temporal`, clean baseline `edd41a4`; SQLite migration 44 adds dedicated
+  Account/Trip/Event root (77 columns) and role-keyed endpoint (40 columns) mirrors.
+  All B-T3E facts round-trip offline without legacy conversion or scheduledDate.
+- Atomic revision reconciliation and existing Account apply gate cover commit;
+  equal-revision B-T3A accepted Place UUID→null loss updates only scoped pointers
+  with all other facts/metadata unchanged. Other mismatches fail closed;
+  older/withheld reads preserve cache.
+  Unknown local versions are withheld. Legacy tables/queue/cursors are unchanged.
+- Individually fetched Events may refresh. Central canonical collection refresh
+  remains deferred pending a reviewed completeness/cursor/deletion contract.
+  No timer, UI, semantic queue, server migration or command activation was added.
+- Evidence: 61 files / 478 scoped B/A/offline regression tests, including 42 real
+  SQLite mirror cases; typecheck/build/full lint/UI guard/changed-file format. Full format reports
+  17 untouched baseline violations.
+  Report: `docs/architecture/TRIP_CANONICAL_B_T3F_LOSSLESS_SQLITE_MIRROR_REPORT.md`.
+- Migration 44 schema is unchanged by this correction.
+- Next checkpoint: review B-T3F and its focused Place-cache correction. All activation gates remain CLOSED; no deploy,
+  Production/Hosted Dev access, sibling modification or commit in this task.
+
 ## Integration Checkpoint #6 — COMBINED ACCEPTED A+B+C STATE
 
 - Reconcile reviewed C commit `a608f47` onto integrated A+B `ae4ae05` while
@@ -55,7 +76,8 @@ Date: 2026-10-04
   REPLAY_UNAVAILABLE; service_role is not a semantic-authority fallback.
 - Dedicated runtime gateway provisioning/credentials/live connector remain
   PENDING. Mobile read transport fences Account/Trip/generation and ABA responses;
-  lossless SQLite/offline mirror and accepted-state apply remain PENDING.
+  lossless SQLite/offline mirror is implemented in B-T3F above (review pending);
+  canonical command accepted-state apply remains PENDING.
 - Canonical Event commands remain disabled; activation gate CLOSED. B-T3D's
   immutable receipts, exact intent codec and fixed command foundation are retained.
 - Reviewed evidence: corrected boundary/transport 36 cases; initial scoped

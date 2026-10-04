@@ -351,3 +351,18 @@ known observation remains separate from current verification; observation time i
 not revision ordering or a guarantee against a later server commit. Device restart,
 empty-queue reconnect and two-device acceptance remain I2B3. See the
 [I2B2 report](architecture/TRIP_CANONICAL_A1_I2B2_IMPLEMENTATION_REPORT.md).
+
+## Canonical Event individual read mirroring — B-T3F
+
+Individual B-T3E reads capture Account/Trip/generation before credentials/network.
+The canonical Event repository rechecks that context under the existing apply gate
+through root+endpoint transaction commit/rollback; the gate is never held across I/O.
+Newer semantic revisions replace the mirror; identical equal revisions are neutral;
+equal-revision B-T3A optional accepted Place UUID→null loss updates only pointers
+when every other root/endpoint fact is identical. Other equal-revision differences
+fail closed; older/withheld observations preserve cache. Neutral loss does not
+advance semantic revision or observation metadata.
+Offline reads use the same Account/Trip scope and return full READ_ONLY representations.
+There is no canonical Event collection/snapshot seam in the central refresh owner:
+no polling, completeness certification, cursor advancement or absence-as-deletion
+is introduced. Existing legacy itinerary and financial/private sync paths are unchanged.

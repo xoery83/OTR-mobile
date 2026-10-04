@@ -404,3 +404,15 @@ service-only legacy-no-op evidence predicate and narrowly extends guarded equiva
 resolution admission; no incident data backfill. Equal-revision local canonical
 metadata accumulates immutable audit IDs and monotonic server timestamps because
 an equivalent closure intentionally does not create a new Expense revision.
+
+## Canonical Event local mirror — B-T3F
+
+SQLite migration 44 adds dedicated Account/Trip/Event-scoped
+`trip_canonical_events` and `trip_canonical_transport_endpoints`. Every B-T3E
+exposed fact has a typed column; endpoints use Account/Trip/Event/role identity.
+Exact temporal/spatial text and opaque provenance maps round-trip without a Date
+conversion or legacy DTO. READ_ONLY/legacy-incompatible markers, read/temporal
+versions, semantic_revision and monotonic observation_sequence are separate from
+existing itinerary sync_version and all financial/private cursors. No legacy data
+is adopted or rewritten. See ADR 0060 and the B-T3F report for the field catalog
+and atomic Account-generation reconciliation. Collection completeness remains deferred.
