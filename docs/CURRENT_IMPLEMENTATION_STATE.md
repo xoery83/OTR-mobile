@@ -2,113 +2,61 @@
 
 Date: 2026-10-04
 
-## Integration Checkpoint #7 — COMBINED B44 + A45 / RUNTIME CLOSED
+## Integration Checkpoint #7 — COMBINED ACCEPTED A+B+C / RUNTIME CLOSED
 
-- Reconcile `0964b31 feat(trip): add protected participation command foundation`
-  onto accepted B-T3F `b7ca2b8`, continuing the paused `git rebase trip/temporal`.
-  Only the four conflicted local migration/test/data-model/current-state files
-  require reconciliation. Both accepted implementations are retained.
-- SQLite order is exactly 1–43 → **44 B-T3F canonical Event read-only mirror** →
-  **45 A1-I2C2 participation result persistence**. No placeholder or duplicate;
-  both reviewed SQL bodies and older migrations remain unchanged.
-- B-T3F: lossless Account/Trip/Event READ_ONLY root (77 columns) and role-keyed
-  TRANSPORT endpoint (40 columns) mirrors provide seven-shape offline reads.
-  Atomic reconciliation and Account apply fencing retain exact temporal/spatial
-  facts, independent semantic revisions and opaque provenance. Equal-revision
-  accepted Place UUID→null cache loss only clears scoped pointers; other mismatch
-  handling and older/withheld preservation remain unchanged. Unknown versions
-  remain withheld. Event editing/mutation and semantic dispatch remain disabled.
-  Collection completeness/cursor/deletion refresh remains deferred.
-- A1-I2C2: protected owner Organizer SET_PARTICIPATION foundation, including self,
-  retains server `20261004000600`, immutable A receipt, Boolean/revision CAS,
-  ABA-safe increments, exact historic replay and current owner admission.
-  SQLite45 result/monotonic target/queue/all-seven certificate invalidation commit
-  under the existing Account apply gate. The existing reporting owner drains
-  earlier reads and performs bounded fresh convergence after releasing the gate.
-  A result is not a complete roster snapshot. Financial/private cursors remain.
-- All lifecycle/Event/Source runtime gates remain CLOSED. Dedicated credentials,
-  runtime activation and physical-device convergence acceptance remain pending;
-  existing PENDING/BLOCKED/deferred items are not promoted by this integration.
-- Authority: `TRIP_CANONICAL_B_T3F_LOSSLESS_SQLITE_MIRROR_REPORT.md` and
-  `TRIP_CANONICAL_A1_I2C2_PROTECTED_PARTICIPATION_COMMAND_REPORT.md` under
-  `docs/architecture/`, plus ADR0060 and the accepted A1-I2C1 contract.
-- Prior accepted evidence: B61 files/478 scoped tests (42 mirror cases); A15 files/
-  264 tests; A two 71-version server replays/1,391 SQL assertions each, deterministic
-  118-table manifest, 111 security cases and empty public/storage diffs.
-- Combined sanity gate: 22 files / 356 tests PASS, including B42 mirror cases,
-  A11 result cases and real 1–43→44→45 upgrade/restart. B root/endpoints and
-  existing legacy/Ledger/Person/financial/private data survive A45; every version
-  applies once. Typecheck, full lint/UI guard and five-file format/whitespace PASS.
-- All A non-conflicting files match `0964b31`; B implementation/docs match
-  `b7ca2b8`; reviewed B44/A45 registrations and 1–43 are byte-identical.
-  User-authorized exception: B repository test's global schema-tail expectation
-  alone moves 44→45. B mirror semantics are unchanged. No server replay is needed
-  for unchanged server artifacts.
-- Next checkpoint: separately approved review/activation work; collection refresh,
-  runtime provisioning and device acceptance remain outside this reconciliation.
-  No Production/Hosted Dev access or push is authorized.
+- Continue the existing import rebase, replaying reviewed C-I3E `488e465` onto
+  integrated A+B `6df3db8`. Only this current-state document requires reconciliation;
+  C-I3E report/harness and all integrated A/B implementation bytes remain intact.
+- A1-I2C2 and B-T3F are FULL PASS / ACCEPTED / CLOSED foundations. C-I3E is
+  PREFLIGHT PASS / ACCEPTED / CLOSED; accepted C-I3D remains CLOSED. These statuses
+  do not activate commands or remove unresolved provider/runtime proof gates.
+- SQLite order remains exactly 1–43 → **44 B-T3F canonical Event read-only mirror**
+  → **45 A1-I2C2 participation result persistence**. Server migration
+  `20261004000600_trip_person_command_foundation.sql` remains unchanged.
+- Event commands, runtime SET_PARTICIPATION and Source commands remain disabled;
+  lifecycle/Event/Source gates CLOSED. Purge/redaction remain disabled. No remote
+  environment access, deployment or push is authorized by this reconciliation.
 
-## Integration Checkpoint #6 — ACCEPTED A+B+C BASELINE (before B44/A45)
+## A1-I2C2 — FULL PASS / ACCEPTED / CLOSED FOUNDATION
 
-- Reconcile reviewed C commit `a608f47` onto integrated A+B `ae4ae05` while
-  continuing the existing `trip/import` rebase. Only this current-state document
-  requires reconciliation. A1-I2C1, B-T3E and C-I3D are accepted/closed checkpoints;
-  prior review-pending Trip status blocks are superseded by this combined handoff.
-- Acceptance does not activate runtime commands. Participation/lifecycle I2C,
-  canonical Event commands and Source commands remain disabled. Event and Source
-  activation gates remain CLOSED; purge/redaction remain disabled.
-- The combined server chain has 70 unique migration versions, ending with
-  `20261004000500_trip_source_command_foundation.sql`. The reviewed C migration,
-  manifest and verifier are unchanged, as are A's lifecycle contract and B's
-  nine non-current-state implementation/docs files. No deployment or remote
-  environment access is part of this reconciliation.
+- Organizer-only protected `SET_PARTICIPATION`, including Organizer self, retains
+  server migration `20261004000600`, immutable historic receipt, exact replay,
+  Boolean/revision CAS, ABA-safe increments and current owner admission.
+- SQLite migration **45** atomically persists exact receipt, monotonic target
+  observation, queue disposition and **all-seven participation certificate
+  invalidation** under the existing Account apply gate. Financial/private cursor
+  checkpoints remain intact; a command result is not a complete roster snapshot.
+- The existing reporting owner drains earlier reads and performs bounded fresh
+  convergence after the apply gate releases, with Account/Trip/generation fencing.
+  No parallel reporting/refresh owner is introduced.
+- Runtime SET_PARTICIPATION remains disabled; lifecycle gate CLOSED. Dedicated
+  runtime provisioning/activation and physical-device convergence remain pending;
+  this accepted foundation does not enable adjacent lifecycle command families.
+- Authority: `docs/architecture/TRIP_CANONICAL_A1_I2C2_PROTECTED_PARTICIPATION_COMMAND_REPORT.md`
+  and accepted A1-I2C1 contract. Prior A evidence: 15 files / 264 tests, two clean
+  71-version replays / 1,391 SQL assertions each, 111 security cases, deterministic
+  118-table manifest and empty public/storage diffs. No fresh suite is run here.
 
-## A1-I2C1 — PARTICIPATION LIFECYCLE COMMAND CONTRACT ACCEPTED / CLOSED
+## B-T3F — FULL PASS / ACCEPTED / CLOSED
 
-- Authority: `docs/architecture/TRIP_CANONICAL_A1_I2C1_LIFECYCLE_COMMAND_CONTRACT.md`
-  from `f7de881`, unchanged. First V1 scope is organizer `SET_PARTICIPATION` for
-  an existing Person, including the organizer's own participation. Member/guest
-  self commands, leave/rejoin, linking/unlinking, removal and ownership transfer
-  remain outside the approved first slice.
-- A command result proves the exact historic operation and affected Person pair;
-  it is not a complete roster snapshot, cannot certify the complete Person set
-  and cannot mint a complete-set fingerprint/shared cursor certificate.
-- Future receipt application must invalidate all seven local certificate fields
-  together, preserve the financial checkpoint and use the existing central
-  reporting/refresh owner with Account/Trip/generation fencing. No parallel
-  scheduler or single-Person roster certification is authorized. APPLIED changes
-  the server vector; UNCHANGED/replay do not inherently change that server hash.
-- Lifecycle runtime commands and I2C remain disabled. This accepted contract does
-  not install command routes, receipts or the future result-application seam.
-- Existing A1-I2B2 complete-vector/shared-v2 protocol, monotonic apply and Account
-  transition gate, plus A1-I2B3 wake/reconnect refresh convergence, remain intact.
-  A1-I2B3 local verification passed; physical convergence acceptance remains
-  PARTIAL with foreground/reconnect/Trip/Account/server-churn cases pending.
-
-## B-T3E — CANONICAL EVENT LOSSLESS READ INTEGRATION ACCEPTED / CLOSED
-
-- Authority/evidence:
-  `docs/architecture/TRIP_CANONICAL_B_T3E_BACKEND_READ_INTEGRATION_REPORT.md`.
-  Integrated implementation is retained from `ae4ae05`; seven-shape lossless read
-  preserves canonical facts, microsecond strings and embedded transport endpoints.
-  Old/unknown clients are WITHHELD; no synthetic scheduledDate is introduced.
-- Canonical receipt route remains
-  `/v2/trips/:tripId/canonical-event-operations/:operationKey`. Historic status
-  correlation withholds private proof bodies. The unshipped `event-operations`
-  route has no alias.
-- Capability projection remains fail-closed. Without the dedicated runtime seam,
-  command version/gate observation remain unknown and exact recovery reports
-  REPLAY_UNAVAILABLE; service_role is not a semantic-authority fallback.
-- Dedicated runtime gateway provisioning/credentials/live connector remain
-  PENDING. Mobile read transport fences Account/Trip/generation and ABA responses;
-  lossless SQLite/offline mirror is implemented in B-T3F above (review pending);
-  canonical command accepted-state apply remains PENDING.
-- Canonical Event commands remain disabled; activation gate CLOSED. B-T3D's
-  immutable receipts, exact intent codec and fixed command foundation are retained.
-- Reviewed evidence: corrected boundary/transport 36 cases; initial scoped
-  86 TypeScript files / 676 cases, 38 SQL files / 1,196 assertions, 78 role-security
-  tests, codec/concurrency and relevant static/manifest checks passed. These are
-  prior checkpoint results, not new tests run for this documentation conflict.
+- SQLite migration **44** installs dedicated lossless canonical Event root
+  (77 columns) and role-keyed TRANSPORT endpoint (40 columns) READ_ONLY mirrors,
+  providing seven-shape offline lossless read. Atomic apply retains exact temporal/
+  spatial facts, independent semantic revisions and opaque provenance.
+- Account/Trip/generation fencing rejects stale/ABA scope responses. Revision-neutral
+  accepted Place UUID→null cache loss only clears the scoped cached pointers;
+  other equal-revision mismatch handling and older/withheld preservation remain.
+- Collection completeness/cursor/deletion contract is still deferred. Event
+  mutation/edit UI and semantic queue remain disabled; dedicated runtime gateway
+  provisioning remains PENDING and canonical Event activation stays CLOSED.
+- B-T3E canonical receipt route remains
+  `/v2/trips/:tripId/canonical-event-operations/:operationKey`; capability projection
+  remains fail-closed, with no service_role semantic-authority fallback.
+- Authority: `docs/architecture/TRIP_CANONICAL_B_T3F_LOSSLESS_SQLITE_MIRROR_REPORT.md`
+  and ADR0060. Prior B evidence: 61 files / 478 scoped tests including 42 mirror
+  cases. Prior combined B44+A45 validation: 22 files / 356 tests, real upgrade/
+  restart and retained B/legacy/Ledger/Person/financial/private data. These
+  accepted results are historical evidence, not new tests for this conflict.
 
 ## C-I3D — PROTECTED SOURCE COMMAND FOUNDATION ACCEPTED / CLOSED
 
@@ -145,9 +93,10 @@ Date: 2026-10-04
   Direct/PUBLIC/inherited EXECUTE, non-system schema CREATE, table/live-column
   ACLs, memberships/SET ROLE/default privileges and zero-row DML guards remain.
 - Source commands remain disabled; gate CLOSED; reserved roles remain NOLOGIN.
-  No runtime credentials or real provider worker are installed. Provider
-  create-only proof, quiescence/parser/resource proof and a trusted completion
-  producer remain PENDING, as do runtime provisioning and lossless local mirror.
+  No runtime credentials or real provider worker are installed. C-I3E below proves
+  local create-only behavior; provider terminality/quiescence, safe UNKNOWN retry
+  and bounded parser/decode safety remain BLOCKED. Trusted completion producer,
+  runtime provisioning and lossless Source local mirror remain PENDING.
   Purge/redaction remain disabled.
 - Reviewed evidence: focused C-I3D 159 / C-I3B 246 assertions; 111 role/security
   tests; C vectors/CAS/phase/isolation/gate-close races; B role/security 78 tests;
@@ -157,16 +106,43 @@ Date: 2026-10-04
   byte checks and populated 114-table forward non-interference passed. Disposable
   validation containers were stopped. No SQL suite is rerun for this conflict.
 
-## Accepted integration baseline schema and next checkpoint (before I2C2)
+## C-I3E — PREFLIGHT PASS / ACCEPTED / CLOSED
 
-- Baseline manifest: 116 RLS tables, 1,746 columns, 1,004 constraints, 365 indexes,
-  198 functions, 141 triggers, 194 policies and four buckets. Checksum:
-  `c7aa6ff4dfa3992f86816b642e94a5cdb66723674710edc66059ec60afc9388f`.
-- Next work requires a separately approved checkpoint. Runtime provisioning,
-  provider completion proof and lossless offline integration remain pending;
-  accepting A+B+C does not authorize activation, deployment or adjacent scope.
-  Earlier unrelated implementation history below does not override this combined
-  Trip state. Production/Hosted Dev access and push are outside this checkpoint.
+- Accepted evidence: `docs/architecture/TRIP_CANONICAL_C_I3E_PROVIDER_PROXY_QUIESCENCE_PREFLIGHT.md`
+  and `scripts/supabase/trip-source-provider-preflight.test.mjs`, retained exactly
+  from `488e465`. Test-only local provider preflight: 20 tests; unchanged attachment/
+  Gateway compatibility: 2 files / 10 tests PASS; disposable infrastructure removed.
+- Local create-only/no-overwrite, collision comparison of actual-byte SHA-256/count,
+  fixed private object identity and bounded private Account/operation/attempt
+  staging mechanism are proven locally. Duplicate create returns HTTP 400 / SDK
+  `statusCode="409"`; original/winning bytes remain exact. Content-Type is only a
+  claim: PNG bytes declared PDF were accepted. No upsert fallback is introduced.
+- Provider post-crash terminality/quiescence remains **BLOCKED**. Safe retry from
+  **IO_UNKNOWN remains BLOCKED** until trusted exact-owner completion/terminality
+  proof establishes quiescence. Timeout, cancellation, socket closure, lease expiry
+  or object existence/absence cannot establish that proof; UNKNOWN stays protected.
+- Bounded parser/decode safety remains **BLOCKED** for PDF/JPEG/PNG/HEIC/HEIF;
+  signatures/brand recognition are candidates, never VERIFIED. Durable multi-worker
+  staging/quota and Account runtime identity remain **PENDING**. A/B progress does
+  not establish these C proofs or promote them to accepted runtime capabilities.
+- No product upload route, runtime provider credentials, real Source worker or
+  Source activation is added. Source commands/gate remain disabled/CLOSED;
+  purge/redaction remain disabled.
+
+## Combined schema and next checkpoint
+
+- The integrated server chain has 71 unique versions, ending with `00600`.
+  Manifest: 118 RLS tables, 1,772 columns, 1,024 constraints, 369 indexes,
+  209 functions, 144 triggers, 199 policies and four buckets. Checksum:
+  `82f91a57ae39c5ed5f04a752c26c5e2d791b711cbe4dd07e536ed67044c32bdb`.
+- Next work requires a separately approved checkpoint. Provider terminality,
+  safe UNKNOWN retry and bounded parser/decode proof remain BLOCKED; runtime
+  provisioning, durable multi-worker staging/Account identity and device acceptance
+  remain pending. Collection refresh remains deferred. No current-state-only
+  reconciliation authorizes runtime activation, deployment or remote access.
+- Earlier superseded Trip state blocks are replaced by this combined handoff;
+  unrelated implementation history below remains intact. No full SQL/test rerun
+  is needed for this document conflict; exact-byte and migration-order checks suffice.
 
 ## Temporary foundation verification screen
 
