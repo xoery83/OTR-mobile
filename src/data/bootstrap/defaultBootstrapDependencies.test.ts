@@ -4,6 +4,9 @@ const mocks = vi.hoisted(() => ({
   readLocalSession: vi.fn(),
   refreshSession: vi.fn(),
   runSync: vi.fn(),
+  generation: 0,
+  selectedJourney: vi.fn(),
+  refreshJourney: vi.fn(),
   scheduleHealth: vi.fn(),
   appStateListener: null as ((state: string) => void) | null,
   networkListener: null as
@@ -15,6 +18,14 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/data/auth/authRepository", () => ({
   readLocalSession: mocks.readLocalSession,
+}));
+vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
+  getDefaultLedgerReportingRepository: async () => ({
+    getSelectedJourneyId: mocks.selectedJourney,
+  }),
+}));
+vi.mock("@/data/sync/ledgerReportingCoordinator", () => ({
+  refreshJourneyLedger: mocks.refreshJourney,
 }));
 vi.mock("@/data/auth/devSupabaseAuth", () => ({
   revalidateStoredSupabaseDevSession: vi.fn(),
@@ -31,7 +42,7 @@ vi.mock("@/data/sync/ledgerOperationalSync", () => ({
   }),
 }));
 vi.mock("@/data/auth/accountGeneration", () => ({
-  getAccountGeneration: () => 0,
+  getAccountGeneration: () => mocks.generation,
 }));
 vi.mock("@/data/health/defaultDataHealthScheduler", () => ({
   getDefaultDataHealthScheduler: () => ({ schedule: mocks.scheduleHealth }),
@@ -57,7 +68,10 @@ vi.mock("react-native", () => ({
 }));
 
 describe("default bootstrap sync", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.generation = 0;
+  });
 
   it("refreshes an expired Dev session before operational sync", async () => {
     const { defaultBootstrapDependencies } =
@@ -133,5 +147,69 @@ describe("default bootstrap sync", () => {
       journeyIds: ["journey-a"],
     });
     subscription.remove();
+  });
+  it.each(["cold start", "foreground", "reconnect"])(
+    "%s wakes selected shared Trip with an empty financial queue",
+    async (trigger) => {
+      const { resumeOperationalSync, subscribeOperationalSyncLifecycle } =
+        await import("./defaultBootstrapDependencies");
+      mocks.readLocalSession.mockResolvedValue({
+        identity: { userId: "user-a" },
+        accessToken: "valid",
+        refreshToken: "refresh",
+      });
+      mocks.selectedJourney.mockResolvedValue("10000000-0000-4000-8000-000000000001");
+      mocks.runSync.mockResolvedValue(undefined);
+      mocks.refreshJourney.mockResolvedValue(false);
+      const subscription = subscribeOperationalSyncLifecycle();
+      await Promise.resolve();
+      try {
+        if (trigger === "foreground") mocks.appStateListener?.("active");
+        if (trigger === "reconnect") {
+          mocks.networkListener?.({ isConnected: false });
+          mocks.networkListener?.({ isConnected: true });
+        }
+        await resumeOperationalSync();
+        expect(mocks.refreshJourney).toHaveBeenCalledOnce();
+        expect(mocks.refreshJourney).toHaveBeenCalledWith(
+          "10000000-0000-4000-8000-000000000001",
+        );
+        expect(mocks.runSync).toHaveBeenCalledOnce();
+      } finally {
+        subscription.remove();
+      }
+    },
+  );
+  it("records shared verification failure without rejecting resume", async () => {
+    const { resumeOperationalSync } = await import("./defaultBootstrapDependencies");
+    mocks.readLocalSession.mockResolvedValue({ identity: { userId: "user-b" } });
+    mocks.selectedJourney.mockResolvedValue("journey-b");
+    mocks.refreshJourney.mockRejectedValueOnce(new Error("Backend unavailable"));
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      await expect(resumeOperationalSync()).resolves.toBeUndefined();
+      expect(info).toHaveBeenCalledWith(
+        JSON.stringify({ event: "ledger_sync_failure", phase: "pull", kind: "local" }),
+      );
+    } finally {
+      info.mockRestore();
+    }
+  });
+  it("still propagates unrelated operational resume failure", async () => {
+    const { resumeOperationalSync } = await import("./defaultBootstrapDependencies");
+    mocks.readLocalSession.mockResolvedValue({ identity: { userId: "user-b" } });
+    mocks.runSync.mockRejectedValueOnce(new Error("Operational failure"));
+    await expect(resumeOperationalSync()).rejects.toThrow("Operational failure");
+    expect(mocks.refreshJourney).not.toHaveBeenCalled();
+  });
+  it("skips refresh if generation changes while resolving selected Trip", async () => {
+    const { resumeOperationalSync } = await import("./defaultBootstrapDependencies");
+    mocks.readLocalSession.mockResolvedValue({ identity: { userId: "user-b" } });
+    mocks.selectedJourney.mockImplementationOnce(async () => {
+      mocks.generation += 1;
+      return "journey-b";
+    });
+    await resumeOperationalSync();
+    expect(mocks.refreshJourney).not.toHaveBeenCalled();
   });
 });

@@ -1,3 +1,4 @@
+import { ApiClientError } from "@/data/api/client";
 import { readLocalSession } from "@/data/auth/authRepository";
 import { adoptLegacyAccountState } from "@/data/auth/accountLocalState";
 import { sessionAccessToken } from "@/data/auth/sessionAccessToken";
@@ -11,6 +12,8 @@ import {
   type LedgerOperationalSyncCompletion,
 } from "@/data/sync/ledgerOperationalSync";
 import { getSyncTransportMode } from "@/data/sync/transportSelection";
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
+import { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { getDefaultDataHealthScheduler } from "@/data/health/defaultDataHealthScheduler";
 import * as Network from "expo-network";
@@ -124,8 +127,28 @@ function isOnline(state: { isConnected?: boolean; isInternetReachable?: boolean 
 }
 
 async function refreshThenSync() {
+  const generation = getAccountGeneration();
   const session = await readLocalSession();
   if (getSyncTransportMode() === "dev" && session?.refreshToken)
     await sessionAccessToken();
   await runLedgerOperationalSync();
+  if (!session?.identity?.userId || generation !== getAccountGeneration()) return;
+  const journeyId = await (
+    await getDefaultLedgerReportingRepository()
+  ).getSelectedJourneyId();
+  if (journeyId && generation === getAccountGeneration()) {
+    try {
+      await refreshJourneyLedger(journeyId);
+    } catch (error) {
+      // Background verification must not undo a successfully installed Account.
+      console.info(
+        JSON.stringify({
+          event: "ledger_sync_failure",
+          phase: "pull",
+          kind: error instanceof ApiClientError ? error.kind : "local",
+          code: error instanceof ApiClientError ? error.code : undefined,
+        }),
+      );
+    }
+  }
 }

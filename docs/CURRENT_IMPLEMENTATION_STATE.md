@@ -2,6 +2,25 @@
 
 Date: 2026-10-04
 
+## Trip Canonical A1-I2B3 — DEVICE ACCEPTANCE COMPLETE / REVIEW PENDING
+
+- Clean starting HEAD `b3fe04b` on `integration/ledger-polish-canonical`.
+  Demonstrated missing global cold/foreground/reconnect selected-Trip refresh with
+  an empty financial queue; nine-line fix reuses the existing reporting owner.
+  Protocol, combined schema, account transition lease and timers remain unchanged.
+- Focused validation: 21 files / 312 tests PASS, including preserved I2B2 races;
+  two isolated SQLite clients verify wake-driven inactive/reactive ABA convergence.
+  Typecheck, Backend build, scoped lint, UI guard, formatting/whitespace PASS.
+- Signed Release installed in place on iPhone 16 Pro / iOS 27.0.1 using an
+  unreachable loopback backend. Cold/restart shell access and migration 41→43
+  cache survival PASS; all old columns of seven tables remain identical, including
+  599 Expenses and 162 queue rows. DeviceHub interaction did not change the screen;
+  physical foreground/reconnect/Trip/Account switching and server churn are PENDING.
+- Evidence and complete matrix:
+  `docs/architecture/TRIP_CANONICAL_A1_I2B3_DEVICE_CONVERGENCE_ACCEPTANCE_REPORT.md`.
+  Next checkpoint: human + independent review; I2C remains disabled. No remote
+  access, sibling changes or commit. Historical full-suite boundary blocker remains.
+
 ## Integration Checkpoint #4 — A+C SCHEMA RECONCILIATION
 
 - Import replay onto `c3fb253` retains A1-I2B2 and B-T3C. Authorized C migration
@@ -19,7 +38,7 @@ Date: 2026-10-04
 - A's existing function/grants and populated receipt/financial/existing table
   snapshots are identical across C. C's tables/guards/bucket/functions/writers
   and role memberships are identical across A. Writer reuse: 26 PASS.
-- A I2B3 device acceptance remains deferred. B-T3C is contract only;
+- A I2B3 local/device evidence is recorded above, with physical cases pending. B-T3C is contract only;
   Source, Event semantic and participation/lifecycle commands remain disabled.
   No Product/Backend/Mobile behavior or remote deployment changes.
 
@@ -48,8 +67,8 @@ Date: 2026-10-04
   `docs/architecture/TRIP_CANONICAL_A1_I2B2_IMPLEMENTATION_REPORT.md`.
   Full-repository green gate remains blocked by the baseline-identical
   `LedgerExpenseDetailScreen.tsx` API import architecture boundary violation.
-- Next checkpoint: human + independent review. I2B3 foreground/reconnect/device
-  acceptance and I2C lifecycle commands remain deferred; no new timers/commands/UI.
+- I2B2 checkpoint remains human + independent review. I2B3 acceptance is recorded
+  above; I2C lifecycle commands remain deferred; no new timers/commands/UI.
   Production/Hosted Dev accessed or mutated: NO; siblings modified: NO.
 
 ## Trip Canonical C-I3B — P2 CORRECTION COMPLETE / REVIEW PENDING
