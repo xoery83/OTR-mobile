@@ -46,6 +46,29 @@ Date: 2026-10-05
 - Scope: Ledger UI and auth regression tests only; other active Trip development
   is excluded from this checkpoint and commit. No backend/schema/auth-runtime change.
 
+## A1-I2C4 — ACTIVATION / PROVISIONING PREFLIGHT COMPLETE / REVIEW PENDING / CLOSED
+
+- Baseline `5873c4c` includes integrated Trip `2c81c54`; clean startup and Ledger
+  work preserved. Contract-only provisioning/activation plan plus test-only probes;
+  no runtime, schema, credential, dispatch or UI change.
+- Future HTTP admission requires dedicated verified session/security inventory,
+  command/receipt v1, DB OPEN, deployment flag ON and exact rollout scope,
+  supported Mobile contract and reviewed compatible schemas. Unknown means disabled.
+- Activation remains blocked on a separately reviewed additive migration: 00600's
+  closed-only CHECK, absent writer Member DML/locking rights and absent fixed
+  discovery/admin fence cannot be bypassed by configuration. Connector/LOGIN secret
+  provisioning, enabled contract/dispatch, Trip navigation fencing and device/live
+  matrix remain pending; accepted I2C1/C2/C3 and B/C gates are unchanged.
+- Kill switch: HTTP flag OFF then admin-fenced DB CLOSED; preserve receipts,
+  committed results and same pending keys. Authorized historic GET stays available;
+  owner loss stays 403 without disclosure. No automatic undo/new-key fallback.
+- Validation: 8 files / 161 tests PASS (75 focused, 45 other regressions, 41
+  certificate cases with temporary native queue-notification isolation). Typecheck,
+  build, scoped lint/UI guard/format/whitespace PASS. Model/source probes do not
+  establish live PostgreSQL ACL/DML enforcement; device/live matrix remains pending.
+  No remote environment or credentials used.
+- Report: `docs/architecture/TRIP_CANONICAL_A1_I2C4_ACTIVATION_PROVISIONING_PREFLIGHT.md`.
+
 ## A1-I2C3 — FULL PASS / ACCEPTED / CLOSED
 
 - Focused correction restores exact GET errors: UNAUTHENTICATED/401, current

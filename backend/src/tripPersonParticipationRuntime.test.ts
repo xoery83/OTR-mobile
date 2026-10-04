@@ -317,3 +317,59 @@ it("Backend independently matches Mobile bytes and rejects altered digest/raw du
     participationResultCodec({ ...r, resultDigest: "0".repeat(64) }, actor, trip, op),
   ).toThrow();
 });
+
+it.each([true, false])(
+  "I2C4 DB gateClosed=%s and caller activation claims never enable HTTP",
+  async (gateClosed) => {
+    const g = connection({
+      readInstalledState: async () => ({
+        commandVersion: 1,
+        receiptVersion: 1,
+        gateClosed,
+      }),
+    });
+    const h = handler(g);
+    const claims = {
+      "X-Participation-Capability": "ENABLED",
+      "X-Deployment-Feature": "tripPersonParticipationCommandsV1=ON",
+      "X-Rollout-Allowlist": `${actor}/${trip}`,
+      "request.jwt.claims": '{"role":"otr_trip_person_command_gateway"}',
+    };
+    const capability = await h(
+      request("person-participation-capabilities", undefined, claims),
+    );
+    expect(await capability.json()).toMatchObject({
+      activationState: "DISABLED",
+      enabledCommands: [],
+      enabledScopes: [],
+    });
+    const response = await h(
+      request(`persons/${person}/participation-commands`, intent(), claims),
+    );
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      error: { code: "PARTICIPATION_COMMANDS_DISABLED" },
+    });
+    expect(g.setParticipation).not.toHaveBeenCalled();
+    // Closed mutation must not disable current-authority historic GET recovery.
+    const historic = await h(request(`person-participation-operations/${op}`));
+    expect(historic.status).toBe(200);
+    expect(await historic.json()).toEqual(result());
+  },
+);
+it("I2C4 stale cached ENABLED after gateway outage cannot admit POST or manufacture replay", async () => {
+  const h = handler();
+  const claims = { "X-Participation-Capability": "ENABLED" };
+  const response = await h(
+    request(`persons/${person}/participation-commands`, intent(), claims),
+  );
+  expect(response.status).toBe(503);
+  expect(await response.json()).toMatchObject({
+    error: { code: "PARTICIPATION_COMMANDS_DISABLED" },
+  });
+  const recovery = await h(
+    request(`person-participation-operations/${op}`, undefined, claims),
+  );
+  expect(recovery.status).toBe(503);
+  expect(await recovery.json()).toMatchObject({ error: { code: "REPLAY_UNAVAILABLE" } });
+});
