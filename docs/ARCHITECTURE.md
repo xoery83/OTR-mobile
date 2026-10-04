@@ -44,6 +44,16 @@ writer has no executable write path; lifecycle commands and freshness remain
 outside this checkpoint. See the [A1-I2A report](architecture/TRIP_CANONICAL_A1_I2A_REPORT.md).
 Implementation is complete with human and independent review pending.
 
+A1-I2B2 implements the accepted participation snapshot contract: a service-only,
+read-only SQL aggregate supplies the complete Member set; the shared Ledger cursor
+uses v2 with fingerprint v1. SQLite migration 43 stores an Account/Trip completeness
+certificate in `ledger_sync_cursors`. Bootstrap and verified pages commit rows,
+actor/certificate and cursor atomically under a narrow Account-transition gate.
+Legacy responses preserve known observations without claiming verification.
+Private-payment cursor v1 and financial/temporal/source semantics are unchanged.
+See the [I2B2 implementation report](architecture/TRIP_CANONICAL_A1_I2B2_IMPLEMENTATION_REPORT.md).
+Status is implementation complete, review pending; device acceptance remains I2B3.
+
 ## React Native / Expo Setup
 
 iOS builds with Xcode 27 enable UIKit scene lifecycle through the official

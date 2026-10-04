@@ -195,6 +195,18 @@ Status labels:
 - Legacy computes via Supabase reads and client-side summary.
 - Backend should return entries, participants, rates, balances, settlements, and sync cursor.
 
+`GET /v2/trips/:id/ledger/bootstrap` and `/ledger/changes` — A1-I2B2 implemented,
+review pending. Bootstrap adds the strict six-key `participationSnapshot` envelope
+and a non-null shared v2 cursor, including sequence zero. Existing Member wire
+order is preserved; fingerprint construction alone normalizes and sorts Person IDs.
+Every shared pull compares the complete current vector with the token hash before
+reading its financial page and returns the strict four-key
+`participationVerification`. Drift or legacy shared v1 requires controlled bootstrap
+via `INVALID_CURSOR`; malformed snapshot is `PARTICIPATION_SNAPSHOT_INVALID` (500),
+and three unstable bootstrap attempts end with `PARTICIPATION_SNAPSHOT_UNSTABLE`
+(503). Private-payment v1 is unchanged. Exact fields/serialization and compatibility:
+[A1-I2B1 contract](architecture/TRIP_CANONICAL_A1_I2B1_SNAPSHOT_CURSOR_CONTRACT.md).
+
 `POST /v1/trips/:id/expenses` - `EXISTING` (Dev only)
 
 - Requires a Supabase Dev bearer token and `Idempotency-Key` header.

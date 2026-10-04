@@ -3,10 +3,10 @@
   "buckets": 3,
   "columns": 1611,
   "indexes": 350,
-  "checksum": "0f331b4e5f6ed5421c9ddf1a0c70bbe24b30c05977a90281534958374802900b",
+  "checksum": "890f6495fe22f08c01be12eb36c4c0d75d00ad9b1b09b55798b542a3e365d359",
   "policies": 179,
   "triggers": 125,
-  "functions": 154,
+  "functions": 155,
   "rls_tables": 108,
   "constraints": 838
 }

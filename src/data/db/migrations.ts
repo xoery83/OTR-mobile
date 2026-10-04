@@ -1442,4 +1442,31 @@ export const migrations: Migration[] = [
         );
     `,
   },
+  {
+    id: 43,
+    name: "trip_person_snapshot_certificate",
+    sql: `
+      ALTER TABLE ledger_sync_cursors ADD COLUMN participation_snapshot_contract_version INTEGER;
+      ALTER TABLE ledger_sync_cursors ADD COLUMN participation_fingerprint_version INTEGER;
+      ALTER TABLE ledger_sync_cursors ADD COLUMN participation_fingerprint TEXT;
+      ALTER TABLE ledger_sync_cursors ADD COLUMN participation_person_ids_json TEXT;
+      ALTER TABLE ledger_sync_cursors ADD COLUMN participation_observed_at TEXT;
+      ALTER TABLE ledger_sync_cursors ADD COLUMN participation_verified_at TEXT;
+      ALTER TABLE ledger_sync_cursors ADD COLUMN participation_bound_cursor TEXT
+        CHECK (
+          (participation_snapshot_contract_version IS NULL AND participation_fingerprint_version IS NULL
+           AND participation_fingerprint IS NULL AND participation_person_ids_json IS NULL
+           AND participation_observed_at IS NULL AND participation_verified_at IS NULL
+           AND participation_bound_cursor IS NULL)
+          OR (user_id IS NOT NULL AND typeof(participation_snapshot_contract_version)='integer'
+           AND participation_snapshot_contract_version=1 AND typeof(participation_fingerprint_version)='integer'
+           AND participation_fingerprint_version=1 AND typeof(participation_fingerprint)='text'
+           AND length(participation_fingerprint)=64 AND participation_fingerprint NOT GLOB '*[^0-9a-f]*'
+           AND typeof(participation_person_ids_json)='text' AND json_valid(participation_person_ids_json)
+           AND json_type(participation_person_ids_json)='array'
+           AND typeof(participation_observed_at)='text' AND typeof(participation_verified_at)='text'
+           AND typeof(participation_bound_cursor)='text' AND length(participation_bound_cursor) BETWEEN 1 AND 1024)
+        );
+    `,
+  },
 ];

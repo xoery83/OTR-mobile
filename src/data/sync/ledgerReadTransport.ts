@@ -1,3 +1,8 @@
+import {
+  assertAccountRequestContext,
+  captureAccountRequestContext,
+  type AccountRequestContext,
+} from "@/data/auth/accountRequestContext";
 import { ApiClientError, createApiClient } from "@/data/api/client";
 import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
@@ -27,10 +32,19 @@ type Dependencies = {
   createClient?: (accessToken: string) => ReturnType<typeof createApiClient>;
 };
 
-async function client(dependencies: Dependencies, timeoutMs = 15_000) {
+async function client(
+  dependencies: Dependencies,
+  timeoutMs = 15_000,
+  context?: AccountRequestContext,
+) {
   if (!dependencies.readSession && !dependencies.createClient)
-    return createAuthenticatedApiClient({ timeoutMs });
+    return createAuthenticatedApiClient({ timeoutMs }, undefined, context);
   const session = await (dependencies.readSession ?? readLocalSession)();
+  if (context)
+    await assertAccountRequestContext(
+      context,
+      async () => session?.identity?.userId ?? "",
+    );
   if (!session?.accessToken)
     throw new ApiClientError(
       "Authentication is unavailable.",
@@ -46,12 +60,19 @@ async function client(dependencies: Dependencies, timeoutMs = 15_000) {
 
 export function createLedgerReadTransport(dependencies: Dependencies = {}) {
   return {
-    async bootstrap(journeyId: string) {
+    async bootstrap(journeyId: string, requestContext?: AccountRequestContext) {
+      const getUser = async () =>
+        (await (dependencies.readSession ?? readLocalSession)())?.identity?.userId ?? "";
+      const context =
+        requestContext ?? (await captureAccountRequestContext(journeyId, getUser));
+      if (context.tripId !== journeyId) throw new Error("Trip request context mismatch.");
+      await assertAccountRequestContext(context, getUser);
       const response = await (
-        await client(dependencies, 120_000)
+        await client(dependencies, 120_000, context)
       ).get(`/v2/trips/${journeyId}/ledger/bootstrap`, ledgerBootstrapResponseSchema, {
         "X-Review-Protocol": "2",
       });
+      await assertAccountRequestContext(context, getUser);
       if (
         response.reviewProtocol !== 2 ||
         !response.reviewFindings ||
@@ -61,15 +82,26 @@ export function createLedgerReadTransport(dependencies: Dependencies = {}) {
       return response;
     },
 
-    async pull(journeyId: string, cursor: string | null) {
+    async pull(
+      journeyId: string,
+      cursor: string | null,
+      requestContext?: AccountRequestContext,
+    ) {
+      const getUser = async () =>
+        (await (dependencies.readSession ?? readLocalSession)())?.identity?.userId ?? "";
+      const context =
+        requestContext ?? (await captureAccountRequestContext(journeyId, getUser));
+      if (context.tripId !== journeyId) throw new Error("Trip request context mismatch.");
+      await assertAccountRequestContext(context, getUser);
       const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
       const response = await (
-        await client(dependencies)
+        await client(dependencies, 15_000, context)
       ).get(
         `/v2/trips/${journeyId}/ledger/changes${query}`,
         ledgerChangesResponseSchema,
         { "X-Review-Protocol": "2" },
       );
+      await assertAccountRequestContext(context, getUser);
       if (
         response.reviewProtocol !== 2 ||
         !response.reviewFindings ||

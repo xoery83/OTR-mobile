@@ -7,7 +7,13 @@ const { refreshPersonal, refreshReview, getActor } = vi.hoisted(() => ({
   refreshReview: vi.fn(async () => undefined),
   getActor: vi.fn(),
 }));
-const accountScope = vi.hoisted(() => ({ generation: 0 }));
+const accountScope = vi.hoisted(() => ({
+  generation: 0,
+  userId: "30000000-0000-4000-8000-000000000001",
+}));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: async () => accountScope.userId,
+}));
 
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => accountScope.generation,
@@ -51,6 +57,7 @@ describe("Ledger pull recovery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     accountScope.generation = 0;
+    accountScope.userId = "30000000-0000-4000-8000-000000000001";
     getActor.mockReset();
   });
 
@@ -65,8 +72,18 @@ describe("Ledger pull recovery", () => {
     await expect(ensureJourneyLedgerActor("new")).resolves.toEqual({
       memberId: "hydrated",
     });
-    expect(transport.bootstrap).toHaveBeenCalledExactlyOnceWith("new");
-    expect(repository.applyBootstrap).toHaveBeenCalledWith({ cursor: "fresh" });
+    expect(transport.bootstrap).toHaveBeenCalledExactlyOnceWith(
+      "new",
+      expect.objectContaining({
+        tripId: "new",
+        accountId: accountScope.userId,
+        generation: 0,
+      }),
+    );
+    expect(repository.applyBootstrap).toHaveBeenCalledWith(
+      { cursor: "fresh" },
+      expect.objectContaining({ accountId: accountScope.userId }),
+    );
   });
 
   it("does not invent an actor after offline failure or an account switch", async () => {
@@ -162,7 +179,10 @@ describe("Ledger pull recovery", () => {
     );
     transport.bootstrap.mockResolvedValue({ cursor: "fresh" });
     await refreshJourneyLedger("journey");
-    expect(repository.applyBootstrap).toHaveBeenCalledWith({ cursor: "fresh" });
+    expect(repository.applyBootstrap).toHaveBeenCalledWith(
+      { cursor: "fresh" },
+      expect.objectContaining({ accountId: accountScope.userId }),
+    );
   });
 
   it("keeps historical Personal Payments available after shared Journey access is revoked", async () => {
@@ -220,8 +240,8 @@ describe("Ledger pull recovery", () => {
       refreshJourneyLedger("journey-b"),
     ]);
     expect(transport.pull.mock.calls).toEqual([
-      ["journey-a", "journey-a-c0"],
-      ["journey-b", "journey-b-c0"],
+      ["journey-a", "journey-a-c0", expect.objectContaining({ tripId: "journey-a" })],
+      ["journey-b", "journey-b-c0", expect.objectContaining({ tripId: "journey-b" })],
     ]);
     expect(repository.applyChanges.mock.calls.map((call) => call[0])).toEqual([
       "journey-a",
@@ -251,9 +271,12 @@ describe("Ledger pull recovery", () => {
     accountScope.generation = 1;
     const second = refreshJourneyLedger("journey-a");
     await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledTimes(2));
+    const rejected = expect(first).rejects.toThrow("Account changed");
     finishFirst({ changes: [], cursor: "c0", hasMore: false });
     finishSecond({ changes: [], cursor: "c0", hasMore: false });
-    await expect(Promise.all([first, second])).resolves.toEqual([false, false]);
+    await rejected;
+    await expect(second).resolves.toBe(false);
+    expect(repository.applyChanges).toHaveBeenCalledOnce();
   });
 
   it("caches authorized summaries without automatic Journey bootstrap", async () => {
@@ -291,4 +314,36 @@ describe("Ledger pull recovery", () => {
       expect(repository.cacheMyLedger).toHaveBeenCalledOnce();
     },
   );
+  it("recovers a missing/stale local certificate once and ends repeated invalidation without recursion", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "saved" });
+    transport.pull.mockResolvedValue({ changes: [], cursor: "page", hasMore: true });
+    const invalid = new ApiClientError("refresh", "validation", 400, "INVALID_CURSOR");
+    repository.applyChanges.mockRejectedValueOnce(invalid);
+    transport.bootstrap.mockResolvedValue({ cursor: "fresh" });
+    repository.applyBootstrap.mockRejectedValueOnce(invalid);
+    await expect(refreshJourneyLedger("bounded")).rejects.toMatchObject({
+      code: "INVALID_CURSOR",
+    });
+    expect(transport.pull).toHaveBeenCalledOnce();
+    expect(transport.bootstrap).toHaveBeenCalledOnce();
+  });
+  it("keeps an earlier committed financial page when the next fingerprint mismatches", async () => {
+    repository.getCursor.mockResolvedValue({ cursor: "saved" });
+    transport.pull
+      .mockResolvedValueOnce({
+        changes: [{ entityType: "HOUSEHOLD" }],
+        cursor: "page1",
+        hasMore: true,
+      })
+      .mockRejectedValueOnce(
+        new ApiClientError("mismatch", "http", 400, "INVALID_CURSOR"),
+      );
+    transport.bootstrap.mockResolvedValue({ cursor: "fresh" });
+    repository.applyChanges.mockResolvedValue(undefined);
+    repository.applyBootstrap.mockResolvedValue(undefined);
+    await expect(refreshJourneyLedger("pagination-mismatch")).resolves.toBe(true);
+    expect(repository.applyChanges).toHaveBeenCalledOnce();
+    expect(repository.applyBootstrap).toHaveBeenCalledOnce();
+    expect(repository.applyChanges.mock.calls[0][3]).toBe("saved");
+  });
 });

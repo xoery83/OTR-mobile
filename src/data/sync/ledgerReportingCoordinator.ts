@@ -1,3 +1,9 @@
+import { requireActiveUserId } from "@/data/auth/authRepository";
+import {
+  captureAccountRequestContext,
+  assertAccountRequestContext,
+  type AccountRequestContext,
+} from "@/data/auth/accountRequestContext";
 import type { MyLedgerPeriod } from "@/data/api/ledgerReadContracts";
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
@@ -14,6 +20,30 @@ type JourneyPullResult = {
   reviewOutcome: "review_success" | "review_blocked_stable" | "review_error";
 };
 const activePulls = new Map<string, Promise<JourneyPullResult>>();
+const cycleTails = new Map<string, Promise<void>>();
+function scopedCycle<T>(
+  journeyId: string,
+  task: (context: AccountRequestContext) => Promise<T>,
+) {
+  const context = captureAccountRequestContext(journeyId, requireActiveUserId);
+  void context.catch(() => undefined);
+  const key = `${getAccountGeneration()}:${journeyId}`;
+  const previous = cycleTails.get(key) ?? Promise.resolve();
+  const run = previous.then(async () => {
+    const captured = await context;
+    await assertAccountRequestContext(captured, requireActiveUserId);
+    return task(captured);
+  });
+  const tail = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  cycleTails.set(key, tail);
+  void tail.then(() => {
+    if (cycleTails.get(key) === tail) cycleTails.delete(key);
+  });
+  return run;
+}
 
 export async function ensureJourneyLedgerActor(journeyId: string) {
   const generation = getAccountGeneration();
@@ -34,14 +64,16 @@ export function refreshJourneyLedgerWithStatus(journeyId: string) {
   const key = `${getAccountGeneration()}:${journeyId}`;
   const active = activePulls.get(key);
   if (active) return active;
-  const pull = pullJourneyLedger(journeyId).finally(() => {
+  const pull = scopedCycle(journeyId, (context) =>
+    pullJourneyLedger(journeyId, context),
+  ).finally(() => {
     if (activePulls.get(key) === pull) activePulls.delete(key);
   });
   activePulls.set(key, pull);
   return pull;
 }
 
-async function pullJourneyLedger(journeyId: string) {
+async function pullJourneyLedger(journeyId: string, context: AccountRequestContext) {
   let personalChanged = false;
   let personalError: unknown;
   let reviewError = false;
@@ -76,13 +108,15 @@ async function pullJourneyLedger(journeyId: string) {
     pullApiRequestCount,
     reviewOutcome,
   });
+  await assertAccountRequestContext(context, requireActiveUserId);
   const repository = await getDefaultLedgerReadRepository();
   const cursor = (await repository.getCursor(journeyId))?.cursor ?? null;
   if (!cursor) {
     try {
       countRequest();
-      const response = await createLedgerReadTransport().bootstrap(journeyId);
-      await repository.applyBootstrap(response);
+      const response = await createLedgerReadTransport().bootstrap(journeyId, context);
+      await assertAccountRequestContext(context, requireActiveUserId);
+      await repository.applyBootstrap(response, context);
       return finish(true);
     } catch (error) {
       if (
@@ -102,8 +136,9 @@ async function pullJourneyLedger(journeyId: string) {
   try {
     do {
       countRequest();
-      const response = await transport.pull(journeyId, nextCursor);
-      await repository.applyChanges(journeyId, response);
+      const response = await transport.pull(journeyId, nextCursor, context);
+      await assertAccountRequestContext(context, requireActiveUserId);
+      await repository.applyChanges(journeyId, response, context, nextCursor);
       changed ||= response.changes.length > 0;
       nextCursor = response.cursor;
       if (!response.hasMore) break;
@@ -120,17 +155,21 @@ async function pullJourneyLedger(journeyId: string) {
     if (!(error instanceof ApiClientError) || error.code !== "INVALID_CURSOR")
       throw error;
     countRequest();
-    const response = await transport.bootstrap(journeyId);
-    await repository.applyBootstrap(response);
+    const response = await transport.bootstrap(journeyId, context);
+    await assertAccountRequestContext(context, requireActiveUserId);
+    await repository.applyBootstrap(response, context);
     return finish(true);
   }
   return finish(changed || personalChanged);
 }
 
-export async function revalidateJourneyLedger(journeyId: string) {
-  const response = await createLedgerReadTransport().bootstrap(journeyId);
-  await (await getDefaultLedgerReadRepository()).applyBootstrap(response);
-  return response;
+export function revalidateJourneyLedger(journeyId: string) {
+  return scopedCycle(journeyId, async (context) => {
+    const response = await createLedgerReadTransport().bootstrap(journeyId, context);
+    await assertAccountRequestContext(context, requireActiveUserId);
+    await (await getDefaultLedgerReadRepository()).applyBootstrap(response, context);
+    return response;
+  });
 }
 
 export async function refreshMyLedger(

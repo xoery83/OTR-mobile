@@ -1,3 +1,7 @@
+import {
+  participationSnapshotSchema,
+  participationVerificationSchema,
+} from "@/domain/trip/participationSnapshot";
 import { z } from "zod";
 
 import { isIso4217Money } from "@/domain/ledger/currency";
@@ -239,6 +243,7 @@ const expenseConflictChainMetadataSchema = z.object({
   openConflictIds: z.array(uuidSchema),
 });
 export const ledgerBootstrapResponseSchema = z.object({
+  participationSnapshot: participationSnapshotSchema.optional(),
   expenseConflictChains: z.array(expenseConflictChainMetadataSchema).optional(),
   reviewProtocol: z.literal(2).optional(),
   journey: z.object({
@@ -275,6 +280,7 @@ export const ledgerBootstrapResponseSchema = z.object({
 });
 
 export const ledgerChangesResponseSchema = z.object({
+  participationVerification: participationVerificationSchema.optional(),
   expenseConflictChains: z.array(expenseConflictChainMetadataSchema).optional(),
   reviewProtocol: z.literal(2).optional(),
   reviewFindings: z.array(ledgerReviewFindingSchema).optional(),

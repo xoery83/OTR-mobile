@@ -333,3 +333,21 @@ later server aggregate/audit timestamps; an older feed snapshot cannot remove cl
 proof or regress those times. Business fields and pending intent overlays remain
 protected. Closed chains, including legacy equivalent UPDATE, converge through the
 formal API without local-only repair or a second mutation.
+
+## Trip Person completeness certificate — A1-I2B2
+
+SQLite migration 43 extends the existing Account/Trip Ledger cursor row with the
+seven I2B1 certificate fields. All-null metadata means unverified; non-null metadata
+requires repository validation of versions, canonical exact ID set, timestamps,
+token bindings and recomputed cached participation hash. Historical cached Persons
+outside that set remain available. Cursor upsert preserves metadata; validity also
+requires active cursor to equal bound cursor. Legacy responses cannot renew it.
+Certified bootstrap/page application is one SQLite transaction, including cursor
+and verification time. Immutable Account/Trip/generation context is captured before
+credentials and checked through response/application; Account switching shares a
+narrow apply gate through commit/rollback. Shared refresh cycles are serialized per
+scope, with one recovery bootstrap and no recursive retry or new timer. Offline
+known observation remains separate from current verification; observation time is
+not revision ordering or a guarantee against a later server commit. Device restart,
+empty-queue reconnect and two-device acceptance remain I2B3. See the
+[I2B2 report](architecture/TRIP_CANONICAL_A1_I2B2_IMPLEMENTATION_REPORT.md).

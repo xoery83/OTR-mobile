@@ -1,4 +1,10 @@
 import {
+  serializeParticipationVector,
+  encodeSharedLedgerCursor,
+  decodeSharedLedgerCursor,
+  participationObservationTimeSchema,
+} from "../../src/domain/trip/participationSnapshot";
+import {
   valuationRebaseEligible,
   rateBindingMatches,
   sameRate,
@@ -6184,6 +6190,52 @@ async function readExpenseChainMetadata(service: SupabaseClient, tripId: string)
   >;
 }
 
+export async function readTripPersonSnapshot(service: SupabaseClient, tripId: string) {
+  const result = await service.rpc("read_trip_person_snapshot_v1", {
+    target_trip: tripId,
+  });
+  try {
+    if (result.error) throw result.error;
+    const data = result.data as {
+      observedAt: unknown;
+      personCount: unknown;
+      members: Record<string, unknown>[];
+    };
+    const observedAt = participationObservationTimeSchema.parse(data.observedAt);
+    if (!Array.isArray(data.members) || data.personCount !== data.members.length)
+      throw new Error();
+    const vector = data.members.map((member) => ({
+      id: member.id,
+      isParticipating: member.participation_active,
+      participationRevision: member.participation_revision,
+    }));
+    const fingerprint = createHash("sha256")
+      .update(serializeParticipationVector(vector), "utf8")
+      .digest("hex");
+    for (const member of data.members)
+      ledgerMemberSchema.parse({
+        id: member.id,
+        displayName: member.display_name,
+        role: member.role,
+        status: member.status,
+        capabilities: capabilities(
+          member.role === null ? null : String(member.role),
+          member.status === null ? null : String(member.status),
+        ),
+        updatedAt: member.updated_at,
+        isParticipating: member.participation_active,
+        participationRevision: member.participation_revision,
+      });
+    return { data: data.members, error: null, fingerprint, observedAt };
+  } catch {
+    throw new BackendError(
+      500,
+      "PARTICIPATION_SNAPSHOT_INVALID",
+      "Trip Person snapshot is invalid.",
+    );
+  }
+}
+
 async function readLedgerBootstrap(
   service: SupabaseClient,
   tripId: string,
@@ -6191,6 +6243,7 @@ async function readLedgerBootstrap(
   attempt = 0,
 ): Promise<LedgerBootstrapResponse> {
   const now = new Date().toISOString();
+  const initialParticipation = await readTripPersonSnapshot(service, tripId);
   const initialSettings = await service
     .from("ledger_settings")
     .select("revision")
@@ -6221,13 +6274,7 @@ async function readLedgerBootstrap(
       .select("settlement_currency, settlement_scale, valuation_policy, updated_at")
       .eq("journey_id", tripId)
       .maybeSingle(),
-    service
-      .from("journey_members")
-      .select(
-        "id, user_id, display_name, role, status, updated_at, participation_active, participation_revision",
-      )
-      .eq("trip_id", tripId)
-      .order("display_name"),
+    readTripPersonSnapshot(service, tripId),
     service
       .from("households")
       .select("id, name, display_order, updated_at")
@@ -6298,11 +6345,19 @@ async function readLedgerBootstrap(
     .eq("journey_id", tripId)
     .single();
   if (finalSettings.error) throw new Error("Supabase Dev settings read failed.");
+  const finalParticipation = await readTripPersonSnapshot(service, tripId);
   if (
+    initialParticipation.fingerprint !== members.fingerprint ||
+    members.fingerprint !== finalParticipation.fingerprint ||
     finalSettings.data.revision !== initialSettings.data.revision ||
     lastSequence !== initialSequence
   ) {
-    if (attempt >= 2) throw new Error("Journey Currency changed during bootstrap.");
+    if (attempt >= 2)
+      throw new BackendError(
+        503,
+        "PARTICIPATION_SNAPSHOT_UNSTABLE",
+        "Trip Person snapshot changed during bootstrap.",
+      );
     return readLedgerBootstrap(service, tripId, userId, attempt + 1);
   }
   const setting = settings.data as Record<string, unknown> | null;
@@ -6376,7 +6431,15 @@ async function readLedgerBootstrap(
       role: actorRole,
       capabilities: capabilities(actorRole, actorStatus),
     },
-    cursor: lastSequence ? encodeLedgerCursor(lastSequence, tripId, userId) : null,
+    participationSnapshot: {
+      contractVersion: 1,
+      complete: true,
+      personCount: members.data.length,
+      fingerprintVersion: 1,
+      fingerprint: members.fingerprint,
+      observedAt: finalParticipation.observedAt,
+    },
+    cursor: encodeSharedLedgerCursor(lastSequence, tripId, userId, members.fingerprint),
     serverTime: now,
   };
 }
@@ -6387,7 +6450,16 @@ async function readLedgerChanges(
   tripId: string,
   cursor: string | null,
 ): Promise<LedgerChangesResponse> {
-  const after = decodeLedgerCursor(cursor, tripId, userId);
+  let binding;
+  try {
+    binding = decodeSharedLedgerCursor(cursor, tripId, userId);
+  } catch {
+    throw new BackendError(400, "INVALID_CURSOR", "The shared Ledger cursor is invalid.");
+  }
+  const after = binding.sequence;
+  const participation = await readTripPersonSnapshot(service, tripId);
+  if (participation.fingerprint !== binding.participationFingerprint)
+    throw new BackendError(400, "INVALID_CURSOR", "Trip Person refresh required.");
   const currencyBarrier = await service
     .from("ledger_changes")
     .select("sequence")
@@ -6655,8 +6727,19 @@ async function readLedgerChanges(
     reviewFindings: review.findings,
     reviewActions: review.actions,
     changes,
+    participationVerification: {
+      contractVersion: 1,
+      fingerprintVersion: 1,
+      fingerprint: binding.participationFingerprint,
+      observedAt: participation.observedAt,
+    },
     cursor: rows.length
-      ? encodeLedgerCursor(Number(rows[rows.length - 1].sequence), tripId, userId)
+      ? encodeSharedLedgerCursor(
+          Number(rows[rows.length - 1].sequence),
+          tripId,
+          userId,
+          binding.participationFingerprint,
+        )
       : cursor,
     hasMore,
     serverTime: new Date().toISOString(),

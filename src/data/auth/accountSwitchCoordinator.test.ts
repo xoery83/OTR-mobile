@@ -2,6 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { LocalSession } from "@/domain/auth/localSession";
 
+import {
+  captureAccountRequestContext,
+  assertAccountRequestGeneration,
+  withAccountApplyGate,
+} from "./accountRequestContext";
+import { getAccountGeneration } from "./accountGeneration";
 import { createAccountSwitchCoordinator } from "./accountSwitchCoordinator";
 
 const session = (userId: string): LocalSession => ({
@@ -43,8 +49,7 @@ describe("account switch boundary", () => {
     });
 
     const switched = coordinator.switchAccount("user-b");
-    await Promise.resolve();
-    expect(events).toEqual(["pause"]);
+    await vi.waitFor(() => expect(events).toEqual(["pause"]));
     releaseSync();
     await switched;
 
@@ -137,5 +142,111 @@ describe("account switch boundary", () => {
     expect(active.identity?.userId).toBe("member");
     await coordinator.switchAccount("owner");
     expect(active.identity?.userId).toBe("owner");
+  });
+});
+
+describe("Account recovery transition", () => {
+  it.each(["switchAccount", "activateSession"] as const)(
+    "%s recovery failure keeps both previous contexts invalid",
+    async (method) => {
+      let active = session("user-a");
+      const oldA = await captureAccountRequestContext(
+        "trip",
+        async () => active.identity!.userId,
+      );
+      let oldB!: typeof oldA;
+      const coordinator = createAccountSwitchCoordinator({
+        pauseSync: async () => {},
+        restartSync: async () => {},
+        readSession: async () => active,
+        writeSession: async (next) => {
+          active = next;
+        },
+        clearSession: async () => {},
+        selectAccount: async (id) => {
+          if (id === "user-a") throw new Error("restore failed");
+          active = session(id);
+          return true;
+        },
+        adoptLocalState: async () => {},
+        clearInMemoryState: async () => {},
+        bootstrapAccount: async () => {
+          oldB = await captureAccountRequestContext(
+            "trip",
+            async () => active.identity!.userId,
+          );
+          throw new Error("bootstrap failed");
+        },
+      });
+      await expect(
+        method === "switchAccount"
+          ? coordinator.switchAccount("user-b")
+          : coordinator.activateSession(session("user-b")),
+      ).rejects.toThrow("bootstrap failed");
+      expect(getAccountGeneration()).toBeGreaterThan(oldB.generation);
+      expect(() => assertAccountRequestGeneration(oldA)).toThrow("Account changed");
+      expect(() => assertAccountRequestGeneration(oldB)).toThrow("Account changed");
+      expect(
+        (await captureAccountRequestContext("trip", async () => active.identity!.userId))
+          .generation,
+      ).toBe(getAccountGeneration());
+      await withAccountApplyGate(async () => {});
+    },
+  );
+  it("runs successful switch bootstrap and restart outside the shared gate", async () => {
+    let active = session("user-a");
+    const events: string[] = [];
+    const coordinator = createAccountSwitchCoordinator({
+      pauseSync: async () => {},
+      readSession: async () => active,
+      writeSession: async (next) => {
+        active = next;
+      },
+      clearSession: async () => {},
+      selectAccount: async (id) => {
+        active = session(id);
+        return true;
+      },
+      adoptLocalState: async () => {},
+      clearInMemoryState: async () => {},
+      bootstrapAccount: async () => {
+        await withAccountApplyGate(async () => {
+          events.push("bootstrap");
+        });
+      },
+      restartSync: async () => {
+        await withAccountApplyGate(async () => {
+          events.push("restart");
+        });
+      },
+    });
+    await coordinator.switchAccount("user-b");
+    expect(active.identity!.userId).toBe("user-b");
+    expect(events).toEqual(["bootstrap", "restart"]);
+  });
+  it("activation recovery restores an originally signed-out session", async () => {
+    let active: LocalSession | null = null;
+    const coordinator = createAccountSwitchCoordinator({
+      pauseSync: async () => {},
+      restartSync: async () => {},
+      readSession: async () => active,
+      writeSession: async (next) => {
+        active = next;
+      },
+      clearSession: async () => {
+        active = null;
+      },
+      selectAccount: async () => false,
+      adoptLocalState: async () => {},
+      clearInMemoryState: async () => {},
+      bootstrapAccount: async (next) => {
+        if (next) throw new Error("bootstrap failed");
+        await withAccountApplyGate(async () => {});
+      },
+    });
+    await expect(coordinator.activateSession(session("user-b"))).rejects.toThrow(
+      "bootstrap failed",
+    );
+    expect(active).toBeNull();
   });
 });

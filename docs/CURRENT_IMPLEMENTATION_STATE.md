@@ -2,6 +2,35 @@
 
 Date: 2026-10-04
 
+## Trip Canonical A1-I2B2 — IMPLEMENTATION COMPLETE / REVIEW PENDING
+
+- Worktree `/Users/xoery/Project/otr-mobile-canonical`, branch
+  `integration/ledger-polish-canonical`; clean starting HEAD `f196f98`.
+  This implementation is uncommitted; historical stage notes below describe their
+  own checkpoints and do not override this current handoff.
+- Approved authority: `TRIP_CANONICAL_A1_I2B1_SNAPSHOT_CURSOR_CONTRACT.md`.
+  Complete one-statement Member aggregate preserves wire display-name ordering;
+  fingerprint v1 independently canonicalizes/sorts IDs. Certified bootstrap uses
+  V0/M/V1 coherence, max three attempts. Every shared v2 pull verifies the complete
+  vector before the financial page. Private-payment cursor remains v1.
+- Server migration `20261004000200_trip_person_snapshot_read.sql` adds only one
+  fixed-search-path service-only read function. SQLite migration 43 adds the seven
+  completeness fields to existing scoped cursor rows. Atomic repository apply,
+  preserving cursor upsert, exact-set local rehash and Account/generation fencing
+  use the same narrow transition gate through commit/rollback.
+- Two clean 67-migration replays agree: 108 RLS tables, 1,611 columns, 838
+  constraints, 155 functions, 125 triggers; schema diff empty. Manifest checksum:
+  `890f6495fe22f08c01be12eb36c4c0d75d00ad9b1b09b55798b542a3e365d359`.
+  Each full native SQL run: 36 files / 863 assertions PASS. Populated financial,
+  identity, permission and source manifests are byte-identical before/after.
+- Validation totals and acceptance matrix:
+  `docs/architecture/TRIP_CANONICAL_A1_I2B2_IMPLEMENTATION_REPORT.md`.
+  Full-repository green gate remains blocked by the baseline-identical
+  `LedgerExpenseDetailScreen.tsx` API import architecture boundary violation.
+- Next checkpoint: human + independent review. I2B3 foreground/reconnect/device
+  acceptance and I2C lifecycle commands remain deferred; no new timers/commands/UI.
+  Production/Hosted Dev accessed or mutated: NO; siblings modified: NO.
+
 ## Trip Canonical B-T3B — IMPLEMENTATION COMPLETE / REVIEW PENDING
 
 - Temporal worktree `trip/temporal`, clean starting baseline `5537eb6`.

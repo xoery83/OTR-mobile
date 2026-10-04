@@ -78,7 +78,7 @@ describe("SQLite migrations", () => {
       "ledger_my_spending_facts",
     );
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(42);
+    expect(latest.id).toBe(43);
     expect(migrations.find((migration) => migration.id === 39)?.sql).toContain(
       "original_mime_type",
     );
@@ -101,6 +101,37 @@ describe("SQLite migrations", () => {
     expect(migrations[26].sql).toContain("personal_payment_id");
     expect(migrations[20].sql).toContain("ledger_review_visibility");
     expect(migrations[19].sql).toContain("observation_context_json");
+  });
+
+  it("upgrades existing scoped and null-user cursors without certifying them", () => {
+    const database = new DatabaseSync(":memory:");
+    try {
+      for (const migration of migrations.filter(({ id }) => id < 43))
+        database.exec(migration.sql);
+      database.exec(
+        "INSERT INTO ledger_sync_cursors(user_id,journey_id,cursor,server_time,updated_at) VALUES ('account','trip','v1','time','time'),(NULL,'legacy','old','time','time')",
+      );
+      const before = database
+        .prepare("SELECT * FROM ledger_sync_cursors ORDER BY journey_id")
+        .all();
+      database.exec(migrations.find(({ id }) => id === 43)!.sql);
+      const metadata = Object.fromEntries(
+        [
+          "snapshot_contract_version",
+          "fingerprint_version",
+          "fingerprint",
+          "person_ids_json",
+          "observed_at",
+          "verified_at",
+          "bound_cursor",
+        ].map((name) => [`participation_${name}`, null]),
+      );
+      expect(
+        database.prepare("SELECT * FROM ledger_sync_cursors ORDER BY journey_id").all(),
+      ).toEqual(before.map((row) => ({ ...row, ...metadata })));
+    } finally {
+      database.close();
+    }
   });
 
   it("upgrades cached Members to an unobserved pair and enforces both-column invariants", () => {

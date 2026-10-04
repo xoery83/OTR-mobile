@@ -1178,8 +1178,7 @@ describe("Pull transaction account boundary", () => {
     const originalRun = api.runAsync;
     api.runAsync = async (sql, ...args) => {
       const result = await originalRun(sql, ...args);
-      if (sql.includes("INSERT OR REPLACE INTO ledger_sync_cursors"))
-        advanceAccountGeneration();
+      if (sql.includes("INSERT INTO ledger_sync_cursors")) advanceAccountGeneration();
       return result;
     };
     const canonical = serverExpense("server title", 2);

@@ -1,4 +1,18 @@
-import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { ApiClientError } from "@/data/api/client";
+import {
+  assertAccountRequestContext,
+  captureAccountRequestContext,
+  withAccountApplyGate,
+  type AccountRequestContext,
+} from "@/data/auth/accountRequestContext";
+import { canonicalPersonIdSchema } from "@/domain/trip/participationSnapshot";
+import {
+  validateParticipationBootstrap,
+  saveParticipationBootstrap,
+  validateParticipationPage,
+  saveParticipationPage,
+  readParticipationCertificate,
+} from "./tripPersonCertificate";
 import {
   storeExpenseCanonical,
   readExpenseCanonical,
@@ -43,159 +57,198 @@ export function createLedgerReadRepository(
   getActiveUserId: () => Promise<string>,
 ) {
   return {
-    async applyBootstrap(response: LedgerBootstrapResponse) {
-      const generation = getAccountGeneration();
-      const userId = await getActiveUserId();
-      await database.withTransactionAsync(async () => {
-        await applyJourney(database, response, userId);
-        for (const expense of response.expenses) {
-          await applyBootstrapExpense(database, expense, userId);
-        }
-        for (const chain of response.expenseConflictChains ?? [])
-          await storeExpenseConflictMetadata(
-            database,
-            userId,
-            response.journey.id,
-            chain,
-          );
-        for (const quote of response.rateQuotes) await applyRateQuote(database, quote);
-        for (const receipt of response.receipts ?? [])
-          await applyReceipt(database, response.journey.id, receipt);
-        for (const settlement of response.settlements ?? [])
-          await applyFinalizedSettlement(database, settlement);
-        const personalPayments = createLedgerPersonalPaymentRepository(
-          database,
-          async () => userId,
-        );
-        for (const payment of response.personalPayments ?? [])
-          await personalPayments.applyCanonical(payment);
-        await personalPayments.applyFxProjectionList(
-          response.journey.id,
-          response.personalPaymentFxProjections ?? [],
-        );
-        if (response.reviewFindings)
-          await applyReviewProjection(
-            database,
-            userId,
-            response.journey.id,
-            response.reviewFindings,
-            response.reviewActions ?? [],
-          );
-        for (const correction of response.corrections) {
-          if (!(await applyCorrection(database, correction))) {
-            await deferChange(database, response.journey.id, {
-              entityType: "CORRECTION",
-              entityId: correction.id,
-              revision: correction.revision,
-              isTombstone: false,
-              aggregate: correction,
-            });
+    async applyBootstrap(
+      response: LedgerBootstrapResponse,
+      requestContext?: AccountRequestContext,
+    ) {
+      const context =
+        requestContext ??
+        (await captureAccountRequestContext(response.journey.id, getActiveUserId));
+      if (context.tripId !== response.journey.id)
+        throw new Error("Trip request context mismatch.");
+      const userId = context.accountId;
+      const certified = response.participationSnapshot !== undefined;
+      if (certified && !requestContext)
+        throw new Error("Certified snapshot requires request context.");
+      await assertAccountRequestContext(context, getActiveUserId);
+      if (certified) await validateParticipationBootstrap(response, context);
+      await withAccountApplyGate(() =>
+        database.withTransactionAsync(async () => {
+          await assertAccountRequestContext(context, getActiveUserId);
+          await applyJourney(database, response, userId);
+          for (const expense of response.expenses) {
+            await applyBootstrapExpense(database, expense, userId);
           }
-        }
-        await drainDeferredExpenseChanges(database, response.journey.id, userId);
-        await saveCursor(
-          database,
-          response.journey.id,
-          response.cursor,
-          response.serverTime,
-          userId,
-        );
-        if (generation !== getAccountGeneration() || userId !== (await getActiveUserId()))
-          throw new Error("Account changed during Ledger pull.");
-      });
+          for (const chain of response.expenseConflictChains ?? [])
+            await storeExpenseConflictMetadata(
+              database,
+              userId,
+              response.journey.id,
+              chain,
+            );
+          for (const quote of response.rateQuotes) await applyRateQuote(database, quote);
+          for (const receipt of response.receipts ?? [])
+            await applyReceipt(database, response.journey.id, receipt);
+          for (const settlement of response.settlements ?? [])
+            await applyFinalizedSettlement(database, settlement);
+          const personalPayments = createLedgerPersonalPaymentRepository(
+            database,
+            async () => userId,
+          );
+          for (const payment of response.personalPayments ?? [])
+            await personalPayments.applyCanonical(payment);
+          await personalPayments.applyFxProjectionList(
+            response.journey.id,
+            response.personalPaymentFxProjections ?? [],
+          );
+          if (response.reviewFindings)
+            await applyReviewProjection(
+              database,
+              userId,
+              response.journey.id,
+              response.reviewFindings,
+              response.reviewActions ?? [],
+            );
+          for (const correction of response.corrections) {
+            if (!(await applyCorrection(database, correction))) {
+              await deferChange(database, response.journey.id, {
+                entityType: "CORRECTION",
+                entityId: correction.id,
+                revision: correction.revision,
+                isTombstone: false,
+                aggregate: correction,
+              });
+            }
+          }
+          await drainDeferredExpenseChanges(database, response.journey.id, userId);
+          await saveCursor(
+            database,
+            response.journey.id,
+            response.cursor,
+            response.serverTime,
+            userId,
+          );
+          if (certified) await saveParticipationBootstrap(database, response, context);
+          await assertAccountRequestContext(context, getActiveUserId);
+        }),
+      );
     },
 
-    async applyChanges(journeyId: string, response: LedgerChangesResponse) {
-      const generation = getAccountGeneration();
-      const userId = await getActiveUserId();
-      await database.withTransactionAsync(async () => {
-        for (const chain of response.expenseConflictChains ?? [])
-          await storeExpenseConflictMetadata(database, userId, journeyId, chain);
-        if (response.reviewFindings)
-          await applyReviewProjection(
-            database,
-            userId,
-            journeyId,
-            response.reviewFindings,
-            response.reviewActions ?? [],
-          );
-        for (const change of response.changes) {
-          if (change.entityType === "EXPENSE") {
-            await applyExpenseChange(database, journeyId, change, userId);
-          } else if (change.entityType === "HOUSEHOLD") {
-            await applyHouseholdChange(database, journeyId, change);
-          } else if (change.entityType === "CORRECTION") {
-            if (change.aggregate && "baseExpenseRevision" in change.aggregate) {
-              if (!(await applyCorrection(database, change.aggregate))) {
+    async applyChanges(
+      journeyId: string,
+      response: LedgerChangesResponse,
+      requestContext?: AccountRequestContext,
+      requestCursor?: string | null,
+    ) {
+      const context =
+        requestContext ??
+        (await captureAccountRequestContext(journeyId, getActiveUserId));
+      if (context.tripId !== journeyId) throw new Error("Trip request context mismatch.");
+      const userId = context.accountId;
+      const certified = response.participationVerification !== undefined;
+      if (certified && !requestContext)
+        throw new Error("Certified page requires request context.");
+      await assertAccountRequestContext(context, getActiveUserId);
+      await withAccountApplyGate(() =>
+        database.withTransactionAsync(async () => {
+          await assertAccountRequestContext(context, getActiveUserId);
+          if (certified)
+            await validateParticipationPage(
+              database,
+              response,
+              context,
+              requestCursor ?? null,
+            );
+          for (const chain of response.expenseConflictChains ?? [])
+            await storeExpenseConflictMetadata(database, userId, journeyId, chain);
+          if (response.reviewFindings)
+            await applyReviewProjection(
+              database,
+              userId,
+              journeyId,
+              response.reviewFindings,
+              response.reviewActions ?? [],
+            );
+          for (const change of response.changes) {
+            if (change.entityType === "EXPENSE") {
+              await applyExpenseChange(database, journeyId, change, userId);
+            } else if (change.entityType === "HOUSEHOLD") {
+              await applyHouseholdChange(database, journeyId, change);
+            } else if (change.entityType === "CORRECTION") {
+              if (change.aggregate && "baseExpenseRevision" in change.aggregate) {
+                if (!(await applyCorrection(database, change.aggregate))) {
+                  await deferChange(database, journeyId, change);
+                }
+              } else {
                 await deferChange(database, journeyId, change);
               }
+            } else if (
+              change.entityType === "RATE_QUOTE" &&
+              change.aggregate &&
+              "quoteCurrency" in change.aggregate
+            ) {
+              await applyRateQuote(database, change.aggregate);
+            } else if (
+              change.entityType === "PAYMENT_RECORD" &&
+              change.aggregate &&
+              "instrumentLabel" in change.aggregate
+            ) {
+              await applyPaymentChange(database, journeyId, change.aggregate);
+            } else if (
+              change.entityType === "RECEIPT" &&
+              change.aggregate &&
+              "objectPath" in change.aggregate
+            ) {
+              await applyReceipt(database, journeyId, change.aggregate);
+            } else if (
+              change.entityType === "SETTLEMENT" &&
+              change.aggregate &&
+              "throughTimestamp" in change.aggregate
+            ) {
+              await applyFinalizedSettlement(database, change.aggregate);
+            } else if (change.entityType === "PERSONAL_SETTLEMENT_PAYMENT") {
+              const personalPayments = createLedgerPersonalPaymentRepository(
+                database,
+                async () => userId,
+              );
+              if (change.isTombstone) {
+                await personalPayments.applyTombstone(
+                  journeyId,
+                  change.entityId,
+                  change.revision,
+                );
+              } else if (change.aggregate && "ownerUserId" in change.aggregate) {
+                await personalPayments.applyCanonical(change.aggregate);
+              }
+            } else if (
+              change.entityType === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION"
+            ) {
+              const personalPayments = createLedgerPersonalPaymentRepository(
+                database,
+                async () => userId,
+              );
+              if (change.isTombstone)
+                await personalPayments.applyFxTombstone(change.entityId);
+              else if (change.aggregate && "targetCurrency" in change.aggregate)
+                await personalPayments.applyFxProjections([change.aggregate]);
+            } else if (change.entityType === "REVIEW_FINDING") {
+              // Review is delivered only through the user-scoped snapshot above.
             } else {
               await deferChange(database, journeyId, change);
             }
-          } else if (
-            change.entityType === "RATE_QUOTE" &&
-            change.aggregate &&
-            "quoteCurrency" in change.aggregate
-          ) {
-            await applyRateQuote(database, change.aggregate);
-          } else if (
-            change.entityType === "PAYMENT_RECORD" &&
-            change.aggregate &&
-            "instrumentLabel" in change.aggregate
-          ) {
-            await applyPaymentChange(database, journeyId, change.aggregate);
-          } else if (
-            change.entityType === "RECEIPT" &&
-            change.aggregate &&
-            "objectPath" in change.aggregate
-          ) {
-            await applyReceipt(database, journeyId, change.aggregate);
-          } else if (
-            change.entityType === "SETTLEMENT" &&
-            change.aggregate &&
-            "throughTimestamp" in change.aggregate
-          ) {
-            await applyFinalizedSettlement(database, change.aggregate);
-          } else if (change.entityType === "PERSONAL_SETTLEMENT_PAYMENT") {
-            const personalPayments = createLedgerPersonalPaymentRepository(
-              database,
-              async () => userId,
-            );
-            if (change.isTombstone) {
-              await personalPayments.applyTombstone(
-                journeyId,
-                change.entityId,
-                change.revision,
-              );
-            } else if (change.aggregate && "ownerUserId" in change.aggregate) {
-              await personalPayments.applyCanonical(change.aggregate);
-            }
-          } else if (change.entityType === "PERSONAL_SETTLEMENT_PAYMENT_FX_PROJECTION") {
-            const personalPayments = createLedgerPersonalPaymentRepository(
-              database,
-              async () => userId,
-            );
-            if (change.isTombstone)
-              await personalPayments.applyFxTombstone(change.entityId);
-            else if (change.aggregate && "targetCurrency" in change.aggregate)
-              await personalPayments.applyFxProjections([change.aggregate]);
-          } else if (change.entityType === "REVIEW_FINDING") {
-            // Review is delivered only through the user-scoped snapshot above.
-          } else {
-            await deferChange(database, journeyId, change);
           }
-        }
-        await drainDeferredExpenseChanges(database, journeyId, userId);
-        await saveCursor(
-          database,
-          journeyId,
-          response.cursor,
-          response.serverTime,
-          userId,
-        );
-        if (generation !== getAccountGeneration() || userId !== (await getActiveUserId()))
-          throw new Error("Account changed during Ledger pull.");
-      });
+          await drainDeferredExpenseChanges(database, journeyId, userId);
+          if (certified) await saveParticipationPage(database, response, context);
+          await saveCursor(
+            database,
+            journeyId,
+            response.cursor,
+            response.serverTime,
+            userId,
+          );
+          await assertAccountRequestContext(context, getActiveUserId);
+        }),
+      );
     },
 
     async cacheMyLedger(response: MyLedgerResponse) {
@@ -308,6 +361,16 @@ export function createLedgerReadRepository(
         userId,
         period,
       );
+    },
+
+    async getParticipationCertificate(journeyId: string) {
+      const context = await captureAccountRequestContext(journeyId, getActiveUserId);
+      return withAccountApplyGate(async () => {
+        await assertAccountRequestContext(context, getActiveUserId);
+        const certificate = await readParticipationCertificate(database, context);
+        await assertAccountRequestContext(context, getActiveUserId);
+        return certificate;
+      });
     },
 
     async getCursor(journeyId: string) {
@@ -497,7 +560,8 @@ async function applyJourney(
     response.journey.updatedAt,
   );
 
-  for (const member of response.members) {
+  for (const incoming of response.members) {
+    const member = { ...incoming, id: canonicalPersonIdSchema.parse(incoming.id) };
     ledgerMemberSchema.parse(member);
     const existing = await database.getFirstAsync<{
       journeyId: string;
@@ -513,6 +577,17 @@ async function applyJourney(
     let active = existing?.active ?? null;
     let revision = existing?.revision ?? null;
     if (member.participationRevision !== undefined) {
+      if (
+        response.participationSnapshot &&
+        revision !== null &&
+        member.participationRevision < revision
+      )
+        throw new ApiClientError(
+          "Trip Person snapshot is older than the cache.",
+          "validation",
+          400,
+          "INVALID_CURSOR",
+        );
       const incomingActive = member.isParticipating ? 1 : 0;
       if (revision === member.participationRevision && active !== incomingActive)
         throw new Error("Inconsistent Member participation observation.");
@@ -1125,9 +1200,10 @@ async function saveCursor(
   userId: string,
 ) {
   await database.runAsync(
-    `INSERT OR REPLACE INTO ledger_sync_cursors (
+    `INSERT INTO ledger_sync_cursors (
       user_id, journey_id, cursor, server_time, updated_at
-    ) VALUES (?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id,journey_id) DO UPDATE SET
+      cursor=excluded.cursor,server_time=excluded.server_time,updated_at=excluded.updated_at`,
     userId,
     journeyId,
     cursor,

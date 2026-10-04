@@ -1,0 +1,30 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set search_path=public,extensions;
+select no_plan();
+select ok((select not prosecdef and provolatile='s' and proconfig=array['search_path=pg_catalog'] from pg_proc where oid='public.read_trip_person_snapshot_v1(uuid)'::regprocedure),'snapshot is stable invoker with trusted search path');
+select ok(has_function_privilege('service_role','public.read_trip_person_snapshot_v1(uuid)','EXECUTE'),'service can read snapshot');
+select ok(not has_function_privilege('authenticated','public.read_trip_person_snapshot_v1(uuid)','EXECUTE') and not has_function_privilege('anon','public.read_trip_person_snapshot_v1(uuid)','EXECUTE'),'runtime users cannot read internal raw roster');
+select is(jsonb_array_length(public.read_trip_person_snapshot_v1('89000000-0000-4000-8000-000000000099')->'members'),0,'empty roster complete');
+select is((public.read_trip_person_snapshot_v1('89000000-0000-4000-8000-000000000099')->>'personCount')::integer,0,'empty count zero');
+select ok((public.read_trip_person_snapshot_v1('10000000-0000-4000-8000-000000000001')->>'observedAt') ~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$','statement observation retains six decimal UTC precision');
+
+insert into public.journey_members(id,trip_id,display_name,role,status)
+select gen_random_uuid(),'10000000-0000-4000-8000-000000000001','Roster '||lpad(i::text,4,'0'),'guest','unlinked' from generate_series(1,1203) i;
+alter table public.journey_members disable trigger journey_members_participation_guard;
+update public.journey_members set participation_active=false,participation_revision=7 where id='12000000-0000-4000-8000-000000000002';
+alter table public.journey_members enable trigger journey_members_participation_guard;
+create temporary table snapshot_read_before as select jsonb_agg(to_jsonb(m) order by m.id) as members from public.journey_members m;
+set local role service_role;
+select is((public.read_trip_person_snapshot_v1('10000000-0000-4000-8000-000000000001')->>'personCount')::integer,(select count(*)::integer from public.journey_members where trip_id='10000000-0000-4000-8000-000000000001'),'roster count includes all rows beyond cap');
+select is(jsonb_array_length(public.read_trip_person_snapshot_v1('10000000-0000-4000-8000-000000000001')->'members'),(select count(*)::integer from public.journey_members where trip_id='10000000-0000-4000-8000-000000000001'),'one JSON aggregate has complete roster above 1000');
+select ok(exists(select 1 from jsonb_array_elements(public.read_trip_person_snapshot_v1('10000000-0000-4000-8000-000000000001')->'members') m where m->>'id'='12000000-0000-4000-8000-000000000002' and m->>'participation_active'='false' and m->>'participation_revision'='7'),'inactive Person remains in snapshot');
+select ok(exists(select 1 from jsonb_array_elements(public.read_trip_person_snapshot_v1('10000000-0000-4000-8000-000000000001')->'members') m where m->>'status'='unlinked' and m->>'role'='guest'),'unlinked guest not filtered');
+select is((select jsonb_agg(m->>'id') from jsonb_array_elements(public.read_trip_person_snapshot_v1('10000000-0000-4000-8000-000000000001')->'members') m),(select jsonb_agg(id::text order by display_name) from public.journey_members where trip_id='10000000-0000-4000-8000-000000000001'),'Member response preserves display-name wire ordering');
+reset role;
+select is((select jsonb_agg(to_jsonb(m) order by m.id) from public.journey_members m),(select members from snapshot_read_before),'snapshot read changes no Member/financial identity or field');
+set local role authenticated;
+select throws_ok($$select public.read_trip_person_snapshot_v1('10000000-0000-4000-8000-000000000001')$$,'42501',null,'internal reader does not bypass existing admission for ordinary API caller');
+reset role;
+select * from finish();
+rollback;
