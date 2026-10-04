@@ -2,6 +2,32 @@
 
 Date: 2026-10-04
 
+## B-T3E — ROUTE CORRECTION COMPLETE / REVIEW PENDING
+
+- Temporal worktree `trip/temporal`, clean baseline `45eed53`. Authenticated
+  capabilities, B-T3C `canonical-event-operations/:operationKey` receipt route
+  and lossless canonical Event read
+  boundary added. Every command remains disabled; activation CLOSED.
+- Seven shapes preserve B-T3A facts, microsecond strings and embedded transport
+  endpoints. Old/unknown clients receive WITHHELD; no synthetic scheduledDate.
+  Receipt output is status-only historic correlation with private proof bodies withheld.
+- Dedicated connection seam exists, but NOLOGIN roles/credentials/live connector
+  remain unprovisioned. service_role is not a fallback; exact runtime recovery is
+  REPLAY_UNAVAILABLE. Command version/gate observation stay unknown without the seam.
+- Mobile transport binds Account/Trip/generation and rejects ABA stale responses;
+  no UI, SQLite apply/migration, semantic queue or accepted-state mutation added.
+- Route correction: B-T3C exact `canonical-event-operations` lookup restored in
+  Backend and Mobile; unshipped `event-operations` removed without an alias.
+  Boundary/transport 36 cases, typecheck/build/scoped lint/format PASS; no SQL,
+  receipt schema, SQLite or capability endpoint changes.
+- Initial integration validation: 30 new cases; scoped 86 TS files / 676 cases; full SQL 38 files /
+  1,196 assertions; 78 polluted-role tests; codec/concurrency, typecheck, build,
+  scoped lint, UI guard, strict verifier and unchanged manifest PASS.
+- Report: `docs/architecture/TRIP_CANONICAL_B_T3E_BACKEND_READ_INTEGRATION_REPORT.md`.
+  Next checkpoint: human/independent review; dedicated read-only runtime provisioning
+  and lossless SQLite/offline acceptance remain PENDING. No remote access, sibling
+  modifications or commit. B-T3D 69-migration signature remains unchanged below.
+
 ## Integration Checkpoint #5 — COMBINED ACCEPTED A+B STATE
 
 - Reconcile A1-I2B3 wake/reconnect convergence from `d2d3ee2` with accepted B-T3D

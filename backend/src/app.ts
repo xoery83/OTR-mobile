@@ -1,3 +1,12 @@
+import { canonicalCapabilities } from "./tripCanonicalRead";
+import {
+  canonicalCapabilitiesSchema,
+  canonicalEventReadSchema,
+  eventOperationReceiptSchema,
+  type CanonicalCapabilities,
+  type CanonicalEventRead,
+  type EventOperationReceipt,
+} from "../../src/data/api/tripCanonicalReadContracts";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
@@ -131,6 +140,21 @@ export type StoredCreate = {
 };
 
 export type DevBackendGateway = {
+  readCanonicalCapabilities?(
+    userId: string,
+    tripId: string,
+  ): Promise<CanonicalCapabilities>;
+  readCanonicalEvent?(
+    userId: string,
+    tripId: string,
+    eventId: string,
+    readVersion: string | null,
+  ): Promise<CanonicalEventRead | null>;
+  readEventOperationReceipt?(
+    userId: string,
+    tripId: string,
+    operationKey: string,
+  ): Promise<EventOperationReceipt | null>;
   validateAccessToken(token: string): Promise<AuthenticatedUser | null>;
   canReadTrip(userId: string, tripId: string): Promise<boolean>;
   canWriteTrip(userId: string, tripId: string): Promise<boolean>;
@@ -889,6 +913,76 @@ async function authorizeRead(
     throw new HttpError(403, "TRIP_READ_FORBIDDEN", "Trip read access is required.");
   }
   return user;
+}
+
+async function readCanonicalBoundary(request: Request, gateway: DevBackendGateway) {
+  const url = new URL(request.url);
+  const match = url.pathname.match(
+    /^\/v2\/trips\/([^/]+)\/(canonical-events|canonical-event-operations)(?:\/([^/]+))?$/,
+  )!;
+  const [, tripId, resource, target] = match;
+  assertTripId(tripId);
+  const user = await authenticate(request, gateway);
+  const unavailable = () =>
+    new HttpError(404, "READ_UNAVAILABLE", "The requested read is unavailable.");
+  if (!(await gateway.canReadTrip(user.id, tripId))) throw unavailable();
+  if (request.method !== "GET")
+    throw new HttpError(
+      503,
+      "CANONICAL_WRITES_DISABLED",
+      "Canonical Event commands are disabled.",
+    );
+  if (url.search)
+    throw new HttpError(400, "INVALID_PAYLOAD", "Read query parameters are unsupported.");
+  if (resource === "canonical-events" && target === "capabilities")
+    return json(
+      200,
+      canonicalCapabilitiesSchema.parse(
+        (await gateway.readCanonicalCapabilities?.(user.id, tripId)) ??
+          (await canonicalCapabilities(false)),
+      ),
+    );
+  if (!target || !uuidPattern.test(target)) throw unavailable();
+  if (resource === "canonical-event-operations") {
+    if (!gateway.readEventOperationReceipt)
+      throw new HttpError(
+        503,
+        "REPLAY_UNAVAILABLE",
+        "Historic operation recovery is unavailable.",
+      );
+    const receipt = await gateway.readEventOperationReceipt(user.id, tripId, target);
+    if (!receipt) throw unavailable();
+    const parsed = eventOperationReceiptSchema.parse(receipt);
+    if (
+      parsed.trip_id !== tripId ||
+      parsed.actor_account_id !== user.id ||
+      parsed.operation_key !== target
+    )
+      throw unavailable();
+    return json(200, parsed);
+  }
+  const readVersion = request.headers.get("X-OTR-Canonical-Event-Read-Version");
+  if (readVersion !== "1")
+    return json(200, {
+      readVersion: 1,
+      disposition: "WITHHELD",
+      reason: "UNSUPPORTED_CLIENT",
+    });
+  if (!gateway.readCanonicalEvent)
+    throw new HttpError(
+      503,
+      "READ_UNAVAILABLE",
+      "Canonical Event reads are unavailable.",
+    );
+  const result = await gateway.readCanonicalEvent(user.id, tripId, target, readVersion);
+  if (!result) throw unavailable();
+  const parsed = canonicalEventReadSchema.parse(result);
+  if (
+    parsed.disposition === "READ_ONLY" &&
+    (parsed.event.trip_id !== tripId || parsed.event.id !== target)
+  )
+    throw unavailable();
+  return json(200, parsed);
 }
 
 async function createEntity(
@@ -2067,7 +2161,14 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (request.method === "GET" && url.pathname === "/health") {
+      if (
+        /^\/v2\/trips\/[^/]+\/(canonical-events|canonical-event-operations)(?:\/[^/]+)?$/.test(
+          url.pathname,
+        )
+      ) {
+        route = "/v2/trips/:tripId/canonical-read/:target";
+        response = await readCanonicalBoundary(request, gateway);
+      } else if (request.method === "GET" && url.pathname === "/health") {
         route = "health";
         response = json(200, { status: "ok", environment: "development" });
       } else if (

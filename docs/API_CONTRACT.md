@@ -507,3 +507,30 @@ Source/head/digest/cutoff equality and all finalization guards remain mandatory.
 No schema, stored financial evidence or confirmation policy changes. Internal
 refresh diagnostics require explicit Debug Mode; generic verification failure
 does not imply an Expense conflict.
+
+## B-T3E disabled canonical Event read boundary
+
+Authenticated `/v2/trips/:tripId/canonical-events/capabilities`,
+`/v2/trips/:tripId/canonical-events/:eventId` and
+`/v2/trips/:tripId/canonical-event-operations/:operationKey` are read-only. The receipt
+path matches B-T3C; the unshipped `event-operations` path is removed with no alias. Event reads
+require `X-OTR-Canonical-Event-Read-Version: 1`; missing/unknown versions receive
+an explicit WITHHELD response without an Event body. The wire schema retains
+B-T3A snake_case facts and exact temporal strings, including rich shapes and
+embedded transport endpoints, and always declares read-only/legacy incompatibility.
+No `scheduledDate` conversion exists. Candidate bodies and Source material are
+excluded; only accepted opaque provenance references follow the Trip read policy.
+
+Capability discovery probes installed columns/endpoint relation. Missing DB state
+is unknown/disabled. The separate reserved gateway connection must attest the
+actual database session identity and offer only installed-state and exact receipt
+reads. No driver, credential provisioning or service-role fallback is installed.
+Without that connection, exact receipt recovery returns REPLAY_UNAVAILABLE, never
+NOT_FOUND. Receipt output is status-only correlation with the stored full hash;
+intended proofs, confirmations and result fields are withheld pending their own
+read-admission policy. The fixed SQL lookup verifies immutable historic bytes.
+All canonical mutation methods return CANONICAL_WRITES_DISABLED; discovery cannot
+activate them. Mobile transport captures Account/Trip/generation before credentials
+and rejects stale responses. It performs no SQLite apply, queueing or product edit.
+Lossless SQLite mirroring and a reviewed dedicated runtime connection remain
+separate activation prerequisites.

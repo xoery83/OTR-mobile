@@ -1,3 +1,11 @@
+import { canonicalEventColumns } from "../../src/data/api/tripCanonicalReadContracts";
+import {
+  canonicalCapabilities,
+  projectCanonicalEvent,
+  projectEventReceipt,
+  requireCanonicalReadConnection,
+  type CanonicalReadGatewayConfig,
+} from "./tripCanonicalRead";
 import {
   serializeParticipationVector,
   encodeSharedLedgerCursor,
@@ -166,6 +174,7 @@ import {
 const approvedDevProjectRef = "tuqigdxrvrerfewsxqgm";
 
 export type SupabaseDevConfig = {
+  canonicalReadGateway?: CanonicalReadGatewayConfig;
   url: string;
   publishableKey: string;
   secretKey: string;
@@ -625,10 +634,17 @@ async function findOne(
   const columns =
     table === "ledger_entries"
       ? "id, journey_id, created_by_user_id, updated_at"
-      : "id, trip_id, created_by, updated_at";
+      : "id, trip_id, created_by, updated_at, temporal_contract_version";
   const result = await service.from(table).select(columns).eq("id", id).maybeSingle();
   if (result.error) throw new Error("Supabase Dev lookup failed.");
-  return result.data ? rowToStoredCreate(result.data) : null;
+  const row = result.data as unknown as Record<string, unknown> | null;
+  if (table === "itinerary_events" && row?.temporal_contract_version != null)
+    throw new BackendError(
+      409,
+      "CANONICAL_TARGET_REQUIRED",
+      "Canonical Events require the versioned read contract.",
+    );
+  return row ? rowToStoredCreate(row) : null;
 }
 
 export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendGateway {
@@ -664,6 +680,59 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
   };
 
   return {
+    async readCanonicalCapabilities(userId, tripId) {
+      if (!(await this.canReadTrip(userId, tripId)))
+        throw new BackendError(
+          404,
+          "READ_UNAVAILABLE",
+          "The requested read is unavailable.",
+        );
+      const probe = await service
+        .from("itinerary_events")
+        .select(canonicalEventColumns)
+        .eq("trip_id", tripId)
+        .limit(0);
+      return canonicalCapabilities(!probe.error, config.canonicalReadGateway);
+    },
+    async readCanonicalEvent(userId, tripId, eventId, readVersion) {
+      if (!(await this.canReadTrip(userId, tripId))) return null;
+      if (readVersion !== "1")
+        return { readVersion: 1, disposition: "WITHHELD", reason: "UNSUPPORTED_CLIENT" };
+      // Embedded endpoints share one database statement/snapshot with the root.
+      const result = await service
+        .from("itinerary_events")
+        .select(canonicalEventColumns)
+        .eq("trip_id", tripId)
+        .eq("id", eventId)
+        .maybeSingle();
+      if (result.error)
+        throw new BackendError(
+          503,
+          "READ_UNAVAILABLE",
+          "Canonical Event reads are unavailable.",
+        );
+      return result.data
+        ? projectCanonicalEvent(
+            result.data as unknown as Record<string, unknown>,
+            readVersion,
+          )
+        : null;
+    },
+    async readEventOperationReceipt(userId, tripId, operationKey) {
+      if (!(await this.canReadTrip(userId, tripId))) return null;
+      const connection = await requireCanonicalReadConnection(
+        config.canonicalReadGateway ?? {},
+      );
+      if (!connection)
+        throw new BackendError(
+          503,
+          "REPLAY_UNAVAILABLE",
+          "Historic operation recovery is unavailable.",
+        );
+      const raw = await connection.lookupExactReceipt(userId, tripId, operationKey);
+      return raw === null ? null : projectEventReceipt(raw, userId, tripId, operationKey);
+    },
+
     async validateAccessToken(token) {
       const { data, error } = await auth.auth.getUser(token);
       return error || !data.user ? null : { id: data.user.id };
