@@ -2,254 +2,124 @@
 
 Date: 2026-10-04
 
-## B-T3E — ROUTE CORRECTION COMPLETE / REVIEW PENDING
+## Integration Checkpoint #6 — COMBINED ACCEPTED A+B+C STATE
 
-- Temporal worktree `trip/temporal`, clean baseline `45eed53`. Authenticated
-  capabilities, B-T3C `canonical-event-operations/:operationKey` receipt route
-  and lossless canonical Event read
-  boundary added. Every command remains disabled; activation CLOSED.
-- Seven shapes preserve B-T3A facts, microsecond strings and embedded transport
-  endpoints. Old/unknown clients receive WITHHELD; no synthetic scheduledDate.
-  Receipt output is status-only historic correlation with private proof bodies withheld.
-- Dedicated connection seam exists, but NOLOGIN roles/credentials/live connector
-  remain unprovisioned. service_role is not a fallback; exact runtime recovery is
-  REPLAY_UNAVAILABLE. Command version/gate observation stay unknown without the seam.
-- Mobile transport binds Account/Trip/generation and rejects ABA stale responses;
-  no UI, SQLite apply/migration, semantic queue or accepted-state mutation added.
-- Route correction: B-T3C exact `canonical-event-operations` lookup restored in
-  Backend and Mobile; unshipped `event-operations` removed without an alias.
-  Boundary/transport 36 cases, typecheck/build/scoped lint/format PASS; no SQL,
-  receipt schema, SQLite or capability endpoint changes.
-- Initial integration validation: 30 new cases; scoped 86 TS files / 676 cases; full SQL 38 files /
-  1,196 assertions; 78 polluted-role tests; codec/concurrency, typecheck, build,
-  scoped lint, UI guard, strict verifier and unchanged manifest PASS.
-- Report: `docs/architecture/TRIP_CANONICAL_B_T3E_BACKEND_READ_INTEGRATION_REPORT.md`.
-  Next checkpoint: human/independent review; dedicated read-only runtime provisioning
-  and lossless SQLite/offline acceptance remain PENDING. No remote access, sibling
-  modifications or commit. B-T3D 69-migration signature remains unchanged below.
+- Reconcile reviewed C commit `a608f47` onto integrated A+B `ae4ae05` while
+  continuing the existing `trip/import` rebase. Only this current-state document
+  requires reconciliation. A1-I2C1, B-T3E and C-I3D are accepted/closed checkpoints;
+  prior review-pending Trip status blocks are superseded by this combined handoff.
+- Acceptance does not activate runtime commands. Participation/lifecycle I2C,
+  canonical Event commands and Source commands remain disabled. Event and Source
+  activation gates remain CLOSED; purge/redaction remain disabled.
+- The combined server chain has 70 unique migration versions, ending with
+  `20261004000500_trip_source_command_foundation.sql`. The reviewed C migration,
+  manifest and verifier are unchanged, as are A's lifecycle contract and B's
+  nine non-current-state implementation/docs files. No deployment or remote
+  environment access is part of this reconciliation.
 
-## Integration Checkpoint #5 — COMBINED ACCEPTED A+B STATE
+## A1-I2C1 — PARTICIPATION LIFECYCLE COMMAND CONTRACT ACCEPTED / CLOSED
 
-- Reconcile A1-I2B3 wake/reconnect convergence from `d2d3ee2` with accepted B-T3D
-  protected Event command/receipt foundation from `814f37b`. Only this handoff
-  document is reconciled; A application/test/report bytes and B implementation,
-  migration/manifest/verifier bytes remain unchanged from their reviewed commits.
-- A local convergence PASS with physical acceptance PARTIAL/PENDING; B machinery
-  is installed with canonical commands disabled and activation CLOSED. I2C remains
-  disabled. Neither track's local acceptance implies command activation or deployment.
-- Current combined schema is the 69-migration B-T3D signature below. Older standalone
-  and integration checkpoints are historical evidence, not overrides of this state.
+- Authority: `docs/architecture/TRIP_CANONICAL_A1_I2C1_LIFECYCLE_COMMAND_CONTRACT.md`
+  from `f7de881`, unchanged. First V1 scope is organizer `SET_PARTICIPATION` for
+  an existing Person, including the organizer's own participation. Member/guest
+  self commands, leave/rejoin, linking/unlinking, removal and ownership transfer
+  remain outside the approved first slice.
+- A command result proves the exact historic operation and affected Person pair;
+  it is not a complete roster snapshot, cannot certify the complete Person set
+  and cannot mint a complete-set fingerprint/shared cursor certificate.
+- Future receipt application must invalidate all seven local certificate fields
+  together, preserve the financial checkpoint and use the existing central
+  reporting/refresh owner with Account/Trip/generation fencing. No parallel
+  scheduler or single-Person roster certification is authorized. APPLIED changes
+  the server vector; UNCHANGED/replay do not inherently change that server hash.
+- Lifecycle runtime commands and I2C remain disabled. This accepted contract does
+  not install command routes, receipts or the future result-application seam.
+- Existing A1-I2B2 complete-vector/shared-v2 protocol, monotonic apply and Account
+  transition gate, plus A1-I2B3 wake/reconnect refresh convergence, remain intact.
+  A1-I2B3 local verification passed; physical convergence acceptance remains
+  PARTIAL with foreground/reconnect/Trip/Account/server-churn cases pending.
 
-## Trip Canonical A1-I2B3 — CORRECTION COMPLETE / REVIEW PENDING
+## B-T3E — CANONICAL EVENT LOSSLESS READ INTEGRATION ACCEPTED / CLOSED
 
-- Clean starting HEAD `b3fe04b` on `integration/ledger-polish-canonical`.
-  Demonstrated missing global cold/foreground/reconnect selected-Trip refresh with
-  an empty financial queue; nine-line fix reuses the existing reporting owner.
-  Shared verification failure is nonfatal to a valid installed Account/session;
-  its narrow containment preserves existing bootstrap/auth/operational error semantics.
-  Local convergence PASS. Protocol, combined schema and account transition lease
-  remain unchanged; no new polling owner or timer.
-- Focused validation: 21 files / 324 tests PASS, including preserved I2B2 races;
-  two isolated SQLite clients verify wake-driven inactive/reactive ABA convergence.
-  Typecheck, Backend build, scoped lint, UI guard, formatting/whitespace PASS.
-- Signed Release installed in place on iPhone 16 Pro / iOS 27.0.1 using an
-  unreachable loopback backend. Cold/restart shell access and migration 41→43
-  cache survival PASS; all old columns of seven tables remain identical, including
-  599 Expenses and 162 queue rows. DeviceHub interaction did not change the screen;
-  physical acceptance remains PARTIAL; foreground/reconnect/Trip/Account switching
-  and server churn are PENDING. Deep/strict signature trust is NOT ESTABLISHED / PENDING.
-- Evidence and complete matrix:
-  `docs/architecture/TRIP_CANONICAL_A1_I2B3_DEVICE_CONVERGENCE_ACCEPTANCE_REPORT.md`.
-  Next checkpoint: human + independent review; I2C remains disabled. No remote
-  access, sibling changes or commit. Historical full-suite boundary blocker remains.
+- Authority/evidence:
+  `docs/architecture/TRIP_CANONICAL_B_T3E_BACKEND_READ_INTEGRATION_REPORT.md`.
+  Integrated implementation is retained from `ae4ae05`; seven-shape lossless read
+  preserves canonical facts, microsecond strings and embedded transport endpoints.
+  Old/unknown clients are WITHHELD; no synthetic scheduledDate is introduced.
+- Canonical receipt route remains
+  `/v2/trips/:tripId/canonical-event-operations/:operationKey`. Historic status
+  correlation withholds private proof bodies. The unshipped `event-operations`
+  route has no alias.
+- Capability projection remains fail-closed. Without the dedicated runtime seam,
+  command version/gate observation remain unknown and exact recovery reports
+  REPLAY_UNAVAILABLE; service_role is not a semantic-authority fallback.
+- Dedicated runtime gateway provisioning/credentials/live connector remain
+  PENDING. Mobile read transport fences Account/Trip/generation and ABA responses;
+  lossless SQLite/offline mirror and accepted-state apply remain PENDING.
+- Canonical Event commands remain disabled; activation gate CLOSED. B-T3D's
+  immutable receipts, exact intent codec and fixed command foundation are retained.
+- Reviewed evidence: corrected boundary/transport 36 cases; initial scoped
+  86 TypeScript files / 676 cases, 38 SQL files / 1,196 assertions, 78 role-security
+  tests, codec/concurrency and relevant static/manifest checks passed. These are
+  prior checkpoint results, not new tests run for this documentation conflict.
 
-## B-T3D — FOUR-FINDING CORRECTION COMPLETE / REVIEW PENDING
+## C-I3D — PROTECTED SOURCE COMMAND FOUNDATION ACCEPTED / CLOSED
 
-- Temporal worktree, branch `trip/temporal`; starting HEAD `b3fe04b`.
-  New local migration `20261004000400_trip_event_command_foundation.sql` installs
-  immutable Event receipts, exact intent codec, reserved gateway/reader roles and
-  six fixed first-slice entrypoints. Canonical commands remain disabled; gate CLOSED.
-- No runtime gateway credential/Backend connection, positive parent DML grant or
-  B-T3B guard activation is installed. Independent review and lossless Mobile
-  acceptance remain PENDING. Zoned resolution and Track C adapter remain blocked.
-- Two clean 69-version replays match: 114 tables/RLS, 1,706 columns, 949 constraints,
-  361 indexes, 175 functions, 139 triggers, 188 policies, four buckets; checksum
-  `487437eec9615630f0d1f7e76c58c69ccf11095975a1f8a99de437afd5870f6e`.
-- Each full SQL run: 38 files / 1,196 assertions; focused B-T3D: 87; polluted-role
-  suite: 77 cases / 78 node tests; Backend/A/sync/financial: 68 files / 657 tests.
-  Golden codec, parallel CAS/replay, strict drift negatives, typecheck and lint PASS.
-  Populated forward snapshots preserve 112 old tables (23 nonempty); schema diff empty.
-- Independent-review correction: exact pre/post reserved capability inventories,
-  all-schema CREATE/routine/default ACL validation, READ COMMITTED-only new semantic
-  execution, timezone-independent UTC receipt hashing/recovery, exact decimal bounds.
-  Real gate-close waiter reproduction and RR/SERIALIZABLE rejection PASS; read-only
-  historic recovery remains available. No new migration version or activation.
-- Report: `docs/architecture/TRIP_CANONICAL_B_T3D_PROTECTED_COMMAND_FOUNDATION_REPORT.md`.
-  No Production/Hosted Dev access, sibling edits, command activation or commit.
-  Next checkpoint: independent B-T3D review; no activation authorized.
+- Authority: accepted C-I3C lifecycle contract and
+  `docs/architecture/TRIP_CANONICAL_C_I3D_PROTECTED_SOURCE_COMMAND_FOUNDATION_REPORT.md`.
+  Reviewed `a608f47` adds only server foundation migration
+  `20261004000500_trip_source_command_foundation.sql` and its validation artifacts.
+- Protected Source operations and immutable terminal receipts support seven
+  bounded families: acquire Source, prepare/verify Representation, replace
+  material, mark Representation lost, recover Representation and upload original.
+  Exact operation/key/digest identity, replay/changed-intent rejection and Source/
+  Representation CAS remain required. Historic exact lookup requires current
+  owner + canReadTrip; semantic finalization also requires canWriteTrip.
+- I/O ownership follows ADMITTED → IO_ACTIVE → IO_UNKNOWN or IO_QUIESCENT → FINAL
+  with exact attempt generation/execution-owner fencing. Timeout/lease expiry
+  never proves quiescence; IO_UNKNOWN stays protected until trusted explicit
+  completion. No database locks span provider/network I/O.
+- Complete `pg_shdepend` ownership inventory is retained: pre-install ownership
+  allowlist is **none**. Final ownership permits only current-database `pg_proc`
+  objects in `public`, matching exact signature and owner:
+  - Writer owns only `trip_source_acquire_source(uuid,text)`,
+    `trip_source_prepare_representation(uuid,text)`,
+    `trip_source_verify_representation(uuid,text)`,
+    `trip_source_replace_material(uuid,text)`,
+    `trip_source_mark_representation_lost(uuid,text)`,
+    `trip_source_recover_representation(uuid,text)` and
+    `trip_source_upload_original(uuid,text)`.
+  - Reader owns only `trip_source_admission(uuid,uuid,boolean)` and
+    `trip_source_operation_lookup(uuid,uuid,uuid,uuid,text,text)`.
+  - Gateway owns **zero** objects; unknown classes/objects fail closed.
+- Domain/collation, unapproved approved-name overloads and wrong-schema exact
+  signatures are covered by complete regression evidence. Atomic rejection
+  preserves hostile ownership/capabilities; no automatic sanitization occurs.
+  Direct/PUBLIC/inherited EXECUTE, non-system schema CREATE, table/live-column
+  ACLs, memberships/SET ROLE/default privileges and zero-row DML guards remain.
+- Source commands remain disabled; gate CLOSED; reserved roles remain NOLOGIN.
+  No runtime credentials or real provider worker are installed. Provider
+  create-only proof, quiescence/parser/resource proof and a trusted completion
+  producer remain PENDING, as do runtime provisioning and lossless local mirror.
+  Purge/redaction remain disabled.
+- Reviewed evidence: focused C-I3D 159 / C-I3B 246 assertions; 111 role/security
+  tests; C vectors/CAS/phase/isolation/gate-close races; B role/security 78 tests;
+  relevant A/B/financial TypeScript 63 files / 547 tests. Two P1-correction clean
+  replays plus one closure replay each passed 70 versions / 39 SQL files /
+  1,355 assertions. Strict verifier/drift negatives, schema diffs, 69 historical
+  byte checks and populated 114-table forward non-interference passed. Disposable
+  validation containers were stopped. No SQL suite is rerun for this conflict.
 
-## Integration Checkpoint #4 — A+C SCHEMA RECONCILIATION
+## Combined schema and next checkpoint
 
-- Import replay onto `c3fb253` retains A1-I2B2 and B-T3C. Authorized C migration
-  rename to `20261004000300_trip_source_protected_foundation.sql` removes the
-  version collision; A stays `20261004000200`. C SQL bytes and all 66 prior
-  migrations remain identical. The standalone signatures below are historical;
-  the combined signature was authoritative at checkpoint #4; checkpoint #5 above
-  now retains the B-T3D combined signature.
-- Combined manifest: 112 tables/RLS tables, 1,683 columns, 924 constraints,
-  359 indexes, 159 functions, 137 triggers, 181 policies, four buckets;
-  checksum `6b554edf84c349dbcb2ee29862dddfe526c68ca710712234f1adaf53e6db7f5a`.
-- Two clean full-chain replays each register 68 distinct versions; each full SQL
-  suite passes 37 files / 1,109 assertions. Both manifests match the committed
-  combined signature; both public/storage diffs are empty. Focused A 13 / C 246 / B 145 assertions and
-  strict verifier/count/same-count checksum drift negatives PASS.
-- A's existing function/grants and populated receipt/financial/existing table
-  snapshots are identical across C. C's tables/guards/bucket/functions/writers
-  and role memberships are identical across A. Writer reuse: 26 PASS.
-- A I2B3 local/device evidence is recorded above, with physical cases pending. B-T3C is contract only;
-  Source, Event semantic and participation/lifecycle commands remain disabled.
-  No Product/Backend/Mobile behavior or remote deployment changes.
-
-## Trip Canonical A1-I2B2 — IMPLEMENTATION COMPLETE / REVIEW PENDING
-
-- Worktree `/Users/xoery/Project/otr-mobile-canonical`, branch
-  `integration/ledger-polish-canonical`; clean starting HEAD `f196f98`.
-  A is retained from the integration baseline; historical stage notes below describe
-  their own checkpoints and do not override this current handoff.
-- Approved authority: `TRIP_CANONICAL_A1_I2B1_SNAPSHOT_CURSOR_CONTRACT.md`.
-  Complete one-statement Member aggregate preserves wire display-name ordering;
-  fingerprint v1 independently canonicalizes/sorts IDs. Certified bootstrap uses
-  V0/M/V1 coherence, max three attempts. Every shared v2 pull verifies the complete
-  vector before the financial page. Private-payment cursor remains v1.
-- Server migration `20261004000200_trip_person_snapshot_read.sql` adds only one
-  fixed-search-path service-only read function. SQLite migration 43 adds the seven
-  completeness fields to existing scoped cursor rows. Atomic repository apply,
-  preserving cursor upsert, exact-set local rehash and Account/generation fencing
-  use the same narrow transition gate through commit/rollback.
-- Standalone A validation: two clean 67-migration replays agree: 108 RLS tables, 1,611 columns, 838
-  constraints, 155 functions, 125 triggers; schema diff empty. Manifest checksum:
-  `890f6495fe22f08c01be12eb36c4c0d75d00ad9b1b09b55798b542a3e365d359`.
-  Each full native SQL run: 36 files / 863 assertions PASS. Populated financial,
-  identity, permission and source manifests are byte-identical before/after.
-- Validation totals and acceptance matrix:
-  `docs/architecture/TRIP_CANONICAL_A1_I2B2_IMPLEMENTATION_REPORT.md`.
-  Full-repository green gate remains blocked by the baseline-identical
-  `LedgerExpenseDetailScreen.tsx` API import architecture boundary violation.
-- I2B2 checkpoint remains human + independent review. I2B3 acceptance is recorded
-  above; I2C lifecycle commands remain deferred; no new timers/commands/UI.
-  Production/Hosted Dev accessed or mutated: NO; siblings modified: NO.
-
-## Trip Canonical C-I3B — P2 CORRECTION COMPLETE / REVIEW PENDING
-
-- Import worktree `trip/import`, clean baseline `f196f98`. One additive migration
-  `20261004000300_trip_source_protected_foundation.sql` installs four protected
-  Source/material/history tables, a private `trip-source-material` bucket,
-  structural/deferred validators, disabled reserved writer and runtime guards.
-  P2: deduplicated lineage closure; all-mutation statement fences reject zero-row DML.
-  Source commands, upload worker, API routes and Mobile SQLite remain unchanged/disabled.
-- Standalone C validation: two clean 67-migration local replays match: 112 RLS tables, 1,683 columns,
-  924 constraints, 158 functions, 137 triggers, 181 policies, four buckets;
-  checksum `6f7449afdc45838a2b29c4d21fc12bf16adcb4971ade9c4c3cb07a85e7bc95a6`.
-  Each full SQL run: 36 files / 1,096 assertions PASS; Source subset 246 PASS;
-  writer reuse 26 PASS; verifier/count/checksum drift rejection PASS.
-- All 108 existing public table contents and schema/grants/RLS/trigger facts,
-  existing buckets/Storage policies and financial projections are byte-equivalent
-  through populated forward migration. All 66 historical migrations unchanged.
-- Typecheck/lint/UI guard pass. Full TS: 1,178 PASS, same pre-existing architecture
-  boundary failure as B-T3B; offending file/test unchanged. Full-repository gate blocked.
-- Authority: C-I3A schema/access contract; evidence and exact compatibility limits:
-  `docs/architecture/TRIP_CANONICAL_C_I3B_PROTECTED_SOURCE_FOUNDATION_REPORT.md`.
-  Source RESTRICT FKs intentionally block physical Trip/Account deletion while history exists.
-- Next checkpoint: human + independent review only; no automatic Source command,
-  acquisition/upload, association, extraction or domain adapter work.
-  Production/Hosted Dev accessed: NO; sibling worktrees modified: NO.
-
-## Trip Canonical B-T3C — CONTRACT ONLY
-
-- Approved command/receipt contract: `TRIP_CANONICAL_B_T3C_COMMAND_RECEIPT_CONTRACT.md`.
-  Contract only; Event semantic commands remain disabled pending their approved slice.
-
-## Trip Canonical B-T3B — IMPLEMENTATION COMPLETE / REVIEW PENDING
-
-- Temporal worktree `trip/temporal`, clean starting baseline `5537eb6`.
-  One additive server migration `20261004000100_trip_temporal_protected_foundation.sql`
-  adds protected nullable root fields, transport endpoints, structural/aggregate
-  validators, isolated writer reservation, runtime row/bulk guards and read RLS.
-  Legacy values stay literal; canonical commands remain disabled. No commit yet.
-- Populated forward legacy/reservation/Track A/financial snapshots are byte-identical.
-  Two finalized clean 66-migration replays match the updated strict manifest:
-  108 RLS tables, 1,611 columns, 838 constraints, 154 functions, 125 triggers;
-  checksum `0f331b4e5f6ed5421c9ddf1a0c70bbe24b30c05977a90281534958374802900b`.
-  Final SQL: 35 files / 849 assertions PASS; negative manifest drift checks PASS.
-- Typecheck/lint/UI guard pass. Full TS: 1,178 pass, one pre-existing architecture
-  boundary failure (`LedgerExpenseDetailScreen.tsx` imports `@/data/api`); both
-  offending file and test are unchanged. Full-repository green gate remains blocked.
-- Authority/acceptance matrix:
-  `docs/architecture/TRIP_CANONICAL_B_T3B_PROTECTED_SERVER_FOUNDATION_REPORT.md`
-  and `TRIP_CANONICAL_B_T3A_SCHEMA_WRITER_CONTRACT.md`.
-- Next checkpoint: human + independent review only. No B-T3C command activation,
-  Mobile/SQLite changes, Track A/Booking/Source redesign or remote deployment.
-  Production/Hosted Dev accessed: NO; sibling worktrees modified: NO.
-
-## Trip Canonical A1-I2A — IMPLEMENTATION COMPLETE / REVIEW PENDING
-
-- Fresh local implementation from clean `0285aced36ca468a955648fc8a651c21c57c8f29`
-  after the owner-confirmed Builder + Independent Review of manifest reconciliation.
-  Draft files from the blocked attempt were not reused. No commit yet.
-- Server migration `20261003000100_trip_person_participation.sql`: protected
-  Boolean/revision baseline true/0 on `journey_members`; ordinary inserts normalize
-  and updates/upserts preserve the pair. Reserved private NOLOGIN writer has no
-  grants, functions or enabled command. Existing permissions/linking remain intact.
-- SQLite migration 42 adds a nullable, validated pair on `ledger_members`.
-  Bootstrap hydration uses preserving upsert; omitted/lower observations retain
-  known state, newer advances it, equal/opposite or malformed observations roll
-  back. `TripPerson.participation` is object/null; the list remains complete.
-- Relevant regression: 42 TS suites / 354 tests PASS; both isolated clean server
-  resets pass 34 SQL files / 705 assertions. Manifests match; schema diff empty.
-  Typecheck, scoped zero-warning lint, UI guard, format/whitespace and strict
-  manifest drift-rejection checks PASS. Before/after migration identity, permission,
-  financial FK and representative financial-source manifests are byte-identical.
-- Retained chain now has 65 migrations, 107 RLS tables, 1,490 columns, 825
-  constraints, 142 functions and 115 triggers. Checksum:
-  `539a75d3cc0d4dc8f7729132f2918a973c80eba8fcbb54b2c1577c01c9d11f89`.
-  Manifest/verifier changes are this migration's explained delta only.
-- Authoritative next entry: `docs/architecture/TRIP_CANONICAL_A1_I2A_REPORT.md`
-  and accepted `TRIP_CANONICAL_A1_I2A_SCHEMA_CONTRACT.md`. Historical blocked
-  attempt is retained in commit `92862af`; it does not describe current runtime.
-- Next checkpoint: human + independent review only. No I2B freshness mechanism,
-  I2C command/API/queue/UI, receipt/audit, device build or automatic continuation.
-  Production accessed: NO; Hosted Dev accessed/mutated: NO; deployment: NO.
-
-## Schema manifest reconciliation — REVIEWED / COMMITTED
-
-- Owner confirmed Builder + Independent Review passed; committed as `0285aced`.
-  Its 64-migration baseline checksum was
-  `201f6b0f42a50e6185233a07604f06907e71bec0dca372645949100cb95c1897`.
-- Current I2A replay matched that baseline before implementation. Historical proof:
-  `docs/architecture/SCHEMA_MANIFEST_RECONCILIATION_REPORT.md`.
-
-## Trip Canonical A1-I1 — CODE COMPLETE / REVIEW PENDING
-
-- Latest narrow checkpoint: `journey_members.id` is the canonical Trip Person ID.
-  `src/domain/trip/person.ts` exposes Trip ID, Person ID and display name;
-  `tripPersonRepository` reads the existing `ledger_members` projection under the
-  active Account's cached Journey context and rejects reads crossing an account
-  generation/identity change. No link field is inferred from unavailable local data.
-- Account-switch test execution is repaired using unused native-entry mocks and
-  the existing migration-backed in-memory fixture; original assertions remain.
-  TEST GATE PASS occurred before implementation: 7 files / 36 tests.
-- Golden Person/isolation tests: 10 PASS. Final relevant regressions: 30 files /
-  175 tests PASS; TypeScript, scoped zero-warning lint, UI guard, changed-file format
-  and whitespace checks PASS. No schema, permission or financial changes; only
-  additive production domain/read files. Existing SQLite/API versions are unchanged.
-- Authoritative report and next-session entry:
-  `docs/architecture/TRIP_CANONICAL_A1_I1_REPORT.md`; A0/A1-D remain design evidence.
-  Historical sections below do not authorize expansion of this Trip slice.
-- Human review and independent reviewer gate remain PENDING. No commit yet.
-  Next checkpoint is review only; no automatic A1-I2/A2, Invite/Claim, leave/revoke,
-  Viewer, ownership, access migration, device build or remote deployment.
-- Production accessed: NO; Hosted Dev mutated: NO; deployment: NO; new migrations:
-  NONE. Account-scoped queues/private projections and offline launch are preserved.
+- Manifest: 116 RLS tables, 1,746 columns, 1,004 constraints, 365 indexes,
+  198 functions, 141 triggers, 194 policies and four buckets. Checksum:
+  `c7aa6ff4dfa3992f86816b642e94a5cdb66723674710edc66059ec60afc9388f`.
+- Next work requires a separately approved checkpoint. Runtime provisioning,
+  provider completion proof and lossless offline integration remain pending;
+  accepting A+B+C does not authorize activation, deployment or adjacent scope.
+  Earlier unrelated implementation history below does not override this combined
+  Trip state. Production/Hosted Dev access and push are outside this checkpoint.
 
 ## Temporary foundation verification screen
 

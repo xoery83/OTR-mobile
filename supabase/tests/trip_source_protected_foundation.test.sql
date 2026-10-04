@@ -6,7 +6,7 @@ select ok((select count(*)=0 from public.trip_sources),'foundation has no busine
 select ok((select not public and file_size_limit=52428800 and allowed_mime_types=array['application/pdf','image/jpeg','image/png','image/heic','image/heif'] from storage.buckets where id='trip-source-material'),'exact private Source bucket');
 select ok((select not rolcanlogin and not rolsuper and not rolcreatedb and not rolcreaterole and not rolinherit and not rolbypassrls and not rolreplication from pg_roles where rolname='otr_trip_source_writer'),'reserved writer exact attributes');
 select ok(not exists(select 1 from pg_auth_members where member='otr_trip_source_writer'::regrole or roleid='otr_trip_source_writer'::regrole and (set_option or inherit_option or member<>'postgres'::regrole)),'no writer inheritance or SET ROLE path');
-select ok(not exists(select 1 from pg_proc where proowner='otr_trip_source_writer'::regrole),'no Source writer function or executable command');
+select is((select count(*)::int from pg_proc where proowner='otr_trip_source_writer'::regrole),7,'Source writer owns exactly seven closed fixed entrypoints');
 select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid='public.trip_sources'::regclass),'trip_sources enabled and forced RLS');
 select ok(not has_table_privilege('anon','public.trip_sources','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') and not exists(select 1 from pg_attribute where attrelid='public.trip_sources'::regclass and attnum>0 and not attisdropped and has_column_privilege('anon',attrelid,attnum,'SELECT,INSERT,UPDATE,REFERENCES')),'anon: trip_sources no effective table or column grants');
 select ok(not has_table_privilege('authenticated','public.trip_sources','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') and not exists(select 1 from pg_attribute where attrelid='public.trip_sources'::regclass and attnum>0 and not attisdropped and has_column_privilege('authenticated',attrelid,attnum,'SELECT,INSERT,UPDATE,REFERENCES')),'authenticated: trip_sources no effective table or column grants');
@@ -286,6 +286,8 @@ select ok((select tgtype=62 from pg_trigger where tgrelid='public.trip_sources':
 select ok((select tgtype=62 from pg_trigger where tgrelid='public.trip_source_revisions'::regclass and tgname='trip_source_statement_guard'),'P2 trip_source_revisions BEFORE statement fence covers all four mutation events');
 select ok((select tgtype=62 from pg_trigger where tgrelid='public.trip_source_representations'::regclass and tgname='trip_source_statement_guard'),'P2 trip_source_representations BEFORE statement fence covers all four mutation events');
 select ok((select tgtype=62 from pg_trigger where tgrelid='public.trip_source_actions'::regclass and tgname='trip_source_statement_guard'),'P2 trip_source_actions BEFORE statement fence covers all four mutation events');
+-- Include the new RESTRICT receipt child so CASCADE reaches the original statement guard.
+grant truncate on public.trip_source_operations to service_role,otr_trip_source_writer;
 grant select,insert,update,delete,truncate on public.trip_sources to service_role;
 grant select,insert,update,delete,truncate on public.trip_source_revisions to service_role;
 grant select,insert,update,delete,truncate on public.trip_source_representations to service_role;

@@ -8,18 +8,18 @@ select plan(32);
 select is(
   (select count(*)::integer from information_schema.tables
     where table_schema = 'public' and table_type = 'BASE TABLE'),
-  114,
-  'retained chain and protected Trip foundation public table count is 114'
+  116,
+  'retained chain and protected Trip foundation public table count is 116'
 );
 select is(
   (select count(*)::integer from information_schema.columns where table_schema = 'public'),
-  1706,
-  'retained chain and protected Trip foundation column count is 1706'
+  1746,
+  'retained chain and protected Trip foundation column count is 1746'
 );
 select is(
   (select count(*)::integer from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity),
-  114,
+  116,
   'RLS is enabled on every public table'
 );
 select is(
