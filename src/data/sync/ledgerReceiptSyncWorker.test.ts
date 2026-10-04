@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { SyncDependencyError } from "./syncEngine";
 import { pushReceiptOperation } from "./ledgerReceiptSyncWorker";
 import { verifyReceiptFile } from "@/data/files/receiptFileStore";
 vi.mock("@/data/files/receiptFileStore", () => ({
@@ -345,6 +346,30 @@ describe("receipt asset worker", () => {
       ),
     ).rejects.toThrow("upload must complete");
     expect(transport.ocr).not.toHaveBeenCalled();
+  });
+
+  it("reports a LINK upload prerequisite as dependency wait rather than retry failure", async () => {
+    const receipts = { getReceipt: vi.fn(async () => asset) };
+    const transport = { link: vi.fn() };
+    await expect(
+      pushReceiptOperation(
+        {
+          id: "link",
+          ownerUserId: "user-a",
+          journeyId: "journey",
+          assetId: asset.id,
+          operationType: "LINK_RECEIPT",
+          idempotencyKey: "stable-link",
+          status: "PENDING",
+          attemptCount: 0,
+          nextAttemptAt: null,
+        },
+        receipts as never,
+        {} as never,
+        transport as never,
+      ),
+    ).rejects.toBeInstanceOf(SyncDependencyError);
+    expect(transport.link).not.toHaveBeenCalled();
   });
 
   it("links an uploaded asset to a Personal Payment without an Expense", async () => {

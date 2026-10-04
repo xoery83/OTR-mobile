@@ -8,6 +8,10 @@ vi.mock("@/data/files/receiptFileStore", () => ({
   verifyReceiptFile: vi.fn(async () => {}),
 }));
 
+vi.mock("@/data/sync/ledgerQueueActivity", () => ({
+  announceLedgerQueueWorkAvailable: vi.fn(),
+}));
+
 describe("offline Expense attachment lifecycle", () => {
   it("survives restart, releases a slot on delete, and keeps Personal Payment evidence", async () => {
     const sqlite = new DatabaseSync(":memory:");

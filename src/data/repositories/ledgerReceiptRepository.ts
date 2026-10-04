@@ -1,4 +1,5 @@
 import type * as SQLite from "expo-sqlite";
+import { announceLedgerQueueWorkAvailable } from "@/data/sync/ledgerQueueActivity";
 
 import type { ReceiptDto, ReceiptSuggestion } from "@/data/api/ledgerReceiptContracts";
 import { createLocalId } from "@/domain/localId";
@@ -434,6 +435,26 @@ export function createLedgerReceiptRepository(
         );
       }
     },
+    async refreshDependencies() {
+      const userId = await getActiveUserId();
+      let released = 0;
+      await database.withTransactionAsync(async () => {
+        released = await refreshReceiptDependencies(database, userId);
+      });
+      if (released > 0) announceLedgerQueueWorkAvailable();
+    },
+    async waitForUpload(id: string) {
+      await database.runAsync(
+        `UPDATE ledger_asset_operations SET status = 'PENDING',
+         failure_category = 'DEPENDENCY', last_error_code = NULL,
+         last_error_message = NULL, last_request_id = NULL, next_attempt_at = NULL, claim_owner = NULL,
+         lease_expires_at = NULL, updated_at = ?
+         WHERE id = ? AND owner_user_id = ? AND status = 'PROCESSING'`,
+        new Date().toISOString(),
+        id,
+        await getActiveUserId(),
+      );
+    },
     async listPendingOperations() {
       const userId = await getActiveUserId();
       return database.getAllAsync<AssetOperation>(
@@ -444,6 +465,7 @@ export function createLedgerReceiptRepository(
         FROM ledger_asset_operations WHERE owner_user_id = ?
           AND status IN ('PENDING', 'RETRYABLE')
           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
+          AND ${receiptDependencyReady}
         ORDER BY CASE WHEN operation_type = 'DELETE_RECEIPT' THEN 0 ELSE 1 END,
           created_at`,
         userId,
@@ -468,7 +490,8 @@ export function createLedgerReceiptRepository(
         `UPDATE ledger_asset_operations SET status = 'PROCESSING', claim_owner = ?,
           lease_expires_at = ?, last_attempt_at = ?, updated_at = ?
          WHERE id = ? AND owner_user_id = ? AND status IN ('PENDING', 'RETRYABLE')
-           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)`,
+           AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
+           AND ${receiptDependencyReady}`,
         processClaimOwner,
         new Date(Date.now() + 5 * 60_000).toISOString(),
         now,
@@ -505,28 +528,34 @@ export function createLedgerReceiptRepository(
       failureCategory: string | null = null,
     ) {
       const userId = await getActiveUserId();
-      await database.runAsync(
-        `UPDATE ledger_asset_operations SET status = ?, attempt_count = attempt_count + CASE WHEN ? = 'RETRYABLE' THEN 1 ELSE 0 END,
+      let released = 0;
+      await database.withTransactionAsync(async () => {
+        await database.runAsync(
+          `UPDATE ledger_asset_operations SET status = ?, attempt_count = attempt_count + CASE WHEN ? = 'RETRYABLE' THEN 1 ELSE 0 END,
         failure_category = ?, last_error_code = ?, last_error_message = ?,
         last_request_id = ?,
         first_failed_at = CASE WHEN ? IS NULL THEN first_failed_at ELSE COALESCE(first_failed_at, ?) END,
         next_attempt_at = ?, claim_owner = NULL, lease_expires_at = NULL,
         updated_at = ? WHERE id = ? AND owner_user_id = ?`,
-        status,
-        status,
-        error ? failureCategory : null,
-        error ? safeErrorCode(error) : null,
-        error ? safeErrorMessage(error) : null,
-        error && "requestId" in error && typeof error.requestId === "string"
-          ? error.requestId
-          : null,
-        error ? failureCategory : null,
-        new Date().toISOString(),
-        nextAttemptAt,
-        new Date().toISOString(),
-        id,
-        userId,
-      );
+          status,
+          status,
+          error ? failureCategory : null,
+          error ? safeErrorCode(error) : null,
+          error ? safeErrorMessage(error) : null,
+          error && "requestId" in error && typeof error.requestId === "string"
+            ? error.requestId
+            : null,
+          error ? failureCategory : null,
+          new Date().toISOString(),
+          nextAttemptAt,
+          new Date().toISOString(),
+          id,
+          userId,
+        );
+        if (status === "COMPLETED" || status === "FAILED")
+          released = await refreshReceiptDependencies(database, userId);
+      });
+      if (released > 0) announceLedgerQueueWorkAvailable();
     },
     async markUploading(id: string) {
       await setAsset(database, id, "upload_status", "UPLOADING", await getActiveUserId());
@@ -681,7 +710,10 @@ async function enqueue(
 ) {
   await database.runAsync(
     `INSERT OR IGNORE INTO ledger_asset_operations (id, journey_id, asset_id, operation_type, idempotency_key,
-    owner_user_id, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?)`,
+    owner_user_id, status, created_at, updated_at, dependency_operation_id)
+    VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?,
+      (SELECT id FROM ledger_asset_operations WHERE asset_id = ? AND owner_user_id = ?
+       AND journey_id = ? AND operation_type = 'UPLOAD_RECEIPT' AND ? = 'LINK_RECEIPT'))`,
     createLocalId("asset-operation"),
     journeyId,
     assetId,
@@ -690,6 +722,10 @@ async function enqueue(
     userId,
     now,
     now,
+    assetId,
+    userId,
+    journeyId,
+    operationType,
   );
 }
 async function setAsset(
@@ -707,4 +743,86 @@ async function setAsset(
     id,
     userId,
   );
+}
+
+// Selection and atomic claim both guard the durable upload prerequisite.
+const receiptDependencyReady = `(
+  operation_type <> 'LINK_RECEIPT' OR EXISTS (
+    SELECT 1 FROM ledger_receipt_assets deleted
+    WHERE deleted.id = ledger_asset_operations.asset_id
+      AND deleted.journey_id = ledger_asset_operations.journey_id
+      AND deleted.deleted_at IS NOT NULL
+  ) OR (
+    EXISTS (SELECT 1 FROM ledger_receipt_assets asset
+      WHERE asset.id = ledger_asset_operations.asset_id
+        AND asset.journey_id = ledger_asset_operations.journey_id
+        AND asset.server_id IS NOT NULL AND asset.upload_status = 'UPLOADED')
+    AND (dependency_operation_id IS NULL OR EXISTS (
+      SELECT 1 FROM ledger_asset_operations dependency
+      WHERE dependency.id = ledger_asset_operations.dependency_operation_id
+        AND dependency.owner_user_id = ledger_asset_operations.owner_user_id
+        AND dependency.journey_id = ledger_asset_operations.journey_id
+        AND dependency.asset_id = ledger_asset_operations.asset_id
+        AND dependency.operation_type = 'UPLOAD_RECEIPT'
+        AND dependency.status = 'COMPLETED'
+    ))
+  )
+)`;
+
+async function refreshReceiptDependencies(database: Database, userId: string) {
+  const now = new Date().toISOString();
+  // Backfill old LINK identities without changing operation keys or retry history.
+  await database.runAsync(
+    `UPDATE ledger_asset_operations SET dependency_operation_id = (
+      SELECT upload.id FROM ledger_asset_operations upload
+      WHERE upload.asset_id = ledger_asset_operations.asset_id
+        AND upload.journey_id = ledger_asset_operations.journey_id
+        AND upload.owner_user_id = ledger_asset_operations.owner_user_id
+        AND upload.operation_type = 'UPLOAD_RECEIPT'
+    ) WHERE owner_user_id = ? AND operation_type = 'LINK_RECEIPT'
+      AND status IN ('PENDING', 'RETRYABLE', 'FAILED')
+      AND dependency_operation_id IS NULL`,
+    userId,
+  );
+  // Release known dependency waits only; genuine network/HTTP backoff survives.
+  const released = await database.runAsync(
+    `UPDATE ledger_asset_operations SET status = 'PENDING', failure_category = NULL,
+      last_error_code = NULL, last_error_message = NULL, last_request_id = NULL,
+      next_attempt_at = NULL, claim_owner = NULL, lease_expires_at = NULL, updated_at = ?
+     WHERE owner_user_id = ? AND operation_type = 'LINK_RECEIPT'
+       AND status IN ('PENDING', 'RETRYABLE', 'FAILED')
+       AND (failure_category = 'DEPENDENCY' OR
+         (status = 'RETRYABLE' AND failure_category = 'UNKNOWN'
+          AND last_error_code = 'SYNC_FAILED'
+          AND last_error_message = 'Receipt upload must complete first.'))
+       AND ${receiptDependencyReady}`,
+    now,
+    userId,
+  );
+  await database.runAsync(
+    `UPDATE ledger_asset_operations SET status = 'FAILED', failure_category = 'DEPENDENCY',
+      last_error_code = 'RECEIPT_DEPENDENCY_FAILED',
+      last_error_message = 'Receipt upload failed; linking is blocked.',
+      next_attempt_at = NULL, updated_at = ?
+     WHERE owner_user_id = ? AND operation_type = 'LINK_RECEIPT'
+       AND status IN ('PENDING', 'RETRYABLE')
+       AND EXISTS (SELECT 1 FROM ledger_asset_operations upload
+         WHERE upload.id = ledger_asset_operations.dependency_operation_id
+           AND upload.owner_user_id = ledger_asset_operations.owner_user_id
+           AND upload.journey_id = ledger_asset_operations.journey_id
+           AND upload.asset_id = ledger_asset_operations.asset_id
+           AND upload.operation_type = 'UPLOAD_RECEIPT' AND upload.status = 'FAILED')`,
+    now,
+    userId,
+  );
+  await database.runAsync(
+    `UPDATE ledger_asset_operations SET failure_category = 'DEPENDENCY',
+      last_error_code = NULL, last_error_message = NULL, next_attempt_at = NULL,
+      updated_at = ?
+     WHERE owner_user_id = ? AND operation_type = 'LINK_RECEIPT' AND status = 'PENDING'
+       AND NOT ${receiptDependencyReady}`,
+    now,
+    userId,
+  );
+  return released.changes;
 }

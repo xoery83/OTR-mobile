@@ -39,6 +39,9 @@ export function classifyLedgerQueueActivity(
   };
   for (const row of rows) {
     if (row.failureCategory === "AUTH") continue;
+    if (row.dependencyStatus && row.dependencyStatus !== "COMPLETED") continue;
+    if (row.failureCategory === "DEPENDENCY" && row.dependencyStatus !== "COMPLETED")
+      continue;
     if (row.status === "PENDING" || row.status === "RETRYABLE")
       consider(row.nextAttemptAt);
     else if (row.status === "PROCESSING" && row.leaseExpiresAt)
@@ -73,8 +76,18 @@ export async function getLedgerQueueActivity(journeyId: string | null = null) {
      SELECT operation.status, operation.failure_category AS failureCategory,
        operation.next_attempt_at AS nextAttemptAt,
        operation.lease_expires_at AS leaseExpiresAt,
-       NULL AS dependencyStatus
+       CASE WHEN operation.operation_type = 'LINK_RECEIPT'
+         AND (asset.server_id IS NULL OR asset.upload_status <> 'UPLOADED')
+         THEN 'WAITING' ELSE dependency.status END AS dependencyStatus
      FROM ledger_asset_operations operation
+     LEFT JOIN ledger_receipt_assets asset ON asset.id = operation.asset_id
+       AND asset.journey_id = operation.journey_id
+     LEFT JOIN ledger_asset_operations dependency
+       ON dependency.id = operation.dependency_operation_id
+       AND dependency.owner_user_id = operation.owner_user_id
+       AND dependency.asset_id = operation.asset_id
+       AND dependency.journey_id = operation.journey_id
+       AND dependency.operation_type = 'UPLOAD_RECEIPT'
      WHERE operation.owner_user_id = ?
        AND operation.status IN ('PENDING', 'PROCESSING', 'RETRYABLE', 'FAILED')
        ${assetScope}`,

@@ -2,6 +2,29 @@
 
 Date: 2026-10-05
 
+## Receipt dependency scheduling fix — 2026-10-05
+
+- New LINK_RECEIPT operations reference their same-account/same-asset upload.
+  Repository selection and atomic claim wait for upload completion; runtime
+  dependency waits preserve attempts and avoid exponential backoff.
+- Upload completion releases dependent work and wakes the existing scheduler.
+  Known legacy upload-wait errors recover with original operation IDs/keys;
+  genuine LINK network backoff is preserved. Permanent upload failures block
+  downstream work without spinning; recovery releases the original LINK.
+- Validation: 9 targeted files / 72 tests, typecheck, lint/UI guard, scoped
+  formatting and diff checks PASS. Includes six upload failures, legacy long
+  backoff, restart, concurrent workers, lost response/idempotent replay,
+  permanent failure/recovery, readiness race and deleted receipt handling.
+- Signed embedded Release installed on Leon's iPhone 16 Pro (iOS 27.0.1), preserving
+  app data. DeviceHub confirmed the affected Development Trip shows updated;
+  a separate NZ$0.01 QA expense with two attachments synchronized successfully.
+  Read-only operation metadata confirmed four COMPLETED operations, explicit
+  upload dependencies, zero retry attempts/errors/backoff, and no unresolved
+  receipt operations in that Trip. Restart retained the QA expense and both
+  attachments without a pending/error banner. Temporary snapshot was deleted.
+- No schema/backend/auth/global retry changes or Production access. ADR:
+  `docs/adr/2026-10-05-receipt-upload-dependency.md`.
+
 ## Ledger receipt / settlement device polish — 2026-10-05
 
 - Receipt landscape review gives the preview the full workspace height, keeps

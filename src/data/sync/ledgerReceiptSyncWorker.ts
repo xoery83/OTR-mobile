@@ -1,3 +1,4 @@
+import { SyncDependencyError } from "./syncEngine";
 import type { createLedgerExpenseRepository } from "@/data/repositories/ledgerExpenseRepository";
 import type {
   AssetOperation,
@@ -82,8 +83,11 @@ export async function pushReceiptOperation(
     return;
   }
 
-  if (!asset.serverId || asset.uploadStatus !== "UPLOADED")
+  if (!asset.serverId || asset.uploadStatus !== "UPLOADED") {
+    if (operation.operationType === "LINK_RECEIPT")
+      throw new SyncDependencyError("Receipt upload must complete first.");
     throw new Error("Receipt upload must complete first.");
+  }
   if (operation.operationType === "OCR_RECEIPT") {
     await receipts.markOcrStatus(asset.id, "RUNNING");
     try {

@@ -69,6 +69,23 @@ describe("Ledger queue activity", () => {
     ).toBe(2);
   });
 
+  it("does not wake blocked receipt links while their upload waits or permanently fails", () => {
+    expect(
+      classifyLedgerQueueActivity(
+        [
+          row("PENDING", {
+            failureCategory: "DEPENDENCY",
+            dependencyStatus: "RETRYABLE",
+          }),
+          row("FAILED", { failureCategory: "DEPENDENCY", dependencyStatus: "FAILED" }),
+          row("PENDING", { dependencyStatus: "WAITING" }),
+          row("PENDING", { dependencyStatus: "COMPLETED" }),
+        ],
+        1_000,
+      ),
+    ).toEqual({ unresolvedCount: 4, actionableNow: 1, nextActionableAt: null });
+  });
+
   it("uses active account and Journey scope for both queues", async () => {
     await getLedgerQueueActivity("journey-a");
     expect(mocks.getAllAsync).toHaveBeenCalledWith(

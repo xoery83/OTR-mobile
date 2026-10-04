@@ -18,6 +18,10 @@ function fakeDatabase() {
   };
 }
 
+vi.mock("@/data/sync/ledgerQueueActivity", () => ({
+  announceLedgerQueueWorkAvailable: vi.fn(),
+}));
+
 describe("Ledger receipt import", () => {
   it("reads upload failure evidence only for an owned receipt operation", async () => {
     const database = fakeDatabase();
