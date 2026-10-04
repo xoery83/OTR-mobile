@@ -23,7 +23,7 @@ Date: 2026-10-05
 - Scope: Ledger UI and auth regression tests only; other active Trip development
   is excluded from this checkpoint and commit. No backend/schema/auth-runtime change.
 
-## A1-I2C3 — RECEIPT ERROR-SEMANTICS CORRECTION COMPLETE / REVIEW PENDING / CLOSED
+## A1-I2C3 — FULL PASS / ACCEPTED / CLOSED
 
 - Focused correction restores exact GET errors: UNAUTHENTICATED/401, current
   Organizer loss PARTICIPATION_FORBIDDEN/403, own-scoped absence
@@ -50,26 +50,64 @@ Date: 2026-10-05
   runtime provisioning and physical-device acceptance remain pending; all accepted
   B/C deferred/provider/collection gates below remain unchanged.
 - No UI, normal dispatch, new timer/worker, credentials, Hosted Dev/Production
-  access or commit by this task. Existing server00600 and SQLite44/45 are intact.
+  access by this implementation. Existing server00600 and SQLite44/45 are intact.
   Unrelated canonical/sibling work appearing during execution is left untouched.
 - Report: `docs/architecture/TRIP_CANONICAL_A1_I2C3_RUNTIME_TRANSPORT_RECOVERY_REPORT.md`.
-- Next checkpoint: independent review of this disabled preflight. Runtime gateway
-  provisioning/activation, authoring/dispatch and device proof need separate approval.
+- Accepted implementation remains runtime-disabled: SET_PARTICIPATION disabled and
+  lifecycle gate CLOSED. Dedicated runtime gateway provisioning/credentials and
+  physical/device acceptance remain pending; activation and device proof need separate approval.
 
-## Integration Checkpoint #7 — COMBINED ACCEPTED A+B+C / RUNTIME CLOSED
+## B-T3G — CONTRACT PASS / ACCEPTED / CLOSED
 
-- Continue the existing import rebase, replaying reviewed C-I3E `488e465` onto
-  integrated A+B `6df3db8`. Only this current-state document requires reconciliation;
-  C-I3E report/harness and all integrated A/B implementation bytes remain intact.
-- A1-I2C2 and B-T3F are FULL PASS / ACCEPTED / CLOSED foundations. C-I3E is
-  PREFLIGHT PASS / ACCEPTED / CLOSED; accepted C-I3D remains CLOSED. These statuses
-  do not activate commands or remove unresolved provider/runtime proof gates.
+- Trip-level canonical Event collection snapshot/cursor contract defines certified
+  completeness, full-read fingerprint, independent collection revision/cursor and
+  certified deletion semantics. No implementation or runtime activation is implied.
+- V1 certifies only when every canonical Event is UNASSIGNED with zero participant
+  rows. ASSIGNED, WHOLE_GROUP or any unexpected participant row withholds the entire
+  collection; no partial collection or silent participant loss is certified.
+- Participant adapter remains disabled/deferred. Collection implementation, server
+  endpoint, local collection certificate and wake integration remain pending.
+  Event mutation/deletion commands remain disabled; activation gate CLOSED.
+- Authority: `docs/architecture/TRIP_CANONICAL_B_T3G_COLLECTION_SNAPSHOT_CURSOR_CONTRACT.md`.
+  This accepted state supersedes historical review-pending wording in the contract.
+
+## C-I3F — CONTRACT/PREFLIGHT PASS / ACCEPTED / CLOSED
+
+- Baseline `4dc7095`; architecture and test-only harness, no product or schema change.
+  Credential-free parser container and single durable exact-attempt execution owner
+  selected; durable runtime owner/journal/staging/quota/provisioning remain PENDING.
+- 23 preflight tests PASS: 10 offline sandbox controls/protocol probes and 12 exact-owner
+  completion model cases plus parent. Model supplier guarantees are explicit assumptions,
+  not Supabase terminality proof. Scoped lint/format/byte checks PASS; probes removed.
+- PDF/JPEG/PNG/HEIC/HEIF full parser/decode profiles remain BLOCKED. Provider post-crash
+  terminality and safe IO_UNKNOWN retry remain BLOCKED; durable staging/Account identity
+  remains PENDING. No timeout/lease/object equality supplies quiescence.
+- C-I3C correction: exact operation admission and exclusive Representation attempt
+  UUID/generation/owner precede all staging/hash/parser work. Overlap observes BUSY
+  with zero payload work; pre-dispatch failure disposition remains PENDING/BLOCKED
+  where no approved path exists. No timeout releases a live slot.
+- Seal actual readback/parser observation before database IO_QUIESCENT so C-I3D
+  `observed_at ≤ io_finished_at` stays intact; semantic finalization separately rechecks
+  current owner/read/write admission and bases. No C-I3D changes or caller bypass.
+- Contract: `docs/architecture/TRIP_CANONICAL_C_I3F_PARSER_TERMINALITY_CONTRACT.md`.
+  Next separately approved slice: offline parser profile/protocol implementation and
+  adversarial fixtures; provider terminality component must be resolved independently.
+  Source commands and product upload route remain disabled; gate CLOSED. No runtime
+  credentials, purge/redaction or remote access. Combined accepted A+B+C below remains intact.
+
+## Integration Checkpoint #8 — COMBINED ACCEPTED A+B+C / RUNTIME CLOSED
+
+- Current-state-only reconciliation of C-I3F `206d4a8` onto `d1e2bf8` preserves
+  accepted A1-I2C3, B-T3G, C-I3F and all prior A/B/C foundations. The committed
+  Ledger state from `727be28` above is retained; no unrelated uncommitted work is included.
 - SQLite order remains exactly 1–43 → **44 B-T3F canonical Event read-only mirror**
   → **45 A1-I2C2 participation result persistence**. Server migration
   `20261004000600_trip_person_command_foundation.sql` remains unchanged.
-- Event commands, runtime SET_PARTICIPATION and Source commands remain disabled;
-  lifecycle/Event/Source gates CLOSED. Purge/redaction remain disabled. No remote
-  environment access, deployment or push is authorized by this reconciliation.
+- Runtime SET_PARTICIPATION, Event mutation/deletion, participant adapter and Source
+  commands/upload route remain disabled; lifecycle/Event/Source gates CLOSED.
+  Provider terminality, safe IO_UNKNOWN retry and all five reviewed decoder profiles
+  remain BLOCKED. Pending provisioning, implementation and device proof stay pending.
+  No remote environment access, deployment or push occurs in this reconciliation.
 
 ## A1-I2C2 — FULL PASS / ACCEPTED / CLOSED FOUNDATION
 
@@ -100,7 +138,8 @@ Date: 2026-10-05
 - Account/Trip/generation fencing rejects stale/ABA scope responses. Revision-neutral
   accepted Place UUID→null cache loss only clears the scoped cached pointers;
   other equal-revision mismatch handling and older/withheld preservation remain.
-- Collection completeness/cursor/deletion contract is still deferred. Event
+- B-T3G collection completeness/cursor/deletion contract is accepted; collection
+  implementation remains pending. Event
   mutation/edit UI and semantic queue remain disabled; dedicated runtime gateway
   provisioning remains PENDING and canonical Event activation stays CLOSED.
 - B-T3E canonical receipt route remains
