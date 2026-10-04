@@ -179,10 +179,11 @@ select ok((select not rolcanlogin and not rolsuper and not rolcreatedb and not r
 select ok(not exists(select 1 from pg_attribute a join pg_class c on c.oid=a.attrelid
   join pg_namespace n on n.oid=c.relnamespace
   where n.nspname='public' and c.relkind in ('r','p','v','m')
+    and c.relname not in ('trip_event_command_gate','trip_event_operation_receipts')
     and a.attnum>0 and not a.attisdropped
     and has_column_privilege('otr_trip_event_semantic_writer',c.oid,a.attnum,'SELECT,INSERT,UPDATE,REFERENCES')),
-  'reserved writer has no effective public relation column capability');
-select is((select count(*)::integer from pg_proc where proowner=(select oid from pg_roles where rolname='otr_trip_event_semantic_writer')),0,'private identity owns no executable command');
+  'reserved writer has no effective existing business relation column capability');
+select is((select count(*)::integer from pg_proc where proowner=(select oid from pg_roles where rolname='otr_trip_event_semantic_writer')),6,'private identity owns exactly six closed fixed entrypoints');
 select ok(not pg_has_role('authenticated','otr_trip_event_semantic_writer','MEMBER'),'authenticated has no writer membership');
 select ok(not has_table_privilege('authenticated','public.itinerary_events','TRUNCATE,TRIGGER'),'authenticated has no itinerary_events bulk/trigger grant');
 select ok(not has_table_privilege('authenticated','public.itinerary_event_participants','TRUNCATE,TRIGGER'),'authenticated has no itinerary_event_participants bulk/trigger grant');

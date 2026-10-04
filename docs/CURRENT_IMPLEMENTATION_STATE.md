@@ -2,24 +2,65 @@
 
 Date: 2026-10-04
 
-## Trip Canonical A1-I2B3 — DEVICE ACCEPTANCE COMPLETE / REVIEW PENDING
+## Integration Checkpoint #5 — COMBINED ACCEPTED A+B STATE
+
+- Reconcile A1-I2B3 wake/reconnect convergence from `d2d3ee2` with accepted B-T3D
+  protected Event command/receipt foundation from `814f37b`. Only this handoff
+  document is reconciled; A application/test/report bytes and B implementation,
+  migration/manifest/verifier bytes remain unchanged from their reviewed commits.
+- A local convergence PASS with physical acceptance PARTIAL/PENDING; B machinery
+  is installed with canonical commands disabled and activation CLOSED. I2C remains
+  disabled. Neither track's local acceptance implies command activation or deployment.
+- Current combined schema is the 69-migration B-T3D signature below. Older standalone
+  and integration checkpoints are historical evidence, not overrides of this state.
+
+## Trip Canonical A1-I2B3 — CORRECTION COMPLETE / REVIEW PENDING
 
 - Clean starting HEAD `b3fe04b` on `integration/ledger-polish-canonical`.
   Demonstrated missing global cold/foreground/reconnect selected-Trip refresh with
   an empty financial queue; nine-line fix reuses the existing reporting owner.
-  Protocol, combined schema, account transition lease and timers remain unchanged.
-- Focused validation: 21 files / 312 tests PASS, including preserved I2B2 races;
+  Shared verification failure is nonfatal to a valid installed Account/session;
+  its narrow containment preserves existing bootstrap/auth/operational error semantics.
+  Local convergence PASS. Protocol, combined schema and account transition lease
+  remain unchanged; no new polling owner or timer.
+- Focused validation: 21 files / 324 tests PASS, including preserved I2B2 races;
   two isolated SQLite clients verify wake-driven inactive/reactive ABA convergence.
   Typecheck, Backend build, scoped lint, UI guard, formatting/whitespace PASS.
 - Signed Release installed in place on iPhone 16 Pro / iOS 27.0.1 using an
   unreachable loopback backend. Cold/restart shell access and migration 41→43
   cache survival PASS; all old columns of seven tables remain identical, including
   599 Expenses and 162 queue rows. DeviceHub interaction did not change the screen;
-  physical foreground/reconnect/Trip/Account switching and server churn are PENDING.
+  physical acceptance remains PARTIAL; foreground/reconnect/Trip/Account switching
+  and server churn are PENDING. Deep/strict signature trust is NOT ESTABLISHED / PENDING.
 - Evidence and complete matrix:
   `docs/architecture/TRIP_CANONICAL_A1_I2B3_DEVICE_CONVERGENCE_ACCEPTANCE_REPORT.md`.
   Next checkpoint: human + independent review; I2C remains disabled. No remote
   access, sibling changes or commit. Historical full-suite boundary blocker remains.
+
+## B-T3D — FOUR-FINDING CORRECTION COMPLETE / REVIEW PENDING
+
+- Temporal worktree, branch `trip/temporal`; starting HEAD `b3fe04b`.
+  New local migration `20261004000400_trip_event_command_foundation.sql` installs
+  immutable Event receipts, exact intent codec, reserved gateway/reader roles and
+  six fixed first-slice entrypoints. Canonical commands remain disabled; gate CLOSED.
+- No runtime gateway credential/Backend connection, positive parent DML grant or
+  B-T3B guard activation is installed. Independent review and lossless Mobile
+  acceptance remain PENDING. Zoned resolution and Track C adapter remain blocked.
+- Two clean 69-version replays match: 114 tables/RLS, 1,706 columns, 949 constraints,
+  361 indexes, 175 functions, 139 triggers, 188 policies, four buckets; checksum
+  `487437eec9615630f0d1f7e76c58c69ccf11095975a1f8a99de437afd5870f6e`.
+- Each full SQL run: 38 files / 1,196 assertions; focused B-T3D: 87; polluted-role
+  suite: 77 cases / 78 node tests; Backend/A/sync/financial: 68 files / 657 tests.
+  Golden codec, parallel CAS/replay, strict drift negatives, typecheck and lint PASS.
+  Populated forward snapshots preserve 112 old tables (23 nonempty); schema diff empty.
+- Independent-review correction: exact pre/post reserved capability inventories,
+  all-schema CREATE/routine/default ACL validation, READ COMMITTED-only new semantic
+  execution, timezone-independent UTC receipt hashing/recovery, exact decimal bounds.
+  Real gate-close waiter reproduction and RR/SERIALIZABLE rejection PASS; read-only
+  historic recovery remains available. No new migration version or activation.
+- Report: `docs/architecture/TRIP_CANONICAL_B_T3D_PROTECTED_COMMAND_FOUNDATION_REPORT.md`.
+  No Production/Hosted Dev access, sibling edits, command activation or commit.
+  Next checkpoint: independent B-T3D review; no activation authorized.
 
 ## Integration Checkpoint #4 — A+C SCHEMA RECONCILIATION
 
@@ -27,7 +68,8 @@ Date: 2026-10-04
   rename to `20261004000300_trip_source_protected_foundation.sql` removes the
   version collision; A stays `20261004000200`. C SQL bytes and all 66 prior
   migrations remain identical. The standalone signatures below are historical;
-  the combined signature is authoritative.
+  the combined signature was authoritative at checkpoint #4; checkpoint #5 above
+  now retains the B-T3D combined signature.
 - Combined manifest: 112 tables/RLS tables, 1,683 columns, 924 constraints,
   359 indexes, 159 functions, 137 triggers, 181 policies, four buckets;
   checksum `6b554edf84c349dbcb2ee29862dddfe526c68ca710712234f1adaf53e6db7f5a`.

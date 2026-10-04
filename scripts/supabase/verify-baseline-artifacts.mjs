@@ -90,26 +90,22 @@ const [
 ]);
 
 const manifest = JSON.parse(manifestRaw);
-// Full retained-chain replay through Source foundation 20261004000300.
-// B-T3B: +1 table, +121 columns, +13 constraints, +1 index, +12 functions,
-// +10 triggers, +1 RLS table and +1 read policy. No historical migration edits.
-// A1-I2B2: +1 read-only function; table/security/temporal/financial counts unchanged.
-// C-I3B: +4 tables/RLS tables, +72 columns, +86 constraints, +9 indexes,
-// +4 read-only/guard functions, +12 triggers, +2 restrictive storage policies,
-// +1 private bucket. P2 uses deduplicated lineage and one all-DML statement fence
-// per table; function/trigger counts unchanged. No historical edits or commands.
-// Refresh only after independent clean replay and explained object drift.
+// Full retained-chain replay through closed B-T3D 20261004000400.
+// +2 RLS tables / 23 columns / 25 constraints / 2 indexes / 16 fixed functions /
+// +2 receipt guards / 7 private policies. Existing schema/financial bodies intact.
+// No mutation activation or historical migration edits. Two clean replay signatures
+// and explicit count/same-count checksum negative tests gate this expected update.
 const expected = {
-  tables: 112,
+  tables: 114,
   buckets: 4,
-  columns: 1683,
-  indexes: 359,
-  checksum: "6b554edf84c349dbcb2ee29862dddfe526c68ca710712234f1adaf53e6db7f5a",
-  policies: 181,
-  triggers: 137,
-  functions: 159,
-  rls_tables: 112,
-  constraints: 924,
+  columns: 1706,
+  indexes: 361,
+  checksum: "487437eec9615630f0d1f7e76c58c69ccf11095975a1f8a99de437afd5870f6e",
+  policies: 188,
+  triggers: 139,
+  functions: 175,
+  rls_tables: 114,
+  constraints: 949,
 };
 
 for (const [key, value] of Object.entries(expected)) {
