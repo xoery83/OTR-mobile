@@ -72,6 +72,7 @@ describe("session access token", () => {
   it.each([
     ["expired", -1],
     ["near expiry", accessTokenRefreshWindowMs - 1],
+    ["at the refresh boundary", accessTokenRefreshWindowMs],
   ])("refreshes a token that is %s", async (_label, offset) => {
     const value = harness(session({ expiresAt: new Date(now + offset).toISOString() }));
     await expect(value.provider()).resolves.toMatchObject({ token: "new-access" });
@@ -144,4 +145,17 @@ describe("session access token", () => {
     await expect(pending).rejects.toMatchObject({ code: "AUTH_CONTEXT_CHANGED" });
     expect(value.read().accessToken).toBe("account-b-token");
   });
+});
+
+it("retries a transient refresh on the next request and persists the renewed session", async () => {
+  const value = harness(session({ expiresAt: new Date(now - 1).toISOString() }));
+  value.refreshSession.mockRejectedValueOnce(
+    new SupabaseDevAuthError("offline", "network"),
+  );
+  await expect(value.provider()).rejects.toMatchObject({
+    code: "AUTH_REFRESH_UNAVAILABLE",
+  });
+  await expect(value.provider()).resolves.toMatchObject({ token: "new-access" });
+  expect(value.refreshSession).toHaveBeenCalledTimes(2);
+  expect(value.read().refreshToken).toBe("new-refresh");
 });

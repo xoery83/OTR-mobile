@@ -288,7 +288,7 @@ it("keeps drawer accessible, native zoom separate from collapse, and explicit re
   expect(sheet).toContain('t("receipt.open", { number: part.number })');
   expect(sheet).toContain('t("expense.receiptNumber",');
   expect(sheet).not.toContain("cards.findIndex");
-  expect(sheet).toContain('t("receipt.remove", { number: active.number })');
+  expect(sheet).toMatch(/t\("receipt\.remove",\s*\{\s*number: active\.number,?\s*\}\)/);
   expect(sheet).toContain("onRetry(active.documentId)");
   expect(sheet).toContain('t("ui.hideImage")');
   expect(sheet).toContain('setOverflow("Currency")');
@@ -322,4 +322,17 @@ it("keeps drawer accessible, native zoom separate from collapse, and explicit re
   expect(config.expo.ios.infoPlist.UISupportedInterfaceOrientations).toContain(
     "UIInterfaceOrientationLandscapeRight",
   );
+});
+
+it("keeps landscape scan controls in the form pane and adapts financial fields", () => {
+  const sheet = readFileSync(
+    new URL("./ReceiptReviewSheet.tsx", import.meta.url),
+    "utf8",
+  );
+  expect(sheet).toContain("{!landscape ? scanControls : null}");
+  expect(sheet).toContain("{landscape ? scanControls : null}");
+  expect(sheet).toContain("{compare && !landscape ? (");
+  expect(sheet).toContain("landscape && panes.form >= 280 * window.fontScale");
+  expect(sheet).toContain("compactFinancial && styles.financialRow");
+  expect(sheet).toContain('edges={["left", "right", "bottom"]}');
 });

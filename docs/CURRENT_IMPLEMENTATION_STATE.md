@@ -2,6 +2,28 @@
 
 Date: 2026-10-04
 
+## Ledger receipt / settlement device polish — 2026-10-05
+
+- Receipt landscape review gives the preview the full workspace height, keeps
+  scan/hide controls together in the left column, and places amount/currency
+  side by side when width and text scale permit. Left/right/bottom safe areas
+  protect the form and image from the Dynamic Island and home indicator.
+- Managed Ledger spending/settlement scroll views disable bounce so pulling down
+  cannot separate the content from the floating section navigation.
+- Existing auth refresh remains unchanged: the 60-second expiry boundary and
+  recovery after a transient refresh failure have added regression coverage.
+  The screenshot alone does not establish the cause of AUTH_REFRESH_UNAVAILABLE.
+- Validation: 13 targeted files / 118 tests, typecheck, scoped lint/format and
+  UI guard PASS. Embedded signed Release installed without uninstalling on
+  Leon's iPhone 16 Pro (iOS 27.0.1). DeviceHub visual checks covered portrait /
+  landscape receipt review, amount/currency alignment, safe areas, hide/reopen,
+  receipt switching, currency picker entry and scan-another entry; settlement
+  Shares pull-down/collapse/restore plus Paid/Payments pull-down passed.
+  Temporary image-review drafts were cancelled without saving an expense.
+- Scope: Ledger UI and auth regression tests only; other active Trip development
+  is excluded from this checkpoint and commit. No backend/schema/auth-runtime change.
+
+
 ## Integration Checkpoint #7 — COMBINED ACCEPTED A+B+C / RUNTIME CLOSED
 
 - Continue the existing import rebase, replaying reviewed C-I3E `488e465` onto

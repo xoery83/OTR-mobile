@@ -382,6 +382,7 @@ export function SettlementReadinessScreen({
           {settlementSectionNames.map((section) => (
             <View collapsable={false} key={section} style={styles.pagerPage}>
               <ScrollView
+                bounces={false}
                 contentInsetAdjustmentBehavior="never"
                 contentContainerStyle={{
                   minHeight: viewportHeight + collapseDistance,

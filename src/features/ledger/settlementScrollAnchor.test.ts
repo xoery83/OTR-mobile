@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { advanceScrollAnchor, restoredScrollY } from "./settlementScrollAnchor";
 
@@ -15,4 +16,11 @@ describe("Settlement page anchors", () => {
       body: 150,
     });
   });
+});
+
+it("keeps managed Ledger scroll content from bouncing away from its floating header", () => {
+  for (const file of ["SettlementReadinessScreen.tsx", "LedgerStage6Screen.tsx"]) {
+    const screen = readFileSync(new URL(file, import.meta.url), "utf8");
+    expect(screen).toMatch(/bounces=\{false\}\s+contentInsetAdjustmentBehavior="never"/);
+  }
 });

@@ -706,6 +706,7 @@ export function LedgerStage6Screen({
                   largeText && styles.largeContent,
                   journey && { paddingTop: spendingHeaderHeight + 14 },
                 ]}
+                bounces={false}
                 contentInsetAdjustmentBehavior="never"
                 directionalLockEnabled
                 onScroll={(event) => {

@@ -19,6 +19,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
 import { currencyScale } from "@/domain/ledger/currency";
 import { CurrencyPicker } from "./CurrencyPicker";
@@ -100,6 +101,7 @@ export function ReceiptReviewSheet({
   const active = cards.find((part) => part.documentId === activeId);
   const compare = Boolean(active && (expanded || (landscape && !landscapeCollapsed)));
   const panes = reviewPaneWidths(workspaceWidth, landscape, compare);
+  const compactFinancial = landscape && panes.form >= 280 * window.fontScale;
   const currencyTags = receiptCurrencyTags(review, journeyCurrency);
   const scale = currencyScale(review.currency.value);
   const amountInvalid = Boolean(
@@ -187,6 +189,34 @@ export function ReceiptReviewSheet({
         : currencyOptions;
   const usedSlots = session.existingAttachmentDraftIds.length + cards.length;
 
+  const scanControls = (
+    <View style={styles.scanRow}>
+      <Pressable
+        accessibilityLabel={t("ui.scanAnotherPart")}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !canScanAnother }}
+        disabled={!canScanAnother}
+        onPress={onScanAnother}
+        style={[styles.scan, !canScanAnother && styles.muted]}
+      >
+        <Text style={styles.actionText}>{t("ui.scanAnotherPart2")}</Text>
+      </Pressable>
+      {landscape && compare ? (
+        <Pressable
+          accessibilityLabel={t("ui.closeReceiptDrawer")}
+          accessibilityRole="button"
+          onPress={closeReceipt}
+          style={styles.inlineCollapse}
+        >
+          <Text style={styles.collapseText}>{t("ui.hideImage")}</Text>
+        </Pressable>
+      ) : null}
+      <Text style={styles.capacity}>
+        {usedSlots} {t("ui.of3")}
+      </Text>
+    </View>
+  );
+
   return (
     <Modal
       animationType="slide"
@@ -216,269 +246,276 @@ export function ReceiptReviewSheet({
             rightLabel={t("ui.confirm")}
             title={t("ui.reviewReceipt")}
           />
-          <View style={styles.scanRow}>
-            <Pressable
-              accessibilityLabel={t("ui.scanAnotherPart")}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !canScanAnother }}
-              disabled={!canScanAnother}
-              onPress={onScanAnother}
-              style={[styles.scan, !canScanAnother && styles.muted]}
+          <SafeAreaView edges={["left", "right", "bottom"]} style={styles.flex}>
+            {!landscape ? scanControls : null}
+            <View
+              onLayout={(event) => setWorkspaceWidth(event.nativeEvent.layout.width)}
+              style={styles.workspace}
             >
-              <Text style={styles.actionText}>{t("ui.scanAnotherPart2")}</Text>
-            </Pressable>
-            <Text style={styles.capacity}>
-              {usedSlots} {t("ui.of3")}
-            </Text>
-          </View>
-          <View
-            onLayout={(event) => setWorkspaceWidth(event.nativeEvent.layout.width)}
-            style={styles.workspace}
-          >
-            <ScrollView
-              automaticallyAdjustKeyboardInsets
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={[styles.content, compare && styles.compareContent]}
-              style={{ width: panes.form }}
-            >
-              {compare ? (
-                <Pressable
-                  accessibilityLabel={t("ui.closeReceiptDrawer")}
-                  accessibilityRole="button"
-                  onPress={closeReceipt}
-                  style={styles.formEdge}
+              <View style={{ width: panes.form, flex: 1 }}>
+                {landscape ? scanControls : null}
+                <ScrollView
+                  automaticallyAdjustKeyboardInsets
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={[
+                    styles.content,
+                    compare && styles.compareContent,
+                  ]}
+                  style={styles.formScroll}
                 >
-                  <AppIcon
-                    name="rectangle.righthalf.inset.filled.arrow.right"
-                    color={colors.textSecondary}
-                    size={18}
-                  />
-                  <Text style={styles.collapseText}>{t("ui.hideImage")}</Text>
-                </Pressable>
-              ) : null}
-              <View style={styles.field}>
-                <Text style={styles.label}>{t("ui.title")}</Text>
-                <TextInput
-                  accessibilityLabel={t("ui.receiptReviewTitle")}
-                  onChangeText={(value) => change("title", value)}
-                  placeholder={t("ui.whatWasIt")}
-                  style={styles.input}
-                  value={review.title.value}
-                  multiline={compare}
-                />
-                {compare ? (
-                  <CandidateDropdown
-                    tags={titleTags}
-                    label={t("ui.title")}
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      setOverflow("Title");
-                    }}
-                  />
-                ) : (
-                  <ReceiptCandidateTags
-                    tags={titleTags}
-                    label={t("ui.title")}
-                    onOverflow={() => {
-                      Keyboard.dismiss();
-                      setOverflow("Title");
-                    }}
-                  />
-                )}
-              </View>
-              <View style={styles.field}>
-                <Text style={styles.label}>{t("ui.amount")}</Text>
-                <TextInput
-                  accessibilityLabel={t("ui.receiptReviewAmount")}
-                  inputMode={scale === 0 ? "numeric" : "decimal"}
-                  keyboardType={scale === 0 ? "number-pad" : "decimal-pad"}
-                  onChangeText={(value) =>
-                    change(
-                      "amount",
-                      currencyAmountInput(review.amount.value, value, scale ?? 2),
-                    )
-                  }
-                  placeholder={t("ui.0")}
-                  style={styles.input}
-                  value={review.amount.value}
-                />
-                {amountInvalid ? (
-                  <Text style={styles.error}>
-                    {currencyAmountHint(review.currency.value, scale ?? 2)}
-                  </Text>
-                ) : null}
-                {receiptAmountCurrencyMismatch(review) ? (
-                  <Text style={styles.error}>
-                    {systemMessage(receiptAmountCurrencyMismatch(review) ?? "")}
-                  </Text>
-                ) : null}
-                {compare ? (
-                  <CandidateDropdown
-                    tags={amountTags}
-                    label={t("ui.amount")}
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      setOverflow("Amount");
-                    }}
-                  />
-                ) : (
-                  <ReceiptCandidateTags
-                    tags={amountTags}
-                    label={t("ui.amount")}
-                    onOverflow={() => {
-                      Keyboard.dismiss();
-                      setOverflow("Amount");
-                    }}
-                  />
-                )}
-              </View>
-              <View style={styles.field}>
-                <Text style={styles.label}>{t("ui.currency")}</Text>
-                <Pressable
-                  accessibilityLabel={t("receipt.currency", {
-                    currency: review.currency.value,
-                  })}
-                  accessibilityRole="button"
-                  onPress={openCurrency}
-                  style={styles.inputButton}
-                >
-                  <Text style={styles.currencyValue}>{review.currency.value}</Text>
-                  <Text style={styles.actionText}>⌄</Text>
-                </Pressable>
-                {compare ? (
-                  <CandidateDropdown
-                    tags={currencyOptions}
-                    label={t("ui.currency")}
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      setOverflow("Currency");
-                    }}
-                  />
-                ) : (
-                  <ReceiptCandidateTags
-                    tags={currencyOptions}
-                    label={t("ui.currency")}
-                    onOverflow={openCurrency}
-                    alwaysOverflow
-                  />
-                )}
-              </View>
-              {error ? (
-                <Text accessibilityRole="alert" style={styles.error}>
-                  {systemMessage(error)}
-                </Text>
-              ) : null}
-            </ScrollView>
-            {!compare ? (
-              <View style={styles.stack}>
-                {[...cards].reverse().map((part, index) => (
-                  <Pressable
-                    key={part.documentId}
-                    accessibilityLabel={t("receipt.open", { number: part.number })}
-                    accessibilityRole="button"
-                    hitSlop={{ left: 8 }}
-                    onPress={() => openReceipt(part.documentId)}
-                    style={[styles.card, { top: 16 + index * 68, zIndex: index }]}
-                  >
-                    <Image
-                      source={{ uri: part.draft.localUri }}
-                      resizeMode="cover"
-                      style={styles.cardImage}
+                  {compare && !landscape ? (
+                    <Pressable
+                      accessibilityLabel={t("ui.closeReceiptDrawer")}
+                      accessibilityRole="button"
+                      onPress={closeReceipt}
+                      style={styles.formEdge}
+                    >
+                      <AppIcon
+                        name="rectangle.righthalf.inset.filled.arrow.right"
+                        color={colors.textSecondary}
+                        size={18}
+                      />
+                      <Text style={styles.collapseText}>{t("ui.hideImage")}</Text>
+                    </Pressable>
+                  ) : null}
+                  <View style={styles.field}>
+                    <Text style={styles.label}>{t("ui.title")}</Text>
+                    <TextInput
+                      accessibilityLabel={t("ui.receiptReviewTitle")}
+                      onChangeText={(value) => change("title", value)}
+                      placeholder={t("ui.whatWasIt")}
+                      style={styles.input}
+                      value={review.title.value}
+                      multiline={compare}
                     />
-                    <Text style={styles.cardNumber}>{part.number}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : null}
-            {active ? (
-              <Animated.View
-                pointerEvents={compare ? "auto" : "none"}
-                accessibilityElementsHidden={!compare}
-                importantForAccessibility={compare ? "auto" : "no-hide-descendants"}
-                style={[
-                  styles.receiptPane,
-                  {
-                    width: Math.round(workspaceWidth * (landscape ? 0.54 : 0.58)),
-                    transform: [{ translateX: offset }],
-                  },
-                ]}
-              >
-                <View style={landscape ? styles.landscapeReceiptToolbar : undefined}>
+                    {compare ? (
+                      <CandidateDropdown
+                        tags={titleTags}
+                        label={t("ui.title")}
+                        onPress={() => {
+                          Keyboard.dismiss();
+                          setOverflow("Title");
+                        }}
+                      />
+                    ) : (
+                      <ReceiptCandidateTags
+                        tags={titleTags}
+                        label={t("ui.title")}
+                        onOverflow={() => {
+                          Keyboard.dismiss();
+                          setOverflow("Title");
+                        }}
+                      />
+                    )}
+                  </View>
                   <View
-                    onTouchStart={(event) => {
-                      swipeStart.current = {
-                        x: event.nativeEvent.pageX,
-                        y: event.nativeEvent.pageY,
-                      };
-                    }}
-                    onTouchEnd={(event) => {
-                      if (
-                        isReceiptCollapseSwipe(
-                          event.nativeEvent.pageX - swipeStart.current.x,
-                          event.nativeEvent.pageY - swipeStart.current.y,
-                        )
-                      )
-                        closeReceipt();
-                    }}
                     style={[
-                      styles.receiptHeader,
-                      landscape && styles.landscapeReceiptHeader,
+                      styles.financialFields,
+                      compactFinancial && styles.financialRow,
                     ]}
                   >
-                    <Text style={styles.receiptIdentity}>
-                      {t("expense.receiptNumber", { position: active.number })}
-                    </Text>
-                    <Pressable
-                      accessibilityLabel={t("receipt.remove", { number: active.number })}
-                      accessibilityRole="button"
-                      onPress={() => onRemove(active.documentId)}
-                      style={styles.smallAction}
+                    <View style={[styles.field, compactFinancial && styles.amountField]}>
+                      <Text style={styles.label}>{t("ui.amount")}</Text>
+                      <TextInput
+                        accessibilityLabel={t("ui.receiptReviewAmount")}
+                        inputMode={scale === 0 ? "numeric" : "decimal"}
+                        keyboardType={scale === 0 ? "number-pad" : "decimal-pad"}
+                        onChangeText={(value) =>
+                          change(
+                            "amount",
+                            currencyAmountInput(review.amount.value, value, scale ?? 2),
+                          )
+                        }
+                        placeholder={t("ui.0")}
+                        style={styles.input}
+                        value={review.amount.value}
+                      />
+                      {amountInvalid ? (
+                        <Text style={styles.error}>
+                          {currencyAmountHint(review.currency.value, scale ?? 2)}
+                        </Text>
+                      ) : null}
+                      {receiptAmountCurrencyMismatch(review) ? (
+                        <Text style={styles.error}>
+                          {systemMessage(receiptAmountCurrencyMismatch(review) ?? "")}
+                        </Text>
+                      ) : null}
+                      {compare ? (
+                        <CandidateDropdown
+                          tags={amountTags}
+                          label={t("ui.amount")}
+                          onPress={() => {
+                            Keyboard.dismiss();
+                            setOverflow("Amount");
+                          }}
+                        />
+                      ) : (
+                        <ReceiptCandidateTags
+                          tags={amountTags}
+                          label={t("ui.amount")}
+                          onOverflow={() => {
+                            Keyboard.dismiss();
+                            setOverflow("Amount");
+                          }}
+                        />
+                      )}
+                    </View>
+                    <View
+                      style={[styles.field, compactFinancial && styles.currencyField]}
                     >
-                      <AppIcon name="trash" color={colors.destructive} size={16} />
-                    </Pressable>
-                    {compare ? (
+                      <Text style={styles.label}>{t("ui.currency")}</Text>
                       <Pressable
-                        accessibilityLabel={t("ui.closeReceiptDrawer")}
+                        accessibilityLabel={t("receipt.currency", {
+                          currency: review.currency.value,
+                        })}
                         accessibilityRole="button"
-                        onPress={closeReceipt}
+                        onPress={openCurrency}
+                        style={styles.inputButton}
+                      >
+                        <Text style={styles.currencyValue}>{review.currency.value}</Text>
+                        <Text style={styles.actionText}>⌄</Text>
+                      </Pressable>
+                      {compare ? (
+                        <CandidateDropdown
+                          tags={currencyOptions}
+                          label={t("ui.currency")}
+                          onPress={() => {
+                            Keyboard.dismiss();
+                            setOverflow("Currency");
+                          }}
+                        />
+                      ) : (
+                        <ReceiptCandidateTags
+                          tags={currencyOptions}
+                          label={t("ui.currency")}
+                          onOverflow={openCurrency}
+                          alwaysOverflow
+                        />
+                      )}
+                    </View>
+                  </View>
+                  {error ? (
+                    <Text accessibilityRole="alert" style={styles.error}>
+                      {systemMessage(error)}
+                    </Text>
+                  ) : null}
+                </ScrollView>
+              </View>
+              {!compare ? (
+                <View style={styles.stack}>
+                  {[...cards].reverse().map((part, index) => (
+                    <Pressable
+                      key={part.documentId}
+                      accessibilityLabel={t("receipt.open", { number: part.number })}
+                      accessibilityRole="button"
+                      hitSlop={{ left: 8 }}
+                      onPress={() => openReceipt(part.documentId)}
+                      style={[styles.card, { top: 16 + index * 68, zIndex: index }]}
+                    >
+                      <Image
+                        source={{ uri: part.draft.localUri }}
+                        resizeMode="cover"
+                        style={styles.cardImage}
+                      />
+                      <Text style={styles.cardNumber}>{part.number}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+              {active ? (
+                <Animated.View
+                  pointerEvents={compare ? "auto" : "none"}
+                  accessibilityElementsHidden={!compare}
+                  importantForAccessibility={compare ? "auto" : "no-hide-descendants"}
+                  style={[
+                    styles.receiptPane,
+                    {
+                      width: Math.round(workspaceWidth * (landscape ? 0.54 : 0.58)),
+                      transform: [{ translateX: offset }],
+                    },
+                  ]}
+                >
+                  <View style={landscape ? styles.landscapeReceiptToolbar : undefined}>
+                    <View
+                      onTouchStart={(event) => {
+                        swipeStart.current = {
+                          x: event.nativeEvent.pageX,
+                          y: event.nativeEvent.pageY,
+                        };
+                      }}
+                      onTouchEnd={(event) => {
+                        if (
+                          isReceiptCollapseSwipe(
+                            event.nativeEvent.pageX - swipeStart.current.x,
+                            event.nativeEvent.pageY - swipeStart.current.y,
+                          )
+                        )
+                          closeReceipt();
+                      }}
+                      style={[
+                        styles.receiptHeader,
+                        landscape && styles.landscapeReceiptHeader,
+                      ]}
+                    >
+                      <Text style={styles.receiptIdentity}>
+                        {t("expense.receiptNumber", { position: active.number })}
+                      </Text>
+                      <Pressable
+                        accessibilityLabel={t("receipt.remove", {
+                          number: active.number,
+                        })}
+                        accessibilityRole="button"
+                        onPress={() => onRemove(active.documentId)}
                         style={styles.smallAction}
                       >
-                        <Text style={styles.actionText}>×</Text>
+                        <AppIcon name="trash" color={colors.destructive} size={16} />
                       </Pressable>
-                    ) : null}
-                  </View>
-                  <View style={styles.receiptTabs}>
-                    {cards.map((part) => (
+                      {compare ? (
+                        <Pressable
+                          accessibilityLabel={t("ui.closeReceiptDrawer")}
+                          accessibilityRole="button"
+                          onPress={closeReceipt}
+                          style={styles.smallAction}
+                        >
+                          <Text style={styles.actionText}>×</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                    <View style={styles.receiptTabs}>
+                      {cards.map((part) => (
+                        <Pressable
+                          key={part.documentId}
+                          accessibilityLabel={t("receipt.open", { number: part.number })}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: activeId === part.documentId }}
+                          onPress={() => openReceipt(part.documentId)}
+                          style={[
+                            styles.tab,
+                            activeId === part.documentId && styles.selectedTab,
+                          ]}
+                        >
+                          <Text style={styles.actionText}>{part.number}</Text>
+                        </Pressable>
+                      ))}
                       <Pressable
-                        key={part.documentId}
-                        accessibilityLabel={t("receipt.open", { number: part.number })}
+                        accessibilityLabel={t("receipt.reread", {
+                          number: active.number,
+                        })}
                         accessibilityRole="button"
-                        accessibilityState={{ selected: activeId === part.documentId }}
-                        onPress={() => openReceipt(part.documentId)}
-                        style={[
-                          styles.tab,
-                          activeId === part.documentId && styles.selectedTab,
-                        ]}
+                        accessibilityState={{ disabled: scanBusy }}
+                        disabled={scanBusy}
+                        onPress={() => onRetry(active.documentId)}
+                        style={[styles.smallAction, scanBusy && styles.muted]}
                       >
-                        <Text style={styles.actionText}>{part.number}</Text>
+                        <Text style={styles.actionText}>{t("ui.reread")}</Text>
                       </Pressable>
-                    ))}
-                    <Pressable
-                      accessibilityLabel={t("receipt.reread", { number: active.number })}
-                      accessibilityRole="button"
-                      accessibilityState={{ disabled: scanBusy }}
-                      disabled={scanBusy}
-                      onPress={() => onRetry(active.documentId)}
-                      style={[styles.smallAction, scanBusy && styles.muted]}
-                    >
-                      <Text style={styles.actionText}>{t("ui.reread")}</Text>
-                    </Pressable>
+                    </View>
                   </View>
-                </View>
-                <ReceiptImage key={active.documentId} uri={active.draft.localUri} />
-              </Animated.View>
-            ) : null}
-          </View>
+                  <ReceiptImage key={active.documentId} uri={active.draft.localUri} />
+                </Animated.View>
+              ) : null}
+            </View>
+          </SafeAreaView>
           {overflow ? (
             <View
               accessibilityViewIsModal
@@ -629,6 +666,12 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.background },
     workspace: { flex: 1, overflow: "hidden" },
+    formScroll: { flex: 1 },
+    financialFields: { gap: 16 },
+    financialRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+    amountField: { flex: 1.6 },
+    currencyField: { flex: 1 },
+    inlineCollapse: { minHeight: 44, justifyContent: "center", paddingHorizontal: 8 },
     scanRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -638,6 +681,7 @@ const createStyles = (colors: UiColors) =>
       gap: 8,
     },
     scan: {
+      flexShrink: 1,
       minHeight: 44,
       justifyContent: "center",
       paddingHorizontal: 12,
