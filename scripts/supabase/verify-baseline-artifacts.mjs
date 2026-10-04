@@ -90,22 +90,26 @@ const [
 ]);
 
 const manifest = JSON.parse(manifestRaw);
-// Full retained-chain replay through Trip Person snapshot read 20261004000200.
+// Full retained-chain replay through Source foundation 20261004000300.
 // B-T3B: +1 table, +121 columns, +13 constraints, +1 index, +12 functions,
 // +10 triggers, +1 RLS table and +1 read policy. No historical migration edits.
 // A1-I2B2: +1 read-only function; table/security/temporal/financial counts unchanged.
+// C-I3B: +4 tables/RLS tables, +72 columns, +86 constraints, +9 indexes,
+// +4 read-only/guard functions, +12 triggers, +2 restrictive storage policies,
+// +1 private bucket. P2 uses deduplicated lineage and one all-DML statement fence
+// per table; function/trigger counts unchanged. No historical edits or commands.
 // Refresh only after independent clean replay and explained object drift.
 const expected = {
-  tables: 108,
-  buckets: 3,
-  columns: 1611,
-  indexes: 350,
-  checksum: "890f6495fe22f08c01be12eb36c4c0d75d00ad9b1b09b55798b542a3e365d359",
-  policies: 179,
-  triggers: 125,
-  functions: 155,
-  rls_tables: 108,
-  constraints: 838,
+  tables: 112,
+  buckets: 4,
+  columns: 1683,
+  indexes: 359,
+  checksum: "6b554edf84c349dbcb2ee29862dddfe526c68ca710712234f1adaf53e6db7f5a",
+  policies: 181,
+  triggers: 137,
+  functions: 159,
+  rls_tables: 112,
+  constraints: 924,
 };
 
 for (const [key, value] of Object.entries(expected)) {

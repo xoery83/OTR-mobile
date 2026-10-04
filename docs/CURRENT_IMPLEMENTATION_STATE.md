@@ -2,12 +2,33 @@
 
 Date: 2026-10-04
 
+## Integration Checkpoint #4 — A+C SCHEMA RECONCILIATION
+
+- Import replay onto `c3fb253` retains A1-I2B2 and B-T3C. Authorized C migration
+  rename to `20261004000300_trip_source_protected_foundation.sql` removes the
+  version collision; A stays `20261004000200`. C SQL bytes and all 66 prior
+  migrations remain identical. The standalone signatures below are historical;
+  the combined signature is authoritative.
+- Combined manifest: 112 tables/RLS tables, 1,683 columns, 924 constraints,
+  359 indexes, 159 functions, 137 triggers, 181 policies, four buckets;
+  checksum `6b554edf84c349dbcb2ee29862dddfe526c68ca710712234f1adaf53e6db7f5a`.
+- Two clean full-chain replays each register 68 distinct versions; each full SQL
+  suite passes 37 files / 1,109 assertions. Both manifests match the committed
+  combined signature; both public/storage diffs are empty. Focused A 13 / C 246 / B 145 assertions and
+  strict verifier/count/same-count checksum drift negatives PASS.
+- A's existing function/grants and populated receipt/financial/existing table
+  snapshots are identical across C. C's tables/guards/bucket/functions/writers
+  and role memberships are identical across A. Writer reuse: 26 PASS.
+- A I2B3 device acceptance remains deferred. B-T3C is contract only;
+  Source, Event semantic and participation/lifecycle commands remain disabled.
+  No Product/Backend/Mobile behavior or remote deployment changes.
+
 ## Trip Canonical A1-I2B2 — IMPLEMENTATION COMPLETE / REVIEW PENDING
 
 - Worktree `/Users/xoery/Project/otr-mobile-canonical`, branch
   `integration/ledger-polish-canonical`; clean starting HEAD `f196f98`.
-  This implementation is uncommitted; historical stage notes below describe their
-  own checkpoints and do not override this current handoff.
+  A is retained from the integration baseline; historical stage notes below describe
+  their own checkpoints and do not override this current handoff.
 - Approved authority: `TRIP_CANONICAL_A1_I2B1_SNAPSHOT_CURSOR_CONTRACT.md`.
   Complete one-statement Member aggregate preserves wire display-name ordering;
   fingerprint v1 independently canonicalizes/sorts IDs. Certified bootstrap uses
@@ -18,7 +39,7 @@ Date: 2026-10-04
   completeness fields to existing scoped cursor rows. Atomic repository apply,
   preserving cursor upsert, exact-set local rehash and Account/generation fencing
   use the same narrow transition gate through commit/rollback.
-- Two clean 67-migration replays agree: 108 RLS tables, 1,611 columns, 838
+- Standalone A validation: two clean 67-migration replays agree: 108 RLS tables, 1,611 columns, 838
   constraints, 155 functions, 125 triggers; schema diff empty. Manifest checksum:
   `890f6495fe22f08c01be12eb36c4c0d75d00ad9b1b09b55798b542a3e365d359`.
   Each full native SQL run: 36 files / 863 assertions PASS. Populated financial,
@@ -30,6 +51,36 @@ Date: 2026-10-04
 - Next checkpoint: human + independent review. I2B3 foreground/reconnect/device
   acceptance and I2C lifecycle commands remain deferred; no new timers/commands/UI.
   Production/Hosted Dev accessed or mutated: NO; siblings modified: NO.
+
+## Trip Canonical C-I3B — P2 CORRECTION COMPLETE / REVIEW PENDING
+
+- Import worktree `trip/import`, clean baseline `f196f98`. One additive migration
+  `20261004000300_trip_source_protected_foundation.sql` installs four protected
+  Source/material/history tables, a private `trip-source-material` bucket,
+  structural/deferred validators, disabled reserved writer and runtime guards.
+  P2: deduplicated lineage closure; all-mutation statement fences reject zero-row DML.
+  Source commands, upload worker, API routes and Mobile SQLite remain unchanged/disabled.
+- Standalone C validation: two clean 67-migration local replays match: 112 RLS tables, 1,683 columns,
+  924 constraints, 158 functions, 137 triggers, 181 policies, four buckets;
+  checksum `6f7449afdc45838a2b29c4d21fc12bf16adcb4971ade9c4c3cb07a85e7bc95a6`.
+  Each full SQL run: 36 files / 1,096 assertions PASS; Source subset 246 PASS;
+  writer reuse 26 PASS; verifier/count/checksum drift rejection PASS.
+- All 108 existing public table contents and schema/grants/RLS/trigger facts,
+  existing buckets/Storage policies and financial projections are byte-equivalent
+  through populated forward migration. All 66 historical migrations unchanged.
+- Typecheck/lint/UI guard pass. Full TS: 1,178 PASS, same pre-existing architecture
+  boundary failure as B-T3B; offending file/test unchanged. Full-repository gate blocked.
+- Authority: C-I3A schema/access contract; evidence and exact compatibility limits:
+  `docs/architecture/TRIP_CANONICAL_C_I3B_PROTECTED_SOURCE_FOUNDATION_REPORT.md`.
+  Source RESTRICT FKs intentionally block physical Trip/Account deletion while history exists.
+- Next checkpoint: human + independent review only; no automatic Source command,
+  acquisition/upload, association, extraction or domain adapter work.
+  Production/Hosted Dev accessed: NO; sibling worktrees modified: NO.
+
+## Trip Canonical B-T3C — CONTRACT ONLY
+
+- Approved command/receipt contract: `TRIP_CANONICAL_B_T3C_COMMAND_RECEIPT_CONTRACT.md`.
+  Contract only; Event semantic commands remain disabled pending their approved slice.
 
 ## Trip Canonical B-T3B — IMPLEMENTATION COMPLETE / REVIEW PENDING
 
