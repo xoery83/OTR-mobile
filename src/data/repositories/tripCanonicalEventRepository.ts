@@ -294,6 +294,20 @@ export function createTripCanonicalEventRepository(
           context.accountId,
           tripId,
         );
+        // SQLite49 extends the Event mirror. Explicit deletion also fences FK-OFF
+        // orphan/re-admission recovery and shares the complete collection transaction.
+        if (
+          await database.getFirstAsync(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='trip_transport_service_mirrors'",
+          )
+        )
+          await database.runAsync(
+            "DELETE FROM trip_transport_service_mirrors WHERE cache_account_id=? AND trip_id=? AND event_id NOT IN (SELECT event_id FROM trip_canonical_event_collection_ids WHERE account_id=? AND trip_id=?)",
+            context.accountId,
+            tripId,
+            context.accountId,
+            tripId,
+          );
         await database.runAsync(
           "DELETE FROM trip_canonical_events WHERE account_id=? AND trip_id=? AND event_id NOT IN (SELECT event_id FROM trip_canonical_event_collection_ids WHERE account_id=? AND trip_id=?)",
           context.accountId,

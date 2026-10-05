@@ -76,8 +76,8 @@ function read(i = 1, semantic = 1, t = trip): ReadOnly {
     },
   } as unknown as ReadOnly;
 }
-function transport(): ReadOnly {
-  const r = read();
+function transport(i = 1, t = trip): ReadOnly {
+  const r = read(i, 1, t);
   Object.assign(r.event, {
     temporal_shape: "TRANSPORT",
     start_quality: null,
@@ -1096,4 +1096,81 @@ describe("B-T3I P2 durable generation integrity", () => {
     await expect(f.repo.refreshCollection(trip)).rejects.toThrow("MIRROR_INTEGRITY");
     expect(fetcher).not.toHaveBeenCalled();
   });
+});
+
+describe.each([true, false])("R2 certified service absence FK=%s", (fk) => {
+  function installService(db: DatabaseSync, a: string, t: string, event: string) {
+    db.prepare(
+      `INSERT INTO trip_transport_service_mirrors(cache_account_id,trip_id,event_id,semantic_revision,service_key,transport_subtype,attribution,operator_namespace,operator_issuer,operator_value,operator_literal,service_number,service_literal,codeshare_operating_key,provenance_refs)
+    VALUES(?,?,?,1,'primary','FLIGHT','MARKETING','IATA_AIRLINE','IATA','NZ','NZ','0289A','NZ0289A',NULL,'{}')`,
+    ).run(a, t, event);
+  }
+  const services = (db: DatabaseSync) =>
+    db
+      .prepare(
+        "SELECT * FROM trip_transport_service_mirrors ORDER BY cache_account_id,trip_id,event_id",
+      )
+      .all();
+  it("removes only certified-absent extensions, preserves retained/other scopes, and fences stale re-admission", async () => {
+    const db = open(":memory:", 49);
+    db.exec(`PRAGMA foreign_keys=${fk ? "ON" : "OFF"}`);
+    const f = fixture(db),
+      absent = transport(),
+      retained = transport(2);
+    f.set([absent, retained]);
+    await f.repo.refreshCollection(trip);
+    installService(db, account, trip, absent.event.id);
+    installService(db, account, trip, retained.event.id);
+    const other = transport(3, otherTrip);
+    await f.repo.applyRead(await f.context(otherTrip), other.event.id, other);
+    installService(db, account, otherTrip, other.event.id);
+    await f.switchUser(otherAccount);
+    await f.repo.applyRead(await f.context(), retained.event.id, retained);
+    installService(db, otherAccount, trip, retained.event.id);
+    await f.switchUser(account);
+    const before = services(db);
+    f.set([retained], "2");
+    expect(await f.repo.refreshCollection(trip)).toBe("APPLIED");
+    expect(services(db)).toEqual(
+      before.filter(
+        (r) =>
+          !(
+            r.cache_account_id === account &&
+            r.trip_id === trip &&
+            r.event_id === absent.event.id
+          ),
+      ),
+    );
+    expect(await f.repo.getEvent(trip, absent.event.id)).toBeNull();
+    f.set([absent, retained], "3");
+    await f.repo.refreshCollection(trip);
+    expect(
+      db
+        .prepare(
+          "SELECT * FROM trip_transport_service_mirrors WHERE cache_account_id=? AND trip_id=? AND event_id=?",
+        )
+        .all(account, trip, absent.event.id),
+    ).toEqual([]);
+  });
+  it.each(["trip_transport_service_mirrors", "trip_canonical_events"])(
+    "rolls back child/parent/certificate/membership together on %s deletion failure",
+    async (table) => {
+      const db = open(":memory:", 49);
+      db.exec(`PRAGMA foreign_keys=${fk ? "ON" : "OFF"}`);
+      const f = fixture(db),
+        event = transport();
+      f.set([event]);
+      await f.repo.refreshCollection(trip);
+      installService(db, account, trip, event.event.id);
+      const before = [durable(db), services(db)];
+      db.exec(
+        `CREATE TEMP TRIGGER fail_service_reconcile BEFORE DELETE ON ${table} BEGIN SELECT RAISE(ABORT,'injected reconciliation failure'); END`,
+      );
+      f.set([], "2");
+      await expect(f.repo.refreshCollection(trip)).rejects.toThrow(
+        "injected reconciliation failure",
+      );
+      expect([durable(db), services(db)]).toEqual(before);
+    },
+  );
 });

@@ -387,3 +387,31 @@ preserves the same key/intent. Current Organizer loss returns
 `PARTICIPATION_FORBIDDEN` / 403 with no disclosure and leaves pending intent intact. A→B→A is fenced. Atomic receipt/queue/row/all-seven certificate
 application and bounded refresh remain owned by I2C2; financial/private cursors
 and offline cached launch are unchanged. No SQLite or server migration is added.
+
+## CP13A.2 import drafts and exact recovery (runtime CLOSED)
+
+The explicit import repositories save reviewed pins, immutable command identity,
+lineage decisions and queue records atomically before handoff. They use the existing
+Account request generation/apply gate and current local Trip read observation;
+retained reads/drafts need no token refresh or network bootstrap. Fresh dispatch
+revalidates material/claim/dependency observations and persists UNKNOWN first.
+Process loss and lease expiry cannot imply no-commit or allocate another Source/Event.
+Exact receipt caching queues support finalization and never adds certified membership
+or writes Day projections. Service mirrors require the current Event baseline.
+
+Capture creates no Source automatically. Explicit NEW/REUSE/REPLACEMENT binds the
+exact CP11 Capture revision, verified original bytes and reviewed Source identities.
+REUSE needs selected material equality and admitted ancestry, with no fabricated
+acquisition receipt. REPLACEMENT preserves prior material and checks Source CAS;
+pending replacement does not advance the current manifest. Binary admission requires
+the installed actual format/profile verifier. Unsupported material is withheld.
+After restart an uncertain binding recovers its same Source operation and original
+BLOB; Account A→B→A invalidates every old callback.
+
+The scheduler always excludes `C_PREPARE_CONFIRMATION`, `C_EXECUTE_EVENT_SLOT`,
+`C_FINALIZE_EVENT_SLOT`, `C_ADMIT_CAPTURE_SOURCE` and `C_REVOKE_EVENT_SLOT`, even
+with a permissive caller filter. There is no worker/runtime adapter, IO retry,
+upload/provider activation or global gate change. Revocation requests retain the
+local CREATE claim until exact authoritative permanent-revocation observation.
+The [implementation report](architecture/TRIP_CHECKPOINT_13A2_CANONICAL_FLIGHT_IMPORT_IMPLEMENTATION_REPORT.md)
+contains acceptance evidence and the terminal CREATE receipt clarification.

@@ -129,6 +129,14 @@ export function syncFailureDetails(error: Error) {
   return { classification: "retryable", category: "UNKNOWN" } as const;
 }
 
+const closedImportOperations = new Set([
+  "C_PREPARE_CONFIRMATION",
+  "C_EXECUTE_EVENT_SLOT",
+  "C_FINALIZE_EVENT_SLOT",
+  "C_ADMIT_CAPTURE_SOURCE",
+  "C_REVOKE_EVENT_SLOT",
+]);
+
 export function createSyncEngine(
   repository: SyncOperationRepository,
   worker: SyncWorker,
@@ -150,7 +158,10 @@ export function createSyncEngine(
         if (generation !== getAccountGeneration())
           return { status: "paused_auth", processedCount };
         const operations = (await repository.listPending()).filter(
-          (operation) => shouldProcess(operation) && !seen.has(operation.id),
+          (operation) =>
+            !closedImportOperations.has(operation.operationType) &&
+            shouldProcess(operation) &&
+            !seen.has(operation.id),
         );
         if (operations.length === 0) break;
         for (const operation of operations) {

@@ -1,6 +1,40 @@
 # Current Implementation State
 
-Date: 2026-10-05
+Date: 2026-10-06
+
+## Checkpoint CP13A.2 — Flight admission / TARGETED CORRECTION REVIEW PENDING
+
+- Active worktree/branch: `codex/cp13a-flight-admission`; HEAD remains
+  `1b2bf98c24f0fb000e438e5cbfbccbc537346577`. Initial recovery found only the two
+  untracked design reports; no stalled implementation edits. All work is unstaged.
+- CP13A.1 received OWNER REVIEW PASS; the owner authorized this additive closed
+  implementation. Eight server migrations extend 74→82 and SQLite49 is registered
+  after unchanged 1–48. Applied only to disposable acceptance databases/files.
+- Implemented protected C6/lineage4/output claims, typed Event-owned Flight services,
+  fixed TRACK_C proof, CREATE/UPDATE under parent CAS, Temporal A,
+  `import-flight-match-v1`, explicit Capture NEW/REUSE/REPLACEMENT, private drafts/
+  exact queue/receipt/catalog recovery and permanent undispatched revocation.
+- Narrow owner clarification: exact terminal CREATE no-commit recovery may omit
+  target read admission while retaining exact current Actor/Trip and every durable
+  binding. It returns minimum proof only. Success/UPDATE require target read;
+  absence remains UNKNOWN. ADR records the clarification; CP12 is unchanged.
+- Acceptance entry: `architecture/TRIP_CHECKPOINT_13A2_CANONICAL_FLIGHT_IMPORT_IMPLEMENTATION_REPORT.md`;
+  blueprint: `architecture/TRIP_CHECKPOINT_13A1_EXACT_SCHEMA_COMMAND_PREFLIGHT.md`;
+  exact schema/RLS/ACL/function manifest: `architecture/TRIP_CHECKPOINT_13A2_SECURITY_MANIFEST.json`.
+- Final selected 17 suites/303 tests, native Flight 118 + permission 83 assertions, fresh 82 /
+  exact 74 seeded upgrade, actual C1/C2/C3 barrier, typecheck/lint/UI guard/build pass.
+  Existing broader Flow/Ledger architecture/format and three legacy SQL harness
+  exceptions remain classified in the report; no new implementation failure remains.
+- Independent owner review required R1–R3; all three targeted corrections are implemented:
+  complete reviewed-action/proof coverage, atomic certified service absence in both
+  FK modes, and bounded transitive local Run ancestry. Focused corrections pass
+  3 suites/154 tests; the independent review evidence remains unchanged.
+- Next step is targeted correction review only. Factories/ports/queue names are
+  unwired and scheduler-filtered. All deployed/runtime gates remain CLOSED. No
+  passenger/booking/participant certificate, civil resolver, reservation CREATE,
+  Ledger mutation, provider/LLM, UI, Hosted Dev/Production, commit or push.
+
+Earlier checkpoint entries below are historical; this is the current handoff.
 
 ## Checkpoint #12 — Import contract foundation / CONTRACT REVIEW PENDING
 

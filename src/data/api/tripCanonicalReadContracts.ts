@@ -167,6 +167,8 @@ const commands = z.enum([
   "UPDATE_LOCATION",
   "UPDATE_GROUPING",
   "UPDATE_STATUS",
+  "CREATE_TRANSPORT",
+  "UPDATE_TRANSPORT",
 ]);
 // Status-only correlation is explicitly not a hash of the filtered response.
 export const eventOperationReceiptSchema = z.strictObject({

@@ -23,7 +23,8 @@ requires cached Account/Trip actor admission; lost admission retains content but
 blocks assigned mutation. Capture is not Source or Representation admission and has
 no processing/imported state, queue, provider or execution journal.
 
-SQLite is contiguous 1–48; server migrations remain 74 with unchanged manifest.
+The CP11 baseline was SQLite 1–48 and 74 server migrations; CP13A.2 adds the
+authorized closed foundation below.
 Module ADRs and `architecture/TRIP_CHECKPOINT_11_FINAL_INTEGRATION_REPORT.md` contain
 the complete local contracts and validation. No UI or runtime activation is implied.
 
@@ -574,3 +575,35 @@ resource until the latter. Terminal cleanup takeover advances the owner fence wi
 changing terminal evidence or reopening execution. No parser/container evidence
 authorizes provider retry or canonical finalization. See the C-I3H report for the
 protocol, validation status and remaining runtime/host-loss/provider blockers.
+
+## CP13A.2 protected import and transport persistence
+
+SQLite49 `trip_import_flight_admission` is authorized and registered after unchanged
+1–48. Eight additive server migrations (`20261005000400`–`20261005001100`) extend
+74 to82; no migration is deployed. Exact schema/constraints/ACLs/RLS and function
+hashes are recorded in the [security manifest](architecture/TRIP_CHECKPOINT_13A2_SECURITY_MANIFEST.json).
+
+Server C catalogs are Runs, Inputs, Candidates, Confirmations, OutputSlots and
+Associations, plus Run predecessors, Candidate lineage, reviewed slot dispositions
+and receipt dependencies. They reuse existing Source/manifest/Representation
+identity. READY publication is atomic and immutable. Parent Confirmation revisions
+own slot CAS; immutable B operation/digest/target bindings survive UNKNOWN and
+restart. Successful CREATE claims remain active; only exact verified terminal
+no-commit or permanent undispatched revocation releases them. All catalogs are
+private with RLS enabled/forced and protected mutation guards.
+
+Event-owned `itinerary_transport_services` stores finite Flight identity with
+qualified namespace/issuer, preserved number/literal, attribution and operating
+relationship. Root, two endpoints, services and receipt commit atomically under
+one Event semantic revision. Existing transports receive no identity backfill;
+missing-service adoption remains withheld. Existing collection/certificate fields
+and hashes are unchanged; service reads/mirrors are a separate baseline-bound
+extension.
+
+SQLite49 mirrors Source3 and C6/lineage4 with registration observations, private
+review drafts, immutable receipt cache, explicit Capture→Source durable bindings
+and baseline-bound transport service mirrors. Pending timestamps are not server
+observations. Original Capture BLOBs and selected local material remain protected
+while referenced. FK-OFF repository checks enforce the same Actor/Trip/material
+bindings. No passenger, booking, Ledger, participant certificate or Day schema is
+added. See the [implementation report](architecture/TRIP_CHECKPOINT_13A2_CANONICAL_FLIGHT_IMPORT_IMPLEMENTATION_REPORT.md).

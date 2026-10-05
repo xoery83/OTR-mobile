@@ -191,3 +191,27 @@ describe("sync engine", () => {
     expect(repository.markRetryable).not.toHaveBeenCalled();
   });
 });
+
+it.each([
+  "C_PREPARE_CONFIRMATION",
+  "C_EXECUTE_EVENT_SLOT",
+  "C_FINALIZE_EVENT_SLOT",
+  "C_ADMIT_CAPTURE_SOURCE",
+  "C_REVOKE_EVENT_SLOT",
+])("keeps %s closed even with a permissive scheduler filter", async (operationType) => {
+  const repository = {
+    listPending: vi.fn().mockResolvedValue([{ ...operation, operationType }]),
+    markProcessing: vi.fn(),
+    markCompleted: vi.fn(),
+    markRetryable: vi.fn(),
+    claim: vi.fn(),
+  };
+  const worker = { push: vi.fn() };
+  const engine = createSyncEngine(repository, worker, vi.fn(), () => true);
+  await expect(engine.run("AUTHENTICATED_ONLINE")).resolves.toEqual({
+    status: "syncing",
+    processedCount: 0,
+  });
+  expect(repository.claim).not.toHaveBeenCalled();
+  expect(worker.push).not.toHaveBeenCalled();
+});

@@ -1,0 +1,4816 @@
+{
+  "roles": [
+    {
+      "name": "otr_trip_event_command_gateway",
+      "login": false,
+      "config": null,
+      "inherit": false,
+      "create_db": false,
+      "superuser": false,
+      "bypass_rls": false,
+      "create_role": false,
+      "replication": false
+    },
+    {
+      "name": "otr_trip_event_receipt_reader",
+      "login": false,
+      "config": null,
+      "inherit": false,
+      "create_db": false,
+      "superuser": false,
+      "bypass_rls": false,
+      "create_role": false,
+      "replication": false
+    },
+    {
+      "name": "otr_trip_event_semantic_writer",
+      "login": false,
+      "config": null,
+      "inherit": false,
+      "create_db": false,
+      "superuser": false,
+      "bypass_rls": false,
+      "create_role": false,
+      "replication": false
+    },
+    {
+      "name": "otr_trip_source_command_gateway",
+      "login": false,
+      "config": null,
+      "inherit": false,
+      "create_db": false,
+      "superuser": false,
+      "bypass_rls": false,
+      "create_role": false,
+      "replication": false
+    },
+    {
+      "name": "otr_trip_source_operation_reader",
+      "login": false,
+      "config": null,
+      "inherit": false,
+      "create_db": false,
+      "superuser": false,
+      "bypass_rls": false,
+      "create_role": false,
+      "replication": false
+    },
+    {
+      "name": "otr_trip_source_writer",
+      "login": false,
+      "config": null,
+      "inherit": false,
+      "create_db": false,
+      "superuser": false,
+      "bypass_rls": false,
+      "create_role": false,
+      "replication": false
+    }
+  ],
+  "tables": [
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=arwdxm/postgres",
+        "authenticated=arwdxm/postgres",
+        "service_role=arwdxm/postgres",
+        "otr_trip_event_collection_reader=r/postgres"
+      ],
+      "name": "itinerary_events",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": [
+            "otr_trip_event_collection_maintainer=r/postgres",
+            "otr_trip_event_receipt_reader=r/postgres",
+            "otr_trip_source_writer=r/postgres"
+          ],
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "not_null": true
+        },
+        {
+          "acl": [
+            "otr_trip_event_collection_maintainer=r/postgres",
+            "otr_trip_event_receipt_reader=r/postgres",
+            "otr_trip_source_writer=r/postgres"
+          ],
+          "name": "trip_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "event_type",
+          "type": "text",
+          "default": "'activity'::text",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "location_name",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "planned_start",
+          "type": "timestamp with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "planned_end",
+          "type": "timestamp with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "booking_reference",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "url",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "order_index",
+          "type": "integer",
+          "default": "0",
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "source_text",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "confidence",
+          "type": "numeric",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "needs_review",
+          "type": "boolean",
+          "default": "false",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "trip_day_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "reservation_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "is_estimated_time",
+          "type": "boolean",
+          "default": "false",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "date_confidence",
+          "type": "numeric",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "time_confidence",
+          "type": "numeric",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "participants_confidence",
+          "type": "numeric",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "location_confidence",
+          "type": "numeric",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "status",
+          "type": "text",
+          "default": "'planned'::text",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "location_text",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "location_lat",
+          "type": "double precision",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "location_lng",
+          "type": "double precision",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "location_status",
+          "type": "public.location_resolution_status",
+          "default": "'none'::public.location_resolution_status",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "place_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "location_provider",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "location_provider_place_id",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "geocoded_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "geocode_error",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "geocode_attempts",
+          "type": "integer",
+          "default": "0",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "manual_location",
+          "type": "boolean",
+          "default": "false",
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_event_collection_maintainer=r/postgres"],
+          "name": "temporal_contract_version",
+          "type": "smallint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_event_receipt_reader=r/postgres"],
+          "name": "temporal_shape",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_event_receipt_reader=r/postgres"],
+          "name": "semantic_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "timing_label",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "timing_provenance_ref",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "participant_scope",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "legacy_planned_start",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "legacy_planned_end",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "legacy_is_estimated_time",
+          "type": "boolean",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "legacy_snapshot_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_local_date",
+          "type": "date",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_local_time",
+          "type": "time(6) without time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_clock_precision",
+          "type": "smallint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_quality",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_basis",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_zone_id",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_supplied_offset_seconds",
+          "type": "integer",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_source_instant",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_source_instant_precision",
+          "type": "smallint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_civil_resolution",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_resolution_offset_seconds",
+          "type": "integer",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_interpretation_key",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_interpretation_input_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "start_provenance_refs",
+          "type": "jsonb",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_local_date",
+          "type": "date",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_local_time",
+          "type": "time(6) without time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_clock_precision",
+          "type": "smallint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_quality",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_basis",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_zone_id",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_supplied_offset_seconds",
+          "type": "integer",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_source_instant",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_source_instant_precision",
+          "type": "smallint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_civil_resolution",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_resolution_offset_seconds",
+          "type": "integer",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_interpretation_key",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_interpretation_input_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "end_provenance_refs",
+          "type": "jsonb",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "authored_label",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "authored_text",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "authored_address",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_address",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_latitude",
+          "type": "double precision",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_longitude",
+          "type": "double precision",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_place_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "spatial_provenance_refs",
+          "type": "jsonb",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "location_input_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_input_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_provider",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_provider_place_id",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_place_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_label",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_address",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_latitude",
+          "type": "double precision",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_longitude",
+          "type": "double precision",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_confidence",
+          "type": "numeric",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_state",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_observed_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_error_code",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "authored_address_line1",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "authored_address_line2",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "authored_address_locality",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "authored_address_region",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "authored_address_postal_code",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "authored_address_country",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_address_line1",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_address_line2",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_address_locality",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_address_region",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_address_postal_code",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "accepted_address_country",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX itinerary_events_location_repair_idx ON public.itinerary_events USING btree (trip_id, location_status, geocoded_at) WHERE (location_text IS NOT NULL)",
+        "CREATE UNIQUE INDEX itinerary_events_pkey ON public.itinerary_events USING btree (id)",
+        "CREATE INDEX itinerary_events_reservation_id_idx ON public.itinerary_events USING btree (reservation_id)",
+        "CREATE INDEX itinerary_events_trip_day_id_idx ON public.itinerary_events USING btree (trip_day_id)",
+        "CREATE INDEX itinerary_events_trip_id_order_index_idx ON public.itinerary_events USING btree (trip_id, order_index)",
+        "CREATE INDEX itinerary_events_trip_id_planned_start_idx ON public.itinerary_events USING btree (trip_id, planned_start)"
+      ],
+      "policies": [
+        {
+          "name": "Trip members can delete itinerary events",
+          "check": null,
+          "roles": ["authenticated"],
+          "using": "(public.is_trip_member(trip_id) OR public.is_trip_creator(trip_id))",
+          "command": "DELETE"
+        },
+        {
+          "name": "Trip members can insert itinerary events",
+          "check": "((created_by = auth.uid()) AND (public.is_trip_member(trip_id) OR public.is_trip_creator(trip_id)))",
+          "roles": ["authenticated"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "Trip members can read itinerary events",
+          "check": null,
+          "roles": ["authenticated"],
+          "using": "(public.is_trip_member(trip_id) OR public.is_trip_creator(trip_id))",
+          "command": "SELECT"
+        },
+        {
+          "name": "Trip members can update itinerary events",
+          "check": "(public.is_trip_member(trip_id) OR public.is_trip_creator(trip_id))",
+          "roles": ["authenticated"],
+          "using": "(public.is_trip_member(trip_id) OR public.is_trip_creator(trip_id))",
+          "command": "UPDATE"
+        },
+        {
+          "name": "import_receipt_target_read",
+          "check": null,
+          "roles": ["otr_trip_event_receipt_reader"],
+          "using": "true",
+          "command": "SELECT"
+        },
+        {
+          "name": "import_source_target_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        },
+        {
+          "name": "trip_event_collection_root_reader",
+          "check": null,
+          "roles": [
+            "otr_trip_event_collection_maintainer",
+            "otr_trip_event_collection_reader"
+          ],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": false,
+      "constraints": [
+        {
+          "name": "flight_parent_service_check",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "itinerary_event_aggregate_check",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "itinerary_events_accepted_place_id_fkey",
+          "definition": "FOREIGN KEY (accepted_place_id) REFERENCES public.places(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "itinerary_events_candidate_place_id_fkey",
+          "definition": "FOREIGN KEY (candidate_place_id) REFERENCES public.places(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "itinerary_events_created_by_fkey",
+          "definition": "FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "itinerary_events_event_type_check",
+          "definition": "CHECK ((event_type = ANY (ARRAY['flight'::text, 'hotel'::text, 'car'::text, 'activity'::text, 'shopping'::text, 'meal'::text, 'transport'::text, 'note'::text, 'other'::text])))"
+        },
+        {
+          "name": "itinerary_events_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "itinerary_events_place_id_fkey",
+          "definition": "FOREIGN KEY (place_id) REFERENCES public.places(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "itinerary_events_reservation_id_fkey",
+          "definition": "FOREIGN KEY (reservation_id) REFERENCES public.itinerary_reservations(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "itinerary_events_semantic_structure",
+          "definition": "CHECK ((public.trip_event_row_valid(to_jsonb(itinerary_events.*)) IS TRUE))"
+        },
+        {
+          "name": "itinerary_events_status_check",
+          "definition": "CHECK ((status = ANY (ARRAY['planned'::text, 'cancelled'::text, 'completed'::text, 'skipped'::text])))"
+        },
+        {
+          "name": "itinerary_events_trip_day_id_fkey",
+          "definition": "FOREIGN KEY (trip_day_id) REFERENCES public.trip_days(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "itinerary_events_trip_id_fkey",
+          "definition": "FOREIGN KEY (trip_id) REFERENCES public.trips(id) ON DELETE CASCADE"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "otr_trip_event_receipt_reader=r/postgres",
+        "otr_trip_event_semantic_writer=r/postgres"
+      ],
+      "name": "itinerary_transport_services",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "event_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "service_key",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "transport_subtype",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "attribution",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "operator_namespace",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "operator_issuer",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "operator_value",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "operator_literal",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "service_number",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "service_literal",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "codeshare_operating_key",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "provenance_refs",
+          "type": "jsonb",
+          "default": null,
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX itinerary_transport_services_attribution ON public.itinerary_transport_services USING btree (event_id, attribution)",
+        "CREATE UNIQUE INDEX itinerary_transport_services_event_id_attribution_operator__key ON public.itinerary_transport_services USING btree (event_id, attribution, operator_namespace, operator_issuer, operator_value, service_number)",
+        "CREATE UNIQUE INDEX itinerary_transport_services_pkey ON public.itinerary_transport_services USING btree (event_id, service_key)"
+      ],
+      "policies": [
+        {
+          "name": "transport_service_private_read",
+          "check": null,
+          "roles": ["otr_trip_event_receipt_reader"],
+          "using": "true",
+          "command": "SELECT"
+        },
+        {
+          "name": "transport_service_writer_read",
+          "check": null,
+          "roles": ["otr_trip_event_semantic_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "flight_service_aggregate_check",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "itinerary_transport_services_attribution_check",
+          "definition": "CHECK ((attribution = ANY (ARRAY['MARKETING'::text, 'OPERATING'::text, 'UNSPECIFIED'::text])))"
+        },
+        {
+          "name": "itinerary_transport_services_check",
+          "definition": "CHECK (((codeshare_operating_key IS NULL) OR ((attribution = 'MARKETING'::text) AND (codeshare_operating_key <> service_key))))"
+        },
+        {
+          "name": "itinerary_transport_services_check1",
+          "definition": "CHECK (((operator_namespace <> 'IATA_AIRLINE'::text) OR ((operator_issuer = 'IATA'::text) AND (operator_value ~ '^[A-Z0-9]{2}$'::text))))"
+        },
+        {
+          "name": "itinerary_transport_services_check2",
+          "definition": "CHECK (((operator_namespace <> 'ICAO_AIRLINE'::text) OR ((operator_issuer = 'ICAO'::text) AND (operator_value ~ '^[A-Z]{3}$'::text))))"
+        },
+        {
+          "name": "itinerary_transport_services_codeshare_operating_key_check",
+          "definition": "CHECK ((codeshare_operating_key ~ '^[A-Za-z0-9._:-]{1,32}$'::text))"
+        },
+        {
+          "name": "itinerary_transport_services_event_id_attribution_operator__key",
+          "definition": "UNIQUE (event_id, attribution, operator_namespace, operator_issuer, operator_value, service_number)"
+        },
+        {
+          "name": "itinerary_transport_services_event_id_codeshare_operating__fkey",
+          "definition": "FOREIGN KEY (event_id, codeshare_operating_key) REFERENCES public.itinerary_transport_services(event_id, service_key) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "itinerary_transport_services_event_id_fkey",
+          "definition": "FOREIGN KEY (event_id) REFERENCES public.itinerary_events(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "itinerary_transport_services_operator_issuer_check",
+          "definition": "CHECK ((((char_length(operator_issuer) >= 1) AND (char_length(operator_issuer) <= 128)) AND (btrim(operator_issuer) <> ''::text)))"
+        },
+        {
+          "name": "itinerary_transport_services_operator_literal_check",
+          "definition": "CHECK ((((char_length(operator_literal) >= 1) AND (char_length(operator_literal) <= 255)) AND (btrim(operator_literal) <> ''::text)))"
+        },
+        {
+          "name": "itinerary_transport_services_operator_namespace_check",
+          "definition": "CHECK ((operator_namespace = ANY (ARRAY['IATA_AIRLINE'::text, 'ICAO_AIRLINE'::text, 'AUTHORITY'::text, 'NAME'::text])))"
+        },
+        {
+          "name": "itinerary_transport_services_operator_value_check",
+          "definition": "CHECK ((((char_length(operator_value) >= 1) AND (char_length(operator_value) <= 128)) AND (btrim(operator_value) <> ''::text)))"
+        },
+        {
+          "name": "itinerary_transport_services_pkey",
+          "definition": "PRIMARY KEY (event_id, service_key)"
+        },
+        {
+          "name": "itinerary_transport_services_provenance_refs_check",
+          "definition": "CHECK (public.trip_import_json_valid(provenance_refs, 16384))"
+        },
+        {
+          "name": "itinerary_transport_services_service_key_check",
+          "definition": "CHECK ((service_key ~ '^[A-Za-z0-9._:-]{1,32}$'::text))"
+        },
+        {
+          "name": "itinerary_transport_services_service_literal_check",
+          "definition": "CHECK ((((char_length(service_literal) >= 1) AND (char_length(service_literal) <= 255)) AND (btrim(service_literal) <> ''::text)))"
+        },
+        {
+          "name": "itinerary_transport_services_service_number_check",
+          "definition": "CHECK ((((char_length(service_number) >= 1) AND (char_length(service_number) <= 64)) AND (btrim(service_number) <> ''::text)))"
+        },
+        {
+          "name": "itinerary_transport_services_transport_subtype_check",
+          "definition": "CHECK ((transport_subtype = ANY (ARRAY['FLIGHT'::text, 'TRAIN'::text, 'BUS'::text, 'FERRY'::text])))"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "otr_trip_event_semantic_writer=ar/postgres",
+        "otr_trip_event_receipt_reader=r/postgres"
+      ],
+      "name": "trip_event_operation_receipts",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "trip_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "actor_account_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "operation_key",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "intent_version",
+          "type": "smallint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "command",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "command_version",
+          "type": "smallint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "intent_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "target_event_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "base_semantic_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "intended_payload",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "outcome",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "result_event_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "committed_semantic_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "observed_semantic_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "result_fields",
+          "type": "jsonb",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "confirmations",
+          "type": "jsonb",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "error_code",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "submitted_http_status",
+          "type": "smallint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "receipt_version",
+          "type": "smallint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "receipt_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "committed_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_event_operation_receipts_pkey ON public.trip_event_operation_receipts USING btree (trip_id, actor_account_id, operation_key)"
+      ],
+      "policies": [
+        {
+          "name": "trip_event_receipt_recovery_read",
+          "check": null,
+          "roles": ["otr_trip_event_receipt_reader"],
+          "using": "true",
+          "command": "SELECT"
+        },
+        {
+          "name": "trip_event_receipt_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_event_semantic_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "trip_event_receipt_writer_read",
+          "check": null,
+          "roles": ["otr_trip_event_semantic_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": false,
+      "constraints": [
+        {
+          "name": "trip_event_operation_receipts_actor_account_id_fkey",
+          "definition": "FOREIGN KEY (actor_account_id) REFERENCES auth.users(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_event_operation_receipts_check1",
+          "definition": "CHECK (((outcome = ANY (ARRAY['APPLIED'::text, 'NO_CHANGE'::text])) = (result_event_id IS NOT NULL)))"
+        },
+        {
+          "name": "trip_event_operation_receipts_check2",
+          "definition": "CHECK (((outcome = ANY (ARRAY['APPLIED'::text, 'NO_CHANGE'::text])) = (committed_semantic_revision IS NOT NULL)))"
+        },
+        {
+          "name": "trip_event_operation_receipts_check3",
+          "definition": "CHECK (((result_event_id IS NULL) OR (result_event_id = target_event_id)))"
+        },
+        {
+          "name": "trip_event_operation_receipts_check4",
+          "definition": "CHECK (((outcome = ANY (ARRAY['APPLIED'::text, 'NO_CHANGE'::text])) = (error_code IS NULL)))"
+        },
+        {
+          "name": "trip_event_operation_receipts_check5",
+          "definition": "CHECK (((jsonb_typeof(result_fields) = 'object'::text) AND (jsonb_typeof(confirmations) = 'object'::text)))"
+        },
+        {
+          "name": "trip_event_operation_receipts_command_check",
+          "definition": "CHECK ((command = ANY (ARRAY['CREATE_EVENT'::text, 'UPDATE_CORE_TEXT'::text, 'UPDATE_TIME'::text, 'UPDATE_LOCATION'::text, 'UPDATE_GROUPING'::text, 'UPDATE_STATUS'::text, 'CREATE_TRANSPORT'::text, 'UPDATE_TRANSPORT'::text])))"
+        },
+        {
+          "name": "trip_event_operation_receipts_command_version_check",
+          "definition": "CHECK ((command_version = 1))"
+        },
+        {
+          "name": "trip_event_operation_receipts_committed_at_check",
+          "definition": "CHECK (isfinite(committed_at))"
+        },
+        {
+          "name": "trip_event_operation_receipts_committed_semantic_revision_check",
+          "definition": "CHECK (((committed_semantic_revision IS NULL) OR ((committed_semantic_revision >= 1) AND (committed_semantic_revision <= '9007199254740991'::bigint))))"
+        },
+        {
+          "name": "trip_event_operation_receipts_intended_payload_check",
+          "definition": "CHECK ((octet_length(intended_payload) <= 32768))"
+        },
+        {
+          "name": "trip_event_operation_receipts_intent_sha256_check",
+          "definition": "CHECK ((intent_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_event_operation_receipts_intent_version_check",
+          "definition": "CHECK ((intent_version = 1))"
+        },
+        {
+          "name": "trip_event_operation_receipts_observed_semantic_revision_check",
+          "definition": "CHECK (((observed_semantic_revision IS NULL) OR ((observed_semantic_revision >= 1) AND (observed_semantic_revision <= '9007199254740991'::bigint))))"
+        },
+        {
+          "name": "trip_event_operation_receipts_operation_key_check",
+          "definition": "CHECK (((operation_key)::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'::text))"
+        },
+        {
+          "name": "trip_event_operation_receipts_outcome_check",
+          "definition": "CHECK ((outcome = ANY (ARRAY['APPLIED'::text, 'NO_CHANGE'::text, 'CONFLICT'::text, 'REJECTED'::text])))"
+        },
+        {
+          "name": "trip_event_operation_receipts_pkey",
+          "definition": "PRIMARY KEY (trip_id, actor_account_id, operation_key)"
+        },
+        {
+          "name": "trip_event_operation_receipts_receipt_sha256_check",
+          "definition": "CHECK ((receipt_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_event_operation_receipts_receipt_version_check",
+          "definition": "CHECK ((receipt_version = 1))"
+        },
+        {
+          "name": "trip_event_operation_receipts_submitted_http_status_check",
+          "definition": "CHECK ((submitted_http_status = ANY (ARRAY[200, 201, 403, 409, 422])))"
+        },
+        {
+          "name": "trip_event_operation_receipts_trip_id_fkey",
+          "definition": "FOREIGN KEY (trip_id) REFERENCES public.trips(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_event_receipts_base_check",
+          "definition": "CHECK ((((command = ANY (ARRAY['CREATE_EVENT'::text, 'CREATE_TRANSPORT'::text])) AND (base_semantic_revision IS NULL)) OR ((command <> ALL (ARRAY['CREATE_EVENT'::text, 'CREATE_TRANSPORT'::text])) AND ((base_semantic_revision >= 1) AND (base_semantic_revision <= '9007199254740991'::bigint)) AND (base_semantic_revision IS NOT NULL))))"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "otr_trip_source_writer=r/postgres",
+        "otr_trip_event_semantic_writer=r/postgres"
+      ],
+      "name": "trip_import_admission_gate",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "singleton",
+          "type": "boolean",
+          "default": "true",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "adapter_version",
+          "type": "smallint",
+          "default": "1",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "flight_admission_enabled",
+          "type": "boolean",
+          "default": "false",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "capture_admission_enabled",
+          "type": "boolean",
+          "default": "false",
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_import_admission_gate_pkey ON public.trip_import_admission_gate USING btree (singleton)"
+      ],
+      "policies": [
+        {
+          "name": "import_gate_writer_read",
+          "check": null,
+          "roles": ["otr_trip_event_semantic_writer", "otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "trip_import_admission_gate_adapter_version_check",
+          "definition": "CHECK ((adapter_version = 1))"
+        },
+        {
+          "name": "trip_import_admission_gate_capture_admission_enabled_check",
+          "definition": "CHECK ((capture_admission_enabled = false))"
+        },
+        {
+          "name": "trip_import_admission_gate_flight_admission_enabled_check",
+          "definition": "CHECK ((flight_admission_enabled = false))"
+        },
+        {
+          "name": "trip_import_admission_gate_pkey",
+          "definition": "PRIMARY KEY (singleton)"
+        },
+        {
+          "name": "trip_import_admission_gate_singleton_check",
+          "definition": "CHECK ((singleton = true))"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_associations",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "target_kind",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "target_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "purpose",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "state",
+          "type": "text",
+          "default": "'ACTIVE'::text",
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "row_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "confirmation_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "preview_input_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "preview_source_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "preview_representation_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "inactive_reason",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "inactive_at",
+          "type": "timestamp(6) with time zone",
+          "default": "NULL::timestamp with time zone",
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "inactive_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_source_associations_active ON public.trip_source_associations USING btree (source_id, target_kind, target_id, purpose) WHERE (state = 'ACTIVE'::text)",
+        "CREATE INDEX trip_source_associations_confirmation ON public.trip_source_associations USING btree (confirmation_id)",
+        "CREATE UNIQUE INDEX trip_source_associations_pkey ON public.trip_source_associations USING btree (id)",
+        "CREATE INDEX trip_source_associations_source ON public.trip_source_associations USING btree (source_id, state)",
+        "CREATE INDEX trip_source_associations_target ON public.trip_source_associations USING btree (target_kind, target_id, state)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        },
+        {
+          "name": "import_writer_update",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "UPDATE"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "import_scope_guard",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_associations_check",
+          "definition": "CHECK (((preview_source_revision IS NULL) = (preview_representation_id IS NULL)))"
+        },
+        {
+          "name": "trip_source_associations_check1",
+          "definition": "CHECK (((purpose <> 'CONFIRMED_SUPPORT'::text) OR (confirmation_id IS NOT NULL)))"
+        },
+        {
+          "name": "trip_source_associations_check2",
+          "definition": "CHECK ((((state = 'INACTIVE'::text) = (inactive_reason IS NOT NULL)) AND ((state = 'INACTIVE'::text) = (inactive_at IS NOT NULL)) AND ((state = 'INACTIVE'::text) = (inactive_by IS NOT NULL))))"
+        },
+        {
+          "name": "trip_source_associations_confirmation_id_fkey",
+          "definition": "FOREIGN KEY (confirmation_id) REFERENCES public.trip_source_confirmations(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_associations_created_at_check",
+          "definition": "CHECK (isfinite(created_at))"
+        },
+        {
+          "name": "trip_source_associations_created_by_fkey",
+          "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_associations_inactive_at_check",
+          "definition": "CHECK (isfinite(inactive_at))"
+        },
+        {
+          "name": "trip_source_associations_inactive_by_fkey",
+          "definition": "FOREIGN KEY (inactive_by) REFERENCES auth.users(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_associations_inactive_reason_check",
+          "definition": "CHECK ((inactive_reason = ANY (ARRAY['UNLINK'::text, 'SOURCE_DELETE'::text, 'TARGET_DELETE'::text])))"
+        },
+        {
+          "name": "trip_source_associations_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "trip_source_associations_preview_input_id_fkey",
+          "definition": "FOREIGN KEY (preview_input_id) REFERENCES public.trip_source_inputs(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_associations_purpose_check",
+          "definition": "CHECK ((purpose = ANY (ARRAY['ATTACHED_EVIDENCE'::text, 'CONFIRMED_SUPPORT'::text])))"
+        },
+        {
+          "name": "trip_source_associations_row_revision_check",
+          "definition": "CHECK (((row_revision >= 1) AND (row_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_associations_source_id_fkey",
+          "definition": "FOREIGN KEY (source_id) REFERENCES public.trip_sources(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_associations_source_id_preview_representation__fkey",
+          "definition": "FOREIGN KEY (source_id, preview_representation_id) REFERENCES public.trip_source_representations(source_id, id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_associations_source_id_preview_source_revision_fkey",
+          "definition": "FOREIGN KEY (source_id, preview_source_revision) REFERENCES public.trip_source_revisions(source_id, material_revision) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_associations_state_check",
+          "definition": "CHECK ((state = ANY (ARRAY['ACTIVE'::text, 'INACTIVE'::text])))"
+        },
+        {
+          "name": "trip_source_associations_target_id_fkey",
+          "definition": "FOREIGN KEY (target_id) REFERENCES public.itinerary_events(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_associations_target_kind_check",
+          "definition": "CHECK ((target_kind = ANY (ARRAY['ITINERARY_EVENT'::text, 'ITINERARY_RESERVATION'::text])))"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_candidate_lineage",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "child_candidate_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "parent_candidate_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "relation",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX trip_source_candidate_lineage_parent ON public.trip_source_candidate_lineage USING btree (parent_candidate_id, child_candidate_id)",
+        "CREATE UNIQUE INDEX trip_source_candidate_lineage_pkey ON public.trip_source_candidate_lineage USING btree (child_candidate_id, parent_candidate_id)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "import_scope_guard",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_candidate_lineage_check",
+          "definition": "CHECK ((child_candidate_id <> parent_candidate_id))"
+        },
+        {
+          "name": "trip_source_candidate_lineage_child_candidate_id_fkey",
+          "definition": "FOREIGN KEY (child_candidate_id) REFERENCES public.trip_source_candidates(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_candidate_lineage_parent_candidate_id_fkey",
+          "definition": "FOREIGN KEY (parent_candidate_id) REFERENCES public.trip_source_candidates(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_candidate_lineage_pkey",
+          "definition": "PRIMARY KEY (child_candidate_id, parent_candidate_id)"
+        },
+        {
+          "name": "trip_source_candidate_lineage_relation_check",
+          "definition": "CHECK ((relation = ANY (ARRAY['REPROCESS'::text, 'CONSOLIDATE'::text])))"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_candidates",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "run_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "candidate_key",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "candidate_kind",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "proposal_version",
+          "type": "smallint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "proposal_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "proposal",
+          "type": "jsonb",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "retention_state",
+          "type": "text",
+          "default": "'RETAINED'::text",
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_source_candidates_pkey ON public.trip_source_candidates USING btree (id)",
+        "CREATE INDEX trip_source_candidates_run ON public.trip_source_candidates USING btree (run_id, id)",
+        "CREATE UNIQUE INDEX trip_source_candidates_run_id_candidate_key_key ON public.trip_source_candidates USING btree (run_id, candidate_key)",
+        "CREATE UNIQUE INDEX trip_source_candidates_run_id_id_key ON public.trip_source_candidates USING btree (run_id, id)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "trip_source_candidates_candidate_key_check",
+          "definition": "CHECK ((candidate_key ~ '^[A-Za-z0-9._:-]{1,128}$'::text))"
+        },
+        {
+          "name": "trip_source_candidates_candidate_kind_check",
+          "definition": "CHECK ((candidate_kind = ANY (ARRAY['TRANSPORT'::text, 'STAY'::text, 'ACTIVITY'::text, 'NOTE'::text, 'OPTIONAL_POI'::text, 'UNCLASSIFIED'::text])))"
+        },
+        {
+          "name": "trip_source_candidates_check",
+          "definition": "CHECK ((((proposal IS NULL) AND (retention_state = 'IDENTITY_ONLY'::text)) OR ((proposal IS NOT NULL) AND public.trip_import_json_valid(proposal, 262144))))"
+        },
+        {
+          "name": "trip_source_candidates_created_at_check",
+          "definition": "CHECK (isfinite(created_at))"
+        },
+        {
+          "name": "trip_source_candidates_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "trip_source_candidates_proposal_sha256_check",
+          "definition": "CHECK ((proposal_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_candidates_proposal_version_check",
+          "definition": "CHECK ((proposal_version = 1))"
+        },
+        {
+          "name": "trip_source_candidates_retention_state_check",
+          "definition": "CHECK ((retention_state = ANY (ARRAY['RETAINED'::text, 'IDENTITY_ONLY'::text])))"
+        },
+        {
+          "name": "trip_source_candidates_run_id_candidate_key_key",
+          "definition": "UNIQUE (run_id, candidate_key)"
+        },
+        {
+          "name": "trip_source_candidates_run_id_fkey",
+          "definition": "FOREIGN KEY (run_id) REFERENCES public.trip_source_runs(id) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_candidates_run_id_id_key",
+          "definition": "UNIQUE (run_id, id)"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_confirmations",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "trip_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "actor_account_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "confirmation_key",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "intent_version",
+          "type": "smallint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "intent_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "state",
+          "type": "text",
+          "default": "'PREPARED'::text",
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "row_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "retention_state",
+          "type": "text",
+          "default": "'RETAINED'::text",
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_source_confirmations_pkey ON public.trip_source_confirmations USING btree (id)",
+        "CREATE INDEX trip_source_confirmations_scope ON public.trip_source_confirmations USING btree (trip_id, actor_account_id, state, id)",
+        "CREATE UNIQUE INDEX trip_source_confirmations_trip_id_actor_account_id_confirma_key ON public.trip_source_confirmations USING btree (trip_id, actor_account_id, confirmation_key)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        },
+        {
+          "name": "import_writer_update",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "UPDATE"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "import_scope_guard",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_confirmations_actor_account_id_fkey",
+          "definition": "FOREIGN KEY (actor_account_id) REFERENCES auth.users(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_confirmations_confirmation_key_check",
+          "definition": "CHECK ((confirmation_key ~ '^[A-Za-z0-9._:-]{1,128}$'::text))"
+        },
+        {
+          "name": "trip_source_confirmations_created_at_check",
+          "definition": "CHECK (isfinite(created_at))"
+        },
+        {
+          "name": "trip_source_confirmations_intent_sha256_check",
+          "definition": "CHECK ((intent_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_confirmations_intent_version_check",
+          "definition": "CHECK ((intent_version = 1))"
+        },
+        {
+          "name": "trip_source_confirmations_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "trip_source_confirmations_retention_state_check",
+          "definition": "CHECK ((retention_state = ANY (ARRAY['RETAINED'::text, 'IDENTITY_ONLY'::text])))"
+        },
+        {
+          "name": "trip_source_confirmations_row_revision_check",
+          "definition": "CHECK (((row_revision >= 1) AND (row_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_confirmations_state_check",
+          "definition": "CHECK ((state = ANY (ARRAY['PREPARED'::text, 'PROCESSING'::text, 'PARTIAL'::text, 'COMPLETE'::text, 'STOPPED'::text])))"
+        },
+        {
+          "name": "trip_source_confirmations_trip_id_actor_account_id_confirma_key",
+          "definition": "UNIQUE (trip_id, actor_account_id, confirmation_key)"
+        },
+        {
+          "name": "trip_source_confirmations_trip_id_fkey",
+          "definition": "FOREIGN KEY (trip_id) REFERENCES public.trips(id) ON DELETE RESTRICT"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_inputs",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "run_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "confirmation_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "material_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "representation_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "payload_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "byte_count",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "observed_source_row_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "historical_selection",
+          "type": "boolean",
+          "default": "false",
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX trip_source_inputs_confirmation ON public.trip_source_inputs USING btree (confirmation_id, id)",
+        "CREATE INDEX trip_source_inputs_material ON public.trip_source_inputs USING btree (source_id, material_revision, representation_id)",
+        "CREATE UNIQUE INDEX trip_source_inputs_pkey ON public.trip_source_inputs USING btree (id)",
+        "CREATE INDEX trip_source_inputs_run ON public.trip_source_inputs USING btree (run_id, id)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "import_scope_guard",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_inputs_byte_count_check",
+          "definition": "CHECK (((byte_count >= 0) AND (byte_count <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_inputs_check",
+          "definition": "CHECK (((run_id IS NULL) <> (confirmation_id IS NULL)))"
+        },
+        {
+          "name": "trip_source_inputs_check1",
+          "definition": "CHECK (((payload_sha256 IS NULL) = (byte_count IS NULL)))"
+        },
+        {
+          "name": "trip_source_inputs_confirmation_id_fkey",
+          "definition": "FOREIGN KEY (confirmation_id) REFERENCES public.trip_source_confirmations(id) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_inputs_material_revision_check",
+          "definition": "CHECK (((material_revision >= 1) AND (material_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_inputs_observed_source_row_revision_check",
+          "definition": "CHECK (((observed_source_row_revision >= 1) AND (observed_source_row_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_inputs_payload_sha256_check",
+          "definition": "CHECK ((payload_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_inputs_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "trip_source_inputs_run_id_fkey",
+          "definition": "FOREIGN KEY (run_id) REFERENCES public.trip_source_runs(id) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_inputs_source_id_fkey",
+          "definition": "FOREIGN KEY (source_id) REFERENCES public.trip_sources(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_inputs_source_id_material_revision_fkey",
+          "definition": "FOREIGN KEY (source_id, material_revision) REFERENCES public.trip_source_revisions(source_id, material_revision) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_inputs_source_id_representation_id_fkey",
+          "definition": "FOREIGN KEY (source_id, representation_id) REFERENCES public.trip_source_representations(source_id, id) ON DELETE RESTRICT"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_output_slots",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "confirmation_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "slot_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "slot_key",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "disposition",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "reviewed_run_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "candidate_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "intended_target_kind",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "intended_target_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "base_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "adapter_key",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "adapter_version",
+          "type": "smallint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "domain_operation_key",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "domain_intent_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "reviewed_payload",
+          "type": "jsonb",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "support_version",
+          "type": "smallint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "support_payload",
+          "type": "jsonb",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "state",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "dispatched_at",
+          "type": "timestamp(6) with time zone",
+          "default": "NULL::timestamp with time zone",
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "receipt_ref",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "result_target_kind",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "result_target_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "result_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "receipt_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "finalization_state",
+          "type": "text",
+          "default": "'NONE'::text",
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "failure_code",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "retention_state",
+          "type": "text",
+          "default": "'RETAINED'::text",
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "create_claim_active",
+          "type": "boolean",
+          "default": "false",
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "no_commit_basis",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "no_commit_receipt_ref",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "no_commit_receipt_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "no_commit_at",
+          "type": "timestamp(6) with time zone",
+          "default": "NULL::timestamp with time zone",
+          "not_null": false
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_source_output_slots_confirmation_id_slot_key_key ON public.trip_source_output_slots USING btree (confirmation_id, slot_key)",
+        "CREATE UNIQUE INDEX trip_source_output_slots_pkey ON public.trip_source_output_slots USING btree (slot_id)",
+        "CREATE INDEX trip_source_slot_candidate ON public.trip_source_output_slots USING btree (candidate_id, slot_key, intended_target_kind)",
+        "CREATE INDEX trip_source_slot_confirmation ON public.trip_source_output_slots USING btree (confirmation_id, slot_id)",
+        "CREATE UNIQUE INDEX trip_source_slot_create_claim ON public.trip_source_output_slots USING btree (candidate_id, slot_key, intended_target_kind) WHERE ((disposition = 'CREATE'::text) AND create_claim_active)",
+        "CREATE INDEX trip_source_slot_domain_operation ON public.trip_source_output_slots USING btree (adapter_key, domain_operation_key) WHERE (domain_operation_key IS NOT NULL)",
+        "CREATE INDEX trip_source_slot_intended ON public.trip_source_output_slots USING btree (intended_target_id)",
+        "CREATE INDEX trip_source_slot_result ON public.trip_source_output_slots USING btree (result_target_id)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        },
+        {
+          "name": "import_writer_update",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "UPDATE"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "import_scope_guard",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_output_slots_adapter_key_check",
+          "definition": "CHECK ((adapter_key = ANY (ARRAY['itinerary-event-v1'::text, 'itinerary-reservation-evidence-v1'::text])))"
+        },
+        {
+          "name": "trip_source_output_slots_adapter_version_check",
+          "definition": "CHECK ((adapter_version = 1))"
+        },
+        {
+          "name": "trip_source_output_slots_base_revision_check",
+          "definition": "CHECK (((base_revision >= 1) AND (base_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_output_slots_check",
+          "definition": "CHECK ((((support_payload IS NULL) AND (retention_state = 'IDENTITY_ONLY'::text)) OR ((support_payload IS NOT NULL) AND public.trip_import_json_valid(support_payload, 262144))))"
+        },
+        {
+          "name": "trip_source_output_slots_check1",
+          "definition": "CHECK (((disposition = 'CREATE'::text) OR (NOT create_claim_active)))"
+        },
+        {
+          "name": "trip_source_output_slots_check10",
+          "definition": "CHECK (((disposition <> ALL (ARRAY['CREATE'::text, 'REJECT'::text, 'DEFER'::text])) OR (base_revision IS NULL)))"
+        },
+        {
+          "name": "trip_source_output_slots_check11",
+          "definition": "CHECK (((disposition <> 'UPDATE'::text) OR (base_revision IS NOT NULL)))"
+        },
+        {
+          "name": "trip_source_output_slots_check2",
+          "definition": "CHECK ((((receipt_ref IS NULL) = (result_target_kind IS NULL)) AND ((receipt_ref IS NULL) = (result_target_id IS NULL)) AND ((receipt_ref IS NULL) = (result_revision IS NULL)) AND ((receipt_ref IS NULL) = (receipt_sha256 IS NULL))))"
+        },
+        {
+          "name": "trip_source_output_slots_check3",
+          "definition": "CHECK (((receipt_ref IS NULL) OR ((result_target_kind = intended_target_kind) AND (result_target_id = intended_target_id))))"
+        },
+        {
+          "name": "trip_source_output_slots_check4",
+          "definition": "CHECK (((state = ANY (ARRAY['DOMAIN_SUCCEEDED'::text, 'EVIDENCE_PENDING'::text, 'FINALIZED'::text])) = (receipt_ref IS NOT NULL)))"
+        },
+        {
+          "name": "trip_source_output_slots_check5",
+          "definition": "CHECK ((((state <> ALL (ARRAY['DOMAIN_SUCCEEDED'::text, 'EVIDENCE_PENDING'::text, 'FINALIZED'::text])) AND (finalization_state = 'NONE'::text)) OR ((state = 'DOMAIN_SUCCEEDED'::text) AND (finalization_state = 'PENDING'::text)) OR ((state = 'EVIDENCE_PENDING'::text) AND (finalization_state = ANY (ARRAY['PENDING'::text, 'BLOCKED'::text]))) OR ((state = 'FINALIZED'::text) AND (finalization_state = 'COMPLETE'::text))))"
+        },
+        {
+          "name": "trip_source_output_slots_check6",
+          "definition": "CHECK (((state <> 'OUTCOME_UNKNOWN'::text) OR (dispatched_at IS NOT NULL)))"
+        },
+        {
+          "name": "trip_source_output_slots_check7",
+          "definition": "CHECK (((no_commit_basis IS NULL) = (no_commit_at IS NULL)))"
+        },
+        {
+          "name": "trip_source_output_slots_check8",
+          "definition": "CHECK ((((no_commit_basis IS NULL) AND (no_commit_receipt_ref IS NULL) AND (no_commit_receipt_sha256 IS NULL)) OR ((no_commit_basis = 'UNDISPATCHED_REVOKED'::text) AND (state = 'CANCELED'::text) AND (dispatched_at IS NULL) AND (no_commit_receipt_ref IS NULL) AND (no_commit_receipt_sha256 IS NULL) AND (NOT create_claim_active)) OR ((no_commit_basis = 'VERIFIED_TERMINAL_RECEIPT'::text) AND (state = ANY (ARRAY['FAILED'::text, 'CONFLICTED'::text])) AND (no_commit_receipt_ref IS NOT NULL) AND (no_commit_receipt_sha256 IS NOT NULL) AND (NOT create_claim_active))))"
+        },
+        {
+          "name": "trip_source_output_slots_check9",
+          "definition": "CHECK ((((disposition = ANY (ARRAY['CREATE'::text, 'UPDATE'::text, 'LINK_ONLY'::text])) AND (intended_target_kind IS NOT NULL) AND (intended_target_id IS NOT NULL) AND (adapter_key IS NOT NULL) AND (adapter_version IS NOT NULL) AND (domain_operation_key IS NOT NULL) AND (domain_intent_sha256 IS NOT NULL) AND (reviewed_payload IS NOT NULL)) OR ((disposition = ANY (ARRAY['REJECT'::text, 'DEFER'::text])) AND (intended_target_kind IS NULL) AND (intended_target_id IS NULL) AND (base_revision IS NULL) AND (adapter_key IS NULL) AND (adapter_version IS NULL) AND (domain_operation_key IS NULL) AND (domain_intent_sha256 IS NULL) AND (receipt_ref IS NULL) AND (support_payload = '{}'::jsonb) AND (state =\nCASE disposition\n    WHEN 'REJECT'::text THEN 'REJECTED'::text\n    ELSE 'DEFERRED'::text\nEND))))"
+        },
+        {
+          "name": "trip_source_output_slots_confirmation_id_fkey",
+          "definition": "FOREIGN KEY (confirmation_id) REFERENCES public.trip_source_confirmations(id) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_output_slots_confirmation_id_slot_key_key",
+          "definition": "UNIQUE (confirmation_id, slot_key)"
+        },
+        {
+          "name": "trip_source_output_slots_dispatched_at_check",
+          "definition": "CHECK (isfinite(dispatched_at))"
+        },
+        {
+          "name": "trip_source_output_slots_disposition_check",
+          "definition": "CHECK ((disposition = ANY (ARRAY['CREATE'::text, 'UPDATE'::text, 'LINK_ONLY'::text, 'REJECT'::text, 'DEFER'::text])))"
+        },
+        {
+          "name": "trip_source_output_slots_domain_intent_sha256_check",
+          "definition": "CHECK ((domain_intent_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_output_slots_domain_operation_key_check",
+          "definition": "CHECK ((domain_operation_key ~ '^[A-Za-z0-9._:-]{1,128}$'::text))"
+        },
+        {
+          "name": "trip_source_output_slots_failure_code_check",
+          "definition": "CHECK ((failure_code = ANY (ARRAY['INPUT_STALE'::text, 'FORBIDDEN'::text, 'DOMAIN_CONFLICT'::text, 'DOMAIN_REJECTED'::text, 'RECEIPT_UNAVAILABLE'::text, 'EVIDENCE_FINALIZE_FAILED'::text, 'OUTCOME_UNKNOWN'::text])))"
+        },
+        {
+          "name": "trip_source_output_slots_finalization_state_check",
+          "definition": "CHECK ((finalization_state = ANY (ARRAY['NONE'::text, 'PENDING'::text, 'COMPLETE'::text, 'BLOCKED'::text])))"
+        },
+        {
+          "name": "trip_source_output_slots_intended_target_kind_check",
+          "definition": "CHECK ((intended_target_kind = ANY (ARRAY['ITINERARY_EVENT'::text, 'ITINERARY_RESERVATION'::text])))"
+        },
+        {
+          "name": "trip_source_output_slots_no_commit_at_check",
+          "definition": "CHECK (isfinite(no_commit_at))"
+        },
+        {
+          "name": "trip_source_output_slots_no_commit_basis_check",
+          "definition": "CHECK ((no_commit_basis = ANY (ARRAY['UNDISPATCHED_REVOKED'::text, 'VERIFIED_TERMINAL_RECEIPT'::text])))"
+        },
+        {
+          "name": "trip_source_output_slots_no_commit_receipt_ref_check",
+          "definition": "CHECK (((char_length(no_commit_receipt_ref) >= 1) AND (char_length(no_commit_receipt_ref) <= 512)))"
+        },
+        {
+          "name": "trip_source_output_slots_no_commit_receipt_sha256_check",
+          "definition": "CHECK ((no_commit_receipt_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_output_slots_pkey",
+          "definition": "PRIMARY KEY (slot_id)"
+        },
+        {
+          "name": "trip_source_output_slots_receipt_ref_check",
+          "definition": "CHECK (((char_length(receipt_ref) >= 1) AND (char_length(receipt_ref) <= 512)))"
+        },
+        {
+          "name": "trip_source_output_slots_receipt_sha256_check",
+          "definition": "CHECK ((receipt_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_output_slots_result_revision_check",
+          "definition": "CHECK (((result_revision >= 1) AND (result_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_output_slots_result_target_id_fkey",
+          "definition": "FOREIGN KEY (result_target_id) REFERENCES public.itinerary_events(id) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_output_slots_result_target_kind_check",
+          "definition": "CHECK ((result_target_kind = ANY (ARRAY['ITINERARY_EVENT'::text, 'ITINERARY_RESERVATION'::text])))"
+        },
+        {
+          "name": "trip_source_output_slots_retention_state_check",
+          "definition": "CHECK ((retention_state = ANY (ARRAY['RETAINED'::text, 'IDENTITY_ONLY'::text])))"
+        },
+        {
+          "name": "trip_source_output_slots_reviewed_payload_check",
+          "definition": "CHECK (public.trip_import_json_valid(reviewed_payload, 262144))"
+        },
+        {
+          "name": "trip_source_output_slots_reviewed_run_id_candidate_id_fkey",
+          "definition": "FOREIGN KEY (reviewed_run_id, candidate_id) REFERENCES public.trip_source_candidates(run_id, id) MATCH FULL ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_output_slots_slot_key_check",
+          "definition": "CHECK ((slot_key ~ '^[A-Za-z0-9._:-]{1,128}$'::text))"
+        },
+        {
+          "name": "trip_source_output_slots_state_check",
+          "definition": "CHECK ((state = ANY (ARRAY['PREPARED'::text, 'OUTCOME_UNKNOWN'::text, 'DOMAIN_SUCCEEDED'::text, 'EVIDENCE_PENDING'::text, 'FINALIZED'::text, 'REJECTED'::text, 'DEFERRED'::text, 'CONFLICTED'::text, 'FAILED'::text, 'CANCELED'::text])))"
+        },
+        {
+          "name": "trip_source_output_slots_support_version_check",
+          "definition": "CHECK ((support_version = 1))"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=r/postgres"],
+      "name": "trip_source_representations",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "row_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "introduced_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "role",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "material_kind",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "original_filename",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "part_key",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "mime_type",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "encoding",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "payload_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "byte_count",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "text_content",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "locator_uri",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "parent_ids",
+          "type": "uuid[]",
+          "default": "'{}'::uuid[]",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "transform_key",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "transform_version",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "transform_options_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "regenerability",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "storage_provider",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "storage_bucket",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "object_key",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "remote_state",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "verified_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "retention_state",
+          "type": "text",
+          "default": "'RETAINED'::text",
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_source_representations_pkey ON public.trip_source_representations USING btree (id)",
+        "CREATE UNIQUE INDEX trip_source_representations_source_id_id_key ON public.trip_source_representations USING btree (source_id, id)",
+        "CREATE UNIQUE INDEX trip_source_representations_storage_bucket_object_key_key ON public.trip_source_representations USING btree (storage_bucket, object_key)"
+      ],
+      "policies": [
+        {
+          "name": "import_representation_pin_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "trip_source_aggregate_check",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_representation_structure",
+          "definition": "CHECK (public.trip_source_representation_valid(to_jsonb(trip_source_representations.*)))"
+        },
+        {
+          "name": "trip_source_representations_check",
+          "definition": "CHECK (public.trip_source_uuid_array_valid(parent_ids,\nCASE\n    WHEN (role = 'ORIGINAL'::text) THEN 0\n    ELSE 1\nEND,\nCASE\n    WHEN (role = 'ORIGINAL'::text) THEN 0\n    ELSE 16\nEND))"
+        },
+        {
+          "name": "trip_source_representations_check1",
+          "definition": "CHECK ((NOT (id = ANY (parent_ids))))"
+        },
+        {
+          "name": "trip_source_representations_check2",
+          "definition": "CHECK ((((payload_sha256 ~ '^[0-9a-f]{64}$'::text) AND (payload_sha256 IS NOT NULL)) OR ((payload_sha256 IS NULL) AND (retention_state = 'IDENTITY_ONLY'::text))))"
+        },
+        {
+          "name": "trip_source_representations_check3",
+          "definition": "CHECK (((((byte_count >= 0) AND (byte_count <= '9007199254740991'::bigint)) AND (byte_count IS NOT NULL)) OR ((byte_count IS NULL) AND (retention_state = 'IDENTITY_ONLY'::text))))"
+        },
+        {
+          "name": "trip_source_representations_check4",
+          "definition": "CHECK ((((role = 'ORIGINAL'::text) AND (transform_key IS NULL) AND (transform_version IS NULL) AND (transform_options_sha256 IS NULL) AND (regenerability = 'NOT_APPLICABLE'::text)) OR ((role = 'DERIVED'::text) AND (transform_key IS NOT NULL) AND (transform_version IS NOT NULL) AND ((transform_options_sha256 IS NOT NULL) OR (retention_state = 'IDENTITY_ONLY'::text)) AND (regenerability = ANY (ARRAY['POSSIBLE'::text, 'IMPOSSIBLE'::text])))))"
+        },
+        {
+          "name": "trip_source_representations_created_at_check",
+          "definition": "CHECK (isfinite(created_at))"
+        },
+        {
+          "name": "trip_source_representations_locator_uri_check",
+          "definition": "CHECK (((char_length(locator_uri) <= 4096) AND (octet_length(locator_uri) <= 16384) AND (locator_uri ~ '^https?://[^[:space:]]+$'::text)))"
+        },
+        {
+          "name": "trip_source_representations_material_kind_check",
+          "definition": "CHECK ((material_kind = ANY (ARRAY['BINARY'::text, 'TEXT'::text, 'LOCATOR'::text])))"
+        },
+        {
+          "name": "trip_source_representations_original_filename_check",
+          "definition": "CHECK (((char_length(original_filename) >= 1) AND (char_length(original_filename) <= 255)))"
+        },
+        {
+          "name": "trip_source_representations_part_key_check",
+          "definition": "CHECK (((char_length(part_key) >= 1) AND (char_length(part_key) <= 128)))"
+        },
+        {
+          "name": "trip_source_representations_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "trip_source_representations_regenerability_check",
+          "definition": "CHECK ((regenerability = ANY (ARRAY['NOT_APPLICABLE'::text, 'POSSIBLE'::text, 'IMPOSSIBLE'::text])))"
+        },
+        {
+          "name": "trip_source_representations_remote_state_check",
+          "definition": "CHECK ((remote_state = ANY (ARRAY['PENDING'::text, 'VERIFIED'::text, 'LOST'::text, 'PURGED'::text, 'NOT_APPLICABLE'::text])))"
+        },
+        {
+          "name": "trip_source_representations_retention_state_check",
+          "definition": "CHECK ((retention_state = ANY (ARRAY['RETAINED'::text, 'PURGE_PENDING'::text, 'PAYLOAD_PURGED'::text, 'IDENTITY_ONLY'::text])))"
+        },
+        {
+          "name": "trip_source_representations_role_check",
+          "definition": "CHECK ((role = ANY (ARRAY['ORIGINAL'::text, 'DERIVED'::text])))"
+        },
+        {
+          "name": "trip_source_representations_row_revision_check",
+          "definition": "CHECK (((row_revision >= 1) AND (row_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_representations_source_id_fkey",
+          "definition": "FOREIGN KEY (source_id) REFERENCES public.trip_sources(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_representations_source_id_id_key",
+          "definition": "UNIQUE (source_id, id)"
+        },
+        {
+          "name": "trip_source_representations_source_id_introduced_revision_fkey",
+          "definition": "FOREIGN KEY (source_id, introduced_revision) REFERENCES public.trip_source_revisions(source_id, material_revision) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_representations_storage_bucket_object_key_key",
+          "definition": "UNIQUE (storage_bucket, object_key)"
+        },
+        {
+          "name": "trip_source_representations_text_content_check",
+          "definition": "CHECK ((octet_length(text_content) <= 262144))"
+        },
+        {
+          "name": "trip_source_representations_transform_key_check",
+          "definition": "CHECK (((char_length(transform_key) >= 1) AND (char_length(transform_key) <= 128)))"
+        },
+        {
+          "name": "trip_source_representations_transform_options_sha256_check",
+          "definition": "CHECK (((transform_options_sha256 IS NULL) OR (transform_options_sha256 ~ '^[0-9a-f]{64}$'::text)))"
+        },
+        {
+          "name": "trip_source_representations_transform_version_check",
+          "definition": "CHECK (((char_length(transform_version) >= 1) AND (char_length(transform_version) <= 128)))"
+        },
+        {
+          "name": "trip_source_representations_verified_at_check",
+          "definition": "CHECK (((verified_at IS NULL) OR isfinite(verified_at)))"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=r/postgres"],
+      "name": "trip_source_revisions",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "source_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "material_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "previous_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "operation_key",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "capture_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "original_representation_ids",
+          "type": "uuid[]",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "completeness",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "reason",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "origin_source_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "origin_material_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "retention_state",
+          "type": "text",
+          "default": "'RETAINED'::text",
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_source_revisions_pkey ON public.trip_source_revisions USING btree (source_id, material_revision)",
+        "CREATE UNIQUE INDEX trip_source_revisions_source_id_operation_key_key ON public.trip_source_revisions USING btree (source_id, operation_key)"
+      ],
+      "policies": [
+        {
+          "name": "import_revision_pin_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "trip_source_aggregate_check",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_revisions_check",
+          "definition": "CHECK ((((capture_sha256 ~ '^[0-9a-f]{64}$'::text) AND (capture_sha256 IS NOT NULL)) OR ((capture_sha256 IS NULL) AND (retention_state = 'IDENTITY_ONLY'::text))))"
+        },
+        {
+          "name": "trip_source_revisions_check1",
+          "definition": "CHECK ((((material_revision = 1) AND (previous_revision IS NULL) AND (reason = ANY (ARRAY['ACQUISITION'::text, 'AUTHORIZED_COPY'::text]))) OR ((material_revision > 1) AND (previous_revision = (material_revision - 1)) AND (previous_revision IS NOT NULL) AND (reason = ANY (ARRAY['REPLACEMENT'::text, 'REFRESH'::text, 'ADD_PART'::text, 'SAVED_TEXT_EDIT'::text])))))"
+        },
+        {
+          "name": "trip_source_revisions_check2",
+          "definition": "CHECK ((((origin_source_id IS NULL) = (origin_material_revision IS NULL)) AND ((reason = 'AUTHORIZED_COPY'::text) = (origin_source_id IS NOT NULL)) AND ((origin_source_id IS NULL) OR (origin_source_id <> source_id))))"
+        },
+        {
+          "name": "trip_source_revisions_completeness_check",
+          "definition": "CHECK ((completeness = ANY (ARRAY['AS_SUPPLIED'::text, 'PARTIAL_CAPTURE'::text])))"
+        },
+        {
+          "name": "trip_source_revisions_created_at_check",
+          "definition": "CHECK (isfinite(created_at))"
+        },
+        {
+          "name": "trip_source_revisions_created_by_fkey",
+          "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_revisions_material_revision_check",
+          "definition": "CHECK (((material_revision >= 1) AND (material_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_revisions_operation_key_check",
+          "definition": "CHECK ((operation_key ~ '^[A-Za-z0-9._:-]{1,128}$'::text))"
+        },
+        {
+          "name": "trip_source_revisions_origin_source_id_origin_material_rev_fkey",
+          "definition": "FOREIGN KEY (origin_source_id, origin_material_revision) REFERENCES public.trip_source_revisions(source_id, material_revision) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_revisions_original_representation_ids_check",
+          "definition": "CHECK (public.trip_source_uuid_array_valid(original_representation_ids, 1, 64))"
+        },
+        {
+          "name": "trip_source_revisions_pkey",
+          "definition": "PRIMARY KEY (source_id, material_revision)"
+        },
+        {
+          "name": "trip_source_revisions_reason_check",
+          "definition": "CHECK ((reason = ANY (ARRAY['ACQUISITION'::text, 'REPLACEMENT'::text, 'REFRESH'::text, 'ADD_PART'::text, 'SAVED_TEXT_EDIT'::text, 'AUTHORIZED_COPY'::text])))"
+        },
+        {
+          "name": "trip_source_revisions_retention_state_check",
+          "definition": "CHECK ((retention_state = ANY (ARRAY['RETAINED'::text, 'IDENTITY_ONLY'::text])))"
+        },
+        {
+          "name": "trip_source_revisions_source_id_fkey",
+          "definition": "FOREIGN KEY (source_id) REFERENCES public.trip_sources(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_revisions_source_id_operation_key_key",
+          "definition": "UNIQUE (source_id, operation_key)"
+        },
+        {
+          "name": "trip_source_revisions_source_id_previous_revision_fkey",
+          "definition": "FOREIGN KEY (source_id, previous_revision) REFERENCES public.trip_source_revisions(source_id, material_revision) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_run_predecessors",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "child_run_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "parent_run_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "relation",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX trip_source_run_predecessors_parent ON public.trip_source_run_predecessors USING btree (parent_run_id, child_run_id)",
+        "CREATE UNIQUE INDEX trip_source_run_predecessors_pkey ON public.trip_source_run_predecessors USING btree (child_run_id, parent_run_id)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "import_scope_guard",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_run_predecessors_check",
+          "definition": "CHECK ((child_run_id <> parent_run_id))"
+        },
+        {
+          "name": "trip_source_run_predecessors_child_run_id_fkey",
+          "definition": "FOREIGN KEY (child_run_id) REFERENCES public.trip_source_runs(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_run_predecessors_parent_run_id_fkey",
+          "definition": "FOREIGN KEY (parent_run_id) REFERENCES public.trip_source_runs(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_run_predecessors_pkey",
+          "definition": "PRIMARY KEY (child_run_id, parent_run_id)"
+        },
+        {
+          "name": "trip_source_run_predecessors_relation_check",
+          "definition": "CHECK ((relation = ANY (ARRAY['REPROCESS'::text, 'CONSOLIDATE'::text])))"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_runs",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "row_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "trip_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "actor_account_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "operation_key",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "scope_source_ids",
+          "type": "uuid[]",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "scope_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "generation",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "input_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "extractor_key",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "extractor_version",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "extractor_options_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "state",
+          "type": "text",
+          "default": "'PENDING'::text",
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "superseded_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "completed_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "error_code",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": ["otr_trip_source_writer=w/postgres"],
+          "name": "retention_state",
+          "type": "text",
+          "default": "'RETAINED'::text",
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_source_runs_pkey ON public.trip_source_runs USING btree (id)",
+        "CREATE INDEX trip_source_runs_scope ON public.trip_source_runs USING btree (trip_id, actor_account_id, scope_sha256, generation DESC)",
+        "CREATE INDEX trip_source_runs_superseded ON public.trip_source_runs USING btree (superseded_by)",
+        "CREATE UNIQUE INDEX trip_source_runs_trip_id_actor_account_id_operation_key_key ON public.trip_source_runs USING btree (trip_id, actor_account_id, operation_key)",
+        "CREATE UNIQUE INDEX trip_source_runs_trip_id_actor_account_id_scope_sha256_gene_key ON public.trip_source_runs USING btree (trip_id, actor_account_id, scope_sha256, generation)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        },
+        {
+          "name": "import_writer_update",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "UPDATE"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "import_scope_guard",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_runs_actor_account_id_fkey",
+          "definition": "FOREIGN KEY (actor_account_id) REFERENCES auth.users(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_runs_check",
+          "definition": "CHECK (((state = 'FAILED'::text) = (error_code IS NOT NULL)))"
+        },
+        {
+          "name": "trip_source_runs_check1",
+          "definition": "CHECK (((state = ANY (ARRAY['READY'::text, 'FAILED'::text])) = (completed_at IS NOT NULL)))"
+        },
+        {
+          "name": "trip_source_runs_completed_at_check",
+          "definition": "CHECK (isfinite(completed_at))"
+        },
+        {
+          "name": "trip_source_runs_created_at_check",
+          "definition": "CHECK (isfinite(created_at))"
+        },
+        {
+          "name": "trip_source_runs_error_code_check",
+          "definition": "CHECK ((error_code = ANY (ARRAY['SOURCE_FAILURE'::text, 'UNSUPPORTED_INPUT'::text, 'EXTRACTOR_FAILURE'::text, 'CANCELED'::text])))"
+        },
+        {
+          "name": "trip_source_runs_extractor_key_check",
+          "definition": "CHECK ((((char_length(extractor_key) >= 1) AND (char_length(extractor_key) <= 128)) AND (btrim(extractor_key) <> ''::text)))"
+        },
+        {
+          "name": "trip_source_runs_extractor_options_sha256_check",
+          "definition": "CHECK ((extractor_options_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_runs_extractor_version_check",
+          "definition": "CHECK ((((char_length(extractor_version) >= 1) AND (char_length(extractor_version) <= 128)) AND (btrim(extractor_version) <> ''::text)))"
+        },
+        {
+          "name": "trip_source_runs_generation_check",
+          "definition": "CHECK (((generation >= 1) AND (generation <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_runs_input_sha256_check",
+          "definition": "CHECK ((input_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_runs_operation_key_check",
+          "definition": "CHECK ((operation_key ~ '^[A-Za-z0-9._:-]{1,128}$'::text))"
+        },
+        {
+          "name": "trip_source_runs_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "trip_source_runs_retention_state_check",
+          "definition": "CHECK ((retention_state = ANY (ARRAY['RETAINED'::text, 'IDENTITY_ONLY'::text])))"
+        },
+        {
+          "name": "trip_source_runs_row_revision_check",
+          "definition": "CHECK (((row_revision >= 1) AND (row_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_runs_scope_sha256_check",
+          "definition": "CHECK ((scope_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_runs_scope_source_ids_check",
+          "definition": "CHECK (public.trip_source_uuid_array_valid(scope_source_ids, 1, 64))"
+        },
+        {
+          "name": "trip_source_runs_state_check",
+          "definition": "CHECK ((state = ANY (ARRAY['PENDING'::text, 'RUNNING'::text, 'READY'::text, 'FAILED'::text])))"
+        },
+        {
+          "name": "trip_source_runs_superseded_by_fkey",
+          "definition": "FOREIGN KEY (superseded_by) REFERENCES public.trip_source_runs(id) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_runs_trip_id_actor_account_id_operation_key_key",
+          "definition": "UNIQUE (trip_id, actor_account_id, operation_key)"
+        },
+        {
+          "name": "trip_source_runs_trip_id_actor_account_id_scope_sha256_gene_key",
+          "definition": "UNIQUE (trip_id, actor_account_id, scope_sha256, generation)"
+        },
+        {
+          "name": "trip_source_runs_trip_id_fkey",
+          "definition": "FOREIGN KEY (trip_id) REFERENCES public.trips(id) ON DELETE RESTRICT"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_slot_dependencies",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "slot_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "predecessor_slot_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "dependency_kind",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "expected_receipt_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "expected_target_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "expected_result_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_source_slot_dependencies_pkey ON public.trip_source_slot_dependencies USING btree (slot_id, predecessor_slot_id)",
+        "CREATE INDEX trip_source_slot_dependencies_predecessor ON public.trip_source_slot_dependencies USING btree (predecessor_slot_id, slot_id)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "import_scope_guard",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_slot_dependencies_check",
+          "definition": "CHECK ((slot_id <> predecessor_slot_id))"
+        },
+        {
+          "name": "trip_source_slot_dependencies_dependency_kind_check",
+          "definition": "CHECK ((dependency_kind = 'RECEIPT_SUCCESS'::text))"
+        },
+        {
+          "name": "trip_source_slot_dependencies_expected_receipt_sha256_check",
+          "definition": "CHECK ((expected_receipt_sha256 ~ '^[0-9a-f]{64}$'::text))"
+        },
+        {
+          "name": "trip_source_slot_dependencies_expected_result_revision_check",
+          "definition": "CHECK (((expected_result_revision >= 1) AND (expected_result_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_source_slot_dependencies_expected_target_id_fkey",
+          "definition": "FOREIGN KEY (expected_target_id) REFERENCES public.itinerary_events(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_slot_dependencies_pkey",
+          "definition": "PRIMARY KEY (slot_id, predecessor_slot_id)"
+        },
+        {
+          "name": "trip_source_slot_dependencies_predecessor_slot_id_fkey",
+          "definition": "FOREIGN KEY (predecessor_slot_id) REFERENCES public.trip_source_output_slots(slot_id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_slot_dependencies_slot_id_fkey",
+          "definition": "FOREIGN KEY (slot_id) REFERENCES public.trip_source_output_slots(slot_id) ON DELETE RESTRICT"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": ["postgres=arwdDxtm/postgres", "otr_trip_source_writer=ar/postgres"],
+      "name": "trip_source_slot_lineage_dispositions",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "slot_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "ancestor_candidate_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "ancestor_slot_key",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "relation",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "review_reason",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "reviewed_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "reviewed_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": true
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX trip_source_slot_lineage_ancestor ON public.trip_source_slot_lineage_dispositions USING btree (ancestor_candidate_id, ancestor_slot_key, slot_id)",
+        "CREATE UNIQUE INDEX trip_source_slot_lineage_dispositions_pkey ON public.trip_source_slot_lineage_dispositions USING btree (slot_id, ancestor_candidate_id, ancestor_slot_key)"
+      ],
+      "policies": [
+        {
+          "name": "import_writer_insert",
+          "check": "true",
+          "roles": ["otr_trip_source_writer"],
+          "using": null,
+          "command": "INSERT"
+        },
+        {
+          "name": "import_writer_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "import_scope_guard",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_slot_lineage_disposition_ancestor_candidate_id_fkey",
+          "definition": "FOREIGN KEY (ancestor_candidate_id) REFERENCES public.trip_source_candidates(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_slot_lineage_dispositions_ancestor_slot_key_check",
+          "definition": "CHECK ((ancestor_slot_key ~ '^[A-Za-z0-9._:-]{1,128}$'::text))"
+        },
+        {
+          "name": "trip_source_slot_lineage_dispositions_pkey",
+          "definition": "PRIMARY KEY (slot_id, ancestor_candidate_id, ancestor_slot_key)"
+        },
+        {
+          "name": "trip_source_slot_lineage_dispositions_relation_check",
+          "definition": "CHECK ((relation = ANY (ARRAY['CONTINUE'::text, 'MERGE_CONTINUE'::text, 'DISTINCT_OUTPUT'::text])))"
+        },
+        {
+          "name": "trip_source_slot_lineage_dispositions_review_reason_check",
+          "definition": "CHECK ((((char_length(review_reason) >= 1) AND (char_length(review_reason) <= 500)) AND (btrim(review_reason) <> ''::text)))"
+        },
+        {
+          "name": "trip_source_slot_lineage_dispositions_reviewed_at_check",
+          "definition": "CHECK (isfinite(reviewed_at))"
+        },
+        {
+          "name": "trip_source_slot_lineage_dispositions_reviewed_by_fkey",
+          "definition": "FOREIGN KEY (reviewed_by) REFERENCES auth.users(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_source_slot_lineage_dispositions_slot_id_fkey",
+          "definition": "FOREIGN KEY (slot_id) REFERENCES public.trip_source_output_slots(slot_id) ON DELETE RESTRICT"
+        }
+      ],
+      "rls_enabled": true
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "otr_trip_source_operation_reader=r/postgres",
+        "otr_trip_source_writer=r/postgres"
+      ],
+      "name": "trip_sources",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "trip_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "acquired_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "acquisition_key",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "acquisition_sha256",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "source_kind",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "acquisition_channel",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "captured_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "capture_time_basis",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "access_mode",
+          "type": "text",
+          "default": "'OWNER_PRIVATE'::text",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "lifecycle",
+          "type": "text",
+          "default": "'ACTIVE'::text",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "current_material_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "row_revision",
+          "type": "bigint",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "retention_state",
+          "type": "text",
+          "default": "'RETAINED'::text",
+          "not_null": true
+        },
+        {
+          "acl": null,
+          "name": "deleted_at",
+          "type": "timestamp(6) with time zone",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "acl": null,
+          "name": "deleted_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX trip_sources_pkey ON public.trip_sources USING btree (id)",
+        "CREATE UNIQUE INDEX trip_sources_trip_id_acquired_by_acquisition_key_key ON public.trip_sources USING btree (trip_id, acquired_by, acquisition_key)"
+      ],
+      "policies": [
+        {
+          "name": "import_source_pin_read",
+          "check": null,
+          "roles": ["otr_trip_source_writer"],
+          "using": "true",
+          "command": "SELECT"
+        },
+        {
+          "name": "trip_source_owner_read",
+          "check": null,
+          "roles": ["otr_trip_source_operation_reader"],
+          "using": "true",
+          "command": "SELECT"
+        }
+      ],
+      "rls_forced": true,
+      "constraints": [
+        {
+          "name": "trip_source_aggregate_check",
+          "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_source_current_revision_fk",
+          "definition": "FOREIGN KEY (id, current_material_revision) REFERENCES public.trip_source_revisions(source_id, material_revision) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED"
+        },
+        {
+          "name": "trip_sources_access_mode_check",
+          "definition": "CHECK ((access_mode = 'OWNER_PRIVATE'::text))"
+        },
+        {
+          "name": "trip_sources_acquired_by_fkey",
+          "definition": "FOREIGN KEY (acquired_by) REFERENCES auth.users(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_sources_acquisition_key_check",
+          "definition": "CHECK ((acquisition_key ~ '^[A-Za-z0-9._:-]{1,128}$'::text))"
+        },
+        {
+          "name": "trip_sources_capture_time_basis_check",
+          "definition": "CHECK ((capture_time_basis = ANY (ARRAY['OBSERVED'::text, 'SUPPLIED'::text, 'UNKNOWN'::text])))"
+        },
+        {
+          "name": "trip_sources_check",
+          "definition": "CHECK ((((acquisition_sha256 ~ '^[0-9a-f]{64}$'::text) AND (acquisition_sha256 IS NOT NULL)) OR ((acquisition_sha256 IS NULL) AND (retention_state = 'IDENTITY_ONLY'::text))))"
+        },
+        {
+          "name": "trip_sources_check1",
+          "definition": "CHECK ((((capture_time_basis = 'UNKNOWN'::text) = (captured_at IS NULL)) AND ((captured_at IS NULL) OR isfinite(captured_at))))"
+        },
+        {
+          "name": "trip_sources_check2",
+          "definition": "CHECK ((((lifecycle = 'DELETED'::text) = (deleted_at IS NOT NULL)) AND ((lifecycle = 'DELETED'::text) = (deleted_by IS NOT NULL)) AND ((deleted_at IS NULL) OR isfinite(deleted_at))))"
+        },
+        {
+          "name": "trip_sources_check3",
+          "definition": "CHECK (((acquisition_channel = 'COPY'::text) OR ((source_kind = 'FILE'::text) AND (acquisition_channel = 'FILES'::text)) OR ((source_kind = 'IMAGE'::text) AND (acquisition_channel = ANY (ARRAY['CAMERA'::text, 'PHOTOS'::text, 'FILES'::text]))) OR ((source_kind = 'TEXT'::text) AND (acquisition_channel = 'PASTE'::text)) OR ((source_kind = 'URL'::text) AND (acquisition_channel = 'URL_CAPTURE'::text)) OR ((source_kind = 'EMAIL'::text) AND (acquisition_channel = 'EMAIL_INPUT'::text))))"
+        },
+        {
+          "name": "trip_sources_created_at_check",
+          "definition": "CHECK (isfinite(created_at))"
+        },
+        {
+          "name": "trip_sources_current_material_revision_check",
+          "definition": "CHECK (((current_material_revision >= 1) AND (current_material_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_sources_deleted_by_fkey",
+          "definition": "FOREIGN KEY (deleted_by) REFERENCES auth.users(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "trip_sources_lifecycle_check",
+          "definition": "CHECK ((lifecycle = ANY (ARRAY['ACTIVE'::text, 'DELETED'::text])))"
+        },
+        {
+          "name": "trip_sources_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "trip_sources_retention_state_check",
+          "definition": "CHECK ((retention_state = ANY (ARRAY['RETAINED'::text, 'IDENTITY_ONLY'::text])))"
+        },
+        {
+          "name": "trip_sources_row_revision_check",
+          "definition": "CHECK (((row_revision >= 1) AND (row_revision <= '9007199254740991'::bigint)))"
+        },
+        {
+          "name": "trip_sources_source_kind_check",
+          "definition": "CHECK ((source_kind = ANY (ARRAY['FILE'::text, 'IMAGE'::text, 'TEXT'::text, 'URL'::text, 'EMAIL'::text])))"
+        },
+        {
+          "name": "trip_sources_trip_id_acquired_by_acquisition_key_key",
+          "definition": "UNIQUE (trip_id, acquired_by, acquisition_key)"
+        },
+        {
+          "name": "trip_sources_trip_id_fkey",
+          "definition": "FOREIGN KEY (trip_id) REFERENCES public.trips(id) ON DELETE RESTRICT"
+        }
+      ],
+      "rls_enabled": true
+    }
+  ],
+  "version": 1,
+  "functions": [
+    {
+      "acl": ["postgres=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.assert_trip_flight_services(uuid)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": false,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "73235e99a147efd912042cbb718ba7925cd47610ee6c75a8b03a80b67816a45a"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_event_semantic_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.guard_trip_import_services()",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": false,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "8170367c11c8e3badbec0d5053e03a8aaa1c3e9f18074eefbc4dc437cb6c0d4c"
+    },
+    {
+      "acl": [
+        "otr_trip_event_semantic_writer=X/otr_trip_event_semantic_writer",
+        "otr_trip_event_command_gateway=X/otr_trip_event_semantic_writer"
+      ],
+      "owner": "otr_trip_event_semantic_writer",
+      "signature": "public.trip_event_create_transport(uuid,uuid,uuid,uuid,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": false,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": true,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "fb39903a06055cd315ade4a29fbc2ab30bc8bcfb5137f907405cd5d04ae77995"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_event_semantic_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_event_execute_flight(text,uuid,uuid,uuid,uuid,bigint,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": false,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "e7e70b2694b6f8de7a472b13cbcba38b9e90670a620342213fba1628f249c75b"
+    },
+    {
+      "acl": [
+        "otr_trip_event_receipt_reader=X/otr_trip_event_receipt_reader",
+        "otr_trip_source_writer=X/otr_trip_event_receipt_reader"
+      ],
+      "owner": "otr_trip_event_receipt_reader",
+      "signature": "public.trip_event_receipt_for_source_slot(uuid,uuid,uuid,uuid,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": true,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "e4ea8984a8c34a3939ca207fa7324d4d7a6c3488576b85284d7b1f5bf09e7b6f"
+    },
+    {
+      "acl": [
+        "otr_trip_event_semantic_writer=X/otr_trip_event_semantic_writer",
+        "otr_trip_event_command_gateway=X/otr_trip_event_semantic_writer"
+      ],
+      "owner": "otr_trip_event_semantic_writer",
+      "signature": "public.trip_event_update_transport(uuid,uuid,uuid,uuid,bigint,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": false,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": true,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "47c6d373d3250c48686d4d31cfd47e8aa5f95142d7e2373dece7daef1f047237"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_event_semantic_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_flight_endpoint(jsonb,uuid,text,jsonb,public.itinerary_transport_endpoints)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": false,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "bf4294e54e499dd6e3bb8aacd5c55f033960beb50a159c9cf3a6047aa42f3244"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_event_semantic_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_flight_payload_keys(text,jsonb)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": false,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "4dc11127c80c34b90f50c83fe47c7d49832df65b78615d6cb9dff8e62879e187"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_source_writer=X/postgres",
+        "otr_trip_event_semantic_writer=X/postgres"
+      ],
+      "owner": "postgres",
+      "signature": "public.trip_flight_services_valid(jsonb)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "bc7111414bec4fb6cee227122c3ca337f855c21b493a2564316aec7a1fe0f33d"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_catalog_scope_guard()",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "29f1813628c769b94c1db533a19d4492eba141968ed54d9dcb10aa65ce2be9bd"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_catalog_write_guard()",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "9f2555bcc196213d537ec72024f55c52296f56ec6555262fa2c62854dc4f5a82"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_claim_check(public.trip_source_output_slots)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "adadb656e64d8473bee13661b1b8528f2a1bc9cb143f45323a890f95da012348"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_field_key_valid(text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "47d726492a4c3a0c645072a18ae0b3f1067f3c992ffa1fd0f3df2b62a4017cde"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_source_writer=X/postgres",
+        "otr_trip_event_semantic_writer=X/postgres"
+      ],
+      "owner": "postgres",
+      "signature": "public.trip_import_field_value(jsonb,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "8828c681e3e0a6eccdbb04f7963fd814f019794686ada3ce4cff4b140fa2ff1f"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_input_valid(public.trip_source_inputs,uuid,uuid,boolean)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "e0fd10a08107b6f43722f28dd248b7f54679b341d92059cdbb0c9b8687b8d862"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_source_writer=X/postgres",
+        "otr_trip_event_semantic_writer=X/postgres"
+      ],
+      "owner": "postgres",
+      "signature": "public.trip_import_json_valid(jsonb,integer)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "92841feaef43c0c8db9238213d2cf9ac1d0b3a64a72193ed7132ce3868304199"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_lineage_candidates(uuid)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "4f03699fc02987e8a30fa5c6d50b4e13a0e60b9bf311da39556bd34aeb928c9b"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_locators_valid(jsonb,uuid[])",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "276eaf1cc9356148f9f215997c3af80f378610e7c58acdbf614f6d42c52aacd0"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_lock_admission(uuid,uuid)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "49b36357a769657d44bf5d50083d73598af56061a643a95b9a543461c70ea509"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_observation(jsonb)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "65bac778fe16e445e7436e80bb5234134854a8772d16335900cfc82737ccb53f"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_source_writer=X/postgres",
+        "otr_trip_event_semantic_writer=X/postgres"
+      ],
+      "owner": "postgres",
+      "signature": "public.trip_import_require_gate()",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "2730e6e6fc7cc6b69b267bdfd9fc839ba043e86ef500f5ef29b8f6f1f16cfddd"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_review_valid(jsonb,jsonb,uuid,uuid,text,uuid)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "d69f2b6f81b650d946d20857207dcbdb45c3515f1deaa13dbdbab25d1e635607"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_run_input_hash(jsonb)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "9747298d0ca132f77833671a703d3b90d3e303d4cbc5e5d987eff7ff8494d36a"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "otr_trip_source_writer=X/postgres",
+        "otr_trip_event_semantic_writer=X/postgres"
+      ],
+      "owner": "postgres",
+      "signature": "public.trip_import_scope_lock(uuid,uuid)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "69d0a39f3987bd195034d0a752e9a25ba5c82fa85ecfc5dea9233e2747063a26"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_import_value_valid(text,jsonb)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "78fecbcd01fd7dfd39b7ee018cce465c0d7dbb23ba9f2d18f79da508201d3c1d"
+    },
+    {
+      "acl": ["otr_trip_source_writer=X/otr_trip_source_writer"],
+      "owner": "otr_trip_source_writer",
+      "signature": "public.trip_source_admit_event_operation(uuid,uuid,uuid,uuid,text,bigint,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "d6dfb0223eacfb269d2aa6564498678c0d91f555d058620d486d1aa944e79e62"
+    },
+    {
+      "acl": [
+        "otr_trip_source_writer=X/otr_trip_source_writer",
+        "otr_trip_event_semantic_writer=X/otr_trip_source_writer"
+      ],
+      "owner": "otr_trip_source_writer",
+      "signature": "public.trip_source_admit_event_proof(uuid,uuid,uuid,uuid,text,bigint,text,uuid,uuid,text,jsonb)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": true,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "fd8e031fe688fff02e470895d984e578eff2c14a01584a56e52a659fbd798e9b"
+    },
+    {
+      "acl": [
+        "otr_trip_source_writer=X/otr_trip_source_writer",
+        "otr_trip_source_command_gateway=X/otr_trip_source_writer"
+      ],
+      "owner": "otr_trip_source_writer",
+      "signature": "public.trip_source_finalize_event_slot(uuid,uuid,uuid,bigint,uuid,uuid)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": true,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "96a55ca7f33709ff1bc9e9584eff849b0aa533021f4df13ffc7362655bf43786"
+    },
+    {
+      "acl": ["postgres=X/postgres", "otr_trip_source_writer=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.trip_source_lock_scope(uuid,uuid,uuid)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": false,
+      "definition_sha256": "c342f9e29a483eeef2ee6f8a3ba011be33213eb62bcca8e690f3d8c07a79414c"
+    },
+    {
+      "acl": [
+        "otr_trip_source_writer=X/otr_trip_source_writer",
+        "otr_trip_source_command_gateway=X/otr_trip_source_writer"
+      ],
+      "owner": "otr_trip_source_writer",
+      "signature": "public.trip_source_mark_slot_dispatch(uuid,uuid,uuid,bigint,uuid,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": true,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "2ee556ab502b69b98d047c5b43879b9b4502ce9bd0fa3bec20a4d48d37fa7a17"
+    },
+    {
+      "acl": [
+        "otr_trip_source_writer=X/otr_trip_source_writer",
+        "otr_trip_source_command_gateway=X/otr_trip_source_writer"
+      ],
+      "owner": "otr_trip_source_writer",
+      "signature": "public.trip_source_prepare_confirmation(uuid,uuid,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": true,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "f248804827189bd95787b689ca5c1756c289402d4673704c189617a66fa9d8df"
+    },
+    {
+      "acl": [
+        "otr_trip_source_writer=X/otr_trip_source_writer",
+        "otr_trip_source_command_gateway=X/otr_trip_source_writer"
+      ],
+      "owner": "otr_trip_source_writer",
+      "signature": "public.trip_source_publish_flight_run(uuid,uuid,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": true,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "d07b2ae1b874726ebb3dfb5ad7ad1f3fb7e9b3ce59f276196b9ec30df4d05373"
+    },
+    {
+      "acl": [
+        "otr_trip_event_receipt_reader=X/otr_trip_event_receipt_reader",
+        "otr_trip_event_command_gateway=X/otr_trip_event_receipt_reader"
+      ],
+      "owner": "otr_trip_event_receipt_reader",
+      "signature": "public.trip_source_read_event_services(uuid,uuid,uuid,bigint)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": false,
+        "otr_trip_event_receipt_reader": true,
+        "otr_trip_event_command_gateway": true,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "3c8c91d03f512b17f55adb5cf5e95c5dcac0d34992f03fb228995a1dec35a389"
+    },
+    {
+      "acl": [
+        "otr_trip_source_writer=X/otr_trip_source_writer",
+        "otr_trip_source_command_gateway=X/otr_trip_source_writer"
+      ],
+      "owner": "otr_trip_source_writer",
+      "signature": "public.trip_source_read_import_catalogs(uuid,uuid)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": true,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "e17427b93feff1082e2b49b0b1c939be523dcde51095bd316138812226dac550"
+    },
+    {
+      "acl": [
+        "otr_trip_source_writer=X/otr_trip_source_writer",
+        "otr_trip_source_command_gateway=X/otr_trip_source_writer"
+      ],
+      "owner": "otr_trip_source_writer",
+      "signature": "public.trip_source_revoke_undispatched_slot(uuid,uuid,uuid,bigint,uuid,text)",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": true,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": true,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "0cfe71a3cbc07f2ef5237f12012ab164f73d7da164ad3e9d419c4f3639d724fe"
+    },
+    {
+      "acl": ["postgres=X/postgres"],
+      "owner": "postgres",
+      "signature": "public.validate_trip_flight_services()",
+      "search_path": ["search_path=pg_catalog"],
+      "execute_matrix": {
+        "anon": false,
+        "service_role": false,
+        "authenticated": false,
+        "otr_trip_source_writer": false,
+        "otr_trip_event_receipt_reader": false,
+        "otr_trip_event_command_gateway": false,
+        "otr_trip_event_semantic_writer": false,
+        "otr_trip_source_command_gateway": false,
+        "otr_trip_source_operation_reader": false
+      },
+      "security_definer": true,
+      "definition_sha256": "d3955dccd047d314c31c92a0191464b00d467bc2fac7a88256b951417aa225dd"
+    }
+  ],
+  "memberships": [
+    {
+      "set": false,
+      "role": "otr_trip_event_command_gateway",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_trip_event_receipt_reader",
+      "admin": false,
+      "member": "postgres",
+      "grantor": "postgres",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_trip_event_receipt_reader",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_trip_event_semantic_writer",
+      "admin": false,
+      "member": "postgres",
+      "grantor": "postgres",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_trip_event_semantic_writer",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_trip_source_command_gateway",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_trip_source_operation_reader",
+      "admin": false,
+      "member": "postgres",
+      "grantor": "postgres",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_trip_source_operation_reader",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_trip_source_writer",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_trip_source_writer",
+      "admin": false,
+      "member": "postgres",
+      "grantor": "postgres",
+      "inherit": false
+    }
+  ],
+  "closed_gates": {
+    "singleton": true,
+    "adapter_version": 1,
+    "flight_admission_enabled": false,
+    "capture_admission_enabled": false
+  },
+  "sqlite_migration": 49,
+  "server_migrations": 82,
+  "participation_security_verifier": true
+}

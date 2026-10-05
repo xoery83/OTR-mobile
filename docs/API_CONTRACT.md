@@ -675,3 +675,34 @@ C-I3H adds internal durable execution inventory/claim responsibility without a n
 HTTP route, product parser/upload dispatch or automatic startup reconciler. Provider
 terminality remains BLOCKED and safe IO_UNKNOWN retry remains disabled. No runtime
 activation follows from the integrated 74-server/46-SQLite candidate.
+
+## CP13A.2 canonical Flight admission (runtime CLOSED)
+
+The [implementation report](architecture/TRIP_CHECKPOINT_13A2_CANONICAL_FLIGHT_IMPORT_IMPLEMENTATION_REPORT.md)
+and [ADR](adr/2026-10-05-cp13a-flight-admission.md) record the authorized private
+foundation. No HTTP route, connector, provider, scheduler or UI is activated.
+
+Private Source-gateway entries publish immutable Flight Runs, prepare exact
+Confirmations, mark dispatch UNKNOWN, finalize exact Event outcomes, permanently
+revoke an undispatched slot, and read bounded Actor/Trip catalogs. The Event gateway
+has only the two added `CREATE_TRANSPORT` / `UPDATE_TRANSPORT` wrappers and a
+separate service read bound to the current Event semantic revision. Both command
+names reuse `otr-event-intent-v1` and the existing immutable B receipt namespace.
+The fixed Source-owned `trip_source_admit_event_proof` root admits exact TRACK_C
+leaves; Event writers have no C catalog access. Retained leaves require their
+exact existing canonical value and opaque provenance reference.
+
+Flight commands are `TRANSPORT`, `FLIGHT`, `UNASSIGNED`; strict typed endpoints and
+1–4 ordered services replace generic patches. Temporal Option A requires independent
+source instant evidence, keeps unknown arrival null, and defers complete civil
+resolution. Passenger/booking bodies and unknown keys are rejected before C/B
+persistence. `import-flight-match-v1` withholds incomplete, ambiguous or contradictory
+scope. Normal receipts never establish certified collection membership.
+
+The private receipt bridge returns correlation only. Successful target-bearing
+outcomes and UPDATE recovery require current target read authority. The owner’s
+narrow clarification permits exact terminal CREATE no-commit proof without target
+read authority, including an absent or foreign-Trip intended UUID. Actor/Trip,
+command, operation, digest, intended target, Confirmation/slot and result identity
+remain mandatory. Missing receipt is UNKNOWN. No private intent or target payload
+is returned, and no generic receipt access is added.
