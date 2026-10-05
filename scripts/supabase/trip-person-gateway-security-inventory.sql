@@ -4,7 +4,7 @@
 begin read only;
 set local search_path=pg_catalog;
 -- Independent reviewed root/code pin before invoking the checker itself.
-do $audit$ declare inventory_root text:='1f6bd2cb0fe9b6a9ddbd611d78e3c8fe33de63a6676032f6d412e228b936199a'; checker_pin text:='c5079be7b4bc04db361519c173f581e3161f8d6dccb534fbf0c982454459ca5d'; anchor_pin text:='f8fdf9394720027db4885f0127277de2a49ba046f00025e0765326746e7d25ad'; begin
+do $audit$ declare inventory_root text:='2a0650a960257bc9e8a0e8ef9e9d2109cf992f2b65be334c3aa586904fb3703c'; checker_pin text:='58e3a1beb2117f19696d6c711a94d487dbf32ccb103a83d702236699cfe50ffe'; anchor_pin text:='be9313fb8d8909f8bf84d9dcfe16e923accabd950f3ce339cbb981cd5eef0ad6'; begin
 
   -- Full anchor definition: no payload/root/hash exclusion in the anchor itself.
   if not exists(select 1 from pg_proc pin join pg_namespace ns on ns.oid=pin.pronamespace join pg_language lang on lang.oid=pin.prolang

@@ -1,12 +1,135 @@
 # A1-I2C5 — Participation activation security foundation
 
-Status: **A1-I2C5 IMPLEMENTATION COMPLETE — REVIEW PENDING / RUNTIME CLOSED**.
+Status: **A1-I2C5 PRINCIPAL-SCOPE COMPATIBILITY AMENDMENT COMPLETE — REVIEW PENDING / RUNTIME CLOSED**.
 Date: 2026-10-05. Original clean baseline:
 `55a35bc2174e2abacc5c1a1bb6206b9918209e3b` on canonical
 `integration/ledger-polish-canonical`, clean at startup. Accepted I2C4 is normative;
 I2C1/C2/C3 semantics and accepted B/C checkpoints remain unchanged.
 
-## Focused P2 correction #2 — independent reviewed-root anchor
+## Principal-scope compatibility amendment
+
+Baseline: clean canonical HEAD5d0af4f010595377cd2d4a730b8072b08f954855.
+Accepted A1-I2C5/security/fixed-root foundation stays CLOSED. This amendment changes
+an accepted security-model semantic and requires independent focused review; it is
+not self-approved FULL PASS. No commit/push, sibling checkout or rebase operation.
+Unchanged accepted C00300 and its accepted SQL tests were read from canonical Git
+objects at dff8f03, never from import's paused checkout.
+
+Before amendment, original A security check passed; applying unchanged C00300 in the
+disposable DB failed UNSAFE_PARTICIPATION_ACTIVATION_LIVE_ROOT. PostgreSQL grants are
+unions: PUBLIC EXECUTE is effective for every role and role-specific REVOKE cannot
+subtract it. The two new isolated principals expanded the old all-non-superuser
+function-execution arrays. Neither directly grants auth.uid()/touch_updated_at().
+This local platform has 50 reviewed non-system/non-extension-member PUBLIC routines
+(the request described49); both original/new shared execution counts remain50.
+The blocker is privilege source/classification, not one count or C-specific grant.
+
+Structural algorithm (no name prefixes or C-role allowlist):
+
+1. PUBLIC is a globally pinned ACL surface, not an authenticatable role graph node.
+   Fixed application admission roots are anon/authenticated/service_role plus ALL
+   LOGIN identities except the two existing trusted migration/DBA identities postgres
+   and supabase_admin. Actual platform LOGIN roots include authenticator, pgbouncer,
+   auth/storage/functions/replication/ETL/read-only administrators. The three protected
+   A identities (command gateway/lifecycle writer/receipt reader) are explicit roots
+   even while NOLOGIN. Their existing accepted private-role/ownership boundaries stay
+   mandatory; DBA exclusion is a documented trust boundary, not a generic superuser
+   exemption for newly created roles.
+2. Compute recursive closure over every membership edge. INHERIT/SET/ADMIN options
+   and role profiles are pinned. Disabled/mixed option edges are conservatively
+   treated as reachable rather than silently proving isolation; this accounts for
+   ADMIN-mediated grants and fails closed on ambiguous catalog paths. Also add
+   EXECUTE→owner edges for SECURITY DEFINER routines: application execution can
+   obtain an owner's privileges without SET ROLE. No function-body dependency crawler
+   or schema-USAGE shortcut is used.
+3. Exclude a candidate only if NOLOGIN/NOINHERIT/NOSUPERUSER/NOBYPASSRLS/NOCREATEDB/
+   NOCREATEROLE/NOREPLICATION; outside that closure; no outgoing membership; no
+   non-system schema ownership/CREATE or database ownership/CREATE; no ownership of
+   any24 critical functions/anchor/3 protected tables; no direct grant on a critical
+   routine; no table/column privilege on the protected tables; no anchor EXECUTE.
+   Otherwise include it in the conservative application-capability set and pin its
+   role profile/edges/effective critical execution, or reject through existing A
+   ownership/private-role checks. Unknown unsafe roles cannot disappear merely by
+   being SUPERUSER or using an internal-looking name.
+4. Recompute execution lists only for this set (36 baseline profiles). An isolated
+   NOLOGIN principal's duplicate PUBLIC-derived ability does not add a new principal
+   row. Direct A grants still fail proof and change exact ACL/profile/root; A ownership,
+   relevant schema/database CREATE and app/recursive/SECURITY DEFINER paths fail closed.
+5. Pin the50 shared PUBLIC routine definitions/properties/owners/exact ACLs globally,
+   along with unchanged24-function/3-table/anchor/default ACL/role/column boundaries.
+   PUBLIC/anon/authenticated/service_role grant drift is never ignored. Existing
+   reserved-role scans also reject new unreviewed PUBLIC routines. C-private own
+   routines/tables remain private to C and visible to C's own install/test inventory;
+   they are not blessed by an A name exception.
+
+The principal-role profiles and membership options, global shared PUBLIC object/ACL
+inventory and scoped execution semantics are the new reviewed semantic inputs. Root
+was regenerated for that SECURITY MODEL change, not C role names. No C role name is
+present in the A migration. Independent anchor remains outside normalization, full
+body pinned. Reviewed root:
+`2a0650a960257bc9e8a0e8ef9e9d2109cf992f2b65be334c3aa586904fb3703c`.
+Anchor full definition hash:
+`be9313fb8d8909f8bf84d9dcfe16e923accabd950f3ce339cbb981cd5eef0ad6`.
+Checker normalized definition hash:
+`58e3a1beb2117f19696d6c711a94d487dbf32ccb103a83d702236699cfe50ffe`.
+
+The reserved participation gateway is always a protected principal, never an isolated
+exemption. Its LOGIN bit remains governed by the accepted expected_login phase
+checks: current install/test requires false, separately reviewed provisioning audit
+requires true, installed discovery follows the existing direct-identity profile.
+The root profile labels this reserved bit reviewed-direct-gateway-phase; no analogous
+exception exists for future isolated roles. This preserves accepted external LOGIN
+provisioning architecture rather than making the future dedicated LOGIN disappear
+from the capability set. No LOGIN/secret/connector/feature/allowlist/dispatch was added;
+PUBLIC TEMP still blocks future LOGIN provisioning pending separate DBA review.
+
+Validation on final candidate:
+
+- Generic scope35 Node tests: opaque two-role stability/OPEN+CLOSE; LOGIN/INHERIT/
+  SUPERUSER/BYPASSRLS/CREATEROLE/CREATEDB/REPLICATION; direct and recursive SET/INHERIT/
+  ADMIN/mixed/disabled membership; outgoing/reverse A bridge; private function/anchor,
+  table/column/ownership/schema/database capabilities; shared PUBLIC ACL/body drift;
+  private PUBLIC leakage; SECURITY DEFINER owner path; internal-looking reachable name.
+- Fixed-root16: all original15 retained plus indirect-helper/root joint forgery;
+  prior P2 52 PASS. Trigger/root, policy/root, independent anchor/discovery/generation/
+  no repair/CLOSE asymmetry remain intact. Positive external anchor/code audit passes.
+- A-only clean replay twice:73 versions, each42 SQL files/1472 assertions PASS.
+  Hostile63, forward1/119 tables, real fence3, I2C2 codec/races1+1 PASS.
+- A+C clean replay twice:74 versions, each43 SQL files/1583 assertions PASS; unchanged
+  C journal test contributes111. A checker PASS after C; C own inventory callable;
+  C gateway/writer NOLOGIN/NOINHERIT, no A-specific direct access/app membership path;
+  shared PUBLIC50 capabilities per role do not change A reviewed root. Per replay
+  compatibility1, scope35 and root16 PASS.
+- The integrated suite uses accepted C versions of the two old Source SQL tests in
+  /tmp, and a /tmp RLS copy changes only119→121 /1776→1812 combined counts. Original
+  baseline expectations correctly failed at the later C stage. No assertions were
+  dropped and canonical A/C tests were not rewritten for integration.
+- Backend29/360, focused7/108 (54 overlap; unique34/414), typecheck/build/full lint/
+  UI guard, changed-file format/whitespace, verifier/count+checksum+anchor-source
+  negatives PASS. A-only manifests identical; integrated manifests identical.
+- Canonical manifest remains A-only119 tables/1776 columns/217 functions; checksum
+  `734a8d75b7b21e7f87bc690df0f1a03bbcd1c7668e85ad44ec5b6e7376e93296`.
+  Integrated121 tables/1812 columns/227 functions checksum
+  `285f314be12ac7d2d1ada8e50ee38814bfc63660c7c7ed7024ac2b11d5755b96`
+  remains /tmp evidence ONLY, for later Checkpoint10 reconciliation.
+- Historical72 migrations, whole SQLite, B/C protected src/backend and Tripsy bytes
+  unchanged. C migration and accepted copied tests byte-equal to Git dff8f03. No
+  import/temporal checkout edits, rebase operations, Hosted Dev/Production or runtime
+  activation. Logs/evidence: /private/tmp/otr-ai2c5/scope-* and integrated-*.
+
+Exact amendment files:
+
+- supabase/migrations/20261005000200_trip_person_participation_activation_foundation.sql
+- scripts/supabase/trip-person-activation-foundation.test.mjs
+- scripts/supabase/trip-person-gateway-security-inventory.sql
+- scripts/supabase/verify-baseline-artifacts.mjs
+- supabase/schema-manifest.json
+- docs/API_CONTRACT.md
+- docs/DATA_MODEL.md
+- docs/CURRENT_IMPLEMENTATION_STATE.md
+- docs/architecture/TRIP_CANONICAL_A1_I2C5_ACTIVATION_SECURITY_FOUNDATION_REPORT.md
+
+## Accepted prior fixed-root correction #2 — independent reviewed-root anchor
 
 The previous mutual normalized-pin scheme admitted the exact independent joint
 trigger forgery. Before correction, `forged-structure.py` returned security_check=true,

@@ -490,3 +490,12 @@ OPEN/discovery compare the complete live inventory root directly to it. No mutab
 registry or user/runtime root setter exists. Separately reviewed migration/DBA DDL
 is the anchor change boundary and must pass the independent external audit/verifier.
 Malicious superuser confinement is not claimed; emergency CLOSE skips these checks.
+
+Principal-scope reviewed root now includes conservative application principal
+profiles/options and global shared PUBLIC object/ACL inventory. Isolated internal
+NOLOGIN roles are omitted only after proving no LOGIN/dangerous flags, recursive
+application/SECURITY DEFINER owner path, outgoing membership, A direct grants/table
+or column rights/ownership or non-system schema/database CREATE. PUBLIC is a global
+ACL union, not an authenticatable role; per-role REVOKE is not a DENY. No role-prefix
+or C-name exemption exists. The independent reviewed-root anchor remains outside
+normalization. C compatibility evidence is isolated; canonical manifest stays A-only.

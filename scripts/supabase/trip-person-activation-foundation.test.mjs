@@ -33,7 +33,19 @@ const absent = () =>
     "t",
   );
 const mode = process.argv[2];
-if (!["reuse", "sql", "fence", "forward", "p2", "root"].includes(mode))
+if (
+  ![
+    "reuse",
+    "sql",
+    "fence",
+    "forward",
+    "p2",
+    "root",
+    "scope",
+    "compatibility",
+    "integrated",
+  ].includes(mode)
+)
   throw Error("Fixed disposable local container; choose reuse/sql/fence/forward/p2/root");
 if (mode === "sql")
   test("full SQL on closed 73-version replay", async (t) => {
@@ -693,7 +705,8 @@ if (mode === "root")
       "scripts/supabase/trip-person-gateway-security-inventory.sql",
       "utf8",
     ).match(/do \$audit\$[\s\S]*?end \$audit\$;/)[0];
-    for (const kind of ["disabled trigger", "broadened writer policy"])
+    sql(`begin read only;${audit}rollback;`);
+    for (const kind of ["disabled trigger", "broadened writer policy", "indirect helper"])
       await t.test(`${kind} + payload + all normalized roots`, () => {
         const inventory = JSON.parse(
           checker.match(/\$inventory\$([\s\S]*?)\$inventory\$/)[1],
@@ -705,6 +718,16 @@ if (mode === "root")
             "alter table public.trip_person_command_gate disable trigger trip_person_command_gate_transition";
           intact =
             "(select tgenabled='D' from pg_trigger where tgrelid='public.trip_person_command_gate'::regclass and tgname='trip_person_command_gate_transition')";
+        } else if (kind === "indirect helper") {
+          fixture =
+            "create or replace function public.trip_event_keys(j jsonb,required text[],optional text[] default '{}') returns boolean language sql immutable set search_path=pg_catalog as $$select true$$";
+          const digest = sql(
+            `begin;${fixture};set search_path=pg_catalog;select encode(extensions.digest(pg_get_functiondef('public.trip_event_keys(jsonb,text[],text[])'::regprocedure),'sha256'),'hex');rollback;`,
+          );
+          inventory.functions["public.trip_event_keys(jsonb,text[],text[])"].hash =
+            digest;
+          intact =
+            "(select pg_get_functiondef('public.trip_event_keys(jsonb,text[],text[])'::regprocedure) like '%select true%')";
         } else {
           const policy = inventory.tables["public.journey_members"].policies.find(
             (p) => p[0] === "trip_person_activation_writer_update",
@@ -816,4 +839,230 @@ if (mode === "root")
       );
     });
     assert.doesNotMatch(anchor, /activation-(?:root|checker|anchor)|\$inventory\$/);
+  });
+
+if (mode === "scope")
+  test("generic isolated principals and recursive application capability paths", async (t) => {
+    const beforeRoot = sql("select public.trip_person_activation_reviewed_root()");
+    const init =
+      "create role as_scope_candidate nologin noinherit nosuperuser nocreatedb nocreaterole nobypassrls noreplication;create role as_scope_bridge nologin noinherit nosuperuser nocreatedb nocreaterole nobypassrls noreplication;";
+    const reject = (statement) =>
+      `do $scope$ declare denied boolean:=false;begin begin ${statement};exception when others then denied:=true;end;if not denied then raise exception 'scope probe accepted unsafe principal';end if;end $scope$;`;
+    await t.test(
+      "two opaque isolated roles leave reviewed root stable and OPEN/CLOSE usable",
+      () => {
+        assert.equal(
+          sql(`begin;${init}select public.trip_person_activation_security_check(true,false);
+        set session authorization postgres;
+        select public.trip_person_set_command_gate((select generation from public.trip_person_command_gate),true) is not null;
+        select public.trip_person_set_command_gate((select generation from public.trip_person_command_gate),false) is not null;
+        reset session authorization;rollback;select public.trip_person_activation_security_check(true,false);`),
+          "t\nt\nt\nt",
+        );
+      },
+    );
+    const probes = [
+      ["LOGIN", "alter role as_scope_candidate login"],
+      ["INHERIT flag", "alter role as_scope_candidate inherit"],
+      ["BYPASSRLS", "alter role as_scope_candidate bypassrls"],
+      ["CREATEROLE", "alter role as_scope_candidate createrole"],
+      ["CREATEDB", "alter role as_scope_candidate createdb"],
+      ["SUPERUSER", "alter role as_scope_candidate superuser"],
+      ["REPLICATION", "alter role as_scope_candidate replication"],
+      [
+        "application INHERIT",
+        "grant as_scope_candidate to authenticated with inherit true,set false",
+      ],
+      [
+        "service SET ROLE",
+        "grant as_scope_candidate to service_role with inherit false,set true",
+      ],
+      [
+        "application ADMIN",
+        "grant as_scope_candidate to authenticated with admin true,inherit false,set false",
+      ],
+      [
+        "ambiguous inactive membership",
+        "grant as_scope_candidate to authenticated with admin false,inherit false,set false",
+      ],
+      [
+        "recursive SET path",
+        "grant as_scope_bridge to authenticated with inherit false,set true;grant as_scope_candidate to as_scope_bridge with inherit false,set true",
+      ],
+      [
+        "recursive INHERIT path",
+        "grant as_scope_bridge to authenticated with inherit true,set false;grant as_scope_candidate to as_scope_bridge with inherit true,set false",
+      ],
+      [
+        "recursive mixed path",
+        "grant as_scope_bridge to service_role with inherit false,set true;grant as_scope_candidate to as_scope_bridge with inherit true,set false",
+      ],
+      [
+        "recursive ADMIN path",
+        "grant as_scope_bridge to authenticated with admin true,inherit false,set false;grant as_scope_candidate to as_scope_bridge with admin true,inherit false,set false",
+      ],
+      [
+        "outgoing protected bridge",
+        "grant otr_trip_person_receipt_reader to as_scope_candidate with inherit false,set true",
+      ],
+      [
+        "outgoing reverse bridge",
+        "grant as_scope_bridge to as_scope_candidate with inherit false,set true;grant otr_trip_person_lifecycle_writer to as_scope_bridge with inherit true,set false",
+      ],
+      [
+        "direct private EXECUTE",
+        "grant execute on function public.trip_person_runtime_state() to as_scope_candidate",
+      ],
+      [
+        "direct checker EXECUTE",
+        "grant execute on function public.trip_person_activation_security_check(boolean,boolean) to as_scope_candidate",
+      ],
+      [
+        "direct anchor EXECUTE",
+        "grant execute on function public.trip_person_activation_reviewed_root() to as_scope_candidate",
+      ],
+      [
+        "A gate SELECT",
+        "grant select on public.trip_person_command_gate to as_scope_candidate",
+      ],
+      ["A Member UPDATE", "grant update on public.journey_members to as_scope_candidate"],
+      [
+        "A column UPDATE",
+        "grant update(participation_active) on public.journey_members to as_scope_candidate",
+      ],
+      [
+        "A receipt SELECT",
+        "grant select on public.trip_person_participation_receipts to as_scope_candidate",
+      ],
+      [
+        "A object ownership",
+        "alter function public.trip_person_runtime_state() owner to as_scope_candidate",
+      ],
+      ["schema CREATE", "grant create on schema public to as_scope_candidate"],
+      ["database CREATE", "grant create on database postgres to as_scope_candidate"],
+      [
+        "shared PUBLIC ACL revoked",
+        "revoke execute on function public.touch_updated_at() from public",
+      ],
+      [
+        "other shared PUBLIC ACL revoked",
+        "revoke execute on function auth.role() from public",
+      ],
+      [
+        "private PUBLIC EXECUTE",
+        "grant execute on function public.trip_person_runtime_state() to public",
+      ],
+      [
+        "shared definition drift",
+        "create or replace function public.trip_event_keys(j jsonb,required text[],optional text[] default '{}') returns boolean language sql immutable set search_path=pg_catalog as $$select true$$",
+      ],
+      [
+        "SECURITY DEFINER ownership privilege path",
+        "create function public.as_scope_authority() returns boolean language sql security definer as $$select true$$;revoke all on function public.as_scope_authority() from public,anon,authenticated,service_role;alter function public.as_scope_authority() owner to as_scope_candidate;grant execute on function public.as_scope_authority() to authenticated",
+      ],
+      [
+        "same naming pattern but reachable",
+        "alter role as_scope_candidate rename to as_internal_execution_gateway;grant as_internal_execution_gateway to authenticated with set true,inherit false",
+      ],
+    ];
+    for (const [label, fixture] of probes)
+      await t.test(label, () => {
+        assert.equal(
+          sql(`begin;${init}create temporary table scope_gate as select * from public.trip_person_command_gate;${fixture};
+        ${reject("perform public.trip_person_activation_security_check(true,false)")}
+        set session authorization postgres;${reject("perform public.trip_person_set_command_gate((select generation from public.trip_person_command_gate),true)")}reset session authorization;
+        set session authorization otr_trip_person_command_gateway;${reject("perform public.trip_person_runtime_state()")}reset session authorization;
+        select not enabled and generation=(select generation from scope_gate) from public.trip_person_command_gate;
+        rollback;select public.trip_person_activation_security_check(true,false);`),
+          "t\nt",
+        );
+      });
+    assert.equal(sql("select public.trip_person_activation_reviewed_root()"), beforeRoot);
+  });
+
+if (mode === "compatibility")
+  test("unchanged module journal principals cannot expand A application root", () => {
+    assert.equal(
+      sql("select public.trip_person_activation_security_check(true,false)"),
+      "t",
+    );
+    // Integration fixture assertions only: no C-name exception exists in A SQL.
+    assert.doesNotMatch(migration, /otr_trip_source_execution_(?:gateway|writer)/);
+    assert.equal(
+      sql(
+        "select bool_and(not rolcanlogin and not rolinherit and not rolsuper and not rolbypassrls and not rolcreatedb and not rolcreaterole and not rolreplication) from pg_roles where rolname in ('otr_trip_source_execution_gateway','otr_trip_source_execution_writer')",
+      ),
+      "t",
+    );
+    assert.equal(
+      sql(
+        "select count(*) from pg_auth_members where member in ('otr_trip_source_execution_gateway'::regrole,'otr_trip_source_execution_writer'::regrole) or roleid in ('otr_trip_source_execution_gateway'::regrole,'otr_trip_source_execution_writer'::regrole) and (member<>'postgres'::regrole or inherit_option or set_option)",
+      ),
+      "0",
+    );
+    assert.equal(
+      sql(
+        "select bool_and(not has_function_privilege(rolname,'public.trip_person_runtime_state()','EXECUTE') and not has_table_privilege(rolname,'public.trip_person_command_gate','SELECT,UPDATE')) from pg_roles where rolname in ('otr_trip_source_execution_gateway','otr_trip_source_execution_writer')",
+      ),
+      "t",
+    );
+    const counts = sql(
+      "select rolname,count(*) from pg_roles r cross join pg_proc p join pg_namespace n on n.oid=p.pronamespace where r.rolname in ('otr_trip_source_execution_gateway','otr_trip_source_execution_writer') and n.nspname not in ('pg_catalog','information_schema') and n.nspname !~ '^pg_(toast|temp)' and not exists(select 1 from pg_depend d where d.classid='pg_proc'::regclass and d.objid=p.oid and d.deptype='e') and exists(select 1 from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a where a.grantee=0 and a.privilege_type='EXECUTE') and has_function_privilege(r.oid,p.oid,'EXECUTE') group by rolname order by rolname",
+    );
+    console.log(`Integrated shared PUBLIC execution: ${counts}`);
+    sql(
+      "begin;set session authorization otr_trip_source_execution_gateway;select public.trip_source_execution_inventory();reset session authorization;rollback;",
+    );
+    const output = sql(
+      "begin;set session authorization postgres;select public.trip_person_set_command_gate((select generation from public.trip_person_command_gate),true) is not null;select public.trip_person_set_command_gate((select generation from public.trip_person_command_gate),false) is not null;reset session authorization;rollback;",
+    );
+    assert.equal(output, "t\nt");
+  });
+
+if (mode === "integrated")
+  test("full unchanged A SQL plus external accepted module SQL on 74-version replay", async (t) => {
+    sql("create extension if not exists pgtap with schema extensions");
+    let total = 0;
+    const files = readdirSync("supabase/tests")
+      .filter((n) => n.endsWith(".sql"))
+      .sort()
+      .map((n) => [
+        [
+          "rls_matrix.test.sql",
+          "trip_source_command_foundation.test.sql",
+          "trip_source_protected_foundation.test.sql",
+        ].includes(n)
+          ? `/private/tmp/otr-ai2c5/integrated-tests/${n}`
+          : `supabase/tests/${n}`,
+        n,
+      ]);
+    files.push([
+      "/private/tmp/otr-ai2c5/C00300.test.sql",
+      "external accepted module journal",
+    ]);
+    for (const [path, label] of files)
+      await t.test(label, () => {
+        const output = sql(
+          "set search_path=public,extensions;\n" + readFileSync(path, "utf8"),
+          label === "trip_event_collection.test.sql" ? "supabase_admin" : "postgres",
+        );
+        assert.doesNotMatch(output, /(?:^|\n)\s*not ok\b/);
+        const plan = [...output.matchAll(/(?:^|\n)\s*1\.\.(\d+)/g)].at(-1);
+        assert.ok(plan, label);
+        assert.equal(
+          [...output.matchAll(/(?:^|\n)\s*ok\s+\d+\b/g)].length,
+          Number(plan[1]),
+        );
+        total += Number(plan[1]);
+      });
+    assert.equal(sql("select count(*) from supabase_migrations.schema_migrations"), "74");
+    assert.equal(
+      sql("select not enabled and generation=0 from public.trip_person_command_gate"),
+      "t",
+    );
+    assert.equal(
+      sql("select public.trip_person_activation_security_check(true,false)"),
+      "t",
+    );
+    console.log(`Integrated SQL ${files.length} files / ${total} assertions`);
   });

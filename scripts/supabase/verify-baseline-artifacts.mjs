@@ -96,7 +96,7 @@ const expected = {
   buckets: 4,
   columns: 1776,
   indexes: 370,
-  checksum: "6675aef5dacbdae84baf5878ad0455f119f44bf3c1d3d3d17bc740d318825486",
+  checksum: "734a8d75b7b21e7f87bc690df0f1a03bbcd1c7668e85ad44ec5b6e7376e93296",
   policies: 207,
   triggers: 149,
   functions: 217,
@@ -142,6 +142,10 @@ for (const required of [
   "/*activation-anchor*/",
   "UNSAFE_PARTICIPATION_ACTIVATION_ANCHOR_ROOT",
   "UNSAFE_PARTICIPATION_ACTIVATION_LIVE_ROOT",
+  "capability_edges(member,target)",
+  "isolated(oid)",
+  "publicSurface",
+  "reviewed-direct-gateway-phase",
   "UNSAFE_PARTICIPATION_ACTIVATION_INVENTORY",
   "UNSAFE_PARTICIPATION_ACTIVATION_MUTUAL_PIN",
   "UNSAFE_PARTICIPATION_ACTIVATION_OVERLOAD",
@@ -152,7 +156,7 @@ for (const required of [
 
 // Independent installation/source anchor. Neither normalized function literals nor
 // a caller-supplied root can redefine this reviewed executable anchor.
-const reviewedRoot = "1f6bd2cb0fe9b6a9ddbd611d78e3c8fe33de63a6676032f6d412e228b936199a";
+const reviewedRoot = "2a0650a960257bc9e8a0e8ef9e9d2109cf992f2b65be334c3aa586904fb3703c";
 const reviewedAnchor = `create function public.trip_person_activation_reviewed_root() returns text
 language sql immutable security invoker set search_path=pg_catalog
 as $anchor$ select '${reviewedRoot}'::text $anchor$;`;

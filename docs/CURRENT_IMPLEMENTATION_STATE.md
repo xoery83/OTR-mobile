@@ -2,39 +2,33 @@
 
 Date: 2026-10-05
 
-## A1-I2C5 — IMPLEMENTATION COMPLETE / REVIEW PENDING / RUNTIME CLOSED
+## A1-I2C5 — accepted base; principal-scope amendment REVIEW PENDING / RUNTIME CLOSED
 
-- Original clean baseline `55a35bc`; correction HEAD `a39cb1c` adds only unrelated
-  Tripsy .docx, preserved untouched. A work remains uncommitted. Additive server `20261005000200` extends 72→73.
-  Historical 72 migrations, SQLite44/45 and all B/C/runtime artifacts are unchanged.
-- Gate defaults CLOSED/generation0. Direct admin expected-generation CAS holds
-  the matching exclusive activation fence; every transition advances. The row guard
-  verifies that lock, stale/ABA requests reject, and OPEN reserves final CLOSE capacity.
-- Private writer receives Member SELECT and UPDATE only participation_active/revision
-  under dedicated-session/gate RLS and unchanged command/evidence guards. Gateway
-  has no Member/gate DML and only SET/exact recovery/fixed state EXECUTE.
-- Roles remain NOLOGIN; fixed session defaults and role/ACL/definition inventory
-  installed. P2 correction pins 24 exact function definitions/owners/config/ACLs
-  and effective execution/membership paths; 3 tables' exact triggers/constraints/
-  columns/RLS/policies and default ACLs. OPEN independently pins checker code/payload;
-  discovery checks the same inventory. P2 #2 adds an immutable reviewed-root anchor
-  outside mutual normalization, full definition pin + external fixed audit/source
-  verifier. Joint trigger/policy payload+root forgery rejects; CLOSE remains independent.
-  LOGIN/secret stays separately provisioned. Read-only bootstrap audit
-  rejects unexpected rights; shared PUBLIC database TEMP needs separate DBA review
-  before LOGIN and is not silently revoked by this task.
-- Discovery reports only versions, closed state, generation and schema identity;
-  missing/corrupt or untrusted state fails closed. HTTP/Mobile capability and dispatch
-  remain disabled; no real connector, flag/allowlist or credentials were added.
-- Validation: Backend29/360, focused7/108 (overlap54), P2 probes52, root/joint probes15, reuse63, forward119 tables,
-  admin fence3, I2C2 codec/races1+1, two clean73 replays each SQL42/1472 PASS.
-  Manifests identical; public/storage diff empty; verifier/drift negatives, typecheck,
-  build, full lint/UI guard and changed-file format/whitespace PASS.
-- Still pending: real identity/secret and connector, environment grants, request-time
-  enabled predicate/flag/rollout/Mobile generation, dispatch/Trip authoring fencing,
-  device/live acceptance and deployment. No Hosted Dev/Production, sibling writes,
-  staging, commit, push, merge/rebase or product mutation activation.
-- Report: `docs/architecture/TRIP_CANONICAL_A1_I2C5_ACTIVATION_SECURITY_FOUNDATION_REPORT.md`.
+- Clean amendment baseline5d0af4f (accepted A foundation/security/fixed-root commit).
+  Original Tripsy parent/artifact unchanged. Amendment remains uncommitted.
+- A-only server73 versions through20261005000200; SQLite44/45 and historical72
+  server migrations/B/C protected implementations unchanged. No sibling/rebase work.
+- Amendment roots: PUBLIC ACL surface; anon/authenticated/service_role; all LOGIN
+  except trusted postgres/supabase_admin; A gateway/writer/reader. Recursive membership
+  (all option paths conservatively) and SECURITY DEFINER EXECUTE→owner reachability.
+  Only structurally isolated NOLOGIN/NOINHERIT/no dangerous flags/no A grant/ownership/
+  schema or database CREATE/no outgoing membership roles escape duplicate PUBLIC
+  enumeration. Global50 shared PUBLIC definitions/ACLs stay pinned; no C-name exception.
+- Fixed24-function/3-table integrity and independent immutable reviewed-root anchor
+  retained. Gate default CLOSED/generation0; exclusive CAS/ABA fence unchanged.
+  OPEN/discovery verify complete live root; CLOSE stays independent of inventory health.
+  Direct gateway is protected even NOLOGIN; accepted future LOGIN phase remains
+  separately reviewed. PUBLIC TEMP remains blocker; no credentials/connector/flags.
+- Validation: scope35; fixed-root16 (original15+helper joint); P2 52; hostile63;
+  forward119 tables/fence3/codec+races1+1. Backend29/360 and focused7/108 PASS.
+  Two A-only73 replays each SQL42/1472; two A+C74 replays each SQL43/1583 PASS.
+  Unchanged C00300 checker compatibility PASS; combined manifest is /tmp evidence only.
+  Canonical manifest remains119 tables/1776 columns/217 functions. Typecheck/build/
+  lint/UI guard/format/verifier/drift negatives PASS. Independent focused review required.
+- Runtime activation, real identity/secret/connector, flags/rollout/Mobile generation,
+  dispatch/authoring fencing, device/live and deployment remain PENDING. No Hosted
+  Dev/Production, commit/push, runtime capability or SET_PARTICIPATION enabled.
+- Report: docs/architecture/TRIP_CANONICAL_A1_I2C5_ACTIVATION_SECURITY_FOUNDATION_REPORT.md.
 
 ## C-I3G — FULL PASS / ACCEPTED / CLOSED
 

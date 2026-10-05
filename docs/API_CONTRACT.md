@@ -618,3 +618,11 @@ rewriting payload and all normalized root literals together cannot bless drift.
 External fixed audit/source verifier pin the same reviewed root and full anchor
 body. CLOSE remains independent of OPEN-only anchor/checker health. No runtime
 connector/capability or new caller-supplied configuration surface is enabled.
+
+Principal-scope amendment: critical execution inventory follows structural application
+reachability (LOGIN/API/A-protected roots, recursive membership including ADMIN/SET/
+INHERIT and SECURITY DEFINER EXECUTE→owner paths). Only proven isolated NOLOGIN roles
+may omit duplicate PUBLIC-derived execution rows; PUBLIC/API/shared ACLs and object
+properties remain globally pinned. Direct A grants, ownership, DDL capabilities or
+application paths fail closed. Independent anchor/OPEN/discovery/CLOSE semantics and
+the accepted dedicated-gateway provisioning phase remain intact; no runtime enabled.
