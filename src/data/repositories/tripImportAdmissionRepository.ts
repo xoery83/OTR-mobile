@@ -11,6 +11,7 @@ import {
   resolveReviewedFlightSelection,
   validateReviewedFlightCommand,
   flightReviewSchema,
+  flightInputSchema,
   importDigest,
   type ImportHash,
   type FlightConfirmationIntent,
@@ -638,6 +639,102 @@ export function createTripImportAdmissionRepository(
           }
         }
         return "APPLIED" as const;
+      });
+    },
+    async readDraft(c: AccountRequestContext, draftKey: string) {
+      return scoped(c, async () => {
+        const row = await database.getFirstAsync<Row>(
+          "SELECT * FROM trip_source_review_drafts WHERE account_id=? AND trip_id=? AND draft_key=?",
+          c.accountId,
+          c.tripId,
+          draftKey,
+        );
+        if (!row) return null;
+        const run = await database.getFirstAsync<Row>(
+          "SELECT * FROM trip_source_runs WHERE cache_account_id=? AND trip_id=? AND actor_account_id=? AND id=?",
+          c.accountId,
+          c.tripId,
+          c.accountId,
+          row.run_id as string,
+        );
+        if (
+          !run ||
+          run.retention_state !== "RETAINED" ||
+          run.input_sha256 !== row.observed_input_sha256
+        )
+          throw new Error("INPUT_STALE");
+        return {
+          runId: row.run_id as string,
+          inputHash: row.observed_input_sha256 as string,
+          revision: row.row_revision as number,
+          review: flightReviewSchema.parse(parseEventJson(row.review_payload as string)),
+        };
+      });
+    },
+    async readClosureEvidence(c: AccountRequestContext, candidateId: string) {
+      z.uuid().parse(candidateId);
+      return scoped(c, async () => {
+        const candidate = await database.getFirstAsync<Row>(
+          "SELECT p.*,r.input_sha256,r.scope_source_ids,r.state AS run_state,r.retention_state AS run_retention FROM trip_source_candidates p JOIN trip_source_runs r ON r.cache_account_id=p.cache_account_id AND r.id=p.run_id WHERE p.cache_account_id=? AND p.id=? AND r.trip_id=? AND r.actor_account_id=?",
+          c.accountId,
+          candidateId,
+          c.tripId,
+          c.accountId,
+        );
+        if (
+          !candidate ||
+          candidate.retention_state !== "RETAINED" ||
+          candidate.run_retention !== "RETAINED" ||
+          candidate.run_state !== "READY"
+        )
+          throw new Error("INPUT_STALE");
+        const family = await related(c, candidateId);
+        const sources = z
+          .array(z.uuid())
+          .max(64)
+          .parse(parseEventJson(candidate.scope_source_ids as string));
+        const claims = await database.getAllAsync<Row>(
+          "SELECT s.*,r.scope_source_ids FROM trip_source_output_slots s JOIN trip_source_confirmations c ON c.cache_account_id=s.cache_account_id AND c.id=s.confirmation_id JOIN trip_source_candidates p ON p.cache_account_id=s.cache_account_id AND p.id=s.candidate_id JOIN trip_source_runs r ON r.cache_account_id=p.cache_account_id AND r.id=p.run_id WHERE c.cache_account_id=? AND c.trip_id=? AND c.actor_account_id=? AND s.disposition='CREATE' AND s.create_claim_active=1",
+          c.accountId,
+          c.tripId,
+          c.accountId,
+        );
+        if (claims.length > 64) throw new Error("IMPORT_RESOURCE_LIMIT");
+        const inputs = await database.getAllAsync<Row>(
+          "SELECT * FROM trip_source_inputs WHERE cache_account_id=? AND run_id=? ORDER BY id",
+          c.accountId,
+          candidate.run_id as string,
+        );
+        if (inputs.length > 64) throw new Error("IMPORT_RESOURCE_LIMIT");
+        for (const row of inputs) {
+          const input = flightInputSchema.parse(
+            Object.fromEntries(
+              Object.keys(flightInputSchema.shape).map((k) => [
+                k,
+                k === "historical_selection" ? row[k] === 1 : row[k],
+              ]),
+            ),
+          );
+          await pin(c, input);
+        }
+        return {
+          candidate,
+          inputs,
+          claims: claims
+            .filter(
+              (p) =>
+                family.includes(p.candidate_id as string) ||
+                z
+                  .array(z.uuid())
+                  .max(64)
+                  .parse(parseEventJson(p.scope_source_ids as string))
+                  .some((id) => sources.includes(id)),
+            )
+            .map((p): Row & { lineage_related: boolean } => ({
+              ...p,
+              lineage_related: family.includes(p.candidate_id as string),
+            })),
+        };
       });
     },
     async saveDraft(
