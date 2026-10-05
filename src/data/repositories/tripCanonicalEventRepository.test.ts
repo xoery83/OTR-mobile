@@ -40,7 +40,7 @@ const connections: DatabaseSync[] = [];
 afterEach(() => {
   for (const database of connections.splice(0)) database.close();
 });
-function connection(path = ":memory:", through = 44) {
+function connection(path = ":memory:", through = 46) {
   const sqlite = new DatabaseSync(path);
   connections.push(sqlite);
   sqlite.exec("PRAGMA foreign_keys=ON");
@@ -245,7 +245,7 @@ describe("canonical Event local mirror", () => {
       let sqlite = new DatabaseSync(path);
       await runMigrations(adapter(sqlite));
       await runMigrations(adapter(sqlite));
-      expect(await getSchemaVersion(adapter(sqlite))).toBe(45);
+      expect(await getSchemaVersion(adapter(sqlite))).toBe(46);
       expect(
         sqlite.prepare("SELECT COUNT(*) n FROM schema_migrations WHERE id=44").get(),
       ).toEqual({ n: 1 });
@@ -293,6 +293,8 @@ describe("canonical Event local mirror", () => {
       expect(JSON.stringify(result)).not.toContain("scheduledDate");
       expect(Object.keys(f.repository)).toEqual([
         "applyRead",
+        "refreshCollection",
+        "getCollectionCertificate",
         "getEvent",
         "refreshEvent",
       ]);

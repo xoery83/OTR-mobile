@@ -1620,4 +1620,57 @@ export const migrations: Migration[] = [
         BEGIN SELECT RAISE(ABORT, 'PARTICIPATION_RECEIPT_IMMUTABLE'); END;
     `,
   },
+  {
+    id: 46,
+    name: "trip_canonical_event_collection_certificate",
+    sql: `
+      CREATE TABLE trip_canonical_event_collection_generations (
+        account_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        refresh_generation BLOB NOT NULL CHECK (typeof(refresh_generation)='integer' AND refresh_generation BETWEEN 1 AND 9007199254740991),
+        PRIMARY KEY (account_id, trip_id)
+      );
+      CREATE TABLE trip_canonical_event_collections (
+        account_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        snapshot_epoch_id TEXT NOT NULL,
+        snapshot_revision TEXT NOT NULL CHECK (length(snapshot_revision) BETWEEN 1 AND 16 AND snapshot_revision NOT GLOB '*[^0-9]*' AND substr(snapshot_revision,1,1) BETWEEN '1' AND '9' AND (length(snapshot_revision)<16 OR snapshot_revision<='9007199254740991')),
+        contract_version INTEGER NOT NULL CHECK (contract_version=1),
+        read_version INTEGER NOT NULL CHECK (read_version=1),
+        temporal_version INTEGER NOT NULL CHECK (temporal_version=1),
+        fingerprint_version INTEGER NOT NULL CHECK (fingerprint_version=1),
+        event_count INTEGER NOT NULL CHECK (event_count BETWEEN 0 AND 10000),
+        fingerprint TEXT NOT NULL CHECK (length(fingerprint)=64 AND fingerprint NOT GLOB '*[^0-9a-f]*'),
+        complete INTEGER NOT NULL CHECK (complete=1),
+        applied_generation BLOB NOT NULL CHECK (typeof(applied_generation)='integer' AND applied_generation BETWEEN 1 AND 9007199254740991),
+        PRIMARY KEY (account_id, trip_id),
+        FOREIGN KEY (account_id, trip_id) REFERENCES trip_canonical_event_collection_generations(account_id, trip_id)
+      );
+      CREATE TRIGGER trip_event_collection_generation_insert BEFORE INSERT ON trip_canonical_event_collections
+        WHEN NOT EXISTS (
+          SELECT 1 FROM trip_canonical_event_collection_generations
+          WHERE account_id=NEW.account_id AND trip_id=NEW.trip_id
+            AND typeof(refresh_generation)='integer'
+            AND typeof(NEW.applied_generation)='integer'
+            AND refresh_generation>=NEW.applied_generation
+        )
+        BEGIN SELECT RAISE(ABORT, 'CANONICAL_EVENT_MIRROR_INTEGRITY'); END;
+      CREATE TRIGGER trip_event_collection_generation_update BEFORE UPDATE ON trip_canonical_event_collections
+        WHEN NOT EXISTS (
+          SELECT 1 FROM trip_canonical_event_collection_generations
+          WHERE account_id=NEW.account_id AND trip_id=NEW.trip_id
+            AND typeof(refresh_generation)='integer'
+            AND typeof(NEW.applied_generation)='integer'
+            AND refresh_generation>=NEW.applied_generation
+        )
+        BEGIN SELECT RAISE(ABORT, 'CANONICAL_EVENT_MIRROR_INTEGRITY'); END;
+      CREATE TABLE trip_canonical_event_collection_ids (
+        account_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        PRIMARY KEY (account_id, trip_id, event_id),
+        FOREIGN KEY (account_id, trip_id) REFERENCES trip_canonical_event_collections(account_id, trip_id) ON DELETE CASCADE
+      );
+    `,
+  },
 ];

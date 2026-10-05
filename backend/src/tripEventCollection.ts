@@ -1,3 +1,12 @@
+import {
+  collectionUuid,
+  collectionSnapshot,
+  eventCollectionCursorSchema,
+  canonicalReadBytes,
+  EventCollectionError,
+  collectionManifestBytes,
+  type EventCollectionCursor,
+} from "../../src/data/api/tripEventCollectionCodec";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
@@ -5,75 +14,16 @@ import {
   type CanonicalEventRead,
 } from "../../src/data/api/tripCanonicalReadContracts";
 
-const uuid = z
-  .string()
-  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
-  .pipe(z.uuid());
-const revision = z
-  .string()
-  .regex(/^[1-9][0-9]*$/)
-  .refine((s) => BigInt(s) <= 9007199254740991n);
-const hash = z.string().regex(/^[0-9a-f]{64}$/);
-const count = z.number().int().min(0).max(10000);
-const snapshot = z.strictObject({ epochId: uuid, collectionRevision: revision });
-const cursorSchema = z
-  .strictObject({
-    version: z.literal(1),
-    purpose: z.literal("TRIP_CANONICAL_EVENTS"),
-    accountId: uuid,
-    tripId: uuid,
-    collectionContractVersion: z.literal(1),
-    readVersion: z.literal(1),
-    temporalContractVersion: z.literal(1),
-    fingerprintVersion: z.literal(1),
-    snapshotEpochId: uuid,
-    snapshotRevision: revision,
-    fingerprint: hash,
-    eventCount: count,
-    nextOrdinal: z.number().int().positive(),
-    ordering: z.literal("EVENT_ID_ASC"),
-  })
-  .refine((c) => c.nextOrdinal % 100 === 0 && c.nextOrdinal < c.eventCount);
-type Cursor = z.infer<typeof cursorSchema>;
-export class EventCollectionError extends Error {
-  constructor(
-    public status: number,
-    public code: string,
-  ) {
-    super(code);
-  }
-}
+const uuid = collectionUuid,
+  snapshot = collectionSnapshot,
+  cursorSchema = eventCollectionCursorSchema;
+type Cursor = EventCollectionCursor;
+export { canonicalReadBytes, EventCollectionError };
 const invalid = () => new EventCollectionError(500, "CANONICAL_EVENT_SNAPSHOT_INVALID");
 const invalidCursor = () =>
   new EventCollectionError(400, "INVALID_EVENT_COLLECTION_CURSOR");
 const limit = () => new EventCollectionError(503, "CANONICAL_EVENT_SNAPSHOT_LIMIT");
 const sha = (bytes: string) => createHash("sha256").update(bytes, "utf8").digest("hex");
-
-// B-T3G uses ECMAScript binary64/UTF-16-key JSON, not PostgreSQL jsonb::text.
-export function canonicalReadBytes(read: CanonicalEventRead): string {
-  if (read.disposition !== "READ_ONLY") throw invalid();
-  const ordered = {
-    ...read,
-    event: {
-      ...read.event,
-      itinerary_transport_endpoints: [...read.event.itinerary_transport_endpoints].sort(
-        (a, b) => (a.role < b.role ? -1 : a.role > b.role ? 1 : 0),
-      ),
-    },
-  };
-  return JSON.stringify(ordered, (_key, value) => {
-    if (typeof value === "string" && !value.isWellFormed()) throw invalid();
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      if (Object.keys(value).some((key) => !key.isWellFormed())) throw invalid();
-      return Object.fromEntries(
-        Object.keys(value)
-          .sort()
-          .map((key) => [key, value[key]]),
-      );
-    }
-    return value;
-  });
-}
 export function collectionFingerprint(tripId: string, events: CanonicalEventRead[]) {
   const manifest = events
     .map((read) => {
@@ -84,10 +34,7 @@ export function collectionFingerprint(tripId: string, events: CanonicalEventRead
       ];
     })
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-  return sha(
-    "otr-trip-canonical-event-collection-v1\n" +
-      JSON.stringify([1, 1, 1, tripId, manifest]),
-  );
+  return sha(collectionManifestBytes(tripId, manifest));
 }
 function encodeCursor(input: Cursor) {
   const c = cursorSchema.parse(input);

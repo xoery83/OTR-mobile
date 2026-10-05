@@ -1,8 +1,10 @@
+import { utf8Length, EventCollectionError } from "@/data/api/tripEventCollectionCodec";
 import { createAuthenticatedApiClient } from "./authenticatedClient";
 import type { ApiClientOptions } from "./client";
 import {
   assertAccountRequestContext,
   captureAccountRequestContext,
+  type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
 import {
   canonicalCapabilitiesSchema,
@@ -28,6 +30,38 @@ export function createTripCanonicalReadTransport(
     return { context, data };
   }
   return {
+    async collectionPage(
+      context: AccountRequestContext,
+      cursor: string | null,
+    ): Promise<unknown> {
+      await assertAccountRequestContext(context, getUserId);
+      const api = createAuthenticatedApiClient(
+        {
+          ...options,
+          fetchImplementation: async (...args) => {
+            const response = await (options.fetchImplementation ?? fetch)(...args);
+            if (
+              response.ok &&
+              utf8Length(await response.clone().text()) > 4 * 1024 * 1024
+            )
+              throw new EventCollectionError(503, "CANONICAL_EVENT_SNAPSHOT_LIMIT");
+            return response;
+          },
+        },
+        tokenProvider,
+        context,
+      );
+      const data = await api.get(
+        `/v2/trips/${context.tripId}/canonical-events/snapshot${cursor === null ? "" : "?cursor=" + encodeURIComponent(cursor)}`,
+        z.unknown(),
+        {
+          "X-OTR-Canonical-Event-Read-Version": "1",
+          "X-OTR-Canonical-Event-Collection-Version": "1",
+        },
+      );
+      await assertAccountRequestContext(context, getUserId);
+      return data;
+    },
     capabilities: (tripId: string) =>
       read(tripId, "canonical-events/capabilities", canonicalCapabilitiesSchema),
     async event(tripId: string, eventId: string) {

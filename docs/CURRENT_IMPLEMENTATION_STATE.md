@@ -30,6 +30,41 @@ Date: 2026-10-05
   Dev/Production, commit/push, runtime capability or SET_PARTICIPATION enabled.
 - Report: docs/architecture/TRIP_CANONICAL_A1_I2C5_ACTIVATION_SECURITY_FOUNDATION_REPORT.md.
 
+## B-T3I — FULL PASS / ACCEPTED / CLOSED
+
+- Clean starting `trip/temporal` HEAD `55a35bc2174e2abacc5c1a1bb6206b9918209e3b`.
+  SQLite 46 adds scoped durable refresh generation, complete certificate and
+  normalized certified Event-ID membership. SQLite 1–45 and all 72 server
+  migrations remain unchanged; no sibling, push or remote access.
+- Explicit `refreshCollection(tripId)` on the existing canonical Event repository
+  validates the full bounded B-T3H page/cursor chain and locally recomputes B-T3G
+  bytes/hash before one Account-gated SQLite transaction. It reconciles all roots/
+  endpoints, installs certificate/ID set and removes only owned scoped mirrors.
+- Persistent membership blocks every individual apply/refresh from resurrecting
+  certified-absent Events, including after restart. Only newer complete certification
+  re-admits them. `mirrorMatches` derives hash consistency after individual updates;
+  historic membership authority remains. Partial/WITHHELD/error never removes rows.
+- Durable Trip refresh generation, Account fencing and captured local baseline
+  reject stale/ABA/intervening reads. Same-epoch revision compares exact BigInt;
+  equal contradiction fails closed; different epochs are incomparable and require
+  whole validation/current generation. No network gate or page-by-page writes.
+- B-T3I P2 durable-generation correction FULL PASS / ACCEPTED / CLOSED: SQLite 46
+  enforces INTEGER storage/bounds without affinity coercion and scoped certificate
+  INSERT/UPDATE watermark guards. Repository trust/apply/refresh validate both
+  generations and exact scope; corruption rejects before owner advancement/network
+  with no repair or mirror/certificate/membership change. Reviewer rewind reproducer PASS.
+- One shared platform-neutral protocol codec preserves Backend bytes/hashes: five
+  Mobile/Python goldens plus 110 baseline equivalence cases and 11 pages/cursors PASS.
+  Participant adapter, commands, authoring/Today UI, background wake policy and
+  server runtime connector/credentials remain pending/disabled.
+- Focused B-T3I 89 tests PASS; scoped B/E/F/H + migration tests 6 files / 207 tests
+  PASS; auth/DB/sync/API selection 38 files / 400 tests PASS; Backend 29 / 360 PASS.
+  Ten existing native-import-blocked suites pass 134 tests with temporary notification
+  isolation. Full Mobile run remains affected by existing native Flow import and
+  Ledger architecture issue; see
+  report. Typecheck/build/lint/UI guard and changed-file format/whitespace PASS.
+- Report: `docs/architecture/TRIP_CANONICAL_B_T3I_MOBILE_COLLECTION_APPLY_REPORT.md`.
+
 ## C-I3G — FULL PASS / ACCEPTED / CLOSED
 
 - Baseline `2c81c54`; test/internal-only credential-free worker and pinned
@@ -85,8 +120,8 @@ Date: 2026-10-05
   All 11 new float probes PASS; genuine contradiction still fails closed.
   B-T3G codec/cursor implementation and five independent golden vectors unchanged.
 - Dedicated collection connection/credentials remain unprovisioned; no service-role
-  fallback. Mobile collection apply/certificate/removal/wake integration remain
-  pending; Mobile collection apply remains unimplemented. No UI, timer,
+  fallback. Mobile certificate/apply/removal is implemented in B-T3I above
+  (review pending); background wake integration remains pending. No UI, timer,
   Event/deletion command or participant adapter activation.
 - Validation: Backend 28 files / 328 tests; scoped B-T3E/T3F/auth/DB/sync
   63 files / 527 tests; full SQL twice after independent clean replays, each
@@ -214,7 +249,7 @@ Date: 2026-10-05
   collection; no partial collection or silent participant loss is certified.
 - Participant adapter remains disabled/deferred. Server collection foundation is
   implemented in B-T3H above (accepted/closed); local collection certificate/apply
-  and wake integration remain pending.
+  is implemented in B-T3I above (review pending); wake integration remains pending.
   Event mutation/deletion commands remain disabled; activation gate CLOSED.
 - Authority: `docs/architecture/TRIP_CANONICAL_B_T3G_COLLECTION_SNAPSHOT_CURSOR_CONTRACT.md`.
   This accepted state supersedes historical review-pending wording in the contract.
@@ -302,7 +337,7 @@ Date: 2026-10-05
   accepted Place UUID→null cache loss only clears the scoped cached pointers;
   other equal-revision mismatch handling and older/withheld preservation remain.
 - B-T3G collection completeness/cursor/deletion contract is accepted; collection
-  server foundation is accepted in B-T3H; Mobile collection apply remains pending. Event
+  server foundation is accepted in B-T3H; Mobile apply is B-T3I review pending. Event
   mutation/edit UI and semantic queue remain disabled; dedicated runtime gateway
   provisioning remains PENDING and canonical Event activation stays CLOSED.
 - B-T3E canonical receipt route remains

@@ -499,3 +499,33 @@ or column rights/ownership or non-system schema/database CREATE. PUBLIC is a glo
 ACL union, not an authenticatable role; per-role REVOKE is not a DENY. No role-prefix
 or C-name exemption exists. The independent reviewed-root anchor remains outside
 normalization. C compatibility evidence is isolated; canonical manifest stays A-only.
+
+## B-T3I Mobile complete collection persistence (accepted)
+
+SQLite **46** adds three Account/Trip-scoped normalized tables without changing
+SQLite 1–45: `trip_canonical_event_collection_generations` stores the latest exact
+local refresh generation; `trip_canonical_event_collections` stores the complete
+applied certificate (epoch, decimal TEXT revision, collection/read/temporal/hash
+versions, count, fingerprint and applied generation); `trip_canonical_event_collection_ids`
+stores its durable certified Event-ID membership. Certificate rows always represent
+complete applied sets; pagination has no durable partial certificate or cursor.
+
+Both generation columns use BLOB affinity to prevent coercing numeric TEXT/REAL
+inputs, with `CHECK(typeof(column)='integer' AND column BETWEEN 1 AND
+9007199254740991)` enforcing positive safe INTEGER storage. Normal repository
+writes cast only an already validated JS safe-integer owner to SQL INTEGER.
+SQLite 46 certificate INSERT/UPDATE triggers require a matching scoped integer
+refresh watermark at least as large as the applied generation. Repository reads
+also validate both storage classes, safe positive values, exact scope and
+`refresh_generation >= applied_generation` before certificate/membership trust,
+individual apply or refresh advancement/network. Missing/corrupt watermark fails
+with `CANONICAL_EVENT_MIRROR_INTEGRITY`; it is never repaired or treated as bootstrap.
+
+One existing Account-gated repository transaction reconciles all B-T3F aggregates,
+replaces certificate/membership, removes only proven scoped canonical mirrors and
+checks the resulting full fingerprint. The historical membership fence survives
+individual fact updates/restart; `mirrorMatches` is derived, not a freshness promise.
+The authorized B-T3I task replaces B-T3G's proposed seven-column/JSON-ID layout with
+this normalized membership and durable generation design, and admits a different
+incomparable epoch only through a full validated set and current local generation.
+No semantic revision orders membership. Server schema/commands remain unchanged.

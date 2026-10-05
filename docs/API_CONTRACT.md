@@ -626,3 +626,20 @@ may omit duplicate PUBLIC-derived execution rows; PUBLIC/API/shared ACLs and obj
 properties remain globally pinned. Direct A grants, ownership, DDL capabilities or
 application paths fail closed. Independent anchor/OPEN/discovery/CLOSE semantics and
 the accepted dedicated-gateway provisioning phase remain intact; no runtime enabled.
+
+## B-T3I explicit Mobile collection refresh (accepted)
+
+`getDefaultTripCanonicalEventRepository().refreshCollection(tripId)` is the single
+explicit Mobile entrypoint for the B-T3H snapshot route. It retains one captured
+Account/Trip context throughout authentication and every page, checks actual wire
+body/page/full-set bounds, canonical continuation and locally recomputed fingerprint,
+then atomically installs SQLite 46 certificate/membership and complete mirror set.
+Partial/WITHHELD/error output preserves accepted mirrors/certificate. No background
+signal, screen, timer, financial cursor or automatic recovery loop invokes it.
+
+All individual `applyRead`/`refreshEvent` calls consult the durable scoped membership
+fence: certified-absent IDs return `CERTIFIED_ABSENT` without recreating mirrors,
+even at a higher Event revision. Only a newer accepted complete certificate can
+re-establish membership. Included individual reads retain B-T3F monotonic/Place-loss
+rules; later facts may invalidate derived `mirrorMatches` while the historic
+membership fence remains. Runtime server connector/credentials are still pending.

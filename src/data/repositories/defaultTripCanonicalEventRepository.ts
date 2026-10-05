@@ -9,5 +9,6 @@ export async function getDefaultTripCanonicalEventRepository() {
     await openDatabase(),
     requireActiveUserId,
     transport.event,
+    transport.collectionPage,
   );
 }
