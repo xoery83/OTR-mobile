@@ -450,8 +450,8 @@ facts, accepted Place-cache loss and participant eligibility/row changes; exact
 no-ops, legacy-only writes and candidate/timestamp-only changes need no increment.
 Overflow rejects the affecting write. Snapshot revision crosses the wire as an
 exact positive decimal string. No Event backfill or SQLite migration is added.
-See the B-T3G contract and B-T3H report for certification/privacy and deferred Mobile
-collection application. No delete command or participant adapter is enabled.
+See the B-T3G contract and B-T3H report for certification/privacy; accepted B-T3I
+Mobile collection application is described below. No delete command or participant adapter is enabled.
 
 ## A1-I2C5 participation activation foundation (runtime CLOSED)
 
@@ -498,7 +498,9 @@ application/SECURITY DEFINER owner path, outgoing membership, A direct grants/ta
 or column rights/ownership or non-system schema/database CREATE. PUBLIC is a global
 ACL union, not an authenticatable role; per-role REVOKE is not a DENY. No role-prefix
 or C-name exemption exists. The independent reviewed-root anchor remains outside
-normalization. C compatibility evidence is isolated; canonical manifest stays A-only.
+normalization. Checkpoint #10 integrates unchanged C00300 with the same reviewed
+root; the canonical manifest is generated from two independent clean 74-migration
+replays. SQLite remains contiguous 1–46, with 44 B-T3F, 45 A1-I2C2 and 46 B-T3I.
 
 ## B-T3I Mobile complete collection persistence (accepted)
 

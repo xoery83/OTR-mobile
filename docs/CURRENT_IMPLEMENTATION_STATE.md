@@ -2,33 +2,53 @@
 
 Date: 2026-10-05
 
-## A1-I2C5 — accepted base; principal-scope amendment REVIEW PENDING / RUNTIME CLOSED
+## Checkpoint #10 — integration candidate / REVIEW PENDING
 
-- Clean amendment baseline5d0af4f (accepted A foundation/security/fixed-root commit).
-  Original Tripsy parent/artifact unchanged. Amendment remains uncommitted.
-- A-only server73 versions through20261005000200; SQLite44/45 and historical72
-  server migrations/B/C protected implementations unchanged. No sibling/rebase work.
-- Amendment roots: PUBLIC ACL surface; anon/authenticated/service_role; all LOGIN
-  except trusted postgres/supabase_admin; A gateway/writer/reader. Recursive membership
-  (all option paths conservatively) and SECURITY DEFINER EXECUTE→owner reachability.
-  Only structurally isolated NOLOGIN/NOINHERIT/no dangerous flags/no A grant/ownership/
-  schema or database CREATE/no outgoing membership roles escape duplicate PUBLIC
-  enumeration. Global50 shared PUBLIC definitions/ACLs stay pinned; no C-name exception.
-- Fixed24-function/3-table integrity and independent immutable reviewed-root anchor
-  retained. Gate default CLOSED/generation0; exclusive CAS/ABA fence unchanged.
-  OPEN/discovery verify complete live root; CLOSE stays independent of inventory health.
-  Direct gateway is protected even NOLOGIN; accepted future LOGIN phase remains
-  separately reviewed. PUBLIC TEMP remains blocker; no credentials/connector/flags.
-- Validation: scope35; fixed-root16 (original15+helper joint); P2 52; hostile63;
-  forward119 tables/fence3/codec+races1+1. Backend29/360 and focused7/108 PASS.
-  Two A-only73 replays each SQL42/1472; two A+C74 replays each SQL43/1583 PASS.
-  Unchanged C00300 checker compatibility PASS; combined manifest is /tmp evidence only.
-  Canonical manifest remains119 tables/1776 columns/217 functions. Typecheck/build/
-  lint/UI guard/format/verifier/drift negatives PASS. Independent focused review required.
+- Authoritative inputs: A `2483379`, B feature `5d231ba`, C feature `dff8f03`.
+  Superseded B integration artifacts are retained only on
+  `checkpoint10-old-b-integration`; the new linear candidate excludes them.
+- Integrated topology: 74 unique server migrations through `20261005000300`;
+  SQLite 1–46, with 44 B mirror, 45 A result, 46 B complete collection certificate.
+  Historical server migrations through `00100` and SQLite 1–45 are unchanged.
+- A1-I2C5 and principal-scope amendment FULL PASS / ACCEPTED / CLOSED;
+  B-T3I and durable-generation correction FULL PASS / ACCEPTED / CLOSED;
+  C-I3H FULL PASS / ACCEPTED / CLOSED. Integration review remains separate.
+- Mobile complete collection certificate/apply and durable Source execution
+  responsibility are implemented. Participation/Event/Source commands stay disabled;
+  participation and Source gates remain CLOSED. No runtime connector, credential,
+  background collection wake policy or automatic startup reconciler is installed.
+- Provider terminality stays BLOCKED; safe IO_UNKNOWN retry is disabled.
+  All existing runtime provisioning, activation, device/live, host-loss, non-PNG
+  decoder and deployment PENDING/BLOCKED boundaries remain in force.
+- Final validation and byte-integrity evidence:
+  `docs/architecture/TRIP_CHECKPOINT_10_FINAL_INTEGRATION_REPORT.md`.
+  No Hosted Dev/Production access or push. Next step: integration review only.
+- Earlier sections retain accepted checkpoint history. The integrated state above
+  supersedes historical pending wording only for the explicitly completed A/B/C
+  foundations; other PENDING/BLOCKED boundaries are unchanged.
+
+## A1-I2C5 — FULL PASS / ACCEPTED / CLOSED
+
+- Accepted activation security/fixed-root foundation `5d0af4f` and principal-scope
+  amendment `2483379` are preserved byte-for-byte. Tripsy/CXE/Polarsteps artifacts
+  and documentation commits remain unchanged.
+- Application roots remain PUBLIC ACL surface, anon/authenticated/service_role,
+  LOGIN except trusted postgres/supabase_admin, and A gateway/writer/reader.
+  Conservative recursive membership and SECURITY DEFINER EXECUTE→owner reachability
+  are retained. Only structurally isolated NOLOGIN/NOINHERIT principals without
+  dangerous flags, A grant/ownership, DDL or outgoing membership may omit duplicate
+  PUBLIC-derived execution rows; all 50 shared PUBLIC definitions/ACLs remain pinned.
+- The fixed 24-function/3-table inventory and independent immutable reviewed-root
+  anchor remain unchanged. OPEN/discovery verify the complete live root; emergency
+  CLOSE remains independent of inventory health. C00300 passes the unchanged A
+  checker without C-name exemptions or expansion of the reviewed root.
 - Runtime activation, real identity/secret/connector, flags/rollout/Mobile generation,
-  dispatch/authoring fencing, device/live and deployment remain PENDING. No Hosted
-  Dev/Production, commit/push, runtime capability or SET_PARTICIPATION enabled.
-- Report: docs/architecture/TRIP_CANONICAL_A1_I2C5_ACTIVATION_SECURITY_FOUNDATION_REPORT.md.
+  dispatch/authoring fencing and device/live deployment remain PENDING. PUBLIC TEMP
+  remains a provisioning blocker; no runtime SET_PARTICIPATION is enabled.
+- Original accepted evidence: scope35, fixed-root16, P2 52, hostile63; A-only SQL
+  42/1472 and isolated A+C SQL 43/1583 per replay. Final integrated validation is
+  recorded separately; the manifest now represents the actual 74-migration schema.
+- Report: `docs/architecture/TRIP_CANONICAL_A1_I2C5_ACTIVATION_SECURITY_FOUNDATION_REPORT.md`.
 
 ## B-T3I — FULL PASS / ACCEPTED / CLOSED
 

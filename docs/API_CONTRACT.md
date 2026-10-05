@@ -558,8 +558,8 @@ No private Source/participant/candidate/financial content is exposed.
 
 No collection runtime connection or credential is provisioned. Missing/wrong gateway
 returns COLLECTION_CERTIFICATION_UNAVAILABLE; there is no service-role list fallback.
-Mobile collection application/certificates/removal and central refresh integration
-remain deferred. Individual reads/receipts/capabilities and all mutation gates stay
+Accepted B-T3I implements explicit Mobile collection application/certificates/removal;
+automatic central refresh/wake integration remains deferred. Individual reads/receipts/capabilities and all mutation gates stay
 unchanged; snapshot completeness enables no deletion command.
 
 ## A1-I2C3 participation runtime preflight (CLOSED)
@@ -643,3 +643,14 @@ even at a higher Event revision. Only a newer accepted complete certificate can
 re-establish membership. Included individual reads retain B-T3F monotonic/Place-loss
 rules; later facts may invalidate derived `mirrorMatches` while the historic
 membership fence remains. Runtime server connector/credentials are still pending.
+
+## Checkpoint #10 integrated capability boundary
+
+A1-I2C5/principal-scope amendment, B-T3I and C-I3H are accepted foundations.
+Participation, Event and Source commands remain disabled, with participation and
+Source gates CLOSED. The explicit Mobile complete collection refresh above is
+implemented; dedicated runtime connections and automatic wake policy remain pending.
+C-I3H adds internal durable execution inventory/claim responsibility without a new
+HTTP route, product parser/upload dispatch or automatic startup reconciler. Provider
+terminality remains BLOCKED and safe IO_UNKNOWN retry remains disabled. No runtime
+activation follows from the integrated 74-server/46-SQLite candidate.
