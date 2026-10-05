@@ -2,6 +2,19 @@
 
 Date: 2026-10-05
 
+## Checkpoint #12 — Import contract foundation / CONTRACT REVIEW PENDING
+
+- Design only, isolated `codex/cp12-import-contract` from exact base
+  `dc580e790d6e0998e97f1dc17fa05a1f50c731ee`; no commit/push or remote access.
+- Six-layer Import, Batch N↔M, context/evidence, action-specific Flight closure,
+  existing-item completion/augmentation, intelligence plugins, data enrichment,
+  offline continuation and presentation-neutral progress contracts are drafted.
+- Authoritative entry: `docs/architecture/TRIP_CHECKPOINT_12_CONTRACT_REPORT.md`;
+  decision: `docs/adr/2026-10-05-import-engine-boundaries.md` (PROPOSED).
+- No engine, runtime/UI, schema/DB or production-code change. SQLite 1–48 and
+  74 server migrations remain unchanged. CP11 semantics and review gates remain.
+- Next step: contract review only; no implementation/activation authorization.
+
 ## Checkpoint #11 — integrated candidate / OWNER REVIEW PENDING
 
 - Canonical branch `integration/ledger-polish-canonical`, starting/retained HEAD
