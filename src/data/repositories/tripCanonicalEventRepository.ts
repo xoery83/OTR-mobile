@@ -35,6 +35,16 @@ export type ScopedCanonicalEventRead = {
 export type CanonicalEventMirrorOutcome =
   "APPLIED" | "UNCHANGED" | "IGNORED_OLDER" | "WITHHELD" | "CERTIFIED_ABSENT";
 type ReadOnlyEvent = Extract<CanonicalEventRead, { disposition: "READ_ONLY" }>;
+export type CertifiedTripEventSource = {
+  context: AccountRequestContext;
+  snapshot: { epochId: string; collectionRevision: string };
+  fingerprint: string;
+  eventCount: number;
+  ids: string[];
+  appliedGeneration: number;
+  events: ReadOnlyEvent[];
+};
+
 type Row = Record<string, unknown>;
 const rootFields = Object.keys(canonicalEventFactsSchema.shape).filter(
   (key) => !["id", "trip_id", "itinerary_transport_endpoints"].includes(key),
@@ -490,7 +500,78 @@ export function createTripCanonicalEventRepository(
     );
     return outcome;
   }
+  // Caller callback runs inside this same coherent, Account-gated transaction.
+  // It must not open another transaction or perform network I/O.
+  async function withCertifiedCollection<T>(
+    context: AccountRequestContext,
+    task: (source: CertifiedTripEventSource | null) => Promise<T>,
+  ): Promise<T> {
+    collectionUuid.parse(context.accountId);
+    collectionUuid.parse(context.tripId);
+    let result!: T;
+    await withAccountApplyGate(() =>
+      database.withTransactionAsync(async () => {
+        await assertAccountRequestContext(context, getActiveUserId);
+        let source: CertifiedTripEventSource | null = null;
+        try {
+          const certificate = await collectionCertificate(context);
+          if (certificate) {
+            const roots = await database.getAllAsync<{ event_id: string }>(
+              "SELECT event_id FROM trip_canonical_events WHERE account_id=? AND trip_id=? ORDER BY event_id COLLATE BINARY",
+              context.accountId,
+              context.tripId,
+            );
+            if (
+              JSON.stringify(roots.map((r) => r.event_id)) !==
+              JSON.stringify(certificate.ids)
+            )
+              integrity();
+            const endpoints = await database.getAllAsync<{ event_id: string }>(
+              "SELECT event_id FROM trip_canonical_transport_endpoints WHERE account_id=? AND trip_id=?",
+              context.accountId,
+              context.tripId,
+            );
+            const membership = new Set(certificate.ids);
+            if (endpoints.some((r) => !membership.has(r.event_id))) integrity();
+            const events: ReadOnlyEvent[] = [];
+            for (const id of certificate.ids) {
+              const local = await load(context, id);
+              if (
+                local?.data.disposition !== "READ_ONLY" ||
+                local.data.event.id !== id ||
+                local.data.event.trip_id !== context.tripId ||
+                local.data.event.participant_scope !== "UNASSIGNED"
+              )
+                integrity();
+              events.push(local.data);
+            }
+            if (
+              (await fingerprintEventCollection(context.tripId, events)) !==
+              certificate.fingerprint
+            )
+              integrity();
+            source = { context, ...certificate, events };
+          }
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            ![
+              "CANONICAL_EVENT_MIRROR_INTEGRITY",
+              "CANONICAL_EVENT_SNAPSHOT_INVALID",
+            ].includes(error.message)
+          )
+            throw error;
+          // Corrupt/mismatching accepted facts cannot certify a new projection.
+        }
+        result = await task(source);
+        await assertAccountRequestContext(context, getActiveUserId);
+      }),
+    );
+    await assertAccountRequestContext(context, getActiveUserId);
+    return result;
+  }
   return {
+    withCertifiedCollection,
     applyRead,
     refreshCollection,
     async getCollectionCertificate(tripId: string): Promise<

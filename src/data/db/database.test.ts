@@ -58,7 +58,7 @@ describe("SQLite migrations", () => {
       "trip_canonical_event_read_only_mirror",
     );
     expect(migrations.map(({ id }) => id)).toEqual(
-      Array.from({ length: 46 }, (_, i) => i + 1),
+      Array.from({ length: 48 }, (_, i) => i + 1),
     );
     await runMigrations(database);
     await runMigrations(database);
@@ -66,9 +66,11 @@ describe("SQLite migrations", () => {
       expect.stringContaining("schema_migrations"),
       participation.sql,
       migrations.find(({ id }) => id === 46)!.sql,
+      migrations.find(({ id }) => id === 47)!.sql,
+      migrations.find(({ id }) => id === 48)!.sql,
       expect.stringContaining("schema_migrations"),
     ]);
-    expect(appliedMigrationIds).toEqual(new Set([...prior, 44, 45, 46]));
+    expect(appliedMigrationIds).toEqual(new Set([...prior, 44, 45, 46, 47, 48]));
   });
 
   it("upgrades v43 through B44 then A45 and preserves both mirrors and existing data on restart", async () => {
@@ -164,7 +166,7 @@ describe("SQLite migrations", () => {
       const priorData = existing();
       sqlite.exec("PRAGMA foreign_keys=ON");
       await runMigrations(adapter());
-      expect(applied).toEqual([44, 45, 46]);
+      expect(applied).toEqual([44, 45, 46, 47, 48]);
       expect(existing()).toBe(priorData);
       expect(mirror()).toBe(mirrorBefore!);
       expect(() =>
@@ -182,16 +184,16 @@ describe("SQLite migrations", () => {
         .run("account", "trip", "person", "operation", "receipt", "digest", "{}");
       const before = sqlite.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
       expect(before.at(-1)).toMatchObject({
-        id: 46,
-        name: "trip_canonical_event_collection_certificate",
+        id: 48,
+        name: "local_capture_inbox",
       });
       expect(before.map((row) => row.id)).toEqual(
-        Array.from({ length: 46 }, (_, i) => i + 1),
+        Array.from({ length: 48 }, (_, i) => i + 1),
       );
       sqlite.close();
       sqlite = new DatabaseSync(path);
       await runMigrations(adapter());
-      expect(applied).toEqual([44, 45, 46]);
+      expect(applied).toEqual([44, 45, 46, 47, 48]);
       expect(existing()).toBe(priorData);
       expect(mirror()).toBe(mirrorBefore!);
       expect(sqlite.prepare("SELECT * FROM schema_migrations ORDER BY id").all()).toEqual(
@@ -244,7 +246,7 @@ describe("SQLite migrations", () => {
       "ledger_my_spending_facts",
     );
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(46);
+    expect(latest.id).toBe(48);
     expect(migrations.find((migration) => migration.id === 39)?.sql).toContain(
       "original_mime_type",
     );

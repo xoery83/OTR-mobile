@@ -1,5 +1,32 @@
 # OTR Mobile 2.0 Data Model Draft
 
+## Checkpoint 11 local foundations — integrated, owner review pending
+
+SQLite 47 (`trip_day_read_model`) adds Account/Trip-scoped `trip_day_projections`,
+`trip_day_events` and role-keyed `trip_day_boundaries`. A header binds format version,
+independent projection generation and exact B-T3I epoch/revision/fingerprint/applied
+generation. Only a coherent, fingerprint-matching complete source can install it;
+installation repeats source validation and generation CAS. Projection children have
+no dependency on mutable canonical mirrors, so historical accepted observations
+remain readable offline. Replacement explicitly deletes scoped children, including
+when foreign-key cascades are disabled. Event revisions and collection semantics
+are unchanged. Temporal facts retain exact strings, precision and endpoint context.
+
+SQLite 48 (`local_capture_inbox`) adds immutable Account-scoped
+`local_capture_payloads` BLOBs and `local_capture_inbox` references. Payload identity,
+byte count, SHA-256, bytes, Capture kind/original metadata/creation time are immutable;
+Trip association and INBOX/ASSIGNED state use independent revision CAS. Binary/TEXT
+limits are 10/1 MiB; quotas are 100 MiB unique bytes and 1,000 references per Account,
+500 MiB unique bytes per device. Exact-byte dedup is Account-local. Payload/reference
+creation, quota decisions and reference-safe deletion are transactional. Assignment
+requires cached Account/Trip actor admission; lost admission retains content but
+blocks assigned mutation. Capture is not Source or Representation admission and has
+no processing/imported state, queue, provider or execution journal.
+
+SQLite is contiguous 1–48; server migrations remain 74 with unchanged manifest.
+Module ADRs and `architecture/TRIP_CHECKPOINT_11_FINAL_INTEGRATION_REPORT.md` contain
+the complete local contracts and validation. No UI or runtime activation is implied.
+
 Current cross-currency `RATE_REQUIRED` Expenses with null `economic_date` use
 `RESTORE_MISSING_ECONOMIC_DATE_V1`: proven Stage 9 date-only import metadata is
 `AUTO_SAFE`; timestamp-only or conflicting evidence requires explicit user

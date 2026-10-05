@@ -245,7 +245,7 @@ describe("canonical Event local mirror", () => {
       let sqlite = new DatabaseSync(path);
       await runMigrations(adapter(sqlite));
       await runMigrations(adapter(sqlite));
-      expect(await getSchemaVersion(adapter(sqlite))).toBe(46);
+      expect(await getSchemaVersion(adapter(sqlite))).toBe(48);
       expect(
         sqlite.prepare("SELECT COUNT(*) n FROM schema_migrations WHERE id=44").get(),
       ).toEqual({ n: 1 });
@@ -292,6 +292,7 @@ describe("canonical Event local mirror", () => {
       expect(result?.context).toMatchObject({ accountId: accountA, tripId: trip });
       expect(JSON.stringify(result)).not.toContain("scheduledDate");
       expect(Object.keys(f.repository)).toEqual([
+        "withCertifiedCollection",
         "applyRead",
         "refreshCollection",
         "getCollectionCertificate",

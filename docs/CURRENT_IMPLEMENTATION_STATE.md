@@ -2,6 +2,39 @@
 
 Date: 2026-10-05
 
+## Checkpoint #11 — integrated candidate / OWNER REVIEW PENDING
+
+- Canonical branch `integration/ledger-polish-canonical`, starting/retained HEAD
+  `d295b5e232bbe1e2b2d8ca96a2ff61e57eb3ba34`. Both Builder working diffs are integrated
+  locally; no commit, push, deploy or Hosted Dev/Production access.
+- SQLite is contiguous 1–48: 47 `trip_day_read_model`, 48 `local_capture_inbox`.
+  Historical SQLite 1–46 and all 74 server migrations are unchanged. Server manifest,
+  verifier, RLS matrix and A1-I2C5/C-I3H security artifacts remain unchanged.
+- Certified Day projection supports explicit date/now/zone queries, exact microsecond
+  ordering, independent generation/source CAS and historical offline observations.
+  A concrete integration correction explicitly deletes scoped children during
+  replacement because the default app connection does not enable FK cascades.
+- Capture stores immutable original SQLite BLOBs with bounded intake, verified exact
+  dedup, transactional quotas, Account/Trip/revision fencing and safe shared-reference
+  deletion. Only INBOX/ASSIGNED states exist; Source handoff is read-only.
+- Both factories are explicit and unwired to UI/startup. No Today/Inbox/Share UI,
+  automatic refresh, provider/parser, queue or timer is added. Participation/Event/
+  Source commands remain disabled; gates CLOSED; runtime provisioning, device/live
+  acceptance and provider terminality/retry blockers remain unchanged.
+- Validation: A/B focused 225 tests and combined fresh/upgrade/offline tests PASS;
+  selected regressions 664 tests PASS with two existing native collection blockers.
+  Typecheck, lint/UI guard, Backend build and changed-file formatting PASS. Normal
+  full suite retains ten native collection blockers and one baseline Ledger
+  architecture failure; full format retains 17 byte-identical baseline failures.
+  Complete evidence is recorded in
+  `docs/architecture/TRIP_CHECKPOINT_11_FINAL_INTEGRATION_REPORT.md`. Module contracts:
+  `docs/adr/2026-10-05-trip-day-read-model.md` and
+  `docs/adr/2026-10-05-local-capture-inbox.md`.
+- Next approved step: owner review of the integrated Checkpoint #11 candidate.
+  No commit/push or later Import/runtime work is authorized before owner review.
+- This section supersedes historical next-step/schema wording below only for
+  Checkpoint #11; it does not independently close Checkpoint #10's recorded review.
+
 ## Checkpoint #10 — integration candidate / REVIEW PENDING
 
 - Authoritative inputs: A `2483379`, B feature `5d231ba`, C feature `dff8f03`.

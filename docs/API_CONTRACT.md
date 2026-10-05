@@ -1,5 +1,26 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## Checkpoint 11 local repository contracts — owner review pending
+
+No HTTP endpoint, server schema, role, credential or enabled capability changes.
+The canonical Event repository adds only `withCertifiedCollection(context, task)`:
+certificate, exact membership, roots, endpoints and fingerprint are validated in one
+Account-gated SQLite transaction. The callback performs local work without nested
+transactions or network I/O. Existing B-T3I apply/certificate semantics are unchanged.
+
+The explicit Trip Day repository exposes prepare/install/rebuild, projection reads,
+local-date/Today/Tomorrow queries, next comparable Event and unresolved candidates.
+Date/now and IANA zone are explicit query inputs. Results distinguish
+`CURRENTLY_MATCHES_SOURCE` from `HISTORICAL_ACCEPTED_PROJECTION`; neither is a server
+freshness promise. Queries and rebuilds perform no network call or polling.
+
+The local Capture repository exposes intake, bounded Account-scoped listing,
+revision-fenced assignment/deletion and read-only `getForSourceHandoff`. Handoff
+returns verified independent payload bytes and Capture metadata, without creating
+Source, invoking a command/parser/provider or changing lifecycle. Module factories
+use the existing local session/database and remain unwired to UI/startup. Participation,
+Event and Source commands stay disabled; no activation gate is opened.
+
 ## Adjustment confirmation source transport
 
 Confirmation preserves PostgreSQL JSON numeric precision in the source proof.

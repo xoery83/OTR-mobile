@@ -1,3 +1,6 @@
+import { tripDayReadModelMigration } from "./migrations/tripDayReadModel";
+import { localCaptureInboxMigration } from "./migrations/localCaptureInbox";
+
 export type Migration = {
   id: number;
   name: string;
@@ -1673,4 +1676,6 @@ export const migrations: Migration[] = [
       );
     `,
   },
+  tripDayReadModelMigration,
+  localCaptureInboxMigration,
 ];
