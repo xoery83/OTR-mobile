@@ -287,6 +287,8 @@ select ok((select tgtype=62 from pg_trigger where tgrelid='public.trip_source_re
 select ok((select tgtype=62 from pg_trigger where tgrelid='public.trip_source_representations'::regclass and tgname='trip_source_statement_guard'),'P2 trip_source_representations BEFORE statement fence covers all four mutation events');
 select ok((select tgtype=62 from pg_trigger where tgrelid='public.trip_source_actions'::regclass and tgname='trip_source_statement_guard'),'P2 trip_source_actions BEFORE statement fence covers all four mutation events');
 -- Include the new RESTRICT receipt child so CASCADE reaches the original statement guard.
+-- C-I3H child FK must not mask the tested canonical TRUNCATE guard.
+grant truncate on public.trip_source_execution_attempts to service_role,otr_trip_source_writer;
 grant truncate on public.trip_source_operations to service_role,otr_trip_source_writer;
 grant select,insert,update,delete,truncate on public.trip_sources to service_role;
 grant select,insert,update,delete,truncate on public.trip_source_revisions to service_role;

@@ -90,29 +90,28 @@ const [
 ]);
 
 const manifest = JSON.parse(manifestRaw);
-// Retained 73-version chain through A1-I2C5; activation security foundation remains CLOSED.
+// Integrated 74-version A+B+C chain; all product runtimes remain CLOSED.
 const expected = {
-  tables: 119,
+  tables: 121,
   buckets: 4,
-  columns: 1776,
-  indexes: 370,
-  checksum: "734a8d75b7b21e7f87bc690df0f1a03bbcd1c7668e85ad44ec5b6e7376e93296",
-  policies: 207,
-  triggers: 149,
-  functions: 217,
-  rls_tables: 119,
-  constraints: 1028,
+  columns: 1812,
+  indexes: 377,
+  checksum: "e6ee9b175bb920554cf61d7d4af76f09e4414e5e6149453fb6e396382abd982c",
+  policies: 211,
+  triggers: 151,
+  functions: 227,
+  rls_tables: 121,
+  constraints: 1071,
 };
 const migrationNames = (await readdir("supabase/migrations"))
   .filter((name) => name.endsWith(".sql"))
   .sort();
 if (
-  migrationNames.length !== 73 ||
-  new Set(migrationNames.map((name) => name.slice(0, 14))).size !== 73 ||
-  migrationNames.at(-1) !==
-    "20261005000200_trip_person_participation_activation_foundation.sql"
+  migrationNames.length !== 74 ||
+  new Set(migrationNames.map((name) => name.slice(0, 14))).size !== 74 ||
+  migrationNames.at(-1) !== "20261005000300_trip_source_execution_journal.sql"
 ) {
-  throw new Error("Expected exactly 73 unique migration versions through A1-I2C5.");
+  throw new Error("Expected exactly 74 unique migration versions through C-I3H.");
 }
 const collectionFoundation = await readFile(
   "supabase/migrations/20261005000100_trip_event_collection_foundation.sql",
@@ -167,6 +166,38 @@ const sourceCommand = await readFile(
   "supabase/migrations/20261004000500_trip_source_command_foundation.sql",
   "utf8",
 );
+const executionJournal = await readFile(
+  "supabase/migrations/20261005000300_trip_source_execution_journal.sql",
+  "utf8",
+);
+for (const required of [
+  "pg_shdepend",
+  "ci3h_owned_routines",
+  "has_column_privilege",
+  "pg_default_acl",
+  "SOURCE_EXECUTION_FENCE_CONFLICT",
+  "owner_fence=a.owner_fence+1",
+  "a.execution_principal=session_user",
+  "s.cleaned_at is null",
+  "release_authorized_at",
+  "o.phase not in ('IO_QUIESCENT','FINAL')",
+  "cleanup_evidence_sha256",
+  "SOURCE_STAGE_PROTECTED",
+  "unique(runtime_node_id,container_id)",
+  "trip_source_execution_exclusive_representation",
+  "x.xmin=pg_current_xact_id()::xid",
+  "tg_op in ('DELETE','TRUNCATE')",
+  "revoke create on schema public from otr_trip_source_execution_writer",
+])
+  if (!executionJournal.includes(required))
+    throw new Error("Protected execution journal missing: " + required);
+if (
+  /create\s+role[^;]*\blogin\b/i.test(executionJournal) ||
+  /alter\s+table\s+public\.trip_source_command_gate/i.test(executionJournal)
+)
+  throw new Error(
+    "Execution journal must remain unprovisioned and canonical gate closed.",
+  );
 const personCommand = await readFile(
   "supabase/migrations/20261004000600_trip_person_command_foundation.sql",
   "utf8",
@@ -214,7 +245,7 @@ const secretPatterns = [
 for (const pattern of secretPatterns) {
   if (
     pattern.test(
-      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${ledger8Review}\n${ledger8Feed}\n${ledger9Import}\n${settlementParticipation}\n${sourceCommand}\n${personCommand}\n${collectionFoundation}\n${participationActivation}\n${seed}`,
+      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${ledger8Review}\n${ledger8Feed}\n${ledger9Import}\n${settlementParticipation}\n${sourceCommand}\n${personCommand}\n${collectionFoundation}\n${participationActivation}\n${executionJournal}\n${seed}`,
     )
   ) {
     throw new Error(`Production identifier or secret-like value found: ${pattern}`);
@@ -268,6 +299,8 @@ const lineageChecksum = createHash("sha256")
   .update(ledger9Import)
   .update("\0")
   .update(settlementParticipation)
+  .update("\0")
+  .update(executionJournal)
   .digest("hex");
 
 console.log(

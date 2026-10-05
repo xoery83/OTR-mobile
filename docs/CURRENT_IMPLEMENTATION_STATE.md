@@ -65,6 +65,35 @@ Date: 2026-10-05
   report. Typecheck/build/lint/UI guard and changed-file format/whitespace PASS.
 - Report: `docs/architecture/TRIP_CANONICAL_B_T3I_MOBILE_COLLECTION_APPLY_REPORT.md`.
 
+## C-I3H — FULL PASS / ACCEPTED / CLOSED
+
+- Additive server `20261005000300` supplies protected execution-attempt and staging
+  responsibility rows. The 72 historical migrations, SQLite 1–45, B-T3H implementation
+  and accepted C-I3G worker/profile/vendor/protocol remain byte-identical.
+- Exact operation/attempt, authenticated principal, Source/Representation, PNG
+  fingerprint, node/key/run-token/container bindings are durable. Initial C-I3D
+  admission and journal registration must commit together before staging; an older
+  IO_ACTIVE or IO_UNKNOWN imports UNKNOWN. Monotonic owner-run/fence CAS rejects stale
+  writes/reconnect/ABA. Unresolved takeover stays UNKNOWN; terminal cleanup takeover
+  preserves terminal proof and cannot reopen execution.
+- Inventory retains STARTING (identity absent/known), RUNNING, TERMINATION_REQUIRED,
+  UNKNOWN and terminal cleanup-pending across process loss. Cleanup needs all journal
+  references terminal, no outstanding responsibility, and separate canonical
+  IO_QUIESCENT/FINAL evidence. Authorization is durable but is not deletion; exact
+  cleanup evidence must be acknowledged before removing inventory responsibility.
+- Explicit internal Backend inventory/claim seam is unwired. No credential, startup
+  worker, timer, Mobile endpoint, product parser/upload/provider route or retry is
+  installed. Execution responsibility is no longer forgotten across process crash;
+  exact external terminality after host/node loss is not solved.
+- Validation details and exact counts: C-I3H report. Source commands remain disabled;
+  C-I3D gate CLOSED; purge/redaction disabled. Provider post-crash terminality and safe
+  IO_UNKNOWN retry remain BLOCKED. Runtime provisioning, actual fsync/quota/staging
+  adapters, trusted evidence producers, automatic recovery, non-PNG decoder profiles
+  and Hosted Dev/Production activation remain PENDING/BLOCKED.
+- Report: `docs/architecture/TRIP_CANONICAL_C_I3H_DURABLE_EXECUTION_JOURNAL_REPORT.md`.
+  Human accepted and closed C-I3H; task-only local commit authorized. No push/deploy
+  or runtime activation. Prior accepted A/B/C states remain intact.
+
 ## C-I3G — FULL PASS / ACCEPTED / CLOSED
 
 - Baseline `2c81c54`; test/internal-only credential-free worker and pinned
@@ -81,13 +110,14 @@ Date: 2026-10-05
   Event-gated arbitrary delay and transport failures retain ownership.
   Lifecycle events wake capped-backoff reconciliation; input/slot remain protected
   until exact terminal proof. Concurrent unrelated worker is untouched. Parent-process
-  crash durability is not solved; future durable owner/journal remain PENDING.
+  crash durability was outside C-I3G; C-I3H adds the journal foundation above.
+  Actual runtime owner/journal adapters remain PENDING.
 - 87 parser/protocol/adversarial/isolation tests and unchanged C-I3F 23-test regression
   PASS; teardown proves 0 active termination obligations and 0 parser containers.
   Typecheck, Backend build, lint/format/byte checks PASS. Containers and
   temporary synthetic staging/evidence removed; immutable local image retained for review.
 - Provider post-crash terminality and safe IO_UNKNOWN retry remain BLOCKED. Durable
-  runtime owner/journal/staging/quota/provisioning and production isolation remain
+  runtime owner/journal adapters/staging/quota/provisioning and production isolation remain
   PENDING; missing pre-dispatch rejection path remains PENDING/BLOCKED.
   Source commands remain disabled; C-I3D gate CLOSED; no product upload route.
 - Report: `docs/architecture/TRIP_CANONICAL_C_I3G_PARSER_WORKER_REPORT.md`.
@@ -102,7 +132,7 @@ Date: 2026-10-05
 - Independent review and float-stability P1 correction accepted; B-T3H is closed.
 - Baseline: clean `trip/temporal` `2c81c54`; additive server migration
   `20261005000100_trip_event_collection_foundation.sql` follows the retained
-  71-version chain: the integrated server chain now contains **72 migrations**.
+  71-version chain: the accepted B-T3H chain contains **72 migrations**; C-I3H extends it to 73.
   SQLite 44/45 and B-T3E/T3F individual reads remain unchanged.
 - Protected independent Trip counter and primary READ COMMITTED single-statement
   observation cover full canonical scope, admission, endpoints and participant
@@ -285,7 +315,8 @@ Date: 2026-10-05
   ACCEPTED / CLOSED are retained without runtime activation.
 - Committed Ledger receipt dependency scheduling through `5873c4c`, all accepted
   Checkpoint #8 A/B/C foundations, SQLite 44/45 and server00600 remain preserved.
-  The server chain is now 72 migrations, ending in `20261005000100`.
+  That accepted checkpoint contains 72 migrations through `20261005000100`;
+  C-I3H adds `20261005000300` as migration 73.
 - B-T3H fingerprint/cursor, security roles and function-local float output policy
   remain unchanged. Runtime collection connector/credentials, Mobile collection
   apply and all existing provisioning/device requirements stay pending.

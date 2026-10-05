@@ -529,3 +529,19 @@ The authorized B-T3I task replaces B-T3G's proposed seven-column/JSON-ID layout 
 this normalized membership and durable generation design, and admits a different
 incomparable epoch only through a full validated set and current local generation.
 No semantic revision orders membership. Server schema/commands remain unchanged.
+
+## C-I3H execution responsibility journal (runtime disabled)
+
+Migration `20261005000300` adds protected staged-resource references and execution
+attempt responsibility, independently of C-I3D canonical operation/receipt state.
+The exact existing operation/attempt and session principal bind immutable node/key,
+run token and optional runtime identity. Claim/takeover uses monotonic CAS fences;
+UNKNOWN retains responsibility and blocks release. Terminal observations require
+exact trusted evidence. A resource can be released only after all references are
+positively terminal with no outstanding responsibility and all associated canonical
+operations IO_QUIESCENT/FINAL under locked exact references. Cleanup authorization
+is separate from positive node/key cleanup acknowledgement; inventory retains the
+resource until the latter. Terminal cleanup takeover advances the owner fence without
+changing terminal evidence or reopening execution. No parser/container evidence
+authorizes provider retry or canonical finalization. See the C-I3H report for the
+protocol, validation status and remaining runtime/host-loss/provider blockers.
