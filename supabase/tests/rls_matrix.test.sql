@@ -13,8 +13,8 @@ select is(
 );
 select is(
   (select count(*)::integer from information_schema.columns where table_schema = 'public'),
-  1775,
-  'retained chain and protected Trip foundation column count is 1775'
+  1776,
+  'retained chain and protected Trip foundation column count is 1776'
 );
 select is(
   (select count(*)::integer from pg_class c join pg_namespace n on n.oid = c.relnamespace

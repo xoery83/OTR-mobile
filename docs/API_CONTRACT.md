@@ -586,3 +586,35 @@ Mobile preserves these HTTP codes and the same pending key/intent; no new key or
 POST is manufactured automatically.
 No dedicated connector or credentials are installed. This preflight does not alter
 server 00600 or activate normal Mobile dispatch.
+
+## A1-I2C5 installed activation security foundation (HTTP disabled)
+
+No new HTTP route or enabled capability. Fixed DB
+`trip_person_runtime_state()` is available only through the exact dedicated session;
+it returns commandVersion=1, receiptVersion=1, gateClosed, safe-integer gateGeneration
+and schemaVersion=20261005000200 after exact protected-definition/role/ACL inventory
+checks. Missing/corrupt state or privileges fail closed. The future connector must
+validate these facts and map them to the existing installed-state interface; none
+is installed by this slice. Ordinary API/service/JWT/GUC identity cannot substitute.
+
+`trip_person_set_command_gate(bigint,boolean)` is a separate administrator-only
+DB boundary: expected generation CAS under the existing exclusive activation fence,
+not a product/gateway operation. DB OPEN alone does not enable HTTP; Backend and
+Mobile mutation remain disabled. Exact historic GET retains UNAUTHENTICATED/401,
+PARTICIPATION_FORBIDDEN/403, OPERATION_NOT_FOUND/404 and REPLAY_UNAVAILABLE/503;
+unavailable/missing recovery retains the same durable key/intent.
+
+A1-I2C5 P2: OPEN and discovery require the fixed 24-function definition/owner/config/
+ACL/effective-execution inventory and exact gate/Member/receipt structural RLS,
+policy, trigger, constraint and column inventory. OPEN/discovery independently pin
+the checker code and payload before invoking it; no drift is repaired. CLOSE does
+not depend on OPEN-only inventory. Shared historical helper ACLs remain exact;
+no new PUBLIC/API execution surface or runtime connector is introduced.
+
+A1-I2C5 fixed-root correction: OPEN and discovery directly verify the immutable
+migration-owned trip_person_activation_reviewed_root() anchor outside the normalized
+activation-function cycle. The complete live inventory root must equal that anchor;
+rewriting payload and all normalized root literals together cannot bless drift.
+External fixed audit/source verifier pin the same reviewed root and full anchor
+body. CLOSE remains independent of OPEN-only anchor/checker health. No runtime
+connector/capability or new caller-supplied configuration surface is enabled.

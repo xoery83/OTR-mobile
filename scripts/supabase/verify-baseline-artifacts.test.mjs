@@ -42,6 +42,26 @@ test("baseline guards reject count and same-count checksum drift", async () => {
           error.stderr.toString().includes(`Schema manifest mismatch for ${field}`),
       );
     }
+    await writeFile(manifestPath, JSON.stringify(canonical));
+    const activationPath = resolve(
+      cwd,
+      "supabase/migrations/20261005000200_trip_person_participation_activation_foundation.sql",
+    );
+    const activation = await readFile(activationPath, "utf8");
+    await writeFile(
+      activationPath,
+      activation.replace(
+        /as \$anchor\$ select '[0-9a-f]{64}'::text/,
+        "as $anchor$ select '" + "0".repeat(64) + "'::text",
+      ),
+    );
+    assert.throws(
+      () => run(verifier),
+      (error) =>
+        error.stderr
+          .toString()
+          .includes("Independent reviewed participation root anchor changed."),
+    );
   } finally {
     await rm(cwd, { recursive: true, force: true });
   }

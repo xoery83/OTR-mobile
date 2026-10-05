@@ -2,6 +2,40 @@
 
 Date: 2026-10-05
 
+## A1-I2C5 — IMPLEMENTATION COMPLETE / REVIEW PENDING / RUNTIME CLOSED
+
+- Original clean baseline `55a35bc`; correction HEAD `a39cb1c` adds only unrelated
+  Tripsy .docx, preserved untouched. A work remains uncommitted. Additive server `20261005000200` extends 72→73.
+  Historical 72 migrations, SQLite44/45 and all B/C/runtime artifacts are unchanged.
+- Gate defaults CLOSED/generation0. Direct admin expected-generation CAS holds
+  the matching exclusive activation fence; every transition advances. The row guard
+  verifies that lock, stale/ABA requests reject, and OPEN reserves final CLOSE capacity.
+- Private writer receives Member SELECT and UPDATE only participation_active/revision
+  under dedicated-session/gate RLS and unchanged command/evidence guards. Gateway
+  has no Member/gate DML and only SET/exact recovery/fixed state EXECUTE.
+- Roles remain NOLOGIN; fixed session defaults and role/ACL/definition inventory
+  installed. P2 correction pins 24 exact function definitions/owners/config/ACLs
+  and effective execution/membership paths; 3 tables' exact triggers/constraints/
+  columns/RLS/policies and default ACLs. OPEN independently pins checker code/payload;
+  discovery checks the same inventory. P2 #2 adds an immutable reviewed-root anchor
+  outside mutual normalization, full definition pin + external fixed audit/source
+  verifier. Joint trigger/policy payload+root forgery rejects; CLOSE remains independent.
+  LOGIN/secret stays separately provisioned. Read-only bootstrap audit
+  rejects unexpected rights; shared PUBLIC database TEMP needs separate DBA review
+  before LOGIN and is not silently revoked by this task.
+- Discovery reports only versions, closed state, generation and schema identity;
+  missing/corrupt or untrusted state fails closed. HTTP/Mobile capability and dispatch
+  remain disabled; no real connector, flag/allowlist or credentials were added.
+- Validation: Backend29/360, focused7/108 (overlap54), P2 probes52, root/joint probes15, reuse63, forward119 tables,
+  admin fence3, I2C2 codec/races1+1, two clean73 replays each SQL42/1472 PASS.
+  Manifests identical; public/storage diff empty; verifier/drift negatives, typecheck,
+  build, full lint/UI guard and changed-file format/whitespace PASS.
+- Still pending: real identity/secret and connector, environment grants, request-time
+  enabled predicate/flag/rollout/Mobile generation, dispatch/Trip authoring fencing,
+  device/live acceptance and deployment. No Hosted Dev/Production, sibling writes,
+  staging, commit, push, merge/rebase or product mutation activation.
+- Report: `docs/architecture/TRIP_CANONICAL_A1_I2C5_ACTIVATION_SECURITY_FOUNDATION_REPORT.md`.
+
 ## C-I3G — FULL PASS / ACCEPTED / CLOSED
 
 - Baseline `2c81c54`; test/internal-only credential-free worker and pinned

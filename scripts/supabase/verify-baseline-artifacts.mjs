@@ -90,28 +90,29 @@ const [
 ]);
 
 const manifest = JSON.parse(manifestRaw);
-// Retained 72-version chain through B-T3H; read-only collection counter/snapshot foundation.
+// Retained 73-version chain through A1-I2C5; activation security foundation remains CLOSED.
 const expected = {
   tables: 119,
   buckets: 4,
-  columns: 1775,
+  columns: 1776,
   indexes: 370,
-  checksum: "cf0f9aa74557cfa256cf583b47c8fbd561f5969a4f7fd299194249a95607b80b",
-  policies: 204,
-  triggers: 148,
-  functions: 212,
+  checksum: "6675aef5dacbdae84baf5878ad0455f119f44bf3c1d3d3d17bc740d318825486",
+  policies: 207,
+  triggers: 149,
+  functions: 217,
   rls_tables: 119,
-  constraints: 1027,
+  constraints: 1028,
 };
 const migrationNames = (await readdir("supabase/migrations"))
   .filter((name) => name.endsWith(".sql"))
   .sort();
 if (
-  migrationNames.length !== 72 ||
-  new Set(migrationNames.map((name) => name.slice(0, 14))).size !== 72 ||
-  migrationNames.at(-1) !== "20261005000100_trip_event_collection_foundation.sql"
+  migrationNames.length !== 73 ||
+  new Set(migrationNames.map((name) => name.slice(0, 14))).size !== 73 ||
+  migrationNames.at(-1) !==
+    "20261005000200_trip_person_participation_activation_foundation.sql"
 ) {
-  throw new Error("Expected exactly 72 unique migration versions through B-T3H.");
+  throw new Error("Expected exactly 73 unique migration versions through A1-I2C5.");
 }
 const collectionFoundation = await readFile(
   "supabase/migrations/20261005000100_trip_event_collection_foundation.sql",
@@ -125,6 +126,39 @@ if (
   !collectionFoundation.includes("participant_scope is distinct from 'UNASSIGNED'")
 )
   throw new Error("Protected read-only collection foundation missing.");
+const participationActivation = await readFile(
+  "supabase/migrations/20261005000200_trip_person_participation_activation_foundation.sql",
+  "utf8",
+);
+for (const required of [
+  "PARTICIPATION_GATE_GENERATION_CONFLICT",
+  "UNSAFE_PARTICIPATION_ACTIVATION_DEPENDENCY",
+  "trip_person_activation_security_check(true,false)",
+  "pg_advisory_xact_lock(hashtextextended('otr-trip-person-activation',0))",
+  "public.trip_person_runtime_state()",
+  "/*activation-inventory*/",
+  "/*activation-root*/",
+  "/*activation-checker*/",
+  "/*activation-anchor*/",
+  "UNSAFE_PARTICIPATION_ACTIVATION_ANCHOR_ROOT",
+  "UNSAFE_PARTICIPATION_ACTIVATION_LIVE_ROOT",
+  "UNSAFE_PARTICIPATION_ACTIVATION_INVENTORY",
+  "UNSAFE_PARTICIPATION_ACTIVATION_MUTUAL_PIN",
+  "UNSAFE_PARTICIPATION_ACTIVATION_OVERLOAD",
+  "generation bigint not null default 0",
+])
+  if (!participationActivation.includes(required))
+    throw new Error("Protected closed activation security foundation missing.");
+
+// Independent installation/source anchor. Neither normalized function literals nor
+// a caller-supplied root can redefine this reviewed executable anchor.
+const reviewedRoot = "1f6bd2cb0fe9b6a9ddbd611d78e3c8fe33de63a6676032f6d412e228b936199a";
+const reviewedAnchor = `create function public.trip_person_activation_reviewed_root() returns text
+language sql immutable security invoker set search_path=pg_catalog
+as $anchor$ select '${reviewedRoot}'::text $anchor$;`;
+if (!participationActivation.includes(reviewedAnchor))
+  throw new Error("Independent reviewed participation root anchor changed.");
+
 const sourceCommand = await readFile(
   "supabase/migrations/20261004000500_trip_source_command_foundation.sql",
   "utf8",
@@ -176,7 +210,7 @@ const secretPatterns = [
 for (const pattern of secretPatterns) {
   if (
     pattern.test(
-      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${ledger8Review}\n${ledger8Feed}\n${ledger9Import}\n${settlementParticipation}\n${sourceCommand}\n${personCommand}\n${collectionFoundation}\n${seed}`,
+      `${baseline}\n${security}\n${ledgerDomain}\n${ledgerSecurity}\n${ledger4A}\n${ledger4B}\n${ledger4C}\n${ledger51}\n${ledger51Links}\n${ledger52}\n${ledger71}\n${ledger71Guard}\n${ledger72A}\n${ledger72AGrants}\n${ledger72ALineage}\n${ledger72B}\n${hostedParity}\n${ledger8Review}\n${ledger8Feed}\n${ledger9Import}\n${settlementParticipation}\n${sourceCommand}\n${personCommand}\n${collectionFoundation}\n${participationActivation}\n${seed}`,
     )
   ) {
     throw new Error(`Production identifier or secret-like value found: ${pattern}`);

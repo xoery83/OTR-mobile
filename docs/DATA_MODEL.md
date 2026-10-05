@@ -452,3 +452,41 @@ Overflow rejects the affecting write. Snapshot revision crosses the wire as an
 exact positive decimal string. No Event backfill or SQLite migration is added.
 See the B-T3G contract and B-T3H report for certification/privacy and deferred Mobile
 collection application. No delete command or participant adapter is enabled.
+
+## A1-I2C5 participation activation foundation (runtime CLOSED)
+
+Server `20261005000200` retains the singleton participation gate and adds safe-
+integer `generation` (initial 0). Gate transitions require the directly authenticated
+administrator, READ COMMITTED, the exact exclusive advisory activation fence and
+expected-generation CAS; each accepted transition, including same-state, advances
+once. OPEN reserves a final generation for CLOSE; exhaustion leaves CLOSED. The
+row guard verifies the actual exclusive lock. Missing/invalid state fails closed;
+no deployment/restart inserts or opens it.
+The unchanged command retains the corresponding shared fence and current owner,
+receipt, CAS/ABA and transition-evidence semantics.
+
+The gateway remains NOLOGIN until external reviewed provisioning. It executes only
+fixed SET, exact recovery and state discovery; owns no object and has no Member/gate
+DML. Private writer gains Member SELECT and UPDATE only participation_active/revision,
+with dedicated-session/gate RLS and unchanged evidence guards. Participation=false
+never changes TripPerson identity, Account identity, role/status or access.
+Generation is an administrative activation fence, independent of participation and
+Event revisions. SQLite44/45 and all-seven invalidation/convergence remain unchanged.
+
+A1-I2C5 P2 integrity: activation-critical function properties/owners/normalized
+bodies and exact/effective ACLs are fixed reviewed inventory, including indirect
+trip_event_keys/canonical JSON/timestamp dependencies. Gate, Member and receipt
+owner/RLS/policy/trigger/constraint/column catalogs are pinned; broader policies,
+disabled guards or weakened singleton/generation/close-capacity constraints reject
+OPEN transactionally. The independent checker root/code pin prevents a replaced
+checker or altered inventory payload from silently permitting OPEN. CLOSE retains
+its existing fenced CAS path without invoking OPEN-only inventory.
+
+The fixed reviewed activation root is held by immutable parameterless SQL function
+trip_person_activation_reviewed_root(), owned by postgres, executable only by trusted
+admin/private receipt reader. Its definition hash includes the returned root literal
+without normalization exclusions. It sits outside the 24-function/3-table cycle;
+OPEN/discovery compare the complete live inventory root directly to it. No mutable
+registry or user/runtime root setter exists. Separately reviewed migration/DBA DDL
+is the anchor change boundary and must pass the independent external audit/verifier.
+Malicious superuser confinement is not claimed; emergency CLOSE skips these checks.

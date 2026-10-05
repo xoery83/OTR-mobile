@@ -31,7 +31,7 @@ create temporary table ai2c2_before as select
 select ok(not (select enabled from public.trip_person_command_gate),'gate CLOSED');
 select is((select count(*)::int from public.trip_person_participation_receipts),0,'no receipts');
 select ok((select bool_and(not rolcanlogin and not rolsuper and not rolbypassrls and not rolcreaterole and not rolcreatedb and not rolreplication and not rolinherit) from pg_roles where rolname in ('otr_trip_person_lifecycle_writer','otr_trip_person_command_gateway','otr_trip_person_receipt_reader')),'reserved roles no runtime credentials/authority');
-select ok(not has_column_privilege('otr_trip_person_lifecycle_writer','public.journey_members','participation_active','UPDATE'),'positive mutation grant absent');
+select ok(has_column_privilege('otr_trip_person_lifecycle_writer','public.journey_members','participation_active','UPDATE') and not has_table_privilege('otr_trip_person_lifecycle_writer','public.journey_members','UPDATE') and not has_column_privilege('otr_trip_person_lifecycle_writer','public.journey_members','id','UPDATE'),'activation foundation grants only protected participation columns');
 select ok(not has_function_privilege('service_role','public.trip_person_set_participation(uuid,text)','EXECUTE'),'service cannot execute');
 select is((select count(*)::int from pg_shdepend where refobjid='otr_trip_person_command_gateway'::regrole and deptype='o'),0,'gateway owns nothing');
 set session authorization otr_trip_person_command_gateway;
@@ -48,10 +48,9 @@ reset session authorization;
 select is((select count(*)::int from public.trip_person_participation_receipts),0,'closed/denied no durable keys');
 -- Trusted fixture activation only; all grants/gate changes roll back. Real
 -- participation/evidence guards remain enabled throughout semantic execution.
-alter table public.trip_person_command_gate drop constraint trip_person_gate_closed;
-update public.trip_person_command_gate set enabled=true;
-grant select,update(id,participation_active,participation_revision) on public.journey_members to otr_trip_person_lifecycle_writer;
-create policy ai2c2_test_writer on public.journey_members to otr_trip_person_lifecycle_writer using(true) with check(true);
+set session authorization postgres;
+select public.trip_person_set_command_gate((select generation from public.trip_person_command_gate where singleton),true);
+reset session authorization;
 set session authorization otr_trip_person_command_gateway;
 insert into ai2c2_historic select public.trip_person_set_participation('00000000-0000-4000-8000-000000000001',(select body from ai2c2_inputs where name='flip'));
 select is((select reply->'receipt'->>'outcome' from ai2c2_historic),'APPLIED','active to inactive');
@@ -85,7 +84,9 @@ select throws_ok($q$update public.trip_person_participation_receipts set reason=
 select throws_ok($q$delete from public.trip_person_participation_receipts where false$q$,'42501','PARTICIPATION_RECEIPT_IMMUTABLE','zero-row DELETE denied');
 select throws_ok($q$truncate public.trip_person_participation_receipts$q$,'42501','PARTICIPATION_RECEIPT_IMMUTABLE','TRUNCATE denied');
 reset session authorization;
-update public.trip_person_command_gate set enabled=false;
+set session authorization postgres;
+select public.trip_person_set_command_gate((select generation from public.trip_person_command_gate where singleton),false);
+reset session authorization;
 set session authorization otr_trip_person_command_gateway;
 select is(public.trip_person_receipt_lookup('00000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','ac200000-0000-4000-8000-000000000001')->'receipt',(select reply->'receipt' from ai2c2_historic),'historic lookup survives gate closure');
 reset session authorization;
