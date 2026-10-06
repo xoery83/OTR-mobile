@@ -729,9 +729,9 @@ and execution observations require the retained Account and user. Configure must
 create killed and may only echo the retained kill value; SECURITY_ADMIN's dedicated
 set-kill command owns changes. Safe responses/results use strict UUID/digest/enums
 and exact retained IDs. PREPARED requires the allocated selection tuple; REJECT/
-DEFER cannot carry Event/preparation IDs. Non-admin mutation requests bind their
-command digest, finite root and hashed verifier scope in the existing immutable
-audit journal; admin commands retain that binding in their ordinary audit entry.
+DEFER cannot carry Event/preparation IDs. All protected non-admin requests, including
+reads, bind their command digest, finite root and hashed verifier scope in the existing
+immutable audit journal; admin commands retain that binding in their ordinary audit entry.
 Same request ID with different bytes, target, principal or root rejects.
 
 ## CP14 C2 closed local continuation contract
@@ -792,7 +792,15 @@ OTR_USER decision pins proposal/version, current Run generation/Input/Candidate
 hashes and Event revision. Before custody or reservation of any NEW decision,
 CP13B's owning assessment must report current evidence: INPUT_STALE,
 STALE_BASE_REVISION or CANONICAL_EVENT_MIRROR_INTEGRITY requires rejection/refresh
-for ACCEPT, REJECT and DEFER alike. READY is additionally required only for ACCEPT;
+for ACCEPT, REJECT and DEFER alike. After asynchronous decision custody and protected
+command authentication/custody verification, B2 rechecks the current authorized
+package/version/proposal digest and repeats owning assessment. CP13B then reuses
+its existing evidence/Input/material validation in a read-only local transaction,
+fencing Candidate hash/Run identity-generation/Input digest and Event base revision.
+Successful COMMIT and synchronous Account-gate release hand the exact authenticated,
+digest-bound reservation directly to Server83, with no further admission await or
+local transaction held across remote I/O. Server83 retains its package/version/fence
+and current Trip/grant authorization checks. READY is additionally required only for ACCEPT;
 current incomplete, ambiguous or unsupported proposals may still REJECT/DEFER.
 Exact sealed historical recovery is reauthorized without this new-decision gate.
 ACCEPT reserves retained authority IDs before CP13A prepare; REJECT/DEFER retain null IDs. Replay/recovery returns exact retained facts,
@@ -803,3 +811,12 @@ recovery stays with CP13A and its unchanged closed command gates.
 **INBOUND APPLICATION BOUNDARY IMPLEMENTED ≠ PUBLIC CHATGPT/CLAUDE/MCP ACTIVATED.**
 See the [B2 report](architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REPORT.md)
 for host-port obligations, tests and the accepted owner lifecycle clarification.
+
+## CP14 final integration closure
+
+The [final integration report](architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md)
+reconciles accepted Persistence/C2/A2/B2 targeted independent rechecks. Cross-path
+acceptance adds tests only: actual Server83 call/START with CLOSED dispatch, explicit
+TEST synthetic execution, and inbound proposal/authenticated decision/CP13A recovery.
+Inbound never schedules outbound enrichment or attributes model cost. Same identifier
+bytes in separate namespaces confer no authority. No new endpoint or activation.

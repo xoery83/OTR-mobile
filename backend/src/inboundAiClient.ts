@@ -38,6 +38,7 @@ import type { createFlightImportClosureOrchestrator } from "../../src/data/repos
 import {
   captureAccountRequestContext,
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   withAccountApplyGate,
   type AccountRequestContext,
 } from "../../src/data/auth/accountRequestContext";
@@ -269,6 +270,7 @@ export function createClosedInboundAiClient(deps: {
     c: AccountRequestContext,
     kind: ProtectedCommand,
     fields: Record<string, unknown>,
+    admitNewDecision?: (handoff: () => void) => Promise<void>,
   ) {
     const a = await session(raw, action, c);
     const body = {
@@ -283,7 +285,18 @@ export function createClosedInboundAiClient(deps: {
       gatewayIdentity: "otr_external_integration_inbound_gateway",
       now: deps.now,
       verifyCustody: deps.verifyCustody,
-      execute: deps.execute,
+      execute: async (kind, context, command) => {
+        if (!admitNewDecision) return deps.execute(kind, context, command);
+        let execution: ReturnType<typeof deps.execute> | undefined;
+        await admitNewDecision(() => {
+          assertAccountRequestGeneration(c);
+          if (context.revoked || Date.parse(context.expires_at) <= Date.parse(deps.now()))
+            throw new Error("INBOUND_AUTH_REQUIRED");
+          execution = deps.execute(kind, context, command);
+        });
+        if (!execution) throw new Error("INBOUND_DECISION_BINDING");
+        return execution;
+      },
       verify: async (r) => ({
         ...a,
         request_id: r.requestId,
@@ -929,39 +942,44 @@ export function createClosedInboundAiClient(deps: {
         ].some((k) => item[k as keyof typeof item] !== r[k as keyof InboundDecision])
       )
         throw new Error("INBOUND_STALE_REVIEW");
-      const currentRun = await deps.readPublishedRun(c, r.run_id);
-      if (
-        currentRun.generation !== r.run_generation ||
-        currentRun.input_sha256 !== r.input_sha256
-      )
-        throw new Error("INBOUND_STALE_REVIEW");
       const view = projectFlightClosure(body.set, body.choices);
+      async function owningAdmission(
+        settings: Awaited<ReturnType<typeof deps.reviewContext>>,
+      ) {
+        const currentRun = await deps.readPublishedRun(c, r.run_id);
+        if (
+          currentRun.generation !== r.run_generation ||
+          currentRun.input_sha256 !== r.input_sha256
+        )
+          throw new Error("INBOUND_STALE_REVIEW");
+        const assessed = await deps.closure.assess(
+          c,
+          view,
+          settings.contexts,
+          retained?.slot_id ?? undefined,
+        );
+        const plan = assessed.plans.find((p) => p.candidate.id === r.candidate_id);
+        if (
+          !plan ||
+          // CP13B owns freshness for every new disposition; READY gates ACCEPT only.
+          (!retained &&
+            plan.reasons.some((reason) =>
+              [
+                "INPUT_STALE",
+                "STALE_BASE_REVISION",
+                "CANONICAL_EVENT_MIRROR_INTEGRITY",
+              ].includes(reason),
+            )) ||
+          plan.candidate.proposal_sha256 !== r.candidate_sha256 ||
+          (plan.target?.semanticRevision ?? null) !== r.base_revision ||
+          (plan.target?.eventId ?? null) !== r.event_id ||
+          (r.disposition === "ACCEPT" && plan.closure !== "READY")
+        )
+          throw new Error("INBOUND_STALE_REVIEW");
+        return plan;
+      }
       const settings = await deps.reviewContext(body.set);
-      const assessed = await deps.closure.assess(
-        c,
-        view,
-        settings.contexts,
-        retained?.slot_id ?? undefined,
-      );
-      const plan = assessed.plans.find((p) => p.candidate.id === r.candidate_id);
-      if (
-        !plan ||
-        // CP13B can retain the displayed Candidate while reporting stale owning
-        // evidence. Freshness gates every new disposition; READY gates ACCEPT only.
-        (!retained &&
-          plan.reasons.some((reason) =>
-            [
-              "INPUT_STALE",
-              "STALE_BASE_REVISION",
-              "CANONICAL_EVENT_MIRROR_INTEGRITY",
-            ].includes(reason),
-          )) ||
-        plan.candidate.proposal_sha256 !== r.candidate_sha256 ||
-        (plan.target?.semanticRevision ?? null) !== r.base_revision ||
-        (plan.target?.eventId ?? null) !== r.event_id ||
-        (r.disposition === "ACCEPT" && plan.closure !== "READY")
-      )
-        throw new Error("INBOUND_STALE_REVIEW");
+      const plan = await owningAdmission(settings);
       const key = inboundId(pkg.reservation_id, r.review_key),
         accept = r.disposition === "ACCEPT";
       const generated = {
@@ -1044,7 +1062,56 @@ export function createClosedInboundAiClient(deps: {
       const saved =
         retained ??
         decisionRowSchema.parse(
-          await invoke(r, "REVIEW", c, "inbound_ai_reserve_review", { row }),
+          await invoke(
+            r,
+            "REVIEW",
+            c,
+            "inbound_ai_reserve_review",
+            { row },
+            async (handoff) => {
+              const current = await authorizedPackage(r, "REVIEW", c);
+              if (
+                current.reservation_id !== pkg.reservation_id ||
+                current.package_sha256 !== pkg.package_sha256 ||
+                current.review_version !== pkg.review_version ||
+                current.publication_fence !== pkg.publication_fence ||
+                current.result_sha256 !== pkg.result_sha256 ||
+                current.safe_result?.result_sha256 !== r.proposal_sha256
+              )
+                throw new Error("INBOUND_STALE_REVIEW");
+              // Content prepared above grants no authority. Reuse the owning local
+              // revision/pin admission after all custody/auth work, without holding
+              // an Account/SQLite transaction across the protected remote call.
+              await owningAdmission(await deps.reviewContext(body.set!));
+              try {
+                await deps.closure.admitReview(
+                  c,
+                  {
+                    candidateId: r.candidate_id,
+                    candidateSha256: r.candidate_sha256,
+                    runId: r.run_id,
+                    runGeneration: r.run_generation,
+                    inputSha256: r.input_sha256,
+                    inputs: view.inputs,
+                    eventId: r.event_id,
+                    baseRevision: r.base_revision,
+                  },
+                  handoff,
+                );
+              } catch (error) {
+                if (
+                  error instanceof Error &&
+                  [
+                    "INPUT_STALE",
+                    "STALE_BASE_REVISION",
+                    "CANONICAL_EVENT_MIRROR_INTEGRITY",
+                  ].includes(error.message)
+                )
+                  throw new Error("INBOUND_STALE_REVIEW");
+                throw error;
+              }
+            },
+          ),
         );
       if (
         saved.review_decision_id !== key ||

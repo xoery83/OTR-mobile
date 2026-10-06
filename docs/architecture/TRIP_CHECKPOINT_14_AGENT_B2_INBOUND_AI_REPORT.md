@@ -451,3 +451,158 @@ full,typecheck,lint,build}.log`. Only the owned network-none fixture was mutated
 | Ready for targeted independent recheck        | YES                                                    |
 
 **STOP — B2 F1 CORRECTION COMPLETE / READY FOR TARGETED INDEPENDENT RECHECK.**
+
+## FINAL CLOSURE F2 — CUSTODY-WINDOW FRESHNESS CORRECTION
+
+Date:2026-10-07. Owner-authorized bounded correction in the existing B2 worktree,
+branch `intelligence/cp14-inbound-ai-client`. Accepted B2 HEAD remains
+`cbd11b414a691b4f3761b02877b45ef9b11545a8`, whose parent is the exact accepted
+A2 base `508d79efb865ac8d7fc21ff949b6e6a12746f39a`. No commit or push.
+
+### Finding and final reservation ordering
+
+The Final Closure review's new F1 is tracked here as **B2 F2**. Accepted B2 F1
+correctly rejected evidence already stale at initial assessment; it did not cover
+advancement during subsequent decision custody/authentication. The original
+Builder hard stop, owner lifecycle clarification, final implementation and F1
+correction above remain historical evidence. The accepted B2 independent review,
+including TARGETED F1 RECHECK, Final Integration report and Final Closure Review
+are not edited or superseded by this Builder claim.
+
+The correction completes decision custody and protected command authentication /
+custody verification first. At the gateway's protected execute handoff, it rechecks
+current authorized package/reservation, package digest, review_version, publication
+fence and exact proposal content digest, then repeats CP13B owning assessment with
+current review context and published Run identity/generation/Input digest. The
+same F1 freshness policy applies to every NEW disposition; READY applies only to
+ACCEPT. Matching and closure policy remain in the owning orchestrator.
+
+After assessment, CP13B's existing admission repository performs a final read-only
+revision admission inside its existing SQLite transaction and Account apply gate.
+It reuses `closureEvidence` / Input/material `pin` validation rather than a second
+freshness implementation. The final comparison binds Candidate/Run identities,
+Run generation, Candidate proposal hash, Run Input digest and exact original Input
+pins; where applicable it checks the canonical Event mirror's expected base
+revision. Existing local Trip and Account generation admission still applies.
+Successful COMMIT and synchronous Account-gate release start the exact protected
+Server83 reservation directly. There is no further admission await after release;
+remote I/O runs outside SQLite transactions and the Account gate. This is a local
+owning revision fence plus Server83's unchanged atomic package/version/grant/Trip
+admission, not a transaction spanning the two stores.
+
+The exact authenticated request/body digest, disposition, decision key, package /
+review version, Candidate hash, private material digest and publication fence stay
+in the existing immutable protected request. Server83 remains the only durable
+Review Decision authority. No new store, scheduler, schema, lock service or review
+authority is introduced. The owning repository's public assessment semantics and
+CP13A preparation/canonical admission are unchanged.
+
+Prepared custody content remains non-authoritative if final admission fails. It
+creates no retained decision, Confirmation, slot, operation or intended Event
+allocation, performs no CP13A prepare, and implies no consent. Existing custody
+retention applies; no cleanup authority was added. Sealed ACCEPT/REJECT/DEFER
+recovery bypasses NEW-decision admission, keeps the original immutable disposition
+and identities, and still requires current disclosure authorization.
+
+### Deterministic and durable evidence
+
+- The three Source-advancement custody tests fail against the accepted uncorrected
+  B2 adapter in a disposable copy: ACCEPT resolves UNKNOWN, REJECT resolves
+  REJECTED and DEFER resolves DEFERRED. The tests reject all three with F2.
+- 84 F2 cases cover all three dispositions: Source row revision, material digest,
+  Candidate hash/retention, Run generation, Input observed revision/digest,
+  Event base revision, real proposal review_version/content refresh, Trip revoke,
+  Account A→B and A→B→A, grant revoke and verifier review revocation during custody.
+  Additional barriers cover verifier, Account read, custody verification, package
+  read, protected status, review context, published Run read and owning assessment.
+  Post-assessment Source/Run/Candidate/Input/Event mutations exercise the final
+  local fence independently of the repeated async assessment.
+- Every rejected vector reads actual decision count and exact decision-key absence
+  independently of the thrown error. Local Confirmation/slot/sync-operation and
+  canonical Event rows are compared before/after rejection; no preparation runs.
+  Actual Server83 witnesses compare full-row fingerprints of Confirmation, slot,
+  execution-attempt and canonical Event tables, plus non-INBOUND_TOOL call/usage
+  counts. No new canonical authority, preparation, Event mutation or outbound
+  usage/cost is created. The intentional stale-evidence fixture mutation is
+  captured before the rejection comparison.
+- Unchanged ACCEPT/REJECT/DEFER succeed exactly once; dedicated controls prove
+  SQLite and Account gate are released at protected-call entry. Concurrent
+  identical callers retain one decision and stable IDs. Accepted incomplete /
+  ambiguous / unsupported nonaccept controls, sealed recovery for all dispositions,
+  F1 vectors, package/invocation replay and response-loss/UNKNOWN recovery remain
+  in the full B2 lifecycle suite.
+
+### Validation and preservation
+
+- Full B2 lifecycle: **141/141 PASS** in normal fault-injected mode and **141/141
+  PASS** against unchanged actual Server83 protected roots/native SQLite50;
+  84 new F2 cases. Actual rejected-vector row fingerprints, exact decision-key
+  absence and outbound call/usage witnesses pass.
+- Accepted offline replay:83 migrations PASS, seeded82→83 definitions/public
+  function hashes unchanged. Accepted548 persistence checks +7 B2 review preflight
+  probes = **555 PASS**, gates CLOSED.
+- CP13A/B selected regressions:103 PASS alongside135 B2 cases before the final six
+  controls were added. Final full suite covers those regressions, C2/A2, Account /
+  Trip/grant, SQLite50 migration/reopen/FK and sync preservation: **2491 PASS,
+  1 unchanged baseline failure** across200 files. The baseline is
+  `src/domain/architectureBoundary.test.ts`, detecting the unchanged
+  `LedgerExpenseDetailScreen.tsx` import from `@/data/api`; no F2 failure is
+  classified as baseline.
+- Typecheck, full lint/UI guard, Backend build, all nine changed-file formatting
+  checks and whitespace: **PASS**. Backend output remains outside the worktree.
+- Existing Final Integration cross-path tests: **2/2 PASS normal**, **2/2 PASS
+  actual Server83**, unchanged assertions and byte-identical test files in an
+  isolated disposable copy with corrected B2/owning source overlaid. An initial
+  actual run stopped at the required container-name guard; renaming the task-owned
+  network-none fixture to `otr-cp14-final-acceptance` satisfied that unchanged guard.
+  No Final Integration test/report or independent review was modified.
+- Evidence logs: `/private/tmp/cp14-b2-f2-{before,owning,full,sql-lifecycle,replay,
+server83,typecheck,lint,build,format,integration-normal,integration-actual}.log`.
+  Only local disposable synthetic fixtures were used. The owned fixture, temporary
+  integration copy/build output and dependency symlink are removed after checks;
+  CP14 worktrees remain retained.
+
+Only B2 adapter/tests, the reused CP13B read-only admission/handoff seam, this
+appended report and narrow API/data/offline/current-state wording change. Server83
+and SQLite50 hashes remain respectively
+`c759a41981f631271df7b960a7ce50dbc32e2317163ca84a7021d1cbf5e46f93` and
+`63d11a4486660d1b609395234eb3d1309960be1a2766f59f8185477f2880d2b0`.
+All historical migrations remain byte-identical; Server83 and SQLite50 are still
+the migration tails. A2/C2, sole `sync_operations` scheduling, all five C denials,
+production factories/endpoints and runtime/provider/public-client gates are
+unchanged. No Hosted Dev/Production access or activation occurred.
+
+### F2 final answers
+
+| Question                                             | Answer                                      |
+| ---------------------------------------------------- | ------------------------------------------- |
+| F2 fixed                                             | YES                                         |
+| Stale evidence during custody can reserve ACCEPT     | NO                                          |
+| Stale evidence during custody can reserve REJECT     | NO                                          |
+| Stale evidence during custody can reserve DEFER      | NO                                          |
+| Final freshness covers Candidate                     | YES                                         |
+| Final freshness covers Run/Input/material            | YES                                         |
+| Final freshness covers Event/base                    | YES                                         |
+| Trip revoke during custody blocked                   | YES                                         |
+| A→B→A during custody fenced                          | YES                                         |
+| Unchanged ACCEPT still succeeds exactly once         | YES                                         |
+| Unchanged REJECT/DEFER still succeed                 | YES                                         |
+| Historical sealed recovery preserved                 | YES                                         |
+| Rejected stale decision creates authority IDs        | NO                                          |
+| Rejected stale decision invokes CP13A prepare        | NO                                          |
+| B2 F1 remains fixed                                  | YES                                         |
+| CP13B freshness authority preserved                  | YES                                         |
+| CP13A authority preserved                            | YES                                         |
+| Inbound invokes A2                                   | NO                                          |
+| Server83/SQLite50 changed                            | NO                                          |
+| New migration                                        | NO                                          |
+| Five C denials unchanged                             | YES                                         |
+| sync_operations sole scheduler                       | YES                                         |
+| Runtime/provider/public-client gates CLOSED          | YES                                         |
+| Final Integration tests preserved                    | YES                                         |
+| New regression                                       | NO — unchanged Ledger baseline failure only |
+| Commit                                               | NO — no new commit                          |
+| Push                                                 | NO                                          |
+| Ready for Final Closure targeted independent recheck | YES                                         |
+
+**STOP — B2 F2 CORRECTION COMPLETE / READY FOR FINAL CLOSURE TARGETED RECHECK.**

@@ -1,135 +1,92 @@
 # Current Implementation State
 
-Date: 2026-10-06 (Pacific/Auckland).
+Date: 2026-10-07 (Pacific/Auckland).
 
-## CP14 Agent B2 — F1 corrected / ready for targeted independent recheck
+## CP14 final owner closure — accepted CLOSED scope
 
-- Fresh worktree `/Users/xoery/.codex/worktrees/cp14-inbound-ai-client/otr-mobile-canonical`,
-  branch `intelligence/cp14-inbound-ai-client`; exact base/HEAD
-  `508d79efb865ac8d7fc21ff949b6e6a12746f39a`. No commit/push.
-- Owner clarification resolves the historical ordering stop: package NEEDS_REVIEW,
-  review_version and digest-bound proposal content/references precede consent.
-  Only verifier-derived explicit OTR_USER ACCEPT/REJECT/DEFER reserves a decision.
-  ACCEPT IDs persist before CP13A prepare; nonaccept IDs are null.
-- Targeted F1 correction gates all NEW dispositions on CP13B owning evidence
-  freshness before custody/reservation. Nonaccept does not require READY; exact
-  sealed historical recovery remains reauthorized and unchanged.
-- Unwired TEST_ONLY vendor-neutral adapter uses Server83 protected roots, admitted
-  material custody/read projections, CP13B Flight interpretation/closure and CP13A
-  preparation/exact recovery. No production read/custody implementation is installed.
-- Server83 548 checks +7 preflight probes PASS;57 B2 lifecycle tests PASS against
-  real Server83 and native SQLite50. Full suite:2407 PASS,1 unchanged baseline
-  Ledger architecture-boundary failure. Typecheck/lint/UI guard/backend build PASS.
-- Server83/SQLite50 and every existing implementation source remain unchanged.
-  No new migration, scheduler, authority, A2 execution, model cost or remote access.
-  Runtime/provider/public-client gates remain CLOSED.
-- Next step: targeted independent F1 recheck of
-  `architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REPORT.md`. The independent
-  `architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REVIEW.md` remains unchanged;
-  its correction requirement is not self-certified as an independent PASS. Public ChatGPT/Claude/MCP activation remains separately gated.
+- Owner closure accepted after the same independent Final Closure reviewer appended
+  **TARGETED FINAL CLOSURE RECHECK PASS**: B2 F2 verified, no remaining IMPORTANT
+  findings and no new CRITICAL/IMPORTANT findings or regressions.
+- Exact reviewed F2 adapter/repository/orchestrator bytes and regression additions
+  are adopted into `integration/cp14-intelligence-final` from the B2 worktree.
+  Final Integration tests, prior report content and both original/appended Final
+  Closure Review bytes remain preserved. One closure commit is authorized; no push,
+  canonical merge, deployment, Hosted access or activation is authorized.
+- Accepted B2 F1 and its independent targeted PASS are preserved. Final Closure
+  found a separate custody-window race. F2 repeats current package/proposal and
+  CP13B assessment after private custody/authentication, then reuses owning
+  evidence validation in an existing read-only local transaction. Candidate/Run/
+  Input/material and Event revisions are fenced until synchronous Account-gate
+  release into the exact protected Server83 reservation, with no admission await
+  after release and no local transaction across remote I/O.
+- All NEW dispositions require freshness; only ACCEPT requires READY. Custody
+  content is non-authoritative. Historical sealed recovery remains exact and
+  currently authorized; rejected stale decisions cause no CP13A preparation.
+- Final integrated validation:505 focused tests PASS;143 B2/inbound tests PASS in
+  normal and actual Server83 modes; actual outbound chain PASS;555 Server83 checks
+  PASS. Full suite:2,494 PASS /1 unchanged Ledger architecture baseline FAIL,200
+  files /2,495 tests; zero new failures. F2/F1/integration are not baseline failures.
+  Typecheck, lint/UI guard, Backend build, changed-file formatting and whitespace
+  PASS. Earlier global formatting/baseline limitations remain historical below.
+- The final owner adoption record and integrated validation are appended to
+  `architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md`. The independent
+  verdict remains in `architecture/TRIP_CHECKPOINT_14_FINAL_CLOSURE_REVIEW.md`.
+- Server83/SQLite50, A2/C2, sole `sync_operations` scheduling and five C denials are
+  unchanged. Synthetic execution is production-unreachable; inbound creates no A2
+  execution or model cost. CP13A owns canonical Event authority; Server83 owns real
+  usage/cost. Real dispatch and runtime/provider/public-client gates remain CLOSED.
+- This closes the foundation only. Real providers/credentials/secrets, public clients,
+  production OAuth/JWT, live custody, Admin/billing, participant/member augmentation,
+  booking, CXE, Product Intelligence/training and notification sending remain deferred.
+  Further scope requires separate owner authorization. Retain CP14 worktrees.
 
-## CP14 Agent A2 — F1 correction / ready for targeted independent recheck
+The following prior integration acceptance is historical; the owner closure above
+supersedes its review-pending next step and pre-F2 production-preservation statement.
 
-- Worktree `/Users/xoery/.codex/worktrees/cp14-a2-outbound-runtime/otr-mobile-canonical`,
-  branch `intelligence/cp14-outbound-runtime`, exact retained HEAD/base
-  `2b88464f259b3daa69fe6621b988838d5de2806f`. All changes remain uncommitted; no push.
-- Owner accepted the initial dispatch hard stop and authorized a TEST-only injected
-  synthetic harness after real call/START responsibility, fresh eligibility and
-  verification that Server83 dispatch remains CLOSED. No real MAY_HAVE_STARTED,
-  live provider, credentials, Apple activation or kill-during-live-I/O claim.
-- Decision-only provider-neutral routing pins immutable bounded control-plane,
-  schema/privacy/network/risk/budget/health/price facts in existing request-material
-  identity. C2 owns attempts, UNKNOWN, fallback, shadow and installation fences.
-  Completion-meter failure retains success/result; exact recovery never reexecutes.
-- Server83/SQLite50, accepted reviews/preflight and all historical migrations are
-  unchanged. sync_operations remains sole scheduler; five C denials are unchanged.
-  No endpoint, default factory, production read/custody gateway, second usage ledger,
-  UI, notifications, billing, Hosted Dev/Production access or deployment is added.
-- Targeted F1 correction adds final fresh Server83/retained identity checks after
-  synthetic begin, then a local attempt/task/fence/Trip CAS and synchronous post-COMMIT
-  gate-release handoff. Failed admission executes no fake and preserves exact START/
-  recovery responsibility. Independent A2 review is unchanged; only F1 is corrected.
-- Validation: A2+C2 focused 193 tests plus5 Account gate tests;13 new barrier/CAS
-  tests and selected4 files/35 tests pass. Full199 files/2,351 tests has2,350
-  passed and the same one Ledger architecture assertion reproduced at exact base.
-  Accepted offline Server83 harness548 checks and actual new bridge acceptance
-  pass. Typecheck, lint/UI guard, Backend build, formatting and preservation pass.
-- Authority and limitations: `architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REPORT.md`
-  and `adr/2026-10-06-cp14-a2-closed-outbound-seam.md`. Next approved step:
-  **Targeted independent F1 recheck only**. Real activation remains separately gated.
+## CP14 final integration complete / ready for independent closure review
 
-## CP14 Agent C2 — targeted F1–F4 correction / ready for independent recheck
-
-- Existing fresh worktree `/Users/xoery/.codex/worktrees/cp14-c2-continuation/otr-mobile-canonical`,
-  branch `intelligence/cp14-continuation-runtime`, exact retained HEAD/base
-  `439168065df182975dda03a75e94908f8d9cc389`. Changes are uncommitted; no push.
-- Owner-approved `INTELLIGENCE_CONTINUATION_WAKE` contract uses existing queue fields
-  and SQLite50: one deterministic retained row, exact body/key/scope validation,
-  coalescing/re-arm and Account/claim/signal conditional completion. Completed means
-  wake-pass completion only. Five C Import denials remain unconditional.
-- Closed injected runtime supports three waits, independent pass/outstanding work,
-  eligible reservation, exact execution/recovery, cancellation/late usage and
-  Account/Trip/Run/Candidate/Event installation fences. File-backed cold resume and
-  typed attention facts use durable journals, never queue count/lease as execution truth.
-- Existing central operational-sync timer/activity accepts the injected adapter for
-  cold/reconnect scheduling. Ledger UI counts/completion scopes exclude intelligence;
-  no provider executor is called by wake/scheduling. Default adapter remains null.
-- No Server84/SQLite51, second scheduler, new authority, provider/Apple activation,
-  UI, notification, Hosted Dev/Production access or deployment. Server83/SQLite50,
-  historical source hashes and accepted persistence review/preflight remain unchanged.
-- Independent review's four C2 defects corrected: shared wake dependency admission/
-  release/projections, post-COMMIT idle-owner delivery, exact pre-start meter CAS,
-  and Account/observed-row conditional invalid quarantine. Original review is preserved.
-- Validation: C2 lifecycle107 tests, selected19 files/666 tests and29 new adversarial
-  tests PASS; typecheck, lint/UI guard and Backend build PASS. Full198 files/2,265
-  tests has2,264 passed and the same existing Ledger architecture assertion.
-  No F1–F4 failure is classified as baseline; no new regression.
-
-- Authoritative C2 implementation/validation and required answers:
-  `architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_RUNTIME_REPORT.md`.
-  Next step: **Targeted independent F1–F4 recheck only**. Real provider/Agent A/inbound/device
-  integration remains separately gated; valid cached offline access is unchanged.
-
-## Accepted CP14 persistence foundation / historical recheck record
-
-- Worktree `/private/tmp/otr-cp14-persistence`, branch
-  `intelligence/cp14-persistence`, exact retained HEAD/base
-  `c4571746b0c300fa3b46842cd37745963567338c`. Changes are unstaged and
-  uncommitted. Canonical and A/B/C input checkouts are preserved. No commit/push.
-- One additive Server83 and SQLite50 implement the approved persistence blueprint:
-  isolated integration/provider/price registry, call responsibility, append-only
-  nullable usage/cost, admin audit/health, external identity/grants, package/
-  invocation/review recovery, and local continuation/attempt journals.
-- Owner's VerifiedCallContextV1 clarification is authoritative: an injectable
-  trusted gateway proves authentication; fixed SQL roots check actual dedicated
-  session, request digest and current durable authorization. This is a closed
-  test boundary, not a credential verifier or provisioned connector.
-- `sync_operations` remains the sole scheduler. Local repository callbacks must
-  validate owning Import/Trip/manifest and policy/budget admission locally, and
-  verify exact recovery evidence. No callback may perform external I/O while the
-  Account gate/transaction is held. No startup adapter or scheduler is added.
-- Unknown execution, result installation and metering remain independent. Retained
-  queue/Capture/Source/revision/Input/Run/Candidate references prevent cleanup,
-  including FK OFF. No TTL deletion or metadata pruning horizon is invented.
-- Server defaults remain killed and `runtime_enabled=false` with a closed CHECK;
-  ordinary configuration cannot activate execution. Event/Source/Import gates and
-  the five C scheduler denials are unchanged. CP13B deterministic interpretation,
-  closure/preparation remain integrated and unwired; CP13A security limitations
-  and Apple spike status remain unchanged.
-- Builder targeted F1–F6 corrections bind retained inbound/call scope, preserve
-  SECURITY_ADMIN kill ownership, enforce one explicit DELTA correction lineage,
-  correlate typed safe results and durably bind mutation requests in the existing
-  audit journal. SQLite50, CP12/13 and A/B/C remain unchanged. The original
-  independent FAIL review is preserved; targeted independent recheck is pending.
-- Validation and exact file/role/function inventories are in
-  `architecture/CP14_PERSISTENCE_CONTROL_PLANE_IMPLEMENTATION_REPORT.md`.
-  Fresh server1→83 and seeded82→83, SQLite0→50/49→50 and FK ON/OFF pass.
-  Full-suite baseline native collection and Ledger architecture blockers remain;
-  no global full-suite PASS is claimed.
-- Next authorized step: **CP14 Persistence Targeted Independent Recheck only**. Provider
-  adapters, issuer/OAuth verifier, secret resolver, dedicated login provisioning,
-  live private custody/device bridge, Admin Portal, customer billing and runtime
-  activation remain deferred. No Hosted Dev/Production access or deployment.
+- Fresh worktree `/Users/xoery/.codex/worktrees/cp14-intelligence-final/otr-mobile-canonical`,
+  branch `integration/cp14-intelligence-final`; exact unchanged HEAD/base
+  `cbd11b414a691b4f3761b02877b45ef9b11545a8`. No commit/push/deploy or Hosted access.
+- Ordered accepted commits: Persistence `4391680`, C2 `2b88464`, A2 `508d79e`, B2
+  `cbd11b4`. Their final targeted independent rechecks PASS and supersede historical
+  pending/correction verdicts. All accepted Builder/Review reports remain unchanged.
+- Closure adds three cross-path tests and documentation reconciliation only.
+  Production sources, Server83/SQLite50 and historical migrations are unchanged.
+  No authority collision, second scheduler, migration or runtime activation was needed.
+- Actual Server83 outbound reservation/START → CLOSED real dispatch → explicit TEST
+  synthetic result/meter → C2 install/publication/attention passes. Server call stays
+  RESERVED/NOT_STARTED; only START is recorded, with null model units/cost. Synthetic
+  observations never become real billable usage or repeat fake execution on install.
+- Inbound real Server83 grant/package/invocation → CP13B proposal → authenticated
+  OTR_USER decision → CP13A preparation/recovery passes. With existing C2 scheduling
+  installed, including after SQLite reopen, proposal/ACCEPT produces no outbound task,
+  router/executor/reservation/model usage. Same UUID package/task namespaces remain
+  independent across A→B→A; stale Account generations never revive.
+- Regressions: full 200 files /2,411 tests: **2,410 PASS, 1 unchanged baseline Ledger
+  architecture assertion**; zero new failures. Untouched exact base:2,406 PASS/2 FAIL,
+  including that Ledger assertion and a timestamp-dependent API test (passing final).
+  Final focused C2/A2/routing/B2, CP13A/B, Capture, Account, sync, Day, maintenance and
+  Data Health tests pass. Fresh Server1→83 and seeded82→83 plus555 protected checks
+  pass. SQLite fresh→50/49→50/FK ON/OFF pass. Typecheck, lint/UI guard, Backend build,
+  changed-file formatting and whitespace pass. Repository-wide formatting has21
+  unchanged exact-base warnings. Global full-suite/format PASS is not claimed.
+- Owner clarifications remain authoritative: trusted injected verifier authenticates,
+  SQL protected roots authorize all requests including reads; proposals create no
+  consent IDs; explicit authenticated decisions reserve stable ACCEPT IDs before
+  preparation. Stale evidence blocks every NEW disposition; historical exact sealed
+  recovery remains currently reauthorized. Five C sync denials are unchanged.
+- Implemented CLOSED foundations: Server83/SQLite50; continuation/attempt lifecycle;
+  provider-neutral outbound and vendor-neutral inbound seams; N→M and supported fact/
+  evidence augmentation; nullable usage/cost responsibility; proposal/decision split.
+- Deferred/unactivated: real provider dispatch, credentials/secrets, public
+  ChatGPT/Claude/MCP, production OAuth/JWT, real remote material custody, Admin Portal,
+  billing, participant/member augmentation, booking persistence, CXE adaptive runtime,
+  Product Intelligence/training and notification sending. No native/device/live
+  acceptance claim. CP13A security limitations and earlier gate status remain intact.
+- Next approved checkpoint: **independent CP14 final closure review only** of
+  `architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md`; activation requires
+  separate authorization. This Builder closure does not self-certify that review.
 
 ## Active schema and accepted foundation
 
@@ -158,11 +115,22 @@ Date: 2026-10-06 (Pacific/Auckland).
   Five C import queue operation names remain scheduler-denied even with permissive
   filters. Existing factories/ports stay unwired.
 
-## Authoritative documents for owner review
+## Authoritative documents for final closure review
 
 Read this handoff first; expand only into directly relevant files. Do not reaudit
 legacy Web or redesign accepted CP12/CP13A semantics.
 
+- `architecture/TRIP_CHECKPOINT_14_FINAL_CLOSURE_REVIEW.md` (original review and F2 recheck)
+- `architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md`
+- `architecture/CP14_PERSISTENCE_IMPLEMENTATION_REVIEW.md` (final targeted recheck)
+- `architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_RUNTIME_REPORT.md`
+- `architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_REVIEW.md` (final F1–F4 recheck)
+- `architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REPORT.md`
+- `architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REVIEW.md` (final F1 recheck)
+- `architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REPORT.md`
+- `architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REVIEW.md` (final F1 recheck)
+- `architecture/CP14_B2_OWNER_REVIEW_LIFECYCLE_CLARIFICATION.txt`
+- `architecture/OTR_DATA_HEALTH_AND_SELF_HEALING_PLAN.md`
 - `architecture/CP14_PERSISTENCE_CONTROL_PLANE_PREFLIGHT.md` (approved blueprint)
 - `architecture/CP14_PERSISTENCE_CONTROL_PLANE_IMPLEMENTATION_REPORT.md`
 - `architecture/CP14_VERIFIED_CALL_CONTEXT_V1.txt` (owner clarification)

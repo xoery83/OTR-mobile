@@ -625,8 +625,8 @@ revision pins have no FK to the mutable Event mirror. No server cost ledger is
 copied locally. Historical server1–82/SQLite1–49 bodies remain unchanged.
 
 Server83's existing audit journal also retains content-free REQUEST_BINDING entries
-for non-admin protected mutations. Its safe_diff stores command/root and request/
-verifier-scope digests; no new replay table is introduced. Usage corrections lock
+for all non-admin protected commands, including reads. Its safe_diff stores command/root
+and request/verifier-scope digests; no new replay table is introduced. Usage corrections lock
 one retained call and admit one same-coverage successor, preserving history.
 Estimate-to-actual DELTA replacement requires explicit supersession; conflicting
 quality without coverage rejects. Distinct admitted disjoint DELTAs still add.
@@ -665,6 +665,18 @@ Only authenticated explicit OTR_USER ACCEPT/REJECT/DEFER creates a row in existi
 Event IDs and Input identity map before CP13A preparation; nonaccept retains null
 IDs and an empty map. Later proposal versions do not rewrite sealed decisions.
 Historical exact recovery preserves original identities under current authority.
+NEW decision admission repeats CP13B assessment after private custody/authentication,
+then checks the same owning Candidate/Run/Input/material and Event revisions inside
+its existing local transaction immediately before the protected reservation handoff.
+The read-only fence creates no durable authority. Custody prepared for a rejected
+stale decision remains non-authoritative content under the existing retention contract;
+it implies no consent or persisted IDs and causes no CP13A preparation.
 Raw evidence and private proposal bodies are excluded from Server83 telemetry.
 Inbound INBOUND_TOOL call/START responsibility has no provider/model attribution,
 model units or cost. There is no A2 continuation or booking/Person authority.
+
+CP14 [final cross-path acceptance](architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md)
+preserves Server83/SQLite50 and all accepted migration bytes. Separate package/task
+namespaces remain independently Account-scoped even when UUIDs/request keys coincide;
+proposal/decision, execution/install and synthetic/server usage remain distinct.
+No new table, authority, cost ledger or migration is introduced.

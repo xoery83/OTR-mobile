@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -20,6 +21,8 @@ import {
   getLedgerQueueActivity,
 } from "../sync/ledgerQueueActivity";
 import {
+  commandDigest,
+  callCorrelationSchema,
   verifyPublicationCorrelation,
   createClosedPersistenceGateway,
 } from "../../../backend/src/externalIntegrationPersistence";
@@ -3825,3 +3828,421 @@ describe("A2 F1 final execution admission", () => {
     expect(a2.executions()).toBe(0);
   });
 });
+
+// Optional actual-root bridge: only a task-owned network-none disposable fixture.
+// Normal runs retain the accepted fault-injected bridge; CP14_SERVER83=1 exercises
+// the same C2 -> A2 -> protected reservation/START -> CLOSED dispatch -> install.
+async function cp14ActualServer(f: Fixture, a2: Awaited<ReturnType<typeof a2Fixture>>) {
+  const container = process.env.CP14_TEST_CONTAINER!;
+  expect(container).toBe("otr-cp14-final-acceptance");
+  expect(
+    spawnSync(
+      "docker",
+      ["inspect", container, "--format", "{{.HostConfig.NetworkMode}}"],
+      { encoding: "utf8" },
+    ).stdout.trim(),
+  ).toBe("none");
+  function sql(body: string) {
+    const r = spawnSync(
+      "docker",
+      [
+        "exec",
+        "-i",
+        container,
+        "psql",
+        "-X",
+        "-qAt",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-U",
+        "supabase_admin",
+        "-d",
+        "postgres",
+      ],
+      { input: body, encoding: "utf8" },
+    );
+    if (r.status !== 0)
+      throw new Error(r.stderr.match(/ERROR:\s+([^\n]+)/)?.[1] ?? "CP14_FIXTURE_FAILURE");
+    return r.stdout.trim();
+  }
+  const literal = (v: unknown) =>
+    "'" + JSON.stringify(v).replaceAll("'", "''") + "'::jsonb";
+  const actor = sql(
+    "select actor_id from public.external_integration_admin_grants where permission='CONFIG_ADMIN' and revoked_at is null limit 1;",
+  );
+  const template = (table: string) =>
+    JSON.parse(sql(`select to_jsonb(t) from public.${table} t limit 1;`));
+  sql(`insert into auth.users(id) values('${account}') on conflict do nothing;`);
+  const context = (
+    kind: string,
+    requestId: string,
+    digest: string,
+    who: "OTR_ADMIN" | "TRUSTED_WORKLOAD",
+    identity: string,
+    gateway:
+      "otr_external_integration_admin_gateway" | "otr_external_integration_call_gateway",
+  ) => ({
+    version: 1 as const,
+    principal_kind: who,
+    verified_actor_id: identity,
+    verified_account_id: identity,
+    verified_client_identity: null,
+    verified_external_subject: null,
+    verified_environment: "TEST" as const,
+    auth_source: "TEST_ONLY_INJECTED_VERIFIER",
+    auth_config_version: 1,
+    auth_session_reference: null,
+    verified_at: now,
+    expires_at: "2070-01-01T00:00:00Z",
+    revoked: false,
+    request_id: requestId,
+    request_sha256: digest,
+    command_kind: kind,
+    gateway_identity: gateway,
+  });
+  const admin = createClosedPersistenceGateway({
+    gatewayIdentity: "otr_external_integration_admin_gateway",
+    now: () => now,
+    async verify(r) {
+      return context(
+        r.command,
+        r.requestId,
+        r.requestSha256,
+        "OTR_ADMIN",
+        actor,
+        "otr_external_integration_admin_gateway",
+      );
+    },
+    async execute(kind, ctx, body) {
+      return JSON.parse(
+        sql(
+          `set session authorization otr_external_integration_admin_gateway;select public.${kind}(${literal(ctx)},${literal(body)});`,
+        ),
+      );
+    },
+  });
+  async function administer(
+    kind: Parameters<typeof admin.invoke>[0],
+    fields: Record<string, unknown>,
+  ) {
+    const body = {
+      version: 1,
+      environment: "TEST",
+      request_id: randomUUID(),
+      actor_id: actor,
+      ...fields,
+    };
+    return admin.invoke(kind, { ...body, request_sha256: commandDigest(body) });
+  }
+  const integration = `cp14-final-${randomUUID()}`;
+  const registry = {
+    ...template("external_integrations"),
+    integration_id: integration,
+    category: "INTELLIGENCE_OUTBOUND",
+    environment: "TEST",
+    config_version: 1,
+    config_sha256: h,
+    enabled: true,
+    kill_switch: true,
+    quota_limit: null,
+    quota_window_seconds: null,
+    rate_per_minute: null,
+    health_state: "UNKNOWN",
+    health_observed_at: null,
+    health_observation_id: null,
+    created_at: now,
+    updated_at: now,
+    created_by: actor,
+    updated_by: actor,
+  };
+  await administer("external_integration_configure", {
+    integration_id: integration,
+    expected_version: null,
+    audit_id: randomUUID(),
+    reason_code: "SYNTHETIC",
+    row: registry,
+  });
+  await administer("external_integration_set_kill", {
+    integration_id: integration,
+    expected_version: 1,
+    audit_id: randomUUID(),
+    reason_code: "SYNTHETIC",
+    kill_switch: false,
+  });
+  const provider = {
+    ...template("intelligence_provider_configs"),
+    provider_config_id: randomUUID(),
+    integration_id: integration,
+    provider_id: "synthetic",
+    model_id: "extractor",
+    model_version: "1",
+    adapter_version: "1",
+    config_version: 1,
+    configuration_sha256: h,
+    provider_class: "DETERMINISTIC",
+    capabilities: ["EXTRACT"],
+    modalities: ["TEXT"],
+    schema_contracts: [{ id: "flight", version: 1, dialect: "otr" }],
+    schema_output: true,
+    privacy_policy: "LOCAL_ONLY",
+    network_required: false,
+    data_region: "DEVICE",
+    routing_class: "DETERMINISTIC",
+    routing_priority: 0,
+    routing_eligibility: "ELIGIBLE",
+    input_byte_limit: 1048576,
+    input_count_limit: 64,
+    output_byte_limit: 1048576,
+    max_complexity: 10,
+    max_risk: 1,
+    replay_support: "UNSUPPORTED",
+    quality_policy_reference: null,
+    quality_policy_sha256: null,
+    quality_observation_reference: null,
+    expected_completion_cost_nanos: null,
+    expected_cost_currency: null,
+    created_at: now,
+    created_by: actor,
+  };
+  await administer("intelligence_provider_config_append", {
+    integration_id: integration,
+    expected_version: null,
+    audit_id: randomUUID(),
+    reason_code: "SYNTHETIC",
+    row: provider,
+  });
+  const environment = JSON.parse(
+    sql(
+      "select to_jsonb(e) from public.external_integration_environment_state e where environment='TEST';",
+    ),
+  );
+  a2.config({
+    integration_id: integration,
+    integration_version: 2,
+    provider_config_id: provider.provider_config_id,
+    config_version: 1,
+    price: null,
+    expected_cost_nanos: null,
+    expected_currency: null,
+    environment_version: Number(environment.config_version),
+  });
+  const gateway = createClosedPersistenceGateway({
+    gatewayIdentity: "otr_external_integration_call_gateway",
+    now: () => now,
+    async verify(r) {
+      return context(
+        r.command,
+        r.requestId,
+        r.requestSha256,
+        "TRUSTED_WORKLOAD",
+        account,
+        "otr_external_integration_call_gateway",
+      );
+    },
+    async execute(kind, ctx, body) {
+      return JSON.parse(
+        sql(
+          `set session authorization otr_external_integration_call_gateway;select public.${kind}(${literal(ctx)},${literal(body)});`,
+        ),
+      );
+    },
+  });
+  const server = createServer83OutboundReservation({
+    gateway,
+    hash,
+    id: randomUUID,
+    async assertCurrentAuthorization(e) {
+      expect(e.attempt.account_id).toBe(account);
+    },
+    async readCurrent() {
+      const i = JSON.parse(
+        sql(
+          `select to_jsonb(i) from public.external_integrations i where integration_id='${integration}';`,
+        ),
+      );
+      const env = JSON.parse(
+        sql(
+          "select to_jsonb(e) from public.external_integration_environment_state e where environment='TEST';",
+        ),
+      );
+      return [
+        {
+          ...a2.snapshot(),
+          enabled: i.enabled,
+          killed: i.kill_switch,
+          integration_version: i.config_version,
+          integration_sha256: i.config_sha256,
+          environment_version: env.config_version,
+          environment_killed: env.kill_switch,
+          runtime_enabled: env.runtime_enabled,
+        },
+      ];
+    },
+    async readReserved(e) {
+      const c = JSON.parse(
+        sql(
+          `select to_jsonb(c) from public.external_integration_calls c where call_id='${e.attempt.usage_correlation_id}';`,
+        ),
+      );
+      const start = JSON.parse(
+        sql(
+          `select to_jsonb(u) from public.external_integration_usage_events u where call_id='${c.call_id}' and observation_kind='START';`,
+        ),
+      );
+      const expected = outboundReservationCommand(e);
+      const { admitted_at: _admitted, ...rowPins } = expected.row;
+      const {
+        observed_at: _observed,
+        received_at: _received,
+        ...startPins
+      } = expected.start;
+      void _admitted;
+      void _observed;
+      void _received;
+      expect(c).toMatchObject({ ...rowPins, admission_sha256: expected.request_sha256 });
+      expect(start).toMatchObject(startPins);
+      return {
+        ...Object.fromEntries(
+          [
+            ...Object.keys(callCorrelationSchema.shape),
+            "environment",
+            "price_schedule_id",
+            "provider_id",
+            "model_id",
+            "model_version",
+            "adapter_version",
+            "trip_id",
+            "import_id",
+            "idempotency_key",
+            "admission_sha256",
+            "row_revision",
+            "dispatch_state",
+            "execution_certainty",
+          ].map((k) => [k, c[k]]),
+        ),
+        start_durable: true,
+        start_sha256: start.observation_sha256,
+      };
+    },
+  });
+  Object.assign(a2.server, server);
+  return {
+    calls: () =>
+      JSON.parse(
+        sql(
+          `select jsonb_agg(to_jsonb(c)) from public.external_integration_calls c where integration_id='${integration}';`,
+        ),
+      ),
+    usage: () =>
+      JSON.parse(
+        sql(
+          `select jsonb_agg(to_jsonb(u)) from public.external_integration_usage_events u join public.external_integration_calls c using(call_id) where c.integration_id='${integration}';`,
+        ),
+      ),
+    inbound: () =>
+      sql(
+        `select jsonb_build_array((select count(*) from public.external_client_grants where account_id='${account}'),(select count(*) from public.inbound_ai_import_reservations where account_id='${account}'),(select count(*) from public.inbound_ai_review_decisions where confirmed_user_id='${account}'));`,
+      ),
+  };
+}
+it("CP14 final outbound wait/wake/router/START/CLOSED synthetic/install/attention chain", async () => {
+  const f = await fixture();
+  f.t.policy_snapshot.network_required = true;
+  f.t.policy_sha256 = await digest(f.t.policy_snapshot);
+  const a2 = await a2Fixture(f);
+  const server = process.env.CP14_SERVER83 === "1" ? await cp14ActualServer(f, a2) : null;
+  const inboundBefore = server?.inbound();
+  let online = false;
+  const router = createOutboundContinuationRouter({
+    environment: "TEST",
+    hash,
+    complexity: () => 0,
+    snapshots: async () => (online ? [a2.snapshot()] : []),
+    predecessor: async () => null,
+    async seed(r) {
+      return {
+        ...(await f.a(r.task, r.task.sync_operation_id!)),
+        request_material_reference: randomUUID(),
+        usage_correlation_id: randomUUID(),
+      };
+    },
+    async retainAdmission(e) {
+      f.sql
+        .prepare("INSERT INTO a2_test_journal(reference,envelope) VALUES(?,?)")
+        .run(e.attempt.request_material_reference!, JSON.stringify(e));
+    },
+  });
+  const runtime = createIntelligenceContinuationRuntime(f.repo, {
+    ...f.deps,
+    router,
+    online: () => online,
+    routePolicy: () => ({
+      modalities: ["TEXT"],
+      latencyBudgetMs: null,
+      risk: "NORMAL",
+      shadowEligible: false,
+    }),
+  });
+  const scheduler = createIntelligenceContinuationScheduling({
+    db: f.db,
+    repo: f.repo,
+    runtime,
+    ...f.deps,
+  });
+  await scheduler.resume("COLD_START");
+  await scheduler.run();
+  const waiting = await f.repo.read(f.context, f.t.task_id);
+  expect(waiting.work_disposition).toBe("WAITING");
+  expect(await f.repo.attempts(f.context, f.t.task_id)).toHaveLength(0);
+  const wake = f.sql
+    .prepare("SELECT id,status,attempt_count FROM sync_operations")
+    .get()!;
+  expect(wake.status).toBe("COMPLETED");
+  online = true;
+  await scheduler.resume("RECONNECT");
+  await scheduler.run();
+  const t = await f.repo.read(f.context, f.t.task_id);
+  expect(f.sql.prepare("SELECT id FROM sync_operations").get()!.id).toBe(wake.id);
+  expect(t.current_attempt_id).toBeTruthy();
+  expect(a2.executions()).toBe(0);
+  const a = await runtime.execute(
+    f.context,
+    t.current_attempt_id!,
+    a2.harness.executor(f.context),
+  );
+  expect(a.execution_outcome).toBe("SUCCEEDED");
+  const publication = randomUUID();
+  let installs = 0;
+  await a2.harness.install(f.context, a.attempt_id, publication, h, async () => {
+    installs++;
+  });
+  await a2.harness.install(f.context, a.attempt_id, publication, h, async () => {
+    installs++;
+  });
+  expect(installs).toBe(1);
+  expect(a2.executions()).toBe(1);
+  expect(
+    await runtime.fact(f.context, t.task_id, {
+      now,
+      urgencyHorizonMs: 0,
+      evidencedDeadline: null,
+    }),
+  ).toMatchObject({ publication_id: publication, result_sha256: h });
+  if (server) {
+    expect(server.calls()).toHaveLength(1);
+    expect(server.calls()[0]).toMatchObject({
+      dispatch_state: "RESERVED",
+      execution_certainty: "NOT_STARTED",
+      account_id: account,
+      task_id: t.task_id,
+      attempt_id: a.attempt_id,
+    });
+    expect(server.usage()).toHaveLength(1);
+    expect(server.usage()[0]).toMatchObject({
+      observation_kind: "START",
+      input_tokens: null,
+      cost_nanos: null,
+    });
+    expect(server.inbound()).toBe(inboundBefore);
+  }
+}, 60000);

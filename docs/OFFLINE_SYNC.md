@@ -493,6 +493,13 @@ resending evidence. Missing exact material fails closed. Refresh uses a new admi
 review_version, while exact completed-invocation and sealed-decision recovery
 preserves historical facts and current authorization fences ordinary disclosure.
 
+For every NEW ACCEPT/REJECT/DEFER, custody preparation and protected authentication
+complete before final current-package and CP13B owning admission. A read-only owning
+pin/revision transaction releases the Account gate synchronously into the exact
+Server83 reservation call; no local transaction spans remote I/O. Stale final pins
+return the existing review-refresh error without a decision or CP13A preparation.
+Sealed historical recovery bypasses this NEW-decision gate and remains reauthorized.
+
 After a real OTR_USER ACCEPT, Server83 decision IDs precede existing CP13A local
 preparation. Preparation response loss recovers the same persisted Confirmation,
 slot, Input map and C_PREPARE_CONFIRMATION operation after SQLite reopen. If exact
@@ -503,3 +510,15 @@ loss follows unchanged CP13A receipt/recovery, never B2 direct Event writes.
 `sync_operations` remains the sole scheduler and all five C denials remain closed.
 Server/package/prepare acceptance does not assert canonical Event acceptance.
 No automatic A2 enrichment, OTR model cost or public/OAuth/provider activation.
+
+## CP14 final cross-path closure
+
+[Final integration acceptance](architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md)
+installs the existing C2 scheduler alongside inbound B2, including after SQLite reopen:
+proposal and authenticated ACCEPT create no outbound task, wake, reservation or model
+usage. A same-UUID package/task Account A→B→A test preserves independent responsibility
+and invalidates old Account generations. Existing C2/A2 restart, UNKNOWN and final
+admission races remain passing. Queue COMPLETED means reevaluation-pass completion;
+domain attention/debug facts retain execution, metering, installation and review state.
+No generic pending-sync or Ledger success substitutes for those facts. No new scheduler,
+startup wiring, recovery policy, UI or notification delivery is introduced.

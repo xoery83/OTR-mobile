@@ -61,7 +61,11 @@ export function createTripImportAdmissionRepository(
   now: () => string,
   newId: () => string,
 ) {
-  async function scoped<T>(context: AccountRequestContext, work: () => Promise<T>) {
+  async function scoped<T>(
+    context: AccountRequestContext,
+    work: () => Promise<T>,
+    afterRelease?: (result: T) => void,
+  ) {
     return withAccountApplyGate(async () => {
       let result!: T;
       await database.withTransactionAsync(async () => {
@@ -72,7 +76,70 @@ export function createTripImportAdmissionRepository(
       });
       await assertAccountRequestContext(context, getAccountId);
       return result;
-    });
+    }, afterRelease);
+  }
+  async function closureEvidence(c: AccountRequestContext, candidateId: string) {
+    const candidate = await database.getFirstAsync<Row>(
+      "SELECT p.*,r.generation,r.input_sha256,r.scope_source_ids,r.state AS run_state,r.retention_state AS run_retention FROM trip_source_candidates p JOIN trip_source_runs r ON r.cache_account_id=p.cache_account_id AND r.id=p.run_id WHERE p.cache_account_id=? AND p.id=? AND r.trip_id=? AND r.actor_account_id=?",
+      c.accountId,
+      candidateId,
+      c.tripId,
+      c.accountId,
+    );
+    if (
+      !candidate ||
+      candidate.retention_state !== "RETAINED" ||
+      candidate.run_retention !== "RETAINED" ||
+      candidate.run_state !== "READY"
+    )
+      throw new Error("INPUT_STALE");
+    const family = await related(c, candidateId);
+    const sources = z
+      .array(z.uuid())
+      .max(64)
+      .parse(parseEventJson(candidate.scope_source_ids as string));
+    const claims = await database.getAllAsync<Row>(
+      "SELECT s.*,r.scope_source_ids FROM trip_source_output_slots s JOIN trip_source_confirmations c ON c.cache_account_id=s.cache_account_id AND c.id=s.confirmation_id JOIN trip_source_candidates p ON p.cache_account_id=s.cache_account_id AND p.id=s.candidate_id JOIN trip_source_runs r ON r.cache_account_id=p.cache_account_id AND r.id=p.run_id WHERE c.cache_account_id=? AND c.trip_id=? AND c.actor_account_id=? AND s.disposition='CREATE' AND s.create_claim_active=1",
+      c.accountId,
+      c.tripId,
+      c.accountId,
+    );
+    if (claims.length > 64) throw new Error("IMPORT_RESOURCE_LIMIT");
+    const inputs = await database.getAllAsync<Row>(
+      "SELECT * FROM trip_source_inputs WHERE cache_account_id=? AND run_id=? ORDER BY id",
+      c.accountId,
+      candidate.run_id as string,
+    );
+    if (inputs.length > 64) throw new Error("IMPORT_RESOURCE_LIMIT");
+    for (const row of inputs) {
+      const input = flightInputSchema.parse(
+        Object.fromEntries(
+          Object.keys(flightInputSchema.shape).map((k) => [
+            k,
+            k === "historical_selection" ? row[k] === 1 : row[k],
+          ]),
+        ),
+      );
+      await pin(c, input);
+    }
+    return {
+      candidate,
+      inputs,
+      claims: claims
+        .filter(
+          (p) =>
+            family.includes(p.candidate_id as string) ||
+            z
+              .array(z.uuid())
+              .max(64)
+              .parse(parseEventJson(p.scope_source_ids as string))
+              .some((id) => sources.includes(id)),
+        )
+        .map((p): Row & { lineage_related: boolean } => ({
+          ...p,
+          lineage_related: family.includes(p.candidate_id as string),
+        })),
+    };
   }
   async function trip(c: AccountRequestContext) {
     if (
@@ -673,69 +740,65 @@ export function createTripImportAdmissionRepository(
     },
     async readClosureEvidence(c: AccountRequestContext, candidateId: string) {
       z.uuid().parse(candidateId);
-      return scoped(c, async () => {
-        const candidate = await database.getFirstAsync<Row>(
-          "SELECT p.*,r.input_sha256,r.scope_source_ids,r.state AS run_state,r.retention_state AS run_retention FROM trip_source_candidates p JOIN trip_source_runs r ON r.cache_account_id=p.cache_account_id AND r.id=p.run_id WHERE p.cache_account_id=? AND p.id=? AND r.trip_id=? AND r.actor_account_id=?",
-          c.accountId,
-          candidateId,
-          c.tripId,
-          c.accountId,
-        );
-        if (
-          !candidate ||
-          candidate.retention_state !== "RETAINED" ||
-          candidate.run_retention !== "RETAINED" ||
-          candidate.run_state !== "READY"
-        )
-          throw new Error("INPUT_STALE");
-        const family = await related(c, candidateId);
-        const sources = z
-          .array(z.uuid())
-          .max(64)
-          .parse(parseEventJson(candidate.scope_source_ids as string));
-        const claims = await database.getAllAsync<Row>(
-          "SELECT s.*,r.scope_source_ids FROM trip_source_output_slots s JOIN trip_source_confirmations c ON c.cache_account_id=s.cache_account_id AND c.id=s.confirmation_id JOIN trip_source_candidates p ON p.cache_account_id=s.cache_account_id AND p.id=s.candidate_id JOIN trip_source_runs r ON r.cache_account_id=p.cache_account_id AND r.id=p.run_id WHERE c.cache_account_id=? AND c.trip_id=? AND c.actor_account_id=? AND s.disposition='CREATE' AND s.create_claim_active=1",
-          c.accountId,
-          c.tripId,
-          c.accountId,
-        );
-        if (claims.length > 64) throw new Error("IMPORT_RESOURCE_LIMIT");
-        const inputs = await database.getAllAsync<Row>(
-          "SELECT * FROM trip_source_inputs WHERE cache_account_id=? AND run_id=? ORDER BY id",
-          c.accountId,
-          candidate.run_id as string,
-        );
-        if (inputs.length > 64) throw new Error("IMPORT_RESOURCE_LIMIT");
-        for (const row of inputs) {
-          const input = flightInputSchema.parse(
-            Object.fromEntries(
-              Object.keys(flightInputSchema.shape).map((k) => [
-                k,
-                k === "historical_selection" ? row[k] === 1 : row[k],
-              ]),
+      return scoped(c, () => closureEvidence(c, candidateId));
+    },
+    // Read-only final revision admission. The caller's synchronous handoff runs
+    // only after COMMIT and Account-gate release, never across remote I/O.
+    async admitClosureReview(
+      c: AccountRequestContext,
+      pins: {
+        candidateId: string;
+        candidateSha256: string;
+        runId: string;
+        runGeneration: number;
+        inputSha256: string;
+        inputs: z.infer<typeof flightInputSchema>[];
+        eventId: string | null;
+        baseRevision: number | null;
+      },
+      handoff: () => void,
+    ) {
+      pins = structuredClone(pins);
+      return scoped(
+        c,
+        async () => {
+          const evidence = await closureEvidence(c, pins.candidateId);
+          const current = evidence.candidate;
+          if (
+            current.run_id !== pins.runId ||
+            current.generation !== pins.runGeneration ||
+            current.input_sha256 !== pins.inputSha256 ||
+            current.proposal_sha256 !== pins.candidateSha256
+          )
+            throw new Error("INPUT_STALE");
+          const inputs = evidence.inputs.map((row) =>
+            flightInputSchema.parse(
+              Object.fromEntries(
+                Object.keys(flightInputSchema.shape).map((key) => [
+                  key,
+                  key === "historical_selection" ? row[key] === 1 : row[key],
+                ]),
+              ),
             ),
           );
-          await pin(c, input);
-        }
-        return {
-          candidate,
-          inputs,
-          claims: claims
-            .filter(
-              (p) =>
-                family.includes(p.candidate_id as string) ||
-                z
-                  .array(z.uuid())
-                  .max(64)
-                  .parse(parseEventJson(p.scope_source_ids as string))
-                  .some((id) => sources.includes(id)),
-            )
-            .map((p): Row & { lineage_related: boolean } => ({
-              ...p,
-              lineage_related: family.includes(p.candidate_id as string),
-            })),
-        };
-      });
+          if (
+            json(inputs) !==
+            json([...pins.inputs].sort((a, b) => a.id.localeCompare(b.id)))
+          )
+            throw new Error("INPUT_STALE");
+          if (pins.eventId !== null) {
+            const event = await database.getFirstAsync<Row>(
+              "SELECT semantic_revision FROM trip_canonical_events WHERE account_id=? AND trip_id=? AND event_id=?",
+              c.accountId,
+              c.tripId,
+              pins.eventId,
+            );
+            if (!event || event.semantic_revision !== pins.baseRevision)
+              throw new Error("STALE_BASE_REVISION");
+          }
+        },
+        handoff,
+      );
     },
     async saveDraft(
       c: AccountRequestContext,

@@ -3,12 +3,14 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { migrations } from "@/data/db/migrations";
 import { serializeDatabaseTransactions } from "@/data/db/databaseConnection";
 import {
+  captureAccountRequestContext,
   beginAccountTransition,
   endAccountTransition,
+  withAccountApplyGate,
   type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
 import catalogs from "@/data/repositories/__fixtures__/tripImportCatalogs.json";
@@ -62,6 +64,17 @@ import {
   inboundPackageSchema,
   type InboundScope,
 } from "@/domain/intelligence/inboundImportPackage";
+import * as outboundRouting from "@/domain/intelligence/outboundRouting";
+import * as outboundHarness from "@/data/intelligence/closedOutboundHarness";
+import * as outboundReservation from "./outboundReservation";
+import { createIntelligenceContinuationRepository } from "@/data/repositories/intelligenceContinuationRepository";
+import {
+  createIntelligenceContinuationRuntime,
+  createIntelligenceContinuationScheduling,
+} from "@/data/sync/intelligenceContinuationWakeWorker";
+import { createSyncOperationRepository } from "@/data/sync/syncOperationRepository";
+import { createSyncEngine } from "@/data/sync/syncEngine";
+import { taskSchema } from "@/domain/intelligence/persistence";
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
 const account = catalogs.actor_account_id,
@@ -474,7 +487,7 @@ async function seedEvent(
 
 const actual = process.env.CP14_B2_SERVER83 === "1";
 function sql(body: string) {
-  const container = "otr-cp14-b2-preflight";
+  const container = process.env.CP14_TEST_CONTAINER ?? "otr-cp14-b2-preflight";
   expect(
     spawnSync(
       "docker",
@@ -935,6 +948,7 @@ async function harness(texts = [exact], staging = false) {
     closure: {
       ...local.engine,
       assess: (...args) => local.engine.assess(...args),
+      admitReview: (...args) => local.engine.admitReview(...args),
       async prepare(...args) {
         prepareCount++;
         const prepared = await local.engine.prepare(...args);
@@ -1023,7 +1037,9 @@ async function harness(texts = [exact], staging = false) {
     adapter: createClosedInboundAiClient(dependencies),
     restart: () => createClosedInboundAiClient(dependencies),
     dependencies,
-    local,
+    get local() {
+      return local;
+    },
     batch,
     reopen: () => {
       local.sql.close();
@@ -1621,6 +1637,394 @@ describe(
         expect(h.counts().decisions).toBe(0);
       }
     });
+    const dispositions = ["ACCEPT", "REJECT", "DEFER"] as const;
+    const vectors = [
+      "source",
+      "material",
+      "candidate",
+      "candidate-retention",
+      "run",
+      "input",
+      "input-digest",
+      "event",
+      "proposal",
+      "trip",
+      "account",
+      "account-aba",
+      "grant",
+      "review-auth",
+    ] as const;
+    const durableEvidence = (h: Awaited<ReturnType<typeof harness>>) => ({
+      local: Object.fromEntries(
+        [
+          "trip_source_confirmations",
+          "trip_source_output_slots",
+          "sync_operations",
+          "trip_canonical_events",
+        ].map((table) => [table, h.local.sql.prepare(`select * from ${table}`).all()]),
+      ),
+      // The actual protected root is independently read, not inferred from a throw.
+      decisions: h.counts().decisions,
+      server: actual
+        ? sql(`select jsonb_build_array(
+        (select md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) from public.trip_source_confirmations t),
+        (select md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) from public.trip_source_output_slots t),
+        (select md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) from public.trip_source_execution_attempts t),
+        (select md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) from public.itinerary_events t),
+        (select count(*) from public.external_integration_calls where call_kind<>'INBOUND_TOOL'),
+        (select count(*) from public.external_integration_usage_events u join public.external_integration_calls c using(call_id) where c.call_kind<>'INBOUND_TOOL'));`)
+        : null,
+    });
+    it.each(
+      vectors.flatMap((vector) =>
+        dispositions.map((disposition) => [vector, disposition] as const),
+      ),
+    )(
+      "F2: %s changes during private custody + %s admits zero authority",
+      async (vector, disposition) => {
+        const h = await harness(
+          vector === "event"
+            ? [exact + " arrDate=2026-12-18 arr=11:30 arrInstant=2026-12-17T22:30:00Z"]
+            : [exact],
+        );
+        if (vector === "event") {
+          const source = await interpretFlightBatch(await fixture([exact]), {
+            sha256: hash,
+            getAccountId: async () => account,
+            now,
+          });
+          const baseline = eventBaseline(source);
+          h.batch.matching.occurrences = [
+            {
+              ...source.candidates[0].anchors[0],
+              eventId: baseline.eventId,
+              semanticRevision: 7,
+            },
+          ];
+          await bind(h.batch);
+          await seedEvent(
+            h.local,
+            await h.local.admission.captureContext(trip),
+            baseline,
+          );
+        }
+        const proposal = await h.adapter.submit(h.request);
+        h.user();
+        const decision = h.choose(proposal, disposition);
+        const put = h.dependencies.custody.put;
+        let fired = false;
+        let witness: ReturnType<typeof durableEvidence> | undefined;
+        h.dependencies.custody.put = async (input) => {
+          const content = await put(input);
+          if (!fired) {
+            fired = true;
+            const q = h.local.sql;
+            if (vector === "source")
+              q.prepare("update trip_sources set row_revision=row_revision+1").run();
+            if (vector === "material")
+              q.prepare("update trip_source_representations set payload_sha256=?").run(
+                "b".repeat(64),
+              );
+            if (vector === "candidate")
+              q.prepare("update trip_source_candidates set proposal_sha256=?").run(
+                "b".repeat(64),
+              );
+            if (vector === "candidate-retention")
+              q.prepare(
+                "update trip_source_candidates set retention_state='IDENTITY_ONLY'",
+              ).run();
+            if (vector === "run")
+              q.prepare("update trip_source_runs set generation=generation+1").run();
+            if (vector === "input")
+              q.prepare(
+                "update trip_source_inputs set observed_source_row_revision=observed_source_row_revision+1",
+              ).run();
+            if (vector === "input-digest")
+              q.prepare("update trip_source_inputs set payload_sha256=?").run(
+                "b".repeat(64),
+              );
+            if (vector === "event")
+              q.prepare(
+                "update trip_canonical_events set semantic_revision=semantic_revision+1",
+              ).run();
+            if (vector === "proposal")
+              await h.adapter.submit(
+                sign({
+                  ...h.request,
+                  request_id: randomUUID(),
+                  expected_review_version: 1,
+                }),
+              );
+            if (vector === "trip") {
+              h.revokeTrip();
+              q.prepare("delete from ledger_actor_context").run();
+            }
+            if (vector === "account") h.dependencies.getAccountId = async () => id(999);
+            if (vector === "account-aba") {
+              const lease = await beginAccountTransition();
+              endAccountTransition(lease);
+            }
+            if (vector === "grant") h.revoke();
+            if (vector === "review-auth") h.patch({ revoked: true });
+            witness = durableEvidence(h);
+          }
+          return content;
+        };
+        await expect(h.adapter.decide(decision)).rejects.toThrow();
+        expect(fired).toBe(true);
+        expect(durableEvidence(h)).toEqual(witness);
+        expect(h.counts().decisions).toBe(0);
+        expect(await h.readDecision(h.scope, decision.review_key)).toBeNull();
+        expect(h.counts().prepareCount).toBe(0);
+        expect(h.commands.some((cmd) => cmd.kind === "inbound_ai_reserve_review")).toBe(
+          false,
+        );
+        expect(h.local.sql.prepare("pragma foreign_key_check").all()).toEqual([]);
+      },
+    );
+    it.each(
+      [
+        "verify",
+        "account-read",
+        "custody-verify",
+        "package-read",
+        "status",
+        "review-context",
+        "run-read",
+        "owning-assessment",
+        "owning-run",
+        "owning-candidate",
+        "owning-input",
+      ].flatMap((boundary) =>
+        dispositions.map((disposition) => [boundary, disposition] as const),
+      ),
+    )(
+      "F2: evidence advances at post-custody %s boundary + %s",
+      async (boundary, disposition) => {
+        const h = await harness();
+        const proposal = await h.adapter.submit(h.request);
+        h.user();
+        const decision = h.choose(proposal, disposition);
+        let armed = false,
+          fired = false;
+        const put = h.dependencies.custody.put;
+        h.dependencies.custody.put = async (p) => {
+          const result = await put(p);
+          armed = true;
+          return result;
+        };
+        const mutate = () => {
+          if (armed && !fired) {
+            fired = true;
+            if (boundary === "owning-run")
+              h.local.sql
+                .prepare("update trip_source_runs set generation=generation+1")
+                .run();
+            else if (boundary === "owning-candidate")
+              h.local.sql
+                .prepare("update trip_source_candidates set proposal_sha256=?")
+                .run("b".repeat(64));
+            else if (boundary === "owning-input")
+              h.local.sql
+                .prepare("update trip_source_inputs set payload_sha256=?")
+                .run("b".repeat(64));
+            else
+              h.local.sql
+                .prepare("update trip_sources set row_revision=row_revision+1")
+                .run();
+          }
+        };
+        if (boundary === "verify") {
+          const original = h.dependencies.verify;
+          h.dependencies.verify = async (p) => {
+            const result = await original(p);
+            mutate();
+            return result;
+          };
+        }
+        if (boundary === "account-read") {
+          const original = h.dependencies.getAccountId;
+          h.dependencies.getAccountId = async () => {
+            const result = await original();
+            mutate();
+            return result;
+          };
+        }
+        if (boundary === "custody-verify") {
+          const original = h.dependencies.verifyCustody;
+          h.dependencies.verifyCustody = async (...p) => {
+            const result = await original(...p);
+            mutate();
+            return result;
+          };
+        }
+        if (boundary === "package-read") {
+          const original = h.dependencies.readPackage;
+          h.dependencies.readPackage = async (p) => {
+            const result = await original(p);
+            mutate();
+            return result;
+          };
+        }
+        if (boundary === "status") {
+          const original = h.dependencies.execute;
+          h.dependencies.execute = async (...p) => {
+            const result = await original(...p);
+            if (p[0] === "inbound_ai_status") mutate();
+            return result;
+          };
+        }
+        if (boundary === "review-context") {
+          const original = h.dependencies.reviewContext;
+          h.dependencies.reviewContext = async (p) => {
+            const result = await original(p);
+            mutate();
+            return result;
+          };
+        }
+        if (boundary === "run-read") {
+          const original = h.dependencies.readPublishedRun;
+          h.dependencies.readPublishedRun = async (...p) => {
+            const result = await original(...p);
+            mutate();
+            return result;
+          };
+        }
+        if (boundary.startsWith("owning-")) {
+          const original = h.dependencies.closure.assess;
+          h.dependencies.closure.assess = async (...p) => {
+            const result = await original(...p);
+            mutate();
+            return result;
+          };
+        }
+        const before = durableEvidence(h);
+        await expect(h.adapter.decide(decision)).rejects.toThrow("INBOUND_STALE_REVIEW");
+        expect(fired).toBe(true);
+        expect(durableEvidence(h)).toEqual(before);
+        expect(await h.readDecision(h.scope, decision.review_key)).toBeNull();
+        expect(h.counts().prepareCount).toBe(0);
+        expect(h.commands.some((cmd) => cmd.kind === "inbound_ai_reserve_review")).toBe(
+          false,
+        );
+      },
+    );
+    it.each(dispositions)(
+      "F2: Event advances after final assessment + %s is fenced",
+      async (disposition) => {
+        const h = await harness([
+          exact + " arrDate=2026-12-18 arr=11:30 arrInstant=2026-12-17T22:30:00Z",
+        ]);
+        const source = await interpretFlightBatch(await fixture([exact]), {
+          sha256: hash,
+          getAccountId: async () => account,
+          now,
+        });
+        const baseline = eventBaseline(source);
+        h.batch.matching.occurrences = [
+          {
+            ...source.candidates[0].anchors[0],
+            eventId: baseline.eventId,
+            semanticRevision: 7,
+          },
+        ];
+        await bind(h.batch);
+        await seedEvent(h.local, await h.local.admission.captureContext(trip), baseline);
+        const proposal = await h.adapter.submit(h.request);
+        h.user();
+        const decision = h.choose(proposal, disposition);
+        const assess = h.dependencies.closure.assess;
+        let calls = 0,
+          witness: ReturnType<typeof durableEvidence> | undefined;
+        h.dependencies.closure.assess = async (...args) => {
+          const result = await assess(...args);
+          if (++calls === 2) {
+            h.local.sql
+              .prepare(
+                "update trip_canonical_events set semantic_revision=semantic_revision+1",
+              )
+              .run();
+            witness = durableEvidence(h);
+          }
+          return result;
+        };
+        await expect(h.adapter.decide(decision)).rejects.toThrow("INBOUND_STALE_REVIEW");
+        expect(calls).toBe(2);
+        expect(durableEvidence(h)).toEqual(witness);
+        expect(h.counts().decisions).toBe(0);
+        expect(await h.readDecision(h.scope, decision.review_key)).toBeNull();
+        expect(h.counts().prepareCount).toBe(0);
+        expect(h.commands.some((cmd) => cmd.kind === "inbound_ai_reserve_review")).toBe(
+          false,
+        );
+      },
+    );
+    it.each(dispositions)(
+      "F2: unchanged %s handoff releases SQLite and Account gate",
+      async (disposition) => {
+        const h = await harness();
+        const proposal = await h.adapter.submit(h.request);
+        h.user();
+        const execute = h.dependencies.execute;
+        let handoffs = 0;
+        h.dependencies.execute = async (...args) => {
+          if (args[0] === "inbound_ai_reserve_review") {
+            expect(h.local.sql.isTransaction).toBe(false);
+            await withAccountApplyGate(async () => {
+              handoffs++;
+            });
+          }
+          return execute(...args);
+        };
+        const decision = h.choose(proposal, disposition);
+        const result = await h.adapter.decide(decision);
+        expect(handoffs).toBe(1);
+        expect(h.counts().decisions).toBe(1);
+        expect(result.state).toBe(
+          disposition === "ACCEPT"
+            ? "PREPARED"
+            : disposition === "REJECT"
+              ? "REJECTED"
+              : "DEFERRED",
+        );
+        expect(result.canonical_acceptance).toBe(false);
+        expect(await h.restart().decide(decision)).toEqual(result);
+        expect(handoffs).toBe(1);
+      },
+    );
+    it.each(dispositions)(
+      "F2: concurrent identical %s callers retain exactly one decision",
+      async (disposition) => {
+        const h = await harness();
+        const proposal = await h.adapter.submit(h.request);
+        h.user();
+        const decision = h.choose(proposal, disposition);
+        const outcomes = await Promise.allSettled([
+          h.adapter.decide(decision),
+          h.restart().decide(decision),
+        ]);
+        const saved = await h.readDecision(h.scope, decision.review_key);
+        expect(h.counts().decisions).toBe(1);
+        expect(saved.disposition).toBe(disposition);
+        expect(outcomes.some((o) => o.status === "fulfilled")).toBe(true);
+        const replay = await h.restart().decide(decision);
+        for (const outcome of outcomes)
+          if (outcome.status === "fulfilled") {
+            for (const key of [
+              "confirmation_id",
+              "slot_id",
+              "operation_key",
+              "intended_event_id",
+            ] as const)
+              expect(outcome.value[key]).toBe(replay[key]);
+            expect(outcome.value.canonical_acceptance).toBe(false);
+          }
+        expect(
+          h.local.sql.prepare("select count(*) n from trip_source_confirmations").get()!
+            .n,
+        ).toBe(disposition === "ACCEPT" ? 1 : 0);
+      },
+    );
     it("arrival evidence completes the same incomplete occurrence through one CP13A UPDATE", async () => {
       const h = await harness([
         exact + " arrDate=2026-12-18 arr=11:30 arrInstant=2026-12-17T22:30:00Z",
@@ -1718,3 +2122,245 @@ describe(
     });
   },
 );
+
+// CP14 integration: install the existing scheduler alongside B2 and observe the
+// actual outbound constructors/router plus durable roots, not an unused fake port.
+it("CP14 inbound proposal/ACCEPT/restart never wakes or pays outbound with scheduler installed", async () => {
+  const h = await harness();
+  const router = vi.spyOn(outboundRouting, "routeOutbound"),
+    fakeFactory = vi.spyOn(outboundHarness, "createClosedOutboundHarness"),
+    callFactory = vi.spyOn(outboundReservation, "createServer83OutboundReservation");
+  try {
+    const deps = {
+      getAccountId: h.dependencies.getAccountId,
+      now,
+      sha256: hash,
+      async validateAdmission() {
+        throw new Error("UNEXPECTED_CONTINUATION");
+      },
+      async validateAttemptAdmission() {
+        throw new Error("UNEXPECTED_ATTEMPT");
+      },
+      async eligibleWait() {
+        return false;
+      },
+      async verifyRecovery() {
+        throw new Error("UNEXPECTED_RECOVERY");
+      },
+    };
+    const repo = createIntelligenceContinuationRepository(h.local.database, deps);
+    const route = vi.fn(async () => {
+      throw new Error("UNEXPECTED_OUTBOUND_ROUTE");
+    });
+    const runtime = createIntelligenceContinuationRuntime(repo, {
+      ...deps,
+      online: () => true,
+      router: route,
+      routePolicy: () => ({
+        modalities: ["TEXT"],
+        latencyBudgetMs: null,
+        risk: "NORMAL",
+        shadowEligible: false,
+      }),
+    });
+    const scheduler = createIntelligenceContinuationScheduling({
+      db: h.local.database,
+      repo,
+      runtime,
+      ...deps,
+    });
+    const count = (table: string) =>
+      Number(h.local.sql.prepare(`select count(*) n from ${table}`).get()!.n);
+    const outbound = () =>
+      actual
+        ? sql(
+            "select jsonb_build_array((select count(*) from public.external_integration_calls where call_kind<>'INBOUND_TOOL'),(select count(*) from public.external_integration_usage_events u join public.external_integration_calls c using(call_id) where c.call_kind<>'INBOUND_TOOL'));",
+          )
+        : null;
+    const before = outbound();
+    await scheduler.resume("COLD_START");
+    await scheduler.run();
+    const proposal = await h.adapter.submit(h.request);
+    await scheduler.resume("RECONNECT");
+    await scheduler.run();
+    expect(await h.restart().status(h.status())).toEqual(proposal);
+    expect(count("intelligence_continuations")).toBe(0);
+    expect(count("intelligence_continuation_attempts")).toBe(0);
+    expect(count("trip_source_confirmations")).toBe(0);
+    h.user();
+    const decision = h.choose(proposal);
+    const prepared = await h.adapter.decide(decision);
+    const after = h.counts();
+    // A permissive generic worker still cannot dispatch CP13A preparation.
+    const pushed = vi.fn(async () => {});
+    await createSyncEngine(
+      createSyncOperationRepository(h.local.database, deps.getAccountId, now),
+      { push: pushed },
+      undefined,
+      () => true,
+    ).run("AUTHENTICATED_ONLINE");
+    expect(pushed).not.toHaveBeenCalled();
+    expect(await h.reopen().decide(decision)).toEqual(prepared);
+    const reopenedRepo = createIntelligenceContinuationRepository(h.local.database, deps);
+    const reopenedRuntime = createIntelligenceContinuationRuntime(reopenedRepo, {
+      ...deps,
+      online: () => true,
+      router: route,
+      routePolicy: () => ({
+        modalities: ["TEXT"],
+        latencyBudgetMs: null,
+        risk: "NORMAL",
+        shadowEligible: false,
+      }),
+    });
+    const reopenedScheduler = createIntelligenceContinuationScheduling({
+      db: h.local.database,
+      repo: reopenedRepo,
+      runtime: reopenedRuntime,
+      ...deps,
+    });
+    await reopenedScheduler.resume("COLD_START");
+    await reopenedScheduler.run();
+    expect(count("intelligence_continuations")).toBe(0);
+    expect(count("intelligence_continuation_attempts")).toBe(0);
+    expect(h.counts()).toEqual(after);
+    expect(h.commands.every((c) => c.kind.startsWith("inbound_ai_"))).toBe(true);
+    for (const c of h.commands.filter(
+      (c) => c.kind === "inbound_ai_reserve_invocation",
+    )) {
+      expect(c.body.call.call_kind).toBe("INBOUND_TOOL");
+      expect(c.body.call.provider_id).toBeNull();
+      expect(c.body.call.model_id).toBeNull();
+      expect(c.body.start.cost_nanos).toBeNull();
+      expect(c.body.start.input_tokens).toBeNull();
+    }
+    expect(outbound()).toEqual(before);
+    expect(route).not.toHaveBeenCalled();
+    expect(router).not.toHaveBeenCalled();
+    expect(fakeFactory).not.toHaveBeenCalled();
+    expect(callFactory).not.toHaveBeenCalled();
+  } finally {
+    router.mockRestore();
+    fakeFactory.mockRestore();
+    callFactory.mockRestore();
+  }
+}, 60000);
+
+it("CP14 same UUID package/task namespaces remain independent across Account A→B→A", async () => {
+  const h = await harness();
+  let active = account;
+  h.dependencies.getAccountId = async () => active;
+  const policy = {
+    version: 1,
+    privacy: "LOCAL_ONLY",
+    network_required: true,
+    region: "DEVICE",
+    budget_currency: null,
+    budget_nanos: null,
+    route: "DETERMINISTIC",
+    max_attempts: 2,
+    deadline: null,
+  };
+  const digest = (v: unknown) =>
+    hash(new TextEncoder().encode(canonicalEventJson(v as Json)));
+  const repo = createIntelligenceContinuationRepository(h.local.database, {
+    getAccountId: h.dependencies.getAccountId,
+    now,
+    sha256: hash,
+    async validateAdmission() {},
+    async validateAttemptAdmission() {},
+    async eligibleWait() {
+      return true;
+    },
+    async verifyRecovery() {
+      throw new Error("NO_TERMINAL_PROOF");
+    },
+  });
+  const context = await captureAccountRequestContext(trip, h.dependencies.getAccountId);
+  const task = taskSchema.parse({
+    account_id: account,
+    task_id: h.scope.package_id,
+    import_id: h.scope.package_id,
+    format_version: 1,
+    manifest_version: 1,
+    manifest_sha256: "a".repeat(64),
+    trip_id: trip,
+    stage: "INTERPRETATION",
+    logical_request_id: h.request.request_id,
+    logical_idempotency_key: h.p.idempotency_key,
+    input_pins: [],
+    input_sha256: await digest([]),
+    consumer_id: "import",
+    schema_id: "flight",
+    schema_dialect: "otr",
+    consumer_version: 1,
+    schema_version: 1,
+    schema_sha256: "a".repeat(64),
+    capability_requirements: ["EXTRACT"],
+    policy_snapshot: policy,
+    policy_sha256: await digest(policy),
+    run_id: null,
+    expected_run_generation: null,
+    candidate_id: null,
+    expected_candidate_sha256: null,
+    event_id: null,
+    expected_event_revision: null,
+    created_at: now(),
+    creation_clock: "DEVICE_WALL",
+    row_revision: 1,
+    publication_fence: 1,
+    current_pass_complete: false,
+    work_disposition: "PENDING",
+    wait_reason: null,
+    wait_reasons: [],
+    sync_operation_id: null,
+    dependencies: [],
+    current_attempt_id: null,
+    cancellation_disposition: "NONE",
+    safe_reason: null,
+    publication_id: null,
+    publication_sha256: null,
+    result_sha256: null,
+    updated_at: now(),
+    update_clock: "DEVICE_WALL",
+    completed_at: null,
+  });
+  await repo.create(context, task);
+  const before = await repo.snapshot(context, task.task_id);
+  const proposal = await h.adapter.submit(h.request);
+  h.user();
+  const decision = h.choose(proposal);
+  const sealed = await h.adapter.decide(decision);
+  expect(await repo.snapshot(context, task.task_id)).toEqual(before);
+  expect(
+    h.local.sql
+      .prepare(
+        "select count(*) n from sync_operations where operation_type='INTELLIGENCE_CONTINUATION_WAKE'",
+      )
+      .get()!.n,
+  ).toBe(0);
+  const b = randomUUID();
+  const toB = await beginAccountTransition();
+  active = b;
+  endAccountTransition(toB);
+  const bContext = await captureAccountRequestContext(trip, h.dependencies.getAccountId);
+  await expect(repo.snapshot(bContext, task.task_id)).rejects.toThrow();
+  await expect(repo.snapshot(context, task.task_id)).rejects.toThrow();
+  await expect(h.restart().status(h.status())).rejects.toThrow();
+  await expect(h.restart().decide(decision)).rejects.toThrow();
+  const toA = await beginAccountTransition();
+  active = account;
+  endAccountTransition(toA);
+  await expect(repo.snapshot(context, task.task_id)).rejects.toThrow();
+  const fresh = await captureAccountRequestContext(trip, h.dependencies.getAccountId);
+  expect(await repo.snapshot(fresh, task.task_id)).toEqual(before);
+  expect(await h.restart().status(h.status())).toEqual(proposal);
+  expect(await h.restart().decide(decision)).toEqual(sealed);
+  expect(h.counts().decisions).toBe(1);
+  expect(h.counts().prepareCount).toBe(1);
+  expect(
+    h.local.sql
+      .prepare("select count(*) n from intelligence_continuation_attempts")
+      .get()!.n,
+  ).toBe(0);
+}, 60000);

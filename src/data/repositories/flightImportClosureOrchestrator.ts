@@ -322,6 +322,7 @@ export function createFlightImportClosureOrchestrator(
   }
   return {
     assess,
+    admitReview: admission.admitClosureReview,
     prepare,
     saveDraft: admission.saveDraft,
     readDraft: admission.readDraft,

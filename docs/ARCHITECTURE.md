@@ -303,3 +303,16 @@ Local continuation responsibility uses the existing Account gate and sole sync
 queue; server call/usage responsibility has no worker lease. Closed repositories
 and synthetic tests install these boundaries without activating adapters, HTTP
 routes, secret resolution, live material custody, Admin UI or customer charging.
+
+## CP14 final integration / closure
+
+The [final integration report](architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md)
+proves accepted Persistence → C2 → A2 → B2 together at exact base
+`cbd11b414a691b4f3761b02877b45ef9b11545a8`. Final targeted independent rechecks
+supersede historical correction-pending verdicts; original reports remain preserved.
+Server83/SQLite50, continuation, closed outbound/inbound seams, CP13B N→M/supported
+augmentation, usage/cost foundation and proposal/decision separation are implemented.
+Real dispatch/credentials/secrets, public ChatGPT/Claude/MCP, production OAuth/JWT,
+Admin Portal, billing, participant/member augmentation, booking persistence,
+CXE adaptive runtime, Product Intelligence/training and notification sending remain
+unimplemented or unactivated. Independent final closure review is the next checkpoint.
