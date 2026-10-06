@@ -415,3 +415,23 @@ upload/provider activation or global gate change. Revocation requests retain the
 local CREATE claim until exact authoritative permanent-revocation observation.
 The [implementation report](architecture/TRIP_CHECKPOINT_13A2_CANONICAL_FLIGHT_IMPORT_IMPLEMENTATION_REPORT.md)
 contains acceptance evidence and the terminal CREATE receipt clarification.
+
+## CP14 durable continuations, runtime closed
+
+SQLite50 journals logical continuations and concrete attempts; `sync_operations`
+remains the only scheduler/claim owner. Attempt reservation requires its retained
+claimed queue row. Wait/wake and queue attempt_count create no model attempt.
+Lease expiry never proves provider terminality or permits blind redispatch.
+
+Account-gated local transactions revalidate manifest/Trip/material/Run/Candidate/
+Event pins and publication fences. Owning admission/policy/budget/wait/recovery
+callbacks perform local checks only, never external I/O under a transaction.
+Exact task→attempt→call→usage→publication correlation is typed and tested with
+synthetic closed seams. UNKNOWN requires trusted exact terminal recovery; retained
+results survive meter loss and installation rollback, without model replay.
+
+Maintenance anti-joins and FK-OFF guards retain referenced queue/evidence/Source
+revision/Input/attempt responsibility. UNKNOWN is never age-deleted. Pruning and
+material release need positive closure and separately approved custody/privacy
+policy. No new worker, provider adapter, startup hook or device bridge is wired;
+existing Event/Source/Import gates and five C scheduler denials stay CLOSED.

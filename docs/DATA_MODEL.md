@@ -607,3 +607,28 @@ observations. Original Capture BLOBs and selected local material remain protecte
 while referenced. FK-OFF repository checks enforce the same Actor/Trip/material
 bindings. No passenger, booking, Ledger, participant certificate or Day schema is
 added. See the [implementation report](architecture/TRIP_CHECKPOINT_13A2_CANONICAL_FLIGHT_IMPORT_IMPLEMENTATION_REPORT.md).
+
+## CP14 closed persistence
+
+Server83 adds fifteen protected control-plane/recovery tables defined in the
+[approved preflight](architecture/CP14_PERSISTENCE_CONTROL_PLANE_PREFLIGHT.md).
+All are migration-owner owned with ENABLE/FORCE RLS and no API/service-role
+access. Immutable config/prices/audit/usage coexist with CAS/fenced call and
+inbound responsibility. Numeric counters remain independently nullable; currency
+aggregates never convert FX or represent unknown cost as zero.
+
+SQLite50 adds `intelligence_continuations` and
+`intelligence_continuation_attempts`, plus narrow queue uniqueness/retention and
+pin guards. Immutable logical/input/policy pins are distinct from concrete
+ordered attempts and independent execution/install/meter observations. Event
+revision pins have no FK to the mutable Event mirror. No server cost ledger is
+copied locally. Historical server1–82/SQLite1–49 bodies remain unchanged.
+
+Server83's existing audit journal also retains content-free REQUEST_BINDING entries
+for non-admin protected mutations. Its safe_diff stores command/root and request/
+verifier-scope digests; no new replay table is introduced. Usage corrections lock
+one retained call and admit one same-coverage successor, preserving history.
+Estimate-to-actual DELTA replacement requires explicit supersession; conflicting
+quality without coverage rejects. Distinct admitted disjoint DELTAs still add.
+Safe result identifiers have typed grammar and exact retained-parent correlation.
+SQLite50 semantics are unchanged by the F1–F6 corrections.

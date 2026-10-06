@@ -19,7 +19,12 @@ export async function cleanupReconstructibleLedgerData(
   const sync = await database.runAsync(
     `DELETE FROM sync_operations WHERE status = 'COMPLETED' AND updated_at < ?
      AND NOT EXISTS (SELECT 1 FROM ledger_expense_commands command WHERE command.operation_id = sync_operations.id)
-     AND NOT EXISTS (SELECT 1 FROM ledger_expense_resolution_receipts receipt WHERE receipt.operation_id = sync_operations.id)`,
+     AND NOT EXISTS (SELECT 1 FROM ledger_expense_resolution_receipts receipt WHERE receipt.operation_id = sync_operations.id)
+     AND NOT EXISTS (SELECT 1 FROM intelligence_continuations task WHERE task.account_id = sync_operations.owner_user_id AND task.sync_operation_id = sync_operations.id)
+     AND NOT EXISTS (SELECT 1 FROM intelligence_continuation_attempts attempt WHERE attempt.account_id = sync_operations.owner_user_id AND attempt.sync_operation_id = sync_operations.id)
+     AND NOT EXISTS (SELECT 1 FROM intelligence_continuations task, json_each(task.dependencies) dependency
+       WHERE task.account_id = sync_operations.owner_user_id AND json_extract(dependency.value, '$.kind') = 'QUEUE_OPERATION'
+         AND json_extract(dependency.value, '$.id') = sync_operations.id)`,
     completedBefore,
   );
   const assets = await database.runAsync(

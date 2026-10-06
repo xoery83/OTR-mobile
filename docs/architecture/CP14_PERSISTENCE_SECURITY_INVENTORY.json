@@ -1,0 +1,733 @@
+{
+  "roles": [
+    {
+      "name": "otr_external_integration_admin_gateway",
+      "login": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "superuser": false,
+      "createrole": false,
+      "replication": false
+    },
+    {
+      "name": "otr_external_integration_call_gateway",
+      "login": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "superuser": false,
+      "createrole": false,
+      "replication": false
+    },
+    {
+      "name": "otr_external_integration_config_writer",
+      "login": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "superuser": false,
+      "createrole": false,
+      "replication": false
+    },
+    {
+      "name": "otr_external_integration_inbound_gateway",
+      "login": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "superuser": false,
+      "createrole": false,
+      "replication": false
+    },
+    {
+      "name": "otr_external_integration_inbound_writer",
+      "login": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "superuser": false,
+      "createrole": false,
+      "replication": false
+    },
+    {
+      "name": "otr_external_integration_meter_writer",
+      "login": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "superuser": false,
+      "createrole": false,
+      "replication": false
+    },
+    {
+      "name": "otr_external_integration_reader",
+      "login": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "superuser": false,
+      "createrole": false,
+      "replication": false
+    },
+    {
+      "name": "otr_external_integration_recovery_gateway",
+      "login": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "superuser": false,
+      "createrole": false,
+      "replication": false
+    },
+    {
+      "name": "otr_external_integration_reporting_gateway",
+      "login": false,
+      "inherit": false,
+      "createdb": false,
+      "bypassrls": false,
+      "superuser": false,
+      "createrole": false,
+      "replication": false
+    }
+  ],
+  "tables": [
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_inbound_writer=ar/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_client_grants",
+      "owner": "postgres",
+      "indexes": 4,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 30
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_inbound_writer=ar/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_client_identities",
+      "owner": "postgres",
+      "indexes": 4,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 14
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_config_writer=r/postgres,otr_external_integration_inbound_writer=r/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_integration_admin_grants",
+      "owner": "postgres",
+      "indexes": 3,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 12
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_meter_writer=ar/postgres,otr_external_integration_inbound_writer=r/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_integration_calls",
+      "owner": "postgres",
+      "indexes": 7,
+      "triggers": 3,
+      "force_rls": true,
+      "constraints": 44
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_config_writer=ar/postgres,otr_external_integration_inbound_writer=ar/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_integration_config_audit",
+      "owner": "postgres",
+      "indexes": 4,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 18
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_config_writer=r/postgres,otr_external_integration_meter_writer=r/postgres,otr_external_integration_inbound_writer=r/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_integration_environment_state",
+      "owner": "postgres",
+      "indexes": 1,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 7
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_config_writer=ar/postgres,otr_external_integration_meter_writer=r/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_integration_health_observations",
+      "owner": "postgres",
+      "indexes": 4,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 14
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_config_writer=ar/postgres,otr_external_integration_meter_writer=r/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_integration_price_schedule_units",
+      "owner": "postgres",
+      "indexes": 1,
+      "triggers": 3,
+      "force_rls": true,
+      "constraints": 9
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_config_writer=ar/postgres,otr_external_integration_meter_writer=r/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_integration_price_schedules",
+      "owner": "postgres",
+      "indexes": 4,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 21
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_meter_writer=ar/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_integration_usage_events",
+      "owner": "postgres",
+      "indexes": 6,
+      "triggers": 3,
+      "force_rls": true,
+      "constraints": 54
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_config_writer=ar/postgres,otr_external_integration_meter_writer=r/postgres,otr_external_integration_inbound_writer=r/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "external_integrations",
+      "owner": "postgres",
+      "indexes": 5,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 33
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_inbound_writer=ar/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "inbound_ai_import_reservations",
+      "owner": "postgres",
+      "indexes": 6,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 39
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_inbound_writer=ar/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "inbound_ai_invocations",
+      "owner": "postgres",
+      "indexes": 4,
+      "triggers": 3,
+      "force_rls": true,
+      "constraints": 29
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_inbound_writer=ar/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "inbound_ai_review_decisions",
+      "owner": "postgres",
+      "indexes": 4,
+      "triggers": 3,
+      "force_rls": true,
+      "constraints": 31
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,otr_external_integration_config_writer=ar/postgres,otr_external_integration_meter_writer=r/postgres,otr_external_integration_reader=r/postgres}",
+      "rls": true,
+      "name": "intelligence_provider_configs",
+      "owner": "postgres",
+      "indexes": 4,
+      "triggers": 2,
+      "force_rls": true,
+      "constraints": 42
+    }
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_audit(jsonb,jsonb,text,text,bigint,bigint,text,text,text)",
+      "security_definer": false
+    },
+    {
+      "acl": "{otr_external_integration_config_writer=X/otr_external_integration_config_writer,otr_external_integration_meter_writer=X/otr_external_integration_config_writer,otr_external_integration_inbound_writer=X/otr_external_integration_config_writer,otr_external_integration_reader=X/otr_external_integration_config_writer}",
+      "owner": "otr_external_integration_config_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_bind_request(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_meter_writer=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_call_admission(external_integration_calls,boolean)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_canonical(jsonb)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_config_replay(jsonb,jsonb)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_context(jsonb,jsonb,text,text[],text)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_client_grants()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_client_identities()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_integration_admin_grants()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_integration_calls()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_integration_config_audit()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_integration_environment_state()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_integration_health_observations()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_integration_price_schedule_units()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_integration_price_schedules()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_integration_usage_events()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_external_integrations()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_inbound_ai_import_reservations()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_inbound_ai_invocations()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_inbound_ai_review_decisions()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_guard_intelligence_provider_configs()",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_hash(jsonb)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_inbound_authorize(jsonb,jsonb,text)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_inbound_target(jsonb,jsonb,text,inbound_ai_import_reservations)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_keys(jsonb,text[],text[])",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_labels(text[])",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_reader=X/postgres,otr_external_integration_meter_writer=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_measurement_value(external_integration_usage_events,text)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_numeric_map(jsonb)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_publication_refs(jsonb)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_reference_map(jsonb)",
+      "security_definer": false
+    },
+    {
+      "acl": "{otr_external_integration_reader=X/otr_external_integration_reader}",
+      "owner": "otr_external_integration_reader",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_relation_integrity()",
+      "security_definer": true
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_request_scope(jsonb)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_safe_result(jsonb)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_config_writer=X/postgres,otr_external_integration_meter_writer=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_scope_lock(text,text)",
+      "security_definer": false
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_inbound_writer=X/postgres,otr_external_integration_reader=X/postgres,otr_external_integration_meter_writer=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_trip_access(uuid,uuid)",
+      "security_definer": true
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_external_integration_reader=X/postgres,otr_external_integration_meter_writer=X/postgres}",
+      "owner": "postgres",
+      "config": ["search_path=pg_catalog"],
+      "signature": "cp14_usage_projection(uuid)",
+      "security_definer": false
+    },
+    {
+      "acl": "{otr_external_integration_inbound_writer=X/otr_external_integration_inbound_writer,otr_external_integration_inbound_gateway=X/otr_external_integration_inbound_writer}",
+      "owner": "otr_external_integration_inbound_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_client_authorize_grant(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_inbound_writer=X/otr_external_integration_inbound_writer,otr_external_integration_inbound_gateway=X/otr_external_integration_inbound_writer}",
+      "owner": "otr_external_integration_inbound_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_client_revoke_grant(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_reader=X/otr_external_integration_reader,otr_external_integration_reporting_gateway=X/otr_external_integration_reader}",
+      "owner": "otr_external_integration_reader",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_admin_report(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_meter_writer=X/otr_external_integration_meter_writer,otr_external_integration_inbound_writer=X/otr_external_integration_meter_writer}",
+      "owner": "otr_external_integration_meter_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_complete_inbound_call(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_config_writer=X/otr_external_integration_config_writer,otr_external_integration_admin_gateway=X/otr_external_integration_config_writer}",
+      "owner": "otr_external_integration_config_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_configure(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_config_writer=X/otr_external_integration_config_writer,otr_external_integration_call_gateway=X/otr_external_integration_config_writer}",
+      "owner": "otr_external_integration_config_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_health_observe(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_meter_writer=X/otr_external_integration_meter_writer,otr_external_integration_call_gateway=X/otr_external_integration_meter_writer}",
+      "owner": "otr_external_integration_meter_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_mark_dispatch(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_meter_writer=X/otr_external_integration_meter_writer,otr_external_integration_call_gateway=X/otr_external_integration_meter_writer,otr_external_integration_recovery_gateway=X/otr_external_integration_meter_writer}",
+      "owner": "otr_external_integration_meter_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_observe_call(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_config_writer=X/otr_external_integration_config_writer,otr_external_integration_admin_gateway=X/otr_external_integration_config_writer}",
+      "owner": "otr_external_integration_config_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_price_append(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_reader=X/otr_external_integration_reader,otr_external_integration_recovery_gateway=X/otr_external_integration_reader}",
+      "owner": "otr_external_integration_reader",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_recover_exact(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_meter_writer=X/otr_external_integration_meter_writer,otr_external_integration_call_gateway=X/otr_external_integration_meter_writer}",
+      "owner": "otr_external_integration_meter_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_reserve_call(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_meter_writer=X/otr_external_integration_meter_writer,otr_external_integration_inbound_writer=X/otr_external_integration_meter_writer}",
+      "owner": "otr_external_integration_meter_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_reserve_inbound_call(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_config_writer=X/otr_external_integration_config_writer,otr_external_integration_admin_gateway=X/otr_external_integration_config_writer}",
+      "owner": "otr_external_integration_config_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_set_kill(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_meter_writer=X/otr_external_integration_meter_writer,otr_external_integration_call_gateway=X/otr_external_integration_meter_writer,otr_external_integration_recovery_gateway=X/otr_external_integration_meter_writer}",
+      "owner": "otr_external_integration_meter_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "external_integration_usage_append(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_inbound_writer=X/otr_external_integration_inbound_writer,otr_external_integration_inbound_gateway=X/otr_external_integration_inbound_writer}",
+      "owner": "otr_external_integration_inbound_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "inbound_ai_attach_material(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_inbound_writer=X/otr_external_integration_inbound_writer,otr_external_integration_inbound_gateway=X/otr_external_integration_inbound_writer,otr_external_integration_recovery_gateway=X/otr_external_integration_inbound_writer}",
+      "owner": "otr_external_integration_inbound_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "inbound_ai_complete_invocation(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_inbound_writer=X/otr_external_integration_inbound_writer,otr_external_integration_inbound_gateway=X/otr_external_integration_inbound_writer,otr_external_integration_recovery_gateway=X/otr_external_integration_inbound_writer}",
+      "owner": "otr_external_integration_inbound_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "inbound_ai_observe_review(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_inbound_writer=X/otr_external_integration_inbound_writer,otr_external_integration_inbound_gateway=X/otr_external_integration_inbound_writer}",
+      "owner": "otr_external_integration_inbound_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "inbound_ai_reserve_invocation(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_inbound_writer=X/otr_external_integration_inbound_writer,otr_external_integration_inbound_gateway=X/otr_external_integration_inbound_writer}",
+      "owner": "otr_external_integration_inbound_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "inbound_ai_reserve_package(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_inbound_writer=X/otr_external_integration_inbound_writer,otr_external_integration_inbound_gateway=X/otr_external_integration_inbound_writer}",
+      "owner": "otr_external_integration_inbound_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "inbound_ai_reserve_review(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_reader=X/otr_external_integration_reader,otr_external_integration_inbound_gateway=X/otr_external_integration_reader}",
+      "owner": "otr_external_integration_reader",
+      "config": ["search_path=pg_catalog"],
+      "signature": "inbound_ai_status(jsonb,jsonb)",
+      "security_definer": true
+    },
+    {
+      "acl": "{otr_external_integration_config_writer=X/otr_external_integration_config_writer,otr_external_integration_admin_gateway=X/otr_external_integration_config_writer}",
+      "owner": "otr_external_integration_config_writer",
+      "config": ["search_path=pg_catalog"],
+      "signature": "intelligence_provider_config_append(jsonb,jsonb)",
+      "security_definer": true
+    }
+  ],
+  "membership": [
+    {
+      "set": false,
+      "role": "otr_external_integration_admin_gateway",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_external_integration_call_gateway",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_external_integration_config_writer",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_external_integration_inbound_gateway",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_external_integration_inbound_writer",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_external_integration_meter_writer",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_external_integration_reader",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_external_integration_recovery_gateway",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    },
+    {
+      "set": false,
+      "role": "otr_external_integration_reporting_gateway",
+      "admin": true,
+      "member": "postgres",
+      "grantor": "supabase_admin",
+      "inherit": false
+    }
+  ],
+  "base": "c4571746b0c300fa3b46842cd37745963567338c",
+  "migration_sha256": "c759a41981f631271df7b960a7ce50dbc32e2317163ca84a7021d1cbf5e46f93",
+  "acceptance_checks": 548,
+  "runtime_enabled": false,
+  "administrative_exemption": "Only automatic creator ADMIN grants to trusted database owner postgres, grantor supabase_admin; SET/INHERIT false. No outgoing private-role or API/runtime membership."
+}

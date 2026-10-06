@@ -2,64 +2,54 @@
 
 Date: 2026-10-06 (Pacific/Auckland).
 
-## Current checkpoint — CP13B integrated / READY FOR OWNER REVIEW
+## Current checkpoint — CP14 persistence / F1–F6 targeted recheck
 
-- Integration worktree:
-  `/Users/xoery/.codex/worktrees/cp13b-flight-integration/otr-mobile-canonical`;
-  branch `integration/cp13b-flight-import`, exact starting/retained HEAD
-  `806c2643d06af60f269c9c4004da1b7e226496b7`. All changes are unstaged and
-  uncommitted. Builder and canonical checkouts are preserved. No commit/push,
-  runtime activation, deployment or Hosted Dev/Production access.
-- Builder A deterministic Flight interpretation and Builder B action-specific
-  closure/review/preparation are integrated. One public `FlightCandidateSet`
-  retains exact immutable proposals, all anchors, observations, contradictions,
-  lineage, Input pins and original evidence. `FlightClosureInputSet` is its
-  canonical explicit review projection, carrying the entire original result;
-  it is not a second Candidate identity model or a temporary compatibility shim.
-- N→M discovery and conservative `import-flight-match-v1` consolidation preserve
-  qualified airport/supplier/codeshare observations. Two observations uniquely
-  matching the same admitted canonical target consolidate without double-counting
-  that target. Conflicting clocks do not contaminate distinct-date/route siblings.
-  Unresolved upstream matching cannot become NEW by changing scope downstream.
-- Closure distinguishes NEW, DUPLICATE_EVIDENCE, COMPLETE_EXISTING, UPDATE_EXISTING,
-  CONFLICT and UNRESOLVED_MATCH. Existing changes use real read-only canonical
-  Event/services and exact parent revision. Mixed supported changes produce one
-  complete atomic update under CP13A R1; unsupported passenger/booking dimensions
-  remain DEFER, never Person/participant/reservation writes.
-- Explicit reviewed continuity/lineage must reference original evidence and
-  declared predecessors. UNKNOWN claims block competing CREATE. Known success
-  retains its exact target; one-to-many DISTINCT_OUTPUT requires reviewed
-  disposition. A new Run/Candidate/key is never no-commit proof.
-- Temporal Option A retains civil/offset/zone/precision/independent-instant facts.
-  Missing, estimated and offset-only departures do not invent an instant;
-  evidenced exact midnight is valid. Unknown arrival stays unknown. Attention
-  and PARTIAL/WAITING progress are separate from identity/closure eligibility.
-- Exact persisted Run pins and published Candidate locators are revalidated before
-  closure/preparation. Drafts, retained original evidence and exact preparation
-  survive SQLite file cold restart. Account A→B→A rejects old generation contexts.
-  READY and preparation do not execute canonical mutation; only the existing
-  `C_PREPARE_CONFIRMATION` operation is queued, undispatched.
-- Validation: A **47**, B **52**, integration **47** tests PASS; selected regression
-  **25 files / 740 tests PASS**. Final serial full Vitest **196 files / 1,997 tests**:
-  **1,996 passed / 1 failed**, with the same **11 failed files** as the exact base
-  (ten native Flow collection blockers and one existing Ledger architecture
-  assertion). No new failed files. Typecheck, lint/UI guard, Backend build,
-  changed-file formatting and whitespace PASS. No global full-suite PASS claim.
-- Final evidence: `architecture/TRIP_CHECKPOINT_13B_FINAL_INTEGRATION_REPORT.md`.
-  Standalone Builder A/B reports are retained byte-for-byte. Capture→Source test
-  uses real CP11 intake/read handoff and an explicitly admitted fixture catalog;
-  no Source acquisition/publication runtime, remote acceptance or device test is
-  claimed. CP13A security limitations remain unchanged.
-- Next authorized step: **Owner Review only**. All runtime gates remain CLOSED.
-  Do not commit/push or add providers, UI, migrations, routes, startup/scheduler
-  wiring or deployments before separate authorization.
+- Worktree `/private/tmp/otr-cp14-persistence`, branch
+  `intelligence/cp14-persistence`, exact retained HEAD/base
+  `c4571746b0c300fa3b46842cd37745963567338c`. Changes are unstaged and
+  uncommitted. Canonical and A/B/C input checkouts are preserved. No commit/push.
+- One additive Server83 and SQLite50 implement the approved persistence blueprint:
+  isolated integration/provider/price registry, call responsibility, append-only
+  nullable usage/cost, admin audit/health, external identity/grants, package/
+  invocation/review recovery, and local continuation/attempt journals.
+- Owner's VerifiedCallContextV1 clarification is authoritative: an injectable
+  trusted gateway proves authentication; fixed SQL roots check actual dedicated
+  session, request digest and current durable authorization. This is a closed
+  test boundary, not a credential verifier or provisioned connector.
+- `sync_operations` remains the sole scheduler. Local repository callbacks must
+  validate owning Import/Trip/manifest and policy/budget admission locally, and
+  verify exact recovery evidence. No callback may perform external I/O while the
+  Account gate/transaction is held. No startup adapter or scheduler is added.
+- Unknown execution, result installation and metering remain independent. Retained
+  queue/Capture/Source/revision/Input/Run/Candidate references prevent cleanup,
+  including FK OFF. No TTL deletion or metadata pruning horizon is invented.
+- Server defaults remain killed and `runtime_enabled=false` with a closed CHECK;
+  ordinary configuration cannot activate execution. Event/Source/Import gates and
+  the five C scheduler denials are unchanged. CP13B deterministic interpretation,
+  closure/preparation remain integrated and unwired; CP13A security limitations
+  and Apple spike status remain unchanged.
+- Builder targeted F1–F6 corrections bind retained inbound/call scope, preserve
+  SECURITY_ADMIN kill ownership, enforce one explicit DELTA correction lineage,
+  correlate typed safe results and durably bind mutation requests in the existing
+  audit journal. SQLite50, CP12/13 and A/B/C remain unchanged. The original
+  independent FAIL review is preserved; targeted independent recheck is pending.
+- Validation and exact file/role/function inventories are in
+  `architecture/CP14_PERSISTENCE_CONTROL_PLANE_IMPLEMENTATION_REPORT.md`.
+  Fresh server1→83 and seeded82→83, SQLite0→50/49→50 and FK ON/OFF pass.
+  Full-suite baseline native collection and Ledger architecture blockers remain;
+  no global full-suite PASS is claimed.
+- Next authorized step: **CP14 Persistence Targeted Independent Recheck only**. Provider
+  adapters, issuer/OAuth verifier, secret resolver, dedicated login provisioning,
+  live private custody/device bridge, Admin Portal, customer billing and runtime
+  activation remain deferred. No Hosted Dev/Production access or deployment.
 
 ## Active schema and accepted foundation
 
-- SQLite migrations are contiguous **1–49**. CP11 adds Day47/Capture48; CP13A adds
-  Import admission49. Historical definitions and all migrations are unchanged by
-  CP13B. Server chain has **82** migrations, ending at
-  `20261005001100_trip_import_undispatched_revocation.sql`.
+- SQLite migrations are contiguous **1–50**. CP11 adds Day47/Capture48; CP13A adds
+  Import admission49; CP14 adds continuation/attempt50. Historical1–49 bodies
+  are unchanged. Server chain has **83** migrations, ending at
+  `20261006000100_external_integration_persistence.sql`; historical1–82 are
+  byte-identical to the exact CP14 base.
 - CP13A.1 received owner review PASS. CP13A.2 implements protected C6/lineage4/output
   claims, Event-owned Flight services, fixed TRACK_C proof/receipt bridge,
   CREATE/UPDATE under parent CAS, Temporal **Option A**, exact private catalog/draft/
@@ -85,6 +75,11 @@ Date: 2026-10-06 (Pacific/Auckland).
 Read this handoff first; expand only into directly relevant files. Do not reaudit
 legacy Web or redesign accepted CP12/CP13A semantics.
 
+- `architecture/CP14_PERSISTENCE_CONTROL_PLANE_PREFLIGHT.md` (approved blueprint)
+- `architecture/CP14_PERSISTENCE_CONTROL_PLANE_IMPLEMENTATION_REPORT.md`
+- `architecture/CP14_VERIFIED_CALL_CONTEXT_V1.txt` (owner clarification)
+- `architecture/OTR_INTELLIGENCE_NEXT_STAGE_PLAN.md`
+- `adr/2026-10-06-cp14-persistence-authority-split.md`
 - `architecture/TRIP_IMPORT_ENGINE_ARCHITECTURE.md`
 - `architecture/TRIP_IMPORT_CONTRACT.md`
 - `architecture/TRIP_RESERVATION_SCHEMA_REGISTRY.md`

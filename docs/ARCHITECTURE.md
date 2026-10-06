@@ -288,3 +288,18 @@ Core dependencies to evaluate during initialization:
 - React Native Testing Library: UI behavior tests once screens begin.
 
 Keep package count small. Prefer official Expo modules and widely adopted libraries.
+
+## CP14 persistence authority split (closed)
+
+The approved [preflight](architecture/CP14_PERSISTENCE_CONTROL_PLANE_PREFLIGHT.md)
+and [ADR](adr/2026-10-06-cp14-persistence-authority-split.md) govern Server83/SQLite50.
+The owner's [VerifiedCallContextV1 clarification](architecture/CP14_VERIFIED_CALL_CONTEXT_V1.txt)
+sets authentication at an injectable trusted gateway and durable authorization at
+fixed SQL roots reached only through exact dedicated sessions. Private NOLOGIN
+function owners/gateways have no runtime membership or canonical mutation edge.
+Trusted database-owner administration remains outside the application guarantee.
+
+Local continuation responsibility uses the existing Account gate and sole sync
+queue; server call/usage responsibility has no worker lease. Closed repositories
+and synthetic tests install these boundaries without activating adapters, HTTP
+routes, secret resolution, live material custody, Admin UI or customer charging.

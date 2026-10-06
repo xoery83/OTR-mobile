@@ -706,3 +706,30 @@ read authority, including an absent or foreign-Trip intended UUID. Actor/Trip,
 command, operation, digest, intended target, Confirmation/slot and result identity
 remain mandatory. Missing receipt is UNKNOWN. No private intent or target payload
 is returned, and no generic receipt access is added.
+
+## CP14 closed protected-command boundary
+
+The [implementation report](architecture/CP14_PERSISTENCE_CONTROL_PLANE_IMPLEMENTATION_REPORT.md)
+lists fixed Server83 roots. Their signature is `(context jsonb, command jsonb)`:
+the first argument is internal VerifiedCallContextV1 from the injectable trusted
+host verifier, never caller payload. SQL binds actual dedicated `session_user`,
+exact request/environment/action/identity/digest and current durable permissions,
+then applies strict named v1 schemas, CAS and exact replay. Generic service_role,
+caller UUID/GUC/auth flags confer no authority. There are no public HTTP routes.
+
+Inbound reserve/complete uses fixed internal generic-call START/completion bridges.
+Safe package projections and sealed invocation/review results carry identifiers,
+versions/digests and dispositions only. COMPLETE/PREPARED is not Event acceptance.
+Private material custody is a bounded put/verify/read/release interface only;
+issuer/OAuth verifier, secret resolver and real connector provisioning are deferred.
+
+CP14 F1–F6 corrections authorize inbound child operations from retained reservation
+Account/client/package/Trip facts; caller scope is a consistency claim. Call usage
+and execution observations require the retained Account and user. Configure must
+create killed and may only echo the retained kill value; SECURITY_ADMIN's dedicated
+set-kill command owns changes. Safe responses/results use strict UUID/digest/enums
+and exact retained IDs. PREPARED requires the allocated selection tuple; REJECT/
+DEFER cannot carry Event/preparation IDs. Non-admin mutation requests bind their
+command digest, finite root and hashed verifier scope in the existing immutable
+audit journal; admin commands retain that binding in their ordinary audit entry.
+Same request ID with different bytes, target, principal or root rejects.

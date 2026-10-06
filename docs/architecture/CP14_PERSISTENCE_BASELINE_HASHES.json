@@ -1,0 +1,438 @@
+{
+  "base": "c4571746b0c300fa3b46842cd37745963567338c",
+  "server_migration_count": 82,
+  "server_tail": "20261005001100_trip_import_undispatched_revocation.sql",
+  "historical_sources": [
+    {
+      "path": "supabase/migrations/20260910000100_canonical_production_baseline.sql",
+      "sha256": "895f8bcca3ae3f5e9f630b3b7c57df36d16ce9898ee6756376b58dbcbf7a1f64",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260910000200_canonical_security_hardening.sql",
+      "sha256": "c78f0debc882359e10634ba3a06facb4864571fa29baafa8abce615a23daa2ed",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260911000100_ledger_2_domain.sql",
+      "sha256": "a17906073d9d563668e3433b5fa47ab35fab3a818731c9a4bc8b9fb609663e8a",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260911000200_ledger_2_security.sql",
+      "sha256": "49ab13d9019e7a89b643bed4d1db6ed365cfaa7f989a95ddff6f78eda97d8423",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912000100_ledger_2_stage_4a_create.sql",
+      "sha256": "5d2e573349f1f35b3c46f0e542cc3c672dfeae98a136037e0ef9270336636179",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912000200_ledger_2_stage_4b_mutations.sql",
+      "sha256": "8c68718ec022f0d9331875507dc60a4ff6b362480e898db01c508267744291bf",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912000300_ledger_2_stage_4c_conflicts.sql",
+      "sha256": "6ec2296ed65dfb03b1344bc7afe22e869b88a391cb155e252cba08dcd13d1170",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912000400_ledger_2_stage_5_1_financial_evidence.sql",
+      "sha256": "cc832783f2bbde410bf33ffa7af60a7925bad29b836dc0fa9fab014f7e3f60e6",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912000500_ledger_2_stage_5_1_evidence_links.sql",
+      "sha256": "b84e97c962fb55c2d1d2489367225a6b111589f904ecbe0684579d7c6a185ba2",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912000600_ledger_2_stage_5_2_receipt_assets.sql",
+      "sha256": "12169b520c0601551a80137eb5ef61a0a1a9d3be76c7cd6521de35ca807c9100",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912000700_ledger_2_stage_7_1_settlements.sql",
+      "sha256": "cf7a15b1f6399275eb0bf85b550c4d0d997cde43501f078385aa55f35cbec7fc",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912000800_ledger_2_stage_7_1_active_settlement_guard.sql",
+      "sha256": "2238bb7508c7ab23bbed3d54940bd930fecc57b8c0ae89bed5ea7936bd4348d7",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912000900_ledger_2_stage_7_2a_payments.sql",
+      "sha256": "00f76ee098d603e06408da7394dab8737602513fd58aefa4a75a0de58817eccb",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912001000_ledger_2_stage_7_2a_internal_rpc_grants.sql",
+      "sha256": "475ac0cfc7665219db115c6bc6fa2a5b370392c76396575762f4446ac6bf7cfc",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260912001100_ledger_2_stage_7_2a_payment_lineage_guard.sql",
+      "sha256": "57491a46e8e00f73addbd8d5a95f275dac63bb137f96f5cfcead552d81be37c9",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260913000100_ledger_2_stage_7_2b_adjustments.sql",
+      "sha256": "b3c514d18277c818fbeedf65c2f5dc2f72531cdf53c564c9672068b5be61123b",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260913000200_hosted_dev_lineage_reconciliation.sql",
+      "sha256": "ed801e30211d23ddfc676dba0dd211454a41bb26a2ce787b63a5f35d4066a082",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260913000300_ledger_2_stage_8_review_actions.sql",
+      "sha256": "0bccf560adce053b3f9c64032136d6c9daee17701b6f1fff529de8f004947e12",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260913000400_ledger_2_stage_8_review_change_feed.sql",
+      "sha256": "8810370f2d623b0ee6ae88a6f4d87a3c7435f257755776ca8ecba076efdb9ab3",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260913000500_ledger_stage_9_import.sql",
+      "sha256": "031a9356f23fb01399bf43f178690cc5a66eb89f0831c06227957cf860a64d46",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260913000600_ledger_2_settlement_participation.sql",
+      "sha256": "d4cbd9dfa24dc7b26753f18d8bf85cd5ae908b520ef286c8fcf3ed11f5903bb2",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260914000100_ledger_ui_polish_fixture.sql",
+      "sha256": "02005c9c51f14a2126e4a7df01bd7ab18df3c655e181fb3086f03c8d6223e1c8",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260914000200_ledger_ui_polish_fixture_currency_repair.sql",
+      "sha256": "2a7312d636e4afd8f92f5208148d791be0b3089e616c00fdc33cd48c72c04cf8",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260914000300_ledger_ui_polish_fixture_append_only_repair.sql",
+      "sha256": "ff821531382b4da2924b91b4d8881db070048c2e67a100a60a4e37ae800a3b4d",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260914000400_ledger_ui_polish_fixture_uuid_repair.sql",
+      "sha256": "b5a2eb3ea6ba86026c7a30e0efff309d9ab7bb7f65fae8ba0d4bfa9d6cec960d",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260914000500_ledger_ui_polish_fixture_lineage_repair.sql",
+      "sha256": "b5b889de891143cbd836a2736acfefa7573f58667673126335ca9b995bb6045a",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260914000600_ledger_ui_polish_fixture_repair_cleanup.sql",
+      "sha256": "2991631bc7a0d992df9d50264b01c64e9cad8641150dcaec5eec24e9f8b690d9",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260916000100_review_v2_engine_foundation.sql",
+      "sha256": "577b4d64b473188b070cdb992f8278869fdf191c7c3ca4221a9a9dacd8ffc37b",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260917000100_review_v2_personal_decisions.sql",
+      "sha256": "54552c7f8381fa65089a3f341c6386d3569317b5421e188ece99f850ced4b126",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260917000200_ledger_economic_date.sql",
+      "sha256": "5b334ab7deb05b44176866184d00d01d43faf5a1746706277b4113f685e51a15",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260917000300_ledger_historical_rate_cache.sql",
+      "sha256": "d54527ef33d95952bf3fc52c1bf8ada86c3d3725d281f6db33be52413d6d2ce2",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260917000400_ledger_rate_decimal_text_projection.sql",
+      "sha256": "44c6a493a0181ff88059b3f822f1065f843013abd99c712e99458c1b2ab52ebf",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260917000500_ledger_reference_valuation_guard.sql",
+      "sha256": "6eb73ddcc267fe9f44119b3c254956ce0a4fc03fd68ad91fde5234664c8e03f3",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260917000600_ledger_journey_currency.sql",
+      "sha256": "cd1c4eb6f36746f9e7697838d4c8fa94540de8101bc51cdba3f593e6a26827a5",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260917000700_ledger_currency_preview_claim_fix.sql",
+      "sha256": "f4b72cef0c881bac8473d052fc2cd22b1ea8654eb3e91d62c508e56f229a3abe",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260918000100_ledger_phase_e_finalized_valuation_guard.sql",
+      "sha256": "a9705014f2415db79e735c0ce912c076d61ad134d8c6cff525b492f8f3dbff50",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260918000200_ledger_phase_e_finalized_replay_guard.sql",
+      "sha256": "9032eb79e6b87da3d083aab2772319442b8633b54b8beabcefb96020a7d0c672",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260918000300_ledger_settlement_fx_preflight.sql",
+      "sha256": "73b6d63a9500311aa695fd9f81ae54b204d9b66eebc766fb7886cd05c4b45025",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260918000400_ledger_settlement_fx_included_only.sql",
+      "sha256": "8ab78b8e24d3dfca6a733ffa9e141debe4e81c5595ef2ce5904ea52056f3e864",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260918000500_ledger_reference_default_per_expense.sql",
+      "sha256": "03dea2b73f55e1a94d9ae8ea14aeb4dc59b2be2cc0f92b64243897e345313a6d",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260918000600_ledger_settlement_publication_retry.sql",
+      "sha256": "e8fef4d54eb55e03fffa7be6bd3815e321b9831e90378ee1b92e6066fdf8d562",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260918000700_ledger_finalized_expense_mutation_guard.sql",
+      "sha256": "0da013d50e59f8def3e2a8058f58e4e8a61ed92cb0f392e3527a1c63a7f55776",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260922000100_settlement_2_phase_1a_personal_payments.sql",
+      "sha256": "47f01655470fb8c9e63a2ecfe79e173ab33c9d9ffde38c8b68443a91d5280519",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260923000100_settlement_2_phase_3a_human_findings.sql",
+      "sha256": "19db091de8513fff694a38812b7271de00084cce2b70e492d4211292ed1a45db",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260923000200_settlement_2_phase_3a_target_shape_fix.sql",
+      "sha256": "2502d6453d18c812fce12bb2343d9b0dcd71f8e08cd9471ac30a3c74a18a9a4e",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260923000300_settlement_2_phase_3b_personal_review_checkpoints.sql",
+      "sha256": "8b6ddc23acfb83e19608603a048787ffc069f2ebb44e650a7db5c8f145dfbc19",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260923000400_settlement_2_phase_4a_correction_successors.sql",
+      "sha256": "4a7a473a699c460db2084ffe180ad6096eb0b7942cb9611dd7a898829550ed21",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260923000500_settlement_2_phase_4a_preserve_review_observation.sql",
+      "sha256": "b6ce23e1976ad588b8399e62adce2a4bf379ab2d61d3b78007610d24f47fcf6b",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260924000100_settlement_review_three_state.sql",
+      "sha256": "ed86c8d3e062a70c2059154ef75cda2c9ee063e49936a250fc8c0195e3c5d6f5",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260924000200_personal_payment_fx_projections.sql",
+      "sha256": "f931af6622a175d3a5f215277f1925935c7bd1d39da0c4522440d2bd6afac4c5",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260924000300_personal_payment_fx_bounded_backfill.sql",
+      "sha256": "9989d6498c095c8879a5180995fb4719540b3c85256117dc9c07fc57cb812c13",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260925000100_ledger_economic_date_completion.sql",
+      "sha256": "79ebd6cd72bd9ac17cf1232308d1caca6a84d369d2b992f799d61944f9acb558",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260925000200_ledger_valuation_revision_guard_fix.sql",
+      "sha256": "4284fea7fb1661c8407c0bd7adf3e04fe35d9035498bc96b212d2cb9e6f3db18",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260925000300_settlement_adjustment_current_source.sql",
+      "sha256": "e7ac5ffdeb3babc087d3478d85426b24747911c9fce9642e771773888722b7b7",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260926000100_my_ledger_lightweight_snapshot.sql",
+      "sha256": "363b521b73d8ef8905a618059aef5380e4b871199fdf25574910feb17cea9bf2",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260927000100_expense_attachment_limit.sql",
+      "sha256": "7f3f4c1746f1d88f9209f8dadf4d704920931dc5c416f303ad5de5d790f109ba",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260927000200_expense_attachment_tombstones.sql",
+      "sha256": "7b7f1e88c41bea5247f25792fd2510a1c5a0e4c09044384a0a70230d8c304520",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260927000300_receipt_storage_provider.sql",
+      "sha256": "705dbd0a495a5cb696429347c1b4cd093137b8f9295146a760b2a3528d4fecd9",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260928000100_settlement_review_exact_decimal_source.sql",
+      "sha256": "9ab2043ce5472218aa09875bad2126f2e6172360354c46030a15558ba85306be",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260929000100_expense_consistency_v2.sql",
+      "sha256": "930166ac307f2590d0e762e1e8e7c0ea41220a3c40f0e47bef5a18aced765135",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260929000200_latest_state_rate_acceptance.sql",
+      "sha256": "573d85579716d6ec94f93b4296ec6ecd65327a75c44f91a56e4c41e2ec1c9976",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260929000300_legacy_expense_equivalent_resolution.sql",
+      "sha256": "904f7356a702ddeebde793530fbcafa912f9a34d7cfe9b8085154bee1f278f31",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260929000400_adjustment_lossless_source_transport.sql",
+      "sha256": "8795431ca37e92e3eb88f005ed6c071c6086a790d3e99a821b6f2ad2334788bb",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20260930000100_expense_participation_preserve_valuation.sql",
+      "sha256": "c6613848f32deeade3d8f782cdf887ecd0ed392e5ba02a11ee764f1d202907de",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261003000100_trip_person_participation.sql",
+      "sha256": "c8683b3f0650ecb7b257ecceaff89139e13ba2afa81f49771eda2f74f756234c",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261004000100_trip_temporal_protected_foundation.sql",
+      "sha256": "1dd359845100c5717238cafe2dfa78a0376b70bf1546c3db8193e0c7fe3378a8",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261004000200_trip_person_snapshot_read.sql",
+      "sha256": "2bcd7885bdffb56d7aeab760aa0e28f889a917eb9b7248e24ae8ae32c1caf4d6",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261004000300_trip_source_protected_foundation.sql",
+      "sha256": "ceef38bf08c85f0a778c042e2c3d86ed32bcc1f3638333fa86f593803426a346",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261004000400_trip_event_command_foundation.sql",
+      "sha256": "f9d8932401e7d52a1ee5ad884f8bc9fc5a9c7f04ff010b214d95e626243cb59a",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261004000500_trip_source_command_foundation.sql",
+      "sha256": "a31e57388b90b27ea9d557da40a04407ffb372dc550e9b9a4c748258b106cf20",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261004000600_trip_person_command_foundation.sql",
+      "sha256": "c347362be54875b951b2f1bdc51c2c1869cce4af644b2740b2d2c8584665752f",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005000100_trip_event_collection_foundation.sql",
+      "sha256": "68267bfcde6642ee79ed1bb03ff5cccef2352b4179acb70292362673e2faadde",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005000200_trip_person_participation_activation_foundation.sql",
+      "sha256": "fce1d9a109b1466ae14eaafac28325f7e2cad6b75a92b5b6881fc19bfa10adca",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005000300_trip_source_execution_journal.sql",
+      "sha256": "7598fa8c751034623fc4eb531b87d910bb7aeca549a380a983ca5cc8b7546528",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005000400_trip_import_admission_catalogs.sql",
+      "sha256": "afb76c415a002f5db987f14203be3bcfcfed29f5607352248eb49be96bba124f",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005000500_trip_import_admission_guards.sql",
+      "sha256": "190282b7e66b27dfdd41a259718d041e27c152101266120e426e2e3b0b2735b5",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005000600_trip_import_confirmation_admission.sql",
+      "sha256": "a5b9ac9775646a050e670349a8a56b900cb0d8f5df5f6a5eb3cf938272ed0fec",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005000700_trip_flight_commands.sql",
+      "sha256": "205b61e6f15f29b93b81bed66a2904b3ce516f50b43ffc30224a692d6059a438",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005000800_trip_import_locking_and_service_reads.sql",
+      "sha256": "6a9cbfec12ccc73dfbccf55024e2e14e59eabad59d91b9328f2ba07fa7a98e7c",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005000900_trip_import_private_catalog_reads.sql",
+      "sha256": "0d21d6bf86fa6aae2ec67a26f338f5e43ec89d98bbbc03b846898293e7443c18",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005001000_trip_import_flight_value_guards.sql",
+      "sha256": "8be58724de31450fda1d9db99408418ffcf548646fcd01e9818240f12abe73f4",
+      "matches_exact_base": true
+    },
+    {
+      "path": "supabase/migrations/20261005001100_trip_import_undispatched_revocation.sql",
+      "sha256": "81c987e93c6d60a0163c02c58c1fd024b8764fdd6f7c6dbbe684e4cc41537e55",
+      "matches_exact_base": true
+    },
+    {
+      "path": "src/data/db/migrations.ts",
+      "sha256": "796635b98234b9f58f9ba99014e26ed151627e1c40be8ac3454a3181b3729a7b",
+      "matches_exact_base": true
+    },
+    {
+      "path": "src/data/db/migrations/localCaptureInbox.ts",
+      "sha256": "6def7f196f873613fbdc82b914636d04e269168fdce79b73d55f77879c565274",
+      "matches_exact_base": true
+    },
+    {
+      "path": "src/data/db/migrations/tripDayReadModel.ts",
+      "sha256": "2dc833c90ea7b9d3dc3757b6417d6266aeb21d79273fd3a8a4ab9505f1bfcbd9",
+      "matches_exact_base": true
+    },
+    {
+      "path": "src/data/db/migrations/tripImportAdmission.ts",
+      "sha256": "f2de5c0c23aeb624ac3a4b4be76833ed302ce085287e4d90160a6eba882d32b8",
+      "matches_exact_base": true
+    }
+  ],
+  "final_verification": "PASS: server1\u201382 byte-identical; SQLite1\u201349 registration source equals exact base after removing only the new SQLite50 import/registration; all three historical standalone sources byte-identical."
+}
