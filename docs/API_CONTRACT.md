@@ -771,3 +771,35 @@ MAY_HAVE_STARTED/RUNNING transition is written. Existing Server83 usage/cost roo
 remain authoritative, separately verified by their accepted database harness.
 See [A2 report](architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REPORT.md)
 and [closed seam ADR](adr/2026-10-06-cp14-a2-closed-outbound-seam.md).
+
+## CP14 B2 closed inbound application boundary
+
+`createClosedInboundAiClient` is an explicitly injected TEST_ONLY adapter, unwired
+from HTTP, startup and provider routing. Strict vendor-neutral Import Package v1
+contains bounded MATERIAL refs/digests, item declarations and advisory SUMMARY /
+INTERPRETATION refs; it accepts no raw evidence, credentials or caller auth fields.
+The trusted host verifier binds the original request/action/digest and external
+client or actual OTR_USER to the existing Server83 protected gateway roots.
+
+Package and invocation reservations precede CP13B interpretation/publication.
+Minimized proposal/status binds package, review_version and retained Run/Candidate /
+Input/reference facts; digest-selected immutable proposal content uses an injected
+accepted private-custody seam. STATUS checks current Server83 authority before
+ordinary disclosure. No production read gateway or content store is provisioned.
+
+A proposal allocates no Review Decision or canonical IDs. An explicit authenticated
+OTR_USER decision pins proposal/version, current Run generation/Input/Candidate
+hashes and Event revision. Before custody or reservation of any NEW decision,
+CP13B's owning assessment must report current evidence: INPUT_STALE,
+STALE_BASE_REVISION or CANONICAL_EVENT_MIRROR_INTEGRITY requires rejection/refresh
+for ACCEPT, REJECT and DEFER alike. READY is additionally required only for ACCEPT;
+current incomplete, ambiguous or unsupported proposals may still REJECT/DEFER.
+Exact sealed historical recovery is reauthorized without this new-decision gate.
+ACCEPT reserves retained authority IDs before CP13A prepare; REJECT/DEFER retain null IDs. Replay/recovery returns exact retained facts,
+never replacement identities. Stale proposals require refresh. Transport uncertainty
+with no exact preparation evidence remains UNKNOWN. Canonical execution/receipt
+recovery stays with CP13A and its unchanged closed command gates.
+
+**INBOUND APPLICATION BOUNDARY IMPLEMENTED ≠ PUBLIC CHATGPT/CLAUDE/MCP ACTIVATED.**
+See the [B2 report](architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REPORT.md)
+for host-port obligations, tests and the accepted owner lifecycle clarification.

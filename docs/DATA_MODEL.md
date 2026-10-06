@@ -651,3 +651,20 @@ NOT_STARTED. Server83 synthetic acceptance is isolated from real billable usage.
 Shadow attempts retain globally ordered sequence and independent call identity;
 the active attempt budget and active attention exclude shadows. The global 64
 attempt ceiling and existing SQLite50 sequence/FK/immutability guards remain.
+
+## CP14 B2 proposal and authenticated decision lifecycle
+
+No schema change: Server83/SQLite50 remain exact. Existing package review_version,
+result digest and RUN publication references select a stable minimized proposal.
+Its immutable interpretation/closure content is private digest-bound material,
+through injected accepted custody/read seams; no new proposal table/journal/store
+implementation is installed. That content has no consent or canonical authority.
+
+Only authenticated explicit OTR_USER ACCEPT/REJECT/DEFER creates a row in existing
+`inbound_ai_review_decisions`. ACCEPT retains Confirmation/slot/operation/intended
+Event IDs and Input identity map before CP13A preparation; nonaccept retains null
+IDs and an empty map. Later proposal versions do not rewrite sealed decisions.
+Historical exact recovery preserves original identities under current authority.
+Raw evidence and private proposal bodies are excluded from Server83 telemetry.
+Inbound INBOUND_TOOL call/START responsibility has no provider/model attribution,
+model units or cost. There is no A2 continuation or booking/Person authority.

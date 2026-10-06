@@ -483,3 +483,23 @@ These are **CLOSED SYNTHETIC EXECUTION ACCEPTANCE** facts. Real dispatch remains
 Server83-authorized only and structurally closed; synthetic observations never
 write another real dispatch authority or production usage ledger. See the
 [A2 report](architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REPORT.md).
+
+## CP14 B2 inbound replay and local preparation (activation closed)
+
+B2 adds no scheduler or local authority. Server83 retains external package,
+invocation and confirmed-decision responsibility; admitted private material and
+CP13B publication refs support exact proposal replay without the external client
+resending evidence. Missing exact material fails closed. Refresh uses a new admitted
+review_version, while exact completed-invocation and sealed-decision recovery
+preserves historical facts and current authorization fences ordinary disclosure.
+
+After a real OTR_USER ACCEPT, Server83 decision IDs precede existing CP13A local
+preparation. Preparation response loss recovers the same persisted Confirmation,
+slot, Input map and C_PREPARE_CONFIRMATION operation after SQLite reopen. If exact
+preparation evidence is absent after an uncertain decision reservation, report
+UNKNOWN; do not repeat preparation or allocate replacements. Canonical response
+loss follows unchanged CP13A receipt/recovery, never B2 direct Event writes.
+
+`sync_operations` remains the sole scheduler and all five C denials remain closed.
+Server/package/prepare acceptance does not assert canonical Event acceptance.
+No automatic A2 enrichment, OTR model cost or public/OAuth/provider activation.

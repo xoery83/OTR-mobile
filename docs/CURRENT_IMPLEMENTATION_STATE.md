@@ -2,6 +2,32 @@
 
 Date: 2026-10-06 (Pacific/Auckland).
 
+## CP14 Agent B2 — F1 corrected / ready for targeted independent recheck
+
+- Fresh worktree `/Users/xoery/.codex/worktrees/cp14-inbound-ai-client/otr-mobile-canonical`,
+  branch `intelligence/cp14-inbound-ai-client`; exact base/HEAD
+  `508d79efb865ac8d7fc21ff949b6e6a12746f39a`. No commit/push.
+- Owner clarification resolves the historical ordering stop: package NEEDS_REVIEW,
+  review_version and digest-bound proposal content/references precede consent.
+  Only verifier-derived explicit OTR_USER ACCEPT/REJECT/DEFER reserves a decision.
+  ACCEPT IDs persist before CP13A prepare; nonaccept IDs are null.
+- Targeted F1 correction gates all NEW dispositions on CP13B owning evidence
+  freshness before custody/reservation. Nonaccept does not require READY; exact
+  sealed historical recovery remains reauthorized and unchanged.
+- Unwired TEST_ONLY vendor-neutral adapter uses Server83 protected roots, admitted
+  material custody/read projections, CP13B Flight interpretation/closure and CP13A
+  preparation/exact recovery. No production read/custody implementation is installed.
+- Server83 548 checks +7 preflight probes PASS;57 B2 lifecycle tests PASS against
+  real Server83 and native SQLite50. Full suite:2407 PASS,1 unchanged baseline
+  Ledger architecture-boundary failure. Typecheck/lint/UI guard/backend build PASS.
+- Server83/SQLite50 and every existing implementation source remain unchanged.
+  No new migration, scheduler, authority, A2 execution, model cost or remote access.
+  Runtime/provider/public-client gates remain CLOSED.
+- Next step: targeted independent F1 recheck of
+  `architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REPORT.md`. The independent
+  `architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REVIEW.md` remains unchanged;
+  its correction requirement is not self-certified as an independent PASS. Public ChatGPT/Claude/MCP activation remains separately gated.
+
 ## CP14 Agent A2 — F1 correction / ready for targeted independent recheck
 
 - Worktree `/Users/xoery/.codex/worktrees/cp14-a2-outbound-runtime/otr-mobile-canonical`,
