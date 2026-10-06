@@ -2,7 +2,39 @@
 
 Date: 2026-10-06 (Pacific/Auckland).
 
-## Current checkpoint — CP14 persistence / F1–F6 targeted recheck
+## CP14 Agent C2 — targeted F1–F4 correction / ready for independent recheck
+
+- Existing fresh worktree `/Users/xoery/.codex/worktrees/cp14-c2-continuation/otr-mobile-canonical`,
+  branch `intelligence/cp14-continuation-runtime`, exact retained HEAD/base
+  `439168065df182975dda03a75e94908f8d9cc389`. Changes are uncommitted; no push.
+- Owner-approved `INTELLIGENCE_CONTINUATION_WAKE` contract uses existing queue fields
+  and SQLite50: one deterministic retained row, exact body/key/scope validation,
+  coalescing/re-arm and Account/claim/signal conditional completion. Completed means
+  wake-pass completion only. Five C Import denials remain unconditional.
+- Closed injected runtime supports three waits, independent pass/outstanding work,
+  eligible reservation, exact execution/recovery, cancellation/late usage and
+  Account/Trip/Run/Candidate/Event installation fences. File-backed cold resume and
+  typed attention facts use durable journals, never queue count/lease as execution truth.
+- Existing central operational-sync timer/activity accepts the injected adapter for
+  cold/reconnect scheduling. Ledger UI counts/completion scopes exclude intelligence;
+  no provider executor is called by wake/scheduling. Default adapter remains null.
+- No Server84/SQLite51, second scheduler, new authority, provider/Apple activation,
+  UI, notification, Hosted Dev/Production access or deployment. Server83/SQLite50,
+  historical source hashes and accepted persistence review/preflight remain unchanged.
+- Independent review's four C2 defects corrected: shared wake dependency admission/
+  release/projections, post-COMMIT idle-owner delivery, exact pre-start meter CAS,
+  and Account/observed-row conditional invalid quarantine. Original review is preserved.
+- Validation: C2 lifecycle107 tests, selected19 files/666 tests and29 new adversarial
+  tests PASS; typecheck, lint/UI guard and Backend build PASS. Full198 files/2,265
+  tests has2,264 passed and the same existing Ledger architecture assertion.
+  No F1–F4 failure is classified as baseline; no new regression.
+
+- Authoritative C2 implementation/validation and required answers:
+  `architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_RUNTIME_REPORT.md`.
+  Next step: **Targeted independent F1–F4 recheck only**. Real provider/Agent A/inbound/device
+  integration remains separately gated; valid cached offline access is unchanged.
+
+## Accepted CP14 persistence foundation / historical recheck record
 
 - Worktree `/private/tmp/otr-cp14-persistence`, branch
   `intelligence/cp14-persistence`, exact retained HEAD/base

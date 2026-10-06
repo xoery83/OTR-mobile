@@ -106,3 +106,13 @@ describe("Ledger queue activity", () => {
     expect(mocks.getAllAsync.mock.calls[1].slice(1)).toEqual(["account-a", "account-a"]);
   });
 });
+
+it("Ledger presentation query excludes intelligence entity counts", async () => {
+  mocks.getAllAsync.mockClear();
+  mocks.getAllAsync.mockResolvedValue([]);
+  await getLedgerQueueActivity();
+  const sql = mocks.getAllAsync.mock.calls[0][0] as string;
+  expect(sql).toContain("operation.entity_type LIKE 'ledger_%'");
+  expect(sql).not.toContain("operation.entity_type = 'INTELLIGENCE_CONTINUATION'");
+  expect(sql).toContain("dependency.operation_type='INTELLIGENCE_CONTINUATION_WAKE'");
+});

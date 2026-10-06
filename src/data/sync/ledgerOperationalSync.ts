@@ -19,6 +19,41 @@ import {
   subscribeLedgerQueueWorkAvailable,
 } from "./ledgerQueueActivity";
 
+export type IntelligenceSchedulingAdapter = {
+  resume(reason: "COLD_START" | "RECONNECT"): Promise<void>;
+  run(): Promise<unknown>;
+  activity(): Promise<{
+    scope: "INTELLIGENCE";
+    actionableNow: number;
+    nextActionableAt: number | null;
+  }>;
+};
+let intelligenceScheduling: IntelligenceSchedulingAdapter | null = null;
+// Closed injection only. No provider factory, executor activation or new lifecycle owner.
+export async function setIntelligenceSchedulingAdapter(
+  adapter: IntelligenceSchedulingAdapter | null,
+) {
+  intelligenceScheduling = adapter;
+  if (adapter) {
+    await adapter.resume("COLD_START");
+    if (intelligenceScheduling === adapter) kickLedgerOperationalSync();
+  }
+}
+async function scheduledQueueActivity() {
+  const ledger = await getLedgerQueueActivity();
+  if (!intelligenceScheduling) return ledger;
+  const intelligence = await intelligenceScheduling.activity();
+  return {
+    ...ledger,
+    actionableNow: ledger.actionableNow + intelligence.actionableNow,
+    nextActionableAt:
+      ledger.nextActionableAt === null
+        ? intelligence.nextActionableAt
+        : intelligence.nextActionableAt === null
+          ? ledger.nextActionableAt
+          : Math.min(ledger.nextActionableAt, intelligence.nextActionableAt),
+  };
+}
 let running: Promise<void> | null = null;
 let paused = false;
 let queueTimer: ReturnType<typeof setTimeout> | null = null;
@@ -34,7 +69,7 @@ async function scheduleQueueWake() {
   const generation = getAccountGeneration();
   const version = ++queueScheduleVersion;
   try {
-    const activity = await getLedgerQueueActivity();
+    const activity = await scheduledQueueActivity();
     if (
       paused ||
       generation !== getAccountGeneration() ||
@@ -138,6 +173,7 @@ async function runOperationalCycle(origin: LedgerOperationalSyncOrigin) {
     runLedgerSettlementPaymentSync(),
     runLedgerReviewSync(),
     runPersonalSettlementReviewSync(),
+    ...(intelligenceScheduling ? [intelligenceScheduling.run()] : []),
   ])
     .then(async () => {
       try {
@@ -171,6 +207,7 @@ async function captureEligibleScopes(): Promise<LedgerOperationalSyncCompletion 
            ON dependency.id = operation.dependency_operation_id
           AND dependency.owner_user_id = operation.owner_user_id
          WHERE operation.owner_user_id = ? AND operation.trip_id IS NOT NULL
+           AND operation.entity_type <> 'INTELLIGENCE_CONTINUATION'
            AND operation.failure_category IS NOT 'AUTH'
            AND (
              operation.status = 'PENDING'
@@ -181,7 +218,8 @@ async function captureEligibleScopes(): Promise<LedgerOperationalSyncCompletion 
                AND operation.lease_expires_at IS NOT NULL
                AND operation.lease_expires_at <= ?)
              OR (operation.status = 'DEPENDENCY_BLOCKED'
-               AND dependency.status = 'COMPLETED')
+               AND dependency.status = 'COMPLETED'
+               AND dependency.operation_type <> 'INTELLIGENCE_CONTINUATION_WAKE')
            )
          UNION
          SELECT operation.journey_id
@@ -234,6 +272,11 @@ export async function pauseLedgerOperationalSync() {
 
 export function allowLedgerOperationalSync() {
   paused = false;
+  if (intelligenceScheduling)
+    void intelligenceScheduling
+      .resume("RECONNECT")
+      .then(() => kickLedgerOperationalSync())
+      .catch(() => undefined);
 }
 
 export async function reactivateLongLivedLedgerFailures() {
@@ -248,6 +291,7 @@ export async function reactivateLongLivedLedgerFailures() {
       requireActiveUserId,
     ).reactivateLongLivedFailures(),
   ]);
+  if (intelligenceScheduling) await intelligenceScheduling.resume("RECONNECT");
 }
 
 export function kickLedgerOperationalSync(

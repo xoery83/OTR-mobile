@@ -1125,12 +1125,16 @@ async function applyRepairPlan(
         timestamp,
       );
     } else if (plan.actionId === "WAKE_COMPLETED_OPERATION_DEPENDENCY_V1") {
+      const dependencyGuard =
+        table === "sync_operations"
+          ? "AND EXISTS (SELECT 1 FROM sync_operations dependency WHERE dependency.id=sync_operations.dependency_operation_id AND dependency.owner_user_id=sync_operations.owner_user_id AND dependency.status='COMPLETED' AND dependency.operation_type<>'INTELLIGENCE_CONTINUATION_WAKE')"
+          : "";
       result = await dependencies.database.runAsync(
         `UPDATE ${table} SET status = 'PENDING', failure_category = NULL,
            last_error_code = NULL, last_error_message = NULL,
            next_attempt_at = NULL, claim_owner = NULL, lease_expires_at = NULL,
            updated_at = ?
-         WHERE id = ? AND owner_user_id = ? AND status = 'DEPENDENCY_BLOCKED'`,
+         WHERE id = ? AND owner_user_id = ? AND status = 'DEPENDENCY_BLOCKED' ${dependencyGuard}`,
         timestamp,
         plan.targetId,
         plan.accountId,
@@ -1266,7 +1270,7 @@ async function readOperationForRepair(
          operation.next_attempt_at AS nextAttemptAt,
          operation.lease_expires_at AS leaseExpiresAt,
          operation.dependency_operation_id AS dependencyOperationId,
-         dependency.status AS dependencyStatus,
+         CASE WHEN dependency.operation_type='INTELLIGENCE_CONTINUATION_WAKE' THEN 'WAITING' ELSE dependency.status END AS dependencyStatus,
          dependency.trip_id AS dependencyJourneyId,
          dependency.entity_id AS dependencyEntityId,
          CASE
@@ -1635,7 +1639,7 @@ async function readAutomaticCandidates(database: Database, accountId: string) {
        operation.failure_category AS failureCategory,
        operation.next_attempt_at AS nextAttemptAt,
        operation.lease_expires_at AS leaseExpiresAt,
-       dependency.status AS dependencyStatus, operation.operation_type AS operationType,
+       CASE WHEN dependency.operation_type='INTELLIGENCE_CONTINUATION_WAKE' THEN 'WAITING' ELSE dependency.status END AS dependencyStatus, operation.operation_type AS operationType,
        operation.last_error_message AS errorMessage, operation.updated_at AS updatedAt
      FROM sync_operations operation
      LEFT JOIN sync_operations dependency
@@ -1779,7 +1783,7 @@ async function buildManifest(
        operation.next_attempt_at AS nextAttemptAt,
        operation.lease_expires_at AS leaseExpiresAt,
        operation.dependency_operation_id AS dependencyOperationId,
-       dependency.status AS dependencyStatus,
+       CASE WHEN dependency.operation_type='INTELLIGENCE_CONTINUATION_WAKE' THEN 'WAITING' ELSE dependency.status END AS dependencyStatus,
        dependency.trip_id AS dependencyJourneyId,
        dependency.entity_id AS dependencyEntityId,
        CASE

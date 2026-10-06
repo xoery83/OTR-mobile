@@ -1,5 +1,5 @@
-import { requireActiveUserId } from "@/data/auth/authRepository";
-import { openDatabase } from "@/data/db/database";
+import type { WakeQueueDatabase } from "./syncOperationRepository";
+import { intelligenceWakeKind } from "@/domain/intelligence/persistence";
 
 export type QueueRow = {
   status: string;
@@ -53,6 +53,10 @@ export function classifyLedgerQueueActivity(
 }
 
 export async function getLedgerQueueActivity(journeyId: string | null = null) {
+  const [{ openDatabase }, { requireActiveUserId }] = await Promise.all([
+    import("@/data/db/database"),
+    import("@/data/auth/authRepository"),
+  ]);
   const database = await openDatabase();
   const userId = await requireActiveUserId();
   const scope = journeyId ? "AND operation.trip_id = ?" : "";
@@ -64,7 +68,8 @@ export async function getLedgerQueueActivity(journeyId: string | null = null) {
     `SELECT operation.status, operation.failure_category AS failureCategory,
        operation.next_attempt_at AS nextAttemptAt,
        operation.lease_expires_at AS leaseExpiresAt,
-       dependency.status AS dependencyStatus
+       CASE WHEN dependency.operation_type='INTELLIGENCE_CONTINUATION_WAKE'
+         THEN 'WAITING' ELSE dependency.status END AS dependencyStatus
      FROM sync_operations operation
      LEFT JOIN sync_operations dependency
        ON dependency.id = operation.dependency_operation_id
@@ -97,4 +102,21 @@ export async function getLedgerQueueActivity(journeyId: string | null = null) {
     ...(journeyId ? [journeyId] : []),
   );
   return classifyLedgerQueueActivity(rows);
+}
+
+// Scheduler-only activity. Never included in Ledger UI counts.
+export async function getIntelligenceQueueActivity(
+  db: WakeQueueDatabase,
+  accountId: string,
+) {
+  const rows = await db.getAllAsync<QueueRow>(
+    `SELECT status,failure_category AS failureCategory,
+    next_attempt_at AS nextAttemptAt,lease_expires_at AS leaseExpiresAt,
+    NULL AS dependencyStatus FROM sync_operations WHERE owner_user_id=?
+    AND operation_type=?
+    AND status IN ('PENDING','RETRYABLE','PROCESSING')`,
+    accountId,
+    intelligenceWakeKind,
+  );
+  return { scope: "INTELLIGENCE" as const, ...classifyLedgerQueueActivity(rows) };
 }

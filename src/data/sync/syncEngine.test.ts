@@ -215,3 +215,20 @@ it.each([
   expect(repository.claim).not.toHaveBeenCalled();
   expect(worker.push).not.toHaveBeenCalled();
 });
+
+it("requires approved scoped claim/finalization before selecting intelligence wakes", async () => {
+  const repository = {
+    listPending: vi.fn(async () => [
+      { ...operation, operationType: "INTELLIGENCE_CONTINUATION_WAKE" },
+    ]),
+    markProcessing: vi.fn(),
+    markCompleted: vi.fn(),
+    markRetryable: vi.fn(),
+  };
+  const worker = { push: vi.fn() };
+  await createSyncEngine(repository, worker, vi.fn(), () => true).run(
+    "AUTHENTICATED_ONLINE",
+  );
+  expect(worker.push).not.toHaveBeenCalled();
+  expect(repository.markProcessing).not.toHaveBeenCalled();
+});

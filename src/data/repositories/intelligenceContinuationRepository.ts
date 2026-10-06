@@ -1,4 +1,11 @@
 import type { SQLiteDatabase } from "expo-sqlite";
+import {
+  signalIntelligenceWake,
+  IntelligenceWakeValidationError,
+  validateIntelligenceWake,
+  type SyncOperation,
+} from "../sync/syncOperationRepository";
+import { announceLedgerQueueWorkAvailable } from "../sync/ledgerQueueActivity";
 import { canonicalEventJson, type Json } from "@/domain/trip/eventIntentJson";
 import {
   taskSchema,
@@ -9,6 +16,8 @@ import {
   attemptMutableColumns,
   type Task,
   type Attempt,
+  type WakePayload,
+  intelligenceWakeKind,
 } from "@/domain/intelligence/persistence";
 import {
   withAccountApplyGate,
@@ -64,7 +73,11 @@ export function createIntelligenceContinuationRepository(
   db: ContinuationDatabase,
   deps: Dependencies,
 ) {
-  async function transaction<T>(context: AccountRequestContext, work: () => Promise<T>) {
+  async function transaction<T>(
+    context: AccountRequestContext,
+    work: () => Promise<T>,
+    committed?: () => void,
+  ) {
     return withAccountApplyGate(async () => {
       await assertAccountRequestContext(context, deps.getAccountId);
       let result!: T;
@@ -72,6 +85,10 @@ export function createIntelligenceContinuationRepository(
         result = await work();
         await assertAccountRequestContext(context, deps.getAccountId);
       });
+      if (committed) {
+        await assertAccountRequestContext(context, deps.getAccountId);
+        committed();
+      }
       return result;
     });
   }
@@ -263,9 +280,10 @@ export function createIntelligenceContinuationRepository(
         if (d.kind === "TASK") await visit(d.id);
         else if (
           !(await db.getFirstAsync(
-            "SELECT id FROM sync_operations WHERE owner_user_id=? AND id=?",
+            "SELECT id FROM sync_operations WHERE owner_user_id=? AND id=? AND operation_type<>?",
             t.account_id,
             d.id,
+            intelligenceWakeKind,
           ))
         )
           fail("INTELLIGENCE_DEPENDENCY_SCOPE");
@@ -275,15 +293,23 @@ export function createIntelligenceContinuationRepository(
     }
     await visit(t.task_id);
   }
-  async function queue(t: Task, id: string, claimed = false) {
+  async function queue(
+    t: Task,
+    id: string,
+    claimed = false,
+    owner?: string | null,
+    signal?: number | null,
+  ) {
     const q = await db.getFirstAsync<{
       owner_user_id: string;
       entity_id: string;
       entity_type: string;
       trip_id: string | null;
       status: string;
+      claim_owner: string | null;
+      base_version: number | null;
     }>(
-      "SELECT owner_user_id,entity_id,entity_type,trip_id,status FROM sync_operations WHERE id=?",
+      "SELECT owner_user_id,entity_id,entity_type,trip_id,status,claim_owner,base_version FROM sync_operations WHERE id=?",
       id,
     );
     if (
@@ -292,11 +318,241 @@ export function createIntelligenceContinuationRepository(
       q.entity_id !== t.task_id ||
       q.entity_type !== "INTELLIGENCE_CONTINUATION" ||
       (t.trip_id !== null && q.trip_id !== t.trip_id) ||
-      (claimed && q.status !== "PROCESSING")
+      (claimed && q.status !== "PROCESSING") ||
+      (owner !== undefined &&
+        (!owner || q.claim_owner !== owner || q.base_version !== signal))
     )
       fail("INTELLIGENCE_QUEUE_SCOPE");
   }
   return {
+    attempts(context: AccountRequestContext, id: string) {
+      return transaction(context, async () => {
+        await task(context.accountId, id);
+        const rows = await db.getAllAsync<Record<string, unknown>>(
+          "SELECT * FROM intelligence_continuation_attempts WHERE account_id=? AND task_id=? ORDER BY attempt_sequence",
+          context.accountId,
+          id,
+        );
+        return rows.map((row) => attemptSchema.parse(decode(row, attemptJsonColumns)));
+      });
+    },
+    publishLocal(
+      context: AccountRequestContext,
+      id: string,
+      revision: number,
+      publicationId: string,
+      resultDigest: string,
+      install: (task: Task) => Promise<void>,
+    ) {
+      return transaction(context, async () => {
+        const t = await task(context.accountId, id);
+        if (
+          t.row_revision !== revision ||
+          t.current_attempt_id ||
+          !["PENDING", "WAITING", "PUBLISHED"].includes(t.work_disposition)
+        )
+          fail("INTELLIGENCE_INSTALL_FENCE");
+        await pins(t, context);
+        if (t.publication_id) {
+          if (t.publication_id !== publicationId || t.result_sha256 !== resultDigest)
+            fail("INTELLIGENCE_CHANGED_PUBLICATION");
+          return t;
+        }
+        await install(t); // Local installation only, under this transaction; never external I/O.
+        return saveTask(
+          {
+            ...t,
+            work_disposition: "PUBLISHED",
+            current_pass_complete: true,
+            wait_reason: null,
+            wait_reasons: [],
+            publication_id: publicationId,
+            publication_sha256: resultDigest,
+            result_sha256: resultDigest,
+            completed_at: deps.now(),
+          },
+          revision,
+        );
+      });
+    },
+    readAttempt(context: AccountRequestContext, id: string) {
+      return transaction(context, () => attempt(context.accountId, id));
+    },
+    list(context: AccountRequestContext) {
+      return transaction(context, async () => {
+        const rows = await db.getAllAsync<Record<string, unknown>>(
+          "SELECT * FROM intelligence_continuations WHERE account_id=? ORDER BY created_at,task_id",
+          context.accountId,
+        );
+        return rows.map((row) => taskSchema.parse(decode(row, taskJsonColumns)));
+      });
+    },
+    scheduleWake(context: AccountRequestContext, id: string, requested?: WakePayload) {
+      return transaction(
+        context,
+        async () => {
+          const t = await task(context.accountId, id);
+          if (t.trip_id !== (context.tripId || null)) fail("INTELLIGENCE_SCOPE");
+          const operationId = await signalIntelligenceWake(
+            db,
+            t,
+            deps.sha256,
+            deps.now(),
+            requested,
+          );
+          if (!t.sync_operation_id)
+            await saveTask({ ...t, sync_operation_id: operationId }, t.row_revision);
+          return operationId;
+        },
+        announceLedgerQueueWorkAvailable,
+      );
+    },
+    inspectWake(context: AccountRequestContext, operation: SyncOperation) {
+      return transaction(context, async () => {
+        const payload = await validateIntelligenceWake(operation, deps.sha256);
+        let t: Task;
+        try {
+          t = await task(context.accountId, payload.task_id);
+        } catch (error) {
+          if (error instanceof Error && error.message === "INTELLIGENCE_TASK_NOT_FOUND")
+            throw new IntelligenceWakeValidationError("INTELLIGENCE_WAKE_BINDING");
+          throw error;
+        }
+        if (
+          t.sync_operation_id !== operation.id ||
+          t.account_id !== payload.account_id ||
+          t.trip_id !== operation.tripId
+        )
+          throw new IntelligenceWakeValidationError("INTELLIGENCE_WAKE_BINDING");
+        await queue(t, operation.id, true, operation.claimOwner, operation.baseVersion);
+        const retained = await db.getFirstAsync<SyncOperation>(
+          `SELECT id, owner_user_id AS ownerUserId, entity_type AS entityType,
+            entity_id AS entityId, operation_type AS operationType,
+            idempotency_key AS idempotencyKey, payload_json AS payloadJson,
+            base_version AS baseVersion FROM sync_operations WHERE id=? AND owner_user_id=?`,
+          operation.id,
+          context.accountId,
+        );
+        if (!retained) throw new Error("INTELLIGENCE_WAKE_MISSING");
+        await validateIntelligenceWake(retained, deps.sha256);
+        if (retained.payloadJson !== operation.payloadJson)
+          fail("INTELLIGENCE_CHANGED_WAKE");
+        const a = t.current_attempt_id
+          ? await attempt(t.account_id, t.current_attempt_id)
+          : null;
+        if (
+          payload.expected_publication_fence !== t.publication_fence ||
+          ["CANCELED", "STALE", "FAILED", "PUBLISHED"].includes(t.work_disposition)
+        )
+          return { task: t, attempt: a, disposition: "TERMINATE" as const };
+        await pins(t, context);
+        await dependencies(t);
+        let ready = true;
+        for (const d of t.dependencies) {
+          if (d.kind === "TASK")
+            ready &&= (await task(t.account_id, d.id)).work_disposition === "PUBLISHED";
+          else
+            ready &&= !!(await db.getFirstAsync(
+              "SELECT id FROM sync_operations WHERE owner_user_id=? AND id=? AND status='COMPLETED' AND operation_type<>?",
+              t.account_id,
+              d.id,
+              intelligenceWakeKind,
+            ));
+        }
+        return {
+          task: t,
+          attempt: a,
+          disposition: ready ? ("EVALUATE" as const) : ("WAIT" as const),
+        };
+      });
+    },
+    terminate(
+      context: AccountRequestContext,
+      id: string,
+      revision: number,
+      reason: "UNSUPPORTED" | "EXHAUSTED",
+      wake?: SyncOperation,
+    ) {
+      return transaction(context, async () => {
+        const t = await task(context.accountId, id);
+        if (t.row_revision !== revision) fail("INTELLIGENCE_CAS");
+        if (wake) await queue(t, wake.id, true, wake.claimOwner, wake.baseVersion);
+        if (t.current_attempt_id) {
+          const a = await attempt(t.account_id, t.current_attempt_id);
+          if (
+            a.execution_observation !== "TERMINAL" ||
+            a.response_sha256 ||
+            !["NOT_REQUIRED", "COMPLETE"].includes(a.metering_disposition)
+          )
+            fail("INTELLIGENCE_UNRESOLVED_RESPONSIBILITY");
+        }
+        return saveTask(
+          {
+            ...t,
+            work_disposition: "FAILED",
+            safe_reason: reason,
+            wait_reason: null,
+            wait_reasons: [],
+          },
+          revision,
+        );
+      });
+    },
+    beginExecution(
+      context: AccountRequestContext,
+      id: string,
+      revision: number,
+      metering: "NOT_REQUIRED" | "START_DURABLE",
+    ) {
+      return transaction(context, async () => {
+        const a = await attempt(context.accountId, id),
+          t = await task(context.accountId, a.task_id);
+        if (
+          a.row_revision !== revision ||
+          a.execution_observation !== "NOT_STARTED" ||
+          t.current_attempt_id !== a.attempt_id ||
+          t.publication_fence !== a.task_publication_fence ||
+          t.cancellation_disposition !== "NONE" ||
+          t.work_disposition !== "RUNNING" ||
+          (a.integration_id && metering !== "START_DURABLE")
+        )
+          fail("INTELLIGENCE_EXECUTION_FENCE");
+        await pins(t, context);
+        await deps.validateAttemptAdmission(
+          t,
+          a,
+          a.predecessor_attempt_id
+            ? await attempt(t.account_id, a.predecessor_attempt_id)
+            : null,
+        );
+        return saveAttempt(
+          {
+            ...a,
+            execution_observation: "RUNNING",
+            metering_disposition: metering,
+            started_at: deps.now(),
+          },
+          revision,
+        );
+      });
+    },
+    snapshot(context: AccountRequestContext, id: string) {
+      return transaction(context, async () => {
+        const t = await task(context.accountId, id);
+        await pins(t, context);
+        const rows = await db.getAllAsync<Record<string, unknown>>(
+          "SELECT * FROM intelligence_continuation_attempts WHERE account_id=? AND task_id=? ORDER BY attempt_sequence",
+          context.accountId,
+          id,
+        );
+        return {
+          task: t,
+          attempts: rows.map((row) =>
+            attemptSchema.parse(decode(row, attemptJsonColumns)),
+          ),
+        };
+      });
+    },
     read(context: AccountRequestContext, id: string) {
       return transaction(context, () => task(context.accountId, id));
     },
@@ -361,17 +617,25 @@ export function createIntelligenceContinuationRepository(
       reasons: Task["wait_reasons"],
       passComplete: boolean,
       dependencyList?: Task["dependencies"],
+      wake?: SyncOperation,
     ) {
       return transaction(context, async () => {
         const t = await task(context.accountId, id);
+        const previous = t.current_attempt_id
+          ? await attempt(t.account_id, t.current_attempt_id)
+          : null;
+        const terminalWithoutResult =
+          previous?.execution_observation === "TERMINAL" &&
+          !previous.response_sha256 &&
+          ["COMPLETE", "NOT_REQUIRED"].includes(previous.metering_disposition);
         if (
           t.row_revision !== revision ||
-          ["RUNNING", "UNKNOWN", "PUBLISHED", "CANCELED", "STALE"].includes(
-            t.work_disposition,
-          ) ||
+          (t.work_disposition === "RUNNING" && !terminalWithoutResult) ||
+          ["UNKNOWN", "PUBLISHED", "CANCELED", "STALE"].includes(t.work_disposition) ||
           !reasons.length
         )
           fail("INTELLIGENCE_CAS");
+        if (wake) await queue(t, wake.id, true, wake.claimOwner, wake.baseVersion);
         const n = taskSchema.parse({
           ...t,
           work_disposition: "WAITING",
@@ -412,6 +676,7 @@ export function createIntelligenceContinuationRepository(
             },
             revision,
           );
+        if (json(n) === json(t)) return t;
         return saveTask(n, revision);
       });
     },
@@ -444,10 +709,21 @@ export function createIntelligenceContinuationRepository(
         );
       });
     },
-    reserveAttempt(context: AccountRequestContext, raw: Attempt) {
+    reserveAttempt(
+      context: AccountRequestContext,
+      raw: Attempt,
+      expectedTaskRevision?: number,
+      wake?: SyncOperation,
+    ) {
       return transaction(context, async () => {
         const a = attemptSchema.parse(raw),
           t = await task(context.accountId, a.task_id);
+        if (
+          expectedTaskRevision !== undefined &&
+          (t.row_revision !== expectedTaskRevision ||
+            t.sync_operation_id !== a.sync_operation_id)
+        )
+          fail("INTELLIGENCE_CAS");
         await pins(t, context);
         await dependencies(t);
         if (
@@ -502,7 +778,8 @@ export function createIntelligenceContinuationRepository(
             fail("INTELLIGENCE_CHANGED_ATTEMPT");
           return prior;
         }
-        await queue(t, a.sync_operation_id, true);
+        await queue(t, a.sync_operation_id, true, wake?.claimOwner, wake?.baseVersion);
+        if (wake) await validateIntelligenceWake(wake, deps.sha256);
         if (
           a.attempt_sequence > t.policy_snapshot.max_attempts ||
           a.attempt_sequence > 64
@@ -530,6 +807,15 @@ export function createIntelligenceContinuationRepository(
           a.descriptor_snapshot.provider_class === "COMMERCIAL_REMOTE"
         )
           fail("INTELLIGENCE_PRIVACY");
+        if (
+          await db.getFirstAsync(
+            "SELECT attempt_id FROM intelligence_continuation_attempts WHERE account_id=? AND (request_id=? OR idempotency_key=?)",
+            a.account_id,
+            a.request_id,
+            a.idempotency_key,
+          )
+        )
+          fail("INTELLIGENCE_CHANGED_ATTEMPT");
         await deps.validateAttemptAdmission(
           t,
           a,
@@ -594,6 +880,12 @@ export function createIntelligenceContinuationRepository(
           observation.execution_observation === "TERMINAL"
         )
           await deps.verifyRecovery(a, recoveryDigest!);
+        if (
+          observation.execution_observation === "RUNNING" &&
+          (t.publication_fence !== a.task_publication_fence ||
+            t.cancellation_disposition !== "NONE")
+        )
+          fail("INTELLIGENCE_EXECUTION_FENCE");
         if (
           observation.execution_observation === "RUNNING" &&
           a.integration_id &&

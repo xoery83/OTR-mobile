@@ -59,6 +59,7 @@ import { runLedgerReceiptSync } from "./ledgerReceiptCoordinator";
 import { runLedgerPersonalPaymentSync } from "./ledgerPersonalPaymentCoordinator";
 import {
   allowLedgerOperationalSync,
+  setIntelligenceSchedulingAdapter,
   kickLedgerOperationalSync,
   pauseLedgerOperationalSync,
   reactivateLongLivedLedgerFailures,
@@ -259,4 +260,36 @@ describe("Ledger mutation sync kick", () => {
     await pauseLedgerOperationalSync();
     vi.useRealTimers();
   });
+});
+
+it("central owner schedules injected cold/reconnect wakes on its existing timer only", async () => {
+  vi.useFakeTimers();
+  const adapter = {
+    resume: vi.fn(async () => {}),
+    run: vi.fn(async () => {}),
+    activity: vi.fn(async () => ({
+      scope: "INTELLIGENCE" as const,
+      actionableNow: 0,
+      nextActionableAt: Date.now() + 4000,
+    })),
+  };
+  try {
+    allowLedgerOperationalSync();
+    await setIntelligenceSchedulingAdapter(adapter);
+    await runLedgerOperationalSync();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(adapter.resume).toHaveBeenCalledWith("COLD_START");
+    expect(adapter.run).toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(1);
+    const before = adapter.run.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(adapter.run.mock.calls.length).toBeGreaterThan(before);
+    await reactivateLongLivedLedgerFailures();
+    expect(adapter.resume).toHaveBeenCalledWith("RECONNECT");
+    await pauseLedgerOperationalSync();
+    expect(vi.getTimerCount()).toBe(0);
+  } finally {
+    await setIntelligenceSchedulingAdapter(null);
+    vi.useRealTimers();
+  }
 });

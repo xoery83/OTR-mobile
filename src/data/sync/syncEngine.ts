@@ -3,6 +3,7 @@ import type { AuthState } from "@/domain/auth/authState";
 import { ApiClientError } from "@/data/api/client";
 
 import type { SyncOperation } from "./syncOperationRepository";
+import { intelligenceWakeKind } from "@/domain/intelligence/persistence";
 
 export type SyncEngineStatus = "idle" | "paused_auth" | "syncing";
 
@@ -18,6 +19,12 @@ export type SyncOperationRepository = {
   markRetryable(id: string, error: Error, nextAttemptAt: string): Promise<void>;
   recoverInterrupted?(): Promise<void>;
   claim?(id: string): Promise<boolean>;
+  claimOperation?(operation: SyncOperation): Promise<boolean>;
+  settleOperation?(
+    operation: SyncOperation,
+    error?: Error,
+    nextAttemptAt?: string,
+  ): Promise<void>;
   markFailed?(id: string, error: Error): Promise<void>;
   markPending?(id: string, error?: Error): Promise<void>;
   markDependencyBlocked?(id: string, dependencyOperationId?: string): Promise<void>;
@@ -160,6 +167,8 @@ export function createSyncEngine(
         const operations = (await repository.listPending()).filter(
           (operation) =>
             !closedImportOperations.has(operation.operationType) &&
+            (operation.operationType !== intelligenceWakeKind ||
+              (!!repository.claimOperation && !!repository.settleOperation)) &&
             shouldProcess(operation) &&
             !seen.has(operation.id),
         );
@@ -168,24 +177,39 @@ export function createSyncEngine(
           if (generation !== getAccountGeneration())
             return { status: "paused_auth", processedCount };
           seen.add(operation.id);
-          if (repository.claim) {
-            if (!(await repository.claim(operation.id))) continue;
-          } else {
-            await repository.markProcessing(operation.id);
+          if (!repository.claimOperation) {
+            if (repository.claim) {
+              if (!(await repository.claim(operation.id))) continue;
+            } else await repository.markProcessing(operation.id);
           }
-          processedCount += 1;
-
           try {
+            if (
+              repository.claimOperation &&
+              !(await repository.claimOperation(operation))
+            )
+              continue;
+            processedCount += 1;
+
             await worker.push(operation);
             if (generation !== getAccountGeneration())
               return { status: "paused_auth", processedCount };
-            await repository.markCompleted(operation.id);
+            if (repository.settleOperation) await repository.settleOperation(operation);
+            else await repository.markCompleted(operation.id);
           } catch (error) {
             if (generation !== getAccountGeneration()) {
-              await repository.markPending?.(operation.id);
+              if (!repository.settleOperation)
+                await repository.markPending?.(operation.id);
               return { status: "paused_auth", processedCount };
             }
             const normalized = error instanceof Error ? error : new Error("Sync failed.");
+            if (repository.settleOperation) {
+              await repository.settleOperation(
+                operation,
+                normalized,
+                calculateNextAttemptAt(operation.attemptCount + 1),
+              );
+              continue;
+            }
             const failure = syncFailureClass(normalized);
             if (normalized instanceof SyncConflictError) {
               if (!repository.markConflict)

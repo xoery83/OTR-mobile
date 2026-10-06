@@ -2149,3 +2149,36 @@ function ruleIds(
 ) {
   return report.findings.map((finding) => finding.ruleId);
 }
+
+it("C2 F1 Data Health cannot repair a corrupt dependency on completed wake-pass evidence", async () => {
+  const fixture = createFixture();
+  insertExpense(fixture.sqlite, {
+    id: "dependent-expense",
+    serverId: "dependent-expense",
+    serverRevision: 1,
+    syncStatus: "PENDING_UPDATE",
+  });
+  insertOperation(fixture.sqlite, {
+    id: "wake",
+    entityId: "continuation",
+    operationType: "INTELLIGENCE_CONTINUATION_WAKE",
+    status: "COMPLETED",
+  });
+  insertOperation(fixture.sqlite, {
+    id: "dependent",
+    entityId: "dependent-expense",
+    status: "DEPENDENCY_BLOCKED",
+    failureCategory: "DEPENDENCY",
+    dependencyOperationId: "wake",
+  });
+  const scan = await fixture.coordinator.run("CHEAP");
+  expect(
+    scan.repairPlans.some(
+      (plan) =>
+        plan.targetId === "dependent" &&
+        plan.actionId === "WAKE_COMPLETED_OPERATION_DEPENDENCY_V1" &&
+        plan.eligibility === "ELIGIBLE",
+    ),
+  ).toBe(false);
+  expect(operationState(fixture.sqlite, "dependent").status).toBe("DEPENDENCY_BLOCKED");
+});

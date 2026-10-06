@@ -281,3 +281,72 @@ export const attemptMutableColumns = [
   "updated_at",
   "update_clock",
 ] as const;
+
+export const intelligenceWakeKind = "INTELLIGENCE_CONTINUATION_WAKE" as const;
+export const wakePayloadSchema = z.strictObject({
+  version: z.literal(1),
+  account_id: identity,
+  task_id: identity,
+  expected_publication_fence: revision,
+  wake_reason: z.literal("REEVALUATE"),
+});
+export type WakePayload = z.infer<typeof wakePayloadSchema>;
+export type ContinuationWaitReason = NonNullable<Task["wait_reason"]>;
+export type RouterRequest = {
+  task: Readonly<Task>;
+  capabilities: readonly string[];
+  modalities: readonly string[];
+  schema: { id: string; version: number; sha256: string };
+  privacy: Task["policy_snapshot"]["privacy"];
+  online: boolean;
+  networkRequired: boolean;
+  latencyBudgetMs: number | null;
+  risk: "NORMAL" | "HIGH";
+  budget: { currency: string | null; nanos: string | null };
+  shadowEligible: boolean;
+};
+// Future Agent A supplies exact admitted pins; this is not a second router.
+export type ContinuationRoute =
+  | {
+      status: "WAIT";
+      reason: ContinuationWaitReason;
+      additionalReasons?: Task["wait_reasons"];
+    }
+  | { status: "UNAVAILABLE"; reason: "UNSUPPORTED" | "EXHAUSTED" }
+  | { status: "ELIGIBLE"; attempt: Attempt };
+export type ContinuationRouter = (request: RouterRequest) => Promise<ContinuationRoute>;
+export const executionReportSchema = z
+  .strictObject({
+    account_id: identity,
+    task_id: identity,
+    attempt_id: identity,
+    request_id: identity,
+    request_sha256: digest,
+    usage_correlation_id: identity.nullable(),
+    execution_observation: z.enum(["TERMINAL", "UNKNOWN"]),
+    execution_outcome: z.enum(["SUCCEEDED", "PARTIAL", "FAILED", "CANCELED"]).nullable(),
+    response_material_reference: identity.nullable(),
+    response_material_sha256: digest.nullable(),
+    response_sha256: digest.nullable(),
+    metering_disposition: attemptSchema.shape.metering_disposition,
+    reported_usage_summary: usage.nullable(),
+    recovery_sha256: digest.nullable(),
+  })
+  .superRefine((v, ctx) => {
+    if (
+      (v.execution_observation === "TERMINAL") !== (v.execution_outcome !== null) ||
+      (v.response_material_reference === null) !==
+        (v.response_material_sha256 === null) ||
+      (v.execution_observation === "TERMINAL" &&
+        ["SUCCEEDED", "PARTIAL"].includes(v.execution_outcome ?? "") &&
+        !v.response_sha256)
+    )
+      ctx.addIssue({ code: "custom", message: "Invalid execution report." });
+  });
+export type ExecutionReport = z.infer<typeof executionReportSchema>;
+// All functions are injected; no installed provider, credentials or network factory.
+export type ContinuationExecutor = {
+  proveUndispatched(attempt: Readonly<Attempt>): Promise<boolean>;
+  prepareUsage(attempt: Readonly<Attempt>): Promise<"NOT_REQUIRED" | "START_DURABLE">;
+  execute(attempt: Readonly<Attempt>): Promise<ExecutionReport>;
+};

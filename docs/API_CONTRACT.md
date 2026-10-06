@@ -733,3 +733,19 @@ DEFER cannot carry Event/preparation IDs. Non-admin mutation requests bind their
 command digest, finite root and hashed verifier scope in the existing immutable
 audit journal; admin commands retain that binding in their ordinary audit entry.
 Same request ID with different bytes, target, principal or root rejects.
+
+## CP14 C2 closed local continuation contract
+
+No new HTTP/Backend/provider endpoint. Local `scheduleWake` validates the approved
+strict v1 `{version,account_id,task_id,expected_publication_fence,wake_reason}` payload,
+where reason is REEVALUATE. Current task row revision is loaded for fresh CAS, not
+stored in payload. The queue owns deterministic dedup, claim, signal generation and
+conditional completion; a completed wake is not intelligence-success dependency proof.
+
+Injected router returns WAIT/UNAVAILABLE/ELIGIBLE with exact attempt pins. Injected
+executor requires positive undispatched proof and exact request/call/result correlation;
+wake does not invoke it. Late terminal/usage recovery remains Account-gated and UNKNOWN
+requires trusted exact recovery. Local installation and sufficient local publication
+are distinct from execution/cost. An admitted atomic notification-ready fact has finite
+attention reasons and explicit evidenced-deadline policy; no notification is sent.
+See the [C2 report](architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_RUNTIME_REPORT.md).

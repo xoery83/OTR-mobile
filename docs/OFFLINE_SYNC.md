@@ -435,3 +435,22 @@ revision/Input/attempt responsibility. UNKNOWN is never age-deleted. Pruning and
 material release need positive closure and separately approved custody/privacy
 policy. No new worker, provider adapter, startup hook or device bridge is wired;
 existing Event/Source/Import gates and five C scheduler denials stay CLOSED.
+
+## CP14 C2 continuation wake adaptation (providers closed)
+
+The approved `INTELLIGENCE_CONTINUATION_WAKE` v1 operation re-evaluates the referenced
+SQLite50 task; it never invokes a provider. Account/task/fence/version references
+produce one deterministic retained queue ID/key. Repeated signals coalesce; a later
+signal re-arms the same completed row, and conditional claim/signal finalization
+preserves signals arriving during processing. Queue completion means completion of
+that evaluation pass, independently of intelligence, publication and metering.
+
+The existing central operational-sync owner accepts a closed injected continuation
+adapter for cold-start/reconnect scheduling and its existing queue timer. Intelligence
+activity is separately typed and excluded from Ledger UI counts. No second scheduler
+or default provider/startup factory is installed. All three waits and pass completion
+survive file restart; RUNNING/UNKNOWN and queue retries require exact recovery rather
+than redispatch. Executor/usage/router seams run outside Account gates and transactions;
+local installation revalidates retained pins, and canceled/stale tasks preserve late
+responsibility. Runtime/provider gates remain CLOSED. See the
+[C2 report](architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_RUNTIME_REPORT.md).
