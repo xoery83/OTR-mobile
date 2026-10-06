@@ -22,6 +22,7 @@ import {
 import {
   withAccountApplyGate,
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 
@@ -293,6 +294,14 @@ export function createIntelligenceContinuationRepository(
     }
     await visit(t.task_id);
   }
+  async function activeAttemptCount(t: Task) {
+    const row = await db.getFirstAsync<{ count: number }>(
+      "SELECT count(*) AS count FROM intelligence_continuation_attempts WHERE account_id=? AND task_id=? AND shadow=0",
+      t.account_id,
+      t.task_id,
+    );
+    return row?.count ?? 0;
+  }
   async function queue(
     t: Task,
     id: string,
@@ -510,7 +519,7 @@ export function createIntelligenceContinuationRepository(
         if (
           a.row_revision !== revision ||
           a.execution_observation !== "NOT_STARTED" ||
-          t.current_attempt_id !== a.attempt_id ||
+          (!a.shadow && t.current_attempt_id !== a.attempt_id) ||
           t.publication_fence !== a.task_publication_fence ||
           t.cancellation_disposition !== "NONE" ||
           t.work_disposition !== "RUNNING" ||
@@ -535,6 +544,60 @@ export function createIntelligenceContinuationRepository(
           revision,
         );
       });
+    },
+    // TEST harness handoff only: no production construction or dispatch authority.
+    admitSyntheticExecution(
+      context: AccountRequestContext,
+      expected: Readonly<Attempt>,
+      execute: () => void,
+    ) {
+      return withAccountApplyGate(
+        async () => {
+          await assertAccountRequestContext(context, deps.getAccountId);
+          await db.withTransactionAsync(async () => {
+            const a = await attempt(context.accountId, expected.attempt_id),
+              t = await task(context.accountId, expected.task_id);
+            if (
+              json(a) !== json(expected) ||
+              a.execution_observation !== "RUNNING" ||
+              a.metering_disposition !== "START_DURABLE" ||
+              (!a.shadow && t.current_attempt_id !== a.attempt_id) ||
+              t.publication_fence !== a.task_publication_fence ||
+              t.cancellation_disposition !== "NONE" ||
+              t.work_disposition !== "RUNNING"
+            )
+              fail("INTELLIGENCE_EXECUTION_FENCE");
+            await pins(t, context);
+            await deps.validateAttemptAdmission(
+              t,
+              a,
+              a.predecessor_attempt_id
+                ? await attempt(t.account_id, a.predecessor_attempt_id)
+                : null,
+            );
+            await assertAccountRequestContext(context, deps.getAccountId);
+            // Revision CAS consumes this exact local start responsibility once.
+            const changed = await db.runAsync(
+              "UPDATE intelligence_continuation_attempts SET row_revision=row_revision+1 WHERE account_id=? AND attempt_id=? AND row_revision=? AND execution_observation='RUNNING' AND metering_disposition='START_DURABLE' AND EXISTS (SELECT 1 FROM intelligence_continuations t WHERE t.account_id=? AND t.task_id=? AND t.row_revision=? AND t.publication_fence=? AND t.cancellation_disposition='NONE' AND t.work_disposition='RUNNING' AND (?=1 OR t.current_attempt_id=?))",
+              a.account_id,
+              a.attempt_id,
+              a.row_revision,
+              t.account_id,
+              t.task_id,
+              t.row_revision,
+              a.task_publication_fence,
+              Number(a.shadow),
+              a.attempt_id,
+            );
+            if (changed.changes !== 1) fail("INTELLIGENCE_EXECUTION_FENCE");
+          });
+        },
+        () => {
+          // COMMIT and gate release precede I/O, with no intervening await.
+          assertAccountRequestGeneration(context);
+          execute();
+        },
+      );
     },
     snapshot(context: AccountRequestContext, id: string) {
       return transaction(context, async () => {
@@ -650,8 +713,7 @@ export function createIntelligenceContinuationRepository(
           Date.parse(t.policy_snapshot.deadline) <= Date.parse(deps.now());
         const exhausted =
           t.current_attempt_id !== null &&
-          (await attempt(t.account_id, t.current_attempt_id)).attempt_sequence >=
-            t.policy_snapshot.max_attempts;
+          (await activeAttemptCount(t)) >= t.policy_snapshot.max_attempts;
         if (
           reasons.some(
             (r) =>
@@ -781,7 +843,8 @@ export function createIntelligenceContinuationRepository(
         await queue(t, a.sync_operation_id, true, wake?.claimOwner, wake?.baseVersion);
         if (wake) await validateIntelligenceWake(wake, deps.sha256);
         if (
-          a.attempt_sequence > t.policy_snapshot.max_attempts ||
+          (!a.shadow &&
+            (await activeAttemptCount(t)) >= t.policy_snapshot.max_attempts) ||
           a.attempt_sequence > 64
         )
           fail("INTELLIGENCE_ATTEMPT_BOUND");

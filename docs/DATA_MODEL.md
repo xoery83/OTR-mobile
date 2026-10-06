@@ -632,3 +632,22 @@ Estimate-to-actual DELTA replacement requires explicit supersession; conflicting
 quality without coverage rejects. Distinct admitted disjoint DELTAs still add.
 Safe result identifiers have typed grammar and exact retained-parent correlation.
 SQLite50 semantics are unchanged by the F1–F6 corrections.
+
+## CP14 A2 immutable outbound pins (closed)
+
+No schema or migration is added. SQLite50 attempt request-material reference and
+SHA-256 bind a bounded nonsecret admission envelope: original body digest, exact
+provider/config/price snapshot, routing and policy digests, Account/Trip/Import/task,
+request/key/call and predecessor/shadow-call lineage. Mutable execution, metering
+and installation observations never rewrite those pins. Server83 call+START owns
+reservation responsibility and pins the exact price schedule; no local cost/quota
+ledger or historical repricing is introduced.
+
+Explicit test-only synthetic observation custody is injected, not installed as a
+production table/store. It retains nullable usage/compute and bounded generic units
+with unmistakable synthetic evidence labels. Synthetic local C2 RUNNING/TERMINAL/
+UNKNOWN observations do not assert real Server83 dispatch: calls remain RESERVED /
+NOT_STARTED. Server83 synthetic acceptance is isolated from real billable usage.
+Shadow attempts retain globally ordered sequence and independent call identity;
+the active attempt budget and active attention exclude shadows. The global 64
+attempt ceiling and existing SQLite50 sequence/FK/immutability guards remain.

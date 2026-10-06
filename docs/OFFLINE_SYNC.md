@@ -454,3 +454,32 @@ than redispatch. Executor/usage/router seams run outside Account gates and trans
 local installation revalidates retained pins, and canceled/stale tasks preserve late
 responsibility. Runtime/provider gates remain CLOSED. See the
 [C2 report](architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_RUNTIME_REPORT.md).
+
+## CP14 A2 synthetic orchestration (real dispatch closed)
+
+The C2 wake adapter can admit a decision-only outbound route; wake never invokes
+the executor. Explicit harness execution requires local attempt admission, exact
+Server83 reservation+durable START, fresh local/server authorization and eligibility,
+and verification that the real dispatch root remains CLOSED. After asynchronous
+synthetic-start work, exact call/START, server eligibility and retained identity are
+rechecked, followed by a final local attempt/task/fence/Trip admission CAS. Only
+successful COMMIT and synchronous Account-gate release hand off to the fake, with
+no further admission await. Failure retains START/synthetic responsibility and
+admits no retry/fallback proof. Every injected I/O seam runs outside SQLite
+transactions and the Account apply gate. No new scheduler,
+queue kind, central timer, startup factory or retry worker is installed.
+
+The test-only harness retains result/usage before completion metering. Meter failure
+leaves success/result intact with COMPLETION_PENDING; recovery and installation never
+call the fake again. Lost START acknowledgement can recover only the exact durable
+call/START plus positive synthetic undispatched proof, with C2 NOT_STARTED CAS.
+Possible execution, timeout, missing callbacks and queue/lease retry preserve exact
+recovery responsibility. Only admitted terminal failure can create a new linked
+attempt/call; UNKNOWN cannot auto-fallback. Shadows never become current, install,
+or consume active attempt/attention bounds. Account generation and C2 installation
+pins still fence A→B→A, revoked Trip and stale Run/Candidate/Event observations.
+
+These are **CLOSED SYNTHETIC EXECUTION ACCEPTANCE** facts. Real dispatch remains
+Server83-authorized only and structurally closed; synthetic observations never
+write another real dispatch authority or production usage ledger. See the
+[A2 report](architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REPORT.md).

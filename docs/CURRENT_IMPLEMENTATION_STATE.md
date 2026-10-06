@@ -2,6 +2,36 @@
 
 Date: 2026-10-06 (Pacific/Auckland).
 
+## CP14 Agent A2 — F1 correction / ready for targeted independent recheck
+
+- Worktree `/Users/xoery/.codex/worktrees/cp14-a2-outbound-runtime/otr-mobile-canonical`,
+  branch `intelligence/cp14-outbound-runtime`, exact retained HEAD/base
+  `2b88464f259b3daa69fe6621b988838d5de2806f`. All changes remain uncommitted; no push.
+- Owner accepted the initial dispatch hard stop and authorized a TEST-only injected
+  synthetic harness after real call/START responsibility, fresh eligibility and
+  verification that Server83 dispatch remains CLOSED. No real MAY_HAVE_STARTED,
+  live provider, credentials, Apple activation or kill-during-live-I/O claim.
+- Decision-only provider-neutral routing pins immutable bounded control-plane,
+  schema/privacy/network/risk/budget/health/price facts in existing request-material
+  identity. C2 owns attempts, UNKNOWN, fallback, shadow and installation fences.
+  Completion-meter failure retains success/result; exact recovery never reexecutes.
+- Server83/SQLite50, accepted reviews/preflight and all historical migrations are
+  unchanged. sync_operations remains sole scheduler; five C denials are unchanged.
+  No endpoint, default factory, production read/custody gateway, second usage ledger,
+  UI, notifications, billing, Hosted Dev/Production access or deployment is added.
+- Targeted F1 correction adds final fresh Server83/retained identity checks after
+  synthetic begin, then a local attempt/task/fence/Trip CAS and synchronous post-COMMIT
+  gate-release handoff. Failed admission executes no fake and preserves exact START/
+  recovery responsibility. Independent A2 review is unchanged; only F1 is corrected.
+- Validation: A2+C2 focused 193 tests plus5 Account gate tests;13 new barrier/CAS
+  tests and selected4 files/35 tests pass. Full199 files/2,351 tests has2,350
+  passed and the same one Ledger architecture assertion reproduced at exact base.
+  Accepted offline Server83 harness548 checks and actual new bridge acceptance
+  pass. Typecheck, lint/UI guard, Backend build, formatting and preservation pass.
+- Authority and limitations: `architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REPORT.md`
+  and `adr/2026-10-06-cp14-a2-closed-outbound-seam.md`. Next approved step:
+  **Targeted independent F1 recheck only**. Real activation remains separately gated.
+
 ## CP14 Agent C2 — targeted F1–F4 correction / ready for independent recheck
 
 - Existing fresh worktree `/Users/xoery/.codex/worktrees/cp14-c2-continuation/otr-mobile-canonical`,

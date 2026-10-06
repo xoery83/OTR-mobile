@@ -24,13 +24,21 @@ async function acquireAccountGate() {
   await previous;
   return release;
 }
-export async function withAccountApplyGate<T>(task: () => Promise<T>): Promise<T> {
+export async function withAccountApplyGate<T>(
+  task: () => Promise<T>,
+  afterRelease?: (result: T) => void,
+): Promise<T> {
   const release = await acquireAccountGate();
+  let result: T;
   try {
-    return await task();
+    result = await task();
   } finally {
     release();
   }
+  // Synchronous handoff after release: queued mutations cannot run in between.
+  // Never await external I/O here; callers own any returned execution promise.
+  afterRelease?.(result);
+  return result;
 }
 export function beginAccountTransition(): Promise<AccountTransitionLease>;
 export function beginAccountTransition(

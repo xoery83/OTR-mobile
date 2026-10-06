@@ -749,3 +749,25 @@ requires trusted exact recovery. Local installation and sufficient local publica
 are distinct from execution/cost. An admitted atomic notification-ready fact has finite
 attention reasons and explicit evidenced-deadline policy; no notification is sent.
 See the [C2 report](architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_RUNTIME_REPORT.md).
+
+## CP14 A2 closed outbound adaptation
+
+The unwired `createOutboundContinuationRouter` adapts bounded immutable Server83
+read projections into C2 WAIT/UNAVAILABLE/ELIGIBLE admission. A retained request
+material envelope binds body, Account/Trip/Import/task, attempt/request/key/call,
+full provider/config/price pins, routing/policy digests and fallback/shadow lineage.
+No endpoint, credentials, live read gateway or production factory is installed.
+
+`createServer83OutboundReservation` invokes the existing protected reserve-call
+root, verifies exact call/START pins, requires injected trusted fresh authorization
+and current eligibility, and observes the real dispatch root's
+`CP14_RUNTIME_CLOSED` rejection. It adds no SQL authority or activation exception.
+
+**CLOSED SYNTHETIC EXECUTION ACCEPTANCE** follows those prerequisites through an
+explicit TEST-only injected fake. Synthetic completion/recovery/result custody and
+metering are separate from Server83 billable usage. **REAL SERVER83-AUTHORIZED
+PROVIDER DISPATCH** remains unavailable: runtime_enabled stays false and no real
+MAY_HAVE_STARTED/RUNNING transition is written. Existing Server83 usage/cost roots
+remain authoritative, separately verified by their accepted database harness.
+See [A2 report](architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REPORT.md)
+and [closed seam ADR](adr/2026-10-06-cp14-a2-closed-outbound-seam.md).

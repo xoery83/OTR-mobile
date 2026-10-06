@@ -19,7 +19,10 @@ import {
   getIntelligenceQueueActivity,
   getLedgerQueueActivity,
 } from "../sync/ledgerQueueActivity";
-import { verifyPublicationCorrelation } from "../../../backend/src/externalIntegrationPersistence";
+import {
+  verifyPublicationCorrelation,
+  createClosedPersistenceGateway,
+} from "../../../backend/src/externalIntegrationPersistence";
 import { migrations } from "../db/migrations";
 import {
   createIntelligenceContinuationRepository,
@@ -29,6 +32,7 @@ import {
   captureAccountRequestContext,
   beginAccountTransition,
   endAccountTransition,
+  withAccountApplyGate,
 } from "../auth/accountRequestContext";
 import { canonicalEventJson, type Json } from "@/domain/trip/eventIntentJson";
 import {
@@ -39,6 +43,22 @@ import {
   type ContinuationRoute,
   type ExecutionReport,
 } from "@/domain/intelligence/persistence";
+import {
+  createClosedOutboundHarness,
+  createOutboundContinuationRouter,
+  type SyntheticObservation,
+} from "../intelligence/closedOutboundHarness";
+import {
+  createServer83OutboundReservation,
+  outboundReservationCommand,
+} from "../../../backend/src/outboundReservation";
+import {
+  readOutboundSnapshots,
+  routeOutbound,
+  createOutboundAdmission,
+  verifyOutboundAdmission,
+  type OutboundAdmission,
+} from "@/domain/intelligence/outboundRouting";
 const central = vi.hoisted(() => ({ db: null as ContinuationDatabase | null }));
 vi.mock("@/data/db/database", () => ({ openDatabase: async () => central.db! }));
 vi.mock("@/data/auth/authRepository", () => ({
@@ -2506,4 +2526,1302 @@ it("F1 admission CAS rejects a dependency that changes to wake evidence before i
       .prepare("SELECT status,dependency_operation_id FROM sync_operations WHERE id=?")
       .get(child.id),
   ).toEqual({ status: "PENDING", dependency_operation_id: null });
+});
+
+// Test-only stand-ins share the real file-backed fixture. These tables are never migrations.
+function a2Snapshot() {
+  return readOutboundSnapshots([
+    {
+      environment: "TEST",
+      environment_version: 1,
+      environment_killed: false,
+      runtime_enabled: false,
+      integration_id: "synthetic-outbound",
+      integration_version: 7,
+      integration_sha256: h,
+      enabled: true,
+      killed: false,
+      provider_config_id: randomUUID(),
+      provider_id: "synthetic",
+      model_id: "extractor",
+      model_version: "1",
+      adapter_version: "1",
+      config_version: 7,
+      configuration_sha256: h,
+      provider_class: "DETERMINISTIC",
+      capabilities: ["EXTRACT"],
+      modalities: ["TEXT"],
+      schemas: [{ id: "flight", version: 1, dialect: "otr" }],
+      schema_output: true,
+      privacy: "LOCAL_ONLY",
+      network_required: false,
+      region: "DEVICE",
+      routing_class: "DETERMINISTIC",
+      priority: 0,
+      eligibility: "ELIGIBLE",
+      input_byte_limit: 1048576,
+      input_count_limit: 64,
+      output_byte_limit: 1048576,
+      max_risk: 1,
+      max_complexity: 10,
+      replay_support: "UNSUPPORTED",
+      quota_admitted: true,
+      rate_admitted: true,
+      latency_ms: null,
+      expected_cost_nanos: "0",
+      expected_currency: "USD",
+      price: { id: randomUUID(), version: "1", sha256: h, currency: "USD" },
+      health: "UNKNOWN",
+      health_reference: null,
+      health_config_version: null,
+      quality_reference: null,
+      quality_policy_reference: null,
+      quality_policy_sha256: null,
+    },
+  ])[0];
+}
+function a2Request(t: Task) {
+  return {
+    task: t,
+    capabilities: t.capability_requirements,
+    modalities: ["TEXT"],
+    schema: { id: t.schema_id, version: t.schema_version, sha256: t.schema_sha256 },
+    privacy: t.policy_snapshot.privacy,
+    online: true,
+    networkRequired: false,
+    latencyBudgetMs: null,
+    risk: "NORMAL" as const,
+    budget: { currency: null, nanos: null },
+    shadowEligible: true,
+    environment: "TEST" as const,
+  };
+}
+async function a2Fixture(f: Fixture, initialize = true) {
+  if (initialize) {
+    f.sql.exec(
+      "CREATE TABLE a2_test_journal(reference TEXT PRIMARY KEY,envelope TEXT NOT NULL,started INTEGER NOT NULL DEFAULT 0,observation TEXT,meter TEXT); CREATE TABLE a2_test_server(call_id TEXT PRIMARY KEY,command TEXT NOT NULL)",
+    );
+    await f.repo.create(f.context, f.t);
+  }
+  let snapshot = a2Snapshot(),
+    failure = "",
+    executions = 0,
+    disposition: SyntheticObservation["disposition"] = "SUCCESS";
+  let onIO = async (_e: Readonly<OutboundAdmission>) => {};
+  let transformObservation = (o: SyntheticObservation): SyntheticObservation => o;
+  const runtime = createIntelligenceContinuationRuntime(f.repo, {
+    ...f.deps,
+    online: () => true,
+    routePolicy: () => ({
+      modalities: ["TEXT"],
+      latencyBudgetMs: null,
+      risk: "NORMAL",
+      shadowEligible: true,
+    }),
+    router: async () => ({ status: "UNAVAILABLE", reason: "UNSUPPORTED" }),
+  });
+  const gateway = createClosedPersistenceGateway({
+    gatewayIdentity: "otr_external_integration_call_gateway",
+    now: () => now,
+    async verify(r) {
+      return {
+        version: 1,
+        principal_kind: "TRUSTED_WORKLOAD",
+        verified_actor_id: account,
+        verified_account_id: account,
+        verified_client_identity: null,
+        verified_external_subject: null,
+        verified_environment: "TEST",
+        auth_source: "TEST_ONLY_INJECTED_VERIFIER",
+        auth_config_version: 1,
+        auth_session_reference: null,
+        verified_at: now,
+        expires_at: "2070-01-01T00:00:00.000Z",
+        revoked: false,
+        request_id: r.requestId,
+        request_sha256: r.requestSha256,
+        command_kind: r.command,
+        gateway_identity: "otr_external_integration_call_gateway",
+      };
+    },
+    async execute(kind, _context, command) {
+      if (kind === "external_integration_mark_dispatch") {
+        if (failure === "closed") return {};
+        if (failure === "closed-auth") throw new Error("CP14_SCOPE_FORBIDDEN");
+        throw new Error("CP14_RUNTIME_CLOSED");
+      }
+      if (failure === "reserve") throw new Error("RESERVE_FAILED");
+      const row = command.row as {
+        call_id: string;
+        shadow: boolean;
+        shadow_of_call_id: string | null;
+      };
+      if (
+        row.shadow &&
+        !f.sql
+          .prepare("SELECT call_id FROM a2_test_server WHERE call_id=?")
+          .get(row.shadow_of_call_id!)
+      )
+        throw new Error("SHADOW_PARENT_RESERVATION_REQUIRED");
+      const old = f.sql
+        .prepare("SELECT command FROM a2_test_server WHERE call_id=?")
+        .get(row.call_id) as { command: string } | undefined;
+      const bytes = canonicalEventJson(command as Json);
+      if (old && old.command !== bytes) throw new Error("CP14_CHANGED_REQUEST");
+      if (!old)
+        f.sql.prepare("INSERT INTO a2_test_server VALUES(?,?)").run(row.call_id, bytes);
+      if (failure === "reserve-ack") throw new Error("START_ACK_LOST");
+      return command.row;
+    },
+  });
+  const server = createServer83OutboundReservation({
+    gateway,
+    hash,
+    id: randomUUID,
+    async assertCurrentAuthorization() {
+      if (failure === "server-auth") throw new Error("CP14_TRIP_FORBIDDEN");
+    },
+    async readCurrent() {
+      return [snapshot];
+    },
+    async readReserved(e) {
+      const retained = f.sql
+        .prepare("SELECT command FROM a2_test_server WHERE call_id=?")
+        .get(e.attempt.usage_correlation_id!) as { command: string };
+      const c = JSON.parse(retained.command),
+        a = c.row;
+      return {
+        account_id: a.account_id,
+        task_id: a.task_id,
+        attempt_id: a.attempt_id,
+        attempt_sequence: a.attempt_sequence,
+        call_id: a.call_id,
+        integration_id: a.integration_id,
+        request_id: a.request_id,
+        request_sha256: a.request_sha256,
+        configuration_sha256: a.configuration_sha256,
+        config_version: a.config_version,
+        provider_config_id: a.provider_config_id,
+        input_sha256: a.input_sha256,
+        schema_sha256: a.schema_sha256,
+        publication_fence: a.publication_fence,
+        fallback_chain_id: a.fallback_chain_id,
+        shadow: a.shadow,
+        shadow_of_call_id: a.shadow_of_call_id,
+        environment: a.environment,
+        price_schedule_id: a.price_schedule_id,
+        provider_id: a.provider_id,
+        model_id: a.model_id,
+        model_version: a.model_version,
+        adapter_version: a.adapter_version,
+        trip_id: a.trip_id,
+        import_id: a.import_id,
+        idempotency_key: a.idempotency_key,
+        admission_sha256: c.request_sha256,
+        start_sha256: c.start.observation_sha256,
+        row_revision: 1,
+        dispatch_state: "RESERVED",
+        execution_certainty: "NOT_STARTED",
+        start_durable: failure !== "start",
+      };
+    },
+  });
+  const read = (e: Readonly<OutboundAdmission>) =>
+    f.sql
+      .prepare("SELECT * FROM a2_test_journal WHERE reference=?")
+      .get(e.attempt.request_material_reference!) as {
+      started: number;
+      observation: string | null;
+      meter: string | null;
+      envelope: string;
+    };
+  const synthetic = {
+    async proveUndispatched(e: Readonly<OutboundAdmission>) {
+      return read(e).started === 0;
+    },
+    async begin(e: Readonly<OutboundAdmission>) {
+      if (failure === "begin") throw new Error("SYNTHETIC_START_FAILED");
+      const changed = f.sql
+        .prepare("UPDATE a2_test_journal SET started=1 WHERE reference=? AND started=0")
+        .run(e.attempt.request_material_reference!);
+      if (changed.changes !== 1) throw new Error("SYNTHETIC_ALREADY_STARTED");
+    },
+    async retain(e: Readonly<OutboundAdmission>, o: SyntheticObservation) {
+      if (failure === "retain") throw new Error("CUSTODY_FAILED");
+      const old = read(e).observation,
+        bytes = canonicalEventJson(o as unknown as Json);
+      if (old && old !== bytes) throw new Error("CHANGED_SYNTHETIC_RESULT");
+      f.sql
+        .prepare("UPDATE a2_test_journal SET observation=? WHERE reference=?")
+        .run(bytes, e.attempt.request_material_reference!);
+    },
+    async read(e: Readonly<OutboundAdmission>): Promise<SyntheticObservation | null> {
+      const bytes = read(e).observation;
+      return bytes ? JSON.parse(bytes) : null;
+    },
+    async appendMeter(e: Readonly<OutboundAdmission>, o: SyntheticObservation) {
+      if (failure === "meter") throw new Error("COMPLETION_METER_FAILED");
+      f.sql
+        .prepare("UPDATE a2_test_journal SET meter=? WHERE reference=?")
+        .run(
+          canonicalEventJson(o as unknown as Json),
+          e.attempt.request_material_reference!,
+        );
+    },
+  };
+  f.deps.verifyRecovery = async (a, evidenceDigest) => {
+    const o = await synthetic.read(
+      JSON.parse(
+        (
+          f.sql
+            .prepare("SELECT envelope FROM a2_test_journal WHERE reference=?")
+            .get(a.request_material_reference!) as { envelope: string }
+        ).envelope,
+      ),
+    );
+    if (!o || (await digest(o)) !== evidenceDigest)
+      throw new Error("UNTRUSTED_SYNTHETIC_RECOVERY");
+  };
+  const harness = createClosedOutboundHarness({
+    mode: "TEST_ONLY",
+    repo: f.repo,
+    runtime,
+    server,
+    hash,
+    getAccountId: f.deps.getAccountId,
+    async loadAdmission(a) {
+      return JSON.parse(
+        (
+          f.sql
+            .prepare("SELECT envelope FROM a2_test_journal WHERE reference=?")
+            .get(a.request_material_reference!) as { envelope: string }
+        ).envelope,
+      );
+    },
+    synthetic,
+    adapter: {
+      kind: "INJECTED_DETERMINISTIC_FAKE",
+      async execute(e) {
+        executions++;
+        // Acquiring the same gate here would deadlock if I/O were accidentally inside it.
+        await withAccountApplyGate(async () => {
+          f.sql.exec("BEGIN; ROLLBACK;");
+        });
+        await onIO(e);
+        if (failure === "throw")
+          throw new Error("private provider error must not become proof");
+        const terminal = [
+          "SUCCESS",
+          "SAFE_FAILURE",
+          "DEFINITELY_NOT_DISPATCHED",
+          "CANCELED_TERMINAL",
+        ].includes(disposition);
+        const r = report(e.attempt, {
+          execution_observation: terminal ? "TERMINAL" : "UNKNOWN",
+          execution_outcome:
+            disposition === "SUCCESS"
+              ? "SUCCEEDED"
+              : disposition === "CANCELED_TERMINAL"
+                ? "CANCELED"
+                : terminal
+                  ? "FAILED"
+                  : null,
+          response_sha256: disposition === "SUCCESS" ? h : null,
+          metering_disposition: "COMPLETION_PENDING",
+          recovery_sha256: null,
+          reported_usage_summary: {
+            version: 1,
+            input_tokens: null,
+            output_tokens: null,
+            total_tokens: null,
+            cached_input_tokens: null,
+            reasoning_tokens: null,
+            image_units: null,
+            audio_units: null,
+            call_count: null,
+            bytes: null,
+            wall_ms: null,
+            cpu_ms: null,
+            gpu_ms: null,
+            accelerator_ms: null,
+            usage_quality: "UNKNOWN",
+          },
+        });
+        return transformObservation({
+          evidence: "CLOSED_SYNTHETIC_EXECUTION_ACCEPTANCE",
+          disposition,
+          report: r,
+          measurement_mode: "NONE",
+          other_units: {},
+          synthetic_cost: { nanos: null, currency: "USD", quality: "UNKNOWN" },
+        });
+      },
+    },
+  });
+  async function admit(
+    predecessor: Attempt | null = null,
+    shadowOf: Attempt | null = null,
+  ) {
+    let t = await f.repo.read(f.context, f.t.task_id);
+    const seed = await f.a(t, t.sync_operation_id ?? undefined);
+    if (!t.sync_operation_id)
+      t = await f.repo.bindQueue(
+        f.context,
+        t.task_id,
+        t.row_revision,
+        seed.sync_operation_id,
+      );
+    const request = a2Request(t),
+      route = await routeOutbound({ ...request, shadow: !!shadowOf }, [snapshot], hash);
+    if (route.status !== "ELIGIBLE") throw new Error(route.reason);
+    const sequence = (await f.repo.attempts(f.context, t.task_id)).length + 1;
+    const e = await createOutboundAdmission({
+      request,
+      pins: route.pins,
+      seed: {
+        ...seed,
+        attempt_sequence: sequence,
+        request_material_reference: randomUUID(),
+        usage_correlation_id: randomUUID(),
+      },
+      predecessor,
+      shadowOf,
+      hash,
+    });
+    f.sql
+      .prepare("INSERT INTO a2_test_journal(reference,envelope) VALUES(?,?)")
+      .run(e.attempt.request_material_reference!, JSON.stringify(e));
+    await f.repo.reserveAttempt(f.context, e.attempt);
+    return e;
+  }
+  return {
+    runtime,
+    harness,
+    synthetic,
+    server,
+    admit,
+    read,
+    executions: () => executions,
+    snapshot: () => snapshot,
+    fail: (v: string) => {
+      failure = v;
+    },
+    disposition: (v: SyntheticObservation["disposition"]) => {
+      disposition = v;
+    },
+    config: (v: Partial<typeof snapshot>) => {
+      snapshot = { ...snapshot, ...v };
+    },
+    io: (v: typeof onIO) => {
+      onIO = v;
+    },
+    output: (v: typeof transformObservation) => {
+      transformObservation = v;
+    },
+  };
+}
+describe("A2 CLOSED SYNTHETIC EXECUTION ACCEPTANCE", () => {
+  for (const failure of [
+    "reserve",
+    "start",
+    "closed",
+    "closed-auth",
+    "begin",
+    "server-auth",
+  ])
+    it(`${failure} pre-dispatch failure leaves fake count zero`, async () => {
+      const f = await fixture(),
+        a2 = await a2Fixture(f),
+        e = await a2.admit();
+      a2.fail(failure);
+      await expect(
+        a2.runtime.execute(
+          f.context,
+          e.attempt.attempt_id,
+          a2.harness.executor(f.context),
+        ),
+      ).rejects.toThrow();
+      expect(a2.executions()).toBe(0);
+    });
+  for (const change of [
+    { killed: true },
+    { enabled: false },
+    { eligibility: "DISABLED" as const },
+    { integration_version: 8 },
+  ])
+    it(`fresh ${JSON.stringify(change)} excludes fake dispatch and preserves V7`, async () => {
+      const f = await fixture(),
+        a2 = await a2Fixture(f),
+        e = await a2.admit();
+      a2.config(change);
+      await expect(
+        a2.runtime.execute(
+          f.context,
+          e.attempt.attempt_id,
+          a2.harness.executor(f.context),
+        ),
+      ).rejects.toThrow("INELIGIBLE");
+      expect(a2.executions()).toBe(0);
+      expect(
+        (await f.repo.readAttempt(f.context, e.attempt.attempt_id)).config_version,
+      ).toBe("7");
+    });
+  it("completes with UNKNOWN units, rollback/replay installs without repeating fake I/O", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit();
+    const a = await a2.runtime.execute(
+      f.context,
+      e.attempt.attempt_id,
+      a2.harness.executor(f.context),
+    );
+    expect(a.reported_usage_summary?.input_tokens).toBeNull();
+    expect(a.reported_usage_summary?.call_count).toBeNull();
+    const publication = randomUUID();
+    let installed = 0;
+    await expect(
+      a2.harness.install(f.context, a.attempt_id, publication, h, async () => {
+        throw new Error("ROLLBACK");
+      }),
+    ).rejects.toThrow("ROLLBACK");
+    expect(a2.read(e).meter).toBeTruthy();
+    await a2.harness.install(f.context, a.attempt_id, publication, h, async () => {
+      installed++;
+    });
+    await a2.harness.install(f.context, a.attempt_id, publication, h, async () => {
+      installed++;
+    });
+    expect(installed).toBe(1);
+    expect(a2.executions()).toBe(1);
+    expect(
+      JSON.parse(
+        (f.sql.prepare("SELECT command FROM a2_test_server").get() as { command: string })
+          .command,
+      ).row.dispatch_state,
+    ).toBe("RESERVED");
+  });
+  it("meter failure retains success, exact late recovery never recalls fake", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit();
+    a2.fail("meter");
+    const a = await a2.runtime.execute(
+      f.context,
+      e.attempt.attempt_id,
+      a2.harness.executor(f.context),
+    );
+    expect(a.execution_outcome).toBe("SUCCEEDED");
+    expect(a.metering_disposition).toBe("COMPLETION_PENDING");
+    expect(a.response_sha256).toBe(h);
+    await expect(
+      a2.runtime.execute(f.context, a.attempt_id, a2.harness.executor(f.context)),
+    ).rejects.toThrow("RECOVERY");
+    a2.fail("");
+    await a2.harness.recover(f.context, a.attempt_id);
+    await a2.harness.recover(f.context, a.attempt_id);
+    expect((await f.repo.readAttempt(f.context, a.attempt_id)).metering_disposition).toBe(
+      "COMPLETE",
+    );
+    expect(a2.executions()).toBe(1);
+  });
+  for (const disposition of ["MAY_HAVE_STARTED", "TIMEOUT", "RESPONSE_LOST"] as const)
+    it(`${disposition} never reexecutes or falls back`, async () => {
+      const f = await fixture(),
+        a2 = await a2Fixture(f),
+        e = await a2.admit();
+      a2.disposition(disposition);
+      const a = await a2.runtime.execute(
+        f.context,
+        e.attempt.attempt_id,
+        a2.harness.executor(f.context),
+      );
+      expect(a.execution_observation).toBe("UNKNOWN");
+      await expect(
+        a2.runtime.execute(f.context, a.attempt_id, a2.harness.executor(f.context)),
+      ).rejects.toThrow("RECOVERY");
+      await expect(a2.admit(a)).rejects.toThrow("ADMISSION_FENCE");
+      expect(a2.executions()).toBe(1);
+    });
+  for (const failure of ["throw", "retain"])
+    it(`${failure} callback/custody loss preserves UNKNOWN responsibility`, async () => {
+      const f = await fixture(),
+        a2 = await a2Fixture(f),
+        e = await a2.admit();
+      a2.fail(failure);
+      await expect(
+        a2.runtime.execute(
+          f.context,
+          e.attempt.attempt_id,
+          a2.harness.executor(f.context),
+        ),
+      ).rejects.toThrow();
+      expect(
+        (await f.repo.readAttempt(f.context, e.attempt.attempt_id)).execution_observation,
+      ).toBe("UNKNOWN");
+      expect(await a2.harness.recover(f.context, e.attempt.attempt_id)).toEqual({
+        reason: "RECOVERY_REQUIRED",
+      });
+      expect(a2.executions()).toBe(1);
+    });
+  for (const disposition of ["SAFE_FAILURE", "DEFINITELY_NOT_DISPATCHED"] as const)
+    it(`${disposition} admits new fallback call using fresh V8 pins`, async () => {
+      const f = await fixture(),
+        a2 = await a2Fixture(f),
+        e = await a2.admit();
+      a2.disposition(disposition);
+      const a = await a2.runtime.execute(
+        f.context,
+        e.attempt.attempt_id,
+        a2.harness.executor(f.context),
+      );
+      a2.config({
+        integration_version: 8,
+        config_version: 8,
+        provider_config_id: randomUUID(),
+      });
+      const fallback = await a2.admit(a);
+      a2.disposition("SUCCESS");
+      await a2.runtime.execute(
+        f.context,
+        fallback.attempt.attempt_id,
+        a2.harness.executor(f.context),
+      );
+      expect(fallback.attempt.usage_correlation_id).not.toBe(a.usage_correlation_id);
+      expect(fallback.attempt.config_version).toBe("8");
+      expect(a.config_version).toBe("7");
+      expect(a2.read(e).meter).toBeTruthy();
+      expect(a2.executions()).toBe(2);
+    });
+  it("active and shadow retain separate call/usage; late shadow cannot install or block active", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit(),
+      shadow = await a2.admit(null, e.attempt);
+    let release!: () => void, started!: () => void;
+    const barrier = new Promise<void>((r) => {
+        release = r;
+      }),
+      ready = new Promise<void>((r) => {
+        started = r;
+      });
+    a2.io(async (envelope) => {
+      if (envelope.attempt.shadow) {
+        started();
+        await barrier;
+      }
+    });
+    await a2.server.reserve(e);
+    const late = a2.runtime.execute(
+      f.context,
+      shadow.attempt.attempt_id,
+      a2.harness.executor(f.context),
+    );
+    await ready;
+    const a = await a2.runtime.execute(
+      f.context,
+      e.attempt.attempt_id,
+      a2.harness.executor(f.context),
+    );
+    await a2.harness.install(f.context, a.attempt_id, randomUUID(), h, async () => {});
+    const fact = await a2.runtime.fact(f.context, f.t.task_id, {
+      now,
+      urgencyHorizonMs: 0,
+      evidencedDeadline: null,
+    });
+    expect(fact.outstanding_work).toBe(false);
+    release();
+    const observed = await late;
+    expect(observed.result_install_disposition).toBe("SHADOW_ONLY");
+    await expect(
+      a2.harness.install(
+        f.context,
+        shadow.attempt.attempt_id,
+        randomUUID(),
+        h,
+        async () => {},
+      ),
+    ).rejects.toThrow("SHADOW");
+    expect(a2.read(e).meter).toBeTruthy();
+    expect(a2.read(shadow).meter).toBeTruthy();
+    expect(a2.executions()).toBe(2);
+    expect((await f.repo.read(f.context, f.t.task_id)).current_attempt_id).toBe(
+      a.attempt_id,
+    );
+  });
+  it("concurrent execute callers permit one fake, exact START reservation replay is stable", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit();
+    const outcomes = await Promise.allSettled([
+      a2.runtime.execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context)),
+      a2.runtime.execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context)),
+    ]);
+    expect(outcomes.filter((o) => o.status === "fulfilled")).toHaveLength(1);
+    expect(a2.executions()).toBe(1);
+    await a2.server.reserve(e);
+    expect(
+      (f.sql.prepare("SELECT count(*) n FROM a2_test_server").get() as { n: number }).n,
+    ).toBe(1);
+  });
+  it("A→B→A callback cannot apply under the old generation; fresh A recovers exact result", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit();
+    a2.io(async () => {
+      let lease = await beginAccountTransition();
+      f.setAccount(randomUUID());
+      endAccountTransition(lease);
+      lease = await beginAccountTransition();
+      f.setAccount(account);
+      endAccountTransition(lease);
+    });
+    await expect(
+      a2.runtime.execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context)),
+    ).rejects.toThrow("Account changed");
+    const fresh = await captureAccountRequestContext("", f.deps.getAccountId);
+    await a2.harness.recover(fresh, e.attempt.attempt_id);
+    expect((await f.repo.readAttempt(fresh, e.attempt.attempt_id)).response_sha256).toBe(
+      h,
+    );
+    expect(a2.executions()).toBe(1);
+  });
+  it("cold reopen recovers metering and retained result without fake redispatch", async () => {
+    const folder = mkdtempSync(join(tmpdir(), "a2-"));
+    folders.push(folder);
+    const path = join(folder, "journal.db");
+    const f = await fixture(true, path),
+      a2 = await a2Fixture(f),
+      e = await a2.admit();
+    a2.fail("meter");
+    await a2.runtime.execute(
+      f.context,
+      e.attempt.attempt_id,
+      a2.harness.executor(f.context),
+    );
+    f.sql.close();
+    const cold = await fixture(true, path, false),
+      reopened = await a2Fixture(cold, false);
+    await reopened.harness.recover(cold.context, e.attempt.attempt_id);
+    expect(
+      (await cold.repo.readAttempt(cold.context, e.attempt.attempt_id))
+        .metering_disposition,
+    ).toBe("COMPLETE");
+    expect(reopened.executions()).toBe(0);
+  });
+  it("retained admission binds price, provider pins and body; mutation rejects", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit();
+    await expect(
+      verifyOutboundAdmission(e.attempt, { ...e, body_sha256: "b".repeat(64) }, hash),
+    ).rejects.toThrow("DIGEST");
+    const changed = {
+      ...e,
+      pins: {
+        ...e.pins,
+        snapshot: {
+          ...e.pins.snapshot,
+          price: { ...e.pins.snapshot.price!, id: randomUUID() },
+        },
+      },
+    };
+    await expect(verifyOutboundAdmission(e.attempt, changed, hash)).rejects.toThrow(
+      "DIGEST",
+    );
+    expect(outboundReservationCommand(e).row.request_sha256).toBe(
+      e.attempt.request_sha256,
+    );
+  });
+});
+
+for (const change of ["Account", "Trip", "task fence"])
+  it(`A2 ${change} change before execution leaves fake count zero`, async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit();
+    if (change === "Account") {
+      const lease = await beginAccountTransition();
+      f.setAccount(randomUUID());
+      endAccountTransition(lease);
+    } else if (change === "Trip") f.setAdmission(false);
+    else {
+      const t = await f.repo.read(f.context, f.t.task_id);
+      await f.repo.fence(f.context, t.task_id, t.row_revision, "CANCELED");
+    }
+    await expect(
+      a2.runtime.execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context)),
+    ).rejects.toThrow();
+    expect(a2.executions()).toBe(0);
+  });
+it("A2 cancel during synthetic I/O retains late result/meter and rejects install", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  a2.io(async () => {
+    await a2.runtime.cancel(f.context, f.t.task_id);
+  });
+  const a = await a2.runtime.execute(
+    f.context,
+    e.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  const installed = await a2.harness.install(
+    f.context,
+    a.attempt_id,
+    randomUUID(),
+    h,
+    async () => {
+      throw new Error("must not install");
+    },
+  );
+  expect(installed.result_install_disposition).toBe("REJECTED_CANCELED");
+  expect(a2.read(e).meter).toBeTruthy();
+  expect(a2.executions()).toBe(1);
+});
+it("A2 stale Trip blocks install without erasing usage or success", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  await a2.runtime.execute(
+    f.context,
+    e.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  f.setAdmission(false);
+  await expect(
+    a2.harness.install(f.context, e.attempt.attempt_id, randomUUID(), h, async () => {}),
+  ).rejects.toThrow("TRIP");
+  expect(a2.read(e).meter).toBeTruthy();
+  expect(a2.executions()).toBe(1);
+});
+it("A2 kill while synthetic I/O is possible does not prove termination", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  a2.disposition("TIMEOUT");
+  a2.io(async () => {
+    a2.config({ killed: true });
+  });
+  const a = await a2.runtime.execute(
+    f.context,
+    e.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  expect(a.execution_observation).toBe("UNKNOWN");
+  await expect(a2.admit(a)).rejects.toThrow("PROVIDER_UNAVAILABLE");
+  expect(a2.read(e).meter).toBeTruthy();
+});
+it("A2 kill after success retains historical responsibility and immutable pins", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  const a = await a2.runtime.execute(
+    f.context,
+    e.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  a2.config({ killed: true });
+  await a2.harness.install(f.context, a.attempt_id, randomUUID(), h, async () => {});
+  expect(a2.read(e).meter).toBeTruthy();
+  expect(a.config_version).toBe("7");
+});
+for (const provider_class of [
+  "DETERMINISTIC",
+  "ON_DEVICE",
+  "OTR_SELF_HOSTED",
+  "COMMERCIAL_REMOTE",
+] as const)
+  it(`A2 fake ${provider_class} keeps absent tokens/compute UNKNOWN and preserves generic units`, async () => {
+    const f = await fixture();
+    // LOCAL_ONLY still correctly excludes remote classes; select their offline fake metadata under REMOTE_ALLOWED.
+    if (["OTR_SELF_HOSTED", "COMMERCIAL_REMOTE"].includes(provider_class)) {
+      f.t.policy_snapshot.privacy = "REMOTE_ALLOWED";
+      f.t.policy_sha256 = await digest(f.t.policy_snapshot);
+    }
+    const a2 = await a2Fixture(f);
+    a2.config({
+      provider_class,
+      privacy: provider_class === "COMMERCIAL_REMOTE" ? "REMOTE_ALLOWED" : "LOCAL_ONLY",
+    });
+    a2.output((o) => ({
+      ...o,
+      measurement_mode: "CUMULATIVE",
+      other_units: { measured_wall_ticks: 17 },
+      report: {
+        ...o.report,
+        reported_usage_summary: {
+          ...o.report.reported_usage_summary!,
+          wall_ms: 5,
+          usage_quality: "ACTUAL_REPORTED",
+        },
+      },
+    }));
+    const e = await a2.admit(),
+      a = await a2.runtime.execute(
+        f.context,
+        e.attempt.attempt_id,
+        a2.harness.executor(f.context),
+      );
+    expect(a.reported_usage_summary?.input_tokens).toBeNull();
+    expect(a.reported_usage_summary?.cpu_ms).toBeNull();
+    expect(a.reported_usage_summary?.wall_ms).toBe(5);
+    expect(JSON.parse(a2.read(e).meter!).other_units.measured_wall_ticks).toBe(17);
+  });
+it("A2 response identity mismatch retains uncertainty and cannot install", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  a2.output((o) => ({ ...o, report: { ...o.report, attempt_id: randomUUID() } }));
+  await expect(
+    a2.runtime.execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context)),
+  ).rejects.toThrow("RESULT_IDENTITY");
+  expect(
+    (await f.repo.readAttempt(f.context, e.attempt.attempt_id)).execution_observation,
+  ).toBe("UNKNOWN");
+  expect(a2.executions()).toBe(1);
+});
+it("A2 UNKNOWN queue retries and cold reopen cannot invoke the fake again", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "a2-unknown-"));
+  folders.push(folder);
+  const path = join(folder, "journal.db");
+  const f = await fixture(true, path),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  a2.disposition("RESPONSE_LOST");
+  await a2.runtime.execute(
+    f.context,
+    e.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  f.sql
+    .prepare(
+      "UPDATE sync_operations SET attempt_count=100,status='RETRYABLE',claim_owner=NULL,next_attempt_at=NULL WHERE id=?",
+    )
+    .run(e.attempt.sync_operation_id);
+  f.sql.close();
+  const cold = await fixture(true, path, false),
+    reopened = await a2Fixture(cold, false);
+  await expect(
+    reopened.runtime.execute(
+      cold.context,
+      e.attempt.attempt_id,
+      reopened.harness.executor(cold.context),
+    ),
+  ).rejects.toThrow("RECOVERY");
+  expect(reopened.executions()).toBe(0);
+});
+
+it("A2 exact trusted terminal recovery resolves synthetic timeout without blind replay", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  a2.disposition("TIMEOUT");
+  await a2.runtime.execute(
+    f.context,
+    e.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  const unknown = JSON.parse(a2.read(e).observation!) as SyntheticObservation;
+  const terminal: SyntheticObservation = {
+    ...unknown,
+    disposition: "SUCCESS",
+    report: {
+      ...unknown.report,
+      execution_observation: "TERMINAL",
+      execution_outcome: "SUCCEEDED",
+      response_sha256: h,
+    },
+  };
+  // The test-only trusted custody owner admits new exact evidence; original UNKNOWN meter is retained.
+  const oldMeter = a2.read(e).meter;
+  f.sql
+    .prepare("UPDATE a2_test_journal SET observation=? WHERE reference=?")
+    .run(JSON.stringify(terminal), e.attempt.request_material_reference!);
+  await a2.harness.recover(f.context, e.attempt.attempt_id);
+  const recovered = await f.repo.readAttempt(f.context, e.attempt.attempt_id);
+  expect(recovered.execution_observation).toBe("TERMINAL");
+  expect(recovered.response_sha256).toBe(h);
+  expect(oldMeter).toBeTruthy();
+  expect(a2.executions()).toBe(1);
+});
+
+it("A2 router adapts actual C2 wake admission; wake never executes fake", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f);
+  const router = createOutboundContinuationRouter({
+    environment: "TEST",
+    hash,
+    complexity: () => 0,
+    snapshots: async () => [a2.snapshot()],
+    predecessor: async () => null,
+    async seed(r) {
+      return {
+        ...(await f.a(r.task, r.task.sync_operation_id!)),
+        request_material_reference: randomUUID(),
+        usage_correlation_id: randomUUID(),
+      };
+    },
+    async retainAdmission(e) {
+      f.sql
+        .prepare("INSERT INTO a2_test_journal(reference,envelope) VALUES(?,?)")
+        .run(e.attempt.request_material_reference!, JSON.stringify(e));
+    },
+  });
+  const runtime = createIntelligenceContinuationRuntime(f.repo, {
+    ...f.deps,
+    router,
+    online: () => true,
+    routePolicy: () => ({
+      modalities: ["TEXT"],
+      latencyBudgetMs: null,
+      risk: "NORMAL",
+      shadowEligible: false,
+    }),
+  });
+  await f.repo.scheduleWake(f.context, f.t.task_id);
+  const queue = createIntelligenceWakeQueue(f.db, f.deps),
+    pending = (
+      await createSyncOperationRepository(f.db, f.deps.getAccountId).listPending()
+    )[0];
+  expect(await queue.claim(f.context, pending, "a2-wake-owner")).toBe(true);
+  expect(await runtime.evaluate(f.context, pending)).toBe("CREATE_ATTEMPT");
+  expect(a2.executions()).toBe(0);
+  const t = await f.repo.read(f.context, f.t.task_id);
+  await runtime.execute(f.context, t.current_attempt_id!, a2.harness.executor(f.context));
+  expect(a2.executions()).toBe(1);
+});
+it("A2 shadow sequence never consumes the active attempt bound; competing fallback admits once", async () => {
+  const f = await fixture();
+  f.t.policy_snapshot.max_attempts = 2;
+  f.t.policy_sha256 = await digest(f.t.policy_snapshot);
+  const a2 = await a2Fixture(f),
+    e = await a2.admit(),
+    shadow = await a2.admit(null, e.attempt);
+  a2.disposition("SAFE_FAILURE");
+  await a2.server.reserve(e);
+  await a2.runtime.execute(
+    f.context,
+    shadow.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  const active = await a2.runtime.execute(
+    f.context,
+    e.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  const attempts = await Promise.allSettled([a2.admit(active), a2.admit(active)]);
+  expect(attempts.filter((o) => o.status === "fulfilled")).toHaveLength(1);
+  const admitted = attempts.find(
+    (o) => o.status === "fulfilled",
+  ) as PromiseFulfilledResult<OutboundAdmission>;
+  expect(admitted.value.attempt.attempt_sequence).toBe(3);
+  a2.disposition("SUCCESS");
+  await a2.runtime.execute(
+    f.context,
+    admitted.value.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+});
+
+it("A2 shadow cannot execute until its active parent call is durably reserved", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    active = await a2.admit(),
+    shadow = await a2.admit(null, active.attempt);
+  await expect(
+    a2.runtime.execute(
+      f.context,
+      shadow.attempt.attempt_id,
+      a2.harness.executor(f.context),
+    ),
+  ).rejects.toThrow("SHADOW_PARENT_RESERVATION_REQUIRED");
+  expect(a2.executions()).toBe(0);
+  expect((await f.repo.read(f.context, f.t.task_id)).current_attempt_id).toBe(
+    active.attempt.attempt_id,
+  );
+});
+
+it("A2 admission snapshots caller-owned pins before asynchronous digest verification", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  const mutable = structuredClone(e);
+  const verified = verifyOutboundAdmission(e.attempt, mutable, async (bytes) => {
+    mutable.trip_id = randomUUID();
+    return hash(bytes);
+  });
+  expect((await verified).trip_id).toBe(e.trip_id);
+});
+
+it("A2 lost START acknowledgement recovers exact call/START and positive undispatched proof", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  a2.fail("reserve-ack");
+  await expect(
+    a2.runtime.execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context)),
+  ).rejects.toThrow("START_ACK_LOST");
+  const unknownMeter = await f.repo.readAttempt(f.context, e.attempt.attempt_id);
+  expect(unknownMeter.execution_observation).toBe("NOT_STARTED");
+  expect(unknownMeter.metering_disposition).toBe("UNKNOWN");
+  expect(a2.executions()).toBe(0);
+  a2.fail("");
+  await a2.harness.recoverStart(f.context, e.attempt.attempt_id);
+  await a2.runtime.execute(
+    f.context,
+    e.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  expect(a2.executions()).toBe(1);
+  expect(
+    (f.sql.prepare("SELECT count(*) n FROM a2_test_server").get() as { n: number }).n,
+  ).toBe(1);
+});
+it("A2 START recovery cannot reset possible synthetic execution", async () => {
+  const f = await fixture(),
+    a2 = await a2Fixture(f),
+    e = await a2.admit();
+  a2.disposition("TIMEOUT");
+  await a2.runtime.execute(
+    f.context,
+    e.attempt.attempt_id,
+    a2.harness.executor(f.context),
+  );
+  await expect(a2.harness.recoverStart(f.context, e.attempt.attempt_id)).rejects.toThrow(
+    "RECOVERY_REQUIRED",
+  );
+  expect(a2.executions()).toBe(1);
+});
+
+// F1: explicit rendezvous, never sleeps/lease inference. Change commits before begin resumes.
+function a2F1Barrier() {
+  let entered!: () => void, resume!: () => void;
+  const reached = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const released = new Promise<void>((resolve) => {
+    resume = resolve;
+  });
+  return {
+    reached,
+    resume,
+    async pause() {
+      entered();
+      await released;
+    },
+  };
+}
+describe("A2 F1 final execution admission", () => {
+  for (const change of [
+    "kill",
+    "disable",
+    "V8 DISABLED",
+    "cancel",
+    "Trip revoke",
+    "A→B",
+    "A→B→A",
+    "stale attempt",
+    "retained identity",
+  ])
+    it(`${change} committed during synthetic.begin leaves fake zero and responsibility intact`, async () => {
+      const f = await fixture(),
+        a2 = await a2Fixture(f),
+        e = await a2.admit(),
+        barrier = a2F1Barrier();
+      const begin = a2.synthetic.begin;
+      a2.synthetic.begin = async (admission) => {
+        await barrier.pause();
+        await begin(admission);
+      };
+      // Attach rejection handling before releasing the barrier, including Account failures.
+      const execution = a2.runtime
+        .execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context))
+        .then(
+          () => null,
+          (error: unknown) => error,
+        );
+      await barrier.reached;
+      if (change === "kill") a2.config({ killed: true });
+      else if (change === "disable") a2.config({ enabled: false });
+      else if (change === "V8 DISABLED")
+        a2.config({
+          config_version: 8,
+          provider_config_id: randomUUID(),
+          eligibility: "DISABLED",
+        });
+      else if (change === "cancel") await a2.runtime.cancel(f.context, e.attempt.task_id);
+      else if (change === "Trip revoke") f.setAdmission(false);
+      else if (change === "A→B" || change === "A→B→A") {
+        const b = await beginAccountTransition();
+        f.setAccount(randomUUID());
+        endAccountTransition(b);
+        if (change === "A→B→A") {
+          const a = await beginAccountTransition();
+          f.setAccount(account);
+          endAccountTransition(a);
+        }
+      } else if (change === "stale attempt") {
+        const a = await f.repo.readAttempt(f.context, e.attempt.attempt_id);
+        await f.repo.observeAttempt(f.context, a.attempt_id, a.row_revision, {
+          ...f.observation("UNKNOWN"),
+          metering_disposition: "START_DURABLE",
+        });
+      } else {
+        const changed = { ...e, body_sha256: "b".repeat(64) };
+        f.sql
+          .prepare("UPDATE a2_test_journal SET envelope=? WHERE reference=?")
+          .run(JSON.stringify(changed), e.attempt.request_material_reference!);
+      }
+      const reserved = f.sql
+        .prepare("SELECT command FROM a2_test_server WHERE call_id=?")
+        .get(e.attempt.usage_correlation_id!) as { command: string };
+      barrier.resume();
+      expect(await execution).toBeInstanceOf(Error);
+      expect(a2.executions()).toBe(0);
+      expect(a2.read(e)).toMatchObject({ started: 1, observation: null, meter: null });
+      expect(
+        f.sql
+          .prepare("SELECT command FROM a2_test_server WHERE call_id=?")
+          .get(e.attempt.usage_correlation_id!),
+      ).toEqual(reserved);
+      const retained = JSON.parse(reserved.command);
+      expect(retained.start).toBeTruthy();
+      // A fresh context can inspect responsibility; equality alone did not admit old A.
+      f.setAccount(account);
+      const fresh = await captureAccountRequestContext("", f.deps.getAccountId);
+      const a = await f.repo.readAttempt(fresh, e.attempt.attempt_id);
+      expect(["UNKNOWN", "RUNNING"]).toContain(a.execution_observation);
+      expect(a.metering_disposition).toBe("START_DURABLE");
+      expect(a.execution_outcome).toBeNull();
+      expect(a.reported_usage_summary).toBeNull();
+      await expect(
+        a2.runtime.execute(fresh, a.attempt_id, a2.harness.executor(fresh)),
+      ).rejects.toThrow("RECOVERY");
+      await expect(a2.admit(a)).rejects.toThrow();
+      expect(a2.executions()).toBe(0);
+    });
+
+  it("valid unchanged begin admits exactly one fake under concurrent callers", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit(),
+      barrier = a2F1Barrier();
+    const begin = a2.synthetic.begin;
+    a2.synthetic.begin = async (admission) => {
+      await barrier.pause();
+      await begin(admission);
+    };
+    const first = a2.runtime.execute(
+      f.context,
+      e.attempt.attempt_id,
+      a2.harness.executor(f.context),
+    );
+    await barrier.reached;
+    await expect(
+      a2.runtime.execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context)),
+    ).rejects.toThrow("RECOVERY");
+    barrier.resume();
+    expect((await first).execution_outcome).toBe("SUCCEEDED");
+    expect(a2.executions()).toBe(1);
+  });
+
+  it("local cancel after successful final server recheck is caught by final local CAS", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit(),
+      barrier = a2F1Barrier();
+    let began = false;
+    const begin = a2.synthetic.begin,
+      eligibility = a2.server.freshEligibility;
+    a2.synthetic.begin = async (admission) => {
+      await begin(admission);
+      began = true;
+    };
+    a2.server.freshEligibility = async (admission) => {
+      await eligibility(admission);
+      if (began) await barrier.pause();
+    };
+    const execution = a2.runtime
+      .execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context))
+      .then(
+        () => null,
+        (error: unknown) => error,
+      );
+    await barrier.reached;
+    await a2.runtime.cancel(f.context, e.attempt.task_id);
+    barrier.resume();
+    expect(await execution).toBeInstanceOf(Error);
+    expect(a2.executions()).toBe(0);
+    expect(a2.read(e)).toMatchObject({ started: 1, observation: null, meter: null });
+  });
+
+  it("final CAS rejects cancellation arriving after local reads before conditional UPDATE", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit(),
+      run = f.db.runAsync;
+    f.db.runAsync = async (sql, ...params) => {
+      if (sql.includes("SET row_revision=row_revision+1"))
+        f.sql
+          .prepare(
+            "UPDATE intelligence_continuations SET publication_fence=publication_fence+1, row_revision=row_revision+1, cancellation_disposition='REQUESTED', work_disposition='CANCELED' WHERE task_id=?",
+          )
+          .run(e.attempt.task_id);
+      return run(sql, ...(params as unknown as never[]));
+    };
+    await expect(
+      a2.runtime.execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context)),
+    ).rejects.toThrow();
+    expect(a2.executions()).toBe(0);
+    expect(a2.read(e).started).toBe(1);
+  });
+
+  it("failed final eligibility permits exact evidence recovery, never reexecution or implicit fallback", async () => {
+    const f = await fixture(),
+      a2 = await a2Fixture(f),
+      e = await a2.admit(),
+      barrier = a2F1Barrier();
+    const begin = a2.synthetic.begin;
+    a2.synthetic.begin = async (admission) => {
+      await barrier.pause();
+      await begin(admission);
+    };
+    const execution = a2.runtime
+      .execute(f.context, e.attempt.attempt_id, a2.harness.executor(f.context))
+      .then(
+        () => null,
+        (error: unknown) => error,
+      );
+    await barrier.reached;
+    a2.config({ killed: true });
+    barrier.resume();
+    expect(await execution).toBeInstanceOf(Error);
+    expect(await a2.harness.recover(f.context, e.attempt.attempt_id)).toEqual({
+      reason: "RECOVERY_REQUIRED",
+    });
+    a2.config({ killed: false });
+    const a = await f.repo.readAttempt(f.context, e.attempt.attempt_id);
+    await expect(a2.admit(a)).rejects.toThrow();
+    // Explicit trusted terminal evidence is required; missing fake execution is not proof.
+    const terminal: SyntheticObservation = {
+      evidence: "CLOSED_SYNTHETIC_EXECUTION_ACCEPTANCE",
+      disposition: "CANCELED_TERMINAL",
+      report: report(a, {
+        execution_observation: "TERMINAL",
+        execution_outcome: "CANCELED",
+        response_sha256: null,
+        reported_usage_summary: null,
+      }),
+      measurement_mode: "NONE",
+      other_units: {},
+      synthetic_cost: { nanos: null, currency: null, quality: "UNKNOWN" },
+    };
+    await a2.synthetic.retain(e, terminal);
+    await a2.harness.recover(f.context, a.attempt_id);
+    expect((await f.repo.readAttempt(f.context, a.attempt_id)).execution_outcome).toBe(
+      "CANCELED",
+    );
+    expect(a2.read(e).meter).toBeTruthy();
+    expect(a2.executions()).toBe(0);
+  });
 });

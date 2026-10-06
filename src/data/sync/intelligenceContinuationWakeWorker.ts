@@ -122,7 +122,9 @@ export function createIntelligenceContinuationRuntime(
       )
         return "WAIT" as const;
       if (
-        (a && a.attempt_sequence >= t.policy_snapshot.max_attempts) ||
+        (a &&
+          (await repo.attempts(context, t.task_id)).filter((row) => !row.shadow).length >=
+            t.policy_snapshot.max_attempts) ||
         (t.policy_snapshot.deadline &&
           Date.parse(t.policy_snapshot.deadline) <= Date.parse(deps.now()))
       ) {
@@ -276,9 +278,10 @@ export function createIntelligenceContinuationRuntime(
       const { task: t, attempts } = await repo.snapshot(context, taskId);
       const unresolved = attempts.filter(
         (a) =>
-          ["RUNNING", "UNKNOWN"].includes(a.execution_observation) ||
-          a.result_install_disposition === "PENDING" ||
-          !["COMPLETE", "NOT_REQUIRED"].includes(a.metering_disposition),
+          !a.shadow &&
+          (["RUNNING", "UNKNOWN"].includes(a.execution_observation) ||
+            a.result_install_disposition === "PENDING" ||
+            !["COMPLETE", "NOT_REQUIRED"].includes(a.metering_disposition)),
       );
       const outstanding =
         ["PENDING", "WAITING", "RUNNING", "RESULT_PENDING", "UNKNOWN"].includes(
