@@ -1,8 +1,89 @@
 # Current Implementation State
 
-Date: 2026-10-07 (Pacific/Auckland).
+Date: 2026-10-08 (Pacific/Auckland).
 
-## Current checkpoint — R1-C1 strict live-host input grammar
+## C1 canonical integration — prepared / independent review pending
+
+- Isolated pending merge at `/private/tmp/otr-c1-canonical-integration`, branch
+  `codex/c1-canonical-integration`: first parent Platform
+  `a817e8e881e2fa2e094696b13bc4df2eca7e2db2`, proposed second parent Capture
+  `79237cbd993792100ed51468e31671e4a2b59888`. All seven Capture commits retained.
+- Automatic merge had no textual conflicts; this handoff is reconciled semantically.
+  C1 and final CP15B/LIVE-W acceptance coexist. Owner Revision 1 acceptance/naming
+  is recorded as a current decision, without a historical acceptance artifact.
+- Bounded macOS matrix: 30 files, 670 PASS, 15 intentional skips. Linux custody,
+  host and HTTPS: 63 PASS, 2 intentional skips. Typecheck/lint/UI guard/Backend
+  build/bundle isolation and 88 schema/sync preservation hashes PASS. Counts
+  overlap; no new full-suite, SQL environment or device acceptance is claimed.
+- Report: `architecture/OTR_CAPTURE_C1_CANONICAL_INTEGRATION_REPORT.md`.
+  Stop for independent review. No C2, SQLite51/Server85, Hosted access, provider
+  activation, integration commit/push or main advancement.
+
+## Capture C1 — owner iPhone device acceptance PASS
+
+- Worktree `/Users/xoery/Project/otr-mobile-capture`, branch `trip/capture`, retained
+  base HEAD `92b87bd20f0d4baf23d3b4da8934d3142133e765`; starting status clean.
+  Owner accepted the complete C1 checkpoint and authorized a local commit only; no push.
+- Authenticated temporary Capture route now mounts identity-neutral reusable content.
+  Installed Files/Photos pickers compose ordered session-local metadata, support
+  removal/cancel and preserve a fixed invocation prior. Leaving/unmounting discards
+  staging. Final Add is disabled and explicitly says nothing has been saved.
+- Existing Account generation gains subscription only; current request/apply gate
+  fences callbacks and waits for local session installation. StrictMode effect replay,
+  Account A→B→A/transition/blur, Trip-prior rerender and late picker results are tested.
+- Independent C1 review fixed F1–F3 and final recheck PASS with **zero remaining
+  CRITICAL/IMPORTANT/MINOR**. C1 **13 tests**; final scoped **16 files /175 tests PASS**.
+  Typecheck, scoped lint/format, UI/terminology guard and whitespace PASS.
+- Signed Release installed on owner iPhone 16 Pro / iOS 27.0.1 with existing data
+  preserved; startup and Capture reachability verified. On 2026-10-08 the owner
+  reported device acceptance **PASS**: add/remove Files, add/remove Photos in the
+  same tray, Cancel, and intentionally unavailable durable submission. No broader
+  VoiceOver, large-text, permission or native visual acceptance is claimed.
+- Camera deferred because installed permission descriptions are receipt-specific;
+  Magic Input/connections are outside C1. No dependency/schema/migration, durable
+  submission, Source/Job/semantic Import/domain writer, Guest, automatic admission,
+  Banner support or runtime/provider/Experience shell activation.
+  C1 changed neither SQLite1–50 nor its then-current Server1–83 baseline.
+  The integrated baseline retains Platform Server1–84 and all six accepted
+  Capture documentation commits; no Server85/SQLite51 is introduced.
+- Reports: `architecture/OTR_CAPTURE_C1_IMPLEMENTATION_REPORT.md`,
+  `architecture/OTR_CAPTURE_C1_IMPLEMENTATION_REVIEW.md`, and
+  `architecture/OTR_CAPTURE_C2_DURABLE_INTAKE_PREFLIGHT.md`.
+- **C1 ACCEPTED at `79237cbd993792100ed51468e31671e4a2b59888`.
+  The prior authorized local C1 commit is complete. C2 NOT STARTED.**
+  C0 runs separately; no output is
+  installed here. C2 awaits approved Batch/Job/context, item idempotency/atomic
+  Capture-manifest linkage, partial recovery and native URI viability handoff.
+  Existing CP14 accepted CLOSED scope and Platform CP15B/LIVE-W remain authoritative.
+  CP14 owner closure/F2 targeted PASS is preserved in the unchanged final
+  integration/closure reports; no older review-pending next step is reinstated.
+
+## Joint P1 ↔ Capture C2 Revision 1 — accepted contract, implementation gated
+
+Owner decision recorded on 2026-10-08 in the current authorization message,
+“OWNER REVIEW PASS — AUTHORIZE C1 CANONICAL INTEGRATION BUILDER”:
+joint P1 ↔ C2 Revision 1 is accepted, with final naming
+`continuesFromInputId` / `continues_from_input_id`. This is a current Owner
+decision, not a reconstructed historical acceptance artifact. The original
+handshake and amendment retain their historical PROPOSED wording; their
+implementation-gated contract is preserved. See
+`adr/2026-10-08-c1-integration-owner-decision.md` for actual evidence paths/hashes.
+Lineage is explicit and same-Account only; it implies neither byte equality,
+replacement, assignment nor authority. No separate historical final Capture
+acceptance artifact was supplied or fabricated.
+
+Future C2 allocates stable submission/Batch/Job/context/Input/replay identities
+once per explicit Add N and atomically registers a frozen ordered roster.
+Batch and Job are separate UUIDs with a C2 1:1 shared header. Reuse SQLite48
+originals; only two additive local tables are contemplated, not installed.
+Hide/Close is available at every intake state and never cancels durable work;
+`allInputsAccepted` is factual and never commands auto-close.
+`availableActions` is derived and reauthorized at invocation. C2 is authenticated
+only, uses passive Trip prior and fresh Account A→B→A fences. No new scheduler,
+Job engine, Source/Run writer, Remote AI or Hosted prerequisite. P5 remains
+deferred to C4. C1 Add stays disabled until a separate authorized C2 slice.
+
+## Platform accepted checkpoint — R1-C1 strict live-host input grammar
 
 The final LOW input-contract correction is complete. Production admits only ordinary
 plain data objects with the five existing field names; complete own-key/descriptor
@@ -16,9 +97,12 @@ additional authority/SQLite/persistence/sync328 PASS (overlapping counts), expli
 cold12 PASS; Linux63 PASS; Server84 security104 PASS/gates CLOSED; scheduler24 PASS.
 Typecheck/lint/UI guard/build/format/whitespace and exact-base schema/sync preservation
 PASS. No new regression or broader behavior change; full suite not rerun for this
-narrow correction. Independent Review unchanged. Details/all answers are appended
-under FINAL LOW R1-C1 in the Builder report. Next: final targeted Independent recheck.
-LIVE-1 remains unauthorized. No commit/push/activation.
+narrow correction. Final independent R1-C1 targeted recheck PASS is appended to the Independent Review,
+with zero remaining CRITICAL/IMPORTANT/LOW findings. Details/all answers remain
+under FINAL LOW R1-C1 in the Builder report. Prior review-pending statements below
+are historical and superseded by that final independent recheck.
+LIVE-1 remains unauthorized. Accepted Platform commits are retained; no new
+integration commit/push/activation.
 
 ## Prior checkpoint — F1-R1 portable composition separation
 
@@ -115,7 +199,10 @@ provider terminality and canonical activation remain outside this checkpoint.
 
 ## Next checkpoint and critical boundaries
 
-Next: final targeted Independent R1-C1 recheck. LIVE-1 provider use is **not authorized**. It needs
+Next: independent review of the prepared, uncommitted C1 integration.
+Integration preparation is Owner-authorized; merge commit/main update/push and C2
+persistence remain separately gated. Final Independent R1-C1 recheck is
+complete/PASS. LIVE-1 provider use is **not authorized**. It needs
 real dedicated issuer/session/workflow provisioning, persistent private mount,
 official current model/currency/price revalidation, dedicated Mobile DEV key,
 current internal Account/Trip/material authority, one-call Owner authorization and
