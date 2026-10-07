@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createDevBackendHandler } from "./app";
 import { createSupabaseDevGateway } from "./supabaseGateway";
 import { createReceiptOcrProvider } from "./receiptOcrProvider";
+import { initializeDevFlightLiveHost } from "./flightLiveHost";
 import { createRateDemandScanner } from "./rateDemandScanner";
 
 const environmentSchema = z.object({
@@ -16,6 +17,12 @@ const environmentSchema = z.object({
 });
 
 const environment = environmentSchema.parse(process.env);
+// Backend-private, unprovisioned and CLOSED. No HTTP route, polling or provider call.
+void initializeDevFlightLiveHost((key) => process.env[key]).catch(() => {
+  console.info(
+    JSON.stringify({ level: "warn", event: "dev_flight_host", status: "CLOSED" }),
+  );
+});
 let scanner: ReturnType<typeof createRateDemandScanner> | null = null;
 const gateway = createSupabaseDevGateway({
   url: environment.OTR_DEV_SUPABASE_URL,

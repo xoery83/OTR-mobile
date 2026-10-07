@@ -2,229 +2,140 @@
 
 Date: 2026-10-07 (Pacific/Auckland).
 
-## CP15B CLOSED DEV Flight foundation — F1–F4 corrected / ready for targeted recheck
+## Current checkpoint — R1-C1 strict live-host input grammar
 
-- Existing worktree: `cp15b-real-dispatch-foundation/otr-mobile-canonical`, branch
-  `intelligence/cp15b-real-dispatch-foundation`, exact unchanged HEAD/base
-  `b973f039dfd6405d302409252ddbdc8f70584159`. No commit or push.
-- Owner accepted the normative byte-identical CP15A adoption, overlay and Server84
-  mapping and authorized completion. Historical prerequisite-stop/report sections
-  are preserved; implementation/results are appended to the Builder report.
-- Server84 adds Security Admin DEV runtime/scope/Account allowlist and immutable
-  call resource holds. TEST/PRODUCTION remain structurally closed. All activation
-  defaults remain disabled/killed; no live monetary policy is invented or seeded.
-  Missing monetary approval denies admission. UNKNOWN never auto-refunds/retries.
-- Fixed DeepSeek/deepseek-flash adapter, Backend-private injected secret boundary,
-  truthful Flight remote v2 envelope/descriptor, deterministic minimizer, strict
-  output parsing, original-span rebinding and server price/usage mapping are implemented.
-  Only network-disabled fixtures exist; no actual resolver/key/network factory or
-  public endpoint is installed. Remote facts traverse the existing CP13B core.
-- SQLite50 cold-reopen/FK conformance passed for truthful Run/attempt/config/evidence/
-  execution/usage/publication association. No SQLite51 or second scheduler was needed.
-  Server1–83/SQLite1–50, accepted reviews, `sync_operations` and five C denials remain
-  preserved. CP13A retains canonical authority; no Event/participant/booking writes
-  are added to the model path.
-- Targeted F1–F4: recovery now repeats current owning disclosure authority and
-  final Account generation after custody; Trip/membership locks serialize mark
-  with revoke; signed admission and immutable holds enforce actual executing pins;
-  schedule-derived cost is ESTIMATED separately from token quality. No SQLite51.
-- Original independent review is unchanged. Its F1–F4 findings are real corrected
-  defects, not baseline failures. Appended targeted results in the Builder report
-  supersede the historical initial readiness claim; independent recheck is pending.
-- Final targeted validation: 202 recovery/executor cases, 124 actual pin/barrier/
-  cost checks, 104 Server84 security checks, 548+75 Server83 compatibility checks,
-  841 original SQL checks, A2/C1/C2/C3 and 143 B2 cases pass. Full suite: 2,577 pass /
-  one unchanged exact-base Ledger failure. Typecheck, lint/UI guard, Backend build,
-  formatting and88 preservation hashes pass; independent review remains unchanged.
-- No Hosted Dev/Production, real secret/provider call, activation, deployment,
-  Vision/Apple/public B2/shadow/fallback, commit or push is authorized here.
-- Next checkpoint: targeted independent F1–F4 recheck. CP15B-LIVE remains separately gated; it is not this task.
-- Authority: normative `architecture/CP15_FIRST_INTELLIGENCE_ACTIVATION_PREFLIGHT.md`,
-  Owner overlay/continuation, Builder report mapping, and
-  `adr/2026-10-07-cp15b-closed-dev-flight-dispatch.md`.
+The final LOW input-contract correction is complete. Production admits only ordinary
+plain data objects with the five existing field names; complete own-key/descriptor
+inspection rejects hidden unknowns, symbols and accessors. Custom/null prototypes,
+classes, detectable proxies and added inherited unknown/capability fields reject
+before configuration/custody/secret/gateway/transport/dispatch. Linux-only composition
+and fixture isolation remain unchanged.
 
-The CP14 sections below are historical accepted foundation context.
+Validation: strict-input/original A–G/startup/bundle/transport focused204 PASS;
+additional authority/SQLite/persistence/sync328 PASS (overlapping counts), explicit
+cold12 PASS; Linux63 PASS; Server84 security104 PASS/gates CLOSED; scheduler24 PASS.
+Typecheck/lint/UI guard/build/format/whitespace and exact-base schema/sync preservation
+PASS. No new regression or broader behavior change; full suite not rerun for this
+narrow correction. Independent Review unchanged. Details/all answers are appended
+under FINAL LOW R1-C1 in the Builder report. Next: final targeted Independent recheck.
+LIVE-1 remains unauthorized. No commit/push/activation.
 
-## CP14 final owner closure — accepted CLOSED scope
+## Prior checkpoint — F1-R1 portable composition separation
 
-- Owner closure accepted after the same independent Final Closure reviewer appended
-  **TARGETED FINAL CLOSURE RECHECK PASS**: B2 F2 verified, no remaining IMPORTANT
-  findings and no new CRITICAL/IMPORTANT findings or regressions.
-- Exact reviewed F2 adapter/repository/orchestrator bytes and regression additions
-  are adopted into `integration/cp14-intelligence-final` from the B2 worktree.
-  Final Integration tests, prior report content and both original/appended Final
-  Closure Review bytes remain preserved. One closure commit is authorized; no push,
-  canonical merge, deployment, Hosted access or activation is authorized.
-- Accepted B2 F1 and its independent targeted PASS are preserved. Final Closure
-  found a separate custody-window race. F2 repeats current package/proposal and
-  CP13B assessment after private custody/authentication, then reuses owning
-  evidence validation in an existing read-only local transaction. Candidate/Run/
-  Input/material and Event revisions are fenced until synchronous Account-gate
-  release into the exact protected Server83 reservation, with no admission await
-  after release and no local transaction across remote I/O.
-- All NEW dispositions require freshness; only ACCEPT requires READY. Custody
-  content is non-authoritative. Historical sealed recovery remains exact and
-  currently authorized; rejected stale decisions cause no CP13A preparation.
-- Final integrated validation:505 focused tests PASS;143 B2/inbound tests PASS in
-  normal and actual Server83 modes; actual outbound chain PASS;555 Server83 checks
-  PASS. Full suite:2,494 PASS /1 unchanged Ledger architecture baseline FAIL,200
-  files /2,495 tests; zero new failures. F2/F1/integration are not baseline failures.
-  Typecheck, lint/UI guard, Backend build, changed-file formatting and whitespace
-  PASS. Earlier global formatting/baseline limitations remain historical below.
-- The final owner adoption record and integrated validation are appended to
-  `architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md`. The independent
-  verdict remains in `architecture/TRIP_CHECKPOINT_14_FINAL_CLOSURE_REVIEW.md`.
-- Server83/SQLite50, A2/C2, sole `sync_operations` scheduling and five C denials are
-  unchanged. Synthetic execution is production-unreachable; inbound creates no A2
-  execution or model cost. CP13A owns canonical Event authority; Server83 owns real
-  usage/cost. Real dispatch and runtime/provider/public-client gates remain CLOSED.
-- This closes the foundation only. Real providers/credentials/secrets, public clients,
-  production OAuth/JWT, live custody, Admin/billing, participant/member augmentation,
-  booking, CXE, Product Intelligence/training and notification sending remain deferred.
-  Further scope requires separate owner authorization. Retain CP14 worktrees.
+Recovered review identified a production-reachable portable custody/fetch seam.
+It is removed: production accepts only provisioning/config, always admits Linux
+anchored custody and continuity before fixed native HTTPS construction, and rejects
+legacy/unknown capability fields. No fetch identity or wrapper-shape security gate.
+Portable root is fixture-only with its own fake credential/transport, absent from
+server exports/imports and compiled Backend bundle. Shared validation, witness,
+recovery/readback and existing executor logic acquire no security capabilities.
+Original Linux filesystem F1 source/tests remain unchanged and regressions pass.
 
-The following prior integration acceptance is historical; the owner closure above
-supersedes its review-pending next step and pre-F2 production-preservation statement.
+Validation: Linux63 PASS; focused361 PASS; actual startup7 combinations PASS;
+Server84 security104 PASS; SQLite cold19 PASS; full2,643 PASS with same reproduced
+exact-base Ledger failure and zero new final failures. Typecheck/lint/UI guard/build
+and export/bundle/format/preservation checks PASS. Earlier intermediate parse failures
+were corrected and rerun, not called baseline. Details/all answers are appended under
+TARGETED F1-R1 in `architecture/CP15B_LIVE_WIRING_IMPLEMENTATION_REPORT.md`.
+Independent Review unchanged; no commit/push/activation. Next: targeted independent
+F1-R1 recheck. LIVE-1 remains unauthorized.
 
-## CP14 final integration complete / ready for independent closure review
+## Prior checkpoint — Owner-approved Linux anchored F1 correction
 
-- Fresh worktree `/Users/xoery/.codex/worktrees/cp14-intelligence-final/otr-mobile-canonical`,
-  branch `integration/cp14-intelligence-final`; exact unchanged HEAD/base
-  `cbd11b414a691b4f3761b02877b45ef9b11545a8`. No commit/push/deploy or Hosted access.
-- Ordered accepted commits: Persistence `4391680`, C2 `2b88464`, A2 `508d79e`, B2
-  `cbd11b4`. Their final targeted independent rechecks PASS and supersede historical
-  pending/correction verdicts. All accepted Builder/Review reports remain unchanged.
-- Closure adds three cross-path tests and documentation reconciliation only.
-  Production sources, Server83/SQLite50 and historical migrations are unchanged.
-  No authority collision, second scheduler, migration or runtime activation was needed.
-- Actual Server83 outbound reservation/START → CLOSED real dispatch → explicit TEST
-  synthetic result/meter → C2 install/publication/attention passes. Server call stays
-  RESERVED/NOT_STARTED; only START is recorded, with null model units/cost. Synthetic
-  observations never become real billable usage or repeat fake execution on install.
-- Inbound real Server83 grant/package/invocation → CP13B proposal → authenticated
-  OTR_USER decision → CP13A preparation/recovery passes. With existing C2 scheduling
-  installed, including after SQLite reopen, proposal/ACCEPT produces no outbound task,
-  router/executor/reservation/model usage. Same UUID package/task namespaces remain
-  independent across A→B→A; stale Account generations never revive.
-- Regressions: full 200 files /2,411 tests: **2,410 PASS, 1 unchanged baseline Ledger
-  architecture assertion**; zero new failures. Untouched exact base:2,406 PASS/2 FAIL,
-  including that Ledger assertion and a timestamp-dependent API test (passing final).
-  Final focused C2/A2/routing/B2, CP13A/B, Capture, Account, sync, Day, maintenance and
-  Data Health tests pass. Fresh Server1→83 and seeded82→83 plus555 protected checks
-  pass. SQLite fresh→50/49→50/FK ON/OFF pass. Typecheck, lint/UI guard, Backend build,
-  changed-file formatting and whitespace pass. Repository-wide formatting has21
-  unchanged exact-base warnings. Global full-suite/format PASS is not claimed.
-- Owner clarifications remain authoritative: trusted injected verifier authenticates,
-  SQL protected roots authorize all requests including reads; proposals create no
-  consent IDs; explicit authenticated decisions reserve stable ACCEPT IDs before
-  preparation. Stale evidence blocks every NEW disposition; historical exact sealed
-  recovery remains currently reauthorized. Five C sync denials are unchanged.
-- Implemented CLOSED foundations: Server83/SQLite50; continuation/attempt lifecycle;
-  provider-neutral outbound and vendor-neutral inbound seams; N→M and supported fact/
-  evidence augmentation; nullable usage/cost responsibility; proposal/decision split.
-- Deferred/unactivated: real provider dispatch, credentials/secrets, public
-  ChatGPT/Claude/MCP, production OAuth/JWT, real remote material custody, Admin Portal,
-  billing, participant/member augmentation, booking persistence, CXE adaptive runtime,
-  Product Intelligence/training and notification sending. No native/device/live
-  acceptance claim. CP13A security limitations and earlier gate status remain intact.
-- Next approved checkpoint: **independent CP14 final closure review only** of
-  `architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md`; activation requires
-  separate authorization. This Builder closure does not self-certify that review.
+The Linux-only contract from `architecture/CP15B_LIVE_W_LINUX_CUSTODY_SPIKE.md`
+is now implemented. Custody requires Linux/procfs, safe descriptor-by-descriptor
+admission from `/`, service-owned0700 root, private0600 files and capability checks.
+All normal I/O uses the retained root FD; replacement and parent retargeting cannot
+switch namespaces. File fsync, immutable hard-link publish and two directory fsyncs
+precede ACK. macOS/Windows reject real filesystem custody; protocol tests explicitly
+inject test custody and intercepted HTTP without weakening production admission.
 
-## Active schema and accepted foundation
+Restart requires an opaque store UUID plus mount metadata provided independently
+through trusted host provisioning, a matching preprovisioned private marker and exact
+retained request pin before transport construction. Empty/replaced/missing custody
+cannot permit provider replay. Metadata restore requires explicit host reattestation;
+no new dispatch authority, native addon, schema or privilege is introduced.
 
-- SQLite migrations are contiguous **1–50**. CP11 adds Day47/Capture48; CP13A adds
-  Import admission49; CP14 adds continuation/attempt50. Historical1–49 bodies
-  are unchanged. Server chain has **83** migrations, ending at
-  `20261006000100_external_integration_persistence.sql`; historical1–82 are
-  byte-identical to the exact CP14 base.
-- CP13A.1 received owner review PASS. CP13A.2 implements protected C6/lineage4/output
-  claims, Event-owned Flight services, fixed TRACK_C proof/receipt bridge,
-  CREATE/UPDATE under parent CAS, Temporal **Option A**, exact private catalog/draft/
-  queue/recovery and explicit Capture NEW/REUSE/REPLACEMENT. No UI/startup wiring.
-- CP13A R1/R2/R3 targeted correctness fixes are independently verified: complete
-  reviewed-action/proof coverage, atomic certified service absence in FK ON/OFF,
-  and bounded transitive Run ancestry. Its independent security limitations remain
-  recorded in the review; CP13B does not upgrade those assurances.
-- Narrow terminal CREATE recovery may omit target read only for exact verified
-  terminal no-commit proof, retaining Actor/Trip and all durable bindings. Successful
-  results and UPDATE retain target read; missing receipt remains UNKNOWN.
-- CP11 Capture owns immutable original BLOBs, bounded intake/dedup/quotas and
-  Account/Trip/revision fencing. INBOX/ASSIGNED only; no automatic Source creation.
-  Day uses existing certified complete/historical Event observations. Import does
-  not certify membership, infer deletion or write Day projections.
-- A1-I2C5, B-T3I and C-I3H accepted foundations remain CLOSED. Their accepted reports,
-  runtime provisioning and provider-terminal/retry blockers remain authoritative.
-  Five C import queue operation names remain scheduler-denied even with permissive
-  filters. Existing factories/ports stay unwired.
+The earlier macOS blocked attempt is preserved in the appended Builder report;
+the Owner-approved narrower platform contract resolves that blocker. Independent
+Review is unchanged. Next: targeted independent F1 recheck; LIVE-1 unauthorized.
+Validation: Linux 48 PASS; focused331 PASS; SQLite cold19 PASS; Server84 security104
+PASS; full2,613 PASS with same exact-base Ledger failure and zero new failures.
+Typecheck/lint/UI guard/build PASS. Final evidence is appended under
+TARGETED F1 — LINUX ANCHORED CUSTODY
+CORRECTION in `architecture/CP15B_LIVE_WIRING_IMPLEMENTATION_REPORT.md`.
 
-## Authoritative documents for final closure review
+## Prior checkpoint — CP15B-LIVE-W CLOSED host wiring
 
-Read this handoff first; expand only into directly relevant files. Do not reaudit
-legacy Web or redesign accepted CP12/CP13A semantics.
+Fresh worktree `/private/tmp/otr-cp15b-live-wiring`, branch
+`intelligence/cp15b-live-wiring`, exact accepted base/retained HEAD
+`56a050c0063bd062cb0bac7f50b928dfeb79ca6f`. Changes are uncommitted; no push.
+Original dirty checkouts and retained LIVE-0 planning input are preserved.
 
-- `architecture/TRIP_CHECKPOINT_14_FINAL_CLOSURE_REVIEW.md` (original review and F2 recheck)
-- `architecture/TRIP_CHECKPOINT_14_FINAL_INTEGRATION_REPORT.md`
-- `architecture/CP14_PERSISTENCE_IMPLEMENTATION_REVIEW.md` (final targeted recheck)
-- `architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_RUNTIME_REPORT.md`
-- `architecture/TRIP_CHECKPOINT_14_AGENT_C2_CONTINUATION_REVIEW.md` (final F1–F4 recheck)
-- `architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REPORT.md`
-- `architecture/TRIP_CHECKPOINT_14_AGENT_A2_OUTBOUND_RUNTIME_REVIEW.md` (final F1 recheck)
-- `architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REPORT.md`
-- `architecture/TRIP_CHECKPOINT_14_AGENT_B2_INBOUND_AI_REVIEW.md` (final F1 recheck)
-- `architecture/CP14_B2_OWNER_REVIEW_LIFECYCLE_CLARIFICATION.txt`
-- `architecture/OTR_DATA_HEALTH_AND_SELF_HEALING_PLAN.md`
-- `architecture/CP14_PERSISTENCE_CONTROL_PLANE_PREFLIGHT.md` (approved blueprint)
-- `architecture/CP14_PERSISTENCE_CONTROL_PLANE_IMPLEMENTATION_REPORT.md`
-- `architecture/CP14_VERIFIED_CALL_CONTEXT_V1.txt` (owner clarification)
-- `architecture/OTR_INTELLIGENCE_NEXT_STAGE_PLAN.md`
-- `adr/2026-10-06-cp14-persistence-authority-split.md`
-- `architecture/TRIP_IMPORT_ENGINE_ARCHITECTURE.md`
-- `architecture/TRIP_IMPORT_CONTRACT.md`
-- `architecture/TRIP_RESERVATION_SCHEMA_REGISTRY.md`
-- `architecture/INTELLIGENCE_PLUGIN_CONTRACT.md`
-- `architecture/TRIP_CHECKPOINT_12_CONTRACT_REVIEW.md`
-- `architecture/TRIP_CHECKPOINT_12_CONTRACT_REPORT.md`
-- `adr/2026-10-05-import-engine-boundaries.md`
-- `architecture/TRIP_CHECKPOINT_13A1_EXACT_SCHEMA_COMMAND_PREFLIGHT.md`
-- `architecture/TRIP_CHECKPOINT_13A2_CANONICAL_FLIGHT_IMPORT_IMPLEMENTATION_REPORT.md`
-- `architecture/TRIP_CHECKPOINT_13A2_IMPLEMENTATION_REVIEW.md` (targeted recheck included)
-- `architecture/TRIP_CHECKPOINT_13A2_SECURITY_MANIFEST.json`
-- `adr/2026-10-05-cp13a-flight-admission.md`
-- `architecture/TRIP_CHECKPOINT_11_FINAL_INTEGRATION_REPORT.md`
-- `adr/2026-10-05-local-capture-inbox.md`
-- `adr/2026-10-05-trip-day-read-model.md`
-- `architecture/TRIP_CHECKPOINT_10_FINAL_INTEGRATION_REPORT.md`
+- DEV/FLIGHT_IMPORT_V1 private composition reuses the accepted CP15B executor and
+  verified Server84 gateway. Normal startup supplies no actual issuer/session/
+  workflow provisioning and remains CLOSED. TEST/PRODUCTION construction rejects.
+- Dedicated environment resolver, fixed HTTPS POST with no redirects/retries,
+  independent default-CLOSED host transport and one-shot gates, and bounded
+  versioned response-model witness are implemented. Tests inject fake environment
+  and deterministic HTTP; no actual developer-process key is read.
+- Private immutable filesystem custody retains requests, raw responses, exact
+  task/attempt/call/config associations and interpreted results before metering or
+  install. File/directory fsync precedes acknowledgement. Persistent host mounting
+  is documented but unprovisioned. No new schema or durable business authority.
+- Immutable acceptance session binds one Account/task/attempt/call/request. Existing
+  Server84 fresh mark CAS governs the one transport handoff across restart; lost
+  ACK/MAY_HAVE_STARTED/UNKNOWN never replay. Raw response recovery repeats pure
+  parsing/rebinding/CP13B under current disclosure authority, without provider I/O.
+- Safe host readback is composed; complete server hold/price/cost reads use existing
+  protected Admin/Recovery or documented operator-only read-only SQL. No grants/UI.
+- Validation details and final readiness are recorded in
+  `architecture/CP15B_LIVE_WIRING_IMPLEMENTATION_REPORT.md` with 2,609 full-suite passes, one exact-base Ledger failure, zero new failures;
+  actual network-denied Server84 E2E and 104 security checks PASS.
 
-Older checkpoint history lives in its architecture/ADR/Ledger reports. Condensing
-this handoff changes no accepted decision, contract, historical report or gate.
+## Accepted foundation and active schema
 
-## Remaining blockers and safety boundaries
+Server migrations are contiguous **1–84**, ending at
+`20261007000100_flight_dev_dispatch_foundation.sql`, SHA-256
+`46e80899f14817d5162f255383e303232a12276e662f34b2cb16156c34d4f2a9`.
+SQLite remains **1–50**; every migration and registry byte is unchanged by LIVE-W.
+The 88 preservation hashes match. No Server85/SQLite51 is authored.
 
-- Interpretation, explicit closure review and CP13A Confirmation/output-slot
-  preparation are integrated and unwired. READY is action-specific eligibility;
-  it never implies acceptance or canonical execution. Runtime activation and any
-  later schema change require separate owner authorization.
-- Runtime identity/credentials/connectors, activation, rollout, native/device/live
-  acceptance, background collection wake and automatic startup reconciliation
-  remain separately PENDING. Structural Flight/Capture/Source/participation gates
-  remain CLOSED; no provider SDK/model/network access is installed.
-- Source IO_UNKNOWN/host-loss/provider terminality and safe IO retry remain BLOCKED.
-  Only the accepted static-PNG parser profile has its recorded test/internal
-  acceptance; other binary decoders/runtime admission remain outside this slice.
-  Interpretation/cancellation/pass completion cannot release protected evidence.
-- Temporal A does not admit civil resolver/fold/gap arithmetic as an independent
-  instant. B-T3I certificate bytes/meaning and Day ownership remain unchanged.
-  Ledger/financial/economic-date/receipt/Settlement semantics are unchanged.
-- Production is not a development target. Earlier Stage9 Production extraction was
-  read-only and disconnected; further access/load/rollback requires new explicit
-  authorization. Exact private financial totals remain outside Git. No Hosted Dev
-  creation, deployment or Simulator/physical-device Release installation is
-  authorized by this checkpoint.
-- Valid cached sessions keep offline access; background auth failure pauses sync.
-  Preserve durable UNKNOWN operations, immutable originals, claim/result/receipt
-  correlation and original reviewed intent. A new Candidate/key is never no-commit
-  proof. Reprocessing/merge/split needs the existing complete lineage claim review.
-- Use canonical UI primitives/glossary and the mandatory UI guard before any later
-  UI/copy change. UI, canonical command adapters and feature lifecycle owners were
-  not changed here.
+CP15B independent targeted F1–F4 recheck PASS supersedes its historical initial
+findings. Recovery repeats current Account/Trip/material authority after custody;
+mark serializes Trip revoke; immutable holds bind exact executing pins; calculated
+schedule cost stays ESTIMATED independently of actual token quality.
+
+CP14 Final Closure targeted PASS, A2/C2/B2 and CP13A/B remain accepted foundations.
+SQLite50 continuations/attempts and `sync_operations` retain their separate owners;
+the five C operation denials remain unconditional. CP13B owns interpretation;
+CP13A owns reviewed canonical commands. Inbound does not schedule paid outbound.
+Capture owns originals and adds no automatic Source authority. Source IO_UNKNOWN
+provider terminality and canonical activation remain outside this checkpoint.
+
+## Next checkpoint and critical boundaries
+
+Next: final targeted Independent R1-C1 recheck. LIVE-1 provider use is **not authorized**. It needs
+real dedicated issuer/session/workflow provisioning, persistent private mount,
+official current model/currency/price revalidation, dedicated Mobile DEV key,
+current internal Account/Trip/material authority, one-call Owner authorization and
+explicit immutable monetary policy/scope/grant. Proposed maximum USD0.0049152 is
+not activated. No Hosted Dev/Production inspection, deployment or real provider call.
+
+DEV runtime defaults disabled/killed; TEST/PRODUCTION real dispatch structurally
+CLOSED. Vision, Apple, fallback, shadow and public B2 remain OFF. No new endpoint,
+scheduler, automatic polling, queue draining or Event execution. Never erase private
+custody or reset identity to retry UNKNOWN. Retention grants neither disclosure nor
+installation authority. Cached valid sessions keep offline access.
+
+Authoritative next-task inputs:
+
+- `architecture/CP15B_LIVE_WIRING_IMPLEMENTATION_REPORT.md`
+- `adr/2026-10-07-cp15b-closed-live-host-wiring.md`
+- accepted CP15A preflight and CP15B implementation/independent targeted recheck
+- API_CONTRACT, DATA_MODEL, OFFLINE_SYNC and DEV Backend deployment/runbook
+- Owner-reviewed LIVE-0 report in `/private/tmp/otr-cp15b-live0-readiness`
+
+Read only directly relevant additional files. No legacy Web reaudit or redesign of
+accepted CP13/CP14 authority. Canonical UI primitives/glossary and UI guard remain
+mandatory for later UI work; no UI is changed by LIVE-W.

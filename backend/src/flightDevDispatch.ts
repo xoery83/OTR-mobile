@@ -9,7 +9,7 @@ import {
 import {
   prepareDeepSeekFlight,
   type FlightSecretResolver,
-  type FlightFixtureTransport,
+  type FlightTransport,
   type FlightProviderResult,
 } from "./deepSeekFlight";
 import {
@@ -205,7 +205,7 @@ export function createFlightDevExecutor(deps: {
   now(): string;
   monotonic(): number;
   resolver: FlightSecretResolver;
-  transport: FlightFixtureTransport;
+  transport: FlightTransport;
   load(a: Readonly<Attempt>): Promise<{
     request: InterpretationRequest;
     envelope: FlightRemoteEnvelope;
@@ -425,6 +425,7 @@ export function createFlightDevExecutor(deps: {
           await adapter.assertReady();
           let marked!: Promise<unknown>;
           await deps.repo.admitExecution(context, a, () => {
+            adapter.assertReadyNow();
             if (e.signal.aborted || deps.monotonic() >= e.deadline)
               throw new Error("CANCELED");
             const c = {
@@ -488,11 +489,30 @@ export function createFlightDevExecutor(deps: {
                 provider_request_id: result.provider_request_id,
                 usage: result.usage,
                 latency_ms: result.latency_ms,
+                ...(result.model_witness ? { model_witness: result.model_witness } : {}),
               };
             }
           return retain(a, result, interpretation);
         },
       };
+    },
+    async loadRetainedAttempt(context: AccountRequestContext, id: string) {
+      const a = await deps.repo.readAttempt(context, id);
+      const loaded = await load(a);
+      await deps.repo.authorizeResultDisclosure(context, a);
+      assertAccountRequestGeneration(context);
+      return { a, loaded };
+    },
+    async retainRecoveredResponse(
+      context: AccountRequestContext,
+      id: string,
+      result: FlightProviderResult,
+      interpretation: unknown | null,
+    ) {
+      const a = await deps.repo.readAttempt(context, id);
+      await deps.repo.authorizeResultDisclosure(context, a);
+      assertAccountRequestGeneration(context);
+      return retain(a, result, interpretation);
     },
     async recover(context: AccountRequestContext, id: string) {
       const a = await deps.repo.readAttempt(context, id);

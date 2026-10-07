@@ -6,14 +6,17 @@ RUN npm ci --ignore-scripts
 
 COPY backend ./backend
 COPY src/data/api ./src/data/api
-COPY src/domain/ledger ./src/domain/ledger
+COPY src/domain ./src/domain
+COPY src/data/auth/accountGeneration.ts src/data/auth/accountRequestContext.ts ./src/data/auth/
 RUN npm run backend:build
 
 FROM node:24-bookworm-slim
 
 ENV NODE_ENV=production
 WORKDIR /app
-RUN useradd --system --uid 10001 --create-home otr
+RUN useradd --system --uid 10001 --create-home otr \
+    && mkdir -p /var/lib/otr \
+    && chmod 0755 /var/lib/otr
 
 COPY --from=build --chown=otr:otr /app/dist/server.mjs ./server.mjs
 

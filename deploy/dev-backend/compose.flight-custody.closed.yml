@@ -1,0 +1,11 @@
+# Optional future Linux-only DEV override. No activation; provision before start.
+services:
+  backend:
+    cap_drop:
+      - ALL
+    volumes:
+      - type: bind
+        source: /opt/otr/dev-backend/private/flight-custody
+        target: /var/lib/otr/dev-flight
+        bind:
+          create_host_path: false

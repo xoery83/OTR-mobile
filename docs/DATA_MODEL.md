@@ -721,3 +721,20 @@ historical response/usage bytes remain stored when current owning authorization
 fails. Schedule-derived cost quality is ESTIMATED independently of actual token
 quality; unresolved price/time applicability is UNKNOWN. Late admitted billing
 observations supersede estimates under existing journal replay/projection semantics.
+
+## CP15B-LIVE-W private content custody (no schema change)
+
+All Server1–84 and SQLite1–50 bytes remain unchanged. The accepted private custody
+interface now has an immutable Backend filesystem implementation: bounded bytes,
+Account/reference SHA/size checks, private owner/mode, exclusive atomic installation,
+file fsync and directory fsync before acknowledgement. Request/result associations
+bind existing task/attempt/call/request/config identities. Raw provider bytes have
+separate bounded private content/reference/hash and exact envelope/execution pins.
+No raw evidence or credential enters control-plane telemetry.
+
+An immutable private acceptance association binds one session to one Account/task/
+attempt/call/request. It only narrows host admission; Server84 call/START/hold/mark
+remains the dispatch authority. No counter, cost ledger, Event authority, schema or
+scheduler is introduced. Release is CLOSED. Missing/corrupt custody fails closed;
+UNKNOWN responsibility is never garbage-collected or used to reopen the session.
+The persistent private host mount is an unprovisioned LIVE-1 requirement.

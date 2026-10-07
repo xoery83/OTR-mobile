@@ -65,7 +65,11 @@ export type FlightSecretResolver = {
     provider: "DeepSeek";
     reference: typeof secretReference;
     host: z.infer<typeof verifiedCallContextSchema>;
-  }): Promise<{ value: string; assertCurrent(): Promise<void> } | null>;
+  }): Promise<{
+    value: string;
+    assertCurrent(): Promise<void>;
+    assertCurrentNow?(): void;
+  } | null>;
 };
 export type FlightFixtureTransport = {
   kind: "NETWORK_DISABLED_FIXTURE";
@@ -79,8 +83,25 @@ export type FlightFixtureTransport = {
     max_response_bytes: number;
   }): Promise<{ status: number; redirected: boolean; body: AsyncIterable<Uint8Array> }>;
 };
+export type FlightLiveTransport = Omit<FlightFixtureTransport, "kind"> & {
+  kind: "DEV_FLIGHT_HTTPS" | "NETWORK_DISABLED_PROTOCOL";
+  assertReady(envelope: FlightRemoteEnvelope, host: unknown): Promise<void>;
+  assertLocalReady(envelope: FlightRemoteEnvelope, host: unknown): void;
+  retainResponse(
+    envelope: FlightRemoteEnvelope,
+    bytes: Uint8Array,
+    status: number,
+  ): Promise<void>;
+  modelWitness(model: unknown): {
+    policy: string;
+    returned_model: string | null;
+    accepted: boolean;
+  };
+};
+export type FlightTransport = FlightFixtureTransport | FlightLiveTransport;
 const completionSchema = z.object({
   id: z.unknown().optional(),
+  model: z.unknown().optional(),
   choices: z
     .array(
       z.object({
@@ -96,7 +117,7 @@ const completionSchema = z.object({
     .length(1),
   usage: z.unknown().optional(),
 });
-export type FlightProviderResult =
+export type FlightProviderResult = (
   | {
       status: "SUCCEEDED";
       output: unknown;
@@ -110,11 +131,14 @@ export type FlightProviderResult =
       usage: FlightProviderUsage;
       provider_request_id: string | null;
       latency_ms: number | null;
-    };
+    }
+) & {
+  model_witness?: { policy: string; returned_model: string | null; accepted: boolean };
+};
 export async function prepareDeepSeekFlight(
   deps: {
     resolver: FlightSecretResolver;
-    transport: FlightFixtureTransport;
+    transport: FlightTransport;
     monotonic(): number;
   },
   envelope: FlightRemoteEnvelope,
@@ -126,7 +150,11 @@ export async function prepareDeepSeekFlight(
   if (!verified.success) throw new Error("POLICY_BLOCKED");
   const host = verified.data;
   if (
-    deps.transport.kind !== "NETWORK_DISABLED_FIXTURE" ||
+    ![
+      "NETWORK_DISABLED_FIXTURE",
+      "DEV_FLIGHT_HTTPS",
+      "NETWORK_DISABLED_PROTOCOL",
+    ].includes(deps.transport.kind) ||
     host.verified_environment !== "DEV" ||
     host.principal_kind !== "TRUSTED_WORKLOAD" ||
     host.gateway_identity !== "otr_external_integration_call_gateway" ||
@@ -137,6 +165,8 @@ export async function prepareDeepSeekFlight(
     envelope.binding.descriptor.boundary_version !== "otr-flight-remote-v2"
   )
     throw new Error("POLICY_BLOCKED");
+  if (deps.transport.kind !== "NETWORK_DISABLED_FIXTURE")
+    deps.transport.assertLocalReady(envelope, host);
   if (signal.aborted || deps.monotonic() >= deadline) throw new Error("CANCELED");
   let secret: Awaited<ReturnType<FlightSecretResolver["resolve"]>>;
   try {
@@ -160,10 +190,21 @@ export async function prepareDeepSeekFlight(
   // Closure custody: credential never enters an envelope, retained result or telemetry.
   const pins = envelope.binding.descriptor.remote;
   let consumed = false;
+  const assertReadyNow = () => {
+    if (signal.aborted || deps.monotonic() >= deadline) throw new Error("CANCELED");
+    if (deps.transport.kind !== "NETWORK_DISABLED_FIXTURE") {
+      if (!secret.assertCurrentNow) throw new Error("AUTH_FAILED");
+      secret.assertCurrentNow();
+      deps.transport.assertLocalReady(envelope, host);
+    }
+  };
   return {
+    assertReadyNow,
     async assertReady() {
       if (signal.aborted || deps.monotonic() >= deadline) throw new Error("CANCELED");
       try {
+        if (deps.transport.kind !== "NETWORK_DISABLED_FIXTURE")
+          await deps.transport.assertReady(envelope, host);
         await secret.assertCurrent();
       } catch {
         throw new Error("AUTH_FAILED");
@@ -189,6 +230,7 @@ export async function prepareDeepSeekFlight(
       const start = deps.monotonic();
       let reportedUsage = mapDeepSeekFlightUsage(null);
       let requestID: string | null = null;
+
       const failure = (
         error: FlightProviderError,
         status: "FAILED" | "UNKNOWN" = "UNKNOWN",
@@ -213,6 +255,12 @@ export async function prepareDeepSeekFlight(
         }, remaining);
       });
       const work = (async () => {
+        // Recheck after mark and immediately before the only transport send.
+        await secret.assertCurrent();
+        if (deps.transport.kind !== "NETWORK_DISABLED_FIXTURE")
+          await deps.transport.assertReady(envelope, host);
+        assertReadyNow();
+        if (signal.aborted || deps.monotonic() >= deadline) return failure("CANCELED");
         const response = await deps.transport.send({
           url: DEEPSEEK_FLIGHT_DESTINATION,
           method: "POST",
@@ -227,16 +275,6 @@ export async function prepareDeepSeekFlight(
         });
         if (response.redirected || (response.status >= 300 && response.status < 400))
           return failure("POLICY_BLOCKED", "FAILED");
-        const statuses: Record<number, FlightProviderError> = {
-          400: "INVALID_REQUEST",
-          401: "AUTH_FAILED",
-          402: "BALANCE_EXHAUSTED",
-          429: "RATE_LIMITED",
-          500: "PROVIDER_UNAVAILABLE",
-          503: "PROVIDER_UNAVAILABLE",
-        };
-        if (response.status !== 200)
-          return failure(statuses[response.status] ?? "PROVIDER_UNAVAILABLE", "FAILED");
         const chunks: Uint8Array[] = [];
         let bytes = 0;
         for await (const chunk of response.body) {
@@ -254,32 +292,16 @@ export async function prepareDeepSeekFlight(
           joined.set(chunk, offset);
           offset += chunk.length;
         }
-        let raw: unknown;
-        try {
-          raw = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(joined));
-        } catch {
-          return failure("MALFORMED_OUTPUT", "FAILED");
-        }
-        if (raw && typeof raw === "object" && !Array.isArray(raw))
-          reportedUsage = mapDeepSeekFlightUsage((raw as Record<string, unknown>).usage);
-        const parsed = completionSchema.safeParse(raw);
-        if (!parsed.success) return failure("MALFORMED_OUTPUT", "FAILED");
-        requestID = safeId(parsed.data.id);
-        let output: unknown;
-        try {
-          output = JSON.parse(parsed.data.choices[0].message.content.trim());
-        } catch {
-          return failure("MALFORMED_OUTPUT", "FAILED");
-        }
-        const wire = flightRemoteOutputSchema.safeParse(output);
-        if (!wire.success) return failure("SEMANTIC_INVALID", "FAILED");
-        return {
-          status: "SUCCEEDED" as const,
-          output: wire.data,
-          usage: reportedUsage,
-          provider_request_id: requestID,
-          latency_ms: Math.max(0, Math.floor(deps.monotonic() - start)),
-        };
+        if (deps.transport.kind !== "NETWORK_DISABLED_FIXTURE")
+          await deps.transport.retainResponse(envelope, joined, response.status);
+        return parseDeepSeekFlightResponse(
+          joined,
+          response.status,
+          Math.max(0, Math.floor(deps.monotonic() - start)),
+          deps.transport.kind !== "NETWORK_DISABLED_FIXTURE"
+            ? deps.transport.modelWitness
+            : undefined,
+        );
       })();
       try {
         return await Promise.race([work, timeout]);
@@ -296,5 +318,68 @@ export async function prepareDeepSeekFlight(
         signal.removeEventListener("abort", cancel);
       }
     },
+  };
+}
+
+// Pure parsing is also used for durable raw-response recovery; it performs no I/O.
+export function parseDeepSeekFlightResponse(
+  bytes: Uint8Array,
+  status: number,
+  latency: number | null,
+  modelWitness?: FlightLiveTransport["modelWitness"],
+): FlightProviderResult {
+  let usage = mapDeepSeekFlightUsage(null);
+  let id: string | null = null;
+  let witness: FlightProviderResult["model_witness"];
+  const fail = (error: FlightProviderError): FlightProviderResult => ({
+    status: "FAILED",
+    error,
+    usage,
+    provider_request_id: id,
+    latency_ms: latency,
+    ...(witness ? { model_witness: witness } : {}),
+  });
+  if (bytes.length > 131072 || bytes.length < 1) return fail("MALFORMED_OUTPUT");
+  let raw: unknown;
+  try {
+    raw = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    return fail("MALFORMED_OUTPUT");
+  }
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    usage = mapDeepSeekFlightUsage((raw as Record<string, unknown>).usage);
+    id = safeId((raw as Record<string, unknown>).id);
+  }
+  if (status !== 200) {
+    const errors: Record<number, FlightProviderError> = {
+      400: "INVALID_REQUEST",
+      422: "INVALID_REQUEST",
+      401: "AUTH_FAILED",
+      402: "BALANCE_EXHAUSTED",
+      429: "RATE_LIMITED",
+    };
+    return fail(errors[status] ?? "PROVIDER_UNAVAILABLE");
+  }
+  const parsed = completionSchema.safeParse(raw);
+  if (!parsed.success) return fail("MALFORMED_OUTPUT");
+  if (modelWitness) {
+    witness = modelWitness(parsed.data.model);
+    if (!witness.accepted) return fail("POLICY_BLOCKED");
+  }
+  let output: unknown;
+  try {
+    output = JSON.parse(parsed.data.choices[0].message.content.trim());
+  } catch {
+    return fail("MALFORMED_OUTPUT");
+  }
+  const wire = flightRemoteOutputSchema.safeParse(output);
+  if (!wire.success) return fail("SEMANTIC_INVALID");
+  return {
+    status: "SUCCEEDED",
+    output: wire.data,
+    usage,
+    provider_request_id: id,
+    latency_ms: latency,
+    ...(witness ? { model_witness: witness } : {}),
   };
 }

@@ -560,3 +560,19 @@ SQL mark serializes Trip/membership authorization using existing C/Trip lock ord
 winning mark retains possible-execution responsibility after later revoke. Immutable
 holds retain digest-bound executing pins and mark checks current Security selection.
 Schedule-derived costs are estimates; missing/ambiguous billing remains UNKNOWN.
+
+## CP15B-LIVE-W CLOSED host transport and retained recovery
+
+The existing C2 executor seam can be composed explicitly in a private DEV host;
+`sync_operations` remains the sole scheduler. Startup provisions no workload/session
+and stays CLOSED; no background poll, second worker, queue draining or inbound→
+outbound activation is added. Host transport/one-shot gates cannot override Server84.
+
+One retained acceptance identity plus Server84 fresh mark CAS fences restart. Lost
+mark ACK, MAY_HAVE_STARTED and UNKNOWN never resend. Durable raw response precedes
+parsing/result retention/metering/installation. After host interruption, exact raw
+recovery revalidates call/request/config and current Account/Trip/material authority
+and reuses pure parsing, original-span rebinding and CP13B; it never invokes transport.
+F1's post-custody disclosure and independent installation fences remain mandatory.
+Missing usage remains UNKNOWN, calculated schedule cost remains ESTIMATED and model
+witness rejection never deletes incurred usage. No monetary policy is activated.

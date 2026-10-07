@@ -880,3 +880,30 @@ Valid reported token counters retain ACTUAL_REPORTED usage quality. Cost derived
 from tokens and a pinned schedule is ESTIMATED; unresolved billing applicability
 or required price components remains UNKNOWN. Only separately admitted billing
 observations can establish actual cost through the existing append-only journal.
+
+## CP15B-LIVE-W CLOSED private DEV host composition
+
+`initializeDevFlightLiveHost` is a Backend-private startup seam. Absent either host
+transport/one-shot gate or actual trusted provisioning it returns CLOSED without
+reading the DeepSeek key, creating custody or contacting a provider. There is no
+public HTTP AI endpoint, public B2 route, polling or new scheduler.
+
+The explicit DEV factory composes the accepted executor, exact verifier-bound
+Server84 gateway/session, environment resolver and fixed HTTPS transport. Dedicated
+workload and SQL session references are host-private configuration; the provisioned
+connector must attest exact call-gateway session_user, DEV and primary connection.
+No synthetic verifier, caller context or service-role fallback is installed.
+TEST/PRODUCTION factory and resolver construction reject even enabled host flags.
+
+A retained acceptance session pins exactly one Account/task/attempt/call/request.
+Server84 fresh mark CAS remains the durable transport authority. Lost ACK/UNKNOWN
+and restart never reconstruct an ACK or replay the provider. Raw-response recovery
+is pure parsing/rebinding/CP13B under current disclosure authority, with no transport.
+The versioned model witness rejects absent/mismatched identifiers while retaining
+incurred usage; mutable aliases do not prove immutable weights.
+
+Private safe readback exposes finite execution/install/meter states, call/attempt,
+provider request ID, custody hashes/byte counts, accepted model witness and nullable
+usage. Rejected model identifiers stay private. Full hold/price/cost/control-plane
+readback uses existing protected Admin/Recovery roots or the explicit operator-only
+read-only SQL in the DEV runbook; no application grants are widened.

@@ -176,3 +176,61 @@ credential, Production endpoint, or Mobile-to-database path in this setup.
   test credential, server secret, localhost Backend, or old LAN Backend value.
 - Request logs contain route templates, status, duration, and request IDs only; no auth
   token, Supabase secret, or sensitive payload was found.
+
+## CP15B-LIVE-W optional CLOSED wiring contract
+
+The checked-in `.env.backend.example` adds names only: dedicated
+`OTR_DEV_DEEPSEEK_API_KEY`, `OTR_DEV_FLIGHT_REMOTE_TRANSPORT`,
+`OTR_DEV_FLIGHT_ONE_SHOT`, private custody directory, acceptance session/Account/task/
+attempt/call/request digest and dedicated workload/SQL session logical references.
+Both gates default `disabled`; all credential/identity/reference values are empty.
+No new secret is read or provisioned by this checkpoint. The existing actual
+`/opt/otr/dev-backend/env/backend.env`, Docker, Caddy and databases were not edited.
+
+`compose.flight-custody.closed.yml` is an optional future DEV-only mount template,
+not enabled by normal Compose. LIVE-1 must explicitly provision its private host
+source directory with owner UID10001 and mode0700 and set the private target directory
+`/var/lib/otr/dev-flight`. Never use `/tmp`, tmpfs or the ephemeral read-only container
+root for durable custody. Keep the mount across recreation/restart; never erase it
+to reopen an acceptance session. No mount/deployment action was performed here.
+
+Normal startup supplies no actual issuer/session/workflow provisioning and remains
+CLOSED even if someone sets the host flags/key. The trusted provisioning contract
+requires a dedicated authenticated workload verifier and exact dedicated call-gateway
+SQL connection; no driver/credential/issuer is synthesized from broad Dev secrets.
+Real provisioning remains for LIVE-1. The Backend build now includes the pure domain
+and Account-context source required by the CLOSED composition.
+
+### Linux-only anchored custody and restart admission
+
+Real provider filesystem custody requires Linux Node24, genuine procfs and successful
+runtime capability tests under UID10001 (use the built image's actual GID; currently999).
+Container ancestors are walked from `/` through retained parent descriptors: no symlink,
+root/service owner, no group/other write; final root must be service-owned0700.
+All generated leaves are opened/linked/unlinked through the retained root FD. File0600,
+bounds/hash/schema/association and both file/directory fsync remain enforced.
+An existing instance continues on its original inode after rename/parent retargeting;
+it never switches namespaces. Deleted/nonprivate admitted roots deny operations.
+
+Before starting any future authorized container, independently provision host bind source
+`/opt/otr/dev-backend/private/flight-custody` and container mount `/var/lib/otr/dev-flight`.
+The override uses `create_host_path: false`; Docker must not create an empty substitute.
+Provide a private0600 `store-identity.json` containing exactly
+`{"version":1,"store_id":"<provisioned opaque UUID>"}`. Supply the expected UUID plus
+mount device/inode through trusted `FlightLiveProvisioning.custody.identity` outside
+that replaceable root, and the exact retained request pin through `requiredRequest`.
+The app never initializes that marker or obtains its expected identity from the marker.
+Startup verifies marker, current mount metadata, runtime capabilities and required
+request bytes before constructing transport. Do not infer new expected values from a
+replacement mount. Reboot/restore may need separately authorized host reattestation of
+metadata and retained associations; device/inode alone is not durable store identity.
+Absent continuity/content leaves transport CLOSED and responsibility UNKNOWN, with no
+hold release/reset/replacement call/replay. No new dispatch journal is added.
+
+Host bind-source ancestors/ACLs are operator provisioning responsibility; container
+admission cannot certify them. No protection is claimed against compromised host root,
+Docker administrators or malicious Backend-UID code. Use read-only root, dedicated
+writable mount, normal private procfs/PID namespace, no privileged/extra capabilities;
+the optional override drops ALL. macOS/Windows reject real filesystem custody.
+Protocol tests can explicitly inject test custody and intercepted HTTP; startup never
+uses that seam. Capability failure never falls back to pathname custody.
