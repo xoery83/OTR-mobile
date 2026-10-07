@@ -4564,3 +4564,29 @@ it.each([
   expect(reopened.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
   expect(migrations.at(-1)?.id).toBe(50);
 });
+
+it("P4a F4 terminal FAILED is visible during interruption before task reevaluation, with SELECT-only readback", async () => {
+  const f = await fixture();
+  await f.repo.create(f.context, f.t);
+  const a = await f.a();
+  await f.repo.reserveAttempt(f.context, a);
+  await f.repo.observeAttempt(f.context, a.attempt_id, 1, f.observation("RUNNING"));
+  await f.repo.observeAttempt(f.context, a.attempt_id, 2, {
+    ...f.observation("TERMINAL", "FAILED"),
+    metering_disposition: "COMPLETE",
+  });
+  expect((await f.repo.read(f.context, f.t.task_id)).work_disposition).toBe("RUNNING");
+  // Stop here: no reevaluation/wake/recovery is allowed from diagnostic readback.
+  f.sql.exec("PRAGMA query_only=ON");
+  const before = f.sql.prepare("SELECT total_changes() AS n").get();
+  const { readLocalOperations } = await import("@/data/operations/localOperations");
+  const result = await readLocalOperations(f.db, f.deps.getAccountId, f.deps.now);
+  expect(result.rows.find((row) => row.correlationId === f.t.task_id)).toMatchObject({
+    execution: "TERMINAL",
+    health: "TERMINAL_FAILURE",
+    operatorAttentionRequired: true,
+    automaticRecovery: "DEFERRED",
+    userActionRequired: null,
+  });
+  expect(f.sql.prepare("SELECT total_changes() AS n").get()).toEqual(before);
+});

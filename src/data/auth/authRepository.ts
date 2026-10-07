@@ -13,6 +13,7 @@ const secureStoreAdapter: SecureSessionStorage = {
 
 const authRepository = createAuthRepository(secureStoreAdapter);
 
+export const readAdoptedLocalSession = authRepository.readAdoptedLocalSession;
 export const readLocalSession = authRepository.readLocalSession;
 export const writeLocalSession = authRepository.writeLocalSession;
 export const clearLocalSession = authRepository.clearLocalSession;
@@ -23,5 +24,11 @@ export const removeLocalAccount = authRepository.removeAccount;
 export async function requireActiveUserId() {
   const userId = (await readLocalSession())?.identity?.userId;
   if (!userId) throw new Error("An authenticated account identity is required.");
+  return userId;
+}
+
+export async function requireAdoptedUserId() {
+  const userId = (await readAdoptedLocalSession())?.identity?.userId;
+  if (!userId) throw new Error("An adopted account identity is required.");
   return userId;
 }

@@ -3,10 +3,11 @@ import { t } from "@/ui/locale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { UiTextInput as TextInput } from "@/ui/forms";
+import { LocalOperationsDiagnostics } from "./LocalOperationsDiagnostics";
 import { UiFoundationFixture } from "@/ui/UiFoundationFixture";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
+import { readDiagnosticsDebugMode } from "@/data/repositories/defaultLedgerReportingRepository";
 import { Button, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -23,10 +24,9 @@ export function FoundationDiagnosticsScreen() {
       let active = true;
       setDebugMode(false);
       if (transportMode === "dev") {
-        void getDefaultLedgerReportingRepository()
-          .then((repository) => repository.getPreferences())
-          .then((preferences) => {
-            if (active) setDebugMode(preferences.debugMode);
+        void readDiagnosticsDebugMode()
+          .then((enabled) => {
+            if (active) setDebugMode(enabled);
           })
           .catch(() => {
             if (active) setDebugMode(false);
@@ -95,6 +95,9 @@ export function FoundationDiagnosticsScreen() {
           <Text style={styles.value}>{t("common.loading")}</Text>
         )}
 
+        {__DEV__ && transportMode === "dev" && debugMode ? (
+          <LocalOperationsDiagnostics />
+        ) : null}
         {__DEV__ && transportMode === "dev" ? (
           <View style={styles.authHarness}>
             <Text style={styles.sectionTitle}>{t("diagnostics.authHeading")}</Text>

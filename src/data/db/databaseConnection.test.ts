@@ -24,6 +24,20 @@ describe("migrated database opener", () => {
   });
 });
 
+it("diagnostic accessor never opens/migrates and fails closed until initialized", async () => {
+  const database = {};
+  const open = vi.fn(async () => database);
+  const migrate = vi.fn(async () => {});
+  const opener = createMigratedDatabaseOpener(open, migrate);
+  expect(() => opener.readInitialized()).toThrow("DATABASE_NOT_INITIALIZED");
+  expect(open).not.toHaveBeenCalled();
+  expect(migrate).not.toHaveBeenCalled();
+  await opener();
+  expect(await opener.readInitialized()).toBe(database);
+  expect(open).toHaveBeenCalledOnce();
+  expect(migrate).toHaveBeenCalledOnce();
+});
+
 describe("shared SQLite transactions", () => {
   it("runs writers in order and continues after a rollback", async () => {
     const events: string[] = [];

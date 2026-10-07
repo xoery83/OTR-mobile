@@ -54,6 +54,23 @@ export function createAuthRepository(storage: SecureSessionStorage) {
   }
 
   return {
+    // Diagnostics may observe only an already adopted active v2 session.
+    // Startup/auth owns legacy adoption; this boundary never installs or deletes.
+    async readAdoptedLocalSession(): Promise<LocalSession | null> {
+      const index = await readIndex();
+      if (index.activeUserId) {
+        const raw = await storage.getItem(accountSessionStorageKey(index.activeUserId));
+        if (!raw) throw new Error("SESSION_NOT_ADOPTED");
+        const session = JSON.parse(raw) as LocalSession;
+        if (session.identity?.userId !== index.activeUserId)
+          throw new Error("SESSION_IDENTITY_MISMATCH");
+        return session;
+      }
+      if (await storage.getItem(legacySessionStorageKey))
+        throw new Error("SESSION_NOT_ADOPTED");
+      return null;
+    },
+
     async readLocalSession(): Promise<LocalSession | null> {
       const index = await readIndex();
       if (index.activeUserId) {

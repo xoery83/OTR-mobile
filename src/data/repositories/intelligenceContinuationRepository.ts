@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { SQLiteDatabase } from "expo-sqlite";
 import {
   signalIntelligenceWake,
@@ -1101,4 +1102,105 @@ export function createIntelligenceContinuationRepository(
       });
     },
   };
+}
+
+const operationalTaskSchema = taskSchema
+  .pick({
+    task_id: true,
+    stage: true,
+    row_revision: true,
+    work_disposition: true,
+    current_pass_complete: true,
+    wait_reason: true,
+    updated_at: true,
+    update_clock: true,
+    current_attempt_id: true,
+  })
+  .extend({
+    current_pass_complete: z.union([z.literal(0), z.literal(1)]).transform(Boolean),
+  });
+const operationalAttemptSchema = attemptSchema.pick({
+  attempt_id: true,
+  task_id: true,
+  execution_observation: true,
+  execution_outcome: true,
+  result_install_disposition: true,
+  metering_disposition: true,
+  safe_failure_code: true,
+  reported_usage_summary: true,
+});
+const operationalResponsibilitySchema = attemptSchema.pick({
+  execution_observation: true,
+  execution_outcome: true,
+  result_install_disposition: true,
+  metering_disposition: true,
+});
+// Current Account's operational metadata only; no evidence, manifest or provider I/O.
+// Cached Trip actor admission matches existing offline local Capture reads.
+export async function readIntelligenceOperationalMetadata(
+  database: Pick<ContinuationDatabase, "getAllAsync" | "getFirstAsync">,
+  accountId: string,
+) {
+  const denied = await database.getFirstAsync<{ denied: number }>(
+    `SELECT EXISTS(SELECT 1 FROM intelligence_continuations t WHERE t.account_id=?
+      AND t.trip_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM ledger_actor_context a
+        WHERE a.user_id=t.account_id AND a.journey_id=t.trip_id)) AS denied`,
+    accountId,
+  );
+  // Fail closed for the whole source; do not disclose denied task identities/counts.
+  if (!denied) return fail("INTELLIGENCE_CORRUPT");
+  if (denied.denied) return null;
+  const raw = await database.getAllAsync(
+    `SELECT task_id,stage,row_revision,work_disposition,current_pass_complete,
+      wait_reason,updated_at,update_clock,current_attempt_id
+     FROM intelligence_continuations WHERE account_id=? ORDER BY updated_at DESC,task_id LIMIT 51`,
+    accountId,
+  );
+  const tasks = raw.map((row) => operationalTaskSchema.parse(row));
+  const summaries = [];
+  for (const task of tasks.slice(0, 50)) {
+    // DISTINCT keeps the finite metadata combinations small; validate all non-shadow
+    // responsibility, including older attempts. No evidence or raw result is read.
+    const responsibility = (
+      await database.getAllAsync(
+        `SELECT DISTINCT execution_observation,execution_outcome,result_install_disposition,metering_disposition
+       FROM intelligence_continuation_attempts WHERE account_id=? AND task_id=? AND shadow=0`,
+        accountId,
+        task.task_id,
+      )
+    ).map((row) => operationalResponsibilitySchema.parse(row));
+    const unresolved = {
+      unknown: responsibility.some(
+        (a) =>
+          a.execution_observation === "UNKNOWN" || a.metering_disposition === "UNKNOWN",
+      ),
+      running: responsibility.some((a) => a.execution_observation === "RUNNING"),
+      install: responsibility.some((a) => a.result_install_disposition === "PENDING"),
+      meter: responsibility.some(
+        (a) => !["COMPLETE", "NOT_REQUIRED"].includes(a.metering_disposition),
+      ),
+    };
+    const current = task.current_attempt_id
+      ? await database.getFirstAsync<Record<string, unknown>>(
+          `SELECT attempt_id,task_id,execution_observation,execution_outcome,result_install_disposition,
+        metering_disposition,safe_failure_code,reported_usage_summary
+       FROM intelligence_continuation_attempts WHERE account_id=? AND task_id=? AND attempt_id=? AND shadow=0`,
+          accountId,
+          task.task_id,
+          task.current_attempt_id,
+        )
+      : null;
+    if (task.current_attempt_id && !current) fail("INTELLIGENCE_CORRUPT");
+    const attempt = current
+      ? operationalAttemptSchema.parse({
+          ...current,
+          reported_usage_summary:
+            typeof current.reported_usage_summary === "string"
+              ? JSON.parse(current.reported_usage_summary)
+              : current.reported_usage_summary,
+        })
+      : null;
+    summaries.push({ task, attempt, unresolved });
+  }
+  return { summaries, limited: tasks.length > 50 };
 }

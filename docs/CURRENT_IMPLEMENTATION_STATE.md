@@ -2,6 +2,46 @@
 
 Date: 2026-10-08 (Pacific/Auckland).
 
+## P4a local Operations — Final Owner accepted / local closure
+
+- Existing isolated worktree `/private/tmp/otr-platform-p4a-local-operations`, branch
+  `codex/platform-p4a-local-operations`, accepted parent baseline
+  `b6daffecedab1616b173fde3f5e2de5d54770eff`. Final Owner acceptance authorizes
+  one local closure commit; main is unchanged and no push is authorized.
+  No other active worktree edited.
+- DEV diagnostics retains its Debug-gated, memory-only Account projection over
+  Data Health, SQLite50 operational metadata and sync_operations. Six states,
+  semantic/operator attention, explicit coverage, nullable usage/cost and measured
+  compatible age remain. No new scheduler, route, endpoint or provider capability.
+- Diagnostic session/identity uses read-only adopted v2 lookup, failing closed
+  for unadopted/mismatched sessions; normal Auth legacy adoption is preserved.
+  Screen preference reads now use the initialized DB handle too, with no cold
+  open/migration path even for Debug Mode OFF. No listPending wake, network Auth
+  refresh, Health run/repair, resume/dispatch or provider recovery from display.
+- All contributing non-shadow attempt responsibility labels are schema-validated;
+  corrupt older labels make the continuation source unavailable. Current terminal
+  FAILED requires operator attention despite retained RUNNING; retry eligibility
+  remains deferred, and older UNKNOWN dominates. Both locales reserve empty copy
+  for a successfully read row source.
+- Operations and Foundation observations use Account generation/current identity
+  and focus/active/supersession/cleanup fences, including A→B→A. Cached Trip actor
+  absence denies continuation metadata without IDs/counts. No evidence, Import
+  admission, retained result or remote capability is disclosed/certified.
+- Final focused validation: 17 files /297 tests PASS; typecheck, lint/UI guard,
+  formatting, whitespace and 90 exact-base schema/sync preservation files PASS.
+  Independent recheck also passed five files /24 external checks (overlapping
+  coverage), closing all F1–F6 with zero remaining required findings.
+  Original six negative scenarios reproduced before correction. No focused
+  baseline failures; no full-suite, native/device or live-provider claim.
+- Report correction section:
+  `architecture/OTR_PLATFORM_P4A_LOCAL_OPERATIONS_BUILDER_REPORT.md`.
+  Independent review retains its original findings and appended targeted PASS:
+  `architecture/OTR_PLATFORM_P4A_LOCAL_OPERATIONS_INDEPENDENT_REVIEW.md`.
+  Owner acceptance/closure is recorded in
+  `adr/2026-10-08-p4a-read-only-local-operations.md`.
+  STOP at local P4a closure. No Hosted/Production access, real AI call, deployment,
+  migration, push or integration. P4b/P4c remain gated.
+
 ## C1 canonical integration — prepared / independent review pending
 
 - Isolated pending merge at `/private/tmp/otr-c1-canonical-integration`, branch

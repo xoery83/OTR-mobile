@@ -15,3 +15,6 @@ export const openDatabase = createMigratedDatabaseOpener(
     serializeDatabaseTransactions(database);
   },
 );
+
+// Diagnostics never open or migrate a database. Startup owns initialization.
+export const readInitializedDatabase = openDatabase.readInitialized;

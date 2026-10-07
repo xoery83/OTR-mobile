@@ -4,7 +4,7 @@ export function createMigratedDatabaseOpener<T>(
 ) {
   let databasePromise: Promise<T> | null = null;
 
-  return function openMigratedDatabase() {
+  const openMigratedDatabase = function () {
     if (!databasePromise) {
       databasePromise = open()
         .then(async (database) => {
@@ -19,6 +19,12 @@ export function createMigratedDatabaseOpener<T>(
 
     return databasePromise;
   };
+  return Object.assign(openMigratedDatabase, {
+    readInitialized() {
+      if (!databasePromise) throw new Error("DATABASE_NOT_INITIALIZED");
+      return databasePromise;
+    },
+  });
 }
 
 export function serializeDatabaseTransactions<

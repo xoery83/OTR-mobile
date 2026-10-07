@@ -179,7 +179,9 @@ it("shares segment foreground/surface roles across animated and static controls,
 it("keeps the acceptance fixture behind persisted Debug Mode even for direct diagnostics entry", () => {
   const source = readFileSync("src/components/FoundationDiagnosticsScreen.tsx", "utf8");
   expect(source).toContain('transportMode === "dev" && debugMode');
-  expect(source).toContain("setDebugMode(preferences.debugMode)");
+  expect(source).toContain("readDiagnosticsDebugMode()");
+  expect(source).toContain("setDebugMode(enabled)");
+  expect(source).not.toContain("getDefaultLedgerReportingRepository()");
   expect(source).toContain("useFocusEffect");
   const settings = readFileSync("app/settings.tsx", "utf8");
   expect(settings).toContain("debugMode ? (");

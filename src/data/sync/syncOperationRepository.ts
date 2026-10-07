@@ -1,5 +1,6 @@
 import type * as SQLite from "expo-sqlite";
 import { createLocalId } from "@/domain/localId";
+import { z } from "zod";
 import { ApiClientError } from "@/data/api/client";
 import { syncFailureDetails, type SyncFailureCategory } from "./syncEngine";
 import { announceLedgerQueueWorkAvailable } from "./ledgerQueueActivity";
@@ -665,4 +666,45 @@ export function createIntelligenceWakeQueue(
       });
     },
   };
+}
+
+// Metadata only: unlike listPending, this does not wake dependencies or claim work.
+const syncDiagnosticSchema = z.object({
+  id: z.string(),
+  entityType: z.string(),
+  operationType: z.string(),
+  status: z.enum([
+    "PENDING",
+    "PROCESSING",
+    "RETRYABLE",
+    "DEPENDENCY_BLOCKED",
+    "FAILED",
+    "CONFLICT",
+    "COMPLETED",
+  ]),
+  failureCategory: z.string().nullable(),
+  updatedAt: z.string(),
+});
+export async function readSyncOperationDiagnostics(
+  database: Pick<SyncQueueDatabase, "getAllAsync">,
+  accountId: string,
+) {
+  const rows = await database.getAllAsync(
+    `SELECT id,entity_type AS entityType,operation_type AS operationType,
+      status,failure_category AS failureCategory,updated_at AS updatedAt
+     FROM sync_operations WHERE owner_user_id=? ORDER BY updated_at DESC,id LIMIT 51`,
+    accountId,
+  );
+  return rows.map((row) => syncDiagnosticSchema.parse(row));
+}
+export async function readPendingSyncCounts(
+  database: Pick<SQLite.SQLiteDatabase, "getFirstAsync">,
+  accountId: string,
+) {
+  return database.getFirstAsync<{ pending: number; itinerary: number }>(
+    `SELECT COUNT(*) AS pending,
+      COALESCE(SUM(entity_type='itinerary' AND operation_type='CREATE_ITINERARY'),0) AS itinerary
+     FROM sync_operations WHERE owner_user_id=? AND status IN ('PENDING','RETRYABLE')`,
+    accountId,
+  );
 }

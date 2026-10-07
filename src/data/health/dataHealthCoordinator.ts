@@ -870,20 +870,9 @@ export function createDataHealthCoordinator(dependencies: DataHealthDependencies
     },
 
     async getLatestState() {
-      const accountId = await dependencies.getActiveAccountId();
-      return dependencies.database.getFirstAsync<{
-        runState: string;
-        outcome: DataHealthOutcome | null;
-        findingCount: number;
-        attentionCount: number;
-        lastManualScanAt: string | null;
-        updatedAt: string;
-      }>(
-        `SELECT run_state AS runState, last_aggregate_outcome AS outcome,
-           last_finding_count AS findingCount, last_manual_scan_at AS lastManualScanAt,
-           last_attention_count AS attentionCount, updated_at AS updatedAt
-         FROM data_health_state WHERE account_id = ?`,
-        accountId,
+      return readLatestDataHealthState(
+        dependencies.database,
+        await dependencies.getActiveAccountId(),
       );
     },
 
@@ -2612,5 +2601,26 @@ function protectedIntentCount(manifest: Manifest) {
         receipt.uploadStatus !== "UPLOADED",
     ).length +
     manifest.reviewStates.filter((state) => state.syncStatus !== "SYNCED").length
+  );
+}
+
+// Read-only metadata shared with local DEV Operations; never scans or repairs.
+export async function readLatestDataHealthState(
+  database: Pick<Database, "getFirstAsync">,
+  accountId: string,
+) {
+  return database.getFirstAsync<{
+    runState: string;
+    outcome: DataHealthOutcome | null;
+    findingCount: number;
+    attentionCount: number;
+    lastManualScanAt: string | null;
+    updatedAt: string;
+  }>(
+    `SELECT run_state AS runState,last_aggregate_outcome AS outcome,
+      last_finding_count AS findingCount,last_attention_count AS attentionCount,
+      last_manual_scan_at AS lastManualScanAt,updated_at AS updatedAt
+     FROM data_health_state WHERE account_id=?`,
+    accountId,
   );
 }
