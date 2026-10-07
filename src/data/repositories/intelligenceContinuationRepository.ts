@@ -384,6 +384,18 @@ export function createIntelligenceContinuationRepository(
         );
       });
     },
+    authorizeResultDisclosure(context: AccountRequestContext, retained: Attempt) {
+      return transaction(context, async () => {
+        const current = await attempt(context.accountId, retained.attempt_id);
+        if (json(current) !== json(retained)) fail("INTELLIGENCE_RECOVERY_IDENTITY");
+        const owning = await task(context.accountId, current.task_id);
+        await pins(owning, context);
+        // Custody is historical; disclosure requires current owning authority.
+        // Recheck after all material/hash awaits, independently of installation.
+        await deps.validateAdmission(owning);
+        await assertAccountRequestContext(context, deps.getAccountId);
+      });
+    },
     readAttempt(context: AccountRequestContext, id: string) {
       return transaction(context, () => attempt(context.accountId, id));
     },
@@ -545,8 +557,8 @@ export function createIntelligenceContinuationRepository(
         );
       });
     },
-    // TEST harness handoff only: no production construction or dispatch authority.
-    admitSyntheticExecution(
+    // Shared final local CAS; synchronous handoff occurs only after COMMIT/gate release.
+    admitExecution(
       context: AccountRequestContext,
       expected: Readonly<Attempt>,
       execute: () => void,
@@ -598,6 +610,15 @@ export function createIntelligenceContinuationRepository(
           execute();
         },
       );
+    },
+    admitSyntheticExecution(
+      context: AccountRequestContext,
+      expected: Readonly<Attempt>,
+      execute: () => void,
+    ) {
+      if (expected.descriptor_snapshot.version !== 1)
+        fail("INTELLIGENCE_EXECUTION_FENCE");
+      return this.admitExecution(context, expected, execute);
     },
     snapshot(context: AccountRequestContext, id: string) {
       return transaction(context, async () => {

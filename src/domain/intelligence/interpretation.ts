@@ -29,32 +29,83 @@ export const interpretationDescriptorSchema = z.strictObject({
   cancellation: z.literal("UNSUPPORTED"),
   privacy_requirement: z.literal("LOCAL_ONLY"),
 });
-export const interpretationBindingSchema = z.strictObject({
-  request_id: uuid,
-  idempotency_key: uuid,
-  schema_dialect: z.literal("OTR_TYPED_V1"),
-  consumer_id: z.literal("otr-import-v1"),
-  contract_version: z.literal("otr-intelligence-v1"),
-  account_id: uuid,
-  trip_id: uuid,
-  run_id: uuid,
-  generation: z.number().int().positive().safe(),
-  input_sha256: digest,
-  schema_id: z.literal("otr.import.flight"),
-  schema_version: z.literal(1),
-  schema_sha256: digest,
-  descriptor: interpretationDescriptorSchema,
-  observed_at: z.iso.datetime(),
-  observation_clock: z.literal("CALLER_OBSERVED"),
-  deadline: z.iso.datetime(),
-  privacy: z.literal("LOCAL_ONLY"),
-  limits: z.strictObject({
-    inputs: z.literal(64),
-    items: z.literal(64),
-    fields: z.literal(64),
-    payload_bytes: z.literal(4194304),
-  }),
+// V1 local descriptors remain unchanged. V2 carries truthful remote execution pins.
+export const remoteFlightPinsSchema = z.strictObject({
+  provider_id: z.literal("DeepSeek"),
+  model_id: z.literal("deepseek-flash"),
+  expected_family: z.literal("DeepSeek-V4.1-Flash"),
+  adapter_version: z.string().min(1).max(128),
+  prompt_sha256: digest,
+  envelope_sha256: digest,
+  output_schema_sha256: digest,
+  minimizer_sha256: digest,
+  privacy_sha256: digest,
+  policy_sha256: digest,
+  price_sha256: digest,
+  provider_config_sha256: digest,
+  scope_sha256: digest,
+  scope_id: uuid,
+  scope_revision: z.number().int().positive().safe(),
+  price_schedule_id: uuid,
+  provider_config_id: uuid,
+  call_id: uuid,
+  attempt_id: uuid,
+  request_sha256: digest,
 });
+export const remoteFlightDescriptorSchema = interpretationDescriptorSchema.extend({
+  boundary_version: z.literal("otr-flight-remote-v2"),
+  plugin_id: z.literal("otr-deepseek-flight"),
+  model_version: z.literal("DeepSeek-V4.1-Flash"),
+  adapter_version: z.literal("deepseek-flight-v1"),
+  execution_location: z.literal("REMOTE_MODEL"),
+  network_required: z.literal(true),
+  privacy_requirement: z.literal("REMOTE_ALLOWED"),
+  replay: z.literal("UNSUPPORTED"),
+  remote: remoteFlightPinsSchema,
+});
+export const interpretationBindingSchema = z
+  .strictObject({
+    request_id: uuid,
+    idempotency_key: uuid,
+    schema_dialect: z.literal("OTR_TYPED_V1"),
+    consumer_id: z.literal("otr-import-v1"),
+    contract_version: z.enum([
+      "otr-intelligence-v1",
+      "otr-intelligence-flight-remote-v2",
+    ]),
+    account_id: uuid,
+    trip_id: uuid,
+    run_id: uuid,
+    generation: z.number().int().positive().safe(),
+    input_sha256: digest,
+    schema_id: z.literal("otr.import.flight"),
+    schema_version: z.literal(1),
+    schema_sha256: digest,
+    descriptor: z.union([interpretationDescriptorSchema, remoteFlightDescriptorSchema]),
+    observed_at: z.iso.datetime(),
+    observation_clock: z.literal("CALLER_OBSERVED"),
+    deadline: z.iso.datetime(),
+    privacy: z.enum(["LOCAL_ONLY", "REMOTE_ALLOWED"]),
+    limits: z.strictObject({
+      inputs: z.literal(64),
+      items: z.literal(64),
+      fields: z.literal(64),
+      payload_bytes: z.literal(4194304),
+    }),
+  })
+  .superRefine((v, ctx) => {
+    const remote = v.descriptor.boundary_version === "otr-flight-remote-v2";
+    if (
+      remote
+        ? v.contract_version !== "otr-intelligence-flight-remote-v2" ||
+          v.privacy !== "REMOTE_ALLOWED"
+        : v.contract_version !== "otr-intelligence-v1" || v.privacy !== "LOCAL_ONLY"
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Interpretation version/privacy mismatch.",
+      });
+  });
 export const interpretationMaterialSchema = z.strictObject({
   pin: flightInputSchema,
   media_type: z.literal("text/plain"),

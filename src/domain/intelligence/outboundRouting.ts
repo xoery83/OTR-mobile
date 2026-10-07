@@ -31,7 +31,12 @@ export const outboundSnapshotSchema = z
     adapter_version: label,
     config_version: version,
     configuration_sha256: digest,
-    provider_class: attemptSchema.shape.descriptor_snapshot.shape.provider_class,
+    provider_class: z.enum([
+      "DETERMINISTIC",
+      "ON_DEVICE",
+      "OTR_SELF_HOSTED",
+      "COMMERCIAL_REMOTE",
+    ]),
     capabilities: z.array(label).max(32),
     modalities: z.array(label).max(32),
     schemas: z.array(z.strictObject({ id: label, version, dialect: label })).max(32),

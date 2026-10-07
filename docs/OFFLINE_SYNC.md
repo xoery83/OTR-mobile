@@ -522,3 +522,41 @@ admission races remain passing. Queue COMPLETED means reevaluation-pass completi
 domain attention/debug facts retain execution, metering, installation and review state.
 No generic pending-sync or Ledger success substitutes for those facts. No new scheduler,
 startup wiring, recovery policy, UI or notification delivery is introduced.
+
+## CP15B CLOSED Flight dispatch handoff
+
+The remote executor is an injected implementation on the existing continuation
+worker seam. `sync_operations` remains the sole scheduler. No live factory is
+installed. The synthetic TEST harness remains separate and production-unreachable.
+
+Async request custody/secret readiness precedes protected reserve+START+hold and
+exact START recovery. The existing repository repeats Account generation, current
+material/Trip/owning admission and task/attempt/publication CAS locally. COMMIT and
+Account-gate release precede synchronous handoff to protected mark-dispatch. Only
+a durable MAY_HAVE_STARTED/RUNNING ACK permits one fixture transport; no network
+I/O occurs under SQLite/Account/SQL transactions. Independent server freshness
+checks reject pre-mark kill, deselection, grant/scope/Trip changes or failed budget.
+
+Lost ACK, response loss, timeout, cancel after possible dispatch and host recovery
+never establish nonexecution. UNKNOWN keeps its hold; queue/lease retries cannot
+redispatch the same attempt. Durable private result custody precedes metering and
+local installation. Meter loss retains the result for exact recovery/installation,
+not re-execution. Post-mark Account changes fence publication while responsibility
+and usage remain associated with the original Account. Holds retain their UTC
+admission day across midnight and never auto-refund on missing usage/failure.
+
+Only an explicitly bounded new same-provider attempt with trusted terminal FAILED
+predecessor, durable completion, C2 responsibility closure and fresh policy/budget/
+privacy/config admission can qualify. Default selected retry bound is one; no
+automatic repair prompt, shadow or commercial fallback is installed. Five C denials
+and CP13A canonical authority remain unchanged.
+
+CP15B F1–F4: private custody recovery completes before current owning disclosure
+admission. Exact current task/attempt/result and Account/Trip/material authority
+are rechecked after custody/hash awaits; a final generation fence precedes evidence
+return without another await. Installation keeps its independent existing fence.
+Denied disclosure never erases retained responsibility or creates execution work.
+SQL mark serializes Trip/membership authorization using existing C/Trip lock order;
+winning mark retains possible-execution responsibility after later revoke. Immutable
+holds retain digest-bound executing pins and mark checks current Security selection.
+Schedule-derived costs are estimates; missing/ambiguous billing remains UNKNOWN.

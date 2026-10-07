@@ -820,3 +820,63 @@ acceptance adds tests only: actual Server83 call/START with CLOSED dispatch, exp
 TEST synthetic execution, and inbound proposal/authenticated decision/CP13A recovery.
 Inbound never schedules outbound enrichment or attributes model cost. Same identifier
 bytes in separate namespaces confer no authority. No new endpoint or activation.
+
+## CP15B CLOSED DEV Flight foundation (Server84)
+
+The Backend-private gateway additionally recognizes `flight_activation_runtime`,
+`flight_activation_select`, `flight_activation_account_grant` and
+`flight_activation_reserve_call`. The first three require authenticated
+SECURITY_ADMIN, exact request binding, replay audit and expected-version CAS.
+No public route or client-supplied trusted context is added. Runtime change accepts
+DEV only and does not clear kill. Config Admin cannot select scopes/grants or
+activate runtime. Scope identity is stable per integration; versions bind exact
+provider/model/family, adapter/template/envelope/schema/minimizer/privacy/policy/
+price pins, expiry, resource bounds and monetary approval. Account grants have
+independent expiry, revocation and revision.
+
+The Flight reserve root atomically retains call, START and one resource hold under
+existing scope locks. Missing monetary policy denies admission. Mark-dispatch
+independently checks the current DEV runtime/kill, workload, scope/grant, Trip,
+configuration/provider and immutable hold. Old generic/synthetic/inbound calls
+lack a qualifying hold and remain unable to dispatch. Lost mark acknowledgement
+is UNKNOWN; a returned durable MAY_HAVE_STARTED/RUNNING ACK precedes transport.
+
+`FLIGHT_REMOTE_TEXT_V1` and `otr-intelligence-flight-remote-v2` carry truthful
+REMOTE_MODEL/REMOTE_ALLOWED execution. Local `otr-intelligence-v1` stays LOCAL_ONLY.
+Provider wire output contains only bounded opaque group/span tokens, allowed field
+paths and OBSERVED hints. It supplies no trusted IDs, canonical values or authority.
+Host rebinding verifies retained representation/material/input pins, restores each
+original UTF-8 span and runs OTR normalization before the existing CP13B pipeline.
+Unsupported private dimensions remain local deferred evidence; CP13A stays sole
+canonical authority. The injected adapter has no installed live transport/resolver.
+
+Usage append accepts a safe nullable `provider_request_id` only on a dispatched,
+held DEV Flight call; it is separate from request/observation identities and has
+no retry authority. Historical/inbound/synthetic rows remain NULL. Missing or
+inconsistent usage stays nullable/UNKNOWN independently of the retained result.
+See [CP15B ADR](adr/2026-10-07-cp15b-closed-dev-flight-dispatch.md).
+
+### CP15B targeted F1–F4 boundaries
+
+Retained-result recovery is a disclosure operation: after exact Account-scoped
+attempt lookup and private reference/hash awaits, it reruns the existing owning
+task/Trip/material admission and exact current attempt/result identity, then
+performs a fresh Account generation fence immediately before returning evidence.
+Retention does not grant disclosure or installation authority; denial leaves
+private result/usage responsibility intact and never redispatches.
+
+Reserve and mark join the existing C admission and Trip/membership row-lock
+convention. The Trip authorization observation is serialized through durable mark.
+Revoke winning denies mark; mark winning retains MAY_HAVE_STARTED responsibility.
+Post-mark revoke fences disclosure/install rather than claiming provider stopped.
+
+Signed reserve carries actual versioned execution pins and their digest. Immutable
+holds retain them; reserve compares them to Security-selected pins and mark repeats
+that comparison against the current selected scope/config. Backend compiled
+prompt/envelope/minimizer/privacy bytes and owning policy are independently checked.
+Opaque scope IDs alone provide no execution authority. Config Admin cannot select.
+
+Valid reported token counters retain ACTUAL_REPORTED usage quality. Cost derived
+from tokens and a pinned schedule is ESTIMATED; unresolved billing applicability
+or required price components remains UNKNOWN. Only separately admitted billing
+observations can establish actual cost through the existing append-only journal.

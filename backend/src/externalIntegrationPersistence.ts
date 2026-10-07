@@ -41,6 +41,10 @@ export const verifiedCallContextSchema = z.strictObject({
 });
 export type VerifiedCallContextV1 = z.infer<typeof verifiedCallContextSchema>;
 export const protectedCommands = [
+  "flight_activation_runtime",
+  "flight_activation_select",
+  "flight_activation_account_grant",
+  "flight_activation_reserve_call",
   "external_integration_configure",
   "external_integration_set_kill",
   "intelligence_provider_config_append",

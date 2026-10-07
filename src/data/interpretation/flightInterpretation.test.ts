@@ -696,3 +696,71 @@ describe("interpretation admission and evidence validation", () => {
     );
   });
 });
+
+// CP15B reuses this admitted catalog fixture and every existing CP13B authority check.
+it("CP15B truthful REMOTE_MODEL original spans enter CP13B N→M/proposal without authority", async () => {
+  const { remoteFixture } =
+    await import("../../../backend/src/__fixtures__/flightRemote");
+  const {
+    minimizeFlightRemoteText,
+    rebindFlightRemoteOutput,
+    flightRemoteRequestDigest,
+    remoteFlightConfigurationPins,
+  } = await import("@/domain/intelligence/remoteFlightText");
+  const { interpretRemoteFlightBatch } = await import("./flightInterpretation");
+  const remote = await remoteFixture();
+  const batch = await fixture([
+    remote.request.materials[0].text,
+    remote.request.materials[0].text.replace("NZ289", "NZ290"),
+  ]);
+  batch.request.binding.privacy = "REMOTE_ALLOWED";
+  batch.request.binding.contract_version = "otr-intelligence-flight-remote-v2";
+  batch.request.binding.descriptor = remote.descriptor;
+  batch.request.binding.deadline = "2070-01-01T00:00:00Z";
+  batch.request.binding.descriptor.configuration_sha256 = await importDigest(
+    "otr-flight-interpretation-config-v1",
+    {
+      matching: flightInterpretationConfiguration(batch),
+      descriptor: remoteFlightConfigurationPins(remote.descriptor),
+    } as unknown as Json,
+    hash,
+  );
+  remote.descriptor.remote.request_sha256 = await flightRemoteRequestDigest(
+    batch.request,
+    hash,
+  );
+  const envelope = await minimizeFlightRemoteText(batch.request, hash);
+  const output = {
+    version: "FLIGHT_REMOTE_OUTPUT_V1",
+    items: [...new Set(envelope.spans.map((s) => s.group))].map((group) => ({
+      group,
+      fields: envelope.spans
+        .filter((s) => s.group === group)
+        .flatMap((s) =>
+          s.paths.map((path) => ({ span: s.token, path, semantic: "OBSERVED" })),
+        ),
+    })),
+  };
+  const response = await rebindFlightRemoteOutput(output, envelope, batch.request, hash);
+  const result = await interpretRemoteFlightBatch(batch, {
+    ...deps,
+    plugin: async () => response,
+  });
+  expect(result.candidates).toHaveLength(2);
+  expect(result.interpretation_binding.descriptor.execution_location).toBe(
+    "REMOTE_MODEL",
+  );
+  expect(result.interpretation_binding.privacy).toBe("REMOTE_ALLOWED");
+  expect(result.publication_request.extractor_options_sha256).toBe(
+    remote.descriptor.configuration_sha256,
+  );
+  expect(result.publication_request.id).toBe(batch.request.binding.run_id);
+  expect(result.fragments.every((f) => f.locator.kind === "TEXT_SPAN")).toBe(true);
+  await expect(
+    interpretFlightBatch(batch, { ...deps, plugin: async () => response }),
+  ).rejects.toThrow("PRIVACY_POLICY_BLOCKED");
+  batch.catalog.trip_source_representations[0].text_content += " stale";
+  await expect(
+    interpretRemoteFlightBatch(batch, { ...deps, plugin: async () => response }),
+  ).rejects.toThrow();
+});

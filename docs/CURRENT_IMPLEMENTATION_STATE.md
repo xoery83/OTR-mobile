@@ -2,6 +2,49 @@
 
 Date: 2026-10-07 (Pacific/Auckland).
 
+## CP15B CLOSED DEV Flight foundation — F1–F4 corrected / ready for targeted recheck
+
+- Existing worktree: `cp15b-real-dispatch-foundation/otr-mobile-canonical`, branch
+  `intelligence/cp15b-real-dispatch-foundation`, exact unchanged HEAD/base
+  `b973f039dfd6405d302409252ddbdc8f70584159`. No commit or push.
+- Owner accepted the normative byte-identical CP15A adoption, overlay and Server84
+  mapping and authorized completion. Historical prerequisite-stop/report sections
+  are preserved; implementation/results are appended to the Builder report.
+- Server84 adds Security Admin DEV runtime/scope/Account allowlist and immutable
+  call resource holds. TEST/PRODUCTION remain structurally closed. All activation
+  defaults remain disabled/killed; no live monetary policy is invented or seeded.
+  Missing monetary approval denies admission. UNKNOWN never auto-refunds/retries.
+- Fixed DeepSeek/deepseek-flash adapter, Backend-private injected secret boundary,
+  truthful Flight remote v2 envelope/descriptor, deterministic minimizer, strict
+  output parsing, original-span rebinding and server price/usage mapping are implemented.
+  Only network-disabled fixtures exist; no actual resolver/key/network factory or
+  public endpoint is installed. Remote facts traverse the existing CP13B core.
+- SQLite50 cold-reopen/FK conformance passed for truthful Run/attempt/config/evidence/
+  execution/usage/publication association. No SQLite51 or second scheduler was needed.
+  Server1–83/SQLite1–50, accepted reviews, `sync_operations` and five C denials remain
+  preserved. CP13A retains canonical authority; no Event/participant/booking writes
+  are added to the model path.
+- Targeted F1–F4: recovery now repeats current owning disclosure authority and
+  final Account generation after custody; Trip/membership locks serialize mark
+  with revoke; signed admission and immutable holds enforce actual executing pins;
+  schedule-derived cost is ESTIMATED separately from token quality. No SQLite51.
+- Original independent review is unchanged. Its F1–F4 findings are real corrected
+  defects, not baseline failures. Appended targeted results in the Builder report
+  supersede the historical initial readiness claim; independent recheck is pending.
+- Final targeted validation: 202 recovery/executor cases, 124 actual pin/barrier/
+  cost checks, 104 Server84 security checks, 548+75 Server83 compatibility checks,
+  841 original SQL checks, A2/C1/C2/C3 and 143 B2 cases pass. Full suite: 2,577 pass /
+  one unchanged exact-base Ledger failure. Typecheck, lint/UI guard, Backend build,
+  formatting and88 preservation hashes pass; independent review remains unchanged.
+- No Hosted Dev/Production, real secret/provider call, activation, deployment,
+  Vision/Apple/public B2/shadow/fallback, commit or push is authorized here.
+- Next checkpoint: targeted independent F1–F4 recheck. CP15B-LIVE remains separately gated; it is not this task.
+- Authority: normative `architecture/CP15_FIRST_INTELLIGENCE_ACTIVATION_PREFLIGHT.md`,
+  Owner overlay/continuation, Builder report mapping, and
+  `adr/2026-10-07-cp15b-closed-dev-flight-dispatch.md`.
+
+The CP14 sections below are historical accepted foundation context.
+
 ## CP14 final owner closure — accepted CLOSED scope
 
 - Owner closure accepted after the same independent Final Closure reviewer appended

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { remoteFlightDescriptorSchema } from "./interpretation";
 export const identity = z.uuid();
 export const digest = z.string().regex(/^[a-f0-9]{64}$/);
 export const label = z.string().regex(/^[A-Za-z0-9._:-]{1,128}$/);
@@ -214,7 +215,15 @@ export const attemptSchema = z.strictObject({
   provider_config_id: identity.nullable(),
   config_version: label.nullable(),
   configuration_sha256: digest.nullable(),
-  descriptor_snapshot: descriptor,
+  descriptor_snapshot: z.union([
+    descriptor,
+    descriptor.extend({
+      version: z.literal(2),
+      provider_class: z.literal("COMMERCIAL_REMOTE"),
+      network_required: z.literal(true),
+      remote_run: remoteFlightDescriptorSchema,
+    }),
+  ]),
   policy_admission: admission,
   policy_admission_sha256: digest,
   task_publication_fence: revision,

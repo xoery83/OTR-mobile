@@ -44,6 +44,7 @@ import {
   type Task,
   type Attempt,
   type ContinuationRoute,
+  executionReportSchema,
   type ExecutionReport,
 } from "@/domain/intelligence/persistence";
 import {
@@ -4246,3 +4247,320 @@ it("CP14 final outbound wait/wake/router/START/CLOSED synthetic/install/attentio
     expect(server.inbound()).toBe(inboundBefore);
   }
 }, 60000);
+
+it.each([
+  "valid",
+  "account-switch",
+  "account-aba",
+  "account-final",
+  "trip-before",
+  "trip-custody",
+  "trip-admission",
+  "material-revoke",
+  "identity-change",
+])("CP15B F1 SQLite50 cold recovery current disclosure authority: %s", async (mode) => {
+  const { remoteFixture } =
+    await import("../../../backend/src/__fixtures__/flightRemote");
+  const {
+    minimizeFlightRemoteText,
+    rebindFlightRemoteOutput,
+    flightRemoteRequestDigest,
+  } = await import("@/domain/intelligence/remoteFlightText");
+  const { writeFileSync, readFileSync } = await import("node:fs");
+  const remote = await remoteFixture();
+  const folder = mkdtempSync(join(tmpdir(), "cp15-remote-cold-"));
+  folders.push(folder);
+  const path = join(folder, "journal.db"),
+    f = await fixture(true, path);
+  const policy = {
+    ...f.t.policy_snapshot,
+    privacy: "REMOTE_ALLOWED" as const,
+    network_required: true,
+    region: "DEV",
+    budget_currency: "USD",
+    budget_nanos: "1000000",
+    route: "DeepSeek",
+  };
+  const trip = remote.request.binding.trip_id,
+    source = randomUUID(),
+    representation = randomUUID();
+  const text = "Original retained Flight=NZ289",
+    materialSha = await hash(new TextEncoder().encode(text));
+  f.sql.exec("BEGIN");
+  f.sql
+    .prepare(
+      "insert into trip_sources(cache_account_id,id,trip_id,acquired_by,acquisition_key,acquisition_sha256,source_kind,acquisition_channel,capture_time_basis,current_material_revision,row_revision) values(?,?,?,?,?,?,'TEXT','SYNTHETIC','UNKNOWN',1,1)",
+    )
+    .run(account, source, trip, account, randomUUID(), h);
+  f.sql
+    .prepare(
+      "insert into trip_source_revisions(cache_account_id,source_id,material_revision,created_by,operation_key,capture_sha256,original_representation_ids,completeness,reason) values(?,?,1,?,?,?,?,'AS_SUPPLIED','ACQUISITION')",
+    )
+    .run(account, source, account, randomUUID(), h, JSON.stringify([representation]));
+  f.sql
+    .prepare(
+      "insert into trip_source_representations(cache_account_id,id,row_revision,source_id,introduced_revision,role,material_kind,payload_sha256,byte_count,text_content,regenerability,remote_state,local_state,local_verified_at,transfer_state) values(?,?,1,?,1,'ORIGINAL','TEXT',?,?,?,'NOT_APPLICABLE','NOT_APPLICABLE','VERIFIED',?,'NOT_REQUIRED')",
+    )
+    .run(account, representation, source, materialSha, text.length, text, now);
+  f.sql.exec("COMMIT");
+  const input_pins = [
+    {
+      kind: "SOURCE" as const,
+      source_id: source,
+      material_revision: 1,
+      representation_id: representation,
+      payload_sha256: materialSha,
+      byte_count: text.length,
+      input_id: null,
+      transform_sha256: null,
+    },
+  ];
+  f.context = await captureAccountRequestContext(trip, async () => account);
+  const task = {
+    ...f.t,
+    trip_id: trip,
+    input_pins,
+    input_sha256: await digest(input_pins),
+    policy_snapshot: policy,
+    policy_sha256: await digest(policy),
+  };
+  await f.repo.create(f.context, task);
+  const original = await f.a(task);
+  const descriptor = remote.descriptor;
+  descriptor.remote.attempt_id = original.attempt_id;
+  descriptor.remote.call_id = randomUUID();
+  descriptor.remote.request_sha256 = original.request_sha256;
+  remote.request.binding.account_id = account;
+  remote.request.binding.request_id = original.request_id;
+  descriptor.remote.request_sha256 = await flightRemoteRequestDigest(
+    remote.request,
+    hash,
+  );
+  original.request_sha256 = descriptor.remote.request_sha256;
+  const envelope = await minimizeFlightRemoteText(remote.request, hash);
+  const requestRef = randomUUID(),
+    responseRef = randomUUID();
+  const response = await rebindFlightRemoteOutput(
+    remote.output,
+    envelope,
+    remote.request,
+    hash,
+  );
+  const bundle = {
+    descriptor,
+    envelope,
+    response,
+    run_id: remote.request.binding.run_id,
+    attempt_id: original.attempt_id,
+    call_id: descriptor.remote.call_id,
+    usage: {
+      input_tokens: 100,
+      output_tokens: 20,
+      total_tokens: 120,
+      quality: "ACTUAL_REPORTED",
+    },
+  };
+
+  const a = attemptSchema.parse({
+    ...original,
+    integration_id: "cp15-flight",
+    provider_id: "DeepSeek",
+    model_id: "deepseek-flash",
+    model_version: "DeepSeek-V4.1-Flash",
+    adapter_version: descriptor.adapter_version,
+    provider_config_id: descriptor.remote.provider_config_id,
+    config_version: "1",
+    configuration_sha256: descriptor.configuration_sha256,
+    request_material_reference: requestRef,
+    request_material_sha256: await digest(envelope),
+    usage_correlation_id: descriptor.remote.call_id,
+    metering_disposition: "START_PENDING",
+    descriptor_snapshot: {
+      version: 2,
+      provider_class: "COMMERCIAL_REMOTE",
+      replay_support: "UNSUPPORTED",
+      capabilities: ["EXTRACT"],
+      modalities: ["TEXT"],
+      network_required: true,
+      remote_run: descriptor,
+    },
+  });
+  const report = executionReportSchema.parse({
+    account_id: a.account_id,
+    task_id: a.task_id,
+    attempt_id: a.attempt_id,
+    request_id: a.request_id,
+    request_sha256: a.request_sha256,
+    usage_correlation_id: a.usage_correlation_id,
+    execution_observation: "TERMINAL",
+    execution_outcome: "SUCCEEDED",
+    response_material_reference: responseRef,
+    response_material_sha256: h,
+    response_sha256: await digest(response),
+    metering_disposition: "COMPLETION_PENDING",
+    reported_usage_summary: null,
+    recovery_sha256: null,
+  });
+  const stored = {
+    version: 1,
+    attempt_id: a.attempt_id,
+    descriptor: a.descriptor_snapshot,
+    interpretation: response,
+    result: { usage: bundle.usage },
+    report,
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(stored)),
+    responseSha = await hash(bytes);
+  writeFileSync(join(folder, responseRef), bytes);
+  await f.repo.reserveAttempt(f.context, a);
+  await f.repo.observeAttempt(f.context, a.attempt_id, 1, {
+    ...f.observation("RUNNING"),
+    metering_disposition: "START_DURABLE",
+  });
+  await f.repo.observeAttempt(f.context, a.attempt_id, 2, {
+    ...f.observation("TERMINAL", "SUCCEEDED", await digest(response)),
+    metering_disposition: "COMPLETION_PENDING",
+    response_material_reference: responseRef,
+    response_material_sha256: responseSha,
+  });
+  f.sql.close();
+  const reopened = await fixture(true, path, false);
+  reopened.context = await captureAccountRequestContext(trip, async () => account);
+  const recovered = await reopened.repo.readAttempt(reopened.context, a.attempt_id);
+  expect(recovered.descriptor_snapshot).toEqual(a.descriptor_snapshot);
+  expect(recovered.usage_correlation_id).toBe(bundle.call_id);
+  expect(recovered.request_material_reference).toBe(requestRef);
+  const retained = readFileSync(join(folder, recovered.response_material_reference!));
+  expect(await hash(retained)).toBe(recovered.response_material_sha256);
+  expect(JSON.parse(retained.toString())).toEqual(stored);
+  const { createFlightDevExecutor } =
+    await import("../../../backend/src/flightDevDispatch");
+  const { advanceAccountGeneration } = await import("../auth/accountGeneration");
+  const transport = vi.fn(),
+    admission = reopened.deps.validateAdmission;
+  let attack = true,
+    checks = 0;
+  if (mode === "trip-before") reopened.setAdmission(false);
+  if (mode === "material-revoke")
+    reopened.sql
+      .prepare(
+        "update trip_sources set lifecycle='DELETED',deleted_at='2026-10-07T00:00:00.000000Z',deleted_by=acquired_by where id=?",
+      )
+      .run(source);
+  reopened.deps.validateAdmission = async (t) => {
+    checks++;
+    if (attack && mode === "trip-admission" && checks === 1) reopened.setAdmission(false);
+    return admission(t);
+  };
+  const factory = createFlightDevExecutor({
+    repo: {
+      ...reopened.repo,
+      async authorizeResultDisclosure(
+        context: typeof reopened.context,
+        attempt: Attempt,
+      ) {
+        await reopened.repo.authorizeResultDisclosure(context, attempt);
+        if (attack && mode === "account-final") {
+          advanceAccountGeneration();
+          advanceAccountGeneration();
+        }
+      },
+    },
+    hash,
+    transport: { kind: "NETWORK_DISABLED_FIXTURE", send: transport },
+    retained: {
+      read: async () => ({
+        reference: responseRef,
+        sha256: responseSha,
+        byteCount: bytes.length,
+      }),
+    },
+    custody: {
+      read: async () => {
+        if (attack && mode === "account-switch") {
+          reopened.setAccount(randomUUID());
+          advanceAccountGeneration();
+        }
+        if (attack && mode === "account-aba") {
+          advanceAccountGeneration();
+          advanceAccountGeneration();
+        }
+        if (attack && mode === "trip-custody") reopened.setAdmission(false);
+        if (attack && mode === "identity-change")
+          await reopened.repo.observeAttempt(
+            reopened.context,
+            a.attempt_id,
+            recovered.row_revision,
+            {
+              ...reopened.observation("TERMINAL", "SUCCEEDED", await digest(response)),
+              metering_disposition: "COMPLETE",
+              response_material_reference: responseRef,
+              response_material_sha256: responseSha,
+            },
+          );
+        return readFileSync(join(folder, responseRef));
+      },
+    },
+  } as unknown as Parameters<typeof createFlightDevExecutor>[0]);
+  if (mode === "valid")
+    expect(
+      (await factory.recover(reopened.context, a.attempt_id)).interpretation,
+    ).toEqual(response);
+  else await expect(factory.recover(reopened.context, a.attempt_id)).rejects.toThrow();
+  expect(readFileSync(join(folder, responseRef))).toEqual(retained);
+  expect(transport).not.toHaveBeenCalled();
+  reopened.setAccount(account);
+  if (mode === "account-switch") advanceAccountGeneration();
+  const fresh = await captureAccountRequestContext(trip, reopened.deps.getAccountId);
+  if (
+    mode === "trip-before" ||
+    mode === "trip-custody" ||
+    mode === "trip-admission" ||
+    mode === "material-revoke"
+  )
+    await expect(
+      reopened.repo.installResult(
+        fresh,
+        a.attempt_id,
+        recovered.row_revision,
+        bundle.run_id,
+        await digest(response),
+        async () => {},
+      ),
+    ).rejects.toThrow();
+  attack = false;
+  reopened.setAdmission(true);
+  if (mode === "material-revoke") {
+    // A deleted Source is not resurrected just to disclose historical evidence.
+    await expect(factory.recover(fresh, a.attempt_id)).rejects.toThrow();
+    const responsibility = await reopened.repo.readAttempt(fresh, a.attempt_id);
+    expect(responsibility.response_material_reference).toBe(responseRef);
+    expect(responsibility.response_material_sha256).toBe(responseSha);
+    expect(responsibility.execution_observation).toBe("TERMINAL");
+    expect(reopened.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    expect(migrations.at(-1)?.id).toBe(50);
+    return;
+  }
+  expect((await factory.recover(fresh, a.attempt_id)).interpretation).toEqual(response);
+  const currentAttempt = await reopened.repo.readAttempt(fresh, a.attempt_id);
+  expect(currentAttempt.response_material_reference).toBe(responseRef);
+  expect(currentAttempt.response_material_sha256).toBe(responseSha);
+  expect(currentAttempt.execution_observation).toBe("TERMINAL");
+
+  expect(await reopened.repo.recoveryDisposition(fresh, task.task_id)).toBe(
+    "INSTALL_ONLY",
+  );
+  await reopened.repo.installResult(
+    fresh,
+    a.attempt_id,
+    currentAttempt.row_revision,
+    bundle.run_id,
+    await digest(response),
+    async () => {},
+  );
+  const installed = await reopened.repo.read(fresh, task.task_id);
+  expect(installed.publication_id).toBe(bundle.run_id);
+  expect(installed.result_sha256).toBe(await digest(response));
+  expect(reopened.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  expect(migrations.at(-1)?.id).toBe(50);
+});

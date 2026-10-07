@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { remoteFlightConfigurationPins } from "@/domain/intelligence/remoteFlightText";
 import {
   tripImportCatalogSchemas,
   tripImportSnapshotSchema,
@@ -516,7 +517,7 @@ function consolidateProposal(
 
 /** Explicit, unwired Builder-B seam. Returns immutable observations/publication
  * input only. Does not install a Run, authorize closure, or prepare any output. */
-export async function interpretFlightBatch(
+async function interpretFlightBatchCore(
   raw: FlightInterpretationBatch,
   dependencies: {
     sha256: ImportHash;
@@ -526,6 +527,7 @@ export async function interpretFlightBatch(
       request: FlightInterpretationBatch["request"],
     ) => Promise<InterpretationResponse>;
   },
+  remote = false,
 ) {
   const parsed = seamSchema.safeParse(raw);
   if (!parsed.success)
@@ -547,8 +549,15 @@ export async function interpretFlightBatch(
   if (Date.parse(request.binding.deadline) <= Date.parse(now()))
     fail("INTERPRETATION_DEADLINE");
   if (
-    request.binding.descriptor.network_required ||
-    request.binding.descriptor.execution_location !== "DETERMINISTIC_LOCAL"
+    remote
+      ? request.binding.privacy !== "REMOTE_ALLOWED" ||
+        request.binding.descriptor.boundary_version !== "otr-flight-remote-v2" ||
+        !request.binding.descriptor.network_required ||
+        request.binding.descriptor.execution_location !== "REMOTE_MODEL" ||
+        !dependencies.plugin
+      : request.binding.privacy !== "LOCAL_ONLY" ||
+        request.binding.descriptor.network_required ||
+        request.binding.descriptor.execution_location !== "DETERMINISTIC_LOCAL"
   )
     fail("PRIVACY_POLICY_BLOCKED");
   if (new TextEncoder().encode(json(batch)).length > 4194304) fail("LIMIT_EXCEEDED");
@@ -630,7 +639,15 @@ export async function interpretFlightBatch(
     request.binding.descriptor.configuration_sha256 !==
       (await importDigest(
         "otr-flight-interpretation-config-v1",
-        flightInterpretationConfiguration(batch) as unknown as Json,
+        (remote
+          ? {
+              matching: flightInterpretationConfiguration(batch),
+              descriptor:
+                request.binding.descriptor.boundary_version === "otr-flight-remote-v2"
+                  ? remoteFlightConfigurationPins(request.binding.descriptor)
+                  : null,
+            }
+          : flightInterpretationConfiguration(batch)) as unknown as Json,
         sha256,
       ))
   )
@@ -706,7 +723,9 @@ export async function interpretFlightBatch(
     json(response.binding) !== json(request.binding) ||
     response_sha256 !==
       (await importDigest(
-        "otr-intelligence-response-v1",
+        remote
+          ? "otr-intelligence-flight-remote-response-v2"
+          : "otr-intelligence-response-v1",
         body as unknown as Json,
         sha256,
       )) ||
@@ -1114,6 +1133,19 @@ export async function interpretFlightBatch(
     return freeze(result);
   });
 }
+
+export const interpretFlightBatch = (
+  raw: FlightInterpretationBatch,
+  deps: Parameters<typeof interpretFlightBatchCore>[1],
+) => interpretFlightBatchCore(raw, deps);
+// Rebound observations traverse the same CP13B validation/matching/publication path.
+// No provider transport is invoked here; the caller supplies the retained response.
+export const interpretRemoteFlightBatch = (
+  raw: FlightInterpretationBatch,
+  deps: Parameters<typeof interpretFlightBatchCore>[1] & {
+    plugin: NonNullable<Parameters<typeof interpretFlightBatchCore>[1]["plugin"]>;
+  },
+) => interpretFlightBatchCore(raw, deps, true);
 
 // The one public Candidate Set; closure uses an explicit review projection.
 export type FlightCandidateSet = Awaited<ReturnType<typeof interpretFlightBatch>>;

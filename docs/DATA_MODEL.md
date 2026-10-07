@@ -680,3 +680,44 @@ preserves Server83/SQLite50 and all accepted migration bytes. Separate package/t
 namespaces remain independently Account-scoped even when UUIDs/request keys coincide;
 proposal/decision, execution/install and synthetic/server usage remain distinct.
 No new table, authority, cost ledger or migration is introduced.
+
+## CP15B CLOSED Server84 / unchanged SQLite50
+
+Server84 is `20261007000100_flight_dev_dispatch_foundation.sql`. Historical
+Server1–83 sources and every SQLite migration remain unchanged. DEV runtime is
+inactive/killed by default; TEST/PRODUCTION cannot store enabled real runtime.
+
+Three protected FORCE-RLS tables extend the existing authority split:
+`flight_activation_scopes` stores immutable SECURITY_ADMIN-selected versions;
+`flight_activation_account_grants` stores scoped Account expiry/revocation/CAS;
+`flight_call_resource_holds` stores one immutable resource reservation per existing
+call. Holds pin scope revision/digest, grant revision, Account/provider, UTC
+admission day, input/output ceilings, conservative worst-case nanos, currency and
+price schedule, and immutable actual execution pins/digest (prompt, envelope/version,
+minimizer/version, privacy/profile, policy, adapter, schema, provider config and price).
+They are resource admission, not a second cost ledger or customer
+billing. Caps are at most 8192 input, 2048 output, 1 concurrent/Account, 20 calls/
+Account/day and 100 DEV/provider/day. No live monetary values or activation rows
+are seeded. Missing approved monetary policy denies real admission.
+
+The usage journal gains safe nullable `provider_request_id`; historical rows
+remain NULL. Existing append-only observations and immutable rational schedules
+retain server usage/cost authority, including nullable quantities and quality.
+Input cache slices are disjoint for costing; reasoning is included in output;
+ambiguous/unsupported/missing pricing remains UNKNOWN rather than double counted.
+Immutable schedule intervals can represent provider currency and time-dependent
+prices; no FX or repricing is introduced.
+
+SQLite50's generic descriptor JSON admits a truthful remote v2 descriptor.
+Immutable request custody and independent response custody/execution/usage axes,
+together with the existing publication UUID/digest and Source Run extractor-options
+digest, preserve the Run→attempt/config/evidence/call association on cold reopen.
+Original evidence retains exact UTF-8 locators. No Run column, SQLite51, scheduler,
+participant/booking table or canonical authority is added.
+
+CP15B F1–F4 corrections stay within uncommitted Server84 and existing SQLite50.
+No SQLite schema change is required for current disclosure authorization. Retained
+historical response/usage bytes remain stored when current owning authorization
+fails. Schedule-derived cost quality is ESTIMATED independently of actual token
+quality; unresolved price/time applicability is UNKNOWN. Late admitted billing
+observations supersede estimates under existing journal replay/projection semantics.
