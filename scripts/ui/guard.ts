@@ -283,6 +283,7 @@ export function newUiDebt(
 // Owner-approved representative UI roots. Relative/component imports expand coverage
 // automatically, so adding a child cannot silently restore baseline debt.
 export const representativeRoots = [
+  "app/(tabs)/capture.tsx",
   "src/features/ledger/LedgerReviewScreen.tsx",
   "src/features/ledger/LedgerReviewFindingScreen.tsx",
   "src/features/ledger/PersonalSettlementReviewScreen.tsx",

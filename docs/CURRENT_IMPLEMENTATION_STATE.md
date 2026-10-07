@@ -1,6 +1,40 @@
 # Current Implementation State
 
-Date: 2026-10-07 (Pacific/Auckland).
+Date: 2026-10-08 (Pacific/Auckland).
+
+## Capture C1 — owner iPhone device acceptance PASS
+
+- Worktree `/Users/xoery/Project/otr-mobile-capture`, branch `trip/capture`, retained
+  base HEAD `92b87bd20f0d4baf23d3b4da8934d3142133e765`; starting status clean.
+  Owner accepted the complete C1 checkpoint and authorized a local commit only; no push.
+- Authenticated temporary Capture route now mounts identity-neutral reusable content.
+  Installed Files/Photos pickers compose ordered session-local metadata, support
+  removal/cancel and preserve a fixed invocation prior. Leaving/unmounting discards
+  staging. Final Add is disabled and explicitly says nothing has been saved.
+- Existing Account generation gains subscription only; current request/apply gate
+  fences callbacks and waits for local session installation. StrictMode effect replay,
+  Account A→B→A/transition/blur, Trip-prior rerender and late picker results are tested.
+- Independent C1 review fixed F1–F3 and final recheck PASS with **zero remaining
+  CRITICAL/IMPORTANT/MINOR**. C1 **13 tests**; final scoped **16 files /175 tests PASS**.
+  Typecheck, scoped lint/format, UI/terminology guard and whitespace PASS.
+- Signed Release installed on owner iPhone 16 Pro / iOS 27.0.1 with existing data
+  preserved; startup and Capture reachability verified. On 2026-10-08 the owner
+  reported device acceptance **PASS**: add/remove Files, add/remove Photos in the
+  same tray, Cancel, and intentionally unavailable durable submission. No broader
+  VoiceOver, large-text, permission or native visual acceptance is claimed.
+- Camera deferred because installed permission descriptions are receipt-specific;
+  Magic Input/connections are outside C1. No dependency/schema/migration, durable
+  submission, Source/Job/semantic Import/domain writer, Guest, automatic admission,
+  Banner support or runtime/provider/Experience shell activation.
+  SQLite1–50/server1–83 and the five accepted Capture documents remain unchanged.
+- Reports: `architecture/OTR_CAPTURE_C1_IMPLEMENTATION_REPORT.md`,
+  `architecture/OTR_CAPTURE_C1_IMPLEMENTATION_REVIEW.md`, and
+  `architecture/OTR_CAPTURE_C2_DURABLE_INTAKE_PREFLIGHT.md`.
+- **C1 ACCEPTED. STOP after the authorized commit. C2 NOT STARTED.**
+  C0 runs separately; no output is
+  installed here. C2 awaits approved Batch/Job/context, item idempotency/atomic
+  Capture-manifest linkage, partial recovery and native URI viability handoff.
+  Existing CP14 accepted CLOSED scope below remains authoritative.
 
 ## CP14 final owner closure — accepted CLOSED scope
 
