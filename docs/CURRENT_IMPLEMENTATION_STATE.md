@@ -2,6 +2,38 @@
 
 Date: 2026-10-09 (Pacific/Auckland).
 
+## P2b-A final Owner acceptance — DORMANT ADAPTER ACCEPTED
+
+- Owner accepts the integrated read-only Adapter, Builder report, original Independent
+  Review and appended R1 targeted recheck PASS. Scope remains dormant local Adapter only.
+- One scoped local closure is authorized at exact parent
+  `7273ac0599b7495bc108c2cf94cc4d8a1cdffdc0`, containing Adapter,38 focused tests,
+  Builder report, Independent Review with correction history, and this handoff.
+- Closure validation:38 focused tests, typecheck, full lint/UI guard, changed-file
+  formatting, whitespace and exact-scope preservation PASS. SQLite1–53 and existing
+  owning repositories remain unchanged; no production caller or runtime wiring added.
+- Next requires separate canonical integration authorization. Authenticated Transport,
+  Integrated C4, provider and C5/C9 gates remain CLOSED; no push/merge/rebase, canonical
+  main advancement, Hosted or device operation is authorized by this closure.
+- Earlier Builder/review-required sections below are preserved checkpoint history.
+
+## P2b-A integrated Adapter Builder — INDEPENDENT REVIEW REQUIRED
+
+- Fresh isolated worktree at verified local/origin/remote main
+  `7273ac0599b7495bc108c2cf94cc4d8a1cdffdc0`. Dormant read-only C2→C4a adapter
+  reuses accepted SQLite51–53 transaction-local owning stores.
+- Complete Membership and current Capture authority replace historical provenance
+  inference; sealed observations receive one final Account-gated transaction comparison.
+  Derived/convergent DAGs retain separate Original/selected pins; ambiguous roots reject.
+- Original12 defect probes reproduced;38 focused and777 affected tests PASS.
+  Typecheck, lint/UI guard, Backend build and changed-file formatting PASS.
+  Full formatting retains28 unchanged baseline violations; accepted history preserved.
+- Exact four-path scope and evidence:
+  `architecture/OTR_PLATFORM_P2BA_ADAPTER_INTEGRATED_BUILDER_REPORT.md`.
+  No schema/owning semantics/runtime/Transport activation or commit/push/merge.
+- Next: independent review only. Authenticated Publication Transport remains CLOSED;
+  historical NULL is fail-closed, UNKNOWN/dependency blocking and invocation revision1 remain.
+
 ## SQLite53 canonical integration preflight — OWNER REVIEW REQUIRED
 
 - Fresh detached candidate at verified main `2128ec7c7dea9a12366a21f98b8722d4c1d75c38`,
