@@ -599,8 +599,10 @@ export function createCaptureSubmissionRepository(
     },
     async list(
       options: { limit?: number; before?: { createdAt: string; batchId: string } } = {},
+      expectedContext?: AccountRequestContext,
     ) {
-      const c = await context();
+      const c = expectedContext ?? (await context());
+      await assert(c);
       const limit = options.limit ?? 20;
       if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
         throw new LocalCaptureError("INVALID_INPUT");

@@ -2,6 +2,61 @@
 
 Date: 2026-10-08 (Pacific/Auckland).
 
+## Capture C3 canonical integration — PREPARED / INDEPENDENT REVIEW PASS
+
+- Owner-authorized isolated worktree
+  `/private/tmp/otr-c3-canonical-integration-20261008`, branch
+  `codex/c3-canonical-integration-20261008`. Ordinary no-commit merge retains first
+  parent `06adea85fc5d5d7b24f7e15a598e28cb86ae4671` and accepted C3 second parent
+  `32d571b8fe4c7408f06c6294f8d41ee375c784d3`; common ancestor is accepted C2
+  `914e854cba7c2c97cfec7243047a06cadcc82c05`. Main/origin/main were freshly fetched
+  and matched the first parent. No commit, push or canonical publication.
+- C3 is Owner-accepted **Functional Simulator PASS / Physical Device Deferred**.
+  Account-scoped Activity discovers retained Jobs with stable20-Job pagination,
+  exact UUID reopen, explicit continuation and truthful intake counts. Hide does
+  not cancel durable work. Request epochs and original Account-generation/context
+  fences reject stale callbacks, including A→B→A. Trip prior stays passive;
+  current Ledger Trip selection is not a Capture Job assignment.
+- Accepted synthetic QA covers45 A +1 B Jobs,20/20/5 pagination,50 long-name inputs,
+  SQLite51 cold recovery/idempotency/no-write reads and native A→B→Empty→A.
+  Simulator native photo recovery preserves old Jobs/Inputs/originals; native Files
+  open/cancel is distinct from adapter byte-acceptance evidence. Ignored synthetic
+  bootstrap selects A at startup, so it does not prove last-active-B retention.
+- Accepted C3 historical targeted19 files /199 PASS; independent7 files /67 PASS,
+  zero remaining in-scope findings. Its serial216 files /2,754 tests records
+  2,737 PASS,2 FAIL,15 SKIP: architecture scanner plus timestamp-sensitive API
+  assertion. These are historical C3 results, not this integration's baseline.
+- Both locales, dark/maximum text and SE3 have accepted synthetic visual evidence.
+  Shared maximum Dynamic Type navigation-title clipping remains external MINOR;
+  actual VoiceOver speech and real provider fidelity remain unverified. Latest
+  refined UI physical-device acceptance is deferred; the historical Account Switch
+  error remains unresolved/unattributed. R3 devtest A→B→A does not resolve it.
+- Final Activity/Trip Home/newness/navigation shell remains Experience-owned.
+  C4a stays dormant; processing is NOT_INSTALLED, semantic results zero/null.
+  No C4/C5/C9, Review/Banner, provider, scheduler or canonical admission activation.
+- Only this shared handoff is semantically reconciled. Catalogs retain the exact
+  clean three-way union; accepted C3 runtime/tests/reports, canonical-only paths,
+  SQLite1–51/Server1–84 and R3 documentation/configuration/gates remain exact.
+  Fresh targeted38 files /696 PASS; terminology1 file /6 PASS. Typecheck, lint/UI
+  guard, Backend build, changed-file formatting and whitespace PASS.
+- Exact-main serial219 files /2,864:2,848 PASS,1 FAIL,15 SKIP; prepared serial223
+  files /2,881:2,865 PASS,1 same FAIL,15 SKIP. All2,864 existing case identities/
+  statuses remain;17 added cases PASS. Three unchanged parameterized case titles
+  contain random UUIDs; only those fields were normalized for identity matching.
+  Full failure strings match after path normalization: the existing architecture
+  scanner sees the P4a LocalOperationsDiagnostics test literal. No full-suite PASS.
+- Independent12 files /178 PASS; preservation and Account isolation review PASS,
+  zero remaining integration findings. No runtime/test adaptation was required.
+  Evidence: `architecture/OTR_CAPTURE_C3_CANONICAL_INTEGRATION_REPORT.md` and
+  `architecture/OTR_CAPTURE_C3_CANONICAL_INDEPENDENT_REVIEW.md`.
+- Original accepted reports: `architecture/OTR_CAPTURE_C3_IMPLEMENTATION_REPORT.md`,
+  `architecture/OTR_CAPTURE_C3_INDEPENDENT_REVIEW.md`,
+  `architecture/OTR_CAPTURE_C3_SIMULATOR_QA_UX_REPORT.md`,
+  `architecture/OTR_CAPTURE_C3_ACCOUNT_SWITCH_RECHECK.md` and historical
+  `architecture/OTR_CAPTURE_C3_OWNER_DEVICE_GATE_REPORT.md` remain byte-for-byte.
+- Next: **Owner Review only** before any commit/publication. Neither device
+  bundle is operated; no Hosted operation, R3 migration or provider activation.
+
 ## Capture C2 canonical integration — published / independent review PASS
 
 - Owner-authorized isolated worktree
@@ -34,8 +89,9 @@ Date: 2026-10-08 (Pacific/Auckland).
   Results overlap and are not added. Evidence:
   `architecture/OTR_CAPTURE_C2_CANONICAL_INTEGRATION_REPORT.md` and
   `architecture/OTR_CAPTURE_C2_CANONICAL_INDEPENDENT_REVIEW.md`.
-- C2 canonical publication is complete; C3 Activity and Integrated C4 remain
-  unaccepted and uninstalled. Integration used only local disposable SQLite
+- C2 canonical publication is complete; C3 Activity is accepted on synthetic
+  Simulators and prepared here, not published or latest-UI device accepted.
+  Integrated C4 remains unaccepted and uninstalled. Integration used only local disposable SQLite
   fixtures; no Hosted operations, R3 migration rerun, device change, provider
   activation or new scope is inferred from its publication.
 
@@ -195,7 +251,7 @@ Date: 2026-10-08 (Pacific/Auckland).
   recovery, portable fixture isolation and strict input grammar remain. LIVE-1,
   credentials/provisioning/monetary policy, Apple/vision/shadow/fallback/public B2
   activation and production access remain unauthorized.
-- C3 Activity, Guest/adoption, durable semantic assessment, Review/Banner/OS
+- Final C3 Experience shell, Guest/adoption, durable semantic assessment, Review/Banner/OS
   notification, Wallet/Photo cloud, Ledger effects and final Experience shell
   require separate decisions. Source IO_UNKNOWN/provider terminality and safe IO
   retry remain blocked; retention/completion never authorizes evidence release or
@@ -207,4 +263,4 @@ Date: 2026-10-08 (Pacific/Auckland).
   design documents; no legacy Web reaudit or redesign. Future UI/copy uses
   `architecture/ui-foundation.md` and `architecture/OTR_TERMINOLOGY_GLOSSARY.md`.
 
-**STOP — R3 CROSS-WORKSTREAM DOCUMENTATION CLOSURE COMPLETE.**
+**STOP — C3 INTEGRATION PREPARED FOR OWNER REVIEW.**

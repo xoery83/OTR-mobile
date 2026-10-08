@@ -944,3 +944,91 @@ it("corrupted reverse lineage cannot fabricate continued status for another Job"
   f.reopen();
   await expect(f.repo.read(other.jobId)).rejects.toMatchObject({ code: "INTEGRITY" });
 });
+
+it("C3 Activity cold restart/offline list and exact reopen retain all intake and explicit lineage with zero writes", async () => {
+  const f = fixture(true, true);
+  expect(await f.repo.list()).toEqual([]);
+  const accepted = f.request(1),
+    partial = f.request(3, randomUUID()),
+    pending = f.request(1);
+  await f.repo.submit(accepted, f.sources(accepted));
+  const sources = f.sources(partial);
+  sources.set(partial.inputs[1].id, async () => {
+    throw new LocalCaptureError("READER_FAILURE");
+  });
+  sources.delete(partial.inputs[2].id);
+  await f.repo.submit(partial, sources);
+  await f.repo.register(pending);
+  const next = f.request(1);
+  next.inputs[0].continuesFromInputId = pending.inputs[0].id;
+  await f.repo.register(next, { [pending.inputs[0].id]: 1 });
+  const rows = () =>
+    f.sql
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+      )
+      .all()
+      .map(({ name }) => [
+        name,
+        f.sql.prepare(`SELECT * FROM "${name}" ORDER BY rowid`).all(),
+      ]);
+  const before = rows();
+  f.reopen();
+  const write = vi.spyOn(f.db, "runAsync");
+  const list = await f.repo.list({ limit: 2 });
+  const older = await f.repo.list({
+    limit: 2,
+    before: { createdAt: list[1].batch.createdAt, batchId: list[1].batch.batchId },
+  });
+  expect([...list, ...older].map((j) => j.batch.batchId)).toEqual(
+    [accepted, partial, pending, next]
+      .map((r) => r.batchId)
+      .sort()
+      .reverse(),
+  );
+  expect(new Set([...list, ...older].map((j) => j.batch.jobId)).size).toBe(4);
+  expect((await f.repo.reopen(partial.jobId)).counts).toEqual({
+    selected: 3,
+    accepted: 1,
+    failed: 1,
+    pending: 1,
+  });
+  expect((await f.repo.reopen(pending.jobId)).inputs[0].continuedIn).toEqual([
+    { jobId: next.jobId, inputId: next.inputs[0].id },
+  ]);
+  expect((await f.repo.reopen(next.jobId)).inputs[0].continuesFromJobId).toBe(
+    pending.jobId,
+  );
+  for (const entry of [...list, ...older]) {
+    expect((await f.repo.reopen(entry.batch.jobId)).batch.jobId).toBe(entry.batch.jobId);
+    expect(entry.processing.capability).toBe("NOT_INSTALLED");
+    expect(entry.results).toEqual({
+      admittedCreates: 0,
+      admittedUpdates: 0,
+      currentAttention: null,
+    });
+    expect(entry.availableActions.canReviewNow).toBe(false);
+  }
+  await f.switchTo(b);
+  expect(await f.repo.list()).toEqual([]);
+  await expect(f.repo.reopen(accepted.jobId)).rejects.toMatchObject({
+    code: "NOT_FOUND",
+  });
+  await f.switchTo(a);
+  expect((await f.repo.reopen(accepted.jobId)).allInputsAccepted).toBe(true);
+  expect(write).not.toHaveBeenCalled();
+  expect(rows()).toEqual(before);
+});
+it("C3 retained list context never recaptures Account authority across A→B→A", async () => {
+  const f = fixture(),
+    r = f.request(1);
+  await f.repo.register(r);
+  const { captureAccountRequestContext } =
+    await import("@/data/auth/accountRequestContext");
+  const old = await captureAccountRequestContext("", f.getUser);
+  await f.switchTo(b);
+  await f.switchTo(a);
+  await expect(f.repo.list({}, old)).rejects.toThrow("Account changed");
+  await expect(f.repo.reopen(r.jobId, old)).rejects.toThrow("Account changed");
+  expect((await f.repo.list())[0].batch.jobId).toBe(r.jobId);
+});

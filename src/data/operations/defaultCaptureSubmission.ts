@@ -61,3 +61,17 @@ export async function createDefaultCaptureRecoveryAction(
     expectedRevision,
   );
 }
+
+// Bind the Account before database initialization; never recapture after an await.
+export async function listDefaultCaptureJobs(
+  options: Parameters<
+    ReturnType<typeof createCaptureSubmissionRepository>["list"]
+  >[0] = {},
+) {
+  const context = await captureAccountRequestContext("", requireActiveUserId);
+  return (await getDefaultCaptureSubmissionRepository()).list(options, context);
+}
+export async function reopenDefaultCaptureJob(jobId: string) {
+  const context = await captureAccountRequestContext("", requireActiveUserId);
+  return (await getDefaultCaptureSubmissionRepository()).reopen(jobId, context);
+}

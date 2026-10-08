@@ -12,6 +12,7 @@ import type {
   createDefaultCaptureSubmissionSession,
   createDefaultCaptureRecoveryAction,
 } from "@/data/operations/defaultCaptureSubmission";
+import { CaptureActivity, captureJobTitle } from "./CaptureActivity";
 import { createCaptureStaging, type CaptureStagingSnapshot } from "./captureStaging";
 
 // Hosts remount on invocation-context change. Context is a prior, never assignment.
@@ -40,6 +41,10 @@ export function CaptureContent({
   const [submitError, setSubmitError] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [reopening, setReopening] = useState(!!jobId);
+  const [activity, setActivity] = useState(false);
+  const [reading, setReading] = useState(!!jobId);
+  const [readError, setReadError] = useState(false);
+  const readEpoch = useRef(0);
   const active = useRef(false);
   const running = useRef(false);
   const session = useRef<Promise<
@@ -55,20 +60,47 @@ export function CaptureContent({
   const progress = (next: CaptureJobReadModel) => {
     if (current()) setModel(next);
   };
+  const hide = () => {
+    active.current = false;
+    ++readEpoch.current;
+    staging.cancel();
+    onCancel();
+  };
+  const openJob = async (id: string) => {
+    if (!current() || running.current) return;
+    const request = ++readEpoch.current;
+    const stillCurrent = () => current() && request === readEpoch.current;
+    staging.cancel();
+    session.current = null;
+    recoveryActions.current.clear();
+    setActivity(false);
+    setModel(null);
+    setReopening(true);
+    setReading(true);
+    setReadError(false);
+    setSubmitError(false);
+    try {
+      const api = await import("@/data/operations/defaultCaptureSubmission");
+      if (!stillCurrent()) return;
+      const next = await api.reopenDefaultCaptureJob(id);
+      if (stillCurrent()) setModel(next);
+    } catch {
+      if (stillCurrent()) setReadError(true);
+    } finally {
+      if (stillCurrent()) setReading(false);
+    }
+  };
   useEffect(() => {
     active.current = true;
     const detach = staging.attach();
-    if (jobId) {
-      void import("@/data/operations/defaultCaptureSubmission")
-        .then((api) => api.getDefaultCaptureSubmissionRepository())
-        .then((repo) => repo.reopen(jobId))
-        .then(progress)
-        .catch(() => {
-          if (current()) setSubmitError(true);
-        });
-    }
+    const reads = readEpoch;
+    const setup = ++reads.current;
+    void Promise.resolve().then(() => {
+      if (jobId && active.current && setup === reads.current) void openJob(jobId);
+    });
     return () => {
       active.current = false;
+      ++reads.current;
       detach();
     };
     // Invocation is fixed by the host; changing it requires remount.
@@ -106,9 +138,17 @@ export function CaptureContent({
     }
   };
   const recover = async (inputId: string) => {
-    if (!current() || running.current || !model) return;
+    if (
+      !current() ||
+      running.current ||
+      reading ||
+      !model ||
+      !model.availableActions.reacquireInputIds.includes(inputId)
+    )
+      return;
     const prior = model,
-      item = prior.inputs.find((i) => i.id === inputId)!;
+      item = prior.inputs.find((i) => i.id === inputId);
+    if (!item) return;
     running.current = true;
     setBusy(true);
     setSubmitError(false);
@@ -148,11 +188,29 @@ export function CaptureContent({
       if (current()) setBusy(false);
     }
   };
+  if (activity)
+    return (
+      <CaptureActivity
+        isCurrent={current}
+        onOpenJob={(id) => void openJob(id)}
+        onReturn={() => setActivity(false)}
+        onHide={hide}
+      />
+    );
   return (
     <CaptureTray
       snapshot={snapshot}
       model={model}
-      busy={busy}
+      busy={busy || reading}
+      reading={reading}
+      readError={readError}
+      onOpenJob={(id) => void openJob(id)}
+      onActivity={() => {
+        if (current() && !running.current && !reading && !snapshot.selecting) {
+          ++readEpoch.current;
+          setActivity(true);
+        }
+      }}
       locked={attempted || reopening}
       submitError={submitError}
       onSubmit={() => {
@@ -162,7 +220,14 @@ export function CaptureContent({
         void recover(id);
       }}
       onAddMore={() => {
-        if (running.current) return;
+        if (
+          !current() ||
+          running.current ||
+          reading ||
+          (model && !model.availableActions.canAddMore)
+        )
+          return;
+        ++readEpoch.current;
         staging.cancel();
         session.current = null;
         recoveryActions.current.clear();
@@ -170,8 +235,9 @@ export function CaptureContent({
         setAttempted(false);
         setReopening(false);
         setSubmitError(false);
+        setReadError(false);
       }}
-      tripName={invocationTripName}
+      tripName={model || reopening ? undefined : invocationTripName}
       onFiles={() => {
         void staging.pick("files");
       }}
@@ -179,10 +245,7 @@ export function CaptureContent({
         void staging.pick("photos");
       }}
       onRemove={staging.remove}
-      onCancel={() => {
-        staging.cancel();
-        onCancel();
-      }}
+      onCancel={hide}
     />
   );
 }
@@ -201,6 +264,10 @@ export function CaptureTray({
   onSubmit,
   onRecover,
   onAddMore,
+  onActivity,
+  onOpenJob,
+  reading = false,
+  readError = false,
 }: {
   snapshot: CaptureStagingSnapshot;
   tripName?: string;
@@ -215,48 +282,75 @@ export function CaptureTray({
   onSubmit?: () => void;
   onRecover?: (inputId: string) => void;
   onAddMore?: () => void;
+  onActivity?: () => void;
+  onOpenJob?: (jobId: string) => void;
+  reading?: boolean;
+  readError?: boolean;
 }) {
+  const [technicalJob, setTechnicalJob] = useState<string | null>(null);
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   return (
     <ScrollView style={styles.body} contentContainerStyle={styles.content}>
-      <UiSection
-        title={tripName ? t("capture.context", { name: tripName }) : t("capture.title")}
-      >
-        <Text style={styles.secondary}>
-          {t(model ? "capture.localCustody" : "capture.transient")}
+      {onActivity ? (
+        <UiButton
+          label={t("capture.activity")}
+          variant="secondary"
+          disabled={busy || snapshot.selecting}
+          onPress={onActivity}
+        />
+      ) : null}
+      {reading ? (
+        <Text accessibilityLiveRegion="polite" style={styles.secondary}>
+          {t("capture.jobLoading")}
         </Text>
-        {tripName ? (
-          <Text style={styles.secondary}>{t("capture.contextHint")}</Text>
-        ) : null}
-        <UiButton
-          label={t("capture.files")}
-          variant="secondary"
-          disabled={snapshot.selecting || busy || locked}
-          onPress={onFiles}
-        />
-        <UiButton
-          label={t("capture.photos")}
-          variant="secondary"
-          disabled={snapshot.selecting || busy || locked}
-          onPress={onPhotos}
-        />
-        {snapshot.selecting ? (
-          <Text accessibilityLiveRegion="polite" style={styles.secondary}>
-            {t("capture.selecting")}
+      ) : null}
+      {readError ? (
+        <Text accessibilityRole="alert" style={styles.error}>
+          {t("capture.jobReadError")}
+        </Text>
+      ) : null}
+      {!model && !locked ? (
+        <UiSection
+          title={tripName ? t("capture.context", { name: tripName }) : t("capture.title")}
+        >
+          <Text style={styles.secondary}>
+            {t(model ? "capture.localCustody" : "capture.transient")}
           </Text>
-        ) : null}
-        {snapshot.error ? (
-          <Text accessibilityRole="alert" style={styles.error}>
-            {t("capture.pickerError")}
-          </Text>
-        ) : null}
-      </UiSection>
+          {tripName ? (
+            <Text style={styles.secondary}>{t("capture.contextHint")}</Text>
+          ) : null}
+          <UiButton
+            label={t("capture.files")}
+            variant="secondary"
+            disabled={snapshot.selecting || busy || locked}
+            onPress={onFiles}
+          />
+          <UiButton
+            label={t("capture.photos")}
+            variant="secondary"
+            disabled={snapshot.selecting || busy || locked}
+            onPress={onPhotos}
+          />
+          {snapshot.selecting ? (
+            <Text accessibilityLiveRegion="polite" style={styles.secondary}>
+              {t("capture.selecting")}
+            </Text>
+          ) : null}
+          {snapshot.error ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {t("capture.pickerError")}
+            </Text>
+          ) : null}
+        </UiSection>
+      ) : null}
       {model ? (
-        <UiSection title={t("capture.intakeTitle")}>
-          <Text accessibilityLiveRegion="polite" style={styles.secondary}>
-            {t("capture.counts", model.counts)}
-          </Text>
+        <UiSection title={captureJobTitle(model)}>
+          {!model.allInputsAccepted ? (
+            <Text accessibilityLiveRegion="polite" style={styles.secondary}>
+              {t("capture.counts", model.counts)}
+            </Text>
+          ) : null}
           <Text style={styles.secondary}>{t("capture.processingUnavailable")}</Text>
           {!model.allInputsAccepted ? (
             <Text style={styles.secondary}>{t("capture.reacquireHint")}</Text>
@@ -280,23 +374,70 @@ export function CaptureTray({
                   {t(`capture.failure.${item.failureCode}`)}
                 </Text>
               ) : null}
-              {item.state !== "ACCEPTED" && onRecover ? (
+              {model.availableActions.reacquireInputIds.includes(item.id) && onRecover ? (
                 <UiButton
                   label={t(
                     item.contentSha256
                       ? "capture.recoverPinned"
-                      : "capture.continueMissing",
+                      : item.acquisitionSource === "photos"
+                        ? "capture.continueMissingPhoto"
+                        : "capture.continueMissing",
                   )}
                   variant="secondary"
                   disabled={busy}
                   onPress={() => onRecover(item.id)}
                 />
               ) : null}
-              {item.continuedIn.length ? (
-                <Text style={styles.secondary}>{t("capture.continued")}</Text>
+              {onOpenJob && item.continuesFromJobId ? (
+                <UiButton
+                  label={t("capture.priorJob")}
+                  variant="text"
+                  disabled={busy}
+                  onPress={() => onOpenJob(item.continuesFromJobId!)}
+                />
               ) : null}
+              {item.continuedIn.map((link) =>
+                onOpenJob ? (
+                  <UiButton
+                    key={link.inputId}
+                    label={t("capture.nextJob")}
+                    variant="text"
+                    disabled={busy}
+                    onPress={() => onOpenJob(link.jobId)}
+                  />
+                ) : (
+                  <Text key={link.inputId} style={styles.secondary}>
+                    {t("capture.continued")}
+                  </Text>
+                ),
+              )}
             </View>
           ))}
+          <UiButton
+            label={t(
+              technicalJob === model.batch.jobId
+                ? "capture.technicalHide"
+                : "capture.technicalShow",
+            )}
+            variant="text"
+            onPress={() =>
+              setTechnicalJob(
+                technicalJob === model.batch.jobId ? null : model.batch.jobId,
+              )
+            }
+          />
+          {technicalJob === model.batch.jobId ? (
+            <View style={styles.item}>
+              <Text selectable style={styles.secondary}>
+                {t("capture.jobIdentity", { id: model.batch.jobId })}
+              </Text>
+              {model.inputs.some(
+                (item) => item.continuesFromJobId || item.continuedIn.length,
+              ) ? (
+                <Text style={styles.secondary}>{t("capture.lineageHint")}</Text>
+              ) : null}
+            </View>
+          ) : null}
         </UiSection>
       ) : (
         <UiSection
@@ -343,19 +484,21 @@ export function CaptureTray({
           {t("capture.submitError")}
         </Text>
       ) : null}
-      <UiButton
-        label={t(snapshot.items.length === 1 ? "capture.addOne" : "capture.addOther", {
-          count: snapshot.items.length,
-        })}
-        disabled={
-          !onSubmit || busy || snapshot.selecting || !snapshot.items.length || !!model
-        }
-        onPress={onSubmit ?? (() => undefined)}
-      />
-      {model && onAddMore ? (
+      {!model && !reading && !readError ? (
+        <UiButton
+          label={t(snapshot.items.length === 1 ? "capture.addOne" : "capture.addOther", {
+            count: snapshot.items.length,
+          })}
+          disabled={
+            !onSubmit || busy || snapshot.selecting || !snapshot.items.length || !!model
+          }
+          onPress={onSubmit ?? (() => undefined)}
+        />
+      ) : null}
+      {model?.availableActions.canAddMore && onAddMore ? (
         <UiButton
           label={t("capture.addMore")}
-          variant="secondary"
+          variant="primary"
           disabled={busy}
           onPress={onAddMore}
         />
@@ -371,9 +514,14 @@ export function CaptureTray({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
-    content: { padding: visual.space.page, gap: visual.space.section },
+    content: { padding: visual.space.page, gap: visual.space.row },
     secondary: { color: colors.textSecondary, ...visual.type.meta },
     error: { color: colors.destructive, ...visual.type.row },
     name: { color: colors.textPrimary, ...visual.type.row },
-    item: { gap: visual.space.heading },
+    item: {
+      gap: visual.space.heading,
+      paddingVertical: visual.space.heading,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.separator,
+    },
   });
