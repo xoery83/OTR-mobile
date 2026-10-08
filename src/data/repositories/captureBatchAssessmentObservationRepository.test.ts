@@ -47,7 +47,7 @@ type Run = (
 const cleanup: (() => void)[] = [];
 afterEach(() => cleanup.splice(0).forEach((fn) => fn()));
 const empty: AssessmentHead = { revision: 0, bodySha256: null };
-async function fixture(fk = true, version = 52) {
+async function fixture(fk = true, version = 53) {
   const dir = mkdtempSync(join(tmpdir(), "otr-p2bb-")),
     path = join(dir, "local.db");
   let sql = new DatabaseSync(path),
@@ -269,7 +269,7 @@ describe("dormant observation SQLite persistence; owning validators are TEST-ONL
     async (fk) => {
       const f = await fixture(fk, 51),
         prior = f.c2Rows();
-      f.sql.exec(migrations.at(-1)!.sql);
+      f.sql.exec(migrations.find((m) => m.id === 52)!.sql);
       expect(f.c2Rows()).toBe(prior);
       expect(
         f.sql
@@ -600,7 +600,7 @@ describe("dormant observation SQLite persistence; owning validators are TEST-ONL
       await runMigrations(adapter);
       await runMigrations(adapter);
       expect(f.sql.prepare("SELECT max(id) AS id FROM schema_migrations").get()!.id).toBe(
-        52,
+        53,
       );
       expect(f.c2Rows()).toBe(before);
     },
@@ -945,3 +945,72 @@ it("R1 historical pending and accepted observations survive legitimate Input and
   expect(writes).not.toHaveBeenCalled();
   expect(f.count()).toBe(2);
 });
+
+it.each([true, false])(
+  "SQLite53 upgrade preserves populated52 observation chain, C2 and original BLOB FK=%s",
+  async (fk) => {
+    const f = await fixture(fk, 52);
+    await f.c2.submit(
+      f.request,
+      new Map([
+        [f.request.inputs[0].id, async () => ({ bytes: new Uint8Array([0, 128, 255]) })],
+      ]),
+    );
+    const one = await append(f),
+      priorC2 = f.c2Rows();
+    const before = f.sql
+      .prepare(
+        "SELECT *,typeof(body_json) body_storage,typeof(assessment_revision) revision_storage FROM capture_batch_assessment_observations",
+      )
+      .all();
+    const originals = f.sql
+      .prepare(
+        "SELECT *,typeof(bytes) storage,typeof(byte_count) count_storage FROM local_capture_payloads",
+      )
+      .all();
+    f.sql.exec(
+      "CREATE TABLE schema_migrations(id INTEGER PRIMARY KEY,name TEXT NOT NULL,applied_at TEXT NOT NULL)",
+    );
+    for (const m of migrations.filter((m) => m.id <= 52))
+      f.sql
+        .prepare("INSERT INTO schema_migrations VALUES(?,?,?)")
+        .run(m.id, m.name, "original52");
+    const history = f.sql.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
+    const db = {
+      ...f.db,
+      execAsync: async (q: string) => {
+        f.sql.exec(q);
+      },
+    };
+    await runMigrations(db);
+    await runMigrations(db);
+    f.reopen();
+    expect(f.c2Rows()).toBe(priorC2);
+    expect(
+      f.sql
+        .prepare(
+          "SELECT *,typeof(body_json) body_storage,typeof(assessment_revision) revision_storage FROM capture_batch_assessment_observations",
+        )
+        .all(),
+    ).toEqual(before);
+    expect(
+      f.sql
+        .prepare(
+          "SELECT *,typeof(bytes) storage,typeof(byte_count) count_storage FROM local_capture_payloads",
+        )
+        .all(),
+    ).toEqual(originals);
+    expect(
+      f.sql.prepare("SELECT * FROM schema_migrations WHERE id<=52 ORDER BY id").all(),
+    ).toEqual(history);
+    expect(
+      (await f.repo().readExact(await f.context(), f.request.batchId, 1)).status,
+    ).toBe("FOUND");
+    expect((await f.repo().append(await f.context(), empty, one.raw)).status).toBe(
+      "EXACT_REPLAY",
+    );
+    await append(f, one.head);
+    expect(f.count()).toBe(2);
+    expect(f.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  },
+);

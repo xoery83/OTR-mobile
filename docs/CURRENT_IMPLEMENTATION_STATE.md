@@ -2,6 +2,61 @@
 
 Date: 2026-10-09 (Pacific/Auckland).
 
+## SQLite53 final Owner acceptance — DORMANT LOCAL PERSISTENCE ACCEPTED
+
+- Owner accepts the SQLite53 Builder/F1 correction, original Independent Review,
+  appended targeted F1 recheck PASS and preserved Migration Design correction.
+  Acceptance covers dormant local persistence only.
+- Accepted affected matrix:24 files /1002 PASS; independent38 +48 probes PASS.
+  Typecheck, lint/UI guard, Backend build, formatting and preservation PASS.
+- Local closure parent is exactly `3216668e42e919a2b4657e1357e8c7536fead114`.
+  Closure contains only the accepted15 paths; no main advancement, push or merge.
+  Canonical main has independently advanced to2128ec7; future integration must
+  reverify its current ancestry, scope and migration allocation separately.
+- Corrected SQLite53 adds one nullable Run column and four guards. Historical1–52
+  bytes/registry remain exact; committed replacement protection is independently
+  accepted with FK/recursive triggers OFF. No SQLite54 or extra schema objects.
+- Next: separately authorized canonical integration. Authenticated Transport,
+  Integrated C4, C5/C9 and providers remain CLOSED; no Hosted/device operation.
+  Prior Builder/recheck-required sections below are historical checkpoints.
+
+## SQLite53 F1 replacement-retention correction — TARGETED INDEPENDENT RECHECK REQUIRED
+
+- Independent Review found F1 (1 IMPORTANT): SQLite REPLACE could erase committed
+  Membership with FK/recursive triggers OFF. Four failures and three cold losses
+  reproduced before correction; original design/review text preserved.
+- Owner-authorized correction changes only existing53 INSERT/UPDATE guard predicates,
+  preempting committed victims across all three unique constraints and excluding
+  UPDATE self. One nullable column/four guards; SQLite1–52 and registry exact.
+- Four original probes and three cold rechecks PASS; original974 +28 F1 tests =1002
+  PASS. Typecheck, lint/UI guard, Backend build, formatting/preservation and actual
+  accepted52-source compatibility PASS. No Repository production redesign.
+- Exact five correction paths, SQL hash and evidence are in the Builder Report F1
+  appendix. All changes remain uncommitted at canonical3216668; no main advancement.
+- Next: targeted Independent Recheck, then Owner acceptance. Transport/C4/C5/C9 and
+  providers remain CLOSED; no Hosted/device/runtime operation or commit/push/merge.
+
+## SQLite53 Publication Membership persistence Builder — INDEPENDENT REVIEW REQUIRED
+
+- Owner-authorized fresh isolated Builder at exact canonical
+  `3216668e42e919a2b4657e1357e8c7536fead114`; local/origin/remote main matched.
+  Canonical registry was1–52 and no competing53 definition was found before work.
+- Builder registry1–53 adds exactly the reviewed nullable Run envelope column and
+  four guards; no backfill/table/index. Historical1–52 entries/bytes stay exact.
+  All accepted repository/contract production code and review histories stay exact.
+- Membership tests use actual SQLite53, with file-backed cold/lost-ACK recovery,
+  whole Candidate/Input/derived-root checks, Account fences, FK ON/OFF guards,
+  typed52 upgrade preservation and atomic DDL/guard/history rollback/retry.
+  Actual accepted52 runner/Import code cold-rehearsal preserves populated53.
+- Fresh final24-file matrix:974 PASS; typecheck, lint/UI guard, Backend build,
+  changed-file formatting and historical preservation PASS.
+- Validation/evidence and exact delivery scope are in
+  `architecture/OTR_PLATFORM_SQLITE53_PUBLICATION_MEMBERSHIP_BUILDER_REPORT.md`.
+  No commit/push/main advancement or Hosted/device/provider operation.
+- Next: Independent Review, then Owner acceptance and separate canonical integration.
+  Transport remains CLOSED; authenticated handoff, C4 owning composition, C5/C9,
+  Continuation wiring and all runtime/provider gates remain separate and CLOSED.
+
 ## Platform P2b canonical integration — VALIDATED / DORMANT
 
 - Final Owner authorization on 2026-10-09 approves two ordinary `--no-ff` merges

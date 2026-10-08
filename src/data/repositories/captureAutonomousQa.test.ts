@@ -34,7 +34,7 @@ function fixture() {
   const now = () => "2026-10-08T00:00:00.000Z";
   sql.exec("PRAGMA foreign_keys=ON");
   for (const migration of migrations) sql.exec(migration.sql);
-  sql.exec("PRAGMA user_version=52");
+  sql.exec("PRAGMA user_version=53");
   const db: LocalCaptureDatabase = serializeDatabaseTransactions({
     async getFirstAsync<T>(query: string, ...params: unknown[]) {
       return (sql.prepare(query).get(...(params as never[])) ?? null) as T | null;
@@ -194,7 +194,7 @@ it("synthetic A/B: 45 A Jobs paginate 20/20/5 deterministically, preserve all fo
   await f.repo.submit(b, f.sources(b));
   const before = f.rows();
   f.reopen();
-  expect(f.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(52);
+  expect(f.sql.prepare("PRAGMA user_version").get()!.user_version).toBe(53);
   expect(f.sql.prepare("PRAGMA integrity_check").get()!.integrity_check).toBe("ok");
   expect(f.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
   const write = vi.spyOn(f.db, "runAsync");

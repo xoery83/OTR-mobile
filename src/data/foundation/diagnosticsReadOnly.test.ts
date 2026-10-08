@@ -165,7 +165,7 @@ it("F1 normal Auth adopts v1 unchanged; subsequent diagnostics read v2 without S
   h.writable = false;
   h.set.mockClear();
   h.delete.mockClear();
-  expect((await readFoundationDiagnostics()).schemaVersion).toBe(52);
+  expect((await readFoundationDiagnostics()).schemaVersion).toBe(53);
   expect((await readDefaultLocalOperations()).coverage.sync).toBe("AVAILABLE");
   expect(h.set).not.toHaveBeenCalled();
   expect(h.delete).not.toHaveBeenCalled();
