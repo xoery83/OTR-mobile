@@ -2,6 +2,27 @@
 
 Date: 2026-10-08 (Pacific/Auckland).
 
+## Platform P2 / Capture C4a — final Owner review PASS / local closure
+
+- Resumed `/private/tmp/otr-p2-c4a-pure-assessment-20261008`, branch
+  `codex/p2-c4a-pure-assessment-20261008`, unchanged exact base
+  `b6daffecedab1616b173fde3f5e2de5d54770eff`. Final Owner review PASS authorizes one
+  local closure commit; external main advancement was not incorporated. Original
+  Independent Review and appended targeted recheck PASS are preserved.
+- R1: caller `INDEPENDENT` assertions now add `DEPENDENCY_UNKNOWN`; observed evidence
+  remains visible, while supported semantics/Review promotion stays blocked.
+- R2: primitive JSON-text input only, strict lossless grammar before schema/hash;
+  raw objects including nested exotic data/Proxies reject without inspection.
+  Valid synthetic fixture data is serialized by test callers. No Node domain import.
+- Current Owner authorization supplies all five Capture constraints, recorded in the
+  appended correction section of `architecture/OTR_PLATFORM_P2_C4A_IMPLEMENTATION_REPORT.md`.
+- Validation: 4 files /135 tests PASS (87 C4a); 16 Builder targeted recheck checks
+  PASS, plus 25 independent targeted checks PASS; typecheck, full lint/UI guard,
+  formatting, whitespace and preservation PASS.
+  Preparation/domain admission remain denied; no runtime composition or activation.
+- **C4a accepted. STOP after the authorized local closure commit; no push/main
+  advancement. Integrated durable C4/C5 remain unauthorized.**
+
 ## C1 canonical integration — prepared / independent review pending
 
 - Isolated pending merge at `/private/tmp/otr-c1-canonical-integration`, branch
