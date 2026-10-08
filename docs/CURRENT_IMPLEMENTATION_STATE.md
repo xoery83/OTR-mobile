@@ -1,6 +1,45 @@
 # Current Implementation State
 
-Date: 2026-10-08 (Pacific/Auckland).
+Date: 2026-10-09 (Pacific/Auckland).
+
+## P2b-B dormant SQLite52 persistence — final Owner acceptance / local closure
+
+- Owner accepted corrected Contract/ADR/plan and conditionally authorized SQLite52.
+  Source gate passed at current canonical main/Builder HEAD
+  `f7115dc288aff7f0a252bf80f53b0f2b626a7534`, descendant of design06adea85;
+  no competing local52 implementation/reservation found. Fresh isolated Builder:
+  `/Users/xoery/.codex/worktrees/p2bb-sqlite-builder/otr-mobile-canonical`.
+- SQLite52 adds one append-only Account/Batch observation table, composite PK and
+  four guards; registry1–52. Historical1–51 SQL/definitions remain exact. Dormant
+  strict-body/readHead/readExact/append implementation retains complete immutable
+  history, separate C2/C4/approved Context digests, revision+digest CAS, exact replay/
+  ACK/cold recovery, Account fences and corrupt-chain blocking. No Beta pruning.
+- 2 MiB UTF-8 body admission explicitly rejects oversized C4a-valid requests without
+  writes or altered evidence. Current owning validator mandatory for every NEW;
+  all installed test validators are labeled TEST-ONLY. No default factory, real
+  owning adapter or production Integrated C4 composition; no C5/C9/Provider authority.
+- Final combined targeted matrix15 files /508 PASS, including43 new body/repository
+  tests. Typecheck/lint/UI guard, formatting/whitespace and SQLite1–51 preservation
+  PASS. No other active SQLite52 definition found at final check. Full-suite/native behavior not newly certified.
+- Owner-authorized R1/R2 corrections reuse full transaction-local C2 verification
+  for historical reads/replay and reject unsafe/overflow revisions before parsing/
+  hashing. Corrupt filename/missing Input deny; legitimate mutable Input/Capture
+  advances preserve replay without current owning freshness. Zero-write/hash
+  regressions PASS. Fresh affected14 files /524 PASS; unchanged independent
+  probes21 PASS are Builder reproduction evidence, not a new review verdict.
+  Typecheck/lint/UI/format/preservation PASS; SQLite1–52 and registry unchanged.
+  Original independent review preserved with appended Targeted Recheck PASS.
+- Independent targeted recheck: original probes21 PASS, additional probes13 PASS,
+  delivered16 files /533 PASS; typecheck/lint/UI/format/preservation PASS. R1/R2
+  closed with zero remaining required findings. Final Owner verdict ACCEPT on
+  2026-10-09 authorizes exactly one scoped local closure commit from parent
+  `f7115dc288aff7f0a252bf80f53b0f2b626a7534` on `codex/p2bb-sqlite-builder`.
+- Evidence: `architecture/OTR_PLATFORM_P2BB_SQLITE_PERSISTENCE_BUILDER_REPORT.md`
+  and `architecture/OTR_PLATFORM_P2BB_SQLITE_PERSISTENCE_INDEPENDENT_REVIEW.md`;
+  original findings/correction history and accepted Contract/plan/ADR preserved.
+  Closure is local only; canonical main is unchanged. No push/merge/rebase,
+  Hosted/device/provider access or activation; all C4/C5/C9/Provider gates CLOSED.
+  Real owning-data adapter and Integrated C4 require separate Owner authorization.
 
 ## Capture C3 canonical integration — PREPARED / INDEPENDENT REVIEW PASS
 
@@ -232,12 +271,12 @@ Date: 2026-10-08 (Pacific/Auckland).
 
 ## Accepted foundation, schema and critical boundaries
 
-- Local registry1–51; historical SQLite1–50 sources remain exact. SQLite48 owns
+- Local registry1–52; historical SQLite1–51 sources remain exact. SQLite48 owns
   originals,49 Import admission,50 continuation/attempts;51 only local submission.
   Git Server1–84 remains exact, tail
   `20261007000100_flight_dev_dispatch_foundation.sql`, SHA-256
   `46e80899f14817d5162f255383e303232a12276e662f34b2cb16156c34d4f2a9`.
-  No Server85 or SQLite52. R3's68 Hosted historical records remain distinct.
+  No Server85. SQLite52 is only the authorized dormant assessment store. R3's68 Hosted historical records remain distinct.
 - C1 Owner/device acceptance at79237cbd is retained in canonical b6daffe with all
   seven original commits. Joint P1/C2 Revision1 and final lineage naming follow
   `adr/2026-10-08-c1-integration-owner-decision.md`; original PROPOSED documents
