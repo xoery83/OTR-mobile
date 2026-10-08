@@ -1,3 +1,10 @@
+import { parseEventJson } from "../../src/domain/trip/eventIntentJson";
+import {
+  PublicationCatalogError,
+  publicationCatalogBody,
+  type PublicationAuthResult,
+} from "./tripPublicationCatalogRead";
+import { createRequestBoundary } from "../../src/data/api/requestBoundary";
 import {
   eventCollectionPage,
   parseEventCollectionQuery,
@@ -157,6 +164,16 @@ export type StoredCreate = {
 };
 
 export type DevBackendGateway = {
+  validatePublicationAccessToken?(
+    token: string,
+    signal: AbortSignal,
+  ): Promise<PublicationAuthResult>;
+  readPublicationImportCatalogs?(
+    actor: string,
+    trip: string,
+    signal: AbortSignal,
+  ): Promise<string>;
+
   observeCanonicalEventCollection?(userId: string, tripId: string): Promise<unknown>;
   readCanonicalCapabilities?(
     userId: string,
@@ -907,6 +924,88 @@ function createResponse(stored: StoredCreate, idempotentReplay: boolean) {
     updatedAt: stored.updatedAt,
     idempotentReplay,
   } satisfies CreateSyncResponse;
+}
+
+async function readPublicationBoundary(request: Request, gateway: DevBackendGateway) {
+  const url = new URL(request.url);
+  const match = url.pathname.match(/^\/v2\/trips\/([^/]*)\/source-import-catalogs$/);
+  if (request.method !== "GET")
+    throw new HttpError(405, "METHOD_NOT_ALLOWED", "GET is required.");
+  if (
+    !match ||
+    !/^[0-9a-f-]{36}$/.test(match[1]) ||
+    !z.uuid().safeParse(match[1]).success
+  )
+    throw new HttpError(400, "INVALID_TRIP_ID", "The Trip id is invalid.");
+  if (
+    url.search ||
+    request.body !== null ||
+    (request.headers.get("content-length") ?? "0") !== "0" ||
+    request.headers.has("transfer-encoding")
+  )
+    throw new HttpError(
+      400,
+      "INVALID_PUBLICATION_READ",
+      "A body and query are not supported.",
+    );
+  if (request.headers.get("X-OTR-Publication-Catalog-Version") !== "1")
+    throw new HttpError(
+      426,
+      "UNSUPPORTED_PUBLICATION_CATALOG_VERSION",
+      "Catalog version1 is required.",
+    );
+  const token = getBearerToken(request);
+  if (!gateway.validatePublicationAccessToken || !gateway.readPublicationImportCatalogs)
+    throw new PublicationCatalogError(
+      503,
+      "PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE",
+    );
+  const boundary = createRequestBoundary(15000, request.signal);
+  async function phase<T>(work: (signal: AbortSignal) => Promise<T>) {
+    const phaseBoundary = createRequestBoundary(5000, boundary.signal);
+    try {
+      return await boundary.run(() =>
+        phaseBoundary.run(() => work(phaseBoundary.signal)),
+      );
+    } finally {
+      phaseBoundary.close();
+    }
+  }
+  try {
+    const auth = await phase((signal) =>
+      gateway.validatePublicationAccessToken!(token, signal),
+    );
+    if (auth.disposition === "REJECTED")
+      throw new HttpError(401, "INVALID_SESSION", "The session is invalid.");
+    if (auth.disposition !== "VERIFIED" || !z.uuid().safeParse(auth.user.id).success)
+      throw new PublicationCatalogError(503, "PUBLICATION_AUTH_UNAVAILABLE");
+    if (!(await phase(() => gateway.canReadTrip(auth.user.id, match[1]))))
+      throw new HttpError(403, "TRIP_READ_FORBIDDEN", "Trip read access is required.");
+    const body = await phase((signal) =>
+      gateway.readPublicationImportCatalogs!(auth.user.id, match[1], signal),
+    );
+    // The gateway returns canonical bounded text, never arbitrary HTTP error details.
+    if (Buffer.byteLength(body, "utf8") > 4194304)
+      throw new PublicationCatalogError(503, "IMPORT_READ_RESOURCE_LIMIT");
+    let original;
+    try {
+      original = parseEventJson(body, 4194304);
+    } catch {
+      throw new PublicationCatalogError(503, "PUBLICATION_MEMBERSHIP_INTEGRITY");
+    }
+    const checked = publicationCatalogBody(original, auth.user.id, match[1]);
+    boundary.assertCurrent();
+    return new Response(checked, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "private, no-store",
+        Vary: "Authorization",
+      },
+    });
+  } finally {
+    boundary.close();
+  }
 }
 
 async function authenticate(request: Request, gateway: DevBackendGateway) {
@@ -2320,7 +2419,10 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (
+      if (/^\/v2\/trips\/[^/]*\/source-import-catalogs$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/source-import-catalogs";
+        response = await readPublicationBoundary(request, gateway);
+      } else if (
         /^\/v2\/trips\/[^/]+\/(?:persons\/[^/]+\/participation-commands|person-participation-operations\/[^/]+|person-participation-capabilities)$/.test(
           url.pathname,
         )
@@ -2516,13 +2618,19 @@ export function createDevBackendHandler({
       }
     } catch (error) {
       const normalized =
-        error instanceof EventCollectionError
+        error instanceof PublicationCatalogError
           ? new HttpError(error.status, error.code, error.message)
-          : error instanceof HttpError
-            ? error
-            : error instanceof BackendError
-              ? new HttpError(error.status, error.code, error.message, error.details)
-              : new HttpError(503, "BACKEND_UNAVAILABLE", "The backend is unavailable.");
+          : error instanceof EventCollectionError
+            ? new HttpError(error.status, error.code, error.message)
+            : error instanceof HttpError
+              ? error
+              : error instanceof BackendError
+                ? new HttpError(error.status, error.code, error.message, error.details)
+                : new HttpError(
+                    503,
+                    "BACKEND_UNAVAILABLE",
+                    "The backend is unavailable.",
+                  );
       response = json(normalized.status, {
         error: {
           code: normalized.code,
@@ -2537,6 +2645,10 @@ export function createDevBackendHandler({
       });
     }
 
+    if (route === "/v2/trips/:tripId/source-import-catalogs") {
+      response.headers.set("Cache-Control", "private, no-store");
+      response.headers.set("Vary", "Authorization");
+    }
     response.headers.set("X-Request-Id", requestId);
     log?.({
       requestId,

@@ -1,3 +1,4 @@
+import { createTripPublicationCatalogTransport } from "@/data/api/tripPublicationCatalogTransport";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -28,6 +29,8 @@ import {
   type PublicationMembershipDatabase,
 } from "./tripPublicationMembershipRepository";
 import catalogs from "./__fixtures__/tripImportCatalogs.json";
+
+vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 
 // Real SQLite1–53 catalogs and committed envelopes; the injected CLOSED RPC is TEST-ONLY.
 const hash = async (bytes: Uint8Array) =>
@@ -1539,3 +1542,198 @@ it.each(replacementPragmas)(
     );
   },
 );
+
+describe("dormant authenticated transport to SQLite53 handoff", () => {
+  async function authenticatedFixture() {
+    const f = fixture(true, true, true),
+      value = snapshot(2);
+    await digest(value);
+    const context = await f.owning.captureContext(trip);
+    const controller = new AbortController();
+    const transport = createTripPublicationCatalogTransport(
+      f.getAccountId,
+      {
+        baseUrl: "https://synthetic.test",
+        fetchImplementation: vi.fn(async () => {
+          expect(await f.database.isInTransactionAsync()).toBe(false);
+          return Response.json(value);
+        }),
+      },
+      async () => ({ userId: actor, token: "synthetic-token" }),
+    );
+    const reader = createClosedPublicationMembershipReader({
+      mode: "CLOSED",
+      getAccountId: f.getAccountId,
+      sha256: hash,
+      rpc: async (routine, parameters) => {
+        expect(routine).toBe("trip_source_read_import_catalogs");
+        expect(parameters).toEqual({ actor: context.accountId, trip: context.tripId });
+        return transport.read(context, controller.signal);
+      },
+    });
+    const handle = await reader.read(context, controller.signal);
+    return {
+      ...f,
+      get sql() {
+        return f.sql;
+      },
+      value,
+      context,
+      controller,
+      handle,
+    };
+  }
+  it("complete original-context handoff installs atomically and replays after cold reopen", async () => {
+    const f = await authenticatedFixture();
+    await f.repo.install(f.context, f.handle);
+    const before = await f.repo.read(f.context, runId);
+    f.reopen();
+    await f.repo.install(f.context, f.handle);
+    expect(await f.repo.read(f.context, runId)).toEqual(before);
+  });
+  it("copied handles and fresh A generations cannot inherit original admission", async () => {
+    const f = await authenticatedFixture();
+    await expect(f.repo.install(f.context, { ...f.handle })).rejects.toThrow(
+      "UNTRUSTED_HANDOFF",
+    );
+    let lease = await beginAccountTransition();
+    f.setAccount(randomUUID());
+    endAccountTransition(lease);
+    lease = await beginAccountTransition();
+    f.setAccount(actor);
+    endAccountTransition(lease);
+    await expect(
+      f.repo.install(await f.owning.captureContext(trip), f.handle),
+    ).rejects.toThrow("UNTRUSTED_HANDOFF");
+    expect(f.sql.prepare("SELECT count(*) n FROM trip_source_runs").get()).toEqual({
+      n: 0,
+    });
+  });
+  it("canceled/superseded handles fail before writes", async () => {
+    const f = await authenticatedFixture();
+    f.controller.abort();
+    await expect(f.repo.install(f.context, f.handle)).rejects.toThrow(
+      "PUBLICATION_MEMBERSHIP_CANCELED",
+    );
+    expect(f.sql.prepare("SELECT count(*) n FROM trip_source_runs").get()).toEqual({
+      n: 0,
+    });
+  });
+  it("cancellation during install rolls back catalogs and membership even with FK OFF", async () => {
+    const f = await authenticatedFixture();
+    f.sql.exec("PRAGMA foreign_keys=OFF");
+    const write = f.database.runAsync.bind(f.database);
+    f.database.runAsync = async (sql, ...args) => {
+      const result = await write(sql, ...(args as (string | number | null)[]));
+      if (sql.startsWith("UPDATE trip_source_runs SET publication_membership"))
+        f.controller.abort();
+      return result;
+    };
+    await expect(f.repo.install(f.context, f.handle)).rejects.toThrow(
+      "PUBLICATION_MEMBERSHIP_CANCELED",
+    );
+    f.reopen();
+    expect(f.sql.prepare("SELECT count(*) n FROM trip_source_runs").get()).toEqual({
+      n: 0,
+    });
+    expect(f.sql.prepare("SELECT count(*) n FROM trip_sources").get()).toEqual({ n: 0 });
+  });
+  it("cancellation while projecting a network result cannot mint a handle", async () => {
+    const f = fixture(),
+      value = snapshot();
+    await digest(value);
+    const context = await f.owning.captureContext(trip),
+      controller = new AbortController();
+    const reader = createClosedPublicationMembershipReader({
+      mode: "CLOSED",
+      getAccountId: f.getAccountId,
+      rpc: async () => json(value),
+      sha256: async (bytes) => {
+        controller.abort();
+        return hash(bytes);
+      },
+    });
+    await expect(reader.read(context, controller.signal)).rejects.toThrow(
+      "PUBLICATION_MEMBERSHIP_CANCELED",
+    );
+  });
+});
+
+it("CLOSED handoff deadline includes abort-ignoring projection/hash", async () => {
+  const f = fixture(),
+    value = snapshot();
+  await digest(value);
+  const context = await f.owning.captureContext(trip),
+    controller = new AbortController();
+  vi.useFakeTimers();
+  try {
+    const reader = createClosedPublicationMembershipReader({
+      mode: "CLOSED",
+      getAccountId: f.getAccountId,
+      rpc: async () => json(value),
+      sha256: async () => new Promise<string>(() => undefined),
+    });
+    const assertion = expect(reader.read(context, controller.signal)).rejects.toThrow(
+      "PUBLICATION_MEMBERSHIP_TIMEOUT",
+    );
+    await vi.advanceTimersByTimeAsync(30001);
+    await assertion;
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+describe("F1 ambiguous HTTP to SQLite53 zero-write rejection", () => {
+  it.each([true, false])(
+    "two digested wire Candidates cannot become zero-Candidate membership FK=%s",
+    async (foreignKeys) => {
+      const f = fixture(true, foreignKeys, true),
+        value = snapshot(2);
+      await digest(value);
+      const body =
+        '{"trip_source_candidates":' +
+        JSON.stringify(value.trip_source_candidates) +
+        "," +
+        json({ ...value, trip_source_candidates: [] }).slice(1);
+      const transport = createTripPublicationCatalogTransport(
+        f.getAccountId,
+        {
+          baseUrl: "https://synthetic.test",
+          fetchImplementation: async () => new Response(body),
+        },
+        async () => ({ userId: actor, token: "synthetic" }),
+      );
+      const context = await f.owning.captureContext(trip),
+        stop = new AbortController();
+      const reader = createClosedPublicationMembershipReader({
+        mode: "CLOSED",
+        getAccountId: f.getAccountId,
+        sha256: hash,
+        rpc: () => transport.read(context, stop.signal),
+      });
+      const tables = Object.keys(tripImportCatalogSchemas);
+      const before = tables.map((table) =>
+        f.sql.prepare(`SELECT * FROM ${table} `).all(),
+      );
+      const writes = vi.spyOn(f.database, "runAsync"),
+        transactions = vi.spyOn(f.database, "withTransactionAsync");
+      await expect(
+        reader
+          .read(context, stop.signal)
+          .then((handle) => f.repo.install(context, handle)),
+      ).rejects.toMatchObject({ code: "INVALID_RESPONSE" });
+      expect(writes).not.toHaveBeenCalled();
+      expect(transactions).not.toHaveBeenCalled();
+      f.reopen();
+      expect(
+        tables.map((table) => f.sql.prepare(`SELECT * FROM ${table} `).all()),
+      ).toEqual(before);
+      const canonical = await f.reader(value).boundary.read(context);
+      await f.repo.install(context, canonical);
+      f.reopen();
+      expect((await f.repo.read(context, runId)).membership.body.candidates).toHaveLength(
+        2,
+      );
+    },
+  );
+});

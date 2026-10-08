@@ -78,7 +78,10 @@ describe("OTR API client", () => {
       status: 200,
       code: "id:invalid_type",
     });
-    expect(JSON.stringify(readLastApiFailure())).not.toContain("42");
+    // Timestamp digits are unrelated to the rejected payload.
+    expect(JSON.stringify({ ...readLastApiFailure(), at: undefined })).not.toContain(
+      "42",
+    );
     const invalidFormatClient = createApiClient({
       baseUrl: "https://api.example.com",
       fetchImplementation: (async () =>

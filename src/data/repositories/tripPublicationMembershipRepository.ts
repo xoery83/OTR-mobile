@@ -1,3 +1,4 @@
+import { createRequestBoundary, RequestBoundaryError } from "@/data/api/requestBoundary";
 import { z } from "zod";
 import type * as SQLite from "expo-sqlite";
 import {
@@ -173,7 +174,7 @@ async function project(snapshot: Catalog, runId: string, hash: ImportHash) {
 export type ClosedPublicationRead = Readonly<{ memberships: readonly string[] }>;
 const admittedReads = new WeakMap<
   ClosedPublicationRead,
-  { raw: string; context: AccountRequestContext }
+  { raw: string; context: AccountRequestContext; signal?: AbortSignal }
 >();
 
 // Inject only the existing dedicated Track C private read gateway. No default
@@ -191,36 +192,70 @@ export function createClosedPublicationMembershipReader(deps: {
 }) {
   if (deps.mode !== "CLOSED") fail("PUBLICATION_MEMBERSHIP_CLOSED");
   return {
-    async read(context: AccountRequestContext): Promise<ClosedPublicationRead> {
-      context = Object.freeze({ ...context });
-      await assertAccountRequestContext(context, deps.getAccountId);
-      if (!deps.rpc) fail("PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE");
-      const raw = await deps.rpc("trip_source_read_import_catalogs", {
-        actor: context.accountId,
-        trip: context.tripId,
-      });
-      const snapshot = catalog(raw);
-      if (
-        snapshot.actor_account_id !== context.accountId ||
-        snapshot.trip_id !== context.tripId
-      )
-        fail();
-      const memberships: string[] = [];
-      for (const run of snapshot.trip_source_runs) {
-        if (run.state === "READY" && run.retention_state === "RETAINED")
-          memberships.push((await project(snapshot, run.id, deps.sha256)).membership);
+    async read(
+      context: AccountRequestContext,
+      signal?: AbortSignal,
+    ): Promise<ClosedPublicationRead> {
+      const boundary = signal
+        ? createRequestBoundary(30000, signal, () =>
+            assertAccountRequestGeneration(context),
+          )
+        : null;
+      const operation = async () => {
+        const requestSignal = boundary?.signal ?? signal;
+        const assertNotCanceled = () => {
+          if (requestSignal?.aborted) fail("PUBLICATION_MEMBERSHIP_CANCELED");
+        };
+        assertNotCanceled();
+        context = Object.freeze({ ...context });
+        await assertAccountRequestContext(context, deps.getAccountId);
+        if (!deps.rpc) fail("PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE");
+        const raw = await deps.rpc("trip_source_read_import_catalogs", {
+          actor: context.accountId,
+          trip: context.tripId,
+        });
+        assertNotCanceled();
+        const snapshot = catalog(raw);
+        if (
+          snapshot.actor_account_id !== context.accountId ||
+          snapshot.trip_id !== context.tripId
+        )
+          fail();
+        const memberships: string[] = [];
+        for (const run of snapshot.trip_source_runs) {
+          if (run.state === "READY" && run.retention_state === "RETAINED")
+            memberships.push((await project(snapshot, run.id, deps.sha256)).membership);
+        }
+        // Validate even an empty/FAILED-only projection; neither means complete semantic success.
+        await validateImportSnapshot(
+          context.accountId,
+          context.tripId,
+          snapshot,
+          deps.sha256,
+        );
+        await assertAccountRequestContext(context, deps.getAccountId);
+        assertNotCanceled();
+        const handle = Object.freeze({ memberships: Object.freeze(memberships.sort()) });
+        admittedReads.set(handle, {
+          raw: json(snapshot),
+          context,
+          signal,
+        });
+        return handle;
+      };
+      try {
+        return boundary ? await boundary.run(operation) : await operation();
+      } catch (error) {
+        if (error instanceof RequestBoundaryError)
+          fail(
+            error.code === "REQUEST_TIMEOUT"
+              ? "PUBLICATION_MEMBERSHIP_TIMEOUT"
+              : "PUBLICATION_MEMBERSHIP_CANCELED",
+          );
+        throw error;
+      } finally {
+        boundary?.close();
       }
-      // Validate even an empty/FAILED-only projection; neither means complete semantic success.
-      await validateImportSnapshot(
-        context.accountId,
-        context.tripId,
-        snapshot,
-        deps.sha256,
-      );
-      await assertAccountRequestContext(context, deps.getAccountId);
-      const handle = Object.freeze({ memberships: Object.freeze(memberships.sort()) });
-      admittedReads.set(handle, { raw: json(snapshot), context });
-      return handle;
     },
   };
 }
@@ -400,6 +435,7 @@ export function createPublicationMembershipTransactionStore(
       const retained = admittedReads.get(handle);
       if (!retained || json(retained.context) !== json(context))
         fail("PUBLICATION_MEMBERSHIP_UNTRUSTED_HANDOFF");
+      if (retained.signal?.aborted) fail("PUBLICATION_MEMBERSHIP_CANCELED");
       await assertAccountRequestContext(retained.context, getAccountId);
       await importStore.applyCatalogs(context, retained.raw);
       for (const raw of handle.memberships) {
@@ -427,6 +463,7 @@ export function createPublicationMembershipTransactionStore(
         await readRetained(context, run_id);
       }
       await assertAccountRequestContext(context, getAccountId);
+      if (retained.signal?.aborted) fail("PUBLICATION_MEMBERSHIP_CANCELED");
     },
     async readCaptureSupport(
       context: AccountRequestContext,
@@ -473,13 +510,18 @@ export function createDormantPublicationMembershipRepository(
     getAccountId,
     hash,
   );
-  async function scoped<T>(context: AccountRequestContext, work: () => Promise<T>) {
+  async function scoped<T>(
+    context: AccountRequestContext,
+    work: () => Promise<T>,
+    signal?: AbortSignal,
+  ) {
     return withAccountApplyGate(async () => {
       let result!: T;
       await database.withTransactionAsync(async () => {
         await assertAccountRequestContext(context, getAccountId);
         result = await work();
         await assertAccountRequestContext(context, getAccountId);
+        if (signal?.aborted) fail("PUBLICATION_MEMBERSHIP_CANCELED");
       });
       assertAccountRequestGeneration(context);
       return result;
@@ -490,6 +532,10 @@ export function createDormantPublicationMembershipRepository(
     read: (context: AccountRequestContext, runId: string) =>
       scoped(context, () => store.read(context, runId)),
     install: (context: AccountRequestContext, handle: ClosedPublicationRead) =>
-      scoped(context, () => store.install(context, handle)),
+      scoped(
+        context,
+        () => store.install(context, handle),
+        admittedReads.get(handle)?.signal,
+      ),
   };
 }

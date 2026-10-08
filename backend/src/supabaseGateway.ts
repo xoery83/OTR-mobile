@@ -1,4 +1,8 @@
 import {
+  readPublicationCatalog,
+  type PublicationCatalogConnection,
+} from "./tripPublicationCatalogRead";
+import {
   EventCollectionError,
   type EventCollectionConnection,
 } from "./tripEventCollection";
@@ -21,7 +25,11 @@ import {
   rateBindingMatches,
   sameRate,
 } from "@/domain/ledger/rateAcceptance";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  isAuthSessionMissingError,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 import { createHash, randomUUID } from "node:crypto";
 import { losslessSourceJson } from "./losslessSourceJson";
 import { classifyMissingEconomicDate } from "../../src/domain/ledger/economicDateEvidence";
@@ -178,6 +186,7 @@ import {
 const approvedDevProjectRef = "tuqigdxrvrerfewsxqgm";
 
 export type SupabaseDevConfig = {
+  publicationCatalogConnection?: PublicationCatalogConnection;
   canonicalReadGateway?: CanonicalReadGatewayConfig;
   canonicalCollectionConnection?: EventCollectionConnection;
   url: string;
@@ -764,6 +773,40 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return raw === null ? null : projectEventReceipt(raw, userId, tripId, operationKey);
     },
 
+    async readPublicationImportCatalogs(actor, trip, signal) {
+      return readPublicationCatalog(
+        config.publicationCatalogConnection,
+        actor,
+        trip,
+        signal,
+      );
+    },
+    async validatePublicationAccessToken(token, signal) {
+      if (signal.aborted) return { disposition: "UNAVAILABLE" };
+      try {
+        const { data, error } = await auth.auth.getUser(token);
+        if (signal.aborted) return { disposition: "UNAVAILABLE" };
+        if (!error && data.user)
+          return { disposition: "VERIFIED", user: { id: data.user.id } };
+        // Auth infrastructure errors are never credential-revocation evidence.
+        if (
+          isAuthSessionMissingError(error) ||
+          (error &&
+            [400, 401, 403, 404].includes(error.status ?? 0) &&
+            [
+              "bad_jwt",
+              "user_not_found",
+              "session_not_found",
+              "session_expired",
+              "user_banned",
+            ].includes(error.code ?? ""))
+        )
+          return { disposition: "REJECTED" };
+        return { disposition: "UNAVAILABLE" };
+      } catch {
+        return { disposition: "UNAVAILABLE" };
+      }
+    },
     async validateAccessToken(token) {
       const { data, error } = await auth.auth.getUser(token);
       return error || !data.user ? null : { id: data.user.id };

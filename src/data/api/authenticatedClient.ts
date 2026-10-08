@@ -17,6 +17,9 @@ export function createAuthenticatedApiClient(
   return createApiClient({
     ...options,
     ...(context
+      ? { assertRequestCurrent: () => assertAccountRequestGeneration(context) }
+      : {}),
+    ...(context
       ? {
           fetchImplementation: ((...args) => {
             assertAccountRequestGeneration(context);
