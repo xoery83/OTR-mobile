@@ -1,0 +1,12 @@
+{
+  "pass": true,
+  "realPostgrestFreshTrip": true,
+  "authorizedBackendBootstrap": 200,
+  "crossAccountBootstrap": 403,
+  "invalidAuthBootstrap": 401,
+  "crossAccountRestRows": 0,
+  "protectedSettingsRest": 403,
+  "requests": 29,
+  "authIdentityFixtureOnly": true,
+  "externalNetwork": "denied"
+}

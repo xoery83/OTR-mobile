@@ -11,6 +11,30 @@ Service/container: `backend` / `otr-dev-backend`
 Always pass `-f deploy/dev-backend/compose.yml`; without it, Compose may discover the
 unrelated `/opt/otr` AI/media project.
 
+## R3 accepted installation and remaining device gate
+
+2026-10-08: Owner accepted same-project DEV `tuqigdxrvrerfewsxqgm`, CLOSED-only
+`otr-r3-dev-v1` and forward `otr-r3-dev-v1-ledger-init-1`. Existing Backend last
+verified development/ok; 36 Hosted checks and final preservation checks PASS.
+No Backend deployment/configuration change was needed for the forward correction.
+
+The original destructive cutover and forward SQL each committed once. Do not rerun
+either, reset DEV, repair migration history, or use normal historical migration
+replay to emulate this separate R3 lineage. Server1–84 source files remain immutable;
+Hosted historical records remain68. Installed catalog/hash/provenance and bounded
+fixtures are recorded in [forward record](../../supabase/dev-forward/r3-v1/README.md)
+and [execution report](../architecture/OTR_R3_SAME_PROJECT_DEV_REBUILD_REPORT.md).
+
+This closure authorizes documentation only: no restart/build/deploy or Hosted write.
+Operational commands below are existing procedures, requiring their applicable
+Owner authorization. Historical CP15B/Server84 sections are future reference;
+R3 has not activated OPEN/discovery or providers. All relevant gates remain CLOSED.
+
+Old device outboxes stay quarantined; do not replay/wipe/reset/logout/rebind or
+re-enable clients under this acceptance. Device first-sync acceptance is a separate
+Owner gate. Use only approved ordinary Account/Trip contracts for any future
+synthetic continuation; no service-role financial seed bypass or legacy import.
+
 ## Check
 
 ```sh

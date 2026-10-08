@@ -1,0 +1,55 @@
+{
+  "forward_sha256": "983674336ac12bffb7746a4d76fc0c79c53b7b3dfec307aaf1875d00aa55f4f2",
+  "installs": [
+    {
+      "container": "otr-r3-ledger-init-a",
+      "pass": true,
+      "sql_assertions": 29,
+      "closed_assertions": 24,
+      "changed_functions": [
+        {
+          "acl": [
+            [
+              "postgres",
+              "postgres",
+              "EXECUTE",
+              false
+            ]
+          ],
+          "owner": "postgres",
+          "signature": "public.add_trip_creator_as_journey_member()",
+          "body_sha256": "73de5cd814b1b1feafc4bf08418a3c402708c80fd87e38119b64f7d1104ada1c"
+        }
+      ],
+      "catalog_sha256": "c9adf99f4818b32d6aca81d22d3a17bc7ccd935652b59f95016fa19cb9982906",
+      "history_rows": 68,
+      "managed_schema_data_preserved": true,
+      "baseline_lineage_preserved": true
+    },
+    {
+      "container": "otr-r3-ledger-init-b",
+      "pass": true,
+      "sql_assertions": 29,
+      "closed_assertions": 24,
+      "changed_functions": [
+        {
+          "acl": [
+            [
+              "postgres",
+              "postgres",
+              "EXECUTE",
+              false
+            ]
+          ],
+          "owner": "postgres",
+          "signature": "public.add_trip_creator_as_journey_member()",
+          "body_sha256": "73de5cd814b1b1feafc4bf08418a3c402708c80fd87e38119b64f7d1104ada1c"
+        }
+      ],
+      "catalog_sha256": "c9adf99f4818b32d6aca81d22d3a17bc7ccd935652b59f95016fa19cb9982906",
+      "history_rows": 68,
+      "managed_schema_data_preserved": true,
+      "baseline_lineage_preserved": true
+    }
+  ]
+}

@@ -2,6 +2,30 @@
 
 Date: 2026-09-09
 
+## Accepted R3 Hosted DEV state — 2026-10-08
+
+Owner accepted DEV `tuqigdxrvrerfewsxqgm` with `otr-r3-dev-v1` plus installed
+forward `otr-r3-dev-v1-ledger-init-1`. Existing Backend
+`https://api-dev.xoery.art` last verified healthy (development/ok).
+36 bounded Hosted checks and final lineage/catalog/function, historical68,
+Auth/Storage, Account isolation and CLOSED verification PASS. This section records
+accepted execution evidence; documentation closure made no new Hosted request.
+
+Last verified fixtures: two synthetic Accounts/Profiles/Trips, four members, two
+Ledger settings/Expenses, one uploaded Receipt and one finalized settlement.
+Auth users12/sessions595; original591 sessions preserved. Storage43 comprises
+original42 unchanged objects plus one synthetic Receipt; bucket hashes preserved.
+Provider calls0; OCR PENDING; Person/Event/Source/Import and provider gates CLOSED.
+Historical Server1–84 source bytes remain; Hosted migration history honestly
+retains68 records. No Server73 OPEN equivalence is claimed.
+
+Device first-sync/re-enable remains gated. Old outboxes must remain quarantined;
+no replay, wipe, reset, logout or Account rebinding is authorized. Production and
+provider activation remain outside this acceptance. See
+[execution report](architecture/OTR_R3_SAME_PROJECT_DEV_REBUILD_REPORT.md),
+[forward provenance](../supabase/dev-forward/r3-v1/README.md) and
+[DEV runbook](ops/DEV_BACKEND_RUNBOOK.md).
+
 ## Machine
 
 - macOS: 26.6.2

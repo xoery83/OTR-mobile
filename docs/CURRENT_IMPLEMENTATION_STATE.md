@@ -2,6 +2,33 @@
 
 Date: 2026-10-08 (Pacific/Auckland).
 
+## R3 Hosted DEV rebuild — Final Owner Acceptance PASS
+
+2026-10-08. Owner accepted the committed CLOSED-only rebuild, one Ledger forward
+correction and bounded Hosted fixtures. This is documentation/Git closure only.
+
+- DEV `tuqigdxrvrerfewsxqgm`: 36 Hosted checks PASS. Final catalog
+  `c9adf99f4818b32d6aca81d22d3a17bc7ccd935652b59f95016fa19cb9982906`;
+  function `73de5cd814b1b1feafc4bf08418a3c402708c80fd87e38119b64f7d1104ada1c`.
+  Historical68, R3 lineage, roles/FORCE RLS, Auth/Storage preservation and CLOSED
+  gates PASS. Original rebuild and forward each committed once; never rerun.
+- Accepted fixture state: Profiles2, Trips2, members4, Ledger settings2, Expenses2,
+  uploaded Receipt1, finalized settlement1. Transfer NZD600 minor OPEN/unpaid;
+  OCR PENDING; provider calls0. Backend development/ok. Last verified Auth users12 /
+  sessions595 and Storage43 (original42 preserved plus1 synthetic Receipt).
+- SQL origin a817e8e; rebuild approved canonical b6daffe; forward local base4f97bb6.
+  Current canonical main c2f1524 includes P4a/C4a. Historical migration files are
+  unchanged; Hosted historical records remain68, without invented Server69–84 rows.
+- Old device outboxes remain quarantined. Device first-sync/client re-enable is
+  NOT accepted or authorized; no replay/wipe/reset/logout/rebind. Future device
+  acceptance and OPEN/discovery/provider work require separate Owner decisions.
+- Execution: architecture/OTR_R3_SAME_PROJECT_DEV_REBUILD_REPORT.md; forward:
+  architecture/OTR_R3_FRESH_TRIP_LEDGER_INITIALIZATION_CORRECTION_REPORT.md and
+  ../supabase/dev-forward/r3-v1/README.md. Environment/ops documents reflect R3.
+- Documentation closure proposal: architecture/OTR_R3_DOCUMENTATION_CLOSURE_PROPOSAL.md.
+  No Hosted/device/provider operation, commit or push in this closure. STOP for
+  scoped commit review. Existing P4a/C4a handoff below is retained byte-for-byte.
+
 ## C4a canonical integration — Final Owner accepted
 
 - Fresh isolated worktree `/private/tmp/otr-c4a-canonical-integration-20261008`, branch
