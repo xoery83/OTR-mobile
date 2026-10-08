@@ -2,6 +2,29 @@
 
 Date: 2026-10-09 (Pacific/Auckland).
 
+## Platform P2b canonical integration — VALIDATED / DORMANT
+
+- Final Owner authorization on 2026-10-09 approves two ordinary `--no-ff` merges
+  from canonical base `f7115dc288aff7f0a252bf80f53b0f2b626a7534`, SQLite52
+  closure `138b55c40f39ed4776b9e2692309cf4a4dcb35a2` first and Publication
+  Membership closure `de370fac0b69cd714319595dbdadfac25bd10bd7` second, followed
+  by normal canonical push only after required validation. Both accepted commits
+  remain in ancestry; no accepted production code or review history is rewritten.
+- Fresh combined23-file regression matrix:937 PASS. Typecheck, lint/UI guard,
+  Backend build, changed-file formatting, whitespace and exact scope/preservation
+  checks PASS. All29 other approved paths match the accepted preflight bytes.
+- Both accepted slice handoffs below are retained verbatim. Their original
+  per-slice schema/pending/local-closure statements are historical.
+- Combined registry is SQLite1–52; SQLite1–51 definitions are unchanged and
+  SQLite53 remains unallocated. Publication Membership's future Run column is
+  absent; installation/read fail closed with
+  `PUBLICATION_MEMBERSHIP_SCHEMA_UNAVAILABLE`. No transport/provider/Integrated C4
+  runtime composition or Hosted/device operation is authorized or performed.
+- Accepted historical preflight:
+  `architecture/OTR_PLATFORM_P2B_CANONICAL_INTEGRATION_PREFLIGHT.md`.
+  Next work requires separate Owner approval for publication migration allocation,
+  actual schema durability, authenticated transport and owning C4 composition.
+
 ## P2b-B dormant SQLite52 persistence — final Owner acceptance / local closure
 
 - Owner accepted corrected Contract/ADR/plan and conditionally authorized SQLite52.
@@ -40,6 +63,30 @@ Date: 2026-10-09 (Pacific/Auckland).
   Closure is local only; canonical main is unchanged. No push/merge/rebase,
   Hosted/device/provider access or activation; all C4/C5/C9/Provider gates CLOSED.
   Real owning-data adapter and Integrated C4 require separate Owner authorization.
+
+## Publication Membership Builder — DORMANT CODE/DESIGN OWNER ACCEPTED
+
+- Fresh isolated verified `f7115dc`; dormant strict membership envelope, CLOSED
+  existing-private-read projection, complete Input/ancestry verification and
+  same-database transaction-local install/read/current Capture-binding seams.
+- Canonical SQLite1–51 unchanged. Separate SQLite52 remains pending acceptance;
+  SQLite53 is only a candidate. One-column/four-guard DDL is design-only; no
+  migration module, registration, allocation or new DDL execution. Actual51
+  installation fails before writes. Durable-schema/guard/cold acceptance blocked.
+- Owner F1–F3 corrections enforce Run Input Source scope, unique Original root
+  for single-Capture support (convergent DAGs preserved), and active transaction/
+  Account/Trip guards on internal Stores. Serialized transaction ownership and
+  Account apply gate remain internal caller preconditions.
+- Correction verification: selected12 suites/788 PASS, additional4 Account/
+  Capture QA suites/13 PASS; final focused39 PASS. Typecheck/lint/UI guard PASS.
+  Future-column simulation is test-only, not migration durability.
+- Report: `architecture/OTR_PLATFORM_PUBLICATION_MEMBERSHIP_BUILDER_REPORT.md`;
+  design: `architecture/OTR_PLATFORM_PUBLICATION_MEMBERSHIP_MIGRATION_DESIGN.md`.
+  Original review/correction history and independent targeted39 PASS retained.
+  Owner authorized one scoped local closure commit on exact `f7115dc` parent.
+  Next: separate52 acceptance/ancestry/Owner migration
+  allocation. P2b-A, P2b-B integration and all runtime/provider/business gates remain
+  CLOSED. No Hosted/device operation, push or Git integration.
 
 ## Capture C3 canonical integration — PREPARED / INDEPENDENT REVIEW PASS
 

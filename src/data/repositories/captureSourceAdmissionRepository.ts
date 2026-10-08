@@ -75,6 +75,86 @@ const json = (v: unknown) => canonicalEventJson(v as Json);
 function fail(code = "CAPTURE_SOURCE_INTEGRITY"): never {
   throw new Error(code);
 }
+// Internal seam: owning caller supplies the complete verified roots, serialized transaction and Account gate.
+export function createCaptureSourceBindingTransactionStore(
+  database: ImportAdmissionDatabase,
+  getAccountId: () => Promise<string>,
+  sha256: ImportHash,
+) {
+  return {
+    async assertCurrent(
+      c: AccountRequestContext,
+      bindingId: string,
+      input: { sourceId: string; materialRevision: number; originalIds: string[] },
+    ) {
+      if (!database.isInTransactionAsync || !(await database.isInTransactionAsync()))
+        fail("CAPTURE_SOURCE_TRANSACTION_REQUIRED");
+      await assertAccountRequestContext(c, getAccountId);
+      if (
+        !(await database.getFirstAsync(
+          "SELECT 1 FROM ledger_actor_context WHERE user_id=? AND journey_id=?",
+          c.accountId,
+          c.tripId,
+        ))
+      )
+        fail("IMPORT_TRIP_ACCESS");
+      if (input.originalIds.length !== 1) fail("CAPTURE_SOURCE_AMBIGUOUS_ORIGINAL");
+      const b = await database.getFirstAsync<Row>(
+        "SELECT * FROM local_capture_source_bindings WHERE account_id=? AND trip_id=? AND id=?",
+        c.accountId,
+        c.tripId,
+        bindingId,
+      );
+      if (
+        !b ||
+        b.state !== "ADMITTED" ||
+        b.source_id !== input.sourceId ||
+        typeof b.material_revision !== "number" ||
+        b.material_revision > input.materialRevision ||
+        !input.originalIds.includes(z.string().parse(b.representation_id))
+      )
+        fail("CAPTURE_SOURCE_STALE");
+      const original = await database.getFirstAsync<Row>(
+        "SELECT * FROM trip_source_representations WHERE cache_account_id=? AND source_id=? AND id=?",
+        c.accountId,
+        input.sourceId,
+        z.string().parse(b.representation_id),
+      );
+      const capture = await database.getFirstAsync<Row>(
+        "SELECT * FROM local_capture_inbox WHERE account_id=? AND id=?",
+        c.accountId,
+        z.string().parse(b.capture_id),
+      );
+      const payload = await database.getFirstAsync<Row>(
+        "SELECT * FROM local_capture_payloads WHERE account_id=? AND id=?",
+        c.accountId,
+        z.string().parse(b.capture_payload_id),
+      );
+      if (
+        !original ||
+        !capture ||
+        !payload ||
+        original.role !== "ORIGINAL" ||
+        original.registration_state !== "REGISTERED" ||
+        original.retention_state !== "RETAINED" ||
+        original.payload_sha256 !== b.material_sha256 ||
+        original.byte_count !== b.byte_count ||
+        capture.trip_id !== c.tripId ||
+        capture.state !== "ASSIGNED" ||
+        capture.revision !== b.capture_revision ||
+        capture.payload_id !== b.capture_payload_id ||
+        payload.sha256 !== b.material_sha256 ||
+        payload.byte_count !== b.byte_count ||
+        !(payload.bytes instanceof Uint8Array) ||
+        payload.bytes.byteLength !== b.byte_count ||
+        (await sha256(payload.bytes)) !== b.material_sha256
+      )
+        fail("CAPTURE_SOURCE_STALE");
+      await assertAccountRequestContext(c, getAccountId);
+      return json({ binding: b, capture, original, payloadHash: payload.sha256 });
+    },
+  };
+}
 export function createCaptureSourceAdmissionRepository(
   database: ImportAdmissionDatabase,
   getAccountId: () => Promise<string>,
