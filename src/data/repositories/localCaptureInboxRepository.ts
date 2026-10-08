@@ -56,7 +56,7 @@ export function createLocalCaptureInboxRepository(
   getActiveUserId: () => Promise<string>,
   dependencies: LocalCaptureDependencies,
 ) {
-  const { sha256, newId, now } = dependencies;
+  const { sha256 } = dependencies;
   // The shared context API's Trip field is empty for Account-only work. No Trip
   // identity is synthesized or persisted; target Trip admission is separate.
   const context = () => captureAccountRequestContext("", getActiveUserId);
@@ -91,73 +91,8 @@ export function createLocalCaptureInboxRepository(
     );
     if (!actor) throw new LocalCaptureError("TRIP_ACCESS");
   }
-  async function verifiedPayload(
-    row: PayloadRow | null,
-    accountId: string,
-    payloadId: string,
-  ) {
-    if (
-      !row ||
-      row.accountId !== accountId ||
-      row.payloadId !== payloadId ||
-      !(row.bytes instanceof Uint8Array) ||
-      !Number.isSafeInteger(row.byteCount) ||
-      row.byteCount <= 0 ||
-      row.byteCount > CAPTURE_LIMITS.binaryBytes ||
-      row.bytes.length !== row.byteCount ||
-      !sha256Schema.safeParse(row.sha256).success
-    )
-      throw new LocalCaptureError("INTEGRITY");
-    const bytes = new Uint8Array(row.bytes);
-    if ((await hashCaptureBytes(bytes, sha256)) !== row.sha256)
-      throw new LocalCaptureError("INTEGRITY");
-    return bytes;
-  }
-  async function load(accountId: string, captureId: string) {
-    const row = await database.getFirstAsync<LocalCapture>(
-      `${captureSelect} WHERE c.account_id = ? AND c.id = ?`,
-      accountId,
-      captureId,
-    );
-    if (!row) throw new LocalCaptureError("NOT_FOUND");
-    const parsed = localCaptureSchema.safeParse(row);
-    if (
-      !parsed.success ||
-      parsed.data.accountId !== accountId ||
-      parsed.data.id !== captureId
-    )
-      throw new LocalCaptureError("INTEGRITY");
-    const capture = parsed.data;
-    const payload = await database.getFirstAsync<PayloadRow>(
-      `${payloadSelect} WHERE account_id = ? AND id = ?`,
-      accountId,
-      capture.payloadId,
-    );
-    const bytes = await verifiedPayload(payload, accountId, capture.payloadId);
-    if (capture.byteCount !== payload!.byteCount || capture.sha256 !== payload!.sha256)
-      throw new LocalCaptureError("INTEGRITY");
-    if (capture.kind === "TEXT") {
-      try {
-        validateCaptureUtf8(bytes);
-      } catch {
-        throw new LocalCaptureError("INTEGRITY");
-      }
-    }
-    return { capture, bytes };
-  }
-  function checkTotals(
-    totals: { accountBytes: number; deviceBytes: number; rows: number } | null,
-  ) {
-    if (
-      !totals ||
-      !Object.values(totals).every((v) => Number.isSafeInteger(v) && v >= 0) ||
-      totals.accountBytes > CAPTURE_LIMITS.accountBytes ||
-      totals.deviceBytes > CAPTURE_LIMITS.deviceBytes ||
-      totals.rows > CAPTURE_LIMITS.accountRows
-    )
-      throw new LocalCaptureError("INTEGRITY");
-    return totals;
-  }
+  const storage = createLocalCaptureTransactionStore(database, dependencies);
+  const { load } = storage;
   return {
     async intake(
       metadata: CaptureMetadata,
@@ -170,84 +105,7 @@ export function createLocalCaptureInboxRepository(
       const payload = await readCapturePayload(meta.kind, input, sha256);
       return scoped(c, async () => {
         await assertTrip(c.accountId, meta.tripId);
-        const totals = checkTotals(
-          await database.getFirstAsync<{
-            accountBytes: number;
-            deviceBytes: number;
-            rows: number;
-          }>(
-            `SELECT
-          (SELECT COALESCE(SUM(byte_count),0) FROM local_capture_payloads WHERE account_id = ?) AS accountBytes,
-          (SELECT COALESCE(SUM(byte_count),0) FROM local_capture_payloads) AS deviceBytes,
-          (SELECT COUNT(*) FROM local_capture_inbox WHERE account_id = ?) AS rows`,
-            c.accountId,
-            c.accountId,
-          ),
-        );
-        if (totals.rows >= CAPTURE_LIMITS.accountRows)
-          throw new LocalCaptureError("ROW_QUOTA");
-        // Metadata narrows candidates; every candidate must pass byte integrity.
-        const candidates = await database.getAllAsync<PayloadRow>(
-          `${payloadSelect} WHERE account_id = ? AND sha256 = ? AND byte_count = ?`,
-          c.accountId,
-          payload.sha256,
-          payload.byteCount,
-        );
-        let payloadId: string | null = null;
-        for (const candidate of candidates) {
-          const bytes = await verifiedPayload(
-            candidate,
-            c.accountId,
-            candidate.payloadId,
-          );
-          if (!equalCaptureBytes(bytes, payload.bytes))
-            throw new LocalCaptureError("INTEGRITY");
-          payloadId ??= candidate.payloadId;
-        }
-        const additional = payloadId === null ? payload.byteCount : 0;
-        if (totals.accountBytes + additional > CAPTURE_LIMITS.accountBytes)
-          throw new LocalCaptureError("ACCOUNT_BYTE_QUOTA");
-        if (totals.deviceBytes + additional > CAPTURE_LIMITS.deviceBytes)
-          throw new LocalCaptureError("DEVICE_BYTE_QUOTA");
-        const capture: LocalCapture = {
-          ...meta,
-          id: newId(),
-          accountId: c.accountId,
-          payloadId: payloadId ?? newId(),
-          byteCount: payload.byteCount,
-          sha256: payload.sha256,
-          createdAt: now(),
-          state: meta.tripId === null ? "INBOX" : "ASSIGNED",
-          revision: 1,
-        };
-        if (!localCaptureSchema.safeParse(capture).success)
-          throw new LocalCaptureError("INVALID_INPUT");
-        if (payloadId === null)
-          await database.runAsync(
-            `INSERT INTO local_capture_payloads (account_id,id,byte_count,sha256,bytes)
-           VALUES (?,?,CAST(? AS INTEGER),?,?)`,
-            c.accountId,
-            capture.payloadId,
-            payload.byteCount,
-            payload.sha256,
-            payload.bytes,
-          );
-        await database.runAsync(
-          `INSERT INTO local_capture_inbox
-          (account_id,id,payload_id,kind,original_filename,declared_content_type,created_at,trip_id,state,revision)
-          VALUES (?,?,?,?,?,?,?,?,?,CAST(? AS INTEGER))`,
-          c.accountId,
-          capture.id,
-          capture.payloadId,
-          capture.kind,
-          capture.originalFilename,
-          capture.declaredContentType,
-          capture.createdAt,
-          capture.tripId,
-          capture.state,
-          1,
-        );
-        return capture;
+        return storage.insert(c.accountId, meta, payload);
       });
     },
     async listInbox(
@@ -347,6 +205,164 @@ export function createLocalCaptureInboxRepository(
           capture.payloadId,
         );
       });
+    },
+  };
+}
+
+// Data-repository-only seam: caller owns one Account-gated transaction.
+// No reader I/O or nested transaction; submission binding commits in that transaction.
+export function createLocalCaptureTransactionStore(
+  database: LocalCaptureDatabase,
+  { sha256, newId, now }: LocalCaptureDependencies,
+) {
+  async function verifiedPayload(
+    row: PayloadRow | null,
+    accountId: string,
+    payloadId: string,
+  ) {
+    if (
+      !row ||
+      row.accountId !== accountId ||
+      row.payloadId !== payloadId ||
+      !(row.bytes instanceof Uint8Array) ||
+      !Number.isSafeInteger(row.byteCount) ||
+      row.byteCount <= 0 ||
+      row.byteCount > CAPTURE_LIMITS.binaryBytes ||
+      row.bytes.length !== row.byteCount ||
+      !sha256Schema.safeParse(row.sha256).success
+    )
+      throw new LocalCaptureError("INTEGRITY");
+    const bytes = new Uint8Array(row.bytes);
+    if ((await hashCaptureBytes(bytes, sha256)) !== row.sha256)
+      throw new LocalCaptureError("INTEGRITY");
+    return bytes;
+  }
+  async function load(accountId: string, captureId: string) {
+    const row = await database.getFirstAsync<LocalCapture>(
+      `${captureSelect} WHERE c.account_id = ? AND c.id = ?`,
+      accountId,
+      captureId,
+    );
+    if (!row) throw new LocalCaptureError("NOT_FOUND");
+    const parsed = localCaptureSchema.safeParse(row);
+    if (
+      !parsed.success ||
+      parsed.data.accountId !== accountId ||
+      parsed.data.id !== captureId
+    )
+      throw new LocalCaptureError("INTEGRITY");
+    const capture = parsed.data;
+    const payload = await database.getFirstAsync<PayloadRow>(
+      `${payloadSelect} WHERE account_id = ? AND id = ?`,
+      accountId,
+      capture.payloadId,
+    );
+    const bytes = await verifiedPayload(payload, accountId, capture.payloadId);
+    if (capture.byteCount !== payload!.byteCount || capture.sha256 !== payload!.sha256)
+      throw new LocalCaptureError("INTEGRITY");
+    if (capture.kind === "TEXT") {
+      try {
+        validateCaptureUtf8(bytes);
+      } catch {
+        throw new LocalCaptureError("INTEGRITY");
+      }
+    }
+    return { capture, bytes };
+  }
+  function checkTotals(
+    totals: { accountBytes: number; deviceBytes: number; rows: number } | null,
+  ) {
+    if (
+      !totals ||
+      !Object.values(totals).every((v) => Number.isSafeInteger(v) && v >= 0) ||
+      totals.accountBytes > CAPTURE_LIMITS.accountBytes ||
+      totals.deviceBytes > CAPTURE_LIMITS.deviceBytes ||
+      totals.rows > CAPTURE_LIMITS.accountRows
+    )
+      throw new LocalCaptureError("INTEGRITY");
+    return totals;
+  }
+  return {
+    load,
+    async insert(
+      accountId: string,
+      meta: ReturnType<typeof captureMetadataSchema.parse>,
+      payload: Awaited<ReturnType<typeof readCapturePayload>>,
+    ): Promise<LocalCapture> {
+      const totals = checkTotals(
+        await database.getFirstAsync<{
+          accountBytes: number;
+          deviceBytes: number;
+          rows: number;
+        }>(
+          `SELECT
+          (SELECT COALESCE(SUM(byte_count),0) FROM local_capture_payloads WHERE account_id = ?) AS accountBytes,
+          (SELECT COALESCE(SUM(byte_count),0) FROM local_capture_payloads) AS deviceBytes,
+          (SELECT COUNT(*) FROM local_capture_inbox WHERE account_id = ?) AS rows`,
+          accountId,
+          accountId,
+        ),
+      );
+      if (totals.rows >= CAPTURE_LIMITS.accountRows)
+        throw new LocalCaptureError("ROW_QUOTA");
+      // Metadata narrows candidates; every candidate must pass byte integrity.
+      const candidates = await database.getAllAsync<PayloadRow>(
+        `${payloadSelect} WHERE account_id = ? AND sha256 = ? AND byte_count = ?`,
+        accountId,
+        payload.sha256,
+        payload.byteCount,
+      );
+      let payloadId: string | null = null;
+      for (const candidate of candidates) {
+        const bytes = await verifiedPayload(candidate, accountId, candidate.payloadId);
+        if (!equalCaptureBytes(bytes, payload.bytes))
+          throw new LocalCaptureError("INTEGRITY");
+        payloadId ??= candidate.payloadId;
+      }
+      const additional = payloadId === null ? payload.byteCount : 0;
+      if (totals.accountBytes + additional > CAPTURE_LIMITS.accountBytes)
+        throw new LocalCaptureError("ACCOUNT_BYTE_QUOTA");
+      if (totals.deviceBytes + additional > CAPTURE_LIMITS.deviceBytes)
+        throw new LocalCaptureError("DEVICE_BYTE_QUOTA");
+      const capture: LocalCapture = {
+        ...meta,
+        id: newId(),
+        accountId: accountId,
+        payloadId: payloadId ?? newId(),
+        byteCount: payload.byteCount,
+        sha256: payload.sha256,
+        createdAt: now(),
+        state: meta.tripId === null ? "INBOX" : "ASSIGNED",
+        revision: 1,
+      };
+      if (!localCaptureSchema.safeParse(capture).success)
+        throw new LocalCaptureError("INVALID_INPUT");
+      if (payloadId === null)
+        await database.runAsync(
+          `INSERT INTO local_capture_payloads (account_id,id,byte_count,sha256,bytes)
+           VALUES (?,?,CAST(? AS INTEGER),?,?)`,
+          accountId,
+          capture.payloadId,
+          payload.byteCount,
+          payload.sha256,
+          payload.bytes,
+        );
+      await database.runAsync(
+        `INSERT INTO local_capture_inbox
+          (account_id,id,payload_id,kind,original_filename,declared_content_type,created_at,trip_id,state,revision)
+          VALUES (?,?,?,?,?,?,?,?,?,CAST(? AS INTEGER))`,
+        accountId,
+        capture.id,
+        capture.payloadId,
+        capture.kind,
+        capture.originalFilename,
+        capture.declaredContentType,
+        capture.createdAt,
+        capture.tripId,
+        capture.state,
+        1,
+      );
+      return capture;
     },
   };
 }

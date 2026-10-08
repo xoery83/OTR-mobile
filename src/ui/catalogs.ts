@@ -1,4 +1,35 @@
 export const en = {
+  "capture.intakeTitle": "Local intake",
+  "capture.counts":
+    "Selected {selected} · saved {accepted} · failed {failed} · pending {pending}",
+  "capture.localCustody":
+    "Only items marked saved are retained on this device. Closing does not delete them.",
+  "capture.processingUnavailable":
+    "Processing is not installed. No plans have been imported.",
+  "capture.reacquireHint":
+    "Unsaved selections may expire. Select one item to recover it; an unverified selection continues in a new submission.",
+  "capture.accepted": "Saved on this device",
+  "capture.failed": "Not saved · intake failed",
+  "capture.pending": "Not saved · pending intake",
+  "capture.submitError":
+    "Could not finish intake. Saved items remain retained. Retry the same submission or recover an unsaved item; select only one item for recovery.",
+  "capture.recoverPinned": "Select original again",
+  "capture.continueMissing": "Continue missing item in a new submission",
+  "capture.continued": "Continued in another submission",
+  "capture.addMore": "Add more in a new submission",
+  "capture.hide": "Hide",
+  "capture.failure.EMPTY_PAYLOAD": "The original is empty.",
+  "capture.failure.PAYLOAD_TOO_LARGE":
+    "The original exceeds the local intake size limit.",
+  "capture.failure.READER_FAILURE": "The original could not be read. Select it again.",
+  "capture.failure.INVALID_UTF8": "The text encoding could not be verified.",
+  "capture.failure.HASH_FAILURE": "The original integrity could not be verified.",
+  "capture.failure.ROW_QUOTA": "The local item limit has been reached.",
+  "capture.failure.ACCOUNT_BYTE_QUOTA":
+    "The account local storage limit has been reached.",
+  "capture.failure.DEVICE_BYTE_QUOTA": "The device local storage limit has been reached.",
+  "capture.failure.CONTENT_MISMATCH":
+    "The selected bytes differ from the pinned original. Select the exact original.",
   "capture.title": "Add material",
   "capture.context": "Add to {name}",
   "capture.contextHint":
@@ -1595,6 +1626,33 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "capture.intakeTitle": "本地接收",
+  "capture.counts":
+    "已选择{selected}项 · 已保存{accepted}项 · 失败{failed}项 · 待接收{pending}项",
+  "capture.localCustody": "仅标记为已保存的项目保留在此设备上。关闭不会删除它们。",
+  "capture.processingUnavailable": "处理功能尚未安装。尚未导入任何旅行计划。",
+  "capture.reacquireHint":
+    "未保存的临时选择可能失效。恢复时请选择一项；未经验证的选择将在新提交中继续。",
+  "capture.accepted": "已保存在此设备上",
+  "capture.failed": "尚未保存 · 接收失败",
+  "capture.pending": "尚未保存 · 待接收",
+  "capture.submitError":
+    "未能完成接收。已保存的项目仍然保留。请重试同一提交或恢复未保存的项目；恢复时仅选择一项。",
+  "capture.recoverPinned": "重新选择原件",
+  "capture.continueMissing": "在新提交中继续缺失项目",
+  "capture.continued": "已在另一提交中继续",
+  "capture.addMore": "在新提交中添加更多",
+  "capture.hide": "隐藏",
+  "capture.failure.EMPTY_PAYLOAD": "原件为空。",
+  "capture.failure.PAYLOAD_TOO_LARGE": "原件超过本地接收大小限制。",
+  "capture.failure.READER_FAILURE": "无法读取原件，请重新选择。",
+  "capture.failure.INVALID_UTF8": "无法验证文本编码。",
+  "capture.failure.HASH_FAILURE": "无法验证原件完整性。",
+  "capture.failure.ROW_QUOTA": "已达到本地项目数量限制。",
+  "capture.failure.ACCOUNT_BYTE_QUOTA": "已达到账户本地存储限制。",
+  "capture.failure.DEVICE_BYTE_QUOTA": "已达到设备本地存储限制。",
+  "capture.failure.CONTENT_MISMATCH":
+    "所选字节与已记录的原件不一致，请选择完全相同的原件。",
   "capture.title": "添加材料",
   "capture.context": "添加到{name}",
   "capture.contextHint": "这是打开此界面时的上下文，不代表已确认的目标。",

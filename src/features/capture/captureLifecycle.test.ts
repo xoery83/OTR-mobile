@@ -23,8 +23,23 @@ const ui = vi.hoisted(() => ({
   photos: vi.fn(),
   session: vi.fn(),
   navigate: vi.fn(),
+  jobId: undefined as string | undefined,
+  reopen: vi.fn(),
+  submit: vi.fn(),
+  createSession: vi.fn(),
+  createRecovery: vi.fn(),
+}));
+vi.mock("@/data/operations/defaultCaptureSubmission", () => ({
+  getDefaultCaptureSubmissionRepository: async () => ({ reopen: ui.reopen }),
+  createDefaultCaptureSubmissionSession: ui.createSession,
+  createDefaultCaptureRecoveryAction: ui.createRecovery,
 }));
 vi.mock("react", () => ({
+  useRef(initial: unknown) {
+    const index = ui.cursor++;
+    if (!(index in ui.slots)) ui.slots[index] = { current: initial };
+    return ui.slots[index];
+  },
   useState(initial: unknown) {
     const index = ui.cursor++;
     if (!(index in ui.slots))
@@ -51,6 +66,7 @@ vi.mock("react", () => ({
   },
 }));
 vi.mock("expo-router", () => ({
+  useLocalSearchParams: () => ({ jobId: ui.jobId }),
   router: { navigate: ui.navigate, push: vi.fn() },
   useFocusEffect(callback: () => (() => void) | void) {
     if (ui.focus !== callback) {
@@ -74,13 +90,19 @@ vi.mock("@/data/auth/authRepository", () => ({ readLocalSession: ui.session }));
 vi.mock("expo-document-picker", () => ({ getDocumentAsync: ui.files }));
 vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: ui.photos }));
 const selected = { canceled: false, assets: [{ name: "one.pdf", uri: "temp://one" }] };
-function renderContent(tripName = "Japan", isCurrent = () => true) {
+function renderContent(tripName = "Japan", isCurrent = () => true, jobId?: string) {
   ui.cursor = 0;
-  return CaptureContent({ tripName, isCurrent, onCancel: ui.navigate }).props as {
+  return CaptureContent({ tripName, isCurrent, onCancel: ui.navigate, jobId }).props as {
     snapshot: CaptureStagingSnapshot;
     tripName: string;
     onFiles(): void;
     onCancel(): void;
+    onSubmit(): void;
+    onAddMore(): void;
+    onRecover(id: string): void;
+    busy: boolean;
+    locked: boolean;
+    model: import("@/domain/capture/captureSubmission").CaptureJobReadModel | null;
   };
 }
 function renderRoute() {
@@ -97,7 +119,9 @@ beforeEach(() => {
   ui.focus = null;
   ui.focusCleanup = null;
   vi.resetAllMocks();
+  ui.jobId = undefined;
   ui.files.mockResolvedValue(selected);
+  ui.createSession.mockResolvedValue({ submit: ui.submit, recover: async () => null });
 });
 it("StrictMode setup/cleanup/setup reuses a working store, rejects prior picker result and later unmount", async () => {
   let resolve!: (value: unknown) => void;
@@ -149,7 +173,7 @@ it("Account transition hides A immediately, waits for gate release, then admits 
   endAccountTransition(lease);
   await vi.waitFor(() => expect(renderRoute().type).toBe(CaptureContent));
   const b = renderRoute();
-  expect(b.key).toBe(String(getAccountGeneration()));
+  expect(b.key).toBe(`${getAccountGeneration()}:`);
   expect(b.props.isCurrent()).toBe(true);
   advanceAccountGeneration();
   expect(b.props.isCurrent()).toBe(false);
@@ -173,4 +197,75 @@ it("blur during a local session read prevents late admission and refocus checks 
   ui.session.mockResolvedValue({ identity: { userId: "A" } });
   renderRoute();
   await vi.waitFor(() => expect(renderRoute().type).toBe(CaptureContent));
+});
+
+it("reopened Job Add more unlocks a fresh volatile roster without creating another Job until Add", async () => {
+  const model = {
+    batch: { jobId: "same-job" },
+    inputs: [],
+    counts: { selected: 1, accepted: 0, failed: 0, pending: 1 },
+  };
+  ui.reopen.mockResolvedValue(model);
+  renderContent("Japan", () => true, "same-job");
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() =>
+    expect(renderContent("Japan", () => true, "same-job").model).toEqual(model),
+  );
+  expect(renderContent("Japan", () => true, "same-job").locked).toBe(true);
+  renderContent("Japan", () => true, "same-job").onAddMore();
+  expect(renderContent("Japan", () => true, "same-job").locked).toBe(false);
+  renderContent("Japan", () => true, "same-job").onFiles();
+  await vi.waitFor(() =>
+    expect(renderContent("Japan", () => true, "same-job").snapshot.items).toHaveLength(1),
+  );
+  expect(ui.createSession).not.toHaveBeenCalled();
+});
+it("double taps share submit; Hide during work permits completion and never auto-closes again", async () => {
+  renderContent();
+  ui.cleanup = ui.effect!() ?? null;
+  renderContent().onFiles();
+  await vi.waitFor(() => expect(renderContent().snapshot.items).toHaveLength(1));
+  let finish!: () => void;
+  ui.submit.mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const tray = renderContent();
+  tray.onSubmit();
+  tray.onSubmit();
+  await vi.waitFor(() => expect(ui.submit).toHaveBeenCalledOnce());
+  expect(ui.createSession).toHaveBeenCalledOnce();
+  expect(renderContent().busy).toBe(true);
+  renderContent().onCancel();
+  ui.cleanup!();
+  finish();
+  await vi.waitFor(() => expect(ui.navigate).toHaveBeenCalledOnce());
+  expect(ui.submit).toHaveBeenCalledOnce();
+});
+
+it("acknowledged pinned mismatch releases old action so exact original can be selected again", async () => {
+  const model = {
+    batch: { jobId: "same-job" },
+    inputs: [{ id: "input", revision: 3, contentSha256: "pin", state: "FAILED" }],
+    counts: { selected: 1, accepted: 0, failed: 1, pending: 0 },
+  };
+  ui.reopen.mockResolvedValue(model);
+  ui.createRecovery.mockImplementation(async () => ({
+    run: async () => ({ ...model, inputs: [{ ...model.inputs[0], revision: 4 }] }),
+    recover: async () => null,
+  }));
+  renderContent("Japan", () => true, "same-job");
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() =>
+    expect(renderContent("Japan", () => true, "same-job").model).toEqual(model),
+  );
+  renderContent("Japan", () => true, "same-job").onRecover("input");
+  await vi.waitFor(() =>
+    expect(renderContent("Japan", () => true, "same-job").busy).toBe(false),
+  );
+  renderContent("Japan", () => true, "same-job").onRecover("input");
+  await vi.waitFor(() => expect(ui.createRecovery).toHaveBeenCalledTimes(2));
+  expect(ui.createRecovery).toHaveBeenLastCalledWith("same-job", "input", 4);
 });

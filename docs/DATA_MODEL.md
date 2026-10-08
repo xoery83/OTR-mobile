@@ -738,3 +738,25 @@ remains the dispatch authority. No counter, cost ledger, Event authority, schema
 scheduler is introduced. Release is CLOSED. Missing/corrupt custody fails closed;
 UNKNOWN responsibility is never garbage-collected or used to reopen the session.
 The persistent private host mount is an unprovisioned LIVE-1 requirement.
+
+## Capture C2 local submission (SQLite51)
+
+SQLite51 adds exactly `capture_submission_batches` and
+`capture_submission_inputs`. A frozen explicit Add roster has distinct Batch/Job
+UUIDs (1:1), stable submission/Input/item keys, immutable bounded context and
+manifest JSON/digests. Trip prior is historical and nullable, never assignment.
+Inputs retain revisioned PENDING/ACCEPTED/FAILED facts, safe failure codes, immutable
+first content pins and exact acceptance-time CP11 Capture/payload bindings.
+Registration alone retains intent; only atomic original-plus-binding acceptance
+means bytes are saved. Linked originals and both new tables are deletion-protected,
+including with foreign keys disabled. Historical SQLite1–50 and Server1–84 are
+unchanged; no guessed Job backfill or third table is added.
+
+`continues_from_input_id` is immutable explicit recovery lineage to an older
+same-Account Input. It does not transfer content identity, acceptance or authority.
+Reverse links are derived and verified against immutable manifests. Local repository
+reads derive counts, `allInputsAccepted`, intake settling, unavailable processing
+and current actions; there is no persisted progress engine. C3 Activity and all
+Source/Run/canonical processing remain deferred. See
+[implementation report](architecture/OTR_CAPTURE_C2_IMPLEMENTATION_REPORT.md) and
+[ADR](adr/2026-10-08-capture-c2-local-intake.md).

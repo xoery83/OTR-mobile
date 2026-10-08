@@ -1,5 +1,5 @@
 import { useCallback, useState, useSyncExternalStore } from "react";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text } from "react-native";
 import { readLocalSession } from "@/data/auth/authRepository";
@@ -21,6 +21,7 @@ import { visual } from "@/ui/visual";
 
 type Admission = { generation: number; accountId: string };
 export default function CaptureRoute() {
+  const { jobId } = useLocalSearchParams<{ jobId?: string }>();
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const generation = useSyncExternalStore(
@@ -68,7 +69,8 @@ export default function CaptureRoute() {
     <SafeAreaView edges={["bottom", "left", "right"]} style={styles.body}>
       {admission?.generation === generation ? (
         <CaptureContent
-          key={generation}
+          key={`${generation}:${jobId ?? ""}`}
+          jobId={typeof jobId === "string" ? jobId : undefined}
           isCurrent={isCurrent}
           onCancel={() => router.navigate("/")}
         />

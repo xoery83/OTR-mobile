@@ -130,3 +130,49 @@ it("busy source actions are disabled; content retains font scaling, wrapping and
   expect(source).not.toMatch(/allowFontScaling=\{false\}|numberOfLines|height:/);
   expect(source).not.toMatch(/tripId|accountId|Guest/);
 });
+
+it("truthful partial and complete intake keep Hide enabled across palettes/locales without fake processing", () => {
+  for (const scheme of ["light", "dark"] as const)
+    for (const locale of ["en", "zh-Hans"] as const)
+      for (const accepted of [0, 1, 2]) {
+        state.scheme = scheme;
+        setUiLocale(locale);
+        state.buttons = [];
+        const model = {
+          counts: { selected: 2, accepted, failed: 2 - accepted, pending: 0 },
+          allInputsAccepted: accepted === 2,
+          inputs: [0, 1].map((n) => ({
+            id: String(n),
+            originalFilename: "original",
+            state: n < accepted ? "ACCEPTED" : "FAILED",
+            contentSha256: null,
+            failureCode: n < accepted ? null : "READER_FAILURE",
+            continuedIn: [],
+          })),
+        } as unknown as import("@/domain/capture/captureSubmission").CaptureJobReadModel;
+        const close = vi.fn(),
+          html = renderToStaticMarkup(
+            createElement(CaptureTray, {
+              snapshot: emptyCaptureStaging,
+              model,
+              busy: true,
+              locked: true,
+              onFiles: vi.fn(),
+              onPhotos: vi.fn(),
+              onRemove: vi.fn(),
+              onCancel: close,
+              onRecover: vi.fn(),
+            }),
+          );
+        expect(html).toContain(t("capture.counts", model.counts));
+        expect(html).toContain(t("capture.processingUnavailable"));
+        expect(html.includes(t("capture.reacquireHint"))).toBe(accepted !== 2);
+        const hide = state.buttons.find(
+          (b) => b.accessibilityLabel === t("capture.hide"),
+        )!;
+        expect(hide.disabled).toBe(false);
+        hide.onPress();
+        expect(close).toHaveBeenCalledOnce();
+        expect(html).not.toMatch(/AI thinking|100%/);
+      }
+});
