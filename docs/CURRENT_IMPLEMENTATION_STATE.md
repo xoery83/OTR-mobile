@@ -2,6 +2,28 @@
 
 Date: 2026-10-08 (Pacific/Auckland).
 
+## C4a canonical integration — Final Owner accepted
+
+- Fresh isolated worktree `/private/tmp/otr-c4a-canonical-integration-20261008`, branch
+  `codex/c4a-canonical-integration-20261008`. Ordinary two-parent merge:
+  first parent accepted canonical P4a `4f97bb6f96daaab7f96f19d192683f63846a413b`,
+  second parent accepted C4a `f3c54c3dbeda1a0613fade89c560718231c83db6`.
+  Common ancestor `b6daffecedab1616b173fde3f5e2de5d54770eff`.
+- Final Owner authorization accepts the prepared merge and permits one merge commit,
+  safe canonical fast-forward and normal push only after final/post-merge checks.
+  Local/fetched remote main must still equal the first parent before promotion.
+- P4a and C4a acceptance/review history below is retained. All accepted runtime/test
+  bytes and original reports/rechecks are preserved; only this shared handoff is
+  reconciled. C4a stays dormant JSON-text pure assessment, separate from the accepted
+  read-only Operations projection. No new runtime composition or authority.
+- Bounded integration smoke: 21 files /432 tests PASS; typecheck, lint/UI guard,
+  Backend build, formatting/whitespace and 90 schema/migration preservation checks
+  PASS. Both accepted implementation/review trees retain exact bytes.
+- Integration evidence: `architecture/OTR_PLATFORM_P2_C4A_CANONICAL_INTEGRATION_REPORT.md`.
+  **C4a accepted for canonical integration. STOP after authorized closure/push.
+  Integrated durable C4/C5, migrations, Hosted access and provider activation remain
+  unauthorized.**
+
 ## P4a local Operations — Final Owner accepted / local closure
 
 - Existing isolated worktree `/private/tmp/otr-platform-p4a-local-operations`, branch
@@ -41,6 +63,27 @@ Date: 2026-10-08 (Pacific/Auckland).
   `adr/2026-10-08-p4a-read-only-local-operations.md`.
   STOP at local P4a closure. No Hosted/Production access, real AI call, deployment,
   migration, push or integration. P4b/P4c remain gated.
+
+## Platform P2 / Capture C4a — final Owner review PASS / local closure
+
+- Resumed `/private/tmp/otr-p2-c4a-pure-assessment-20261008`, branch
+  `codex/p2-c4a-pure-assessment-20261008`, unchanged exact base
+  `b6daffecedab1616b173fde3f5e2de5d54770eff`. Final Owner review PASS authorizes one
+  local closure commit; external main advancement was not incorporated. Original
+  Independent Review and appended targeted recheck PASS are preserved.
+- R1: caller `INDEPENDENT` assertions now add `DEPENDENCY_UNKNOWN`; observed evidence
+  remains visible, while supported semantics/Review promotion stays blocked.
+- R2: primitive JSON-text input only, strict lossless grammar before schema/hash;
+  raw objects including nested exotic data/Proxies reject without inspection.
+  Valid synthetic fixture data is serialized by test callers. No Node domain import.
+- Current Owner authorization supplies all five Capture constraints, recorded in the
+  appended correction section of `architecture/OTR_PLATFORM_P2_C4A_IMPLEMENTATION_REPORT.md`.
+- Validation: 4 files /135 tests PASS (87 C4a); 16 Builder targeted recheck checks
+  PASS, plus 25 independent targeted checks PASS; typecheck, full lint/UI guard,
+  formatting, whitespace and preservation PASS.
+  Preparation/domain admission remain denied; no runtime composition or activation.
+- **C4a accepted. STOP after the authorized local closure commit; no push/main
+  advancement. Integrated durable C4/C5 remain unauthorized.**
 
 ## C1 canonical integration — prepared / independent review pending
 
