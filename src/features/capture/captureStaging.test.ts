@@ -189,10 +189,9 @@ it("host context invalidation rejects stale Trip selections without rebinding th
   await pending;
   expect(staging.getSnapshot()).toBe(emptyCaptureStaging);
 });
-it("production staging/acquisition/content have no repository, durable submit, file byte reader or scheduler dependency", () => {
+it("staging and acquisition remain volatile; content uses operations without direct custody or scheduler dependencies", () => {
   for (const path of [
     "src/features/capture/captureStaging.ts",
-    "src/features/capture/CaptureContent.tsx",
     "src/native/capturePicker.ts",
   ]) {
     const source = readFileSync(path, "utf8");

@@ -2,227 +2,143 @@
 
 Date: 2026-10-08 (Pacific/Auckland).
 
-## C1 canonical integration — prepared / independent review pending
+## Capture C2 — FINAL OWNER REVIEW PASS
 
-- Isolated pending merge at `/private/tmp/otr-c1-canonical-integration`, branch
-  `codex/c1-canonical-integration`: first parent Platform
-  `a817e8e881e2fa2e094696b13bc4df2eca7e2db2`, proposed second parent Capture
-  `79237cbd993792100ed51468e31671e4a2b59888`. All seven Capture commits retained.
-- Automatic merge had no textual conflicts; this handoff is reconciled semantically.
-  C1 and final CP15B/LIVE-W acceptance coexist. Owner Revision 1 acceptance/naming
-  is recorded as a current decision, without a historical acceptance artifact.
-- Bounded macOS matrix: 30 files, 670 PASS, 15 intentional skips. Linux custody,
-  host and HTTPS: 63 PASS, 2 intentional skips. Typecheck/lint/UI guard/Backend
-  build/bundle isolation and 88 schema/sync preservation hashes PASS. Counts
-  overlap; no new full-suite, SQL environment or device acceptance is claimed.
-- Report: `architecture/OTR_CAPTURE_C1_CANONICAL_INTEGRATION_REPORT.md`.
-  Stop for independent review. No C2, SQLite51/Server85, Hosted access, provider
-  activation, integration commit/push or main advancement.
+- On 2026-10-08 the Owner accepted C2 local durable intake, SQLite51, native
+  Files/Photos submission, atomic CP11 binding, idempotent recovery, offline
+  local acceptance and scoped Job read/reopen. Device testing and the final
+  read-only persistence audit are accepted. One local checkpoint commit is
+  authorized on `codex/capture-c2-builder`; stop after commit. No push, merge,
+  rebase or cherry-pick. C3 Activity, AI processing, canonical admission and
+  runtime/provider gates remain unauthorized.
+- Owner tested mixed Files/Photos **4/4 saved**, iCloud acquisition, duplicate
+  submission disabling, Hide/navigation/restart and offline local submission.
+  Audit found **7 Jobs /11 ACCEPTED Inputs /11 Captures /7 retained payloads**,
+  exact bytes/hash/Account scope valid, zero integrity violations. Offline Job
+  `afd3c134-a31c-4267-88fe-15214444a951` persisted **2/2**, attributed by Owner
+  confirmation rather than inferred network telemetry. Three identical device DB
+  snapshots and read-only repository reopen/Account checks passed with zero writes.
+- Normal Capture opens an empty new staging tray; retained Jobs require exact
+  Job reopening. C3 Activity discovery is not installed.
 
-## Capture C1 — owner iPhone device acceptance PASS
+## Accepted C2 device gate evidence
 
-- Worktree `/Users/xoery/Project/otr-mobile-capture`, branch `trip/capture`, retained
-  base HEAD `92b87bd20f0d4baf23d3b4da8934d3142133e765`; starting status clean.
-  Owner accepted the complete C1 checkpoint and authorized a local commit only; no push.
-- Authenticated temporary Capture route now mounts identity-neutral reusable content.
-  Installed Files/Photos pickers compose ordered session-local metadata, support
-  removal/cancel and preserve a fixed invocation prior. Leaving/unmounting discards
-  staging. Final Add is disabled and explicitly says nothing has been saved.
-- Existing Account generation gains subscription only; current request/apply gate
-  fences callbacks and waits for local session installation. StrictMode effect replay,
-  Account A→B→A/transition/blur, Trip-prior rerender and late picker results are tested.
-- Independent C1 review fixed F1–F3 and final recheck PASS with **zero remaining
-  CRITICAL/IMPORTANT/MINOR**. C1 **13 tests**; final scoped **16 files /175 tests PASS**.
-  Typecheck, scoped lint/format, UI/terminology guard and whitespace PASS.
-- Signed Release installed on owner iPhone 16 Pro / iOS 27.0.1 with existing data
-  preserved; startup and Capture reachability verified. On 2026-10-08 the owner
-  reported device acceptance **PASS**: add/remove Files, add/remove Photos in the
-  same tray, Cancel, and intentionally unavailable durable submission. No broader
-  VoiceOver, large-text, permission or native visual acceptance is claimed.
-- Camera deferred because installed permission descriptions are receipt-specific;
-  Magic Input/connections are outside C1. No dependency/schema/migration, durable
-  submission, Source/Job/semantic Import/domain writer, Guest, automatic admission,
-  Banner support or runtime/provider/Experience shell activation.
-  C1 changed neither SQLite1–50 nor its then-current Server1–83 baseline.
-  The integrated baseline retains Platform Server1–84 and all six accepted
-  Capture documentation commits; no Server85/SQLite51 is introduced.
-- Reports: `architecture/OTR_CAPTURE_C1_IMPLEMENTATION_REPORT.md`,
-  `architecture/OTR_CAPTURE_C1_IMPLEMENTATION_REVIEW.md`, and
-  `architecture/OTR_CAPTURE_C2_DURABLE_INTAKE_PREFLIGHT.md`.
-- **C1 ACCEPTED at `79237cbd993792100ed51468e31671e4a2b59888`.
-  The prior authorized local C1 commit is complete. C2 NOT STARTED.**
-  C0 runs separately; no output is
-  installed here. C2 awaits approved Batch/Job/context, item idempotency/atomic
-  Capture-manifest linkage, partial recovery and native URI viability handoff.
-  Existing CP14 accepted CLOSED scope and Platform CP15B/LIVE-W remain authoritative.
-  CP14 owner closure/F2 targeted PASS is preserved in the unchanged final
-  integration/closure reports; no older review-pending next step is reinstated.
+- Engineering review accepted for device testing by the Owner on 2026-10-08.
+  Signed `OTRMobile` Release arm64 with Team `U9D5C58Z94` and unchanged bundle
+  `com.xoery.otrmobile` was overwrite-installed on Leon's iPhone16pro
+  (iPhone 16 Pro / iOS 27.0.1). Startup and Capture reachability verified.
+- Actual retained device database migrated **50 → 51**. Upgrade rehearsal preserved
+  every old table/row exactly; actual startup preserved all 9,242 old rows and
+  historical migration records. 83 old data tables are byte-equivalent as typed
+  row projections; existing startup health scanning changed only scan timestamps
+  and generation in one `data_health_state` row. No submission was made during installation checks; later Owner submissions
+  and the accepted persistence audit are recorded above.
+- Full device-gate evidence: `architecture/OTR_CAPTURE_C2_OWNER_DEVICE_GATE_REPORT.md`.
+  No product code/configuration correction or uninstall/reset was required.
+  Build uses local-only API configuration without Hosted credentials. Owner C2
+  device acceptance is now PASS; C3 and runtime/provider gates stay closed.
 
-## Joint P1 ↔ Capture C2 Revision 1 — accepted contract, implementation gated
+## Accepted C2 implementation
 
-Owner decision recorded on 2026-10-08 in the current authorization message,
-“OWNER REVIEW PASS — AUTHORIZE C1 CANONICAL INTEGRATION BUILDER”:
-joint P1 ↔ C2 Revision 1 is accepted, with final naming
-`continuesFromInputId` / `continues_from_input_id`. This is a current Owner
-decision, not a reconstructed historical acceptance artifact. The original
-handshake and amendment retain their historical PROPOSED wording; their
-implementation-gated contract is preserved. See
-`adr/2026-10-08-c1-integration-owner-decision.md` for actual evidence paths/hashes.
-Lineage is explicit and same-Account only; it implies neither byte equality,
-replacement, assignment nor authority. No separate historical final Capture
-acceptance artifact was supplied or fabricated.
-
-Future C2 allocates stable submission/Batch/Job/context/Input/replay identities
-once per explicit Add N and atomically registers a frozen ordered roster.
-Batch and Job are separate UUIDs with a C2 1:1 shared header. Reuse SQLite48
-originals; only two additive local tables are contemplated, not installed.
-Hide/Close is available at every intake state and never cancels durable work;
-`allInputsAccepted` is factual and never commands auto-close.
-`availableActions` is derived and reauthorized at invocation. C2 is authenticated
-only, uses passive Trip prior and fresh Account A→B→A fences. No new scheduler,
-Job engine, Source/Run writer, Remote AI or Hosted prerequisite. P5 remains
-deferred to C4. C1 Add stays disabled until a separate authorized C2 slice.
-
-## Platform accepted checkpoint — R1-C1 strict live-host input grammar
-
-The final LOW input-contract correction is complete. Production admits only ordinary
-plain data objects with the five existing field names; complete own-key/descriptor
-inspection rejects hidden unknowns, symbols and accessors. Custom/null prototypes,
-classes, detectable proxies and added inherited unknown/capability fields reject
-before configuration/custody/secret/gateway/transport/dispatch. Linux-only composition
-and fixture isolation remain unchanged.
-
-Validation: strict-input/original A–G/startup/bundle/transport focused204 PASS;
-additional authority/SQLite/persistence/sync328 PASS (overlapping counts), explicit
-cold12 PASS; Linux63 PASS; Server84 security104 PASS/gates CLOSED; scheduler24 PASS.
-Typecheck/lint/UI guard/build/format/whitespace and exact-base schema/sync preservation
-PASS. No new regression or broader behavior change; full suite not rerun for this
-narrow correction. Final independent R1-C1 targeted recheck PASS is appended to the Independent Review,
-with zero remaining CRITICAL/IMPORTANT/LOW findings. Details/all answers remain
-under FINAL LOW R1-C1 in the Builder report. Prior review-pending statements below
-are historical and superseded by that final independent recheck.
-LIVE-1 remains unauthorized. Accepted Platform commits are retained; no new
-integration commit/push/activation.
-
-## Prior checkpoint — F1-R1 portable composition separation
-
-Recovered review identified a production-reachable portable custody/fetch seam.
-It is removed: production accepts only provisioning/config, always admits Linux
-anchored custody and continuity before fixed native HTTPS construction, and rejects
-legacy/unknown capability fields. No fetch identity or wrapper-shape security gate.
-Portable root is fixture-only with its own fake credential/transport, absent from
-server exports/imports and compiled Backend bundle. Shared validation, witness,
-recovery/readback and existing executor logic acquire no security capabilities.
-Original Linux filesystem F1 source/tests remain unchanged and regressions pass.
-
-Validation: Linux63 PASS; focused361 PASS; actual startup7 combinations PASS;
-Server84 security104 PASS; SQLite cold19 PASS; full2,643 PASS with same reproduced
-exact-base Ledger failure and zero new final failures. Typecheck/lint/UI guard/build
-and export/bundle/format/preservation checks PASS. Earlier intermediate parse failures
-were corrected and rerun, not called baseline. Details/all answers are appended under
-TARGETED F1-R1 in `architecture/CP15B_LIVE_WIRING_IMPLEMENTATION_REPORT.md`.
-Independent Review unchanged; no commit/push/activation. Next: targeted independent
-F1-R1 recheck. LIVE-1 remains unauthorized.
-
-## Prior checkpoint — Owner-approved Linux anchored F1 correction
-
-The Linux-only contract from `architecture/CP15B_LIVE_W_LINUX_CUSTODY_SPIKE.md`
-is now implemented. Custody requires Linux/procfs, safe descriptor-by-descriptor
-admission from `/`, service-owned0700 root, private0600 files and capability checks.
-All normal I/O uses the retained root FD; replacement and parent retargeting cannot
-switch namespaces. File fsync, immutable hard-link publish and two directory fsyncs
-precede ACK. macOS/Windows reject real filesystem custody; protocol tests explicitly
-inject test custody and intercepted HTTP without weakening production admission.
-
-Restart requires an opaque store UUID plus mount metadata provided independently
-through trusted host provisioning, a matching preprovisioned private marker and exact
-retained request pin before transport construction. Empty/replaced/missing custody
-cannot permit provider replay. Metadata restore requires explicit host reattestation;
-no new dispatch authority, native addon, schema or privilege is introduced.
-
-The earlier macOS blocked attempt is preserved in the appended Builder report;
-the Owner-approved narrower platform contract resolves that blocker. Independent
-Review is unchanged. Next: targeted independent F1 recheck; LIVE-1 unauthorized.
-Validation: Linux 48 PASS; focused331 PASS; SQLite cold19 PASS; Server84 security104
-PASS; full2,613 PASS with same exact-base Ledger failure and zero new failures.
-Typecheck/lint/UI guard/build PASS. Final evidence is appended under
-TARGETED F1 — LINUX ANCHORED CUSTODY
-CORRECTION in `architecture/CP15B_LIVE_WIRING_IMPLEMENTATION_REPORT.md`.
-
-## Prior checkpoint — CP15B-LIVE-W CLOSED host wiring
-
-Fresh worktree `/private/tmp/otr-cp15b-live-wiring`, branch
-`intelligence/cp15b-live-wiring`, exact accepted base/retained HEAD
-`56a050c0063bd062cb0bac7f50b928dfeb79ca6f`. Changes are uncommitted; no push.
-Original dirty checkouts and retained LIVE-0 planning input are preserved.
-
-- DEV/FLIGHT_IMPORT_V1 private composition reuses the accepted CP15B executor and
-  verified Server84 gateway. Normal startup supplies no actual issuer/session/
-  workflow provisioning and remains CLOSED. TEST/PRODUCTION construction rejects.
-- Dedicated environment resolver, fixed HTTPS POST with no redirects/retries,
-  independent default-CLOSED host transport and one-shot gates, and bounded
-  versioned response-model witness are implemented. Tests inject fake environment
-  and deterministic HTTP; no actual developer-process key is read.
-- Private immutable filesystem custody retains requests, raw responses, exact
-  task/attempt/call/config associations and interpreted results before metering or
-  install. File/directory fsync precedes acknowledgement. Persistent host mounting
-  is documented but unprovisioned. No new schema or durable business authority.
-- Immutable acceptance session binds one Account/task/attempt/call/request. Existing
-  Server84 fresh mark CAS governs the one transport handoff across restart; lost
-  ACK/MAY_HAVE_STARTED/UNKNOWN never replay. Raw response recovery repeats pure
-  parsing/rebinding/CP13B under current disclosure authority, without provider I/O.
-- Safe host readback is composed; complete server hold/price/cost reads use existing
-  protected Admin/Recovery or documented operator-only read-only SQL. No grants/UI.
-- Validation details and final readiness are recorded in
-  `architecture/CP15B_LIVE_WIRING_IMPLEMENTATION_REPORT.md` with 2,609 full-suite passes, one exact-base Ledger failure, zero new failures;
-  actual network-denied Server84 E2E and 104 security checks PASS.
+- Isolated worktree `/private/tmp/otr-capture-c2-builder`, branch
+  `codex/capture-c2-builder`, exact starting/parent HEAD
+  `b6daffecedab1616b173fde3f5e2de5d54770eff`. The Owner authorizes the complete
+  local checkpoint commit; existing worktrees remain preserved. No push, merge,
+  rebase, deployment, Hosted access or provider activation.
+- SQLite51 adds exactly two local tables: immutable Batch/Job header and ordered
+  Input manifest. Distinct Batch/Job UUIDs are 1:1. Explicit Add freezes stable
+  submission/context/Input/replay identities; registration persists the whole
+  roster before reading bytes. Registration is intent, not saved evidence.
+- CP11 storage/quota/dedup logic is factored into a narrow transaction-local seam.
+  First verified content pins persist before acceptance; original and Input binding
+  commit atomically. Exact-key readback recovers lost registration/pin/acceptance
+  ACK. Unverifiable outcomes retain the original request rather than create new
+  identities. Accepted originals and both manifest tables are deletion-protected.
+- C1 Files/Photos now submit through the data operation and bounded read-only native
+  URI adapter. UI displays selected/saved/failed/pending truth, safe reasons and
+  local custody. Hide is always available and never cancels durable work. No
+  automatic close or semantic-import success is shown.
+- Explicit recovery uses immutable `continuesFromInputId` /
+  `continues_from_input_id` to an older same-Account Input. New unpinned recovery
+  is a distinct Batch/Job; pinned recovery requires verified original bytes.
+  Forward/reverse lineage is checked; it transfers no acceptance or authority.
+- Scoped register/submit/read/list/reopen/exact-key recovery/resume are available.
+  Read models derive `allInputsAccepted`, intake settling and action availability;
+  processing is NOT_INSTALLED, semantic result counts are zero/null. Current
+  authorization and revisions are rechecked at invocation. One Account generation
+  survives all async action phases; fresh A may reopen after A→B→A, old actions may
+  not. Trip prior stays nullable/passive and originals enter INBOX.
+- Validation: affected regressions **18 files /510 PASS**; independent final review
+  **10 files /200 PASS**, no remaining CRITICAL/IMPORTANT/MINOR. Final serial full
+  suite **212 files /2,737 tests: 2,721 PASS, 1 FAIL, 15 SKIP**. Exact-base archive
+  (1,186 tracked files verified) reproduces the same architecture-boundary failure:
+  **210 files /2,691 tests: 2,675 PASS, 1 FAIL, 15 SKIP**. The guard scans the literal
+  forbidden-module name inside the pre-existing staging-test regex. No new final
+  failed file/test; no global full-suite PASS claim. Earlier version50 assertions
+  were updated for the additive migration and rerun.
+- Typecheck, lint/UI/terminology guard, changed-file format, whitespace, Backend
+  build and offline iOS bundle export PASS. Repository-wide format retains the
+  same 25 unchanged exact-base issues; all changed files pass. All **88 historical migration files**
+  are byte-preserved; registry adds only the SQLite51 import/entry. The later signed
+  device Release/install evidence is recorded above; Owner acceptance applies only to the stated C2 scope.
+- Limitations: actual Files/Photos provider URI lifetime/readability/fidelity and
+  device accessibility/visual acceptance remain unverified. Inaccessible handles
+  fail safely. C3 Activity/Recent Imports is not mounted; scoped list/reopen and
+  `/capture?jobId=<UUID>` are seams, not a discoverable Activity surface.
+- Reports: `architecture/OTR_CAPTURE_C2_IMPLEMENTATION_REPORT.md` and
+  `architecture/OTR_CAPTURE_C2_INDEPENDENT_REVIEW.md`; decision:
+  `adr/2026-10-08-capture-c2-local-intake.md`. Next checkpoint: stop after the authorized local C2 commit. C3 and runtime
+  gates require separate authorization.
 
 ## Accepted foundation and active schema
 
-Server migrations are contiguous **1–84**, ending at
-`20261007000100_flight_dev_dispatch_foundation.sql`, SHA-256
-`46e80899f14817d5162f255383e303232a12276e662f34b2cb16156c34d4f2a9`.
-SQLite remains **1–50**; every migration and registry byte is unchanged by LIVE-W.
-The 88 preservation hashes match. No Server85/SQLite51 is authored.
+- C1 was owner device-accepted at Capture `79237cbd993792100ed51468e31671e4a2b59888`
+  and integrated into exact canonical `b6daffe…`. Preserve its independent report,
+  seven original commits and generation subscription. Current C2 uses the canonical
+  integrated baseline; it does not execute on the old Capture HEAD.
+- Owner acceptance of P1 ↔ C2 Revision 1 and final lineage naming is recorded in
+  `adr/2026-10-08-c1-integration-owner-decision.md`. External historical handshake
+  and amendment retain PROPOSED wording; that record preserves their exact paths
+  and hashes. Current C2 authorization supersedes the historical persistence gate.
+- Active local migrations are **1–51**. SQLite48 originals, SQLite49 Import
+  admission, SQLite50 continuations/attempts and their owners remain unchanged.
+  Server remains **1–84**, tail `20261007000100_flight_dev_dispatch_foundation.sql`,
+  SHA-256 `46e80899f14817d5162f255383e303232a12276e662f34b2cb16156c34d4f2a9`.
+- CP13A/B reviewed Flight interpretation/closure/preparation, CP14 final CLOSED
+  A2/C2/B2 integration and CP15B final F1–F4/R1-C1 corrections remain accepted.
+  SQLite50 continuation C2 is a separate owner from Capture C2. Generic five C
+  queue-operation dispatch denials remain unconditional. READY/preparation is not
+  accepted canonical output; no new Source/Representation/Run/Import writer.
+- CP15B/LIVE-W startup remains CLOSED. Linux anchored private custody, exact
+  one-call mark/recovery, portable fixture isolation and strict input grammar keep
+  their accepted contracts. LIVE-1 remains unauthorized. No issuer/session/workflow,
+  private mount, monetary policy, credentials or provider is provisioned here.
 
-CP15B independent targeted F1–F4 recheck PASS supersedes its historical initial
-findings. Recovery repeats current Account/Trip/material authority after custody;
-mark serializes Trip revoke; immutable holds bind exact executing pins; calculated
-schedule cost stays ESTIMATED independently of actual token quality.
+## Authoritative references and remaining gates
 
-CP14 Final Closure targeted PASS, A2/C2/B2 and CP13A/B remain accepted foundations.
-SQLite50 continuations/attempts and `sync_operations` retain their separate owners;
-the five C operation denials remain unconditional. CP13B owns interpretation;
-CP13A owns reviewed canonical commands. Inbound does not schedule paid outbound.
-Capture owns originals and adds no automatic Source authority. Source IO_UNKNOWN
-provider terminality and canonical activation remain outside this checkpoint.
+Read this handoff first; inspect only task-relevant dependencies. No legacy Web
+reaudit or independent redesign of accepted decisions.
 
-## Next checkpoint and critical boundaries
+- Capture: five accepted UX/Resolution/Review/Custody/End-to-End documents,
+  `architecture/OTR_CAPTURE_IMPLEMENTATION_READINESS_AUDIT.md`, C1 reports,
+  `architecture/OTR_CAPTURE_C2_DURABLE_INTAKE_PREFLIGHT.md` and the C2 reports above.
+- Platform: `architecture/CP15B_LIVE_WIRING_IMPLEMENTATION_REPORT.md`, independent
+  targeted rechecks, `architecture/CP15B_REAL_DEV_DISPATCH_IMPLEMENTATION_REPORT.md`,
+  `architecture/CP15B_LIVE_W_LINUX_CUSTODY_SPIKE.md` and accepted CP14 final
+  integration/closure reports. Historical headings do not reopen accepted findings.
+- Owning contracts: PRODUCT, ARCHITECTURE, DATA_MODEL, API_CONTRACT, OFFLINE_SYNC;
+  Import architecture/contract/schema registry and accepted CP13A/B reports.
+- UI uses `architecture/ui-foundation.md` and normative terminology glossary.
 
-Next: independent review of the prepared, uncommitted C1 integration.
-Integration preparation is Owner-authorized; merge commit/main update/push and C2
-persistence remain separately gated. Final Independent R1-C1 recheck is
-complete/PASS. LIVE-1 provider use is **not authorized**. It needs
-real dedicated issuer/session/workflow provisioning, persistent private mount,
-official current model/currency/price revalidation, dedicated Mobile DEV key,
-current internal Account/Trip/material authority, one-call Owner authorization and
-explicit immutable monetary policy/scope/grant. Proposed maximum USD0.0049152 is
-not activated. No Hosted Dev/Production inspection, deployment or real provider call.
+C3 Activity, Guest/adoption, whole-batch semantic assessment, Review/Banner/OS
+notifications, Photo cloud, Wallet, Ledger side effects and final Experience shell
+remain deferred. No new scheduler, startup polling, queue draining or remote AI.
+Source IO_UNKNOWN/provider terminality and safe I/O retry remain blocked; completion
+or retained lineage never authorizes evidence release or retry of unknown execution.
 
-DEV runtime defaults disabled/killed; TEST/PRODUCTION real dispatch structurally
-CLOSED. Vision, Apple, fallback, shadow and public B2 remain OFF. No new endpoint,
-scheduler, automatic polling, queue draining or Event execution. Never erase private
-custody or reset identity to retry UNKNOWN. Retention grants neither disclosure nor
-installation authority. Cached valid sessions keep offline access.
+Cached valid local sessions retain offline access; background refresh failure pauses
+sync instead of blocking app launch. Current Account/Trip/material authorization and
+exact immutable pins govern disclosure and execution independently of retention.
+Production is not a development target; no Hosted Dev/Production access occurred.
 
-Authoritative next-task inputs:
-
-- `architecture/CP15B_LIVE_WIRING_IMPLEMENTATION_REPORT.md`
-- `adr/2026-10-07-cp15b-closed-live-host-wiring.md`
-- accepted CP15A preflight and CP15B implementation/independent targeted recheck
-- API_CONTRACT, DATA_MODEL, OFFLINE_SYNC and DEV Backend deployment/runbook
-- Owner-reviewed LIVE-0 report in `/private/tmp/otr-cp15b-live0-readiness`
-
-Read only directly relevant additional files. No legacy Web reaudit or redesign of
-accepted CP13/CP14 authority. Canonical UI primitives/glossary and UI guard remain
-mandatory for later UI work; no UI is changed by LIVE-W.
+STOP AFTER THE AUTHORIZED C2 COMMIT. C3 AND RUNTIME GATES REMAIN UNAUTHORIZED.

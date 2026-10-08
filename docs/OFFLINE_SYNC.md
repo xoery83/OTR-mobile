@@ -576,3 +576,23 @@ and reuses pure parsing, original-span rebinding and CP13B; it never invokes tra
 F1's post-custody disclosure and independent installation fences remain mandatory.
 Missing usage remains UNKNOWN, calculated schedule cost remains ESTIMATED and model
 witness rejection never deletes incurred usage. No monetary policy is activated.
+
+## Capture C2 local intake and recovery
+
+Authenticated offline intake uses the current local Account/generation and SQLite
+only. One data operation freezes Add N, registers the entire roster before native
+reader I/O, retains the first verified content pin, then commits each CP11 original
+and Input binding in one transaction. Reader I/O occurs outside the apply gate.
+Known acquisition/quota failures retain safe item facts; uncertain writes require
+exact submission-key/Input readback before any retry. Failed readback never proves
+absence. Retained recovery actions keep their original request through lost ACK.
+
+Hide/unmount does not cancel local durable work or delete accepted evidence. Process
+termination stops transient execution; the registered same Job is available through
+scoped list/read/reopen, with explicit local resume rather than a new scheduler.
+Accepted items need no temporary URI. Pinned resume requires verified original
+bytes; unpinned reacquisition is a new explicit submission with immutable lineage.
+All phases retain one Account-generation fence; fresh A may reopen A's Job after
+A→B→A, while old callbacks/actions cannot regain authority. No Source/Run/queue,
+provider, upload, automatic startup/reconnect task or canonical mutation is added.
+C3 Activity discovery is still deferred.

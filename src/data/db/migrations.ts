@@ -1,3 +1,4 @@
+import { captureSubmissionsMigration } from "./migrations/captureSubmissions";
 import { intelligenceContinuationsMigration } from "./migrations/intelligenceContinuations";
 import { tripImportAdmissionMigration } from "./migrations/tripImportAdmission";
 import { tripDayReadModelMigration } from "./migrations/tripDayReadModel";
@@ -1682,4 +1683,5 @@ export const migrations: Migration[] = [
   localCaptureInboxMigration,
   tripImportAdmissionMigration,
   intelligenceContinuationsMigration,
+  captureSubmissionsMigration,
 ];
