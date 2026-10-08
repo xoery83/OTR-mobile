@@ -1,3 +1,5 @@
+import { captureAccountScope } from "@/data/auth/accountRequestContext";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 import { useCallback, useEffect, useState } from "react";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
@@ -88,11 +90,16 @@ export function useLedgerStage3() {
   const cacheMyLedger = useCallback(
     () =>
       run(async () => {
-        const response = await createLedgerReadTransport().myLedger("ALL", {
-          from: null,
-          to: null,
-        });
-        await (await getDefaultLedgerReadRepository()).cacheMyLedger(response);
+        const context = await captureAccountScope(requireActiveUserId);
+        const response = await createLedgerReadTransport().myLedger(
+          "ALL",
+          {
+            from: null,
+            to: null,
+          },
+          context,
+        );
+        await (await getDefaultLedgerReadRepository()).cacheMyLedger(response, context);
         return `Cached ${response.journeys.length} Journey summaries.`;
       }),
     [run],

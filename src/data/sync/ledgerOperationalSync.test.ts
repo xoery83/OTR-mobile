@@ -59,6 +59,8 @@ import { runLedgerReceiptSync } from "./ledgerReceiptCoordinator";
 import { runLedgerPersonalPaymentSync } from "./ledgerPersonalPaymentCoordinator";
 import {
   allowLedgerOperationalSync,
+  scheduleOperationalReadRetry,
+  notifyLedgerReadCompletion,
   setIntelligenceSchedulingAdapter,
   kickLedgerOperationalSync,
   pauseLedgerOperationalSync,
@@ -259,6 +261,58 @@ describe("Ledger mutation sync kick", () => {
     expect(runLedgerExpenseSync).toHaveBeenCalledTimes(2);
     await pauseLedgerOperationalSync();
     vi.useRealTimers();
+  });
+  it("uses one existing timer for an idle read retry and cancels it on Account pause", async () => {
+    vi.useFakeTimers();
+    const retry = vi.fn(async () => undefined);
+    try {
+      scheduleOperationalReadRetry({ at: Date.now() + 15000, generation: 7, run: retry });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vi.getTimerCount()).toBe(1);
+      await vi.advanceTimersByTimeAsync(14999);
+      expect(retry).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(retry).toHaveBeenCalledOnce();
+      scheduleOperationalReadRetry({ at: Date.now() + 15000, generation: 7, run: retry });
+      await vi.advanceTimersByTimeAsync(0);
+      await pauseLedgerOperationalSync();
+      await vi.advanceTimersByTimeAsync(15000);
+      expect(retry).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("announces zero-known-Journey discovery and drops ABA-stale notifications/retries", async () => {
+    vi.useFakeTimers();
+    const listener = vi.fn(),
+      retry = vi.fn(async () => undefined);
+    const unsubscribe = subscribeLedgerOperationalSyncCompletion(listener);
+    try {
+      notifyLedgerReadCompletion({
+        accountId: "user-a",
+        generation: 7,
+        journeyIds: [],
+        discoveryChanged: true,
+      });
+      expect(listener).toHaveBeenCalledOnce();
+      scheduleOperationalReadRetry({ at: Date.now() + 15000, generation: 7, run: retry });
+      await vi.advanceTimersByTimeAsync(0);
+      mocks.generation += 2;
+      notifyLedgerReadCompletion({
+        accountId: "user-a",
+        generation: 7,
+        journeyIds: ["old"],
+        discoveryChanged: true,
+      });
+      await vi.advanceTimersByTimeAsync(15000);
+      expect(listener).toHaveBeenCalledOnce();
+      expect(retry).not.toHaveBeenCalled();
+    } finally {
+      scheduleOperationalReadRetry(null);
+      unsubscribe();
+      vi.useRealTimers();
+    }
   });
 });
 

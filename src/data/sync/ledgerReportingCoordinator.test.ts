@@ -108,6 +108,7 @@ describe("Ledger pull recovery", () => {
       incomplete: true,
       pullApiRequestCount: 2,
       reviewOutcome: "review_error",
+      auxiliaryErrors: [expect.any(Error)],
     });
     await expect(refreshJourneyLedger("journey")).resolves.toBe(false);
   });
@@ -140,6 +141,7 @@ describe("Ledger pull recovery", () => {
     await expect(refreshJourneyLedgerWithStatus("journey")).resolves.toMatchObject({
       incomplete: true,
       reviewOutcome: "review_error",
+      auxiliaryErrors: [error],
     });
   });
 
@@ -192,7 +194,11 @@ describe("Ledger pull recovery", () => {
       new ApiClientError("removed", "http", 403, "TRIP_READ_FORBIDDEN"),
     );
     await expect(refreshJourneyLedger("journey")).resolves.toBe(true);
-    expect(refreshPersonal).toHaveBeenCalledWith("journey", expect.any(Function));
+    expect(refreshPersonal).toHaveBeenCalledWith(
+      "journey",
+      expect.any(Function),
+      expect.objectContaining({ accountId: accountScope.userId }),
+    );
     expect(repository.applyChanges).not.toHaveBeenCalled();
   });
 
@@ -310,7 +316,10 @@ describe("Ledger pull recovery", () => {
     async (period, bounds) => {
       transport.myLedger.mockResolvedValue({ journeys: [] });
       await refreshMyLedger(period, bounds);
-      expect(transport.myLedger).toHaveBeenCalledExactlyOnceWith(period, bounds);
+      expect(transport.myLedger).toHaveBeenCalledExactlyOnceWith(period, bounds, {
+        accountId: accountScope.userId,
+        generation: accountScope.generation,
+      });
       expect(repository.cacheMyLedger).toHaveBeenCalledOnce();
     },
   );
@@ -345,5 +354,38 @@ describe("Ledger pull recovery", () => {
     expect(repository.applyChanges).toHaveBeenCalledOnce();
     expect(repository.applyBootstrap).toHaveBeenCalledOnce();
     expect(repository.applyChanges.mock.calls[0][3]).toBe("saved");
+  });
+  it("coalesces discovery and My Ledger focus with the exact captured Account/period", async () => {
+    let release!: () => void;
+    transport.myLedger.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ journeys: [] });
+        }),
+    );
+    const first = refreshMyLedger("ALL", { from: null, to: null });
+    const second = refreshMyLedger("ALL", { from: null, to: null });
+    await vi.waitFor(() => expect(transport.myLedger).toHaveBeenCalledOnce());
+    release();
+    await Promise.all([first, second]);
+    expect(repository.cacheMyLedger).toHaveBeenCalledOnce();
+  });
+  it("rejects a delayed discovery after A→B→A before applying any summary", async () => {
+    let release!: () => void;
+    transport.myLedger.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ journeys: [] });
+        }),
+    );
+    const first = refreshMyLedger("ALL", { from: null, to: null });
+    await vi.waitFor(() => expect(transport.myLedger).toHaveBeenCalledOnce());
+    accountScope.userId = "B";
+    accountScope.generation++;
+    accountScope.userId = "30000000-0000-4000-8000-000000000001";
+    accountScope.generation++;
+    release();
+    await expect(first).rejects.toThrow("Account changed");
+    expect(repository.cacheMyLedger).not.toHaveBeenCalled();
   });
 });

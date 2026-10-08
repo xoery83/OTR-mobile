@@ -1,3 +1,9 @@
+import {
+  captureAccountScope,
+  assertAccountRequestGeneration,
+} from "@/data/auth/accountRequestContext";
+import { requireActiveUserId } from "@/data/auth/authRepository";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import { segmentedControlTokens } from "@/ui/segmented";
 import type { TextInput as NativeTextInput } from "react-native";
 import { UiTextInput as TextInput } from "@/ui/forms";
@@ -55,10 +61,12 @@ import type {
   ReportingBucket,
   ReportingScope,
 } from "@/domain/ledger/reporting";
-import { stage3JourneyId } from "@/hooks/useLedgerStage3";
 import { useLedgerActiveSync } from "@/hooks/useLedgerActiveSync";
 import { settlementLoadMetrics } from "@/hooks/settlementLoadMetrics";
-import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
 
 import {
   formatLedgerDate,
@@ -226,10 +234,6 @@ export function LedgerStage6Screen({
   const categorySummary = categorySelection?.summary ?? summary;
   const expenses = projection?.expenses ?? [];
   const settlement = projection?.settlement ?? ({ kind: "PREVIEW" } as const);
-  const fallbackJourneyId =
-    journeys.length === 0 || journeys.some((item) => item.journeyId === stage3JourneyId)
-      ? stage3JourneyId
-      : "";
   const journeySections = useMemo(
     () =>
       journeyPickerSections(
@@ -245,11 +249,17 @@ export function LedgerStage6Screen({
   const loadProjection = useCallback(
     async (nextJourney: LedgerJourneyContext, nextScope: ReportingScope) => {
       const id = request.begin();
+      const generation = getAccountGeneration();
       setMessage(null);
       try {
         return await retrySQLiteRollbackOnce(async () => {
           const repository = await getDefaultLedgerReportingRepository();
-          const actor = await ensureJourneyLedgerActor(nextJourney.journeyId);
+          const context = await captureAccountScope(requireActiveUserId);
+          if (context.generation !== generation) return false;
+          const actor = await ensureJourneyLedgerActor(
+            nextJourney.journeyId,
+            Object.freeze({ ...context, tripId: nextJourney.journeyId }),
+          );
           const nextMemberId = actor?.memberId ?? null;
           if (!nextMemberId) throw new Error(t("extra.copy13"));
           const query = {
@@ -344,7 +354,8 @@ export function LedgerStage6Screen({
             loadEstimatedSettlement(nextJourney.journeyId).catch(() => null),
             settlementRepository.hasPendingFinancialOperations(nextJourney.journeyId),
           ]);
-          if (!request.isCurrent(id)) return false;
+          if (!request.isCurrent(id) || generation !== getAccountGeneration())
+            return false;
           memberRequest.cancel();
           scopeRef.current = nextScope;
           selectedJourneyIdRef.current = nextJourney.journeyId;
@@ -378,7 +389,8 @@ export function LedgerStage6Screen({
           return true;
         });
       } catch {
-        if (request.isCurrent(id)) setMessage(t("ledger.refreshFailed"));
+        if (request.isCurrent(id) && generation === getAccountGeneration())
+          setMessage(t("ledger.refreshFailed"));
         return false;
       }
     },
@@ -431,11 +443,14 @@ export function LedgerStage6Screen({
   };
 
   const loadContext = useCallback(async () => {
+    const context = await captureAccountScope(requireActiveUserId);
+    const generation = context.generation;
     const repository = await getDefaultLedgerReportingRepository();
     const [available, selected] = await Promise.all([
       repository.listJourneys(),
       repository.getSelectedJourneyId(),
     ]);
+    if (generation !== getAccountGeneration()) return;
     const entry = chooseJourneyEntry(
       available,
       localToday(),
@@ -454,8 +469,34 @@ export function LedgerStage6Screen({
       setProjection(null);
       setMessage(null);
     }
-    setLoading(false);
+    if (generation === getAccountGeneration()) setLoading(false);
   }, [loadProjection, request, scopedJourneyId]);
+
+  useEffect(
+    () =>
+      subscribeAccountGeneration(() => {
+        request.cancel();
+        memberRequest.cancel();
+        manualJourneyId.current = undefined;
+        selectedJourneyIdRef.current = null;
+        selectedMemberIdRef.current = null;
+        setProjection(null);
+        setJourneys([]);
+        setLoading(true);
+        setAccountGeneration(getAccountGeneration());
+      }),
+    [request, memberRequest],
+  );
+
+  useEffect(
+    () =>
+      subscribeLedgerOperationalSyncCompletion((event) => {
+        if (event.generation !== getAccountGeneration()) return;
+        if (event.discoveryChanged || event.journeyIds.length)
+          void loadContext().catch(() => undefined);
+      }),
+    [loadContext],
+  );
 
   const handleLedgerChanged = useCallback(async () => {
     setLedgerChangeSeq((value) => value + 1);
@@ -481,10 +522,7 @@ export function LedgerStage6Screen({
   );
 
   const network = useNetworkState();
-  const syncStatus = useLedgerActiveSync(
-    (journey?.journeyId ?? fallbackJourneyId) || null,
-    handleLedgerChanged,
-  );
+  const syncStatus = useLedgerActiveSync(journey?.journeyId ?? null, handleLedgerChanged);
 
   useFocusEffect(
     useCallback(() => {
@@ -541,6 +579,7 @@ export function LedgerStage6Screen({
   );
 
   const chooseJourney = async (selected: LedgerJourneyContext) => {
+    const context = await captureAccountScope(requireActiveUserId);
     setSettlementSection("Summary");
     setModeNavHidden(false);
     const previous = projection;
@@ -548,6 +587,7 @@ export function LedgerStage6Screen({
     manualJourneyId.current = selected.journeyId;
     setSelectingJourneyId(selected.journeyId);
     const loaded = await loadProjection(selected, scopeRef.current);
+    if (context.generation !== getAccountGeneration()) return;
     if (!loaded) {
       manualJourneyId.current = previousManualJourneyId;
       setSelectingJourneyId(null);
@@ -555,17 +595,19 @@ export function LedgerStage6Screen({
     }
     try {
       const repository = await getDefaultLedgerReportingRepository();
-      await repository.selectJourney(selected.journeyId);
+      await repository.selectJourney(selected.journeyId, context);
+      assertAccountRequestGeneration(context);
       if (scopedJourneyId) router.setParams({ journeyId: selected.journeyId });
       setJourneyPickerOpen(false);
       setJourneyQuery("");
     } catch {
+      if (context.generation !== getAccountGeneration()) return;
       manualJourneyId.current = previousManualJourneyId;
       request.cancel();
       setProjection(previous);
       setMessage(t("ledger.selectionFailed"));
     } finally {
-      setSelectingJourneyId(null);
+      if (context.generation === getAccountGeneration()) setSelectingJourneyId(null);
     }
   };
 

@@ -52,4 +52,39 @@ describe("shared transport response fence", () => {
       expect(send).toHaveBeenCalledOnce();
     },
   );
+  it("fences a delayed My Ledger ALL response after A→B→A", async () => {
+    let active = account;
+    const readSession = async () => ({
+      accessToken: "token",
+      refreshToken: "refresh",
+      expiresAt: "2099-01-01T00:00:00Z",
+      identity: { userId: active, displayName: "A", email: null },
+    });
+    const send = vi.fn(async () => {
+      active = "B";
+      advanceAccountGeneration();
+      active = account;
+      advanceAccountGeneration();
+      return Response.json({
+        period: "ALL",
+        from: null,
+        to: null,
+        journeys: [],
+        serverTime: "2026-10-09T00:00:00Z",
+      });
+    });
+    const transport = createLedgerReadTransport({
+      readSession,
+      createClient: (token) =>
+        createApiClient({
+          baseUrl: "https://example.test",
+          accessToken: token,
+          fetchImplementation: send,
+        }),
+    });
+    await expect(transport.myLedger("ALL", { from: null, to: null })).rejects.toThrow(
+      "Account changed",
+    );
+    expect(send).toHaveBeenCalledOnce();
+  });
 });

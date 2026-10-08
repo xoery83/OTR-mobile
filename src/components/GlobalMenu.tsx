@@ -64,7 +64,6 @@ export function GlobalMenu({
     () =>
       createDefaultAccountSwitchCoordinator({
         clearInMemoryState: () => queryClient.clear(),
-        bootstrapAccount: async () => undefined,
       }),
     [queryClient],
   );

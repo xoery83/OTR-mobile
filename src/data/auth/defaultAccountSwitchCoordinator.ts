@@ -2,6 +2,7 @@ import { openDatabase } from "@/data/db/database";
 import type { LocalSession } from "@/domain/auth/localSession";
 import {
   pauseOperationalSync,
+  bootstrapActivatedAccount,
   restartOperationalSync,
 } from "@/data/bootstrap/defaultBootstrapDependencies";
 
@@ -16,7 +17,7 @@ import { createAccountSwitchCoordinator } from "./accountSwitchCoordinator";
 
 export function createDefaultAccountSwitchCoordinator(input: {
   clearInMemoryState(): void | Promise<void>;
-  bootstrapAccount(session: LocalSession | null): Promise<void>;
+  bootstrapAccount?(session: LocalSession | null): Promise<void>;
 }) {
   return createAccountSwitchCoordinator({
     pauseSync: pauseOperationalSync,
@@ -29,6 +30,6 @@ export function createDefaultAccountSwitchCoordinator(input: {
       await adoptLegacyAccountState(await openDatabase(), userId);
     },
     clearInMemoryState: input.clearInMemoryState,
-    bootstrapAccount: input.bootstrapAccount,
+    bootstrapAccount: input.bootstrapAccount ?? bootstrapActivatedAccount,
   });
 }

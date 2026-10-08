@@ -1,3 +1,4 @@
+import { advanceAccountGeneration } from "./accountGeneration";
 import { describe, expect, it, vi } from "vitest";
 
 import { SupabaseDevAuthError } from "./devSupabaseAuth";
@@ -158,4 +159,26 @@ it("retries a transient refresh on the next request and persists the renewed ses
   await expect(value.provider()).resolves.toMatchObject({ token: "new-access" });
   expect(value.refreshSession).toHaveBeenCalledTimes(2);
   expect(value.read().refreshToken).toBe("new-refresh");
+});
+
+it("cannot persist a late refresh after A→B→A with the same refresh token", async () => {
+  const value = harness(session({ expiresAt: new Date(now - 1).toISOString() }));
+  let release!: () => void;
+  value.refreshSession.mockImplementationOnce(async (_token, persist) => {
+    await new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const refreshed = session({ accessToken: "late-token" });
+    await persist(refreshed);
+    return refreshed;
+  });
+  const pending = value.provider();
+  await vi.waitFor(() => expect(value.refreshSession).toHaveBeenCalledOnce());
+  value.write(session({ identity: { ...identity, userId: "B" } }));
+  advanceAccountGeneration();
+  value.write(session({ accessToken: "restored-A" }));
+  advanceAccountGeneration();
+  release();
+  await expect(pending).rejects.toMatchObject({ code: "AUTH_CONTEXT_CHANGED" });
+  expect(value.read().accessToken).toBe("restored-A");
 });

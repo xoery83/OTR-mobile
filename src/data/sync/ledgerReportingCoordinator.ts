@@ -1,6 +1,9 @@
 import { requireActiveUserId } from "@/data/auth/authRepository";
 import {
   captureAccountRequestContext,
+  captureAccountScope,
+  assertAccountRequestGeneration,
+  type AccountScope,
   assertAccountRequestContext,
   type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
@@ -20,6 +23,7 @@ import type {
 type JourneyPullResult = {
   changed: boolean;
   incomplete: boolean;
+  auxiliaryErrors?: readonly unknown[];
   pullApiRequestCount: number;
   reviewOutcome: "review_success" | "review_blocked_stable" | "review_error";
 };
@@ -87,27 +91,45 @@ export function reconcileTripPersonParticipationResult(
   );
 }
 
-export async function ensureJourneyLedgerActor(journeyId: string) {
-  const generation = getAccountGeneration();
+export async function ensureJourneyLedgerActor(
+  journeyId: string,
+  requestContext?: AccountRequestContext,
+) {
+  const context =
+    requestContext ??
+    (await captureAccountRequestContext(journeyId, requireActiveUserId));
+  if (context.tripId !== journeyId) throw new Error("Journey context mismatch.");
+  await assertAccountRequestContext(context, requireActiveUserId);
   const repository = await getDefaultLedgerReportingRepository();
   const cached = await repository.getActorMemberId(journeyId);
+  await assertAccountRequestContext(context, requireActiveUserId);
   if (cached?.memberId) return cached;
-  await revalidateJourneyLedger(journeyId);
-  if (generation !== getAccountGeneration())
-    throw new Error("Account changed during Journey bootstrap.");
-  return repository.getActorMemberId(journeyId);
+  await refreshJourneyLedgerWithStatus(journeyId, context);
+  await assertAccountRequestContext(context, requireActiveUserId);
+  const hydrated = await repository.getActorMemberId(journeyId);
+  await assertAccountRequestContext(context, requireActiveUserId);
+  return hydrated;
 }
 
 export function refreshJourneyLedger(journeyId: string) {
   return refreshJourneyLedgerWithStatus(journeyId).then((result) => result.changed);
 }
 
-export function refreshJourneyLedgerWithStatus(journeyId: string) {
-  const key = `${getAccountGeneration()}:${journeyId}`;
+export function refreshJourneyLedgerWithStatus(
+  journeyId: string,
+  requestContext?: AccountRequestContext,
+) {
+  if (requestContext) {
+    if (requestContext.tripId !== journeyId) throw new Error("Journey context mismatch.");
+    assertAccountRequestGeneration(requestContext);
+  }
+  const key = `${requestContext?.generation ?? getAccountGeneration()}:${journeyId}`;
   const active = activePulls.get(key);
   if (active) return active;
-  const pull = scopedCycle(journeyId, (context) =>
-    pullJourneyLedger(journeyId, context),
+  const pull = scopedCycle(
+    journeyId,
+    (context) => pullJourneyLedger(journeyId, context),
+    requestContext,
   ).finally(() => {
     if (activePulls.get(key) === pull) activePulls.delete(key);
   });
@@ -118,20 +140,24 @@ export function refreshJourneyLedgerWithStatus(journeyId: string) {
 async function pullJourneyLedger(journeyId: string, context: AccountRequestContext) {
   let personalChanged = false;
   let personalError: unknown;
-  let reviewError = false;
+  let reviewError: unknown;
   let reviewOutcome: JourneyPullResult["reviewOutcome"] = "review_success";
   let pullApiRequestCount = 0;
   const countRequest = () => {
     pullApiRequestCount += 1;
   };
   try {
-    personalChanged = await refreshLedgerPersonalPayments(journeyId, countRequest);
+    personalChanged = await refreshLedgerPersonalPayments(
+      journeyId,
+      countRequest,
+      context,
+    );
   } catch (error) {
     personalError = error;
   }
   try {
     countRequest();
-    await refreshPersonalSettlementReview(journeyId);
+    await refreshPersonalSettlementReview(journeyId, context);
   } catch (error) {
     if (
       error instanceof ApiClientError &&
@@ -141,12 +167,19 @@ async function pullJourneyLedger(journeyId: string, context: AccountRequestConte
       reviewOutcome = "review_blocked_stable";
     } else {
       reviewOutcome = "review_error";
-      reviewError = true;
+      reviewError = error;
     }
   }
   const finish = (changed: boolean): JourneyPullResult => ({
     changed,
-    incomplete: Boolean(personalError) || reviewError,
+    incomplete: Boolean(personalError) || Boolean(reviewError),
+    ...(personalError || reviewError
+      ? {
+          auxiliaryErrors: [personalError, reviewError].filter(
+            (error) => error !== undefined,
+          ),
+        }
+      : {}),
     pullApiRequestCount,
     reviewOutcome,
   });
@@ -214,11 +247,31 @@ export function revalidateJourneyLedger(journeyId: string) {
   });
 }
 
+const summaryReads = new Map<string, Promise<void>>();
 export async function refreshMyLedger(
   period: MyLedgerPeriod,
   bounds: { from: string | null; to: string | null },
+  requestContext?: AccountScope,
 ) {
-  const response = await createLedgerReadTransport().myLedger(period, bounds);
-  const repository = await getDefaultLedgerReadRepository();
-  await repository.cacheMyLedger(response);
+  const context = requestContext ?? (await captureAccountScope(requireActiveUserId));
+  await assertAccountRequestContext(context, requireActiveUserId);
+  const key = JSON.stringify([context.accountId, context.generation, period, bounds]);
+  let read = summaryReads.get(key);
+  if (!read) {
+    read = (async () => {
+      const response = await createLedgerReadTransport().myLedger(
+        period,
+        bounds,
+        context,
+      );
+      await assertAccountRequestContext(context, requireActiveUserId);
+      const repository = await getDefaultLedgerReadRepository();
+      await repository.cacheMyLedger(response, context);
+    })().finally(() => {
+      summaryReads.delete(key);
+    });
+    summaryReads.set(key, read);
+  }
+  await read;
+  await assertAccountRequestContext(context, requireActiveUserId);
 }

@@ -1,3 +1,4 @@
+import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "@/data/api/client";
@@ -77,4 +78,18 @@ describe("Personal Payment pull recovery", () => {
     });
     expect(transport.list).not.toHaveBeenCalled();
   });
+});
+
+it("does not apply personal responses to a later A generation", async () => {
+  vi.clearAllMocks();
+  repository.getCursor.mockResolvedValue({ cursor: "saved" });
+  transport.changes.mockImplementationOnce(async () => {
+    advanceAccountGeneration();
+    advanceAccountGeneration();
+    return { changes: [], cursor: "late", hasMore: false, serverTime: "now" };
+  });
+  await expect(refreshLedgerPersonalPayments("same-journey")).rejects.toThrow(
+    "Account changed",
+  );
+  expect(repository.applyChanges).not.toHaveBeenCalled();
 });

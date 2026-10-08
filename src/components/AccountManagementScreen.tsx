@@ -56,7 +56,6 @@ export function AccountManagementScreen({ authBoundary = false }) {
     () =>
       createDefaultAccountSwitchCoordinator({
         clearInMemoryState: () => queryClient.clear(),
-        bootstrapAccount: async () => undefined,
       }),
     [queryClient],
   );

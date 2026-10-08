@@ -1,3 +1,5 @@
+import { captureAccountScope } from "@/data/auth/accountRequestContext";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 import * as FileSystem from "expo-file-system/legacy";
 import { useEffect, useState } from "react";
 
@@ -242,6 +244,7 @@ async function runStage9Checks(mode: string): Promise<Check[]> {
       memberId: actor.memberId,
       scope: "GROUP" as const,
     };
+    const context = await captureAccountScope(requireActiveUserId);
     const [spending, search, summary, analysis, serverAnalysis, myLedger, preview] =
       await Promise.all([
         reporting.listExpenses(query, 200),
@@ -249,13 +252,13 @@ async function runStage9Checks(mode: string): Promise<Check[]> {
         reporting.summarize(query),
         reporting.analyze(query, "CATEGORY"),
         transport.analysis(stage9JourneyId, "GROUP", "CATEGORY"),
-        transport.myLedger("ALL", { from: null, to: null }),
+        transport.myLedger("ALL", { from: null, to: null }, context),
         createLedgerSettlementTransport().preview(
           stage9JourneyId,
           "9999-12-31T23:59:59.999Z",
         ),
       ]);
-    await repository.cacheMyLedger(myLedger);
+    await repository.cacheMyLedger(myLedger, context);
     const cachedMyLedger = (await repository.listMyLedgerSummaries("ALL")).find(
       (journey) => journey.journeyId === stage9JourneyId,
     );

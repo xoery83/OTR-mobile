@@ -1,10 +1,13 @@
+import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiClientError } from "@/data/api/client";
 
 const mocks = vi.hoisted(() => ({ read: vi.fn(), applyRemote: vi.fn() }));
 vi.mock("@/data/db/database", () => ({ openDatabase: async () => ({}) }));
-vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: async () => "user-a",
+}));
 vi.mock("@/data/repositories/personalSettlementReviewRepository", () => ({
   createPersonalSettlementReviewRepository: () => ({ applyRemote: mocks.applyRemote }),
 }));
@@ -31,4 +34,17 @@ describe("explicit Personal Settlement Review read", () => {
     await expect(refreshPersonalSettlementReview("journey-a")).rejects.toBe(blocked);
     expect(mocks.applyRemote).not.toHaveBeenCalled();
   });
+});
+
+it("does not apply Review after a response crosses A→B→A", async () => {
+  vi.clearAllMocks();
+  mocks.read.mockImplementationOnce(async () => {
+    advanceAccountGeneration();
+    advanceAccountGeneration();
+    return {};
+  });
+  await expect(refreshPersonalSettlementReview("same-journey")).rejects.toThrow(
+    "Account changed",
+  );
+  expect(mocks.applyRemote).not.toHaveBeenCalled();
 });

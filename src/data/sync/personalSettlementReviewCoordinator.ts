@@ -1,3 +1,9 @@
+import {
+  captureAccountRequestContext,
+  assertAccountRequestContext,
+  withAccountApplyGate,
+  type AccountRequestContext,
+} from "@/data/auth/accountRequestContext";
 import { requireActiveUserId } from "@/data/auth/authRepository";
 import { openDatabase } from "@/data/db/database";
 import { createPersonalSettlementReviewRepository } from "@/data/repositories/personalSettlementReviewRepository";
@@ -7,16 +13,30 @@ import { createPersonalSettlementReviewTransport } from "./personalSettlementRev
 import { createSyncEngine } from "./syncEngine";
 import { createSyncOperationRepository } from "./syncOperationRepository";
 
-export async function refreshPersonalSettlementReview(journeyId: string) {
+export async function refreshPersonalSettlementReview(
+  journeyId: string,
+  requestContext?: AccountRequestContext,
+) {
+  const context =
+    requestContext ??
+    (await captureAccountRequestContext(journeyId, requireActiveUserId));
+  await assertAccountRequestContext(context, requireActiveUserId);
   const database = await openDatabase();
   const repository = createPersonalSettlementReviewRepository(
     database,
-    requireActiveUserId,
+    async () => context.accountId,
   );
-  await repository.applyRemote(
+  const response = await createPersonalSettlementReviewTransport().read(
     journeyId,
-    await createPersonalSettlementReviewTransport().read(journeyId),
+    context,
   );
+  await withAccountApplyGate(async () => {
+    await assertAccountRequestContext(context, requireActiveUserId);
+    await database.withTransactionAsync(async () => {
+      await repository.applyRemote(journeyId, response);
+      await assertAccountRequestContext(context, requireActiveUserId);
+    });
+  });
 }
 
 export async function runPersonalSettlementReviewSync(journeyId?: string) {

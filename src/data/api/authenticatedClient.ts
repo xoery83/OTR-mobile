@@ -1,7 +1,7 @@
 import {
   assertAccountRequestContext,
   assertAccountRequestGeneration,
-  type AccountRequestContext,
+  type AccountScope,
 } from "@/data/auth/accountRequestContext";
 import { createApiClient, type ApiClientOptions } from "./client";
 import { sessionAccessToken } from "@/data/auth/sessionAccessToken";
@@ -11,7 +11,7 @@ type TokenProvider = typeof sessionAccessToken;
 export function createAuthenticatedApiClient(
   options: Omit<ApiClientOptions, "accessToken" | "accessTokenProvider"> = {},
   tokenProvider: TokenProvider = sessionAccessToken,
-  context?: AccountRequestContext,
+  context?: AccountScope,
 ) {
   let userId: string | undefined = context?.accountId;
   return createApiClient({
