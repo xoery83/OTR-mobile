@@ -2,6 +2,16 @@
 
 Date: 2026-10-09 (Pacific/Auckland).
 
+## Authenticated Publication Transport dormant code — FINAL OWNER ACCEPTED
+
+- Fresh isolated Builder/local/origin/remote main matched `7273ac0599b7495bc108c2cf94cc4d8a1cdffdc0`; no base advancement. Accepted SQLite53 and protected SQL bytes remain exact.
+- One versioned authenticated complete private catalog GET, verified server actor, same-leased-session protected SQL injection, 64/family +4MiB fail-whole response, and bounded context-fenced Mobile transport implemented dormant. Server connection remains absent.
+- Original cancellation signal follows CLOSED handoff through final SQLite admission; no network under its transaction. Native buffered Response fails before token/network; no default/native streaming adapter is installed or certified.
+- F1 correction and local closure use authorized parent7273ac0. Local main/origin main advanced externally to094cf3b (dormant Capture assessment adapter); affected F1 dependencies unchanged, no rebase/adoption.
+- Original seven independent F1 failures reproduced; strict original-text parsing now rejects ambiguous Catalog evidence at Backend and Mobile before schema/canonicalization. SQLite53 zero-write rejection and strict-parser A→B→A controls added. Original Independent Review remains exact.
+- Final affected17 suites /433 PASS; typecheck, clean lint/UI guard and Backend build PASS. Formatting/preservation recorded in `architecture/OTR_PLATFORM_AUTHENTICATED_PUBLICATION_TRANSPORT_BUILDER_REPORT.md`.
+- Final Owner accepted dormant read-only code, Builder F1 correction and appended Targeted Independent Security Recheck PASS (14 independent cases). Scoped local closure only; no canonical integration or runtime authorization. Historical probe harness limitations remain documented in the F1 evidence. Actual SQL principal/driver/Hosted contract, native acceptance and Integrated C4 remain separate gates; no credentials, migrations, runtime/provider/C5/C9 activation, device/Hosted access, push/merge.
+
 ## SQLite53 canonical integration preflight — OWNER REVIEW REQUIRED
 
 - Fresh detached candidate at verified main `2128ec7c7dea9a12366a21f98b8722d4c1d75c38`,

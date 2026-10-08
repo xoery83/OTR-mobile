@@ -907,3 +907,43 @@ provider request ID, custody hashes/byte counts, accepted model witness and null
 usage. Rejected model identifiers stay private. Full hold/price/cost/control-plane
 readback uses existing protected Admin/Recovery roots or the explicit operator-only
 read-only SQL in the DEV runbook; no application grants are widened.
+
+## Dormant authenticated Publication Catalog read — Owner-authorized Builder
+
+GET `/v2/trips/:tripId/source-import-catalogs` requires bearer Auth and
+`X-OTR-Publication-Catalog-Version: 1`. No body/query/pagination/actor parameter;
+unsupported method/UUID/request/version returns405/400/400/426 before SQL. Server
+actor comes only from verified Supabase Auth; definitive recognized invalid-session
+codes return401, transient or unknown Auth failure returns503. Existing Trip read
+admission is followed by independent current protected SQL admission.
+
+An optional trusted connection leases one primary SQL session. The helper issues
+fixed READ COMMITTED READ ONLY BEGIN, transaction-local5s statement/1s lock timeouts,
+actual `SELECT session_user`, and parameterized
+`trip_source_read_import_catalogs($1::uuid,$2::uuid)` before COMMIT. Actual principal
+must be `otr_trip_source_command_gateway`. Missing/wrong connection fails503
+`PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE`; no service-role/public RPC/SET ROLE
+fallback. The injected driver must cancel/retire uncertain leases and finish
+rollback before reuse. `backend/src/server.ts` provisions nothing.
+
+Success is exactly the canonical version1 complete13-family existing Import catalog,
+max64 rows per family and4,194,304 actual UTF-8 bytes, with private/no-store headers.
+Overflow withholds the whole set (`IMPORT_READ_RESOURCE_LIMIT`), never pages or
+filters. Empty-complete is valid; unavailable/FAILED-only is not publication success.
+This observation conveys neither perpetual authorization nor C5/domain-write authority.
+
+Mobile captures Account/Trip/generation once and reuses context-bound token refresh
+coalescing with one401 replay. Explicit bounded/signal API mode covers token wait,
+fetch, streaming body and schema under one deadline; Publication caps it at30s.
+Error bodies cap at8KiB; no private error details or payload diagnostics are retained.
+Bodies are accumulated with an actual byte cap before JSON parse; missing native
+stream support fails CLOSED. Publication has **no default fetch adapter**: a trusted
+streaming adapter must be injected, and no native adapter is certified or installed.
+HTTPS and redirect denial protect bearer transport.
+
+The CLOSED reader accepts an optional original cancellation signal, retains it on
+its admitted handle, and bounds signal-scoped read/provenance validation at30s.
+Canceled/superseded handles cannot install; final repository admission rechecks
+cancellation before SQLite COMMIT. Account generation fences remain mandatory with
+or without a signal. Network precedes the existing Account-gated owning transaction;
+no scheduler, worker, GET outbox, startup caller or live installation is enabled.

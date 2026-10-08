@@ -1,3 +1,8 @@
+import {
+  createRequestBoundary,
+  readBoundedJson,
+  RequestBoundaryError,
+} from "./requestBoundary";
 import { z } from "zod";
 
 const apiBaseUrlSchema = z.string().url();
@@ -11,6 +16,10 @@ export type ApiClientOptions = {
   ) => Promise<string>;
   fetchImplementation?: typeof fetch;
   timeoutMs?: number;
+  signal?: AbortSignal;
+  maxResponseBytes?: number;
+  assertRequestCurrent?: () => void;
+  parseBoundedResponseText?: (text: string) => unknown;
 };
 
 export type ApiErrorKind = "http" | "network" | "timeout" | "validation";
@@ -56,6 +65,9 @@ export function createApiClient(options: ApiClientOptions = {}) {
     body?: unknown,
     headers?: Record<string, string>,
   ): Promise<T> {
+    if (options.maxResponseBytes !== undefined || options.signal !== undefined) {
+      return boundedRequest(method, path, responseSchema, body, headers);
+    }
     const serializedBody = body === undefined ? undefined : JSON.stringify(body);
 
     async function send(accessToken?: string | null) {
@@ -161,6 +173,108 @@ export function createApiClient(options: ApiClientOptions = {}) {
       };
       console.info(JSON.stringify({ event: "api_request_failed", ...lastFailure }));
       throw failure;
+    }
+  }
+
+  async function boundedRequest<T>(
+    method: string,
+    path: string,
+    schema: z.ZodType<T>,
+    body?: unknown,
+    headers?: Record<string, string>,
+  ): Promise<T> {
+    const boundary = createRequestBoundary(
+      timeoutMs,
+      options.signal,
+      options.assertRequestCurrent,
+    );
+    try {
+      const maximum = options.maxResponseBytes ?? 4194304;
+      if (!Number.isSafeInteger(maximum) || maximum < 1)
+        throw new RequestBoundaryError("BODY_LIMIT");
+      let token = options.accessTokenProvider
+        ? await boundary.run(() => options.accessTokenProvider!(false))
+        : options.accessToken;
+      async function send() {
+        return boundary.run(() =>
+          fetchImplementation(`${baseUrl}${path}`, {
+            method,
+            redirect: "error",
+            signal: boundary.signal,
+            headers: {
+              ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              ...headers,
+            },
+            body: body === undefined ? undefined : JSON.stringify(body),
+          }),
+        );
+      }
+      let response = await send();
+      if (response.status === 401 && options.accessTokenProvider) {
+        void response.body?.cancel().catch(() => undefined);
+        token = await boundary.run(() =>
+          options.accessTokenProvider!(true, token ?? undefined),
+        );
+        response = await send();
+      }
+      const payload = await readBoundedJson(
+        response,
+        response.ok ? maximum : 8192,
+        boundary,
+        response.ok ? options.parseBoundedResponseText : undefined,
+      );
+      if (!response.ok) {
+        const error = z
+          .object({ error: z.object({ code: z.string() }) })
+          .safeParse(payload);
+        const code =
+          error.success &&
+          [
+            "AUTH_REQUIRED",
+            "INVALID_SESSION",
+            "TRIP_READ_FORBIDDEN",
+            "PUBLICATION_AUTH_UNAVAILABLE",
+            "PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE",
+            "IMPORT_READ_RESOURCE_LIMIT",
+            "PUBLICATION_MEMBERSHIP_INTEGRITY",
+            "INVALID_TRIP_ID",
+            "INVALID_PUBLICATION_READ",
+            "UNSUPPORTED_PUBLICATION_CATALOG_VERSION",
+            "METHOD_NOT_ALLOWED",
+            "BACKEND_UNAVAILABLE",
+          ].includes(error.data.error.code)
+            ? error.data.error.code
+            : undefined;
+        throw new ApiClientError(
+          "OTR API read is unavailable.",
+          "http",
+          response.status,
+          code,
+        );
+      }
+      const parsed = schema.safeParse(payload);
+      if (!parsed.success)
+        throw new ApiClientError(
+          "OTR API returned an invalid response.",
+          "validation",
+          response.status,
+          "INVALID_RESPONSE",
+        );
+      boundary.assertCurrent();
+      return parsed.data;
+    } catch (error) {
+      if (error instanceof ApiClientError) throw error;
+      if (error instanceof RequestBoundaryError)
+        throw new ApiClientError(
+          "OTR API read is unavailable.",
+          error.code === "REQUEST_TIMEOUT" ? "timeout" : "validation",
+          undefined,
+          error.code,
+        );
+      throw new ApiClientError("OTR API read is unavailable.", "network");
+    } finally {
+      boundary.close();
     }
   }
 
