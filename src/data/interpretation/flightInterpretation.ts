@@ -182,7 +182,7 @@ export function flightInterpretationConfiguration(
   };
 }
 export async function flightRunInputDigest(
-  materials: FlightInterpretationBatch["request"]["materials"],
+  materials: Pick<FlightInterpretationBatch["request"]["materials"][number], "pin">[],
   representations: z.infer<typeof tripImportCatalogSchemas.trip_source_representations>[],
   sha256: ImportHash,
 ) {

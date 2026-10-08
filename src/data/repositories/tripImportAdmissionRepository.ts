@@ -39,7 +39,8 @@ import { eventOperationReceiptSchema } from "@/data/api/tripCanonicalReadContrac
 export type ImportAdmissionDatabase = Pick<
   SQLite.SQLiteDatabase,
   "getFirstAsync" | "getAllAsync" | "runAsync" | "withTransactionAsync"
->;
+> &
+  Partial<Pick<SQLite.SQLiteDatabase, "isInTransactionAsync">>;
 type Row = Record<string, unknown>;
 const receiptSchema = eventOperationReceiptSchema.omit({ projection: true }).extend({
   intended_payload: z.string().max(32768),
@@ -150,6 +151,12 @@ export function createTripImportAdmissionRepository(
       ))
     )
       throw new Error("IMPORT_TRIP_ACCESS");
+  }
+  async function admitTransactionStore(c: AccountRequestContext) {
+    if (!database.isInTransactionAsync || !(await database.isInTransactionAsync()))
+      throw new Error("IMPORT_TRANSACTION_REQUIRED");
+    await assertAccountRequestContext(c, getAccountId);
+    await trip(c);
   }
   async function queue(
     c: AccountRequestContext,
@@ -524,189 +531,203 @@ export function createTripImportAdmissionRepository(
       ...Object.values(row),
     );
   }
+  async function applyCatalogsInTransaction(c: AccountRequestContext, raw: string) {
+    const snapshot = tripImportSnapshotSchema.parse(parseEventJson(raw, 4194304));
+    if (snapshot.trip_id !== c.tripId || snapshot.actor_account_id !== c.accountId)
+      integrity();
+    const catalogs = snapshot as unknown as Record<TripImportCatalogName, Row[]>;
+    await validateImportSnapshot(c.accountId, c.tripId, catalogs, sha256);
+    await trip(c);
+    // Deferred Source/manifest and C parent FKs are checked at transaction commit.
+    // Every cross-row relationship is also checked above for FK-OFF parity.
+    const parentRevisions = new Map<
+      unknown,
+      { revision: unknown; registered: boolean }
+    >();
+    for (const observed of catalogs.trip_source_confirmations) {
+      const previous = await database.getFirstAsync<Row>(
+        "SELECT row_revision,registration_state FROM trip_source_confirmations WHERE cache_account_id=? AND id=?",
+        c.accountId,
+        observed.id as string,
+      );
+      if (previous)
+        parentRevisions.set(observed.id, {
+          revision: previous.row_revision,
+          registered: previous.registration_state === "REGISTERED",
+        });
+    }
+    for (const table of Object.keys(importCatalogKeys) as TripImportCatalogName[]) {
+      for (const observed of catalogs[table]) {
+        const values: Record<string, string | number | null> = {
+          cache_account_id: c.accountId,
+          registration_state: "REGISTERED",
+        };
+        for (const [key, value] of Object.entries(observed))
+          values[key] =
+            value === null
+              ? null
+              : typeof value === "boolean"
+                ? Number(value)
+                : typeof value === "object"
+                  ? json(value)
+                  : (value as string | number);
+        const keys = importCatalogKeys[table];
+        const where = ["cache_account_id", ...keys].map((k) => `${k}=?`).join(" AND ");
+        const params = [c.accountId, ...keys.map((k) => values[k])];
+        const old = await database.getFirstAsync<Row>(
+          `SELECT * FROM ${table} WHERE ${where}`,
+          ...params,
+        );
+        if (!old) {
+          if (table === "trip_source_representations")
+            Object.assign(values, {
+              local_uri: null,
+              local_state:
+                observed.material_kind === "TEXT" &&
+                observed.retention_state === "RETAINED"
+                  ? "VERIFIED"
+                  : "ABSENT",
+              local_verified_at:
+                observed.material_kind === "TEXT" &&
+                observed.retention_state === "RETAINED"
+                  ? now()
+                  : null,
+              transfer_state:
+                observed.material_kind === "BINARY"
+                  ? observed.remote_state === "VERIFIED"
+                    ? "COMPLETE"
+                    : "PENDING"
+                  : "NOT_REQUIRED",
+            });
+          await insert(table, values);
+          continue;
+        }
+        if (old.retention_state !== "RETAINED" && observed.retention_state === "RETAINED")
+          integrity();
+        if (
+          table === "trip_source_candidates" &&
+          old.proposal !== values.proposal &&
+          !(observed.retention_state === "IDENTITY_ONLY" && values.proposal === null)
+        )
+          integrity();
+        if (table === "trip_source_representations") {
+          // Material identity can only disappear through an authoritative privacy
+          // transition; a higher operational revision cannot rebind its bytes.
+          for (const k of [
+            "text_content",
+            "locator_uri",
+            "storage_provider",
+            "storage_bucket",
+            "object_key",
+            "payload_sha256",
+            "byte_count",
+            "original_filename",
+          ]) {
+            if (
+              old[k] !== values[k] &&
+              !(observed.retention_state !== "RETAINED" && values[k] === null)
+            )
+              integrity();
+          }
+        }
+        const mutable = importCatalogMutableColumns[table];
+        for (const [key, value] of Object.entries(values)) {
+          if (
+            key === "registration_state" ||
+            mutable.includes(key) ||
+            (old.registration_state === "PENDING" &&
+              (key === "created_at" || key === "reviewed_at") &&
+              old[key] === null)
+          )
+            continue;
+          if (
+            old[key] !== value &&
+            !(
+              ((table === "trip_sources" && key === "acquisition_sha256") ||
+                (table === "trip_source_revisions" && key === "capture_sha256")) &&
+              observed.retention_state === "IDENTITY_ONLY" &&
+              value === null
+            )
+          )
+            throw new Error("IMPORT_OBSERVATION_IDENTITY_CONFLICT");
+        }
+        if (
+          typeof old.row_revision === "number" &&
+          typeof values.row_revision === "number"
+        ) {
+          if (values.row_revision < old.row_revision) continue;
+          if (
+            values.row_revision === old.row_revision &&
+            old.registration_state === "REGISTERED" &&
+            Object.keys(values).some((k) => old[k] !== values[k])
+          )
+            throw new Error("IMPORT_OBSERVATION_REVISION_CONFLICT");
+        }
+        if (table === "trip_source_output_slots") {
+          const parent = catalogs.trip_source_confirmations.find(
+            (p) => p.id === observed.confirmation_id,
+          )!;
+          const previous = parentRevisions.get(observed.confirmation_id);
+          if (previous && Number(parent.row_revision) < Number(previous.revision))
+            continue;
+          if (
+            previous?.registered &&
+            parent.row_revision === previous.revision &&
+            old.registration_state === "REGISTERED" &&
+            Object.keys(values).some((k) => old[k] !== values[k])
+          )
+            throw new Error("IMPORT_OBSERVATION_REVISION_CONFLICT");
+          if (old.dispatched_at !== null && values.dispatched_at === null) continue;
+          for (const k of [
+            "receipt_sha256",
+            "result_target_id",
+            "result_revision",
+            "no_commit_basis",
+            "no_commit_receipt_sha256",
+          ]) {
+            if (old[k] !== null && old[k] !== values[k]) integrity();
+          }
+          if (
+            old.create_claim_active === 1 &&
+            values.create_claim_active === 0 &&
+            values.no_commit_basis === null
+          )
+            integrity();
+        }
+        const columns = Object.keys(values).filter(
+          (k) => k !== "cache_account_id" && !keys.includes(k),
+        );
+        await database.runAsync(
+          `UPDATE ${table} SET ${columns.map((k) => `${k}=?`).join(",")} WHERE ${where}`,
+          ...columns.map((k) => values[k]),
+          ...params,
+        );
+      }
+    }
+    return "APPLIED" as const;
+  }
   return {
     captureContext: (tripId: string) =>
       captureAccountRequestContext(tripId, getAccountId),
+    // Owning caller supplies the existing serialized transaction and Account gate.
+    transactionStore: Object.freeze({
+      database,
+      async applyCatalogs(c: AccountRequestContext, raw: string) {
+        await admitTransactionStore(c);
+        const result = await applyCatalogsInTransaction(c, raw);
+        await assertAccountRequestContext(c, getAccountId);
+        return result;
+      },
+      async assertInput(
+        c: AccountRequestContext,
+        input: FlightConfirmationIntent["inputs"][number],
+      ) {
+        await admitTransactionStore(c);
+        return pin(c, input);
+      },
+    }),
     async applyCatalogs(c: AccountRequestContext, raw: string) {
-      const snapshot = tripImportSnapshotSchema.parse(parseEventJson(raw, 4194304));
-      if (snapshot.trip_id !== c.tripId || snapshot.actor_account_id !== c.accountId)
-        integrity();
-      const catalogs = snapshot as unknown as Record<TripImportCatalogName, Row[]>;
-      await validateImportSnapshot(c.accountId, c.tripId, catalogs, sha256);
-      return scoped(c, async () => {
-        // Deferred Source/manifest and C parent FKs are checked at transaction commit.
-        // Every cross-row relationship is also checked above for FK-OFF parity.
-        const parentRevisions = new Map<
-          unknown,
-          { revision: unknown; registered: boolean }
-        >();
-        for (const observed of catalogs.trip_source_confirmations) {
-          const previous = await database.getFirstAsync<Row>(
-            "SELECT row_revision,registration_state FROM trip_source_confirmations WHERE cache_account_id=? AND id=?",
-            c.accountId,
-            observed.id as string,
-          );
-          if (previous)
-            parentRevisions.set(observed.id, {
-              revision: previous.row_revision,
-              registered: previous.registration_state === "REGISTERED",
-            });
-        }
-        for (const table of Object.keys(importCatalogKeys) as TripImportCatalogName[]) {
-          for (const observed of catalogs[table]) {
-            const values: Record<string, string | number | null> = {
-              cache_account_id: c.accountId,
-              registration_state: "REGISTERED",
-            };
-            for (const [key, value] of Object.entries(observed))
-              values[key] =
-                value === null
-                  ? null
-                  : typeof value === "boolean"
-                    ? Number(value)
-                    : typeof value === "object"
-                      ? json(value)
-                      : (value as string | number);
-            const keys = importCatalogKeys[table];
-            const where = ["cache_account_id", ...keys]
-              .map((k) => `${k}=?`)
-              .join(" AND ");
-            const params = [c.accountId, ...keys.map((k) => values[k])];
-            const old = await database.getFirstAsync<Row>(
-              `SELECT * FROM ${table} WHERE ${where}`,
-              ...params,
-            );
-            if (!old) {
-              if (table === "trip_source_representations")
-                Object.assign(values, {
-                  local_uri: null,
-                  local_state:
-                    observed.material_kind === "TEXT" &&
-                    observed.retention_state === "RETAINED"
-                      ? "VERIFIED"
-                      : "ABSENT",
-                  local_verified_at:
-                    observed.material_kind === "TEXT" &&
-                    observed.retention_state === "RETAINED"
-                      ? now()
-                      : null,
-                  transfer_state:
-                    observed.material_kind === "BINARY"
-                      ? observed.remote_state === "VERIFIED"
-                        ? "COMPLETE"
-                        : "PENDING"
-                      : "NOT_REQUIRED",
-                });
-              await insert(table, values);
-              continue;
-            }
-            if (
-              old.retention_state !== "RETAINED" &&
-              observed.retention_state === "RETAINED"
-            )
-              integrity();
-            if (
-              table === "trip_source_candidates" &&
-              old.proposal !== values.proposal &&
-              !(observed.retention_state === "IDENTITY_ONLY" && values.proposal === null)
-            )
-              integrity();
-            if (table === "trip_source_representations") {
-              // Material identity can only disappear through an authoritative privacy
-              // transition; a higher operational revision cannot rebind its bytes.
-              for (const k of [
-                "text_content",
-                "locator_uri",
-                "storage_provider",
-                "storage_bucket",
-                "object_key",
-                "payload_sha256",
-                "byte_count",
-                "original_filename",
-              ]) {
-                if (
-                  old[k] !== values[k] &&
-                  !(observed.retention_state !== "RETAINED" && values[k] === null)
-                )
-                  integrity();
-              }
-            }
-            const mutable = importCatalogMutableColumns[table];
-            for (const [key, value] of Object.entries(values)) {
-              if (
-                key === "registration_state" ||
-                mutable.includes(key) ||
-                (old.registration_state === "PENDING" &&
-                  (key === "created_at" || key === "reviewed_at") &&
-                  old[key] === null)
-              )
-                continue;
-              if (
-                old[key] !== value &&
-                !(
-                  ((table === "trip_sources" && key === "acquisition_sha256") ||
-                    (table === "trip_source_revisions" && key === "capture_sha256")) &&
-                  observed.retention_state === "IDENTITY_ONLY" &&
-                  value === null
-                )
-              )
-                throw new Error("IMPORT_OBSERVATION_IDENTITY_CONFLICT");
-            }
-            if (
-              typeof old.row_revision === "number" &&
-              typeof values.row_revision === "number"
-            ) {
-              if (values.row_revision < old.row_revision) continue;
-              if (
-                values.row_revision === old.row_revision &&
-                old.registration_state === "REGISTERED" &&
-                Object.keys(values).some((k) => old[k] !== values[k])
-              )
-                throw new Error("IMPORT_OBSERVATION_REVISION_CONFLICT");
-            }
-            if (table === "trip_source_output_slots") {
-              const parent = catalogs.trip_source_confirmations.find(
-                (p) => p.id === observed.confirmation_id,
-              )!;
-              const previous = parentRevisions.get(observed.confirmation_id);
-              if (previous && Number(parent.row_revision) < Number(previous.revision))
-                continue;
-              if (
-                previous?.registered &&
-                parent.row_revision === previous.revision &&
-                old.registration_state === "REGISTERED" &&
-                Object.keys(values).some((k) => old[k] !== values[k])
-              )
-                throw new Error("IMPORT_OBSERVATION_REVISION_CONFLICT");
-              if (old.dispatched_at !== null && values.dispatched_at === null) continue;
-              for (const k of [
-                "receipt_sha256",
-                "result_target_id",
-                "result_revision",
-                "no_commit_basis",
-                "no_commit_receipt_sha256",
-              ]) {
-                if (old[k] !== null && old[k] !== values[k]) integrity();
-              }
-              if (
-                old.create_claim_active === 1 &&
-                values.create_claim_active === 0 &&
-                values.no_commit_basis === null
-              )
-                integrity();
-            }
-            const columns = Object.keys(values).filter(
-              (k) => k !== "cache_account_id" && !keys.includes(k),
-            );
-            await database.runAsync(
-              `UPDATE ${table} SET ${columns.map((k) => `${k}=?`).join(",")} WHERE ${where}`,
-              ...columns.map((k) => values[k]),
-              ...params,
-            );
-          }
-        }
-        return "APPLIED" as const;
-      });
+      return scoped(c, () => applyCatalogsInTransaction(c, raw));
     },
     async readDraft(c: AccountRequestContext, draftKey: string) {
       return scoped(c, async () => {

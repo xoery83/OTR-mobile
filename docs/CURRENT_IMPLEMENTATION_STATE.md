@@ -1,6 +1,30 @@
 # Current Implementation State
 
-Date: 2026-10-08 (Pacific/Auckland).
+Date: 2026-10-09 (Pacific/Auckland).
+
+## Publication Membership Builder — DORMANT CODE/DESIGN OWNER ACCEPTED
+
+- Fresh isolated verified `f7115dc`; dormant strict membership envelope, CLOSED
+  existing-private-read projection, complete Input/ancestry verification and
+  same-database transaction-local install/read/current Capture-binding seams.
+- Canonical SQLite1–51 unchanged. Separate SQLite52 remains pending acceptance;
+  SQLite53 is only a candidate. One-column/four-guard DDL is design-only; no
+  migration module, registration, allocation or new DDL execution. Actual51
+  installation fails before writes. Durable-schema/guard/cold acceptance blocked.
+- Owner F1–F3 corrections enforce Run Input Source scope, unique Original root
+  for single-Capture support (convergent DAGs preserved), and active transaction/
+  Account/Trip guards on internal Stores. Serialized transaction ownership and
+  Account apply gate remain internal caller preconditions.
+- Correction verification: selected12 suites/788 PASS, additional4 Account/
+  Capture QA suites/13 PASS; final focused39 PASS. Typecheck/lint/UI guard PASS.
+  Future-column simulation is test-only, not migration durability.
+- Report: `architecture/OTR_PLATFORM_PUBLICATION_MEMBERSHIP_BUILDER_REPORT.md`;
+  design: `architecture/OTR_PLATFORM_PUBLICATION_MEMBERSHIP_MIGRATION_DESIGN.md`.
+  Original review/correction history and independent targeted39 PASS retained.
+  Owner authorized one scoped local closure commit on exact `f7115dc` parent.
+  Next: separate52 acceptance/ancestry/Owner migration
+  allocation. P2b-A, P2b-B integration and all runtime/provider/business gates remain
+  CLOSED. No Hosted/device operation, push or Git integration.
 
 ## Capture C3 canonical integration — PREPARED / INDEPENDENT REVIEW PASS
 
