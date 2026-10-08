@@ -1,3 +1,5 @@
+import { captureAccountScope } from "@/data/auth/accountRequestContext";
+import { requireActiveUserId } from "@/data/auth/authRepository";
 import * as FileSystem from "expo-file-system/legacy";
 import { useEffect, useState } from "react";
 
@@ -94,8 +96,9 @@ async function runAcceptance(mode: string) {
         `${hydrated} journey/member rows`,
       );
 
-      const myLedger = await transport.myLedger("ALL", { from: null, to: null });
-      await readRepository.cacheMyLedger(myLedger);
+      const context = await captureAccountScope(requireActiveUserId);
+      const myLedger = await transport.myLedger("ALL", { from: null, to: null }, context);
+      await readRepository.cacheMyLedger(myLedger, context);
       const summaries = await readRepository.listMyLedgerSummaries("ALL");
       record("My Ledger cache", summaries.length > 0, `${summaries.length} summaries`);
     }

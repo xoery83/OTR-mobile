@@ -42,6 +42,9 @@ const fixture = vi.hoisted(() => ({
   runSync: vi.fn(),
   appListener: null as null | ((state: string) => void),
   networkListener: null as null | ((state: { isConnected: boolean }) => void),
+  myLedger: vi.fn(),
+  notify: vi.fn(),
+  retry: vi.fn(),
   bootstrap: vi.fn(),
   pull: vi.fn(),
 }));
@@ -65,7 +68,11 @@ vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   getDefaultLedgerReportingRepository: async () => current().reporting,
 }));
 vi.mock("@/data/sync/ledgerReadTransport", () => ({
-  createLedgerReadTransport: () => ({ bootstrap: fixture.bootstrap, pull: fixture.pull }),
+  createLedgerReadTransport: () => ({
+    bootstrap: fixture.bootstrap,
+    pull: fixture.pull,
+    myLedger: fixture.myLedger,
+  }),
 }));
 vi.mock("@/data/sync/ledgerPersonalPaymentCoordinator", () => ({
   refreshLedgerPersonalPayments: async () => false,
@@ -75,6 +82,8 @@ vi.mock("@/data/sync/personalSettlementReviewCoordinator", () => ({
 }));
 vi.mock("@/data/sync/transportSelection", () => ({ getSyncTransportMode: () => "dev" }));
 vi.mock("@/data/sync/ledgerOperationalSync", () => ({
+  scheduleOperationalReadRetry: fixture.retry,
+  notifyLedgerReadCompletion: fixture.notify,
   runLedgerOperationalSync: fixture.runSync,
   pauseLedgerOperationalSync: async () => {},
   allowLedgerOperationalSync: () => {},
@@ -262,6 +271,14 @@ async function wake(kind: "foreground" | "reconnect" | "cold start") {
 }
 beforeEach(() => {
   vi.clearAllMocks();
+  advanceAccountGeneration();
+  fixture.myLedger.mockResolvedValue({
+    period: "ALL",
+    from: null,
+    to: null,
+    journeys: [],
+    serverTime: time,
+  });
   fixture.online = true;
   fixture.accountId = account;
   fixture.runSync.mockImplementation(async () => {});
@@ -500,6 +517,7 @@ describe("real central-owner lifecycle convergence with local clients", () => {
       expect(fixture.accountId).toBe(b);
       expect(getAccountGeneration()).toBe(installedGeneration);
       expect(selected).not.toContain(account);
+      await resumeOperationalSync();
       expect(fixture.pull).toHaveBeenCalledOnce();
       expect(await c.reads.getParticipationCertificate(trip)).toEqual(certificate);
       expect(c.sqlite.prepare("SELECT count(*) AS n FROM sync_operations").get()?.n).toBe(
@@ -570,7 +588,7 @@ describe("real central-owner lifecycle convergence with local clients", () => {
     fixture.runSync.mockImplementationOnce(async () => {
       advanceAccountGeneration();
     });
-    await resumeOperationalSync();
+    await expect(resumeOperationalSync()).rejects.toThrow("Account changed");
     expect(fixture.pull).not.toHaveBeenCalled();
     expect(fixture.bootstrap).not.toHaveBeenCalled();
   });
@@ -644,4 +662,117 @@ describe("real central-owner lifecycle convergence with local clients", () => {
       expect(getAccountGeneration()).toBeGreaterThan(bGeneration);
     },
   );
+});
+
+describe("fresh Account SQLite52 bootstrap acceptance", () => {
+  const summary = (id: string, current = true) => ({
+    journeyId: id,
+    title: "Zero Expense Journey",
+    startDate: current ? "2000-01-01" : null,
+    endDate: current ? "2099-01-01" : null,
+    currency: "NZD",
+    scale: 2,
+    mySpendMinor: 0,
+    paidMinor: 0,
+    positionMinor: 0,
+    unvaluedCount: 0,
+    conflictCount: 0,
+    updatedAt: time,
+  });
+  it("discovers fresh A1, hydrates only the current eligible Journey, and preserves queued Expense/Capture bytes", async () => {
+    const c = client();
+    clients.push(c);
+    fixture.client = c;
+    c.sqlite.exec(
+      `INSERT INTO sync_operations (id,entity_type,entity_id,operation_type,idempotency_key,payload_json,status,created_at,updated_at,owner_user_id) VALUES ('pending-expense','expense','e','CREATE_EXPENSE','expense-key','{}','PENDING','${time}','${time}','${account}'), ('pending-capture','capture_submission','c','CREATE_CAPTURE_SUBMISSION','capture-key','{}','RETRYABLE','${time}','${time}','${account}');`,
+    );
+    const before = c.sqlite.prepare("SELECT * FROM sync_operations ORDER BY id").all();
+    fixture.myLedger.mockResolvedValue({
+      period: "ALL",
+      from: null,
+      to: null,
+      journeys: [summary(trip), summary(tripB, false)],
+      serverTime: time,
+    });
+    fixture.bootstrap.mockImplementation(async (id: string) => {
+      const response = serverBootstrap(id);
+      return {
+        ...response,
+        actor: { ...response.actor, memberId: person, role: "guest" as const },
+      };
+    });
+    expect(await c.reporting.listJourneys()).toEqual([]);
+    await resumeOperationalSync();
+    expect(await c.reporting.listJourneys()).toHaveLength(2);
+    expect(await c.reporting.getSelectedJourneyId()).toBe(trip);
+    expect(await c.reporting.getActorMemberId(trip)).toMatchObject({ memberId: person });
+    expect(fixture.bootstrap).toHaveBeenCalledExactlyOnceWith(
+      trip,
+      expect.objectContaining({ accountId: account }),
+    );
+    expect(c.sqlite.prepare("SELECT count(*) AS n FROM ledger_expenses").get()?.n).toBe(
+      0,
+    );
+    expect(c.sqlite.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
+      before,
+    );
+    expect(c.sqlite.prepare("PRAGMA integrity_check").get()).toMatchObject({
+      integrity_check: "ok",
+    });
+    expect(c.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    expect(migrations.map((m) => m.id)).toEqual(
+      Array.from({ length: 52 }, (_, i) => i + 1),
+    );
+    expect(fixture.notify).toHaveBeenCalledWith(
+      expect.objectContaining({ discoveryChanged: true, journeyIds: [] }),
+    );
+  });
+  it("keeps summary/selection/actors Account-owned with the same Journey UUID and A→B→A", async () => {
+    const c = client();
+    clients.push(c);
+    fixture.client = c;
+    fixture.myLedger.mockImplementation(async () => ({
+      period: "ALL",
+      from: null,
+      to: null,
+      journeys: [
+        {
+          ...summary(trip),
+          title: fixture.accountId === account ? "A Journey" : "B Journey",
+        },
+      ],
+      serverTime: time,
+    }));
+    fixture.bootstrap.mockImplementation(async (id: string) => {
+      const response = serverBootstrap(id);
+      return {
+        ...response,
+        actor: {
+          ...response.actor,
+          memberId: fixture.accountId === account ? person : null,
+        },
+      };
+    });
+    await resumeOperationalSync();
+    const a = (await c.reporting.listJourneys())[0];
+    const b = "30000000-0000-4000-8000-000000000002";
+    fixture.accountId = b;
+    advanceAccountGeneration();
+    expect(await c.reporting.getSelectedJourneyId()).toBeNull();
+    expect(await c.reporting.listJourneys()).toEqual([]);
+    await resumeOperationalSync();
+    expect((await c.reporting.listMyLedger("ALL"))[0].title).toBe("B Journey");
+    expect(await c.reporting.getActorMemberId(trip)).toEqual({ memberId: null });
+    fixture.accountId = account;
+    advanceAccountGeneration();
+    expect((await c.reporting.listJourneys())[0]).toEqual(a);
+    expect(await c.reporting.getSelectedJourneyId()).toBe(trip);
+    expect(await c.reporting.getActorMemberId(trip)).toMatchObject({ memberId: person });
+    expect(
+      c.sqlite
+        .prepare("SELECT user_id FROM ledger_my_journey_summaries ORDER BY user_id")
+        .all(),
+    ).toHaveLength(2);
+    expect(c.sqlite.prepare("PRAGMA integrity_check").get()?.integrity_check).toBe("ok");
+  });
 });

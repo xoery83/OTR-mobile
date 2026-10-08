@@ -61,6 +61,16 @@ function database() {
       conflict_count INTEGER, updated_at TEXT);
   `);
   const adapter: LedgerReportingDatabase = {
+    async withTransactionAsync(task: () => Promise<void>) {
+      sqlite.exec("BEGIN");
+      try {
+        await task();
+        sqlite.exec("COMMIT");
+      } catch (error) {
+        sqlite.exec("ROLLBACK");
+        throw error;
+      }
+    },
     async getAllAsync<T>(sql: string, ...params: unknown[]) {
       return sqlite.prepare(sql).all(...(params as never[])) as T[];
     },
@@ -464,6 +474,7 @@ describe("Ledger reporting repository", () => {
     });
     await repository.setDefaultCurrency("EUR");
     await repository.setDebugMode(true);
+    insertFixture(sqlite);
     await repository.selectJourney("journey");
 
     expect(await repository.getPreferences()).toEqual({

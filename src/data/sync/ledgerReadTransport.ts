@@ -1,6 +1,8 @@
 import {
   assertAccountRequestContext,
   captureAccountRequestContext,
+  captureAccountScope,
+  type AccountScope,
   type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
 import { ApiClientError, createApiClient } from "@/data/api/client";
@@ -35,7 +37,7 @@ type Dependencies = {
 async function client(
   dependencies: Dependencies,
   timeoutMs = 15_000,
-  context?: AccountRequestContext,
+  context?: AccountScope,
 ) {
   if (!dependencies.readSession && !dependencies.createClient)
     return createAuthenticatedApiClient({ timeoutMs }, undefined, context);
@@ -133,11 +135,17 @@ export function createLedgerReadTransport(dependencies: Dependencies = {}) {
     async myLedger(
       period: MyLedgerPeriod,
       bounds: { from: string | null; to: string | null },
+      requestContext?: AccountScope,
     ) {
-      return (await client(dependencies)).get(
-        `/v2/me/ledger${queryString({ period, ...bounds })}`,
-        myLedgerResponseSchema,
-      );
+      const getUser = async () =>
+        (await (dependencies.readSession ?? readLocalSession)())?.identity?.userId ?? "";
+      const context = requestContext ?? (await captureAccountScope(getUser));
+      await assertAccountRequestContext(context, getUser);
+      const response = await (
+        await client(dependencies, 15_000, context)
+      ).get(`/v2/me/ledger${queryString({ period, ...bounds })}`, myLedgerResponseSchema);
+      await assertAccountRequestContext(context, getUser);
+      return response;
     },
 
     async rateQuotes(journeyId: string, quoteCurrency: string, baseCurrency: string) {

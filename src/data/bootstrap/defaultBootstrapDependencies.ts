@@ -1,10 +1,17 @@
 import { ApiClientError } from "@/data/api/client";
-import { readLocalSession } from "@/data/auth/authRepository";
+import { readLocalSession, requireActiveUserId } from "@/data/auth/authRepository";
 import { adoptLegacyAccountState } from "@/data/auth/accountLocalState";
-import { sessionAccessToken } from "@/data/auth/sessionAccessToken";
+import {
+  captureAccountScope,
+  assertAccountRequestContext,
+  type AccountScope,
+} from "@/data/auth/accountRequestContext";
+import { chooseJourneyEntry } from "@/domain/ledger/journeyContext";
 import { openDatabase } from "@/data/db/database";
 import {
   allowLedgerOperationalSync,
+  scheduleOperationalReadRetry,
+  notifyLedgerReadCompletion,
   pauseLedgerOperationalSync,
   reactivateLongLivedLedgerFailures,
   runLedgerOperationalSync,
@@ -13,12 +20,16 @@ import {
 } from "@/data/sync/ledgerOperationalSync";
 import { getSyncTransportMode } from "@/data/sync/transportSelection";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
-import { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";
+import {
+  refreshJourneyLedgerWithStatus,
+  refreshMyLedger,
+} from "@/data/sync/ledgerReportingCoordinator";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { getDefaultDataHealthScheduler } from "@/data/health/defaultDataHealthScheduler";
 import * as Network from "expo-network";
 import { AppState } from "react-native";
 
+import type { LocalSession } from "@/domain/auth/localSession";
 import type { FoundationBootstrapDependencies } from "./bootstrapApplication";
 
 export const defaultBootstrapDependencies: FoundationBootstrapDependencies = {
@@ -30,13 +41,35 @@ export const defaultBootstrapDependencies: FoundationBootstrapDependencies = {
   scheduleHealth: () => scheduleAutomaticDataHealth("COLD_START"),
 };
 
-let resuming: Promise<void> | null = null;
+let resuming: { generation: number; promise: Promise<void> } | null = null;
+let discovery: { generation: number; complete: boolean; failures: number } | null = null;
+let syncOnline = true;
+let syncActive = AppState.currentState === "active";
+
+export async function bootstrapActivatedAccount(session: LocalSession | null) {
+  // Reload the installed Account's cache independently of remote availability.
+  if (session?.identity?.userId) {
+    void captureAccountScope(requireActiveUserId)
+      .then((context) => {
+        if (context.accountId === session.identity?.userId)
+          notifyLedgerReadCompletion({
+            ...context,
+            journeyIds: [],
+            discoveryChanged: true,
+          });
+      })
+      .catch(() => undefined);
+  }
+  if (!syncPaused) void resumeOperationalSync().catch(() => undefined);
+}
 let syncPaused = false;
 let activeHealthTimer: ReturnType<typeof setInterval> | null = null;
 const ACTIVE_HEALTH_INTERVAL_MS = 15 * 60_000;
 
 export function subscribeOperationalSyncLifecycle() {
   let online: boolean | null = null;
+  let liveConnectivity = false;
+  let removed = false;
   const updateActiveTimer = (active: boolean) => {
     if (activeHealthTimer) clearInterval(activeHealthTimer);
     activeHealthTimer = active
@@ -46,21 +79,34 @@ export function subscribeOperationalSyncLifecycle() {
         )
       : null;
   };
-  updateActiveTimer(AppState.currentState === "active");
-  void Network.getNetworkStateAsync().then((state) => {
-    online = isOnline(state);
-  });
+  syncActive = AppState.currentState === "active";
+  updateActiveTimer(syncActive);
+  void Network.getNetworkStateAsync()
+    .then((state) => {
+      if (liveConnectivity || removed) return;
+      online = isOnline(state);
+      syncOnline = online;
+      if (!online) scheduleOperationalReadRetry(null);
+    })
+    .catch(() => undefined);
   const appState = AppState.addEventListener("change", (state) => {
     const active = state === "active";
     updateActiveTimer(active);
-    if (!active) return;
+    syncActive = active;
+    if (!active) {
+      scheduleOperationalReadRetry(null);
+      return;
+    }
     void resumeOperationalSync().catch(() => undefined);
     void scheduleAutomaticDataHealth("FOREGROUND").catch(() => undefined);
   });
   const network = Network.addNetworkStateListener((state) => {
+    liveConnectivity = true;
     const next = isOnline(state);
     const restored = next && online === false;
     online = next;
+    syncOnline = next;
+    if (!next) scheduleOperationalReadRetry(null);
     if (restored) {
       void resumeOperationalSync().catch(() => undefined);
       void scheduleAutomaticDataHealth("CONNECTIVITY_RESTORED").catch(() => undefined);
@@ -73,6 +119,7 @@ export function subscribeOperationalSyncLifecycle() {
   });
   return {
     remove() {
+      removed = true;
       appState.remove();
       network.remove();
       unsubscribeSync();
@@ -82,24 +129,30 @@ export function subscribeOperationalSyncLifecycle() {
 }
 
 export function resumeOperationalSync() {
-  if (syncPaused) return Promise.resolve();
-  if (resuming) return resuming;
-  resuming = refreshThenSync().finally(() => {
-    resuming = null;
+  if (syncPaused || !syncOnline || !syncActive) return Promise.resolve();
+  const generation = getAccountGeneration();
+  if (resuming?.generation === generation) return resuming.promise;
+  const promise = refreshThenSync().finally(() => {
+    if (resuming?.promise === promise) resuming = null;
   });
-  return resuming;
+  resuming = { generation, promise };
+  return promise;
 }
 
 export async function pauseOperationalSync() {
   syncPaused = true;
-  await Promise.all([resuming, pauseLedgerOperationalSync()]);
+  scheduleOperationalReadRetry(null);
+  // Read callbacks are generation-fenced; only durable mutation work must drain.
+  await pauseLedgerOperationalSync();
 }
 
 export async function restartOperationalSync() {
   allowLedgerOperationalSync();
   syncPaused = false;
-  await reactivateLongLivedLedgerFailures();
-  await resumeOperationalSync();
+  void reactivateLongLivedLedgerFailures()
+    .catch(() => undefined)
+    .then(() => resumeOperationalSync())
+    .catch(() => undefined);
   void scheduleAutomaticDataHealth("AUTH_RECOVERED").catch(() => undefined);
 }
 
@@ -127,28 +180,100 @@ function isOnline(state: { isConnected?: boolean; isInternetReachable?: boolean 
 }
 
 async function refreshThenSync() {
-  const generation = getAccountGeneration();
   const session = await readLocalSession();
-  if (getSyncTransportMode() === "dev" && session?.refreshToken)
-    await sessionAccessToken();
+  if (!session?.identity?.userId) return;
+  const context = await captureAccountScope(requireActiveUserId);
   await runLedgerOperationalSync();
-  if (!session?.identity?.userId || generation !== getAccountGeneration()) return;
-  const journeyId = await (
-    await getDefaultLedgerReportingRepository()
-  ).getSelectedJourneyId();
-  if (journeyId && generation === getAccountGeneration()) {
-    try {
-      await refreshJourneyLedger(journeyId);
-    } catch (error) {
-      // Background verification must not undo a successfully installed Account.
-      console.info(
-        JSON.stringify({
-          event: "ledger_sync_failure",
-          phase: "pull",
-          kind: error instanceof ApiClientError ? error.kind : "local",
-          code: error instanceof ApiClientError ? error.code : undefined,
-        }),
-      );
+  await assertAccountRequestContext(context, requireActiveUserId);
+  if (getSyncTransportMode() === "dev") await discoverAccountJourneys(context);
+}
+
+async function discoverAccountJourneys(context: AccountScope) {
+  if (discovery?.generation !== context.generation)
+    discovery = { generation: context.generation, complete: false, failures: 0 };
+  const state = discovery;
+  let discoveryChanged = false;
+  let journeyId: string | null = null;
+  try {
+    if (!state.complete) {
+      await refreshMyLedger("ALL", { from: null, to: null }, context);
+      await assertAccountRequestContext(context, requireActiveUserId);
+      state.complete = true;
+      discoveryChanged = true;
+      notifyLedgerReadCompletion({ ...context, journeyIds: [], discoveryChanged: true });
     }
+    const repository = await getDefaultLedgerReportingRepository();
+    const [journeys, selected] = await Promise.all([
+      repository.listJourneys(),
+      repository.getSelectedJourneyId(),
+    ]);
+    await assertAccountRequestContext(context, requireActiveUserId);
+    // A retained Account choice wins; otherwise retain the approved date policy.
+    const entry = chooseJourneyEntry(journeys, localCalendarDate(), selected);
+    journeyId =
+      selected && journeys.some((j) => j.journeyId === selected)
+        ? selected
+        : entry.kind === "JOURNEY"
+          ? entry.journeyId
+          : null;
+    if (journeyId) {
+      if (selected !== journeyId) await repository.selectJourney(journeyId, context);
+      const result = await refreshJourneyLedgerWithStatus(
+        journeyId,
+        Object.freeze({ ...context, tripId: journeyId }),
+      );
+      await assertAccountRequestContext(context, requireActiveUserId);
+      if (result.incomplete) {
+        const errors = result.auxiliaryErrors ?? [];
+        throw (
+          errors.find((error) => !isRetryableReadFailure(error)) ??
+          errors[0] ??
+          new ApiClientError("Incomplete read has no classified failure.", "validation")
+        );
+      }
+    }
+    state.failures = 0;
+    scheduleOperationalReadRetry(null);
+  } catch (error) {
+    await assertAccountRequestContext(context, requireActiveUserId);
+    const transient = isRetryableReadFailure(error);
+    if (transient && !syncPaused && syncActive && syncOnline) {
+      const delay = [15_000, 30_000, 60_000][Math.min(state.failures++, 2)];
+      scheduleOperationalReadRetry({
+        at: Date.now() + delay,
+        generation: context.generation,
+        run: resumeOperationalSync,
+      });
+    } else scheduleOperationalReadRetry(null);
+    console.info(
+      JSON.stringify({
+        event: "ledger_sync_failure",
+        phase: "discovery",
+        kind: error instanceof ApiClientError ? error.kind : "local",
+      }),
+    );
+  } finally {
+    await assertAccountRequestContext(context, requireActiveUserId);
+    notifyLedgerReadCompletion({
+      ...context,
+      journeyIds: journeyId ? [journeyId] : [],
+      discoveryChanged,
+    });
   }
+}
+
+function localCalendarDate() {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function isRetryableReadFailure(error: unknown) {
+  return (
+    error instanceof ApiClientError &&
+    (error.kind === "network" ||
+      error.kind === "timeout" ||
+      (error.kind === "http" &&
+        error.status !== undefined &&
+        (error.status === 429 || error.status >= 500)))
+  );
 }

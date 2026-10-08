@@ -1,3 +1,4 @@
+import type { AccountRequestContext } from "@/data/auth/accountRequestContext";
 import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
   createPersonalSettlementCheckpointRequestSchema,
@@ -15,8 +16,8 @@ const createResponse = personalSettlementReviewResponseSchema.extend({
 
 export function createPersonalSettlementReviewTransport() {
   return {
-    async read(journeyId: string) {
-      return (await client()).get(
+    async read(journeyId: string, context?: AccountRequestContext) {
+      return createAuthenticatedApiClient({}, undefined, context).get(
         `/v2/trips/${journeyId}/settlement-review`,
         personalSettlementReviewResponseSchema,
       );

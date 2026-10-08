@@ -1,3 +1,4 @@
+import { assertAccountRequestGeneration } from "@/data/auth/accountRequestContext";
 import { openDatabase } from "@/data/db/database";
 import { requireActiveUserId } from "@/data/auth/authRepository";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
@@ -59,6 +60,28 @@ let paused = false;
 let queueTimer: ReturnType<typeof setTimeout> | null = null;
 let workSignaledDuringRun = false;
 let queueScheduleVersion = 0;
+let readRetry: { at: number; generation: number; run(): Promise<unknown> } | null = null;
+
+// Read retries share the queue owner's one timer; they never author queue rows.
+export function scheduleOperationalReadRetry(retry: typeof readRetry) {
+  readRetry = retry;
+  void scheduleQueueWake();
+}
+
+export function notifyLedgerReadCompletion(event: LedgerOperationalSyncCompletion) {
+  try {
+    assertAccountRequestGeneration(event);
+  } catch {
+    return;
+  }
+  for (const listener of completionListeners) {
+    try {
+      listener(event);
+    } catch {
+      /* A view cannot invalidate a completed cache apply. */
+    }
+  }
+}
 
 function clearQueueTimer() {
   if (queueTimer) clearTimeout(queueTimer);
@@ -76,7 +99,7 @@ async function scheduleQueueWake() {
       version !== queueScheduleVersion
     )
       return;
-    const delay =
+    const queueDelay =
       workSignaledDuringRun && activity.actionableNow > 0
         ? 0
         : activity.actionableNow > 0
@@ -89,13 +112,25 @@ async function scheduleQueueWake() {
           : activity.nextActionableAt !== null
             ? Math.max(0, activity.nextActionableAt - Date.now())
             : null;
+    if (readRetry?.generation !== generation) readRetry = null;
+    const readDelay = readRetry ? Math.max(0, readRetry.at - Date.now()) : null;
+    const delay =
+      queueDelay === null
+        ? readDelay
+        : readDelay === null
+          ? queueDelay
+          : Math.min(queueDelay, readDelay);
     workSignaledDuringRun = false;
     clearQueueTimer();
     if (delay === null) return;
     queueTimer = setTimeout(() => {
       queueTimer = null;
-      if (!paused && generation === getAccountGeneration())
-        void runLedgerOperationalSync().catch(() => undefined);
+      if (paused || generation !== getAccountGeneration()) return;
+      if (readRetry && readRetry.at <= Date.now()) {
+        const retry = readRetry;
+        readRetry = null;
+        void retry.run().catch(() => undefined);
+      } else void runLedgerOperationalSync().catch(() => undefined);
     }, delay);
   } catch {
     // No active account or unavailable SQLite: lifecycle recovery will retry.
@@ -123,6 +158,7 @@ export type LedgerOperationalSyncCompletion = {
   accountId: string;
   generation: number;
   journeyIds: string[];
+  discoveryChanged?: boolean;
 };
 
 export function isLedgerOperationalSyncPaused() {
@@ -145,7 +181,9 @@ export function subscribeLedgerOperationalSyncCompletion(
   listener: (event: LedgerOperationalSyncCompletion) => void,
 ) {
   completionListeners.add(listener);
-  return () => completionListeners.delete(listener);
+  return () => {
+    completionListeners.delete(listener);
+  };
 }
 
 export function runLedgerOperationalSync(
@@ -267,6 +305,7 @@ export async function pauseLedgerOperationalSync() {
   queueScheduleVersion += 1;
   clearQueueTimer();
   workSignaledDuringRun = false;
+  readRetry = null;
   await running;
 }
 

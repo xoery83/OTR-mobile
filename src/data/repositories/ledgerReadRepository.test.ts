@@ -1,3 +1,4 @@
+import { captureAccountScope } from "@/data/auth/accountRequestContext";
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 import { migrations } from "@/data/db/migrations";
@@ -693,7 +694,10 @@ describe("Ledger read repository", () => {
       serverTime: "2026-09-11T00:00:00.000Z",
     };
 
-    await createLedgerReadRepository(db, activeUser).cacheMyLedger(response);
+    await createLedgerReadRepository(db, activeUser).cacheMyLedger(
+      response,
+      await captureAccountScope(activeUser),
+    );
 
     expect(writes).toHaveLength(2);
     expect(writes[1].sql).toContain("ledger_my_journey_summaries");

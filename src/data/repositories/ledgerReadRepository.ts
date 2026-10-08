@@ -2,6 +2,7 @@ import { ApiClientError } from "@/data/api/client";
 import {
   assertAccountRequestContext,
   captureAccountRequestContext,
+  type AccountScope,
   withAccountApplyGate,
   type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
@@ -397,86 +398,95 @@ export function createLedgerReadRepository(
       );
     },
 
-    async cacheMyLedger(response: MyLedgerResponse) {
-      const userId = await getActiveUserId();
-      await database.withTransactionAsync(async () => {
-        const latest = await database.getFirstAsync<{ serverTime: string }>(
-          `SELECT server_time AS serverTime FROM ledger_my_spending_periods
+    async cacheMyLedger(response: MyLedgerResponse, context: AccountScope) {
+      if (!context)
+        throw new Error("Captured Account scope is required for My Ledger cache apply.");
+      const userId = context.accountId;
+      await assertAccountRequestContext(context, getActiveUserId);
+      await withAccountApplyGate(() =>
+        database.withTransactionAsync(async () => {
+          await assertAccountRequestContext(context, getActiveUserId);
+          const latest = await database.getFirstAsync<{ serverTime: string }>(
+            `SELECT server_time AS serverTime FROM ledger_my_spending_periods
            WHERE user_id = ? AND period_key = ?`,
-          userId,
-          response.period,
-        );
-        if (latest && latest.serverTime > response.serverTime) return;
-        if (response.spendingFacts) {
-          const eligible = new Set(response.journeys.map((journey) => journey.journeyId));
-          if (response.spendingFacts.some((fact) => !eligible.has(fact.journeyId)))
-            throw new Error("My Ledger spending fact outside authorized response.");
-          await database.runAsync(
-            `INSERT OR REPLACE INTO ledger_my_spending_periods
-             (user_id, period_key, server_time) VALUES (?, ?, ?)`,
-            userId,
-            response.period,
-            response.serverTime,
-          );
-          await database.runAsync(
-            `DELETE FROM ledger_my_spending_facts WHERE user_id = ? AND period_key = ?`,
             userId,
             response.period,
           );
-          for (const fact of response.spendingFacts)
+          if (latest && latest.serverTime > response.serverTime) return;
+          if (response.spendingFacts) {
+            const eligible = new Set(
+              response.journeys.map((journey) => journey.journeyId),
+            );
+            if (response.spendingFacts.some((fact) => !eligible.has(fact.journeyId)))
+              throw new Error("My Ledger spending fact outside authorized response.");
             await database.runAsync(
-              `INSERT INTO ledger_my_spending_facts (
+              `INSERT OR REPLACE INTO ledger_my_spending_periods
+             (user_id, period_key, server_time) VALUES (?, ?, ?)`,
+              userId,
+              response.period,
+              response.serverTime,
+            );
+            await database.runAsync(
+              `DELETE FROM ledger_my_spending_facts WHERE user_id = ? AND period_key = ?`,
+              userId,
+              response.period,
+            );
+            for (const fact of response.spendingFacts)
+              await database.runAsync(
+                `INSERT INTO ledger_my_spending_facts (
                   user_id, period_key, expense_id, revision, journey_id, category,
                   economic_date, occurred_at, status, has_open_conflict,
                 original_currency, original_scale, personal_split_minor
               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-              userId,
-              response.period,
-              fact.expenseId,
-              fact.revision,
-              fact.journeyId,
-              fact.category,
-              fact.economicDate,
-              fact.occurredAt,
-              fact.status,
-              fact.hasOpenConflict ? 1 : 0,
-              fact.originalCurrency,
-              fact.originalScale,
-              fact.personalSplitMinor,
-            );
-        }
-        await database.runAsync(
-          `DELETE FROM ledger_my_journey_summaries
-           WHERE user_id = ? AND period_key = ?`,
-          userId,
-          response.period,
-        );
-        for (const journey of response.journeys) {
+                userId,
+                response.period,
+                fact.expenseId,
+                fact.revision,
+                fact.journeyId,
+                fact.category,
+                fact.economicDate,
+                fact.occurredAt,
+                fact.status,
+                fact.hasOpenConflict ? 1 : 0,
+                fact.originalCurrency,
+                fact.originalScale,
+                fact.personalSplitMinor,
+              );
+          }
           await database.runAsync(
-            `INSERT OR REPLACE INTO ledger_my_journey_summaries (
+            `DELETE FROM ledger_my_journey_summaries
+           WHERE user_id = ? AND period_key = ?`,
+            userId,
+            response.period,
+          );
+          for (const journey of response.journeys) {
+            await database.runAsync(
+              `INSERT OR REPLACE INTO ledger_my_journey_summaries (
               user_id, journey_id, period_key, from_at, to_at, title, start_date, end_date,
               currency, scale, my_spend_minor, paid_minor, position_minor,
               unvalued_count, conflict_count, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            userId,
-            journey.journeyId,
-            response.period,
-            response.from,
-            response.to,
-            journey.title,
-            journey.startDate,
-            journey.endDate,
-            journey.currency,
-            journey.scale,
-            journey.mySpendMinor,
-            journey.paidMinor,
-            journey.positionMinor,
-            journey.unvaluedCount,
-            journey.conflictCount,
-            journey.updatedAt,
-          );
-        }
-      });
+              userId,
+              journey.journeyId,
+              response.period,
+              response.from,
+              response.to,
+              journey.title,
+              journey.startDate,
+              journey.endDate,
+              journey.currency,
+              journey.scale,
+              journey.mySpendMinor,
+              journey.paidMinor,
+              journey.positionMinor,
+              journey.unvaluedCount,
+              journey.conflictCount,
+              journey.updatedAt,
+            );
+          }
+          await assertAccountRequestContext(context, getActiveUserId);
+        }),
+      );
     },
 
     async listMyLedgerSummaries(period = "YEAR") {

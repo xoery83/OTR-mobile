@@ -1,3 +1,9 @@
+import { getAccountGeneration } from "./accountGeneration";
+import {
+  assertAccountRequestGeneration,
+  withAccountApplyGate,
+  type AccountScope,
+} from "./accountRequestContext";
 import { ApiClientError } from "@/data/api/client";
 import type { AccountIdentity, LocalSession } from "@/domain/auth/localSession";
 
@@ -37,9 +43,12 @@ export function createSessionAccessTokenProvider(
   const refreshes = new Map<string, Promise<LocalSession>>();
 
   return async function accessToken(request: TokenRequest = {}) {
+    const generation = getAccountGeneration();
     const session = await dependencies.readSession();
     const userId = session?.identity?.userId;
     if (!session?.accessToken || !session.refreshToken || !userId) throw authRequired();
+    const context = Object.freeze({ accountId: userId, generation });
+    assertTokenGeneration(context);
     if (request.expectedUserId && request.expectedUserId !== userId)
       throw authContextChanged();
 
@@ -56,10 +65,10 @@ export function createSessionAccessTokenProvider(
     )
       return { token: session.accessToken, userId };
 
-    const refreshKey = `${userId}\0${session.refreshToken}`;
+    const refreshKey = `${generation}\0${userId}\0${session.refreshToken}`;
     let refresh = refreshes.get(refreshKey);
     if (!refresh) {
-      refresh = refreshOwnedSession(session, dependencies).finally(() => {
+      refresh = refreshOwnedSession(session, dependencies, context).finally(() => {
         refreshes.delete(refreshKey);
       });
       refreshes.set(refreshKey, refresh);
@@ -81,26 +90,34 @@ export function createSessionAccessTokenProvider(
     }
 
     const current = await dependencies.readSession();
+    assertTokenGeneration(context);
     if (current?.identity?.userId !== userId || !current.accessToken)
       throw authContextChanged();
     return { token: current.accessToken, userId };
   };
 }
 
-async function refreshOwnedSession(session: LocalSession, dependencies: Dependencies) {
+async function refreshOwnedSession(
+  session: LocalSession,
+  dependencies: Dependencies,
+  context: AccountScope,
+) {
   const identity = session.identity;
   if (!identity || !session.refreshToken) throw authRequired();
   return dependencies.refreshSession(
     session.refreshToken,
-    async (refreshed) => {
-      const active = await dependencies.readSession();
-      if (
-        active?.identity?.userId !== identity.userId ||
-        active.refreshToken !== session.refreshToken
-      )
-        throw authContextChanged();
-      await dependencies.writeSession(refreshed);
-    },
+    async (refreshed) =>
+      withAccountApplyGate(async () => {
+        assertTokenGeneration(context);
+        const active = await dependencies.readSession();
+        if (
+          active?.identity?.userId !== identity.userId ||
+          active.refreshToken !== session.refreshToken
+        )
+          throw authContextChanged();
+        assertTokenGeneration(context);
+        await dependencies.writeSession(refreshed);
+      }),
     identity,
   );
 }
@@ -124,3 +141,11 @@ function authContextChanged() {
 }
 
 export const sessionAccessToken = createSessionAccessTokenProvider();
+
+function assertTokenGeneration(context: AccountScope) {
+  try {
+    assertAccountRequestGeneration(context);
+  } catch {
+    throw authContextChanged();
+  }
+}

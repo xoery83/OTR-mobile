@@ -1,3 +1,4 @@
+import { captureAccountScope } from "@/data/auth/accountRequestContext";
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 import type { MyLedgerResponse } from "@/data/api/ledgerReadContracts";
@@ -90,6 +91,7 @@ function setup() {
     sqlite,
     writer: createLedgerReadRepository(database, active),
     reader: createLedgerReportingRepository(database, active),
+    scope: () => captureAccountScope(active),
     setAccount: (value: string) => {
       account = value;
     },
@@ -99,13 +101,22 @@ function setup() {
 describe("My Ledger narrow cache", () => {
   it("isolates accounts and periods, replaces revisions, and ignores older refreshes", async () => {
     const cache = setup();
-    await cache.writer.cacheMyLedger(response("YEAR", "2026-09-26T00:00:00Z"));
-    await cache.writer.cacheMyLedger(response("ALL", "2026-09-26T00:00:00Z"));
+    await cache.writer.cacheMyLedger(
+      response("YEAR", "2026-09-26T00:00:00Z"),
+      await cache.scope(),
+    );
+    await cache.writer.cacheMyLedger(
+      response("ALL", "2026-09-26T00:00:00Z"),
+      await cache.scope(),
+    );
     expect(await cache.reader.listMyLedgerSpendingFacts("YEAR")).toHaveLength(1);
     const newer = response("YEAR", "2026-09-26T00:01:00Z");
     newer.spendingFacts![0] = { ...fact, revision: 2, personalSplitMinor: 70 };
-    await cache.writer.cacheMyLedger(newer);
-    await cache.writer.cacheMyLedger(response("YEAR", "2026-09-26T00:00:00Z"));
+    await cache.writer.cacheMyLedger(newer, await cache.scope());
+    await cache.writer.cacheMyLedger(
+      response("YEAR", "2026-09-26T00:00:00Z"),
+      await cache.scope(),
+    );
     expect((await cache.reader.listMyLedgerSpendingFacts("YEAR"))[0]).toMatchObject({
       revision: 2,
       personalSplitMinor: 70,
@@ -117,10 +128,13 @@ describe("My Ledger narrow cache", () => {
     cache.setAccount("account-b");
     expect(await cache.reader.listMyLedgerSpendingFacts("YEAR")).toEqual([]);
     expect(await cache.reader.hasMyLedgerSpendingSnapshot("YEAR")).toBe(false);
-    await cache.writer.cacheMyLedger({
-      ...response("YEAR", "2026-09-26T00:02:00Z"),
-      spendingFacts: [],
-    });
+    await cache.writer.cacheMyLedger(
+      {
+        ...response("YEAR", "2026-09-26T00:02:00Z"),
+        spendingFacts: [],
+      },
+      await cache.scope(),
+    );
     expect(await cache.reader.hasMyLedgerSpendingSnapshot("YEAR")).toBe(true);
     cache.setAccount("account-a");
     expect(await cache.reader.listMyLedgerSpendingFacts("YEAR")).toHaveLength(1);
@@ -129,18 +143,24 @@ describe("My Ledger narrow cache", () => {
   it("keeps facts for an older compatible response and refuses a fact outside its Journey set", async () => {
     const cache = setup();
     const first = response("YEAR", "2026-09-26T00:00:00Z");
-    await cache.writer.cacheMyLedger(first);
-    await cache.writer.cacheMyLedger({
-      ...first,
-      serverTime: "2026-09-26T00:01:00Z",
-      spendingFacts: undefined,
-    });
+    await cache.writer.cacheMyLedger(first, await cache.scope());
+    await cache.writer.cacheMyLedger(
+      {
+        ...first,
+        serverTime: "2026-09-26T00:01:00Z",
+        spendingFacts: undefined,
+      },
+      await cache.scope(),
+    );
     expect(await cache.reader.listMyLedgerSpendingFacts("YEAR")).toHaveLength(1);
     await expect(
-      cache.writer.cacheMyLedger({
-        ...response("YEAR", "2026-09-26T00:02:00Z"),
-        journeys: [],
-      }),
+      cache.writer.cacheMyLedger(
+        {
+          ...response("YEAR", "2026-09-26T00:02:00Z"),
+          journeys: [],
+        },
+        await cache.scope(),
+      ),
     ).rejects.toThrow("outside authorized response");
     expect(await cache.reader.listMyLedgerSpendingFacts("YEAR")).toHaveLength(1);
     cache.sqlite.close();

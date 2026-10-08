@@ -1,3 +1,9 @@
+import {
+  captureAccountScope,
+  assertAccountRequestContext,
+  withAccountApplyGate,
+  type AccountScope,
+} from "@/data/auth/accountRequestContext";
 import { reportingDateBoundary } from "@/domain/ledger/reporting";
 import type * as SQLite from "expo-sqlite";
 import type { MyLedgerSpendingFact } from "@/data/api/ledgerReadContracts";
@@ -21,7 +27,7 @@ import type {
 
 export type LedgerReportingDatabase = Pick<
   SQLite.SQLiteDatabase,
-  "getAllAsync" | "getFirstAsync" | "runAsync"
+  "getAllAsync" | "getFirstAsync" | "runAsync" | "withTransactionAsync"
 >;
 
 export type LedgerReportQuery = ReportingFilters & {
@@ -452,18 +458,37 @@ export function createLedgerReportingRepository(
       );
     },
 
-    async selectJourney(journeyId: string | null) {
-      const userId = await getActiveUserId();
-      await database.runAsync(
-        `INSERT INTO account_local_state
+    async selectJourney(journeyId: string | null, requestContext?: AccountScope) {
+      const context = requestContext ?? (await captureAccountScope(getActiveUserId));
+      await withAccountApplyGate(() =>
+        database.withTransactionAsync(async () => {
+          await assertAccountRequestContext(context, getActiveUserId);
+          const userId = context.accountId;
+          if (
+            journeyId &&
+            !(await database.getFirstAsync(
+              `SELECT 1 FROM ledger_actor_context WHERE user_id = ? AND journey_id = ?
+         UNION ALL SELECT 1 FROM ledger_my_journey_summaries WHERE user_id = ? AND journey_id = ? LIMIT 1`,
+              userId,
+              journeyId,
+              userId,
+              journeyId,
+            ))
+          )
+            throw new Error("Journey is not available for this Account.");
+          await database.runAsync(
+            `INSERT INTO account_local_state
            (user_id, selected_journey_id, default_currency, updated_at)
          VALUES (?, ?, 'NZD', ?)
          ON CONFLICT(user_id) DO UPDATE SET
            selected_journey_id = excluded.selected_journey_id,
            updated_at = excluded.updated_at`,
-        userId,
-        journeyId,
-        new Date().toISOString(),
+            userId,
+            journeyId,
+            new Date().toISOString(),
+          );
+          await assertAccountRequestContext(context, getActiveUserId);
+        }),
       );
     },
 

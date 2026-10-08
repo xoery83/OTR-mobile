@@ -1,3 +1,4 @@
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import { segmentedControlTokens } from "@/ui/segmented";
 import { categoryLabel, domainLabel } from "@/ui/domainLabels";
 import { t, getFormatLocale } from "@/ui/locale";
@@ -17,7 +18,10 @@ import {
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 
-import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
 import { myLedgerPeriodBounds } from "@/domain/ledger/journeyContext";
 import { useLedgerReportingRefresh } from "@/hooks/useLedgerReportingRefresh";
 import { formatLedgerDateRange, formatLedgerMoney } from "./format";
@@ -63,12 +67,43 @@ export function MyLedgerScreen() {
         setViewGeneration(generation);
         setCurrency(next.currency);
       } catch {
-        if (request.isCurrent(id)) setError(true);
+        if (request.isCurrent(id) && generation === getAccountGeneration())
+          setError(true);
       } finally {
-        if (request.isCurrent(id)) setLoading(false);
+        if (request.isCurrent(id) && generation === getAccountGeneration())
+          setLoading(false);
       }
     },
     [request],
+  );
+
+  useEffect(
+    () =>
+      subscribeAccountGeneration(() => {
+        request.cancel();
+        setView(null);
+        setCurrency(null);
+        selection.current.currency = null;
+        setLoading(true);
+        setViewGeneration(getAccountGeneration());
+      }),
+    [request],
+  );
+
+  useEffect(
+    () =>
+      subscribeLedgerOperationalSyncCompletion((event) => {
+        if (
+          (event.discoveryChanged || event.journeyIds.length > 0) &&
+          event.generation === getAccountGeneration()
+        )
+          void load(
+            selection.current.period,
+            selection.current.currency,
+            selection.current.section,
+          );
+      }),
+    [load],
   );
 
   useFocusEffect(

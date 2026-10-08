@@ -2,6 +2,20 @@
 
 Date: 2026-10-09 (Pacific/Auckland).
 
+## Core bootstrap canonical integration preflight — OWNER REVIEW REQUIRED
+
+- Fresh isolated candidate based on verified local/origin/remote main
+  `3216668e42e919a2b4657e1357e8c7536fead114`; uncommitted `--no-ff` merge of accepted
+  Core closure `5d4f118c6b84627dd8b9602a05504a24b7adb2a4` (parent `f7115dc`).
+- No textual conflicts. Both Platform and Core handoffs/reviews preserved. One
+  test-only compatibility correction expects accepted SQLite1–52 instead of1–51;
+  all accepted runtime code unchanged; SQLite53 remains unallocated.
+- Combined validation is recorded in
+  `architecture/OTR_FRESH_ACCOUNT_BOOTSTRAP_CANONICAL_INTEGRATION_PREFLIGHT.md`.
+  No commit/main advancement/push, Hosted/device operation or provider activation.
+- Next gate: Owner integration review, then separately authorized new DEV Test
+  artifact and native Simulator acceptance; no device authority inferred here.
+
 ## Platform P2b canonical integration — VALIDATED / DORMANT
 
 - Final Owner authorization on 2026-10-09 approves two ordinary `--no-ff` merges
@@ -87,6 +101,25 @@ Date: 2026-10-09 (Pacific/Auckland).
   Next: separate52 acceptance/ancestry/Owner migration
   allocation. P2b-A, P2b-B integration and all runtime/provider/business gates remain
   CLOSED. No Hosted/device operation, push or Git integration.
+
+## Fresh Account Journey bootstrap — 2026-10-09 / OWNER ACCEPTED LOCAL CLOSURE
+
+Owner accepted the Audit, Builder with F1–F5 corrections, original Independent Review
+and appended targeted recheck PASS. One scoped local closure commit is authorized in
+`/Users/xoery/.codex/worktrees/fresh-account-bootstrap-builder/otr-mobile-canonical`,
+with exact parent `f7115dc288aff7f0a252bf80f53b0f2b626a7534`.
+Automatic Ledger-eligible Journey discovery preserves local activation, captured
+Account/generation fences, selected-only hydration, transient-only retries through
+the existing timer and current-generation cache notifications. Every summary apply
+requires its original Account scope, including diagnostic/acceptance callers.
+152 affected files / 1,726 tests, typecheck, lint/UI guard and preservation checks PASS;
+independent targeted recheck found no remaining in-scope findings.
+Authoritative evidence: `architecture/OTR_FRESH_ACCOUNT_JOURNEY_BOOTSTRAP_BUILDER_REPORT.md`
+and `architecture/OTR_FRESH_ACCOUNT_JOURNEY_BOOTSTRAP_INDEPENDENT_REVIEW.md`.
+No Backend/migration/provider/Capture production or Login routing change. No Hosted/device
+operation, push, merge, rebase or canonical-main advancement is authorized here.
+General Trip/invitation discovery and native fixture/rendered-screen acceptance remain
+separate Owner-authorized checkpoints; local closure does not grant execution authority.
 
 ## Capture C3 canonical integration — PREPARED / INDEPENDENT REVIEW PASS
 

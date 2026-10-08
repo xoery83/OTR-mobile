@@ -1,10 +1,7 @@
 import { getAccountGeneration, advanceAccountGeneration } from "./accountGeneration";
 
-export type AccountRequestContext = Readonly<{
-  accountId: string;
-  tripId: string;
-  generation: number;
-}>;
+export type AccountScope = Readonly<{ accountId: string; generation: number }>;
+export type AccountRequestContext = AccountScope & Readonly<{ tripId: string }>;
 export type AccountTransitionLease = Readonly<{ token: symbol; generation: number }>;
 type RecoveryContext = {
   accountId: string | null;
@@ -80,7 +77,7 @@ export function endAccountTransition(lease: AccountTransitionLease) {
   activeTransition = null;
   release();
 }
-export function assertAccountRequestGeneration(context: AccountRequestContext) {
+export function assertAccountRequestGeneration<T extends AccountScope>(context: T) {
   if (
     activeTransition !== null ||
     pendingTransitions > 0 ||
@@ -88,8 +85,8 @@ export function assertAccountRequestGeneration(context: AccountRequestContext) {
   )
     throw new Error("Account changed during Ledger request.");
 }
-export async function assertAccountRequestContext(
-  context: AccountRequestContext,
+export async function assertAccountRequestContext<T extends AccountScope>(
+  context: T,
   getUserId: () => Promise<string>,
 ) {
   const userId = await getUserId();
@@ -109,6 +106,17 @@ export async function captureAccountRequestContext(
   const accountId = await getUserId();
   if (!accountId) throw new Error("No active Account for Ledger request.");
   const context = Object.freeze({ accountId, tripId, generation });
+  await assertAccountRequestContext(context, getUserId);
+  return context;
+}
+
+export async function captureAccountScope(
+  getUserId: () => Promise<string>,
+): Promise<AccountScope> {
+  const generation = getAccountGeneration();
+  const accountId = await getUserId();
+  const context = Object.freeze({ accountId, generation });
+  if (!accountId) throw new Error("No active Account for Ledger request.");
   await assertAccountRequestContext(context, getUserId);
   return context;
 }

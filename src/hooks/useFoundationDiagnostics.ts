@@ -31,7 +31,6 @@ export function useFoundationDiagnostics() {
     () =>
       createDefaultAccountSwitchCoordinator({
         clearInMemoryState: () => queryClient.clear(),
-        bootstrapAccount: async () => undefined,
       }),
     [queryClient],
   );
