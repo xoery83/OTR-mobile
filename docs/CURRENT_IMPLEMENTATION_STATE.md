@@ -2,7 +2,7 @@
 
 Date: 2026-10-08 (Pacific/Auckland).
 
-## Capture C2 canonical integration — prepared / independent review PASS
+## Capture C2 canonical integration — published / independent review PASS
 
 - Owner-authorized isolated worktree
   `/private/tmp/otr-c2-canonical-integration-20261008`, branch
@@ -10,8 +10,9 @@ Date: 2026-10-08 (Pacific/Auckland).
   parent `56a7ab8f08ea973eb777fa00c8e6393057c1193c`, accepted C2 second parent
   `914e854cba7c2c97cfec7243047a06cadcc82c05`, common ancestor
   `b6daffecedab1616b173fde3f5e2de5d54770eff`. Fetched origin/main and actual main
-  matched the first parent before preparation. HEAD remains there; no commit,
-  push or main advancement is authorized.
+  matched the first parent before preparation. The accepted merge is now canonical
+  `9c77433958ae0d04589aa24242bc8a743b89ef97`, with those exact parents.
+  Preparation and review reports remain unchanged historical evidence.
 - Only the shared handoff conflicted. Capture and Operations catalog entries and
   continuation tests retain both accepted sides. The sole additional test change
   updates P4a's full-registry diagnostics schema expectation from50 to51; its
@@ -33,9 +34,10 @@ Date: 2026-10-08 (Pacific/Auckland).
   Results overlap and are not added. Evidence:
   `architecture/OTR_CAPTURE_C2_CANONICAL_INTEGRATION_REPORT.md` and
   `architecture/OTR_CAPTURE_C2_CANONICAL_INDEPENDENT_REVIEW.md`.
-- Next: STOP for Owner review of the prepared merge. No commit/push/main advancement
-  is authorized. Only local disposable SQLite fixtures were used; no Hosted
-  operations, R3 migration rerun, device change, provider activation or new scope.
+- C2 canonical publication is complete; C3 Activity and Integrated C4 remain
+  unaccepted and uninstalled. Integration used only local disposable SQLite
+  fixtures; no Hosted operations, R3 migration rerun, device change, provider
+  activation or new scope is inferred from its publication.
 
 ## Capture C2 — final Owner/device acceptance PASS
 
@@ -153,9 +155,24 @@ Date: 2026-10-08 (Pacific/Auckland).
   `architecture/OTR_R3_FRESH_TRIP_LEDGER_INITIALIZATION_CORRECTION_REPORT.md`,
   `architecture/OTR_R3_DOCUMENTATION_CLOSURE_PROPOSAL.md` and
   `../supabase/dev-forward/r3-v1/README.md`.
-- Old device outboxes remain quarantined. Device first-sync/client re-enable is
-  NOT accepted/authorized. No replay/wipe/reset/logout/rebind. C2 local device
-  acceptance does not authorize R3 device synchronization or provider activity.
+- R3-D1c is **accepted with limitations** in the isolated DEV device bundle.
+  D1b SQLite51/fresh Account isolation and A1 login, then D1c A2 login/A→B→A,
+  Expense create/update and ordinary Receipt offline save→restart→upload→link→render
+  passed. The malformed seed PNG downloaded faithfully; useful rendering did not
+  pass. Historical Hosted36 checks above are retained, not rerun by this closure.
+- `com.xoery.otrmobile.devtest` is the shared future DEV device-testing bundle.
+  `com.xoery.otrmobile` protects historical data and remains quarantined; isolated
+  acceptance never permits original-app re-enable, old outbox replay or cleanup.
+- Six retained limitations: invalid synthetic PNG/incomplete useful-render proof;
+  unmeasured Account-switch latency; untested active-upload interruption/UNKNOWN
+  recovery; one unsaved synthetic draft retained with unverified provenance;
+  expected Settlement `ADJUSTMENT_REQUIRED`; original-app network quarantine and
+  observation limits. Adversarial Account requests/direct Keychain-item absence
+  remain unverified. No new device or Hosted observation is claimed.
+- Accepted cross-workstream handoff:
+  `architecture/OTR_R3_D1C_CROSS_WORKSTREAM_HANDOFF.md`. Capture C2 and accepted
+  P2/C4a/P4a remain as recorded above. C4/C5/C9 and provider/runtime gates remain
+  **CLOSED**; no C3 or Integrated C4 acceptance/capability is granted.
 
 ## Accepted foundation, schema and critical boundaries
 
@@ -190,4 +207,4 @@ Date: 2026-10-08 (Pacific/Auckland).
   design documents; no legacy Web reaudit or redesign. Future UI/copy uses
   `architecture/ui-foundation.md` and `architecture/OTR_TERMINOLOGY_GLOSSARY.md`.
 
-**STOP — C2 INTEGRATION PREPARED FOR OWNER REVIEW.**
+**STOP — R3 CROSS-WORKSTREAM DOCUMENTATION CLOSURE COMPLETE.**
