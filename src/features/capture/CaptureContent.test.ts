@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { afterEach, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { CaptureTray } from "./CaptureContent";
+import { CaptureActivityList, captureJobTitle } from "./CaptureActivity";
 import { emptyCaptureStaging } from "./captureStaging";
 import { getUiLocale, setUiLocale, t } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
@@ -141,9 +142,16 @@ it("truthful partial and complete intake keep Hide enabled across palettes/local
         const model = {
           counts: { selected: 2, accepted, failed: 2 - accepted, pending: 0 },
           allInputsAccepted: accepted === 2,
+          batch: { jobId: "same-job" },
+          intakeSettled: true,
+          availableActions: {
+            canAddMore: true,
+            reacquireInputIds: accepted === 2 ? [] : [String(accepted)],
+          },
           inputs: [0, 1].map((n) => ({
             id: String(n),
             originalFilename: "original",
+            acquisitionSource: n % 2 ? "photos" : "files",
             state: n < accepted ? "ACCEPTED" : "FAILED",
             contentSha256: null,
             failureCode: n < accepted ? null : "READER_FAILURE",
@@ -164,8 +172,19 @@ it("truthful partial and complete intake keep Hide enabled across palettes/local
               onRecover: vi.fn(),
             }),
           );
-        expect(html).toContain(t("capture.counts", model.counts));
+        expect(html).toContain(captureJobTitle(model));
+        if (!model.allInputsAccepted)
+          expect(html).toContain(t("capture.counts", model.counts));
+        expect(html).not.toContain(model.batch.jobId);
+        expect(html).not.toContain(t("capture.addOther", { count: 0 }));
         expect(html).toContain(t("capture.processingUnavailable"));
+        expect(html).not.toContain(t("capture.lineageHint"));
+        if (accepted < 2)
+          expect(html).toContain(
+            t(
+              accepted === 1 ? "capture.continueMissingPhoto" : "capture.continueMissing",
+            ),
+          );
         expect(html.includes(t("capture.reacquireHint"))).toBe(accepted !== 2);
         const hide = state.buttons.find(
           (b) => b.accessibilityLabel === t("capture.hide"),
@@ -175,4 +194,138 @@ it("truthful partial and complete intake keep Hide enabled across palettes/local
         expect(close).toHaveBeenCalledOnce();
         expect(html).not.toMatch(/AI thinking|100%/);
       }
+});
+
+it("Activity renders real 0/1/N identities and counts, no fake progress; buttons wrap and Hide stays enabled", () => {
+  for (const scheme of ["light", "dark"] as const)
+    for (const locale of ["en", "zh-Hans"] as const) {
+      state.scheme = scheme;
+      setUiLocale(locale);
+      for (const n of [0, 1, 3]) {
+        state.buttons = [];
+        const jobs = Array.from({ length: n }, (_, i) => ({
+          batch: { jobId: `retained-uuid-${i}`, createdAt: "2026-10-08T00:00:00.000Z" },
+          counts: { selected: 2, accepted: i, failed: 2 - i, pending: 0 },
+          allInputsAccepted: i === 2,
+          intakeSettled: true,
+          availableActions: { canReopen: true },
+        })) as unknown as import("@/domain/capture/captureSubmission").CaptureJobReadModel[];
+        const open = vi.fn(),
+          hide = vi.fn();
+        const html = renderToStaticMarkup(
+          createElement(CaptureActivityList, {
+            jobs,
+            loading: false,
+            error: false,
+            hasMore: n > 0,
+            onRefresh: vi.fn(),
+            onMore: vi.fn(),
+            onReturn: vi.fn(),
+            onHide: hide,
+            onOpenJob: open,
+          }),
+        );
+        expect(html.includes(t("capture.activityEmpty"))).toBe(n === 0);
+        expect(html).toContain(uiPalette(scheme).background);
+        expect(html).not.toMatch(/100%|AI thinking|Waiting for internet/);
+        for (const job of jobs) {
+          expect(html).toContain(captureJobTitle(job));
+          if (!job.allInputsAccepted)
+            expect(html).toContain(t("capture.counts", job.counts));
+          expect(html).not.toContain(job.batch.jobId);
+          expect(html).toContain(t("capture.activityHint"));
+          const button = state.buttons.find(
+            (b) =>
+              b.accessibilityLabel ===
+              t("capture.jobView", { summary: captureJobTitle(job) }),
+          )!;
+          expect(button.style[0].minHeight).toBeGreaterThanOrEqual(44);
+          button.onPress();
+          expect(open).toHaveBeenLastCalledWith(job.batch.jobId);
+        }
+        const button = state.buttons.find(
+          (b) => b.accessibilityLabel === t("capture.hide"),
+        )!;
+        expect(button.disabled).toBe(false);
+        button.onPress();
+        expect(hide).toHaveBeenCalledOnce();
+      }
+      for (const loading of [false, true]) {
+        state.buttons = [];
+        const html = renderToStaticMarkup(
+          createElement(CaptureActivityList, {
+            jobs: [],
+            loading,
+            error: !loading,
+            hasMore: false,
+            onRefresh: vi.fn(),
+            onMore: vi.fn(),
+            onReturn: vi.fn(),
+            onHide: vi.fn(),
+            onOpenJob: vi.fn(),
+          }),
+        );
+        expect(html).toContain(
+          t(loading ? "capture.activityLoading" : "capture.activityError"),
+        );
+        expect(html).not.toContain(t("capture.activityEmpty"));
+        expect(
+          state.buttons.find((b) => b.accessibilityLabel === t("capture.hide"))!.disabled,
+        ).toBe(false);
+      }
+    }
+  expect(readFileSync("src/features/capture/CaptureActivity.tsx", "utf8")).not.toMatch(
+    /allowFontScaling=\{false\}|numberOfLines|height:|setTimeout|setInterval/,
+  );
+});
+it("derived actions govern recovery; explicit forward/reverse lineage opens the projected exact Job", () => {
+  const open = vi.fn(),
+    recover = vi.fn();
+  const model = {
+    batch: { jobId: "original-job" },
+    counts: { selected: 1, accepted: 0, failed: 1, pending: 0 },
+    allInputsAccepted: false,
+    intakeSettled: true,
+    availableActions: { canAddMore: false, reacquireInputIds: [] },
+    inputs: [
+      {
+        id: "missing",
+        originalFilename: "same-name.pdf",
+        state: "FAILED",
+        failureCode: "READER_FAILURE",
+        contentSha256: null,
+        continuesFromJobId: "earlier-job",
+        continuedIn: [{ jobId: "later-job", inputId: "later-input" }],
+      },
+    ],
+  } as unknown as import("@/domain/capture/captureSubmission").CaptureJobReadModel;
+  state.buttons = [];
+  renderToStaticMarkup(
+    createElement(CaptureTray, {
+      snapshot: emptyCaptureStaging,
+      model,
+      onFiles: vi.fn(),
+      onPhotos: vi.fn(),
+      onRemove: vi.fn(),
+      onCancel: vi.fn(),
+      onRecover: recover,
+      onOpenJob: open,
+      onAddMore: vi.fn(),
+    }),
+  );
+  expect(
+    state.buttons.some((b) => b.accessibilityLabel === t("capture.continueMissing")),
+  ).toBe(false);
+  expect(state.buttons.some((b) => b.accessibilityLabel === t("capture.addMore"))).toBe(
+    false,
+  );
+  state.buttons
+    .find((b) => b.accessibilityLabel === t("capture.priorJob", { id: "earlier-job" }))!
+    .onPress();
+  expect(open).toHaveBeenLastCalledWith("earlier-job");
+  state.buttons
+    .find((b) => b.accessibilityLabel === t("capture.nextJob", { id: "later-job" }))!
+    .onPress();
+  expect(open).toHaveBeenLastCalledWith("later-job");
+  expect(recover).not.toHaveBeenCalled();
 });

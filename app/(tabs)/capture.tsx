@@ -1,5 +1,5 @@
 import { useCallback, useState, useSyncExternalStore } from "react";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text } from "react-native";
 import { readLocalSession } from "@/data/auth/authRepository";
@@ -22,6 +22,7 @@ import { visual } from "@/ui/visual";
 type Admission = { generation: number; accountId: string };
 export default function CaptureRoute() {
   const { jobId } = useLocalSearchParams<{ jobId?: string }>();
+  const navigation = useNavigation<{ setParams(params: { jobId?: string }): void }>();
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const generation = useSyncExternalStore(
@@ -53,8 +54,10 @@ export default function CaptureRoute() {
       return () => {
         active = false;
         setAdmission(null);
+        // Historical deep links are one invocation; ordinary return opens a fresh tray.
+        navigation.setParams({ jobId: undefined });
       };
-    }, [generation]),
+    }, [generation, navigation]),
   );
   const isCurrent = () => {
     if (!admission || admission.generation !== getAccountGeneration()) return false;

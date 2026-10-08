@@ -2,6 +2,57 @@
 
 Date: 2026-10-08 (Pacific/Auckland).
 
+## Capture C3 — OWNER ACCEPTED / FUNCTIONAL SIMULATOR PASS / PHYSICAL DEVICE DEFERRED
+
+- Worktree-only status: `/private/tmp/otr-capture-c3-builder`, branch
+  `codex/capture-c3-builder`, accepted C2 base
+  `914e854cba7c2c97cfec7243047a06cadcc82c05`. Owner accepted the functional
+  Simulator QA, scoped UX refinement and independent C3 review, and authorized
+  one local C3 checkpoint on this existing branch. No push/merge/rebase/cherry-pick
+  or canonical integration; stop after the checkpoint.
+- Owner authorized autonomous synthetic QA and focused C3 UI refinement. Two
+  dedicated iOS27 simulators (16 Pro and SE3) run a Release/ad-hoc signed local QA
+  build. Real router/repositories/SecureStore render synthetic A/B/Empty sessions,
+  loopback-only API, no credentials/Hosted DEV. QA bootstrap is ignored local
+  build evidence, not a product entry or runtime gate.
+- Activity retains Account-scoped stable 20-Job pagination, exact UUID reopen,
+  explicit continuation and read-only browsing. C2 recovery, generation fencing,
+  fresh normal entry and passive Trip prior remain unchanged. Cards now use human
+  localized summaries; technical UUID/lineage moves behind disclosure, failure
+  actions match file/photo source, and canonical layout is compact/readable.
+- Automated disk QA: 45 A +1 B Jobs, 20/20/5 pagination, 50 long-name inputs,
+  SQLite51 restart/idempotence/no-write/isolation. Native A→B→Empty→A passed.
+  Native photo recovery created one new synthetic Job while preserving every old
+  Job/Input/original; kill/relaunch and both lineage directions passed. Native
+  Files picker open/cancel passed; provider acceptance remains adapter evidence.
+- Final affected **19 files /199 PASS**; independent **seven files /67 PASS**,
+  zero remaining C3 findings. Typecheck/lint/UI guard/format PASS. Full suite:
+  **216 files /2,754 tests: 2,737 PASS, two FAIL, 15 SKIP**: known C2
+  architecture scanner failure plus unchanged API test matching 42 in the log
+  timestamp; independent narrow API recheck seven PASS. New disk fixture was
+  moved from feature to repository tests after an IMPORTANT review finding;
+  matrix/layer recheck passed apart from scanner baseline. Guard unchanged;
+  no global suite PASS.
+- Before/pass1/final screenshots cover Activity/detail/recovery/empty, en/zh-Hans,
+  dark, maximum text and SE3. External MINOR: shared navigation title clips at
+  maximum accessibility size; Experience/UI Foundation owns it. Real VoiceOver
+  audio and latest-UI physical-device acceptance remain unverified. Owner accepted
+  the scoped Simulator UI refinement; final Experience architecture is excluded.
+- Owner's observed physical account-switch failure is unresolved. Isolated C2/C3
+  tests and synthetic native switching do not diagnose or fix it; nine relevant
+  Core/Auth files remain identical to C2. Physical device hold is absolute for
+  R3-D1b; no phone, prior device snapshot, Keychain/Documents/database, new DEV or
+  R3 operation occurred during this cycle. Current refined UI is **not installed
+  on the owner phone**. Earlier device-gate report remains historical evidence.
+- SQLite1–51 /Server1–84, provider/runtime gates, queues, scheduler, canonical
+  admission and C4/C5 remain unchanged/closed. Experience owns final shell, Trip
+  Home, Recent Imports/newness and navigation IA; this mount remains C3-local.
+- Reports: `architecture/OTR_CAPTURE_C3_SIMULATOR_QA_UX_REPORT.md`,
+  `architecture/OTR_CAPTURE_C3_ACCOUNT_SWITCH_RECHECK.md`, targeted append in
+  `architecture/OTR_CAPTURE_C3_INDEPENDENT_REVIEW.md`, historical device evidence
+  `architecture/OTR_CAPTURE_C3_OWNER_DEVICE_GATE_REPORT.md`.
+  Next: **STOP AFTER C3 CHECKPOINT. C4/C5 AND RUNTIME GATES UNAUTHORIZED.**
+
 ## Capture C2 — FINAL OWNER REVIEW PASS
 
 - On 2026-10-08 the Owner accepted C2 local durable intake, SQLite51, native
@@ -141,4 +192,4 @@ sync instead of blocking app launch. Current Account/Trip/material authorization
 exact immutable pins govern disclosure and execution independently of retention.
 Production is not a development target; no Hosted Dev/Production access occurred.
 
-STOP AFTER THE AUTHORIZED C2 COMMIT. C3 AND RUNTIME GATES REMAIN UNAUTHORIZED.
+STOP — WAIT FOR C3 OWNER DEVICE ACCEPTANCE.
