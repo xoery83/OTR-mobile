@@ -83,192 +83,7 @@ export function createCaptureSubmissionRepository(
       return result;
     });
   }
-  async function loadHeader(
-    c: AccountRequestContext,
-    jobId: string,
-  ): Promise<SubmissionRequest> {
-    submissionId.parse(jobId);
-    const row = await database.getFirstAsync<HeaderRow>(
-      `${headers} WHERE account_id=? AND job_id=?`,
-      c.accountId,
-      jobId,
-    );
-    if (!row) throw new LocalCaptureError("NOT_FOUND");
-    let request: SubmissionRequest;
-    try {
-      request = submissionRequestSchema.parse({
-        formatVersion: row.formatVersion,
-        manifestVersion: row.manifestVersion,
-        accountId: c.accountId,
-        batchId: row.batchId,
-        jobId: row.jobId,
-        submissionKey: row.submissionKey,
-        createdAt: row.createdAt,
-        context: JSON.parse(row.contextJson),
-        inputs: JSON.parse(row.manifestJson),
-      });
-      if (
-        row.formatStorage !== "integer" ||
-        row.manifestStorage !== "integer" ||
-        row.contextId !== request.context.id ||
-        boundedSubmissionJson(request.context) !== row.contextJson ||
-        boundedSubmissionJson(request.inputs) !== row.manifestJson ||
-        (await hash(canonicalSubmission(request))) !== row.requestSha256 ||
-        (await hash(row.manifestJson)) !== row.manifestSha256
-      )
-        fail();
-    } catch {
-      return fail();
-    }
-    return request;
-  }
-  async function load(
-    c: AccountRequestContext,
-    jobId: string,
-  ): Promise<CaptureJobReadModel> {
-    const request = await loadHeader(c, jobId);
-    const rows = await database.getAllAsync<InputRow>(
-      `${inputs} WHERE account_id=? AND batch_id=? ORDER BY ordinal`,
-      c.accountId,
-      request.batchId,
-    );
-    if (rows.length !== request.inputs.length) fail();
-    const projected: CaptureSubmissionInput[] = [];
-    for (const [n, row] of rows.entries()) {
-      const declaration = request.inputs[n];
-      if (
-        row.inputId !== declaration.id ||
-        row.declarationSha256 !== (await hash(JSON.stringify(declaration)))
-      )
-        fail();
-      const {
-        revisionStorage,
-        countStorage,
-        captureRevisionStorage,
-        ordinalStorage,
-        inputId,
-        declarationSha256: _hash,
-        itemKey,
-        ordinal,
-        acquisitionSource,
-        kind,
-        originalFilename,
-        declaredContentType,
-        continuesFromInputId,
-        ...rawFacts
-      } = row;
-      const storedDeclaration = inputDeclarationSchema.safeParse({
-        id: inputId,
-        itemKey,
-        ordinal,
-        acquisitionSource,
-        kind,
-        originalFilename,
-        declaredContentType,
-        continuesFromInputId,
-      });
-      if (
-        !storedDeclaration.success ||
-        JSON.stringify(storedDeclaration.data) !== JSON.stringify(declaration)
-      )
-        fail();
-      if (
-        revisionStorage !== "integer" ||
-        ordinalStorage !== "integer" ||
-        countStorage !== (row.contentByteCount === null ? "null" : "integer") ||
-        captureRevisionStorage !== (row.captureRevision === null ? "null" : "integer")
-      )
-        fail();
-      const parsed = inputFactsSchema.safeParse(rawFacts);
-      if (
-        !parsed.success ||
-        (declaration.kind === "TEXT" && (parsed.data.contentByteCount ?? 0) > 1048576)
-      )
-        fail();
-      const facts = parsed.data!;
-      if (facts.state === "ACCEPTED") {
-        const { capture } = await storage.load(c.accountId, facts.captureId!);
-        if (
-          capture.payloadId !== facts.payloadId ||
-          capture.sha256 !== facts.contentSha256 ||
-          capture.byteCount !== facts.contentByteCount ||
-          capture.kind !== declaration.kind ||
-          capture.originalFilename !== declaration.originalFilename ||
-          capture.declaredContentType !== declaration.declaredContentType ||
-          capture.revision < facts.captureRevision!
-        )
-          fail();
-      }
-      let continuesFromJobId: string | null = null;
-      if (declaration.continuesFromInputId) {
-        const prior = await database.getFirstAsync<{ jobId: string }>(
-          `SELECT b.job_id AS jobId FROM capture_submission_inputs i JOIN capture_submission_batches b ON b.account_id=i.account_id AND b.batch_id=i.batch_id JOIN capture_submission_batches current ON current.account_id=? AND current.batch_id=? WHERE i.account_id=? AND i.input_id=? AND b.rowid<current.rowid`,
-          c.accountId,
-          request.batchId,
-          c.accountId,
-          declaration.continuesFromInputId,
-        );
-        if (!prior) fail();
-        const priorHeader = await loadHeader(c, prior!.jobId);
-        if (!priorHeader.inputs.some((i) => i.id === declaration.continuesFromInputId))
-          fail();
-        continuesFromJobId = prior!.jobId;
-      }
-      const continuedIn = await database.getAllAsync<{ jobId: string; inputId: string }>(
-        `SELECT b.job_id AS jobId,i.input_id AS inputId FROM capture_submission_inputs i JOIN capture_submission_batches b ON b.account_id=i.account_id AND b.batch_id=i.batch_id WHERE i.account_id=? AND i.continues_from_input_id=? ORDER BY b.rowid,i.ordinal`,
-        c.accountId,
-        declaration.id,
-      );
-      for (const successor of continuedIn) {
-        const successorHeader = await loadHeader(c, successor.jobId);
-        if (
-          !successorHeader.inputs.some(
-            (i) =>
-              i.id === successor.inputId && i.continuesFromInputId === declaration.id,
-          )
-        )
-          fail();
-      }
-      projected.push({ ...declaration, ...facts, continuedIn, continuesFromJobId });
-    }
-    const counts = {
-      selected: projected.length,
-      accepted: projected.filter((i) => i.state === "ACCEPTED").length,
-      failed: projected.filter((i) => i.state === "FAILED").length,
-      pending: projected.filter((i) => i.state === "PENDING").length,
-    };
-    return {
-      batch: request,
-      inputs: projected,
-      counts,
-      allInputsAccepted: counts.accepted === counts.selected,
-      intakeSettled: counts.pending === 0,
-      processing: {
-        capability: "NOT_INSTALLED",
-        assessedInputs: null,
-        totalInputs: null,
-        currentPassComplete: null,
-      },
-      results: { admittedCreates: 0, admittedUpdates: 0, currentAttention: null },
-      availableActions: {
-        canHide: true,
-        canReopen: true,
-        canAddMore: true,
-        canResumeAcceptedLocalWork: false,
-        canReviewNow: false,
-        canOpenCurrentReview: false,
-        // No transient handle is available from a durable projection. FAILED alone grants no retry.
-        canRetryKnownFailedItem: false,
-        reacquireInputIds: projected
-          .filter((i) => i.state !== "ACCEPTED")
-          .map((i) => i.id),
-        unavailableReasons:
-          counts.accepted < counts.selected
-            ? ["PROCESSING_NOT_INSTALLED", "INPUT_REACQUISITION_REQUIRED"]
-            : ["PROCESSING_NOT_INSTALLED"],
-      },
-    };
-  }
+  const { load } = createCaptureSubmissionTransactionStore(database, dependencies);
   async function register(
     c: AccountRequestContext,
     raw: SubmissionRequest,
@@ -638,4 +453,201 @@ export function createCaptureSubmissionRepository(
       return acceptItem(c, jobId, inputId, expectedRevision, source, false);
     },
   };
+}
+
+// Caller owns the Account gate and transaction; no lifecycle or nested transaction.
+export function createCaptureSubmissionTransactionStore(
+  database: LocalCaptureDatabase,
+  dependencies: LocalCaptureDependencies,
+) {
+  const storage = createLocalCaptureTransactionStore(database, dependencies);
+  const hash = (json: string) =>
+    hashCaptureBytes(new TextEncoder().encode(json), dependencies.sha256);
+  async function loadHeader(
+    c: AccountRequestContext,
+    jobId: string,
+  ): Promise<SubmissionRequest> {
+    submissionId.parse(jobId);
+    const row = await database.getFirstAsync<HeaderRow>(
+      `${headers} WHERE account_id=? AND job_id=?`,
+      c.accountId,
+      jobId,
+    );
+    if (!row) throw new LocalCaptureError("NOT_FOUND");
+    let request: SubmissionRequest;
+    try {
+      request = submissionRequestSchema.parse({
+        formatVersion: row.formatVersion,
+        manifestVersion: row.manifestVersion,
+        accountId: c.accountId,
+        batchId: row.batchId,
+        jobId: row.jobId,
+        submissionKey: row.submissionKey,
+        createdAt: row.createdAt,
+        context: JSON.parse(row.contextJson),
+        inputs: JSON.parse(row.manifestJson),
+      });
+      if (
+        row.formatStorage !== "integer" ||
+        row.manifestStorage !== "integer" ||
+        row.contextId !== request.context.id ||
+        boundedSubmissionJson(request.context) !== row.contextJson ||
+        boundedSubmissionJson(request.inputs) !== row.manifestJson ||
+        (await hash(canonicalSubmission(request))) !== row.requestSha256 ||
+        (await hash(row.manifestJson)) !== row.manifestSha256
+      )
+        fail();
+    } catch {
+      return fail();
+    }
+    return request;
+  }
+  async function load(
+    c: AccountRequestContext,
+    jobId: string,
+  ): Promise<CaptureJobReadModel> {
+    const request = await loadHeader(c, jobId);
+    const rows = await database.getAllAsync<InputRow>(
+      `${inputs} WHERE account_id=? AND batch_id=? ORDER BY ordinal`,
+      c.accountId,
+      request.batchId,
+    );
+    if (rows.length !== request.inputs.length) fail();
+    const projected: CaptureSubmissionInput[] = [];
+    for (const [n, row] of rows.entries()) {
+      const declaration = request.inputs[n];
+      if (
+        row.inputId !== declaration.id ||
+        row.declarationSha256 !== (await hash(JSON.stringify(declaration)))
+      )
+        fail();
+      const {
+        revisionStorage,
+        countStorage,
+        captureRevisionStorage,
+        ordinalStorage,
+        inputId,
+        declarationSha256: _hash,
+        itemKey,
+        ordinal,
+        acquisitionSource,
+        kind,
+        originalFilename,
+        declaredContentType,
+        continuesFromInputId,
+        ...rawFacts
+      } = row;
+      const storedDeclaration = inputDeclarationSchema.safeParse({
+        id: inputId,
+        itemKey,
+        ordinal,
+        acquisitionSource,
+        kind,
+        originalFilename,
+        declaredContentType,
+        continuesFromInputId,
+      });
+      if (
+        !storedDeclaration.success ||
+        JSON.stringify(storedDeclaration.data) !== JSON.stringify(declaration)
+      )
+        fail();
+      if (
+        revisionStorage !== "integer" ||
+        ordinalStorage !== "integer" ||
+        countStorage !== (row.contentByteCount === null ? "null" : "integer") ||
+        captureRevisionStorage !== (row.captureRevision === null ? "null" : "integer")
+      )
+        fail();
+      const parsed = inputFactsSchema.safeParse(rawFacts);
+      if (
+        !parsed.success ||
+        (declaration.kind === "TEXT" && (parsed.data.contentByteCount ?? 0) > 1048576)
+      )
+        fail();
+      const facts = parsed.data!;
+      if (facts.state === "ACCEPTED") {
+        const { capture } = await storage.load(c.accountId, facts.captureId!);
+        if (
+          capture.payloadId !== facts.payloadId ||
+          capture.sha256 !== facts.contentSha256 ||
+          capture.byteCount !== facts.contentByteCount ||
+          capture.kind !== declaration.kind ||
+          capture.originalFilename !== declaration.originalFilename ||
+          capture.declaredContentType !== declaration.declaredContentType ||
+          capture.revision < facts.captureRevision!
+        )
+          fail();
+      }
+      let continuesFromJobId: string | null = null;
+      if (declaration.continuesFromInputId) {
+        const prior = await database.getFirstAsync<{ jobId: string }>(
+          `SELECT b.job_id AS jobId FROM capture_submission_inputs i JOIN capture_submission_batches b ON b.account_id=i.account_id AND b.batch_id=i.batch_id JOIN capture_submission_batches current ON current.account_id=? AND current.batch_id=? WHERE i.account_id=? AND i.input_id=? AND b.rowid<current.rowid`,
+          c.accountId,
+          request.batchId,
+          c.accountId,
+          declaration.continuesFromInputId,
+        );
+        if (!prior) fail();
+        const priorHeader = await loadHeader(c, prior!.jobId);
+        if (!priorHeader.inputs.some((i) => i.id === declaration.continuesFromInputId))
+          fail();
+        continuesFromJobId = prior!.jobId;
+      }
+      const continuedIn = await database.getAllAsync<{ jobId: string; inputId: string }>(
+        `SELECT b.job_id AS jobId,i.input_id AS inputId FROM capture_submission_inputs i JOIN capture_submission_batches b ON b.account_id=i.account_id AND b.batch_id=i.batch_id WHERE i.account_id=? AND i.continues_from_input_id=? ORDER BY b.rowid,i.ordinal`,
+        c.accountId,
+        declaration.id,
+      );
+      for (const successor of continuedIn) {
+        const successorHeader = await loadHeader(c, successor.jobId);
+        if (
+          !successorHeader.inputs.some(
+            (i) =>
+              i.id === successor.inputId && i.continuesFromInputId === declaration.id,
+          )
+        )
+          fail();
+      }
+      projected.push({ ...declaration, ...facts, continuedIn, continuesFromJobId });
+    }
+    const counts = {
+      selected: projected.length,
+      accepted: projected.filter((i) => i.state === "ACCEPTED").length,
+      failed: projected.filter((i) => i.state === "FAILED").length,
+      pending: projected.filter((i) => i.state === "PENDING").length,
+    };
+    return {
+      batch: request,
+      inputs: projected,
+      counts,
+      allInputsAccepted: counts.accepted === counts.selected,
+      intakeSettled: counts.pending === 0,
+      processing: {
+        capability: "NOT_INSTALLED",
+        assessedInputs: null,
+        totalInputs: null,
+        currentPassComplete: null,
+      },
+      results: { admittedCreates: 0, admittedUpdates: 0, currentAttention: null },
+      availableActions: {
+        canHide: true,
+        canReopen: true,
+        canAddMore: true,
+        canResumeAcceptedLocalWork: false,
+        canReviewNow: false,
+        canOpenCurrentReview: false,
+        // No transient handle is available from a durable projection. FAILED alone grants no retry.
+        canRetryKnownFailedItem: false,
+        reacquireInputIds: projected
+          .filter((i) => i.state !== "ACCEPTED")
+          .map((i) => i.id),
+        unavailableReasons:
+          counts.accepted < counts.selected
+            ? ["PROCESSING_NOT_INSTALLED", "INPUT_REACQUISITION_REQUIRED"]
+            : ["PROCESSING_NOT_INSTALLED"],
+      },
+    };
+  }
+  return { loadHeader, load };
 }

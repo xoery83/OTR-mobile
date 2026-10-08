@@ -108,13 +108,14 @@ describe("Checkpoint 11 registered composition", () => {
           { id: 49, name: "trip_import_flight_admission" },
           { id: 50, name: "intelligence_continuations" },
           { id: 51, name: "capture_submissions" },
+          { id: 52, name: "capture_batch_assessment_observations" },
         ]);
         expect(
           sql
             .prepare("SELECT id FROM schema_migrations ORDER BY id")
             .all()
             .map((r) => r.id),
-        ).toEqual(Array.from({ length: 51 }, (_, i) => i + 1));
+        ).toEqual(Array.from({ length: 52 }, (_, i) => i + 1));
         expect(sql.prepare("PRAGMA synchronous").get()).toMatchObject({ synchronous: 2 });
         const storage = new Map<string, string>();
         const auth = createAuthRepository({

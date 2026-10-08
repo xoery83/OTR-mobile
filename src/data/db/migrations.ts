@@ -1,3 +1,4 @@
+import { captureBatchAssessmentObservationsMigration } from "./migrations/captureBatchAssessmentObservations";
 import { captureSubmissionsMigration } from "./migrations/captureSubmissions";
 import { intelligenceContinuationsMigration } from "./migrations/intelligenceContinuations";
 import { tripImportAdmissionMigration } from "./migrations/tripImportAdmission";
@@ -1684,4 +1685,5 @@ export const migrations: Migration[] = [
   tripImportAdmissionMigration,
   intelligenceContinuationsMigration,
   captureSubmissionsMigration,
+  captureBatchAssessmentObservationsMigration,
 ];
