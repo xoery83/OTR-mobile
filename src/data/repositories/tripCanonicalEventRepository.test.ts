@@ -245,7 +245,7 @@ describe("canonical Event local mirror", () => {
       let sqlite = new DatabaseSync(path);
       await runMigrations(adapter(sqlite));
       await runMigrations(adapter(sqlite));
-      expect(await getSchemaVersion(adapter(sqlite))).toBe(52);
+      expect(await getSchemaVersion(adapter(sqlite))).toBe(53);
       expect(
         sqlite.prepare("SELECT COUNT(*) n FROM schema_migrations WHERE id=44").get(),
       ).toEqual({ n: 1 });

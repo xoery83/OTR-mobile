@@ -664,7 +664,7 @@ describe("real central-owner lifecycle convergence with local clients", () => {
   );
 });
 
-describe("fresh Account SQLite52 bootstrap acceptance", () => {
+describe("fresh Account SQLite53 bootstrap acceptance", () => {
   const summary = (id: string, current = true) => ({
     journeyId: id,
     title: "Zero Expense Journey",
@@ -721,7 +721,7 @@ describe("fresh Account SQLite52 bootstrap acceptance", () => {
     });
     expect(c.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
     expect(migrations.map((m) => m.id)).toEqual(
-      Array.from({ length: 52 }, (_, i) => i + 1),
+      Array.from({ length: 53 }, (_, i) => i + 1),
     );
     expect(fixture.notify).toHaveBeenCalledWith(
       expect.objectContaining({ discoveryChanged: true, journeyIds: [] }),

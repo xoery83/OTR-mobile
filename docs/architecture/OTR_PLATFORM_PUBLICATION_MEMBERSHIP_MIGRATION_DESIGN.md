@@ -84,3 +84,13 @@ Rollback disables the dormant consumer; retain populated column, guards, catalog
 evidence and migration history. No destructive down migration/reset/backfill.
 Coordinate with accepted SQLite52 and reverify canonical registry/ancestry rather
 than append a presumed53 to an older51 branch.
+
+## F1 correction record — owner authorized 2026-10-09
+
+The original reviewed design above is preserved as historical text. Independent Review F1 proved that SQLite conflict replacement can delete a committed Run without invoking its DELETE guard when `recursive_triggers=OFF`; `foreign_keys=OFF` also removes the populated Input FK protection. Before correction, the four independent rejection probes fail and the three cold-file characterization probes confirm committed envelope/Run loss.
+
+The owner authorizes correcting the uncommitted SQLite53 INSERT and UPDATE guards before Independent Recheck. Each guard must preemptively reject an incoming row that conflicts with a committed victim through any existing unique constraint: `(cache_account_id,id)`, `(cache_account_id,trip_id,actor_account_id,operation_key)`, or `(cache_account_id,trip_id,actor_account_id,scope_sha256,generation)`. UPDATE excludes its own OLD composite identity from the victim lookup, preserving permitted observation/retention updates. These checks apply before replacement deletion and do not depend on FK or recursive-trigger settings.
+
+Only the existing INSERT and UPDATE guard predicates change; their existing error contracts remain `PUBLICATION_MEMBERSHIP_INSTALL_REQUIRED` and `PUBLICATION_MEMBERSHIP_IMMUTABLE`. The install and retention guards, one nullable column, four-guard count, historical NULL semantics, no-backfill behavior, and all SQLite1–52 bytes/registry entries remain unchanged. The original SQL block's two collision-vulnerable predicates are superseded by this record and the corrected SQLite53 module. No new table, index, trigger, migration, Repository design, Transport or runtime activation is authorized.
+
+Required evidence: reject INSERT/UPDATE replacement across all three constraints with FK ON/OFF and recursive triggers ON/OFF; preserve the exact committed row and envelope after close/reopen; retain legitimate NULL writes and allowed committed observation/retention updates; rerun the accepted migration, rollback/retry, accepted52 compatibility, 974-test matrix and static/preservation checks. The Builder Report correction appendix records the final SQL hash and results. Targeted Independent Recheck remains required.
