@@ -17,6 +17,7 @@ import {
   canonicalSubmission,
 } from "@/domain/capture/captureSubmission";
 import type { z } from "zod";
+import type { AssessmentObservationBody } from "@/domain/capture/batchAssessmentObservation";
 import {
   tripImportSnapshotSchema,
   tripImportCatalogSchemas,
@@ -169,191 +170,231 @@ export function createCaptureBatchAssessmentAdapter(
     }
     return { job, bindings, publications };
   }
-  return {
-    async assess(jobId: string) {
-      const context = await captureAccountRequestContext("", getAccountId);
-      const observed = await scoped(context, () => observe(context, jobId));
-      const { job } = observed;
-      const c2 = {
-        requestSha256: await sha256(
-          new TextEncoder().encode(canonicalSubmission(job.batch)),
-        ),
-        manifestSha256: await sha256(
-          new TextEncoder().encode(boundedSubmissionJson(job.batch.inputs)),
-        ),
-      };
-      const manifest = captureIntakeManifestSchema.parse({
-        version: 1,
-        accountId: context.accountId,
-        batchId: job.batch.batchId,
-        jobId: job.batch.jobId,
-        submissionKey: job.batch.submissionKey,
-        contextSnapshotId: job.batch.context.id,
-        contextSha256: await importDigest(
-          "otr-capture-context-v1",
-          job.batch.context as Json,
-          sha256,
-        ),
-        tripPriorId: job.batch.context.tripPrior?.id ?? null,
-        manifestVersion: job.batch.manifestVersion,
-        inputs: job.batch.inputs.map((i) => ({
-          inputId: i.id,
-          replayKey: i.itemKey,
-          ordinal: i.ordinal,
-          continuesFromInputId: i.continuesFromInputId,
-        })),
-      });
-      const snapshot: CaptureProcessingSnapshot = {
-        version: 1,
-        accountId: context.accountId,
-        batchId: job.batch.batchId,
-        jobId,
-        manifestVersion: manifest.manifestVersion,
-        manifestSha256: await importDigest(
-          "otr-capture-intake-manifest-v1",
-          manifest as Json,
-          sha256,
-        ),
-        assessmentRevision: 1,
-        inputs: job.inputs.map((i) => ({
-          inputId: i.id,
-          observedRevision: i.revision,
-          acquisition:
-            i.state === "ACCEPTED"
-              ? {
-                  state: "ACCEPTED",
-                  original: {
-                    captureId: i.captureId!,
-                    payloadId: i.payloadId!,
-                    revision: i.captureRevision!,
-                    sha256: i.contentSha256!,
-                    byteCount: i.contentByteCount!,
-                  },
-                }
-              : { state: i.pendingReason === "RECOVER_COMMIT" ? "UNKNOWN" : i.state },
-          processing: i.state === "ACCEPTED" ? "UNKNOWN" : "NOT_APPLICABLE",
-          bindings: [],
-        })),
-        findings: [],
-        decisions: [],
-        historicalEvidence: [],
-      };
-      for (const {
-        runId,
-        publication,
-        snapshot: catalog,
-        supports,
-      } of observed.publications) {
-        const candidates = catalog.trip_source_candidates.filter(
-          (c) => c.run_id === runId,
-        );
-        if (
-          snapshot.findings.length + candidates.length >
-          BATCH_ASSESSMENT_LIMITS.findings
-        )
-          throw new Error("C4A_RESOURCE_LIMIT");
-        for (const support of supports) {
-          const input = snapshot.inputs.find((i) => i.inputId === support.inputId)!;
-          if (input.acquisition.state !== "ACCEPTED") return fail();
-          input.bindings.push({
-            accountId: context.accountId,
-            batchId: manifest.batchId,
-            runId,
-            runGeneration: publication.membership.body.generation,
-            runInputSha256: publication.membership.body.input_sha256,
-            originalSha256: input.acquisition.original.sha256,
-            pin: support.pin,
-          });
-        }
-        for (const candidate of candidates) {
-          const fields = Object.values(candidate.proposal!.fields);
-          for (const field of fields) {
-            if (
-              field?.input_ids.some((id) => !supports.some((s) => s.pin.id === id)) ||
-              field?.locators?.some((l) => !field.input_ids.includes(l.input_id))
-            )
-              fail();
-          }
-          const evidence = [
-            ...new Map(
-              fields.flatMap((f) => f?.locators ?? []).map((l) => [json(l), l]),
-            ).values(),
-          ];
-          if (!evidence.length) continue;
-          for (const support of supports)
-            if (evidence.some((l) => l.input_id === support.pin.id))
-              snapshot.inputs.find((i) => i.inputId === support.inputId)!.processing =
-                "UNDERSTOOD";
-          snapshot.findings.push({
-            id: candidate.id,
-            candidate: {
-              id: candidate.id,
-              run_id: runId,
-              proposal_sha256: candidate.proposal_sha256,
-              input_sha256: publication.membership.body.input_sha256,
-            },
-            evidence,
-            question: "NONE",
-            dependencies: snapshot.inputs.map((i) => ({
-              inputId: i.inputId,
-              relation: supports.some(
-                (s) =>
-                  s.inputId === i.inputId &&
-                  evidence.some((l) => l.input_id === s.pin.id),
-              )
-                ? "DEPENDS_ON"
-                : "UNKNOWN",
-            })),
-          });
-        }
-      }
-      captureProcessingSnapshotSchema.parse(snapshot);
-      const request = {
-        manifest,
-        snapshot,
-        current: {
+  const seals = new WeakMap<
+    object,
+    { context: AccountRequestContext; jobId: string; readSet: string; content: string }
+  >();
+  async function assess(context: AccountRequestContext, jobId: string, seal?: object) {
+    context = Object.freeze({ ...context });
+    const observed = await scoped(context, () => observe(context, jobId));
+    const { job } = observed;
+    const c2 = {
+      requestSha256: await sha256(
+        new TextEncoder().encode(canonicalSubmission(job.batch)),
+      ),
+      manifestSha256: await sha256(
+        new TextEncoder().encode(boundedSubmissionJson(job.batch.inputs)),
+      ),
+    };
+    const manifest = captureIntakeManifestSchema.parse({
+      version: 1,
+      accountId: context.accountId,
+      batchId: job.batch.batchId,
+      jobId: job.batch.jobId,
+      submissionKey: job.batch.submissionKey,
+      contextSnapshotId: job.batch.context.id,
+      contextSha256: await importDigest(
+        "otr-capture-context-v1",
+        job.batch.context as Json,
+        sha256,
+      ),
+      tripPriorId: job.batch.context.tripPrior?.id ?? null,
+      manifestVersion: job.batch.manifestVersion,
+      inputs: job.batch.inputs.map((i) => ({
+        inputId: i.id,
+        replayKey: i.itemKey,
+        ordinal: i.ordinal,
+        continuesFromInputId: i.continuesFromInputId,
+      })),
+    });
+    const snapshot: CaptureProcessingSnapshot = {
+      version: 1,
+      accountId: context.accountId,
+      batchId: job.batch.batchId,
+      jobId,
+      manifestVersion: manifest.manifestVersion,
+      manifestSha256: await importDigest(
+        "otr-capture-intake-manifest-v1",
+        manifest as Json,
+        sha256,
+      ),
+      assessmentRevision: 1,
+      inputs: job.inputs.map((i) => ({
+        inputId: i.id,
+        observedRevision: i.revision,
+        acquisition:
+          i.state === "ACCEPTED"
+            ? {
+                state: "ACCEPTED",
+                original: {
+                  captureId: i.captureId!,
+                  payloadId: i.payloadId!,
+                  revision: i.captureRevision!,
+                  sha256: i.contentSha256!,
+                  byteCount: i.contentByteCount!,
+                },
+              }
+            : { state: i.pendingReason === "RECOVER_COMMIT" ? "UNKNOWN" : i.state },
+        processing: i.state === "ACCEPTED" ? "UNKNOWN" : "NOT_APPLICABLE",
+        bindings: [],
+      })),
+      findings: [],
+      decisions: [],
+      historicalEvidence: [],
+    };
+    for (const {
+      runId,
+      publication,
+      snapshot: catalog,
+      supports,
+    } of observed.publications) {
+      const candidates = catalog.trip_source_candidates.filter((c) => c.run_id === runId);
+      if (snapshot.findings.length + candidates.length > BATCH_ASSESSMENT_LIMITS.findings)
+        throw new Error("C4A_RESOURCE_LIMIT");
+      for (const support of supports) {
+        const input = snapshot.inputs.find((i) => i.inputId === support.inputId)!;
+        if (input.acquisition.state !== "ACCEPTED") return fail();
+        input.bindings.push({
           accountId: context.accountId,
           batchId: manifest.batchId,
-          jobId,
-          manifestVersion: manifest.manifestVersion,
-          manifestSha256: snapshot.manifestSha256,
-          assessmentRevision: snapshot.assessmentRevision,
-          snapshotSha256: await importDigest(
-            "otr-capture-processing-snapshot-v1",
-            snapshot as Json,
-            sha256,
-          ),
-          inputRevisions: snapshot.inputs.map((i) => ({
+          runId,
+          runGeneration: publication.membership.body.generation,
+          runInputSha256: publication.membership.body.input_sha256,
+          originalSha256: input.acquisition.original.sha256,
+          pin: support.pin,
+        });
+      }
+      for (const candidate of candidates) {
+        const fields = Object.values(candidate.proposal!.fields);
+        for (const field of fields) {
+          if (
+            field?.input_ids.some((id) => !supports.some((s) => s.pin.id === id)) ||
+            field?.locators?.some((l) => !field.input_ids.includes(l.input_id))
+          )
+            fail();
+        }
+        const evidence = [
+          ...new Map(
+            fields.flatMap((f) => f?.locators ?? []).map((l) => [json(l), l]),
+          ).values(),
+        ];
+        if (!evidence.length) continue;
+        for (const support of supports)
+          if (evidence.some((l) => l.input_id === support.pin.id))
+            snapshot.inputs.find((i) => i.inputId === support.inputId)!.processing =
+              "UNDERSTOOD";
+        snapshot.findings.push({
+          id: candidate.id,
+          candidate: {
+            id: candidate.id,
+            run_id: runId,
+            proposal_sha256: candidate.proposal_sha256,
+            input_sha256: publication.membership.body.input_sha256,
+          },
+          evidence,
+          question: "NONE",
+          dependencies: snapshot.inputs.map((i) => ({
             inputId: i.inputId,
-            revision: i.observedRevision,
+            relation: supports.some(
+              (s) =>
+                s.inputId === i.inputId && evidence.some((l) => l.input_id === s.pin.id),
+            )
+              ? "DEPENDS_ON"
+              : "UNKNOWN",
           })),
-        },
+        });
+      }
+    }
+    captureProcessingSnapshotSchema.parse(snapshot);
+    const request = {
+      manifest,
+      snapshot,
+      current: {
+        accountId: context.accountId,
+        batchId: manifest.batchId,
+        jobId,
+        manifestVersion: manifest.manifestVersion,
+        manifestSha256: snapshot.manifestSha256,
+        assessmentRevision: snapshot.assessmentRevision,
+        snapshotSha256: await importDigest(
+          "otr-capture-processing-snapshot-v1",
+          snapshot as Json,
+          sha256,
+        ),
+        inputRevisions: snapshot.inputs.map((i) => ({
+          inputId: i.inputId,
+          revision: i.observedRevision,
+        })),
+      },
+    };
+    const assessment = await assessCaptureBatch(json(request), sha256);
+    // Seal outside the gate, then compare the entire read set at one final admission point.
+    const expected = json(observed);
+    const result = await scoped(context, async () => {
+      if (json(await observe(context, jobId)) !== expected)
+        throw new Error("C4A_STALE_REVISION");
+      return {
+        c2,
+        manifest,
+        snapshot,
+        assessment,
+        provenance: observed.publications.flatMap((p) =>
+          p.supports.map((s) => ({
+            inputId: s.inputId,
+            runId: p.runId,
+            original: s.original,
+            selected: {
+              id: s.pin.representation_id,
+              sha256: s.pin.payload_sha256,
+              byteCount: s.pin.byte_count,
+            },
+          })),
+        ),
       };
-      const assessment = await assessCaptureBatch(json(request), sha256);
-      // Seal outside the gate, then compare the entire read set at one final admission point.
-      const expected = json(observed);
-      return scoped(context, async () => {
-        if (json(await observe(context, jobId)) !== expected)
-          throw new Error("C4A_STALE_REVISION");
-        return {
-          c2,
-          manifest,
-          snapshot,
-          assessment,
-          provenance: observed.publications.flatMap((p) =>
-            p.supports.map((s) => ({
-              inputId: s.inputId,
-              runId: p.runId,
-              original: s.original,
-              selected: {
-                id: s.pin.representation_id,
-                sha256: s.pin.payload_sha256,
-                byteCount: s.pin.byte_count,
-              },
-            })),
-          ),
-        };
+    });
+    if (seal)
+      seals.set(seal, {
+        context,
+        jobId,
+        readSet: expected,
+        content: json([c2, manifest, snapshot]),
       });
+    return result;
+  }
+  return {
+    async assess(jobId: string) {
+      return assess(await captureAccountRequestContext("", getAccountId), jobId);
+    },
+    async observeForComposer(context: AccountRequestContext, jobId: string) {
+      const seal = Object.freeze({});
+      return { ...(await assess(context, jobId, seal)), seal };
+    },
+    async assertCurrentForAppend(
+      context: AccountRequestContext,
+      seal: object,
+      body: AssessmentObservationBody,
+    ) {
+      if (!(await database.isInTransactionAsync()))
+        throw new Error("C4A_ADAPTER_TRANSACTION_REQUIRED");
+      const admitted = seals.get(seal);
+      if (!admitted) return fail();
+      if (
+        json(context) !== json(admitted.context) ||
+        admitted.content !==
+          json([
+            {
+              requestSha256: body.c2RequestSha256,
+              manifestSha256: body.c2ManifestSha256,
+            },
+            body.manifest,
+            { ...body.snapshot, assessmentRevision: 1 },
+          ])
+      )
+        fail();
+      await assertAccountRequestContext(context, getAccountId);
+      if (json(await observe(context, admitted.jobId)) !== admitted.readSet)
+        throw new Error("C4A_STALE_REVISION");
+      await assertAccountRequestContext(context, getAccountId);
     },
   };
 }

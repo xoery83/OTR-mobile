@@ -2,6 +2,57 @@
 
 Date: 2026-10-09 (Pacific/Auckland).
 
+## P2c final Owner acceptance — DORMANT COMPOSER ACCEPTED
+
+- Owner accepts the dormant local Composer, original Independent Review and appended
+  F1 Targeted Independent Recheck PASS, including the four minimal contract deltas.
+- Exactly one scoped local closure commit is authorized at parent
+  `094cf3beb6b05f2a7f1c8cca1fa007ed630651c4`, containing the accepted twelve-file
+  implementation/evidence scope and this handoff.
+- Final closure validation:54 focused Composer tests, typecheck, full lint/UI guard,
+  changed-file formatting, whitespace and preservation checks PASS. Earlier affected
+  matrix:818 tests PASS; original19 and extra6 independent probes PASS.
+- Exact recovery ownership correction, private seals, final owning transaction,
+  durable CAS, UNCHANGED, replay and uncertainty contracts remain accepted and dormant.
+  SQLite1–53, existing owning repositories, C2/Continuation and runtime/UI are preserved.
+- Next requires separate canonical integration authorization/current-main gate.
+  Transport, native, Experience integration, provider and C5/C9 gates stay CLOSED.
+  No push, merge, rebase, canonical main advancement, Hosted/device operation or
+  runtime activation is authorized by this local closure.
+- Earlier Builder/recheck-required sections below are retained checkpoint history.
+
+## P2c F1 recovery correlation correction — TARGETED INDEPENDENT RECHECK REQUIRED
+
+- Original independent F1 probe reproduced wrong-Job receipt ABSENT; corrected
+  recovery validates immutable C2 Account/Batch/Job ownership before exact lookup.
+  Wrong/missing/corrupt ownership is UNAVAILABLE; historical/offline recovery remains.
+- Original19 independent probes and54 Composer tests PASS; affected21-file/818-test
+  matrix and validation are recorded in the appended
+  [Builder evidence](architecture/OTR_PLATFORM_P2C_COMPOSER_BUILDER_REPORT.md).
+- Original Independent Review and SQLite52/53/Adapter/owning contracts remain unchanged.
+  Next: targeted Independent Recheck, then Owner acceptance. No runtime/Transport/
+  Experience/C5/C9/provider activation, Hosted/device operation or Git closure.
+
+## P2c dormant Composer Builder — INDEPENDENT REVIEW REQUIRED
+
+- Owner accepted the P2c preflight and four minimal deltas. Fresh isolated Builder
+  worktree starts at verified local/origin/remote main
+  `094cf3beb6b05f2a7f1c8cca1fa007ed630651c4`.
+- Explicit Composer composes complete C2 intake, trusted SQLite53 Membership,
+  P2b-A observation and C4a into SQLite52 immutable history. Private Adapter seals
+  are revalidated inside the final owning append transaction; original public
+  Adapter revision1 and accepted CAS/replay/body contracts are preserved.
+- Latest logical-content UNCHANGED, durable revision recomputation and receipt-only
+  recovery are historical-only. Unknown append outcomes prevent NEW admission until
+  exact resolution. The separate C3 projection is read-only; UI/Job DTOs are unchanged.
+- Validation and exact file scope:
+  [P2c Builder report](architecture/OTR_PLATFORM_P2C_COMPOSER_BUILDER_REPORT.md).
+  No migration, default factory, app caller, lifecycle hook, notification, scheduler,
+  Transport/provider/C5/C9/business write or Hosted/device operation.
+- Next: Independent Review only, then Owner acceptance and separately authorized
+  canonical integration. No commit, push, merge or runtime activation in this stage.
+  Earlier sections below remain historical checkpoint statements.
+
 ## P2b-A final Owner acceptance — DORMANT ADAPTER ACCEPTED
 
 - Owner accepts the integrated read-only Adapter, Builder report, original Independent

@@ -1,5 +1,39 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## P2c dormant local Composer — Independent Review required
+
+Owner approved the four minimal deltas in
+[the accepted preflight](architecture/OTR_PLATFORM_P2C_INTEGRATED_C4_COMPOSER_PREFLIGHT.md).
+`createCaptureBatchAssessmentComposer(database, importStore, getAccountId, dependencies)`
+requires initialized SQLite52/53 and the owning Import store's identical connection.
+It is explicitly injected, with no default runtime factory or application caller.
+
+`assess(context,jobId,signal?)` accepts the original Account/generation and empty Trip
+scope. Results discriminate APPENDED, EXACT_REPLAY, UNCHANGED, REASSESS_REQUIRED
+(finite stale/CAS code), REJECTED (finite validation/resource/admission code),
+INTEGRITY_BLOCKED, UNAVAILABLE, CANCELED and OUTCOME_UNKNOWN. Successful observations
+return a five-field receipt `{accountId,batchId,jobId,revision,bodySha256}` and bounded
+summary with `historicalOnly:true,currentAuthority:"NOT_ASSERTED"`. Unknown outcome
+returns only its exact receipt; cancellation after possible COMMIT remains unknown.
+
+`recover(context,receipt)` is read-only and returns exact FOUND with historical
+summary, ABSENT, REVISION_CONFLICT, INTEGRITY_BLOCKED or UNAVAILABLE. Fresh original
+Account generation can read history; stale callbacks cannot. No new revision is
+allocated to replace an unresolved attempted append. Cold reassessment without a
+receipt makes no recovery claim.
+
+`readAssessment(context,jobId)` returns the separate AssessmentProjection:
+UNASSESSED, OBSERVED with receipt/summary, INTEGRITY_BLOCKED or UNAVAILABLE. It
+exposes only barrier, counts and closed authority flags, never source text, Candidate
+payloads or locators. It does not alter C3 Job facts or subscribe to notifications.
+
+Internal Adapter seams `observeForComposer(context,jobId)` and
+`assertCurrentForAppend(context,seal,body)` retain private original-context admission
+and whole-read-set validation in the existing SQLite52 transaction. The accepted
+`assess(jobId)` still returns invocation revision1. SQLite52 adds only synchronous
+`assertAppendActive` checks before NEW INSERT/pre-COMMIT; replay bypasses new admission.
+C2/Import/Membership/Continuation ownership and all HTTP contracts are unchanged.
+
 ## Checkpoint 11 local repository contracts — owner review pending
 
 No HTTP endpoint, server schema, role, credential or enabled capability changes.

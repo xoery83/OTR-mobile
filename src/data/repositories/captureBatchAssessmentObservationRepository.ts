@@ -58,6 +58,7 @@ export function createCaptureBatchAssessmentObservationRepository(
   database: LocalCaptureDatabase,
   getActiveUserId: () => Promise<string>,
   dependencies: LocalCaptureDependencies & {
+    assertAppendActive?: () => void;
     assertCurrentOwningData: (
       context: AccountRequestContext,
       body: AssessmentObservationBody,
@@ -66,13 +67,18 @@ export function createCaptureBatchAssessmentObservationRepository(
 ) {
   const c2 = createCaptureSubmissionTransactionStore(database, dependencies);
   const hashText = (raw: string) => dependencies.sha256(new TextEncoder().encode(raw));
-  async function scoped<T>(context: AccountRequestContext, work: () => Promise<T>) {
+  async function scoped<T>(
+    context: AccountRequestContext,
+    work: () => Promise<T>,
+    beforeCommit?: () => void,
+  ) {
     return withAccountApplyGate(async () => {
       let result!: T;
       await database.withTransactionAsync(async () => {
         await assertAccountRequestContext(context, getActiveUserId);
         result = await work();
         await assertAccountRequestContext(context, getActiveUserId);
+        beforeCommit?.();
       });
       await assertAccountRequestContext(context, getActiveUserId);
       return result;
@@ -221,84 +227,93 @@ export function createCaptureBatchAssessmentObservationRepository(
           body.parentBodySha256 !== expectedHead.bodySha256
         )
           fail("HEAD_CONFLICT");
-        return await scoped(context, async () => {
-          const c = await chain(context, batchId),
-            revision = body.snapshot.assessmentRevision;
-          const prior = c.rows.get(revision);
-          if (prior) {
+        let isNew = false;
+        return await scoped(
+          context,
+          async () => {
+            const c = await chain(context, batchId),
+              revision = body.snapshot.assessmentRevision;
+            const prior = c.rows.get(revision);
+            if (prior) {
+              if (
+                prior.bodySha256 !== proposed.bodySha256 ||
+                observationJson(prior.body) !== raw
+              )
+                fail("REVISION_CONFLICT");
+              return {
+                status: "EXACT_REPLAY" as const,
+                revision,
+                bodySha256: prior.bodySha256,
+                chainStatus: c.status,
+                historicalOnly: true as const,
+              };
+            }
+            if (c.status === "INTEGRITY_BLOCKED")
+              return { status: "INTEGRITY_BLOCKED" as const };
             if (
-              prior.bodySha256 !== proposed.bodySha256 ||
-              observationJson(prior.body) !== raw
+              c.head.revision !== expectedHead.revision ||
+              c.head.bodySha256 !== expectedHead.bodySha256
             )
-              fail("REVISION_CONFLICT");
-            return {
-              status: "EXACT_REPLAY" as const,
-              revision,
-              bodySha256: prior.bodySha256,
-              chainStatus: c.status,
-              historicalOnly: true as const,
-            };
-          }
-          if (c.status === "INTEGRITY_BLOCKED")
-            return { status: "INTEGRITY_BLOCKED" as const };
-          if (
-            c.head.revision !== expectedHead.revision ||
-            c.head.bodySha256 !== expectedHead.bodySha256
-          )
-            fail("HEAD_CONFLICT");
-          await verifyC2(await header(context, batchId), body);
-          if (typeof dependencies.assertCurrentOwningData !== "function")
-            fail("STALE_OBSERVATION");
-          try {
-            await dependencies.assertCurrentOwningData(context, body);
-          } catch {
-            fail("STALE_OBSERVATION");
-          }
-          const current = await c2.load(context, body.manifest.jobId);
-          for (const input of body.snapshot.inputs) {
-            const owned = current.inputs.find((i) => i.id === input.inputId);
-            if (
-              !owned ||
-              owned.revision !== input.observedRevision ||
-              (input.acquisition.state === "ACCEPTED"
-                ? owned.state !== "ACCEPTED" ||
-                  owned.captureId !== input.acquisition.original.captureId ||
-                  owned.payloadId !== input.acquisition.original.payloadId ||
-                  owned.captureRevision !== input.acquisition.original.revision ||
-                  owned.contentSha256 !== input.acquisition.original.sha256 ||
-                  owned.contentByteCount !== input.acquisition.original.byteCount
-                : owned.state !==
-                  (input.acquisition.state === "FAILED" ? "FAILED" : "PENDING"))
-            )
+              fail("HEAD_CONFLICT");
+            await verifyC2(await header(context, batchId), body);
+            if (typeof dependencies.assertCurrentOwningData !== "function")
               fail("STALE_OBSERVATION");
-          }
-          await assertAccountRequestContext(context, getActiveUserId);
-          const inserted = await database.runAsync(
-            `INSERT INTO capture_batch_assessment_observations(account_id,batch_id,job_id,format_version,assessment_revision,c2_manifest_sha256,c4_manifest_sha256,snapshot_sha256,body_sha256,parent_body_sha256,body_json) VALUES(?,?,?,1,CAST(? AS INTEGER),?,?,?,?,?,?)`,
-            context.accountId,
-            batchId,
-            body.manifest.jobId,
-            revision,
-            body.c2ManifestSha256,
-            body.snapshot.manifestSha256,
-            body.envelope.snapshotSha256,
-            proposed.bodySha256,
-            body.parentBodySha256,
-            raw,
-          );
-          if (inserted.changes !== 1) fail("INTEGRITY");
-          const retained = await chain(context, batchId);
-          if (
-            retained.status !== "HEALTHY" ||
-            retained.head.bodySha256 !== proposed.bodySha256
-          )
-            fail("INTEGRITY");
-          return {
-            status: "APPENDED" as const,
-            revision,
-            bodySha256: proposed.bodySha256,
-          };
-        });
+            try {
+              await dependencies.assertCurrentOwningData(context, body);
+            } catch {
+              fail("STALE_OBSERVATION");
+            }
+            const current = await c2.load(context, body.manifest.jobId);
+            for (const input of body.snapshot.inputs) {
+              const owned = current.inputs.find((i) => i.id === input.inputId);
+              if (
+                !owned ||
+                owned.revision !== input.observedRevision ||
+                (input.acquisition.state === "ACCEPTED"
+                  ? owned.state !== "ACCEPTED" ||
+                    owned.captureId !== input.acquisition.original.captureId ||
+                    owned.payloadId !== input.acquisition.original.payloadId ||
+                    owned.captureRevision !== input.acquisition.original.revision ||
+                    owned.contentSha256 !== input.acquisition.original.sha256 ||
+                    owned.contentByteCount !== input.acquisition.original.byteCount
+                  : owned.state !==
+                    (input.acquisition.state === "FAILED" ? "FAILED" : "PENDING"))
+              )
+                fail("STALE_OBSERVATION");
+            }
+            await assertAccountRequestContext(context, getActiveUserId);
+            dependencies.assertAppendActive?.();
+            isNew = true;
+            const inserted = await database.runAsync(
+              `INSERT INTO capture_batch_assessment_observations(account_id,batch_id,job_id,format_version,assessment_revision,c2_manifest_sha256,c4_manifest_sha256,snapshot_sha256,body_sha256,parent_body_sha256,body_json) VALUES(?,?,?,1,CAST(? AS INTEGER),?,?,?,?,?,?)`,
+              context.accountId,
+              batchId,
+              body.manifest.jobId,
+              revision,
+              body.c2ManifestSha256,
+              body.snapshot.manifestSha256,
+              body.envelope.snapshotSha256,
+              proposed.bodySha256,
+              body.parentBodySha256,
+              raw,
+            );
+            if (inserted.changes !== 1) fail("INTEGRITY");
+            const retained = await chain(context, batchId);
+            if (
+              retained.status !== "HEALTHY" ||
+              retained.head.bodySha256 !== proposed.bodySha256
+            )
+              fail("INTEGRITY");
+            return {
+              status: "APPENDED" as const,
+              revision,
+              bodySha256: proposed.bodySha256,
+            };
+          },
+          () => {
+            if (isNew) dependencies.assertAppendActive?.();
+          },
+        );
       } catch (error) {
         if (error instanceof LocalCaptureError && error.code === "INTEGRITY")
           return { status: "INTEGRITY_BLOCKED" as const };
