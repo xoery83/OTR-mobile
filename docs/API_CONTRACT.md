@@ -955,7 +955,11 @@ An optional trusted connection leases one primary SQL session. The helper issues
 fixed READ COMMITTED READ ONLY BEGIN, transaction-local5s statement/1s lock timeouts,
 actual `SELECT session_user`, and parameterized
 `trip_source_read_import_catalogs($1::uuid,$2::uuid)` before COMMIT. Actual principal
-must be `otr_trip_source_command_gateway`. Missing/wrong connection fails503
+must be `otr_trip_publication_catalog_reader`; the Backend rejects the old command
+gateway. The R3-A forward preserves that gateway's existing SQL read compatibility
+and adds the Reader to only the protected root session allowlist. The delivered
+Reader is NOLOGIN/PASSWORD NULL; Hosted provisioning and Backend injection require
+separate acceptance. Missing/wrong connection fails503
 `PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE`; no service-role/public RPC/SET ROLE
 fallback. The injected driver must cancel/retire uncertain leases and finish
 rollback before reuse. `backend/src/server.ts` provisions nothing.

@@ -43,13 +43,13 @@ Pool.prototype.connect = function (): any {
 before(async () => {
   await admin.connect();
   await admin.query(
-    "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'otr_trip_source_command_gateway') THEN CREATE ROLE otr_trip_source_command_gateway LOGIN PASSWORD 'otr_r2_local_fixture'; END IF; END $$",
+    "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'otr_trip_publication_catalog_reader') THEN CREATE ROLE otr_trip_publication_catalog_reader LOGIN PASSWORD 'otr_r2_local_fixture'; END IF; END $$",
   );
   await admin.query(
     `CREATE OR REPLACE FUNCTION public.trip_source_read_import_catalogs(actor uuid, trip uuid) RETURNS jsonb LANGUAGE sql AS $$ SELECT '${JSON.stringify(fixture)}'::jsonb $$`,
   );
   await admin.query(
-    "GRANT EXECUTE ON FUNCTION public.trip_source_read_import_catalogs(uuid,uuid) TO otr_trip_source_command_gateway",
+    "GRANT EXECUTE ON FUNCTION public.trip_source_read_import_catalogs(uuid,uuid) TO otr_trip_publication_catalog_reader",
   );
 });
 after(async () => {
@@ -122,8 +122,8 @@ test("real TLS identity/read-only transaction and same physical lease reuse", as
         );
         assert.deepEqual(identity.rows, [
           {
-            principal: "otr_trip_source_command_gateway",
-            current_user: "otr_trip_source_command_gateway",
+            principal: "otr_trip_publication_catalog_reader",
+            current_user: "otr_trip_publication_catalog_reader",
             readonly: "on",
             pid: leased.processID,
           },

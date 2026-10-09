@@ -1,0 +1,374 @@
+{
+  "role": {
+    "name": "otr_trip_publication_catalog_reader",
+    "login": false,
+    "inherit": false,
+    "createdb": false,
+    "settings": [
+      "search_path=pg_catalog",
+      "default_transaction_read_only=on",
+      "statement_timeout=5000ms",
+      "lock_timeout=1000ms",
+      "idle_in_transaction_session_timeout=5000ms"
+    ],
+    "bypassrls": false,
+    "superuser": false,
+    "createrole": false,
+    "replication": false,
+    "password_expiry": null,
+    "connection_limit": 1
+  },
+  "closed": {
+    "event": true,
+    "import": true,
+    "person": true,
+    "source": true,
+    "provider": true
+  },
+  "schemas": [
+    {
+      "acl": [
+        "supabase_admin=UC/supabase_admin",
+        "anon=U/supabase_admin",
+        "authenticated=U/supabase_admin",
+        "service_role=U/supabase_admin",
+        "supabase_auth_admin=UC/supabase_admin",
+        "dashboard_user=UC/supabase_admin",
+        "postgres=U/supabase_admin"
+      ],
+      "name": "auth",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": [
+        "postgres=UC/postgres",
+        "anon=U/postgres",
+        "authenticated=U/postgres",
+        "service_role=U/postgres",
+        "dashboard_user=UC/postgres",
+        "otr_external_integration_config_writer=U/postgres",
+        "otr_external_integration_inbound_writer=U/postgres",
+        "otr_external_integration_meter_writer=U/postgres",
+        "otr_external_integration_reader=U/postgres",
+        "otr_trip_event_collection_reader=U/postgres",
+        "otr_trip_event_receipt_reader=U/postgres",
+        "otr_trip_event_semantic_writer=U/postgres",
+        "otr_trip_person_command_gateway=U/postgres",
+        "otr_trip_person_lifecycle_writer=U/postgres",
+        "otr_trip_person_receipt_reader=U/postgres",
+        "otr_trip_source_command_gateway=U/postgres",
+        "otr_trip_source_operation_reader=U/postgres",
+        "otr_trip_source_writer=U/postgres"
+      ],
+      "name": "extensions",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": [
+        "supabase_admin=UC/supabase_admin",
+        "postgres=U*/supabase_admin",
+        "anon=U/supabase_admin",
+        "authenticated=U/supabase_admin",
+        "service_role=U/supabase_admin"
+      ],
+      "name": "graphql",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": null,
+      "name": "graphql_public",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": ["postgres=UC/postgres"],
+      "name": "otr_dev_migrations",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": null,
+      "name": "pgbouncer",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": [
+        "pg_database_owner=UC/pg_database_owner",
+        "=U/pg_database_owner",
+        "postgres=UC/pg_database_owner",
+        "otr_external_integration_admin_gateway=U/pg_database_owner",
+        "otr_external_integration_call_gateway=U/pg_database_owner",
+        "otr_external_integration_config_writer=U/pg_database_owner",
+        "otr_external_integration_inbound_gateway=U/pg_database_owner",
+        "otr_external_integration_inbound_writer=U/pg_database_owner",
+        "otr_external_integration_meter_writer=U/pg_database_owner",
+        "otr_external_integration_reader=U/pg_database_owner",
+        "otr_external_integration_recovery_gateway=U/pg_database_owner",
+        "otr_external_integration_reporting_gateway=U/pg_database_owner",
+        "otr_trip_event_collection_gateway=U/pg_database_owner",
+        "otr_trip_event_collection_maintainer=U/pg_database_owner",
+        "otr_trip_event_collection_reader=U/pg_database_owner",
+        "otr_trip_event_command_gateway=U/pg_database_owner",
+        "otr_trip_event_receipt_reader=U/pg_database_owner",
+        "otr_trip_event_semantic_writer=U/pg_database_owner",
+        "otr_trip_person_command_gateway=U/pg_database_owner",
+        "otr_trip_person_lifecycle_writer=U/pg_database_owner",
+        "otr_trip_person_receipt_reader=U/pg_database_owner",
+        "otr_trip_source_command_gateway=U/pg_database_owner",
+        "otr_trip_source_execution_gateway=U/pg_database_owner",
+        "otr_trip_source_execution_writer=U/pg_database_owner",
+        "otr_trip_source_operation_reader=U/pg_database_owner",
+        "otr_trip_source_writer=U/pg_database_owner",
+        "otr_trip_publication_catalog_reader=U/pg_database_owner"
+      ],
+      "name": "public",
+      "usage": true,
+      "create": false
+    },
+    {
+      "acl": [
+        "supabase_admin=UC/supabase_admin",
+        "postgres=U*/supabase_admin",
+        "anon=U/supabase_admin",
+        "service_role=U/supabase_admin",
+        "supabase_realtime_admin=U*C*/supabase_admin",
+        "authenticated=U/supabase_admin"
+      ],
+      "name": "realtime",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": [
+        "supabase_admin=UC/supabase_admin",
+        "postgres=U*/supabase_admin",
+        "anon=U/supabase_admin",
+        "authenticated=U/supabase_admin",
+        "service_role=U/supabase_admin",
+        "supabase_storage_admin=U*C*/supabase_admin",
+        "dashboard_user=UC/supabase_admin"
+      ],
+      "name": "storage",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": [
+        "supabase_admin=UC/supabase_admin",
+        "postgres=U/supabase_admin",
+        "anon=U/supabase_admin",
+        "authenticated=U/supabase_admin",
+        "service_role=U/supabase_admin",
+        "supabase_functions_admin=UC/supabase_admin"
+      ],
+      "name": "supabase_functions",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": null,
+      "name": "supabase_migrations",
+      "usage": false,
+      "create": false
+    },
+    {
+      "acl": [
+        "supabase_admin=UC/supabase_admin",
+        "postgres=U*/supabase_admin",
+        "service_role=U/supabase_admin"
+      ],
+      "name": "vault",
+      "usage": false,
+      "create": false
+    }
+  ],
+  "version": "otr-r3-dev-v1-catalog-reader-1",
+  "routines": [
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "owner": "postgres",
+      "result": "trigger",
+      "settings": ["search_path=public"],
+      "extension": false,
+      "signature": "public.ledger_apply_economic_date()",
+      "public_execute": true,
+      "security_definer": false,
+      "definition_sha256": "4fff2fdb842ea303d9065fcc1985bf52262d3980339dfea6d41338d75bfd48ee"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "owner": "postgres",
+      "result": "trigger",
+      "settings": ["search_path=public"],
+      "extension": false,
+      "signature": "public.ledger_currency_serialize_input()",
+      "public_execute": true,
+      "security_definer": false,
+      "definition_sha256": "85268938d408da3a041a6e9e7f2717f80fb2d5a8fd47ea6dcadee5fc6d613052"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "owner": "postgres",
+      "result": "trigger",
+      "settings": ["search_path=public"],
+      "extension": false,
+      "signature": "public.ledger_guard_journey_currency()",
+      "public_execute": true,
+      "security_definer": false,
+      "definition_sha256": "d700bbc9da3e48e24ae7267ad597487d1ffff9baca99bb3c3300ccd04c3d032f"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "owner": "postgres",
+      "result": "trigger",
+      "settings": ["search_path=public"],
+      "extension": false,
+      "signature": "public.ledger_limit_expense_attachments()",
+      "public_execute": true,
+      "security_definer": false,
+      "definition_sha256": "74288bdb6f2ecacbb8fc3f0a5ffcb11b513741e1c375db99787f30fa5012aabb"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "owner": "postgres",
+      "result": "trigger",
+      "settings": ["search_path=public"],
+      "extension": false,
+      "signature": "public.ledger_stale_corrections_after_expense_update()",
+      "public_execute": true,
+      "security_definer": false,
+      "definition_sha256": "dc51e11e278f542e133f9eebe1d291e63a0982039c1efd5ecfd887356555ee71"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "owner": "postgres",
+      "result": "trigger",
+      "settings": null,
+      "extension": false,
+      "signature": "public.touch_journey_chat_message_updated_at()",
+      "public_execute": true,
+      "security_definer": false,
+      "definition_sha256": "68944495795e6e9ede756119edec24e16bc8647f53ae5f8f44ca6f3abfb89e2e"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "owner": "postgres",
+      "result": "trigger",
+      "settings": null,
+      "extension": false,
+      "signature": "public.touch_updated_at()",
+      "public_execute": true,
+      "security_definer": false,
+      "definition_sha256": "f5e4c4fbdb433e5e08c763615167420b4e89e56073bd620e4431eda71a725b3f"
+    },
+    {
+      "acl": [
+        "otr_trip_source_writer=X/otr_trip_source_writer",
+        "otr_trip_source_command_gateway=X/otr_trip_source_writer",
+        "otr_trip_publication_catalog_reader=X/otr_trip_source_writer"
+      ],
+      "owner": "otr_trip_source_writer",
+      "result": "jsonb",
+      "settings": ["search_path=pg_catalog"],
+      "extension": false,
+      "signature": "public.trip_source_read_import_catalogs(uuid,uuid)",
+      "public_execute": false,
+      "security_definer": true,
+      "definition_sha256": "e1fd9179d8f8c90bf3a8c9be4cddc98e286b62d2680b06ad955da9ddf035ecab"
+    }
+  ],
+  "relations": [
+    {
+      "acl": [
+        "supabase_admin=arwdDxtm/supabase_admin",
+        "=r/supabase_admin",
+        "postgres=a*r*w*d*D*x*t*m*/supabase_admin"
+      ],
+      "kind": "v",
+      "name": "extensions.pg_stat_statements",
+      "column_acls": null
+    },
+    {
+      "acl": [
+        "supabase_admin=arwdDxtm/supabase_admin",
+        "=r/supabase_admin",
+        "postgres=a*r*w*d*D*x*t*m*/supabase_admin"
+      ],
+      "kind": "v",
+      "name": "extensions.pg_stat_statements_info",
+      "column_acls": null
+    }
+  ],
+  "memberships": [
+    [
+      "otr_trip_publication_catalog_reader",
+      "postgres",
+      "supabase_admin",
+      true,
+      false,
+      false
+    ]
+  ],
+  "default_acls": [],
+  "database_rights": {
+    "temp": true,
+    "create": false,
+    "connect": true,
+    "public_acl": [
+      "=Tc/postgres",
+      "postgres=CTc/postgres",
+      "supabase_etl_admin=C/postgres",
+      "supabase_storage_admin=C/postgres",
+      "dashboard_user=CTc/postgres",
+      "otr_trip_publication_catalog_reader=c/postgres"
+    ]
+  },
+  "ownership_count": 0,
+  "future_default_acls": []
+}

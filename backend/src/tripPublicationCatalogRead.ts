@@ -92,7 +92,7 @@ export async function readPublicationCatalog(
           );
           if (
             identity.rows.length !== 1 ||
-            identity.rows[0].principal !== "otr_trip_source_command_gateway"
+            identity.rows[0].principal !== "otr_trip_publication_catalog_reader"
           )
             throw unavailable();
           const result = await boundary.run(() =>

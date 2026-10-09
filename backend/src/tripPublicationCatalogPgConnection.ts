@@ -54,7 +54,7 @@ export function createPublicationCatalogPgConnection(
     host: config.host,
     port: config.port,
     database: config.database,
-    user: "otr_trip_source_command_gateway",
+    user: "otr_trip_publication_catalog_reader",
     password: config.password,
     ssl: {
       rejectUnauthorized: true,

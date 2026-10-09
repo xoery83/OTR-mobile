@@ -61,7 +61,7 @@ beforeEach(() => {
     rows: sql.includes("pg_is_in_recovery")
       ? [{ recovery: false }]
       : sql.includes("session_user")
-        ? [{ principal: "otr_trip_source_command_gateway" }]
+        ? [{ principal: "otr_trip_publication_catalog_reader" }]
         : sql.includes("trip_source_read_import_catalogs")
           ? [{ catalog: fixture }]
           : [],
@@ -77,7 +77,7 @@ describe("dormant PostgreSQL catalog lease", () => {
     expect(fake.pool.config).toMatchObject({
       max: 1,
       connectionTimeoutMillis: 1000,
-      user: "otr_trip_source_command_gateway",
+      user: "otr_trip_publication_catalog_reader",
       ssl: { rejectUnauthorized: true },
       options: expect.stringContaining("statement_timeout=5000"),
     });

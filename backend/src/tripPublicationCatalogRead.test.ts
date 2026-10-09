@@ -41,7 +41,7 @@ function gateway(overrides: Partial<DevBackendGateway> = {}) {
   } as unknown as DevBackendGateway;
 }
 function connection(
-  principal = "otr_trip_source_command_gateway",
+  principal = "otr_trip_publication_catalog_reader",
   value: unknown = fixture,
   failure?: unknown,
 ) {
@@ -162,21 +162,24 @@ describe("dormant authenticated Publication catalog", () => {
       readPublicationCatalog(undefined, actor, trip, new AbortController().signal),
     ).rejects.toMatchObject({ status: 503 });
   });
-  it.each(["service_role", "postgres", "authenticated", "anon"])(
-    "rejects actual leased principal %s",
-    async (principal) => {
-      const f = connection(principal);
-      await expect(
-        readPublicationCatalog(f.c, actor, trip, new AbortController().signal),
-      ).rejects.toMatchObject({ status: 503 });
-      expect(
-        f.query.mock.calls.some(([sql]) =>
-          sql.includes("trip_source_read_import_catalogs"),
-        ),
-      ).toBe(false);
-      expect(f.query.mock.calls.at(-1)?.[0]).toBe("ROLLBACK");
-    },
-  );
+  it.each([
+    "service_role",
+    "postgres",
+    "authenticated",
+    "anon",
+    "otr_trip_source_command_gateway",
+  ])("rejects actual leased principal %s", async (principal) => {
+    const f = connection(principal);
+    await expect(
+      readPublicationCatalog(f.c, actor, trip, new AbortController().signal),
+    ).rejects.toMatchObject({ status: 503 });
+    expect(
+      f.query.mock.calls.some(([sql]) =>
+        sql.includes("trip_source_read_import_catalogs"),
+      ),
+    ).toBe(false);
+    expect(f.query.mock.calls.at(-1)?.[0]).toBe("ROLLBACK");
+  });
   it("uses one leased READ COMMITTED READ ONLY observation and fixed parameters", async () => {
     const f = connection();
     expect(
@@ -259,6 +262,30 @@ describe("dormant authenticated Publication catalog", () => {
     done({ disposition: "VERIFIED", user: { id: actor } });
     await Promise.resolve();
     expect(g.readPublicationImportCatalogs).not.toHaveBeenCalled();
+  });
+  it("adds only the dormant Reader session to the existing forward read body", () => {
+    const historical = readFileSync(
+      "supabase/migrations/20261005000900_trip_import_private_catalog_reads.sql",
+      "utf8",
+    );
+    const forward = readFileSync(
+      "supabase/dev-forward/r3-v1/202610090001_publication_catalog_reader.sql",
+      "utf8",
+    );
+    const body = historical.match(/as \$\$(declare result jsonb;[\s\S]*?)\$\$;/)![1];
+    expect(forward).toContain(
+      body.replace(
+        "session_user<>'otr_trip_source_command_gateway'",
+        "session_user not in ('otr_trip_source_command_gateway','otr_trip_publication_catalog_reader')",
+      ),
+    );
+    expect(forward).toContain("nologin password null nosuperuser");
+    expect(forward).not.toMatch(
+      /set role|grant.*writer to otr_trip_publication_catalog_reader/i,
+    );
+    expect(forward.match(/grant execute on function/g)).toHaveLength(1);
+    expect(forward).toContain("R3_CATALOG_READER_ROLE_EXISTS");
+    expect(forward).toContain("R3_CATALOG_READER_CATALOG_DRIFT");
   });
   it("retains immutable SQL authorization/roster bounds and unprovisioned server", () => {
     const sql = readFileSync(

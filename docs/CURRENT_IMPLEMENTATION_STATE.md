@@ -1,3 +1,92 @@
+# R3-A dormant SQL Principal — FINAL OWNER ACCEPTED
+
+2026-10-09. Owner accepted the dormant dedicated Catalog Reader SQL and Backend
+fixed-identity contract, including the F1 correction and independent recheck PASS.
+Corrected extended H1:
+`a56e074a33ea3e3b34c042a0e02c391f0074a5d868ee59e22f66f9ea22446e42`;
+corrected rollback:
+`ce0a1e589877705dd6d982e1be3f5c28d7a778b041c7bc899f8863ad5a5ba3fb`.
+Earlier commitments and pending-review statements below are historical evidence.
+Exactly one local closure commit is authorized at parent
+`d263503b6e6ced9edee977508ffeff94e90ad4df`; canonical main remains unchanged.
+Final closure checks:235 PostgreSQL outcomes,19 TLS/socket cases,58 affected
+suites/1,196 PASS/15 existing skips; typecheck, lint/UI guard, Backend build, scoped
+format/whitespace and preservation PASS. Reader remains initially NOLOGIN/PASSWORD
+NULL; Command Gateway grants remain intact. Hosted forward migration, secret/LOGIN provisioning, Direct Primary TLS
+verification, Backend injection and live-read acceptance require separate gates.
+Composer/C5/C9/providers and device/runtime activation remain CLOSED.
+
+# R3-A F1 independent targeted recheck — PASS
+
+2026-10-09. Original Reviewer reproduced F1 on preserved pre-correction SQL, then
+independently verified corrected235-outcome PostgreSQL matrix and158 added controls
+on fresh disposable fixtures. Extended H0/H1/synthetic H2/reverse commitments and
+both administrator restoration branches/all24 rollback faults match; original
+review is retained byte-for-byte before appended F1 TARGETED RECHECK — PASS.
+Remaining CRITICAL /IMPORTANT /required MINOR:0 /0 /0. No new regressions;
+expanded62 application suites/1,233 PASS/15 existing skips,19 actual TLS/socket
+cases PASS. Typecheck, lint/UI guard, Backend build, scoped format/whitespace and
+preservation PASS; full format retains28 unchanged base issues.
+Ready for Dormant-Code Final Owner Acceptance:YES. Privileged post-validation
+ACL drift and compromised-Reader admitted-Actor disclosure remain documented.
+Hosted/Secret/Direct Primary TLS/Backend injection/Native runtime/device and
+Composer/C5/C9/provider gates remain CLOSED. No production correction or Git ref
+operation. See appended recheck in
+`architecture/OTR_PLATFORM_R3A_SQL_PRINCIPAL_INDEPENDENT_SECURITY_REVIEW.md`.
+
+# R3-A F1 default ACL correction — TARGETED INDEPENDENT RECHECK REQUIRED
+
+2026-10-09. Owner-authorized F1 correction adds transaction-local future table/
+sequence default-ACL rejection to both forward/reverse pre/postconditions and a
+read-only commitment boundary. Normalized PUBLIC/Reader future grants are now
+committed; harmless managed defaults remain unchanged. Corrected extended H1:
+`a56e074a33ea3e3b34c042a0e02c391f0074a5d868ee59e22f66f9ea22446e42`;
+reverse: `ce0a1e589877705dd6d982e1be3f5c28d7a778b041c7bc899f8863ad5a5ba3fb`.
+Old OTR-only hashes and original Independent Review/report text are preserved.
+Two fresh local PostgreSQL fixtures:235 recorded outcomes, including96 atomic
+unsafe-default rejections and24 transition rollback cases;58 affected suites/
+1,196 PASS/15 existing skips. Original probes reject at corrected boundaries;
+a later privileged administrator bypassing validation can still grant access.
+See appended F1 evidence in
+`architecture/OTR_PLATFORM_R3A_SQL_PRINCIPAL_BUILDER_REPORT.md` for adapter details,
+forensic controls, exact hashes and limitations. Targeted independent recheck is
+next; no final Owner, Hosted/secret/TLS/runtime/device/Composer/provider/C5/C9
+acceptance is implied. No Hosted/device operation, deployment or Git ref change.
+
+# R3-A SQL Principal independent review — REQUIRED CORRECTION
+
+2026-10-09. Independent review of exact Builder base d263503 and17 paths:
+**PASS WITH REQUIRED CORRECTIONS**,0 CRITICAL /1 IMPORTANT /0 MINOR.
+F1: unsafe PUBLIC default SELECT leaves H0 unchanged and passes the forward;
+actual disposable TLS Reader can read a future synthetic business table.
+No production correction made. Report:
+`architecture/OTR_PLATFORM_R3A_SQL_PRINCIPAL_INDEPENDENT_SECURITY_REVIEW.md`.
+Both administrator grantor branches and24 forward/reverse transition failures
+restore exact state; H1/synthetic H2/reverse commitments independently match.
+Final two local installs133 recorded outcomes include4 F1 confirmations;
+57 affected suites/1,181 PASS/15 existing skips and19 actual TLS/socket cases PASS.
+Typecheck, lint/UI guard, Backend build, scoped formatting/preservation PASS;
+full formatting retains28 unchanged base issues. Original Builder evidence retained.
+Next: correct F1 and independently recheck before Dormant-Code Final Owner Acceptance.
+Hosted/Secret/Direct Primary TLS/Backend injection/Native runtime and Composer/C5/C9/
+provider gates remain CLOSED. No Hosted/device operation or commit/push/merge.
+
+# R3-A dormant SQL Principal Builder — INDEPENDENT SECURITY REVIEW REQUIRED
+
+2026-10-09. Owner accepted Option B. Isolated Builder base is canonical
+`d263503b6e6ced9edee977508ffeff94e90ad4df`. Dedicated
+`otr_trip_publication_catalog_reader` is proposed NOLOGIN/PASSWORD NULL in a new
+R3 forward artifact; only the protected Catalog read session predicate/EXECUTE
+ACL expands. Existing command gateway and SQL histories remain unchanged.
+Backend fixed user/same-lease identity now require the Reader; server.ts remains
+unprovisioned. See `architecture/OTR_PLATFORM_R3A_SQL_PRINCIPAL_BUILDER_REPORT.md`
+for exact commitments, two disposable PostgreSQL proofs, ambient capabilities,
+limitations, rollback and remaining Owner gates. This is a dormant local Builder,
+not a Hosted migration or runtime acceptance. No commit/push/merge performed.
+Next: independent security review, then separately authorized Hosted forward,
+credential/Direct Primary TLS attestation, Backend injection and live read gates.
+SQLite51–53/offline-first, Composer/C5/C9/provider and Native runtime gates persist.
+
 # R2-Native dormant closure — FINAL OWNER ACCEPTED — 2026-10-09
 
 Owner accepted the dormant iOS receiver, Builder/F1 evidence and appended targeted
