@@ -1,6 +1,37 @@
+# R2-Native dormant closure — FINAL OWNER ACCEPTED — 2026-10-09
+
+Owner accepted the dormant iOS receiver, Builder/F1 evidence and appended targeted
+security recheck PASS; one scoped local closure commit is authorized at parent
+`b35b369e4e206f7f295e59d8e3baa4a5f289eaf2`. Final43 native fixtures/nine header
+observations,19 suites/498 regressions and standalone Swift/Expo compile/link PASS;
+typecheck, lint/UI guard, Backend build and scoped preservation checks PASS.
+This supersedes the pending review/acceptance status retained below. Canonical main
+and Hosted/Principal, runtime/Composer/provider/C5/C9 and device gates stay unchanged.
+The receiver remains dormant; Android/missing native module fails CLOSED.
+
+# R2-Native F1 encoding correction — 2026-10-09
+
+Owner selected identity-only receive following the accepted independent security
+review. The dormant receiver requests identity, rejects encoded/ambiguous headers
+and raw gzip signatures; targeted recheck is required. See the appended F1 evidence
+in `architecture/OTR_PLATFORM_TRANSPORT_R2_NATIVE_RECEIVER_BUILDER_REPORT.md`.
+Native43 body fixtures/nine header observations and independent20-case replay
+PASS;19 suites/498 regression tests PASS. Final standalone iOS core/Expo bridge
+compile/link, autolinking, typecheck, lint/UI guard and Backend build PASS.
+This checkpoint supersedes encoding and compile status in the retained history
+below. No runtime or device acceptance is enabled.
+
 # Current Implementation State
 
 Date: 2026-10-09 (Pacific/Auckland).
+
+## Transport R2-Native Builder — INDEPENDENT REVIEW REQUIRED
+
+- Fresh isolated source at verified local/origin/remote main `b35b369e4e206f7f295e59d8e3baa4a5f289eaf2`; accepted R1 recovered from `/private/tmp/otr-platform-transport-r1-20261009`, SHA-256 recorded in the Builder report. Previous blocked worktree/report preserved.
+- Dormant local iOS Expo receiver and privately registered facade: fixed DEV HTTPS GET, platform TLS/no redirects, decoded-byte bounds4MiB/8KiB before append, native deadline/cancel, one unacknowledged result slot, strict original-text parser and original Account generation/signal preserved. Android/missing module CLOSED; no default caller or global fetch replacement.
+- Native macOS URLSession policy/slot and19 loopback HTTP/TLS fixtures PASS; iOS27 SDK core typecheck, bridge syntax and Apple autolinking PASS. Affected19 suites/498 JS tests, typecheck, lint/UI guard, Backend build and scoped formatting PASS; full formatting retains28 exact-base violations. Final checks are recorded in `architecture/OTR_PLATFORM_TRANSPORT_R2_NATIVE_RECEIVER_BUILDER_REPORT.md`.
+- Native app/Expo bridge linking and device acceptance remain unperformed. URLSession decoded callback chunks can exceed the retained-body ceiling; OS/decoder/bridge memory has no certified total4MiB bound. No Hosted/device, principal/SQL, Composer/provider/C5/C9 or runtime operation, commit/push/merge.
+- Next: Independent Review of dormant receiver only; no artifact/device/runtime authorization is implied.
 
 ## Transport R2-SQL canonical integration — VALIDATED / DORMANT
 

@@ -970,10 +970,25 @@ Mobile captures Account/Trip/generation once and reuses context-bound token refr
 coalescing with one401 replay. Explicit bounded/signal API mode covers token wait,
 fetch, streaming body and schema under one deadline; Publication caps it at30s.
 Error bodies cap at8KiB; no private error details or payload diagnostics are retained.
-Bodies are accumulated with an actual byte cap before JSON parse; missing native
-stream support fails CLOSED. Publication has **no default fetch adapter**: a trusted
-streaming adapter must be injected, and no native adapter is certified or installed.
-HTTPS and redirect denial protect bearer transport.
+Bodies are accumulated with an actual byte cap before JSON parse. Publication has
+**no default fetch adapter**. The dormant iOS R2 facade
+`createPublicationCatalogNativeFetch()` requires the actual version1 local
+`PublicationCatalogReceive` module before token work and accepts only
+`https://api-dev.xoery.art` and this exact GET contract. Its private registration
+alone bypasses the global RN Response streaming-shape guard; arbitrary callbacks
+retain that guard. Missing native code, incompatible module or Android fails CLOSED.
+URLSession counts decoded bytes before append, cancels overflow, rejects every
+redirect and uses platform TLS validation with ephemeral/no-cache/no-cookie state.
+Identity only: request `Accept-Encoding: identity`; reject nonidentity, empty or
+combined Content-Encoding values and raw gzip magic even without that header.
+Local URLSession header-preservation fixtures gate this policy; iOS runtime
+verification remains required before activation. Native monotonic deadline, absolute
+original expiry at dispatch and one held request/result slot fence stalled JS;
+JS retains Account/generation, original signal and one401 refresh ownership.
+Only complete bounded bytes reach the unchanged fatal UTF-8/original-text parser.
+No runtime composition or app/device acceptance is enabled; OS decoder/bridge
+scratch memory is not certified as a4MiB process-memory ceiling. See
+[the R2 Builder report](architecture/OTR_PLATFORM_TRANSPORT_R2_NATIVE_RECEIVER_BUILDER_REPORT.md).
 
 The CLOSED reader accepts an optional original cancellation signal, retains it on
 its admitted handle, and bounds signal-scoped read/provenance validation at30s.

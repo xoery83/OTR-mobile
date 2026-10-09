@@ -38,3 +38,8 @@ supabase/.temp/
 
 expo-env.d.ts
 # @end expo-cli
+
+# Dormant local Publication Catalog Expo module source (generated app ios/ stays ignored).
+!modules/publication-catalog-receive/ios/
+!modules/publication-catalog-receive/ios/*.swift
+!modules/publication-catalog-receive/ios/*.podspec

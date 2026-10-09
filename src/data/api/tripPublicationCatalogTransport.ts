@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  bindPublicationCatalogNativeDeadline,
+  publicationCatalogNativeCapability,
+  PUBLICATION_CATALOG_DEV_ORIGIN,
+} from "@/native/publicationCatalogReceive";
 import { createAuthenticatedApiClient } from "./authenticatedClient";
 import { ApiClientError, type ApiClientOptions } from "./client";
 import { createRequestBoundary, RequestBoundaryError } from "./requestBoundary";
@@ -38,11 +43,14 @@ export function createTripPublicationCatalogTransport(
       z.uuid().parse(context.accountId);
       z.uuid().parse(context.tripId);
       assertAccountRequestGeneration(context);
+      const native = publicationCatalogNativeCapability(options.fetchImplementation);
       if (
         !options.fetchImplementation ||
-        typeof ReadableStream === "undefined" ||
-        typeof Response === "undefined" ||
-        !("body" in Response.prototype)
+        native === false ||
+        (native !== true &&
+          (typeof ReadableStream === "undefined" ||
+            typeof Response === "undefined" ||
+            !("body" in Response.prototype)))
       )
         throw new ApiClientError(
           "Publication transport is unavailable.",
@@ -58,7 +66,10 @@ export function createTripPublicationCatalogTransport(
         url.username ||
         url.password ||
         url.search ||
-        url.hash
+        url.hash ||
+        (native === true &&
+          (options.baseUrl ?? process.env.EXPO_PUBLIC_OTR_API_BASE_URL) !==
+            PUBLICATION_CATALOG_DEV_ORIGIN)
       )
         throw new ApiClientError(
           "Publication transport is unavailable.",
@@ -66,16 +77,20 @@ export function createTripPublicationCatalogTransport(
           undefined,
           "PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE",
         );
-      const boundary = createRequestBoundary(
-        Math.min(options.timeoutMs ?? 30000, 30000),
-        signal ?? options.signal,
-        () => assertAccountRequestGeneration(context),
+      const timeoutMs = Math.min(options.timeoutMs ?? 30000, 30000);
+      const expires = Date.now() + timeoutMs;
+      const boundary = createRequestBoundary(timeoutMs, signal ?? options.signal, () =>
+        assertAccountRequestGeneration(context),
       );
       try {
         await boundary.run(() => assertAccountRequestContext(context, getAccountId));
         const api = createAuthenticatedApiClient(
           {
             ...options,
+            fetchImplementation: bindPublicationCatalogNativeDeadline(
+              options.fetchImplementation,
+              expires,
+            ),
             timeoutMs: Math.min(options.timeoutMs ?? 30000, 30000),
             signal: boundary.signal,
             maxResponseBytes: 4194304,
