@@ -2,6 +2,45 @@
 
 Date: 2026-10-09 (Pacific/Auckland).
 
+## Transport R2-SQL final Owner acceptance — DORMANT LOCAL CLOSURE
+
+- Owner accepts the dormant Backend driver, Builder/F1 history, original Independent Review and appended targeted F1 recheck PASS. Exactly one scoped local closure authorized at parent `ad52275c00ea0d0e2cdd956e6c86eeecfc3fe28d` with the eight accepted Driver/test/package/report/handoff paths; no canonical integration or main advancement.
+- Final closure validation:33 focused driver tests, typecheck, clean lint/UI guard, Backend build, changed-file formatting/whitespace and preservation PASS. Accepted independent physical19/19 and affected55 suites/988 PASS/15 existing skips remain the prior reviewed evidence; physical fixtures were not rerun for this documentation-only closure checkpoint.
+- Original review, appended F1 recheck and Builder/F1 evidence remain unchanged. Fixed principal, strict TLS, direct-primary gate, terminal-dot Pooler rejection, Pool/max1, same-lease SQL and uncertain socket retirement are preserved; `server.ts` remains unprovisioned.
+- Next requires separate canonical integration authorization. Principal LOGIN/ACL design, Hosted/R3 verification, direct-endpoint attestation, Native receiver/device, provider/C5/C9 and runtime injection remain CLOSED. No push, merge, rebase, Hosted/device operation or credential provisioning.
+- Earlier Builder/review/recheck checkpoints below are retained history and superseded by final dormant-code Owner acceptance.
+
+## Transport R2-SQL F1 independent recheck — PASS / FINAL OWNER ACCEPTANCE READY
+
+- Original reviewer reproduced F1 on preserved pre-correction bytes (30 PASS /1 F1 FAIL), then unchanged31 reviewer probes and corrected33 driver tests PASS. Exact production change is terminal-dot normalization for case-insensitive Pooler classification only; TLS/identity/SQL/pool/retirement bytes remain unchanged.
+- Independently rerun actual PostgreSQL/TLS/socket19/19 PASS; affected55 suites988 PASS/15 existing skips. Typecheck, lint/UI guard, Backend build, changed-file formatting/whitespace and preservation PASS. No new regressions;0 CRITICAL /0 IMPORTANT /0 required MINOR remain.
+- Appended `F1 TARGETED RECHECK — PASS` in `architecture/OTR_PLATFORM_TRANSPORT_R2_SQL_DRIVER_INDEPENDENT_SECURITY_REVIEW.md`; original review text retained byte-for-byte. Ready for Dormant-Code Final Owner Acceptance: YES. Closure/integration remains separately authorized.
+- Principal/Hosted/direct-endpoint/Native/runtime gates remain CLOSED. No Hosted/device operation, Builder source change, injection, migration, commit/push/merge/rebase; clean full install remains uncertified. Earlier correction/review sections below are preserved history.
+
+## Transport R2-SQL F1 correction — TARGETED INDEPENDENT SECURITY RECHECK REQUIRED
+
+- Original Independent Review F1 failure reproduced before correction at unchanged `ad52275c00ea0d0e2cdd956e6c86eeecfc3fe28d`; original review text remains exact.
+- One classification-only change strips a single terminal DNS dot before case-insensitive known-Pooler rejection. Configured connection/TLS host,6543 rejection, fixed gateway, Pool/max1, same-lease SQL and physical retirement remain unchanged. Arbitrary DNS/proxy directness remains separately gated.
+- Corrected driver33/33 and unchanged reviewer replay31/31 PASS; affected55 suites/988 PASS/15 existing skips; actual PostgreSQL/TLS/socket replay19/19 PASS. Typecheck, clean lint/UI guard, Backend build, changed-file formatting and preservation PASS. Builder Report F1 appendix: `architecture/OTR_PLATFORM_TRANSPORT_R2_SQL_DRIVER_BUILDER_REPORT.md`.
+- Next: targeted Independent Security Recheck only, then separate Owner acceptance. No Hosted/native/device/runtime injection or Principal/ACL/deployment change, commit/push/merge/rebase.
+- Earlier Builder/review checkpoints below are preserved history and superseded by this correction checkpoint.
+
+## Transport R2-SQL independent security review — REQUIRED CORRECTION
+
+- Independent review at exact `ad52275c00ea0d0e2cdd956e6c86eeecfc3fe28d`: **PASS WITH REQUIRED CORRECTIONS**,0 CRITICAL /1 IMPORTANT /0 MINOR. F1: known pooler host with terminal DNS dot bypasses the direct-only config rejection; source remains uncorrected.
+- Physical socket retirement independently **YES**: original13 plus6 reviewer PostgreSQL/TLS/socket cases PASS. Original22 driver tests PASS;9 added deterministic probes produce8 PASS /1 F1 FAIL. Existing Backend/Transport43 suites822 PASS/15 existing skips; Auth/SQLite53 adds12 suites155 PASS; no existing regression.
+- Typecheck, lint/UI guard, Backend build, changed-file format/whitespace and preservation PASS. Full format retains28 exact-base failures; clean full install remains uncertified.
+- Report: `architecture/OTR_PLATFORM_TRANSPORT_R2_SQL_DRIVER_INDEPENDENT_SECURITY_REVIEW.md`. Next: correct F1 and targeted independent recheck before Dormant-Code Final Owner Acceptance. Principal/Hosted/direct-endpoint/Native/runtime gates remain CLOSED; no source fix, commit/push/merge, Hosted or device operation.
+- The Builder checkpoint below is preserved history and superseded by this review result.
+
+## Transport R2-SQL dormant driver — INDEPENDENT SECURITY REVIEW REQUIRED
+
+- Fresh detached Builder at verified local/origin/remote main `ad52275c00ea0d0e2cdd956e6c86eeecfc3fe28d`; other workstreams preserved.
+- Backend-only `pg@8.16.3` / `@types/pg@8.15.5` adapter retains the accepted leased interface: one process Pool/max1, direct-primary gate, verified chain/hostname TLS, fixed gateway identity/SQL,1s checkout and rollback,5s SQL/15s Backend unchanged, uncertain socket destruction and bounded late completion.
+- Dormant factory only; `server.ts` remains unprovisioned. No role/ACL/migration/Hosted/device/runtime change, commit/push/merge.
+- Actual disposable PostgreSQL/TLS/physical retirement13/13 PASS; deterministic driver22/22 PASS; combined43 suites/822 PASS/15 existing skipped. Typecheck, clean lint/UI guard, Backend build, changed-file formatting and preservation PASS. Builder report: `architecture/OTR_PLATFORM_TRANSPORT_R2_SQL_DRIVER_BUILDER_REPORT.md`.
+- Next: Independent Security Review only. Exact gateway remains NOLOGIN with broader R1 mutation permissions; Owner principal design and forward R3 verification are prerequisites to provisioning. Session Pooler/native/integrated/runtime gates remain CLOSED.
+
 ## Authenticated Transport canonical integration preflight — OWNER REVIEW REQUIRED
 
 - Fresh isolated candidate at verified local/origin/remote main094cf3b, retaining accepted Transport closure afcb69c as MERGE_HEAD under an uncommitted non-fast-forward merge; authorized closure parent7273ac0 remains intact.
