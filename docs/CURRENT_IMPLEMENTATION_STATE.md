@@ -2,6 +2,25 @@
 
 Date: 2026-10-09 (Pacific/Auckland).
 
+## P2c canonical integration preflight — OWNER REVIEW REQUIRED
+
+- Fresh isolated candidate at verified local/origin/remote main
+  `ad52275c00ea0d0e2cdd956e6c86eeecfc3fe28d`, retaining accepted P2c closure
+  `a2ad2ef708ebcc635c0c94e9e726bdad99751aab` as MERGE_HEAD under an uncommitted
+  non-fast-forward merge; closure parent094cf3b remains intact.
+- Only current-state handoff conflicted. Transport and Composer handoffs below,
+  accepted reviews/rechecks and shared historical body are preserved; API merged
+  both accepted blocks automatically. No source compatibility change was needed.
+- Combined39 suites /1,206 tests PASS; typecheck, lint/UI guard, Backend build,
+  changed-file formatting, whitespace and preservation PASS. Accepted Transport
+  cancellation extension and Composer seals/final transaction/recovery stay intact.
+- Exact proposed scope and validation:
+  [P2c integration preflight](architecture/OTR_PLATFORM_P2C_CANONICAL_INTEGRATION_PREFLIGHT.md).
+- Next: Owner review only. SQL Principal/Driver, Hosted, Native Streaming/persistence,
+  Experience/default runtime, C5/C9 and providers remain separately gated. No commit,
+  canonical ref advancement, push, merge into main, rebase or runtime activation.
+  Earlier sections below remain historical checkpoint statements.
+
 ## Authenticated Transport canonical integration preflight — OWNER REVIEW REQUIRED
 
 - Fresh isolated candidate at verified local/origin/remote main094cf3b, retaining accepted Transport closure afcb69c as MERGE_HEAD under an uncommitted non-fast-forward merge; authorized closure parent7273ac0 remains intact.
@@ -19,6 +38,57 @@ Date: 2026-10-09 (Pacific/Auckland).
 - Original seven independent F1 failures reproduced; strict original-text parsing now rejects ambiguous Catalog evidence at Backend and Mobile before schema/canonicalization. SQLite53 zero-write rejection and strict-parser A→B→A controls added. Original Independent Review remains exact.
 - Final affected17 suites /433 PASS; typecheck, clean lint/UI guard and Backend build PASS. Formatting/preservation recorded in `architecture/OTR_PLATFORM_AUTHENTICATED_PUBLICATION_TRANSPORT_BUILDER_REPORT.md`.
 - Final Owner accepted dormant read-only code, Builder F1 correction and appended Targeted Independent Security Recheck PASS (14 independent cases). Scoped local closure only; no canonical integration or runtime authorization. Historical probe harness limitations remain documented in the F1 evidence. Actual SQL principal/driver/Hosted contract, native acceptance and Integrated C4 remain separate gates; no credentials, migrations, runtime/provider/C5/C9 activation, device/Hosted access, push/merge.
+
+## P2c final Owner acceptance — DORMANT COMPOSER ACCEPTED
+
+- Owner accepts the dormant local Composer, original Independent Review and appended
+  F1 Targeted Independent Recheck PASS, including the four minimal contract deltas.
+- Exactly one scoped local closure commit is authorized at parent
+  `094cf3beb6b05f2a7f1c8cca1fa007ed630651c4`, containing the accepted twelve-file
+  implementation/evidence scope and this handoff.
+- Final closure validation:54 focused Composer tests, typecheck, full lint/UI guard,
+  changed-file formatting, whitespace and preservation checks PASS. Earlier affected
+  matrix:818 tests PASS; original19 and extra6 independent probes PASS.
+- Exact recovery ownership correction, private seals, final owning transaction,
+  durable CAS, UNCHANGED, replay and uncertainty contracts remain accepted and dormant.
+  SQLite1–53, existing owning repositories, C2/Continuation and runtime/UI are preserved.
+- Next requires separate canonical integration authorization/current-main gate.
+  Transport, native, Experience integration, provider and C5/C9 gates stay CLOSED.
+  No push, merge, rebase, canonical main advancement, Hosted/device operation or
+  runtime activation is authorized by this local closure.
+- Earlier Builder/recheck-required sections below are retained checkpoint history.
+
+## P2c F1 recovery correlation correction — TARGETED INDEPENDENT RECHECK REQUIRED
+
+- Original independent F1 probe reproduced wrong-Job receipt ABSENT; corrected
+  recovery validates immutable C2 Account/Batch/Job ownership before exact lookup.
+  Wrong/missing/corrupt ownership is UNAVAILABLE; historical/offline recovery remains.
+- Original19 independent probes and54 Composer tests PASS; affected21-file/818-test
+  matrix and validation are recorded in the appended
+  [Builder evidence](architecture/OTR_PLATFORM_P2C_COMPOSER_BUILDER_REPORT.md).
+- Original Independent Review and SQLite52/53/Adapter/owning contracts remain unchanged.
+  Next: targeted Independent Recheck, then Owner acceptance. No runtime/Transport/
+  Experience/C5/C9/provider activation, Hosted/device operation or Git closure.
+
+## P2c dormant Composer Builder — INDEPENDENT REVIEW REQUIRED
+
+- Owner accepted the P2c preflight and four minimal deltas. Fresh isolated Builder
+  worktree starts at verified local/origin/remote main
+  `094cf3beb6b05f2a7f1c8cca1fa007ed630651c4`.
+- Explicit Composer composes complete C2 intake, trusted SQLite53 Membership,
+  P2b-A observation and C4a into SQLite52 immutable history. Private Adapter seals
+  are revalidated inside the final owning append transaction; original public
+  Adapter revision1 and accepted CAS/replay/body contracts are preserved.
+- Latest logical-content UNCHANGED, durable revision recomputation and receipt-only
+  recovery are historical-only. Unknown append outcomes prevent NEW admission until
+  exact resolution. The separate C3 projection is read-only; UI/Job DTOs are unchanged.
+- Validation and exact file scope:
+  [P2c Builder report](architecture/OTR_PLATFORM_P2C_COMPOSER_BUILDER_REPORT.md).
+  No migration, default factory, app caller, lifecycle hook, notification, scheduler,
+  Transport/provider/C5/C9/business write or Hosted/device operation.
+- Next: Independent Review only, then Owner acceptance and separately authorized
+  canonical integration. No commit, push, merge or runtime activation in this stage.
+  Earlier sections below remain historical checkpoint statements.
 
 ## P2b-A final Owner acceptance — DORMANT ADAPTER ACCEPTED
 
