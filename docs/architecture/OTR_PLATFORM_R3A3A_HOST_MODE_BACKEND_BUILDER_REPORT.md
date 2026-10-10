@@ -693,3 +693,103 @@ records, preserving the previously uncommitted retry outcome bytes. No unrelated
 worktree/untracked files or original review bytes changed.
 
 **STOP — NETWORK PRESERVATION DIAGNOSIS COMPLETE.**
+
+
+## Final instrumented Host-mode retry — 2026-10-11 NZ / ROLLED BACK
+
+One Owner-authorized attempt ran against canonical
+`a95348ab1fe929617485d559b38d90149eeaa2a5`. Exact accepted controller SHA256
+`c8f6723042f3ad7f073f0bc408d983edc9f9f4daece3b74ddb567da20b1da854` and handoff
+hash verified. Canonical/actual remote main matched, Docker image build inputs
+unchanged from reviewed release3e74628; pinned Host image
+`sha256:51432b86743f3a7e24b1523dfe004961a9b0cc89f6b41f6e053af03492c67574`
+and Bridge rollback image
+`sha256:d2e512b1841db689ff64948f4663c4660a20fc181914aee3412483a96c84d0f5`
+verified before stop. Fresh reciprocal endpoint/veth ownership was attested.
+Both effective Compose guards selected exclusively backend.rotated.env through
+accepted private override. Rotated credential metadata and Caddy state matched
+prior accepted evidence. Eleven diagnostic tests and combined-probe syntax PASS.
+No source, deployment-contract or guard correction was made during this attempt.
+
+Host startup and live assertions PASS: sole healthy exact pinned Host image, no
+published ports, HTTP127.0.0.1:8787 only; four non-loopback IPv4 and one IPv6
+connection attempts ECONNREFUSED; local/public HTTPS health200, protected401;
+privileged new-key read-only API200 (body discarded). Direct Primary AAAA
+2406:da1c:4c7:f800::7dd1 TCP5432/TLS1.3 with hostname/chain verification PASS;
+wrong hostname and untrusted chain REJECTED, no SQL authentication. Caddy routing
+PASS, operator Unix Admin200, same-filesystem Backend UID EACCES, in-container
+Unix socket ENOENT, TCP Admin DENIED/absent. Caddy was not reloaded/restarted.
+
+**Mandatory guard failed; Host-mode NOT accepted.** At
+2026-10-10T17:03:16.542952Z, UNRELATED_INTERFACES contained exactly one mismatch:
+
+- Path `/interfaces/br-ef4d1e4c04f6/flags`, expected/observed ifindex44.
+- Expected normalized flags `[BROADCAST, MULTICAST, UP]`.
+- Observed normalized flags `[NO-CARRIER, BROADCAST, MULTICAST, UP]`.
+- Ownership `backend_bridge`, not an unrelated interface. Old attested Backend
+  4cbe1a22487a00bb76bfb771aec87d7d95d1cd893c4a4ded636850dd2b5f0197,
+  endpoint f901299c87f986565b35b956a405369284983a23c0693365f7ab23e61ce5c0e9,
+  vetha3fdb9b/395; new Host attachment null as expected.
+
+The exact NO-CARRIER mismatch is now CONFIRMED for this attempt. The controller
+rejects an extra carrier flag on the vacated Backend bridge; the earlier failure
+had no retained snapshot and cannot retrospectively be certified. Strict checks
+were not weakened. Remaining Host preservation checks after this first assertion
+were short-circuited and are not claimed PASS.
+
+Durable safe interface projections and mismatch were written/fsynced under root
+0700 `/opt/otr/dev-backend/env/r3a3a-host-retry-a95348ab1fe9`, before rollback began
+2026-10-10T17:03:16.543210Z. Final read-only verification confirmed diagnostic
+files root-owned0600 and exact retained hashes. Host mismatch SHA256
+`95f36c7bf6c42352335a609ab5a13234f5bf5a2ab52ba418b18ee23b8f53c9a5`;
+Host interface projection SHA256
+`7360ea8057b2e7a9db640ad7184d48dde6ec69b4d2c406463aabfaa96a33e4a1`.
+Original snapshots/result/status-only timing retained privately; no credentials,
+tokens, private response payloads or resolved secret environments displayed.
+Local metadata evidence under owner0700
+`/private/tmp/otr-r3a3a-instrumented-host-20261011`, files0600.
+
+One automatic pinned Bridge rollback PASS. Live Backend
+`f8703bb976d44ce98aa266724d151667d8e1de6c3436115d62e3f897081b218a`,
+network dev-backend_default, rollback imaged2e512b, published only127.0.0.1:8787.
+Fresh veth68ed7a9/397 attested; full rollback unrelated interface/container/endpoint,
+route/firewall/forwarding/Docker-daemon preservation PASS. Unrelated listeners,
+Caddy process/configuration and private credential metadata unchanged. Rollback
+local/public health200, protected401; final private read-only API200. No exposed
+old credential selection, host-wide network modification or second retry.
+
+Whole maintenance including rollback51.735s, under120s. Status-only sampling
+observed forward outage0.655s (bracket upper0.747s) and rollback outage0.755s
+(upper0.846s), approximately1.410s combined observed /1.593s combined bracket
+upper; sampled estimates, not exact continuous downtime. Aggregate26.180s spans
+a healthy interval and must not be reported as a continuous outage.
+
+Reader NOLOGIN/PASSWORD NULL and Runtime/Native/Composer/C5/C9/provider gates
+preserved without provisioning/activation or Hosted SQL mutation. Authenticated
+Ledger bootstrap DEFERRED, not PASS. Old API key deletion Owner-confirmed,
+authoritative verification PENDING. Any carrier-guard correction and another
+live retry require a new Owner direction; current state remains healthy Bridge.
+Only this report/current-state evidence updated, uncommitted; canonical unchanged.
+
+**STOP — R3-A3A INSTRUMENTED HOST-MODE RETRY COMPLETE.**
+
+## Attested Backend bridge NO-CARRIER correction — 2026-10-11
+
+Retained Host mismatch hash and fresh read-only ownership verified: approved
+dev-backend_default network ef4d1e4c04f6 has only Backend f8703bb9 attached;
+reciprocal veth68ed7a9/397 is its sole bridge port. Exact bridge44 remains
+br-ef4d1e4c04f6. Credential metadata/Caddy match accepted prior baseline.
+
+Correction limited to the existing carrier normalization: on the attested bridge,
+NO-CARRIER may appear only when no ports remain, after the existing UP, operstate
+and LOWER_UP checks. Strip that empty-port carrier flag only; active bridge
+NO-CARRIER rejects. All other flags, bridge fields and unrelated interfaces remain
+exact; routes/firewall/container/address/daemon comparisons unchanged. Existing
+exclusive diagnostic persistence before rollback is unchanged. No controller
+redesign, application/credential/deployment configuration or review bytes changed.
+
+Twelve Python tests PASS, including empty bridge carrier lifecycle and unrelated
+bridge/interface, extra flag, MTU/index, active carrier and shared-port negatives;
+existing rollback/route/address/firewall/ownership drift and custody diagnostics
+retained. All38 immutable credential/image and combined probe tests PASS.
+One live deployment result will be appended after scoped normal integration.

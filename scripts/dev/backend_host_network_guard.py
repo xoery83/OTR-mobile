@@ -174,7 +174,9 @@ def preserved(before, after, direction, diagnostics=None):
                 remaining = [i for i in snapshot['links'] if i.get('master') == old['bridge']]
                 require(link['operstate'] == ('UP' if remaining else 'DOWN')
                         and ('LOWER_UP' in flags) == bool(remaining), 'BRIDGE_CARRIER')
-                link['flags'] = [flag for flag in flags if flag != 'LOWER_UP']
+                require('NO-CARRIER' not in flags or not remaining, 'BRIDGE_NO_CARRIER')
+                link['flags'] = [flag for flag in flags
+                                 if flag != 'LOWER_UP' and not (flag == 'NO-CARRIER' and not remaining)]
                 del link['operstate']
             result.append(link)
         return canonical(result)

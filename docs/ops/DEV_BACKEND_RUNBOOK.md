@@ -384,3 +384,12 @@ Never use the forward image variable/host profile for rollback, rebuild the old 
 rely on a mutable tag, prune the bridge or modify credentials to make checks pass.
 Caddy Unix isolation can remain in place during Backend rollback. Remove only private
 preflight files after evidence retention; no deployment command ran in the correction.
+
+### Attested Backend bridge carrier flag — R3-A3A correction
+
+The empty attested dev-backend bridge may add NO-CARRIER after its Backend veth
+is removed. The guard validates administrative UP, operstate/LOWER_UP against
+remaining ports and rejects NO-CARRIER on an active bridge. Only this bridge's
+empty-port NO-CARRIER is normalized; all other flags/fields and unrelated
+interfaces remain exact. Rollback attests the fresh peer and validates restored
+carrier. Persist diagnostics before rollback; never suppress unrelated drift.

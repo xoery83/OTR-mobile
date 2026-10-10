@@ -1,3 +1,34 @@
+## Latest R3-A3A carrier correction — 2026-10-11 / DEPLOYMENT AUTHORIZED
+
+- Exact retained NO-CARRIER failure and sole Backend bridge endpoint/port verified.
+  Guard normalizes NO-CARRIER only on the attested empty Backend bridge and rejects
+  active/shared/unrelated carrier drift; all other fields and comparisons retained.
+- Twelve guard tests plus38 image/credential/probe tests PASS. Correction isolated
+  to guard/test, runbook and incremental evidence. One bounded live attempt follows
+  normal integration; rotated credential and pinned Bridge rollback preserved.
+- Reader/Runtime gates CLOSED; member Ledger smoke DEFERRED; authoritative old-key
+  revocation remains PENDING. No live acceptance claimed before execution.
+
+## Latest R3-A3A instrumented Host retry — 2026-10-11 / ROLLED BACK
+
+- One authorized attempt on canonicala95348a; accepted controller/hash and fresh
+  veth ownership verified. Host exact immutable image/rotated env, loopback-only
+  HTTP and non-loopback denial, health200/protected401/API200, Caddy isolation and
+  Direct IPv6/TLS1.3 hostname/chain positive/negative checks PASS.
+- Exact failure CONFIRMED at2026-10-10T17:03:16.542952Z:
+  `/interfaces/br-ef4d1e4c04f6/flags`, index44, ownership backend_bridge;
+  normalized `[BROADCAST,MULTICAST,UP]` gained NO-CARRIER when Backend veth removed.
+  Durable root0700/0600 structured evidence persisted before rollback. No guard
+  weakening; subsequent Host preservation checks short-circuited, not certified.
+- Automatic pinned Bridge rollback PASS; sole healthy Backendf8703bb9, imaged2e512b,
+  loopback127.0.0.1:8787 publication, rotated env retained. Full rollback preservation,
+  Caddy process/config/Admin isolation and final health200/protected401/API200 PASS.
+- Whole attempt51.735s; sampled forward outage0.655s /rollback0.755s (combined upper
+  bracket1.593s). No second retry, source correction or unrelated live mutation.
+  Exact details in Builder report; outcome documents uncommitted, canonicala95348a.
+- Host-mode NOT accepted. Reader/Runtime gates CLOSED, member Ledger smoke DEFERRED,
+  authoritative old-key revocation PENDING. Next correction/retry needs Owner direction.
+
 ## Latest R3-A3A preservation diagnosis — 2026-10-11 / OWNER REVIEW
 
 - Exact DEV mismatch/root cause UNKNOWN: failed Host snapshot was not retained before

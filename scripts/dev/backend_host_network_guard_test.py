@@ -118,16 +118,41 @@ class DiagnosticTests(unittest.TestCase):
             self.assertEqual(diagnostic.stat().st_mode & 0o777, 0o600)
             self.assertTrue((pathlib.Path(directory) / 'preservation-host-interfaces.json').exists())
 
-    def test_carrier_flag_is_diagnosed_without_weakening_guard(self):
+    def test_attested_empty_bridge_no_carrier_allowed(self):
         before = fixture()
         after = host(before)
         after['links'][0]['flags'].append('NO-CARRIER')
-        rows = []
-        with self.assertRaisesRegex(AssertionError, 'UNRELATED_INTERFACES'):
-            preserved(before, after, 'host', diagnostics=rows.append)
-        self.assertEqual(rows[0]['mismatches'][0]['path'], '/interfaces/' + BRIDGE + '/flags')
-        self.assertEqual(rows[0]['mismatches'][0]['observed'], ['UP', 'NO-CARRIER'])
-        self.assertEqual(rows[0]['mismatches'][0]['ownership'], 'backend_bridge')
+        self.assertEqual(preserved(before, after, 'host')['result'], 'PASS')
+
+    def test_carrier_exception_remains_narrow(self):
+        for name in ['unrelated_bridge', 'unrelated_interface', 'extra_flag',
+                     'bridge_mtu', 'bridge_index', 'active_no_carrier', 'shared_port']:
+            with self.subTest(name=name):
+                before = fixture()
+                after = host(before)
+                after['links'][0]['flags'].append('NO-CARRIER')
+                if name in ['unrelated_bridge', 'unrelated_interface']:
+                    link = {'ifname': 'br-other' if name == 'unrelated_bridge' else 'eth-other',
+                            'ifindex': 90, 'flags': ['UP'], 'mtu': 1500}
+                    before['links'].append(copy.deepcopy(link))
+                    link['flags'].append('NO-CARRIER')
+                    after['links'].append(link)
+                elif name == 'extra_flag':
+                    after['links'][0]['flags'].append('PROMISC')
+                elif name == 'bridge_mtu':
+                    after['links'][0]['mtu'] = 1400
+                elif name == 'bridge_index':
+                    after['links'][0]['ifindex'] = 99
+                elif name == 'active_no_carrier':
+                    before['links'][1]['flags'].append('NO-CARRIER')
+                else:
+                    port = {'ifname': 'vethshared', 'ifindex': 91, 'master': BRIDGE}
+                    before['links'].append(copy.deepcopy(port))
+                    after['links'].append(port)
+                    after['links'][0]['operstate'] = 'UP'
+                    after['links'][0]['flags'].append('LOWER_UP')
+                with self.assertRaises(AssertionError):
+                    preserved(before, after, 'host')
 
     def test_indices_presence_and_lifecycle_attributes_are_reported(self):
         for field, value in [('ifindex', 99), ('link_index', 99), ('link_netnsid', 99), ('qdisc', 'fq')]:
