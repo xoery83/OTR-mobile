@@ -1,3 +1,64 @@
+# R3-A3B dormant credential provisioning — FINAL OWNER ACCEPTED
+
+2026-10-10. Owner accepts the dormant fail-closed implementation and the original
+proofs, Builder/Independent Review, F1/F2 recheck and final F3 targeted PASS.
+Exactly one scoped local closure commit is authorized at parent
+`d2c904efb22090d9a1c51fd1be63a3bb5780c8cc`; canonical main stays unchanged.
+Database-disabled state remains distinct from complete custody UNAVAILABLE.
+Unknown/unrecognized custody never produces DORMANT; uncertain credential mutation
+is observed/reconciled without automatic replay. Fixed Reader, SCRAM, finite expiry,
+rotation by day14, verified Direct Primary TLS and explicit session retirement persist.
+Accepted synthetic proofs and327 affected regressions/13 existing skips remain the
+validation boundary; original reports and all appended rechecks are preserved.
+Next: separately authorized host/Hosted/custody prerequisites only. Complete custody
+acceptance and Hosted provisioning remain CLOSED, as do Backend injection/deployment,
+runtime/device and Composer/C5/C9/provider activation. No push/merge/rebase authorized.
+
+# R3-A3B F3 custody correction — FAIL CLOSED / TARGETED RECHECK REQUIRED
+
+2026-10-10. Original independent unexpected-backup DORMANT failure reproduced and
+closed. Strict bounded metadata inventory rejects unknown/unsafe entries without
+deleting them. Emergency database revocation/session termination works despite
+damaged or unwritable journal. F1/F2 negatives, UNKNOWN/lost-ACK recovery, lifecycle
+and cancellation/FATAL secrecy probes PASS;327 regressions PASS,13 existing skips;
+required static checks PASS. Review and appended rechecks preserved byte-for-byte.
+Complete DORMANT acceptance is **UNAVAILABLE**, even after a clean inventory:
+existing advisory flock cannot exclude an uncooperative privileged writer. Durable
+CUSTODY_INCOMPLETE blocks automatic new provisioning; no filesystem architecture added.
+Next: targeted independent recheck of fail-closed correction. Hosted provisioning NO.
+See appended F3 Builder Report; no Hosted/Production, runtime/device or Git operation.
+
+# R3-A3B F1/F2 corrections — TARGETED INDEPENDENT RECHECK REQUIRED
+
+2026-10-10. Original independent SIGKILL/journal and candidate-fsync negatives
+reproduced before correction and rerun byte-for-byte after correction. Checked,
+durable journal staging recovery and schema rejection close F1. Verified retirement
+includes candidate.new; cleanup/durability failures return CUSTODY_INCOMPLETE and
+never DORMANT, closing F2. Emergency disable checks fixture project/verified TLS,
+fixed Reader and administrator authority independently of local journal contents.
+Actual role/session observations gate recovery; no uncertain mutation retries.
+262 application regressions,65 additional security tests and real PostgreSQL probes
+PASS;13 existing platform skips. Typecheck/lint/UI guard/Backend build PASS.
+Original Independent Review preserved byte-for-byte; Builder Report appended.
+No Hosted/Production access, injection/deployment, devices, activation or Git refs.
+Next: targeted independent F1/F2 recheck only. Hosted provisioning remains NO;
+actual Hosted/Apport/PANIC/WAL/backup and exact null-expiry restoration not accepted.
+
+# R3-A3B hardened credential Builder — INDEPENDENT SECURITY REVIEW REQUIRED
+
+2026-10-10. Isolated Builder at canonical d2c904e; fresh read-only Hosted H1 matches
+a56e074a…e42. Hosted Reader remains NOLOGIN/PASSWORD NULL, expiry NULL, limit1,
+zero sessions. Dormant Python/libpq fixture module closes reproduced cancel/FATAL
+log and diagnostic-output paths; UNKNOWN blocks retries and reconciles a real
+unconsumed COMMIT response. Rotation/disable explicitly terminate old sessions.
+Synthetic PostgreSQL17.6/Supautils3.4.0 checks pass;262 scoped regressions and
+typecheck pass. No Principal/Driver/runtime contract or deployment change.
+Exact Hosted build, server PANIC/dumps/WAL/backups and actual host Apport/retention
+remain uncertified. Disable restores NOLOGIN/password NULL but retains finite
+expiry metadata in the fixture. Independent review YES; Hosted provisioning NO.
+Report: `architecture/OTR_PLATFORM_R3A3B_HARDENED_PROVISIONING_BUILDER_REPORT.md`.
+STOP for independent review; no commit/push/merge, injection or activation.
+
 # R3-A dormant SQL Principal — FINAL OWNER ACCEPTED
 
 2026-10-09. Owner accepted the dormant dedicated Catalog Reader SQL and Backend
