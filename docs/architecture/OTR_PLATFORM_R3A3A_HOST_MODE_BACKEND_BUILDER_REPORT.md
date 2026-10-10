@@ -552,3 +552,144 @@ Scope: only guard/test, runbook, this appendix and incremental current-state han
 Normal scoped integration precedes one Owner-authorized120-second maintenance attempt;
 Caddy isolation already active, so no Caddy restart/reload is planned. Exact prior
 Bridge image d2e512b plus exclusive rotated credential remain rollback inputs.
+
+
+### Bounded live retry result — ROLLED BACK / 2026-10-10
+
+Canonical main/local/origin/remote synchronized at
+`63ea4951be1f21290c077b9c0bde4a1d89bd01ec`. All Dockerfile/COPY/package application
+build inputs are byte-identical to accepted3e74628; the existing pinned Host image
+`sha256:51432b86743f3a7e24b1523dfe004961a9b0cc89f6b41f6e053af03492c67574`
+was reverified against the canonical input manifest and original private release.
+Exclusive rotated env and both effective immutable forward/Bridge rollback guards
+passed. Caddy existing config/drop-in/socket/operator state verified, with no reload
+or restart. Before any service operation, a one-time controller parity comparison
+incorrectly included the Bridge-only build stanza and stopped. It was restored to
+the accepted comparison; exact no-service-attempt state and staged-image files were
+verified before resuming. This no-mutation stop is retained separately and does not
+represent another deployment attempt.
+
+Exactly one Host-mode attempt started at09:26:47.399UTC. Candidate reached healthy
+status with reviewed image, host namespace, no published ports/mounts and UID10001.
+Owned listener127.0.0.1:8787 only; four non-loopback IPv4 and one IPv6 ingress probes
+refused. Local/public health200, protected401, new-key privileged read-only API200,
+Caddy Unix denial/operator200 and TCP Admin absence passed. The corrected **combined
+live probe actually PASS**: Direct AAAA2406:da1c:4c7:f800::7dd1, IPv6TCP5432,
+TLS1.3/verified chain+hostname, wrong-hostname and empty-trust negatives rejected,
+Backend Unix ENOENT and all three alternate host-local TCP Admin addresses refused.
+No SQL StartupMessage/authentication, Reader credential or business write occurred.
+
+Mandatory preservation then failed at **2026-10-10T09:27:17.970635+00:00** with exact assertion
+`UNRELATED_INTERFACES`: expected canonical equality of all host interface metadata
+after the exact attested service-veth exclusion/sole-bridge carrier normalization;
+observed inequality. **Live Host guard acceptance BLOCKED**, despite passing
+synthetic tests. The controller did not persist the failed Host snapshot before
+rollback; the differing interface/field cannot be established from retained evidence.
+Do not infer a benign carrier issue or certify absence of transient unrelated drift.
+No guard weakening or speculative infrastructure correction was performed after
+failure, and no second live retry occurred.
+
+Automatic pinned Bridge rollback **PASS**, including freshly attested endpoint
+f901299c87f986565b35b956a405369284983a23c0693365f7ab23e61ce5c0e9, vetha3fdb9b/395,
+reciprocal peer2, same network/IP and rotated credential. Full rollback preservation
+PASS for unrelated interfaces/addresses/routes/endpoints/containers, firewall,
+forwarding/host settings and Docker daemon/networks. Final container
+`4cbe1a22487a00bb76bfb771aec87d7d95d1cd893c4a4ded636850dd2b5f0197`, image
+`sha256:d2e512b1841db689ff64948f4663c4660a20fc181914aee3412483a96c84d0f5`, healthy `dev-backend_default`, only127.0.0.1:8787 publishing.
+Local/public health200, protected401 and a final private Backend API read200. Caddy
+PID/config and private rotated-env/override metadata unchanged. All protected original
+incident evidence and unused candidate custody retained; no exposed old-key fallback.
+
+Complete maintenance attempt including rollback52.013s, within120s. Sampled forward
+HTTPS unavailability0.772s (bracket upper0.863s), rollback0.829s (upper0.920s).
+The original aggregate26.413s spans the healthy interval between those outages and
+is **not continuous downtime**. Status-only samples, pre-stop stop, source/hash
+manifest and final verification remain0600 under local0700
+`/private/tmp/otr-r3a3a-host-retry-20261010`; remote root-private results/baselines/pinned
+overrides under `/opt/otr/dev-backend/env/r3a3a-host-retry-63ea4951be1f`.
+
+Host-mode **ROLLED BACK**, not accepted; another attempt requires separate Owner
+authorization and actual failed-interface evidence/guard resolution. Authenticated
+Ledger bootstrap remains DEFERRED. Authoritative old-key revocation verification
+PENDING (Owner-confirmed deletion); Reader NOLOGIN/PASSWORD NULL preserved by
+non-access, with provisioning/LOGIN/password/authenticated Direct/same-lease/live read
+and runtime gates CLOSED. No Production, Hosted SQL mutation, Native/device,
+Composer/C5/C9/provider operation or force/unrelated Git change.
+
+**STOP — R3-A3A HOST-MODE RETRY COMPLETE: ROLLED BACK.**
+
+
+## Owner-authorized network preservation diagnosis — 2026-10-11
+
+**Original root cause UNKNOWN; exact DEV mismatch field UNKNOWN. Diagnostic coverage
+PASS, strict guard retained.** The retained failed controller asserts
+`links(before) == links(after)` after canonical JSON sorting. It failed
+UNRELATED_INTERFACES at2026-10-10T09:27:17.970635Z. Expected/observed Host snapshot was
+not saved: its `after.json` write occurred only after all checks passed, then rollback
+replaced the in-memory after snapshot. Retained before and restored-Bridge snapshots
+cannot reconstruct a transient Host-state field difference. No live transition,
+Backend/Caddy operation, remote credential operation or Hosted access occurred here.
+
+The collector uses `ip -j link` plus only detailed `linkinfo.info_kind`, not statistics
+mode. Exact compared fields in retained schema are address, broadcast, flags, group,
+ifindex, ifname, link_index, link_netnsid, link_type, linkinfo.info_kind, linkmode,
+master, mtu, operstate, qdisc and txqlen. Counters/timestamps were not collected.
+Backend-owned old/new peers are excluded after attestation; the own bridge drops
+LOWER_UP and operstate only after explicit carrier/admin checks. All remaining fields
+stay exact, including bridge flags and unrelated interface indexes/namespace indexes.
+Their possible lifecycle sensitivity is not permission to ignore them. A synthetic
+NO-CARRIER flag case reproduces `/interfaces/<Backend bridge>/flags` with ownership
+backend_bridge, but **does not prove that field caused the original DEV failure**.
+No speculative normalization/correction was made.
+
+Change limited to diagnostics in existing `backend_host_network_guard.py`, immediate
+tests and runbook/evidence. `preserved()` still evaluates the same equality and raises
+the same assertion. An optional callback supplies at most32 field mismatches with
+safe expected/observed values, presence/index and ownership, with count/truncation.
+Fixed known interface fields/value shapes only; arbitrary unknown attributes/values
+redact. `preserved_with_evidence()` writes/fsyncs safe expected/observed interface
+projections (at most128 per snapshot, explicit truncation, total byte cap256KiB) under
+owner0700 custody to exclusive0600 files before checking. It writes/fsyncs mismatch
+output before raising, so rollback entry can consume already durable evidence. No
+raw container environment/credential/request/business payload enters diagnostics.
+Prior evidence is not overwritten, redacted or deleted.
+
+Prepared, compiled the existing one-time controller with both preservation calls
+changed to that wrapper and mismatch emission before automatic rollback. Public
+source retained at
+`/private/tmp/otr-r3a3a-network-diagnosis-20261011/remote-controller-instrumented.py`,
+SHA256 `c8f6723042f3ad7f073f0bc408d983edc9f9f4daece3b74ddb567da20b1da854`. It was **not executed** and is not deployment authorization;
+future payload/attestation/source inputs must be refreshed and frozen under a new
+Owner-authorized attempt. Controller source/order checks and the tested wrapper
+confirm evidence is available before rollback begins, including failure paths.
+
+Validation:11 Python tests PASS locally and in a disposable network-disabled,
+read-only Linux container with all capabilities dropped and no host mounts. Tests
+cover expected Host/Bridge lifecycle, existing unrelated drift negatives, exact
+field paths/ownership, indices/namespace attributes/presence, NO-CARRIER diagnostic,
+redaction/truncation, custody, non-overwrite and evidence available at rollback entry.
+All38 accepted immutable-image/credential/combined-probe tests PASS. Python and
+prepared-controller compile/order checks and git whitespace PASS. Initial Docker
+mount sharing and native namespace/peer commands failed before a usable kernel
+snapshot; available image uses BusyBox ip, not the DEV iproute2 collector. Native
+kernel/iproute2 reproduction is **not certified**; synthetic fixtures are identified
+honestly. Every task-owned container removed. No full Platform regression/security
+review, application rebuild or independent review rewrite was performed.
+
+**Ready for one instrumented retry YES, only after separate Owner authorization.**
+The missing evidence is precisely the failed Host normalized interface field/value
+pair, with its interface name/index and ownership before rollback. Proposed attempt
+uses fresh reciprocal current Backend endpoint/veth attestation, unchanged immutable
+Host/Bridge guards and exclusive rotated credential, current Caddy isolation, the
+checked combined probe and new durable diagnostic wrapper. Capture diagnostics
+before auto-rollback on any failure; do not accept a failed guard or retry repeatedly.
+No actual Host-mode acceptance is claimed. Current healthy Bridge and protected
+credential/Caddy are preserved by non-operation, not a new live acceptance test.
+Reader/runtime gates CLOSED; authenticated Ledger smoke DEFERRED; old-key deletion
+Owner-confirmed / authoritative verification PENDING.
+
+Scoped integration includes guard/test, runbook and incremental Builder/current-state
+records, preserving the previously uncommitted retry outcome bytes. No unrelated
+worktree/untracked files or original review bytes changed.
+
+**STOP — NETWORK PRESERVATION DIAGNOSIS COMPLETE.**

@@ -1,3 +1,37 @@
+## Latest R3-A3A preservation diagnosis — 2026-10-11 / OWNER REVIEW
+
+- Exact DEV mismatch/root cause UNKNOWN: failed Host snapshot was not retained before
+  rollback. Compared link fields include flags, indices/namespace indices, addresses,
+  MTU, qdisc and kind; no counters/timestamps. NO-CARRIER fixture is a hypothesis.
+- Strict equality/exclusions unchanged. New bounded, allowlisted field/ownership
+  diagnostics and owner0700/0600 exclusive evidence wrapper persist/fsync before
+  guard/rollback. Prepared controller uses it in both paths; not executed live.
+- Eleven Python fixture tests local/disposable Linux PASS plus38 prior controls;
+  compile/order/whitespace PASS. Synthetic transition fixtures clearly identified;
+  native iproute2 reproduction not certified. Disposable resources removed.
+- Ready for one instrumented retry YES under separate Owner authorization, using
+  fresh endpoint/veth attestation, rotated env, pinned images and auto rollback.
+  Healthy Bridge/Caddy untouched by non-operation. Reader/runtime gates CLOSED;
+  Ledger smoke DEFERRED; authoritative old-key revocation verification PENDING.
+
+## Latest R3-A3A bounded Host retry — 2026-10-10 / ROLLED BACK
+
+- Canonical63ea495 integrates scoped attested-veth guard; synthetic guard and38 prior
+  controls PASS. One live Host attempt passed exact image/no ports, loopback-only
+  socket/non-loopback denial, health200/protected401/API200, Caddy isolation and the
+  corrected combined DirectIPv6/TLS1.3/hostname/chain-negative probe.
+- Mandatory UNRELATED_INTERFACES comparison failed09:27:17.971UTC. Failed Host
+  snapshot was not retained, so actual differing interface/field remains UNKNOWN;
+  no benign-drift inference or guard weakening. Live Host acceptance BLOCKED.
+- One automatic pinned Bridge rollback PASS, including full unrelated network,
+  endpoints/containers/firewall/forwarding/daemon preservation and freshly attested
+  vetha3fdb9b/395. Healthy sole Backend4cbe1a2, oldd2e512b image, same rotated env,
+  loopback8787 publication; health200/protected401 and final API200. Caddy unchanged.
+- Whole attempt52.013s; sampled forward outage0.772s, rollback0.829s. Report appended;
+  live-result docs intentionally uncommitted after STOP; canonical remains63ea495.
+- No repeated live attempt. Reader/Runtime gates CLOSED; Ledger member smoke DEFERRED;
+  authoritative old-key verification PENDING. Next action requires Owner direction.
+
 ## Latest R3-A3A veth guard correction — 2026-10-10
 
 - Guard PASS: Backend endpoint/MAC/IP and reciprocal namespace peer indexes attest

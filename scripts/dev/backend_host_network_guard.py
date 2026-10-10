@@ -3,6 +3,9 @@ import copy
 import ipaddress
 import json
 import re
+import os
+import pathlib
+import stat
 
 
 def require(condition, code):
@@ -42,6 +45,95 @@ def canonical(rows):
     return sorted(json.dumps(row, sort_keys=True) for row in rows)
 
 
+
+# Values are selected from ip-link metadata only; unknown fields/values never enter diagnostics.
+INTERFACE_FIELDS = {'address', 'broadcast', 'flags', 'group', 'ifindex', 'ifname',
+                    'link_index', 'link_netnsid', 'link_type', 'linkinfo', 'linkmode',
+                    'master', 'mtu', 'operstate', 'qdisc', 'txqlen'}
+
+
+def safe_value(field, value):
+    if value is None:
+        return None
+    if field in {'ifindex', 'link_index', 'link_netnsid', 'mtu', 'txqlen'}:
+        return value if type(value) is int and 0 <= value <= 2 ** 32 else '<redacted>'
+    if field in {'address', 'broadcast'}:
+        return value if isinstance(value, str) and re.fullmatch(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}', value) else '<redacted>'
+    if field == 'flags':
+        return value if isinstance(value, list) and len(value) <= 16 and all(isinstance(v, str) and v in {'BROADCAST', 'MULTICAST', 'UP', 'LOWER_UP', 'LOOPBACK', 'NO-CARRIER', 'POINTOPOINT', 'RUNNING', 'PROMISC', 'ALLMULTI', 'DORMANT', 'NOARP', 'SLAVE', 'MASTER', 'ECHO', 'NOTRAILERS', 'DEBUG'} for v in value) else '<redacted>'
+    if field == 'linkinfo':
+        return {'info_kind': safe_value('info_kind', value.get('info_kind'))} if isinstance(value, dict) else '<redacted>'
+    if field in {'ifname', 'master'}:
+        return value if isinstance(value, str) and re.fullmatch(r'[a-zA-Z0-9_.:@-]{1,15}', value) else '<redacted>'
+    if field in {'group', 'link_type', 'linkmode', 'operstate', 'qdisc', 'info_kind'}:
+        allowed = {'group': {'default'}, 'link_type': {'ether', 'loopback', 'none', 'sit', 'gre', 'ipip', 'infiniband', 'ppp', 'tunnel6', 'ip6gre'},
+                   'linkmode': {'DEFAULT', 'DORMANT'}, 'operstate': {'UNKNOWN', 'NOTPRESENT', 'DOWN', 'LOWERLAYERDOWN', 'TESTING', 'DORMANT', 'UP'},
+                   'qdisc': {'noqueue', 'fq_codel', 'fq', 'pfifo_fast', 'mq', 'htb', 'tbf', 'cake'},
+                   'info_kind': {'bridge', 'veth', 'dummy', 'bond', 'vlan', 'vxlan', 'geneve', 'tun', 'macvlan', 'ipvlan', 'wireguard'}}
+        return value if isinstance(value, str) and value in allowed[field] else '<redacted>'
+    return '<redacted>'
+
+
+def interface_mismatches(expected, observed, old, new):
+    left = {row['ifname']: row for row in expected}
+    right = {row['ifname']: row for row in observed}
+    rows = []
+    count = 0
+    for name in sorted(set(left) | set(right)):
+        ownership = 'backend_bridge' if name == old['bridge'] else 'unrelated'
+        fields = sorted(set(left.get(name, {})) | set(right.get(name, {}))) if name in left and name in right else ['presence']
+        for field in fields:
+            a = left.get(name, {}).get(field)
+            b = right.get(name, {}).get(field)
+            if field == 'presence':
+                a, b = name in left, name in right
+            if a == b and (field in left.get(name, {})) == (field in right.get(name, {})):
+                continue
+            count += 1
+            if len(rows) < 32:
+                safe_field = field if field in INTERFACE_FIELDS or field == 'presence' else '$unrecognized_field'
+                rows.append({'path': '/interfaces/' + safe_value('ifname', name) + '/' + safe_field,
+                             'expected': a if field == 'presence' else safe_value(field, a),
+                             'observed': b if field == 'presence' else safe_value(field, b),
+                             'ownership': ownership, 'expected_ifindex': safe_value('ifindex', left.get(name, {}).get('ifindex')),
+                             'observed_ifindex': safe_value('ifindex', right.get(name, {}).get('ifindex'))})
+    return {'code': 'UNRELATED_INTERFACES', 'mismatches': rows, 'mismatch_count': count,
+            'truncated': count > len(rows), 'old_attachment': old, 'new_attachment': new}
+
+
+def preserved_with_evidence(before, after, direction, directory):
+    """Persist safe interface input and any mismatch before caller can start rollback."""
+    require(direction in ('host', 'bridge'), 'DIRECTION')
+    directory = pathlib.Path(directory)
+    custody = directory.lstat()
+    require(stat.S_ISDIR(custody.st_mode) and custody.st_uid == os.geteuid()
+            and stat.S_IMODE(custody.st_mode) == 0o700, 'DIAGNOSTIC_CUSTODY')
+
+    def write(suffix, value):
+        data = json.dumps(value, sort_keys=True).encode()
+        require(len(data) <= 262144, 'DIAGNOSTIC_SIZE')
+        path = directory / ('preservation-' + direction + '-' + suffix + '.json')
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, 'wb') as output:
+            output.write(data)
+            output.flush()
+            os.fsync(output.fileno())
+        fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+    def projection(snapshot):
+        links = snapshot['links']
+        return {'interfaces': [{k: safe_value(k, row[k]) for k in sorted(INTERFACE_FIELDS & row.keys())}
+                               for row in sorted(links, key=lambda row: row['ifname'])[:128]],
+                'interface_count': len(links), 'truncated': len(links) > 128}
+
+    write('interfaces', {'expected': projection(before), 'observed': projection(after)})
+    return preserved(before, after, direction, diagnostics=lambda value: write('mismatch', value))
+
+
 def firewall(text, attachment, bridge_mode):
     bridge, address = attachment['bridge'], attachment['ip']
     expected = {
@@ -55,7 +147,7 @@ def firewall(text, attachment, bridge_mode):
     return [line for line in lines if line not in expected]
 
 
-def preserved(before, after, direction):
+def preserved(before, after, direction, diagnostics=None):
     require(direction in ('host', 'bridge'), 'DIRECTION')
     old = attested(before)
     require(before['backend']['id'] != after['backend']['id'], 'REPLACEMENT_ID')
@@ -87,7 +179,11 @@ def preserved(before, after, direction):
             result.append(link)
         return canonical(result)
     require(not any(i['ifname'] == old['interface'] for i in after['links']) or (new and new['interface'] == old['interface']), 'OLD_VETH_REMOVED')
-    require(links(before) == links(after), 'UNRELATED_INTERFACES')
+    expected_links, observed_links = links(before), links(after)
+    if expected_links != observed_links and diagnostics is not None:
+        diagnostics(interface_mismatches([json.loads(row) for row in expected_links],
+                                        [json.loads(row) for row in observed_links], old, new))
+    require(expected_links == observed_links, 'UNRELATED_INTERFACES')
     def addresses(snapshot):
         rows = []
         for interface in snapshot['addresses']:

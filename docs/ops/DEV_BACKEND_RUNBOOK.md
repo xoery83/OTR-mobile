@@ -315,6 +315,19 @@ route, network and host setting exactly. Do not discard all veth entries. The re
 one-time retry controller must call `preserved()` from
 `scripts/dev/backend_host_network_guard.py` using fresh reciprocal namespace peer
 indexes, endpoint ID/MAC/IP and bridge attestation before stop and after rollback.
+For an instrumented attempt, call `preserved_with_evidence(before, after, direction,
+backup)` instead of the raw `preserved()` call in both forward and rollback paths.
+The backup must be a fresh owner0700 directory. Before evaluating the guard, this
+wrapper writes/fsyncs bounded sanitized interface projections to exclusive0600
+`preservation-<direction>-interfaces.json`. A failing interface comparison writes/fsyncs
+`preservation-<direction>-mismatch.json` before raising the unchanged assertion.
+Read/emit that bounded mismatch record before entering automatic rollback; retain
+both files. Do not reuse a prior evidence filename or print a raw full snapshot,
+resolved environment, arbitrary unknown field or exception. Diagnostics include
+normalized field path, safe expected/observed values, interface ownership and indexes;
+unknown values redact and truncation is explicit. Diagnostic failure never authorizes
+acceptance or suppression of preservation failures. All existing guard rules remain.
+
 The sole-port bridge's derived carrier/linkdown state may follow that attachment;
 its administrative UP, MTU, MAC, addresses and routes remain unchanged. Only the
 three exact Docker-managed8787 publication rules may disappear in Host mode and

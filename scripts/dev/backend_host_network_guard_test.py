@@ -1,6 +1,10 @@
 import copy
 import unittest
-from backend_host_network_guard import attested, preserved
+import tempfile
+import pathlib
+import json
+import os
+from backend_host_network_guard import attested, preserved, preserved_with_evidence
 
 OLD, NEW, OTHER, NETWORK = 'a' * 64, 'b' * 64, 'c' * 64, 'd' * 64
 BRIDGE = 'br-' + NETWORK[:12]
@@ -94,6 +98,86 @@ class GuardTests(unittest.TestCase):
             before['inner_links'][0][field] = value
             with self.assertRaises(AssertionError):
                 attested(before)
+
+
+class DiagnosticTests(unittest.TestCase):
+    def test_mismatch_persisted_before_rollback(self):
+        before = fixture()
+        after = host(before)
+        after['links'][-1]['mtu'] = 1400
+        with tempfile.TemporaryDirectory() as directory:
+            os.chmod(directory, 0o700)
+            with self.assertRaisesRegex(AssertionError, 'UNRELATED_INTERFACES'):
+                preserved_with_evidence(before, after, 'host', directory)
+            # This is the controller's rollback-entry point; evidence must already exist.
+            diagnostic = pathlib.Path(directory) / 'preservation-host-mismatch.json'
+            data = json.loads(diagnostic.read_text())
+            row = data['mismatches'][0]
+            self.assertEqual(row['path'], '/interfaces/vethother/mtu')
+            self.assertEqual((row['expected'], row['observed'], row['ownership']), (1500, 1400, 'unrelated'))
+            self.assertEqual(diagnostic.stat().st_mode & 0o777, 0o600)
+            self.assertTrue((pathlib.Path(directory) / 'preservation-host-interfaces.json').exists())
+
+    def test_carrier_flag_is_diagnosed_without_weakening_guard(self):
+        before = fixture()
+        after = host(before)
+        after['links'][0]['flags'].append('NO-CARRIER')
+        rows = []
+        with self.assertRaisesRegex(AssertionError, 'UNRELATED_INTERFACES'):
+            preserved(before, after, 'host', diagnostics=rows.append)
+        self.assertEqual(rows[0]['mismatches'][0]['path'], '/interfaces/' + BRIDGE + '/flags')
+        self.assertEqual(rows[0]['mismatches'][0]['observed'], ['UP', 'NO-CARRIER'])
+        self.assertEqual(rows[0]['mismatches'][0]['ownership'], 'backend_bridge')
+
+    def test_indices_presence_and_lifecycle_attributes_are_reported(self):
+        for field, value in [('ifindex', 99), ('link_index', 99), ('link_netnsid', 99), ('qdisc', 'fq')]:
+            before = fixture()
+            after = host(before)
+            after['links'][-1][field] = value
+            rows = []
+            with self.assertRaisesRegex(AssertionError, 'UNRELATED_INTERFACES'):
+                preserved(before, after, 'host', diagnostics=rows.append)
+            self.assertEqual(rows[0]['mismatches'][0]['path'], '/interfaces/vethother/' + field)
+        after = host(fixture())
+        after['links'].pop()
+        rows = []
+        with self.assertRaisesRegex(AssertionError, 'UNRELATED_INTERFACES'):
+            preserved(fixture(), after, 'host', diagnostics=rows.append)
+        self.assertEqual(rows[0]['mismatches'][0]['observed'], False)
+
+    def test_unknown_values_are_redacted_and_diagnostics_bounded(self):
+        before = fixture()
+        after = host(before)
+        sentinel = 'sb_secret_SYNTHETIC_DIAGNOSTIC_SENTINEL'
+        after['links'][-1]['unknown'] = sentinel
+        after['links'][-1]['operstate'] = sentinel
+        for number in range(40):
+            after['links'].append({'ifname': 'dummy' + str(number), 'ifindex': 100 + number})
+        with tempfile.TemporaryDirectory() as directory:
+            os.chmod(directory, 0o700)
+            with self.assertRaisesRegex(AssertionError, 'UNRELATED_INTERFACES'):
+                preserved_with_evidence(before, after, 'host', directory)
+            texts = [p.read_text() for p in pathlib.Path(directory).iterdir()]
+            self.assertNotIn(sentinel, ''.join(texts))
+            data = json.loads((pathlib.Path(directory) / 'preservation-host-mismatch.json').read_text())
+            self.assertEqual(len(data['mismatches']), 32)
+            self.assertTrue(data['truncated'])
+
+    def test_success_keeps_evidence_and_guard_result(self):
+        with tempfile.TemporaryDirectory() as directory:
+            os.chmod(directory, 0o700)
+            self.assertEqual(preserved_with_evidence(fixture(), host(fixture()), 'host', directory)['result'], 'PASS')
+            self.assertFalse((pathlib.Path(directory) / 'preservation-host-mismatch.json').exists())
+
+    def test_permissive_custody_and_overwrite_reject(self):
+        with tempfile.TemporaryDirectory() as directory:
+            os.chmod(directory, 0o755)
+            with self.assertRaisesRegex(AssertionError, 'DIAGNOSTIC_CUSTODY'):
+                preserved_with_evidence(fixture(), host(fixture()), 'host', directory)
+            os.chmod(directory, 0o700)
+            preserved_with_evidence(fixture(), host(fixture()), 'host', directory)
+            with self.assertRaises(FileExistsError):
+                preserved_with_evidence(fixture(), host(fixture()), 'host', directory)
 
 
 if __name__ == '__main__':
