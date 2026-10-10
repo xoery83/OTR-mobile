@@ -1,4 +1,4 @@
-"""Dormant, fixed-identity fixture Builder. No CLI or Hosted activation path."""
+"""Dormant, fixed DEV/fixture one-shot procedure. No CLI or runtime caller."""
 import ctypes as C
 import ctypes.util
 import datetime as dt
@@ -16,6 +16,8 @@ import time
 
 READER = 'otr_trip_publication_catalog_reader'
 FIXTURE_PROJECT = 'OTR_DISPOSABLE_DEV:tuqigdxrvrerfewsxqgm'
+DEV_PROJECT = 'tuqigdxrvrerfewsxqgm'
+DEV_HOST = 'db.tuqigdxrvrerfewsxqgm.supabase.co'
 SECRET_ARTIFACTS = ('candidate', 'candidate.new', 'active')
 SETTINGS = {
     'log_statement': 'none', 'log_min_messages': 'panic',
@@ -60,8 +62,17 @@ def wipe(value):
 
 class Pg:
     """Never call libpq error-text accessors: FATAL context may contain a secret."""
-    def __init__(self, ca, user='postgres', password=None, port=5432):
-        self.lib = C.CDLL(ctypes.util.find_library('pq'))
+    def __init__(self, ca, user='postgres', password=None, port=5432, *, host='localhost'):
+        self.conn=None
+        if host not in ('localhost',DEV_HOST): raise Closed()
+        if host==DEV_HOST:
+            harden_process()
+            if port!=5432 or user not in ('postgres',READER) or not isinstance(password,C.Array) or password._type_ is not C.c_char or not 2<=C.sizeof(password)<=4097 or password[0]==b'\0' or password[-1]!=b'\0':
+                raise Closed()
+        self.host,self.ca,self.port=host,ca,port
+        library=ctypes.util.find_library('pq')
+        if not library: raise Closed()
+        self.lib = C.CDLL(library)
         signatures = {
             'PQconnectStartParams': ([C.POINTER(C.c_char_p), C.POINTER(C.c_char_p), C.c_int], C.c_void_p),
             'PQconnectPoll': ([C.c_void_p], C.c_int), 'PQsocket': ([C.c_void_p], C.c_int),
@@ -75,12 +86,11 @@ class Pg:
             fn = getattr(self.lib,name); fn.argtypes=args; fn.restype=result
         if user not in ('postgres','supabase_admin',READER,'app_observer','monitor_observer'):
             raise Closed()
-        # shortcut: only loopback disposable Primary is reachable; a separately reviewed
-        # Hosted activation must pin the accepted DEV hostname and administrative custody.
-        options = {'host':b'localhost','port':str(port).encode(),'dbname':b'postgres',
+        options = {'host':host.encode(),'port':str(port).encode(),'dbname':b'postgres',
                    'user':user.encode(),'password':b'','sslmode':b'verify-full',
                    'sslrootcert':os.fsencode(ca),'connect_timeout':b'2',
-                   'application_name':b'otr-dormant-credential-builder','passfile':b'/proof/no-passfile'}
+                   'ssl_min_protocol_version':b'TLSv1.2',
+                   'application_name':b'otr-dormant-credential-builder','passfile':b'/dev/null/otr-passfile-disabled'}
         keys=(C.c_char_p*(len(options)+1))(*[k.encode() for k in options],None)
         values=(C.c_char_p*(len(options)+1))(*options.values(),None)
         if password is not None:
@@ -105,6 +115,9 @@ class Pg:
             self.query("SET lock_timeout='1s'")
             self.query("SET idle_in_transaction_session_timeout='5s'")
             if self.query('SELECT pg_is_in_recovery()',rows=True)!=[['f']]: raise Closed()
+            if host==DEV_HOST:
+                identity=self.query("SELECT current_database(),session_user,current_user,(SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()),current_setting('default_transaction_read_only')",rows=True)
+                if len(identity)!=1 or identity[0][:4]!=['postgres',user,user,'t'] or (user==READER and identity[0][4]!='on'): raise Closed()
         except BaseException:
             self.close(); raise Closed() from None
 
@@ -306,10 +319,12 @@ def retire(pg):
 
 
 def verify_disable_channel(pg):
-    # Independent of custody/journal. The fixture-only stamp cannot activate Hosted.
+    # Independent of custody/journal; Hosted project identity comes from pinned TLS.
     if not isinstance(pg,Pg) or not pg.conn: raise Closed()
+    hosted=pg.host==DEV_HOST
+    if pg.host not in ('localhost',DEV_HOST) or (hosted and pg.port!=5432): raise Closed()
     identity=pg.query("""SELECT current_database(),session_user,current_user,
-      shobj_description((SELECT oid FROM pg_database WHERE datname=current_database()),'pg_database'),
+      """+("coalesce(current_setting('supabase.project_ref',true),'')" if hosted else "shobj_description((SELECT oid FROM pg_database WHERE datname=current_database()),'pg_database')")+""",
       (SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()),
       pg_has_role(session_user,'supabase_privileged_role','USAGE'),
       pg_has_role(session_user,'pg_signal_backend','USAGE'),
@@ -317,8 +332,9 @@ def verify_disable_channel(pg):
       (SELECT rolsuper FROM pg_roles WHERE rolname=session_user) OR EXISTS
        (SELECT FROM pg_auth_members WHERE roleid=(SELECT oid FROM pg_roles WHERE rolname='otr_trip_publication_catalog_reader')
         AND member=(SELECT oid FROM pg_roles WHERE rolname=session_user) AND admin_option)""",rows=True)
-    if len(identity)!=1 or identity[0][0]!='postgres' or identity[0][1] not in ('postgres','supabase_admin') or identity[0][2]!=identity[0][1] or identity[0][3:]!=[FIXTURE_PROJECT,'t','t','t','t','t']:
+    if len(identity)!=1 or identity[0][0]!='postgres' or identity[0][1] not in (('postgres',) if hosted else ('postgres','supabase_admin')) or identity[0][2]!=identity[0][1] or identity[0][4:]!=['t','t','t','t','t']:
         raise Closed()
+    if (hosted and identity[0][3] not in ('',DEV_PROJECT)) or (not hosted and identity[0][3]!=FIXTURE_PROJECT): raise Closed()
     state=pg.query(OBSERVE,rows=True)
     if len(state)!=1 or state[0][3]!='t': raise Closed()
 
@@ -436,7 +452,7 @@ def reconcile(pg,store):
         expected=dt.datetime.fromisoformat(journal['expiry'])
         observed=dt.datetime.fromisoformat(state[0][2])
         if state[0][:2]!=['t','t'] or observed!=expected: return 'UNKNOWN'
-        reader=Pg('/proof/ca.crt',READER,password)
+        reader=Pg(pg.ca,READER,password,pg.port,host=pg.host)
         reader.query('SELECT 1')
     except (Closed,ValueError,KeyError,TypeError): return 'UNKNOWN'
     finally:

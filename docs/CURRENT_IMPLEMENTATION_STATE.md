@@ -1,3 +1,21 @@
+## R3-A4 Hosted Reader adapter — 2026-10-11 / IMPLEMENTED, PROVISIONING BLOCKED
+
+- Fixed DEV Direct Primary endpoint/verified TLS and actual operator/Reader identity
+  branch added to the accepted one-shot module; fixture stamp remains mandatory on
+  localhost. Reconciliation reuses the same endpoint/port/CA. No CLI/runtime caller.
+- Synthetic endpoint/CA/SAN/principal/read-only/privilege negatives, provisioning,
+  committed UNKNOWN/no-replay, disable/session retirement and UNAVAILABLE custody
+  PASS. Retained F1/F2/F3 and lifecycle controls PASS;211 focused app tests PASS;
+  typecheck, lint/UI guard, Backend build, syntax/format/whitespace PASS.
+- Fresh DEV H1/principal inventory unchanged. Added realtime.authorize classified as
+  managed SECURITY INVOKER authorization probe; Reader lacks schema USAGE. No ACL fix.
+- Actual Direct admin credential descriptor/store is not established; API-key env and
+  Management auth are not substitutes. Host libpq unavailable, Apport/retention
+  uncertified, complete Reader custody UNAVAILABLE. Real Hosted provisioning NO.
+- Report: `architecture/OTR_PLATFORM_R3A4_HOSTED_ADAPTER_REPORT.md`. No real Reader
+  mutation, deployment, injection, Production/device/provider operation. Backend and
+  Native Catalog Runtime remain CLOSED; next step is separately authorized prerequisites.
+
 ## Latest R3-A3A exact endpoint firewall correction — 2026-10-11
 
 - Live Docker29.1.3 rule constructor/unique endpoint/Compose network correlation
