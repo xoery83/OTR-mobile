@@ -515,3 +515,40 @@ preserved as historical evidence. Scoped correction integration changes only two
 probe files, runbook and incremental Builder/current-state evidence.
 
 **STOP — HOST-MODE FAILURE DIAGNOSIS COMPLETE.**
+
+
+## Owner-authorized veth preservation correction and bounded retry — 2026-10-10
+
+**Guard correction PASS; live retry result recorded below after execution.** Before
+replacement, Backend container `fc9f01519e648ac9219bb6f01d36788d56c8f3689f37b891601b55cfacb435f5`
+endpoint `6d1c97bf13fcaa276eab4f72de707c46407e24d8ad54a270ac320a0331f432ae`
+on network `ef4d1e4c04f66ff8018c3cb71f8231aa3032365febabab5e0dd662cee94523c1`
+is independently correlated with eth0 MAC8a:01:e2:b3:70:da, IP172.18.0.2 and reciprocal
+peer indexes2/393. Host peer is `veth8d87235`, master `br-ef4d1e4c04f6`; distinct
+network namespace inodes verified. Two collection passes confirm stable ownership.
+
+New standard-library-only `backend_host_network_guard.py` accepts only that attested
+service attachment removal and a freshly attested Bridge replacement endpoint.
+It compares every unrelated container/endpoint/interface/address, IPv4/IPv6 route,
+Docker network/config/daemon and host/per-interface forwarding/config setting.
+Only kernel link-local/multicast routes and sysctls of attested old/new veths are
+excluded. Sole-port bridge carrier/route linkdown follows the port lifecycle; all
+configured bridge properties stay exact. Docker's three exact8787 loopback publication
+rules may disappear for Host mode and return for pinned Bridge rollback. Unrelated
+firewall rules/policies stay exact; counters/comments are operational metadata, not
+configuration. No broad veth exclusion or host network/firewall mutation is allowed.
+
+Five Python tests include positive ownership, Host removal and Bridge recreation,
+plus11 unrelated drift cases and two ownership negatives. All PASS. The actual
+nonsecret DEV snapshot also passes a synthetic Host-transition check. Corrected
+combined probe and33 image/credential controls:38 PASS. Python compile, scoped ESLint,
+UI guard and whitespace PASS. No application/build input changed, so accepted image
+51432b8 remains applicable once its exact build-input identity is reverified against
+integrated canonical. No full application matrix or real authenticated Reader test
+is claimed. Independent reviews, accepted probe, Caddy/Compose/application sources,
+rotated credential and original incident evidence unchanged.
+
+Scope: only guard/test, runbook, this appendix and incremental current-state handoff.
+Normal scoped integration precedes one Owner-authorized120-second maintenance attempt;
+Caddy isolation already active, so no Caddy restart/reload is planned. Exact prior
+Bridge image d2e512b plus exclusive rotated credential remain rollback inputs.

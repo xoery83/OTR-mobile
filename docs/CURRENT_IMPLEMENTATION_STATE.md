@@ -1,3 +1,16 @@
+## Latest R3-A3A veth guard correction — 2026-10-10
+
+- Guard PASS: Backend endpoint/MAC/IP and reciprocal namespace peer indexes attest
+  veth8d87235/393 exclusively. Only service-owned lifecycle is excluded; unrelated
+  interfaces/endpoints/routes/firewall/host/Docker state stay checked.
+- Expected sole-port bridge carrier and exact Docker8787 publication lifecycle are
+  checked without any host/firewall configuration command. Five Python tests with
+  positive transitions,11 unrelated drift and two ownership negatives PASS;38 prior
+  combined/image/credential controls PASS; static/compile/UI/whitespace PASS.
+- Integrated correction permits one Owner-authorized bounded Host retry, retaining
+  Caddy Unix isolation and exclusive rotated credential with pinned Bridge rollback.
+  Live result follows execution; Reader/runtime gates remain CLOSED.
+
 ## Latest R3-A3A Host-mode failure diagnosis — 2026-10-10
 
 - Root cause CONFIRMED: combined probe had a missing Promise closure; DEV Node24.21

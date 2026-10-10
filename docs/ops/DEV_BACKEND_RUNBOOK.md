@@ -312,7 +312,14 @@ Snapshot the replaced Backend's host-side veth identity before stop and the new
 attachment after startup/rollback. Preservation may exclude only those attested
 service-owned interfaces and their routes; compare every unrelated veth, interface,
 route, network and host setting exactly. Do not discard all veth entries. The retained
-one-time controller used raw equality and must be corrected before another attempt.
+one-time retry controller must call `preserved()` from
+`scripts/dev/backend_host_network_guard.py` using fresh reciprocal namespace peer
+indexes, endpoint ID/MAC/IP and bridge attestation before stop and after rollback.
+The sole-port bridge's derived carrier/linkdown state may follow that attachment;
+its administrative UP, MTU, MAC, addresses and routes remain unchanged. Only the
+three exact Docker-managed8787 publication rules may disappear in Host mode and
+return in Bridge mode; unrelated firewall rules/policies remain exact. No firewall
+configuration command belongs to this procedure.
 
 4. In the separately approved Backend maintenance window, stop only the old service:
    `docker compose -p dev-backend -f deploy/dev-backend/compose.yml stop backend`.
