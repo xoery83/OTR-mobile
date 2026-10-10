@@ -1,0 +1,5 @@
+# Forward only. Stage a private copy with the independently reviewed exact new ID.
+# This placeholder must fail the pre-stop checker; never deploy this template.
+services:
+  backend:
+    image: "sha256:REPLACE_WITH_REVIEWED_NEW_IMAGE_ID"

@@ -8,13 +8,37 @@ import { createReceiptOcrProvider } from "./receiptOcrProvider";
 import { initializeDevFlightLiveHost } from "./flightLiveHost";
 import { createRateDemandScanner } from "./rateDemandScanner";
 
-const environmentSchema = z.object({
-  OTR_DEV_SUPABASE_URL: z.url(),
-  OTR_DEV_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
-  OTR_DEV_SUPABASE_SECRET_KEY: z.string().min(1),
-  OTR_DEV_BACKEND_PORT: z.coerce.number().int().positive().default(8787),
-  OTR_DEV_RECEIPT_OCR_ACCEPTANCE_FIXTURE: z.enum(["0", "1"]).default("0"),
-});
+const environmentSchema = z
+  .object({
+    OTR_DEV_BACKEND_NETWORK_MODE: z.enum(["bridge", "host"]).default("bridge"),
+    OTR_DEV_BACKEND_BIND_ADDRESS: z.string().optional(),
+    OTR_DEV_SUPABASE_URL: z.url(),
+    OTR_DEV_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+    OTR_DEV_SUPABASE_SECRET_KEY: z.string().min(1),
+    OTR_DEV_BACKEND_PORT: z.coerce.number().int().positive().default(8787),
+    OTR_DEV_RECEIPT_OCR_ACCEPTANCE_FIXTURE: z.enum(["0", "1"]).default("0"),
+  })
+  .superRefine((environment, context) => {
+    const hostMode = environment.OTR_DEV_BACKEND_NETWORK_MODE === "host";
+    const address = hostMode ? "127.0.0.1" : "0.0.0.0";
+    if (
+      environment.OTR_DEV_BACKEND_BIND_ADDRESS !== address &&
+      (hostMode || environment.OTR_DEV_BACKEND_BIND_ADDRESS !== undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["OTR_DEV_BACKEND_BIND_ADDRESS"],
+        message: `Expected exact ${address} for the selected DEV network mode.`,
+      });
+    }
+    if (hostMode && environment.OTR_DEV_BACKEND_PORT !== 8787) {
+      context.addIssue({
+        code: "custom",
+        path: ["OTR_DEV_BACKEND_PORT"],
+        message: "DEV host mode requires port 8787.",
+      });
+    }
+  });
 
 const environment = environmentSchema.parse(process.env);
 // Backend-private, unprovisioned and CLOSED. No HTTP route, polling or provider call.
@@ -86,14 +110,18 @@ const server = createServer(async (incoming, outgoing) => {
 });
 
 server.on("close", () => scanner?.stop());
-server.listen(environment.OTR_DEV_BACKEND_PORT, "0.0.0.0", () => {
-  console.info(
-    JSON.stringify({
-      level: "info",
-      event: "listening",
-      port: environment.OTR_DEV_BACKEND_PORT,
-      environment: "development",
-    }),
-  );
-  scanner?.start();
-});
+server.listen(
+  environment.OTR_DEV_BACKEND_PORT,
+  environment.OTR_DEV_BACKEND_NETWORK_MODE === "host" ? "127.0.0.1" : "0.0.0.0",
+  () => {
+    console.info(
+      JSON.stringify({
+        level: "info",
+        event: "listening",
+        port: environment.OTR_DEV_BACKEND_PORT,
+        environment: "development",
+      }),
+    );
+    scanner?.start();
+  },
+);
