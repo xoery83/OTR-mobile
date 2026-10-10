@@ -977,3 +977,29 @@ Ledger smoke DEFERRED; authoritative old-key verification PENDING. Scoped files:
 guard/tests, runbook, Builder/current-state. No full Platform matrix repeated.
 
 **STOP — FIREWALL PRESERVATION DIAGNOSIS COMPLETE.**
+
+## Final ownership check and exact endpoint lifecycle correction — 2026-10-11
+
+Read-only pinned-SSH live ownership correlation: Docker29.1.3 Ubuntu build, sole
+Backend7b0a9fb8 endpoint9b1f8b4c on Compose dev-backend/default networkef4d1e4c;
+reciprocal veth42dd8fd/401 and bridgebr-ef4d1e4c04f6, IPv4172.18.0.2. No other
+Docker endpoint has that address. Exact raw/PREROUTING rule13 (source line16):
+`-A PREROUTING -d 172.18.0.2/32 ! -i br-ef4d1e4c04f6 -j DROP`.
+Moby docker-v29.1.3 internal/iptabler/endpoint.go AddEndpoint/DelEndpoint calls
+filterDirectAccess with true/false and constructs exactly these bridge/address/DROP
+operands. Primary source:
+https://raw.githubusercontent.com/moby/moby/docker-v29.1.3/daemon/libnetwork/drivers/bridge/internal/iptabler/endpoint.go
+Ownership and expected endpoint lifetime CONFIRMED from version-matched constructor,
+registered bridge network/unique endpoint and exact rule, not address reference alone.
+Historical failed observed rule remains unavailable; no retrospective cause claim.
+
+Small correction requires exactly one such raw-table rule with active attested
+Bridge endpoint and none in Host. Rollback requires one restored. Only this exact
+rule is filtered before existing full rule/order comparison; all other policies,
+existing three publication-rule allowances and counters normalization retained.
+Strengthened attestation rejects shared endpoint IP across Docker networks. No
+firewall command/configuration executed by correction.25 guard tests and38 immutable
+image/credential/combined probe tests PASS, including wrong table/action/address/
+bridge, duplicate/missing/Host-leftover rule, unrelated policy and shared-IP negatives.
+Compile/whitespace/review-byte preservation checked. One Owner-authorized live attempt
+follows normal scoped integration; full private diagnostics/controller unchanged.

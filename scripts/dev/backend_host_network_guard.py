@@ -24,6 +24,10 @@ def attested(snapshot):
     endpoint = backend['networks']['dev-backend_default']
     network = snapshot['docker_networks'][endpoint['NetworkID']]
     require(network['Name'] == 'dev-backend_default' and network['Driver'] == 'bridge', 'NETWORK_ID')
+    owners = [(nid, cid, c.get('EndpointID')) for nid, n in snapshot['docker_networks'].items()
+              for cid, c in n['Containers'].items()
+              if c.get('IPv4Address', '').split('/')[0] == endpoint['IPAddress']]
+    require(owners == [(endpoint['NetworkID'], backend['id'], endpoint['EndpointID'])], 'EXCLUSIVE_ENDPOINT_IP')
     entry = network['Containers'][backend['id']]
     require(entry['Name'] == 'otr-dev-backend' and entry['EndpointID'] == endpoint['EndpointID']
             and entry['MacAddress'] == endpoint['MacAddress']
@@ -339,8 +343,23 @@ def preserved_with_evidence(before, after, direction, directory):
         raise
 
 
-def firewall(text, attachment, bridge_mode):
+def firewall(text, attachment, bridge_mode, endpoint_drop=False):
     bridge, address = attachment['bridge'], attachment['ip']
+    if endpoint_drop:
+        # Docker 29 endpoint direct-access filtering; only the attested raw rule may leave.
+        rule = f'-A PREROUTING -d {address}/32 ! -i {bridge} -j DROP'
+        table, selected, retained = None, 0, []
+        for line in text.splitlines():
+            if line.startswith('*'):
+                table = line[1:]
+            if table == 'raw' and line == rule:
+                selected += 1
+            else:
+                retained.append(line)
+            if line == 'COMMIT':
+                table = None
+        require(selected == (1 if bridge_mode else 0), 'BACKEND_ENDPOINT_DROP_RULE')
+        text = '\n'.join(retained)
     expected = {
         '-A PREROUTING -d 127.0.0.1/32 ! -i lo -p tcp -m tcp --dport 8787 -j DROP',
         f'-A DOCKER -d {address}/32 ! -i {bridge} -o {bridge} -p tcp -m tcp --dport 8787 -j ACCEPT',
@@ -441,7 +460,7 @@ def preserved(before, after, direction, diagnostics=None, comparison_evidence=No
                         network['Containers'].pop(identifier, None)
             return value
         equal(unrelated(before), unrelated(after), 'UNRELATED_' + key.upper(), key)
-    equal(firewall(before['firewall4'], old, True), firewall(after['firewall4'], new or old, direction == 'bridge'), 'UNRELATED_FIREWALL4', 'firewall4')
+    equal(firewall(before['firewall4'], old, True, endpoint_drop=True), firewall(after['firewall4'], new or old, direction == 'bridge', endpoint_drop=True), 'UNRELATED_FIREWALL4', 'firewall4')
     for key in ('firewall6', 'sysctls', 'daemon'):
         left, right = before[key], after[key]
         if key == 'firewall6':

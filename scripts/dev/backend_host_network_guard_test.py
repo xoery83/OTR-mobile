@@ -28,7 +28,7 @@ def fixture():
             'addresses': [{'ifname': 'vethold', 'addr_info': [{'local': 'fe80::1'}]}, {'ifname': 'eth0', 'addr_info': [{'local': '2001:db8::1'}]}],
             'routes4': [], 'routes6': [{'dev': 'vethold', 'dst': 'fe80::/64', 'protocol': 'kernel'}, {'dev': 'vethother', 'dst': 'fe80::/64', 'protocol': 'kernel'}],
             'containers': {OLD: {'image': 'old'}, OTHER: {'image': 'other', 'endpoint': 'unchanged'}},
-            'firewall4': rules + '\n-A FORWARD -j DROP', 'firewall6': '-A INPUT -j DROP', 'sysctls': {'forwarding': 0}, 'daemon': 'unchanged'}
+            'firewall4': '*raw\n' + rules + f'\n-A PREROUTING -d 172.18.0.2/32 ! -i {BRIDGE} -j DROP\nCOMMIT\n-A FORWARD -j DROP', 'firewall6': '-A INPUT -j DROP', 'sysctls': {'forwarding': 0}, 'daemon': 'unchanged'}
 
 
 def host(before):
@@ -43,7 +43,7 @@ def host(before):
     after['docker_networks'][NETWORK]['Containers'].pop(OLD)
     after['containers'].pop(OLD)
     after['containers'][NEW] = {'image': 'new'}
-    after['firewall4'] = '-A FORWARD -j DROP'
+    after['firewall4'] = '*raw\nCOMMIT\n-A FORWARD -j DROP'
     return after
 
 
@@ -349,6 +349,38 @@ class FirewallDiagnosticTests(unittest.TestCase):
         from backend_host_network_guard import structured_mismatches
         data = structured_mismatches('X', {'forwarding': 0}, {'forwarding': 1}, 'sysctls', attested(fixture()), None)
         self.assertEqual(data['mismatches'][0]['ownership'], 'unattested')
+
+
+class EndpointDropTests(unittest.TestCase):
+    def test_endpoint_drop_presence_and_scope_fail_closed(self):
+        rule = f'-A PREROUTING -d 172.18.0.2/32 ! -i {BRIDGE} -j DROP'
+        for change in ['missing_before', 'duplicate_before', 'present_host', 'wrong_table',
+                       'other_address', 'other_bridge', 'other_target']:
+            with self.subTest(change=change):
+                before = fixture()
+                after = host(before)
+                if change == 'missing_before':before['firewall4'] = before['firewall4'].replace(rule, '')
+                elif change == 'duplicate_before':before['firewall4'] = before['firewall4'].replace(rule, rule + '\n' + rule)
+                elif change == 'present_host':after['firewall4'] = after['firewall4'].replace('*raw', '*raw\n' + rule)
+                elif change == 'wrong_table':before['firewall4'] = before['firewall4'].replace('*raw', '*filter')
+                else:
+                    extra = rule.replace('172.18.0.2', '172.18.0.3') if change == 'other_address' else rule.replace(BRIDGE, 'br-other') if change == 'other_bridge' else rule.replace('DROP', 'ACCEPT')
+                    after['firewall4'] = after['firewall4'].replace('*raw', '*raw\n' + extra)
+                with self.assertRaises(AssertionError):preserved(before, after, 'host')
+
+    def test_shared_endpoint_address_rejects_ownership(self):
+        before = fixture()
+        before['docker_networks']['e' * 64] = {'Containers': {OTHER: {'IPv4Address': '172.18.0.2/16', 'EndpointID': 'other'}}}
+        with self.assertRaisesRegex(AssertionError, 'EXCLUSIVE_ENDPOINT_IP'):
+            preserved(before, host(before), 'host')
+
+    def test_expected_rule_removed_without_changing_other_order(self):
+        before = fixture()
+        after = host(before)
+        self.assertEqual(preserved(before, after, 'host')['result'], 'PASS')
+        after['firewall4'] += '\n-A DOCKER-USER -j ACCEPT'
+        with self.assertRaisesRegex(AssertionError, 'UNRELATED_FIREWALL4'):
+            preserved(before, after, 'host')
 
 
 if __name__ == '__main__':

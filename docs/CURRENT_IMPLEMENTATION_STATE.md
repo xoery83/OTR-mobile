@@ -1,3 +1,14 @@
+## Latest R3-A3A exact endpoint firewall correction — 2026-10-11
+
+- Live Docker29.1.3 rule constructor/unique endpoint/Compose network correlation
+  confirms exact raw/PREROUTING Backend direct-access DROP lifetime. Guard requires
+  one active Bridge rule /none Host /one rollback; all other rules/order exact.
+- 25 guard tests and38 accepted image/credential/probe tests PASS. Shared IP, wrong
+  rule/table and unrelated policy reject. No host firewall/network mutation.
+- One Owner-authorized bounded attempt follows scoped integration, with complete
+  private failure operands and pinned rotated-credential Bridge rollback. Reader/
+  Runtime CLOSED; member smoke DEFERRED, old-key verification PENDING.
+
 ## Latest R3-A3A firewall diagnosis — 2026-10-11 / OWNER REVIEW
 
 - Latest instrumented Host attempt rolled back on UNRELATED_FIREWALL4; exact expected

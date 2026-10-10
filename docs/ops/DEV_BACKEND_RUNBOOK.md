@@ -424,3 +424,13 @@ fail closed; no diagnostic failure permits acceptance. Raw original positions ca
 be reconstructed privately. Docker chain/reference is an ownership hint, never an
 exemption. Non-container ownership remains unattested. All original equality and
 three exact publication-rule allowances remain unchanged.
+
+### Verified Docker endpoint direct-access DROP lifecycle
+
+Docker29.1.3 creates/deletes one raw/PREROUTING direct-access DROP per bridge
+endpoint. For the uniquely attested DEV Backend address/bridge only, require
+`-A PREROUTING -d <endpoint IPv4>/32 ! -i <attested bridge> -j DROP` exactly once
+in raw while Bridge-attached and absent after Host transition. Rollback must restore
+exactly one. Wrong table/action/address/bridge, duplicate/missing active rule or
+shared endpoint address rejects. Preserve all other normalized rules and order;
+no host firewall commands, general Docker-chain exception or global setting change.
