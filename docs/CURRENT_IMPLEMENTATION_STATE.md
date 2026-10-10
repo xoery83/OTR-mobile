@@ -1,3 +1,19 @@
+## R3-A3A dormant Host-mode closure — 2026-10-10
+
+- Owner accepted final independent F1/F2 review, plus credential-cutover compatibility
+  correction: forward/rollback guards require exclusively verified rotated env;
+  immutable image, Caddy isolation and loopback binding retained. Source integration
+  only; no Host-mode deployment/Caddy maintenance/credential or SQL mutation.
+- 33 deployment controls; affected890/expanded935 PASS (15 existing skips); actual
+  Compose and disposable Caddy/socket proofs, typecheck/lint/UI guard/build PASS.
+- DEV Backend remains on original Bridge using new key `otr_dev_backend_20261010`.
+  Old Modern key deletion Owner-confirmed / authoritative verification PENDING;
+  authenticated member Ledger bootstrap DEFERRED. Neither blocks dormant integration
+  under explicit Owner decision. Do not select retained exposed original backend.env.
+- Builder/unchanged Independent Review reports under architecture are authoritative.
+  Live Caddy prerequisite, exact reviewed Host image/rollback, combined ingress/Direct
+  TLS acceptance and all Reader nonlogging provisioning/LOGIN/live read gates remain.
+
 # R3-A dormant SQL Principal — FINAL OWNER ACCEPTED
 
 2026-10-09. Owner accepted the dormant dedicated Catalog Reader SQL and Backend
