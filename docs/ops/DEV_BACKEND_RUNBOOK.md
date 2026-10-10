@@ -299,6 +299,21 @@ source/profile and immutable rollback image, and set the Owner maintenance timeo
    Inspect retained limits/read-only/tmpfs/user/health/log parity separately. Freeze the
    reviewed files/variables through startup; any drift requires repeating preflight.
 
+Before maintenance, syntax-check the maintained combined acceptance probe:
+`node --check scripts/dev/backend-host-private-smoke.cjs`. Use its exact checked
+bytes inside the accepted running container (`docker exec -i otr-dev-backend node
+-e '<checked public script source>'`), with only the approved public CA on stdin.
+The credential stays in the already configured container; never pass it in command
+arguments or render its environment. The probe discards API response bodies and
+emits only status/connectivity results. Execute it only under deployment acceptance
+authorization, not as part of a source-only diagnosis. Do not rebuild an inline copy.
+
+Snapshot the replaced Backend's host-side veth identity before stop and the new
+attachment after startup/rollback. Preservation may exclude only those attested
+service-owned interfaces and their routes; compare every unrelated veth, interface,
+route, network and host setting exactly. Do not discard all veth entries. The retained
+one-time controller used raw equality and must be corrected before another attempt.
+
 4. In the separately approved Backend maintenance window, stop only the old service:
    `docker compose -p dev-backend -f deploy/dev-backend/compose.yml stop backend`.
    Confirm8787 free, then use exactly the validated forward files and values:

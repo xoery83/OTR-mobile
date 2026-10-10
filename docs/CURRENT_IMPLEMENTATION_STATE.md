@@ -1,3 +1,36 @@
+## Latest R3-A3A Host-mode failure diagnosis — 2026-10-10
+
+- Root cause CONFIRMED: combined probe had a missing Promise closure; DEV Node24.21
+  rejects it at parse time, before API/TLS/Admin checks. Expected JSON/exit0, actual
+  syntax exit1. Derived failure phase interval08:38:03.318–08:38:03.407UTC; exact
+  per-probe timestamp not retained. No application/network startup defect established.
+- Corrected maintained private smoke source and five synthetic tests; with33 accepted
+  immutable/credential guards,38 PASS. Runbook requires syntax validation before stop.
+- Healthy Bridge/rotated credential and Caddy isolation untouched. No deployment.
+  Retry readiness NO until one-time controller preservation safely excludes only
+  attested replaced Backend veths, with all unrelated routes/interfaces still checked.
+  Another live attempt requires Owner authorization; no new architecture preflight.
+- Builder diagnosis appendix preserves original failed evidence. Reader/runtime gates
+  CLOSED; Ledger member smoke DEFERRED; authoritative old-key verification PENDING.
+
+## Latest R3-A3A live DEV deployment attempt — 2026-10-10
+
+- **ROLLED BACK; Host-mode NOT accepted.** Exact canonical candidate image51432b8
+  reached healthy loopback-only Host startup, then combined private acceptance failed.
+  One automatic rollback restored healthy pinned d2e512b Bridge Backend retaining
+  backend.rotated.env. Final health200/protected401 and private API read200.
+- Accepted Caddy Unix Admin isolation installed and retained:0700 socket/dir,
+  UID10001 EACCES, operator GET/reload PASS, TCP Admin absent; routing preserved.
+- Initial rollback checker flagged replaced veth metadata; read-only verification
+  confirms actual Bridge restoration and non-veth/unrelated-service preservation.
+  Individual diagnostic Direct IPv6/TLS1.3 and privileged API probes PASS; these do
+  not retroactively accept the failed live probe. No second deployment attempted.
+- Sampled HTTPS interruptions: Caddy0.093s, forward0.652s, rollback0.645s (bounded
+  sampling, not continuously measured all-site downtime). Builder report appended.
+- Another Host deployment requires Owner authorization after probe/check correction.
+  Reader/Native/Composer/C5/C9/provider gates CLOSED; Ledger user smoke DEFERRED;
+  old-key deletion Owner-confirmed, authoritative verification PENDING. No Git change.
+
 ## R3-A3A dormant Host-mode closure — 2026-10-10
 
 - Owner accepted final independent F1/F2 review, plus credential-cutover compatibility

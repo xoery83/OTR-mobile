@@ -411,3 +411,107 @@ Typecheck, lint/UI guard and Backend build PASS. Initial non-escalated build was
 Closure scope remains exactly the accepted13 paths (startup implementation/test, three Host/Caddy files, three Host guard/socket scripts, runbook/current state and three Host evidence/review reports). API-key handoff/install tools and incident/preparation/cutover reports remain outside this closure commit; their local originals/untracked files are preserved. Canonical main prior to integration is `301830c16e633fbc0193113ae9f4642258a9a7f5`, descended from Builder base; its dormant Reader advance is preserved by ancestry-preserving merge if fast-forward is unavailable. Integration validation/synchronization is reported separately at completion.
 
 Remaining gates: independently reviewed real Host image; live Caddy administration prerequisite/all-site maintenance; separately authorized Host replacement with effective rotated credential, combined host8787/publicIPv4/IPv6/Direct TLS/health and actual pinned rollback/downtime acceptance. Reader NOLOGIN/PASSWORD NULL is untouched by non-access; nonlogging credential custody/provisioning/LOGIN/authenticated Direct/same-lease/live read gates remain separately CLOSED. Authenticated user smoke and authoritative API-key revocation verification remain honestly deferred/pending.
+
+
+## Owner-authorized live DEV deployment attempt — 2026-10-10
+
+**Final outcome: ROLLED BACK. Host-mode live deployment NOT accepted.** Canonical source remained `3e74628203959022e765fb456cf1ff9b1ccbfb29`; no Git mutation occurred. Exact canonical Git archive (no private env files) built and pinned candidate image `sha256:51432b86743f3a7e24b1523dfe004961a9b0cc89f6b41f6e053af03492c67574` before any service stop. Both effective forward/rollback configurations passed accepted image/rotated-credential/network guards; rollback retained original source/Bridge and image `sha256:d2e512b1841db689ff64948f4663c4660a20fc181914aee3412483a96c84d0f5`. New credential selection stayed exclusively `backend.rotated.env`; exposed original env was never selected or read.
+
+### Caddy change and preservation
+
+Applied the exact accepted Unix Admin global directive and systemd drop-in; preserved existing site/upstream/HTTPS configuration bytes below the new global block. Root-private prior config/unit/metadata backups retained. Caddyfile target now root:caddy0640; `/run/caddy-admin` and socket caddy996:988/0700. Admin TCP absent; actual host UID10001 same-filesystem connect denied EACCES; operator GET200 and systemctl reload through explicit Unix address passed. Caddy is active/running PID3665346. Isolation remains installed after safe Bridge rollback; restoring TCP Admin was unnecessary.
+
+Caddy serves api-dev, ai, media and host-address routes; shared restart impact was explicitly communicated before mutation. Only api-dev availability was sampled; no Production application requests were made. Initial parent-mode staging guard stopped before build (existing safe public release parent0755, unique new release0700). Initial config comparison stopped before any live mutation because Caddy generated a file-server hide entry from the candidate filename. After normalizing that single generated filename, every non-admin setting matched; actual Caddy validation passed. These initial no-mutation stops were preserved, not misreported as successful service operations.
+
+### Single Host-mode attempt and automatic rollback
+
+Exactly one Backend-only Host-mode replacement attempt ran with no build/pull during startup and a120-second deadline. Old Backend was stopped,8787 release verified, then pinned candidate started. It became healthy, exact Host image/network/no publishing verified, actual owned socket was only127.0.0.1:8787 (UID10001), four host non-loopback IPv4 and one global IPv6 ingress probes refused, local/public health200 and protected unauthenticated401 passed. The combined private API/Direct TLS/Admin acceptance probe then returned failure. The candidate was **not accepted**, even though health was green.
+
+Automatic pinned Bridge rollback ran once, retaining the same private rotated env override. It restored a healthy sole Backend and health200/protected401. The controller initially reported BLOCKED/rollback-check failure because its strict raw IPv6 route/address preservation comparison included the Backend's intentionally recreated Docker veth interfaces. Mutation stopped; no second deployment/rollback attempt occurred. Subsequent read-only verification confirmed unrelated containers, networks, non-veth IPv6 routes/interfaces, sysctls and Docker daemon state preserved. Rotated env, private credential override and original env inode/size/mtime/ctime/ownership/mode match earlier evidence. Thus **actual pinned Bridge restoration is verified**, while the original controller failure remains honestly retained. No host-wide networking/firewall configuration command was used; Docker changed only the replaced service's namespace/attachment/publication.
+
+Final running container `fc9f01519e648ac9219bb6f01d36788d56c8f3689f37b891601b55cfacb435f5`, image `sha256:d2e512b1841db689ff64948f4663c4660a20fc181914aee3412483a96c84d0f5`, original `dev-backend_default` Bridge; only127.0.0.1:8787 publication. Config files are original Bridge, accepted private API-key cutover override, and retained literal rollback image override. No exposed-old-env fallback. Final private loaded-key privileged read200, local/public health200 and unauthenticated protected401; actual host non-loopback IPv4/IPv6 connections refused. All task-owned probe containers removed.
+
+### Direct connectivity, limitation and interruption evidence
+
+Read-only diagnostic probes after rollback, using the exact candidate runtime without application deployment, returned privileged API200 and Unix ENOENT/TCP2019 refusal for UID10001. Direct AAAA `2406:da1c:4c7:f800::7dd1`; real IPv6 TCP5432 plus TLS1.3 with approved CA/hostname verified. Wrong hostname rejected ERR_TLS_CERT_ALTNAME_INVALID; empty trust rejected SELF_SIGNED_CERT_IN_CHAIN. Only PostgreSQL SSLRequest/TLS traffic: no StartupMessage, authentication, Reader credential or SQL. These individual diagnostics passed but **do not retroactively pass the failed combined live acceptance probe**; its failure remains unclassified. No further deployment was attempted. Independent external public IPv6 ingress sampling was not performed; host non-loopback refusal/owned socket inspection passed during the candidate run.
+
+Status-only public HTTPS sampling measured unavailable intervals: Caddy restart approximately0.093s (sampling bracket upper0.218s); Host Backend replacement0.652s (upper0.742s); automatic Bridge rollback0.645s (upper0.734s). These are sampled API availability intervals, not continuously measured all-site downtime. Caddy restart through prerequisite acceptance0.565s. Labelled Host attempt bounded approximately35.927–36.109s; labelled rollback approximately25.971s, both within their120-second bounds. Failed requests could502/terminate; no zero-downtime claim.
+
+### Retained evidence and remaining gates
+
+Private live release: `/opt/otr/dev-backend/releases/r3a3a-3e74628203959022e765fb456cf1ff9b1ccbfb29`. Backups/pinned overrides/credential-free configs/results/status-only samples: `/opt/otr/dev-backend/env/r3a3a-host-deployment-3e7462820395` under root-private custody. Local nonsecret evidence0600 beneath0700 `/private/tmp/otr-r3a3a-live-host-20261010`; `final-summary.json` separates original controller result from verified actual state. Original incident/review evidence and protected credentials retained; no deletion/redaction or secret value output.
+
+Another Host-mode attempt needs separate Owner authorization after resolving the combined acceptance probe failure and correcting preservation checks to account for service-owned veth replacement. Live Host-mode acceptance remains OPEN; final Bridge Backend does not certify Direct connectivity from that Bridge namespace. Authenticated existing-member Ledger bootstrap DEFERRED. Old Modern key deletion Owner-confirmed / authoritative verification PENDING. Reader nonlogging custody/provisioning/LOGIN/password, authenticated Direct Primary/same-lease attestation and live reads remain separately CLOSED; TLS/health/API smoke do not prove Reader access. No Hosted SQL/Reader mutation, credential rotation/revocation, Production access, Native/device/Simulator or Composer/C5/C9/provider/business-write activation performed; no full Hosted write/provider audit claimed.
+
+**STOP — DEV HOST-MODE DEPLOYMENT ACCEPTANCE COMPLETE: ROLLED BACK.**
+
+
+## Owner-authorized Host-mode failure diagnosis — 2026-10-10
+
+**Combined-probe root cause CONFIRMED: malformed acceptance JavaScript, not a
+failed Backend/TLS/Admin runtime assertion.** The retained `backend_private_checks`
+source in `/private/tmp/otr-r3a3a-live-host-20261010/deploy.py` ends the handshake with
+`family:secure.remoteFamily}));})} (async()=>`. It closes the data callback but omits
+the outer Promise callback/constructor closure. Correct ending:
+`family:secure.remoteFamily}));});});} (async()=>`.
+
+The first actual failure is Node parsing: expected a runnable probe returning
+nonsecret JSON with exit0; observed syntax exit1, reproduced locally and using
+`docker exec -i otr-dev-backend node --check` on DEV Node v24.21.0:
+`SyntaxError: missing ) after argument list`. Syntax checking does not execute source,
+read credentials or send requests. Consequently no key/API, DNS, TLS or Admin
+assertion inside this invocation ran. The controller's `run()` rejected nonzero
+exit before `json.loads`; stderr was discarded, so neither the syntax error nor the
+fixed catch message was retained in original output. Earlier startup, exact Host
+image/network, socket, local/public health200 and unauthenticated401 checks had passed.
+Backend startup, Caddy upstream and namespace failure are not supported causes for
+this invocation. Timing/network races remain unproven hypotheses, unnecessary to
+explain this failure.
+
+**Timestamp limit:** no per-probe UTC failure event was recorded. Retained status-only
+samples bracket the Host-to-rollback phase transition at monotonic8807800.470087662
+through8807800.559236329. Mapping with the later host realtime-minus-monotonic offset
+1782813682.847582 gives approximately2026-10-10T08:38:03.318Z–08:38:03.407Z. This is a
+derived phase-transition interval, not the precise assertion timestamp; intervening
+wall-clock adjustment is not excluded. Final controller result mtime is
+2026-10-10T08:38:29.376599Z. Original evidence remains unchanged; allowlisted
+`failure-diagnosis.json` was added under existing local private evidence custody.
+
+**Minimum correction:** promote the exact original probe with only its missing
+closure repaired, equivalent explicit resolve/reject branches, explicit Buffer import
+and formatting into `scripts/dev/backend-host-private-smoke.cjs`.
+No application, credential, Compose, image, Caddy, SQL Driver or Auth contract change.
+Runbook requires pre-stop syntax validation and use of these checked bytes rather
+than rebuilding inline source. Five network-free synthetic tests check parsing,
+combined success, API rejection, Admin denial failure and wrong-hostname acceptance
+failure; all response bodies discarded and synthetic key absent from output.
+Together with33 accepted image/credential/network guards:38 PASS. Corrected source
+also passes DEV Node24.21 `--check`; scoped ESLint, code formatting, UI guard and
+whitespace checks PASS. Original syntax failure and an intermediate synthetic mock
+omission after the explicit Buffer import were reproduced, then fixed before the
+final passing rerun. No full application matrix/build was repeated for this probe-only
+change. These are synthetic
+validation, not live Host acceptance or authenticated Ledger smoke.
+
+**Separate confirmed controller defect:** rollback `preserved()` compared raw IPv6
+routes/addresses including intentionally replaced service veths, producing a false
+rollback failure after healthy Bridge restoration. Prior read-only evidence confirmed
+actual rollback and preservation, but dropping every veth is not an acceptable
+future fix. Runbook now requires attestation of old/new Backend-owned host-side veths
+and exact comparison of all remaining interfaces/routes. That one-time controller
+has not been safely rewritten or rerun: original pre-stop peer ownership mapping was
+not retained, so retrospective ownership cannot be guessed. Before a retry, its
+preservation comparison must implement and test this bounded exception using fresh
+service-owned metadata. **Ready for one bounded Host retry: NO until that controller
+correction is validated; no further architecture review or incident investigation is
+required.** A fresh Owner deployment authorization is still required.
+
+Read-only DEV syntax check observed healthy original Bridge image d2e512b. No live
+redeployment, Caddy reload, credential selection/change, unrelated service operation,
+Hosted SQL/Reader LOGIN or runtime activation. Authenticated Ledger smoke remains
+DEFERRED; old-key deletion Owner-confirmed / authoritative verification PENDING.
+Original independent reviews/rechecks unchanged. Prior live-attempt documentation is
+preserved as historical evidence. Scoped correction integration changes only two
+probe files, runbook and incremental Builder/current-state evidence.
+
+**STOP — HOST-MODE FAILURE DIAGNOSIS COMPLETE.**
