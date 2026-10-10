@@ -7,6 +7,9 @@ import os
 import pathlib
 import stat
 import time
+import hashlib
+import shlex
+import difflib
 
 
 def require(condition, code):
@@ -184,7 +187,7 @@ def structured_mismatches(code, expected, observed, category, old=None, new=None
             truncated = True
             return
         visited += 1
-        if present_a == present_b and a == b and type(a) is type(b) and not isinstance(a, (dict, list)):
+        if present_a == present_b and type(a) is type(b) and a == b and json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True):
             return
         if present_a and present_b and isinstance(a, dict) and isinstance(b, dict):
             keys = sorted(set(a) | set(b))
@@ -205,7 +208,8 @@ def structured_mismatches(code, expected, observed, category, old=None, new=None
         row = {'path': path, 'expected_present': present_a, 'observed_present': present_b,
                'expected_type': type(a).__name__, 'observed_type': type(b).__name__,
                'expected': metadata_value(field, a), 'observed': metadata_value(field, b),
-               'ownership': 'backend' if old and identifier in {old['container'], (new or {}).get('container')} else 'unrelated'}
+               'ownership': ('backend' if old and identifier is not None and identifier in {old['container'], (new or {}).get('container')}
+                             else 'unrelated') if category == 'containers' else 'unattested'}
         if category == 'containers':
             record = expected.get(identifier) or observed.get(identifier) or {}
             row.update(container_id=metadata_value('id', identifier),
@@ -217,6 +221,68 @@ def structured_mismatches(code, expected, observed, category, old=None, new=None
     return {'code': code, 'mismatches': rows, 'reported_count': len(rows),
             'truncated': truncated, 'utc': time.time(), 'old_attachment': old, 'new_attachment': new}
 
+
+
+def firewall_structure(lines, attachment):
+    """Describe normalized iptables-save lines without addresses/comments or raw hashes."""
+    table, positions, result = None, {}, []
+    chains = {'INPUT', 'OUTPUT', 'FORWARD', 'PREROUTING', 'POSTROUTING', 'DOCKER',
+              'DOCKER-USER', 'DOCKER-FORWARD', 'DOCKER-BRIDGE', 'DOCKER-CT',
+              'DOCKER-INTERNAL', 'DOCKER-ISOLATION-STAGE-1', 'DOCKER-ISOLATION-STAGE-2'}
+    for index, line in enumerate(lines):
+        try:
+            words = shlex.split(line)
+        except ValueError:
+            words = []
+        kind, chain = 'other', None
+        if line.startswith('*'):
+            table = line[1:] if line[1:] in {'filter', 'nat', 'mangle', 'raw', 'security'} else '<redacted>'
+            kind = 'table'
+        elif line.startswith(':'):
+            kind = 'policy'
+            chain = words[0][1:] if words else None
+        elif len(words) > 1 and words[0] == '-A':
+            kind, chain = 'rule', words[1]
+        elif line == 'COMMIT':
+            kind = 'commit'
+        descriptor = {'table': table or '<not present>', 'chain': chain if chain in chains else '<redacted>', 'class': kind}
+        if kind == 'rule':
+            key = (table, chain)
+            positions[key] = positions.get(key, 0) + 1
+            descriptor['normalized_chain_position'] = positions[key]
+        for option, field, allowed in [('-j', 'target', chains | {'ACCEPT', 'DROP', 'REJECT', 'RETURN', 'DNAT', 'SNAT', 'MASQUERADE'}),
+                                       ('-p', 'protocol', {'tcp', 'udp', 'icmp', 'ipv6-icmp', 'all'})]:
+            if option in words and words.index(option) + 1 < len(words):
+                value = words[words.index(option) + 1]
+                descriptor[field] = value if value in allowed else '<redacted>'
+        if kind == 'policy' and len(words) > 1:
+            descriptor['policy'] = words[1] if words[1] in {'ACCEPT', 'DROP', '-'} else '<redacted>'
+        descriptor['backend_bridge_reference'] = attachment['bridge'] in words
+        descriptor['backend_address_reference'] = any(word in {attachment['ip'], attachment['ip'] + '/32'} for word in words)
+        # Fingerprint the public structure only, never a potentially secret rule/comment value.
+        shape = {k: v for k, v in descriptor.items() if k != 'normalized_chain_position'}
+        descriptor['structure_sha256'] = hashlib.sha256(json.dumps(shape, sort_keys=True).encode()).hexdigest()
+        descriptor['normalized_index'] = index
+        descriptor['ownership'] = 'docker_chain_unattested' if chain and chain.startswith('DOCKER') else 'unattested'
+        result.append(descriptor)
+    return result
+
+
+def firewall_mismatches(code, expected, observed, old):
+    require(max(len(expected), len(observed)) <= 2048, 'DIAGNOSTIC_FIREWALL_LIMIT')
+    left, right = firewall_structure(expected, old), firewall_structure(observed, old)
+    operations = [op for op in difflib.SequenceMatcher(None, expected, observed, autojunk=False).get_opcodes() if op[0] != 'equal']
+    rows = []
+    for operation, a, b, c, d in operations[:32]:
+        rows.append({'operation': operation, 'expected_range': [a, b], 'observed_range': [c, d],
+                     'expected': left[a:min(b, a + 8)], 'observed': right[c:min(d, c + 8)],
+                     'details_truncated': b - a > 8 or d - c > 8,
+                     'raw_values_changed': True, 'raw_values': 'private comparison-operands evidence', 'ownership': 'unattested'})
+    return {'code': code, 'mismatches': rows, 'operation_count': len(operations),
+            'truncated': len(operations) > 32 or any(r['details_truncated'] for r in rows),
+            'change_class': 'reordering' if sorted(expected) == sorted(observed) else 'edit_operations',
+            'utc': time.time(), 'fingerprint_scope': 'public_structure_only',
+            'complete_operands': 'comparison-operands private evidence'}
 
 def preserved_with_evidence(before, after, direction, directory):
     """Persist sanitized inputs and every guard failure before caller can start rollback."""
@@ -247,6 +313,8 @@ def preserved_with_evidence(before, after, direction, directory):
                                for row in sorted(links, key=lambda row: row['ifname'])[:128]],
                 'interface_count': len(links), 'truncated': len(links) > 128}
 
+    write('firewall-inputs', {family: {'expected': before[family], 'observed': after[family]}
+                              for family in ('firewall4', 'firewall6')})
     write('interfaces', {'expected': projection(before), 'observed': projection(after)})
     write('containers', {'expected': safe_tree(before['containers']), 'observed': safe_tree(after['containers']),
                          'expected_count': len(before['containers']), 'observed_count': len(after['containers']),
@@ -259,7 +327,8 @@ def preserved_with_evidence(before, after, direction, directory):
         emitted = True
 
     try:
-        return preserved(before, after, direction, diagnostics=diagnostic)
+        return preserved(before, after, direction, diagnostics=diagnostic,
+                         comparison_evidence=lambda value: write('comparison-operands', value))
     except (AssertionError, KeyError, TypeError, ValueError) as error:
         if not emitted:
             # Validation failures retain bounded context, not a claim about normalized operands.
@@ -283,7 +352,7 @@ def firewall(text, attachment, bridge_mode):
     return [line for line in lines if line not in expected]
 
 
-def preserved(before, after, direction, diagnostics=None):
+def preserved(before, after, direction, diagnostics=None, comparison_evidence=None):
     require(direction in ('host', 'bridge'), 'DIRECTION')
     old = attested(before)
     require(before['backend']['id'] != after['backend']['id'], 'REPLACEMENT_ID')
@@ -296,11 +365,14 @@ def preserved(before, after, direction, diagnostics=None):
                 and after['host_netns'] == after['backend_netns'], 'HOST_NETWORK')
         new = None
     def equal(left, right, code, category):
+        if left != right and comparison_evidence is not None:
+            comparison_evidence({'code': code, 'category': category, 'expected': left, 'observed': right})
         if left != right and diagnostics is not None:
             a, b = left, right
             if category in {'addresses', 'routes4', 'routes6'}:
                 a, b = [json.loads(r) for r in left], [json.loads(r) for r in right]
-            diagnostics(structured_mismatches(code, a, b, category, old, new))
+            diagnostics(firewall_mismatches(code, a, b, old) if category in {'firewall4', 'firewall6'}
+                        else structured_mismatches(code, a, b, category, old, new))
         require(left == right, code)
 
     excluded = {old['interface']} | ({new['interface']} if new else set())

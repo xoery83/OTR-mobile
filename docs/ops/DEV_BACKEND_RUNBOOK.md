@@ -404,3 +404,23 @@ remaining ports and rejects NO-CARRIER on an active bridge. Only this bridge's
 empty-port NO-CARRIER is normalized; all other flags/fields and unrelated
 interfaces remain exact. Rollback attests the fresh peer and validates restored
 carrier. Persist diagnostics before rollback; never suppress unrelated drift.
+
+### Firewall evidence and limits — R3-A3A diagnostic correction
+
+Before guard evaluation, retain complete before/after firewall text privately in
+exclusive0600 `preservation-<direction>-firewall-inputs.json`. On any normalized
+comparison failure, write/fsync complete operands to private
+`preservation-<direction>-comparison-operands.json` before public diagnostics and
+rollback. These files may contain sensitive comments/labels/paths: never emit their
+contents, put them in Git or attach them to a report. Keep owner0700 custody.
+
+Firewall reports use insertion/deletion/replacement edit ranges and exact reorder
+classification; public table/known chain/target/policy and normalized chain position,
+Backend-reference booleans and SHA256 of public structure only. Never fingerprint
+raw comments, addresses or secret-bearing values. Reports cap32 edit ranges and8
+rules per side; truncation points to the complete private operands instead of losing
+the failure. At most2048 lines are analyzed; files remain capped256KiB. Excess limits
+fail closed; no diagnostic failure permits acceptance. Raw original positions can
+be reconstructed privately. Docker chain/reference is an ownership hint, never an
+exemption. Non-container ownership remains unattested. All original equality and
+three exact publication-rule allowances remain unchanged.

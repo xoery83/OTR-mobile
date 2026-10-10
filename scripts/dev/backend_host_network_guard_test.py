@@ -264,7 +264,7 @@ class ContainerDiagnosticTests(unittest.TestCase):
             os.chmod(directory, 0o700)
             with self.assertRaisesRegex(AssertionError, 'UNRELATED_CONTAINERS'):
                 preserved_with_evidence(before, after, 'host', directory)
-            self.assertNotIn(sentinel, ''.join(p.read_text() for p in pathlib.Path(directory).iterdir()))
+            self.assertNotIn(sentinel, ''.join(p.read_text() for p in pathlib.Path(directory).iterdir() if 'comparison-operands' not in p.name and 'firewall-inputs' not in p.name))
         from backend_host_network_guard import structured_mismatches
         data = structured_mismatches('UNRELATED_CONTAINERS', {OTHER: {}}, {OTHER: {'health': None}}, 'containers')
         self.assertFalse(data['mismatches'][0]['expected_present'])
@@ -283,6 +283,72 @@ class ContainerDiagnosticTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, 'UNRELATED_ROUTES6'):
             preserved(before, after, 'host', diagnostics=rows.append)
         self.assertTrue(rows[0]['mismatches'])
+
+
+class FirewallDiagnosticTests(unittest.TestCase):
+    def test_private_operands_before_rollback_public_structure_only(self):
+        before = fixture()
+        after = host(before)
+        sentinel = 'sb_secret_SYNTHETIC_FIREWALL_COMMENT'
+        after['firewall4'] += '\n-A INPUT -m comment --comment "' + sentinel + '" -j ACCEPT'
+        with tempfile.TemporaryDirectory() as directory:
+            os.chmod(directory, 0o700)
+            with self.assertRaisesRegex(AssertionError, 'UNRELATED_FIREWALL4'):
+                preserved_with_evidence(before, after, 'host', directory)
+            private = pathlib.Path(directory) / 'preservation-host-comparison-operands.json'
+            self.assertIn(sentinel, private.read_text())
+            self.assertEqual(private.stat().st_mode & 0o777, 0o600)
+            data = json.loads((pathlib.Path(directory) / 'preservation-host-mismatch.json').read_text())
+            self.assertNotIn(sentinel, json.dumps(data))
+            self.assertEqual(data['mismatches'][0]['operation'], 'insert')
+            self.assertEqual(data['mismatches'][0]['observed'][0]['target'], 'ACCEPT')
+            self.assertEqual(data['mismatches'][0]['ownership'], 'unattested')
+
+    def test_large_shift_is_one_edit_not_positional_cascade(self):
+        from backend_host_network_guard import firewall_mismatches
+        rules = ['*filter'] + ['-A FORWARD -p tcp --dport ' + str(i) + ' -j DROP' for i in range(200)] + ['COMMIT']
+        after = rules[:150] + ['-A INPUT -j ACCEPT'] + rules[150:]
+        data = firewall_mismatches('UNRELATED_FIREWALL4', rules, after, attested(fixture()))
+        self.assertEqual(data['operation_count'], 1)
+        self.assertFalse(data['truncated'])
+        self.assertEqual(data['mismatches'][0]['expected_range'], [150, 150])
+        self.assertEqual(data['mismatches'][0]['observed'][0]['table'], 'filter')
+        self.assertEqual(data['mismatches'][0]['observed'][0]['chain'], 'INPUT')
+
+    def test_reorder_delete_replace_policy_and_other_docker_rule_reject(self):
+        from backend_host_network_guard import firewall_mismatches
+        rules = ['*filter', ':FORWARD DROP [COUNTERS]', '-A FORWARD -j DROP', '-A INPUT -j DROP', 'COMMIT']
+        reorder = rules[:2] + [rules[3], rules[2]] + rules[4:]
+        self.assertEqual(firewall_mismatches('X', rules, reorder, attested(fixture()))['change_class'], 'reordering')
+        for tail in ['-A INPUT -j ACCEPT', '-A DOCKER-USER -j ACCEPT', '-A FORWARD -j ACCEPT']:
+            before = fixture()
+            after = host(before)
+            after['firewall4'] += '\n' + tail
+            with self.assertRaisesRegex(AssertionError, 'UNRELATED_FIREWALL4'):
+                preserved(before, after, 'host')
+        for changed in [rules[:-2] + rules[-1:], rules[:1] + [':FORWARD ACCEPT [COUNTERS]'] + rules[2:]]:
+            self.assertTrue(firewall_mismatches('X', rules, changed, attested(fixture()))['mismatches'])
+
+    def test_unrelated_reorder_and_deletion_remain_fail_closed(self):
+        before = fixture()
+        before['firewall4'] += '\n-A INPUT -j DROP\n-A OUTPUT -j DROP'
+        for tail in ['-A OUTPUT -j DROP', '-A OUTPUT -j DROP\n-A INPUT -j DROP']:
+            after = host(before)
+            after['firewall4'] += '\n' + tail
+            with self.assertRaisesRegex(AssertionError, 'UNRELATED_FIREWALL4'):
+                preserved(before, after, 'host')
+
+    def test_allowed_publication_lifecycle_and_counter_normalization(self):
+        before = fixture()
+        after = host(before)
+        before['firewall4'] += '\n:FORWARD DROP [1:2]'
+        after['firewall4'] += '\n:FORWARD DROP [100:200]'
+        self.assertEqual(preserved(before, after, 'host')['result'], 'PASS')
+
+    def test_noncontainer_none_is_never_backend_owned(self):
+        from backend_host_network_guard import structured_mismatches
+        data = structured_mismatches('X', {'forwarding': 0}, {'forwarding': 1}, 'sysctls', attested(fixture()), None)
+        self.assertEqual(data['mismatches'][0]['ownership'], 'unattested')
 
 
 if __name__ == '__main__':

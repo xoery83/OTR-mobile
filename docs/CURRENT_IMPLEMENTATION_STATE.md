@@ -1,3 +1,18 @@
+## Latest R3-A3A firewall diagnosis — 2026-10-11 / OWNER REVIEW
+
+- Latest instrumented Host attempt rolled back on UNRELATED_FIREWALL4; exact expected
+  index15 is raw/PREROUTING rule13, DROP, referencing Backend bridge/address. Failed
+  observed rule list absent; actual cause/ownership UNKNOWN, no lifecycle exemption.
+- Diagnostic-only correction retains complete raw firewall inputs and failed normalized
+  operands privately before rollback; bounded public structure fingerprints/edit ranges
+  identify reordering/insertion/deletion/replacement without leaking selector/comments.
+  Truncation points to complete private operands. Non-container ownership bug fixed.
+- 22 guard tests plus38 image/credential/probe controls and250 identical old/new outcomes
+  PASS; compile/order/whitespace/review preservation PASS. No live deployment or host
+  policy mutation. Healthy Bridge/rotated credential/Caddy preserved by non-operation.
+- Ready for one bounded instrumented retry YES after separate Owner authorization.
+  Reader/Runtime CLOSED; member Ledger smoke DEFERRED, old-key verification PENDING.
+
 ## Latest R3-A3A container diagnostics — 2026-10-11 / OWNER REVIEW
 
 - Historic UNRELATED_CONTAINERS exact field/root cause UNKNOWN; failed Host snapshot

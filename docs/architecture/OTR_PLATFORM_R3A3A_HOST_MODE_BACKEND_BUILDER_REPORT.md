@@ -916,3 +916,64 @@ old-key revocation verification PENDING. Scoped paths: guard, immediate tests,
 runbook and Builder/current-state records including previous uncommitted outcome.
 
 **STOP — CONTAINER GUARD DIAGNOSTIC FIX COMPLETE.**
+
+## Firewall preservation diagnosis — 2026-10-11 / NO LIVE RETRY
+
+Actual canonical/remote base1ed959ad7f6efe4aead2fcd825a8b58212b2e96e verified.
+Latest one attempt rolled back with UNRELATED_FIREWALL4 at22:15:35.447647UTC;
+functional Host checks and earlier container/network/interface/address/route
+comparisons passed. Latest rollback/full preservation/API200 passed; no historic
+container false-positive conclusion. Private outcome retained at
+`/private/tmp/otr-r3a3a-container-retry-20261011/HOST_MODE_INSTRUMENTED_RETRY_RESULT.md`.
+
+Read only approved remote root-private retained files through pinned SSH. Original
+mismatch hash b7c12ce4401160c468be50ab4a2440e989293eda3ab3bdbf65e6824fb02c8b15
+verified. Expected index15 is raw/PREROUTING rule13, targetDROP, referencing the
+attested Backend bridge and address. Same position in retained original unfiltered
+snapshot. Public structural fingerprint
+`e918aed939c0e8efe750aa86a89b9215c8c74a0b5a331f7e9e4bc2a71d35d780` excludes raw
+selector/comment values. Docker-owned Backend ingress lifecycle is a candidate,
+not proven ownership or a permitted exception. Observed rule/value UNKNOWN: failed
+Host after.json, raw firewall inputs and normalized operands were not retained.
+Insertion/deletion/replacement/reorder/normalization cannot be established from
+redacted positional output. **Root cause UNKNOWN; no policy correction made.**
+
+Diagnostic-only correction: persist complete raw firewall inputs and exact failed
+normalized operands privately (owner0700/exclusive0600/fsync/non-overwrite) before
+rollback. Public firewall edit ranges replace32 positional cascades; classification
+uses exact raw normalized list identity/order. Only public structure is fingerprinted,
+never secret-bearing values. Rule metadata table/known chain/normalized position/
+target/policy, Backend-reference booleans; unknowns redact.32 edit ranges,8 rules
+per side,2048 analyzed lines,256KiB files, explicit truncation with complete private
+operands for trusted replay. Bounds fail closed, not PASS. No arbitrary raw operand
+contents in output or Git. Current retained historical evidence unchanged.
+
+Corrected None-identifier ownership bug: non-container rows are unattested, not
+backend-owned by matching null attachment. Docker-chain/reference hints do not
+attest management ownership. Reviewed other predicates: all normalized comparison
+failures now retain exact private operands before bounded public diffs; validation
+failures still report code/context, not proof of a particular operand. Skip equal
+subtrees during diff traversal while preserving canonical numeric distinction;
+original equality/assertion order and all Backend peer/carrier/publication exclusions
+unchanged. Prepared accepted controller ff2314e9 calls this wrapper in both paths;
+its source unchanged, compiled/order-checked, not executed in this task.
+
+Validation22 Python tests PASS: allowed exact Backend publication lifecycle/counter
+normalization; unrelated INPUT/FORWARD/DOCKER-USER/policy drift rejects; edit/reorder/
+delete/replace metadata, >128-rule shift gives one precise edit, sensitive synthetic
+comment retained only privately, None ownership rejected. Existing lifecycle,
+container/route/carrier/redaction/custody tests retained.38 image/credential/probe
+controls PASS;250 old/new outcomes identical, compile/whitespace/review preservation
+PASS. Disposable fixtures only; no native or live transition. Runbook/current-state
+formatting checked, historical Builder extra blank lines preserved.
+
+Ready for one bounded instrumented retry YES only with separate Owner authorization,
+fresh pinned-image/rotated-credential rollback baseline and complete private firewall
+input/operand capture. That is the missing evidence needed to prove actual lifecycle
+or unrelated policy change. No broad Docker-ignore or new firewall allowance.
+Healthy Bridge/Caddy/rotated credential untouched; no firewall/network/daemon/SQL/
+credential mutation, Production/device/Reader/Runtime/provider activation. Member
+Ledger smoke DEFERRED; authoritative old-key verification PENDING. Scoped files:
+guard/tests, runbook, Builder/current-state. No full Platform matrix repeated.
+
+**STOP — FIREWALL PRESERVATION DIAGNOSIS COMPLETE.**
