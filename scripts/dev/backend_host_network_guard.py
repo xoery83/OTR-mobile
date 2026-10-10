@@ -6,6 +6,7 @@ import re
 import os
 import pathlib
 import stat
+import time
 
 
 def require(condition, code):
@@ -101,8 +102,124 @@ def interface_mismatches(expected, observed, old, new):
             'truncated': count > len(rows), 'old_attachment': old, 'new_attachment': new}
 
 
+# Diagnostics use known metadata shapes only; equality always uses the original operands.
+DIFF_FIELDS = INTERFACE_FIELDS | {'id', 'name', 'image', 'status', 'health', 'pid', 'network',
+    'ports', 'labels', 'networks', 'mounts', 'user', 'HostIp', 'HostPort', 'Name', 'Id',
+    'Driver', 'Options', 'IPAM', 'Internal', 'EnableIPv6', 'Containers', 'NetworkID',
+    'EndpointID', 'MacAddress', 'IPAddress', 'IPv4Address', 'IPv6Address', 'Gateway',
+    'IPv6Gateway', 'IPPrefixLen', 'GlobalIPv6Address', 'GlobalIPv6PrefixLen', 'Aliases',
+    'DNSNames', 'IPAMConfig', 'Links', 'DriverOpts', 'Network', 'Endpoint', 'Type',
+    'Source', 'Destination', 'Mode', 'RW', 'Propagation', 'interface', 'family', 'local',
+    'prefixlen', 'scope', 'label', 'dev', 'dst', 'gateway', 'prefsrc', 'protocol', 'table',
+    'metric', 'type', 'expected', 'observed', 'presence', 'com.docker.compose.project',
+    'com.docker.compose.service'}
+KNOWN_NAMES = {'otr-dev-backend', '/otr-dev-backend', 'dev-backend', 'backend', 'otr',
+    'host', 'none', 'default', 'dev-backend_default', 'otr_default', 'media-service',
+    'stt-service', 'image-index-service', 'face-service', 'fixture-other',
+    '/otr-media-service', '/otr-stt-service', '/otr-image-index-service', '/otr-face-service'}
+
+
+def safe_segment(value):
+    value = str(value)
+    if value in DIFF_FIELDS or re.fullmatch(r'[0-9a-f]{64}|[0-9]{1,5}(?:/(?:tcp|udp))?', value):
+        return value.replace('~', '~0').replace('/', '~1')
+    if value in KNOWN_NAMES:
+        return value
+    if re.fullmatch(r'net/(?:ipv[46]/conf/[A-Za-z0-9_.:@-]{1,15}/(?:forwarding|disable_ipv6|accept_ra|autoconf)|ipv4/ip_forward)', value):
+        return value.replace('/', '~1')
+    return '$redacted_key'
+
+
+def metadata_value(field, value):
+    if value is None:
+        return None
+    if field in INTERFACE_FIELDS:
+        return safe_value(field, value)
+    if field not in DIFF_FIELDS and field not in {'sysctl', 'daemon'}:
+        return '<redacted>'
+    if type(value) is bool or type(value) is int:
+        return value if -1 <= value <= 2 ** 32 else '<redacted>'
+    if not isinstance(value, str):
+        return '<redacted>'
+    if field in {'id', 'Id', 'NetworkID', 'EndpointID', 'image'}:
+        return value if re.fullmatch(r'(?:sha256:)?[0-9a-f]{64}', value) else '<redacted>'
+    if field in {'name', 'Name', 'network', 'user', 'com.docker.compose.project', 'com.docker.compose.service'}:
+        return value if value in KNOWN_NAMES or re.fullmatch(r'[0-9a-f]{64}', value) else '<redacted>'
+    if field in {'status', 'health'}:
+        return value if value in {'running', 'exited', 'created', 'paused', 'restarting', 'removing', 'dead', 'healthy', 'unhealthy', 'starting'} else '<redacted>'
+    if field == 'MacAddress':
+        return safe_value('address', value)
+    if field in {'HostIp', 'IPAddress', 'IPv4Address', 'IPv6Address', 'Gateway', 'IPv6Gateway',
+                 'GlobalIPv6Address', 'local', 'dst', 'gateway', 'prefsrc'}:
+        try:
+            ipaddress.ip_interface(value)
+            return value
+        except ValueError:
+            return 'default' if field == 'dst' and value == 'default' else '<redacted>'
+    if field == 'HostPort' or field == 'sysctl':
+        return value if re.fullmatch(r'[0-9]{1,5}', value) else '<redacted>'
+    return '<redacted>'
+
+
+def safe_tree(value, field='', depth=0):
+    if depth >= 12:
+        return '<depth limit>'
+    if isinstance(value, dict):
+        result = {safe_segment(k): safe_tree(v, str(k), depth + 1)
+                  for k, v in list(value.items())[:128]}
+        if len(value) > 128 or len(result) < min(len(value), 128):
+            result['$truncated_or_redacted_keys'] = True
+        return result
+    if isinstance(value, list):
+        return [safe_tree(v, field, depth + 1) for v in value[:32]] + (['<truncated>'] if len(value) > 32 else [])
+    return metadata_value(field, value)
+
+
+def structured_mismatches(code, expected, observed, category, old=None, new=None):
+    rows, visited, truncated = [], 0, False
+
+    def walk(a, b, path, field='', identifier=None, present_a=True, present_b=True):
+        nonlocal visited, truncated
+        if visited >= 4096 or len(rows) >= 32:
+            truncated = True
+            return
+        visited += 1
+        if present_a == present_b and a == b and type(a) is type(b) and not isinstance(a, (dict, list)):
+            return
+        if present_a and present_b and isinstance(a, dict) and isinstance(b, dict):
+            keys = sorted(set(a) | set(b))
+            if len(keys) > 128:
+                truncated = True
+            for key in keys[:128]:
+                cid = key if category == 'containers' and path == '/containers' else identifier
+                walk(a.get(key), b.get(key), path + '/' + safe_segment(key),
+                     'sysctl' if category == 'sysctls' else str(key), cid, key in a, key in b)
+            return
+        if present_a and present_b and isinstance(a, list) and isinstance(b, list):
+            if max(len(a), len(b)) > 128:
+                truncated = True
+            for index in range(min(128, max(len(a), len(b)))):
+                walk(a[index] if index < len(a) else None, b[index] if index < len(b) else None,
+                     path + '/' + str(index), field, identifier, index < len(a), index < len(b))
+            return
+        row = {'path': path, 'expected_present': present_a, 'observed_present': present_b,
+               'expected_type': type(a).__name__, 'observed_type': type(b).__name__,
+               'expected': metadata_value(field, a), 'observed': metadata_value(field, b),
+               'ownership': 'backend' if old and identifier in {old['container'], (new or {}).get('container')} else 'unrelated'}
+        if category == 'containers':
+            record = expected.get(identifier) or observed.get(identifier) or {}
+            row.update(container_id=metadata_value('id', identifier),
+                       name=metadata_value('name', record.get('name')),
+                       name_source='snapshot' if 'name' in record else 'not_collected')
+        rows.append(row)
+
+    walk(expected, observed, '/' + category, category)
+    return {'code': code, 'mismatches': rows, 'reported_count': len(rows),
+            'truncated': truncated, 'utc': time.time(), 'old_attachment': old, 'new_attachment': new}
+
+
 def preserved_with_evidence(before, after, direction, directory):
-    """Persist safe interface input and any mismatch before caller can start rollback."""
+    """Persist sanitized inputs and every guard failure before caller can start rollback."""
     require(direction in ('host', 'bridge'), 'DIRECTION')
     directory = pathlib.Path(directory)
     custody = directory.lstat()
@@ -131,7 +248,26 @@ def preserved_with_evidence(before, after, direction, directory):
                 'interface_count': len(links), 'truncated': len(links) > 128}
 
     write('interfaces', {'expected': projection(before), 'observed': projection(after)})
-    return preserved(before, after, direction, diagnostics=lambda value: write('mismatch', value))
+    write('containers', {'expected': safe_tree(before['containers']), 'observed': safe_tree(after['containers']),
+                         'expected_count': len(before['containers']), 'observed_count': len(after['containers']),
+                         'truncated': len(before['containers']) > 128 or len(after['containers']) > 128})
+    emitted = False
+
+    def diagnostic(value):
+        nonlocal emitted
+        write('mismatch', value)
+        emitted = True
+
+    try:
+        return preserved(before, after, direction, diagnostics=diagnostic)
+    except (AssertionError, KeyError, TypeError, ValueError) as error:
+        if not emitted:
+            # Validation failures retain bounded context, not a claim about normalized operands.
+            code = str(error) if isinstance(error, AssertionError) and re.fullmatch(r'[A-Z0-9_]+', str(error)) else 'GUARD_VALIDATION_' + type(error).__name__.upper()
+            value = structured_mismatches(code, before, after, 'validation_context')
+            value['scope'] = 'validation_context'
+            diagnostic(value)
+        raise
 
 
 def firewall(text, attachment, bridge_mode):
@@ -159,6 +295,14 @@ def preserved(before, after, direction, diagnostics=None):
         require(after['backend']['network'] == 'host' and set(after['backend']['networks']) == {'host'}
                 and after['host_netns'] == after['backend_netns'], 'HOST_NETWORK')
         new = None
+    def equal(left, right, code, category):
+        if left != right and diagnostics is not None:
+            a, b = left, right
+            if category in {'addresses', 'routes4', 'routes6'}:
+                a, b = [json.loads(r) for r in left], [json.loads(r) for r in right]
+            diagnostics(structured_mismatches(code, a, b, category, old, new))
+        require(left == right, code)
+
     excluded = {old['interface']} | ({new['interface']} if new else set())
     # Only freshly attested old/new service peers are excluded; other veths remain exact.
     def links(snapshot):
@@ -196,7 +340,7 @@ def preserved(before, after, direction, diagnostics=None):
                 row = {k: v for k, v in address.items() if k not in ('valid_life_time', 'preferred_life_time')}
                 rows.append({'interface': interface['ifname'], 'address': row})
         return canonical(rows)
-    require(addresses(before) == addresses(after), 'UNRELATED_ADDRESSES')
+    equal(addresses(before), addresses(after), 'UNRELATED_ADDRESSES', 'addresses')
     for family in ('routes4', 'routes6'):
         def routes(snapshot):
             rows = []
@@ -211,7 +355,7 @@ def preserved(before, after, direction, diagnostics=None):
                     row['flags'] = [flag for flag in row.get('flags', []) if flag != 'linkdown']
                 rows.append(row)
             return canonical(rows)
-        require(routes(before) == routes(after), 'UNRELATED_' + family.upper())
+        equal(routes(before), routes(after), 'UNRELATED_' + family.upper(), family)
     for key in ('containers', 'docker_networks'):
         def unrelated(snapshot):
             value = copy.deepcopy(snapshot[key])
@@ -224,8 +368,8 @@ def preserved(before, after, direction, diagnostics=None):
                     for identifier in ids:
                         network['Containers'].pop(identifier, None)
             return value
-        require(unrelated(before) == unrelated(after), 'UNRELATED_' + key.upper())
-    require(firewall(before['firewall4'], old, True) == firewall(after['firewall4'], new or old, direction == 'bridge'), 'UNRELATED_FIREWALL4')
+        equal(unrelated(before), unrelated(after), 'UNRELATED_' + key.upper(), key)
+    equal(firewall(before['firewall4'], old, True), firewall(after['firewall4'], new or old, direction == 'bridge'), 'UNRELATED_FIREWALL4', 'firewall4')
     for key in ('firewall6', 'sysctls', 'daemon'):
         left, right = before[key], after[key]
         if key == 'firewall6':
@@ -234,5 +378,5 @@ def preserved(before, after, direction, diagnostics=None):
         if key == 'sysctls':
             left = {k: v for k, v in left.items() if not any('/' + name + '/' in k for name in excluded)}
             right = {k: v for k, v in right.items() if not any('/' + name + '/' in k for name in excluded)}
-        require(left == right, 'UNCHANGED_' + key.upper())
+        equal(left, right, 'UNCHANGED_' + key.upper(), key)
     return {'result': 'PASS', 'old_attachment': old, 'new_attachment': new, 'direction': direction}

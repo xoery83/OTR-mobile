@@ -793,3 +793,126 @@ bridge/interface, extra flag, MTU/index, active carrier and shared-port negative
 existing rollback/route/address/firewall/ownership drift and custody diagnostics
 retained. All38 immutable credential/image and combined probe tests PASS.
 One live deployment result will be appended after scoped normal integration.
+
+### Single live deployment result — ROLLED BACK / 2026-10-11
+
+Correction integrated by normal fast-forward/push at
+`53cf315a6b65580548ce61be10506e04afa8fb7a`; local/origin/actual remote main agreed.
+Only five scoped paths committed: existing carrier guard/test, DEV runbook, Builder
+report and current-state handoff (including prior instrumented outcome). Original
+independent review unchanged. Unrelated untracked CP15B evidence preserved.
+Compile/controller persistence order and whitespace PASS; runbook/current-state
+formatting PASS. Builder formatting has pre-existing extra blank lines at accepted
+a95348a; historical bytes preserved rather than broadly reformatted. No application
+source/build-input changes or full Platform test rerun.
+
+One attempt used unchanged accepted diagnostic controller, pinned Host51432b8 and
+Bridge d2e512b images with verified original build/deployment input hashes and
+exclusive backend.rotated.env selection. Caddy Admin prerequisites PASS.
+Fresh before Backendf8703bb9/veth68ed7a9/397 attested to sole approved bridge port.
+
+**Carrier correction PASS in live evidence.** br-ef4d1e4c04f6/index44 transitioned
+from `[BROADCAST,MULTICAST,UP,LOWER_UP]`, operstateUP, to
+`[NO-CARRIER,BROADCAST,MULTICAST,UP]`, operstateDOWN. MAC, broadcast, MTU1500,
+index, kind, group, qdisc and linkmode unchanged. Interface/address/route comparisons
+completed successfully before the subsequent container assertion. Root0600 durable
+Host projection SHA256
+`e758fd603d616e2964d4ca62a1df048f1c739adc28241f943373a331d26550ed`
+under root0700 `/opt/otr/dev-backend/env/r3a3a-host-retry-53cf315a6b65`.
+
+All functional live checks PASS: sole healthy pinned Host image/no published ports,
+HTTP127.0.0.1:8787 only, four IPv4/one IPv6 non-loopback ECONNREFUSED, local/public
+health200, protected401, privileged new-key read-only API200. Direct Primary
+IPv6 AAAA/TCP5432/TLS1.3 verified hostname/chain; wrong hostname and empty trust
+rejected, no SQL authentication. Caddy routing/operator Admin200 and Backend
+EACCES/ENOENT/TCP Admin denial PASS; no Caddy reload/replacement.
+
+**Host-mode NOT accepted.** Next mandatory assertion UNRELATED_CONTAINERS failed
+at 2026-10-10T17:13:13.155983+00:00. Guard remained fail-closed; no exception was added or second attempt
+made. Exact differing container/field UNKNOWN: accepted diagnostic controller
+persists interface inputs before rollback but does not persist the failed Host
+container snapshot or container-specific mismatch. Fixed assertion/timestamp were
+emitted before rollback and retained in private result/output; this does not meet
+field-level container failure evidence. Do not infer benign drift or retrospectively
+claim whole Host preservation PASS. Remaining comparisons after that assertion
+were short-circuited. No speculative correction or extra diagnosis performed.
+
+Automatic pinned Bridge rollback PASS within51.672s total maintenance. Healthy
+sole Backend34f1cc63293512f00c733e0cbf0fb68cb2115b9befa21acce6aa33d496bf836c,
+Bridge dev-backend_default/imaged2e512b, only127.0.0.1:8787 publication, fresh
+veth843c276/399 attested. Full rollback interface/container/endpoint/route/firewall/
+forwarding/Docker-daemon preservation PASS; unrelated listeners, Caddy process/
+config and rotated credential metadata unchanged. Local/public health200,
+protected401 and final private read-only API200 PASS. Exposed backend.env never
+selected. Status-only observed outages0.860s forward and0.556s rollback, respective
+bracket upper0.951s/0.648s; sampled total1.416s /combined upper1.599s. Aggregate
+26.054s includes a healthy interval and is not continuous downtime.
+
+Local evidence0700 `/private/tmp/otr-r3a3a-carrier-deploy-20261011`, files0600;
+original historical evidence preserved. No secrets/tokens/private payload output.
+Reader/Runtime/Native/Composer/C5/C9/provider gates CLOSED. Authenticated Ledger
+bootstrap DEFERRED; old-key deletion Owner-confirmed, authoritative verification
+PENDING. Final outcome/current-state edits remain uncommitted; canonical53cf315.
+Further container diagnosis/retry requires new Owner direction.
+
+**STOP — R3-A3A HOST-MODE DEPLOYMENT COMPLETE: ROLLED BACK.**
+
+## Container preservation diagnostics — 2026-10-11 / NO LIVE DEPLOYMENT
+
+Original failure remains UNRELATED_CONTAINERS at2026-10-10T17:13:13.155983Z.
+Existing failed Host container snapshot was not retained. Before/rollback snapshots
+cannot establish the transient differing field; root cause UNKNOWN. No false-positive
+correction or preservation exclusion was introduced. Current healthy pinned Bridge,
+rotated credential and Caddy left untouched; no DEV access or live probe in this task.
+
+Exact existing container comparison fields: id, image, status, health, pid, network,
+ports, labels, networks, mounts, user. Full nested dictionaries/lists participate,
+including endpoint IDs/IP/MAC/gateways/aliases, Compose labels, mount metadata and
+HostIp/HostPort. Docker environment/secret values, logs, health output and resource
+counters are not collected. Only old and replacement Backend IDs are excluded.
+PID/status/health changes therefore reject, as do image/endpoint/port/mount/label
+changes and unrelated deletion. No restart exemption or health-volatility exclusion.
+
+Diagnostic-only correction adds sanitized container input evidence and common
+bounded field differences for containers, Docker networks, addresses/routes,
+firewall, sysctls and daemon. Original comparison operands/order/assertion codes
+remain; canonical address/route string equality preserved (including1 versus1.0).
+Known metadata shapes/IDs/enums/IP/ports only, unknown fields/values redact. Container
+records report ID, name/name_source, ownership, field path, presence/type and safe
+expected/observed values. Name was absent from original collector; prepared future
+controller adds Docker.Name, unknown names redact. Validation/ownership/carrier/
+publication failures persist code plus clearly labelled validation_context rather
+than claiming exact normalized mismatch operands. Interface diagnostic behavior
+retained. Inputs and mismatch use owner0700/exclusive0600/non-overwrite/fsync custody.
+Common diff capped32 rows/4096 nodes/128 keys or list items, projections depth12/
+128 keys/32 list items; explicit truncation and256KiB file cap. Redacted unknown-key
+collisions marked; no arbitrary labels/mount paths/firewall rules or daemon text output.
+
+Prepared existing one-time controller at
+`/private/tmp/otr-r3a3a-container-diagnostics-evidence/remote-controller-instrumented.py`,
+SHA256 `ff2314e904d0ba4bd9c57934364ad157dbe087bc5f722f714e9f80ec13d90a02`. Not executed live. It collects nonsecret Docker.Name and writes/fsyncs
+fixed phase/assertion/timestamp before rollback for outer assertions; snapshot
+mismatches are already durable when it emits them. Outer assertion metadata is not
+field-level operand evidence. Controller evidence-write failure records FAILED and
+still attempts safe rollback; it never authorizes acceptance. No redesign/deployment.
+
+Validation16 Python tests PASS (temporary disposable fixture/evidence directories),
+including container image/PID/network/port/status/health/deletion failures, normalized
+paths/identity/name/ownership before rollback, all remaining comparison categories,
+validation fallback, bounds/truncation, absent-vs-null, secret sentinel redaction and
+canonical numeric distinction. Existing Host/Bridge replacement lifecycle and all
+unrelated carrier/interface/endpoint/route/firewall drift negatives retained. All38
+immutable-image/rotated-credential/combined-probe tests PASS.250 deterministic old/new
+outcome comparisons PASS. Python/prepared-controller compilation, persistence order,
+whitespace and review preservation PASS; runbook/current-state formatting checked.
+Historical Builder formatting extra blank lines preserved. No full Platform matrix,
+native transition or new DEV Host attempt; synthetic fixture evidence labelled.
+
+Ready for one instrumented retry YES only under separate Owner authorization with
+fresh baseline/pinned images/rotated selection and this prepared diagnostic source.
+Exact historic differing container field UNKNOWN; no benign-drift inference. Reader/
+Runtime/Native/provider gates CLOSED; Ledger member smoke DEFERRED; authoritative
+old-key revocation verification PENDING. Scoped paths: guard, immediate tests,
+runbook and Builder/current-state records including previous uncommitted outcome.
+
+**STOP — CONTAINER GUARD DIAGNOSTIC FIX COMPLETE.**

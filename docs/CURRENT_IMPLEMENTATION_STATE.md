@@ -1,3 +1,38 @@
+## Latest R3-A3A container diagnostics — 2026-10-11 / OWNER REVIEW
+
+- Historic UNRELATED_CONTAINERS exact field/root cause UNKNOWN; failed Host snapshot
+  absent. No false-positive correction, exclusion or live operation performed.
+- Container comparison remains exact id/image/status/health/PID/network/ports/labels/
+  endpoints/mounts/user, excluding only old/new Backend IDs. Common bounded nonsecret
+  diffs now cover every normalized snapshot comparison; validation context labelled.
+  Durable owner0700/0600 container inputs/mismatch persist before rollback.
+- Prepared existing controller adds Docker.Name and durable fixed outer failure
+  metadata; source/hash in Builder report. Not executed. Sixteen Python fixtures,
+  38 image/credential/probe tests and250 old/new outcome comparisons PASS; compile/
+  persistence order/whitespace PASS. Original independent review bytes preserved.
+- Ready for one instrumented retry YES after separate Owner authorization. Current
+  healthy Bridge/rotated credential/Caddy untouched. Reader/Runtime CLOSED; member
+  Ledger smoke DEFERRED; authoritative old-key verification PENDING.
+
+## Latest R3-A3A carrier correction/deployment — 2026-10-11 / ROLLED BACK
+
+- Narrow carrier correction integrated/pushed at53cf315a6b65580548ce61be10506e04afa8fb7a,
+  local/origin/remote synchronized. Twelve guard tests and38 image/credential/probe
+  tests plus compile/order/whitespace checks PASS. Existing review bytes preserved.
+- Live carrier/interface/address/route checks PASS: attested bridge44 lost LOWER_UP
+  and gained NO-CARRIER with sole Backend veth removal; other interface fields exact.
+  Functional Host loopback/non-loopback, health200/protected401/API200, Caddy isolation
+  and verified Direct IPv6/TLS1.3 checks PASS.
+- Next guard UNRELATED_CONTAINERS failed2026-10-10T17:13:13.155983Z. Exact container
+  field UNKNOWN; accepted diagnostics retain interfaces, not failed container state.
+  No weakening/retry/extra diagnosis. Whole Host preservation NOT accepted.
+- Automatic Bridge rollback PASS; healthy Backend34f1cc63, imaged2e512b, rotated env
+  only, loopback8787 publication. Full rollback preservation/Caddy and final health
+  200/protected401/API200 PASS. Attempt51.672s, sampled outages0.860s+0.556s.
+- Details in Builder report; outcome records uncommitted. Reader/Runtime CLOSED;
+  member Ledger smoke DEFERRED, authoritative old-key verification PENDING.
+  Further container diagnosis/live retry requires Owner direction.
+
 ## Latest R3-A3A carrier correction — 2026-10-11 / DEPLOYMENT AUTHORIZED
 
 - Exact retained NO-CARRIER failure and sole Backend bridge endpoint/port verified.

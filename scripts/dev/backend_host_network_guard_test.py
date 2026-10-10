@@ -205,5 +205,85 @@ class DiagnosticTests(unittest.TestCase):
                 preserved_with_evidence(fixture(), host(fixture()), 'host', directory)
 
 
+class ContainerDiagnosticTests(unittest.TestCase):
+    def test_container_failures_are_durable_and_identified(self):
+        for field, value in [('image', 'sha256:' + 'e' * 64), ('pid', 999),
+                             ('network', 'host'), ('ports', {'8787/tcp': [{'HostIp': '0.0.0.0', 'HostPort': '8787'}]}),
+                             ('status', 'restarting'), ('health', 'unhealthy'), ('presence', None)]:
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                os.chmod(directory, 0o700)
+                before = fixture()
+                before['containers'][OTHER].update(name='fixture-other', image='sha256:' + 'f' * 64,
+                    pid=123, network='none', ports={}, status='running', health='healthy')
+                after = host(before)
+                if field == 'presence':
+                    after['containers'].pop(OTHER)
+                else:
+                    after['containers'][OTHER][field] = value
+                with self.assertRaisesRegex(AssertionError, 'UNRELATED_CONTAINERS'):
+                    preserved_with_evidence(before, after, 'host', directory)
+                # Rollback entry sees the durable normalized comparison mismatch.
+                data = json.loads((pathlib.Path(directory) / 'preservation-host-mismatch.json').read_text())
+                row = data['mismatches'][0]
+                self.assertEqual(row['container_id'], OTHER)
+                self.assertEqual(row['name'], 'fixture-other')
+                self.assertEqual(row['ownership'], 'unrelated')
+                self.assertTrue(row['path'].startswith('/containers/' + OTHER))
+                self.assertTrue((pathlib.Path(directory) / 'preservation-host-containers.json').exists())
+
+    def test_remaining_predicates_emit_before_rollback(self):
+        changes = {
+            'UNRELATED_ADDRESSES': lambda a: a['addresses'][0]['addr_info'][0].update(local='2001:db8::2'),
+            'UNRELATED_ROUTES6': lambda a: a['routes6'][0].update(dst='::/0'),
+            'UNRELATED_DOCKER_NETWORKS': lambda a: a['docker_networks'][NETWORK].update(Driver='changed'),
+            'UNRELATED_FIREWALL4': lambda a: a.update(firewall4=a['firewall4'] + '\n-A INPUT -j ACCEPT'),
+            'UNCHANGED_FIREWALL6': lambda a: a.update(firewall6='changed'),
+            'UNCHANGED_SYSCTLS': lambda a: a['sysctls'].update(forwarding=1),
+            'UNCHANGED_DAEMON': lambda a: a.update(daemon='restarted'),
+            'BRIDGE_ADMIN_UP': lambda a: a['links'][0].update(flags=[]),
+            'HOST_NETWORK': lambda a: a['backend'].update(network='none'),
+        }
+        for code, change in changes.items():
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as directory:
+                os.chmod(directory, 0o700)
+                before = fixture()
+                after = host(before)
+                change(after)
+                with self.assertRaisesRegex(AssertionError, code):
+                    preserved_with_evidence(before, after, 'host', directory)
+                data = json.loads((pathlib.Path(directory) / 'preservation-host-mismatch.json').read_text())
+                self.assertEqual(data['code'], code)
+                self.assertTrue(data['mismatches'])
+
+    def test_nonsecret_bounds_paths_and_missing_null(self):
+        before = fixture()
+        after = host(before)
+        sentinel = 'sb_secret_SYNTHETIC_CONTAINER_SENTINEL'
+        after['containers'][OTHER].update(labels={sentinel: sentinel}, mounts=[{'Source': sentinel}], **{sentinel: sentinel})
+        with tempfile.TemporaryDirectory() as directory:
+            os.chmod(directory, 0o700)
+            with self.assertRaisesRegex(AssertionError, 'UNRELATED_CONTAINERS'):
+                preserved_with_evidence(before, after, 'host', directory)
+            self.assertNotIn(sentinel, ''.join(p.read_text() for p in pathlib.Path(directory).iterdir()))
+        from backend_host_network_guard import structured_mismatches
+        data = structured_mismatches('UNRELATED_CONTAINERS', {OTHER: {}}, {OTHER: {'health': None}}, 'containers')
+        self.assertFalse(data['mismatches'][0]['expected_present'])
+        data = structured_mismatches('UNRELATED_CONTAINERS', {}, {('e' * 60 + format(i, '04x')): {} for i in range(100)}, 'containers')
+        self.assertEqual(len(data['mismatches']), 32)
+        self.assertTrue(data['truncated'])
+
+    def test_canonical_comparison_stays_exact(self):
+        before = fixture()
+        before['routes6'][-1]['metric'] = 1
+        after = host(before)
+        after['routes6'][0]['metric'] = 1.0
+        with self.assertRaisesRegex(AssertionError, 'UNRELATED_ROUTES6'):
+            preserved(before, after, 'host')
+        rows = []
+        with self.assertRaisesRegex(AssertionError, 'UNRELATED_ROUTES6'):
+            preserved(before, after, 'host', diagnostics=rows.append)
+        self.assertTrue(rows[0]['mismatches'])
+
+
 if __name__ == '__main__':
     unittest.main()

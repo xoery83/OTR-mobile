@@ -319,8 +319,19 @@ For an instrumented attempt, call `preserved_with_evidence(before, after, direct
 backup)` instead of the raw `preserved()` call in both forward and rollback paths.
 The backup must be a fresh owner0700 directory. Before evaluating the guard, this
 wrapper writes/fsyncs bounded sanitized interface projections to exclusive0600
-`preservation-<direction>-interfaces.json`. A failing interface comparison writes/fsyncs
+`preservation-<direction>-interfaces.json`. The wrapper also writes sanitized bounded container inputs to
+`preservation-<direction>-containers.json`. Every comparison failure writes/fsyncs
 `preservation-<direction>-mismatch.json` before raising the unchanged assertion.
+Container records include ID, collected name (or explicit not_collected/redacted),
+ownership, normalized field path, presence/type and safe before/after values.
+Addresses/routes, Docker networks, firewall, sysctls and daemon use the same bounded
+diff of their actual normalized comparison operands. Validation failures use clearly
+marked snapshot context, not an assertion of which operand caused the failure.
+Limits:32 rows,4096 visited nodes,128 keys/list items per traversal, exclusive0600
+file and256KiB cap; truncation explicit. Unsafe values/keys redact. Firewall rules,
+mount paths and arbitrary labels are not printed. Evidence failure never permits PASS.
+The prepared controller collects Docker .Name and persists fixed phase/assertion/
+timestamp before rollback for failures outside the snapshot guard as well.
 Read/emit that bounded mismatch record before entering automatic rollback; retain
 both files. Do not reuse a prior evidence filename or print a raw full snapshot,
 resolved environment, arbitrary unknown field or exception. Diagnostics include
