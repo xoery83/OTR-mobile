@@ -1,18 +1,21 @@
-## Capture Flight-first Stage 1 — 2026-10-12 / INTERPRETATION + EVIDENCE PASS
+## Capture Flight-first Stage 1 + Accuracy Addendum — 2026-10-12 / PASS WITH CORE BLOCKED
 
-- Isolated branch `codex/capture-flight-stage1` from freshly fetched `741579c`.
-  Existing deterministic extractor/grammar v2 handles sparse return/native-text
-  tables and ordered rebooking mentions; exact evidence pins and UNKNOWNs retained.
-- Actual private local samples: PDFKit 1→2 and Vision OCR 1→4 PASS on macOS.
-  Capture native PDF/OCR wiring and iPhone NOT VERIFIED; Foundation Models NOT
-  WIRED (host available, zero requests); Remote LLM/DeepSeek NOT ACTIVATED.
-- Final 3502 tests:3485 PASS/2 existing baseline FAIL/15 SKIP; typecheck, lint/UI
-  guard, Backend build and independent targeted review PASS. No new regressions.
+- Isolated `codex/capture-flight-stage1` from freshly fetched main `741579c`.
+  Existing grammar v2 and exact evidence projection preserve private PDF 1→2 /
+  screenshot 1→4, unknown service/time/zone/association and immutable originals.
+- Added pure six-dimension quality assessment, scope/revision-pinned recommendations
+  and synthetic gold/cost measurements. Provider/LLM recommendations never execute;
+  incomplete/unavailable sources defer, unresolved material conflicts seek review.
+- Actual PDFKit/Vision macOS extraction PASS; Capture native wiring/iPhone NOT
+  VERIFIED. Foundation Models NOT WIRED. Provider/Remote LLM NOT ACTIVATED.
+- Consolidated 3540 tests:3523 PASS/2 unchanged baseline FAIL/15 SKIP; typecheck,
+  lint/UI guard, Backend build, format/diff and independent193-test recheck PASS.
+  Observable synthetic gold12/12 +4/4; population accuracy/pricing NOT MEASURED.
 - CORE ADAPTER BLOCKED: accepted multi-output contract absent; UNKNOWN sibling
-  fence intact. CANONICAL ADMISSION NOT AUTHORIZED; DAY FEED NOT VERIFIED.
-- Report: `architecture/OTR_CAPTURE_FLIGHT_FIRST_STAGE1_REPORT.md`.
-  Canonical integration requires Owner review of overlapping existing handoff edits;
-  other worktrees/private originals preserved. No providers/C5/C9/device activation.
+  fence unchanged. CANONICAL ADMISSION NOT AUTHORIZED; DAY FEED NOT VERIFIED.
+- Overall report: `architecture/OTR_CAPTURE_FLIGHT_FIRST_STAGE1_REPORT.md`.
+  Same isolated branch publication; main integration requires Owner review of
+  pre-existing overlapping handoff edits. No C5/C9/provider/device activation.
 
 ## R3-B Native Catalog → SQLite53 — 2026-10-11 / PASS
 

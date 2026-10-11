@@ -11,6 +11,9 @@ import {
 import type { z } from "zod";
 import type { FlightCandidateSet } from "./flightInterpretation";
 
+import { assessFlightInterpretationQuality } from "./flightInterpretationQuality";
+import { decideFlightEnrichment } from "./flightEnrichmentDecision";
+
 // Private, transient evidence view; no Document identity or attachment acquisition is inferred.
 export async function projectFlightEvidenceCoverage(
   context: AccountRequestContext,
@@ -18,6 +21,7 @@ export async function projectFlightEvidenceCoverage(
   supplied: InterpretationRequest["materials"],
   sha256: ImportHash,
   getAccountId: () => Promise<string>,
+  qualityOptions?: Parameters<typeof assessFlightInterpretationQuality>[1],
 ) {
   source = structuredClone(source);
   const materials = supplied.map((m) => interpretationMaterialSchema.parse(m));
@@ -63,7 +67,10 @@ export async function projectFlightEvidenceCoverage(
           : null,
     };
   }
+  const quality = assessFlightInterpretationQuality(source, qualityOptions);
   const result = {
+    quality,
+    enrichment: decideFlightEnrichment(quality),
     access: "OWNER_PRIVATE" as const,
     materials,
     interpreted: source.candidates.map((candidate) => ({
