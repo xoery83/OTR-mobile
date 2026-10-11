@@ -1,4 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
+import { assessFlightAdmission } from "./flightAdmissionAssessment";
+import { projectFlightEvidenceCoverage } from "./flightEvidenceCoverage";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -68,6 +70,155 @@ const id = (n: number) => `ca13b000-0000-4000-8000-${String(n).padStart(12, "0")
 const now = () => "2026-10-06T00:00:00Z";
 const deps = { sha256: hash, getAccountId: async () => account, now };
 const leg = "NZ289 AKL→CHC 2026-12-18 dep=10:30";
+
+describe("Capture Flight-first assessment through owning CP13A preparation", () => {
+  const outbound = "NZ5069 AKL→CHC 2026-12-18 dep=10:30 depInstant=2026-12-17T21:30:00Z";
+  const returning = "NZ5070 CHC→AKL 2026-12-20 dep=18:00 depInstant=2026-12-20T05:00:00Z";
+  it("assesses two segments, prepares one, preserves the sibling UNKNOWN fence and recovers after restart", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "capture-flight-"));
+    dirs.push(dir);
+    const path = join(dir, "cold.sqlite");
+    const x = await retained(
+      [`${outbound}\n${returning}`, `${outbound} pnr=SYNTHETIC-ORDER; seat=12A`],
+      path,
+    );
+    const assessed = await assessFlightAdmission(
+      x.ctx,
+      x.source,
+      choices(x.source),
+      contexts(x.source),
+      x.f.engine,
+      deps.getAccountId,
+    );
+    expect(assessed.outputs).toHaveLength(2);
+    expect(assessed.outputs.every((o) => o.preparation === "REVIEW_REQUIRED")).toBe(true);
+    const evidence = await projectFlightEvidenceCoverage(
+      x.ctx,
+      x.source,
+      x.batch.request.materials,
+      hash,
+      deps.getAccountId,
+    );
+    expect(evidence.deferred.map((d) => d.dimension)).toEqual(
+      expect.arrayContaining(["bookings", "seats"]),
+    );
+    const selections = assessed.closure.plans.map((plan) =>
+      selection(assessed.closure.set, plan),
+    );
+    const prepared = await x.f.engine.prepare(
+      x.ctx,
+      assessed.closure.set,
+      contexts(x.source),
+      selections[0],
+    );
+    expect(
+      await x.f.engine.prepare(
+        x.ctx,
+        assessed.closure.set,
+        contexts(x.source),
+        selections[0],
+      ),
+    ).toEqual(prepared);
+    // Existing Run-wide UNKNOWN protection is not relaxed by a Capture projection.
+    await expect(
+      x.f.engine.prepare(x.ctx, assessed.closure.set, contexts(x.source), selections[1]),
+    ).rejects.toThrow("CLOSURE_REVIEW_REQUIRED");
+    expect(x.f.sql.prepare("SELECT COUNT(*) n FROM sync_operations").get()?.n).toBe(1);
+    expect(x.f.sql.prepare("SELECT COUNT(*) n FROM trip_canonical_events").get()?.n).toBe(
+      0,
+    );
+    x.f.sql.close();
+    const reopened = native(path, false);
+    const fresh = await reopened.admission.captureContext(trip);
+    const recovered = await reopened.engine.prepare(
+      fresh,
+      assessed.closure.set,
+      contexts(x.source),
+      selections[0],
+    );
+    expect(recovered.intent).toEqual(prepared.intent);
+    await expect(
+      reopened.engine.prepare(
+        fresh,
+        assessed.closure.set,
+        contexts(x.source),
+        selections[1],
+      ),
+    ).rejects.toThrow("CLOSURE_REVIEW_REQUIRED");
+    expect(reopened.sql.prepare("SELECT COUNT(*) n FROM sync_operations").get()?.n).toBe(
+      1,
+    );
+    expect(
+      reopened.sql.prepare("SELECT COUNT(*) n FROM trip_canonical_events").get()?.n,
+    ).toBe(0);
+  });
+  it("retains sparse observations in the owning catalog without preparation or invented instant", async () => {
+    const x = await retained(["NZ5069 2026-12-18"]);
+    const a = await assessFlightAdmission(
+      x.ctx,
+      x.source,
+      choices(x.source),
+      contexts(x.source),
+      x.f.engine,
+      deps.getAccountId,
+    );
+    expect(a.outputs[0].preparation).toBe("BLOCKED");
+    expect(a.source.candidates[0].occurrence["origin.local_date"].value).toBe(
+      "2026-12-18",
+    );
+    expect(a.source.candidates[0].proposal.fields.origin).toBeUndefined();
+    expect(
+      x.f.sql.prepare("SELECT COUNT(*) n FROM trip_source_candidates").get()?.n,
+    ).toBe(1);
+    expect(x.f.sql.prepare("SELECT COUNT(*) n FROM sync_operations").get()?.n).toBe(0);
+  });
+  it("retains contradictory source clocks and blocks preparation", async () => {
+    const x = await retained([
+      `${outbound} occurrence=NZ:2026-12-18:leg42`,
+      "NZ5069 AKL→CHC 2026-12-18 dep=10:45 depInstant=2026-12-17T21:45:00Z occurrence=NZ:2026-12-18:leg42",
+    ]);
+    const a = await assessFlightAdmission(
+      x.ctx,
+      x.source,
+      choices(x.source),
+      contexts(x.source),
+      x.f.engine,
+      deps.getAccountId,
+    );
+    expect(a.outputs.every((o) => o.preparation === "BLOCKED")).toBe(true);
+    expect(a.source.candidates[0].contradictions.length).toBeGreaterThan(0);
+    expect(x.f.sql.prepare("SELECT COUNT(*) n FROM sync_operations").get()?.n).toBe(0);
+  });
+  it("keeps reviewed user edits separate from immutable extracted facts", async () => {
+    const x = await retained([outbound]);
+    const a = await assessFlightAdmission(
+      x.ctx,
+      x.source,
+      choices(x.source),
+      contexts(x.source),
+      x.f.engine,
+      deps.getAccountId,
+    );
+    const original = x.source.candidates[0].proposal.fields.title!.proposed_value;
+    const selected = selection(a.closure.set, a.closure.plans[0]);
+    selected.review.edits.title = "My reviewed Flight title";
+    const prepared = await x.f.engine.prepare(
+      x.ctx,
+      a.closure.set,
+      contexts(x.source),
+      selected,
+    );
+    expect(prepared.command).toMatchObject({
+      payload: { core: { title: "My reviewed Flight title" } },
+    });
+    expect(x.source.candidates[0].proposal.fields.title!.proposed_value).toBe(original);
+    expect(a.userEditProtection).toBe("CORE_REQUIRED");
+    expect(a.automaticAdmission).toBe("NOT_AUTHORIZED");
+    expect(x.f.sql.prepare("SELECT COUNT(*) n FROM trip_canonical_events").get()?.n).toBe(
+      0,
+    );
+  });
+});
 async function fixture(
   texts: string[],
   form: FlightInterpretationBatch["request"]["materials"][number]["form"] = "TEXT",
