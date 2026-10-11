@@ -15,6 +15,7 @@ backend/src/tripCoreV2PgStorage.test.ts
 backend/src/tripCoreV2PgStorage.ts
 backend/src/tripCoreV2Source.test.ts
 backend/src/tripCoreV2Source.ts
+backend/src/tripCoreV2SourcePgStorage.sql.test.ts
 backend/src/tripCoreV2SourcePgStorage.test.ts
 backend/src/tripCoreV2SourcePgStorage.ts
 docs/CURRENT_IMPLEMENTATION_STATE.md
@@ -39,7 +40,9 @@ docs/trip/contracts/W0_PHYSICAL_SCHEMA_SPEC.md
 docs/trip/contracts/W0_READ_PROJECTION_CONTRACT.md
 docs/trip/contracts/W0_UNIFIED_DATA_CONTRACT.md
 docs/trip/implementation/FLIGHT_MULTI_OUTPUT_V2.md
+docs/trip/implementation/W1_W5_ACCEPTANCE_EVIDENCE.md
 docs/trip/implementation/W1_W5_CAPTURE_IMPLEMENTATION_HANDOFF.md
+docs/trip/implementation/W1_W5_CHANGED_FILES.txt
 docs/trip/implementation/W1_W5_EXECUTION.md
 docs/trip/implementation/W1_W5_SOURCE_AUTHORITY_GATE.md
 scripts/trip/core-v2-sql-acceptance.py

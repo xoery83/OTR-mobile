@@ -44,7 +44,7 @@ runtime waits for the remaining owning bindings and reviewed activation gates.
 Owning PostgreSQL writer/reader, complete collection/Item HTTP transport and atomic
 SQLite read2 install: IMPLEMENTED_AND_TESTED in isolated synthetic SQL/SQLite only.
 Owning Source catalog adapter: IMPLEMENTED_AND_TESTED with sealed legacy pins; missing
-qualified identity remains REVIEW. Actual Source SQL validation is in progress.
+qualified identity remains REVIEW. Actual Source SQL validation PASS: sealed legacy publication, exact pins, cold REVIEW replay, cross-actor/Trip/request-reuse/stale negatives, no canonical mutation.
 Qualified v2 publisher/Source READY dispatch/finalization: BLOCKED by the demonstrated
 W4 authority gap in W1_W5_SOURCE_AUTHORITY_GATE.md; Owner assignment is pending.
 Verified Document/Ledger owning capability and open-original custody: BLOCKED pending

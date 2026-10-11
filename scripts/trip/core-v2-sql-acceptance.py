@@ -1,4 +1,5 @@
 """Run Core85–89 on an owned, network-isolated copy of the synthetic Server84 image."""
+import argparse
 import json
 import pathlib
 import subprocess
@@ -25,6 +26,10 @@ def sql(text):
 FINGERPRINTS = """SELECT jsonb_object_agg(p.oid::regprocedure::text,
  encode(digest(pg_get_functiondef(p.oid),'sha256'),'hex')) FROM pg_proc p
  JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prokind='f';"""
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--source", action="store_true", help="Run the owning Source SQL scenario in a separate fresh clone")
+args = parser.parse_args()
+scenario = "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
 created = False
 try:
     docker("image", "inspect", IMAGE)  # Never pull, read secrets, reset or access a hosted DB.
@@ -49,7 +54,7 @@ try:
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t"
     import os
     env = dict(os.environ, OTR_CORE_OWNED_SQL_FIXTURE=NAME)
-    subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", "backend/src/tripCoreV2PgStorage.sql.test.ts"], cwd=ROOT, env=env, check=True)
+    subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", scenario], cwd=ROOT, env=env, check=True)
     print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89], "historicalFunctionsPreserved": len(before), "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
 finally:
     if created:

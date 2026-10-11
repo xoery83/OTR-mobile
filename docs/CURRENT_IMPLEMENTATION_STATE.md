@@ -20,7 +20,8 @@ W4 Capture and W6 Experience retain separate ownership. Core is INCOMPLETE.
   existing repository/sync machinery. Generic executor excludes Core-owned commands.
 - Exact receipt lookup precedes fresh capability discovery. Private audit evidence
   requires owning authorization; immutable receipts are returned STATUS_ONLY when denied.
-- Source port and PostgreSQL adapter exist; actual sealed Source/run/input/proposal pins
+- Source port and PostgreSQL adapter exist; actual isolated sealed legacy two-Candidate
+  publication/REVIEW/replay/stale/request-reuse/actor/Trip/principal SQL scenario PASS; actual sealed Source/run/input/proposal pins
   are checked, legacy UNKNOWN claims retained. Missing authority remains REVIEW.
   No real READY publication, qualification or Source finalization is certified.
 
@@ -40,7 +41,7 @@ no caller assertion, extractor confidence or synthetic certificate replaces owni
 ## Validation and environment
 
 - Typecheck and lint/UI guard passed. Focused reader/HTTP/transport/repository/sync/lifecycle
-  run84 PASS; lifecycle reducer16 PASS. Final full regression:3584 PASS,16 skipped,2 baseline failures.
+  run84 PASS; lifecycle reducer16 PASS. Final full regression:3584 PASS,17 skipped,2 baseline failures.
 - Actual isolated synthetic PostgreSQL Server84→85–89 acceptance PASS: P1–P6, sparse
   exact replay/CAS, full collection/Item read, Person invalidation, RLS, closed gates and
   least privileges. All329 historical public function bodies retain exact fingerprints.

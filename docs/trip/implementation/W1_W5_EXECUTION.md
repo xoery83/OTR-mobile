@@ -148,3 +148,12 @@ Capture owner confirmed no owning v2 airport/whole-Source relationship publisher
 See W1_W5_SOURCE_AUTHORITY_GATE.md for the demonstrated authority gap, concrete ownership
 decision, unfinished custody/Ledger/lifecycle and remaining20 target traces. This stage
 is not STOP — CORE CONTINUOUS IMPLEMENTATION COMPLETE.
+
+Final isolated checkpoint:7c1c641 scoped reader/recovery and Core88/89;
+75186f3 accurate Capture/A01–A20 handoff;16e2d33 actual Source PostgreSQL acceptance.
+Final Vitest3584 PASS/17 skipped/2 unchanged-base failures. Typecheck/lint/UI guard,
+Backend build and all81 touched formatted files PASS. Separate default/--source runs of
+core-v2-sql-acceptance.py each create/delete their own UUID synthetic clone and PASS;
+329 old public functions unchanged. No historical migration rewrite or main integration.
+Source READY remains blocked by missing W4 sealed identity authority; custody/Ledger and
+partial acceptance targets are unfinished Core implementation, not falsely declared PASS.

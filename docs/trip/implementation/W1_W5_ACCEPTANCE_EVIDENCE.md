@@ -5,13 +5,16 @@ Base741579c; isolated branch codex/trip-core-v2-w1-w5. Runtime/Hosted/native/pro
 
 ## Executed checks
 
-- Full Vitest:3584 passed,16 skipped,2 failed. Both failures reproduce on unchanged
+- Full Vitest:3584 passed,17 skipped,2 failed. Both failures reproduce on unchanged
   base741579c: architectureBoundary UI-test scan and navigationLayout wrapper assumptions.
-- Typecheck, lint and UI guard PASS. No UI changes or new dependencies.
+- Typecheck, lint, UI guard, Backend build and all81 touched formatted files PASS. No UI changes or new dependencies.
 - Focused read/HTTP/transport/SQLite/sync/lifecycle84 PASS; reducer/lifecycle16 PASS.
 - Owned synthetic PostgreSQL Core85–89 scenario PASS: P1–P6 root/child writes, sparse
   exact receipt/replay/operation reuse/CAS, complete collection/Item, Person invalidation;
   rollback-only RLS and closed-gate/role/private-locator negatives PASS.
+- Source owning SQL scenario PASS separately: actual sealed legacy two-Candidate publication,
+  exact hash/pins, durable cold REVIEW replay, request reuse/stale/actor/Trip/principal
+  denials, no canonical/receipt/Ledger/membership/asset row-hash changes; no qualified READY.
 - All329 prior public function fingerprints unchanged. Only additive migrations; no
   existing or Hosted DB mutation. Node pg TLS/primary lease tests use mocks, not deployment.
 - SQLite53→54 preservation, interrupted upgrade rollback, durable sparse restart,
