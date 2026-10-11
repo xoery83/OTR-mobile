@@ -261,12 +261,13 @@ export function createTripCoreV2Repository(
         );
         for (const binding of validated.bindings)
           await database.runAsync(
-            "INSERT INTO trip_core_person_bindings(account_id,trip_id,person_id,linked_account_id,active) VALUES(?,?,?,?,?)",
+            "INSERT INTO trip_core_person_bindings(account_id,trip_id,person_id,linked_account_id,active,participating) VALUES(?,?,?,?,?,?)",
             ctx.accountId,
             ctx.tripId,
             binding.person_id,
             binding.account_id,
             binding.active ? 1 : 0,
+            binding.participating ? 1 : 0,
           );
         await database.runAsync(
           "INSERT INTO trip_core_read_certificates(account_id,trip_id,epoch,revision,access_revision,applied_generation,actor_person_binding_hash,roster_hash,manifest_sha256,business_version,read_version,temporal_version,complete) VALUES(?,?,?,?,?,?,?,?,?,2,2,1,1) ON CONFLICT(account_id,trip_id) DO UPDATE SET epoch=excluded.epoch,revision=excluded.revision,access_revision=excluded.access_revision,applied_generation=excluded.applied_generation,actor_person_binding_hash=excluded.actor_person_binding_hash,roster_hash=excluded.roster_hash,manifest_sha256=excluded.manifest_sha256",

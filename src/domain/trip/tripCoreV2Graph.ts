@@ -45,7 +45,11 @@ const foreignRoots = {
   document_id: "DOCUMENT",
   instruction_id: "INSTRUCTION",
 } as const;
-export function validateCoreGraph(graph: CoreGraph, tripId: string): CoreGraph {
+export function validateCoreGraph(
+  graph: CoreGraph,
+  tripId: string,
+  actorProjection = false,
+): CoreGraph {
   for (const [table, schema] of Object.entries(coreTableSchemas)) {
     const seen = new Set<string>();
     for (const row of graph[table as CoreTable]) {
@@ -65,6 +69,8 @@ export function validateCoreGraph(graph: CoreGraph, tripId: string): CoreGraph {
       if (
         table === "trip_instruction_entries" &&
         row.supersedes_id !== null &&
+        (!actorProjection ||
+          graph.trip_instruction_entries.some((old) => old.id === row.supersedes_id)) &&
         !graph.trip_instruction_entries.some(
           (old) =>
             old.id === row.supersedes_id &&

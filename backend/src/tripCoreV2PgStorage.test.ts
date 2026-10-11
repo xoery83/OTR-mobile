@@ -1,0 +1,112 @@
+import { randomUUID, createHash } from "node:crypto";
+import { it, expect, vi } from "vitest";
+import { createCorePgStorage, type CorePgLease } from "./tripCoreV2PgStorage";
+import { executeCoreCommandV2 } from "./tripCoreV2Commands";
+import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
+const actor = randomUUID(),
+  trip = randomUUID(),
+  id = randomUUID(),
+  operation = randomUUID();
+const hash = async (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
+const command = () => ({
+  contractVersion: 2,
+  intentVersion: 2,
+  operationId: operation,
+  tripId: trip,
+  command: "CREATE_SPARSE_FLIGHT",
+  target: { kind: "ITEM", id },
+  baseVector: [{ kind: "ITEM", id, revision: null }],
+  admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+  payload: {
+    flightNumberLiteral: "NZ5069",
+    departureDate: "2026-12-14",
+    ...coreDefaults("member"),
+  },
+});
+function fixture(principal = "otr_trip_core_v2_gateway", active = true) {
+  const queries: { sql: string; params: readonly unknown[] }[] = [],
+    retire = vi.fn();
+  const lease: CorePgLease = {
+    retire,
+    async query(sql, parameters = []) {
+      queries.push({ sql, params: parameters });
+      if (sql.includes("session_user AS"))
+        return { rows: [{ principal, role: principal }] };
+      if (sql.includes("trip_core_lock_actor_scope"))
+        return {
+          rows: [
+            {
+              actor: {
+                accountId: actor,
+                tripId: trip,
+                active,
+                canManageShared: false,
+                personId: null,
+                personIds: [],
+              },
+            },
+          ],
+        };
+      if (sql.includes("SELECT runtime_enabled"))
+        return { rows: [{ runtime_enabled: false, enabled_commands: [] }] };
+      return { rows: [] };
+    },
+  };
+  return {
+    queries,
+    retire,
+    lease,
+    storage: createCorePgStorage({ withLease: async (work) => work(lease) }, hash),
+  };
+}
+it("checks dedicated principal and rolls back before any foreign actor/table access", async () => {
+  const f = fixture("service_role");
+  await expect(
+    executeCoreCommandV2(f.storage, actor, trip, command(), hash),
+  ).rejects.toThrow("CORE_PRINCIPAL_UNAVAILABLE");
+  expect(f.queries.at(-1)?.sql).toBe("ROLLBACK");
+  expect(f.queries.some((q) => q.sql.includes("trip_core_lock_actor_scope"))).toBe(false);
+});
+it("keeps fresh closed writes unavailable without an invented receipt or root mutation", async () => {
+  const f = fixture();
+  await expect(
+    executeCoreCommandV2(f.storage, actor, trip, command(), hash),
+  ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+  expect(
+    f.queries.some(
+      (q) =>
+        q.sql.startsWith("INSERT") ||
+        q.sql.startsWith("UPDATE") ||
+        q.sql.startsWith("DELETE"),
+    ),
+  ).toBe(false);
+  const scope = f.queries.find((q) => q.sql.includes("set_config('otr.core.actor'"))!;
+  expect(scope.params).toEqual([actor, trip]);
+  expect(f.queries.findIndex((q) => q.sql.includes("SELECT id,body"))).toBeLessThan(
+    f.queries.findIndex((q) => q.sql.includes("SELECT runtime_enabled")),
+  );
+});
+it("rejects revoked fresh commands before gate or graph access", async () => {
+  const f = fixture(undefined, false);
+  await expect(
+    executeCoreCommandV2(f.storage, actor, trip, command(), hash),
+  ).rejects.toThrow("NOT_VISIBLE");
+  expect(
+    f.queries.some(
+      (q) =>
+        q.sql.includes("SELECT runtime_enabled") || q.sql.includes("to_jsonb(facts)"),
+    ),
+  ).toBe(false);
+});
+it("retires a lease when rollback cannot be proved, retaining the original failure", async () => {
+  const f = fixture("service_role"),
+    query = f.lease.query;
+  f.lease.query = async (sql, params) => {
+    if (sql === "ROLLBACK") throw new Error("cleanup lost");
+    return query(sql, params);
+  };
+  await expect(
+    executeCoreCommandV2(f.storage, actor, trip, command(), hash),
+  ).rejects.toThrow("CORE_PRINCIPAL_UNAVAILABLE");
+  expect(f.retire).toHaveBeenCalledOnce();
+});

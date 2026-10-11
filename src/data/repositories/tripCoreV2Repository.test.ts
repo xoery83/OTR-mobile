@@ -98,17 +98,88 @@ function fixture(path = ":memory:", initialize = true) {
     },
   };
 }
-async function collection() {
-  const graph = applyCoreCommand(emptyCoreGraph(), sparse(), actor, stamp).graph;
+async function collection(
+  participating = true,
+  graph = applyCoreCommand(emptyCoreGraph(), sparse(), actor, stamp).graph,
+) {
   return buildCoreActorCollection(
     graph,
     actor,
     { epoch: randomUUID(), revision: 1, accessRevision: 1, generatedAt: stamp },
-    [{ person_id: person, account_id: account, active: true, revision: 1 }],
+    [
+      {
+        person_id: person,
+        account_id: account,
+        active: true,
+        participating,
+        revision: 1,
+      },
+    ],
     hash,
   );
 }
 describe("Core SQLite54 account partition and durable offline foundation", () => {
+  it("keeps a linked non-participating Person authorized and excludes it from the participating roster", async () => {
+    const yes = await collection(true),
+      no = await collection(false);
+    expect(no.manifest.participatingRosterHash).not.toBe(
+      yes.manifest.participatingRosterHash,
+    );
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      refresh = await f.repo.beginRefresh(ctx, 1);
+    await f.repo.install(refresh, no.manifest, no.pages);
+    expect((await f.repo.day(ctx, actor, "2026-12-14"))[0].row.itemRef).toBe(item);
+    expect(
+      f.sql.prepare("SELECT active,participating FROM trip_core_person_bindings").get(),
+    ).toMatchObject({ active: 1, participating: 0 });
+  });
+  it("installs an authorized correction without exposing the private predecessor body", async () => {
+    const graph = applyCoreCommand(emptyCoreGraph(), sparse(), actor, stamp).graph,
+      oldId = randomUUID(),
+      newId = randomUUID(),
+      other = randomUUID();
+    const instruction = {
+      trip_id: trip,
+      revision: 1,
+      owner_account_id: other,
+      hidden_at: null,
+      created_at: stamp,
+      updated_at: stamp,
+      field_state: {},
+      event_id: item,
+      section: "TRANSPORT",
+      sensitivity: "NORMAL",
+      source_representation_id: null,
+    };
+    graph.trip_instruction_entries.push(
+      {
+        ...instruction,
+        id: oldId,
+        visibility: "PRIVATE",
+        body: "private secret",
+        supersedes_id: null,
+      },
+      {
+        ...instruction,
+        id: newId,
+        visibility: "GROUP",
+        body: "new authorized guidance",
+        supersedes_id: oldId,
+      },
+    );
+    const bundle = await collection(true, graph),
+      f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      refresh = await f.repo.beginRefresh(ctx, 1);
+    expect(JSON.stringify(bundle)).not.toContain("private secret");
+    await f.repo.install(refresh, bundle.manifest, bundle.pages);
+    expect((await f.repo.readGraph(ctx)).trip_instruction_entries).toHaveLength(1);
+    expect((await f.repo.readGraph(ctx)).trip_instruction_entries[0].supersedes_id).toBe(
+      oldId,
+    );
+  });
+
   it("upgrades SQLite53 without changing historical schema or existing data", () => {
     const sql = new DatabaseSync(":memory:");
     connections.push(sql);

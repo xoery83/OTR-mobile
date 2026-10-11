@@ -213,14 +213,16 @@ export function applyCoreCommand(
     checkPeople(part.people);
     if (part.selfPersonId !== null && part.selfPersonId !== actor.personId)
       throw new Error("INVALID_SELF_PERSON");
-    g.trip_item_participants = g.trip_item_participants.filter((x) => x.item_id !== r.id);
+    for (const row of g.trip_item_participants.filter((x) => x.item_id === r.id))
+      row.active = part.people.includes(row.person_id);
     for (const id of part.people)
-      g.trip_item_participants.push({
-        trip_id: actor.tripId,
-        item_id: r.id,
-        person_id: id,
-        active: true,
-      });
+      if (!g.trip_item_participants.some((x) => x.item_id === r.id && x.person_id === id))
+        g.trip_item_participants.push({
+          trip_id: actor.tripId,
+          item_id: r.id,
+          person_id: id,
+          active: true,
+        });
     r.participation_mode = part.mode;
     r.self_person_id =
       part.mode === "SELF" ? (part.selfPersonId ?? actor.personId) : null;
@@ -862,16 +864,22 @@ export function applyCoreCommand(
       touch("ENTITLEMENT", r);
       mark("ENTITLEMENT", r, p.fields);
       checkPeople(p.holders);
-      g.trip_entitlement_holders = g.trip_entitlement_holders.filter(
-        (x) => x.entitlement_id !== r.id,
-      );
+      for (const row of g.trip_entitlement_holders.filter(
+        (x) => x.entitlement_id === r.id,
+      ))
+        row.active = p.holders.includes(row.person_id);
       for (const id of p.holders)
-        g.trip_entitlement_holders.push({
-          trip_id: actor.tripId,
-          entitlement_id: r.id,
-          person_id: id,
-          active: true,
-        });
+        if (
+          !g.trip_entitlement_holders.some(
+            (x) => x.entitlement_id === r.id && x.person_id === id,
+          )
+        )
+          g.trip_entitlement_holders.push({
+            trip_id: actor.tripId,
+            entitlement_id: r.id,
+            person_id: id,
+            active: true,
+          });
       break;
     }
     case "RECONCILE_ENTITLEMENT_LINKS": {

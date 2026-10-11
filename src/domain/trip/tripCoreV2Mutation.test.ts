@@ -72,10 +72,39 @@ function create(g = emptyCoreGraph(), family = "P1", id = randomUUID(), end?: st
   return { id, q, result: applyCoreCommand(g, q, actor, now) };
 }
 describe("Core v2 finite mutation and access", () => {
+  it("retains inactive participant history and reactivates the same relation identity", () => {
+    const { id, result } = create();
+    let graph = result.graph;
+    for (const people of [[person], [], [person]])
+      graph = applyCoreCommand(
+        graph,
+        command(graph, "SET_ITEM_PARTICIPATION", id, {
+          participation: {
+            mode: people.length ? "SELECTED_MEMBERS" : "WHOLE_GROUP",
+            people,
+            selfPersonId: null,
+          },
+        }),
+        actor,
+        now,
+      ).graph;
+    expect(graph.trip_item_participants).toHaveLength(1);
+    expect(graph.trip_item_participants[0].active).toBe(true);
+    graph = applyCoreCommand(
+      graph,
+      command(graph, "SET_ITEM_PARTICIPATION", id, {
+        participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
+      }),
+      actor,
+      now,
+    ).graph;
+    expect(graph.trip_item_participants[0].active).toBe(false);
+  });
+
   it("accepts registered room and dotted service field addresses only", () => {
-    expect(isCoreFieldAddress("itinerary_transport_services.operator.main.service_literal")).toBe(
-      true,
-    );
+    expect(
+      isCoreFieldAddress("itinerary_transport_services.operator.main.service_literal"),
+    ).toBe(true);
     expect(isCoreFieldAddress(`trip_stay_rooms.${randomUUID()}.category`)).toBe(true);
     expect(isCoreFieldAddress("trip_stay_rooms.fake.category")).toBe(false);
     expect(isCoreFieldAddress("trip_rental_places.PICKUP.RETURN.authored_label")).toBe(

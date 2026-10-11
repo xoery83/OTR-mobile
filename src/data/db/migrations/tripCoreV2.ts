@@ -487,7 +487,6 @@ CREATE TABLE trip_core_trip_instruction_entries (
   "supersedes_id" TEXT,
   "source_representation_id" TEXT,
   FOREIGN KEY(cache_account_id,"trip_id","event_id") REFERENCES trip_core_itinerary_events(cache_account_id,trip_id,id) ON DELETE NO ACTION DEFERRABLE INITIALLY DEFERRED,
-  FOREIGN KEY(cache_account_id,trip_id,supersedes_id) REFERENCES trip_core_trip_instruction_entries(cache_account_id,trip_id,id) ON DELETE NO ACTION DEFERRABLE INITIALLY DEFERRED,
   PRIMARY KEY(cache_account_id, "trip_id", mirror_key),
   UNIQUE(cache_account_id, "trip_id", "id")
 );
@@ -719,6 +718,7 @@ CREATE TABLE trip_core_read_certificates (
 CREATE TABLE trip_core_person_bindings (
  account_id TEXT NOT NULL,trip_id TEXT NOT NULL,person_id TEXT NOT NULL,
  linked_account_id TEXT,active INTEGER NOT NULL CHECK(active IN (0,1)),
+ participating INTEGER NOT NULL CHECK(participating IN (0,1)),
  PRIMARY KEY(account_id,trip_id,person_id),
  FOREIGN KEY(account_id,trip_id) REFERENCES trip_core_scopes(account_id,trip_id)
 );

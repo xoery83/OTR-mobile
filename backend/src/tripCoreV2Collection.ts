@@ -35,7 +35,11 @@ export function coreActorReadRecords(
           body[child] = graph[child]
             .filter((x) => x.event_id === row.id)
             .sort((a, b) =>
-              coreMirrorKey(child, a).localeCompare(coreMirrorKey(child, b)),
+              coreMirrorKey(child, a) < coreMirrorKey(child, b)
+                ? -1
+                : coreMirrorKey(child, a) > coreMirrorKey(child, b)
+                  ? 1
+                  : 0,
             );
       if (kind === "BOOKING")
         body.trip_booking_observations = graph.trip_booking_observations
@@ -99,6 +103,7 @@ export async function buildCoreActorCollection(
     person_id: string;
     account_id: string | null;
     active: boolean;
+    participating: boolean;
     revision: number;
   }[],
   hash: ImportHash,
@@ -129,7 +134,7 @@ export async function buildCoreActorCollection(
       ),
       participatingRosterHash: await coreHashValue(
         "otr-trip-core-participating-roster-v2",
-        bodies.filter((b) => b.active).map((b) => b.person_id),
+        bodies.filter((b) => b.active && b.participating).map((b) => b.person_id),
         hash,
       ),
     },

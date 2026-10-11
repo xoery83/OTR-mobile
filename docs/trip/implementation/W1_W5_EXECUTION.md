@@ -48,7 +48,7 @@ The roster digest is `otr-trip-core-roster-v2\n` plus the ordered
 `[{id,revision,sha256}]` object roster. Person binding and participating roster digests
 use `otr-trip-core-person-bindings-v2` and `otr-trip-core-participating-roster-v2`.
 Relation `body` is `{tableName,row}` using the exact finite table row schema;
-PERSON_BINDING `body` is `{person_id,account_id,active}` and retains its existing
+PERSON_BINDING `body` is `{person_id,account_id,active,participating}` and retains its existing
 material revision. These specify implementation-level codecs where W0 names the
 finite grammar without enumerating the hash input/record body.
 
@@ -110,3 +110,22 @@ Full suite first run3514 passed/26 failed/15 skipped.24 failures were old latest
 53 expectations, fixed with54 registration (related431 tests now PASS). Remaining two
 UI/architecture failures reproduced on an untouched741579c archive; no Core change
 caused them and no UI file was modified. A final full regression remains required.
+
+
+## Owning PostgreSQL command checkpoint
+
+Core87 grants only scoped owning-session reads, exact actor/Trip membership locks and
+pure existing CHECK dependencies. Historical function bodies remain untouched.
+`tripCoreV2PgStorage.ts` executes finite-table deltas and immutable exact receipts in
+one transaction; fresh-session TLS primary connection stays unprovisioned. Actual
+network-isolated SQL-port acceptance executes P1–P6 creation, fractional places,
+sparse replay/operation reuse/CAS and child aggregate checks. Positive fixture gate
+CHECK changes occur only inside its disposable clone; repository migration gate
+remains CLOSED. Node pg TLS/session policy tests are mocked and are not deployed proof.
+Current focused Source/Core/PostgreSQL policy/SQLite regression59 PASS plus one actual
+SQL-port scenario with all six families PASS;329 legacy public function bodies preserved.
+
+Read2 bindings distinguish active identity from participation. Private instruction
+predecessor bodies are not required in an authorized complete actor projection; local
+mirrors retain only the opaque predecessor UUID, while global FK/chain checks stay strict.
+Participant and holder changes preserve inactive historical relations.

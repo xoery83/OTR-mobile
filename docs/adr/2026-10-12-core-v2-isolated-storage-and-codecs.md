@@ -32,3 +32,23 @@ or unexpected errors propagate without fabricated success or hidden retries.
 
 No route, hosted connection, provider, custody, native device or business activation
 is established by this ADR. Those integrations require their scoped acceptance proof.
+
+The next owning PostgreSQL adapter leases a dedicated gateway session, verifies its
+principal, and uses parameterized finite-table SQL only. It locks actor/Trip membership,
+operation identity and the sorted affected roots before loading the final read set.
+It never adopts a legacy root on a v2 create. Source, resolver, original custody and
+Ledger admission are verified by explicit owning ports; absent ports remain closed.
+Business deltas, immutable exact receipt and read-state bump commit together. A lease
+must retire on uncertain rollback/cleanup. No generic SQL or credentials are exposed
+through HTTP, repositories or feature modules; the existing read-only Catalog driver
+is not repurposed as a writer.
+
+Actor read2 Person bindings distinguish current binding validity (`active`) from
+current travel participation (`participating`). Leaving the participating roster does
+not revoke a still-linked Person's private/selected access. The participating hash
+uses only active participating Persons. Instruction read mirrors may retain an opaque
+predecessor UUID whose body is excluded by independent ACL; full server graph validation
+and FK enforcement remain strict. Authorized collection validation checks any visible
+predecessor, without requiring an unauthorized predecessor body or widening access.
+Canonical child sets use the same UTF-16 key ordering as the finite JSON/hash contract.
+Participation and holder edits retain inactive historical rows rather than deleting them.

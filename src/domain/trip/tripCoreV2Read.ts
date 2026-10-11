@@ -52,6 +52,7 @@ export const corePersonBindingSchema = z.strictObject({
   person_id: f.coreUuid,
   account_id: f.coreUuid.nullable(),
   active: z.boolean(),
+  participating: z.boolean(),
 });
 export const coreReadRecordSchema = z
   .strictObject({
@@ -320,6 +321,9 @@ export async function validateCoreReadCollection(
         const rows = body[child] as CoreRow[];
         if (rows.some((x) => x[r.kind === "ITEM" ? "event_id" : "booking_id"] !== r.id))
           throw new Error("CORE_READ_CHILD_MISMATCH");
+        const keys = rows.map((row) => coreMirrorKey(child as f.CoreTable, row));
+        if (keys.some((key, index) => index > 0 && key <= keys[index - 1]))
+          throw new Error("CORE_READ_CHILD_ORDER");
         graph[child as f.CoreTable].push(...rows);
       }
       if (
@@ -330,7 +334,7 @@ export async function validateCoreReadCollection(
       graph[table].push(root);
     }
   }
-  validateCoreGraph(graph, tripId);
+  validateCoreGraph(graph, tripId, true);
   if (
     (await coreHashValue(
       "otr-trip-core-person-bindings-v2",
@@ -339,7 +343,7 @@ export async function validateCoreReadCollection(
     )) !== manifest.actorPersonBindingHash ||
     (await coreHashValue(
       "otr-trip-core-participating-roster-v2",
-      bindings.filter((b) => b.active).map((b) => b.person_id),
+      bindings.filter((b) => b.active && b.participating).map((b) => b.person_id),
       hash,
     )) !== manifest.participatingRosterHash
   )
