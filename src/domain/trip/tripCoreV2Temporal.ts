@@ -51,11 +51,7 @@ export const coreBoundarySchema = z
     try {
       if (t.local_date) validateCalendarDate(t.local_date);
       if ((t.local_time === null) !== (t.clock_precision === null)) return fail();
-      if (
-        t.local_time &&
-        normalizeCoreClock(t.local_time, t.clock_precision!) !== t.local_time
-      )
-        return fail();
+      if (t.local_time) normalizeCoreClock(t.local_time, t.clock_precision!);
       if ((t.source_instant === null) !== (t.source_instant_precision === null))
         return fail();
       if (t.source_instant) {
@@ -124,4 +120,20 @@ export function coreDateBoundary(date: string): CoreBoundary {
     interpretation_input_sha256: null,
     provenance_refs: null,
   });
+}
+
+export function coreStoredBoundary(
+  row: Record<string, unknown>,
+  role?: "start" | "end",
+): CoreBoundary {
+  const fields = Object.keys(coreBoundarySchema.shape);
+  return coreBoundarySchema.parse(
+    Object.fromEntries(
+      fields.map((key) => [
+        key,
+        row[role ? (key === "instant" ? "planned_" + role : role + "_" + key) : key] ??
+          null,
+      ]),
+    ),
+  );
 }

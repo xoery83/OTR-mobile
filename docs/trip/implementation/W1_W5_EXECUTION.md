@@ -30,3 +30,33 @@ actual SOURCE_INSTANT evidence; ordinary clock/offset is never upgraded to proof
 First focused temporal+existing Flight suites36 PASS; typecheck/touched lint PASS.
 Sparse→qualified conversion remains a separate guarded command, not a relaxed
 CP13A create/update or a duplicate legacy Event. Existing strict validator unchanged.
+
+## First executable Core unit (2026-10-12)
+
+Implemented finite 31-table schemas, command2 validators and pure aggregate reducer;
+strict sparse/qualified same-ID Flight, parent CAS, independent ACL/participation,
+manual protection, typed family details and non-cascade relation state are executable.
+`applyCoreCommand` is an internal reducer, not the authenticated proof boundary:
+its source authorization and lifecycle hash inputs must come from the owning
+transaction/verifier. No route or feature can turn these inputs into admission.
+Document custody and Ledger mutations currently fail closed with
+`OWNING_CAPABILITY_REQUIRED`; production transaction binding and proof verification
+remain unfinished. W1/W2/W3/W5 are not declared complete by this unit.
+
+Read2 manifests/pages and roster/binding hashes are executable and version-separated.
+The roster digest is `otr-trip-core-roster-v2\n` plus the ordered
+`[{id,revision,sha256}]` object roster. Person binding and participating roster digests
+use `otr-trip-core-person-bindings-v2` and `otr-trip-core-participating-roster-v2`.
+Relation `body` is `{tableName,row}` using the exact finite table row schema;
+PERSON_BINDING `body` is `{person_id,account_id,active}` and retains its existing
+material revision. These specify implementation-level codecs where W0 names the
+finite grammar without enumerating the hash input/record body.
+
+Two technical physical bindings preserve existing semantics:
+Booking observations require nullable `evidence_ref` to retain the W0 command's
+immutable provenance; the W0 table appendix omitted this command field.
+Existing Ledger SQL uses `expense_links.link_type`; the approved logical read field
+`type` maps to that column, without changing its enum or introducing a second table.
+
+All runtime capabilities remain CLOSED. Tests so far are local synthetic domain
+and actual SQLite acceptance; none are Hosted DEV, native-device or provider E2E.
