@@ -34,6 +34,8 @@ function fixture(
         };
       if (sql.includes("trip_core_lock_source_scope"))
         return { rows: [{ allowed: options.allowed ?? true }] };
+      if (sql.startsWith("SELECT lifecycle,retention_state"))
+        return { rows: [{ lifecycle: "ACTIVE", retention_state: "RETAINED" }] };
       if (sql.includes("to_jsonb(s) AS source"))
         return {
           rows: [
@@ -240,7 +242,7 @@ it("leaves legacy catalogs read-only and uses the owning definer for locks", asy
       q.includes("public.trip_source_candidates ") ||
       q.includes("public.trip_source_output_slots "),
   );
-  expect(legacyReads).toHaveLength(5);
+  expect(legacyReads).toHaveLength(6);
   expect(legacyReads.every((q) => !q.includes("FOR UPDATE"))).toBe(true);
   expect(f.queries.some((q) => q.includes("trip_core_lock_source_scope"))).toBe(true);
 });

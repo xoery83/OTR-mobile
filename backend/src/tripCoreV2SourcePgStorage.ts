@@ -15,6 +15,7 @@ export async function readOwningLegacySourceCatalog(
   lease: CorePgLease,
   scope: CoreSourceScopeV2 & { sourceId: string },
   runId?: string,
+  historicalRevision?: number,
 ): Promise<CoreSourceCatalogV2> {
   const sourceId = scope.sourceId;
   const source = (
@@ -33,8 +34,14 @@ export async function readOwningLegacySourceCatalog(
     throw new Error("INPUT_STALE");
   const runs = (
     await lease.query(
-      "SELECT to_jsonb(r) AS run FROM public.trip_source_runs r WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND $3::uuid=ANY(scope_source_ids) AND superseded_by IS NULL AND ($4::uuid IS NULL OR id=$4::uuid) ORDER BY generation DESC LIMIT 65",
-      [scope.actorAccountId, scope.tripId, sourceId, runId ?? null],
+      "SELECT to_jsonb(r) AS run FROM public.trip_source_runs r WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND $3::uuid=ANY(scope_source_ids) AND ($5::boolean OR superseded_by IS NULL) AND ($4::uuid IS NULL OR id=$4::uuid) ORDER BY generation DESC LIMIT 65",
+      [
+        scope.actorAccountId,
+        scope.tripId,
+        sourceId,
+        runId ?? null,
+        historicalRevision !== undefined,
+      ],
     )
   ).rows;
   // Multiple independent scopes require the future owning complete-catalog selector.
@@ -44,8 +51,8 @@ export async function readOwningLegacySourceCatalog(
     throw new Error("INPUT_STALE");
   const pins = (
     await lease.query(
-      "SELECT to_jsonb(i) AS pin,public.trip_import_input_valid(i,$2::uuid,$3::uuid,true) AS valid FROM public.trip_source_inputs i WHERE run_id=$1::uuid ORDER BY id LIMIT 65",
-      [run.id, scope.actorAccountId, scope.tripId],
+      "SELECT to_jsonb(i) AS pin,public.trip_import_input_valid(i,$2::uuid,$3::uuid,$4::boolean) AS valid FROM public.trip_source_inputs i WHERE run_id=$1::uuid ORDER BY id LIMIT 65",
+      [run.id, scope.actorAccountId, scope.tripId, historicalRevision === undefined],
     )
   ).rows;
   if (!pins.length || pins.length > 64 || pins.some((p) => p.valid !== true))
@@ -84,7 +91,7 @@ export async function readOwningLegacySourceCatalog(
     actorAccountId: scope.actorAccountId,
     tripId: scope.tripId,
     sourceId,
-    sourceRevision: Number(source.current_material_revision),
+    sourceRevision: historicalRevision ?? Number(source.current_material_revision),
     inputCatalogSha256: inputHash as string,
     source,
     inputs,
@@ -172,6 +179,18 @@ export function createCoreSourcePgStorageV2(
           )
             throw new Error("IMPORT_SCOPE_MISMATCH");
 
+          const access = (
+            await lease.query(
+              "SELECT lifecycle,retention_state FROM public.trip_sources WHERE id=$1::uuid AND trip_id=$2::uuid AND acquired_by=$3::uuid",
+              [sourceId, scope.tripId, scope.actorAccountId],
+            )
+          ).rows[0];
+          if (
+            !access ||
+            access.lifecycle !== "ACTIVE" ||
+            access.retention_state !== "RETAINED"
+          )
+            throw new Error("NOT_VISIBLE");
           const tx = {
             async readPlan() {
               return stored

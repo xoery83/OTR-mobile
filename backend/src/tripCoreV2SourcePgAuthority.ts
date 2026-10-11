@@ -23,6 +23,7 @@ import {
 import {
   flightOutputPurposeV2Schema,
   assertFlightOutputClaimsV2,
+  compareFlightOutputPurposesV2,
   type FlightOutputClaimV2,
 } from "../../src/domain/trip/flightOutputPurposeV2";
 import {
@@ -116,11 +117,28 @@ async function materials(
   catalog: CoreSourceCatalogV2,
 ): Promise<CorePublicationMaterial[]> {
   const result: CorePublicationMaterial[] = [];
+  const revision = (
+    await lease.query(
+      "SELECT original_representation_ids,retention_state FROM public.trip_source_revisions WHERE source_id=$1::uuid AND material_revision=$2",
+      [catalog.sourceId, catalog.sourceRevision],
+    )
+  ).rows[0];
+  if (!revision || revision.retention_state !== "RETAINED")
+    throw new Error("SOURCE_INTEGRITY_FAILURE");
+  const originals = revision.original_representation_ids as string[],
+    selected = catalog.inputs.map(
+      (p) => (p as { representation_id: string }).representation_id,
+    );
+  if (
+    originals.length !== selected.length ||
+    [...originals].sort().join("|") !== selected.sort().join("|")
+  )
+    throw new Error("CONTRACT_UNSUPPORTED");
   for (const input of catalog.inputs) {
     const pin = flightInputSchema.parse(input),
       row = (
         await lease.query(
-          "SELECT material_kind,text_content,payload_sha256,byte_count,retention_state FROM public.trip_source_representations WHERE source_id=$1::uuid AND id=$2::uuid",
+          "SELECT role,material_kind,text_content,payload_sha256,byte_count,retention_state FROM public.trip_source_representations WHERE source_id=$1::uuid AND id=$2::uuid",
           [pin.source_id, pin.representation_id],
         )
       ).rows[0];
@@ -131,7 +149,11 @@ async function materials(
       Number(row.byte_count) !== pin.byte_count
     )
       throw new Error("SOURCE_INTEGRITY_FAILURE");
-    if (row.material_kind !== "TEXT" || typeof row.text_content !== "string")
+    if (
+      row.role !== "ORIGINAL" ||
+      row.material_kind !== "TEXT" ||
+      typeof row.text_content !== "string"
+    )
       throw new Error("CONTRACT_UNSUPPORTED");
     result.push({ pin, media_type: "text/plain", form: "TEXT", text: row.text_content });
   }
@@ -188,6 +210,7 @@ async function catalogForCandidates(
   scope: CoreSourceScopeV2 & { sourceId: string },
   candidateIds: readonly string[],
   hash: ImportHash,
+  historical = false,
 ): Promise<CoreSourceCatalogV2> {
   const selected = (
     await lease.query(
@@ -203,7 +226,12 @@ async function catalogForCandidates(
   const ids = new Set(bodies.map((c) => c.publicationId));
   if (ids.size !== 1) throw new Error("CONTRACT_UNSUPPORTED");
   const pub = await publication(lease, scope, bodies[0].publicationId, hash),
-    catalog = await readOwningLegacySourceCatalog(lease, scope, pub.response.runId);
+    catalog = await readOwningLegacySourceCatalog(
+      lease,
+      scope,
+      pub.response.runId,
+      historical ? pub.response.sourceRevision : undefined,
+    );
   if (
     catalog.sourceRevision !== pub.response.sourceRevision ||
     catalog.inputCatalogSha256 !== pub.response.inputCatalogSha256
@@ -217,7 +245,8 @@ async function catalogForCandidates(
     );
   if (mixed && pub.response.candidates.some((c) => c.status === "QUALIFIED"))
     throw new Error("INVALID_PROVENANCE");
-  if (!mixed) await verifyBytes(lease, catalog, hash);
+  if (!mixed && pub.response.candidates.some((c) => c.status === "QUALIFIED"))
+    await verifyBytes(lease, catalog, hash);
   const rows = (
     await lease.query(
       "SELECT candidate_id,run_id,source_revision,input_catalog_sha256,candidate_sha256,candidate_json FROM public.trip_source_core_v2_candidates WHERE account_id=$1::uuid AND trip_id=$2::uuid AND source_id=$3::uuid AND candidate_json->>'publicationId'=$4 ORDER BY candidate_id LIMIT 65",
@@ -258,7 +287,7 @@ async function catalogForCandidates(
         (pub.row.verification_json as { hazard?: boolean }).hazard !== false
       )
         throw new Error("INVALID_PROVENANCE");
-      for (const airport of body.airportBindings) {
+      for (const airport of historical ? [] : body.airportBindings) {
         if (
           json(await registry(lease, airport.code, body.identityFacts.originDate)) !==
           json(airport)
@@ -316,7 +345,10 @@ function verifyPayload(
     ) as FlightValues;
     for (const [key, value] of Object.entries(changes)) {
       if (key === "proofs") continue;
-      if (json(value) !== json(values[key as keyof FlightValues]))
+      if (
+        values[key as keyof FlightValues] === undefined ||
+        json(value) !== json(values[key as keyof FlightValues])
+      )
         throw new Error("INVALID_PROVENANCE");
     }
     selected = flightCommandLeaves(changes);
@@ -383,7 +415,8 @@ function checkUpdateTarget(
     if (!endpoint) continue;
     const old = role === "origin" ? origin : destination;
     for (const [key, value] of Object.entries({ ...endpoint.time, ...endpoint.location }))
-      if (value === null && old[key] !== null) throw new Error("INVALID_PROVENANCE");
+      if (key !== "fold_choice" && value === null && old[key] !== null)
+        throw new Error("INVALID_PROVENANCE");
   }
 }
 async function claims(
@@ -394,7 +427,7 @@ async function claims(
 ): Promise<FlightOutputClaimV2[]> {
   const rows = (
     await lease.query(
-      "SELECT s.*,c.run_id FROM public.trip_source_core_v2_slots s JOIN public.trip_source_core_v2_candidates c ON c.candidate_id=s.candidate_id WHERE s.account_id=$1::uuid AND s.trip_id=$2::uuid AND s.source_id=$3::uuid AND s.command='CREATE_SPARSE_FLIGHT' ORDER BY s.output_slot_id LIMIT 65 FOR UPDATE OF s",
+      "SELECT s.*,c.run_id FROM public.trip_source_core_v2_slots s JOIN public.trip_source_core_v2_candidates c ON c.candidate_id=s.candidate_id WHERE s.account_id=$1::uuid AND s.trip_id=$2::uuid AND s.source_id=$3::uuid AND s.command IN('CREATE_SPARSE_FLIGHT','QUALIFY_FLIGHT','UPDATE_FLIGHT_FACTS') ORDER BY s.output_slot_id LIMIT 65 FOR UPDATE OF s",
       scopeParams(scope),
     )
   ).rows;
@@ -450,6 +483,22 @@ async function claims(
     });
   }
   return result;
+}
+function checkKnownTarget(
+  all: FlightOutputClaimV2[],
+  targetId: string,
+  body: SealedCoreFlightCandidate,
+) {
+  for (const claim of all) {
+    if (claim.outcome === "NO_COMMIT") continue;
+    if (claim.kind === "LEGACY") throw new Error("PREDECESSOR_OUTCOME_UNKNOWN");
+    const other = claim.certified.purpose,
+      relation = compareFlightOutputPurposesV2(body.identityFacts!, other.identityFacts);
+    if (other.targetId === targetId) {
+      if (relation !== "SAME_OUTPUT") throw new Error("OUTPUT_TARGET_COLLISION");
+    } else if (relation === "SAME_OUTPUT") throw new Error("OUTPUT_PURPOSE_COLLISION");
+    else if (relation === "UNKNOWN") throw new Error("PREDECESSOR_OUTCOME_UNKNOWN");
+  }
 }
 async function putPlan(
   lease: CorePgLease,
@@ -601,6 +650,8 @@ export function createCoreSourcePgAuthority(
               body = verifiedBodies.get(command.operationId);
             if (!body) throw new Error("INVALID_PROVENANCE");
             checkUpdateTarget(graph, command, body);
+            if (command.command !== "CREATE_SPARSE_FLIGHT")
+              checkKnownTarget(await tx.readClaims(), command.target.id, body);
             applyCoreCommand(graph, command, actor!, new Date().toISOString(), true);
           },
           putPlan: (p) => putPlan(lease, own, p),
@@ -622,7 +673,7 @@ export function createCoreSourcePgAuthority(
             }
             let current: CoreSourceCatalogV2;
             try {
-              current = await load();
+              current = await catalogForCandidates(lease, own, ids, hash, true);
             } catch (error) {
               if (
                 error instanceof Error &&
@@ -879,15 +930,22 @@ export function createCoreSourcePgAuthority(
       !["READY", "DOMAIN_SUCCEEDED", "EVIDENCE_PENDING", "COMPLETE"].includes(slot.state)
     )
       throw new Error("INVALID_PROVENANCE");
-    const catalog = await catalogForCandidates(
-        lease,
-        scope,
-        plan.request.candidateIds,
-        hash,
-      ),
-      candidate = catalog.candidates.find(
-        (c) => c.candidateId === slot.proposed.candidateId,
-      );
+    let catalog: CoreSourceCatalogV2;
+    try {
+      catalog = await catalogForCandidates(lease, scope, plan.request.candidateIds, hash);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        ["INPUT_STALE", "SOURCE_INTEGRITY_FAILURE", "CONTRACT_UNSUPPORTED"].includes(
+          error.message,
+        )
+      )
+        throw new Error("INVALID_PROVENANCE");
+      throw error;
+    }
+    const candidate = catalog.candidates.find(
+      (c) => c.candidateId === slot.proposed.candidateId,
+    );
     if (
       !candidate ||
       candidate.candidateSha256 !== slot.binding.candidateSha256 ||
@@ -922,7 +980,7 @@ export function createCoreSourcePgAuthority(
     sourceReader(lease, async () => {
       const context = await slotAuthority(lease, actor, command, intentSha256);
       checkUpdateTarget(graph, command, context.body);
-      if (command.command === "CREATE_SPARSE_FLIGHT") {
+      {
         const legacy = (
           await lease.query(
             "SELECT s.slot_id FROM public.trip_source_output_slots s JOIN public.trip_source_confirmations c ON c.id=s.confirmation_id LEFT JOIN public.trip_source_runs r ON r.id=s.reviewed_run_id WHERE c.actor_account_id=$1::uuid AND c.trip_id=$2::uuid AND ($3::uuid=ANY(r.scope_source_ids) OR EXISTS(SELECT 1 FROM public.trip_source_inputs i WHERE i.confirmation_id=c.id AND i.source_id=$3::uuid)) AND s.disposition='CREATE' AND s.no_commit_basis IS NULL LIMIT 65",
@@ -935,6 +993,14 @@ export function createCoreSourcePgAuthority(
           slotId: r.slot_id as string,
           outcome: "UNKNOWN" as const,
         }));
+        if (command.command !== "CREATE_SPARSE_FLIGHT") {
+          checkKnownTarget(
+            await claims(lease, context.scope, legacy, hash),
+            command.target.id,
+            context.body,
+          );
+          return;
+        }
         await assertFlightOutputClaimsV2(
           context.slot.binding!,
           context.slot.certified!,
@@ -1036,8 +1102,8 @@ export function createCoreSourcePgAuthority(
           if (!e || e.ref !== pointer) return false;
           const rep = (
             await lease.query(
-              "SELECT id FROM public.trip_source_representations WHERE id=$1::uuid AND source_id=$2::uuid AND payload_sha256=$3 AND retention_state='RETAINED'",
-              [e.representationId, e.sourceId, e.payloadSha256],
+              "SELECT rep.id FROM public.trip_source_representations rep JOIN public.trip_source_revisions rev ON rev.source_id=rep.source_id AND rev.material_revision=$4 WHERE rep.id=$1::uuid AND rep.source_id=$2::uuid AND rep.payload_sha256=$3 AND rep.retention_state='RETAINED' AND rev.retention_state='RETAINED'",
+              [e.representationId, e.sourceId, e.payloadSha256, e.sourceRevision],
             )
           ).rows[0];
           if (!rep) return false;

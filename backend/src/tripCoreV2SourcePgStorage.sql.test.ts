@@ -10,10 +10,12 @@ import {
 import {
   createCorePgStorage,
   readCorePgOperation,
+  lockCorePgActor,
   type CorePgLease,
 } from "./tripCoreV2PgStorage";
 import { executeCoreCommandV2 } from "./tripCoreV2Commands";
 import { createCoreSourcePgAuthority } from "./tripCoreV2SourcePgAuthority";
+import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
 import { flightCommandLeaves } from "../../src/domain/trip/flightAdmission";
 import {
@@ -97,6 +99,104 @@ function session(fixture: string) {
       proc.kill();
     },
   };
+}
+async function seedPublicationSource(
+  admin: ReturnType<typeof session>,
+  f: Awaited<ReturnType<typeof publicationFixture>>,
+  account: string,
+  trip: string,
+) {
+  const m = f.materials[0],
+    pin = m.pin,
+    source = f.request.sourceId,
+    run = f.request.runId;
+  await admin.lease.query("BEGIN");
+  await admin.lease.query("SET CONSTRAINTS ALL DEFERRED");
+  for (const t of [
+    "trip_sources",
+    "trip_source_revisions",
+    "trip_source_representations",
+  ])
+    await admin.lease.query(`ALTER TABLE public.${t} DISABLE TRIGGER USER`);
+  await admin.lease.query(
+    "INSERT INTO public.trip_sources(id,trip_id,acquired_by,acquisition_key,acquisition_sha256,source_kind,acquisition_channel,capture_time_basis,created_at,current_material_revision,row_revision) VALUES($1::uuid,$2::uuid,$3::uuid,$1,repeat('0',64),'TEXT','PASTE','UNKNOWN',clock_timestamp(),1,1)",
+    [source, trip, account],
+  );
+  await admin.lease.query(
+    "INSERT INTO public.trip_source_revisions(source_id,material_revision,created_at,created_by,operation_key,capture_sha256,original_representation_ids,completeness,reason) VALUES($1::uuid,1,clock_timestamp(),$2::uuid,$1,repeat('0',64),ARRAY[$3::uuid],'AS_SUPPLIED','ACQUISITION')",
+    [source, account, pin.representation_id],
+  );
+  await admin.lease.query(
+    "INSERT INTO public.trip_source_representations(id,row_revision,source_id,introduced_revision,role,material_kind,encoding,payload_sha256,byte_count,text_content,regenerability,created_at,remote_state) VALUES($1::uuid,1,$2::uuid,1,'ORIGINAL','TEXT','UTF-8',$3,$4,$5,'NOT_APPLICABLE',clock_timestamp(),'NOT_APPLICABLE')",
+    [pin.representation_id, source, pin.payload_sha256, pin.byte_count, m.text],
+  );
+  await admin.lease.query("SET CONSTRAINTS ALL IMMEDIATE");
+  for (const t of [
+    "trip_sources",
+    "trip_source_revisions",
+    "trip_source_representations",
+  ])
+    await admin.lease.query(`ALTER TABLE public.${t} ENABLE TRIGGER USER`);
+  await admin.lease.query("COMMIT");
+  await admin.lease.query(
+    "ALTER TABLE public.trip_import_admission_gate DROP CONSTRAINT IF EXISTS trip_import_admission_gate_flight_admission_enabled_check",
+  );
+  await admin.lease.query(
+    "UPDATE public.trip_import_admission_gate SET flight_admission_enabled=true",
+  );
+  await admin.lease.query(
+    "GRANT UPDATE ON public.trip_sources TO otr_trip_source_writer",
+  );
+  await admin.lease.query(
+    "GRANT SELECT,UPDATE ON public.trips,public.trip_members,public.journey_members TO otr_trip_source_writer",
+  );
+  for (const t of ["trips", "trip_members", "journey_members"])
+    await admin.lease.query(
+      `DROP POLICY IF EXISTS source_sql_fixture_read ON public.${t}`,
+    );
+  for (const t of ["trips", "trip_members", "journey_members"])
+    await admin.lease.query(
+      `CREATE POLICY source_sql_fixture_read ON public.${t} TO otr_trip_source_writer USING(true)`,
+    );
+  await admin.lease.query("SET SESSION AUTHORIZATION otr_trip_source_command_gateway");
+  const legacy = {
+    id: run,
+    operation_key: run,
+    scope_source_ids: [source],
+    extractor_key: "synthetic-flight-source",
+    extractor_version: "1",
+    extractor_options_sha256: "0".repeat(64),
+    inputs: [pin],
+    candidates: [
+      {
+        id: randomUUID(),
+        candidate_key: "source-evidence",
+        candidate_kind: "TRANSPORT",
+        proposal_version: 1,
+        proposal: {
+          fields: { title: { proposed_value: "NZ1", input_ids: [pin.id] } },
+        },
+      },
+    ],
+    predecessors: [],
+    lineage: [],
+  };
+  const row = (
+    await admin.lease.query(
+      "SELECT public.trip_source_publish_flight_run($1::uuid,$2::uuid,$3) AS run",
+      [account, trip, JSON.stringify(legacy)],
+    )
+  ).rows[0].run as { input_sha256: string };
+  f.request.inputCatalogSha256 = row.input_sha256;
+  await admin.lease.query("RESET SESSION AUTHORIZATION");
+  await admin.lease.query(
+    "UPDATE public.trip_import_admission_gate SET flight_admission_enabled=false",
+  );
+  for (const code of ["AKL", "CHC"])
+    await admin.lease.query(
+      "INSERT INTO public.trip_core_airport_identities(namespace,issuer,airport_code,identity_id,valid_from,valid_until,registry_version,registry_sha256,enabled) VALUES('IATA_AIRPORT','IATA',$1,'IATA_AIRPORT:'||$1,'2020-01-01','2030-12-31','synthetic/1',repeat('d',64),true) ON CONFLICT DO NOTHING",
+      [code],
+    );
 }
 // This proves the SQL adapter in a UUID-owned, network-none clone, not the deployed Node pg driver.
 it.skipIf(!owned)(
@@ -436,8 +536,7 @@ it.skipIf(!owned)(
     });
     const m = f.materials[0],
       pin = m.pin,
-      source = f.request.sourceId,
-      run = f.request.runId;
+      source = f.request.sourceId;
     const connect = {
       withLease: async <T>(work: (lease: CorePgLease) => Promise<T>) => {
         const s = session(owned!);
@@ -476,95 +575,7 @@ it.skipIf(!owned)(
       ") AS hashes";
     try {
       const before = (await admin.lease.query(unrelated)).rows[0];
-      await admin.lease.query("BEGIN");
-      await admin.lease.query("SET CONSTRAINTS ALL DEFERRED");
-      for (const t of [
-        "trip_sources",
-        "trip_source_revisions",
-        "trip_source_representations",
-      ])
-        await admin.lease.query(`ALTER TABLE public.${t} DISABLE TRIGGER USER`);
-      await admin.lease.query(
-        "INSERT INTO public.trip_sources(id,trip_id,acquired_by,acquisition_key,acquisition_sha256,source_kind,acquisition_channel,capture_time_basis,created_at,current_material_revision,row_revision) VALUES($1::uuid,$2::uuid,$3::uuid,$1,repeat('0',64),'TEXT','PASTE','UNKNOWN',clock_timestamp(),1,1)",
-        [source, trip, account],
-      );
-      await admin.lease.query(
-        "INSERT INTO public.trip_source_revisions(source_id,material_revision,created_at,created_by,operation_key,capture_sha256,original_representation_ids,completeness,reason) VALUES($1::uuid,1,clock_timestamp(),$2::uuid,$1,repeat('0',64),ARRAY[$3::uuid],'AS_SUPPLIED','ACQUISITION')",
-        [source, account, pin.representation_id],
-      );
-      await admin.lease.query(
-        "INSERT INTO public.trip_source_representations(id,row_revision,source_id,introduced_revision,role,material_kind,encoding,payload_sha256,byte_count,text_content,regenerability,created_at,remote_state) VALUES($1::uuid,1,$2::uuid,1,'ORIGINAL','TEXT','UTF-8',$3,$4,$5,'NOT_APPLICABLE',clock_timestamp(),'NOT_APPLICABLE')",
-        [pin.representation_id, source, pin.payload_sha256, pin.byte_count, m.text],
-      );
-      await admin.lease.query("SET CONSTRAINTS ALL IMMEDIATE");
-      for (const t of [
-        "trip_sources",
-        "trip_source_revisions",
-        "trip_source_representations",
-      ])
-        await admin.lease.query(`ALTER TABLE public.${t} ENABLE TRIGGER USER`);
-      await admin.lease.query("COMMIT");
-      await admin.lease.query(
-        "ALTER TABLE public.trip_import_admission_gate DROP CONSTRAINT IF EXISTS trip_import_admission_gate_flight_admission_enabled_check",
-      );
-      await admin.lease.query(
-        "UPDATE public.trip_import_admission_gate SET flight_admission_enabled=true",
-      );
-      await admin.lease.query(
-        "GRANT UPDATE ON public.trip_sources TO otr_trip_source_writer",
-      );
-      await admin.lease.query(
-        "GRANT SELECT,UPDATE ON public.trips,public.trip_members,public.journey_members TO otr_trip_source_writer",
-      );
-      for (const t of ["trips", "trip_members", "journey_members"])
-        await admin.lease.query(
-          `DROP POLICY IF EXISTS source_sql_fixture_read ON public.${t}`,
-        );
-      for (const t of ["trips", "trip_members", "journey_members"])
-        await admin.lease.query(
-          `CREATE POLICY source_sql_fixture_read ON public.${t} TO otr_trip_source_writer USING(true)`,
-        );
-      await admin.lease.query(
-        "SET SESSION AUTHORIZATION otr_trip_source_command_gateway",
-      );
-      const legacy = {
-        id: run,
-        operation_key: run,
-        scope_source_ids: [source],
-        extractor_key: "synthetic-flight-source",
-        extractor_version: "1",
-        extractor_options_sha256: "0".repeat(64),
-        inputs: [pin],
-        candidates: [
-          {
-            id: randomUUID(),
-            candidate_key: "source-evidence",
-            candidate_kind: "TRANSPORT",
-            proposal_version: 1,
-            proposal: {
-              fields: { title: { proposed_value: "NZ1", input_ids: [pin.id] } },
-            },
-          },
-        ],
-        predecessors: [],
-        lineage: [],
-      };
-      const row = (
-        await admin.lease.query(
-          "SELECT public.trip_source_publish_flight_run($1::uuid,$2::uuid,$3) AS run",
-          [account, trip, JSON.stringify(legacy)],
-        )
-      ).rows[0].run as { input_sha256: string };
-      f.request.inputCatalogSha256 = row.input_sha256;
-      await admin.lease.query("RESET SESSION AUTHORIZATION");
-      await admin.lease.query(
-        "UPDATE public.trip_import_admission_gate SET flight_admission_enabled=false",
-      );
-      for (const code of ["AKL", "CHC"])
-        await admin.lease.query(
-          "INSERT INTO public.trip_core_airport_identities(namespace,issuer,airport_code,identity_id,valid_from,valid_until,registry_version,registry_sha256,enabled) VALUES('IATA_AIRPORT','IATA',$1,'IATA_AIRPORT:'||$1,'2020-01-01','2030-12-31','synthetic/1',repeat('d',64),true)",
-          [code],
-        );
+      await seedPublicationSource(admin, f, account, trip);
       await admin.lease.query(
         "DO $$DECLARE c record;BEGIN FOR c IN SELECT conname FROM pg_constraint WHERE conrelid='public.trip_core_activation_gate'::regclass AND contype='c' LOOP EXECUTE format('ALTER TABLE public.trip_core_activation_gate DROP CONSTRAINT %I',c.conname);END LOOP;END$$",
       );
@@ -684,6 +695,30 @@ it.skipIf(!owned)(
           hash,
         ),
       ).toEqual(prepared);
+      // Exercise the actual owning writer admission boundary before any dispatch.
+      const firstReady = prepared.readyCommands[0],
+        firstIntent = await coreHashValue("otr-trip-core-intent-v2", firstReady, hash);
+      await admin.lease.query(
+        "UPDATE public.trip_core_airport_identities SET enabled=false WHERE airport_code='AKL'",
+      );
+      await commands.withLockedCommand(
+        {
+          actorAccountId: account,
+          tripId: trip,
+          operationId: firstReady.operationId,
+          baseVector: firstReady.baseVector,
+        },
+        async (tx) => {
+          const graph = await tx.readLockedGraph(firstReady);
+          await expect(
+            tx.verifyAdmission(firstReady, firstIntent, graph),
+          ).rejects.toThrow("INVALID_PROVENANCE");
+        },
+      );
+      expect(await authority.publish(account, trip, f.request)).toEqual(published);
+      await admin.lease.query(
+        "UPDATE public.trip_core_airport_identities SET enabled=true WHERE airport_code='AKL'",
+      );
       const receipts = new Map<
         string,
         Awaited<ReturnType<typeof executeCoreCommandV2>>
@@ -768,6 +803,147 @@ it.skipIf(!owned)(
           hash,
         ),
       ).rejects.toThrow("INVALID_DOMAIN_RECEIPT");
+      // Direct additive-trigger acceptance only; old mutation guards are disabled in this owned fixture.
+      const legacyConfirmation = randomUUID(),
+        legacyPin = randomUUID(),
+        recoverySlot = randomUUID(),
+        revokedSlot = randomUUID();
+      await admin.lease.query("BEGIN");
+      await admin.lease.query("SET CONSTRAINTS ALL DEFERRED");
+      for (const table of [
+        "trip_source_confirmations",
+        "trip_source_inputs",
+        "trip_source_output_slots",
+      ])
+        await admin.lease.query(`ALTER TABLE public.${table} DISABLE TRIGGER USER`);
+      await admin.lease.query(
+        "INSERT INTO public.trip_source_confirmations(id,trip_id,actor_account_id,confirmation_key,intent_version,intent_sha256,created_at,row_revision) VALUES($1::uuid,$2::uuid,$3::uuid,$1,1,repeat('f',64),clock_timestamp(),1)",
+        [legacyConfirmation, trip, account],
+      );
+      await admin.lease.query(
+        "INSERT INTO public.trip_source_inputs(id,confirmation_id,source_id,material_revision,representation_id,payload_sha256,byte_count,observed_source_row_revision,historical_selection) VALUES($1::uuid,$2::uuid,$3::uuid,1,$4::uuid,$5,$6,1,false)",
+        [
+          legacyPin,
+          legacyConfirmation,
+          source,
+          pin.representation_id,
+          pin.payload_sha256,
+          pin.byte_count,
+        ],
+      );
+      for (const [slot, key, state, active, basis] of [
+        [recoverySlot, "recovery", "PREPARED", true, null],
+        [revokedSlot, "revoked", "CANCELED", false, "UNDISPATCHED_REVOKED"],
+      ] as const)
+        await admin.lease.query(
+          "INSERT INTO public.trip_source_output_slots(confirmation_id,slot_id,slot_key,disposition,intended_target_kind,intended_target_id,adapter_key,adapter_version,domain_operation_key,domain_intent_sha256,reviewed_payload,support_payload,support_version,state,create_claim_active,no_commit_basis,no_commit_at) VALUES($1::uuid,$2::uuid,$3,'CREATE','ITINERARY_EVENT',$4::uuid,'itinerary-event-v1',1,$5,repeat('f',64),'{}','{}',1,$6,$7,$8,CASE WHEN $8 IS NULL THEN NULL ELSE clock_timestamp() END)",
+          [
+            legacyConfirmation,
+            slot,
+            key,
+            randomUUID(),
+            randomUUID(),
+            state,
+            active,
+            basis,
+          ],
+        );
+      await admin.lease.query("SET CONSTRAINTS ALL IMMEDIATE");
+      for (const table of ["trip_source_confirmations", "trip_source_inputs"])
+        await admin.lease.query(`ALTER TABLE public.${table} ENABLE TRIGGER USER`);
+      await admin.lease.query(
+        "ALTER TABLE public.trip_source_output_slots ENABLE TRIGGER core_v2_retained_claim_fence",
+      );
+      await admin.lease.query("COMMIT");
+      await admin.lease.query(
+        "SELECT set_config('otr.core.actor',$1,false),set_config('otr.core.trip',$2,false)",
+        [account, trip],
+      );
+      await admin.lease.query(
+        "DO $$BEGIN BEGIN INSERT INTO public.trip_source_output_slots(confirmation_id,slot_id,slot_key,disposition,state,support_version,support_payload) VALUES('" +
+          legacyConfirmation +
+          "',gen_random_uuid(),'fresh','CREATE','PREPARED',1,'{}');RAISE EXCEPTION 'FENCE_NOT_ENFORCED';EXCEPTION WHEN check_violation THEN IF SQLERRM<>'CORE_V2_SOURCE_CLAIM_PRESENT' THEN RAISE;END IF;END;END$$",
+      );
+      await admin.lease.query(
+        "UPDATE public.trip_source_output_slots SET state='OUTCOME_UNKNOWN',dispatched_at=clock_timestamp() WHERE slot_id=$1::uuid",
+        [recoverySlot],
+      );
+      expect(
+        (
+          await admin.lease.query(
+            "SELECT state FROM public.trip_source_output_slots WHERE slot_id=$1::uuid",
+            [recoverySlot],
+          )
+        ).rows[0].state,
+      ).toBe("OUTCOME_UNKNOWN");
+      await admin.lease.query(
+        "DO $$BEGIN BEGIN UPDATE public.trip_source_output_slots SET state='PREPARED',create_claim_active=true,no_commit_basis=NULL,no_commit_at=NULL WHERE slot_id='" +
+          revokedSlot +
+          "';RAISE EXCEPTION 'REOPEN_NOT_FENCED';EXCEPTION WHEN check_violation THEN IF SQLERRM<>'CORE_V2_SOURCE_CLAIM_PRESENT' THEN RAISE;END IF;END;END$$",
+      );
+      // Even certified slots marked REVIEW retain their known or uncertain physical claim.
+      await admin.lease.query(
+        "ALTER TABLE public.trip_source_core_v2_slots DISABLE TRIGGER USER",
+      );
+      await admin.lease.query(
+        "UPDATE public.trip_source_core_v2_slots SET state='REVIEW' WHERE source_id=$1::uuid",
+        [source],
+      );
+      await admin.lease.query(
+        "DO $$BEGIN BEGIN INSERT INTO public.trip_source_output_slots(confirmation_id,slot_id,slot_key,disposition,state,support_version,support_payload) VALUES('" +
+          legacyConfirmation +
+          "',gen_random_uuid(),'retained-review','CREATE','PREPARED',1,'{}');RAISE EXCEPTION 'REVIEW_RELEASED_CLAIM';EXCEPTION WHEN check_violation THEN IF SQLERRM<>'CORE_V2_SOURCE_CLAIM_PRESENT' THEN RAISE;END IF;END;END$$",
+      );
+      await admin.lease.query(
+        "UPDATE public.trip_source_core_v2_slots SET state='READY' WHERE source_id=$1::uuid",
+        [source],
+      );
+      await admin.lease.query(
+        "ALTER TABLE public.trip_source_core_v2_slots ENABLE TRIGGER USER",
+      );
+      await admin.lease.query(
+        "ALTER TABLE public.trip_source_output_slots ENABLE TRIGGER USER",
+      );
+      const nextRep = randomUUID(),
+        nextText = m.text + "\nReplacement material",
+        nextHash = await hash(new TextEncoder().encode(nextText));
+      await admin.lease.query("BEGIN");
+      await admin.lease.query("SET CONSTRAINTS ALL DEFERRED");
+      for (const table of [
+        "trip_sources",
+        "trip_source_revisions",
+        "trip_source_representations",
+      ])
+        await admin.lease.query(`ALTER TABLE public.${table} DISABLE TRIGGER USER`);
+      await admin.lease.query(
+        "INSERT INTO public.trip_source_revisions(source_id,material_revision,previous_revision,created_at,created_by,operation_key,capture_sha256,original_representation_ids,completeness,reason) VALUES($1::uuid,2,1,clock_timestamp(),$2::uuid,$3,$4,ARRAY[$5::uuid],'AS_SUPPLIED','REPLACEMENT')",
+        [source, account, randomUUID(), nextHash, nextRep],
+      );
+      await admin.lease.query(
+        "INSERT INTO public.trip_source_representations(id,row_revision,source_id,introduced_revision,role,material_kind,encoding,payload_sha256,byte_count,text_content,regenerability,created_at,remote_state) VALUES($1::uuid,1,$2::uuid,2,'ORIGINAL','TEXT','UTF-8',$3,$4,$5,'NOT_APPLICABLE',clock_timestamp(),'NOT_APPLICABLE')",
+        [nextRep, source, nextHash, new TextEncoder().encode(nextText).length, nextText],
+      );
+      await admin.lease.query(
+        "UPDATE public.trip_sources SET current_material_revision=2,row_revision=row_revision+1 WHERE id=$1::uuid",
+        [source],
+      );
+      await admin.lease.query("SET CONSTRAINTS ALL IMMEDIATE");
+      for (const table of [
+        "trip_sources",
+        "trip_source_revisions",
+        "trip_source_representations",
+      ])
+        await admin.lease.query(`ALTER TABLE public.${table} ENABLE TRIGGER USER`);
+      await admin.lease.query("COMMIT");
+      await expect(
+        prepareCoreSourcePlanV2(
+          authority.source,
+          account,
+          trip,
+          { ...request, planId: randomUUID() },
+          hash,
+        ),
+      ).rejects.toThrow("INPUT_STALE");
       for (const slot of slots) {
         const result = receipts.get(slot.operationId)!;
         if (result.projection !== "FULL") throw new Error("UNEXPECTED_REDACTION");
@@ -828,6 +1004,38 @@ it.skipIf(!owned)(
       ).rows[0];
       expect(endpoints.source_instant_precision).toBe(6);
       expect((await admin.lease.query(unrelated)).rows[0]).toEqual(before);
+      await admin.lease.query("ALTER TABLE public.trip_sources DISABLE TRIGGER USER");
+      await admin.lease.query(
+        "UPDATE public.trip_sources SET lifecycle='DELETED',deleted_at=clock_timestamp(),deleted_by=$2::uuid WHERE id=$1::uuid",
+        [source, account],
+      );
+      await admin.lease.query("ALTER TABLE public.trip_sources ENABLE TRIGGER USER");
+      await expect(
+        readCoreSourcePlanV2(authority.source, account, trip, planId, hash),
+      ).rejects.toThrow("NOT_VISIBLE");
+      await expect(
+        finalizeCoreSourceSlotV2(
+          authority.source,
+          account,
+          trip,
+          planId,
+          {
+            captureVersion: 2,
+            slotId: slots[0].slotId,
+            operationId: first.receipt.operationId,
+            intentSha256: first.receipt.intentSha256,
+            domainReceiptId: first.domainReceiptId,
+            receiptSha256: first.receipt.receiptSha256,
+          },
+          hash,
+        ),
+      ).rejects.toThrow("NOT_VISIBLE");
+      await admin.lease.query("ALTER TABLE public.trip_sources DISABLE TRIGGER USER");
+      await admin.lease.query(
+        "UPDATE public.trip_sources SET lifecycle='ACTIVE',deleted_at=NULL,deleted_by=NULL WHERE id=$1::uuid",
+        [source],
+      );
+      await admin.lease.query("ALTER TABLE public.trip_sources ENABLE TRIGGER USER");
       await admin.lease.query(
         "UPDATE public.trip_core_activation_gate SET runtime_enabled=false",
       );
@@ -835,6 +1043,380 @@ it.skipIf(!owned)(
       expect(
         await readCorePgOperation(commands, account, trip, slots[0].operationId, hash),
       ).toEqual(first);
+    } finally {
+      admin.close();
+    }
+  },
+  60000,
+);
+
+it.skipIf(!owned)(
+  "retains Source qualification claims for a manual sparse Flight and protects edited fields and CAS",
+  async () => {
+    if (!/^otr-core-v2-test-[a-f0-9]{12}$/.test(owned!))
+      throw new Error("OWNED_FIXTURE_REQUIRED");
+    const admin = session(owned!),
+      f = await publicationFixture(true),
+      account = "00000000-0000-4000-8000-000000000002",
+      trip = "10000000-0000-4000-8000-000000000001",
+      hash = publicationTestHash;
+    const source = randomUUID(),
+      run = randomUUID(),
+      rep = randomUUID(),
+      pin = randomUUID(),
+      candidates = f.request.candidates.map(() => randomUUID()),
+      oldIds = f.request.candidates.map((c) => c.candidateId);
+    f.request.sourceId = source;
+    f.request.runId = run;
+    f.request.publicationId = randomUUID();
+    f.materials[0].pin.source_id = source;
+    f.materials[0].pin.representation_id = rep;
+    f.materials[0].pin.id = pin;
+    f.materials[0].text = f.materials[0].text
+      .replaceAll("2026-12-17", "2026-12-21")
+      .replaceAll("2026-12-20", "2026-12-22")
+      .replaceAll("2026-12-16", "2026-12-20")
+      .replaceAll("2026-12-19", "2026-12-21");
+    f.materials[0].pin.payload_sha256 = await hash(
+      new TextEncoder().encode(f.materials[0].text),
+    );
+    f.request.candidates.forEach((c, i) => {
+      c.candidateId = candidates[i];
+      c.accountId = account;
+      c.tripId = trip;
+      c.sourceId = source;
+      c.runId = run;
+      c.inputRepresentationIds = [rep];
+      c.facts.departureDate = `2026-12-${21 + i}`;
+      c.facts.origin!.time.local_date = c.facts.departureDate;
+      c.facts.origin!.time.source_instant = `2026-12-${20 + i}T20:00:00.120000Z`;
+      for (const key of Object.keys(c.fieldEvidence))
+        c.fieldEvidence[key] = c.fieldEvidence[key].map((ref) =>
+          ref.replace(oldIds[i], c.candidateId),
+        );
+    });
+    f.request.evidence.forEach((e) => {
+      e.candidateId = candidates[oldIds.indexOf(e.candidateId)];
+      e.inputId = pin;
+      e.locator.input_id = pin;
+    });
+    const candidate = f.request.candidates[0];
+    candidate.facts.core = { title: candidate.facts.flightNumberLiteral! };
+    candidate.fieldKnowledge["ROOT.title"] = "PRESENT";
+    candidate.fieldEvidence["ROOT.title"] = [
+      `track-c/field-evidence/${candidate.candidateId}/ROOT.title`,
+    ];
+    f.request.evidence.push({
+      ...f.request.evidence.find(
+        (e) =>
+          e.candidateId === candidate.candidateId && e.fieldKey === "flightNumberLiteral",
+      )!,
+      fieldKey: "ROOT.title",
+    });
+    const connect = {
+        withLease: async <T>(work: (lease: CorePgLease) => Promise<T>) => {
+          const s = session(owned!);
+          try {
+            await s.lease.query("SET SESSION AUTHORIZATION otr_trip_core_v2_gateway");
+            return await work(s.lease);
+          } finally {
+            s.close();
+          }
+        },
+      },
+      authority = createCoreSourcePgAuthority(connect, hash),
+      commands = createCorePgStorage(connect, hash, {
+        verify: authority.verifySourceIntent,
+        canReadSourceReceipt: authority.canReadSourceReceipt,
+        canReadAudit: authority.canReadAudit,
+        audit: authority.audit,
+        canReadOriginal: async () => false,
+      });
+    try {
+      await seedPublicationSource(admin, f, account, trip);
+      await admin.lease.query(
+        "UPDATE public.trip_core_activation_gate SET runtime_enabled=true,enabled_commands=ARRAY['CREATE_SPARSE_FLIGHT','QUALIFY_FLIGHT','UPDATE_FLIGHT_FACTS','SET_ITEM_TEXT'],enabled_families=ARRAY['P2'],enabled_admission_modes=ARRAY['MANUAL','REVIEWED_SOURCE']",
+      );
+      expect(
+        (await authority.publish(account, trip, f.request)).candidates.map(
+          (c) => c.status,
+        ),
+      ).toEqual(["QUALIFIED", "QUALIFIED"]);
+      const target = randomUUID(),
+        manual = {
+          contractVersion: 2,
+          intentVersion: 2,
+          operationId: randomUUID(),
+          tripId: trip,
+          command: "CREATE_SPARSE_FLIGHT",
+          target: { kind: "ITEM", id: target },
+          baseVector: [{ kind: "ITEM", id: target, revision: null }],
+          admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+          payload: {
+            flightNumberLiteral: candidate.facts.flightNumberLiteral,
+            departureDate: candidate.facts.departureDate,
+            ...coreDefaults("member"),
+          },
+        };
+      const savedManual = await executeCoreCommandV2(
+        commands,
+        account,
+        trip,
+        manual,
+        hash,
+      );
+      if (savedManual.projection !== "FULL") throw new Error("REDACTED");
+      expect(savedManual.receipt.outcome).toBe("APPLIED");
+      const full = {
+          origin: candidate.facts.origin!,
+          destination: candidate.facts.destination!,
+          services: candidate.facts.services!,
+        },
+        keys = Object.keys(flightCommandLeaves(full)),
+        qSlot = {
+          slotId: randomUUID(),
+          slotKey: "qualify",
+          candidateId: candidate.candidateId,
+          targetKind: "ITEM",
+          target: { kind: "ITEM", id: target },
+          command: "QUALIFY_FLIGHT",
+          operationId: randomUUID(),
+          dependsOn: [],
+          selectedFields: keys,
+          evidenceRefs: Object.fromEntries(
+            keys.map((k) => [k, candidate.fieldEvidence[k]]),
+          ),
+          baseVector: [{ kind: "ITEM", id: target, revision: 1 }],
+          payload: {
+            ...full,
+            proofs: Object.fromEntries(
+              keys.map((k) => [
+                k,
+                { kind: "TRACK_C", ref: candidate.fieldEvidence[k][0] },
+              ]),
+            ),
+          },
+        },
+        qPlan = {
+          captureVersion: 2,
+          planId: randomUUID(),
+          sourceId: source,
+          sourceRevision: 1,
+          mode: "REVIEWED_SOURCE",
+          policyVersion: null,
+          candidateIds: [candidate.candidateId],
+          slots: [qSlot],
+        };
+      const prepared = await prepareCoreSourcePlanV2(
+        authority.source,
+        account,
+        trip,
+        qPlan,
+        hash,
+      );
+      expect(prepared.readyCommands).toHaveLength(1);
+      const qualified = await executeCoreCommandV2(
+        commands,
+        account,
+        trip,
+        prepared.readyCommands[0],
+        hash,
+      );
+      expect(qualified.projection).toBe("FULL");
+      if (qualified.projection !== "FULL") throw new Error("REDACTED");
+      expect(qualified.receipt.outcome).toBe("APPLIED");
+      await connect.withLease(async (lease) => {
+        await lease.query("BEGIN");
+        await lease.query(
+          "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
+          [account, trip],
+        );
+        const actor = await lockCorePgActor(lease, account, trip);
+        expect(await authority.canReadAudit(lease, actor, qualified.receipt)).toBe(true);
+        const privateBefore = {
+          ...qualified.receipt,
+          audit: {
+            ...qualified.receipt.audit,
+            before: qualified.receipt.audit.after.map((snapshot) => ({
+              ...snapshot,
+              facts: {
+                ...(snapshot.facts as object),
+                field_state: {
+                  secret: {
+                    evidence_ref: `track-c/field-evidence/${randomUUID()}/ORIGIN.local_date`,
+                  },
+                },
+              },
+            })),
+          },
+        };
+        expect(
+          await authority.canReadSourceReceipt(lease, actor, qSlot.operationId),
+        ).toBe(true);
+        expect(await authority.canReadAudit(lease, actor, privateBefore)).toBe(false);
+        await lease.query("ROLLBACK");
+      });
+      const createKeys = [
+          "flightNumberLiteral",
+          "departureDate",
+          `SERVICE.${candidate.facts.services![0].service_key}.service_number`,
+          "ORIGIN.local_date",
+          "ORIGIN.authored_label",
+          "DESTINATION.authored_label",
+        ],
+        duplicate = {
+          ...qPlan,
+          planId: randomUUID(),
+          slots: [
+            {
+              slotId: randomUUID(),
+              slotKey: "create",
+              candidateId: candidate.candidateId,
+              targetKind: "ITEM",
+              target: { kind: "ITEM", id: randomUUID() },
+              command: "CREATE_SPARSE_FLIGHT",
+              operationId: randomUUID(),
+              dependsOn: [],
+              selectedFields: ["flightNumberLiteral", "departureDate"],
+              evidenceRefs: Object.fromEntries(
+                createKeys.map((k) => [k, candidate.fieldEvidence[k]]),
+              ),
+              baseVector: null,
+              payload: {
+                flightNumberLiteral: candidate.facts.flightNumberLiteral,
+                departureDate: candidate.facts.departureDate,
+                ...coreDefaults("member"),
+              },
+            },
+          ],
+        };
+      duplicate.slots[0].baseVector = [
+        { kind: "ITEM", id: duplicate.slots[0].target.id, revision: null },
+      ] as any;
+      const collision = await prepareCoreSourcePlanV2(
+        authority.source,
+        account,
+        trip,
+        duplicate,
+        hash,
+      );
+      expect(collision.readyCommands).toEqual([]);
+      expect(collision.reviewSlots[0].errorCode).toBe("OUTPUT_PURPOSE_COLLISION");
+      const updateSlot = {
+          ...qSlot,
+          slotId: randomUUID(),
+          slotKey: "title",
+          command: "UPDATE_FLIGHT_FACTS",
+          operationId: randomUUID(),
+          selectedFields: ["ROOT.title"],
+          evidenceRefs: Object.fromEntries(
+            [
+              "ROOT.title",
+              `SERVICE.${candidate.facts.services![0].service_key}.service_number`,
+              "ORIGIN.local_date",
+              "ORIGIN.authored_label",
+              "DESTINATION.authored_label",
+            ].map((k) => [k, candidate.fieldEvidence[k]]),
+          ),
+          payload: {
+            changes: { title: candidate.facts.core.title },
+            proofs: {
+              "ROOT.title": {
+                kind: "TRACK_C",
+                ref: candidate.fieldEvidence["ROOT.title"][0],
+              },
+            },
+          },
+          baseVector: [{ kind: "ITEM", id: target, revision: 1 }],
+        },
+        stale = await prepareCoreSourcePlanV2(
+          authority.source,
+          account,
+          trip,
+          { ...qPlan, planId: randomUUID(), slots: [updateSlot] },
+          hash,
+        );
+      expect(stale.reviewSlots[0].errorCode).toBe("REVISION_CONFLICT");
+      const edit = {
+        ...manual,
+        operationId: randomUUID(),
+        command: "SET_ITEM_TEXT",
+        baseVector: [{ kind: "ITEM", id: target, revision: 2 }],
+        payload: { title: "My protected title" },
+      };
+      const edited = await executeCoreCommandV2(commands, account, trip, edit, hash);
+      if (edited.projection !== "FULL") throw new Error("REDACTED");
+      expect(edited.receipt.outcome).toBe("APPLIED");
+      const protectedResult = await prepareCoreSourcePlanV2(
+        authority.source,
+        account,
+        trip,
+        {
+          ...qPlan,
+          planId: randomUUID(),
+          slots: [
+            {
+              ...updateSlot,
+              slotId: randomUUID(),
+              operationId: randomUUID(),
+              baseVector: [{ kind: "ITEM", id: target, revision: 3 }],
+            },
+          ],
+        },
+        hash,
+      );
+      expect(protectedResult.readyCommands).toEqual([]);
+      expect(protectedResult.reviewSlots[0].errorCode).toBe("PROTECTED_FIELD");
+      expect(
+        (
+          await admin.lease.query(
+            "SELECT title,semantic_revision FROM public.itinerary_events WHERE id=$1::uuid",
+            [target],
+          )
+        ).rows[0],
+      ).toEqual({ title: "My protected title", semantic_revision: 3 });
+      const finalize = {
+        captureVersion: 2,
+        slotId: qSlot.slotId,
+        operationId: qSlot.operationId,
+        intentSha256: qualified.receipt.intentSha256,
+        domainReceiptId: qualified.domainReceiptId,
+        receiptSha256: qualified.receipt.receiptSha256,
+      };
+      // A committed domain result does not authorize a new association after old evidence is redacted.
+      await admin.lease.query(
+        "ALTER TABLE public.trip_source_revisions DISABLE TRIGGER USER",
+      );
+      await admin.lease.query(
+        "UPDATE public.trip_source_revisions SET retention_state='IDENTITY_ONLY',capture_sha256=NULL WHERE source_id=$1::uuid AND material_revision=1",
+        [source],
+      );
+      await admin.lease.query(
+        "ALTER TABLE public.trip_source_revisions ENABLE TRIGGER USER",
+      );
+      expect(
+        (
+          await finalizeCoreSourceSlotV2(
+            authority.source,
+            account,
+            trip,
+            qPlan.planId,
+            finalize,
+            hash,
+          )
+        ).state,
+      ).toBe("EVIDENCE_PENDING");
+      expect(
+        (
+          await admin.lease.query(
+            "SELECT count(*)::int AS creates FROM public.trip_source_core_v2_slots WHERE source_id=$1::uuid AND command='CREATE_SPARSE_FLIGHT'",
+            [source],
+          )
+        ).rows[0].creates,
+      ).toBe(0);
+      await admin.lease.query(
+        "UPDATE public.trip_core_activation_gate SET runtime_enabled=false",
+      );
     } finally {
       admin.close();
     }
