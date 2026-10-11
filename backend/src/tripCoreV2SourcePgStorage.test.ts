@@ -225,3 +225,22 @@ it("preparation persists unresolved identity as REVIEW and emits no executable c
   ]);
   expect(f.queries.filter((q) => q.startsWith("INSERT"))).toHaveLength(1);
 });
+
+it("leaves legacy catalogs read-only and uses the owning definer for locks", async () => {
+  const f = fixture();
+  await f.storage.withLockedSourcePlan(scope, async (tx) => {
+    await tx.readSealedCatalog();
+    await tx.readClaims();
+  });
+  const legacyReads = f.queries.filter(
+    (q) =>
+      q.includes("public.trip_sources ") ||
+      q.includes("public.trip_source_runs ") ||
+      q.includes("public.trip_source_inputs ") ||
+      q.includes("public.trip_source_candidates ") ||
+      q.includes("public.trip_source_output_slots "),
+  );
+  expect(legacyReads).toHaveLength(5);
+  expect(legacyReads.every((q) => !q.includes("FOR UPDATE"))).toBe(true);
+  expect(f.queries.some((q) => q.includes("trip_core_lock_source_scope"))).toBe(true);
+});

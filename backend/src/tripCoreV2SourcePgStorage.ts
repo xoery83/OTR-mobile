@@ -83,10 +83,11 @@ export function createCoreSourcePgStorageV2(
                 ? structuredClone(stored.prepared_json as CoreSourceStoredPlanV2)
                 : null;
             },
+            // The scoped definer holds legacy locks; this principal has SELECT-only legacy grants.
             async readSealedCatalog(): Promise<CoreSourceCatalogV2> {
               const source = (
                 await lease.query(
-                  "SELECT to_jsonb(s) AS source FROM public.trip_sources s WHERE id=$1::uuid FOR UPDATE",
+                  "SELECT to_jsonb(s) AS source FROM public.trip_sources s WHERE id=$1::uuid",
                   [sourceId],
                 )
               ).rows[0]?.source as Record<string, Json> | undefined;
@@ -100,7 +101,7 @@ export function createCoreSourcePgStorageV2(
                 throw new Error("INPUT_STALE");
               const runs = (
                 await lease.query(
-                  "SELECT to_jsonb(r) AS run FROM public.trip_source_runs r WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND $3::uuid=ANY(scope_source_ids) AND superseded_by IS NULL ORDER BY generation DESC LIMIT 65 FOR UPDATE",
+                  "SELECT to_jsonb(r) AS run FROM public.trip_source_runs r WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND $3::uuid=ANY(scope_source_ids) AND superseded_by IS NULL ORDER BY generation DESC LIMIT 65",
                   [scope.actorAccountId, scope.tripId, sourceId],
                 )
               ).rows;
@@ -111,7 +112,7 @@ export function createCoreSourcePgStorageV2(
                 throw new Error("INPUT_STALE");
               const pins = (
                 await lease.query(
-                  "SELECT to_jsonb(i) AS pin,public.trip_import_input_valid(i,$2::uuid,$3::uuid,true) AS valid FROM public.trip_source_inputs i WHERE run_id=$1::uuid ORDER BY id LIMIT 65 FOR UPDATE",
+                  "SELECT to_jsonb(i) AS pin,public.trip_import_input_valid(i,$2::uuid,$3::uuid,true) AS valid FROM public.trip_source_inputs i WHERE run_id=$1::uuid ORDER BY id LIMIT 65",
                   [run.id, scope.actorAccountId, scope.tripId],
                 )
               ).rows;
@@ -134,7 +135,7 @@ export function createCoreSourcePgStorageV2(
               if (inputHash !== run.input_sha256) throw new Error("INPUT_STALE");
               const candidates = (
                 await lease.query(
-                  "SELECT id,run_id,candidate_kind,proposal,proposal_sha256,retention_state,public.trip_source_hash('otr-source-candidate-v1',proposal) AS checked_hash FROM public.trip_source_candidates WHERE run_id=$1::uuid ORDER BY id LIMIT 65 FOR UPDATE",
+                  "SELECT id,run_id,candidate_kind,proposal,proposal_sha256,retention_state,public.trip_source_hash('otr-source-candidate-v1',proposal) AS checked_hash FROM public.trip_source_candidates WHERE run_id=$1::uuid ORDER BY id LIMIT 65",
                   [run.id],
                 )
               ).rows;
@@ -174,7 +175,7 @@ export function createCoreSourcePgStorageV2(
             async readClaims(): Promise<FlightOutputClaimV2[]> {
               const rows = (
                 await lease.query(
-                  "SELECT s.slot_id FROM public.trip_source_output_slots s JOIN public.trip_source_confirmations c ON c.id=s.confirmation_id JOIN public.trip_source_runs r ON r.id=s.reviewed_run_id WHERE c.actor_account_id=$1::uuid AND c.trip_id=$2::uuid AND $3::uuid=ANY(r.scope_source_ids) AND s.disposition='CREATE' AND s.no_commit_basis IS NULL LIMIT 65 FOR UPDATE OF s",
+                  "SELECT s.slot_id FROM public.trip_source_output_slots s JOIN public.trip_source_confirmations c ON c.id=s.confirmation_id JOIN public.trip_source_runs r ON r.id=s.reviewed_run_id WHERE c.actor_account_id=$1::uuid AND c.trip_id=$2::uuid AND $3::uuid=ANY(r.scope_source_ids) AND s.disposition='CREATE' AND s.no_commit_basis IS NULL LIMIT 65",
                   [scope.actorAccountId, scope.tripId, sourceId],
                 )
               ).rows;
