@@ -1,3 +1,30 @@
+## R3-A4 administrator password handoff — 2026-10-11 / READY, AWAITING OWNER INPUT
+
+- Fixed DEV postgres identity/SCRAM password presence verified read-only; Direct
+  endpoint db.tuqigdxrvrerfewsxqgm.supabase.co:5432, database/user postgres.
+- Owner helper: `scripts/dev/dev-postgres-admin-handoff.py --handoff`. Run only
+  from a private Owner Terminal; enter the existing DEV database password at the
+  hidden prompt, never in chat/arguments/environment. API key custody stays separate.
+- Pinned SSH, no forwarding, bounded operations and hidden TTY input verified using
+  synthetic values. Password travels only over SSH stdin into hardened native memory.
+  Separate `/opt/otr/dev-postgres-admin` prepared root:root0700 with empty regular
+  single-link0600 lock; no actual credential entered. Publication uses0600 pending
+  marker/fsync/rename under cooperative exclusive lock with checked inventories.
+- Interrupted transfer is UNKNOWN, never automatic overwrite/replay; `--check`
+  reads metadata only. STAGED means private storage, not successful authentication.
+  Unsafe ownership/permissions/links/inventory/lock/mutation reject. Fixtures PASS.
+- Actual libpq160015 verify-full reaches password-required boundary; wrong hostname
+  and CA reject. Core0/dumpable0 verified; Backend identity/start/health unchanged.
+- DEV trusted-root/cooperative-lock acceptance remains explicit, never race-free.
+  Apport enabled; backup/snapshot/retention exclusions unverified. Python getpass/SSH
+  can retain transient memory copies despite wiping mutable/native buffers; no
+  absolute memory-erasure guarantee. No new manager or persistent dump-policy change.
+- Reader module byte-identical: NOLOGIN/passwordNULL/expiryNULL/limit1/zero sessions.
+  No real password acquisition, Hosted mutation or authenticated Direct SQL yet.
+  Next: Owner privately enters existing password, then separately verify admin
+  authentication/logging prerequisites before Reader provisioning. Backend/Native
+  Catalog Runtime remain CLOSED.
+
 ## R3-A4 final connection prerequisites — 2026-10-11 / LIBPQ READY, READER BLOCKED
 
 - Unpublished fa8b32a is the Owner-accepted bounded Day Feed integration from
