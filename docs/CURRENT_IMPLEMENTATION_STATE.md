@@ -31,7 +31,9 @@ Capture owner confirmed legacy publication seals labels but no qualified airport
 resolved airports/matching are transient. There is no authoritative v2 Candidate/Evidence
 publisher for whole-Source independent-leg/retiming/continuity evidence. The concrete
 publisher/ownership proposal is `trip/implementation/W1_W5_SOURCE_AUTHORITY_GATE.md`.
-Awaiting Owner assignment of that W4 unit; ordinary compatible Core work continues.
+Owner direction now assigns the authoritative v2 Candidate Publisher to Core/Source;
+Capture retains interpretation/evidence/preparation without Canonical SQL authority.
+The assignment gate is resolved; publisher implementation and verification remain pending.
 
 Operational document custody registry/host/grants, owning Ledger association, remaining
 lifecycle acceptance, all20 target traces and final integration remain unfinished. Do not
@@ -62,7 +64,7 @@ Read this first, then `trip/implementation/W1_W5_EXECUTION.md`,
 under `trip/contracts/`. The storage/read codec decision is recorded in
 `adr/2026-10-12-core-v2-isolated-storage-and-codecs.md`.
 
-Next: finish compatible acceptance/custody/Ledger work; once assigned, owning Capture
+Next: finish compatible acceptance/custody/Ledger work; owning Core/Source
 publisher → strict Core verification → Source SQL/finalization → W7 retained Flight
 original/same-ID sparse/exact receipt/read2/native Day evidence. Native and Hosted
 activation require their own gates; W7 does not require all Experience renderers.

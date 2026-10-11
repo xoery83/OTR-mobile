@@ -1,6 +1,6 @@
 # W1–W5 owning Source authority gate
 
-Status: MATERIAL CORE/CAPTURE AUTHORITY GATE; Core continuous implementation is incomplete.
+Status: OWNERSHIP RESOLVED; publisher implementation pending; Core continuous implementation is incomplete.
 All runtime, hosted, provider and native activation remains CLOSED.
 
 ## Demonstrated gap
@@ -28,7 +28,15 @@ retains legacy UNKNOWN claims, and keeps absent qualified identity in REVIEW. It
 store certified READY commands or finalize their Source evidence. No arbitrary booleans,
 transient provider interpretation, fictional v1 candidate or old-v2 approval is used.
 
-## Concrete ownership decision required
+## Accepted ownership decision — 2026-10-12
+
+Owner directed Core/Source to own authoritative v2 Candidate publication. Capture owns
+interpretation, evidence and candidate preparation; it receives no direct Canonical SQL
+mutation authority. Source acceptance commit c316688 is integrated here as16e2d33.
+The prior assignment question is resolved. Sealed authority implementation and its
+qualification/admission gates remain required.
+
+## Concrete implementation unit
 
 The smallest compatible next unit is an owning v2 Candidate/Evidence publisher in the
 W4 Source boundary, jointly integrated with Core's existing verifier. The publisher must:
@@ -44,7 +52,7 @@ W4 Source boundary, jointly integrated with Core's existing verifier. The publis
    existing candidate2/plan2/command2/receipt2 interface. Existing legacy UNKNOWN handling,
    actual no-commit authority and strict SOURCE_INSTANT admission remain unchanged.
 
-This requires assigning and approving the new authoritative publication boundary.
+Core/Source now implements this publication boundary under the accepted Owner direction.
 It is not permission to turn on providers, hosted writes, sync's five C operations or
 native Capture runtime. The existing W0 public command/plan DTOs need no change unless
 implementation identifies a concrete incompatible sealing requirement.
