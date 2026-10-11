@@ -119,6 +119,26 @@ class Store implements CoreSourcePlanStorageV2 {
               (await importDigest("test-sealed-candidate", known.snapshot, hash))
           )
             throw new Error("INVALID_PROVENANCE");
+          for (const input of sealed.inputs) {
+            const relation = (
+              input as {
+                relationship?: {
+                  kind: string;
+                  candidateId: string;
+                  previousCandidateId: string;
+                };
+              }
+            ).relationship;
+            if (
+              command.command === "CREATE_SPARSE_FLIGHT" &&
+              relation?.kind === "FLIGHT_RETIMING" &&
+              relation.candidateId === candidate.candidateId &&
+              sealed.candidates.some(
+                (c) => c.candidateId === relation.previousCandidateId,
+              )
+            )
+              throw new Error("PREDECESSOR_OUTCOME_UNKNOWN");
+          }
           const snapshot = known.snapshot as {
             flightNumberLiteral: string;
             departureDate: string;
@@ -329,6 +349,11 @@ async function fixture() {
     inputs: [{ id: id(4), revision: 1 }],
     candidates,
   };
+  catalog.inputCatalogSha256 = await importDigest(
+    "test-input-catalog",
+    catalog.inputs,
+    hash,
+  );
   store.set("catalog", catalog);
   const request: CoreSourcePrepareV2 = {
     captureVersion: 2,
@@ -676,6 +701,64 @@ describe("Source receipt and immutable plan trust boundary", () => {
     await expect(prepare(f.store, f.request)).rejects.toThrow("OPERATION_REUSE_MISMATCH");
     expect(f.store.plans()).toHaveLength(1);
     expect(f.store.plans()[0].slots[0].command).toEqual(first.readyCommands[0]);
+    f.store.close();
+  });
+  it("prepares the independent Flight while a fractional unsupported sibling remains Review", async () => {
+    const f = await fixture();
+    f.request.slots[1].command = "CREATE_ITEM";
+    f.request.slots[1].payload = {
+      family: "P1",
+      place: { latitude: -36.8485, longitude: 174.7633 },
+      region: { x: 0.1, y: 0.2, width: 0.3, height: 0.4 },
+    };
+    const prepared = await prepare(f.store, f.request);
+    expect(prepared.readyCommands).toHaveLength(1);
+    expect(prepared.reviewSlots).toEqual([
+      { slotId: f.request.slots[1].slotId, errorCode: "CONTRACT_UNSUPPORTED" },
+    ]);
+    expect(prepared.plan.slots).toHaveLength(1);
+    f.store.close();
+    const reopened = new Store(f.store.file);
+    expect(await prepare(reopened, f.request)).toEqual(prepared);
+    reopened.close();
+  });
+  it("rejects a second CREATE for a retimed flight despite complete exact leaves and different dates", async () => {
+    const f = await fixture();
+    const previous = f.catalog.candidates[0],
+      retimed = f.catalog.candidates[1];
+    retimed.snapshot = { flightNumberLiteral: "NZ1", departureDate: "2026-12-20" };
+    retimed.identityFacts = { ...previous.identityFacts!, originDate: "2026-12-20" };
+    retimed.candidateSha256 = await importDigest(
+      "test-sealed-candidate",
+      retimed.snapshot,
+      hash,
+    );
+    f.request.slots[1].payload = {
+      ...(retimed.snapshot as object),
+      ...JSON.parse(json(coreDefaults("member"))),
+    };
+    f.catalog.inputs.push({
+      id: id(800),
+      sourceId: f.catalog.sourceId,
+      sourceRevision: 1,
+      relationship: {
+        kind: "FLIGHT_RETIMING",
+        candidateId: retimed.candidateId,
+        previousCandidateId: previous.candidateId,
+      },
+      sourceText: "Departure moved from 17 December to 20 December",
+    });
+    f.catalog.inputCatalogSha256 = await importDigest(
+      "test-input-catalog",
+      f.catalog.inputs,
+      hash,
+    );
+    f.store.set("catalog", f.catalog);
+    const prepared = await prepare(f.store, f.request);
+    expect(prepared.readyCommands).toHaveLength(1);
+    expect(prepared.reviewSlots[0].errorCode).toBe("PREDECESSOR_OUTCOME_UNKNOWN");
+    expect(prepared.plan.slots).toHaveLength(1);
+    expect(f.store.plans()[0].slots[1].certified).toBeNull();
     f.store.close();
   });
   it("reviews unsupported modes without opening mutation capabilities", async () => {
