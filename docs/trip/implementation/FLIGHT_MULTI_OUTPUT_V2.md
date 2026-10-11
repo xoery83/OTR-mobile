@@ -135,3 +135,83 @@ command remains private BLOCKED metadata until its exact prerequisite receipt
 permits certification and freeze. GET returns `{captureVersion:2,plan,status}`,
 where `status` is the exact W0 §3 status envelope. Core foundation confirmed this
 binding; it changes no purpose authority or active-claim semantics.
+
+## Capture integration sequence
+
+1. Persist stable plan/Candidate/slot/operation/target UUIDs before submitting
+   `POST /v2/trips/:tripId/core/source-plans/prepare` with the exact W0 §6
+   `captureVersion:2` request. For each supported qualified Source leg, propose
+   `CREATE_SPARSE_FLIGHT` with ITEM vector `{kind:"ITEM",id:targetId,revision:null}`,
+   plus a `QUALIFY_FLIGHT` slot for that same target, distinct slot/operation IDs,
+   `dependsOn:[createSlotId]`, and `baseVector:null`.
+2. Submit only returned frozen `readyCommands`, unchanged, to
+   `POST /v2/trips/:tripId/core/commands`. A preparation is not an execution grant
+   when the negotiated Core capability is CLOSED. Sparse manual save remains
+   separate; Source purpose verification does not authorize unqualified matching.
+3. Re-submit the identical preparation after the creation receipt exists. Core
+   binds each qualification to its own exact successful receipt revision; never
+   replace that revision with the latest target revision. Execute the returned
+   qualification commands. Two independently supported legs retain two targets.
+4. Use the owning FULL receipt projection's separate `domainReceiptId` and full
+   receipt's `operationId`, `intentSha256`, `receiptSha256` for
+   `POST /v2/trips/:tripId/core/source-plans/:planId/finalize`, together with the
+   original `slotId` and `captureVersion:2`. Caller HTTP success is not a receipt.
+   EVIDENCE_PENDING retries finalization only. Missing/failed receipts retain
+   claims; exact command replay uses the original operation and payload.
+5. Read `GET /v2/trips/:tripId/core/source-plans/:planId` for the private
+   `{captureVersion:2,plan,status}` response. Account-generation fencing remains
+   Capture transport/repository responsibility, with current server authorization
+   independently enforced by the Core storage adapter. Capture owns no canonical
+   SQL or canonical writer.
+
+Legacy undispatched preparations already have a Core-owned recovery authority:
+`trip_source_revoke_undispatched_slot` in server migration
+`20261005001100_trip_import_undispatched_revocation.sql`. It requires exact
+confirmation CAS/digest, PREPARED state, no dispatch and no receipt under existing
+locks. Dispatched or potentially committed legacy operations require exact
+owning receipt reconciliation. Capture cannot assign NO_COMMIT or delete claims.
+Unclassified legacy success remains fenced until an owning accepted-target
+baseline classifies it; this helper does not forge historical v2 certificates.
+
+Latest local validation: 14 focused Core/Import suites, 347 tests PASS, including
+28 durable Source transaction/executor cases and 29 purpose cases; typecheck,
+lint/UI guard, backend build, touched formatting and diff check PASS. PostgreSQL
+Source authority/binding remains a separate required implementation gate.
+
+## Owning PostgreSQL authority gap discovered during binding
+
+`trip_source_publish_flight_run` seals the CP13A proposal containers and exact
+Input pins. Capture's `flightInterpretation.ts` creates those endpoints with
+`accepted_place_id:null`; it separately uses transient `resolved_airports`,
+matching/relationship observations and supplier scope observations for its
+assessment. Those observations are not included in the published Run proposal.
+The v2 candidate table exists, but its `candidate_json` does not have an owning
+publication command or a frozen verified-identity grammar. Database privileges
+alone therefore cannot turn that table into a verified Candidate authority.
+
+A PostgreSQL binding must not infer qualified airport identity from authored
+labels, accept client `unique`/`verified` flags, or treat selected-field locators
+as proof that the whole Source contains no retiming/overlapping alternative.
+Core needs an owning v2 Candidate sealing/verification contract for qualified
+identity and whole-Source continuity before the real multi-output slice can be
+unblocked. Existing manual sparse save and the tested transaction ports do not
+provide this missing authority. Until it exists, Source Admission remains CLOSED;
+legacy UNKNOWN and exact undispatched revocation authority remain unchanged.
+
+Core foundation has been notified under explicit Owner coordination authorization.
+No speculative Source SQL writer, historical migration edit, or trust-flag bypass
+was added to hide this gate.
+
+`createCoreSourcePgStorageV2` now binds the Source port to a dedicated Core PG
+lease, the owning Source scope lock and existing sealed legacy catalogs. It
+checks current Input validity, descriptor hash and Candidate proposal hash,
+preserves unclassified legacy claims, and persists only uncertified REVIEW or
+BLOCKED metadata. It deliberately rejects certified command storage and
+execution/finalization until the W4 verified Candidate authority is supplied.
+Seven SQL-port tests include the actual preparation function returning
+UNRESOLVED_IDENTITY with no ready command. They use a deterministic query lease,
+not a PostgreSQL server; owning SQL helper/grants and a disposable SQL acceptance
+run remain required. Latest recheck after shared Core dependency integration:
+15 focused suites / 229 tests plus 7 Source PG binding tests PASS; typecheck and
+lint/UI guard PASS. Earlier broader 14-suite / 347-test run remains recorded
+above; these are different selections, not cumulative test totals.
