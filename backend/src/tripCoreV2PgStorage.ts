@@ -26,7 +26,11 @@ import type {
   CoreCommand,
   CoreCommandName,
 } from "../../src/domain/trip/tripCoreV2Commands";
-import type { CoreCommandStorage, CoreCommandTransaction } from "./tripCoreV2Commands";
+import {
+  coreReceiptStatus,
+  type CoreCommandStorage,
+  type CoreCommandTransaction,
+} from "./tripCoreV2Commands";
 import type { ImportHash } from "../../src/domain/trip/flightImportReview";
 export type CorePgLease = {
   retire(): void;
@@ -474,4 +478,31 @@ export function createCorePgStorage(
       });
     },
   };
+}
+
+export async function readCorePgOperation(
+  storage: CoreCommandStorage,
+  actorAccountId: string,
+  tripId: string,
+  operationId: string,
+  hash: ImportHash,
+) {
+  for (const id of [actorAccountId, tripId, operationId]) coreUuid.parse(id);
+  return storage.withLockedCommand(
+    { actorAccountId, tripId, operationId, baseVector: [] },
+    async (tx) => {
+      const prior = await tx.readReceipt();
+      if (!prior) return null;
+      const receipt = await validateCoreReceipt(JSON.parse(prior.receiptText), hash);
+      if (
+        receipt.actorAccountId !== actorAccountId ||
+        receipt.tripId !== tripId ||
+        receipt.operationId !== operationId
+      )
+        return null;
+      return (await tx.canReadReceipt(receipt))
+        ? { projection: "FULL" as const, domainReceiptId: prior.domainReceiptId, receipt }
+        : coreReceiptStatus(prior.domainReceiptId, receipt);
+    },
+  );
 }

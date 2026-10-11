@@ -1,7 +1,11 @@
 import { spawn } from "node:child_process";
 import { randomUUID, createHash } from "node:crypto";
 import { expect, it } from "vitest";
-import { createCorePgStorage, type CorePgLease } from "./tripCoreV2PgStorage";
+import {
+  createCorePgStorage,
+  readCorePgOperation,
+  type CorePgLease,
+} from "./tripCoreV2PgStorage";
 import { createCorePgReader } from "./tripCoreV2PgRead";
 import { validateCoreReadCollection } from "../../src/domain/trip/tripCoreV2Read";
 import { executeCoreCommandV2 } from "./tripCoreV2Commands";
@@ -122,6 +126,19 @@ it.skipIf(!fixture)(
       expect(first.projection).toBe("FULL");
       if (first.projection !== "FULL") throw new Error("REDACTED_UNEXPECTED");
       expect(first.receipt.errorCode).toBeNull();
+      expect(
+        await readCorePgOperation(storage, account, trip, command.operationId, hash),
+      ).toEqual(first);
+      expect(
+        await readCorePgOperation(
+          storage,
+          account,
+          randomUUID(),
+          command.operationId,
+          hash,
+        ),
+      ).toBeNull();
+
       expect(first.receipt.outcome).toBe("APPLIED");
       expect(await executeCoreCommandV2(storage, account, trip, command, hash)).toEqual(
         first,

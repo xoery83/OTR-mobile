@@ -56,7 +56,7 @@ export type CoreCommandStorage = {
   ): Promise<T>;
 };
 export type { CoreReceiptProjection } from "../../src/domain/trip/tripCoreV2Receipt";
-const redacted = (id: string, r: CoreReceipt): CoreReceiptProjection => ({
+export const coreReceiptStatus = (id: string, r: CoreReceipt): CoreReceiptProjection => ({
   projection: "STATUS_ONLY",
   domainReceiptId: id,
   receiptSha256: r.receiptSha256,
@@ -130,7 +130,7 @@ export async function executeCoreCommandV2(
           throw new Error("OPERATION_REUSE_MISMATCH");
         return (await tx.canReadReceipt(receipt))
           ? { projection: "FULL", domainReceiptId: prior.domainReceiptId, receipt }
-          : redacted(prior.domainReceiptId, receipt);
+          : coreReceiptStatus(prior.domainReceiptId, receipt);
       }
       if (!tx.actor.active) throw new Error("NOT_VISIBLE");
       if (await tx.hasLegacyOperation()) throw new Error("OPERATION_REUSE_MISMATCH");
@@ -281,7 +281,7 @@ export async function executeCoreCommandV2(
       const domainReceiptId = await tx.commit(mutation, receipt, canonicalIntent);
       return (await tx.canReadReceipt(receipt))
         ? { projection: "FULL", domainReceiptId, receipt }
-        : redacted(domainReceiptId, receipt);
+        : coreReceiptStatus(domainReceiptId, receipt);
     },
   );
 }
