@@ -14,21 +14,21 @@ Six primary Experience families are sufficient for Beta: **P1 Generic Activity, 
 
 ## 2. Core invariants and object boundaries
 
-| Object | Identity and ownership | Key invariant |
-|---|---|---|
-| Trip Item (L1) | Dated plan, title + local date minimum; system identity/revision/scope | Date-only → TNS; qualified start → Timeline; no invented end/duration |
-| Typed service details | Flight/Stay/Rental/Transport/Activity semantics, logically associated | May exist incomplete; no huge universal nullable Event table requirement |
-| Booking | Reservation/contract; independent from plan | One Booking ↔ many Items; ref optional, not globally unique |
-| Ticket / Entitlement | Rights, quantity, holder, validity, usable credential | Independent of Item/Booking; one ticket may cover several segments |
-| Document | Original source and attachments | Original remains immutable; mention of an attachment ≠ imported attachment |
-| Wallet | Unified ticket/pass access surface | Not a second ticket database, not automatic Apple Wallet conversion |
-| Ledger | Expense/payment/split authority | Booking price/due is not proof of Ledger payment |
-| Day Projection | Today/TNS/Timeline presentation | Multiple rows from one Item do not create multiple Events |
-| Pool / Flexible | Unscheduled resource and flexible choice contexts | Not required for manual dated Item creation |
+| Object                | Identity and ownership                                                 | Key invariant                                                              |
+| --------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Trip Item (L1)        | Dated plan, title + local date minimum; system identity/revision/scope | Date-only → TNS; qualified start → Timeline; no invented end/duration      |
+| Typed service details | Flight/Stay/Rental/Transport/Activity semantics, logically associated  | May exist incomplete; no huge universal nullable Event table requirement   |
+| Booking               | Reservation/contract; independent from plan                            | One Booking ↔ many Items; ref optional, not globally unique                |
+| Ticket / Entitlement  | Rights, quantity, holder, validity, usable credential                  | Independent of Item/Booking; one ticket may cover several segments         |
+| Document              | Original source and attachments                                        | Original remains immutable; mention of an attachment ≠ imported attachment |
+| Wallet                | Unified ticket/pass access surface                                     | Not a second ticket database, not automatic Apple Wallet conversion        |
+| Ledger                | Expense/payment/split authority                                        | Booking price/due is not proof of Ledger payment                           |
+| Day Projection        | Today/TNS/Timeline presentation                                        | Multiple rows from one Item do not create multiple Events                  |
+| Pool / Flexible       | Unscheduled resource and flexible choice contexts                      | Not required for manual dated Item creation                                |
 
 L1 optional fields: time/end, one user-facing optional place/address, notes, participants, documents, Ledger links, Booking/Ticket links. Place name matching prioritizes Trip/day geographic context, preserves authored text; provider failure never prevents save. Unverified text may open map search, not qualified routing. Organizer-created/imported unspecified participation → dynamic WHOLE_GROUP; member-created unspecified → SELF; explicit members → SELECTED_MEMBERS without approval. Separate participation from viewing permissions.
 
-**Field authority:** plan placement/participant scope on Item; scheduled service facts on typed occurrence or qualified Booking service facts with *one authoritative writer selected by Core*; Booking order/status/amount; Ticket validity/seat/QR/access method; Document originals; Ledger payment. Derive display rather than maintaining multiple writable date/place copies. Distinguish planned arrival from hotel permitted check-in. Preserve source, timezone, precision, user edits, revision and amendments.
+**Field authority:** plan placement/participant scope on Item; scheduled service facts on typed occurrence or qualified Booking service facts with _one authoritative writer selected by Core_; Booking order/status/amount; Ticket validity/seat/QR/access method; Document originals; Ledger payment. Derive display rather than maintaining multiple writable date/place copies. Distinguish planned arrival from hotel permitted check-in. Preserve source, timezone, precision, user edits, revision and amendments.
 
 ## 3. P1 — Generic Activity
 
@@ -96,14 +96,14 @@ One file → many Items/Bookings/Tickets; many files → one Booking; a new supp
 
 **Historical evidence only:** L1/L2 v0.1 consolidated contract; P2 flight preflight; F0/F1 Faroe corpus and negative tests; production integration commit reports. In the inspected P2 audit, Canonical Flight service attribution and qualified endpoints existed, but Day read DTO lacked complete flight services, terminals, itinerary association, booking enrichment and participant details; historical audit reported these as mapping/missing/deferred. F1-R1 fixed empty Flight Focus fields and 186 tests passed in its scoped review. Neither report certifies current canonical HEAD or a real imported P3–P6 end-to-end path.
 
-| Gate | Required Codex evidence | Owner decision needed |
-|---|---|---|
-| G0 current inventory | Exact HEAD, files, migration ledger, accepted read/write contracts, hashes, branch cleanliness | None; read-only |
-| G1 authority | Field-by-field owner: Item/service/Booking/Ticket/Document/Ledger, time zones and provenance | Resolve any double-writer |
-| G2 relation & lifecycle | Booking↔Items, Ticket↔Segments, soft delete/cancel/replace, offline permissions | Approve minimal additive commands |
-| G3 projection | P3 multi-day, P4 multi-return, P5 all segments, P6 local ticket access; no fake Events | Approve display contracts |
-| G4 Import admission | Sparse save, N→M, supplement existing Item, idempotency, source preservation | Authorize scoped implementation |
-| G5 device QA | Real admitted Day Feed/Focus/Immersive, offline, 375pt, Dynamic Type, VoiceOver, original ticket | Beta acceptance only after evidence |
+| Gate                    | Required Codex evidence                                                                          | Owner decision needed               |
+| ----------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| G0 current inventory    | Exact HEAD, files, migration ledger, accepted read/write contracts, hashes, branch cleanliness   | None; read-only                     |
+| G1 authority            | Field-by-field owner: Item/service/Booking/Ticket/Document/Ledger, time zones and provenance     | Resolve any double-writer           |
+| G2 relation & lifecycle | Booking↔Items, Ticket↔Segments, soft delete/cancel/replace, offline permissions                  | Approve minimal additive commands   |
+| G3 projection           | P3 multi-day, P4 multi-return, P5 all segments, P6 local ticket access; no fake Events           | Approve display contracts           |
+| G4 Import admission     | Sparse save, N→M, supplement existing Item, idempotency, source preservation                     | Authorize scoped implementation     |
+| G5 device QA            | Real admitted Day Feed/Focus/Immersive, offline, 375pt, Dynamic Type, VoiceOver, original ticket | Beta acceptance only after evidence |
 
 **Known design tension:** Earlier L1/L2 contract allows Booking to own role-qualified stay/pickup time facts; later L3 design places typed facts on Stay/Rental service. These must not become two writable copies. Decide canonical service occurrence and projection authority during G1; do not settle via an arbitrary JSON blob or new migration without evidence.
 

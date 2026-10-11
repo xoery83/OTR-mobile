@@ -12,14 +12,14 @@
 
 **CONFIRMED:** Trip Item is an independent dated itinerary arrangement. Minimum business input is **Title + local Date**; date may be inherited from selected Day. System maintains identity, Trip scope, creator, revision and sync metadata. Creating a Trip Item directly does **not** require creating a Pool entry.
 
-| Input | Placement | Rules |
-|---|---|---|
-| Title only, no date | Unscheduled candidate/resource, not yet dated Trip Item | May be personal Pool; exact global Capture staging OPEN |
-| Title + Date | Day **TNS (Time Not Set)**, at top | Addition-order default; optional reorder later |
-| Title + Date + Start | Day Timeline | End optional, no invented duration |
-| Title + Date + Start + End | Day Timeline | End time smaller immediately below start in Browse |
+| Input                      | Placement                                               | Rules                                                   |
+| -------------------------- | ------------------------------------------------------- | ------------------------------------------------------- |
+| Title only, no date        | Unscheduled candidate/resource, not yet dated Trip Item | May be personal Pool; exact global Capture staging OPEN |
+| Title + Date               | Day **TNS (Time Not Set)**, at top                      | Addition-order default; optional reorder later          |
+| Title + Date + Start       | Day Timeline                                            | End optional, no invented duration                      |
+| Title + Date + Start + End | Day Timeline                                            | End time smaller immediately below start in Browse      |
 
-**CONFIRMED L1 optional fields:** Start, End, a **single user-facing optional place/address entry**, Notes, Participants (system default), 0..N attachments, 0..N explicitly linked Ledger expenses, 0..N Booking/Ticket associations. User need not supply address, verified place, coordinates or location separately. Can paste an address. System may recognize place from Title and Trip area, autocomplete, enrich address/coordinates when reliably matched; preserve authored text. Offline and provider failure never prevent saving. Unverified place text may be handed to external map *search*, not represented as verified navigation or qualified TTR endpoint. Apple MapKit place search is a candidate, not an approved provider/licensing solution.
+**CONFIRMED L1 optional fields:** Start, End, a **single user-facing optional place/address entry**, Notes, Participants (system default), 0..N attachments, 0..N explicitly linked Ledger expenses, 0..N Booking/Ticket associations. User need not supply address, verified place, coordinates or location separately. Can paste an address. System may recognize place from Title and Trip area, autocomplete, enrich address/coordinates when reliably matched; preserve authored text. Offline and provider failure never prevent saving. Unverified place text may be handed to external map _search_, not represented as verified navigation or qualified TTR endpoint. Apple MapKit place search is a candidate, not an approved provider/licensing solution.
 
 **CONFIRMED participant scopes:** Organizer-created/imported Item with no explicit participants → dynamic `WHOLE_GROUP` (all current Trip members, including later joiners), not N duplicated associations. Ordinary member-created Item without selection → `SELF`. Explicit selection → `SELECTED_MEMBERS`, immediately visible to selected members without approval/acceptance. Creator and participants are separate facts. Overlapping events stay visible; no automatic deletion or reschedule. Future personal swipe-hide without changing shared facts is PROPOSED, not implemented. Exact edit/delete permissions OPEN; no event-level approval workflow.
 
@@ -37,20 +37,20 @@ Flexible Block is a single-day time-window context, with Group and Personal Choi
 
 ### L2 common logical fields
 
-| Field | Booking meaning | Ticket meaning | Requirement |
-|---|---|---|---|
-| Title | Service/reservation name | Entitlement name | Name for independent human-readable record; raw document can exist before classification |
-| Supplier / Issuer | Service provider | Issuer | Optional |
-| Reference | Booking ID/confirmation | Ticket/pass number | Optional |
-| Status | Reservation status | Validity/usage status | Optional/Unknown; no implicit Confirmed |
-| Time facts | Check-in/out, pickup/return, departure/arrival | Validity windows, allowed use dates | 0..N role-qualified |
-| Place facts | Property, terminals, pickup/return locations | Valid venues, region, network/scope | 0..N role-qualified |
-| Booked by / Holder | Booker when known | Holder or group capacity | Optional |
-| Documents / Expenses | Explicit links | Explicit links | 0..N |
-| Trip Items | Qualified association | Qualified association | 0..N |
-| Notes / Evidence | Human note plus original source | Human note plus original source | Separate concepts |
+| Field                | Booking meaning                                | Ticket meaning                      | Requirement                                                                              |
+| -------------------- | ---------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------- |
+| Title                | Service/reservation name                       | Entitlement name                    | Name for independent human-readable record; raw document can exist before classification |
+| Supplier / Issuer    | Service provider                               | Issuer                              | Optional                                                                                 |
+| Reference            | Booking ID/confirmation                        | Ticket/pass number                  | Optional                                                                                 |
+| Status               | Reservation status                             | Validity/usage status               | Optional/Unknown; no implicit Confirmed                                                  |
+| Time facts           | Check-in/out, pickup/return, departure/arrival | Validity windows, allowed use dates | 0..N role-qualified                                                                      |
+| Place facts          | Property, terminals, pickup/return locations   | Valid venues, region, network/scope | 0..N role-qualified                                                                      |
+| Booked by / Holder   | Booker when known                              | Holder or group capacity            | Optional                                                                                 |
+| Documents / Expenses | Explicit links                                 | Explicit links                      | 0..N                                                                                     |
+| Trip Items           | Qualified association                          | Qualified association               | 0..N                                                                                     |
+| Notes / Evidence     | Human note plus original source                | Human note plus original source     | Separate concepts                                                                        |
 
-**CONFIRMED:** Booking/Ticket maintain their *own* time/place facts independent of Trip Item. Booking check-in eligibility need not equal user's planned hotel arrival. Ticket validity need not equal a scheduled use. Use **role-qualified temporal/spatial facts**, not only one universal start/end/address. Hotel check-in/out, rental pickup/return, ferry/flight departure/arrival, ticket valid-from/until or several venues are examples. For nationwide participating venues, preserve coverage text rather than inventing one address or thousands of place rows. Small controlled common role vocabulary + type-specific roles is the design direction; exact role schema, enums, precision and storage are OPEN. Preserve original rule text and source-linked unparsed fragments, not just user Notes.
+**CONFIRMED:** Booking/Ticket maintain their _own_ time/place facts independent of Trip Item. Booking check-in eligibility need not equal user's planned hotel arrival. Ticket validity need not equal a scheduled use. Use **role-qualified temporal/spatial facts**, not only one universal start/end/address. Hotel check-in/out, rental pickup/return, ferry/flight departure/arrival, ticket valid-from/until or several venues are examples. For nationwide participating venues, preserve coverage text rather than inventing one address or thousands of place rows. Small controlled common role vocabulary + type-specific roles is the design direction; exact role schema, enums, precision and storage are OPEN. Preserve original rule text and source-linked unparsed fragments, not just user Notes.
 
 **CONFIRMED forms:** Type-natural fields, common essentials visible, More Details collapsed. Hotel/Hut check-in/out dates prominent (times optional); rental pickup/return dates **and times** prominent; flights/ferries endpoint dates/times as known; ticket use/validity depends on type. Do not expose technical role names or coordinates. Incomplete records may be saved without fabricated confirmation.
 

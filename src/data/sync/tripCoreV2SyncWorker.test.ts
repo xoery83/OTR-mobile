@@ -48,7 +48,7 @@ async function fixture() {
     entityId: id,
     operationType: "CORE_V2_COMMAND",
     idempotencyKey: op,
-      payloadJson: canonicalCoreJson(command as unknown as Json),
+    payloadJson: canonicalCoreJson(command as unknown as Json),
     ownerUserId: actor,
   } as SyncOperation;
   return {

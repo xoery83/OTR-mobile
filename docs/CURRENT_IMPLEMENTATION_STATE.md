@@ -40,7 +40,7 @@ no caller assertion, extractor confidence or synthetic certificate replaces owni
 ## Validation and environment
 
 - Typecheck and lint/UI guard passed. Focused reader/HTTP/transport/repository/sync/lifecycle
-  run84 PASS; lifecycle reducer16 PASS. Final full regression is pending this checkpoint.
+  run84 PASS; lifecycle reducer16 PASS. Final full regression:3584 PASS,16 skipped,2 baseline failures.
 - Actual isolated synthetic PostgreSQL Server84→85–89 acceptance PASS: P1–P6, sparse
   exact replay/CAS, full collection/Item read, Person invalidation, RLS, closed gates and
   least privileges. All329 historical public function bodies retain exact fingerprints.
@@ -57,7 +57,7 @@ no caller assertion, extractor confidence or synthetic certificate replaces owni
 
 Read this first, then `trip/implementation/W1_W5_EXECUTION.md`,
 `trip/implementation/W1_W5_SOURCE_AUTHORITY_GATE.md`,
-`trip/implementation/CAPTURE_V2_IMPLEMENTATION_HANDOFF.md` and the nine W0 contracts
+`trip/implementation/W1_W5_CAPTURE_IMPLEMENTATION_HANDOFF.md` and the nine W0 contracts
 under `trip/contracts/`. The storage/read codec decision is recorded in
 `adr/2026-10-12-core-v2-isolated-storage-and-codecs.md`.
 
