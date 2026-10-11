@@ -17,7 +17,17 @@ import {
   type CoreReceiptProjection,
 } from "../../domain/trip/tripCoreV2Receipt";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
+import {
+  validateCoreReadCollection,
+  type CoreReadManifest,
+  type CoreReadPage,
+} from "../../domain/trip/tripCoreV2Read";
 import type { CoreSyncTransport } from "../sync/tripCoreV2SyncWorker";
+export type CoreReadTransport = {
+  collection(
+    ctx: AccountRequestContext,
+  ): Promise<{ manifest: CoreReadManifest; pages: CoreReadPage[] }>;
+};
 const redacted = z.strictObject({
   projection: z.literal("STATUS_ONLY"),
   domainReceiptId: coreUuid,
@@ -37,13 +47,13 @@ export function createCoreV2Transport(
   hash: ImportHash,
   options: Omit<ApiClientOptions, "accessToken" | "accessTokenProvider"> = {},
   tokenProvider?: Parameters<typeof createAuthenticatedApiClient>[1],
-): CoreSyncTransport {
-  const api = (ctx: AccountRequestContext) =>
+): CoreSyncTransport & CoreReadTransport {
+  const api = (ctx: AccountRequestContext, maximum = 1048576) =>
     createAuthenticatedApiClient(
       {
         ...options,
-        maxResponseBytes: 1048576,
-        parseBoundedResponseText: (text) => parseCoreJson(text, 1048576),
+        maxResponseBytes: maximum,
+        parseBoundedResponseText: (text) => parseCoreJson(text, maximum),
       },
       tokenProvider,
       ctx,
@@ -74,6 +84,26 @@ export function createCoreV2Transport(
     return { projection: "FULL", domainReceiptId: output.domainReceiptId, receipt: r };
   }
   return {
+    async collection(ctx) {
+      await assertAccountRequestContext(ctx, getAccountId);
+      const bundle = await api(ctx, 65 * 1048576).get(
+        path(ctx) + "/collection",
+        z.strictObject({
+          manifest: z.unknown(),
+          pages: z.array(z.unknown()).min(1).max(100),
+        }),
+        headers,
+      );
+      const validated = await validateCoreReadCollection(
+        bundle.manifest,
+        bundle.pages,
+        ctx.accountId,
+        ctx.tripId,
+        hash,
+      );
+      await assertAccountRequestContext(ctx, getAccountId);
+      return { manifest: validated.manifest, pages: bundle.pages as CoreReadPage[] };
+    },
     async capabilities(ctx) {
       await assertAccountRequestContext(ctx, getAccountId);
       const result = await api(ctx).get(

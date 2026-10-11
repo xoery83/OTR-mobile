@@ -441,3 +441,56 @@ it("missing installed columns disable read capabilities and canonical targets ca
     vi.unstubAllGlobals();
   }
 });
+it("excludes business2 from legacy service-role reads and falls back only for an absent version column", async () => {
+  let mode: "CORE2" | "OLD_SCHEMA" | "DENIED" = "CORE2";
+  const reads: URL[] = [];
+  vi.stubGlobal("fetch", async (input: string) => {
+    const url = new URL(input);
+    if (!url.pathname.endsWith("/itinerary_events")) return Response.json([{ id: trip }]);
+    reads.push(url);
+    if (mode === "CORE2")
+      return Response.json({
+        ...facts(),
+        business_contract_version: 2,
+        title: "private core title",
+      });
+    if (mode === "DENIED")
+      return Response.json(
+        { code: "42501", message: "permission denied" },
+        { status: 403 },
+      );
+    return url.searchParams.get("select")?.includes("business_contract_version")
+      ? Response.json(
+          {
+            code: "42703",
+            message: "column itinerary_events.business_contract_version does not exist",
+          },
+          { status: 400 },
+        )
+      : Response.json(facts());
+  });
+  try {
+    const gateway = createSupabaseDevGateway({
+      url: "https://tuqigdxrvrerfewsxqgm.supabase.co",
+      secretKey: "test-only",
+      publishableKey: "test-only",
+    });
+    expect(await gateway.readCanonicalEvent!(actor, trip, event, "1")).toBeNull();
+    expect(reads[0].searchParams.get("business_contract_version")).toBe("is.null");
+    mode = "OLD_SCHEMA";
+    reads.length = 0;
+    expect(await gateway.readCanonicalEvent!(actor, trip, event, "1")).toHaveProperty(
+      "disposition",
+      "READ_ONLY",
+    );
+    expect(reads).toHaveLength(2);
+    mode = "DENIED";
+    reads.length = 0;
+    await expect(
+      gateway.readCanonicalEvent!(actor, trip, event, "1"),
+    ).rejects.toMatchObject({ code: "READ_UNAVAILABLE" });
+    expect(reads).toHaveLength(1);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});

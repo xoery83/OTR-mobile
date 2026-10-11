@@ -148,7 +148,8 @@ export function createSyncEngine(
   repository: SyncOperationRepository,
   worker: SyncWorker,
   calculateNextAttemptAt: (attemptCount: number) => string = nextSyncAttemptAt,
-  shouldProcess: (operation: SyncOperation) => boolean = () => true,
+  shouldProcess: (operation: SyncOperation) => boolean = (operation) =>
+    operation.operationType !== "CORE_V2_COMMAND",
 ) {
   return {
     async run(authState: AuthState): Promise<SyncRunResult> {

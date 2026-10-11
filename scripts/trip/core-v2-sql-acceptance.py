@@ -1,4 +1,4 @@
-"""Run Core85/86/87 on an owned, network-isolated copy of the synthetic Server84 image."""
+"""Run Core85–89 on an owned, network-isolated copy of the synthetic Server84 image."""
 import json
 import pathlib
 import subprocess
@@ -40,7 +40,7 @@ try:
     before = json.loads(sql(FINGERPRINTS))
     assert "guard_trip_event_semantics()" in before, "Not the accepted Server84 fixture"
     assert sql("select to_regclass('public.trip_core_activation_gate') is null;").strip() == "t", "Base image already contains Core85"
-    for filename in ("20261011000100_trip_core_v2_foundation.sql", "20261011000200_trip_core_v2_version_dispatch.sql", "20261011000300_trip_core_v2_owning_session.sql"):
+    for filename in ("20261011000100_trip_core_v2_foundation.sql", "20261011000200_trip_core_v2_version_dispatch.sql", "20261011000300_trip_core_v2_owning_session.sql", "20261011000400_trip_core_v2_read_scope.sql", "20261011000500_trip_core_v2_source_scope.sql"):
         sql((ROOT / "supabase/migrations" / filename).read_text())
     after = json.loads(sql(FINGERPRINTS))
     changed = [name for name, digest in before.items() if after.get(name) != digest]
@@ -50,7 +50,7 @@ try:
     import os
     env = dict(os.environ, OTR_CORE_OWNED_SQL_FIXTURE=NAME)
     subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", "backend/src/tripCoreV2PgStorage.sql.test.ts"], cwd=ROOT, env=env, check=True)
-    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87], "historicalFunctionsPreserved": len(before), "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
+    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89], "historicalFunctionsPreserved": len(before), "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
 finally:
     if created:
         docker("rm", "-f", NAME)  # Only the UUID-named container created by this invocation.

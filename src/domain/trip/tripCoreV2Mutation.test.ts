@@ -299,6 +299,88 @@ describe("Core v2 finite mutation and access", () => {
     expect(result.graph.itinerary_reservations[0].commercial_status).toBe("ACTIVE");
     expect(result.graph.trip_booking_item_links).toEqual([]);
   });
+  it("cancels a shared Booking only with its complete explicit Item scope and preserves Tickets", () => {
+    const first = create(),
+      second = create(first.result.graph);
+    const booking = randomUUID();
+    const graph = applyCoreCommand(
+      second.result.graph,
+      command(
+        second.result.graph,
+        "CREATE_BOOKING",
+        booking,
+        {
+          fields: { title: "Shared" },
+          observations: [],
+          itemIds: [first.id, second.id],
+          entitlementIds: [],
+          documentIds: [],
+          acl: coreDefaults("member").acl,
+        },
+        "BOOKING",
+        [first.id, second.id].map((id) => ({ kind: "ITEM", id, revision: 1 })),
+      ),
+      actor,
+      now,
+    ).graph;
+    const make = (scope: string, items: string[], bookings: string[]) =>
+      command(
+        graph,
+        "CANCEL_ARRANGEMENT",
+        first.id,
+        {
+          scope,
+          affectedItems: items,
+          affectedBookings: bookings,
+          graphHash: "0".repeat(64),
+        },
+        "ITEM",
+        [
+          {
+            kind: "ITEM",
+            id: second.id,
+            revision: graph.itinerary_events.find((r) => r.id === second.id)!
+              .semantic_revision as number,
+          },
+          { kind: "BOOKING", id: booking, revision: 1 },
+        ],
+      );
+    expect(() =>
+      applyCoreCommand(
+        graph,
+        make("WHOLE_BOOKING", [first.id], [booking]),
+        actor,
+        now,
+        false,
+        "0".repeat(64),
+      ),
+    ).toThrow("GRAPH_CHANGED");
+    expect(() =>
+      applyCoreCommand(
+        graph,
+        make("EXCLUSIVE_ARRANGEMENT", [first.id, second.id], [booking]),
+        actor,
+        now,
+        false,
+        "0".repeat(64),
+      ),
+    ).toThrow("GRAPH_CHANGED");
+    const cancelled = applyCoreCommand(
+      graph,
+      make("WHOLE_BOOKING", [first.id, second.id], [booking]),
+      actor,
+      now,
+      false,
+      "0".repeat(64),
+    ).graph;
+    expect(cancelled.itinerary_events.map((r) => r.status)).toEqual([
+      "cancelled",
+      "cancelled",
+    ]);
+    expect(cancelled.itinerary_reservations[0].commercial_status).toBe("CANCELLED");
+    expect(cancelled.trip_booking_item_links.every((r) => r.active)).toBe(true);
+    expect(cancelled.trip_entitlements).toEqual(graph.trip_entitlements);
+  });
   it("rejects incomplete money facts", () => {
     const g = emptyCoreGraph(),
       id = randomUUID();

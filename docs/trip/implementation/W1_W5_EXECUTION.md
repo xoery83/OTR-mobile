@@ -111,7 +111,6 @@ Full suite first run3514 passed/26 failed/15 skipped.24 failures were old latest
 UI/architecture failures reproduced on an untouched741579c archive; no Core change
 caused them and no UI file was modified. A final full regression remains required.
 
-
 ## Owning PostgreSQL command checkpoint
 
 Core87 grants only scoped owning-session reads, exact actor/Trip membership locks and
@@ -129,3 +128,23 @@ Read2 bindings distinguish active identity from participation. Private instructi
 predecessor bodies are not required in an authorized complete actor projection; local
 mirrors retain only the opaque predecessor UUID, while global FK/chain checks stay strict.
 Participant and holder changes preserve inactive historical relations.
+
+## Owning read and recovery checkpoint
+
+Core88 supplies exact zero-based existing Person material bindings and additive read
+access-generation invalidation. Core89 supplies bounded owning Source read/lock grants
+without legacy UPDATE or normal gateway raw Source/object-key SELECT privileges.
+Source adapter commits cdaabab/4792baa/e018e8e retain the unavailable identity in REVIEW.
+Core reader returns a complete actor-filtered inline collection in one primary snapshot;
+HTTP/transport/repository validate and atomically install it. Private evidence is redacted
+before actor hashing; Item and Day share protected pending overlays and accepted roster.
+The owning sync coordinator resumes only its Trip's durable Core commands; generic sync
+does not adopt them. Actual SQLite lost-response/restart recovery uses exact receipt
+before a now-closed fresh capability and produces one Item, then accepted Item/Day read2.
+Backend test authority in that recovery is synthetic; separate SQL-port scenario proves
+physical Core writer/collection/Item/CAS/Person invalidation, not native or Hosted E2E.
+
+Capture owner confirmed no owning v2 airport/whole-Source relationship publisher exists.
+See W1_W5_SOURCE_AUTHORITY_GATE.md for the demonstrated authority gap, concrete ownership
+decision, unfinished custody/Ledger/lifecycle and remaining20 target traces. This stage
+is not STOP — CORE CONTINUOUS IMPLEMENTATION COMPLETE.

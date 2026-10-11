@@ -84,6 +84,7 @@ export function applyCoreCommand(
   now: string,
   sourceAuthorized = false,
   lifecycleGraphHash?: string,
+  actorProjection = false,
 ): CoreMutation {
   const q = validateCoreCommand(input);
   if (!actor.active || q.tripId !== actor.tripId) throw new Error("TRIP_NOT_AUTHORIZED");
@@ -974,6 +975,19 @@ export function applyCoreCommand(
           p.affectedItems[0] !== q.target.id)
       )
         throw new Error("INVALID_AGGREGATE");
+      if (p.scope !== "ITEM_ONLY") {
+        const links = g.trip_booking_item_links.filter(
+          (x) => x.active && p.affectedBookings.includes(x.booking_id),
+        );
+        if (
+          !p.affectedBookings.length ||
+          !p.affectedItems.includes(q.target.id) ||
+          p.affectedItems.some((id: string) => !links.some((x) => x.item_id === id)) ||
+          (p.scope === "EXCLUSIVE_ARRANGEMENT" &&
+            (p.affectedBookings.length !== 1 || p.affectedItems.length !== 1))
+        )
+          throw new Error("GRAPH_CHANGED");
+      }
       for (const id of p.affectedBookings) {
         requireBase("BOOKING", id);
         const booking = root("BOOKING", id, true);
@@ -1041,6 +1055,15 @@ export function applyCoreCommand(
         (x) => x.booking_id === old.id && x.active,
       );
       if (p.transferItemIds.some((id: string) => !active.some((x) => x.item_id === id)))
+        throw new Error("GRAPH_CHANGED");
+      if (
+        p.transferEntitlementIds.some(
+          (id: string) =>
+            !g.trip_booking_entitlement_links.some(
+              (x) => x.booking_id === old.id && x.entitlement_id === id && x.active,
+            ),
+        )
+      )
         throw new Error("GRAPH_CHANGED");
       const r = create("BOOKING", p.newBookingId, {
         business_contract_version: 2,
@@ -1189,6 +1212,6 @@ export function applyCoreCommand(
   }
   if (q.baseVector.some((v) => !usedBases.has(v.kind + ":" + v.id)))
     throw new Error("UNUSED_BASE_VECTOR");
-  validateCoreGraph(g, actor.tripId);
+  validateCoreGraph(g, actor.tripId, actorProjection);
   return { graph: g, changed: [...changed.values()] };
 }

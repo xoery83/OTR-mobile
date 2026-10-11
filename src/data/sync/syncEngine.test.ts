@@ -28,6 +28,20 @@ const operation: SyncOperation = {
 };
 
 describe("sync engine", () => {
+  it("leaves Core2 operations to their explicitly scoped coordinator", async () => {
+    const push = vi.fn(),
+      repository = {
+        listPending: async () => [{ ...operation, operationType: "CORE_V2_COMMAND" }],
+        markProcessing: vi.fn(),
+        markCompleted: vi.fn(),
+        markRetryable: vi.fn(),
+      };
+    expect(
+      (await createSyncEngine(repository, { push }).run("AUTHENTICATED_ONLINE"))
+        .processedCount,
+    ).toBe(0);
+    expect(push).not.toHaveBeenCalled();
+  });
   it("does not run durable operations without online auth", async () => {
     const repository = {
       listPending: vi.fn(),

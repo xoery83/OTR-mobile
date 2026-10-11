@@ -58,10 +58,12 @@ export const coreReadRecordSchema = z
   .strictObject({
     kind: kindSchema,
     id: f.coreText(256),
-    revision: f.coreRevision,
+    revision: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
     body: z.unknown(),
   })
   .superRefine((r, c) => {
+    if (r.kind !== "PERSON_BINDING" && r.revision === 0)
+      c.addIssue({ code: "custom", message: "INVALID_READ_REVISION" });
     const schema =
       r.kind === "ITEM"
         ? itemBody

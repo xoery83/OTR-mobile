@@ -52,3 +52,39 @@ and FK enforcement remain strict. Authorized collection validation checks any vi
 predecessor, without requiring an unauthorized predecessor body or widening access.
 Canonical child sets use the same UTF-16 key ordering as the finite JSON/hash contract.
 Participation and holder edits retain inactive historical rows rather than deleting them.
+
+Owning read2 holds one primary transaction snapshot and the same actor/Trip membership
+locks. A complete inline collection returns all bounded pages from that snapshot;
+there is no multi-request pagination token in this atomic bundle. Current Person
+participation/binding material is supplied by a scoped security-definer read function,
+without exposing raw Person tables to the dedicated gateway. Membership/participation
+changes bump an existing Core read state's access generation through additive triggers.
+Item supplemental projection consumes this verified roster and independent original/
+Ledger read authorities; absent custody/Ledger ports filter those associations. The
+HTTP/read transport and repository install still inherit account and refresh fencing.
+
+Existing Person participation material revisions begin at zero. PERSON_BINDING record
+revisions therefore accept zero and preserve that exact v1 value; Core root/relationship
+and collection revisions remain positive. No synthetic increment or v1 rewrite is used.
+
+Core Source transactions join the existing C/Source serialization locks before actor/
+Trip row locks. A new scoped definer locks retained Source ownership and claim inputs;
+it never impersonates a legacy gateway. Read-only legacy Source grants are bounded by
+current actor/Trip ownership and run/confirmation ancestry, with no legacy writer or
+admission function grants. Missing sealed qualified airport/relationship authority
+remains Review; transient extractor observations are not promoted to evidence.
+
+Normal gateway raw SELECT excludes operational storage keys and legacy Source tables.
+The authenticated owning read transaction temporarily assumes the dedicated writer
+role for its internal complete graph and returns to gateway before material binding
+reads; independent original/ACL filtering precedes any outward projection. Source
+storage similarly reads its private legacy catalog only under that owning role.
+Legacy business1 Event reads explicitly exclude business2 rows. Before the additive
+business-version column exists, only an exact undefined-column response permits the
+historical query; permission/transport errors never enable a permissive fallback.
+
+Actor collection hashing redacts unauthorized Source evidence references before hashing
+and retains admitted business facts. Immutable full receipts whose audit contains
+private Source pointers require a separate owning audit read check; absent authority
+returns STATUS_ONLY. A group root permission does not grant another owner's Source
+provenance, and audit redaction never rewrites the immutable exact receipt digest.

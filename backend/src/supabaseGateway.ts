@@ -739,24 +739,33 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       if (readVersion !== "1")
         return { readVersion: 1, disposition: "WITHHELD", reason: "UNSUPPORTED_CLIENT" };
       // Embedded endpoints share one database statement/snapshot with the root.
-      const result = await service
+      let result = await service
         .from("itinerary_events")
-        .select(canonicalEventColumns)
+        .select("business_contract_version," + canonicalEventColumns)
         .eq("trip_id", tripId)
         .eq("id", eventId)
+        .is("business_contract_version", null)
         .maybeSingle();
+      if (
+        result.error?.code === "42703" &&
+        result.error.message.includes("business_contract_version")
+      )
+        result = await service
+          .from("itinerary_events")
+          .select(canonicalEventColumns)
+          .eq("trip_id", tripId)
+          .eq("id", eventId)
+          .maybeSingle();
       if (result.error)
         throw new BackendError(
           503,
           "READ_UNAVAILABLE",
           "Canonical Event reads are unavailable.",
         );
-      return result.data
-        ? projectCanonicalEvent(
-            result.data as unknown as Record<string, unknown>,
-            readVersion,
-          )
-        : null;
+      const row = result.data as unknown as Record<string, unknown> | null;
+      if (!row || row.business_contract_version != null) return null;
+      const { business_contract_version: _businessVersion, ...legacy } = row;
+      return projectCanonicalEvent(legacy, readVersion);
     },
     async readEventOperationReceipt(userId, tripId, operationKey) {
       if (!(await this.canReadTrip(userId, tripId))) return null;

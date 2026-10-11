@@ -100,14 +100,21 @@ export function createCoreV2SyncWorker(
 export function createCoreV2SyncCoordinator(
   queue: SyncOperationRepository,
   worker: SyncWorker,
-  tripId?: string,
+  repository: Repository,
+  tripId: string,
 ) {
-  return createSyncEngine(
+  const engine = createSyncEngine(
     queue,
     worker,
     undefined,
     (operation) =>
-      operation.operationType === "CORE_V2_COMMAND" &&
-      (!tripId || operation.tripId === tripId),
+      operation.operationType === "CORE_V2_COMMAND" && operation.tripId === tripId,
   );
+  return {
+    async run(authState: Parameters<typeof engine.run>[0]) {
+      if (authState === "AUTHENTICATED_ONLINE")
+        await repository.resume(await repository.captureContext(tripId));
+      return engine.run(authState);
+    },
+  };
 }

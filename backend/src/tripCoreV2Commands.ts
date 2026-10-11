@@ -23,6 +23,7 @@ import type { ImportHash } from "../../src/domain/trip/flightImportReview";
 import { ZodError } from "zod";
 export type CoreCommandTransaction = {
   actor: CoreActor;
+  authoritativeClock?(): Promise<string>;
   readReceipt(): Promise<{ domainReceiptId: string; receiptText: string } | null>;
   hasLegacyOperation(): Promise<boolean>;
   canReadReceipt(receipt: CoreReceipt): Promise<boolean>;
@@ -133,6 +134,7 @@ export async function executeCoreCommandV2(
       if (!(await tx.enabledCommands()).includes(command.command))
         throw new Error("CORE_CAPABILITY_CLOSED");
       const before = await tx.readLockedGraph(command);
+      const committedAt = tx.authoritativeClock ? await tx.authoritativeClock() : clock();
       let mutation: CoreMutation | null = null,
         errorCode: string | null = null;
       try {
@@ -141,7 +143,7 @@ export async function executeCoreCommandV2(
           before,
           command,
           tx.actor,
-          clock(),
+          committedAt,
           command.admission.mode !== "MANUAL",
           await tx.lifecycleGraphHash(command, before),
         );
@@ -190,6 +192,45 @@ export async function executeCoreCommandV2(
         };
       });
       const typed = (x: CoreMutation["changed"][number]) => ({ kind: x.kind, id: x.id });
+      const edgeTables = {
+        trip_booking_item_links: ["booking_id", "BOOKING", "item_id", "ITEM"],
+        trip_entitlement_item_links: ["entitlement_id", "ENTITLEMENT", "item_id", "ITEM"],
+        trip_booking_entitlement_links: [
+          "booking_id",
+          "BOOKING",
+          "entitlement_id",
+          "ENTITLEMENT",
+        ],
+        trip_booking_document_links: ["booking_id", "BOOKING", "document_id", "DOCUMENT"],
+        trip_entitlement_document_links: [
+          "entitlement_id",
+          "ENTITLEMENT",
+          "document_id",
+          "DOCUMENT",
+        ],
+        trip_item_document_links: ["item_id", "ITEM", "document_id", "DOCUMENT"],
+      } as const;
+      const retiredEdges = mutation
+        ? Object.entries(edgeTables).flatMap(
+            ([relation, [parentField, parentKind, childField, childKind]]) =>
+              before[relation as keyof CoreGraph]
+                .filter(
+                  (edge) =>
+                    edge.active &&
+                    mutation!.graph[relation as keyof CoreGraph].some(
+                      (current) =>
+                        current[parentField] === edge[parentField] &&
+                        current[childField] === edge[childField] &&
+                        !current.active,
+                    ),
+                )
+                .map((edge) => ({
+                  relation,
+                  parent: { kind: parentKind, id: edge[parentField] },
+                  child: { kind: childKind, id: edge[childField] },
+                })),
+          )
+        : [];
       const body = {
         receiptVersion: 2 as const,
         commandVersion: 2 as const,
@@ -204,7 +245,7 @@ export async function executeCoreCommandV2(
         result: {
           created: affected.filter((x) => x.baseRevision === null).map(typed),
           changed: affected.filter((x) => x.baseRevision !== null).map(typed),
-          retiredEdges: [],
+          retiredEdges,
           replacement:
             command.command === "REPLACE_BOOKING" && mutation
               ? {
@@ -218,7 +259,7 @@ export async function executeCoreCommandV2(
           custodyGrantId: null,
         },
         errorCode,
-        committedAt: clock(),
+        committedAt,
         audit: {
           before: mutation ? snapshots(before) : [],
           after: mutation ? snapshots(mutation.graph) : [],

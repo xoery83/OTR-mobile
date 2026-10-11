@@ -1,3 +1,14 @@
+import {
+  executeCoreCommandV2,
+  type CoreCommandStorage,
+} from "../../../backend/src/tripCoreV2Commands";
+import {
+  createCoreV2SyncWorker,
+  createCoreV2SyncCoordinator,
+} from "../sync/tripCoreV2SyncWorker";
+import { createSyncOperationRepository } from "../sync/syncOperationRepository";
+import { coreClosedCapabilities } from "../../domain/trip/tripCoreV2Commands";
+import { ApiClientError } from "../api/client";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -119,6 +130,132 @@ async function collection(
   );
 }
 describe("Core SQLite54 account partition and durable offline foundation", () => {
+  it("redacts private Source addresses before actor-specific read hashing while retaining accepted facts", async () => {
+    const graph = applyCoreCommand(emptyCoreGraph(), sparse(), actor, stamp).graph;
+    const ref = "track-c/field-evidence/" + randomUUID() + "/ORIGIN.local_date";
+    graph.itinerary_events[0].start_provenance_refs = { local_date: ref };
+    graph.itinerary_events[0].field_state = {
+      "itinerary_events.start_local_date": {
+        state: "KNOWN",
+        origin: "SOURCE",
+        protected: false,
+        changed_revision: 1,
+        evidence_ref: ref,
+      },
+    };
+    const bundle = await collection(true, graph);
+    expect(JSON.stringify(bundle)).not.toContain(ref);
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip);
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    expect((await f.repo.day(ctx, actor, "2026-12-14"))[0].row.rowKey.localDate).toBe(
+      "2026-12-14",
+    );
+  });
+
+  it("recovers a committed lost response after client restart while capability closes, then installs Day and Item read2", async () => {
+    const folder = mkdtempSync(join(tmpdir(), "otr-core-recovery-"));
+    folders.push(folder);
+    const path = join(folder, "core.db");
+    let f = fixture(path),
+      server = emptyCoreGraph(),
+      stored: { domainReceiptId: string; receiptText: string } | null = null,
+      dispatches = 0;
+    const storage: CoreCommandStorage = {
+      async withLockedCommand(scope, work) {
+        if (scope.actorAccountId !== account || scope.tripId !== trip)
+          throw new Error("NOT_VISIBLE");
+        return work({
+          actor,
+          readReceipt: async () => stored,
+          hasLegacyOperation: async () => false,
+          canReadReceipt: async () => true,
+          enabledCommands: async () => ["CREATE_SPARSE_FLIGHT"],
+          readLockedGraph: async () => server,
+          verifyAdmission: async () => {},
+          lifecycleGraphHash: async () => undefined,
+          async commit(mutation, receipt) {
+            if (mutation) server = mutation.graph;
+            stored = {
+              domainReceiptId: randomUUID(),
+              receiptText: JSON.stringify(receipt),
+            };
+            return stored.domainReceiptId;
+          },
+        });
+      },
+    };
+    const q = sparse(),
+      ctx = await f.repo.captureContext(trip);
+    await f.repo.enqueue(ctx, q);
+    const transport = {
+      capabilities: async () => ({
+        ...coreClosedCapabilities,
+        activationState: "ENABLED",
+        enabledCommands: ["CREATE_SPARSE_FLIGHT"],
+        enabledFamilies: ["P2"],
+        enabledAdmissionModes: ["MANUAL"],
+      }),
+      receipt: async () =>
+        stored
+          ? executeCoreCommandV2(storage, account, trip, q, hash, () => stamp)
+          : null,
+      submit: async () => {
+        dispatches++;
+        await executeCoreCommandV2(storage, account, trip, q, hash, () => stamp);
+        throw new ApiClientError("lost response", "network");
+      },
+    };
+    let queue = createSyncOperationRepository(
+      f.database,
+      async () => account,
+      () => stamp,
+    );
+    await createCoreV2SyncCoordinator(
+      queue,
+      createCoreV2SyncWorker(f.repo, transport, async () => account, hash),
+      f.repo,
+      trip,
+    ).run("AUTHENTICATED_ONLINE");
+    expect(dispatches).toBe(1);
+    expect(server.itinerary_events).toHaveLength(1);
+    f.sql.close();
+    f = fixture(path, false);
+    queue = createSyncOperationRepository(
+      f.database,
+      async () => account,
+      () => stamp,
+    );
+    f.sql.exec(
+      "UPDATE sync_operations SET next_attempt_at=NULL WHERE status='RETRYABLE'",
+    );
+    transport.capabilities = async () => ({
+      ...coreClosedCapabilities,
+      activationState: "CLOSED",
+      enabledCommands: [],
+      enabledFamilies: [],
+      enabledAdmissionModes: [],
+    });
+    await createCoreV2SyncCoordinator(
+      queue,
+      createCoreV2SyncWorker(f.repo, transport, async () => account, hash),
+      f.repo,
+      trip,
+    ).run("AUTHENTICATED_ONLINE");
+    expect(dispatches).toBe(1);
+    expect(f.sql.prepare("SELECT status FROM sync_operations").get()?.status).toBe(
+      "COMPLETED",
+    );
+    const next = await f.repo.captureContext(trip);
+    await f.repo.refresh(next, { collection: async () => collection(true, server) });
+    expect((await f.repo.item(next, actor, item))?.localState).toBe("ACCEPTED");
+    expect((await f.repo.day(next, actor, "2026-12-14"))[0].localState).toBe("ACCEPTED");
+  });
+
   it("keeps a linked non-participating Person authorized and excludes it from the participating roster", async () => {
     const yes = await collection(true),
       no = await collection(false);

@@ -52,6 +52,7 @@ export type CoreSupplementalAuthority = {
   originalDocumentIds?: readonly string[];
   ledgerExpenseIds?: readonly string[];
   rosterHash?: string;
+  participatingPersonIds?: readonly string[];
 };
 export function projectCoreItem(
   g: CoreGraph,
@@ -295,10 +296,13 @@ export function projectCoreItem(
     localState,
     participation: {
       mode: item.participation_mode,
-      personIds: g.trip_item_participants
-        .filter((r) => r.item_id === itemId && r.active)
-        .map((r) => r.person_id)
-        .sort(),
+      personIds:
+        item.participation_mode === "WHOLE_GROUP"
+          ? [...(authority.participatingPersonIds ?? [])].sort()
+          : g.trip_item_participants
+              .filter((r) => r.item_id === itemId && r.active)
+              .map((r) => r.person_id)
+              .sort(),
       ...(item.self_person_id ? { selfPersonId: item.self_person_id } : {}),
       ...(authority.rosterHash ? { rosterHash: authority.rosterHash } : {}),
     },

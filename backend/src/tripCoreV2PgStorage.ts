@@ -20,7 +20,7 @@ import {
   type CoreRow,
 } from "../../src/domain/trip/tripCoreV2Mutation";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
-import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
+import { coreLifecycleGraphHash } from "../../src/domain/trip/tripCoreV2Lifecycle";
 import { validateCoreReceipt } from "../../src/domain/trip/tripCoreV2Receipt";
 import type {
   CoreCommand,
@@ -48,6 +48,11 @@ export type CorePgAdmission = {
     actor: CoreActor,
     operationId: string,
   ): Promise<boolean>;
+  canReadAudit?(
+    lease: CorePgLease,
+    actor: CoreActor,
+    receipt: import("../../src/domain/trip/tripCoreV2Receipt").CoreReceipt,
+  ): Promise<boolean>;
   canReadOriginal(
     lease: CorePgLease,
     actor: CoreActor,
@@ -72,7 +77,10 @@ const projection = (table: CoreTable) =>
   columns(table)
     .map((k) => `${quoted(physical(table, k))} AS ${quoted(k)}`)
     .join(",");
-async function readGraph(lease: CorePgLease, trip: string): Promise<CoreGraph> {
+export async function readCorePgGraph(
+  lease: CorePgLease,
+  trip: string,
+): Promise<CoreGraph> {
   const graph = emptyCoreGraph();
   let count = 0;
   for (const table of Object.keys(coreTableSchemas) as CoreTable[]) {
@@ -92,7 +100,7 @@ async function readGraph(lease: CorePgLease, trip: string): Promise<CoreGraph> {
   }
   return validateCoreGraph(graph, trip);
 }
-async function loadActor(
+export async function lockCorePgActor(
   lease: CorePgLease,
   actor: string,
   trip: string,
@@ -196,7 +204,12 @@ export function createCorePgStorage(
             "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
             [scope.actorAccountId, scope.tripId],
           );
-          const actor = await loadActor(lease, scope.actorAccountId, scope.tripId);
+          // Join the established Source/C locks before membership rows to avoid reversed lock order.
+          await lease.query("SELECT public.trip_import_scope_lock($1::uuid,$2::uuid)", [
+            scope.actorAccountId,
+            scope.tripId,
+          ]);
+          const actor = await lockCorePgActor(lease, scope.actorAccountId, scope.tripId);
           await lease.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
             "otr-core2-operation:" + scope.actorAccountId + ":" + scope.operationId,
           ]);
@@ -204,6 +217,13 @@ export function createCorePgStorage(
             collision = false;
           const tx: CoreCommandTransaction = {
             actor,
+            async authoritativeClock() {
+              const clock = (
+                await lease.query("SELECT to_jsonb(transaction_timestamp()) AS instant")
+              ).rows[0]?.instant;
+              if (typeof clock !== "string") throw new Error("CORE_CLOCK_UNAVAILABLE");
+              return clock.replace(/\+00:00$/, "Z");
+            },
             async readReceipt() {
               const row = (
                 await lease.query(
@@ -260,7 +280,7 @@ export function createCorePgStorage(
               await lease.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [
                 "otr-core2-trip:" + actor.tripId,
               ]);
-              locked = await readGraph(lease, actor.tripId);
+              locked = await readCorePgGraph(lease, actor.tripId);
               await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
               return locked;
             },
@@ -322,12 +342,37 @@ export function createCorePgStorage(
             },
             async lifecycleGraphHash(command, graph) {
               return "graphHash" in (command.payload as object)
-                ? coreHashValue("otr-trip-core-lifecycle-graph-v2", graph, hash)
+                ? coreLifecycleGraphHash(graph, actor, command, hash)
                 : undefined;
             },
             async canReadReceipt(receipt) {
               if (!actor.active) return false;
-              const graph = locked ?? (await readGraph(lease, actor.tripId));
+              const privateProof = (value: unknown): boolean => {
+                if (!value || typeof value !== "object") return false;
+                return Object.entries(value).some(
+                  ([key, child]) =>
+                    (["evidence_ref", "source_representation_id"].includes(key) &&
+                      child !== null) ||
+                    (!key.includes(".") &&
+                      key.endsWith("provenance_refs") &&
+                      child !== null &&
+                      typeof child === "object" &&
+                      Object.keys(child).length > 0) ||
+                    privateProof(child),
+                );
+              };
+              if (
+                (receipt.audit.evidenceRefs.length || privateProof(receipt.audit)) &&
+                (!admission?.canReadAudit ||
+                  !(await admission.canReadAudit(lease, actor, receipt)))
+              )
+                return false;
+              let graph = locked;
+              if (!graph) {
+                await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
+                graph = await readCorePgGraph(lease, actor.tripId);
+                await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+              }
               for (const v of receipt.targetVector) {
                 if (v.kind === "SOURCE" || v.kind === "EXPENSE_LINK") return false;
                 const row = graph[coreKindTables[v.kind as CoreKind]].find(

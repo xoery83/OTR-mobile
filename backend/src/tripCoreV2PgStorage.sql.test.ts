@@ -2,6 +2,8 @@ import { spawn } from "node:child_process";
 import { randomUUID, createHash } from "node:crypto";
 import { expect, it } from "vitest";
 import { createCorePgStorage, type CorePgLease } from "./tripCoreV2PgStorage";
+import { createCorePgReader } from "./tripCoreV2PgRead";
+import { validateCoreReadCollection } from "../../src/domain/trip/tripCoreV2Read";
 import { executeCoreCommandV2 } from "./tripCoreV2Commands";
 import { coreDateBoundary } from "../../src/domain/trip/tripCoreV2Temporal";
 import {
@@ -239,6 +241,53 @@ it.skipIf(!fixture)(
         if (created.projection === "FULL")
           expect(created.receipt.outcome, family).toBe("APPLIED");
       }
+
+      const reader = createCorePgReader({ withLease: async (work) => work(lease) }, hash);
+      const collection = await reader.collection(account, trip);
+      const verified = await validateCoreReadCollection(
+        collection.manifest,
+        collection.pages,
+        account,
+        trip,
+        hash,
+      );
+      expect(verified.graph.itinerary_events).toHaveLength(6);
+      expect((await reader.item(account, trip, id))?.details).toMatchObject({
+        qualification: "SPARSE",
+        flightNumberLiteral: "NZ5069",
+      });
+      expect(
+        await reader.item("00000000-0000-4000-8000-000000000003", trip, id),
+      ).toBeNull();
+      await lease.query("RESET SESSION AUTHORIZATION");
+      const oldAccess = collection.manifest.accessRevision;
+      // Privileged synthetic fixture transition only; existing Person command guards stay byte-identical.
+      await lease.query("BEGIN");
+      await lease.query(
+        "ALTER TABLE public.journey_members DISABLE TRIGGER journey_members_participation_guard",
+      );
+      await lease.query(
+        "ALTER TABLE public.journey_members DISABLE TRIGGER trip_person_transition_evidence_guard",
+      );
+      await lease.query(
+        "UPDATE public.journey_members SET participation_active=false,participation_revision=participation_revision+1 WHERE user_id=$1::uuid AND trip_id=$2::uuid",
+        [account, trip],
+      );
+      await lease.query("SET CONSTRAINTS ALL IMMEDIATE");
+      await lease.query(
+        "ALTER TABLE public.journey_members ENABLE TRIGGER journey_members_participation_guard",
+      );
+      await lease.query(
+        "ALTER TABLE public.journey_members ENABLE TRIGGER trip_person_transition_evidence_guard",
+      );
+      await lease.query("COMMIT");
+      await lease.query("SET SESSION AUTHORIZATION otr_trip_core_v2_gateway");
+      const changed = await reader.collection(account, trip);
+      expect(changed.manifest.accessRevision).toBeGreaterThan(oldAccess);
+      expect(changed.manifest.participatingRosterHash).not.toBe(
+        collection.manifest.participatingRosterHash,
+      );
+      expect((await reader.item(account, trip, id))?.itemId).toBe(id);
     } finally {
       proc.stdin.end();
       proc.kill();

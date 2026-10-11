@@ -24,7 +24,10 @@ import {
   type CoreSourcePlanStorageV2,
 } from "./tripCoreV2Source";
 
+import { validateCoreReadCollection } from "../../src/domain/trip/tripCoreV2Read";
+import type { createCorePgReader } from "./tripCoreV2PgRead";
 export type CoreHttpConnection = {
+  read?: ReturnType<typeof createCorePgReader>;
   commands: CoreCommandStorage;
   source?: CoreSourcePlanStorageV2;
   hash: ImportHash;
@@ -182,6 +185,25 @@ export async function coreHttpBoundary(
               connection.hash,
             ),
       );
+    }
+    if (path === "collection" && request.method === "GET") {
+      if (!connection?.read) return failure(503, "CORE_READ_UNAVAILABLE");
+      const result = await connection.read.collection(actor, trip);
+      await validateCoreReadCollection(
+        result.manifest,
+        result.pages,
+        actor,
+        trip,
+        connection.hash,
+      );
+      return reply(200, result);
+    }
+    const item = /^objects\/ITEM\/([0-9a-f-]{36})$/.exec(path);
+    if (item && request.method === "GET") {
+      coreUuid.parse(item[1]);
+      if (!connection?.read) return failure(503, "CORE_READ_UNAVAILABLE");
+      const result = await connection.read.item(actor, trip, item[1]);
+      return result ? reply(200, result) : failure(404, "NOT_VISIBLE");
     }
     if (
       path === "collection" ||

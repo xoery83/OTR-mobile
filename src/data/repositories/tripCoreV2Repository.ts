@@ -20,6 +20,8 @@ import {
   type CoreGraph,
 } from "../../domain/trip/tripCoreV2Mutation";
 import { coreMirrorKey } from "../../domain/trip/tripCoreV2Graph";
+import { projectCoreItem } from "../../domain/trip/tripCoreV2Views";
+import type { CoreReadTransport } from "../api/tripCoreV2Transport";
 import { projectCoreDay } from "../../domain/trip/tripCoreV2Day";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
 import { createSyncOperationRepository } from "../sync/syncOperationRepository";
@@ -390,25 +392,33 @@ export function createTripCoreV2Repository(
       });
     });
   }
-  async function day(ctx: AccountRequestContext, actor: CoreActor, date: string) {
+  async function projection(ctx: AccountRequestContext, actor: CoreActor) {
     if (actor.accountId !== ctx.accountId || actor.tripId !== ctx.tripId)
       throw new Error("CORE_SCOPE_MISMATCH");
     const graph = await readGraph(ctx);
-    const cert = await database.getFirstAsync<{ applied_generation: number }>(
-      "SELECT applied_generation FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
+    const cert = await database.getFirstAsync<{
+      applied_generation: number;
+      roster_hash: string;
+    }>(
+      "SELECT applied_generation,roster_hash FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
       ctx.accountId,
       ctx.tripId,
     );
+    let participatingPersonIds: string[] = [];
     if (cert) {
       const bindings = await database.getAllAsync<{
         person_id: string;
         linked_account_id: string | null;
         active: number;
+        participating: number;
       }>(
-        "SELECT person_id,linked_account_id,active FROM trip_core_person_bindings WHERE account_id=? AND trip_id=?",
+        "SELECT person_id,linked_account_id,active,participating FROM trip_core_person_bindings WHERE account_id=? AND trip_id=?",
         ctx.accountId,
         ctx.tripId,
       );
+      participatingPersonIds = bindings
+        .filter((b) => b.active && b.participating)
+        .map((b) => b.person_id);
       const own = bindings.filter(
         (b) => b.active && b.linked_account_id === ctx.accountId,
       );
@@ -435,6 +445,9 @@ export function createTripCoreV2Repository(
           intent.command,
           actor,
           intent.created_at,
+          false,
+          undefined,
+          true,
         );
         Object.assign(graph, predicted.graph);
         for (const changed of predicted.changed)
@@ -444,6 +457,50 @@ export function createTripCoreV2Repository(
       }
     }
     await assertContext(ctx);
+    return { graph, cert, predictedIds, participatingPersonIds };
+  }
+  async function item(ctx: AccountRequestContext, actor: CoreActor, itemId: string) {
+    const p = await projection(ctx, actor);
+    return projectCoreItem(
+      p.graph,
+      actor,
+      itemId,
+      {
+        rosterHash: p.cert?.roster_hash,
+        participatingPersonIds: p.participatingPersonIds,
+      },
+      p.predictedIds.has(itemId) ? "PENDING" : "ACCEPTED",
+    );
+  }
+  async function refresh(ctx: AccountRequestContext, transport: CoreReadTransport) {
+    await assertContext(ctx);
+    await scope(ctx);
+    const result = await transport.collection(ctx);
+    await assertContext(ctx);
+    return install(
+      await beginRefresh(ctx, result.manifest.accessRevision),
+      result.manifest,
+      result.pages,
+    );
+  }
+  async function resume(ctx: AccountRequestContext) {
+    await withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      await scope(ctx);
+      await database.withTransactionAsync(async () => {
+        await database.runAsync(
+          "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND trip_id=? AND operation_type='CORE_V2_COMMAND' AND status='DEPENDENCY_BLOCKED' AND id IN (SELECT queue_operation_id FROM trip_core_pending_intents WHERE account_id=? AND trip_id=? AND state IN ('BLOCKED','PENDING','IN_FLIGHT'))",
+          ctx.accountId,
+          ctx.tripId,
+          ctx.accountId,
+          ctx.tripId,
+        );
+        await assertContext(ctx);
+      });
+    });
+  }
+  async function day(ctx: AccountRequestContext, actor: CoreActor, date: string) {
+    const { graph, cert, predictedIds } = await projection(ctx, actor);
     return projectCoreDay(graph, actor, date, cert?.applied_generation ?? 0).map(
       (row) => ({
         row: {
@@ -461,6 +518,9 @@ export function createTripCoreV2Repository(
   return {
     captureContext,
     readGraph,
+    item,
+    refresh,
+    resume,
     enqueue,
     pending,
     beginRefresh,
