@@ -99,3 +99,10 @@ ambiguous/absent/revoked assignments remain REVIEW. Existing accepted_place_id s
 unless an independent verified places UUID exists. No airport lookup creates a Place,
 route capability, civil-time resolver, provider call or Hosted activation. Isolated SQL
 fixtures explicitly seed synthetic registry authority and cannot prove deployed authority.
+
+Legacy v1 admission cannot inspect v2 purpose certificates. An additive trigger therefore
+fences fresh/reopened legacy CREATE claims for an actor/Trip/Source with active v2 slots.
+It takes the established C scope lock before reading the v2 claim catalog; existing
+legacy CREATE recovery updates are preserved. Publication without a prepared v2 slot
+is not an active domain claim. This is a conservative cross-version admission fence,
+not a rewrite of historical functions, new Capture authority or activation permission.
