@@ -76,15 +76,55 @@ export type CorePgAdmission = {
 };
 const quoted = (value: string) => '"' + value + '"';
 const json = (value: unknown) => canonicalCoreJson(value as Json);
-const normalized = (row: CoreRow) =>
-  Object.fromEntries(
-    Object.entries(row).map(([k, v]) => [
-      k,
-      typeof v === "string" && /^\d{4}-\d\d-\d\dT/.test(v)
-        ? v.replace(/\+00:00$/, "Z")
-        : v,
-    ]),
+const normalized = (row: CoreRow) => {
+  const fact = { ...row };
+  for (const [key, value] of Object.entries(fact))
+    if (
+      typeof value === "string" &&
+      (key.endsWith("_at") ||
+        key.endsWith("_instant") ||
+        ["instant", "planned_start", "planned_end"].includes(key))
+    )
+      fact[key] = value.replace(/\+00:00$/, "Z");
+  const fraction = (value: unknown, precision: unknown) => {
+    if (typeof value !== "string" || typeof precision !== "number") return value;
+    const match = /^(.*\d\d:\d\d:\d\d)(?:\.(\d{1,6}))?(Z|[+-]\d\d:\d\d)?$/.exec(value);
+    if (!match) throw new Error("INVALID_CLOCK_PRECISION");
+    const digits = match[2] ?? "",
+      size = Math.max(0, precision);
+    if (
+      !Number.isInteger(precision) ||
+      precision < -1 ||
+      precision > 6 ||
+      /[1-9]/.test(digits.slice(size))
+    )
+      throw new Error("INVALID_CLOCK_PRECISION");
+    return (
+      match[1] +
+      (size ? "." + digits.slice(0, size).padEnd(size, "0") : "") +
+      (match[3] ?? "")
+    );
+  };
+  for (const prefix of ["", "start_", "end_"]) {
+    fact[prefix + "local_time"] = fraction(
+      fact[prefix + "local_time"],
+      fact[prefix + "clock_precision"],
+    );
+    const precision = fact[prefix + "source_instant_precision"];
+    fact[prefix + "source_instant"] = fraction(
+      fact[prefix + "source_instant"],
+      precision,
+    );
+    const instant = prefix ? "planned_" + prefix.slice(0, -1) : "instant";
+    if (fact[prefix + "basis"] === "SOURCE_INSTANT")
+      fact[instant] = fraction(fact[instant], precision);
+    else fact[instant] = fraction(fact[instant], fact[prefix + "clock_precision"]);
+  }
+  // Keep the exact finite physical shape; missing tuple members are not invented.
+  return Object.fromEntries(
+    Object.entries(fact).filter(([, value]) => value !== undefined),
   );
+};
 const columns = (table: CoreTable) => Object.keys(coreTableSchemas[table].shape);
 const physical = (table: CoreTable, column: string) =>
   table === "expense_links" && column === "type" ? "link_type" : column;
