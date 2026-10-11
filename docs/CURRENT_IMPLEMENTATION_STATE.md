@@ -1,3 +1,23 @@
+## R3-A4 final connection prerequisites — 2026-10-11 / LIBPQ READY, READER BLOCKED
+
+- Unpublished fa8b32a is the Owner-accepted bounded Day Feed integration from
+  Consolidate Trip Day Feed; conditional routing acceptance and normal integration
+  are explicitly authorized. R3-A4 custody commit6f17fe3 changes only its five files.
+- DEV Ubuntu24.04 amd64 libpq5 16.15 installed through supported apt, pinned and
+  hash-verified. Exactly libpq5 changed, no upgrades/removals, automatic service
+  restarts suppressed. Backend ID/start time/running healthy state unchanged.
+- Actual libpq verify-full reaches the password-required boundary without any
+  credential supplied; wrong DNS identity/CA reject. Driver runtime options present.
+- Management query parameters do not establish nonlogging request/parameter custody
+  or a pinned session for suppression before secret binding. Its temporary CLI role
+  endpoint does not initialize the fixed Reader. No password-bearing API request.
+- Remaining input: existing DEV Direct Primary postgres database password, via
+  Owner-local hidden TTY/pinned SSH/private native-buffer delivery. The API-specific
+  handoff is reference only and cannot be used unchanged or share its destination.
+  Approved admin delivery is not yet established; no real password input requested.
+- Reader initialization BLOCKED; no real Reader password generation/mutation.
+  COOPERATIVE_DORMANT contract preserved; Backend/Native Catalog Runtime CLOSED.
+
 ## R3-A4 DEV trusted-root custody — 2026-10-11 / IMPLEMENTED, READER BLOCKED
 
 - Explicit DEV project opt-in and fixed verified DEV Pg identity are required;

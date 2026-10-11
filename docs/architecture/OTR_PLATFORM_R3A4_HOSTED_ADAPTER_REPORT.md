@@ -164,3 +164,59 @@ Local starting main fa8b32a included an existing unpublished Day Feed commit;
 remote main was45092ea. This task integrates only its five changed files locally
 and does not push that unrelated predecessor. Shared dirty documentation is
 preserved. Backend and Native Catalog Runtime remain CLOSED.
+
+## Final connection prerequisites — 2026-10-11
+
+Ownership resolved by reading the actual Owner message in “Consolidate Trip Day
+Feed” (thread01a124b8-257c-7120-8679-e33f62447315): conditional acceptance of the
+bounded 25-file routing milestone and normal commit/integration authorized. Its
+final integration evidence identifies fa8b32a. Full Day Feed acceptance remains
+OPEN, but this predecessor is not unaccepted work. R3-A4 commit6f17fe3 contains
+only its five documented files. Normal fast-forward publication can retain this
+already accepted canonical predecessor; no new Day Feed changes belong to this task.
+
+DEV host is Ubuntu24.04/noble amd64. Apt selected libpq5
+16.15-0ubuntu0.24.04.1, compatible with installed dependencies; simulation showed
+only one new package, zero upgrades/removals. Download SHA256 verified against
+supported apt metadata:3f96dd36bcd7841172c1ead4965da20a193bb9ccf9a93a3f5a3ac7f56369dbb1.
+Package control contains only an ldconfig trigger and no service-management scripts.
+The first no-download/local-archive attempt failed before installation; read-only
+reconciliation confirmed package still absent and Backend unchanged. The verified
+public archive was then put into apt's standard cache; pinned no-download install
+PASS with noninteractive operation and NEEDRESTART_MODE=l. Exactly libpq5 changed.
+Backend container ID, start time, running/healthy state are identical before/after.
+No unrelated package, running Backend configuration or persistent dump policy changed.
+
+Native lookup/CDLL load PASS, PQlibVersion160015, required verify-full/root CA/minimum
+TLS/connect-timeout/passfile options present. Actual libpq to the fixed DEV Primary
+with accepted CA and no password reaches the password-required boundary. Wrong
+hostname (same fixed IP) and untrusted CA reject. This verifies transport/library
+readiness, not authenticated SQL. Probe suppresses raw diagnostics and supplies
+no administrator or Reader password; no SQL is sent. Public CA/test/package
+metadata resides in root0700 /var/tmp/otr-r3a4-libpq-20261011.
+
+Current official Management API supports query parameters but documents neither
+request-body secret exclusion nor a pinned multi-request PostgreSQL session for
+logging suppression before secret binding. Its CLI login-role endpoint creates
+a temporary CLI identity, not credentials for the existing fixed Reader. Therefore
+nonlogging Reader password initialization through this authority is NOT VERIFIED:
+no plaintext or verifier was sent in SQL/API requests, and no temporary role was
+created. References: https://supabase.com/docs/reference/api/v1-run-a-query and
+https://supabase.com/docs/reference/api/v1-create-login-role .
+
+For the accepted private libpq procedure, the remaining exact input is the existing
+DEV database password for postgres at db.tuqigdxrvrerfewsxqgm.supabase.co:5432,
+database postgres. It is not an API key/Management token or a new Reader password.
+The simplest approved operational reference remains the Owner-local hidden TTY/
+pinned SSH stdin workflow in dev-api-key-handoff.py. It is API-specific: its
+validator, destinations and encrypted staging cannot be reused unchanged. Any
+password-specific handoff must use separate admin custody, harden before acquisition,
+verify root0700/regular single-link0600/no-follow ownership, deliver the checked
+native buffer and close/wipe once. No admin password loader/store was invented in
+this task; no real password prompt/input or Reader generation was performed.
+The real missing input/delivery remains BLOCKED, not a renewed absolute-custody gate.
+
+DEV cooperative custody source and all recovery/termination controls are unchanged.
+Privileged writer, Apport, provider-backup/retention residuals remain documented.
+Reader initialization BLOCKED; actual authenticated SQL NOT RUN. Backend/Native
+Runtime remain CLOSED. Nonsecret evidence:/private/tmp/otr-r3a4-final-blockers.
