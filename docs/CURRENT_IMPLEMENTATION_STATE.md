@@ -1,3 +1,22 @@
+## Capture Flight-first adapter — 2026-10-11 / IMPLEMENTED, RUNTIME CLOSED
+
+- Owner-authorized isolated development from canonical5076174. Flight assessment/
+  private evidence projection committed ac46a90; seven synthetic relationship
+  vectors and concise note committed741579c; both integrated into canonical main.
+- Existing owning CP13 assessor validates evidence/claims/revisions; no new writer,
+  consent identity, schema, provider or runtime gate. Sparse/deferred facts retained;
+  Account callbacks, original pins, raw structured text and reviewed edits fenced.
+- Focused9 suites/313 tests, typecheck, touched lint/format, UI guard PASS. Synthetic
+  Source catalogs → two Candidate assessments → one reviewed durable preparation,
+  exact replay/cold restart PASS; canonical Event writes0.
+- Material dependency: existing Run-wide UNKNOWN claim blocks sibling Segment
+  preparation. Protection is retained; Core must approve distinct sibling output
+  preparation. No newer approved owning mutation interface was found. Automatic
+  admission, sparse canonical save, participation/privacy and edit authority remain
+  Core-owned. Composer/C5/C9/providers/business runtime stay CLOSED.
+- Note: architecture/OTR_CAPTURE_FLIGHT_FIRST_IMPLEMENTATION.md. Next: accepted
+  Core sibling-output/interface contract, then two-preparation vertical fixture.
+
 ## R3-B Native Catalog → SQLite53 — 2026-10-11 / PASS
 
 - Accepted canonical8b5c603/R3-A6 verified. Explicit native factory connects the
