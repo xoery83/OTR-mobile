@@ -528,7 +528,13 @@ async function dependencyFixture() {
   const values = structuredClone(
     intents.confirmation.slots[0].reviewed_payload.edits,
   ) as unknown as Required<FlightValues>;
-  values.origin.time.local_date = "2026-12-17";
+  const flightNumberLiteral = values.title;
+  f.catalog.candidates[0].identityFacts!.serviceNumber =
+    values.services[0].service_number;
+  f.catalog.candidates[0].snapshot = {
+    ...(f.catalog.candidates[0].snapshot as object),
+    flightNumberLiteral,
+  };
   delete (values as FlightValues).title;
   const proofs = Object.fromEntries(
     Object.keys(flightCommandLeaves(values)).map((field) => [
@@ -559,7 +565,7 @@ async function dependencyFixture() {
   f.request.candidateIds = [f.request.candidateIds[0]];
   f.request.slots = [f.request.slots[0]];
   f.request.slots[0].payload = {
-    flightNumberLiteral: "NZ1",
+    flightNumberLiteral,
     departureDate: "2026-12-17",
     ...JSON.parse(json(coreDefaults("member"))),
   };
