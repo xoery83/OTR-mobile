@@ -85,9 +85,10 @@ p=op()
 def normal_hook(stage,pg):
     if stage=='staged': candidate()
 result['initial']=b.provision(p,store,expiry,boundary=normal_hook);assert result['initial']=='APPLIED';p.close()
-assert dt.datetime.fromisoformat(store.journal()['rotate_by'])<=dt.datetime.now(dt.timezone.utc)+dt.timedelta(days=14)
+assert 'rotate_by' not in store.journal()
+assert dt.datetime.fromisoformat(store.journal()['remind_by'])==expiry-dt.timedelta(days=14)
 q=op()
-try:b.provision(q,store,dt.datetime.now(dt.timezone.utc)+dt.timedelta(days=31),'rotate');raise AssertionError('overlong_expiry_accepted')
+try:b.provision(q,store,dt.datetime.now(dt.timezone.utc)+dt.timedelta(days=91),'rotate');raise AssertionError('overlong_expiry_accepted')
 except b.Closed:result['overlong_expiry_rejected']=True
 finally:q.close()
 observe_secrets()
@@ -185,8 +186,9 @@ def corrected_fault(mode):
     else:
         assert reconciled=='UNKNOWN'
     result[mode]={'completion':state,'reconciled':reconciled,'retry_blocked':True}
-    result[mode]['disable']=b.disable(q,store);assert b.reconcile(q,store)=='DORMANT'
+    result[mode]['disable']=b.disable(q,store);assert b.reconcile(q,store)=='UNAVAILABLE'
     q.close();p.close()
+    store.remove('operation.json') # Disposable fixture lacks accepted cooperative custody.
     p=op();assert b.provision(p,store,expiry,boundary=normal_hook)=='APPLIED';p.close();observe_secrets()
 for mode in ['cancel','timeout','fatal','error','connection_failure','interrupted_rotation','lost_response']:corrected_fault(mode)
 
@@ -204,7 +206,7 @@ except b.Closed:result['expired_login_rejected']=True
 finally:b.wipe(secret)
 root.query("ALTER ROLE otr_trip_publication_catalog_reader VALID UNTIL '"+store.journal()['expiry']+"'")
 secret=store.read('active',True);reader=b.Pg('/proof/ca.crt',b.READER,secret);b.wipe(secret)
-p=op();assert b.disable(p,store)=='DORMANT';p.close()
+p=op();assert b.disable(p,store)=='UNAVAILABLE';p.close()
 try:reader.query('SELECT 1');raise AssertionError('disable_session_survived')
 except b.Closed:result['emergency_disable_terminated']=True
 reader.close();result['final_dormant']=root.query(b.OBSERVE,rows=True)

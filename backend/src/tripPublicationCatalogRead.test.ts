@@ -287,7 +287,7 @@ describe("dormant authenticated Publication catalog", () => {
     expect(forward).toContain("R3_CATALOG_READER_ROLE_EXISTS");
     expect(forward).toContain("R3_CATALOG_READER_CATALOG_DRIFT");
   });
-  it("retains immutable SQL authorization/roster bounds and unprovisioned server", () => {
+  it("retains immutable SQL authorization/roster bounds and private DEV injection", () => {
     const sql = readFileSync(
       "supabase/migrations/20261005000900_trip_import_private_catalog_reads.sql",
       "utf8",
@@ -298,8 +298,8 @@ describe("dormant authenticated Publication catalog", () => {
     expect(sql).toContain("jsonb_array_length(rows)>64");
     expect(sql).toContain(">4194304");
     expect(sql).toContain("from public,anon,authenticated,service_role");
-    expect(readFileSync("backend/src/server.ts", "utf8")).not.toContain(
-      "publicationCatalogConnection",
+    expect(readFileSync("backend/src/server.ts", "utf8")).toContain(
+      "loadDevPublicationCatalog",
     );
   });
 });

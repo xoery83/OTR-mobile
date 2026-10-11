@@ -15,7 +15,7 @@
     "format:write": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "backend:build": "esbuild backend/src/server.ts --bundle --platform=node --target=node24 --format=esm --alias:@=./src --outfile=dist/server.mjs",
+    "backend:build": "esbuild backend/src/server.ts --bundle --platform=node --target=node24 --format=esm --alias:@=./src --outfile=dist/server.mjs --banner:js='import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);'",
     "backend:dev": "node --env-file-if-exists=.env.backend --import tsx backend/src/server.ts",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",

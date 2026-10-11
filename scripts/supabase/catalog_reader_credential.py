@@ -328,20 +328,25 @@ class Custody:
         if self.exists('operation.json.new'): raise Closed()
         try:
             value=self.read('operation.json')
-            if not isinstance(value,dict) or set(value)-{'state','operation','expiry','rotate_by','candidate_ready'}:
+            if not isinstance(value,dict) or set(value)-{'state','operation','expiry','rotate_by','created_at','remind_by','candidate_ready'}:
                 raise Closed()
-            if value.get('state') not in ('UNKNOWN','APPLIED','DORMANT','COOPERATIVE_DORMANT','CUSTODY_INCOMPLETE') or value.get('operation') not in ('initial','rotate','disable','reconcile'):
+            if value.get('state') not in ('UNKNOWN','APPLIED','DORMANT','COOPERATIVE_DORMANT','CUSTODY_INCOMPLETE') or value.get('operation') not in ('initial','rotate','disable','reconcile','extend_expiry'):
                 raise Closed()
             if value.get('state')=='COOPERATIVE_DORMANT' and not self.cooperative: raise Closed()
             if 'candidate_ready' in value and type(value['candidate_ready']) is not bool: raise Closed()
-            for name in ('expiry','rotate_by'):
+            for name in ('expiry','rotate_by','created_at','remind_by'):
                 if name in value:
                     date=dt.datetime.fromisoformat(value[name])
                     if date.tzinfo is None: raise Closed()
-            if (value['state']=='APPLIED' or value.get('candidate_ready')) and not {'expiry','rotate_by'}<=set(value): raise Closed()
+            if (value['state']=='APPLIED' or value.get('candidate_ready')) and not ('expiry' in value and ('rotate_by' in value or {'created_at','remind_by'}<=set(value))): raise Closed()
+            if 'created_at' in value or 'remind_by' in value:
+                created=dt.datetime.fromisoformat(value['created_at'])
+                expiry=dt.datetime.fromisoformat(value['expiry'])
+                if not created<expiry<=created+dt.timedelta(days=90) or dt.datetime.fromisoformat(value['remind_by'])!=expiry-dt.timedelta(days=14): raise Closed()
+                if 'rotate_by' in value: raise Closed()
             return value
         except FileNotFoundError: return None
-        except (ValueError,TypeError): raise Closed() from None
+        except (ValueError,TypeError,KeyError): raise Closed() from None
 
     def exists(self,name):
         try: os.stat(name,dir_fd=self.fd,follow_symlinks=False); return True
@@ -540,7 +545,7 @@ def _provision(pg,store,expiry,operation,boundary):
     verify_custody_mode(pg,store)
     if operation not in ('initial','rotate'): raise Closed()
     now=dt.datetime.now(dt.timezone.utc)
-    if expiry.tzinfo is None or not now<expiry<=now+dt.timedelta(days=30): raise Closed()
+    if expiry.tzinfo is None or not now<expiry<=now+dt.timedelta(days=90): raise Closed()
     previous=store.journal()
     dormant='COOPERATIVE_DORMANT' if store.cooperative else 'DORMANT'
     if previous and previous['state'] not in (dormant,'APPLIED'): raise Closed()
@@ -556,7 +561,7 @@ def _provision(pg,store,expiry,operation,boundary):
         if dt.datetime.fromisoformat(state[0][2])!=dt.datetime.fromisoformat(previous['expiry']): raise Closed()
     # Retire before changing the credential; Driver admission must already be closed.
     store.write('operation.json',{'state':'UNKNOWN','operation':operation,'expiry':expiry.isoformat(),
-                                 'rotate_by':(now+dt.timedelta(days=14)).isoformat()})
+                                 'created_at':now.isoformat(),'remind_by':(expiry-dt.timedelta(days=14)).isoformat()})
     pg.query('BEGIN'); pg.query('ALTER ROLE otr_trip_publication_catalog_reader NOLOGIN'); pg.query('COMMIT')
     retire(pg)
     password=C.create_string_buffer(secrets.token_urlsafe(48).encode())
@@ -627,4 +632,34 @@ def reconcile(pg,store):
     except CustodyUnavailable:
         pg.close(); return 'UNAVAILABLE'
     except (OSError,Closed): return 'UNKNOWN'
+    return 'APPLIED'
+
+
+def extend_dev_expiry(pg,store,created_at,expected_journal):
+    """One expiry-only DEV adjustment; never rotate or retire existing sessions."""
+    verify_disable_channel(pg)
+    verify_custody_mode(pg,store)
+    now=dt.datetime.now(dt.timezone.utc)
+    if created_at.tzinfo is None or not created_at<now: raise Closed()
+    expiry=created_at+dt.timedelta(days=90)
+    if expiry<=now: raise Closed()
+    store.inventory(active=True)
+    if store.journal()!=expected_journal or expected_journal.get('state')!='APPLIED': raise Closed()
+    state=pg.query(OBSERVE,rows=True)
+    if len(state)!=1 or state[0][:2]!=['t','t'] or state[0][3]!='t' or dt.datetime.fromisoformat(state[0][2])!=dt.datetime.fromisoformat(expected_journal['expiry']): raise Closed()
+    journal={'state':'UNKNOWN','operation':'extend_expiry','expiry':expiry.isoformat(),
+             'created_at':created_at.isoformat(),'remind_by':(expiry-dt.timedelta(days=14)).isoformat(),
+             'candidate_ready':True}
+    # Durable ambiguity marker precedes DDL; a failed attempt requires observation.
+    store.write('operation.json',journal)
+    try:
+        pg.query('BEGIN')
+        pg.query("ALTER ROLE otr_trip_publication_catalog_reader VALID UNTIL '"+expiry.isoformat()+"'")
+        observed=pg.query(OBSERVE,rows=True)
+        if len(observed)!=1 or observed[0][:2]!=['t','t'] or observed[0][3]!='t' or dt.datetime.fromisoformat(observed[0][2])!=expiry: raise Closed()
+        pg.query('COMMIT')
+        journal['state']='APPLIED';store.write('operation.json',journal)
+    except BaseException:
+        pg.close()
+        return 'UNKNOWN'
     return 'APPLIED'

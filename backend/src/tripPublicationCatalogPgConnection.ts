@@ -63,7 +63,7 @@ export function createPublicationCatalogPgConnection(
         checkServerIdentity(config.host, certificate),
     },
     max: 1,
-    connectionTimeoutMillis: 1000,
+    connectionTimeoutMillis: 3000,
     idleTimeoutMillis: 10000,
     options:
       "-c default_transaction_read_only=on -c statement_timeout=5000 -c lock_timeout=1000 -c idle_in_transaction_session_timeout=5000",
@@ -81,7 +81,7 @@ export function createPublicationCatalogPgConnection(
       if (closed || occupied || signal.aborted) throw unavailable();
       occupied = true;
       const boundary = createRequestBoundary(5000, signal);
-      const checkout = createRequestBoundary(1000, boundary.signal);
+      const checkout = createRequestBoundary(3000, boundary.signal);
       let client: PoolClient | undefined;
       let retired = false;
       let released = false;

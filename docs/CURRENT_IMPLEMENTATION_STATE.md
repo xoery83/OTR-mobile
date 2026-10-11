@@ -1,3 +1,29 @@
+## DEV Reader 90-day policy / R3-A5 runtime — 2026-10-11 / PASS WITH HTTP DEFERRED
+
+- DEV policy UPDATED: original creation2026-10-11T02:03:36.084144Z;
+  actual PostgreSQL/custody expiry2027-01-09T02:03:36.084144Z;
+  remind-by2026-12-26T02:03:36.084144Z. Day14 rotation removed; suspected
+  compromise requires immediate rotation. Owner reminder ACTIVE; Production unchanged.
+- ACTIVE/APPLIED custody consistent; same password artifact, fixed SCRAM Reader,
+  accepted ACL/limit1 preserved. Actual verified TLS1.3 authentication PASS;
+  expiry-only adjustment terminated no healthy sessions; final Reader sessions0.
+- DEV Backend deployed immutable23dae9c026f3b945b5f394aa1e9c381daf9ef439dad22472184cb26992fba1b4
+  through private read-only tmpfs injection. Host/read-only rootfs/loopback bind,
+  Caddy, unrelated services and current exclusive rotated DEV API key preserved.
+- Actual deployed internal Driver Catalog/SQL permission negatives/schema/bounds/
+  canonical exact text PASS (510bytes/13 empty rosters). Health200; HTTP no/invalid
+  auth401, malformed/query400, version426, method405. Authenticated Actor/Trip HTTP
+  positive/permission smoke DEFERRED_NO_APPROVED_SESSION by Owner instruction.
+- No unexpected writes:24 scoped table digests unchanged. Credential exposure
+  checks PASS. Two earlier replacement attempts restored accepted configuration;
+  final successful cutover observed interruption0.562s (upper bracket0.671s).
+- Seven credential fixture scripts and6 Backend/Auth/Catalog/Host suites204 tests
+  PASS; typecheck, lint/UI guard, Backend build, touched format/Python syntax PASS.
+  3s cold checkout correction retains5s overall deadline, max1/same-lease retirement.
+- Report: `architecture/OTR_DEV_READER_90_DAY_POLICY_REPORT.md`; policy/ADR recorded.
+  Native/device/SQLite53 runtime integration, Composer/C5/C9/providers/business
+  activation remain CLOSED. Reboot requires approved private tmpfs re-injection.
+
 ## Faroe F1-R1 — 2026-10-11 / PASS; OWNER REVIEW
 
 - Exact main base `1f1a53c9262de8b10020da66af7214586f10bf18`, isolated source snapshot; old dirty CP13B checkout and concurrent Platform/Experience work preserved. No Git ref changes.

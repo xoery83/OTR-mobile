@@ -76,7 +76,7 @@ describe("dormant PostgreSQL catalog lease", () => {
   it("pins one owner, max1, verified TLS, fixed principal and deadlines", async () => {
     expect(fake.pool.config).toMatchObject({
       max: 1,
-      connectionTimeoutMillis: 1000,
+      connectionTimeoutMillis: 3000,
       user: "otr_trip_publication_catalog_reader",
       ssl: { rejectUnauthorized: true },
       options: expect.stringContaining("statement_timeout=5000"),
@@ -205,7 +205,7 @@ describe("dormant PostgreSQL catalog lease", () => {
         unavailable,
       );
       if (mode === "cancel") controller.abort();
-      else await vi.advanceTimersByTimeAsync(1001);
+      else await vi.advanceTimersByTimeAsync(3001);
       await rejection;
       await expect(read()).rejects.toMatchObject(unavailable);
       pending.resolve(fake.pool.client);

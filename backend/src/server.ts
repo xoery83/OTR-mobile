@@ -6,6 +6,7 @@ import { createDevBackendHandler } from "./app";
 import { createSupabaseDevGateway } from "./supabaseGateway";
 import { createReceiptOcrProvider } from "./receiptOcrProvider";
 import { initializeDevFlightLiveHost } from "./flightLiveHost";
+import { loadDevPublicationCatalog } from "./tripPublicationCatalogRuntime";
 import { createRateDemandScanner } from "./rateDemandScanner";
 
 const environmentSchema = z
@@ -48,7 +49,12 @@ void initializeDevFlightLiveHost((key) => process.env[key]).catch(() => {
   );
 });
 let scanner: ReturnType<typeof createRateDemandScanner> | null = null;
+const publicationCatalogConnection = loadDevPublicationCatalog(
+  environment.OTR_DEV_BACKEND_NETWORK_MODE,
+  environment.OTR_DEV_SUPABASE_URL,
+);
 const gateway = createSupabaseDevGateway({
+  publicationCatalogConnection,
   url: environment.OTR_DEV_SUPABASE_URL,
   publishableKey: environment.OTR_DEV_SUPABASE_PUBLISHABLE_KEY,
   secretKey: environment.OTR_DEV_SUPABASE_SECRET_KEY,
@@ -109,7 +115,10 @@ const server = createServer(async (incoming, outgoing) => {
   }
 });
 
-server.on("close", () => scanner?.stop());
+server.on("close", () => {
+  scanner?.stop();
+  void publicationCatalogConnection?.close();
+});
 server.listen(
   environment.OTR_DEV_BACKEND_PORT,
   environment.OTR_DEV_BACKEND_NETWORK_MODE === "host" ? "127.0.0.1" : "0.0.0.0",
