@@ -1,3 +1,22 @@
+## R3-B Native Catalog → SQLite53 — 2026-10-11 / PASS
+
+- Accepted canonical8b5c603/R3-A6 verified. Explicit native factory connects the
+  existing authenticated Catalog Transport, CLOSED Reader and transactional53
+  installer with original Account/Trip/generation and cancellation. No startup
+  or scheduler caller. Metro namespace-getter failure fixed by named Platform import.
+- Actual isolated Harness4246352E/nativeharness: DEV disposable Actor/Trip empty
+  Catalog install/replay PASS; populated fixture install/replay/read, actual52→53
+  all-prior-row/history preservation, interrupted transaction rollback, cold
+  local read with unavailable token seam and A→B→A fencing PASS. Live403/401 denied.
+- Focused9 files/386 tests, Swift43 fixtures/header9, typecheck, lint/UI guard,
+  Backend build and touched formatting PASS. SQLite1–53 unchanged. Reserved6,593
+  fingerprints/own marker unchanged; original81-file Harness app restored/terminated.
+- Dedicated DEV session logged out204; token artifacts removed. Report:
+  `architecture/OTR_R3B_NATIVE_SQLITE53_INTEGRATION_REPORT.md`.
+- Remaining: populated live Catalog publication, physical-device memory/stress,
+  independent hostname-only native TLS negative and physical offline isolation.
+  Composer/C5/C9/providers/business activation stay CLOSED; no runtime auto-wiring.
+
 ## DEV Reader 90-day policy / R3-A5 runtime — 2026-10-11 / PASS WITH HTTP DEFERRED
 
 - DEV policy UPDATED: original creation2026-10-11T02:03:36.084144Z;

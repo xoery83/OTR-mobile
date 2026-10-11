@@ -1000,3 +1000,15 @@ Canceled/superseded handles cannot install; final repository admission rechecks
 cancellation before SQLite COMMIT. Account generation fences remain mandatory with
 or without a signal. Network precedes the existing Account-gated owning transaction;
 no scheduler, worker, GET outbox, startup caller or live installation is enabled.
+
+## R3-B explicit native Catalog membership installation
+
+`createNativePublicationMembershipIntegration` composes the accepted iOS fixed-DEV
+receiver, authenticated Catalog transport, CLOSED membership reader and owning
+SQLite53 repository. `captureContext(tripId)` retains original Account/generation;
+`install(context,signal?)` fetches and validates outside the Account/SQLite gate,
+then commits the admitted Catalog and sealed memberships together. It returns the
+installed membership count; zero is a valid empty roster, not deletion or a
+publication certificate. `read(context,runId)` uses local retained membership only.
+The reader forwards the original context and cancellation signal to transport.
+No startup/scheduler, Composer, provider or business-command activation is added.

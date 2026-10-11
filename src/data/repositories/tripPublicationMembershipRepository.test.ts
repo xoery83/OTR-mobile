@@ -1,3 +1,4 @@
+import { createNativePublicationMembershipIntegration } from "./nativePublicationMembershipIntegration";
 import { createTripPublicationCatalogTransport } from "@/data/api/tripPublicationCatalogTransport";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
@@ -30,6 +31,14 @@ import {
 } from "./tripPublicationMembershipRepository";
 import catalogs from "./__fixtures__/tripImportCatalogs.json";
 
+const native = vi.hoisted(() => ({
+  contractVersion: () => 1,
+  receive: vi.fn(),
+  cancel: vi.fn(),
+  release: vi.fn(),
+}));
+vi.mock("expo", () => ({ requireNativeModule: () => native }));
+vi.mock("react-native", () => ({ Platform: { OS: "ios" } }));
 vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 
 // Real SQLite1–53 catalogs and committed envelopes; the injected CLOSED RPC is TEST-ONLY.
@@ -482,10 +491,12 @@ describe("dormant complete publication ownership", () => {
       const f = await installed(count),
         read = await f.repo.read(f.context, runId);
       expect(read.membership.body.candidates).toHaveLength(count);
-      expect(f.rpc).toHaveBeenCalledWith("trip_source_read_import_catalogs", {
-        actor,
-        trip,
-      });
+      expect(f.rpc).toHaveBeenCalledWith(
+        "trip_source_read_import_catalogs",
+        { actor, trip },
+        f.context,
+        undefined,
+      );
       const reversed = structuredClone(f.value);
       reversed.trip_source_candidates.reverse();
       expect((await f.reader(reversed).boundary.read(f.context)).memberships).toEqual(
@@ -1736,4 +1747,157 @@ describe("F1 ambiguous HTTP to SQLite53 zero-write rejection", () => {
       );
     },
   );
+});
+
+describe("R3-B Native → authenticated Catalog → SQLite53", () => {
+  async function integration(f: ReturnType<typeof fixture>, value = snapshot(2)) {
+    await digest(value);
+    native.receive.mockReset();
+    native.receive.mockResolvedValue({
+      status: 200,
+      bytes: new TextEncoder().encode(json(value)),
+    });
+    const token = vi.fn(async () => ({ userId: actor, token: "synthetic-r3b-token" }));
+    const connected = await createNativePublicationMembershipIntegration(
+      f.database,
+      f.owning.transactionStore,
+      f.getAccountId,
+      hash,
+      token,
+    );
+    return { connected, token, value, context: await connected.captureContext(trip) };
+  }
+  it("installs populated Catalog once, replays exactly, reopens and reads offline without token/native IO", async () => {
+    const f = fixture(true, true, true);
+    const { connected, token, context } = await integration(f);
+    expect(await connected.install(context)).toBe(1);
+    const before = f.sql.prepare("SELECT * FROM trip_source_runs").all();
+    expect(await connected.install(context)).toBe(1);
+    expect(f.sql.prepare("SELECT * FROM trip_source_runs").all()).toEqual(before);
+    f.reopen();
+    token.mockRejectedValue(new Error("OFFLINE"));
+    native.receive.mockRejectedValue(new Error("OFFLINE"));
+    const read = await connected.read(context, runId);
+    expect(read.membership.body.candidates).toHaveLength(2);
+    expect(token).toHaveBeenCalledTimes(2);
+    expect(native.receive).toHaveBeenCalledTimes(2);
+    expect(f.sql.prepare("PRAGMA integrity_check").get()?.integrity_check).toBe("ok");
+    expect(f.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  });
+  it("accepts complete empty roster without clearing installed publication", async () => {
+    const f = fixture();
+    const { connected, context } = await integration(f);
+    await connected.install(context);
+    const empty = Object.fromEntries(
+      Object.entries(snapshot()).map(([key, value]) => [
+        key,
+        Array.isArray(value) ? [] : value,
+      ]),
+    );
+    native.receive.mockResolvedValue({
+      status: 200,
+      bytes: new TextEncoder().encode(json(empty)),
+    });
+    expect(await connected.install(context)).toBe(0);
+    expect(
+      (await connected.read(context, runId)).membership.body.candidates,
+    ).toHaveLength(2);
+  });
+  it.each([
+    401,
+    403,
+    400,
+    "NETWORK_FAILURE",
+    "TLS_FAILURE",
+    "BODY_LIMIT",
+    "malformed",
+    "scope",
+    "lineage",
+  ])("%s preserves existing membership across restart", async (failure) => {
+    const f = fixture(true, true, true);
+    const { connected, context, value } = await integration(f);
+    await connected.install(context);
+    const before = f.sql.prepare("SELECT * FROM trip_source_runs").all();
+    if (typeof failure === "number")
+      native.receive.mockResolvedValue({
+        status: failure,
+        bytes: new TextEncoder().encode('{"error":{"code":"R3B_FIXTURE_REJECTION"}}'),
+      });
+    else if (failure === "malformed")
+      native.receive.mockResolvedValue({
+        status: 200,
+        bytes: new TextEncoder().encode("{"),
+      });
+    else if (failure === "scope" || failure === "lineage") {
+      if (failure === "scope") value.trip_id = randomUUID();
+      else value.trip_source_representations[0].parent_ids = [randomUUID()];
+      native.receive.mockResolvedValue({
+        status: 200,
+        bytes: new TextEncoder().encode(json(value)),
+      });
+    } else native.receive.mockResolvedValue({ error: failure });
+    await expect(connected.install(context)).rejects.toThrow();
+    f.reopen();
+    expect(f.sql.prepare("SELECT * FROM trip_source_runs").all()).toEqual(before);
+    expect(
+      (await connected.read(context, runId)).membership.body.candidates,
+    ).toHaveLength(2);
+  });
+  it("cancels native acquisition and rolls back interrupted installation", async () => {
+    const f = fixture(true, true, true);
+    const { connected, context } = await integration(f);
+    const stop = new AbortController();
+    let finish!: (value: unknown) => void;
+    native.receive.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const assertion = expect(connected.install(context, stop.signal)).rejects.toThrow();
+    await vi.waitFor(() => expect(native.receive).toHaveBeenCalledTimes(1));
+    stop.abort();
+    await assertion;
+    finish({ status: 200, bytes: new TextEncoder().encode(json(snapshot())) });
+    expect(native.cancel).toHaveBeenCalled();
+    const write = f.database.runAsync.bind(f.database);
+    vi.spyOn(f.database, "runAsync").mockImplementation(async (query, ...args) => {
+      const result = await write(query, ...args);
+      if (query.startsWith("UPDATE trip_source_runs SET publication_membership"))
+        throw new Error("INTERRUPTED_INSTALL");
+      return result;
+    });
+    await expect(connected.install(context)).rejects.toThrow("INTERRUPTED_INSTALL");
+    f.reopen();
+    expect(f.sql.prepare("SELECT count(*) n FROM trip_source_runs").get()?.n).toBe(0);
+  });
+  it("lost COMMIT acknowledgement replays original membership after restart", async () => {
+    const f = fixture(true, true, true);
+    const { connected, context } = await integration(f);
+    f.loseAck();
+    await expect(connected.install(context)).rejects.toThrow("TEST_LOST_COMMIT_ACK");
+    f.reopen();
+    const before = (await connected.read(context, runId)).membership;
+    await connected.install(context);
+    expect((await connected.read(context, runId)).membership).toEqual(before);
+  });
+  it("Account B cannot read A; A→B→A rejects old requests and fresh A reads retained membership", async () => {
+    const f = fixture();
+    const { connected, context } = await integration(f);
+    await connected.install(context);
+    let lease = await beginAccountTransition();
+    f.setAccount(randomUUID());
+    endAccountTransition(lease);
+    const b = await connected.captureContext(trip);
+    await expect(connected.read(b, runId)).rejects.toThrow();
+    lease = await beginAccountTransition();
+    f.setAccount(actor);
+    endAccountTransition(lease);
+    await expect(connected.install(context)).rejects.toThrow("Account changed");
+    await expect(connected.read(context, runId)).rejects.toThrow("Account changed");
+    expect(
+      (await connected.read(await connected.captureContext(trip), runId)).membership.body
+        .candidates,
+    ).toHaveLength(2);
+  });
 });

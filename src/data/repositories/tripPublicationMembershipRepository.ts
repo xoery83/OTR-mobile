@@ -185,6 +185,8 @@ export function createClosedPublicationMembershipReader(deps: {
     | ((
         routine: "trip_source_read_import_catalogs",
         parameters: { actor: string; trip: string },
+        context: AccountRequestContext,
+        signal?: AbortSignal,
       ) => Promise<string>)
     | null;
   getAccountId(): Promise<string>;
@@ -210,10 +212,12 @@ export function createClosedPublicationMembershipReader(deps: {
         context = Object.freeze({ ...context });
         await assertAccountRequestContext(context, deps.getAccountId);
         if (!deps.rpc) fail("PUBLICATION_MEMBERSHIP_TRANSPORT_UNAVAILABLE");
-        const raw = await deps.rpc("trip_source_read_import_catalogs", {
-          actor: context.accountId,
-          trip: context.tripId,
-        });
+        const raw = await deps.rpc(
+          "trip_source_read_import_catalogs",
+          { actor: context.accountId, trip: context.tripId },
+          context,
+          requestSignal,
+        );
         assertNotCanceled();
         const snapshot = catalog(raw);
         if (

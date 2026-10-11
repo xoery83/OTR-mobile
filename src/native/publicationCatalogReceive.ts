@@ -45,7 +45,7 @@ export function bindPublicationCatalogNativeDeadline(
 export async function createPublicationCatalogNativeFetch(): Promise<typeof fetch> {
   const [{ requireNativeModule }, { Platform }] = await Promise.all([
     import("expo"),
-    import("react-native"),
+    import("./publicationCatalogPlatform"),
   ]);
   if (Platform.OS !== "ios") unavailable();
   let native: NativeReceiver;
