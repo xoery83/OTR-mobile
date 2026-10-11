@@ -61,6 +61,7 @@ const evidenceRef = z
   .regex(
     /^track-c\/field-evidence\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[A-Za-z0-9._:-]{1,128}$/,
   );
+export type FlightPurposeEvidenceV2 = z.infer<typeof flightPurposeEvidenceV2Schema>;
 export const flightPurposeEvidenceV2Schema = z.strictObject({
   service: z.array(evidenceRef).min(1).max(16),
   originDate: z.array(evidenceRef).min(1).max(16),

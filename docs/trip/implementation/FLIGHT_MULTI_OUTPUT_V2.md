@@ -82,3 +82,57 @@ replay, success+unknown, identical purpose, competing target, overlap, legacy
 UNKNOWN/no-commit, all-claim checking, scope/stale pin/forged hash rejection and
 mutable asynchronous input isolation. Existing Core/Import regressions and static
 checks are run separately; no new durable v2 or live mutation claim yet.
+
+## Flight Source plan port
+
+`backend/src/tripCoreV2Source.ts` exposes `prepareCoreSourcePlanV2`,
+`finalizeCoreSourceSlotV2`, and `readCoreSourcePlanV2` using W0 §6 envelopes.
+Capture supplies its reviewed plan and stable slot/operation/target IDs; Core
+returns frozen `readyCommands`. Execute those commands through Core Mutation,
+then finalize with the exact `slotId`, `operationId`, `intentSha256`,
+`domainReceiptId`, and `receiptSha256`. The Source port never writes canonical
+objects. `CREATE_SPARSE_FLIGHT`, `QUALIFY_FLIGHT`, `UPDATE_FLIGHT_FACTS`, and
+`REPLACE_FLIGHT_SERVICE` are the finite Flight command set. AUTO and other kinds
+remain Review with `CONTRACT_UNSUPPORTED`.
+
+The owning `CoreSourcePlanStorageV2.withLockedSourcePlan` implementation must:
+
+- Authenticate the current account/Trip and hold the Source, plan, and complete
+  claim-set locks until commit, including legacy v1 claims.
+- Read the complete immutable Source/input/Candidate catalog. Verify the actual
+  pins, hashes, selected payload leaves, qualified airport/service/occurrence
+  identity, D1 time authority, and target continuity before certifying evidence.
+- Validate current ACL, participation, CAS, protected fields, and the complete
+  candidate aggregate with Core command admission before freezing a command.
+- Persist the immutable request, command/hash/certificate/binding, durable active
+  CREATE claims, and operation ownership atomically. Prevent operation reuse
+  across slots/plans, and never overwrite frozen fields on replay.
+- Read an immutable owning receipt as `{domainReceiptId, receiptText}`; storage
+  ID is separate from the full canonical receipt body. Both must correlate.
+- Finalize associations atomically and idempotently. Anticipated evidence errors
+  return `EVIDENCE_PENDING` without aborting the transaction or releasing claims.
+
+Replay reads the stored plan and exact receipt before any new claim gate. A
+missing, rejected, or unavailable receipt never releases an output claim or
+allocates a replacement command. Only a dependency's exact successful Core
+receipt can bind a deferred base revision. Current target revisions cannot
+silently rebase it. Review requires a new reviewed plan; completed commands and
+retained claims remain available for reconciliation.
+
+The disposable SQLite adapter in `backend/src/tripCoreV2Source.test.ts` validates
+metadata durability, cold reopen, two outputs, collisions, legacy UNKNOWN,
+exact replay, receipt correlation, failed-finalization retry, and same-ID
+receipt-dependent qualification/CAS. It is a test adapter, not a second writer
+or a shipped database schema. **PostgreSQL storage binding and HTTP activation
+are CONTRACT_ONLY until the Core foundation owner implements and validates them.**
+No Capture v1 writer/fence or historical migration changes are included.
+
+Pre-seal rejected/uncertified proposals remain in private preparation metadata
+and `reviewSlots`; they are omitted from the sealed plan projection. Every
+included slot therefore retains W0's required non-null `outputPurpose`.
+Private status counts all submitted proposals, including omitted Review slots,
+so partial success cannot falsely become COMPLETE. A dependency with no frozen
+command remains private BLOCKED metadata until its exact prerequisite receipt
+permits certification and freeze. GET returns `{captureVersion:2,plan,status}`,
+where `status` is the exact W0 §3 status envelope. Core foundation confirmed this
+binding; it changes no purpose authority or active-claim semantics.
