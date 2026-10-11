@@ -88,3 +88,14 @@ and retains admitted business facts. Immutable full receipts whose audit contain
 private Source pointers require a separate owning audit read check; absent authority
 returns STATUS_ONLY. A group root permission does not grant another owner's Source
 provenance, and audit redaction never rewrites the immutable exact receipt digest.
+
+Owner direction on2026-10-12 assigns v2 publication authority to Core/Source; Capture
+supplies interpretation/evidence/preparation only. Publication re-reads retained source
+bytes and reuses the deterministic extractor, rather than trusting client normalized
+values or qualification flags. Airport purpose identities use IATA_AIRPORT:<code> only
+after an owning, date-bound registry assignment is uniquely verified. Regex/code presence
+is not qualification. Private registry rows pin an immutable registry version/digest;
+ambiguous/absent/revoked assignments remain REVIEW. Existing accepted_place_id stays NULL
+unless an independent verified places UUID exists. No airport lookup creates a Place,
+route capability, civil-time resolver, provider call or Hosted activation. Isolated SQL
+fixtures explicitly seed synthetic registry authority and cannot prove deployed authority.
