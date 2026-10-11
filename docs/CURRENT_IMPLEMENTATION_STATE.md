@@ -1,3 +1,23 @@
+## R3-A4 final administrator authentication — 2026-10-11 / AUTH_REJECTED
+
+- One authorized DEV Direct postgres attempt with corrected wrapper, verify-full
+  and10-second hard deadline: AUTH_REJECTED at CONNECT_POLL after2.074 seconds;
+  exception class Closed, structured startup SQLSTATE unavailable. Custody verified.
+  No authenticated SQL executed. Staged credential unchanged; Reader readiness NO.
+- Minimal correction preserves sanitized failure stage/class/timing/exception and
+  available query SQLSTATE. Connection error classification matches fixed tokens
+  only in native memory; no raw libpq error string copied or retained.
+- Default provisioning behavior/two-second bound unchanged. Explicit timeout1..10
+  and postgres-only identity mode allow zero constructor SQL plus one read-only
+  identity query; startup read-only and statement timeout remain enforced.
+- Synthetic SCRAM success/wrong-password, network/TLS, missing-CA, timeout,
+  client/binding errors, query22012 and identity-only query counts PASS.
+  Hosted adapter, cooperative custody, F1F2 and F3 regression suites PASS.
+- Reader credential not generated/provisioned; Hosted ACL/schema, Backend/services
+  and Native Runtime unchanged. No reset, replacement or automatic retry.
+  Next requires privately resolving the rejected DEV postgres credential.
+  Backend/Native Catalog Runtime remain CLOSED.
+
 ## R3-A4 administrator password handoff — 2026-10-11 / READY, AWAITING OWNER INPUT
 
 - Fixed DEV postgres identity/SCRAM password presence verified read-only; Direct

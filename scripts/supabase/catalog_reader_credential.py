@@ -40,8 +40,14 @@ OBSERVE = """SELECT rolcanlogin,rolpassword IS NOT NULL,rolvaliduntil::text,
 
 
 class Closed(Exception):
-    def __init__(self):
+    def __init__(self, *, classification='UNKNOWN', stage=None, sqlstate=None,
+                 elapsed_seconds=None, python_error=None):
         super().__init__('CREDENTIAL_OPERATION_CLOSED')
+        self.classification=classification
+        self.stage=stage
+        self.sqlstate=sqlstate
+        self.elapsed_seconds=elapsed_seconds
+        self.python_error=python_error
 
 
 class CustodyUnavailable(Closed):
@@ -66,15 +72,37 @@ def wipe(value):
 
 
 class Pg:
-    """Never call libpq error-text accessors: FATAL context may contain a secret."""
-    def __init__(self, ca, user='postgres', password=None, port=5432, *, host='localhost'):
+    """Only native allowlist matching may inspect connection errors; never copy text."""
+    def __init__(self, ca, user='postgres', password=None, port=5432, *, host='localhost', timeout=2, identity_only=False):
         self.conn=None
+        self.stage='PARAMETERS'
+        self.classification='CLIENT_CONFIGURATION'
+        started=time.monotonic()
+        try:
+            if type(timeout) is not int or not 1<=timeout<=10 or type(identity_only) is not bool or (identity_only and user!='postgres'): raise Closed()
+            self._connect(ca,user,password,port,host,timeout,identity_only)
+        except BaseException as error:
+            stage=self.stage
+            classification=self.classification
+            if isinstance(error,TimeoutError): classification='TIMEOUT'
+            if stage in ('CONNECT_START','CONNECT_POLL') and isinstance(error,(TypeError,ValueError,AttributeError)):
+                classification='CLIENT_CONFIGURATION'
+            code=error.sqlstate if isinstance(error,Closed) else None
+            kind=type(error).__name__
+            if kind not in ('Closed','OSError','TypeError','ValueError','AttributeError','TimeoutError','KeyboardInterrupt'):
+                kind='OTHER'
+            self.close()
+            raise Closed(classification=classification,stage=stage,sqlstate=code,
+                         elapsed_seconds=round(time.monotonic()-started,3),python_error=kind) from None
+
+    def _connect(self,ca,user,password,port,host,timeout,identity_only):
         if host not in ('localhost',DEV_HOST): raise Closed()
         if host==DEV_HOST:
             harden_process()
             if port!=5432 or user not in ('postgres',READER) or not isinstance(password,C.Array) or password._type_ is not C.c_char or not 2<=C.sizeof(password)<=4097 or password[0]==b'\0' or password[-1]!=b'\0':
                 raise Closed()
         self.host,self.ca,self.port=host,ca,port
+        self.stage='LIBPQ_LOAD'
         library=ctypes.util.find_library('pq')
         if not library: raise Closed()
         self.lib = C.CDLL(library)
@@ -86,6 +114,7 @@ class Pg:
             'PQresultStatus': ([C.c_void_p], C.c_int), 'PQclear': ([C.c_void_p], None),
             'PQntuples': ([C.c_void_p], C.c_int), 'PQnfields': ([C.c_void_p], C.c_int),
             'PQgetvalue': ([C.c_void_p,C.c_int,C.c_int], C.c_char_p),
+            'PQresultErrorField': ([C.c_void_p,C.c_int], C.c_char_p),
         }
         for name,(args,result) in signatures.items():
             fn = getattr(self.lib,name); fn.argtypes=args; fn.restype=result
@@ -93,45 +122,81 @@ class Pg:
             raise Closed()
         options = {'host':host.encode(),'port':str(port).encode(),'dbname':b'postgres',
                    'user':user.encode(),'password':b'','sslmode':b'verify-full',
-                   'sslrootcert':os.fsencode(ca),'connect_timeout':b'2',
+                   'sslrootcert':os.fsencode(ca),'connect_timeout':str(timeout).encode(),
                    'ssl_min_protocol_version':b'TLSv1.2',
                    'application_name':b'otr-dormant-credential-builder','passfile':b'/dev/null/otr-passfile-disabled'}
+        if identity_only:
+            options['options']=b'-c default_transaction_read_only=on -c statement_timeout=5000'
         keys=(C.c_char_p*(len(options)+1))(*[k.encode() for k in options],None)
         values=(C.c_char_p*(len(options)+1))(*options.values(),None)
         if password is not None:
             values[list(options).index('password')]=C.cast(password,C.c_char_p)
+        self.stage='CONNECT_START'; self.classification='UNKNOWN'
         self.conn=self.lib.PQconnectStartParams(keys,values,0)
         if not self.conn: raise Closed()
         self.notice=C.CFUNCTYPE(None,C.c_void_p,C.c_void_p)(lambda _arg,_text: None)
         self.lib.PQsetNoticeProcessor.argtypes=[C.c_void_p,type(self.notice),C.c_void_p]
         self.lib.PQsetNoticeProcessor(self.conn,self.notice,None)
-        deadline=time.monotonic()+2
+        self.stage='CONNECT_POLL'
+        deadline=time.monotonic()+timeout
         try:
             while True:
                 state=self.lib.PQconnectPoll(self.conn)
                 if state==3: break
-                if state==0 or time.monotonic()>=deadline: raise Closed()
+                if state==0:
+                    self.classification=self.connection_error_class()
+                    raise Closed()
+                if time.monotonic()>=deadline:
+                    self.classification='TIMEOUT'
+                    raise Closed()
                 if state==4: continue
                 fd=self.lib.PQsocket(self.conn)
                 if fd<0: raise Closed()
                 select.select([fd] if state==1 else [],[fd] if state==2 else [],[],max(0,deadline-time.monotonic()))
+            if identity_only: return
+            self.stage='SESSION_SETUP'
             self.query("SET search_path='pg_catalog'")
             self.query("SET statement_timeout='5s'")
             self.query("SET lock_timeout='1s'")
             self.query("SET idle_in_transaction_session_timeout='5s'")
             if self.query('SELECT pg_is_in_recovery()',rows=True)!=[['f']]: raise Closed()
             if host==DEV_HOST:
+                self.stage='IDENTITY'
                 identity=self.query("SELECT current_database(),session_user,current_user,(SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()),current_setting('default_transaction_read_only')",rows=True)
                 if len(identity)!=1 or identity[0][:4]!=['postgres',user,user,'t'] or (user==READER and identity[0][4]!='on'): raise Closed()
         except BaseException:
-            self.close(); raise Closed() from None
+            self.close(); raise
+
+    def connection_error_class(self):
+        # libpq exposes no structured SQLSTATE for failed startup. Match in native
+        # memory only; raw error bytes never become Python strings or evidence.
+        self.lib.PQerrorMessage.argtypes=[C.c_void_p]
+        self.lib.PQerrorMessage.restype=C.c_void_p
+        pointer=self.lib.PQerrorMessage(self.conn)
+        if not pointer: return 'UNKNOWN'
+        libc=C.CDLL(None)
+        libc.strstr.argtypes=[C.c_void_p,C.c_char_p]; libc.strstr.restype=C.c_void_p
+        def contains(token): return bool(libc.strstr(pointer,token))
+        if contains(b'password authentication failed'): return 'AUTH_REJECTED'
+        if contains(b'timeout expired') or contains(b'Connection timed out'): return 'TIMEOUT'
+        if any(contains(t) for t in (b'could not translate host name',b'Connection refused',
+                b'Network is unreachable',b'No route to host',b'certificate verify failed',
+                b'does not match host name',b'SSL error',b'could not establish SSL',
+                b'server does not support SSL',b'SSL connection is required')):
+            return 'NETWORK_OR_TLS'
+        if any(contains(t) for t in (b'invalid connection option',b'invalid value for parameter',
+                b'root certificate file',b'no password supplied')):
+            return 'CLIENT_CONFIGURATION'
+        return 'UNKNOWN'
 
     def query(self, sql, parameters=(), rows=False):
         values=(C.c_char_p*len(parameters))(*[C.cast(p,C.c_char_p) if isinstance(p,C.Array) else p for p in parameters])
         result=self.lib.PQexecParams(self.conn,sql.encode(),len(parameters),None,values,None,None,0)
         try:
             if not result or self.lib.PQresultStatus(result) not in (1,2):
-                raise Closed()
+                code=self.lib.PQresultErrorField(result,ord('C')) if result else None
+                safe=code.decode('ascii') if code and re.fullmatch(rb'[0-9A-Z]{5}',code) else None
+                raise Closed(stage='QUERY',sqlstate=safe)
             # Only explicitly non-secret observation queries may return rows.
             return [[self.lib.PQgetvalue(result,i,j).decode() for j in range(self.lib.PQnfields(result))]
                     for i in range(self.lib.PQntuples(result))] if rows else None
