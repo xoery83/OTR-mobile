@@ -1,3 +1,11 @@
+## Faroe F1-R1 — 2026-10-11 / PASS; OWNER REVIEW
+
+- Exact main base `1f1a53c9262de8b10020da66af7214586f10bf18`, isolated source snapshot; old dirty CP13B checkout and concurrent Platform/Experience work preserved. No Git ref changes.
+- Controlled application of the four compatible F1 test/fixture files; all original assertions retained. Only runtime change: Focus omits absent Flight optional Text nodes and an entirely empty third row. Meaningful arrival-only, terminal-only and duration-only rows retain existing column geometry; Browse and Focus actions unchanged.
+- F1/Day Feed regression: 186/186 PASS (179 F1 assertions + 7 R1 cases). Scoped lint, format and UI guard PASS. Full typecheck retains identical nine backend pg/type errors; no new diagnostics or dependency changes.
+- Test/diff/manifest evidence: task visualization `faroe-f1-r1/F1_R1_REPORT.md`. 13 whole Faroe scenarios remain blocked as recorded by F1. Static render assertions are not native/real-data admission acceptance.
+- Recommendation: ready for Owner review and separately authorized bounded commit/integration; no automatic commit/merge/push or F2/import/provider/data writes.
+
 ## R3-A4 final administrator authentication — 2026-10-11 / AUTH_REJECTED
 
 - One authorized DEV Direct postgres attempt with corrected wrapper, verify-full

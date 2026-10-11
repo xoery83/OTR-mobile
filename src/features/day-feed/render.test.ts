@@ -8,11 +8,16 @@ import { P1Row } from "./P1Row";
 import { FlightRows } from "./FlightRows";
 import { flightPresentation } from "./presentation";
 import { t } from "@/ui/locale";
+import { uiPalette } from "@/ui/palette";
+import { timeRailWidth } from "./visualTokens";
+import { faroeNegativeFixtures, syntheticDate } from "./faroeNegative.test.fixtures";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup: (node: ReactNode) => string;
 };
 const state = vi.hoisted(() => ({
   presses: [] as Record<string, any>[],
+  nodes: [] as Record<string, any>[],
+  instant: "2026-10-10T00:30:00Z",
   scale: 1,
   scheme: "light",
   hooks: [] as unknown[],
@@ -34,6 +39,7 @@ vi.mock("react", async (original) => ({
 vi.mock("react-native", async () => {
   const { createElement } = await import("react");
   const primitive = (props: Record<string, any>) => {
+    state.nodes.push(props);
     if (props.onPress) state.presses.push(props);
     return createElement(
       "div",
@@ -54,7 +60,7 @@ vi.mock("react-native", async () => {
 });
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("./useMinuteClock", () => ({
-  useMinuteClock: () => ({ instant: "2026-10-10T00:30:00Z" }),
+  useMinuteClock: () => ({ instant: state.instant }),
 }));
 const boundary = (role: "START" | "END" | "ORIGIN" | "DESTINATION", hour: string) => ({
   role,
@@ -92,9 +98,12 @@ const projection = {
 const render = (node: ReactNode) => {
   state.cursor = 0;
   state.presses = [];
+  state.nodes = [];
   return renderToStaticMarkup(node);
 };
 beforeEach(() => {
+  state.instant = "2026-10-10T00:30:00Z";
+  state.nodes = [];
   state.hooks = [];
   state.cursor = 0;
   state.scale = 1;
@@ -181,4 +190,306 @@ it("keeps Gallery factories, unsupported capabilities and write commands out of 
   expect(reader).not.toMatch(
     /\b(?:runAsync|rebuild|refreshCollection|INSERT|UPDATE|DELETE|openDatabase)\b/,
   );
+});
+
+// Faroe-derived patterns run through these same accepted components and native mocks.
+it("F1 A1/A3/TC13: mixed historical P1/P2 keeps order, identities and planned state", () => {
+  const f = faroeNegativeFixtures();
+  state.instant = "2027-02-10T11:00:00Z";
+  const bytes = JSON.stringify(f.day);
+  const html = render(
+    createElement(DayFeed, {
+      projection: f.day,
+      date: syntheticDate,
+      zone: "UTC",
+      services: f.services,
+    }),
+  );
+  const positions = [f.before.title, f.segment.title, f.after.title].map((label, i) =>
+    state.presses.findIndex(
+      (p, n) =>
+        p.accessibilityLabel === label &&
+        (i !== 2 ||
+          n > state.presses.findIndex((a) => a.accessibilityLabel === f.segment.title)),
+    ),
+  );
+  expect(positions.every((n) => n >= 0)).toBe(true);
+  expect(positions[0]).toBeLessThan(positions[1]);
+  expect(positions[1]).toBeLessThan(positions[2]);
+  expect(html).toContain("NZ901");
+  expect(html).not.toMatch(
+    /now-within|now-between|Connection|Boarding|confirmed|completed/,
+  );
+  expect(
+    f.day.events.every(
+      (e) => e.participant_scope === "UNASSIGNED" && e.status === "planned",
+    ),
+  ).toBe(true);
+  expect(JSON.stringify(f.day)).toBe(bytes);
+});
+it("F1 A1/A2/B7: Browse is compact and P1/P2 Focus retains the subtle theme outline", () => {
+  const f = faroeNegativeFixtures();
+  for (const scheme of ["light", "dark"] as const) {
+    state.scheme = scheme;
+    state.hooks = [];
+    let html = render(
+      createElement(P1Row, { event: f.before, depth: "B", onDepth: vi.fn() }),
+    );
+    expect(html).not.toContain('data-testid="focus-selected-region"');
+    expect(state.nodes.find((n) => n.children === f.before.title)?.numberOfLines).toBe(2);
+    html = render(
+      createElement(P1Row, { event: f.before, depth: "F", onDepth: vi.fn() }),
+    );
+    expect(html).toContain("Synthetic quay");
+    expect(
+      state.nodes.find((n) => n.testID === "focus-selected-region")!.style,
+    ).toMatchObject({ borderWidth: 1, borderColor: uiPalette(scheme).separator });
+    expect(
+      state.nodes.find((n) => n.children === f.before.title)?.numberOfLines,
+    ).toBeUndefined();
+    state.hooks = [];
+    const props = {
+      projection: f.day,
+      date: syntheticDate,
+      zone: "UTC",
+      services: f.services,
+    };
+    render(createElement(DayFeed, props));
+    state.presses.find((p) => p.accessibilityLabel === f.segment.title)!.onPress();
+    html = render(createElement(DayFeed, props));
+    expect(
+      state.nodes.some(
+        (n) =>
+          n.style?.borderWidth === 1 &&
+          n.style?.borderColor === uiPalette(scheme).separator,
+      ),
+    ).toBe(true);
+    expect(html).toContain("NZ901");
+    expect(html).not.toMatch(/Move|Navigate|Boarding|Booking/);
+  }
+});
+it("F1 A3/B5: P1/P2 rails share width for normal and enlarged text", () => {
+  const f = faroeNegativeFixtures();
+  for (const scale of [1, 2.4]) {
+    state.scale = scale;
+    state.hooks = [];
+    render(createElement(P1Row, { event: f.before, depth: "B", onDepth: vi.fn() }));
+    expect(
+      state.nodes.some(
+        (n) =>
+          Array.isArray(n.style) &&
+          n.style.some((s: Record<string, any>) => s?.width === timeRailWidth(scale)),
+      ),
+    ).toBe(true);
+    state.hooks = [];
+    render(
+      createElement(FlightRows, {
+        fixture: flightPresentation(f.segment, [f.services[f.segment.id][0]])!,
+      }),
+    );
+    expect(
+      state.nodes.some(
+        (n) =>
+          Array.isArray(n.style) &&
+          n.style.some((s: Record<string, any>) => s?.width === timeRailWidth(scale)),
+      ),
+    ).toBe(true);
+  }
+});
+it("F1 A4/TC16/TC22/B2: dangling Ledger hints and blank amounts never become financial rows", () => {
+  const f = faroeNegativeFixtures();
+  const event = Object.assign(structuredClone(f.before), {
+    expenses: [
+      {
+        id: f.untrusted.ledgerReference,
+        title: f.before.title,
+        amount: f.untrusted.amount,
+      },
+    ],
+    bookingStatus: f.untrusted.bookingStatus,
+    travelerIds: f.untrusted.travelerIds,
+  });
+  const bytes = JSON.stringify(event);
+  for (const depth of ["B", "F", "I"] as const) {
+    state.hooks = [];
+    const html = render(createElement(P1Row, { event, depth, onDepth: vi.fn() }));
+    expect(html).not.toMatch(
+      /L-0806-XX|CNY|1266\.87|¥|confirmed|F1_SYNTHETIC_PRIVATE_CANARY/,
+    );
+  }
+  expect(JSON.stringify(event)).toBe(bytes);
+  expect(event.expenses).toHaveLength(1);
+  expect(event.expenses[0].amount).toBe("");
+});
+it("F1 TC17/B1/B6: incomplete Flight never invents clocks, terminal, travelers or booking status", () => {
+  const f = faroeNegativeFixtures(),
+    flight = flightPresentation(f.incomplete, [])!;
+  for (const options of [{}, { focused: true }, { immersive: true }]) {
+    state.hooks = [];
+    const html = render(createElement(FlightRows, { fixture: flight, ...options }));
+    expect(html).toContain(t("flight.unknownAirport"));
+    expect(html).not.toMatch(
+      /00:00|NZ901|Terminal|confirmed|Booking|Boarding|Traveler|CNY|¥/,
+    );
+    expect(state.presses).toHaveLength(0);
+  }
+  expect(f.untrusted.travelerIds).toBeNull();
+  expect(flight.supplemental.endpoints.ORIGIN.terminal).toBeNull();
+});
+it("F1 A2: explicit test-only terminal renders, while the production adapter withholds it", () => {
+  const f = faroeNegativeFixtures(),
+    flight = flightPresentation(f.segment, f.services[f.segment.id])!;
+  expect(flight.supplemental.endpoints.ORIGIN.terminal).toBeNull();
+  flight.supplemental.endpoints.ORIGIN.terminal = "TEST-T1";
+  const html = render(createElement(FlightRows, { fixture: flight, focused: true }));
+  expect(html).toContain("TEST-T1");
+  expect(html).not.toContain("TEST-T2");
+});
+it("F1 B7: long multilingual title keeps full identity and unbounded Focus in both themes", () => {
+  const f = faroeNegativeFixtures();
+  f.before.title = "Synthetic 博物馆 · Musée · long title ".repeat(8);
+  for (const scheme of ["light", "dark"]) {
+    state.scheme = scheme;
+    state.scale = 2.4;
+    state.hooks = [];
+    render(createElement(P1Row, { event: f.before, depth: "F", onDepth: vi.fn() }));
+    const title = state.nodes.find((n) => n.children === f.before.title)!;
+    expect(title.numberOfLines).toBeUndefined();
+    expect(state.presses.some((p) => p.accessibilityLabel === f.before.title)).toBe(true);
+    title.onTextLayout({ nativeEvent: { lines: [{}, {}, {}] } });
+    render(createElement(P1Row, { event: f.before, depth: "F", onDepth: vi.fn() }));
+    expect(
+      state.nodes.some(
+        (n) =>
+          Array.isArray(n.style) &&
+          n.style.some((s: Record<string, any>) => s?.position === "relative"),
+      ),
+    ).toBe(true);
+  }
+});
+it("F1 B7/TC17: unavailable Flight optional labels and the empty detail row are omitted", () => {
+  const f = faroeNegativeFixtures();
+  render(
+    createElement(FlightRows, {
+      fixture: flightPresentation(f.incomplete, [])!,
+      focused: true,
+    }),
+  );
+  expect(
+    state.nodes.filter((n) =>
+      ["departure-terminal", "arrival-terminal", "duration"].includes(n.testID),
+    ),
+  ).toHaveLength(0);
+  expect(state.nodes.some((n) => n.testID === "flight-row-3")).toBe(false);
+});
+
+it.each(["ORIGIN", "DESTINATION"] as const)(
+  "F1-R1: Focus preserves a %s-only terminal without empty optional labels",
+  (role) => {
+    const f = faroeNegativeFixtures();
+    const flight = flightPresentation(f.incomplete, [])!;
+    flight.supplemental.endpoints[role].terminal = "TEST-T1";
+    const original = JSON.stringify(flight);
+    const html = render(createElement(FlightRows, { fixture: flight, focused: true }));
+    expect(html).toContain(t("flight.terminal", { terminal: "TEST-T1" }));
+    const optional = state.nodes.filter((n) =>
+      ["departure-terminal", "arrival-terminal", "duration"].includes(n.testID),
+    );
+    expect(optional.map((n) => n.testID)).toEqual([
+      role === "ORIGIN" ? "departure-terminal" : "arrival-terminal",
+    ]);
+    expect(state.nodes.some((n) => n.testID === "flight-row-3")).toBe(true);
+    expect(state.nodes.some((n) => n.testID === "arrival-time")).toBe(false);
+    expect(state.nodes.some((n) => n.style?.width === 76)).toBe(true);
+    expect(JSON.stringify(flight)).toBe(original);
+  },
+);
+it("F1-R1: Focus duration-only optional facts retain qualified duration and arrival clock", () => {
+  const f = faroeNegativeFixtures();
+  const flight = flightPresentation(f.segment, f.services[f.segment.id])!;
+  render(createElement(FlightRows, { fixture: flight, focused: true }));
+  expect(state.nodes.find((n) => n.testID === "duration")?.children).toBe(
+    t("flight.duration", { hours: 2, minutes: 0 }),
+  );
+  expect(state.nodes.find((n) => n.testID === "arrival-time")?.children).toBe("12:00");
+  expect(state.nodes.some((n) => n.testID === "departure-terminal")).toBe(false);
+  expect(state.nodes.some((n) => n.testID === "arrival-terminal")).toBe(false);
+  expect(state.nodes.some((n) => n.testID === "flight-row-3")).toBe(true);
+});
+it("F1-R1: populated Focus keeps Compact A content and column styles in both themes", () => {
+  const f = faroeNegativeFixtures();
+  const flight = flightPresentation(f.segment, f.services[f.segment.id])!;
+  flight.supplemental.endpoints.ORIGIN.terminal = "TEST-T1";
+  flight.supplemental.endpoints.DESTINATION.terminal = "TEST-T2";
+  for (const scheme of ["light", "dark"]) {
+    state.scheme = scheme;
+    const browse = render(createElement(FlightRows, { fixture: flight }));
+    const columns = state.nodes
+      .filter((n) =>
+        ["arrival-time", "departure-terminal", "duration", "arrival-terminal"].includes(
+          n.testID,
+        ),
+      )
+      .map((n) => ({ id: n.testID, value: n.children, style: n.style }));
+    const focus = render(createElement(FlightRows, { fixture: flight, focused: true }));
+    expect(focus).toBe(browse);
+    expect(
+      state.nodes
+        .filter((n) =>
+          ["arrival-time", "departure-terminal", "duration", "arrival-terminal"].includes(
+            n.testID,
+          ),
+        )
+        .map((n) => ({ id: n.testID, value: n.children, style: n.style })),
+    ).toEqual(columns);
+    expect(columns.map((n) => n.value)).toEqual([
+      "12:00",
+      t("flight.terminal", { terminal: "TEST-T1" }),
+      t("flight.duration", { hours: 2, minutes: 0 }),
+      t("flight.terminal", { terminal: "TEST-T2" }),
+    ]);
+  }
+});
+it("F1-R1: arrival-only Focus retains meaningful third row without guessing duration", () => {
+  const f = faroeNegativeFixtures();
+  f.segment.boundaries[0] = structuredClone(f.incomplete.boundaries[0]);
+  render(
+    createElement(FlightRows, {
+      fixture: flightPresentation(f.segment, [])!,
+      focused: true,
+    }),
+  );
+  expect(state.nodes.find((n) => n.testID === "arrival-time")?.children).toBe("12:00");
+  expect(state.nodes.some((n) => n.testID === "flight-row-3")).toBe(true);
+  expect(
+    state.nodes.some((n) =>
+      ["departure-terminal", "arrival-terminal", "duration"].includes(n.testID),
+    ),
+  ).toBe(false);
+});
+it("F1-R1: unqualified time evidence cannot become a displayed duration", () => {
+  const f = faroeNegativeFixtures();
+  f.segment.boundaries[0].quality = "ESTIMATED";
+  render(
+    createElement(FlightRows, {
+      fixture: flightPresentation(f.segment, [])!,
+      focused: true,
+    }),
+  );
+  expect(state.nodes.some((n) => n.testID === "duration")).toBe(false);
+  expect(state.nodes.find((n) => n.testID === "arrival-time")?.children).toBe("12:00");
+});
+it("F1-R1: incomplete Browse retains accepted Compact A three-row geometry", () => {
+  const f = faroeNegativeFixtures();
+  render(createElement(FlightRows, { fixture: flightPresentation(f.incomplete, [])! }));
+  for (const id of [
+    "flight-row-1",
+    "flight-row-2",
+    "flight-row-3",
+    "arrival-time",
+    "departure-terminal",
+    "arrival-terminal",
+    "duration",
+  ])
+    expect(state.nodes.some((n) => n.testID === id)).toBe(true);
 });

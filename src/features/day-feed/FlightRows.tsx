@@ -56,6 +56,8 @@ export function FlightRows({
     destination = f.supplemental.endpoints.DESTINATION;
   const term = (value: string | null) =>
     value ? t("flight.terminal", { terminal: value }) : null;
+  const arrivalTime = arr?.local_time?.slice(0, 5);
+  const duration = durationLabel(durationMinutes(f));
   if (focused && largeText && !immersive) {
     const route = t("flight.itinerary", {
       origin: airport(f, originRole),
@@ -236,28 +238,46 @@ export function FlightRows({
           {destination.name}
         </Text>
       </View>
-      <View style={s.baseline} testID="flight-row-3">
-        <Text
-          testID="arrival-time"
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.75}
-          style={[s.arrival, rail]}
-        >
-          {arr?.local_time?.slice(0, 5)}
-        </Text>
-        <Text testID="departure-terminal" style={[s.meta, s.left]}>
-          {!largeText && term(origin.terminal)}
-        </Text>
-        {!largeText ? (
-          <Text testID="duration" style={s.centerMeta}>
-            {durationLabel(durationMinutes(f))}
-          </Text>
-        ) : null}
-        <Text testID="arrival-terminal" style={[s.meta, s.right]}>
-          {!largeText && term(destination.terminal)}
-        </Text>
-      </View>
+      {!focused || arrivalTime || origin.terminal || duration || destination.terminal ? (
+        <View style={s.baseline} testID="flight-row-3">
+          {!focused || arrivalTime ? (
+            <Text
+              testID="arrival-time"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+              style={[s.arrival, rail]}
+            >
+              {arrivalTime}
+            </Text>
+          ) : (
+            <View style={[s.rail, rail]} />
+          )}
+          {!focused || origin.terminal ? (
+            <Text testID="departure-terminal" style={[s.meta, s.left]}>
+              {!largeText && term(origin.terminal)}
+            </Text>
+          ) : (
+            <View style={s.left} />
+          )}
+          {!largeText ? (
+            !focused || duration ? (
+              <Text testID="duration" style={s.centerMeta}>
+                {duration}
+              </Text>
+            ) : (
+              <View style={s.middle} />
+            )
+          ) : null}
+          {!focused || destination.terminal ? (
+            <Text testID="arrival-terminal" style={[s.meta, s.right]}>
+              {!largeText && term(destination.terminal)}
+            </Text>
+          ) : (
+            <View style={s.right} />
+          )}
+        </View>
+      ) : null}
       {largeText ? (
         <View style={{ marginLeft: rail.width + 12, gap: 4 }}>
           <Text style={s.meta}>
