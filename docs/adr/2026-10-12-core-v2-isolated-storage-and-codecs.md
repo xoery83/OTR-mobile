@@ -106,3 +106,19 @@ It takes the established C scope lock before reading the v2 claim catalog; exist
 legacy CREATE recovery updates are preserved. Publication without a prepared v2 slot
 is not an active domain claim. This is a conservative cross-version admission fence,
 not a rewrite of historical functions, new Capture authority or activation permission.
+
+Certified physical v2 slots in REVIEW can still represent uncertain or known domain
+outputs. REVIEW state alone does not release their claims. The additive legacy fence
+therefore remains conservative across all physical v2 slots until a bounded exact
+NO_COMMIT release authority is available; unqualified pre-seal REVIEW has no physical
+slot. Existing legacy recovery updates remain permitted, while fresh/reopened CREATE
+cannot bypass a retained v2 claim by changing its state label.
+
+Fresh publication/admission rechecks current Source revision/run/pins and airport authority.
+Already committed evidence finalization uses exact retained historical revision/run/pins,
+immutable Candidate field evidence and exact slot/receipt/target vector, with current
+Source ownership/retention and Trip access. A later material update or run supersession
+cannot silently rebase or permanently prevent lineage for an accepted receipt. Source
+removal/access loss still denies. The association-specific additive guard separates
+historical finalization from the unchanged current-publication guard; it writes metadata
+only and never changes Canonical facts or grants fresh dispatch authority.
