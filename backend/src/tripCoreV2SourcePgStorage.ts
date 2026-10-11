@@ -175,7 +175,7 @@ export function createCoreSourcePgStorageV2(
             async readClaims(): Promise<FlightOutputClaimV2[]> {
               const rows = (
                 await lease.query(
-                  "SELECT s.slot_id FROM public.trip_source_output_slots s JOIN public.trip_source_confirmations c ON c.id=s.confirmation_id JOIN public.trip_source_runs r ON r.id=s.reviewed_run_id WHERE c.actor_account_id=$1::uuid AND c.trip_id=$2::uuid AND $3::uuid=ANY(r.scope_source_ids) AND s.disposition='CREATE' AND s.no_commit_basis IS NULL LIMIT 65",
+                  "SELECT s.slot_id FROM public.trip_source_output_slots s JOIN public.trip_source_confirmations c ON c.id=s.confirmation_id LEFT JOIN public.trip_source_runs r ON r.id=s.reviewed_run_id WHERE c.actor_account_id=$1::uuid AND c.trip_id=$2::uuid AND ($3::uuid=ANY(r.scope_source_ids) OR EXISTS(SELECT 1 FROM public.trip_source_inputs i WHERE i.confirmation_id=c.id AND i.source_id=$3::uuid)) AND s.disposition='CREATE' AND s.no_commit_basis IS NULL LIMIT 65",
                   [scope.actorAccountId, scope.tripId, sourceId],
                 )
               ).rows;

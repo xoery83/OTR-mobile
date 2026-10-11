@@ -208,10 +208,10 @@ checks current Input validity, descriptor hash and Candidate proposal hash,
 preserves unclassified legacy claims, and persists only uncertified REVIEW or
 BLOCKED metadata. It deliberately rejects certified command storage and
 execution/finalization until the W4 verified Candidate authority is supplied.
-Seven SQL-port tests include the actual preparation function returning
+Eight SQL-port tests include the actual preparation function returning
 UNRESOLVED_IDENTITY with no ready command. They use a deterministic query lease,
 not a PostgreSQL server; owning SQL helper/grants and a disposable SQL acceptance
 run remain required. Latest recheck after shared Core dependency integration:
-15 focused suites / 229 tests plus 7 Source PG binding tests PASS; typecheck and
+15 focused suites / 229 tests plus 8 Source PG binding tests PASS; typecheck and
 lint/UI guard PASS. Earlier broader 14-suite / 347-test run remains recorded
 above; these are different selections, not cumulative test totals.
