@@ -227,8 +227,9 @@ remain explicit gaps; no alternate runtime/provider/writer introduced.
 Implementation commit `8743641f336ce48114a6d35abeb942af2f77897d` was committed
 and pushed to `origin/codex/capture-flight-stage1` after validation and review.
 Initial publication-record commit `b8effbfbfeec80858ecad7d9cd27b8b595637d01` remains
-in the same branch. Addendum publication commit is recorded after final validation;
-its report-record commit is identified in Git history/final message to avoid a
-self-referential hash. Canonical integration **BLOCKED FOR OWNER REVIEW**: pre-existing main
+in the same branch. Addendum implementation commit
+`ff7c2bbfab42b0f4ef5f884abb633a90e84ad152` was pushed to that same branch after
+final validation. Its publication-record commit is identified in Git history/final
+message to avoid a self-referential hash. Canonical integration **BLOCKED FOR OWNER REVIEW**: pre-existing main
 edits overlap `docs/CURRENT_IMPLEMENTATION_STATE.md`, also required for this stage.
 Parallel edits were preserved. No merge, stash, force push or overwrite performed.
