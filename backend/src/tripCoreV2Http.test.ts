@@ -1,3 +1,5 @@
+import { publicationFixture } from "./__fixtures__/tripCoreV2CandidatePublication";
+import { candidatePublicationRequestHash } from "../../src/domain/trip/tripCoreV2CandidatePublication";
 import { createHash, randomUUID } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import { createDevBackendHandler, type DevBackendGateway } from "./app";
@@ -72,6 +74,13 @@ describe("Core2 authenticated HTTP boundary, default CLOSED", () => {
       ).status,
     ).toBe(426);
   });
+  it("returns426 for unknown Capture versions before the closed admission port", async () => {
+    const h = handle();
+    for (const path of ["source-plans/prepare", `source-plans/${randomUUID()}/finalize`])
+      expect((await h(request(path, JSON.stringify({ captureVersion: 1 })))).status).toBe(
+        426,
+      );
+  });
   it("rejects duplicate keys, oversized body, scope forgery and caller authority flags", async () => {
     const h = handle(),
       q = command();
@@ -122,4 +131,74 @@ describe("Core2 authenticated HTTP boundary, default CLOSED", () => {
       "targetRevision",
     ]);
   });
+});
+
+it("bounds the publication route and verifies owning response scope/hash/roster", async () => {
+  const { request: publication } = await publicationFixture();
+  for (const candidate of publication.candidates) {
+    candidate.accountId = actor;
+    candidate.tripId = trip;
+  }
+  const result = {
+    publicationVersion: 2 as const,
+    publicationId: publication.publicationId,
+    accountId: actor,
+    tripId: trip,
+    sourceId: publication.sourceId,
+    sourceRevision: publication.sourceRevision,
+    runId: publication.runId,
+    inputCatalogSha256: publication.inputCatalogSha256,
+    requestSha256: await candidatePublicationRequestHash(publication, hash),
+    candidates: publication.candidates.map((c) => ({
+      candidateId: c.candidateId,
+      candidateSha256: "a".repeat(64),
+      status: "QUALIFIED" as const,
+      errorCode: null,
+    })),
+  };
+  let reply = result;
+  const connection: CoreHttpConnection = {
+    hash,
+    commands: {
+      withLockedCommand: async () => {
+        throw new Error("UNUSED_COMMAND_PORT");
+      },
+    },
+    readOperation: async () => null,
+    publishSourceCandidates: async (owner: string, scope: string) => {
+      expect(owner).toBe(actor);
+      expect(scope).toBe(trip);
+      return reply;
+    },
+  };
+  const post = () =>
+    coreHttpBoundary(
+      request("source-candidates/publish", JSON.stringify(publication)),
+      actor,
+      async () => true,
+      connection,
+    );
+  expect((await post()).status).toBe(200);
+  reply = { ...result, accountId: randomUUID() };
+  expect((await post()).status).toBe(503);
+  reply = { ...result, requestSha256: "0".repeat(64) };
+  expect((await post()).status).toBe(503);
+  reply = { ...result, candidates: result.candidates.slice(0, 1) };
+  expect((await post()).status).toBe(503);
+  expect(
+    (await handle()(request("source-candidates/publish", JSON.stringify(publication))))
+      .status,
+  ).toBe(503);
+  expect(
+    (
+      await handle()(
+        request(
+          "source-candidates/publish",
+          JSON.stringify({ ...publication, publicationVersion: 1 }),
+        ),
+      )
+    ).status,
+  ).toBe(426);
+  publication.candidates[0].accountId = randomUUID();
+  expect((await post()).status).toBe(404);
 });

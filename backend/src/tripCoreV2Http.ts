@@ -24,9 +24,20 @@ import {
   type CoreSourcePlanStorageV2,
 } from "./tripCoreV2Source";
 
+import {
+  coreCandidatePublicationV2Schema,
+  coreCandidatePublicationResultSchema,
+  candidatePublicationRequestHash,
+  type CoreCandidatePublicationResult,
+} from "../../src/domain/trip/tripCoreV2CandidatePublication";
 import { validateCoreReadCollection } from "../../src/domain/trip/tripCoreV2Read";
 import type { createCorePgReader } from "./tripCoreV2PgRead";
 export type CoreHttpConnection = {
+  publishSourceCandidates?(
+    actorAccountId: string,
+    tripId: string,
+    input: unknown,
+  ): Promise<CoreCandidatePublicationResult>;
   read?: ReturnType<typeof createCorePgReader>;
   commands: CoreCommandStorage;
   source?: CoreSourcePlanStorageV2;
@@ -45,6 +56,14 @@ const statusReceipt = z.strictObject({
   outcome: z.enum(["APPLIED", "NO_CHANGE", "REJECTED", "CONFLICT"]),
   targetRevision: z.null(),
 });
+const unsupportedVersion = (
+  input: unknown,
+  key: "contractVersion" | "captureVersion" | "publicationVersion",
+) =>
+  input !== null &&
+  typeof input === "object" &&
+  key in input &&
+  (input as Record<string, unknown>)[key] !== 2;
 const reply = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
     status,
@@ -123,12 +142,7 @@ export async function coreHttpBoundary(
       return reply(200, coreClosedCapabilities);
     if (path === "commands" && request.method === "POST") {
       const input = await body(request);
-      if (
-        input &&
-        typeof input === "object" &&
-        "contractVersion" in input &&
-        input.contractVersion !== 2
-      )
+      if (unsupportedVersion(input, "contractVersion"))
         return failure(426, "UNSUPPORTED_CLIENT");
       const q = validateCoreCommand(input);
       if (q.tripId !== trip) return failure(404, "NOT_VISIBLE");
@@ -145,9 +159,54 @@ export async function coreHttpBoundary(
         await receipt(result, actor, trip, q.operationId, connection.hash),
       );
     }
+    if (path === "source-candidates/publish" && request.method === "POST") {
+      const input = await body(request);
+      if (unsupportedVersion(input, "publicationVersion"))
+        return failure(426, "UNSUPPORTED_CLIENT");
+      const publication = coreCandidatePublicationV2Schema.parse(input);
+      if (
+        publication.candidates.some(
+          (c) =>
+            c.accountId !== actor ||
+            c.tripId !== trip ||
+            c.sourceId !== publication.sourceId ||
+            c.sourceRevision !== publication.sourceRevision ||
+            c.runId !== publication.runId,
+        )
+      )
+        return failure(404, "NOT_VISIBLE");
+      if (!connection?.publishSourceCandidates)
+        return failure(503, "CORE_CAPABILITY_CLOSED");
+      const result = coreCandidatePublicationResultSchema.parse(
+        await connection.publishSourceCandidates(actor, trip, publication),
+      );
+      if (
+        result.accountId !== actor ||
+        result.tripId !== trip ||
+        result.publicationId !== publication.publicationId ||
+        result.sourceId !== publication.sourceId ||
+        result.sourceRevision !== publication.sourceRevision ||
+        result.runId !== publication.runId ||
+        result.inputCatalogSha256 !== publication.inputCatalogSha256 ||
+        result.requestSha256 !==
+          (await candidatePublicationRequestHash(publication, connection.hash)) ||
+        result.candidates
+          .map((c) => c.candidateId)
+          .sort()
+          .join("\0") !==
+          publication.candidates
+            .map((c) => c.candidateId)
+            .sort()
+            .join("\0")
+      )
+        throw new Error("CORE_PUBLICATION_SCOPE_MISMATCH");
+      return reply(200, result);
+    }
     const plan = /^source-plans\/([0-9a-f-]{36})(\/finalize)?$/.exec(path);
     if (path === "source-plans/prepare" && request.method === "POST") {
       const input = await body(request);
+      if (unsupportedVersion(input, "captureVersion"))
+        return failure(426, "UNSUPPORTED_CLIENT");
       if (!connection?.source) return failure(503, "CORE_CAPABILITY_CLOSED");
       return reply(
         200,
@@ -165,6 +224,9 @@ export async function coreHttpBoundary(
       ((request.method === "GET" && !plan[2]) || (request.method === "POST" && plan[2]))
     ) {
       coreUuid.parse(plan[1]);
+      const input = plan[2] ? await body(request) : undefined;
+      if (unsupportedVersion(input, "captureVersion"))
+        return failure(426, "UNSUPPORTED_CLIENT");
       if (!connection?.source) return failure(503, "CORE_CAPABILITY_CLOSED");
       return reply(
         200,
@@ -174,7 +236,7 @@ export async function coreHttpBoundary(
               actor,
               trip,
               plan[1],
-              await body(request),
+              input,
               connection.hash,
             )
           : await readCoreSourcePlanV2(

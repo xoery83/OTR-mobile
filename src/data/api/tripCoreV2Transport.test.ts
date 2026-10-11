@@ -1,3 +1,5 @@
+import { publicationFixture } from "../../../backend/src/__fixtures__/tripCoreV2CandidatePublication";
+import { candidatePublicationRequestHash } from "../../domain/trip/tripCoreV2CandidatePublication";
 import { createHash, randomUUID } from "node:crypto";
 import { it, expect, vi } from "vitest";
 import { createCoreV2Transport } from "./tripCoreV2Transport";
@@ -98,4 +100,58 @@ it("fences a late capability response after A→B→A", async () => {
     token,
   );
   await expect(transport.capabilities(ctx)).rejects.toThrow();
+});
+
+it("validates publication request/response scope and rejects a late account-switched result", async () => {
+  const { request: publication } = await publicationFixture();
+  for (const candidate of publication.candidates) {
+    candidate.accountId = actor;
+    candidate.tripId = trip;
+  }
+  const result = {
+    publicationVersion: 2 as const,
+    publicationId: publication.publicationId,
+    accountId: actor,
+    tripId: trip,
+    sourceId: publication.sourceId,
+    sourceRevision: publication.sourceRevision,
+    runId: publication.runId,
+    inputCatalogSha256: publication.inputCatalogSha256,
+    requestSha256: await candidatePublicationRequestHash(publication, hash),
+    candidates: publication.candidates.map((c) => ({
+      candidateId: c.candidateId,
+      candidateSha256: "a".repeat(64),
+      status: "QUALIFIED" as const,
+      errorCode: null,
+    })),
+  };
+  let current = actor,
+    wrong = false,
+    switchAccount = false;
+  const transport = createCoreV2Transport(
+    async () => current,
+    hash,
+    {
+      baseUrl: "http://core.local",
+      fetchImplementation: async (input, init) => {
+        expect(String(input)).toContain("/source-candidates/publish");
+        expect(JSON.parse(String(init?.body))).toEqual(publication);
+        if (switchAccount) current = randomUUID();
+        return new Response(
+          JSON.stringify({ ...result, accountId: wrong ? randomUUID() : actor }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      },
+    },
+    token,
+  );
+  const context = await captureAccountRequestContext(trip, async () => actor);
+  expect(await transport.publishSourceCandidates(context, publication)).toEqual(result);
+  wrong = true;
+  await expect(transport.publishSourceCandidates(context, publication)).rejects.toThrow(
+    "CORE_PUBLICATION_SCOPE_MISMATCH",
+  );
+  wrong = false;
+  switchAccount = true;
+  await expect(transport.publishSourceCandidates(context, publication)).rejects.toThrow();
 });

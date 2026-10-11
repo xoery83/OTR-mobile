@@ -11,11 +11,18 @@ import {
   type CoreCommand,
 } from "../../domain/trip/tripCoreV2Commands";
 import { coreUuid, coreHash } from "../../domain/trip/tripCoreV2";
-import { parseCoreJson } from "../../domain/trip/tripCoreV2Json";
+import { canonicalCoreJson, parseCoreJson } from "../../domain/trip/tripCoreV2Json";
 import {
   validateCoreReceipt,
   type CoreReceiptProjection,
 } from "../../domain/trip/tripCoreV2Receipt";
+import {
+  coreCandidatePublicationV2Schema,
+  coreCandidatePublicationResultSchema,
+  candidatePublicationRequestHash,
+  type CoreCandidatePublicationV2,
+  type CoreCandidatePublicationResult,
+} from "../../domain/trip/tripCoreV2CandidatePublication";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
 import {
   validateCoreReadCollection,
@@ -41,13 +48,19 @@ const full = z.strictObject({
   domainReceiptId: coreUuid,
   receipt: z.unknown(),
 });
+export type CoreCandidatePublicationTransport = {
+  publishSourceCandidates(
+    ctx: AccountRequestContext,
+    input: CoreCandidatePublicationV2,
+  ): Promise<CoreCandidatePublicationResult>;
+};
 // Transport only. Accepted apply, queue ownership and retry stay in existing data layers.
 export function createCoreV2Transport(
   getAccountId: () => Promise<string>,
   hash: ImportHash,
   options: Omit<ApiClientOptions, "accessToken" | "accessTokenProvider"> = {},
   tokenProvider?: Parameters<typeof createAuthenticatedApiClient>[1],
-): CoreSyncTransport & CoreReadTransport {
+): CoreSyncTransport & CoreReadTransport & CoreCandidatePublicationTransport {
   const api = (ctx: AccountRequestContext, maximum = 1048576) =>
     createAuthenticatedApiClient(
       {
@@ -103,6 +116,52 @@ export function createCoreV2Transport(
       );
       await assertAccountRequestContext(ctx, getAccountId);
       return { manifest: validated.manifest, pages: bundle.pages as CoreReadPage[] };
+    },
+    async publishSourceCandidates(ctx, input) {
+      await assertAccountRequestContext(ctx, getAccountId);
+      const publication = coreCandidatePublicationV2Schema.parse(input);
+      if (
+        publication.candidates.some(
+          (c) =>
+            c.accountId !== ctx.accountId ||
+            c.tripId !== ctx.tripId ||
+            c.sourceId !== publication.sourceId ||
+            c.sourceRevision !== publication.sourceRevision ||
+            c.runId !== publication.runId,
+        )
+      )
+        throw new Error("CORE_PUBLICATION_SCOPE_MISMATCH");
+      if (new TextEncoder().encode(canonicalCoreJson(publication)).length > 32768)
+        throw new Error("CORE_REQUEST_LIMIT");
+      const result = await api(ctx).post(
+        path(ctx) + "/source-candidates/publish",
+        publication,
+        coreCandidatePublicationResultSchema,
+        headers,
+      );
+      await assertAccountRequestContext(ctx, getAccountId);
+      if (
+        result.accountId !== ctx.accountId ||
+        result.tripId !== ctx.tripId ||
+        result.publicationId !== publication.publicationId ||
+        result.sourceId !== publication.sourceId ||
+        result.sourceRevision !== publication.sourceRevision ||
+        result.runId !== publication.runId ||
+        result.inputCatalogSha256 !== publication.inputCatalogSha256 ||
+        result.requestSha256 !==
+          (await candidatePublicationRequestHash(publication, hash)) ||
+        result.candidates
+          .map((c) => c.candidateId)
+          .sort()
+          .join("\0") !==
+          publication.candidates
+            .map((c) => c.candidateId)
+            .sort()
+            .join("\0")
+      )
+        throw new Error("CORE_PUBLICATION_SCOPE_MISMATCH");
+      await assertAccountRequestContext(ctx, getAccountId);
+      return result;
     },
     async capabilities(ctx) {
       await assertAccountRequestContext(ctx, getAccountId);
