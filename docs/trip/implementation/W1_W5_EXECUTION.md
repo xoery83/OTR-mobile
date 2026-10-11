@@ -69,3 +69,28 @@ An exact preparation replay returns the immutable original proposal hash/review 
 correction needs a new explicit proposal/plan. GET source-plan transport wraps the
 unchanged §3 status envelope as `{captureVersion:2,plan,status}`; §6 did not enumerate
 an outer wrapper. This changes no admission authority or product semantics.
+
+## Isolated persistence checkpoint
+
+SQLite54 mirrors the 31 finite accepted tables in an account/Trip partition, retains
+verified read2 Person bindings, and uses existing sync_operations for durable Core
+intent identity. Offline predictions carry localState=PENDING and certificate0;
+accepted projection carries its actual certificate generation. Revocation UPSERT is
+persistent before first read. Actual Node SQLite upgrade/restart/rollback/read/privacy
+acceptance:9 tests PASS. This is SQLite engine evidence, not Expo native-device E2E.
+
+Core85/86 applied from a fresh owned synthetic Server84 clone; all329 historical
+public functions retain exact SHA256 fingerprints. Rollback-only RLS tests prove
+owner/Group/Selected visibility, no organizer PRIVATE override, outsider rejection,
+reserved non-login roles, no public write privilege and closed writer rejection.
+The actual field-state test caught and fixed a new helper-name/scope mismatch before
+commit. Neither historical migrations nor accepted v1 function bodies were edited.
+Run scripts/trip/core-v2-sql-acceptance.py against the pre-created local synthetic
+image otr-core-v2-server84-fixture:20261012. It creates only a UUID-named network-none
+clone, never pulls, and removes only that clone. This image is a read-only snapshot of
+the existing stopped synthetic cp15 fixture; there is no hosted connection and no
+migration-journal or provider/native proof. Existing database containers are untouched.
+
+Remaining: owning PostgreSQL command/Source bindings, authenticated HTTP and sync
+composition, custody/Ledger capability verification, full typed supplemental bundles,
+Day scenarios and all twenty target traces. Current checkpoint is not W1–W5 completion.
