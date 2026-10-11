@@ -152,7 +152,7 @@ export const FLIGHT_INTERPRETATION_SCHEMA = {
   id: "otr.import.flight",
   version: 1,
   normalization_version: 1,
-  reference_grammar: 1,
+  reference_grammar: 2,
   field_paths: FLIGHT_OBSERVATION_PATHS,
   candidate_families: ["transport_subtype", "title", "origin", "destination", "services"],
 };
@@ -473,8 +473,13 @@ function consolidateProposal(
   }
   for (const role of ["origin", "destination"] as const) {
     const airport = get(`${role}.airport`) as { value: string } | null;
+    const placeLabel = get(`${role}.place_label`) as string | null;
     const paths = Object.keys(occurrence).filter((p) => p.startsWith(`${role}.`));
-    if (!airport || paths.some((p) => occurrence[p].knowledge === "AMBIGUOUS")) continue;
+    if (
+      (!airport && !placeLabel) ||
+      paths.some((p) => occurrence[p].knowledge === "AMBIGUOUS")
+    )
+      continue;
     const clock = get(`${role}.local_time`) as {
       value: string;
       precision: number;
@@ -504,7 +509,7 @@ function consolidateProposal(
       proposed_value: {
         time,
         location: {
-          authored_label: airport.value,
+          authored_label: airport?.value ?? placeLabel!,
           authored_text: null,
           accepted_place_id: null,
         },

@@ -14,7 +14,7 @@ import { canonicalEventJson, type Json } from "./eventIntentJson";
 export const REFERENCE_FLIGHT_DESCRIPTOR = {
   plugin_id: "otr-reference-flight",
   boundary_version: "otr-intelligence-v1",
-  adapter_version: "1",
+  adapter_version: "2",
   model_version: "NO_MODEL",
   execution_location: "DETERMINISTIC_LOCAL",
   capabilities: ["STRUCTURED_EXTRACTION", "BATCH_N_TO_M_EXTRACTION", "EVIDENCE_MAPPING"],
@@ -38,7 +38,7 @@ export const UNKNOWN_FLIGHT_TIME: z.infer<typeof flightTimeInputSchema> = {
   source_instant_precision: null,
   fold_choice: null,
 };
-const designator = /^([A-Z0-9]{2})([0-9]{1,4}[A-Z]?)$/;
+const designator = /^([A-Z][A-Z0-9]|[0-9][A-Z])([0-9]{1,4}[A-Z]?)$/;
 function service(raw: string, operating = false): FlightService {
   const literal = raw.replace(/^(?:flight\s*[:=]\s*|operating\s*[:=]\s*)/i, "").trim();
   const match = designator.exec(literal);
@@ -62,6 +62,8 @@ export const FLIGHT_OBSERVATION_PATHS = [
   "operating_service",
   "origin.airport",
   "destination.airport",
+  "origin.place_label",
+  "destination.place_label",
   ...["origin", "destination"].flatMap((role) =>
     [
       "local_date",
@@ -102,11 +104,18 @@ export function normalizeFlightObservation(
   if (["service", "transport_subtype"].includes(path) && label && label !== "flight")
     throw new Error("EVIDENCE_INVALID");
   if (path === "transport_subtype") {
-    service(raw);
+    if (!/^Flight$/i.test(raw.trim())) service(raw);
     value = "FLIGHT";
   } else if (path === "service" || path === "operating_service")
     value = service(raw, path === "operating_service");
-  else if (path.endsWith(".airport")) {
+  else if (path.endsWith(".place_label")) {
+    const route = /^([A-Za-z][A-Za-z .'-]{0,127}) to ([A-Za-z][A-Za-z .'-]{0,127})$/.exec(
+      raw.trim(),
+    );
+    if (!route && !/^[A-Za-z][A-Za-z .'-]{0,127}$/.test(raw.trim()))
+      throw new Error("INPUT_INVALID");
+    value = route ? route[path.startsWith("origin") ? 1 : 2] : raw.trim();
+  } else if (path.endsWith(".airport")) {
     const route = /^(?:route\s*[:=]\s*)?([A-Z]{3})\s*(?:→|->)\s*([A-Z]{3})$/i.exec(
       raw.trim(),
     );
@@ -116,14 +125,26 @@ export function normalizeFlightObservation(
       value: route[path.startsWith("origin") ? 1 : 2].toUpperCase(),
     };
   } else if (path.endsWith(".local_date")) {
+    const english =
+      /^(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+)?(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})$/i.exec(
+        literal,
+      );
+    const normalized = english
+      ? `${english[3]}-${String("jan feb mar apr may jun jul aug sep oct nov dec".split(" ").indexOf(english[2].toLowerCase()) + 1).padStart(2, "0")}-${english[1].padStart(2, "0")}`
+      : literal;
     const parsed = flightTimeInputSchema.safeParse({
       ...UNKNOWN_FLIGHT_TIME,
-      local_date: literal,
+      local_date: normalized,
     });
     if (!parsed.success) return { value: null, uncertainty: ["UNRESOLVED_DATE"] };
-    value = literal;
+    value = normalized;
   } else if (path.endsWith(".local_time")) {
-    const clock = literal.replace(/^~/, "");
+    const ampm = /^(\d{1,2}):(\d{2})\s+(AM|PM)$/i.exec(literal);
+    if (ampm && (Number(ampm[1]) < 1 || Number(ampm[1]) > 12))
+      return { value: null, uncertainty: ["UNRESOLVED_CLOCK"] };
+    const clock = ampm
+      ? `${String((Number(ampm[1]) % 12) + (ampm[3].toUpperCase() === "PM" ? 12 : 0)).padStart(2, "0")}:${ampm[2]}`
+      : literal.replace(/^~/, "");
     const precision =
       clock.length === 5 ? -1 : clock.includes(".") ? clock.split(".")[1].length : 0;
     const quality = literal.startsWith("~") ? "ESTIMATED" : "EXACT";
@@ -235,19 +256,77 @@ export async function referenceFlightExtract(
       // to it until the next leg or unrelated row. No OCR/transport is performed.
       const lines = [...material.text.matchAll(/[^\n]+/g)];
       let current: InterpretationItem | undefined;
-      for (const line of lines) {
+      let tableMarker: { raw: string; at: number } | undefined;
+      const consumed = new Set<number>();
+      let ignoredCharEnd = 0,
+        ignoredByteEnd = 0;
+      const ignore = (start: number, end: number) => {
+        const gap = material.text.slice(ignoredCharEnd, start);
+        const startByte = ignoredByteEnd + new TextEncoder().encode(gap).length;
+        const endByte =
+          startByte + new TextEncoder().encode(material.text.slice(start, end)).length;
+        const locator = {
+          input_id: material.pin.id,
+          kind: "TEXT_SPAN" as const,
+          page: null,
+          start: startByte,
+          end: endByte,
+          region: null,
+        };
+        const previous = ignored.at(-1);
+        if (previous && /^\s*$/.test(gap)) previous.end = endByte;
+        else ignored.push(locator);
+        ignoredCharEnd = end;
+        ignoredByteEnd = endByte;
+      };
+      for (const [lineNumber, line] of lines.entries()) {
+        if (consumed.has(lineNumber)) continue;
         const body = line[0].replace(/\r$/, "");
+        if (/^(?:Your flights|Flight details)$/i.test(body.trim())) {
+          const at = body.toLowerCase().indexOf("flight");
+          tableMarker = { raw: body.slice(at, at + 6), at: line.index! + at };
+          current = undefined;
+          ignore(line.index!, line.index! + body.length);
+          continue;
+        }
+        const placeRoute =
+          tableMarker &&
+          /^([A-Za-z][A-Za-z .'-]{0,127}) to ([A-Za-z][A-Za-z .'-]{0,127})$/.test(
+            body.trim(),
+          );
+        const table = placeRoute && lines.slice(lineNumber + 1, lineNumber + 11);
+        const tableLeg =
+          table &&
+          table.length === 10 &&
+          [table[3], table[8]].every((l) =>
+            /^[A-Za-z][A-Za-z .'-]{0,127}$/.test(l[0].trim()),
+          ) &&
+          /^Departure$/i.test(table[0][0].trim()) &&
+          /^Arrival$/i.test(table[5][0].trim()) &&
+          [table[1], table[6]].every((l) =>
+            /^\d{1,2}:\d{2}\s+(AM|PM)$/i.test(l[0].trim()),
+          ) &&
+          [table[2], table[7]].every((l) =>
+            /^(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+)?\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$/i.test(
+              l[0].trim(),
+            ),
+          );
+        if (!tableLeg) tableMarker = undefined;
         const head =
-          /^\s*(?:Flight\s*[:=]\s*)?([A-Z0-9]{2}[0-9]{1,4}[A-Z]?)(?=\s|[;|]|$)/.exec(
+          /^\s*(?:Flight\s*[:=]\s*)?((?:[A-Z][A-Z0-9]|[0-9][A-Z])[0-9]{1,4}[A-Z]?)(?=\s|[;|]|$)/.exec(
+            body,
+          );
+        // Only an explicit Flight marker starts a numberless leg; route prose is not enough.
+        const sparseHead =
+          /^\s*(Flight)(?=\s+(?:route\s*[:=]\s*)?[A-Z]{3}\s*(?:→|->)\s*[A-Z]{3})/i.exec(
             body,
           );
         const labelled =
           /^\s*(?:date|depDate|arrDate|departure|arrival|dep|arr|route|depZone|arrZone|depOffset|arrOffset|depInstant|arrInstant|passenger|pnr|seat|ticket|baggage|fare|cabin|occurrence|change)\s*[:=]/i.test(
             body,
           );
-        if (!head && (!current || !labelled)) {
-          if (body.trim())
-            ignored.push(textSpan(material, line.index!, line.index! + body.length));
+        if (!head && !sparseHead && !tableLeg && (!current || !labelled)) {
+          if (body.trim()) ignore(line.index!, line.index! + body.length);
           if (ignored.length > 64) throw new Error("LIMIT_EXCEEDED");
           current = undefined;
           continue;
@@ -255,7 +334,8 @@ export async function referenceFlightExtract(
         const covered: [number, number][] = [];
         const add = (path: string, raw: string, at: number) => {
           if (raw.length > 5000) throw new Error("LIMIT_EXCEEDED");
-          covered.push([at - line.index!, at - line.index! + raw.length]);
+          if (at >= line.index! && at + raw.length <= line.index! + body.length)
+            covered.push([at - line.index!, at - line.index! + raw.length]);
           const id = `f:${material.pin.id}:${new TextEncoder().encode(material.text.slice(0, at)).length}:${new TextEncoder().encode(raw).length}`;
           if (!localFragments.some((f) => f.id === id))
             localFragments.push({
@@ -275,7 +355,7 @@ export async function referenceFlightExtract(
             uncertainty: normalized.uncertainty,
           });
         };
-        if (head) {
+        if (head || sparseHead || tableLeg) {
           current = {
             token: `item:${material.pin.id}:${line.index}`,
             schema_id: "otr.import.flight",
@@ -283,16 +363,43 @@ export async function referenceFlightExtract(
             deferred: [],
           };
           localItems.push(current);
-          const raw = head[0].trim(),
-            at = line.index! + head[0].indexOf(raw);
+          const marker = head ?? sparseHead;
+          const raw = marker ? marker[0].trim() : tableMarker!.raw,
+            at = marker ? line.index! + marker[0].indexOf(raw) : tableMarker!.at;
           add("transport_subtype", raw, at);
-          add("service", raw, at);
+          if (head) add("service", raw, at);
         }
-        for (const route of body.matchAll(
-          /(?:route\s*[:=]\s*)?[A-Z]{3}\s*(?:→|->)\s*[A-Z]{3}/gi,
-        )) {
-          add("origin.airport", route[0], line.index! + route.index!);
-          add("destination.airport", route[0], line.index! + route.index!);
+        if (tableLeg && table) {
+          const route = body.trim();
+          add("origin.place_label", route, line.index! + body.indexOf(route));
+          add("destination.place_label", route, line.index! + body.indexOf(route));
+          for (const [role, index] of [
+            ["origin", 3],
+            ["destination", 8],
+          ] as const) {
+            const entry = table[index],
+              raw = entry[0].trim();
+            add(`${role}.place_label`, raw, entry.index! + entry[0].indexOf(raw));
+          }
+          for (let index = 0; index < table.length; index++) {
+            consumed.add(lineNumber + 1 + index);
+            if ([0, 4, 5, 9].includes(index))
+              ignore(table[index].index!, table[index].index! + table[index][0].length);
+          }
+          for (const [role, clockIndex, dateIndex] of [
+            ["origin", 1, 2],
+            ["destination", 6, 7],
+          ] as const) {
+            for (const [index, path] of [
+              [clockIndex, `${role}.local_time`],
+              [dateIndex, `${role}.local_date`],
+            ] as const) {
+              const entry = table[index];
+              const raw = entry[0].trim();
+              add(path, raw, entry.index! + entry[0].indexOf(raw));
+              consumed.add(lineNumber + 1 + index);
+            }
+          }
         }
         for (const entry of body.matchAll(
           /\b(date|depDate|arrDate|departure|arrival|dep|arr|depZone|arrZone|depOffset|arrOffset|depInstant|arrInstant|operating|occurrence|change)\s*[:=]\s*([^;|\n]+?)(?=\s+[A-Za-z]+\s*[:=]|[;|]|$)/gi,
@@ -317,12 +424,6 @@ export async function referenceFlightExtract(
                   ? "change_notice"
                   : `${role}.${suffix}`;
           add(path, entry[0].trimEnd(), line.index! + entry.index!);
-        }
-        // A bare ISO date on a compact itinerary row is its departure-local date.
-        if (head && !/\b(?:date|depDate)\s*[:=]/i.test(body)) {
-          const date = /\b\d{4}-\d{2}-\d{2}\b/.exec(body);
-          if (date && !body.slice(0, date.index).endsWith("Instant="))
-            add("origin.local_date", date[0], line.index! + date.index);
         }
         const dimensions: Record<
           string,
@@ -356,10 +457,32 @@ export async function referenceFlightExtract(
             reason: "UNSUPPORTED_DIMENSION",
           });
         }
+        for (const route of body.matchAll(
+          /(?:route\s*[:=]\s*)?[A-Z]{3}(?:\s*(?:→|->)\s*[A-Z]{3})+/gi,
+        )) {
+          const at = route.index!;
+          if (covered.some(([start, end]) => at < end && at + route[0].length > start))
+            continue;
+          // An itinerary chain does not establish a service-to-leg pairing.
+          if (route[0].split(/→|->/).length !== 2) continue;
+          add("origin.airport", route[0], line.index! + route.index!);
+          add("destination.airport", route[0], line.index! + route.index!);
+        }
+        // A bare ISO date on a compact itinerary row is its departure-local date.
+        if ((head || sparseHead) && !/\b(?:date|depDate)\s*[:=]/i.test(body)) {
+          for (const date of body.matchAll(
+            /(?:^|[\s;|])(\d{4}-\d{2}-\d{2})(?=$|[\s;|])/g,
+          )) {
+            const at = date.index! + date[0].indexOf(date[1]);
+            if (covered.some(([start, end]) => at < end && at + date[1].length > start))
+              continue;
+            add("origin.local_date", date[1], line.index! + at);
+          }
+        }
         let cursor = 0;
         const ignoreGap = (start: number, end: number) => {
           if (body.slice(start, end).replace(/[\s;|/]+/g, "").length)
-            ignored.push(textSpan(material, line.index! + start, line.index! + end));
+            ignore(line.index! + start, line.index! + end);
         };
         for (const [start, end] of covered.sort((a, b) => a[0] - b[0])) {
           if (start > cursor) ignoreGap(cursor, start);

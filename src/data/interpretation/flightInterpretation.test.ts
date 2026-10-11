@@ -431,13 +431,26 @@ describe("interpretation admission and evidence validation", () => {
     const r = await interpretFlightBatch(b, deps);
     expect(Object.isFrozen(r.candidates[0].occurrence.service.observations)).toBe(true);
   });
-  it("more than 64 ignored text rows are explicitly deferred, not truncated", async () => {
+  it("coalesces more than 64 adjacent ignored rows without losing any bytes", async () => {
+    const text = Array.from({ length: 65 }, (_, i) => `Hotel row ${i}`).join("\n");
+    const r = await run([text, leg]);
+    expect(r.status).toBe("SUCCEEDED");
+    expect(r.coverage[0].ignored).toHaveLength(1);
+    expect(r.coverage[0].ignored[0]).toMatchObject({
+      start: 0,
+      end: new TextEncoder().encode(text).length,
+    });
+    expect(r.failures).toHaveLength(0);
+  });
+  it("more than 64 disjoint ignored spans are deferred without truncation", async () => {
     const r = await run([
-      Array.from({ length: 65 }, (_, i) => `Hotel row ${i}`).join("\n"),
+      "NZ289\n" +
+        Array.from({ length: 65 }, (_, i) => `pnr=SYNTHETIC; unmapped-${i}`).join("\n"),
       leg,
     ]);
     expect(r.status).toBe("PARTIAL");
     expect(r.coverage[0]).toMatchObject({ status: "DEFERRED", code: "LIMIT_EXCEEDED" });
+    expect(r.coverage[0].item_tokens).toEqual([]);
     expect(r.failures[0]).toMatchObject({
       category: "LIMIT_EXCEEDED",
       execution_certainty: "TERMINAL",

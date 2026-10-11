@@ -1,3 +1,19 @@
+## Capture Flight-first Stage 1 — 2026-10-12 / INTERPRETATION + EVIDENCE PASS
+
+- Isolated branch `codex/capture-flight-stage1` from freshly fetched `741579c`.
+  Existing deterministic extractor/grammar v2 handles sparse return/native-text
+  tables and ordered rebooking mentions; exact evidence pins and UNKNOWNs retained.
+- Actual private local samples: PDFKit 1→2 and Vision OCR 1→4 PASS on macOS.
+  Capture native PDF/OCR wiring and iPhone NOT VERIFIED; Foundation Models NOT
+  WIRED (host available, zero requests); Remote LLM/DeepSeek NOT ACTIVATED.
+- Final 3502 tests:3485 PASS/2 existing baseline FAIL/15 SKIP; typecheck, lint/UI
+  guard, Backend build and independent targeted review PASS. No new regressions.
+- CORE ADAPTER BLOCKED: accepted multi-output contract absent; UNKNOWN sibling
+  fence intact. CANONICAL ADMISSION NOT AUTHORIZED; DAY FEED NOT VERIFIED.
+- Report: `architecture/OTR_CAPTURE_FLIGHT_FIRST_STAGE1_REPORT.md`.
+  Canonical integration requires Owner review of overlapping existing handoff edits;
+  other worktrees/private originals preserved. No providers/C5/C9/device activation.
+
 ## R3-B Native Catalog → SQLite53 — 2026-10-11 / PASS
 
 - Accepted canonical8b5c603/R3-A6 verified. Explicit native factory connects the
