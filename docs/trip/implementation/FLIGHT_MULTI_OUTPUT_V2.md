@@ -4,7 +4,8 @@ Owner authorized this bounded implementation on 2026-10-12. Base canonical main
 741579c; Capture baseline 8e45c8d. W0 Capture handoff sections 5–6 remain the
 normative plan/command/receipt transport. The W1–W5 foundation chat owns the
 shared schema, private writer, access, CAS and receipt implementation; this
-worktree contributes the narrow Flight purpose validator and its regressions.
+worktree contributes the narrow Flight purpose validator, owning Source port,
+and their regressions.
 
 Root cause reproduced at741579c: the first reviewed CP13A preparation allocates an
 active CREATE claim without a result receipt. `readClosureEvidence` loads every
@@ -29,8 +30,6 @@ Sparse Flight save has no qualified occurrence certificate and uses the existing
 separate save/qualification boundary. This helper does not grant mutation rights,
 change participation/visibility, relax Flight Option A, write any domain row or
 reconcile a receipt. Those remain owning Core command/repository responsibilities.
-
-Integration ports and validation evidence will be recorded after implementation.
 
 ## Core helper port
 

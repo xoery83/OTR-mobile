@@ -702,6 +702,50 @@ describe("exact receipt-dependent Flight update", () => {
         expect(rows).toEqual([]);
     f.store.close();
   });
+  it("preserves an existing independent Booking through Flight preparation and qualification", async () => {
+    const f = await dependencyFixture();
+    const before = applyCoreCommand(
+      emptyCoreGraph(),
+      {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId: id(701),
+        tripId: actor.tripId,
+        command: "CREATE_BOOKING",
+        target: { kind: "BOOKING", id: id(702) },
+        baseVector: [{ kind: "BOOKING", id: id(702), revision: null }],
+        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        payload: {
+          fields: { title: "Independent booking" },
+          observations: [],
+          itemIds: [],
+          entitlementIds: [],
+          documentIds: [],
+          acl: { visibility: "PRIVATE", people: [] },
+        },
+      },
+      actor,
+      "2026-10-12T00:00:00Z",
+    ).graph;
+    f.store.set("graph", before);
+    const first = await prepare(f.store, f.request);
+    await f.store.execute(first.readyCommands[0]);
+    const second = await prepare(f.store, f.request);
+    await f.store.execute(second.readyCommands[0]);
+    const after = f.store.get<CoreGraph>("graph");
+    for (const [key, rows] of Object.entries(before))
+      if (
+        ![
+          "itinerary_events",
+          "trip_flight_intents",
+          "itinerary_transport_endpoints",
+          "itinerary_transport_services",
+        ].includes(key)
+      )
+        expect(after[key as keyof CoreGraph]).toEqual(rows);
+    expect(after.itinerary_reservations).toHaveLength(1);
+    f.store.close();
+  });
   it("keeps the prerequisite revision and rejects stale update rather than rebasing to latest", async () => {
     const f = await dependencyFixture();
     const p = await prepare(f.store, f.request);
