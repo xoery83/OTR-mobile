@@ -119,8 +119,9 @@ remain explicit gaps; no alternate runtime/provider/writer introduced.
 
 ## Publication
 
-Scoped branch commit/push authorized after validation and review. Commit identity
-is recorded in Git history and final completion message, avoiding a self-referential
-report hash. Canonical integration **BLOCKED FOR OWNER REVIEW**: pre-existing main
+Implementation commit `8743641f336ce48114a6d35abeb942af2f77897d` was committed
+and pushed to `origin/codex/capture-flight-stage1` after validation and review.
+The publication-record documentation commit is identified by Git history and the
+final completion message, avoiding a self-referential report hash. Canonical integration **BLOCKED FOR OWNER REVIEW**: pre-existing main
 edits overlap `docs/CURRENT_IMPLEMENTATION_STATE.md`, also required for this stage.
 Parallel edits were preserved. No merge, stash, force push or overwrite performed.
