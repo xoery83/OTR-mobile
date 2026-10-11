@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { canonicalEventJson, parseEventJson, type Json } from "./eventIntentJson";
+import { canonicalCoreJson, parseCoreJson, type Json } from "./tripCoreV2Json";
 import { coreBoundarySchema } from "./tripCoreV2Temporal";
 import { validateCalendarDate } from "./dayReadModel";
 export const CORE_V2 = 2 as const;
@@ -58,7 +58,7 @@ export const coreFieldState = z
     (v) =>
       Object.keys(v).length <= 256 &&
       Object.keys(v).every(isCoreFieldAddress) &&
-      new TextEncoder().encode(canonicalEventJson(v as Json)).length <= 32768,
+      new TextEncoder().encode(canonicalCoreJson(v as Json)).length <= 32768,
   );
 const region = z
   .strictObject({
@@ -724,7 +724,7 @@ export const coreScheduleSchema = z.strictObject({
 });
 export function parseCoreWire(text: string): unknown {
   if (new TextEncoder().encode(text).length > 32768) throw new Error("INVALID_WIRE");
-  return parseEventJson(text);
+  return parseCoreJson(text);
 }
 export function coreDefaults(role: "organizer" | "member") {
   return {
@@ -740,7 +740,7 @@ export function coreDefaults(role: "organizer" | "member") {
 export function isCoreFieldAddress(address: string): boolean {
   const [table, ...parts] = address.split(".");
   const schema = coreTableSchemas[table as CoreTable];
-  if (!schema || parts.length < 1 || parts.length > 2) return false;
+  if (!schema || parts.length < 1) return false;
   const field = parts.at(-1)!;
   if (
     [
@@ -756,10 +756,12 @@ export function isCoreFieldAddress(address: string): boolean {
     ].includes(field)
   )
     return false;
-  if (parts.length === 2) {
-    const role = parts[0];
+  if (parts.length > 1) {
+    const role = parts.slice(0, -1).join(".");
     if (table === "itinerary_transport_services") {
       if (!/^[A-Za-z0-9._:-]{1,32}$/.test(role)) return false;
+    } else if (table === "trip_stay_rooms") {
+      if (!coreUuid.safeParse(role).success) return false;
     } else if (
       !(
         table === "itinerary_transport_endpoints" || table === "trip_endpoint_details"

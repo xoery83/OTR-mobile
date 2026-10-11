@@ -2,6 +2,7 @@ import { coreCanRead } from "./tripCoreV2Mutation";
 import type { CoreActor, CoreGraph, CoreRow } from "./tripCoreV2Mutation";
 import { coreStoredBoundary, type CoreBoundary } from "./tripCoreV2Temporal";
 import { instantMicroseconds } from "./dayReadModel";
+import { canonicalCoreJson } from "./tripCoreV2Json";
 export type CoreBoundaryView = {
   comparable: boolean;
   localDate?: string;
@@ -213,8 +214,14 @@ export function projectCoreDay(
   for (const row of rows) {
     if (row.family !== "P4" || !row.displayTime?.comparable || !row.place) continue;
     const item = active.find((x) => x.id === row.itemRef)!;
-    const placeKey = row.place.placeId ?? row.place.authoredLabel;
-    if (!placeKey) continue;
+    if (
+      !row.place.placeId &&
+      !row.place.authoredLabel &&
+      !row.place.authoredAddress &&
+      !row.place.authoredText
+    )
+      continue;
+    const placeKey = canonicalCoreJson(row.place);
     const key = [
       row.rowKey.projectionRole,
       localDate,

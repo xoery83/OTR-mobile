@@ -4,8 +4,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { canonicalEventJson, type Json } from "@/domain/trip/eventIntentJson";
-import { importDigest } from "@/domain/trip/flightImportReview";
+import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
+import { coreHashValue as importDigest } from "@/domain/trip/tripCoreV2Read";
 import type { FlightOutputClaimV2 } from "@/domain/trip/flightOutputPurposeV2";
 import { coreDefaults } from "@/domain/trip/tripCoreV2";
 import {
@@ -24,6 +24,7 @@ import {
   type CoreSourceStoredPlanV2,
   type CoreSourcePrepareV2,
 } from "./tripCoreV2Source";
+import { executeCoreCommandV2 } from "./tripCoreV2Commands";
 import intents from "@/data/repositories/__fixtures__/tripImportIntents.json";
 import { flightCommandLeaves, type FlightValues } from "@/domain/trip/flightAdmission";
 const id = (n: number) => `fb000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -37,7 +38,7 @@ const actor = {
 };
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
-const json = (value: unknown) => canonicalEventJson(value as Json);
+const json = (value: unknown) => canonicalCoreJson(value as Json);
 const directories: string[] = [];
 afterEach(() => {
   for (const directory of directories.splice(0))
@@ -203,68 +204,79 @@ class Store implements CoreSourcePlanStorageV2 {
     }
   }
   async execute(command: CoreCommand) {
-    const prior = this.db
-      .prepare("SELECT id,body FROM receipts WHERE op=?")
-      .get(command.operationId);
-    if (prior)
-      return {
-        domainReceiptId: prior.id as string,
-        receipt: JSON.parse(prior.body as string),
-      };
-    const graph = this.get<CoreGraph>("graph");
-    let applied: ReturnType<typeof applyCoreCommand> | null = null,
-      errorCode: string | null = null;
-    try {
-      applied = applyCoreCommand(graph, command, actor, "2026-10-12T00:00:00Z", true);
-    } catch (error) {
-      errorCode = (error as Error).message;
-    }
-    const body = {
-      receiptVersion: 2,
-      commandVersion: 2,
-      intentVersion: 2,
-      actorAccountId: actor.accountId,
-      tripId: actor.tripId,
-      operationId: command.operationId,
-      command: command.command,
-      intentSha256: await importDigest("otr-trip-core-intent-v2", command as Json, hash),
-      targetVector: command.baseVector.map((v) => ({
-        kind: v.kind,
-        id: v.id,
-        baseRevision: v.revision,
-        committedRevision: applied ? (v.revision ?? 0) + 1 : null,
-      })),
-      outcome: applied ? "APPLIED" : "CONFLICT",
-      result: {
-        created:
-          applied && command.command === "CREATE_SPARSE_FLIGHT" ? [command.target] : [],
-        changed:
-          applied && command.command !== "CREATE_SPARSE_FLIGHT" ? [command.target] : [],
-        retiredEdges: [],
-        replacement: null,
-        custodyGrantId: null,
+    const record = await executeCoreCommandV2(
+      {
+        withLockedCommand: async (scope, work) => {
+          if (scope.actorAccountId !== actor.accountId || scope.tripId !== actor.tripId)
+            throw new Error("NOT_VISIBLE");
+          this.db.exec("BEGIN IMMEDIATE");
+          try {
+            const result = await work({
+              actor,
+              readReceipt: async () => {
+                const row = this.db
+                  .prepare("SELECT id,body FROM receipts WHERE op=?")
+                  .get(scope.operationId);
+                return row
+                  ? { domainReceiptId: row.id as string, receiptText: row.body as string }
+                  : null;
+              },
+              hasLegacyOperation: async () => false,
+              canReadReceipt: async () => true,
+              enabledCommands: async () => [
+                "CREATE_SPARSE_FLIGHT",
+                "QUALIFY_FLIGHT",
+                "UPDATE_FLIGHT_FACTS",
+                "REPLACE_FLIGHT_SERVICE",
+              ],
+              readLockedGraph: async () => this.get<CoreGraph>("graph"),
+              verifyAdmission: async (q, sha) => {
+                if (q.admission.mode === "MANUAL") return;
+                const plan = this.plans().find((p) =>
+                  p.slots.some((s) => s.proposed.slotId === q.admission.sourceIntentId),
+                );
+                const slot = plan?.slots.find(
+                  (s) => s.proposed.slotId === q.admission.sourceIntentId,
+                );
+                if (
+                  !plan ||
+                  plan.scope.actorAccountId !== actor.accountId ||
+                  plan.scope.tripId !== actor.tripId ||
+                  !slot?.certified ||
+                  slot.state !== "READY" ||
+                  slot.intentSha256 !== sha ||
+                  json(slot.command) !== json(q)
+                )
+                  throw new Error("INVALID_PROVENANCE");
+              },
+              lifecycleGraphHash: async () => undefined,
+              commit: async (mutation, receipt) => {
+                if (mutation) this.set("graph", mutation.graph);
+                const receiptId = id(
+                  900 + this.db.prepare("SELECT * FROM receipts").all().length,
+                );
+                this.db
+                  .prepare("INSERT INTO receipts VALUES(?,?,?)")
+                  .run(scope.operationId, receiptId, json(receipt));
+                return receiptId;
+              },
+            });
+            this.db.exec("COMMIT");
+            return result;
+          } catch (error) {
+            this.db.exec("ROLLBACK");
+            throw error;
+          }
+        },
       },
-      errorCode,
-      committedAt: "2026-10-12T00:00:00Z",
-      audit: { before: [], after: [], evidenceRefs: [], authorizationRefs: [] },
-    };
-    const receipt = {
-        ...body,
-        receiptSha256: await importDigest("otr-trip-core-receipt-v2", body as Json, hash),
-      },
-      domainReceiptId = id(900 + this.db.prepare("SELECT * FROM receipts").all().length);
-    this.db.exec("BEGIN IMMEDIATE");
-    try {
-      if (applied) this.set("graph", applied.graph);
-      this.db
-        .prepare("INSERT INTO receipts VALUES(?,?,?)")
-        .run(command.operationId, domainReceiptId, json(receipt));
-      this.db.exec("COMMIT");
-    } catch (error) {
-      this.db.exec("ROLLBACK");
-      throw error;
-    }
-    return { domainReceiptId, receipt };
+      actor.accountId,
+      actor.tripId,
+      command,
+      hash,
+      () => "2026-10-12T00:00:00Z",
+    );
+    if (record.projection !== "FULL") throw new Error("NOT_VISIBLE");
+    return record;
   }
   close() {
     this.db.close();
@@ -511,7 +523,11 @@ describe("Core owning Flight Source plan transaction v2", () => {
   it("retains rejected receipt and its output claim, without a replacement command", async () => {
     const f = await fixture(),
       p = await prepare(f.store, f.request);
-    await f.store.execute({ ...p.readyCommands[0], operationId: id(777) });
+    await f.store.execute({
+      ...p.readyCommands[0],
+      operationId: id(777),
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    });
     const r = await f.store.execute(p.readyCommands[0]);
     expect(r.receipt.outcome).toBe("CONFLICT");
     await finalize(f.store, f.request.planId, finalInput(f.request.slots[0].slotId, r));
@@ -604,7 +620,10 @@ describe("Source receipt and immutable plan trust boundary", () => {
       const f = await fixture(),
         p = await prepare(f.store, f.request),
         r = await f.store.execute(p.readyCommands[0]);
-      const body = structuredClone(r.receipt);
+      const body = structuredClone(r.receipt) as Omit<
+        typeof r.receipt,
+        "receiptSha256"
+      > & { receiptSha256?: string };
       delete body.receiptSha256;
       if (unrelated) body.result.created = [{ kind: "BOOKING", id: id(888) }];
       else body.targetVector[0].id = id(888);
@@ -700,6 +719,35 @@ describe("exact receipt-dependent Flight update", () => {
         ].includes(key)
       )
         expect(rows).toEqual([]);
+    f.store.close();
+  });
+  it("reconciles a rejected frozen UPDATE with its attempted CAS vector retained", async () => {
+    const f = await dependencyFixture();
+    const first = await prepare(f.store, f.request);
+    await f.store.execute(first.readyCommands[0]);
+    const second = await prepare(f.store, f.request);
+    const g = f.store.get<CoreGraph>("graph");
+    g.itinerary_events[0].semantic_revision = 2;
+    f.store.set("graph", g);
+    const rejected = await f.store.execute(second.readyCommands[0]);
+    expect(rejected.receipt.outcome).toBe("CONFLICT");
+    expect(rejected.receipt.targetVector[0]).toEqual({
+      kind: "ITEM",
+      id: f.request.slots[0].target.id,
+      baseRevision: 1,
+      committedRevision: null,
+    });
+    await finalize(
+      f.store,
+      f.request.planId,
+      finalInput(f.request.slots[1].slotId, rejected),
+    );
+    const replay = await prepare(f.store, f.request);
+    expect(replay.readyCommands).toHaveLength(0);
+    expect(replay.reviewSlots[0].errorCode).toBe("REVISION_CONFLICT");
+    expect(f.store.get<CoreGraph>("graph").trip_flight_intents[0].qualification).toBe(
+      "SPARSE",
+    );
     f.store.close();
   });
   it("preserves an existing independent Booking through Flight preparation and qualification", async () => {

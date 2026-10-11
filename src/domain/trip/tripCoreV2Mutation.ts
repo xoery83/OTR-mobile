@@ -7,7 +7,7 @@ import {
   normalizeCoreClock,
   type CoreBoundary,
 } from "./tripCoreV2Temporal";
-import { canonicalEventJson, type Json } from "./eventIntentJson";
+import { canonicalCoreJson, type Json } from "./tripCoreV2Json";
 import { instantMicroseconds, validateCalendarDate } from "./dayReadModel";
 export type CoreRow = Record<string, unknown>;
 export type CoreGraph = { [T in f.CoreTable]: CoreRow[] };
@@ -74,7 +74,7 @@ const rev = (row: CoreRow, kind: f.CoreKind) =>
   row[kind === "ITEM" ? "semantic_revision" : "revision"] as number;
 export function coreGraphHashText(g: CoreGraph): string {
   // Caller selects the authorized closed lifecycle subgraph before hashing.
-  return canonicalEventJson(g as unknown as Json);
+  return canonicalCoreJson(g as unknown as Json);
 }
 export function applyCoreCommand(
   given: CoreGraph,
@@ -140,7 +140,7 @@ export function applyCoreCommand(
       if (
         q.admission.mode !== "MANUAL" &&
         state[address]?.protected &&
-        canonicalEventJson(value as Json) !== canonicalEventJson(r[key] as Json)
+        canonicalCoreJson(value as Json) !== canonicalCoreJson(r[key] as Json)
       )
         throw new Error("PROTECTED_FIELD");
       if (q.admission.mode !== "MANUAL" && state[address]?.protected) continue;
@@ -256,8 +256,14 @@ export function applyCoreCommand(
         ...values,
         local_time: normalizeCoreClock(values.local_time, values.clock_precision),
       };
+    const identity =
+      t === "itinerary_transport_services"
+        ? "service_key"
+        : t === "trip_stay_rooms"
+          ? "room_id"
+          : "role";
     const old = g[t].find(
-      (x) => x.event_id === id && (role === undefined || x.role === role),
+      (x) => x.event_id === id && (role === undefined || x[identity] === role),
     );
     const item = root("ITEM", id, true),
       address = t + "." + (role ? role + "." : "");
@@ -266,7 +272,7 @@ export function applyCoreCommand(
       if (
         q.admission.mode !== "MANUAL" &&
         state[address + key]?.protected &&
-        canonicalEventJson(v as Json) !== canonicalEventJson((old?.[key] ?? null) as Json)
+        canonicalCoreJson(v as Json) !== canonicalCoreJson((old?.[key] ?? null) as Json)
       )
         throw new Error("PROTECTED_FIELD");
     const row = {
@@ -274,11 +280,11 @@ export function applyCoreCommand(
       ...old,
       trip_id: actor.tripId,
       event_id: id,
-      ...(role ? { role } : {}),
+      ...(role ? { [identity]: role } : {}),
       ...values,
     };
     g[t] = g[t].filter(
-      (x) => !(x.event_id === id && (role === undefined || x.role === role)),
+      (x) => !(x.event_id === id && (role === undefined || x[identity] === role)),
     );
     g[t].push(row);
     for (const [key, v] of Object.entries(values)) {
@@ -301,6 +307,42 @@ export function applyCoreCommand(
       };
     }
   };
+  const replaceDetails = (t: f.CoreTable, id: string, rows: CoreRow[], key: string) => {
+    const item = root("ITEM", id, true);
+    const state = item.field_state as Record<string, any>;
+    const removed = g[t].filter(
+      (r) => r.event_id === id && !rows.some((n) => n[key] === r[key]),
+    );
+    for (const row of removed)
+      if (
+        q.admission.mode !== "MANUAL" &&
+        Object.entries(state).some(
+          ([address, meta]) =>
+            address.startsWith(t + "." + row[key] + ".") && meta.protected,
+        )
+      )
+        throw new Error("PROTECTED_FIELD");
+    for (const row of rows) {
+      const { [key]: identity, ...facts } = row;
+      detail(t, id, facts, identity as string);
+    }
+    g[t] = g[t].filter((r) => r.event_id !== id || rows.some((n) => n[key] === r[key]));
+    for (const row of removed)
+      for (const field of Object.keys(row)) {
+        const address = t + "." + row[key] + "." + field;
+        if (!f.isCoreFieldAddress(address)) continue;
+        state[address] = {
+          state: "CLEARED",
+          origin: q.admission.mode === "MANUAL" ? "MANUAL" : "SOURCE",
+          protected: q.admission.mode === "MANUAL",
+          changed_revision: rev(item, "ITEM"),
+          evidence_ref: null,
+        };
+      }
+  };
+  const clearPlace = Object.fromEntries(
+    Object.keys(f.corePlaceSchema.shape).map((key) => [key, null]),
+  );
   const relation = (
     t: f.CoreTable,
     owner: f.CoreKind,
@@ -316,6 +358,7 @@ export function applyCoreCommand(
       requireBase(childKind, id);
       root(childKind, id, true);
       const existing = g[t].find((x) => x[parentKey] === r.id && x[childKey] === id);
+      if (existing?.active === true) throw new Error("DUPLICATE_LINK");
       const extra =
         typeof raw === "string"
           ? {}
@@ -386,6 +429,11 @@ export function applyCoreCommand(
         : g.itinerary_transport_endpoints.find(
             (x) => x.event_id === r.id && x.role === "ORIGIN",
           )?.local_date;
+    if (
+      q.command === "QUALIFY_FLIGHT" &&
+      Object.keys(f.corePlaceSchema.shape).some((key) => r[key] !== null)
+    )
+      throw new Error("PROTECTED_FIELD");
     if (q.command === "QUALIFY_FLIGHT" && oldDate !== full.origin.time.local_date)
       throw new Error("PROTECTED_FIELD");
     if (
@@ -444,8 +492,8 @@ export function applyCoreCommand(
           const key = "itinerary_transport_services." + service.service_key + "." + field;
           if (q.admission.mode !== "MANUAL" && state[key]?.protected) {
             if (
-              canonicalEventJson(value as Json) !==
-              canonicalEventJson((old?.[field] ?? null) as Json)
+              canonicalCoreJson(value as Json) !==
+              canonicalCoreJson((old?.[field] ?? null) as Json)
             )
               throw new Error("PROTECTED_FIELD");
             continue;
@@ -524,18 +572,18 @@ export function applyCoreCommand(
             { ...p.endpoints[input].time, ...p.endpoints[input].place },
             role,
           );
-        g.itinerary_transport_services.push({
-          trip_id: actor.tripId,
-          event_id: r.id,
-          ...p.service,
-        });
+        replaceDetails(
+          "itinerary_transport_services",
+          r.id as string,
+          [p.service],
+          "service_key",
+        );
       } else setSchedule(r, p.schedule);
       if (p.place) mark("ITEM", r, p.place);
       if (p.category) r.activity_category = p.category;
       if (p.family === "P3") {
         detail("trip_stay_details", r.id, p.details ?? {});
-        for (const room of p.rooms ?? [])
-          g.trip_stay_rooms.push({ trip_id: actor.tripId, event_id: r.id, ...room });
+        replaceDetails("trip_stay_rooms", r.id as string, p.rooms ?? [], "room_id");
       }
       if (p.family === "P4") {
         detail("trip_rental_details", r.id, p.details ?? {});
@@ -634,9 +682,7 @@ export function applyCoreCommand(
       if (r.experience_family !== "P3") throw new Error("INVALID_AGGREGATE");
       touch("ITEM", r);
       detail("trip_stay_details", r.id as string, p.details);
-      g.trip_stay_rooms = g.trip_stay_rooms.filter((x) => x.event_id !== r.id);
-      for (const room of p.rooms)
-        g.trip_stay_rooms.push({ trip_id: actor.tripId, event_id: r.id, ...room });
+      replaceDetails("trip_stay_rooms", r.id as string, p.rooms, "room_id");
       break;
     }
     case "SET_RENTAL_DETAILS": {
@@ -649,7 +695,12 @@ export function applyCoreCommand(
         ["return", "RETURN"],
       ] as const)
         if (Object.hasOwn(p.places, input))
-          detail("trip_rental_places", r.id as string, p.places[input] ?? {}, role);
+          detail(
+            "trip_rental_places",
+            r.id as string,
+            p.places[input] ?? clearPlace,
+            role,
+          );
       break;
     }
     case "SET_ACTIVITY_DETAILS": {
@@ -657,7 +708,12 @@ export function applyCoreCommand(
       if (r.experience_family !== "P6") throw new Error("INVALID_AGGREGATE");
       touch("ITEM", r);
       detail("trip_activity_details", r.id as string, p.details);
-      detail("trip_activity_entry_places", r.id as string, p.entryPlace ?? {}, "ENTRY");
+      detail(
+        "trip_activity_entry_places",
+        r.id as string,
+        p.entryPlace ?? clearPlace,
+        "ENTRY",
+      );
       break;
     }
     case "SET_TRANSPORT_DETAILS": {
@@ -675,16 +731,13 @@ export function applyCoreCommand(
             { ...p.endpoints[input].time, ...p.endpoints[input].place },
             role,
           );
-      if (p.service) {
-        g.itinerary_transport_services = g.itinerary_transport_services.filter(
-          (x) => x.event_id !== r.id,
+      if (p.service)
+        replaceDetails(
+          "itinerary_transport_services",
+          r.id as string,
+          [p.service],
+          "service_key",
         );
-        g.itinerary_transport_services.push({
-          trip_id: actor.tripId,
-          event_id: r.id,
-          ...p.service,
-        });
-      }
       if (p.annotations)
         for (const [input, role] of [
           ["origin", "ORIGIN"],
@@ -692,18 +745,13 @@ export function applyCoreCommand(
         ] as const)
           if (p.annotations[input])
             detail("trip_endpoint_details", r.id as string, p.annotations[input], role);
-      if (p.operationalFacts) {
-        g.trip_transport_operational_facts = g.trip_transport_operational_facts.filter(
-          (x) => x.event_id !== r.id,
+      if (p.operationalFacts)
+        replaceDetails(
+          "trip_transport_operational_facts",
+          r.id as string,
+          p.operationalFacts.map((x: any) => ({ role: x.role, ...x.time, ...x.place })),
+          "role",
         );
-        for (const x of p.operationalFacts)
-          detail(
-            "trip_transport_operational_facts",
-            r.id as string,
-            { ...x.time, ...x.place },
-            x.role,
-          );
-      }
       break;
     }
     case "CREATE_BOOKING": {

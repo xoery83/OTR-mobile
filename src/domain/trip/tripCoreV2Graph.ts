@@ -1,6 +1,6 @@
 import { coreTableSchemas, coreKindTables, type CoreTable } from "./tripCoreV2";
 import type { CoreGraph, CoreRow } from "./tripCoreV2Mutation";
-import { canonicalEventJson, type Json } from "./eventIntentJson";
+import { canonicalCoreJson, type Json } from "./tripCoreV2Json";
 export const coreTableKeys: Record<CoreTable, readonly string[]> = {
   itinerary_events: ["id"],
   itinerary_transport_endpoints: ["event_id", "role"],
@@ -35,7 +35,7 @@ export const coreTableKeys: Record<CoreTable, readonly string[]> = {
   expense_links: ["id"],
 };
 export function coreMirrorKey(table: CoreTable, row: CoreRow): string {
-  return canonicalEventJson(coreTableKeys[table].map((key) => row[key]) as Json);
+  return canonicalCoreJson(coreTableKeys[table].map((key) => row[key]) as Json);
 }
 const foreignRoots = {
   event_id: "ITEM",

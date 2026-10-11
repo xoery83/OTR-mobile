@@ -2,7 +2,7 @@ import { z } from "zod";
 import * as f from "./tripCoreV2";
 import { emptyCoreGraph, type CoreGraph, type CoreRow } from "./tripCoreV2Mutation";
 import { coreMirrorKey, validateCoreGraph } from "./tripCoreV2Graph";
-import { canonicalEventJson, type Json } from "./eventIntentJson";
+import { canonicalCoreJson, type Json } from "./tripCoreV2Json";
 import type { ImportHash } from "./flightImportReview";
 const kinds = [
   "ITEM",
@@ -124,9 +124,11 @@ export const coreReadManifestSchema = z.strictObject({
 export type CoreReadManifest = z.infer<typeof coreReadManifestSchema>;
 export type CoreReadPage = z.infer<typeof coreReadPageSchema>;
 export const coreHashValue = async (domain: string, body: unknown, hash: ImportHash) =>
-  hash(new TextEncoder().encode(domain + "\n" + canonicalEventJson(body as Json)));
+  f.coreHash.parse(
+    await hash(new TextEncoder().encode(domain + "\n" + canonicalCoreJson(body as Json))),
+  );
 const byteCount = (v: unknown) =>
-  new TextEncoder().encode(canonicalEventJson(v as Json)).length;
+  new TextEncoder().encode(canonicalCoreJson(v as Json)).length;
 const recordOrder = (a: CoreReadRecord, b: CoreReadRecord) =>
   a.kind + ":" + a.id < b.kind + ":" + b.id
     ? -1
@@ -281,8 +283,8 @@ export async function validateCoreReadCollection(
     hash,
   );
   if (
-    canonicalEventJson(rebuilt.manifest.rosters as Json) !==
-      canonicalEventJson(manifest.rosters as Json) ||
+    canonicalCoreJson(rebuilt.manifest.rosters as Json) !==
+      canonicalCoreJson(manifest.rosters as Json) ||
     new Set(manifest.rosters.map((r) => r.kind)).size !== 7 ||
     records.some((r, i) => i > 0 && recordOrder(records[i - 1], r) >= 0)
   )

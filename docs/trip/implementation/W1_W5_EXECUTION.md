@@ -60,3 +60,12 @@ Existing Ledger SQL uses `expense_links.link_type`; the approved logical read fi
 
 All runtime capabilities remain CLOSED. Tests so far are local synthetic domain
 and actual SQLite acceptance; none are Hosted DEV, native-device or provider E2E.
+
+Source pre-seal consistency binding: uncertifiable submitted proposals remain private
+preparation metadata and appear in `reviewSlots`; they are not sealed AdmissionPlan
+slots and never gain a nullable/fabricated outputPurpose or active CREATE claim.
+Status includes those reviews, so omission cannot yield a false COMPLETE workflow.
+An exact preparation replay returns the immutable original proposal hash/review result;
+correction needs a new explicit proposal/plan. GET source-plan transport wraps the
+unchanged §3 status envelope as `{captureVersion:2,plan,status}`; §6 did not enumerate
+an outer wrapper. This changes no admission authority or product semantics.

@@ -7,7 +7,7 @@ import {
   type CoreGraph,
   type CoreActor,
 } from "./tripCoreV2Mutation";
-import { coreDefaults } from "./tripCoreV2";
+import { coreDefaults, corePlaceSchema, isCoreFieldAddress } from "./tripCoreV2";
 import { coreDateBoundary } from "./tripCoreV2Temporal";
 const trip = randomUUID(),
   account = randomUUID(),
@@ -72,6 +72,74 @@ function create(g = emptyCoreGraph(), family = "P1", id = randomUUID(), end?: st
   return { id, q, result: applyCoreCommand(g, q, actor, now) };
 }
 describe("Core v2 finite mutation and access", () => {
+  it("accepts registered room and dotted service field addresses only", () => {
+    expect(isCoreFieldAddress("itinerary_transport_services.operator.main.service_literal")).toBe(
+      true,
+    );
+    expect(isCoreFieldAddress(`trip_stay_rooms.${randomUUID()}.category`)).toBe(true);
+    expect(isCoreFieldAddress("trip_stay_rooms.fake.category")).toBe(false);
+    expect(isCoreFieldAddress("trip_rental_places.PICKUP.RETURN.authored_label")).toBe(
+      false,
+    );
+  });
+  it("preserves manually protected room facts and rejects source removal", () => {
+    const id = randomUUID(),
+      roomId = randomUUID();
+    const room = { room_id: roomId, category: "Double", quantity: 1, capacity: null };
+    const q = command(emptyCoreGraph(), "CREATE_ITEM", id, {
+      family: "P3",
+      core: { title: "Stay" },
+      schedule: {
+        start: coreDateBoundary("2026-12-14"),
+        end: coreDateBoundary("2026-12-17"),
+      },
+      rooms: [room],
+      ...coreDefaults("member"),
+    });
+    const g = applyCoreCommand(emptyCoreGraph(), q, actor, now).graph;
+    const source = command(g, "SET_STAY_DETAILS", id, { details: {}, rooms: [] });
+    source.admission = {
+      mode: "REVIEWED_SOURCE",
+      sourceIntentId: randomUUID(),
+      policyVersion: null,
+    };
+    expect(() => applyCoreCommand(g, source, actor, now, true)).toThrow(
+      "PROTECTED_FIELD",
+    );
+    expect(g.trip_stay_rooms[0].category).toBe("Double");
+  });
+  it("explicit null clears Rental place facts and records protected CLEARED leaves", () => {
+    const id = randomUUID();
+    const place = Object.fromEntries(
+      Object.keys(corePlaceSchema.shape).map((k) => [
+        k,
+        k === "authored_label" ? "Depot" : null,
+      ]),
+    );
+    const q = command(emptyCoreGraph(), "CREATE_ITEM", id, {
+      family: "P4",
+      core: { title: "Rental" },
+      schedule: {
+        start: coreDateBoundary("2026-12-14"),
+        end: coreDateBoundary("2026-12-20"),
+      },
+      places: { pickup: place },
+      ...coreDefaults("member"),
+    });
+    const g = applyCoreCommand(emptyCoreGraph(), q, actor, now).graph;
+    const clear = command(g, "SET_RENTAL_DETAILS", id, {
+      details: {},
+      places: { pickup: null },
+    });
+    const after = applyCoreCommand(g, clear, actor, now).graph;
+    expect(after.trip_rental_places[0].authored_label).toBeNull();
+    expect(
+      (after.itinerary_events[0].field_state as any)[
+        "trip_rental_places.PICKUP.authored_label"
+      ],
+    ).toMatchObject({ state: "CLEARED", protected: true });
+  });
+
   it("creates P1 date-only without fabricating a clock or instant", () => {
     const { result, id } = create();
     const row = result.graph.itinerary_events[0];

@@ -1,10 +1,11 @@
 import { z } from "zod";
 import {
-  canonicalEventJson,
-  parseEventJson,
+  canonicalCoreJson,
+  parseCoreJson,
   type Json,
-} from "@/domain/trip/eventIntentJson";
-import { importDigest, type ImportHash } from "@/domain/trip/flightImportReview";
+} from "@/domain/trip/tripCoreV2Json";
+import type { ImportHash } from "@/domain/trip/flightImportReview";
+import { coreHashValue as importDigest } from "@/domain/trip/tripCoreV2Read";
 import {
   mintFlightOutputPurposeV2,
   assertFlightOutputClaimsV2,
@@ -182,7 +183,7 @@ export type CoreSourcePlanStorageV2 = {
     task: (tx: CoreSourcePlanTransactionV2) => Promise<T>,
   ): Promise<T>;
 };
-const json = (v: unknown) => canonicalEventJson(v as Json);
+const json = (v: unknown) => canonicalCoreJson(v as Json);
 const supported = new Set([
   "CREATE_SPARSE_FLIGHT",
   "QUALIFY_FLIGHT",
@@ -217,7 +218,7 @@ async function exactReceipt(
   if (!slot.command || !slot.intentSha256) return null;
   const raw = await tx.readCoreReceipt(slot.command.operationId);
   if (raw === null) return null;
-  const r = await validateCoreReceipt(parseEventJson(raw.receiptText, 262144), sha256);
+  const r = await validateCoreReceipt(parseCoreJson(raw.receiptText, 262144), sha256);
   if (
     r.actorAccountId !== scope.actorAccountId ||
     r.tripId !== scope.tripId ||
