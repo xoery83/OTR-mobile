@@ -35,6 +35,9 @@ export type CoreCommandTransaction = {
     graph: CoreGraph,
   ): Promise<void>;
   lifecycleGraphHash(command: CoreCommand, graph: CoreGraph): Promise<string | undefined>;
+  admissionAudit?(): Promise<
+    Pick<CoreReceipt["audit"], "evidenceRefs" | "authorizationRefs">
+  >;
   commit(
     mutation: CoreMutation | null,
     receipt: CoreReceipt,
@@ -231,6 +234,10 @@ export async function executeCoreCommandV2(
                 })),
           )
         : [];
+      const admissionAudit =
+        errorCode === null && tx.admissionAudit
+          ? await tx.admissionAudit()
+          : { evidenceRefs: [], authorizationRefs: [] };
       const body = {
         receiptVersion: 2 as const,
         commandVersion: 2 as const,
@@ -263,8 +270,8 @@ export async function executeCoreCommandV2(
         audit: {
           before: mutation ? snapshots(before) : [],
           after: mutation ? snapshots(mutation.graph) : [],
-          evidenceRefs: [],
-          authorizationRefs: [],
+          evidenceRefs: admissionAudit.evidenceRefs,
+          authorizationRefs: admissionAudit.authorizationRefs,
         },
       };
       const receipt = coreReceiptSchema.parse({

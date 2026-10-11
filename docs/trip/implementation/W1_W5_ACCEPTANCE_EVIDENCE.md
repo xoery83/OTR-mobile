@@ -9,6 +9,9 @@ Base741579c; isolated branch codex/trip-core-v2-w1-w5. Runtime/Hosted/native/pro
   base741579c: architectureBoundary UI-test scan and navigationLayout wrapper assumptions.
 - Typecheck, lint, UI guard, Backend build and all81 touched formatted files PASS. No UI changes or new dependencies.
 - Focused read/HTTP/transport/SQLite/sync/lifecycle84 PASS; reducer/lifecycle16 PASS.
+- W0 A01–A09 pure graph compiler9 PASS (explicit synthetic required P5 service inputs;
+  no invented production operator, Document originals or Source qualification). New owning
+  receipt-audit tests2 PASS; Source/PG/audit focused34 PASS. Qualified admission is separate.
 - Owned synthetic PostgreSQL Core85–89 scenario PASS: P1–P6 root/child writes, sparse
   exact receipt/replay/operation reuse/CAS, complete collection/Item, Person invalidation;
   rollback-only RLS and closed-gate/role/private-locator negatives PASS.
@@ -32,8 +35,8 @@ repository tests under src/data/repositories.
 | ------------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ------- |
 | A01 two Flights/one Booking          | Source28 same-ID/sibling orchestration; Booking N:M reducer                                | Actual sealed two-leg Source qualification and full accepted fixture          | BLOCKED |
 | A02 Rentals                          | P4 independent identities/Returns in Views; SQL family/places                              | Complete W0 exact shared-pickup fixture and Booking due facts                 | PARTIAL |
-| A03 three Stays                      | Calendar Stay/nights/Base Views and P3 SQL                                                 | Full three-Stay order admission fixture                                       | PARTIAL |
-| A04 supplemental Stay Booking        | Generic independent N:M links                                                              | Execute complete accepted supplementary-order fixture                         | PARTIAL |
+| A03 three Stays                      | Calendar Stay/nights/Base Views and P3 SQL                                                 | Owning Source admission/custody; three-Stay graph now executes                | PARTIAL |
+| A04 supplemental Stay Booking        | Generic independent N:M links                                                              | Owning Source admission; supplemental Booking/same-Stay graph now executes    | PARTIAL |
 | A05 Water Taxi                       | Independent P5 endpoints/subtype/Day tests                                                 | Full outbound/return Booking fixture                                          | PARTIAL |
 | A06 connected train/shared Ticket    | Generic entitlement/segment relation codecs                                                | Exact coach/seat/shared-original fixture and custody                          | BLOCKED |
 | A07 group Ferry                      | Optional holders/quantity finite codec                                                     | Full group-ticket original face/custody fixture                               | BLOCKED |

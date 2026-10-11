@@ -36,6 +36,17 @@ export type CorePgConnection = {
   withLease<T>(work: (lease: CorePgLease) => Promise<T>): Promise<T>;
 };
 export type CorePgAdmission = {
+  audit?(
+    lease: CorePgLease,
+    actor: CoreActor,
+    command: CoreCommand,
+    intentSha256: string,
+  ): Promise<
+    Pick<
+      import("../../src/domain/trip/tripCoreV2Receipt").CoreReceipt["audit"],
+      "evidenceRefs" | "authorizationRefs"
+    >
+  >;
   verify(
     lease: CorePgLease,
     actor: CoreActor,
@@ -214,7 +225,8 @@ export function createCorePgStorage(
             "otr-core2-operation:" + scope.actorAccountId + ":" + scope.operationId,
           ]);
           let locked: CoreGraph | undefined,
-            collision = false;
+            collision = false,
+            verified: { command: CoreCommand; intentSha256: string } | undefined;
           const tx: CoreCommandTransaction = {
             actor,
             async authoritativeClock() {
@@ -338,7 +350,13 @@ export function createCorePgStorage(
               ) {
                 if (!admission) throw new Error("OWNING_CAPABILITY_REQUIRED");
                 await admission.verify(lease, actor, command, intent, graph);
+                verified = { command, intentSha256: intent };
               }
+            },
+            async admissionAudit() {
+              return verified && admission?.audit
+                ? admission.audit(lease, actor, verified.command, verified.intentSha256)
+                : { evidenceRefs: [], authorizationRefs: [] };
             },
             async lifecycleGraphHash(command, graph) {
               return "graphHash" in (command.payload as object)
