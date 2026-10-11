@@ -572,6 +572,8 @@ async function dependencyFixture() {
   const values = structuredClone(
     intents.confirmation.slots[0].reviewed_payload.edits,
   ) as unknown as Required<FlightValues>;
+  // The synthetic Source uses AKL/CHC; borrow only the legacy fixture's time/service shape.
+  values.destination.location.authored_label = "Christchurch";
   const flightNumberLiteral = values.title;
   f.catalog.candidates[0].identityFacts!.serviceNumber =
     values.services[0].service_number;
@@ -930,6 +932,93 @@ describe("exact receipt-dependent Flight update", () => {
       )
         expect(after[key as keyof CoreGraph]).toEqual(rows);
     expect(after.itinerary_reservations).toHaveLength(1);
+    f.store.close();
+  });
+  it("qualifies both distinct Source outputs through their own exact CREATE receipts", async () => {
+    const f = await dependencyFixture();
+    const c = f.catalog.candidates[1],
+      first = f.request.slots[0];
+    const qualified = structuredClone(
+      (f.catalog.candidates[0].snapshot as Record<string, Json>).qualified,
+    ) as unknown as {
+      origin: Required<FlightValues>["origin"];
+      destination: Required<FlightValues>["destination"];
+      services: Required<FlightValues>["services"];
+      proofs: Record<string, { kind: "TRACK_C"; ref: string }>;
+    };
+    qualified.origin.location.authored_label = "Christchurch";
+    qualified.destination.location.authored_label = "Auckland";
+    qualified.origin.time.local_date = "2026-12-20";
+    qualified.origin.time.source_instant = "2026-12-19T20:00:00.123456Z";
+    qualified.services[0].service_number = "2";
+    qualified.services[0].service_literal = "NZ2";
+    qualified.proofs = Object.fromEntries(
+      Object.keys(flightCommandLeaves(qualified)).map((field) => [
+        field,
+        {
+          kind: "TRACK_C" as const,
+          ref: `track-c/field-evidence/${c.candidateId}/${field}`,
+        },
+      ]),
+    );
+    c.snapshot = { ...(c.snapshot as object), qualified: qualified as unknown as Json };
+    c.candidateSha256 = await importDigest("test-sealed-candidate", c.snapshot, hash);
+    f.store.set("catalog", f.catalog);
+    const create = {
+      ...structuredClone(first),
+      slotId: id(400),
+      candidateId: c.candidateId,
+      operationId: id(401),
+      target: { kind: "ITEM" as const, id: id(402) },
+      baseVector: [{ kind: "ITEM" as const, id: id(402), revision: null }],
+      evidenceRefs: c.identityEvidenceRefs!,
+      payload: {
+        flightNumberLiteral: "NZ2",
+        departureDate: "2026-12-20",
+        ...JSON.parse(json(coreDefaults("member"))),
+      },
+    };
+    f.request.candidateIds.push(c.candidateId);
+    f.request.slots.push(create, {
+      ...structuredClone(create),
+      slotId: id(403),
+      slotKey: "qualify",
+      operationId: id(404),
+      command: "QUALIFY_FLIGHT",
+      dependsOn: [create.slotId],
+      baseVector: null,
+      payload: qualified as unknown as Json,
+      selectedFields: Object.keys(flightCommandLeaves(qualified)),
+      evidenceRefs: {
+        ...c.identityEvidenceRefs!,
+        ...Object.fromEntries(
+          Object.entries(qualified.proofs).map(([field, proof]) => [field, [proof.ref]]),
+        ),
+      },
+    });
+    const sparse = await prepare(f.store, f.request);
+    expect(sparse.readyCommands).toHaveLength(2);
+    for (const cmd of sparse.readyCommands) await f.store.execute(cmd);
+    const ready = await prepare(f.store, f.request);
+    expect(ready.readyCommands).toHaveLength(2);
+    for (const cmd of ready.readyCommands) await f.store.execute(cmd);
+    for (const cmd of ready.readyCommands) await f.store.execute(cmd);
+    const graph = f.store.get<CoreGraph>("graph");
+    expect(graph.itinerary_events).toHaveLength(2);
+    expect(
+      graph.itinerary_events.every(
+        (r) =>
+          r.semantic_revision === 2 &&
+          r.visibility === "PRIVATE" &&
+          r.participation_mode === "SELF",
+      ),
+    ).toBe(true);
+    expect(graph.trip_flight_intents.every((r) => r.qualification === "QUALIFIED")).toBe(
+      true,
+    );
+    expect(graph.itinerary_transport_endpoints).toHaveLength(4);
+    expect(f.store.db.prepare("SELECT * FROM receipts").all()).toHaveLength(4);
+    expect((await prepare(f.store, f.request)).readyCommands).toHaveLength(0);
     f.store.close();
   });
   it("keeps the prerequisite revision and rejects stale update rather than rebasing to latest", async () => {
