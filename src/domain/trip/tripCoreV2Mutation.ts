@@ -9,6 +9,7 @@ import {
 } from "./tripCoreV2Temporal";
 import { canonicalCoreJson, type Json } from "./tripCoreV2Json";
 import { instantMicroseconds, validateCalendarDate } from "./dayReadModel";
+import { isIso4217Money } from "../ledger/currency";
 export type CoreRow = Record<string, unknown>;
 export type CoreGraph = { [T in f.CoreTable]: CoreRow[] };
 export type CoreActor = {
@@ -358,7 +359,8 @@ export function applyCoreCommand(
       requireBase(childKind, id);
       root(childKind, id, true);
       const existing = g[t].find((x) => x[parentKey] === r.id && x[childKey] === id);
-      if (existing?.active === true) throw new Error("DUPLICATE_LINK");
+      if (existing?.active === true && typeof raw === "string")
+        throw new Error("DUPLICATE_LINK");
       const extra =
         typeof raw === "string"
           ? {}
@@ -1146,6 +1148,8 @@ export function applyCoreCommand(
       const v = [r[prefix + "_minor"], r[prefix + "_currency"], r[prefix + "_scale"]];
       if (v.some((x) => x !== null) && v.some((x) => x === null))
         throw new Error("INVALID_MONEY");
+      if (v[0] !== null && !isIso4217Money(v[1] as string, v[2] as number))
+        throw new Error("INVALID_MONEY");
     }
   for (const r of g.trip_entitlements) {
     if (
@@ -1154,7 +1158,25 @@ export function applyCoreCommand(
       (r.validity_precision === "INSTANT" && (r.valid_from_date || r.valid_until_date))
     )
       throw new Error("INVALID_VALIDITY");
+    if (
+      r.validity_precision === null &&
+      [
+        r.valid_from_date,
+        r.valid_until_date,
+        r.valid_from_instant,
+        r.valid_until_instant,
+        r.validity_zone_id,
+      ].some((v) => v !== null)
+    )
+      throw new Error("INVALID_VALIDITY");
     if (r.valid_from_date && r.valid_until_date && r.valid_until_date < r.valid_from_date)
+      throw new Error("INVALID_VALIDITY");
+    if (
+      r.valid_from_instant &&
+      r.valid_until_instant &&
+      instantMicroseconds(r.valid_until_instant as string) <
+        instantMicroseconds(r.valid_from_instant as string)
+    )
       throw new Error("INVALID_VALIDITY");
   }
   if (q.baseVector.some((v) => !usedBases.has(v.kind + ":" + v.id)))

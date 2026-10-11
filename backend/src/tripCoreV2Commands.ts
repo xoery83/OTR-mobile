@@ -16,6 +16,7 @@ import {
   coreReceiptSchema,
   validateCoreReceipt,
   type CoreReceipt,
+  CoreReceiptProjection,
 } from "../../src/domain/trip/tripCoreV2Receipt";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import type { ImportHash } from "../../src/domain/trip/flightImportReview";
@@ -50,16 +51,7 @@ export type CoreCommandStorage = {
     work: (transaction: CoreCommandTransaction) => Promise<T>,
   ): Promise<T>;
 };
-export type CoreReceiptProjection =
-  | { projection: "FULL"; domainReceiptId: string; receipt: CoreReceipt }
-  | {
-      projection: "STATUS_ONLY";
-      domainReceiptId: string;
-      receiptSha256: string;
-      operationId: string;
-      outcome: CoreReceipt["outcome"];
-      targetRevision: null;
-    };
+export type { CoreReceiptProjection } from "../../src/domain/trip/tripCoreV2Receipt";
 const redacted = (id: string, r: CoreReceipt): CoreReceiptProjection => ({
   projection: "STATUS_ONLY",
   domainReceiptId: id,

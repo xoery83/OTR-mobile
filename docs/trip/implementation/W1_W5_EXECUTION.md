@@ -94,3 +94,19 @@ migration-journal or provider/native proof. Existing database containers are unt
 Remaining: owning PostgreSQL command/Source bindings, authenticated HTTP and sync
 composition, custody/Ledger capability verification, full typed supplemental bundles,
 Day scenarios and all twenty target traces. Current checkpoint is not W1–W5 completion.
+
+Core2 HTTP uses existing token authentication and a private, unprovisioned owning
+connection. It exposes CLOSED discovery and guarded command/operation/Source ports;
+unknown versions426, duplicate keys and oversized body rejected. Replays authenticate
+before owning status-only redaction and do not force current Trip read access. New
+frontend transport inherits bounded response decoding and account generations. Worker
+uses existing queue/executor, looks up exact receipt before fresh capability dispatch,
+and never treats a status-only receipt as accepted facts. No launch/timer/host activated.
+Local Day overlays wrap the unchanged strict DayRow as `{row,localState}` so pending
+metadata never enters accepted DTO hashes. Supplemental Item/Occurrence DTO and six
+P3/P4/P5/P6 synthetic projection tests exist; custody/device flags fail closed.
+
+Full suite first run3514 passed/26 failed/15 skipped.24 failures were old latest-schema
+53 expectations, fixed with54 registration (related431 tests now PASS). Remaining two
+UI/architecture failures reproduced on an untouched741579c archive; no Core change
+caused them and no UI file was modified. A final full regression remains required.

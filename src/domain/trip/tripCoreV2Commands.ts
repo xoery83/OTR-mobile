@@ -438,6 +438,36 @@ export function validateCoreCommand(input: unknown): CoreCommand {
   }
   return { ...q, payload };
 }
+export const coreCapabilitiesSchema = z
+  .strictObject({
+    contractVersion: z.literal(2),
+    commandVersion: z.literal(2),
+    readVersion: z.literal(2),
+    captureVersion: z.literal(2),
+    activationState: z.enum(["CLOSED", "ENABLED"]),
+    enabledCommands: z.array(z.enum(commands)).max(commands.length),
+    enabledFamilies: z.array(z.enum(["P1", "P2", "P3", "P4", "P5", "P6"])).max(6),
+    enabledAdmissionModes: z
+      .array(z.enum(["MANUAL", "REVIEWED_SOURCE", "AUTO_SOURCE"]))
+      .max(3),
+    maximumRequestBytes: z.literal(32768),
+    maximumAffectedRoots: z.literal(32),
+    maximumRelations: z.literal(64),
+    resolverAvailable: z.boolean(),
+    sourceEvidenceAvailable: z.boolean(),
+    operationalCustodyAvailable: z.boolean(),
+  })
+  .refine(
+    (c) =>
+      (c.activationState !== "CLOSED" ||
+        (!c.enabledCommands.length &&
+          !c.enabledFamilies.length &&
+          !c.enabledAdmissionModes.length)) &&
+      new Set(c.enabledCommands).size === c.enabledCommands.length &&
+      new Set(c.enabledFamilies).size === c.enabledFamilies.length &&
+      new Set(c.enabledAdmissionModes).size === c.enabledAdmissionModes.length,
+  );
+export type CoreCapabilities = z.infer<typeof coreCapabilitiesSchema>;
 export const coreClosedCapabilities = {
   contractVersion: 2,
   commandVersion: 2,

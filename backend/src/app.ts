@@ -23,6 +23,7 @@ import {
   type ParticipationGateway,
 } from "./tripPersonParticipationRuntime";
 import { canonicalCapabilities } from "./tripCanonicalRead";
+import { coreHttpBoundary, type CoreHttpConnection } from "./tripCoreV2Http";
 import {
   canonicalCapabilitiesSchema,
   canonicalEventReadSchema,
@@ -596,6 +597,7 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  coreConnection?: CoreHttpConnection;
   participationGateway?: ParticipationGateway;
   gateway: DevBackendGateway;
   log?: (event: SafeLogEvent) => void;
@@ -2335,6 +2337,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  coreConnection,
   participationGateway,
   gateway,
   log,
@@ -2419,7 +2422,16 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (/^\/v2\/trips\/[^/]*\/source-import-catalogs$/.test(url.pathname)) {
+      if (/^\/v2\/trips\/[^/]+\/core\//.test(url.pathname)) {
+        route = "/v2/trips/:tripId/core/:resource";
+        const actor = await authenticate(request, gateway);
+        response = await coreHttpBoundary(
+          request,
+          actor.id,
+          (a, t) => gateway.canReadTrip(a, t),
+          coreConnection,
+        );
+      } else if (/^\/v2\/trips\/[^/]*\/source-import-catalogs$/.test(url.pathname)) {
         route = "/v2/trips/:tripId/source-import-catalogs";
         response = await readPublicationBoundary(request, gateway);
       } else if (

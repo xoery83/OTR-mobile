@@ -102,3 +102,14 @@ export async function validateCoreReceipt(
     throw new Error("INVALID_REJECTED_RECEIPT");
   return receipt;
 }
+
+export type CoreReceiptProjection =
+  | { projection: "FULL"; domainReceiptId: string; receipt: CoreReceipt }
+  | {
+      projection: "STATUS_ONLY";
+      domainReceiptId: string;
+      receiptSha256: string;
+      operationId: string;
+      outcome: CoreReceipt["outcome"];
+      targetRevision: null;
+    };

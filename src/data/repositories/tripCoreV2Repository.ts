@@ -445,13 +445,15 @@ export function createTripCoreV2Repository(
     await assertContext(ctx);
     return projectCoreDay(graph, actor, date, cert?.applied_generation ?? 0).map(
       (row) => ({
-        ...row,
+        row: {
+          ...row,
+          certificateGeneration: predictedIds.has(row.itemRef)
+            ? 0
+            : row.certificateGeneration,
+        },
         localState: predictedIds.has(row.itemRef)
           ? ("PENDING" as const)
           : ("ACCEPTED" as const),
-        certificateGeneration: predictedIds.has(row.itemRef)
-          ? 0
-          : row.certificateGeneration,
       }),
     );
   }

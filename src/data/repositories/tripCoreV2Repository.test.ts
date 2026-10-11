@@ -189,12 +189,14 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
     const restarted = fixture(path, false),
       next = await restarted.repo.captureContext(trip);
     expect((await restarted.repo.pending(next))[0].command.target.id).toBe(item);
-    expect((await restarted.repo.day(next, actor, "2026-12-14"))[0].position).toBe("TNS");
+    expect((await restarted.repo.day(next, actor, "2026-12-14"))[0].row.position).toBe(
+      "TNS",
+    );
     expect((await restarted.repo.day(next, actor, "2026-12-14"))[0].localState).toBe(
       "PENDING",
     );
     expect(
-      (await restarted.repo.day(next, actor, "2026-12-14"))[0].certificateGeneration,
+      (await restarted.repo.day(next, actor, "2026-12-14"))[0].row.certificateGeneration,
     ).toBe(0);
   });
   it("rejects operation reuse mismatch without changing the queue", async () => {
@@ -217,7 +219,9 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
       bundle = await collection();
     await f.repo.install(refresh, bundle.manifest, bundle.pages);
     expect((await f.repo.readGraph(ctx)).itinerary_events[0].id).toBe(item);
-    expect((await f.repo.day(ctx, actor, "2026-12-14"))[0].certificateGeneration).toBe(1);
+    expect(
+      (await f.repo.day(ctx, actor, "2026-12-14"))[0].row.certificateGeneration,
+    ).toBe(1);
     expect((await f.repo.day(ctx, actor, "2026-12-14"))[0].localState).toBe("ACCEPTED");
     await expect(
       f.repo.day(ctx, { ...actor, personId: randomUUID() }, "2026-12-14"),
