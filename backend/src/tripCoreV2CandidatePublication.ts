@@ -1,10 +1,7 @@
 import { z } from "zod";
-import { coreUuid, coreHash } from "../../src/domain/trip/tripCoreV2";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
-import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import {
   flightEndpointSchema,
-  flightServicesSchema,
   flightCommandLeaves,
   type FlightValues,
 } from "../../src/domain/trip/flightAdmission";
@@ -20,157 +17,20 @@ import {
 import {
   interpretationMaterialSchema,
   type InterpretationItem,
-  type InterpretationResponse,
 } from "../../src/domain/intelligence/interpretation";
+import { flightPurposeIdentityV2Schema } from "../../src/domain/trip/flightOutputPurposeV2";
 import {
-  flightPurposeIdentityV2Schema,
-  flightPurposeEvidenceV2Schema,
-} from "../../src/domain/trip/flightOutputPurposeV2";
-const date = z.string().regex(/^\d{4}-\d\d-\d\d$/);
-const field = z
-  .string()
-  .max(128)
-  .regex(
-    /^(flightNumberLiteral|departureDate|ROOT\.title|(ORIGIN|DESTINATION)\.(local_date|local_time|zone_id|supplied_offset_seconds|source_instant|authored_label|authored_text|accepted_place_id)|SERVICE\.[A-Za-z0-9._:-]{1,32}\.(operator_namespace|operator_issuer|operator_value|operator_literal|service_number|service_literal|attribution|codeshare_operating_key))$/,
-  );
-const uniqueIds = z
-  .array(coreUuid)
-  .min(1)
-  .max(64)
-  .refine((a) => new Set(a).size === a.length);
-const ref = z
-  .string()
-  .max(512)
-  .regex(/^track-c\/field-evidence\/[0-9a-f-]{36}\/[A-Za-z0-9._:-]{1,128}$/);
-export const coreFlightCandidateV2Schema = z
-  .strictObject({
-    schemaId: z.literal("otr.trip.capture.candidate/2"),
-    candidateId: coreUuid,
-    accountId: coreUuid,
-    tripId: coreUuid,
-    sourceId: coreUuid,
-    sourceRevision: z.number().int().positive().safe(),
-    runId: coreUuid,
-    inputRepresentationIds: uniqueIds,
-    kind: z.literal("P2"),
-    facts: z.strictObject({
-      flightNumberLiteral: z.string().min(1).max(255).nullable(),
-      departureDate: date.nullable(),
-      core: z.strictObject({ title: z.string().min(1).max(200) }).optional(),
-      origin: flightEndpointSchema.optional(),
-      destination: flightEndpointSchema.optional(),
-      services: flightServicesSchema.optional(),
-    }),
-    fieldKnowledge: z.record(
-      field,
-      z.enum(["UNKNOWN", "AMBIGUOUS", "PRESENT", "NOT_APPLICABLE"]),
-    ),
-    fieldEvidence: z.record(field, z.array(ref).min(1).max(16)),
-    existingTargetHint: z
-      .strictObject({
-        kind: z.literal("ITEM"),
-        id: coreUuid,
-        revision: z.number().int().positive().safe(),
-      })
-      .nullable(),
-    unmappedObservations: z
-      .array(
-        z.strictObject({
-          key: z.string().min(1).max(128),
-          value: z.string().max(2000),
-          evidenceRefs: z.array(z.string().max(512)).max(16),
-        }),
-      )
-      .max(64),
-  })
-  .superRefine((v, c) => {
-    if (
-      Object.keys(v.fieldKnowledge).length > 256 ||
-      Object.keys(v.fieldEvidence).length > 256 ||
-      new TextEncoder().encode(canonicalCoreJson(v as Json)).length > 32768
-    )
-      c.addIssue({ code: "custom", message: "CANDIDATE_LIMIT" });
-  });
-export const coreCandidatePublicationV2Schema = z
-  .strictObject({
-    publicationVersion: z.literal(2),
-    publicationId: coreUuid,
-    sourceId: coreUuid,
-    sourceRevision: z.number().int().positive().safe(),
-    runId: coreUuid,
-    inputCatalogSha256: coreHash,
-    candidates: z.array(coreFlightCandidateV2Schema).min(1).max(64),
-    evidence: z
-      .array(
-        z.strictObject({
-          candidateId: coreUuid,
-          fieldKey: field,
-          inputId: coreUuid,
-          locator: flightLocatorSchema,
-        }),
-      )
-      .min(1)
-      .max(4096),
-  })
-  .superRefine((v, c) => {
-    if (
-      new Set(v.candidates.map((x) => x.candidateId)).size !== v.candidates.length ||
-      new Set(v.evidence.map((x) => x.candidateId + ":" + x.fieldKey)).size !==
-        v.evidence.length ||
-      v.evidence.some(
-        (x) =>
-          x.locator.input_id !== x.inputId ||
-          !v.candidates.some((k) => k.candidateId === x.candidateId),
-      ) ||
-      new TextEncoder().encode(canonicalCoreJson(v as Json)).length > 32768
-    )
-      c.addIssue({ code: "custom", message: "INVALID_PUBLICATION" });
-  });
-export type CoreCandidatePublicationV2 = z.infer<typeof coreCandidatePublicationV2Schema>;
-export const coreAirportBindingSchema = z.strictObject({
-  namespace: z.literal("IATA_AIRPORT"),
-  issuer: z.literal("IATA"),
-  code: z.string().regex(/^[A-Z]{3}$/),
-  identityId: z.string().regex(/^IATA_AIRPORT:[A-Z]{3}$/),
-  registryVersion: z.string().min(1).max(128),
-  registrySha256: coreHash,
-  validFrom: date,
-  validUntil: date.nullable(),
-});
-export type CoreAirportBinding = z.infer<typeof coreAirportBindingSchema>;
-const verifiedField = z.strictObject({
-  ref,
-  sourceId: coreUuid,
-  sourceRevision: z.number().int().positive().safe(),
-  representationId: coreUuid,
-  inputId: coreUuid,
-  payloadSha256: coreHash,
-  locator: flightLocatorSchema,
-  value: z.json(),
-});
-export const sealedCoreFlightCandidateSchema = z.strictObject({
-  version: z.literal(2),
-  publicationId: coreUuid,
-  candidate: coreFlightCandidateV2Schema,
-  status: z.enum(["QUALIFIED", "REVIEW"]),
-  errorCode: z.string().nullable(),
-  identityFacts: flightPurposeIdentityV2Schema.nullable(),
-  identityEvidenceRefs: flightPurposeEvidenceV2Schema.nullable(),
-  values: z.json(),
-  fieldEvidence: z.record(field, verifiedField),
-  airportBindings: z.array(coreAirportBindingSchema).max(2),
-});
-export type SealedCoreFlightCandidate = z.infer<typeof sealedCoreFlightCandidateSchema>;
-export const fieldRef = (candidateId: string, key: string) =>
-  `track-c/field-evidence/${candidateId}/${key}`;
+  coreCandidatePublicationV2Schema,
+  coreAirportBindingSchema,
+  sealedCoreFlightCandidateSchema,
+  fieldRef,
+  type CoreCandidatePublicationV2,
+  type CoreAirportBinding,
+  type CorePublicationMaterial,
+  type SealedCoreFlightCandidate,
+} from "../../src/domain/trip/tripCoreV2CandidatePublication";
+export * from "../../src/domain/trip/tripCoreV2CandidatePublication";
 const json = (v: unknown) => canonicalCoreJson(v as Json);
-export async function candidatePublicationHash(
-  body: SealedCoreFlightCandidate,
-  hash: ImportHash,
-) {
-  return coreHashValue("otr-trip-core-source-candidate-v2", body as Json, hash);
-}
-export type CorePublicationMaterial = z.infer<typeof interpretationMaterialSchema>;
 function unique(item: InterpretationItem, path: string) {
   const fields = item.fields.filter((f) => f.path === path);
   if (
@@ -466,10 +326,10 @@ export async function extractCoreFlightPublication(
         if (!otherService || !otherOrigin || !otherDestination)
           throw new Error("UNRESOLVED_MATCH");
       }
-      const airports = await Promise.all([
-        resolveAirport(origin, day),
-        resolveAirport(destination, day),
-      ]);
+      const airports = [
+        await resolveAirport(origin, day),
+        await resolveAirport(destination, day),
+      ];
       if (airports.some((a) => a === null)) throw new Error("UNRESOLVED_IDENTITY");
       body.airportBindings = airports.map((a, i) => {
         const b = coreAirportBindingSchema.parse(a);
