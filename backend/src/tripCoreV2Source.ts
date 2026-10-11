@@ -115,6 +115,7 @@ export type CoreSourceScopeV2 = {
   tripId: string;
   planId: string;
   sourceId?: string;
+  candidateIds?: string[];
 };
 export type CoreSourceCandidateV2 = {
   candidateId: string;
@@ -133,6 +134,7 @@ export type CoreSourceCatalogV2 = {
   inputCatalogSha256: string;
   source: Json;
   inputs: Json[];
+  runScopeSourceIds?: string[];
   candidates: CoreSourceCandidateV2[];
 };
 export type CoreSourceReceiptV2 = CoreReceipt;
@@ -425,7 +427,8 @@ export async function prepareCoreSourcePlanV2(
     request as Json,
     sha256,
   );
-  return storage.withLockedSourcePlan(scope, async (tx) => {
+  const storageScope = { ...scope, candidateIds: request.candidateIds };
+  return storage.withLockedSourcePlan(storageScope, async (tx) => {
     let plan = await tx.readPlan();
     if (
       plan &&

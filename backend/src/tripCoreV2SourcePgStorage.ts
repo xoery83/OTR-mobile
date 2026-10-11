@@ -5,9 +5,104 @@ import type {
   CoreSourcePlanStorageV2,
   CoreSourceStoredPlanV2,
   CoreSourceCatalogV2,
+  CoreSourceScopeV2,
+  CoreSourcePlanTransactionV2,
 } from "./tripCoreV2Source";
-import type { CorePgConnection } from "./tripCoreV2PgStorage";
+import type { CorePgConnection, CorePgLease } from "./tripCoreV2PgStorage";
 const json = (value: unknown) => canonicalCoreJson(value as Json);
+
+export async function readOwningLegacySourceCatalog(
+  lease: CorePgLease,
+  scope: CoreSourceScopeV2 & { sourceId: string },
+  runId?: string,
+): Promise<CoreSourceCatalogV2> {
+  const sourceId = scope.sourceId;
+  const source = (
+    await lease.query(
+      "SELECT to_jsonb(s) AS source FROM public.trip_sources s WHERE id=$1::uuid",
+      [sourceId],
+    )
+  ).rows[0]?.source as Record<string, Json> | undefined;
+  if (
+    !source ||
+    source.trip_id !== scope.tripId ||
+    source.acquired_by !== scope.actorAccountId ||
+    source.lifecycle !== "ACTIVE" ||
+    source.retention_state !== "RETAINED"
+  )
+    throw new Error("INPUT_STALE");
+  const runs = (
+    await lease.query(
+      "SELECT to_jsonb(r) AS run FROM public.trip_source_runs r WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND $3::uuid=ANY(scope_source_ids) AND superseded_by IS NULL AND ($4::uuid IS NULL OR id=$4::uuid) ORDER BY generation DESC LIMIT 65",
+      [scope.actorAccountId, scope.tripId, sourceId, runId ?? null],
+    )
+  ).rows;
+  // Multiple independent scopes require the future owning complete-catalog selector.
+  if (runs.length !== 1) throw new Error("PREDECESSOR_OUTCOME_UNKNOWN");
+  const run = runs[0].run as Record<string, Json>;
+  if (run.state !== "READY" || run.retention_state !== "RETAINED")
+    throw new Error("INPUT_STALE");
+  const pins = (
+    await lease.query(
+      "SELECT to_jsonb(i) AS pin,public.trip_import_input_valid(i,$2::uuid,$3::uuid,true) AS valid FROM public.trip_source_inputs i WHERE run_id=$1::uuid ORDER BY id LIMIT 65",
+      [run.id, scope.actorAccountId, scope.tripId],
+    )
+  ).rows;
+  if (!pins.length || pins.length > 64 || pins.some((p) => p.valid !== true))
+    throw new Error("INPUT_STALE");
+  const inputs = pins.map((p) => {
+    const {
+      run_id: _run,
+      confirmation_id: _confirmation,
+      ...pin
+    } = p.pin as Record<string, Json>;
+    return pin;
+  });
+  const inputHash = (
+    await lease.query("SELECT public.trip_import_run_input_hash($1::jsonb) AS hash", [
+      json(inputs),
+    ])
+  ).rows[0]?.hash;
+  if (inputHash !== run.input_sha256) throw new Error("INPUT_STALE");
+  const candidates = (
+    await lease.query(
+      "SELECT id,run_id,candidate_kind,proposal,proposal_sha256,retention_state,public.trip_source_hash('otr-source-candidate-v1',proposal) AS checked_hash FROM public.trip_source_candidates WHERE run_id=$1::uuid ORDER BY id LIMIT 65",
+      [run.id],
+    )
+  ).rows;
+  if (
+    candidates.length > 64 ||
+    candidates.some(
+      (c) =>
+        c.retention_state !== "RETAINED" ||
+        c.checked_hash !== c.proposal_sha256 ||
+        !c.proposal,
+    )
+  )
+    throw new Error("INVALID_PROVENANCE");
+  return {
+    actorAccountId: scope.actorAccountId,
+    tripId: scope.tripId,
+    sourceId,
+    sourceRevision: Number(source.current_material_revision),
+    inputCatalogSha256: inputHash as string,
+    source,
+    inputs,
+    ...(Array.isArray(run.scope_source_ids)
+      ? { runScopeSourceIds: run.scope_source_ids as string[] }
+      : {}),
+    candidates: candidates.map((c) => ({
+      candidateId: c.id as string,
+      runId: c.run_id as string,
+      candidateSha256: c.proposal_sha256 as string,
+      kind: c.candidate_kind === "TRANSPORT" ? "P2" : (c.candidate_kind as string),
+      snapshot: c.proposal as Json,
+      // Do not promote Capture's transient airport/relationship observations.
+      identityFacts: null,
+      identityEvidenceRefs: null,
+    })),
+  };
+}
 
 // This binding can persist honest REVIEW plans; W4 has not sealed qualified identity yet.
 export function createCoreSourcePgStorageV2(
@@ -85,92 +180,7 @@ export function createCoreSourcePgStorageV2(
             },
             // The scoped definer holds legacy locks; this principal has SELECT-only legacy grants.
             async readSealedCatalog(): Promise<CoreSourceCatalogV2> {
-              const source = (
-                await lease.query(
-                  "SELECT to_jsonb(s) AS source FROM public.trip_sources s WHERE id=$1::uuid",
-                  [sourceId],
-                )
-              ).rows[0]?.source as Record<string, Json> | undefined;
-              if (
-                !source ||
-                source.trip_id !== scope.tripId ||
-                source.acquired_by !== scope.actorAccountId ||
-                source.lifecycle !== "ACTIVE" ||
-                source.retention_state !== "RETAINED"
-              )
-                throw new Error("INPUT_STALE");
-              const runs = (
-                await lease.query(
-                  "SELECT to_jsonb(r) AS run FROM public.trip_source_runs r WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND $3::uuid=ANY(scope_source_ids) AND superseded_by IS NULL ORDER BY generation DESC LIMIT 65",
-                  [scope.actorAccountId, scope.tripId, sourceId],
-                )
-              ).rows;
-              // Multiple independent scopes require the future owning complete-catalog selector.
-              if (runs.length !== 1) throw new Error("PREDECESSOR_OUTCOME_UNKNOWN");
-              const run = runs[0].run as Record<string, Json>;
-              if (run.state !== "READY" || run.retention_state !== "RETAINED")
-                throw new Error("INPUT_STALE");
-              const pins = (
-                await lease.query(
-                  "SELECT to_jsonb(i) AS pin,public.trip_import_input_valid(i,$2::uuid,$3::uuid,true) AS valid FROM public.trip_source_inputs i WHERE run_id=$1::uuid ORDER BY id LIMIT 65",
-                  [run.id, scope.actorAccountId, scope.tripId],
-                )
-              ).rows;
-              if (!pins.length || pins.length > 64 || pins.some((p) => p.valid !== true))
-                throw new Error("INPUT_STALE");
-              const inputs = pins.map((p) => {
-                const {
-                  run_id: _run,
-                  confirmation_id: _confirmation,
-                  ...pin
-                } = p.pin as Record<string, Json>;
-                return pin;
-              });
-              const inputHash = (
-                await lease.query(
-                  "SELECT public.trip_import_run_input_hash($1::jsonb) AS hash",
-                  [json(inputs)],
-                )
-              ).rows[0]?.hash;
-              if (inputHash !== run.input_sha256) throw new Error("INPUT_STALE");
-              const candidates = (
-                await lease.query(
-                  "SELECT id,run_id,candidate_kind,proposal,proposal_sha256,retention_state,public.trip_source_hash('otr-source-candidate-v1',proposal) AS checked_hash FROM public.trip_source_candidates WHERE run_id=$1::uuid ORDER BY id LIMIT 65",
-                  [run.id],
-                )
-              ).rows;
-              if (
-                candidates.length > 64 ||
-                candidates.some(
-                  (c) =>
-                    c.retention_state !== "RETAINED" ||
-                    c.checked_hash !== c.proposal_sha256 ||
-                    !c.proposal,
-                )
-              )
-                throw new Error("INVALID_PROVENANCE");
-              return {
-                actorAccountId: scope.actorAccountId,
-                tripId: scope.tripId,
-                sourceId,
-                sourceRevision: Number(source.current_material_revision),
-                inputCatalogSha256: inputHash as string,
-                source,
-                inputs,
-                candidates: candidates.map((c) => ({
-                  candidateId: c.id as string,
-                  runId: c.run_id as string,
-                  candidateSha256: c.proposal_sha256 as string,
-                  kind:
-                    c.candidate_kind === "TRANSPORT"
-                      ? "P2"
-                      : (c.candidate_kind as string),
-                  snapshot: c.proposal as Json,
-                  // Do not promote Capture's transient airport/relationship observations.
-                  identityFacts: null,
-                  identityEvidenceRefs: null,
-                })),
-              };
+              return readOwningLegacySourceCatalog(lease, { ...scope, sourceId });
             },
             async readClaims(): Promise<FlightOutputClaimV2[]> {
               const rows = (
@@ -180,13 +190,6 @@ export function createCoreSourcePgStorageV2(
                 )
               ).rows;
               if (rows.length > 64) throw new Error("PREDECESSOR_OUTCOME_UNKNOWN");
-              const v2 = (
-                await lease.query(
-                  "SELECT output_slot_id FROM public.trip_source_core_v2_slots WHERE account_id=$1::uuid AND trip_id=$2::uuid AND source_id=$3::uuid LIMIT 1 FOR UPDATE",
-                  [scope.actorAccountId, scope.tripId, sourceId],
-                )
-              ).rows;
-              if (v2.length) throw new Error("CONTRACT_UNSUPPORTED");
               return rows.map((r) => ({
                 kind: "LEGACY",
                 accountId: scope.actorAccountId,
@@ -270,4 +273,24 @@ export function createCoreSourcePgStorageV2(
       });
     },
   };
+}
+
+// Reuse the existing owning transaction boundary for publisher and admitted Source ports.
+export async function withCoreSourcePgLease<T>(
+  connection: CorePgConnection,
+  scope: CoreSourceScopeV2,
+  task: (lease: CorePgLease, legacy: CoreSourcePlanTransactionV2) => Promise<T>,
+): Promise<T> {
+  let current: CorePgLease | undefined;
+  const storage = createCoreSourcePgStorageV2({
+    withLease: (work) =>
+      connection.withLease((lease) => {
+        current = lease;
+        return work(lease);
+      }),
+  });
+  return storage.withLockedSourcePlan(scope, (tx) => {
+    if (!current) throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
+    return task(current, tx);
+  });
 }
