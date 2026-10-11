@@ -1,7 +1,7 @@
-# Current implementation state — isolated Core v2 branch
+# Current implementation state — Core v2 integrated
 
-Updated 2026-10-12. This handoff describes `codex/trip-core-v2-w1-w5` in
-`/private/tmp/otr-trip-core-v2-20261012`; it is not evidence of canonical-main integration.
+Updated 2026-10-12. Core branch `e565080` was integrated into canonical main by
+normal fast-forward from `741579c`; concurrent Platform documentation remains local.
 Owner accepted W0 `otr-trip-core/2` and continuous W1/W2/W3/W5 implementation.
 W4 Capture and W6 Experience retain separate ownership. Core is INCOMPLETE.
 
@@ -23,7 +23,8 @@ W4 Capture and W6 Experience retain separate ownership. Core is INCOMPLETE.
 - Source port and PostgreSQL adapter exist; actual isolated sealed legacy two-Candidate
   publication/REVIEW/replay/stale/request-reuse/actor/Trip/principal SQL scenario PASS; actual sealed Source/run/input/proposal pins
   are checked, legacy UNKNOWN claims retained. Missing authority remains REVIEW.
-  No real READY publication, qualification or Source finalization is certified.
+  Owning synthetic SQL certifies qualified READY publication, same-ID qualification
+  and exact-receipt Source finalization. Hosted or real supplier acceptance is not claimed.
 
 ## Blocking authority and unfinished scope
 
@@ -46,10 +47,13 @@ Shared publication DTO: domain/trip/tripCoreV2CandidatePublication.ts. POST
 /v2/trips/:trip/core/source-candidates/publish; authenticated actor/Trip,32KiB request,
 exact request hash and candidate roster, account-generation fenced transport. Explicit
 createCorePgHttpConnection composes Source authority around the sole Core writer;
-no startup call or provisioned principal. Source recovery/revocation followup tests continue.
+no startup call or provisioned principal. Source recovery/revocation followup is complete:
+74 focused Source/publication/purpose tests,11 HTTP/transport/factory tests and3 actual
+isolated Source SQL scenarios PASS. Source deletion, registry revocation, manual edit
+protection, stale revisions and retained historical receipt recovery are covered.
 
 Operational document custody registry/host/grants, owning Ledger association, remaining
-lifecycle acceptance, all20 target traces and final integration remain unfinished. Do not
+lifecycle acceptance, all20 target traces remain unfinished. Do not
 label this checkpoint Core complete or production ready. Public DTO changes need evidence;
 no caller assertion, extractor confidence or synthetic certificate replaces owning proof.
 
@@ -67,7 +71,7 @@ no caller assertion, extractor confidence or synthetic certificate replaces owni
   UI-test infrastructure scan and navigationLayout's wrapper assumptions. Unrelated UI
   changes are outside this branch. No dependencies or product screens added.
 - Runtime/provider/native/hosted gates CLOSED; no provisioned Core principal, startup
-  wiring, provider calls, five-C queue dispatch, business runtime or main ref changes.
+  wiring, provider calls, five-C queue dispatch, business runtime activation. Canonical integration does not open those gates.
 
 ## Authoritative next-task documents
 
