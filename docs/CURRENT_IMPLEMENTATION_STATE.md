@@ -1,3 +1,12 @@
+## Bounded Production Day Feed — 2026-10-11 / CONDITIONAL ROUTING ACCEPTANCE
+
+- Owner accepted the routing/unavailable-state milestone and authorized bounded commit/integration; full Day Feed production acceptance remains OPEN. Reconciled against canonical `45092ead6fa12f0e9b3e6cce81ab64e95167f79d`; accepted 25-file implementation and P1/P2/NOW presentation preserved.
+- My Trips partial Ledger candidates and independently admitted explicit-ID lookup → Trip Home → explicit date/IANA-zone Day Feed. Today shares transient generation-fenced context. Complete Trip Root inventory remains a separate Beta requirement.
+- Read-only account-scoped accepted Day projections; no admission bypass, synthetic records, refresh/rebuild/import/seed, migration, provider or Flexible business-model changes. Capture, Ledger and the existing Create/Sync harness at `/trip-validation` remain accessible.
+- Technical checks and bounded signed-out native route evidence: task `outputs/production-pass`; final reconciliation/regression evidence: `outputs/production-integration-final`. Real admitted-data rendering, VoiceOver and real-photo evidence remain OPEN. Live Dynamic Type clipping until relaunch is an outstanding Beta UX issue; static enlarged launch passed.
+- Next major acceptance gate: real admitted Trip exercising My Trips → Trip Home → Day Feed → Focus → Immersive, including return/offline behavior. Separate R0 real-world data audit does not block this routing milestone. No full My Trips, Trip creation, Photos, Calendar, Timeline or production TTR claim.
+- Rollback: revert only this bounded Day Feed commit, preserving subsequent/concurrent work; no data migration or provider rollback. Providers and broader production acceptance require separate authorization.
+
 ## R3-A4 Hosted Reader adapter — 2026-10-11 / IMPLEMENTED, PROVISIONING BLOCKED
 
 - Fixed DEV Direct Primary endpoint/verified TLS and actual operator/Reader identity

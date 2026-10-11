@@ -191,7 +191,7 @@ export function civilBoundaryMicroseconds(boundary: DayBoundary): bigint | null 
     BigInt(boundary.resolution_offset_seconds) * 1000000n
   );
 }
-function anchor(boundary: DayBoundary): string | null {
+export function acceptedBoundaryAnchor(boundary: DayBoundary): string | null {
   // Conflicting retained civil/source evidence does not claim a combined schedule.
   if (
     boundary.source_instant &&
@@ -227,7 +227,7 @@ function hasUncertainty(event: DayEvent) {
     event.temporal_shape === "WINDOW" ||
     event.boundaries.some(
       (b) =>
-        anchor(b) === null &&
+        acceptedBoundaryAnchor(b) === null &&
         (b.role !== "END" || ["SPAN", "STAY"].includes(event.temporal_shape)),
     )
   );
@@ -249,7 +249,7 @@ export function itemsForLocalDate(
     const roles: DayBoundary["role"][] = [];
     const anchors: string[] = [];
     for (const b of event.boundaries) {
-      const time = anchor(b);
+      const time = acceptedBoundaryAnchor(b);
       if (time !== null) {
         const us = instantMicroseconds(time);
         if (us >= dayStart && us < dayEnd) {
@@ -263,8 +263,8 @@ export function itemsForLocalDate(
         roles.push(b.role);
     }
     const [start, end] = interval(event);
-    const a = start && anchor(start),
-      b = end && anchor(end);
+    const a = start && acceptedBoundaryAnchor(start),
+      b = end && acceptedBoundaryAnchor(end);
     let occupancy = false;
     let occupancyBasis: DayItem["occupancyBasis"] = null;
     if (event.temporal_shape === "ALL_DAY" && start?.local_date && start.zone_id) {
@@ -352,7 +352,7 @@ export function nextComparableEvent(
   const current = instantMicroseconds(now);
   const candidates = projection.events.flatMap((event) =>
     event.boundaries.flatMap((b) => {
-      const time = anchor(b);
+      const time = acceptedBoundaryAnchor(b);
       return time !== null && instantMicroseconds(time) > current
         ? [{ event, role: b.role, anchor: time }]
         : [];

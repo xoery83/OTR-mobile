@@ -73,6 +73,10 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen
+            name="trip-validation"
+            options={{ headerShown: true, headerTitle: t("dayFeed.validation") }}
+          />
+          <Stack.Screen
             name="foundation"
             options={{ headerShown: true, headerTitle: t("navigation.signIn") }}
           />

@@ -1,0 +1,11 @@
+# Bounded production Day Feed integration
+
+Owner approved My Trips → Trip Home → Day (Feed default), with Today sharing transient selected view context. Ledger candidates are partial account-local discovery, not a Trip Root inventory or admission. Explicit Trip IDs use the accepted account-scoped Day read repository independently of discovery. Null projection is unavailable; an accepted empty projection is distinct. No collection refresh, rebuild, import, seed or write is performed.
+
+Date and named query timezone are view context, not canonical Trip attributes. Only an unambiguous accepted boundary zone may prefill. Ambiguous zones remain unresolved until selected explicitly. Accepted historical projections remain available offline and are labeled as such. Account generation invalidates navigation context, results and visible metadata.
+
+Extract accepted G2 P1 row geometry, P2 Compact A rows and N1 placement/marker into production presentation. Gallery controllers, factories, photos, documents and operational statuses are excluded. Supplemental fields without an admitted read contract remain hidden. Canonical projections and schedule semantics remain unchanged. Preserve the old Create/Sync validation route separately.
+
+TTR impact: the shared Composer retains Event-to-Event identity slots. Future qualified TTR presentation enters those slots; providers never enter the UI. Straight-line versus route distance/ETA must remain explicit; no mode inference, no Flight waiting inference, no personal selection mutation or collaboration sync. Flexible confirmed anchors and NOW collision handling stay in the Composer. Apple ETA/route-distance caching remains licensing-gated. No TTR implementation in this pass.
+
+Owner review closure (2026-10-11): conditional acceptance applies to routing and honest unavailable states only. Commit/integration is authorized after clean reconciliation; it is not full Day Feed production acceptance. Real admitted-data, VoiceOver and real-photo validation remain OPEN. Live Dynamic Type clipping until relaunch is an outstanding Beta UX issue. The next acceptance milestone is a real admitted Trip through My Trips → Trip Home → Day Feed → Focus → Immersive. Separate R0 data audit is nonblocking.

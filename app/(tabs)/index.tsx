@@ -1,4 +1,4 @@
-import { FoundationScreen } from "@/components/FoundationScreen";
+import { TripScreen } from "@/features/day-feed/TripScreen";
 import { Stage4BPhysicalSmokeScreen } from "@/components/Stage4BPhysicalSmokeScreen";
 
 export default function TodayRoute() {
@@ -6,5 +6,5 @@ export default function TodayRoute() {
     return <Stage4BPhysicalSmokeScreen />;
   }
 
-  return <FoundationScreen status="Local data first" />;
+  return <TripScreen today />;
 }
