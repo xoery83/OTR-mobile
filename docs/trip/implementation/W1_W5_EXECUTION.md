@@ -157,3 +157,14 @@ core-v2-sql-acceptance.py each create/delete their own UUID synthetic clone and 
 329 old public functions unchanged. No historical migration rewrite or main integration.
 Source READY remains blocked by missing W4 sealed identity authority; custody/Ledger and
 partial acceptance targets are unfinished Core implementation, not falsely declared PASS.
+
+Owner publisher direction is implemented in bounded retained ORIGINAL TEXT/reference
+Flight scope. Core90 private date-bound registry/publication/association storage;
+Core91/92 additive legacy claim fences and metadata-only retained historical finalization.
+Source authority968d35a + shared DTOb62bc79; operatione90cb94; codec1a403be;
+HTTP/transport/explicit sole-writer compositionee603f5. Actual SQL2-Candidate→2-sparse→
+2same-IDqualify→4exactassociations/coldreplay PASS. Source followup adversaries continue.
+Full suite3609PASS/18skipped/2 known-base failures; typecheck/lint/UIguard/build/92touched
+formatted files PASS. All activationCLOSED. Main741579c retains concurrent Platform dirty
+CURRENT_IMPLEMENTATION_STATE and reports; no overwrite or inclusion in Core commits.
+Core overall remains incomplete: custody/Ledger/lifecycle/full20/native evidence not claimed.

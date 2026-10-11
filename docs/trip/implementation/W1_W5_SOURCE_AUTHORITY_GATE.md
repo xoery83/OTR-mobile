@@ -1,9 +1,9 @@
 # W1–W5 owning Source authority gate
 
-Status: OWNERSHIP RESOLVED; publisher implementation pending; Core continuous implementation is incomplete.
+Status: OWNERSHIP RESOLVED; bounded publisher IMPLEMENTED_AND_TESTED; Core continuous implementation is incomplete.
 All runtime, hosted, provider and native activation remains CLOSED.
 
-## Demonstrated gap
+## Historical gap before owning publisher implementation
 
 W0_CAPTURE_HANDOFF_CONTRACT §4–6 requires complete sealed Source/input/Candidate
 catalogs, exact qualified airport/service/date identity evidence, whole-Source
@@ -23,7 +23,7 @@ Consequently an owning PostgreSQL adapter cannot reproduce the qualified purpose
 certificate from actual stored authority. The executable synthetic Source port tests
 verify orchestration but do not fill this production authority gap.
 
-The actual Source PG binding verifies current Source/run/input/proposal pins and hashes,
+The initial legacy-only Source PG binding verified current Source/run/input/proposal pins and hashes,
 retains legacy UNKNOWN claims, and keeps absent qualified identity in REVIEW. It cannot
 store certified READY commands or finalize their Source evidence. No arbitrary booleans,
 transient provider interpretation, fictional v1 candidate or old-v2 approval is used.
@@ -33,8 +33,12 @@ transient provider interpretation, fictional v1 candidate or old-v2 approval is 
 Owner directed Core/Source to own authoritative v2 Candidate publication. Capture owns
 interpretation, evidence and candidate preparation; it receives no direct Canonical SQL
 mutation authority. Source acceptance commit c316688 is integrated here as16e2d33.
-The prior assignment question is resolved. Sealed authority implementation and its
-qualification/admission gates remain required.
+The prior assignment question is resolved. Core now implements the bounded ORIGINAL
+TEXT/reference Flight publication and same-writer admission path, with actual isolated
+PostgreSQL2-qualified/2-sparse/same-IDqualification/4-association replay evidence.
+Binary/OCR, codeshare/supplier/ambiguous/manual-edit/mixed-Source cases remain REVIEW.
+Deployed registry authority, native/Hosted activation and broader Source grammar remain
+their existing later gates. Recovery/retained-claim adversaries are being completed.
 
 ## Concrete implementation unit
 
@@ -59,7 +63,7 @@ implementation identifies a concrete incompatible sealing requirement.
 
 ## Remaining work; no complete claim
 
-Before Core completion: verified publisher/admission/finalization and Source SQL acceptance;
+Before Core completion: remaining Source recovery/revocation/coexistence adversaries;
 operational custody registry/host/grant/CREATE_DOCUMENT binding; owning Ledger association;
 remaining lifecycle and all 20 acceptance target traces; final compatibility/integration.
 Current tests demonstrate isolated SQL/SQLite/backend policy mechanics. They do not

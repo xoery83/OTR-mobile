@@ -10,7 +10,7 @@ W4 Capture and W6 Experience retain separate ownership. Core is INCOMPLETE.
 - Frozen finite31-table model, command2/receipt2/read2/capture2 codecs, protected
   manual writes, sparse Flight identity, independent visibility/participation, N:M
   relations, typed P1–P6 details and deterministic Day projections are executable.
-- Additive Server85–89 and SQLite54 only. Actual isolated PostgreSQL command writer
+- Additive Server85–92 and SQLite54 only. Actual isolated PostgreSQL command writer
   atomically commits roots/children/exact receipts. Actor read uses one consistent
   snapshot and complete actor-scoped collection, with private Source evidence redacted
   before hashing. Person binding preserves actual revision0 and separates active identity
@@ -28,12 +28,25 @@ W4 Capture and W6 Experience retain separate ownership. Core is INCOMPLETE.
 ## Blocking authority and unfinished scope
 
 Capture owner confirmed legacy publication seals labels but no qualified airport IDs;
-resolved airports/matching are transient. There is no authoritative v2 Candidate/Evidence
-publisher for whole-Source independent-leg/retiming/continuity evidence. The concrete
+resolved airports/matching are transient. The initial absence of an authoritative v2 Candidate/Evidence publisher has been resolved
+for the bounded retained ORIGINAL TEXT/reference Flight grammar. The concrete
 publisher/ownership proposal is `trip/implementation/W1_W5_SOURCE_AUTHORITY_GATE.md`.
 Owner direction now assigns the authoritative v2 Candidate Publisher to Core/Source;
 Capture retains interpretation/evidence/preparation without Canonical SQL authority.
-The assignment gate is resolved; publisher implementation and verification remain pending.
+The assignment gate is resolved. Owning publisher/admission/finalization now execute in
+isolated SQL:2 qualified Candidates→2 sparse roots→same-ID qualification→4 exact receipt
+associations→cold replay without duplicates. Missing/ambiguous/unsupported evidence stays
+REVIEW. Fresh airport authority uses private immutable date-bound registry assignments;
+original bytes/current pins and complete Source observations are independently re-read.
+Server90 stores publisher/association metadata and registry;91/92 fence legacy fresh
+claims and retain uncertain claims. Historical finalization guards verify retained old
+pins/receipt with current access, without granting fresh dispatch.
+
+Shared publication DTO: domain/trip/tripCoreV2CandidatePublication.ts. POST
+/v2/trips/:trip/core/source-candidates/publish; authenticated actor/Trip,32KiB request,
+exact request hash and candidate roster, account-generation fenced transport. Explicit
+createCorePgHttpConnection composes Source authority around the sole Core writer;
+no startup call or provisioned principal. Source recovery/revocation followup tests continue.
 
 Operational document custody registry/host/grants, owning Ledger association, remaining
 lifecycle acceptance, all20 target traces and final integration remain unfinished. Do not
@@ -43,8 +56,8 @@ no caller assertion, extractor confidence or synthetic certificate replaces owni
 ## Validation and environment
 
 - Typecheck and lint/UI guard passed. Focused reader/HTTP/transport/repository/sync/lifecycle
-  run84 PASS; lifecycle reducer16 PASS. Final full regression:3584 PASS,17 skipped,2 baseline failures.
-- Actual isolated synthetic PostgreSQL Server84→85–89 acceptance PASS: P1–P6, sparse
+  run84 PASS; lifecycle reducer16 PASS. Final full regression:3609 PASS,18 skipped,2 baseline failures.
+- Actual isolated synthetic PostgreSQL Server84→85–92 acceptance PASS: P1–P6, sparse
   exact replay/CAS, full collection/Item read, Person invalidation, RLS, closed gates and
   least privileges. All329 historical public function bodies retain exact fingerprints.
 - Tests create only a UUID-named network-none Docker clone from cached synthetic image

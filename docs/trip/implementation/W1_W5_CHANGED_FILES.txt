@@ -1,20 +1,28 @@
-Isolated Core v2 branch vs base741579c; no canonical-main integration.
+Isolated Core v2 branch vs base741579c; canonical-main integration pending.
 
+backend/src/__fixtures__/tripCoreV2CandidatePublication.ts
 backend/src/app.ts
 backend/src/supabaseGateway.ts
 backend/src/tripCanonicalRead.test.ts
+backend/src/tripCoreV2CandidatePublication.test.ts
+backend/src/tripCoreV2CandidatePublication.ts
 backend/src/tripCoreV2Collection.ts
 backend/src/tripCoreV2Commands.ts
 backend/src/tripCoreV2Http.test.ts
 backend/src/tripCoreV2Http.ts
+backend/src/tripCoreV2PgCodec.test.ts
 backend/src/tripCoreV2PgConnection.test.ts
 backend/src/tripCoreV2PgConnection.ts
+backend/src/tripCoreV2PgHttpConnection.test.ts
+backend/src/tripCoreV2PgHttpConnection.ts
 backend/src/tripCoreV2PgRead.ts
 backend/src/tripCoreV2PgStorage.sql.test.ts
 backend/src/tripCoreV2PgStorage.test.ts
 backend/src/tripCoreV2PgStorage.ts
+backend/src/tripCoreV2ReceiptAudit.test.ts
 backend/src/tripCoreV2Source.test.ts
 backend/src/tripCoreV2Source.ts
+backend/src/tripCoreV2SourcePgAuthority.ts
 backend/src/tripCoreV2SourcePgStorage.sql.test.ts
 backend/src/tripCoreV2SourcePgStorage.test.ts
 backend/src/tripCoreV2SourcePgStorage.ts
@@ -39,6 +47,7 @@ docs/trip/contracts/W0_OWNER_REVIEW.md
 docs/trip/contracts/W0_PHYSICAL_SCHEMA_SPEC.md
 docs/trip/contracts/W0_READ_PROJECTION_CONTRACT.md
 docs/trip/contracts/W0_UNIFIED_DATA_CONTRACT.md
+docs/trip/implementation/CORE_V2_CANDIDATE_PUBLICATION.md
 docs/trip/implementation/FLIGHT_MULTI_OUTPUT_V2.md
 docs/trip/implementation/W1_W5_ACCEPTANCE_EVIDENCE.md
 docs/trip/implementation/W1_W5_CAPTURE_IMPLEMENTATION_HANDOFF.md
@@ -68,6 +77,7 @@ src/data/sync/tripCoreV2SyncWorker.ts
 src/domain/trip/flightOutputPurposeV2.test.ts
 src/domain/trip/flightOutputPurposeV2.ts
 src/domain/trip/tripCoreV2.ts
+src/domain/trip/tripCoreV2CandidatePublication.ts
 src/domain/trip/tripCoreV2Commands.test.ts
 src/domain/trip/tripCoreV2Commands.ts
 src/domain/trip/tripCoreV2Day.ts
@@ -85,9 +95,14 @@ src/domain/trip/tripCoreV2Temporal.test.ts
 src/domain/trip/tripCoreV2Temporal.ts
 src/domain/trip/tripCoreV2Views.test.ts
 src/domain/trip/tripCoreV2Views.ts
+src/domain/trip/tripCoreV2W0Fixtures.test.ts
 supabase/migrations/20261011000100_trip_core_v2_foundation.sql
 supabase/migrations/20261011000200_trip_core_v2_version_dispatch.sql
 supabase/migrations/20261011000300_trip_core_v2_owning_session.sql
 supabase/migrations/20261011000400_trip_core_v2_read_scope.sql
 supabase/migrations/20261011000500_trip_core_v2_source_scope.sql
+supabase/migrations/20261011000600_trip_core_v2_candidate_publication.sql
+supabase/migrations/20261011000700_trip_core_v2_legacy_claim_fence.sql
+supabase/migrations/20261011000800_trip_core_v2_retained_claim_fence.sql
+supabase/tests/core-v2/candidate-publication.sql
 supabase/tests/core-v2/foundation.sql

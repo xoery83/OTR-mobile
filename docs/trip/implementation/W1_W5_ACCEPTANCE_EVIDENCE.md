@@ -5,14 +5,14 @@ Base741579c; isolated branch codex/trip-core-v2-w1-w5. Runtime/Hosted/native/pro
 
 ## Executed checks
 
-- Full Vitest:3584 passed,17 skipped,2 failed. Both failures reproduce on unchanged
+- Full Vitest:3609 passed,18 skipped,2 failed. Both failures reproduce on unchanged
   base741579c: architectureBoundary UI-test scan and navigationLayout wrapper assumptions.
 - Typecheck, lint, UI guard, Backend build and all81 touched formatted files PASS. No UI changes or new dependencies.
 - Focused read/HTTP/transport/SQLite/sync/lifecycle84 PASS; reducer/lifecycle16 PASS.
 - W0 A01–A09 pure graph compiler9 PASS (explicit synthetic required P5 service inputs;
   no invented production operator, Document originals or Source qualification). New owning
   receipt-audit tests2 PASS; Source/PG/audit focused34 PASS. Qualified admission is separate.
-- Owned synthetic PostgreSQL Core85–89 scenario PASS: P1–P6 root/child writes, sparse
+- Owned synthetic PostgreSQL Core85–92 scenario PASS: P1–P6 root/child writes, sparse
   exact receipt/replay/operation reuse/CAS, complete collection/Item, Person invalidation;
   rollback-only RLS and closed-gate/role/private-locator negatives PASS.
 - Source owning SQL scenario PASS separately: actual sealed legacy two-Candidate publication,
@@ -61,3 +61,11 @@ publication has labels but no qualified airport IDs or whole-Source identity aut
 Core cannot safely admit that data by inventing proof. Custody/Ledger and the partial
 acceptance rows remain implementation work; they are not reclassified as Owner approvals.
 No canonical-main integration or production readiness is claimed.
+
+Owning publisher checkpoint: actual SourceSQL2scenarios PASS includes sealed two-Candidate
+publication, sparse CREATE through the sole writer, same-IDqualification from exact
+prerequisite receipts, four exact associations, cold replay, .120000 precision6 and
+unrelated business-row preservation. The previous publication-ownership blocker is
+resolved for retained ORIGINAL TEXT/reference grammar; broad Target A01/A10/A13/A18 still
+needs all named adversaries/native evidence and full fixture coverage. Publication's
+QUALIFIED status is not Canonical admission. Core overall remains incomplete.

@@ -57,3 +57,26 @@ account/Trip read2 snapshot or protected pending local intent; pending metadata 
 accepted DTO hashes. createCorePgReader is the dormant single-snapshot owning backend
 reader; originalDocumentIds/ledgerExpenseIds/sourceEvidenceRefs require owning independent
 authorization. No startup or feature-owned refresh scheduler is introduced.
+
+## Owning Candidate publisher checkpoint
+
+The prior publisher assignment gate is resolved by Owner direction: Core/Source owns
+publication; Capture prepares interpretation/evidence. Shared finite request/result DTOs
+and hashes live in src/domain/trip/tripCoreV2CandidatePublication.ts. The owning backend
+extractor re-reads complete retained ORIGINAL TEXT/reference grammar and exact locators;
+private date-bound registry assignments qualify IATA identity, with no Place UUID creation.
+Unsupported binary/OCR/manual-edit/codeshare/supplier/mixed-source cases remain REVIEW.
+
+POST /v2/trips/:trip/core/source-candidates/publish binds authenticated Actor/Trip and
+Source/run/revision, request SHA and complete requested candidate-ID roster. Client
+createCoreV2Transport.publishSourceCandidates uses account-generation fences and the
+existing authenticated client;32KiB input and1MiB response bounds. QUALIFIED publication
+means sealed physical identity/evidence; it is not Canonical/temporal admission or runtime
+permission. Exact SOURCE_INSTANT and same-ID guarded command validation remain separate.
+
+createCoreSourcePgAuthority supplies publication, plans, same-lease verifier/private audit
+and exact receipt/association finalization. createCorePgHttpConnection explicitly composes
+that authority with the sole Core writer/reader/readCorePgOperation; no second writer,
+startup caller or credentials. Actual isolated SQL2-Candidate→2-sparse→2same-IDqualify→4
+receipt associations/cold replay PASS; .120000 precision6 retained and unrelated business
+rows/329 historical functions unchanged. Runtime/Hosted/native/provider CLOSED.
