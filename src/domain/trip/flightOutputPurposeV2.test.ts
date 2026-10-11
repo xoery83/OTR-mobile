@@ -151,6 +151,63 @@ describe("Core Flight output-purpose2", () => {
       }),
     ).toBe("DISTINCT_OUTPUT");
   });
+  it("keeps conflicting supplier/operating continuity UNKNOWN across dates or routes", () => {
+    const supplierOccurrence = {
+      namespace: "SUPPLIER",
+      issuer: "NZ",
+      value: "leg42",
+      scopeId: "order42",
+    };
+    expect(
+      compareFlightOutputPurposesV2(
+        { ...outbound, supplierOccurrence },
+        { ...returning, supplierOccurrence },
+      ),
+    ).toBe("UNKNOWN");
+    expect(
+      compareFlightOutputPurposesV2(
+        { ...outbound, operatingOccurrence: "operating-leg42" },
+        { ...returning, operatingOccurrence: "operating-leg42" },
+      ),
+    ).toBe("UNKNOWN");
+    expect(
+      compareFlightOutputPurposesV2(
+        { ...outbound, supplierOccurrence },
+        { ...returning, originDate: outbound.originDate, supplierOccurrence },
+      ),
+    ).toBe("UNKNOWN");
+  });
+  it("treats verified shared operating occurrence as one output across service aliases", () => {
+    const operatingOccurrence = "operating-leg42";
+    expect(
+      compareFlightOutputPurposesV2(
+        { ...outbound, operatingOccurrence },
+        { ...outbound, operator: "SQ", serviceNumber: "4289", operatingOccurrence },
+      ),
+    ).toBe("SAME_OUTPUT");
+  });
+  it("retains supplier continuity in the certificate without changing the physical tuple fingerprint", async () => {
+    const supplierOccurrence = {
+      namespace: "SUPPLIER",
+      issuer: "NZ",
+      value: "leg42",
+      scopeId: "order42",
+    };
+    const annotated = await mintFlightOutputPurposeV2(
+      binding(),
+      { ...outbound, supplierOccurrence },
+      { ...evidence(), supplierOccurrence: [ref("supplier.leg")] },
+      async () => {},
+      sha256,
+    );
+    expect(annotated.identitySha256).toBe((await mint()).identitySha256);
+    expect(annotated.purpose.identityFacts.supplierOccurrence).toEqual(
+      supplierOccurrence,
+    );
+    await expect(mint(binding(), { ...outbound, supplierOccurrence })).rejects.toThrow(
+      "INVALID_PROVENANCE",
+    );
+  });
   it("does not upgrade a legacy UNKNOWN claim into a purpose certificate", async () => {
     await expect(
       assertFlightOutputClaimsV2(

@@ -6,6 +6,17 @@ import type { Json } from "./eventIntentJson";
 const uuid = z.uuid().regex(/^[0-9a-f-]{36}$/);
 const hash = z.string().regex(/^[0-9a-f]{64}$/);
 const revision = z.number().int().positive().safe();
+const boundedIdentity = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((v) => v === v.trim() && !v.includes("\0"));
+const supplierIdentity = z.strictObject({
+  namespace: boundedIdentity,
+  issuer: boundedIdentity,
+  value: boundedIdentity,
+  scopeId: boundedIdentity,
+});
 const airport = z
   .string()
   .min(1)
@@ -31,6 +42,8 @@ export const flightPurposeIdentityV2Schema = z
     }),
     originAirportId: airport,
     destinationAirportId: airport,
+    operatingOccurrence: boundedIdentity.optional(),
+    supplierOccurrence: supplierIdentity.optional(),
   })
   .superRefine((value, context) => {
     if (
@@ -53,6 +66,8 @@ export const flightPurposeEvidenceV2Schema = z.strictObject({
   originDate: z.array(evidenceRef).min(1).max(16),
   originAirportId: z.array(evidenceRef).min(1).max(16),
   destinationAirportId: z.array(evidenceRef).min(1).max(16),
+  operatingOccurrence: z.array(evidenceRef).min(1).max(16).optional(),
+  supplierOccurrence: z.array(evidenceRef).min(1).max(16).optional(),
 });
 const purposeFields = {
   version: z.literal(2),
@@ -92,6 +107,23 @@ export type FlightPurposeEvidenceVerifierV2 = (input: {
   identityEvidenceRefs: z.infer<typeof flightPurposeEvidenceV2Schema>;
 }) => Promise<void>;
 
+async function identityDigest(identity: FlightPurposeIdentityV2, sha256: ImportHash) {
+  const {
+    operatingOccurrence: _operating,
+    supplierOccurrence: _supplier,
+    ...tuple
+  } = identity;
+  return importDigest("otr-trip-core-flight-identity-v2", tuple as Json, sha256);
+}
+function requireContinuityEvidence(
+  identity: FlightPurposeIdentityV2,
+  evidence: z.infer<typeof flightPurposeEvidenceV2Schema>,
+) {
+  for (const key of ["operatingOccurrence", "supplierOccurrence"] as const)
+    if ((identity[key] === undefined) !== (evidence[key] === undefined))
+      throw new Error("INVALID_PROVENANCE");
+}
+
 export async function mintFlightOutputPurposeV2(
   binding: FlightPurposeBindingV2,
   identityFacts: FlightPurposeIdentityV2,
@@ -105,6 +137,7 @@ export async function mintFlightOutputPurposeV2(
   pinned.identityEvidenceRefs = flightPurposeEvidenceV2Schema.parse(
     pinned.identityEvidenceRefs,
   );
+  requireContinuityEvidence(pinned.identityFacts, pinned.identityEvidenceRefs);
   for (const refs of Object.values(pinned.identityEvidenceRefs)) {
     if (new Set(refs).size !== refs.length) throw new Error("INVALID_PROVENANCE");
     refs.sort();
@@ -132,11 +165,7 @@ export async function mintFlightOutputPurposeV2(
         sha256,
       ),
     },
-    identitySha256: await importDigest(
-      "otr-trip-core-flight-identity-v2",
-      pinned.identityFacts as Json,
-      sha256,
-    ),
+    identitySha256: await identityDigest(pinned.identityFacts, sha256),
   };
 }
 
@@ -147,6 +176,7 @@ async function verifyCertificate(
 ) {
   const purpose = flightOutputPurposeV2Schema.parse(certified.purpose);
   const expected = flightPurposeBindingV2Schema.parse(binding);
+  requireContinuityEvidence(purpose.identityFacts, purpose.identityEvidenceRefs);
   const { purposeSha256, ...unsigned } = purpose;
   for (const key of Object.keys(purposeFields) as (keyof typeof purposeFields)[])
     if (purpose[key] !== expected[key])
@@ -154,12 +184,7 @@ async function verifyCertificate(
   if (
     purposeSha256 !==
       (await importDigest("otr-trip-core-output-purpose-v2", unsigned as Json, sha256)) ||
-    certified.identitySha256 !==
-      (await importDigest(
-        "otr-trip-core-flight-identity-v2",
-        purpose.identityFacts as Json,
-        sha256,
-      ))
+    certified.identitySha256 !== (await identityDigest(purpose.identityFacts, sha256))
   )
     throw new Error("INVALID_OUTPUT_PURPOSE");
   return purpose;
@@ -171,15 +196,30 @@ export function compareFlightOutputPurposesV2(
 ): "SAME_OUTPUT" | "DISTINCT_OUTPUT" | "UNKNOWN" {
   left = flightPurposeIdentityV2Schema.parse(left);
   right = flightPurposeIdentityV2Schema.parse(right);
-  if (left.originDate !== right.originDate) return "DISTINCT_OUTPUT";
+  const sameSupplier =
+    left.supplierOccurrence &&
+    right.supplierOccurrence &&
+    ["namespace", "issuer", "value", "scopeId"].every(
+      (key) =>
+        left.supplierOccurrence![key as keyof typeof left.supplierOccurrence] ===
+        right.supplierOccurrence![key as keyof typeof right.supplierOccurrence],
+    );
+  const sameOperating =
+    left.operatingOccurrence !== undefined &&
+    left.operatingOccurrence === right.operatingOccurrence;
+  if (left.originDate !== right.originDate)
+    return sameSupplier || sameOperating ? "UNKNOWN" : "DISTINCT_OUTPUT";
   const sameRoute =
     left.originAirportId === right.originAirportId &&
     left.destinationAirportId === right.destinationAirportId;
+  if ((sameSupplier || sameOperating) && !sameRoute) return "UNKNOWN";
   if (sameRoute)
-    return left.namespace === right.namespace &&
-      left.issuer === right.issuer &&
-      left.operator === right.operator &&
-      left.serviceNumber === right.serviceNumber
+    return sameSupplier ||
+      sameOperating ||
+      (left.namespace === right.namespace &&
+        left.issuer === right.issuer &&
+        left.operator === right.operator &&
+        left.serviceNumber === right.serviceNumber)
       ? "SAME_OUTPUT"
       : "UNKNOWN";
   if (

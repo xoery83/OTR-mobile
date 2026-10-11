@@ -56,7 +56,10 @@ verifyEvidence, sha256)` → `{purpose, identitySha256}`. Binding includes
   `SAME_OUTPUT | DISTINCT_OUTPUT | UNKNOWN`. Different independently evidenced
   dates or reversed qualified route can establish distinctness. Same route/date
   with different service identifiers, same-date reroutes and unreviewed connecting
-  observations remain UNKNOWN; no heuristic codeshare merge or route synthesis.
+  observations remain UNKNOWN. A shared verified operating/supplier leg with
+  contradictory route/date also remains UNKNOWN. Optional continuity anchors
+  require their own exact evidence; extra provenance does not alter the normalized
+  physical tuple fingerprint. No heuristic codeshare merge or route synthesis.
 
 The writer must acquire existing Account/Trip/Source and identity/claim locks,
 load every related active claim including legacy and successful pending
@@ -74,7 +77,7 @@ before claiming the two-preparation acceptance or mutation completion.
 ## Initial validation
 
 Baseline sibling fence fixture passes at741579c, including real SQLite cold
-reopen. Pure helper has26 tests covering distinct return outputs, exact serialized
+reopen. Pure helper has29 tests covering distinct return outputs, exact serialized
 replay, success+unknown, identical purpose, competing target, overlap, legacy
 UNKNOWN/no-commit, all-claim checking, scope/stale pin/forged hash rejection and
 mutable asynchronous input isolation. Existing Core/Import regressions and static
