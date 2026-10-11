@@ -49,6 +49,7 @@ afterEach(() => {
 class Store implements CoreSourcePlanStorageV2 {
   db: DatabaseSync;
   finalizeUnavailable = false;
+  admissionDenials = new Map<string, string>();
   constructor(readonly file: string) {
     this.db = new DatabaseSync(file);
     this.db.exec(
@@ -179,6 +180,8 @@ class Store implements CoreSourcePlanStorageV2 {
             throw new Error("INVALID_PROVENANCE");
         },
         assertCommandAdmission: async (command) => {
+          const denied = this.admissionDenials.get(command.target.id);
+          if (denied) throw new Error(denied);
           applyCoreCommand(
             this.get<CoreGraph>("graph"),
             command,
@@ -759,6 +762,58 @@ describe("Source receipt and immutable plan trust boundary", () => {
     expect(prepared.reviewSlots[0].errorCode).toBe("PREDECESSOR_OUTCOME_UNKNOWN");
     expect(prepared.plan.slots).toHaveLength(1);
     expect(f.store.plans()[0].slots[1].certified).toBeNull();
+    f.store.close();
+  });
+  it.each([
+    "SCOPE_NOT_AUTHORIZED",
+    "INVALID_SELF_PERSON",
+    "CROSS_TRIP_PERSON",
+    "CROSS_TRIP_REFERENCE",
+    "CORE_CAPABILITY_CLOSED",
+  ])(
+    "retains independent preparation when owning admission denies a sibling with %s",
+    async (error) => {
+      const f = await fixture();
+      f.store.admissionDenials.set(f.request.slots[1].target.id, error);
+      const p = await prepare(f.store, f.request);
+      expect(p.readyCommands).toHaveLength(1);
+      expect(p.reviewSlots).toEqual([
+        { slotId: f.request.slots[1].slotId, errorCode: error },
+      ]);
+      expect(p.plan.slots).toHaveLength(1);
+      expect(f.store.plans()[0].slots[1].command).toBeNull();
+      expect(f.store.plans()[0].slots[1].certified).toBeNull();
+      f.store.close();
+    },
+  );
+  it.each(["SELF", "SELECTED_MEMBERS"] as const)(
+    "checks actual Core Person participation instead of accepting proposed %s bindings",
+    async (mode) => {
+      const f = await fixture();
+      const payload = f.request.slots[1].payload as Record<string, Json>;
+      payload.participation = {
+        mode,
+        people: mode === "SELF" ? [] : [id(990)],
+        selfPersonId: mode === "SELF" ? id(990) : null,
+      };
+      const p = await prepare(f.store, f.request);
+      expect(p.readyCommands).toHaveLength(1);
+      expect(p.reviewSlots[0].errorCode).toBe(
+        mode === "SELF" ? "INVALID_SELF_PERSON" : "CROSS_TRIP_PERSON",
+      );
+      f.store.close();
+    },
+  );
+  it("rolls back all preparation metadata for an unexpected storage fault", async () => {
+    const f = await fixture();
+    f.store.admissionDenials.set(
+      f.request.slots[1].target.id,
+      "UNEXPECTED_STORAGE_FAULT",
+    );
+    await expect(prepare(f.store, f.request)).rejects.toThrow("UNEXPECTED_STORAGE_FAULT");
+    expect(f.store.plans()).toEqual([]);
+    expect(f.store.db.prepare("SELECT * FROM operations").all()).toEqual([]);
+    expect(f.store.get<CoreGraph>("graph").itinerary_events).toHaveLength(0);
     f.store.close();
   });
   it("reviews unsupported modes without opening mutation capabilities", async () => {
