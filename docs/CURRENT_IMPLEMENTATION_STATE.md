@@ -1,3 +1,23 @@
+## R3-A4 DEV trusted-root custody — 2026-10-11 / IMPLEMENTED, READER BLOCKED
+
+- Explicit DEV project opt-in and fixed verified DEV Pg identity are required;
+  default custody remains UNAVAILABLE. Checked cooperating-writer acceptance is
+  COOPERATIVE_DORMANT, never race-free DORMANT. Root0700/0600, single links,
+  no-follow and exclusive locking remain mandatory; secret reads/writes/removal/
+  promotion compare inventory and detect unexplained changes as UNAVAILABLE.
+- New cooperative lifecycle, filesystem/staging/ownership/link/lock/race negatives,
+  damaged-journal/unknown-file emergency disable, old-session retirement and
+  committed UNKNOWN/no-replay fixture tests PASS; retained adapter/F1/F2/F3 PASS.
+  211 focused Catalog Driver/read/transport/repository tests, typecheck, lint/UI
+  guard, Backend build, syntax, docs formatting and whitespace checks PASS.
+- Real initialization STOP: approved Direct admin credential delivery unavailable
+  and DEV host libpq absent. Reader remains NOLOGIN/password NULL/expiry NULL/
+  limit1/zero sessions; no real secret generation, Hosted mutation or deployment.
+- Owner accepts DEV privileged-writer/cooperative-lock risk; Apport remains enabled
+  and backup/snapshot/retention exclusions are not certified. No host policy changed.
+- Existing adapter report/ADR document the decision. Next required work is actual
+  administrator delivery and libpq prerequisites; Backend/Native Runtime stay CLOSED.
+
 ## Bounded Production Day Feed — 2026-10-11 / CONDITIONAL ROUTING ACCEPTANCE
 
 - Owner accepted the routing/unavailable-state milestone and authorized bounded commit/integration; full Day Feed production acceptance remains OPEN. Reconciled against canonical `45092ead6fa12f0e9b3e6cce81ab64e95167f79d`; accepted 25-file implementation and P1/P2/NOW presentation preserved.

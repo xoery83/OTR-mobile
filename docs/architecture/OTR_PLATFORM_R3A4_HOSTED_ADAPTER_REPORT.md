@@ -113,3 +113,54 @@ and BLOCKED on direct admin custody, host runtime/crash/retention and complete
 Reader custody prerequisites.
 
 **STOP — R3-A4 Hosted provisioning adapter implementation complete.**
+
+## Owner-authorized DEV cooperative custody correction — 2026-10-11
+
+Explicit opt-in for project tuqigdxrvrerfewsxqgm accepts trusted root and
+cooperating writers. Default custody retains UNAVAILABLE. The new disabled
+acceptance state is COOPERATIVE_DORMANT, never race-free DORMANT. Fixed DEV
+endpoint identity is required for SQL operations using this mode. Every local
+write/remove/promotion checks inventory before and after under the held lock;
+unexplained changes latch UNAVAILABLE. Unknown files are not read or deleted.
+Existing UNKNOWN recovery and independent database revocation remain mandatory.
+Root compromise/noncooperating privileged writes, Apport, provider backups and
+retention are residual DEV risks, not exclusion guarantees. This authorization
+does not create an administrator credential or supply missing host libpq.
+
+Validation of this correction: all four final network-none PostgreSQL fixture
+suites PASS (retained adapter, new trusted-root, retained F1/F2 and retained F3).
+The original default unconditional UNAVAILABLE behavior was reproduced; opt-in
+cooperative lifecycle and reinitialization pass. Negative backup/candidate/staging/
+temporary/links/ownership/modes/replaced-lock cases close. Observed changes between
+transitions, during writes and during inventory latch UNAVAILABLE. Emergency
+disable with damaged journal and unknown files terminates an established Reader
+session and preserves unexplained entries. Committed UNKNOWN authenticates and
+reconciles without replay. Fixture logs/statistics contain no captured secrets or
+verifiers. Secret reads also check inventory before/after and wipe on failed
+validation. Tests use synthetic credentials; operator fixture trust authentication
+is not actual DEV administrator SCRAM acceptance.
+
+211 focused Driver/read/transport/membership-repository tests PASS. Typecheck,
+lint/UI guard, Backend build, Python syntax, changed-doc formatting and whitespace
+checks PASS. The first JS test launch required permission for Vite's dependency
+cache; the permitted run passed. A fixture challenge file was initially absent
+and one test-only assertion typo was corrected before final full fixture PASS.
+No role SQL, migration, Backend Driver or runtime source changed.
+
+Actual host prerequisite refresh: no approved Direct admin credential descriptor/
+store established, root-private admin candidate paths absent; host libpq lookup,
+standard paths, loader and package metadata all absent. Required real Direct
+admin authentication/logging verification cannot proceed. Per task item19 STOP:
+Reader initialization BLOCKED, authenticated Reader SQL NOT RUN. Fresh Management
+read-only SQL confirms postgres/Primary and Reader NOLOGIN/password NULL/expiry
+NULL/limit1/zero sessions. No real credential acquired/generated and no Hosted
+SQL/ACL/migration change. No host package, dump policy or custody store created.
+Existing root0700 API custody is not Reader/admin custody. Enabled Apport with
+suid_dumpable2, provider snapshots/backup retention, privileged memory/inspectors
+and noncooperating root remain explicitly recorded DEV residuals.
+
+Nonsecret evidence: `/private/tmp/otr-r3a4-trusted-root-evidence` (0700, files0600).
+Local starting main fa8b32a included an existing unpublished Day Feed commit;
+remote main was45092ea. This task integrates only its five changed files locally
+and does not push that unrelated predecessor. Shared dirty documentation is
+preserved. Backend and Native Catalog Runtime remain CLOSED.

@@ -13,6 +13,7 @@ import select
 import stat
 import sys
 import time
+from contextlib import contextmanager
 
 READER = 'otr_trip_publication_catalog_reader'
 FIXTURE_PROJECT = 'OTR_DISPOSABLE_DEV:tuqigdxrvrerfewsxqgm'
@@ -41,6 +42,10 @@ OBSERVE = """SELECT rolcanlogin,rolpassword IS NOT NULL,rolvaliduntil::text,
 class Closed(Exception):
     def __init__(self):
         super().__init__('CREDENTIAL_OPERATION_CLOSED')
+
+
+class CustodyUnavailable(Closed):
+    pass
 
 
 def harden_process():
@@ -139,8 +144,12 @@ class Pg:
 
 class Custody:
     """Dedicated existing root-private DEV subtree; synthetic tests use tmpfs."""
-    def __init__(self,path):
+    def __init__(self,path,*,trusted_dev_project=None):
         harden_process()
+        if trusted_dev_project not in (None,DEV_PROJECT): raise Closed()
+        self.cooperative=trusted_dev_project==DEV_PROJECT
+        self.checkpoint=None
+        self.unavailable=False
         if not os.path.isabs(path) or os.path.normpath(path)!=path: raise Closed()
         ancestor=path
         while ancestor:
@@ -150,7 +159,7 @@ class Custody:
             if ancestor=='/': break
             ancestor=os.path.dirname(ancestor)
         info=os.lstat(path)
-        if not stat.S_ISDIR(info.st_mode) or info.st_uid!=0 or stat.S_IMODE(info.st_mode)!=0o700:
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid!=0 or info.st_gid!=0 or stat.S_IMODE(info.st_mode)!=0o700:
             raise Closed()
         self.path=path
         self.fd=os.open(path,os.O_DIRECTORY|os.O_NOFOLLOW)
@@ -161,10 +170,21 @@ class Custody:
     @staticmethod
     def check(fd):
         s=os.fstat(fd)
-        if not stat.S_ISREG(s.st_mode) or s.st_uid!=0 or stat.S_IMODE(s.st_mode)!=0o600 or s.st_nlink!=1:
+        if not stat.S_ISREG(s.st_mode) or s.st_uid!=0 or s.st_gid!=0 or stat.S_IMODE(s.st_mode)!=0o600 or s.st_nlink!=1:
             raise Closed()
 
     def read(self,name,secret=False):
+        if not secret: return self._read(name,False)
+        value=None
+        try:
+            with self.transition():
+                value=self._read(name,True)
+            return value
+        except BaseException:
+            wipe(value)
+            raise
+
+    def _read(self,name,secret):
         fd=os.open(name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=self.fd)
         try:
             self.check(fd)
@@ -183,6 +203,10 @@ class Custody:
         finally: os.close(fd)
 
     def write(self,name,value):
+        with self.transition(name,name+'.new'):
+            self._write(name,value)
+
+    def _write(self,name,value):
         # The fixed private staging name is recovered only by authorized reconciliation.
         fd=os.open(name+'.new',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600,dir_fd=self.fd)
         try:
@@ -198,9 +222,42 @@ class Custody:
         os.fsync(self.fd)
 
     def remove(self,name):
-        try: os.unlink(name,dir_fd=self.fd)
-        except FileNotFoundError: pass
-        os.fsync(self.fd)
+        with self.transition(name):
+            try: os.unlink(name,dir_fd=self.fd)
+            except FileNotFoundError: pass
+            os.fsync(self.fd)
+
+    def promote(self):
+        with self.transition('candidate','active'):
+            try: os.replace('candidate','active',src_dir_fd=self.fd,dst_dir_fd=self.fd)
+            except FileNotFoundError: pass
+            os.fsync(self.fd)
+
+    @contextmanager
+    def transition(self,*changed):
+        if not self.cooperative:
+            yield
+            return
+        try:
+            if self.unavailable: raise Closed()
+            before=self.inventory(recovery=True)
+            directory=os.fstat(self.fd)
+            stamp=(directory.st_mtime_ns,directory.st_ctime_ns)
+            if self.checkpoint is not None and self.checkpoint!=(stamp,before): raise Closed()
+        except (OSError,Closed):
+            self.unavailable=True
+            raise CustodyUnavailable() from None
+        try:
+            yield
+        finally:
+            try:
+                after=self.inventory(recovery=True)
+                if {k:v for k,v in before.items() if k not in changed}!={k:v for k,v in after.items() if k not in changed}: raise Closed()
+                directory=os.fstat(self.fd)
+                self.checkpoint=((directory.st_mtime_ns,directory.st_ctime_ns),after)
+            except (OSError,Closed):
+                self.unavailable=True
+                raise CustodyUnavailable() from None
 
     def journal(self):
         if self.exists('operation.json.new'): raise Closed()
@@ -208,8 +265,9 @@ class Custody:
             value=self.read('operation.json')
             if not isinstance(value,dict) or set(value)-{'state','operation','expiry','rotate_by','candidate_ready'}:
                 raise Closed()
-            if value.get('state') not in ('UNKNOWN','APPLIED','DORMANT','CUSTODY_INCOMPLETE') or value.get('operation') not in ('initial','rotate','disable','reconcile'):
+            if value.get('state') not in ('UNKNOWN','APPLIED','DORMANT','COOPERATIVE_DORMANT','CUSTODY_INCOMPLETE') or value.get('operation') not in ('initial','rotate','disable','reconcile'):
                 raise Closed()
+            if value.get('state')=='COOPERATIVE_DORMANT' and not self.cooperative: raise Closed()
             if 'candidate_ready' in value and type(value['candidate_ready']) is not bool: raise Closed()
             for name in ('expiry','rotate_by'):
                 if name in value:
@@ -259,18 +317,33 @@ class Custody:
         os.fsync(self.fd)
         if self.secret_artifacts(): raise Closed()
 
-    def inventory(self,active=False):
+    def inventory(self,active=False,recovery=False):
+        try:
+            snapshot=self._inventory(active,recovery)
+            if self.cooperative and not recovery:
+                directory=os.fstat(self.fd)
+                checkpoint=((directory.st_mtime_ns,directory.st_ctime_ns),snapshot)
+                if self.unavailable or (self.checkpoint is not None and self.checkpoint!=checkpoint): raise Closed()
+                self.checkpoint=checkpoint
+            return snapshot
+        except (OSError,Closed):
+            if self.cooperative:
+                self.unavailable=True
+                raise CustodyUnavailable() from None
+            raise
+
+    def _inventory(self,active=False,recovery=False):
         """Checked snapshot under the existing exclusive custodian lock; no unknown IO."""
         directory=os.fstat(self.fd)
         path=os.lstat(self.path)
-        if (directory.st_dev,directory.st_ino)!=(path.st_dev,path.st_ino) or not stat.S_ISDIR(path.st_mode) or path.st_uid!=0 or stat.S_IMODE(path.st_mode)!=0o700:
+        if (directory.st_dev,directory.st_ino)!=(path.st_dev,path.st_ino) or not stat.S_ISDIR(path.st_mode) or path.st_uid!=0 or path.st_gid!=0 or stat.S_IMODE(path.st_mode)!=0o700:
             raise Closed()
         names=os.listdir(self.fd)
         if len(names)>256 or 'lock' not in names: raise Closed()
         snapshot={}
         for name in names:
             evidence=re.fullmatch(r'journal-evidence-[0-9a-f]{16}\.json',name)
-            if name not in ('lock','operation.json') and not evidence and not (active and name=='active'):
+            if name not in ('lock','operation.json') and not evidence and not (active and name=='active') and not (recovery and name in (*SECRET_ARTIFACTS,'operation.json.new')):
                 raise Closed()
             fd=os.open(name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=self.fd)
             try:
@@ -278,7 +351,7 @@ class Custody:
                 if info.st_size>4096: raise Closed()
                 if name=='lock':
                     if info.st_size or (info.st_dev,info.st_ino)!=(os.fstat(self.lock).st_dev,os.fstat(self.lock).st_ino): raise Closed()
-                elif name=='operation.json': self.journal()
+                elif name=='operation.json' and not recovery: self.journal()
                 elif evidence:
                     try: value=self.read(name)
                     except (ValueError,TypeError): raise Closed() from None
@@ -339,20 +412,27 @@ def verify_disable_channel(pg):
     if len(state)!=1 or state[0][3]!='t': raise Closed()
 
 
+def verify_custody_mode(pg,store):
+    if store.cooperative and pg.host!=DEV_HOST: raise Closed()
+
+
 def complete_dormant(pg,store,operation):
+    verify_custody_mode(pg,store)
     retire(pg)
     state=pg.query(OBSERVE,rows=True)
     if len(state)!=1 or state[0][:2]!=['f','f'] or state[0][3]!='t': raise Closed()
     try:
         store.retire_secrets()
         before=store.inventory()
-        store.write('operation.json',{'state':'CUSTODY_INCOMPLETE','operation':operation})
+        state='COOPERATIVE_DORMANT' if store.cooperative else 'CUSTODY_INCOMPLETE'
+        store.write('operation.json',{'state':state,'operation':operation})
         after=store.inventory()
         if {k:v for k,v in before.items() if k!='operation.json'}!={k:v for k,v in after.items() if k!='operation.json'}: raise Closed()
     except (OSError,Closed):
         try: store.write('operation.json',{'state':'CUSTODY_INCOMPLETE','operation':operation})
         except (OSError,Closed): pass
-        return 'CUSTODY_INCOMPLETE'
+        return 'UNAVAILABLE' if store.cooperative else 'CUSTODY_INCOMPLETE'
+    if store.cooperative: return 'COOPERATIVE_DORMANT'
     # shortcut: flock cannot exclude an uncooperative privileged writer; complete
     # DORMANT acceptance stays unavailable until that custody prerequisite is proven.
     return 'UNAVAILABLE'
@@ -360,6 +440,7 @@ def complete_dormant(pg,store,operation):
 
 def disable(pg,store):
     verify_disable_channel(pg)
+    verify_custody_mode(pg,store)
     try:
         # Emergency revocation cannot depend on a writable or intelligible journal.
         try:
@@ -375,24 +456,33 @@ def disable(pg,store):
         try:
             store.recover_journal_staging()
             store.write('operation.json',{'state':'UNKNOWN','operation':'disable'})
-        except (OSError,Closed): return 'CUSTODY_INCOMPLETE'
+        except (OSError,Closed): return 'UNAVAILABLE' if store.cooperative else 'CUSTODY_INCOMPLETE'
         return complete_dormant(pg,store,'disable')
     except (OSError,Closed):
         pg.close(); return 'UNKNOWN'
 
 
 def provision(pg,store,expiry,operation='initial',boundary=None):
+    try: return _provision(pg,store,expiry,operation,boundary)
+    except CustodyUnavailable:
+        pg.close()
+        return 'UNAVAILABLE'
+
+
+def _provision(pg,store,expiry,operation,boundary):
     """One attempt only. boundary is a fixture fault hook, never a runtime caller."""
     verify_disable_channel(pg)
+    verify_custody_mode(pg,store)
     if operation not in ('initial','rotate'): raise Closed()
     now=dt.datetime.now(dt.timezone.utc)
     if expiry.tzinfo is None or not now<expiry<=now+dt.timedelta(days=30): raise Closed()
     previous=store.journal()
-    if previous and previous['state'] not in ('DORMANT','APPLIED'): raise Closed()
+    dormant='COOPERATIVE_DORMANT' if store.cooperative else 'DORMANT'
+    if previous and previous['state'] not in (dormant,'APPLIED'): raise Closed()
     if operation=='rotate' and (not previous or previous['state']!='APPLIED'): raise Closed()
-    if operation=='initial' and previous and previous['state']!='DORMANT': raise Closed()
+    if operation=='initial' and previous and previous['state']!=dormant: raise Closed()
     store.inventory(active=operation=='rotate')
-    if (not previous or previous['state']=='DORMANT') and store.secret_artifacts(): raise Closed()
+    if (not previous or previous['state']==dormant) and store.secret_artifacts(): raise Closed()
     state=pg.query(OBSERVE,rows=True)
     if len(state)!=1 or state[0][3]!='t' or (operation=='initial' and state[0][:2]!=['f','f']): raise Closed()
     if operation=='rotate':
@@ -418,6 +508,9 @@ def provision(pg,store,expiry,operation='initial',boundary=None):
         if boundary: boundary('before_commit',pg)
         pg.query('COMMIT')
         if boundary: boundary('committed',pg)
+    except CustodyUnavailable:
+        pg.close()
+        return 'UNAVAILABLE'
     except BaseException:
         # UNKNOWN remains durable even for cancellation, process death or lost reply.
         pg.close()
@@ -428,16 +521,19 @@ def provision(pg,store,expiry,operation='initial',boundary=None):
 
 def reconcile(pg,store):
     verify_disable_channel(pg)
+    verify_custody_mode(pg,store)
     state=pg.query(OBSERVE,rows=True)
     if len(state)==1 and state[0][:2]==['f','f'] and state[0][3]=='t':
         try:
             store.recover_journal_staging()
             store.write('operation.json',{'state':'UNKNOWN','operation':'reconcile'})
             return complete_dormant(pg,store,'reconcile')
+        except CustodyUnavailable: pg.close(); return 'UNAVAILABLE'
         except (OSError,Closed): pg.close(); return 'UNKNOWN'
     try:
         store.recover_journal_staging()
         journal=store.journal()
+    except CustodyUnavailable: pg.close(); return 'UNAVAILABLE'
     except (OSError,Closed): return 'UNKNOWN'
     if not journal or journal['state'] not in ('UNKNOWN','APPLIED'): return 'UNKNOWN'
     if journal.get('operation')=='disable' or len(state)!=1 or state[0][3]!='t': return 'UNKNOWN'
@@ -446,6 +542,7 @@ def reconcile(pg,store):
         except FileNotFoundError:
             if journal['state']!='APPLIED' and not journal.get('candidate_ready'): return 'UNKNOWN'
             password=store.read('active',True)
+    except CustodyUnavailable: pg.close(); return 'UNAVAILABLE'
     except (OSError,Closed): return 'UNKNOWN'
     reader=None
     try:
@@ -460,8 +557,9 @@ def reconcile(pg,store):
         wipe(password)
     retire(pg)
     try:
-        try: os.replace('candidate','active',src_dir_fd=store.fd,dst_dir_fd=store.fd); os.fsync(store.fd)
-        except FileNotFoundError: pass
+        store.promote()
         journal['state']='APPLIED'; store.write('operation.json',journal)
+    except CustodyUnavailable:
+        pg.close(); return 'UNAVAILABLE'
     except (OSError,Closed): return 'UNKNOWN'
     return 'APPLIED'
