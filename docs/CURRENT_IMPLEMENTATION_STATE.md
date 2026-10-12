@@ -1,3 +1,49 @@
+# DL1 controlled main integration — Phase A validated
+
+2026-10-12. Owner accepted DL1 `81b2192`/`fb0aba7`; controlled merge based on
+actual main/local origin/remote `12693e3`. No product conflict; current-state
+checkpoint prefixes reconciled without replacing newer Flight handoffs.
+Focused124 PASS; full3718 PASS/same2 baseline FAIL/21 skipped (clean-main3711).
+Typecheck/lint/UI guard/format PASS. Accepted Fixture/Simulator evidence retained.
+Report: `architecture/OTR_DAY_FEED_LAB_DL1_MAIN_INTEGRATION.md`.
+
+Advance local main only after pinned-ref/preservation recheck. Then DL2 read-only
+Lab source selector and owning Core read integration are authorized continuously.
+No push/Hosted writes/Seed/migration/provider/auth bypass or production deployment.
+
+---
+
+# DL1 Day Feed Lab — Simulator PASS / Owner Review
+
+Updated 2026-10-12. Owner authorized continuous DL1 only. Branch
+`codex/day-feed-lab-dl1`, worktree `/private/tmp/otr-day-feed-lab-dl1-20261012`,
+base main/origin/main/remote `6af3aff`; accepted G2 `6dc3e04` is an ancestor.
+No main merge/push or Hosted/provider activation.
+
+Debug Trip → Day Feed Lab / `otrmobile://day-feed-lab` uses five deterministic
+localized synthetic Trips, date controls and fixed Fixture NOW. Production
+DayFeed/P1/P2/Focus/Immersive/G2 Composer remain authoritative; only optional
+`instant` input was added. Release entry redirects; normal auth/bootstrap unchanged.
+No repository, schema, migration, canonical write, provider or DEV Data mode added.
+
+Focused 12 files/138 tests PASS. Full comparison: 3711 PASS versus clean-main3704;
+same two architecture/navigation failures and20 skips, all7 added tests PASS.
+Typecheck/lint/UI guard/format PASS. Release iOS export PASS; synthetic module
+bytes are retained by Metro, while route/entry guards prevent Release access.
+Final Scene-configured Debug Simulator build/install/launch and all DL1 native
+interactions PASS after Mac unlock. Production Immersive gets automatic native
+safe-area inset; P1/P2 return and nonzero scroll retention PASS. All five fixtures,
+NOW/TNS, bounded dates, Light/Dark and Trip→Lab→Back PASS. Read-only native SQLite:
+64 Trip tables /0 rows. Screenshots and acceptance JSON: `docs/qa/day-feed-lab-dl1/`.
+Evidence: `architecture/OTR_DAY_FEED_LAB_DL1_REPORT.md`.
+
+Authoritative usage/catalog/contribution ports: `architecture/OTR_DAY_FEED_LAB_DL1.md`.
+P3–P6, Flexible and `ttr-presentation/1` native rendering remain dormant. Next DL2:
+separately approved actor-scoped Core v2 read adapter, read-only first. No DEV Seed,
+write gate or provider activation is implied by Fixture/Simulator results.
+
+---
+
 # CP-FLIGHT-DEV-02 Integration Readiness — Owner Review
 
 Updated 2026-10-12 (Pacific/Auckland). Isolated branch

@@ -269,3 +269,12 @@ compatible merge, retries and ordinary confirmation stay silent; provenance rema
 under Rate details. Explicit choices show their actual waiting, confirmed or failed
 result in business language. No generic Retry/Force Sync for 409. Delivery is gated
 by ADR 0056; later FX/recovery phases remain separately gated.
+
+## Authorized DL1 Day Feed Lab
+
+Owner authorized a temporary Debug-only native Day Feed Lab on 2026-10-12. Five
+synthetic Trip scenarios and date controls feed the production P1/P2 Day Read
+boundary, Composer, Focus, NOW and Immersive components. Fixture mode has no
+canonical writes, session creation or provider access. Release rejects the route.
+P3–P6, Flexible, TTR and Core DEV Data activation remain outside DL1. Integration
+seams and usage are in `architecture/OTR_DAY_FEED_LAB_DL1.md`.

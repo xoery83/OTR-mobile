@@ -4,10 +4,12 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import type { DayEvent, DayProjection } from "@/domain/trip/dayReadModel";
 import { DayFeed } from "./DayFeed";
+import { DayFeedLabScreen } from "../day-feed-lab/DayFeedLabScreen";
+import { getFixtureCatalog } from "../day-feed-lab/fixtureCatalog";
 import { P1Row } from "./P1Row";
 import { FlightRows } from "./FlightRows";
 import { flightPresentation } from "./presentation";
-import { t } from "@/ui/locale";
+import { formatUiDate, t } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
 import { timeRailWidth } from "./visualTokens";
 import { faroeNegativeFixtures, syntheticDate } from "./faroeNegative.test.fixtures";
@@ -31,6 +33,8 @@ vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => {
     const i = state.cursor++;
+    if (state.hooks[i] === undefined)
+      state.hooks[i] = typeof initial === "function" ? initial() : initial;
     return [
       state.hooks[i] ?? initial,
       (next: unknown) => {
@@ -72,6 +76,8 @@ vi.mock("react-native", async () => {
     useColorScheme: () => state.scheme,
   };
 });
+vi.mock("@react-native-community/datetimepicker", () => ({ default: () => null }));
+vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("./useMinuteClock", () => ({
   useMinuteClock: () => ({ instant: state.instant }),
@@ -638,4 +644,66 @@ it("v2 qualified unknown clocks and names omit empty rows in Browse, large Focus
   expect(html).not.toContain("00:00");
   html = render(createElement(FlightRows, { fixture: f, immersive: true }));
   expect(html).not.toContain("00:00");
+});
+
+it("DL1 uses production NOW/P1 and retains Trip/date/Focus across Immersive and nonzero scroll return", () => {
+  state.instant = "2040-01-01T00:00:00Z"; // The fixture clock owns only this explicit input.
+  const fixture = getFixtureCatalog()[0];
+  let html = render(createElement(DayFeedLabScreen));
+  expect(html).toContain('data-testid="now-within"');
+  state.nodes
+    .find((n) => n.onScroll)!
+    .onScroll({ nativeEvent: { contentOffset: { y: 320 } } });
+  state.presses
+    .find((p) => p.accessibilityLabel === fixture.projection.events[0].title)!
+    .onPress();
+  render(createElement(DayFeedLabScreen));
+  state.presses.find((p) => p.accessibilityLabel === t("p1r.richerDetails"))!.onPress();
+  html = render(createElement(DayFeedLabScreen));
+  expect(html).toContain(fixture.id);
+  expect(html).toContain("2027-01-15");
+  state.presses.find((p) => p.accessibilityLabel === t("common.close"))!.onPress();
+  const onDismiss = state.nodes.find((n) => n.onDismiss)!.onDismiss;
+  html = render(createElement(DayFeedLabScreen));
+  onDismiss();
+  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 320, animated: false });
+  expect(html).toContain('data-testid="focus-selected-region"');
+  expect(html).toContain(fixture.id);
+});
+it("DL1 controls switch bounded dates and Trips using the same P2 renderer in either theme", () => {
+  for (const scheme of ["light", "dark"]) {
+    state.scheme = scheme;
+    state.hooks = [];
+    render(createElement(DayFeedLabScreen));
+    state.presses.find((p) => p.accessibilityLabel === t("dayLab.next"))!.onPress();
+    let html = render(createElement(DayFeedLabScreen));
+    expect(html).toContain("2027-01-16");
+    state.presses
+      .find(
+        (p) =>
+          p.accessibilityLabel ===
+          formatUiDate(new Date("2027-01-17T12:00:00Z"), {
+            month: "short",
+            day: "numeric",
+            timeZone: "UTC",
+          }),
+      )!
+      .onPress();
+    render(createElement(DayFeedLabScreen));
+    expect(
+      state.presses.find((p) => p.accessibilityLabel === t("dayLab.next"))!.disabled,
+    ).toBe(true);
+    state.presses
+      .find((p) => p.accessibilityLabel.startsWith(t("dayLab.trip")))!
+      .onPress();
+    render(createElement(DayFeedLabScreen));
+    state.presses
+      .find((p) => p.accessibilityLabel === getFixtureCatalog()[1].title)!
+      .onPress();
+    html = render(createElement(DayFeedLabScreen));
+    expect(html).toContain("day-lab-faroe");
+    expect(html).toContain("2027-01-15");
+    expect(html).toContain('data-testid="flight-browse-geometry"');
+    expect(html).toContain(getFixtureCatalog()[1].projection.events[2].title);
+  }
 });

@@ -72,6 +72,12 @@ export default function RootLayout() {
             orientation: "portrait",
           }}
         >
+          {__DEV__ ? (
+            <Stack.Screen
+              name="day-feed-lab"
+              options={{ headerShown: true, headerTitle: t("dayLab.title") }}
+            />
+          ) : null}
           <Stack.Screen
             name="trip-validation"
             options={{ headerShown: true, headerTitle: t("dayFeed.validation") }}
