@@ -256,13 +256,38 @@
   "deliveryFiles": [
     {
       "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
-      "sha256": "ba17f9f5dc018c73b7501f7d10a7d4bac0c3105b00bdd6553b6d66746bcb67e2",
-      "bytes": 57188
+      "sha256": "02eb07952534be5aa074596b8a7ac68b7f00cc260f6ec062e7ab486e933ae764",
+      "bytes": 61571
     },
     {
       "path": "docs/architecture/CP01B_G2_MAIN_INTEGRATION_REPORT.md",
-      "sha256": "bb25d31a1634838fa4477c03ad913535f805b6278dc027cdaf9d02ea327714f6",
-      "bytes": 9871
+      "sha256": "4a61dc92644476fca6f8a4284fdc9358cb5d481e80a39d4f95cc47d0150c0b1e",
+      "bytes": 12118
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/current-focused.log",
+      "sha256": "6b123dfae4cda34d83ba432a0473a68554f3d0619b90ddc7cff2534998826e42",
+      "bytes": 238
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/current-lint.log",
+      "sha256": "da2986113d556e042fbe0aca90df1c2fd067e1934b606296be627285030413c5",
+      "bytes": 231
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/current-main-preflight.json",
+      "sha256": "9d496bc89e330cc5a275075ab71b24fd98a18903bbd0773dd7e9e5e0c8cc2c4f",
+      "bytes": 594
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/current-typecheck.log",
+      "sha256": "83536ce573035559e7b92f6bd0afc1e2bd2871c514609d42f7d7ce4b9920c42e",
+      "bytes": 46
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/current-validation.json",
+      "sha256": "fb20967d7e7be1c0bb3f5e808aaad45107c151b249c5e0bec81b8e44ab076883",
+      "bytes": 4999
     },
     {
       "path": "docs/architecture/evidence/cp01b-g2-main/f01-empty-immersive-light.png",
@@ -395,6 +420,31 @@
       "bytes": 40331
     },
     {
+      "path": "docs/architecture/evidence/cp01b-g2-main/reconciled-f13-scroll-before-light.png",
+      "sha256": "bf22a2ffff57a332dc49af7af4ce28e069434a3993bd3c161004c5f34ade6fae",
+      "bytes": 441641
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/reconciled-f13-scroll-restored-light.png",
+      "sha256": "c39cd1ff39aa0ee222b5cbef695390e4ea303fc5ae4da7c0dd89b6ed05a1747e",
+      "bytes": 440646
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/reconciled-f14-no-key-warning-light.png",
+      "sha256": "5402ba042e1d6e2cacc94b29b179fc5f0e9ece6a3b883db4568fc762e1fae65c",
+      "bytes": 437040
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/reconciled-nelson-default-light.png",
+      "sha256": "80f5e5844335f98b877e59e28f3180930c0e08826283ee7ce4e9dd2bc9ad9ff2",
+      "bytes": 438631
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/reconciled-ttr-sheet-light.png",
+      "sha256": "90239910ecde87326cf4bdf373f2de54323ebdbd6eb0a9f1f323f6f9e61fa82e",
+      "bytes": 434749
+    },
+    {
       "path": "docs/architecture/evidence/cp01b-g2-main/typecheck.log",
       "sha256": "83536ce573035559e7b92f6bd0afc1e2bd2871c514609d42f7d7ce4b9920c42e",
       "bytes": 46
@@ -407,7 +457,102 @@
   ],
   "protectedAuthorityDiff": "NONE",
   "runtimeDiffFromAccepted": "NONE",
-  "integrationMethod": "guarded non-forced fast-forward; additive G2 documentation/evidence commit only",
+  "integrationMethod": "normal merge in isolated worktree, current-state-only conflict resolution; main fast-forward pending final Owner approval",
   "mainAdvanceStatus": "BLOCKED: automatic approval review requires trusted explicit final Owner approval after validation",
-  "canonicalMain": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016"
+  "canonicalMain": "065bdd96d334cfa4818178cb715dfd7ff14b5289",
+  "reconciledMerge": "03d06b680da1ac53c668a7b1d4b87bb8ec5bada5",
+  "reconciledParents": [
+    "065bdd96d334cfa4818178cb715dfd7ff14b5289",
+    "a5b58ae695465411b7fd01c6802cda03884fb393"
+  ],
+  "actualChangedPathsFromCurrentMain": [
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/architecture/CP01B_G2_COORDINATED_INTEGRATION_REPORT.md",
+    "docs/architecture/CP01B_G2_MAIN_INTEGRATION_REPORT.md",
+    "docs/architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f01-empty-immersive-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f02-group-choice-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f03-two-column-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f04-nested-item-focus-restored-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f05-carousel-scroll-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f06-pool-gesture-expanded-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f07-search-result-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f08-copy-my3-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f08-remove-undo-focus-cleared-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f09-empty-gap-excluded-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f10-now-straight-line-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f11-past-no-evidence-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f12-accessibility-type-light.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-immersive-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-tns-outer-light.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-before-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-restored-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-immersive-light.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/integrated-manifest.json",
+    "docs/architecture/evidence/cp01b-g2-coordinated/nelson-default-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-manifest.json",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-proposal-manifest.json",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-registration-proposal.patch",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-registration-test-proposal.patch",
+    "docs/architecture/evidence/cp01b-g2-coordinated/ttr-now-existing-sheet-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/validation.json",
+    "docs/architecture/evidence/cp01b-g2-main/current-focused.log",
+    "docs/architecture/evidence/cp01b-g2-main/current-lint.log",
+    "docs/architecture/evidence/cp01b-g2-main/current-main-preflight.json",
+    "docs/architecture/evidence/cp01b-g2-main/current-typecheck.log",
+    "docs/architecture/evidence/cp01b-g2-main/current-validation.json",
+    "docs/architecture/evidence/cp01b-g2-main/f01-empty-immersive-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f02-group-focus-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f03-group-choice-focus-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f04-nested-item-focus-return-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f05-published-carousel-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f06-divider-down-collapsed-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f06-divider-up-expanded-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f07-saved-preview-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f08-copy-my3-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f09-empty-excluded-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f10-now-choice-focus-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f11-past-no-evidence-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f12-accessible-immersive-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/f13-adjacent-immersive-dark.png",
+    "docs/architecture/evidence/cp01b-g2-main/f13-nonzero-before-dark.png",
+    "docs/architecture/evidence/cp01b-g2-main/f13-nonzero-restored-dark.png",
+    "docs/architecture/evidence/cp01b-g2-main/f14-no-key-warning-dark.png",
+    "docs/architecture/evidence/cp01b-g2-main/focused.log",
+    "docs/architecture/evidence/cp01b-g2-main/lint.log",
+    "docs/architecture/evidence/cp01b-g2-main/manifest.json",
+    "docs/architecture/evidence/cp01b-g2-main/native-catalog.ax.txt",
+    "docs/architecture/evidence/cp01b-g2-main/original-p1-p2-faroe-dark.png",
+    "docs/architecture/evidence/cp01b-g2-main/original-p2-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-main/original-p3-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-main/original-ttr-intent-sheet-dark.png",
+    "docs/architecture/evidence/cp01b-g2-main/original-ttr-now-dark.png",
+    "docs/architecture/evidence/cp01b-g2-main/preflight.json",
+    "docs/architecture/evidence/cp01b-g2-main/reconciled-f13-scroll-before-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/reconciled-f13-scroll-restored-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/reconciled-f14-no-key-warning-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/reconciled-nelson-default-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/reconciled-ttr-sheet-light.png",
+    "docs/architecture/evidence/cp01b-g2-main/typecheck.log",
+    "docs/architecture/evidence/cp01b-g2-main/validation.json",
+    "fixtures/flexible-native/src/ui/catalogs.ts",
+    "src/features/day-feed-lab/fixtureRegistration.test.ts",
+    "src/features/day-feed-lab/fixtureRegistration.ts",
+    "src/features/day-feed/render.test.ts",
+    "src/features/flexible-native-gallery/Gallery.tsx",
+    "src/features/flexible-native-gallery/Manipulation.tsx",
+    "src/features/flexible-native-gallery/copy.ts",
+    "src/features/flexible-native-gallery/data.json",
+    "src/features/flexible-native-gallery/fixtures.ts",
+    "src/features/flexible-native-gallery/images/cafe-reference.png",
+    "src/features/flexible-native-gallery/images/garden-reference.png",
+    "src/features/flexible-native-gallery/index.ts",
+    "src/features/flexible-native-gallery/labAdapter.tsx",
+    "src/features/flexible-native-gallery/model.test.ts",
+    "src/features/flexible-native-gallery/model.ts",
+    "src/features/flexible-native-gallery/renderer.test.ts",
+    "src/features/flexible-native-gallery/snapshot.test.ts",
+    "src/features/flexible-native-gallery/snapshot.ts"
+  ]
 }

@@ -1,3 +1,15 @@
+# Current-main reconciliation addendum
+
+Canonical main advanced concurrently to `065bdd96d334cfa4818178cb715dfd7ff14b5289` during the final guard. Its newer finite upload-authority changes are compatible and preserved exactly. A fresh isolated worktree `/private/tmp/otr-cp01b-g2-main-current-20261013`, branch `codex/cp01b-g2-main-current-20261013`, contains normal merge `03d06b680da1ac53c668a7b1d4b87bb8ec5bada5`, parents `065bdd96d334cfa4818178cb715dfd7ff14b5289` and `a5b58ae695465411b7fd01c6802cda03884fb393`. Only the shared current-state prefix conflicted; both handoffs were retained. All accepted CP01B/G2 source bytes match `22c0369`, and all newer main authority/backend/migration/script files match `065bdd9`. No runtime integration correction.
+
+The preflight/root file hashes show every unrelated dirty and untracked file unchanged. The changed main/index comes from the concurrent canonical integration; this task has not advanced main. The previous automatic approval rejection remains binding. Final local main is still `065bdd9`; the prepared target is this integration branch HEAD. The sections below record the initial `54ecb4b` validation and evidence, superseded by the current-baseline gate recorded in the manifest/validation JSON.
+
+Current-main gates: clean `065bdd9` **3,893 passed / 2 failed / 52 skipped**; reconciled integration **3,965 passed / 2 failed / 52 skipped**. Complete normalized failure diagnostics match exactly. Focused **17 files / 261 passed**, typecheck, full lint/UI guard, changed-file formatting and diff checks pass. The 29 additional skips are newer main SQL tests requiring an owned fixture; no database capability was activated. See `evidence/cp01b-g2-main/current-validation.json` and current logs.
+
+The existing isolated Debug app was reloaded with JavaScript from the reconciled checkout. Nelson default, F14 no-key-warning/read-only behavior, F13 nonzero scroll return and the original TTR intent Sheet pass again. These five fresh images supplement the complete F01–F14/P1/P2/P3/Light/Dark gate above the concurrency change; all relevant renderer/registry/Focus/NOW code is byte-identical across the reconciliation. No fresh native build or deferred-gesture acceptance is claimed.
+
+---
+
 # CP01B / G2 controlled local-main integration
 
 2026-10-13. Owner accepted synthetic/Simulator integration of `22c036944c8b7dc1ea483cb8ae9ca8766706b430`. Applicable integration gates passed. The isolated candidate is ready for guarded `git merge --ff-only`, preserving the accepted history. Canonical main remains `54ecb4bad6b91827d3abb42f355fc1e0d1fc7016`. No runtime correction, merge conflict, push, deployment, Hosted operation or production activation.

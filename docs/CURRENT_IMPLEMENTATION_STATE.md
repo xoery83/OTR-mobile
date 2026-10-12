@@ -1,3 +1,13 @@
+# CP01B / G2 — current-main reconciliation / final advance approval blocked
+
+Prepared isolated normal merge `03d06b6`, parents current main `065bdd9` and validated candidate `a5b58ae`. Newer accepted upload-authority work is unchanged; only the shared handoff prefix conflicted and both versions are retained. Accepted CP01B/G2 runtime exactly matches `22c0369`. Automatic approval review requires explicit final Owner approval for main advancement; no update by this task. Canonical main remains `065bdd9`.
+
+Fresh `065bdd9` baseline3893/reconciled3965 PASS, identical two failures/52 skips; focused261, typecheck and lint/UI guard PASS. No new persistent regression.
+
+Current validation and handoff: [CP01B_G2_MAIN_INTEGRATION_REPORT.md](architecture/CP01B_G2_MAIN_INTEGRATION_REPORT.md), including current-baseline evidence and the exact prepared manifest. Native reload of the reconciled tree confirms default Nelson, F14 warning removal, nonzero scroll and TTR intent. Original 22 entries/order/default, all 14 TTR scenarios and unchanged shared Snapshot/Focus contracts remain mandatory. No push/deploy/Hosted/production activation. Deferred held-copy/resize, gap creation, promotion, Group-only Past and physical/real-data gates remain separate. G2 maintenance resumes after the approved local-main advance.
+
+---
+
 # CP01B / G2 — controlled integration ready / main approval blocked
 
 2026-10-13. Owner-accepted `22c0369` prepared in a clean integration worktree from verified current main `54ecb4b`, preserving all accepted feature/G2 commits. Automatic approval review rejected main advancement and requires explicit final Owner approval after validation. Canonical main remains `54ecb4b`; prepared target is the integration branch HEAD. Runtime tree exactly matches the accepted candidate; no integration source corrections.
