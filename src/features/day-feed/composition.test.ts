@@ -1,6 +1,12 @@
 import { expect, it } from "vitest";
 import { itemsForLocalDate, type DayProjection } from "@/domain/trip/dayReadModel";
-import { composeDayStream, dayRowKey, type TransitionProjection } from "./composition";
+import {
+  composeDayStream,
+  dayRowKey,
+  choiceFocusKey,
+  type TransitionProjection,
+} from "./composition";
+import { flexibleContribution } from "../day-feed-lab/flexibleContribution";
 import { faroeNegativeFixtures, syntheticDate } from "./faroeNegative.test.fixtures";
 const now = `${syntheticDate}T09:30:00Z`;
 function setup() {
@@ -103,6 +109,10 @@ it("Flexible affiliation is explicit, unique, independent of Choice scope and re
   expect(group.containers[0].choices.map((c) => c.id)).toEqual(["group"]);
   expect(my.rows.find((r) => r.item.event.id === f.segment.id)!.containerId).toBeNull();
   expect(my.containers[0].rowKeys).toHaveLength(2);
+  expect(my.entries.map((entry) => entry.kind)).toEqual(my.rows.map(() => "ITEM"));
+  expect(
+    my.entries.filter((entry) => entry.kind === "ITEM").map((entry) => entry.row.key),
+  ).toEqual(my.rows.map((row) => row.key));
   expect(composeDayStream(query, now).rows.map((r) => r.key)).toEqual(
     my.rows.map((r) => r.key),
   );
@@ -134,6 +144,26 @@ it("qualified straight-line-only Transition survives NOW collision without mode 
   });
   expect(row.transition).not.toHaveProperty("route");
   expect(row.transition).not.toHaveProperty("externalMaps");
+  const withBlock = composeDayStream(query, now, {
+    transitions: [enriched],
+    scope,
+    flexible: [
+      {
+        version: "g2-flexible/1",
+        synthetic: true,
+        id: "choice-only",
+        title: "",
+        accountId: scope.accountId,
+        tripId: scope.tripId,
+        localDate: syntheticDate,
+        itemIds: [],
+        choices: [{ id: "idea", name: "Idea", scope: "MY" }],
+        softWindow: { startMinute: 540, endMinute: 600 },
+      },
+    ],
+  });
+  expect(withBlock.rows[1].transition).toEqual(row.transition);
+  expect(withBlock.entries.filter((entry) => entry.kind === "BLOCK")).toHaveLength(1);
 });
 it("confirmed mode persists without ETA and relation identity excludes display date and revision", () => {
   const { f, query, transition, scope } = setup();
@@ -221,4 +251,98 @@ it("W0 role-bearing presentation keys retain role/date and never claim edit-stab
   expect(dayRowKey("same-item", "START", syntheticDate)).not.toBe(
     dayRowKey("same-item", "START", "2027-02-04"),
   );
+});
+
+it("G2-F01/F02/F03 composes empty and Choice-only Blocks independently with one global Focus", () => {
+  const fixture = flexibleContribution();
+  const query = itemsForLocalDate(fixture.projection, fixture.selectedDate, fixture.zone);
+  const ports = fixture.ports!;
+  const base = composeDayStream(query, fixture.instant, ports);
+  expect(base.entries.filter((entry) => entry.kind === "BLOCK")).toHaveLength(3);
+  expect(base.containers.find((block) => block.id === "flex-empty")).toMatchObject({
+    rowKeys: [],
+    choices: [],
+  });
+  expect(
+    base.containers
+      .find((block) => block.id === "flex-choices")
+      ?.choices.map((c) => c.id),
+  ).toEqual(["cafe"]);
+  expect(
+    base.containers.find((block) => block.id === "flex-nested")?.rowKeys,
+  ).toHaveLength(1);
+  expect(base.rows.find((row) => row.item.event.id === "flex-tns")).toMatchObject({
+    position: "TNS",
+    containerId: null,
+  });
+  expect(
+    base.rows.find((row) => row.item.event.id === "flex-outer")?.containerId,
+  ).toBeNull();
+  expect(
+    base.entries
+      .filter((entry) => entry.kind === "ITEM")
+      .map((entry) => entry.row.item.event.id),
+  ).toEqual(["flex-outer", "flex-tns"]);
+  const key = choiceFocusKey("flex-nested", "MY", "garden");
+  const choice = composeDayStream(query, fixture.instant, { ...ports, focus: key });
+  expect(choice.focus).toBe(key);
+  expect(
+    choice.containers.find((block) => block.id === "flex-nested")?.focusedChoiceKey,
+  ).toBe(key);
+  expect(choice.rows.some((row) => row.focused)).toBe(false);
+  expect(
+    composeDayStream(query, fixture.instant, {
+      ...ports,
+      focus: "flex-item",
+    }).rows.filter((row) => row.focused),
+  ).toHaveLength(1);
+  const blockImmersive = composeDayStream(query, fixture.instant, {
+    ...ports,
+    immersive: "flex-empty",
+  });
+  expect(blockImmersive.immersive).toBe("flex-empty");
+  expect(blockImmersive.focus).toBeNull();
+  expect(base.now).toEqual(composeDayStream(query, fixture.instant).now);
+  const outsideSoftWindow = composeDayStream(query, fixture.instant, {
+    ...ports,
+    flexible: ports.flexible!.map((block) =>
+      block.id === "flex-nested" && "version" in block
+        ? { ...block, softWindow: { startMinute: 900, endMinute: 960 } }
+        : block,
+    ),
+  });
+  expect(
+    outsideSoftWindow.rows.find((row) => row.item.event.id === "flex-item")?.containerId,
+  ).toBe("flex-nested");
+});
+
+it("G2 affiliation fails to outer rows for conflicts, TNS, removed Blocks and wrong scope", () => {
+  const fixture = flexibleContribution();
+  const query = itemsForLocalDate(fixture.projection, fixture.selectedDate, fixture.zone);
+  const ports = fixture.ports!;
+  const nested = ports.flexible!.find((b) => b.id === "flex-nested")!;
+  const conflicted = composeDayStream(query, fixture.instant, {
+    ...ports,
+    flexible: [...ports.flexible!, { ...nested, id: "other" }],
+  });
+  expect(
+    conflicted.rows.find((row) => row.item.event.id === "flex-item")?.containerId,
+  ).toBeNull();
+  expect(conflicted.entries.filter((entry) => entry.kind === "ITEM")).toHaveLength(3);
+  for (const flexible of [[], [{ ...nested, tripId: "other" }]]) {
+    const stream = composeDayStream(query, fixture.instant, { ...ports, flexible });
+    expect(stream.rows.every((row) => row.containerId === null)).toBe(true);
+    expect(stream.entries.filter((entry) => entry.kind === "ITEM")).toHaveLength(3);
+  }
+  const group = composeDayStream(query, fixture.instant, {
+    ...ports,
+    flexible: ports.flexible!.map((b) =>
+      b.id === "flex-nested" ? { ...b, choiceScope: "GROUP" as const } : b,
+    ),
+    focus: choiceFocusKey("flex-nested", "MY", "garden"),
+  });
+  expect(group.focus).toBeNull();
+  expect(
+    group.containers.find((b) => b.id === "flex-nested")?.choices.map((c) => c.id),
+  ).toEqual(["cafe"]);
 });

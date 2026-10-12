@@ -2,6 +2,7 @@ import type { DayProjection } from "@/domain/trip/dayReadModel";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import type { FlightService } from "@/domain/trip/flightAdmission";
 import type { DayStreamPorts } from "@/features/day-feed/composition";
+import type { FlexibleBlockRenderer } from "@/features/day-feed/FlexibleBlockRow";
 import type {
   DayFeedQuery,
   DayRowRenderer,
@@ -23,6 +24,7 @@ export type FixtureContribution<T = unknown> = Readonly<{
   supplemental?: T;
   query?: (date: string, zone: string) => DayFeedQuery;
   renderer?: DayRowRenderer;
+  flexibleRenderer?: FlexibleBlockRenderer;
   ports?: Omit<DayStreamPorts, "focus" | "immersive">;
 }>;
 export function collectFixtureContributions(

@@ -1,3 +1,20 @@
+# G2-FLEX-01 shared port — isolated / Owner Review
+
+2026-10-12. `codex/g2-flex-01` starts from canonical local main `eb4c8eb` and
+adds only synthetic `g2-flexible/1` Block presentation to the shared Day Feed.
+Independent empty/Choice-only Blocks, one Item/Choice Focus, direct Block
+Immersive, unique eligible nested Item placement with outer fallback, soft
+windows, per-Block My/Group filtering and TNS exclusion are implemented.
+Core, storage, Admission, Sync, TTR and Provider are unchanged. CP01A remains
+isolated; CP01B must adapt its accepted authorized projection, supply both
+Choice scopes when needed and validate its renderer in the shared Lab. See
+`architecture/G2_FLEXIBLE_SHARED_PORT_01.md` and the G2-FLEX-01 report. This
+branch is for Owner Review only; do not merge or push without that checkpoint.
+Focused 68 PASS; typecheck/lint/UI guard and changed-file format PASS. Native
+task Simulator exercised Block/Choice/Item Focus and Immersive with scroll return.
+
+---
+
 # DL4 shared Day Feed Lab — local-main release / maintenance
 
 2026-10-12. Owner accepted DL4 `e984ed1` for controlled integration on exact

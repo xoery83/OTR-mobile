@@ -12,6 +12,8 @@ import {
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { DayFeedLabScreen } from "../day-feed-lab/DayFeedLabScreen";
 import { getLabFixtures } from "../day-feed-lab/fixtureRegistration";
+import { stayTripId } from "../day-feed-lab/stayContribution";
+import { flexibleContribution } from "../day-feed-lab/flexibleContribution";
 import { getFixtureCatalog } from "../day-feed-lab/fixtureCatalog";
 import { P1Row } from "./P1Row";
 import { FlightRows } from "./FlightRows";
@@ -819,7 +821,7 @@ it("DL2 denied capability never enables Core or replaces Fixture data", async ()
 });
 
 it("DL4 Stay renderer uses shared Focus/Immersive, typed details and nonzero scroll return; missing renderer falls back", () => {
-  const stay = getLabFixtures().at(-1)!;
+  const stay = getLabFixtures().find((entry) => entry.id === stayTripId)!;
   const props = {
     projection: stay.projection,
     services: stay.services,
@@ -853,4 +855,78 @@ it("DL4 Stay renderer uses shared Focus/Immersive, typed details and nonzero scr
   expect(render(createElement(DayFeed, { ...props, renderer: () => null }))).toContain(
     title,
   );
+});
+
+it("G2 Flexible empty header opens Immersive directly; Choice and Item share Focus and scroll return", () => {
+  const fixture = flexibleContribution();
+  const props = {
+    projection: fixture.projection,
+    date: fixture.selectedDate,
+    zone: fixture.zone,
+    services: fixture.services,
+    instant: fixture.instant,
+    ports: fixture.ports,
+  };
+  let html = render(createElement(DayFeed, props));
+  expect(html).toContain(t("dayLab.flexibleEmpty"));
+  expect(html).toContain(t("dayLab.flexibleChoices"));
+  expect(html.match(/flexible-block-row/g)).toHaveLength(3);
+  expect(
+    state.presses.filter((p) => p.accessibilityLabel === t("dayLab.flexibleItem")),
+  ).toHaveLength(1);
+  state.nodes
+    .find((node) => node.onScroll)!
+    .onScroll({ nativeEvent: { contentOffset: { y: 188 } } });
+  state.presses
+    .find((p) => p.accessibilityLabel === t("dayLab.flexibleEmpty"))!
+    .onPress();
+  render(createElement(DayFeed, props));
+  expect(state.nodes.find((node) => node.onDismiss)?.visible).toBe(true);
+  state.presses.find((p) => p.accessibilityLabel === t("common.close"))!.onPress();
+  const dismiss = state.nodes.find((node) => node.onDismiss)!.onDismiss;
+  render(createElement(DayFeed, props));
+  dismiss();
+  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 188, animated: false });
+  state.presses
+    .find((p) => p.accessibilityLabel === t("dayLab.flexibleMyChoice"))!
+    .onPress();
+  render(createElement(DayFeed, props));
+  expect(
+    state.presses.find((p) => p.accessibilityLabel === t("dayLab.flexibleMyChoice"))
+      ?.accessibilityState?.selected,
+  ).toBe(true);
+  state.presses.find((p) => p.accessibilityLabel === t("dayLab.flexibleItem"))!.onPress();
+  render(createElement(DayFeed, props));
+  expect(
+    state.presses.find((p) => p.accessibilityLabel === t("dayLab.flexibleMyChoice"))
+      ?.accessibilityState?.selected,
+  ).toBe(false);
+  state.presses.find((p) => p.accessibilityLabel === t("flexible.group"))!.onPress();
+  html = render(createElement(DayFeed, props));
+  expect(html).toContain(t("dayLab.flexibleGroupChoice"));
+  expect(html).not.toContain(t("dayLab.flexibleMyChoice"));
+});
+
+it("G2 presents CP01A's blank Block title with localized fallback", () => {
+  const fixture = flexibleContribution();
+  render(
+    createElement(DayFeed, {
+      projection: fixture.projection,
+      date: fixture.selectedDate,
+      zone: fixture.zone,
+      services: fixture.services,
+      instant: fixture.instant,
+      ports: {
+        ...fixture.ports!,
+        flexible: fixture.ports!.flexible!.map((block) =>
+          block.id === "flex-empty" ? { ...block, title: "" } : block,
+        ),
+      },
+    }),
+  );
+  expect(
+    state.presses.some(
+      (press) => press.accessibilityLabel === t("flexible.untitledBlock"),
+    ),
+  ).toBe(true);
 });

@@ -1,4 +1,17 @@
 export const en = {
+  "flexible.openBlock": "Open Block details",
+  "flexible.untitledBlock": "Flexible block",
+  "flexible.my": "My Choices",
+  "flexible.group": "Group Choices",
+  "dayLab.flexibleScenario": "Synthetic Flexible Blocks",
+  "dayLab.flexibleEmpty": "Open block",
+  "dayLab.flexibleChoices": "Choice-only block",
+  "dayLab.flexibleNested": "Scheduled block",
+  "dayLab.flexibleMyChoice": "My garden idea",
+  "dayLab.flexibleGroupChoice": "Group café idea",
+  "dayLab.flexibleItem": "Scheduled museum Item",
+  "dayLab.flexibleOuter": "Independent lunch Item",
+  "dayLab.flexibleTns": "Date-only Item",
   "dayLab.stayScenario": "Synthetic P3 Stay",
   "dayLab.stayProperty": "Synthetic Harbour Lodge",
   "dayLab.stayInstructions": "Synthetic instructions: collect the key at reception.",
@@ -54,7 +67,8 @@ export const en = {
   "dayLab.next": "Next",
   "dayLab.diagnostics":
     "Fixture · Trip {id} · Date {date} · Day Read v{version} · NOW {instant}",
-  "dayLab.deferred": "P3–P6, Flexible and TTR are future integration ports.",
+  "dayLab.deferred":
+    "P3 and Flexible are synthetic Lab proofs; P4–P6 and TTR remain future ports.",
 
   "dayFeed.role.DESTINATION": "Destination",
   "dayFeed.role.ORIGIN": "Origin",
@@ -1757,6 +1771,19 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "flexible.openBlock": "打开区块详情",
+  "flexible.untitledBlock": "灵活区块",
+  "flexible.my": "我的备选",
+  "flexible.group": "团队备选",
+  "dayLab.flexibleScenario": "合成灵活区块",
+  "dayLab.flexibleEmpty": "开放区块",
+  "dayLab.flexibleChoices": "仅备选区块",
+  "dayLab.flexibleNested": "已安排区块",
+  "dayLab.flexibleMyChoice": "我的花园想法",
+  "dayLab.flexibleGroupChoice": "团队咖啡馆想法",
+  "dayLab.flexibleItem": "已安排的博物馆项目",
+  "dayLab.flexibleOuter": "独立午餐项目",
+  "dayLab.flexibleTns": "仅日期项目",
   "dayLab.stayScenario": "合成 P3 住宿",
   "dayLab.stayProperty": "合成海港旅舍",
   "dayLab.stayInstructions": "合成说明：请在前台领取钥匙。",
@@ -1806,7 +1833,7 @@ export const zhHans: Record<MessageKey, string> = {
   "dayLab.next": "后一天",
   "dayLab.diagnostics":
     "合成测试数据 · 旅行 {id} · 日期 {date} · Day Read v{version} · NOW {instant}",
-  "dayLab.deferred": "P3–P6、Flexible 和 TTR 为后续集成接口。",
+  "dayLab.deferred": "P3 和 Flexible 仅用于合成测试；P4–P6 和 TTR 仍待后续集成。",
   "dayFeed.role.DESTINATION": "目的地",
   "dayFeed.role.ORIGIN": "出发地",
   "dayFeed.role.END": "结束",

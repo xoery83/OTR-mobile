@@ -291,6 +291,7 @@ export function DayFeedLabScreen() {
           instant={fixture.trip.instant}
           query={fixture.trip.query}
           renderer={fixture.trip.renderer}
+          flexibleRenderer={fixture.trip.flexibleRenderer}
           ports={fixture.trip.ports}
         />
       ) : visibleCore ? (
