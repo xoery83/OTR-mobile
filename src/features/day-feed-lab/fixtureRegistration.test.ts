@@ -4,16 +4,19 @@ import { ttrLabCases, type TtrLabFacts } from "@/features/ttr/labFixtures";
 import { getLabFixtures } from "./fixtureRegistration";
 
 vi.mock("./StayFixtureRow", () => ({ stayRenderer: () => () => null }));
+vi.mock("./FlexibleSnapshotFixtureRow", () => ({
+  FlexibleSnapshotFixtureRow: () => null,
+}));
 
 it("registers all 14 named synthetic TTR scenarios after the existing Lab entries", () => {
   const catalog = getLabFixtures();
-  expect(catalog).toHaveLength(21);
-  expect(new Set(catalog.map((fixture) => fixture.id)).size).toBe(21);
+  expect(catalog).toHaveLength(22);
+  expect(new Set(catalog.map((fixture) => fixture.id)).size).toBe(22);
   expect(catalog.slice(0, 7).every((fixture) => fixture.synthetic)).toBe(true);
   expect(
-    catalog.slice(7).map((fixture) => (fixture.supplemental as TtrLabFacts).caseId),
+    catalog.slice(7, 21).map((fixture) => (fixture.supplemental as TtrLabFacts).caseId),
   ).toEqual(ttrLabCases);
-  for (const fixture of catalog.slice(7)) {
+  for (const fixture of catalog.slice(7, 21)) {
     const facts = fixture.supplemental as TtrLabFacts;
     expect(fixture.title).toContain("TTR");
     const stream = composeDayStream(

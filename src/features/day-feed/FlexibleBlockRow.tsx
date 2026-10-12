@@ -7,6 +7,7 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import type { composeDayStream } from "./composition";
+import type { FlexibleSnapshot } from "./flexibleSnapshot";
 
 type Block = ReturnType<typeof composeDayStream>["containers"][number];
 export type FlexibleBlockRendererProps = Readonly<{
@@ -17,6 +18,8 @@ export type FlexibleBlockRendererProps = Readonly<{
   onChoiceFocusIntent: (key: string | null) => void;
   onChoiceScopeIntent: (scope: "MY" | "GROUP") => void;
   onClose: () => void;
+  flexibleSnapshot?: FlexibleSnapshot | null;
+  onReplaceFlexibleSnapshot?: (snapshot: FlexibleSnapshot) => boolean;
 }>;
 export type FlexibleBlockRenderer = ComponentType<FlexibleBlockRendererProps>;
 
@@ -66,12 +69,13 @@ export function FlexibleBlockRow({
       {block.choices.map((choice) => (
         <Pressable
           key={choice.key}
-          accessibilityRole="button"
+          accessibilityRole={immersive ? "text" : "button"}
           accessibilityLabel={choice.name}
           accessibilityState={{ selected: choice.key === block.focusedChoiceKey }}
           onPress={() =>
             onChoiceFocusIntent(choice.key === block.focusedChoiceKey ? null : choice.key)
           }
+          disabled={immersive}
           style={choice.key === block.focusedChoiceKey ? styles.focused : undefined}
         >
           <Text style={styles.choice}>{choice.name}</Text>

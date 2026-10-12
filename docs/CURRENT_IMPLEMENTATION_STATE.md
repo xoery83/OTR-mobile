@@ -1,3 +1,22 @@
+# G2-FLEX-02 — isolated shared port / Owner Review
+
+2026-10-13. `codex/g2-flex-02`, based on accepted local main `a878be35`, adds
+`g2-flexible-snapshot/1` scoped complete replacement and Immersive-local Focus
+suspension/restoration. Existing `g2-flexible/1`, one Composer/Feed/Focus and all
+14 TTR fixtures remain. Synthetic reactive fixture proves revisions, Choices,
+soft resize/delete, affiliation fallback and local resource expansion; no
+Flexible storage/Pool/workspace or Core/TTR/Provider changes. Focused168 PASS;
+full bounded baseline3878/candidate3893 PASS, same two known failures/23 skips.
+Typecheck, full lint/UI guard and changed-file format PASS. Dedicated iOS27
+Simulator validates synthetic updates, Focus/nonzero scroll return, Light/Dark,
+P1/P2/P3 and TTR coexistence/anchor suppression. See
+`architecture/G2_FLEX_02_SHARED_PORT_IMPLEMENTATION_REPORT.md` for exact API,
+manifest, evidence and CP01B resumption steps. Main/concurrent dirty work preserved.
+No merge/push. Next: Owner Review, then CP01B adoption. Real data, physical device,
+Flexible business persistence and Core/Provider authority remain separately gated.
+
+---
+
 # CP-G2-TTR-01 — controlled local-main integration / Owner Review
 
 2026-10-13. Accepted source `aa8753e` (base `1114ccc`) normally merged into
@@ -186,7 +205,6 @@ Ordinary supplier/Quartz PDFs remain REVIEW. Agent A/B must use the shared contr
 `trip/contracts/CP_FLIGHT_PDF_DERIVATIVE_AUTHORITY_V1.md`.
 Next: review `trip/implementation/CP_FLIGHT_PDF_AUTH_01_REPORT.md`; preserve concurrent
 Day/Platform/Native work and reconcile this isolated handoff heading at integration.
-
 
 ---
 

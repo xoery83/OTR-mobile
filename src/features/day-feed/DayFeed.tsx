@@ -34,6 +34,7 @@ import { FlightRows } from "./FlightRows";
 import { NowMarker } from "./NowMarker";
 import { useMinuteClock } from "./useMinuteClock";
 import { flightPresentation, type Depth } from "./presentation";
+import { useFlexibleSnapshot, type FlexiblePublication } from "./flexibleSnapshot";
 
 function ContributedRow({
   renderer,
@@ -62,6 +63,7 @@ export function DayFeed({
   flexibleRenderer,
   ports,
   onOpenTtr,
+  flexiblePublication,
 }: {
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
@@ -73,6 +75,7 @@ export function DayFeed({
   renderer?: DayRowRenderer;
   flexibleRenderer?: FlexibleBlockRenderer;
   ports?: Omit<DayStreamPorts, "focus" | "immersive">;
+  flexiblePublication?: FlexiblePublication;
   onOpenTtr?: (
     intent: ComposedTransition["openTtr"],
     context: Pick<ComposedTransition, "key" | "inputFingerprint">,
@@ -85,19 +88,47 @@ export function DayFeed({
       ? projection.query(date, zone)
       : itemsForLocalDate(projection, date, zone);
   const clock = useMinuteClock(zone);
+  const publication = useFlexibleSnapshot(flexiblePublication, {
+    accountId: projection.accountId,
+    tripId: projection.tripId,
+    localDate: date,
+  });
+  const viewContext = JSON.stringify([
+    projection.accountId,
+    projection.tripId,
+    date,
+    flexiblePublication?.scope?.generation,
+  ]);
+  const [navigationContext, setNavigationContext] = useState(viewContext);
   const [focus, setFocus] = useState<string | null>(null);
   const [immersive, setImmersive] = useState<string | null>(null);
   const [choiceScopes, setChoiceScopes] = useState<Record<string, "MY" | "GROUP">>({});
   const stream = composeDayStream(query, instant ?? clock.instant, {
     ...ports,
-    flexible: ports?.flexible?.map((block) =>
+    scope: flexiblePublication
+      ? { accountId: projection.accountId, tripId: projection.tripId }
+      : ports?.scope,
+    flexible: (flexiblePublication
+      ? (publication.snapshot?.blocks ?? [])
+      : ports?.flexible
+    )?.map((block) =>
       "version" in block && choiceScopes[block.id]
         ? { ...block, choiceScope: choiceScopes[block.id] }
         : block,
     ),
-    focus,
-    immersive,
+    focus: navigationContext === viewContext ? focus : null,
+    immersive: navigationContext === viewContext ? immersive : null,
   });
+  if (navigationContext !== viewContext) {
+    setFocus(null);
+    setImmersive(null);
+    setChoiceScopes({});
+    setNavigationContext(viewContext);
+  } else {
+    if (focus && focus !== stream.focus && focus !== stream.suspendedFocus)
+      setFocus(null);
+    if (immersive && immersive !== stream.immersive) setImmersive(null);
+  }
   const { rows, now } = stream;
   const scroll = useRef<ScrollView>(null),
     offset = useRef(0),
@@ -215,54 +246,62 @@ export function DayFeed({
     </View>
   );
   const choiceScope = (id: string, scope: "MY" | "GROUP") => {
-    setFocus(null);
     setChoiceScopes((current) => ({ ...current, [id]: scope }));
   };
   return (
     <>
-      <ScrollView
-        ref={scroll}
+      <View
         style={styles.root}
-        contentContainerStyle={styles.content}
-        scrollEventThrottle={16}
-        onScroll={(e) => {
-          offset.current = e.nativeEvent.contentOffset.y;
-        }}
+        pointerEvents={selectedBlock ? "none" : "auto"}
+        accessibilityElementsHidden={!!selectedBlock}
+        importantForAccessibility={selectedBlock ? "no-hide-descendants" : "auto"}
       >
-        {!stream.entries.length ? (
-          <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
-        ) : null}
-        {stream.entries.map((entry) =>
-          entry.kind === "ITEM" ? (
-            renderItem(entry.row)
-          ) : (
-            <View key={entry.block.key}>
-              <BlockSlot
-                renderer={flexibleRenderer}
-                block={entry.block}
-                immersive={false}
-                nestedItems={
-                  <>
-                    {rows
-                      .filter((row) => row.containerId === entry.block.id)
-                      .map(renderItem)}
-                  </>
-                }
-                onBlockImmersiveIntent={() => change(entry.block.id, "I")}
-                onChoiceFocusIntent={(key) => change(key ?? "", key ? "F" : "B")}
-                onChoiceScopeIntent={(scope) => choiceScope(entry.block.id, scope)}
-                onClose={close}
-              />
-            </View>
-          ),
-        )}
-        {stream.nowAfter ? <NowMarker placement={now} /> : null}
-        {query.unresolved.length ? (
-          <Text style={styles.meta}>
-            {t("dayFeed.unresolvedCount", { count: query.unresolved.length })}
-          </Text>
-        ) : null}
-      </ScrollView>
+        <ScrollView
+          ref={scroll}
+          style={styles.root}
+          contentContainerStyle={styles.content}
+          scrollEventThrottle={16}
+          onScroll={(e) => {
+            offset.current = e.nativeEvent.contentOffset.y;
+          }}
+        >
+          {!stream.entries.length ? (
+            <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
+          ) : null}
+          {stream.entries.map((entry) =>
+            entry.kind === "ITEM" ? (
+              renderItem(entry.row)
+            ) : (
+              <View key={entry.block.key}>
+                <BlockSlot
+                  renderer={flexibleRenderer}
+                  block={entry.block}
+                  immersive={false}
+                  nestedItems={
+                    <>
+                      {rows
+                        .filter((row) => row.containerId === entry.block.id)
+                        .map(renderItem)}
+                    </>
+                  }
+                  onBlockImmersiveIntent={() => change(entry.block.id, "I")}
+                  onChoiceFocusIntent={(key) => change(key ?? "", key ? "F" : "B")}
+                  onChoiceScopeIntent={(scope) => choiceScope(entry.block.id, scope)}
+                  onClose={close}
+                  flexibleSnapshot={publication.snapshot}
+                  onReplaceFlexibleSnapshot={publication.replace}
+                />
+              </View>
+            ),
+          )}
+          {stream.nowAfter ? <NowMarker placement={now} /> : null}
+          {query.unresolved.length ? (
+            <Text style={styles.meta}>
+              {t("dayFeed.unresolvedCount", { count: query.unresolved.length })}
+            </Text>
+          ) : null}
+        </ScrollView>
+      </View>
       <Modal
         visible={!!selected || !!selectedBlock}
         onRequestClose={close}
@@ -290,9 +329,11 @@ export function DayFeed({
                 </>
               }
               onBlockImmersiveIntent={() => change(selectedBlock.id, "I")}
-              onChoiceFocusIntent={setFocus}
+              onChoiceFocusIntent={() => {}}
               onChoiceScopeIntent={(scope) => choiceScope(selectedBlock.id, scope)}
               onClose={close}
+              flexibleSnapshot={publication.snapshot}
+              onReplaceFlexibleSnapshot={publication.replace}
             />
           ) : null}
         </ScrollView>

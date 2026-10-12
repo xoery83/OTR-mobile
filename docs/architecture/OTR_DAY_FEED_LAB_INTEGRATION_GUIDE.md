@@ -107,6 +107,33 @@ membership does not choose a container. A contributed renderer can inspect its
 container's filtered Choices/softWindow. This is a dormant presentation port,
 not Block/Choice persistence, business lifecycle or a complete Flexible renderer.
 
+## G2-FLEX-02 reactive synthetic presentation
+
+The additive `flexiblePublication` field on `FixtureContribution` and `DayFeed`
+accepts `{ scope, snapshot }` from `day-feed/flexibleSnapshot.ts`. Scope is host-
+declared Account/Trip/localDate/generation; snapshot is a complete
+`g2-flexible-snapshot/1` with increasing revision and existing `FlexibleBlockPort[]`.
+Generation is a host stream token, not a Core admission certificate. Updating the
+prop or calling the renderer's `onReplaceFlexibleSnapshot(next): boolean` replaces
+only the current authorized presentation. Do not change the Feed React key to
+publish an ordinary revision. Read `flexibleSnapshot` from renderer props to build
+the next complete replacement. Null means no accepted initial publication; an
+empty `blocks` array with a higher revision explicitly clears presentation.
+
+Block Immersive suspends Feed Focus and disables/hides background Feed interaction.
+Its renderer owns one local expansion; Pool/Search/Saved resources do not call
+`onChoiceFocusIntent`. Closing restores only still-visible Feed Focus. Keep
+Canonical nested Items on the supplied standard depth callbacks. Scope changes,
+hidden/deleted targets and stale callbacks clear/reject without auto-selecting.
+
+`Synthetic Flexible snapshots + TTR` is the 22nd fixture, after the unchanged
+14 TTR cases. Its in-memory buttons demonstrate COPY/remove/Group edit/resize/
+delete, rapid/stale revisions, ambiguous affiliations and TTR anchor nesting.
+Resource chips prove local expansion only. They implement no Pool, Search engine,
+Choice lifecycle, persistence or business workspace. See
+`G2_FLEX_02_SHARED_PORT_IMPLEMENTATION_REPORT.md` for the exact API, validation,
+native evidence and CP01B resumption handoff.
+
 ## Qualified TTR fixture seam
 
 Use `TransitionProjection` from composition.ts, the implemented structural subset

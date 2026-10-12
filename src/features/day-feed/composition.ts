@@ -40,6 +40,46 @@ const hasVersion = (
   block: FlexibleContainer | FlexibleBlockPort,
 ): block is FlexibleBlockPort => (block as FlexibleBlockPort).version !== undefined;
 
+export function validFlexibleBlock(
+  block: FlexibleBlockPort,
+  scope: { accountId: string; tripId: string; localDate: string },
+) {
+  return (
+    block?.version === "g2-flexible/1" &&
+    block.synthetic === true &&
+    block.accountId === scope.accountId &&
+    block.tripId === scope.tripId &&
+    block.localDate === scope.localDate &&
+    typeof block.id === "string" &&
+    !!block.id &&
+    typeof block.title === "string" &&
+    Array.isArray(block.itemIds) &&
+    block.itemIds.every((id) => typeof id === "string" && !!id) &&
+    Array.isArray(block.choices) &&
+    block.choices.every(
+      (choice) =>
+        choice &&
+        typeof choice.id === "string" &&
+        !!choice.id &&
+        typeof choice.name === "string" &&
+        !!choice.name &&
+        (choice.scope === "MY" || choice.scope === "GROUP"),
+    ) &&
+    new Set(
+      block.choices.map((choice) => choiceFocusKey(block.id, choice.scope, choice.id)),
+    ).size === block.choices.length &&
+    (block.choiceScope === undefined ||
+      block.choiceScope === "MY" ||
+      block.choiceScope === "GROUP") &&
+    (!block.softWindow ||
+      (Number.isInteger(block.softWindow.startMinute) &&
+        Number.isInteger(block.softWindow.endMinute) &&
+        block.softWindow.startMinute >= 0 &&
+        block.softWindow.endMinute <= 1440 &&
+        block.softWindow.startMinute < block.softWindow.endMinute))
+  );
+}
+
 type RelationIdentity = Readonly<{
   accountId: string;
   tripId: string;
@@ -112,33 +152,24 @@ export function composeDayStream(
   const flex = blocks.filter(
     (block): block is FlexibleBlockPort =>
       hasVersion(block) &&
-      block.version === "g2-flexible/1" &&
-      block.synthetic === true &&
       !!ports.scope &&
-      block.accountId === ports.scope.accountId &&
-      block.tripId === ports.scope.tripId &&
-      block.localDate === query.date &&
-      !!block.id &&
-      !members.some((item) => item.event.id === block.id) &&
-      new Set(
-        block.choices.map((choice) => choiceFocusKey(block.id, choice.scope, choice.id)),
-      ).size === block.choices.length &&
-      block.choices.every((choice) => !!choice.id && !!choice.name) &&
-      (!block.softWindow ||
-        (Number.isInteger(block.softWindow.startMinute) &&
-          Number.isInteger(block.softWindow.endMinute) &&
-          block.softWindow.startMinute >= 0 &&
-          block.softWindow.endMinute <= 1440 &&
-          block.softWindow.startMinute < block.softWindow.endMinute)),
+      validFlexibleBlock(block, { ...ports.scope, localDate: query.date }) &&
+      !members.some((item) => item.event.id === block.id),
   );
   const acceptedBlocks = blocks.filter(
     (block) => !hasVersion(block) || flex.includes(block),
   );
   const containers = acceptedBlocks.map((block) => {
-    const scope = hasVersion(block)
+    const preferred = hasVersion(block)
       ? (block.choiceScope ??
         (block.choices.some((c) => c.scope === "MY") ? "MY" : "GROUP"))
       : (ports.choiceScope ?? "MY");
+    const scope =
+      hasVersion(block) &&
+      block.choices.length &&
+      !block.choices.some((choice) => choice.scope === preferred)
+        ? block.choices[0].scope
+        : preferred;
     return {
       id: block.id,
       key: blockRowKey(block.id, query.date),
@@ -168,10 +199,10 @@ export function composeDayStream(
   const visibleBlock = (id: string | null | undefined) =>
     flex.some((b) => b.id === id) ? id! : null;
   const immersive = visibleItem(ports.immersive) ?? visibleBlock(ports.immersive);
-  const focus =
-    visibleItem(ports.immersive) ??
-    visibleItem(ports.focus) ??
-    visibleChoice(ports.focus);
+  const retainedFocus = visibleItem(ports.focus) ?? visibleChoice(ports.focus);
+  const blockImmersive = !!visibleBlock(immersive);
+  const focus = blockImmersive ? null : (visibleItem(immersive) ?? retainedFocus);
+  const suspendedFocus = blockImmersive ? retainedFocus : null;
   const rows = members.map((item, index) => {
     const coreRowKeys =
       query.coreRows
@@ -325,6 +356,7 @@ export function composeDayStream(
     context,
     now,
     focus,
+    suspendedFocus,
     immersive,
     nowAfter: now.mode === "BETWEEN_EVENTS" && now.beforeIndex === rows.length,
     containers: enriched,
