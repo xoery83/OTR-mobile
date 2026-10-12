@@ -1,3 +1,13 @@
+# CP01B / G2 coordinated integration — Owner Review
+
+Isolated branch `codex/cp01b-g2-coordinated` on accepted main `54ecb4b`; canonical main remains unchanged. F01–F14 append after the original 22 entries, preserving Nelson default and all TTR expectations. Feature changes and G2 registry/test ownership have separate commits.
+
+Focused 261 tests, typecheck and lint/UI guard pass. Full suite retains two clean-baseline failures. Native F01–F14, default Nelson and original TTR Sheet were exercised; Pool divider gesture and F14 key warning fixed in feature-owned commits. Positive held copy/resize native calibration remains open. F09 gap creation and F14 promotion remain excluded. No push/deploy/production capability activation.
+
+Exact report, manifest and evidence: [CP01B_G2_COORDINATED_INTEGRATION_REPORT.md](architecture/CP01B_G2_COORDINATED_INTEGRATION_REPORT.md). Next checkpoint: final Owner Review; do not advance canonical main.
+
+---
+
 # Flexible CP01B — registration proposal PASS / G2 integration pending
 
 2026-10-13. CP01B now reconciles exact required main54ecb4b. G2 reviewed append-only
