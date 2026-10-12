@@ -30,6 +30,8 @@ The shell supplies `projection/date/zone/services/instant` to production `DayFee
 Only `instant` is new and optional: production continues using its existing minute
 clock; fixtures replace that input. `composeDayStream`, P1Row, FlightRows, Focus,
 NOW placement, Browse geometry and Immersive Modal remain the single production path.
+Native acceptance adds automatic safe-area inset to the production Immersive
+ScrollView so the first P1/P2 row clears the status bar without fixed offsets.
 
 ## Dormant contribution ports
 

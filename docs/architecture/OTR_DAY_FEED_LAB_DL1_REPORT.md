@@ -22,7 +22,7 @@ Legacy Web was not opened. No Hosted/Production/provider operation was made.
 - `app/_layout.tsx` — Debug Lab title in the existing native Stack.
 - `src/features/day-feed/TripScreen.tsx` — Debug-only Lab entry.
 - `src/features/day-feed/DayFeed.tsx` — optional deterministic instant input;
-  production minute clock/default behavior retained.
+  production minute clock/default behavior retained; native Immersive safe-area inset.
 - `src/features/day-feed-lab/DayFeedLabScreen.tsx` — shared shell, canonical
   Trip/date controls, Fixture diagnostics and the production Feed.
 - `src/features/day-feed-lab/fixtureCatalog.ts` — five version1 synthetic Day
@@ -37,6 +37,9 @@ Legacy Web was not opened. No Hosted/Production/provider operation was made.
 - `docs/CURRENT_IMPLEMENTATION_STATE.md` — isolated checkpoint handoff.
 - `docs/architecture/OTR_DAY_FEED_LAB_DL1.md` — usage, boundary and owning ports.
 - `docs/architecture/OTR_DAY_FEED_LAB_DL1_REPORT.md` — this report.
+
+- `docs/qa/day-feed-lab-dl1/` — eight synthetic-only native screenshots and
+  acceptance JSON including64 empty Trip-table readbacks.
 
 No schema, migration, repository, auth, sync, backend, provider, native target,
 dependency version or lockfile change. Generated native files remain ignored.
@@ -102,35 +105,59 @@ ignored project lacked the repository's accepted Scene configuration. The isolat
 iOS project was then regenerated from unchanged tracked Expo config (including
 `enableSceneSupport`); this is a native-cache repair, not a product config change.
 
-The final regenerated Scene-configured Debug build also succeeded and was
-reinstalled/launched (PID82885). Device Hub still reports the Mac locked and cannot
-operate the Simulator’s system Open prompt. The Owner unlock request is pending.
-Lab opening/appearance/interaction remains BLOCKED; build/install/launch-attempt
-success alone is not Simulator UI PASS. No auth, system prompt or security bypass
-was introduced. Metro remains available on localhost8091 for resuming acceptance.
-Logs: `/private/tmp/otr-dl1-native-build-regenerated.log`,
+The final regenerated Scene-configured Debug build succeeded and installed/launched.
+After Owner Mac unlock, restarting only the DL1 Metro server cleared the stale
+resolver cache from native-cache repair. All scoped DL1 native checks now PASS.
+No auth/security bypass or real session was added. Existing Simulator and
+physical-device app containers were preserved.
+
+Native testing exposed the production Immersive ScrollView's first row under the
+status bar. `contentInsetAdjustmentBehavior="automatic"` fixes it through native
+safe-area handling without fixed offsets or duplicated chrome. P1/P2 Immersive
+and nonzero underlying scroll/selected Focus return were rechecked successfully.
+Focused Feed/Lab56 tests, typecheck, full lint/UI guard and full regression
+3711 PASS/same2 baseline FAIL/20 skipped were rerun after this correction.
+
+| P1/P2 behavior                                           | Source/render tests    | Native Simulator                                     |
+| -------------------------------------------------------- | ---------------------- | ---------------------------------------------------- |
+| Five fixture scenarios and bounded Trip/date selection   | PASS                   | PASS                                                 |
+| P1/P2 Browse, NOW and future-date suppression            | PASS                   | PASS                                                 |
+| TNS/date-only and missing time/location/arrival omission | PASS                   | PASS                                                 |
+| P1/P2 Focus selection and explicit dismissal             | PASS                   | PASS                                                 |
+| P1/P2 Immersive and retained Trip/date/Focus             | PASS                   | PASS                                                 |
+| Nonzero P1 scroll return, same first-visible row         | PASS (320pt harness)   | PASS (visual before/after)                           |
+| Light/Dark shell and Immersive                           | PASS                   | PASS                                                 |
+| Enlarged production-row fallback                         | PASS (mocks)           | NOT RUN                                              |
+| Trip → Debug Lab button → native Back                    | Guard/regressions PASS | PASS with no-session Trip state                      |
+| Fixture persistence isolation                            | PASS                   | All64 Trip tables still0 rows, read-only after tests |
+
+Committed evidence under `docs/qa/day-feed-lab-dl1/`:
+`lab-light.png`, `trip-dev-entry.png`, `europe-dark.png`,
+`flight-immersive-dark.png`, `p1-immersive.png`, `nelson-scroll-before.png`,
+`nelson-scroll-return.png`, `sparse-date-only.png`, and `acceptance.json`.
+Only synthetic app pixels are included. No Mac/Device Hub screenshot, real
+account, credentials or private originals are committed. Empty native Trip-table
+readback proves no fixture rows persisted; it does not certify real-data permissions.
+
+Local evidence: `/private/tmp/otr-dl1-native-build-regenerated.log`,
 `otr-dl1-launch.log`, `otr-dl1-prebuild.log`, `otr-dl1-native-scene-build.log`,
-`otr-dl1-native-scene-launch.png`.
+`otr-dl1-metro-final.log`, `otr-dl1-final-full.json`,
+`otr-dl1-native-final-typecheck.log`, `otr-dl1-native-final-lint.log`.
 
-| P1/P2 behavior                                  | Source/render tests                | Native UI                   |
-| ----------------------------------------------- | ---------------------------------- | --------------------------- |
-| Browse, fixed NOW, TNS/missing-field omission   | PASS                               | BLOCKED (Mac unlock)        |
-| Trip/date switching; Focus dismissal            | PASS                               | BLOCKED (Mac unlock)        |
-| Immersive return and nonzero scroll retention   | PASS                               | BLOCKED (Mac unlock)        |
-| Light/Dark and enlarged production row fallback | PASS (mocks)                       | BLOCKED (Mac unlock)        |
-| Existing production Trip data flow              | Unchanged reader; regressions PASS | NOT VERIFIED with real data |
-
-To resume on this exact source/artifact: unlock the Mac, accept the Simulator’s
-Open prompt and exercise the Lab. If Metro was stopped, run
+To run this exact source/artifact, start
 `npx expo start --dev-client --localhost --port 8091` from this worktree; then
-launch the DEV Test app on the task-owned Simulator with
-`xcrun simctl launch AE11480D-B6B9-402B-BE8A-4F2BBD4D0704 com.xoery.otrmobile.devtest -RCT_jsLocation localhost:8091`
-and open `otrmobile://day-feed-lab`. Debug requires Metro. Do not substitute an
-existing reserved Simulator/account/container or claim Release Lab availability.
+launch the DEV Test app on its task-owned Simulator with
+`xcrun simctl launch AE11480D-B6B9-402B-BE8A-4F2BBD4D0704 com.xoery.otrmobile.devtest -RCT_jsLocation localhost:8091`.
+Open Trip → Day Feed Lab or `otrmobile://day-feed-lab`. Debug requires Metro.
+Rebuilding should regenerate the ignored native project from accepted Scene
+config in an isolated checkout with DEV Test bundle identity. Do not reuse stale
+native caches or install over reserved Simulator/account/container data.
 
-Physical Device, Core DEV Read and Capture E2E: NOT RUN.
+**Fixture PASS · Simulator PASS.** Physical Device, Core DEV Read, Capture E2E,
+real authenticated Trip data and native Dynamic Type/VoiceOver: NOT RUN.
+No unresolved DL1 blocker. Owner product review remains the next checkpoint.
 
-**STOP — DL1 SOURCE READY / NATIVE INTERACTION BLOCKED / OWNER REVIEW.**
+**STOP — DL1 DAY FEED LAB READY / OWNER REVIEW.**
 
 ## Next boundary
 

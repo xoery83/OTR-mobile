@@ -160,7 +160,11 @@ export function DayFeed({
         }
         animationType="slide"
       >
-        <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+        <ScrollView
+          style={styles.root}
+          contentContainerStyle={styles.content}
+          contentInsetAdjustmentBehavior="automatic"
+        >
           {selected ? render(selected, "I") : null}
         </ScrollView>
       </Modal>

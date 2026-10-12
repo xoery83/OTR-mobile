@@ -1,4 +1,4 @@
-# DL1 Day Feed Lab — source ready / native interaction blocked
+# DL1 Day Feed Lab — Simulator PASS / Owner Review
 
 Updated 2026-10-12. Owner authorized continuous DL1 only. Branch
 `codex/day-feed-lab-dl1`, worktree `/private/tmp/otr-day-feed-lab-dl1-20261012`,
@@ -15,9 +15,12 @@ Focused 12 files/138 tests PASS. Full comparison: 3711 PASS versus clean-main370
 same two architecture/navigation failures and20 skips, all7 added tests PASS.
 Typecheck/lint/UI guard/format PASS. Release iOS export PASS; synthetic module
 bytes are retained by Metro, while route/entry guards prevent Release access.
-Final Scene-configured Debug Simulator build/install/launch attempt PASS; native
-Lab opening/interaction remains BLOCKED by locked Mac/system Open prompt. No
-Simulator UI PASS claim. Evidence: `architecture/OTR_DAY_FEED_LAB_DL1_REPORT.md`.
+Final Scene-configured Debug Simulator build/install/launch and all DL1 native
+interactions PASS after Mac unlock. Production Immersive gets automatic native
+safe-area inset; P1/P2 return and nonzero scroll retention PASS. All five fixtures,
+NOW/TNS, bounded dates, Light/Dark and Trip→Lab→Back PASS. Read-only native SQLite:
+64 Trip tables /0 rows. Screenshots and acceptance JSON: `docs/qa/day-feed-lab-dl1/`.
+Evidence: `architecture/OTR_DAY_FEED_LAB_DL1_REPORT.md`.
 
 Authoritative usage/catalog/contribution ports: `architecture/OTR_DAY_FEED_LAB_DL1.md`.
 P3–P6, Flexible and `ttr-presentation/1` native rendering remain dormant. Next DL2:
