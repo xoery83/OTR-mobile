@@ -511,18 +511,20 @@ export function FlexibleRenderer({
       </ScrollView>
       {fixture === "f14" && state.my.length ? (
         <View style={styles.wrap}>
-          {(["pending", "failed", "accepted"] as const).map((outcome) =>
-            action(
-              t(
-                outcome === "failed"
-                  ? "failure"
-                  : outcome === "accepted"
-                    ? "accept"
-                    : "pending",
-              ),
-              () => dispatch({ type: "promotion", id: state.my[0], outcome }),
-            ),
-          )}
+          {(["pending", "failed", "accepted"] as const).map((outcome) => (
+            <View key={outcome}>
+              {action(
+                t(
+                  outcome === "failed"
+                    ? "failure"
+                    : outcome === "accepted"
+                      ? "accept"
+                      : "pending",
+                ),
+                () => dispatch({ type: "promotion", id: state.my[0], outcome }),
+              )}
+            </View>
+          ))}
           <Text style={styles.meta}>
             {t(
               state.promotion === "pending"
