@@ -45,9 +45,7 @@ it("appends Flexible F01-F14 after the unchanged 22 entries and preserves all TT
   );
   expect(catalog.slice(0, 7).every((fixture) => fixture.synthetic)).toBe(true);
   expect(
-    catalog
-      .slice(7, 21)
-      .map((fixture) => (fixture.supplemental as TtrLabFacts).caseId),
+    catalog.slice(7, 21).map((fixture) => (fixture.supplemental as TtrLabFacts).caseId),
   ).toEqual(ttrLabCases);
   for (const fixture of catalog.slice(7, 21)) {
     const facts = fixture.supplemental as TtrLabFacts;
