@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { DayProjection } from "@/domain/trip/dayReadModel";
+import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { placeNow } from "@/domain/trip/experience/nowIndicator";
 import type { FlightService } from "@/domain/trip/flightAdmission";
@@ -21,13 +22,16 @@ export function DayFeed({
   zone,
   services,
 }: {
-  projection: DayProjection;
+  projection: DayProjection | CoreFlightDayProjection;
   date: string;
   zone: string;
   services: Record<string, FlightService[]>;
 }) {
   const styles = useThemedStyles(createStyles);
-  const query = itemsForLocalDate(projection, date, zone);
+  const query =
+    projection.version === 2
+      ? projection.query(date, zone)
+      : itemsForLocalDate(projection, date, zone);
   const rows = [...query.timed, ...query.nonComparable];
   const clock = useMinuteClock(zone);
   const now = placeNow(query, rows, clock.instant);
@@ -58,7 +62,11 @@ export function DayFeed({
     mode: Depth,
     withinMarker?: React.ReactNode,
   ) => {
-    const flight = flightPresentation(event, services[event.id] ?? []);
+    const flight = flightPresentation(
+      event,
+      services[event.id] ?? [],
+      projection.version === 2 ? projection.flightFacts[event.id] : undefined,
+    );
     if (!flight)
       return (
         <P1Row

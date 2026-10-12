@@ -13,10 +13,16 @@ import {
   type ObservedDayProjection,
 } from "./tripDayReadRepository";
 import { createLedgerReportingRepository } from "./ledgerReportingRepository";
+import { createTripCoreV2Repository } from "./tripCoreV2Repository";
+import {
+  createCoreFlightDayFeedReader,
+  type ObservedCoreFlightProjection,
+} from "./tripCoreV2DayFeedRepository";
 
 type Dependencies = {
   account: () => Promise<string>;
   projection: (id: string) => Promise<ObservedDayProjection | null>;
+  coreProjection?: (id: string) => Promise<ObservedCoreFlightProjection | null>;
   candidates: () => Promise<{ journeyId: string; title: string }[]>;
   services: (
     scope: AccountScope,
@@ -35,7 +41,8 @@ export function createTripDayFeedReader(deps: Dependencies) {
     async trip(tripId: string) {
       collectionUuid.parse(tripId);
       const scope = await captureAccountScope(deps.account);
-      const observed = await deps.projection(tripId);
+      const observed =
+        (await deps.coreProjection?.(tripId)) ?? (await deps.projection(tripId));
       await assertAccountRequestContext(scope, deps.account);
       if (!observed) return { scope, observed: null, services: {} };
       if (
@@ -45,8 +52,15 @@ export function createTripDayFeedReader(deps: Dependencies) {
         throw new Error("DAY_FEED_SCOPE");
       let services: Record<string, FlightService[]> = {};
       try {
-        if (observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE")
-          services = await deps.services(scope, observed);
+        if (observed.projection.version === 2)
+          services = Object.fromEntries(
+            Object.entries(observed.projection.flightFacts).map(([id, facts]) => [
+              id,
+              facts.services,
+            ]),
+          );
+        else if (observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE")
+          services = await deps.services(scope, observed as ObservedDayProjection);
       } catch {
         // Supplemental failure does not revoke accepted local facts; account validity is mandatory.
         await assertAccountRequestContext(scope, deps.account);
@@ -61,9 +75,21 @@ export async function readTripDayFeed() {
   const database = await readInitializedDatabase();
   const days = createTripDayReadRepository(database, requireActiveUserId);
   const ledger = createLedgerReportingRepository(database, requireActiveUserId);
+  const core = createTripCoreV2Repository(
+    database,
+    requireActiveUserId,
+    async (bytes) => {
+      const { digest, CryptoDigestAlgorithm } = await import("expo-crypto");
+      return Array.from(
+        new Uint8Array(await digest(CryptoDigestAlgorithm.SHA256, new Uint8Array(bytes))),
+        (b) => b.toString(16).padStart(2, "0"),
+      ).join("");
+    },
+  );
   return createTripDayFeedReader({
     account: requireActiveUserId,
     projection: days.getProjection,
+    coreProjection: createCoreFlightDayFeedReader(core),
     candidates: ledger.listJourneys,
     services: async (scope, observed) =>
       withAccountApplyGate(async () => {
