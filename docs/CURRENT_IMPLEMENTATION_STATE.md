@@ -1,3 +1,18 @@
+# CP04A3-CORE-ORDER-02 — canonical readiness / Owner Review
+
+2026-10-13. Verified main `065bdd96` after Flight SOURCE-02 integration/push.
+Accepted TTR `a027f2a` preserved; normal isolated merge candidate `f43f0e0` on
+`codex/cp-ttr04a3-core-order-02-canonical-prep`. All accepted production hashes exact;
+only SQL acceptance runner/current-state overlap reconciled. Entire canonical
+handoff retained below. PostgreSQL Flight00100→TTR00200 and SQLite Flight56→TTR57
+PASS; owning SQL2, Upload29, joined Flight1 and targeted SQLite2 PASS. Static checks
+PASS. Unchanged accepted regression evidence reused; no new broad/native audit.
+Readiness report: `trip/implementation/CP_TTR_04A3_CORE_ORDER_02_CANONICAL_READINESS_REPORT.md`.
+Canonical/concurrent dirty files unchanged. No canonical merge/push or activation.
+Next: separate Owner integration approval. Hosted/Provider/paid LLM/Native/Production CLOSED.
+
+---
+
 # CP04A3-CORE-ORDER-02 — CLOSED isolated implementation / Owner Review
 
 2026-10-13. Branch `codex/cp-ttr04a3-core-order-02`, implementation `f58ab85`, allocation correction `c88796f`.
