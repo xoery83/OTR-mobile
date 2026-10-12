@@ -1,3 +1,13 @@
+# CP01B / G2 — controlled local-main integration / Owner Review
+
+2026-10-13. Owner-accepted `22c0369` integrated through guarded fast-forward from verified current main `54ecb4b`, preserving all accepted feature/G2 commits. Final target is the G2 documentation commit containing this handoff. Runtime tree exactly matches the accepted candidate; no integration source corrections.
+
+Original 22 Fixtures/order/Nelson January 15 default plus F01–F14 = 36 unique Trips; all 14 TTR expectations preserved. Shared `g2-flexible/1`, `g2-flexible-snapshot/1`, Composer/Focus/NOW/Core authority and Release isolation unchanged. Fresh focused261 PASS; clean-main3893/integrated3965 PASS with identical two baseline failures/23 skips. Typecheck, lint/UI guard and formatting PASS. Fresh isolated Simulator checks F01–F14, both Pool divider directions, no F14 key warning, nested Focus, nonzero scroll return, P1/P2/P3, TTR NOW/Sheet and Light/Dark. Existing Debug binary with new integration JavaScript; no fresh native-build claim.
+
+Report/manifest/native evidence: [CP01B_G2_MAIN_INTEGRATION_REPORT.md](architecture/CP01B_G2_MAIN_INTEGRATION_REPORT.md). Concurrent dirty/untracked work, source branch and evidence preserved; no push/deploy/Hosted/production activation. G2 returns to maintenance; Flexible resumes against accepted ports. Held copy/resize calibration, gap creation, promotion, Group-only Past and real-data/device/business persistence gates remain separate. STOP for Owner Review.
+
+---
+
 # CP01B / G2 coordinated integration — Owner Review
 
 Isolated branch `codex/cp01b-g2-coordinated` on accepted main `54ecb4b`; canonical main remains unchanged. F01–F14 append after the original 22 entries, preserving Nelson default and all TTR expectations. Feature changes and G2 registry/test ownership have separate commits.
