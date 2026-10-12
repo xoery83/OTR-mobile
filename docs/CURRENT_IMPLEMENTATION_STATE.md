@@ -1,3 +1,20 @@
+# CP04A3-CORE-ORDER-02 — CLOSED isolated implementation / Owner Review
+
+2026-10-13. Branch `codex/cp-ttr04a3-core-order-02`, implementation `f58ab85`.
+Explicit actor-self ordinary-order carrier and negotiated read2 ORDER projection;
+SQLite56 accepted mirror and `otr-core-ttr-input/1` local read/checker. Three
+independent pairs, private UNKNOWN gaps, replay/CAS, cold offline reopen and
+Transport arrival roles verified. TTR migration allocated `20261013000200` after
+unchanged Flight00100; identical SQL hash and combined disposable install PASS.
+Full3890 PASS/two exact baseline UI failures/25 skips; SQL2 and joined Flight1,
+typecheck/lint/UI guard/backend build PASS. No canonical merge/push or activation.
+Core equivalence stays UNKNOWN absent accepted evidence; personal TTR state unchanged.
+See `trip/implementation/CP_TTR_04A3_CORE_ORDER_02_IMPLEMENTATION_REPORT.md` and
+`trip/contracts/CORE_ORDINARY_ORDER_TTR_INPUT_V1.md`. Next: Owner Review and separate
+integration decision; real-data consumer/Hosted/Provider/paid LLM/Native/Production CLOSED.
+
+---
+
 # CP-G2-TTR-01 — controlled local-main integration / Owner Review
 
 2026-10-13. Accepted source `aa8753e` (base `1114ccc`) normally merged into
