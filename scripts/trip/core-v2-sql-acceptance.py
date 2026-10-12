@@ -1,10 +1,11 @@
-"""Run Core85–92 on an owned, network-isolated copy of the synthetic Server84 image."""
+"""Run Core85–92 on an owned synthetic Server84 clone; TEXT transport uses a loopback TLS port."""
 import argparse
 import json
 import pathlib
 import subprocess
 import time
 import uuid
+import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DOCKER = "/opt/homebrew/bin/docker"
@@ -30,12 +31,21 @@ parser = argparse.ArgumentParser(description=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--flight", action="store_true", help="Run Capture to Core Flight SQL acceptance")
 group.add_argument("--source", action="store_true", help="Run the owning Source SQL scenario in a separate fresh clone")
+group.add_argument("--text-runtime", action="store_true", help="Run real local HTTP/pg/TLS TEXT acceptance")
 args = parser.parse_args()
-scenario = "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
+scenario = "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
 created = False
+network_created = False
+private = tempfile.TemporaryDirectory(prefix="otr-flight-text-")
+network = NAME + "-network"
 try:
     docker("image", "inspect", IMAGE)  # Never pull, read secrets, reset or access a hosted DB.
-    docker("run", "--name", NAME, "--network", "none", "-d", IMAGE)
+    if args.text_runtime:
+        docker("network", "create", network)
+        network_created = True
+        docker("run", "--name", NAME, "--network", network, "-p", "127.0.0.1::5432", "-d", IMAGE)
+    else:
+        docker("run", "--name", NAME, "--network", "none", "-d", IMAGE)
     created = True
     for attempt in range(50):
         ready = subprocess.run([DOCKER, "exec", NAME, "pg_isready", "-U", "supabase_admin"], capture_output=True)
@@ -57,7 +67,24 @@ try:
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t"
     import os
     env = dict(os.environ, OTR_CORE_OWNED_SQL_FIXTURE=NAME)
+    if args.text_runtime:
+        cert = pathlib.Path(private.name) / "server.crt"
+        key = pathlib.Path(private.name) / "server.key"
+        subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1", "-subj", "/CN=localhost", "-addext", "subjectAltName=DNS:localhost", "-keyout", str(key), "-out", str(cert)], check=True, capture_output=True)
+        docker("cp", str(cert), NAME + ":/tmp/flight-server.crt")
+        docker("cp", str(key), NAME + ":/tmp/flight-server.key")
+        docker("exec", "-u", "root", NAME, "chown", "postgres:postgres", "/tmp/flight-server.key", "/tmp/flight-server.crt")
+        docker("exec", "-u", "root", NAME, "chmod", "600", "/tmp/flight-server.key")
+        sql("ALTER SYSTEM SET ssl='on'; ALTER SYSTEM SET ssl_cert_file='/tmp/flight-server.crt'; ALTER SYSTEM SET ssl_key_file='/tmp/flight-server.key'; SELECT pg_reload_conf();")
+        # Entirely synthetic passwords and LOGIN changes in this owned disposable clone only.
+        sql("ALTER ROLE otr_trip_core_v2_gateway LOGIN PASSWORD 'synthetic-core-text'; ALTER ROLE otr_trip_source_command_gateway LOGIN PASSWORD 'synthetic-source-text';")
+        port = docker("port", NAME, "5432/tcp").strip()
+        assert port.startswith("127.0.0.1:"), "Fixture exposed beyond loopback"
+        env.update(OTR_FLIGHT_TEXT_PORT=port.split(":")[-1], OTR_FLIGHT_TEXT_CA=str(cert))
     subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", scenario, "--disableConsoleIntercept"], cwd=ROOT, env=env, check=True)
+    if args.text_runtime:
+        assert sql("select not enabled from trip_source_command_gate;").strip() == "t"
+        assert sql("select not flight_admission_enabled from trip_import_admission_gate;").strip() == "t"
     # Positive fixture scenarios retain disabled allowlists; reset only this owned clone.
     sql("update trip_core_activation_gate set runtime_enabled=false,enabled_commands='{}',enabled_families='{}',enabled_admission_modes='{}';")
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t", "Fixture activation gate was not restored CLOSED"
@@ -66,5 +93,12 @@ try:
     assert not changed, "Historical function changes during scenario: " + repr(changed)
     print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92], "historicalFunctionsPreserved": len(before), "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
 finally:
-    if created:
-        docker("rm", "-f", NAME)  # Only the UUID-named container created by this invocation.
+    try:
+        if created:
+            docker("rm", "-f", NAME)  # Only the UUID-named container created by this invocation.
+    finally:
+        try:
+            if network_created:
+                docker("network", "rm", network)
+        finally:
+            private.cleanup()

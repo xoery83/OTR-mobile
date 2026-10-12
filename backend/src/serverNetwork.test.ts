@@ -21,7 +21,12 @@ async function start(extra: Record<string, string | undefined>) {
   }))
     vi.stubEnv(key, value);
   const listen = vi.fn();
-  const createServer = vi.fn(() => ({ on: vi.fn(), listen }));
+  const createServer = vi.fn(
+    (_handler: (incoming: unknown, outgoing: unknown) => Promise<void>) => ({
+      on: vi.fn(),
+      listen,
+    }),
+  );
   vi.doMock("node:http", () => ({ createServer }));
   return { loading: import("./server"), listen, createServer };
 }
@@ -75,4 +80,29 @@ describe("DEV Backend network profile at actual startup", () => {
     await expect(loading).rejects.toThrow();
     expect(createServer).not.toHaveBeenCalled();
   });
+});
+
+it("bounds TEXT Source ingress before concatenating an oversized body", async () => {
+  const { loading, createServer } = await start({});
+  await loading;
+  const incoming = {
+    url: "/v2/trips/10000000-0000-4000-8000-000000000001/sources/acquire",
+    async *[Symbol.asyncIterator]() {
+      yield Buffer.alloc(2097153);
+      throw new Error("MUST_NOT_CONTINUE_READING");
+    },
+  };
+  const outgoing = {
+    on: vi.fn(),
+    off: vi.fn(),
+    writableFinished: false,
+    statusCode: 0,
+    setHeader: vi.fn(),
+    end: vi.fn(),
+  };
+  await createServer.mock.calls[0][0](incoming, outgoing);
+  expect(outgoing.statusCode).toBe(413);
+  expect(outgoing.end).toHaveBeenCalledWith(
+    expect.stringContaining("INVALID_SOURCE_COMMAND"),
+  );
 });

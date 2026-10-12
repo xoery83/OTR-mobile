@@ -23,6 +23,10 @@ import {
   type ParticipationGateway,
 } from "./tripPersonParticipationRuntime";
 import { canonicalCapabilities } from "./tripCanonicalRead";
+import {
+  flightTextSourceBoundary,
+  type FlightTextSourceConnection,
+} from "./flightTextSource";
 import { coreHttpBoundary, type CoreHttpConnection } from "./tripCoreV2Http";
 import {
   canonicalCapabilitiesSchema,
@@ -598,6 +602,7 @@ export type SafeLogEvent = {
 
 export type BackendDependencies = {
   coreConnection?: CoreHttpConnection;
+  flightTextSourceConnection?: FlightTextSourceConnection;
   participationGateway?: ParticipationGateway;
   gateway: DevBackendGateway;
   log?: (event: SafeLogEvent) => void;
@@ -2337,6 +2342,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  flightTextSourceConnection,
   coreConnection,
   participationGateway,
   gateway,
@@ -2422,7 +2428,16 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (/^\/v2\/trips\/[^/]+\/core\//.test(url.pathname)) {
+      if (/^\/v2\/trips\/[^/]+\/sources\/(?:acquire|runs\/publish)$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/sources/:resource";
+        const actor = await authenticate(request, gateway);
+        response = await flightTextSourceBoundary(
+          request,
+          actor.id,
+          (a, t) => gateway.canReadTrip(a, t),
+          flightTextSourceConnection,
+        );
+      } else if (/^\/v2\/trips\/[^/]+\/core\//.test(url.pathname)) {
         route = "/v2/trips/:tripId/core/:resource";
         const actor = await authenticate(request, gateway);
         response = await coreHttpBoundary(

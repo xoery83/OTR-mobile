@@ -1,5 +1,8 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { createCorePgConnection } from "./tripCoreV2PgConnection";
+import {
+  createCorePgConnection,
+  createSourcePgConnection,
+} from "./tripCoreV2PgConnection";
 const f = vi.hoisted(() => ({
   config: {} as Record<string, unknown>,
   principal: "otr_trip_core_v2_gateway",
@@ -72,4 +75,14 @@ it("rejects pooled addresses, foreign principals, replicas and unfinished transa
       await lease.query("BEGIN");
     }),
   ).rejects.toThrow("CORE_TRANSACTION_UNFINISHED");
+});
+
+it("Source uses its own fixed principal through the same verified TLS driver", async () => {
+  f.principal = "otr_trip_source_command_gateway";
+  await createSourcePgConnection(config).withLease(async (lease) => {
+    await lease.query("BEGIN");
+    await lease.query("COMMIT");
+  });
+  expect(f.config.user).toBe("otr_trip_source_command_gateway");
+  expect(f.config.ssl).toMatchObject({ rejectUnauthorized: true });
 });

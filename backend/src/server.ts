@@ -93,7 +93,26 @@ const server = createServer(async (incoming, outgoing) => {
   outgoing.on("close", onClose);
   try {
     const chunks: Buffer[] = [];
-    for await (const chunk of incoming) chunks.push(Buffer.from(chunk));
+    const textSourceRoute =
+      /^\/v2\/trips\/[^/]+\/sources\/(?:acquire|runs\/publish)(?:\?|$)/.test(
+        incoming.url ?? "",
+      );
+    let byteCount = 0;
+    for await (const chunk of incoming) {
+      byteCount += chunk.length;
+      if (textSourceRoute && byteCount > 2097152) {
+        outgoing.statusCode = 413;
+        outgoing.setHeader("Content-Type", "application/json");
+        outgoing.setHeader("Cache-Control", "private, no-store");
+        outgoing.end(
+          JSON.stringify({
+            error: { code: "INVALID_SOURCE_COMMAND", message: "INVALID_SOURCE_COMMAND" },
+          }),
+        );
+        return;
+      }
+      chunks.push(Buffer.from(chunk));
+    }
     const body = Buffer.concat(chunks);
     const request = new Request(
       `http://${incoming.headers.host ?? "127.0.0.1"}${incoming.url ?? "/"}`,

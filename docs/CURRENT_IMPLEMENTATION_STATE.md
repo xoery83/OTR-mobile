@@ -1,3 +1,31 @@
+# CP-FLIGHT-DEV-02 — CLOSED local TEXT implementation / Owner Review
+
+Updated 2026-10-12 (Pacific/Auckland). Isolated `codex/flight-dev-backend`;
+canonical baseline `6af3aff1fbfb136b087512589aa94b2c9d4640fc`, accepted assessment
+parent `09d833a4d170da940b0ff6765668689d70b56b15`. Owner selected ORIGINAL TEXT-only.
+
+Explicit backend composition now connects authenticated Source ACQUIRE/Run/Input
+SQL and existing Core publication2/plan/command/receipt/finalization/read2 through
+separate fixed Source/Core verified-TLS Node pg sessions. One existing Source store;
+no dependency, migration, Canonical writer or W0/W4 authority changes. Normal
+startup supplies no connection/credentials and remains CLOSED. TEXT JSON/ingress
+is bounded; binary/Document access stays disabled.
+
+Local real HTTP/pg/TLS fixture PASS: exact one UTF-8 original/revision1, two qualified
+Flights at revision2, five backend process kills/restarts, four lost command receipt
+recoveries, exact acquisition/Run replay, actor/Trip/private Source and principal
+fences, hostname/CA/password negatives. 329 historical function bodies preserved;
+owned fixture gates restored CLOSED; all temporary resources removed. Fixture Auth
+and temporary grants/deny-trigger relaxation do not certify Hosted activation.
+Focused11 suites/90 PASS; typecheck/build/lint/UI guard/format/whitespace PASS.
+
+Next: Owner Review of `trip/implementation/CP_FLIGHT_DEV_02_REPORT.md`, exact manifest
+and evidence alongside it. STOP before real Hosted principal/credential/grants/
+gates/deployment/Auth verification; separate authorization required. Native/C5/C9,
+Provider/paid LLM/Production/binary custody remain CLOSED. Accepted baseline follows.
+
+---
+
 # Flight AB canonical integration — prepared only
 
 Updated 2026-10-12. Accepted AB tip `5544ba0` is prepared against current local

@@ -1012,3 +1012,35 @@ installed membership count; zero is a valid empty roster, not deletion or a
 publication certificate. `read(context,runId)` uses local retained membership only.
 The reader forwards the original context and cancellation signal to transport.
 No startup/scheduler, Composer, provider or business-command activation is added.
+
+## CP-FLIGHT-DEV-02 CLOSED ORIGINAL TEXT transport
+
+Explicit `createFlightTextDevBackend(dependencies,{source,core})` composes the
+existing authenticated DEV handler and separate fixed Source/Core Node pg
+principals. It is not called at normal startup; no environment activation flag,
+credential loader or new business authority is introduced.
+
+- `POST /v2/trips/:tripId/sources/acquire`: existing Source command1 envelope,
+  ACQUIRE_SOURCE only, TEXT/PASTE/UTF-8, UNKNOWN capture time, nullable MIME,
+  exact original text/hash/byte count (≤262,144 bytes), stable IDs/key/digests.
+  Actor is derived from validated bearer auth; envelope Account/Trip are only
+  consistency claims. Existing owning SQL validates all manifest/operation hashes
+  and current write admission, atomically retains Source/revision/original/receipt.
+  Lost response replays the identical envelope; 503 or absence is not no-commit.
+- `POST /v2/trips/:tripId/sources/runs/publish`: existing complete
+  `trip_source_publish_flight_run` Run/Input/Candidate/predecessor/lineage envelope.
+  Owning SQL seals and validates actual pins; replay retains the original Run ID.
+- Existing Core publication2/plan2/command2/operation receipt/finalization/read2
+  endpoints and DTOs are unchanged. Source responses are private/no-store.
+
+Source HTTP JSON is strictly parsed and bounded to2MiB; normal Node server caps
+TEXT ingress before concatenation. Invalid auth401; denied Trip/actor403;
+invalid schema/material422 (malformed JSON400); identity reuse/stale pins409;
+oversize413; unavailable/uncertain storage503. SQL details/material/credentials
+are not returned. Binary/LOCATOR acquisition and Document access stay CLOSED.
+
+Local HTTP/Node pg/verified TLS acceptance uses only a disposable synthetic SQL
+clone and fixture bearer identities; it does not certify Supabase Auth or Hosted
+provisioning. Dedicated Hosted principals/grants/activation and actual DEV Auth
+acceptance require separate Owner authorization. See
+`trip/implementation/CP_FLIGHT_DEV_02_REPORT.md`.
