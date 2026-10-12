@@ -30,12 +30,14 @@ export function DayFeed({
   zone,
   services,
   instant,
+  emptyMessage,
 }: {
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
   zone: string;
   services: Record<string, FlightService[]>;
   instant?: string;
+  emptyMessage?: string;
 }) {
   const styles = useThemedStyles(createStyles);
   const query =
@@ -134,7 +136,9 @@ export function DayFeed({
           offset.current = e.nativeEvent.contentOffset.y;
         }}
       >
-        {!rows.length ? <Text style={styles.meta}>{t("dayFeed.dayEmpty")}</Text> : null}
+        {!rows.length ? (
+          <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
+        ) : null}
         {rows.map((row) => (
           <View key={row.key}>
             {row.nowBefore ? <NowMarker placement={now} /> : null}

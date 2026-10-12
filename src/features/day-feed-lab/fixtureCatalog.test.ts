@@ -83,7 +83,7 @@ it("uses one production composer for deterministic NOW, Focus and Immersive cont
     stream.rows.map((r) => r.key),
   );
 });
-it("keeps release entry closed and the fixture subtree free of persistence/auth/network/composer code", () => {
+it("keeps release entry closed and fixture data pure and the shell limited to read-only repository access", () => {
   vi.stubGlobal("__DEV__", false);
   try {
     expect(DayFeedLabRoute().props.href).toBe("/trip");
@@ -100,10 +100,10 @@ it("keeps release entry closed and the fixture subtree free of persistence/auth/
   for (const file of ["fixtureCatalog.ts", "DayFeedLabScreen.tsx"]) {
     const source = readFileSync(new URL(file, import.meta.url), "utf8");
     expect(source).not.toMatch(
-      /@\/data\/|fetch\(|SQLite|composeDayStream|createTripDayFeedReader/,
+      /@\/data\/(?:api|db|sync)\/|fetch\(|SQLite|composeDayStream|createTripDayFeedReader/,
     );
   }
   const shell = readFileSync(new URL("DayFeedLabScreen.tsx", import.meta.url), "utf8");
   expect(shell).toContain('import { DayFeed } from "@/features/day-feed/DayFeed"');
-  expect(shell).toContain("key={`${trip.id}/${date}`}");
+  expect(shell).toContain("key={`FIXTURE/${fixture.trip.id}/${date}`}");
 });

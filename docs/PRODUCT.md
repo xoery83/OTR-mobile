@@ -278,3 +278,13 @@ boundary, Composer, Focus, NOW and Immersive components. Fixture mode has no
 canonical writes, session creation or provider access. Release rejects the route.
 P3–P6, Flexible, TTR and Core DEV Data activation remain outside DL1. Integration
 seams and usage are in `architecture/OTR_DAY_FEED_LAB_DL1.md`.
+
+## Authorized DL2 Lab read integration
+
+Owner authorized DL2 on 2026-10-12 after local DL1 integration. The same Debug Lab
+can select complete, current actor-scoped local Core v2 Trip reads when an adopted
+session and permitted Trip are present. It reuses the owning P2 Flight bridge and
+G2 Composer; sparse Flight retains existing P1 presentation. Other Core families
+are explicitly unsupported. Accepted Trip discovery is local and partial. No
+read installation, remote refresh, canonical write, Seed or provider activation
+is included. See `architecture/OTR_DAY_FEED_LAB_DL2_READ_PORT.md`.

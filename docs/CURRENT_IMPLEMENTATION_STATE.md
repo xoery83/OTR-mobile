@@ -1,3 +1,25 @@
+# DL2 Lab read integration — source complete / native Core blocked
+
+2026-10-12. DL1 accepted commits integrated into local canonical main
+`c0a69204fab3e663356a7f34406d580147869aeb`; no push, dirty work preserved.
+DL2 branch `codex/day-feed-lab-dl2` is isolated and not merged into main.
+The same Debug Lab/production Feed reads actor-scoped complete accepted local
+Core2 collections through the owning P2 Flight bridge. Other Core families are
+explicitly unsupported. Adopted-session/certificate/permission/Account-generation
+gates fail closed; no network refresh/install/write/Seed/provider.
+
+Focused160 PASS; full3727 PASS/same2 baseline FAIL/21 skipped. Typecheck/lint/
+UI guard/format PASS. Native five Fixtures/source gate/P1/Flight Immersive return/
+Light/Dark PASS;64 Trip tables0 rows,0 accepted Core certificates. Native positive
+Core/live DEV blocked by absent authorized session/installed read. Final nonzero
+scroll was not reconfirmed; accepted DL1 evidence remains.
+
+Report: `architecture/OTR_DAY_FEED_LAB_DL2_REPORT.md`. Read port and dated ADR
+define the subset. Next DL3: authorized existing session/accepted collection,
+then native Core switching/Focus/NOW/nonzero scroll. No Seed or activation implied.
+
+---
+
 # CP-LLM-03A — CLOSED canonical integration preparation / Owner Review
 
 2026-10-12. Prepared from local main `c0a6920`; actual remote main `12693e3`.

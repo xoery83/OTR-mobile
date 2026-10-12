@@ -4,6 +4,12 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import type { DayEvent, DayProjection } from "@/domain/trip/dayReadModel";
 import { DayFeed } from "./DayFeed";
+import { readTripDayFeedLab } from "@/data/repositories/tripDayFeedLabRepository";
+import {
+  getAccountGeneration,
+  advanceAccountGeneration,
+} from "@/data/auth/accountGeneration";
+import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { DayFeedLabScreen } from "../day-feed-lab/DayFeedLabScreen";
 import { getFixtureCatalog } from "../day-feed-lab/fixtureCatalog";
 import { P1Row } from "./P1Row";
@@ -28,9 +34,13 @@ const state = vi.hoisted(() => ({
   refCursor: 0,
   scrollTo: vi.fn(),
   platform: "ios",
+  effects: [] as (() => unknown)[],
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useEffect: (callback: () => unknown) => {
+    state.effects.push(callback);
+  },
   useState: (initial: unknown) => {
     const i = state.cursor++;
     if (state.hooks[i] === undefined)
@@ -61,6 +71,7 @@ vi.mock("react-native", async () => {
     );
   };
   return {
+    AppState: { addEventListener: () => ({ remove: vi.fn() }) },
     Platform: {
       get OS() {
         return state.platform;
@@ -76,6 +87,9 @@ vi.mock("react-native", async () => {
     useColorScheme: () => state.scheme,
   };
 });
+vi.mock("@/data/repositories/tripDayFeedLabRepository", () => ({
+  readTripDayFeedLab: vi.fn(),
+}));
 vi.mock("@react-native-community/datetimepicker", () => ({ default: () => null }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
@@ -121,6 +135,7 @@ const render = (node: ReactNode) => {
   state.refCursor = 0;
   state.presses = [];
   state.nodes = [];
+  state.effects = [];
   return renderToStaticMarkup(node);
 };
 beforeEach(() => {
@@ -706,4 +721,98 @@ it("DL1 controls switch bounded dates and Trips using the same P2 renderer in ei
     expect(html).toContain('data-testid="flight-browse-geometry"');
     expect(html).toContain(getFixtureCatalog()[1].projection.events[2].title);
   }
+});
+
+it("DL2 source selection uses one Feed, retains fixture context and withholds prior Account data immediately", async () => {
+  const f = faroeNegativeFixtures();
+  const scope = { accountId: "core-synthetic-actor", generation: getAccountGeneration() };
+  const coreTrip = "core-synthetic-trip";
+  const projection = {
+    ...f.day,
+    version: 2 as const,
+    accountId: scope.accountId,
+    tripId: coreTrip,
+    items: [],
+    flightFacts: {},
+    source: {
+      epoch: "synthetic",
+      revision: "1",
+      accessRevision: 1,
+      actorPersonBindingHash: "synthetic",
+      participatingRosterHash: "synthetic",
+      manifestSha256: "synthetic",
+    },
+    query: (date: string, zone: string) => ({
+      ...itemsForLocalDate(f.day, date, zone),
+      coreRows: [],
+    }),
+  };
+  vi.mocked(readTripDayFeedLab).mockResolvedValue({
+    candidates: async () => ({ scope, tripIds: [coreTrip] }),
+    trip: async () => ({
+      scope,
+      projection,
+      dates: [syntheticDate],
+      unsupportedFamilies: [],
+    }),
+  });
+  render(createElement(DayFeedLabScreen));
+  expect(
+    state.presses.find((p) => p.accessibilityLabel === t("dayLab.coreSource"))!.disabled,
+  ).toBe(true);
+  state.effects[0]();
+  await vi.waitFor(() => {
+    render(createElement(DayFeedLabScreen));
+    expect(
+      state.presses.find((p) => p.accessibilityLabel === t("dayLab.coreSource"))!
+        .disabled,
+    ).toBe(false);
+  });
+  state.presses.find((p) => p.accessibilityLabel === t("dayLab.next"))!.onPress();
+  render(createElement(DayFeedLabScreen));
+  state.presses.find((p) => p.accessibilityLabel === t("dayLab.coreSource"))!.onPress();
+  render(createElement(DayFeedLabScreen));
+  state.effects[1]();
+  await vi.waitFor(() => {
+    const html = render(createElement(DayFeedLabScreen));
+    expect(html).toContain(coreTrip);
+    expect(html).toContain('data-testid="flight-browse-geometry"');
+    expect(html).not.toContain("day-lab-nelson");
+  });
+  state.presses.find((p) => p.accessibilityLabel === f.segment.title)!.onPress();
+  render(createElement(DayFeedLabScreen));
+  state.presses
+    .find((p) => p.accessibilityLabel === t("dayLab.fixtureSource"))!
+    .onPress();
+  let html = render(createElement(DayFeedLabScreen));
+  expect(html).toContain("day-lab-nelson");
+  expect(html).toContain("2027-01-16");
+  expect(html).not.toContain(coreTrip);
+  state.presses.find((p) => p.accessibilityLabel === t("dayLab.coreSource"))!.onPress();
+  render(createElement(DayFeedLabScreen));
+  state.effects[1]();
+  await vi.waitFor(() =>
+    expect(render(createElement(DayFeedLabScreen))).toContain(f.segment.title),
+  );
+  advanceAccountGeneration();
+  html = render(createElement(DayFeedLabScreen));
+  expect(html).not.toContain(coreTrip);
+  expect(html).not.toContain(f.segment.title);
+  expect(
+    state.presses.find((p) => p.accessibilityLabel === t("dayLab.coreSource"))!.disabled,
+  ).toBe(true);
+});
+it("DL2 denied capability never enables Core or replaces Fixture data", async () => {
+  vi.mocked(readTripDayFeedLab).mockRejectedValue(new Error("CORE_LAB_AUTH_REQUIRED"));
+  render(createElement(DayFeedLabScreen));
+  state.effects[0]();
+  await vi.waitFor(() => {
+    const html = render(createElement(DayFeedLabScreen));
+    expect(html).toContain(t("dayLab.read.AUTH_REQUIRED"));
+    expect(html).toContain("day-lab-nelson");
+    expect(
+      state.presses.find((p) => p.accessibilityLabel === t("dayLab.coreSource"))!
+        .disabled,
+    ).toBe(true);
+  });
 });

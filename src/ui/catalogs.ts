@@ -1,4 +1,23 @@
 export const en = {
+  "dayLab.coreDayEmpty": "No supported Core Flight Items match this date.",
+  "dayLab.fixtureSource": "Fixture",
+  "dayLab.coreSource": "Core DEV Read",
+  "dayLab.coreTrip": "Core Trip · {id}",
+  "dayLab.coreDiagnostics":
+    "Core DEV Read · accepted local collection · Trip {id} · Date {date} · Read v2 · Query UTC",
+  "dayLab.noCoreTrips":
+    "No accepted Core v2 Trips are available for this Account on this device.",
+  "dayLab.unsupported":
+    "Core families without a supported Feed adapter: {families}. These Items are not rendered.",
+  "dayLab.read.LOADING": "Checking local Core read capability…",
+  "dayLab.read.AUTH_REQUIRED":
+    "Core DEV Read requires an existing authenticated DEV session. Fixture mode remains available.",
+  "dayLab.read.DENIED":
+    "Core read access changed or was denied. Refresh the accepted read context.",
+  "dayLab.read.UNAVAILABLE":
+    "An accepted compatible Core read collection is unavailable. No data source fallback is used.",
+  "dayLab.read.READY": "Accepted local Core read available.",
+
   "dayLab.fixture0": "Synthetic flight",
   "dayLab.fixture1": "Synthetic origin airport",
   "dayLab.fixture2": "Synthetic destination airport",
@@ -1749,6 +1768,21 @@ export const zhHans: Record<MessageKey, string> = {
   "dayLab.fixture17": "空白 / 稀疏旅行",
   "dayLab.fixture18": "缺少时间和地点的合成地点",
   "dayLab.trailStop": "合成步道停靠点 {number}",
+  "dayLab.fixtureSource": "合成测试数据",
+  "dayLab.coreSource": "Core DEV 只读",
+  "dayLab.coreTrip": "Core 旅行 · {id}",
+  "dayLab.coreDiagnostics":
+    "Core DEV 只读 · 已接受的本地集合 · 旅行 {id} · 日期 {date} · Read v2 · 查询 UTC",
+  "dayLab.noCoreTrips": "此设备没有当前账户可用的已接受 Core v2 旅行。",
+  "dayLab.unsupported":
+    "缺少受支持 Feed 适配器的 Core 类型：{families}。这些项目未展示。",
+  "dayLab.read.LOADING": "正在检查本地 Core 读取能力…",
+  "dayLab.read.AUTH_REQUIRED":
+    "Core DEV 只读需要已有的已认证 DEV 会话。合成测试数据仍可使用。",
+  "dayLab.read.DENIED": "Core 读取权限已变更或被拒绝。请刷新已接受的读取上下文。",
+  "dayLab.read.UNAVAILABLE": "兼容的已接受 Core 读取集合不可用。不会切换到其他数据源。",
+  "dayLab.read.READY": "已接受的本地 Core 读取可用。",
+  "dayLab.coreDayEmpty": "此日期没有受支持的 Core 航班项目。",
   "dayLab.title": "Day Feed Lab",
   "dayLab.trip": "测试旅行",
   "dayLab.previous": "前一天",

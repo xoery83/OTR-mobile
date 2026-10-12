@@ -29,12 +29,20 @@ import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repos
 import { createCoreFlightDayFeedReader } from "./tripCoreV2DayFeedRepository";
 import { createTripDayFeedReader, readTripDayFeed } from "./tripDayFeedRepository";
 import { readInitializedDatabase } from "../db/database";
-import { requireActiveUserId } from "../auth/authRepository";
+import { requireActiveUserId, readAdoptedLocalSession } from "../auth/authRepository";
+import {
+  createTripDayFeedLabReader,
+  readTripDayFeedLab,
+} from "./tripDayFeedLabRepository";
+import { composeDayStream, dayRowKey } from "../../features/day-feed/composition";
 import { DayFeed } from "../../features/day-feed/DayFeed";
 import intents from "./__fixtures__/tripImportIntents.json";
 
 vi.mock("../auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
-vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/authRepository", () => ({
+  requireActiveUserId: vi.fn(),
+  readAdoptedLocalSession: vi.fn(),
+}));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 vi.mock("../../components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("../../features/day-feed/useMinuteClock", () => ({
@@ -592,4 +600,191 @@ it("an access-generation change blocks the old certificate rather than borrowing
   await f.repo.beginRefresh(await f.repo.captureContext(trip), 2);
   await expect(f.read.trip(trip)).rejects.toThrow("CORE_READ_ACCESS_MISMATCH");
   expect(f.v1).not.toHaveBeenCalled();
+});
+
+it("DL2 lists only accepted actor-scoped local Trips, including an empty complete Trip", async () => {
+  const f = local(),
+    server = await acceptedServer();
+  await pull(f, server);
+  const emptyTrip = randomUUID();
+  const bundle = await buildCoreActorCollection(
+    emptyCoreGraph(),
+    { ...actor, tripId: emptyTrip, personId: null, personIds: [] },
+    { epoch: randomUUID(), revision: 1, accessRevision: 1, generatedAt: stamp },
+    [],
+    hash,
+  );
+  const ctx = await f.repo.captureContext(emptyTrip);
+  await f.repo.install(await f.repo.beginRefresh(ctx, 1), bundle.manifest, bundle.pages);
+  const reader = createTripDayFeedLabReader(f.repo, async () => f.account());
+  const candidates = await reader.candidates();
+  expect(candidates.tripIds.sort()).toEqual([trip, emptyTrip].sort());
+  const populated = await reader.trip(trip, candidates.scope);
+  expect(populated.projection.events.map((e) => e.id).sort()).toEqual(
+    [first, second].sort(),
+  );
+  expect(populated.unsupportedFamilies).toEqual([]);
+  const empty = await reader.trip(emptyTrip, candidates.scope);
+  expect(empty.projection.events).toEqual([]);
+  expect(empty.projection.query(dates[0], "UTC").coreRows).toEqual([]);
+  expect(empty.dates).toEqual([]);
+  await expect(reader.trip(randomUUID(), candidates.scope)).rejects.toThrow(
+    "CORE_LAB_NO_ACCEPTED_READ",
+  );
+});
+it("DL2 rejects wrong certificate versions/completeness, stale access and revocation without fallback", async () => {
+  const f = local();
+  await pull(f, await acceptedServer());
+  const reader = createTripDayFeedLabReader(f.repo, async () => f.account());
+  const { scope } = await reader.candidates();
+  f.sql.exec("PRAGMA ignore_check_constraints=ON");
+  for (const [field, bad, good] of [
+    ["read_version", 3, 2],
+    ["business_version", 1, 2],
+    ["temporal_version", 2, 1],
+    ["complete", 0, 1],
+  ] as const) {
+    f.sql.prepare(`UPDATE trip_core_read_certificates SET ${field}=?`).run(bad);
+    expect((await reader.candidates()).tripIds).toEqual([]);
+    await expect(reader.trip(trip, scope)).rejects.toThrow("CORE_READ_VERSION_MISMATCH");
+    f.sql.prepare(`UPDATE trip_core_read_certificates SET ${field}=?`).run(good);
+  }
+  await f.repo.beginRefresh(await f.repo.captureContext(trip), 2);
+  expect((await reader.candidates()).tripIds).toEqual([]);
+  await expect(reader.trip(trip, scope)).rejects.toThrow("CORE_READ_ACCESS_MISMATCH");
+  await f.repo.revoke(await f.repo.captureContext(trip), 2);
+  expect((await reader.candidates()).tripIds).toEqual([]);
+  await expect(reader.trip(trip, scope)).rejects.toThrow("CORE_ACCESS_REVOKED");
+  expect(f.v1).not.toHaveBeenCalled();
+});
+it("DL2 private/SELF records stay actor-scoped; A→B→A never revives an old read context", async () => {
+  const f = local(),
+    server = await acceptedServer();
+  await pull(f, server);
+  const reader = createTripDayFeedLabReader(f.repo, async () => f.account());
+  const old = await reader.candidates();
+  const b = randomUUID();
+  f.switchTo(b);
+  advanceAccountGeneration();
+  expect((await reader.candidates()).tripIds).toEqual([]);
+  await expect(reader.trip(trip, old.scope)).rejects.toThrow("Account changed");
+  const privateBundle = await server.bundle({
+    ...actor,
+    accountId: b,
+    personId: null,
+    personIds: [],
+  });
+  const ctx = await f.repo.captureContext(trip);
+  await f.repo.install(
+    await f.repo.beginRefresh(ctx, 1),
+    privateBundle.manifest,
+    privateBundle.pages,
+  );
+  const bScope = (await reader.candidates()).scope;
+  expect((await reader.trip(trip, bScope)).projection.events).toEqual([]);
+  f.switchTo(account);
+  advanceAccountGeneration();
+  await expect(reader.trip(trip, old.scope)).rejects.toThrow("Account changed");
+  const fresh = await reader.candidates();
+  expect(
+    (await reader.trip(trip, fresh.scope)).projection.events.map((e) => e.id).sort(),
+  ).toEqual([first, second].sort());
+});
+it("DL2 withholds a late accepted read after an Account generation changes", async () => {
+  const f = local();
+  await pull(f, await acceptedServer());
+  const reader = createTripDayFeedLabReader(
+    {
+      ...f.repo,
+      acceptedSnapshot: async (ctx) => {
+        const snapshot = await f.repo.acceptedSnapshot(ctx);
+        advanceAccountGeneration();
+        return snapshot;
+      },
+    },
+    async () => f.account(),
+  );
+  const scope = (await reader.candidates()).scope;
+  await expect(reader.trip(trip, scope)).rejects.toThrow("Account changed");
+});
+it("DL2 G2 display preserves the owning origin/destination DayRow identities without a second composer", async () => {
+  const f = local(),
+    server = await acceptedServer();
+  const destination = server
+    .graph()
+    .itinerary_transport_endpoints.find(
+      (r) => r.event_id === first && r.role === "DESTINATION",
+    )!;
+  Object.assign(destination, {
+    local_date: dates[0],
+    local_time: "14:00:00",
+    clock_precision: 0,
+    zone_id: "Pacific/Auckland",
+    quality: "EXACT",
+    basis: "SOURCE_INSTANT",
+    source_instant: "2026-12-17T01:00:00Z",
+    source_instant_precision: 0,
+    instant: "2026-12-17T01:00:00Z",
+    civil_resolution: null,
+  });
+  await pull(f, server);
+  const reader = createTripDayFeedLabReader(f.repo, async () => f.account());
+  const result = await reader.trip(trip, (await reader.candidates()).scope);
+  const query = result.projection.query(dates[0], "UTC");
+  const stream = composeDayStream(query, "2026-12-17T00:00:00Z", { focus: first });
+  expect(stream.rows).toHaveLength(1); // Production compact Flight groups its two endpoints.
+  expect(stream.rows[0].coreRowKeys).toEqual(query.coreRows.map((row) => row.rowKey));
+  expect(stream.rows[0].coreRowKeys.map((row) => row.projectionRole)).toEqual([
+    "ORIGIN",
+    "DESTINATION",
+  ]);
+  expect(stream.rows[0].key).toBe(
+    JSON.stringify(
+      query.coreRows.map((row) => [
+        row.rowKey.itemId,
+        row.rowKey.projectionRole,
+        row.rowKey.localDate,
+      ]),
+    ),
+  );
+  const single = result.projection.query(dates[1], "UTC");
+  expect(composeDayStream(single, stamp).rows[0].key).toBe(
+    dayRowKey(second, "ORIGIN", dates[1]),
+  );
+});
+it("DL2 native facade requires an adopted session but permits an expired offline access token without refresh", async () => {
+  vi.mocked(readAdoptedLocalSession).mockResolvedValue(null);
+  await expect(readTripDayFeedLab()).rejects.toThrow("CORE_LAB_AUTH_REQUIRED");
+  const f = local();
+  await pull(f, await acceptedServer(false));
+  vi.mocked(readInitializedDatabase).mockResolvedValue(
+    f.database as Awaited<ReturnType<typeof readInitializedDatabase>>,
+  );
+  vi.mocked(readAdoptedLocalSession).mockResolvedValue({
+    accessToken: "synthetic-test-token",
+    refreshToken: "synthetic-test-refresh",
+    expiresAt: "2000-01-01T00:00:00Z",
+    identity: { userId: account, displayName: "Synthetic", email: null },
+  });
+  const reader = await readTripDayFeedLab();
+  const scope = (await reader.candidates()).scope;
+  const result = await reader.trip(trip, scope);
+  expect(result.projection.query(dates[0], "UTC").nonComparable[0].event.id).toBe(first);
+  expect(result.projection.events[0].boundaries[0].local_time).toBeNull();
+});
+
+it("DL2 explicitly reports unsupported visible Core families instead of fabricating a renderer", async () => {
+  const f = local(),
+    server = await acceptedServer(false);
+  const row = server.graph().itinerary_events.find((r) => r.id === first)!;
+  row.experience_family = "P1";
+  row.event_type = "activity";
+  server.graph().trip_flight_intents = server
+    .graph()
+    .trip_flight_intents.filter((r) => r.event_id !== first);
+  await pull(f, server);
+  const reader = createTripDayFeedLabReader(f.repo, async () => f.account());
+  const result = await reader.trip(trip, (await reader.candidates()).scope);
+  expect(result.unsupportedFamilies).toEqual(["P1"]);
+  expect(result.projection.events.map((e) => e.id)).toEqual([second]);
 });
