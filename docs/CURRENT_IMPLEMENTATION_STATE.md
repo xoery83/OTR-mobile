@@ -1,3 +1,19 @@
+# DL4 shared Day Feed Lab — local-main release / maintenance
+
+2026-10-12. Owner accepted DL4 `e984ed1` for controlled integration on exact
+local main `40c5d29`; the source is included by ancestry in the integration
+commit containing this handoff. One production Feed/G2 now hosts the versioned
+Fixture and renderer ports, the original five scenarios and synthetic P3 Stay.
+G2 owns the shared Shell/contracts/Focus/NOW/composition regressions; P3–P6,
+Flexible and TTR own their fixtures, typed facts and visual renderers. See
+`architecture/OTR_DAY_FEED_LAB_SHARED_HANDOFF.md` and the integration report.
+No remote push or Product/Hosted/Provider activation. Core DEV Read still needs
+an authorized accepted local collection; P3 stays fixture-only. Next checkpoint:
+feature-owned P3 Accommodation work, then P4/P5 and P6, with Core/Flight/Flexible/
+TTR authority handled in their own gates.
+
+---
+
 # DL4 Day Feed Lab shared port — isolated / Owner Review
 
 2026-10-12. Owner-approved DL2 `f5cc324` is integrated into local canonical main
