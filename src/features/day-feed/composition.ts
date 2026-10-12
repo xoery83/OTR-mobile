@@ -16,6 +16,30 @@ export type FlexibleContainer = Readonly<{
   choices: readonly Readonly<{ id: string; scope: "MY" | "GROUP" }>[];
 }>;
 
+export type FlexibleBlockPort = Readonly<{
+  version: "g2-flexible/1";
+  synthetic: true;
+  id: string;
+  title: string;
+  accountId: string;
+  tripId: string;
+  localDate: string;
+  itemIds: readonly string[];
+  softWindow?: Readonly<{ startMinute: number; endMinute: number }>;
+  choiceScope?: "MY" | "GROUP";
+  choices: readonly Readonly<{ id: string; name: string; scope: "MY" | "GROUP" }>[];
+}>;
+export const choiceFocusKey = (
+  blockId: string,
+  scope: "MY" | "GROUP",
+  choiceId: string,
+) => JSON.stringify(["FLEXIBLE_CHOICE", blockId, scope, choiceId]);
+export const blockRowKey = (blockId: string, localDate: string) =>
+  JSON.stringify(["FLEXIBLE_BLOCK", blockId, localDate]);
+const hasVersion = (
+  block: FlexibleContainer | FlexibleBlockPort,
+): block is FlexibleBlockPort => (block as FlexibleBlockPort).version !== undefined;
+
 type RelationIdentity = Readonly<{
   accountId: string;
   tripId: string;
@@ -49,7 +73,7 @@ export type TransitionProjection = Readonly<{
 export type DayStreamPorts = {
   focus?: string | null;
   immersive?: string | null;
-  flexible?: readonly FlexibleContainer[];
+  flexible?: readonly (FlexibleContainer | FlexibleBlockPort)[];
   choiceScope?: "MY" | "GROUP";
   transitions?: readonly TransitionProjection[];
   scope?: { accountId: string; tripId: string };
@@ -80,12 +104,72 @@ export function composeDayStream(
   } catch {
     // Invalid view time cannot qualify a Transition presentation.
   }
-  const visible = (id: string | null | undefined) =>
-    members.some((r) => r.event.id === id) ? id! : null;
-  const focus = visible(ports.immersive) ?? visible(ports.focus);
   const blocks = (ports.flexible ?? []).filter(
     (block, _, all) => all.filter((b) => b.id === block.id).length === 1,
   );
+  const flex = blocks.filter(
+    (block): block is FlexibleBlockPort =>
+      hasVersion(block) &&
+      block.version === "g2-flexible/1" &&
+      block.synthetic === true &&
+      !!ports.scope &&
+      block.accountId === ports.scope.accountId &&
+      block.tripId === ports.scope.tripId &&
+      block.localDate === query.date &&
+      !!block.id &&
+      !members.some((item) => item.event.id === block.id) &&
+      new Set(
+        block.choices.map((choice) => choiceFocusKey(block.id, choice.scope, choice.id)),
+      ).size === block.choices.length &&
+      block.choices.every((choice) => !!choice.id && !!choice.name) &&
+      (!block.softWindow ||
+        (Number.isInteger(block.softWindow.startMinute) &&
+          Number.isInteger(block.softWindow.endMinute) &&
+          block.softWindow.startMinute >= 0 &&
+          block.softWindow.endMinute <= 1440 &&
+          block.softWindow.startMinute < block.softWindow.endMinute)),
+  );
+  const acceptedBlocks = blocks.filter(
+    (block) => !hasVersion(block) || flex.includes(block),
+  );
+  const containers = acceptedBlocks.map((block) => {
+    const scope = hasVersion(block)
+      ? (block.choiceScope ??
+        (block.choices.some((c) => c.scope === "MY") ? "MY" : "GROUP"))
+      : (ports.choiceScope ?? "MY");
+    return {
+      id: block.id,
+      key: blockRowKey(block.id, query.date),
+      title: hasVersion(block) ? block.title : undefined,
+      softWindow: block.softWindow,
+      choiceScope: scope,
+      availableScopes: [...new Set(block.choices.map((c) => c.scope))],
+      choices: block.choices
+        .filter((c) => c.scope === scope)
+        .map((c) => ({
+          id: c.id,
+          name: "name" in c ? String(c.name) : c.id,
+          scope: c.scope,
+          key: choiceFocusKey(block.id, c.scope, c.id),
+        })),
+      version: hasVersion(block) ? block.version : undefined,
+    };
+  });
+  const visibleItem = (id: string | null | undefined) =>
+    members.some((r) => r.event.id === id) ? id! : null;
+  const visibleChoice = (id: string | null | undefined) =>
+    containers.some(
+      (b) => b.version === "g2-flexible/1" && b.choices.some((c) => c.key === id),
+    )
+      ? id!
+      : null;
+  const visibleBlock = (id: string | null | undefined) =>
+    flex.some((b) => b.id === id) ? id! : null;
+  const immersive = visibleItem(ports.immersive) ?? visibleBlock(ports.immersive);
+  const focus =
+    visibleItem(ports.immersive) ??
+    visibleItem(ports.focus) ??
+    visibleChoice(ports.focus);
   const rows = members.map((item, index) => {
     const coreRowKeys =
       query.coreRows
@@ -102,7 +186,7 @@ export function composeDayStream(
         : owningKeys.length > 1
           ? JSON.stringify(owningKeys)
           : dayRowKey(item.event.id, "EVENT", query.date);
-    const affiliations = blocks.filter((b) => b.itemIds.includes(item.event.id));
+    const affiliations = acceptedBlocks.filter((b) => b.itemIds.includes(item.event.id));
     const nowBefore = now.mode === "BETWEEN_EVENTS" && now.beforeIndex === index;
     // shortcut: same-day adjacent EVENT anchors only, expand after Core's role/occurrence port is accepted.
     const candidates = (ports.transitions ?? []).filter((p) => {
@@ -163,7 +247,15 @@ export function composeDayStream(
       focused: focus === item.event.id,
       nowBefore,
       nowWithin: now.mode === "WITHIN_EVENT_WINDOW" && now.eventId === item.event.id,
-      containerId: affiliations.length === 1 ? affiliations[0].id : null,
+      containerId:
+        affiliations.length === 1 &&
+        (!hasVersion(affiliations[0]) ||
+          (item.anchor !== null &&
+            !query.coreRows?.some(
+              (r) => r.itemRef === item.event.id && r.position === "BASE",
+            )))
+          ? affiliations[0].id
+          : null,
       transition: projection
         ? {
             key: relationKey(projection.identity!),
@@ -178,18 +270,51 @@ export function composeDayStream(
         : null,
     };
   });
+  const enriched = containers.map((block) => ({
+    ...block,
+    rowKeys: rows.filter((r) => r.containerId === block.id).map((r) => r.key),
+    focusedChoiceKey: block.choices.find((c) => c.key === focus)?.key ?? null,
+  }));
+  const time = (instant: string) => {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: query.zone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date(instant));
+    return (
+      Number(parts.find((p) => p.type === "hour")?.value) * 60 +
+      Number(parts.find((p) => p.type === "minute")?.value)
+    );
+  };
+  const positioned = flex
+    .map((block) => ({
+      block: enriched.find((b) => b.id === block.id)!,
+      minute: block.softWindow?.startMinute ?? 1440,
+    }))
+    .sort((a, b) => a.minute - b.minute);
+  const nestedBlockIds = new Set(flex.map((block) => block.id));
+  const entries: (
+    | { kind: "ITEM"; row: (typeof rows)[number] }
+    | { kind: "BLOCK"; block: (typeof enriched)[number] }
+  )[] = [];
+  for (const row of rows.slice(0, query.timed.length)) {
+    const minute = positioned.length && row.item.anchor ? time(row.item.anchor) : 1440;
+    while (positioned.length && positioned[0].minute <= minute)
+      entries.push({ kind: "BLOCK", block: positioned.shift()!.block });
+    if (!row.containerId || !nestedBlockIds.has(row.containerId))
+      entries.push({ kind: "ITEM", row });
+  }
+  for (const entry of positioned) entries.push({ kind: "BLOCK", block: entry.block });
+  for (const row of rows.slice(query.timed.length)) entries.push({ kind: "ITEM", row });
   return {
     rows,
+    entries,
     context,
     now,
     focus,
-    immersive: visible(ports.immersive),
+    immersive,
     nowAfter: now.mode === "BETWEEN_EVENTS" && now.beforeIndex === rows.length,
-    containers: blocks.map((b) => ({
-      id: b.id,
-      ...(b.softWindow ? { softWindow: b.softWindow } : {}),
-      rowKeys: rows.filter((r) => r.containerId === b.id).map((r) => r.key),
-      choices: b.choices.filter((c) => c.scope === (ports.choiceScope ?? "MY")),
-    })),
+    containers: enriched,
   };
 }
