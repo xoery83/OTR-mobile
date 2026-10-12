@@ -42,3 +42,36 @@ export const sourcePdfVerifyCommandSchema = z.strictObject({
   }),
 });
 export type SourcePdfVerifyCommand = z.infer<typeof sourcePdfVerifyCommandSchema>;
+// Exact existing VERIFY_REPRESENTATION FINAL reply, not a new receipt format.
+export const sourcePdfVerifyReceiptSchema = z.strictObject({
+  contract_version: z.literal(1),
+  operation_id: coreUuid,
+  operation_key: z.string().regex(/^[A-Za-z0-9._:-]{1,128}$/),
+  command: z.literal("VERIFY_REPRESENTATION"),
+  operation_sha256: coreHash,
+  outcome: z.enum(["APPLIED", "REJECTED"]),
+  error_code: z
+    .enum([
+      "SOURCE_CAS_CONFLICT",
+      "REPRESENTATION_CAS_CONFLICT",
+      "PRIOR_STATE_CONFLICT",
+      "OBJECT_CONTENT_CONFLICT",
+      "MATERIAL_INTEGRITY_MISMATCH",
+      "SOURCE_IO_UNAVAILABLE",
+    ])
+    .nullable(),
+  completed_at: z.string(),
+  source_id: coreUuid,
+  representation_id: coreUuid,
+  result_source_row_revision: z.number().int().positive().safe().nullable(),
+  result_material_revision: z.number().int().positive().safe().nullable(),
+  result_representation_row_revision: z.number().int().positive().safe().nullable(),
+  result_remote_state: z
+    .enum(["PENDING", "VERIFIED", "LOST", "NOT_APPLICABLE"])
+    .nullable(),
+  result_retention_state: z.literal("RETAINED").nullable(),
+  result_action_id: coreUuid.nullable(),
+  result_verified_at: z.string().nullable(),
+  result_sha256: coreHash,
+});
+export type SourcePdfVerifyReceipt = z.infer<typeof sourcePdfVerifyReceiptSchema>;

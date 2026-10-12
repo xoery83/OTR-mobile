@@ -49,6 +49,10 @@ Historical Source acquisition/runtime activation remains outside this checkpoint
 - `sourcePdfVerifyCommandSchema` / `SourcePdfVerifyCommand`: exact existing
   VERIFY_REPRESENTATION /1 envelope (snake_case). Hash remains
   `otr-source-command-v1` over its existing finite tuple. No new verification command.
+- `sourcePdfVerifyReceiptSchema` / `SourcePdfVerifyReceipt`: exact existing FINAL
+  VERIFY reply plus digest/pin validation; APPLIED must return VERIFIED at the
+  expected original row revision +1. It remains a historical result, not a live
+  custody or qualification capability.
 - `sourcePdfRegistrationRequestSchema` / `SourcePdfRegistrationRequest`: accepted
   seal request pins plus `verificationOperationId` and `verificationResultSha256`.
   This is registration, not a seal request: mint a separate stable seal operation ID

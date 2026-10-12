@@ -1,3 +1,24 @@
+# CP-FLIGHT-PDF-SOURCE-02 — isolated owning Source closure / Owner Review
+
+2026-10-12. `codex/cp-flight-pdf-source-02` closes finite Source PDF VERIFY
+completion and immutable DERIVED TEXT registration; original authority/seal remains
+exact. Base9ca16d3 reconciled with independently integrated G2 Flexible1114ccc.
+Forward20261012000300 follows LLM protected admission and PDF derivative authority.
+Existing VERIFY operation/attempt/result receipt reused; private registration receipt
+binds verification result, exact custody hash/length/epoch, transform and full page map.
+Only finite representation guard cases added; other Source mutations remain denied.
+Both Source/PDF gates and principals stay CLOSED/NOLOGIN. No HTTP, private provider,
+upload, Native, Canonical writer or G2 production change. Actual strict retained PDF
+→ VERIFY → register → independent seal → two revision2 Items/read2/SQLite54/Day PASS.
+Focused140 PASS/1 fixture skip; four disposable SQL scenarios16 PASS. Typecheck,
+Backend build, touched lint/UI guard/diff PASS. Canonical main/dirty files untouched.
+Agent A/B must use `trip/contracts/CP_FLIGHT_PDF_SOURCE_REGISTRATION_V1.md` and
+existing derivative authority /1; runtime custody/transport/native gates remain.
+Report/manifest/evidence: `trip/implementation/CP_FLIGHT_PDF_SOURCE_02_REPORT.md`.
+No canonical merge/push, Hosted, Provider/paid LLM, Production or DEV DATA activation.
+
+---
+
 # G2-FLEX-01 — controlled local-main integration / Owner Review
 
 2026-10-12. Accepted source `6758683` (`codex/g2-flex-01`, base `eb4c8eb`)

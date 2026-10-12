@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { Json } from "../../src/domain/trip/eventIntentJson";
 import {
   sourcePdfRegistrationRequestSchema,
   sourcePdfRegistrationBodySchema,
   sourcePdfRegistrationReceiptSchema,
   sourcePdfVerifyCommandSchema,
+  sourcePdfVerifyReceiptSchema,
   type SourcePdfRegistrationRequest,
   type SourcePdfVerifyCommand,
 } from "../../src/domain/trip/sourcePdfRegistration";
@@ -83,7 +83,8 @@ export function createSourcePdfRegistration(
       throw new Error("MATERIAL_INTEGRITY_MISMATCH");
     return result;
   }
-  async function validateVerify(r: Record<string, unknown>, q: SourcePdfVerifyCommand) {
+  async function validateVerify(input: unknown, q: SourcePdfVerifyCommand) {
+    const r = sourcePdfVerifyReceiptSchema.parse(input);
     if (
       r.operation_id !== q.operation_id ||
       r.operation_key !== q.operation_key ||
@@ -91,6 +92,15 @@ export function createSourcePdfRegistration(
       r.command !== q.command ||
       r.source_id !== q.source_id ||
       r.representation_id !== q.payload.representation_id ||
+      (r.outcome === "APPLIED" &&
+        (r.error_code !== null ||
+          r.result_source_row_revision !== q.payload.expected_source_row_revision ||
+          r.result_material_revision !== q.payload.material_revision ||
+          r.result_representation_row_revision !==
+            q.payload.expected_representation_row_revision + 1 ||
+          r.result_remote_state !== "VERIFIED" ||
+          r.result_retention_state !== "RETAINED" ||
+          !r.result_verified_at)) ||
       r.result_sha256 !==
         (await importDigest(
           "otr-source-result-v1",
@@ -109,7 +119,7 @@ export function createSourcePdfRegistration(
             r.result_retention_state,
             r.result_action_id,
             r.result_verified_at,
-          ] as Json,
+          ],
           hash,
         ))
     )

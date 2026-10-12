@@ -240,6 +240,29 @@ export async function registerPendingPdfFixture(
       "ALTER TABLE public.trip_source_representations DISABLE TRIGGER USER",
     );
     await admin.lease.query(
+      "UPDATE public.trip_source_representations SET payload_sha256=repeat('0',64) WHERE id=$1::uuid",
+      [original],
+    );
+    await admin.lease.query(
+      "ALTER TABLE public.trip_source_representations ENABLE TRIGGER USER",
+    );
+    await expect(api().registerDerived(actor, trip, q)).rejects.toThrow(
+      "PDF_CONTEXT_STALE",
+    );
+    await admin.lease.query(
+      "ALTER TABLE public.trip_source_representations DISABLE TRIGGER USER",
+    );
+    await admin.lease.query(
+      "UPDATE public.trip_source_representations SET payload_sha256=$2 WHERE id=$1::uuid",
+      [original, pdfHash(bytes)],
+    );
+    await admin.lease.query(
+      "ALTER TABLE public.trip_source_representations ENABLE TRIGGER USER",
+    );
+    await admin.lease.query(
+      "ALTER TABLE public.trip_source_representations DISABLE TRIGGER USER",
+    );
+    await admin.lease.query(
       "UPDATE public.trip_source_representations SET remote_state='LOST',row_revision=3 WHERE id=$1::uuid",
       [original],
     );
