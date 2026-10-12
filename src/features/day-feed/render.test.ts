@@ -11,6 +11,7 @@ import {
 } from "@/data/auth/accountGeneration";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { DayFeedLabScreen } from "../day-feed-lab/DayFeedLabScreen";
+import { getLabFixtures } from "../day-feed-lab/fixtureRegistration";
 import { getFixtureCatalog } from "../day-feed-lab/fixtureCatalog";
 import { P1Row } from "./P1Row";
 import { FlightRows } from "./FlightRows";
@@ -815,4 +816,41 @@ it("DL2 denied capability never enables Core or replaces Fixture data", async ()
         .disabled,
     ).toBe(true);
   });
+});
+
+it("DL4 Stay renderer uses shared Focus/Immersive, typed details and nonzero scroll return; missing renderer falls back", () => {
+  const stay = getLabFixtures().at(-1)!;
+  const props = {
+    projection: stay.projection,
+    services: stay.services,
+    date: stay.selectedDate,
+    zone: stay.zone,
+    instant: stay.instant,
+    query: stay.query,
+    renderer: stay.renderer,
+  };
+  let html = render(createElement(DayFeed, props));
+  const title = stay.projection.events[0].title;
+  expect(html).toContain(title);
+  expect(html).not.toContain(t("dayLab.stayInstructions"));
+  state.nodes
+    .find((n) => n.onScroll)!
+    .onScroll({ nativeEvent: { contentOffset: { y: 217 } } });
+  state.presses.find((p) => p.accessibilityLabel === title)!.onPress();
+  html = render(createElement(DayFeed, props));
+  expect(html).toContain(t("dayLab.stayInstructions"));
+  expect(html).toContain(t("dayLab.stayRole.TONIGHT"));
+  state.presses.find((p) => p.accessibilityLabel === t("p1r.richerDetails"))!.onPress();
+  html = render(createElement(DayFeed, props));
+  expect(state.nodes.some((n) => n.contentInsetAdjustmentBehavior === "automatic")).toBe(
+    true,
+  );
+  const onDismiss = state.nodes.find((n) => n.onDismiss)!.onDismiss;
+  state.presses.find((p) => p.accessibilityLabel === t("common.close"))!.onPress();
+  render(createElement(DayFeed, props));
+  onDismiss();
+  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 217, animated: false });
+  expect(render(createElement(DayFeed, { ...props, renderer: () => null }))).toContain(
+    title,
+  );
 });

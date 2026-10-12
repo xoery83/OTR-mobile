@@ -1,3 +1,35 @@
+# DL4 Day Feed Lab shared port — isolated / Owner Review
+
+2026-10-12. Owner-approved DL2 `f5cc324` is integrated into local canonical main
+at `40c5d29a9f3d6232003393af1ae516a339a46b56`, after reconciling newer
+main `0379453`. Dirty/staged/untracked canonical bytes were preserved; no push.
+The DL4 work is isolated on `codex/day-feed-lab-dl4`. The versioned
+`day-feed-lab/1` Fixture contribution and `day-feed-renderer/1` adapter let
+Experience workstreams use the production Feed/G2 without their own Shell.
+All five original synthetic Trips remain; a sixth P3 three-night Stay proves
+owning CoreDayRow roles/identity, TNS/BASE, shared Focus/Immersive and a typed
+temporary renderer. Flexible/TTR ports remain dormant presentation seams.
+
+Focused 84 PASS; full 3749 PASS/same two baseline FAIL/21 skipped versus exact
+integrated-main 3743 PASS/same two/21. Typecheck, full lint/UI guard, format,
+diff and Release iOS export PASS. Debug Simulator exercised all six Fixtures,
+date switching, P1/P2/P3 Focus/Immersive return, NOW/TNS and Light/Dark. Native
+nonzero scroll in the final DL4 run was not established; render regression and
+accepted DL1 native scroll evidence remain. Task Simulator has 64 Trip tables,
+zero Trip rows, zero accepted Core certificates and zero sync operations. Thus
+positive native Core and live DEV reads are blocked by absent authorized local
+session/collection, and no physical device was run. P3 remains synthetic proof,
+not final P3 Experience acceptance.
+
+Review: `architecture/OTR_DAY_FEED_LAB_DL4_REPORT.md`; usage:
+`architecture/OTR_DAY_FEED_LAB_INTEGRATION_GUIDE.md`; native evidence:
+`qa/day-feed-lab-dl4/`. Next checkpoint is Owner Review of the isolated DL4
+port, then separately approved generic owning Core-to-Feed read and P3 design.
+Flight E2E, Flexible/TTR ownership, Hosted/provider and Production gates remain
+separate and closed.
+
+---
+
 # DL2 Lab read integration — source complete / native Core blocked
 
 2026-10-12. DL1 accepted commits integrated into local canonical main

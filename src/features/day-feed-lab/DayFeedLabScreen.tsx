@@ -15,7 +15,8 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { getFixtureCatalog, selectLabContext } from "./fixtureCatalog";
+import { getLabFixtures } from "./fixtureRegistration";
+import { selectLabContext } from "./fixtureCatalog";
 
 // The selector formats a calendar key without shifting it to the device timezone.
 const dateLabel = (date: string) =>
@@ -48,8 +49,10 @@ export function DayFeedLabScreen() {
     getAccountGeneration,
     getAccountGeneration,
   );
-  const fixtureCatalog = getFixtureCatalog();
-  const [context, setContext] = useState(() => selectLabContext(fixtureCatalog[0].id));
+  const fixtureCatalog = getLabFixtures();
+  const [context, setContext] = useState(() =>
+    selectLabContext(fixtureCatalog[0].id, undefined, fixtureCatalog),
+  );
   const [choosing, setChoosing] = useState(false);
   const [mode, setMode] = useState<"FIXTURE" | "CORE">("FIXTURE");
   const [catalog, setCatalog] = useState<Candidates | null>(null);
@@ -172,7 +175,7 @@ export function DayFeedLabScreen() {
     mode === "FIXTURE" ? fixture.trip.title : t("dayLab.coreTrip", { id: tripId });
   const selectDate = (value: string) =>
     mode === "FIXTURE"
-      ? setContext(selectLabContext(tripId, value))
+      ? setContext(selectLabContext(tripId, value, fixtureCatalog))
       : setCoreSelection({
           tripId,
           date: value,
@@ -286,6 +289,9 @@ export function DayFeedLabScreen() {
           date={date}
           zone={fixture.trip.zone}
           instant={fixture.trip.instant}
+          query={fixture.trip.query}
+          renderer={fixture.trip.renderer}
+          ports={fixture.trip.ports}
         />
       ) : visibleCore ? (
         <DayFeed
@@ -314,7 +320,8 @@ export function DayFeedLabScreen() {
                 label={entry.title}
                 selected={entry.id === tripId}
                 onPress={() => {
-                  if (mode === "FIXTURE") setContext(selectLabContext(entry.id));
+                  if (mode === "FIXTURE")
+                    setContext(selectLabContext(entry.id, undefined, fixtureCatalog));
                   else
                     setCoreSelection({
                       tripId: entry.id,

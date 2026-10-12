@@ -11,7 +11,12 @@ import {
 import type { DayProjection } from "@/domain/trip/dayReadModel";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
-import { composeDayStream } from "./composition";
+import type {
+  DayFeedQuery,
+  DayRowRenderer,
+  DayRowRendererProps,
+} from "./rendererContribution";
+import { composeDayStream, type DayStreamPorts } from "./composition";
 import type { FlightService } from "@/domain/trip/flightAdmission";
 import { UiButton } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -24,6 +29,14 @@ import { NowMarker } from "./NowMarker";
 import { useMinuteClock } from "./useMinuteClock";
 import { flightPresentation, type Depth } from "./presentation";
 
+function ContributedRow({
+  renderer,
+  fallback,
+  ...props
+}: DayRowRendererProps & { renderer: DayRowRenderer; fallback: React.ReactNode }) {
+  return renderer(props) ?? fallback;
+}
+
 export function DayFeed({
   projection,
   date,
@@ -31,6 +44,9 @@ export function DayFeed({
   services,
   instant,
   emptyMessage,
+  query: contributedQuery,
+  renderer,
+  ports,
 }: {
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
@@ -38,16 +54,24 @@ export function DayFeed({
   services: Record<string, FlightService[]>;
   instant?: string;
   emptyMessage?: string;
+  query?: (date: string, zone: string) => DayFeedQuery;
+  renderer?: DayRowRenderer;
+  ports?: Omit<DayStreamPorts, "focus" | "immersive">;
 }) {
   const styles = useThemedStyles(createStyles);
-  const query =
-    projection.version === 2
+  const query = contributedQuery
+    ? contributedQuery(date, zone)
+    : projection.version === 2
       ? projection.query(date, zone)
       : itemsForLocalDate(projection, date, zone);
   const clock = useMinuteClock(zone);
   const [focus, setFocus] = useState<string | null>(null);
   const [immersive, setImmersive] = useState<string | null>(null);
-  const stream = composeDayStream(query, instant ?? clock.instant, { focus, immersive });
+  const stream = composeDayStream(query, instant ?? clock.instant, {
+    ...ports,
+    focus,
+    immersive,
+  });
   const { rows, now } = stream;
   const scroll = useRef<ScrollView>(null),
     offset = useRef(0),
@@ -76,21 +100,20 @@ export function DayFeed({
     mode: Depth,
     withinMarker?: React.ReactNode,
   ) => {
+    const row = rows.find((entry) => entry.item.event.id === event.id)!;
     const flight = flightPresentation(
       event,
       services[event.id] ?? [],
       projection.version === 2 ? projection.flightFacts[event.id] : undefined,
     );
-    if (!flight)
-      return (
-        <P1Row
-          event={event}
-          depth={mode}
-          onDepth={(next) => (mode === "I" ? close() : change(event.id, next))}
-          withinMarker={withinMarker}
-        />
-      );
-    return (
+    const fallback = !flight ? (
+      <P1Row
+        event={event}
+        depth={mode}
+        onDepth={(next) => (mode === "I" ? close() : change(event.id, next))}
+        withinMarker={withinMarker}
+      />
+    ) : (
       <View style={styles.flight}>
         {mode === "F" ? <View pointerEvents="none" style={styles.outline} /> : null}
         <Pressable
@@ -122,6 +145,19 @@ export function DayFeed({
           <UiButton label={t("common.close")} variant="text" onPress={close} />
         ) : null}
       </View>
+    );
+    return renderer ? (
+      <ContributedRow
+        renderer={renderer}
+        fallback={fallback}
+        row={row}
+        container={stream.containers.find((entry) => entry.id === row.containerId)}
+        depth={mode}
+        onDepth={(next) => (mode === "I" ? close() : change(event.id, next))}
+        withinMarker={withinMarker}
+      />
+    ) : (
+      fallback
     );
   };
   const selected = rows.find((r) => r.item.event.id === stream.immersive)?.item.event;

@@ -1,14 +1,14 @@
 import { expect, it, vi } from "vitest";
 import DayFeedLabRoute from "../../../app/day-feed-lab";
 import { readFileSync } from "node:fs";
-import { getFixtureCatalog, selectLabContext } from "./fixtureCatalog";
+import { getDl1FixtureCatalog, selectLabContext } from "./fixtureCatalog";
 import { itemsForLocalDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { composeDayStream } from "@/features/day-feed/composition";
 import { flightPresentation } from "@/features/day-feed/presentation";
 
 vi.mock("expo-router", () => ({ Redirect: "redirect" }));
 
-const fixtureCatalog = getFixtureCatalog();
+const fixtureCatalog = getDl1FixtureCatalog();
 it("has five deterministic, separate synthetic projections and globally stable row identities", () => {
   expect(fixtureCatalog).toHaveLength(5);
   const keys: string[] = [];
