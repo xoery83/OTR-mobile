@@ -5,6 +5,23 @@ normal fast-forward from `741579c`; concurrent Platform documentation remains lo
 Owner accepted W0 `otr-trip-core/2` and continuous W1/W2/W3/W5 implementation.
 W4 Capture and W6 Experience retain separate ownership. Core is INCOMPLETE.
 
+## CP-FLIGHT-E2E-A — isolated, not integrated
+
+Owner-scoped branch `codex/cp-flight-e2e-a` from canonical `b5caa1f`; code commits
+`e53e32d` / `d0525b0`. Capture CandidateSet/evidence → existing publication2 →
+Source prepare2 → sole Core command writer → exact receipt/finalization now passes
+actual disposable SQL for two independent same-ID qualified Flights. Four lost HTTP
+responses recover exact receipts; duplicate targets collide, unknown airports/ambiguous
+siblings remain REVIEW, manual SET/CLEAR survives, shared Item does not share Source proof.
+Focused9 suites/171 PASS plus FlightSQL1 and existing SourceSQL3 PASS;329 historical
+functions unchanged. Typecheck, touched lint/format and backend build PASS.
+Only10 necessary Stage 1 dependency files carried; its17-file integration remains absent
+from main. `fb8dbc9` is absent and not cherry-picked. No merge/push or activation.
+Report: `trip/implementation/CP_FLIGHT_E2E_A_REPORT.md`; manifest alongside it.
+Agent 2 consumes accepted actor-scoped collection2/Item UUID/revision into existing
+SQLite54/Day, without treating Candidate/quality/plan data as accepted facts.
+Native/Hosted/real Source byte custody and deployment remain separately gated CLOSED.
+
 ## Latest Core checkpoint
 
 - Frozen finite31-table model, command2/receipt2/read2/capture2 codecs, protected
