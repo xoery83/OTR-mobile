@@ -22,6 +22,10 @@ const state = vi.hoisted(() => ({
   scheme: "light",
   hooks: [] as unknown[],
   cursor: 0,
+  refs: [] as { current: any }[],
+  refCursor: 0,
+  scrollTo: vi.fn(),
+  platform: "ios",
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -35,12 +39,17 @@ vi.mock("react", async (original) => ({
       },
     ];
   },
+  useRef: (initial: unknown) => {
+    const i = state.refCursor++;
+    return (state.refs[i] ??= { current: initial });
+  },
 }));
 vi.mock("react-native", async () => {
   const { createElement } = await import("react");
   const primitive = (props: Record<string, any>) => {
     state.nodes.push(props);
     if (props.onPress) state.presses.push(props);
+    if (props.ref) props.ref.current = { scrollTo: state.scrollTo };
     return createElement(
       "div",
       { "data-testid": props.testID, "aria-label": props.accessibilityLabel },
@@ -48,6 +57,11 @@ vi.mock("react-native", async () => {
     );
   };
   return {
+    Platform: {
+      get OS() {
+        return state.platform;
+      },
+    },
     View: primitive,
     Text: primitive,
     ScrollView: primitive,
@@ -86,6 +100,7 @@ const poi = {
 const flight = {
   ...poi,
   id: "flight",
+  title: "Synthetic flight",
   event_type: "flight",
   temporal_shape: "TRANSPORT",
   boundaries: [boundary("ORIGIN", "02"), boundary("DESTINATION", "04")],
@@ -97,6 +112,7 @@ const projection = {
 } as DayProjection;
 const render = (node: ReactNode) => {
   state.cursor = 0;
+  state.refCursor = 0;
   state.presses = [];
   state.nodes = [];
   return renderToStaticMarkup(node);
@@ -105,6 +121,9 @@ beforeEach(() => {
   state.instant = "2026-10-10T00:30:00Z";
   state.nodes = [];
   state.hooks = [];
+  state.refs = [];
+  state.scrollTo.mockClear();
+  state.platform = "ios";
   state.cursor = 0;
   state.scale = 1;
   state.scheme = "light";
@@ -492,4 +511,89 @@ it("F1-R1: incomplete Browse retains accepted Compact A three-row geometry", () 
     "duration",
   ])
     expect(state.nodes.some((n) => n.testID === id)).toBe(true);
+});
+
+it("Immersive dismissal restores nonzero scroll and keeps manual Focus/date across NOW ticks and enrichment", () => {
+  const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
+  render(createElement(DayFeed, props));
+  state.nodes
+    .find((n) => n.onScroll)!
+    .onScroll({ nativeEvent: { contentOffset: { y: 293.33 } } });
+  state.presses
+    .find(
+      (p) =>
+        p.accessibilityLabel === flight.title &&
+        p.accessibilityHint === t("p1r.focusHint"),
+    )!
+    .onPress();
+  render(createElement(DayFeed, props));
+  state.presses
+    .find(
+      (p) =>
+        p.accessibilityLabel === flight.title &&
+        p.accessibilityHint === t("p1r.immersiveHint"),
+    )!
+    .onPress();
+  render(createElement(DayFeed, props));
+  const modal = state.nodes.find((n) => n.onDismiss)!;
+  expect(modal.visible).toBe(true);
+  state.instant = "2026-10-10T03:00:00Z";
+  const enriched = {
+    ...props,
+    projection: {
+      ...projection,
+      events: projection.events.map((e) => ({
+        ...e,
+        semantic_revision: e.semantic_revision + 1,
+      })),
+    },
+  };
+  render(createElement(DayFeed, enriched));
+  state.presses.find((p) => p.accessibilityLabel === t("common.close"))!.onPress();
+  modal.onDismiss();
+  const html = render(createElement(DayFeed, enriched));
+  expect(state.scrollTo).toHaveBeenCalledExactlyOnceWith({ y: 293.33, animated: false });
+  expect(state.nodes.some((n) => n.onDismiss)).toBe(false);
+  expect(
+    state.presses.filter((p) => p.accessibilityHint === t("p1r.immersiveHint")),
+  ).toHaveLength(1);
+  expect(html).toContain('data-testid="now-within"');
+  expect(props.date).toBe("2026-10-10");
+});
+it("switching Focus between P1/P2 never leaves two active Focus rows", () => {
+  const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
+  render(createElement(DayFeed, props));
+  state.presses.find((p) => p.accessibilityLabel === poi.title)!.onPress();
+  render(createElement(DayFeed, props));
+  state.presses
+    .find(
+      (p) =>
+        p.accessibilityLabel === flight.title &&
+        p.accessibilityHint === t("p1r.focusHint"),
+    )!
+    .onPress();
+  const html = render(createElement(DayFeed, props));
+  expect(html).not.toContain('data-testid="focus-selected-region"');
+  expect(
+    state.presses.filter((p) => p.accessibilityHint === t("p1r.immersiveHint")),
+  ).toHaveLength(1);
+});
+it("Android restores the captured offset even without a native Modal dismissal event", () => {
+  state.platform = "android";
+  vi.stubGlobal("requestAnimationFrame", (callback: () => void) => callback());
+  try {
+    const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
+    render(createElement(DayFeed, props));
+    state.nodes
+      .find((n) => n.onScroll)!
+      .onScroll({ nativeEvent: { contentOffset: { y: 120 } } });
+    state.presses.find((p) => p.accessibilityLabel === flight.title)!.onPress();
+    render(createElement(DayFeed, props));
+    state.presses.find((p) => p.accessibilityLabel === flight.title)!.onPress();
+    render(createElement(DayFeed, props));
+    state.nodes.find((n) => n.onRequestClose)!.onRequestClose();
+    expect(state.scrollTo).toHaveBeenCalledExactlyOnceWith({ y: 120, animated: false });
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

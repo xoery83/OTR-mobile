@@ -1,3 +1,35 @@
+# Day Feed G2 — accepted local-main integration
+
+Updated 2026-10-12. Owner accepted recovery candidate `3ee685f` for controlled
+integration. Pinned main/local origin/main `b5caa1f`; the coherent integration
+commit is the `codex/day-feed-g2-main-integration` tip and local-main fast-forward
+target. No remote push, deployment or runtime/provider activation.
+
+One `composeDayStream` owns final production Feed rows, stable Event/date keys,
+manual Focus and independent NOW. P1/P2 geometry/copy unchanged. Immersive return
+restores scroll on iOS dismissal, retaining Android's frame fallback. Flexible
+and `ttr-presentation/1` seams remain dormant and fixture-only.
+
+Flight E2E adapter `8e3916f`, B tip `fdd5a5c`, joined tip `5544ba0` remain isolated.
+Current exact joined/G2 rehearsal: 9 files/123 tests, typecheck/UI guard PASS,
+retaining v2 query/v1 fallback and owning Flight facts through G2 composition.
+No unaccepted Flight/Core/Capture changes imported into main. Production main in
+this checkpoint retains v1; supported v2 source compatibility is rehearsal evidence.
+
+Full regression: 3,620 PASS / 2 unchanged baseline failures / 19 skipped; exact
+clean-main: 3,609 PASS / same 2 failures / 19 skipped. Typecheck, full lint/UI guard,
+touched formatting and whitespace PASS. Full results and changed manifest are in
+`architecture/TRIP_DAY_FEED_G2_MAIN_INTEGRATION.md`; recovery source inventory remains
+`architecture/TRIP_DAY_FEED_G2_RECOVERY.md`. Native/device/real-data acceptance stays
+separate and unexecuted here. Concurrent canonical Platform/Capture notes are
+preserved as local uncommitted work, never included in this integration commit.
+
+Next: review completed bounded G2 main integration; separately integrate approved
+Flight/W7 v2 path, then authorize W6 + first P3 Stay Experience slice. Core/TTR
+role/occurrence/continuity authority and Flexible business ownership remain external.
+
+---
+
 # Current implementation state — Core v2 integrated
 
 Updated 2026-10-12. Core branch `e565080` was integrated into canonical main by
