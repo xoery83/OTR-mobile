@@ -1,12 +1,12 @@
 # CP01B / G2 controlled local-main integration
 
-2026-10-13. Owner accepted synthetic/Simulator integration of `22c036944c8b7dc1ea483cb8ae9ca8766706b430`. Applicable integration gates passed. Local canonical main advances through guarded `git merge --ff-only`, preserving the accepted history. No runtime correction, merge conflict, push, deployment, Hosted operation or production activation.
+2026-10-13. Owner accepted synthetic/Simulator integration of `22c036944c8b7dc1ea483cb8ae9ca8766706b430`. Applicable integration gates passed. The isolated candidate is ready for guarded `git merge --ff-only`, preserving the accepted history. Canonical main remains `54ecb4bad6b91827d3abb42f355fc1e0d1fc7016`. No runtime correction, merge conflict, push, deployment, Hosted operation or production activation.
 
 ## Ancestry and scope
 
 Preflight canonical main: `54ecb4bad6b91827d3abb42f355fc1e0d1fc7016`; local origin/main and read-only remote main: `b4ddd27d2352350b6d16617543d0f17a715dc077`. Accepted G2-FLEX-02 `12eadff4db4fe2f297f7d2a7a4d73a0790ab2745` is in main ancestry. Accepted CP01B candidate is a descendant of current main.
 
-A fresh clean worktree `/private/tmp/otr-cp01b-g2-main-integration-20261013`, branch `codex/cp01b-g2-main-integration-20261013`, was created at current main and fast-forwarded to the exact accepted candidate. Its runtime tree matches `22c0369` exactly. A separate G2 documentation/evidence commit follows the accepted HEAD; the commit containing this report is the final integration target. No accepted commit was rewritten.
+A fresh clean worktree `/private/tmp/otr-cp01b-g2-main-integration-20261013`, branch `codex/cp01b-g2-main-integration-20261013`, was created at current main and fast-forwarded to the exact accepted candidate. Its runtime tree matches `22c0369` exactly. Separate G2 documentation/evidence commits follow the accepted HEAD; the integration branch HEAD is the prepared target. No accepted commit was rewritten.
 
 | Attribution                  | Exact accepted commits                     |
 | ---------------------------- | ------------------------------------------ |
@@ -68,4 +68,8 @@ Flexible may resume its own held-gesture calibration and business experience wor
 
 Held drag-copy, held edge-resize, F09 gap creation, F14 promotion and Group-only Past remain deferred and unactivated. Physical-device calibration, real data, business persistence, Pool backend, actual network-disconnection validation and production gesture activation are separate gates. No acceptance for these is implied by control-based COPY/Undo or Simulator checks.
 
-STOP — CP01B / G2 MAIN INTEGRATION COMPLETE / OWNER REVIEW.
+## Main advance approval block
+
+Automatic approval review rejected the attempted guarded local-main fast-forward before execution: it classified canonical main as a protected/default branch and required trusted explicit final Owner approval after validation. The attached request authorizes controlled main integration, but the automatic reviewer did not accept that as the required final approval. No ref/index/worktree update occurred. Do not bypass the rejection. All unaffected integration, regression, native and evidence work is complete; the prepared candidate is ready for explicit approval of the local-only fast-forward. No runtime change or repeat native gate is required for these documentation-only status updates.
+
+STOP — VALIDATED CP01B / G2 CANDIDATE READY; LOCAL MAIN ADVANCE BLOCKED ON FINAL OWNER APPROVAL.

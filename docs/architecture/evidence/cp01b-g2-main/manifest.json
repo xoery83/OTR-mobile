@@ -256,13 +256,13 @@
   "deliveryFiles": [
     {
       "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
-      "sha256": "c9b4a455d8583946ce399c9af23dc7c0affe50f8cf9d71f802e9f5d049b0e1aa",
-      "bytes": 57014
+      "sha256": "ba17f9f5dc018c73b7501f7d10a7d4bac0c3105b00bdd6553b6d66746bcb67e2",
+      "bytes": 57188
     },
     {
       "path": "docs/architecture/CP01B_G2_MAIN_INTEGRATION_REPORT.md",
-      "sha256": "b551d1f75149e06398bf376cc004db48e4a4d5bf075d981baed958778c02ec16",
-      "bytes": 9057
+      "sha256": "bb25d31a1634838fa4477c03ad913535f805b6278dc027cdaf9d02ea327714f6",
+      "bytes": 9871
     },
     {
       "path": "docs/architecture/evidence/cp01b-g2-main/f01-empty-immersive-light.png",
@@ -407,5 +407,7 @@
   ],
   "protectedAuthorityDiff": "NONE",
   "runtimeDiffFromAccepted": "NONE",
-  "integrationMethod": "guarded non-forced fast-forward; additive G2 documentation/evidence commit only"
+  "integrationMethod": "guarded non-forced fast-forward; additive G2 documentation/evidence commit only",
+  "mainAdvanceStatus": "BLOCKED: automatic approval review requires trusted explicit final Owner approval after validation",
+  "canonicalMain": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016"
 }
