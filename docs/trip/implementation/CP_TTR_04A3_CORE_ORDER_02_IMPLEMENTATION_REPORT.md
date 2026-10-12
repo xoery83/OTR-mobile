@@ -1,6 +1,41 @@
 # CP04A3-CORE-ORDER-02 implementation report
 
-**Synthetic tests PASS; INTEGRATION BLOCKED by SQLite56 collision. STOP AT OWNER REVIEW.**
+**SQLite allocation correction PASS: actual Flight56 → TTR57. STOP AT OWNER REVIEW.**
+
+## SQLite allocation correction — Owner Review
+
+Correction commit `c88796f284d5147324f705d918ee26d3f31ef524`; correction
+implementation tree `ab49c6e459811edeb58ba0bbdab8e641a451e11a`.
+
+Latest verification: local canonical `54ecb4bad6b91827d3abb42f355fc1e0d1fc7016`,
+remote canonical `b4ddd27d2352350b6d16617543d0f17a715dc077`.
+All registered existing worktree migration definition files were scanned; SQLite57
+was unallocated. The exact remote migration definitions also contained no57.
+
+Flight56 is the actual accepted `capturePdfSourceHandoffMigration`, copied without
+byte changes from the registered Flight Native worktree. The registry installs56
+then `coreOrdinaryOrderMigration`57. TTR file differs only in its numeric ID; its
+SQL body and authority semantics remain byte-identical. Existing version/fixture
+expectations now follow the complete1–57 registry rather than omitting Flight56.
+
+New real file-SQLite cases cover both fresh creation and upgrade from55 through
+actual56/57, exact ledger sequence, both tables and Flight immutable trigger,
+foreign-key integrity, cold reopen and idempotent migration replay. Existing
+owning PostgreSQL→read2→SQLite tests verify accepted collection replay, offline
+qualification and retention with both migrations installed.
+
+Focused42 PASS/one existing skip across3 suites. Owning ordinary SQL2 PASS;
+joined Flight SQL/SQLite/Day1 PASS on an isolated rerun. Typecheck, lint/UI guard,
+Backend build, touched formatting and diff checks PASS. The initial concurrent
+broad/focused/Flight runs produced timeout failures under load; isolated focused
+and Flight reruns pass. Final limited-worker full run: **3892 PASS,25 skips,two exact baseline UI
+failures only**. All extra timeout failures cleared.
+No timeout or authority semantics were changed to obtain a pass.
+
+The correction touches14 implementation/test files (including the unchanged
+carried Flight56 module) and the three existing handoff documents. Exact final
+candidate HEAD/tree and all changed-file hashes accompany the final handoff.
+No canonical merge/push, Hosted install or activation occurred.
 
 ## Provenance and scope
 
@@ -56,10 +91,20 @@ Final migration-definition scan found a second collision: Flight PDF Native
 `capturePdfSourceHandoff.ts` allocates SQLite56, name `capture_pdf_source_handoff`,
 at worktree `/Users/xoery/.codex/worktrees/flight-pdf-native-01/otr-mobile-canonical`,
 HEAD `ce8200a8218fb6251b2b7d9a4f85297b45868c93`.
-Our SQLite56 `core_ordinary_order` therefore cannot integrate unchanged. An earlier
-scan of the registry alone missed imported definitions. No further implementation
-or allocation change was made after discovering this conflict. Owner allocation
-is required; the PostgreSQL00200 rename itself is complete and independently PASS.
+The implementation stopped at that conflict; the Owner subsequently authorized
+TTR57 allocation only. A fresh definition scan across all registered worktrees and
+the exact remote tree found57 unused. Flight56 is carried byte-identically from
+that accepted worktree and registered before TTR57. No Flight production semantics
+or SQLite1–55 migrations are changed. The PostgreSQL00200 allocation is unchanged.
+
+TTR SQLite module SHA-256 before allocation correction:
+`82a064844c56bfeb7fc1198b051b8d8342f1b1fa01448e22824888039751d082`.
+After only `id: 56` → `id: 57`:
+`4bfa5c153fcc68f86cd79412fb65cfe7d06959cdea98cc3739b2834e30f71c40`.
+Exact normalized bytes and SQL template equality verified.
+Flight56 module SHA-256:
+`a47a0b932d289c59ec14e6754c0d214bf447d36e8cdbc687e2be2ba3ed065065`.
+Accepted source and carried candidate bytes match exactly.
 
 Disposable PostgreSQL installed Core85–92, accepted PDF derivative/registration,
 unchanged Flight00100, then TTR00200 successfully. No dependency conflict.
@@ -67,7 +112,7 @@ Runner supports an explicit local accepted Flight fixture path only for this
 ordering check. Historical Core329 functions preserved; all377 installed functions
 unchanged during the acceptance scenario; RLS and activation CLOSED PASS.
 
-## Verification
+## Original pre-correction verification
 
 - Full Vitest: **3890 PASS, 25 skipped, two existing baseline failures** only:
   navigationLayout tabBarActiveTintColor and architectureBoundary diagnostics import.
@@ -93,8 +138,7 @@ No Hosted/native/simulator acceptance is claimed.
 
 ## Remaining gates
 
-Owner SQLite allocation decision first, then affected installation/replay/static
-revalidation and separate normal integration decision; current canonical has
+Owner Review and separate normal integration decision; current canonical has
 advanced independently. Hosted migration install and command negotiation activation
 remain CLOSED. Explicit order-authoring product integration is not activated.
 Real TTR consumer integration must honor spatial UNKNOWN/geometry distinction and
@@ -149,4 +193,6 @@ docs/trip/contracts/CORE_ORDINARY_ORDER_TTR_INPUT_V1.md
 docs/trip/implementation/CP_TTR_04A3_CORE_ORDER_02_IMPLEMENTATION_REPORT.md
 ```
 
-Final combined scope: **35 files**. No historical migration modification.
+Allocation correction additionally carries the accepted unmodified dependency:
+`src/data/db/migrations/capturePdfSourceHandoff.ts`.
+Final combined scope: **36 files**. No historical migration modification.

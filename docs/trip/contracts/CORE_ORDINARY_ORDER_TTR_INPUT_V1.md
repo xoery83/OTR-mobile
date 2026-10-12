@@ -1,8 +1,8 @@
 # Core ordinary ordering → TTR input /1
 
 CP04A3-CORE-ORDER-02. CLOSED isolated implementation; Owner Review pending.
-SQLite56 currently collides with Flight capture_pdf_source_handoff; integration
-is blocked pending Owner allocation. No renumbering is assumed.
+Owner allocation correction: unchanged accepted Flight handoff is SQLite56;
+ordinary-order carrier is SQLite57. Both are registered in that sequence.
 Implements the corrected CORE-ORDER-01 and AUTH-01 Revision 2 contract.
 
 ## Authoritative carrier and command
@@ -47,7 +47,7 @@ its authoritative position is absent. Placed unresolved nodes fence incident spa
 other independent qualified pairs remain usable. Relation-specific accepted
 Transport coverage prevents an additional ordinary movement suggestion.
 
-SQLite56 atomically mirrors negotiated ORDER records with the existing accepted
+SQLite57 atomically mirrors negotiated ORDER records with the existing accepted
 collection/certificate. A default unnegotiated collection preserves physical ORDER
 rows but disables their authority via certificate version 0. No second sync lifecycle.
 
