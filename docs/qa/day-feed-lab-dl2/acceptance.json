@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-12",
+  "simulator": "AE11480D-B6B9-402B-BE8A-4F2BBD4D0704",
+  "bundle": "com.xoery.otrmobile.devtest",
+  "tripTableCount": 64,
+  "tripRows": 0,
+  "coreCertificates": 0,
+  "fixtureScenarios": "five executed",
+  "nativeFixture": "PASS",
+  "nativeSourceGate": "PASS \u2014 Core disabled, generic UNAVAILABLE",
+  "nativePositiveCore": "BLOCKED \u2014 no installed accepted Core collection or supplied authorized session",
+  "liveDev": "NOT EXECUTED",
+  "nonzeroScrollOnFinalDL2": "not reconfirmed; DL1 accepted evidence retained",
+  "physicalDevice": "not executed",
+  "operationQueueCounts": {
+    "sync_operations": 0,
+    "ledger_asset_operations": 0,
+    "ledger_expense_operation_receipts": 0,
+    "trip_core_trip_transport_operational_facts": 0,
+    "trip_core_trip_operational_documents": 0
+  }
+}

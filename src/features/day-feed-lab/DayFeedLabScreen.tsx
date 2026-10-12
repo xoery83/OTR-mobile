@@ -1,5 +1,11 @@
-import { useState } from "react";
-import { Modal, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AppState, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
+import { readTripDayFeedLab } from "@/data/repositories/tripDayFeedLabRepository";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
+import { localCalendarDate, nextCalendarDate } from "@/domain/trip/dayReadModel";
 import { DayFeed } from "@/features/day-feed/DayFeed";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton } from "@/ui/controls";
@@ -19,21 +25,203 @@ const dateLabel = (date: string) =>
     timeZone: "UTC",
   });
 
+type Reader = Awaited<ReturnType<typeof readTripDayFeedLab>>;
+type Candidates = Awaited<ReturnType<Reader["candidates"]>>;
+type CoreRead = Awaited<ReturnType<Reader["trip"]>>;
+type ReadStatus = "LOADING" | "READY" | "AUTH_REQUIRED" | "DENIED" | "UNAVAILABLE";
+const readStatus = (error: unknown): ReadStatus => {
+  const message = error instanceof Error ? error.message : "";
+  return message === "CORE_LAB_AUTH_REQUIRED"
+    ? "AUTH_REQUIRED"
+    : /CORE_ACCESS_REVOKED|CORE_READ_ACCESS_MISMATCH|CORE_LAB_SCOPE|Account changed/.test(
+          message,
+        )
+      ? "DENIED"
+      : "UNAVAILABLE";
+};
+
 export function DayFeedLabScreen() {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+    getAccountGeneration,
+  );
   const fixtureCatalog = getFixtureCatalog();
   const [context, setContext] = useState(() => selectLabContext(fixtureCatalog[0].id));
   const [choosing, setChoosing] = useState(false);
-  const { trip, date } = selectLabContext(context.trip.id, context.date, fixtureCatalog);
-  const index = trip.dates.indexOf(date);
-  const selectDate = (value: string) => setContext(selectLabContext(trip.id, value));
+  const [mode, setMode] = useState<"FIXTURE" | "CORE">("FIXTURE");
+  const [catalog, setCatalog] = useState<Candidates | null>(null);
+  const [catalogStatus, setCatalogStatus] = useState<ReadStatus>("LOADING");
+  const [coreSelection, setCoreSelection] = useState({
+    tripId: "",
+    date: "",
+    generation,
+    accountId: "",
+  });
+  const [coreRead, setCoreRead] = useState<(CoreRead & { date: string }) | null>(null);
+  const [status, setStatus] = useState<ReadStatus>("LOADING");
+  const reader = useRef<Reader | null>(null),
+    requests = useRef({ catalog: 0, day: 0 });
+  const refresh = useCallback(async () => {
+    const captured = getAccountGeneration(),
+      ticket = ++requests.current.catalog;
+    await Promise.resolve();
+    setCatalogStatus("LOADING");
+    try {
+      const nextReader = await readTripDayFeedLab();
+      const result = await nextReader.candidates();
+      if (captured !== getAccountGeneration() || ticket !== requests.current.catalog)
+        return;
+      reader.current = nextReader;
+      setCatalog(result);
+      setCatalogStatus("READY");
+    } catch (error) {
+      if (captured !== getAccountGeneration() || ticket !== requests.current.catalog)
+        return;
+      reader.current = null;
+      setCatalog(null);
+      setCatalogStatus(readStatus(error));
+    }
+  }, []);
+  useEffect(() => {
+    void Promise.resolve().then(refresh);
+    const activeRequests = requests.current;
+    const subscription = AppState.addEventListener("change", (value) => {
+      if (value === "active") void refresh();
+    });
+    return () => {
+      ++activeRequests.catalog;
+      ++activeRequests.day;
+      subscription.remove();
+    };
+  }, [refresh, generation]);
+  const currentCatalog =
+    catalog?.scope.generation === generation && catalogStatus === "READY"
+      ? catalog
+      : null;
+  const selection =
+    coreSelection.generation === generation &&
+    coreSelection.accountId === currentCatalog?.scope.accountId
+      ? coreSelection
+      : { tripId: "", date: "" };
+  const coreId = currentCatalog?.tripIds.includes(selection.tripId)
+    ? selection.tripId
+    : (currentCatalog?.tripIds[0] ?? "");
+  const fixture = selectLabContext(context.trip.id, context.date, fixtureCatalog);
+  useEffect(() => {
+    const activeRequests = requests.current;
+    const ticket = ++activeRequests.day;
+    if (mode !== "CORE" || !coreId || !currentCatalog || !reader.current) return;
+    const scope = currentCatalog.scope,
+      activeReader = reader.current;
+    void Promise.resolve().then(async () => {
+      setStatus("LOADING");
+      try {
+        const result = await activeReader.trip(coreId, scope);
+        if (
+          scope.generation !== getAccountGeneration() ||
+          ticket !== requests.current.day
+        )
+          return;
+        const date =
+          selection.date ||
+          (result.dates.includes(context.date) ? context.date : result.dates[0]) ||
+          localCalendarDate(new Date().toISOString(), "UTC");
+        setCoreRead({ ...result, date });
+        setStatus("READY");
+      } catch (error) {
+        if (
+          scope.generation !== getAccountGeneration() ||
+          ticket !== requests.current.day
+        )
+          return;
+        setCoreRead(null);
+        setStatus(readStatus(error));
+      }
+    });
+    return () => {
+      ++activeRequests.day;
+    };
+  }, [mode, coreId, currentCatalog, selection.date, context.date]);
+  const visibleCore =
+    status === "READY" &&
+    coreRead?.scope.generation === generation &&
+    coreRead.scope.accountId === currentCatalog?.scope.accountId &&
+    coreRead.projection.tripId === coreId
+      ? coreRead
+      : null;
+  const today = localCalendarDate(new Date().toISOString(), "UTC");
+  const date =
+    mode === "FIXTURE" ? fixture.date : (visibleCore?.date ?? (selection.date || today));
+  const dates =
+    mode === "FIXTURE"
+      ? fixture.trip.dates
+      : [
+          ...new Set([
+            today,
+            nextCalendarDate(today),
+            date,
+            ...(visibleCore?.dates ?? []),
+          ]),
+        ].sort();
+  const index = dates.indexOf(date);
+  const tripId = mode === "FIXTURE" ? fixture.trip.id : coreId;
+  const tripTitle =
+    mode === "FIXTURE" ? fixture.trip.title : t("dayLab.coreTrip", { id: tripId });
+  const selectDate = (value: string) =>
+    mode === "FIXTURE"
+      ? setContext(selectLabContext(tripId, value))
+      : setCoreSelection({
+          tripId,
+          date: value,
+          generation,
+          accountId: currentCatalog?.scope.accountId ?? "",
+        });
+  const tripChoices =
+    mode === "FIXTURE"
+      ? fixtureCatalog.map((entry) => ({ id: entry.id, title: entry.title }))
+      : (currentCatalog?.tripIds ?? []).map((id) => ({
+          id,
+          title: t("dayLab.coreTrip", { id }),
+        }));
   return (
     <View style={styles.root}>
       <View style={styles.controls}>
+        <View style={styles.navigation}>
+          <UiButton
+            label={t("dayLab.fixtureSource")}
+            variant={mode === "FIXTURE" ? "secondary" : "text"}
+            onPress={() => setMode("FIXTURE")}
+          />
+          <UiButton
+            label={t("dayLab.coreSource")}
+            variant={mode === "CORE" ? "secondary" : "text"}
+            disabled={!currentCatalog?.tripIds.length}
+            onPress={() => setMode("CORE")}
+          />
+          <UiButton
+            label={t("capture.activityRefresh")}
+            variant="text"
+            onPress={() => {
+              void refresh();
+            }}
+          />
+        </View>
+        {catalogStatus !== "READY" || !currentCatalog?.tripIds.length ? (
+          <Text style={styles.meta}>
+            {t(
+              catalogStatus === "READY"
+                ? "dayLab.noCoreTrips"
+                : `dayLab.read.${catalogStatus}`,
+            )}
+          </Text>
+        ) : null}
         <UiFormRow
           label={t("dayLab.trip")}
-          value={trip.title}
+          value={tripTitle}
+          disabled={!tripChoices.length}
           onPress={() => setChoosing(true)}
         />
         <View style={styles.navigation}>
@@ -41,14 +229,14 @@ export function DayFeedLabScreen() {
             label={t("dayLab.previous")}
             variant="text"
             disabled={index === 0}
-            onPress={() => selectDate(trip.dates[index - 1])}
+            onPress={() => selectDate(dates[index - 1])}
           />
           <ScrollView
             horizontal
             style={styles.dateStrip}
             contentContainerStyle={styles.dates}
           >
-            {trip.dates.map((value) => (
+            {dates.map((value) => (
               <UiChoiceChip
                 key={value}
                 label={dateLabel(value)}
@@ -60,28 +248,57 @@ export function DayFeedLabScreen() {
           <UiButton
             label={t("dayLab.next")}
             variant="text"
-            disabled={index === trip.dates.length - 1}
-            onPress={() => selectDate(trip.dates[index + 1])}
+            disabled={index === dates.length - 1}
+            onPress={() => selectDate(dates[index + 1])}
           />
         </View>
         <Text style={styles.meta}>
-          {t("dayLab.diagnostics", {
-            id: trip.id,
-            date,
-            version: trip.projection.version,
-            instant: trip.instant,
-          })}
+          {mode === "FIXTURE"
+            ? t("dayLab.diagnostics", {
+                id: fixture.trip.id,
+                date,
+                version: fixture.trip.projection.version,
+                instant: fixture.trip.instant,
+              })
+            : t("dayLab.coreDiagnostics", { id: tripId, date })}
         </Text>
+        {mode === "CORE" && visibleCore?.unsupportedFamilies.length ? (
+          <Text style={styles.meta}>
+            {t("dayLab.unsupported", {
+              families: visibleCore.unsupportedFamilies.join(", "),
+            })}
+          </Text>
+        ) : null}
+        {mode === "CORE" && !visibleCore ? (
+          <Text style={styles.meta}>
+            {t(
+              `dayLab.read.${currentCatalog?.tripIds.length ? status : catalogStatus === "READY" ? "UNAVAILABLE" : catalogStatus}`,
+            )}
+          </Text>
+        ) : null}
         <Text style={styles.meta}>{t("dayLab.deferred")}</Text>
       </View>
-      <DayFeed
-        key={`${trip.id}/${date}`}
-        projection={trip.projection}
-        services={trip.services}
-        date={date}
-        zone={trip.zone}
-        instant={trip.instant}
-      />
+      {mode === "FIXTURE" ? (
+        <DayFeed
+          key={`FIXTURE/${fixture.trip.id}/${date}`}
+          projection={fixture.trip.projection}
+          services={fixture.trip.services}
+          date={date}
+          zone={fixture.trip.zone}
+          instant={fixture.trip.instant}
+        />
+      ) : visibleCore ? (
+        <DayFeed
+          key={`CORE/${visibleCore.scope.accountId}/${generation}/${tripId}/${date}`}
+          projection={visibleCore.projection}
+          services={{}}
+          emptyMessage={t("dayLab.coreDayEmpty")}
+          date={date}
+          zone="UTC"
+        />
+      ) : (
+        <View style={styles.root} />
+      )}
       <Modal
         visible={choosing}
         animationType="slide"
@@ -91,13 +308,20 @@ export function DayFeedLabScreen() {
         <View style={styles.root}>
           <SheetHeader title={t("dayLab.trip")} onLeft={() => setChoosing(false)} />
           <ScrollView contentContainerStyle={styles.controls}>
-            {fixtureCatalog.map((entry) => (
+            {tripChoices.map((entry) => (
               <UiChoiceChip
                 key={entry.id}
                 label={entry.title}
-                selected={entry.id === trip.id}
+                selected={entry.id === tripId}
                 onPress={() => {
-                  setContext(selectLabContext(entry.id));
+                  if (mode === "FIXTURE") setContext(selectLabContext(entry.id));
+                  else
+                    setCoreSelection({
+                      tripId: entry.id,
+                      date: "",
+                      generation,
+                      accountId: currentCatalog?.scope.accountId ?? "",
+                    });
                   setChoosing(false);
                 }}
               />

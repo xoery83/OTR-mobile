@@ -2,6 +2,7 @@ import type * as SQLite from "expo-sqlite";
 import {
   assertAccountRequestContext,
   captureAccountRequestContext,
+  captureAccountScope,
   withAccountApplyGate,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
@@ -121,6 +122,22 @@ export function createTripCoreV2Repository(
     await assertContext(ctx);
     return graph;
   }
+  async function acceptedTripIds() {
+    return withAccountApplyGate(async () => {
+      const context = await captureAccountScope(getAccountId);
+      let tripIds: string[] = [];
+      await database.withTransactionAsync(async () => {
+        const rows = await database.getAllAsync<{ trip_id: string }>(
+          "SELECT c.trip_id FROM trip_core_read_certificates c JOIN trip_core_scopes s ON s.account_id=c.account_id AND s.trip_id=c.trip_id WHERE c.account_id=? AND s.revoked=0 AND s.access_revision=c.access_revision AND c.business_version=2 AND c.read_version=2 AND c.temporal_version=1 AND c.complete=1 ORDER BY c.trip_id",
+          context.accountId,
+        );
+        tripIds = rows.map((row) => row.trip_id);
+        await assertAccountRequestContext(context, getAccountId);
+      });
+      await assertAccountRequestContext(context, getAccountId);
+      return { scope: context, tripIds };
+    });
+  }
   // Accepted collection only: pending predictions never become Day Feed authority.
   async function acceptedSnapshot(
     ctx: AccountRequestContext,
@@ -130,12 +147,26 @@ export function createTripCoreV2Repository(
       let result: CoreAcceptedSnapshot | null = null;
       await database.withTransactionAsync(async () => {
         const current = await scope(ctx);
-        const certificate = await database.getFirstAsync<CoreAcceptedCertificate>(
-          "SELECT epoch,revision,access_revision,applied_generation,actor_person_binding_hash,roster_hash,manifest_sha256 FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
+        const certificate = await database.getFirstAsync<
+          CoreAcceptedCertificate & {
+            business_version: number;
+            read_version: number;
+            temporal_version: number;
+            complete: number;
+          }
+        >(
+          "SELECT epoch,revision,access_revision,applied_generation,actor_person_binding_hash,roster_hash,manifest_sha256,business_version,read_version,temporal_version,complete FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
           ctx.accountId,
           ctx.tripId,
         );
         if (!certificate) return;
+        if (
+          certificate.business_version !== 2 ||
+          certificate.read_version !== 2 ||
+          certificate.temporal_version !== 1 ||
+          certificate.complete !== 1
+        )
+          throw new Error("CORE_READ_VERSION_MISMATCH");
         if (certificate.access_revision !== current?.access_revision)
           throw new Error("CORE_READ_ACCESS_MISMATCH");
         const bindings = await database.getAllAsync<{
@@ -586,6 +617,7 @@ export function createTripCoreV2Repository(
     captureContext,
     readGraph,
     acceptedSnapshot,
+    acceptedTripIds,
     item,
     refresh,
     resume,

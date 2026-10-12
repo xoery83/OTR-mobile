@@ -1,4 +1,5 @@
 import { localCalendarDate, type DayQuery } from "@/domain/trip/dayReadModel";
+import type { CoreDayRow } from "@/domain/trip/tripCoreV2Day";
 import { placeNow } from "@/domain/trip/experience/nowIndicator";
 
 export const dayRowKey = (itemId: string, role: string, localDate: string) =>
@@ -59,7 +60,11 @@ const relationKey = (identity: RelationIdentity) =>
   ]);
 
 // G2 owns final presentation; selectors and E1B remain upstream semantic inputs.
-export function composeDayStream(query: DayQuery, instant: string, ports: Ports = {}) {
+export function composeDayStream(
+  query: DayQuery & { coreRows?: readonly CoreDayRow[] },
+  instant: string,
+  ports: Ports = {},
+) {
   const members = [...query.timed, ...query.nonComparable];
   if (new Set(members.map((r) => r.event.id)).size !== members.length)
     throw new Error("DAY_STREAM_DUPLICATE_ITEM");
@@ -78,7 +83,21 @@ export function composeDayStream(query: DayQuery, instant: string, ports: Ports 
     (block, _, all) => all.filter((b) => b.id === block.id).length === 1,
   );
   const rows = members.map((item, index) => {
-    const key = dayRowKey(item.event.id, "EVENT", query.date);
+    const coreRowKeys =
+      query.coreRows
+        ?.filter((row) => row.itemRef === item.event.id)
+        .map((row) => row.rowKey) ?? [];
+    const owningKeys = coreRowKeys.map((row) => [
+      row.itemId,
+      row.projectionRole,
+      row.localDate,
+    ]);
+    const key =
+      owningKeys.length === 1
+        ? JSON.stringify(owningKeys[0])
+        : owningKeys.length > 1
+          ? JSON.stringify(owningKeys)
+          : dayRowKey(item.event.id, "EVENT", query.date);
     const affiliations = blocks.filter((b) => b.itemIds.includes(item.event.id));
     const nowBefore = now.mode === "BETWEEN_EVENTS" && now.beforeIndex === index;
     // shortcut: same-day adjacent EVENT anchors only, expand after Core's role/occurrence port is accepted.
@@ -128,6 +147,7 @@ export function composeDayStream(query: DayQuery, instant: string, ports: Ports 
     const projection = candidates.length === 1 ? candidates[0] : null;
     return {
       key,
+      coreRowKeys,
       item,
       position: item.anchor === null ? ("TNS" as const) : ("TIMELINE" as const),
       focused: focus === item.event.id,

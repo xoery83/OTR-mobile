@@ -1,0 +1,59 @@
+{
+  "otr-dl1-current-main-baseline": {
+    "numPassedTests": 3711,
+    "numFailedTests": 2,
+    "numPendingTests": 21,
+    "failures": [
+      {
+        "file": "domain/architectureBoundary.test.ts",
+        "tests": [
+          "foundation architecture boundaries keeps UI and domain modules away from direct data infrastructure"
+        ]
+      },
+      {
+        "file": "components/navigationLayout.test.ts",
+        "tests": [
+          "updates only the tab bar option as navigation enters and leaves deep pages"
+        ]
+      }
+    ]
+  },
+  "otr-dl1-current-main-integrated": {
+    "numPassedTests": 3718,
+    "numFailedTests": 2,
+    "numPendingTests": 21,
+    "failures": [
+      {
+        "file": "domain/architectureBoundary.test.ts",
+        "tests": [
+          "foundation architecture boundaries keeps UI and domain modules away from direct data infrastructure"
+        ]
+      },
+      {
+        "file": "components/navigationLayout.test.ts",
+        "tests": [
+          "updates only the tab bar option as navigation enters and leaves deep pages"
+        ]
+      }
+    ]
+  },
+  "otr-dl2-final-full": {
+    "numPassedTests": 3727,
+    "numFailedTests": 2,
+    "numPendingTests": 21,
+    "failures": [
+      {
+        "file": "domain/architectureBoundary.test.ts",
+        "tests": [
+          "foundation architecture boundaries keeps UI and domain modules away from direct data infrastructure"
+        ]
+      },
+      {
+        "file": "components/navigationLayout.test.ts",
+        "tests": [
+          "updates only the tab bar option as navigation enters and leaves deep pages"
+        ]
+      }
+    ]
+  }
+}
