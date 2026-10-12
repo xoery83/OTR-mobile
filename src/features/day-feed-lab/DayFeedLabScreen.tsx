@@ -328,6 +328,7 @@ export function DayFeedLabScreen() {
           query={fixture.trip.query}
           renderer={fixture.trip.renderer}
           flexibleRenderer={fixture.trip.flexibleRenderer}
+          flexiblePublication={fixture.trip.flexiblePublication}
           ports={fixture.trip.ports}
           onOpenTtr={
             ttrFacts

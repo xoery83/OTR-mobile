@@ -14,6 +14,12 @@ import { DayFeedLabScreen } from "../day-feed-lab/DayFeedLabScreen";
 import { getLabFixtures } from "../day-feed-lab/fixtureRegistration";
 import { stayTripId } from "../day-feed-lab/stayContribution";
 import { flexibleContribution } from "../day-feed-lab/flexibleContribution";
+import {
+  flexibleReactiveContribution,
+  flexibleFixtureUpdate,
+} from "../day-feed-lab/flexibleReactiveContribution";
+import { FlexibleBlockRow, type FlexibleBlockRendererProps } from "./FlexibleBlockRow";
+import { FlexibleSnapshotFixtureRow } from "../day-feed-lab/FlexibleSnapshotFixtureRow";
 import { ttrLabFixture } from "@/features/ttr/labFixtures";
 import { projectTtr, reduceTtr } from "@/domain/trip/ttrState";
 import { syntheticObservation } from "@/domain/trip/__fixtures__/ttr";
@@ -1096,4 +1102,185 @@ it("rejects a queued old TTR tap after switching A to B to A", () => {
   const html = render(createElement(DayFeedLabScreen));
   expect(html).toContain(t("dayLab.ttr.DRIVING_PENDING"));
   expect(html).not.toContain("publication v1");
+});
+
+function reactiveFeed() {
+  const fixture = flexibleReactiveContribution();
+  const seen: FlexibleBlockRendererProps[] = [];
+  const Renderer = (props: FlexibleBlockRendererProps) => {
+    seen.push(props);
+    return createElement(FlexibleBlockRow, props);
+  };
+  const props = {
+    projection: fixture.projection,
+    date: fixture.selectedDate,
+    zone: fixture.zone,
+    services: fixture.services,
+    instant: fixture.instant,
+    query: fixture.query,
+    ports: fixture.ports,
+    flexiblePublication: fixture.flexiblePublication,
+    flexibleRenderer: Renderer,
+  };
+  const draw = () => {
+    seen.length = 0;
+    return render(createElement(DayFeed, props));
+  };
+  const latest = () => seen.at(-1)!;
+  return { fixture, props, draw, latest };
+}
+
+it("suspends Choice Focus, blocks background interaction, replaces snapshots without remounting and restores Focus/scroll", () => {
+  const { draw, latest } = reactiveFeed();
+  draw();
+  state.presses
+    .find((press) => press.accessibilityLabel === t("dayLab.flexibleMyChoice"))!
+    .onPress();
+  draw();
+  state.nodes
+    .find((node) => node.onScroll)!
+    .onScroll({ nativeEvent: { contentOffset: { y: 271 } } });
+  const originalRefs = [...state.refs];
+  state.presses
+    .find((press) => press.accessibilityLabel === t("dayLab.snapshotBlock"))!
+    .onPress();
+  draw();
+  expect(latest().immersive).toBe(true);
+  expect(latest().block.focusedChoiceKey).toBeNull();
+  expect(
+    state.nodes.some(
+      (node) => node.pointerEvents === "none" && node.accessibilityElementsHidden,
+    ),
+  ).toBe(true);
+  const snapshot = latest().flexibleSnapshot!;
+  expect(
+    latest().onReplaceFlexibleSnapshot!(flexibleFixtureUpdate(snapshot, "COPY")),
+  ).toBe(true);
+  draw();
+  expect(latest().flexibleSnapshot!.revision).toBe(1);
+  expect(latest().block.choices.some((choice) => choice.id === "copied")).toBe(true);
+  expect(state.refs).toEqual(originalRefs);
+  latest().onClose();
+  const dismiss = state.nodes.find((node) => node.onDismiss)!.onDismiss;
+  draw();
+  dismiss();
+  expect(latest().block.focusedChoiceKey).toContain("garden");
+  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 271, animated: false });
+});
+
+it("clears deleted/hidden suspended Focus and deleted Block Immersive without losing canonical Items", () => {
+  const { draw, latest, fixture } = reactiveFeed();
+  draw();
+  state.presses
+    .find((press) => press.accessibilityLabel === t("dayLab.flexibleMyChoice"))!
+    .onPress();
+  draw();
+  latest().onBlockImmersiveIntent();
+  draw();
+  const original = latest().flexibleSnapshot!;
+  latest().onReplaceFlexibleSnapshot!(flexibleFixtureUpdate(original, "REMOVE"));
+  draw();
+  latest().onClose();
+  draw();
+  expect(latest().block.focusedChoiceKey).toBeNull();
+  expect(latest().block.choiceScope).toBe("GROUP");
+  latest().onReplaceFlexibleSnapshot!({ ...original, revision: 2 });
+  draw();
+  expect(latest().block.focusedChoiceKey).toBeNull();
+  latest().onBlockImmersiveIntent();
+  draw();
+  latest().onReplaceFlexibleSnapshot!(
+    flexibleFixtureUpdate(latest().flexibleSnapshot!, "DELETE"),
+  );
+  const html = draw();
+  expect(html).not.toContain('data-testid="flexible-block-row"');
+  expect(state.nodes.some((node) => node.onDismiss)).toBe(false);
+  for (const event of fixture.projection.events) expect(html).toContain(event.title);
+});
+
+it("accepts rapid revisions and rejects stale callbacks across Account/Trip/date/generation and A→B→A", () => {
+  const { draw, latest, props, fixture } = reactiveFeed();
+  draw();
+  const publish = latest().onReplaceFlexibleSnapshot!;
+  const first = flexibleFixtureUpdate(latest().flexibleSnapshot!, "COPY");
+  expect(publish(first)).toBe(true);
+  expect(publish(flexibleFixtureUpdate(first, "RESIZE"))).toBe(true);
+  expect(publish(first)).toBe(false);
+  draw();
+  expect(latest().flexibleSnapshot!.revision).toBe(2);
+  for (const field of ["accountId", "tripId", "localDate", "generation"] as const) {
+    const original = fixture.flexiblePublication;
+    props.flexiblePublication = {
+      ...original,
+      scope: { ...original.scope, [field]: field === "generation" ? 2 : "wrong" },
+    };
+    draw();
+    draw();
+    expect(publish({ ...first, revision: 99 })).toBe(false);
+    props.flexiblePublication = original;
+    draw();
+    draw();
+    expect(publish({ ...first, revision: 99 })).toBe(false);
+  }
+});
+
+it("feature-owned local expansion selects one resource while Feed Focus stays suspended", () => {
+  const { props, draw, latest } = reactiveFeed();
+  draw();
+  latest().onBlockImmersiveIntent();
+  draw();
+  state.hooks = [];
+  state.refs = [];
+  const html = render(createElement(FlexibleSnapshotFixtureRow, latest()));
+  expect(html).toContain(t("dayLab.snapshotResource.POOL"));
+  state.presses
+    .find((press) => press.accessibilityLabel === t("dayLab.snapshotResource.POOL"))!
+    .onPress();
+  render(createElement(FlexibleSnapshotFixtureRow, latest()));
+  state.presses
+    .find((press) => press.accessibilityLabel === t("dayLab.snapshotResource.SAVED"))!
+    .onPress();
+  const expanded = render(createElement(FlexibleSnapshotFixtureRow, latest()));
+  expect(expanded).toContain(
+    t("dayLab.snapshotExpanded", { resource: t("dayLab.snapshotResource.SAVED") }),
+  );
+  expect(expanded).not.toContain(
+    t("dayLab.snapshotExpanded", { resource: t("dayLab.snapshotResource.POOL") }),
+  );
+  expect(latest().block.focusedChoiceKey).toBeNull();
+  expect(props.flexiblePublication.snapshot.revision).toBe(0);
+});
+
+it("consumes host prop replacements, preserves Item Focus through My/Group and clears lost Item access without resurrection", () => {
+  const { draw, latest, props, fixture } = reactiveFeed();
+  draw();
+  const title = fixture.projection.events.find(
+    (event) => event.id === "reactive-item",
+  )!.title;
+  state.presses.find((press) => press.accessibilityLabel === title)!.onPress();
+  expect(draw()).toContain('data-testid="focus-selected-region"');
+  latest().onChoiceScopeIntent("GROUP");
+  expect(draw()).toContain('data-testid="focus-selected-region"');
+  const refs = [...state.refs];
+  const original = fixture.flexiblePublication.snapshot;
+  props.flexiblePublication = {
+    ...props.flexiblePublication,
+    snapshot: flexibleFixtureUpdate(original, "COPY"),
+  };
+  draw();
+  expect(draw()).toContain('data-testid="focus-selected-region"');
+  expect(latest().flexibleSnapshot!.revision).toBe(1);
+  expect(state.refs).toEqual(refs);
+  latest().onBlockImmersiveIntent();
+  expect(draw()).not.toContain('data-testid="focus-selected-region"');
+  const authorized = fixture.query(fixture.selectedDate, fixture.zone);
+  props.query = () => ({
+    ...authorized,
+    timed: authorized.timed.filter((row) => row.event.id !== "reactive-item"),
+  });
+  draw();
+  latest().onClose();
+  expect(draw()).not.toContain('data-testid="focus-selected-region"');
+  props.query = fixture.query;
+  expect(draw()).not.toContain('data-testid="focus-selected-region"');
 });

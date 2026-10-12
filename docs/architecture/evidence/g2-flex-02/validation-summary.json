@@ -1,0 +1,81 @@
+{
+  "baseline": "a878be35db92fb7e36edd5e89f26fe94f1bcb07a",
+  "branch": "codex/g2-flex-02",
+  "command": "npm test -- --maxWorkers=2 --reporter=json --outputFile=<file>",
+  "baselineFull": {
+    "passed": 3878,
+    "failed": 2,
+    "skipped": 23,
+    "failures": [
+      {
+        "file": "src/components/navigationLayout.test.ts",
+        "test": "updates only the tab bar option as navigation enters and leaves deep pages",
+        "message": "TypeError: Cannot read properties of undefined (reading 'tabBarActiveTintColor')"
+      },
+      {
+        "file": "src/domain/architectureBoundary.test.ts",
+        "test": "foundation architecture boundaries keeps UI and domain modules away from direct data infrastructure",
+        "message": "AssertionError: <worktree>/src/components/LocalOperationsDiagnostics.test.ts imports /@\\/data\\/sync/: expected 'import { createElement, type ReactNod\u2026' not to match /@\\/data\\/sync/data\\"
+      }
+    ]
+  },
+  "candidateFull": {
+    "passed": 3893,
+    "failed": 2,
+    "skipped": 23,
+    "failures": [
+      {
+        "file": "src/components/navigationLayout.test.ts",
+        "test": "updates only the tab bar option as navigation enters and leaves deep pages",
+        "message": "TypeError: Cannot read properties of undefined (reading 'tabBarActiveTintColor')"
+      },
+      {
+        "file": "src/domain/architectureBoundary.test.ts",
+        "test": "foundation architecture boundaries keeps UI and domain modules away from direct data infrastructure",
+        "message": "AssertionError: <worktree>/src/components/LocalOperationsDiagnostics.test.ts imports /@\\/data\\/sync/: expected 'import { createElement, type ReactNod\u2026' not to match /@\\/data\\/sync/data\\"
+      }
+    ]
+  },
+  "newRegressions": 0,
+  "focused": {
+    "files": 11,
+    "passed": 168
+  },
+  "typecheck": "PASS",
+  "lint": "PASS",
+  "uiGuard": "PASS",
+  "changedFileFormatting": "PASS",
+  "defaultWorkerTransient": {
+    "files": [
+      "src/data/repositories/captureAutonomousQa.test.ts",
+      "src/features/ledger/MoneyText.test.ts"
+    ],
+    "observed": "STACK_TRACE_ERROR",
+    "isolatedRerun": {
+      "files": 2,
+      "passed": 17
+    }
+  },
+  "native": {
+    "device": "1D01B9F0-6591-4C15-A4CD-43E86E86AA13",
+    "os": "iOS 27.0",
+    "app": "com.xoery.otrmobile",
+    "bundle": "isolated final JS / existing Debug binary / Metro8097",
+    "scope": "synthetic only",
+    "screenshots": [
+      "01-choice-focus-dark.png",
+      "02-immersive-local-saved-dark.png",
+      "03-copy-focus-restored-dark.png",
+      "04-nonzero-scroll-restored-dark.png",
+      "05-ttr-inert-sheet-light.png",
+      "06-now-ttr-light.png",
+      "07-block-delete-canonical-retained-light.png",
+      "08-p3-focus-light.png",
+      "09-p2-flight-focus-light.png",
+      "10-p1-focus-now-light.png",
+      "11-local-search-light.png",
+      "12-nested-anchor-ttr-withheld-light.png"
+    ]
+  },
+  "rawEvidence": "/private/tmp/otr-g2-flex-02-evidence"
+}

@@ -5,6 +5,8 @@ import { stayRenderer } from "./StayFixtureRow";
 import { flexibleContribution } from "./flexibleContribution";
 import { getTtrLabFixtures } from "@/features/ttr/labFixtures";
 import { t } from "@/ui/locale";
+import { flexibleReactiveContribution } from "./flexibleReactiveContribution";
+import { FlexibleSnapshotFixtureRow } from "./FlexibleSnapshotFixtureRow";
 
 // Explicit immutable registration; new workstreams add contributions here, not to source switching.
 export function getLabFixtures() {
@@ -17,5 +19,6 @@ export function getLabFixtures() {
       ...fixture,
       title: t(`dayLab.ttr.${fixture.supplemental!.caseId}`),
     })),
+    { ...flexibleReactiveContribution(), flexibleRenderer: FlexibleSnapshotFixtureRow },
   ]);
 }
