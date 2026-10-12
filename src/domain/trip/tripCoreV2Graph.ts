@@ -2,6 +2,7 @@ import { coreTableSchemas, coreKindTables, type CoreTable } from "./tripCoreV2";
 import type { CoreGraph, CoreRow } from "./tripCoreV2Mutation";
 import { canonicalCoreJson, type Json } from "./tripCoreV2Json";
 export const coreTableKeys: Record<CoreTable, readonly string[]> = {
+  trip_person_ordinary_orders: ["id"],
   itinerary_events: ["id"],
   itinerary_transport_endpoints: ["event_id", "role"],
   trip_endpoint_details: ["event_id", "role"],

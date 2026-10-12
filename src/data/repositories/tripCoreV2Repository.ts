@@ -1,3 +1,4 @@
+import { qualifyCoreTtr, type CoreTtrResult } from "../../domain/trip/tripCoreTtr";
 import type * as SQLite from "expo-sqlite";
 import {
   assertAccountRequestContext,
@@ -42,6 +43,7 @@ export type CoreAcceptedCertificate = {
   actor_person_binding_hash: string;
   roster_hash: string;
   manifest_sha256: string;
+  ordinary_order_version: number;
 };
 export type CoreAcceptedSnapshot = {
   graph: CoreGraph;
@@ -99,8 +101,11 @@ export function createTripCoreV2Repository(
   async function readGraph(ctx: AccountRequestContext): Promise<CoreGraph> {
     await assertContext(ctx);
     const currentScope = await scope(ctx);
-    const accepted = await database.getFirstAsync<{ access_revision: number }>(
-      "SELECT access_revision FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
+    const accepted = await database.getFirstAsync<{
+      access_revision: number;
+      ordinary_order_version: number;
+    }>(
+      "SELECT access_revision,ordinary_order_version FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
       ctx.accountId,
       ctx.tripId,
     );
@@ -108,6 +113,11 @@ export function createTripCoreV2Repository(
     if (accepted && accepted.access_revision !== currentScope?.access_revision)
       return graph;
     for (const [table, schema] of Object.entries(coreTableSchemas)) {
+      if (
+        table === "trip_person_ordinary_orders" &&
+        accepted?.ordinary_order_version !== 1
+      )
+        continue;
       const rows = await database.getAllAsync<Record<string, unknown>>(
         `SELECT * FROM trip_core_${table} WHERE cache_account_id=? AND ${table === "expense_links" ? "journey_id" : "trip_id"}=?`,
         ctx.accountId,
@@ -139,70 +149,135 @@ export function createTripCoreV2Repository(
     });
   }
   // Accepted collection only: pending predictions never become Day Feed authority.
+  async function acceptedWithinTransaction(
+    ctx: AccountRequestContext,
+  ): Promise<CoreAcceptedSnapshot | null> {
+    await assertContext(ctx);
+    const current = await scope(ctx);
+    const certificate = await database.getFirstAsync<
+      CoreAcceptedCertificate & {
+        business_version: number;
+        read_version: number;
+        temporal_version: number;
+        complete: number;
+      }
+    >(
+      "SELECT epoch,revision,access_revision,applied_generation,actor_person_binding_hash,roster_hash,manifest_sha256,ordinary_order_version,business_version,read_version,temporal_version,complete FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
+      ctx.accountId,
+      ctx.tripId,
+    );
+    if (!certificate) return null;
+    if (
+      certificate.business_version !== 2 ||
+      certificate.read_version !== 2 ||
+      certificate.temporal_version !== 1 ||
+      certificate.complete !== 1
+    )
+      throw new Error("CORE_READ_VERSION_MISMATCH");
+    if (certificate.access_revision !== current?.access_revision)
+      throw new Error("CORE_READ_ACCESS_MISMATCH");
+    const bindings = await database.getAllAsync<{
+      person_id: string;
+      linked_account_id: string | null;
+      active: number;
+      participating: number;
+    }>(
+      "SELECT person_id,linked_account_id,active,participating FROM trip_core_person_bindings WHERE account_id=? AND trip_id=? ORDER BY person_id",
+      ctx.accountId,
+      ctx.tripId,
+    );
+    const own = bindings.filter((b) => b.active && b.linked_account_id === ctx.accountId);
+    if (own.length > 1) throw new Error("CORE_PERSON_BINDING_MISMATCH");
+    const result: CoreAcceptedSnapshot = {
+      graph: validateCoreGraph(await readGraph(ctx), ctx.tripId, true),
+      actor: {
+        accountId: ctx.accountId,
+        tripId: ctx.tripId,
+        active: true,
+        canManageShared: false,
+        personId: own[0]?.person_id ?? null,
+        personIds: bindings.filter((b) => b.active).map((b) => b.person_id),
+      },
+      certificate,
+      participatingPersonIds: bindings
+        .filter((b) => b.active && b.participating)
+        .map((b) => b.person_id),
+    };
+    await assertContext(ctx);
+    return result;
+  }
   async function acceptedSnapshot(
     ctx: AccountRequestContext,
   ): Promise<CoreAcceptedSnapshot | null> {
     return withAccountApplyGate(async () => {
-      await assertContext(ctx);
       let result: CoreAcceptedSnapshot | null = null;
       await database.withTransactionAsync(async () => {
-        const current = await scope(ctx);
-        const certificate = await database.getFirstAsync<
-          CoreAcceptedCertificate & {
-            business_version: number;
-            read_version: number;
-            temporal_version: number;
-            complete: number;
-          }
-        >(
-          "SELECT epoch,revision,access_revision,applied_generation,actor_person_binding_hash,roster_hash,manifest_sha256,business_version,read_version,temporal_version,complete FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
-          ctx.accountId,
-          ctx.tripId,
-        );
-        if (!certificate) return;
-        if (
-          certificate.business_version !== 2 ||
-          certificate.read_version !== 2 ||
-          certificate.temporal_version !== 1 ||
-          certificate.complete !== 1
-        )
-          throw new Error("CORE_READ_VERSION_MISMATCH");
-        if (certificate.access_revision !== current?.access_revision)
-          throw new Error("CORE_READ_ACCESS_MISMATCH");
-        const bindings = await database.getAllAsync<{
-          person_id: string;
-          linked_account_id: string | null;
-          active: number;
-          participating: number;
-        }>(
-          "SELECT person_id,linked_account_id,active,participating FROM trip_core_person_bindings WHERE account_id=? AND trip_id=? ORDER BY person_id",
-          ctx.accountId,
-          ctx.tripId,
-        );
-        const own = bindings.filter(
-          (b) => b.active && b.linked_account_id === ctx.accountId,
-        );
-        if (own.length > 1) throw new Error("CORE_PERSON_BINDING_MISMATCH");
-        result = {
-          graph: validateCoreGraph(await readGraph(ctx), ctx.tripId, true),
-          actor: {
-            accountId: ctx.accountId,
-            tripId: ctx.tripId,
-            active: true,
-            canManageShared: false,
-            personId: own[0]?.person_id ?? null,
-            personIds: bindings.filter((b) => b.active).map((b) => b.person_id),
-          },
-          certificate,
-          participatingPersonIds: bindings
-            .filter((b) => b.active && b.participating)
-            .map((b) => b.person_id),
-        };
-        await assertContext(ctx);
+        result = await acceptedWithinTransaction(ctx);
       });
       await assertContext(ctx);
       return result;
     });
+  }
+  // Caller owns the Account gate and serialized SQLite transaction. Never reacquire either.
+  async function ttrWithinTransaction(
+    ctx: AccountRequestContext,
+    orderId: string,
+    fromId: string,
+    toId: string,
+  ): Promise<CoreTtrResult> {
+    const snapshot = await acceptedWithinTransaction(ctx);
+    if (!snapshot || snapshot.certificate.ordinary_order_version !== 1)
+      return {
+        version: "otr-core-ttr-input/1" as const,
+        status: "UNAVAILABLE" as const,
+        reason: "CONTINUITY_UNKNOWN",
+      };
+    const result = await qualifyCoreTtr(
+      snapshot.graph,
+      snapshot.actor,
+      orderId,
+      fromId,
+      toId,
+      ctx,
+      snapshot.certificate,
+      snapshot.participatingPersonIds,
+      hash,
+      true,
+    );
+    await assertContext(ctx);
+    return result;
+  }
+  async function readTtr(
+    ctx: AccountRequestContext,
+    orderId: string,
+    fromId: string,
+    toId: string,
+  ) {
+    return withAccountApplyGate(async () => {
+      let result!: Awaited<ReturnType<typeof ttrWithinTransaction>>;
+      await database.withTransactionAsync(async () => {
+        result = await ttrWithinTransaction(ctx, orderId, fromId, toId);
+      });
+      await assertContext(ctx);
+      return result;
+    });
+  }
+  async function revalidateTtrWithinTransaction(
+    ctx: AccountRequestContext,
+    orderId: string,
+    fromId: string,
+    toId: string,
+    captured: Extract<CoreTtrResult, { status: "QUALIFIED" }>,
+  ) {
+    const result = await ttrWithinTransaction(ctx, orderId, fromId, toId);
+    return (
+      result.status === "QUALIFIED" &&
+      result.authorityKey === captured.authorityKey &&
+      canonicalCoreJson(result.input as unknown as Json) ===
+        canonicalCoreJson(captured.input as unknown as Json) &&
+      canonicalCoreJson(result.spatial as unknown as Json) ===
+        canonicalCoreJson(captured.spatial as unknown as Json)
+    );
   }
   async function enqueue(ctx: AccountRequestContext, input: unknown) {
     const command = validateCoreCommand(input);
@@ -333,6 +408,11 @@ export function createTripCoreV2Repository(
         )
           throw new Error("CORE_READ_EPOCH_OR_REVISION_MISMATCH");
         for (const [table, schema] of Object.entries(coreTableSchemas)) {
+          if (
+            table === "trip_person_ordinary_orders" &&
+            validated.manifest.ordinaryOrderVersion !== 1
+          )
+            continue;
           await database.runAsync(
             `DELETE FROM trip_core_${table} WHERE cache_account_id=? AND ${table === "expense_links" ? "journey_id" : "trip_id"}=?`,
             ctx.accountId,
@@ -370,7 +450,7 @@ export function createTripCoreV2Repository(
             binding.participating ? 1 : 0,
           );
         await database.runAsync(
-          "INSERT INTO trip_core_read_certificates(account_id,trip_id,epoch,revision,access_revision,applied_generation,actor_person_binding_hash,roster_hash,manifest_sha256,business_version,read_version,temporal_version,complete) VALUES(?,?,?,?,?,?,?,?,?,2,2,1,1) ON CONFLICT(account_id,trip_id) DO UPDATE SET epoch=excluded.epoch,revision=excluded.revision,access_revision=excluded.access_revision,applied_generation=excluded.applied_generation,actor_person_binding_hash=excluded.actor_person_binding_hash,roster_hash=excluded.roster_hash,manifest_sha256=excluded.manifest_sha256",
+          "INSERT INTO trip_core_read_certificates(account_id,trip_id,epoch,revision,access_revision,applied_generation,actor_person_binding_hash,roster_hash,manifest_sha256,business_version,read_version,temporal_version,complete,ordinary_order_version) VALUES(?,?,?,?,?,?,?,?,?,2,2,1,1,?) ON CONFLICT(account_id,trip_id) DO UPDATE SET epoch=excluded.epoch,revision=excluded.revision,access_revision=excluded.access_revision,applied_generation=excluded.applied_generation,actor_person_binding_hash=excluded.actor_person_binding_hash,roster_hash=excluded.roster_hash,manifest_sha256=excluded.manifest_sha256,ordinary_order_version=excluded.ordinary_order_version",
           ctx.accountId,
           ctx.tripId,
           m.epoch,
@@ -380,6 +460,7 @@ export function createTripCoreV2Repository(
           m.actorPersonBindingHash,
           m.participatingRosterHash,
           m.manifestSha256,
+          m.ordinaryOrderVersion ?? 0,
         );
         const receiptRows = await database.getAllAsync<{
           operation_id: string;
@@ -617,6 +698,9 @@ export function createTripCoreV2Repository(
     captureContext,
     readGraph,
     acceptedSnapshot,
+    readTtr,
+    ttrWithinTransaction,
+    revalidateTtrWithinTransaction,
     acceptedTripIds,
     item,
     refresh,

@@ -1,3 +1,4 @@
+import { coreOrdinaryOrderMigration } from "./migrations/coreOrdinaryOrder";
 import { captureFlightNativeMigration } from "./migrations/captureFlightNative";
 import { tripCoreV2Migration } from "./migrations/tripCoreV2";
 import { tripSourcePublicationMembershipMigration } from "./migrations/tripSourcePublicationMembership";
@@ -1692,4 +1693,5 @@ export const migrations: Migration[] = [
   tripSourcePublicationMembershipMigration,
   tripCoreV2Migration,
   captureFlightNativeMigration,
+  coreOrdinaryOrderMigration,
 ];

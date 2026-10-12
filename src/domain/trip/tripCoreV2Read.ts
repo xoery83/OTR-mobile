@@ -5,6 +5,7 @@ import { coreMirrorKey, validateCoreGraph } from "./tripCoreV2Graph";
 import { canonicalCoreJson, type Json } from "./tripCoreV2Json";
 import type { ImportHash } from "./flightImportReview";
 const kinds = [
+  "ORDER",
   "ITEM",
   "BOOKING",
   "ENTITLEMENT",
@@ -65,19 +66,21 @@ export const coreReadRecordSchema = z
     if (r.kind !== "PERSON_BINDING" && r.revision === 0)
       c.addIssue({ code: "custom", message: "INVALID_READ_REVISION" });
     const schema =
-      r.kind === "ITEM"
-        ? itemBody
-        : r.kind === "BOOKING"
-          ? bookingBody
-          : r.kind === "ENTITLEMENT"
-            ? f.trip_entitlementsSchema
-            : r.kind === "DOCUMENT"
-              ? f.trip_operational_documentsSchema
-              : r.kind === "INSTRUCTION"
-                ? f.trip_instruction_entriesSchema
-                : r.kind === "PERSON_BINDING"
-                  ? corePersonBindingSchema
-                  : relationBodies;
+      r.kind === "ORDER"
+        ? f.trip_person_ordinary_ordersSchema
+        : r.kind === "ITEM"
+          ? itemBody
+          : r.kind === "BOOKING"
+            ? bookingBody
+            : r.kind === "ENTITLEMENT"
+              ? f.trip_entitlementsSchema
+              : r.kind === "DOCUMENT"
+                ? f.trip_operational_documentsSchema
+                : r.kind === "INSTRUCTION"
+                  ? f.trip_instruction_entriesSchema
+                  : r.kind === "PERSON_BINDING"
+                    ? corePersonBindingSchema
+                    : relationBodies;
     if (!schema.safeParse(r.body).success)
       c.addIssue({ code: "custom", message: "INVALID_READ_RECORD" });
   });
@@ -99,6 +102,7 @@ export const coreReadPageSchema = z.strictObject({
 export const coreReadManifestSchema = z.strictObject({
   ...scope,
   projectionVersion: z.literal(2),
+  ordinaryOrderVersion: z.literal(1).optional(),
   actorPersonBindingHash: f.coreHash,
   participatingRosterHash: f.coreHash,
   generatedAt: z.string().datetime({ precision: undefined }),
@@ -111,7 +115,8 @@ export const coreReadManifestSchema = z.strictObject({
         sha256: f.coreHash,
       }),
     )
-    .length(7),
+    .min(7)
+    .max(8),
   pages: z
     .array(
       z.strictObject({
@@ -158,7 +163,9 @@ export async function makeCoreReadCollection(
   )
     throw new Error("COLLECTION_TOO_LARGE");
   const roster = [];
-  for (const kind of kinds) {
+  for (const kind of kinds.filter(
+    (k) => k !== "ORDER" || header.ordinaryOrderVersion === 1,
+  )) {
     const rows = records.filter((r) => r.kind === kind);
     const entries = await Promise.all(
       rows.map(async (r) => ({
@@ -282,13 +289,17 @@ export async function validateCoreReadCollection(
       actorPersonBindingHash: manifest.actorPersonBindingHash,
       participatingRosterHash: manifest.participatingRosterHash,
       generatedAt: manifest.generatedAt,
+      ...(manifest.ordinaryOrderVersion === 1
+        ? { ordinaryOrderVersion: 1 as const }
+        : {}),
     },
     hash,
   );
   if (
     canonicalCoreJson(rebuilt.manifest.rosters as Json) !==
       canonicalCoreJson(manifest.rosters as Json) ||
-    new Set(manifest.rosters.map((r) => r.kind)).size !== 7 ||
+    new Set(manifest.rosters.map((r) => r.kind)).size !==
+      (manifest.ordinaryOrderVersion === 1 ? 8 : 7) ||
     records.some((r, i) => i > 0 && recordOrder(records[i - 1], r) >= 0)
   )
     throw new Error("CORE_READ_ROSTER_MISMATCH");
@@ -310,6 +321,8 @@ export async function validateCoreReadCollection(
       if (r.id !== binding.person_id) throw new Error("CORE_READ_ID_MISMATCH");
       bindings.push(binding);
     } else {
+      if (r.kind === "ORDER" && manifest.ordinaryOrderVersion !== 1)
+        throw new Error("CORE_READ_VERSION_MISMATCH");
       const table = f.coreKindTables[r.kind];
       const childTables =
         r.kind === "ITEM"

@@ -45,7 +45,7 @@ describe("SQLite53 additive migration", () => {
         const before = sql.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
         await runMigrations(db);
         expect(before.map((r) => r.id)).toEqual(
-          Array.from({ length: 55 }, (_, i) => i + 1),
+          Array.from({ length: 56 }, (_, i) => i + 1),
         );
         expect(sql.prepare("SELECT * FROM schema_migrations ORDER BY id").all()).toEqual(
           before,

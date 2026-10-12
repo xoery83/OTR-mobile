@@ -1,3 +1,4 @@
+import { projectOrdinaryOrder } from "../../src/domain/trip/tripCoreTtr";
 import {
   coreCanRead,
   type CoreActor,
@@ -19,6 +20,7 @@ export function coreActorReadRecords(
   authorizedOriginalIds: readonly string[] = [],
   authorizedExpenseIds: readonly string[] = [],
   authorizedEvidenceRefs: readonly string[] = [],
+  ordinaryOrderVersion?: 1,
 ): CoreReadRecord[] {
   const redact = (row: Record<string, unknown>) => {
     const copy = structuredClone(row);
@@ -55,15 +57,18 @@ export function coreActorReadRecords(
   for (const [kind, table] of Object.entries(coreKindTables))
     for (const row of graph[table]) {
       if (
+        (kind === "ORDER" && ordinaryOrderVersion !== 1) ||
         !coreCanRead(graph, actor, kind as CoreKind, row) ||
         (kind === "DOCUMENT" && !authorizedOriginalIds.includes(row.id as string))
       )
         continue;
       const revision = row[kind === "ITEM" ? "semantic_revision" : "revision"] as number;
       const body =
-        kind === "DOCUMENT"
-          ? { ...row, field_state: redact(row).field_state }
-          : redact(row);
+        kind === "ORDER"
+          ? projectOrdinaryOrder(graph, actor, row)
+          : kind === "DOCUMENT"
+            ? { ...row, field_state: redact(row).field_state }
+            : redact(row);
       if (kind === "ITEM")
         for (const child of coreReadItemChildren)
           body[child] = graph[child]
@@ -146,6 +151,7 @@ export async function buildCoreActorCollection(
   authorizedOriginalIds: readonly string[] = [],
   authorizedExpenseIds: readonly string[] = [],
   authorizedEvidenceRefs: readonly string[] = [],
+  ordinaryOrderVersion?: 1,
 ) {
   if (!actor.active) throw new Error("NOT_VISIBLE");
   const records = coreActorReadRecords(
@@ -154,6 +160,7 @@ export async function buildCoreActorCollection(
     authorizedOriginalIds,
     authorizedExpenseIds,
     authorizedEvidenceRefs,
+    ordinaryOrderVersion,
   );
   const sorted = [...bindings].sort((a, b) => a.person_id.localeCompare(b.person_id));
   for (const { revision, ...body } of sorted)
@@ -163,6 +170,7 @@ export async function buildCoreActorCollection(
     records,
     {
       ...state,
+      ...(ordinaryOrderVersion === 1 ? { ordinaryOrderVersion: 1 as const } : {}),
       actorAccountId: actor.accountId,
       tripId: actor.tripId,
       actorPersonBindingHash: await coreHashValue(
