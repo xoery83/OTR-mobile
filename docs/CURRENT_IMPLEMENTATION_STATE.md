@@ -1,3 +1,31 @@
+# DL1 Day Feed Lab — source ready / native interaction blocked
+
+Updated 2026-10-12. Owner authorized continuous DL1 only. Branch
+`codex/day-feed-lab-dl1`, worktree `/private/tmp/otr-day-feed-lab-dl1-20261012`,
+base main/origin/main/remote `6af3aff`; accepted G2 `6dc3e04` is an ancestor.
+No main merge/push or Hosted/provider activation.
+
+Debug Trip → Day Feed Lab / `otrmobile://day-feed-lab` uses five deterministic
+localized synthetic Trips, date controls and fixed Fixture NOW. Production
+DayFeed/P1/P2/Focus/Immersive/G2 Composer remain authoritative; only optional
+`instant` input was added. Release entry redirects; normal auth/bootstrap unchanged.
+No repository, schema, migration, canonical write, provider or DEV Data mode added.
+
+Focused 12 files/138 tests PASS. Full comparison: 3711 PASS versus clean-main3704;
+same two architecture/navigation failures and20 skips, all7 added tests PASS.
+Typecheck/lint/UI guard/format PASS. Release iOS export PASS; synthetic module
+bytes are retained by Metro, while route/entry guards prevent Release access.
+Final Scene-configured Debug Simulator build/install/launch attempt PASS; native
+Lab opening/interaction remains BLOCKED by locked Mac/system Open prompt. No
+Simulator UI PASS claim. Evidence: `architecture/OTR_DAY_FEED_LAB_DL1_REPORT.md`.
+
+Authoritative usage/catalog/contribution ports: `architecture/OTR_DAY_FEED_LAB_DL1.md`.
+P3–P6, Flexible and `ttr-presentation/1` native rendering remain dormant. Next DL2:
+separately approved actor-scoped Core v2 read adapter, read-only first. No DEV Seed,
+write gate or provider activation is implied by Fixture/Simulator results.
+
+---
+
 # Flight AB canonical integration — prepared only
 
 Updated 2026-10-12. Accepted AB tip `5544ba0` is prepared against current local

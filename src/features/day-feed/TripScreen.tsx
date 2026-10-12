@@ -273,6 +273,13 @@ function TripContent({ today = false }: { today?: boolean }) {
         variant="text"
         onPress={() => router.navigate("/expenses")}
       />
+      {__DEV__ ? (
+        <UiButton
+          label={t("dayLab.title")}
+          variant="text"
+          onPress={() => router.push("/day-feed-lab")}
+        />
+      ) : null}
       <UiButton
         label={t("dayFeed.validation")}
         variant="text"

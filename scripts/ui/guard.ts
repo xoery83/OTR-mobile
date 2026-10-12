@@ -309,6 +309,8 @@ export const representativeRoots = [
   "src/features/ledger/ConfirmExpenseDateScreen.tsx",
   "src/components/FoundationDiagnosticsScreen.tsx",
   "src/features/day-feed/TripScreen.tsx",
+  "app/day-feed-lab.tsx",
+  "src/features/day-feed-lab/DayFeedLabScreen.tsx",
   "app/_layout.tsx",
   "app/(tabs)/_layout.tsx",
   "app/(tabs)/expenses/_layout.tsx",

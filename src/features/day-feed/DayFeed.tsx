@@ -29,11 +29,13 @@ export function DayFeed({
   date,
   zone,
   services,
+  instant,
 }: {
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
   zone: string;
   services: Record<string, FlightService[]>;
+  instant?: string;
 }) {
   const styles = useThemedStyles(createStyles);
   const query =
@@ -43,7 +45,7 @@ export function DayFeed({
   const clock = useMinuteClock(zone);
   const [focus, setFocus] = useState<string | null>(null);
   const [immersive, setImmersive] = useState<string | null>(null);
-  const stream = composeDayStream(query, clock.instant, { focus, immersive });
+  const stream = composeDayStream(query, instant ?? clock.instant, { focus, immersive });
   const { rows, now } = stream;
   const scroll = useRef<ScrollView>(null),
     offset = useRef(0),
