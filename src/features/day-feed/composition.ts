@@ -54,6 +54,7 @@ export type TransitionProjection = Readonly<{
   qualification: "QUALIFIED" | "UNQUALIFIED";
   unavailableReason: string | null;
   publicationVersion: number;
+  inputFingerprint?: string | null;
   visibility: "HIDDEN" | "STRAIGHT_LINE" | "SELECTED_MODE" | "SUGGESTED_MODE";
   modeOrigin: "NONE" | "USER_CONFIRMED" | "SYSTEM_SUGGESTED";
   mode: "walking" | "driving" | "transit" | null;
@@ -62,6 +63,7 @@ export type TransitionProjection = Readonly<{
     source: "LOCAL_GEOMETRY";
     meters: number;
   }>;
+  route?: Readonly<{ status: "MISSING" | "PENDING" | "AVAILABLE" | "FAILED" }>;
   anchors: Readonly<{ fromRowKey: string; toRowKey: string }> | null;
   actions: Readonly<{
     openTtr: Readonly<{
@@ -199,6 +201,8 @@ export function composeDayStream(
         p.qualification !== "QUALIFIED" ||
         p.unavailableReason !== null ||
         p.visibility === "HIDDEN" ||
+        (p.route &&
+          !["MISSING", "PENDING", "AVAILABLE", "FAILED"].includes(p.route.status)) ||
         !id ||
         !action ||
         !ports.scope ||
@@ -232,7 +236,12 @@ export function composeDayStream(
             p.modeOrigin ===
               (p.visibility === "SELECTED_MODE" ? "USER_CONFIRMED" : "SYSTEM_SUGGESTED");
     });
-    const projection = candidates.length === 1 ? candidates[0] : null;
+    const nested = flex.some(
+      (block) =>
+        block.itemIds.includes(item.event.id) ||
+        (index > 0 && block.itemIds.includes(members[index - 1].event.id)),
+    );
+    const projection = candidates.length === 1 && !nested ? candidates[0] : null;
     return {
       key,
       coreRowKeys,
@@ -259,8 +268,11 @@ export function composeDayStream(
       transition: projection
         ? {
             key: relationKey(projection.identity!),
+            inputFingerprint: projection.inputFingerprint ?? null,
+            visibility: projection.visibility,
             mode: projection.mode,
             modeOrigin: projection.modeOrigin,
+            routeStatus: projection.route?.status ?? "MISSING",
             ...(projection.geometricDistance
               ? { geometricDistance: projection.geometricDistance }
               : {}),

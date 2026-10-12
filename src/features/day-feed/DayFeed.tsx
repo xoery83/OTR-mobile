@@ -29,6 +29,7 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { P1Row } from "./P1Row";
+import { TransitionRow, type ComposedTransition } from "./TransitionRow";
 import { FlightRows } from "./FlightRows";
 import { NowMarker } from "./NowMarker";
 import { useMinuteClock } from "./useMinuteClock";
@@ -60,6 +61,7 @@ export function DayFeed({
   renderer,
   flexibleRenderer,
   ports,
+  onOpenTtr,
 }: {
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
@@ -71,6 +73,10 @@ export function DayFeed({
   renderer?: DayRowRenderer;
   flexibleRenderer?: FlexibleBlockRenderer;
   ports?: Omit<DayStreamPorts, "focus" | "immersive">;
+  onOpenTtr?: (
+    intent: ComposedTransition["openTtr"],
+    context: Pick<ComposedTransition, "key" | "inputFingerprint">,
+  ) => void;
 }) {
   const styles = useThemedStyles(createStyles);
   const query = contributedQuery
@@ -187,6 +193,20 @@ export function DayFeed({
   const renderItem = (row: (typeof rows)[number]) => (
     <View key={row.key}>
       {row.nowBefore ? <NowMarker placement={now} /> : null}
+      {row.transition ? (
+        <TransitionRow
+          transition={row.transition}
+          onOpen={
+            onOpenTtr
+              ? () =>
+                  onOpenTtr(row.transition!.openTtr, {
+                    key: row.transition!.key,
+                    inputFingerprint: row.transition!.inputFingerprint,
+                  })
+              : undefined
+          }
+        />
+      ) : null}
       {render(
         row.item.event,
         depth(row.item.event.id) === "I" ? "F" : depth(row.item.event.id),

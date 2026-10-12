@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { AppState, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
 import { readTripDayFeedLab } from "@/data/repositories/tripDayFeedLabRepository";
 import {
@@ -17,6 +24,12 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { getLabFixtures } from "./fixtureRegistration";
 import { selectLabContext } from "./fixtureCatalog";
+import {
+  acceptsTtrLabIntent,
+  type TtrLabFacts,
+  type TtrLabIntentVector,
+} from "@/features/ttr/labFixtures";
+import { ttrIdentityKey } from "@/domain/trip/ttr";
 
 // The selector formats a calendar key without shifting it to the device timezone.
 const dateLabel = (date: string) =>
@@ -54,6 +67,9 @@ export function DayFeedLabScreen() {
     selectLabContext(fixtureCatalog[0].id, undefined, fixtureCatalog),
   );
   const [choosing, setChoosing] = useState(false);
+  const [openedTtr, setOpenedTtr] = useState<
+    (TtrLabIntentVector & { inputFingerprint: string | null }) | null
+  >(null);
   const [mode, setMode] = useState<"FIXTURE" | "CORE">("FIXTURE");
   const [catalog, setCatalog] = useState<Candidates | null>(null);
   const [catalogStatus, setCatalogStatus] = useState<ReadStatus>("LOADING");
@@ -113,6 +129,26 @@ export function DayFeedLabScreen() {
     ? selection.tripId
     : (currentCatalog?.tripIds[0] ?? "");
   const fixture = selectLabContext(context.trip.id, context.date, fixtureCatalog);
+  const ttrFacts =
+    (fixture.trip.supplemental as TtrLabFacts | undefined)?.source === "SYNTHETIC_TTR_LAB"
+      ? (fixture.trip.supplemental as TtrLabFacts)
+      : null;
+  const currentFixture = useRef({
+    id: fixture.trip.id,
+    date: fixture.date,
+    facts: ttrFacts,
+    mode,
+    context,
+  });
+  useLayoutEffect(() => {
+    currentFixture.current = {
+      id: fixture.trip.id,
+      date: fixture.date,
+      facts: ttrFacts,
+      mode,
+      context,
+    };
+  }, [fixture.trip.id, fixture.date, ttrFacts, mode, context]);
   useEffect(() => {
     const activeRequests = requests.current;
     const ticket = ++activeRequests.day;
@@ -293,6 +329,37 @@ export function DayFeedLabScreen() {
           renderer={fixture.trip.renderer}
           flexibleRenderer={fixture.trip.flexibleRenderer}
           ports={fixture.trip.ports}
+          onOpenTtr={
+            ttrFacts
+              ? (intent, presentation) => {
+                  const current = currentFixture.current;
+                  const vector: TtrLabIntentVector = {
+                    intent,
+                    capturedScope: ttrFacts.input.scope,
+                    expectedAccepted: true,
+                  };
+                  if (
+                    current.mode === "FIXTURE" &&
+                    current.context === context &&
+                    current.id === fixture.trip.id &&
+                    current.date === fixture.date &&
+                    current.facts &&
+                    presentation.key === ttrIdentityKey(intent.identity) &&
+                    current.facts.projection.inputFingerprint ===
+                      presentation.inputFingerprint &&
+                    acceptsTtrLabIntent(
+                      current.facts.projection,
+                      current.facts.input.scope,
+                      vector,
+                    )
+                  )
+                    setOpenedTtr({
+                      ...vector,
+                      inputFingerprint: presentation.inputFingerprint,
+                    });
+                }
+              : undefined
+          }
         />
       ) : visibleCore ? (
         <DayFeed
@@ -306,6 +373,36 @@ export function DayFeedLabScreen() {
       ) : (
         <View style={styles.root} />
       )}
+      <Modal
+        visible={!!openedTtr && mode === "FIXTURE"}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setOpenedTtr(null)}
+      >
+        <View style={styles.root}>
+          <SheetHeader title={t("ttr.intentTitle")} onLeft={() => setOpenedTtr(null)} />
+          {openedTtr ? (
+            <View>
+              <Text style={styles.intent}>
+                {t("ttr.intentDetail", {
+                  relation: JSON.stringify(openedTtr.intent.identity),
+                  version: openedTtr.intent.publicationVersion,
+                  status: t(
+                    `ttr.route.${ttrFacts?.projection.route.status ?? "MISSING"}`,
+                  ),
+                })}
+              </Text>
+              {openedTtr.inputFingerprint ? (
+                <Text style={styles.intent}>
+                  {t("ttr.intentFingerprint", {
+                    fingerprint: openedTtr.inputFingerprint,
+                  })}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
+      </Modal>
       <Modal
         visible={choosing}
         animationType="slide"
@@ -348,4 +445,5 @@ const createStyles = (c: UiColors) =>
     dateStrip: { flex: 1 },
     dates: { gap: visual.space.heading, alignItems: "center" },
     meta: { ...visual.type.meta, color: c.textSecondary },
+    intent: { ...visual.type.row, color: c.textPrimary, padding: visual.space.page },
   });

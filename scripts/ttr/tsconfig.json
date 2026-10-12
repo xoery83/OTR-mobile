@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": [
+    "../../src/domain/trip/ttr*.ts",
+    "../../src/domain/trip/__fixtures__/ttr.ts",
+    "../../src/features/ttr/*.ts"
+  ],
+  "exclude": []
+}

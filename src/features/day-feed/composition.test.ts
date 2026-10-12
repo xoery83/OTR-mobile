@@ -129,7 +129,7 @@ it("qualified straight-line-only Transition survives NOW collision without mode 
   const enriched = {
     ...transition,
     route: {
-      status: "AVAILABLE",
+      status: "AVAILABLE" as const,
       observation: { provider: "APPLE", seconds: 42, meters: 1500 },
     },
   };
@@ -140,6 +140,8 @@ it("qualified straight-line-only Transition survives NOW collision without mode 
     mode: null,
     geometricDistance: { meters: 1200 },
     suppressConnector: true,
+    visibility: "STRAIGHT_LINE",
+    routeStatus: "AVAILABLE",
     openTtr: transition.actions.openTtr,
   });
   expect(row.transition).not.toHaveProperty("route");
@@ -164,6 +166,46 @@ it("qualified straight-line-only Transition survives NOW collision without mode 
   });
   expect(withBlock.rows[1].transition).toEqual(row.transition);
   expect(withBlock.entries.filter((entry) => entry.kind === "BLOCK")).toHaveLength(1);
+});
+it("carries each accepted route status without route metrics or invented ETA", () => {
+  const { query, transition, scope } = setup();
+  for (const status of ["MISSING", "PENDING", "AVAILABLE", "FAILED"] as const) {
+    const row = composeDayStream(query, now, {
+      scope,
+      transitions: [{ ...transition, route: { status } }],
+    }).rows[1];
+    expect(row.transition).toMatchObject({
+      visibility: "STRAIGHT_LINE",
+      routeStatus: status,
+      geometricDistance: { meters: 1200 },
+      suppressConnector: true,
+    });
+    expect(row.transition).not.toHaveProperty("route");
+  }
+});
+it("withholds Transition placement when a versioned Flexible block nests either anchor", () => {
+  const { f, query, transition, scope } = setup();
+  for (const itemId of [f.before.id, f.segment.id]) {
+    const stream = composeDayStream(query, now, {
+      scope,
+      transitions: [transition],
+      flexible: [
+        {
+          version: "g2-flexible/1",
+          synthetic: true,
+          id: "nested",
+          title: "Synthetic block",
+          accountId: scope.accountId,
+          tripId: scope.tripId,
+          localDate: syntheticDate,
+          itemIds: [itemId],
+          choices: [],
+        },
+      ],
+    });
+    expect(stream.rows[1].transition).toBeNull();
+    expect(stream.rows.filter((row) => row.containerId === "nested")).toHaveLength(1);
+  }
 });
 it("confirmed mode persists without ETA and relation identity excludes display date and revision", () => {
   const { f, query, transition, scope } = setup();
@@ -217,6 +259,7 @@ it("Past, unknown clock, unqualified, stale anchors/action, scope mismatch and d
       geometricDistance: { ...transition.geometricDistance!, meters: NaN },
     },
     { ...transition, visibility: "HIDDEN" as const },
+    { ...transition, route: { status: "INVALID" as "MISSING" } },
     { ...transition, identity: { ...transition.identity!, occurrenceDiscriminator: "" } },
   ])
     expect(

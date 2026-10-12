@@ -1,3 +1,37 @@
+# CP-G2-TTR-01 — controlled local-main integration / Owner Review
+
+2026-10-13. Accepted source `aa8753e` (base `1114ccc`) normally merged into
+verified canonical `b4ddd27` without rewriting source history. All 25 accepted
+non-handoff files remain byte-identical; current PDF Source handoffs preserved.
+TTR 14-case Lab catalog, one Composer/DayFeed/Focus, optional fenced DEV inert
+intent sink and G2-FLEX-01 remain synthetic. G2-FLEX-02 has not started; CP01B
+worktree/report preserved for later snapshot/Focus port work. Focused252 PASS;
+integrated full3878 PASS/two exact baseline failures/23 skips. Capture passes
+both full runs; clean-main transient inbound-AI failure passes isolated rerun.
+Typecheck/lint/UI guard/touched format PASS. Task-owned iOS27 Simulator validates
+TTR states/tap/retention, Flexible/P1/P2/P3, nonzero scroll and Light/Dark.
+See `architecture/OTR_G2_TTR_01_MAIN_INTEGRATION_REPORT.md` for provenance,
+manifest and evidence. No push, Hosted, Provider/Apple or production activation.
+Next: Owner Review, then G2-FLEX-02 aligns with this accepted main.
+
+---
+
+# CP-G2-TTR-01 — isolated synthetic Transition consumer / Owner Review
+
+2026-10-13. From accepted local main `1114ccc`, G2 registered the 14 exact
+CP04B1 synthetic TTR contributions and rendered their composed Transitions in
+the production DayFeed used by the DEV-only shared Lab. The bounded optional
+`onOpenTtr` seam opens an inert sheet after current synthetic context fencing;
+no Core/Provider/Apple/production TTR activation. Focused 155 PASS,
+typecheck/lint/UI guard/format PASS. iOS 27 dedicated Simulator confirmed the
+chooser, key Transition states, NOW, tap/dismissal, Light/Dark and existing
+P1/P2/P3/Flexible behavior. Full-suite baseline comparison and evidence are in
+`architecture/OTR_G2_TTR_01_SYNTHETIC_CONSUMER_REPORT.md`. The work stays in
+`codex/g2-ttr-01-synthetic`; no main merge or push. Next: Owner review, then
+TTR/Core authority checkpoints before production use.
+
+---
+
 # CP-FLIGHT-PDF-SOURCE-03 — isolated integration preparation / Owner Review
 
 2026-10-13. `codex/cp-flight-pdf-source-03` prepares exact accepted SOURCE-02

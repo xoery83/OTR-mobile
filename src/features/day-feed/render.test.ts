@@ -14,11 +14,14 @@ import { DayFeedLabScreen } from "../day-feed-lab/DayFeedLabScreen";
 import { getLabFixtures } from "../day-feed-lab/fixtureRegistration";
 import { stayTripId } from "../day-feed-lab/stayContribution";
 import { flexibleContribution } from "../day-feed-lab/flexibleContribution";
+import { ttrLabFixture } from "@/features/ttr/labFixtures";
+import { projectTtr, reduceTtr } from "@/domain/trip/ttrState";
+import { syntheticObservation } from "@/domain/trip/__fixtures__/ttr";
 import { getFixtureCatalog } from "../day-feed-lab/fixtureCatalog";
 import { P1Row } from "./P1Row";
 import { FlightRows } from "./FlightRows";
 import { flightPresentation } from "./presentation";
-import { formatUiDate, t } from "@/ui/locale";
+import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
 import { timeRailWidth } from "./visualTokens";
 import { faroeNegativeFixtures, syntheticDate } from "./faroeNegative.test.fixtures";
@@ -43,6 +46,9 @@ vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useEffect: (callback: () => unknown) => {
     state.effects.push(callback);
+  },
+  useLayoutEffect: (callback: () => unknown) => {
+    callback();
   },
   useState: (initial: unknown) => {
     const i = state.cursor++;
@@ -929,4 +935,165 @@ it("G2 presents CP01A's blank Block title with localized fallback", () => {
       (press) => press.accessibilityLabel === t("flexible.untitledBlock"),
     ),
   ).toBe(true);
+});
+
+it("renders synthetic TTR distance, mode, route status and NOW without exposing ETA, and emits the exact intent", () => {
+  for (const [caseId, expected] of [
+    ["STRAIGHT_LINE", t("ttr.straightLine")],
+    ["WALKING_NO_ETA", t("ttr.mode.walking")],
+    ["DRIVING_PENDING", t("ttr.route.PENDING")],
+    ["TRANSIT_FAILED", t("ttr.route.FAILED")],
+    ["NOW_COLLISION", t("ttr.straightLine")],
+  ] as const) {
+    const fixture = ttrLabFixture(caseId);
+    const onOpenTtr = vi.fn();
+    const distance = t("ttr.straightLineDistance", {
+      distance: formatUiNumber(
+        fixture.supplemental!.projection.geometricDistance!.meters / 1000,
+        { maximumFractionDigits: 1 },
+      ),
+    });
+    const html = render(
+      createElement(DayFeed, {
+        projection: fixture.projection,
+        date: fixture.selectedDate,
+        zone: fixture.zone,
+        services: fixture.services,
+        instant: fixture.instant,
+        query: fixture.query,
+        ports: fixture.ports,
+        onOpenTtr,
+      }),
+    );
+    expect(html).toContain(expected);
+    expect(html).toContain(distance);
+    expect(html).not.toContain("ETA");
+    if (caseId === "NOW_COLLISION") expect(html).toContain("now-between");
+    const control = state.presses.find((press) =>
+      press.accessibilityLabel?.includes(distance),
+    );
+    expect(control).toBeDefined();
+    control!.onPress();
+    expect(onOpenTtr).toHaveBeenCalledWith(
+      fixture.supplemental!.projection.actions.openTtr,
+      {
+        key: expect.any(String),
+        inputFingerprint: fixture.supplemental!.projection.inputFingerprint,
+      },
+    );
+  }
+  const hidden = ttrLabFixture("PAST");
+  const html = render(
+    createElement(DayFeed, {
+      projection: hidden.projection,
+      date: hidden.selectedDate,
+      zone: hidden.zone,
+      services: hidden.services,
+      instant: hidden.instant,
+      query: hidden.query,
+      ports: hidden.ports,
+    }),
+  );
+  expect(html).not.toContain(t("ttr.straightLineDistance", { distance: "0" }));
+});
+
+it("renders suggested mode distinctly and synthetic permitted availability without ETA metrics", () => {
+  const straight = ttrLabFixture("STRAIGHT_LINE");
+  let html = render(
+    createElement(DayFeed, {
+      projection: straight.projection,
+      date: straight.selectedDate,
+      zone: straight.zone,
+      services: straight.services,
+      instant: straight.instant,
+      query: straight.query,
+      ports: {
+        ...straight.ports,
+        transitions: [
+          {
+            ...straight.supplemental!.projection,
+            visibility: "SUGGESTED_MODE",
+            modeOrigin: "SYSTEM_SUGGESTED",
+            mode: "walking",
+          },
+        ],
+      },
+    }),
+  );
+  expect(html).toContain(t("ttr.suggestedMode", { mode: t("ttr.mode.walking") }));
+
+  const pending = ttrLabFixture("DRIVING_PENDING");
+  const state = pending.supplemental!.state;
+  if (state.route.status !== "PENDING") throw new Error("Expected pending TTR fixture");
+  const available = projectTtr(
+    reduceTtr(state, {
+      type: "FIXTURE_RESULT",
+      ticket: state.route.ticket,
+      observation: {
+        ...syntheticObservation("driving"),
+        observedAt: pending.instant,
+      },
+    }),
+    { now: pending.instant, displayPermission: "SYNTHETIC_ALLOWED" },
+  );
+  html = render(
+    createElement(DayFeed, {
+      projection: pending.projection,
+      date: pending.selectedDate,
+      zone: pending.zone,
+      services: pending.services,
+      instant: pending.instant,
+      query: pending.query,
+      ports: { ...pending.ports, transitions: [available] },
+    }),
+  );
+  expect(html).toContain(t("ttr.route.AVAILABLE"));
+  expect(html).not.toContain("600");
+});
+
+it("dispatches current synthetic TTR intent to an inert Lab sheet and keeps Trip/date on close", () => {
+  render(createElement(DayFeedLabScreen));
+  state.presses
+    .find((press) => press.accessibilityLabel.startsWith(t("dayLab.trip")))!
+    .onPress();
+  render(createElement(DayFeedLabScreen));
+  state.presses
+    .find((press) => press.accessibilityLabel === t("dayLab.ttr.DRIVING_PENDING"))!
+    .onPress();
+  let html = render(createElement(DayFeedLabScreen));
+  const fixture = ttrLabFixture("DRIVING_PENDING");
+  expect(html).toContain(fixture.id);
+  state.presses
+    .find((press) => press.accessibilityLabel?.includes(t("ttr.route.PENDING")))!
+    .onPress();
+  html = render(createElement(DayFeedLabScreen));
+  expect(html).toContain("publication v1");
+  expect(html).toContain("Input fingerprint");
+  state.nodes.find((node) => node.onRequestClose && node.visible)!.onRequestClose();
+  html = render(createElement(DayFeedLabScreen));
+  expect(html).toContain(fixture.id);
+  expect(html).toContain(fixture.selectedDate);
+  expect(html).not.toContain("publication v1");
+});
+
+it("rejects a queued old TTR tap after switching A to B to A", () => {
+  const select = (name: string) => {
+    state.presses
+      .find((press) => press.accessibilityLabel.startsWith(t("dayLab.trip")))!
+      .onPress();
+    render(createElement(DayFeedLabScreen));
+    state.presses.find((press) => press.accessibilityLabel === name)!.onPress();
+    render(createElement(DayFeedLabScreen));
+  };
+  render(createElement(DayFeedLabScreen));
+  select(t("dayLab.ttr.DRIVING_PENDING"));
+  const oldTap = state.presses.find((press) =>
+    press.accessibilityLabel?.includes(t("ttr.route.PENDING")),
+  )!.onPress;
+  select(t("dayLab.ttr.WALKING_NO_ETA"));
+  select(t("dayLab.ttr.DRIVING_PENDING"));
+  oldTap();
+  const html = render(createElement(DayFeedLabScreen));
+  expect(html).toContain(t("dayLab.ttr.DRIVING_PENDING"));
+  expect(html).not.toContain("publication v1");
 });
