@@ -1,3 +1,20 @@
+# CP-FLIGHT-PDF-UPLOAD-SOURCE-01 — isolated CLOSED implementation / Owner Review
+
+2026-10-13: finite `PDF_PRIVATE_UPLOAD_V1` uses existing Source operation/receipt and
+execution/staging journal. Durable reservation, sealed-stage dispatch, exact terminal
+producer evidence, Source FINAL recovery, full plan exclusivity and protected cleanup
+are implemented in forward `20261013000100_source_pdf_upload_authority.sql`. Original
+upload remains PENDING; unchanged VERIFY/REGISTER/SEAL then Core qualification is required.
+UNKNOWN has no automatic retry/cleanup and continues quota. No remote orphan deletion.
+
+Versioned contract: `docs/trip/CP_FLIGHT_PDF_UPLOAD_AUTHORITY_V1.md` and
+`src/domain/trip/sourcePdfUploadAuthority.ts`. SQL security/recovery/PNG lifecycle: 29 PASS;
+strict retained PDF → two qualified Items → read2/SQLite54/Day PASS. TEXT HTTP/pg/TLS,
+Core/Source and Native REVIEW regressions PASS; static checks PASS. Real provider
+completion semantics, private staging/storage adapter, Backend HTTP and Native handoff
+remain later gates. No canonical merge/push or Hosted/provider/runtime activation.
+Local canonical baseline `a878be3`; actual remote `b4ddd27`. TTR/G2 and dirty files preserved.
+
 # CP-G2-TTR-01 — controlled local-main integration / Owner Review
 
 2026-10-13. Accepted source `aa8753e` (base `1114ccc`) normally merged into
