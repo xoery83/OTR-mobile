@@ -1,17 +1,17 @@
 {
   "checkpoint": "CP-FLIGHT-PDF-NATIVE-JOIN-01",
   "classification": "CLOSED_JOINED_PREPARATION_ONLY",
-  "joinedCommit": "be86edaac5f68771a8beba576b5afa6a143cd35e",
-  "joinedTree": "d19b8d11420f7193a8ac7efefb84f0fe8409722c",
-  "canonicalBaseline": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+  "joinedCommit": "ef86c03170ee87a434d8baf59a95b0335fa3e69c",
+  "joinedTree": "44e19d6e713a4d77550b7c6dddc4226ce342b6e6",
+  "canonicalBaseline": "eb4c8eb889ed700e1949eee71d2fa6e0e37d86b9",
   "remote": "03794531a224f0a7046f2717a7a9960b1241fc4f",
   "pdfAuthoritySql": [
     {
       "classification": "CP_FLIGHT_PDF_AUTH_01_SOURCE_SEAL",
-      "originalId": "7e956c33-8b4c-42f3-9869-027f5d66eaa7",
+      "originalId": "425671f2-be35-4b83-8f61-84a881f2d225",
       "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
-      "operationId": "9948bd14-0b5d-457c-881f-66da1f93f418",
-      "sealSha256": "85ab490179c496e079b8385f8a112d948b93bb8f47d87028206655ff15450fb2",
+      "operationId": "70f72c29-5697-4dd9-b10b-7884cdf5cb39",
+      "sealSha256": "605e716967cba0dd90aa20a72b5b4f5fa8848baa509321e6abbc2f33eba136d0",
       "pages": [
         {
           "pageIndex": 0,
@@ -33,30 +33,30 @@
       "tripId": "10000000-0000-4000-8000-000000000001",
       "sqlRead2SqliteDayPairs": [
         {
-          "itemId": "01f0029d-dbb8-40b9-9919-990ca177df72",
+          "itemId": "1f0c6ba9-98c7-4ff0-bc84-2f75c63f369d",
           "semanticRevision": 2
         },
         {
-          "itemId": "2ec665f3-3647-49ac-9547-cfe012f0e5f2",
+          "itemId": "5356d938-2e1e-44ff-9a30-c14d2b0dae96",
           "semanticRevision": 2
         }
       ],
       "itemDateExpectations": [
         {
-          "itemId": "01f0029d-dbb8-40b9-9919-990ca177df72",
-          "semanticRevision": 2,
-          "localDate": "2026-12-17"
-        },
-        {
-          "itemId": "2ec665f3-3647-49ac-9547-cfe012f0e5f2",
+          "itemId": "5356d938-2e1e-44ff-9a30-c14d2b0dae96",
           "semanticRevision": 2,
           "localDate": "2026-12-20"
+        },
+        {
+          "itemId": "1f0c6ba9-98c7-4ff0-bc84-2f75c63f369d",
+          "semanticRevision": 2,
+          "localDate": "2026-12-17"
         }
       ],
-      "dates": ["2026-12-17", "2026-12-20"],
-      "read2ManifestSha256": "ecc0b51a9c98383f3fdb7163157bf4dfd8965c3a1b981a1b29f69c028e1a427b",
+      "dates": ["2026-12-20", "2026-12-17"],
+      "read2ManifestSha256": "7338aa2c6b82a4e92bddb3321e7a6c232dbdac1b2a8ab17dadca43b7c0ac5073",
       "read2AccessRevision": 1,
-      "read2Epoch": "3c1db555-7ce0-4911-a528-19d4e78a915c",
+      "read2Epoch": "c85d46b2-1edc-4641-baa6-45c1956d61d9",
       "lostCollectionResponseRecovered": true,
       "fileColdOfflineReopen": true,
       "privateSourceLeakage": false,
@@ -65,22 +65,22 @@
     },
     {
       "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
-      "sourceId": "d9cef82e-f329-4c87-ae93-2f6d7460b2bc",
-      "runId": "fad45674-fe79-4830-a28a-440b7b1875fd",
-      "inputCatalogSha256": "23c63f3d55376f5e7cb42978624c685b66d4dae76d0d46053985d90fc4704546",
+      "sourceId": "b9ab735e-e76a-41e3-9995-fc7babe87318",
+      "runId": "aeadea9e-9383-4588-935d-80a25e07beb8",
+      "inputCatalogSha256": "8ac519b31416b67b3deecd27de481f0375c810796eff7a8fc62f8d0a15b4cd5a",
       "candidateIds": [
-        "14fef464-71ce-8ba0-a269-49811bc150ce",
-        "8df32101-8a19-8845-a3a9-da7d7317f4c6"
+        "1e55d024-7b5c-881b-a356-0d97fb613be9",
+        "f9152fc2-4abc-88a1-ac2b-61220cd9517d"
       ],
       "itemIds": [
-        "01f0029d-dbb8-40b9-9919-990ca177df72",
-        "2ec665f3-3647-49ac-9547-cfe012f0e5f2"
+        "5356d938-2e1e-44ff-9a30-c14d2b0dae96",
+        "1f0c6ba9-98c7-4ff0-bc84-2f75c63f369d"
       ],
       "recoveredOperationIds": [
-        "c282e14f-b657-400c-86fb-686dee7e3e60",
-        "1f1762b0-853d-4f45-aa8e-80fb6b7641f0",
-        "13129d56-7d15-47bf-9db1-4dc8ec26ad48",
-        "436ca57a-bf5d-4347-9dc6-07d979219093"
+        "a5718203-ea25-4f5d-b974-8bb97f494f3c",
+        "c7dfb837-279a-4757-8114-396476c5c1f0",
+        "61db6072-c132-4a82-9724-7566339938e3",
+        "faabe718-4ef6-4c9e-92a7-4e2e7ee4f4d3"
       ],
       "sourcePlanStatus": "COMPLETE",
       "associations": 4,
@@ -116,11 +116,11 @@
     {
       "classification": "CP_FLIGHT_NATIVE_01_CLOSED_SQL_REVIEW",
       "originalSha256": "f193cd842ed36779c9087d9c6c0a1bd7c3859dbafbf1807227d29afdeaacc12c",
-      "sourceId": "ebe2a088-67fa-43e3-bc4c-9975f8d267d3",
-      "runId": "294be067-6584-40be-a696-fee2940b83f2",
+      "sourceId": "8aff5ea7-1bf0-44b9-9910-5d956a74b73c",
+      "runId": "cc365081-96b1-498b-8128-fb84ce617715",
       "candidateIds": [
-        "2f3bddb5-3bb9-8550-a2b2-1db1c1f8d137",
-        "53979cd9-0e42-892b-a96d-5318c0639081"
+        "18ccacea-0bf4-86ad-a083-0ed40e7056eb",
+        "929528f7-151b-86d0-ae45-25d79ae7630e"
       ],
       "review": ["CONTRACT_UNSUPPORTED", "CONTRACT_UNSUPPORTED"],
       "queuedCommands": 0,
@@ -207,17 +207,17 @@
   "originalTextHttpPgTls": [
     {
       "classification": "CP_FLIGHT_DEV_02_LOCAL_HTTP_NODE_PG_TLS",
-      "sourceId": "29282c81-55a8-436a-ac89-8c65873a7341",
+      "sourceId": "674cc743-96b4-49ef-bfda-cd79f00b006c",
       "exactTextSha256": "9e63a65981bbcf2016c01291c6446328fc074c9f6b8ad2d8614befb9162f80e9",
       "itemIds": [
-        "d62c1714-5cd4-40a6-828c-6e2e6c5e1fd9",
-        "dace9143-da1b-428e-bb95-187444b7ccad"
+        "e3421833-d5ec-4c8d-8957-a4a0da273478",
+        "f48d6d61-b758-4c74-bc3c-e4e9b4ba1d57"
       ],
       "recoveredOperationIds": [
-        "8b71559e-4efe-4462-bc3e-3e15069614b3",
-        "83bbc6ec-1a08-4b18-8d07-8b63fda33801",
-        "22c977ad-5ce6-425b-ab8e-bf881305db31",
-        "cf2c6495-1b0a-4e61-af09-00c7f3e73326"
+        "1a5fdd55-7b19-4187-bd13-cabfc1d5a0ab",
+        "f748cedc-26ee-45ba-a317-640f083040e7",
+        "1425ae60-3695-45be-950b-b148e0b6c0db",
+        "c4bfda0e-856e-45c4-b8e5-946e6965ec04"
       ],
       "originalCopies": 1,
       "privateSourceLeakage": false,
@@ -258,30 +258,30 @@
       "tripId": "10000000-0000-4000-8000-000000000001",
       "sqlRead2SqliteDayPairs": [
         {
-          "itemId": "1727ea92-9746-4d7a-91c0-e074ed1e97a8",
+          "itemId": "a020f70d-98e3-4273-a9ae-50a3cddf76d6",
           "semanticRevision": 2
         },
         {
-          "itemId": "a58fc5aa-3504-4939-a78c-bf1e1e588540",
+          "itemId": "ceac2380-2c33-4f50-9563-21341763c733",
           "semanticRevision": 2
         }
       ],
       "itemDateExpectations": [
         {
-          "itemId": "a58fc5aa-3504-4939-a78c-bf1e1e588540",
+          "itemId": "a020f70d-98e3-4273-a9ae-50a3cddf76d6",
           "semanticRevision": 2,
           "localDate": "2026-12-17"
         },
         {
-          "itemId": "1727ea92-9746-4d7a-91c0-e074ed1e97a8",
+          "itemId": "ceac2380-2c33-4f50-9563-21341763c733",
           "semanticRevision": 2,
           "localDate": "2026-12-20"
         }
       ],
       "dates": ["2026-12-17", "2026-12-20"],
-      "read2ManifestSha256": "641605598ce1960176080ec29753c15e62e1b5dbd61676e7c0f4bbbc82aa327f",
+      "read2ManifestSha256": "0a28c478774392c3d71f5cb1649ae4b3c1e7e922fd6b62596a6fcdc5c8211043",
       "read2AccessRevision": 1,
-      "read2Epoch": "96db860c-5789-4cb1-8535-079149a3ac68",
+      "read2Epoch": "86ac4ec1-1011-4a8b-8a29-eafc1748d58d",
       "lostCollectionResponseRecovered": true,
       "fileColdOfflineReopen": true,
       "privateSourceLeakage": false,
@@ -290,22 +290,22 @@
     },
     {
       "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
-      "sourceId": "f49046b9-f32c-4ad1-94d9-a74cc2256e96",
-      "runId": "cd83462e-9a03-4f0c-affe-2e4ab4bc4412",
-      "inputCatalogSha256": "c510134c9dbcd27a411b9180ddb1ec945d6ad4ebfbe79f025aed8d59a4fec725",
+      "sourceId": "66cf8518-df58-42a5-9cc0-7d06bd7632ef",
+      "runId": "fee14ae1-97ab-4aa3-95c5-8bb48df70c44",
+      "inputCatalogSha256": "064daede3a6204f9f44a4268cedc36d345237bf14216c779096d43f617f4071d",
       "candidateIds": [
-        "36b1d773-76f2-8360-ac87-36e95dd32302",
-        "c2373970-8281-83c3-a340-9ebb3069e433"
+        "f08621a9-1ff3-85ee-af62-79c6cd496f20",
+        "f72acb6e-a1ef-84ad-aeb0-f63d2786b849"
       ],
       "itemIds": [
-        "a58fc5aa-3504-4939-a78c-bf1e1e588540",
-        "1727ea92-9746-4d7a-91c0-e074ed1e97a8"
+        "a020f70d-98e3-4273-a9ae-50a3cddf76d6",
+        "ceac2380-2c33-4f50-9563-21341763c733"
       ],
       "recoveredOperationIds": [
-        "57d61dbf-02ff-4320-964d-0d51e3878f38",
-        "a57788e4-ca14-4f9e-b6c2-b09ef3331037",
-        "a02bdd72-53b7-4ed5-8477-a5f0c2773374",
-        "dd61ee27-b920-4f3f-bad8-b62a68be1e5d"
+        "44a77bea-abc6-4a3b-a1a2-1f2d0c89a5d8",
+        "109ee91b-9de9-4b63-814b-2d568724de9e",
+        "89e0b770-8b2c-4608-aa40-4e9f504814dc",
+        "98bd6b1b-1252-4973-85d4-ccd16422c3e5"
       ],
       "sourcePlanStatus": "COMPLETE",
       "associations": 4,
@@ -378,8 +378,8 @@
     "installedOrSimulatorRun": false
   },
   "validation": {
-    "focusedSuites": 23,
-    "passed": 618,
+    "focusedSuites": 24,
+    "passed": 624,
     "skipped": 3,
     "skipReasons": [
       "unconfigured LIVE_W_SERVER84 full host bridge",
@@ -393,7 +393,8 @@
     "uiGuard": "PASS",
     "format": "PASS",
     "pythonSyntax": "PASS",
-    "diff": "PASS"
+    "diff": "PASS",
+    "logsPrefix": "/private/tmp/pdf-native-join-dl4-"
   },
   "conflictResolution": {
     "docs/CURRENT_IMPLEMENTATION_STATE.md": "new join heading + accepted Native checkpoint headers + exact AUTH02 body; canonical working notes exact suffix",
@@ -401,35 +402,18 @@
     "scripts/trip/core-v2-sql-acceptance.py": "preserve all six selectors plus combined Core/LLM/PDF options; assert Native canonical Item and seal increments are zero"
   },
   "preservation": {
-    "classification": "JOINED_SHARED_CLONE_PRESERVATION",
-    "canonicalMain": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+    "classification": "DL4_JOINED_SHARED_CLONE_PRESERVATION",
+    "canonicalMain": "eb4c8eb889ed700e1949eee71d2fa6e0e37d86b9",
+    "previewCommit": "ef86c03170ee87a434d8baf59a95b0335fa3e69c",
     "mainRefAndIndexUnchanged": true,
     "canonicalDirtyStatusAndBytesUnchanged": true,
-    "dirtyPaths": {
-      "docs/CURRENT_IMPLEMENTATION_STATE.md": {
-        "status": " M",
-        "sha256": "3e3a12b8b6362b76dd3b2c99a17a64df6986a2180d10a937be858d8b1b6dc15d"
-      },
-      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": {
-        "status": " M",
-        "sha256": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3"
-      },
-      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": {
-        "status": "??",
-        "sha256": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4"
-      },
-      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": {
-        "status": "??",
-        "sha256": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573"
-      },
-      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": {
-        "status": "??",
-        "sha256": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a"
-      },
-      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": {
-        "status": "??",
-        "sha256": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
-      }
+    "dirtyHashes": {
+      "docs/CURRENT_IMPLEMENTATION_STATE.md": "aaad6353698cc9309453e2d7a610cca4b9bd9d3aec15eaed1969bf1980ee4888",
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
     },
     "acceptedBranchTipsUnchanged": true,
     "previewAllWorkingNotesExactSuffix": true,
@@ -456,5 +440,20 @@
     "native handoff of Source-sealed admitted catalog/text",
     "ordinary Quartz/general supplier PDF remains REVIEW",
     "Owner canonical integration decision with dirty-document preservation"
-  ]
+  ],
+  "g2Dl4Coordination": {
+    "localMain": "eb4c8eb889ed700e1949eee71d2fa6e0e37d86b9",
+    "remoteMain": "03794531a224f0a7046f2717a7a9960b1241fc4f",
+    "oldBaselineAncestor": true,
+    "remoteAncestor": true,
+    "sharedPortConflict": null,
+    "fixtureContribution": "src/features/day-feed-lab/contribution.ts: FixtureContribution<T> / day-feed-lab/1",
+    "rendererContribution": "src/features/day-feed/rendererContribution.ts: RendererContribution<T> / day-feed-renderer/1",
+    "portsAndG2FilesByteIdentical": true,
+    "flightLabOrCandidateItemInjection": false,
+    "productionReader": "owning Core read2 \u2192 SQLite54 under local schema55 \u2192 production Day reader",
+    "changedCanonicalOverlap": ["docs/CURRENT_IMPLEMENTATION_STATE.md"],
+    "independentMainAdvanceDetectedAndReconciled": true,
+    "newCanonicalWorkingNotesBytes": 37658
+  }
 }

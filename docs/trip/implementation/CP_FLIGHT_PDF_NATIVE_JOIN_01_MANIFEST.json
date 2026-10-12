@@ -1,12 +1,12 @@
 {
   "branch": "codex/cp-flight-pdf-native-join-01",
-  "canonicalBaseline": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+  "canonicalBaseline": "eb4c8eb889ed700e1949eee71d2fa6e0e37d86b9",
   "acceptedPdfCommit": "51256f982bab85a9e11cec2e535f69e24137213d",
   "acceptedPdfTree": "c678e519fb00712f0eb33c8d5035391db0383f4d",
   "acceptedNativeCommit": "94d30a3bf48e1923eb94c61f881d7dfbb49b75fd",
   "acceptedNativeTree": "3f0431a30cc3832714a225fa9b0a98e004287872",
-  "joinedImplementationCommit": "be86edaac5f68771a8beba576b5afa6a143cd35e",
-  "joinedImplementationTree": "d19b8d11420f7193a8ac7efefb84f0fe8409722c",
+  "joinedImplementationCommit": "ef86c03170ee87a434d8baf59a95b0335fa3e69c",
+  "joinedImplementationTree": "44e19d6e713a4d77550b7c6dddc4226ce342b6e6",
   "preparedFiles": [
     {
       "status": "M",
@@ -89,7 +89,7 @@
     {
       "status": "M",
       "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
-      "sha256": "7e08223321476dd7f7b25ed267daa75573c30eb57166af29e7fbb3189aa32c0e",
+      "sha256": "c43de67dcb0f18237e8482532235af49b466c3f89118c27d842880d278129935",
       "acceptedFrom": ["PDF Authority", "Native"]
     },
     {
@@ -781,5 +781,38 @@
         "exact": true
       }
     }
-  }
+  },
+  "initialJoinedImplementationCommit": "be86edaac5f68771a8beba576b5afa6a143cd35e",
+  "g2Dl4AcceptedSource": "e984ed1bb377518c855af76f0cd9fd6366a73b58",
+  "g2Dl4PreservedPaths": [
+    "docs/PRODUCT.md",
+    "docs/adr/2026-10-12-day-feed-lab-shared-experience-port.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_DL4_MAIN_INTEGRATION.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_DL4_PORT.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_DL4_REPORT.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_INTEGRATION_GUIDE.md",
+    "docs/architecture/OTR_DAY_FEED_LAB_SHARED_HANDOFF.md",
+    "docs/qa/day-feed-lab-dl4-integration/01-nonzero-scroll-after-immersive-return.png",
+    "docs/qa/day-feed-lab-dl4-integration/acceptance.json",
+    "docs/qa/day-feed-lab-dl4/01-p3-base-focus-light.png",
+    "docs/qa/day-feed-lab-dl4/02-p3-immersive-light.png",
+    "docs/qa/day-feed-lab-dl4/03-p3-immersive-dark.png",
+    "docs/qa/day-feed-lab-dl4/04-p3-checkout-focus-dark.png",
+    "docs/qa/day-feed-lab-dl4/acceptance.json",
+    "src/features/day-feed-lab/DayFeedLabScreen.tsx",
+    "src/features/day-feed-lab/StayFixtureRow.tsx",
+    "src/features/day-feed-lab/contribution.test.ts",
+    "src/features/day-feed-lab/contribution.ts",
+    "src/features/day-feed-lab/fixtureCatalog.test.ts",
+    "src/features/day-feed-lab/fixtureCatalog.ts",
+    "src/features/day-feed-lab/fixtureFacts.ts",
+    "src/features/day-feed-lab/fixtureRegistration.ts",
+    "src/features/day-feed-lab/stayContribution.ts",
+    "src/features/day-feed/DayFeed.tsx",
+    "src/features/day-feed/P1Row.tsx",
+    "src/features/day-feed/composition.ts",
+    "src/features/day-feed/render.test.ts",
+    "src/features/day-feed/rendererContribution.ts",
+    "src/ui/catalogs.ts"
+  ]
 }

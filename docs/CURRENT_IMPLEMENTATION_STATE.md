@@ -5,7 +5,7 @@ Accepted AUTH02 bba31ff/51256f9 then Native04 94d30a3 combined in isolation.
 Source seal/DTO/profile and Native production bytes stay exact. Only handoff,
 shared fixture and SQL selectors are coordinated. Strict Source-owned profile
 may qualify; ordinary PDFKit/Quartz remains REVIEW with no accepted Items.
-Combined618 PASS/3 explicit skips, SQL20 PASS, standalone Swift/PDFKit9 PASS.
+Combined624 PASS/3 explicit skips, SQL20 PASS, standalone Swift/PDFKit9 PASS.
 Typecheck/build/lint/UI guard/format/diff and production-hash preservation PASS.
 G2 DL4 shared ports, LLM protected admission and DEV TEXT retained; latest canonical working
 notes are an exact suffix below accepted checkpoint headers. No Stage1 tree merge.
