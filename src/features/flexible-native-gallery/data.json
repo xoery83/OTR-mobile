@@ -1,0 +1,104 @@
+{
+  "baskets": [
+    {
+      "id": "group",
+      "name": "Group",
+      "resources": ["garden", "cafe", "museum"],
+      "published": true
+    },
+    {
+      "id": "member-a",
+      "name": "Alex · published",
+      "resources": ["bookshop", "garden"],
+      "published": true
+    },
+    {
+      "id": "member-b",
+      "name": "小林 · published",
+      "resources": ["cafe", "market"],
+      "published": true
+    },
+    {
+      "id": "private",
+      "name": "SECRET PRIVATE BASKET",
+      "resources": ["private-resource"],
+      "published": false
+    }
+  ],
+  "resources": [
+    {
+      "id": "garden",
+      "name": "Jardin du Luxembourg · 卢森堡公园",
+      "category": "Garden · 公园",
+      "location": "Saint-Germain, Paris",
+      "relevant": true,
+      "coordinates": {
+        "latitude": 48.8462,
+        "longitude": 2.3372
+      },
+      "image": "garden"
+    },
+    {
+      "id": "cafe",
+      "name": "Café de Flore · 咖啡馆",
+      "category": "Café · 咖啡馆",
+      "location": "Saint-Germain, Paris",
+      "relevant": true,
+      "coordinates": {
+        "latitude": 48.854,
+        "longitude": 2.3325
+      },
+      "image": "cafe"
+    },
+    {
+      "id": "museum",
+      "name": "Musée du Luxembourg · 卢森堡博物馆",
+      "category": "Museum · 博物馆",
+      "location": "Paris",
+      "relevant": true,
+      "coordinates": {
+        "latitude": 48.8483,
+        "longitude": 2.3347
+      }
+    },
+    {
+      "id": "bookshop",
+      "name": "Shakespeare and Company · 莎士比亚书店",
+      "category": "Bookshop · 书店",
+      "location": "Paris",
+      "relevant": true
+    },
+    {
+      "id": "market",
+      "name": "Marché · 市集",
+      "category": "Market · 市集",
+      "relevant": false
+    },
+    {
+      "id": "saved-away",
+      "name": "Kyoto · 京都散步",
+      "location": "Kyoto",
+      "relevant": false
+    },
+    {
+      "id": "activity-1",
+      "name": "Quiet courtyard · 庭院",
+      "relevant": true
+    },
+    {
+      "id": "activity-2",
+      "name": "Riverside stroll · 河畔漫步",
+      "relevant": true
+    },
+    {
+      "id": "activity-3",
+      "name": "Local gallery · 本地画廊",
+      "relevant": true
+    },
+    {
+      "id": "activity-4",
+      "name": "Open-air market · 露天市集",
+      "relevant": true
+    }
+  ]
+}

@@ -1,3 +1,42 @@
+# Flexible CP01B — registration proposal PASS / G2 integration pending
+
+2026-10-13. CP01B now reconciles exact required main54ecb4b. G2 reviewed append-only
+placement, then retained shared registry application ownership. Registry/test patches
+are prepared externally, NOT APPLIED:36 unique entries, first22/default Nelson and
+all14 TTR checks. Focused261 PASS includes prior260 plus proposed-catalog coverage.
+No shared source, Simulator, native/database changes, commit/merge/push. Index empty.
+Next: G2 controlled integration, then actual shared Lab Simulator validation.
+Report: `architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md`.
+
+---
+
+# Flexible CP01B — native gate / registration approval pending
+
+2026-10-13. Required main54ecb4b and the approved 17-file candidate hashes verified.
+Prepared an external two-line G2 catalog patch appending F01–F14 after existing22;
+not applied. Sent to G2 owner per explicit prior-approval requirement. No shared
+file, feature code, Simulator or database change; index empty, no commit/merge/push.
+Report: `architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md`.
+Next: G2 registration approval, safe required-main base reconciliation, then actual
+shared Lab Simulator validation. No native PASS is claimed.
+
+---
+
+# Flexible CP01B — adapter preparation / Owner Review
+
+2026-10-13. Isolated `codex/flexible-day-feed-lab-cp01b` prepares against accepted
+G2-FLEX-02 source `12eadff`; initial main `a878be35` lacked it. Final main
+`54ecb4b` contains it with identical shared interface bytes.
+Approved CP01A `5853009` feature files supply a controlled G2 renderer, both-scoped
+Block adapter and immutable revisioned snapshot producer. COPY/remove/resize/delete,
+rejection, scope fences, Focus boundary and TTR stability tests pass (260 total).
+Shared catalog is not registered; Simulator/device acceptance is not performed
+in this adapter preparation turn. No shared G2/TTR/Core/migration changes or commit/merge/push.
+Report: `architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md`.
+Next: Owner Review, shared catalog registration and native acceptance; no production activation.
+
+---
+
 # G2-FLEX-02 — controlled local-main integration / Owner Review
 
 2026-10-13. Owner-accepted `12eadff` normally merged unchanged into current
