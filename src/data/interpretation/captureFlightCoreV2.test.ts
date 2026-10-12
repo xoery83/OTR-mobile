@@ -121,3 +121,58 @@ it("modified Source bytes and switched accounts fail before publication", async 
     ),
   ).rejects.toThrow("Account changed");
 });
+
+it("does not discard a Capture edit to manufacture an evidence-grounded title", async () => {
+  const f = await captureFlightFixture();
+  const edited = structuredClone(f.set);
+  edited.candidates[0].proposal.fields.title!.proposed_value = "Edited Capture title";
+  const built = await buildCaptureFlightPublicationV2(
+    f.context,
+    edited,
+    f.batch.request.materials,
+    randomUUID(),
+    hash,
+    f.getAccountId,
+  );
+  expect(built.publication.candidates[0].facts.core?.title).toBe("Edited Capture title");
+  const checked = await extractCoreFlightPublication(
+    built.publication,
+    f.batch.request.materials,
+    f.context.accountId,
+    f.context.tripId,
+    hash,
+    publicationTestAirport,
+  );
+  expect(checked.sealed[0].status).toBe("REVIEW");
+});
+
+it("preserves a known Canonical target hint instead of presenting it as a fresh unrelated CREATE", async () => {
+  const f = await captureFlightFixture();
+  const set = structuredClone(f.set),
+    existingId = randomUUID();
+  set.matching_scope.occurrences = [
+    { ...set.candidates[0].anchors[0], eventId: existingId, semanticRevision: 7 },
+  ];
+  const built = await buildCaptureFlightPublicationV2(
+    f.context,
+    set,
+    f.batch.request.materials,
+    randomUUID(),
+    hash,
+    f.getAccountId,
+  );
+  expect(built.publication.candidates[0].existingTargetHint).toEqual({
+    kind: "ITEM",
+    id: existingId,
+    revision: 7,
+  });
+  const checked = await extractCoreFlightPublication(
+    built.publication,
+    f.batch.request.materials,
+    f.context.accountId,
+    f.context.tripId,
+    hash,
+    publicationTestAirport,
+  );
+  expect(checked.sealed[0].status).toBe("REVIEW");
+});

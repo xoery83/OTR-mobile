@@ -49,6 +49,7 @@ it.skipIf(!owned)(
       qualifyOperationId: randomUUID(),
     }));
     const plan = buildCaptureFlightSourcePlanV2(p, randomUUID(), identities);
+    const recoveredOperations: string[] = [];
     try {
       await seedPublicationSource(
         admin,
@@ -122,6 +123,7 @@ it.skipIf(!owned)(
           expect(recovered?.projection).toBe("FULL");
           if (recovered?.projection !== "FULL") throw new Error("REDACTED_UNEXPECTED");
           expect(recovered.receipt.outcome).toBe("APPLIED");
+          recoveredOperations.push(recovered.receipt.operationId);
           expect(await transport.submit(f.context, command)).toEqual(recovered);
           const slot = plan.slots.find((s) => s.operationId === command.operationId)!;
           const finalized = await transport.finalizeSourceSlot(f.context, plan.planId, {
@@ -313,6 +315,22 @@ it.skipIf(!owned)(
       ).toBe(2);
 
       expect(Object.keys(flightCommandLeaves(c.facts))).not.toHaveLength(0);
+      expect(new Set(recoveredOperations).size).toBe(4);
+      console.info(
+        JSON.stringify({
+          classification: "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+          sourceId: p.sourceId,
+          runId: p.runId,
+          inputCatalogSha256: p.inputCatalogSha256,
+          candidateIds: p.candidates.map((c) => c.candidateId),
+          itemIds: identities.map((i) => i.itemId),
+          recoveredOperationIds: recoveredOperations,
+          sourcePlanStatus: "COMPLETE",
+          associations: 4,
+          qualificationRevision: 2,
+          negativeWrites: 0,
+        }),
+      );
     } finally {
       await admin.lease.query(
         "UPDATE public.trip_core_activation_gate SET runtime_enabled=false,enabled_commands='{}',enabled_families='{}',enabled_admission_modes='{}'",

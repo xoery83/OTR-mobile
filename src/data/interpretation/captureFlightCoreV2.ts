@@ -9,7 +9,11 @@ import type {
   CoreSourcePlanTransport,
 } from "../api/tripCoreV2Transport";
 import type { InterpretationRequest } from "@/domain/intelligence/interpretation";
-import { flightCommandLeaves, flightEndpointSchema } from "@/domain/trip/flightAdmission";
+import {
+  flightCommandLeaves,
+  flightEndpointSchema,
+  matchFlightV1,
+} from "@/domain/trip/flightAdmission";
 import type { ImportHash } from "@/domain/trip/flightImportReview";
 import {
   coreCandidatePublicationV2Schema,
@@ -79,7 +83,12 @@ export async function buildCaptureFlightPublicationV2(
           : null,
       ...(origin.success ? { origin: origin.data } : {}),
       ...(destination.success ? { destination: destination.data } : {}),
-      ...(services ? { services, core: { title: services[0].service_literal } } : {}),
+      ...(services
+        ? {
+            services,
+            core: { title: fields.title?.proposed_value ?? services[0].service_literal },
+          }
+        : {}),
     };
     const leaves = {
       flightNumberLiteral: facts.flightNumberLiteral,
@@ -120,6 +129,12 @@ export async function buildCaptureFlightPublicationV2(
         });
       }
     }
+    const hints = c.anchors
+      .map((anchor) => matchFlightV1(anchor, set.matching_scope))
+      .filter((match) => match.assessment === "SAME_ITEM");
+    const targets = [...new Set(hints.map((h) => h.targetId))];
+    if (targets.length > 1) throw new Error("CONTRACT_UNSUPPORTED");
+    const hint = set.matching_scope.occurrences.find((o) => o.eventId === targets[0]);
     return {
       schemaId: "otr.trip.capture.candidate/2" as const,
       candidateId: c.id,
@@ -141,7 +156,9 @@ export async function buildCaptureFlightPublicationV2(
       facts,
       fieldKnowledge,
       fieldEvidence,
-      existingTargetHint: null,
+      existingTargetHint: hint
+        ? { kind: "ITEM" as const, id: hint.eventId, revision: hint.semanticRevision }
+        : null,
       unmappedObservations,
     };
   });
