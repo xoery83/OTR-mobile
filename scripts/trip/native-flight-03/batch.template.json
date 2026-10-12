@@ -1,0 +1,192 @@
+{
+  "batch_id": "ca13b000-0000-4000-8000-000000009001",
+  "manifest_version": 1,
+  "catalog": {
+    "trip_id": "10000000-0000-4000-8000-000000000001",
+    "version": 1,
+    "trip_sources": [
+      {
+        "id": "ca13b000-0000-4000-8000-000000000001",
+        "trip_id": "10000000-0000-4000-8000-000000000001",
+        "lifecycle": "ACTIVE",
+        "created_at": "2026-10-05T12:46:12.458682Z",
+        "deleted_at": null,
+        "deleted_by": null,
+        "access_mode": "OWNER_PRIVATE",
+        "acquired_by": "00000000-0000-4000-8000-000000000001",
+        "captured_at": null,
+        "source_kind": "TEXT",
+        "row_revision": 1,
+        "acquisition_key": "source-0",
+        "retention_state": "RETAINED",
+        "acquisition_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "capture_time_basis": "UNKNOWN",
+        "acquisition_channel": "PASTE",
+        "current_material_revision": 1
+      }
+    ],
+    "actor_account_id": "00000000-0000-4000-8000-000000000001",
+    "trip_source_runs": [],
+    "trip_source_inputs": [],
+    "trip_source_revisions": [
+      {
+        "reason": "ACQUISITION",
+        "source_id": "ca13b000-0000-4000-8000-000000000001",
+        "created_at": "2026-10-05T12:46:12.459271Z",
+        "created_by": "00000000-0000-4000-8000-000000000001",
+        "completeness": "AS_SUPPLIED",
+        "operation_key": "fixture-source",
+        "capture_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "retention_state": "RETAINED",
+        "origin_source_id": null,
+        "material_revision": 1,
+        "previous_revision": null,
+        "origin_material_revision": null,
+        "original_representation_ids": ["ca13b000-0000-4000-8000-000000000002"]
+      }
+    ],
+    "trip_source_candidates": [],
+    "trip_source_associations": [],
+    "trip_source_output_slots": [],
+    "trip_source_confirmations": [],
+    "trip_source_representations": [
+      {
+        "id": "ca13b000-0000-4000-8000-000000000002",
+        "role": "ORIGINAL",
+        "encoding": "UTF-8",
+        "part_key": null,
+        "mime_type": null,
+        "source_id": "ca13b000-0000-4000-8000-000000000001",
+        "byte_count": 125,
+        "created_at": "2026-10-05T12:46:12.459579Z",
+        "object_key": null,
+        "parent_ids": [],
+        "locator_uri": null,
+        "verified_at": null,
+        "remote_state": "NOT_APPLICABLE",
+        "row_revision": 1,
+        "text_content": "NZ1 AKL->CHC 2026-12-17 depInstant=2026-12-16T20:00:00.120000Z\nNZ2 CHC->AKL 2026-12-20 depInstant=2026-12-19T20:00:00.120000Z",
+        "material_kind": "TEXT",
+        "transform_key": null,
+        "payload_sha256": "654e97d2555d91b7e6d9d8022cba672be10587bf384358f533eda51992a5e2f3",
+        "regenerability": "NOT_APPLICABLE",
+        "storage_bucket": null,
+        "retention_state": "RETAINED",
+        "storage_provider": null,
+        "original_filename": null,
+        "transform_version": null,
+        "introduced_revision": 1,
+        "transform_options_sha256": null
+      }
+    ],
+    "trip_source_run_predecessors": [],
+    "trip_source_candidate_lineage": [],
+    "trip_source_slot_dependencies": [],
+    "trip_source_slot_lineage_dispositions": []
+  },
+  "matching": {
+    "complete": true,
+    "current": true,
+    "proposalsComplete": true,
+    "lineageComplete": true,
+    "servicesAtEventBaselines": true,
+    "baseline_id": "fixture-complete-relevant-scope",
+    "occurrences": []
+  },
+  "resolved_airports": [
+    {
+      "input_id": "ca13b000-0000-4000-8000-000000000003",
+      "code": "AKL",
+      "airport_id": "fixture-airport:AKL",
+      "namespace": "IATA_AIRPORT",
+      "unique": true,
+      "resolution_observation_id": "fixture-reference-airports-v1"
+    },
+    {
+      "input_id": "ca13b000-0000-4000-8000-000000000003",
+      "code": "CHC",
+      "airport_id": "fixture-airport:CHC",
+      "namespace": "IATA_AIRPORT",
+      "unique": true,
+      "resolution_observation_id": "fixture-reference-airports-v1"
+    }
+  ],
+  "predecessor_run_ids": [],
+  "predecessor_candidate_ids": [],
+  "supplier_scopes": [
+    {
+      "issuer": "NZ",
+      "scope_id": "2026-12-18",
+      "documented_uniqueness": "ONE_LEG_WITHIN_SCOPE"
+    }
+  ],
+  "request": {
+    "binding": {
+      "request_id": "ca13b000-0000-4000-8000-000000009002",
+      "idempotency_key": "ca13b000-0000-4000-8000-000000009002",
+      "schema_dialect": "OTR_TYPED_V1",
+      "consumer_id": "otr-import-v1",
+      "contract_version": "otr-intelligence-v1",
+      "account_id": "00000000-0000-4000-8000-000000000001",
+      "trip_id": "10000000-0000-4000-8000-000000000001",
+      "run_id": "ca13b000-0000-4000-8000-000000009003",
+      "generation": 1,
+      "input_sha256": "242ec8aca4320577b404ebc0493805a232aeb3d98e9b6baf3dfeaf48f54ae85e",
+      "schema_id": "otr.import.flight",
+      "schema_version": 1,
+      "schema_sha256": "71c5c3d0f72ebd7622b11a8488840825e3f2d27b966e1475692baedce24fc9d0",
+      "descriptor": {
+        "plugin_id": "otr-reference-flight",
+        "boundary_version": "otr-intelligence-v1",
+        "adapter_version": "2",
+        "model_version": "NO_MODEL",
+        "execution_location": "DETERMINISTIC_LOCAL",
+        "capabilities": [
+          "STRUCTURED_EXTRACTION",
+          "BATCH_N_TO_M_EXTRACTION",
+          "EVIDENCE_MAPPING"
+        ],
+        "modalities": ["TEXT"],
+        "replay": "SUPPORTED",
+        "network_required": false,
+        "limits": {
+          "inputs": 64,
+          "items": 64,
+          "fields": 64,
+          "payload_bytes": 4194304
+        },
+        "timeout": "CALLER_FENCED",
+        "cancellation": "UNSUPPORTED",
+        "privacy_requirement": "LOCAL_ONLY",
+        "configuration_sha256": "40dff73d8f3738632c7e0d342f0a7de07d7180b0db16e572eabbf875740d5958"
+      },
+      "observed_at": "2026-10-06T00:00:00Z",
+      "observation_clock": "CALLER_OBSERVED",
+      "deadline": "2026-10-07T00:00:00Z",
+      "privacy": "LOCAL_ONLY",
+      "limits": {
+        "inputs": 64,
+        "items": 64,
+        "fields": 64,
+        "payload_bytes": 4194304
+      }
+    },
+    "materials": [
+      {
+        "pin": {
+          "id": "ca13b000-0000-4000-8000-000000000003",
+          "source_id": "ca13b000-0000-4000-8000-000000000001",
+          "representation_id": "ca13b000-0000-4000-8000-000000000002",
+          "material_revision": 1,
+          "payload_sha256": "654e97d2555d91b7e6d9d8022cba672be10587bf384358f533eda51992a5e2f3",
+          "byte_count": 125,
+          "observed_source_row_revision": 1,
+          "historical_selection": false
+        },
+        "media_type": "text/plain",
+        "form": "TEXT",
+        "text": "NZ1 AKL->CHC 2026-12-17 depInstant=2026-12-16T20:00:00.120000Z\nNZ2 CHC->AKL 2026-12-20 depInstant=2026-12-19T20:00:00.120000Z"
+      }
+    ]
+  }
+}

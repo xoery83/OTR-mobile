@@ -48,7 +48,13 @@ export function session(fixture: string) {
       }
     }
   });
-  proc.on("exit", () => pending?.reject(new Error(errors || "SQL_SESSION_LOST")));
+  let exited = false;
+  proc.on("exit", () => {
+    exited = true;
+    const request = pending;
+    pending = undefined;
+    request?.reject(new Error(errors || "SQL_SESSION_LOST"));
+  });
   const literal = (value: unknown) =>
     value === null
       ? "NULL"
@@ -60,6 +66,7 @@ export function session(fixture: string) {
       proc.kill();
     },
     query(sql, params = []) {
+      if (exited) return Promise.reject(new Error(errors || "SQL_SESSION_LOST"));
       if (pending) throw new Error("CONCURRENT_SQL_TEST_QUERY");
       const bound = sql.replace(/\$(\d+)/g, (_, n) => literal(params[Number(n) - 1]));
       const statement = /^SELECT\b/i.test(bound)
@@ -87,6 +94,9 @@ export async function seedPublicationSource(
   account: string,
   trip: string,
   suppliedPublication?: object,
+  pdfOriginal?:
+    | { id: string; sha256: string; byteCount: number; optionsSha256: string }
+    | { representationId: string; sha256: string; byteCount: number },
 ) {
   const m = f.materials[0],
     pin = m.pin,
@@ -106,12 +116,61 @@ export async function seedPublicationSource(
   );
   await admin.lease.query(
     "INSERT INTO public.trip_source_revisions(source_id,material_revision,created_at,created_by,operation_key,capture_sha256,original_representation_ids,completeness,reason) VALUES($1::uuid,1,clock_timestamp(),$2::uuid,$1,repeat('0',64),ARRAY[$3::uuid],'AS_SUPPLIED','ACQUISITION')",
-    [source, account, pin.representation_id],
+    [
+      source,
+      account,
+      pdfOriginal && "representationId" in pdfOriginal
+        ? pdfOriginal.representationId
+        : pin.representation_id,
+    ],
   );
   await admin.lease.query(
     "INSERT INTO public.trip_source_representations(id,row_revision,source_id,introduced_revision,role,material_kind,encoding,payload_sha256,byte_count,text_content,regenerability,created_at,remote_state) VALUES($1::uuid,1,$2::uuid,1,'ORIGINAL','TEXT','UTF-8',$3,$4,$5,'NOT_APPLICABLE',clock_timestamp(),'NOT_APPLICABLE')",
     [pin.representation_id, source, pin.payload_sha256, pin.byte_count, m.text],
   );
+  if (pdfOriginal && "representationId" in pdfOriginal) {
+    const nativeOriginal = pdfOriginal;
+    await admin.lease.query(
+      "INSERT INTO public.trip_source_representations(id,row_revision,source_id,introduced_revision,role,material_kind,mime_type,payload_sha256,byte_count,parent_ids,regenerability,created_at,remote_state,verified_at,storage_provider,storage_bucket,object_key) VALUES($1::uuid,1,$2::uuid,1,'ORIGINAL','BINARY','application/pdf',$3,$4,'{}','NOT_APPLICABLE',clock_timestamp(),'VERIFIED',clock_timestamp(),'supabase_storage','trip-source-material',$1)",
+      [
+        nativeOriginal.representationId,
+        source,
+        nativeOriginal.sha256,
+        nativeOriginal.byteCount,
+      ],
+    );
+    await admin.lease.query(
+      "UPDATE public.trip_source_representations SET role='DERIVED',parent_ids=ARRAY[$2::uuid],transform_key='apple-pdfkit',transform_version='1',transform_options_sha256=repeat('0',64),regenerability='POSSIBLE' WHERE id=$1::uuid",
+      [pin.representation_id, nativeOriginal.representationId],
+    );
+    await admin.lease.query(
+      "UPDATE public.trip_sources SET source_kind='FILE',acquisition_channel='FILES' WHERE id=$1::uuid",
+      [source],
+    );
+  } else if (pdfOriginal) {
+    await admin.lease.query(
+      "UPDATE public.trip_sources SET source_kind='FILE',acquisition_channel='FILES' WHERE id=$1::uuid",
+      [source],
+    );
+    await admin.lease.query(
+      "UPDATE public.trip_source_revisions SET original_representation_ids=ARRAY[$2::uuid] WHERE source_id=$1::uuid",
+      [source, pdfOriginal.id],
+    );
+    await admin.lease.query(
+      "UPDATE public.trip_source_representations SET role='DERIVED',parent_ids=ARRAY[$2::uuid],transform_key='otr.pdf.literal-text',transform_version='1',transform_options_sha256=$3,regenerability='POSSIBLE' WHERE id=$1::uuid",
+      [pin.representation_id, pdfOriginal.id, pdfOriginal.optionsSha256],
+    );
+    await admin.lease.query(
+      "INSERT INTO public.trip_source_representations(id,row_revision,source_id,introduced_revision,role,material_kind,mime_type,payload_sha256,byte_count,regenerability,created_at,storage_provider,storage_bucket,object_key,remote_state,verified_at) VALUES($1::uuid,1,$2::uuid,1,'ORIGINAL','BINARY','application/pdf',$3,$4,'NOT_APPLICABLE',clock_timestamp(),'supabase_storage','trip-source-material',$5,'VERIFIED',clock_timestamp())",
+      [
+        pdfOriginal.id,
+        source,
+        pdfOriginal.sha256,
+        pdfOriginal.byteCount,
+        `synthetic/${source}/${pdfOriginal.id}`,
+      ],
+    );
+  }
   await admin.lease.query("SET CONSTRAINTS ALL IMMEDIATE");
   for (const t of [
     "trip_sources",

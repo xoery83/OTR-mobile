@@ -246,6 +246,7 @@ export async function verifyJoinedFlightDay({
       accountId,
       tripId,
       sqlRead2SqliteDayPairs: pairs(expected),
+      itemDateExpectations: expected.map((item) => ({ ...item })),
       dates: expected.map((i) => i.localDate),
       read2ManifestSha256: first.manifest.manifestSha256,
       read2AccessRevision: first.manifest.accessRevision,
@@ -254,6 +255,7 @@ export async function verifyJoinedFlightDay({
       fileColdOfflineReopen: true,
       privateSourceLeakage: false,
       sqliteMigration: 54,
+      localSchemaVersion: migrations.at(-1)?.id,
     };
   } finally {
     if (sql) sql.close();

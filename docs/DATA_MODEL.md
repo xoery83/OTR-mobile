@@ -760,3 +760,14 @@ and current actions; there is no persisted progress engine. C3 Activity and all
 Source/Run/canonical processing remain deferred. See
 [implementation report](architecture/OTR_CAPTURE_C2_IMPLEMENTATION_REPORT.md) and
 [ADR](adr/2026-10-08-capture-c2-local-intake.md).
+
+## CP-FLIGHT-NATIVE-01 local preparation (activation CLOSED)
+
+Additive SQLite55 `capture_flight_native_preparations` references existing local
+Capture custody by Account/Trip/Capture. It stores immutable prospective import
+identities, PDFKit extraction/page ranges and exact adapter preparation; it is not
+registered Source authority, an accepted Item mirror or a Day projection. Historical
+SQLite1–54 and Server migrations are unchanged. Accepted read2 remains SQLite54.
+Same-Trip reassignment fences retained preparation rather than reallocating IDs.
+See `trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md` for the owning PDF Source
+and derivative-publication blockers. No Capture/Source/Core activation is implied.

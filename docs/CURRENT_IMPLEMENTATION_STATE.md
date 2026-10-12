@@ -1,3 +1,102 @@
+# CP-FLIGHT-PDF-NATIVE-JOIN-01 — isolated CLOSED joined preparation
+
+Updated 2026-10-12. `codex/cp-flight-pdf-native-join-01` starts at canonical40c5d29.
+Accepted AUTH02 bba31ff/51256f9 then Native04 94d30a3 combined in isolation.
+Source seal/DTO/profile and Native production bytes stay exact. Only handoff,
+shared fixture and SQL selectors are coordinated. Strict Source-owned profile
+may qualify; ordinary PDFKit/Quartz remains REVIEW with no accepted Items.
+Combined618 PASS/3 explicit skips, SQL20 PASS, standalone Swift/PDFKit9 PASS.
+Typecheck/build/lint/UI guard/format/diff and production-hash preservation PASS.
+G2 DL2, LLM protected admission and DEV TEXT retained; original canonical working
+notes are an exact suffix below accepted checkpoint headers. No Stage1 tree merge.
+Report/evidence/exact commit/tree/manifest:
+`trip/implementation/CP_FLIGHT_PDF_NATIVE_JOIN_01_INTEGRATION_READINESS_REPORT.md`.
+No main merge/push, Hosted, paid LLM/Provider, DEV DATA or native runtime activation.
+
+---
+
+## CP-FLIGHT-NATIVE-03 — installed bridge verified; Owner Review pending
+
+Isolated `codex/flight-native-03` reconciles accepted Native preparation with canonical `40c5d29a` and preserves G2/CLOSED model-task changes. Actual installed DEV Simulator PDFKit/C2/private preparation and no-reinstall cold recovery pass; exact installed packet owning SQL remains two REVIEW results, zero commands. No authoritative PDF Source/Item is registered. Selectable-text PDF only; Agent 3 derivative authority remains pending. No canonical merge/push or activation. See `docs/trip/implementation/CP_FLIGHT_NATIVE_03_REPORT.md` and synthetic evidence for exact tree, scope, G2 read expectations and separate Fixture/Simulator/Device/Core DEV status. Next step: Owner integration review.
+
+# CP-FLIGHT-NATIVE-02 — integration preparation / OWNER REVIEW
+
+Updated 2026-10-12. `codex/flight-native-02-integration-prep` prepares accepted
+Native b10e076 against canonical12693e3. Implementation06df5de/tree73178e0:
+exact32 paths,30 accepted blobs unchanged; handoff and shared SQL runner conflicts
+resolved preserving Backend TEXT and Native PDF REVIEW modes. Canonical HEAD,
+status inventory and9695-byte dirty-note suffix retained; no merge/push/activation.
+Targeted266 PASS; native SQL13, TEXT runtime1, joined Flight1, Source3 PASS;
+iOS27 standalone PDFKit9 PASS. Expo autolinking/provider/offline prebuild PASS,
+linked app blocked on offline CocoaPods index (cached Hermes workaround retained
+only in generated build). Installed bridge/physical/Core DEV Read remain untested.
+Agent3 PDF authority remains pending; Native expected accepted Items0. G2 remains
+sole Lab owner; observed DL1 lacks approved read2 contribution/DEV Data activation.
+Next: Owner Review of `trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_READINESS_REPORT.md`
+and adjacent evidence/35-path manifest. Separate canonical/build/runtime gates apply.
+
+---
+
+# CP-FLIGHT-NATIVE-01 — local preparation / OWNER REVIEW
+
+Updated 2026-10-12. Isolated `codex/flight-native-capture` from exact
+`6af3aff1fbfb136b087512589aa94b2c9d4640fc`; no canonical merge/push/activation.
+Text-bearing PDFKit capability and explicit dormant C2 handoff retain original
+hash/page spans, prospective Source/Run/Input identities and complete Core adapter
+IDs across restart/offline/retry. Additive local SQLite55 only; accepted read2/Day
+remain SQLite54-owned. Historical migrations and owning writers unchanged.
+Actual iOS27 Harness standalone extraction9 PASS; native/C2/owning SQL13 PASS;
+full regression3719 PASS,2 documented baseline failures,21 skipped. Actual binary
+root→derived TEXT publication stays REVIEW/CONTRACT_UNSUPPORTED with0 commands/
+accepted Items; lost-publication response and cold replay PASS. Accepted ORIGINAL
+TEXT joined SQL/SQLite/Day remains PASS, separate from PDF acceptance.
+Full native PDF→accepted Day is BLOCKED: existing Source binary profile is static
+PNG only, and owning Core publisher requires ORIGINAL TEXT. No product Capture
+UI action or installed Expo bridge/real-device/DEV runtime acceptance is claimed.
+Experience/G2 remains sole Native Day Lab owner; paired accepted text fixture
+UUID/revision/date handoff is `trip/implementation/CP_FLIGHT_NATIVE_01_G2_HANDOFF.md`.
+Native PDF expected accepted roster is empty; no Lab shell or DEV DATA activation.
+Next: Owner Review of the bounded preparation and Source/Core PDF authority work,
+then separate explicit runtime authorization. Report/manifest/evidence:
+`trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md` and adjacent files.
+
+---
+
+# CP-FLIGHT-PDF-AUTH-02 — CLOSED canonical integration preparation
+
+Updated 2026-10-12. Isolated `codex/cp-flight-pdf-auth-02`, canonical baseline40c5d29.
+Accepted authority da1a8a7 / ee75692 / ea9cbf4 carried with exact semantics.
+Current Core85–92, DEV TEXT Backend, G2/DL1/DL2 and protected LLM admission retained.
+Migration order: Core85–92 → model_task_protected_admission → PDF derivative authority.
+Native/Hosted branches remain excluded; Source seal/DTO/Producer unchanged.
+Combined172 PASS/2 explicit host skips; PDF/Source/real TEXT SQL5 PASS and
+24 protected-root groups PASS. Typecheck/build/lint/UI guard/format/diff PASS.
+PDF preserves351 preexisting functions; Core preserves329 historical definitions
+and LLM changes only its2 approved roots. Exact prepared commit/tree/manifest in
+`trip/implementation/CP_FLIGHT_PDF_AUTH_02_INTEGRATION_READINESS_REPORT.md`.
+No main merge/push, runtime, Provider/paid LLM or general PDF/Quartz/OCR activation.
+Current canonical working handoff notes are preserved verbatim below historical AUTH01.
+
+---
+
+# CP-FLIGHT-PDF-AUTH-01 — isolated CLOSED authority / Owner Review
+
+Updated 2026-10-12. `codex/cp-flight-pdf-auth-01` starts from canonical12693e3.
+Source-owned PDF seal/receipt /1 and finite OTR_PDF_LITERAL_TEXT_V1 verifier added;
+existing Publisher2/Core Admission accepts only an exact certified whole-Source closure.
+Original TEXT, airport/purpose/SOURCE_INSTANT/manual fences remain unchanged.
+Disposable PostgreSQL: PDF→two qualified Items at revision2, read2/SQLite54/Day,
+replay/recovery/privacy/revocation PASS; 329 historical functions unchanged.
+46 focused tests, typecheck/lint/UI guard/backend build/diff PASS.
+No route, actual binary custody registration, Hosted/native activation or main merge.
+Ordinary supplier/Quartz PDFs remain REVIEW. Agent A/B must use the shared contract:
+`trip/contracts/CP_FLIGHT_PDF_DERIVATIVE_AUTHORITY_V1.md`.
+Next: review `trip/implementation/CP_FLIGHT_PDF_AUTH_01_REPORT.md`; preserve concurrent
+Day/Platform/Native work and reconcile this isolated handoff heading at integration.
+
+
+---
+
 # DL2 Lab read integration — source complete / native Core blocked
 
 2026-10-12. DL1 accepted commits integrated into local canonical main
@@ -17,27 +116,6 @@ scroll was not reconfirmed; accepted DL1 evidence remains.
 Report: `architecture/OTR_DAY_FEED_LAB_DL2_REPORT.md`. Read port and dated ADR
 define the subset. Next DL3: authorized existing session/accepted collection,
 then native Core switching/Focus/NOW/nonzero scroll. No Seed or activation implied.
-
----
-
-# CP-LLM-03A — CLOSED canonical integration preparation / Owner Review
-
-2026-10-12. Prepared from local main `c0a6920`; actual remote main `12693e3`.
-Accepted LLM `af1cc93` contributes22 exact unchanged files plus the reconciled handoff.
-Core85–92 → `20261012000100_model_task_protected_admission.sql`; prior23-group
-network-none PostgreSQL proof applies to identical migration/fixture inputs.
-`otr-model-task-v1` facade/profile/private technical witness contracts unchanged.
-No runtime wiring, paid dispatch, fallback, shadow execution or semantic repair added.
-
-Current Core/Capture/Platform/Experience handoffs below are preserved verbatim,
-including the previously uncommitted canonical Capture/Platform suffix, copied only
-for this authorized isolated shared-file reconciliation. Canonical files remain untouched.
-The historical CP-LLM-02A acceptance snapshot remains in its implementation report;
-current integration evidence is in `architecture/CP_LLM_03A_CANONICAL_INTEGRATION_READINESS_REPORT.md`.
-Focused network-none Linux501 PASS/4 SKIP; local typecheck/Backend build and touched
-code lint/format PASS. Extra emulated Linux typecheck timed out220s without diagnostics;
-this environment limitation is recorded in the report. Normal isolated commits only; main merge/push and Hosted/Provider/paid LLM/C5/C9/
-Production activation require separate Owner approval. Provider NOT_CONFIGURED.
 
 ---
 

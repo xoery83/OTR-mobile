@@ -19,6 +19,10 @@ public class ReceiptOcrModule: Module {
       return self.recognize(uri: uri, requestId: requestId)
     }
 
+    AsyncFunction("extractFlightPdf") { (data: Data) -> [String: Any] in
+      return FlightPdfExtractor.extract(data)
+    }
+
     Function("cancel") { (requestId: String) in
       self.lock.lock()
       let request = self.running[requestId]

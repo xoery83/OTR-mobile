@@ -43,3 +43,7 @@ expo-env.d.ts
 !modules/publication-catalog-receive/ios/
 !modules/publication-catalog-receive/ios/*.swift
 !modules/publication-catalog-receive/ios/*.podspec
+
+# Retained source for the scoped local PDFKit capability; generated app ios stays ignored.
+!modules/receipt-ocr/ios/
+!modules/receipt-ocr/ios/FlightPdfExtractor.swift

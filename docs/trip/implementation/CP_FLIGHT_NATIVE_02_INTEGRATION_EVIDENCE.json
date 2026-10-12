@@ -1,0 +1,448 @@
+{
+  "checkpoint": "CP-FLIGHT-NATIVE-02",
+  "baseline": "12693e3c1513d678bd3fe0190bb830d79f262b49",
+  "acceptedNative": "b10e0768fb61f6acb6b2b8f8847d3b0941b3af23",
+  "branch": "codex/flight-native-02-integration-prep",
+  "implementationCommit": "06df5de7bfe228519ad3f375964505e4bbd2ba98",
+  "implementationTree": "73178e094092abeed3f4bac7e7ae85a614df8ab3",
+  "parent": "12693e3c1513d678bd3fe0190bb830d79f262b49",
+  "manifestCount": 32,
+  "acceptedManifestExactlyMatchesCommit": true,
+  "acceptedUnchangedBlobs": 30,
+  "acceptedFiles": [
+    {
+      "path": ".gitignore",
+      "acceptedBlob": "3c2431ba4d44a59bfebe41931fcb5332282c319e",
+      "sha256": "2f037ed4a249096e404c6511ab8052d576c0591227c626b1923c02df96a0da13",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "backend/src/__fixtures__/flightCoreDayAcceptance.ts",
+      "acceptedBlob": "cc1edc695953fd7cd9358a8943a3e428d8f5dbec",
+      "sha256": "9b12f81576fc6ff00e57e850b0ba0210d91b6696293741c9df135a07f7a19c17",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "backend/src/__fixtures__/tripCoreV2Sql.ts",
+      "acceptedBlob": "b56acd53b8c6dd75b194b7be3b42cf2d14857a98",
+      "sha256": "2fc2fdfdf3d11bcb9c09798b15ef2f2d6840d79174d63659c96549965ee0b66d",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "acceptedBlob": "5aa2436111261ba94249c0c27289f75b529227e6",
+      "sha256": "773a181d78d090c351ef5e42b1393a0949fb6cccc20a822422edfcf82356f59e",
+      "acceptedBytesPreserved": false
+    },
+    {
+      "path": "docs/DATA_MODEL.md",
+      "acceptedBlob": "6e2d2a28e72b38206a602ad781f09b9e323328ed",
+      "sha256": "d182ee9d727d0fa300facb3f4cdf50b167e3718a83f995094fd4d93e1b5da066",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_CHANGED_FILES.txt",
+      "acceptedBlob": "aab4d3ba8a9036f260cbae9b193566ce46034115",
+      "sha256": "61d614b0b2754777b152eeacc3f510c85864d09bfa87466047ee8583e1ae84e1",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_EVIDENCE.json",
+      "acceptedBlob": "065b25fe631686a39088a1d28976a10352909ae7",
+      "sha256": "a670ef181b8d4a56a049d03dc763335291be2859a71d6a192d5af86dce02fd27",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_G2_HANDOFF.md",
+      "acceptedBlob": "bea55283b317c22d53a4756404e9adf6e5d534cc",
+      "sha256": "d9418acd72badd81ec89c301e6b0769e8f0c056801db557a9183491d5e4936ea",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md",
+      "acceptedBlob": "44f73c3825dac32be2d3323b4a0253061a697936",
+      "sha256": "924d44f50a0eb1c43f5f68e00c47ea846d4d666bd6ac3a7d46d1f605678dd2e7",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "modules/receipt-ocr/ios/FlightPdfExtractor.swift",
+      "acceptedBlob": "36677bdcb8354963cddda9da4fcf887b989b39ce",
+      "sha256": "b699b0944d78d52739d278594e5237628f9b8375f28a14b9e82c7c614878b707",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "modules/receipt-ocr/ios/ReceiptOcrModule.swift",
+      "acceptedBlob": "17225dbbe5c1977948f45ba086a2abf8bfcd9ed3",
+      "sha256": "09f192abbfd95d28c0c2fa763f3de52ea749960ab5b19f488532b305c67de368",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "modules/receipt-ocr/tests/README.md",
+      "acceptedBlob": "96e72c5e1e17be273ba32e84481b8ccec0eef958",
+      "sha256": "5609dec7cb505dc98d160bb140c56c3705c4611a99e2223824236365366c1f97",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "modules/receipt-ocr/tests/main.swift",
+      "acceptedBlob": "a072573b57bcd87b74aa98622fcfbce6eac1ced3",
+      "sha256": "3911a95911c5361b27926310c0a58539548525c76761c90fae6917a48f5c031e",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "scripts/trip/core-v2-sql-acceptance.py",
+      "acceptedBlob": "02bef0b64c45e39d74cdef50713c8e9c3a8896a8",
+      "sha256": "7464756993c64a39290014ceffdf50f8b165090e785aa167a51095f399e5df47",
+      "acceptedBytesPreserved": false
+    },
+    {
+      "path": "src/data/bootstrap/participationWakeAcceptance.test.ts",
+      "acceptedBlob": "1977c2378c6a9c0ae783a32e83d5b3bb50a7add6",
+      "sha256": "137c8b2cf8b0f75fa906905b03427ba47f23a354093a8f570391394fdc22b5f1",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/db/checkpoint11Integration.test.ts",
+      "acceptedBlob": "2b747dd0b55740c4627dddcf0ada212448c5af46",
+      "sha256": "37827e127c274ce3853d6a5fc25d4869d7ad03ea44a49ebb40c00b97d70dba84",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/db/database.test.ts",
+      "acceptedBlob": "09d308f57952bf8356bcd7f45ca8320197fbea22",
+      "sha256": "5bd90220675d6b3d51d6064daf7a26310a7a4921dd13d275cec7bd283c2294f9",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/db/migrations.ts",
+      "acceptedBlob": "f16128c4036a9bb48f69aee4a982c0e3c2582e8a",
+      "sha256": "bafc1d732b2e790f11b332a0a590a9c29af22cda2b0554e3c64d23891569493f",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/db/migrations/captureFlightNative.ts",
+      "acceptedBlob": "f5184e11dc8310f2b6ebd0172e64119ac0b8f709",
+      "sha256": "c075a7bec486863a833458444bec8ee6af66514ae8dbb9b1e5c47a514caf03b6",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/db/publicationMembershipMigration.test.ts",
+      "acceptedBlob": "7871a78eac2909360e34382fe83d6dc742085317",
+      "sha256": "c3abbac846e4dd55015c7548eb5b7fe65e394051bca1fe2e13b0ba88fc84319a",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/foundation/diagnosticsReadOnly.test.ts",
+      "acceptedBlob": "b5618acc835b7bbbb65903f49c351843f3b75589",
+      "sha256": "d704bff8eb02fd023504435aafb8501fdb619c3127521a8fc10e15c66a064c2e",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/interpretation/__fixtures__/nativeFlightPdf.json",
+      "acceptedBlob": "a3caaa0b26731f74a2c98ac2d8facd1f14345c61",
+      "sha256": "6d517adcd52c561364b843c51e0fc52204dcdfa0fd877efaa38467402aeed947",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/interpretation/flightPdfExtraction.ts",
+      "acceptedBlob": "7f03d805b4729c5cdd0fb099e844edbc47067a8b",
+      "sha256": "97f24c98295525af1e9fa1a2c6aa3a5c599534e6c3052a874f7d4fa797e4765b",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/operations/defaultCaptureFlightNative.ts",
+      "acceptedBlob": "0ca7444d6a41a04084d558c716eacd27154bd624",
+      "sha256": "43793edb77d7562ac8582d90e1ef16ccdfecbafdcaf7a6ae127b81503dcf4997",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/repositories/captureBatchAssessmentObservationRepository.test.ts",
+      "acceptedBlob": "06a87a46f5ea70b0edca42d36cbc7ca689a59994",
+      "sha256": "c933cf1d7316e736636a713ef1e5fe38ef664ec113b7388b48cb98aced005eda",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/repositories/captureFlightNativeRepository.test.ts",
+      "acceptedBlob": "8e32e72c38aa1977de346c5c7d727cd64391210d",
+      "sha256": "8cdf1a49462a14d87ce7f1e33da7d03a28b94f583c86743ae5755fbb319f7132",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/repositories/captureFlightNativeRepository.ts",
+      "acceptedBlob": "e6dfcc2485cb549f6dd884c5ed79325cc920eddf",
+      "sha256": "f097f862c119926d5efd7172be5fe449806b778dc9c87ea0fc19eb5f78fa4a0b",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/repositories/intelligenceContinuationRepository.test.ts",
+      "acceptedBlob": "bb87c7e1f3309c81c40a6c12c8fa238b47faba88",
+      "sha256": "adc3110bce27efaf2b4662a189b0c3d3f69f464c4442bb860d28baab714eb6bb",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/repositories/tripCanonicalEventRepository.test.ts",
+      "acceptedBlob": "bd772b88eb8701fd51eeff950214126c547deb41",
+      "sha256": "df93d6723070ef65151afa05e02b9c968adaaddad18bcd3d6561a21ac78c18f8",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/data/repositories/tripPublicationMembershipRepository.test.ts",
+      "acceptedBlob": "b9c764055f9d40901542139e24e477d25b274f59",
+      "sha256": "2f18516b59f57ca7b59176ac1eca53a31e5c81747c728277dd80103929acea39",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/native/flightPdf.test.ts",
+      "acceptedBlob": "3024de2ce873f0a6e07a9844c57cbca51b9464f8",
+      "sha256": "7b275d9cc83650a683e95f86a445d0a18b5e25c9703f432a55ae9c369bc5da06",
+      "acceptedBytesPreserved": true
+    },
+    {
+      "path": "src/native/flightPdf.ts",
+      "acceptedBlob": "aebf9fdeb47da097257979a8585960f23e8acf09",
+      "sha256": "6b78128ce9ac1e875611ced6d8cc5ef345d8b221302d8e97c046833ad25f104d",
+      "acceptedBytesPreserved": true
+    }
+  ],
+  "conflictsResolved": [
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "scripts/trip/core-v2-sql-acceptance.py"
+  ],
+  "canonicalBefore": {
+    "canonicalHead": "12693e3c1513d678bd3fe0190bb830d79f262b49",
+    "statusSha256": "e50d3f56c7456bfe7f22532519b0c96070aec1e609de7814245e1381c12b1aca",
+    "handoffSha256": "2872eaa2f326f577a3e0b21b97938bfb2030c7f4cb365847a8fd219f6c19c22e",
+    "dirtyHandoffSuffixBytes": 9695
+  },
+  "canonicalAfter": {
+    "canonicalHead": "12693e3c1513d678bd3fe0190bb830d79f262b49",
+    "statusSha256": "e50d3f56c7456bfe7f22532519b0c96070aec1e609de7814245e1381c12b1aca",
+    "handoffSha256": "2872eaa2f326f577a3e0b21b97938bfb2030c7f4cb365847a8fd219f6c19c22e"
+  },
+  "canonicalBackendPreservedPaths": 17,
+  "targetedTests": {
+    "suites": 15,
+    "passed": 266,
+    "skipped": 1
+  },
+  "sql": {
+    "native": [
+      {
+        "classification": "CP_FLIGHT_NATIVE_01_CLOSED_SQL_REVIEW",
+        "originalSha256": "f193cd842ed36779c9087d9c6c0a1bd7c3859dbafbf1807227d29afdeaacc12c",
+        "sourceId": "c2515f01-d6ba-4c6a-8c05-5bf744d36ae0",
+        "runId": "ae0a4ced-1fee-4752-b6ff-7065585d7c96",
+        "candidateIds": [
+          "b7dff9df-f4e1-80a2-a0a2-9f6c5b85e13f",
+          "c8433a44-6d6b-8953-af2c-c5507663539a"
+        ],
+        "review": ["CONTRACT_UNSUPPORTED", "CONTRACT_UNSUPPORTED"],
+        "queuedCommands": 0,
+        "acceptedLocalItems": 0,
+        "restartReplay": true,
+        "lostPublicationRecovered": true
+      },
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [85, 86, 87, 88, 89, 90, 91, 92],
+        "historicalFunctionsPreserved": 329,
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ],
+    "textRuntime": [
+      {
+        "classification": "CP_FLIGHT_DEV_02_LOCAL_HTTP_NODE_PG_TLS",
+        "sourceId": "7c715aaf-9485-450a-add8-c6ae0d221b0c",
+        "exactTextSha256": "9e63a65981bbcf2016c01291c6446328fc074c9f6b8ad2d8614befb9162f80e9",
+        "itemIds": [
+          "2cfc67b3-a155-4d3a-a104-bd85d18e10b0",
+          "78ba5a1a-3ec1-4a77-83b0-bf2fdac69856"
+        ],
+        "recoveredOperationIds": [
+          "b9a6f9aa-164c-444b-8027-28950cfb2e33",
+          "39099549-47d5-4d68-9852-a19a3b65689c",
+          "618bdad5-c771-43a9-aa15-40d0df06c455",
+          "15f70bbe-83d7-454f-a64e-00aec2b320ea"
+        ],
+        "originalCopies": 1,
+        "privateSourceLeakage": false,
+        "backendProcessRestarts": 5,
+        "tlsVerified": true,
+        "hostnameAndCaAndCredentialNegatives": true,
+        "hosted": false
+      },
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [85, 86, 87, 88, 89, 90, 91, 92],
+        "historicalFunctionsPreserved": 329,
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ],
+    "joined": [
+      {
+        "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+        "accountId": "00000000-0000-4000-8000-000000000001",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "sqlRead2SqliteDayPairs": [
+          {
+            "itemId": "b3ab2057-246e-4be8-86f0-70b004c8016c",
+            "semanticRevision": 2
+          },
+          {
+            "itemId": "cc1b94ad-1d4b-42ed-b4a7-ee4a02a9bfe9",
+            "semanticRevision": 2
+          }
+        ],
+        "itemDateExpectations": [
+          {
+            "itemId": "b3ab2057-246e-4be8-86f0-70b004c8016c",
+            "semanticRevision": 2,
+            "localDate": "2026-12-17"
+          },
+          {
+            "itemId": "cc1b94ad-1d4b-42ed-b4a7-ee4a02a9bfe9",
+            "semanticRevision": 2,
+            "localDate": "2026-12-20"
+          }
+        ],
+        "dates": ["2026-12-17", "2026-12-20"],
+        "read2ManifestSha256": "3cb5a1a483c2a0ec907849e67cd5ec1f29da6e88ea6c878fc82f3194407fd85d",
+        "read2AccessRevision": 1,
+        "read2Epoch": "19d4dfdb-2c40-4204-b3ff-ae1eacaad73c",
+        "lostCollectionResponseRecovered": true,
+        "fileColdOfflineReopen": true,
+        "privateSourceLeakage": false,
+        "sqliteMigration": 54,
+        "localSchemaVersion": 55
+      },
+      {
+        "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+        "sourceId": "35e45373-8831-46dc-a517-8e8539ab02e2",
+        "runId": "0b8bc6dd-39d5-45d2-90ea-6aac8364982c",
+        "inputCatalogSha256": "2f9cc3de38223a082d1326fc6f7814cd3f896bc6af1005c23b5434226e76457e",
+        "candidateIds": [
+          "469e4da0-066d-8360-a86a-885f32990646",
+          "b473a8e8-e58d-8acf-a8b2-d71a821ab3df"
+        ],
+        "itemIds": [
+          "b3ab2057-246e-4be8-86f0-70b004c8016c",
+          "cc1b94ad-1d4b-42ed-b4a7-ee4a02a9bfe9"
+        ],
+        "recoveredOperationIds": [
+          "1bc6fd0b-ce6a-418d-8752-b1809d449291",
+          "1f6837f6-68ad-4ca7-89c0-ef1ffccb5c91",
+          "455c5727-416a-4586-875b-22657b08d185",
+          "7aa65988-498a-432f-b8f8-a6a5f0181c69"
+        ],
+        "sourcePlanStatus": "COMPLETE",
+        "associations": 4,
+        "qualificationRevision": 2,
+        "negativeWrites": 0
+      },
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [85, 86, 87, 88, 89, 90, 91, 92],
+        "historicalFunctionsPreserved": 329,
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ],
+    "source": [
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [85, 86, 87, 88, 89, 90, 91, 92],
+        "historicalFunctionsPreserved": 329,
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ]
+  },
+  "simulator": {
+    "udid": "4246352E-7631-4DD5-9E0D-3F35B3150494",
+    "runtime": "iOS27.0",
+    "artifactPlatform": "IOSSIMULATOR",
+    "pdfChecksPassed": 9,
+    "installedApp": false
+  },
+  "packaging": {
+    "autolinking": "PASS; ReceiptOcr pod/module resolved",
+    "providerGeneration": "PASS; ReceiptOcrModule registered",
+    "sourceGlob": "**/*.swift includes FlightPdfExtractor.swift",
+    "offlinePrebuild": "PASS",
+    "isolatedBundleId": "com.xoery.otrmobile.nativeflightreadiness",
+    "packageJsonUnchanged": true,
+    "podInstall": "BLOCKED_OFFLINE_CDN_INDEX",
+    "firstAttempt": "Hermes source fallback / missing cmake",
+    "cachedRetry": "local legacy Hermes archive succeeds; CocoaPods trunk index unavailable",
+    "appBuild": "NOT_RUN_POD_INSTALL_BLOCKED",
+    "installedExpoBridge": "NOT_TESTED"
+  },
+  "g2": {
+    "owner": "Experience/G2",
+    "dl1ObservedCommit": "81b21923ae431998bef60fa99c356ef8a29c0daa",
+    "overlap": ["docs/CURRENT_IMPLEMENTATION_STATE.md"],
+    "imported": false,
+    "nativePdfAcceptedItems": [],
+    "acceptedTextFixture": {
+      "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "tripId": "10000000-0000-4000-8000-000000000001",
+      "sqlRead2SqliteDayPairs": [
+        {
+          "itemId": "b3ab2057-246e-4be8-86f0-70b004c8016c",
+          "semanticRevision": 2
+        },
+        {
+          "itemId": "cc1b94ad-1d4b-42ed-b4a7-ee4a02a9bfe9",
+          "semanticRevision": 2
+        }
+      ],
+      "itemDateExpectations": [
+        {
+          "itemId": "b3ab2057-246e-4be8-86f0-70b004c8016c",
+          "semanticRevision": 2,
+          "localDate": "2026-12-17"
+        },
+        {
+          "itemId": "cc1b94ad-1d4b-42ed-b4a7-ee4a02a9bfe9",
+          "semanticRevision": 2,
+          "localDate": "2026-12-20"
+        }
+      ],
+      "dates": ["2026-12-17", "2026-12-20"],
+      "read2ManifestSha256": "3cb5a1a483c2a0ec907849e67cd5ec1f29da6e88ea6c878fc82f3194407fd85d",
+      "read2AccessRevision": 1,
+      "read2Epoch": "19d4dfdb-2c40-4204-b3ff-ae1eacaad73c",
+      "lostCollectionResponseRecovered": true,
+      "fileColdOfflineReopen": true,
+      "privateSourceLeakage": false,
+      "sqliteMigration": 54,
+      "localSchemaVersion": 55
+    },
+    "remainingSeam": "G2-owned read2-to-Lab contribution adapter; production Feed already supports v2"
+  },
+  "authority": "PDF derivative REVIEW / CONTRACT_UNSUPPORTED retained; Agent3 pending contract untouched",
+  "runtimeActivation": false,
+  "hostedAccess": false,
+  "providerCalls": 0,
+  "acceptanceCategories": {
+    "Fixture": "PASS",
+    "Simulator": "PASS for PDFKit only",
+    "PhysicalDevice": "NOT_RUN",
+    "CoreDevRead": "NOT_RUN",
+    "InstalledBridge": "NOT_TESTED"
+  },
+  "fullSuite": "NOT_RERUN; scope uses byte-identical accepted product sources and targeted integration checks",
+  "checks": {
+    "typecheck": "PASS",
+    "uiGuard": "PASS",
+    "fullLint": "PASS zero warnings",
+    "backendBuild": "PASS",
+    "touchedFormatting": "PASS",
+    "runnerSyntax": "PASS",
+    "whitespace": "PASS"
+  },
+  "acceptedFilesScope": "implementation commit06df5de; final docs-only checkpoint adds a header to CURRENT_IMPLEMENTATION_STATE",
+  "generatedBuildArtifactsCommitted": false
+}

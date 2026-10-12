@@ -1,3 +1,4 @@
+import { captureFlightNativeMigration } from "./migrations/captureFlightNative";
 import { tripCoreV2Migration } from "./migrations/tripCoreV2";
 import { tripSourcePublicationMembershipMigration } from "./migrations/tripSourcePublicationMembership";
 import { captureBatchAssessmentObservationsMigration } from "./migrations/captureBatchAssessmentObservations";
@@ -1690,4 +1691,5 @@ export const migrations: Migration[] = [
   captureBatchAssessmentObservationsMigration,
   tripSourcePublicationMembershipMigration,
   tripCoreV2Migration,
+  captureFlightNativeMigration,
 ];

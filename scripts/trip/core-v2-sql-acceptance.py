@@ -32,8 +32,16 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument("--flight", action="store_true", help="Run Capture to Core Flight SQL acceptance")
 group.add_argument("--source", action="store_true", help="Run the owning Source SQL scenario in a separate fresh clone")
 group.add_argument("--text-runtime", action="store_true", help="Run real local HTTP/pg/TLS TEXT acceptance")
+group.add_argument("--pdf-authority", action="store_true", help="Run CLOSED Source PDF authority acceptance")
+group.add_argument("--native-flight", action="store_true", help="Run native PDF Source authority rejection in a disposable CLOSED fixture")
+group.add_argument("--native-installed", action="store_true", help="Verify exact installed Simulator packet remains owning REVIEW")
+parser.add_argument("--with-llm", action="store_true", help="Install current CLOSED LLM protected admission before PDF authority")
+parser.add_argument("--with-pdf-authority", action="store_true", help="Install CLOSED PDF authority while testing a non-PDF scenario")
 args = parser.parse_args()
-scenario = "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
+install_pdf = args.pdf_authority or args.with_pdf_authority
+llm_roots = {"flight_activation_reserve_call(jsonb,jsonb)", "external_integration_mark_dispatch(jsonb,jsonb)"}
+llm_changes = []
+scenario = "backend/src/nativeFlightInstalledReview.sql.test.ts" if args.native_installed else "src/data/repositories/captureFlightNativeRepository.test.ts" if args.native_flight else "backend/src/captureFlightCoreV2.sql.test.ts" if args.pdf_authority else "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
 created = False
 network_created = False
 private = tempfile.TemporaryDirectory(prefix="otr-flight-text-")
@@ -59,14 +67,29 @@ try:
     assert sql("select to_regclass('public.trip_core_activation_gate') is null;").strip() == "t", "Base image already contains Core85"
     for filename in ("20261011000100_trip_core_v2_foundation.sql", "20261011000200_trip_core_v2_version_dispatch.sql", "20261011000300_trip_core_v2_owning_session.sql", "20261011000400_trip_core_v2_read_scope.sql", "20261011000500_trip_core_v2_source_scope.sql", "20261011000600_trip_core_v2_candidate_publication.sql", "20261011000700_trip_core_v2_legacy_claim_fence.sql", "20261011000800_trip_core_v2_retained_claim_fence.sql"):
         sql((ROOT / "supabase/migrations" / filename).read_text())
-    after = json.loads(sql(FINGERPRINTS))
-    changed = [name for name, digest in before.items() if after.get(name) != digest]
-    assert not changed, "Historical function changes: " + repr(changed)
+    core_after = json.loads(sql(FINGERPRINTS))
+    assert all(core_after.get(name) == digest for name, digest in before.items()), "Core changed historical functions"
+    installed = core_after
+    if args.with_llm:
+        sql((ROOT / "supabase/migrations/20261012000100_model_task_protected_admission.sql").read_text())
+        installed = json.loads(sql(FINGERPRINTS))
+        llm_changes = [name for name, digest in core_after.items() if installed.get(name) != digest]
+        assert set(llm_changes) == llm_roots, "Unexpected LLM protected-root changes: " + repr(llm_changes)
+        assert sql("select not runtime_enabled from external_integration_environment_state where environment='DEV';").strip() == "t"
+    before_pdf = installed
+    if install_pdf:
+        sql((ROOT / "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql").read_text())
+        assert sql("select not enabled from trip_source_pdf_gate;").strip() == "t"
+        sql((ROOT / "supabase/tests/source-pdf/authority.sql").read_text())
+        installed = json.loads(sql(FINGERPRINTS))
+        assert all(installed.get(name) == digest for name, digest in before_pdf.items()), "PDF authority changed preexisting functions"
     sql((ROOT / "supabase/tests/core-v2/foundation.sql").read_text())
     sql((ROOT / "supabase/tests/core-v2/candidate-publication.sql").read_text())
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t"
     import os
     env = dict(os.environ, OTR_CORE_OWNED_SQL_FIXTURE=NAME)
+    if args.pdf_authority:
+        env["OTR_CORE_PDF_AUTHORITY"] = "1"
     if args.text_runtime:
         cert = pathlib.Path(private.name) / "server.crt"
         key = pathlib.Path(private.name) / "server.key"
@@ -81,17 +104,25 @@ try:
         port = docker("port", NAME, "5432/tcp").strip()
         assert port.startswith("127.0.0.1:"), "Fixture exposed beyond loopback"
         env.update(OTR_FLIGHT_TEXT_PORT=port.split(":")[-1], OTR_FLIGHT_TEXT_CA=str(cert))
+    native_items_before = sql("select count(*) from public.itinerary_events;").strip() if args.native_flight or args.native_installed else None
     subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", scenario, "--disableConsoleIntercept"], cwd=ROOT, env=env, check=True)
+    if native_items_before is not None:
+        assert sql("select count(*) from public.itinerary_events;").strip() == native_items_before, "Native REVIEW created unauthorized canonical Items"
+        if install_pdf:
+            assert sql("select count(*) from public.trip_source_pdf_seals;").strip() == "0", "Native declared its own derivative seal"
+        print(json.dumps({"classification": "JOINED_NATIVE_AUTHORITY_FENCE", "unauthorizedCanonicalItems": 0, "nativeSeals": 0 if install_pdf else None}))
     if args.text_runtime:
         assert sql("select not enabled from trip_source_command_gate;").strip() == "t"
         assert sql("select not flight_admission_enabled from trip_import_admission_gate;").strip() == "t"
+    if install_pdf:
+        assert sql("select not enabled from trip_source_pdf_gate;").strip() == "t"
     # Positive fixture scenarios retain disabled allowlists; reset only this owned clone.
     sql("update trip_core_activation_gate set runtime_enabled=false,enabled_commands='{}',enabled_families='{}',enabled_admission_modes='{}';")
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t", "Fixture activation gate was not restored CLOSED"
     after_scenario = json.loads(sql(FINGERPRINTS))
-    changed = [name for name, digest in before.items() if after_scenario.get(name) != digest]
+    changed = [name for name, digest in installed.items() if after_scenario.get(name) != digest]
     assert not changed, "Historical function changes during scenario: " + repr(changed)
-    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92], "historicalFunctionsPreserved": len(before), "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
+    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92] + (["20261012000100_model_task_protected_admission"] if args.with_llm else []) + (["20261012000200_source_pdf_derivative_authority"] if install_pdf else []), "coreHistoricalFunctionsPreserved": len(before), "llmApprovedChangedRoots": llm_changes, "pdfPreexistingFunctionsPreserved": len(before_pdf) if install_pdf else None, "installedFunctionsPreservedDuringScenario": len(installed), "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
 finally:
     try:
         if created:

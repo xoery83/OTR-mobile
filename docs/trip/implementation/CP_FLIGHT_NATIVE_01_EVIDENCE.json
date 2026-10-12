@@ -1,0 +1,108 @@
+{
+  "checkpoint": "CP-FLIGHT-NATIVE-01",
+  "baseline": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+  "branch": "codex/flight-native-capture",
+  "status": "PARTIAL_LOCAL_NATIVE_PREPARATION__OWNER_REVIEW__PDF_AUTHORITY_BLOCKED",
+  "simulator": {
+    "udid": "4246352E-7631-4DD5-9E0D-3F35B3150494",
+    "runtime": "iOS 27.0",
+    "platform": "IOSSIMULATOR",
+    "mode": "standalone synthetic Swift executable; no app install or app launch",
+    "pdfKitCasesPassed": 9
+  },
+  "nativeSourceReviewSql": {
+    "classification": "CP_FLIGHT_NATIVE_01_CLOSED_SQL_REVIEW",
+    "originalSha256": "f193cd842ed36779c9087d9c6c0a1bd7c3859dbafbf1807227d29afdeaacc12c",
+    "sourceId": "77b7bdcb-03c5-4b80-bc43-1b7f43785e2f",
+    "runId": "a9f2635d-e233-48fe-9067-28e84a1b2d8b",
+    "candidateIds": [
+      "127d1411-2d10-887c-ab89-3ae074fdddf6",
+      "e18a0238-6218-8c54-a768-85a919e95a17"
+    ],
+    "review": ["CONTRACT_UNSUPPORTED", "CONTRACT_UNSUPPORTED"],
+    "queuedCommands": 0,
+    "acceptedLocalItems": 0,
+    "restartReplay": true,
+    "lostPublicationRecovered": true
+  },
+  "fullRegression": {
+    "passed": 3719,
+    "failed": 2,
+    "skipped": 21,
+    "failedFiles": [
+      "src/components/navigationLayout.test.ts",
+      "src/domain/architectureBoundary.test.ts"
+    ],
+    "baselineFailuresDocumented": true
+  },
+  "nativeSqlTestsPassed": 13,
+  "acceptedOriginalTextJoinedSql": "PASS; separate original-text regression, not native PDF acceptance",
+  "historicalSqlFunctionsPreserved": 329,
+  "acceptedMirrorMigration": 54,
+  "localPreparationMigration": 55,
+  "runtimeActivation": false,
+  "hostedAccess": false,
+  "providerCalls": 0,
+  "realDocuments": false,
+  "limits": {
+    "pdfBytes": 10485760,
+    "pages": 32,
+    "derivedUtf8Bytes": 262144,
+    "format": "unencrypted text-bearing PDF only"
+  },
+  "remaining": [
+    "Capture binary Source profile admits only static PNG",
+    "Core PG publisher requires ORIGINAL TEXT, not PDF-derived TEXT",
+    "Expo/Hermes installed bridge and Capture UI action not exercised",
+    "Real-device and designated DEV runtime not activated"
+  ],
+  "g2AcceptedTextFixture": {
+    "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+    "accountId": "00000000-0000-4000-8000-000000000001",
+    "tripId": "10000000-0000-4000-8000-000000000001",
+    "sqlRead2SqliteDayPairs": [
+      {
+        "itemId": "6ea64af7-5a10-485f-9a61-8e18299d4332",
+        "semanticRevision": 2
+      },
+      {
+        "itemId": "d0748b5d-d906-42d1-be9e-0c1c8b4f15d8",
+        "semanticRevision": 2
+      }
+    ],
+    "itemDateExpectations": [
+      {
+        "itemId": "6ea64af7-5a10-485f-9a61-8e18299d4332",
+        "semanticRevision": 2,
+        "localDate": "2026-12-17"
+      },
+      {
+        "itemId": "d0748b5d-d906-42d1-be9e-0c1c8b4f15d8",
+        "semanticRevision": 2,
+        "localDate": "2026-12-20"
+      }
+    ],
+    "dates": ["2026-12-17", "2026-12-20"],
+    "read2ManifestSha256": "2b05446444205f533222da25448cabdc8015c1b042cdeca72dd2c6109fc90d2d",
+    "read2AccessRevision": 1,
+    "read2Epoch": "cbe031c7-85ba-4948-9034-1a44eba11b4f",
+    "lostCollectionResponseRecovered": true,
+    "fileColdOfflineReopen": true,
+    "privateSourceLeakage": false,
+    "sqliteMigration": 54,
+    "localSchemaVersion": 55
+  },
+  "g2NativePdfExpectedAcceptedItems": [],
+  "acceptanceCategories": {
+    "Fixture": "PASS; actual synthetic Core SQL and host SQLite/production Day rendering",
+    "Simulator": "PASS for standalone PDFKit extraction only; shared native Day Lab not exercised",
+    "PhysicalDevice": "NOT_RUN",
+    "CoreDevRead": "NOT_RUN; no Hosted access"
+  },
+  "g2Coordination": {
+    "owner": "Experience/G2",
+    "nativeDayLabShellCreated": false,
+    "devDataModeEnabled": false,
+    "readSeam": "existing Core read2 collection \u2192 SQLite54 accepted snapshot \u2192 production Day reader"
+  }
+}

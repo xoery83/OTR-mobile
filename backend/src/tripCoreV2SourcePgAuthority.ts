@@ -1,3 +1,4 @@
+import { readSourcePdfCoreProof } from "./sourcePdfCoreProof";
 import { randomUUID } from "node:crypto";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
@@ -115,6 +116,9 @@ async function lockSource(
 async function materials(
   lease: CorePgLease,
   catalog: CoreSourceCatalogV2,
+  hash: ImportHash,
+  historical = false,
+  expectedSeals?: { representationId: string; sealSha256: string }[],
 ): Promise<CorePublicationMaterial[]> {
   const result: CorePublicationMaterial[] = [];
   const revision = (
@@ -129,10 +133,10 @@ async function materials(
     selected = catalog.inputs.map(
       (p) => (p as { representation_id: string }).representation_id,
     );
-  if (
-    originals.length !== selected.length ||
-    [...originals].sort().join("|") !== selected.sort().join("|")
-  )
+  const direct =
+    originals.length === selected.length &&
+    [...originals].sort().join("|") === selected.sort().join("|");
+  if (!direct && (originals.length !== 1 || selected.length !== 1))
     throw new Error("CONTRACT_UNSUPPORTED");
   for (const input of catalog.inputs) {
     const pin = flightInputSchema.parse(input),
@@ -149,8 +153,27 @@ async function materials(
       Number(row.byte_count) !== pin.byte_count
     )
       throw new Error("SOURCE_INTEGRITY_FAILURE");
+    if (!direct) {
+      if (
+        expectedSeals &&
+        (expectedSeals.length !== 1 ||
+          expectedSeals[0].representationId !== pin.representation_id)
+      )
+        throw new Error("INVALID_PROVENANCE");
+      const seal = await readSourcePdfCoreProof(
+        lease,
+        catalog,
+        pin.representation_id,
+        hash,
+        historical,
+        expectedSeals?.find((s) => s.representationId === pin.representation_id)
+          ?.sealSha256,
+      );
+      if (seal.originalRepresentationId !== originals[0])
+        throw new Error("CONTRACT_UNSUPPORTED");
+    }
     if (
-      row.role !== "ORIGINAL" ||
+      (direct ? row.role !== "ORIGINAL" : row.role !== "DERIVED") ||
       row.material_kind !== "TEXT" ||
       typeof row.text_content !== "string"
     )
@@ -163,8 +186,10 @@ async function verifyBytes(
   lease: CorePgLease,
   catalog: CoreSourceCatalogV2,
   hash: ImportHash,
+  historical = false,
+  expectedSeals?: { representationId: string; sealSha256: string }[],
 ) {
-  for (const m of await materials(lease, catalog)) {
+  for (const m of await materials(lease, catalog, hash, historical, expectedSeals)) {
     const bytes = new TextEncoder().encode(m.text);
     if (bytes.length !== m.pin.byte_count || (await hash(bytes)) !== m.pin.payload_sha256)
       throw new Error("SOURCE_INTEGRITY_FAILURE");
@@ -245,8 +270,15 @@ async function catalogForCandidates(
     );
   if (mixed && pub.response.candidates.some((c) => c.status === "QUALIFIED"))
     throw new Error("INVALID_PROVENANCE");
-  if (!mixed && pub.response.candidates.some((c) => c.status === "QUALIFIED"))
-    await verifyBytes(lease, catalog, hash);
+  if (!mixed && pub.response.candidates.some((c) => c.status === "QUALIFIED")) {
+    if (
+      bodies.some(
+        (b) => json(b.derivativeSeals ?? []) !== json(bodies[0].derivativeSeals ?? []),
+      )
+    )
+      throw new Error("INVALID_PROVENANCE");
+    await verifyBytes(lease, catalog, hash, historical, bodies[0].derivativeSeals ?? []);
+  }
   const rows = (
     await lease.query(
       "SELECT candidate_id,run_id,source_revision,input_catalog_sha256,candidate_sha256,candidate_json FROM public.trip_source_core_v2_candidates WHERE account_id=$1::uuid AND trip_id=$2::uuid AND source_id=$3::uuid AND candidate_json->>'publicationId'=$4 ORDER BY candidate_id LIMIT 65",
@@ -677,7 +709,11 @@ export function createCoreSourcePgAuthority(
             } catch (error) {
               if (
                 error instanceof Error &&
-                ["INPUT_STALE", "SOURCE_INTEGRITY_FAILURE"].includes(error.message)
+                [
+                  "INPUT_STALE",
+                  "SOURCE_INTEGRITY_FAILURE",
+                  "CONTRACT_UNSUPPORTED",
+                ].includes(error.message)
               )
                 return { state: "EVIDENCE_PENDING", errorCode: error.message };
               throw error;
@@ -782,7 +818,7 @@ export function createCoreSourcePgAuthority(
           throw new Error("CONTRACT_UNSUPPORTED");
         extracted = await extractCoreFlightPublication(
           request,
-          await materials(lease, catalog),
+          await materials(lease, catalog, hash),
           actorAccountId,
           tripId,
           hash,
@@ -816,6 +852,32 @@ export function createCoreSourcePgAuthority(
             hazard: true,
           },
         };
+      }
+      if (extracted.sealed.some((b) => b.status === "QUALIFIED")) {
+        const originalIds = (
+          await lease.query(
+            "SELECT original_representation_ids FROM public.trip_source_revisions WHERE source_id=$1::uuid AND material_revision=$2",
+            [catalog.sourceId, catalog.sourceRevision],
+          )
+        ).rows[0].original_representation_ids as string[];
+        const seals: { representationId: string; sealSha256: string }[] = [];
+        for (const pin of catalog.inputs as { representation_id: string }[])
+          if (!originalIds.includes(pin.representation_id)) {
+            const proof = await readSourcePdfCoreProof(
+              lease,
+              catalog,
+              pin.representation_id,
+              hash,
+            );
+            seals.push({
+              representationId: proof.representationId,
+              sealSha256: proof.sealSha256,
+            });
+          }
+        if (seals.length)
+          extracted.sealed.forEach((b) => {
+            b.derivativeSeals = seals;
+          });
       }
       const result: CoreCandidatePublicationResult = {
         publicationVersion: 2,
@@ -1107,6 +1169,21 @@ export function createCoreSourcePgAuthority(
             )
           ).rows[0];
           if (!rep) return false;
+          if (body.derivativeSeals?.length) {
+            const seal = body.derivativeSeals.find(
+              (s) => s.representationId === e.representationId,
+            );
+            if (
+              !seal ||
+              !(
+                await lease.query(
+                  "SELECT r.id FROM public.trip_source_pdf_seals s JOIN public.trip_source_representations r ON r.id=(s.body->'request'->>'originalRepresentationId')::uuid WHERE s.seal_sha256=$1 AND s.account_id=$2::uuid AND s.trip_id=$3::uuid AND s.source_id=$4::uuid AND r.retention_state='RETAINED' AND r.remote_state='VERIFIED' AND r.payload_sha256=s.body->>'originalSha256' AND r.byte_count=(s.body->>'originalByteCount')::bigint",
+                  [seal.sealSha256, actor.accountId, actor.tripId, e.sourceId],
+                )
+              ).rows[0]
+            )
+              return false;
+          }
         } else if (pub) {
           const row = (
             await lease.query(

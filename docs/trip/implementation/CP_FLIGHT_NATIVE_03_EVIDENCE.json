@@ -1,0 +1,259 @@
+{
+  "firstInstalledLaunch": {
+    "checkpoint": "CP-FLIGHT-NATIVE-03",
+    "result": "FIRST_PASS",
+    "launches": 1,
+    "bridgeRegistered": true,
+    "actualPdfKitCalls": 1,
+    "originalSha256": "f193cd842ed36779c9087d9c6c0a1bd7c3859dbafbf1807227d29afdeaacc12c",
+    "originalByteCount": 8393,
+    "candidateIds": [
+      "214b51d6-0ef3-82ba-ab3a-bb3d482f4fec",
+      "40492636-283f-8d6c-afeb-2d9772de3c66"
+    ],
+    "identities": {
+      "sourceId": "1d95ec3c-ab1d-4ef9-a2fa-60f0ba7760a9",
+      "originalRepresentationId": "5ecc77e9-87d8-4a0a-8f22-da3173e677d0",
+      "derivedRepresentationId": "6aa66215-df6d-4955-916b-710dfa6ed1b1",
+      "runId": "cd42515d-dbb0-4a69-88c4-04dedd8e045b",
+      "inputId": "7a959fb4-cd4b-42c9-abf7-7897b9094456",
+      "requestId": "6eef3498-58a5-4f22-bb0c-102935c0e8b9",
+      "batchId": "b67570a2-7e6f-4631-881e-67adee7961f3",
+      "publicationId": "08abaae3-0ed5-49a4-ac39-e03fdf04ab47",
+      "planId": "a5b6e332-f3ba-4eb7-b1a8-7b3c8097372d"
+    },
+    "adapterIdentities": [
+      {
+        "candidateId": "214b51d6-0ef3-82ba-ab3a-bb3d482f4fec",
+        "itemId": "90c56c04-1e65-43e4-91d4-e098ce5628dc",
+        "createSlotId": "3b2bb6b6-10d0-47e8-996e-b5cc1cffbe3d",
+        "createOperationId": "ecb3499c-2b73-4d1f-a163-aebf509d647b",
+        "qualifySlotId": "36139b15-7111-4f8c-b2cd-4f24cf22e4c1",
+        "qualifyOperationId": "4a4882c9-c12d-41d4-9ea1-55e6dfa7f5a2"
+      },
+      {
+        "candidateId": "40492636-283f-8d6c-afeb-2d9772de3c66",
+        "itemId": "019e96ad-485c-42a8-955b-c8b87f794515",
+        "createSlotId": "24e8da27-477e-44e9-b8fc-ddf45ac53d81",
+        "createOperationId": "1d4b2c05-cf81-499a-b179-29780f6cfd8a",
+        "qualifySlotId": "d0b40d3e-20a0-4891-945a-256e09758c60",
+        "qualifyOperationId": "4d808fc5-58af-4493-8b57-50d6fd77681c"
+      }
+    ],
+    "sourceAuthority": "REVIEW_REQUIRED_NOT_REGISTERED",
+    "acceptedItems": [],
+    "counts": {
+      "sources": 0,
+      "items": 0,
+      "queued": 0
+    },
+    "offline": true,
+    "networkAttempts": 0,
+    "accountTripFences": true,
+    "derivedPages": [
+      {
+        "pageIndex": 0,
+        "start": 0,
+        "end": 62
+      },
+      {
+        "pageIndex": 1,
+        "start": 63,
+        "end": 125
+      }
+    ],
+    "inputId": "9bc34f6e-2c2f-47c2-b1eb-48a2304494e7",
+    "jobId": "963f9fc7-0881-4760-8a30-173fc96f6b7d",
+    "schemaVersion": 55
+  },
+  "thirdInstalledLaunchWithoutReinstall": {
+    "checkpoint": "CP-FLIGHT-NATIVE-03",
+    "result": "COLD_RESTART_PASS",
+    "launches": 3,
+    "bridgeRegistered": true,
+    "actualPdfKitCalls": 0,
+    "originalSha256": "f193cd842ed36779c9087d9c6c0a1bd7c3859dbafbf1807227d29afdeaacc12c",
+    "originalByteCount": 8393,
+    "candidateIds": [
+      "214b51d6-0ef3-82ba-ab3a-bb3d482f4fec",
+      "40492636-283f-8d6c-afeb-2d9772de3c66"
+    ],
+    "identities": {
+      "sourceId": "1d95ec3c-ab1d-4ef9-a2fa-60f0ba7760a9",
+      "originalRepresentationId": "5ecc77e9-87d8-4a0a-8f22-da3173e677d0",
+      "derivedRepresentationId": "6aa66215-df6d-4955-916b-710dfa6ed1b1",
+      "runId": "cd42515d-dbb0-4a69-88c4-04dedd8e045b",
+      "inputId": "7a959fb4-cd4b-42c9-abf7-7897b9094456",
+      "requestId": "6eef3498-58a5-4f22-bb0c-102935c0e8b9",
+      "batchId": "b67570a2-7e6f-4631-881e-67adee7961f3",
+      "publicationId": "08abaae3-0ed5-49a4-ac39-e03fdf04ab47",
+      "planId": "a5b6e332-f3ba-4eb7-b1a8-7b3c8097372d"
+    },
+    "adapterIdentities": [
+      {
+        "candidateId": "214b51d6-0ef3-82ba-ab3a-bb3d482f4fec",
+        "createOperationId": "ecb3499c-2b73-4d1f-a163-aebf509d647b",
+        "createSlotId": "3b2bb6b6-10d0-47e8-996e-b5cc1cffbe3d",
+        "itemId": "90c56c04-1e65-43e4-91d4-e098ce5628dc",
+        "qualifyOperationId": "4a4882c9-c12d-41d4-9ea1-55e6dfa7f5a2",
+        "qualifySlotId": "36139b15-7111-4f8c-b2cd-4f24cf22e4c1"
+      },
+      {
+        "candidateId": "40492636-283f-8d6c-afeb-2d9772de3c66",
+        "createOperationId": "1d4b2c05-cf81-499a-b179-29780f6cfd8a",
+        "createSlotId": "24e8da27-477e-44e9-b8fc-ddf45ac53d81",
+        "itemId": "019e96ad-485c-42a8-955b-c8b87f794515",
+        "qualifyOperationId": "4d808fc5-58af-4493-8b57-50d6fd77681c",
+        "qualifySlotId": "d0b40d3e-20a0-4891-945a-256e09758c60"
+      }
+    ],
+    "sourceAuthority": "REVIEW_REQUIRED_NOT_REGISTERED",
+    "acceptedItems": [],
+    "counts": {
+      "sources": 0,
+      "items": 0,
+      "queued": 0
+    },
+    "offline": true,
+    "networkAttempts": 0,
+    "accountTripFences": true,
+    "derivedPages": [
+      {
+        "pageIndex": 0,
+        "start": 0,
+        "end": 62
+      },
+      {
+        "pageIndex": 1,
+        "start": 63,
+        "end": 125
+      }
+    ],
+    "inputId": "9bc34f6e-2c2f-47c2-b1eb-48a2304494e7",
+    "jobId": "963f9fc7-0881-4760-8a30-173fc96f6b7d",
+    "schemaVersion": 55
+  },
+  "initialIntegrationVerification": {
+    "mergeCommit": "706fd35fabd4fa27882e09c206dd9d113c4d7670",
+    "mergeTree": "c11ddb304eabde4b7bb9e7ad155bf9a51fa9af70",
+    "accepted35Manifest": [
+      ".gitignore",
+      "backend/src/__fixtures__/flightCoreDayAcceptance.ts",
+      "backend/src/__fixtures__/tripCoreV2Sql.ts",
+      "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "docs/DATA_MODEL.md",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_CHANGED_FILES.txt",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_EVIDENCE.json",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_G2_HANDOFF.md",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_CHANGED_FILES.txt",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_EVIDENCE.json",
+      "docs/trip/implementation/CP_FLIGHT_NATIVE_02_INTEGRATION_READINESS_REPORT.md",
+      "modules/receipt-ocr/ios/FlightPdfExtractor.swift",
+      "modules/receipt-ocr/ios/ReceiptOcrModule.swift",
+      "modules/receipt-ocr/tests/README.md",
+      "modules/receipt-ocr/tests/main.swift",
+      "scripts/trip/core-v2-sql-acceptance.py",
+      "src/data/bootstrap/participationWakeAcceptance.test.ts",
+      "src/data/db/checkpoint11Integration.test.ts",
+      "src/data/db/database.test.ts",
+      "src/data/db/migrations.ts",
+      "src/data/db/migrations/captureFlightNative.ts",
+      "src/data/db/publicationMembershipMigration.test.ts",
+      "src/data/foundation/diagnosticsReadOnly.test.ts",
+      "src/data/interpretation/__fixtures__/nativeFlightPdf.json",
+      "src/data/interpretation/flightPdfExtraction.ts",
+      "src/data/operations/defaultCaptureFlightNative.ts",
+      "src/data/repositories/captureBatchAssessmentObservationRepository.test.ts",
+      "src/data/repositories/captureFlightNativeRepository.test.ts",
+      "src/data/repositories/captureFlightNativeRepository.ts",
+      "src/data/repositories/intelligenceContinuationRepository.test.ts",
+      "src/data/repositories/tripCanonicalEventRepository.test.ts",
+      "src/data/repositories/tripPublicationMembershipRepository.test.ts",
+      "src/native/flightPdf.test.ts",
+      "src/native/flightPdf.ts"
+    ],
+    "canonicalOverlap": ["docs/CURRENT_IMPLEMENTATION_STATE.md"],
+    "approvedBlobMismatches": [],
+    "canonicalBefore": {
+      "head": "c0a69204fab3e663356a7f34406d580147869aeb",
+      "statusHash": "e50d3f56c7456bfe7f22532519b0c96070aec1e609de7814245e1381c12b1aca",
+      "handoffHash": "82aa678b92d4edddb68c56c9ad16cba106a97c3001667f4770f46c22401dff95"
+    },
+    "canonicalAfter": {
+      "head": "03794531a224f0a7046f2717a7a9960b1241fc4f",
+      "statusHash": "853fbba161994adc58ba23cfd2aa76adbf2e0f12ddfe437d14e8e7f6a0f98379",
+      "handoffHash": "82aa678b92d4edddb68c56c9ad16cba106a97c3001667f4770f46c22401dff95"
+    },
+    "canonicalUntouched": false
+  },
+  "finalIntegration": {
+    "canonicalLocal": "40c5d29a9f3d6232003393af1ae516a339a46b56",
+    "canonicalRemote": "12693e3c1513d678bd3fe0190bb830d79f262b49",
+    "commit": "691aa895a7443883e12051ab153a74ee64e312aa",
+    "tree": "1eae97d34b3ceb2b1d8bedacc8f17c123bbd0776",
+    "allLatestCanonicalBlobsPreservedExceptCombinedHandoff": true,
+    "allApprovedNativePreparationBlobsPreservedExceptCombinedHandoff": true,
+    "acceptedManifestCount": 35
+  },
+  "evidenceLimits": {
+    "physicalDevice": "NOT_RUN",
+    "coreDevRead": "NOT_RUN",
+    "pdfAuthority": "PENDING_AGENT_3",
+    "networkIsolation": "app fetch rejection and embedded offline bundle; not OS network isolation",
+    "accountTrip": "synthetic installed domain/generation fences; not Auth UI",
+    "acquisition": "real native URI/C2 stream; not system picker UI",
+    "canonicalChangesDuringTask": "Owner/concurrent CLOSED model-task commits; no canonical writes by Native03",
+    "installedBuildTree": "installed evidence predates final G2 DL2; final affected repository/Day/SQL regressions run separately"
+  },
+  "finalChecks": {
+    "typecheck": "PASS",
+    "lintUiGuard": "PASS",
+    "backendBuild": "PASS",
+    "affectedDl2NativeTests": {
+      "passed": 60,
+      "skipped": 1
+    },
+    "concurrentModelHostTests": {
+      "passed": 57,
+      "skipped": 2
+    },
+    "finalJoinedSql": "PASS"
+  },
+  "finalJoinedReadProjection": {
+    "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+    "accountId": "00000000-0000-4000-8000-000000000001",
+    "tripId": "10000000-0000-4000-8000-000000000001",
+    "sqlRead2SqliteDayPairs": [
+      {
+        "itemId": "116b3382-d0d6-40e3-bcc4-b875c06d244b",
+        "semanticRevision": 2
+      },
+      {
+        "itemId": "c25b3fb4-579a-42b4-b793-e4df85cda1f5",
+        "semanticRevision": 2
+      }
+    ],
+    "itemDateExpectations": [
+      {
+        "itemId": "116b3382-d0d6-40e3-bcc4-b875c06d244b",
+        "semanticRevision": 2,
+        "localDate": "2026-12-20"
+      },
+      {
+        "itemId": "c25b3fb4-579a-42b4-b793-e4df85cda1f5",
+        "semanticRevision": 2,
+        "localDate": "2026-12-17"
+      }
+    ],
+    "dates": ["2026-12-20", "2026-12-17"],
+    "read2ManifestSha256": "08950541d7c17647c98de5093073dd43cb13ce66fe33d5f737583972eb24e59f",
+    "read2AccessRevision": 1,
+    "read2Epoch": "434f9814-a2d0-4080-9446-11e9fe3a7394",
+    "lostCollectionResponseRecovered": true,
+    "fileColdOfflineReopen": true,
+    "privateSourceLeakage": false,
+    "sqliteMigration": 54,
+    "localSchemaVersion": 55
+  }
+}

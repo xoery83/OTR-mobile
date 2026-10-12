@@ -1,3 +1,4 @@
+import { seedAndSealPdf } from "./__fixtures__/sourcePdfAcceptance";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { captureFlightFixture } from "../../src/data/interpretation/__fixtures__/captureFlightCoreV2";
@@ -50,7 +51,12 @@ it.skipIf(!owned)(
   async () => {
     if (!/^otr-core-v2-test-[a-f0-9]{12}$/.test(owned!))
       throw new Error("OWNED_FIXTURE_REQUIRED");
-    const f = await captureFlightFixture(),
+    const pdfMode = process.env.OTR_CORE_PDF_AUTHORITY === "1";
+    const f = await captureFlightFixture(
+        pdfMode
+          ? "NZ1 AKL->CHC 2026-12-17 depInstant=2026-12-16T20:00:00.120000Z\nNZ2 CHC->AKL 2026-12-20 depInstant=2026-12-19T20:00:00.120000Z"
+          : undefined,
+      ),
       p = f.built.publication;
     const account = f.context.accountId,
       trip = f.context.tripId;
@@ -74,16 +80,20 @@ it.skipIf(!owned)(
       qualifySlotId: randomUUID(),
       qualifyOperationId: randomUUID(),
     }));
-    const plan = buildCaptureFlightSourcePlanV2(p, randomUUID(), identities);
+    let plan = buildCaptureFlightSourcePlanV2(p, randomUUID(), identities);
     const recoveredOperations: string[] = [];
+    let pdf: Awaited<ReturnType<typeof seedAndSealPdf>> | undefined;
     try {
-      await seedPublicationSource(
-        admin,
-        { materials: f.batch.request.materials, request: p },
-        account,
-        trip,
-        f.built.sourcePublication,
-      );
+      if (pdfMode) pdf = await seedAndSealPdf(admin, owned!, f);
+      else
+        await seedPublicationSource(
+          admin,
+          { materials: f.batch.request.materials, request: p },
+          account,
+          trip,
+          f.built.sourcePublication,
+        );
+      if (pdfMode) plan = buildCaptureFlightSourcePlanV2(p, plan.planId, identities);
       await admin.lease.query(
         "DO $$DECLARE c record;BEGIN FOR c IN SELECT conname FROM pg_constraint WHERE conrelid='public.trip_core_activation_gate'::regclass AND contype='c' LOOP EXECUTE format('ALTER TABLE public.trip_core_activation_gate DROP CONSTRAINT %I',c.conname);END LOOP;END$$",
       );
@@ -232,6 +242,9 @@ it.skipIf(!owned)(
           p.publicationId,
           ...p.candidates.map((c) => c.candidateId),
           f.batch.request.materials[0].pin.representation_id,
+          ...(pdf
+            ? [pdf.originalId, pdf.receipt.operationId, pdf.receipt.sealSha256]
+            : []),
         ],
       });
       console.info(JSON.stringify(joined));
@@ -380,6 +393,55 @@ it.skipIf(!owned)(
         )?.count,
       ).toBe(2);
 
+      if (pdf) {
+        // Revoked custody cannot authorize a new output; already accepted items are preserved.
+        await pdf.alter(
+          "UPDATE public.trip_source_representations SET remote_state='LOST',row_revision=2 WHERE id=$1::uuid",
+          [pdf.originalId],
+        );
+        await expect(
+          core.source!.withLockedSourcePlan(
+            {
+              actorAccountId: account,
+              tripId: trip,
+              sourceId: p.sourceId,
+              planId: plan.planId,
+              candidateIds: p.candidates.map((c) => c.candidateId),
+            },
+            (tx) => tx.readSealedCatalog(),
+          ),
+        ).rejects.toThrow("CONTRACT_UNSUPPORTED");
+        const redacted = await transport.receipt(f.context, recoveredOperations[0]);
+        expect(redacted?.projection).toBe("STATUS_ONLY");
+        expect(
+          (
+            await admin.lease.query(
+              "SELECT count(*)::int AS n FROM public.itinerary_events WHERE id IN($1::uuid,$2::uuid)",
+              identities.map((i) => i.itemId),
+            )
+          ).rows[0].n,
+        ).toBe(2);
+        await pdf.alter(
+          "UPDATE public.trip_source_representations SET remote_state='VERIFIED',row_revision=2 WHERE id=$1::uuid",
+          [pdf.originalId],
+        );
+        await expect(
+          core.source!.withLockedSourcePlan(
+            {
+              actorAccountId: account,
+              tripId: trip,
+              sourceId: p.sourceId,
+              planId: plan.planId,
+              candidateIds: p.candidates.map((c) => c.candidateId),
+            },
+            (tx) => tx.readSealedCatalog(),
+          ),
+        ).rejects.toThrow("CONTRACT_UNSUPPORTED");
+        await pdf.alter(
+          "UPDATE public.trip_source_representations SET remote_state='VERIFIED',row_revision=1 WHERE id=$1::uuid",
+          [pdf.originalId],
+        );
+      }
       expect(Object.keys(flightCommandLeaves(c.facts))).not.toHaveLength(0);
       expect(new Set(recoveredOperations).size).toBe(4);
       console.info(
@@ -398,6 +460,7 @@ it.skipIf(!owned)(
         }),
       );
     } finally {
+      if (pdf) await pdf.close();
       await admin.lease.query(
         "UPDATE public.trip_core_activation_gate SET runtime_enabled=false,enabled_commands='{}',enabled_families='{}',enabled_admission_modes='{}'",
       );

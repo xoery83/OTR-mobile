@@ -1,0 +1,182 @@
+{
+  "checkpoint": "CP-FLIGHT-PDF-AUTH-01",
+  "implementationCommit": "ee7569228e61a774dcd33d22965af7d3a3933fd9",
+  "classification": "CLOSED_SYNTHETIC_ONLY",
+  "pdfRecords": [
+    {
+      "classification": "CP_FLIGHT_PDF_AUTH_01_SOURCE_SEAL",
+      "originalId": "dad4ee4a-f177-4715-9206-2749216978ff",
+      "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+      "operationId": "f52fa996-c0bc-48f8-82c4-41ed27d36295",
+      "sealSha256": "26156f81925e908746f38da91ec07d667cbafc2583b324a368cfd01670bf8581",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "start": 0,
+          "end": 62
+        },
+        {
+          "pageIndex": 1,
+          "start": 63,
+          "end": 125
+        }
+      ],
+      "replay": "EXACT",
+      "negativeSealWrites": 0
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "tripId": "10000000-0000-4000-8000-000000000001",
+      "sqlRead2SqliteDayPairs": [
+        {
+          "itemId": "3ab65c50-53fb-4518-9177-ffac0ded0d54",
+          "semanticRevision": 2
+        },
+        {
+          "itemId": "dc0f8467-8367-48be-a097-17f0a2732d70",
+          "semanticRevision": 2
+        }
+      ],
+      "dates": ["2026-12-20", "2026-12-17"],
+      "read2ManifestSha256": "cff0c35b8c6645b3a0624636e883d9f0fc7ea0db63f654980a7116c93c6bf0c3",
+      "read2AccessRevision": 1,
+      "read2Epoch": "6360bd5e-777d-41d2-b521-ac8d5535c700",
+      "lostCollectionResponseRecovered": true,
+      "fileColdOfflineReopen": true,
+      "privateSourceLeakage": false,
+      "sqliteMigration": 54
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+      "sourceId": "8f718afe-5a9b-4108-b61c-45ff610b42ec",
+      "runId": "7332bf6b-0ada-44c7-adc7-e52c6f89f5ae",
+      "inputCatalogSha256": "3329632c58173bb2973aa3f89bf490624bd50a1ee8f63b0f1626a1d8d240a441",
+      "candidateIds": [
+        "afd7048e-1234-80f2-a7a7-be538ceb0ee9",
+        "ebefdabc-24dd-8fed-a06d-bf080ca86bb9"
+      ],
+      "itemIds": [
+        "3ab65c50-53fb-4518-9177-ffac0ded0d54",
+        "dc0f8467-8367-48be-a097-17f0a2732d70"
+      ],
+      "recoveredOperationIds": [
+        "9718c1e4-16f3-4d3e-82fc-81f793a11087",
+        "a2b7552a-c7df-4bfd-8f7b-9d4829ccd54e",
+        "4e312c9b-1044-4198-80bf-42cf55fe8b95",
+        "5996bb83-6b8c-4ae4-837d-ec12a6185faa"
+      ],
+      "sourcePlanStatus": "COMPLETE",
+      "associations": 4,
+      "qualificationRevision": 2,
+      "negativeWrites": 0
+    },
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [85, 86, 87, 88, 89, 90, 91, 92, 93],
+      "historicalFunctionsPreserved": 329,
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "originalTextRegressionRecords": [
+    {
+      "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "tripId": "10000000-0000-4000-8000-000000000001",
+      "sqlRead2SqliteDayPairs": [
+        {
+          "itemId": "7e1d17b6-2c36-40b4-a308-7253d3b619bf",
+          "semanticRevision": 2
+        },
+        {
+          "itemId": "8ec4cb2e-9f16-434e-bc3b-18358643121d",
+          "semanticRevision": 2
+        }
+      ],
+      "dates": ["2026-12-17", "2026-12-20"],
+      "read2ManifestSha256": "c6b7b54eaed3ddaaf3f075add715c630a69a68068d74fc427b1006588d7c5898",
+      "read2AccessRevision": 1,
+      "read2Epoch": "6758c0ad-62ef-46bc-a197-b9053db88862",
+      "lostCollectionResponseRecovered": true,
+      "fileColdOfflineReopen": true,
+      "privateSourceLeakage": false,
+      "sqliteMigration": 54
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+      "sourceId": "dafcfac1-51eb-40cc-bf92-e92ee28f0bde",
+      "runId": "0aabab49-a6bf-41fa-8cf1-aa1b1f67af9f",
+      "inputCatalogSha256": "b8f2c8d85e0f80e0e3cf3902de0f65c8cb4ab77fd6c7e9375c0aab0cabf8330c",
+      "candidateIds": [
+        "c6b02deb-b9b0-8a53-a9c0-d6cc64e6c764",
+        "e30a62e3-3622-83ee-a922-7689900623e3"
+      ],
+      "itemIds": [
+        "8ec4cb2e-9f16-434e-bc3b-18358643121d",
+        "7e1d17b6-2c36-40b4-a308-7253d3b619bf"
+      ],
+      "recoveredOperationIds": [
+        "3dd1e2cf-7f65-426c-a54d-af12d632895d",
+        "5ee2da1e-0ed0-46cd-b111-947413d8e02f",
+        "8d47c2a0-bb5c-4d20-b2a8-56a395b9ef65",
+        "3ea1d2af-4b5b-43cb-a702-b2c990577cf7"
+      ],
+      "sourcePlanStatus": "COMPLETE",
+      "associations": 4,
+      "qualificationRevision": 2,
+      "negativeWrites": 0
+    },
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [85, 86, 87, 88, 89, 90, 91, 92],
+      "historicalFunctionsPreserved": 329,
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "focusedTests": {
+    "suites": 4,
+    "passed": 46
+  },
+  "validation": {
+    "typecheck": "PASS",
+    "touchedLint": "PASS",
+    "uiGuard": "PASS",
+    "backendBuild": "PASS",
+    "format": "PASS",
+    "diffCheck": "PASS",
+    "pdfKitSyntheticSelectableTwoPages": "PASS"
+  },
+  "fixture": {
+    "path": "backend/src/__fixtures__/source-pdf/synthetic-roundtrip.pdf",
+    "byteCount": 950,
+    "sha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da"
+  },
+  "notVerified": [
+    "Hosted custody/principals/Auth/deployment",
+    "PDF Node pg/TLS transport",
+    "Native PDF handoff/runtime",
+    "general supplier/Quartz PDF profile"
+  ],
+  "canonicalAtStart": "12693e3c1513d678bd3fe0190bb830d79f262b49",
+  "canonicalAtHandoffRead": {
+    "localMain": "c0a69204fab3e663356a7f34406d580147869aeb",
+    "remoteMain": "12693e3c1513d678bd3fe0190bb830d79f262b49"
+  },
+  "negativeAssertions": [
+    "CHECK-CLOSED and principal/ACL restrictions",
+    "stale Source row/material and original row",
+    "cross-account and wrong Trip",
+    "altered original bytes and alternate valid PDF",
+    "altered derived text",
+    "forged page map and producer/body",
+    "duplicate seal epoch and changed operation",
+    "first Source COMMIT response loss then cold receipt recovery",
+    "revoked custody rejects fresh Core catalog and redacts audit",
+    "manual SET/CLEAR retained",
+    "other-member collection excludes original/seal/private Source IDs",
+    "Capture reinterprets actual PDF/DERIVED catalog with stable Candidate IDs and matching Set/Run/Input hash"
+  ],
+  "authorityCommit": "da1a8a7082a94242107172527426666f231337ba"
+}

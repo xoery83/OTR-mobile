@@ -142,6 +142,10 @@ export const sealedCoreFlightCandidateSchema = z.strictObject({
   values: z.json(),
   fieldEvidence: z.record(field, verifiedField),
   airportBindings: z.array(coreAirportBindingSchema).max(2),
+  derivativeSeals: z
+    .array(z.strictObject({ representationId: coreUuid, sealSha256: coreHash }))
+    .max(64)
+    .optional(),
 });
 export type SealedCoreFlightCandidate = z.infer<typeof sealedCoreFlightCandidateSchema>;
 export const fieldRef = (candidateId: string, key: string) =>
