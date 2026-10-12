@@ -5,6 +5,19 @@ normal fast-forward from `741579c`; concurrent Platform documentation remains lo
 Owner accepted W0 `otr-trip-core/2` and continuous W1/W2/W3/W5 implementation.
 W4 Capture and W6 Experience retain separate ownership. Core is INCOMPLETE.
 
+## CP-FLIGHT-E2E-AB — joined isolated acceptance
+
+- Branch `codex/cp-flight-e2e-ab`, baseline `b5caa1f`; accepted A473893f+Bfdd5a5c
+  merged locally as90128ce; joined harness763860a. No main merge/push/activation.
+- Actual Source/Capture→owning Core SQL/read2→authenticated collection→SQLite54→
+  production Day reader proves two same UUID/revision2 pairs, repeat/lost-response
+  recovery, file cold offline reopen and Actor/Trip/private-Source fences.
+- Combined19 suites/347 PASS; joined SQL1 and SourceSQL3 PASS;329 historical bodies
+  unchanged; typecheck/lint/UI guard/backend build/format/diff PASS. Native/Hosted
+  remain uncertified. Exact40-file manifest and run UUIDs are in the AB report/
+  evidence under `trip/implementation/`. Next: separate integration decision and
+  approved F6 deployment/custody/native/device gates. All activation remains CLOSED.
+
 ## CP-FLIGHT-E2E-A — isolated, not integrated
 
 Owner-scoped branch `codex/cp-flight-e2e-a` from canonical `b5caa1f`; code commits
