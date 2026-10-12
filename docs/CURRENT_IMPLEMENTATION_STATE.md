@@ -1,3 +1,22 @@
+# G2-FLEX-01 — controlled local-main integration / Owner Review
+
+2026-10-12. Accepted source `6758683` (`codex/g2-flex-01`, base `eb4c8eb`)
+merges into current canonical `9ca16d3` without rewriting the reviewed commit.
+The additive synthetic `g2-flexible/1` Day Feed port supports independent
+empty/Choice-only Blocks, Choice/Item global Focus, direct Block Immersive,
+explicit unique Item nesting with safe outer fallback, soft windows, My/Group
+Choice filtering and TNS exclusion. CP01B owns Flexible business lifecycle;
+TTR remains dormant. No remote push, Hosted or production activation.
+Clean-main full baseline: 3,766 pass / two known failures / 23 skips;
+merged tree: 3,770 pass / the same failures / 23 skips. Focused 131 pass /
+one host-dependent skip; typecheck and lint/UI guard pass. An isolated iOS 27
+DEV Test Simulator validated Fixture, Focus/Immersive, P1/P2/P3, NOW/TNS,
+nonzero scroll return and Light/Dark. Core DEV Read remains unavailable there.
+See `architecture/G2_FLEXIBLE_SHARED_PORT_01.md` and
+`architecture/G2_FLEX_01_MAIN_INTEGRATION_REPORT.md` for the API and evidence.
+
+---
+
 # CP-FLIGHT-PDF-NATIVE-JOIN-01 — isolated CLOSED joined preparation
 
 Updated 2026-10-12. `codex/cp-flight-pdf-native-join-01` reconciles canonical eb4c8eb (G2 DL4).
