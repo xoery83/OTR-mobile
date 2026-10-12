@@ -1,3 +1,16 @@
+# CP-FLIGHT-PDF-UPLOAD-SOURCE-02 — allocation resolved / Owner Review
+
+2026-10-13: Owner reserves Flight `20261013000100`, TTR `20261013000200`.
+Accepted frozen Flight `9e80142` / 14-path scope and production hashes preserved.
+Narrow disposable install Flight00100 → TTR00200 PASS; 378 existing functions and
+CLOSED gates preserved. TTR is not accepted or included. Prior SQL49/TypeScript227
+and static evidence reused because relevant inputs/canonical `54ecb4b` are unchanged.
+Earlier pre-dispatch `source_pdf_stage_shape` failure remains unresolved, not fixed.
+Final readiness addendum: `trip/implementation/CP_FLIGHT_PDF_UPLOAD_SOURCE_02_REPORT.md`.
+READY FOR SEPARATE CANONICAL INTEGRATION APPROVAL; no merge/push/runtime activation.
+
+---
+
 # CP-FLIGHT-PDF-UPLOAD-SOURCE-02 — BLOCKED allocation / Owner Review
 
 2026-10-13: accepted SOURCE-01 `1398b2b` integrated into an isolated tree based on
