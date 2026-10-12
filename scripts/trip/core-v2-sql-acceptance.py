@@ -57,7 +57,13 @@ try:
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t"
     import os
     env = dict(os.environ, OTR_CORE_OWNED_SQL_FIXTURE=NAME)
-    subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", scenario], cwd=ROOT, env=env, check=True)
+    subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", scenario, "--disableConsoleIntercept"], cwd=ROOT, env=env, check=True)
+    # Positive fixture scenarios retain disabled allowlists; reset only this owned clone.
+    sql("update trip_core_activation_gate set runtime_enabled=false,enabled_commands='{}',enabled_families='{}',enabled_admission_modes='{}';")
+    assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t", "Fixture activation gate was not restored CLOSED"
+    after_scenario = json.loads(sql(FINGERPRINTS))
+    changed = [name for name, digest in before.items() if after_scenario.get(name) != digest]
+    assert not changed, "Historical function changes during scenario: " + repr(changed)
     print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92], "historicalFunctionsPreserved": len(before), "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
 finally:
     if created:

@@ -15,12 +15,38 @@ import type { CorePgLease } from "./tripCoreV2PgStorage";
 import { executeCoreCommandV2 } from "./tripCoreV2Commands";
 import { prepareCoreSourcePlanV2, readCoreSourcePlanV2 } from "./tripCoreV2Source";
 import { flightCommandLeaves } from "../../src/domain/trip/flightAdmission";
+import { verifyJoinedFlightDay } from "./__fixtures__/flightCoreDayAcceptance";
 vi.mock("../../src/data/auth/sessionAccessToken", () => ({
   sessionAccessToken: vi.fn(),
 }));
+vi.mock("../../src/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../../src/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
+vi.mock("../../src/components/AppIcon", () => ({ AppIcon: () => null }));
+vi.mock("../../src/features/day-feed/useMinuteClock", () => ({
+  useMinuteClock: () => ({ instant: "2026-01-01T00:00:00Z" }),
+}));
+vi.mock("react-native", async () => {
+  const { createElement } = await import("react");
+  const primitive = (p: Record<string, any>) =>
+    createElement(
+      "div",
+      { "data-testid": p.testID, "aria-label": p.accessibilityLabel },
+      p.children,
+    );
+  return {
+    View: primitive,
+    Text: primitive,
+    ScrollView: primitive,
+    Pressable: primitive,
+    Modal: (p: Record<string, any>) => (p.visible ? primitive(p) : null),
+    StyleSheet: { create: (s: unknown) => s, hairlineWidth: 0.5 },
+    useWindowDimensions: () => ({ width: 375, height: 812, fontScale: 1 }),
+    useColorScheme: () => "light",
+  };
+});
 const owned = process.env.OTR_CORE_OWNED_SQL_FIXTURE;
 it.skipIf(!owned)(
-  "Capture CandidateSet → owning Publisher → two same-ID Core Flights and cold exact receipt recovery",
+  "joined Capture → owning SQL/read2 → SQLite54 → Day with same-ID exact receipt recovery",
   async () => {
     if (!/^otr-core-v2-test-[a-f0-9]{12}$/.test(owned!))
       throw new Error("OWNED_FIXTURE_REQUIRED");
@@ -143,6 +169,15 @@ it.skipIf(!owned)(
         (await readCoreSourcePlanV2(core.source!, account, trip, plan.planId, hash))
           .status.status,
       ).toBe("COMPLETE");
+      const repeat = await prepareCaptureFlightSetV2(
+        f.context,
+        f.built,
+        plan.planId,
+        identities,
+        transport,
+      );
+      expect(repeat.publication).toEqual(published);
+      expect(repeat.preparation.readyCommands).toEqual([]);
       const duplicateIds = identities.map((i) => ({
         ...i,
         itemId: randomUUID(),
@@ -169,6 +204,37 @@ it.skipIf(!owned)(
         expect(item?.itemId).toBe(i.itemId);
         expect(item?.details).toMatchObject({ qualification: "QUALIFIED" });
       }
+      const sqlPairs = (
+        await admin.lease.query(
+          "SELECT id::text AS item_id,semantic_revision::int AS semantic_revision FROM public.itinerary_events WHERE id IN($1::uuid,$2::uuid) ORDER BY id",
+          identities.map((i) => i.itemId),
+        )
+      ).rows;
+      expect(sqlPairs).toHaveLength(2);
+      expect(sqlPairs.every((r) => r.semantic_revision === 2)).toBe(true);
+      const joined = await verifyJoinedFlightDay({
+        core: () => core,
+        hash,
+        accountId: account,
+        otherAccountId: "00000000-0000-4000-8000-000000000002",
+        tripId: trip,
+        expected: identities.map((i) => ({
+          itemId: i.itemId,
+          semanticRevision: Number(
+            sqlPairs.find((r) => r.item_id === i.itemId)!.semantic_revision,
+          ),
+          localDate: p.candidates.find((c) => c.candidateId === i.candidateId)!.facts
+            .departureDate!,
+        })),
+        privateIds: [
+          p.sourceId,
+          p.runId,
+          p.publicationId,
+          ...p.candidates.map((c) => c.candidateId),
+          f.batch.request.materials[0].pin.representation_id,
+        ],
+      });
+      console.info(JSON.stringify(joined));
       expect(
         (
           await admin.lease.query(
