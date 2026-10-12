@@ -7,8 +7,11 @@ The accepted40-path AB manifest is retained; production reconciliation only keep
 AB's v2 query/v1 fallback and Flight facts through canonical's single G2 Composer.
 Both owning source branches and all concurrent files remain preserved.
 
-Joined synthetic SQL/SQLite/Day acceptance is Owner PASS. Final prepared-tree
-verification and a separate Owner decision precede any normal main fast-forward.
+Joined synthetic SQL/SQLite/Day acceptance is Owner PASS. This prepared tree
+passes358 focused tests/20 suites and the actual joined SQL scenario; full regression
+3704 PASS/20 skipped retains only the two baseline architecture/navigation failures.
+Typecheck, lint/UI guard, backend build, format and diff checks PASS. A separate
+Owner decision is still required before any normal main fast-forward or push.
 No Hosted, Provider, paid LLM, Native/Mobile Runtime or Production activation.
 Concurrent canonical Capture/Platform notes remain an exact uncommitted suffix;
 the readiness overlay preview retains them alongside this tracked handoff without
