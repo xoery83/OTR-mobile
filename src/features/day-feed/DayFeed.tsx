@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   Modal,
   Platform,
@@ -17,6 +17,11 @@ import type {
   DayRowRendererProps,
 } from "./rendererContribution";
 import { composeDayStream, type DayStreamPorts } from "./composition";
+import {
+  composedTtrActionability,
+  createG2TtrSessionBridge,
+  type G2TtrSessionPort,
+} from "./ttrSessionBridge";
 import {
   FlexibleBlockRow,
   type FlexibleBlockRenderer,
@@ -64,6 +69,7 @@ export function DayFeed({
   ports,
   onOpenTtr,
   flexiblePublication,
+  ttrSession,
 }: {
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
@@ -76,6 +82,7 @@ export function DayFeed({
   flexibleRenderer?: FlexibleBlockRenderer;
   ports?: Omit<DayStreamPorts, "focus" | "immersive">;
   flexiblePublication?: FlexiblePublication;
+  ttrSession?: G2TtrSessionPort;
   onOpenTtr?: (
     intent: ComposedTransition["openTtr"],
     context: Pick<ComposedTransition, "key" | "inputFingerprint">,
@@ -129,6 +136,25 @@ export function DayFeed({
       setFocus(null);
     if (immersive && immersive !== stream.immersive) setImmersive(null);
   }
+  const [ttrBridge] = useState(createG2TtrSessionBridge);
+  const ttrView = ttrSession
+    ? ttrBridge.prepare(
+        composedTtrActionability(
+          ttrSession.scope,
+          stream,
+          ports?.transitions ?? [],
+          ttrSession.permitted,
+        ),
+      )
+    : null;
+  useLayoutEffect(() => {
+    if (ttrView && ttrBridge.commit(ttrView, ttrSession!.sheetOpen))
+      ttrSession!.onChange(ttrView);
+  });
+  useLayoutEffect(() => {
+    const bridge = ttrBridge;
+    return () => bridge.dispose();
+  }, [ttrBridge]);
   const { rows, now } = stream;
   const scroll = useRef<ScrollView>(null),
     offset = useRef(0),
@@ -229,11 +255,18 @@ export function DayFeed({
           transition={row.transition}
           onOpen={
             onOpenTtr
-              ? () =>
-                  onOpenTtr(row.transition!.openTtr, {
+              ? () => {
+                  const intent = row.transition!.openTtr;
+                  const presentation = {
                     key: row.transition!.key,
                     inputFingerprint: row.transition!.inputFingerprint,
-                  })
+                  };
+                  if (
+                    !ttrSession ||
+                    (ttrView && ttrBridge.accepts(ttrView, intent, presentation))
+                  )
+                    onOpenTtr(intent, presentation);
+                }
               : undefined
           }
         />
@@ -252,9 +285,11 @@ export function DayFeed({
     <>
       <View
         style={styles.root}
-        pointerEvents={selectedBlock ? "none" : "auto"}
-        accessibilityElementsHidden={!!selectedBlock}
-        importantForAccessibility={selectedBlock ? "no-hide-descendants" : "auto"}
+        pointerEvents={selectedBlock || ttrSession?.sheetOpen ? "none" : "auto"}
+        accessibilityElementsHidden={!!selectedBlock || !!ttrSession?.sheetOpen}
+        importantForAccessibility={
+          selectedBlock || ttrSession?.sheetOpen ? "no-hide-descendants" : "auto"
+        }
       >
         <ScrollView
           ref={scroll}

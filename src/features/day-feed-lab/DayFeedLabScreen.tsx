@@ -1,7 +1,7 @@
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -24,12 +24,15 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { getLabFixtures } from "./fixtureRegistration";
 import { selectLabContext } from "./fixtureCatalog";
-import {
-  acceptsTtrLabIntent,
-  type TtrLabFacts,
-  type TtrLabIntentVector,
-} from "@/features/ttr/labFixtures";
+import type { TtrLabFacts } from "@/features/ttr/labFixtures";
 import { ttrIdentityKey } from "@/domain/trip/ttr";
+import { flexibleFixtureUpdate } from "./flexibleReactiveContribution";
+import type { FlexibleSnapshot } from "@/features/day-feed/flexibleSnapshot";
+import { useTtrSessionHost } from "./useTtrSessionHost";
+import {
+  TtrLabSheetContent,
+  type TtrLabSheetCopy,
+} from "@/features/ttr/TtrLabSheetContent";
 
 // The selector formats a calendar key without shifting it to the device timezone.
 const dateLabel = (date: string) =>
@@ -67,9 +70,6 @@ export function DayFeedLabScreen() {
     selectLabContext(fixtureCatalog[0].id, undefined, fixtureCatalog),
   );
   const [choosing, setChoosing] = useState(false);
-  const [openedTtr, setOpenedTtr] = useState<
-    (TtrLabIntentVector & { inputFingerprint: string | null }) | null
-  >(null);
   const [mode, setMode] = useState<"FIXTURE" | "CORE">("FIXTURE");
   const [catalog, setCatalog] = useState<Candidates | null>(null);
   const [catalogStatus, setCatalogStatus] = useState<ReadStatus>("LOADING");
@@ -133,22 +133,43 @@ export function DayFeedLabScreen() {
     (fixture.trip.supplemental as TtrLabFacts | undefined)?.source === "SYNTHETIC_TTR_LAB"
       ? (fixture.trip.supplemental as TtrLabFacts)
       : null;
-  const currentFixture = useRef({
-    id: fixture.trip.id,
-    date: fixture.date,
+  const [ttrPaused, setTtrPaused] = useState(false);
+  const [testNesting, setTestNesting] = useState<{
+    tripId: string;
+    snapshot: FlexibleSnapshot;
+  } | null>(null);
+  const ttrVisit = useMemo(
+    () => ({ context, mode, generation }),
+    [context, mode, generation],
+  );
+  const ttrHost = useTtrSessionHost({
     facts: ttrFacts,
-    mode,
-    context,
+    accountId: fixture.trip.projection.accountId,
+    tripId: fixture.trip.id,
+    date: fixture.date,
+    generation,
+    instant: fixture.trip.instant,
+    visit: ttrVisit,
+    permitted: mode === "FIXTURE" && !choosing && !ttrPaused,
   });
-  useLayoutEffect(() => {
-    currentFixture.current = {
-      id: fixture.trip.id,
-      date: fixture.date,
-      facts: ttrFacts,
-      mode,
-      context,
-    };
-  }, [fixture.trip.id, fixture.date, ttrFacts, mode, context]);
+  const sheetCopy: TtrLabSheetCopy = {
+    title: t("ttr.lab.title"),
+    confirm: t("ttr.lab.confirm"),
+    checkSaved: t("ttr.lab.checkSaved"),
+    externalMaps: t("ttr.lab.externalMaps"),
+    noMode: t("ttr.lab.noMode"),
+    opening: t("ttr.lab.opening"),
+    saving: t("ttr.lab.saving"),
+    checking: t("ttr.lab.checking"),
+    unavailable: t("ttr.lab.unavailable"),
+    failure: t("ttr.lab.failure"),
+    uncertain: t("ttr.lab.uncertain"),
+    published: t("ttr.lab.published"),
+    savedUnpublished: t("ttr.lab.savedUnpublished"),
+    endpoints: (from, to) => t("ttr.lab.endpoints", { from, to }),
+    confirmed: (mode) => t("ttr.lab.confirmed", { mode }),
+    preview: (mode) => t("ttr.lab.preview", { mode }),
+  };
   useEffect(() => {
     const activeRequests = requests.current;
     const ticket = ++activeRequests.day;
@@ -209,6 +230,70 @@ export function DayFeedLabScreen() {
   const tripId = mode === "FIXTURE" ? fixture.trip.id : coreId;
   const tripTitle =
     mode === "FIXTURE" ? fixture.trip.title : t("dayLab.coreTrip", { id: tripId });
+  const nativeDiagnostics = ttrFacts ? (
+    <View style={styles.ttrDiagnostics}>
+      <UiButton
+        label={t(ttrPaused ? "ttr.lab.resume" : "ttr.lab.pause")}
+        variant="text"
+        onPress={() => setTtrPaused((v) => !v)}
+      />
+      <UiButton
+        label={t("ttr.lab.replaceProjection")}
+        variant="text"
+        onPress={ttrHost.replacePublication}
+      />
+      {ttrHost.sheetOpen ? (
+        <>
+          <UiButton
+            label={t("ttr.lab.failNext")}
+            variant="text"
+            onPress={ttrHost.failNextConfirm}
+          />
+          {fixture.trip.flexiblePublication?.snapshot ? (
+            <UiButton
+              label={t("ttr.lab.nestAnchor")}
+              variant="text"
+              onPress={() =>
+                setTestNesting({
+                  tripId: fixture.trip.id,
+                  snapshot: flexibleFixtureUpdate(
+                    testNesting?.tripId === fixture.trip.id
+                      ? testNesting.snapshot
+                      : fixture.trip.flexiblePublication!.snapshot!,
+                    "NEST_ANCHOR",
+                  ),
+                })
+              }
+            />
+          ) : null}
+        </>
+      ) : (
+        <>
+          <UiButton
+            label={t("ttr.lab.queueTap")}
+            variant="text"
+            onPress={ttrHost.queueTap}
+          />
+          <UiButton
+            label={t("ttr.lab.dispatchTap")}
+            variant="text"
+            onPress={ttrHost.dispatchQueuedTap}
+          />
+          <UiButton
+            label={t("ttr.lab.accountGuard")}
+            variant="text"
+            onPress={() => {
+              void ttrHost.testAccountGuard();
+            }}
+          />
+          <Text style={styles.meta}>
+            {t("ttr.lab.rejectedTaps", { count: ttrHost.rejectedTaps })}
+          </Text>
+          <Text style={styles.meta}>{t(`ttr.lab.scopeGuard.${ttrHost.scopeGuard}`)}</Text>
+        </>
+      )}
+    </View>
+  ) : null;
   const selectDate = (value: string) =>
     mode === "FIXTURE"
       ? setContext(selectLabContext(tripId, value, fixtureCatalog))
@@ -316,6 +401,7 @@ export function DayFeedLabScreen() {
           </Text>
         ) : null}
         <Text style={styles.meta}>{t("dayLab.deferred")}</Text>
+        {!ttrHost.sheetOpen ? nativeDiagnostics : null}
       </View>
       {mode === "FIXTURE" ? (
         <DayFeed
@@ -328,39 +414,18 @@ export function DayFeedLabScreen() {
           query={fixture.trip.query}
           renderer={fixture.trip.renderer}
           flexibleRenderer={fixture.trip.flexibleRenderer}
-          flexiblePublication={fixture.trip.flexiblePublication}
-          ports={fixture.trip.ports}
-          onOpenTtr={
-            ttrFacts
-              ? (intent, presentation) => {
-                  const current = currentFixture.current;
-                  const vector: TtrLabIntentVector = {
-                    intent,
-                    capturedScope: ttrFacts.input.scope,
-                    expectedAccepted: true,
-                  };
-                  if (
-                    current.mode === "FIXTURE" &&
-                    current.context === context &&
-                    current.id === fixture.trip.id &&
-                    current.date === fixture.date &&
-                    current.facts &&
-                    presentation.key === ttrIdentityKey(intent.identity) &&
-                    current.facts.projection.inputFingerprint ===
-                      presentation.inputFingerprint &&
-                    acceptsTtrLabIntent(
-                      current.facts.projection,
-                      current.facts.input.scope,
-                      vector,
-                    )
-                  )
-                    setOpenedTtr({
-                      ...vector,
-                      inputFingerprint: presentation.inputFingerprint,
-                    });
-                }
-              : undefined
+          flexiblePublication={
+            testNesting?.tripId === fixture.trip.id && fixture.trip.flexiblePublication
+              ? { ...fixture.trip.flexiblePublication, snapshot: testNesting.snapshot }
+              : fixture.trip.flexiblePublication
           }
+          ports={
+            ttrFacts && ttrHost.projection
+              ? { ...fixture.trip.ports, transitions: [ttrHost.projection] }
+              : fixture.trip.ports
+          }
+          ttrSession={ttrFacts ? ttrHost.sessionPort : undefined}
+          onOpenTtr={ttrFacts ? ttrHost.onOpenTtr : undefined}
         />
       ) : visibleCore ? (
         <DayFeed
@@ -375,33 +440,39 @@ export function DayFeedLabScreen() {
         <View style={styles.root} />
       )}
       <Modal
-        visible={!!openedTtr && mode === "FIXTURE"}
+        visible={ttrHost.sheetOpen && mode === "FIXTURE"}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setOpenedTtr(null)}
+        onRequestClose={ttrHost.adapter.dismiss}
       >
         <View style={styles.root}>
-          <SheetHeader title={t("ttr.intentTitle")} onLeft={() => setOpenedTtr(null)} />
-          {openedTtr ? (
-            <View>
-              <Text style={styles.intent}>
-                {t("ttr.intentDetail", {
-                  relation: JSON.stringify(openedTtr.intent.identity),
-                  version: openedTtr.intent.publicationVersion,
-                  status: t(
-                    `ttr.route.${ttrFacts?.projection.route.status ?? "MISSING"}`,
-                  ),
-                })}
-              </Text>
-              {openedTtr.inputFingerprint ? (
-                <Text style={styles.intent}>
-                  {t("ttr.intentFingerprint", {
-                    fingerprint: openedTtr.inputFingerprint,
-                  })}
-                </Text>
-              ) : null}
-            </View>
+          {ttrFacts && ttrHost.projection?.identity ? (
+            <TtrLabSheetContent
+              view={ttrHost.adapter.view}
+              facts={{
+                source: "SYNTHETIC_TTR_LAB",
+                identityKey: ttrIdentityKey(ttrHost.projection.identity),
+                fromLabel:
+                  fixture.trip.projection.events.find(
+                    (e) => e.id === ttrFacts.input.from?.eventId,
+                  )?.title ?? t("ttr.lab.unavailable"),
+                toLabel:
+                  fixture.trip.projection.events.find(
+                    (e) => e.id === ttrFacts.input.to?.eventId,
+                  )?.title ?? t("ttr.lab.unavailable"),
+              }}
+              copy={sheetCopy}
+              onPreview={ttrHost.adapter.preview}
+              onConfirm={() => {
+                void ttrHost.adapter.confirm();
+              }}
+              onDismiss={ttrHost.adapter.dismiss}
+              onRecover={() => {
+                void ttrHost.adapter.recover();
+              }}
+            />
           ) : null}
+          {nativeDiagnostics}
         </View>
       </Modal>
       <Modal
@@ -443,6 +514,13 @@ const createStyles = (c: UiColors) =>
     root: { flex: 1, backgroundColor: c.background },
     controls: { padding: visual.space.page, gap: visual.space.heading },
     navigation: { flexDirection: "row", alignItems: "center" },
+    ttrDiagnostics: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: visual.space.heading,
+      padding: visual.space.row,
+    },
     dateStrip: { flex: 1 },
     dates: { gap: visual.space.heading, alignItems: "center" },
     meta: { ...visual.type.meta, color: c.textSecondary },

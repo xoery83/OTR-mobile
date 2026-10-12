@@ -1,6 +1,6 @@
 import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import type { DayEvent, DayProjection } from "@/domain/trip/dayReadModel";
 import { DayFeed } from "./DayFeed";
@@ -44,6 +44,8 @@ const state = vi.hoisted(() => ({
   cursor: 0,
   refs: [] as { current: any }[],
   refCursor: 0,
+  memoCursor: 0,
+  memos: [] as { deps: readonly unknown[]; value: unknown }[],
   scrollTo: vi.fn(),
   platform: "ios",
   effects: [] as (() => unknown)[],
@@ -67,6 +69,17 @@ vi.mock("react", async (original) => ({
           typeof next === "function" ? next(state.hooks[i] ?? initial) : next;
       },
     ];
+  },
+  useMemo: (create: () => unknown, deps: readonly unknown[]) => {
+    const i = state.memoCursor++;
+    const old = state.memos[i];
+    if (
+      !old ||
+      old.deps.length !== deps.length ||
+      !deps.every((v, n) => Object.is(v, old.deps[n]))
+    )
+      state.memos[i] = { deps, value: create() };
+    return state.memos[i].value;
   },
   useRef: (initial: unknown) => {
     const i = state.refCursor++;
@@ -102,6 +115,17 @@ vi.mock("react-native", async () => {
     useColorScheme: () => state.scheme,
   };
 });
+vi.mock("@/data/repositories/ttrLabSelectionRepository", () => ({
+  openTtrLabSelectionRepository: vi.fn(async () => ({
+    repository: {
+      read: async () => null,
+      confirm: async () => {
+        throw new Error("TEST_USE_CONTROLLER_SUITE");
+      },
+    },
+    close: async () => {},
+  })),
+}));
 vi.mock("@/data/repositories/tripDayFeedLabRepository", () => ({
   readTripDayFeedLab: vi.fn(),
 }));
@@ -151,16 +175,19 @@ const projection = {
 const render = (node: ReactNode) => {
   state.cursor = 0;
   state.refCursor = 0;
+  state.memoCursor = 0;
   state.presses = [];
   state.nodes = [];
   state.effects = [];
   return renderToStaticMarkup(node);
 };
+afterEach(() => vi.unstubAllGlobals());
 beforeEach(() => {
   state.instant = "2026-10-10T00:30:00Z";
   state.nodes = [];
   state.hooks = [];
   state.refs = [];
+  state.memos = [];
   state.scrollTo.mockClear();
   state.platform = "ios";
   state.cursor = 0;
@@ -790,7 +817,7 @@ it("DL2 source selection uses one Feed, retains fixture context and withholds pr
   render(createElement(DayFeedLabScreen));
   state.presses.find((p) => p.accessibilityLabel === t("dayLab.coreSource"))!.onPress();
   render(createElement(DayFeedLabScreen));
-  state.effects[1]();
+  state.effects.at(-1)!();
   await vi.waitFor(() => {
     const html = render(createElement(DayFeedLabScreen));
     expect(html).toContain(coreTrip);
@@ -808,7 +835,7 @@ it("DL2 source selection uses one Feed, retains fixture context and withholds pr
   expect(html).not.toContain(coreTrip);
   state.presses.find((p) => p.accessibilityLabel === t("dayLab.coreSource"))!.onPress();
   render(createElement(DayFeedLabScreen));
-  state.effects[1]();
+  state.effects.at(-1)!();
   await vi.waitFor(() =>
     expect(render(createElement(DayFeedLabScreen))).toContain(f.segment.title),
   );
@@ -1060,7 +1087,8 @@ it("renders suggested mode distinctly and synthetic permitted availability witho
   expect(html).not.toContain("600");
 });
 
-it("dispatches current synthetic TTR intent to an inert Lab sheet and keeps Trip/date on close", () => {
+it("dispatches current synthetic TTR intent to owning Sheet Content and keeps Trip/date on close", async () => {
+  vi.stubGlobal("__DEV__", true);
   render(createElement(DayFeedLabScreen));
   state.presses
     .find((press) => press.accessibilityLabel.startsWith(t("dayLab.trip")))!
@@ -1072,17 +1100,22 @@ it("dispatches current synthetic TTR intent to an inert Lab sheet and keeps Trip
   let html = render(createElement(DayFeedLabScreen));
   const fixture = ttrLabFixture("DRIVING_PENDING");
   expect(html).toContain(fixture.id);
+  for (const effect of state.effects) effect();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  html = render(createElement(DayFeedLabScreen));
   state.presses
     .find((press) => press.accessibilityLabel?.includes(t("ttr.route.PENDING")))!
     .onPress();
   html = render(createElement(DayFeedLabScreen));
-  expect(html).toContain("publication v1");
-  expect(html).toContain("Input fingerprint");
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  html = render(createElement(DayFeedLabScreen));
+  expect(html).toContain(t("ttr.lab.noMode"));
+  expect(html).toContain(t("ttr.lab.confirm"));
   state.nodes.find((node) => node.onRequestClose && node.visible)!.onRequestClose();
   html = render(createElement(DayFeedLabScreen));
   expect(html).toContain(fixture.id);
   expect(html).toContain(fixture.selectedDate);
-  expect(html).not.toContain("publication v1");
+  expect(html).not.toContain(t("ttr.lab.noMode"));
 });
 
 it("rejects a queued old TTR tap after switching A to B to A", () => {
@@ -1104,7 +1137,7 @@ it("rejects a queued old TTR tap after switching A to B to A", () => {
   oldTap();
   const html = render(createElement(DayFeedLabScreen));
   expect(html).toContain(t("dayLab.ttr.DRIVING_PENDING"));
-  expect(html).not.toContain("publication v1");
+  expect(html).not.toContain(t("ttr.lab.noMode"));
 });
 
 function reactiveFeed() {
