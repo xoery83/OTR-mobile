@@ -1,0 +1,534 @@
+{
+  "checkpoint": "CP-FLIGHT-PDF-SOURCE-02",
+  "classification": "ISOLATED_CLOSED_IMPLEMENTATION_OWNER_REVIEW",
+  "initialCanonical": "9ca16d380b4ed7f8aedeff79d8fc7be903dda1b1",
+  "reconciledCanonical": "1114cccb536d6a6920c0ba6c6434b5dfe6ace5c9",
+  "actualRemoteMain": "9ca16d380b4ed7f8aedeff79d8fc7be903dda1b1",
+  "implementationCommit": "af36b9a166d58db9ad60f1980e7e679f317d12ea",
+  "implementationTree": "0157d9fc29aa2c6fd84f97e657cb5ce86358942c",
+  "pdfSourceSql": [
+    {
+      "classification": "CP_FLIGHT_PDF_SOURCE_02_OWNING_REGISTRATION",
+      "sourceId": "25ad3630-4cca-4105-9caa-174ec02ec6e0",
+      "originalId": "9b421b38-c13c-4a56-bf19-13d0e4958091",
+      "derivedId": "66ee5a0f-c25f-473e-b561-29f1d398c063",
+      "objectKey": "v1/10000000-0000-4000-8000-000000000001/25ad3630-4cca-4105-9caa-174ec02ec6e0/9b421b38-c13c-4a56-bf19-13d0e4958091/payload",
+      "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+      "originalByteCount": 950,
+      "verificationOperationId": "822ca479-c457-40ae-929a-8771c0f067d4",
+      "verificationResultSha256": "fb17be79e983e95027842ea807bd6e3efa6025f8a06adc1aea15d44d6c576826",
+      "registrationOperationId": "5acb7ee4-a612-4d2c-ba3b-e4b55f408525",
+      "registrationSha256": "5d2414b2cbcde34d2b1a7a058063a3d1fe29e295452e4ef15ee2f990daf57425",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "start": 0,
+          "end": 62
+        },
+        {
+          "pageIndex": 1,
+          "start": 63,
+          "end": 125
+        }
+      ],
+      "retainedFileRead": true,
+      "lostVerifyAndRegistrationResponseRecovered": true,
+      "preSealAuthority": false,
+      "sourceMaterialRevision": 1,
+      "sourceRowRevision": 1,
+      "originalRowRevision": 2,
+      "ordinaryQuartz": "REVIEW",
+      "newCanonicalItems": 0
+    },
+    {
+      "classification": "CP_FLIGHT_PDF_AUTH_01_SOURCE_SEAL",
+      "originalId": "9b421b38-c13c-4a56-bf19-13d0e4958091",
+      "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+      "operationId": "a6bddd3b-e5f4-4bb5-96dc-fb3c3e871fbe",
+      "sealSha256": "041fe61b1dea55225e202910e283326edb832fc753b7b9e84b91416d02a25ac8",
+      "pages": [
+        {
+          "pageIndex": 0,
+          "start": 0,
+          "end": 62
+        },
+        {
+          "pageIndex": 1,
+          "start": 63,
+          "end": 125
+        }
+      ],
+      "replay": "EXACT",
+      "negativeSealWrites": 0
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "tripId": "10000000-0000-4000-8000-000000000001",
+      "sqlRead2SqliteDayPairs": [
+        {
+          "itemId": "8e322d65-a9b2-44d5-b9b8-cda8d42430b9",
+          "semanticRevision": 2
+        },
+        {
+          "itemId": "aa422556-b792-4568-a15d-1c6ae53eb8f8",
+          "semanticRevision": 2
+        }
+      ],
+      "itemDateExpectations": [
+        {
+          "itemId": "aa422556-b792-4568-a15d-1c6ae53eb8f8",
+          "semanticRevision": 2,
+          "localDate": "2026-12-17"
+        },
+        {
+          "itemId": "8e322d65-a9b2-44d5-b9b8-cda8d42430b9",
+          "semanticRevision": 2,
+          "localDate": "2026-12-20"
+        }
+      ],
+      "dates": ["2026-12-17", "2026-12-20"],
+      "read2ManifestSha256": "20937e6168abb623133d03e3936520b94ccac689cc3c166e4e2f68fa46575e80",
+      "read2AccessRevision": 1,
+      "read2Epoch": "fa9fcf38-f6cb-41ce-b244-bdff808e99a5",
+      "lostCollectionResponseRecovered": true,
+      "fileColdOfflineReopen": true,
+      "privateSourceLeakage": false,
+      "sqliteMigration": 54,
+      "localSchemaVersion": 55
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+      "sourceId": "25ad3630-4cca-4105-9caa-174ec02ec6e0",
+      "runId": "7240f9d5-a9d5-483f-aa03-23be313e833c",
+      "inputCatalogSha256": "c43cd2c593f251d5116099e7b8c6e66ce333d31947c66e38e2a4638281236036",
+      "candidateIds": [
+        "15cacd89-0e66-8db1-af50-09d28087b548",
+        "ab373b87-30a0-83bf-ac2c-30b42d3c8aeb"
+      ],
+      "itemIds": [
+        "aa422556-b792-4568-a15d-1c6ae53eb8f8",
+        "8e322d65-a9b2-44d5-b9b8-cda8d42430b9"
+      ],
+      "recoveredOperationIds": [
+        "167e5b93-6e68-441e-863c-891619c9f943",
+        "7a805105-9bc5-4e6b-aa24-3fe12e427e09",
+        "9bedfd13-1266-435f-86e8-d9be65cb3a63",
+        "321034f2-3cfb-4598-84f3-5db19353d3f1"
+      ],
+      "sourcePlanStatus": "COMPLETE",
+      "associations": 4,
+      "qualificationRevision": 2,
+      "negativeWrites": 0
+    },
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        "20261012000100_model_task_protected_admission",
+        "20261012000200_source_pdf_derivative_authority",
+        "20261012000300_source_pdf_registration"
+      ],
+      "coreHistoricalFunctionsPreserved": 329,
+      "llmApprovedChangedRoots": [
+        "flight_activation_reserve_call(jsonb,jsonb)",
+        "external_integration_mark_dispatch(jsonb,jsonb)"
+      ],
+      "pdfPreexistingFunctionsPreserved": 351,
+      "installedFunctionsPreservedDuringScenario": 363,
+      "sourcePdfRegistrationInstalled": true,
+      "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "originalTextDay": [
+    {
+      "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+      "accountId": "00000000-0000-4000-8000-000000000001",
+      "tripId": "10000000-0000-4000-8000-000000000001",
+      "sqlRead2SqliteDayPairs": [
+        {
+          "itemId": "0185f781-46af-45b0-8511-d1d19fcd9f08",
+          "semanticRevision": 2
+        },
+        {
+          "itemId": "c3388409-068d-4337-8d10-f10aaa15ec12",
+          "semanticRevision": 2
+        }
+      ],
+      "itemDateExpectations": [
+        {
+          "itemId": "c3388409-068d-4337-8d10-f10aaa15ec12",
+          "semanticRevision": 2,
+          "localDate": "2026-12-17"
+        },
+        {
+          "itemId": "0185f781-46af-45b0-8511-d1d19fcd9f08",
+          "semanticRevision": 2,
+          "localDate": "2026-12-20"
+        }
+      ],
+      "dates": ["2026-12-17", "2026-12-20"],
+      "read2ManifestSha256": "8029bc046d19184847fdd0b9a44484e6ca4979cebb0946308554b364db198553",
+      "read2AccessRevision": 1,
+      "read2Epoch": "b65b7e9f-2338-4abb-9e1d-a66be9a857cc",
+      "lostCollectionResponseRecovered": true,
+      "fileColdOfflineReopen": true,
+      "privateSourceLeakage": false,
+      "sqliteMigration": 54,
+      "localSchemaVersion": 55
+    },
+    {
+      "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+      "sourceId": "2a5fce9a-b6fd-45a1-bd0f-1b37d7e09fee",
+      "runId": "79a2dbce-13c2-4a50-a7b0-d989cf921584",
+      "inputCatalogSha256": "d292e5f2eb7c7ef146998749983a6a97f6284aa97706ccc09ffc25d4e3f8f37b",
+      "candidateIds": [
+        "771d6033-9818-8ef5-a5ed-bd1ff5caa7f1",
+        "e6ae0d79-96bf-8c8f-ad13-a7738cc6be59"
+      ],
+      "itemIds": [
+        "c3388409-068d-4337-8d10-f10aaa15ec12",
+        "0185f781-46af-45b0-8511-d1d19fcd9f08"
+      ],
+      "recoveredOperationIds": [
+        "2a3a2278-ab46-419d-93a5-83e2895afafa",
+        "be316264-8595-4869-8d8a-65084a77d8f3",
+        "719ca482-fa02-402c-b8c3-c7fb5f2b8ce0",
+        "8bb12d1e-08a1-4b7f-90a3-a0ee6da062a1"
+      ],
+      "sourcePlanStatus": "COMPLETE",
+      "associations": 4,
+      "qualificationRevision": 2,
+      "negativeWrites": 0
+    },
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        "20261012000100_model_task_protected_admission",
+        "20261012000200_source_pdf_derivative_authority",
+        "20261012000300_source_pdf_registration"
+      ],
+      "coreHistoricalFunctionsPreserved": 329,
+      "llmApprovedChangedRoots": [
+        "flight_activation_reserve_call(jsonb,jsonb)",
+        "external_integration_mark_dispatch(jsonb,jsonb)"
+      ],
+      "pdfPreexistingFunctionsPreserved": 351,
+      "installedFunctionsPreservedDuringScenario": 363,
+      "sourcePdfRegistrationInstalled": true,
+      "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "ordinaryQuartzSql": [
+    {
+      "classification": "CP_FLIGHT_NATIVE_01_CLOSED_SQL_REVIEW",
+      "originalSha256": "f193cd842ed36779c9087d9c6c0a1bd7c3859dbafbf1807227d29afdeaacc12c",
+      "sourceId": "2d967f49-722c-4d30-89ec-3d236df86ba6",
+      "runId": "1bd1d952-d340-455a-80a9-cbab705e6eac",
+      "candidateIds": [
+        "1438777f-bb5e-880d-a281-24e525829a8c",
+        "259eabd3-e202-85dc-a42d-ff93fc619ffe"
+      ],
+      "review": ["CONTRACT_UNSUPPORTED", "CONTRACT_UNSUPPORTED"],
+      "queuedCommands": 0,
+      "acceptedLocalItems": 0,
+      "restartReplay": true,
+      "lostPublicationRecovered": true
+    },
+    {
+      "classification": "JOINED_NATIVE_AUTHORITY_FENCE",
+      "unauthorizedCanonicalItems": 0,
+      "nativeSeals": 0
+    },
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        "20261012000100_model_task_protected_admission",
+        "20261012000200_source_pdf_derivative_authority",
+        "20261012000300_source_pdf_registration"
+      ],
+      "coreHistoricalFunctionsPreserved": 329,
+      "llmApprovedChangedRoots": [
+        "flight_activation_reserve_call(jsonb,jsonb)",
+        "external_integration_mark_dispatch(jsonb,jsonb)"
+      ],
+      "pdfPreexistingFunctionsPreserved": 351,
+      "installedFunctionsPreservedDuringScenario": 363,
+      "sourcePdfRegistrationInstalled": true,
+      "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "originalTextHttpPgTls": [
+    {
+      "classification": "CP_FLIGHT_DEV_02_LOCAL_HTTP_NODE_PG_TLS",
+      "sourceId": "566fc028-5f41-4fec-a12b-5a0d1f7da5d1",
+      "exactTextSha256": "9e63a65981bbcf2016c01291c6446328fc074c9f6b8ad2d8614befb9162f80e9",
+      "itemIds": [
+        "19c5dab8-4212-48eb-bd1e-e88c12972623",
+        "82757df3-07b7-4a8d-bcae-75403695ee9f"
+      ],
+      "recoveredOperationIds": [
+        "fe4745e9-d8b1-4099-a7ad-07f0a9058d71",
+        "c0f31ebf-2662-4d78-b297-2f871b37a7c1",
+        "6518b3ba-71c0-4ec0-8e10-7bb857920518",
+        "0f37de59-be23-492e-892b-69482c6e0864"
+      ],
+      "originalCopies": 1,
+      "privateSourceLeakage": false,
+      "backendProcessRestarts": 5,
+      "tlsVerified": true,
+      "hostnameAndCaAndCredentialNegatives": true,
+      "hosted": false
+    },
+    {
+      "classification": "ISOLATED_SYNTHETIC_SQL",
+      "migrations": [
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        "20261012000100_model_task_protected_admission",
+        "20261012000200_source_pdf_derivative_authority",
+        "20261012000300_source_pdf_registration"
+      ],
+      "coreHistoricalFunctionsPreserved": 329,
+      "llmApprovedChangedRoots": [
+        "flight_activation_reserve_call(jsonb,jsonb)",
+        "external_integration_mark_dispatch(jsonb,jsonb)"
+      ],
+      "pdfPreexistingFunctionsPreserved": 351,
+      "installedFunctionsPreservedDuringScenario": 363,
+      "sourcePdfRegistrationInstalled": true,
+      "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+      "rlsAndClosedGate": "PASS",
+      "activation": "CLOSED"
+    }
+  ],
+  "validation": {
+    "focusedSuites": 13,
+    "passed": 140,
+    "skipped": 1,
+    "skipReason": "Native owning SQL test requires dedicated fixture; separately executed in 13-test SQL mode",
+    "sqlScenariosPassed": 4,
+    "sqlTestsPassed": 16,
+    "typecheck": "PASS",
+    "backendBuild": "PASS",
+    "touchedLint": "PASS",
+    "uiGuard": "PASS (473 baseline / 89 representative files)",
+    "format": "PASS",
+    "diff": "PASS",
+    "pythonSyntax": "PASS"
+  },
+  "sourceAuthority": {
+    "preexistingFunctions": 357,
+    "preservedPreexistingFunctions": 356,
+    "soleForwardReplacedRoot": "guard_trip_source_mutation()",
+    "installedFunctionsDuringScenario": 363,
+    "historicalMigrationsRewritten": false,
+    "existingSealPublisherAndCoreWriterChanged": false,
+    "rootRevisionActionMutationsStillDenied": true,
+    "verifyUsesExistingOperationAndAttemptReceipt": true,
+    "registrationReceiptSatellite": "trip_source_pdf_registrations",
+    "clientProofOrTextAdmission": false,
+    "registeredDerivativeAloneQualifies": false,
+    "sourceAndPdfGates": "CLOSED",
+    "principals": "NOLOGIN"
+  },
+  "preservation": {
+    "initialCanonical": "9ca16d380b4ed7f8aedeff79d8fc7be903dda1b1",
+    "canonicalMain": "1114cccb536d6a6920c0ba6c6434b5dfe6ace5c9",
+    "originMain": "9ca16d380b4ed7f8aedeff79d8fc7be903dda1b1",
+    "concurrentStatus": " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md\n?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md\n?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md\n?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md\n?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc",
+    "otherFiveConcurrentFilesExact": true,
+    "acceptedProductionAndHistoricalMigrationsExact": true,
+    "preservedPaths": [
+      "backend/src/sourcePdfAuthority.ts",
+      "backend/src/sourcePdfProfile.ts",
+      "backend/src/sourcePdfCoreProof.ts",
+      "src/domain/trip/sourcePdfAuthority.ts",
+      "docs/trip/contracts/CP_FLIGHT_PDF_DERIVATIVE_AUTHORITY_V1.md",
+      "modules/receipt-ocr/expo-module.config.json",
+      "modules/receipt-ocr/ios/FlightPdfExtractor.swift",
+      "modules/receipt-ocr/ios/ReceiptOcr.podspec",
+      "modules/receipt-ocr/ios/ReceiptOcrModule.swift",
+      "modules/receipt-ocr/tests/README.md",
+      "modules/receipt-ocr/tests/main.swift",
+      "src/features/day-feed-lab/DayFeedLabScreen.tsx",
+      "src/features/day-feed-lab/StayFixtureRow.tsx",
+      "src/features/day-feed-lab/contribution.test.ts",
+      "src/features/day-feed-lab/contribution.ts",
+      "src/features/day-feed-lab/fixtureCatalog.test.ts",
+      "src/features/day-feed-lab/fixtureCatalog.ts",
+      "src/features/day-feed-lab/fixtureFacts.ts",
+      "src/features/day-feed-lab/fixtureRegistration.ts",
+      "src/features/day-feed-lab/flexibleContribution.ts",
+      "src/features/day-feed-lab/stayContribution.ts",
+      "src/features/day-feed/DayFeed.tsx",
+      "src/features/day-feed/FlexibleBlockRow.tsx",
+      "src/features/day-feed/FlightRows.tsx",
+      "src/features/day-feed/NowMarker.tsx",
+      "src/features/day-feed/P1Row.tsx",
+      "src/features/day-feed/TripScreen.tsx",
+      "src/features/day-feed/TripViewContext.tsx",
+      "src/features/day-feed/composition.test.ts",
+      "src/features/day-feed/composition.ts",
+      "src/features/day-feed/faroeNegative.test.fixtures.ts",
+      "src/features/day-feed/faroeNegative.test.ts",
+      "src/features/day-feed/presentation.test.ts",
+      "src/features/day-feed/presentation.ts",
+      "src/features/day-feed/render.test.ts",
+      "src/features/day-feed/rendererContribution.ts",
+      "src/features/day-feed/useMinuteClock.test.ts",
+      "src/features/day-feed/useMinuteClock.ts",
+      "src/features/day-feed/visualTokens.ts",
+      "src/native/capturePicker.ts",
+      "src/native/captureUriReader.test.ts",
+      "src/native/captureUriReader.ts",
+      "src/native/flightPdf.test.ts",
+      "src/native/flightPdf.ts",
+      "src/native/publicationCatalogPlatform.ts",
+      "src/native/publicationCatalogReceive.test.ts",
+      "src/native/publicationCatalogReceive.ts",
+      "src/native/receiptDraftPreview.ts",
+      "src/native/receiptOcr.test.ts",
+      "src/native/receiptOcr.ts",
+      "src/native/uiLocalePreference.test.ts",
+      "src/native/uiLocalePreference.ts",
+      "supabase/migrations/20260910000100_canonical_production_baseline.sql",
+      "supabase/migrations/20260910000200_canonical_security_hardening.sql",
+      "supabase/migrations/20260911000100_ledger_2_domain.sql",
+      "supabase/migrations/20260911000200_ledger_2_security.sql",
+      "supabase/migrations/20260912000100_ledger_2_stage_4a_create.sql",
+      "supabase/migrations/20260912000200_ledger_2_stage_4b_mutations.sql",
+      "supabase/migrations/20260912000300_ledger_2_stage_4c_conflicts.sql",
+      "supabase/migrations/20260912000400_ledger_2_stage_5_1_financial_evidence.sql",
+      "supabase/migrations/20260912000500_ledger_2_stage_5_1_evidence_links.sql",
+      "supabase/migrations/20260912000600_ledger_2_stage_5_2_receipt_assets.sql",
+      "supabase/migrations/20260912000700_ledger_2_stage_7_1_settlements.sql",
+      "supabase/migrations/20260912000800_ledger_2_stage_7_1_active_settlement_guard.sql",
+      "supabase/migrations/20260912000900_ledger_2_stage_7_2a_payments.sql",
+      "supabase/migrations/20260912001000_ledger_2_stage_7_2a_internal_rpc_grants.sql",
+      "supabase/migrations/20260912001100_ledger_2_stage_7_2a_payment_lineage_guard.sql",
+      "supabase/migrations/20260913000100_ledger_2_stage_7_2b_adjustments.sql",
+      "supabase/migrations/20260913000200_hosted_dev_lineage_reconciliation.sql",
+      "supabase/migrations/20260913000300_ledger_2_stage_8_review_actions.sql",
+      "supabase/migrations/20260913000400_ledger_2_stage_8_review_change_feed.sql",
+      "supabase/migrations/20260913000500_ledger_stage_9_import.sql",
+      "supabase/migrations/20260913000600_ledger_2_settlement_participation.sql",
+      "supabase/migrations/20260914000100_ledger_ui_polish_fixture.sql",
+      "supabase/migrations/20260914000200_ledger_ui_polish_fixture_currency_repair.sql",
+      "supabase/migrations/20260914000300_ledger_ui_polish_fixture_append_only_repair.sql",
+      "supabase/migrations/20260914000400_ledger_ui_polish_fixture_uuid_repair.sql",
+      "supabase/migrations/20260914000500_ledger_ui_polish_fixture_lineage_repair.sql",
+      "supabase/migrations/20260914000600_ledger_ui_polish_fixture_repair_cleanup.sql",
+      "supabase/migrations/20260916000100_review_v2_engine_foundation.sql",
+      "supabase/migrations/20260917000100_review_v2_personal_decisions.sql",
+      "supabase/migrations/20260917000200_ledger_economic_date.sql",
+      "supabase/migrations/20260917000300_ledger_historical_rate_cache.sql",
+      "supabase/migrations/20260917000400_ledger_rate_decimal_text_projection.sql",
+      "supabase/migrations/20260917000500_ledger_reference_valuation_guard.sql",
+      "supabase/migrations/20260917000600_ledger_journey_currency.sql",
+      "supabase/migrations/20260917000700_ledger_currency_preview_claim_fix.sql",
+      "supabase/migrations/20260918000100_ledger_phase_e_finalized_valuation_guard.sql",
+      "supabase/migrations/20260918000200_ledger_phase_e_finalized_replay_guard.sql",
+      "supabase/migrations/20260918000300_ledger_settlement_fx_preflight.sql",
+      "supabase/migrations/20260918000400_ledger_settlement_fx_included_only.sql",
+      "supabase/migrations/20260918000500_ledger_reference_default_per_expense.sql",
+      "supabase/migrations/20260918000600_ledger_settlement_publication_retry.sql",
+      "supabase/migrations/20260918000700_ledger_finalized_expense_mutation_guard.sql",
+      "supabase/migrations/20260922000100_settlement_2_phase_1a_personal_payments.sql",
+      "supabase/migrations/20260923000100_settlement_2_phase_3a_human_findings.sql",
+      "supabase/migrations/20260923000200_settlement_2_phase_3a_target_shape_fix.sql",
+      "supabase/migrations/20260923000300_settlement_2_phase_3b_personal_review_checkpoints.sql",
+      "supabase/migrations/20260923000400_settlement_2_phase_4a_correction_successors.sql",
+      "supabase/migrations/20260923000500_settlement_2_phase_4a_preserve_review_observation.sql",
+      "supabase/migrations/20260924000100_settlement_review_three_state.sql",
+      "supabase/migrations/20260924000200_personal_payment_fx_projections.sql",
+      "supabase/migrations/20260924000300_personal_payment_fx_bounded_backfill.sql",
+      "supabase/migrations/20260925000100_ledger_economic_date_completion.sql",
+      "supabase/migrations/20260925000200_ledger_valuation_revision_guard_fix.sql",
+      "supabase/migrations/20260925000300_settlement_adjustment_current_source.sql",
+      "supabase/migrations/20260926000100_my_ledger_lightweight_snapshot.sql",
+      "supabase/migrations/20260927000100_expense_attachment_limit.sql",
+      "supabase/migrations/20260927000200_expense_attachment_tombstones.sql",
+      "supabase/migrations/20260927000300_receipt_storage_provider.sql",
+      "supabase/migrations/20260928000100_settlement_review_exact_decimal_source.sql",
+      "supabase/migrations/20260929000100_expense_consistency_v2.sql",
+      "supabase/migrations/20260929000200_latest_state_rate_acceptance.sql",
+      "supabase/migrations/20260929000300_legacy_expense_equivalent_resolution.sql",
+      "supabase/migrations/20260929000400_adjustment_lossless_source_transport.sql",
+      "supabase/migrations/20260930000100_expense_participation_preserve_valuation.sql",
+      "supabase/migrations/20261003000100_trip_person_participation.sql",
+      "supabase/migrations/20261004000100_trip_temporal_protected_foundation.sql",
+      "supabase/migrations/20261004000200_trip_person_snapshot_read.sql",
+      "supabase/migrations/20261004000300_trip_source_protected_foundation.sql",
+      "supabase/migrations/20261004000400_trip_event_command_foundation.sql",
+      "supabase/migrations/20261004000500_trip_source_command_foundation.sql",
+      "supabase/migrations/20261004000600_trip_person_command_foundation.sql",
+      "supabase/migrations/20261005000100_trip_event_collection_foundation.sql",
+      "supabase/migrations/20261005000200_trip_person_participation_activation_foundation.sql",
+      "supabase/migrations/20261005000300_trip_source_execution_journal.sql",
+      "supabase/migrations/20261005000400_trip_import_admission_catalogs.sql",
+      "supabase/migrations/20261005000500_trip_import_admission_guards.sql",
+      "supabase/migrations/20261005000600_trip_import_confirmation_admission.sql",
+      "supabase/migrations/20261005000700_trip_flight_commands.sql",
+      "supabase/migrations/20261005000800_trip_import_locking_and_service_reads.sql",
+      "supabase/migrations/20261005000900_trip_import_private_catalog_reads.sql",
+      "supabase/migrations/20261005001000_trip_import_flight_value_guards.sql",
+      "supabase/migrations/20261005001100_trip_import_undispatched_revocation.sql",
+      "supabase/migrations/20261006000100_external_integration_persistence.sql",
+      "supabase/migrations/20261007000100_flight_dev_dispatch_foundation.sql",
+      "supabase/migrations/20261011000100_trip_core_v2_foundation.sql",
+      "supabase/migrations/20261011000200_trip_core_v2_version_dispatch.sql",
+      "supabase/migrations/20261011000300_trip_core_v2_owning_session.sql",
+      "supabase/migrations/20261011000400_trip_core_v2_read_scope.sql",
+      "supabase/migrations/20261011000500_trip_core_v2_source_scope.sql",
+      "supabase/migrations/20261011000600_trip_core_v2_candidate_publication.sql",
+      "supabase/migrations/20261011000700_trip_core_v2_legacy_claim_fence.sql",
+      "supabase/migrations/20261011000800_trip_core_v2_retained_claim_fence.sql",
+      "supabase/migrations/20261012000100_model_task_protected_admission.sql",
+      "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql"
+    ]
+  },
+  "notImplemented": [
+    "Agent A HTTP/private storage provider/upload/pg-TLS PDF composition",
+    "Agent B native upload/catalog adaptation",
+    "Source acquisition runtime/Hosted activation",
+    "general Quartz/OCR expansion",
+    "new scheduler/journal/Canonical writer",
+    "canonical merge/push"
+  ]
+}

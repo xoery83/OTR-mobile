@@ -1,0 +1,80 @@
+{
+  "branch": "codex/cp-flight-pdf-source-02",
+  "initialBaseline": "9ca16d380b4ed7f8aedeff79d8fc7be903dda1b1",
+  "canonicalBaseline": "1114cccb536d6a6920c0ba6c6434b5dfe6ace5c9",
+  "implementationCommit": "af36b9a166d58db9ad60f1980e7e679f317d12ea",
+  "implementationTree": "0157d9fc29aa2c6fd84f97e657cb5ce86358942c",
+  "preparedFiles": [
+    {
+      "status": "M",
+      "path": "backend/src/__fixtures__/sourcePdfAcceptance.ts",
+      "sha256": "af7d518044983d40e0820e8ed9e51b1aec0876450cae144a89e6c62bcb17e3e4"
+    },
+    {
+      "status": "A",
+      "path": "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts",
+      "sha256": "ece847a3b451932c49db2acfa0606afa75341b51cf4cc8df450940f36dd40c0b"
+    },
+    {
+      "status": "M",
+      "path": "backend/src/__fixtures__/tripCoreV2Sql.ts",
+      "sha256": "416715bf0fb8fec7e69c16d40537bb60a02bf65d8816e34df8b9c1df6f5f6e49"
+    },
+    {
+      "status": "M",
+      "path": "backend/src/captureFlightCoreV2.sql.test.ts",
+      "sha256": "af9c36f6c67c0e331915bf70c831c8d20573bc85585824f059aaf945226ec190"
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfRegistration.test.ts",
+      "sha256": "ebece9ba611a810d0041793482e4abd60e268df700d3f06be61a5c9bf57b3ee9"
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfRegistration.ts",
+      "sha256": "b43a52d97315ba456cc949e0ca6e2774c6aa133b21c4aab9d092e38b878b247e"
+    },
+    {
+      "status": "M",
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "sha256": "33f3e9ba83fa8b95b671c677ded2972c175fc6fd658b693e2d3434bde89c663f"
+    },
+    {
+      "status": "A",
+      "path": "docs/adr/2026-10-12-source-owned-pdf-registration.md",
+      "sha256": "45cbc090b271738ecda2a9d69e4e6a3c84c30a1e4c333576a7c94be7ff407f82"
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/contracts/CP_FLIGHT_PDF_SOURCE_REGISTRATION_V1.md",
+      "sha256": "6e90fd40c2838fb46cebd888153c4e78243096e1a90460d768584a7079f5b982"
+    },
+    {
+      "status": "M",
+      "path": "scripts/trip/core-v2-sql-acceptance.py",
+      "sha256": "4d60c212968fb3d479f98b71fca206f51ec2d33adbd0c0d7b9ad33e70c3f1844"
+    },
+    {
+      "status": "A",
+      "path": "src/domain/trip/sourcePdfRegistration.ts",
+      "sha256": "fe6b4e34ad89b0e74c895020ba2ec252cbb31269c5e75b95a4c519d30b43010d"
+    },
+    {
+      "status": "A",
+      "path": "supabase/migrations/20261012000300_source_pdf_registration.sql",
+      "sha256": "d5c59775cc959ed70c7e73180168413922c8ae74def87fe9e6012d044759e82f"
+    },
+    {
+      "status": "A",
+      "path": "supabase/tests/source-pdf/registration.sql",
+      "sha256": "75954a7932d2f1210408e56705fe5b724719e55d2481afdee9fe6134ce93e63d"
+    }
+  ],
+  "handoffFiles": [
+    "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_02_REPORT.md",
+    "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_02_EVIDENCE.json",
+    "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_02_MANIFEST.json"
+  ],
+  "finalChangedPathCount": 16
+}
