@@ -1,3 +1,20 @@
+# CP04A3-CORE-ORDER-03 — G2 reconciliation readiness / Owner Review
+
+2026-10-13. Owner cleared remote inclusion of unchanged G2 CP01B `e091b60` ancestry.
+Normal isolated merge `5fd1eec` combines that local main and prior accepted TTR
+`6b3f3df`, preserving all production hashes. Only current-state prefixes conflict;
+full G2 and TTR handoffs retained below. Candidate on
+`codex/cp-ttr04a3-core-order-03-canonical-prep`; no canonical merge/push.
+Focused G2/TTR/Core/SQLite95 and joined owning Flight SQL/read2/SQLite/Day1 PASS;
+initial SQL timeout passes isolated unchanged rerun. Static checks PASS. PostgreSQL
+Flight00100→TTR00200 and SQLite Flight56→TTR57 unchanged; CLOSED gates verified.
+Prior unchanged full regression evidence reused. Concurrent files preserved.
+Report: `trip/implementation/CP_TTR_04A3_CORE_ORDER_03_INTEGRATION_READINESS_REPORT.md`.
+Next: separate Owner exact-tree approval. No new Composer/selection/authority path.
+Hosted/Provider/paid LLM/Production/unrestricted Native/TTR consumer activation CLOSED.
+
+---
+
 # CP04A3-CORE-ORDER-02 — canonical readiness / Owner Review
 
 2026-10-13. Verified main `065bdd96` after Flight SOURCE-02 integration/push.
