@@ -29,6 +29,7 @@ FINGERPRINTS = """SELECT jsonb_object_agg(p.oid::regprocedure::text,
  JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prokind='f';"""
 parser = argparse.ArgumentParser(description=__doc__)
 group = parser.add_mutually_exclusive_group()
+group.add_argument("--ordinary-order", action="store_true", help="Run CLOSED ordinary Core ordering and SQLite acceptance")
 group.add_argument("--flight", action="store_true", help="Run Capture to Core Flight SQL acceptance")
 group.add_argument("--source", action="store_true", help="Run the owning Source SQL scenario in a separate fresh clone")
 group.add_argument("--text-runtime", action="store_true", help="Run real local HTTP/pg/TLS TEXT acceptance")
@@ -41,12 +42,17 @@ group.add_argument("--pdf-upload", action="store_true", help="Run finite PDF upl
 parser.add_argument("--with-pdf-source", action="store_true", help="Install CLOSED owning PDF registration during regression scenarios")
 parser.add_argument("--with-llm", action="store_true", help="Install current CLOSED LLM protected admission before PDF authority")
 parser.add_argument("--with-pdf-authority", action="store_true", help="Install CLOSED PDF authority while testing a non-PDF scenario")
+parser.add_argument("--with-pdf-upload-migration", type=pathlib.Path, help="Install accepted CLOSED Flight upload SQL from an explicit local fixture path before ordinary ordering")
 args = parser.parse_args()
+if args.with_pdf_upload_migration and not args.with_pdf_source:
+    parser.error("Flight upload ordering verification requires --with-pdf-source")
+if args.with_pdf_upload_migration and (args.pdf_upload or args.with_pdf_upload):
+    parser.error("Choose canonical PDF upload installation or an explicit fixture path, not both")
 install_source_pdf = args.pdf_source or args.with_pdf_source or args.pdf_upload or args.with_pdf_upload
 install_pdf = args.pdf_authority or install_source_pdf or args.with_pdf_authority
 llm_roots = {"flight_activation_reserve_call(jsonb,jsonb)", "external_integration_mark_dispatch(jsonb,jsonb)"}
 llm_changes = []
-scenario = "backend/src/sourcePdfUpload.sql.test.ts" if args.pdf_upload else "backend/src/nativeFlightInstalledReview.sql.test.ts" if args.native_installed else "src/data/repositories/captureFlightNativeRepository.test.ts" if args.native_flight else "backend/src/captureFlightCoreV2.sql.test.ts" if args.pdf_authority or args.pdf_source else "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
+scenario = "backend/src/coreOrdinaryOrder.sql.test.ts" if args.ordinary_order else "backend/src/sourcePdfUpload.sql.test.ts" if args.pdf_upload else "backend/src/nativeFlightInstalledReview.sql.test.ts" if args.native_installed else "src/data/repositories/captureFlightNativeRepository.test.ts" if args.native_flight else "backend/src/captureFlightCoreV2.sql.test.ts" if args.pdf_authority or args.pdf_source else "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
 created = False
 network_created = False
 private = tempfile.TemporaryDirectory(prefix="otr-flight-text-")
@@ -101,6 +107,14 @@ try:
         assert [n for n, v in installed.items() if upload_after.get(n) != v] == ["trip_source_execution_inventory()"], "Unexpected PDF upload changed root"
         sql((ROOT / "supabase/tests/source-pdf/upload.sql").read_text())
         installed = upload_after
+    if args.with_pdf_upload_migration:
+        assert args.with_pdf_upload_migration.name == "20261013000100_source_pdf_upload_authority.sql"
+        sql(args.with_pdf_upload_migration.read_text())
+        installed = json.loads(sql(FINGERPRINTS))
+    sql((ROOT / "supabase/migrations/20261013000200_core_ordinary_order.sql").read_text())
+    order_after = json.loads(sql(FINGERPRINTS))
+    assert all(order_after.get(name) == digest for name, digest in installed.items()), "Ordinary ordering changed installed functions"
+    installed = order_after
     sql((ROOT / "supabase/tests/core-v2/foundation.sql").read_text())
     sql((ROOT / "supabase/tests/core-v2/candidate-publication.sql").read_text())
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t"
@@ -149,7 +163,7 @@ try:
     after_scenario = json.loads(sql(FINGERPRINTS))
     changed = [name for name, digest in installed.items() if after_scenario.get(name) != digest]
     assert not changed, "Historical function changes during scenario: " + repr(changed)
-    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92] + (["20261012000100_model_task_protected_admission"] if args.with_llm else []) + (["20261012000200_source_pdf_derivative_authority"] if install_pdf else []) + (["20261012000300_source_pdf_registration"] if install_source_pdf else []) + (["20261013000100_source_pdf_upload_authority"] if args.pdf_upload or args.with_pdf_upload else []), "coreHistoricalFunctionsPreserved": len(before), "llmApprovedChangedRoots": llm_changes, "pdfPreexistingFunctionsPreserved": len(before_pdf) if install_pdf else None, "installedFunctionsPreservedDuringScenario": len(installed), "sourcePdfUploadInstalled": args.pdf_upload or args.with_pdf_upload, "pdfUploadApprovedChangedRoot": "trip_source_execution_inventory()" if args.pdf_upload or args.with_pdf_upload else None, "sourcePdfRegistrationInstalled": install_source_pdf, "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()" if install_source_pdf else None, "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
+    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92] + (["20261012000100_model_task_protected_admission"] if args.with_llm else []) + (["20261012000200_source_pdf_derivative_authority"] if install_pdf else []) + (["20261012000300_source_pdf_registration"] if install_source_pdf else []) + (["20261013000100_source_pdf_upload_authority"] if args.pdf_upload or args.with_pdf_upload else []), "ordinaryOrderMigration": "20261013000200", "flightUploadBeforeOrder": bool(args.pdf_upload or args.with_pdf_upload or args.with_pdf_upload_migration), "coreHistoricalFunctionsPreserved": len(before), "llmApprovedChangedRoots": llm_changes, "pdfPreexistingFunctionsPreserved": len(before_pdf) if install_pdf else None, "installedFunctionsPreservedDuringScenario": len(installed), "sourcePdfUploadInstalled": args.pdf_upload or args.with_pdf_upload, "pdfUploadApprovedChangedRoot": "trip_source_execution_inventory()" if args.pdf_upload or args.with_pdf_upload else None, "sourcePdfRegistrationInstalled": install_source_pdf, "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()" if install_source_pdf else None, "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
 finally:
     try:
         if created:

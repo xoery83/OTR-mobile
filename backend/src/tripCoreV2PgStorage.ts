@@ -342,6 +342,30 @@ export function createCorePgStorage(
             },
             async verifyAdmission(command, intent, graph) {
               if (collision) throw new Error("REVISION_CONFLICT");
+              if (command.command === "SET_ORDINARY_ORDER") {
+                const bindings = (
+                  await lease.query(
+                    "SELECT public.trip_core_read_person_bindings($1::uuid,$2::uuid) AS bindings",
+                    [actor.accountId, actor.tripId],
+                  )
+                ).rows[0]?.bindings as {
+                  person_id: string;
+                  account_id: string | null;
+                  active: boolean;
+                  participating: boolean;
+                }[];
+                if (
+                  !bindings?.some(
+                    (b) =>
+                      b.person_id === actor.personId &&
+                      b.account_id === actor.accountId &&
+                      b.active &&
+                      b.participating,
+                  )
+                )
+                  throw new Error("INVALID_SELF_PERSON");
+              }
+
               const gate = (
                 await lease.query(
                   "SELECT enabled_families,enabled_admission_modes FROM public.trip_core_activation_gate WHERE singleton",
@@ -440,6 +464,15 @@ export function createCorePgStorage(
                 const row = graph[coreKindTables[v.kind as CoreKind]].find(
                   (r) => r.id === v.id,
                 );
+                if (
+                  row &&
+                  v.kind === "ORDER" &&
+                  (row.nodes as { eventId: string }[]).some((n) => {
+                    const item = graph!.itinerary_events.find((x) => x.id === n.eventId);
+                    return !item || !coreCanRead(graph!, actor, "ITEM", item);
+                  })
+                )
+                  return false;
                 if (!row) {
                   if (
                     v.baseRevision === null &&

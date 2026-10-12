@@ -600,7 +600,7 @@ describe("dormant observation SQLite persistence; owning validators are TEST-ONL
       await runMigrations(adapter);
       await runMigrations(adapter);
       expect(f.sql.prepare("SELECT max(id) AS id FROM schema_migrations").get()!.id).toBe(
-        55,
+        57,
       );
       expect(f.c2Rows()).toBe(before);
     },

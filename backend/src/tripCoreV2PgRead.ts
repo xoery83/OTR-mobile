@@ -27,7 +27,11 @@ export function createCorePgReader(
   hash: ImportHash,
   authority?: CorePgReadAuthority,
 ) {
-  async function snapshot(actorAccountId: string, tripId: string) {
+  async function snapshot(
+    actorAccountId: string,
+    tripId: string,
+    ordinaryOrderVersion?: 1,
+  ) {
     coreUuid.parse(actorAccountId);
     coreUuid.parse(tripId);
     return connection.withLease(async (lease) => {
@@ -107,6 +111,7 @@ export function createCorePgReader(
           rights.originalDocumentIds,
           rights.ledgerExpenseIds,
           rights.sourceEvidenceRefs,
+          ordinaryOrderVersion,
         );
         await lease.query("COMMIT");
         began = false;
@@ -124,8 +129,8 @@ export function createCorePgReader(
     });
   }
   return {
-    async collection(actorAccountId: string, tripId: string) {
-      return (await snapshot(actorAccountId, tripId)).collection;
+    async collection(actorAccountId: string, tripId: string, ordinaryOrderVersion?: 1) {
+      return (await snapshot(actorAccountId, tripId, ordinaryOrderVersion)).collection;
     },
     async item(actorAccountId: string, tripId: string, itemId: string) {
       coreUuid.parse(itemId);

@@ -250,7 +250,14 @@ export async function coreHttpBoundary(
     }
     if (path === "collection" && request.method === "GET") {
       if (!connection?.read) return failure(503, "CORE_READ_UNAVAILABLE");
-      const result = await connection.read.collection(actor, trip);
+      const orderVersion = request.headers.get("X-OTR-Ordinary-Order-Version");
+      if (orderVersion !== null && orderVersion !== "1")
+        return failure(426, "UNSUPPORTED_CLIENT");
+      const result = await connection.read.collection(
+        actor,
+        trip,
+        orderVersion === "1" ? 1 : undefined,
+      );
       await validateCoreReadCollection(
         result.manifest,
         result.pages,

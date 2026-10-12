@@ -711,7 +711,7 @@ describe("dormant complete publication ownership", () => {
       await f.owning.readClosureEvidence(context, value.trip_source_candidates[0].id),
     ).toBeDefined();
     await expect(f.repo.read(context, runId)).rejects.toThrow("SCHEMA_UNAVAILABLE");
-    expect(migrations.at(-1)?.id).toBe(55);
+    expect(migrations.at(-1)?.id).toBe(57);
   });
   it("historical NULL remains unavailable, not a certified empty publication", async () => {
     const f = fixture(),

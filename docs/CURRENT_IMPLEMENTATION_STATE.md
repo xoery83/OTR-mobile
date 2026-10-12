@@ -1,3 +1,39 @@
+# CP04A3-CORE-ORDER-02 — canonical readiness / Owner Review
+
+2026-10-13. Verified main `065bdd96` after Flight SOURCE-02 integration/push.
+Accepted TTR `a027f2a` preserved; normal isolated merge candidate `f43f0e0` on
+`codex/cp-ttr04a3-core-order-02-canonical-prep`. All accepted production hashes exact;
+only SQL acceptance runner/current-state overlap reconciled. Entire canonical
+handoff retained below. PostgreSQL Flight00100→TTR00200 and SQLite Flight56→TTR57
+PASS; owning SQL2, Upload29, joined Flight1 and targeted SQLite2 PASS. Static checks
+PASS. Unchanged accepted regression evidence reused; no new broad/native audit.
+Readiness report: `trip/implementation/CP_TTR_04A3_CORE_ORDER_02_CANONICAL_READINESS_REPORT.md`.
+Canonical/concurrent dirty files unchanged. No canonical merge/push or activation.
+Next: separate Owner integration approval. Hosted/Provider/paid LLM/Native/Production CLOSED.
+
+---
+
+# CP04A3-CORE-ORDER-02 — CLOSED isolated implementation / Owner Review
+
+2026-10-13. Branch `codex/cp-ttr04a3-core-order-02`, implementation `f58ab85`, allocation correction `c88796f`.
+Explicit actor-self ordinary-order carrier and negotiated read2 ORDER projection;
+SQLite57 accepted mirror and `otr-core-ttr-input/1` local read/checker.
+Owner correction: Flight `capture_pdf_source_handoff` retains SQLite56, carried
+byte-identically and registered before TTR57. Fresh/55-upgrade/cold-reopen checks
+verify both tables coexist; owning SQL replay/offline checks pass. Three
+independent pairs, private UNKNOWN gaps, replay/CAS, cold offline reopen and
+Transport arrival roles verified. TTR migration allocated `20261013000200` after
+unchanged Flight00100; identical SQL hash and combined disposable install PASS.
+Final full3892 PASS/two exact baseline UI failures/25 skips; SQL2 and joined Flight1,
+typecheck/lint/UI guard/backend build PASS. No canonical merge/push or activation.
+Core equivalence stays UNKNOWN absent accepted evidence; personal TTR state unchanged.
+See `trip/implementation/CP_TTR_04A3_CORE_ORDER_02_IMPLEMENTATION_REPORT.md` and
+`trip/contracts/CORE_ORDINARY_ORDER_TTR_INPUT_V1.md`. Next: Owner Review, then separate
+integration decision; real-data consumer/Hosted/Provider/paid LLM/Native/Production CLOSED.
+
+
+---
+
 # CP01B / G2 — current-main reconciliation / final advance approval blocked
 
 Prepared isolated normal merge `03d06b6`, parents current main `065bdd9` and validated candidate `a5b58ae`. Newer accepted upload-authority work is unchanged; only the shared handoff prefix conflicted and both versions are retained. Accepted CP01B/G2 runtime exactly matches `22c0369`. Automatic approval review requires explicit final Owner approval for main advancement; no update by this task. Canonical main remains `065bdd9`.

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ordinaryNodeSchema, ordinaryGapSchema } from "./tripCoreOrdinaryOrder";
 import { canonicalCoreJson, parseCoreJson, type Json } from "./tripCoreV2Json";
 import { coreBoundarySchema } from "./tripCoreV2Temporal";
 import { validateCalendarDate } from "./dayReadModel";
@@ -622,7 +623,23 @@ export const expense_linksSchema = z.strictObject({
   created_by: coreUuid,
   created_at: instant,
 });
+export const trip_person_ordinary_ordersSchema = z.strictObject({
+  id: coreUuid,
+  trip_id: coreUuid,
+  revision: coreRevision,
+  owner_account_id: coreUuid,
+  visibility: z.literal("PRIVATE"),
+  hidden_at: z.null(),
+  created_at: instant,
+  updated_at: instant,
+  field_state: coreFieldState,
+  person_id: coreUuid,
+  branch_id: coreUuid,
+  nodes: z.array(ordinaryNodeSchema).max(30),
+  gaps: z.array(ordinaryGapSchema).max(29),
+});
 export const coreTableSchemas = {
+  trip_person_ordinary_orders: trip_person_ordinary_ordersSchema,
   itinerary_events: itinerary_eventsSchema,
   itinerary_transport_endpoints: itinerary_transport_endpointsSchema,
   trip_endpoint_details: trip_endpoint_detailsSchema,
@@ -656,6 +673,7 @@ export const coreTableSchemas = {
   expense_links: expense_linksSchema,
 } as const;
 export const coreKindTables = {
+  ORDER: "trip_person_ordinary_orders",
   ITEM: "itinerary_events",
   BOOKING: "itinerary_reservations",
   ENTITLEMENT: "trip_entitlements",
