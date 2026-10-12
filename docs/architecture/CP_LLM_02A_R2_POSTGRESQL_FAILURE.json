@@ -1,0 +1,15 @@
+{
+  "classification": "DISPOSABLE_POSTGRESQL_BOOTSTRAP_FAILURE",
+  "image": "sha256:8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068",
+  "network": "none",
+  "migration_applied": false,
+  "invariant_tests_completed": 0,
+  "provider_calls": 0,
+  "failure_root": "flight_activation_runtime",
+  "sql_error": "CP15_CAS",
+  "stage": "reused security-acceptance.py initializer, line 23",
+  "expected_dev_revision": 1,
+  "actual_dev_revision": "not captured; CAS mismatch only",
+  "cleanup": "task-owned test container removed in finally",
+  "owner_stop": "PostgreSQL verification fails: stop and submit exact finding"
+}

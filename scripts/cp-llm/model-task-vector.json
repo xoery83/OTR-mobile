@@ -1,0 +1,35 @@
+{
+  "request": {
+    "contract_version": "otr-model-task-v1",
+    "task_id": "11111111-1111-4111-8111-111111111111",
+    "logical_request_id": "22222222-2222-4222-8222-222222222222",
+    "logical_idempotency_key": "33333333-3333-4333-8333-333333333333",
+    "consumer_id": "import",
+    "consumer_version": 1,
+    "input": {
+      "reference": "44444444-4444-4444-8444-444444444444",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byte_count": 128
+    },
+    "schema": {
+      "id": "FLIGHT_REMOTE_OUTPUT_V1",
+      "version": 1,
+      "dialect": "OTR_TYPED_V1",
+      "sha256": "a9800a43f1078e8c7ea74c8c88e3671e1655014b2212655779198472d125226e"
+    },
+    "policy_snapshot": {
+      "version": 1,
+      "privacy": "REMOTE_ALLOWED",
+      "network_required": true,
+      "region": "fixture",
+      "route": "COMMERCIAL_REMOTE",
+      "budget_currency": "USD",
+      "budget_nanos": "1000000000",
+      "max_attempts": 1,
+      "deadline": "2070-01-01T00:00:00Z"
+    },
+    "policy_sha256": "6629d8eae7fadf088cd3696d4f4bdcb979730052980cbe8eac11efa5e3c5e032"
+  },
+  "request_sha256": "4140f9893a80604a5e79e21b2b11fc37597b12fb93595814d326e438454be7d6",
+  "policy_sha256": "6629d8eae7fadf088cd3696d4f4bdcb979730052980cbe8eac11efa5e3c5e032"
+}

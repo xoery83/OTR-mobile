@@ -1,0 +1,12 @@
+{
+  "head": "741579c8bac3f898669ca331875a28efc645cfa2",
+  "sha256": {
+    "src/domain/intelligence/persistence.ts": "9bfe59158fd3f61a74edf1b51c20171cf21b5723cea68dab1765223d23b1dfe0",
+    "src/data/db/migrations/intelligenceContinuations.ts": "63d11a4486660d1b609395234eb3d1309960be1a2766f59f8185477f2880d2b0",
+    "src/data/repositories/intelligenceContinuationRepository.ts": "fa7ff4be0a30f53c44cdf9c3a3a0c0c85d8331beaf7fd586cb4c3a5b07698676",
+    "backend/src/flightDevDispatch.ts": "251d2bd3777e310ab8eb6af177c74d9c051e99198062d43ccb164e7a4ed31162",
+    "backend/src/flightPrivateCustody.ts": "65994a35eba397bed8619887d2d779c152a859ddb56639173321c1297f20c897",
+    "supabase/migrations/20261006000100_external_integration_persistence.sql": "c759a41981f631271df7b960a7ce50dbc32e2317163ca84a7021d1cbf5e46f93",
+    "supabase/migrations/20261007000100_flight_dev_dispatch_foundation.sql": "46e80899f14817d5162f255383e303232a12276e662f34b2cb16156c34d4f2a9"
+  }
+}

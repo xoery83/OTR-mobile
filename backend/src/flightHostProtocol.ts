@@ -141,6 +141,7 @@ export async function recoverFlightRaw(
     null,
     flightModelWitness,
   );
+  const technicalOutput = result.status === "SUCCEEDED" ? result.output : null;
   let interpretation: unknown | null = null;
   if (result.status === "SUCCEEDED") {
     try {
@@ -157,7 +158,13 @@ export async function recoverFlightRaw(
       result = { ...result, status: "FAILED", error: "SEMANTIC_INVALID" };
     }
   }
-  await factory.retainRecoveredResponse(context, a.attempt_id, result, interpretation);
+  await factory.retainRecoveredResponse(
+    context,
+    a.attempt_id,
+    result,
+    interpretation,
+    technicalOutput,
+  );
   return factory.recover(context, a.attempt_id);
 }
 export async function readFlightHostStatus(

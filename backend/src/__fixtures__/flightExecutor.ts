@@ -5,7 +5,8 @@ import {
   flightReservationCommand,
   flightRemoteRequestMaterial,
 } from "../flightDevDispatch";
-import { fixtureHash, remoteFixture } from "./flightRemote";
+import { fixtureHash, remoteFixture, flightFixturePolicy } from "./flightRemote";
+import { bindModelTask, registeredFlightModelProfile } from "../modelTaskProfile";
 import {
   createClosedPersistenceGateway,
   verifiedCallContextSchema,
@@ -58,7 +59,7 @@ export async function flightExecutorFixture(
       network_required: true,
       remote_run: f.descriptor,
     },
-    policy_admission: { version: 1, policy_sha256: h, allowed: true },
+    policy_admission: { version: 1, policy_sha256: pins.policy_sha256, allowed: true },
     policy_admission_sha256: h,
     task_publication_fence: 1,
     sync_operation_id: randomUUID(),
@@ -85,12 +86,37 @@ export async function flightExecutorFixture(
     updated_at: at,
     update_clock: "DEVICE_WALL",
   });
+  a.request_material_sha256 = await fixtureHash(
+    flightRemoteRequestMaterial(f.request, f.envelope),
+  );
+  const modelTaskBinding = bindModelTask({
+    contract_version: "otr-model-task-v1",
+    task_id: a.task_id,
+    logical_request_id: randomUUID(),
+    logical_idempotency_key: randomUUID(),
+    consumer_id: "import",
+    consumer_version: 1,
+    input: {
+      reference: a.request_material_reference!,
+      sha256: a.request_material_sha256,
+      byte_count: flightRemoteRequestMaterial(f.request, f.envelope).length,
+    },
+    schema: {
+      id: "FLIGHT_REMOTE_OUTPUT_V1",
+      version: 1,
+      dialect: "OTR_TYPED_V1",
+      sha256: registeredFlightModelProfile.output_schema_sha256,
+    },
+    policy_snapshot: flightFixturePolicy,
+    policy_sha256: pins.policy_sha256,
+  });
   const command = flightReservationCommand(a, f.envelope, {
     integration_version: 1,
     grant_revision: 1,
     trip_id: f.request.binding.trip_id,
     import_id: randomUUID(),
     currency: "USD",
+    model_task_binding: modelTaskBinding,
   });
   a.request_material_sha256 = await fixtureHash(
     flightRemoteRequestMaterial(f.request, f.envelope),

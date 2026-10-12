@@ -1,4 +1,10 @@
 import { z } from "zod";
+import { modelTaskBindingSchema, type ModelTaskBinding } from "./modelTaskProfile";
+import {
+  technicalOutputWitnessSchema,
+  type TechnicalOutputWitness,
+} from "../../src/domain/intelligence/modelTask";
+import { flightRemoteOutputSchema } from "../../src/domain/intelligence/remoteFlightText";
 import { canonicalEventJson, type Json } from "../../src/domain/trip/eventIntentJson";
 import {
   commandDigest,
@@ -79,11 +85,21 @@ export function flightReservationCommand(
     trip_id: string;
     import_id: string;
     currency: string;
+    model_task_binding: ModelTaskBinding;
   },
 ) {
   if (
     a.descriptor_snapshot.version !== 2 ||
     e.binding.descriptor.boundary_version !== "otr-flight-remote-v2"
+  )
+    throw new Error("POLICY_BLOCKED");
+  const binding = modelTaskBindingSchema.parse(structuredClone(scope.model_task_binding));
+  if (
+    binding.request.task_id !== a.task_id ||
+    binding.request.input.reference !== a.request_material_reference ||
+    binding.request.input.sha256 !== a.request_material_sha256 ||
+    binding.request.policy_sha256 !== a.policy_admission.policy_sha256 ||
+    binding.request.policy_sha256 !== e.binding.descriptor.remote.policy_sha256
   )
     throw new Error("POLICY_BLOCKED");
   const p = e.binding.descriptor.remote;
@@ -168,6 +184,7 @@ export function flightReservationCommand(
     integration_id: a.integration_id,
     row,
     start,
+    model_task_binding: binding,
     scope_id: p.scope_id,
     scope_revision: p.scope_revision,
     scope_sha256: p.scope_sha256,
@@ -279,6 +296,19 @@ export function createFlightDevExecutor(deps: {
         e.request.binding.descriptor.remote.policy_sha256
     )
       throw new Error("POLICY_BLOCKED");
+    const modelBinding = modelTaskBindingSchema.parse(e.command.model_task_binding);
+    if (
+      modelBinding.request.task_id !== a.task_id ||
+      modelBinding.request.policy_snapshot.deadline !== e.request.binding.deadline ||
+      modelBinding.request.input.reference !== a.request_material_reference ||
+      modelBinding.request.input.sha256 !== a.request_material_sha256 ||
+      modelBinding.request.input.byte_count !==
+        flightRemoteRequestMaterial(e.request, e.envelope).length ||
+      modelBinding.request.policy_sha256 !== a.policy_admission.policy_sha256 ||
+      modelBinding.request.policy_sha256 !==
+        e.request.binding.descriptor.remote.policy_sha256
+    )
+      throw new Error("POLICY_BLOCKED");
     const material = flightRemoteRequestMaterial(e.request, e.envelope);
     if (
       !a.request_material_reference ||
@@ -306,10 +336,36 @@ export function createFlightDevExecutor(deps: {
       throw new Error("POLICY_BLOCKED");
     return h;
   }
+  async function retainTechnical(
+    a: Readonly<Attempt>,
+    raw: unknown,
+    schemaSha256: string,
+  ) {
+    const output = flightRemoteOutputSchema.parse(raw);
+    const bytes = new TextEncoder().encode(canonicalEventJson(output as unknown as Json));
+    const sha256 = await deps.hash(bytes);
+    const pin = await deps.custody.put({
+      accountId: a.account_id,
+      reservationId: deps.id(),
+      sha256,
+      byteCount: bytes.length,
+      bytes,
+    });
+    return technicalOutputWitnessSchema.parse({
+      version: 1,
+      task_id: a.task_id,
+      attempt_id: a.attempt_id,
+      request_id: a.request_id,
+      request_sha256: a.request_sha256,
+      schema_sha256: schemaSha256,
+      output: { reference: pin.reference, sha256, byte_count: bytes.length },
+    });
+  }
   async function retain(
     a: Readonly<Attempt>,
     result: FlightProviderResult,
     interpretation: unknown | null,
+    technical: TechnicalOutputWitness | null = null,
   ): Promise<ExecutionReport> {
     const base = {
       account_id: a.account_id,
@@ -358,6 +414,7 @@ export function createFlightDevExecutor(deps: {
         descriptor: a.descriptor_snapshot,
         result,
         interpretation,
+        technical_output: technical,
         report: base,
       }),
     );
@@ -472,6 +529,13 @@ export function createFlightDevExecutor(deps: {
               },
             };
           }
+          let technical: TechnicalOutputWitness | null = null;
+          if (result.status === "SUCCEEDED")
+            technical = await retainTechnical(
+              a,
+              result.output,
+              e.command.model_task_binding.request.schema.sha256,
+            );
           let interpretation: unknown | null = null;
           if (result.status === "SUCCEEDED")
             try {
@@ -492,7 +556,7 @@ export function createFlightDevExecutor(deps: {
                 ...(result.model_witness ? { model_witness: result.model_witness } : {}),
               };
             }
-          return retain(a, result, interpretation);
+          return retain(a, result, interpretation, technical);
         },
       };
     },
@@ -508,11 +572,23 @@ export function createFlightDevExecutor(deps: {
       id: string,
       result: FlightProviderResult,
       interpretation: unknown | null,
+      technicalOutput: unknown | null = null,
     ) {
       const a = await deps.repo.readAttempt(context, id);
       await deps.repo.authorizeResultDisclosure(context, a);
       assertAccountRequestGeneration(context);
-      return retain(a, result, interpretation);
+      const loaded = await load(a);
+      const output =
+        technicalOutput ?? (result.status === "SUCCEEDED" ? result.output : null);
+      const technical =
+        output === null
+          ? null
+          : await retainTechnical(
+              a,
+              output,
+              loaded.command.model_task_binding.request.schema.sha256,
+            );
+      return retain(a, result, interpretation, technical);
     },
     async recover(context: AccountRequestContext, id: string) {
       const a = await deps.repo.readAttempt(context, id);
@@ -554,6 +630,38 @@ export function createFlightDevExecutor(deps: {
       await deps.repo.authorizeResultDisclosure(context, a);
       assertAccountRequestGeneration(context); // No await between this fence and evidence return.
       return disclosed;
+    },
+    async readTechnicalOutput(context: AccountRequestContext, id: string) {
+      const stored = await this.recover(context, id);
+      if (!stored.technical_output) return null; // Historical results retain their old meaning.
+      const { a, loaded } = await this.loadRetainedAttempt(context, id);
+      const witness = technicalOutputWitnessSchema.parse(stored.technical_output);
+      if (
+        stored.report.execution_observation !== "TERMINAL" ||
+        witness.task_id !== a.task_id ||
+        witness.attempt_id !== a.attempt_id ||
+        witness.request_id !== a.request_id ||
+        witness.request_sha256 !== a.request_sha256 ||
+        witness.schema_sha256 !== loaded.command.model_task_binding.request.schema.sha256
+      )
+        throw new Error("POLICY_BLOCKED");
+      const bytes = await deps.custody.read({
+        accountId: a.account_id,
+        reference: witness.output.reference,
+        sha256: witness.output.sha256,
+        byteCount: witness.output.byte_count,
+      });
+      if (
+        bytes.length !== witness.output.byte_count ||
+        (await deps.hash(bytes)) !== witness.output.sha256
+      )
+        throw new Error("POLICY_BLOCKED");
+      const output = flightRemoteOutputSchema.parse(
+        JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)),
+      );
+      await deps.repo.authorizeResultDisclosure(context, a);
+      assertAccountRequestGeneration(context);
+      return { witness, output, request: loaded.command.model_task_binding.request };
     },
     async install(
       context: AccountRequestContext,

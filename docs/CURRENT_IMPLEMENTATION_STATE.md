@@ -1,3 +1,24 @@
+# CP-LLM-03A — CLOSED canonical integration preparation / Owner Review
+
+2026-10-12. Prepared from local main `c0a6920`; actual remote main `12693e3`.
+Accepted LLM `af1cc93` contributes22 exact unchanged files plus the reconciled handoff.
+Core85–92 → `20261012000100_model_task_protected_admission.sql`; prior23-group
+network-none PostgreSQL proof applies to identical migration/fixture inputs.
+`otr-model-task-v1` facade/profile/private technical witness contracts unchanged.
+No runtime wiring, paid dispatch, fallback, shadow execution or semantic repair added.
+
+Current Core/Capture/Platform/Experience handoffs below are preserved verbatim,
+including the previously uncommitted canonical Capture/Platform suffix, copied only
+for this authorized isolated shared-file reconciliation. Canonical files remain untouched.
+The historical CP-LLM-02A acceptance snapshot remains in its implementation report;
+current integration evidence is in `architecture/CP_LLM_03A_CANONICAL_INTEGRATION_READINESS_REPORT.md`.
+Focused network-none Linux501 PASS/4 SKIP; local typecheck/Backend build and touched
+code lint/format PASS. Extra emulated Linux typecheck timed out220s without diagnostics;
+this environment limitation is recorded in the report. Normal isolated commits only; main merge/push and Hosted/Provider/paid LLM/C5/C9/
+Production activation require separate Owner approval. Provider NOT_CONFIGURED.
+
+---
+
 # DL1 controlled main integration — Phase A validated
 
 2026-10-12. Owner accepted DL1 `81b2192`/`fb0aba7`; controlled merge based on
@@ -361,3 +382,144 @@ activation require their own gates; W7 does not require all Experience renderers
   ARCHITECTURE, DATA_MODEL, API_CONTRACT, OFFLINE_SYNC and accepted Capture/Import
   design documents; no legacy Web reaudit or redesign. Future UI/copy uses
   `architecture/ui-foundation.md` and `architecture/OTR_TERMINOLOGY_GLOSSARY.md`.
+
+## Preserved concurrent local Capture and Platform notes
+
+These pre-integration notes remain uncommitted. Their earlier Core blocker status
+is superseded by the integrated publisher acceptance above. Platform status is retained.
+
+## Capture Flight-first adapter — 2026-10-11 / IMPLEMENTED, RUNTIME CLOSED
+
+- Owner-authorized isolated development from canonical5076174. Flight assessment/
+  private evidence projection committed ac46a90; seven synthetic relationship
+  vectors and concise note committed741579c; both integrated into canonical main.
+- Existing owning CP13 assessor validates evidence/claims/revisions; no new writer,
+  consent identity, schema, provider or runtime gate. Sparse/deferred facts retained;
+  Account callbacks, original pins, raw structured text and reviewed edits fenced.
+- Focused9 suites/313 tests, typecheck, touched lint/format, UI guard PASS. Synthetic
+  Source catalogs → two Candidate assessments → one reviewed durable preparation,
+  exact replay/cold restart PASS; canonical Event writes0.
+- Material dependency: existing Run-wide UNKNOWN claim blocks sibling Segment
+  preparation. Protection is retained; Core must approve distinct sibling output
+  preparation. No newer approved owning mutation interface was found. Automatic
+  admission, sparse canonical save, participation/privacy and edit authority remain
+  Core-owned. Composer/C5/C9/providers/business runtime stay CLOSED.
+- Note: architecture/OTR_CAPTURE_FLIGHT_FIRST_IMPLEMENTATION.md. Next: accepted
+  Core sibling-output/interface contract, then two-preparation vertical fixture.
+
+## R3-A5 DEV Backend Catalog live read — 2026-10-11 / BLOCKED
+
+- Corrected actual fixed-principal Node Driver probe returned transport503 before
+  acquiring a Catalog lease. Backend was never stopped/replaced; runtime CLOSED.
+  Isolated five-file private-injection candidate remains unintegrated/uncommitted;
+  focused6-file/205 tests, typecheck, lint/UI guard, build and formatting PASS.
+- Original accepted Host Backend unchanged/healthy; local/public health200,
+  Catalog unauthenticated/invalid-token401, malformed/query400, version426, POST405.
+  Authorized/unauthorized authenticated Actor/Trip HTTP DEFERRED by Owner direction.
+- Reader ACTIVE/APPLIED, LOGIN/SCRAM/limit1 retained, final sessions0; all temporary
+  injection/proof containers removed. Rotate_by2026-10-25T02:03:36.664119Z;
+  expiry2026-11-08T02:03:36.084144Z. Interruption0; rollback NOT_REQUIRED.
+- Report: `architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md`;
+  nonsecret evidence/candidate patch `/private/tmp/otr-r3a5-live`. No business/SQL
+  mutation, Caddy/network/API-key change, Auth fixture/session, Production, Mobile,
+  provider, Composer/C5/C9 or Git operation. Native/SQLite53 gates remain separate.
+
+# Current Implementation State
+
+Date: 2026-10-06 (Pacific/Auckland).
+
+## R3-A4 Reader candidate reconciliation — 2026-10-11 / APPLIED, RUNTIME CLOSED
+
+- Existing Candidate authenticated PASS via fixed DEV Direct Primary with
+  verify-full/TLS1.3, actual session_user/current_user both dedicated Reader,
+  Primary true and default/transaction read-only on. One bounded recovery
+  authentication; one explicitly required concurrent connection-limit negative.
+- Existing admitted Actor/Trip Catalog EXECUTE PASS. Unauthorized Actor/Trip,
+  direct trips/trip_sources reads, SET ROLE postgres/writer and admission-helper
+  EXECUTE denied with SQLSTATE42501. Connection limit1 enforced, native socket
+  closed and final Reader sessions zero.
+- Accepted reconcile function jointly verified UNKNOWN journal, exact role expiry,
+  restricted role and cooperative private custody; atomic candidate-to-active
+  promotion completed and journal durably APPLIED. Only active, lock and
+  operation.json remain under root0700/regular single-link0600 custody.
+- LOGIN/SCRAM/limit1 retained; expiry2026-11-08T02:03:36.084144Z,
+  rotate_by2026-10-25T02:03:36.664119Z. No password generation or ALTER ROLE replay.
+- Normalized historical H1 and capability/ACL manifest unchanged except authorized
+  LOGIN/expiry. Emergency disable not required. Trusted-root/cooperative locking
+  is not race-free; privileged-writer, Apport and backup/retention risks remain.
+- Backend credential injection/deployment and Native Catalog Runtime remain CLOSED;
+  enabling either requires separate authorization. No Git action or business writes.
+- Nonsecret evidence: /private/tmp/otr-r3a4-real-acceptance/candidate-reconciliation-result.json
+  and candidate-reconciliation-acl-result.json. Prior initialization UNKNOWN was
+  resolved by this accepted recovery, without credential mutation replay.
+
+## R3-A4 connection-error diagnosis — 2026-10-11 / CORRECTION TESTED, NO HOSTED RETRY
+
+- Confirmed reporting defect: Pg collapsed connection failures into generic Closed;
+  one-off operator catches also discarded the underlying failure. Prior counters
+  marked an attempt before constructing Pg, so they do not prove server rejection.
+- Pg now preserves fixed stage/classification, sanitized Python exception type,
+  elapsed seconds and structured query SQLSTATE. Failed libpq startup has no
+  structured SQLSTATE; native-only fixed-token matching yields AUTH_REJECTED,
+  NETWORK_OR_TLS, TIMEOUT or CLIENT_CONFIGURATION; unknown/localized text stays
+  UNKNOWN. Raw connection errors never become Python strings or retained evidence.
+- Default two-second timeout preserved; explicit bounded timeout1..10 available.
+  Recovery/provisioning and cooperative custody logic unchanged. Corrected operator
+  catch example retained privately; no launcher or automatic retry added.
+- Network-none synthetic SCRAM success/wrong-password, network/TLS/missing-CA,
+  timeout, parameter/binding-error sanitization and query22012 retention PASS.
+  Hosted adapter/cooperative custody/F1F2/F3 regression suites PASS.
+- Actual DEV root cause remains UNKNOWN. Existing endpoint/TLS/native-buffer
+  handoff parameters verified from source and retained metadata; no password read,
+  replacement, Hosted connection/mutation or runtime/service operation this task.
+  Ready for one explicitly authorized final diagnostic test YES; Reader readiness NO.
+  No Git operation; scoped source/test/current-state edits remain uncommitted.
+
+## R3-A4 Owner-staged administrator test — 2026-10-11 / AUTHENTICATION BLOCKED
+
+- Owner reports private password entry; pinned metadata check confirms STAGED in
+  separate administrator custody. Credential read only on hardened DEV host into
+  native memory under checked exclusive lock; no value/error text emitted.
+- Two bounded Direct Pg attempts fail before any post-authentication query.
+  Accepted driver exposes no raw connection error; bad password versus another
+  authentication/handshake failure is not established. No password overwrite/replay.
+- Fresh no-password libpq verify-full still reaches password-required boundary;
+  wrong hostname/CA reject. Thus endpoint/TLS readiness passes, while actual admin
+  authenticated SQL and logging-control acceptance remain BLOCKED/unverified.
+- Management read-only observation confirms Reader NOLOGIN/passwordNULL/expiryNULL/
+  limit1/zero sessions. No Reader password generation, credential mutation, Hosted
+  ACL/schema changes, emergency disable or service operation. Admin custody STAGED;
+  trusted-root/Apport/backup-retention residual risks remain as previously recorded.
+- Canonical source unchanged at e284c38aaef5688d9503c10483fa36e173c7f519.
+  Nonsecret evidence: /private/tmp/otr-r3a4-real-acceptance (owner0700/files0600).
+  Next is privately resolve the DEV postgres authentication failure; do not blindly
+  rerun handoff or provisioning. Backend/Native Catalog Runtime remain CLOSED.
+
+## R3-A4 administrator handoff — 2026-10-11 / BLOCKED
+
+- Canonical45092ead6fa12f0e9b3e6cce81ab64e95167f79d local/remote verified.
+  DEV postgres LOGIN/SCRAM metadata and operator privileges verified read-only;
+  Reader remains NOLOGIN/password NULL/expiry NULL/limit1/zero sessions.
+- No approved private Direct admin store established. Pinned SSH metadata and
+  synthetic hidden-TTY/redirect checks PASS; API custody cannot be reused.
+- Exact Direct TLS1.3/identity/chain checks PASS; host libpq absent. Apport and
+  secret-retention exclusions unverified; Reader custody remains UNAVAILABLE.
+- Handoff BLOCKED / real Hosted provisioning NO. No real input or secret staging,
+  credential framework, host setting/package change, mutation or runtime activation.
+- Report: `architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md`. Concurrent local
+  Day Feed integration moved main tofa8b32a; remote stayed45092ea; adapter unchanged.
+
+## Latest R3-A3A Host-mode live acceptance — 2026-10-11
+
+- Host-mode DEPLOYED/accepted on canonical78e9315da932f660f544e7363676094e01d9e4ba;
+  one bounded attempt PASS, healthy immutable image51432b86743f, no rollback.
+- Exact Backend endpoint raw/PREROUTING DROP ownership CONFIRMED; only attested
+  lifecycle permitted. Unrelated containers/network/interfaces/firewall/host policy PASS.
+- Loopback-only127.0.0.1:8787, non-loopback IPv4/IPv6 denied; local/public health200,
+  protected401, privileged API200; Caddy routing/admin isolation and verified Direct
+  IPv6/TLS1.3 PASS. Rotated credential retained exclusively; Caddy unchanged.
+- Maintenance30.767s, sampled downtime0.645s (upper bracket0.735s). Root-private
+  evidence: /opt/otr/dev-backend/env/r3a3a-host-retry-78e9315da932.
+- Infrastructure acceptance complete; stop further infrastructure work. Reader/
+  Runtime gates remain CLOSED; authenticated Ledger smoke DEFERRED. Old-key deletion
+  Owner-confirmed, authoritative verification PENDING. Dormant utilities untouched.

@@ -1,0 +1,23 @@
+{
+  "flight_activation_reserve_call": true,
+  "external_integration_mark_dispatch": true,
+  "gates": [
+    {
+      "environment": "PRODUCTION",
+      "runtime_enabled": false,
+      "kill_switch": true
+    },
+    {
+      "environment": "TEST",
+      "runtime_enabled": false,
+      "kill_switch": false
+    },
+    {
+      "environment": "DEV",
+      "runtime_enabled": false,
+      "kill_switch": true
+    }
+  ],
+  "network": "none",
+  "historical_calls": "310"
+}

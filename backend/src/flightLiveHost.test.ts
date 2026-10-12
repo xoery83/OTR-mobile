@@ -108,6 +108,7 @@ async function setup(mode = "success", model: unknown = "deepseek-flash") {
       trip_id: f.request.binding.trip_id,
       import_id: f.command.row.import_id,
       currency: "USD",
+      model_task_binding: f.command.model_task_binding,
     });
   }
   const base = process.platform === "linux" ? "/custody-tests" : tmpdir();
