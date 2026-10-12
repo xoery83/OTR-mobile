@@ -1,3 +1,22 @@
+# G2-FLEX-02 — controlled local-main integration / Owner Review
+
+2026-10-13. Owner-accepted `12eadff` normally merged unchanged into current
+canonical `a878be35` as `6801bfc` (parents `a878be35`, `12eadff`); merge tree
+matches reviewed source exactly. `g2-flexible-snapshot/1`, Immersive-local Focus
+boundary, existing `g2-flexible/1`, one Feed/Composer/global Focus and all14 TTR
+fixtures preserved. No source correction or CP01B business implementation.
+Focused251 PASS; fresh clean-main3878/integrated3893 PASS, same two failure
+identities/23 skips. Typecheck, full lint/UI guard, changed-file format PASS.
+Dedicated iOS27 Simulator validates updates/filters, local expansion, valid/invalid
+Focus, nonzero scroll, Light/Dark, P1/P2/P3 and TTR. Original source/evidence and
+concurrent dirty/untracked work preserved; no push/deploy/Hosted/Provider activity.
+See `architecture/G2_FLEX_02_MAIN_INTEGRATION_REPORT.md` for merge provenance,
+exact manifests, tests/evidence and exported API. CP01B may resume its producer
+and approved workspace against this shared port after this checkpoint; G2 returns
+to maintenance. Real-data/device/persistence/Core/Provider gates remain separate.
+
+---
+
 # G2-FLEX-02 — isolated shared port / Owner Review
 
 2026-10-13. `codex/g2-flex-02`, based on accepted local main `a878be35`, adds
