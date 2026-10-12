@@ -1,3 +1,4 @@
+import { flexibleLabContributions } from "@/features/flexible-native-gallery/labAdapter";
 import { collectFixtureContributions } from "./contribution";
 import { getDl1FixtureCatalog } from "./fixtureCatalog";
 import { stayContribution } from "./stayContribution";
@@ -20,5 +21,6 @@ export function getLabFixtures() {
       title: t(`dayLab.ttr.${fixture.supplemental!.caseId}`),
     })),
     { ...flexibleReactiveContribution(), flexibleRenderer: FlexibleSnapshotFixtureRow },
+    ...flexibleLabContributions(),
   ]);
 }
