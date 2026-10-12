@@ -1,0 +1,13 @@
+docs/CURRENT_IMPLEMENTATION_STATE.md
+docs/trip/implementation/CP_FLIGHT_E2E_B_CHANGED_FILES.txt
+docs/trip/implementation/CP_FLIGHT_E2E_B_IMPLEMENTATION_REPORT.md
+src/data/repositories/tripCoreV2DayFeedRepository.test.ts
+src/data/repositories/tripCoreV2DayFeedRepository.ts
+src/data/repositories/tripCoreV2Repository.ts
+src/data/repositories/tripDayFeedRepository.ts
+src/domain/trip/dayReadModel.ts
+src/domain/trip/tripCoreV2DayFeed.ts
+src/features/day-feed/DayFeed.tsx
+src/features/day-feed/FlightRows.tsx
+src/features/day-feed/presentation.ts
+src/features/day-feed/render.test.ts

@@ -5,6 +5,20 @@ normal fast-forward from `741579c`; concurrent Platform documentation remains lo
 Owner accepted W0 `otr-trip-core/2` and continuous W1/W2/W3/W5 implementation.
 W4 Capture and W6 Experience retain separate ownership. Core is INCOMPLETE.
 
+## CP-FLIGHT-E2E-B — isolated downstream acceptance
+
+- Branch `codex/cp-flight-e2e-b`, baseline `b5caa1f`, implementation `8e3916f`;
+  local commit only, not integrated. Accepted collection2 → SQLite54 → existing
+  Day presentation now has a v2 P2 reader with exact certificate/Person binding,
+  typed endpoint, stable UUID/occurrence, sparse and access-generation fences.
+- Focused11 suites/180 PASS; typecheck, lint/UI guard, touched format/diff PASS.
+  Actual Node SQLite file cold reopen/offline retention and repeated collection
+  pass. Synthetic Core executor/HTTP and native-component static rendering only;
+  no native/Hosted/runtime or real supplier acceptance is claimed.
+- Report/manifest: `trip/implementation/CP_FLIGHT_E2E_B_IMPLEMENTATION_REPORT.md`.
+  Next: separate integration decision, Agent 3 accepted UUID/revision/read2 alignment
+  and approved joined/native F5/F6 evidence. All activation gates remain CLOSED.
+
 ## Latest Core checkpoint
 
 - Frozen finite31-table model, command2/receipt2/read2/capture2 codecs, protected
