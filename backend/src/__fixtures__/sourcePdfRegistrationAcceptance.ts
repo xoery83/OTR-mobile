@@ -11,7 +11,7 @@ import { coreHashValue } from "../../../src/domain/trip/tripCoreV2Read";
 import { importDigest } from "../../../src/domain/trip/flightImportReview";
 import { canonicalCoreJson } from "../../../src/domain/trip/tripCoreV2Json";
 import { type SourcePdfVerifyCommand } from "../../../src/domain/trip/sourcePdfRegistration";
-import { pdfHash, encodeProfilePdf } from "../sourcePdfProfile";
+import { pdfHash, encodeProfilePdf, verifySourcePdf } from "../sourcePdfProfile";
 export async function registerPendingPdfFixture(
   admin: ReturnType<typeof session>,
   owned: string,
@@ -316,7 +316,31 @@ export async function registerPendingPdfFixture(
         l.query("SELECT public.trip_source_pdf_registration_commit($1::jsonb,$2,$3)", [
           canonicalCoreJson(forged),
           forgeryHash,
-          new TextDecoder().decode(bytes),
+          verifySourcePdf(bytes).text,
+        ]),
+      ),
+    ).rejects.toThrow("INVALID_PDF_REGISTRATION");
+    const wrongOptions = {
+      ...registered.body,
+      request: { ...q, operationId: randomUUID(), derivedRepresentationId: randomUUID() },
+      transformOptionsSha256: "0".repeat(64),
+    };
+    wrongOptions.requestSha256 = await coreHashValue(
+      "otr-source-pdf-registration-request-v1",
+      { accountId: actor, tripId: trip, request: wrongOptions.request },
+      hash,
+    );
+    const wrongOptionsSha = await coreHashValue(
+      "otr-source-pdf-registration-v1",
+      wrongOptions,
+      hash,
+    );
+    await expect(
+      connection.withLease((l) =>
+        l.query("SELECT public.trip_source_pdf_registration_commit($1::jsonb,$2,$3)", [
+          canonicalCoreJson(wrongOptions),
+          wrongOptionsSha,
+          verifySourcePdf(bytes).text,
         ]),
       ),
     ).rejects.toThrow("INVALID_PDF_REGISTRATION");
