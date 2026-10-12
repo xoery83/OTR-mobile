@@ -1,9 +1,17 @@
 import { useRef, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import type { DayProjection } from "@/domain/trip/dayReadModel";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
-import { placeNow } from "@/domain/trip/experience/nowIndicator";
+import { composeDayStream } from "./composition";
 import type { FlightService } from "@/domain/trip/flightAdmission";
 import { UiButton } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -32,16 +40,16 @@ export function DayFeed({
     projection.version === 2
       ? projection.query(date, zone)
       : itemsForLocalDate(projection, date, zone);
-  const rows = [...query.timed, ...query.nonComparable];
   const clock = useMinuteClock(zone);
-  const now = placeNow(query, rows, clock.instant);
   const [focus, setFocus] = useState<string | null>(null);
   const [immersive, setImmersive] = useState<string | null>(null);
+  const stream = composeDayStream(query, clock.instant, { focus, immersive });
+  const { rows, now } = stream;
   const scroll = useRef<ScrollView>(null),
     offset = useRef(0),
     returnOffset = useRef(0);
   const depth = (id: string): Depth =>
-    immersive === id ? "I" : focus === id ? "F" : "B";
+    stream.immersive === id ? "I" : stream.focus === id ? "F" : "B";
   const change = (id: string, next: Depth) => {
     if (next === "I") {
       returnOffset.current = offset.current;
@@ -53,9 +61,11 @@ export function DayFeed({
   };
   const close = () => {
     setImmersive(null);
-    requestAnimationFrame(() =>
-      scroll.current?.scrollTo({ y: returnOffset.current, animated: false }),
-    );
+    // Android does not deliver Modal.onDismiss.
+    if (Platform.OS !== "ios")
+      requestAnimationFrame(() =>
+        scroll.current?.scrollTo({ y: returnOffset.current, animated: false }),
+      );
   };
   const render = (
     event: DayProjection["events"][number],
@@ -110,7 +120,7 @@ export function DayFeed({
       </View>
     );
   };
-  const selected = rows.find((r) => r.event.id === immersive)?.event;
+  const selected = rows.find((r) => r.item.event.id === stream.immersive)?.item.event;
   return (
     <>
       <ScrollView
@@ -123,30 +133,31 @@ export function DayFeed({
         }}
       >
         {!rows.length ? <Text style={styles.meta}>{t("dayFeed.dayEmpty")}</Text> : null}
-        {rows.map((row, i) => (
-          <View key={row.event.id}>
-            {now.mode === "BETWEEN_EVENTS" && now.beforeIndex === i ? (
-              <NowMarker placement={now} />
-            ) : null}
+        {rows.map((row) => (
+          <View key={row.key}>
+            {row.nowBefore ? <NowMarker placement={now} /> : null}
             {render(
-              row.event,
-              depth(row.event.id) === "I" ? "F" : depth(row.event.id),
-              now.mode === "WITHIN_EVENT_WINDOW" && now.eventId === row.event.id ? (
-                <NowMarker placement={now} within />
-              ) : undefined,
+              row.item.event,
+              depth(row.item.event.id) === "I" ? "F" : depth(row.item.event.id),
+              row.nowWithin ? <NowMarker placement={now} within /> : undefined,
             )}
           </View>
         ))}
-        {now.mode === "BETWEEN_EVENTS" && now.beforeIndex === rows.length ? (
-          <NowMarker placement={now} />
-        ) : null}
+        {stream.nowAfter ? <NowMarker placement={now} /> : null}
         {query.unresolved.length ? (
           <Text style={styles.meta}>
             {t("dayFeed.unresolvedCount", { count: query.unresolved.length })}
           </Text>
         ) : null}
       </ScrollView>
-      <Modal visible={!!selected} onRequestClose={close} animationType="slide">
+      <Modal
+        visible={!!selected}
+        onRequestClose={close}
+        onDismiss={() =>
+          scroll.current?.scrollTo({ y: returnOffset.current, animated: false })
+        }
+        animationType="slide"
+      >
         <ScrollView style={styles.root} contentContainerStyle={styles.content}>
           {selected ? render(selected, "I") : null}
         </ScrollView>

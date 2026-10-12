@@ -1,3 +1,54 @@
+# Flight AB canonical integration — prepared only
+
+Updated 2026-10-12. Accepted AB tip `5544ba0` is prepared against current local
+canonical G2 main `6dc3e04`; actual remote main remains `b5caa1f`. This isolated
+`codex/cp-flight-e2e-ab-canonical-prep` tree has not advanced or pushed main.
+The accepted40-path AB manifest is retained; production reconciliation only keeps
+AB's v2 query/v1 fallback and Flight facts through canonical's single G2 Composer.
+Both owning source branches and all concurrent files remain preserved.
+
+Joined synthetic SQL/SQLite/Day acceptance is Owner PASS. Final prepared-tree
+verification and a separate Owner decision precede any normal main fast-forward.
+No Hosted, Provider, paid LLM, Native/Mobile Runtime or Production activation.
+Concurrent canonical Capture/Platform notes remain an exact uncommitted suffix;
+the readiness overlay preview retains them alongside this tracked handoff without
+staging their unrelated reports. Historical blocked notes do not revoke newer
+accepted Core publisher/AB or Platform Reader status recorded below.
+
+---
+
+# Day Feed G2 — accepted local-main integration
+
+Updated 2026-10-12. Owner accepted recovery candidate `3ee685f` for controlled
+integration. Pinned main/local origin/main `b5caa1f`; the coherent integration
+commit is the `codex/day-feed-g2-main-integration` tip and local-main fast-forward
+target. No remote push, deployment or runtime/provider activation.
+
+One `composeDayStream` owns final production Feed rows, stable Event/date keys,
+manual Focus and independent NOW. P1/P2 geometry/copy unchanged. Immersive return
+restores scroll on iOS dismissal, retaining Android's frame fallback. Flexible
+and `ttr-presentation/1` seams remain dormant and fixture-only.
+
+Flight E2E adapter `8e3916f`, B tip `fdd5a5c`, joined tip `5544ba0` remain isolated.
+Current exact joined/G2 rehearsal: 9 files/123 tests, typecheck/UI guard PASS,
+retaining v2 query/v1 fallback and owning Flight facts through G2 composition.
+No unaccepted Flight/Core/Capture changes imported into main. Production main in
+this checkpoint retains v1; supported v2 source compatibility is rehearsal evidence.
+
+Full regression: 3,620 PASS / 2 unchanged baseline failures / 19 skipped; exact
+clean-main: 3,609 PASS / same 2 failures / 19 skipped. Typecheck, full lint/UI guard,
+touched formatting and whitespace PASS. Full results and changed manifest are in
+`architecture/TRIP_DAY_FEED_G2_MAIN_INTEGRATION.md`; recovery source inventory remains
+`architecture/TRIP_DAY_FEED_G2_RECOVERY.md`. Native/device/real-data acceptance stays
+separate and unexecuted here. Concurrent canonical Platform/Capture notes are
+preserved as local uncommitted work, never included in this integration commit.
+
+Next: review completed bounded G2 main integration; separately integrate approved
+Flight/W7 v2 path, then authorize W6 + first P3 Stay Experience slice. Core/TTR
+role/occurrence/continuity authority and Flexible business ownership remain external.
+
+---
+
 # Current implementation state — Core v2 integrated
 
 Updated 2026-10-12. Core branch `e565080` was integrated into canonical main by
@@ -104,7 +155,7 @@ no caller assertion, extractor confidence or synthetic certificate replaces owni
 ## Validation and environment
 
 - Typecheck and lint/UI guard passed. Focused reader/HTTP/transport/repository/sync/lifecycle
-  run84 PASS; lifecycle reducer16 PASS. Final full regression:3609 PASS,18 skipped,2 baseline failures.
+  run84 PASS; lifecycle reducer16 PASS. Final Core regression:3609 PASS,19 skipped,2 baseline failures.
 - Actual isolated synthetic PostgreSQL Server84→85–92 acceptance PASS: P1–P6, sparse
   exact replay/CAS, full collection/Item read, Person invalidation, RLS, closed gates and
   least privileges. All329 historical public function bodies retain exact fingerprints.
@@ -184,7 +235,7 @@ activation require their own gates; W7 does not require all Experience renderers
   Git Server1–84 remains exact, tail
   `20261007000100_flight_dev_dispatch_foundation.sql`, SHA-256
   `46e80899f14817d5162f255383e303232a12276e662f34b2cb16156c34d4f2a9`.
-  This Core branch adds Server85–89 and SQLite54 only; Hosted lineage remains distinct.
+  Core adds Server85–92 and SQLite54 only; Hosted lineage remains distinct.
 - C1 Owner/device acceptance at79237cbd is retained in canonical b6daffe with all
   seven original commits. Joint P1/C2 Revision1 and final lineage naming follow
   `adr/2026-10-08-c1-integration-owner-decision.md`; original PROPOSED documents
