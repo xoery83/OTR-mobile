@@ -1,3 +1,19 @@
+# CP-G2-TTR-01 — isolated synthetic Transition consumer / Owner Review
+
+2026-10-13. From accepted local main `1114ccc`, G2 registered the 14 exact
+CP04B1 synthetic TTR contributions and rendered their composed Transitions in
+the production DayFeed used by the DEV-only shared Lab. The bounded optional
+`onOpenTtr` seam opens an inert sheet after current synthetic context fencing;
+no Core/Provider/Apple/production TTR activation. Focused 155 PASS,
+typecheck/lint/UI guard/format PASS. iOS 27 dedicated Simulator confirmed the
+chooser, key Transition states, NOW, tap/dismissal, Light/Dark and existing
+P1/P2/P3/Flexible behavior. Full-suite baseline comparison and evidence are in
+`architecture/OTR_G2_TTR_01_SYNTHETIC_CONSUMER_REPORT.md`. The work stays in
+`codex/g2-ttr-01-synthetic`; no main merge or push. Next: Owner review, then
+TTR/Core authority checkpoints before production use.
+
+---
+
 # G2-FLEX-01 — controlled local-main integration / Owner Review
 
 2026-10-12. Accepted source `6758683` (`codex/g2-flex-01`, base `eb4c8eb`)
