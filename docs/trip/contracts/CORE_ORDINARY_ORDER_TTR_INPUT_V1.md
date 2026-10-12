@@ -1,6 +1,8 @@
 # Core ordinary ordering → TTR input /1
 
 CP04A3-CORE-ORDER-02. CLOSED isolated implementation; Owner Review pending.
+SQLite56 currently collides with Flight capture_pdf_source_handoff; integration
+is blocked pending Owner allocation. No renumbering is assumed.
 Implements the corrected CORE-ORDER-01 and AUTH-01 Revision 2 contract.
 
 ## Authoritative carrier and command

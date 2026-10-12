@@ -1,6 +1,6 @@
 # CP04A3-CORE-ORDER-02 implementation report
 
-**CLOSED synthetic implementation PASS; STOP AT OWNER REVIEW.**
+**Synthetic tests PASS; INTEGRATION BLOCKED by SQLite56 collision. STOP AT OWNER REVIEW.**
 
 ## Provenance and scope
 
@@ -52,7 +52,14 @@ TTR SHA-256 before/after:
 `45c36ccf6f3d0ca92f30b3e78689fb95a6490e64a811bf2b670d521dfe8093c1`.
 Flight accepted file SHA-256 (both registered upload worktrees):
 `a8f39d530420b4769310ae9c431633aba3136be4d031bc0dd17fa0c433aaa1a4`.
-SQLite migration56 was unused in concurrent registered allocation checks.
+Final migration-definition scan found a second collision: Flight PDF Native
+`capturePdfSourceHandoff.ts` allocates SQLite56, name `capture_pdf_source_handoff`,
+at worktree `/Users/xoery/.codex/worktrees/flight-pdf-native-01/otr-mobile-canonical`,
+HEAD `ce8200a8218fb6251b2b7d9a4f85297b45868c93`.
+Our SQLite56 `core_ordinary_order` therefore cannot integrate unchanged. An earlier
+scan of the registry alone missed imported definitions. No further implementation
+or allocation change was made after discovering this conflict. Owner allocation
+is required; the PostgreSQL00200 rename itself is complete and independently PASS.
 
 Disposable PostgreSQL installed Core85–92, accepted PDF derivative/registration,
 unchanged Flight00100, then TTR00200 successfully. No dependency conflict.
@@ -86,7 +93,8 @@ No Hosted/native/simulator acceptance is claimed.
 
 ## Remaining gates
 
-Owner review and separate normal integration decision; current canonical has
+Owner SQLite allocation decision first, then affected installation/replay/static
+revalidation and separate normal integration decision; current canonical has
 advanced independently. Hosted migration install and command negotiation activation
 remain CLOSED. Explicit order-authoring product integration is not activated.
 Real TTR consumer integration must honor spatial UNKNOWN/geometry distinction and
