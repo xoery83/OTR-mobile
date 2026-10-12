@@ -1,0 +1,110 @@
+{
+  "base": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016",
+  "files": [
+    {
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "status": "M",
+      "bytes": 54560,
+      "sha256": "bebbc16227ab87e7f28640f0c9edb950bfbe8f6a93e1979a9573e769f93e4fcb"
+    },
+    {
+      "path": "docs/architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md",
+      "status": "A",
+      "bytes": 22498,
+      "sha256": "cb6125c0397ee513211c4f5ddc0d0efe1d24a061463c1dbff8efd0d633e3e49c"
+    },
+    {
+      "path": "fixtures/flexible-native/src/ui/catalogs.ts",
+      "status": "A",
+      "bytes": 6521,
+      "sha256": "38d3bd424ab204eed6d1eb1a84e6c6a011d5d8f8cdabfe61c928732eabc612e7"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/Gallery.tsx",
+      "status": "A",
+      "bytes": 30791,
+      "sha256": "7a0cf52e931f663e967e96c5192433b2ce69e5f646dbde40af0d059442951320"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/Manipulation.tsx",
+      "status": "A",
+      "bytes": 3468,
+      "sha256": "4d63c89e8b9cbfb7bdc962a0db904978b9861f30f3b37ba0e5ee16ea6dbdd8ea"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/copy.ts",
+      "status": "A",
+      "bytes": 467,
+      "sha256": "b4926c24cf50df63c69d1b0515c294ebdd986686a27f650d0950f20eb18a6808"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/data.json",
+      "status": "A",
+      "bytes": 2356,
+      "sha256": "dc33e00c7bace4bd19d2ed6625718b2332e6a9848a9f45cd805de6615a004d09"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/fixtures.ts",
+      "status": "A",
+      "bytes": 3624,
+      "sha256": "ad00af4807b343982a559ef1d503bc4246f0383da29dcce85ac82fdb61a2713a"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/images/cafe-reference.png",
+      "status": "A",
+      "bytes": 3417,
+      "sha256": "84476b2465beb549860f380b0424e58029647b67cca435cf51139730df83b488"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/images/garden-reference.png",
+      "status": "A",
+      "bytes": 5931,
+      "sha256": "c7788759e4d5ee7b0d65a878da67624ca769112888d44311db9216a224639fe3"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/index.ts",
+      "status": "A",
+      "bytes": 429,
+      "sha256": "b015cba06fb1a291184098874cd87efa5d926b2fb92f0289355739b6ed49c444"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/labAdapter.tsx",
+      "status": "A",
+      "bytes": 5280,
+      "sha256": "e26d83135653d9f65c17248563dd1725fe07af9dbba190a61f7e734af319e4ad"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/model.test.ts",
+      "status": "A",
+      "bytes": 6515,
+      "sha256": "0de10edbfc018c7f4fcff6939a8310a9b129e0a5305ae868970849c84907eb4e"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/model.ts",
+      "status": "A",
+      "bytes": 7006,
+      "sha256": "ab123ed61b4eaaa3f66758922e29cb0461646765c071250f02441d02dbb5de15"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/renderer.test.ts",
+      "status": "A",
+      "bytes": 28547,
+      "sha256": "3c40040ac4600164f1eeca1c7e65c68a5e4b42e9fab50e2ec0737c5d22c00bb8"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/snapshot.test.ts",
+      "status": "A",
+      "bytes": 9152,
+      "sha256": "c8166e730fe5136513c9df8d33a4b61fe34f66cab3e2d2f7a33a75ffb0c18aae"
+    },
+    {
+      "path": "src/features/flexible-native-gallery/snapshot.ts",
+      "status": "A",
+      "bytes": 5510,
+      "sha256": "1ed8ef3650c6ef5e93f82b9d124b8a82e5f142467d2a099545f0ed5ddb2acec8"
+    }
+  ],
+  "sharedFileChanges": [],
+  "staged": [],
+  "status": "PROPOSAL/TEST PASS \u2014 G2 controlled registry integration pending"
+}

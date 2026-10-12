@@ -1,0 +1,39 @@
+{
+  "status": "NOT APPLIED",
+  "sharedTargets": [
+    "src/features/day-feed-lab/fixtureRegistration.ts",
+    "src/features/day-feed-lab/fixtureRegistration.test.ts"
+  ],
+  "artifacts": [
+    {
+      "path": "/private/tmp/cp01b-native-gate-evidence/registration-proposal.patch",
+      "bytes": 799,
+      "sha256": "3db7dfb5145293d14df7b897eb42717cc651abf695c708fd4aa2274bdbd02322"
+    },
+    {
+      "path": "/private/tmp/cp01b-native-gate-evidence/registration-test-proposal.patch",
+      "bytes": 2752,
+      "sha256": "b4259b22920debfbf28fd31e6431d8fb035b046cd2db257e0f601405da61ef4d"
+    },
+    {
+      "path": "/private/tmp/cp01b-native-gate-evidence/fixtureRegistration.proposed.ts",
+      "bytes": 1212,
+      "sha256": "e54b5e53aaf8d0b9dcb1cb5d6bd2c542c22e38431971e04bd80f7fdd1d166d3e"
+    },
+    {
+      "path": "/private/tmp/cp01b-native-gate-evidence/fixtureRegistration.proposed.test.ts",
+      "bytes": 2548,
+      "sha256": "7df072787e60bb78813c96769065f8d6ce3f825e8a713c29be281364f3937371"
+    },
+    {
+      "path": "/private/tmp/cp01b-native-gate-evidence/executed-registration-proposal.test.ts",
+      "bytes": 2617,
+      "sha256": "1dadf0dc13a27ba52c94f9a316af42f0d1511a57a7f6c3e3d1521e7b1ab04ec7"
+    },
+    {
+      "path": "/private/tmp/cp01b-native-gate-evidence/registration-runtime.ts",
+      "bytes": 1366,
+      "sha256": "2f1559541b5bfd6e6adbf1079725a874cb7f76a6a20b1f87aaac7e83695ac024"
+    }
+  ]
+}

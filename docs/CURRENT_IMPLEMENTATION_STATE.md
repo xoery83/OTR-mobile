@@ -1,3 +1,62 @@
+# CP01B / G2 — controlled integration ready / main approval blocked
+
+2026-10-13. Owner-accepted `22c0369` prepared in a clean integration worktree from verified current main `54ecb4b`, preserving all accepted feature/G2 commits. Automatic approval review rejected main advancement and requires explicit final Owner approval after validation. Canonical main remains `54ecb4b`; prepared target is the integration branch HEAD. Runtime tree exactly matches the accepted candidate; no integration source corrections.
+
+Original 22 Fixtures/order/Nelson January 15 default plus F01–F14 = 36 unique Trips; all 14 TTR expectations preserved. Shared `g2-flexible/1`, `g2-flexible-snapshot/1`, Composer/Focus/NOW/Core authority and Release isolation unchanged. Fresh focused261 PASS; clean-main3893/integrated3965 PASS with identical two baseline failures/23 skips. Typecheck, lint/UI guard and formatting PASS. Fresh isolated Simulator checks F01–F14, both Pool divider directions, no F14 key warning, nested Focus, nonzero scroll return, P1/P2/P3, TTR NOW/Sheet and Light/Dark. Existing Debug binary with new integration JavaScript; no fresh native-build claim.
+
+Report/manifest/native evidence: [CP01B_G2_MAIN_INTEGRATION_REPORT.md](architecture/CP01B_G2_MAIN_INTEGRATION_REPORT.md). Concurrent dirty/untracked work, source branch and evidence preserved; no push/deploy/Hosted/production activation. G2 returns to maintenance after the approved local-main advance; Flexible can use the prepared accepted ports. Held copy/resize calibration, gap creation, promotion, Group-only Past and real-data/device/business persistence gates remain separate. STOP for Owner Review.
+
+---
+
+# CP01B / G2 coordinated integration — Owner Review
+
+Isolated branch `codex/cp01b-g2-coordinated` on accepted main `54ecb4b`; canonical main remains unchanged. F01–F14 append after the original 22 entries, preserving Nelson default and all TTR expectations. Feature changes and G2 registry/test ownership have separate commits.
+
+Focused 261 tests, typecheck and lint/UI guard pass. Full suite retains two clean-baseline failures. Native F01–F14, default Nelson and original TTR Sheet were exercised; Pool divider gesture and F14 key warning fixed in feature-owned commits. Positive held copy/resize native calibration remains open. F09 gap creation and F14 promotion remain excluded. No push/deploy/production capability activation.
+
+Exact report, manifest and evidence: [CP01B_G2_COORDINATED_INTEGRATION_REPORT.md](architecture/CP01B_G2_COORDINATED_INTEGRATION_REPORT.md). Next checkpoint: final Owner Review; do not advance canonical main.
+
+---
+
+# Flexible CP01B — registration proposal PASS / G2 integration pending
+
+2026-10-13. CP01B now reconciles exact required main54ecb4b. G2 reviewed append-only
+placement, then retained shared registry application ownership. Registry/test patches
+are prepared externally, NOT APPLIED:36 unique entries, first22/default Nelson and
+all14 TTR checks. Focused261 PASS includes prior260 plus proposed-catalog coverage.
+No shared source, Simulator, native/database changes, commit/merge/push. Index empty.
+Next: G2 controlled integration, then actual shared Lab Simulator validation.
+Report: `architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md`.
+
+---
+
+# Flexible CP01B — native gate / registration approval pending
+
+2026-10-13. Required main54ecb4b and the approved 17-file candidate hashes verified.
+Prepared an external two-line G2 catalog patch appending F01–F14 after existing22;
+not applied. Sent to G2 owner per explicit prior-approval requirement. No shared
+file, feature code, Simulator or database change; index empty, no commit/merge/push.
+Report: `architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md`.
+Next: G2 registration approval, safe required-main base reconciliation, then actual
+shared Lab Simulator validation. No native PASS is claimed.
+
+---
+
+# Flexible CP01B — adapter preparation / Owner Review
+
+2026-10-13. Isolated `codex/flexible-day-feed-lab-cp01b` prepares against accepted
+G2-FLEX-02 source `12eadff`; initial main `a878be35` lacked it. Final main
+`54ecb4b` contains it with identical shared interface bytes.
+Approved CP01A `5853009` feature files supply a controlled G2 renderer, both-scoped
+Block adapter and immutable revisioned snapshot producer. COPY/remove/resize/delete,
+rejection, scope fences, Focus boundary and TTR stability tests pass (260 total).
+Shared catalog is not registered; Simulator/device acceptance is not performed
+in this adapter preparation turn. No shared G2/TTR/Core/migration changes or commit/merge/push.
+Report: `architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md`.
+Next: Owner Review, shared catalog registration and native acceptance; no production activation.
+
+---
+
 # CP-FLIGHT-PDF-UPLOAD-SOURCE-02 — allocation resolved / Owner Review
 
 2026-10-13: Owner reserves Flight `20261013000100`, TTR `20261013000200`.

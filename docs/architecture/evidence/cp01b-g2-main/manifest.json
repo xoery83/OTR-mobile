@@ -1,0 +1,413 @@
+{
+  "base": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016",
+  "acceptedHead": "22c036944c8b7dc1ea483cb8ae9ca8766706b430",
+  "acceptedTree": "0e7fbcdc83ab8eff9fd2a7e293cffe4e7399f8bf",
+  "acceptedCommits": [
+    "c2fc443071c0473d49b96adb2c64bd425714821e feat(flexible): import reviewed CP01B synthetic Lab contributions",
+    "8ef0a3fb50b033865c793d6ca79c042cd169d978 integration(g2): append CP01B fixtures to the owned shared registry",
+    "693b9b5bce69109e78f95bfdcc31d49fee3d432e test(g2): isolate feature renderer imports in shared Feed harness",
+    "d190d89a38c29037f08a8816c7cccb21ce98e156 fix(flexible): own Pool divider touches before parent scrolling",
+    "f5b4597c630ea97507c3a71b3d76b5c3c5a265b5 fix(flexible): key synthetic recovery controls in native Lab",
+    "055fa7666a2ea4c083a5727d15e41f2e952968c7 style(g2): format reviewed registry regression assertion",
+    "22c036944c8b7dc1ea483cb8ae9ca8766706b430 docs(g2): record coordinated CP01B validation and Owner Review gate"
+  ],
+  "acceptedFiles": [
+    {
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "sha256": "8ae03e298e404d0c38b57b1cf4b177575f83077d171027809aefbc3f8501f204",
+      "bytes": 55514
+    },
+    {
+      "path": "docs/architecture/CP01B_G2_COORDINATED_INTEGRATION_REPORT.md",
+      "sha256": "2809badd9b62bbb66eddadb9b6daf9479c6a784e60482775a29851ae381e0438",
+      "bytes": 11608
+    },
+    {
+      "path": "docs/architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md",
+      "sha256": "cb6125c0397ee513211c4f5ddc0d0efe1d24a061463c1dbff8efd0d633e3e49c",
+      "bytes": 22498
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f01-empty-immersive-dark.png",
+      "sha256": "6796c845beb5f2e4d12a72fcc7fb461fabdeea71ce895168967bba78f36a81ef",
+      "bytes": 221882
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f02-group-choice-focus-dark.png",
+      "sha256": "543ccce95aeea3da9c7fef2cd93dc819fb00c44b02c1ff8e65021e5da2f52935",
+      "bytes": 285893
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f03-two-column-focus-dark.png",
+      "sha256": "6d6ea34d0e83db147c16cec8013e092964cfcc3b694efa8588c3c7e5a54ba691",
+      "bytes": 268848
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f04-nested-item-focus-restored-dark.png",
+      "sha256": "88a3bcbc040943f2b861b2688b585eadda0d931a50d01cce2ff495a229bb9e96",
+      "bytes": 276330
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f05-carousel-scroll-dark.png",
+      "sha256": "60514df8595db1741f5437e3036302eef079d03c7bc3b55e21bdc9aee3d7f95f",
+      "bytes": 277432
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f06-pool-gesture-expanded-dark.png",
+      "sha256": "970676a4ebd7b9315b5f341af829ae0951adb28301a7a2f24bff920d5741855f",
+      "bytes": 290833
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f07-search-result-dark.png",
+      "sha256": "a2410dbaa4dfca5a9ca88f0790937dc636d336dd2463924a8cee30a46023bf2b",
+      "bytes": 218284
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f08-copy-my3-dark.png",
+      "sha256": "0a05cd6c3c58979cb9863cff15c2349ddaa6cd8997f603fdafa3afb5e24f6a6c",
+      "bytes": 454302
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f08-remove-undo-focus-cleared-dark.png",
+      "sha256": "a97ec8a628561b48b7ceecb1c2afd29a1baf8e2b8c5a429aff2658c7f66b3c03",
+      "bytes": 243350
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f09-empty-gap-excluded-dark.png",
+      "sha256": "70f0dec7fcbd15d2b832a046f84d79fad95c8697507ffce0182f9172001f81cc",
+      "bytes": 192806
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f10-now-straight-line-focus-dark.png",
+      "sha256": "a21c9d46ef25007c3eb029627351068c753dfd63059d7d23d07b409771b02cdb",
+      "bytes": 289628
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f11-past-no-evidence-dark.png",
+      "sha256": "2fd4db3b5fdafc74fa7ab8eff50a8774d5cd599dd945d9b1d98383c0f5bdec41",
+      "bytes": 207020
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f12-accessibility-type-light.png",
+      "sha256": "4f8ade0234c129a3dc294d48fdfac495970044ec463c21081b8f425a3b351885",
+      "bytes": 264864
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-immersive-final.png",
+      "sha256": "cc919d257c028910b65b5d2ed777f203daf1366918f1871ed321d3b4c902bef7",
+      "bytes": 344647
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-tns-outer-light.png",
+      "sha256": "f9848773b1c148465c5e7a6e8a4e4f97f38d41eb68c2d55eaa5815f39f8242a8",
+      "bytes": 229199
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-before-final.png",
+      "sha256": "f6d27d69e005fbca1a270d8ab50f21a6bca41574e31da57c2a60ea4b868995e1",
+      "bytes": 434219
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-restored-final.png",
+      "sha256": "f02bb2663d9342ed9d6c5a7017c8d43526d4acd0176aebeceffc09bea5936403",
+      "bytes": 432445
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-final.png",
+      "sha256": "fa3a81f3e4861f40b7b0b0f0d8e06ed9cadd48b425ead74809200eb474ac9004",
+      "bytes": 430013
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-immersive-light.png",
+      "sha256": "1a1006b58a18499e3245f930df9b328b29ffd190553e426beba0a7cb5894dd73",
+      "bytes": 364110
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/integrated-manifest.json",
+      "sha256": "b789052406cdebb79a1ea3ea03c70e4cea085eea978abbd503b06db027552fd4",
+      "bytes": 11358
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/nelson-default-final.png",
+      "sha256": "613dfc97ef44ad7a2d97fe111c40dc5d9ccf2e036d673dc38e72b31b4c2d5cf4",
+      "bytes": 430372
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-manifest.json",
+      "sha256": "79a1cc8c019660b832148199ce225906c86abafbe548040eb9e7df9b459a625b",
+      "bytes": 3709
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-proposal-manifest.json",
+      "sha256": "11c557dbe88d8ed8176da543f53b949582fe6c68a4bd818b8b4fa4995aa9b5b6",
+      "bytes": 1429
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-registration-proposal.patch",
+      "sha256": "3db7dfb5145293d14df7b897eb42717cc651abf695c708fd4aa2274bdbd02322",
+      "bytes": 799
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-registration-test-proposal.patch",
+      "sha256": "b4259b22920debfbf28fd31e6431d8fb035b046cd2db257e0f601405da61ef4d",
+      "bytes": 2752
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/ttr-now-existing-sheet-final.png",
+      "sha256": "2e356ff6458425f52b06e63c73cad5545da2a50a74333fa40a42cb0df2c05de7",
+      "bytes": 427635
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-coordinated/validation.json",
+      "sha256": "c2f571a0725fcf772e79fe09de5169468ca5009bbd280a1d4c24379ee8318381",
+      "bytes": 4841
+    },
+    {
+      "path": "fixtures/flexible-native/src/ui/catalogs.ts",
+      "sha256": "38d3bd424ab204eed6d1eb1a84e6c6a011d5d8f8cdabfe61c928732eabc612e7",
+      "bytes": 6521
+    },
+    {
+      "path": "src/features/day-feed-lab/fixtureRegistration.test.ts",
+      "sha256": "dbd1528fcfe7ea51c1108ec2ca709df6d107615eee9979131eaacb7e3db45b07",
+      "bytes": 2534
+    },
+    {
+      "path": "src/features/day-feed-lab/fixtureRegistration.ts",
+      "sha256": "e54b5e53aaf8d0b9dcb1cb5d6bd2c542c22e38431971e04bd80f7fdd1d166d3e",
+      "bytes": 1212
+    },
+    {
+      "path": "src/features/day-feed/render.test.ts",
+      "sha256": "e44774d32507c6bacbea443f4771b2f0ee9979ffe43e73d01e8efc4d04fcd545",
+      "bytes": 49183
+    },
+    {
+      "path": "src/features/flexible-native-gallery/Gallery.tsx",
+      "sha256": "fe1fc1e6bd70db0a65a7b15415682d3d2a6ef5148ffefd20458e0e7cbbd6d9ec",
+      "bytes": 31013
+    },
+    {
+      "path": "src/features/flexible-native-gallery/Manipulation.tsx",
+      "sha256": "4d63c89e8b9cbfb7bdc962a0db904978b9861f30f3b37ba0e5ee16ea6dbdd8ea",
+      "bytes": 3468
+    },
+    {
+      "path": "src/features/flexible-native-gallery/copy.ts",
+      "sha256": "b4926c24cf50df63c69d1b0515c294ebdd986686a27f650d0950f20eb18a6808",
+      "bytes": 467
+    },
+    {
+      "path": "src/features/flexible-native-gallery/data.json",
+      "sha256": "dc33e00c7bace4bd19d2ed6625718b2332e6a9848a9f45cd805de6615a004d09",
+      "bytes": 2356
+    },
+    {
+      "path": "src/features/flexible-native-gallery/fixtures.ts",
+      "sha256": "ad00af4807b343982a559ef1d503bc4246f0383da29dcce85ac82fdb61a2713a",
+      "bytes": 3624
+    },
+    {
+      "path": "src/features/flexible-native-gallery/images/cafe-reference.png",
+      "sha256": "84476b2465beb549860f380b0424e58029647b67cca435cf51139730df83b488",
+      "bytes": 3417
+    },
+    {
+      "path": "src/features/flexible-native-gallery/images/garden-reference.png",
+      "sha256": "c7788759e4d5ee7b0d65a878da67624ca769112888d44311db9216a224639fe3",
+      "bytes": 5931
+    },
+    {
+      "path": "src/features/flexible-native-gallery/index.ts",
+      "sha256": "b015cba06fb1a291184098874cd87efa5d926b2fb92f0289355739b6ed49c444",
+      "bytes": 429
+    },
+    {
+      "path": "src/features/flexible-native-gallery/labAdapter.tsx",
+      "sha256": "e26d83135653d9f65c17248563dd1725fe07af9dbba190a61f7e734af319e4ad",
+      "bytes": 5280
+    },
+    {
+      "path": "src/features/flexible-native-gallery/model.test.ts",
+      "sha256": "0de10edbfc018c7f4fcff6939a8310a9b129e0a5305ae868970849c84907eb4e",
+      "bytes": 6515
+    },
+    {
+      "path": "src/features/flexible-native-gallery/model.ts",
+      "sha256": "ab123ed61b4eaaa3f66758922e29cb0461646765c071250f02441d02dbb5de15",
+      "bytes": 7006
+    },
+    {
+      "path": "src/features/flexible-native-gallery/renderer.test.ts",
+      "sha256": "f1aef316b3b09f16bbfda0a12da262807adbca308d9c65cf78ad602119fa4ba7",
+      "bytes": 29323
+    },
+    {
+      "path": "src/features/flexible-native-gallery/snapshot.test.ts",
+      "sha256": "c8166e730fe5136513c9df8d33a4b61fe34f66cab3e2d2f7a33a75ffb0c18aae",
+      "bytes": 9152
+    },
+    {
+      "path": "src/features/flexible-native-gallery/snapshot.ts",
+      "sha256": "1ed8ef3650c6ef5e93f82b9d124b8a82e5f142467d2a099545f0ed5ddb2acec8",
+      "bytes": 5510
+    }
+  ],
+  "deliveryFiles": [
+    {
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "sha256": "ba17f9f5dc018c73b7501f7d10a7d4bac0c3105b00bdd6553b6d66746bcb67e2",
+      "bytes": 57188
+    },
+    {
+      "path": "docs/architecture/CP01B_G2_MAIN_INTEGRATION_REPORT.md",
+      "sha256": "bb25d31a1634838fa4477c03ad913535f805b6278dc027cdaf9d02ea327714f6",
+      "bytes": 9871
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f01-empty-immersive-light.png",
+      "sha256": "baf39c5e62d8630da2950382035f9389aa580a3f15f6e3faea472ac0f37628fd",
+      "bytes": 402690
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f02-group-focus-light.png",
+      "sha256": "6d6ce7a995c98c14c85e04ff7bc54c50857e025307259b83e893bc4ea22df638",
+      "bytes": 438327
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f03-group-choice-focus-light.png",
+      "sha256": "8e6121fba89f4bde57c157bf5732ac352ddac4932010922b17101e7ce852f1b9",
+      "bytes": 441203
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f04-nested-item-focus-return-light.png",
+      "sha256": "c9fe78383d83eff99bf93b2d61e1ebea67f81f3a9cb18bb23cf84561fa8ee14e",
+      "bytes": 435157
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f05-published-carousel-light.png",
+      "sha256": "1fc54dee7354c1869860dc1b39eb22d56ec5a43b332b1b1416a7bbdbd67fa46c",
+      "bytes": 428186
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f06-divider-down-collapsed-light.png",
+      "sha256": "296b55632e3f28ab1ca62c253bc97836f760b1d15e8326039221d830b3309c61",
+      "bytes": 428099
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f06-divider-up-expanded-light.png",
+      "sha256": "e44b682a35fbea9a0e4dcbbafccb7a565ce308c2358afd4dca5507e65dfd8451",
+      "bytes": 429489
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f07-saved-preview-light.png",
+      "sha256": "2f709e5563ee993a378a8fa5c4e5016e53f4f53c9f4e9acdc2836120ee276e6d",
+      "bytes": 422441
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f08-copy-my3-light.png",
+      "sha256": "dcc50c5a56ffbae0dd27b66a968343c55aa54f24e3d83606ad8666aaceeb71ba",
+      "bytes": 432392
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f09-empty-excluded-light.png",
+      "sha256": "583d40e7f2ac82bbc8b698dca6ce7e4e27499c0a052c35b88ea379cd357fdb30",
+      "bytes": 407595
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f10-now-choice-focus-light.png",
+      "sha256": "f1859e56b708ac551b247531fa34974bab17cdf8ef6e501000612a171df1a9b1",
+      "bytes": 444392
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f11-past-no-evidence-light.png",
+      "sha256": "4df2204c5421f7624c5dc9ddc7ab6d3ca7e898248da0bbf05eb80df250c53363",
+      "bytes": 396620
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f12-accessible-immersive-light.png",
+      "sha256": "38bc20447f8f8f06c5926b0f7aae38c5a171692873897034399dd442133a5095",
+      "bytes": 428112
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f13-adjacent-immersive-dark.png",
+      "sha256": "ac5d69564bad773ecca1d6ec0eae7a4ac521ec0dec4df2c35b20350f76bf693c",
+      "bytes": 336731
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f13-nonzero-before-dark.png",
+      "sha256": "c5733d871386bed62f6fed09d4b557a4b2234ea1c491b55a8c1fa845c11e2188",
+      "bytes": 427036
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f13-nonzero-restored-dark.png",
+      "sha256": "510453734ee90a254519ed9fc33a8e262b1f39c25b15c8bb0885300920625ca5",
+      "bytes": 425306
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/f14-no-key-warning-dark.png",
+      "sha256": "70a8864de2766e6c791ddd602af36df7ba47d5a473e095dfc7f3df30936e2ca9",
+      "bytes": 421670
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/focused.log",
+      "sha256": "96e20c9046ff57a46c400bafddc5dfbd8bce1ee2c437d1ae274ed8e92bff5e77",
+      "bytes": 242
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/lint.log",
+      "sha256": "da2986113d556e042fbe0aca90df1c2fd067e1934b606296be627285030413c5",
+      "bytes": 231
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/native-catalog.ax.txt",
+      "sha256": "73f4a49209c71d724cfac8c28b642f433b41d975fb7572b4c0a48993a0253bd1",
+      "bytes": 8168
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/original-p1-p2-faroe-dark.png",
+      "sha256": "146e8d9aaf4a0fdae42a00806de0cbbd5211fd8ef4f5cab39cb39a2fe2001424",
+      "bytes": 426422
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/original-p2-focus-dark.png",
+      "sha256": "a6432c72e8f09d709d687c637caa47aa9c80b4be85f9f8c0e7bf51687252f584",
+      "bytes": 433710
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/original-p3-focus-dark.png",
+      "sha256": "0194d1185b5d84e3a1c66bd804750b12e1cf23f429818caf6bf71c5414f7f75e",
+      "bytes": 415260
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/original-ttr-intent-sheet-dark.png",
+      "sha256": "03e66bc73c34a25c72ea4a2c99f370193e590ff22f84dcc6d6fc210fddc11724",
+      "bytes": 415638
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/original-ttr-now-dark.png",
+      "sha256": "25ec91d13eb7b984661df0cb8c6e5dfb91dfe4ec18b0a1ca8244461ef3e84f48",
+      "bytes": 414472
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/preflight.json",
+      "sha256": "a320a707a2004dd441a644b57928707da0decd4ff94abda227e538ce3a64bc3a",
+      "bytes": 40331
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/typecheck.log",
+      "sha256": "83536ce573035559e7b92f6bd0afc1e2bd2871c514609d42f7d7ce4b9920c42e",
+      "bytes": 46
+    },
+    {
+      "path": "docs/architecture/evidence/cp01b-g2-main/validation.json",
+      "sha256": "b9569fbe22f9d19cdfbdbbc9f6743ced5cc97b98ef9af140b991efe6bc37ac25",
+      "bytes": 4767
+    }
+  ],
+  "protectedAuthorityDiff": "NONE",
+  "runtimeDiffFromAccepted": "NONE",
+  "integrationMethod": "guarded non-forced fast-forward; additive G2 documentation/evidence commit only",
+  "mainAdvanceStatus": "BLOCKED: automatic approval review requires trusted explicit final Owner approval after validation",
+  "canonicalMain": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016"
+}

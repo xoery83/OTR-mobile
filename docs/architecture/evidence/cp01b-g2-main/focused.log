@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /private/tmp/otr-cp01b-g2-main-integration-20261013
+
+
+ Test Files  17 passed (17)
+      Tests  261 passed (261)
+   Start at  10:57:12
+   Duration  4.70s (transform 574ms, setup 0ms, import 1.45s, tests 2.18s, environment 1ms)
+

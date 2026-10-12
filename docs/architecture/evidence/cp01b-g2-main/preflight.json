@@ -1,0 +1,586 @@
+{
+  "main": {
+    "head": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016",
+    "status": " M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md\u0000?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md\u0000?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md\u0000?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md\u0000?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc\u0000",
+    "dirtyHashes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "index": "7b77aa7e8779a241c48292215f4084077506d77a"
+  },
+  "originMain": "b4ddd27d2352350b6d16617543d0f17a715dc077",
+  "accepted": "22c036944c8b7dc1ea483cb8ae9ca8766706b430",
+  "changed": [
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/architecture/CP01B_G2_COORDINATED_INTEGRATION_REPORT.md",
+    "docs/architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f01-empty-immersive-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f02-group-choice-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f03-two-column-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f04-nested-item-focus-restored-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f05-carousel-scroll-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f06-pool-gesture-expanded-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f07-search-result-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f08-copy-my3-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f08-remove-undo-focus-cleared-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f09-empty-gap-excluded-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f10-now-straight-line-focus-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f11-past-no-evidence-dark.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f12-accessibility-type-light.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-immersive-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-adjacent-tns-outer-light.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-before-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f13-scroll-restored-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/f14-read-only-immersive-light.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/integrated-manifest.json",
+    "docs/architecture/evidence/cp01b-g2-coordinated/nelson-default-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-manifest.json",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-proposal-manifest.json",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-registration-proposal.patch",
+    "docs/architecture/evidence/cp01b-g2-coordinated/reviewed-registration-test-proposal.patch",
+    "docs/architecture/evidence/cp01b-g2-coordinated/ttr-now-existing-sheet-final.png",
+    "docs/architecture/evidence/cp01b-g2-coordinated/validation.json",
+    "fixtures/flexible-native/src/ui/catalogs.ts",
+    "src/features/day-feed-lab/fixtureRegistration.test.ts",
+    "src/features/day-feed-lab/fixtureRegistration.ts",
+    "src/features/day-feed/render.test.ts",
+    "src/features/flexible-native-gallery/Gallery.tsx",
+    "src/features/flexible-native-gallery/Manipulation.tsx",
+    "src/features/flexible-native-gallery/copy.ts",
+    "src/features/flexible-native-gallery/data.json",
+    "src/features/flexible-native-gallery/fixtures.ts",
+    "src/features/flexible-native-gallery/images/cafe-reference.png",
+    "src/features/flexible-native-gallery/images/garden-reference.png",
+    "src/features/flexible-native-gallery/index.ts",
+    "src/features/flexible-native-gallery/labAdapter.tsx",
+    "src/features/flexible-native-gallery/model.test.ts",
+    "src/features/flexible-native-gallery/model.ts",
+    "src/features/flexible-native-gallery/renderer.test.ts",
+    "src/features/flexible-native-gallery/snapshot.test.ts",
+    "src/features/flexible-native-gallery/snapshot.ts"
+  ],
+  "worktrees": {
+    "/private/tmp/otr-capture-flight-20261011": {
+      "head": "8e45c8d0d50e0004a10cc1e0bb07522ec6cde296",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "8b2181eb84ccfbe25c3d2b789f67ebbb8c11d372",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-capture-flight-stage1-20261012": {
+      "head": "1fd4b7d0f3f73b1f0abdaff58a4a3882bd6008af",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "25d4c9246d478793566cd9e2769da68eeb88eee7",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-core-flight-multi-output-20261012": {
+      "head": "a331e53e61e05b3ff52d862fbd81fea2b34eec32",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "0a4f238f1a1aa84b91ce6cfcc343e98d7a077499",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-cp-flight-e2e-a-20261012": {
+      "head": "473893f7654a7fc194a7e7c35e922e350d426f24",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "41f1c4fa2f3f1c01290710e2f0b1b0bea34d047c",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-cp-ttr04a3-core-order-02-20261013": {
+      "head": "a027f2ad0703d853afc6fa490a8b5734bbd2e454",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "5339789db54f345e13f7667a9a2e67196398e211",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-cp01b-g2-coordinated-20261013": {
+      "head": "22c036944c8b7dc1ea483cb8ae9ca8766706b430",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "0e7fbcdc83ab8eff9fd2a7e293cffe4e7399f8bf",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-day-feed-g2-main-integration-20261012": {
+      "head": "6dc3e04b58c1332f680954dbf0ecf0e29ec03ebf",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "ffb160503707e1f6a054aeff8350e82f4fc2d3d6",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-day-feed-g2-recovery-20261012": {
+      "head": "3ee685f53c55f3d906201420c9e46e50a1d04687",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "a98ca6987f0590f119673c4ef47500e694c295ce",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flexible-day-feed-lab-cp01b-20261012": {
+      "head": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016",
+      "status": " M docs/CURRENT_IMPLEMENTATION_STATE.md\u0000?? docs/architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md\u0000?? fixtures/flexible-native/src/ui/catalogs.ts\u0000?? src/features/flexible-native-gallery/Gallery.tsx\u0000?? src/features/flexible-native-gallery/Manipulation.tsx\u0000?? src/features/flexible-native-gallery/copy.ts\u0000?? src/features/flexible-native-gallery/data.json\u0000?? src/features/flexible-native-gallery/fixtures.ts\u0000?? src/features/flexible-native-gallery/images/cafe-reference.png\u0000?? src/features/flexible-native-gallery/images/garden-reference.png\u0000?? src/features/flexible-native-gallery/index.ts\u0000?? src/features/flexible-native-gallery/labAdapter.tsx\u0000?? src/features/flexible-native-gallery/model.test.ts\u0000?? src/features/flexible-native-gallery/model.ts\u0000?? src/features/flexible-native-gallery/renderer.test.ts\u0000?? src/features/flexible-native-gallery/snapshot.test.ts\u0000?? src/features/flexible-native-gallery/snapshot.ts\u0000",
+      "dirtyHashes": {
+        "docs/CURRENT_IMPLEMENTATION_STATE.md": "bebbc16227ab87e7f28640f0c9edb950bfbe8f6a93e1979a9573e769f93e4fcb",
+        "docs/architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md": "cb6125c0397ee513211c4f5ddc0d0efe1d24a061463c1dbff8efd0d633e3e49c",
+        "fixtures/flexible-native/src/ui/catalogs.ts": "38d3bd424ab204eed6d1eb1a84e6c6a011d5d8f8cdabfe61c928732eabc612e7",
+        "src/features/flexible-native-gallery/Gallery.tsx": "7a0cf52e931f663e967e96c5192433b2ce69e5f646dbde40af0d059442951320",
+        "src/features/flexible-native-gallery/Manipulation.tsx": "4d63c89e8b9cbfb7bdc962a0db904978b9861f30f3b37ba0e5ee16ea6dbdd8ea",
+        "src/features/flexible-native-gallery/copy.ts": "b4926c24cf50df63c69d1b0515c294ebdd986686a27f650d0950f20eb18a6808",
+        "src/features/flexible-native-gallery/data.json": "dc33e00c7bace4bd19d2ed6625718b2332e6a9848a9f45cd805de6615a004d09",
+        "src/features/flexible-native-gallery/fixtures.ts": "ad00af4807b343982a559ef1d503bc4246f0383da29dcce85ac82fdb61a2713a",
+        "src/features/flexible-native-gallery/images/cafe-reference.png": "84476b2465beb549860f380b0424e58029647b67cca435cf51139730df83b488",
+        "src/features/flexible-native-gallery/images/garden-reference.png": "c7788759e4d5ee7b0d65a878da67624ca769112888d44311db9216a224639fe3",
+        "src/features/flexible-native-gallery/index.ts": "b015cba06fb1a291184098874cd87efa5d926b2fb92f0289355739b6ed49c444",
+        "src/features/flexible-native-gallery/labAdapter.tsx": "e26d83135653d9f65c17248563dd1725fe07af9dbba190a61f7e734af319e4ad",
+        "src/features/flexible-native-gallery/model.test.ts": "0de10edbfc018c7f4fcff6939a8310a9b129e0a5305ae868970849c84907eb4e",
+        "src/features/flexible-native-gallery/model.ts": "ab123ed61b4eaaa3f66758922e29cb0461646765c071250f02441d02dbb5de15",
+        "src/features/flexible-native-gallery/renderer.test.ts": "3c40040ac4600164f1eeca1c7e65c68a5e4b42e9fab50e2ec0737c5d22c00bb8",
+        "src/features/flexible-native-gallery/snapshot.test.ts": "c8166e730fe5136513c9df8d33a4b61fe34f66cab3e2d2f7a33a75ffb0c18aae",
+        "src/features/flexible-native-gallery/snapshot.ts": "1ed8ef3650c6ef5e93f82b9d124b8a82e5f142467d2a099545f0ed5ddb2acec8"
+      },
+      "index": "7b77aa7e8779a241c48292215f4084077506d77a",
+      "overlapDirty": [
+        "docs/CURRENT_IMPLEMENTATION_STATE.md",
+        "docs/architecture/FLEXIBLE_CP01B_SHARED_LAB_INTEGRATION_REPORT.md",
+        "fixtures/flexible-native/src/ui/catalogs.ts",
+        "src/features/flexible-native-gallery/Gallery.tsx",
+        "src/features/flexible-native-gallery/Manipulation.tsx",
+        "src/features/flexible-native-gallery/copy.ts",
+        "src/features/flexible-native-gallery/data.json",
+        "src/features/flexible-native-gallery/fixtures.ts",
+        "src/features/flexible-native-gallery/images/cafe-reference.png",
+        "src/features/flexible-native-gallery/images/garden-reference.png",
+        "src/features/flexible-native-gallery/index.ts",
+        "src/features/flexible-native-gallery/labAdapter.tsx",
+        "src/features/flexible-native-gallery/model.test.ts",
+        "src/features/flexible-native-gallery/model.ts",
+        "src/features/flexible-native-gallery/renderer.test.ts",
+        "src/features/flexible-native-gallery/snapshot.test.ts",
+        "src/features/flexible-native-gallery/snapshot.ts"
+      ]
+    },
+    "/private/tmp/otr-flexible-native-gallery-cp01-20261012": {
+      "head": "58530096c4a00a2d243178a40dce7c5978dbd4aa",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "de2764738a15fbdbba792e78b14670e5b7dff425",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-ab-preservation-rehearsal-20261012": {
+      "head": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "status": " M docs/CURRENT_IMPLEMENTATION_STATE.md\u0000 M docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md\u0000?? docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md\u0000?? docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md\u0000?? docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md\u0000?? scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc\u0000",
+      "dirtyHashes": {
+        "docs/CURRENT_IMPLEMENTATION_STATE.md": "07d837d154e97251e02d3a8d6e597bd0932a968770d420b2ab51b088956b31b5",
+        "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+        "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+        "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+        "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+        "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+      },
+      "index": "aff45db9f583ed054c564a2f6b6379f5606858e7",
+      "overlapDirty": ["docs/CURRENT_IMPLEMENTATION_STATE.md"]
+    },
+    "/private/tmp/otr-flight-e2e-ab-20261012": {
+      "head": "5544ba0b8d67f48f98ba3b456126adacb1eeca27",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "456001198e8445c407e0a06dd485b41b98fdc105",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-e2e-ab-canonical-prep-20261012": {
+      "head": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "aff45db9f583ed054c564a2f6b6379f5606858e7",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-e2e-b-20261012": {
+      "head": "fdd5a5c38660a7942b19fee0d65af7144d1aed19",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "401d4188b1c9dbb7cf3505c7abab807e5dd4a083",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-pdf-auth-01-20261012": {
+      "head": "ea9cbf4d601a6df72264cc96fb3728304b3e00a8",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "ff85d68d778adc8f6f73586cd7dd5083f1ed0bea",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-pdf-auth-02-20261012": {
+      "head": "51256f982bab85a9e11cec2e535f69e24137213d",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "c678e519fb00712f0eb33c8d5035391db0383f4d",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-pdf-native-join-01-20261012": {
+      "head": "9ca16d380b4ed7f8aedeff79d8fc7be903dda1b1",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "107620f825fe80d86c7577b11b8b1fc48ee34357",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-pdf-source-02-20261012": {
+      "head": "ad77231ecc7f8bbc3a5c25affda07697e181b10e",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "9b6d5cf18fe72ed9c1c2d684e23e291c51afac33",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-pdf-source-03-20261013": {
+      "head": "b4ddd27d2352350b6d16617543d0f17a715dc077",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "3f70217849bd4ff934f11da4b1aa7333de12908d",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-pdf-upload-source-01-20261013": {
+      "head": "1398b2bc1bf49755b31fc74c5f67dbb0534895cc",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "4b151dd4ac5e04117f26c0889893adb456292fe8",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-pdf-upload-source-02-20261013": {
+      "head": "065bdd96d334cfa4818178cb715dfd7ff14b5289",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "bb12a174c4b38e4312fd2c40c26897c5a9e71507",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-stage1-canonical-baseline-20261012": {
+      "head": "741579c8bac3f898669ca331875a28efc645cfa2",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "462dd47379a8195e4a425b837f51692f619d95aa",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-flight-stage1-canonical-integration-20261012": {
+      "head": "741579c8bac3f898669ca331875a28efc645cfa2",
+      "status": "M  docs/CURRENT_IMPLEMENTATION_STATE.md\u0000A  docs/architecture/OTR_CAPTURE_FLIGHT_FIRST_STAGE1_REPORT.md\u0000A  docs/architecture/OTR_CAPTURE_FLIGHT_STAGE1_CANONICAL_INDEPENDENT_REVIEW.md\u0000A  docs/architecture/OTR_CAPTURE_FLIGHT_STAGE1_CANONICAL_INTEGRATION_REPORT.md\u0000A  src/data/interpretation/__fixtures__/flightEnrichmentBenchmark.ts\u0000A  src/data/interpretation/__fixtures__/flightFirstStage1.ts\u0000A  src/data/interpretation/flightEnrichmentDecision.ts\u0000M  src/data/interpretation/flightEvidenceCoverage.ts\u0000A  src/data/interpretation/flightFirstStage1.test.ts\u0000M  src/data/interpretation/flightInterpretation.test.ts\u0000M  src/data/interpretation/flightInterpretation.ts\u0000A  src/data/interpretation/flightInterpretationBenchmark.test.ts\u0000A  src/data/interpretation/flightInterpretationBenchmark.ts\u0000A  src/data/interpretation/flightInterpretationQuality.test.ts\u0000A  src/data/interpretation/flightInterpretationQuality.ts\u0000A  src/data/interpretation/flightSourcePayload.ts\u0000M  src/domain/trip/referenceFlightExtractor.ts\u0000",
+      "dirtyHashes": {
+        "docs/CURRENT_IMPLEMENTATION_STATE.md": "ee42a86e46b141fa0da729021a3e6094c70b16eab5a42910f906757d1e974030",
+        "docs/architecture/OTR_CAPTURE_FLIGHT_FIRST_STAGE1_REPORT.md": "d6d4f24f3f8e175bd83876cb5ad23fad9131dc7f19fe7a5cf1316fb838ab6363",
+        "docs/architecture/OTR_CAPTURE_FLIGHT_STAGE1_CANONICAL_INDEPENDENT_REVIEW.md": "a7221ab2f7b29d290e927376eded5055c3dec9748d8cbb969e441a1de4e36483",
+        "docs/architecture/OTR_CAPTURE_FLIGHT_STAGE1_CANONICAL_INTEGRATION_REPORT.md": "67a0f8ec9d31295bb0bf04427e29276d3d9ed5d75462ef8a6ae3f0c24c2b97e0",
+        "src/data/interpretation/__fixtures__/flightEnrichmentBenchmark.ts": "999decce81e247186c9cb5321b266a6c4ec9f6961c48e275e08ae37947cf498c",
+        "src/data/interpretation/__fixtures__/flightFirstStage1.ts": "6ea373b1745586c0f4bcb3556f8621f00738d4228acc1f4832c4e86c0949d549",
+        "src/data/interpretation/flightEnrichmentDecision.ts": "93683ad9d8754a2a3cc02791d15fb5d03ac1c46d9fc66567e9f3582f58958835",
+        "src/data/interpretation/flightEvidenceCoverage.ts": "c0d12402601fb9814a5efb8d3ddd397696d42124366f53236c9fd09f1e70556f",
+        "src/data/interpretation/flightFirstStage1.test.ts": "a49fbad14fcf4fda8f1196e889d52b22e388e3abd8943d2a2fbb89b82a41812f",
+        "src/data/interpretation/flightInterpretation.test.ts": "35c6e6fae6bc68eba488bc4cd4c5a33ba6edbc920322737189f3eb223056b858",
+        "src/data/interpretation/flightInterpretation.ts": "09055ef05ab8a067cad8769276ecaba972d93f2e54d23e3f249c8e96aac20d8b",
+        "src/data/interpretation/flightInterpretationBenchmark.test.ts": "d3350c2e950fe97d0a99f588d84c6e1325aedbcefeb8b79ef2b188ca9f42ab14",
+        "src/data/interpretation/flightInterpretationBenchmark.ts": "6d277d8d95a19d601e5a8a1eb2aa4157466687be65761c389581fc96df75709b",
+        "src/data/interpretation/flightInterpretationQuality.test.ts": "34989d8a739b5b4f2258988e240080b7b85c2a48cf31163aaa0baaf089561ec1",
+        "src/data/interpretation/flightInterpretationQuality.ts": "ed1d2e8fb0ed2f4e4410504d76890c124c33a8f816976d1af670d5dd53fe88e7",
+        "src/data/interpretation/flightSourcePayload.ts": "bfe09c6e8c89d70adfd95a5deab6add4f3f426ec7436be2d9b26316b4b2cbb1c",
+        "src/domain/trip/referenceFlightExtractor.ts": "b8517b5a3dac6b71da4fc427722b194c0df3c1e551f4410c8b62866d1f36fb93"
+      },
+      "index": "99adfeb087b11cb14ed4d4c5a1398e4dc8a74705",
+      "overlapDirty": ["docs/CURRENT_IMPLEMENTATION_STATE.md"]
+    },
+    "/private/tmp/otr-g2-flex-01-20261012": {
+      "head": "67586831e09c3b4ffd26d1672e4e1fa14c9866cc",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "0275145a6bb09de6261616a3389019f4ad959135",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-g2-flex-01-main-integration-20261012": {
+      "head": "1114cccb536d6a6920c0ba6c6434b5dfe6ace5c9",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "3d4ce1c4d796c0c040b44fbc83c410194d930f33",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-g2-flex-02-20261013": {
+      "head": "12eadff4db4fe2f297f7d2a7a4d73a0790ab2745",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "126139ac405fcedff0673e31319aa4d90f357bb2",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-g2-flex-02-main-integration-20261013": {
+      "head": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "7b77aa7e8779a241c48292215f4084077506d77a",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-g2-ttr-01-20261013": {
+      "head": "aa8753e54330fd4f0b540a586d28f5d0d148179d",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "d01e9dd616716e102723a3f8ae56a19a0a0ca0fa",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-g2-ttr-01-baseline-20261013": {
+      "head": "1114cccb536d6a6920c0ba6c6434b5dfe6ace5c9",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "3d4ce1c4d796c0c040b44fbc83c410194d930f33",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-g2-ttr-01-main-integration-20261013": {
+      "head": "a878be35db92fb7e36edd5e89f26fe94f1bcb07a",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "0746b03db0de2fe0c19d87edbbd8d986f8339fe3",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-g2-ttr-main-baseline-20261013": {
+      "head": "b4ddd27d2352350b6d16617543d0f17a715dc077",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "3f70217849bd4ff934f11da4b1aa7333de12908d",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-r3a3-reader-preflight-20261010": {
+      "head": "d2c904efb22090d9a1c51fd1be63a3bb5780c8cc",
+      "status": " M docs/CURRENT_IMPLEMENTATION_STATE.md\u0000?? docs/architecture/OTR_PLATFORM_R3A3_READER_CREDENTIAL_DIRECT_TLS_PREFLIGHT.md\u0000",
+      "dirtyHashes": {
+        "docs/CURRENT_IMPLEMENTATION_STATE.md": "b0d5060401fe8b01782a9852cae70a0793134e60c05a37373b9d552ffdd3931e",
+        "docs/architecture/OTR_PLATFORM_R3A3_READER_CREDENTIAL_DIRECT_TLS_PREFLIGHT.md": "ccebe0d7203f6a5170387dfb42476ebbd5681b3caedc593fc32ddbf07408eb7d"
+      },
+      "index": "2584f8d1a8cab1b824383b63ef0d5d5fd8f61c0e",
+      "overlapDirty": ["docs/CURRENT_IMPLEMENTATION_STATE.md"]
+    },
+    "/private/tmp/otr-trip-core-v2-20261012": {
+      "head": "fb8dbc9923153cbf20aa13c150dcea40f3961967",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "53094dec27e7f68a4f9eca9217e61ef2befa6216",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-ttr04a1-local-foundation": {
+      "head": "a45a5c6b4f63015f220fff03ac1933ed8abdad09",
+      "status": "?? docs/architecture/OTR_TTR_CP04A2_INTEGRATION_PORT_VERIFICATION.md\u0000",
+      "dirtyHashes": {
+        "docs/architecture/OTR_TTR_CP04A2_INTEGRATION_PORT_VERIFICATION.md": "a80a06a3b3eaed075bc150c989022b520a3130eb7ef57ee7cded19dc37ea38d7"
+      },
+      "index": "c4c427510f013cd6875e673aeaddf9e581007850",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-ttr04b1-lab-fixtures": {
+      "head": "b909a86df227e1e9ade14529f7490c5b87401047",
+      "status": "?? docs/architecture/OTR_TTR_CP04B2_LOCAL_PERSISTENCE_PREFLIGHT.md\u0000",
+      "dirtyHashes": {
+        "docs/architecture/OTR_TTR_CP04B2_LOCAL_PERSISTENCE_PREFLIGHT.md": "c850e6595d502b360ae23b05b27a46c0bc368e7c7f8aa06bf293ad18166e0f37"
+      },
+      "index": "89262ddbd205603ba0b074700a6a9192678d2fe7",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-ttr04b2a-local-repository": {
+      "head": "7d15629e11a71227447373fb8844bd9e87c4d585",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "89a5ae82ffe1388b0bfa98b8a76f0395ee7534f0",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-ttr05a1-synthetic-controller": {
+      "head": "b18203bf0dcdb654a0200dd0c126b9c3c72b2716",
+      "status": "?? docs/architecture/OTR_TTR_CP05A2_NATIVE_LAB_PREFLIGHT.md\u0000",
+      "dirtyHashes": {
+        "docs/architecture/OTR_TTR_CP05A2_NATIVE_LAB_PREFLIGHT.md": "75ae09d93665a9dc37ef371d278ac4a1996c0c12eff7259773bd48eb4aef3378"
+      },
+      "index": "f0b72347f2f0e8091306288f6076e26c94202ca9",
+      "overlapDirty": []
+    },
+    "/private/tmp/otr-ttr05a2a-feature-preparation": {
+      "head": "54ecb4bad6b91827d3abb42f355fc1e0d1fc7016",
+      "status": " M docs/CURRENT_IMPLEMENTATION_STATE.md\u0000 M scripts/ttr/tsconfig.json\u0000?? docs/architecture/OTR_TTR_CP05A2A_FEATURE_PREPARATION_REPORT.md\u0000?? src/data/repositories/ttrInteractionController.test.ts\u0000?? src/data/repositories/ttrLabSelectionRepository.test.ts\u0000?? src/data/repositories/ttrLabSelectionRepository.ts\u0000?? src/data/repositories/ttrSelectionRepository.test.ts\u0000?? src/data/repositories/ttrSelectionRepository.ts\u0000?? src/features/ttr/TtrLabSheetContent.test.ts\u0000?? src/features/ttr/TtrLabSheetContent.tsx\u0000?? src/features/ttr/interactionController.ts\u0000?? src/features/ttr/useTtrLabInteraction.test.ts\u0000?? src/features/ttr/useTtrLabInteraction.ts\u0000",
+      "dirtyHashes": {
+        "docs/CURRENT_IMPLEMENTATION_STATE.md": "e27f0efc39289dfa3b215b1ec6551ae0adc31feb229b16dd388341c33d2be5ce",
+        "scripts/ttr/tsconfig.json": "0e0988502ad82131a5caa7f9591eea4737b66549f530842fb2edce849e3e7454",
+        "docs/architecture/OTR_TTR_CP05A2A_FEATURE_PREPARATION_REPORT.md": "9415a41bff02549b8f265484256baeaca98af59d2854d5d98cde9d9ac9f3dfd1",
+        "src/data/repositories/ttrInteractionController.test.ts": "0ad7949c6c666ffae9b48cb4dce6429af322f58652757f7a2116ccd39f9d8006",
+        "src/data/repositories/ttrLabSelectionRepository.test.ts": "e381b262fe3095d5e635c5bf171c90d2f1210001b35b84f11a61eadfc0a8dfef",
+        "src/data/repositories/ttrLabSelectionRepository.ts": "bc40bdd7728fddb7da0caa2dfffd2bb09ddaf8a8c292b67a4c0062af3ba1e6ac",
+        "src/data/repositories/ttrSelectionRepository.test.ts": "c1644143d1862293387146c982e991f8a7efaec3c8142e06971f65eaf8f209a8",
+        "src/data/repositories/ttrSelectionRepository.ts": "e22a38574fd082fd8596194eaf9d784493e53c7bbbbdcecd1d0eba0613a6db25",
+        "src/features/ttr/TtrLabSheetContent.test.ts": "d60d8b62e345e473dc4456beed72312e1b441fce5991a7dd6b85ea797c42753c",
+        "src/features/ttr/TtrLabSheetContent.tsx": "2f19b3d642fe7aa144b556220422dc3c0130e36616d87afa7136c386aa817d0c",
+        "src/features/ttr/interactionController.ts": "53ddd121ac167a444b1b3263aaff4f4af8f73759fc7438b929e3015e823631d5",
+        "src/features/ttr/useTtrLabInteraction.test.ts": "4a6969897084208940b2f965f211dfdc93952a736c7d7fabe80dc376a2b24b70",
+        "src/features/ttr/useTtrLabInteraction.ts": "6ef0328297db276572dd9c4102b777b764157a3a63532b3be7c82421745f8705"
+      },
+      "index": "7b77aa7e8779a241c48292215f4084077506d77a",
+      "overlapDirty": ["docs/CURRENT_IMPLEMENTATION_STATE.md"]
+    },
+    "/Users/xoery/.codex/worktrees/flight-dev-backend/otr-mobile-canonical": {
+      "head": "0fd9120709effcfcc8d3b2b0c3d539fb3a452d13",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "48547e3b7b09db12683b9c4aa7c785c9eee502bd",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/flight-dev-integration-readiness/otr-mobile-canonical": {
+      "head": "12693e3c1513d678bd3fe0190bb830d79f262b49",
+      "status": " M docs/CURRENT_IMPLEMENTATION_STATE.md\u0000?? docs/trip/implementation/CP_FLIGHT_DEV_03_HOSTED_READINESS_EVIDENCE.json\u0000?? docs/trip/implementation/CP_FLIGHT_DEV_03_HOSTED_READINESS_REPORT.md\u0000",
+      "dirtyHashes": {
+        "docs/CURRENT_IMPLEMENTATION_STATE.md": "b87d0c5680eead0146b6754a9a060f4e4d1527e2f2350a8f4b21e4a151a8d583",
+        "docs/trip/implementation/CP_FLIGHT_DEV_03_HOSTED_READINESS_EVIDENCE.json": "1a562a6a8d5e54c829e0fac231be29893726c677d5de041ed32a18e622b946a2",
+        "docs/trip/implementation/CP_FLIGHT_DEV_03_HOSTED_READINESS_REPORT.md": "e4224d55546b64cbf9201b6b851386021153e40c49e9e407f8bbbf707bfbaf9b"
+      },
+      "index": "8aba1eb6d8b88ccea3a97f00fe7ccaaa33b868cc",
+      "overlapDirty": ["docs/CURRENT_IMPLEMENTATION_STATE.md"]
+    },
+    "/Users/xoery/.codex/worktrees/flight-dev03-d0-d1/otr-mobile-canonical": {
+      "head": "82ed7bd45e56a48620db37cd8f21242f89f785d0",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "fb865a29662c6139e6e51de13a78f34440e5c864",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/flight-native-capture/otr-mobile-canonical": {
+      "head": "b10e0768fb61f6acb6b2b8f8847d3b0941b3af23",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "e1da087106e21c45bf81ceda1817eef8fb3afdc9",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/flight-native-installed-simulator/otr-mobile-canonical": {
+      "head": "94d30a3bf48e1923eb94c61f881d7dfbb49b75fd",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "3f0431a30cc3832714a225fa9b0a98e004287872",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/flight-native-integration-prep/otr-mobile-canonical": {
+      "head": "14a9041828f87881c9d76c24769317592cf6be66",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "5c9f16cd6649369b1b0f1d37edc2acf9b540f86d",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/flight-pdf-backend-01/otr-mobile-canonical": {
+      "head": "6606213f4bc97b09240cc082a20ee00f21a99578",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "0b1c4fd261160f1b87bb536ae2d3fcac34992f41",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/flight-pdf-backend-02/otr-mobile-canonical": {
+      "head": "de727f7fae29720f3cc0d1985ec6adc358195428",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "beedb9d035f62fb05ce7aa6e68600c2872ea3ae4",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/flight-pdf-native-01/otr-mobile-canonical": {
+      "head": "ce8200a8218fb6251b2b7d9a4f85297b45868c93",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "1a17f6c450f9d18f94e9a5f8308faee1b43f2185",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/flight-pdf-provider-01/otr-mobile-canonical": {
+      "head": "8d6eedda4e69db1176dc13570a10ddc940ce9c00",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "780c4c554a0cb53611749a36671d73353b43b691",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/p2c-canonical-integration-preflight/otr-mobile-canonical": {
+      "head": "2a42ec6009bc784a5e4e80a9199719c43fb44640",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "20bdb98ecf0a32f865c829ae83b285bf267390c8",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/p2c-composer-preflight/otr-mobile-canonical": {
+      "head": "094cf3beb6b05f2a7f1c8cca1fa007ed630651c4",
+      "status": " M docs/CURRENT_IMPLEMENTATION_STATE.md\u0000?? docs/architecture/OTR_PLATFORM_P2C_INTEGRATED_C4_COMPOSER_PREFLIGHT.md\u0000",
+      "dirtyHashes": {
+        "docs/CURRENT_IMPLEMENTATION_STATE.md": "8adfae1fa41f21d2cfc45f0a23f20020e4477c90deaf6fc5dc70294def5062bc",
+        "docs/architecture/OTR_PLATFORM_P2C_INTEGRATED_C4_COMPOSER_PREFLIGHT.md": "0885305493d75169658f2b0f991d098732042ac45ffe25c44c81520400ca77e0"
+      },
+      "index": "d79d87f4462d87b68cd3856c1f2fda3d1b777ecd",
+      "overlapDirty": ["docs/CURRENT_IMPLEMENTATION_STATE.md"]
+    },
+    "/Users/xoery/.codex/worktrees/platform-r3a-canonical-integration-preflight/otr-mobile-canonical": {
+      "head": "d2c904efb22090d9a1c51fd1be63a3bb5780c8cc",
+      "status": "?? docs/architecture/OTR_PLATFORM_R3A_SQL_PRINCIPAL_CANONICAL_INTEGRATION_PREFLIGHT.md\u0000",
+      "dirtyHashes": {
+        "docs/architecture/OTR_PLATFORM_R3A_SQL_PRINCIPAL_CANONICAL_INTEGRATION_PREFLIGHT.md": "1cb5cab51e605652aaef1c5b150adb6d71990e95689ca097bb71266084fcc2b1"
+      },
+      "index": "2584f8d1a8cab1b824383b63ef0d5d5fd8f61c0e",
+      "overlapDirty": []
+    },
+    "/Users/xoery/.codex/worktrees/platform-r3a-principal-preflight/otr-mobile-canonical": {
+      "head": "d263503b6e6ced9edee977508ffeff94e90ad4df",
+      "status": " M docs/CURRENT_IMPLEMENTATION_STATE.md\u0000?? docs/architecture/OTR_PLATFORM_R3A_SQL_PRINCIPAL_SECURITY_PREFLIGHT.md\u0000",
+      "dirtyHashes": {
+        "docs/CURRENT_IMPLEMENTATION_STATE.md": "66bed0d04ffee149865f40be0b18986550f0882b04d6e4641336ba20dd6e501d",
+        "docs/architecture/OTR_PLATFORM_R3A_SQL_PRINCIPAL_SECURITY_PREFLIGHT.md": "bf661d82eead63c393976943f47840ebff5062ca109ce99c11af1fcbe19924fc"
+      },
+      "index": "0bf4d1fe4f9745f5e1bd1aa8163fc79a7ee2d8e2",
+      "overlapDirty": ["docs/CURRENT_IMPLEMENTATION_STATE.md"]
+    },
+    "/Users/xoery/.codex/worktrees/trip-core-v2-foundation/otr-mobile-canonical": {
+      "head": "741579c8bac3f898669ca331875a28efc645cfa2",
+      "status": "",
+      "dirtyHashes": {},
+      "index": "462dd47379a8195e4a425b837f51692f619d95aa",
+      "overlapDirty": []
+    },
+    "/Users/xoery/Project/otr-mobile-experience": {
+      "head": "55c8a22db34e6b4f48511021bd10810e6f056e04",
+      "status": " M app/settings.tsx\u0000 M docs/CURRENT_IMPLEMENTATION_STATE.md\u0000 M src/ui/catalogs.ts\u0000?? app/experience-gallery.tsx\u0000?? docs/architecture/TRIP_EXPERIENCE_E1C1A_PLANNING_DAY_VISUAL_BASELINE_REPORT.md\u0000?? docs/architecture/TRIP_EXPERIENCE_E1C1B_ADAPTIVE_STREAM_INTERACTION_REPORT.md\u0000?? docs/architecture/TRIP_EXPERIENCE_E1C1C_LIFECYCLE_MORPH_GALLERY_REPORT.md\u0000?? node_modules\u0000?? src/features/trip-experience-gallery/AdaptiveStreamGallery.tsx\u0000?? src/features/trip-experience-gallery/LifecycleGallery.tsx\u0000?? src/features/trip-experience-gallery/PlanningDayGallery.tsx\u0000?? src/features/trip-experience-gallery/adaptive.test.ts\u0000?? src/features/trip-experience-gallery/adaptive.ts\u0000?? src/features/trip-experience-gallery/adaptiveRenderer.test.ts\u0000?? src/features/trip-experience-gallery/gallery.test.ts\u0000?? src/features/trip-experience-gallery/gallery.ts\u0000?? src/features/trip-experience-gallery/images/cafe-memory.png\u0000?? src/features/trip-experience-gallery/images/cafe-reference.png\u0000?? src/features/trip-experience-gallery/images/garden-memory.png\u0000?? src/features/trip-experience-gallery/images/garden-reference.png\u0000?? src/features/trip-experience-gallery/images/louvre-reference.png\u0000?? src/features/trip-experience-gallery/lifecycle.test.ts\u0000?? src/features/trip-experience-gallery/lifecycle.ts\u0000?? src/features/trip-experience-gallery/lifecycleImages.ts\u0000?? src/features/trip-experience-gallery/lifecycleRenderer.test.ts\u0000?? src/features/trip-experience-gallery/renderer.test.ts\u0000",
+      "dirtyHashes": {
+        "app/settings.tsx": "32493a1a76d79f5341f191ef63b68988c489d3d3a6e35996449a7550bc64c945",
+        "docs/CURRENT_IMPLEMENTATION_STATE.md": "3f713627f057f7d3e3ff3578c1944b7ad2b8906bbfd5786151a66e2217945378",
+        "src/ui/catalogs.ts": "80192e2e624d1dc13c2ffd8063807fdcee54886d128f2cb1f7ee74827c3277fa",
+        "app/experience-gallery.tsx": "bfb4eae6eec8944c416407a14a1d831d2fb4a8ac2d0e4a3a1566566bc7c98570",
+        "docs/architecture/TRIP_EXPERIENCE_E1C1A_PLANNING_DAY_VISUAL_BASELINE_REPORT.md": "7d347e8af97b3a948d98b5a36196b1b2a92cfd73b97489fe2335c9b408f0b573",
+        "docs/architecture/TRIP_EXPERIENCE_E1C1B_ADAPTIVE_STREAM_INTERACTION_REPORT.md": "2f7108ed80a1efb92e8c2583cdeaec4645160353006c8ed4b3b2451828df28fb",
+        "docs/architecture/TRIP_EXPERIENCE_E1C1C_LIFECYCLE_MORPH_GALLERY_REPORT.md": "220cd7760968ed9442f790a43e294054a2b8ce984d998d6a7fd79170364725a6",
+        "src/features/trip-experience-gallery/AdaptiveStreamGallery.tsx": "e0a4f97858d2dc4bb03d691b0769ad8350e1ce5d739f024173d552f7cacf1c9b",
+        "src/features/trip-experience-gallery/LifecycleGallery.tsx": "973829da033c62662bae3073dac604ad0872b0f65ea0b6740ac90a00c69d2191",
+        "src/features/trip-experience-gallery/PlanningDayGallery.tsx": "6f7515a938eee38ccf5e27f941eb8a5565f34c15a76f2016bf479f7b4f2bf488",
+        "src/features/trip-experience-gallery/adaptive.test.ts": "415d2b5c80a9291e38e67e9b75b5b9fd0136199c662a6947e03cf9d2b946500a",
+        "src/features/trip-experience-gallery/adaptive.ts": "434b9551d6de11c92c405193f34a7df004b3441f37275c9e935b1a63e19d3c17",
+        "src/features/trip-experience-gallery/adaptiveRenderer.test.ts": "961c594fae2030a61b70aa953968bdbcac7cf5d657102951f4028df9448d477c",
+        "src/features/trip-experience-gallery/gallery.test.ts": "b6966b34b7a2c8c134ecdca6c149d96425adc81e8cce9bae352b23047be93d06",
+        "src/features/trip-experience-gallery/gallery.ts": "ea98e2cfc95dd9c2b028d925fe82c956254fda5b381e40515a8475e8c5b7649b",
+        "src/features/trip-experience-gallery/images/cafe-memory.png": "ec1ede2929ec4ee6ce3b95b817e3d636c6ce893e86191b9a946e90f00a79b4c5",
+        "src/features/trip-experience-gallery/images/cafe-reference.png": "84476b2465beb549860f380b0424e58029647b67cca435cf51139730df83b488",
+        "src/features/trip-experience-gallery/images/garden-memory.png": "f6cad95aebeee203c7814d195d8007be23bf4785de15f2baff458cf96820ce9f",
+        "src/features/trip-experience-gallery/images/garden-reference.png": "c7788759e4d5ee7b0d65a878da67624ca769112888d44311db9216a224639fe3",
+        "src/features/trip-experience-gallery/images/louvre-reference.png": "4d7b53887ceeeaf08ef6d8d44a8626375e50ff0f825f7206d73439723521c4cb",
+        "src/features/trip-experience-gallery/lifecycle.test.ts": "b9879fb71c92fd81866d676ee2db8267dfd288c3f512074a1c76219e5b7e22df",
+        "src/features/trip-experience-gallery/lifecycle.ts": "dca39a6c7bd2472d1ca4b4201ed8da6ac8af381cb8026cf6121e57bba46d4946",
+        "src/features/trip-experience-gallery/lifecycleImages.ts": "e556e009f45e53e899de80fb73203a4677296631323e5c4a629b5244e6fdb426",
+        "src/features/trip-experience-gallery/lifecycleRenderer.test.ts": "29e2e372b024bcf7403afdf663604e0f443db39daf3a72157da6aed451171c3a",
+        "src/features/trip-experience-gallery/renderer.test.ts": "753482198a9b259475636207be9623286a7ead5be04affa2433dd5880e864a41"
+      },
+      "index": "d126d5396af23e761440782ada076216ec454b48",
+      "overlapDirty": ["docs/CURRENT_IMPLEMENTATION_STATE.md"]
+    },
+    "/Users/xoery/Project/otr-mobile-temporal": {
+      "head": "d295b5e232bbe1e2b2d8ca96a2ff61e57eb3ba34",
+      "status": " M src/data/repositories/tripCanonicalEventRepository.test.ts\u0000 M src/data/repositories/tripCanonicalEventRepository.ts\u0000?? docs/adr/2026-10-05-trip-day-read-model.md\u0000?? docs/architecture/TRIP_CHECKPOINT_11_DAY_READ_MODEL_REPORT.md\u0000?? src/data/db/migrations/tripDayReadModel.ts\u0000?? src/data/repositories/defaultTripDayReadRepository.ts\u0000?? src/data/repositories/tripDayReadRepository.test.ts\u0000?? src/data/repositories/tripDayReadRepository.ts\u0000?? src/domain/trip/dayReadModel.test.ts\u0000?? src/domain/trip/dayReadModel.ts\u0000",
+      "dirtyHashes": {
+        "src/data/repositories/tripCanonicalEventRepository.test.ts": "38025435a6a95672514a2eacc71c96d90fdc2f397d97fa4c20e797dfa24bc6ff",
+        "src/data/repositories/tripCanonicalEventRepository.ts": "70abc1a7b430a64df898c7954159c3ff5ab43367e0c16e8a6118cd0743e2c7d9",
+        "docs/adr/2026-10-05-trip-day-read-model.md": "0038ec0f806d92617c3a28e8309ab92bc30de29b15ec46a8e479494c620f3d01",
+        "docs/architecture/TRIP_CHECKPOINT_11_DAY_READ_MODEL_REPORT.md": "f49ab4ebadc02f107110236d2269431dd14528edcf5a35af36bbe8e9f5147303",
+        "src/data/db/migrations/tripDayReadModel.ts": "d715067c64333c30b92486c933430da78ecf3c82249167c6258911e984d329e7",
+        "src/data/repositories/defaultTripDayReadRepository.ts": "6d62448bc2afad95f889059118360598cb46bdbdffaf179b9dcd1f4c4eb50c9c",
+        "src/data/repositories/tripDayReadRepository.test.ts": "663a8e85cbbc259d38b17f237af8eecd43df45023fe75d370c21fc96654afb49",
+        "src/data/repositories/tripDayReadRepository.ts": "5e8b5aa609e9e6b8574dbc429edb0c69d4bb52f0e2a45ef81ce85d33506b4b13",
+        "src/domain/trip/dayReadModel.test.ts": "797db40d700a582902f4baeeeee964dc81a20e5d6a03074304169d35f35b1186",
+        "src/domain/trip/dayReadModel.ts": "bf7a5ea4314cede9173d0426cba9f4090bd7debbca1aced810309a04eda8184c"
+      },
+      "index": "4fc79eb96864af16f68fb2d3c7156109f20f215e",
+      "overlapDirty": []
+    }
+  }
+}
