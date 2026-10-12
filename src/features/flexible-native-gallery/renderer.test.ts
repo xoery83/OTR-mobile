@@ -258,7 +258,9 @@ it("ordinary vertical scrolling never arms copy and native cancellation does not
   render("f08");
   press(t("afternoon"));
   render("f08");
-  const handlers = harness.nodes.filter((n) => n.onMoveShouldSetPanResponderCapture);
+  const handlers = harness.nodes.filter(
+    (n) => n.onMoveShouldSetPanResponderCapture && n.onStartShouldSetPanResponder,
+  );
   for (const g of handlers)
     expect(g.onMoveShouldSetPanResponderCapture({}, { dx: 0, dy: 80 })).toBe(false);
   const before = JSON.stringify(harness.updates.at(-1));
@@ -270,6 +272,21 @@ it("ordinary vertical scrolling never arms copy and native cancellation does not
   for (const bg of harness.background) bg("background");
   render("f08");
   expect(JSON.stringify(harness.updates.at(-1))).toBe(before);
+});
+it("owns the Pool divider touch before parent scrolling and ignores horizontal releases", () => {
+  render("f06");
+  press(t("afternoon"));
+  render("f06");
+  const divider = harness.nodes.find((n) => n.onStartShouldSetPanResponderCapture);
+  expect(divider.onStartShouldSetPanResponderCapture()).toBe(true);
+  divider.onPanResponderRelease({}, { dx: 60, dy: 5 });
+  expect(render("f06")).toContain(t("expand"));
+  divider.onPanResponderRelease({}, { dx: 5, dy: -60 });
+  expect(render("f06")).toContain(t("collapse"));
+  divider.onPanResponderRelease({}, { dx: 5, dy: 60 });
+  expect(render("f06")).toContain(t("expand"));
+  divider.onPanResponderRelease({}, { dx: 0, dy: 0 });
+  expect(render("f06")).toContain(t("collapse"));
 });
 it("resource detail return preserves caller Focus and own Choice scope", () => {
   harness.focus = choiceFocusKey("fixture-flexible-f03", "browse", "garden");

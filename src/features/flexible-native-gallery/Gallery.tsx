@@ -152,10 +152,12 @@ export function FlexibleRenderer({
   const splitter = useMemo(
     () =>
       PanResponder.create({
-        onMoveShouldSetPanResponder: (_, g) =>
-          Math.abs(g.dy) > 10 && Math.abs(g.dy) > Math.abs(g.dx),
+        // Own this divider touch before the nested ScrollViews claim it.
+        onStartShouldSetPanResponderCapture: () => true,
         onPanResponderRelease: (_, g) => {
-          if (Math.abs(g.dy) > 24) setExpanded(g.dy < 0);
+          if (Math.abs(g.dy) > 24 && Math.abs(g.dy) > Math.abs(g.dx))
+            setExpanded(g.dy < 0);
+          else if (Math.hypot(g.dx, g.dy) < 10) setExpanded((value) => !value);
         },
         onPanResponderTerminationRequest: () => true,
       }),
