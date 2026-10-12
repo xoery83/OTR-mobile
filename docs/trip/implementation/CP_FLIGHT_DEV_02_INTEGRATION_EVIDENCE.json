@@ -1,0 +1,520 @@
+{
+  "acceptedCommit": "0fd9120709effcfcc8d3b2b0c3d539fb3a452d13",
+  "acceptedParent": "09d833a4d170da940b0ff6765668689d70b56b15",
+  "canonicalBase": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+  "acceptedManifest": [
+    {
+      "path": "backend/src/__fixtures__/flightTextDevHost.ts",
+      "gitBlob": "2a289afaa9c27caca0f09ed2b39e9f61affab0f4",
+      "sha256": "57b14c04dced3393ffaf4df4ca15396764d05778f6fe7102e976541964ca1aed"
+    },
+    {
+      "path": "backend/src/app.ts",
+      "gitBlob": "f7f940bab4e1201392708042859737fcaf722e59",
+      "sha256": "c38dd7b6a1356f9e3cc95dc7b8c1c1402e74a95e3bf6c583e92cf9aa366e7bee"
+    },
+    {
+      "path": "backend/src/flightTextDevBackend.runtime.test.ts",
+      "gitBlob": "58246ef1121a4d03c1f92403801348467def41e1",
+      "sha256": "c3c4257bf1e57738c6d57df64b3d6d3ecfc88af45b50f585b7f6933d04fe1a70"
+    },
+    {
+      "path": "backend/src/flightTextDevBackend.ts",
+      "gitBlob": "9babbec83fa23b075568472ffbf5a9c40ba8f77e",
+      "sha256": "db818602367b78ae8531f18477660a6a029669937d94a3b8e5017608b12afb3c"
+    },
+    {
+      "path": "backend/src/flightTextSource.test.ts",
+      "gitBlob": "1dc679a6ddc5d3cb1b6fcb868ffd7e8cc7b858d6",
+      "sha256": "d7459c492e3a2d85df45a7661e08db12b5d9402da444d47850f34a0d53258308"
+    },
+    {
+      "path": "backend/src/flightTextSource.ts",
+      "gitBlob": "82f8c9129882903fe6d2b8cbb26bc8f11807429f",
+      "sha256": "c1f091824434d25066ea3a9fd1a366b0d45b896e13967e4e348b216bb4187c22"
+    },
+    {
+      "path": "backend/src/server.ts",
+      "gitBlob": "9fd0383b9789354db1300899b5fee434455e6b20",
+      "sha256": "52e4439494ad09c3f717718ae8545d907cca7d57b71a6354148df50d99745d04"
+    },
+    {
+      "path": "backend/src/serverNetwork.test.ts",
+      "gitBlob": "8bcfd4363c24be1e7be59f151adeb39acc70c45e",
+      "sha256": "f85d306cdb2b95b3622e5fa946f5daf5eff2ebd8838ecb4a4245ad321dc82836"
+    },
+    {
+      "path": "backend/src/tripCoreV2PgConnection.test.ts",
+      "gitBlob": "80cc06e7db3d029cd3a7e7c7c53037908f223fc2",
+      "sha256": "20a1d70cd5ac6fdf708c0f1d07fc870390146576388b3e7ea3ac8275a757aac0"
+    },
+    {
+      "path": "backend/src/tripCoreV2PgConnection.ts",
+      "gitBlob": "8dcbe88eab9a328269c3c5514865fd3e0a6c6c4b",
+      "sha256": "9e59fc3f69112ea5671cdfcaf99b4a0a6c8f51f69a08f9fd41b84a675646b59b"
+    },
+    {
+      "path": "docs/API_CONTRACT.md",
+      "gitBlob": "78b8c6867e97eee66953ce5d04ab2b24e85427d5",
+      "sha256": "07a2c770d696be419f9d606b679d88c8a47f6a80466ee062249c58029b9f5e14"
+    },
+    {
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "gitBlob": "c02644c86b2849a1937ef9ff85c9504d675ea500",
+      "sha256": "da47facf06ec867a5da0d0a8766a16666c8583ae073e21e1e02c6a504d7f0a7a"
+    },
+    {
+      "path": "docs/trip/implementation/CP_FLIGHT_DEV_02_CHANGED_FILES.txt",
+      "gitBlob": "7a5e83baef9e4d489935768b68fea99261560df7",
+      "sha256": "3ccbd5addf41f1f2a33f9899deeb68e546ca4a459f2e74b10260a6c8f43bbe7b"
+    },
+    {
+      "path": "docs/trip/implementation/CP_FLIGHT_DEV_02_EVIDENCE.json",
+      "gitBlob": "e0def8f76a891b10307648cb75ba58db4eb3fed6",
+      "sha256": "f60023702e5120aaf0ebc4e1ed2565d4cc375091d0302a7d151ba3782a345df6"
+    },
+    {
+      "path": "docs/trip/implementation/CP_FLIGHT_DEV_02_REPORT.md",
+      "gitBlob": "31acc4b21a20aed408fec1d8ed0e5f7bd37e700b",
+      "sha256": "e95b90c8e991b17aa3b6f2a56448b79850ff42fb3626f83e5ffcf915c052e114"
+    },
+    {
+      "path": "scripts/trip/core-v2-sql-acceptance.py",
+      "gitBlob": "7cb6f6327e4f78859215cef37059d30cc18bd498",
+      "sha256": "ceb571d266dbc599d0ecb0be2f5cdea89afec3f95fc6291c22e253d7dac38714"
+    }
+  ],
+  "ownershipBefore": [
+    {
+      "root": "/Users/xoery/Project/otr-mobile",
+      "head": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "branch": "main",
+      "statusSha256": "e50d3f56c7456bfe7f22532519b0c96070aec1e609de7814245e1381c12b1aca"
+    },
+    {
+      "root": "/Users/xoery/Project/otr-mobile-canonical",
+      "head": "c4571746b0c300fa3b46842cd37745963567338c",
+      "branch": "intelligence/deferred-apple",
+      "statusSha256": "f2b033bfa17283947fcd82bf0c964e83790df401f09f96556099520b46c6b668"
+    },
+    {
+      "root": "/Users/xoery/Project/otr-mobile-capture",
+      "head": "79237cbd993792100ed51468e31671e4a2b59888",
+      "branch": "trip/capture",
+      "statusSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "root": "/Users/xoery/Project/otr-mobile-experience",
+      "head": "55c8a22db34e6b4f48511021bd10810e6f056e04",
+      "branch": "trip/experience",
+      "statusSha256": "86d57979de2e4ce781e820f2729a78d6cf070a6e92607eac9ad63767a0ce8344"
+    },
+    {
+      "root": "/Users/xoery/.codex/worktrees/flight-native-capture/otr-mobile-canonical",
+      "head": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "branch": "codex/flight-native-capture",
+      "statusSha256": "4b5f367f74ed10fda8fbbc29b47bc46e0471b8084de2f80fd85f5b257d5ac836"
+    },
+    {
+      "root": "/private/tmp/otr-flexible-native-gallery-cp01-20261012",
+      "head": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "branch": "codex/flexible-native-gallery-cp01",
+      "statusSha256": "773f26d465517ee7d9ff6d41d2d9bb8351201dd516a5b0cf1c22e971eda9915a"
+    },
+    {
+      "root": "/private/tmp/otr-cp-llm-02a-closed-20261012",
+      "head": "af1cc93ff99257124452f091221b1f978cdbb774",
+      "branch": "codex/cp-llm-02a-closed",
+      "statusSha256": "538a2b41a643b0d9768a8f11aef425bed7149a76750bc5737655983e505b4a30"
+    }
+  ],
+  "integrationCodeCommit": "b61235765aab69ed1d63ddd4aa8af3b630d6465b",
+  "integrationCodeTree": "93cd0bcbc7fac4d7a715b072103693c74748eb21",
+  "conflicts": [
+    "docs/CURRENT_IMPLEMENTATION_STATE.md; assessment header absent on canonical; resolved exact accepted file"
+  ],
+  "overlay": {
+    "threeWayMerge": "CLEAN",
+    "candidateSha256": "da47facf06ec867a5da0d0a8766a16666c8583ae073e21e1e02c6a504d7f0a7a",
+    "canonicalDirtySha256": "07d837d154e97251e02d3a8d6e597bd0932a968770d420b2ab51b088956b31b5",
+    "preservedSuffixSha256": "d765875558b65a10df37abffb27d927c7c86f79c2b5afe0b5ee4276eab0f3309",
+    "mergedPreviewSha256": "7c40d5f2fa28a771af2638fbc0be7099b3568d49ffb7e5ab5355b8674de30c33",
+    "previewPath": "/private/tmp/otr-flight-dev02-integration-overlay/merged-preview.md",
+    "importedIntoCommit": false
+  },
+  "nativeConcurrentOverlap": [
+    {
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "mergeExit": 1,
+      "conflictMarkers": 1,
+      "nativeSha256": "60536727b5db6b7cd7ab35c8446ddf7ad8f278fead9aeacdf4a28f4207eb6a74",
+      "previewPath": "/private/tmp/otr-flight-dev02-integration-overlay/docs_CURRENT_IMPLEMENTATION_STATE.md.native-merge-preview",
+      "imported": false
+    },
+    {
+      "path": "scripts/trip/core-v2-sql-acceptance.py",
+      "mergeExit": 1,
+      "conflictMarkers": 1,
+      "nativeSha256": "b2e834aa10b4e79cb3f95344c1f327544b5ea65302e971e7d4cbae4ed3520a3b",
+      "previewPath": "/private/tmp/otr-flight-dev02-integration-overlay/scripts_trip_core-v2-sql-acceptance.py.native-merge-preview",
+      "imported": false
+    }
+  ],
+  "ownershipAfter": [
+    {
+      "root": "/Users/xoery/Project/otr-mobile",
+      "branch": "main",
+      "headBefore": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "headAfter": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "statusSha256Before": "e50d3f56c7456bfe7f22532519b0c96070aec1e609de7814245e1381c12b1aca",
+      "statusSha256After": "e50d3f56c7456bfe7f22532519b0c96070aec1e609de7814245e1381c12b1aca",
+      "dirtyPathsBefore": [
+        "docs/CURRENT_IMPLEMENTATION_STATE.md",
+        "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md",
+        "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md",
+        "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md",
+        "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+        "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc"
+      ],
+      "beforeContentPinsSha256": "c2b1599ba0c7dbfeff48c5999409cc7224aefff995464bc640b11acbd839a765",
+      "observedFileDifferences": [],
+      "writtenByThisCheckpoint": false
+    },
+    {
+      "root": "/Users/xoery/Project/otr-mobile-canonical",
+      "branch": "intelligence/deferred-apple",
+      "headBefore": "c4571746b0c300fa3b46842cd37745963567338c",
+      "headAfter": "c4571746b0c300fa3b46842cd37745963567338c",
+      "statusSha256Before": "f2b033bfa17283947fcd82bf0c964e83790df401f09f96556099520b46c6b668",
+      "statusSha256After": "f2b033bfa17283947fcd82bf0c964e83790df401f09f96556099520b46c6b668",
+      "dirtyPathsBefore": [
+        "backend/src/externalIntegrationControlPlane.ts",
+        "docs/CURRENT_IMPLEMENTATION_STATE.md",
+        "docs/adr/2026-10-06-cp14-outbound-runtime.md",
+        "docs/architecture/APPLE_LOCAL_INTELLIGENCE_CAPABILITY_SPIKE.md",
+        "docs/architecture/CP15B_LIVE_W_LINUX_CUSTODY_SPIKE.md",
+        "docs/architecture/CP_LLM_01A_PLATFORM_CONTRACT_REVIEW.md",
+        "docs/architecture/EXTERNAL_INTEGRATION_CONTROL_PLANE.md",
+        "docs/architecture/OTR_CAPTURE_L1_L3_INTEGRATION_READINESS_ASSESSMENT.md",
+        "docs/architecture/OTR_CAPTURE_UX_ARCHITECTURE_BASELINE.md",
+        "docs/architecture/OTR_DEV_READER_90_DAY_POLICY_REPORT.md",
+        "docs/architecture/OTR_DEV_TEST_SIMULATOR_AUTHENTICATION_REPORT.md",
+        "docs/architecture/OTR_DEV_TEST_SIMULATOR_BUILD_PREFLIGHT.md",
+        "docs/architecture/OTR_DEV_TEST_SIMULATOR_BUILD_REPORT.md",
+        "docs/architecture/OTR_DEV_TEST_SIMULATOR_FIRST_LAUNCH_REPORT.md",
+        "docs/architecture/OTR_DEV_TEST_SIMULATOR_OFFLINE_ACCEPTANCE_REPORT.md",
+        "docs/architecture/OTR_FRESH_ACCOUNT_BOOTSTRAP_SIMULATOR_ACCEPTANCE_REPORT.md",
+        "docs/architecture/OTR_INTELLIGENCE_PLATFORM.md",
+        "docs/architecture/OTR_LEGACY_SIMULATOR_INVENTORY_QUARANTINE.md",
+        "docs/architecture/OTR_PLATFORM_P2B_CANONICAL_INTEGRATION_PREFLIGHT.md",
+        "docs/architecture/OTR_PLATFORM_R3A3A_HOST_NETWORK_FEASIBILITY_REPORT.md",
+        "docs/architecture/OTR_PLATFORM_R3A3A_IPV6_CONNECTIVITY_PROOF.md",
+        "docs/architecture/OTR_PLATFORM_R3A3B_CREDENTIAL_ALTERNATIVE_PROOF.md",
+        "docs/architecture/OTR_PLATFORM_R3A3B_NONLOGGING_CREDENTIAL_PROOF.md",
+        "docs/architecture/OTR_PLATFORM_R3A4_DEV_READER_ACCEPTANCE_REPORT.md",
+        "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md",
+        "docs/architecture/OTR_PLATFORM_SIMPLIFICATION_S1_DESIGN.md",
+        "docs/architecture/OTR_PLATFORM_SQLITE53_CANONICAL_INTEGRATION_PREFLIGHT.md",
+        "docs/architecture/OTR_PLATFORM_SQLITE53_PUBLICATION_MEMBERSHIP_BUILDER_REPORT.md",
+        "docs/architecture/OTR_R3A6_AUTHENTICATED_CATALOG_HTTP_ACCEPTANCE_REPORT.md",
+        "docs/architecture/OTR_R3B_NATIVE_SQLITE53_INTEGRATION_REPORT.md",
+        "docs/architecture/OTR_R3_D1A_DEVICE_SNAPSHOT_RETENTION_REPORT.md",
+        "docs/architecture/OTR_R3_D1B_APPLE_TRUST_VERIFICATION_REPORT.md",
+        "docs/architecture/OTR_R3_D1B_DEVELOPER_TRUST_QUARANTINE_REVIEW.md",
+        "docs/architecture/OTR_R3_D1B_ISOLATED_DEV_BUNDLE_BUILDER_REPORT.md",
+        "docs/architecture/OTR_R3_D1B_ISOLATED_DEV_BUNDLE_PREFLIGHT.md",
+        "docs/architecture/OTR_R3_D1B_LIFECYCLE_DIAGNOSTIC_REPORT.md",
+        "docs/architecture/OTR_R3_D1B_OFFLINE_FIRST_LAUNCH_REPORT.md",
+        "docs/architecture/OTR_R3_D1B_OFFLINE_INSTALLATION_GATE_REPORT.md",
+        "docs/architecture/OTR_R3_D1B_ONLINE_FIRST_SYNC_REPORT.md",
+        "docs/architecture/OTR_R3_D1C_FINAL_DEVICE_ACCEPTANCE_REPORT.md",
+        "docs/architecture/OTR_SIMULATOR_QUARANTINE_EXECUTION_REPORT.md",
+        "docs/architecture/OTR_TTR_MAPKIT_FEASIBILITY_INVESTIGATION.md",
+        "docs/architecture/SERVER69_HOSTED_DEV_CAPABILITY_DRIFT_REVIEW.md",
+        "docs/architecture/TRIP_CHECKPOINT_14_AGENT_A_OUTBOUND_RUNTIME_REPORT.md",
+        "docs/architecture/TRIP_CHECKPOINT_14_AGENT_C_DEFERRED_APPLE_REPORT.md",
+        "docs/architecture/TRIP_EXPERIENCE_E0_BASELINE_ARCHITECTURE_REPORT.md",
+        "docs/architecture/TRIP_EXPERIENCE_MOVE_REFLOW_DESIGN_BASELINE.md",
+        "docs/trip/OTR_DAY_FEED_LAB_CROSS_WORKSTREAM_PLAN.md",
+        "docs/trip/OTR_EXPERIENCE_DESIGN_INHERITANCE_v1.md",
+        "docs/trip/OTR_Flexible_Block_Pool_Contract_v0.1.md",
+        "docs/trip/OTR_Flexible_Native_Fixture_Gallery_Gate_v0.1.md",
+        "docs/trip/OTR_Flexible_Nine_State_Consolidation_Review_v1.0.md",
+        "docs/trip/OTR_Trip_L1_L2_Consolidated_Contract_v0.1.md",
+        "docs/trip/OTR_Trip_L1_L3_Review_v0.2.md",
+        "docs/trip/audits/G0_CURRENT_IMPLEMENTATION_INVENTORY.md",
+        "docs/trip/audits/G1_CAPTURE_EXPERIENCE_CONTRACTS.md",
+        "docs/trip/audits/G1_FIELD_AUTHORITY_MATRIX.csv",
+        "docs/trip/audits/G1_FLEXIBLE_TTR_COMPATIBILITY.md",
+        "docs/trip/audits/G1_MINIMAL_IMPLEMENTATION_PLAN.md",
+        "docs/trip/audits/G1_OWNER_DECISION_REGISTER.md",
+        "docs/trip/audits/G1_RELATIONSHIP_AND_LIFECYCLE_REVIEW.md",
+        "docs/trip/audits/G1_SCHEMA_GAP_ANALYSIS.md",
+        "docs/trip/contracts/W0_CAPTURE_HANDOFF_CONTRACT.md",
+        "docs/trip/contracts/W0_COMMAND_ADMISSION_CONTRACT.md",
+        "docs/trip/contracts/W0_COMPATIBILITY_AND_ROLLBACK.md",
+        "docs/trip/contracts/W0_FIELD_AUTHORITY_MATRIX.csv",
+        "docs/trip/contracts/W0_IMPLEMENTATION_PACKAGES.md",
+        "docs/trip/contracts/W0_OWNER_REVIEW.md",
+        "docs/trip/contracts/W0_PHYSICAL_SCHEMA_SPEC.md",
+        "docs/trip/contracts/W0_READ_PROJECTION_CONTRACT.md",
+        "docs/trip/contracts/W0_UNIFIED_DATA_CONTRACT.md",
+        "package.json",
+        "scripts/dev/ios-devtest-destination.json",
+        "scripts/dev/ios-devtest-simulator.mjs",
+        "scripts/dev/ios-devtest-simulator.selfcheck.mjs",
+        "src/data/intelligence/importReferencePlugin.ts",
+        "src/data/intelligence/runtime.test.ts",
+        "src/data/intelligence/runtime.ts",
+        "src/data/interpretation/flightImportIntegration.test.ts",
+        "src/domain/intelligence/runtime.ts"
+      ],
+      "beforeContentPinsSha256": "1e4bd92c1d81bcdf2c937105bd2793e865936214dfba62fec6bab882dc3d6ef0",
+      "observedFileDifferences": [],
+      "writtenByThisCheckpoint": false
+    },
+    {
+      "root": "/Users/xoery/Project/otr-mobile-capture",
+      "branch": "trip/capture",
+      "headBefore": "79237cbd993792100ed51468e31671e4a2b59888",
+      "headAfter": "79237cbd993792100ed51468e31671e4a2b59888",
+      "statusSha256Before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "statusSha256After": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "dirtyPathsBefore": [],
+      "beforeContentPinsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "observedFileDifferences": [],
+      "writtenByThisCheckpoint": false
+    },
+    {
+      "root": "/Users/xoery/Project/otr-mobile-experience",
+      "branch": "trip/experience",
+      "headBefore": "55c8a22db34e6b4f48511021bd10810e6f056e04",
+      "headAfter": "55c8a22db34e6b4f48511021bd10810e6f056e04",
+      "statusSha256Before": "86d57979de2e4ce781e820f2729a78d6cf070a6e92607eac9ad63767a0ce8344",
+      "statusSha256After": "86d57979de2e4ce781e820f2729a78d6cf070a6e92607eac9ad63767a0ce8344",
+      "dirtyPathsBefore": [
+        "app/experience-gallery.tsx",
+        "app/settings.tsx",
+        "docs/CURRENT_IMPLEMENTATION_STATE.md",
+        "docs/architecture/TRIP_EXPERIENCE_E1C1A_PLANNING_DAY_VISUAL_BASELINE_REPORT.md",
+        "docs/architecture/TRIP_EXPERIENCE_E1C1B_ADAPTIVE_STREAM_INTERACTION_REPORT.md",
+        "docs/architecture/TRIP_EXPERIENCE_E1C1C_LIFECYCLE_MORPH_GALLERY_REPORT.md",
+        "node_modules",
+        "src/features/trip-experience-gallery/AdaptiveStreamGallery.tsx",
+        "src/features/trip-experience-gallery/LifecycleGallery.tsx",
+        "src/features/trip-experience-gallery/PlanningDayGallery.tsx",
+        "src/features/trip-experience-gallery/adaptive.test.ts",
+        "src/features/trip-experience-gallery/adaptive.ts",
+        "src/features/trip-experience-gallery/adaptiveRenderer.test.ts",
+        "src/features/trip-experience-gallery/gallery.test.ts",
+        "src/features/trip-experience-gallery/gallery.ts",
+        "src/features/trip-experience-gallery/images/cafe-memory.png",
+        "src/features/trip-experience-gallery/images/cafe-reference.png",
+        "src/features/trip-experience-gallery/images/garden-memory.png",
+        "src/features/trip-experience-gallery/images/garden-reference.png",
+        "src/features/trip-experience-gallery/images/louvre-reference.png",
+        "src/features/trip-experience-gallery/lifecycle.test.ts",
+        "src/features/trip-experience-gallery/lifecycle.ts",
+        "src/features/trip-experience-gallery/lifecycleImages.ts",
+        "src/features/trip-experience-gallery/lifecycleRenderer.test.ts",
+        "src/features/trip-experience-gallery/renderer.test.ts",
+        "src/ui/catalogs.ts"
+      ],
+      "beforeContentPinsSha256": "1d21e6a61430f219b4afbc5aa47f976993273908f4e3fa5d09c6aef2b817975c",
+      "observedFileDifferences": [],
+      "writtenByThisCheckpoint": false
+    },
+    {
+      "root": "/Users/xoery/.codex/worktrees/flight-native-capture/otr-mobile-canonical",
+      "branch": "codex/flight-native-capture",
+      "headBefore": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "headAfter": "b10e0768fb61f6acb6b2b8f8847d3b0941b3af23",
+      "statusSha256Before": "4b5f367f74ed10fda8fbbc29b47bc46e0471b8084de2f80fd85f5b257d5ac836",
+      "statusSha256After": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "dirtyPathsBefore": [
+        ".gitignore",
+        "backend/src/__fixtures__/flightCoreDayAcceptance.ts",
+        "backend/src/__fixtures__/tripCoreV2Sql.ts",
+        "docs/CURRENT_IMPLEMENTATION_STATE.md",
+        "docs/DATA_MODEL.md",
+        "docs/trip/implementation/CP_FLIGHT_NATIVE_01_EVIDENCE.json",
+        "docs/trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md",
+        "modules/receipt-ocr/ios/FlightPdfExtractor.swift",
+        "modules/receipt-ocr/ios/ReceiptOcrModule.swift",
+        "modules/receipt-ocr/tests/README.md",
+        "modules/receipt-ocr/tests/main.swift",
+        "node_modules",
+        "scripts/trip/core-v2-sql-acceptance.py",
+        "src/data/bootstrap/participationWakeAcceptance.test.ts",
+        "src/data/db/checkpoint11Integration.test.ts",
+        "src/data/db/database.test.ts",
+        "src/data/db/migrations.ts",
+        "src/data/db/migrations/captureFlightNative.ts",
+        "src/data/db/publicationMembershipMigration.test.ts",
+        "src/data/foundation/diagnosticsReadOnly.test.ts",
+        "src/data/interpretation/__fixtures__/nativeFlightPdf.json",
+        "src/data/interpretation/flightPdfExtraction.ts",
+        "src/data/operations/defaultCaptureFlightNative.ts",
+        "src/data/repositories/captureBatchAssessmentObservationRepository.test.ts",
+        "src/data/repositories/captureFlightNativeRepository.test.ts",
+        "src/data/repositories/captureFlightNativeRepository.ts",
+        "src/data/repositories/intelligenceContinuationRepository.test.ts",
+        "src/data/repositories/tripCanonicalEventRepository.test.ts",
+        "src/data/repositories/tripPublicationMembershipRepository.test.ts",
+        "src/native/flightPdf.test.ts",
+        "src/native/flightPdf.ts"
+      ],
+      "beforeContentPinsSha256": "74d1c69009d6432e5236e9d59c1e397d54506354032ef1bdcb82c0ca21b48562",
+      "observedFileDifferences": [
+        {
+          "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+          "before": "ed8c873d04a1cefaa479cfefe87f2d2435578b3072a03f2e292f690a974ec5cb",
+          "after": "60536727b5db6b7cd7ab35c8446ddf7ad8f278fead9aeacdf4a28f4207eb6a74"
+        },
+        {
+          "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_EVIDENCE.json",
+          "before": "e4d424f835950b12d30e264469c3b81ebd3ff74cf9c08f77aa2448f9921595e5",
+          "after": "a670ef181b8d4a56a049d03dc763335291be2859a71d6a192d5af86dce02fd27"
+        },
+        {
+          "path": "docs/trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md",
+          "before": "e3b90cbd6deb5539235fb4c20753da3f0fec74d7d978f300ae1e7f1f641d564a",
+          "after": "924d44f50a0eb1c43f5f68e00c47ea846d4d666bd6ac3a7d46d1f605678dd2e7"
+        },
+        {
+          "path": "modules/receipt-ocr/tests/README.md",
+          "before": "50c072ad72705edbcc380d1dfd30ad2b18e99f9b0f36aca0338421e748e01fc0",
+          "after": "5609dec7cb505dc98d160bb140c56c3705c4611a99e2223824236365366c1f97"
+        },
+        {
+          "path": "node_modules",
+          "beforeSymlink": "/Users/xoery/Project/otr-mobile/node_modules",
+          "afterSymlink": null
+        }
+      ],
+      "writtenByThisCheckpoint": false
+    },
+    {
+      "root": "/private/tmp/otr-flexible-native-gallery-cp01-20261012",
+      "branch": "codex/flexible-native-gallery-cp01",
+      "headBefore": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "headAfter": "6af3aff1fbfb136b087512589aa94b2c9d4640fc",
+      "statusSha256Before": "773f26d465517ee7d9ff6d41d2d9bb8351201dd516a5b0cf1c22e971eda9915a",
+      "statusSha256After": "773f26d465517ee7d9ff6d41d2d9bb8351201dd516a5b0cf1c22e971eda9915a",
+      "dirtyPathsBefore": [
+        "docs/architecture/FLEXIBLE_NATIVE_GALLERY_CP01_REPORT.md",
+        "docs/trip/OTR_DAY_FEED_LAB_CROSS_WORKSTREAM_PLAN.md",
+        "docs/trip/OTR_EXPERIENCE_DESIGN_INHERITANCE_v1.md",
+        "docs/trip/OTR_Flexible_Block_Pool_Contract_v0.1.md",
+        "docs/trip/OTR_Flexible_Native_Fixture_Gallery_Gate_v0.1.md",
+        "docs/trip/OTR_Flexible_Nine_State_Consolidation_Review_v1.0.md",
+        "fixtures/flexible-native/src/ui/catalogs.ts",
+        "src/features/flexible-native-gallery/Gallery.tsx",
+        "src/features/flexible-native-gallery/Manipulation.tsx",
+        "src/features/flexible-native-gallery/copy.ts",
+        "src/features/flexible-native-gallery/fixtures.ts",
+        "src/features/flexible-native-gallery/images/cafe-reference.png",
+        "src/features/flexible-native-gallery/images/garden-reference.png",
+        "src/features/flexible-native-gallery/index.ts",
+        "src/features/flexible-native-gallery/model.test.ts",
+        "src/features/flexible-native-gallery/model.ts"
+      ],
+      "beforeContentPinsSha256": "5d81cfa9ba259b5108d262a5beec705f64f8f1ba5fa53562f59e25b699fbdb0f",
+      "observedFileDifferences": [
+        {
+          "path": "src/features/flexible-native-gallery/Gallery.tsx",
+          "before": "4159de11daab7939885296a630e152cdb2f420651eed5557c916bd184ddf632f",
+          "after": "1179001a099bfa8d647603d2703f133b5862635034be3e7a24cdee0919ed3a89"
+        },
+        {
+          "path": "src/features/flexible-native-gallery/Manipulation.tsx",
+          "before": "ecd9c6bda34b00079526c88cc32e82617b0e963ff661a6878de52cef8bb244e5",
+          "after": "8f32d8985fc91d098c2bdb626961d7a0542760e5d000a85dd34caa3a3189c22b"
+        },
+        {
+          "path": "src/features/flexible-native-gallery/fixtures.ts",
+          "before": "fa154070c99efbc0ff68753d557d0eef7648f07e2cf6b8ebe49ac717274ea631",
+          "after": "402b4be28fa3fcffbba74b0e0b566e18d82084b6ab5d0cee13b1ce61e293f1e9"
+        }
+      ],
+      "writtenByThisCheckpoint": false
+    },
+    {
+      "root": "/private/tmp/otr-cp-llm-02a-closed-20261012",
+      "branch": "codex/cp-llm-02a-closed",
+      "headBefore": "af1cc93ff99257124452f091221b1f978cdbb774",
+      "headAfter": "af1cc93ff99257124452f091221b1f978cdbb774",
+      "statusSha256Before": "538a2b41a643b0d9768a8f11aef425bed7149a76750bc5737655983e505b4a30",
+      "statusSha256After": "538a2b41a643b0d9768a8f11aef425bed7149a76750bc5737655983e505b4a30",
+      "dirtyPathsBefore": ["node_modules"],
+      "beforeContentPinsSha256": "ea944062371fea16da723050d621d38d94bbffa08678ab33816cc0376c37ff7b",
+      "observedFileDifferences": [],
+      "writtenByThisCheckpoint": false
+    }
+  ],
+  "nativeConcurrentCommit": "b10e0768fb61f6acb6b2b8f8847d3b0941b3af23",
+  "verification": {
+    "targetedSuites": 20,
+    "targetedPassed": 265,
+    "sqlScenarios": {
+      "textRuntime": 1,
+      "flightJoined": 1,
+      "source": 3
+    },
+    "historicalFunctionsPreservedPerClone": 329,
+    "typecheck": "PASS",
+    "backendBuild": "PASS",
+    "lintUiGuard": "PASS",
+    "normalStartup": "CLOSED",
+    "hostedAccess": false,
+    "mainMergePush": false
+  },
+  "newRuntimePins": {
+    "sourceId": "b831f0af-5b6a-4a2a-b74a-636103bd8e24",
+    "exactTextSha256": "9e63a65981bbcf2016c01291c6446328fc074c9f6b8ad2d8614befb9162f80e9",
+    "items": [
+      "1dd4b5a1-0c39-44cd-b112-6d7b497ede3d",
+      "e851e58b-d19f-4b8e-a5b1-6fd4cc0b7309"
+    ],
+    "recoveredOperations": [
+      "843113af-f4ee-4ed4-b02a-03cc2cc3f3eb",
+      "d033269c-e90b-4a5e-bf69-15c6a0fafab7",
+      "26dc2525-8d56-486c-9d89-12e06b4580bf",
+      "6b99bf5c-f2ae-4076-a629-35b91986b231"
+    ],
+    "originalCopies": 1,
+    "backendRestarts": 5,
+    "privateSourceLeakage": false,
+    "tlsCaHostnamePasswordNegatives": true
+  },
+  "joinedRead2": {
+    "sqlRead2SqliteDayPairs": [
+      {
+        "itemId": "8875caa2-13ef-46be-970a-87d094587186",
+        "semanticRevision": 2
+      },
+      {
+        "itemId": "cf2187e8-25b2-40fa-b49e-ca8fc293154a",
+        "semanticRevision": 2
+      }
+    ],
+    "manifestSha256": "77feb1e8d3b781edd7b47137be8828e4e6bd6b17472d5d186c1336b81c020860",
+    "lostCollectionResponseRecovered": true,
+    "fileColdOfflineReopen": true
+  },
+  "finalHandoffOverlay": {
+    "result": "CLEAN",
+    "candidateSha256": "238a819f7930a9dd691dae6e71085a92a484d03a71f90eb45e20a2428556f7bc",
+    "preservedConcurrentSuffixSha256": "d765875558b65a10df37abffb27d927c7c86f79c2b5afe0b5ee4276eab0f3309",
+    "previewSha256": "2872eaa2f326f577a3e0b21b97938bfb2030c7f4cb365847a8fd219f6c19c22e",
+    "previewPath": "/private/tmp/otr-flight-dev02-integration-overlay/final-merged-preview.md",
+    "includedInCommit": false
+  },
+  "finalAcceptedFileVerification": {
+    "identicalFiles": 15,
+    "handoff": "readiness heading prepended; accepted handoff and canonical suffix retained",
+    "runtimeCodeModified": false,
+    "canonicalDirtyPinsUnchanged": true,
+    "pythonSyntax": "PASS"
+  }
+}

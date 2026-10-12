@@ -1,3 +1,27 @@
+# CP-FLIGHT-DEV-02 Integration Readiness — Owner Review
+
+Updated 2026-10-12 (Pacific/Auckland). Isolated branch
+`codex/flight-dev-integration-readiness`; canonical local/remote main remains
+`6af3aff1fbfb136b087512589aa94b2c9d4640fc`. Accepted0fd9120 was scoped onto main
+as b61235765aab69ed1d63ddd4aa8af3b630d6465b, tree93cd0bcbc7fac4d7a715b072103693c74748eb21.
+All16 accepted blobs match at that implementation commit. A separate docs-only
+readiness commit adds evidence/manifest and this heading; product code is unchanged.
+
+Integration265 tests/20 suites and5 disposable SQL tests PASS; typecheck/build/
+lint/UI guard/format/diff PASS. Real HTTP/pg/TLS and joined read2/SQLite54/Day
+recovery remain CLOSED synthetic evidence. Canonical dirty Capture/Platform notes
+are unchanged; exact suffix merge preview is clean. Concurrent Native b10e076
+has handoff/harness conflicts in a separate preview, excluded here; active gallery
+owner work is also excluded. No canonical write/main advancement/merge/push.
+
+Next: Owner Review of `trip/implementation/CP_FLIGHT_DEV_02_INTEGRATION_READINESS.md`
+and exact19-path manifest/evidence alongside it. Future main integration must
+recheck live refs and preserve the dirty handoff suffix; Hosted principals,
+credentials, grants/gates/deployment/Auth and Native activation need separate scopes.
+All runtime/provider/Production/C5/C9 gates remain CLOSED. Accepted handoff follows.
+
+---
+
 # CP-FLIGHT-DEV-02 — CLOSED local TEXT implementation / Owner Review
 
 Updated 2026-10-12 (Pacific/Auckland). Isolated `codex/flight-dev-backend`;
