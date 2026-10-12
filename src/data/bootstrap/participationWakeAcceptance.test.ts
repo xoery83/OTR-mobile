@@ -721,7 +721,7 @@ describe("fresh Account SQLite53 bootstrap acceptance", () => {
     });
     expect(c.sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
     expect(migrations.map((m) => m.id)).toEqual(
-      Array.from({ length: 56 }, (_, i) => i + 1),
+      Array.from({ length: 57 }, (_, i) => i + 1),
     );
     expect(fixture.notify).toHaveBeenCalledWith(
       expect.objectContaining({ discoveryChanged: true, journeyIds: [] }),

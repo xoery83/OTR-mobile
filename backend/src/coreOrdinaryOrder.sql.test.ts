@@ -292,7 +292,7 @@ it.skipIf(!fixture)(
           coldOfflineReopen: true,
           innerChecker: true,
           privateGapRedacted: true,
-          sqlite: 56,
+          sqlite: 57,
         }),
       );
     } finally {

@@ -41,7 +41,7 @@ const now = () => "2026-10-06T00:00:00.000Z";
 const bytes = new Uint8Array(Buffer.from(fixturePdf.originalBase64, "base64"));
 const cleanups: (() => void)[] = [];
 afterEach(() => cleanups.splice(0).forEach((f) => f()));
-async function fixture(version = 56) {
+async function fixture(version = 57) {
   const template = await admittedFlightBatch([fixturePdf.extraction.text]);
   const account = template.request.binding.account_id,
     trip = template.request.binding.trip_id;

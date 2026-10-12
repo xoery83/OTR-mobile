@@ -1,6 +1,6 @@
 import type { Migration } from "../migrations";
 export const coreOrdinaryOrderMigration: Migration = {
-  id: 56,
+  id: 57,
   name: "core_ordinary_order",
   sql: `
 CREATE TABLE trip_core_trip_person_ordinary_orders (
