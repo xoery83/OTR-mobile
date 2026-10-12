@@ -1,3 +1,4 @@
+import { registerPendingPdfFixture } from "./sourcePdfRegistrationAcceptance";
 import { interpretFlightBatch } from "../../../src/data/interpretation/flightInterpretation";
 import { buildCaptureFlightPublicationV2 } from "../../../src/data/interpretation/captureFlightCoreV2";
 import { coreHashValue } from "../../../src/domain/trip/tripCoreV2Read";
@@ -42,7 +43,10 @@ export async function seedAndSealPdf(
     byte_count: bytes.length,
     storage_provider: "supabase_storage",
     storage_bucket: "trip-source-material",
-    object_key: `synthetic/${p.sourceId}/${originalId}`,
+    object_key:
+      process.env.OTR_CORE_PDF_SOURCE_REGISTRATION === "1"
+        ? `v1/${trip}/${p.sourceId}/${originalId}/payload`
+        : `synthetic/${p.sourceId}/${originalId}`,
     remote_state: "VERIFIED" as const,
     verified_at: "2026-10-12T00:00:00.000000Z",
   };
@@ -82,6 +86,19 @@ export async function seedAndSealPdf(
   Object.assign(p, rebuilt.publication);
   f.built = { ...rebuilt, publication: p };
   expect(p.inputCatalogSha256).toBe(f.set.input_sha256);
+  const registered =
+    process.env.OTR_CORE_PDF_SOURCE_REGISTRATION === "1"
+      ? await registerPendingPdfFixture(
+          admin,
+          owned,
+          account,
+          trip,
+          p.sourceId,
+          originalId,
+          f.batch.request.materials[0].pin.representation_id,
+          bytes,
+        )
+      : undefined;
   await seedPublicationSource(
     admin,
     { materials: f.batch.request.materials, request: p },
@@ -94,6 +111,7 @@ export async function seedAndSealPdf(
       byteCount: bytes.length,
       optionsSha256: PDF_OPTIONS_SHA,
     },
+    Boolean(registered),
   );
   const connect = {
     withLease: async <T>(work: (lease: CorePgLease) => Promise<T>) => {
@@ -128,7 +146,7 @@ export async function seedAndSealPdf(
     sourceRevision: 1,
     sourceRowRevision: 1,
     originalRepresentationId: originalId,
-    originalRowRevision: 1,
+    originalRowRevision: registered ? 2 : 1,
     derivedRepresentationId: f.batch.request.materials[0].pin.representation_id,
   };
   await expect(makeAuthority().seal(account, trip, q)).rejects.toThrow(
@@ -136,7 +154,7 @@ export async function seedAndSealPdf(
   );
   expect(reads).toBe(0);
   await admin.lease.query(
-    "ALTER TABLE public.trip_source_pdf_gate DROP CONSTRAINT trip_source_pdf_gate_enabled_check",
+    "ALTER TABLE public.trip_source_pdf_gate DROP CONSTRAINT IF EXISTS trip_source_pdf_gate_enabled_check",
   );
   await admin.lease.query("UPDATE public.trip_source_pdf_gate SET enabled=true");
   await expect(
@@ -248,7 +266,7 @@ export async function seedAndSealPdf(
     [q.derivedRepresentationId, decoded.text, pdfHash(decoded.text)],
   );
   await alter(
-    "UPDATE public.trip_source_representations SET remote_state='LOST',row_revision=2 WHERE id=$1::uuid",
+    "UPDATE public.trip_source_representations SET remote_state='LOST',row_revision=row_revision+1 WHERE id=$1::uuid",
     [originalId],
   );
   await expect(
@@ -257,8 +275,8 @@ export async function seedAndSealPdf(
   // Seal replay remains a historical receipt; it is never a new qualification decision.
   expect(await makeAuthority().seal(account, trip, q)).toEqual(receipt);
   await alter(
-    "UPDATE public.trip_source_representations SET remote_state='VERIFIED',row_revision=1 WHERE id=$1::uuid",
-    [originalId],
+    "UPDATE public.trip_source_representations SET remote_state='VERIFIED',row_revision=$2 WHERE id=$1::uuid",
+    [originalId, registered ? 2 : 1],
   );
   console.info(
     JSON.stringify({

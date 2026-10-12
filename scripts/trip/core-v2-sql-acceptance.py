@@ -32,16 +32,19 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument("--flight", action="store_true", help="Run Capture to Core Flight SQL acceptance")
 group.add_argument("--source", action="store_true", help="Run the owning Source SQL scenario in a separate fresh clone")
 group.add_argument("--text-runtime", action="store_true", help="Run real local HTTP/pg/TLS TEXT acceptance")
+group.add_argument("--pdf-source", action="store_true", help="Run owning CLOSED PDF custody and derivative registration plus existing joined Core acceptance")
 group.add_argument("--pdf-authority", action="store_true", help="Run CLOSED Source PDF authority acceptance")
 group.add_argument("--native-flight", action="store_true", help="Run native PDF Source authority rejection in a disposable CLOSED fixture")
 group.add_argument("--native-installed", action="store_true", help="Verify exact installed Simulator packet remains owning REVIEW")
+parser.add_argument("--with-pdf-source", action="store_true", help="Install CLOSED owning PDF registration during regression scenarios")
 parser.add_argument("--with-llm", action="store_true", help="Install current CLOSED LLM protected admission before PDF authority")
 parser.add_argument("--with-pdf-authority", action="store_true", help="Install CLOSED PDF authority while testing a non-PDF scenario")
 args = parser.parse_args()
-install_pdf = args.pdf_authority or args.with_pdf_authority
+install_source_pdf = args.pdf_source or args.with_pdf_source
+install_pdf = args.pdf_authority or install_source_pdf or args.with_pdf_authority
 llm_roots = {"flight_activation_reserve_call(jsonb,jsonb)", "external_integration_mark_dispatch(jsonb,jsonb)"}
 llm_changes = []
-scenario = "backend/src/nativeFlightInstalledReview.sql.test.ts" if args.native_installed else "src/data/repositories/captureFlightNativeRepository.test.ts" if args.native_flight else "backend/src/captureFlightCoreV2.sql.test.ts" if args.pdf_authority else "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
+scenario = "backend/src/nativeFlightInstalledReview.sql.test.ts" if args.native_installed else "src/data/repositories/captureFlightNativeRepository.test.ts" if args.native_flight else "backend/src/captureFlightCoreV2.sql.test.ts" if args.pdf_authority or args.pdf_source else "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
 created = False
 network_created = False
 private = tempfile.TemporaryDirectory(prefix="otr-flight-text-")
@@ -83,13 +86,22 @@ try:
         sql((ROOT / "supabase/tests/source-pdf/authority.sql").read_text())
         installed = json.loads(sql(FINGERPRINTS))
         assert all(installed.get(name) == digest for name, digest in before_pdf.items()), "PDF authority changed preexisting functions"
+    if install_source_pdf:
+        sql((ROOT / "supabase/migrations/20261012000300_source_pdf_registration.sql").read_text())
+        pdf_source_after = json.loads(sql(FINGERPRINTS))
+        pdf_source_changes = [n for n, v in installed.items() if pdf_source_after.get(n) != v]
+        assert pdf_source_changes == ["guard_trip_source_mutation()"], repr(pdf_source_changes)
+        sql((ROOT / "supabase/tests/source-pdf/registration.sql").read_text())
+        installed = pdf_source_after
     sql((ROOT / "supabase/tests/core-v2/foundation.sql").read_text())
     sql((ROOT / "supabase/tests/core-v2/candidate-publication.sql").read_text())
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t"
     import os
     env = dict(os.environ, OTR_CORE_OWNED_SQL_FIXTURE=NAME)
-    if args.pdf_authority:
+    if args.pdf_authority or args.pdf_source:
         env["OTR_CORE_PDF_AUTHORITY"] = "1"
+    if args.pdf_source:
+        env["OTR_CORE_PDF_SOURCE_REGISTRATION"] = "1"
     if args.text_runtime:
         cert = pathlib.Path(private.name) / "server.crt"
         key = pathlib.Path(private.name) / "server.key"
@@ -116,13 +128,16 @@ try:
         assert sql("select not flight_admission_enabled from trip_import_admission_gate;").strip() == "t"
     if install_pdf:
         assert sql("select not enabled from trip_source_pdf_gate;").strip() == "t"
+    if args.pdf_source:
+        assert sql("select not enabled from trip_source_command_gate;").strip() == "t"
+        assert sql("select count(*) from trip_source_pdf_registrations;").strip() == "1"
     # Positive fixture scenarios retain disabled allowlists; reset only this owned clone.
     sql("update trip_core_activation_gate set runtime_enabled=false,enabled_commands='{}',enabled_families='{}',enabled_admission_modes='{}';")
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t", "Fixture activation gate was not restored CLOSED"
     after_scenario = json.loads(sql(FINGERPRINTS))
     changed = [name for name, digest in installed.items() if after_scenario.get(name) != digest]
     assert not changed, "Historical function changes during scenario: " + repr(changed)
-    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92] + (["20261012000100_model_task_protected_admission"] if args.with_llm else []) + (["20261012000200_source_pdf_derivative_authority"] if install_pdf else []), "coreHistoricalFunctionsPreserved": len(before), "llmApprovedChangedRoots": llm_changes, "pdfPreexistingFunctionsPreserved": len(before_pdf) if install_pdf else None, "installedFunctionsPreservedDuringScenario": len(installed), "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
+    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92] + (["20261012000100_model_task_protected_admission"] if args.with_llm else []) + (["20261012000200_source_pdf_derivative_authority"] if install_pdf else []) + (["20261012000300_source_pdf_registration"] if install_source_pdf else []), "coreHistoricalFunctionsPreserved": len(before), "llmApprovedChangedRoots": llm_changes, "pdfPreexistingFunctionsPreserved": len(before_pdf) if install_pdf else None, "installedFunctionsPreservedDuringScenario": len(installed), "sourcePdfRegistrationInstalled": install_source_pdf, "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()" if install_source_pdf else None, "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
 finally:
     try:
         if created:

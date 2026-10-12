@@ -396,8 +396,8 @@ it.skipIf(!owned)(
       if (pdf) {
         // Revoked custody cannot authorize a new output; already accepted items are preserved.
         await pdf.alter(
-          "UPDATE public.trip_source_representations SET remote_state='LOST',row_revision=2 WHERE id=$1::uuid",
-          [pdf.originalId],
+          "UPDATE public.trip_source_representations SET remote_state='LOST',row_revision=$2 WHERE id=$1::uuid",
+          [pdf.originalId, pdf.receipt.body.request.originalRowRevision + 1],
         );
         await expect(
           core.source!.withLockedSourcePlan(
@@ -422,8 +422,8 @@ it.skipIf(!owned)(
           ).rows[0].n,
         ).toBe(2);
         await pdf.alter(
-          "UPDATE public.trip_source_representations SET remote_state='VERIFIED',row_revision=2 WHERE id=$1::uuid",
-          [pdf.originalId],
+          "UPDATE public.trip_source_representations SET remote_state='VERIFIED',row_revision=$2 WHERE id=$1::uuid",
+          [pdf.originalId, pdf.receipt.body.request.originalRowRevision + 1],
         );
         await expect(
           core.source!.withLockedSourcePlan(
@@ -438,8 +438,8 @@ it.skipIf(!owned)(
           ),
         ).rejects.toThrow("CONTRACT_UNSUPPORTED");
         await pdf.alter(
-          "UPDATE public.trip_source_representations SET remote_state='VERIFIED',row_revision=1 WHERE id=$1::uuid",
-          [pdf.originalId],
+          "UPDATE public.trip_source_representations SET remote_state='VERIFIED',row_revision=$2 WHERE id=$1::uuid",
+          [pdf.originalId, pdf.receipt.body.request.originalRowRevision],
         );
       }
       expect(Object.keys(flightCommandLeaves(c.facts))).not.toHaveLength(0);
