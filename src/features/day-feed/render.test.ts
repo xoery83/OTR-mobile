@@ -108,6 +108,9 @@ vi.mock("@/data/repositories/tripDayFeedLabRepository", () => ({
 vi.mock("@react-native-community/datetimepicker", () => ({ default: () => null }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
+vi.mock("@/features/flexible-native-gallery/Gallery", () => ({
+  FlexibleRenderer: () => null,
+}));
 vi.mock("./useMinuteClock", () => ({
   useMinuteClock: () => ({ instant: state.instant }),
 }));
