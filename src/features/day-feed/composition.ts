@@ -9,6 +9,10 @@ export const dayRowKey = (itemId: string, role: string, localDate: string) =>
 export type FlexibleContainer = Readonly<{
   id: string;
   itemIds: readonly string[];
+  softWindow?: Readonly<{
+    start?: import("@/domain/trip/tripCoreV2Day").CoreBoundaryView;
+    end?: import("@/domain/trip/tripCoreV2Day").CoreBoundaryView;
+  }>;
   choices: readonly Readonly<{ id: string; scope: "MY" | "GROUP" }>[];
 }>;
 
@@ -42,7 +46,7 @@ export type TransitionProjection = Readonly<{
     }> | null;
   }>;
 }>;
-type Ports = {
+export type DayStreamPorts = {
   focus?: string | null;
   immersive?: string | null;
   flexible?: readonly FlexibleContainer[];
@@ -63,7 +67,7 @@ const relationKey = (identity: RelationIdentity) =>
 export function composeDayStream(
   query: DayQuery & { coreRows?: readonly CoreDayRow[] },
   instant: string,
-  ports: Ports = {},
+  ports: DayStreamPorts = {},
 ) {
   const members = [...query.timed, ...query.nonComparable];
   if (new Set(members.map((r) => r.event.id)).size !== members.length)
@@ -149,7 +153,13 @@ export function composeDayStream(
       key,
       coreRowKeys,
       item,
-      position: item.anchor === null ? ("TNS" as const) : ("TIMELINE" as const),
+      position: query.coreRows
+        ?.filter((r) => r.itemRef === item.event.id)
+        .some((r) => r.position === "BASE")
+        ? ("BASE" as const)
+        : item.anchor === null
+          ? ("TNS" as const)
+          : ("TIMELINE" as const),
       focused: focus === item.event.id,
       nowBefore,
       nowWithin: now.mode === "WITHIN_EVENT_WINDOW" && now.eventId === item.event.id,
@@ -177,6 +187,7 @@ export function composeDayStream(
     nowAfter: now.mode === "BETWEEN_EVENTS" && now.beforeIndex === rows.length,
     containers: blocks.map((b) => ({
       id: b.id,
+      ...(b.softWindow ? { softWindow: b.softWindow } : {}),
       rowKeys: rows.filter((r) => r.containerId === b.id).map((r) => r.key),
       choices: b.choices.filter((c) => c.scope === (ports.choiceScope ?? "MY")),
     })),

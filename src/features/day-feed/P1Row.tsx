@@ -16,11 +16,13 @@ export function P1Row({
   depth,
   onDepth,
   withinMarker,
+  children,
 }: {
   event: DayEvent;
   depth: Depth;
   onDepth: (depth: Depth) => void;
   withinMarker?: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
@@ -128,6 +130,7 @@ export function P1Row({
         {focused || immersive ? (
           <Text style={styles.meta}>{t(`dayFeed.status.${event.status}`)}</Text>
         ) : null}
+        {focused || immersive ? children : null}
         {immersive
           ? event.boundaries.map((b) => (
               <View key={b.role} style={styles.section}>

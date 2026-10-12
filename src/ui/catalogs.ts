@@ -1,4 +1,13 @@
 export const en = {
+  "dayLab.stayScenario": "Synthetic P3 Stay",
+  "dayLab.stayProperty": "Synthetic Harbour Lodge",
+  "dayLab.stayInstructions": "Synthetic instructions: collect the key at reception.",
+  "dayLab.stayProof": "Fixture-only P3 integration proof",
+  "dayLab.stayRange": "{start} → {end} · {nights} nights",
+  "dayLab.stayRole.CHECKIN": "Check-in day",
+  "dayLab.stayRole.CHECKOUT": "Check-out day",
+  "dayLab.stayRole.TONIGHT": "Accommodation base for tonight",
+
   "dayLab.coreDayEmpty": "No supported Core Flight Items match this date.",
   "dayLab.fixtureSource": "Fixture",
   "dayLab.coreSource": "Core DEV Read",
@@ -1748,6 +1757,14 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "dayLab.stayScenario": "合成 P3 住宿",
+  "dayLab.stayProperty": "合成海港旅舍",
+  "dayLab.stayInstructions": "合成说明：请在前台领取钥匙。",
+  "dayLab.stayProof": "仅限测试样例的 P3 集成验证",
+  "dayLab.stayRange": "{start} → {end} · {nights} 晚",
+  "dayLab.stayRole.CHECKIN": "入住日",
+  "dayLab.stayRole.CHECKOUT": "退房日",
+  "dayLab.stayRole.TONIGHT": "今晚住宿基地",
   "dayLab.fixture0": "合成航班",
   "dayLab.fixture1": "合成出发机场",
   "dayLab.fixture2": "合成抵达机场",

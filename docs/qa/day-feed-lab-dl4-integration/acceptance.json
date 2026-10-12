@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "e984ed1bb377518c855af76f0cd9fd6366a73b58",
+  "simulator": "AE11480D-B6B9-402B-BE8A-4F2BBD4D0704",
+  "app": "com.xoery.otrmobile.devtest",
+  "metroSource": "/private/tmp/otr-day-feed-lab-dl4-20261012",
+  "fixturesSelected": [
+    "Nelson Hiking",
+    "Faroe Islands",
+    "Europe Multi-city",
+    "Urban Weekend",
+    "Empty / Sparse Trip",
+    "Synthetic P3 Stay"
+  ],
+  "native": "PASS: P1/P2 Focus and Immersive return; P3 Jan15 check-in, Jan16 base and Jan18 check-out; date switching; NOW/TNS; Light/Dark",
+  "nonzeroScroll": "PASS: Nelson Jan15 swiped from ridge walk to stop3 at top, opened stop6 Focus and Immersive, closed; stop3 stayed at top and stop6 stayed in Focus",
+  "nonzeroScrollScreenshot": "01-nonzero-scroll-after-immersive-return.png",
+  "coreRead": "disabled: no accepted compatible local Core collection; no positive native/live DEV read claimed",
+  "appearanceRestored": "light",
+  "physicalDevice": "not executed"
+}

@@ -1,0 +1,20 @@
+{
+  "simulator": "AE11480D-B6B9-402B-BE8A-4F2BBD4D0704",
+  "app": "com.xoery.otrmobile.devtest",
+  "tripTables": 64,
+  "tripRows": 0,
+  "acceptedCoreCertificates": 0,
+  "syncOperations": 0,
+  "scenarios": [
+    "Nelson Hiking",
+    "Faroe Islands",
+    "Europe Multi-city",
+    "Urban Weekend",
+    "Empty / Sparse Trip",
+    "Synthetic P3 Stay"
+  ],
+  "native": "PASS: six fixture selections; P1/P2 Focus and Immersive return; P3 Jan15 check-in, Jan16 base, Jan18 check-out; light/dark; Core disabled",
+  "nativeNonzeroScroll": "not established in final CUA run; render regression asserts 217 offset and DL1 prior native acceptance",
+  "realCore": "blocked: no accepted local Core collection/authorized session provided",
+  "physical": "not executed"
+}

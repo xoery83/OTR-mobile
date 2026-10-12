@@ -1,13 +1,13 @@
 # CP-FLIGHT-PDF-NATIVE-JOIN-01 — isolated CLOSED joined preparation
 
-Updated 2026-10-12. `codex/cp-flight-pdf-native-join-01` starts at canonical40c5d29.
+Updated 2026-10-12. `codex/cp-flight-pdf-native-join-01` reconciles canonical eb4c8eb (G2 DL4).
 Accepted AUTH02 bba31ff/51256f9 then Native04 94d30a3 combined in isolation.
 Source seal/DTO/profile and Native production bytes stay exact. Only handoff,
 shared fixture and SQL selectors are coordinated. Strict Source-owned profile
 may qualify; ordinary PDFKit/Quartz remains REVIEW with no accepted Items.
 Combined618 PASS/3 explicit skips, SQL20 PASS, standalone Swift/PDFKit9 PASS.
 Typecheck/build/lint/UI guard/format/diff and production-hash preservation PASS.
-G2 DL2, LLM protected admission and DEV TEXT retained; original canonical working
+G2 DL4 shared ports, LLM protected admission and DEV TEXT retained; latest canonical working
 notes are an exact suffix below accepted checkpoint headers. No Stage1 tree merge.
 Report/evidence/exact commit/tree/manifest:
 `trip/implementation/CP_FLIGHT_PDF_NATIVE_JOIN_01_INTEGRATION_READINESS_REPORT.md`.
@@ -94,6 +94,54 @@ Ordinary supplier/Quartz PDFs remain REVIEW. Agent A/B must use the shared contr
 Next: review `trip/implementation/CP_FLIGHT_PDF_AUTH_01_REPORT.md`; preserve concurrent
 Day/Platform/Native work and reconcile this isolated handoff heading at integration.
 
+
+---
+
+# DL4 shared Day Feed Lab — local-main release / maintenance
+
+2026-10-12. Owner accepted DL4 `e984ed1` for controlled integration on exact
+local main `40c5d29`; the source is included by ancestry in the integration
+commit containing this handoff. One production Feed/G2 now hosts the versioned
+Fixture and renderer ports, the original five scenarios and synthetic P3 Stay.
+G2 owns the shared Shell/contracts/Focus/NOW/composition regressions; P3–P6,
+Flexible and TTR own their fixtures, typed facts and visual renderers. See
+`architecture/OTR_DAY_FEED_LAB_SHARED_HANDOFF.md` and the integration report.
+No remote push or Product/Hosted/Provider activation. Core DEV Read still needs
+an authorized accepted local collection; P3 stays fixture-only. Next checkpoint:
+feature-owned P3 Accommodation work, then P4/P5 and P6, with Core/Flight/Flexible/
+TTR authority handled in their own gates.
+
+---
+
+# DL4 Day Feed Lab shared port — isolated / Owner Review
+
+2026-10-12. Owner-approved DL2 `f5cc324` is integrated into local canonical main
+at `40c5d29a9f3d6232003393af1ae516a339a46b56`, after reconciling newer
+main `0379453`. Dirty/staged/untracked canonical bytes were preserved; no push.
+The DL4 work is isolated on `codex/day-feed-lab-dl4`. The versioned
+`day-feed-lab/1` Fixture contribution and `day-feed-renderer/1` adapter let
+Experience workstreams use the production Feed/G2 without their own Shell.
+All five original synthetic Trips remain; a sixth P3 three-night Stay proves
+owning CoreDayRow roles/identity, TNS/BASE, shared Focus/Immersive and a typed
+temporary renderer. Flexible/TTR ports remain dormant presentation seams.
+
+Focused 84 PASS; full 3749 PASS/same two baseline FAIL/21 skipped versus exact
+integrated-main 3743 PASS/same two/21. Typecheck, full lint/UI guard, format,
+diff and Release iOS export PASS. Debug Simulator exercised all six Fixtures,
+date switching, P1/P2/P3 Focus/Immersive return, NOW/TNS and Light/Dark. Native
+nonzero scroll in the final DL4 run was not established; render regression and
+accepted DL1 native scroll evidence remain. Task Simulator has 64 Trip tables,
+zero Trip rows, zero accepted Core certificates and zero sync operations. Thus
+positive native Core and live DEV reads are blocked by absent authorized local
+session/collection, and no physical device was run. P3 remains synthetic proof,
+not final P3 Experience acceptance.
+
+Review: `architecture/OTR_DAY_FEED_LAB_DL4_REPORT.md`; usage:
+`architecture/OTR_DAY_FEED_LAB_INTEGRATION_GUIDE.md`; native evidence:
+`qa/day-feed-lab-dl4/`. Next checkpoint is Owner Review of the isolated DL4
+port, then separately approved generic owning Core-to-Feed read and P3 design.
+Flight E2E, Flexible/TTR ownership, Hosted/provider and Production gates remain
+separate and closed.
 
 ---
 

@@ -288,3 +288,13 @@ G2 Composer; sparse Flight retains existing P1 presentation. Other Core families
 are explicitly unsupported. Accepted Trip discovery is local and partial. No
 read installation, remote refresh, canonical write, Seed or provider activation
 is included. See `architecture/OTR_DAY_FEED_LAB_DL2_READ_PORT.md`.
+
+## Authorized DL4 shared Lab port
+
+Owner authorized DL4 on 2026-10-12 after DL2 integration. Independent Experience
+workstreams can contribute versioned synthetic Fixtures, typed supplemental facts,
+explicit renderer adapters and dormant Flexible/TTR presentation ports to the same
+Debug-only production Feed. A minimal three-night P3 Stay demonstrates the shared
+read/renderer/Focus/Immersive path using generic geometry. This is fixture proof;
+final P3–P6 designs and accepted generic Core runtime reads remain separately
+scoped. Integration guide: `architecture/OTR_DAY_FEED_LAB_INTEGRATION_GUIDE.md`.
