@@ -1,3 +1,22 @@
+# CP-FLIGHT-PDF-SOURCE-03 — isolated integration preparation / Owner Review
+
+2026-10-13. `codex/cp-flight-pdf-source-03` prepares exact accepted SOURCE-02
+ad77231/tree9b6d5cf against canonical1114ccc (remote9ca16d3).
+All accepted production/fixture/runner bytes unchanged; only this short handoff
+heading reconciles state. G2 Flexible/DL4, LLM, DEV TEXT and Native remain exact.
+Order: Core85–92 → LLM001 → PDF002 → Source Registration003; gates CLOSED/NOLOGIN.
+Focused218 PASS/3 documented skips; six actual disposable SQL scenarios20 PASS,
+including owning PDF→two qualified revision2 Items/read2/SQLite54/current Day,
+Source recovery, TEXT HTTP/pg/TLS and retained Native/Quartz REVIEW (Items/seals0).
+Typecheck/build/touched lint/UI guard/format/diff PASS. Canonical main/index and
+five concurrent dirty/untracked files preserved. No authority/schema/transport
+or Native code change; no canonical merge/push or runtime activation.
+Report/manifest/evidence: `trip/implementation/CP_FLIGHT_PDF_SOURCE_03_REPORT.md`.
+Next: separate Owner integration review; Agent A/B custody/transport/native and
+Hosted acquisition/activation inventories remain their existing gates.
+
+---
+
 # CP-FLIGHT-PDF-SOURCE-02 — isolated owning Source closure / Owner Review
 
 2026-10-12. `codex/cp-flight-pdf-source-02` closes finite Source PDF VERIFY
