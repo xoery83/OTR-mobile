@@ -11,6 +11,9 @@ import {
 import type { z } from "zod";
 import type { FlightCandidateSet } from "./flightInterpretation";
 
+import { assessFlightInterpretationQuality } from "./flightInterpretationQuality";
+import { decideFlightEnrichment } from "./flightEnrichmentDecision";
+
 // Private, transient evidence view; no Document identity or attachment acquisition is inferred.
 export async function projectFlightEvidenceCoverage(
   context: AccountRequestContext,
@@ -18,6 +21,7 @@ export async function projectFlightEvidenceCoverage(
   supplied: InterpretationRequest["materials"],
   sha256: ImportHash,
   getAccountId: () => Promise<string>,
+  qualityOptions?: Parameters<typeof assessFlightInterpretationQuality>[1],
 ) {
   source = structuredClone(source);
   const materials = supplied.map((m) => interpretationMaterialSchema.parse(m));
@@ -63,9 +67,38 @@ export async function projectFlightEvidenceCoverage(
           : null,
     };
   }
+  const quality = assessFlightInterpretationQuality(source, qualityOptions);
   const result = {
+    quality,
+    enrichment: decideFlightEnrichment(quality),
     access: "OWNER_PRIVATE" as const,
     materials,
+    interpreted: source.candidates.map((candidate) => ({
+      candidateId: candidate.id,
+      // Candidate sort order is opaque; tokens and byte locators retain source ordering.
+      observationTokens: candidate.observation_tokens,
+      fields: Object.entries(candidate.occurrence).map(([path, field]) => ({
+        path,
+        knowledge: field.knowledge,
+        value: field.value,
+        observations: field.observations.map((observation) => ({
+          ...observation,
+          evidence: observation.fragment_ids.map((id) => {
+            const fragment = source.fragments.find((f) => f.id === id);
+            if (!fragment) throw new Error("EVIDENCE_INVALID");
+            const retained = evidence(fragment.locator);
+            if (
+              fragment.source_id !== retained.pin.source_id ||
+              fragment.representation_id !== retained.pin.representation_id ||
+              fragment.material_revision !== retained.pin.material_revision ||
+              (retained.raw !== null && retained.raw !== observation.raw)
+            )
+              throw new Error("EVIDENCE_INVALID");
+            return retained;
+          }),
+        })),
+      })),
+    })),
     coverage: source.coverage.map((input) => ({
       ...input,
       unmapped: input.ignored.map(evidence),

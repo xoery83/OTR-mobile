@@ -1,0 +1,123 @@
+import { randomUUID } from "node:crypto";
+import { expect, it } from "vitest";
+import { captureFlightFixture } from "./__fixtures__/captureFlightCoreV2";
+import { advanceAccountGeneration } from "../auth/accountGeneration";
+import {
+  buildCaptureFlightPublicationV2,
+  buildCaptureFlightSourcePlanV2,
+} from "./captureFlightCoreV2";
+import {
+  publicationTestHash as hash,
+  publicationTestAirport,
+} from "../../../backend/src/__fixtures__/tripCoreV2CandidatePublication";
+import { extractCoreFlightPublication } from "../../../backend/src/tripCoreV2CandidatePublication";
+
+it("preserves two Candidate IDs, complete Input hashes and exact Capture byte locators; owning publication qualifies both", async () => {
+  const f = await captureFlightFixture();
+  const p = f.built.publication;
+  expect(p.candidates.map((c) => c.candidateId)).toEqual(
+    f.set.candidates.map((c) => c.id),
+  );
+  expect(p.inputCatalogSha256).toBe(f.set.input_sha256);
+  const sealed = await extractCoreFlightPublication(
+    p,
+    f.batch.request.materials,
+    f.context.accountId,
+    f.context.tripId,
+    hash,
+    publicationTestAirport,
+  );
+  expect(sealed.sealed.map((c) => c.status)).toEqual(["QUALIFIED", "QUALIFIED"]);
+  expect(
+    p.evidence.every((e) =>
+      f.set.fragments.some(
+        (fragment) => JSON.stringify(fragment.locator) === JSON.stringify(e.locator),
+      ),
+    ),
+  ).toBe(true);
+  expect(
+    p.candidates.every(
+      (c) => !Object.keys(c).some((k) => /purpose|qualified|certificate/i.test(k)),
+    ),
+  ).toBe(true);
+});
+it("keeps stable caller IDs and receipt-dependent qualification without a second writer", async () => {
+  const f = await captureFlightFixture();
+  const identities = f.built.publication.candidates.map((c) => ({
+    candidateId: c.candidateId,
+    itemId: randomUUID(),
+    createSlotId: randomUUID(),
+    createOperationId: randomUUID(),
+    qualifySlotId: randomUUID(),
+    qualifyOperationId: randomUUID(),
+  }));
+  const planId = randomUUID();
+  const first = buildCaptureFlightSourcePlanV2(f.built.publication, planId, identities);
+  expect(buildCaptureFlightSourcePlanV2(f.built.publication, planId, identities)).toEqual(
+    first,
+  );
+  expect(first.slots).toHaveLength(4);
+  expect(
+    first.slots
+      .filter((s) => s.command === "QUALIFY_FLIGHT")
+      .every((s) => s.baseVector === null && s.dependsOn.length === 1),
+  ).toBe(true);
+  expect(new Set(first.slots.map((s) => s.target.id)).size).toBe(2);
+  expect(() =>
+    buildCaptureFlightSourcePlanV2(f.built.publication, planId, [
+      identities[0],
+      identities[0],
+    ]),
+  ).toThrow("INVALID_SOURCE_PLAN");
+});
+it("unqualified airports are REVIEW under the owning extractor", async () => {
+  const f = await captureFlightFixture();
+  const sealed = await extractCoreFlightPublication(
+    f.built.publication,
+    f.batch.request.materials,
+    f.context.accountId,
+    f.context.tripId,
+    hash,
+    async () => null,
+  );
+  expect(sealed.sealed.every((c) => c.status === "REVIEW")).toBe(true);
+});
+it("retiming siblings stay REVIEW rather than dropping the competing observation", async () => {
+  const f = await captureFlightFixture(
+    "NZ1 AKL→CHC 2026-12-17 dep=10:30\nNZ1 AKL→CHC 2026-12-17 dep=11:30",
+  );
+  expect(f.built.publication.candidates).toHaveLength(2);
+  const sealed = await extractCoreFlightPublication(
+    f.built.publication,
+    f.batch.request.materials,
+    f.context.accountId,
+    f.context.tripId,
+    hash,
+    publicationTestAirport,
+  );
+  expect(sealed.sealed.every((c) => c.status === "REVIEW")).toBe(true);
+});
+it("modified Source bytes and switched accounts fail before publication", async () => {
+  const f = await captureFlightFixture();
+  await expect(
+    buildCaptureFlightPublicationV2(
+      f.context,
+      f.set,
+      f.batch.request.materials.map((m) => ({ ...m, text: m.text + "x" })),
+      randomUUID(),
+      hash,
+      f.getAccountId,
+    ),
+  ).rejects.toThrow("EVIDENCE_INPUT_MISMATCH");
+  advanceAccountGeneration();
+  await expect(
+    buildCaptureFlightPublicationV2(
+      f.context,
+      f.set,
+      f.batch.request.materials,
+      randomUUID(),
+      hash,
+      f.getAccountId,
+    ),
+  ).rejects.toThrow("Account changed");
+});

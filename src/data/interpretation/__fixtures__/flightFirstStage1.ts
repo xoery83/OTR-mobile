@@ -1,0 +1,51 @@
+// Sanitized structured-text equivalents only; neither fixture claims PDF/OCR execution.
+export const airNzReturnText = [
+  "Subject: NZ999 booking confirmation (filename-only number)",
+  "Booking reference: SYNTHETIC-RETURN",
+  "Flight AKL→NSN 2030-12-14 dep=09:00 arr=10:35",
+  "Flight NSN→AKL 2030-12-22 dep=11:55 arr=13:25",
+  "Attachments mentioned: synthetic-eticket.pdf; synthetic-invoice.pdf (not supplied)",
+].join("\n");
+
+export const deltaRebookingText = [
+  "245 miles",
+  "Flight Rebooked — synthetic version 2",
+  "Itinerary: AKL→SYD→LAX→MSP→MDW",
+  "Itinerary departure: 06:00; arrival: 16:47; duration: 28h47",
+  "QF0140",
+  "DL0040",
+  "DL0799",
+  "DL4714",
+  "700",
+  "On Time (display label only)",
+  "Layout: cropped; per-leg airport pairing and timing unresolved",
+].join("\n");
+
+export const airNzTableText = [
+  "Subject: NZ999 (unassigned clue)",
+  "Booking reference: SYNTHETIC-TABLE-ORDER",
+  "Your flights",
+  "Auckland to Nelson",
+  "Departure",
+  "9:00 AM",
+  "14 Dec 2030",
+  "Auckland",
+  "Domestic",
+  "Arrival",
+  "10:35 AM",
+  "14 Dec 2030",
+  "Nelson",
+  "Domestic",
+  "Nelson to Auckland",
+  "Departure",
+  "11:55 AM",
+  "22 Dec 2030",
+  "Nelson",
+  "Domestic",
+  "Arrival",
+  "1:25 PM",
+  "22 Dec 2030",
+  "Auckland",
+  "Domestic",
+  "Mentioned e-ticket and invoice are not supplied",
+].join("\n");

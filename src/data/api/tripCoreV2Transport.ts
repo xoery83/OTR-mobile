@@ -23,6 +23,16 @@ import {
   type CoreCandidatePublicationV2,
   type CoreCandidatePublicationResult,
 } from "../../domain/trip/tripCoreV2CandidatePublication";
+import {
+  coreSourcePrepareV2Schema,
+  coreSourcePreparationResultV2Schema,
+  coreSourceFinalizeV2Schema,
+  coreSourceFinalizeResultV2Schema,
+  type CoreSourcePrepareV2,
+  type CoreSourcePreparationResultV2,
+  type CoreSourceFinalizeV2,
+} from "../../domain/trip/tripCoreV2SourceContract";
+import { coreHashValue } from "../../domain/trip/tripCoreV2Read";
 import type { ImportHash } from "../../domain/trip/flightImportReview";
 import {
   validateCoreReadCollection,
@@ -54,13 +64,27 @@ export type CoreCandidatePublicationTransport = {
     input: CoreCandidatePublicationV2,
   ): Promise<CoreCandidatePublicationResult>;
 };
+export type CoreSourcePlanTransport = {
+  prepareSourcePlan(
+    ctx: AccountRequestContext,
+    input: CoreSourcePrepareV2,
+  ): Promise<CoreSourcePreparationResultV2>;
+  finalizeSourceSlot(
+    ctx: AccountRequestContext,
+    planId: string,
+    input: CoreSourceFinalizeV2,
+  ): Promise<import("zod").infer<typeof coreSourceFinalizeResultV2Schema>>;
+};
 // Transport only. Accepted apply, queue ownership and retry stay in existing data layers.
 export function createCoreV2Transport(
   getAccountId: () => Promise<string>,
   hash: ImportHash,
   options: Omit<ApiClientOptions, "accessToken" | "accessTokenProvider"> = {},
   tokenProvider?: Parameters<typeof createAuthenticatedApiClient>[1],
-): CoreSyncTransport & CoreReadTransport & CoreCandidatePublicationTransport {
+): CoreSyncTransport &
+  CoreReadTransport &
+  CoreCandidatePublicationTransport &
+  CoreSourcePlanTransport {
   const api = (ctx: AccountRequestContext, maximum = 1048576) =>
     createAuthenticatedApiClient(
       {
@@ -97,6 +121,91 @@ export function createCoreV2Transport(
     return { projection: "FULL", domainReceiptId: output.domainReceiptId, receipt: r };
   }
   return {
+    async prepareSourcePlan(ctx, input) {
+      await assertAccountRequestContext(ctx, getAccountId);
+      const proposed = coreSourcePrepareV2Schema.parse(input);
+      const result = await api(ctx).post(
+        path(ctx) + "/source-plans/prepare",
+        proposed,
+        coreSourcePreparationResultV2Schema,
+        headers,
+      );
+      await assertAccountRequestContext(ctx, getAccountId);
+      if (
+        result.plan.accountId !== ctx.accountId ||
+        result.plan.tripId !== ctx.tripId ||
+        result.plan.planId !== proposed.planId ||
+        result.plan.sourceId !== proposed.sourceId ||
+        result.plan.sourceRevision !== proposed.sourceRevision ||
+        result.plan.mode !== proposed.mode ||
+        result.plan.policyVersion !== proposed.policyVersion ||
+        [...result.plan.candidateIds].sort().join("|") !==
+          [...proposed.candidateIds].sort().join("|")
+      )
+        throw new Error("CORE_SOURCE_PLAN_SCOPE_MISMATCH");
+      for (const command of result.readyCommands) {
+        validateCoreCommand(command);
+        const slot = proposed.slots.find((s) => s.operationId === command.operationId);
+        const saved = result.plan.slots.find(
+          (s) => s.operationId === command.operationId,
+        );
+        if (
+          !slot ||
+          !saved ||
+          command.tripId !== ctx.tripId ||
+          command.target.id !== slot.target.id ||
+          command.target.kind !== slot.target.kind ||
+          command.command !== slot.command ||
+          command.admission.sourceIntentId !== slot.slotId ||
+          command.admission.mode !== proposed.mode ||
+          command.admission.policyVersion !== proposed.policyVersion ||
+          saved.slotId !== slot.slotId ||
+          saved.candidateId !== slot.candidateId ||
+          saved.target.existingId !== slot.target.id ||
+          saved.state !== "READY" ||
+          saved.intentSha256 !==
+            (await coreHashValue("otr-trip-core-intent-v2", command, hash)) ||
+          canonicalCoreJson(
+            command.payload as import("../../domain/trip/tripCoreV2Json").Json,
+          ) !== canonicalCoreJson(slot.payload) ||
+          (slot.baseVector !== null &&
+            canonicalCoreJson(command.baseVector) !== canonicalCoreJson(slot.baseVector))
+        )
+          throw new Error("CORE_SOURCE_PLAN_SCOPE_MISMATCH");
+      }
+      if (
+        new Set(result.readyCommands.map((c) => c.operationId)).size !==
+          result.readyCommands.length ||
+        result.reviewSlots.some(
+          (s) => !proposed.slots.some((p) => p.slotId === s.slotId),
+        ) ||
+        result.plan.slots.some(
+          (s) =>
+            !proposed.slots.some(
+              (p) =>
+                p.slotId === s.slotId &&
+                p.candidateId === s.candidateId &&
+                p.operationId === s.operationId,
+            ),
+        )
+      )
+        throw new Error("CORE_SOURCE_PLAN_SCOPE_MISMATCH");
+      await assertAccountRequestContext(ctx, getAccountId);
+      return result;
+    },
+    async finalizeSourceSlot(ctx, planId, input) {
+      await assertAccountRequestContext(ctx, getAccountId);
+      const result = await api(ctx).post(
+        path(ctx) + "/source-plans/" + coreUuid.parse(planId) + "/finalize",
+        coreSourceFinalizeV2Schema.parse(input),
+        coreSourceFinalizeResultV2Schema,
+        headers,
+      );
+      await assertAccountRequestContext(ctx, getAccountId);
+      if (result.slotId !== input.slotId)
+        throw new Error("CORE_SOURCE_PLAN_SCOPE_MISMATCH");
+      return result;
+    },
     async collection(ctx) {
       await assertAccountRequestContext(ctx, getAccountId);
       const bundle = await api(ctx, 65 * 1048576).get(
