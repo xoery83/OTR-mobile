@@ -70,6 +70,7 @@ create function public.trip_source_pdf_original_begin(actor uuid,raw text,attemp
  select * into s from public.trip_sources where id=o.source_id;
  r:=public.trip_source_assert_pins(o);
  if r.mime_type<>'application/pdf' or r.byte_count>65536 or s.current_material_revision<>o.material_revision or s.lifecycle<>'ACTIVE' or s.retention_state<>'RETAINED' then raise exception 'PDF_CONTEXT_STALE';end if;
+ if exists(select 1 from public.trip_source_operations where source_id=s.id and representation_id=r.id and id<>o.id and phase<>'FINAL') then raise exception 'SOURCE_IO_UNAVAILABLE';end if;
  perform public.trip_source_attempt_start(actor,o.trip_id,o.source_id,o.id,o.operation_key,o.operation_sha256,o.phase,o.attempt_generation,o.attempt_id,attempt);
  return jsonb_build_object('original',to_jsonb(r));
 end$$;
@@ -101,6 +102,7 @@ create function public.trip_source_pdf_registration_context(actor uuid,trip uuid
  select * into v from public.trip_source_revisions where source_id=s.id and material_revision=s.current_material_revision for share;
  select * into o from public.trip_source_operations where id=(q->>'verificationOperationId')::uuid;
  if r.id is null or v.source_id is null or o.id is null or s.current_material_revision is distinct from (q->>'sourceRevision')::bigint or s.row_revision is distinct from (q->>'sourceRowRevision')::bigint or v.retention_state<>'RETAINED' or v.original_representation_ids<>array[r.id] or r.row_revision is distinct from (q->>'originalRowRevision')::bigint or r.role<>'ORIGINAL' or r.material_kind<>'BINARY' or r.mime_type<>'application/pdf' or r.remote_state<>'VERIFIED' or r.retention_state<>'RETAINED' or r.introduced_revision>s.current_material_revision or o.command<>'VERIFY_REPRESENTATION' or o.phase<>'FINAL' or o.outcome<>'APPLIED' or o.actor_account_id<>actor or o.trip_id<>trip or o.source_id<>s.id or o.representation_id<>r.id or o.result_material_revision<>s.current_material_revision or o.result_source_row_revision<>s.row_revision or o.result_representation_row_revision<>r.row_revision or o.bound_payload_sha256 is distinct from r.payload_sha256 or o.bound_byte_count is distinct from r.byte_count or o.bound_mime_type is distinct from r.mime_type or o.result_verified_at is distinct from r.verified_at or o.result_remote_state<>'VERIFIED' or o.result_sha256 is distinct from q->>'verificationResultSha256' then raise exception 'PDF_CONTEXT_STALE';end if;
+ if exists(select 1 from public.trip_source_operations where representation_id=r.id and phase<>'FINAL') then raise exception 'SOURCE_IO_UNAVAILABLE';end if;
  return to_jsonb(r);
 end$$;
 create function public.trip_source_pdf_registration_commit(b jsonb,digest text,t text) returns jsonb language plpgsql security definer set search_path=pg_catalog as $$declare q jsonb:=b->'request';actor uuid:=(b->>'accountId')::uuid;trip uuid:=(b->>'tripId')::uuid;r jsonb;prior jsonb;begin

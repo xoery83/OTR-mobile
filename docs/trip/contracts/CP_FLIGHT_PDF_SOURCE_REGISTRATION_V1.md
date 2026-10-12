@@ -24,7 +24,9 @@ Exact replay precedes CAS but repeats current read ownership/membership checks.
 The receipt records producer/profile/hash/map and original verification receipt;
 it grants no Core qualification. The existing independent PDF seal must still pass
 before Source-wide publication, Run/Input pins, purpose/airport/SOURCE_INSTANT and
-Canonical admission. Old stale/lost/revoked receipts remain historical only.
+Canonical admission. Old stale/lost/revoked receipts remain historical only. Fresh owning operations
+fail closed while another non-FINAL original operation exists; IO_UNKNOWN is never
+reclaimed or converted into quiescence.
 
 A forward-only migration admits only the representation mutations necessary for
 these two server-only commands: current PENDING strict PDF ORIGINAL → VERIFIED

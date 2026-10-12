@@ -146,6 +146,65 @@ export async function registerPendingPdfFixture(
       "ALTER TABLE public.trip_source_pdf_gate DROP CONSTRAINT trip_source_pdf_gate_enabled_check",
     );
     await admin.lease.query("UPDATE public.trip_source_pdf_gate SET enabled=true");
+    const pending = {
+      ...verify,
+      operation_id: randomUUID(),
+      operation_key: randomUUID(),
+    };
+    pending.operation_sha256 = await importDigest(
+      "otr-source-command-v1",
+      [
+        1,
+        pending.command,
+        pending.operation_id,
+        pending.operation_key,
+        actor,
+        trip,
+        source,
+        [1, 1, ["ACTIVE", "RETAINED"], original, 1, ["PENDING", "RETAINED"]],
+      ],
+      hash,
+    );
+    await connection.withLease((l) =>
+      l.query("SELECT public.trip_source_pdf_original_begin($1::uuid,$2,$3::uuid)", [
+        actor,
+        canonicalCoreJson(pending),
+        randomUUID(),
+      ]),
+    );
+    await admin.lease.query(
+      "ALTER TABLE public.trip_source_operations DISABLE TRIGGER USER",
+    );
+    await admin.lease.query(
+      "UPDATE public.trip_source_operations SET phase='IO_UNKNOWN' WHERE id=$1::uuid",
+      [pending.operation_id],
+    );
+    await admin.lease.query(
+      "ALTER TABLE public.trip_source_operations ENABLE TRIGGER USER",
+    );
+    await expect(api().verifyOriginal(actor, trip, verify)).rejects.toThrow(
+      "SOURCE_IO_UNAVAILABLE",
+    );
+    expect(
+      (
+        await admin.lease.query(
+          "SELECT phase FROM public.trip_source_operations WHERE id=$1::uuid",
+          [pending.operation_id],
+        )
+      ).rows[0].phase,
+    ).toBe("IO_UNKNOWN");
+    expect(reads).toBe(0);
+    // Remove only this synthetic negative-fixture operation; no producer quiescence/recovery is claimed.
+    await admin.lease.query(
+      "ALTER TABLE public.trip_source_operations DISABLE TRIGGER USER",
+    );
+    await admin.lease.query(
+      "DELETE FROM public.trip_source_operations WHERE id=$1::uuid",
+      [pending.operation_id],
+    );
+    await admin.lease.query(
+      "ALTER TABLE public.trip_source_operations ENABLE TRIGGER USER",
+    );
     await rm(file);
     await expect(api().verifyOriginal(actor, trip, verify)).rejects.toThrow("ENOENT");
     expect(
