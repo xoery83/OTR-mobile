@@ -19,7 +19,7 @@ import {
   type CoreActor,
   type CoreGraph,
 } from "../../domain/trip/tripCoreV2Mutation";
-import { coreMirrorKey } from "../../domain/trip/tripCoreV2Graph";
+import { coreMirrorKey, validateCoreGraph } from "../../domain/trip/tripCoreV2Graph";
 import { projectCoreItem } from "../../domain/trip/tripCoreV2Views";
 import type { CoreReadTransport } from "../api/tripCoreV2Transport";
 import { projectCoreDay } from "../../domain/trip/tripCoreV2Day";
@@ -32,6 +32,21 @@ export type CoreDatabase = Pick<
 export type CoreRefresh = AccountRequestContext & {
   refreshGeneration: number;
   accessRevision: number;
+};
+export type CoreAcceptedCertificate = {
+  epoch: string;
+  revision: string;
+  access_revision: number;
+  applied_generation: number;
+  actor_person_binding_hash: string;
+  roster_hash: string;
+  manifest_sha256: string;
+};
+export type CoreAcceptedSnapshot = {
+  graph: CoreGraph;
+  actor: CoreActor;
+  certificate: CoreAcceptedCertificate;
+  participatingPersonIds: string[];
 };
 function fieldType(schema: any): string {
   while (["nullable", "optional"].includes(schema.def.type))
@@ -105,6 +120,58 @@ export function createTripCoreV2Repository(
     }
     await assertContext(ctx);
     return graph;
+  }
+  // Accepted collection only: pending predictions never become Day Feed authority.
+  async function acceptedSnapshot(
+    ctx: AccountRequestContext,
+  ): Promise<CoreAcceptedSnapshot | null> {
+    return withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      let result: CoreAcceptedSnapshot | null = null;
+      await database.withTransactionAsync(async () => {
+        const current = await scope(ctx);
+        const certificate = await database.getFirstAsync<CoreAcceptedCertificate>(
+          "SELECT epoch,revision,access_revision,applied_generation,actor_person_binding_hash,roster_hash,manifest_sha256 FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
+          ctx.accountId,
+          ctx.tripId,
+        );
+        if (!certificate) return;
+        if (certificate.access_revision !== current?.access_revision)
+          throw new Error("CORE_READ_ACCESS_MISMATCH");
+        const bindings = await database.getAllAsync<{
+          person_id: string;
+          linked_account_id: string | null;
+          active: number;
+          participating: number;
+        }>(
+          "SELECT person_id,linked_account_id,active,participating FROM trip_core_person_bindings WHERE account_id=? AND trip_id=? ORDER BY person_id",
+          ctx.accountId,
+          ctx.tripId,
+        );
+        const own = bindings.filter(
+          (b) => b.active && b.linked_account_id === ctx.accountId,
+        );
+        if (own.length > 1) throw new Error("CORE_PERSON_BINDING_MISMATCH");
+        result = {
+          graph: validateCoreGraph(await readGraph(ctx), ctx.tripId, true),
+          actor: {
+            accountId: ctx.accountId,
+            tripId: ctx.tripId,
+            active: true,
+            canManageShared: false,
+            personId: own[0]?.person_id ?? null,
+            personIds: bindings.filter((b) => b.active).map((b) => b.person_id),
+          },
+          certificate,
+          participatingPersonIds: bindings
+            .filter((b) => b.active && b.participating)
+            .map((b) => b.person_id),
+        };
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      return result;
+    });
   }
   async function enqueue(ctx: AccountRequestContext, input: unknown) {
     const command = validateCoreCommand(input);
@@ -518,6 +585,7 @@ export function createTripCoreV2Repository(
   return {
     captureContext,
     readGraph,
+    acceptedSnapshot,
     item,
     refresh,
     resume,

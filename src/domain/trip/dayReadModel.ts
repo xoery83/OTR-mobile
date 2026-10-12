@@ -232,7 +232,9 @@ function hasUncertainty(event: DayEvent) {
     )
   );
 }
-export function unresolvedCandidates(projection: DayProjection): DayEvent[] {
+export function unresolvedCandidates(
+  projection: Pick<DayProjection, "events">,
+): DayEvent[] {
   return projection.events.filter(hasUncertainty).sort(authored);
 }
 export function itemsForLocalDate(

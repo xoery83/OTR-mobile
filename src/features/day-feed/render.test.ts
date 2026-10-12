@@ -493,3 +493,45 @@ it("F1-R1: incomplete Browse retains accepted Compact A three-row geometry", () 
   ])
     expect(state.nodes.some((n) => n.testID === id)).toBe(true);
 });
+
+it("v2 qualified unknown clocks and names omit empty rows in Browse, large Focus and Immersive", () => {
+  const f = flightPresentation(
+    {
+      ...flight,
+      boundaries: flight.boundaries.map((b) => ({
+        ...b,
+        local_time: null,
+        instant: null,
+        source_instant: null,
+        quality: "UNKNOWN",
+        clock_precision: null,
+      })),
+    },
+    [],
+    {
+      qualification: "QUALIFIED",
+      flightNumberLiteral: "NZ1",
+      services: [],
+      endpoints: {
+        ORIGIN: { code: "AKL", name: null, terminal: null },
+        DESTINATION: { code: "PVG", name: null, terminal: null },
+      },
+    },
+  )!;
+  let html = render(createElement(FlightRows, { fixture: f }));
+  expect(html).toContain("AKL");
+  expect(html).toContain("PVG");
+  expect(html).not.toContain('data-testid="flight-row-2"');
+  expect(html).not.toContain('data-testid="flight-row-3"');
+  state.scale = 2;
+  const focused = createElement(FlightRows, { fixture: f, focused: true });
+  render(focused);
+  state.nodes
+    .find((p) => p.testID === "flight-responsive-focus")!
+    .onLayout({ nativeEvent: { layout: { width: 360 } } });
+  html = render(focused);
+  expect(html).not.toContain('data-testid="flight-large-times"');
+  expect(html).not.toContain("00:00");
+  html = render(createElement(FlightRows, { fixture: f, immersive: true }));
+  expect(html).not.toContain("00:00");
+});

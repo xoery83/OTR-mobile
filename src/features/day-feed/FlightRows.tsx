@@ -58,6 +58,7 @@ export function FlightRows({
     value ? t("flight.terminal", { terminal: value }) : null;
   const arrivalTime = arr?.local_time?.slice(0, 5);
   const duration = durationLabel(durationMinutes(f));
+  const legacyGeometry = f.qualification === undefined;
   if (focused && largeText && !immersive) {
     const route = t("flight.itinerary", {
       origin: airport(f, originRole),
@@ -90,30 +91,44 @@ export function FlightRows({
             >
               {route}
             </Text>
-            <Text
-              testID="flight-large-times"
-              style={s.focusTimes}
-              accessibilityLabel={`${airport(f, originRole)} ${dep?.local_time?.slice(0, 5)} · ${airport(f, destinationRole)} ${arr?.local_time?.slice(0, 5)}`}
-              onTextLayout={({ nativeEvent }) => {
-                if (nativeEvent.lines.length > 1) setRowsFit(false);
-              }}
-            >
-              {times}
-            </Text>
+            {legacyGeometry || dep?.local_time || arr?.local_time ? (
+              <Text
+                testID="flight-large-times"
+                style={s.focusTimes}
+                accessibilityLabel={`${airport(f, originRole)} ${dep?.local_time?.slice(0, 5)} · ${airport(f, destinationRole)} ${arr?.local_time?.slice(0, 5)}`}
+                onTextLayout={({ nativeEvent }) => {
+                  if (nativeEvent.lines.length > 1) setRowsFit(false);
+                }}
+              >
+                {times}
+              </Text>
+            ) : null}
             {withinMarker}
             <Text style={s.meta}>
               {[flightNumber(f), durationLabel(durationMinutes(f))]
                 .filter(Boolean)
                 .join(" · ")}
             </Text>
-            <Text
-              style={s.meta}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              accessibilityLabel={`${origin.name} · ${destination.name}`}
-            >
-              {origin.name} · {destination.name}
-            </Text>
+            {legacyGeometry || origin.name || destination.name ? (
+              <Text
+                style={s.meta}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                accessibilityLabel={
+                  legacyGeometry
+                    ? `${origin.name} · ${destination.name}`
+                    : [origin.name, destination.name].filter(Boolean).join(" · ")
+                }
+              >
+                {legacyGeometry ? (
+                  <>
+                    {origin.name} · {destination.name}
+                  </>
+                ) : (
+                  [origin.name, destination.name].filter(Boolean).join(" · ")
+                )}
+              </Text>
+            ) : null}
             {origin.terminal || destination.terminal ? (
               <View style={s.expenseRow}>
                 {origin.terminal ? (
@@ -132,14 +147,18 @@ export function FlightRows({
         ) : (
           <View testID="flight-large-stacked" style={s.rows}>
             <Text style={s.airport}>{airport(f, originRole)}</Text>
-            <Text style={s.focusTimes}>{dep?.local_time?.slice(0, 5)}</Text>
+            {legacyGeometry || dep?.local_time ? (
+              <Text style={s.focusTimes}>{dep?.local_time?.slice(0, 5)}</Text>
+            ) : null}
             {withinMarker}
             <Text style={s.meta} numberOfLines={1} ellipsizeMode="tail">
               {origin.name}
             </Text>
             {origin.terminal ? <Text style={s.meta}>{term(origin.terminal)}</Text> : null}
             <Text style={s.airport}>{airport(f, destinationRole)}</Text>
-            <Text style={s.focusTimes}>{arr?.local_time?.slice(0, 5)}</Text>
+            {legacyGeometry || arr?.local_time ? (
+              <Text style={s.focusTimes}>{arr?.local_time?.slice(0, 5)}</Text>
+            ) : null}
             <Text style={s.meta} numberOfLines={1} ellipsizeMode="tail">
               {destination.name}
             </Text>
@@ -164,18 +183,22 @@ export function FlightRows({
           <Text style={s.centerMeta}>{flightNumber(f)}</Text>
           <Text style={[s.airport, s.right]}>{airport(f, destinationRole)}</Text>
         </View>
-        <View style={s.row}>
-          <Text style={[s.meta, s.left]}>{origin.name}</Text>
-          <View style={s.line}>
-            <AppIcon name="airplane" size={14} color={colors.textSecondary} />
+        {legacyGeometry || origin.name || destination.name ? (
+          <View style={s.row}>
+            <Text style={[s.meta, s.left]}>{origin.name}</Text>
+            <View style={s.line}>
+              <AppIcon name="airplane" size={14} color={colors.textSecondary} />
+            </View>
+            <Text style={[s.meta, s.right]}>{destination.name}</Text>
           </View>
-          <Text style={[s.meta, s.right]}>{destination.name}</Text>
-        </View>
-        <View style={s.row}>
-          <Text style={[s.body, s.left]}>{dep?.local_time?.slice(0, 5)}</Text>
-          <Text style={s.centerMeta}>{durationLabel(durationMinutes(f))}</Text>
-          <Text style={[s.body, s.right]}>{arr?.local_time?.slice(0, 5)}</Text>
-        </View>
+        ) : null}
+        {legacyGeometry || dep?.local_time || arr?.local_time || duration ? (
+          <View style={s.row}>
+            <Text style={[s.body, s.left]}>{dep?.local_time?.slice(0, 5)}</Text>
+            <Text style={s.centerMeta}>{durationLabel(durationMinutes(f))}</Text>
+            <Text style={[s.body, s.right]}>{arr?.local_time?.slice(0, 5)}</Text>
+          </View>
+        ) : null}
         {showDate && (
           <View style={s.row}>
             <Text style={[s.meta, s.left]}>{dep?.local_date}</Text>
@@ -214,33 +237,39 @@ export function FlightRows({
           {airport(f, destinationRole)}
         </Text>
       </View>
-      <View style={s.row} testID="flight-row-2">
-        <View style={[s.rail, rail]} />
-        <Text
-          testID="flight-origin-name"
-          style={[s.meta, s.left]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {origin.name}
-        </Text>
-        {!largeText ? (
-          <View style={s.line}>
-            <AppIcon name="airplane" size={14} color={colors.textSecondary} />
-          </View>
-        ) : null}
-        <Text
-          testID="flight-destination-name"
-          style={[s.meta, s.right]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {destination.name}
-        </Text>
-      </View>
-      {!focused || arrivalTime || origin.terminal || duration || destination.terminal ? (
+      {legacyGeometry || origin.name || destination.name ? (
+        <View style={s.row} testID="flight-row-2">
+          <View style={[s.rail, rail]} />
+          <Text
+            testID="flight-origin-name"
+            style={[s.meta, s.left]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {origin.name}
+          </Text>
+          {!largeText ? (
+            <View style={s.line}>
+              <AppIcon name="airplane" size={14} color={colors.textSecondary} />
+            </View>
+          ) : null}
+          <Text
+            testID="flight-destination-name"
+            style={[s.meta, s.right]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {destination.name}
+          </Text>
+        </View>
+      ) : null}
+      {(!focused && legacyGeometry) ||
+      arrivalTime ||
+      origin.terminal ||
+      duration ||
+      destination.terminal ? (
         <View style={s.baseline} testID="flight-row-3">
-          {!focused || arrivalTime ? (
+          {(!focused && legacyGeometry) || arrivalTime ? (
             <Text
               testID="arrival-time"
               numberOfLines={1}
@@ -253,7 +282,7 @@ export function FlightRows({
           ) : (
             <View style={[s.rail, rail]} />
           )}
-          {!focused || origin.terminal ? (
+          {(!focused && legacyGeometry) || origin.terminal ? (
             <Text testID="departure-terminal" style={[s.meta, s.left]}>
               {!largeText && term(origin.terminal)}
             </Text>
@@ -261,7 +290,7 @@ export function FlightRows({
             <View style={s.left} />
           )}
           {!largeText ? (
-            !focused || duration ? (
+            (!focused && legacyGeometry) || duration ? (
               <Text testID="duration" style={s.centerMeta}>
                 {duration}
               </Text>
@@ -269,7 +298,7 @@ export function FlightRows({
               <View style={s.middle} />
             )
           ) : null}
-          {!focused || destination.terminal ? (
+          {(!focused && legacyGeometry) || destination.terminal ? (
             <Text testID="arrival-terminal" style={[s.meta, s.right]}>
               {!largeText && term(destination.terminal)}
             </Text>

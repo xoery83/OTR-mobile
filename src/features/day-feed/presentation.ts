@@ -7,8 +7,10 @@ import {
   type DayProjection,
 } from "@/domain/trip/dayReadModel";
 import type { FlightService } from "@/domain/trip/flightAdmission";
+import type { CoreFlightFacts } from "@/domain/trip/tripCoreV2DayFeed";
 export type Depth = "B" | "F" | "I";
 export type FlightPresentation = {
+  qualification?: CoreFlightFacts["qualification"];
   canonical: DayEvent;
   services: FlightService[];
   supplemental: {
@@ -37,22 +39,32 @@ export function durationMinutes(f: FlightPresentation) {
 export function flightPresentation(
   event: DayEvent,
   services: FlightService[],
+  facts?: CoreFlightFacts,
 ): FlightPresentation | null {
   if (
+    facts?.qualification === "SPARSE" ||
     event.temporal_shape !== "TRANSPORT" ||
-    !(event.event_type === "flight" || services.length)
+    !(
+      facts?.qualification === "QUALIFIED" ||
+      event.event_type === "flight" ||
+      services.length
+    )
   )
     return null;
-  const facts = (role: "ORIGIN" | "DESTINATION") => ({
+  const endpointFacts = (role: "ORIGIN" | "DESTINATION") => ({
     code: null,
     terminal: null,
     name: event.boundaries.find((b) => b.role === role)?.authored_label ?? null,
   });
   return {
     canonical: event,
-    services,
+    ...(facts ? { qualification: facts.qualification } : {}),
+    services: facts?.services ?? services,
     supplemental: {
-      endpoints: { ORIGIN: facts("ORIGIN"), DESTINATION: facts("DESTINATION") },
+      endpoints: facts?.endpoints ?? {
+        ORIGIN: endpointFacts("ORIGIN"),
+        DESTINATION: endpointFacts("DESTINATION"),
+      },
     },
   };
 }
@@ -74,7 +86,7 @@ export const eventLocation = (e: DayEvent) =>
   e.authored_address_line1 ??
   e.accepted_address ??
   e.authored_address;
-export function boundaryZone(projection: DayProjection) {
+export function boundaryZone(projection: Pick<DayProjection, "events">) {
   const accepted = projection.events
     .flatMap((e) => e.boundaries)
     .filter((b) => acceptedBoundaryAnchor(b));
