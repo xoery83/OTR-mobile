@@ -1,0 +1,129 @@
+{
+  "branch": "codex/cp-flight-pdf-source-03",
+  "canonicalBaseline": "1114cccb536d6a6920c0ba6c6434b5dfe6ace5c9",
+  "remoteMain": "9ca16d380b4ed7f8aedeff79d8fc7be903dda1b1",
+  "acceptedSource02Commit": "ad77231ecc7f8bbc3a5c25affda07697e181b10e",
+  "acceptedSource02Tree": "9b6d5cf18fe72ed9c1c2d684e23e291c51afac33",
+  "preparedImplementationCommit": "8956800d3fda8972bc9ee1647175890eae362597",
+  "preparedImplementationTree": "21bc53828d7e29425b004fb4ef8e436e0df7825f",
+  "preparedFiles": [
+    {
+      "status": "M",
+      "path": "backend/src/__fixtures__/sourcePdfAcceptance.ts",
+      "sha256": "af7d518044983d40e0820e8ed9e51b1aec0876450cae144a89e6c62bcb17e3e4",
+      "acceptedSha256": "af7d518044983d40e0820e8ed9e51b1aec0876450cae144a89e6c62bcb17e3e4",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts",
+      "sha256": "ece847a3b451932c49db2acfa0606afa75341b51cf4cc8df450940f36dd40c0b",
+      "acceptedSha256": "ece847a3b451932c49db2acfa0606afa75341b51cf4cc8df450940f36dd40c0b",
+      "exactAccepted": true
+    },
+    {
+      "status": "M",
+      "path": "backend/src/__fixtures__/tripCoreV2Sql.ts",
+      "sha256": "416715bf0fb8fec7e69c16d40537bb60a02bf65d8816e34df8b9c1df6f5f6e49",
+      "acceptedSha256": "416715bf0fb8fec7e69c16d40537bb60a02bf65d8816e34df8b9c1df6f5f6e49",
+      "exactAccepted": true
+    },
+    {
+      "status": "M",
+      "path": "backend/src/captureFlightCoreV2.sql.test.ts",
+      "sha256": "af9c36f6c67c0e331915bf70c831c8d20573bc85585824f059aaf945226ec190",
+      "acceptedSha256": "af9c36f6c67c0e331915bf70c831c8d20573bc85585824f059aaf945226ec190",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfRegistration.test.ts",
+      "sha256": "ebece9ba611a810d0041793482e4abd60e268df700d3f06be61a5c9bf57b3ee9",
+      "acceptedSha256": "ebece9ba611a810d0041793482e4abd60e268df700d3f06be61a5c9bf57b3ee9",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "backend/src/sourcePdfRegistration.ts",
+      "sha256": "b43a52d97315ba456cc949e0ca6e2774c6aa133b21c4aab9d092e38b878b247e",
+      "acceptedSha256": "b43a52d97315ba456cc949e0ca6e2774c6aa133b21c4aab9d092e38b878b247e",
+      "exactAccepted": true
+    },
+    {
+      "status": "M",
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "sha256": "e5c3ddbedd2bfa3923f562cb02ccac55c92cafd986d85e7a2c6bfb7a81af15f8",
+      "acceptedSha256": "33f3e9ba83fa8b95b671c677ded2972c175fc6fd658b693e2d3434bde89c663f",
+      "exactAccepted": false
+    },
+    {
+      "status": "A",
+      "path": "docs/adr/2026-10-12-source-owned-pdf-registration.md",
+      "sha256": "45cbc090b271738ecda2a9d69e4e6a3c84c30a1e4c333576a7c94be7ff407f82",
+      "acceptedSha256": "45cbc090b271738ecda2a9d69e4e6a3c84c30a1e4c333576a7c94be7ff407f82",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/contracts/CP_FLIGHT_PDF_SOURCE_REGISTRATION_V1.md",
+      "sha256": "6e90fd40c2838fb46cebd888153c4e78243096e1a90460d768584a7079f5b982",
+      "acceptedSha256": "6e90fd40c2838fb46cebd888153c4e78243096e1a90460d768584a7079f5b982",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_02_EVIDENCE.json",
+      "sha256": "6c10e17403bcad2b3ad15cdd83068fb0a497a97e4a8737aba52b357f993f0e03",
+      "acceptedSha256": "6c10e17403bcad2b3ad15cdd83068fb0a497a97e4a8737aba52b357f993f0e03",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_02_MANIFEST.json",
+      "sha256": "0f562b1a5397386e5d98bb4eafdd9325456a550ac5ac8e10741742dff7f8e389",
+      "acceptedSha256": "0f562b1a5397386e5d98bb4eafdd9325456a550ac5ac8e10741742dff7f8e389",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_02_REPORT.md",
+      "sha256": "bdba3a3ef006d6b0b4f94ae9cb58ff3ea1887d4001cfd5986f0affec8d4bfe81",
+      "acceptedSha256": "bdba3a3ef006d6b0b4f94ae9cb58ff3ea1887d4001cfd5986f0affec8d4bfe81",
+      "exactAccepted": true
+    },
+    {
+      "status": "M",
+      "path": "scripts/trip/core-v2-sql-acceptance.py",
+      "sha256": "4d60c212968fb3d479f98b71fca206f51ec2d33adbd0c0d7b9ad33e70c3f1844",
+      "acceptedSha256": "4d60c212968fb3d479f98b71fca206f51ec2d33adbd0c0d7b9ad33e70c3f1844",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "src/domain/trip/sourcePdfRegistration.ts",
+      "sha256": "fe6b4e34ad89b0e74c895020ba2ec252cbb31269c5e75b95a4c519d30b43010d",
+      "acceptedSha256": "fe6b4e34ad89b0e74c895020ba2ec252cbb31269c5e75b95a4c519d30b43010d",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "supabase/migrations/20261012000300_source_pdf_registration.sql",
+      "sha256": "d5c59775cc959ed70c7e73180168413922c8ae74def87fe9e6012d044759e82f",
+      "acceptedSha256": "d5c59775cc959ed70c7e73180168413922c8ae74def87fe9e6012d044759e82f",
+      "exactAccepted": true
+    },
+    {
+      "status": "A",
+      "path": "supabase/tests/source-pdf/registration.sql",
+      "sha256": "75954a7932d2f1210408e56705fe5b724719e55d2481afdee9fe6134ce93e63d",
+      "acceptedSha256": "75954a7932d2f1210408e56705fe5b724719e55d2481afdee9fe6134ce93e63d",
+      "exactAccepted": true
+    }
+  ],
+  "handoffFiles": [
+    "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_03_REPORT.md",
+    "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_03_MANIFEST.json",
+    "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_03_EVIDENCE.json"
+  ],
+  "finalChangedPathCount": 19
+}

@@ -1,0 +1,489 @@
+{
+  "checkpoint": "CP-FLIGHT-PDF-SOURCE-03",
+  "classification": "ISOLATED_PREPARATION_OWNER_REVIEW",
+  "canonicalLocal": "1114cccb536d6a6920c0ba6c6434b5dfe6ace5c9",
+  "actualRemoteMain": "9ca16d380b4ed7f8aedeff79d8fc7be903dda1b1",
+  "acceptedCommit": "ad77231ecc7f8bbc3a5c25affda07697e181b10e",
+  "acceptedTree": "9b6d5cf18fe72ed9c1c2d684e23e291c51afac33",
+  "preparedImplementationCommit": "8956800d3fda8972bc9ee1647175890eae362597",
+  "preparedImplementationTree": "21bc53828d7e29425b004fb4ef8e436e0df7825f",
+  "acceptedHashes": {
+    "backend/src/__fixtures__/sourcePdfAcceptance.ts": "af7d518044983d40e0820e8ed9e51b1aec0876450cae144a89e6c62bcb17e3e4",
+    "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts": "ece847a3b451932c49db2acfa0606afa75341b51cf4cc8df450940f36dd40c0b",
+    "backend/src/__fixtures__/tripCoreV2Sql.ts": "416715bf0fb8fec7e69c16d40537bb60a02bf65d8816e34df8b9c1df6f5f6e49",
+    "backend/src/captureFlightCoreV2.sql.test.ts": "af9c36f6c67c0e331915bf70c831c8d20573bc85585824f059aaf945226ec190",
+    "backend/src/sourcePdfRegistration.test.ts": "ebece9ba611a810d0041793482e4abd60e268df700d3f06be61a5c9bf57b3ee9",
+    "backend/src/sourcePdfRegistration.ts": "b43a52d97315ba456cc949e0ca6e2774c6aa133b21c4aab9d092e38b878b247e",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md": "33f3e9ba83fa8b95b671c677ded2972c175fc6fd658b693e2d3434bde89c663f",
+    "docs/adr/2026-10-12-source-owned-pdf-registration.md": "45cbc090b271738ecda2a9d69e4e6a3c84c30a1e4c333576a7c94be7ff407f82",
+    "docs/trip/contracts/CP_FLIGHT_PDF_SOURCE_REGISTRATION_V1.md": "6e90fd40c2838fb46cebd888153c4e78243096e1a90460d768584a7079f5b982",
+    "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_02_EVIDENCE.json": "6c10e17403bcad2b3ad15cdd83068fb0a497a97e4a8737aba52b357f993f0e03",
+    "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_02_MANIFEST.json": "0f562b1a5397386e5d98bb4eafdd9325456a550ac5ac8e10741742dff7f8e389",
+    "docs/trip/implementation/CP_FLIGHT_PDF_SOURCE_02_REPORT.md": "bdba3a3ef006d6b0b4f94ae9cb58ff3ea1887d4001cfd5986f0affec8d4bfe81",
+    "scripts/trip/core-v2-sql-acceptance.py": "4d60c212968fb3d479f98b71fca206f51ec2d33adbd0c0d7b9ad33e70c3f1844",
+    "src/domain/trip/sourcePdfRegistration.ts": "fe6b4e34ad89b0e74c895020ba2ec252cbb31269c5e75b95a4c519d30b43010d",
+    "supabase/migrations/20261012000300_source_pdf_registration.sql": "d5c59775cc959ed70c7e73180168413922c8ae74def87fe9e6012d044759e82f",
+    "supabase/tests/source-pdf/registration.sql": "75954a7932d2f1210408e56705fe5b724719e55d2481afdee9fe6134ce93e63d"
+  },
+  "acceptedExactExceptCurrentHandoff": true,
+  "sourceAuthoritySemanticsChanged": false,
+  "fixtureRunnerChangesBeyondAcceptedSource02": false,
+  "migrationOrder": [
+    "Core85-92",
+    "20261012000100_model_task_protected_admission",
+    "20261012000200_source_pdf_derivative_authority",
+    "20261012000300_source_pdf_registration"
+  ],
+  "sqlScenarios": {
+    "pdf": [
+      {
+        "classification": "CP_FLIGHT_PDF_SOURCE_02_OWNING_REGISTRATION",
+        "sourceId": "d51b3563-c35c-449a-9ea9-a2be21d68651",
+        "originalId": "172cf101-be5f-418e-817e-59a5fd1394ff",
+        "derivedId": "97d79cce-cdfb-4851-8a95-c0fb0ebc2d44",
+        "objectKey": "v1/10000000-0000-4000-8000-000000000001/d51b3563-c35c-449a-9ea9-a2be21d68651/172cf101-be5f-418e-817e-59a5fd1394ff/payload",
+        "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+        "originalByteCount": 950,
+        "verificationOperationId": "e65b9783-d4ba-404c-a054-466eb15569e4",
+        "verificationResultSha256": "4eba8cbba585a4a46117a8c422e8e361fa52a7ab8e48b6480f2f66402cf87844",
+        "registrationOperationId": "9ce8b8ef-08f9-4315-9f98-962ecdafa9fb",
+        "registrationSha256": "c3551097f56855189eb5d185bf4c1b8fdb9905136babb0818b66f705aa38558f",
+        "pages": [
+          {
+            "pageIndex": 0,
+            "start": 0,
+            "end": 62
+          },
+          {
+            "pageIndex": 1,
+            "start": 63,
+            "end": 125
+          }
+        ],
+        "retainedFileRead": true,
+        "lostVerifyAndRegistrationResponseRecovered": true,
+        "preSealAuthority": false,
+        "sourceMaterialRevision": 1,
+        "sourceRowRevision": 1,
+        "originalRowRevision": 2,
+        "ordinaryQuartz": "REVIEW",
+        "newCanonicalItems": 0
+      },
+      {
+        "classification": "CP_FLIGHT_PDF_AUTH_01_SOURCE_SEAL",
+        "originalId": "172cf101-be5f-418e-817e-59a5fd1394ff",
+        "originalSha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+        "operationId": "d3c1fa2a-c865-4762-a20a-561323e94796",
+        "sealSha256": "44e6a96a85bbd27b620fbcfe56f90016e5e82f0d4a33d39cae5b2ef53b291405",
+        "pages": [
+          {
+            "pageIndex": 0,
+            "start": 0,
+            "end": 62
+          },
+          {
+            "pageIndex": 1,
+            "start": 63,
+            "end": 125
+          }
+        ],
+        "replay": "EXACT",
+        "negativeSealWrites": 0
+      },
+      {
+        "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+        "accountId": "00000000-0000-4000-8000-000000000001",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "sqlRead2SqliteDayPairs": [
+          {
+            "itemId": "5294de3d-edda-485c-86ce-a3c983526ebd",
+            "semanticRevision": 2
+          },
+          {
+            "itemId": "a5772da1-bd74-4693-8b1a-fb74d3b58845",
+            "semanticRevision": 2
+          }
+        ],
+        "itemDateExpectations": [
+          {
+            "itemId": "a5772da1-bd74-4693-8b1a-fb74d3b58845",
+            "semanticRevision": 2,
+            "localDate": "2026-12-17"
+          },
+          {
+            "itemId": "5294de3d-edda-485c-86ce-a3c983526ebd",
+            "semanticRevision": 2,
+            "localDate": "2026-12-20"
+          }
+        ],
+        "dates": ["2026-12-17", "2026-12-20"],
+        "read2ManifestSha256": "a0755e795d6bb53ea8b4630e1ff0e487b54a3dd448e12b2957255d21c4c474a7",
+        "read2AccessRevision": 1,
+        "read2Epoch": "405593bf-0911-40e7-8c9b-7a799a955d9d",
+        "lostCollectionResponseRecovered": true,
+        "fileColdOfflineReopen": true,
+        "privateSourceLeakage": false,
+        "sqliteMigration": 54,
+        "localSchemaVersion": 55
+      },
+      {
+        "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+        "sourceId": "d51b3563-c35c-449a-9ea9-a2be21d68651",
+        "runId": "73427ce9-5e87-4c65-b482-7795dcff7f64",
+        "inputCatalogSha256": "6fcd8e48ec0fe354ae3f0734f8b7c6611f8ba00f6c1d5c1b3372fba7070401e1",
+        "candidateIds": [
+          "59c2c8a0-15e3-8c3f-a2aa-e1875be2b174",
+          "c439c66a-f326-8533-a868-fd9d856d02c5"
+        ],
+        "itemIds": [
+          "a5772da1-bd74-4693-8b1a-fb74d3b58845",
+          "5294de3d-edda-485c-86ce-a3c983526ebd"
+        ],
+        "recoveredOperationIds": [
+          "39dbc562-6457-416a-8403-7493e7cbb625",
+          "32355f74-d030-44da-85f5-133e87b46cef",
+          "4a033a32-e1e0-4a8a-add6-d4559c851f15",
+          "4d54ed49-12ea-4bf8-a527-3c16c0ea1214"
+        ],
+        "sourcePlanStatus": "COMPLETE",
+        "associations": 4,
+        "qualificationRevision": 2,
+        "negativeWrites": 0
+      },
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          "20261012000100_model_task_protected_admission",
+          "20261012000200_source_pdf_derivative_authority",
+          "20261012000300_source_pdf_registration"
+        ],
+        "coreHistoricalFunctionsPreserved": 329,
+        "llmApprovedChangedRoots": [
+          "flight_activation_reserve_call(jsonb,jsonb)",
+          "external_integration_mark_dispatch(jsonb,jsonb)"
+        ],
+        "pdfPreexistingFunctionsPreserved": 351,
+        "installedFunctionsPreservedDuringScenario": 363,
+        "sourcePdfRegistrationInstalled": true,
+        "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ],
+    "native": [
+      {
+        "classification": "CP_FLIGHT_NATIVE_01_CLOSED_SQL_REVIEW",
+        "originalSha256": "f193cd842ed36779c9087d9c6c0a1bd7c3859dbafbf1807227d29afdeaacc12c",
+        "sourceId": "c308da6e-b7a1-4ec2-853a-c453e0338406",
+        "runId": "350d3f16-7321-4d86-bb93-12e3c0df664b",
+        "candidateIds": [
+          "ab4c3758-04a5-8863-aba5-49af5bc4e243",
+          "e7145266-b410-89d9-a456-685acf3c2350"
+        ],
+        "review": ["CONTRACT_UNSUPPORTED", "CONTRACT_UNSUPPORTED"],
+        "queuedCommands": 0,
+        "acceptedLocalItems": 0,
+        "restartReplay": true,
+        "lostPublicationRecovered": true
+      },
+      {
+        "classification": "JOINED_NATIVE_AUTHORITY_FENCE",
+        "unauthorizedCanonicalItems": 0,
+        "nativeSeals": 0
+      },
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          "20261012000100_model_task_protected_admission",
+          "20261012000200_source_pdf_derivative_authority",
+          "20261012000300_source_pdf_registration"
+        ],
+        "coreHistoricalFunctionsPreserved": 329,
+        "llmApprovedChangedRoots": [
+          "flight_activation_reserve_call(jsonb,jsonb)",
+          "external_integration_mark_dispatch(jsonb,jsonb)"
+        ],
+        "pdfPreexistingFunctionsPreserved": 351,
+        "installedFunctionsPreservedDuringScenario": 363,
+        "sourcePdfRegistrationInstalled": true,
+        "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ],
+    "installed": [
+      {
+        "classification": "CP_FLIGHT_NATIVE_03_INSTALLED_PACKET_OWNING_REVIEW",
+        "publicationId": "08abaae3-0ed5-49a4-ac39-e03fdf04ab47",
+        "runId": "cd42515d-dbb0-4a69-88c4-04dedd8e045b",
+        "candidateIds": [
+          "214b51d6-0ef3-82ba-ab3a-bb3d482f4fec",
+          "40492636-283f-8d6c-afeb-2d9772de3c66"
+        ],
+        "review": ["CONTRACT_UNSUPPORTED", "CONTRACT_UNSUPPORTED"],
+        "readyCommands": 0,
+        "originalSha256": "f193cd842ed36779c9087d9c6c0a1bd7c3859dbafbf1807227d29afdeaacc12c",
+        "rebuiltCandidates": false,
+        "sourceSealImplemented": false,
+        "hosted": false
+      },
+      {
+        "classification": "JOINED_NATIVE_AUTHORITY_FENCE",
+        "unauthorizedCanonicalItems": 0,
+        "nativeSeals": 0
+      },
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          "20261012000100_model_task_protected_admission",
+          "20261012000200_source_pdf_derivative_authority",
+          "20261012000300_source_pdf_registration"
+        ],
+        "coreHistoricalFunctionsPreserved": 329,
+        "llmApprovedChangedRoots": [
+          "flight_activation_reserve_call(jsonb,jsonb)",
+          "external_integration_mark_dispatch(jsonb,jsonb)"
+        ],
+        "pdfPreexistingFunctionsPreserved": 351,
+        "installedFunctionsPreservedDuringScenario": 363,
+        "sourcePdfRegistrationInstalled": true,
+        "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ],
+    "text-day": [
+      {
+        "classification": "CP_FLIGHT_E2E_AB_JOINED_SQL_SQLITE_DAY",
+        "accountId": "00000000-0000-4000-8000-000000000001",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "sqlRead2SqliteDayPairs": [
+          {
+            "itemId": "aa3ea084-a6ae-437d-bb95-a4c1dc2152f0",
+            "semanticRevision": 2
+          },
+          {
+            "itemId": "b26b6958-c46c-4d99-84ba-6dd7e5eeb08c",
+            "semanticRevision": 2
+          }
+        ],
+        "itemDateExpectations": [
+          {
+            "itemId": "aa3ea084-a6ae-437d-bb95-a4c1dc2152f0",
+            "semanticRevision": 2,
+            "localDate": "2026-12-17"
+          },
+          {
+            "itemId": "b26b6958-c46c-4d99-84ba-6dd7e5eeb08c",
+            "semanticRevision": 2,
+            "localDate": "2026-12-20"
+          }
+        ],
+        "dates": ["2026-12-17", "2026-12-20"],
+        "read2ManifestSha256": "2fa8c8c02a797c0ae6aabc6d0b1d1501250fc26ddad1bf9230607428204d86d2",
+        "read2AccessRevision": 1,
+        "read2Epoch": "49d470de-0872-4593-841b-5c9c66845ecd",
+        "lostCollectionResponseRecovered": true,
+        "fileColdOfflineReopen": true,
+        "privateSourceLeakage": false,
+        "sqliteMigration": 54,
+        "localSchemaVersion": 55
+      },
+      {
+        "classification": "CP_FLIGHT_E2E_A_ISOLATED_SYNTHETIC_SQL",
+        "sourceId": "e57cec20-fd92-44bd-9409-6779b12e12b9",
+        "runId": "78024f13-9f11-45ff-82cf-91825baa9c14",
+        "inputCatalogSha256": "4b5729146a53f29234917a2ed1678f43aaf03500554ad8484eb4ffcb120ce4e9",
+        "candidateIds": [
+          "09f810a4-1cb6-8d5e-a40b-377774abb820",
+          "54bcb084-5582-8101-ae17-b809e3fe595a"
+        ],
+        "itemIds": [
+          "aa3ea084-a6ae-437d-bb95-a4c1dc2152f0",
+          "b26b6958-c46c-4d99-84ba-6dd7e5eeb08c"
+        ],
+        "recoveredOperationIds": [
+          "b4c9c816-1a00-4312-b153-564452bbdaf6",
+          "23f100d7-c44e-4ec1-b77c-5b565cf0ddb8",
+          "2f86cb7b-7051-49b1-b047-a556f11880a3",
+          "375e0ad3-bb14-4eb3-86d2-6acdbd29b42e"
+        ],
+        "sourcePlanStatus": "COMPLETE",
+        "associations": 4,
+        "qualificationRevision": 2,
+        "negativeWrites": 0
+      },
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          "20261012000100_model_task_protected_admission",
+          "20261012000200_source_pdf_derivative_authority",
+          "20261012000300_source_pdf_registration"
+        ],
+        "coreHistoricalFunctionsPreserved": 329,
+        "llmApprovedChangedRoots": [
+          "flight_activation_reserve_call(jsonb,jsonb)",
+          "external_integration_mark_dispatch(jsonb,jsonb)"
+        ],
+        "pdfPreexistingFunctionsPreserved": 351,
+        "installedFunctionsPreservedDuringScenario": 363,
+        "sourcePdfRegistrationInstalled": true,
+        "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ],
+    "text-http": [
+      {
+        "classification": "CP_FLIGHT_DEV_02_LOCAL_HTTP_NODE_PG_TLS",
+        "sourceId": "825b7d6d-9078-4ddd-9294-e3bec468b177",
+        "exactTextSha256": "9e63a65981bbcf2016c01291c6446328fc074c9f6b8ad2d8614befb9162f80e9",
+        "itemIds": [
+          "10f7daf5-f308-4bd9-8e8b-5f48db1fcd00",
+          "430f0c8c-dd04-4293-8d6d-4b28620dd65e"
+        ],
+        "recoveredOperationIds": [
+          "b0311369-5410-48e1-8a63-2b5567c9bac3",
+          "1986ba83-868b-4b55-abd5-24de0c7ad9eb",
+          "dea32cde-2050-4be5-a415-958907ebcdcf",
+          "a5d4cac4-7120-4130-8d28-2d45a12bb8aa"
+        ],
+        "originalCopies": 1,
+        "privateSourceLeakage": false,
+        "backendProcessRestarts": 5,
+        "tlsVerified": true,
+        "hostnameAndCaAndCredentialNegatives": true,
+        "hosted": false
+      },
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          "20261012000100_model_task_protected_admission",
+          "20261012000200_source_pdf_derivative_authority",
+          "20261012000300_source_pdf_registration"
+        ],
+        "coreHistoricalFunctionsPreserved": 329,
+        "llmApprovedChangedRoots": [
+          "flight_activation_reserve_call(jsonb,jsonb)",
+          "external_integration_mark_dispatch(jsonb,jsonb)"
+        ],
+        "pdfPreexistingFunctionsPreserved": 351,
+        "installedFunctionsPreservedDuringScenario": 363,
+        "sourcePdfRegistrationInstalled": true,
+        "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ],
+    "source": [
+      {
+        "classification": "ISOLATED_SYNTHETIC_SQL",
+        "migrations": [
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          "20261012000100_model_task_protected_admission",
+          "20261012000200_source_pdf_derivative_authority",
+          "20261012000300_source_pdf_registration"
+        ],
+        "coreHistoricalFunctionsPreserved": 329,
+        "llmApprovedChangedRoots": [
+          "flight_activation_reserve_call(jsonb,jsonb)",
+          "external_integration_mark_dispatch(jsonb,jsonb)"
+        ],
+        "pdfPreexistingFunctionsPreserved": 351,
+        "installedFunctionsPreservedDuringScenario": 363,
+        "sourcePdfRegistrationInstalled": true,
+        "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()",
+        "rlsAndClosedGate": "PASS",
+        "activation": "CLOSED"
+      }
+    ]
+  },
+  "validation": {
+    "focusedSuites": 17,
+    "passed": 218,
+    "skipped": 3,
+    "skipReasons": [
+      "LIVE_W_SERVER84 full host bridge not configured",
+      "Linux-only actual host custody case on macOS",
+      "Native owning SQL case lacks fixture during unit run; separately executed in SQL mode"
+    ],
+    "actualSqlScenarios": 6,
+    "actualSqlTestsPassed": 20,
+    "typecheck": "PASS",
+    "backendBuild": "PASS",
+    "touchedCodeLint": "PASS",
+    "uiGuard": "PASS",
+    "format": "PASS",
+    "pythonSyntax": "PASS",
+    "diffCheck": "PASS"
+  },
+  "preservation": {
+    "canonicalMainIndexAndDirtyUnchanged": true,
+    "dirtyHashes": {
+      "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    },
+    "sharedCloneFastForward": "PASS",
+    "canonicalHandoffExactSuffix": true,
+    "acceptedHandoffExactSuffix": true,
+    "accepted15NonHandoffFilesExact": true,
+    "canonicalMergeExecuted": false
+  },
+  "notExecuted": [
+    "canonical merge/push",
+    "Hosted/credentials/Provider/paid LLM/Production activation",
+    "Native rebuild/install/launch/device acceptance",
+    "Agent A/B transport/custody/native code",
+    "full repository regression"
+  ]
+}
