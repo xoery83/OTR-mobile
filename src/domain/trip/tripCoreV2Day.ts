@@ -76,7 +76,6 @@ export function coreBoundaryView(time: CoreBoundary): CoreBoundaryView {
 export function corePlaceView(row: CoreRow): CorePlaceView | undefined {
   const view: CorePlaceView = {
     qualification:
-      typeof row.accepted_place_id === "string" &&
       typeof row.accepted_latitude === "number" &&
       typeof row.accepted_longitude === "number"
         ? "QUALIFIED"

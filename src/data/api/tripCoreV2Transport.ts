@@ -43,6 +43,7 @@ import type { CoreSyncTransport } from "../sync/tripCoreV2SyncWorker";
 export type CoreReadTransport = {
   collection(
     ctx: AccountRequestContext,
+    ordinaryOrderVersion?: 1,
   ): Promise<{ manifest: CoreReadManifest; pages: CoreReadPage[] }>;
 };
 const redacted = z.strictObject({
@@ -206,7 +207,7 @@ export function createCoreV2Transport(
         throw new Error("CORE_SOURCE_PLAN_SCOPE_MISMATCH");
       return result;
     },
-    async collection(ctx) {
+    async collection(ctx, ordinaryOrderVersion) {
       await assertAccountRequestContext(ctx, getAccountId);
       const bundle = await api(ctx, 65 * 1048576).get(
         path(ctx) + "/collection",
@@ -214,7 +215,9 @@ export function createCoreV2Transport(
           manifest: z.unknown(),
           pages: z.array(z.unknown()).min(1).max(100),
         }),
-        headers,
+        ordinaryOrderVersion === 1
+          ? { ...headers, "X-OTR-Ordinary-Order-Version": "1" }
+          : headers,
       );
       const validated = await validateCoreReadCollection(
         bundle.manifest,
@@ -224,6 +227,8 @@ export function createCoreV2Transport(
         hash,
       );
       await assertAccountRequestContext(ctx, getAccountId);
+      if (ordinaryOrderVersion === 1 && validated.manifest.ordinaryOrderVersion !== 1)
+        throw new Error("CORE_READ_VERSION_MISMATCH");
       return { manifest: validated.manifest, pages: bundle.pages as CoreReadPage[] };
     },
     async publishSourceCandidates(ctx, input) {

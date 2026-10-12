@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ordinaryOrderPayload } from "./tripCoreOrdinaryOrder";
 import * as f from "./tripCoreV2";
 import { coreBoundarySchema } from "./tripCoreV2Temporal";
 import {
@@ -170,6 +171,7 @@ const ticketLink = f.trip_entitlement_item_linksSchema
   .omit({ item_id: true });
 const typedId = z.strictObject({
   kind: z.enum([
+    "ORDER",
     "ITEM",
     "BOOKING",
     "ENTITLEMENT",
@@ -181,6 +183,7 @@ const typedId = z.strictObject({
 });
 const lifecycle = { graphHash: f.coreHash };
 export const corePayloadSchemas = {
+  SET_ORDINARY_ORDER: ordinaryOrderPayload,
   CREATE_ITEM: createItem,
   CREATE_SPARSE_FLIGHT: z.strictObject({
     flightNumberLiteral: f.coreText(255).refine((s) => s.trim().length > 0),
@@ -342,6 +345,7 @@ const commands = Object.keys(corePayloadSchemas) as [
 ];
 export const coreVectorEntrySchema = z.strictObject({
   kind: z.enum([
+    "ORDER",
     "ITEM",
     "BOOKING",
     "ENTITLEMENT",
@@ -372,23 +376,31 @@ export type CoreCommand = z.infer<typeof coreCommandSchema>;
 export function validateCoreCommand(input: unknown): CoreCommand {
   const q = coreCommandSchema.parse(input);
   const payload = corePayloadSchemas[q.command].parse(q.payload);
-  const expectedKind = q.command.includes("BOOKING")
-    ? "BOOKING"
-    : q.command.includes("ENTITLEMENT")
-      ? "ENTITLEMENT"
-      : q.command === "CREATE_DOCUMENT"
-        ? "DOCUMENT"
-        : q.command === "APPEND_INSTRUCTION" || q.command === "CORRECT_INSTRUCTION"
-          ? "INSTRUCTION"
-          : q.command === "LINK_EXPENSE" || q.command === "UNLINK_EXPENSE"
-            ? "EXPENSE_LINK"
-            : q.command === "AUTHORIZE_DOCUMENT_COPY"
-              ? "DOCUMENT"
-              : ["HIDE_OBJECT", "RESTORE_OBJECT", "SET_OBJECT_VISIBILITY"].includes(
-                    q.command,
-                  )
-                ? q.target.kind
-                : "ITEM";
+  const expectedKind =
+    q.command === "SET_ORDINARY_ORDER"
+      ? "ORDER"
+      : q.command.includes("BOOKING")
+        ? "BOOKING"
+        : q.command.includes("ENTITLEMENT")
+          ? "ENTITLEMENT"
+          : q.command === "CREATE_DOCUMENT"
+            ? "DOCUMENT"
+            : q.command === "APPEND_INSTRUCTION" || q.command === "CORRECT_INSTRUCTION"
+              ? "INSTRUCTION"
+              : q.command === "LINK_EXPENSE" || q.command === "UNLINK_EXPENSE"
+                ? "EXPENSE_LINK"
+                : q.command === "AUTHORIZE_DOCUMENT_COPY"
+                  ? "DOCUMENT"
+                  : ["HIDE_OBJECT", "RESTORE_OBJECT", "SET_OBJECT_VISIBILITY"].includes(
+                        q.command,
+                      )
+                    ? q.target.kind
+                    : "ITEM";
+  if (
+    q.target.kind === "ORDER" &&
+    (q.command !== "SET_ORDINARY_ORDER" || q.admission.mode !== "MANUAL")
+  )
+    throw new Error("SCOPE_NOT_AUTHORIZED");
   if (q.target.kind !== expectedKind) throw new Error("INVALID_TARGET_KIND");
   const keys = q.baseVector.map((x) => `${x.kind}:${x.id}`);
   if (

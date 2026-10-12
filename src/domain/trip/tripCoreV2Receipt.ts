@@ -9,6 +9,7 @@ const typedId = coreVectorEntrySchema
 const finiteSnapshot = z
   .strictObject({
     kind: z.enum([
+      "ORDER",
       "ITEM",
       "BOOKING",
       "ENTITLEMENT",

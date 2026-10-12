@@ -47,6 +47,8 @@ export function coreCanRead(
   row: CoreRow,
 ): boolean {
   if (!actor.active || row.trip_id !== actor.tripId) return false;
+  if (kind === "ORDER")
+    return row.owner_account_id === actor.accountId && row.person_id === actor.personId;
   if (kind === "INSTRUCTION") {
     const parent = g.itinerary_events.find((x) => x.id === row.event_id);
     if (!parent || !coreCanRead(g, actor, "ITEM", parent)) return false;
@@ -75,7 +77,11 @@ const rev = (row: CoreRow, kind: f.CoreKind) =>
   row[kind === "ITEM" ? "semantic_revision" : "revision"] as number;
 export function coreGraphHashText(g: CoreGraph): string {
   // Caller selects the authorized closed lifecycle subgraph before hashing.
-  return canonicalCoreJson(g as unknown as Json);
+  return canonicalCoreJson(
+    Object.fromEntries(
+      Object.entries(g).filter(([table]) => table !== "trip_person_ordinary_orders"),
+    ) as unknown as Json,
+  );
 }
 export function applyCoreCommand(
   given: CoreGraph,
@@ -204,6 +210,7 @@ export function applyCoreCommand(
       r.owner_account_id !== actor.accountId
     )
       throw new Error("SCOPE_NOT_AUTHORIZED");
+    if (k === "ORDER") throw new Error("SCOPE_NOT_AUTHORIZED");
     const [t, key] = aclTables[k];
     g[t] = g[t].filter((x) => x[key] !== r.id);
     for (const id of acl.people)
@@ -633,6 +640,62 @@ export function applyCoreCommand(
       const r = target();
       touch("ITEM", r);
       mark("ITEM", r, p);
+      break;
+    }
+    case "SET_ORDINARY_ORDER": {
+      if (
+        q.admission.mode !== "MANUAL" ||
+        !actor.personId ||
+        p.personId !== actor.personId
+      )
+        throw new Error("INVALID_SELF_PERSON");
+      const existing = g.trip_person_ordinary_orders.find((x) => x.id === q.target.id);
+      if (existing && existing.person_id !== p.personId)
+        throw new Error("SCOPE_NOT_AUTHORIZED");
+      if (
+        g.trip_person_ordinary_orders.some(
+          (x) => x.id !== q.target.id && x.person_id === p.personId,
+        )
+      )
+        throw new Error("INVALID_AGGREGATE");
+      const refs = new Set<string>([
+        ...p.nodes.map((n: any) => n.eventId),
+        ...p.gaps.flatMap((x: any) => (x.transportId ? [x.transportId] : [])),
+      ]);
+      for (const id of refs) {
+        requireBase("ITEM", id);
+        const item = root("ITEM", id);
+        if (!(
+          item.participation_mode === "WHOLE_GROUP" ||
+          (item.participation_mode === "SELF" &&
+            item.self_person_id === actor.personId) ||
+          (item.participation_mode === "SELECTED_MEMBERS" &&
+            g.trip_item_participants.some(
+              (x) => x.item_id === id && x.active && x.person_id === actor.personId,
+            ))
+        ))
+          throw new Error("INVALID_PARTICIPATION");
+      }
+      for (const gap of p.gaps)
+        if (gap.transportId) {
+          const leg = root("ITEM", gap.transportId);
+          if (
+            leg.temporal_shape !== "TRANSPORT" ||
+            p.nodes.some((x: any) => x.eventId === gap.transportId)
+          )
+            throw new Error("INVALID_AGGREGATE");
+        }
+      const row =
+        existing ??
+        create("ORDER", q.target.id, {
+          person_id: p.personId,
+          branch_id: p.branchId,
+          visibility: "PRIVATE",
+          nodes: [],
+          gaps: [],
+        });
+      if (existing) touch("ORDER", row);
+      mark("ORDER", row, { branch_id: p.branchId, nodes: p.nodes, gaps: p.gaps });
       break;
     }
     case "SET_ITEM_SCHEDULE": {
