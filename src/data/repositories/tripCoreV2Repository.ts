@@ -1,7 +1,9 @@
 import { qualifyCoreTtr, type CoreTtrResult } from "../../domain/trip/tripCoreTtr";
+import type { TtrInput } from "../../domain/trip/ttr";
 import type * as SQLite from "expo-sqlite";
 import {
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   captureAccountRequestContext,
   captureAccountScope,
   withAccountApplyGate,
@@ -51,6 +53,60 @@ export type CoreAcceptedSnapshot = {
   certificate: CoreAcceptedCertificate;
   participatingPersonIds: string[];
 };
+export type CoreTtrAuthority = Readonly<{
+  scope: AccountRequestContext;
+  personId: string;
+  branchId: string;
+  order: { id: string; revision: number };
+  collection: CoreAcceptedCertificate;
+  refreshGeneration: number;
+  from: {
+    eventId: string;
+    occurrenceToken: string;
+    role: NonNullable<NonNullable<TtrInput["from"]>["role"]>;
+    itemRevision: number;
+    locationInputRevision: number;
+  };
+  to: {
+    eventId: string;
+    occurrenceToken: string;
+    role: NonNullable<NonNullable<TtrInput["from"]>["role"]>;
+    itemRevision: number;
+    locationInputRevision: number;
+  };
+  coverage: "NONE_PROVEN";
+  expiry: { eventDate: string; zone: string };
+}>;
+export type CoreQualifiedTtrRead = Extract<CoreTtrResult, { status: "QUALIFIED" }> & {
+  authority: CoreTtrAuthority;
+};
+export type CoreTtrReadResult =
+  Extract<CoreTtrResult, { status: "UNAVAILABLE" }> | CoreQualifiedTtrRead;
+export type CoreTtrPublicationLease = Readonly<{
+  envelope: CoreQualifiedTtrRead;
+  isCurrent(): boolean;
+  ifCurrent(emit: () => undefined): boolean;
+}>;
+export type CoreTtrPublicationResult =
+  | { status: "CURRENT" }
+  | { status: "STALE"; reason: "AUTHORITY_CHANGED" | "REFRESH_PENDING" }
+  | {
+      status: "UNAVAILABLE";
+      reason: Extract<CoreTtrResult, { status: "UNAVAILABLE" }>["reason"];
+    };
+// Ephemeral fences shared by repositories on the identical serialized connection; never revisions.
+const ttrPublicationFences = new WeakMap<CoreDatabase, Map<string, object>>();
+function ttrFence(
+  database: CoreDatabase,
+  ctx: AccountRequestContext,
+  invalidate = false,
+) {
+  let scopes = ttrPublicationFences.get(database);
+  if (!scopes) ttrPublicationFences.set(database, (scopes = new Map()));
+  const key = JSON.stringify([ctx.accountId, ctx.tripId]);
+  if (invalidate || !scopes.has(key)) scopes.set(key, {});
+  return scopes.get(key)!;
+}
 function fieldType(schema: any): string {
   while (["nullable", "optional"].includes(schema.def.type))
     schema = schema.def.innerType;
@@ -224,7 +280,7 @@ export function createTripCoreV2Repository(
     orderId: string,
     fromId: string,
     toId: string,
-  ): Promise<CoreTtrResult> {
+  ): Promise<CoreTtrReadResult> {
     const snapshot = await acceptedWithinTransaction(ctx);
     if (!snapshot || snapshot.certificate.ordinary_order_version !== 1)
       return {
@@ -245,7 +301,34 @@ export function createTripCoreV2Repository(
       true,
     );
     await assertContext(ctx);
-    return result;
+    if (result.status !== "QUALIFIED") return result;
+    const order = snapshot.graph.trip_person_ordinary_orders.find(
+      (o) => o.id === orderId,
+    )!;
+    const current = await scope(ctx);
+    await assertContext(ctx);
+    const occurrence = (o: NonNullable<typeof result.input.from>) => ({
+      eventId: o.eventId,
+      occurrenceToken: o.occurrenceToken!,
+      role: o.role!,
+      itemRevision: o.semanticRevision,
+      locationInputRevision: o.endpoint!.locationInputRevision!,
+    });
+    return {
+      ...result,
+      authority: {
+        scope: { ...ctx },
+        personId: snapshot.actor.personId!,
+        branchId: String(order.branch_id),
+        order: { id: orderId, revision: Number(order.revision) },
+        collection: { ...snapshot.certificate },
+        refreshGeneration: current!.refresh_generation,
+        from: occurrence(result.input.from!),
+        to: occurrence(result.input.to!),
+        coverage: "NONE_PROVEN",
+        expiry: { ...result.input.expiry! },
+      },
+    };
   }
   async function readTtr(
     ctx: AccountRequestContext,
@@ -276,7 +359,90 @@ export function createTripCoreV2Repository(
       canonicalCoreJson(result.input as unknown as Json) ===
         canonicalCoreJson(captured.input as unknown as Json) &&
       canonicalCoreJson(result.spatial as unknown as Json) ===
-        canonicalCoreJson(captured.spatial as unknown as Json)
+        canonicalCoreJson(captured.spatial as unknown as Json) &&
+      (!("authority" in captured) ||
+        canonicalCoreJson(result.authority as unknown as Json) ===
+          canonicalCoreJson(captured.authority as Json))
+    );
+  }
+  // Caller must first finish its personal selection transaction AND release its Account gate.
+  async function guardTtrPublication(
+    ctx: AccountRequestContext,
+    orderId: string,
+    fromId: string,
+    toId: string,
+    captured: CoreQualifiedTtrRead,
+    handoff: (lease: CoreTtrPublicationLease) => undefined,
+  ): Promise<CoreTtrPublicationResult> {
+    const context = Object.freeze({ ...ctx });
+    let handedOff = false;
+    return withAccountApplyGate(
+      async () => {
+        let current: CoreTtrReadResult | undefined;
+        try {
+          await database.withTransactionAsync(async () => {
+            current = await ttrWithinTransaction(context, orderId, fromId, toId);
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "";
+          if (
+            [
+              "CORE_ACCESS_REVOKED",
+              "CORE_READ_ACCESS_MISMATCH",
+              "CORE_PERSON_BINDING_MISMATCH",
+              "Account changed during Ledger request.",
+            ].includes(message)
+          )
+            return { status: "UNAVAILABLE", reason: "ACCESS_UNAVAILABLE" } as const;
+          throw error;
+        }
+        if (!current)
+          return { status: "UNAVAILABLE", reason: "CONTINUITY_UNKNOWN" } as const;
+        if (current.status === "UNAVAILABLE")
+          return { status: "UNAVAILABLE", reason: current.reason } as const;
+        if (
+          current.authority.collection.applied_generation !==
+          current.authority.refreshGeneration
+        )
+          return { status: "STALE", reason: "REFRESH_PENDING" } as const;
+        if (
+          canonicalCoreJson(current as unknown as Json) !==
+          canonicalCoreJson(captured as unknown as Json)
+        )
+          return { status: "STALE", reason: "AUTHORITY_CHANGED" } as const;
+        const envelope = structuredClone(current);
+        const token = ttrFence(database, context);
+        const isCurrent = () => {
+          try {
+            assertAccountRequestGeneration(context);
+          } catch {
+            return false;
+          }
+          return ttrFence(database, context) === token;
+        };
+        const lease: CoreTtrPublicationLease = Object.freeze({
+          get envelope() {
+            return structuredClone(envelope);
+          },
+          isCurrent,
+          ifCurrent(emit: () => undefined) {
+            if (!isCurrent()) return false;
+            if (emit() !== undefined) throw new Error("CORE_TTR_ASYNC_HANDOFF_FORBIDDEN");
+            return true;
+          },
+        });
+        return { status: "CURRENT", lease } as const;
+      },
+      (result) => {
+        if (result.status === "CURRENT")
+          handedOff = result.lease.ifCurrent(() => handoff(result.lease));
+      },
+    ).then((result) =>
+      result.status === "CURRENT"
+        ? handedOff
+          ? { status: "CURRENT" as const }
+          : { status: "UNAVAILABLE" as const, reason: "ACCESS_UNAVAILABLE" as const }
+        : result,
     );
   }
   async function enqueue(ctx: AccountRequestContext, input: unknown) {
@@ -359,6 +525,7 @@ export function createTripCoreV2Repository(
     let generation = 0;
     await withAccountApplyGate(async () => {
       await assertContext(ctx);
+      ttrFence(database, ctx, true);
       await database.withTransactionAsync(async () => {
         const current = await scope(ctx);
         if (current && accessRevision < current.access_revision)
@@ -388,6 +555,7 @@ export function createTripCoreV2Repository(
       throw new Error("CORE_READ_ACCESS_MISMATCH");
     await withAccountApplyGate(async () => {
       await assertContext(ctx);
+      ttrFence(database, ctx, true);
       await database.withTransactionAsync(async () => {
         const current = await scope(ctx);
         if (
@@ -556,6 +724,7 @@ export function createTripCoreV2Repository(
       throw new Error("INVALID_ACCESS_REVISION");
     await withAccountApplyGate(async () => {
       await assertContext(ctx);
+      ttrFence(database, ctx, true);
       await database.withTransactionAsync(async () => {
         await database.runAsync(
           "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,?,1) ON CONFLICT(account_id,trip_id) DO UPDATE SET revoked=1,refresh_generation=refresh_generation+1,access_revision=MAX(access_revision,excluded.access_revision)",
@@ -699,6 +868,7 @@ export function createTripCoreV2Repository(
     readGraph,
     acceptedSnapshot,
     readTtr,
+    guardTtrPublication,
     ttrWithinTransaction,
     revalidateTtrWithinTransaction,
     acceptedTripIds,
