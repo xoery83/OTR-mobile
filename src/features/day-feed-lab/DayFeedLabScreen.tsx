@@ -349,6 +349,7 @@ export function DayFeedLabScreen() {
         <UiFormRow
           label={t("dayLab.trip")}
           value={tripTitle}
+          stacked
           disabled={!tripChoices.length}
           onPress={() => setChoosing(true)}
         />
