@@ -1,7 +1,26 @@
-import { createTripDayFeedReader } from "./tripDayFeedRepository";
+import { readTripDayFeed, createTripDayFeedReader } from "./tripDayFeedRepository";
 import { beforeEach, expect, it, vi } from "vitest";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 import type { ObservedDayProjection } from "./tripDayReadRepository";
+import { requireActiveUserId } from "@/data/auth/authRepository";
+import { readInitializedDatabase } from "@/data/db/database";
+import { applyCoreCommand, emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
+import { coreDefaults } from "@/domain/trip/tripCoreV2";
+import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
+const factory = vi.hoisted(() => ({
+  captureContext: vi.fn(),
+  acceptedSnapshot: vi.fn(),
+  install: vi.fn(),
+  legacyProjection: vi.fn(),
+  listJourneys: vi.fn(),
+}));
+vi.mock("./tripCoreV2Repository", () => ({ createTripCoreV2Repository: () => factory }));
+vi.mock("./tripDayReadRepository", () => ({
+  createTripDayReadRepository: () => ({ getProjection: factory.legacyProjection }),
+}));
+vi.mock("./ledgerReportingRepository", () => ({
+  createLedgerReportingRepository: () => ({ listJourneys: factory.listJourneys }),
+}));
 vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
 const accountId = "10000000-0000-4000-8000-000000000001",
@@ -130,4 +149,98 @@ it("supplemental unavailability preserves admitted local facts but never hides a
     },
   });
   await expect(changed.trip(tripId)).rejects.toThrow("Account changed");
+});
+
+it("production local reader includes accepted Stay occurrences while keeping legacy fallback and no installation", async () => {
+  const itemId = "30000000-0000-4000-8000-000000000001";
+  const actor = {
+    accountId,
+    tripId,
+    active: true,
+    canManageShared: false,
+    personId: "40000000-0000-4000-8000-000000000001",
+    personIds: ["40000000-0000-4000-8000-000000000001"],
+  };
+  let graph = applyCoreCommand(
+    emptyCoreGraph(),
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: "50000000-0000-4000-8000-000000000001",
+      tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: itemId },
+      baseVector: [{ kind: "ITEM", id: itemId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P3",
+        core: { title: "Saved Stay" },
+        schedule: {
+          start: coreDateBoundary("2026-10-14"),
+          end: coreDateBoundary("2026-10-17"),
+        },
+        ...coreDefaults("member"),
+      },
+    },
+    actor,
+    "2026-10-13T00:00:00Z",
+  ).graph;
+  const flightId = "60000000-0000-4000-8000-000000000001";
+  graph = applyCoreCommand(
+    graph,
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: "70000000-0000-4000-8000-000000000001",
+      tripId,
+      command: "CREATE_SPARSE_FLIGHT",
+      target: { kind: "ITEM", id: flightId },
+      baseVector: [{ kind: "ITEM", id: flightId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        flightNumberLiteral: "NZ0289A",
+        departureDate: "2026-10-14",
+        ...coreDefaults("member"),
+      },
+    },
+    actor,
+    "2026-10-13T00:00:00Z",
+  ).graph;
+  vi.mocked(requireActiveUserId).mockResolvedValue(accountId);
+  vi.mocked(readInitializedDatabase).mockResolvedValue({} as never);
+  factory.captureContext.mockReset().mockResolvedValue({ accountId, tripId });
+  factory.acceptedSnapshot.mockReset().mockResolvedValue({
+    graph,
+    actor,
+    certificate: {
+      epoch: "epoch",
+      revision: "1",
+      access_revision: 1,
+      applied_generation: 1,
+      actor_person_binding_hash: "binding",
+      roster_hash: "roster",
+      manifest_sha256: "manifest",
+    },
+    participatingPersonIds: actor.personIds,
+  });
+  factory.legacyProjection.mockReset().mockResolvedValue(observed);
+  factory.install.mockClear();
+  const reader = await readTripDayFeed();
+  const accepted = await reader.trip(tripId);
+  expect(accepted.observed?.projection.events.map((event) => event.title)).toContain(
+    "Saved Stay",
+  );
+  expect(accepted.observed?.projection.version).toBe(2);
+  if (accepted.observed?.projection.version !== 2) throw new Error("EXPECTED_CORE_V2");
+  expect(accepted.observed.projection.flightFacts[flightId].flightNumberLiteral).toBe(
+    "NZ0289A",
+  );
+  expect(accepted.services).toEqual({
+    [flightId]: accepted.observed.projection.flightFacts[flightId].services,
+  });
+  expect(factory.legacyProjection).not.toHaveBeenCalled();
+  factory.acceptedSnapshot.mockResolvedValue(null);
+  expect((await reader.trip(tripId)).observed).toEqual(observed);
+  expect(factory.legacyProjection).toHaveBeenCalledWith(tripId);
+  expect(factory.install).not.toHaveBeenCalled();
 });
