@@ -2,7 +2,11 @@
 
 Reconciled 2026-10-13 NZDT against canonical baseline `50f07d5e1a2be99a5c11f1bba3a76096e153dfb7`; reviewed code/docs local adoption `8141f8fe1efecee86c23de58d9a6d6019cf37ad4`. This is the only active Decision Register and Beta Scope Baseline. [Status](BETA_STATUS.md), [execution/intake](BETA_EXECUTION.md), [interfaces](BETA_INTERFACE_REGISTER.md). Historical contracts/ADRs and sealed candidates are not rewritten.
 
-### Push31–33 scoped execution under BD43 — 2026-10-14 NZDT
+### Push35 scoped execution under BD43 — 2026-10-14 NZDT
+
+Normal non-force fast-forward published only the one-file DEV TTR Lab static SQLite import compatibility fix `8be886d` after different-author code review, narrow straight-line READY A1A Native observation and main checks ([receipt](/private/tmp/otr-beta-push35-receipt.json)). The 0m UNKNOWN unavailable Sheet keeps the wider Spatial, synthetic 0m/SAME fixture and dependent Core adapter isolated; no formal Selection/TTR runtime or protected gate changed. Original five unrelated dirty entries/index remain preserved.
+
+### Prior Push31–33 scoped execution under BD43 — 2026-10-14 NZDT
 
 Normal non-force fast-forwards separately published Gallery ordinary controls `9a8fed6` ([Push31](/private/tmp/otr-beta-push31-receipt.json)), dormant Document original-read port `b3e1ff9` ([Push32](/private/tmp/otr-beta-push32-receipt.json)), and SQLite61 Account-scoped Trip discovery read snapshot/explicit bounded transport `1a0495a` ([Push33](/private/tmp/otr-beta-push33-receipt.json)). Independent reviews, main checks, live readbacks and preservation of the original five dirty files/empty index are recorded per receipt. These are three local technical scopes, not a real accepted-Day/full-journey or protected runtime grant. Document original rights/provider and DEV discovery deployment/Mobile consumer remain separately gated; no permission or environment activation follows publication.
 

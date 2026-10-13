@@ -1,6 +1,10 @@
 # OTR Beta — STATUS
 
-## Current Push33 integration — 2026-10-13T16:16:33Z / 2026-10-14 NZDT
+## Current Push35 integration — 2026-10-13T16:26:22Z / 2026-10-14 NZDT
+
+Canonical main/live `origin/main` match `8be886d81885a353c3e2e2ccce81395a3c6323ad` after only the one-file DEV TTR Lab static SQLite import fix ([receipt](/private/tmp/otr-beta-push35-receipt.json)). Different-author code review and narrow straight-line READY A1A Native PASS support host compatibility. Spatial 0m UNKNOWN still opens an unavailable/disabled Sheet, so full Spatial, synthetic 0m/SAME fixture and dormant Core adapter stay isolated pending Core fix and independent Native recheck. Technical scopes **25**, one real local pending subloop, complete real journeys **0**; Owner-ready **0**, required responses **4**, Root product code **0**. Formal TTR/accepted Day/protected runtime remain CLOSED; original five dirty entries/index preserved. Push33 and lower snapshots are historical.
+
+## Prior Push33 integration (historical) — 2026-10-13T16:16:33Z / 2026-10-14 NZDT
 
 Canonical main/live `origin/main` are `1a0495accbe4e150d6ecbc208fa851c52a09f07a` after normal non-force Push31 Gallery ordinary controls, Push32 dormant Document original-read port and Push33 account-scoped SQLite61 Trip discovery cache/explicit transport ([receipts](/private/tmp/otr-beta-push33-receipt.json)). Each passed its separate independent review and scoped main checks; five original dirty entries/index remain preserved. Gallery held gestures/Cancel/Scroll Lease are unverified. Document original provider/HTTP/Mobile opener/current Core permission remains unavailable. Mobile discovery has no automatic DEV request or UI caller; actual remote read, all-accessible inventory and server-only workspace navigation remain unverified. WP02 spatial READY Sheet Native and dependent dormant adapter remain held during narrow Lab import repair QA. Technical scopes **24**; one real local pending Trip/P1/P3 subloop, complete real journeys **0**. Active feature packets: Core WP02 repair and Experience Discovery UI consumer; Source integration/records is a separate lane. Owner-ready **0**, required Owner responses **4**, Root product code **0**. Accepted Day/offline/remote/PG/runtime gates remain CLOSED; Backend build and optional Trip port UNKNOWN. Push29 and lower snapshots are historical.
 
