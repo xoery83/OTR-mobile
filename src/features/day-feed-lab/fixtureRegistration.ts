@@ -4,6 +4,7 @@ import { getDl1FixtureCatalog } from "./fixtureCatalog";
 import { stayContribution } from "./stayContribution";
 import { stayRenderer } from "./StayFixtureRow";
 import { rentalContribution } from "./rentalContribution";
+import { scheduledTransportContribution } from "./scheduledTransportContribution";
 import { flexibleContribution } from "./flexibleContribution";
 import { getTtrLabFixtures } from "@/features/ttr/labFixtures";
 import { t } from "@/ui/locale";
@@ -20,6 +21,9 @@ export function getLabFixtures() {
     rentalContribution("TODAY"),
     rentalContribution("TODAY_RETURN"),
     rentalContribution("PAST"),
+    scheduledTransportContribution("FUTURE"),
+    scheduledTransportContribution("TODAY"),
+    scheduledTransportContribution("PAST"),
     flexibleContribution(),
     ...getTtrLabFixtures().map((fixture) => ({
       ...fixture,

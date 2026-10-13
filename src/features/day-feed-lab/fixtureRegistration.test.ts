@@ -21,33 +21,36 @@ vi.mock("./FlexibleSnapshotFixtureRow", () => ({
   FlexibleSnapshotFixtureRow: () => null,
 }));
 
-it("appends Flexible F01-F14 after the unchanged 22 entries and preserves all TTR checks", () => {
+it("adds three separate P5 fixtures while preserving TTR and Flexible appendix", () => {
   const catalog = getLabFixtures();
-  expect(catalog).toHaveLength(36);
-  expect(new Set(catalog.map((fixture) => fixture.id)).size).toBe(36);
-  expect(catalog.slice(0, 22).map((f) => f.id)).toEqual([
+  expect(catalog).toHaveLength(43);
+  expect(new Set(catalog.map((fixture) => fixture.id)).size).toBe(43);
+  expect(catalog.slice(0, 6).map((f) => f.id)).toEqual([
     "day-lab-nelson",
     "day-lab-faroe",
     "day-lab-europe",
     "day-lab-urban",
     "day-lab-sparse",
     "c0000000-0000-4000-8000-000000000003",
-    "day-lab-flexible",
-    ...getTtrLabFixtures().map((f) => f.id),
-    "20000000-0000-4000-8000-000000000099",
+  ]);
+  expect(catalog.filter((f) => f.id.startsWith("d1000000-")).map((f) => f.id)).toEqual([
+    "d1000000-0000-4000-8000-000000000001",
+    "d1000000-0000-4000-8000-000000000002",
+    "d1000000-0000-4000-8000-000000000003",
   ]);
   expect(catalog[0].selectedDate).toBe("2027-01-15");
-  expect(catalog.slice(22).map((f) => f.id)).toEqual(
+  expect(catalog.slice(-14).map((f) => f.id)).toEqual(
     Array.from({ length: 14 }, (_, i) => {
       const id = `f${String(i + 1).padStart(2, "0")}`;
       return `flexible-cp01b-${id}-${id === "f11" ? "past" : id === "f10" ? "today" : "future"}`;
     }),
   );
-  expect(catalog.slice(0, 7).every((fixture) => fixture.synthetic)).toBe(true);
-  expect(
-    catalog.slice(7, 21).map((fixture) => (fixture.supplemental as TtrLabFacts).caseId),
-  ).toEqual(ttrLabCases);
-  for (const fixture of catalog.slice(7, 21)) {
+  const ttrStart = catalog.findIndex((f) => f.id === getTtrLabFixtures()[0].id);
+  const ttr = catalog.slice(ttrStart, ttrStart + ttrLabCases.length);
+  expect(ttr.map((fixture) => (fixture.supplemental as TtrLabFacts).caseId)).toEqual(
+    ttrLabCases,
+  );
+  for (const fixture of ttr) {
     const facts = fixture.supplemental as TtrLabFacts;
     expect(fixture.title).toContain("TTR");
     const stream = composeDayStream(
