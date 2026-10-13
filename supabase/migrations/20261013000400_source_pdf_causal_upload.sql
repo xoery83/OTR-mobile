@@ -73,13 +73,18 @@ language plpgsql security definer set search_path=pg_catalog as $$declare tag te
  return new;
 end$$;
 create trigger source_pdf_causal_association before insert or update on public.trip_source_execution_attempts for each row execute function public.trip_source_pdf_causal_association();
--- At READ COMMITTED, another transaction's visible row is committed; own xmin is not.
--- Compare full current xid converted to xid, so epoch wrap is not compared as text to xid8.
+-- Visible own subtransactions remain rollbackable after RELEASE SAVEPOINT.
+-- Qualify xmin in the nearest epoch of one native xid8 anchor; accept only committed status.
 create function public.trip_source_pdf_causal_committed(attempt uuid, stage boolean default false) returns boolean
 language sql volatile security definer set search_path=pg_catalog as $$
- select case when stage then s.xmin<>pg_current_xact_id()::xid else a.xmin<>pg_current_xact_id()::xid end
+ with anchor as materialized (select pg_current_xact_id()::text::numeric as full_xid),
+ version as (
+ select anchor.full_xid,(case when stage then s.xmin else a.xmin end)::text::numeric-mod(anchor.full_xid,4294967296) as delta
  from public.trip_source_execution_attempts a join public.trip_source_staged_resources s on s.id=a.staged_resource_id
+ cross join anchor
  where a.id=attempt and a.execution_principal=session_user and a.profile_id='PDF_PRIVATE_UPLOAD_BETA_CAUSAL_V3'
+ )
+ select coalesce(pg_xact_status((full_xid+case when delta>2147483647 then delta-4294967296 when delta< -2147483648 then delta+4294967296 else delta end)::text::xid8)='committed',false) from version
 $$;
 create function public.trip_source_pdf_causal_reserve(operation uuid, attempt uuid, resource uuid, node uuid, resource_key text, run_token uuid, owner_run uuid, binding jsonb) returns jsonb
 language plpgsql security definer set search_path=pg_catalog set timezone='UTC' set datestyle='ISO, YMD' as $$

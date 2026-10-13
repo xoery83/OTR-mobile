@@ -307,6 +307,84 @@ describe.skipIf(!owned)("CLOSED V3 causal upload authority", () => {
       }),
     ).rejects.toThrow("PDF_CAUSAL_COMMIT_REQUIRED");
   });
+  it.each(
+    (["savepoint", "exception"] as const).flatMap((child) =>
+      (
+        [
+          ["STAGE", "DISPATCH"],
+          ["DISPATCH", "CONFIRM"],
+          ["DISPATCH", "ACK"],
+          ["ACK", "READ"],
+          ["READ", "GET"],
+        ] as const
+      ).map(([prior, next]) => ({ child, prior, next })),
+    ),
+  )(
+    "$child $prior cannot authorize $next before outer commit",
+    async ({ child, prior, next }) => {
+      const f =
+        prior === "STAGE"
+          ? { ...(await seed()), j: undefined as CausalJournal | undefined }
+          : prior === "DISPATCH"
+            ? await start()
+            : prior === "ACK"
+              ? await running()
+              : await ack(await running());
+      const before = f.j ?? ((await f.plan.begin()).journal as CausalJournal);
+      const snapshot = async () =>
+        (
+          await admin.lease.query(
+            "SELECT to_jsonb(a) AS journal,to_jsonb(s) AS stage,to_jsonb(o) AS operation FROM trip_source_execution_attempts a JOIN trip_source_staged_resources s ON s.id=a.staged_resource_id JOIN trip_source_operations o ON o.id=a.operation_id WHERE a.id=$1::uuid",
+            [before.id],
+          )
+        ).rows[0];
+      const original = await snapshot();
+      const proof: Json | null =
+        prior === "STAGE"
+          ? {
+              sha256: pdfHash(bytes),
+              byteCount: bytes.length,
+              evidenceSha256: "e".repeat(64),
+            }
+          : prior === "ACK"
+            ? await causalProof(owned!, before, "ACK")
+            : null;
+      await expect(
+        transaction(async (s) => {
+          let j: CausalJournal;
+          if (child === "savepoint") {
+            await s.lease.query("SAVEPOINT causal_boundary");
+            j = (await inTx(s, before, prior, proof)).rows[0].r as CausalJournal;
+            await s.lease.query("RELEASE SAVEPOINT causal_boundary");
+          } else {
+            await s.lease.query(
+              "CREATE TEMP TABLE causal_child_result (journal jsonb) ON COMMIT DROP",
+            );
+            // An EXCEPTION clause creates a child transaction even on its successful path.
+            await s.lease.query(
+              "DO $child$ BEGIN BEGIN INSERT INTO causal_child_result SELECT trip_source_pdf_causal_execute($1::uuid,$2::uuid,$3::bigint,$4,$5::jsonb); EXCEPTION WHEN OTHERS THEN RAISE; END; END $child$",
+              [
+                before.id,
+                before.owner_run,
+                before.owner_fence,
+                prior,
+                proof === null ? null : canonicalCoreJson(proof),
+              ],
+            );
+            j = (await s.lease.query("SELECT journal AS r FROM causal_child_result"))
+              .rows[0].r as CausalJournal;
+          }
+          await inTx(
+            s,
+            j,
+            next,
+            next === "ACK" || next === "GET" ? await causalProof(owned!, j, next) : null,
+          );
+        }),
+      ).rejects.toThrow("PDF_CAUSAL_COMMIT_REQUIRED");
+      expect(await snapshot()).toEqual(original); // Outer rollback retains no child authority.
+    },
+  );
   it("pre-ACK/cached read with matching bytes is not a Source-issued permit", async () => {
     const f = await running();
     const cached = await causalProof(owned!, f.j, "GET");
