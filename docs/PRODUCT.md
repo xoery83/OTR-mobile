@@ -160,6 +160,17 @@ rather than a permanent primary destination. Migrating the current bottom tabs
 to this structure is a future task and is not part of the Global Menu and
 Account Switching work.
 
+The later direct Owner authorization for WP-EXP-SHELL-01 permits a bounded
+R0/R1 bottom Shell now: a left NavigationIsland with at most three actual
+routable destinations and a right ActionIsland with at most one supported
+contextual action. Its initial S0 candidate exposes only a conditional Day entry after an
+account-matched accepted read establishes current Trip/date context; My Trips
+waits for qualified Trip UI integration. It presents no right action until a
+real capability-backed handler exists. This packet does not create Calendar,
+Timeline, Photos, Wallet or Lab destinations, and it does not activate those
+modules or change the long-term pillar direction above. See BD49 and the Shell S0 contract for the proposed bounded route set;
+implementation and Native Visual review remain pending.
+
 The top-left menu is a contextual utility menu, not a second app launcher. It
 combines the current account, Settings, Language, Log out, and low-frequency
 actions for the current primary module. While Ledger is active, those actions
