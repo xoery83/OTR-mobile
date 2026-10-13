@@ -2,9 +2,10 @@
 
 Owner Response 01 accepted the read-only inventory and delegated routine R0/R1
 implementation, independent review, tests, commit and local integration when
-existing Gates are satisfied. The sole active portfolio records are
-[Beta STATUS](beta/STATUS.md), [EXECUTION](beta/EXECUTION.md) and
-[DECISIONS](beta/DECISIONS.md). Read those and current Git first.
+existing Gates are satisfied. Explicit L1/L2 local packages are now approved;
+protected runtime/environment grants remain separate. The sole active portfolio records are
+[Beta STATUS](beta/BETA_STATUS.md), [EXECUTION](beta/BETA_EXECUTION.md),
+[DECISIONS](beta/BETA_DECISIONS.md) and [INTERFACES](beta/BETA_INTERFACE_REGISTER.md). Read those and current Git first.
 
 The older prefixes below are retained historical evidence, not fresh approvals.
 Explicit Owner-only Gates remain effective until named authorization; normal
