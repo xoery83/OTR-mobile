@@ -9,6 +9,17 @@ import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { createSyncOperationRepository } from "../sync/syncOperationRepository";
+import {
+  createTripCreateSyncCoordinator,
+  createTripCreateSyncWorker,
+} from "../sync/tripCreateSyncWorker";
+import {
+  createCoreV2SyncCoordinator,
+  createCoreV2SyncWorker,
+} from "../sync/tripCoreV2SyncWorker";
+import { coreClosedCapabilities } from "@/domain/trip/tripCoreV2Commands";
+import type { TripCreateTransport } from "../sync/tripCreateTransport";
+import type { CoreSyncTransport } from "../sync/tripCoreV2SyncWorker";
 import { createTripRepository } from "./tripRepository";
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
@@ -377,4 +388,89 @@ it("applies an owning receipt and queue completion atomically, including exact r
   f.sql.close();
   f = local(path, false);
   expect(await f.repo.getTrip(create.tripId)).toEqual(accepted);
+});
+it("wakes an exact pending Trip receipt into Core eligibility while CLOSED Core capability blocks dispatch", async () => {
+  const f = local();
+  const create = input();
+  await f.repo.createTrip(create);
+  for (const family of ["P1", "P3"] as const)
+    await f.repo.addItem(create.tripId, {
+      operationId: randomUUID(),
+      itemId: randomUUID(),
+      family,
+      title: family === "P1" ? "Ridge walk" : "Lodge",
+      startDate: "2027-01-16",
+      ...(family === "P3" ? { endDate: "2027-01-18" } : {}),
+    });
+  const original = await f.repo.pendingItems(create.tripId);
+  expect(original).toHaveLength(2);
+  expect(await f.queue.listPending()).toEqual([]);
+  const receipt = {
+    operationId: create.operationId,
+    tripId: create.tripId,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+    name: "Local trip",
+    destination: create.destination,
+    startDate: create.startDate,
+    endDate: create.endDate,
+  };
+  const createTransport = {
+    receipt: vi.fn(async () => receipt),
+    create: vi.fn(),
+  } as unknown as TripCreateTransport;
+  const createCoordinator = createTripCreateSyncCoordinator(
+    f.queue,
+    createTripCreateSyncWorker(f.repo, createTransport, async () => accountA),
+    f.repo,
+    () => true,
+  );
+  expect((await createCoordinator.run("AUTHENTICATED_ONLINE")).processedCount).toBe(1);
+  expect(createTransport.create).not.toHaveBeenCalled();
+  expect((await f.repo.getTrip(create.tripId))?.ownerPersonId).toBe(
+    receipt.ownerPersonId,
+  );
+  expect((await f.repo.getTrip(create.tripId))?.syncStatus).toBe("SYNCED");
+  expect((await f.queue.listPending()).length).toBe(0);
+  expect(
+    f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(create.operationId)
+      ?.status,
+  ).toBe("COMPLETED");
+  const coreTransport = {
+    capabilities: vi.fn(async () => coreClosedCapabilities),
+    receipt: vi.fn(async () => null),
+    submit: vi.fn(),
+  } as unknown as CoreSyncTransport;
+  const coreCoordinator = createCoreV2SyncCoordinator(
+    f.queue,
+    createCoreV2SyncWorker(
+      f.core,
+      coreTransport,
+      async () => accountA,
+      async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+    ),
+    f.core,
+    create.tripId,
+  );
+  expect((await coreCoordinator.run("AUTHENTICATED_ONLINE")).processedCount).toBe(2);
+  expect(coreTransport.capabilities).toHaveBeenCalledTimes(2);
+  expect(coreTransport.submit).not.toHaveBeenCalled();
+  const after = await f.repo.pendingItems(create.tripId);
+  expect(after.map((item) => item.command.operationId)).toEqual(
+    original.map((item) => item.command.operationId),
+  );
+  expect(after.map((item) => item.state)).toEqual(["BLOCKED", "BLOCKED"]);
+  expect(
+    f.sql
+      .prepare(
+        "SELECT count(*) AS n FROM sync_operations WHERE operation_type='CORE_V2_COMMAND' AND status='DEPENDENCY_BLOCKED'",
+      )
+      .get()?.n,
+  ).toBe(2);
+  expect(
+    await f.core.acceptedSnapshot(await f.core.captureContext(create.tripId)),
+  ).toBeNull();
 });
