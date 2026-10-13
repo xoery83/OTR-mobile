@@ -1,0 +1,89 @@
+# P3 Accommodation — Level1 acceptance report, 2026-10-14
+
+**PARTIAL product delivery. Current Native Visual NOT OBSERVED; Runtime NOT VERIFIED; Level2 pending.** Reviewer p4_visual_61 is independent of the original P3 builder. Source alone adopts this report. This is a report-only isolated candidate, not a production activation, passed full Level1 gate or Product UX Accepted statement.
+
+## A. Scope and exact evidence
+
+Read CURRENT_IMPLEMENTATION_STATE first, then Owner Download `OTR_P3_PRODUCT_DESIGN_DELTA_2026-10-13.md` (byte-identical to `../../trip/OTR_P3_PRODUCT_DESIGN_DELTA_2026-10-13.md`, SHA256e1ba268b554f70619e08892569832b948ab7fcbc2d06cab7e56b7410f7ccfd0f), the current P3 row/Core renderer/Lab binding, and immediate shared Day composition. Initial source inspection used canonical main4c476047a1c09bc0882da33eace90df701b0a7d5 (Push47 report intake). Current main9c73b1738bf5111b6209b6a9d467d57dbc1856a7 was rechecked after record-only intake; task-relevant product hashes remain unchanged, not new P3 runtime. Companion manifest seals task-relevant current source hashes.
+
+`StayRow.tsx`, `coreStayRenderer.tsx`, `StayFixtureRow.tsx` and `stayContribution.ts` exactly match the accepted8ff7ca88fb7606989bf37af1b87ab77014f38a29 P3 manifest. Reused different-author functional64/64 receipt `/private/tmp/otr-beta-p3-independent-functional-review.md`; unchanged P3 source does not justify a repeat whole-code review/test run. Shared composition currently emits TNS first, timed activities next and BASE after activities while retaining true underlying anchors. Existing one G2 Focus/Immersive/NOW/scroll ownership is preserved.
+
+App source0.1.0/com.xoery.otrmobile/automatic appearance; actual installed build and JS source attachment **unknown**. Approved existing SimulatorA1A21E80-9007-4D69-87A4-2A5AF927F0A3 only. No installation, new bundle/signing, account/Auth/credentials, private originals/gallery, native preference/data, Core/Flight/formalTTR/Hosted operation. Existing Native technical condition has not changed: DeviceHub exposes older CP02 host with no current OTR screenshot. Per instruction, no retry was made.
+
+| Layer               | Verdict                                                           | Precise meaning                                                                                                                                                                                                                   |
+| ------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Functional          | PASS for accepted bounded renderer seam; complete product PARTIAL | Trusted independent64 tests reused; conditional supplied-callback rendering is not actual owning module delivery.                                                                                                                 |
+| Product Conformance | PARTIAL                                                           | Baseline role/context/unified Stay/honest absence structurally conform; production P3 mount and required owning Beta0 capabilities remain undelivered or unverified. No new ordinary defect identified in the unchanged renderer. |
+| Native Visual       | NOT OBSERVED / TECHNICAL BLOCKED                                  | Zero current-version screenshots. Historical synthetic8ff observations are indexed only, not substituted for current images.                                                                                                      |
+| Runtime             | NOT VERIFIED                                                      | Real accepted Stay Day, original byte opening/offline rights, actual gallery/Ledger/management and complete journey not established.                                                                                              |
+| Owner Level2        | PENDING                                                           | Accurate partial report is not UX acceptance; no new Owner gate/design question introduced.                                                                                                                                       |
+
+## B. Nine states — actual current native evidence
+
+Each row includes Check-in/Daily Base/Check-out where applicable. Existing synthetic Lab stay idc0000000-0000-4000-8000-000000000003 has Jan15→18 three-night dates, selectedJan16 and shared Stay renderer. It is not actual accepted account-scoped Stay data. Supplied-document/guest/photo/action tests are explicit conditional input seams, not implemented providers.
+
+| Context/depth    | Approved requirement / current static capability                                                                      | Screenshot and Native verdict                               |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Future Browse    | Check-in/out and untimed middle Daily Base at day end; explicit-only Confirmed; no repeated full Booking              | NOT OBSERVED                                                |
+| Future Focus     | Full dates/night count/selected role; View on Map; direct authorized original or chooser                              | NOT OBSERVED; actual originals DEFERRED owning prerequisite |
+| Future Immersive | Same Stay detail; external map/no embedded placeholder/nearby items; supplied registered guests/docs/manage/lower Add | NOT OBSERVED; actual guest/docs/manage/Add unavailable      |
+| Today Browse     | Role-specific operational nodes, untimed day-end Base; no instructions in Browse                                      | NOT OBSERVED                                                |
+| Today Focus      | Check-in original instructions, Staying location/contact, Check-out deadline/originals; available exact Directions    | NOT OBSERVED; actual document/contact provider unavailable  |
+| Today Immersive  | Same Stay, selected role priority, original internal-first/external fallback, registered guests, lawful manage/Add    | NOT OBSERVED; owning opener/rights/actions unavailable      |
+| Past Browse      | Historic nodes/Base, authorized photo count only; no thumbnail/money/attendance inference                             | NOT OBSERVED; actual linked photo read DEFERRED             |
+| Past Focus       | Identity/dates/location; authorized photo/expense counts; lower Booking; no amounts                                   | NOT OBSERVED; actual linked counts/originals unavailable    |
+| Past Immersive   | Top≤3 photos/Viewall; same Stay; paired Ledger/per-night/original-currency groups; documents/lower additions          | NOT OBSERVED; actual photos/Ledger/doc/add providers absent |
+
+**No current screenshot asset exists.** No generated image, design mockup, static render or old app image is offered as acceptance evidence. Historical `/private/tmp/otr-beta-p3-8ff-native-partial-review.md` reports synthetic Future/Today/Past interactions and role rails only; its prior bounded PASS does not certify current main, accepted data, Dark/large type or the complete nine-state product.
+
+## C. Fourteen scenario acceptance matrix
+
+PASS below is limited to unchanged renderer semantics with existing authorized input; PARTIAL/DEFERRED marks every absent required capability rather than declaring a missing feature passed. All native results remain NOT OBSERVED.
+
+| #   | Expected                                                                                           | Current actual / delivery verdict                                                                                            |
+| --- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Three nights: first Check-in, middle day-end Base, last Check-out, one detail                      | PASS bounded role/identity/BASE placement; production/real Day PARTIAL/NV                                                    |
+| 2   | HotelA out/HotelB in distinct, both same-day roles preserved without duplicate Booking             | PASS conditional role/identity presentation; real two-Stay context NV; no extra Item minted                                  |
+| 3   | Unknown time preserves date/role, invents no14:00/10:00/20:00                                      | PASS bounded exact-quality/precision clock rail; BASE untimed                                                                |
+| 4   | Future full range/night count; direct original or multiple chooser                                 | PARTIAL: full dates/chooser seam exists; owning confirmations/opener DEFERRED                                                |
+| 5   | Evidence-only Confirmed; no invented Pending/Not booked                                            | PASS bounded flag handling/adapter omission; actual confirmation evidence provider absent, not inferred                      |
+| 6   | Precise map versus name+area keyword search; no promoted TTR authority                             | PASS bounded URL distinction; actual external Maps handoff NV                                                                |
+| 7   | Today original instructions internal-first/external fallback, absent action omitted, no AI summary | PARTIAL: role-specific Original callback seam exists; internal viewer/fallback/actual originals DEFERRED; no P3 AI call      |
+| 8   | Authorized sourced guest names and distinguishable room/Booking associations, no Member fill       | PARTIAL: supplied names render; adapter supplies none, multi-room/Booking association unavailable/DEFERRED                   |
+| 9   | Past authorized photo/expense counts only; no attendance                                           | PARTIAL: conditional counters/honest omissions exist; actual linked reads DEFERRED                                           |
+| 10  | Past gallery≤3/Viewall; no empty gallery                                                           | PARTIAL conditional renderer; actual owning gallery/Viewall DEFERRED                                                         |
+| 11  | Trip-currency Total+per-night / Share+per-night, original only Total; no fabricated0               | DEFERRED owning Ledger values/FX/share/visibility. Amount groups entirely absent, not PASS delivery                          |
+| 12  | Capability-authorized lower Add; top-right management obeys lifecycle                              | PARTIAL conditional callbacks/placement; actual mutation/add/lifecycle unavailable/DEFERRED, no cancellation/delete executed |
+| 13  | Previously available offline originals, honest unavailable external resources, no hidden LLM       | PARTIAL honest omission/no AI; actual local byte/opener/offline availability NOT VERIFIED                                    |
+| 14  | Shared Focus/NOW/date/scroll/P1/P2/TTR unchanged                                                   | PASS trusted shared contract/test evidence; current Native and full runtime NV                                               |
+
+## D. Decision mapping and Beta scope
+
+| Decision IDs              | Current conformance and missing delivery                                                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P3-TB01/02, FB01, PB01    | Untimed Base uses shared BASE ordering at day end; Browse omits access instructions. Real accepted Day not observed.                                                         |
+| P3-TB03, FB03/04, FI01/02 | External accepted-location map vs keyword search; Future View on Map, no embedded/nearby placeholder; actual handoff NV.                                                     |
+| P3-TF01/02, TI02, FF01/02 | Role-specific original instructions/checkout/deadline and full Stay date/night display; direct/chooser callback exists but owning original opener internal/fallback missing. |
+| P3-TI01                   | One event/Stay facts across dates and shared G2 depth, no second Focus controller; production mount absent.                                                                  |
+| P3-TI03/04, PI02          | Top management/lower Add seams hidden unless supplied; actual lawful owning lifecycle/add not implemented by this renderer.                                                  |
+| P3-FB02                   | Confirmed requires explicit supplied evidence flag; adapter invents no supplier status.                                                                                      |
+| P3-FI03                   | Guests rendered only if supplied; no Trip-Member inference; source/room/Booking association unavailable.                                                                     |
+| P3-PB02, PF01/02, PI01    | Past count-only Browse, count/no-money Focus, lower Booking, top-three gallery capability; actual links unavailable.                                                         |
+| P3-PI03/04                | Correct owning Ledger boundary by absence; requested paired money layout is not currently implemented/delivered.                                                             |
+| P3-AI01                   | Beta no structured AI Access Facts; no P3 model call or generated instruction summary.                                                                                       |
+
+Beta0 baseline already present: context/role labels, full dates/night count, unknown-time restraint, day-end Base composition, unified Stay seam, external map intent, honest capability absence and shared G2 behavior. **Beta0 still incomplete**: production Day does not inject createCoreStayRenderer; actual accepted P3 Day, original instructions/confirmation opener, source-authorized registered guest association and management/add attachment capability are missing or unverified. The production composition gap is an ordinary presentation/read-only task, distinct from protected runtime: current readTripDayFeed selects the FlightP2-only reader. Existing approved createCoreP1P3DayFeedReader can supply the same acceptedSnapshot/certificate/account-gated local projection, and TripScreen can bind existing createCoreStayRenderer only for version2. Source/Root have approved the minimal two-point candidate; implementation/review is pending. No network/write/Core activation or fabricated callback is required. Other missing capabilities remain owning dependencies.
+
+Beta1 enhancements: actual Photos gallery/add and Ledger linked count/amount/FX/share/add remain DEFERRED to owning capability. Richer Documents associations are conditional on their accepted capability. Basic P3 renderer work need not wait for Photos/Ledger; those missing enhancements still cannot be labeled delivered. Delta's Beta0/Beta1 labels are scope recommendations requiring central reconciliation, not a new unilateral approval.
+
+## E. Findings and boundaries
+
+No new must-fix ordinary renderer defect found within this unchanged accepted scope; no cosmetic or input-seam bug was invented to create a work packet. No production candidate modified. Existing required gaps above are explicitly recorded instead of promoted to PASS. Source/Core own accepted-read/production composition and Documents/Members/Ledger/Photos own their missing rights/data/actions. The current TripScreen passes no Stay renderer into its DayFeed, and readTripDayFeed chooses a P2-only factory. The approved next candidate reuses existing read-only P1P3 projection and presentation renderer under identical accepted account/certificate gates; it must preserve v1 fallback, P2 services and all owning boundaries. This is ordinary source composition, not protected Core/runtime/network activation. Source has assigned the local builder lease. No second Day renderer, fake originals or synthetic financial/media source is needed.
+
+Measured layout/contrast/clipping/Light-Dark/DynamicType/VoiceOver/safe-area/scroll results cannot be stated without pixels/native observation. There are no before/after current screenshots or repair claims. Existing Source review remains trusted for the unchanged seam; current shared source hashes are recorded, without broad P1/P2/TTR re-audit.
+
+## F. Level2 delivery
+
+Level1 report is now available to Source for queue/records and subsequent Owner/domain review. Full Level1 and Level2 remain pending actual observable states and missing owning capabilities; **Product UX Accepted is not granted**. There is no unresolved new product design decision blocking baseline renderer work. Ordinary dependencies proceed under existing scope while unavailable Native/runtime proof remains explicit; no other module is paused by this report.
+
+Skipped: repeated trusted P3 tests/code review, native retry/install, broad audit, private originals/gallery and protected runtime. Risk: synthetic/conditional renderer evidence does not establish real accepted Stay, original offline availability or Photos/Ledger functionality.
