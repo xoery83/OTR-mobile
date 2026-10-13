@@ -97,9 +97,19 @@ const server = createServer(async (incoming, outgoing) => {
       /^\/v2\/trips\/[^/]+\/sources\/(?:acquire|runs\/publish)(?:\?|$)/.test(
         incoming.url ?? "",
       );
+    const originalRoute = /^\/v2\/trips\/[^/]+\/documents\/[^/]+\/original(?:\?|$)/.test(
+      incoming.url ?? "",
+    );
     let byteCount = 0;
     for await (const chunk of incoming) {
       byteCount += chunk.length;
+      if (originalRoute && byteCount > 0) {
+        outgoing.statusCode = 413;
+        outgoing.setHeader("Content-Type", "application/json");
+        outgoing.setHeader("Cache-Control", "private, no-store");
+        outgoing.end(JSON.stringify({ error: { code: "ORIGINAL_UNAVAILABLE" } }));
+        return;
+      }
       if (textSourceRoute && byteCount > 2097152) {
         outgoing.statusCode = 413;
         outgoing.setHeader("Content-Type", "application/json");

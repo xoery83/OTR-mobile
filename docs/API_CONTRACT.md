@@ -398,6 +398,18 @@ Response shape:
 
 - Returns signed URL or stream metadata for offline cache.
 
+`GET /v2/trips/:id/documents/:documentId/original` - `DORMANT_BACKEND_BOUNDARY`
+
+- Requires normal Backend authentication, `X-OTR-Content-Version` (positive integer)
+  and `If-Match` (quoted lowercase SHA-256); rejects query, body and Range.
+- Returns only bounded private bytes after the injected current Core Document ACL
+  **and** current Source/copy retention right pass, with matching version/hash and
+  post-read rechecks. Missing owning ports and unreadable originals return the same
+  unavailable result; no storage locator or signed URL is exposed.
+- The route has no default Core/custody provider and is unavailable in the normal
+  Backend composition. It does not activate `canReadOriginal`, a viewer or Mobile
+  original cache. Real retained bytes and Native opening remain separately gated.
+
 `POST /trips/:id/documents/:documentId/ocr` - `NEW`
 
 - Future endpoint. Not Phase 1 required.

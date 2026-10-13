@@ -31,6 +31,10 @@ import { coreHttpBoundary, type CoreHttpConnection } from "./tripCoreV2Http";
 import { tripCreateBoundary, type TripCreatePort } from "./tripCreate";
 import { tripDiscoveryBoundary, type TripDiscoveryPort } from "./tripDiscovery";
 import {
+  tripDocumentOriginalBoundary,
+  type DocumentOriginalReader,
+} from "./tripDocumentOriginalHttp";
+import {
   canonicalCapabilitiesSchema,
   canonicalEventReadSchema,
   eventOperationReceiptSchema,
@@ -605,6 +609,7 @@ export type SafeLogEvent = {
 
 export type BackendDependencies = {
   tripCreatePort?: TripCreatePort;
+  documentOriginalReader?: DocumentOriginalReader;
   coreConnection?: CoreHttpConnection;
   flightTextSourceConnection?: FlightTextSourceConnection;
   participationGateway?: ParticipationGateway;
@@ -2347,6 +2352,7 @@ function reportingFilters(url: URL): ReportingFilters {
 
 export function createDevBackendHandler({
   tripCreatePort,
+  documentOriginalReader,
   flightTextSourceConnection,
   coreConnection,
   participationGateway,
@@ -2450,6 +2456,15 @@ export function createDevBackendHandler({
         route = "/v2/trips:create";
         const actor = await authenticate(request, gateway);
         response = await tripCreateBoundary(request, actor.id, tripCreatePort);
+      } else if (/^\/v2\/trips\/[^/]+\/documents\/[^/]+\/original$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/documents/:documentId/original";
+        const actor = await authenticate(request, gateway);
+        response = await tripDocumentOriginalBoundary(
+          request,
+          actor.id,
+          (a, t) => gateway.canReadTrip(a, t),
+          documentOriginalReader,
+        );
       } else if (
         /^\/v2\/trips\/[^/]+\/sources\/(?:acquire|runs\/publish)$/.test(url.pathname)
       ) {

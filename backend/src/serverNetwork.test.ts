@@ -106,3 +106,28 @@ it("bounds TEXT Source ingress before concatenating an oversized body", async ()
     expect.stringContaining("INVALID_SOURCE_COMMAND"),
   );
 });
+
+it("rejects a Document original request body before buffering private-route input", async () => {
+  const { loading, createServer } = await start({});
+  await loading;
+  const incoming = {
+    url: "/v2/trips/10000000-0000-4000-8000-000000000001/documents/10000000-0000-4000-8000-000000000002/original",
+    async *[Symbol.asyncIterator]() {
+      yield Buffer.from("unexpected body");
+      throw new Error("MUST_NOT_CONTINUE_READING");
+    },
+  };
+  const outgoing = {
+    on: vi.fn(),
+    off: vi.fn(),
+    writableFinished: false,
+    statusCode: 0,
+    setHeader: vi.fn(),
+    end: vi.fn(),
+  };
+  await createServer.mock.calls[0][0](incoming, outgoing);
+  expect(outgoing.statusCode).toBe(413);
+  expect(outgoing.end).toHaveBeenCalledWith(
+    expect.stringContaining("ORIGINAL_UNAVAILABLE"),
+  );
+});
