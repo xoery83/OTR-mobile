@@ -1,0 +1,9 @@
+# My Trips ordinary presentation repair contract
+
+Source owns implementation/intake; reviewer p4_visual_61 is independent. Base inspected005e35c. No new product decision or permission gate.
+
+1. Latest Owner bottom-shell target: floating glass capsule(s), icon plus label, selected inner pill, subtle edge/shadow; preserve left Navigation Island≤3 and right Action Island≤1, existing Expo Router/selected Day/+ create handlers, canonical semantic palette/type/native controls. Current ExperienceBottomShell lacks material/translucency, capsule/selected inner pill/shadow and uses horizontal icon+label. Use existing installed native/foundation capabilities; no new large dependency or second router. Native Light/Dark/large-type/safe-area acceptance required after repair.
+2. Search is DEFERRED by the latest direct Owner My Trips Handoff: global Search is not designed, no Trips-only Search and no invalid action entry. This overrides the older TRIPS10 reservation. Keep the current omission; do not add a disabled, fake or placeholder Search entry. Preserve GlobalMenu and one clear My Trips hierarchy. No Search repair is in this contract.
+3. TRIPS01/02/07/09/11 cached-only presentation: inspect bounded merge of remote-only cached summary cards into truthful lifecycle groups; known active cached summaries need applicable image hierarchy and Past preview/See all policy. Preserve cached status/current-rights caveat and omit OpenToday/Add/manual cover/Capture/Ledger until owning authority qualifies. Do not infer local Trip creation or current access from cache. If the current dates are insufficient, undated remains honest; no fake dates or counts.
+
+Before/after native images on the exact frozen candidate are required when the approved A1A is observable. Current native host is technically blocked; no markup or asset image certifies the repair. Do not change original dirty R3 data, install new binary or retry private-container metadata.
