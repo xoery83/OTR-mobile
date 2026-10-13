@@ -1,3 +1,11 @@
+# CP-FLIGHT-PDF-TIMING-03 — isolated finite causal upload / Owner Review
+
+V3 `PDF_PRIVATE_UPLOAD_BETA_CAUSAL_V3` replaces relative upload audit-clock comparisons with committed stage/dispatch/ACK/read-permit facts, exact ACK-linked GET and current Source pins/access. Old v1/v2/PNG receipts and timestamp rules remain unchanged; remote writer debt, UNKNOWN and quota survive logical FINAL/PENDING. Migration `20261013000400` follows accepted isolated Beta00300 and canonical Flight00100/TTR00200; SQLite56/57 unchanged. Based on verified canonical `e9e4511`, with accepted Recovery-03A carried by normal isolated merge. Contract: `trip/CP_FLIGHT_PDF_CAUSAL_UPLOAD_AUTHORITY_V3.md`; report: `trip/implementation/CP_FLIGHT_PDF_TIMING_03_IMPLEMENTATION_REPORT.md`.
+
+Private worktree `/private/tmp/otr-flight-pdf-timing-03-20261013`, branch `codex/cp-flight-pdf-timing-03`, uses a separate local Git seed after shared-Gitdir permission-review timeouts. This handoff applies only to that isolated candidate. No canonical merge/push, Backend/Native runtime or Hosted/Provider activation. Real producer commit→IO and fresh independent GET capability remains unproven. Earlier pre-dispatch stage-shape and clock rollback validation caveats remain recorded; V3 does not fix the environment or old profiles. STOP at Owner Review.
+
+---
+
 # CP04A3-CORE-ORDER-03 — G2 reconciliation readiness / Owner Review
 
 2026-10-13. Owner cleared remote inclusion of unchanged G2 CP01B `e091b60` ancestry.
