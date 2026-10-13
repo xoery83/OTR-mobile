@@ -29,6 +29,7 @@ import {
 } from "./flightTextSource";
 import { coreHttpBoundary, type CoreHttpConnection } from "./tripCoreV2Http";
 import { tripCreateBoundary, type TripCreatePort } from "./tripCreate";
+import { tripDiscoveryBoundary, type TripDiscoveryPort } from "./tripDiscovery";
 import {
   canonicalCapabilitiesSchema,
   canonicalEventReadSchema,
@@ -170,6 +171,7 @@ export type StoredCreate = {
 };
 
 export type DevBackendGateway = {
+  discoverTrips?: TripDiscoveryPort["discoverTrips"];
   validatePublicationAccessToken?(
     token: string,
     signal: AbortSignal,
@@ -2431,7 +2433,17 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (
+      if (url.pathname === "/v2/trips" && request.method === "GET") {
+        route = "/v2/trips:list";
+        const actor = await authenticate(request, gateway);
+        response = await tripDiscoveryBoundary(
+          request,
+          actor.id,
+          gateway.discoverTrips
+            ? { discoverTrips: gateway.discoverTrips.bind(gateway) }
+            : undefined,
+        );
+      } else if (
         url.pathname === "/v2/trips" ||
         /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname)
       ) {

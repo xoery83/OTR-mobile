@@ -31,6 +31,7 @@ import {
   type SupabaseClient,
 } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "node:crypto";
+import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { losslessSourceJson } from "./losslessSourceJson";
 import { classifyMissingEconomicDate } from "../../src/domain/ledger/economicDateEvidence";
 import { summarizeMyLedgerSnapshot, type LightweightSnapshot } from "./myLedgerSummary";
@@ -850,6 +851,70 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return Boolean(
         creator.data.length || legacyMember.data.length || journeyMember.data.length,
       );
+    },
+
+    async discoverTrips(userId, cursor, limit) {
+      let createdQuery = service.from("trips").select("id").eq("created_by", userId);
+      let legacyQuery = service
+        .from("trip_members")
+        .select("trip_id")
+        .eq("user_id", userId);
+      let linkedQuery = service
+        .from("journey_members")
+        .select("trip_id")
+        .eq("user_id", userId)
+        .eq("status", "linked");
+      if (cursor !== null) {
+        createdQuery = createdQuery.gt("id", cursor);
+        legacyQuery = legacyQuery.gt("trip_id", cursor);
+        linkedQuery = linkedQuery.gt("trip_id", cursor);
+      }
+      const [created, legacy, linked] = await Promise.all([
+        createdQuery.order("id").limit(limit + 1),
+        legacyQuery.order("trip_id").limit(limit + 1),
+        linkedQuery.order("trip_id").limit(limit + 1),
+      ]);
+      if (created.error || legacy.error || linked.error)
+        throw new Error("TRIP_DISCOVERY_UNAVAILABLE");
+      const candidates = [
+        ...created.data.map((row) => row.id),
+        ...legacy.data.map((row) => row.trip_id),
+        ...linked.data.map((row) => row.trip_id),
+      ];
+      if (candidates.some((id) => !coreUuid.safeParse(id).success))
+        throw new Error("TRIP_DISCOVERY_UNAVAILABLE");
+      const ordered = [...new Set(candidates)].sort();
+      const pageIds = ordered.slice(0, limit);
+      const nextCursor = ordered.length > limit ? pageIds.at(-1)! : null;
+      const admitted = await Promise.all(
+        pageIds.map((tripId) => this.canReadTrip(userId, tripId)),
+      );
+      const visibleIds = pageIds.filter((_, index) => admitted[index]);
+      if (!visibleIds.length) return { trips: [], nextCursor };
+      const details = await service
+        .from("trips")
+        .select("id,name,destination,start_date,end_date,created_at")
+        .in("id", visibleIds);
+      if (details.error) throw new Error("TRIP_DISCOVERY_UNAVAILABLE");
+      const byId = new Map(details.data.map((row) => [row.id, row]));
+      return {
+        trips: visibleIds.flatMap((id) => {
+          const row = byId.get(id);
+          return row
+            ? [
+                {
+                  id: row.id,
+                  name: row.name,
+                  destination: row.destination,
+                  startDate: row.start_date,
+                  endDate: row.end_date,
+                  createdAt: row.created_at,
+                },
+              ]
+            : [];
+        }),
+        nextCursor,
+      };
     },
 
     async canWriteTrip(userId, tripId) {

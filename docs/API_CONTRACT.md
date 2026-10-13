@@ -1,5 +1,19 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## WP-TRIPS-DISCOVERY/INDEX — isolated Backend candidate, runtime unchanged
+
+Authenticated `GET /v2/trips?cursor=<uuid>&limit=<1..25>` lists only Trip IDs
+found through the actor's creator, legacy Trip member or **linked** Journey member
+relation. The Backend deduplicates stable UUIDs, rechecks each candidate with
+the existing `canReadTrip` rule, then returns only
+`{id,name,destination,startDate,endDate,createdAt}` and a continuation cursor.
+The default page size is 20; errors fail closed. The response is private/no-store.
+The existing `POST /v2/trips` create and per-Trip admission remain separate.
+This source candidate has no installed DEV endpoint evidence and no Mobile cache or
+My Trips merge yet; all-accessible inventory remains partial. Local pending Trip
+rows retain their stable UUID and cannot be fabricated from this read. Any
+protected Backend installation still requires its separate approved gate.
+
 ## WP05-D Trip creation port — implemented locally, runtime closed
 
 `POST /v2/trips` accepts a validated bearer identity, `Idempotency-Key` equal to
