@@ -1,0 +1,76 @@
+{
+  "atUTC": "2026-10-13T20:00:18.398492+00:00",
+  "manifestSha256": "5be10f9f0a04f19f0f3b2fb4c4f697798a005ffd76d452a5b1e431d4db1226ee",
+  "candidateFiles": [
+    {
+      "path": "src/components/ExperienceBottomShell.tsx",
+      "sha256": "50e15f49961676b5abd6679e9a1c58a521fb143693832353bc57045740942b64"
+    },
+    {
+      "path": "src/components/ExperienceBottomShell.test.ts",
+      "sha256": "da1dea164a8924ad6a8361f5e4aed1dd1e66db51230a8bc76053c7ab22efd38e"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.tsx",
+      "sha256": "13bef184eaacaea8388b05d651c2aa92c0cf7566e4854dc1807bef95066e6341"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.test.ts",
+      "sha256": "fc91cd29822c062bf5b611c940fe1eed2d476acaa8cad19f4137463eee5be266"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+      "sha256": "fafeabfc630f4ba8396ed30ebc8a4035fc363475f433e6d5b08df69de9411e81"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+      "sha256": "05e2d09b7d28e9359b86ae7f604e057b275618d1786c765de6f64a463579b055"
+    },
+    {
+      "path": "src/features/day-feed/TripCoverVisual.tsx",
+      "sha256": "5624806c8fef2dfb85c97b5fd556a2c98148ebf60a90e2a4e7ecc7aa74c25653"
+    },
+    {
+      "path": "src/features/day-feed/TripCoverVisual.test.ts",
+      "sha256": "5bfb7c8df9a66b181b74bc0da4379c6ca381aef91fdac825296dacb4f400549e"
+    },
+    {
+      "path": "src/features/day-feed/tripListPresentation.ts",
+      "sha256": "9a380580b6ec1671bd4e77fe9744460b827df7ff8a65f4ea0ae81d14cbef08ff"
+    },
+    {
+      "path": "src/ui/palette.ts",
+      "sha256": "dc3617c3845f2b076a6c4922e2532884adc41ad0db3f625e98d4aeebfc2d8708"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "sha256": "b4f1617d19599864830148664e48227ac242fe1b064c20bee63cc698026d2b3b"
+    }
+  ],
+  "overlayRestoration": [
+    {
+      "path": "app/(tabs)/_layout.tsx",
+      "restoredSha256": "aac506ffe04f3bc10a3abdd042fcc689563f6a25b2a04435ab38d024703771d7"
+    },
+    {
+      "path": "src/components/ExperienceBottomShell.tsx",
+      "restoredSha256": "50e15f49961676b5abd6679e9a1c58a521fb143693832353bc57045740942b64"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.tsx",
+      "restoredSha256": "13bef184eaacaea8388b05d651c2aa92c0cf7566e4854dc1807bef95066e6341"
+    },
+    {
+      "path": "src/data/repositories/tripDiscoveryRepository.ts",
+      "restoredSha256": "be7c4d49de34e035bf9cf2a58f1cf167f96d1777e602818ffe2bb5925d914673"
+    }
+  ],
+  "device": "A1A21E80-9007-4D69-87A4-2A5AF927F0A3",
+  "bundle": "com.xoery.otrmobile",
+  "metroSession": 54463,
+  "metro": "still leased for serial QA; no competing writer",
+  "nativeCategory": "five increases then five decreases; exact label unmeasured",
+  "appearance": "Light",
+  "keyboardCapture": "off",
+  "scope": "Only owned QA clone; no business writes, Auth, installation or private originals."
+}
