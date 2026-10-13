@@ -2,6 +2,7 @@ import { TripViewProvider } from "@/features/day-feed/TripViewContext";
 import { Tabs, usePathname } from "expo-router";
 
 import { AppIcon } from "@/components/AppIcon";
+import { ExperienceBottomShell } from "@/components/ExperienceBottomShell";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { bottomBarVisible } from "@/components/bottomBarVisibility";
 import { useUiTheme } from "@/ui/theme";
@@ -15,6 +16,12 @@ export default function TabsLayout() {
   return (
     <TripViewProvider>
       <Tabs
+        tabBar={() => (
+          <ExperienceBottomShell
+            visible={bottomBarVisible(pathname)}
+            pathname={pathname}
+          />
+        )}
         screenOptions={{
           tabBarActiveTintColor: colors.accent,
           tabBarInactiveTintColor: colors.textSecondary,

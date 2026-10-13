@@ -1,4 +1,7 @@
 export const en = {
+  "shell.day": "Day",
+  "shell.openSelectedDay": "Open the selected Day",
+  "shell.openMyTrips": "Open My Trips",
   "tripCreate.savedTrips": "Trips saved on this device",
   "tripCreate.newTrip": "Create Trip",
   "tripCreate.name": "Trip name",
@@ -1902,6 +1905,9 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "shell.day": "日程",
+  "shell.openSelectedDay": "打开所选日期的日程",
+  "shell.openMyTrips": "打开我的旅程",
   "tripCreate.savedTrips": "保存在此设备上的旅行",
   "tripCreate.newTrip": "创建旅行",
   "tripCreate.name": "旅行名称",

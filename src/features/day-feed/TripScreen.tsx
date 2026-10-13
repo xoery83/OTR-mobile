@@ -63,7 +63,11 @@ function TripContent({ today = false }: { today?: boolean }) {
   const [isLocalTrip, setIsLocalTrip] = useState(false);
   const home = params.view !== "day";
   const request = useRef(0);
-  const requested = today ? (view?.tripId ?? "") : value(params.tripId);
+  const requested = today
+    ? (view?.tripId ?? "")
+    : params.view === "trips"
+      ? ""
+      : value(params.tripId);
   const visibleTrip =
     trip?.scope.generation === generation &&
     trip.observed?.projection.tripId === requested
