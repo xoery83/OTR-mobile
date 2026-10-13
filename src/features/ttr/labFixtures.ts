@@ -31,6 +31,8 @@ export const ttrLabCases = [
   "REVERSED_RELATION",
   "EXTERNAL_MAPS_NO_MODE",
   "STALE_OPEN_TTR",
+  "COINCIDENT_UNKNOWN",
+  "EXPLICIT_SAME_LOCATION",
 ] as const;
 export type TtrLabCase = (typeof ttrLabCases)[number];
 type OpenIntent = NonNullable<TtrPresentationProjection["actions"]["openTtr"]>;
@@ -121,6 +123,14 @@ export function ttrLabFixture(caseId: TtrLabCase): FixtureContribution<TtrLabFac
   if (caseId === "UNKNOWN_CONTINUITY") input.continuity = null;
   if (caseId === "MISSING_ENDPOINT") input.to!.endpoint = null;
   if (caseId === "TEXT_ONLY_ENDPOINT") input.to!.endpoint!.qualification = "TEXT_ONLY";
+  if (caseId === "COINCIDENT_UNKNOWN" || caseId === "EXPLICIT_SAME_LOCATION") {
+    input.to!.endpoint!.coordinates = { ...input.from!.endpoint!.coordinates! };
+    if (caseId === "EXPLICIT_SAME_LOCATION")
+      input.spatialEquivalence = {
+        equivalence: "SAME_LOCATION",
+        provenance: "synthetic-lab-equivalence",
+      };
+  }
   let state = openTtr(input);
   const options = { now: instant, displayPermission: "DENIED" as const };
   let before: TtrPresentationProjection | undefined;
@@ -209,7 +219,11 @@ export function ttrLabFixture(caseId: TtrLabCase): FixtureContribution<TtrLabFac
   const expected: TtrLabFacts["expected"] = {
     qualification: qualified ? "QUALIFIED" : "UNQUALIFIED",
     visibility:
-      !qualified || past ? "HIDDEN" : selected ? "SELECTED_MODE" : "STRAIGHT_LINE",
+      !qualified || past || caseId === "EXPLICIT_SAME_LOCATION"
+        ? "HIDDEN"
+        : selected
+          ? "SELECTED_MODE"
+          : "STRAIGHT_LINE",
     mode: selected ? mode : null,
     routeStatus:
       caseId === "DRIVING_PENDING"
@@ -217,7 +231,7 @@ export function ttrLabFixture(caseId: TtrLabCase): FixtureContribution<TtrLabFac
         : caseId === "TRANSIT_FAILED"
           ? "FAILED"
           : "MISSING",
-    composed: qualified && !past,
+    composed: qualified && !past && caseId !== "EXPLICIT_SAME_LOCATION",
     suppressConnector: today,
   };
   // Day facts are synthetic rendering inputs; applicability and continuity are supplied separately above.

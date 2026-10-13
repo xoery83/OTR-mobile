@@ -24,8 +24,8 @@ vi.mock("./FlexibleSnapshotFixtureRow", () => ({
 
 it("adds separate P5 and P6 fixtures while preserving TTR and Flexible appendix", () => {
   const catalog = getLabFixtures();
-  expect(catalog).toHaveLength(47);
-  expect(new Set(catalog.map((fixture) => fixture.id)).size).toBe(47);
+  expect(catalog).toHaveLength(49);
+  expect(new Set(catalog.map((fixture) => fixture.id)).size).toBe(49);
   expect(catalog.slice(0, 6).map((f) => f.id)).toEqual([
     "day-lab-nelson",
     "day-lab-faroe",

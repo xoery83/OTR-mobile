@@ -50,8 +50,8 @@ describe("TTR shared Lab contribution", () => {
     const existing = getFixtureCatalog();
     const bytes = JSON.stringify(existing);
     const contributed = getTtrLabFixtures();
-    expect(contributed).toHaveLength(14);
-    expect(collectFixtureContributions([...existing, ...contributed])).toHaveLength(20);
+    expect(contributed).toHaveLength(16);
+    expect(collectFixtureContributions([...existing, ...contributed])).toHaveLength(22);
     expect(JSON.stringify(getFixtureCatalog())).toBe(bytes);
     expect(getFixtureCatalog()).toHaveLength(6);
     expect(JSON.stringify(getTtrLabFixtures())).toBe(JSON.stringify(contributed));
@@ -138,6 +138,28 @@ describe("TTR shared Lab contribution", () => {
     expect(stream.rows[1].transition?.geometricDistance).toEqual(
       f.supplemental!.projection.geometricDistance,
     );
+  });
+  it("keeps coincident geometry UNKNOWN until explicit same-location evidence exists", () => {
+    const unknown = ttrLabFixture("COINCIDENT_UNKNOWN").supplemental!;
+    const same = ttrLabFixture("EXPLICIT_SAME_LOCATION").supplemental!;
+    expect(unknown.input.spatialEquivalence).toEqual({ equivalence: "UNKNOWN" });
+    expect(unknown.projection).toMatchObject({
+      qualification: "QUALIFIED",
+      visibility: "STRAIGHT_LINE",
+      geometricDistance: { meters: 0 },
+      actions: { openTtr: expect.any(Object) },
+    });
+    expect(same.input.spatialEquivalence).toEqual({
+      equivalence: "SAME_LOCATION",
+      provenance: "synthetic-lab-equivalence",
+    });
+    expect(same.projection).toMatchObject({
+      qualification: "QUALIFIED",
+      visibility: "HIDDEN",
+      unavailableReason: "SAME_LOCATION",
+      actions: { openTtr: null },
+    });
+    expect(same.projection).not.toHaveProperty("geometricDistance");
   });
   it.each(["UNKNOWN_CONTINUITY", "MISSING_ENDPOINT", "TEXT_ONLY_ENDPOINT"] as const)(
     "%s never fabricates geometry or an action",
