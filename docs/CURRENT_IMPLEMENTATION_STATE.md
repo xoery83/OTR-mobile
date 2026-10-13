@@ -1,8 +1,8 @@
-# G2-TTR-02 — controlled integration validated
+# G2-TTR-02 — MAIN INTEGRATED / shared Experience maintenance
 
 2026-10-13. Normal isolated merge `fa18238` preserves current canonical `e9e4511` and accepted G2/TTR `13b001e`; only this handoff overlapped and both workstreams are retained. Accepted runtime/TTR archival bytes exact; no Core/schema/Provider or Flexible CP02 changes. Focused430 PASS; fresh baseline3979/integrated4152 PASS with the same two failures/54 skips and exact normalized messages. Static/format gates PASS. Integrated anonymous native JS reload confirms durable Confirm/rollback/cold recovery, isolation/ABA/nesting, Focus/NOW/date/nonzero scroll and Light/Dark; original accepted native evidence reused where byte-identical.
 
-Exact report/manifest and remaining gates: [G2-TTR-02 integration](architecture/OTR_G2_TTR_02_MAIN_INTEGRATION_REPORT.md). Guarded local-main advance is the final approval-gated step; no push/Hosted/production activation. G2 resumes shared Experience maintenance after approved advancement. Earlier prefixes below record the preceding workstreams and approval checkpoints.
+Exact report/manifest and remaining gates: [G2-TTR-02 integration](architecture/OTR_G2_TTR_02_MAIN_INTEGRATION_REPORT.md). Approval gate permitted guarded local-only fast-forward `e9e4511`→`ae70dc4`; main HEAD/tree/index and five unrelated dirty/untracked files were verified. G2 has returned to shared Experience maintenance. This completion seal changes documentation only; no push/Hosted/production activation. Earlier prefixes below record the preceding workstreams and approval checkpoints.
 
 ---
 

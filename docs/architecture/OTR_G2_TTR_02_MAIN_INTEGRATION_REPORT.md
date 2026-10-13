@@ -1,6 +1,6 @@
 # G2-TTR-02 — Controlled Main Integration
 
-2026-10-13. **Validated isolated integration.** Current-main baseline `e9e4511c0bcbf668627a8bc99b02bb8962580a17`; local tracking ref and live remote main matched. Accepted source `13b001e7d25c572394db5994548a78cfad9c70ae`, reviewed baseline `e091b60`. No push, Hosted operation, deployment or production activation.
+2026-10-13. **MAIN INTEGRATED — shared Experience maintenance.** Current-main baseline `e9e4511c0bcbf668627a8bc99b02bb8962580a17`; local tracking ref and live remote main matched. Accepted source `13b001e7d25c572394db5994548a78cfad9c70ae`, reviewed baseline `e091b60`. No push, Hosted operation, deployment or production activation.
 
 ## Integration and integrity
 
@@ -43,6 +43,6 @@ Accepted byte-identical runtime evidence for all14 TTR fixtures and P1/registere
 
 ## Main advance and remaining gates
 
-Evaluate the existing approval gate only after sealing this exact validated target and rechecking unchanged current main. Use guarded non-forced local fast-forward; if exact-target Owner approval is required, leave canonical main unchanged and request it. No bypass, force update or source rewrite.
+The approval gate permitted the guarded non-forced local fast-forward from `e9e4511c0bcbf668627a8bc99b02bb8962580a17` to sealed validated target `ae70dc4a19fd927841cc95a78d011ea6ac335a4f`, tree `c45361f3dc2702ccf608698fa0dab5595c2e36e6`. HEAD/main, accepted ancestry, index and all five unrelated file hashes were verified afterward. No additional Owner approval was required by the gate. This final completion seal changes only this report, the shared handoff and manifest; the final documentation commit/ref are recorded in the delivery and `/private/tmp/g2-ttr-02-integration-evidence/MAIN_INTEGRATION_COMPLETE.json`. No bypass, force update or source rewrite.
 
-After approved local advancement, G2 returns to shared Experience maintenance. Real Core routing/consumer execution, Apple routing/ETA/cache, production Admission/storage/runtime, Hosted/Provider and physical/real-data acceptance remain separate and CLOSED.
+G2 has returned to shared Experience maintenance. Real Core routing/consumer execution, Apple routing/ETA/cache, production Admission/storage/runtime, Hosted/Provider and physical/real-data acceptance remain separate and CLOSED.

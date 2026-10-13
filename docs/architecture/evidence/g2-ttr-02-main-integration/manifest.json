@@ -7,7 +7,7 @@
     {
       "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
       "owner": "G2",
-      "sha256": "43d69ac1bfb15791d3972299ccfcaf1e3c3c9a2f75a8ac7c6d9a5186c7a9864c"
+      "sha256": "89b6462e1d4b63be22ae86082b36fdec2fed9af305e4754adbca5c6ee69a3fdd"
     },
     {
       "path": "docs/architecture/OTR_G2_TTR_02_ARCHITECTURE_DECISION.md",
@@ -22,7 +22,7 @@
     {
       "path": "docs/architecture/OTR_G2_TTR_02_MAIN_INTEGRATION_REPORT.md",
       "owner": "G2",
-      "sha256": "dc60abef7d9ea8948cdba1adf377cb5a17a15e7c645ce7e17a66bbb532ceff1e"
+      "sha256": "36d3f951167199487759a03b30f6411a9579ba02d0f640682c6ffa163065e557"
     },
     {
       "path": "docs/architecture/OTR_TTR_CP05A2A_FEATURE_PREPARATION_REPORT.md",
