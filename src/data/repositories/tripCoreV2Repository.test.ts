@@ -1,4 +1,10 @@
 import {
+  ordinaryFixture,
+  ordinaryTime,
+  ordinaryPlace,
+} from "../../domain/trip/__fixtures__/coreOrdinaryOrder";
+import { straightLineDistance } from "../../domain/trip/ttr";
+import {
   executeCoreCommandV2,
   type CoreCommandStorage,
 } from "../../../backend/src/tripCoreV2Commands";
@@ -17,10 +23,15 @@ import { join } from "node:path";
 import { afterEach, describe, it, expect } from "vitest";
 import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
-import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
+import {
+  createTripCoreV2Repository,
+  type CoreDatabase,
+  type CoreTtrPublicationLease,
+} from "./tripCoreV2Repository";
 import {
   beginAccountTransition,
   endAccountTransition,
+  withAccountApplyGate,
 } from "../auth/accountRequestContext";
 import {
   applyCoreCommand,
@@ -489,4 +500,360 @@ describe("Core SQLite54 account partition and durable offline foundation", () =>
       "CORE_ACCESS_REVOKED",
     );
   });
+});
+
+async function ordinaryLocal() {
+  const dir = mkdtempSync(join(tmpdir(), "otr-core-port-"));
+  folders.push(dir);
+  const local = fixture(join(dir, "core.sqlite"));
+  const f = ordinaryFixture({ accountId: account, tripId: trip, personId: person });
+  const epoch = randomUUID();
+  const ctx = await local.repo.captureContext(trip);
+  const install = async (revision = 1, graph = f.graph, ownPerson = person) => {
+    const readActor = { ...f.actor, personId: ownPerson, personIds: [ownPerson] };
+    const bundle = await buildCoreActorCollection(
+      graph,
+      readActor,
+      { epoch, revision, accessRevision: 1, generatedAt: stamp },
+      [
+        {
+          person_id: ownPerson,
+          account_id: account,
+          active: true,
+          participating: true,
+          revision,
+        },
+      ],
+      hash,
+      [],
+      [],
+      [],
+      1,
+    );
+    await local.repo.install(
+      await local.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+  };
+  await install();
+  const read = async (repo = local.repo, i = 0) => {
+    const result = await repo.readTtr(ctx, f.orderId, f.ids[i], f.ids[i + 1]);
+    expect(result.status).toBe("QUALIFIED");
+    if (result.status !== "QUALIFIED") throw new Error("test relation unavailable");
+    return result;
+  };
+  const captured = await read();
+  // Test-owned stand-in for the unchanged nine-field TTR selection, in the same durable DB.
+  local.sql.exec(
+    "CREATE TABLE ttr_selections(account_id TEXT,trip_id TEXT,from_event_id TEXT,to_event_id TEXT,occurrence_discriminator TEXT,confirmed_mode TEXT,selected_at TEXT,applicable_event_date TEXT,expiry_zone_id TEXT)",
+  );
+  await withAccountApplyGate(() =>
+    local.database.withTransactionAsync(async () => {
+      expect(
+        await local.repo.revalidateTtrWithinTransaction(
+          ctx,
+          f.orderId,
+          f.ids[0],
+          f.ids[1],
+          captured,
+        ),
+      ).toBe(true);
+      await local.database.runAsync(
+        "INSERT INTO ttr_selections VALUES(?,?,?,?,?,?,?,?,?)",
+        account,
+        trip,
+        f.ids[0],
+        f.ids[1],
+        "ordinary-test",
+        "walking",
+        stamp,
+        "2027-01-15",
+        "UTC",
+      );
+    }),
+  );
+  const selection = () =>
+    expect(local.sql.prepare("SELECT confirmed_mode FROM ttr_selections").get()).toEqual({
+      confirmed_mode: "walking",
+    });
+  const guard = (
+    value = captured,
+    repo = local.repo,
+    handoff: (lease: CoreTtrPublicationLease) => undefined = () => {
+      throw new Error("stale publication emitted");
+    },
+  ) => repo.guardTtrPublication(ctx, f.orderId, f.ids[0], f.ids[1], value, handoff);
+  return { ...local, f, ctx, captured, read, install, selection, guard };
+}
+
+describe("Core coherent TTR post-commit publication port, CLOSED", () => {
+  it("captures one coherent vector and hands off after the selection commits, preserving UNKNOWN 0m geometry", async () => {
+    const a = await ordinaryLocal();
+    const g = structuredClone(a.f.graph);
+    g.itinerary_events[1].accepted_latitude = g.itinerary_events[0].accepted_latitude;
+    g.itinerary_events[1].semantic_revision = 2;
+    await a.install(2, g);
+    const current = await a.read();
+    expect(current.authority).toMatchObject({
+      scope: a.ctx,
+      personId: person,
+      branchId: a.f.branchId,
+      order: { id: a.f.orderId, revision: 1 },
+      coverage: "NONE_PROVEN",
+      from: { itemRevision: 1 },
+      to: { itemRevision: 2 },
+    });
+    expect(current.authority.collection.access_revision).toBe(1);
+    expect(current.authority.collection.applied_generation).toBe(
+      current.authority.refreshGeneration,
+    );
+    expect(current.spatial.equivalence).toBe("UNKNOWN");
+    expect(
+      straightLineDistance(
+        current.input.from!.endpoint!.coordinates!,
+        current.input.to!.endpoint!.coordinates!,
+      ),
+    ).toBe(0);
+    let lease!: CoreTtrPublicationLease;
+    expect(
+      await a.guard(current, a.repo, (l) => {
+        lease = l;
+        a.selection();
+      }),
+    ).toEqual({ status: "CURRENT" });
+    let count = 0;
+    expect(
+      lease.ifCurrent(() => {
+        count++;
+      }),
+    ).toBe(true);
+    expect(count).toBe(1);
+    const copy = lease.envelope;
+    copy.authority.collection.access_revision = 99;
+    expect(lease.envelope.authority.collection.access_revision).toBe(1);
+    a.selection();
+  });
+  it.each([
+    "access",
+    "person",
+    "branch",
+    "ordering",
+    "endpoint",
+    "coverage",
+    "snapshot",
+  ] as const)(
+    "suppresses %s changes after commit and preserves personal mode",
+    async (change) => {
+      const a = await ordinaryLocal(),
+        g = structuredClone(a.f.graph);
+      if (change === "access") await a.repo.revoke(a.ctx, 2);
+      else if (change === "person") await a.install(2, g, randomUUID());
+      else {
+        const o = g.trip_person_ordinary_orders[0];
+        if (change === "branch") {
+          o.branch_id = randomUUID();
+          o.revision = 2;
+        }
+        if (change === "ordering") {
+          const nodes = o.nodes as { eventId: string }[];
+          [nodes[0], nodes[1]] = [nodes[1], nodes[0]];
+          o.gaps = nodes.slice(0, -1).map((n, i) => ({
+            from: n.eventId,
+            to: nodes[i + 1].eventId,
+            coverage: "NONE_PROVEN",
+            complete: true,
+            transportId: null,
+          }));
+          o.revision = 2;
+        }
+        if (change === "endpoint") {
+          g.itinerary_events[1].location_input_revision = 2;
+          g.itinerary_events[1].semantic_revision = 2;
+        }
+        if (change === "coverage") {
+          (o.gaps as { coverage: string; complete: boolean }[])[0].coverage = "UNKNOWN";
+          (o.gaps as { complete: boolean }[])[0].complete = false;
+          o.revision = 2;
+        }
+        await a.install(2, g);
+      }
+      expect((await a.guard()).status).not.toBe("CURRENT");
+      a.selection();
+    },
+  );
+  it("rejects newly explicit Transport coverage with its precise reason", async () => {
+    const a = await ordinaryLocal(),
+      id = randomUUID();
+    const q = a.f.command(
+      "CREATE_ITEM",
+      id,
+      {
+        family: "P5",
+        core: { title: "covered transport" },
+        participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null },
+        acl: { visibility: "GROUP", people: [] },
+        endpoints: {
+          origin: { time: ordinaryTime("09"), place: ordinaryPlace(1) },
+          destination: { time: ordinaryTime("10"), place: ordinaryPlace(2) },
+        },
+        service: {
+          service_key: "rail.one",
+          transport_subtype: "TRAIN",
+          attribution: "UNSPECIFIED",
+          operator_namespace: "NAME",
+          operator_issuer: "SUPPLIER",
+          operator_value: "Synthetic Rail",
+          operator_literal: "Synthetic Rail",
+          service_number: "1",
+          service_literal: "Rail 1",
+          codeshare_operating_key: null,
+        },
+      },
+      [{ kind: "ITEM", id, revision: null }],
+    );
+    const g = applyCoreCommand(a.f.graph, q, a.f.actor, stamp).graph;
+    const o = g.trip_person_ordinary_orders[0];
+    o.revision = 2;
+    (o.gaps as { coverage: string; transportId: string | null }[])[0].coverage =
+      "EXPLICIT_TRANSPORT";
+    (o.gaps as { transportId: string | null }[])[0].transportId = id;
+    await a.install(2, g);
+    expect(await a.guard()).toEqual({
+      status: "UNAVAILABLE",
+      reason: "EXPLICIT_TRANSPORT",
+    });
+    a.selection();
+  });
+  it("rejects tampered metadata and in-flight refresh, preserving offline accepted data", async () => {
+    const a = await ordinaryLocal(),
+      fake = structuredClone(a.captured);
+    fake.authority.collection.manifest_sha256 = "0".repeat(64);
+    expect(await a.guard(fake)).toEqual({ status: "STALE", reason: "AUTHORITY_CHANGED" });
+    await a.repo.beginRefresh(a.ctx, 1);
+    expect((await a.read()).status).toBe("QUALIFIED");
+    expect(await a.guard()).toEqual({ status: "STALE", reason: "REFRESH_PENDING" });
+    a.selection();
+  });
+  it("closes queued refresh race at synchronous handoff and fences late emissions across repository instances", async () => {
+    const a = await ordinaryLocal();
+    let unblock!: () => void, entered!: () => void;
+    const reached = new Promise<void>((r) => {
+      entered = r;
+    });
+    const pause = new Promise<void>((r) => {
+      unblock = r;
+    });
+    let waiting = true;
+    const slowHash = async (b: Uint8Array) => {
+      if (waiting) {
+        waiting = false;
+        entered();
+        await pause;
+      }
+      return hash(b);
+    };
+    const other = createTripCoreV2Repository(
+      a.database,
+      async () => account,
+      slowHash,
+      () => stamp,
+    );
+    let lease!: CoreTtrPublicationLease;
+    const publication = a.guard(a.captured, other, (l) => {
+      lease = l;
+      expect(l.isCurrent()).toBe(true);
+    });
+    await reached;
+    const refresh = a.repo.beginRefresh(a.ctx, 1);
+    unblock();
+    expect(await publication).toEqual({ status: "CURRENT" });
+    await refresh;
+    expect(lease.isCurrent()).toBe(false);
+    expect(
+      lease.ifCurrent(() => {
+        throw new Error("late emission");
+      }),
+    ).toBe(false);
+    a.selection();
+  });
+  it("fences Account generation and retains independent C→D qualification after a B edit", async () => {
+    const a = await ordinaryLocal();
+    const cd = await a.read(a.repo, 2);
+    let lease!: CoreTtrPublicationLease;
+    await a.guard(a.captured, a.repo, (l) => {
+      lease = l;
+    });
+    const g = structuredClone(a.f.graph);
+    g.itinerary_events[1].start_zone_id = null;
+    g.itinerary_events[1].semantic_revision = 2;
+    await a.install(2, g);
+    const fresh = await a.read(a.repo, 2);
+    expect(fresh.input).toEqual(cd.input);
+    expect(fresh.authorityKey).not.toBe(cd.authorityKey);
+    expect(
+      await a.repo.guardTtrPublication(
+        a.ctx,
+        a.f.orderId,
+        a.f.ids[2],
+        a.f.ids[3],
+        fresh,
+        () => undefined,
+      ),
+    ).toEqual({ status: "CURRENT" });
+    expect(lease.isCurrent()).toBe(false);
+    const transition = await beginAccountTransition();
+    endAccountTransition(transition);
+    expect(await a.guard()).toEqual({
+      status: "UNAVAILABLE",
+      reason: "ACCESS_UNAVAILABLE",
+    });
+    a.selection();
+  });
+});
+
+it("Core publication denies a queued Account transition and wrong Trip without touching the nine-field row", async () => {
+  const a = await ordinaryLocal();
+  let release!: () => void, entered!: () => void;
+  const arrived = new Promise<void>((r) => {
+      entered = r;
+    }),
+    pause = new Promise<void>((r) => {
+      release = r;
+    });
+  let blocked = false;
+  const repo = createTripCoreV2Repository(
+    a.database,
+    async () => account,
+    async (b) => {
+      if (!blocked) {
+        blocked = true;
+        entered();
+        await pause;
+      }
+      return hash(b);
+    },
+    () => stamp,
+  );
+  const guard = a.guard(a.captured, repo);
+  await arrived;
+  const transition = beginAccountTransition();
+  release();
+  expect(await guard).toEqual({ status: "UNAVAILABLE", reason: "ACCESS_UNAVAILABLE" });
+  endAccountTransition(await transition);
+  const ctx = await a.repo.captureContext(randomUUID());
+  expect(
+    await a.repo.guardTtrPublication(
+      ctx,
+      a.f.orderId,
+      a.f.ids[0],
+      a.f.ids[1],
+      a.captured,
+      () => {
+        throw new Error("wrong Trip published");
+      },
+    ),
+  ).toMatchObject({ status: "UNAVAILABLE" });
+  expect(a.sql.prepare("PRAGMA table_info(ttr_selections)").all()).toHaveLength(9);
+  a.selection();
 });
