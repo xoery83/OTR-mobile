@@ -33,6 +33,7 @@
     "fixture:settlement": "node --env-file=.env.backend --import tsx scripts/dev/enable-settlement-test-fixture.ts"
   },
   "dependencies": {
+    "@noble/hashes": "1.8.0",
     "@react-native-community/datetimepicker": "9.1.0",
     "@supabase/supabase-js": "^2.116.0",
     "@tanstack/react-query": "^5.0.0",

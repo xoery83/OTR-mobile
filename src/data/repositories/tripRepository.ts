@@ -18,6 +18,7 @@ import {
 import { readInitializedDatabase } from "../db/database";
 import { requireActiveUserId } from "../auth/authRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
+import { tripCoreSha256Hex } from "./tripCoreSha256";
 
 type Database = Pick<
   SQLite.SQLiteDatabase,
@@ -309,13 +310,7 @@ export async function readLocalTripRepository(): Promise<TripRepository> {
   const core = createTripCoreV2Repository(
     database,
     requireActiveUserId,
-    async (bytes) => {
-      const { digest, CryptoDigestAlgorithm } = await import("expo-crypto");
-      return Array.from(
-        new Uint8Array(await digest(CryptoDigestAlgorithm.SHA256, new Uint8Array(bytes))),
-        (b) => b.toString(16).padStart(2, "0"),
-      ).join("");
-    },
+    tripCoreSha256Hex,
   );
   return createTripRepository(database, requireActiveUserId, core);
 }
