@@ -5,6 +5,7 @@ import { stayContribution } from "./stayContribution";
 import { stayRenderer } from "./StayFixtureRow";
 import { rentalContribution } from "./rentalContribution";
 import { scheduledTransportContribution } from "./scheduledTransportContribution";
+import { ticketedActivityContribution } from "./ticketedActivityContribution";
 import { flexibleContribution } from "./flexibleContribution";
 import { getTtrLabFixtures } from "@/features/ttr/labFixtures";
 import { t } from "@/ui/locale";
@@ -24,6 +25,10 @@ export function getLabFixtures() {
     scheduledTransportContribution("FUTURE"),
     scheduledTransportContribution("TODAY"),
     scheduledTransportContribution("PAST"),
+    ticketedActivityContribution("FUTURE"),
+    ticketedActivityContribution("TODAY"),
+    ticketedActivityContribution("PAST"),
+    ticketedActivityContribution("TNS"),
     flexibleContribution(),
     ...getTtrLabFixtures().map((fixture) => ({
       ...fixture,
