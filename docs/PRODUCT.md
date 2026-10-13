@@ -161,16 +161,26 @@ to this structure is a future task and is not part of the Global Menu and
 Account Switching work.
 
 The later direct Owner authorization for WP-EXP-SHELL-01 permits a bounded
-R0/R1 bottom Shell now: a left NavigationIsland with at most three actual
+R0/R1 bottom Shell: a left NavigationIsland with at most three actual
 routable destinations and a right ActionIsland with at most one supported
-contextual action. Its initial S0 candidate exposes only a conditional Day entry after an
-account-matched accepted read establishes current Trip/date context; My Trips
-Shell entry awaits the bounded S2 integration on the now-qualified local
-Trip workspace. It presents no right action until a
-real capability-backed handler exists. This packet does not create Calendar,
-Timeline, Photos, Wallet or Lab destinations, and it does not activate those
-modules or change the long-term pillar direction above. See BD49 and the Shell S0 contract for the proposed bounded route set;
-implementation and Native Visual review remain pending.
+contextual action. Its locally integrated S2 exposes My Trips and shows Day only
+after an account-matched accepted Trip/date context exists; no right action or
+placeholder destination is exposed yet. This does not change the long-term
+pillar direction above. See BD49 and the Shell S0 contract for this bounded
+implementation and its remaining accepted-Day Native limit.
+
+BD50 approves My Trips as the unified Trip selection root. Accessible Active
+Trips use separate large photographic cards; Upcoming, undated and Past use
+compact image-bearing rows. Eligible Active cards have a separate Open Today
+that reaches the existing Day Feed only with accepted current-day context.
+A card body opens the matching selected Trip Home; detailed Home content remains
+a separate design. Past preview shows up to three rows with See all. Embedded
+offline cover choice prefers explicit user selection, then curated bundled
+photos, then a designed fallback. Missing dates, access rights or owning
+statistics never become invented facts. The Search icon decision does not
+provide a functional global Search yet. Preserve existing Ledger routes and
+deep links. See the byte-exact Trips Delta and BD50; the first three cover
+images are an initial asset batch, not a mandatory library count.
 
 The top-left menu is a contextual utility menu, not a second app launcher. It
 combines the current account, Settings, Language, Log out, and low-frequency
