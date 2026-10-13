@@ -818,3 +818,9 @@ SQLite1–54 and Server migrations are unchanged. Accepted read2 remains SQLite5
 Same-Trip reassignment fences retained preparation rather than reallocating IDs.
 See `trip/implementation/CP_FLIGHT_NATIVE_01_REPORT.md` for the owning PDF Source
 and derivative-publication blockers. No Capture/Source/Core activation is implied.
+
+### Private operational Document custody prerequisite (local101)
+
+`20261014000200_trip_document_private_reference_custody.sql` implements W0’s private `trip_operational_document_custody` registry, without a Mobile mirror. It binds allocated Document/Trip/actor/retained Source representation/hash/media/size; exact verified bytes precede VERIFIED and matching PRIVATE Document insertion atomically consumes it into BOUND. Original identity is immutable and active Document proofs are unique. Actor access requires current Core Document ACL plus current own retained Source reference; no Item/Source admission or creator role is an original-byte grant. Explicit authorized-copy custody remains unavailable until its separate immutable grant producer.
+
+Existing Core runtimeFALSE/empty allowlists/NOLOGIN and write guard remain unchanged; direct public/Auth/service/gateway registry access is denied. Different-author disposable installation and13 CLOSED/privilege checks passed, but positive binding/storage/runtime/user journey are not certified. CREATE_DOCUMENT domain mutation connection remains missing. This forward migration is excluded from the existing nine-file DEV schema proposal until separately qualified. Full original access is not delivered by this local prerequisite.
