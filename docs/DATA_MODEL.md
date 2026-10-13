@@ -369,6 +369,14 @@ Uncertain:
 
 Purpose: local file/document/photo references independent of upload state.
 
+The bounded Trip Photos first slice uses `local_trip_photos` (SQLite62) only for
+Account-scoped, local Trip-owned retained image bytes. Its composite
+`(account_id, trip_id)` reference points to `local_trip_containers`; each photo
+has a stable asset UUID, sniffed MIME, byte count, SHA-256 and app-documents URI.
+Listing verifies retained bytes and degrades to an unavailable image when they
+are missing or changed. This table is not a Day association, cloud upload queue,
+Core accepted asset, or cross-Account media grant.
+
 Legacy mapping:
 
 - Web `MediaAsset` has provider file ids, thumbnail/preview/original paths, mime, dimensions, EXIF, AI/OCR status, duplicate/blur/scene metadata.

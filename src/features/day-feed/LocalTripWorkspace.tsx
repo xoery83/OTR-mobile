@@ -34,6 +34,7 @@ import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
 import { TripCoverPicker } from "./TripCoverPicker";
+import { LocalTripPhotos } from "./LocalTripPhotos";
 import { TripCoverVisual } from "./TripCoverVisual";
 import { tripCoverSource } from "./tripCovers";
 
@@ -414,6 +415,7 @@ function LocalTripContent({
               </Text>
             ) : null}
           </UiSection>
+          <LocalTripPhotos tripId={selected.id} />
           <UiSection title={t("tripCreate.pendingItems")}>
             <Text style={styles.status}>{t("tripCreate.pendingHint")}</Text>
             {pending.map((p) => {

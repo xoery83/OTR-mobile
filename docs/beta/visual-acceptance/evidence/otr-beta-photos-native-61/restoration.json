@@ -1,0 +1,126 @@
+{
+  "atUTC": "2026-10-13T21:34:40.195469+00:00",
+  "files": [
+    {
+      "path": "app/(tabs)/_layout.tsx",
+      "sha256": "d283ea8a129ccefc5dac1769ce45e123a7a10c57f0481eb2d23e6d662781e0b6"
+    },
+    {
+      "path": "docs/DATA_MODEL.md",
+      "sha256": "db32f568fca8a748cae515fb1e81ed2423eaf1f0a76729b2b31e4a39b3d2bde3"
+    },
+    {
+      "path": "docs/trip/OTR_TRIP_PHOTOS_LOCAL_UI_REPORT.md",
+      "sha256": "c8d8d2dfee5ff40c1ae6aef9263b9953690da9012a56d057cb811b1c5e3f6fa5"
+    },
+    {
+      "path": "src/components/ExperienceBottomShell.test.ts",
+      "sha256": "da1dea164a8924ad6a8361f5e4aed1dd1e66db51230a8bc76053c7ab22efd38e"
+    },
+    {
+      "path": "src/components/ExperienceBottomShell.tsx",
+      "sha256": "ed39d0c9b5ee2258c90032dee47732133bae84f549a87ba49cf9a11e89f98b2b"
+    },
+    {
+      "path": "src/data/db/database.test.ts",
+      "sha256": "c6c00f97533aa7a91f0e5826976d72b0b87c7a988606836d6cecb6bba88f4314"
+    },
+    {
+      "path": "src/data/db/migrations.ts",
+      "sha256": "76ed4f83f31f502f2c0c1044c5c05aee789aa5511bf54b12ec0f1e4d846c1d68"
+    },
+    {
+      "path": "src/data/db/migrations/tripLocalPhotos.ts",
+      "sha256": "b231be66d56308f7b2b9ac65a2186e2064fabfb0ad389ae82b35b77812f3f824"
+    },
+    {
+      "path": "src/data/files/tripPhotoFileStore.test.ts",
+      "sha256": "809bd5c5a1a13ca50575d971cf24d6ae4d26774974c40eda3fd02725a6bb83b4"
+    },
+    {
+      "path": "src/data/files/tripPhotoFileStore.ts",
+      "sha256": "88ef4ce5c30697323329557f2eb4c88669eaca1bfb47f9a9b86f1688950bb6da"
+    },
+    {
+      "path": "src/data/repositories/tripDayFeedRepository.test.ts",
+      "sha256": "7eac9a4701246aa9d63a7a9d512a063857c8a36e81bccd0bdda7953f177835b7"
+    },
+    {
+      "path": "src/data/repositories/tripDayFeedRepository.ts",
+      "sha256": "3b62004cfdd4047c5f4ddb27eb77c70b6378d7508b14a9645b5afe4632fd2542"
+    },
+    {
+      "path": "src/data/repositories/tripPhotoRepository.test.ts",
+      "sha256": "06ebdce0757edefef8fc6357d9600ffb0f0d04a6f4b714b995d4a98d95aab7f8"
+    },
+    {
+      "path": "src/data/repositories/tripPhotoRepository.ts",
+      "sha256": "64c6f2f8aec3c45471df102383dfdc2c9893ae7c5e28987b3673793dfc871561"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripPhotos.test.ts",
+      "sha256": "2af9a4d07bc75d388e56824c5db995c6236f35dd206555526771c92c000c015c"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripPhotos.tsx",
+      "sha256": "1d87161e4358338a8bb970b2968ad7f1923d00e2caaf24c8037f43e33e12aeb6"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+      "sha256": "ecfb3b417dc15af198ee67839e4b3210a94c6dde9b8ebf488bc3e264f7e18c3a"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+      "sha256": "e544fc17db9fd3f8d9a16e59f7986056e17cda53700fbf844ccbc14dc88f5855"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.test.ts",
+      "sha256": "fde5a6b7d2e409453aeab79f7dde734d2539c0c553efebb1f9a5dca3e95a7e90"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.tsx",
+      "sha256": "c9fe5f50fc05457684ab9f55f07d526867039baf19fe2f52dddde5774be70539"
+    },
+    {
+      "path": "src/features/day-feed/TripCoverVisual.test.ts",
+      "sha256": "5bfb7c8df9a66b181b74bc0da4379c6ca381aef91fdac825296dacb4f400549e"
+    },
+    {
+      "path": "src/features/day-feed/TripCoverVisual.tsx",
+      "sha256": "5624806c8fef2dfb85c97b5fd556a2c98148ebf60a90e2a4e7ecc7aa74c25653"
+    },
+    {
+      "path": "src/features/day-feed/TripScreen.tsx",
+      "sha256": "85328c65af39a9ae7b3964fe6609befc8b1a46145ed79e6cda37e1bfaec419d0"
+    },
+    {
+      "path": "src/features/day-feed/tripListPresentation.ts",
+      "sha256": "9a380580b6ec1671bd4e77fe9744460b827df7ff8a65f4ea0ae81d14cbef08ff"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "sha256": "8943b18dd218a6bc1747056148d3df3500f842bd89792ea5f551ddb3cfa32368"
+    },
+    {
+      "path": "src/ui/controls.test.ts",
+      "sha256": "1fa9168237cff597d4460bfdfe32515def3e6b55cc6a8325f92aa94a0be8463c"
+    },
+    {
+      "path": "src/ui/controls.tsx",
+      "sha256": "70e012136dc4ad0a63847b0405a0f42dea4d6598d6cea170ca80f719a7a46999"
+    },
+    {
+      "path": "src/ui/palette.ts",
+      "sha256": "dc3617c3845f2b076a6c4922e2532884adc41ad0db3f625e98d4aeebfc2d8708"
+    }
+  ],
+  "all28Exact": true,
+  "qaOverlaysRestored": true,
+  "ownedAssetId": "ea1555a1-f5c5-4d32-a788-576bc06b600c",
+  "ownedFixtureBytesRestored": true,
+  "ownedFixtureSha256": "c8fda1493e5bd63359037aad70f1493f32ba11751e0053b1756c884754f885a1",
+  "rowsBeforeAfter": "0\u21921; missing/restore retains1",
+  "metro": "owned54463 retained singlelease",
+  "appearance": "Light; baseline font1; captureOff",
+  "appearanceRestoredAtUTC": "2026-10-13T21:36:26.069491+00:00"
+}

@@ -115,6 +115,10 @@ vi.mock("./MyTripsList", () => ({
       }),
     ),
 }));
+vi.mock("./LocalTripPhotos", () => ({
+  LocalTripPhotos: (p: { tripId: string }) =>
+    createElement("div", { "data-trip-photos": p.tripId }),
+}));
 vi.mock("./TripCoverPicker", () => ({ TripCoverPicker: () => null }));
 vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: () => null }));
 vi.mock("./tripCovers", () => ({ tripCoverSource: () => 1 }));
@@ -343,6 +347,7 @@ it("opens a cached remote-only summary without local write controls and clears i
   const summary = render();
   expect(summary).toContain("Cached shared Trip");
   expect(summary).toContain("myTrips.cachedDetails");
+  expect(summary).not.toContain("data-trip-photos");
   expect(summary).not.toContain("tripCreate.addItem");
   expect(summary).not.toContain("myTrips.chooseCover");
   expect(props.onKnownTrip).toHaveBeenLastCalledWith("CACHED");
@@ -352,4 +357,20 @@ it("opens a cached remote-only summary without local write controls and clears i
     readMerged: async () => ({ cachedAt: null, trips: [] }),
   });
   expect(render()).not.toContain("Cached shared Trip");
+});
+
+it("mounts trusted Photos only for the currently selected local Trip", async () => {
+  state.repo.mockResolvedValue(
+    repository([trip("local-a", "Local A"), trip("local-b", "Local B")]),
+  );
+  props.tripId = "local-a";
+  render();
+  await flush();
+  expect(render()).toContain('data-trip-photos="local-a"');
+  props.tripId = "local-b";
+  render();
+  await flush();
+  const next = render();
+  expect(next).toContain('data-trip-photos="local-b"');
+  expect(next).not.toContain('data-trip-photos="local-a"');
 });

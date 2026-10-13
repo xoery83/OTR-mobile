@@ -1,0 +1,265 @@
+import { randomUUID } from "node:crypto";
+import { DatabaseSync } from "node:sqlite";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { expect, it, vi } from "vitest";
+import { migrations } from "../db/migrations";
+import { advanceAccountGeneration } from "../auth/accountGeneration";
+import type { RetainTripPhotoResult } from "../files/tripPhotoFileStore";
+import { createTripPhotoRepository } from "./tripPhotoRepository";
+
+vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
+vi.mock("../files/tripPhotoFileStore", () => ({
+  retainTripPhoto: vi.fn(),
+  resolveRetainedTripPhoto: vi.fn(),
+  discardRetainedTripPhoto: vi.fn(),
+}));
+const accountA = randomUUID(),
+  accountB = randomUUID(),
+  tripId = randomUUID();
+const photoId = randomUUID(),
+  stamp = "2026-10-14T01:00:00Z";
+const sha = "a".repeat(64);
+
+function setup() {
+  const dir = mkdtempSync(join(tmpdir(), "otr-trip-photos-"));
+  const path = join(dir, "data.db");
+  let sql = new DatabaseSync(path);
+  sql.exec("PRAGMA foreign_keys=ON");
+  for (const migration of migrations) sql.exec(migration.sql);
+  sql
+    .prepare(
+      "INSERT INTO local_trip_containers(account_id,id,create_operation_id,name,created_at,updated_at) VALUES(?,?,?,?,?,?)",
+    )
+    .run(accountA, tripId, randomUUID(), "Trip", stamp, stamp);
+  let account: string = accountA;
+  let failInsert = false;
+  let abaRead = false;
+  const database = () => ({
+    async getFirstAsync<T>(query: string, ...args: unknown[]) {
+      return (sql.prepare(query).get(...(args as never[])) ?? null) as T | null;
+    },
+    async getAllAsync<T>(query: string, ...args: unknown[]) {
+      const rows = sql.prepare(query).all(...(args as never[])) as T[];
+      if (abaRead && query.includes("FROM local_trip_photos")) {
+        abaRead = false;
+        account = accountB;
+        advanceAccountGeneration();
+        account = accountA;
+        advanceAccountGeneration();
+      }
+      return rows;
+    },
+    async runAsync(query: string, ...args: unknown[]) {
+      if (failInsert && query.startsWith("INSERT INTO local_trip_photos")) {
+        failInsert = false;
+        throw new Error("INSERT_FAILED");
+      }
+      return sql.prepare(query).run(...(args as never[])) as never;
+    },
+    async withTransactionAsync(work: () => Promise<void>) {
+      sql.exec("BEGIN");
+      try {
+        await work();
+        sql.exec("COMMIT");
+      } catch (error) {
+        sql.exec("ROLLBACK");
+        throw error;
+      }
+    },
+  });
+  const retained: RetainTripPhotoResult = {
+    photo: {
+      accountId: accountA,
+      tripId,
+      assetId: photoId,
+      mimeType: "image/jpeg",
+      sizeBytes: 12,
+      sha256: sha,
+      localUri: "file:///app/trip-photos/image.jpg",
+    },
+    createdNew: true,
+  };
+  const files = {
+    retainTripPhoto: vi.fn(async () => retained),
+    resolveRetainedTripPhoto: vi.fn((): string | null => retained.photo.localUri),
+    discardRetainedTripPhoto: vi.fn(() => true),
+  };
+  return {
+    get sql() {
+      return sql;
+    },
+    files,
+    retained,
+    repo: () =>
+      createTripPhotoRepository(
+        database(),
+        async () => account,
+        files,
+        () => photoId,
+        () => stamp,
+      ),
+    account(id: string) {
+      account = id;
+      advanceAccountGeneration();
+    },
+    failInsert() {
+      failInsert = true;
+    },
+    abaRead() {
+      abaRead = true;
+    },
+    reopen() {
+      sql.close();
+      sql = new DatabaseSync(path);
+      sql.exec("PRAGMA foreign_keys=ON");
+    },
+    close() {
+      sql.close();
+      rmSync(dir, { recursive: true, force: true });
+    },
+  };
+}
+
+it("stores a scoped local photo, survives cold reopen, and reports missing bytes honestly", async () => {
+  const test = setup();
+  try {
+    const photo = await test.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    expect(photo).toMatchObject({
+      assetId: photoId,
+      tripId,
+      localUri: test.files.resolveRetainedTripPhoto(),
+    });
+    expect(test.files.retainTripPhoto).toHaveBeenCalledWith({
+      accountId: accountA,
+      tripId,
+      assetId: photoId,
+      temporaryUri: "file:///picker/selected.jpg",
+    });
+    expect(test.files.discardRetainedTripPhoto).not.toHaveBeenCalled();
+    test.reopen();
+    expect(await test.repo().listTripPhotos(tripId)).toHaveLength(1);
+    test.sql
+      .prepare(
+        "UPDATE local_trip_photos SET local_uri=? WHERE account_id=? AND trip_id=?",
+      )
+      .run("file:///untrusted/location.jpg", accountA, tripId);
+    expect(await test.repo().listTripPhotos(tripId)).toMatchObject([
+      { assetId: photoId, localUri: null },
+    ]);
+    test.sql
+      .prepare(
+        "UPDATE local_trip_photos SET local_uri=? WHERE account_id=? AND trip_id=?",
+      )
+      .run(test.retained.photo.localUri, accountA, tripId);
+    test.files.resolveRetainedTripPhoto.mockReturnValue(null);
+    expect(await test.repo().listTripPhotos(tripId)).toMatchObject([
+      { assetId: photoId, localUri: null },
+    ]);
+    expect(test.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    expect(() =>
+      test.sql
+        .prepare(
+          "INSERT INTO local_trip_photos(account_id,trip_id,asset_id,mime_type,size_bytes,sha256,local_uri,created_at) VALUES(?,?,?,?,?,?,?,?)",
+        )
+        .run(accountB, tripId, randomUUID(), "image/jpeg", 12, sha, "file:///x", stamp),
+    ).toThrow(/FOREIGN KEY/);
+    test.account(accountB);
+    expect(await test.repo().listTripPhotos(tripId)).toEqual([]);
+    await expect(
+      test.repo().addTripPhoto(tripId, "file:///picker/selected.jpg"),
+    ).rejects.toThrow("TRIP_LOCAL_RECORD_MISSING");
+  } finally {
+    test.close();
+  }
+});
+
+it("discards only a newly retained file when SQLite insert rolls back", async () => {
+  const test = setup();
+  try {
+    test.failInsert();
+    await expect(
+      test.repo().addTripPhoto(tripId, "file:///picker/selected.jpg"),
+    ).rejects.toThrow("INSERT_FAILED");
+    expect(test.files.discardRetainedTripPhoto).toHaveBeenCalledTimes(1);
+    expect(test.sql.prepare("SELECT count(*) AS n FROM local_trip_photos").get()).toEqual(
+      { n: 0 },
+    );
+    test.files.retainTripPhoto.mockResolvedValueOnce({
+      photo: test.retained.photo,
+      createdNew: false,
+    });
+    test.failInsert();
+    await expect(
+      test.repo().addTripPhoto(tripId, "file:///picker/selected.jpg"),
+    ).rejects.toThrow("INSERT_FAILED");
+    expect(test.files.discardRetainedTripPhoto).toHaveBeenCalledTimes(1);
+  } finally {
+    test.close();
+  }
+});
+
+it("aborts a stale account generation after file retention and cleans the fresh copy", async () => {
+  const test = setup();
+  try {
+    test.files.retainTripPhoto.mockImplementationOnce(async () => {
+      test.account(accountB);
+      test.account(accountA);
+      return {
+        photo: {
+          accountId: accountA,
+          tripId,
+          assetId: photoId,
+          mimeType: "image/jpeg",
+          sizeBytes: 12,
+          sha256: sha,
+          localUri: "file:///app/trip-photos/image.jpg",
+        },
+        createdNew: true,
+      };
+    });
+    await expect(
+      test.repo().addTripPhoto(tripId, "file:///picker/selected.jpg"),
+    ).rejects.toThrow("Account changed");
+    expect(test.files.discardRetainedTripPhoto).toHaveBeenCalledTimes(1);
+    expect(test.sql.prepare("SELECT count(*) AS n FROM local_trip_photos").get()).toEqual(
+      { n: 0 },
+    );
+  } finally {
+    test.close();
+  }
+});
+
+it("keeps a committed association and retained file if the final read fails", async () => {
+  const test = setup();
+  try {
+    test.files.resolveRetainedTripPhoto.mockImplementationOnce(() => {
+      throw new Error("FINAL_READ_FAILED");
+    });
+    await expect(
+      test.repo().addTripPhoto(tripId, "file:///picker/selected.jpg"),
+    ).resolves.toMatchObject({ assetId: photoId, localUri: null });
+    expect(test.sql.prepare("SELECT count(*) AS n FROM local_trip_photos").get()).toEqual(
+      {
+        n: 1,
+      },
+    );
+    expect(test.files.discardRetainedTripPhoto).not.toHaveBeenCalled();
+    expect(await test.repo().listTripPhotos(tripId)).toHaveLength(1);
+  } finally {
+    test.close();
+  }
+});
+
+it("rejects a prior Account generation even when the same Account returns before list completion", async () => {
+  const test = setup();
+  try {
+    await test.repo().addTripPhoto(tripId, "file:///picker/selected.jpg");
+    test.abaRead();
+    await expect(test.repo().listTripPhotos(tripId)).rejects.toThrow("Account changed");
+  } finally {
+    test.close();
+  }
+});
