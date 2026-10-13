@@ -3,6 +3,7 @@ import { collectFixtureContributions } from "./contribution";
 import { getDl1FixtureCatalog } from "./fixtureCatalog";
 import { stayContribution } from "./stayContribution";
 import { stayRenderer } from "./StayFixtureRow";
+import { rentalContribution } from "./rentalContribution";
 import { flexibleContribution } from "./flexibleContribution";
 import { getTtrLabFixtures } from "@/features/ttr/labFixtures";
 import { t } from "@/ui/locale";
@@ -15,6 +16,10 @@ export function getLabFixtures() {
   return collectFixtureContributions([
     ...getDl1FixtureCatalog(),
     { ...stay, renderer: stayRenderer(stay) },
+    rentalContribution("FUTURE"),
+    rentalContribution("TODAY"),
+    rentalContribution("TODAY_RETURN"),
+    rentalContribution("PAST"),
     flexibleContribution(),
     ...getTtrLabFixtures().map((fixture) => ({
       ...fixture,
