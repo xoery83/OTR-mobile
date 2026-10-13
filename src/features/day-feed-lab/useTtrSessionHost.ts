@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { loadTtrLabTestDriver } from "@/data/repositories/ttrLabTestDriver";
 import { openTtrLabSelectionRepository } from "@/data/repositories/ttrLabSelectionRepository";
-import { ttrIdentityKey, type TtrIdentity } from "@/domain/trip/ttr";
+import { ttrIdentityKey, ttrInputSchema, type TtrIdentity } from "@/domain/trip/ttr";
 import type { TtrPresentationProjection } from "@/domain/trip/ttrState";
 import { useTtrLabInteraction } from "@/features/ttr/useTtrLabInteraction";
 import type { TtrLabFacts } from "@/features/ttr/labFixtures";
@@ -130,10 +130,10 @@ export function useTtrSessionHost(input: {
         return null;
       return {
         relation: {
-          input: {
+          input: ttrInputSchema.parse({
             ...current.facts.input,
             scope: { ...current.facts.input.scope, generation: current.scope.generation },
-          },
+          }),
           accessRevision: 1,
           publicationVersion: p.publicationVersion,
         },

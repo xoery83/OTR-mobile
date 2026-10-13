@@ -231,7 +231,11 @@ export function DayFeedLabScreen() {
   const tripTitle =
     mode === "FIXTURE" ? fixture.trip.title : t("dayLab.coreTrip", { id: tripId });
   const nativeDiagnostics = ttrFacts ? (
-    <View style={styles.ttrDiagnostics}>
+    <ScrollView
+      horizontal
+      style={styles.ttrDiagnosticStrip}
+      contentContainerStyle={styles.ttrDiagnostics}
+    >
       <UiButton
         label={t(ttrPaused ? "ttr.lab.resume" : "ttr.lab.pause")}
         variant="text"
@@ -292,7 +296,7 @@ export function DayFeedLabScreen() {
           <Text style={styles.meta}>{t(`ttr.lab.scopeGuard.${ttrHost.scopeGuard}`)}</Text>
         </>
       )}
-    </View>
+    </ScrollView>
   ) : null;
   const selectDate = (value: string) =>
     mode === "FIXTURE"
@@ -514,9 +518,9 @@ const createStyles = (c: UiColors) =>
     root: { flex: 1, backgroundColor: c.background },
     controls: { padding: visual.space.page, gap: visual.space.heading },
     navigation: { flexDirection: "row", alignItems: "center" },
+    ttrDiagnosticStrip: { flexGrow: 0 },
     ttrDiagnostics: {
       flexDirection: "row",
-      flexWrap: "wrap",
       alignItems: "center",
       gap: visual.space.heading,
       padding: visual.space.row,

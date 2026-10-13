@@ -6,7 +6,7 @@ import {
   createG2TtrSessionBridge,
 } from "@/features/day-feed/ttrSessionBridge";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
-import { qualifyTtr, ttrIdentityKey } from "@/domain/trip/ttr";
+import { qualifyTtr, ttrIdentityKey, ttrInputSchema } from "@/domain/trip/ttr";
 import { useTtrSessionHost } from "./useTtrSessionHost";
 
 const hooks = vi.hoisted(() => ({
@@ -25,13 +25,16 @@ vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => storage.generation,
 }));
 vi.mock("@/data/repositories/ttrLabSelectionRepository", () => ({
-  openTtrLabSelectionRepository: vi.fn(async () => ({
+  openTtrLabSelectionRepository: vi.fn(async (options) => ({
     repository: {
       read: async () => {
         ++storage.reads;
         return storage.saved;
       },
-      confirm: async (_context: unknown, relation: any, mode: any) => {
+      confirm: async (context: unknown, relation: any, mode: any) => {
+        const normalized = { ...relation, input: ttrInputSchema.parse(relation.input) };
+        if (!(await options.isCurrentRelation(context, normalized)))
+          throw new Error("TTR_STALE_AUTHORITY");
         if (storage.fail) throw new Error("WRITE_FAILED");
         ++storage.writes;
         storage.saved = {
