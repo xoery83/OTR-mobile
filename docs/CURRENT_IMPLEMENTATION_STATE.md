@@ -1,3 +1,18 @@
+# Beta Coordinator — active engineering baseline / 2026-10-13
+
+Owner Response 01 accepted the read-only inventory and delegated routine R0/R1
+implementation, independent review, tests, commit and local integration when
+existing Gates are satisfied. The sole active portfolio records are
+[Beta STATUS](beta/STATUS.md), [EXECUTION](beta/EXECUTION.md) and
+[DECISIONS](beta/DECISIONS.md). Read those and current Git first.
+
+The older prefixes below are retained historical evidence, not fresh approvals.
+Explicit Owner-only Gates remain effective until named authorization; normal
+engineering choices do not acquire new Owner-only Gates. UI packets require
+independent observed Visual QA, separately from functional/security review.
+
+---
+
 # G2-TTR-02 — MAIN INTEGRATED / shared Experience maintenance
 
 2026-10-13. Normal isolated merge `fa18238` preserves current canonical `e9e4511` and accepted G2/TTR `13b001e`; only this handoff overlapped and both workstreams are retained. Accepted runtime/TTR archival bytes exact; no Core/schema/Provider or Flexible CP02 changes. Focused430 PASS; fresh baseline3979/integrated4152 PASS with the same two failures/54 skips and exact normalized messages. Static/format gates PASS. Integrated anonymous native JS reload confirms durable Confirm/rollback/cold recovery, isolation/ABA/nesting, Focus/NOW/date/nonzero scroll and Light/Dark; original accepted native evidence reused where byte-identical.
