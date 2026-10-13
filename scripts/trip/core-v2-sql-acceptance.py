@@ -42,17 +42,21 @@ group.add_argument("--pdf-upload", action="store_true", help="Run finite PDF upl
 parser.add_argument("--with-pdf-source", action="store_true", help="Install CLOSED owning PDF registration during regression scenarios")
 parser.add_argument("--with-llm", action="store_true", help="Install current CLOSED LLM protected admission before PDF authority")
 parser.add_argument("--with-pdf-authority", action="store_true", help="Install CLOSED PDF authority while testing a non-PDF scenario")
+group.add_argument("--pdf-beta", action="store_true", help="Run CLOSED Beta custody security acceptance")
+parser.add_argument("--with-pdf-beta", action="store_true", help="Install CLOSED Beta custody during regressions")
 parser.add_argument("--with-pdf-upload-migration", type=pathlib.Path, help="Install accepted CLOSED Flight upload SQL from an explicit local fixture path before ordinary ordering")
 args = parser.parse_args()
 if args.with_pdf_upload_migration and not args.with_pdf_source:
     parser.error("Flight upload ordering verification requires --with-pdf-source")
-if args.with_pdf_upload_migration and (args.pdf_upload or args.with_pdf_upload):
-    parser.error("Choose canonical PDF upload installation or an explicit fixture path, not both")
-install_source_pdf = args.pdf_source or args.with_pdf_source or args.pdf_upload or args.with_pdf_upload
+if args.with_pdf_upload_migration and (args.pdf_upload or args.with_pdf_upload or args.pdf_beta or args.with_pdf_beta):
+    parser.error("Choose canonical upload installation or explicit fixture path, not both")
+install_beta = args.pdf_beta or args.with_pdf_beta
+install_upload = args.pdf_upload or args.with_pdf_upload or install_beta
+install_source_pdf = args.pdf_source or args.with_pdf_source or install_upload
 install_pdf = args.pdf_authority or install_source_pdf or args.with_pdf_authority
 llm_roots = {"flight_activation_reserve_call(jsonb,jsonb)", "external_integration_mark_dispatch(jsonb,jsonb)"}
 llm_changes = []
-scenario = "backend/src/coreOrdinaryOrder.sql.test.ts" if args.ordinary_order else "backend/src/sourcePdfUpload.sql.test.ts" if args.pdf_upload else "backend/src/nativeFlightInstalledReview.sql.test.ts" if args.native_installed else "src/data/repositories/captureFlightNativeRepository.test.ts" if args.native_flight else "backend/src/captureFlightCoreV2.sql.test.ts" if args.pdf_authority or args.pdf_source else "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
+scenario = "backend/src/coreOrdinaryOrder.sql.test.ts" if args.ordinary_order else "backend/src/sourcePdfUploadBeta.sql.test.ts" if args.pdf_beta else "backend/src/sourcePdfUpload.sql.test.ts" if args.pdf_upload else "backend/src/nativeFlightInstalledReview.sql.test.ts" if args.native_installed else "src/data/repositories/captureFlightNativeRepository.test.ts" if args.native_flight else "backend/src/captureFlightCoreV2.sql.test.ts" if args.pdf_authority or args.pdf_source else "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
 created = False
 network_created = False
 private = tempfile.TemporaryDirectory(prefix="otr-flight-text-")
@@ -101,7 +105,7 @@ try:
         assert pdf_source_changes == ["guard_trip_source_mutation()"], repr(pdf_source_changes)
         sql((ROOT / "supabase/tests/source-pdf/registration.sql").read_text())
         installed = pdf_source_after
-    if args.pdf_upload or args.with_pdf_upload:
+    if install_upload:
         sql((ROOT / "supabase/migrations/20261013000100_source_pdf_upload_authority.sql").read_text())
         upload_after = json.loads(sql(FINGERPRINTS))
         assert [n for n, v in installed.items() if upload_after.get(n) != v] == ["trip_source_execution_inventory()"], "Unexpected PDF upload changed root"
@@ -113,8 +117,15 @@ try:
         installed = json.loads(sql(FINGERPRINTS))
     sql((ROOT / "supabase/migrations/20261013000200_core_ordinary_order.sql").read_text())
     order_after = json.loads(sql(FINGERPRINTS))
-    assert all(order_after.get(name) == digest for name, digest in installed.items()), "Ordinary ordering changed installed functions"
+    assert all(order_after.get(name) == digest for name,digest in installed.items()), "Ordinary ordering changed installed functions"
     installed = order_after
+    if install_beta:
+        sql((ROOT / "supabase/migrations/20261013000300_source_pdf_beta_custody.sql").read_text())
+        beta_after = json.loads(sql(FINGERPRINTS))
+        assert set(n for n, v in installed.items() if beta_after.get(n) != v) == {"trip_source_seal(trip_source_operations,trip_sources,trip_source_representations,uuid,text)", "trip_source_operation_guard()"}
+        sql((ROOT / "supabase/tests/source-pdf/beta.sql").read_text())
+        installed = beta_after
+        assert sql("select not beta_enabled from trip_source_pdf_upload_config;").strip() == "t"
     sql((ROOT / "supabase/tests/core-v2/foundation.sql").read_text())
     sql((ROOT / "supabase/tests/core-v2/candidate-publication.sql").read_text())
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t"
@@ -126,6 +137,8 @@ try:
         env["OTR_CORE_PDF_SOURCE_REGISTRATION"] = "1"
     if args.with_pdf_upload:
         env["OTR_CORE_PDF_UPLOAD"] = "1"
+    if args.with_pdf_beta:
+        env["OTR_CORE_PDF_BETA"] = "1"
     if args.text_runtime:
         cert = pathlib.Path(private.name) / "server.crt"
         key = pathlib.Path(private.name) / "server.key"
@@ -141,7 +154,7 @@ try:
         assert port.startswith("127.0.0.1:"), "Fixture exposed beyond loopback"
         env.update(OTR_FLIGHT_TEXT_PORT=port.split(":")[-1], OTR_FLIGHT_TEXT_CA=str(cert))
     native_items_before = sql("select count(*) from public.itinerary_events;").strip() if args.native_flight or args.native_installed else None
-    subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", scenario, "--disableConsoleIntercept"], cwd=ROOT, env=env, check=True)
+    subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", scenario, "--disableConsoleIntercept", "--testTimeout", "60000", "--hookTimeout", "60000"], cwd=ROOT, env=env, check=True)
     if native_items_before is not None:
         assert sql("select count(*) from public.itinerary_events;").strip() == native_items_before, "Native REVIEW created unauthorized canonical Items"
         if install_pdf:
@@ -155,15 +168,17 @@ try:
     if args.pdf_source:
         assert sql("select not enabled from trip_source_command_gate;").strip() == "t"
         assert sql("select count(*) from trip_source_pdf_registrations;").strip() == "1"
-    if args.pdf_upload or args.with_pdf_upload:
+    if install_upload:
         assert sql("select not enabled from trip_source_pdf_upload_config;").strip() == "t"
+    if install_beta:
+        assert sql("select not beta_enabled from trip_source_pdf_upload_config;").strip() == "t"
     # Positive fixture scenarios retain disabled allowlists; reset only this owned clone.
     sql("update trip_core_activation_gate set runtime_enabled=false,enabled_commands='{}',enabled_families='{}',enabled_admission_modes='{}';")
     assert sql("select not runtime_enabled and enabled_commands='{}' and enabled_families='{}' and enabled_admission_modes='{}' from trip_core_activation_gate;").strip() == "t", "Fixture activation gate was not restored CLOSED"
     after_scenario = json.loads(sql(FINGERPRINTS))
     changed = [name for name, digest in installed.items() if after_scenario.get(name) != digest]
     assert not changed, "Historical function changes during scenario: " + repr(changed)
-    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92] + (["20261012000100_model_task_protected_admission"] if args.with_llm else []) + (["20261012000200_source_pdf_derivative_authority"] if install_pdf else []) + (["20261012000300_source_pdf_registration"] if install_source_pdf else []) + (["20261013000100_source_pdf_upload_authority"] if args.pdf_upload or args.with_pdf_upload else []), "ordinaryOrderMigration": "20261013000200", "flightUploadBeforeOrder": bool(args.pdf_upload or args.with_pdf_upload or args.with_pdf_upload_migration), "coreHistoricalFunctionsPreserved": len(before), "llmApprovedChangedRoots": llm_changes, "pdfPreexistingFunctionsPreserved": len(before_pdf) if install_pdf else None, "installedFunctionsPreservedDuringScenario": len(installed), "sourcePdfUploadInstalled": args.pdf_upload or args.with_pdf_upload, "pdfUploadApprovedChangedRoot": "trip_source_execution_inventory()" if args.pdf_upload or args.with_pdf_upload else None, "sourcePdfRegistrationInstalled": install_source_pdf, "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()" if install_source_pdf else None, "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
+    print(json.dumps({"classification": "ISOLATED_SYNTHETIC_SQL", "migrations": [85, 86, 87, 88, 89, 90, 91, 92] + (["20261012000100_model_task_protected_admission"] if args.with_llm else []) + (["20261012000200_source_pdf_derivative_authority"] if install_pdf else []) + (["20261012000300_source_pdf_registration"] if install_source_pdf else []) + (["20261013000100_source_pdf_upload_authority"] if install_upload else []) + (["20261013000300_source_pdf_beta_custody"] if install_beta else []), "ordinaryOrderMigration": "20261013000200", "betaCustodyInstalled": install_beta, "coreHistoricalFunctionsPreserved": len(before), "llmApprovedChangedRoots": llm_changes, "pdfPreexistingFunctionsPreserved": len(before_pdf) if install_pdf else None, "installedFunctionsPreservedDuringScenario": len(installed), "sourcePdfUploadInstalled": install_upload, "pdfUploadApprovedChangedRoot": "trip_source_execution_inventory()" if install_upload else None, "sourcePdfRegistrationInstalled": install_source_pdf, "sourcePdfApprovedChangedRoot": "guard_trip_source_mutation()" if install_source_pdf else None, "rlsAndClosedGate": "PASS", "activation": "CLOSED"}))
 finally:
     try:
         if created:

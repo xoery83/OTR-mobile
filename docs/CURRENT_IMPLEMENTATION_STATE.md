@@ -53,6 +53,11 @@ integration decision; real-data consumer/Hosted/Provider/paid LLM/Native/Product
 
 # CP01B / G2 — current-main reconciliation / final advance approval blocked
 
+
+## Recovery-03A isolated Source authority — CLOSED / Owner Review pending
+
+Finite `PDF_PRIVATE_UPLOAD_BETA_ACK_V2` adds durable complete ACK + independent retained GET + current Source CAS/access before logical UPLOAD FINAL/APPLIED(PENDING). It reuses the Source/execution/staging journal; nonterminal remote obligations and shared quota remain outstanding. Strict v1/PNG and VERIFY/REGISTER/SEAL/Core fences stay in place. No succession/dedup, cleanup, Hosted/Provider or Backend/Native runtime activation. Branch `codex/cp-flight-pdf-upload-recovery-03a`, based on local main `e091b60`; remote baseline `065bdd9`. Additive migration `20261013000300` leaves Flight00100 and isolated TTR00200 unchanged. Contract/report: `docs/trip/CP_FLIGHT_PDF_UPLOAD_BETA_ACK_V2.md`, `docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_REPORT.md`. This note applies to the isolated candidate only; it is not canonical integration authorization.
+
 Prepared isolated normal merge `03d06b6`, parents current main `065bdd9` and validated candidate `a5b58ae`. Newer accepted upload-authority work is unchanged; only the shared handoff prefix conflicted and both versions are retained. Accepted CP01B/G2 runtime exactly matches `22c0369`. Automatic approval review requires explicit final Owner approval for main advancement; no update by this task. Canonical main remains `065bdd9`.
 
 Fresh `065bdd9` baseline3893/reconciled3965 PASS, identical two failures/52 skips; focused261, typecheck and lint/UI guard PASS. No new persistent regression.
