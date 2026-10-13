@@ -125,6 +125,17 @@ semantics were changed to obtain passes.
 Evidence logs `/private/tmp/otr-core-port02-{combined,flight-domain,sql,flight-sql,
 types4,lint,lint-touched,build,format}.log`. Disposable SQL fixtures were removed.
 
+## Concurrent final canonical advance
+
+During implementation, G2-TTR-02 independently advanced local main to
+`ae70dc4a19fd927841cc95a78d011ea6ac335a4f`; actual remote remains
+`e9e4511c0bcbf668627a8bc99b02bb8962580a17`. Its six-file scope overlap with this
+candidate is only current-state documentation; Core port production files remain
+unchanged there. The tested implementation remains isolated on the verified start
+baseline. No merge/reconstruction was performed; later integration readiness must
+preserve that new G2 ancestor and reconcile handoffs. No validation against the new
+combined tree is claimed. Canonical dirty/untracked bytes remain unchanged.
+
 ## Remaining integration seams and gates
 
 TTR must retain the raw capture separately from its derived presentation, invoke
