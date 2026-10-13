@@ -3,7 +3,10 @@
   "include": [
     "../../src/domain/trip/ttr*.ts",
     "../../src/domain/trip/__fixtures__/ttr.ts",
-    "../../src/features/ttr/*.ts"
+    "../../src/features/ttr/*.ts",
+    "../../src/features/ttr/*.tsx",
+    "../../src/data/repositories/ttr*Repository*.ts",
+    "../../src/data/repositories/ttrInteractionController.test.ts"
   ],
   "exclude": []
 }

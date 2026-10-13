@@ -1,3 +1,15 @@
+# G2-TTR-02 — isolated Controller Bridge ready for Owner Review
+
+Owner-authorized synthetic DEV integration is implemented on `codex/g2-ttr-02-controller-bridge` from verified accepted `e091b60`. Accepted CP05A2-A source `6a1c80b` is adopted byte-exact in `4305054` (12 files; older handoff excluded). G2 session bridge/host/diagnostics/tests are separate `122985a`; native-proven adapter/viewport corrections are `37ffdf8`. Architecture decision archived before implementation.
+
+One existing Composer and Focus; additive `g2-ttr-session/1` committed-view leases fence stale and A→B→A opens. Versioned actionability invalidation closes the accepted TTR adapter/Sheet. Immutable presentation replacement follows durable-local Confirm only. Dedicated guarded TTR SQLite; no Core/schema/Sync/Provider changes or production activation.
+
+Final focused430 and invalidation54 PASS; typecheck, dedicated TTR config, lint/UI guard and scoped formatting pass. Full regression comparison and native acceptance are recorded in [G2-TTR-02 report](architecture/OTR_G2_TTR_02_CONTROLLER_BRIDGE_REPORT.md). Fresh anonymous Simulator/dedicated bundle validated: durable Confirm/rollback/cold recovery, isolation/ABA/nesting, Focus/date/nonzero scroll, NOW, Light/Dark and all14 TTR fixtures. Full4138 PASS with the same two clean-baseline failures and52 skips; no full-suite PASS claim.
+
+Canonical main independently advanced to `e9e4511` through Core readiness work; candidate stays pinned to the approved start baseline. Next: Owner Review, then separately reconcile newer main. Do not merge/push/main-advance. Historical prefixes below predate the final Owner-approved CP01B/G2 advance to `e091b60` and are retained as history.
+
+---
+
 # CP04A3-CORE-ORDER-03 — G2 reconciliation readiness / Owner Review
 
 2026-10-13. Owner cleared remote inclusion of unchanged G2 CP01B `e091b60` ancestry.

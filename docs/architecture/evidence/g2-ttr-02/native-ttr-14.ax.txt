@@ -1,0 +1,27 @@
+					37 heading Description: Day Feed Lab, Secondary Actions: Cancel
+					38 button Description: Fixture, Secondary Actions: Cancel
+					39 button (disabled) Description: Core DEV Read, Secondary Actions: Cancel
+					40 button Description: Refresh, Secondary Actions: Cancel
+					41 text Description: An accepted compatible Core read collection is unavailable. No data source fallback is used., Secondary Actions: Cancel
+					42 button Description: Test Trip, TTR · Stale open intent, Secondary Actions: Cancel
+					43 button (disabled) Description: Previous, Secondary Actions: Cancel
+					44 button (selected) Description: Jan 15, Secondary Actions: Cancel
+					45 button (disabled) Description: Next, Secondary Actions: Cancel
+					46 text Secondary Actions: Cancel, Description: Fixture · Trip 20000000-0000-4000-8000-000000000014 · Date 2027-01-15 · Day Read v1 · NOW 2027-01-14T12:00:00Z
+					47 text Description: P3, Flexible and TTR are synthetic Lab proofs; P4–P6 remain future ports., Secondary Actions: Cancel
+					48 button Description: Pause TTR actions, Secondary Actions: Cancel
+					49 button Description: Replace synthetic projection, Secondary Actions: Cancel
+					50 button Description: Queue TTR tap, Secondary Actions: Cancel
+					51 button Description: Dispatch queued tap, Secondary Actions: Cancel
+					52 button Description: Check Account guard, Secondary Actions: Cancel
+					53 text Description: Rejected queued taps: 0, Secondary Actions: Cancel
+					54 text Description: Account guard not checked, Secondary Actions: Cancel
+					55 text Description: 09:00, Secondary Actions: Cancel
+					56 button Description: Synthetic trail stop 1, Help: Show inline place details, Secondary Actions: Cancel
+					57 button Description: Straight-line travel · Straight-line distance · 111.2 km · No route estimate, Secondary Actions: Cancel
+					58 text Description: 13:00, Secondary Actions: Cancel
+					59 button Description: Synthetic trail stop 2, Help: Show inline place details, Secondary Actions: Cancel
+				60 button Description: Home, ID: app.grid.3x3
+				61 button Description: Screenshot, ID: camera.viewfinder
+				62 button Description: Record, ID: record.circle
+		83 toggle button Description: Filter, Help: Sort and Filter, Value: off

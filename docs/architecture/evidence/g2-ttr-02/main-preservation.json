@@ -1,0 +1,13 @@
+{
+  "currentMain": "e9e4511c0bcbf668627a8bc99b02bb8962580a17",
+  "preflightMain": "e091b60e0527766bf6a055a4280e21f61933da5c",
+  "unrelatedDirtyHashesUnchanged": {
+    "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": true,
+    "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": true,
+    "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": true,
+    "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": true,
+    "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": true
+  },
+  "mainAdvancedBySeparateCoreWork": true,
+  "candidateRemainsPinned": true
+}

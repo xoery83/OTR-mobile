@@ -1,0 +1,131 @@
+{
+  "nativeCodeCommit": "37ffdf8a594f3459d494a7bad6af9763d9d269cb",
+  "build": "Debug fresh build PASS; private ignored generated iOS/Pods repaired to installed locked SDK and canonical scene configuration",
+  "container": {
+    "udid": "3582A5EB-9AC2-4E2C-A097-055CC382769C",
+    "name": "OTR G2 TTR 02 Anonymous",
+    "bundleId": "com.xoery.otrmobile.g2ttr02",
+    "metroPort": 8099,
+    "createdFreshForCheckpoint": true,
+    "protectedContainerReused": false
+  },
+  "checks": {
+    "ownedSheet": true,
+    "previewNoWrite": true,
+    "dismissNoWrite": true,
+    "durableWalkingConfirm": true,
+    "failedDrivingRollbackToWalking": true,
+    "coldReopenWalking": true,
+    "accountGuardDenied": true,
+    "tripIsolation": true,
+    "queuedAbaRejected": true,
+    "permissionInvalidationNoReopen": true,
+    "projectionReplacementNoReopen": true,
+    "flexibleNestingInvalidation": true,
+    "choiceFocusPreserved": true,
+    "nonzeroScrollGeometryPreserved": true,
+    "nowCollision": true,
+    "selectedDatePreserved": true,
+    "myGroupAndImmersive": true,
+    "lightDark": true,
+    "P1Focus": true,
+    "existingLabFlightRow": true,
+    "P3Stay": true
+  },
+  "ttrFixtures": [
+    {
+      "case": 1,
+      "visibleTransition": true,
+      "labels": [
+        "57 button Description: Straight-line travel \u00b7 Straight-line distance \u00b7 111.2 km \u00b7 No route estimate, Secondary Actions: Cancel"
+      ]
+    },
+    {
+      "case": 2,
+      "visibleTransition": true,
+      "labels": [
+        "57 button Description: Walking \u00b7 Straight-line distance \u00b7 111.2 km \u00b7 No route estimate, Secondary Actions: Cancel"
+      ]
+    },
+    {
+      "case": 3,
+      "visibleTransition": true,
+      "labels": [
+        "57 button Description: Driving \u00b7 Straight-line distance \u00b7 111.2 km \u00b7 Route pending, Secondary Actions: Cancel"
+      ]
+    },
+    {
+      "case": 4,
+      "visibleTransition": true,
+      "labels": [
+        "57 button Description: Transit \u00b7 Straight-line distance \u00b7 111.2 km \u00b7 Route unavailable, Secondary Actions: Cancel"
+      ]
+    },
+    {
+      "case": 5,
+      "visibleTransition": true,
+      "labels": [
+        "58 button Description: Straight-line travel \u00b7 Straight-line distance \u00b7 111.2 km \u00b7 No route estimate, Secondary Actions: Cancel"
+      ]
+    },
+    {
+      "case": 6,
+      "visibleTransition": false,
+      "labels": []
+    },
+    {
+      "case": 7,
+      "visibleTransition": false,
+      "labels": []
+    },
+    {
+      "case": 8,
+      "visibleTransition": false,
+      "labels": []
+    },
+    {
+      "case": 9,
+      "visibleTransition": false,
+      "labels": []
+    },
+    {
+      "case": 10,
+      "visibleTransition": true,
+      "labels": [
+        "57 button Description: Straight-line travel \u00b7 Straight-line distance \u00b7 111.2 km \u00b7 No route estimate, Secondary Actions: Cancel"
+      ]
+    },
+    {
+      "case": 11,
+      "visibleTransition": true,
+      "labels": [
+        "57 button Description: Walking \u00b7 Straight-line distance \u00b7 222.4 km \u00b7 No route estimate, Secondary Actions: Cancel"
+      ]
+    },
+    {
+      "case": 12,
+      "visibleTransition": true,
+      "labels": [
+        "57 button Description: Straight-line travel \u00b7 Straight-line distance \u00b7 111.2 km \u00b7 No route estimate, Secondary Actions: Cancel"
+      ]
+    },
+    {
+      "case": 13,
+      "visibleTransition": true,
+      "labels": [
+        "57 button Description: Straight-line travel \u00b7 Straight-line distance \u00b7 111.2 km \u00b7 No route estimate, Secondary Actions: Cancel"
+      ]
+    },
+    {
+      "case": 14,
+      "visibleTransition": true,
+      "labels": [
+        "57 button Description: Straight-line travel \u00b7 Straight-line distance \u00b7 111.2 km \u00b7 No route estimate, Secondary Actions: Cancel"
+      ]
+    }
+  ],
+  "limits": [
+    "Native flight check uses the registered synthetic Lab row; detailed FlightRows geometry is covered by automated regressions.",
+    "No physical device, narrow-device repeat, authoritative Core execution or production capability activation."
+  ]
+}
