@@ -33,7 +33,8 @@ function local(path = ":memory:", initialize = true) {
   let account: string = accountA,
     failQueue = false,
     abaRead = false,
-    abaWrite = false;
+    abaWrite = false,
+    abaAccept = false;
   const database: CoreDatabase = serializeDatabaseTransactions({
     async getFirstAsync<T>(query: string, ...args: unknown[]) {
       const row = sql.prepare(query).get(...(args as never[])) ?? null;
@@ -57,6 +58,13 @@ function local(path = ":memory:", initialize = true) {
       const result = sql.prepare(query).run(...(args as never[]));
       if (abaWrite && query.startsWith("INSERT INTO local_trip_containers")) {
         abaWrite = false;
+        account = accountB;
+        advanceAccountGeneration();
+        account = accountA;
+        advanceAccountGeneration();
+      }
+      if (abaAccept && query.startsWith("UPDATE local_trip_containers")) {
+        abaAccept = false;
         account = accountB;
         advanceAccountGeneration();
         account = accountA;
@@ -96,6 +104,9 @@ function local(path = ":memory:", initialize = true) {
     },
     abaNextWrite() {
       abaWrite = true;
+    },
+    abaNextAccept() {
+      abaAccept = true;
     },
   };
 }
@@ -286,4 +297,54 @@ it("an Account ABA during Trip transaction rolls back local metadata and the dur
   expect(await f.repo.getTrip(create.tripId)).toBeNull();
   expect(await f.repo.listTrips()).toEqual([]);
   expect(f.sql.prepare("SELECT count(*) AS n FROM sync_operations").get()?.n).toBe(0);
+});
+
+it("applies an owning receipt and queue completion atomically, including exact replay after reopen", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-trip-accept-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const create = input();
+  await f.repo.createTrip(create);
+  const result = {
+    operationId: create.operationId,
+    tripId: create.tripId,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+    name: "Local trip",
+    destination: create.destination,
+    startDate: create.startDate,
+    endDate: create.endDate,
+  };
+  f.abaNextAccept();
+  await expect(f.repo.acceptCreate(result)).rejects.toThrow("Account changed");
+  expect((await f.repo.getTrip(create.tripId))?.syncStatus).toBe("PENDING_CREATE");
+  expect(
+    f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(create.operationId)
+      ?.status,
+  ).toBe("DEPENDENCY_BLOCKED");
+  await expect(
+    f.repo.acceptCreate({ ...result, actorAccountId: accountB }),
+  ).rejects.toThrow("TRIP_CREATE_ACCOUNT_MISMATCH");
+  await expect(f.repo.acceptCreate({ ...result, name: "Changed" })).rejects.toThrow(
+    "TRIP_CREATE_RECEIPT_MISMATCH",
+  );
+  const accepted = await f.repo.acceptCreate(result);
+  expect(accepted).toMatchObject({
+    serverId: create.tripId,
+    syncStatus: "SYNCED",
+    ownerPersonId: result.ownerPersonId,
+    baseCurrency: null,
+  });
+  expect(
+    f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(create.operationId)
+      ?.status,
+  ).toBe("COMPLETED");
+  expect(await f.repo.acceptCreate(result)).toEqual(accepted);
+  f.sql.close();
+  f = local(path, false);
+  expect(await f.repo.getTrip(create.tripId)).toEqual(accepted);
 });

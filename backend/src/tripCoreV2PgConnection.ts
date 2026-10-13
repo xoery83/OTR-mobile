@@ -31,9 +31,15 @@ export function createCorePgConnection(input: CorePgConfig): CorePgConnection {
 export function createSourcePgConnection(input: CorePgConfig): CorePgConnection {
   return createOwningPgConnection(input, "otr_trip_source_command_gateway");
 }
+export function createTripPgConnection(input: CorePgConfig): CorePgConnection {
+  return createOwningPgConnection(input, "otr_trip_create_gateway");
+}
 function createOwningPgConnection(
   input: CorePgConfig,
-  principal: "otr_trip_core_v2_gateway" | "otr_trip_source_command_gateway",
+  principal:
+    | "otr_trip_core_v2_gateway"
+    | "otr_trip_source_command_gateway"
+    | "otr_trip_create_gateway",
 ): CorePgConnection {
   const config = configSchema.parse(input);
   let occupied = false;

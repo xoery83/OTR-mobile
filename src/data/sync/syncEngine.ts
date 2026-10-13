@@ -149,7 +149,8 @@ export function createSyncEngine(
   worker: SyncWorker,
   calculateNextAttemptAt: (attemptCount: number) => string = nextSyncAttemptAt,
   shouldProcess: (operation: SyncOperation) => boolean = (operation) =>
-    operation.operationType !== "CORE_V2_COMMAND",
+    operation.operationType !== "CORE_V2_COMMAND" &&
+    operation.operationType !== "CREATE_TRIP",
 ) {
   return {
     async run(authState: AuthState): Promise<SyncRunResult> {

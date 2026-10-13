@@ -1,5 +1,18 @@
 # OTR Mobile 2.0 Data Model Draft
 
+## WP05-D Trip creation acceptance — isolated, runtime closed
+
+SQLite59 adds nullable `owner_person_id` and `accepted_at` to the Account-scoped
+SQLite58 local Trip container. One existing `CREATE_TRIP` queue operation and the
+local Trip share stable UUIDs; an owning receipt applies Person identity and
+queue completion in one Account-gated SQLite transaction. PostgreSQL migration
+`20261013000500` adds an operation-unique, Trip-unique actor/payload receipt and
+two narrowly executable creator/receipt functions for a dedicated dormant role.
+Creation uses the existing Trip creator triggers for owner membership and linked
+Person, and initializes an empty `trip_core_read_state` row; it does not create a
+Core certificate or Ledger settlement settings. Exact replay is read from the
+persisted rows. Hosted deployment and runtime connection remain separately gated.
+
 ## Checkpoint 11 local foundations — integrated, owner review pending
 
 SQLite 47 (`trip_day_read_model`) adds Account/Trip-scoped `trip_day_projections`,

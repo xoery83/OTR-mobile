@@ -6,6 +6,11 @@ import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { corePayloadSchemas } from "@/domain/trip/tripCoreV2Commands";
 import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 import {
+  tripCreateRequestSchema,
+  tripCreateResultSchema,
+  type TripCreateResult,
+} from "@/domain/trip/tripCreateContract";
+import {
   captureAccountScope,
   assertAccountRequestContext,
   withAccountApplyGate,
@@ -30,10 +35,12 @@ type Row = {
   end_date: string | null;
   created_at: string;
   updated_at: string;
+  owner_person_id: string | null;
+  accepted_at: string | null;
 };
 const trip = (row: Row): Trip => ({
   id: row.id,
-  serverId: null,
+  serverId: row.accepted_at ? row.id : null,
   name: row.name,
   destination: row.destination,
   startDate: row.start_date,
@@ -41,10 +48,10 @@ const trip = (row: Row): Trip => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   deletedAt: null,
-  syncStatus: "PENDING_CREATE",
+  syncStatus: row.accepted_at ? "SYNCED" : "PENDING_CREATE",
   syncVersion: 0,
   baseCurrency: null,
-  ownerPersonId: null,
+  ownerPersonId: row.owner_person_id,
 });
 const title = (value: string) => {
   const result = value.trim();
@@ -156,6 +163,8 @@ export function createTripRepository(
               end_date: endDate,
               created_at: now,
               updated_at: now,
+              owner_person_id: null,
+              accepted_at: null,
             });
           }
           await assertAccountRequestContext(scope, account);
@@ -201,6 +210,95 @@ export function createTripRepository(
         const payload = corePayloadSchemas.CREATE_ITEM.parse(intent.command.payload);
         if (payload.family !== "P1" && payload.family !== "P3") return [];
         return [{ ...intent, payload }];
+      });
+    },
+    async acceptCreate(resultInput: TripCreateResult) {
+      const accepted = tripCreateResultSchema.parse(resultInput);
+      const scope = await captureAccountScope(account);
+      if (accepted.actorAccountId !== scope.accountId)
+        throw new Error("TRIP_CREATE_ACCOUNT_MISMATCH");
+      return withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        let applied: Trip | null = null;
+        await database.withTransactionAsync(async () => {
+          const operation = await database.getFirstAsync<{
+            payload_json: string;
+            trip_id: string;
+            idempotency_key: string;
+            status: string;
+          }>(
+            "SELECT payload_json,trip_id,idempotency_key,status FROM sync_operations WHERE id=? AND owner_user_id=? AND operation_type='CREATE_TRIP'",
+            accepted.operationId,
+            scope.accountId,
+          );
+          if (
+            !operation ||
+            operation.trip_id !== accepted.tripId ||
+            operation.idempotency_key !== accepted.operationId
+          )
+            throw new Error("TRIP_CREATE_QUEUE_MISMATCH");
+          const proposed = tripCreateRequestSchema.parse({
+            operationId: accepted.operationId,
+            ...JSON.parse(operation.payload_json),
+          });
+          if (
+            proposed.tripId !== accepted.tripId ||
+            proposed.name !== accepted.name ||
+            proposed.destination !== accepted.destination ||
+            proposed.startDate !== accepted.startDate ||
+            proposed.endDate !== accepted.endDate
+          )
+            throw new Error("TRIP_CREATE_RECEIPT_MISMATCH");
+          const row = await database.getFirstAsync<Row>(
+            "SELECT * FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
+            scope.accountId,
+            accepted.tripId,
+            accepted.operationId,
+          );
+          if (
+            !row ||
+            (row.owner_person_id && row.owner_person_id !== accepted.ownerPersonId)
+          )
+            throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
+          if (operation.status === "COMPLETED" && !row.accepted_at)
+            throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
+          const now = clock();
+          if (!row.accepted_at)
+            await database.runAsync(
+              "UPDATE local_trip_containers SET owner_person_id=?,accepted_at=?,updated_at=? WHERE account_id=? AND id=? AND create_operation_id=?",
+              accepted.ownerPersonId,
+              now,
+              now,
+              scope.accountId,
+              accepted.tripId,
+              accepted.operationId,
+            );
+          await database.runAsync(
+            "UPDATE sync_operations SET status='COMPLETED',next_attempt_at=NULL,last_error_code=NULL,updated_at=? WHERE id=? AND owner_user_id=? AND operation_type='CREATE_TRIP'",
+            now,
+            accepted.operationId,
+            scope.accountId,
+          );
+          await assertAccountRequestContext(scope, account);
+          applied = trip({
+            ...row,
+            owner_person_id: accepted.ownerPersonId,
+            accepted_at: row.accepted_at ?? now,
+            updated_at: row.accepted_at ? row.updated_at : now,
+          });
+        });
+        return applied!;
+      });
+    },
+    async resumeCreateTrips() {
+      const scope = await captureAccountScope(account);
+      await withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        await database.runAsync(
+          "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND operation_type='CREATE_TRIP' AND status='DEPENDENCY_BLOCKED'",
+          scope.accountId,
+        );
+        await assertAccountRequestContext(scope, account);
       });
     },
   };

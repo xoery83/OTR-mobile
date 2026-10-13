@@ -1,5 +1,21 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## WP05-D Trip creation port — implemented locally, runtime closed
+
+`POST /v2/trips` accepts a validated bearer identity, `Idempotency-Key` equal to
+the request's stable `operationId`, and exact Trip metadata
+`{operationId,tripId,name,destination,startDate,endDate}`. Destination and calendar
+dates may be null. The actor, owner membership and linked Person are never
+client-provided. An exact retry returns the persisted result; changed operation
+payload, actor or Trip UUID is rejected. `GET /v2/trip-create-operations/:id`
+looks up that actor's durable receipt before an uncertain create retry and
+returns404 only when no receipt exists. Both responses are private/no-store and
+return persisted `actorAccountId`, `tripId`, `ownerPersonId`, `coreEpoch`, Core
+revision/access revision and Trip metadata. They do not carry a Core collection
+certificate or financial setup. The route remains503 CLOSED at normal startup
+until its separate owning port is provisioned; no Hosted/runtime activation is
+implied by this local contract.
+
 ## P2c dormant local Composer — Independent Review required
 
 Owner approved the four minimal deltas in

@@ -11,6 +11,7 @@ import { tripDayReadModelMigration } from "./migrations/tripDayReadModel";
 import { localCaptureInboxMigration } from "./migrations/localCaptureInbox";
 
 import { localTripContainersMigration } from "./migrations/localTripContainers";
+import { tripCreateAcceptanceMigration } from "./migrations/tripCreateAcceptance";
 
 export type Migration = {
   id: number;
@@ -1699,4 +1700,5 @@ export const migrations: Migration[] = [
   capturePdfSourceHandoffMigration,
   coreOrdinaryOrderMigration,
   localTripContainersMigration,
+  tripCreateAcceptanceMigration,
 ];
