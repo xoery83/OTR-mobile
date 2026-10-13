@@ -1,0 +1,198 @@
+{
+  "canonicalLocal": "e9e4511c0bcbf668627a8bc99b02bb8962580a17",
+  "canonicalOrigin": "e9e4511c0bcbf668627a8bc99b02bb8962580a17",
+  "actualRemote": "e9e4511c0bcbf668627a8bc99b02bb8962580a17",
+  "acceptedDependency": "3aecdbce472e469cbff370f25845df67f6e74b5e",
+  "dependencyMerge": "0582d8747dfc34ffd72ecd2a10ecd0343fecb8f1",
+  "acceptedUnchangedSha256": {
+    "backend/src/__fixtures__/sourcePdfUpload.ts": "2acfb2b402388631055844ebc11bc44e64c2e24c2b2ce88d061313dc6ab29ada",
+    "backend/src/__fixtures__/sourcePdfUploadBeta.ts": "822f35d6bdaec50a0151361db8abeb5350bf0a807291b50603daca5e49a65274",
+    "backend/src/sourcePdfUploadBeta.sql.test.ts": "b55e6c3c6d15cd455843ac55144c778bec526292ca1fe7dcafd978d4b1581cd1",
+    "docs/adr/2026-10-13-bounded-pdf-beta-custody.md": "b619e49567a650c874ee6c563ee9f59d51e06ba8f07d485d3a3eccc2b7c6c4e8",
+    "docs/trip/CP_FLIGHT_PDF_UPLOAD_BETA_ACK_V2.md": "553442e7e3d17a68b911f3dee6e171075140a03f63c48cb549dc78d0244c896f",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_MANIFEST.json": "6e5a3eed4ac2444f8b08c7d9f338be55302a11346809b5972c1935605bc65d64",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_REPORT.md": "28dddf6a6f408a2b81df4c7e7103469a413dcae9f4acf3da9833a912c9b0e7b8",
+    "src/domain/trip/sourcePdfUploadBeta.ts": "a1d01df5e8f4781cedda7f123b90b3312e8637412588e318cba296f6bad23152",
+    "supabase/migrations/20261013000300_source_pdf_beta_custody.sql": "840e2c22b6262aa8af486eec3a5efe001657c4567a8805a3e80ab01e0dab051a",
+    "supabase/tests/source-pdf/beta.sql": "c75111b47195f926a265172054a1574b472651d623ab8ed0254edb10430d0ba3"
+  },
+  "canonicalDirtyPreserved": {
+    "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": {
+      "before": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+      "after": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3"
+    },
+    "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": {
+      "before": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+      "after": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4"
+    },
+    "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": {
+      "before": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+      "after": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573"
+    },
+    "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": {
+      "before": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+      "after": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a"
+    },
+    "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": {
+      "before": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769",
+      "after": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+    }
+  },
+  "migrationAllocations": {
+    "20261013000100": [
+      {
+        "filename": "20261013000100_source_pdf_upload_authority.sql",
+        "sha256": "a8f39d530420b4769310ae9c431633aba3136be4d031bc0dd17fa0c433aaa1a4"
+      }
+    ],
+    "20261013000200": [
+      {
+        "filename": "20261013000200_core_ordinary_order.sql",
+        "sha256": "45c36ccf6f3d0ca92f30b3e78689fb95a6490e64a811bf2b670d521dfe8093c1"
+      }
+    ],
+    "20261013000300": [
+      {
+        "filename": "20261013000300_source_pdf_beta_custody.sql",
+        "sha256": "840e2c22b6262aa8af486eec3a5efe001657c4567a8805a3e80ab01e0dab051a"
+      }
+    ],
+    "20261013000400": [
+      {
+        "filename": "20261013000400_source_pdf_causal_upload.sql",
+        "sha256": "26e974ed089ee303ed21f52cb44da75f9088fb981bd83813a231993f40003013"
+      }
+    ]
+  },
+  "historicalMigrationsPreservedCount": 97,
+  "sqliteSha256": {
+    "src/data/db/migrations/capturePdfSourceHandoff.ts": "a47a0b932d289c59ec14e6754c0d214bf447d36e8cdbc687e2be2ba3ed065065",
+    "src/data/db/migrations/coreOrdinaryOrder.ts": "4bfa5c153fcc68f86cd79412fb65cfe7d06959cdea98cc3739b2834e30f71c40"
+  },
+  "carriedDependencyManifest": [
+    "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts",
+    "backend/src/__fixtures__/sourcePdfUpload.ts",
+    "backend/src/__fixtures__/sourcePdfUploadBeta.ts",
+    "backend/src/sourcePdfUploadBeta.sql.test.ts",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/adr/2026-10-13-bounded-pdf-beta-custody.md",
+    "docs/trip/CP_FLIGHT_PDF_UPLOAD_BETA_ACK_V2.md",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_MANIFEST.json",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_REPORT.md",
+    "scripts/trip/core-v2-sql-acceptance.py",
+    "src/domain/trip/sourcePdfUploadBeta.ts",
+    "supabase/migrations/20261013000300_source_pdf_beta_custody.sql",
+    "supabase/tests/source-pdf/beta.sql"
+  ],
+  "checkpoint": "CP-FLIGHT-PDF-TIMING-03",
+  "branch": "codex/cp-flight-pdf-timing-03",
+  "implementationCommit": "4ba9a3a451302dda03d7231fbfac4e216f83af49",
+  "implementationTree": "ed5495655851986672a34314b6b2d8f1a5720557",
+  "v3ImplementationPaths": [
+    "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts",
+    "backend/src/__fixtures__/sourcePdfUploadCausal.ts",
+    "backend/src/sourcePdfUploadCausal.sql.test.ts",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/adr/2026-10-13-finite-causal-pdf-upload.md",
+    "docs/trip/CP_FLIGHT_PDF_CAUSAL_UPLOAD_AUTHORITY_V3.md",
+    "scripts/trip/core-v2-sql-acceptance.py",
+    "src/domain/trip/sourcePdfUploadCausal.ts",
+    "supabase/migrations/20261013000400_source_pdf_causal_upload.sql",
+    "supabase/tests/source-pdf/causal.sql"
+  ],
+  "combinedCanonicalManifest": [
+    "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts",
+    "backend/src/__fixtures__/sourcePdfUpload.ts",
+    "backend/src/__fixtures__/sourcePdfUploadBeta.ts",
+    "backend/src/__fixtures__/sourcePdfUploadCausal.ts",
+    "backend/src/sourcePdfUploadBeta.sql.test.ts",
+    "backend/src/sourcePdfUploadCausal.sql.test.ts",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md",
+    "docs/adr/2026-10-13-bounded-pdf-beta-custody.md",
+    "docs/adr/2026-10-13-finite-causal-pdf-upload.md",
+    "docs/trip/CP_FLIGHT_PDF_CAUSAL_UPLOAD_AUTHORITY_V3.md",
+    "docs/trip/CP_FLIGHT_PDF_UPLOAD_BETA_ACK_V2.md",
+    "docs/trip/implementation/CP_FLIGHT_PDF_TIMING_03_IMPLEMENTATION_REPORT.md",
+    "docs/trip/implementation/CP_FLIGHT_PDF_TIMING_03_MANIFEST.json",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_MANIFEST.json",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_REPORT.md",
+    "scripts/trip/core-v2-sql-acceptance.py",
+    "src/domain/trip/sourcePdfUploadBeta.ts",
+    "src/domain/trip/sourcePdfUploadCausal.ts",
+    "supabase/migrations/20261013000300_source_pdf_beta_custody.sql",
+    "supabase/migrations/20261013000400_source_pdf_causal_upload.sql",
+    "supabase/tests/source-pdf/beta.sql",
+    "supabase/tests/source-pdf/causal.sql"
+  ],
+  "combinedPathCount": 22,
+  "fileSha256": {
+    "backend/src/__fixtures__/sourcePdfRegistrationAcceptance.ts": "f6253bd1a94931ce60eb5e18cfc8bd2821e2f68b9b401f81e4efcc7d56182c91",
+    "backend/src/__fixtures__/sourcePdfUpload.ts": "2acfb2b402388631055844ebc11bc44e64c2e24c2b2ce88d061313dc6ab29ada",
+    "backend/src/__fixtures__/sourcePdfUploadBeta.ts": "822f35d6bdaec50a0151361db8abeb5350bf0a807291b50603daca5e49a65274",
+    "backend/src/__fixtures__/sourcePdfUploadCausal.ts": "a25d0e421f626b238570b886a86ce0fd259caf77a7b2a3c6d43ca3d0495b2184",
+    "backend/src/sourcePdfUploadBeta.sql.test.ts": "b55e6c3c6d15cd455843ac55144c778bec526292ca1fe7dcafd978d4b1581cd1",
+    "backend/src/sourcePdfUploadCausal.sql.test.ts": "b658d9d15da015cd7b8752329ca8c2107562f2c3874467650ecebb3f0876a27d",
+    "docs/CURRENT_IMPLEMENTATION_STATE.md": "198db45e6d7cfc2f9c57525d9def8ce6e9e00bdf683430d0f63796072f713465",
+    "docs/adr/2026-10-13-bounded-pdf-beta-custody.md": "b619e49567a650c874ee6c563ee9f59d51e06ba8f07d485d3a3eccc2b7c6c4e8",
+    "docs/adr/2026-10-13-finite-causal-pdf-upload.md": "6ca7cddf2f69935472519c0908c01f89aa420ab0db0dbff99ced4d2a4306b26d",
+    "docs/trip/CP_FLIGHT_PDF_CAUSAL_UPLOAD_AUTHORITY_V3.md": "5d9eeaf6d6439fca18f61bb0190d0ce49f95c368cba1c2fbfe4bc7f0be766a52",
+    "docs/trip/CP_FLIGHT_PDF_UPLOAD_BETA_ACK_V2.md": "553442e7e3d17a68b911f3dee6e171075140a03f63c48cb549dc78d0244c896f",
+    "docs/trip/implementation/CP_FLIGHT_PDF_TIMING_03_IMPLEMENTATION_REPORT.md": "b1c1f4d7979bd206236c2920092e70f6f0d278e1abe8b1a19f786459cf4b91c9",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_MANIFEST.json": "6e5a3eed4ac2444f8b08c7d9f338be55302a11346809b5972c1935605bc65d64",
+    "docs/trip/implementation/CP_FLIGHT_PDF_UPLOAD_RECOVERY_03A_REPORT.md": "28dddf6a6f408a2b81df4c7e7103469a413dcae9f4acf3da9833a912c9b0e7b8",
+    "scripts/trip/core-v2-sql-acceptance.py": "fcf03995229dcc86906f9cc74789acdbc1028e1e34b0a129690b781267bed892",
+    "src/domain/trip/sourcePdfUploadBeta.ts": "a1d01df5e8f4781cedda7f123b90b3312e8637412588e318cba296f6bad23152",
+    "src/domain/trip/sourcePdfUploadCausal.ts": "9d5086a8efa0033041440ca4d957e4cd588e9eddbda5e6e6f20e37814d773832",
+    "supabase/migrations/20261013000300_source_pdf_beta_custody.sql": "840e2c22b6262aa8af486eec3a5efe001657c4567a8805a3e80ab01e0dab051a",
+    "supabase/migrations/20261013000400_source_pdf_causal_upload.sql": "26e974ed089ee303ed21f52cb44da75f9088fb981bd83813a231993f40003013",
+    "supabase/tests/source-pdf/beta.sql": "c75111b47195f926a265172054a1574b472651d623ab8ed0254edb10430d0ba3",
+    "supabase/tests/source-pdf/causal.sql": "00630025f916076939525a23819941e9624b8f22d8f94e3d3ee053d3e07381d3"
+  },
+  "selfHashExcluded": "docs/trip/implementation/CP_FLIGHT_PDF_TIMING_03_MANIFEST.json",
+  "logs": {
+    "timing03-sql-35": {
+      "path": "/private/tmp/timing03-sql-35.log",
+      "sha256": "de7ea5ab15cb03c008c7fc03f2ad389385223ef8dff40de45f447c9f3b6a5046"
+    },
+    "timing03-v1": {
+      "path": "/private/tmp/timing03-v1.log",
+      "sha256": "8239617c96f08517860d792e1fee6f3807a93ffe2cebe284f91e7fc889592b08"
+    },
+    "timing03-v2": {
+      "path": "/private/tmp/timing03-v2.log",
+      "sha256": "b93135af01ef424ac7869a792a805ca5fc0182c4d4890b74f1fdf23aba4751db"
+    },
+    "timing03-chain": {
+      "path": "/private/tmp/timing03-chain.log",
+      "sha256": "d5f2150ea1ea34d543e1aa3ce10a081f7eaf0766fad6bdd31e4fff24f804eb84"
+    },
+    "timing03-text": {
+      "path": "/private/tmp/timing03-text.log",
+      "sha256": "95b0347425d61b9b0cc6d86a4619113c1618bdb18b6137820eba2fd9f8fd85d4"
+    },
+    "timing03-text-serial": {
+      "path": "/private/tmp/timing03-text-serial.log",
+      "sha256": "f7843f6fdbe9aad0505b7f769acefe2bcc4e655749aed6eca376a9cc8c5d6945"
+    },
+    "timing03-unit": {
+      "path": "/private/tmp/timing03-unit.log",
+      "sha256": "56120f114ca9a7b8621b2fc019630ef070a01d2ceb7f545a904b544950ad6b9c"
+    },
+    "timing03-types-final": {
+      "path": "/private/tmp/timing03-types-final.log",
+      "sha256": "83536ce573035559e7b92f6bd0afc1e2bd2871c514609d42f7d7ce4b9920c42e"
+    },
+    "timing03-lint-final": {
+      "path": "/private/tmp/timing03-lint-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "timing03-build-final": {
+      "path": "/private/tmp/timing03-build-final.log",
+      "sha256": "ed90b783060e279b51ed9b363086b15be82ee555fa44a2f23165b5f838a873d2"
+    },
+    "timing03-uiguard-final": {
+      "path": "/private/tmp/timing03-uiguard-final.log",
+      "sha256": "4d01abac9a20a82fa3f35ae619017c0e543db809a068fa8b72162ff5e51ba7a6"
+    }
+  }
+}

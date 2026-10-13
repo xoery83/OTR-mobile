@@ -1,0 +1,27 @@
+# PDF_PRIVATE_UPLOAD_BETA_ACK_V2 — CLOSED Source custody contract
+
+Status: scoped Recovery-03A implementation; Owner Review required. Strict v1 is unchanged.
+
+The existing Source operation, execution attempt and staged resource are the only journal. The additive finite profile uses the same UPLOAD_ORIGINAL codec and immutable FINAL receipt. Source owns the protected transitions. Only `otr_trip_source_command_gateway` can invoke its producer wrappers. The fixed issuer is `otr-source-pdf-beta-producer/2`; the private CLOSED configuration binds one producer UUID and one provider instance digest. They are deployment facts, not client-selected values. No runtime role is enabled here.
+
+## Sequence and meaning
+
+1. `trip_source_pdf_beta_begin` registers UPLOAD and reserves durable quota before dispatch. It pins the exact actor/Trip/Source/Original/material/row revisions, PREPARE parent, operation hash/key, attempt generation, staging identity, provider/bucket/key, PDF SHA/length, producer and profile. A nonfinal plan excludes all sibling UPLOAD/RECOVER/VERIFY plans for the same Original. Once dispatched, that epoch/key cannot be uploaded again under a new operation ID.
+2. `trip_source_pdf_beta_execute(..., 'STAGE', proof)` records sealed fsynced staging evidence. `DISPATCH` grants exactly one provider call, only at initial owner fence 1. Backend must disable SDK retry/upsert and send the same immutable payload. A takeover never grants dispatch.
+3. `ACK` durably records a complete HTTP 200 response, exact full UTF-8 JSON body `{Key, Id}`, body SHA/length, declared complete transport, create-only request, immutable binding, producer and dispatch. It is an authenticated producer attestation, not independent proof of provider exclusivity or physical writer termination. No truncated body, timeout, GET-only match or client metadata is sufficient.
+4. `GET` records a separate authenticated read using a fresh read UUID, after durable ACK, with exact retained hash/length/MIME and binding. Backend must read the registered private object independently, disable cache reuse and hash all bytes. Source cannot inspect provider bytes itself; the sole authorized producer is the trust boundary. ACK and GET are immutable, separately replayable and digest-bound.
+5. `trip_source_pdf_beta_finish` performs receipt-first lookup, current owner fence, current access/CAS/roster checks and exact ACK/GET closure. It seals existing Source FINAL/APPLIED with Original still PENDING. `io_finished_at` stays NULL. Execution remains RUNNING or UNKNOWN with `termination_outstanding=true`, no container, terminal result or terminal evidence. Logical custody permits the unchanged VERIFY → REGISTER → independent SEAL → Publisher/Core path. It does not qualify business evidence itself.
+
+## Recovery and safety
+
+A durable ACK can be replayed after response loss and followed by a new independent GET if none was recorded. A durable FINAL is recovered through the existing immutable Source receipt before any new dispatch. Takeover invalidates old owner fences, retains historic ACK, and requires the current owner for new GET/finish. If ACK was lost before journal persistence, matching retained bytes remain UNKNOWN: no retry, VERIFY, registration or cleanup. Conflicting proof never replaces an existing record. Stale CAS, membership/Source/Representation revocation or private access failure blocks completion.
+
+This bounded model assumes the configured sole producer exclusively controls the private key, sends only the sealed payload for it, and the provider faithfully associates responses and GET bytes with that key. A successful create-only response does not establish exclusive writing: observed concurrent different-content Supabase successes violate any such assumption. Source provides one dispatch per immutable key/epoch and rejects conflicting content; Backend must provide process/credential isolation against bypass. Delayed same-content writes are remote debt, never terminal proof. A later unexpected byte mutation fails the unchanged independent VERIFY/seal checks. Credential compromise or provider misbinding cannot be solved by SQL hashes.
+
+No V2 TERMINAL, release, cleanup or orphan deletion wrapper exists. Strict v1 terminal/release wrappers reject V2. Durable stages, including completed custody and UNKNOWN, continue to count against shared account/global quotas until separately authorized safe cleanup. Default quotas and retention remain CLOSED configurable values, not Beta product policy. Normal successes may exhaust quota; this checkpoint deliberately retains that obligation.
+
+Exceptional isolated re-import remains UNKNOWN/REVIEW; this API supplies no succession token or automatic Canonical CREATE. Cross-Source dedup/succession is not implemented. All SOURCE_INSTANT, airports, Source-wide siblings, private evidence, actor/Trip fences and protected manual fields remain the existing owning authorities.
+
+## Agent A handoff
+
+Consume the versioned domain schemas and Source RPCs; pass configured producer identity and provider instance through the Source-issued binding, never accept them from Native. Persist exact complete response evidence before independent GET. Replays consult receipts/journal first; do not write again. Full durable ACK loss stays UNKNOWN. Keep remote debt/quota inventory visible after logical FINAL. No Supabase behavior is certified by synthetic tests. Agent B receives only the existing Source receipt and subsequently Source-sealed catalog; Native creates no authority.
