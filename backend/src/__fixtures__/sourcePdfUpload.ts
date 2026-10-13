@@ -55,6 +55,7 @@ export async function makeUploadPlan(
   original: string,
   bytes: Uint8Array,
   mime = "application/pdf",
+  rpcPrefix = "trip_source_pdf_upload",
 ) {
   const payload = {
     material_revision: 1,
@@ -136,7 +137,7 @@ export async function makeUploadPlan(
   const begin = () =>
     uploadRpc(
       owned,
-      "trip_source_pdf_upload_begin",
+      `${rpcPrefix}_begin`,
       ["uuid", "text", "uuid", "uuid", "uuid", "text", "uuid", "uuid"],
       [
         actor,
@@ -157,14 +158,14 @@ export async function makeUploadPlan(
   ) =>
     uploadRpc(
       owned,
-      `trip_source_pdf_upload_${verb}`,
+      `${rpcPrefix}_${verb}`,
       ["uuid", "uuid", "bigint", ...extraTypes],
       [j.id, j.owner_run, j.owner_fence, ...extra],
     );
   const finish = (j: UploadJournal) =>
     uploadRpc(
       owned,
-      "trip_source_pdf_upload_finish",
+      `${rpcPrefix}_finish`,
       ["uuid", "text", "uuid", "uuid", "bigint"],
       [actor, canonicalCoreJson(q), j.id, j.owner_run, j.owner_fence],
     );

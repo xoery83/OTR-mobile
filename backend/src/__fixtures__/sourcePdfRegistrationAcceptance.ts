@@ -1,3 +1,5 @@
+import { uploadCausalRetainedPdfFixture } from "./sourcePdfUploadCausal";
+import { uploadBetaRetainedPdfFixture } from "./sourcePdfUploadBeta";
 import { uploadRetainedPdfFixture } from "./sourcePdfUpload";
 import { randomUUID } from "node:crypto";
 import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
@@ -27,7 +29,12 @@ export async function registerPendingPdfFixture(
   const objectKey = `v1/${trip}/${source}/${original}/payload`,
     file = join(directory, objectKey);
   await mkdir(dirname(file), { recursive: true });
-  if (process.env.OTR_CORE_PDF_UPLOAD !== "1") await writeFile(file, bytes);
+  if (
+    process.env.OTR_CORE_PDF_UPLOAD !== "1" &&
+    process.env.OTR_CORE_PDF_BETA !== "1" &&
+    process.env.OTR_CORE_PDF_CAUSAL !== "1"
+  )
+    await writeFile(file, bytes);
   // Only the acquisition descriptor is synthetic-seeded. New VERIFY/register run with all guards enabled.
   await admin.lease.query("BEGIN");
   for (const table of [
@@ -168,6 +175,52 @@ export async function registerPendingPdfFixture(
       } finally {
         await admin.lease.query(
           "UPDATE public.trip_source_pdf_upload_config SET enabled=false",
+        );
+      }
+    }
+    if (process.env.OTR_CORE_PDF_BETA === "1") {
+      await admin.lease.query(
+        "ALTER TABLE trip_source_pdf_upload_config DROP CONSTRAINT source_pdf_beta_closed",
+      );
+      await admin.lease.query(
+        "UPDATE trip_source_pdf_upload_config SET beta_enabled=true",
+      );
+      try {
+        await uploadBetaRetainedPdfFixture(
+          owned,
+          actor,
+          trip,
+          source,
+          original,
+          bytes,
+          file,
+        );
+      } finally {
+        await admin.lease.query(
+          "UPDATE trip_source_pdf_upload_config SET beta_enabled=false",
+        );
+      }
+    }
+    if (process.env.OTR_CORE_PDF_CAUSAL === "1") {
+      await admin.lease.query(
+        "ALTER TABLE trip_source_pdf_upload_config DROP CONSTRAINT source_pdf_causal_closed",
+      );
+      await admin.lease.query(
+        "UPDATE trip_source_pdf_upload_config SET causal_enabled=true",
+      );
+      try {
+        await uploadCausalRetainedPdfFixture(
+          owned,
+          actor,
+          trip,
+          source,
+          original,
+          bytes,
+          file,
+        );
+      } finally {
+        await admin.lease.query(
+          "UPDATE trip_source_pdf_upload_config SET causal_enabled=false",
         );
       }
     }
