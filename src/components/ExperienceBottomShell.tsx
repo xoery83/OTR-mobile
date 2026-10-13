@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
 import { useTripView } from "@/features/day-feed/TripViewContext";
@@ -21,6 +21,7 @@ export function ExperienceBottomShell({
   useUiLocale();
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
+  const largeText = useWindowDimensions().fontScale > 2;
   const { view } = useTripView();
   if (!visible) return null;
   const openMyTrips = () => {
@@ -29,7 +30,7 @@ export function ExperienceBottomShell({
   };
   return (
     <SafeAreaView edges={["bottom", "left", "right"]} style={styles.safe}>
-      <View style={styles.row}>
+      <View style={[styles.row, largeText && styles.largeRow]}>
         <View style={styles.navigationIsland}>
           <Pressable
             accessibilityRole="button"
@@ -37,7 +38,7 @@ export function ExperienceBottomShell({
             accessibilityHint={t("shell.openMyTrips")}
             accessibilityState={{ selected: pathname === "/trip" }}
             onPress={openMyTrips}
-            style={styles.destination}
+            style={[styles.destination, largeText && styles.largeDestination]}
           >
             <AppIcon
               name="suitcase"
@@ -54,7 +55,7 @@ export function ExperienceBottomShell({
               accessibilityHint={t("shell.openSelectedDay")}
               accessibilityState={{ selected: pathname === "/" }}
               onPress={() => router.navigate("/")}
-              style={styles.destination}
+              style={[styles.destination, largeText && styles.largeDestination]}
             >
               <AppIcon
                 name="calendar"
@@ -95,6 +96,7 @@ const createStyles = (c: UiColors) =>
       flexDirection: "row",
       justifyContent: "space-between",
     },
+    largeRow: { paddingBottom: visual.space.section },
     navigationIsland: {
       backgroundColor: c.elevatedSurface,
       borderColor: c.separator,
@@ -122,6 +124,10 @@ const createStyles = (c: UiColors) =>
       alignItems: "center",
       justifyContent: "center",
       gap: visual.space.heading,
+    },
+    largeDestination: {
+      minHeight: 76,
+      paddingVertical: visual.space.card,
     },
     label: { ...visual.type.action, color: c.textSecondary },
     activeLabel: { color: c.accent },

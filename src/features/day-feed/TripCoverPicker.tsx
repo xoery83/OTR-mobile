@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { UiButton } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -19,6 +19,7 @@ export function TripCoverPicker({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const largeText = useWindowDimensions().fontScale > 2;
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
@@ -30,7 +31,7 @@ export function TripCoverPicker({
         onPress={() => setOpen(!open)}
       />
       {open ? (
-        <View style={styles.choices}>
+        <View style={[styles.choices, largeText && styles.largeChoices]}>
           {builtInTripCoverIds.map((id) => (
             <Pressable
               key={id}
@@ -46,10 +47,15 @@ export function TripCoverPicker({
                   .catch(() => setError(true))
                   .finally(() => setSaving(false));
               }}
-              style={styles.choice}
+              style={[styles.choice, largeText && styles.largeChoice]}
             >
-              <TripCoverVisual source={builtInTripCoverSource(id)} style={styles.image} />
-              <Text style={styles.label}>{t(`myTrips.cover.${id}`)}</Text>
+              <TripCoverVisual
+                source={builtInTripCoverSource(id)}
+                style={[styles.image, largeText && styles.largeImage]}
+              />
+              <Text style={[styles.label, largeText && styles.largeLabel]}>
+                {t(`myTrips.cover.${id}`)}
+              </Text>
             </Pressable>
           ))}
         </View>
@@ -71,6 +77,7 @@ const createStyles = (c: UiColors) =>
       alignItems: "flex-start",
       gap: visual.space.heading,
     },
+    largeChoices: { flexDirection: "column" },
     choice: {
       flex: 1,
       minHeight: 72,
@@ -79,12 +86,15 @@ const createStyles = (c: UiColors) =>
       borderRadius: visual.radius.card,
       overflow: "hidden",
     },
+    largeChoice: { flex: 0, width: "100%", flexDirection: "row", alignItems: "center" },
     image: { width: "100%", height: 76 },
+    largeImage: { width: 96 },
     label: {
       ...visual.type.meta,
       color: c.textPrimary,
       paddingHorizontal: visual.space.heading,
       paddingBottom: visual.space.heading,
     },
+    largeLabel: { flexShrink: 1, paddingVertical: visual.space.heading },
     error: { ...visual.type.meta, color: c.destructive },
   });

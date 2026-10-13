@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   view: null as null | { tripId: string; date: string; zone: string; generation: number },
   navigate: vi.fn(),
   setParams: vi.fn(),
+  fontScale: 1,
 }));
 vi.mock("expo-router", () => ({ router: state }));
 vi.mock("react-native", () => ({
@@ -14,6 +15,7 @@ vi.mock("react-native", () => ({
   Text: "Text",
   View: "View",
   StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
+  useWindowDimensions: () => ({ fontScale: state.fontScale }),
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: "AppIcon" }));
@@ -33,6 +35,7 @@ type ShellElement = ReactElement<{
   accessibilityLabel?: string;
   accessibilityState?: { selected?: boolean };
   onPress?: () => void;
+  style?: unknown;
 }>;
 function pressables(node: ReactNode): ShellElement[] {
   if (!isValidElement(node)) return [];
@@ -47,6 +50,15 @@ beforeEach(() => {
   state.view = null;
   state.navigate.mockReset();
   state.setParams.mockReset();
+  state.fontScale = 1;
+});
+
+it("lets the destination grow for accessibility-large text", () => {
+  state.fontScale = 3;
+  const buttons = pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  expect(buttons[0].props.style).toEqual(
+    expect.arrayContaining([expect.objectContaining({ minHeight: 76 })]),
+  );
 });
 
 it("keeps the real My Trips destination available without a selected accepted Day", () => {

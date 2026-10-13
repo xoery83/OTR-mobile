@@ -1,5 +1,6 @@
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
 import { Tabs, usePathname } from "expo-router";
+import { Text, useWindowDimensions } from "react-native";
 
 import { AppIcon } from "@/components/AppIcon";
 import { ExperienceBottomShell } from "@/components/ExperienceBottomShell";
@@ -8,11 +9,13 @@ import { bottomBarVisible } from "@/components/bottomBarVisibility";
 import { useUiTheme } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { t } from "@/ui/locale";
+import { visual } from "@/ui/visual";
 
 export default function TabsLayout() {
   useUiLocale();
   const colors = useUiTheme();
   const pathname = usePathname();
+  const largeText = useWindowDimensions().fontScale > 2;
   return (
     <TripViewProvider>
       <Tabs
@@ -68,6 +71,23 @@ export default function TabsLayout() {
           name="trip"
           options={{
             headerLeft: () => <GlobalMenu module="TRIP" />,
+            ...(largeText
+              ? {
+                  headerTitleAlign: "left" as const,
+                  headerTitle: () => (
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        ...visual.type.section,
+                        color: colors.textPrimary,
+                        minWidth: 132,
+                      }}
+                    >
+                      {t("navigation.trip")}
+                    </Text>
+                  ),
+                }
+              : {}),
             tabBarIcon: ({ color }) => <AppIcon color={color} name="suitcase" />,
             title: t("navigation.trip"),
           }}
