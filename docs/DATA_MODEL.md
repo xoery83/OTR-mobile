@@ -1,5 +1,17 @@
 # OTR Mobile 2.0 Data Model Draft
 
+## Trips built-in cover choice — local SQLite60
+
+SQLite60 adds nullable `selected_cover_asset_id` to the Account-keyed
+`local_trip_containers` row. It stores only a validated embedded cover ID,
+not a URI, photo object, remote authority or inferred destination. A user’s
+explicit built-in selection survives local reopen and takes precedence over
+the deterministic bundled fallback; an unknown catalog ID displays a designed
+fallback without erasing the stored choice. Reads and writes stay fenced by
+the active Account and Trip, and this presentation preference is not synced to
+Backend or treated as Core Trip admission. Arbitrary user-photo selection
+requires its separate owning Photos capability.
+
 ## WP05-D Trip creation acceptance — isolated, runtime closed
 
 SQLite59 adds nullable `owner_person_id` and `accepted_at` to the Account-scoped

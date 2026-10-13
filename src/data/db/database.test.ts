@@ -58,7 +58,7 @@ describe("SQLite migrations", () => {
       "trip_canonical_event_read_only_mirror",
     );
     expect(migrations.map(({ id }) => id)).toEqual(
-      Array.from({ length: 59 }, (_, i) => i + 1),
+      Array.from({ length: 60 }, (_, i) => i + 1),
     );
     await runMigrations(database);
     await runMigrations(database);
@@ -79,10 +79,30 @@ describe("SQLite migrations", () => {
       migrations.find(({ id }) => id === 57)!.sql,
       migrations.find(({ id }) => id === 58)!.sql,
       migrations.find(({ id }) => id === 59)!.sql,
+      migrations.find(({ id }) => id === 60)!.sql,
       expect.stringContaining("schema_migrations"),
     ]);
     expect(appliedMigrationIds).toEqual(
-      new Set([...prior, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]),
+      new Set([
+        ...prior,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+      ]),
     );
   });
 
@@ -180,7 +200,7 @@ describe("SQLite migrations", () => {
       sqlite.exec("PRAGMA foreign_keys=ON");
       await runMigrations(adapter());
       expect(applied).toEqual([
-        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
       ]);
       expect(existing()).toBe(priorData);
       expect(mirror()).toBe(mirrorBefore!);
@@ -199,17 +219,17 @@ describe("SQLite migrations", () => {
         .run("account", "trip", "person", "operation", "receipt", "digest", "{}");
       const before = sqlite.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
       expect(before.at(-1)).toMatchObject({
-        id: 59,
-        name: "trip_create_acceptance",
+        id: 60,
+        name: "trip_cover_choice",
       });
       expect(before.map((row) => row.id)).toEqual(
-        Array.from({ length: 59 }, (_, i) => i + 1),
+        Array.from({ length: 60 }, (_, i) => i + 1),
       );
       sqlite.close();
       sqlite = new DatabaseSync(path);
       await runMigrations(adapter());
       expect(applied).toEqual([
-        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
       ]);
       expect(existing()).toBe(priorData);
       expect(mirror()).toBe(mirrorBefore!);
@@ -263,7 +283,7 @@ describe("SQLite migrations", () => {
       "ledger_my_spending_facts",
     );
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(59);
+    expect(latest.id).toBe(60);
     expect(migrations.find((migration) => migration.id === 39)?.sql).toContain(
       "original_mime_type",
     );
@@ -708,7 +728,7 @@ describe("SQLite migrations", () => {
 });
 
 it.each([0, 55])(
-  "installs Flight56, TTR57, local Trip58 and acceptance59 from SQLite%d and cold reopens",
+  "installs Flight56, TTR57, local Trip58, acceptance59 and cover60 from SQLite%d and cold reopens",
   async (priorVersion) => {
     const dir = mkdtempSync(join(tmpdir(), "otr-order-allocation-"));
     const path = join(dir, "combined.db");
@@ -748,8 +768,8 @@ it.each([0, 55])(
           .run(m.id, m.name, "synthetic");
       }
       await runMigrations(adapter());
-      expect(applied.slice(-4)).toEqual([56, 57, 58, 59]);
-      if (priorVersion === 55) expect(applied).toEqual([56, 57, 58, 59]);
+      expect(applied.slice(-5)).toEqual([56, 57, 58, 59, 60]);
+      if (priorVersion === 55) expect(applied).toEqual([56, 57, 58, 59, 60]);
       const state = () => ({
         versions: sql
           .prepare("SELECT id,name FROM schema_migrations WHERE id>=56 ORDER BY id")
@@ -766,6 +786,7 @@ it.each([0, 55])(
         { id: 57, name: "core_ordinary_order" },
         { id: 58, name: "local_trip_containers" },
         { id: 59, name: "trip_create_acceptance" },
+        { id: 60, name: "trip_cover_choice" },
       ]);
       expect(before.objects).toHaveLength(4);
       expect(
@@ -773,7 +794,13 @@ it.each([0, 55])(
           .prepare("PRAGMA table_info(local_trip_containers)")
           .all()
           .map((column) => (column as { name: string }).name),
-      ).toEqual(expect.arrayContaining(["owner_person_id", "accepted_at"]));
+      ).toEqual(
+        expect.arrayContaining([
+          "owner_person_id",
+          "accepted_at",
+          "selected_cover_asset_id",
+        ]),
+      );
       expect(
         sql
           .prepare("SELECT ordinary_order_version FROM trip_core_read_certificates")
@@ -783,9 +810,7 @@ it.each([0, 55])(
       sql = new DatabaseSync(path);
       await runMigrations(adapter());
       expect(state()).toEqual(before);
-      expect(
-        applied.filter((id) => id === 56 || id === 57 || id === 58 || id === 59),
-      ).toEqual([56, 57, 58, 59]);
+      expect(applied.filter((id) => id >= 56 && id <= 60)).toEqual([56, 57, 58, 59, 60]);
       expect(sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
     } finally {
       sql.close();

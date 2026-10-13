@@ -1,5 +1,10 @@
 import type * as SQLite from "expo-sqlite";
-import type { CreateTripInput, CreateTripItemInput, Trip } from "@/domain/trip/types";
+import type {
+  BuiltInTripCoverId,
+  CreateTripInput,
+  CreateTripItemInput,
+  Trip,
+} from "@/domain/trip/types";
 import { coreUuid, coreDefaults } from "@/domain/trip/tripCoreV2";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
@@ -38,7 +43,10 @@ type Row = {
   updated_at: string;
   owner_person_id: string | null;
   accepted_at: string | null;
+  selected_cover_asset_id?: string | null;
 };
+const isBuiltInCover = (value: unknown): value is BuiltInTripCoverId =>
+  value === "city" || value === "coast" || value === "mountain";
 const trip = (row: Row): Trip => ({
   id: row.id,
   serverId: row.accepted_at ? row.id : null,
@@ -53,6 +61,9 @@ const trip = (row: Row): Trip => ({
   syncVersion: 0,
   baseCurrency: null,
   ownerPersonId: row.owner_person_id,
+  selectedCoverAssetId: isBuiltInCover(row.selected_cover_asset_id)
+    ? row.selected_cover_asset_id
+    : null,
 });
 const title = (value: string) => {
   const result = value.trim();
@@ -90,6 +101,30 @@ export function createTripRepository(
       );
       await assertAccountRequestContext(scope, account);
       return rows.map(trip);
+    },
+    async selectBuiltInCover(tripId: string, coverAssetId: BuiltInTripCoverId | null) {
+      coreUuid.parse(tripId);
+      if (coverAssetId !== null && !isBuiltInCover(coverAssetId))
+        throw new Error("TRIP_COVER_INVALID");
+      const scope = await captureAccountScope(account);
+      await withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        await database.withTransactionAsync(async () => {
+          const row = await database.getFirstAsync<{ id: string }>(
+            "SELECT id FROM local_trip_containers WHERE account_id=? AND id=?",
+            scope.accountId,
+            tripId,
+          );
+          if (!row) throw new Error("TRIP_LOCAL_RECORD_MISSING");
+          await database.runAsync(
+            "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
+            coverAssetId,
+            scope.accountId,
+            tripId,
+          );
+          await assertAccountRequestContext(scope, account);
+        });
+      });
     },
     async createTrip(input: CreateTripInput): Promise<Trip> {
       coreUuid.parse(input.operationId);

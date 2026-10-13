@@ -196,6 +196,36 @@ it("local Trip→save→open→P1/P3 pending→real file close/reopen preserves 
       .get()?.n,
   ).toBe(0);
 });
+it("keeps a built-in cover choice on disk and fences reads and writes to its account", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-trip-cover-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const saved = await f.repo.createTrip(input());
+  await f.repo.selectBuiltInCover(saved.id, "city");
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
+  expect((await f.repo.listTrips())[0]?.selectedCoverAssetId).toBe("city");
+  await expect(f.repo.selectBuiltInCover(saved.id, "unknown" as "city")).rejects.toThrow(
+    "TRIP_COVER_INVALID",
+  );
+  f.sql.close();
+  f = local(path, false);
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
+  f.switchTo(accountB);
+  expect(await f.repo.getTrip(saved.id)).toBeNull();
+  await expect(f.repo.selectBuiltInCover(saved.id, "coast")).rejects.toThrow(
+    "TRIP_LOCAL_RECORD_MISSING",
+  );
+  f.switchTo(accountA);
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
+  f.abaNextAccept();
+  await expect(f.repo.selectBuiltInCover(saved.id, "mountain")).rejects.toThrow(
+    "Account changed",
+  );
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
+  await f.repo.selectBuiltInCover(saved.id, null);
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBeNull();
+});
 it("duplicate Trip request replays exactly; changed payload, duplicate Trip key and queue failure cannot leave partial records", async () => {
   const f = local(),
     create = input();

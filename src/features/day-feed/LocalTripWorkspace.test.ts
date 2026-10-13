@@ -110,6 +110,7 @@ const trip = (id: string, name: string): Trip => ({
 const repository = (list: Trip[] = []): TripRepository => ({
   listTrips: vi.fn(async () => list),
   getTrip: vi.fn(async (id) => list.find((t) => t.id === id) ?? null),
+  selectBuiltInCover: vi.fn(async () => {}),
   createTrip: vi.fn(async (input) => trip(input.tripId, input.name)),
   addItem: vi.fn(async (_tripId, input) => ({
     localStatus: "PENDING" as const,
