@@ -1,19 +1,8 @@
-import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
-
-const summarySchema = z.object({
-  id: coreUuid,
-  name: z.string().min(1),
-  destination: z.string().nullable(),
-  startDate: z.string().nullable(),
-  endDate: z.string().nullable(),
-  createdAt: z.string().nullable(),
-});
-const pageSchema = z.object({
-  trips: z.array(summarySchema).max(25),
-  nextCursor: coreUuid.nullable(),
-});
-export type TripDiscoveryPage = z.infer<typeof pageSchema>;
+import {
+  tripDiscoveryPageSchema,
+  type TripDiscoveryPage,
+} from "../../src/domain/trip/tripDiscoveryContract";
 export type TripDiscoveryPort = {
   discoverTrips(
     actor: string,
@@ -59,7 +48,9 @@ export async function tripDiscoveryBoundary(
     return reply(400, { error: { code: "TRIP_DISCOVERY_INVALID" } });
   if (!port) return reply(503, { error: { code: "TRIP_DISCOVERY_CLOSED" } });
   try {
-    const page = pageSchema.parse(await port.discoverTrips(actor, cursor, limit));
+    const page = tripDiscoveryPageSchema.parse(
+      await port.discoverTrips(actor, cursor, limit),
+    );
     if (page.trips.some((trip) => cursor !== null && trip.id <= cursor))
       throw new Error("TRIP_DISCOVERY_CURSOR_INVALID");
     return reply(200, page);

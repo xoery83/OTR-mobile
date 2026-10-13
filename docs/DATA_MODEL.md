@@ -1,5 +1,19 @@
 # OTR Mobile 2.0 Data Model Draft
 
+## WP-TRIPS-DISCOVERY/INDEX — isolated SQLite61 read projection
+
+SQLite61 stores a complete, bounded Backend Trip-list snapshot under the current
+Account, with nullable server `createdAt` and no local create operation. A refresh
+atomically replaces only that Account's prior summary rows after every page has
+passed schema, cursor and account-generation checks. An unavailable or incomplete
+refresh retains the previous offline snapshot. `readMerged()` combines the cache
+with Account-local containers by stable Trip UUID; local pending names, dates and
+cover choice win on collision. The result includes snapshot time and distinguishes
+cached remote membership from local status. It does not admit a Core Trip, create
+a Person/member, install accepted Day, or grant fresh rights while offline.
+The existing My Trips UI still reads local containers only; remote-only workspace
+consumption and applicable Native acceptance are later separate work.
+
 ## Trips built-in cover choice — local SQLite60
 
 SQLite60 adds nullable `selected_cover_asset_id` to the Account-keyed

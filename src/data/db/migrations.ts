@@ -13,6 +13,7 @@ import { localCaptureInboxMigration } from "./migrations/localCaptureInbox";
 import { localTripContainersMigration } from "./migrations/localTripContainers";
 import { tripCreateAcceptanceMigration } from "./migrations/tripCreateAcceptance";
 import { tripCoverChoiceMigration } from "./migrations/tripCoverChoice";
+import { tripDiscoverySnapshotMigration } from "./migrations/tripDiscoverySnapshot";
 
 export type Migration = {
   id: number;
@@ -1703,4 +1704,5 @@ export const migrations: Migration[] = [
   localTripContainersMigration,
   tripCreateAcceptanceMigration,
   tripCoverChoiceMigration,
+  tripDiscoverySnapshotMigration,
 ];
