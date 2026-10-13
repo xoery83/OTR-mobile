@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import { itemsForLocalDate, type DayProjection } from "@/domain/trip/dayReadModel";
+import { closedItemCapabilities, type CoreDayRow } from "@/domain/trip/tripCoreV2Day";
 import {
   composeDayStream,
   dayRowKey,
@@ -85,6 +86,71 @@ it("date-only rows stay in TNS without inventing midnight or clock", () => {
   expect(stream.rows[0]).toMatchObject({ position: "TNS", item: { anchor: null } });
   expect(stream.now.mode).toBe("HIDDEN");
   expect(stream.rows[0].item.event.boundaries[0].local_time).toBeNull();
+});
+it("presents shared TNS above timed rows and Flexible Blocks while leaving BASE and NOW in place", () => {
+  const { f } = setup();
+  const tns = structuredClone(f.before);
+  tns.id = "tns";
+  tns.boundaries[0] = {
+    ...tns.boundaries[0],
+    instant: null,
+    source_instant: null,
+    local_time: null,
+    quality: "UNKNOWN",
+    clock_precision: null,
+    source_instant_precision: null,
+  };
+  const base = structuredClone(tns);
+  base.id = "base";
+  const query = itemsForLocalDate(
+    { ...f.day, events: [f.segment, tns, base] },
+    syntheticDate,
+    "UTC",
+  );
+  const coreRows: CoreDayRow[] = [
+    {
+      rowKey: { itemId: base.id, projectionRole: "BASE_FROM", localDate: syntheticDate },
+      itemRevision: 1,
+      projectionVersion: 2,
+      certificateGeneration: 1,
+      family: "P3",
+      title: base.title,
+      status: "planned",
+      position: "BASE",
+      itemRef: base.id,
+      capabilities: closedItemCapabilities,
+    },
+  ];
+  const stream = composeDayStream({ ...query, coreRows }, `${syntheticDate}T23:00:00Z`, {
+    focus: tns.id,
+    scope: { accountId: f.day.accountId, tripId: f.day.tripId },
+    flexible: [
+      {
+        version: "g2-flexible/1",
+        synthetic: true,
+        id: "block",
+        title: "Synthetic block",
+        accountId: f.day.accountId,
+        tripId: f.day.tripId,
+        localDate: syntheticDate,
+        itemIds: [],
+        choices: [],
+        softWindow: { startMinute: 480, endMinute: 540 },
+      },
+    ],
+  });
+  expect(stream.rows.map((row) => row.item.event.id)).toEqual([
+    f.segment.id,
+    ...query.nonComparable.map((item) => item.event.id),
+  ]);
+  expect(
+    stream.entries.map((entry) =>
+      entry.kind === "ITEM" ? entry.row.item.event.id : entry.block.id,
+    ),
+  ).toEqual([tns.id, "block", f.segment.id, base.id]);
+  expect(stream.focus).toBe(tns.id);
+  expect(stream.now).toEqual(composeDayStream(query, `${syntheticDate}T23:00:00Z`).now);
+  expect(stream.nowAfter).toBe(false);
 });
 it("rejects duplicate Event insertion rather than rendering ambiguous keys", () => {
   const { query } = setup();
@@ -325,7 +391,7 @@ it("G2-F01/F02/F03 composes empty and Choice-only Blocks independently with one 
     base.entries
       .filter((entry) => entry.kind === "ITEM")
       .map((entry) => entry.row.item.event.id),
-  ).toEqual(["flex-outer", "flex-tns"]);
+  ).toEqual(["flex-tns", "flex-outer"]);
   const key = choiceFocusKey("flex-nested", "MY", "garden");
   const choice = composeDayStream(query, fixture.instant, { ...ports, focus: key });
   expect(choice.focus).toBe(key);

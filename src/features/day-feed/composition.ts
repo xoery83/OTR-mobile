@@ -341,6 +341,8 @@ export function composeDayStream(
     | { kind: "ITEM"; row: (typeof rows)[number] }
     | { kind: "BLOCK"; block: (typeof enriched)[number] }
   )[] = [];
+  for (const row of rows.slice(query.timed.length))
+    if (row.position === "TNS") entries.push({ kind: "ITEM", row });
   for (const row of rows.slice(0, query.timed.length)) {
     const minute = positioned.length && row.item.anchor ? time(row.item.anchor) : 1440;
     while (positioned.length && positioned[0].minute <= minute)
@@ -349,7 +351,8 @@ export function composeDayStream(
       entries.push({ kind: "ITEM", row });
   }
   for (const entry of positioned) entries.push({ kind: "BLOCK", block: entry.block });
-  for (const row of rows.slice(query.timed.length)) entries.push({ kind: "ITEM", row });
+  for (const row of rows.slice(query.timed.length))
+    if (row.position === "BASE") entries.push({ kind: "ITEM", row });
   return {
     rows,
     entries,
