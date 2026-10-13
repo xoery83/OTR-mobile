@@ -1,0 +1,311 @@
+{
+  "classification": "CLOSED_BACKEND_PREPARATION_NOT_SOURCE_V2_ACCEPTANCE",
+  "baseline": "e091b60e0527766bf6a055a4280e21f61933da5c",
+  "actualRemoteAtPreflight": "065bdd96d334cfa4818178cb715dfd7ff14b5289",
+  "sourceV2Integration": "UNIMPLEMENTED_PENDING_OWNING_INTERFACE",
+  "sourceV2FinalCalls": 0,
+  "newBackendSourceFinalCalls": 0,
+  "actualStorage": {
+    "passed": 33,
+    "failed": 0,
+    "imagePins": {
+      "supabase/postgres:17.6.1.167": "sha256:6942962433a569e87f228b4d4ab7e11db5deca64e43babb3a038443ad6c4f1bb",
+      "public.ecr.aws/supabase/storage-api:v1.73.1": "sha256:c24fb33cc2fa38d0f9582a30312907fc56da333fb9ba0646833186197e4982f3"
+    },
+    "environment": {
+      "namespace": "otr-pdf-provider-e0f4c56d258d",
+      "loopbackOnly": true,
+      "outboundMasquerade": false,
+      "queueEnabled": false,
+      "backend": "FILE_TMPFS",
+      "nodeHostVersion": "v24.18.0"
+    },
+    "tests": [
+      {
+        "name": "authenticates, streams exact bytes, seals and reopens across adapter construction",
+        "status": "passed"
+      },
+      {
+        "name": "streams authenticated ingress through a fixture-only Node HTTP host",
+        "status": "passed"
+      },
+      {
+        "name": "cancels stalled ingress without dispatch or quota release",
+        "status": "passed"
+      },
+      {
+        "name": "reopens the immutable closed file after a crash between link and temporary unlink",
+        "status": "passed"
+      },
+      {
+        "name": "reopens a sealed stage from a fresh Node process",
+        "status": "passed"
+      },
+      {
+        "name": "records operational ACK before rejecting newly revoked scope",
+        "status": "passed"
+      },
+      {
+        "name": "rejects oversized before Provider dispatch",
+        "status": "passed"
+      },
+      {
+        "name": "rejects truncated before Provider dispatch",
+        "status": "passed"
+      },
+      {
+        "name": "rejects changed before Provider dispatch",
+        "status": "passed"
+      },
+      {
+        "name": "rejects mime before Provider dispatch",
+        "status": "passed"
+      },
+      {
+        "name": "rejects quartz before Provider dispatch",
+        "status": "passed"
+      },
+      {
+        "name": "rejects account context",
+        "status": "passed"
+      },
+      {
+        "name": "rejects trip context",
+        "status": "passed"
+      },
+      {
+        "name": "rejects source context",
+        "status": "passed"
+      },
+      {
+        "name": "rejects representation context",
+        "status": "passed"
+      },
+      {
+        "name": "rejects operation context",
+        "status": "passed"
+      },
+      {
+        "name": "rejects generation context",
+        "status": "passed"
+      },
+      {
+        "name": "rejects revoked context",
+        "status": "passed"
+      },
+      {
+        "name": "rejects unauthenticated context",
+        "status": "passed"
+      },
+      {
+        "name": "rejects changed binding/content under one sealed resource and symlink substitution",
+        "status": "passed"
+      },
+      {
+        "name": "uses the identity returned by the durable grant for an undispatched reservation",
+        "status": "passed"
+      },
+      {
+        "name": "records complete bound ACK separately from independent GET and rejects duplicates",
+        "status": "passed"
+      },
+      {
+        "name": "retains timeout as UNKNOWN and does not retry",
+        "status": "passed"
+      },
+      {
+        "name": "retains disconnect as UNKNOWN and does not retry",
+        "status": "passed"
+      },
+      {
+        "name": "retains incomplete as UNKNOWN and does not retry",
+        "status": "passed"
+      },
+      {
+        "name": "retains badshape as UNKNOWN and does not retry",
+        "status": "passed"
+      },
+      {
+        "name": "retains redirect as UNKNOWN and does not retry",
+        "status": "passed"
+      },
+      {
+        "name": "independent GET rejects mismatch",
+        "status": "passed"
+      },
+      {
+        "name": "independent GET rejects wrongmime",
+        "status": "passed"
+      },
+      {
+        "name": "rejects declared length mismatch and unsafe stage permissions",
+        "status": "passed"
+      },
+      {
+        "name": "rejects an untrusted Provider TLS certificate without retry",
+        "status": "passed"
+      },
+      {
+        "name": "requires fixed private origin and bounded configuration",
+        "status": "passed"
+      },
+      {
+        "name": "actual disposable Supabase complete ACK + retained match without Source FINAL",
+        "status": "passed"
+      }
+    ]
+  },
+  "focusedFinal": {
+    "files": 4,
+    "passed": 44,
+    "skipped": 1,
+    "optionalStorageTestSkipped": true
+  },
+  "regressions": {
+    "textHttpPgVerifiedTls": {
+      "passed": true,
+      "backendRestarts": 5,
+      "lostReceiptRecoveries": 4,
+      "twoStableItems": true,
+      "privateSourceLeakage": false,
+      "tlsHostnameCaPrincipalNegatives": true
+    },
+    "sourceV1UploadJournal": {
+      "passed": 29,
+      "failed": 0,
+      "syntheticV1ProviderOnly": true
+    },
+    "strictPdfSourceCoreRead2": {
+      "passed": true,
+      "twoItems": true,
+      "fourReceiptsRecovered": true,
+      "ordinaryQuartz": "REVIEW",
+      "activation": "CLOSED"
+    },
+    "optionalCombinedV1UploadPdfCore": {
+      "status": "WATCHDOG_TIMEOUT_UNRESOLVED",
+      "attempts": 3,
+      "watchdogMs": 30000,
+      "registrationAndSealReached": true
+    },
+    "cleanBaselineStrictPdf": {
+      "passed": true,
+      "durationSeconds": 27.75,
+      "baselineLogSha256": "7baa18c4715787fe51cbb0c2b153ad8dbf7e31b4329e29dfe9b73a80a3ed3a6e"
+    }
+  },
+  "unchangedAuthorityAndRegistrySha256": {
+    "supabase/migrations/20260929000400_adjustment_lossless_source_transport.sql": "8795431ca37e92e3eb88f005ed6c071c6086a790d3e99a821b6f2ad2334788bb",
+    "supabase/migrations/20260912000500_ledger_2_stage_5_1_evidence_links.sql": "b84e97c962fb55c2d1d2489367225a6b111589f904ecbe0684579d7c6a185ba2",
+    "supabase/migrations/20260918000600_ledger_settlement_publication_retry.sql": "e8fef4d54eb55e03fffa7be6bd3815e321b9831e90378ee1b92e6066fdf8d562",
+    "supabase/migrations/20261012000300_source_pdf_registration.sql": "d5c59775cc959ed70c7e73180168413922c8ae74def87fe9e6012d044759e82f",
+    "supabase/migrations/20260912000300_ledger_2_stage_4c_conflicts.sql": "6ec2296ed65dfb03b1344bc7afe22e869b88a391cb155e252cba08dcd13d1170",
+    "supabase/migrations/20260913000200_hosted_dev_lineage_reconciliation.sql": "ed801e30211d23ddfc676dba0dd211454a41bb26a2ce787b63a5f35d4066a082",
+    "supabase/migrations/20260923000100_settlement_2_phase_3a_human_findings.sql": "19db091de8513fff694a38812b7271de00084cce2b70e492d4211292ed1a45db",
+    "supabase/migrations/20261006000100_external_integration_persistence.sql": "c759a41981f631271df7b960a7ce50dbc32e2317163ca84a7021d1cbf5e46f93",
+    "supabase/migrations/20261011000800_trip_core_v2_retained_claim_fence.sql": "874208aa54404d710748b8c950a288f943a846b557c37cee5220b9488c063b63",
+    "supabase/migrations/20260912001100_ledger_2_stage_7_2a_payment_lineage_guard.sql": "57491a46e8e00f73addbd8d5a95f275dac63bb137f96f5cfcead552d81be37c9",
+    "supabase/migrations/20260918000700_ledger_finalized_expense_mutation_guard.sql": "0da013d50e59f8def3e2a8058f58e4e8a61ed92cb0f392e3527a1c63a7f55776",
+    "supabase/migrations/20260917000100_review_v2_personal_decisions.sql": "54552c7f8381fa65089a3f341c6386d3569317b5421e188ece99f850ced4b126",
+    "supabase/migrations/20260914000200_ledger_ui_polish_fixture_currency_repair.sql": "2a7312d636e4afd8f92f5208148d791be0b3089e616c00fdc33cd48c72c04cf8",
+    "supabase/migrations/20261013000100_source_pdf_upload_authority.sql": "a8f39d530420b4769310ae9c431633aba3136be4d031bc0dd17fa0c433aaa1a4",
+    "supabase/migrations/20260917000500_ledger_reference_valuation_guard.sql": "6eb73ddcc267fe9f44119b3c254956ce0a4fc03fd68ad91fde5234664c8e03f3",
+    "supabase/migrations/20261005000600_trip_import_confirmation_admission.sql": "a5b9ac9775646a050e670349a8a56b900cb0d8f5df5f6a5eb3cf938272ed0fec",
+    "supabase/migrations/20260912000800_ledger_2_stage_7_1_active_settlement_guard.sql": "2238bb7508c7ab23bbed3d54940bd930fecc57b8c0ae89bed5ea7936bd4348d7",
+    "supabase/migrations/20260913000400_ledger_2_stage_8_review_change_feed.sql": "8810370f2d623b0ee6ae88a6f4d87a3c7435f257755776ca8ecba076efdb9ab3",
+    "supabase/migrations/20260927000100_expense_attachment_limit.sql": "7f3f4c1746f1d88f9209f8dadf4d704920931dc5c416f303ad5de5d790f109ba",
+    "supabase/migrations/20260910000200_canonical_security_hardening.sql": "c78f0debc882359e10634ba3a06facb4864571fa29baafa8abce615a23daa2ed",
+    "supabase/migrations/20260923000200_settlement_2_phase_3a_target_shape_fix.sql": "2502d6453d18c812fce12bb2343d9b0dcd71f8e08cd9471ac30a3c74a18a9a4e",
+    "supabase/migrations/20260918000100_ledger_phase_e_finalized_valuation_guard.sql": "a9705014f2415db79e735c0ce912c076d61ad134d8c6cff525b492f8f3dbff50",
+    "supabase/migrations/20260927000300_receipt_storage_provider.sql": "705dbd0a495a5cb696429347c1b4cd093137b8f9295146a760b2a3528d4fecd9",
+    "supabase/migrations/20260926000100_my_ledger_lightweight_snapshot.sql": "363b521b73d8ef8905a618059aef5380e4b871199fdf25574910feb17cea9bf2",
+    "supabase/migrations/20261012000100_model_task_protected_admission.sql": "efee375bec1da7c12d33e7d7994d8983ad9fb32ba7851a56cc4f82b550d65e94",
+    "supabase/migrations/20260913000300_ledger_2_stage_8_review_actions.sql": "0bccf560adce053b3f9c64032136d6c9daee17701b6f1fff529de8f004947e12",
+    "supabase/migrations/20260924000300_personal_payment_fx_bounded_backfill.sql": "9989d6498c095c8879a5180995fb4719540b3c85256117dc9c07fc57cb812c13",
+    "supabase/migrations/20260912000700_ledger_2_stage_7_1_settlements.sql": "cf7a15b1f6399275eb0bf85b550c4d0d997cde43501f078385aa55f35cbec7fc",
+    "supabase/migrations/20260929000100_expense_consistency_v2.sql": "930166ac307f2590d0e762e1e8e7c0ea41220a3c40f0e47bef5a18aced765135",
+    "supabase/migrations/20260914000100_ledger_ui_polish_fixture.sql": "02005c9c51f14a2126e4a7df01bd7ab18df3c655e181fb3086f03c8d6223e1c8",
+    "supabase/migrations/20260914000600_ledger_ui_polish_fixture_repair_cleanup.sql": "2991631bc7a0d992df9d50264b01c64e9cad8641150dcaec5eec24e9f8b690d9",
+    "supabase/migrations/20261011000300_trip_core_v2_owning_session.sql": "eb8df5c6db491fa05f48c959a17153457530f2eb63d9a25aef2bca41bcd65214",
+    "supabase/migrations/20261004000300_trip_source_protected_foundation.sql": "ceef38bf08c85f0a778c042e2c3d86ed32bcc1f3638333fa86f593803426a346",
+    "supabase/migrations/20261011000400_trip_core_v2_read_scope.sql": "f1681c6b395e84a21f8ddb6155e3afcd4615066c980ae3c30a8c081a627e1be0",
+    "supabase/migrations/20260924000200_personal_payment_fx_projections.sql": "f931af6622a175d3a5f215277f1925935c7bd1d39da0c4522440d2bd6afac4c5",
+    "supabase/migrations/20261011000600_trip_core_v2_candidate_publication.sql": "0aee99a4f2c7558170cc1235b595ad93735d403cfd346e0a6a0268c45b058a55",
+    "supabase/migrations/20261005000300_trip_source_execution_journal.sql": "7598fa8c751034623fc4eb531b87d910bb7aeca549a380a983ca5cc8b7546528",
+    "supabase/migrations/20260918000300_ledger_settlement_fx_preflight.sql": "73b6d63a9500311aa695fd9f81ae54b204d9b66eebc766fb7886cd05c4b45025",
+    "supabase/migrations/20260917000600_ledger_journey_currency.sql": "cd1c4eb6f36746f9e7697838d4c8fa94540de8101bc51cdba3f593e6a26827a5",
+    "supabase/migrations/20261011000500_trip_core_v2_source_scope.sql": "6118ede99678d0ab30837612278599b208a42eb44efe9ace47740333401f7eb7",
+    "supabase/migrations/20260923000300_settlement_2_phase_3b_personal_review_checkpoints.sql": "8b6ddc23acfb83e19608603a048787ffc069f2ebb44e650a7db5c8f145dfbc19",
+    "supabase/migrations/20260927000200_expense_attachment_tombstones.sql": "7b7f1e88c41bea5247f25792fd2510a1c5a0e4c09044384a0a70230d8c304520",
+    "supabase/migrations/20260929000300_legacy_expense_equivalent_resolution.sql": "904f7356a702ddeebde793530fbcafa912f9a34d7cfe9b8085154bee1f278f31",
+    "supabase/migrations/20260923000500_settlement_2_phase_4a_preserve_review_observation.sql": "b6ce23e1976ad588b8399e62adce2a4bf379ab2d61d3b78007610d24f47fcf6b",
+    "supabase/migrations/20261012000200_source_pdf_derivative_authority.sql": "2c16a3ce1ac519a9eaa75529facd3857f3f846ef8320d3a905e13a2756921a72",
+    "supabase/migrations/20260914000400_ledger_ui_polish_fixture_uuid_repair.sql": "b5a2eb3ea6ba86026c7a30e0efff309d9ab7bb7f65fae8ba0d4bfa9d6cec960d",
+    "supabase/migrations/20261005001100_trip_import_undispatched_revocation.sql": "81c987e93c6d60a0163c02c58c1fd024b8764fdd6f7c6dbbe684e4cc41537e55",
+    "supabase/migrations/20260924000100_settlement_review_three_state.sql": "ed86c8d3e062a70c2059154ef75cda2c9ee063e49936a250fc8c0195e3c5d6f5",
+    "supabase/migrations/20260925000200_ledger_valuation_revision_guard_fix.sql": "4284fea7fb1661c8407c0bd7adf3e04fe35d9035498bc96b212d2cb9e6f3db18",
+    "supabase/migrations/20260913000100_ledger_2_stage_7_2b_adjustments.sql": "b3c514d18277c818fbeedf65c2f5dc2f72531cdf53c564c9672068b5be61123b",
+    "supabase/migrations/20261005000700_trip_flight_commands.sql": "205b61e6f15f29b93b81bed66a2904b3ce516f50b43ffc30224a692d6059a438",
+    "supabase/migrations/20261004000400_trip_event_command_foundation.sql": "f9d8932401e7d52a1ee5ad884f8bc9fc5a9c7f04ff010b214d95e626243cb59a",
+    "supabase/migrations/20260913000500_ledger_stage_9_import.sql": "031a9356f23fb01399bf43f178690cc5a66eb89f0831c06227957cf860a64d46",
+    "supabase/migrations/20260917000400_ledger_rate_decimal_text_projection.sql": "44c6a493a0181ff88059b3f822f1065f843013abd99c712e99458c1b2ab52ebf",
+    "supabase/migrations/20261005000500_trip_import_admission_guards.sql": "190282b7e66b27dfdd41a259718d041e27c152101266120e426e2e3b0b2735b5",
+    "supabase/migrations/20261005000400_trip_import_admission_catalogs.sql": "afb76c415a002f5db987f14203be3bcfcfed29f5607352248eb49be96bba124f",
+    "supabase/migrations/20260914000300_ledger_ui_polish_fixture_append_only_repair.sql": "ff821531382b4da2924b91b4d8881db070048c2e67a100a60a4e37ae800a3b4d",
+    "supabase/migrations/20260930000100_expense_participation_preserve_valuation.sql": "c6613848f32deeade3d8f782cdf887ecd0ed392e5ba02a11ee764f1d202907de",
+    "supabase/migrations/20260917000200_ledger_economic_date.sql": "5b334ab7deb05b44176866184d00d01d43faf5a1746706277b4113f685e51a15",
+    "supabase/migrations/20260925000300_settlement_adjustment_current_source.sql": "e7ac5ffdeb3babc087d3478d85426b24747911c9fce9642e771773888722b7b7",
+    "supabase/migrations/20260917000300_ledger_historical_rate_cache.sql": "d54527ef33d95952bf3fc52c1bf8ada86c3d3725d281f6db33be52413d6d2ce2",
+    "supabase/migrations/20261007000100_flight_dev_dispatch_foundation.sql": "46e80899f14817d5162f255383e303232a12276e662f34b2cb16156c34d4f2a9",
+    "supabase/migrations/20261011000200_trip_core_v2_version_dispatch.sql": "c0a63da8efeb397991ef53f5c4a575c56d3f6dcdb864d909de7f5c50488cfad9",
+    "supabase/migrations/20260929000200_latest_state_rate_acceptance.sql": "573d85579716d6ec94f93b4296ec6ecd65327a75c44f91a56e4c41e2ec1c9976",
+    "supabase/migrations/20260918000500_ledger_reference_default_per_expense.sql": "03dea2b73f55e1a94d9ae8ea14aeb4dc59b2be2cc0f92b64243897e345313a6d",
+    "supabase/migrations/20260925000100_ledger_economic_date_completion.sql": "79ebd6cd72bd9ac17cf1232308d1caca6a84d369d2b992f799d61944f9acb558",
+    "supabase/migrations/20261011000700_trip_core_v2_legacy_claim_fence.sql": "747f2eb2a8a280176183ea7e2977444c45a5361e501bf1addcb65f71bbae0a57",
+    "supabase/migrations/20260912000100_ledger_2_stage_4a_create.sql": "5d2e573349f1f35b3c46f0e542cc3c672dfeae98a136037e0ef9270336636179",
+    "supabase/migrations/20260922000100_settlement_2_phase_1a_personal_payments.sql": "47f01655470fb8c9e63a2ecfe79e173ab33c9d9ffde38c8b68443a91d5280519",
+    "supabase/migrations/20260928000100_settlement_review_exact_decimal_source.sql": "9ab2043ce5472218aa09875bad2126f2e6172360354c46030a15558ba85306be",
+    "supabase/migrations/20260910000100_canonical_production_baseline.sql": "895f8bcca3ae3f5e9f630b3b7c57df36d16ce9898ee6756376b58dbcbf7a1f64",
+    "supabase/migrations/20261004000600_trip_person_command_foundation.sql": "c347362be54875b951b2f1bdc51c2c1869cce4af644b2740b2d2c8584665752f",
+    "supabase/migrations/20260918000400_ledger_settlement_fx_included_only.sql": "8ab78b8e24d3dfca6a733ffa9e141debe4e81c5595ef2ce5904ea52056f3e864",
+    "supabase/migrations/20261004000100_trip_temporal_protected_foundation.sql": "1dd359845100c5717238cafe2dfa78a0376b70bf1546c3db8193e0c7fe3378a8",
+    "supabase/migrations/20260916000100_review_v2_engine_foundation.sql": "577b4d64b473188b070cdb992f8278869fdf191c7c3ca4221a9a9dacd8ffc37b",
+    "supabase/migrations/20260911000100_ledger_2_domain.sql": "a17906073d9d563668e3433b5fa47ab35fab3a818731c9a4bc8b9fb609663e8a",
+    "supabase/migrations/20260923000400_settlement_2_phase_4a_correction_successors.sql": "4a7a473a699c460db2084ffe180ad6096eb0b7942cb9611dd7a898829550ed21",
+    "supabase/migrations/20261005000900_trip_import_private_catalog_reads.sql": "0d21d6bf86fa6aae2ec67a26f338f5e43ec89d98bbbc03b846898293e7443c18",
+    "supabase/migrations/20260914000500_ledger_ui_polish_fixture_lineage_repair.sql": "b5b889de891143cbd836a2736acfefa7573f58667673126335ca9b995bb6045a",
+    "supabase/migrations/20261005000100_trip_event_collection_foundation.sql": "68267bfcde6642ee79ed1bb03ff5cccef2352b4179acb70292362673e2faadde",
+    "supabase/migrations/20260917000700_ledger_currency_preview_claim_fix.sql": "f4b72cef0c881bac8473d052fc2cd22b1ea8654eb3e91d62c508e56f229a3abe",
+    "supabase/migrations/20261003000100_trip_person_participation.sql": "c8683b3f0650ecb7b257ecceaff89139e13ba2afa81f49771eda2f74f756234c",
+    "supabase/migrations/20260912000900_ledger_2_stage_7_2a_payments.sql": "00f76ee098d603e06408da7394dab8737602513fd58aefa4a75a0de58817eccb",
+    "supabase/migrations/20261011000100_trip_core_v2_foundation.sql": "495db2ca7b66cc9410eac7d9711b7c4deb63822eea6c635a8d7d3337bc2f0d41",
+    "supabase/migrations/20260912000600_ledger_2_stage_5_2_receipt_assets.sql": "12169b520c0601551a80137eb5ef61a0a1a9d3be76c7cd6521de35ca807c9100",
+    "supabase/migrations/20261005000200_trip_person_participation_activation_foundation.sql": "fce1d9a109b1466ae14eaafac28325f7e2cad6b75a92b5b6881fc19bfa10adca",
+    "supabase/migrations/20261004000200_trip_person_snapshot_read.sql": "2bcd7885bdffb56d7aeab760aa0e28f889a917eb9b7248e24ae8ae32c1caf4d6",
+    "supabase/migrations/20260912000400_ledger_2_stage_5_1_financial_evidence.sql": "cc832783f2bbde410bf33ffa7af60a7925bad29b836dc0fa9fab014f7e3f60e6",
+    "supabase/migrations/20260913000600_ledger_2_settlement_participation.sql": "d4cbd9dfa24dc7b26753f18d8bf85cd5ae908b520ef286c8fcf3ed11f5903bb2",
+    "supabase/migrations/20260912001000_ledger_2_stage_7_2a_internal_rpc_grants.sql": "475ac0cfc7665219db115c6bc6fa2a5b370392c76396575762f4446ac6bf7cfc",
+    "supabase/migrations/20261005000800_trip_import_locking_and_service_reads.sql": "6a9cbfec12ccc73dfbccf55024e2e14e59eabad59d91b9328f2ba07fa7a98e7c",
+    "supabase/migrations/20260918000200_ledger_phase_e_finalized_replay_guard.sql": "9032eb79e6b87da3d083aab2772319442b8633b54b8beabcefb96020a7d0c672",
+    "supabase/migrations/20261005001000_trip_import_flight_value_guards.sql": "8be58724de31450fda1d9db99408418ffcf548646fcd01e9818240f12abe73f4",
+    "supabase/migrations/20260912000200_ledger_2_stage_4b_mutations.sql": "8c68718ec022f0d9331875507dc60a4ff6b362480e898db01c508267744291bf",
+    "supabase/migrations/20260911000200_ledger_2_security.sql": "49ab13d9019e7a89b643bed4d1db6ed365cfaa7f989a95ddff6f78eda97d8423",
+    "supabase/migrations/20261004000500_trip_source_command_foundation.sql": "a31e57388b90b27ea9d557da40a04407ffb372dc550e9b9a4c748258b106cf20",
+    "supabase/schema-manifest.json": "20a52f881a5b5e421e32af277658ed5f1d6851468185fcadd374001f6a3afa96",
+    "supabase/schema_manifest.sql": "b134f8313ba78eaf4c2a2faac52d00fb1f2b883da6eb3cd26e608196a07afef9",
+    "src/domain/trip/sourcePdfUploadAuthority.ts": "91fe41864cce452d3e4a318ce2447c724e7e833f93c4c3e515e26b277ed9803a",
+    "docs/trip/CP_FLIGHT_PDF_UPLOAD_AUTHORITY_V1.md": "f1933c3746348993c74c8d43e3ea702d523f433c0adc0beee58af6b6206b72d7"
+  },
+  "recovery02DecisionSha256": "b9d58f7f46ec201abc1a5816e9ddc7b6e67cfea994392e75abb7a6fc98b72773",
+  "implementationCommit": "095b430df5166db5bd7098f7a3751d71eaffc62e",
+  "implementationTree": "0f09861cb1eb0fcc0adde9442b0974560cb0d0e0",
+  "implementationFileSha256": {
+    "backend/src/__fixtures__/sourcePdfBackendLocal.mjs": "6eac6b5f1d8537d840470ca3f8544ad2463960fa16139613e4ed26731e632227",
+    "backend/src/app.ts": "43da1c4e6ce3f2608622eef6e190219fa300ab8c43b9a183eb42d8d7f7126a65",
+    "backend/src/sourcePdfBackendPreparation.test.ts": "463747f61ed82a20c557f077fd569f35ed0f9a4b6eb28eba37bba2473cc046fc",
+    "backend/src/sourcePdfBackendPreparation.ts": "a69eac04d5ddcc36bb0491428569fc7932ef16ed2bcf3462b6899d4e4459f5c5",
+    "backend/src/sourcePdfPrivateStage.ts": "5b9d91ac39d624963c8710695bfa0283887423cb2fe9075d55b7ee7accaa47ec",
+    "backend/src/sourcePdfStorageProducer.ts": "544cdcf67b8cfdaa45fa546c9a056b0410afa69567933838d021acc6e1605f53",
+    "scripts/provider/flight-pdf-provider-local.py": "b2d9c9fcc6befc83ddcffaba70ded68b6e258c26815543399817f2acd9dec2f9"
+  }
+}

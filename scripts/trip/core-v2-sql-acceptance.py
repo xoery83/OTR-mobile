@@ -47,8 +47,9 @@ parser.add_argument("--with-pdf-beta", action="store_true", help="Install CLOSED
 parser.add_argument("--with-pdf-upload-migration", type=pathlib.Path, help="Install accepted CLOSED Flight upload SQL from an explicit local fixture path before ordinary ordering")
 group.add_argument("--pdf-causal",action="store_true",help="Run CLOSED V3 causal upload authority acceptance")
 parser.add_argument("--with-pdf-causal",action="store_true",help="Install CLOSED V3 while testing unchanged interfaces")
+group.add_argument("--pdf-joined", action="store_true", help="Run CLOSED existing Backend + Source V3 journal/HTTP binding in an owned fixture")
 args = parser.parse_args()
-install_causal=args.pdf_causal or args.with_pdf_causal
+install_causal=args.pdf_causal or args.with_pdf_causal or args.pdf_joined
 if args.with_pdf_upload_migration and not args.with_pdf_source:
     parser.error("Flight upload ordering verification requires --with-pdf-source")
 if args.with_pdf_upload_migration and (args.pdf_upload or args.with_pdf_upload or args.pdf_beta or args.with_pdf_beta):
@@ -59,7 +60,7 @@ install_source_pdf = args.pdf_source or args.with_pdf_source or install_upload
 install_pdf = args.pdf_authority or install_source_pdf or args.with_pdf_authority
 llm_roots = {"flight_activation_reserve_call(jsonb,jsonb)", "external_integration_mark_dispatch(jsonb,jsonb)"}
 llm_changes = []
-scenario = "backend/src/sourcePdfUploadCausal.sql.test.ts" if args.pdf_causal else "backend/src/coreOrdinaryOrder.sql.test.ts" if args.ordinary_order else "backend/src/sourcePdfUploadBeta.sql.test.ts" if args.pdf_beta else "backend/src/sourcePdfUpload.sql.test.ts" if args.pdf_upload else "backend/src/nativeFlightInstalledReview.sql.test.ts" if args.native_installed else "src/data/repositories/captureFlightNativeRepository.test.ts" if args.native_flight else "backend/src/captureFlightCoreV2.sql.test.ts" if args.pdf_authority or args.pdf_source else "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
+scenario = "backend/src/sourcePdfCausalAuthority.sql.test.ts" if args.pdf_joined else "backend/src/sourcePdfUploadCausal.sql.test.ts" if args.pdf_causal else "backend/src/coreOrdinaryOrder.sql.test.ts" if args.ordinary_order else "backend/src/sourcePdfUploadBeta.sql.test.ts" if args.pdf_beta else "backend/src/sourcePdfUpload.sql.test.ts" if args.pdf_upload else "backend/src/nativeFlightInstalledReview.sql.test.ts" if args.native_installed else "src/data/repositories/captureFlightNativeRepository.test.ts" if args.native_flight else "backend/src/captureFlightCoreV2.sql.test.ts" if args.pdf_authority or args.pdf_source else "backend/src/flightTextDevBackend.runtime.test.ts" if args.text_runtime else "backend/src/captureFlightCoreV2.sql.test.ts" if args.flight else "backend/src/tripCoreV2SourcePgStorage.sql.test.ts" if args.source else "backend/src/tripCoreV2PgStorage.sql.test.ts"
 created = False
 network_created = False
 private = tempfile.TemporaryDirectory(prefix="otr-flight-text-")
@@ -166,7 +167,7 @@ try:
         assert port.startswith("127.0.0.1:"), "Fixture exposed beyond loopback"
         env.update(OTR_FLIGHT_TEXT_PORT=port.split(":")[-1], OTR_FLIGHT_TEXT_CA=str(cert))
     native_items_before = sql("select count(*) from public.itinerary_events;").strip() if args.native_flight or args.native_installed else None
-    subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", scenario, "--disableConsoleIntercept", "--testTimeout", "60000", "--hookTimeout", "60000"], cwd=ROOT, env=env, check=True)
+    subprocess.run([str(ROOT / "node_modules/.bin/vitest"), "run", scenario, "--configLoader", "runner", "--no-cache", "--disableConsoleIntercept", "--testTimeout", "60000", "--hookTimeout", "60000"], cwd=ROOT, env=env, check=True)
     if native_items_before is not None:
         assert sql("select count(*) from public.itinerary_events;").strip() == native_items_before, "Native REVIEW created unauthorized canonical Items"
         if install_pdf:
