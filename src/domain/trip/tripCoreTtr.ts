@@ -151,7 +151,11 @@ export type CoreTtrUnavailableReason =
   | "TEMPORAL_CONFLICT"
   | "ANCHOR_UNAVAILABLE";
 export type CoreTtrResult =
-  | { version: "otr-core-ttr-input/1"; status: "UNAVAILABLE"; reason: string }
+  | {
+      version: "otr-core-ttr-input/1";
+      status: "UNAVAILABLE";
+      reason: CoreTtrUnavailableReason;
+    }
   | {
       version: "otr-core-ttr-input/1";
       status: "QUALIFIED";
