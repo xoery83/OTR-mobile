@@ -27,6 +27,8 @@ import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
 import { createCoreFlightDayFeedReader } from "./tripCoreV2DayFeedRepository";
+import { createCoreP1P3DayFeedReader } from "./tripCoreV2P1P3DayFeedRepository";
+import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import { createTripDayFeedReader, readTripDayFeed } from "./tripDayFeedRepository";
 import { readInitializedDatabase } from "../db/database";
 import { requireActiveUserId, readAdoptedLocalSession } from "../auth/authRepository";
@@ -118,6 +120,7 @@ async function acceptedServer(qualified = true) {
         canReadReceipt: async () => true,
         enabledCommands: async () => [
           "CREATE_SPARSE_FLIGHT",
+          "CREATE_ITEM",
           "QUALIFY_FLIGHT",
           "SET_OBJECT_VISIBILITY",
           "SET_ITEM_PARTICIPATION",
@@ -290,12 +293,13 @@ function local(path = ":memory:", initialize = true) {
 async function pull(
   f: ReturnType<typeof local>,
   server: Awaited<ReturnType<typeof acceptedServer>>,
+  who: CoreActor = actor,
 ) {
   const handler = createDevBackendHandler({
     gateway: {
       validateAccessToken: async (token: string) =>
         token === "fixture" ? { id: f.account() } : null,
-      canReadTrip: async (a: string, t: string) => a === account && t === trip,
+      canReadTrip: async (a: string, t: string) => a === who.accountId && t === trip,
     } as unknown as DevBackendGateway,
     coreConnection: {
       hash,
@@ -303,8 +307,8 @@ async function pull(
       readOperation: async () => null,
       read: {
         collection: async (a, t) => {
-          expect([a, t]).toEqual([account, trip]);
-          return server.bundle();
+          expect([a, t]).toEqual([who.accountId, trip]);
+          return server.bundle(who);
         },
         item: async () => null,
       },
@@ -788,4 +792,222 @@ it("DL2 explicitly reports unsupported visible Core families instead of fabricat
   const result = await reader.trip(trip, (await reader.candidates()).scope);
   expect(result.unsupportedFamilies).toEqual(["P1"]);
   expect(result.projection.events.map((e) => e.id)).toEqual([second]);
+});
+
+async function acceptedGeneric(
+  server: Awaited<ReturnType<typeof acceptedServer>>,
+  family: "P1" | "P3",
+  start: string,
+  end?: string,
+  title: string = family,
+) {
+  const id = randomUUID();
+  await server.execute({
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: trip,
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id },
+    baseVector: [{ kind: "ITEM", id, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      family,
+      core: { title },
+      schedule: {
+        start: coreDateBoundary(start),
+        ...(end ? { end: coreDateBoundary(end) } : {}),
+      },
+      ...coreDefaults("member"),
+    },
+  });
+  return id;
+}
+
+it("P1/P3 accepted read2 bridge preserves Core occurrences and P2 facts through file restart without a v1 projection", async () => {
+  const server = await acceptedServer();
+  const stay = await acceptedGeneric(server, "P3", "2026-12-16", "2026-12-20");
+  const activity = await acceptedGeneric(server, "P1", "2026-12-18");
+  const folder = mkdtempSync(join(tmpdir(), "otr-p1p3-day-"));
+  folders.push(folder);
+  const path = join(folder, "mirror.db");
+  let f = local(path);
+  await pull(f, server);
+  const before = (await createCoreP1P3DayFeedReader(f.repo)(trip))!.projection;
+  const flight = (await f.coreRead(trip))!.projection;
+  expect(before.flightFacts).toEqual(flight.flightFacts);
+  expect(before.events.filter((e) => e.id === first || e.id === second)).toEqual(
+    flight.events,
+  );
+  expect(before.query(dates[0], "UTC").timed.filter((r) => r.event.id === first)).toEqual(
+    flight.query(dates[0], "UTC").timed,
+  );
+  expect(before.items.every((i) => i.localState === "ACCEPTED")).toBe(true);
+  expect(before.items.find((i) => i.itemId === stay)?.details.nights).toBe(4);
+  expect(before.query("2026-12-16", "UTC").coreRows.map((r) => r.rowKey)).toEqual([
+    { itemId: stay, projectionRole: "CHECKIN", localDate: "2026-12-16" },
+  ]);
+  const middle = before.query("2026-12-18", "UTC");
+  expect(middle.coreRows.filter((r) => r.family === "P3").map((r) => r.rowKey)).toEqual([
+    { itemId: stay, projectionRole: "BASE_FROM", localDate: "2026-12-18" },
+    { itemId: stay, projectionRole: "BASE_RETURN", localDate: "2026-12-18" },
+  ]);
+  const base = middle.nonComparable.find((r) => r.event.id === stay)!;
+  expect(base).toMatchObject({
+    anchor: null,
+    roles: [],
+    occupancy: true,
+    occupancyBasis: "CALENDAR_NIGHTS",
+  });
+  const composed = composeDayStream(middle, "2026-12-18T12:00:00Z");
+  expect(composed.rows).toHaveLength(2);
+  expect(composed.rows.find((r) => r.item.event.id === stay)).toMatchObject({
+    position: "BASE",
+    coreRowKeys: middle.coreRows.filter((r) => r.family === "P3").map((r) => r.rowKey),
+  });
+  expect(middle.nonComparable.find((r) => r.event.id === activity)).toMatchObject({
+    anchor: null,
+    roles: ["START"],
+    occupancy: false,
+  });
+  expect(
+    before.query("2026-12-19", "UTC").coreRows.map((r) => r.rowKey.projectionRole),
+  ).toEqual(["TONIGHT"]);
+  expect(
+    before.query("2026-12-20", "UTC").coreRows.map((r) => r.rowKey.projectionRole),
+  ).toEqual(["CHECKOUT"]);
+  expect(before.query("2026-12-21", "UTC").nonComparable).toEqual([]);
+  expect(before.events.find((e) => e.id === activity)?.boundaries[0]).toMatchObject({
+    local_time: null,
+    instant: null,
+    zone_id: null,
+  });
+  expect(f.sql.prepare("SELECT count(*) AS n FROM trip_day_events").get()?.n).toBe(0);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM trip_core_itinerary_events").get()?.n,
+  ).toBe(4);
+  f.sql.close();
+  f = local(path, false);
+  const after = (await createCoreP1P3DayFeedReader(f.repo)(trip))!.projection;
+  expect(after.source).toEqual(before.source);
+  expect(after.generation).toBe(before.generation);
+  expect(after.events).toEqual(before.events);
+  expect(after.query("2026-12-18", "UTC")).toEqual(middle);
+  await expect(
+    f.repo.refresh(await f.repo.captureContext(trip), {
+      collection: async () => {
+        throw new Error("OFFLINE");
+      },
+    }),
+  ).rejects.toThrow("OFFLINE");
+  expect(
+    (await createCoreP1P3DayFeedReader(f.repo)(trip))!.projection.query(
+      "2026-12-18",
+      "UTC",
+    ),
+  ).toEqual(middle);
+});
+
+it("P3 zero-night and private overlapping stays use only owning Day/ACL semantics in the accepted consumer", async () => {
+  const server = await acceptedServer(false);
+  const zero = await acceptedGeneric(
+    server,
+    "P3",
+    "2026-12-21",
+    "2026-12-21",
+    "Private zero-night",
+  );
+  const privateStay = await acceptedGeneric(
+    server,
+    "P3",
+    "2026-12-16",
+    "2026-12-20",
+    "Private lodging",
+  );
+  const groupStay = await acceptedGeneric(
+    server,
+    "P3",
+    "2026-12-16",
+    "2026-12-20",
+    "Shared lodging",
+  );
+  await server.execute({
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: trip,
+    command: "SET_OBJECT_VISIBILITY",
+    target: { kind: "ITEM", id: groupStay },
+    baseVector: [{ kind: "ITEM", id: groupStay, revision: 1 }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { acl: { visibility: "GROUP", people: [] } },
+  });
+  await server.execute({
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: randomUUID(),
+    tripId: trip,
+    command: "SET_ITEM_PARTICIPATION",
+    target: { kind: "ITEM", id: groupStay },
+    baseVector: [{ kind: "ITEM", id: groupStay, revision: 2 }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { participation: { mode: "WHOLE_GROUP", people: [], selfPersonId: null } },
+  });
+  const owner = local();
+  await pull(owner, server);
+  const own = (await createCoreP1P3DayFeedReader(owner.repo)(trip))!.projection;
+  expect(
+    own
+      .query("2026-12-21", "UTC")
+      .coreRows.map((r) => r.rowKey.projectionRole)
+      .sort(),
+  ).toEqual(["CHECKIN", "CHECKOUT"]);
+  expect(own.query("2026-12-21", "UTC").nonComparable[0]).toMatchObject({
+    event: { id: zero },
+    occupancy: false,
+    anchor: null,
+  });
+  expect(own.query("2026-12-19", "UTC").coreRows).toEqual([]);
+  const foreign: CoreActor = {
+    ...actor,
+    accountId: randomUUID(),
+    personId: null,
+    personIds: [],
+  };
+  const other = local();
+  other.switchTo(foreign.accountId);
+  await pull(other, server, foreign);
+  const view = (await createCoreP1P3DayFeedReader(other.repo)(trip))!.projection;
+  expect(view.items.map((i) => i.itemId)).toEqual([groupStay]);
+  expect(view.events.map((e) => e.id)).toEqual([groupStay]);
+  const tonight = view.query("2026-12-19", "UTC");
+  expect(tonight.coreRows.map((r) => r.rowKey)).toEqual([
+    { itemId: groupStay, projectionRole: "TONIGHT", localDate: "2026-12-19" },
+  ]);
+  expect(tonight.nonComparable[0]).toMatchObject({ occupancy: true, anchor: null });
+  const exposed = JSON.stringify({ items: view.items, events: view.events, tonight });
+  for (const secret of [zero, privateStay, "Private zero-night", "Private lodging"])
+    expect(exposed).not.toContain(secret);
+});
+
+it("P1/P3 consumer rejects Account ABA at the existing read facade and never borrows legacy admission", async () => {
+  const f = local(),
+    server = await acceptedServer(false);
+  await acceptedGeneric(server, "P1", "2026-12-18");
+  await pull(f, server);
+  const coreRead = createCoreP1P3DayFeedReader(f.repo);
+  const reader = createTripDayFeedReader({
+    account: async () => f.account(),
+    projection: f.v1,
+    coreProjection: async () => {
+      const accepted = await coreRead(trip);
+      advanceAccountGeneration();
+      return accepted;
+    },
+    candidates: async () => [],
+    services: f.supplemental,
+  });
+  await expect(reader.trip(trip)).rejects.toThrow("Account changed");
+  expect(f.v1).not.toHaveBeenCalled();
+  expect(f.supplemental).not.toHaveBeenCalled();
 });
