@@ -253,3 +253,20 @@ it("Release content is inert", () => {
   expect(f.render()).toBe("");
   expect(f.props.onConfirm).not.toHaveBeenCalled();
 });
+it("UNKNOWN zero geometry keeps mode choice eligible, explicit SAME_LOCATION disables it", () => {
+  const f = fixture();
+  const input = ttrFixture();
+  input.to!.endpoint!.coordinates = { ...input.from!.endpoint!.coordinates! };
+  f.props.view = { ...f.props.view, state: openTtr(input) };
+  f.render();
+  expect(f.button("Walking").disabled).toBe(false);
+  f.button("Walking").onPress();
+  expect(f.props.onPreview).toHaveBeenCalledWith("walking");
+  input.spatialEquivalence = {
+    equivalence: "SAME_LOCATION",
+    provenance: "synthetic-authority",
+  };
+  f.props.view = { ...f.props.view, state: openTtr(input) };
+  f.render();
+  expect(f.button("Walking").disabled).toBe(true);
+});

@@ -64,7 +64,7 @@ export function TtrLabSheetContent({
     !!matches &&
     view.phase === "READY" &&
     state.qualification.status === "QUALIFIED" &&
-    !state.qualification.sameLocation &&
+    state.qualification.spatialEquivalence.equivalence !== "SAME_LOCATION" &&
     state.input?.period !== "PAST";
   const busy =
     view.phase === "SAVING" || view.phase === "RECOVERING" || view.phase === "OPENING";

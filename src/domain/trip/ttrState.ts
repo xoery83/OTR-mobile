@@ -182,7 +182,7 @@ export function reduceTtr(s: TtrState, event: TtrEvent): TtrState {
       if (
         !mode ||
         s.qualification.status !== "QUALIFIED" ||
-        s.qualification.sameLocation ||
+        s.qualification.spatialEquivalence.equivalence === "SAME_LOCATION" ||
         s.input?.period === "PAST"
       )
         return s;
@@ -270,7 +270,7 @@ export function projectTtr(
   const q = s.qualification;
   const hidden =
     q.status !== "QUALIFIED" ||
-    q.sameLocation ||
+    q.spatialEquivalence.equivalence === "SAME_LOCATION" ||
     s.input?.period === "PAST" ||
     ttrExpired(s.input?.expiry ?? null, options.now);
   const suggested =
@@ -304,7 +304,7 @@ export function projectTtr(
     unavailableReason:
       q.status === "UNQUALIFIED"
         ? q.reason
-        : q.sameLocation
+        : q.spatialEquivalence.equivalence === "SAME_LOCATION"
           ? "SAME_LOCATION"
           : hidden
             ? "PAST"

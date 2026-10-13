@@ -54,6 +54,7 @@ export function ttrFixture(): TtrInput {
       crossDay: false,
     },
     special: "ORDINARY",
+    spatialEquivalence: { equivalence: "UNKNOWN" },
     blockAnchorsConfirmed: false,
     period: "FUTURE",
     queryTime: null,

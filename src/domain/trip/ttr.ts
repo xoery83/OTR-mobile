@@ -75,6 +75,11 @@ const queryTime = z.strictObject({
   precision: z.number().int().min(-1).max(6),
   comparable: z.boolean(),
 });
+export const ttrSpatialEquivalenceSchema = z.discriminatedUnion("equivalence", [
+  z.strictObject({ equivalence: z.literal("UNKNOWN") }),
+  z.strictObject({ equivalence: z.literal("SAME_LOCATION"), provenance: token }),
+]);
+export type TtrSpatialEquivalence = z.infer<typeof ttrSpatialEquivalenceSchema>;
 export const ttrInputSchema = z.strictObject({
   scope,
   source: z.strictObject({ key: token, complete: z.boolean(), accessible: z.boolean() }),
@@ -101,6 +106,8 @@ export const ttrInputSchema = z.strictObject({
   period: z.enum(["FUTURE", "TODAY", "PAST", "UNKNOWN"]),
   queryTime: queryTime.nullable(),
   expiry: expiry.nullable(),
+  // Compatibility: old inputs carry no equivalence evidence, so remain UNKNOWN.
+  spatialEquivalence: ttrSpatialEquivalenceSchema.optional(),
   anchors: z.strictObject({ fromRowKey: token, toRowKey: token }),
 });
 export type TtrInput = z.infer<typeof ttrInputSchema>;
@@ -135,7 +142,7 @@ export type TtrQualification =
         source: "LOCAL_GEOMETRY";
         meters: number;
       }>;
-      sameLocation: boolean;
+      spatialEquivalence: TtrSpatialEquivalence;
       timedEligible: boolean;
     }>;
 
@@ -268,7 +275,9 @@ export function qualifyTtr(raw: unknown): TtrQualification {
       source: "LOCAL_GEOMETRY",
       meters: straightLineDistance(a, b),
     }),
-    sameLocation: samePoint(a, b),
+    spatialEquivalence: Object.freeze(
+      input.spatialEquivalence ?? { equivalence: "UNKNOWN" },
+    ),
     timedEligible: exactQueryTime(input.queryTime),
   };
 }

@@ -450,3 +450,24 @@ it("has no Day row/Focus/scroll/Provider or fixture-registry mutation path", () 
     /composeDayStream|setFocus|setScroll|setDate|fetch\(|MapKit|fixtureRegistration/,
   );
 });
+it("UNKNOWN equal geometry stays actionable through the unchanged React adapter", async () => {
+  const f = fixture();
+  const src = structuredClone(f.source());
+  src.relation.input.to!.endpoint!.coordinates = {
+    ...src.relation.input.from!.endpoint!.coordinates!,
+  };
+  const projection = projectTtr(
+    openTtr(src.relation.input, null, src.relation.publicationVersion),
+    {
+      now: f.props.clock(),
+      displayPermission: "DENIED",
+    },
+  );
+  f.setSource({ ...src, projection });
+  const a = await f.open();
+  expect(a.view.phase).toBe("READY");
+  a.preview("walking");
+  await f.current().confirm();
+  expect(f.render().view.phase).toBe("PUBLISHED");
+  expect(f.publish.mock.calls[0][0].geometricDistance!.meters).toBe(0);
+});

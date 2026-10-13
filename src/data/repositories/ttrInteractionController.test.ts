@@ -198,6 +198,43 @@ function fixture() {
     },
   };
 }
+it("UNKNOWN equal geometry survives Controller requalification and durable Confirm", async () => {
+  const f = fixture();
+  const src = copy(f.current());
+  src.relation.input.to!.endpoint!.coordinates = {
+    ...src.relation.input.from!.endpoint!.coordinates!,
+  };
+  f.setCurrent(src);
+  f.reproject();
+  await f.open();
+  expect(f.controller.snapshot()!.state.qualification).toMatchObject({
+    spatialEquivalence: { equivalence: "UNKNOWN" },
+    geometricDistance: { meters: 0 },
+  });
+  f.controller.preview("walking");
+  expect(await f.controller.confirm()).toMatchObject({ status: "PUBLISHED" });
+  expect(f.rows()).toHaveLength(1);
+  expect(f.publications[0]).toMatchObject({
+    visibility: "SELECTED_MODE",
+    mode: "walking",
+    geometricDistance: { meters: 0 },
+  });
+});
+it("unchanged G2 ttr-presentation/1 consumer composes zero-distance UNKNOWN", () => {
+  const f = ttrLabFixture("STRAIGHT_LINE");
+  const input = copy(f.supplemental!.input);
+  input.to!.endpoint!.coordinates = { ...input.from!.endpoint!.coordinates! };
+  const p = projectTtr(openTtr(input), { now: f.instant, displayPermission: "DENIED" });
+  const stream = composeDayStream(f.query!(f.selectedDate, f.zone), f.instant, {
+    ...f.ports,
+    transitions: [p],
+  });
+  expect(stream.rows[1].transition).toMatchObject({
+    visibility: "STRAIGHT_LINE",
+    geometricDistance: { meters: 0 },
+    mode: null,
+  });
+});
 
 describe("synthetic interaction lifecycle with accepted SQLite repository", () => {
   it("opens a current intent with no selected mode, request, write or draft publication", async () => {

@@ -243,8 +243,8 @@ describe("TTR relation qualification", () => {
     ).toBe(0);
     const f = ttrFixture();
     f.to!.endpoint!.coordinates!.longitude = 0;
-    expect(projection(openTtr(f)).visibility).toBe("HIDDEN");
-    expect(projection(openTtr(f)).unavailableReason).toBe("SAME_LOCATION");
+    expect(projection(openTtr(f)).visibility).toBe("STRAIGHT_LINE");
+    expect(projection(openTtr(f)).unavailableReason).toBeNull();
     f.to!.endpoint!.coordinates!.longitude = 0.00000001;
     expect(projection(openTtr(f)).visibility).toBe("STRAIGHT_LINE");
     expect(
