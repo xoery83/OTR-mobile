@@ -2,6 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import {
   createCorePgConnection,
   createSourcePgConnection,
+  createTripPgConnection,
 } from "./tripCoreV2PgConnection";
 const f = vi.hoisted(() => ({
   config: {} as Record<string, unknown>,
@@ -85,4 +86,18 @@ it("Source uses its own fixed principal through the same verified TLS driver", a
   });
   expect(f.config.user).toBe("otr_trip_source_command_gateway");
   expect(f.config.ssl).toMatchObject({ rejectUnauthorized: true });
+});
+
+it("Trip create uses only its own fixed principal on a verified primary", async () => {
+  f.principal = "otr_trip_create_gateway";
+  await createTripPgConnection(config).withLease(async (lease) => {
+    await lease.query("BEGIN");
+    await lease.query("COMMIT");
+  });
+  expect(f.config.user).toBe("otr_trip_create_gateway");
+  expect(f.config.ssl).toMatchObject({ rejectUnauthorized: true });
+  f.principal = "otr_trip_core_v2_gateway";
+  await expect(
+    createTripPgConnection(config).withLease(async () => undefined),
+  ).rejects.toThrow("CORE_PRINCIPAL_UNAVAILABLE");
 });
