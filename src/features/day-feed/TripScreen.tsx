@@ -19,6 +19,7 @@ import { visual } from "@/ui/visual";
 import { boundaryZone, viewContext } from "./presentation";
 import { DayFeed } from "./DayFeed";
 import { useTripView } from "./TripViewContext";
+import { LocalTripWorkspace } from "./LocalTripWorkspace";
 type Reader = ReturnType<typeof createTripDayFeedReader>;
 type TripRead = Awaited<ReturnType<Reader["trip"]>>;
 type Candidates = Awaited<ReturnType<Reader["candidates"]>>;
@@ -59,6 +60,7 @@ function TripContent({ today = false }: { today?: boolean }) {
   const [candidates, setCandidates] = useState<Candidates | null>(null);
   const [status, setStatus] = useState<"LOADING" | "UNAVAILABLE" | "READY">("LOADING");
   const [contextError, setContextError] = useState(false);
+  const [isLocalTrip, setIsLocalTrip] = useState(false);
   const home = params.view !== "day";
   const request = useRef(0);
   const requested = today ? (view?.tripId ?? "") : value(params.tripId);
@@ -112,6 +114,10 @@ function TripContent({ today = false }: { today?: boolean }) {
   const open = (id: string) => {
     select(null);
     router.setParams({ tripId: id.trim(), date: "", zone: "", view: "home" });
+  };
+  const backToTrips = () => {
+    select(null);
+    router.setParams({ tripId: "", date: "", zone: "", view: "" });
   };
   const enterDay = () => {
     try {
@@ -167,7 +173,7 @@ function TripContent({ today = false }: { today?: boolean }) {
         {t(
           today
             ? "navigation.today"
-            : visibleTrip?.observed
+            : visibleTrip?.observed || isLocalTrip
               ? "dayFeed.tripHome"
               : "dayFeed.myTrips",
         )}
@@ -177,6 +183,14 @@ function TripContent({ today = false }: { today?: boolean }) {
       ) : null}
       {status === "UNAVAILABLE" ? (
         <Text style={styles.meta}>{t("dayFeed.unavailable")}</Text>
+      ) : null}
+      {!today ? (
+        <LocalTripWorkspace
+          tripId={requested || null}
+          onOpen={open}
+          onKnownTrip={setIsLocalTrip}
+          onBackToTrips={backToTrips}
+        />
       ) : null}
       {today ? (
         <>
@@ -219,13 +233,10 @@ function TripContent({ today = false }: { today?: boolean }) {
               <UiButton
                 label={t("dayFeed.myTrips")}
                 variant="text"
-                onPress={() => {
-                  select(null);
-                  router.setParams({ tripId: "", date: "", zone: "", view: "" });
-                }}
+                onPress={backToTrips}
               />
             </>
-          ) : (
+          ) : isLocalTrip ? null : (
             <>
               <Text style={styles.meta}>{t("dayFeed.partial")}</Text>
               {status === "READY" && !visibleCandidates.length ? (

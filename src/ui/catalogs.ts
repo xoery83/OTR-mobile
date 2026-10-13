@@ -1,4 +1,32 @@
 export const en = {
+  "tripCreate.savedTrips": "Trips saved on this device",
+  "tripCreate.newTrip": "Create Trip",
+  "tripCreate.name": "Trip name",
+  "tripCreate.destination": "Destination (optional)",
+  "tripCreate.start": "Start date (optional)",
+  "tripCreate.end": "End date (optional)",
+  "tripCreate.notSet": "Not set",
+  "tripCreate.clearDate": "Clear date",
+  "tripCreate.saveTrip": "Save Trip",
+  "tripCreate.pendingTrip":
+    "Trip creation is saved here and waiting to sync. Member and Ledger setup have not been confirmed for this request.",
+  "tripCreate.pendingItems": "Saved itinerary",
+  "tripCreate.pendingHint":
+    "These items are saved here and waiting to sync. Confirmed Day Feed is available after Trip setup.",
+  "tripCreate.itemPending": "Saved · waiting to sync",
+  "tripCreate.itemNeedsAttention": "Saved · needs attention before syncing",
+  "tripCreate.addItem": "Add to itinerary",
+  "tripCreate.activity": "Activity",
+  "tripCreate.stay": "Accommodation",
+  "tripCreate.itemTitle": "Item title",
+  "tripCreate.itemDate": "Activity date",
+  "tripCreate.checkin": "Check-in date",
+  "tripCreate.checkout": "Check-out date",
+  "tripCreate.saveItem": "Save item",
+  "tripCreate.unavailable":
+    "Saved Trips could not be opened. Sign in or refresh and try again.",
+  "tripCreate.saveFailed": "Could not save. Check the name and dates, then try again.",
+
   "dayLab.snapshotScenario": "Synthetic Flexible snapshots + TTR",
   "dayLab.snapshotBlock": "Reactive synthetic Block",
   "dayLab.snapshotCopied": "Copied synthetic Choice",
@@ -1850,6 +1878,33 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "tripCreate.savedTrips": "保存在此设备上的旅行",
+  "tripCreate.newTrip": "创建旅行",
+  "tripCreate.name": "旅行名称",
+  "tripCreate.destination": "目的地（可选）",
+  "tripCreate.start": "开始日期（可选）",
+  "tripCreate.end": "结束日期（可选）",
+  "tripCreate.notSet": "未设置",
+  "tripCreate.clearDate": "清除日期",
+  "tripCreate.saveTrip": "保存旅行",
+  "tripCreate.pendingTrip":
+    "旅行创建请求已保存在此设备，等待同步；此请求的成员及账本设置尚未确认。",
+  "tripCreate.pendingItems": "已保存的安排",
+  "tripCreate.pendingHint":
+    "这些项目已保存在此设备，等待同步。旅行设置完成后可查看已确认的日期安排。",
+  "tripCreate.itemPending": "已保存 · 待同步",
+  "tripCreate.itemNeedsAttention": "已保存 · 同步前需要处理",
+  "tripCreate.addItem": "添加安排",
+  "tripCreate.activity": "活动",
+  "tripCreate.stay": "住宿",
+  "tripCreate.itemTitle": "项目标题",
+  "tripCreate.itemDate": "活动日期",
+  "tripCreate.checkin": "入住日期",
+  "tripCreate.checkout": "退房日期",
+  "tripCreate.saveItem": "保存项目",
+  "tripCreate.unavailable": "无法打开已保存的旅行。请登录或刷新后重试。",
+  "tripCreate.saveFailed": "未能保存，请检查名称和日期后重试。",
+
   "dayLab.snapshotScenario": "合成 Flexible 快照与 TTR",
   "dayLab.snapshotBlock": "响应式合成区块",
   "dayLab.snapshotCopied": "已复制的合成选项",
