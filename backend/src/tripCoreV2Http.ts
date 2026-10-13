@@ -38,7 +38,7 @@ export type CoreHttpConnection = {
     tripId: string,
     input: unknown,
   ): Promise<CoreCandidatePublicationResult>;
-  read?: ReturnType<typeof createCorePgReader>;
+  read?: Pick<ReturnType<typeof createCorePgReader>, "collection" | "item">;
   commands: CoreCommandStorage;
   source?: CoreSourcePlanStorageV2;
   hash: ImportHash;

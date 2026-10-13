@@ -11,6 +11,10 @@ import {
   type CorePgLease,
 } from "./tripCoreV2PgStorage";
 import type { ImportHash } from "../../src/domain/trip/flightImportReview";
+import type {
+  CurrentDocumentAccess,
+  DocumentOriginalRequest,
+} from "./tripDocumentOriginalRead";
 export type CorePgReadAuthority = {
   authorize(
     lease: CorePgLease,
@@ -129,6 +133,17 @@ export function createCorePgReader(
     });
   }
   return {
+    // Internal ACL observation only; Source retention/copy rights remain independent.
+    async currentDocumentAccess(
+      request: DocumentOriginalRequest,
+    ): Promise<CurrentDocumentAccess> {
+      const current = await snapshot(request.actorAccountId, request.tripId);
+      return {
+        actor: current.actor,
+        graph: current.graph,
+        accessRevision: current.collection.manifest.accessRevision,
+      };
+    },
     async collection(actorAccountId: string, tripId: string, ordinaryOrderVersion?: 1) {
       return (await snapshot(actorAccountId, tripId, ordinaryOrderVersion)).collection;
     },
