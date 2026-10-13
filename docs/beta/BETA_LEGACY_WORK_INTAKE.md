@@ -1,5 +1,7 @@
 # OTR Beta — Legacy Work Intake Index
 
+Current publication delta: canonical `60218f7` is live `origin/main` after the authorized normal Push01; exact local receipt `/private/tmp/otr-beta-push01-receipt.json`. Later local data-only WP05-C main `4394058` adds SQLite58/repository without importing candidate UI; this changes no historical artifact status or old Session execution claim. The original five dirty canonical entries remain byte-identical and unstaged. The replacement Source Integrator owns the serial registry/main/records lane under the Owner-requested fallback; old Agents/Sessions remain reference-only.
+
 Incremental checkpoint2026-10-13 against canonical main `f12e36d8717dc4e0487661f5b408589bfc826dd7`. This is an artifact/adoption index into [BETA_EXECUTION](BETA_EXECUTION.md), not a second task or approval queue. Ordinary development stays in current Coordinator subagents. Old Sessions are historical sources; none restarted or messaged, no uncommitted work removed. [STATUS](BETA_STATUS.md) owns current metrics; [DECISIONS](BETA_DECISIONS.md) owns scope/Gates.
 
 Status grammar: ACTIVE / REVIEW_PENDING / REVIEW_ACCEPTED / COMMIT_PENDING / INTEGRATION_PENDING / RUNTIME_PENDING / SUPERSEDED / BLOCKED. Multiple stages may apply to distinct scopes of the same artifact. Adoption disposition is independent: integrated / taken over unfinished / valuable unreceived / replaced. Git ancestry or exact owned bytes and later accepted evolution establish adoption; a title or latest reply does not.

@@ -2,6 +2,14 @@
 
 Reconciled 2026-10-13 NZDT against canonical baseline `50f07d5e1a2be99a5c11f1bba3a76096e153dfb7`; reviewed code/docs local adoption `8141f8fe1efecee86c23de58d9a6d6019cf37ad4`. This is the only active Decision Register and Beta Scope Baseline. [Status](BETA_STATUS.md), [execution/intake](BETA_EXECUTION.md), [interfaces](BETA_INTERFACE_REGISTER.md). Historical contracts/ADRs and sealed candidates are not rewritten.
 
+### BD43 — normal canonical push authority, 2026-10-13
+
+The Owner expressly authorized a safe normal non-force push of eligible canonical main to GitHub `origin/main` after independent reviews and integration gates, necessary main regressions, tracked-range secret/migration/unrelated-dirty checks, a refreshed live remote and fast-forward proof. This is separate from Hosted/Production/native deployment and does not open protected credentials, devices, paid Provider, real Flight Native positive or TTR runtime. Divergence or a real secret stops publication for scoped resolution; no force/history rewrite or bypass. Eligible later batches follow the same checks without per-SHA permission. Push01 published `e9e4511`→`60218f7` with live remote readback and preserved five dirty entries/empty index; exact local receipt `/private/tmp/otr-beta-push01-receipt.json`. This additional direct Owner operating source does not change the original 92 Archive decisions or BD40's StageB activation limits.
+
+### BD44 / MAP-01 — optional embedded context map backlog, 2026-10-13
+
+Direct Owner MAP-01 adds an **optional Beta1 stretch** context map for POI detail, Booking/Reservation location, Flexible Immersive multi-Choice comparison (for example three places) and later Trip/Day geography. Status **PLANNED / NOT STARTED**; it is not a Beta0 or Beta1 release blocker and changes neither the current critical path nor forecasts. Minimum is an external Apple Maps action for a confirmed place; Google Maps may be an available option. Unknown/incomplete place data must degrade honestly without fabricated coordinates. Multi-Choice comparison may be deferred. Reuse Core/Choice authorized location and permission facts; no new location database, map engine, routing framework or TTR semantic change. This newer optional backlog is distinct from the P3 Delta's deferred common embedded map: P3 retains its external-map baseline, with no P3-specific map implementation. At Trip Home/Flexible/Booking UI integration, the Coordinator assesses the smallest useful embedded affordance; otherwise preserve the external fallback. No map builder or activation is assigned now.
+
 ## Authority and evidence rules
 
 1. Latest explicit Owner decision within its stated scope prevails. An uploaded summary's APPROVED label or later filename date does not independently revoke a formally accepted Git contract.
