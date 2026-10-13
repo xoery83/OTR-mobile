@@ -55,7 +55,7 @@ function guard(options: Options) {
   const context = { ...options.context() };
   if (
     context.accountId !== "10000000-0000-4000-8000-000000000001" ||
-    !/^20000000-0000-4000-8000-0000000000(?:0[1-9]|1[0-4]|99)$/.test(context.tripId)
+    !/^20000000-0000-4000-8000-0000000000(?:0[1-9]|1[0-6]|99)$/.test(context.tripId)
   )
     throw new Error("TTR_LAB_NON_FIXTURE_SCOPE");
   assertAccountRequestGeneration(context);

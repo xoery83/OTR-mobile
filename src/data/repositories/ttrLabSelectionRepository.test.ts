@@ -146,6 +146,19 @@ it("requires explicit synthetic authorization and rejects real Account/Trip scop
   await expect(h.open()).rejects.toThrow("NON_FIXTURE_SCOPE");
   expect(h.load).not.toHaveBeenCalled();
 });
+it("accepts only the two appended 0 m Lab scopes beyond the original fixture range", async () => {
+  for (const suffix of ["15", "16"]) {
+    const f = fixture();
+    f.context.tripId = `20000000-0000-4000-8000-0000000000${suffix}`;
+    const handle = await f.open();
+    expect(f.driver.openDatabaseAsync).toHaveBeenCalledOnce();
+    await handle.close();
+  }
+  const outside = fixture();
+  outside.context.tripId = "20000000-0000-4000-8000-000000000017";
+  await expect(outside.open()).rejects.toThrow("NON_FIXTURE_SCOPE");
+  expect(outside.load).not.toHaveBeenCalled();
+});
 it("rechecks DEV authorization after lazy loading before native open", async () => {
   const f = fixture();
   f.load.mockImplementationOnce(async () => {
