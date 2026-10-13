@@ -724,6 +724,38 @@ it("shared Immersive uses a local Resource focus and direct G2 close boundary", 
   press(t("close"));
   expect(close).toHaveBeenCalledOnce();
 });
+it("shared Immersive reserves inaccessible inactive actions and withholds synthetic Past evidence", async () => {
+  const { initialState } = await import("./fixtures");
+  const state = initialState("f03");
+  const shared = {
+    state,
+    dispatch: vi.fn(),
+    scope: "MY" as const,
+    choices: ["garden"],
+    onScope: vi.fn(),
+    immersive: true,
+    open: vi.fn(),
+    close: vi.fn(),
+  };
+  let html = render("f03", "past", { shared });
+  expect(html).toContain('data-testid="flexible-interaction-bar"');
+  expect(html).toContain(t("noEvidence"));
+  expect(html).not.toContain(t("photo"));
+  expect(html).not.toContain(t("expense"));
+  const cancel = harness.nodes.find((n) => n.testID === "flexible-cancel-slot");
+  const undo = harness.nodes.find((n) => n.testID === "flexible-undo-slot");
+  expect(cancel.pointerEvents).toBe("none");
+  expect(cancel.accessibilityElementsHidden).toBe(true);
+  expect(undo.pointerEvents).toBe("none");
+  expect(undo.accessibilityElementsHidden).toBe(true);
+  html = render("f03", "past", {
+    shared: { ...shared, state: { ...state, undo: { my: [] } } },
+  });
+  expect(html).toContain('data-testid="flexible-interaction-bar"');
+  const visibleUndo = harness.nodes.find((n) => n.testID === "flexible-undo-slot");
+  expect(visibleUndo.pointerEvents).toBe("auto");
+  expect(visibleUndo.accessibilityElementsHidden).toBe(false);
+});
 it("mounted adapter publishes COPY through accepted snapshots and reports a rejected Remove without optimistic loss", async () => {
   const { flexibleLabContribution } = await import("./labAdapter");
   const { composeDayStream } = await import("@/features/day-feed/composition");

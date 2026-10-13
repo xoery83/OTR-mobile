@@ -352,7 +352,7 @@ export function FlexibleRenderer({
         ? choices.map((id) => ({ id }))
         : projectFixture(state, fixture, scope).choices
       ).map(({ id }) => {
-        const hasEvidence = fixture !== "f11" && id === "garden";
+        const hasEvidence = !shared && fixture !== "f11" && id === "garden";
         return (
           <View key={id} style={styles.resource}>
             {resource(id, "history", false)}
@@ -383,7 +383,10 @@ export function FlexibleRenderer({
   const planning = (
     <ScrollView
       style={styles.modalRoot}
-      contentContainerStyle={styles.workspace}
+      contentContainerStyle={[
+        styles.workspace,
+        shared?.immersive && styles.sharedWorkspace,
+      ]}
       scrollEnabled={!busy}
       nestedScrollEnabled
       stickyHeaderIndices={expanded ? [1] : []}
@@ -546,6 +549,23 @@ export function FlexibleRenderer({
         : null}
     </ScrollView>
   );
+  const cancelManipulation = () => {
+    setCancelKey((k) => k + 1);
+    setBusy(false);
+    setPreview(null);
+    setEditingEdge(null);
+  };
+  const interactionSlot = (id: string, visible: boolean, child: ReactNode) => (
+    <View
+      testID={id}
+      style={[styles.interactionSlot, !visible && styles.hiddenAction]}
+      pointerEvents={visible ? "auto" : "none"}
+      accessibilityElementsHidden={!visible}
+      importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
+    >
+      {child}
+    </View>
+  );
   return (
     <View style={styles.root}>
       <View testID="flexible-component" style={styles.feed}>
@@ -621,15 +641,25 @@ export function FlexibleRenderer({
             <Text style={styles.meta}>{t("empty")}</Text>
           </View>
         ) : null}
-        {busy
-          ? action(t("cancel"), () => {
-              setCancelKey((k) => k + 1);
-              setBusy(false);
-              setPreview(null);
-              setEditingEdge(null);
-            })
-          : null}
-        {state.undo ? action(t("undo"), () => dispatch({ type: "undo" })) : null}
+        {shared?.immersive ? (
+          <View testID="flexible-interaction-bar" style={styles.interactionBar}>
+            {interactionSlot(
+              "flexible-cancel-slot",
+              busy,
+              action(t("cancel"), cancelManipulation, !busy),
+            )}
+            {interactionSlot(
+              "flexible-undo-slot",
+              !!state.undo,
+              action(t("undo"), () => dispatch({ type: "undo" }), !state.undo),
+            )}
+          </View>
+        ) : (
+          <>
+            {busy ? action(t("cancel"), cancelManipulation) : null}
+            {state.undo ? action(t("undo"), () => dispatch({ type: "undo" })) : null}
+          </>
+        )}
       </View>
       {shared?.immersive ? (
         <>
@@ -739,6 +769,13 @@ const createStyles = (c: UiColors) =>
     root: { backgroundColor: c.background },
     modalRoot: { flex: 1, backgroundColor: c.background },
     feed: { padding: visual.space.page, gap: visual.space.section },
+    interactionBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.heading,
+    },
+    interactionSlot: { flex: 1, minWidth: 0 },
+    hiddenAction: { opacity: 0 },
     block: {
       width: "100%",
       borderTopWidth: StyleSheet.hairlineWidth,
@@ -796,6 +833,7 @@ const createStyles = (c: UiColors) =>
       paddingHorizontal: visual.space.page,
       gap: visual.space.heading,
     },
+    sharedWorkspace: { paddingHorizontal: 0 },
     baskets: { flexDirection: "row", gap: visual.space.card },
     my: { minWidth: 0, gap: visual.space.heading, backgroundColor: c.background },
     published: { flex: 0.6, minWidth: 0 },
