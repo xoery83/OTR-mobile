@@ -298,7 +298,7 @@ describe("dormant authenticated Publication catalog", () => {
     expect(sql).toContain("jsonb_array_length(rows)>64");
     expect(sql).toContain(">4194304");
     expect(sql).toContain("from public,anon,authenticated,service_role");
-    expect(readFileSync("backend/src/server.ts", "utf8")).toContain(
+    expect(readFileSync("backend/src/serverStartup.ts", "utf8")).toContain(
       "loadDevPublicationCatalog",
     );
   });

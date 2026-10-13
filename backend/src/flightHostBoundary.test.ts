@@ -166,7 +166,12 @@ describe("production/test root isolation", () => {
     const shared = await readFile("backend/src/flightHostProtocol.ts", "utf8");
     expect(shared).not.toContain("createFlightHostProtocol");
     expect(shared).not.toContain("globalThis.fetch");
-    const server = await readFile("backend/src/server.ts", "utf8");
+    const server = (
+      await Promise.all([
+        readFile("backend/src/server.ts", "utf8"),
+        readFile("backend/src/serverStartup.ts", "utf8"),
+      ])
+    ).join("\n");
     expect(server).not.toContain("__fixtures__");
     const pkg = JSON.parse(await readFile("package.json", "utf8"));
     expect(pkg.exports).toBeUndefined();
