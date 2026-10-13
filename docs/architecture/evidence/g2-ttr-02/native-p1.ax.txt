@@ -1,0 +1,40 @@
+					37 heading Description: Day Feed Lab, Secondary Actions: Cancel
+					38 button Description: Fixture, Secondary Actions: Cancel
+					39 button (disabled) Description: Core DEV Read, Secondary Actions: Cancel
+					40 button Description: Refresh, Secondary Actions: Cancel
+					41 text Description: An accepted compatible Core read collection is unavailable. No data source fallback is used., Secondary Actions: Cancel
+					42 button Description: Test Trip, Nelson Hiking, Secondary Actions: Cancel
+					43 button (disabled) Description: Previous, Secondary Actions: Cancel
+					44 button (selected) Description: Jan 15, Secondary Actions: Cancel
+					45 button Description: Jan 16, Secondary Actions: Cancel
+					46 button Description: Jan 17, Secondary Actions: Cancel
+					47 button Description: Next, Secondary Actions: Cancel
+					48 text Description: Fixture · Trip day-lab-nelson · Date 2027-01-15 · Day Read v1 · NOW 2027-01-15T12:00:00Z, Secondary Actions: Cancel
+					49 text Description: P3, Flexible and TTR are synthetic Lab proofs; P4–P6 remain future ports., Secondary Actions: Cancel
+					50 button Description: Open place details, Secondary Actions: Cancel
+					51 text Description: 11:00, Secondary Actions: Cancel
+					52 button Description: Synthetic ridge walk, Help: Collapse the inline details and keep your place in the day, Secondary Actions: Cancel
+					53 text Description: Clock time 12:00; planned schedule only, ID: now-within, Secondary Actions: Cancel
+					54 text Description: Planned, Secondary Actions: Cancel
+					55 text Description: 15:00, Secondary Actions: Cancel
+					56 button Description: Synthetic lookout, Help: Show inline place details, Secondary Actions: Cancel
+					57 text Description: 16:00, Secondary Actions: Cancel
+					58 button Description: Synthetic trail stop 1, Help: Show inline place details, Secondary Actions: Cancel
+					59 text Description: 17:00, Secondary Actions: Cancel
+					60 button Description: Synthetic trail stop 2, Help: Show inline place details, Secondary Actions: Cancel
+					61 text Description: 18:00, Secondary Actions: Cancel
+					62 button Description: Synthetic trail stop 3, Help: Show inline place details, Secondary Actions: Cancel
+					63 text Description: 19:00, Secondary Actions: Cancel
+					64 text Description: Synthetic trail stop 4, Help: Show inline place details, Secondary Actions: Cancel
+					65 text Description: 20:00, Secondary Actions: Cancel
+					66 button Description: Synthetic trail stop 5, Help: Show inline place details, Secondary Actions: Cancel
+					67 text Description: 21:00, Secondary Actions: Cancel
+					68 button Description: Synthetic trail stop 6, Help: Show inline place details, Secondary Actions: Cancel
+					69 text Description: 22:00, Secondary Actions: Cancel
+					70 button Description: Synthetic trail stop 7, Help: Show inline place details, Secondary Actions: Cancel
+					71 text Description: 23:00, Secondary Actions: Cancel
+					72 button Description: Synthetic trail stop 8, Help: Show inline place details, Secondary Actions: Cancel
+				73 button Description: Home, ID: app.grid.3x3
+				74 button Description: Screenshot, ID: camera.viewfinder
+				75 button Description: Record, ID: record.circle
+		96 toggle button Description: Filter, Help: Sort and Filter, Value: off

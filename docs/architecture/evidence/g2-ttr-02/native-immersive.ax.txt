@@ -1,0 +1,28 @@
+					37 text Description: Reactive synthetic Block, Secondary Actions: Cancel
+					38 text Description: 10:00–12:00, Secondary Actions: Cancel
+					39 text Description: 13:00, Secondary Actions: Cancel
+					40 button Description: Synthetic trail stop 2, Help: Show inline place details, Secondary Actions: Cancel
+					41 text Description: 14:00, Secondary Actions: Cancel
+					42 button Description: Scheduled museum Item, Help: Show inline place details, Secondary Actions: Cancel
+					43 button Description: My Choices, Secondary Actions: Cancel
+					44 button (selected) Description: Group Choices, Secondary Actions: Cancel
+					45 button (disabled) Description: Group café idea, Secondary Actions: Cancel
+					46 button Description: Close, Secondary Actions: Cancel
+					47 text Description: Synthetic presentation revision 1, Secondary Actions: Cancel
+					48 button Description: Synthetic Pool resource, Secondary Actions: Cancel
+					49 button Description: Synthetic Search resource, Secondary Actions: Cancel
+					50 button Description: Synthetic Saved resource, Secondary Actions: Cancel
+					51 button Description: Synthetic Published resource, Secondary Actions: Cancel
+					52 button Description: Fixture: COPY into My Choices, Secondary Actions: Cancel
+					53 button Description: Fixture: remove My Choices, Secondary Actions: Cancel
+					54 button Description: Fixture: edit Group Choice, Secondary Actions: Cancel
+					55 button Description: Fixture: resize Block, Secondary Actions: Cancel
+					56 button Description: Fixture: delete Block, Secondary Actions: Cancel
+					57 button Description: Fixture: nest TTR anchor, Secondary Actions: Cancel
+					58 button Description: Fixture: ambiguous affiliation, Secondary Actions: Cancel
+					59 button Description: Fixture: two rapid revisions, Secondary Actions: Cancel
+					60 button Description: Fixture: stale revision, Secondary Actions: Cancel
+				61 button Description: Home, ID: app.grid.3x3
+				62 button Description: Screenshot, ID: camera.viewfinder
+				63 button Description: Record, ID: record.circle
+		84 toggle button Description: Filter, Help: Sort and Filter, Value: off

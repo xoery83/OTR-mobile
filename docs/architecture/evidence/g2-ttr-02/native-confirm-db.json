@@ -1,0 +1,26 @@
+{
+  "columns": [
+    "account_id",
+    "trip_id",
+    "from_event_id",
+    "to_event_id",
+    "occurrence_discriminator",
+    "confirmed_mode",
+    "selected_at",
+    "applicable_event_date",
+    "expiry_zone_id"
+  ],
+  "rows": [
+    [
+      "10000000-0000-4000-8000-000000000001",
+      "20000000-0000-4000-8000-000000000005",
+      "30000000-0000-4000-8000-000000000001",
+      "30000000-0000-4000-8000-000000000002",
+      "[\"synthetic-person/branch-1\",\"synthetic-exit-1\",\"END\",\"synthetic-entry-1\",\"START\"]",
+      "walking",
+      "2027-01-15T12:00:00Z",
+      "2027-01-15",
+      "UTC"
+    ]
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "canonicalConfiguration": "app.json expo-build-properties ios.enableSceneSupport=true",
+  "installedPlugin": "node_modules/expo-build-properties/build/iosSceneSupport.js",
+  "privateIgnoredNativeCopyOnly": true,
+  "reason": "iOS 27 scene lifecycle assertion before JavaScript startup"
+}
