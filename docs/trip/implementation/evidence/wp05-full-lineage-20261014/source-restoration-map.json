@@ -1,0 +1,193 @@
+{
+  "newMappedDomainOmissions": 15,
+  "inheritedCp14Omissions": 5,
+  "immutableTotal": 20,
+  "liveOnlyLaterCoreGrantsExcludedByImmutableChoice": 4,
+  "omissions": [
+    {
+      "omittedDirective": "CREATE POLICY trip_source_bucket_client_deny ON storage.buckets AS RESTRICTIVE TO authenticated, anon USING ((id <> 'trip-source-material'::text)) WITH CHECK ((id <> 'trip-source-material'::text));",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000300_trip_source_protected_foundation.sql",
+          "sql": "create policy trip_source_bucket_client_deny on storage.buckets as restrictive\n for all to anon,authenticated using(id<>'trip-source-material') with check(id<>'trip-source-material');"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "CREATE POLICY trip_source_material_client_deny ON storage.objects AS RESTRICTIVE TO authenticated, anon USING ((bucket_id <> 'trip-source-material'::text)) WITH CHECK ((bucket_id <> 'trip-source-material'::text));",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000300_trip_source_protected_foundation.sql",
+          "sql": "create policy trip_source_material_client_deny on storage.objects as restrictive\n for all to anon,authenticated using(bucket_id<>'trip-source-material') with check(bucket_id<>'trip-source-material');"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_trip_event_semantic_writer;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000400_trip_event_command_foundation.sql",
+          "sql": "grant usage on schema extensions to otr_trip_event_semantic_writer,otr_trip_event_receipt_reader;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_trip_event_receipt_reader;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000400_trip_event_command_foundation.sql",
+          "sql": "grant usage on schema extensions to otr_trip_event_semantic_writer,otr_trip_event_receipt_reader;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_trip_source_writer;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000500_trip_source_command_foundation.sql",
+          "sql": "grant usage on schema public,extensions to otr_trip_source_writer,otr_trip_source_operation_reader,otr_trip_source_command_gateway;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_trip_source_operation_reader;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000500_trip_source_command_foundation.sql",
+          "sql": "grant usage on schema public,extensions to otr_trip_source_writer,otr_trip_source_operation_reader,otr_trip_source_command_gateway;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_trip_source_command_gateway;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000500_trip_source_command_foundation.sql",
+          "sql": "grant usage on schema public,extensions to otr_trip_source_writer,otr_trip_source_operation_reader,otr_trip_source_command_gateway;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_trip_person_lifecycle_writer;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000600_trip_person_command_foundation.sql",
+          "sql": "grant usage on schema public,extensions to otr_trip_person_lifecycle_writer,otr_trip_person_receipt_reader,otr_trip_person_command_gateway;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_trip_person_receipt_reader;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000600_trip_person_command_foundation.sql",
+          "sql": "grant usage on schema public,extensions to otr_trip_person_lifecycle_writer,otr_trip_person_receipt_reader,otr_trip_person_command_gateway;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_trip_person_command_gateway;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261004000600_trip_person_command_foundation.sql",
+          "sql": "grant usage on schema public,extensions to otr_trip_person_lifecycle_writer,otr_trip_person_receipt_reader,otr_trip_person_command_gateway;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_trip_event_collection_reader;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261005000100_trip_event_collection_foundation.sql",
+          "sql": "grant usage on schema extensions to otr_trip_event_collection_reader;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_external_integration_config_writer;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261006000100_external_integration_persistence.sql",
+          "sql": "grant usage on schema extensions to otr_external_integration_config_writer,otr_external_integration_meter_writer,otr_external_integration_inbound_writer,otr_external_integration_reader;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_external_integration_meter_writer;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261006000100_external_integration_persistence.sql",
+          "sql": "grant usage on schema extensions to otr_external_integration_config_writer,otr_external_integration_meter_writer,otr_external_integration_inbound_writer,otr_external_integration_reader;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_external_integration_inbound_writer;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261006000100_external_integration_persistence.sql",
+          "sql": "grant usage on schema extensions to otr_external_integration_config_writer,otr_external_integration_meter_writer,otr_external_integration_inbound_writer,otr_external_integration_reader;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "GRANT USAGE ON SCHEMA extensions TO otr_external_integration_reader;",
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20261006000100_external_integration_persistence.sql",
+          "sql": "grant usage on schema extensions to otr_external_integration_config_writer,otr_external_integration_meter_writer,otr_external_integration_inbound_writer,otr_external_integration_reader;"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "CREATE POLICY \"Journey members can read memory shot previews\" ON storage.objects FOR SELECT TO authenticated USING (((bucket_id = 'memory-shot-renders'::text) AND public.can_access_memory_shot_preview(name)));",
+      "inheritedCp14PublicReferencePolicy": true,
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20260910000100_canonical_production_baseline.sql",
+          "sql": "create policy \"Journey members can read memory shot previews\"\n  on \"storage\".\"objects\"\n  for select\n  to \"authenticated\"\n  using (((bucket_id = 'memory-shot-renders'::text) AND can_access_memory_shot_preview(name)));"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "CREATE POLICY \"Journey members can update memory shot previews\" ON storage.objects FOR UPDATE TO authenticated USING (((bucket_id = 'memory-shot-renders'::text) AND public.can_access_memory_shot_preview(name))) WITH CHECK (((bucket_id = 'memory-shot-renders'::text) AND public.can_access_memory_shot_preview(name)));",
+      "inheritedCp14PublicReferencePolicy": true,
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20260910000100_canonical_production_baseline.sql",
+          "sql": "create policy \"Journey members can update memory shot previews\"\n  on \"storage\".\"objects\"\n  for update\n  to \"authenticated\"\n  using (((bucket_id = 'memory-shot-renders'::text) AND can_access_memory_shot_preview(name)))\n  with check (((bucket_id = 'memory-shot-renders'::text) AND can_access_memory_shot_preview(name)));"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "CREATE POLICY \"Journey members can upload memory shot previews\" ON storage.objects FOR INSERT TO authenticated WITH CHECK (((bucket_id = 'memory-shot-renders'::text) AND public.can_access_memory_shot_preview(name)));",
+      "inheritedCp14PublicReferencePolicy": true,
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20260910000100_canonical_production_baseline.sql",
+          "sql": "create policy \"Journey members can upload memory shot previews\"\n  on \"storage\".\"objects\"\n  for insert\n  to \"authenticated\"\n  with check (((bucket_id = 'memory-shot-renders'::text) AND can_access_memory_shot_preview(name)));"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "CREATE POLICY \"Trip members can read trip media\" ON storage.objects FOR SELECT TO authenticated USING (((bucket_id = 'trip-media'::text) AND public.can_access_trip_media(name)));",
+      "inheritedCp14PublicReferencePolicy": true,
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20260910000100_canonical_production_baseline.sql",
+          "sql": "create policy \"Trip members can read trip media\"\n  on \"storage\".\"objects\"\n  for select\n  to \"authenticated\"\n  using (((bucket_id = 'trip-media'::text) AND can_access_trip_media(name)));"
+        }
+      ]
+    },
+    {
+      "omittedDirective": "CREATE POLICY \"Trip members can upload trip media\" ON storage.objects FOR INSERT TO authenticated WITH CHECK (((bucket_id = 'trip-media'::text) AND public.can_upload_trip_media(name)));",
+      "inheritedCp14PublicReferencePolicy": true,
+      "restoringGitStatements": [
+        {
+          "path": "supabase/migrations/20260910000100_canonical_production_baseline.sql",
+          "sql": "create policy \"Trip members can upload trip media\"\n  on \"storage\".\"objects\"\n  for insert\n  to \"authenticated\"\n  with check (((bucket_id = 'trip-media'::text) AND can_upload_trip_media(name)));"
+        }
+      ]
+    }
+  ]
+}

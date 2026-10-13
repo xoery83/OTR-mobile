@@ -1,0 +1,9 @@
+# WP05 META-01 — existing authority refreshed
+
+Existing exact approved queries were repeated on DEV `tuqigdxrvrerfewsxqgm` through the installed CLI/existing management identity. Both reported READ ONLY; effective migration/role catalogs remain visible and non-RLS. At2026-10-13T20:35Z the same selected two versions, two tables, two Trip functions and three roles had no matches. This is selected absence, not whole-schema absence or LOGIN=false for a missing role.
+
+Public Backend health returned200/ok/development and public HTTPS certificate verification0. Deployed immutable Backend build and optional Trip-create/receipt configuration remain UNKNOWN: no existing restricted Ops channel was available. No ENV/credential-store/DB URL/token inspection was substituted. Actual internal principal/TLS/rollback/credential availability evidence and additional closure objects remain outside this refresh, not silently read.
+
+Evidence: [receipt](evidence/wp05-full-lineage-20261014/refresh-receipt.json), [selected result](evidence/wp05-full-lineage-20261014/primary-output.json), [visibility](evidence/wp05-full-lineage-20261014/visibility-output.json), [health](evidence/wp05-full-lineage-20261014/backend-health.json), [operator report](evidence/wp05-full-lineage-20261014/refresh-report.md), [independent Source-package applicability](evidence/wp05-full-lineage-20261014/source-package-peer-review.md).
+
+No new Owner action, business/Auth row read, role/password/schema/deployment/runtime change occurred. The already accepted synthetic local100/18 proof was not rerun. [Protected stages](WP05_ACCEPTED_DAY_PROTECTED_STAGES_2026-10-14.md) preserve the original authority and enumerate future unready artifacts; ordinary default-OFF optional Backend startup composition is now an authorized local engineering task, not blocked on future runtime grants. Actual accepted Day/full journeys remain0 and protected runtime CLOSED.

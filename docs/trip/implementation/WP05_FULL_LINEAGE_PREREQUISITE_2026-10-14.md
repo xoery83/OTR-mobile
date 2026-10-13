@@ -1,0 +1,15 @@
+# WP05 full-lineage prerequisite — independent local PASS
+
+Source independently accepted the immutable, synthetic exact Git replay on current production source `8aee9f3cfdab8c503b6636b8cec9646af0811e94`. All100 migration bytes were actually applied in order, followed by unchanged Trip8 and CLOSED initialization/read10 checks. This closes the local reproducibility prerequisite; actual DEV/Hosted installation, authenticated gateway, accepted Day and full offline journey remain NOT VERIFIED/CLOSED.
+
+The historical ACL failure was the cached PG17.6.1.166 cron definition missing `CASCADE`, compared with the unchanged allowlisted .167 definition. No fingerprint/guard repair was made. The cached immutable .167 image `6942962433a569e87f228b4d4ab7e11db5deca64e43babb3a038443ad6c4f1bb` and immutable Server84 schema-only image `8b7c01e4b163b04bfd939652e69ae677e36315abd111bd4a36949658f73b5068` supplied a reproducible local platform.
+
+Bootstrap temporarily omits20 Git-owned directives:13 domain-schema grants, two Source restrictive policies and five inherited cp14 storage policies referencing public tables. Every directive maps to owning DDL that ran in the exact chain. Four additional Core grants belong only to the live donor and are excluded by choosing the immutable image. The final Core gate stays false, command/family/admission allowlists empty, gateway/writers NOLOGIN/noBYPASSRLS. No DB migration journal was fabricated; receipts are external records of actual execution.
+
+Evidence: [actual100 receipts](evidence/wp05-full-lineage-20261014/actual-execution-receipts.jsonl), [result](evidence/wp05-full-lineage-20261014/full-replay-receipt.json), [exact restoration map](evidence/wp05-full-lineage-20261014/source-restoration-map.json), [builder artifact seal](evidence/wp05-full-lineage-20261014/builder-manifest.json), [independent review](evidence/wp05-full-lineage-20261014/source-independent-review.md). The artifact seal lists all local runner/bootstrap/SQL/dump hashes; it is not an instruction to use these synthetic scripts on a deployed database.
+
+## Local reproduction boundary
+
+The frozen `/private/tmp/otr-beta-accepted-day-61/full-replay.py` uses only cached pinned images and a new UUID-named network-none/no-port disposable clone. It reuses accepted cp14 platform bootstrap, exact frozen100 files and the established postgres1–84/supabase_admin85–100 principals. SUCCESS is recorded after each actual ON_ERROR_STOP execution. It removes only its owned clone. SQL guard-only foundation acceptance runs without its later disable-trigger fixtures; Trip checks run in rollback transactions. The shared62 fixture and canonical dirtyfive/index remain unchanged. No canonical runner, SQL migration or registry changed.
+
+For another machine, first supply the exact provenance-verified images/schema-only artifact and inspect the sealed helper hashes; do not substitute a deployed platform or recreate a journal. This runbook authorizes no Hosted/DEV DDL, role/password change, build deployment or runtime enable.

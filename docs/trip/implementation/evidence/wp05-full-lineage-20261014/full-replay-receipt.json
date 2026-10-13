@@ -1,0 +1,26 @@
+{
+  "classification": "SYNTHETIC_FULL_GIT_LINEAGE",
+  "container": "otr-accepted-day-61-837b896d0dc0",
+  "imageId": "sha256:6942962433a569e87f228b4d4ab7e11db5deca64e43babb3a038443ad6c4f1bb",
+  "sourceBase": "7ae593ec2768679278bdff2f504ef4500fe91cef",
+  "completedMigrations": 100,
+  "activation": "CLOSED",
+  "tripGateway": "NOLOGIN",
+  "fullReplay": "PASS",
+  "owningChecks": {
+    "status": "PASS",
+    "booleans": 8,
+    "replayActorPayloadCollision": "PASS",
+    "transactionRollback": "PASS"
+  },
+  "cleanup": "PASS",
+  "closedInitReadChecks": {
+    "status": "PASS",
+    "booleans": 10,
+    "acceptedDay": "NOT_VERIFIED",
+    "closedWriterRejected": true,
+    "outsiderBindingsRejected": true,
+    "ledgerNotInitialized": true
+  },
+  "closedGuardChecks": "PASS"
+}
