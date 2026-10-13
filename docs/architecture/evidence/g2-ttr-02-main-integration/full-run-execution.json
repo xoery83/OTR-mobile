@@ -1,0 +1,16 @@
+{
+  "sequential": true,
+  "maxWorkers": 2,
+  "testTimeoutMs": 30000,
+  "reason": "Concurrent exact-main and integrated runs hit unrelated real-SQLite 5-second timeouts; assertions unchanged.",
+  "results": [
+    {
+      "name": "baseline",
+      "exitCode": 1
+    },
+    {
+      "name": "integrated",
+      "exitCode": 1
+    }
+  ]
+}

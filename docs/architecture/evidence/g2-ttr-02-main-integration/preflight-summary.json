@@ -1,0 +1,20 @@
+{
+  "main": "e9e4511c0bcbf668627a8bc99b02bb8962580a17",
+  "originMain": "e9e4511c0bcbf668627a8bc99b02bb8962580a17",
+  "candidate": "13b001e7d25c572394db5994548a78cfad9c70ae",
+  "candidateManifestCount": 86,
+  "acceptedSource": "6a1c80b0d327172c4bbc4ffa2257ab6473beebd9",
+  "archivalTree": "0f27c49cdd992fc20e2d9bcb6cb6a6bb430f9e0e",
+  "adopted12Exact": true,
+  "overlap": ["docs/CURRENT_IMPLEMENTATION_STATE.md"],
+  "mainDirtyHashes": {
+    "docs/architecture/OTR_PLATFORM_R3A3A_HOST_MODE_BACKEND_BUILDER_REPORT.md": "d51bfc84c71de8a2d4527c0db501374e8e4f6cbf4a5156dbf887cf53e540a3e3",
+    "docs/architecture/CP15B_LIVE1P_HOSTED_DEV_PROVISIONING_REPORT.md": "978d2c5595c6f04a03feb6246f42a02dd36671cf0c07ec2a9d9f94803c3ac3d4",
+    "docs/architecture/OTR_PLATFORM_R3A4_ADMIN_HANDOFF_REPORT.md": "e0d3c142392b93acf080ecc10d894bc875cd5d3de2c9ba8568b6d6378400f573",
+    "docs/architecture/OTR_PLATFORM_R3A5_BACKEND_CATALOG_LIVE_READ_REPORT.md": "d6cd6d42c1aa061951c17f420df3a238c9ed423ced740043049a3280a74e931a",
+    "scripts/dev/__pycache__/dev-postgres-admin-handoff.cpython-314.pyc": "8df0fd3b1ba4321647cccdcbb3bf97e142645fab956e2180c67bbd4351d31769"
+  },
+  "mainIndexEntriesHash": "2c8052ab3518722507010ffbb18b88a86fe21df39f22f8cad2ad5b33f50cbf1e",
+  "worktreesInspected": 131,
+  "rawInventory": "/private/tmp/g2-ttr-02-integration-evidence/preflight.json"
+}

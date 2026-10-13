@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /private/tmp/otr-g2-ttr-02-main-integration-20261013
+
+
+ Test Files  25 passed (25)
+      Tests  430 passed (430)
+   Start at  13:15:53
+   Duration  34.80s (transform 5.45s, setup 0ms, import 13.42s, tests 48.62s, environment 4ms)
+

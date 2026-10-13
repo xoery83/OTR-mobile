@@ -1,0 +1,604 @@
+{
+  "expectedMain": "e9e4511c0bcbf668627a8bc99b02bb8962580a17",
+  "acceptedCandidate": "13b001e7d25c572394db5994548a78cfad9c70ae",
+  "merge": "fa18238d4caed6d071d708956fbfbcee16068420",
+  "runtimeCorrection": false,
+  "files": [
+    {
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "owner": "G2",
+      "sha256": "43d69ac1bfb15791d3972299ccfcaf1e3c3c9a2f75a8ac7c6d9a5186c7a9864c"
+    },
+    {
+      "path": "docs/architecture/OTR_G2_TTR_02_ARCHITECTURE_DECISION.md",
+      "owner": "G2",
+      "sha256": "e2eb8ef39f3cfd1ee8ee1fc8a29c42b8681ad1eaf5a7b00bd34a535ed584822c"
+    },
+    {
+      "path": "docs/architecture/OTR_G2_TTR_02_CONTROLLER_BRIDGE_REPORT.md",
+      "owner": "G2",
+      "sha256": "3f791e041f5a1885a2044d6ef7685b3c927483a84253f55585657687e01d0542"
+    },
+    {
+      "path": "docs/architecture/OTR_G2_TTR_02_MAIN_INTEGRATION_REPORT.md",
+      "owner": "G2",
+      "sha256": "dc60abef7d9ea8948cdba1adf377cb5a17a15e7c645ce7e17a66bbb532ceff1e"
+    },
+    {
+      "path": "docs/architecture/OTR_TTR_CP05A2A_FEATURE_PREPARATION_REPORT.md",
+      "owner": "TTR (archival bytes)",
+      "sha256": "9415a41bff02549b8f265484256baeaca98af59d2854d5d98cde9d9ac9f3dfd1"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/focused.txt",
+      "owner": "G2",
+      "sha256": "44a437a6969ab25eed2568315ff38bd8197ff586e1452a6115b87bfcb5010e9c"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/full-run-execution.json",
+      "owner": "G2",
+      "sha256": "e2facf60427df9d6746726f4643d072c805888678c5379a105a53b14ca9fd28e"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/lint.txt",
+      "owner": "G2",
+      "sha256": "ffba4b57b2e2e547d4e43fc5ad7d320c4b3fe55b94e756420fae1ea003127f2e"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/manifest.json",
+      "owner": "G2",
+      "sha256": null
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/merge-integrity.json",
+      "owner": "G2",
+      "sha256": "52a23e18a1c271f3632cbbfe189cba6b9f2c9de76d27f306dedbae370bd94f6a"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-aba.ax.txt",
+      "owner": "G2",
+      "sha256": "e61f45f2ce62606793a56b1e296a5b5e75f0d37a7dda746098e147f8a00bbeda"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-account-guard.ax.txt",
+      "owner": "G2",
+      "sha256": "16a40cd80e7b7cbd5c31ae1bbd4240dd33ac8ab7730f39d927a8d95ded4f67f3"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-cold-recovery.ax.txt",
+      "owner": "G2",
+      "sha256": "c0aa87a66d335e45dd43b9d9d2d51def82ecb27843732c994eb85c6f0a43edcb"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-confirm-rollback-db.json",
+      "owner": "G2",
+      "sha256": "2490f60d8fcf93f307063f785094d057f48af7eaf4e0fb1c021b07fabee640e3"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-confirm.ax.txt",
+      "owner": "G2",
+      "sha256": "4ac12fc6387338bd707ecfcd9ca2a5401fe2eaab1fb2a16794261203d00725aa"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-nesting.ax.txt",
+      "owner": "G2",
+      "sha256": "0e95f08dbe8c4f9da3c6cff265cb0e90aef1bd4250642cb363737482a99d5b99"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-nesting.png",
+      "owner": "G2",
+      "sha256": "f13b3fa9d481f968bd487be42b01cef74f5804def835baf7ce8010486040e06a"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-now.ax.txt",
+      "owner": "G2",
+      "sha256": "ab15550e72290d62cf209d33c55e31d5baeb490506dc5ef579c84c40a4f9da9a"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-permission.ax.txt",
+      "owner": "G2",
+      "sha256": "ab15550e72290d62cf209d33c55e31d5baeb490506dc5ef579c84c40a4f9da9a"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-preview-db.json",
+      "owner": "G2",
+      "sha256": "923cef51a4c908c42bce69e1ab8329757e10229672b55cf2411ed6eb9e06b51f"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-preview.ax.txt",
+      "owner": "G2",
+      "sha256": "c35ce77fe316ac3845a0452d452d60d0bf4cfab20dde3a4dbbcfb5b57791d789"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-replacement.ax.txt",
+      "owner": "G2",
+      "sha256": "ab15550e72290d62cf209d33c55e31d5baeb490506dc5ef579c84c40a4f9da9a"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-rollback.ax.txt",
+      "owner": "G2",
+      "sha256": "095e912ae23abc1ef6caf9549c22328b7d850d027add71b9673fa18787c9ca11"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-rollback.png",
+      "owner": "G2",
+      "sha256": "e01d90882043d82d6e6cf8f54336014d55e151d489f879bc9be4795e91470d75"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-scroll-after.ax.txt",
+      "owner": "G2",
+      "sha256": "14dc6b4157b4b8c366dcc34044a6ad56dd9c782cedb14a11b58a93409f5bc3a5"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-scroll-after.png",
+      "owner": "G2",
+      "sha256": "bf685d643e4f2be3a7317c79c1a8db64fb0e02ff8a8234465b004113009309db"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-scroll-before.ax.txt",
+      "owner": "G2",
+      "sha256": "0ab34f08fd63835ad06a24a55d841435d79a5fa4fcf41d71465d0471bdb32f3c"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-scroll-before.png",
+      "owner": "G2",
+      "sha256": "8c5473355720bdf976159d9300738fc844ef77ce94905f07f93edd9fa36f83b7"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-sheet-dark.ax.txt",
+      "owner": "G2",
+      "sha256": "5f08a15f17e47571ee9c924aaa87357945b6d022b17040aa0d814400624797c3"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-sheet-dark.png",
+      "owner": "G2",
+      "sha256": "ff55ab63a3c2d569d678dab3fdb70fb106a68aa79b2bf972211ce213c5f77c0f"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-sheet-light.ax.txt",
+      "owner": "G2",
+      "sha256": "5f08a15f17e47571ee9c924aaa87357945b6d022b17040aa0d814400624797c3"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-summary.json",
+      "owner": "G2",
+      "sha256": "48169fa650a01c689edcb15002ec004136b5b0950df7c51af4d01651e2495263"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/native-trip-isolation.ax.txt",
+      "owner": "G2",
+      "sha256": "5f08a15f17e47571ee9c924aaa87357945b6d022b17040aa0d814400624797c3"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/preflight-summary.json",
+      "owner": "G2",
+      "sha256": "ec5c0e8c0a7ba3e4a1f82c8607fe6cbe150b4da3163e0d5102d7800915ba3112"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/regression-summary.json",
+      "owner": "G2",
+      "sha256": "ff10fc1739f5b858a8e19b0913872365ac1d3441a94d224da3e8501508be35e5"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/ttr-typecheck.txt",
+      "owner": "G2",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02-main-integration/typecheck.txt",
+      "owner": "G2",
+      "sha256": "83536ce573035559e7b92f6bd0afc1e2bd2871c514609d42f7d7ce4b9920c42e"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/adopted-source.json",
+      "owner": "G2",
+      "sha256": "71d0736cf3fe8c4b8ad7c0fbef0889805b0debc2ca20691ef27f64f977506042"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/focused-files.json",
+      "owner": "G2",
+      "sha256": "e2f98fa4192865cb94f852f7b01b0365febf555eca891c7d889ec0bc9060f967"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/focused-final.txt",
+      "owner": "G2",
+      "sha256": "9173a3b624b245a6b77448474b073059bddfa1b0aaeb2dc8293586fb3f0c12bb"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/format-final.txt",
+      "owner": "G2",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/invalidation-final.txt",
+      "owner": "G2",
+      "sha256": "aa03484ed24c206e750c0710a21f35819eae477466b02c02d1e6aa2d1aea8ebe"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/lint-final.txt",
+      "owner": "G2",
+      "sha256": "ffba4b57b2e2e547d4e43fc5ad7d320c4b3fe55b94e756420fae1ea003127f2e"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/main-preservation.json",
+      "owner": "G2",
+      "sha256": "29d713753695deea298fd9bbf2f45d30988b8f5291dee7cca8f1bfeeb36ffcf8"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/manifest.json",
+      "owner": "G2",
+      "sha256": "3792b43a61418c68edfb63c6875942ff1677cdbd9a49939b67fb4d1223ca510d"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-aba.ax.txt",
+      "owner": "G2",
+      "sha256": "3f8fff47787e5b9f1704504b14a483433f7527dffc0bc221136f18e3f0b416d4"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-account-guard.ax.txt",
+      "owner": "G2",
+      "sha256": "c94c4c879da19a9cc02f3590074a3f94dbfddc9af4bebeaaac66d5b8b9e70698"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-cold-recovery-light.png",
+      "owner": "G2",
+      "sha256": "3e1ae2eca347638e16fc2ca4ac00a18b3b248eff4a4f8af4c04b0c9002c3a832"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-cold-recovery.ax.txt",
+      "owner": "G2",
+      "sha256": "5f08a15f17e47571ee9c924aaa87357945b6d022b17040aa0d814400624797c3"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-confirm-db.json",
+      "owner": "G2",
+      "sha256": "a1010236f293cd5941b929c88800ea0ed98b080bbad49a3c0795deb022ec8eb3"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-confirm-fixed.txt",
+      "owner": "G2",
+      "sha256": "5d47334aaf6942d85448c2636169a0848f9e5eeb2286496ac72c6be437733024"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-confirm.ax.txt",
+      "owner": "G2",
+      "sha256": "166ff166d60f85969f59e97827eb0261a41ec1258c504037053a4a92661b06d4"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-container.json",
+      "owner": "G2",
+      "sha256": "ec46f05789327dc2bf48a6895d14c1e6b5a18510ec47d17610a6417f5f0048b8"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-crash-summary.json",
+      "owner": "G2",
+      "sha256": "565506cf6a4bdcfbd5433bf062053d5f6bc9efa41f160b3b8f8f8a7a79eba248"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-dependency-aliases.json",
+      "owner": "G2",
+      "sha256": "fa2792f1e514f096469e295962fe13f74fbe5fcb07fbf799ba13513d57784dbc"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-failure-db.json",
+      "owner": "G2",
+      "sha256": "a75b817a0570006da97af0090801a3e63841a15de20033f6895673d6fc5ec4b6"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-failure.ax.txt",
+      "owner": "G2",
+      "sha256": "2701d450b86d1934071545f7f05e09df28dba99b80e5617caceb1180e4e44063"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-failure.png",
+      "owner": "G2",
+      "sha256": "dfc769fdfbb390e29d6cd1cf4c21fe4366abd6e2e29dddfc5c6f4e5307fae01d"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-final-db.json",
+      "owner": "G2",
+      "sha256": "9b93eb5cc9a4ea3c7b60d61e7292b31ae44b0082192f4dbcf8db7c8c25412a06"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-focus-scroll-after.ax.txt",
+      "owner": "G2",
+      "sha256": "cb8bb6f3a954e4165c4fc8c53acdb37792f4ed7eadf7a073e67493ac1640bba5"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-focus-scroll-after.png",
+      "owner": "G2",
+      "sha256": "424c15b1f659760d85842553f6a31045fe06da7f8db633dcad662adaf1d0cfae"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-focus-scroll-before.ax.txt",
+      "owner": "G2",
+      "sha256": "c776e4df3a5933698b7b393950d8732360479a4249cdd6dcf1de020a3a53e91e"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-focus-scroll-before.png",
+      "owner": "G2",
+      "sha256": "c69ae8321b0f6692245f974f5deaefbae9725e7e076e09a51d96d5b97e20d1e4"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-group.ax.txt",
+      "owner": "G2",
+      "sha256": "56a1e50f96b9466c20818b9001525d6ce36aaf41a12dc6daa4d136fe0830fdf1"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-immersive.ax.txt",
+      "owner": "G2",
+      "sha256": "2c29d7a96828e58f12c69b49ae3e9a363b6d12160d29318de4658d4fee9cd62a"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-layout-fixed.txt",
+      "owner": "G2",
+      "sha256": "9fba51a5cb335ae2c6834a8d0067725d159c704c1327c489f05a73ef09e6f851"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-nesting.ax.txt",
+      "owner": "G2",
+      "sha256": "0e95f08dbe8c4f9da3c6cff265cb0e90aef1bd4250642cb363737482a99d5b99"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-p1.ax.txt",
+      "owner": "G2",
+      "sha256": "afb97d191e9b5a259b249b656f0d361db800b74d1e9a1fae2c83ff0d2c4957d5"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-p2.ax.txt",
+      "owner": "G2",
+      "sha256": "8399495b06d9f05699573b032df4c9ae569c726736a92c3a9259e1797dd9a6d2"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-p3.ax.txt",
+      "owner": "G2",
+      "sha256": "83aaee3d0d61da804e42f271ff5624297fd7e70f108f7f595246f7b232df89c4"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-permission.ax.txt",
+      "owner": "G2",
+      "sha256": "3f8fff47787e5b9f1704504b14a483433f7527dffc0bc221136f18e3f0b416d4"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-preview-db.json",
+      "owner": "G2",
+      "sha256": "def7d6c8471b9658798df524829ad79ff5733140b849109cd4b6c65c92abb915"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-preview.ax.txt",
+      "owner": "G2",
+      "sha256": "49184cca93969b8a0797927329a733f50f9f4b050fc643eae452b2461b4c87f8"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-preview.png",
+      "owner": "G2",
+      "sha256": "18d6956bdb5965d566382f61e079221536ec39fc6452dd876b8bebb92cc44775"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-replacement.ax.txt",
+      "owner": "G2",
+      "sha256": "3f8fff47787e5b9f1704504b14a483433f7527dffc0bc221136f18e3f0b416d4"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-scene-support.json",
+      "owner": "G2",
+      "sha256": "9c5b001d26cd3cf9cbb50a9d0ba331900001c5c58638afb42800153433e09553"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-sheet-dark.png",
+      "owner": "G2",
+      "sha256": "944693403a9a454139585120782e510c1469cb9a89277bfa7757e9dc7a86103c"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-sheet-light.ax.txt",
+      "owner": "G2",
+      "sha256": "31d654e0c16661789f6dc518610d9d80eeb8b024b2e6dfda61d371eeba894732"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-summary.json",
+      "owner": "G2",
+      "sha256": "0bb21c301ef25827f4762f0ee8454d2e4fbad10d0f4e025e01aee5378bb5d2ac"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-trip-isolation.ax.txt",
+      "owner": "G2",
+      "sha256": "31d654e0c16661789f6dc518610d9d80eeb8b024b2e6dfda61d371eeba894732"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-01.ax.txt",
+      "owner": "G2",
+      "sha256": "30e0d416af1112d8e43c2a43ab19ee62bd24397ee5bed29e4da0a3f68bd06c11"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-02.ax.txt",
+      "owner": "G2",
+      "sha256": "b5236d1b8180c57a0f7daa1342a080c27dd84666cb152079017f44d75696bfcd"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-03.ax.txt",
+      "owner": "G2",
+      "sha256": "b06576686a2b2128cec7836892d255386ae571791a183c682a6ef515d988f6f2"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-04.ax.txt",
+      "owner": "G2",
+      "sha256": "4703592273083e88f8b449a228c04f170e7f37f516ed1e0fea14af9198441906"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-05.ax.txt",
+      "owner": "G2",
+      "sha256": "ab15550e72290d62cf209d33c55e31d5baeb490506dc5ef579c84c40a4f9da9a"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-06.ax.txt",
+      "owner": "G2",
+      "sha256": "1792677eb0cd35aa3f7baada264bb102ec3382986f0fccccf610c88493a8d1c1"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-07.ax.txt",
+      "owner": "G2",
+      "sha256": "69fc024626b602f4cb5eefbee489cfba865c45d5811f367d49439326fe79e3ac"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-08.ax.txt",
+      "owner": "G2",
+      "sha256": "07f26314bff5b6ec9704523dcc0c9ba0c414ca8f973eae6414bc4f864100e126"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-09.ax.txt",
+      "owner": "G2",
+      "sha256": "decdf4e9e3e9c17d0bf9c37b45fdfd5fbacb1358552cd6d07fed10277c645166"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-10.ax.txt",
+      "owner": "G2",
+      "sha256": "63299a294313f56e480c7872306b320d55be898cfb54ce77de34bc5df2425394"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-11.ax.txt",
+      "owner": "G2",
+      "sha256": "6c092bb144b5e71e78abffc25273a707354ef9bb049ffaa1eea448dbbb35571d"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-12.ax.txt",
+      "owner": "G2",
+      "sha256": "0d44a343215954fac74434ffd764ece320c71aacdd6bbd0a2859c6d229e9081e"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-13.ax.txt",
+      "owner": "G2",
+      "sha256": "5ad1c4547da4f310ad05690c7620b8aef3f1829d3327290d87bf1d5c7969a825"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-14-current-open.ax.txt",
+      "owner": "G2",
+      "sha256": "31d654e0c16661789f6dc518610d9d80eeb8b024b2e6dfda61d371eeba894732"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/native-ttr-14.ax.txt",
+      "owner": "G2",
+      "sha256": "c43bdb77e0f7c58d3596083494b99a406588c06b2046e5fe1e9171ab7b232c8c"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/regression-summary.json",
+      "owner": "G2",
+      "sha256": "6cf1c612fe492de7cbd4cefa803f3f778da97af482a9814487a11f213bfdd3ba"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/ttr-typecheck.txt",
+      "owner": "G2",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/architecture/evidence/g2-ttr-02/typecheck-final.txt",
+      "owner": "G2",
+      "sha256": "83536ce573035559e7b92f6bd0afc1e2bd2871c514609d42f7d7ce4b9920c42e"
+    },
+    {
+      "path": "scripts/ttr/tsconfig.json",
+      "owner": "TTR (archival bytes)",
+      "sha256": "0e0988502ad82131a5caa7f9591eea4737b66549f530842fb2edce849e3e7454"
+    },
+    {
+      "path": "src/data/repositories/ttrInteractionController.test.ts",
+      "owner": "TTR (archival bytes)",
+      "sha256": "0ad7949c6c666ffae9b48cb4dce6429af322f58652757f7a2116ccd39f9d8006"
+    },
+    {
+      "path": "src/data/repositories/ttrLabSelectionRepository.test.ts",
+      "owner": "TTR (archival bytes)",
+      "sha256": "e381b262fe3095d5e635c5bf171c90d2f1210001b35b84f11a61eadfc0a8dfef"
+    },
+    {
+      "path": "src/data/repositories/ttrLabSelectionRepository.ts",
+      "owner": "TTR (archival bytes)",
+      "sha256": "bc40bdd7728fddb7da0caa2dfffd2bb09ddaf8a8c292b67a4c0062af3ba1e6ac"
+    },
+    {
+      "path": "src/data/repositories/ttrLabTestDriver.test.ts",
+      "owner": "G2",
+      "sha256": "9df12985cf34585d1988c9604da03445b80738f9ba81791de7c7cf660c408240"
+    },
+    {
+      "path": "src/data/repositories/ttrLabTestDriver.ts",
+      "owner": "G2",
+      "sha256": "75cc94f8d83e542f4d38154dbbcda787c6ebfaf720621f00100cff21eefef032"
+    },
+    {
+      "path": "src/data/repositories/ttrSelectionRepository.test.ts",
+      "owner": "TTR (archival bytes)",
+      "sha256": "c1644143d1862293387146c982e991f8a7efaec3c8142e06971f65eaf8f209a8"
+    },
+    {
+      "path": "src/data/repositories/ttrSelectionRepository.ts",
+      "owner": "TTR (archival bytes)",
+      "sha256": "e22a38574fd082fd8596194eaf9d784493e53c7bbbbdcecd1d0eba0613a6db25"
+    },
+    {
+      "path": "src/features/day-feed-lab/DayFeedLabScreen.tsx",
+      "owner": "G2",
+      "sha256": "ea9a95b4f0ba1c18d14c43fc63ad43ffe7b1ccbbc247296c12bfc23fd8217e36"
+    },
+    {
+      "path": "src/features/day-feed-lab/useTtrSessionHost.test.ts",
+      "owner": "G2",
+      "sha256": "a4da8b61a6ad6c74f834773d4e055f0fbaca4d7103bd8e53f00c9b38eb80c662"
+    },
+    {
+      "path": "src/features/day-feed-lab/useTtrSessionHost.ts",
+      "owner": "G2",
+      "sha256": "3e1657a5ce296c53dfc7546d2915a7570f2747e3280d16d24497983a180b17e6"
+    },
+    {
+      "path": "src/features/day-feed/DayFeed.tsx",
+      "owner": "G2",
+      "sha256": "c80bfaa56537edbb427d4d1896467a4629f7c397a467e87b2d75a94d6660f303"
+    },
+    {
+      "path": "src/features/day-feed/render.test.ts",
+      "owner": "G2",
+      "sha256": "9bd3f15a6ca6e99d4ac3d067449f105487c5c52205fce2961a0d5d26d5fa10a1"
+    },
+    {
+      "path": "src/features/day-feed/ttrSessionBridge.test.ts",
+      "owner": "G2",
+      "sha256": "bc6b196606c73b9a8ce900413edaabf4cfeac9afd031c2e5b848ccac2f1cb9a4"
+    },
+    {
+      "path": "src/features/day-feed/ttrSessionBridge.ts",
+      "owner": "G2",
+      "sha256": "de856d32d74cdd28132610ef2e0c14d56341c3d23ad67be0add12dde36b2720a"
+    },
+    {
+      "path": "src/features/ttr/TtrLabSheetContent.test.ts",
+      "owner": "TTR (archival bytes)",
+      "sha256": "d60d8b62e345e473dc4456beed72312e1b441fce5991a7dd6b85ea797c42753c"
+    },
+    {
+      "path": "src/features/ttr/TtrLabSheetContent.tsx",
+      "owner": "TTR (archival bytes)",
+      "sha256": "2f19b3d642fe7aa144b556220422dc3c0130e36616d87afa7136c386aa817d0c"
+    },
+    {
+      "path": "src/features/ttr/interactionController.ts",
+      "owner": "TTR (archival bytes)",
+      "sha256": "53ddd121ac167a444b1b3263aaff4f4af8f73759fc7438b929e3015e823631d5"
+    },
+    {
+      "path": "src/features/ttr/useTtrLabInteraction.test.ts",
+      "owner": "TTR (archival bytes)",
+      "sha256": "4a6969897084208940b2f965f211dfdc93952a736c7d7fabe80dc376a2b24b70"
+    },
+    {
+      "path": "src/features/ttr/useTtrLabInteraction.ts",
+      "owner": "TTR (archival bytes)",
+      "sha256": "6ef0328297db276572dd9c4102b777b764157a3a63532b3be7c82421745f8705"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "owner": "G2",
+      "sha256": "b08a910a52d672e3e0f500b6c2ccbcc831d3cd8d841ce5169407ff360a3ffea7"
+    }
+  ],
+  "selfHash": "Manifest is authenticated by its containing Git commit."
+}

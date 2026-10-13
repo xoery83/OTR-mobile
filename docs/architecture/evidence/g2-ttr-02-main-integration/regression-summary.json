@@ -1,0 +1,44 @@
+{
+  "baseline": {
+    "numPassedTests": 3979,
+    "numFailedTests": 2,
+    "numPendingTests": 54,
+    "failures": [
+      {
+        "file": "src/components/navigationLayout.test.ts",
+        "test": "updates only the tab bar option as navigation enters and leaves deep pages",
+        "normalizedMessage": "TypeError: Cannot read properties of undefined (reading 'tabBarActiveTintColor')\n    at <REPO>/src/components/navigationLayout.test.ts:17:38\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64"
+      },
+      {
+        "file": "src/domain/architectureBoundary.test.ts",
+        "test": "foundation architecture boundaries keeps UI and domain modules away from direct data infrastructure",
+        "normalizedMessage": "AssertionError: <REPO>/src/components/LocalOperationsDiagnostics.test.ts imports /@\\/data\\/sync/: expected 'import { createElement, type ReactNod\u2026' not to match /@\\/data\\/sync/data\\\n    at <REPO>/src/domain/architectureBoundary.test.ts:41:66\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64"
+      }
+    ]
+  },
+  "integrated": {
+    "numPassedTests": 4152,
+    "numFailedTests": 2,
+    "numPendingTests": 54,
+    "failures": [
+      {
+        "file": "src/components/navigationLayout.test.ts",
+        "test": "updates only the tab bar option as navigation enters and leaves deep pages",
+        "normalizedMessage": "TypeError: Cannot read properties of undefined (reading 'tabBarActiveTintColor')\n    at <REPO>/src/components/navigationLayout.test.ts:17:38\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64"
+      },
+      {
+        "file": "src/domain/architectureBoundary.test.ts",
+        "test": "foundation architecture boundaries keeps UI and domain modules away from direct data infrastructure",
+        "normalizedMessage": "AssertionError: <REPO>/src/components/LocalOperationsDiagnostics.test.ts imports /@\\/data\\/sync/: expected 'import { createElement, type ReactNod\u2026' not to match /@\\/data\\/sync/data\\\n    at <REPO>/src/domain/architectureBoundary.test.ts:41:66\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file://<REPO>/node_modules/@vitest/runner/dist/chunk-artifact.js:2956:64"
+      }
+    ]
+  },
+  "normalizedFailureIdentitiesAndFullMessagesEqual": true,
+  "newPersistentFailures": [],
+  "execution": {
+    "sequential": true,
+    "workers": 2,
+    "testTimeoutMs": 30000,
+    "assertionsUnchanged": true
+  }
+}

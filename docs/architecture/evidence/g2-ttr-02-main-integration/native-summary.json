@@ -1,0 +1,25 @@
+{
+  "validatedMerge": "fa18238d4caed6d071d708956fbfbcee16068420",
+  "mode": "Integrated JavaScript reload; reused accepted fresh Debug binary, not a new native build.",
+  "udid": "3582A5EB-9AC2-4E2C-A097-055CC382769C",
+  "bundle": "com.xoery.otrmobile.g2ttr02",
+  "metro": 8099,
+  "database": "otr-ttr-native-lab-cp05a2-v1.db",
+  "checks": [
+    "Nelson default/Lab opens",
+    "TTR-owned Sheet",
+    "Trip001 Preview/Dismiss leave no selection",
+    "Trip001 durable Driving Confirm replaces mounted Feed",
+    "Injected Transit failure retains Driving in SQLite and Sheet",
+    "Cold reopen reads Driving",
+    "Non-fixture Account denied",
+    "Trip005 retains Walking, not Trip001 Driving",
+    "A\u2192B\u2192A queued callback rejected",
+    "Flexible nesting closes Sheet/removes Transition",
+    "Choice Focus/date/nonzero-scroll geometry preserved through durable replacement",
+    "NOW-between and Transition coexist",
+    "Permission loss/replacement close without auto-reopen",
+    "Light/Dark"
+  ],
+  "reusedAcceptedEvidence": "Byte-identical G2/TTR runtime, registry and renderers: accepted all14 TTR fixture/P1/registered flight row/P3/Flexible evidence remains under evidence/g2-ttr-02. Integrated focused430 covers rendering/registration/Release/Core v1-v2 boundaries."
+}

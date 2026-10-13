@@ -1,3 +1,11 @@
+# G2-TTR-02 — controlled integration validated
+
+2026-10-13. Normal isolated merge `fa18238` preserves current canonical `e9e4511` and accepted G2/TTR `13b001e`; only this handoff overlapped and both workstreams are retained. Accepted runtime/TTR archival bytes exact; no Core/schema/Provider or Flexible CP02 changes. Focused430 PASS; fresh baseline3979/integrated4152 PASS with the same two failures/54 skips and exact normalized messages. Static/format gates PASS. Integrated anonymous native JS reload confirms durable Confirm/rollback/cold recovery, isolation/ABA/nesting, Focus/NOW/date/nonzero scroll and Light/Dark; original accepted native evidence reused where byte-identical.
+
+Exact report/manifest and remaining gates: [G2-TTR-02 integration](architecture/OTR_G2_TTR_02_MAIN_INTEGRATION_REPORT.md). Guarded local-main advance is the final approval-gated step; no push/Hosted/production activation. G2 resumes shared Experience maintenance after approved advancement. Earlier prefixes below record the preceding workstreams and approval checkpoints.
+
+---
+
 # G2-TTR-02 — isolated Controller Bridge ready for Owner Review
 
 Owner-authorized synthetic DEV integration is implemented on `codex/g2-ttr-02-controller-bridge` from verified accepted `e091b60`. Accepted CP05A2-A source `6a1c80b` is adopted byte-exact in `4305054` (12 files; older handoff excluded). G2 session bridge/host/diagnostics/tests are separate `122985a`; native-proven adapter/viewport corrections are `37ffdf8`. Architecture decision archived before implementation.
@@ -59,7 +67,6 @@ Core equivalence stays UNKNOWN absent accepted evidence; personal TTR state unch
 See `trip/implementation/CP_TTR_04A3_CORE_ORDER_02_IMPLEMENTATION_REPORT.md` and
 `trip/contracts/CORE_ORDINARY_ORDER_TTR_INPUT_V1.md`. Next: Owner Review, then separate
 integration decision; real-data consumer/Hosted/Provider/paid LLM/Native/Production CLOSED.
-
 
 ---
 
