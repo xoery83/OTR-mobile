@@ -2,7 +2,11 @@
 
 Reconciled 2026-10-13 NZDT against canonical baseline `50f07d5e1a2be99a5c11f1bba3a76096e153dfb7`; reviewed code/docs local adoption `8141f8fe1efecee86c23de58d9a6d6019cf37ad4`. This is the only active Decision Register and Beta Scope Baseline. [Status](BETA_STATUS.md), [execution/intake](BETA_EXECUTION.md), [interfaces](BETA_INTERFACE_REGISTER.md). Historical contracts/ADRs and sealed candidates are not rewritten.
 
-### Push29 scoped execution under BD43 — 2026-10-14 NZDT
+### Push31–33 scoped execution under BD43 — 2026-10-14 NZDT
+
+Normal non-force fast-forwards separately published Gallery ordinary controls `9a8fed6` ([Push31](/private/tmp/otr-beta-push31-receipt.json)), dormant Document original-read port `b3e1ff9` ([Push32](/private/tmp/otr-beta-push32-receipt.json)), and SQLite61 Account-scoped Trip discovery read snapshot/explicit bounded transport `1a0495a` ([Push33](/private/tmp/otr-beta-push33-receipt.json)). Independent reviews, main checks, live readbacks and preservation of the original five dirty files/empty index are recorded per receipt. These are three local technical scopes, not a real accepted-Day/full-journey or protected runtime grant. Document original rights/provider and DEV discovery deployment/Mobile consumer remain separately gated; no permission or environment activation follows publication.
+
+### Prior Push29 scoped execution under BD43 — 2026-10-14 NZDT
 
 Normal two-commit fast-forward published separately reviewed TNS presentation and Backend-only actor-scoped Trip discovery at `7a9bd8fc4ca4e2257ac7ee4528e240cd687ba438`, with exact live readback and preserved unrelated dirty files ([receipt](/private/tmp/otr-beta-push29-receipt.json)). This is local code publication only. It does not prove deployed DEV discovery, Mobile all-accessible inventory, real accepted Day or any protected runtime activation. WP02 spatial UI remains held on its missing READY Sheet Native gate.
 
