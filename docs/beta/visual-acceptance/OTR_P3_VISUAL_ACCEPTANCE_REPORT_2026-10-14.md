@@ -1,6 +1,6 @@
 # P3 Accommodation — Level1 acceptance report, 2026-10-14
 
-**PARTIAL product delivery. Current Native Visual NOT OBSERVED; Runtime NOT VERIFIED; Level2 pending.** Reviewer p4_visual_61 is independent of the original P3 builder. Source alone adopts this report. This is a report-only isolated candidate, not a production activation, passed full Level1 gate or Product UX Accepted statement.
+**Level1 INCOMPLETE; PARTIAL product delivery. Current Native Visual NOT OBSERVED; Runtime NOT VERIFIED; Level2 pending.** Reviewer p4_visual_61 is independent of the original P3 builder. Source alone adopts this report. This is a report-only isolated candidate, not a production activation, passed full Level1 gate or Product UX Accepted statement.
 
 ## A. Scope and exact evidence
 
@@ -87,3 +87,11 @@ Measured layout/contrast/clipping/Light-Dark/DynamicType/VoiceOver/safe-area/scr
 Level1 report is now available to Source for queue/records and subsequent Owner/domain review. Full Level1 and Level2 remain pending actual observable states and missing owning capabilities; **Product UX Accepted is not granted**. There is no unresolved new product design decision blocking baseline renderer work. Ordinary dependencies proceed under existing scope while unavailable Native/runtime proof remains explicit; no other module is paused by this report.
 
 Skipped: repeated trusted P3 tests/code review, native retry/install, broad audit, private originals/gallery and protected runtime. Risk: synthetic/conditional renderer evidence does not establish real accepted Stay, original offline availability or Photos/Ledger functionality.
+
+Latest standing clarification (2026-10-14): this report lacks complete exact-candidate Native state images and is **Level1 INCOMPLETE**, not `WAITING_OWNER_UX_REVIEW` or Level2-ready. Historical technical observation is a timestamped snapshot. Subsequent A1A baseline recovery and independent My Trips candidate attachment do not establish current P3/P4 native acceptance.
+
+## Approved local consumer candidate — independent affected-state conformance
+
+Exact candidate `/private/tmp/otr-beta-p3-production-consumer-61`, base9c73b1738bf5111b6209b6a9d467d57dbc1856a7, author-manifest SHA25600f8509d78b7d90f8d8f8136c36de1cc1376b5645b58f01cc21b815ea08dc92c. Independent reviewer verified all3 path hashes. **PASS for bounded structural Product Conformance**: production local read now uses existing createCoreP1P3DayFeedReader; same acceptedSnapshot/certificate/account gates remain. Existing projector retains Flight before adding P1/P3; v1 fallback and P2 service extraction stay unchanged. TripScreen binds existing Stay renderer only on a scoped accepted version2 projection, preserving generic fallback for other families/legacy data. Source independently reviews functionality; author reports2 suites26 tests/static gates PASS. No runtime enabled, install/refresh/network/write/SQL or new document/guest/action authority.
+
+Affected9-state structure: each Future/Today/Past Browse/Focus/Immersive can now receive accepted local P3 facts through its existing shared row/controller when an owning snapshot exists, closing the two-point presentation composition gap in isolated candidate code. This is not observed actual accepted Day, and no synthetic snapshot is installed on A1A. Full/current Native P3 matrix remains NOT OBSERVED, Runtime NOT VERIFIED and Level1 INCOMPLETE, not Level2-ready/WAITING_OWNER_UX_REVIEW. Original internal/offline viewer, source-authorized guest/Booking-room association, management/add and Photos/Ledger capabilities remain absent/conditional; candidate does not label them delivered. Earlier main snapshot in this report remains accurate for its exact source, and this addendum does not assert canonical intake.
