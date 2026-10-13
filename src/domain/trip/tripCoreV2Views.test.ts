@@ -108,6 +108,46 @@ describe("Core2 supplemental read and deterministic Day, synthetic accepted fact
     const second = create(first.graph, "P3", "2026-12-14", "2026-12-18");
     expect(projectCoreDay(second.graph, actor, "2026-12-15", 1)).toEqual([]);
   });
+  it("zero-night Stay keeps both date-only boundaries and never creates an overnight Base", () => {
+    const stay = create(emptyCoreGraph(), "P3", "2026-12-14", "2026-12-14");
+    expect(projectCoreItem(stay.graph, actor, stay.id)?.details.nights).toBe(0);
+    const rows = projectCoreDay(stay.graph, actor, "2026-12-14", 1);
+    expect(rows.map((row) => row.rowKey.projectionRole)).toEqual(["CHECKIN", "CHECKOUT"]);
+    expect(new Set(rows.map((row) => row.itemRef))).toEqual(new Set([stay.id]));
+    for (const row of rows) {
+      expect(row.position).toBe("TNS");
+      expect(row.displayTime?.comparable).toBe(false);
+      expect(row.displayTime).not.toHaveProperty("instant");
+      expect(row.displayTime).not.toHaveProperty("localTime");
+    }
+    expect(projectCoreDay(stay.graph, actor, "2026-12-15", 1)).toEqual([]);
+    expect(stay.graph.itinerary_events).toHaveLength(1);
+  });
+  it("private overlapping Stay cannot leak through another actor's Base or nights", () => {
+    const privateStay = create(emptyCoreGraph(), "P3", "2026-12-14", "2026-12-17", {
+      ...coreDefaults("member"),
+      core: { title: "Private overnight plan" },
+      details: { property_name: "Private lodge" },
+    });
+    const sharedStay = create(privateStay.graph, "P3", "2026-12-14", "2026-12-18", {
+      details: { property_name: "Shared lodge" },
+    });
+    const other = { ...actor, accountId: randomUUID(), personId: randomUUID() };
+    const visibleRows = projectCoreDay(sharedStay.graph, other, "2026-12-15", 1);
+    expect(visibleRows).toHaveLength(1);
+    expect(visibleRows[0].rowKey.projectionRole).toBe("TONIGHT");
+    expect(visibleRows[0].itemRef).toBe(sharedStay.id);
+    expect(projectCoreItem(sharedStay.graph, other, privateStay.id)).toBeNull();
+    const visibleItem = projectCoreItem(sharedStay.graph, other, sharedStay.id)!;
+    expect(visibleItem.details.nights).toBe(4);
+    const disclosed = JSON.stringify({ rows: visibleRows, item: visibleItem });
+    for (const hidden of [privateStay.id, "Private overnight plan", "Private lodge"])
+      expect(disclosed).not.toContain(hidden);
+    expect(projectCoreItem(sharedStay.graph, actor, privateStay.id)?.details.nights).toBe(
+      3,
+    );
+    expect(projectCoreDay(sharedStay.graph, actor, "2026-12-15", 1)).toEqual([]);
+  });
   it("P4 independent rentals retain reserved category/verified plate and distinct Returns", () => {
     const first = create(emptyCoreGraph(), "P4", "2026-12-14", "2026-12-20", {
       details: { reserved_category: "SUV", verified_plate: "NZ123" },
