@@ -1,0 +1,32 @@
+{
+  "atUTC": "2026-10-13T20:25:54.293771+00:00",
+  "candidate": "/private/tmp/otr-beta-hot-native-61",
+  "sourceManifestSha256": "c1a834359d09732be377f168eb0e1efc2587ce1e92e1a65a9a1945be2c431adc",
+  "files": [
+    {
+      "path": "assets/hot-empty-light.png",
+      "sha256": "e762a373896fe9bf945d099b74e34e50b3a7d2c3d18e9af0bf995f97529d6f49"
+    },
+    {
+      "path": "assets/hot-empty-scrolled-dark.png",
+      "sha256": "740cc596c5f5e216f760d6fcf7773f7f7fdfafd232ab2701fe41af7ed20228a1"
+    },
+    {
+      "path": "assets/hot-empty-scrolled-light.png",
+      "sha256": "ae8250d7f563e1beeacbe59656401f0eedeb479fde66896970e0536b1617c213"
+    },
+    {
+      "path": "assets/hot-real-home-long-dark.png",
+      "sha256": "4559040dec1a2fb8e5d8d3a1607ed650b64b472a23cfc25a589b53b716fd7a5b"
+    },
+    {
+      "path": "assets/reload-real-home-long-dark.png",
+      "sha256": "fd04f2a639bae9e362b5cad565457c2afc60396aabc503c601fb895db61828a6"
+    },
+    {
+      "path": "report.md",
+      "sha256": "94c4d0de101c188c188183f6f3f3fb8d3393990ab02266b61823f3b81e25a152"
+    }
+  ],
+  "verdict": "PARTIAL/FIX; INCOMPLETE; Level2 NOT READY"
+}

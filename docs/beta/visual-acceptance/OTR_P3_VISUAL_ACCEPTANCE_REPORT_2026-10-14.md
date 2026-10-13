@@ -4,7 +4,7 @@
 
 ## A. Scope, source and separate verdicts
 
-Snapshot 2026-10-13T20:57:49.754199+00:00. Authority: Owner approved P3 Delta SHA256e1ba268b554f70619e08892569832b948ab7fcbc2d06cab7e56b7410f7ccfd0f. Prior no-pixels report is a historical snapshot, superseded here only for observed current states. Current main report-only Push50 does not contain these isolated wiring/UI candidates.
+Snapshot 2026-10-13T20:57:49.754199+00:00. Authority: Owner approved P3 Delta SHA256e1ba268b554f70619e08892569832b948ab7fcbc2d06cab7e56b7410f7ccfd0f. Prior no-pixels report is a historical snapshot, superseded here only for observed current states. At that observation snapshot, main was report-only Push50 and did not contain these wiring/UI candidates. Current bounded technical integration is Push55 `3fb13390` ([receipt](/private/tmp/otr-beta-push55-receipt.json)): exactly the existing P1/P3 reader and guarded Stay renderer links/test are I. The Hot mixed17 composition remains an isolated QA source; these screenshots still do not exercise real accepted-v2 runtime.
 
 Source composition is explicit: standalone Hotr2 exact15 (manifest20b82b43) plus Source-reviewed P3 reader3b62004c/test7eac9a and merged TripScreen85328c65 from mixed manifestd9a1f06d. All17 path hashes match the served QA clone; no Photos migration/helper/Workspace mount is applied. The merged TripScreen retains P3 registration and UiText rather than copying an older screen over it. [Composition evidence](evidence/p3-20261014-source-composition.json). Trusted P3 renderer64 and P3 consumer26 functional receipts remain unchanged; Source's exact mixed composition function review is separate.
 

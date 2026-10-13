@@ -1,0 +1,28 @@
+{
+  "atUTC": "2026-10-13T20:10:07.912235+00:00",
+  "scope": "Transient marker diagnostic only, not production screenshot acceptance; marker/all11 restored, baseline fontScale1, Light, captureoff",
+  "candidate": "/private/tmp/otr-beta-mytrips-native-61",
+  "sourceManifestSha256": "5be10f9f0a04f19f0f3b2fb4c4f697798a005ffd76d452a5b1e431d4db1226ee",
+  "files": [
+    {
+      "path": "qa-fontscale-diagnostic.md",
+      "sha256": "454b4b6897dc34831e82e4f7182a32ffb4ab51c5968c538bf894b90f2e1ef7ae"
+    },
+    {
+      "path": "qa-fontscale-log.json",
+      "sha256": "084baa61580eeb9ea3b94d3deccdc209b475d816188d22676b57ec06aa5d7ce5"
+    },
+    {
+      "path": "docs/beta/visual-acceptance/assets/qa-fontscale-r3-baseline.png",
+      "sha256": "72d5931bef5b292a9b69a243939717afb3d32cb190bfd5c717825a89248a78f1"
+    },
+    {
+      "path": "docs/beta/visual-acceptance/assets/qa-fontscale-r3-hot-five.png",
+      "sha256": "11c10cc1f397d2bb6949ed58e0d13ad074b8ee68fbe0aa0356cfbcf600a3c5f6"
+    },
+    {
+      "path": "docs/beta/visual-acceptance/assets/qa-fontscale-r3-reload-five.png",
+      "sha256": "b4889ccd47c3d35f69b71943d624b07ba81424622e0a47bcf2de85aeb2d10d6a"
+    }
+  ]
+}

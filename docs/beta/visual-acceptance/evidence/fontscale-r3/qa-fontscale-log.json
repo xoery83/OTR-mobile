@@ -1,0 +1,48 @@
+{
+  "baseline": "hook=1 win=1 pixel=1 large=false",
+  "increases": [
+    {
+      "step": 1,
+      "marker": "QA SCALE hook=1.118 win=1.118 pixel=1.118 large=false, Secondary Actions: Cancel"
+    },
+    {
+      "step": 2,
+      "marker": "QA SCALE hook=1.235 win=1.235 pixel=1.235 large=false, Secondary Actions: Cancel"
+    },
+    {
+      "step": 3,
+      "marker": "QA SCALE hook=1.353 win=1.353 pixel=1.353 large=false, Secondary Actions: Cancel"
+    },
+    {
+      "step": 4,
+      "marker": "QA SCALE hook=1.786 win=1.786 pixel=1.786 large=false, Secondary Actions: Cancel"
+    },
+    {
+      "step": 5,
+      "marker": "QA SCALE hook=2.143 win=2.143 pixel=2.143 large=true, Secondary Actions: Cancel"
+    }
+  ],
+  "reload": "hook=2.143 win=2.143 pixel=2.143 large=true",
+  "decreases": [
+    {
+      "step": 1,
+      "marker": "QA SCALE hook=1.786 win=1.786 pixel=1.786 large=false, Secondary Actions: Cancel"
+    },
+    {
+      "step": 2,
+      "marker": "QA SCALE hook=1.353 win=1.353 pixel=1.353 large=false, Secondary Actions: Cancel"
+    },
+    {
+      "step": 3,
+      "marker": "QA SCALE hook=1.235 win=1.235 pixel=1.235 large=false, Secondary Actions: Cancel"
+    },
+    {
+      "step": 4,
+      "marker": "QA SCALE hook=1.118 win=1.118 pixel=1.118 large=false, Secondary Actions: Cancel"
+    },
+    {
+      "step": 5,
+      "marker": "QA SCALE hook=1 win=1 pixel=1 large=false, Secondary Actions: Cancel"
+    }
+  ]
+}
