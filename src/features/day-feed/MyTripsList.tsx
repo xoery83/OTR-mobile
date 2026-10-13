@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Trip } from "@/domain/trip/types";
+import { validateCalendarDate } from "@/domain/trip/dayReadModel";
+import type { TripListSummary } from "@/data/repositories/tripDiscoveryRepository";
 import { UiButton, UiSection } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -14,6 +16,7 @@ import { TripCoverVisual } from "./TripCoverVisual";
 export type TodayEntry = Readonly<{ date: string; zone: string }>;
 type Props = {
   trips: readonly Trip[];
+  remoteTrips: readonly TripListSummary[];
   today: string;
   eligibleToday: Readonly<Record<string, TodayEntry>>;
   onOpen(id: string): void;
@@ -28,17 +31,30 @@ const displayDate = (value: string) =>
     day: "numeric",
     timeZone: "UTC",
   });
-const dateLabel = (trip: Trip) =>
-  trip.startDate && trip.endDate
+const knownDate = (value: string | null) => {
+  if (!value) return null;
+  try {
+    return validateCalendarDate(value);
+  } catch {
+    return null;
+  }
+};
+const dateLabel = (
+  trip: Readonly<{ startDate: string | null; endDate: string | null }>,
+) => {
+  const start = knownDate(trip.startDate),
+    end = knownDate(trip.endDate);
+  return start && end
     ? t("myTrips.dateRange", {
-        start: displayDate(trip.startDate),
-        end: displayDate(trip.endDate),
+        start: displayDate(start),
+        end: displayDate(end),
       })
-    : trip.startDate
-      ? t("myTrips.starts", { date: displayDate(trip.startDate) })
-      : trip.endDate
-        ? t("myTrips.ends", { date: displayDate(trip.endDate) })
+    : start
+      ? t("myTrips.starts", { date: displayDate(start) })
+      : end
+        ? t("myTrips.ends", { date: displayDate(end) })
         : t("myTrips.datesToBeDecided");
+};
 const cardLabel = (trip: Trip) =>
   trip.destination
     ? t("myTrips.openTripDetails", {
@@ -50,6 +66,7 @@ const cardLabel = (trip: Trip) =>
 
 export function MyTripsList({
   trips,
+  remoteTrips,
   today,
   eligibleToday,
   onOpen,
@@ -60,7 +77,7 @@ export function MyTripsList({
   const styles = useThemedStyles(createStyles);
   const [allPast, setAllPast] = useState(false);
   const groups = groupLocalTrips(trips, today, new Set(Object.keys(eligibleToday)));
-  if (!trips.length)
+  if (!trips.length && !remoteTrips.length)
     return (
       <View style={styles.empty}>
         <TripCoverVisual
@@ -161,6 +178,32 @@ export function MyTripsList({
               onPress={() => setAllPast(true)}
             />
           ) : null}
+        </UiSection>
+      ) : null}
+      {remoteTrips.length ? (
+        <UiSection title={t("myTrips.cachedTrips")}>
+          {remoteTrips.map((trip) => (
+            <Pressable
+              key={trip.id}
+              accessibilityRole="button"
+              accessibilityLabel={t("myTrips.openCachedTrip", { name: trip.name })}
+              onPress={() => onOpen(trip.id)}
+              style={styles.compact}
+            >
+              <TripCoverVisual source={tripCoverSource(trip)} style={styles.thumbnail} />
+              <View style={styles.compactBody}>
+                <Text style={styles.title} numberOfLines={2}>
+                  {trip.name}
+                </Text>
+                <Text style={styles.meta}>{dateLabel(trip)}</Text>
+                {trip.destination ? (
+                  <Text style={styles.meta} numberOfLines={1}>
+                    {trip.destination}
+                  </Text>
+                ) : null}
+              </View>
+            </Pressable>
+          ))}
         </UiSection>
       ) : null}
     </View>

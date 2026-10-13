@@ -21,6 +21,12 @@ import { DayFeed } from "./DayFeed";
 import { useTripView } from "./TripViewContext";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import type { TodayEntry } from "./MyTripsList";
+import {
+  resolvedWorkspaceKind,
+  showTripContextualActions,
+  type WorkspaceKind,
+  type WorkspaceResolution,
+} from "./tripWorkspaceRoute";
 type Reader = ReturnType<typeof createTripDayFeedReader>;
 type TripRead = Awaited<ReturnType<Reader["trip"]>>;
 const value = (p: string | string[] | undefined) => (typeof p === "string" ? p : "");
@@ -59,12 +65,6 @@ function TripContent({ today = false }: { today?: boolean }) {
   const [trip, setTrip] = useState<TripRead | null>(null);
   const [status, setStatus] = useState<"LOADING" | "UNAVAILABLE" | "READY">("LOADING");
   const [contextError, setContextError] = useState(false);
-  const [isLocalTrip, setIsLocalTrip] = useState(false);
-  const [localChecked, setLocalChecked] = useState(false);
-  const knownTrip = useCallback((known: boolean) => {
-    setIsLocalTrip(known);
-    setLocalChecked(true);
-  }, []);
   const home = params.view !== "day";
   const request = useRef(0);
   const requested = today
@@ -77,6 +77,20 @@ function TripContent({ today = false }: { today?: boolean }) {
     trip.observed?.projection.tripId === requested
       ? trip
       : null;
+  const [workspaceResolution, setWorkspaceResolution] =
+    useState<WorkspaceResolution | null>(null);
+  const knownTrip = useCallback(
+    (kind: WorkspaceKind) => {
+      setWorkspaceResolution({ tripId: requested, generation, kind });
+    },
+    [requested, generation],
+  );
+  const workspaceKind = resolvedWorkspaceKind(workspaceResolution, requested, generation);
+  const localChecked = workspaceKind !== null;
+  const knownWorkspaceTrip = workspaceKind === "LOCAL" || workspaceKind === "CACHED";
+  const showContextualActions =
+    today ||
+    showTripContextualActions(requested, workspaceKind, Boolean(visibleTrip?.observed));
   const load = useCallback(async () => {
     const captured = getAccountGeneration(),
       ticket = ++request.current;
@@ -185,7 +199,7 @@ function TripContent({ today = false }: { today?: boolean }) {
         {t(
           today
             ? "navigation.today"
-            : visibleTrip?.observed || isLocalTrip
+            : visibleTrip?.observed || knownWorkspaceTrip
               ? "dayFeed.tripHome"
               : "dayFeed.myTrips",
         )}
@@ -193,7 +207,7 @@ function TripContent({ today = false }: { today?: boolean }) {
       {status === "LOADING" ? (
         <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
       ) : null}
-      {status === "UNAVAILABLE" && (today || (localChecked && !isLocalTrip)) ? (
+      {status === "UNAVAILABLE" && (today || (localChecked && !knownWorkspaceTrip)) ? (
         <Text style={styles.meta}>{t("dayFeed.unavailable")}</Text>
       ) : null}
       {!today ? (
@@ -251,7 +265,7 @@ function TripContent({ today = false }: { today?: boolean }) {
                 onPress={backToTrips}
               />
             </>
-          ) : isLocalTrip || !requested ? null : (
+          ) : knownWorkspaceTrip || !requested ? null : (
             <>
               <Text style={styles.meta}>{t("dayFeed.partial")}</Text>
               <Text style={styles.meta}>{t("dayFeed.explicitId")}</Text>
@@ -271,35 +285,41 @@ function TripContent({ today = false }: { today?: boolean }) {
           )}
         </>
       )}
-      <UiButton
-        label={t("capture.activityRefresh")}
-        variant="text"
-        onPress={() => {
-          void load();
-        }}
-      />
-      <UiButton
-        label={t("navigation.capture")}
-        variant="text"
-        onPress={() => router.navigate("/capture")}
-      />
-      <UiButton
-        label={t("navigation.ledger")}
-        variant="text"
-        onPress={() => router.navigate("/expenses")}
-      />
-      {__DEV__ ? (
+      {showContextualActions ? (
+        <>
+          <UiButton
+            label={t("capture.activityRefresh")}
+            variant="text"
+            onPress={() => {
+              void load();
+            }}
+          />
+          <UiButton
+            label={t("navigation.capture")}
+            variant="text"
+            onPress={() => router.navigate("/capture")}
+          />
+          <UiButton
+            label={t("navigation.ledger")}
+            variant="text"
+            onPress={() => router.navigate("/expenses")}
+          />
+        </>
+      ) : null}
+      {__DEV__ && showContextualActions ? (
         <UiButton
           label={t("dayLab.title")}
           variant="text"
           onPress={() => router.push("/day-feed-lab")}
         />
       ) : null}
-      <UiButton
-        label={t("dayFeed.validation")}
-        variant="text"
-        onPress={() => router.push("/trip-validation")}
-      />
+      {showContextualActions ? (
+        <UiButton
+          label={t("dayFeed.validation")}
+          variant="text"
+          onPress={() => router.push("/trip-validation")}
+        />
+      ) : null}
     </ScrollView>
   );
 }

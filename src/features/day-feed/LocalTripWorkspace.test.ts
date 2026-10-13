@@ -25,6 +25,7 @@ const state = vi.hoisted(() => ({
   nodes: [] as Record<string, any>[],
   mount: false,
   repo: vi.fn(),
+  discovery: vi.fn(),
   serial: 0,
 }));
 vi.mock("react", async (original) => ({
@@ -91,6 +92,9 @@ vi.mock("@/domain/localId", () => ({ createUuid: () => `test-uuid-${++state.seri
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: () => state.repo(),
 }));
+vi.mock("@/data/repositories/tripDiscoveryRepository", () => ({
+  readLocalTripDiscoveryRepository: () => state.discovery(),
+}));
 vi.mock("@/data/repositories/tripDayFeedRepository", () => ({
   readTripDayFeed: vi.fn(),
 }));
@@ -104,9 +108,16 @@ vi.mock("./MyTripsList", () => ({
         state.nodes.push(node);
         return createElement("button", { key: trip.id }, trip.name);
       }),
+      p.remoteTrips.map((trip: { id: string; name: string }) => {
+        const node = { label: trip.name, onPress: () => p.onOpen(trip.id) };
+        state.nodes.push(node);
+        return createElement("button", { key: trip.id }, trip.name);
+      }),
     ),
 }));
 vi.mock("./TripCoverPicker", () => ({ TripCoverPicker: () => null }));
+vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: () => null }));
+vi.mock("./tripCovers", () => ({ tripCoverSource: () => 1 }));
 
 const trip = (id: string, name: string): Trip => ({
   id,
@@ -191,6 +202,10 @@ beforeEach(() => {
   state.refs = [];
   key = null;
   state.repo.mockReset();
+  state.discovery.mockReset();
+  state.discovery.mockResolvedValue({
+    readMerged: async () => ({ cachedAt: null, trips: [] }),
+  });
   props.tripId = null;
   props.mode = "LIST";
   props.onOpen.mockClear();
@@ -297,4 +312,44 @@ it("shows an accepted local Trip without calling its creation pending", async ()
   const html = render();
   expect(html).toContain("tripCreate.acceptedTrip");
   expect(html).not.toContain("tripCreate.pendingTrip");
+});
+
+it("opens a cached remote-only summary without local write controls and clears it on account switch", async () => {
+  const local = trip("local-a", "Local pending Trip");
+  const remote = {
+    id: "remote-b",
+    name: "Cached shared Trip",
+    destination: "Wellington",
+    startDate: "invalid-date",
+    endDate: null,
+    createdAt: null,
+    localStatus: null,
+    selectedCoverAssetId: null,
+    remoteListed: true,
+  };
+  state.repo.mockResolvedValue(repository([local]));
+  state.discovery.mockResolvedValue({
+    readMerged: async () => ({ cachedAt: "2026-10-13T00:00:00Z", trips: [remote] }),
+  });
+  render();
+  await flush();
+  expect(render()).toContain("Local pending Trip");
+  expect(render()).toContain("Cached shared Trip");
+  button("Cached shared Trip").onPress();
+  expect(props.onOpen).toHaveBeenCalledWith("remote-b");
+  props.tripId = "remote-b";
+  render();
+  await flush();
+  const summary = render();
+  expect(summary).toContain("Cached shared Trip");
+  expect(summary).toContain("myTrips.cachedDetails");
+  expect(summary).not.toContain("tripCreate.addItem");
+  expect(summary).not.toContain("myTrips.chooseCover");
+  expect(props.onKnownTrip).toHaveBeenLastCalledWith("CACHED");
+  advanceAccountGeneration();
+  state.repo.mockResolvedValue(repository());
+  state.discovery.mockResolvedValue({
+    readMerged: async () => ({ cachedAt: null, trips: [] }),
+  });
+  expect(render()).not.toContain("Cached shared Trip");
 });

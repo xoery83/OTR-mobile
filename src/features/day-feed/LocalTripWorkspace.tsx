@@ -8,12 +8,16 @@ import {
 } from "react";
 import { AppState, StyleSheet, Text, View } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
-import { localCalendarDate } from "@/domain/trip/dayReadModel";
+import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { createUuid } from "@/domain/localId";
 import {
   readLocalTripRepository,
   type TripRepository,
 } from "@/data/repositories/tripRepository";
+import {
+  readLocalTripDiscoveryRepository,
+  type TripListSummary,
+} from "@/data/repositories/tripDiscoveryRepository";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -30,6 +34,8 @@ import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
 import { TripCoverPicker } from "./TripCoverPicker";
+import { TripCoverVisual } from "./TripCoverVisual";
+import { tripCoverSource } from "./tripCovers";
 
 type Pending = Awaited<ReturnType<TripRepository["pendingItems"]>>;
 const calendarDate = (value: Date) =>
@@ -49,6 +55,14 @@ const displayDate = (value: string) =>
     day: "numeric",
     timeZone: "UTC",
   });
+const knownDate = (value: string | null) => {
+  if (!value) return null;
+  try {
+    return validateCalendarDate(value);
+  } catch {
+    return null;
+  }
+};
 function CalendarField({
   label,
   value,
@@ -114,7 +128,7 @@ type Props = {
   onOpen(id: string): void;
   onCreate(): void;
   onOpenToday(id: string, context: TodayEntry): void;
-  onKnownTrip(known: boolean): void;
+  onKnownTrip(kind: "LOCAL" | "CACHED" | "NONE"): void;
   onBackToTrips(): void;
 };
 export function LocalTripWorkspace(props: Props) {
@@ -143,7 +157,9 @@ function LocalTripContent({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const [trips, setTrips] = useState<Trip[]>([]),
+    [remoteTrips, setRemoteTrips] = useState<TripListSummary[]>([]),
     [selected, setSelected] = useState<Trip | null>(null),
+    [remoteSelected, setRemoteSelected] = useState<TripListSummary | null>(null),
     [pending, setPending] = useState<Pending>([]),
     [eligibleToday, setEligibleToday] = useState<Record<string, TodayEntry>>({});
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
@@ -179,6 +195,16 @@ function LocalTripContent({
       const local = tripId ? await repo.getTrip(tripId) : null;
       const list = tripId ? [] : await repo.listTrips();
       const intents = local ? await repo.pendingItems(local.id) : [];
+      const discovery = await readLocalTripDiscoveryRepository()
+        .then((reader) => reader.readMerged())
+        .catch(() => null);
+      const cached =
+        tripId && !local
+          ? (discovery?.trips.find(
+              (trip) => trip.id === tripId && trip.localStatus === null,
+            ) ?? null)
+          : null;
+      const localIds = new Set(list.map((trip) => trip.id));
       if (
         !alive.current ||
         captured !== getAccountGeneration() ||
@@ -186,11 +212,19 @@ function LocalTripContent({
       )
         return;
       setTrips(list);
+      setRemoteTrips(
+        tripId
+          ? []
+          : (discovery?.trips.filter(
+              (trip) => trip.localStatus === null && !localIds.has(trip.id),
+            ) ?? []),
+      );
       setEligibleToday({});
       setSelected(local);
+      setRemoteSelected(cached);
       setPending(intents);
       setStatus("READY");
-      onKnownTrip(local !== null);
+      onKnownTrip(local ? "LOCAL" : cached ? "CACHED" : "NONE");
       if (!tripId && list.length) {
         const possible = possibleTodayTrips(list, calendarDate(new Date()));
         if (possible.length) {
@@ -235,11 +269,13 @@ function LocalTripContent({
       )
         return;
       setTrips([]);
+      setRemoteTrips([]);
       setSelected(null);
+      setRemoteSelected(null);
       setPending([]);
       setEligibleToday({});
       setStatus("UNAVAILABLE");
-      onKnownTrip(false);
+      onKnownTrip("NONE");
     }
   }, [tripId, onKnownTrip, generation]);
   useEffect(() => {
@@ -340,7 +376,9 @@ function LocalTripContent({
     await repo.selectBuiltInCover(trip.id, id);
     if (alive.current && generation === getAccountGeneration()) await load();
   };
-  if (tripId && !selected) return null;
+  const remoteStart = knownDate(remoteSelected?.startDate ?? null);
+  const remoteEnd = knownDate(remoteSelected?.endDate ?? null);
+  if (tripId && !selected && !remoteSelected) return null;
   return (
     <View style={styles.root}>
       {error ? (
@@ -442,10 +480,29 @@ function LocalTripContent({
             />
           </UiSection>
         </>
+      ) : remoteSelected ? (
+        <>
+          <UiButton label={t("dayFeed.myTrips")} variant="text" onPress={onBackToTrips} />
+          <UiSection title={remoteSelected.name}>
+            <TripCoverVisual
+              source={tripCoverSource(remoteSelected)}
+              style={styles.remoteCover}
+            />
+            {remoteSelected.destination ? (
+              <Text style={styles.body}>{remoteSelected.destination}</Text>
+            ) : null}
+            {remoteStart ? (
+              <Text style={styles.body}>{displayDate(remoteStart)}</Text>
+            ) : null}
+            {remoteEnd ? <Text style={styles.body}>{displayDate(remoteEnd)}</Text> : null}
+            <Text style={styles.status}>{t("myTrips.cachedDetails")}</Text>
+          </UiSection>
+        </>
       ) : mode === "LIST" ? (
         status === "READY" ? (
           <MyTripsList
             trips={trips}
+            remoteTrips={remoteTrips}
             today={calendarDate(new Date())}
             eligibleToday={eligibleToday}
             onOpen={onOpen}
@@ -494,6 +551,7 @@ function LocalTripContent({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     root: { gap: visual.space.section },
+    remoteCover: { width: "100%", height: 192, borderRadius: visual.radius.card },
     body: { color: colors.textPrimary, ...visual.type.row },
     status: { color: colors.textSecondary, ...visual.type.meta },
   });
