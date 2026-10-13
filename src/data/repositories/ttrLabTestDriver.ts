@@ -1,4 +1,5 @@
 import type { openTtrLabSelectionRepository } from "./ttrLabSelectionRepository";
+import * as SQLite from "expo-sqlite";
 
 type Loader = NonNullable<Parameters<typeof openTtrLabSelectionRepository>[1]>;
 
@@ -7,7 +8,7 @@ export function loadTtrLabTestDriver(consumeFailure: () => boolean): Loader {
   return async () => {
     if (typeof __DEV__ === "undefined" || __DEV__ !== true)
       throw new Error("G2_TEST_DRIVER_DEV_ONLY");
-    const driver = await import("expo-sqlite");
+    const driver = SQLite;
     return {
       openDatabaseAsync: async (name, options) => {
         const db = await driver.openDatabaseAsync(name, options);
