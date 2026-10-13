@@ -5,5 +5,23 @@ export type Trip = SyncableRecord & {
   destination: string | null;
   startDate: string | null;
   endDate: string | null;
-  baseCurrency: string;
+  baseCurrency: string | null;
+  ownerPersonId: string | null;
+};
+
+export type CreateTripInput = {
+  operationId: string;
+  tripId: string;
+  name: string;
+  destination?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+};
+export type CreateTripItemInput = {
+  operationId: string;
+  itemId: string;
+  family: "P1" | "P3";
+  title: string;
+  startDate: string;
+  endDate?: string;
 };
