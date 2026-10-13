@@ -165,7 +165,8 @@ R0/R1 bottom Shell now: a left NavigationIsland with at most three actual
 routable destinations and a right ActionIsland with at most one supported
 contextual action. Its initial S0 candidate exposes only a conditional Day entry after an
 account-matched accepted read establishes current Trip/date context; My Trips
-waits for qualified Trip UI integration. It presents no right action until a
+Shell entry awaits the bounded S2 integration on the now-qualified local
+Trip workspace. It presents no right action until a
 real capability-backed handler exists. This packet does not create Calendar,
 Timeline, Photos, Wallet or Lab destinations, and it does not activate those
 modules or change the long-term pillar direction above. See BD49 and the Shell S0 contract for the proposed bounded route set;
