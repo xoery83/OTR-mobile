@@ -6,6 +6,7 @@ import {
 import { readInitializedDatabase } from "../db/database";
 import { collectionUuid } from "../api/tripEventCollectionCodec";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
+import { tripCoreSha256Hex } from "./tripCoreSha256";
 import { coreCanRead } from "../../domain/trip/tripCoreV2Mutation";
 import { createCoreFlightDayFeedReader } from "./tripCoreV2DayFeedRepository";
 import { validateCalendarDate } from "../../domain/trip/dayReadModel";
@@ -77,12 +78,6 @@ export async function readTripDayFeedLab() {
   };
   await account();
   const database = await readInitializedDatabase();
-  const repository = createTripCoreV2Repository(database, account, async (bytes) => {
-    const { digest, CryptoDigestAlgorithm } = await import("expo-crypto");
-    return Array.from(
-      new Uint8Array(await digest(CryptoDigestAlgorithm.SHA256, new Uint8Array(bytes))),
-      (b) => b.toString(16).padStart(2, "0"),
-    ).join("");
-  });
+  const repository = createTripCoreV2Repository(database, account, tripCoreSha256Hex);
   return createTripDayFeedLabReader(repository, account);
 }

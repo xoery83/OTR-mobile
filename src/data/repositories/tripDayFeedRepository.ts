@@ -14,6 +14,7 @@ import {
 } from "./tripDayReadRepository";
 import { createLedgerReportingRepository } from "./ledgerReportingRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
+import { tripCoreSha256Hex } from "./tripCoreSha256";
 import {
   createCoreFlightDayFeedReader,
   type ObservedCoreFlightProjection,
@@ -78,13 +79,7 @@ export async function readTripDayFeed() {
   const core = createTripCoreV2Repository(
     database,
     requireActiveUserId,
-    async (bytes) => {
-      const { digest, CryptoDigestAlgorithm } = await import("expo-crypto");
-      return Array.from(
-        new Uint8Array(await digest(CryptoDigestAlgorithm.SHA256, new Uint8Array(bytes))),
-        (b) => b.toString(16).padStart(2, "0"),
-      ).join("");
-    },
+    tripCoreSha256Hex,
   );
   return createTripDayFeedReader({
     account: requireActiveUserId,
