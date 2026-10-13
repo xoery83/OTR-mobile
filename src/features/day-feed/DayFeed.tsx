@@ -235,6 +235,7 @@ export function DayFeed({
         fallback={fallback}
         row={row}
         container={stream.containers.find((entry) => entry.id === row.containerId)}
+        context={stream.context}
         depth={mode}
         onDepth={(next) => (mode === "I" ? close() : change(event.id, next))}
         withinMarker={withinMarker}

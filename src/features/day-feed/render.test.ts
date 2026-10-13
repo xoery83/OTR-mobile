@@ -12,7 +12,7 @@ import {
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { DayFeedLabScreen } from "../day-feed-lab/DayFeedLabScreen";
 import { getLabFixtures } from "../day-feed-lab/fixtureRegistration";
-import { stayTripId } from "../day-feed-lab/stayContribution";
+import { stayContribution, stayTripId } from "../day-feed-lab/stayContribution";
 import { flexibleContribution } from "../day-feed-lab/flexibleContribution";
 import {
   flexibleReactiveContribution,
@@ -25,6 +25,10 @@ import { projectTtr, reduceTtr } from "@/domain/trip/ttrState";
 import { syntheticObservation } from "@/domain/trip/__fixtures__/ttr";
 import { getFixtureCatalog } from "../day-feed-lab/fixtureCatalog";
 import { P1Row } from "./P1Row";
+import { StayRow, stayDirectionsUrl, stayMapUrl, type StayFacts } from "./StayRow";
+import { createCoreStayRenderer } from "./coreStayRenderer";
+import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
+import { composeDayStream } from "./composition";
 import { FlightRows } from "./FlightRows";
 import { flightPresentation } from "./presentation";
 import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
@@ -109,6 +113,8 @@ vi.mock("react-native", async () => {
     Text: primitive,
     ScrollView: primitive,
     Pressable: primitive,
+    Image: primitive,
+    Linking: { openURL: vi.fn() },
     Modal: (p: Record<string, any>) => (p.visible ? primitive(p) : null),
     StyleSheet: { create: (s: unknown) => s, hairlineWidth: 0.5 },
     useWindowDimensions: () => ({ width: 375, height: 812, fontScale: state.scale }),
@@ -882,8 +888,8 @@ it("DL4 Stay renderer uses shared Focus/Immersive, typed details and nonzero scr
     .onScroll({ nativeEvent: { contentOffset: { y: 217 } } });
   state.presses.find((p) => p.accessibilityLabel === title)!.onPress();
   html = render(createElement(DayFeed, props));
-  expect(html).toContain(t("dayLab.stayInstructions"));
-  expect(html).toContain(t("dayLab.stayRole.TONIGHT"));
+  expect(html).toContain(t("p3.role.base"));
+  expect(html).not.toContain(t("dayLab.stayInstructions"));
   state.presses.find((p) => p.accessibilityLabel === t("p1r.richerDetails"))!.onPress();
   html = render(createElement(DayFeed, props));
   expect(state.nodes.some((n) => n.contentInsetAdjustmentBehavior === "automatic")).toBe(
@@ -897,6 +903,357 @@ it("DL4 Stay renderer uses shared Focus/Immersive, typed details and nonzero scr
   expect(render(createElement(DayFeed, { ...props, renderer: () => null }))).toContain(
     title,
   );
+});
+
+const p3 = (date: string, extra: Partial<StayFacts> = {}) => {
+  const fixture = stayContribution();
+  const row = composeDayStream(fixture.query!(date, fixture.zone), fixture.instant)
+    .rows[0];
+  return {
+    row,
+    container: undefined,
+    facts: { ...fixture.supplemental!, ...extra },
+    onDepth: vi.fn(),
+  };
+};
+
+it("G2 passes its existing Future/Today/Past context to contributed rows", () => {
+  const fixture = stayContribution();
+  for (const [date, expected] of [
+    ["2027-01-15", "PAST"],
+    ["2027-01-16", "TODAY"],
+    ["2027-01-18", "FUTURE"],
+  ] as const) {
+    const seen: string[] = [];
+    render(
+      createElement(DayFeed, {
+        projection: fixture.projection,
+        services: fixture.services,
+        date,
+        zone: fixture.zone,
+        instant: "2027-01-16T12:00:00Z",
+        query: fixture.query,
+        renderer: (props) => {
+          seen.push(props.context ?? "MISSING");
+          return null;
+        },
+      }),
+    );
+    expect(seen).toContain(expected);
+  }
+});
+
+it("P3 renders one end-of-day Base without a made-up time or instruction summary", () => {
+  for (const date of ["2027-01-16", "2027-01-17"]) {
+    const props = p3(date);
+    expect(props.row.position).toBe("BASE");
+    expect(
+      props.row.coreRowKeys.every((key) =>
+        ["TONIGHT", "BASE_FROM", "BASE_RETURN"].includes(key.projectionRole),
+      ),
+    ).toBe(true);
+    const html = render(
+      createElement(StayRow, { ...props, depth: "B", context: "TODAY" }),
+    );
+    expect(html).toContain(t("p3.role.base"));
+    expect(html).not.toContain("00:00");
+    expect(html).not.toContain(t("dayLab.stayInstructions"));
+  }
+});
+it("P3 keeps the shared within-row NOW marker in Browse and Focus", () => {
+  const props = p3("2027-01-15");
+  const marker = createElement("span", { "data-testid": "p3-now-marker" }, "NOW");
+  expect(
+    render(
+      createElement(StayRow, {
+        ...props,
+        depth: "B",
+        context: "TODAY",
+        withinMarker: marker,
+      }),
+    ),
+  ).toContain('data-testid="p3-now-marker"');
+  expect(
+    render(
+      createElement(StayRow, {
+        ...props,
+        depth: "F",
+        context: "TODAY",
+        withinMarker: marker,
+      }),
+    ),
+  ).toContain('data-testid="p3-now-marker"');
+  expect(
+    render(
+      createElement(StayRow, {
+        ...props,
+        depth: "I",
+        context: "TODAY",
+        withinMarker: marker,
+      }),
+    ),
+  ).not.toContain('data-testid="p3-now-marker"');
+});
+it("P3 Browse shows only known role clocks and never reuses them for Daily Base", () => {
+  const rendered = (date: string) => {
+    const props = p3(date);
+    const source = props.row.item.event.boundaries[0];
+    const event = {
+      ...props.row.item.event,
+      boundaries: [
+        {
+          ...source,
+          role: "START" as const,
+          local_time: "14:00:00",
+          quality: "EXACT" as const,
+          clock_precision: 0,
+        },
+        {
+          ...source,
+          role: "END" as const,
+          local_time: "10:00:00",
+          quality: "EXACT" as const,
+          clock_precision: 0,
+        },
+      ],
+    };
+    return render(
+      createElement(StayRow, {
+        ...props,
+        row: { ...props.row, item: { ...props.row.item, event } },
+        depth: "B",
+        context: "FUTURE",
+      }),
+    );
+  };
+  expect(rendered("2027-01-15")).toContain("14:00");
+  expect(rendered("2027-01-15")).not.toContain("10:00");
+  expect(rendered("2027-01-18")).toContain("10:00");
+  expect(rendered("2027-01-18")).not.toContain("14:00");
+  expect(rendered("2027-01-16")).not.toMatch(/14:00|10:00/);
+  const unknown = p3("2027-01-15");
+  expect(
+    render(createElement(StayRow, { ...unknown, depth: "B", context: "FUTURE" })),
+  ).not.toMatch(/14:00|10:00/);
+});
+
+it("P3 single-night same-day roles use one Stay identity and singular date copy", () => {
+  const props = p3("2027-01-15", { checkout: "2027-01-16", nights: 1 });
+  const row = {
+    ...props.row,
+    coreRowKeys: [
+      {
+        itemId: props.row.item.event.id,
+        projectionRole: "CHECKIN",
+        localDate: "2027-01-15",
+      },
+      {
+        itemId: props.row.item.event.id,
+        projectionRole: "CHECKOUT",
+        localDate: "2027-01-15",
+      },
+    ],
+  };
+  const html = render(
+    createElement(StayRow, {
+      ...props,
+      row,
+      depth: "F",
+      context: "FUTURE",
+    }),
+  );
+  expect(html).toContain(t("p3.role.sameDay"));
+  expect(html).toContain("1 night");
+  expect(html).not.toContain("1 nights");
+});
+
+it("P3 Future shows confirmed only with source evidence, and separates exact map from keyword search", () => {
+  const props = p3("2027-01-15", { area: "Nelson" });
+  expect(
+    stayMapUrl(props.row.item.event, { ...props.facts, area: undefined }),
+  ).toBeNull();
+  expect(stayMapUrl(props.row.item.event, props.facts)).toContain(
+    "Synthetic%20Harbour%20Lodge%20Nelson",
+  );
+  expect(
+    stayMapUrl(
+      { ...props.row.item.event, accepted_latitude: -41.27, accepted_longitude: 173.28 },
+      props.facts,
+    ),
+  ).toContain("ll=-41.27,173.28");
+  expect(stayDirectionsUrl(props.row.item.event)).toBeNull();
+  const accepted = {
+    ...props.row.item.event,
+    accepted_address_line1: "4 Harbour Road",
+    accepted_address: "4 Harbour Road, Nelson, New Zealand",
+    accepted_address_locality: "Nelson",
+  };
+  expect(stayMapUrl(accepted, props.facts)).toContain(
+    "4%20Harbour%20Road%2C%20Nelson%2C%20New%20Zealand",
+  );
+  expect(stayDirectionsUrl(accepted)).toContain(
+    "4%20Harbour%20Road%2C%20Nelson%2C%20New%20Zealand",
+  );
+  expect(stayDirectionsUrl({ ...accepted, accepted_address: null })).toContain(
+    "4%20Harbour%20Road%2C%20Nelson",
+  );
+  expect(
+    stayDirectionsUrl({
+      ...accepted,
+      accepted_address: null,
+      accepted_address_locality: null,
+    }),
+  ).toBeNull();
+  expect(
+    stayDirectionsUrl({
+      ...props.row.item.event,
+      accepted_latitude: -41.27,
+      accepted_longitude: 173.28,
+    }),
+  ).toContain("daddr=-41.27,173.28");
+  let html = render(createElement(StayRow, { ...props, depth: "B", context: "FUTURE" }));
+  expect(html).not.toContain(t("p3.confirmed"));
+  html = render(
+    createElement(StayRow, {
+      ...props,
+      facts: { ...props.facts, confirmedBySource: true },
+      depth: "F",
+      context: "FUTURE",
+    }),
+  );
+  expect(html).toContain(t("p3.confirmed"));
+  expect(html).toContain(t("p3.viewMap"));
+  expect(html).not.toContain(t("p3.directions"));
+});
+
+it("P3 Focus opens one original directly and offers a chooser for several originals", () => {
+  const one = vi.fn(),
+    other = vi.fn();
+  const props = p3("2027-01-15", {
+    instructionOriginals: [{ id: "a", title: "Original check-in PDF", onOpen: one }],
+    bookingOriginals: [
+      { id: "b", title: "Room A confirmation", onOpen: one },
+      { id: "c", title: "Room B confirmation", onOpen: other },
+    ],
+  });
+  let html = render(createElement(StayRow, { ...props, depth: "F", context: "TODAY" }));
+  expect(html).toContain(t("p3.instructions"));
+  expect(html).not.toContain("Room A confirmation");
+  state.presses.find((p) => p.accessibilityLabel === t("p3.instructions"))!.onPress();
+  expect(one).toHaveBeenCalledTimes(1);
+  state.presses.find((p) => p.accessibilityLabel === t("p3.booking"))!.onPress();
+  html = render(createElement(StayRow, { ...props, depth: "F", context: "TODAY" }));
+  expect(html).toContain("Room A confirmation");
+  expect(html).toContain("Room B confirmation");
+  state.presses.find((p) => p.accessibilityLabel === "Room B confirmation")!.onPress();
+  expect(other).toHaveBeenCalledTimes(1);
+});
+
+it("P3 Today quick actions follow the selected Stay role and omit absent originals", () => {
+  const checkin = p3("2027-01-15", {
+    instructionOriginals: [{ id: "in", title: "Arrival PDF", onOpen: vi.fn() }],
+    checkoutOriginals: [{ id: "out", title: "Departure PDF", onOpen: vi.fn() }],
+    checkoutBy: "10:00",
+  });
+  let html = render(createElement(StayRow, { ...checkin, depth: "F", context: "TODAY" }));
+  expect(html).toContain(t("p3.instructions"));
+  expect(html).not.toContain(t("p3.checkoutInstructions"));
+  const base = p3("2027-01-16", checkin.facts);
+  html = render(createElement(StayRow, { ...base, depth: "F", context: "TODAY" }));
+  expect(html).not.toContain(t("p3.instructions"));
+  expect(html).not.toContain(t("p3.checkoutInstructions"));
+  const checkout = p3("2027-01-18", checkin.facts);
+  html = render(createElement(StayRow, { ...checkout, depth: "F", context: "TODAY" }));
+  expect(html).toContain(t("p3.checkoutInstructions"));
+  expect(html).toContain(t("p3.checkoutBy", { time: "10:00" }));
+  expect(html).not.toContain(t("p3.instructions"));
+});
+
+it("P3 Past counts are conditional and Immersive limits previews to three without attendance claims", () => {
+  const props = p3("2027-01-18", {
+    photos: {
+      count: 4,
+      previews: [1, 2, 3, 4].map((n) => ({ id: String(n), uri: `file:///photo-${n}` })),
+      onViewAll: vi.fn(),
+    },
+    expenses: { count: 2 },
+    registeredGuests: ["Sourced guest"],
+    bookingOriginals: [
+      { id: "booking", title: "Original confirmation", onOpen: vi.fn() },
+    ],
+  });
+  let html = render(createElement(StayRow, { ...props, depth: "B", context: "PAST" }));
+  expect(html).toContain(t("p3.photoCount", { count: 4 }));
+  expect(html).not.toContain(t("p3.expenseCount", { count: 2 }));
+  html = render(createElement(StayRow, { ...props, depth: "F", context: "PAST" }));
+  expect(html).toContain(t("p3.photoCount", { count: 4 }));
+  expect(html).toContain(t("p3.expenseCount", { count: 2 }));
+  expect(html).toContain(t("p3.booking"));
+  html = render(createElement(StayRow, { ...props, depth: "I", context: "PAST" }));
+  expect(html).toContain(t("p3.expenseCount", { count: 2 }));
+  expect(html).toContain("Sourced guest");
+  expect(
+    state.nodes.filter((n) => n.source?.uri?.startsWith("file:///photo")),
+  ).toHaveLength(3);
+  expect(html).not.toMatch(/Stayed|Completed|Visited|Total Cost|My Share/);
+  html = render(
+    createElement(StayRow, { ...p3("2027-01-18"), depth: "I", context: "PAST" }),
+  );
+  expect(html).not.toContain(t("p3.viewAllPhotos"));
+  expect(html).not.toContain(t("p3.photoCount", { count: 0 }));
+});
+
+it("P3 lower actions and management appear only when owning callbacks are supplied", () => {
+  const props = p3("2027-01-16");
+  let html = render(createElement(StayRow, { ...props, depth: "I", context: "TODAY" }));
+  expect(html).not.toContain(t("p3.manage"));
+  expect(html).not.toContain(t("p3.addPhoto"));
+  html = render(
+    createElement(StayRow, {
+      ...props,
+      facts: { ...props.facts, onManage: vi.fn(), onAddPhoto: vi.fn() },
+      depth: "I",
+      context: "TODAY",
+    }),
+  );
+  expect(html).toContain(t("p3.manage"));
+  expect(html).toContain(t("p3.addPhoto"));
+  expect(html).not.toContain(t("p3.addExpense"));
+});
+
+it("P3 accepted Core adapter uses only owned Stay dates/name and withholds unsupported actions", () => {
+  const props = p3("2027-01-16");
+  const projection = {
+    events: [stayContribution().projection.events[0]],
+    items: [
+      {
+        itemId: props.row.item.event.id,
+        family: "P3",
+        hidden: false,
+        schedule: {
+          start: { localDate: "2027-01-15" },
+          end: { localDate: "2027-01-18" },
+        },
+        details: { propertyName: "Owned Lodge", nights: 3, permittedCheckoutBy: "10:00" },
+        bookingSummaries: [{ status: "CONFIRMED" }],
+        instructionShortcuts: [{ entryId: "unavailable-original" }],
+      },
+    ],
+  } as unknown as CoreFlightDayProjection;
+  const renderer = createCoreStayRenderer(projection);
+  const element = renderer({ ...props, depth: "F", context: "TODAY" });
+  const html = render(element);
+  expect(html).toContain("Owned Lodge");
+  expect(html).not.toContain(t("p3.confirmed"));
+  expect(html).not.toContain(t("p3.instructions"));
+  expect(html).not.toContain(t("p3.booking"));
+  expect(html).not.toContain(t("p3.addExpense"));
+  expect(
+    createCoreStayRenderer({
+      ...projection,
+      items: [{ ...projection.items[0], details: { nights: 0 } }],
+    })({ ...props, depth: "B", context: "TODAY" }),
+  ).toBeNull();
 });
 
 it("G2 Flexible empty header opens Immersive directly; Choice and Item share Focus and scroll return", () => {

@@ -18,7 +18,6 @@ export type StaySupplement = Readonly<{
   checkin: string;
   checkout: string;
   nights: number;
-  instructions: string;
 }>;
 export function stayContribution(): FixtureContribution<StaySupplement> {
   const itemId = "c0000000-0000-4000-8000-000000000013";
@@ -85,7 +84,6 @@ export function stayContribution(): FixtureContribution<StaySupplement> {
       ? { propertyName: item.details.propertyName }
       : {}),
     nights: Number(item.details.nights),
-    instructions: t("dayLab.stayInstructions"),
   };
   const event = {
     ...place(itemId, root.title, checkin),

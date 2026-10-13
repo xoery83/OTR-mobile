@@ -9,6 +9,7 @@ type Stream = ReturnType<typeof composeDayStream>;
 export type DayRowRendererProps = {
   row: Stream["rows"][number];
   container: Stream["containers"][number] | undefined;
+  context?: Stream["context"];
   depth: Depth;
   onDepth: (depth: Depth) => void;
   withinMarker?: ReactNode;
