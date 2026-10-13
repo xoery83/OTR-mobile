@@ -1,3 +1,20 @@
+# CP04B2B-CORE-PORT-02 — CLOSED coherent read/publication port / Owner Review
+
+2026-10-13. Isolated `codex/cp-ttr04b2b-core-port-02` from accepted main `e9e4511`.
+Implementation `64c84e0`: enriched existing readTtr with coherent transient vectors,
+finite unavailable reasons and guarded post-commit CURRENT/STALE/UNAVAILABLE handoff.
+Ephemeral same-connection lease rejects queued/late authority changes; no global
+revision, schema/migration, Controller, nine-field selection or Composer changes.
+UNKNOWN/equal-coordinate geometry preserved; TTR spatial `841ff819` remains separate.
+188 focused/domain/owning SQL tests PASS; static checks PASS. Stored selection survives
+denial. Unresolved started refresh withholds publication, retaining offline facts.
+TTR/G2 lease-aware emission/actionability integration remains open. Report:
+`trip/implementation/CP_TTR_04B2B_CORE_PORT_02_IMPLEMENTATION_REPORT.md`; contract:
+`trip/contracts/CORE_TTR_PUBLICATION_PORT_V1.md`. No canonical merge/push or activation.
+Next: Owner Review. Hosted/Provider/paid LLM/Production/unrestricted Native CLOSED.
+
+---
+
 # CP04A3-CORE-ORDER-03 — G2 reconciliation readiness / Owner Review
 
 2026-10-13. Owner cleared remote inclusion of unchanged G2 CP01B `e091b60` ancestry.
