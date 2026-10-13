@@ -53,11 +53,19 @@ it("keeps the real My Trips destination available without a selected accepted Da
   const buttons = pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
   expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual([
     "dayFeed.myTrips",
+    "myTrips.createTrip",
   ]);
   expect(buttons[0].props.accessibilityState).toEqual({ selected: true });
   buttons[0].props.onPress?.();
   expect(state.setParams).toHaveBeenCalledWith({ view: "trips" });
   expect(state.navigate).not.toHaveBeenCalled();
+  buttons[1].props.onPress?.();
+  expect(state.setParams).toHaveBeenCalledWith({
+    tripId: "",
+    date: "",
+    zone: "",
+    view: "create",
+  });
   expect(ExperienceBottomShell({ visible: false, pathname: "/trip" })).toBeNull();
 });
 

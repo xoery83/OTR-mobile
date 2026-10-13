@@ -66,6 +66,20 @@ export function ExperienceBottomShell({
             </Pressable>
           ) : null}
         </View>
+        {pathname === "/trip" ? (
+          <View style={styles.actionIsland}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("myTrips.createTrip")}
+              onPress={() =>
+                router.setParams({ tripId: "", date: "", zone: "", view: "create" })
+              }
+              style={styles.action}
+            >
+              <AppIcon name="plus" color={colors.accent} />
+            </Pressable>
+          </View>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -79,7 +93,7 @@ const createStyles = (c: UiColors) =>
       paddingTop: visual.space.heading,
       paddingBottom: visual.space.heading,
       flexDirection: "row",
-      justifyContent: "flex-start",
+      justifyContent: "space-between",
     },
     navigationIsland: {
       backgroundColor: c.elevatedSurface,
@@ -87,6 +101,18 @@ const createStyles = (c: UiColors) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderRadius: visual.radius.control,
       flexDirection: "row",
+    },
+    actionIsland: {
+      backgroundColor: c.elevatedSurface,
+      borderColor: c.separator,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: visual.radius.control,
+    },
+    action: {
+      minWidth: 48,
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center",
     },
     destination: {
       minWidth: 76,

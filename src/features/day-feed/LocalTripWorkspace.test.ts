@@ -91,6 +91,22 @@ vi.mock("@/domain/localId", () => ({ createUuid: () => `test-uuid-${++state.seri
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: () => state.repo(),
 }));
+vi.mock("@/data/repositories/tripDayFeedRepository", () => ({
+  readTripDayFeed: vi.fn(),
+}));
+vi.mock("./MyTripsList", () => ({
+  MyTripsList: (p: any) =>
+    createElement(
+      "div",
+      null,
+      p.trips.map((trip: Trip) => {
+        const node = { label: trip.name, onPress: () => p.onOpen(trip.id) };
+        state.nodes.push(node);
+        return createElement("button", { key: trip.id }, trip.name);
+      }),
+    ),
+}));
+vi.mock("./TripCoverPicker", () => ({ TripCoverPicker: () => null }));
 
 const trip = (id: string, name: string): Trip => ({
   id,
@@ -134,7 +150,10 @@ const flush = async () => {
 let key: string | null;
 const props = {
   tripId: null as string | null,
+  mode: "LIST" as "LIST" | "CREATE",
   onOpen: vi.fn(),
+  onCreate: vi.fn(),
+  onOpenToday: vi.fn(),
   onKnownTrip: vi.fn(),
   onBackToTrips: vi.fn(),
 };
@@ -173,6 +192,7 @@ beforeEach(() => {
   key = null;
   state.repo.mockReset();
   props.tripId = null;
+  props.mode = "LIST";
   props.onOpen.mockClear();
   props.onKnownTrip.mockClear();
   props.onBackToTrips.mockClear();
@@ -186,6 +206,9 @@ it("fences a deferred A save before mutation, clears stale account UI, and lets 
   render();
   await flush();
   expect(render()).toContain("Account A old trip");
+  props.mode = "CREATE";
+  render();
+  await flush();
   input("tripCreate.name", "A private draft");
   render();
   const old = deferred<TripRepository>();
@@ -260,4 +283,18 @@ it("remounts when leaving a trip, rejects its late item save, and exposes My Tri
   expect(button("Local pending trip")).toBeDefined();
   button("Local pending trip").onPress();
   expect(props.onOpen).toHaveBeenCalledWith("local-a");
+});
+
+it("shows an accepted local Trip without calling its creation pending", async () => {
+  const accepted = {
+    ...trip("accepted-local", "Accepted Trip"),
+    syncStatus: "SYNCED" as const,
+  };
+  state.repo.mockResolvedValue(repository([accepted]));
+  props.tripId = accepted.id;
+  render();
+  await flush();
+  const html = render();
+  expect(html).toContain("tripCreate.acceptedTrip");
+  expect(html).not.toContain("tripCreate.pendingTrip");
 });

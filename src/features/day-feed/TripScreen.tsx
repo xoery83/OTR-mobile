@@ -20,9 +20,9 @@ import { boundaryZone, viewContext } from "./presentation";
 import { DayFeed } from "./DayFeed";
 import { useTripView } from "./TripViewContext";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
+import type { TodayEntry } from "./MyTripsList";
 type Reader = ReturnType<typeof createTripDayFeedReader>;
 type TripRead = Awaited<ReturnType<Reader["trip"]>>;
-type Candidates = Awaited<ReturnType<Reader["candidates"]>>;
 const value = (p: string | string[] | undefined) => (typeof p === "string" ? p : "");
 
 export function TripScreen({ today = false }: { today?: boolean }) {
@@ -57,15 +57,19 @@ function TripContent({ today = false }: { today?: boolean }) {
   const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
   const [trip, setTrip] = useState<TripRead | null>(null);
-  const [candidates, setCandidates] = useState<Candidates | null>(null);
   const [status, setStatus] = useState<"LOADING" | "UNAVAILABLE" | "READY">("LOADING");
   const [contextError, setContextError] = useState(false);
   const [isLocalTrip, setIsLocalTrip] = useState(false);
+  const [localChecked, setLocalChecked] = useState(false);
+  const knownTrip = useCallback((known: boolean) => {
+    setIsLocalTrip(known);
+    setLocalChecked(true);
+  }, []);
   const home = params.view !== "day";
   const request = useRef(0);
   const requested = today
     ? (view?.tripId ?? "")
-    : params.view === "trips"
+    : params.view === "trips" || params.view === "create"
       ? ""
       : value(params.tripId);
   const visibleTrip =
@@ -73,16 +77,14 @@ function TripContent({ today = false }: { today?: boolean }) {
     trip.observed?.projection.tripId === requested
       ? trip
       : null;
-  const visibleCandidates =
-    candidates?.scope.generation === generation ? candidates.candidates : [];
   const load = useCallback(async () => {
     const captured = getAccountGeneration(),
       ticket = ++request.current;
     await Promise.resolve();
     setStatus("LOADING");
     try {
-      const reader = await readTripDayFeed();
       if (requested) {
+        const reader = await readTripDayFeed();
         const result = await reader.trip(requested);
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
         setTrip(result);
@@ -92,15 +94,12 @@ function TripContent({ today = false }: { today?: boolean }) {
             (previous) => previous || boundaryZone(result.observed!.projection) || "",
           );
       } else if (!today) {
-        const result = await reader.candidates();
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
-        setCandidates(result);
         setStatus("READY");
       } else setStatus("READY");
     } catch {
       if (getAccountGeneration() === captured && ticket === request.current) {
         setTrip(null);
-        setCandidates(null);
         setStatus("UNAVAILABLE");
       }
     }
@@ -122,6 +121,15 @@ function TripContent({ today = false }: { today?: boolean }) {
   const backToTrips = () => {
     select(null);
     router.setParams({ tripId: "", date: "", zone: "", view: "" });
+  };
+  const createTrip = () => {
+    select(null);
+    router.setParams({ tripId: "", date: "", zone: "", view: "create" });
+  };
+  const openToday = (id: string, context: TodayEntry) => {
+    if (generation !== getAccountGeneration()) return;
+    select({ tripId: id, ...context, generation });
+    router.navigate("/");
   };
   const enterDay = () => {
     try {
@@ -185,14 +193,17 @@ function TripContent({ today = false }: { today?: boolean }) {
       {status === "LOADING" ? (
         <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
       ) : null}
-      {status === "UNAVAILABLE" ? (
+      {status === "UNAVAILABLE" && (today || (localChecked && !isLocalTrip)) ? (
         <Text style={styles.meta}>{t("dayFeed.unavailable")}</Text>
       ) : null}
       {!today ? (
         <LocalTripWorkspace
           tripId={requested || null}
+          mode={params.view === "create" ? "CREATE" : "LIST"}
           onOpen={open}
-          onKnownTrip={setIsLocalTrip}
+          onCreate={createTrip}
+          onOpenToday={openToday}
+          onKnownTrip={knownTrip}
           onBackToTrips={backToTrips}
         />
       ) : null}
@@ -240,20 +251,9 @@ function TripContent({ today = false }: { today?: boolean }) {
                 onPress={backToTrips}
               />
             </>
-          ) : isLocalTrip ? null : (
+          ) : isLocalTrip || !requested ? null : (
             <>
               <Text style={styles.meta}>{t("dayFeed.partial")}</Text>
-              {status === "READY" && !visibleCandidates.length ? (
-                <Text style={styles.meta}>{t("dayFeed.noCandidates")}</Text>
-              ) : null}
-              {visibleCandidates.map((c) => (
-                <UiButton
-                  key={c.journeyId}
-                  label={c.title}
-                  variant="secondary"
-                  onPress={() => open(c.journeyId)}
-                />
-              ))}
               <Text style={styles.meta}>{t("dayFeed.explicitId")}</Text>
               <UiTextInput
                 accessibilityLabel={t("dayFeed.explicitId")}

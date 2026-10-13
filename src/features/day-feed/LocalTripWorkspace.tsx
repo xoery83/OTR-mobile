@@ -7,7 +7,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import { AppState, StyleSheet, Text, View } from "react-native";
-import type { Trip } from "@/domain/trip/types";
+import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
+import { localCalendarDate } from "@/domain/trip/dayReadModel";
 import { createUuid } from "@/domain/localId";
 import {
   readLocalTripRepository,
@@ -24,6 +25,11 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
+import { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
+import { boundaryZone } from "./presentation";
+import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
+import { MyTripsList, type TodayEntry } from "./MyTripsList";
+import { TripCoverPicker } from "./TripCoverPicker";
 
 type Pending = Awaited<ReturnType<TripRepository["pendingItems"]>>;
 const calendarDate = (value: Date) =>
@@ -104,7 +110,10 @@ function CalendarField({
 
 type Props = {
   tripId: string | null;
+  mode?: "LIST" | "CREATE";
   onOpen(id: string): void;
+  onCreate(): void;
+  onOpenToday(id: string, context: TodayEntry): void;
   onKnownTrip(known: boolean): void;
   onBackToTrips(): void;
 };
@@ -115,7 +124,7 @@ export function LocalTripWorkspace(props: Props) {
   );
   return (
     <LocalTripContent
-      key={JSON.stringify([generation, props.tripId])}
+      key={JSON.stringify([generation, props.tripId, props.mode])}
       {...props}
       generation={generation}
     />
@@ -123,7 +132,10 @@ export function LocalTripWorkspace(props: Props) {
 }
 function LocalTripContent({
   tripId,
+  mode = "LIST",
   onOpen,
+  onCreate,
+  onOpenToday,
   onKnownTrip,
   onBackToTrips,
   generation,
@@ -132,7 +144,8 @@ function LocalTripContent({
   const styles = useThemedStyles(createStyles);
   const [trips, setTrips] = useState<Trip[]>([]),
     [selected, setSelected] = useState<Trip | null>(null),
-    [pending, setPending] = useState<Pending>([]);
+    [pending, setPending] = useState<Pending>([]),
+    [eligibleToday, setEligibleToday] = useState<Record<string, TodayEntry>>({});
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
   const [name, setName] = useState(""),
     [destination, setDestination] = useState(""),
@@ -173,10 +186,47 @@ function LocalTripContent({
       )
         return;
       setTrips(list);
+      setEligibleToday({});
       setSelected(local);
       setPending(intents);
       setStatus("READY");
       onKnownTrip(local !== null);
+      if (!tripId && list.length) {
+        const possible = possibleTodayTrips(list, calendarDate(new Date()));
+        if (possible.length) {
+          void (async () => {
+            try {
+              const reader = await readTripDayFeed();
+              const matches = await Promise.all(
+                possible.map(async (trip) => {
+                  try {
+                    const result = await reader.trip(trip.id);
+                    if (result.scope.generation !== captured || !result.observed)
+                      return null;
+                    const zone = boundaryZone(result.observed.projection);
+                    if (!zone) return null;
+                    const date = localCalendarDate(new Date().toISOString(), zone);
+                    if (!groupLocalTrips([trip], date).active.length) return null;
+                    return [trip.id, { date, zone }] as const;
+                  } catch {
+                    return null;
+                  }
+                }),
+              );
+              if (
+                alive.current &&
+                captured === getAccountGeneration() &&
+                ticket === request.current
+              )
+                setEligibleToday(
+                  Object.fromEntries(matches.filter((entry) => entry !== null)),
+                );
+            } catch {
+              // A missing accepted Day never hides the local Trip list.
+            }
+          })();
+        }
+      }
     } catch {
       if (
         !alive.current ||
@@ -187,6 +237,7 @@ function LocalTripContent({
       setTrips([]);
       setSelected(null);
       setPending([]);
+      setEligibleToday({});
       setStatus("UNAVAILABLE");
       onKnownTrip(false);
     }
@@ -250,6 +301,45 @@ function LocalTripContent({
       }
     }
   };
+  const openToday = async (id: string) => {
+    const prior = eligibleToday[id];
+    if (!prior || generation !== getAccountGeneration()) return;
+    try {
+      const reader = await readTripDayFeed();
+      const result = await reader.trip(id);
+      if (
+        !alive.current ||
+        generation !== getAccountGeneration() ||
+        result.scope.generation !== generation ||
+        !result.observed
+      )
+        return;
+      const zone = boundaryZone(result.observed.projection);
+      if (!zone || zone !== prior.zone) return;
+      const date = localCalendarDate(new Date().toISOString(), zone);
+      if (date !== prior.date) return;
+      const repo = await readLocalTripRepository();
+      const local = await repo.getTrip(id);
+      if (
+        !local ||
+        !groupLocalTrips([local], date).active.length ||
+        !alive.current ||
+        generation !== getAccountGeneration()
+      )
+        return;
+      onOpenToday(id, { date, zone });
+    } catch {
+      // A stale or revoked Day action simply stays on My Trips.
+    }
+  };
+  const selectCover = async (id: BuiltInTripCoverId) => {
+    const trip = selected;
+    if (!trip || !alive.current || generation !== getAccountGeneration()) return;
+    const repo = await readLocalTripRepository();
+    if (!alive.current || generation !== getAccountGeneration()) return;
+    await repo.selectBuiltInCover(trip.id, id);
+    if (alive.current && generation === getAccountGeneration()) await load();
+  };
   if (tripId && !selected) return null;
   return (
     <View style={styles.root}>
@@ -262,6 +352,10 @@ function LocalTripContent({
         <>
           <UiButton label={t("dayFeed.myTrips")} variant="text" onPress={onBackToTrips} />
           <UiSection title={selected.name}>
+            <TripCoverPicker
+              selected={selected.selectedCoverAssetId}
+              onSelect={selectCover}
+            />
             {selected.destination ? (
               <Text style={styles.body}>{selected.destination}</Text>
             ) : null}
@@ -271,7 +365,16 @@ function LocalTripContent({
             {selected.endDate ? (
               <Text style={styles.body}>{displayDate(selected.endDate)}</Text>
             ) : null}
-            <Text style={styles.status}>{t("tripCreate.pendingTrip")}</Text>
+            {selected.syncStatus === "PENDING_CREATE" ||
+            selected.syncStatus === "SYNCED" ? (
+              <Text style={styles.status}>
+                {t(
+                  selected.syncStatus === "SYNCED"
+                    ? "tripCreate.acceptedTrip"
+                    : "tripCreate.pendingTrip",
+                )}
+              </Text>
+            ) : null}
           </UiSection>
           <UiSection title={t("tripCreate.pendingItems")}>
             <Text style={styles.status}>{t("tripCreate.pendingHint")}</Text>
@@ -339,22 +442,23 @@ function LocalTripContent({
             />
           </UiSection>
         </>
+      ) : mode === "LIST" ? (
+        status === "READY" ? (
+          <MyTripsList
+            trips={trips}
+            today={calendarDate(new Date())}
+            eligibleToday={eligibleToday}
+            onOpen={onOpen}
+            onOpenToday={(id) => void openToday(id)}
+            onCreate={onCreate}
+          />
+        ) : (
+          <Text style={styles.status}>
+            {t(status === "LOADING" ? "dayFeed.loading" : "tripCreate.unavailable")}
+          </Text>
+        )
       ) : (
         <>
-          <UiSection title={t("tripCreate.savedTrips")}>
-            {status === "UNAVAILABLE" ? (
-              <Text style={styles.status}>{t("tripCreate.unavailable")}</Text>
-            ) : (
-              trips.map((trip) => (
-                <UiButton
-                  key={trip.id}
-                  label={trip.name}
-                  variant="secondary"
-                  onPress={() => onOpen(trip.id)}
-                />
-              ))
-            )}
-          </UiSection>
           <UiSection title={t("tripCreate.newTrip")}>
             <UiTextInput
               accessibilityLabel={t("tripCreate.name")}
