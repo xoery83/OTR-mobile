@@ -1015,7 +1015,7 @@ async function readPublicationBoundary(request: Request, gateway: DevBackendGate
   }
 }
 
-async function authenticate(request: Request, gateway: DevBackendGateway) {
+export async function authenticate(request: Request, gateway: DevBackendGateway) {
   const user = await gateway.validateAccessToken(getBearerToken(request));
   if (!user) throw new HttpError(401, "INVALID_SESSION", "The session is invalid.");
   return user;
