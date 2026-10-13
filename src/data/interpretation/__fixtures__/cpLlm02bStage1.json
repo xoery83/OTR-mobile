@@ -1,0 +1,3084 @@
+{
+  "fixture_version": "cp-llm-02b-stage1-v1",
+  "stage1_commit": "1fd4b7d0f3f73b1f0abdaff58a4a3882bd6008af",
+  "evidence": {
+    "quality": {
+      "version": 1,
+      "basis": {
+        "accountId": "00000000-0000-4000-8000-000000000001",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "runGeneration": 1,
+        "manifestVersion": 1,
+        "runId": "ca13b000-0000-4000-8000-000000009003",
+        "candidateSetId": "24519878-e672-8877-add8-810d602200f0",
+        "responseSha256": "7a840e3b7c253c19ee001ebf3a510b02c8a74a43de3f94a74911a57eb06cf8e0",
+        "inputs": [
+          {
+            "id": "ca13b000-0000-4000-8000-000000000003",
+            "source_id": "ca13b000-0000-4000-8000-000000000001",
+            "material_revision": 1,
+            "representation_id": "ca13b000-0000-4000-8000-000000000002",
+            "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+            "byte_count": 73,
+            "observed_source_row_revision": 1,
+            "historical_selection": false
+          },
+          {
+            "id": "ca13b000-0000-4000-8000-000000000013",
+            "source_id": "ca13b000-0000-4000-8000-000000000011",
+            "material_revision": 1,
+            "representation_id": "ca13b000-0000-4000-8000-000000000012",
+            "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+            "byte_count": 36,
+            "observed_source_row_revision": 1,
+            "historical_selection": false
+          }
+        ]
+      },
+      "extractionCoverage": [
+        {
+          "inputId": "ca13b000-0000-4000-8000-000000000003",
+          "textRead": true,
+          "originalCompleteness": "UNKNOWN",
+          "issues": [],
+          "processingStatus": "PROCESSED",
+          "code": null,
+          "unmatchedSpanCount": 0
+        },
+        {
+          "inputId": "ca13b000-0000-4000-8000-000000000013",
+          "textRead": true,
+          "originalCompleteness": "UNKNOWN",
+          "issues": [],
+          "processingStatus": "PROCESSED",
+          "code": null,
+          "unmatchedSpanCount": 0
+        }
+      ],
+      "fieldSupport": [
+        {
+          "candidateId": "47026a0d-b32e-88ea-ab60-9d43419a892a",
+          "fields": [
+            {
+              "path": "transport_subtype",
+              "critical": false,
+              "value": "FLIGHT",
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "0ec8d6bb700cbb0d81f82a71a972789cedfb09e72e80da46de456fcdafed2cb8",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "service",
+              "critical": true,
+              "value": {
+                "service_key": "service",
+                "transport_subtype": "FLIGHT",
+                "attribution": "UNSPECIFIED",
+                "operator_namespace": "IATA_AIRLINE",
+                "operator_issuer": "IATA",
+                "operator_value": "NZ",
+                "operator_literal": "NZ",
+                "service_number": "123",
+                "service_literal": "NZ123",
+                "codeshare_operating_key": null
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "a1d869a3aba236a66c5561ea04d8467bfcee2eb5d1e195f7bc59c0b1b6a016f3",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "operating_service",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.airport",
+              "critical": true,
+              "value": {
+                "namespace": "IATA_AIRPORT",
+                "value": "AKL"
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "384418d3066c12be9c93958a2c77cc1c86653923f8a15b2608f341a1c36ecf06",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 6,
+                    "end": 15,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.airport",
+              "critical": true,
+              "value": {
+                "namespace": "IATA_AIRPORT",
+                "value": "NSN"
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "e1f5fdcc67f06a431744b9e4c63abe8af406e3159c50f6585680acbeb566c7bb",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 6,
+                    "end": 15,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.place_label",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.place_label",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.local_date",
+              "critical": true,
+              "value": "2030-12-14",
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "4e0d195a384be6b7bf1c1396a30770f7276ca6007010a94d1731311cfe2c0ce6",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 16,
+                    "end": 26,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.local_time",
+              "critical": true,
+              "value": {
+                "value": "09:00",
+                "precision": -1,
+                "quality": "EXACT"
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "cbb6fadcd6f6ebe23b3bc921bdcfe4850bd9144b2865100ae78deccd9f4dd044",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 27,
+                    "end": 36,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.zone_id",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.supplied_offset_seconds",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.source_instant",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.local_date",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.local_time",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.zone_id",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.supplied_offset_seconds",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.source_instant",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "supplier_occurrence",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "change_notice",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            }
+          ],
+          "proposedFields": [
+            {
+              "path": "transport_subtype",
+              "value": "FLIGHT",
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "title",
+              "value": "NZ123",
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin",
+              "value": {
+                "time": {
+                  "local_date": "2030-12-14",
+                  "local_time": "09:00",
+                  "clock_precision": -1,
+                  "quality": "EXACT",
+                  "basis": "DERIVED_CIVIL",
+                  "zone_id": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant": null,
+                  "source_instant_precision": null,
+                  "fold_choice": null
+                },
+                "location": {
+                  "authored_label": "AKL",
+                  "authored_text": null,
+                  "accepted_place_id": null
+                }
+              },
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 16,
+                    "end": 26,
+                    "region": null
+                  }
+                },
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 27,
+                    "end": 36,
+                    "region": null
+                  }
+                },
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 6,
+                    "end": 15,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination",
+              "value": {
+                "time": {
+                  "local_date": null,
+                  "local_time": null,
+                  "clock_precision": null,
+                  "quality": "UNKNOWN",
+                  "basis": "DERIVED_CIVIL",
+                  "zone_id": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant": null,
+                  "source_instant_precision": null,
+                  "fold_choice": null
+                },
+                "location": {
+                  "authored_label": "NSN",
+                  "authored_text": null,
+                  "accepted_place_id": null
+                }
+              },
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 6,
+                    "end": 15,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "services",
+              "value": [
+                {
+                  "service_key": "service",
+                  "transport_subtype": "FLIGHT",
+                  "attribution": "UNSPECIFIED",
+                  "operator_namespace": "IATA_AIRLINE",
+                  "operator_issuer": "IATA",
+                  "operator_value": "NZ",
+                  "operator_literal": "NZ",
+                  "service_number": "123",
+                  "service_literal": "NZ123",
+                  "codeshare_operating_key": null
+                }
+              ],
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000013",
+                    "source_id": "ca13b000-0000-4000-8000-000000000011",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                    "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                    "byte_count": 36,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000013",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            }
+          ],
+          "gaps": [
+            {
+              "path": "origin.zone_id",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            },
+            {
+              "path": "destination.local_date",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            },
+            {
+              "path": "destination.local_time",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            },
+            {
+              "path": "destination.zone_id",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            }
+          ],
+          "providerLookupEligible": true,
+          "independentVerification": "NOT_ESTABLISHED",
+          "historicalEvidence": false,
+          "ambiguity": ["origin.TEMPORAL_RESOLUTION_PENDING"],
+          "matchingUncertainty": [
+            {
+              "left": "f7f183ed-8fef-8af7-ab92-eeb4d61e355d",
+              "right": "47026a0d-b32e-88ea-ab60-9d43419a892a",
+              "outcome": "UNRESOLVED_MATCH",
+              "reason": "UNQUALIFIED_OR_CONTRADICTORY",
+              "policy": "import-flight-match-v1"
+            },
+            {
+              "left": "babed023-9b70-8cc5-a493-726fa53759b8",
+              "right": "47026a0d-b32e-88ea-ab60-9d43419a892a",
+              "outcome": "UNRESOLVED_MATCH",
+              "reason": "UNQUALIFIED_OR_CONTRADICTORY",
+              "policy": "import-flight-match-v1"
+            }
+          ]
+        },
+        {
+          "candidateId": "babed023-9b70-8cc5-a493-726fa53759b8",
+          "fields": [
+            {
+              "path": "transport_subtype",
+              "critical": false,
+              "value": "FLIGHT",
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "849ccdc0fa16dbddcd5a0dfb52972f59b807a3540b1057736b2f1bc7ffacc4f9",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 37,
+                    "end": 42,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "service",
+              "critical": true,
+              "value": {
+                "service_key": "service",
+                "transport_subtype": "FLIGHT",
+                "attribution": "UNSPECIFIED",
+                "operator_namespace": "IATA_AIRLINE",
+                "operator_issuer": "IATA",
+                "operator_value": "NZ",
+                "operator_literal": "NZ",
+                "service_number": "124",
+                "service_literal": "NZ124",
+                "codeshare_operating_key": null
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "ac5efc6dce7f48265248802b377be2c49fa0c85509c22d7b8fad4a8f8ed0772b",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 37,
+                    "end": 42,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "operating_service",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.airport",
+              "critical": true,
+              "value": {
+                "namespace": "IATA_AIRPORT",
+                "value": "NSN"
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "de87388d4346f5a96aa4245193e83dbf4c790b702f76d7c0a681c905674941b0",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 43,
+                    "end": 52,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.airport",
+              "critical": true,
+              "value": {
+                "namespace": "IATA_AIRPORT",
+                "value": "AKL"
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "093b82355d81e7a491d1bb2b17a0048171e1d9b7c59990eb7f8d35d4126de2a9",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 43,
+                    "end": 52,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.place_label",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.place_label",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.local_date",
+              "critical": true,
+              "value": "2030-12-22",
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "cbe0ceba8eacf24582e7d1f8c8fb99ffbd70b8feb8828d30b52c0bb048289559",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 53,
+                    "end": 63,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.local_time",
+              "critical": true,
+              "value": {
+                "value": "11:55",
+                "precision": -1,
+                "quality": "EXACT"
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "de2b2e980c8228f2f0d7b78c8ff88ea1791a162a75a49e71fa6b4e84fe4b0482",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 64,
+                    "end": 73,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.zone_id",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.supplied_offset_seconds",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.source_instant",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.local_date",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.local_time",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.zone_id",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.supplied_offset_seconds",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.source_instant",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "supplier_occurrence",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "change_notice",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            }
+          ],
+          "proposedFields": [
+            {
+              "path": "transport_subtype",
+              "value": "FLIGHT",
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 37,
+                    "end": 42,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "title",
+              "value": "NZ124",
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 37,
+                    "end": 42,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin",
+              "value": {
+                "time": {
+                  "local_date": "2030-12-22",
+                  "local_time": "11:55",
+                  "clock_precision": -1,
+                  "quality": "EXACT",
+                  "basis": "DERIVED_CIVIL",
+                  "zone_id": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant": null,
+                  "source_instant_precision": null,
+                  "fold_choice": null
+                },
+                "location": {
+                  "authored_label": "NSN",
+                  "authored_text": null,
+                  "accepted_place_id": null
+                }
+              },
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 43,
+                    "end": 52,
+                    "region": null
+                  }
+                },
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 53,
+                    "end": 63,
+                    "region": null
+                  }
+                },
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 64,
+                    "end": 73,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination",
+              "value": {
+                "time": {
+                  "local_date": null,
+                  "local_time": null,
+                  "clock_precision": null,
+                  "quality": "UNKNOWN",
+                  "basis": "DERIVED_CIVIL",
+                  "zone_id": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant": null,
+                  "source_instant_precision": null,
+                  "fold_choice": null
+                },
+                "location": {
+                  "authored_label": "AKL",
+                  "authored_text": null,
+                  "accepted_place_id": null
+                }
+              },
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 43,
+                    "end": 52,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "services",
+              "value": [
+                {
+                  "service_key": "service",
+                  "transport_subtype": "FLIGHT",
+                  "attribution": "UNSPECIFIED",
+                  "operator_namespace": "IATA_AIRLINE",
+                  "operator_issuer": "IATA",
+                  "operator_value": "NZ",
+                  "operator_literal": "NZ",
+                  "service_number": "124",
+                  "service_literal": "NZ124",
+                  "codeshare_operating_key": null
+                }
+              ],
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 37,
+                    "end": 42,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            }
+          ],
+          "gaps": [
+            {
+              "path": "origin.zone_id",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            },
+            {
+              "path": "destination.local_date",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            },
+            {
+              "path": "destination.local_time",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            },
+            {
+              "path": "destination.zone_id",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            }
+          ],
+          "providerLookupEligible": true,
+          "independentVerification": "NOT_ESTABLISHED",
+          "historicalEvidence": false,
+          "ambiguity": ["origin.TEMPORAL_RESOLUTION_PENDING"],
+          "matchingUncertainty": [
+            {
+              "left": "f7f183ed-8fef-8af7-ab92-eeb4d61e355d",
+              "right": "babed023-9b70-8cc5-a493-726fa53759b8",
+              "outcome": "UNRESOLVED_MATCH",
+              "reason": "UNQUALIFIED_OR_CONTRADICTORY",
+              "policy": "import-flight-match-v1"
+            },
+            {
+              "left": "babed023-9b70-8cc5-a493-726fa53759b8",
+              "right": "47026a0d-b32e-88ea-ab60-9d43419a892a",
+              "outcome": "UNRESOLVED_MATCH",
+              "reason": "UNQUALIFIED_OR_CONTRADICTORY",
+              "policy": "import-flight-match-v1"
+            }
+          ]
+        },
+        {
+          "candidateId": "f7f183ed-8fef-8af7-ab92-eeb4d61e355d",
+          "fields": [
+            {
+              "path": "transport_subtype",
+              "critical": false,
+              "value": "FLIGHT",
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "b4df27759318746f7615b0b0ea2a56b4ee51813a248cf4ee7bbd150b8cf4a8e3",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "service",
+              "critical": true,
+              "value": {
+                "service_key": "service",
+                "transport_subtype": "FLIGHT",
+                "attribution": "UNSPECIFIED",
+                "operator_namespace": "IATA_AIRLINE",
+                "operator_issuer": "IATA",
+                "operator_value": "NZ",
+                "operator_literal": "NZ",
+                "service_number": "123",
+                "service_literal": "NZ123",
+                "codeshare_operating_key": null
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "7164b3dc2a486611083622cdc0f2aa941e3f73580d9ba2fbb9aa9971c719af48",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "operating_service",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.airport",
+              "critical": true,
+              "value": {
+                "namespace": "IATA_AIRPORT",
+                "value": "AKL"
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "3347498fa76a1ed565f91309584cf930ea5fadc93b848233bac056c576e557cc",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 6,
+                    "end": 15,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.airport",
+              "critical": true,
+              "value": {
+                "namespace": "IATA_AIRPORT",
+                "value": "NSN"
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "f6a9c321c2d3a2af36a173315cecf90eeb8687dc46f983b1d2452bb29d025bbc",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 6,
+                    "end": 15,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.place_label",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.place_label",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.local_date",
+              "critical": true,
+              "value": "2030-12-14",
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "53240a867db54bec89c4a1fbc3a64afe4f9cac1627ca1d16a3a379160a31b00c",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 16,
+                    "end": 26,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.local_time",
+              "critical": true,
+              "value": {
+                "value": "09:00",
+                "precision": -1,
+                "quality": "EXACT"
+              },
+              "knowledge": "PRESENT",
+              "evidenceKinds": ["DOCUMENT_EXTRACTED", "DETERMINISTIC_DERIVED"],
+              "status": "OBSERVED",
+              "validation": "SUPPORTED",
+              "provenance": [
+                {
+                  "observationId": "c3b6db9082b52e82270091c0f18a4f5269bc931472b90ea2c2f678a684a0df4f",
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 27,
+                    "end": 36,
+                    "region": null
+                  }
+                }
+              ],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.zone_id",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.supplied_offset_seconds",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin.source_instant",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.local_date",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.local_time",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.zone_id",
+              "critical": true,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.supplied_offset_seconds",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination.source_instant",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "supplier_occurrence",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "change_notice",
+              "critical": false,
+              "value": null,
+              "knowledge": "UNKNOWN",
+              "evidenceKinds": [],
+              "status": "UNKNOWN",
+              "validation": "UNSUPPORTED",
+              "provenance": [],
+              "conflicts": [],
+              "uncertainty": [],
+              "automaticallyConfirmed": false
+            }
+          ],
+          "proposedFields": [
+            {
+              "path": "transport_subtype",
+              "value": "FLIGHT",
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "title",
+              "value": "NZ123",
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "origin",
+              "value": {
+                "time": {
+                  "local_date": "2030-12-14",
+                  "local_time": "09:00",
+                  "clock_precision": -1,
+                  "quality": "EXACT",
+                  "basis": "DERIVED_CIVIL",
+                  "zone_id": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant": null,
+                  "source_instant_precision": null,
+                  "fold_choice": null
+                },
+                "location": {
+                  "authored_label": "AKL",
+                  "authored_text": null,
+                  "accepted_place_id": null
+                }
+              },
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 16,
+                    "end": 26,
+                    "region": null
+                  }
+                },
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 27,
+                    "end": 36,
+                    "region": null
+                  }
+                },
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 6,
+                    "end": 15,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "destination",
+              "value": {
+                "time": {
+                  "local_date": null,
+                  "local_time": null,
+                  "clock_precision": null,
+                  "quality": "UNKNOWN",
+                  "basis": "DERIVED_CIVIL",
+                  "zone_id": null,
+                  "supplied_offset_seconds": null,
+                  "source_instant": null,
+                  "source_instant_precision": null,
+                  "fold_choice": null
+                },
+                "location": {
+                  "authored_label": "NSN",
+                  "authored_text": null,
+                  "accepted_place_id": null
+                }
+              },
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 6,
+                    "end": 15,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            },
+            {
+              "path": "services",
+              "value": [
+                {
+                  "service_key": "service",
+                  "transport_subtype": "FLIGHT",
+                  "attribution": "UNSPECIFIED",
+                  "operator_namespace": "IATA_AIRLINE",
+                  "operator_issuer": "IATA",
+                  "operator_value": "NZ",
+                  "operator_literal": "NZ",
+                  "service_number": "123",
+                  "service_literal": "NZ123",
+                  "codeshare_operating_key": null
+                }
+              ],
+              "evidenceKind": "DETERMINISTIC_DERIVED",
+              "provenance": [
+                {
+                  "pin": {
+                    "id": "ca13b000-0000-4000-8000-000000000003",
+                    "source_id": "ca13b000-0000-4000-8000-000000000001",
+                    "material_revision": 1,
+                    "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                    "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                    "byte_count": 73,
+                    "observed_source_row_revision": 1,
+                    "historical_selection": false
+                  },
+                  "locator": {
+                    "input_id": "ca13b000-0000-4000-8000-000000000003",
+                    "kind": "TEXT_SPAN",
+                    "page": null,
+                    "start": 0,
+                    "end": 5,
+                    "region": null
+                  }
+                }
+              ],
+              "automaticallyConfirmed": false
+            }
+          ],
+          "gaps": [
+            {
+              "path": "origin.zone_id",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            },
+            {
+              "path": "destination.local_date",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            },
+            {
+              "path": "destination.local_time",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            },
+            {
+              "path": "destination.zone_id",
+              "reason": "MISSING_SUPPORTED_EVIDENCE"
+            }
+          ],
+          "providerLookupEligible": true,
+          "independentVerification": "NOT_ESTABLISHED",
+          "historicalEvidence": false,
+          "ambiguity": ["origin.TEMPORAL_RESOLUTION_PENDING"],
+          "matchingUncertainty": [
+            {
+              "left": "f7f183ed-8fef-8af7-ab92-eeb4d61e355d",
+              "right": "babed023-9b70-8cc5-a493-726fa53759b8",
+              "outcome": "UNRESOLVED_MATCH",
+              "reason": "UNQUALIFIED_OR_CONTRADICTORY",
+              "policy": "import-flight-match-v1"
+            },
+            {
+              "left": "f7f183ed-8fef-8af7-ab92-eeb4d61e355d",
+              "right": "47026a0d-b32e-88ea-ab60-9d43419a892a",
+              "outcome": "UNRESOLVED_MATCH",
+              "reason": "UNQUALIFIED_OR_CONTRADICTORY",
+              "policy": "import-flight-match-v1"
+            }
+          ]
+        }
+      ],
+      "structuralCoverage": {
+        "candidateCount": 3,
+        "orderedByInput": [
+          {
+            "inputId": "ca13b000-0000-4000-8000-000000000003",
+            "candidateIds": [
+              "f7f183ed-8fef-8af7-ab92-eeb4d61e355d",
+              "babed023-9b70-8cc5-a493-726fa53759b8"
+            ]
+          },
+          {
+            "inputId": "ca13b000-0000-4000-8000-000000000013",
+            "candidateIds": ["47026a0d-b32e-88ea-ab60-9d43419a892a"]
+          }
+        ],
+        "orderSemantics": "SOURCE_MENTION_ORDER_NOT_VERIFIED_SEGMENT_ASSOCIATION",
+        "deferredRelationshipCount": 0,
+        "relationshipCompleteness": "UNKNOWN",
+        "unmatchedSpanCount": 0
+      },
+      "consistency": {
+        "materialConflicts": [],
+        "unresolvedMatchCount": 3,
+        "revisionContinuity": "NOT_ESTABLISHED"
+      },
+      "authorityFreshness": {
+        "bookingVerification": "NOT_ESTABLISHED",
+        "liveFacts": "NOT_VERIFIED",
+        "sourceFreshness": "UNKNOWN"
+      },
+      "admissionReadiness": {
+        "diagnosticOnly": true,
+        "grantsAuthority": false,
+        "coreAssessmentRequired": true,
+        "supportedCriticalFieldsComplete": false,
+        "unknownSiblingFence": "UNCHANGED"
+      }
+    },
+    "enrichment": {
+      "version": 1,
+      "route": "DEFER_UNTIL_CAPABILITY",
+      "reason": "OPTIONAL_ENRICHMENT_NOT_AVAILABLE",
+      "targetFields": [
+        "origin.zone_id",
+        "destination.local_date",
+        "destination.local_time",
+        "destination.zone_id",
+        "segment_association"
+      ],
+      "candidateIds": [
+        "47026a0d-b32e-88ea-ab60-9d43419a892a",
+        "babed023-9b70-8cc5-a493-726fa53759b8",
+        "f7f183ed-8fef-8af7-ab92-eeb4d61e355d"
+      ],
+      "basis": {
+        "accountId": "00000000-0000-4000-8000-000000000001",
+        "tripId": "10000000-0000-4000-8000-000000000001",
+        "runGeneration": 1,
+        "manifestVersion": 1,
+        "runId": "ca13b000-0000-4000-8000-000000009003",
+        "candidateSetId": "24519878-e672-8877-add8-810d602200f0",
+        "responseSha256": "7a840e3b7c253c19ee001ebf3a510b02c8a74a43de3f94a74911a57eb06cf8e0",
+        "inputs": [
+          {
+            "id": "ca13b000-0000-4000-8000-000000000003",
+            "source_id": "ca13b000-0000-4000-8000-000000000001",
+            "material_revision": 1,
+            "representation_id": "ca13b000-0000-4000-8000-000000000002",
+            "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+            "byte_count": 73,
+            "observed_source_row_revision": 1,
+            "historical_selection": false
+          },
+          {
+            "id": "ca13b000-0000-4000-8000-000000000013",
+            "source_id": "ca13b000-0000-4000-8000-000000000011",
+            "material_revision": 1,
+            "representation_id": "ca13b000-0000-4000-8000-000000000012",
+            "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+            "byte_count": 36,
+            "observed_source_row_revision": 1,
+            "historical_selection": false
+          }
+        ]
+      },
+      "executionAuthorized": false,
+      "requiredEvidence": ["CURRENT_EVIDENCE_AND_REVISION_RECHECK"],
+      "estimatedCost": {
+        "tier": "UNKNOWN",
+        "monetaryMinor": null
+      },
+      "estimatedLatencyTier": "UNKNOWN",
+      "fallback": [],
+      "providerAssignments": [],
+      "unaddressedTargets": [],
+      "recheckRequired": true
+    },
+    "access": "OWNER_PRIVATE",
+    "materials": [
+      {
+        "pin": {
+          "id": "ca13b000-0000-4000-8000-000000000003",
+          "source_id": "ca13b000-0000-4000-8000-000000000001",
+          "material_revision": 1,
+          "representation_id": "ca13b000-0000-4000-8000-000000000002",
+          "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+          "byte_count": 73,
+          "observed_source_row_revision": 1,
+          "historical_selection": false
+        },
+        "media_type": "text/plain",
+        "form": "TEXT",
+        "text": "NZ123 AKL→NSN 2030-12-14 dep=09:00\nNZ124 NSN→AKL 2030-12-22 dep=11:55"
+      },
+      {
+        "pin": {
+          "id": "ca13b000-0000-4000-8000-000000000013",
+          "source_id": "ca13b000-0000-4000-8000-000000000011",
+          "material_revision": 1,
+          "representation_id": "ca13b000-0000-4000-8000-000000000012",
+          "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+          "byte_count": 36,
+          "observed_source_row_revision": 1,
+          "historical_selection": false
+        },
+        "media_type": "text/plain",
+        "form": "TEXT",
+        "text": "NZ123 AKL→NSN 2030-12-14 dep=09:00"
+      }
+    ],
+    "interpreted": [
+      {
+        "candidateId": "47026a0d-b32e-88ea-ab60-9d43419a892a",
+        "observationTokens": ["item:ca13b000-0000-4000-8000-000000000013:0"],
+        "fields": [
+          {
+            "path": "transport_subtype",
+            "knowledge": "PRESENT",
+            "value": "FLIGHT",
+            "observations": [
+              {
+                "path": "transport_subtype",
+                "raw": "NZ123",
+                "normalized": "FLIGHT",
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000013:0:5"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000013:0",
+                "observation_id": "0ec8d6bb700cbb0d81f82a71a972789cedfb09e72e80da46de456fcdafed2cb8",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000013",
+                      "source_id": "ca13b000-0000-4000-8000-000000000011",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                      "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                      "byte_count": 36,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000013",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 0,
+                      "end": 5,
+                      "region": null
+                    },
+                    "raw": "NZ123"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "service",
+            "knowledge": "PRESENT",
+            "value": {
+              "service_key": "service",
+              "transport_subtype": "FLIGHT",
+              "attribution": "UNSPECIFIED",
+              "operator_namespace": "IATA_AIRLINE",
+              "operator_issuer": "IATA",
+              "operator_value": "NZ",
+              "operator_literal": "NZ",
+              "service_number": "123",
+              "service_literal": "NZ123",
+              "codeshare_operating_key": null
+            },
+            "observations": [
+              {
+                "path": "service",
+                "raw": "NZ123",
+                "normalized": {
+                  "service_key": "service",
+                  "transport_subtype": "FLIGHT",
+                  "attribution": "UNSPECIFIED",
+                  "operator_namespace": "IATA_AIRLINE",
+                  "operator_issuer": "IATA",
+                  "operator_value": "NZ",
+                  "operator_literal": "NZ",
+                  "service_number": "123",
+                  "service_literal": "NZ123",
+                  "codeshare_operating_key": null
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000013:0:5"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000013:0",
+                "observation_id": "a1d869a3aba236a66c5561ea04d8467bfcee2eb5d1e195f7bc59c0b1b6a016f3",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000013",
+                      "source_id": "ca13b000-0000-4000-8000-000000000011",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                      "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                      "byte_count": 36,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000013",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 0,
+                      "end": 5,
+                      "region": null
+                    },
+                    "raw": "NZ123"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "origin.local_time",
+            "knowledge": "PRESENT",
+            "value": {
+              "value": "09:00",
+              "precision": -1,
+              "quality": "EXACT"
+            },
+            "observations": [
+              {
+                "path": "origin.local_time",
+                "raw": "dep=09:00",
+                "normalized": {
+                  "value": "09:00",
+                  "precision": -1,
+                  "quality": "EXACT"
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000013:27:9"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000013:0",
+                "observation_id": "cbb6fadcd6f6ebe23b3bc921bdcfe4850bd9144b2865100ae78deccd9f4dd044",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000013",
+                      "source_id": "ca13b000-0000-4000-8000-000000000011",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                      "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                      "byte_count": 36,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000013",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 27,
+                      "end": 36,
+                      "region": null
+                    },
+                    "raw": "dep=09:00"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "origin.airport",
+            "knowledge": "PRESENT",
+            "value": {
+              "namespace": "IATA_AIRPORT",
+              "value": "AKL"
+            },
+            "observations": [
+              {
+                "path": "origin.airport",
+                "raw": "AKL→NSN",
+                "normalized": {
+                  "namespace": "IATA_AIRPORT",
+                  "value": "AKL"
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000013:6:9"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000013:0",
+                "observation_id": "384418d3066c12be9c93958a2c77cc1c86653923f8a15b2608f341a1c36ecf06",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000013",
+                      "source_id": "ca13b000-0000-4000-8000-000000000011",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                      "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                      "byte_count": 36,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000013",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 6,
+                      "end": 15,
+                      "region": null
+                    },
+                    "raw": "AKL→NSN"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "destination.airport",
+            "knowledge": "PRESENT",
+            "value": {
+              "namespace": "IATA_AIRPORT",
+              "value": "NSN"
+            },
+            "observations": [
+              {
+                "path": "destination.airport",
+                "raw": "AKL→NSN",
+                "normalized": {
+                  "namespace": "IATA_AIRPORT",
+                  "value": "NSN"
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000013:6:9"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000013:0",
+                "observation_id": "e1f5fdcc67f06a431744b9e4c63abe8af406e3159c50f6585680acbeb566c7bb",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000013",
+                      "source_id": "ca13b000-0000-4000-8000-000000000011",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                      "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                      "byte_count": 36,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000013",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 6,
+                      "end": 15,
+                      "region": null
+                    },
+                    "raw": "AKL→NSN"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "origin.local_date",
+            "knowledge": "PRESENT",
+            "value": "2030-12-14",
+            "observations": [
+              {
+                "path": "origin.local_date",
+                "raw": "2030-12-14",
+                "normalized": "2030-12-14",
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000013:16:10"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000013:0",
+                "observation_id": "4e0d195a384be6b7bf1c1396a30770f7276ca6007010a94d1731311cfe2c0ce6",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000013",
+                      "source_id": "ca13b000-0000-4000-8000-000000000011",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000012",
+                      "payload_sha256": "bc81deccc2df2a7712372e910ac97e5a63a4279126918cd0f5e127166fd179cb",
+                      "byte_count": 36,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000013",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 16,
+                      "end": 26,
+                      "region": null
+                    },
+                    "raw": "2030-12-14"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "candidateId": "babed023-9b70-8cc5-a493-726fa53759b8",
+        "observationTokens": ["item:ca13b000-0000-4000-8000-000000000003:35"],
+        "fields": [
+          {
+            "path": "transport_subtype",
+            "knowledge": "PRESENT",
+            "value": "FLIGHT",
+            "observations": [
+              {
+                "path": "transport_subtype",
+                "raw": "NZ124",
+                "normalized": "FLIGHT",
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:37:5"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:35",
+                "observation_id": "849ccdc0fa16dbddcd5a0dfb52972f59b807a3540b1057736b2f1bc7ffacc4f9",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 37,
+                      "end": 42,
+                      "region": null
+                    },
+                    "raw": "NZ124"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "service",
+            "knowledge": "PRESENT",
+            "value": {
+              "service_key": "service",
+              "transport_subtype": "FLIGHT",
+              "attribution": "UNSPECIFIED",
+              "operator_namespace": "IATA_AIRLINE",
+              "operator_issuer": "IATA",
+              "operator_value": "NZ",
+              "operator_literal": "NZ",
+              "service_number": "124",
+              "service_literal": "NZ124",
+              "codeshare_operating_key": null
+            },
+            "observations": [
+              {
+                "path": "service",
+                "raw": "NZ124",
+                "normalized": {
+                  "service_key": "service",
+                  "transport_subtype": "FLIGHT",
+                  "attribution": "UNSPECIFIED",
+                  "operator_namespace": "IATA_AIRLINE",
+                  "operator_issuer": "IATA",
+                  "operator_value": "NZ",
+                  "operator_literal": "NZ",
+                  "service_number": "124",
+                  "service_literal": "NZ124",
+                  "codeshare_operating_key": null
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:37:5"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:35",
+                "observation_id": "ac5efc6dce7f48265248802b377be2c49fa0c85509c22d7b8fad4a8f8ed0772b",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 37,
+                      "end": 42,
+                      "region": null
+                    },
+                    "raw": "NZ124"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "origin.local_time",
+            "knowledge": "PRESENT",
+            "value": {
+              "value": "11:55",
+              "precision": -1,
+              "quality": "EXACT"
+            },
+            "observations": [
+              {
+                "path": "origin.local_time",
+                "raw": "dep=11:55",
+                "normalized": {
+                  "value": "11:55",
+                  "precision": -1,
+                  "quality": "EXACT"
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:64:9"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:35",
+                "observation_id": "de2b2e980c8228f2f0d7b78c8ff88ea1791a162a75a49e71fa6b4e84fe4b0482",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 64,
+                      "end": 73,
+                      "region": null
+                    },
+                    "raw": "dep=11:55"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "origin.airport",
+            "knowledge": "PRESENT",
+            "value": {
+              "namespace": "IATA_AIRPORT",
+              "value": "NSN"
+            },
+            "observations": [
+              {
+                "path": "origin.airport",
+                "raw": "NSN→AKL",
+                "normalized": {
+                  "namespace": "IATA_AIRPORT",
+                  "value": "NSN"
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:43:9"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:35",
+                "observation_id": "de87388d4346f5a96aa4245193e83dbf4c790b702f76d7c0a681c905674941b0",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 43,
+                      "end": 52,
+                      "region": null
+                    },
+                    "raw": "NSN→AKL"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "destination.airport",
+            "knowledge": "PRESENT",
+            "value": {
+              "namespace": "IATA_AIRPORT",
+              "value": "AKL"
+            },
+            "observations": [
+              {
+                "path": "destination.airport",
+                "raw": "NSN→AKL",
+                "normalized": {
+                  "namespace": "IATA_AIRPORT",
+                  "value": "AKL"
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:43:9"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:35",
+                "observation_id": "093b82355d81e7a491d1bb2b17a0048171e1d9b7c59990eb7f8d35d4126de2a9",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 43,
+                      "end": 52,
+                      "region": null
+                    },
+                    "raw": "NSN→AKL"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "origin.local_date",
+            "knowledge": "PRESENT",
+            "value": "2030-12-22",
+            "observations": [
+              {
+                "path": "origin.local_date",
+                "raw": "2030-12-22",
+                "normalized": "2030-12-22",
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:53:10"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:35",
+                "observation_id": "cbe0ceba8eacf24582e7d1f8c8fb99ffbd70b8feb8828d30b52c0bb048289559",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 53,
+                      "end": 63,
+                      "region": null
+                    },
+                    "raw": "2030-12-22"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "candidateId": "f7f183ed-8fef-8af7-ab92-eeb4d61e355d",
+        "observationTokens": ["item:ca13b000-0000-4000-8000-000000000003:0"],
+        "fields": [
+          {
+            "path": "transport_subtype",
+            "knowledge": "PRESENT",
+            "value": "FLIGHT",
+            "observations": [
+              {
+                "path": "transport_subtype",
+                "raw": "NZ123",
+                "normalized": "FLIGHT",
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:0:5"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:0",
+                "observation_id": "b4df27759318746f7615b0b0ea2a56b4ee51813a248cf4ee7bbd150b8cf4a8e3",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 0,
+                      "end": 5,
+                      "region": null
+                    },
+                    "raw": "NZ123"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "service",
+            "knowledge": "PRESENT",
+            "value": {
+              "service_key": "service",
+              "transport_subtype": "FLIGHT",
+              "attribution": "UNSPECIFIED",
+              "operator_namespace": "IATA_AIRLINE",
+              "operator_issuer": "IATA",
+              "operator_value": "NZ",
+              "operator_literal": "NZ",
+              "service_number": "123",
+              "service_literal": "NZ123",
+              "codeshare_operating_key": null
+            },
+            "observations": [
+              {
+                "path": "service",
+                "raw": "NZ123",
+                "normalized": {
+                  "service_key": "service",
+                  "transport_subtype": "FLIGHT",
+                  "attribution": "UNSPECIFIED",
+                  "operator_namespace": "IATA_AIRLINE",
+                  "operator_issuer": "IATA",
+                  "operator_value": "NZ",
+                  "operator_literal": "NZ",
+                  "service_number": "123",
+                  "service_literal": "NZ123",
+                  "codeshare_operating_key": null
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:0:5"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:0",
+                "observation_id": "7164b3dc2a486611083622cdc0f2aa941e3f73580d9ba2fbb9aa9971c719af48",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 0,
+                      "end": 5,
+                      "region": null
+                    },
+                    "raw": "NZ123"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "origin.local_time",
+            "knowledge": "PRESENT",
+            "value": {
+              "value": "09:00",
+              "precision": -1,
+              "quality": "EXACT"
+            },
+            "observations": [
+              {
+                "path": "origin.local_time",
+                "raw": "dep=09:00",
+                "normalized": {
+                  "value": "09:00",
+                  "precision": -1,
+                  "quality": "EXACT"
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:27:9"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:0",
+                "observation_id": "c3b6db9082b52e82270091c0f18a4f5269bc931472b90ea2c2f678a684a0df4f",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 27,
+                      "end": 36,
+                      "region": null
+                    },
+                    "raw": "dep=09:00"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "origin.airport",
+            "knowledge": "PRESENT",
+            "value": {
+              "namespace": "IATA_AIRPORT",
+              "value": "AKL"
+            },
+            "observations": [
+              {
+                "path": "origin.airport",
+                "raw": "AKL→NSN",
+                "normalized": {
+                  "namespace": "IATA_AIRPORT",
+                  "value": "AKL"
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:6:9"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:0",
+                "observation_id": "3347498fa76a1ed565f91309584cf930ea5fadc93b848233bac056c576e557cc",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 6,
+                      "end": 15,
+                      "region": null
+                    },
+                    "raw": "AKL→NSN"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "destination.airport",
+            "knowledge": "PRESENT",
+            "value": {
+              "namespace": "IATA_AIRPORT",
+              "value": "NSN"
+            },
+            "observations": [
+              {
+                "path": "destination.airport",
+                "raw": "AKL→NSN",
+                "normalized": {
+                  "namespace": "IATA_AIRPORT",
+                  "value": "NSN"
+                },
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:6:9"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:0",
+                "observation_id": "f6a9c321c2d3a2af36a173315cecf90eeb8687dc46f983b1d2452bb29d025bbc",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 6,
+                      "end": 15,
+                      "region": null
+                    },
+                    "raw": "AKL→NSN"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "path": "origin.local_date",
+            "knowledge": "PRESENT",
+            "value": "2030-12-14",
+            "observations": [
+              {
+                "path": "origin.local_date",
+                "raw": "2030-12-14",
+                "normalized": "2030-12-14",
+                "fragment_ids": ["f:ca13b000-0000-4000-8000-000000000003:16:10"],
+                "uncertainty": [],
+                "item_token": "item:ca13b000-0000-4000-8000-000000000003:0",
+                "observation_id": "53240a867db54bec89c4a1fbc3a64afe4f9cac1627ca1d16a3a379160a31b00c",
+                "evidence": [
+                  {
+                    "pin": {
+                      "id": "ca13b000-0000-4000-8000-000000000003",
+                      "source_id": "ca13b000-0000-4000-8000-000000000001",
+                      "material_revision": 1,
+                      "representation_id": "ca13b000-0000-4000-8000-000000000002",
+                      "payload_sha256": "603d91405d0f5ca2faf8eedb3b633413a8d7a5ab6df29e14ecf136ba7f3939aa",
+                      "byte_count": 73,
+                      "observed_source_row_revision": 1,
+                      "historical_selection": false
+                    },
+                    "locator": {
+                      "input_id": "ca13b000-0000-4000-8000-000000000003",
+                      "kind": "TEXT_SPAN",
+                      "page": null,
+                      "start": 16,
+                      "end": 26,
+                      "region": null
+                    },
+                    "raw": "2030-12-14"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "coverage": [
+      {
+        "input_id": "ca13b000-0000-4000-8000-000000000003",
+        "status": "PROCESSED",
+        "item_tokens": [
+          "item:ca13b000-0000-4000-8000-000000000003:0",
+          "item:ca13b000-0000-4000-8000-000000000003:35"
+        ],
+        "ignored": [],
+        "code": null,
+        "unmapped": []
+      },
+      {
+        "input_id": "ca13b000-0000-4000-8000-000000000013",
+        "status": "PROCESSED",
+        "item_tokens": ["item:ca13b000-0000-4000-8000-000000000013:0"],
+        "ignored": [],
+        "code": null,
+        "unmapped": []
+      }
+    ],
+    "deferred": [],
+    "unprocessedInputIds": []
+  }
+}
