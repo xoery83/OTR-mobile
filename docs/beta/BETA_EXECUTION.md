@@ -2,13 +2,13 @@
 
 Iteration starts 2026-10-13 NZDT. [STATUS](BETA_STATUS.md) is the current evidence snapshot; [DECISIONS](BETA_DECISIONS.md) controls authority. Earlier queue sections below “Prior serial integration receipt” are historical.
 
-## Current execution queue after source Push72 — 2026-10-14 NZDT
+## Current execution queue after source Push75 — 2026-10-14 NZDT
 
 Source retains sole main/PG/SQLite/records writer. Security by Outcome and Simplicity govern ordinary work: preserve actor/Trip/private/financial outcomes, reuse owning contracts/helpers, and finish the smallest complete user path rather than adding uncalled ports.
 
 - Protected runtime: approved revised finite schema is installed and read back CLOSED/NOLOGIN/empty. No further schema query/replay is needed. Next runtime prerequisites are deployed optional provider/build evidence, a lawful dedicated principal/connection and internal TLS, plus an explicit finite activation contract. Existing role guards reject LOGIN; schema installation does not authorize provisioning, deployment or activation. Preserve original immutable SQL and successful inert prefix.
 - Documents: the normal online ITEM-current-right→verified bytes→last current-right→ephemeral system open/share slice and narrow DayFeed/catalog caller are frozen at762e, with Source bounded function peer b360 after final staged-file hash repair; UI/device and current positive runtime remain unverified. No offline lease, Doc101 activation, second store or permission inference. Current positive runtime remains NV.
-- Reference/navigation: Ref16 data QA remains I70. Actual actor-qualified LOCAL Trip100/MEMORY16 immutable artifact was normally imported once on A1A; d220 proves MyTrips/Home/selected Day/P3 inline detail/Back only, P1 full interaction partial and seven unresolved gaps. Core normalnav19 peerfb293 is PASS; next sole Visual lease applies exact currentMain1c baseline plus19 reviewed paths, uses existing data without Apply/TEMP/clock, verifies consumed modules, takes minimum targeted P1/P456/Back checks and restores currentMain. No whole16/Hosted/offline/three-role readiness.
+- Reference/navigation: finite P1/P3 subset9a26/independent59fe is I74 at9335310 (main80/5). Existing normal Reference rows remain; no reApply/TEMP/clock. Cumulative19/P456 is held: P4 Browse rows only, USER_CHANGED stopped Pickup interaction, P5/P6 NV. P1 normal Focus/Immersive/Close context evidence9ee03 plus P3d220 is bounded; full16/cold/offline/Hosted remain NV. Next QA starts/restores exact approved Main858 baseline, not older4b/1c/P1b candidates.
 - Dispatch: earlier agent-thread-limit rejections occurred at full concurrency. QA reactivation subsequently succeeded; there is no current persistent dispatch block. Continue active lanes and preserve exact seals/leases for explicit resume.
 - Unified QA: latest Reference-first standing permits targeted base/defect/permission Native checks and the ready normal MyTrips→ReferenceHome→Day→Focus→Immersive smoke. Broad matrices remain deferred until normal data/navigation and Owner basic feedback. Retain old verdicts; no unQA UI intake or premature Reference READY. SQLite62/Coast/account remain preserved.
 
@@ -27,10 +27,20 @@ The original Experience Builder is the single shared UI/catalog/navigation write
 
 ### Active Capture Entry/Composer queue — WP-CP-UX-01A / 01B, 2026-10-14
 
-- WP-CP-UX-01A: Owner-approved Entry through pre-submit, exact source CP-UX-01 Delta; helper319f/b814 I72. Experience single UI author owns authenticated same-instance Capture host/composer/direct Files/Photos, retained exact Account/nullableTrip drafts, immutable unadded-text-once roster and confirmation Clear. Caller/function/targeted Native remain separate. Current unassigned route uses tripPrior:null; no silent lastTrip or Guest adoption.
+- WP-CP-UX-01A: helper319f/b814 I72; authenticated UI0853 submitted-roster defect was repaired by b1ab/Source3c0d (20/2). Existing C3 owns submitted selections/current retry, not a restored new draft. Bounded Native505d function path passed, but actual keyboard safe-area/title/footer geometry was repaired structurally by e9/ab77 (20/2); current08e+8 e9 targeted keyboard geometry QA is pending before UI intake. Unassigned tripPrior:null, same-host memory only; no guest/cold/Trip association or CP02 expansion.
 - WP-CP-UX-01B: truthful Email Forward/mailbox/AI readiness only; no producer means Unavailable, never fake Connected or provider authorization.
 
-CP-UX-02 post-Submit processing/History/Review/admission/custody is excluded. CP §8 grants no migrations, sync model or ImportAuthority. Magic/Camera/Clipboard cannot be relabelled as Files/Photos to bypass current durable provenance; legal Submit remains PARTIAL. Source reviews only new helper/caller differences; no helper/UI scope count or full user-readiness claim.
+CP-UX-02 is a separately approved queue below; current CP01 helper/UI does not implement its post-Submit lifecycle. CP §8 grants no migrations, sync model or ImportAuthority. Magic/Camera/Clipboard cannot be relabelled as Files/Photos to bypass current durable provenance; legal Submit remains PARTIAL. Source reviews only new helper/caller differences; no helper/UI scope count or full user-readiness claim.
+
+Owner QA operation rule (2026-10-14): CaptureKeyboard stays OFF for non-text actions, mouse/screenshots, waiting and SAFE. Enable only for an actual Simulator text-input atomic step, then finally OFF after completion/failure/USER_CHANGED. Latest505d final OFF; one Owner manual observation assist this cycle, historical count not inferred. A new observation window is not permission to keep the keyboard captured.
+
+### Owner-approved independent CP submission queue — WP-CP-UX-02A/B/C, 2026-10-14
+
+- WP-CP-UX-02A: same Capture sheet Submit→actual existing C3 durable intake/Progress; multiple independent stable batches, leave/reopen same identity, truthful capability and seconds from persisted created/accepted events. Close never cancels submitted Activity. I75 only projects recorded normal C2 metadata (46/3 main checks); the same-sheet caller is separately coding, not integrated. acceptedAt is an input acceptance record, not retained originals or canonical outcomes; unknown processing history/Trip scope remains unavailable. Proceed independently of B/C, while preserving CP01 keyboard fix priority and actual Files/Photos provenance limits.
+- WP-CP-UX-02B: only owning canonical admission/create/update receipts qualify batch Results category counts, recorded-time sorting and lawful deep links. Inputs/Candidates are not outcomes; absent producer stays unavailable.
+- WP-CP-UX-02C: owning Updates/Docs/readstate/notifications dependencies. Badge projects currentTrip+Personal: unread actionable red takes precedence over unread completed green, no duplicates after attribution. Mark All Read affects only currently selected Updates scope and never resolves business state. No new push service/permission/provider or Review engine is implied.
+
+Source CP-UX-02 Delta was fully read (20 cases). Approved design is separate from implementation/runtime; it does not change sealed migrations/CoreAdmission/RLS/Hosted/Auth/SQL/Push/provenance gates. No fabricated processing when current C3 reports NOT_INSTALLED or timestamps from UI/planned dates. Ordinary Results has no generic AddMore; supporting evidence/recovery keeps exact owning linkage.
 
 ### Historical maintenance pause and exact resume order — superseded by explicit Owner resume
 

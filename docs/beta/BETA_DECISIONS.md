@@ -16,7 +16,15 @@ Actions require actual owning capabilities and forms. Day dates are weak context
 
 Source: `/Users/xoery/Downloads/OTR_CP_UX_01_CAPTURE_ENTRY_COMPOSER_CONNECTIONS_PRODUCT_DESIGN_DELTA_2026-10-14.md`, fully read. WP-CP-UX-01A covers Entry/pre-submit composer and exact Account/nullableTrip draft restoration; WP-CP-UX-01B covers truthful connection states. Close retains; confirmed Clear empties only unsubmitted tray/editor and stays open. Reliable native identity/revision may deduplicate selections; filenames do not. Valid unadded text is included once in an immutable prospective roster.
 
-Owner explicitly limits this Delta to Entry/pre-submit; §8 excludes new migrations/sync/ImportAuthority. Existing C2 Files/Photos durable Submit stays authoritative. Magic text remains draft-only; Camera/Clipboard/Guest-to-Account adoption and provider mechanisms are not invented. CP-UX-02 post-Submit flow is excluded. Partial Submit capability is an owning implementation limit, not a new Owner-only gate for ordinary pre-submit UI. Function/helper intake does not grant Native/UX/runtime acceptance.
+Owner explicitly limits this Delta to Entry/pre-submit; §8 excludes new migrations/sync/ImportAuthority. Existing C2 Files/Photos durable Submit stays authoritative. Magic text remains draft-only; Camera/Clipboard/Guest-to-Account adoption and provider mechanisms are not invented. CP-UX-02 is excluded from CP01 and now independently approved below. Partial Submit capability is an owning implementation limit, not a new Owner-only gate for ordinary pre-submit UI. Function/helper intake does not grant Native/UX/runtime acceptance.
+
+### Owner-approved CP submission/activity lifecycle — 2026-10-14
+
+Source: `/Users/xoery/Downloads/OTR_CP_UX_02_CAPTURE_SUBMISSION_ACTIVITY_LIFECYCLE_PRODUCT_DESIGN_DELTA_2026-10-14.md`, fully read; typed Owner R0/R1 implementation approval covers CAPTURE-ACTIVITY01/02/04R/06/07, NOTIFY01–03, REVIEW01/02 and RECOVERY01. Register independent WP-CP-UX-02A/B/C. Submit transforms the same sheet into real durable Activity; independent batches retain separate identity/Results, Close≠cancel, actual persisted times display seconds.
+
+Canonical outcome tags/counts/deep links require real owning create/update/admission receipts. Needs Attention preserves semantic Review vs non-auto-recoverable failure; waits/automatic retries excluded. CurrentTrip+Personal unread red overrides green; selected-scope MarkAllRead is a different projection and never resolves Review. Mature Review does not auto-open a Form; supporting evidence/Retry retains exact linkage, ordinary Results no generic AddMore. No fake processing, outcomes, dates, provider, badge or push.
+
+Twenty acceptance cases are approved design, not capability proof. Sealed database contracts/CoreAdmission/RLS/provider/newReview engine and existing Hosted/Auth/newSQL/provenance/Push gates are unchanged. A may use existing C3 without waiting for absent B/C owners; current CP01 keyboard fix remains priority.
 
 ### Installed schema amendment — source Push68 / 2026-10-14
 
