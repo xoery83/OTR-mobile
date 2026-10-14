@@ -17,6 +17,12 @@ vi.mock("@/data/auth/accountGeneration", () => ({
 }));
 vi.mock("@/features/day-feed/TripViewContext", () => ({ useTripView: () => state }));
 vi.mock("@/ui/controls", () => ({ UiButton: "Button" }));
+vi.mock("react-native", () => ({
+  Pressable: "Button",
+  StyleSheet: { create: (s: unknown) => s },
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: "Icon" }));
+vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({ accent: "accent" }) }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 beforeEach(() => {
@@ -32,6 +38,12 @@ it("opens the My Trips preset without silently binding a working Trip", () => {
     params: { entry: "MY_TRIPS" },
   });
   expect(state.view.tripId).toBe("other");
+});
+it("the icon entry retains its localized accessible task name", () => {
+  const entry = TripSearchEntry({ entry: "MY_TRIPS" })!;
+  expect(entry.props.accessibilityRole).toBe("button");
+  expect(entry.props.accessibilityLabel).toBe("comprehensiveSearch.title");
+  expect(entry.props.children.props.name).toBe("magnifyingglass");
 });
 it("uses explicit Home inspection target without switching the working Trip", () => {
   state.view = { tripId: "working", generation: 1 };

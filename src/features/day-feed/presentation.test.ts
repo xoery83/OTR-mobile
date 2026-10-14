@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import {
   boundaryZone,
+  explicitBoundaryZones,
   viewContext,
   flightPresentation,
   eventClock,
@@ -9,6 +10,19 @@ import {
 } from "./presentation";
 import { placeNow } from "@/domain/trip/experience/nowIndicator";
 import { event, projection } from "./faroeNegative.test.fixtures";
+
+it("explicit zone choices retain unresolved authored zones without inferring a default or comparable clock", () => {
+  const e = event("a", "SPAN", "2026-10-10T00:00:00Z", "2026-10-10T01:00:00Z");
+  e.boundaries[0].zone_id = "Asia/Tokyo";
+  e.boundaries[0].instant = null;
+  e.boundaries[1].zone_id = "Europe/Paris";
+  const before = JSON.stringify(e);
+  expect(explicitBoundaryZones(projection(e))).toEqual(["Asia/Tokyo", "Europe/Paris"]);
+  expect(JSON.stringify(e)).toBe(before);
+  e.boundaries[0].zone_id = "+09:00";
+  e.boundaries[1].zone_id = "Mars/Olympus";
+  expect(explicitBoundaryZones(projection(e))).toEqual([]);
+});
 
 it("requires explicit date and named zone, including leap and invalid contexts", () => {
   expect(viewContext("2024-02-29", "Pacific/Auckland").zone).toBe("Pacific/Auckland");

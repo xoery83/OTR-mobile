@@ -12,13 +12,13 @@ import {
 } from "@/data/repositories/tripDayFeedRepository";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton } from "@/ui/controls";
-import { UiTextInput } from "@/ui/forms";
-import { t } from "@/ui/locale";
+import { UiChoiceChip, UiTextInput } from "@/ui/forms";
+import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { boundaryZone, viewContext } from "./presentation";
+import { boundaryZone, explicitBoundaryZones, viewContext } from "./presentation";
 import { DayFeed } from "./DayFeed";
 import { wholeTripCalendarDates } from "./tripListPresentation";
 import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
@@ -185,6 +185,11 @@ function TripContent({ today = false }: { today?: boolean }) {
     router.navigate("/");
   };
   const enterDay = () => {
+    if (
+      generation !== getAccountGeneration() ||
+      visibleTrip?.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE"
+    )
+      return;
     try {
       const context = viewContext(date, zone);
       if (!visibleTrip?.observed) return;
@@ -343,6 +348,29 @@ function TripContent({ today = false }: { today?: boolean }) {
       ? { ...homeItem, read: visibleTrip }
       : null;
   const selected = today ? view : !home && view?.tripId === requested ? view : null;
+  const homeContextCurrent =
+    homeSnapshot &&
+    visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
+    visibleTrip.observed.projection.version === 2 &&
+    homeSnapshot.scope.accountId === visibleTrip.scope.accountId &&
+    homeSnapshot.scope.generation === generation &&
+    homeSnapshot.epoch === visibleTrip.observed.projection.source.epoch;
+  const firstKnownDate =
+    homeSnapshot?.candidateDays[0] ??
+    homeSnapshot?.trip?.startDate ??
+    homeSnapshot?.trip?.endDate;
+  const dateChoices =
+    homeContextCurrent && firstKnownDate
+      ? wholeTripCalendarDates(
+          homeSnapshot!.trip,
+          homeSnapshot!.candidateDays,
+          firstKnownDate,
+        )
+      : [];
+  const zoneChoices =
+    visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
+      ? explicitBoundaryZones(visibleTrip.observed.projection)
+      : [];
   const calendarDates =
     selected &&
     homeSnapshot &&
@@ -466,6 +494,19 @@ function TripContent({ today = false }: { today?: boolean }) {
                     />
                     <ScrollView contentContainerStyle={styles.content}>
                       <Text style={styles.meta}>{t("dayFeed.date")}</Text>
+                      {dateChoices.length ? (
+                        <ScrollView horizontal contentContainerStyle={styles.choices}>
+                          {dateChoices.map((choice) => (
+                            <UiChoiceChip
+                              compact
+                              key={choice}
+                              label={formatUiDate(new Date(`${choice}T12:00:00`))}
+                              selected={date === choice}
+                              onPress={() => setDate(choice)}
+                            />
+                          ))}
+                        </ScrollView>
+                      ) : null}
                       <UiTextInput
                         accessibilityLabel={t("dayFeed.date")}
                         value={date}
@@ -473,6 +514,17 @@ function TripContent({ today = false }: { today?: boolean }) {
                         autoCapitalize="none"
                       />
                       <Text style={styles.meta}>{t("dayFeed.zone")}</Text>
+                      <View style={styles.choices}>
+                        {zoneChoices.map((choice) => (
+                          <UiChoiceChip
+                            compact
+                            key={choice}
+                            label={choice}
+                            selected={zone === choice}
+                            onPress={() => setZone(choice)}
+                          />
+                        ))}
+                      </View>
                       <UiTextInput
                         accessibilityLabel={t("dayFeed.zone")}
                         value={zone}
@@ -531,6 +583,7 @@ function TripContent({ today = false }: { today?: boolean }) {
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     modal: { flex: 1, backgroundColor: c.background },
+    choices: { flexDirection: "row", gap: visual.space.heading },
     root: { flex: 1, backgroundColor: c.background },
     content: { padding: visual.space.page, gap: visual.space.heading },
     header: { paddingHorizontal: visual.space.page, paddingTop: visual.space.heading },

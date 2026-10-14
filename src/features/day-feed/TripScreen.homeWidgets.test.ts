@@ -80,11 +80,14 @@ vi.mock("@/data/auth/accountGeneration", () => ({
 vi.mock("@/data/repositories/tripDayFeedRepository", () => ({
   readTripDayFeed: async () => ({ trip: state.read }),
 }));
-vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
+vi.mock("@/ui/locale", () => ({
+  t: (key: string) => key,
+  formatUiDate: (value: Date) => value.toISOString().slice(0, 10),
+}));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
 vi.mock("@/ui/controls", () => ({ UiButton: "Button" }));
-vi.mock("@/ui/forms", () => ({ UiTextInput: "Input" }));
+vi.mock("@/ui/forms", () => ({ UiTextInput: "Input", UiChoiceChip: "Choice" }));
 vi.mock("./LocalTripWorkspace", () => ({ LocalTripWorkspace: "Workspace" }));
 vi.mock("./coreExperienceRenderer", () => ({
   createCoreExperienceRenderer: () => undefined,
@@ -486,3 +489,51 @@ it("normal Home hides internal accepted IDs and defers date inputs to the Day ac
 });
 
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));
+
+function choices(node: ReactNode): any[] {
+  if (!isValidElement(node)) return [];
+  if (node.type === "Choice") return [node.props];
+  return Children.toArray((node.props as { children?: ReactNode }).children).flatMap(
+    choices,
+  );
+}
+function buttons(node: ReactNode): any[] {
+  if (!isValidElement(node)) return [];
+  if (node.type === "Button") return [node.props];
+  return Children.toArray((node.props as { children?: ReactNode }).children).flatMap(
+    buttons,
+  );
+}
+it("explicit date and named-zone choices never move the Day bookmark before Open Day", async () => {
+  state.snapshot.trip = { startDate: "2027-02-01", endDate: "2027-02-12" };
+  state.snapshot.candidateDays = ["2027-02-01", "2027-02-12"];
+  state.result.observed.projection.events = [
+    { boundaries: [{ zone_id: "Asia/Tokyo", instant: null }] },
+  ];
+  const options = choices(await loaded());
+  expect(options).toHaveLength(13);
+  options[5].onPress();
+  options.find((option) => option.label === "Asia/Tokyo").onPress();
+  expect(state.select).not.toHaveBeenCalled();
+  expect(state.params).not.toHaveBeenCalled();
+  expect(state.saveReading).not.toHaveBeenCalled();
+  expect(choices(render()).filter((option) => option.selected)).toHaveLength(2);
+  const opens = buttons(render()).filter((button) => button.label === "dayFeed.openDay");
+  opens[opens.length - 1].onPress();
+  expect(state.select).toHaveBeenCalledWith({
+    tripId: reference,
+    date: "2027-02-06",
+    zone: "Asia/Tokyo",
+    generation: 5,
+  });
+  expect(state.saveReading).not.toHaveBeenCalled();
+  state.params.mockClear();
+  state.liveGeneration = 6;
+  opens[opens.length - 1].onPress();
+  expect(state.params).not.toHaveBeenCalled();
+  state.liveGeneration = 5;
+  state.snapshot.scope.accountId = "foreign";
+  state.appActive!();
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(choices(render()).filter((option) => option.label !== "Asia/Tokyo")).toEqual([]);
+});

@@ -110,3 +110,19 @@ export function viewContext(date: string, zone: string) {
   localCalendarDate("2000-01-01T00:00:00Z", zone);
   return { date, zone };
 }
+// Explicit presentation choices only: an authored named zone is not a Trip-time authority.
+export function explicitBoundaryZones(projection: Pick<DayProjection, "events">) {
+  const zones = new Set<string>();
+  for (const event of projection.events) {
+    for (const boundary of event.boundaries) {
+      if (!boundary.zone_id) continue;
+      try {
+        viewContext("2000-01-01", boundary.zone_id);
+        zones.add(boundary.zone_id);
+      } catch {
+        // Unknown/invalid zones do not become a selectable presentation context.
+      }
+    }
+  }
+  return [...zones].sort();
+}

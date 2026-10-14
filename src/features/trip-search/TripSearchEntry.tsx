@@ -5,7 +5,9 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { useTripView } from "@/features/day-feed/TripViewContext";
-import { UiButton } from "@/ui/controls";
+import { Pressable, StyleSheet } from "react-native";
+import { AppIcon } from "@/components/AppIcon";
+import { useUiTheme } from "@/ui/theme";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 
@@ -17,6 +19,7 @@ export function TripSearchEntry({
   tripId?: string;
 }) {
   useUiLocale();
+  const colors = useUiTheme();
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
@@ -33,9 +36,10 @@ export function TripSearchEntry({
           : undefined;
   if (entry !== "MY_TRIPS" && !target) return null;
   return (
-    <UiButton
-      label={t("comprehensiveSearch.title")}
-      variant="text"
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t("comprehensiveSearch.title")}
+      style={styles.target}
       onPress={() => {
         if (generation !== getAccountGeneration()) return;
         router.push({
@@ -43,6 +47,11 @@ export function TripSearchEntry({
           params: { entry, ...(target ? { tripId: target } : {}) },
         });
       }}
-    />
+    >
+      <AppIcon name="magnifyingglass" color={colors.accent} />
+    </Pressable>
   );
 }
+const styles = StyleSheet.create({
+  target: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
+});
