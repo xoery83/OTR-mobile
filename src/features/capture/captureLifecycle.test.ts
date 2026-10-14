@@ -9,6 +9,7 @@ import {
   beginAccountTransition,
   endAccountTransition,
 } from "@/data/auth/accountRequestContext";
+import { createCaptureStaging } from "./captureStaging";
 import type { CaptureStagingSnapshot } from "./captureStaging";
 
 // Existing hook/event harness pattern: execute the production lifecycle without a new renderer.
@@ -23,6 +24,8 @@ const ui = vi.hoisted(() => ({
   photos: vi.fn(),
   session: vi.fn(),
   navigate: vi.fn(),
+  back: vi.fn(),
+  canGoBack: vi.fn(),
   setParams: vi.fn(),
   jobId: undefined as string | undefined,
   reopen: vi.fn(),
@@ -70,7 +73,12 @@ const navigation = { setParams: ui.setParams };
 vi.mock("expo-router", () => ({
   useNavigation: () => navigation,
   useLocalSearchParams: () => ({ jobId: ui.jobId }),
-  router: { navigate: ui.navigate, push: vi.fn() },
+  router: {
+    navigate: ui.navigate,
+    push: vi.fn(),
+    back: ui.back,
+    canGoBack: ui.canGoBack,
+  },
   useFocusEffect(callback: () => (() => void) | void) {
     if (ui.focus !== callback) {
       ui.focusCleanup?.();
@@ -355,4 +363,205 @@ it("route blur clears historical deep-link params; next ordinary focus opens a f
   renderRoute();
   await vi.waitFor(() => expect(renderRoute().type).toBe(CaptureContent));
   expect(renderRoute().props.jobId).toBeUndefined();
+});
+
+vi.mock("./CaptureComposer", () => ({ CaptureComposer: () => null }));
+
+it("mounted retained composer includes editor once, blocks unsupported submission, and Close restores the same authenticated draft", async () => {
+  const owner = { accountId: "synthetic-admitted", tripPrior: null };
+  const staging = createCaptureStaging(
+    async () => [],
+    () => true,
+    owner,
+  );
+  const draw = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      draftStaging: staging,
+    }).props as any;
+  };
+  let composer = draw();
+  ui.cleanup = ui.effect?.() ?? null;
+  composer = draw();
+  composer.onText("Original travel note");
+  composer = draw();
+  expect(composer.count).toBe(1);
+  composer.onSubmit();
+  await Promise.resolve();
+  expect(ui.createSession).not.toHaveBeenCalled();
+  composer.onAddText();
+  composer = draw();
+  expect(composer.count).toBe(1);
+  expect(composer.snapshot.editorText).toBe("");
+  expect(composer.snapshot.items[0].source).toBe("magic_input");
+  const staleClear = composer.onClear;
+  composer.onClose();
+  ui.cleanup?.();
+  ui.cleanup = null;
+  expect(staging.getDraftSnapshot().items).toHaveLength(0);
+  expect(staging.resume({ accountId: "other", tripPrior: null }, () => true)).toBe(false);
+  expect(staging.resume(owner, () => true)).toBe(true);
+  ui.slots = [];
+  composer = draw();
+  ui.cleanup = ui.effect?.() ?? null;
+  expect(draw().count).toBe(1);
+  staleClear();
+  expect(draw().count).toBe(1);
+  composer.onClear();
+  expect(draw().count).toBe(0);
+  expect(ui.navigate).toHaveBeenCalledOnce();
+});
+
+it("normal route rechecks auth and restores the same unassigned draft after blur without adopting another account", async () => {
+  ui.session.mockResolvedValue({ identity: { userId: "A" } });
+  renderRoute();
+  await vi.waitFor(() => expect(renderRoute().type).toBe(CaptureContent));
+  const first = renderRoute().props.draftStaging;
+  ui.canGoBack.mockReturnValue(true);
+  renderRoute().props.onCancel();
+  expect(ui.back).toHaveBeenCalledOnce();
+  expect(ui.navigate).not.toHaveBeenCalled();
+  first.setEditorText("Account A draft");
+  first.hide();
+  ui.focusCleanup!();
+  ui.focus = null;
+  renderRoute();
+  await vi.waitFor(() => expect(renderRoute().type).toBe(CaptureContent));
+  expect(renderRoute().props.draftStaging).toBe(first);
+  expect(first.getDraftSnapshot().editorText).toBe("Account A draft");
+  const transition = await beginAccountTransition();
+  ui.session.mockResolvedValue({ identity: { userId: "B" } });
+  renderRoute();
+  endAccountTransition(transition);
+  await vi.waitFor(() => expect(renderRoute().type).toBe(CaptureContent));
+  const second = renderRoute().props.draftStaging;
+  expect(second).not.toBe(first);
+  expect(second.getDraftSnapshot().editorText).toBe("");
+  expect(second.getDraftSnapshot().items).toHaveLength(0);
+});
+
+it("opening a saved Job uses the existing route invocation without clearing the retained pre-submit draft", () => {
+  const staging = createCaptureStaging(
+    async () => [],
+    () => true,
+    { accountId: "A", tripPrior: null },
+  );
+  const open = vi.fn();
+  const draw = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      draftStaging: staging,
+      onReopenJob: open,
+    }).props as any;
+  };
+  draw();
+  ui.cleanup = ui.effect?.() ?? null;
+  staging.setEditorText("Keep original draft");
+  draw().onActivity();
+  draw().onOpenJob("saved-job");
+  expect(open).toHaveBeenCalledWith("saved-job");
+  expect(staging.getDraftSnapshot().editorText).toBe("Keep original draft");
+  expect(ui.reopen).not.toHaveBeenCalled();
+});
+
+it("reviewer: a submitted Files roster is not restored as a new unsubmitted draft after Close", async () => {
+  const owner = { accountId: "A", tripPrior: null };
+  const staging = createCaptureStaging(
+    async () => [
+      {
+        source: "files" as const,
+        temporaryUri: "file://selected.pdf",
+        name: "selected.pdf",
+        typeHint: "application/pdf",
+      },
+    ],
+    () => true,
+    owner,
+  );
+  const draw = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      draftStaging: staging,
+    }).props as any;
+  };
+  const model = {
+    batch: { jobId: "existing-owning-job" },
+    inputs: [],
+    counts: { selected: 1, accepted: 1, failed: 0, pending: 0 },
+    availableActions: { canAddMore: true, reacquireInputIds: [] },
+  };
+  ui.submit.mockImplementation(
+    async (_items: unknown, progress: (m: unknown) => void) => {
+      progress(model);
+    },
+  );
+  draw();
+  ui.cleanup = ui.effect!() ?? null;
+  draw().onFiles();
+  await vi.waitFor(() => expect(draw().count).toBe(1));
+  draw().onSubmit();
+  await vi.waitFor(() => expect(draw().model).toEqual(model));
+  expect(ui.createSession).toHaveBeenCalledOnce();
+  draw().onCancel();
+  ui.cleanup?.();
+  ui.cleanup = null;
+  expect(staging.resume(owner, () => true)).toBe(true);
+  ui.slots = [];
+  draw();
+  ui.cleanup = ui.effect!() ?? null;
+  expect(draw().count).toBe(0);
+});
+
+it("retained C3 failed acknowledgement retries the same owning session, while cleanup cannot reoffer its roster as a fresh batch", async () => {
+  const owner = { accountId: "A", tripPrior: null };
+  const staging = createCaptureStaging(
+    async () => [
+      {
+        source: "files" as const,
+        temporaryUri: "file://one",
+        name: "one.pdf",
+        typeHint: "application/pdf",
+      },
+    ],
+    () => true,
+    owner,
+  );
+  const draw = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      draftStaging: staging,
+    }).props as any;
+  };
+  ui.submit
+    .mockRejectedValueOnce(new Error("SYNTHETIC_UNKNOWN_ACK"))
+    .mockResolvedValueOnce(undefined);
+  draw();
+  ui.cleanup = ui.effect!() ?? null;
+  draw().onFiles();
+  await vi.waitFor(() => expect(draw().count).toBe(1));
+  draw().onSubmit();
+  await vi.waitFor(() => expect(draw().submitError).toBe(true));
+  expect(staging.getSnapshot().items).toHaveLength(0);
+  expect(draw().snapshot.items).toHaveLength(1);
+  draw().onSubmit();
+  await vi.waitFor(() => expect(ui.submit).toHaveBeenCalledTimes(2));
+  await vi.waitFor(() => expect(draw().busy).toBe(false));
+  expect(ui.createSession).toHaveBeenCalledOnce();
+  expect(ui.submit.mock.calls[1][0]).toEqual(ui.submit.mock.calls[0][0]);
+  ui.cleanup!();
+  ui.cleanup = null;
+  expect(staging.resume(owner, () => true)).toBe(true);
+  ui.slots = [];
+  draw();
+  ui.cleanup = ui.effect!() ?? null;
+  expect(draw().count).toBe(0);
+  expect(ui.createSession).toHaveBeenCalledOnce();
 });

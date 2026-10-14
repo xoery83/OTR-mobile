@@ -13,6 +13,7 @@ import type {
   createDefaultCaptureRecoveryAction,
 } from "@/data/operations/defaultCaptureSubmission";
 import { CaptureActivity, captureJobTitle } from "./CaptureActivity";
+import { CaptureComposer } from "./CaptureComposer";
 import { createCaptureStaging, type CaptureStagingSnapshot } from "./captureStaging";
 
 // Hosts remount on invocation-context change. Context is a prior, never assignment.
@@ -21,14 +22,18 @@ export function CaptureContent({
   tripName,
   onCancel,
   jobId,
+  draftStaging,
+  onReopenJob,
 }: {
   isCurrent: () => boolean;
   tripName?: string;
   onCancel: () => void;
   jobId?: string;
+  draftStaging?: ReturnType<typeof createCaptureStaging>;
+  onReopenJob?: (id: string) => void;
 }) {
   const [{ staging, invocationTripName }] = useState(() => ({
-    staging: createCaptureStaging(pickCaptureMaterial, isCurrent),
+    staging: draftStaging ?? createCaptureStaging(pickCaptureMaterial, isCurrent),
     invocationTripName: tripName,
   }));
   const snapshot = useSyncExternalStore(
@@ -36,10 +41,19 @@ export function CaptureContent({
     staging.getSnapshot,
     staging.getSnapshot,
   );
+  const draft = useSyncExternalStore(
+    staging.subscribe,
+    staging.getDraftSnapshot,
+    staging.getDraftSnapshot,
+  );
+  const [duplicate, setDuplicate] = useState(false);
   const [model, setModel] = useState<CaptureJobReadModel | null>(null);
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const [submittedSelections, setSubmittedSelections] = useState<
+    readonly import("./captureStaging").StagedCaptureItem[] | null
+  >(null);
   const [reopening, setReopening] = useState(!!jobId);
   const [activity, setActivity] = useState(false);
   const [reading, setReading] = useState(!!jobId);
@@ -61,13 +75,19 @@ export function CaptureContent({
     if (current()) setModel(next);
   };
   const hide = () => {
+    if (draftStaging && !current()) return;
     active.current = false;
     ++readEpoch.current;
-    staging.cancel();
+    if (draftStaging) staging.hide();
+    else staging.cancel();
     onCancel();
   };
   const openJob = async (id: string) => {
     if (!current() || running.current) return;
+    if (draftStaging && onReopenJob) {
+      onReopenJob(id);
+      return;
+    }
     const request = ++readEpoch.current;
     const stillCurrent = () => current() && request === readEpoch.current;
     staging.cancel();
@@ -107,13 +127,26 @@ export function CaptureContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staging]);
   const submit = async () => {
-    if (!current() || running.current || snapshot.selecting || !snapshot.items.length)
+    if (
+      !current() ||
+      running.current ||
+      snapshot.selecting ||
+      !(submittedSelections ?? snapshot.items).length
+    )
       return;
+    const roster =
+      submittedSelections ?? (draftStaging ? staging.prepareSubmit() : snapshot.items);
+    if (!roster?.length || roster.some((item) => item.source === "magic_input")) return;
+    const selected = roster
+      .filter(
+        (item): item is import("./captureStaging").StagedCaptureItem =>
+          item.source !== "magic_input",
+      )
+      .map((item) => ({ ...item }));
     running.current = true;
     setBusy(true);
     setAttempted(true);
     setSubmitError(false);
-    const selected = snapshot.items.map((item) => ({ ...item }));
     session.current ??= import("@/data/operations/defaultCaptureSubmission")
       .then((api) => api.createDefaultCaptureSubmissionSession())
       .catch((error) => {
@@ -123,6 +156,11 @@ export function CaptureContent({
     try {
       const owner = await session.current;
       if (!current()) return;
+      if (draftStaging && !submittedSelections) {
+        // The existing C3 invocation now owns this frozen roster, not the pre-submit draft.
+        setSubmittedSelections(selected);
+        staging.cancel();
+      }
       await owner.submit(selected, progress);
     } catch {
       if (current()) {
@@ -197,9 +235,48 @@ export function CaptureContent({
         onHide={hide}
       />
     );
+  if (draftStaging && !attempted && !reopening && !model) {
+    const pick = async (source: "files" | "photos") => {
+      if (!current() || running.current) return;
+      setDuplicate(false);
+      const result = await staging.pick(source);
+      if (current()) setDuplicate(!!result?.duplicates);
+    };
+    return (
+      <CaptureComposer
+        snapshot={draft}
+        count={staging.prepareSubmit()?.length ?? 0}
+        tripName={invocationTripName}
+        duplicate={duplicate}
+        onClose={hide}
+        onFiles={() => void pick("files")}
+        onPhotos={() => void pick("photos")}
+        onRemove={(id) => {
+          if (current()) staging.remove(id);
+        }}
+        onText={(text) => {
+          if (current()) staging.setEditorText(text);
+        }}
+        onAddText={() => {
+          if (current()) setDuplicate(staging.addEditorText() === "duplicate");
+        }}
+        onClear={() => {
+          if (!current()) return;
+          staging.clearAllConfirmed();
+          setDuplicate(false);
+        }}
+        onSubmit={() => void submit()}
+        onActivity={() => {
+          if (current() && !draft.selecting) setActivity(true);
+        }}
+      />
+    );
+  }
   return (
     <CaptureTray
-      snapshot={snapshot}
+      snapshot={
+        submittedSelections ? { ...snapshot, items: submittedSelections } : snapshot
+      }
       model={model}
       busy={busy || reading}
       reading={reading}
@@ -233,6 +310,7 @@ export function CaptureContent({
         recoveryActions.current.clear();
         setModel(null);
         setAttempted(false);
+        setSubmittedSelections(null);
         setReopening(false);
         setSubmitError(false);
         setReadError(false);

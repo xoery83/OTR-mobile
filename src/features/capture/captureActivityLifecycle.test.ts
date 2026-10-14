@@ -165,3 +165,5 @@ it("late list/error is fenced after blur, Account A→B→A/Trip invalidation, a
     );
   }
 });
+
+vi.mock("./CaptureComposer", () => ({ CaptureComposer: () => null }));

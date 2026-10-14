@@ -1,4 +1,4 @@
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text } from "react-native";
@@ -11,6 +11,8 @@ import {
   assertAccountRequestGeneration,
   withAccountApplyGate,
 } from "@/data/auth/accountRequestContext";
+import { createCaptureStaging } from "@/features/capture/captureStaging";
+import { pickCaptureMaterial } from "@/native/capturePicker";
 import { CaptureContent } from "@/features/capture/CaptureContent";
 import { UiButton } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -19,7 +21,11 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 
-type Admission = { generation: number; accountId: string };
+type Admission = {
+  generation: number;
+  accountId: string;
+  staging: ReturnType<typeof createCaptureStaging>;
+};
 export default function CaptureRoute() {
   const { jobId } = useLocalSearchParams<{ jobId?: string }>();
   const navigation = useNavigation<{ setParams(params: { jobId?: string }): void }>();
@@ -30,11 +36,16 @@ export default function CaptureRoute() {
     getAccountGeneration,
     getAccountGeneration,
   );
+  const retained = useRef<{
+    accountId: string;
+    staging: ReturnType<typeof createCaptureStaging>;
+  } | null>(null);
   const [admission, setAdmission] = useState<Admission | null>(null);
   const [checked, setChecked] = useState<number | null>(null);
   useFocusEffect(
     useCallback(() => {
       let active = true;
+      let visibleStaging: ReturnType<typeof createCaptureStaging> | null = null;
       setAdmission(null);
       setChecked(null);
       void withAccountApplyGate(readLocalSession)
@@ -44,7 +55,24 @@ export default function CaptureRoute() {
           if (accountId) {
             const next = { accountId, generation };
             assertAccountRequestGeneration({ ...next, tripId: "" });
-            setAdmission(next);
+            const owner = { accountId, tripPrior: null };
+            const lease = () => {
+              try {
+                assertAccountRequestGeneration({ ...next, tripId: "" });
+                return next.generation === getAccountGeneration();
+              } catch {
+                return false;
+              }
+            };
+            if (retained.current?.accountId === accountId)
+              retained.current.staging.resume(owner, lease);
+            else
+              retained.current = {
+                accountId,
+                staging: createCaptureStaging(pickCaptureMaterial, lease, owner),
+              };
+            visibleStaging = retained.current.staging;
+            setAdmission({ ...next, staging: visibleStaging });
           }
           setChecked(generation);
         })
@@ -53,8 +81,9 @@ export default function CaptureRoute() {
         });
       return () => {
         active = false;
+        visibleStaging?.hide();
         setAdmission(null);
-        // Historical deep links are one invocation; ordinary return opens a fresh tray.
+        // Historical deep links are one invocation; the authenticated unsubmitted draft stays retained.
         navigation.setParams({ jobId: undefined });
       };
     }, [generation, navigation]),
@@ -75,7 +104,12 @@ export default function CaptureRoute() {
           key={`${generation}:${jobId ?? ""}`}
           jobId={typeof jobId === "string" ? jobId : undefined}
           isCurrent={isCurrent}
-          onCancel={() => router.navigate("/")}
+          draftStaging={jobId ? undefined : admission.staging}
+          onReopenJob={(id) => navigation.setParams({ jobId: id })}
+          onCancel={() => {
+            if (router.canGoBack()) router.back();
+            else router.navigate("/");
+          }}
         />
       ) : (
         <>

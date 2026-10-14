@@ -329,3 +329,5 @@ it("derived actions govern recovery; explicit forward/reverse lineage opens the 
   expect(open).toHaveBeenLastCalledWith("later-job");
   expect(recover).not.toHaveBeenCalled();
 });
+
+vi.mock("./CaptureComposer", () => ({ CaptureComposer: () => null }));
