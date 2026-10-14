@@ -1,8 +1,20 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  type TextProps,
+} from "react-native";
 import { useThemedStyles } from "./theme";
 import type { UiColors } from "./palette";
 import { visual } from "./visual";
+export function UiText(props: TextProps) {
+  const { fontScale } = useWindowDimensions();
+  // shortcut: observed native hot text sizing can retain stale measurement; remove after a host update passes hot-resize QA.
+  return <Text key={fontScale} {...props} />;
+}
 export function UiButton({
   label,
   onPress,

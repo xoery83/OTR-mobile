@@ -4,11 +4,12 @@ import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { afterEach, expect, it, vi } from "vitest";
 import { UiFoundationFixture } from "./UiFoundationFixture";
-import { UiButton } from "./controls";
+import { UiButton, UiText } from "./controls";
 import { getUiLocale, getFormatLocale, setUiLocale, t } from "./locale";
 import { uiPalette } from "./palette";
 const state = vi.hoisted(() => ({
   scheme: "light" as "light" | "dark",
+  fontScale: 1,
   input: {} as Record<string, any>,
   picker: {} as Record<string, any>,
 }));
@@ -50,7 +51,7 @@ vi.mock("react-native", async () => {
       visible ? children : null,
     StyleSheet: { create: (value: unknown) => value, flatten },
     useColorScheme: () => state.scheme,
-    useWindowDimensions: () => ({ width: 375, fontScale: 1 }),
+    useWindowDimensions: () => ({ width: 375, fontScale: state.fontScale }),
   };
 });
 vi.mock("@react-native-community/datetimepicker", () => ({
@@ -180,4 +181,17 @@ it("propagates both appearances/locales through inputs, choices and the native s
       expect(row).toContain(`background-color:${colors.surface}`);
       expect(row).toContain(t("fixture.date"));
     }
+});
+
+it("refreshes only the native text identity on hot font changes and preserves its props", () => {
+  const props = { children: "Title", onPress: vi.fn(), accessibilityLabel: "Title" };
+  state.fontScale = 1;
+  const before = UiText(props);
+  state.fontScale = 2.143;
+  const enlarged = UiText(props);
+  expect(enlarged.key).not.toBe(before.key);
+  expect(enlarged.type).toBe(before.type);
+  expect(enlarged.props).toEqual(before.props);
+  expect(enlarged.props.allowFontScaling).not.toBe(false);
+  state.fontScale = 1;
 });

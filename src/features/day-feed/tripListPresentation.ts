@@ -1,11 +1,17 @@
 import type { Trip } from "@/domain/trip/types";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 
-export type TripGroups = Readonly<{
-  active: readonly Trip[];
-  upcoming: readonly Trip[];
-  undated: readonly Trip[];
-  past: readonly Trip[];
+type TripListMetadata = Readonly<{
+  id: string;
+  startDate: string | null;
+  endDate: string | null;
+  createdAt: string | null;
+}>;
+export type TripGroups<T = Trip> = Readonly<{
+  active: readonly T[];
+  upcoming: readonly T[];
+  undated: readonly T[];
+  past: readonly T[];
 }>;
 
 const knownDate = (value: string | null): value is string => {
@@ -19,13 +25,13 @@ const knownDate = (value: string | null): value is string => {
 };
 
 // A missing or invalid bound is undated; no lifecycle state is inferred from it.
-export function groupLocalTrips(
-  trips: readonly Trip[],
+export function groupLocalTrips<T extends TripListMetadata>(
+  trips: readonly T[],
   today: string,
   acceptedTodayTripIds: ReadonlySet<string> = new Set(),
-): TripGroups {
+): TripGroups<T> {
   validateCalendarDate(today);
-  const groups: { active: Trip[]; upcoming: Trip[]; undated: Trip[]; past: Trip[] } = {
+  const groups: { active: T[]; upcoming: T[]; undated: T[]; past: T[] } = {
     active: [],
     upcoming: [],
     undated: [],
@@ -53,7 +59,8 @@ export function groupLocalTrips(
     (a, b) => a.startDate!.localeCompare(b.startDate!) || a.id.localeCompare(b.id),
   );
   groups.undated.sort(
-    (a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id),
+    (a, b) =>
+      (b.createdAt ?? "").localeCompare(a.createdAt ?? "") || a.id.localeCompare(b.id),
   );
   groups.past.sort(
     (a, b) => b.endDate!.localeCompare(a.endDate!) || a.id.localeCompare(b.id),

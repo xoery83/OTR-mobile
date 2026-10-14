@@ -163,6 +163,8 @@ export const en = {
   "myTrips.cover.mountain": "Mountain",
   "myTrips.coverFailed": "Could not save this cover. Try again.",
   "myTrips.cachedTrips": "Other Trips from your saved list",
+  "myTrips.cachedDateSummary": "Saved summary · {date}",
+  "myTrips.compactDetails": "{date} · {destination}",
   "myTrips.openCachedTrip": "Open {name} summary",
   "myTrips.cachedDetails":
     "This Trip summary is saved here. Planning details and actions are not available on this device yet.",
@@ -2235,6 +2237,8 @@ export const zhHans: Record<MessageKey, string> = {
   "myTrips.cover.mountain": "山地",
   "myTrips.coverFailed": "无法保存此封面，请重试。",
   "myTrips.cachedTrips": "已保存列表中的其他旅行",
+  "myTrips.cachedDateSummary": "已保存摘要 · {date}",
+  "myTrips.compactDetails": "{date} · {destination}",
   "myTrips.openCachedTrip": "打开{name}的摘要",
   "myTrips.cachedDetails": "此设备已保存旅行摘要，详细安排和操作目前不可用。",
   "tripCreate.newTrip": "创建旅行",

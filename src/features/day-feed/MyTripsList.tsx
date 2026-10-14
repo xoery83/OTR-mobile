@@ -1,12 +1,13 @@
+import { AppIcon } from "@/components/AppIcon";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import type { Trip } from "@/domain/trip/types";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import type { TripListSummary } from "@/data/repositories/tripDiscoveryRepository";
-import { UiButton, UiSection } from "@/ui/controls";
+import { UiButton, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { tripCoverId, tripCoverSource, builtInTripCoverSource } from "./tripCovers";
@@ -55,7 +56,8 @@ const dateLabel = (
         ? t("myTrips.ends", { date: displayDate(end) })
         : t("myTrips.datesToBeDecided");
 };
-const cardLabel = (trip: Trip) =>
+type ListedTrip = Trip | TripListSummary;
+const cardLabel = (trip: ListedTrip) =>
   trip.destination
     ? t("myTrips.openTripDetails", {
         name: trip.name,
@@ -75,8 +77,15 @@ export function MyTripsList({
 }: Props) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
+  const { fontScale } = useWindowDimensions();
   const [allPast, setAllPast] = useState(false);
-  const groups = groupLocalTrips(trips, today, new Set(Object.keys(eligibleToday)));
+  const localIds = new Set(trips.map((trip) => trip.id));
+  const groups = groupLocalTrips<ListedTrip>(
+    [...trips, ...remoteTrips],
+    today,
+    new Set(Object.keys(eligibleToday).filter((id) => localIds.has(id))),
+  );
   if (!trips.length && !remoteTrips.length)
     return (
       <View style={styles.empty}>
@@ -92,11 +101,12 @@ export function MyTripsList({
       </View>
     );
 
-  const compact = (trip: Trip) => (
+  const compact = (trip: ListedTrip) => (
     <Pressable
       key={trip.id}
       accessibilityRole="button"
       accessibilityLabel={cardLabel(trip)}
+      accessibilityHint={!localIds.has(trip.id) ? t("myTrips.cachedDetails") : undefined}
       onPress={() => onOpen(trip.id)}
       style={styles.compact}
     >
@@ -109,102 +119,103 @@ export function MyTripsList({
         <Text style={styles.title} numberOfLines={2}>
           {trip.name}
         </Text>
-        <Text style={styles.meta}>{dateLabel(trip)}</Text>
-        {trip.destination ? (
-          <Text style={styles.meta} numberOfLines={1}>
-            {trip.destination}
-          </Text>
-        ) : null}
+        <Text style={styles.meta} numberOfLines={fontScale > 1 ? undefined : 2}>
+          {trip.destination
+            ? t("myTrips.compactDetails", {
+                date: localIds.has(trip.id)
+                  ? dateLabel(trip)
+                  : t("myTrips.cachedDateSummary", { date: dateLabel(trip) }),
+                destination: trip.destination,
+              })
+            : localIds.has(trip.id)
+              ? dateLabel(trip)
+              : t("myTrips.cachedDateSummary", { date: dateLabel(trip) })}
+        </Text>
+      </View>
+      <View style={styles.chevron} accessible={false}>
+        <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
       </View>
     </Pressable>
   );
   return (
     <View style={styles.list}>
       {groups.active.length ? (
-        <UiSection title={t("myTrips.active")}>
-          {groups.active.map((trip) => (
-            <View key={trip.id} style={styles.heroCard}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={cardLabel(trip)}
-                onPress={() => onOpen(trip.id)}
-                style={styles.heroBody}
+        <View style={styles.section}>
+          <Text accessibilityRole="header" style={styles.sectionHeading}>
+            {t("myTrips.active")}
+          </Text>
+          <View style={styles.groupContent}>
+            {groups.active.map((trip) => (
+              <TripCoverVisual
+                key={`${trip.id}:${tripCoverId(trip)}`}
+                source={tripCoverSource(trip)}
+                style={styles.heroImage}
               >
-                <TripCoverVisual
-                  key={tripCoverId(trip)}
-                  source={tripCoverSource(trip)}
-                  style={styles.heroImage}
-                />
-                <View style={styles.heroDetails}>
-                  <Text style={styles.title} numberOfLines={2}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={cardLabel(trip)}
+                  onPress={() => onOpen(trip.id)}
+                  style={styles.heroDetails}
+                >
+                  <Text style={styles.heroTitle} numberOfLines={2}>
                     {trip.name}
                   </Text>
-                  <Text style={styles.meta}>{dateLabel(trip)}</Text>
+                  <Text style={styles.heroMeta}>{dateLabel(trip)}</Text>
                   {trip.destination ? (
-                    <Text style={styles.meta} numberOfLines={1}>
+                    <Text style={styles.heroMeta} numberOfLines={1}>
                       {trip.destination}
                     </Text>
                   ) : null}
-                </View>
-              </Pressable>
-              {eligibleToday[trip.id] ? (
-                <View style={styles.heroAction}>
-                  <UiButton
-                    label={t("myTrips.openToday")}
-                    variant="secondary"
-                    onPress={() => onOpenToday(trip.id)}
-                  />
-                </View>
-              ) : null}
-            </View>
-          ))}
-        </UiSection>
+                  {!localIds.has(trip.id) ? (
+                    <Text style={styles.heroMeta}>{t("myTrips.cachedDetails")}</Text>
+                  ) : null}
+                </Pressable>
+                {localIds.has(trip.id) && eligibleToday[trip.id] ? (
+                  <View style={styles.heroAction}>
+                    <UiButton
+                      label={t("myTrips.openToday")}
+                      variant="secondary"
+                      onPress={() => onOpenToday(trip.id)}
+                    />
+                  </View>
+                ) : null}
+              </TripCoverVisual>
+            ))}
+          </View>
+        </View>
       ) : null}
       {groups.upcoming.length ? (
-        <UiSection title={t("myTrips.upcoming")}>
-          {groups.upcoming.map(compact)}
-        </UiSection>
+        <View style={styles.section}>
+          <Text accessibilityRole="header" style={styles.sectionHeading}>
+            {t("myTrips.upcoming")}
+          </Text>
+          <View style={styles.groupContent}>{groups.upcoming.map(compact)}</View>
+        </View>
       ) : null}
       {groups.undated.length ? (
-        <UiSection title={t("myTrips.undated")}>{groups.undated.map(compact)}</UiSection>
+        <View style={styles.section}>
+          <Text accessibilityRole="header" style={styles.sectionHeading}>
+            {t("myTrips.undated")}
+          </Text>
+          <View style={styles.groupContent}>{groups.undated.map(compact)}</View>
+        </View>
       ) : null}
       {groups.past.length ? (
-        <UiSection title={t("myTrips.past")}>
-          {(allPast ? groups.past : groups.past.slice(0, 3)).map(compact)}
-          {!allPast && groups.past.length > 3 ? (
-            <UiButton
-              label={t("myTrips.seeAllPast")}
-              variant="text"
-              onPress={() => setAllPast(true)}
-            />
-          ) : null}
-        </UiSection>
-      ) : null}
-      {remoteTrips.length ? (
-        <UiSection title={t("myTrips.cachedTrips")}>
-          {remoteTrips.map((trip) => (
-            <Pressable
-              key={trip.id}
-              accessibilityRole="button"
-              accessibilityLabel={t("myTrips.openCachedTrip", { name: trip.name })}
-              onPress={() => onOpen(trip.id)}
-              style={styles.compact}
-            >
-              <TripCoverVisual source={tripCoverSource(trip)} style={styles.thumbnail} />
-              <View style={styles.compactBody}>
-                <Text style={styles.title} numberOfLines={2}>
-                  {trip.name}
-                </Text>
-                <Text style={styles.meta}>{dateLabel(trip)}</Text>
-                {trip.destination ? (
-                  <Text style={styles.meta} numberOfLines={1}>
-                    {trip.destination}
-                  </Text>
-                ) : null}
-              </View>
-            </Pressable>
-          ))}
-        </UiSection>
+        <View style={styles.section}>
+          <Text accessibilityRole="header" style={styles.sectionHeading}>
+            {t("myTrips.past")}
+          </Text>
+          <View style={styles.groupContent}>
+            {(allPast ? groups.past : groups.past.slice(0, 3)).map(compact)}
+            {!allPast && groups.past.length > 3 ? (
+              <UiButton
+                label={t("myTrips.seeAllPast")}
+                variant="text"
+                onPress={() => setAllPast(true)}
+              />
+            ) : null}
+          </View>
+        </View>
       ) : null}
     </View>
   );
@@ -213,6 +224,9 @@ export function MyTripsList({
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     list: { gap: visual.space.section },
+    section: { gap: visual.space.heading },
+    sectionHeading: { ...visual.type.section, color: c.textPrimary },
+    groupContent: { gap: visual.space.card },
     empty: {
       backgroundColor: c.surface,
       borderRadius: visual.radius.hero,
@@ -233,20 +247,36 @@ const createStyles = (c: UiColors) =>
       overflow: "hidden",
     },
     thumbnail: { width: 104, height: 88 },
+    chevron: { paddingRight: visual.space.card },
     compactBody: {
       flex: 1,
+      minWidth: 0,
       gap: visual.space.heading,
       paddingVertical: visual.space.card,
-      paddingRight: visual.space.card,
     },
-    heroCard: {
-      backgroundColor: c.surface,
-      borderRadius: visual.radius.hero,
-      overflow: "hidden",
+    heroImage: { width: "100%", minHeight: 240, borderRadius: visual.radius.hero },
+    heroDetails: {
+      flexGrow: 1,
+      minHeight: 240,
+      justifyContent: "flex-end",
+      gap: visual.space.heading,
+      padding: visual.space.page,
+      paddingTop: 96,
     },
-    heroBody: { minHeight: 44 },
-    heroImage: { width: "100%", height: 192 },
-    heroDetails: { gap: visual.space.heading, padding: visual.space.page },
+    heroTitle: {
+      ...visual.type.metric,
+      color: c.mediaText,
+      textShadowColor: c.mediaBackground,
+      textShadowRadius: 4,
+      textShadowOffset: { width: 0, height: 1 },
+    },
+    heroMeta: {
+      ...visual.type.meta,
+      color: c.mediaText,
+      textShadowColor: c.mediaBackground,
+      textShadowRadius: 4,
+      textShadowOffset: { width: 0, height: 1 },
+    },
     heroAction: {
       paddingHorizontal: visual.space.page,
       paddingBottom: visual.space.page,
