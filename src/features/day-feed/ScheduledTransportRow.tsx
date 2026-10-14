@@ -92,6 +92,12 @@ const endpointLabel = (endpoint: Endpoint) =>
 const endpointTime = (endpoint: Endpoint) =>
   endpoint.time ? `${civil(endpoint.date)} · ${endpoint.time}` : civil(endpoint.date);
 
+const endpointSummary = (endpoint: Endpoint, showDate: boolean) => {
+  const place = endpointLabel(endpoint);
+  const schedule = showDate || !place ? endpointTime(endpoint) : endpoint.time;
+  return [place, schedule].filter(Boolean).join(" · ");
+};
+
 // Coordinates and accepted addresses can drive exact directions. Authored
 // labels are keyword search only, never promoted to trusted coordinates.
 export function transportMapUrl(endpoint: Endpoint, directions: boolean): string | null {
@@ -194,6 +200,8 @@ export function ScheduledTransportRow({
   const [mapUnavailable, setMapUnavailable] = useState(false);
   const focused = depth === "F",
     immersive = depth === "I";
+  const crossDayBrowse =
+    !focused && !immersive && facts.origin.date !== facts.destination.date;
   const roles = row.coreRowKeys.map((key) => key.projectionRole);
   const current =
     roles.includes("DESTINATION") && !roles.includes("ORIGIN")
@@ -284,13 +292,9 @@ export function ScheduledTransportRow({
             {[facts.operator, facts.service].filter(Boolean).join(" · ")}
           </Text>
         ) : null}
+        <Text style={styles.body}>{endpointSummary(facts.origin, crossDayBrowse)}</Text>
         <Text style={styles.body}>
-          {endpointLabel(facts.origin) ?? civil(facts.origin.date)}
-          {facts.origin.time ? ` · ${facts.origin.time}` : ""}
-        </Text>
-        <Text style={styles.body}>
-          {endpointLabel(facts.destination) ?? civil(facts.destination.date)}
-          {facts.destination.time ? ` · ${facts.destination.time}` : ""}
+          {endpointSummary(facts.destination, crossDayBrowse)}
         </Text>
         {context === "FUTURE" && facts.bookingMarker ? (
           <Text style={styles.meta}>

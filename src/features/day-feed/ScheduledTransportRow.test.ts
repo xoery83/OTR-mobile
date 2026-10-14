@@ -9,7 +9,7 @@ import {
   type ScheduledTransportFacts,
 } from "./ScheduledTransportRow";
 import { knownTransportClock } from "./coreScheduledTransportRenderer";
-import { t } from "@/ui/locale";
+import { formatUiDate, t } from "@/ui/locale";
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -241,4 +241,34 @@ it("omits unowned private capabilities and refuses imprecise clocks or direction
       comparable: true,
     }),
   ).toBe("09:00");
+});
+
+it("keeps known overnight civil dates beside named Browse endpoints without adding missing clocks", () => {
+  const date = (value: string) =>
+    formatUiDate(new Date(`${value}T12:00:00Z`), {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+  for (const period of ["TODAY", "FUTURE", "PAST"] as const) {
+    const overnight = render(period, "B");
+    expect(overnight).toContain(`Origin station · ${date("2027-01-15")} · 09:00`);
+    expect(overnight).toContain(`Destination station · ${date("2027-01-16")} · 11:00`);
+    expect(overnight).not.toContain(t("p5.showTicket"));
+    const unknownClock = render(period, "B", {
+      ...facts,
+      destination: { ...facts.destination, time: undefined },
+    });
+    expect(unknownClock).toContain(`Destination station · ${date("2027-01-16")}`);
+    expect(unknownClock).not.toContain("11:00");
+    expect(unknownClock).not.toContain("00:00");
+    const sameDay = render(period, "B", {
+      ...facts,
+      destination: { ...facts.destination, date: facts.origin.date },
+    });
+    expect(sameDay).toContain("Origin station · 09:00");
+    expect(sameDay).toContain("Destination station · 11:00");
+    expect(sameDay).not.toContain(date("2027-01-15"));
+  }
 });
