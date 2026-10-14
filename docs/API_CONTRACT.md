@@ -1089,3 +1089,7 @@ clone and fixture bearer identities; it does not certify Supabase Auth or Hosted
 provisioning. Dedicated Hosted principals/grants/activation and actual DEV Auth
 acceptance require separate Owner authorization. See
 `trip/implementation/CP_FLIGHT_DEV_02_REPORT.md`.
+
+### Local Updates first Capture failure contract (reserved, not installed)
+
+The repository/default adapter uses the existing captured Account request generation/apply gate. Only new committed safe Capture failures with an actual authorized reacquisition path may create an Account-personal Batch aggregate; infrastructure/unknown/routine progress is not a notification. List/open/current category-query-unread Mark All Read recheck owning source/account/material version, exclude other Accounts/Trips, preserve original notification time and independent read state. Explicit open marks only the captured observed notification version; later material updates remain unread. Opening/read never performs recovery or business resolution. Partial source coverage is explicit. Existing C3 list/reopen/continuation/verified-byte contracts remain authoritative; NOT_INSTALLED is not processing, acceptedAt not notification time, canonical/cloud/true Trip attribution remain unavailable. No new HTTP/Hosted/provider/Push endpoint or privilege is introduced.

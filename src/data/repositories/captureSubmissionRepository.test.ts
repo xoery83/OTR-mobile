@@ -31,7 +31,7 @@ const cleanups: (() => void)[] = [];
 afterEach(() => {
   cleanups.splice(0).forEach((clean) => clean());
 });
-function fixture(fk = true, disk = false, version = 51) {
+function fixture(fk = true, disk = false, version = 63) {
   const dir = disk ? mkdtempSync(join(tmpdir(), "capture-c2-")) : null;
   const path = dir ? join(dir, "local.db") : ":memory:";
   let sql = new DatabaseSync(path);

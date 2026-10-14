@@ -56,3 +56,7 @@ INTEGRITY. Existing Account-context rejection is preserved; SQLite/I/O failures
 propagate and transactions roll back. Nothing is logged. Account-retained data is
 not automatically deleted on logout/switch. Encryption/retention and real Share
 adapters remain future decisions.
+
+## Approved local Updates extension — reserved2026-10-15, not installed
+
+The first UPD-UX-01 producer records only a new committed C3 input-recovery failure requiring real user action, in the existing Account transaction. A separate minimal notification/read marker records stable Batch identity/material version and actual notice-creation time; it is not a second material store or general event engine. No historical FAILED time is guessed, no payload/private metadata copied, no Trip-prior authority inferred. Current source revalidation qualifies attention/resolution; read and resolution remain independent, with original ordering preserved. SQLite63 is additive and source-reserved; old Capture48/51 and all Hosted SQL stay immutable. Notification implementation/runtime readiness awaits its independent tests/integration.

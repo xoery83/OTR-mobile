@@ -1,3 +1,5 @@
+import { isActionableIntakeFailure } from "@/domain/updates/updatesInbox";
+import { recordCommittedCaptureFailure } from "./updatesInboxRepository";
 import {
   captureAccountRequestContext,
   assertAccountRequestContext,
@@ -325,12 +327,21 @@ export function createCaptureSubmissionRepository(
   ) {
     await scoped(c, async () => {
       const current = (await load(c, jobId)).inputs.find((i) => i.id === item.id)!;
-      if (current.state !== "ACCEPTED" && current.revision === item.revision)
+      if (current.state !== "ACCEPTED" && current.revision === item.revision) {
         await update(c, jobId, current, {
           state: "FAILED",
           pendingReason: null,
           failureCode: code,
         });
+        if (isActionableIntakeFailure(code))
+          await recordCommittedCaptureFailure(
+            database,
+            c,
+            await load(c, jobId),
+            current.id,
+            dependencies.now(),
+          );
+      }
     });
   }
   return {
