@@ -52,11 +52,13 @@ export function CaptureActivity({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const inventory = useRef(jobs);
   const epoch = useRef(0);
   const active = useRef(false);
   const running = useRef(false);
   const load = async (older = false) => {
-    if (!active.current || !isCurrent() || running.current) return;
+    if (!active.current || !isCurrent() || running.current || jobs !== inventory.current)
+      return;
     running.current = true;
     const request = ++epoch.current;
     const current = () => active.current && request === epoch.current && isCurrent();
@@ -71,7 +73,9 @@ export function CaptureActivity({
         before: last ? { createdAt: last.createdAt, batchId: last.batchId } : undefined,
       });
       if (!current()) return;
-      setJobs(older ? [...jobs, ...page] : page);
+      const next = older ? [...jobs, ...page] : page;
+      inventory.current = next;
+      setJobs(next);
       setHasMore(page.length === pageSize);
     } catch {
       if (current()) setError(true);

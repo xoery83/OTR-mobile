@@ -167,3 +167,24 @@ it("late list/error is fenced after blur, Account A→B→A/Trip invalidation, a
 });
 
 vi.mock("./CaptureComposer", () => ({ CaptureComposer: () => null }));
+
+it.each(["onMore", "onRefresh"] as const)(
+  "stale %s captured before Refresh cannot restore an obsolete inventory",
+  async (action) => {
+    ui.list.mockResolvedValueOnce(page(20, "old"));
+    render();
+    ui.cleanup = ui.effect!() ?? null;
+    await vi.waitFor(() => expect(render().loading).toBe(false));
+    const staleAction = render()[action];
+    ui.list.mockResolvedValueOnce(page(1, "current"));
+    render().onRefresh();
+    await vi.waitFor(() => expect(render().jobs[0]?.batch.jobId).toBe("current-0"));
+    const calls = ui.list.mock.calls.length;
+    ui.list.mockResolvedValueOnce(page(1, "obsolete-older"));
+    staleAction();
+    await new Promise((done) => setTimeout(done, 0));
+    expect(ui.list.mock.calls.length).toBe(calls);
+    expect(render().jobs).toEqual(page(1, "current"));
+    expect(render().loading).toBe(false);
+  },
+);
