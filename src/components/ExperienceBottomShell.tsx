@@ -23,7 +23,7 @@ export function ExperienceBottomShell({
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 2;
-  const { view } = useTripView();
+  const { view, resumeView, resume } = useTripView();
   if (!visible) return null;
   const openMyTrips = () => {
     if (pathname === "/trip") router.setParams({ view: "trips" });
@@ -49,13 +49,16 @@ export function ExperienceBottomShell({
               {t("dayFeed.myTrips")}
             </Text>
           </Pressable>
-          {view ? (
+          {view || resumeView ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t("shell.day")}
               accessibilityHint={t("shell.openSelectedDay")}
               accessibilityState={{ selected: pathname === "/" }}
-              onPress={() => router.navigate("/")}
+              onPress={() => {
+                resume();
+                router.navigate("/");
+              }}
               style={[styles.destination, largeText && styles.largeDestination]}
             >
               <AppIcon

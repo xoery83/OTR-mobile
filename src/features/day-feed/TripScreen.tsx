@@ -53,7 +53,7 @@ function TripContent({ today = false }: { today?: boolean }) {
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  const { view, select } = useTripView();
+  const { view, select, switchTrip, entry, saveReading, enterHeader } = useTripView();
   const params = useLocalSearchParams<{
     tripId?: string;
     date?: string;
@@ -131,7 +131,7 @@ function TripContent({ today = false }: { today?: boolean }) {
     };
   }, [load, generation]);
   const open = (id: string) => {
-    select(null);
+    switchTrip(id.trim(), generation);
     router.setParams({ tripId: id.trim(), date: "", zone: "", view: "home" });
   };
   const backToTrips = () => {
@@ -144,7 +144,7 @@ function TripContent({ today = false }: { today?: boolean }) {
   };
   const openToday = (id: string, context: TodayEntry) => {
     if (generation !== getAccountGeneration()) return;
-    select({ tripId: id, ...context, generation });
+    enterHeader({ tripId: id, ...context, generation }, "EXPLICIT_TODAY_HEADER");
     router.navigate("/");
   };
   const enterDay = () => {
@@ -188,6 +188,8 @@ function TripContent({ today = false }: { today?: boolean }) {
         </View>
         <DayFeed
           key={`${requested}/${selected.date}/${selected.zone}/${generation}`}
+          entry={entry}
+          onReadingChange={(reading) => saveReading(selected, reading)}
           projection={visibleTrip.observed.projection}
           date={selected.date}
           zone={selected.zone}

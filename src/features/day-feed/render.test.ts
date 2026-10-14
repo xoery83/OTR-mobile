@@ -49,6 +49,8 @@ const state = vi.hoisted(() => ({
   refs: [] as { current: any }[],
   refCursor: 0,
   memoCursor: 0,
+  layoutCursor: 0,
+  layouts: [] as (readonly unknown[] | undefined)[],
   memos: [] as { deps: readonly unknown[]; value: unknown }[],
   scrollTo: vi.fn(),
   platform: "ios",
@@ -59,8 +61,17 @@ vi.mock("react", async (original) => ({
   useEffect: (callback: () => unknown) => {
     state.effects.push(callback);
   },
-  useLayoutEffect: (callback: () => unknown) => {
-    callback();
+  useLayoutEffect: (callback: () => unknown, deps?: readonly unknown[]) => {
+    const i = state.layoutCursor++;
+    const previous = state.layouts[i];
+    if (
+      !deps ||
+      !previous ||
+      deps.length !== previous.length ||
+      deps.some((value, index) => !Object.is(value, previous[index]))
+    )
+      callback();
+    state.layouts[i] = deps;
   },
   useState: (initial: unknown) => {
     const i = state.cursor++;
@@ -135,6 +146,11 @@ vi.mock("@/data/repositories/ttrLabSelectionRepository", () => ({
 vi.mock("@/data/repositories/tripDayFeedLabRepository", () => ({
   readTripDayFeedLab: vi.fn(),
 }));
+vi.mock("expo-sqlite", () => ({
+  openDatabaseAsync: vi.fn(async () => {
+    throw new Error("TEST_NATIVE_STORAGE_FORBIDDEN");
+  }),
+}));
 vi.mock("@react-native-community/datetimepicker", () => ({ default: () => null }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
@@ -182,6 +198,7 @@ const render = (node: ReactNode) => {
   state.cursor = 0;
   state.refCursor = 0;
   state.memoCursor = 0;
+  state.layoutCursor = 0;
   state.presses = [];
   state.nodes = [];
   state.effects = [];
@@ -194,6 +211,7 @@ beforeEach(() => {
   state.hooks = [];
   state.refs = [];
   state.memos = [];
+  state.layouts = [];
   state.scrollTo.mockClear();
   state.platform = "ios";
   state.cursor = 0;
@@ -1676,4 +1694,33 @@ it("consumes host prop replacements, preserves Item Focus through My/Group and c
   expect(draw()).not.toContain('data-testid="focus-selected-region"');
   props.query = fixture.query;
   expect(draw()).not.toContain('data-testid="focus-selected-region"');
+});
+
+it("normal P1 first body tap visibly focuses, richer details opens and closes into the same focused scroll", () => {
+  const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
+  const draw = () => render(createElement(DayFeed, props));
+  draw();
+  state.nodes
+    .find((node) => node.onScroll)!
+    .onScroll({ nativeEvent: { contentOffset: { y: 172 } } });
+  state.presses
+    .find(
+      (press) =>
+        press.accessibilityLabel === poi.title &&
+        press.accessibilityHint === t("p1r.focusHint"),
+    )!
+    .onPress();
+  expect(draw()).toContain('data-testid="focus-selected-region"');
+  state.presses
+    .find((press) => press.accessibilityLabel === t("p1r.richerDetails"))!
+    .onPress();
+  draw();
+  const dismiss = state.nodes.find((node) => node.onDismiss)!.onDismiss;
+  expect(state.nodes.find((node) => node.onDismiss)!.visible).toBe(true);
+  state.presses
+    .find((press) => press.accessibilityLabel === t("common.close"))!
+    .onPress();
+  expect(draw()).toContain('data-testid="focus-selected-region"');
+  dismiss();
+  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 172, animated: false });
 });

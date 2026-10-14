@@ -5,6 +5,13 @@ import { ExperienceBottomShell } from "./ExperienceBottomShell";
 
 const state = vi.hoisted(() => ({
   view: null as null | { tripId: string; date: string; zone: string; generation: number },
+  resume: vi.fn(),
+  resumeView: null as null | {
+    tripId: string;
+    date: string;
+    zone: string;
+    generation: number;
+  },
   navigate: vi.fn(),
   setParams: vi.fn(),
   fontScale: 1,
@@ -20,7 +27,11 @@ vi.mock("react-native", () => ({
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: "AppIcon" }));
 vi.mock("@/features/day-feed/TripViewContext", () => ({
-  useTripView: () => ({ view: state.view }),
+  useTripView: () => ({
+    view: state.view,
+    resumeView: state.resumeView,
+    resume: state.resume,
+  }),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
@@ -48,6 +59,8 @@ function pressables(node: ReactNode): ShellElement[] {
 
 beforeEach(() => {
   state.view = null;
+  state.resumeView = null;
+  state.resume.mockReset();
   state.navigate.mockReset();
   state.setParams.mockReset();
   state.fontScale = 1;
@@ -110,4 +123,22 @@ it("opens the actual Trip list from another tab and only exposes a selected Day"
     pressables(ExperienceBottomShell({ visible: true, pathname: "/" }))[1].props
       .accessibilityState,
   ).toEqual({ selected: true });
+});
+
+it("Day destination resumes the scoped bookmark before normal navigation", () => {
+  state.resumeView = {
+    tripId: "reference",
+    date: "2027-02-02",
+    zone: "Asia/Tokyo",
+    generation: 7,
+  };
+  const buttons = pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  buttons
+    .find((button) => button.props.accessibilityLabel === "shell.day")!
+    .props.onPress?.();
+  expect(state.resume).toHaveBeenCalledOnce();
+  expect(state.navigate).toHaveBeenCalledWith("/");
+  expect(state.resume.mock.invocationCallOrder[0]).toBeLessThan(
+    state.navigate.mock.invocationCallOrder[0],
+  );
 });
