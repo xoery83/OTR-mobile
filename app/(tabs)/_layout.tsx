@@ -1,6 +1,9 @@
+import { UiText as Text } from "@/ui/controls";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
 import { Tabs, usePathname } from "expo-router";
-import { Text, useWindowDimensions } from "react-native";
+import { getDefaultHeaderHeight } from "expo-router/react-navigation";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useWindowDimensions } from "react-native";
 
 import { AppIcon } from "@/components/AppIcon";
 import { ExperienceBottomShell } from "@/components/ExperienceBottomShell";
@@ -15,7 +18,10 @@ export default function TabsLayout() {
   useUiLocale();
   const colors = useUiTheme();
   const pathname = usePathname();
-  const largeText = useWindowDimensions().fontScale > 2;
+  const dimensions = useWindowDimensions();
+  const { fontScale } = dimensions;
+  const insets = useSafeAreaInsets();
+  const largeText = fontScale > 2;
   return (
     <TripViewProvider>
       <Tabs
@@ -74,13 +80,27 @@ export default function TabsLayout() {
             ...(largeText
               ? {
                   headerTitleAlign: "left" as const,
-                  headerTitle: () => (
+                  headerStyle: {
+                    backgroundColor: colors.surface,
+                    height: Math.max(
+                      getDefaultHeaderHeight(dimensions, false, insets.top),
+                      insets.top +
+                        visual.type.section.fontSize * fontScale +
+                        visual.space.card * 2,
+                    ),
+                  },
+                  headerTitleContainerStyle: {
+                    minWidth: 132,
+                    minHeight:
+                      visual.type.section.fontSize * fontScale + visual.space.card,
+                  },
+                  headerTitle: ({ onLayout }) => (
                     <Text
+                      onLayout={onLayout}
                       numberOfLines={1}
                       style={{
                         ...visual.type.section,
                         color: colors.textPrimary,
-                        minWidth: 132,
                       }}
                     >
                       {t("navigation.trip")}
