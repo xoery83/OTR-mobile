@@ -201,3 +201,140 @@ it("staging and acquisition remain volatile; content uses operations without dir
     expect(source).not.toMatch(/\.intake\(|getForSourceHandoff|createSource|setInterval/);
   }
 });
+
+const draftOwner = { accountId: "real-account", tripPrior: "trip-one" };
+const selection = (name = "one.pdf", identity?: { key: string; revision: string }) => ({
+  source: "files" as const,
+  temporaryUri: "temporary://file",
+  name,
+  typeHint: "application/pdf",
+  ...(identity ? { identity } : {}),
+});
+it("retained editor Add and immutable Submit roster include unadded text once in selection order", async () => {
+  const staging = createCaptureStaging(async () => [selection()], scope(), draftOwner);
+  staging.setEditorText("   ");
+  expect(staging.prepareSubmit()).toEqual([]);
+  staging.setEditorText(" First text \n");
+  staging.addEditorText();
+  expect(staging.getDraftSnapshot().editorText).toBe("");
+  await staging.pick("files");
+  staging.setEditorText("Unadded text");
+  const prepared = staging.prepareSubmit()!;
+  expect(prepared.map((item) => item.source)).toEqual([
+    "magic_input",
+    "files",
+    "magic_input",
+  ]);
+  expect(prepared[0]).toMatchObject({ text: " First text \n" });
+  expect(prepared[2]).toMatchObject({ text: "Unadded text" });
+  expect(Object.isFrozen(prepared)).toBe(true);
+  prepared.forEach((item) => expect(Object.isFrozen(item)).toBe(true));
+  staging.setEditorText("Later edit");
+  staging.remove(prepared[0].stagingId);
+  expect(prepared[0]).toMatchObject({ text: " First text \n" });
+  expect(prepared[2]).toMatchObject({ text: "Unadded text" });
+  staging.clearAllConfirmed();
+  staging.setEditorText("Same text");
+  expect(staging.addEditorText()).toBe("added");
+  staging.setEditorText("Same text");
+  expect(staging.prepareSubmit()).toHaveLength(1);
+  expect(staging.addEditorText()).toBe("duplicate");
+  expect(staging.getDraftSnapshot().items).toHaveLength(1);
+});
+it("Close and unmount retain exact-owner draft; Clear All removes only draft while remaining open", async () => {
+  const staging = createCaptureStaging(async () => [selection()], scope(), draftOwner);
+  const detach = staging.attach();
+  await staging.pick("files");
+  staging.setEditorText("Not added");
+  staging.hide();
+  expect(staging.getDraftSnapshot().items).toEqual([]);
+  expect(staging.prepareSubmit()).toBeNull();
+  expect(staging.resume({ ...draftOwner, tripPrior: null }, scope())).toBe(false);
+  expect(staging.resume({ ...draftOwner, accountId: "foreign" }, scope())).toBe(false);
+  expect(staging.resume(draftOwner, scope())).toBe(true);
+  const freshDetach = staging.attach();
+  detach(); // Old host cleanup cannot hide a resumed invocation.
+  expect(staging.getDraftSnapshot()).toMatchObject({ editorText: "Not added" });
+  expect(staging.getDraftSnapshot().items).toHaveLength(1);
+  freshDetach();
+  expect(staging.getDraftSnapshot().items).toEqual([]);
+  expect(staging.resume(draftOwner, scope())).toBe(true);
+  expect(staging.getDraftSnapshot().items).toHaveLength(1);
+  staging.clearAllConfirmed();
+  expect(staging.getDraftSnapshot()).toMatchObject({ items: [], editorText: "" });
+  staging.setEditorText("Fresh start");
+  expect(staging.getDraftSnapshot().editorText).toBe("Fresh start");
+});
+it("Account ABA and resumed draft reject old picker callbacks and stale-generation leases", async () => {
+  let complete!: (value: ReturnType<typeof selection>[]) => void;
+  const oldLease = scope();
+  const staging = createCaptureStaging(
+    () =>
+      new Promise((done) => {
+        complete = done;
+      }),
+    oldLease,
+    draftOwner,
+  );
+  staging.setEditorText("A private draft");
+  const pending = staging.pick("files");
+  advanceAccountGeneration();
+  expect(staging.getDraftSnapshot().editorText).toBe("");
+  expect(staging.resume(draftOwner, oldLease)).toBe(false);
+  expect(staging.resume({ ...draftOwner, accountId: "foreign" }, scope())).toBe(false);
+  advanceAccountGeneration();
+  expect(staging.resume(draftOwner, scope())).toBe(true);
+  complete([selection("Late old account file")]);
+  await pending;
+  expect(staging.getDraftSnapshot()).toMatchObject({
+    items: [],
+    editorText: "A private draft",
+    selecting: false,
+  });
+});
+it("same selection identity/revision suppresses duplicates; name, URI and size alone never do", async () => {
+  const identity = { key: "provider-material-id", revision: "revision-one" };
+  const staging = createCaptureStaging(
+    async () => [
+      selection("same.pdf", identity),
+      selection("renamed.pdf", identity),
+      selection("same.pdf", { ...identity, revision: "revision-two" }),
+      selection("same.pdf"),
+      selection("same.pdf"),
+    ],
+    scope(),
+    draftOwner,
+  );
+  expect(await staging.pick("files")).toEqual({ added: 4, duplicates: 1 });
+  identity.revision = "changed-outside";
+  expect(staging.getDraftSnapshot().items[0]).toMatchObject({
+    identity: { revision: "revision-one" },
+    availability: "unverified",
+  });
+  expect(staging.getDraftSnapshot().items).toHaveLength(4);
+});
+it("hiding a retained picker or clearing it cannot resurrect unsubmitted selections", async () => {
+  for (const clear of [false, true]) {
+    let complete!: (value: ReturnType<typeof selection>[]) => void;
+    const staging = createCaptureStaging(
+      () =>
+        new Promise((done) => {
+          complete = done;
+        }),
+      scope(),
+      draftOwner,
+    );
+    staging.setEditorText("Retained");
+    const pending = staging.pick("files");
+    expect(staging.prepareSubmit()).toBeNull();
+    if (clear) staging.clearAllConfirmed();
+    else {
+      staging.hide();
+      staging.resume(draftOwner, scope());
+    }
+    complete([selection("Late file")]);
+    await pending;
+    expect(staging.getDraftSnapshot().items).toEqual([]);
+    expect(staging.getDraftSnapshot().editorText).toBe(clear ? "" : "Retained");
+  }
+});
