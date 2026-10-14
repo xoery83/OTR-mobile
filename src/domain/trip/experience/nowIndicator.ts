@@ -86,6 +86,21 @@ export function placeNow(
     for (const [index, row] of rows.entries()) {
       const event = row.event;
       if (["CALENDAR", "ALL_DAY", "WINDOW"].includes(event.temporal_shape)) continue;
+      if (event.temporal_shape === "STAY") {
+        const appearanceBoundaries = event.boundaries.filter((b) =>
+          row.roles.includes(b.role),
+        );
+        // P3 Daily Base is a day-end summary; date-only check-in/out supplies no NOW anchor.
+        if (
+          (!row.roles.length && row.occupancy) ||
+          (appearanceBoundaries.length > 0 &&
+            appearanceBoundaries.length === row.roles.length &&
+            appearanceBoundaries.every(
+              (b) => b.local_date && !b.local_time && !b.instant && !b.source_instant,
+            ))
+        )
+          continue;
+      }
       const transport = event.temporal_shape === "TRANSPORT";
       const rentalRole = rentalRoles[index];
       const startRole = rentalRole ?? (transport ? "ORIGIN" : "START");

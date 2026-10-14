@@ -9,7 +9,7 @@ import {
   type ScheduledTransportFacts,
 } from "./ScheduledTransportRow";
 import { knownTransportClock } from "./coreScheduledTransportRenderer";
-import { formatUiDate, t } from "@/ui/locale";
+import { formatUiDate, getUiLocale, setUiLocale, t } from "@/ui/locale";
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -291,4 +291,28 @@ it("reviewer: unresolved Destination is labelled even when current Origin is com
   const html = render("FUTURE", "I", value);
   expect(html).toContain("11:00");
   expect(html).toContain(t("p6.plannedUnresolved"));
+});
+
+it("each displayed planned endpoint keeps a natural qualifier in both locales without exposing sort diagnostics", () => {
+  const originalLocale = getUiLocale();
+  const value = {
+    ...facts,
+    origin: { ...facts.origin, plannedUnresolved: true },
+    destination: { ...facts.destination, plannedUnresolved: true },
+  };
+  try {
+    for (const [locale, caption] of [
+      ["en", "Planned local time"],
+      ["zh-Hans", "计划当地时间"],
+    ] as const) {
+      setUiLocale(locale);
+      const html = render("FUTURE", "I", value);
+      expect(html).toContain("11:00");
+      expect(html.split(caption).length).toBeGreaterThanOrEqual(3);
+      expect(html).not.toContain("order not yet resolved");
+      expect(html).not.toContain("排序依据尚未确定");
+    }
+  } finally {
+    setUiLocale(originalLocale);
+  }
 });

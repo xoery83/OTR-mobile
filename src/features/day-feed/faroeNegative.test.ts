@@ -16,7 +16,12 @@ import {
   flightPresentation,
   viewContext,
 } from "./presentation";
-import { faroeNegativeFixtures, syntheticDate } from "./faroeNegative.test.fixtures";
+import {
+  event,
+  projection,
+  faroeNegativeFixtures,
+  syntheticDate,
+} from "./faroeNegative.test.fixtures";
 
 const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -31,6 +36,113 @@ const interpret = async (texts: string[]) => {
 };
 
 describe("F1 synthetic negatives; no raw corpus or domain writes", () => {
+  it("date-only Stay check-in/out and calendar-night base do not veto independently exact timed rows", () => {
+    const before = event("before", "POINT", `${syntheticDate}T09:00:00Z`);
+    const after = event("after", "POINT", `${syntheticDate}T12:00:00Z`);
+    for (const item of [before, after]) item.boundaries[0].source_instant_precision = 0;
+    const checkout = event("checkout", "STAY");
+    checkout.boundaries[0].local_date = "2027-02-01";
+    checkout.boundaries[1].local_date = syntheticDate;
+    const checkin = event("checkin", "STAY");
+    checkin.boundaries[0].local_date = syntheticDate;
+    checkin.boundaries[1].local_date = "2027-02-06";
+    const base = event("base", "STAY");
+    base.boundaries[0].local_date = "2027-02-01";
+    base.boundaries[1].local_date = "2027-02-06";
+    const query = itemsForLocalDate(
+      projection(before, after, checkout, checkin, base),
+      syntheticDate,
+      "UTC",
+    );
+    const rows = [...query.timed, ...query.nonComparable];
+    const original = JSON.stringify(query);
+    expect(rows).toHaveLength(5);
+    expect(placeNow(query, rows, `${syntheticDate}T11:00:00Z`)).toMatchObject({
+      mode: "BETWEEN_EVENTS",
+      beforeIndex: 1,
+    });
+    expect(JSON.stringify(query)).toBe(original);
+    const timedBase = event(
+      "timedBase",
+      "STAY",
+      "2027-02-01T15:00:00Z",
+      "2027-02-06T11:00:00Z",
+    );
+    timedBase.boundaries.forEach((b) => {
+      b.source_instant_precision = 0;
+    });
+    const middle = itemsForLocalDate(
+      projection(before, after, timedBase),
+      syntheticDate,
+      "UTC",
+    );
+    expect(
+      [...middle.timed, ...middle.nonComparable].find((r) => r.event.id === "timedBase")
+        ?.roles,
+    ).toEqual([]);
+    expect(
+      placeNow(
+        middle,
+        [...middle.timed, ...middle.nonComparable],
+        `${syntheticDate}T11:00:00Z`,
+      ),
+    ).toMatchObject({ mode: "BETWEEN_EVENTS", beforeIndex: 2 });
+    const stays = itemsForLocalDate(
+      projection(checkout, checkin, base),
+      syntheticDate,
+      "UTC",
+    );
+    expect(
+      placeNow(
+        stays,
+        [...stays.timed, ...stays.nonComparable],
+        `${syntheticDate}T11:00:00Z`,
+      ),
+    ).toMatchObject({ mode: "HIDDEN", reason: "NO_TIMED_EVENTS" });
+    checkin.boundaries[0].local_time = "10:00:00";
+    const unresolved = itemsForLocalDate(
+      projection(before, after, checkin),
+      syntheticDate,
+      "UTC",
+    );
+    expect(
+      placeNow(
+        unresolved,
+        [...unresolved.timed, ...unresolved.nonComparable],
+        `${syntheticDate}T11:00:00Z`,
+      ),
+    ).toMatchObject({ mode: "HIDDEN", reason: "TIMING" });
+    checkin.boundaries[0].local_time = null;
+    for (const field of ["instant", "source_instant"] as const) {
+      checkin.boundaries[0][field] = `${syntheticDate}T10:00:00Z`;
+      const clocked = itemsForLocalDate(
+        projection(before, after, checkin),
+        syntheticDate,
+        "UTC",
+      );
+      expect(
+        placeNow(
+          clocked,
+          [...clocked.timed, ...clocked.nonComparable],
+          `${syntheticDate}T11:00:00Z`,
+        ),
+      ).toMatchObject({ mode: "HIDDEN", reason: "TIMING" });
+      checkin.boundaries[0][field] = null;
+    }
+    checkin.temporal_shape = "SPAN";
+    const span = itemsForLocalDate(
+      projection(before, after, checkin),
+      syntheticDate,
+      "UTC",
+    );
+    expect(
+      placeNow(
+        span,
+        [...span.timed, ...span.nonComparable],
+        `${syntheticDate}T11:00:00Z`,
+      ),
+    ).toMatchObject({ mode: "HIDDEN", reason: "TIMING" });
+  });
   it("TC02/TC07: four distinct synthetic legs keep identity without assuming one party", async () => {
     const result = await interpret([
       `${leg}\nNZ902 CHC→AKL 2027-02-03 dep=15:00`,
