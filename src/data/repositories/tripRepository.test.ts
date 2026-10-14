@@ -731,3 +731,190 @@ it("Reference-local Backend receipts and collection admit five P1/P3 through nor
     }),
   ).rejects.toThrow("OPERATION_REUSE_MISMATCH");
 });
+
+it("Reference full sixteen normal commands/receipts and owning cold collection preserve sparse/TNS/overnight facts without Trip or Ticket authority", async () => {
+  const {
+    referenceTripV1Full: scenario,
+    seedReferenceTripV1Full,
+    createReferenceTripV1LocalProducer,
+  } = await import("./__fixtures__/referenceTripV1");
+  const { createCoreP6DayFeedReader } = await import("./tripCoreV2P6DayFeedRepository");
+  const folder = mkdtempSync(join(tmpdir(), "otr-reference-full16-"));
+  folders.push(folder);
+  const path = join(folder, "owned-reference.db");
+  let f = local(path, true, () => scenario.createdAt);
+  const saved = await seedReferenceTripV1Full(f.repo, f.core);
+  const context = await f.core.captureContext(saved.id);
+  const intents = await f.core.pending(context);
+  expect(intents).toHaveLength(16);
+  expect(await seedReferenceTripV1Full(f.repo, f.core)).toEqual(saved);
+  expect(await f.core.pending(context)).toEqual(intents);
+  expect(intents.every((row) => row.created_at === scenario.createdAt)).toBe(true);
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  const producer = await createReferenceTripV1LocalProducer(accountA, hash, true);
+  const receipts = [];
+  for (const intent of intents) {
+    const result = await producer.execute(intent.command);
+    expect(result.receipt.outcome).toBe("APPLIED");
+    await f.core.applyReceipt(context, result.receipt);
+    expect(await producer.execute(intent.command)).toEqual(result);
+    receipts.push(result.receipt.receiptSha256);
+  }
+  expect(new Set(receipts).size).toBe(16);
+  const bundle = await producer.collection();
+  await f.core.install(
+    await f.core.beginRefresh(context, 1),
+    bundle.manifest,
+    bundle.pages,
+  );
+  f.sql.close();
+  f = local(path, false, () => scenario.createdAt);
+  const coldScope = await f.core.captureContext(saved.id);
+  const snapshot = await f.core.acceptedSnapshot(coldScope);
+  expect(snapshot?.graph.itinerary_events).toHaveLength(16);
+  if (!snapshot) throw new Error("REFERENCE_COLD_COLLECTION_MISSING");
+  expect(snapshot.graph.itinerary_events.map((row) => row.id).sort()).toEqual(
+    scenario.items.map((row) => row.itemId).sort(),
+  );
+  expect(snapshot.graph.trip_flight_intents).toHaveLength(2);
+  expect(
+    snapshot.graph.trip_flight_intents.every((row) => row.qualification === "SPARSE"),
+  ).toBe(true);
+  expect(
+    snapshot.graph.itinerary_transport_services.filter(
+      (row) => row.transport_subtype === "FLIGHT",
+    ),
+  ).toHaveLength(0);
+  expect(snapshot.graph.trip_rental_details).toHaveLength(3);
+  const sameDay = snapshot.graph.itinerary_events.find(
+    (row) => row.title === "Reference same-day rental",
+  )!;
+  expect(sameDay).toMatchObject({
+    start_local_date: "2027-02-09",
+    end_local_date: "2027-02-09",
+    start_local_time: "09:00:00",
+    end_local_time: "17:00:00",
+    planned_start: null,
+    planned_end: null,
+  });
+  const overnight = scenario.items.find((row) => row.key === 13)!;
+  expect(
+    snapshot.graph.itinerary_transport_endpoints.filter(
+      (row) => row.event_id === overnight.itemId,
+    ),
+  ).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        role: "ORIGIN",
+        local_date: "2027-02-10",
+        instant: null,
+        local_time: null,
+      }),
+      expect.objectContaining({
+        role: "DESTINATION",
+        local_date: "2027-02-11",
+        instant: null,
+        local_time: null,
+      }),
+    ]),
+  );
+  const dayTicket = scenario.items.find((row) => row.key === 15)!;
+  expect(
+    snapshot.graph.itinerary_events.find((row) => row.id === dayTicket.itemId),
+  ).toMatchObject({
+    start_local_date: "2027-02-04",
+    start_local_time: "14:00:00",
+    start_quality: "ESTIMATED",
+    planned_start: null,
+  });
+  expect(snapshot.graph.trip_entitlements).toHaveLength(0);
+  expect(snapshot.graph.trip_booking_item_links).toHaveLength(0);
+  const observed = await createCoreP6DayFeedReader(f.core)(saved.id);
+  expect(observed?.projection.items).toHaveLength(16);
+  if (!observed) throw new Error("REFERENCE_READER_MISSING");
+  const activity = observed.projection.query("2027-02-04", "Asia/Tokyo");
+  expect(
+    activity.coreRows?.find((row) => row.rowKey.itemId === dayTicket.itemId),
+  ).toMatchObject({
+    family: "P6",
+    position: "TNS",
+    displayTime: { localTime: "14:00:00", comparable: false },
+  });
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    syncStatus: "PENDING_CREATE",
+    serverId: null,
+    ownerPersonId: null,
+  });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT count(*) AS n FROM sync_operations WHERE operation_type='CREATE_TRIP' AND status='DEPENDENCY_BLOCKED'",
+      )
+      .get()?.n,
+  ).toBe(1);
+  expect(f.sql.prepare("SELECT count(*) AS n FROM ledger_members").get()?.n).toBe(0);
+  f.switchTo(accountB);
+  expect(await f.repo.getTrip(saved.id)).toBeNull();
+  expect(await createCoreP6DayFeedReader(f.core)(saved.id)).toBeNull();
+  f.switchTo(accountA);
+  expect(
+    (await createCoreP6DayFeedReader(f.core)(saved.id))?.projection.items,
+  ).toHaveLength(16);
+  const other = local(":memory:", true, () => scenario.createdAt);
+  const broken = structuredClone(bundle.pages);
+  broken[0].pageSha256 = "0".repeat(64);
+  const otherScope = await other.core.captureContext(saved.id);
+  await expect(
+    other.core.install(
+      await other.core.beginRefresh(otherScope, 1),
+      bundle.manifest,
+      broken,
+    ),
+  ).rejects.toThrow();
+  expect(await other.core.acceptedSnapshot(otherScope)).toBeNull();
+  expect(
+    (await createCoreP6DayFeedReader(f.core)(saved.id))?.projection.items,
+  ).toHaveLength(16);
+});
+
+it("Reference fixture optional bootstrap keeps supplied normal actor/person/epoch/access identity rather than synthetic defaults", async () => {
+  const { referenceTripV1, createReferenceTripV1LocalProducer, seedReferenceTripV1 } =
+    await import("./__fixtures__/referenceTripV1");
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  const actor = {
+    accountId: accountA,
+    tripId: referenceTripV1.trip.tripId,
+    active: true,
+    canManageShared: true,
+    personId: randomUUID(),
+    personIds: [] as string[],
+  };
+  actor.personIds = [actor.personId];
+  const epoch = randomUUID();
+  const producer = await createReferenceTripV1LocalProducer(accountA, hash, false, {
+    actor,
+    epoch,
+    accessRevision: 7,
+  });
+  const f = local();
+  await seedReferenceTripV1(f.repo);
+  const pending = await f.core.pending(await f.core.captureContext(actor.tripId));
+  for (const row of pending) await producer.execute(row.command);
+  const bundle = await producer.collection();
+  expect(producer.evidenceLevel).toBe("REFERENCE_LOCAL_PG_BOOTSTRAP_MEMORY_ITEMS");
+  expect(bundle.manifest).toMatchObject({ epoch, accessRevision: 7 });
+  const bindings = bundle.pages
+    .flatMap((page) => page.records)
+    .filter((row) => row.kind === "PERSON_BINDING");
+  expect(JSON.stringify(bindings)).toContain(actor.personId);
+  expect(JSON.stringify(bindings)).not.toContain(referenceTripV1.persons[0].personId);
+  await expect(
+    createReferenceTripV1LocalProducer(accountA, hash, false, {
+      actor: { ...actor, accountId: accountB },
+      epoch,
+      accessRevision: 7,
+    }),
+  ).rejects.toThrow("BOOTSTRAP_MISMATCH");
+});

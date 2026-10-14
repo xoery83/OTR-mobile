@@ -12,7 +12,7 @@ Original META/B0, necessary named writer subset and DEV97 finite metadata ran; c
 
 The trusted migration administrator retains ADMIN regrant/replacement capability; INHERIT/SET flags do not remove that residual. App/runtime topology, NOLOGIN attributes, CLOSED/empty gate and existing Creator73de/NZD are verified only within fixed metadata scope. No new credentials, LOGIN, deployment, Doc101 or runtime activation is authorized by this result.
 
-Owner-approved Search01–13 replaces the earlier Search deferral; implemented function review does not release UI/entry icons. Latest unified Reference schedule pauses ALL single-module Native/Visual until Reference data and normal navigation are ready. REF-C QA proves explicitly synthetic local admission, not real Trip acceptance/Auth/roles. I66 Home correction remains bounded, not UX acceptance; HOME03A/03B/04/05 keep their owning authority and single shared navigation author. Trip/Journey UUID is not Ledger permission. HOME02 WAITING_DESIGN_FILE.
+Owner-approved Search01–13 replaces the earlier Search deferral; implemented function review does not release UI/entry icons. Latest Owner Reference-first schedule supersedes the earlier all-module pause: targeted Native base/defect/permission checks are permitted, then an explicitly ready normal Reference smoke; broad matrices wait for normal data/navigation and Owner basic feedback. REF-C QA proves explicitly synthetic local admission, not real Trip acceptance/Auth/roles. I66 Home correction remains bounded, not UX acceptance; HOME03A/03B/04/05 keep their owning authority and single shared navigation author. Trip/Journey UUID is not Ledger permission. HOME02 WAITING_DESIGN_FILE.
 
 ### BD34 finite Members resolution and Push42–43 local receipts — 2026-10-14
 

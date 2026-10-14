@@ -8,7 +8,13 @@
 
 DEV approved finite schema: actual11 transaction commits and final10 metadata TRUE; CLOSED/empty/NOLOGIN, preserved Creator73de/NZD. Original failed checks/query attempts remain historical evidence. Deployed Backend build/provider injection, operational principal/internal TLS and real Actor/Trip/acceptedv2/offline remain UNKNOWN or NV.
 
-WholeHome/MyTrips/Shell L1 INCOMPLETE/L2 NOT READY. Home navigation586843 and Search revised function reviews passed but mounted UI remains isolated. ALL single-module Native/Visual is paused until unified Reference data +normal navigation readiness. REF-C is local synthetic QA only, pending Trip and no actual device seed. P456 partial UIHOLD; Photos existing local evidence retained. Qualifying integration waits0 at this checkpoint; other ages UNKNOWN.
+WholeHome/MyTrips/Shell L1 INCOMPLETE/L2 NOT READY. Home navigation586843 and Search revised function reviews passed but mounted UI remains isolated. Latest Reference-first standing allows targeted Native base/defect/permission checks; broad matrices are deferred until normal Reference data/navigation and Owner basic feedback. REF-C is local synthetic QA only, pending Trip and no actual device seed. P456 partial UIHOLD; Photos existing local evidence retained. Qualifying integration waits0 at this checkpoint; other ages UNKNOWN.
+
+### Maintenance checkpoint — OWNERPAUSED / 2026-10-14
+
+Owner requested a maintenance pause. Finish only the already-running qualified Ref16/standing-record integration; no new task, Ops, Native, review or automatic resume. At pause, base/live088fa3 is verified and the reviewed Ref16 two-file intake is in progress; its final commit/live/time is recorded by [Push70 receipt](/private/tmp/otr-beta-push70-receipt.json) only after successful publication. Original dirtysix/index are preserved; Source-owned Ref changes are the explicit atomic scope, not abandoned edits.
+
+Ref16 b9d3/independent5a07 data tests are bounded, not App/Actor/Trip readiness. Core's genuine localPG Trip100/RN-safe importer is active work to freeze for review; actual Actor capture, device seed and normal App Native remain NOT READY. Documents762e has Source bounded function PASS b360; LOGIN f445 has independent local peer d7fd, neither is live runtime activation. Installed DEV remains CLOSED/NOLOGIN/empty; full real journeys0. Home586843/Search revised4fffff/P456da692 remain held. No fresh Visual result is inferred from the latest targeted-smoke permission.
 
 ## Prior Push40 (historical) integration — 2026-10-13T16:58:25Z / 2026-10-14 NZDT
 
