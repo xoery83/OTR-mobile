@@ -26,6 +26,12 @@ Canonical outcome tags/counts/deep links require real owning create/update/admis
 
 Twenty acceptance cases are approved design, not capability proof. Sealed database contracts/CoreAdmission/RLS/provider/newReview engine and existing Hosted/Auth/newSQL/provenance/Push gates are unchanged. A may use existing C3 without waiting for absent B/C owners; current CP01 keyboard fix remains priority.
 
+### Owner-approved Updates inbox — 2026-10-14 / registered2026-10-15
+
+Source `/Users/xoery/Downloads/OTR_UPD_UX_01_UPDATES_PRODUCT_DESIGN_DELTA_2026-10-14.md` fully read; latest typed Owner approval covers the 13-case Delta, WP-UPD01A/B. Relevance-first authorized events only: routine Expense/photo/manual edits silent; deliberate Notify Participants defaults OFF each edit and only successful authorized save may notify. Batch/Trip+Ledger aggregation, chronological original creation-time seconds, All/Needs Attention/Activity/Messages and independent unread filter. Read does not resolve owning Review/ACK/DISMISS, and resolution does not duplicate or reorder the notification.
+
+UPD-UX03R mixes Current Trip + Personal Inbox without switching Trip. UPD-UX04 explicitly supersedes earlier ACTION05R: Mark All Read applies only matching current category/unread filter across that mixed scope, no other Trips or business resolution. Explicit card-open marks only that notification read; list/scroll/filter never auto-read. Badges count aggregate cards, not Review Units. Module search remains authorized/local-coverage honest. Announcement publishing/budget design approved, but Beta inclusion/targeting/composer remain OPEN; no implementation/Push service/permission manufactured. Actual event/read-state/semantic Review/canonical outcome producers remain engineering dependencies, not inferred from C3 input acceptance or routine NOT_INSTALLED.
+
 ### Installed schema amendment — source Push68 / 2026-10-14
 
 Original META/B0, necessary named writer subset and DEV97 finite metadata ran; conditional fullB1/50pins did not. Original preflight failed, after which Owner explicitly approved the revised Hosted compatibility conditional package (`call_6b4c5a301e1742689680e0093b23c116`, peer owner-gate f73cc9). Revised preflight/prior compatibility passed; exact ten SQL plus OFFforward committed and fixed ten postmetadata outputs were TRUE. Original7a9b/429f and failed query receipts remain immutable evidence. Push68 reconciles exactly Core85/OFFforward source contracts with executed candidates, without rewriting historical journal or declaring runtime ready.
