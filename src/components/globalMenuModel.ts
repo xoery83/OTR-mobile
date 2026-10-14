@@ -1,4 +1,4 @@
-export type GlobalMenuModule = "TODAY" | "LEDGER" | "TRIP" | "CAPTURE";
+export type GlobalMenuModule = "TODAY" | "LEDGER" | "TRIP" | "CAPTURE" | "UPDATES";
 
 export type GlobalMenuDestination = {
   label: "My Ledger" | "Currency";
@@ -20,6 +20,7 @@ export function moduleReturnPath(module: GlobalMenuModule) {
   if (module === "LEDGER") return "/expenses";
   if (module === "TRIP") return "/trip";
   if (module === "CAPTURE") return "/capture";
+  if (module === "UPDATES") return "/updates";
   return "/";
 }
 

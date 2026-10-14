@@ -17,6 +17,7 @@ describe("contextual global menu", () => {
     expect(contextualMenuDestinations("TODAY")).toEqual([]);
     expect(contextualMenuDestinations("TRIP")).toEqual([]);
     expect(contextualMenuDestinations("CAPTURE")).toEqual([]);
+    expect(contextualMenuDestinations("UPDATES")).toEqual([]);
   });
 
   it("builds account labels without exposing identifiers", () => {
@@ -24,6 +25,7 @@ describe("contextual global menu", () => {
     expect(journeyRoleLabel("member")).toBe("Member");
     expect(maskEmail("synthetic.owner@example.test")).toBe("s•••@example.test");
     expect(moduleReturnPath("LEDGER")).toBe("/expenses");
+    expect(moduleReturnPath("UPDATES")).toBe("/updates");
   });
 
   it("recognizes only approved Dev identities", () => {

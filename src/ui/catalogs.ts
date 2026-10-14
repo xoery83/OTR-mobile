@@ -1,4 +1,29 @@
 export const en = {
+  "updates.title": "Updates",
+  "updates.category.ALL": "All",
+  "updates.category.NEEDS_ATTENTION": "Needs Attention",
+  "updates.category.ACTIVITY": "Activity",
+  "updates.category.MESSAGES": "Messages",
+  "updates.unreadOnly": "Unread only",
+  "updates.search": "Search local updates",
+  "updates.coverage":
+    "Only available personal Capture intake notices are shown. Other sources and remote coverage are not available.",
+  "updates.unavailable":
+    "Some current updates could not be checked. Refresh to try again.",
+  "updates.emptyAll": "No matching notices in the loaded local records.",
+  "updates.emptyAttention":
+    "No matching actionable intake notices in the loaded records.",
+  "updates.emptyUnread": "No matching unread notices in the loaded records.",
+  "updates.emptySearch": "No matches in the loaded local records.",
+  "updates.needsInput": "{count} inputs need reacquisition",
+  "updates.state.RECOVERED": "Intake issue recovered",
+  "updates.state.INACTIVE": "Intake activity",
+  "updates.state.UNAVAILABLE": "Current intake status unavailable",
+  "updates.personalCapture": "Personal Inbox · Capture intake",
+  "updates.loadMore": "Load more",
+  "updates.refresh": "Refresh",
+  "updates.markAll": "Mark All as Read",
+
   "capture.progress.recordedCounts":
     "Recorded intake: {accepted} accepted · {failed} failed · {pending} pending",
   "capture.progress.closeHint":
@@ -2131,6 +2156,28 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "updates.title": "更新",
+  "updates.category.ALL": "全部",
+  "updates.category.NEEDS_ATTENTION": "需要处理",
+  "updates.category.ACTIVITY": "动态",
+  "updates.category.MESSAGES": "消息",
+  "updates.unreadOnly": "仅未读",
+  "updates.search": "搜索本地更新",
+  "updates.coverage": "仅显示本地可用的个人材料接收通知。其他来源及远端记录暂不可用。",
+  "updates.unavailable": "暂时无法验证部分更新。请刷新重试。",
+  "updates.emptyAll": "已加载的本地记录中没有匹配通知。",
+  "updates.emptyAttention": "已加载的记录中没有匹配的材料接收处理事项。",
+  "updates.emptyUnread": "已加载的记录中没有匹配的未读通知。",
+  "updates.emptySearch": "已加载的本地记录中没有匹配结果。",
+  "updates.needsInput": "{count}项材料需要重新选取",
+  "updates.state.RECOVERED": "材料接收问题已恢复",
+  "updates.state.INACTIVE": "材料接收动态",
+  "updates.state.UNAVAILABLE": "暂时无法验证材料接收状态",
+  "updates.personalCapture": "个人收件箱 · 材料接收",
+  "updates.loadMore": "加载更多",
+  "updates.refresh": "刷新",
+  "updates.markAll": "全部标为已读",
+
   "capture.progress.recordedCounts":
     "接收记录：已接收{accepted}项 · 失败{failed}项 · 待处理{pending}项",
   "capture.progress.closeHint": "关闭仅收起此界面，离开应用后工作可能暂停。",

@@ -117,6 +117,15 @@ export function GlobalMenu({
   const sections: AppNavigationMenuItem[][] = [
     ...(contextItems.length ? [contextItems] : []),
     [
+      ...(identity?.userId
+        ? [
+            {
+              icon: "tray" as const,
+              label: t("updates.title"),
+              onPress: () => router.navigate("/updates" as never),
+            },
+          ]
+        : []),
       {
         icon: "gearshape",
         label: t("navigation.settings"),

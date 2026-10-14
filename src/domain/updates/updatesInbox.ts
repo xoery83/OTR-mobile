@@ -52,12 +52,26 @@ export type CaptureUpdateCard = Readonly<{
   recoveryInputs: readonly CaptureFailureFact[];
   searchText: string;
 }>;
-export function matchesUpdatesFilter(card: CaptureUpdateCard, raw: UpdatesFilter) {
+export type UpdatesPresentationText = (
+  state: CaptureUpdateCard["sourceState"],
+  count: number,
+) => string;
+export function matchesUpdatesFilter(
+  card: CaptureUpdateCard,
+  raw: UpdatesFilter,
+  presentationText?: UpdatesPresentationText,
+) {
   const f = updatesFilterSchema.parse(raw);
   return (
     f.category !== "MESSAGES" &&
     (f.category !== "NEEDS_ATTENTION" || card.sourceState === "ACTION_REQUIRED") &&
     (!f.unreadOnly || card.unread) &&
-    card.searchText.toLocaleLowerCase().includes(f.query.trim().toLocaleLowerCase())
+    [
+      card.searchText,
+      presentationText?.(card.sourceState, card.recoveryInputs.length) ?? "",
+    ]
+      .join(" ")
+      .toLocaleLowerCase()
+      .includes(f.query.trim().toLocaleLowerCase())
   );
 }

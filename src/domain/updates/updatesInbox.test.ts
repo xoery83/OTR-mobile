@@ -55,3 +55,24 @@ it("category and independent unread/query filters use current attention while pe
     ),
   ).toBe(true);
 });
+it("presentation search receives only state/count and retains category/unread guards", () => {
+  const f = {
+    category: "ALL" as const,
+    query: "needs input",
+    unreadOnly: false,
+    currentTripId: null,
+  };
+  expect(matchesUpdatesFilter(card, f, (_state, count) => `${count} needs input`)).toBe(
+    true,
+  );
+  expect(
+    matchesUpdatesFilter(card, { ...f, category: "MESSAGES" }, () => "needs input"),
+  ).toBe(false);
+  expect(
+    matchesUpdatesFilter(
+      { ...card, unread: false },
+      { ...f, unreadOnly: true },
+      () => "needs input",
+    ),
+  ).toBe(false);
+});

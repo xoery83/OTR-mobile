@@ -4,6 +4,7 @@ export function bottomBarVisible(pathname: string) {
     pathname === "/" ||
     pathname === "/trip" ||
     pathname === "/capture" ||
+    pathname === "/updates" ||
     pathname === "/expenses" ||
     /^\/expenses\/journey\/[^/]+$/.test(pathname)
   );

@@ -284,6 +284,7 @@ export function newUiDebt(
 // automatically, so adding a child cannot silently restore baseline debt.
 export const representativeRoots = [
   "app/(tabs)/capture.tsx",
+  "app/(tabs)/updates.tsx",
   "src/features/ledger/LedgerReviewScreen.tsx",
   "src/features/ledger/LedgerReviewFindingScreen.tsx",
   "src/features/ledger/PersonalSettlementReviewScreen.tsx",

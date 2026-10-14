@@ -14,6 +14,7 @@ import {
   type CaptureFailureFact,
   type CaptureUpdateCard,
   type UpdatesFilter,
+  type UpdatesPresentationText,
 } from "@/domain/updates/updatesInbox";
 import type { LocalCaptureDatabase } from "./localCaptureInboxRepository";
 
@@ -236,6 +237,7 @@ export function createUpdatesInboxRepository(
       rawFilter: UpdatesFilter,
       context: AccountRequestContext,
       options: {
+        presentationText?: UpdatesPresentationText;
         limit?: number;
         before?: { createdAt: string; notificationId: string };
       } = {},
@@ -259,7 +261,9 @@ export function createUpdatesInboxRepository(
         const selected = page.slice(0, limit);
         const qualified: CaptureUpdateCard[] = [];
         for (const row of selected) qualified.push((await qualify(row, context)).card);
-        const cards = qualified.filter((card) => matchesUpdatesFilter(card, filter));
+        const cards = qualified.filter((card) =>
+          matchesUpdatesFilter(card, filter, options.presentationText),
+        );
         const last = selected.at(-1);
         return {
           cards,
@@ -302,7 +306,11 @@ export function createUpdatesInboxRepository(
         return { job: result.job!, recoveryInputs: result.card.recoveryInputs };
       });
     },
-    async markAllRead(rawFilter: UpdatesFilter, context: AccountRequestContext) {
+    async markAllRead(
+      rawFilter: UpdatesFilter,
+      context: AccountRequestContext,
+      options: { presentationText?: UpdatesPresentationText } = {},
+    ) {
       const filter = updatesFilterSchema.parse(rawFilter);
       return scoped(context, async () => {
         let before: { createdAt: string; notificationId: string } | undefined;
@@ -316,7 +324,8 @@ export function createUpdatesInboxRepository(
               unavailableCount++;
               continue;
             }
-            if (matchesUpdatesFilter(card, filter)) marked += await mark(context, card);
+            if (matchesUpdatesFilter(card, filter, options.presentationText))
+              marked += await mark(context, card);
           }
           if (page.length < 100) break;
           const last = page.at(-1)!;

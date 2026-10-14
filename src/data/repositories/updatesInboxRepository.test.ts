@@ -382,3 +382,38 @@ it("actual SQLite62→63 additive upgrade preserves normal accepted originals an
     sql.close();
   }
 });
+it("safe presentation text uses identical list and snapshot Mark All predicates without exposing private source fields", async () => {
+  const s = setup(),
+    first = await s.fail(1),
+    second = await s.fail(2),
+    context = await s.context();
+  const presentationText = (state: string, count: number) =>
+    `${state} · ${count}项材料需要重新选取`;
+  const query = {
+    ...filter,
+    category: "NEEDS_ATTENTION" as const,
+    unreadOnly: true,
+    query: "1项材料需要重新选取",
+  };
+  const page = await s.inbox.list(query, context, { presentationText });
+  expect(page.cards.map((card) => card.jobId)).toEqual([first.jobId]);
+  expect(await s.inbox.markAllRead(query, context, { presentationText })).toMatchObject({
+    marked: 1,
+  });
+  const unread = (await s.inbox.list({ ...filter, unreadOnly: true }, context)).cards;
+  expect(unread.map((card) => card.jobId)).toEqual([second.jobId]);
+  expect(
+    (
+      await s.inbox.list({ ...filter, query: "PRIVATE secret-name" }, context, {
+        presentationText,
+      })
+    ).cards,
+  ).toHaveLength(0);
+  expect(
+    (
+      await s.inbox.list({ ...query, category: "MESSAGES" }, context, {
+        presentationText,
+      })
+    ).cards,
+  ).toHaveLength(0);
+});

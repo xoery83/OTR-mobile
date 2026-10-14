@@ -11,6 +11,7 @@ import {
   assertAccountRequestGeneration,
   withAccountApplyGate,
 } from "@/data/auth/accountRequestContext";
+import { captureOriginPath } from "@/features/capture/captureOriginPath";
 import { createCaptureStaging } from "@/features/capture/captureStaging";
 import { pickCaptureMaterial } from "@/native/capturePicker";
 import { CaptureContent } from "@/features/capture/CaptureContent";
@@ -27,8 +28,18 @@ type Admission = {
   staging: ReturnType<typeof createCaptureStaging>;
 };
 export default function CaptureRoute() {
-  const { jobId } = useLocalSearchParams<{ jobId?: string }>();
-  const navigation = useNavigation<{ setParams(params: { jobId?: string }): void }>();
+  const { jobId, origin, originGeneration } = useLocalSearchParams<{
+    jobId?: string;
+    origin?: string;
+    originGeneration?: string;
+  }>();
+  const navigation = useNavigation<{
+    setParams(params: {
+      jobId?: string;
+      origin?: string;
+      originGeneration?: string;
+    }): void;
+  }>();
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const generation = useSyncExternalStore(
@@ -84,7 +95,11 @@ export default function CaptureRoute() {
         visibleStaging?.hide();
         setAdmission(null);
         // Historical deep links are one invocation; the authenticated unsubmitted draft stays retained.
-        navigation.setParams({ jobId: undefined });
+        navigation.setParams({
+          jobId: undefined,
+          origin: undefined,
+          originGeneration: undefined,
+        });
       };
     }, [generation, navigation]),
   );
@@ -108,7 +123,13 @@ export default function CaptureRoute() {
           accountId={admission.accountId}
           onReopenJob={(id) => navigation.setParams({ jobId: id })}
           onCancel={() => {
-            if (router.canGoBack()) router.back();
+            const target = captureOriginPath(
+              origin,
+              originGeneration,
+              getAccountGeneration(),
+            );
+            if (target) router.navigate(target as never);
+            else if (router.canGoBack()) router.back();
             else router.navigate("/");
           }}
         />
