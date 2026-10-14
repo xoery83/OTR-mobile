@@ -622,11 +622,11 @@ do $$ declare principal text; begin
    execute format('create role %I nologin nosuperuser nocreatedb nocreaterole noinherit nobypassrls',principal);
   end if;
   if exists(select 1 from pg_roles where rolname=principal and (rolcanlogin or rolsuper or rolcreatedb or rolcreaterole or rolinherit or rolbypassrls or rolreplication)) or
-   exists(select 1 from pg_auth_members where roleid=principal::regrole or member=principal::regrole) then raise exception 'UNSAFE_CORE_V2_PRINCIPAL';end if;
+   exists(select 1 from pg_auth_members where (roleid=principal::regrole or member=principal::regrole) and not (roleid=principal::regrole and member=current_user::regrole and admin_option and not inherit_option and not set_option)) then raise exception 'UNSAFE_CORE_V2_PRINCIPAL';end if;
  end loop;
 end $$;
 grant otr_trip_core_v2_writer to otr_trip_core_v2_gateway with inherit false,set true;
-grant usage on schema public,auth,extensions to otr_trip_core_v2_gateway,otr_trip_core_v2_writer;
+grant usage on schema public,extensions to otr_trip_core_v2_gateway,otr_trip_core_v2_writer;
 
 create table public.trip_core_activation_gate (
  singleton boolean primary key default true check(singleton),

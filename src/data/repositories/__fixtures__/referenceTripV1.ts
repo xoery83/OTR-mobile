@@ -73,3 +73,122 @@ export async function seedReferenceTripV1(
   for (const item of referenceTripV1.items) await repository.addItem(trip.id, item);
   return trip;
 }
+
+// Reference-local synthetic authority only; never real Auth/Trip initialization.
+export async function createReferenceTripV1LocalProducer(
+  accountId: string,
+  hash: import("@/domain/trip/flightImportReview").ImportHash,
+) {
+  const { executeCoreCommandV2 } =
+    await import("../../../../backend/src/tripCoreV2Commands");
+  const { buildCoreActorCollection } =
+    await import("../../../../backend/src/tripCoreV2Collection");
+  const { emptyCoreGraph } = await import("@/domain/trip/tripCoreV2Mutation");
+  const { coreUuid } = await import("@/domain/trip/tripCoreV2");
+  const { corePayloadSchemas } = await import("@/domain/trip/tripCoreV2Commands");
+  coreUuid.parse(accountId);
+  const actor = {
+    accountId,
+    tripId: referenceTripV1.trip.tripId,
+    active: true,
+    canManageShared: true,
+    personId: referenceTripV1.persons[0].personId,
+    personIds: [referenceTripV1.persons[0].personId],
+  };
+  let graph = emptyCoreGraph();
+  const receipts = new Map<string, { domainReceiptId: string; receiptText: string }>();
+  let pending: Promise<void> = Promise.resolve();
+  const storage: import("../../../../backend/src/tripCoreV2Commands").CoreCommandStorage =
+    {
+      async withLockedCommand(scope, work) {
+        if (scope.actorAccountId !== accountId || scope.tripId !== actor.tripId)
+          throw new Error("REFERENCE_LOCAL_SCOPE");
+        const prior = pending;
+        let release!: () => void;
+        pending = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        await prior;
+        try {
+          return await work({
+            actor,
+            authoritativeClock: async () => referenceTripV1.createdAt,
+            readReceipt: async () => receipts.get(scope.operationId) ?? null,
+            hasLegacyOperation: async () => false,
+            canReadReceipt: async () => true,
+            enabledCommands: async () => ["CREATE_ITEM"],
+            readLockedGraph: async () => graph,
+            verifyAdmission: async () => {},
+            lifecycleGraphHash: async () => undefined,
+            async commit(mutation, receipt) {
+              if (mutation) graph = mutation.graph;
+              const stored = {
+                domainReceiptId: id(3000 + receipts.size),
+                receiptText: JSON.stringify(receipt),
+              };
+              receipts.set(scope.operationId, stored);
+              return stored.domainReceiptId;
+            },
+          });
+        } finally {
+          release();
+        }
+      },
+    };
+  return {
+    evidenceLevel: "REFERENCE_LOCAL_SYNTHETIC" as const,
+    async execute(command: import("@/domain/trip/tripCoreV2Commands").CoreCommand) {
+      const expected = referenceTripV1.items.find(
+        (item) =>
+          item.operationId === command.operationId && item.itemId === command.target.id,
+      );
+      const payload = corePayloadSchemas.CREATE_ITEM.safeParse(command.payload);
+      if (
+        command.command !== "CREATE_ITEM" ||
+        command.admission.mode !== "MANUAL" ||
+        command.tripId !== actor.tripId ||
+        !expected ||
+        !payload.success ||
+        payload.data.family !== expected.family
+      )
+        throw new Error("REFERENCE_LOCAL_FINITE_COMMAND");
+      const result = await executeCoreCommandV2(
+        storage,
+        accountId,
+        actor.tripId,
+        command,
+        hash,
+      );
+      if (result.projection !== "FULL" || result.receipt.outcome !== "APPLIED")
+        throw new Error("REFERENCE_LOCAL_COMMAND_REJECTED");
+      return result;
+    },
+    async collection() {
+      if (
+        receipts.size !== referenceTripV1.items.length ||
+        graph.itinerary_events.length !== referenceTripV1.items.length
+      )
+        throw new Error("REFERENCE_LOCAL_INCOMPLETE");
+      return buildCoreActorCollection(
+        graph,
+        actor,
+        {
+          epoch: id(3),
+          revision: receipts.size,
+          accessRevision: 1,
+          generatedAt: referenceTripV1.createdAt,
+        },
+        [
+          {
+            person_id: actor.personId,
+            account_id: accountId,
+            active: true,
+            participating: true,
+            revision: 1,
+          },
+        ],
+        hash,
+      );
+    },
+  };
+}

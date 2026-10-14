@@ -23,6 +23,12 @@ create function public.trip_core_finite_scope_allowed(actor uuid,trip uuid)
 returns boolean language plpgsql security definer set search_path=pg_catalog as $$
 declare gate public.trip_core_activation_gate%rowtype; instant timestamptz;
 begin
+ -- ADMIN is trusted migration ownership, not a sandbox; unexpected edges fail closed.
+ if exists(select 1 from pg_roles where rolname in ('otr_trip_core_v2_gateway','otr_trip_core_v2_writer','otr_trip_create_gateway') and (rolcanlogin or rolsuper or rolcreatedb or rolcreaterole or rolinherit or rolbypassrls or rolreplication))
+ or (select count(*) from pg_roles where rolname in ('otr_trip_core_v2_gateway','otr_trip_core_v2_writer','otr_trip_create_gateway'))<>3
+ or exists(select 1 from pg_auth_members m where (m.roleid in ('otr_trip_core_v2_gateway'::regrole,'otr_trip_core_v2_writer'::regrole,'otr_trip_create_gateway'::regrole) or m.member in ('otr_trip_core_v2_gateway'::regrole,'otr_trip_core_v2_writer'::regrole,'otr_trip_create_gateway'::regrole)) and not (
+  (m.member=current_user::regrole and m.roleid in ('otr_trip_core_v2_gateway'::regrole,'otr_trip_core_v2_writer'::regrole,'otr_trip_create_gateway'::regrole) and m.admin_option and not m.inherit_option and not m.set_option)
+  or (m.roleid='otr_trip_core_v2_writer'::regrole and m.member='otr_trip_core_v2_gateway'::regrole and not m.admin_option and not m.inherit_option and m.set_option))) then return false;end if;
  if session_user not in ('otr_trip_core_v2_gateway','otr_trip_create_gateway') or actor is null then return false;end if;
  select * into gate from public.trip_core_activation_gate where singleton for share;
  instant:=clock_timestamp();

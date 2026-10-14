@@ -37,7 +37,7 @@ afterEach(() => {
 const accountA = randomUUID(),
   accountB = randomUUID(),
   stamp = "2026-10-13T05:30:00Z";
-function local(path = ":memory:", initialize = true) {
+function local(path = ":memory:", initialize = true, clock?: () => string) {
   const sql = new DatabaseSync(path);
   connections.push(sql);
   if (initialize) for (const migration of migrations) sql.exec(migration.sql);
@@ -95,14 +95,17 @@ function local(path = ":memory:", initialize = true) {
     },
   });
   const identity = async () => account;
-  const core = createTripCoreV2Repository(database, identity, async (bytes) =>
-    createHash("sha256").update(bytes).digest("hex"),
+  const core = createTripCoreV2Repository(
+    database,
+    identity,
+    async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+    clock,
   );
   return {
     sql,
     core,
     queue: createSyncOperationRepository(database, identity),
-    repo: createTripRepository(database, identity, core, () => stamp),
+    repo: createTripRepository(database, identity, core, clock ?? (() => stamp)),
     switchTo(id: string) {
       account = id;
       advanceAccountGeneration();
@@ -590,4 +593,141 @@ it("Reference Trip v1 uses normal repositories and survives SQLite reopen/replay
   activeAccount = accountA;
   advanceAccountGeneration();
   expect(await r.repo.pendingItems(saved.id)).toEqual(pending);
+});
+
+it("Reference-local Backend receipts and collection admit five P1/P3 through normal Day read after cold reopen, without Trip acceptance", async () => {
+  const {
+    referenceTripV1: scenario,
+    seedReferenceTripV1,
+    createReferenceTripV1LocalProducer,
+  } = await import("./__fixtures__/referenceTripV1");
+  const { createCoreP1P3DayFeedReader } =
+    await import("./tripCoreV2P1P3DayFeedRepository");
+  const { createTripDayFeedReader } = await import("./tripDayFeedRepository");
+  const { composeDayStream } = await import("@/features/day-feed/composition");
+  const folder = mkdtempSync(join(tmpdir(), "otr-reference-local-accepted-"));
+  folders.push(folder);
+  const path = join(folder, "owned-reference.db");
+  let f = local(path, true, () => scenario.createdAt);
+  const saved = await seedReferenceTripV1(f.repo);
+  expect(saved.createdAt).toBe(scenario.createdAt);
+  const intents = await f.repo.pendingItems(saved.id);
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  const producer = await createReferenceTripV1LocalProducer(accountA, hash);
+  expect(producer.evidenceLevel).toBe("REFERENCE_LOCAL_SYNTHETIC");
+  const context = await f.core.captureContext(saved.id);
+  const receipts = [];
+  for (const intent of intents) {
+    const result = await producer.execute(intent.command);
+    expect(result.receipt.outcome).toBe("APPLIED");
+    await f.core.applyReceipt(context, result.receipt);
+    expect(await producer.execute(intent.command)).toEqual(result);
+    receipts.push(result.receipt.receiptSha256);
+  }
+  expect(new Set(receipts).size).toBe(5);
+  const bundle = await producer.collection();
+  expect(await producer.collection()).toEqual(bundle);
+  await f.core.install(
+    await f.core.beginRefresh(context, 1),
+    bundle.manifest,
+    bundle.pages,
+  );
+  let readerAccount = accountA;
+  const normalReader = () =>
+    createTripDayFeedReader({
+      account: async () => readerAccount,
+      candidates: async () => [],
+      projection: async () => null,
+      services: async () => ({}),
+      coreProjection: createCoreP1P3DayFeedReader(f.core),
+    });
+  let observed = (await normalReader().trip(saved.id)).observed;
+  expect(observed?.projection.version).toBe(2);
+  expect(observed?.projection.events.map((event) => event.id).sort()).toEqual(
+    scenario.items.map((item) => item.itemId).sort(),
+  );
+  expect(
+    observed?.projection.events.every((event) =>
+      event.boundaries.every(
+        (boundary) => boundary.instant === null && boundary.local_time === null,
+      ),
+    ),
+  ).toBe(true);
+  if (observed?.projection.version !== 2) throw new Error("REFERENCE_NORMAL_DAY_MISSING");
+  expect(
+    observed.projection
+      .query("2027-02-02", "Asia/Tokyo")
+      .nonComparable.some((row) => row.event.id === scenario.items[0].itemId),
+  ).toBe(true);
+  const acceptedQuery = observed.projection.query("2027-02-02", "Asia/Tokyo");
+  expect(
+    composeDayStream(acceptedQuery, scenario.qaViewClock.instant, {
+      focus: scenario.items[0].itemId,
+    }).focus,
+  ).toBe(scenario.items[0].itemId);
+  expect(
+    composeDayStream(acceptedQuery, scenario.qaViewClock.instant, {
+      immersive: scenario.items[0].itemId,
+    }).immersive,
+  ).toBe(scenario.items[0].itemId);
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    syncStatus: "PENDING_CREATE",
+    serverId: null,
+    ownerPersonId: null,
+  });
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(scenario.trip.operationId)?.status,
+  ).toBe("DEPENDENCY_BLOCKED");
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM trip_core_read_certificates").get()?.n,
+  ).toBe(1);
+  expect(f.sql.prepare("SELECT count(*) AS n FROM ledger_members").get()?.n).toBe(0);
+  f.sql.close();
+  f = local(path, false, () => scenario.createdAt);
+  observed = (await normalReader().trip(saved.id)).observed;
+  expect(observed?.projection.events).toHaveLength(5);
+  expect(
+    await f.core.acceptedSnapshot(await f.core.captureContext(saved.id)),
+  ).not.toBeNull();
+  expect((await f.repo.getTrip(saved.id))?.syncStatus).toBe("PENDING_CREATE");
+  for (const intent of intents) {
+    const replay = await producer.execute(intent.command);
+    await f.core.applyReceipt(await f.core.captureContext(saved.id), replay.receipt);
+  }
+  const oldContext = await f.core.captureContext(saved.id);
+  f.switchTo(accountB);
+  readerAccount = accountB;
+  expect(await f.repo.getTrip(saved.id)).toBeNull();
+  expect(await f.core.acceptedSnapshot(await f.core.captureContext(saved.id))).toBeNull();
+  expect((await normalReader().trip(saved.id)).observed).toBeNull();
+  await expect(f.core.acceptedSnapshot(oldContext)).rejects.toThrow("Account changed");
+  const other = local(":memory:", true, () => scenario.createdAt);
+  const otherContext = await other.core.captureContext(saved.id);
+  const corrupt = structuredClone(bundle.pages);
+  corrupt[0].pageSha256 = "0".repeat(64);
+  await expect(
+    other.core.install(
+      await other.core.beginRefresh(otherContext, 1),
+      bundle.manifest,
+      corrupt,
+    ),
+  ).rejects.toThrow();
+  expect(
+    await other.core.acceptedSnapshot(await other.core.captureContext(saved.id)),
+  ).toBeNull();
+  await expect(
+    producer.execute({ ...intents[0].command, tripId: randomUUID() }),
+  ).rejects.toThrow("REFERENCE_LOCAL_FINITE_COMMAND");
+  await expect(
+    producer.execute({
+      ...intents[0].command,
+      payload: {
+        ...(intents[0].command.payload as Record<string, unknown>),
+        core: { title: "Changed replay" },
+      },
+    }),
+  ).rejects.toThrow("OPERATION_REUSE_MISMATCH");
 });
