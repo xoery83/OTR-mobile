@@ -1,12 +1,14 @@
 # Beta Coordinator — active engineering baseline / 2026-10-14
 
-## Current source Push68 checkpoint — 2026-10-14 NZDT
+## Current source Push70 checkpoint — 2026-10-14 NZDT
 
-Actual main/live `a03490be311bf8c13e4dbaddc9825fa32f8fe0dc` ([Push68 receipt](/private/tmp/otr-beta-push68-receipt.json)); Git PG101/SQLite62, original dirtyfive plus unrelated assets.zip and empty index preserved. Push67 integrated only nine independently reviewed Home data/readonly files and records. Push68 reconciled exactly two approved Hosted SQL contracts/ADR and integrated the two independently reviewed REF-C QA files. Mounted Home navigation/Search UI stays isolated. STATUS owns metrics and EXECUTION owns the resume queue.
+Actual main/cached origin/live `e57af658495a69ec1e26eb47c057a16cad0e1618` ([Push70 receipt](/private/tmp/otr-beta-push70-receipt.json)); Git PG101/SQLite62, original dirtysix and empty index preserved. P70 integrated only Ref16 QA two files plus necessary standing records after independent review; previous P67 nonUI data and P68 SQL reconciliation remain authoritative. Owner explicitly resumed maintenance. Core's App importer/generator is active from partial5fb and requires a new frozen seal/Source peer before seed or readiness. STATUS owns metrics; EXECUTION owns the queue and preserves the historical pause.
 
 DEV finite schema installation completed: eleven approved transactions and ten fixed postmetadata booleans passed ([actual evidence](/private/tmp/otr-beta-core-hosted-execution-61/manifest.json)). Source SQL matches the executed candidates; runtime remains CLOSED with empty allowlists and NOLOGIN roles. Original failed preflight/query receipts and immutable prior SQL remain preserved. This does not establish deployed Backend injection, internal principal/TLS or real accepted-Day readiness.
 
 REF-C proves normal local synthetic command→collection→SQLite install→P1/P3 read/cold/replay; Trip remains PENDING_CREATE and real Auth/three Persons/device seed are unproved. Latest Owner Reference-first standing supersedes the prior complete pause: targeted Native base/defect/permission checks are allowed; broad matrices wait for normal Reference data/navigation and Owner basic feedback. Documents online original caller has independent bounded function PASS after final-file verification repair; UI/device and positive runtime remain unverified; offline lease/Doc101 activation remain outside it. Comprehensive Search01–13 is approved and its revised functional review passed, with UI intake held. HOME02 remains WAITING_DESIGN_FILE.
+
+Owner-approved contextual Action Island/Trip navigation (2026-10-14) is WP-ACTION01..04 in existing Decision/Interface/Execution registers. The Experience Builder is the sole shared UI author; Source does not parallel-edit it. ACTION06A remains OPEN. Targeted normal Reference smoke requires SAFE/READY; broad matrices and ProductUX acceptance remain separate.
 
 ## Prior Push40 (historical) checkpoint — 2026-10-13T16:58:25Z / 2026-10-14 NZDT
 

@@ -1,20 +1,24 @@
 # OTR Beta — STATUS
 
-## Current source Push68 verdict — 2026-10-14 NZDT
+## Current source Push70 verdict — 2026-10-14 NZDT
 
 **Full real Create→accepted Day→Offline0; local pending subloop1; Owner-ready0; Root product code0.** Auxiliary technical scopes39; data subsets, corrections, assets, reports, REF QA and schema reconciliation do not add journeys or scopes. Required solicited Owner responses10 = nine decisions/permissions plus one resolved shared-UI coordination.
 
-[Push68](/private/tmp/otr-beta-push68-receipt.json) main/live `a03490be311bf8c13e4dbaddc9825fa32f8fe0dc`, ahead0 at readback; main repository10/1, type/guard/touched lint/format PASS. Push67 nonUI Home data/readonly is I; Push68 exact two SQL/ADR plus REF-C two QA files is I. Git PG101/SQLite62 and unrelated dirtysix/index preserved.
+[Push70](/private/tmp/otr-beta-push70-receipt.json) main/cached origin/live `e57af658495a69ec1e26eb47c057a16cad0e1618`; exact seven-path Ref16 QA/standing-record intake, main12/1 and affected static checks PASS. Push67 nonUI Home data/readonly and Push68 SQL reconciliation/REF-C remain I. Git PG101/SQLite62, original dirtysix and empty index are preserved. Owner explicitly resumed maintenance; Source and Core App preparation are ACTIVE, with no automatic resume inferred from the earlier pause.
 
 DEV approved finite schema: actual11 transaction commits and final10 metadata TRUE; CLOSED/empty/NOLOGIN, preserved Creator73de/NZD. Original failed checks/query attempts remain historical evidence. Deployed Backend build/provider injection, operational principal/internal TLS and real Actor/Trip/acceptedv2/offline remain UNKNOWN or NV.
 
-WholeHome/MyTrips/Shell L1 INCOMPLETE/L2 NOT READY. Home navigation586843 and Search revised function reviews passed but mounted UI remains isolated. Latest Reference-first standing allows targeted Native base/defect/permission checks; broad matrices are deferred until normal Reference data/navigation and Owner basic feedback. REF-C is local synthetic QA only, pending Trip and no actual device seed. P456 partial UIHOLD; Photos existing local evidence retained. Qualifying integration waits0 at this checkpoint; other ages UNKNOWN.
+WholeHome/MyTrips/Shell L1 INCOMPLETE/L2 NOT READY. Home navigation586843 and Search revised function reviews passed but mounted UI remains isolated. Latest Reference-first standing allows targeted Native base/defect/permission checks; broad matrices are deferred until normal Reference data/navigation and Owner basic feedback. Ref16 is I70 QA-only (b9d3/independent5a07); its default Trip remains pending and no actual device seed is proved. Core App importer is resumed from partial5fb, awaiting a new frozen author seal and independent review. P456 partial UIHOLD; Photos existing local evidence retained. Qualifying integration waits0 at this checkpoint; other ages UNKNOWN.
 
-### Maintenance checkpoint — OWNERPAUSED / 2026-10-14
+### Historical maintenance checkpoint — OWNERPAUSED, superseded by explicit resume / 2026-10-14
 
 Owner requested a maintenance pause. Finish only the already-running qualified Ref16/standing-record integration; no new task, Ops, Native, review or automatic resume. At pause, base/live088fa3 is verified and the reviewed Ref16 two-file intake is in progress; its final commit/live/time is recorded by [Push70 receipt](/private/tmp/otr-beta-push70-receipt.json) only after successful publication. Original dirtysix/index are preserved; Source-owned Ref changes are the explicit atomic scope, not abandoned edits.
 
 Ref16 b9d3/independent5a07 data tests are bounded, not App/Actor/Trip readiness. Core's genuine localPG Trip100/RN-safe importer is active work to freeze for review; actual Actor capture, device seed and normal App Native remain NOT READY. Documents762e has Source bounded function PASS b360; LOGIN f445 has independent local peer d7fd, neither is live runtime activation. Installed DEV remains CLOSED/NOLOGIN/empty; full real journeys0. Home586843/Search revised4fffff/P456da692 remain held. No fresh Visual result is inferred from the latest targeted-smoke permission.
+
+**Final atomic publication completed:** main/cached origin/live `e57af658495a69ec1e26eb47c057a16cad0e1618` at 2026-10-14T06:40:04.648064+00:00; [Push70 receipt](/private/tmp/otr-beta-push70-receipt.json), exact7 paths, main12/1/static PASS, ahead0/index empty and original dirtysix preserved. This local maintenance-note amendment is saved only in STATUS/EXECUTION after publication; no additional code/UI intake or automatic resume follows.
+
+Core App preparation is now frozen PARTIAL/NOT READY at `/private/tmp/otr-beta-reference-app-import-61/manifest.json` SHA5fb05c62ad93783e620dc3efe032b75a314eb5000d43d17b778a8e7d0a7a21d8. Five author paths saved, importer test unwritten, partial typecheck exit2 (baseVector/actor inference/enqueue return). Actor capture/artifact generation/device seed/Native0. Its local clone verification was rejected by automatic approval review before process creation for authentication-config/function/proposal writes judged outside the recognized narrow scope; no clone, bypass or retry. Source does not review or integrate this partial candidate during the pause.
 
 ## Prior Push40 (historical) integration — 2026-10-13T16:58:25Z / 2026-10-14 NZDT
 

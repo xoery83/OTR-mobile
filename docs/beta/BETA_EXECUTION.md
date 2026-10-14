@@ -2,19 +2,30 @@
 
 Iteration starts 2026-10-13 NZDT. [STATUS](BETA_STATUS.md) is the current evidence snapshot; [DECISIONS](BETA_DECISIONS.md) controls authority. Earlier queue sections below “Prior serial integration receipt” are historical.
 
-## Current execution queue after source Push68 — 2026-10-14 NZDT
+## Current execution queue after source Push70 — 2026-10-14 NZDT
 
 Source retains sole main/PG/SQLite/records writer. Security by Outcome and Simplicity govern ordinary work: preserve actor/Trip/private/financial outcomes, reuse owning contracts/helpers, and finish the smallest complete user path rather than adding uncalled ports.
 
 - Protected runtime: approved revised finite schema is installed and read back CLOSED/NOLOGIN/empty. No further schema query/replay is needed. Next runtime prerequisites are deployed optional provider/build evidence, a lawful dedicated principal/connection and internal TLS, plus an explicit finite activation contract. Existing role guards reject LOGIN; schema installation does not authorize provisioning, deployment or activation. Preserve original immutable SQL and successful inert prefix.
-- Documents: active Core builder owns the normal online ITEM-current-right→verified bytes→last current-right→ephemeral system open/share slice and narrow DayFeed/catalog caller. Independent bounded online-client function review passed after final staged-file hash repair; UI/device and current positive runtime remain unverified. No offline lease, Doc101 activation, second store or permission inference. Current positive runtime remains NV.
-- Reference/navigation: REF-C two-file QA chain is I68; synthetic local admission retains PENDING_CREATE and proves no real Auth/three Persons/device seed. Full sixteen-Item data candidate b9d3 is frozen for independent review; Core is preparing a genuine localPG Trip100 receipt/actual actor-person-epoch artifact and RN-safe normal-repository importer. Normal App readiness is not yet verified. Home shared navigation586843 function PASS and Search revised function PASS stay isolated for unified QA; entry icons must use real permission-filtered targets. P45614 remains held.
+- Documents: the normal online ITEM-current-right→verified bytes→last current-right→ephemeral system open/share slice and narrow DayFeed/catalog caller are frozen at762e, with Source bounded function peer b360 after final staged-file hash repair; UI/device and current positive runtime remain unverified. No offline lease, Doc101 activation, second store or permission inference. Current positive runtime remains NV.
+- Reference/navigation: REF-C two-file QA chain is I68; synthetic local admission retains PENDING_CREATE and proves no real Auth/three Persons/device seed. Full sixteen-Item b9d3/5a07 data QA is I70; Core is preparing a genuine localPG Trip100 receipt/actual actor-person-epoch artifact and RN-safe normal-repository importer. Normal App readiness is not yet verified. Home shared navigation586843 function PASS and Search revised function PASS stay isolated for unified QA; entry icons must use real permission-filtered targets. P45614 remains held.
 - Dispatch: earlier agent-thread-limit rejections occurred at full concurrency. QA reactivation subsequently succeeded; there is no current persistent dispatch block. Continue active lanes and preserve exact seals/leases for explicit resume.
 - Unified QA: latest Reference-first standing permits targeted base/defect/permission Native checks and the ready normal MyTrips→ReferenceHome→Day→Focus→Immersive smoke. Broad matrices remain deferred until normal data/navigation and Owner basic feedback. Retain old verdicts; no unQA UI intake or premature Reference READY. SQLite62/Coast/account remain preserved.
 
 HOME03A trustworthy Trip-local Today producer, HOME03B actionable batch/seenack and HOME02 missing design retain their precise dependencies. HOME04/05 nonUI data/readonly subset is I67; caller/UI and real user journey remain separately unverified.
 
-### Maintenance pause and exact resume order — OWNERPAUSED
+### Active bounded Action Island queue — WP-ACTION01..04 / 2026-10-14
+
+Owner explicitly resumed maintenance. Core repairs the saved App importer/generator and writes normal owning tests in its isolated lease; Source independently reviews its new seal before any App seed or intake. Reuse P70 Ref16/5a07 and existing schema/Docs/LOGIN proof. The pre-process rejected local runner remains preserved; use the safest qualified local fixture without bypass. No new Ops is implied.
+
+- WP-ACTION01: MyTrips Start a Trip menu and first-empty Import/Create actions; use the actual unassigned Capture flow and existing Create form. No previous Trip association is required or invented.
+- WP-ACTION02: actual-capability Home/Day Import plus four Quick Adds; reliable anchored Day date is weak form context only. Add Ledger direct New Expense and remove its duplicate header plus. Qualified user-success may select one relevant Widget once without ordering or background focus theft.
+- WP-ACTION03: owning Updates personal Mark All Read for the selected Trip (disabled geometry at zero), Documents Capture, Members Add and Photos multi-add. Unavailable producers remain explicit; ACTION06A unlinked Trip attachment is OPEN and excluded.
+- WP-ACTION04: one global working-Trip identity/switcher, per-Trip bookmarks and unsaved-form fences; Search temporary target does not switch it. Immersive defaults to no floating plus or mandatory left island.
+
+The original Experience Builder is the single shared UI/catalog/navigation writer. Source owns records and serial integration; Core owns the disjoint DEV Reference importer. Independent function review then minimum targeted normal Reference smoke applies; full matrices follow Owner feedback, with no ProductUXAccepted inference. No new roles, credentials, Hosted operation or device is authorized.
+
+### Historical maintenance pause and exact resume order — superseded by explicit Owner resume
 
 Save all frozen candidates and current partial artifacts; do not delete/reset worktrees, regenerate immutable Reference first-publisher identity, kill unknown resources or restart after relaunch automatically. Source completes only current qualified atomic Push70, then releases its turn. Core's app-import candidate is pending author freeze/review, not an approved device operation.
 
@@ -23,6 +34,8 @@ Save all frozen candidates and current partial artifacts; do not delete/reset wo
 3. When explicitly SAFE/READY and sole Native lease granted, run the finite normal MyTrips→ReferenceHome→Day→Focus→Immersive→Back smoke plus necessary targeted base/permission/defect checks. Broad matrices wait for Owner basic feedback. Real journey/runtime, system originals and unproduced Ticket/role assertions stay unverified until their own lawful evidence.
 
 Documents peer `/private/tmp/otr-beta-documents-online-source-review-61/review.json` b360; local connection-contract peer `/private/tmp/otr-beta-core-login-compat-peer-61-r2/manifest.json` d7fd. These are retained evidence, not new Ops/deploy/LOGIN permissions. Latest Owner pause takes precedence over earlier queue refill standing.
+
+Core saved partial app-import seal5fb05c62 at `/private/tmp/otr-beta-reference-app-import-61/manifest.json`; see its checkpoint.md for five exact files/known typecheck2/test-unwritten state. Before future independent acceptance, repair only missing baseVector/actor typing/normal enqueue return, write owning importer tests, then resolve the pre-process automatic-review rejection against existing authorized local-fixture scope or a safer already-qualified fixture. No new approval request, DB work or retry occurs while OWNERPAUSED. Public Actor capture/first-publisher artifact/device seed remain0; preserve actual actor/person/epoch rather than synthetic defaults. Push70 completed normally; only this STATUS/EXECUTION local maintenance note remains Source-owned uncommitted handoff.
 
 ## Prior serial queue after Push40 (historical) — 2026-10-13T16:58:25Z / 2026-10-14 NZDT
 
