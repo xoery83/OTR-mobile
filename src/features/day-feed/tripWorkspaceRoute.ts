@@ -26,3 +26,16 @@ export function showTripContextualActions(
   if (kind === null || kind === "CACHED") return false;
   return acceptedTripVisible;
 }
+
+// Presentation-only context, never an admission or capability grant.
+export function isSelectedTripHome(params: unknown): boolean {
+  if (!params || typeof params !== "object") return false;
+  const { tripId, view } = params as { tripId?: unknown; view?: unknown };
+  return (
+    typeof tripId === "string" &&
+    Boolean(tripId.trim()) &&
+    view !== "trips" &&
+    view !== "create" &&
+    view !== "day"
+  );
+}

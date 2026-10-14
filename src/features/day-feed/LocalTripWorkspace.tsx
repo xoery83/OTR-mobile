@@ -1,3 +1,4 @@
+import { TripHomeFrame } from "@/features/trip/TripHomeFrame";
 import {
   useCallback,
   useEffect,
@@ -6,7 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { AppState, StyleSheet, Text, View } from "react-native";
+import { AppState, StyleSheet, View } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { createUuid } from "@/domain/localId";
@@ -22,7 +23,7 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-import { UiButton, UiSection } from "@/ui/controls";
+import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
 import { UiChoiceChip, UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -35,7 +36,6 @@ import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
 import { TripCoverPicker } from "./TripCoverPicker";
 import { LocalTripPhotos } from "./LocalTripPhotos";
-import { TripCoverVisual } from "./TripCoverVisual";
 import { tripCoverSource } from "./tripCovers";
 
 type Pending = Awaited<ReturnType<TripRepository["pendingItems"]>>;
@@ -382,40 +382,54 @@ function LocalTripContent({
   if (tripId && !selected && !remoteSelected) return null;
   return (
     <View style={styles.root}>
-      {error ? (
+      {error && !selected && !remoteSelected ? (
         <Text accessibilityRole="alert" style={styles.status}>
           {t("tripCreate.saveFailed")}
         </Text>
       ) : null}
       {selected ? (
         <>
-          <UiButton label={t("dayFeed.myTrips")} variant="text" onPress={onBackToTrips} />
-          <UiSection title={selected.name}>
+          <TripHomeFrame
+            title={selected.name}
+            onBack={onBackToTrips}
+            cover={tripCoverSource(selected)}
+            metadata={[
+              ...(selected.destination ? [selected.destination] : []),
+              ...(selected.startDate && selected.endDate
+                ? [
+                    t("myTrips.dateRange", {
+                      start: displayDate(selected.startDate),
+                      end: displayDate(selected.endDate),
+                    }),
+                  ]
+                : selected.startDate
+                  ? [t("myTrips.starts", { date: displayDate(selected.startDate) })]
+                  : selected.endDate
+                    ? [t("myTrips.ends", { date: displayDate(selected.endDate) })]
+                    : [t("myTrips.datesToBeDecided")]),
+              ...(["PENDING_CREATE", "SYNCED"].includes(selected.syncStatus)
+                ? [
+                    t(
+                      selected.syncStatus === "SYNCED"
+                        ? "tripCreate.acceptedTrip"
+                        : "tripCreate.pendingTrip",
+                    ),
+                  ]
+                : []),
+            ]}
+            modules={<LocalTripPhotos tripId={selected.id} />}
+          />
+          {error ? (
+            <Text accessibilityRole="alert" style={styles.status}>
+              {t("tripCreate.saveFailed")}
+            </Text>
+          ) : null}
+          <UiSection title={t("tripHome.coverTools")}>
             <TripCoverPicker
               selected={selected.selectedCoverAssetId}
               onSelect={selectCover}
             />
-            {selected.destination ? (
-              <Text style={styles.body}>{selected.destination}</Text>
-            ) : null}
-            {selected.startDate ? (
-              <Text style={styles.body}>{displayDate(selected.startDate)}</Text>
-            ) : null}
-            {selected.endDate ? (
-              <Text style={styles.body}>{displayDate(selected.endDate)}</Text>
-            ) : null}
-            {selected.syncStatus === "PENDING_CREATE" ||
-            selected.syncStatus === "SYNCED" ? (
-              <Text style={styles.status}>
-                {t(
-                  selected.syncStatus === "SYNCED"
-                    ? "tripCreate.acceptedTrip"
-                    : "tripCreate.pendingTrip",
-                )}
-              </Text>
-            ) : null}
           </UiSection>
-          <LocalTripPhotos tripId={selected.id} />
           <UiSection title={t("tripCreate.pendingItems")}>
             <Text style={styles.status}>{t("tripCreate.pendingHint")}</Text>
             {pending.map((p) => {
@@ -484,21 +498,27 @@ function LocalTripContent({
         </>
       ) : remoteSelected ? (
         <>
-          <UiButton label={t("dayFeed.myTrips")} variant="text" onPress={onBackToTrips} />
-          <UiSection title={remoteSelected.name}>
-            <TripCoverVisual
-              source={tripCoverSource(remoteSelected)}
-              style={styles.remoteCover}
-            />
-            {remoteSelected.destination ? (
-              <Text style={styles.body}>{remoteSelected.destination}</Text>
-            ) : null}
-            {remoteStart ? (
-              <Text style={styles.body}>{displayDate(remoteStart)}</Text>
-            ) : null}
-            {remoteEnd ? <Text style={styles.body}>{displayDate(remoteEnd)}</Text> : null}
-            <Text style={styles.status}>{t("myTrips.cachedDetails")}</Text>
-          </UiSection>
+          <TripHomeFrame
+            title={remoteSelected.name}
+            onBack={onBackToTrips}
+            cover={tripCoverSource(remoteSelected)}
+            notice={t("myTrips.cachedDetails")}
+            metadata={[
+              ...(remoteSelected.destination ? [remoteSelected.destination] : []),
+              ...(remoteStart && remoteEnd
+                ? [
+                    t("myTrips.dateRange", {
+                      start: displayDate(remoteStart),
+                      end: displayDate(remoteEnd),
+                    }),
+                  ]
+                : remoteStart
+                  ? [t("myTrips.starts", { date: displayDate(remoteStart) })]
+                  : remoteEnd
+                    ? [t("myTrips.ends", { date: displayDate(remoteEnd) })]
+                    : [t("myTrips.datesToBeDecided")]),
+            ]}
+          />
         </>
       ) : mode === "LIST" ? (
         status === "READY" ? (
@@ -553,7 +573,6 @@ function LocalTripContent({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     root: { gap: visual.space.section },
-    remoteCover: { width: "100%", height: 192, borderRadius: visual.radius.card },
     body: { color: colors.textPrimary, ...visual.type.row },
     status: { color: colors.textSecondary, ...visual.type.meta },
   });

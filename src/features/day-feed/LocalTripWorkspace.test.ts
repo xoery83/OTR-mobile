@@ -9,6 +9,19 @@ import {
 } from "@/data/auth/accountGeneration";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 
+vi.mock("@/features/trip/TripHomeFrame", () => ({
+  TripHomeFrame: (p: any) => {
+    if (p.onBack) state.nodes.push({ label: "dayFeed.myTrips", onPress: p.onBack });
+    return createElement(
+      "div",
+      { "data-trip-home-frame": p.title },
+      p.title,
+      ...p.metadata,
+      p.notice,
+      p.modules,
+    );
+  },
+}));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
 };
@@ -61,6 +74,7 @@ vi.mock("react-native", () => ({
   AppState: { addEventListener: () => ({ remove: vi.fn() }) },
 }));
 vi.mock("@/ui/controls", () => ({
+  UiText: (p: any) => createElement("span", null, p.children),
   UiButton: (p: any) => {
     state.nodes.push(p);
     return createElement("button", { disabled: p.disabled }, p.label);

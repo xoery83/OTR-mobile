@@ -89,6 +89,7 @@ function TripContent({ today = false }: { today?: boolean }) {
   const workspaceKind = resolvedWorkspaceKind(workspaceResolution, requested, generation);
   const localChecked = workspaceKind !== null;
   const knownWorkspaceTrip = workspaceKind === "LOCAL" || workspaceKind === "CACHED";
+  const hideHomePrelude = !today && home && knownWorkspaceTrip;
   const showContextualActions =
     today ||
     showTripContextualActions(requested, workspaceKind, Boolean(visibleTrip?.observed));
@@ -201,19 +202,23 @@ function TripContent({ today = false }: { today?: boolean }) {
     );
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
-      <Text accessibilityRole="header" style={styles.heading}>
-        {t(
-          today
-            ? "navigation.today"
-            : visibleTrip?.observed || knownWorkspaceTrip
-              ? "dayFeed.tripHome"
-              : "dayFeed.myTrips",
-        )}
-      </Text>
-      {status === "LOADING" ? (
+      {!hideHomePrelude ? (
+        <Text accessibilityRole="header" style={styles.heading}>
+          {t(
+            today
+              ? "navigation.today"
+              : visibleTrip?.observed || knownWorkspaceTrip
+                ? "dayFeed.tripHome"
+                : "dayFeed.myTrips",
+          )}
+        </Text>
+      ) : null}
+      {!hideHomePrelude && status === "LOADING" ? (
         <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
       ) : null}
-      {status === "UNAVAILABLE" && (today || (localChecked && !knownWorkspaceTrip)) ? (
+      {!hideHomePrelude &&
+      status === "UNAVAILABLE" &&
+      (today || (localChecked && !knownWorkspaceTrip)) ? (
         <Text style={styles.meta}>{t("dayFeed.unavailable")}</Text>
       ) : null}
       {!today ? (

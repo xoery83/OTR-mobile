@@ -1,0 +1,20 @@
+{
+  "candidateManifestSHA": "eb2b0c5f9bb5078e48dcd25a4c8ffd2f1d9f669c5b9a56ad773f63a5d2b06b58",
+  "candidatePaths": 12,
+  "baseline": "eae4216/b6f8b844",
+  "required": [
+    "402 fullHero width/defaultheight<=40%/noProductTextAbove",
+    "LightDarksmallgrayMyTripsgroupheadings",
+    "legalexistinglonglocalHero/titlecopy/Photos/zerowidgetfallback",
+    "hot5ShelllabelLight+Dark/samefontreload/5down",
+    "MyTripsreturnP03title/currentTodaytitlewithoutacceptedfacts",
+    "rotation geometry on sameapproveddevice only if observable",
+    "ENZH only legalexistingfacts or labeledtemporarypresentationFixture"
+  ],
+  "NV": [
+    "newPreparationWidgetBusiness",
+    "positiveacceptedActor/cert/Day",
+    "systempicker",
+    "fullL1/UXAccepted"
+  ]
+}

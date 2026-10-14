@@ -1,0 +1,158 @@
+Window: "OTR CP02 Native Host Recovery", App: Device Hub.
+0 standard window OTR CP02 Native Host Recovery – iOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, Secondary Actions: Raise
+	1 split group
+		2 split group com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, SidebarNavigationSplitView
+			3 scroll area Secondary Actions: Scroll Up, Scroll Down
+				4 list Sidebar
+					5 row (selectable) Description: Available, Value: Expanded
+					6 row (selected) Description: iphone.gen3, Value: OTR CP02 Native Host Recovery
+27.0
+Simulator
+					7 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR 02 Anonymous
+27.0
+Simulator
+					8 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR Synthetic QA
+27.0
+Simulator
+					9 row (selectable) Description: iphone.gen3, Value: OTR Day Feed Lab DL1
+27.0
+Simulator
+					10 row (selectable) Description: iphone.gen3, Value: OTR G2 FLEX Main Integration
+27.0
+Simulator
+					11 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro Max
+27.0
+Simulator
+					12 row (selectable) Description: ipad, Value: leon’s iPad
+26.0.1
+iPad Air (5th generation)
+					13 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - B
+27.0
+Simulator
+					14 row (selectable) Description: iphone.gen3, Value: OTR Flexible CP02 Held QA
+27.0
+Simulator
+					15 row (selectable) Description: iphone.gen3, Value: OTR Flight Native03 CLOSED
+27.0
+Simulator
+					16 row (selectable) Description: iphone.gen1, Value: OTR N1 NOW Compact QA
+27.0
+Simulator
+					17 row (selectable) Description: iphone.gen3, Value: OTR N1 NOW Large QA
+27.0
+Simulator
+					18 row (selectable) Description: iphone.gen1, Value: OTR P1 V1R5 Compact QA
+27.0
+Simulator
+					19 row (selectable) Description: iphone.gen3, Value: OTR P2 Flight QA
+27.0
+Simulator
+					20 row (selectable) Description: iphone.gen1, Value: OTR P2 Flight Small QA
+27.0
+Simulator
+					21 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - A
+27.0
+Simulator
+					22 row (selectable) Description: iphone.gen1, Value: OTR Capture C3 Small QA
+27.0
+Simulator
+					23 row (selectable) Description: iphone.gen3, Value: OTR Capture C3 Synthetic QA
+27.0
+Simulator
+					24 row (selectable) Description: iphone.gen3, Value: iPhone 17 Pro
+26.5
+Simulator
+					25 row (selectable) Description: Unavailable, Value: Collapsed
+				26 scroll bar (settable, float) 0
+					27 value indicator (settable, float) 0
+					28 increment arrow button
+					29 decrement arrow button
+					30 increment page button
+					31 decrement page button
+			32 search text field (settable) Search
+				33 button Search
+			34 splitter (disabled, settable, float) 308
+			35 container
+				36 container
+					37 button Description: Open app menu, Secondary Actions: Cancel
+					38 heading Description: Auckland Coast and Mountain Family Journey with Friends 2026 Long Title QA, Secondary Actions: Cancel
+					39 heading Description: Auckland Coast and Mountain Family Journey with Friends 2026 Long Title QA, Secondary Actions: Cancel
+					40 text Description: Auckland, Secondary Actions: Cancel
+					41 text Description: Dates to be decided, Secondary Actions: Cancel
+					42 text Secondary Actions: Cancel, Description: Trip creation is saved here and waiting to sync. Member and Ledger setup have not been confirmed for this request.
+					43 button Description: My Trips, Secondary Actions: Cancel
+					44 heading Description: Trip workspace, Secondary Actions: Cancel
+					45 text Description: No contextual workspace is available for this Trip yet., Secondary Actions: Cancel
+					46 heading Description: Trip tools, Secondary Actions: Cancel
+					47 heading Description: Photos, Secondary Actions: Cancel
+					48 button Description: Choose photo, Secondary Actions: Cancel
+					49 heading Description: Trip cover, Secondary Actions: Cancel
+					50 button Description: Choose cover, Secondary Actions: Cancel
+					51 heading Description: Saved itinerary, Secondary Actions: Cancel
+					52 text Description: These items are saved here and waiting to sync. Confirmed Day Feed is available after Trip setup., Secondary Actions: Cancel
+					53 heading Description: Add to itinerary, Secondary Actions: Cancel
+					54 button (selected) Description: Activity, Secondary Actions: Cancel
+					55 button Description: Accommodation, Secondary Actions: Cancel
+					56 text field (settable) Description: Item title, Secondary Actions: Cancel
+					57 button Description: Activity date, Not set, Secondary Actions: Cancel
+					58 button (disabled) Description: Save item, Secondary Actions: Cancel
+					59 button Description: Refresh, Secondary Actions: Cancel
+					60 button Description: Capture, Secondary Actions: Cancel
+					61 button Description: Ledger, Secondary Actions: Cancel
+					62 button Description: Day Feed Lab, Secondary Actions: Cancel
+					63 button Description: Create / Sync validation harness, Secondary Actions: Cancel
+					64 button (selected) Description: My Trips, Help: Open My Trips, Secondary Actions: Cancel
+					65 button Description: Create Trip, Secondary Actions: Cancel
+				66 button Description: Home, ID: app.grid.3x3
+				67 button Description: Screenshot, ID: camera.viewfinder
+				68 button Description: Record, ID: record.circle
+				69 button Rotate Left
+		70 splitter (disabled, settable, float) 820
+		71 container
+			72 Inspector Subcategory
+				73 radio button Description: Info, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.info
+				74 radio button Description: Apps, Value: 1, ID: InspectorButton.com.apple.devicekit.inspector.apps
+				75 radio button Description: Profiles, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.profiles
+			76 scroll area Description: Apps, ID: Inspector.com.apple.devicekit.inspector.apps
+				77 container
+					78 scroll area
+						79 list
+							80 row (selected) OTR Mobile
+0.1.0
+com.xoery.otrmobile
+					81 button Add
+					82 button Remove
+			83 container Description: Apps, ID: Inspector.com.apple.devicekit.inspector.apps
+				84 image Description: Search, ID: magnifyingglass
+				85 text field (settable) Filter
+				86 pop up button Value: Developer, ID: App Filter
+	87 toolbar
+		88 menu button Add, Help: Add Device, ID: plus
+		89 toggle button Description: Filter, Help: Sort and Filter, Value: off
+		90 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+		91 toggle button Description: Capture Keyboard, Value: off
+		92 toggle button Description: Resize mode, Help: Enter resize mode, Value: off
+		93 Zoom
+			94 radio button Description: Zoom Out, Value: 0, ID: minus.magnifyingglass
+			95 radio button Description: arrowtriangles.up.right.down.left.magnifyingglass, Help: Zoom to Fit, Value: 0
+			96 radio button Description: Zoom To Actual Size, Help: Physical Size, Value: 1, ID: 1.magnifyingglass
+			97 radio button Description: Zoom In, Value: 0, ID: plus.magnifyingglass
+		98 button Description: Open in New Window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+		99 menu button More, Help: More Actions, ID: ellipsis
+		100 Inspector Category
+			101 radio button Description: Edit, Help: Settings, Value: 0, ID: slider.horizontal.3
+			102 radio button Description: text.document, Help: Reports, Value: 0
+			103 radio button Description: Info, Value: 1, ID: info
+	104 close button
+	105 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	106 minimize button
+	107 text OTR CP02 Native Host Recovery iOS 27.0
+108 menu bar
+	109 Device Hub
+	110 File
+	111 Edit
+	112 View
+	113 Device
+	114 Controls
+	115 Window
+	116 Help

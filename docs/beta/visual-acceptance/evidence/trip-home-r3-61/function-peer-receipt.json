@@ -1,0 +1,64 @@
+{
+  "stage": "HOME01 R3 + Owner MyTrips headings + shared Shell UiText",
+  "reviewer": "reference_trip_61; non-author of all12candidatefiles",
+  "verdict": "PASS_BOUNDED_FUNCTIONAL_SAFE",
+  "manifestSha256": "eb2b0c5f9bb5078e48dcd25a4c8ffd2f1d9f669c5b9a56ad773f63a5d2b06b58",
+  "baseCommit": "eae4216388852d553a3da03c5ab4edcc752b197c",
+  "patchSha256": "c6225a4f21d9b785c880682d6e7cc95f1d1cd59f5f37bb353b159863e2c39dfb",
+  "revisionPatchSha256": "727b3a0ef2a16d42af77f2ef1a50afc133bce5b409c0ab473ff36bbaf8ab25ea",
+  "trustedReuse": [
+    "R2ae9e manifest/55685 peer receipt unchanged scope",
+    "Core9864 tiny heading provenance/Sourceadb87 review; exact7631d427 file, no P4 hunk"
+  ],
+  "exactness": {
+    "sourceFiles": 12,
+    "preservedDependencies": 8,
+    "allCurrentBaseSourceHashes": "MATCH",
+    "previousR2Manifest": "MATCH",
+    "CoreHeadingCoauthor": "EXACT",
+    "allReportPatchFiveLogsExitReceiptHashes": "MATCH",
+    "afterChecksSourceHashes": "UNCHANGED"
+  },
+  "authorCommandEvidence": "five independent commands exit0; actual logs/hash checked, not combined-shell last exit",
+  "independentCommands": [
+    {
+      "command": "npx vitest run --configLoader runner src/features/trip/TripHomeWidgetHost.test.ts src/features/day-feed/LocalTripWorkspace.test.ts src/features/day-feed/MyTripsList.test.ts src/features/day-feed/tripWorkspaceRoute.test.ts src/components/ExperienceBottomShell.test.ts src/ui/controls.test.ts src/data/repositories/tripDayFeedRepository.test.ts src/ui/coverage.test.ts",
+      "exitCode": 0,
+      "filesPassed": 8,
+      "testsPassed": 39,
+      "durationSeconds": 1.75
+    },
+    {
+      "command": "npx eslint src/features/trip/TripHomeFrame.tsx src/features/trip/TripHomeWidgetHost.test.ts src/features/day-feed/LocalTripWorkspace.tsx src/features/day-feed/LocalTripWorkspace.test.ts src/features/day-feed/tripWorkspaceRoute.ts src/features/day-feed/tripWorkspaceRoute.test.ts src/features/day-feed/MyTripsList.tsx src/components/ExperienceBottomShell.tsx 'app/(tabs)/_layout.tsx'",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "conformance": {
+    "fullWidthHero": "actual useWindowDimensions.width; centered bleed through existing content inset, no new offset",
+    "photoHeight": "min(232,windowheight*0.4), reactive; latest Owner supersedes r2 text-zone height growth",
+    "largeLandscapeCopy": "one-line media title plus full intrinsic title/metadata below; no scaling cap",
+    "abovePhotoProductText": "Workspace back/error moved below; exact Core knownHome guard hides heading/loading/unavailable prelude only; selected Home native title empty, Menu retained",
+    "routePredicate": "presentation intent only; MyTrips/Create/Day/empty/malformed-shape contexts preserved, never a UUID/access validator",
+    "MyTripsHeadings": "four existing lifecycle headings use canonical eyebrow/textSecondary; heading role, data/order/callbacks unchanged",
+    "Shell": "raw Text swapped to existing UiText hot-size remount only; no nav/state/controller change",
+    "PhotosAndAuthFences": "trusted unchanged owning repository/localPhotos/generation/async behavior preserved",
+    "newWidgets": 0,
+    "P4Body": "EXCLUDED",
+    "newAuthority": "NONE"
+  },
+  "findings": [],
+  "readiness": {
+    "functional": "PASS_BOUNDED_R3",
+    "Native": "AFTERFIX_NOT_OBSERVED",
+    "fullHome": "PARTIAL",
+    "HOME02": "WAITING_DESIGN_FILE",
+    "level1": "INCOMPLETE",
+    "level2": "NOT_READY",
+    "ProductUXAccepted": false
+  },
+  "sourceMainNativeOpsWrites": 0,
+  "Today03A": "preflight saved; private draft not frozen/not delivered/not counted. Root explicitly defers to future owning producer/bookmark plan",
+  "release": "SAFE; pass exact packet to Visual for applicable Native QA; no Source operator job block"
+}

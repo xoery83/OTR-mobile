@@ -1,0 +1,81 @@
+{
+  "atUTC": "2026-10-14T02:47:48.451489+00:00",
+  "candidateManifestSHA": "eb2b0c5f9bb5078e48dcd25a4c8ffd2f1d9f669c5b9a56ad773f63a5d2b06b58",
+  "baseline844": "PASS",
+  "peerReceipt": "1d7cbea89ec0576bed2b7a6f61b9f0d1497b2a623058eca265e4fe32a0febf30",
+  "files": [
+    {
+      "path": "src/features/trip/TripHomeFrame.tsx",
+      "sha256": "3bdf7cad1e4b0cceaaf4e0a401defef0403b26f806a06e2a146455324e56847a",
+      "beforeExists": false,
+      "beforeSHA": null
+    },
+    {
+      "path": "src/features/trip/TripHomeWidgetHost.tsx",
+      "sha256": "279a7a482aed7f918171d4a3916436aac6cb81d0c67760da8d9e3097ad3bf3ab",
+      "beforeExists": false,
+      "beforeSHA": null
+    },
+    {
+      "path": "src/features/trip/TripHomeWidgetHost.test.ts",
+      "sha256": "18ff1f5c0f451e808cb3d4f07e73d4cae25c4811fe2d60523264d67079164624",
+      "beforeExists": false,
+      "beforeSHA": null
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+      "sha256": "ae9425c307ac2da8cdf5cf5f1af40a1a95c7c4c8a8992f0d48a9db0c9515f56a",
+      "beforeExists": true,
+      "beforeSHA": "d0065220d41dda0c8aab13ce00906b7b03a392ae882b963dc1565d3da33aee50"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+      "sha256": "02875d5b6c8037bf4e68bab36a7e6c5ede9b7289464d657d1d473293d4f4b93c",
+      "beforeExists": true,
+      "beforeSHA": "a0fbcc9747a9e879ecab3d2cc5a5df3f32ce31232add9bb108b8066702aa8385"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "sha256": "f6ae050d8798a6f97547993fe6bb10a6a0d6c82a9cee69140812d45cd2bb0721",
+      "beforeExists": true,
+      "beforeSHA": "cecbeeb781de6a575a911a1d594df4e4a0058cde6dedbb395f1f0b644b0e6bfa"
+    },
+    {
+      "path": "app/(tabs)/_layout.tsx",
+      "sha256": "ddceda52a905781420454485710e2cb79b694386072bba7ce5ff6a7da50d4724",
+      "beforeExists": true,
+      "beforeSHA": "8fe95c322304b5a2be751ba1201f5c8cd551a1f18aa3a39e216bff32c233ebd9"
+    },
+    {
+      "path": "src/components/ExperienceBottomShell.tsx",
+      "sha256": "6115712c4e65284ce3de68171a6042ac2b5fb319f7cebec7c73513737e24423c",
+      "beforeExists": true,
+      "beforeSHA": "210b0bc254f0e9aacbcb0da6151fc80182244dab8dd737413516c5df3912af14"
+    },
+    {
+      "path": "src/features/day-feed/tripWorkspaceRoute.ts",
+      "sha256": "d80715c3d490dac38cce6d9e8fc04d58e88242a5ab3bc001ab1b369bddb28a00",
+      "beforeExists": true,
+      "beforeSHA": "23fd29e777a52e5fa283bdf07b03232c1ac2cda30f955d8e4d6ce67db33c430a"
+    },
+    {
+      "path": "src/features/day-feed/tripWorkspaceRoute.test.ts",
+      "sha256": "1ffb5c0f24472521eb101a23c2f783856d8c501899502082cd4df29460de1810",
+      "beforeExists": true,
+      "beforeSHA": "6b9db1ca79bf75c1067fb239cb29e910548ca453122431cdac496a95dec33b0e"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.tsx",
+      "sha256": "3903663611523417c041d1fbbeff1370cb7a2442bbfce93c40f9a6d0984ffdc7",
+      "beforeExists": true,
+      "beforeSHA": "4c3a38acdf64345c7eb4f9c1277f1d411a17cbf0330b7d7c2a4e8945fd7fd467"
+    },
+    {
+      "path": "src/features/day-feed/TripScreen.tsx",
+      "sha256": "7631d427bbf19270f83820e80ee204ef037f52c033581f8f4f338ea15e4501a0",
+      "beforeExists": true,
+      "beforeSHA": "2ebd4f62e80da6846f0fa005af466ae0523f17b4a4018e8aa658d1f1c858bb2d"
+    }
+  ],
+  "SQLite62": "preserved/no writes"
+}

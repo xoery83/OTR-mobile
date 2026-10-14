@@ -225,7 +225,7 @@ const createStyles = (c: UiColors) =>
   StyleSheet.create({
     list: { gap: visual.space.section },
     section: { gap: visual.space.heading },
-    sectionHeading: { ...visual.type.section, color: c.textPrimary },
+    sectionHeading: { ...visual.type.eyebrow, color: c.textSecondary },
     groupContent: { gap: visual.space.card },
     empty: {
       backgroundColor: c.surface,

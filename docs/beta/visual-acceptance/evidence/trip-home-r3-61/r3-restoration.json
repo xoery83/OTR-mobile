@@ -1,0 +1,59 @@
+{
+  "atUTC": "2026-10-14T02:56:52.130111+00:00",
+  "currentBaselineGit": "eae4216388852d553a3da03c5ab4edcc752b197c",
+  "all844": "PASS exact",
+  "files": [
+    {
+      "path": "src/features/trip/TripHomeFrame.tsx",
+      "restored": "originallyabsent"
+    },
+    {
+      "path": "src/features/trip/TripHomeWidgetHost.tsx",
+      "restored": "originallyabsent"
+    },
+    {
+      "path": "src/features/trip/TripHomeWidgetHost.test.ts",
+      "restored": "originallyabsent"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+      "restored": "d0065220d41dda0c8aab13ce00906b7b03a392ae882b963dc1565d3da33aee50"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+      "restored": "a0fbcc9747a9e879ecab3d2cc5a5df3f32ce31232add9bb108b8066702aa8385"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "restored": "cecbeeb781de6a575a911a1d594df4e4a0058cde6dedbb395f1f0b644b0e6bfa"
+    },
+    {
+      "path": "app/(tabs)/_layout.tsx",
+      "restored": "8fe95c322304b5a2be751ba1201f5c8cd551a1f18aa3a39e216bff32c233ebd9"
+    },
+    {
+      "path": "src/components/ExperienceBottomShell.tsx",
+      "restored": "210b0bc254f0e9aacbcb0da6151fc80182244dab8dd737413516c5df3912af14"
+    },
+    {
+      "path": "src/features/day-feed/tripWorkspaceRoute.ts",
+      "restored": "23fd29e777a52e5fa283bdf07b03232c1ac2cda30f955d8e4d6ce67db33c430a"
+    },
+    {
+      "path": "src/features/day-feed/tripWorkspaceRoute.test.ts",
+      "restored": "6b9db1ca79bf75c1067fb239cb29e910548ca453122431cdac496a95dec33b0e"
+    },
+    {
+      "path": "src/features/day-feed/MyTripsList.tsx",
+      "restored": "4c3a38acdf64345c7eb4f9c1277f1d411a17cbf0330b7d7c2a4e8945fd7fd467"
+    },
+    {
+      "path": "src/features/day-feed/TripScreen.tsx",
+      "restored": "2ebd4f62e80da6846f0fa005af466ae0523f17b4a4018e8aa658d1f1c858bb2d"
+    }
+  ],
+  "oldP1b": "retainedarchiveonly",
+  "SQLite62": "preserved",
+  "CoastAssetAssociation": "retained",
+  "deviceAccountBusinessWrites": 0
+}

@@ -1,0 +1,11 @@
+http://localhost:8081/.expo/.virtual-metro-entry.bundle?platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.xoery.otrmobile
+        return require(_dependencyMap[0], "/private/tmp/otr-beta-trips-shell-r2-native-61/app/(tabs)/_layout.tsx");
+},744,[745,746,750,752,1258,756,458,1260,1264,1268,1594,747,1267,1265,749,72],"app/(tabs)/_layout.tsx");
+},1264,[746,752,458,756,1260,750,1265,1267,747,749,72],"src/components/ExperienceBottomShell.tsx");
+    var detailsBelow = fontScale > 1 || width > height;
+          height: Math.min(232, height * 0.4)
+            numberOfLines: detailsBelow ? 1 : 2,
+          }), !detailsBelow ? metadata.map((line, index) => (0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+      }), detailsBelow ? (0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+},1832,[756,458,746,747,749,1265,1267,1833,1834,72],"src/features/trip/TripHomeFrame.tsx");
+SHA e52e3577935183075311ede1cada6ddd6379c3b550703ff052d8d17352481c91

@@ -1,0 +1,159 @@
+{
+  "atUTC": "2026-10-14T02:58:44.616814+00:00",
+  "candidate": "eb2b0c5f exact12",
+  "baseline": "eae4216 exact844",
+  "kind": "Independent affected actualNative noFixture",
+  "functional": "PASS bounded",
+  "product": "PASS affected",
+  "visual": "PASS observed affected",
+  "runtime": "PARTIAL",
+  "fullL1": "INCOMPLETE",
+  "L2": "NOT READY fullproduct",
+  "SAFE": "currentbaseline restored",
+  "files": [
+    {
+      "path": "01-r3-mytrips-light.png",
+      "sha256": "309d13c4f92a586f7e4063347d164031c5c5f5733b0383597a9cb42bbf1799eb"
+    },
+    {
+      "path": "02-r3-home-light-ax.txt",
+      "sha256": "dd9132e14b821510a82c9cac9cc18f185bbcc03ae3ce246f11cb628f492a87db"
+    },
+    {
+      "path": "02-r3-home-light.png",
+      "sha256": "fbbd6e3902af2ef6a54b46eb92c05082b935e8d4fd8a69079053e613e7231c66"
+    },
+    {
+      "path": "03-r3-hot-five-light-ax.txt",
+      "sha256": "0c9bc62efd38845ba77740fa6d0af86dc20695be5b355f83138300fa9b7f3584"
+    },
+    {
+      "path": "03-r3-hot-five-light.png",
+      "sha256": "ab846df5c950b188d05541c88a3bda717241c0f9b63f702746a1bb0c043cdf0e"
+    },
+    {
+      "path": "04-r3-large-mytrips-light.png",
+      "sha256": "89ea5217e75a852739e6fecea4f0c7eb0b54001420178f03f02b2618b1ae2d37"
+    },
+    {
+      "path": "04-r3-reload-today-ax.txt",
+      "sha256": "0910662fbf606382e205e1113e46b05997e784196882ad3eed067e1d91f685e4"
+    },
+    {
+      "path": "05-r3-same-font-reload-light.png",
+      "sha256": "dd81890b06eab52ec0116d8f9109fcf78e8cd523865ee7bfa5eda93429d9ac0e"
+    },
+    {
+      "path": "06-r3-light-five-down.png",
+      "sha256": "112d844e71e4f3078de27e2f7fe709958572eac30508133691af77bd65cc401c"
+    },
+    {
+      "path": "07-r3-home-dark.png",
+      "sha256": "03d6c2a1c135777e891644518fbe80cd557f12107f0e974938695db5a9be644a"
+    },
+    {
+      "path": "08-r3-hot-five-dark-ax.txt",
+      "sha256": "0c9bc62efd38845ba77740fa6d0af86dc20695be5b355f83138300fa9b7f3584"
+    },
+    {
+      "path": "08-r3-hot-five-dark.png",
+      "sha256": "9c40574a8621e6fc2ed0de96be859abbb3a5199a1af97ac3eea9eb25119a6522"
+    },
+    {
+      "path": "09-r3-large-photos-tools-dark.png",
+      "sha256": "f3452b2919bc081ad55c91868847dbfec62eb7058315f5c71ae64b2551f0e4e3"
+    },
+    {
+      "path": "10-r3-large-mytrips-dark.png",
+      "sha256": "c534fdbf9e53a4420f3c39a97da8eef3a5f1deff2c98a518e652102a5c90271b"
+    },
+    {
+      "path": "11-r3-same-font-reload-dark.png",
+      "sha256": "7b9ef5234bc5ddbd831073dee1adda547d8037646dc39f1e06e6e93d1c7ac7ac"
+    },
+    {
+      "path": "12-r3-landscape-large-dark-ax.txt",
+      "sha256": "a8147ba7aedda823b60856593052ac45369eb65a208f6b7e5cf3418756b28641"
+    },
+    {
+      "path": "12-r3-landscape-large-dark.png",
+      "sha256": "20a0eb45caf949d24d506b9b08d59169512c1cf9bde87983ed3e5a8279cb3fd6"
+    },
+    {
+      "path": "13-r3-dark-five-down.png",
+      "sha256": "0084df1a2acb7770cff03e7d20734e162a9b7db3815468baf788775c6e8d2c9a"
+    },
+    {
+      "path": "14-r3-return-mytrips-dark-ax.txt",
+      "sha256": "79acb4c9f0aeb94b95f5284a5de801ec9c705cb7efddeb56d7bec6ee0479b5e3"
+    },
+    {
+      "path": "14-r3-return-mytrips-dark.png",
+      "sha256": "e6d5b5a5ccdd9a434679c025416e794c1691f50566b100bdc6a03c15e9522ff4"
+    },
+    {
+      "path": "15-r3-short-local-dark.png",
+      "sha256": "ee71422e12b1bf37e9abb2108cc896217d41aa814f7c52d81a69ea475ccac443"
+    },
+    {
+      "path": "baseline-applied.json",
+      "sha256": "3cea0b893e044ad069fd4bb29eb17a4e0e19d0bbf1491d1e8652779d44eab1c6"
+    },
+    {
+      "path": "baseline-checkpoint.md",
+      "sha256": "b44823e956400c3e5d9308b63e974b64b6bff77db7e87abd3016514468c2a53a"
+    },
+    {
+      "path": "baseline-current-ax.txt",
+      "sha256": "a5bf6d62e95543a2524aa82bdb22616c964d7624cde5e16fde447e43a329eef6"
+    },
+    {
+      "path": "baseline-current.png",
+      "sha256": "ba56f4a3122a8feac49d48e1d3b87407017730a4ee283cee9423d7a18b03c5ea"
+    },
+    {
+      "path": "baseline-safe-ax.txt",
+      "sha256": "179489f300e4dc7038818bc59e3929ee7cb98528508698b3cc339f490eb66f18"
+    },
+    {
+      "path": "baseline-served-proof.txt",
+      "sha256": "c0bfe96d5e1ef9e190fdd602155a1832bc9a95afbed48f5d210a01afd74496b0"
+    },
+    {
+      "path": "consumed-r3-hero.txt",
+      "sha256": "5753b7a79693ef1be18b74ada6f9670c8af9950f54742eebf9117b0d1d84c9e6"
+    },
+    {
+      "path": "consumed-r3-shell.txt",
+      "sha256": "c30f9324a9bf1d20dfd00e8e769676a81ec58010c01c27ab1aad1505462f8ad4"
+    },
+    {
+      "path": "consumed-r3-tabs.txt",
+      "sha256": "0b96184f8b4069669c53080c7775d17b7a36a127a16b502705bb7d031c0c2f45"
+    },
+    {
+      "path": "planned-matrix.json",
+      "sha256": "f6d7debe963c8a821bad62bfb1dfe679cf4efe85a4eb5f89eb64abc8609fd872"
+    },
+    {
+      "path": "r3-composition.json",
+      "sha256": "c60fcb6c820056d314979b13d967ebeed9237defc31974e557845248a1a17d4d"
+    },
+    {
+      "path": "r3-restoration.json",
+      "sha256": "6bfe8f7f303f89d93443c61ae534a915d3118e4d9676feba561328b1bbc99be5"
+    },
+    {
+      "path": "r3-restored-current-ax.txt",
+      "sha256": "79acb4c9f0aeb94b95f5284a5de801ec9c705cb7efddeb56d7bec6ee0479b5e3"
+    },
+    {
+      "path": "r3-served-proof.txt",
+      "sha256": "e01d31443fa73047f1d438c2da82fd52f97b8099b32d9d118da0cd4b5bf83157"
+    },
+    {
+      "path": "report-r3.md",
+      "sha256": "0319668d9a20dcb1784fbc76bcda6ba39401f26f3cf5220651646b09b66f8b0a"
+    }
+  ]
+}

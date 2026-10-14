@@ -1,5 +1,6 @@
+import { UiText as Text } from "@/ui/controls";
 import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
 import { useTripView } from "@/features/day-feed/TripViewContext";

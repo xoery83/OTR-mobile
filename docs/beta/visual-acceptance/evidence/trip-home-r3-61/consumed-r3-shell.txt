@@ -1,0 +1,144 @@
+function ExperienceBottomShell({
+    visible,
+    pathname
+  }) {
+    _s();
+    (0, _uiUseUiLocale.useUiLocale)();
+    var colors = (0, _uiTheme.useUiTheme)();
+    var styles = (0, _uiTheme.useThemedStyles)(createStyles);
+    var largeText = (0, _reactNative.useWindowDimensions)().fontScale > 2;
+    var {
+      view
+    } = (0, _featuresDayFeedTripViewContext.useTripView)();
+    if (!visible) return null;
+    var openMyTrips = () => {
+      if (pathname === "/trip") _expoRouter.router.setParams({
+        view: "trips"
+      });else _expoRouter.router.navigate({
+        pathname: "/trip",
+        params: {
+          view: "trips"
+        }
+      });
+    };
+    return (0, _reactJsxRuntime.jsx)(_reactNativeSafeAreaContext.SafeAreaView, {
+      edges: ["bottom", "left", "right"],
+      style: styles.safe,
+      children: (0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+        style: [styles.row, largeText && styles.largeRow],
+        children: [(0, _reactJsxRuntime.jsxs)(_reactNative.View, {
+          style: styles.navigationIsland,
+          children: [(0, _reactJsxRuntime.jsxs)(_reactNative.Pressable, {
+            accessibilityRole: "button",
+            accessibilityLabel: (0, _uiLocale.t)("dayFeed.myTrips"),
+            accessibilityHint: (0, _uiLocale.t)("shell.openMyTrips"),
+            accessibilityState: {
+              selected: pathname === "/trip"
+            },
+            onPress: openMyTrips,
+            style: [styles.destination, largeText && styles.largeDestination],
+            children: [(0, _reactJsxRuntime.jsx)(_componentsAppIcon.AppIcon, {
+              name: "suitcase",
+              color: pathname === "/trip" ? colors.accent : colors.textSecondary
+            }), (0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+              style: [styles.label, pathname === "/trip" && styles.activeLabel],
+              children: (0, _uiLocale.t)("dayFeed.myTrips")
+            })]
+          }), view ? (0, _reactJsxRuntime.jsxs)(_reactNative.Pressable, {
+            accessibilityRole: "button",
+            accessibilityLabel: (0, _uiLocale.t)("shell.day"),
+            accessibilityHint: (0, _uiLocale.t)("shell.openSelectedDay"),
+            accessibilityState: {
+              selected: pathname === "/"
+            },
+            onPress: () => _expoRouter.router.navigate("/"),
+            style: [styles.destination, largeText && styles.largeDestination],
+            children: [(0, _reactJsxRuntime.jsx)(_componentsAppIcon.AppIcon, {
+              name: "calendar",
+              color: pathname === "/" ? colors.accent : colors.textSecondary
+            }), (0, _reactJsxRuntime.jsx)(_uiControls.UiText, {
+              style: [styles.label, pathname === "/" && styles.activeLabel],
+              children: (0, _uiLocale.t)("shell.day")
+            })]
+          }) : null]
+        }), pathname === "/trip" ? (0, _reactJsxRuntime.jsx)(_reactNative.View, {
+          style: styles.actionIsland,
+          children: (0, _reactJsxRuntime.jsx)(_reactNative.Pressable, {
+            accessibilityRole: "button",
+            accessibilityLabel: (0, _uiLocale.t)("myTrips.createTrip"),
+            onPress: () => _expoRouter.router.setParams({
+              tripId: "",
+              date: "",
+              zone: "",
+              view: "create"
+            }),
+            style: styles.action,
+            children: (0, _reactJsxRuntime.jsx)(_componentsAppIcon.AppIcon, {
+              name: "plus",
+              color: colors.accent
+            })
+          })
+        }) : null]
+      })
+    });
+  }
+  _s(ExperienceBottomShell, "ydTWP6TTUMSqhf6ioDDV9/1fdT8=", false, function () {
+    return [_uiUseUiLocale.useUiLocale, _uiTheme.useUiTheme, _uiTheme.useThemedStyles, _reactNative.useWindowDimensions, _featuresDayFeedTripViewContext.useTripView];
+  });
+  _c = ExperienceBottomShell;
+  var createStyles = c => _reactNative.StyleSheet.create({
+    safe: {
+      backgroundColor: c.background
+    },
+    row: {
+      paddingHorizontal: _uiVisual.visual.space.page,
+      paddingTop: _uiVisual.visual.space.heading,
+      paddingBottom: _uiVisual.visual.space.heading,
+      flexDirection: "row",
+      justifyContent: "space-between"
+    },
+    largeRow: {
+      paddingBottom: _uiVisual.visual.space.section
+    },
+    navigationIsland: {
+      backgroundColor: c.elevatedSurface,
+      borderColor: c.separator,
+      borderWidth: _reactNative.StyleSheet.hairlineWidth,
+      borderRadius: _uiVisual.visual.radius.control,
+      flexDirection: "row"
+    },
+    actionIsland: {
+      backgroundColor: c.elevatedSurface,
+      borderColor: c.separator,
+      borderWidth: _reactNative.StyleSheet.hairlineWidth,
+      borderRadius: _uiVisual.visual.radius.control
+    },
+    action: {
+      minWidth: 48,
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center"
+    },
+    destination: {
+      minWidth: 76,
+      minHeight: 44,
+      paddingHorizontal: _uiVisual.visual.space.heading,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: _uiVisual.visual.space.heading
+    },
+    largeDestination: {
+      minHeight: 76,
+      paddingVertical: _uiVisual.visual.space.card
+    },
+    label: {
+      ..._uiVisual.visual.type.action,
+      color: c.textSecondary
+    },
+    activeLabel: {
+      color: c.accent
+    }
+  });
+  var _c;
+  $RefreshReg$(_c, "ExperienceBottomShell");

@@ -1,0 +1,144 @@
+Window: "OTR CP02 Native Host Recovery", App: Device Hub.
+0 standard window OTR CP02 Native Host Recovery – iOS 27.0, ID: com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, Secondary Actions: Raise
+	1 split group
+		2 split group com.apple.dt.DeviceKit.DeviceManagementWindow-AppWindow-1, SidebarNavigationSplitView
+			3 scroll area Secondary Actions: Scroll Up, Scroll Down
+				4 list Sidebar
+					5 row (selectable) Description: Available, Value: Expanded
+					6 row (selected) Description: iphone.gen3, Value: OTR CP02 Native Host Recovery
+27.0
+Simulator
+					7 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR 02 Anonymous
+27.0
+Simulator
+					8 row (selectable) Description: iphone.gen3, Value: OTR G2 TTR Synthetic QA
+27.0
+Simulator
+					9 row (selectable) Description: iphone.gen3, Value: OTR Day Feed Lab DL1
+27.0
+Simulator
+					10 row (selectable) Description: iphone.gen3, Value: OTR G2 FLEX Main Integration
+27.0
+Simulator
+					11 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro Max
+27.0
+Simulator
+					12 row (selectable) Description: ipad, Value: leon’s iPad
+26.0.1
+iPad Air (5th generation)
+					13 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - B
+27.0
+Simulator
+					14 row (selectable) Description: iphone.gen3, Value: OTR Flexible CP02 Held QA
+27.0
+Simulator
+					15 row (selectable) Description: iphone.gen3, Value: OTR Flight Native03 CLOSED
+27.0
+Simulator
+					16 row (selectable) Description: iphone.gen1, Value: OTR N1 NOW Compact QA
+27.0
+Simulator
+					17 row (selectable) Description: iphone.gen3, Value: OTR N1 NOW Large QA
+27.0
+Simulator
+					18 row (selectable) Description: iphone.gen1, Value: OTR P1 V1R5 Compact QA
+27.0
+Simulator
+					19 row (selectable) Description: iphone.gen3, Value: OTR P2 Flight QA
+27.0
+Simulator
+					20 row (selectable) Description: iphone.gen1, Value: OTR P2 Flight Small QA
+27.0
+Simulator
+					21 row (selectable) Description: iphone.gen3, Value: iPhone 18 Pro - A
+27.0
+Simulator
+					22 row (selectable) Description: iphone.gen1, Value: OTR Capture C3 Small QA
+27.0
+Simulator
+					23 row (selectable) Description: iphone.gen3, Value: OTR Capture C3 Synthetic QA
+27.0
+Simulator
+					24 row (selectable) Description: iphone.gen3, Value: iPhone 17 Pro
+26.5
+Simulator
+					25 row (selectable) Description: Unavailable, Value: Collapsed
+				26 scroll bar (settable, float) 0
+					27 value indicator (settable, float) 0
+					28 increment arrow button
+					29 decrement arrow button
+					30 increment page button
+					31 decrement page button
+			32 search text field (settable) Search
+				33 button Search
+			34 splitter (disabled, settable, float) 308
+			35 container
+				36 container
+					37 button Description: Open app menu, Secondary Actions: Cancel
+					38 heading Description: Trip, Secondary Actions: Cancel
+					39 heading Description: My Trips, Secondary Actions: Cancel
+					40 heading Description: Dates to be decided, Secondary Actions: Cancel
+					41 button Secondary Actions: Cancel, Description: Open Auckland Coast and Mountain Family Journey with Friends 2026 Long Title QA. Dates to be decided. Auckland.
+					42 button Description: Open R3-A6 QA local Trip 2026-10-13. Dates to be decided. Auckland., Secondary Actions: Cancel
+					43 heading Description: Past, Secondary Actions: Cancel
+					44 button Description: Open My Trips visual QA 2026-10-13. Oct 13, 2026 – Oct 13, 2026. Auckland., Secondary Actions: Cancel
+					45 button Description: Refresh, Secondary Actions: Cancel
+					46 button Description: Capture, Secondary Actions: Cancel
+					47 button Description: Ledger, Secondary Actions: Cancel
+					48 button Description: Day Feed Lab, Secondary Actions: Cancel
+					49 button Description: Create / Sync validation harness, Secondary Actions: Cancel
+					50 button (selected) Description: My Trips, Help: Open My Trips, Secondary Actions: Cancel
+					51 button Description: Create Trip, Secondary Actions: Cancel
+				52 button Description: Home, ID: app.grid.3x3
+				53 button Description: Screenshot, ID: camera.viewfinder
+				54 button Description: Record, ID: record.circle
+				55 button Rotate Left
+		56 splitter (disabled, settable, float) 820
+		57 container
+			58 Inspector Subcategory
+				59 radio button Description: Info, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.info
+				60 radio button Description: Apps, Value: 1, ID: InspectorButton.com.apple.devicekit.inspector.apps
+				61 radio button Description: Profiles, Value: 0, ID: InspectorButton.com.apple.devicekit.inspector.profiles
+			62 scroll area Description: Apps, ID: Inspector.com.apple.devicekit.inspector.apps
+				63 container
+					64 scroll area
+						65 list
+							66 row (selected) OTR Mobile
+0.1.0
+com.xoery.otrmobile
+					67 button Add
+					68 button Remove
+			69 container Description: Apps, ID: Inspector.com.apple.devicekit.inspector.apps
+				70 image Description: Search, ID: magnifyingglass
+				71 text field (settable) Filter
+				72 pop up button Value: Developer, ID: App Filter
+	73 toolbar
+		74 menu button Add, Help: Add Device, ID: plus
+		75 toggle button Description: Filter, Help: Sort and Filter, Value: off
+		76 button Description: Hide Sidebar, Secondary Actions: Increment, Decrement, Delete, Cancel
+		77 toggle button Description: Capture Keyboard, Value: off
+		78 toggle button Description: Resize mode, Help: Enter resize mode, Value: off
+		79 Zoom
+			80 radio button Description: Zoom Out, Value: 0, ID: minus.magnifyingglass
+			81 radio button Description: arrowtriangles.up.right.down.left.magnifyingglass, Help: Zoom to Fit, Value: 1
+			82 radio button Description: Zoom To Actual Size, Help: Physical Size, Value: 0, ID: 1.magnifyingglass
+			83 radio button Description: Zoom In, Value: 0, ID: plus.magnifyingglass
+		84 button Description: Open in New Window, Secondary Actions: Increment, Decrement, Delete, Cancel, Move previous, Move next, Remove from toolbar
+		85 menu button More, Help: More Actions, ID: ellipsis
+		86 Inspector Category
+			87 radio button Description: Edit, Help: Settings, Value: 0, ID: slider.horizontal.3
+			88 radio button Description: text.document, Help: Reports, Value: 0
+			89 radio button Description: Info, Value: 1, ID: info
+	90 close button
+	91 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window
+	92 minimize button
+	93 text OTR CP02 Native Host Recovery iOS 27.0
+94 menu bar
+	95 Device Hub
+	96 File
+	97 Edit
+	98 View
+	99 Device
+	100 Controls
+	101 Window
+	102 Help

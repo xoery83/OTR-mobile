@@ -1,3 +1,4 @@
+import { isSelectedTripHome } from "@/features/day-feed/tripWorkspaceRoute";
 import { UiText as Text } from "@/ui/controls";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
 import { Tabs, usePathname } from "expo-router";
@@ -75,42 +76,44 @@ export default function TabsLayout() {
         />
         <Tabs.Screen
           name="trip"
-          options={{
+          options={({ route }) => ({
             headerLeft: () => <GlobalMenu module="TRIP" />,
-            ...(largeText
-              ? {
-                  headerTitleAlign: "left" as const,
-                  headerStyle: {
-                    backgroundColor: colors.surface,
-                    height: Math.max(
-                      getDefaultHeaderHeight(dimensions, false, insets.top),
-                      insets.top +
-                        visual.type.section.fontSize * fontScale +
-                        visual.space.card * 2,
+            ...(isSelectedTripHome(route.params)
+              ? { headerTitle: "" }
+              : largeText
+                ? {
+                    headerTitleAlign: "left" as const,
+                    headerStyle: {
+                      backgroundColor: colors.surface,
+                      height: Math.max(
+                        getDefaultHeaderHeight(dimensions, false, insets.top),
+                        insets.top +
+                          visual.type.section.fontSize * fontScale +
+                          visual.space.card * 2,
+                      ),
+                    },
+                    headerTitleContainerStyle: {
+                      minWidth: 132,
+                      minHeight:
+                        visual.type.section.fontSize * fontScale + visual.space.card,
+                    },
+                    headerTitle: ({ onLayout }) => (
+                      <Text
+                        onLayout={onLayout}
+                        numberOfLines={1}
+                        style={{
+                          ...visual.type.section,
+                          color: colors.textPrimary,
+                        }}
+                      >
+                        {t("navigation.trip")}
+                      </Text>
                     ),
-                  },
-                  headerTitleContainerStyle: {
-                    minWidth: 132,
-                    minHeight:
-                      visual.type.section.fontSize * fontScale + visual.space.card,
-                  },
-                  headerTitle: ({ onLayout }) => (
-                    <Text
-                      onLayout={onLayout}
-                      numberOfLines={1}
-                      style={{
-                        ...visual.type.section,
-                        color: colors.textPrimary,
-                      }}
-                    >
-                      {t("navigation.trip")}
-                    </Text>
-                  ),
-                }
-              : {}),
+                  }
+                : {}),
             tabBarIcon: ({ color }) => <AppIcon color={color} name="suitcase" />,
             title: t("navigation.trip"),
-          }}
+          })}
         />
       </Tabs>
     </TripViewProvider>
