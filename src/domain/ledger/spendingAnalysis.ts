@@ -7,6 +7,7 @@ export type AnalysisExpense = {
   category: string;
   occurredAt: string;
   updatedAt: string;
+  createdAt?: string;
   payerMemberId: string;
   originalMinor: number;
   originalCurrency: string;

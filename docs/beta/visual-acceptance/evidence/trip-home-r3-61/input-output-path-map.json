@@ -1,0 +1,13 @@
+{
+  "inputManifestSha256": "8cb6dceb3348f3a240273f8f560e740fa027126b7742a151788d00c5f9d9ec7e",
+  "defaultMapping": "alllisted native files exceptreport-r3.md stored byte-identical inthisdirectory; manifest renamednative-manifest.json",
+  "report": {
+    "input": "report-r3.md",
+    "inputSha256": "0319668d9a20dcb1784fbc76bcda6ba39401f26f3cf5220651646b09b66f8b0a",
+    "output": "../../OTR_TRIP_HOME_VISUAL_ACCEPTANCE_REPORT_2026-10-14.md",
+    "outputSha256": "c0d40bef29c52abdd8464b266996daf003a4aa23d3c543efcc023f6600bc4018",
+    "transform": "15image references prefixevidence/trip-home-r3-61; markdownwhitespace/tableformat only; normalizedmeaning verified beforeI66"
+  },
+  "fullL1": "INCOMPLETE",
+  "L2": "NOT_READY"
+}

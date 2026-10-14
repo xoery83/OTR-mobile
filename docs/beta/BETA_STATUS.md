@@ -1,15 +1,14 @@
 # OTR Beta — STATUS
 
-## Current source Push62 verdict — 2026-10-14 NZDT
+## Current source Push66 verdict — 2026-10-14 NZDT
 
-**Full real Create→accepted Day→Offline:0; real pending local subloop:1; Owner-ready:0; Root product code:0.** Auxiliary integrated technical scopes38 = previous36 plus finite Core mechanism and private Document connector; corrections/assets/reports do not add journeys or features. Seven required replies comprise six permissions/decisions plus one resolved shared-UI coordination answer. Original META/B0 authorization waits are cleared. Qualifying integration wait0 after Push62; other wait ages/longest current wait remain UNKNOWN. Compact qualification23:29:36.563795Z→I61 00:56:25.912571Z was86m49.349s wall time, including quota interruption.
+**Full real Create→accepted Day→Offline0; local pending subloop1; Owner-ready0; Root product code0.** Auxiliary technical scopes39; corrections/assets/reports/REF fixture do not add real journeys. Required solicited Owner responses9 = eight decisions/permissions plus one resolved shared-UI coordination; subsequent directed diagnostic/recovery/design instructions are not new solicited unanswered requests.
 
-Latest product main/live7683900 ([Push62](/private/tmp/otr-beta-push62-receipt.json)), ahead0 at readback. Push60c30f00b ([receipt](/private/tmp/otr-beta-push60-receipt.json)) integrates the independently reviewed default-OFF finite first-loop mechanism and concrete private Document connector; main90/9/static/build passed. Push6102ae204 ([receipt](/private/tmp/otr-beta-push61-receipt.json)) integrates minimum MyTrips body width/crop/metadata after current25/6 and bounded Native plus mechanical applicability. Push62 integrates P5 overnight date repair after7/2 and bounded Native18. PG101/SQLite62, original dirtyfive/unknown assets.zip/index preserved.
+[Push66](/private/tmp/otr-beta-push66-receipt.json) main/livea0a81f7, ahead0 at readback; main43/9/static PASS. Bounded Home/Shell correction has independent39/8 plus15 actual affected images. P03 I64 and REF-B I65 keep their finite scopes. PG101/SQLite62 and unrelated dirty/index preserved.
 
-Photos owning repository add0→1/cold/missing/restore is actually verified on the existing actor/local Trip and one public Coast fixture; system picker/offline/account transition remain NV. P3 bounded production assembly is I, real acceptedv2 runtime/full14 remains NV. MyTrips/Shell overall L1 INCOMPLETE; header independent qualification pending actual corrected bundle identity. P5 full L1 INCOMPLETE/production consumer absent/NOW limited; P4/P6 current Native still pending. Positive original Document binding/copy grants/user opener and live first-loop remain NV. No ProductUXAccepted or protected activation is implied.
+WholeHome/MyTrips/Shell L1 INCOMPLETE/L2 NOT READY. Home r2 composition586843 has independent35/8 bounded function PASS, no new Native/Runtime/UX claim. ALL single-module Visual/Native acceptance is paused until unified Reference data +normal navigation are ready; old evidence retained. P456 functionPASS/Nativepartial/UIHOLD. Photos real local add/cold/missing retained, picker/offline/account transition NV.
 
-Accepted creatorR3 and direct semantic-writer recipient are qualified metadata facts, not deployed connection principal proof. DEV97 remains the one newly identified schema dependency outside B0; administrator/build/principal/TLS/forward activation remain unresolved. See EXECUTION for owners and exact next dependencies; inherited snapshots below are historical.
-
+Original operator preflight/diagnostic failed, zeroDDL; DEV97 ABSENT/Creator73de/NZD/semantic writer facts retained. Source Hosted compatibility429f is a proposal, not a write grant; independent Core20/normal-flow PASS now sealed. Qualifying integration waits0; other wait ages UNKNOWN. Actual acceptedv2/offline/current rights remain NV.
 
 ## Prior Push40 (historical) integration — 2026-10-13T16:58:25Z / 2026-10-14 NZDT
 

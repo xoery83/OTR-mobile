@@ -32,7 +32,7 @@ function database() {
       title TEXT, description TEXT, category TEXT, occurred_at TEXT,
       original_amount_minor INTEGER, original_currency TEXT, original_scale INTEGER,
       business_status TEXT, settlement_participation TEXT, sync_status TEXT, deleted_at TEXT,
-      local_owner_user_id TEXT, updated_at TEXT NOT NULL DEFAULT '2026-09-12T08:00:00.000Z');
+      local_owner_user_id TEXT, created_at TEXT NOT NULL DEFAULT '2026-09-09T08:00:00.000Z', updated_at TEXT NOT NULL DEFAULT '2026-09-12T08:00:00.000Z');
     CREATE INDEX ledger_expenses_journey_occurred ON ledger_expenses(journey_id, occurred_at DESC, id);
     CREATE TABLE ledger_expense_participants (expense_id TEXT, member_id TEXT,
       display_name_snapshot TEXT, PRIMARY KEY(expense_id, member_id));
@@ -364,7 +364,7 @@ describe("Ledger reporting repository", () => {
       "UPDATE ledger_journeys SET start_date = '2024-01-01', end_date = '2026-09-30'",
     );
     const insert = sqlite.prepare(
-      "INSERT INTO ledger_expenses SELECT ?, ?, journey_id, payer_member_id, title, description, category, ?, original_amount_minor, original_currency, original_scale, business_status, settlement_participation, sync_status, deleted_at, local_owner_user_id, updated_at FROM ledger_expenses WHERE id='valued'",
+      "INSERT INTO ledger_expenses SELECT ?, ?, journey_id, payer_member_id, title, description, category, ?, original_amount_minor, original_currency, original_scale, business_status, settlement_participation, sync_status, deleted_at, local_owner_user_id, created_at, updated_at FROM ledger_expenses WHERE id='valued'",
     );
     const split = sqlite.prepare(
       "INSERT INTO ledger_expense_splits SELECT ?, member_id, original_amount_minor, settlement_amount_minor FROM ledger_expense_splits WHERE expense_id='valued'",
@@ -826,4 +826,22 @@ it("sorts Recent by update time before limiting, preserving ordinary occurrence 
     "valued",
   );
   expect((await repository.listExpenses(query, 1))[0].id).toBe("conflict");
+});
+
+it("exposes persisted creation time without replacing it with occurred or edited time", async () => {
+  const { adapter, sqlite } = database();
+  insertFixture(sqlite);
+  sqlite.exec(
+    "UPDATE ledger_expenses SET created_at = '2026-08-01T09:00:00.000Z', updated_at = '2026-10-01T09:00:00.000Z' WHERE id = 'valued'",
+  );
+  const projection = await createLedgerReportingRepository(
+    adapter,
+    async () => "user-a",
+  ).loadSpendingAnalysisProjection(journeyId, memberId);
+  expect(projection.expenses.find((item) => item.id === "valued")).toMatchObject({
+    createdAt: "2026-08-01T09:00:00.000Z",
+    occurredAt: "2026-09-10T08:00:00.000Z",
+    updatedAt: "2026-10-01T09:00:00.000Z",
+  });
+  sqlite.close();
 });
