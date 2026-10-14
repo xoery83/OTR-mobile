@@ -1,14 +1,14 @@
 # OTR Beta — STATUS
 
-## Current source Push66 verdict — 2026-10-14 NZDT
+## Current source Push68 verdict — 2026-10-14 NZDT
 
-**Full real Create→accepted Day→Offline0; local pending subloop1; Owner-ready0; Root product code0.** Auxiliary technical scopes39; corrections/assets/reports/REF fixture do not add real journeys. Required solicited Owner responses9 = eight decisions/permissions plus one resolved shared-UI coordination; subsequent directed diagnostic/recovery/design instructions are not new solicited unanswered requests.
+**Full real Create→accepted Day→Offline0; local pending subloop1; Owner-ready0; Root product code0.** Auxiliary technical scopes39; data subsets, corrections, assets, reports, REF QA and schema reconciliation do not add journeys or scopes. Required solicited Owner responses10 = nine decisions/permissions plus one resolved shared-UI coordination.
 
-[Push66](/private/tmp/otr-beta-push66-receipt.json) main/livea0a81f7, ahead0 at readback; main43/9/static PASS. Bounded Home/Shell correction has independent39/8 plus15 actual affected images. P03 I64 and REF-B I65 keep their finite scopes. PG101/SQLite62 and unrelated dirty/index preserved.
+[Push68](/private/tmp/otr-beta-push68-receipt.json) main/live `a03490be311bf8c13e4dbaddc9825fa32f8fe0dc`, ahead0 at readback; main repository10/1, type/guard/touched lint/format PASS. Push67 nonUI Home data/readonly is I; Push68 exact two SQL/ADR plus REF-C two QA files is I. Git PG101/SQLite62 and unrelated dirtysix/index preserved.
 
-WholeHome/MyTrips/Shell L1 INCOMPLETE/L2 NOT READY. Home r2 composition586843 has independent35/8 bounded function PASS, no new Native/Runtime/UX claim. ALL single-module Visual/Native acceptance is paused until unified Reference data +normal navigation are ready; old evidence retained. P456 functionPASS/Nativepartial/UIHOLD. Photos real local add/cold/missing retained, picker/offline/account transition NV.
+DEV approved finite schema: actual11 transaction commits and final10 metadata TRUE; CLOSED/empty/NOLOGIN, preserved Creator73de/NZD. Original failed checks/query attempts remain historical evidence. Deployed Backend build/provider injection, operational principal/internal TLS and real Actor/Trip/acceptedv2/offline remain UNKNOWN or NV.
 
-Original operator preflight/diagnostic failed, zeroDDL; DEV97 ABSENT/Creator73de/NZD/semantic writer facts retained. Source Hosted compatibility429f is a proposal, not a write grant; independent Core20/normal-flow PASS now sealed. Qualifying integration waits0; other wait ages UNKNOWN. Actual acceptedv2/offline/current rights remain NV.
+WholeHome/MyTrips/Shell L1 INCOMPLETE/L2 NOT READY. Home navigation586843 and Search revised function reviews passed but mounted UI remains isolated. ALL single-module Native/Visual is paused until unified Reference data +normal navigation readiness. REF-C is local synthetic QA only, pending Trip and no actual device seed. P456 partial UIHOLD; Photos existing local evidence retained. Qualifying integration waits0 at this checkpoint; other ages UNKNOWN.
 
 ## Prior Push40 (historical) integration — 2026-10-13T16:58:25Z / 2026-10-14 NZDT
 
