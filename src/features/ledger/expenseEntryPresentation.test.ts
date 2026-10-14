@@ -7,6 +7,8 @@ import type {
   ExpenseSplitMethod,
 } from "@/domain/ledger/types";
 import {
+  suggestedManualExpenseDate,
+  initialExpenseDraftDate,
   applyExpenseSharing,
   compactExpenseDate,
   exactSharingAllocation,
@@ -274,4 +276,31 @@ describe("New Expense compact presentation", () => {
       "Maximum {MAX_EXPENSE_ATTACHMENTS} attachments selected",
     );
   });
+});
+
+it("weak Day date initializes only an eligible new manual draft and never receipt/edit/source contexts", () => {
+  expect(suggestedManualExpenseDate("2027-01-02", true)).toBe("2027-01-02");
+  expect(suggestedManualExpenseDate("2027-01-02", false)).toBeNull();
+  expect(suggestedManualExpenseDate("2026-02-30", true)).toBeNull();
+  expect(suggestedManualExpenseDate("unknown", true)).toBeNull();
+  expect(suggestedManualExpenseDate(["2027-01-02"], true)).toBeNull();
+});
+
+it("the real draft date initializer preserves edits and receipt/source dates before a weak suggestion", () => {
+  const fallback = "2026-10-14",
+    weak = "2027-01-02";
+  expect(initialExpenseDraftDate(undefined, undefined, weak, true, fallback)).toBe(weak);
+  expect(initialExpenseDraftDate("2026-06-01", undefined, weak, false, fallback)).toBe(
+    "2026-06-01",
+  );
+  expect(initialExpenseDraftDate(null, undefined, weak, false, fallback)).toBe("");
+  expect(
+    initialExpenseDraftDate(undefined, "2026-05-03T09:00:00Z", weak, false, fallback),
+  ).toBe("2026-05-03");
+  expect(initialExpenseDraftDate(undefined, undefined, weak, false, fallback)).toBe(
+    fallback,
+  );
+  expect(initialExpenseDraftDate(undefined, undefined, "unknown", true, fallback)).toBe(
+    fallback,
+  );
 });

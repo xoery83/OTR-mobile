@@ -38,6 +38,7 @@ export function CaptureComposer({
   content,
   title,
   contextLabel,
+  errorMessage,
 }: {
   snapshot: CaptureDraftSnapshot;
   count: number;
@@ -46,6 +47,7 @@ export function CaptureComposer({
   content?: ReactNode;
   title?: string;
   contextLabel?: string;
+  errorMessage?: string;
   onClose: () => void;
   onFiles: () => void;
   onPhotos: () => void;
@@ -97,6 +99,11 @@ export function CaptureComposer({
                   ? t("capture.context", { name: tripName })
                   : t("capture.composer.unassigned"))}
             </UiText>
+            {errorMessage ? (
+              <UiText accessibilityRole="alert" style={styles.error}>
+                {errorMessage}
+              </UiText>
+            ) : null}
             {content != null ? (
               <View style={styles.contentViewport}>{content}</View>
             ) : (

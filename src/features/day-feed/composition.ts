@@ -114,6 +114,7 @@ export type TransitionProjection = Readonly<{
 }>;
 export type DayStreamPorts = {
   focus?: string | null;
+  occurrenceFocus?: boolean;
   immersive?: string | null;
   flexible?: readonly (FlexibleContainer | FlexibleBlockPort)[];
   choiceScope?: "MY" | "GROUP";
@@ -163,6 +164,7 @@ export function composeDayStream(
         : dayRowKey(item.event.id, "EVENT", query.date);
   });
   const focusKeys = members.map((item, index) =>
+    ports.occurrenceFocus ||
     members.filter((other) => other.event.id === item.event.id).length > 1
       ? keys[index]
       : item.event.id,

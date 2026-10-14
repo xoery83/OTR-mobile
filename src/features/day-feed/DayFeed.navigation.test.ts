@@ -2,6 +2,8 @@ import { createElement } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { DayFeed } from "./DayFeed";
+import { wholeTripCalendarDates } from "./tripListPresentation";
+import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { faroeNegativeFixtures, syntheticDate } from "./faroeNegative.test.fixtures";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
@@ -150,4 +152,99 @@ it("first P1 intent focuses, explicit richer detail opens Immersive, Close retai
     .onDepth("B");
   expect(render(props)).toContain(`${fixture.before.id}:F`);
   expect(reading).toHaveBeenCalledTimes(1);
+});
+
+it("whole owning calendar retains all twelve days and known outlying candidates without device-time inference", () => {
+  const dates = wholeTripCalendarDates(
+    { startDate: "2027-02-01", endDate: "2027-02-12" },
+    ["2027-02-15"],
+    "2027-02-02",
+  );
+  expect(dates).toHaveLength(13);
+  expect(dates[11]).toBe("2027-02-12");
+  expect(dates[12]).toBe("2027-02-15");
+  expect(wholeTripCalendarDates(null, [], "2027-02-02")).toEqual(["2027-02-02"]);
+  expect(
+    wholeTripCalendarDates(
+      { startDate: "bad", endDate: "2027-02-12" },
+      ["bad", "2027-02-04"],
+      "2027-02-02",
+    ),
+  ).toEqual(["2027-02-02", "2027-02-04"]);
+});
+it("continuous dated sections share one Focus and one scroll; legacy reading restores relative to its explicit header", () => {
+  const otherDate = "2027-02-04";
+  const baseQuery = itemsForLocalDate(fixture.day, syntheticDate, "UTC");
+  const reading = vi.fn();
+  const props = {
+    dates: [syntheticDate, otherDate],
+    date: otherDate,
+    query: (date: string) => ({ ...baseQuery, date }),
+    entry: { revision: 1, kind: "RESUME", reading: { offset: 172, focus: null } },
+    onReadingChange: reading,
+  };
+  render(props);
+  expect(state.nodes.filter((p) => p.onScroll)).toHaveLength(1);
+  const headers = state.nodes.filter((p) => p.onLayout);
+  headers[0].onLayout({ nativeEvent: { layout: { y: 0 } } });
+  headers[1].onLayout({ nativeEvent: { layout: { y: 500 } } });
+  state.nodes.find((p) => p.onContentSizeChange).onContentSizeChange();
+  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 672, animated: false });
+  const occurrences = state.nodes.filter((p) => p.event?.id === fixture.before.id);
+  expect(occurrences).toHaveLength(2);
+  occurrences[1].onDepth("F");
+  render(props);
+  expect(state.nodes.filter((p) => p.depth === "F")).toHaveLength(1);
+  state.nodes
+    .find((p) => p.onScroll)
+    .onScroll({ nativeEvent: { contentOffset: { y: 672 } } });
+  expect(reading).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      offset: 672,
+      layout: "WHOLE_TRIP",
+      anchoredDate: otherDate,
+    }),
+  );
+});
+
+it("reviewer: unplaced accepted events retain an unknown-schedule cue in the continuous feed", () => {
+  const projection = {
+    ...fixture.day,
+    events: fixture.day.events.map((event) => ({
+      ...event,
+      boundaries: event.boundaries.map((boundary) => ({
+        ...boundary,
+        instant: null,
+        source_instant: null,
+        local_date: null,
+        local_time: null,
+        zone_id: null,
+        quality: "UNKNOWN" as const,
+        civil_resolution: "PENDING" as const,
+        resolution_offset_seconds: null,
+      })),
+    })),
+  };
+  const output = render({ projection, dates: [syntheticDate, "2027-02-04"] });
+  expect(output).toContain("dayFeed.timeUnspecified");
+  for (const event of projection.events)
+    expect(output.split(event.title)).toHaveLength(
+      1 + projection.events.filter((other) => other.title === event.title).length,
+    );
+  expect(output).not.toContain("dayFeed.unresolvedCount");
+  expect(state.nodes.some((node) => node.event?.id === projection.events[0].id)).toBe(
+    false,
+  );
+});
+
+it("date-only placed occurrences never reappear in the unplaced notice", () => {
+  const query = itemsForLocalDate(fixture.day, syntheticDate, "UTC");
+  const item = query.timed[0];
+  const html = render({
+    dates: [syntheticDate],
+    query: () => ({ ...query, unresolved: [item.event] }),
+  });
+  expect(html).not.toContain(item.event.title);
+  expect(html).not.toContain("dayFeed.unresolvedCount");
+  expect(state.nodes.some((node) => node.event?.id === item.event.id)).toBe(true);
 });

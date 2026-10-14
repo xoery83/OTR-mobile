@@ -60,6 +60,7 @@ function BlockSlot({
 export function DayFeed({
   projection,
   date,
+  dates,
   zone,
   services,
   instant,
@@ -77,6 +78,7 @@ export function DayFeed({
 }: {
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
+  dates?: readonly string[];
   zone: string;
   services: Record<string, FlightService[]>;
   instant?: string;
@@ -96,11 +98,15 @@ export function DayFeed({
   ) => void;
 }) {
   const styles = useThemedStyles(createStyles);
-  const query = contributedQuery
-    ? contributedQuery(date, zone)
-    : projection.version === 2
-      ? projection.query(date, zone)
-      : itemsForLocalDate(projection, date, zone);
+  const continuous = Boolean(dates);
+  const queryForDate = (day: string) =>
+    contributedQuery
+      ? contributedQuery(day, zone)
+      : projection.version === 2
+        ? projection.query(day, zone)
+        : itemsForLocalDate(projection, day, zone);
+  const calendar = dates?.length ? [...new Set([...dates, date])].sort() : [date];
+  const query = queryForDate(date);
   const clock = useMinuteClock(zone);
   const publication = useFlexibleSnapshot(flexiblePublication, {
     accountId: projection.accountId,
@@ -110,41 +116,84 @@ export function DayFeed({
   const viewContext = JSON.stringify([
     projection.accountId,
     projection.tripId,
+    continuous,
     date,
     zone,
     entry?.revision,
     directItem?.itemId,
     flexiblePublication?.scope?.generation,
   ]);
+  const initialFocus =
+    dates && entry?.reading.focus
+      ? (composeDayStream(query, instant ?? clock.instant).rows.find(
+          (row) => row.focusKey === entry.reading.focus,
+        )?.key ?? entry.reading.focus)
+      : (entry?.reading.focus ?? null);
   const [navigationContext, setNavigationContext] = useState(viewContext);
-  const [focus, setFocus] = useState<string | null>(entry?.reading.focus ?? null);
+  const [focus, setFocus] = useState<string | null>(initialFocus);
   const [immersive, setImmersive] = useState<string | null>(directItem?.itemId ?? null);
   const [choiceScopes, setChoiceScopes] = useState<Record<string, "MY" | "GROUP">>({});
-  const stream = composeDayStream(query, instant ?? clock.instant, {
-    ...ports,
-    scope: flexiblePublication
-      ? { accountId: projection.accountId, tripId: projection.tripId }
-      : ports?.scope,
-    flexible: (flexiblePublication
-      ? (publication.snapshot?.blocks ?? [])
-      : ports?.flexible
-    )?.map((block) =>
-      "version" in block && choiceScopes[block.id]
-        ? { ...block, choiceScope: choiceScopes[block.id] }
-        : block,
-    ),
-    focus: navigationContext === viewContext ? focus : null,
-    immersive: navigationContext === viewContext ? immersive : null,
+  const compose = (dayQuery: DayFeedQuery) =>
+    composeDayStream(dayQuery, instant ?? clock.instant, {
+      occurrenceFocus: Boolean(dates),
+      ...ports,
+      scope: flexiblePublication
+        ? { accountId: projection.accountId, tripId: projection.tripId }
+        : ports?.scope,
+      flexible: (flexiblePublication
+        ? (publication.snapshot?.blocks ?? [])
+        : ports?.flexible
+      )?.map((block) =>
+        "version" in block && choiceScopes[block.id]
+          ? { ...block, choiceScope: choiceScopes[block.id] }
+          : block,
+      ),
+      focus: navigationContext === viewContext ? focus : null,
+      immersive: navigationContext === viewContext ? immersive : null,
+    });
+  // shortcut: existing ScrollView renders the owned calendar; virtualize this same stream for long-Trip scale.
+  const sections = calendar.map((day) => {
+    const query = queryForDate(day);
+    return { date: day, query, stream: compose(query) };
   });
+  const rowSections = new Map(
+    sections.flatMap((section) =>
+      section.stream.rows.map((row) => [row.key, section] as const),
+    ),
+  );
+  const stream =
+    sections.find((section) => section.stream.immersive)?.stream ??
+    sections.find((section) => section.date === date)!.stream;
+  const allRows = sections.flatMap((section) => section.stream.rows);
+  const placedIds = new Set(allRows.map((row) => row.item.event.id));
+  const unplaced = [
+    ...new Map(
+      sections
+        .flatMap((section) => section.query.unresolved)
+        .map((event) => [event.id, event]),
+    ).values(),
+  ].filter(
+    (event) =>
+      !placedIds.has(event.id) &&
+      !["cancelled", "skipped"].includes(event.status) &&
+      (projection.version !== 2 ||
+        projection.items.some((item) => item.itemId === event.id && !item.hidden)),
+  );
   if (navigationContext !== viewContext) {
-    setFocus(entry?.reading.focus ?? null);
+    setFocus(initialFocus);
     setImmersive(directItem?.itemId ?? null);
     setChoiceScopes({});
     setNavigationContext(viewContext);
   } else {
-    if (focus && focus !== stream.focus && focus !== stream.suspendedFocus)
+    if (
+      focus &&
+      !sections.some(
+        ({ stream }) => focus === stream.focus || focus === stream.suspendedFocus,
+      )
+    )
       setFocus(null);
-    if (immersive && immersive !== stream.immersive) setImmersive(null);
+    if (immersive && !sections.some(({ stream }) => immersive === stream.immersive))
+      setImmersive(null);
   }
   const [ttrBridge] = useState(createG2TtrSessionBridge);
   const ttrView = ttrSession
@@ -165,22 +214,54 @@ export function DayFeed({
     const bridge = ttrBridge;
     return () => bridge.dispose();
   }, [ttrBridge]);
-  const { rows, now } = stream;
+  const rows = allRows;
   const scroll = useRef<ScrollView>(null),
     offset = useRef(entry?.reading.offset ?? 0),
-    returnOffset = useRef(0);
+    returnOffset = useRef(0),
+    sectionOffsets = useRef<Record<string, number>>({});
   const restoredContext = useRef<string | null>(null);
+  const readingOffset = entry?.reading.offset ?? 0;
+  const wholeTripReading = entry?.reading.layout === "WHOLE_TRIP";
+  const restoreReading = () => {
+    if (restoredContext.current === viewContext || !scroll.current) return;
+    const anchor = continuous && !wholeTripReading ? sectionOffsets.current[date] : 0;
+    if (anchor === undefined) return;
+    restoredContext.current = viewContext;
+    offset.current = anchor + readingOffset;
+    scroll.current?.scrollTo({ y: offset.current, animated: false });
+  };
   useLayoutEffect(() => {
     restoredContext.current = null;
-    offset.current = entry?.reading.offset ?? 0;
-    scroll.current?.scrollTo({ y: offset.current, animated: false });
-  }, [viewContext, entry?.reading.offset]);
+    const anchor = continuous && !wholeTripReading ? sectionOffsets.current[date] : 0;
+    if (anchor !== undefined && scroll.current) {
+      offset.current = anchor + readingOffset;
+      scroll.current.scrollTo({ y: offset.current, animated: false });
+      restoredContext.current = viewContext;
+    }
+  }, [viewContext, continuous, wholeTripReading, date, readingOffset]);
   const remember = (nextFocus: string | null, nextOffset = offset.current) => {
-    if (!entry || entry.kind === "RESUME")
-      onReadingChange?.({ offset: nextOffset, focus: nextFocus });
+    if (!entry || entry.kind === "RESUME") {
+      const anchoredDate =
+        [...calendar]
+          .reverse()
+          .find(
+            (day) =>
+              sectionOffsets.current[day] !== undefined &&
+              sectionOffsets.current[day] <= nextOffset,
+          ) ?? date;
+      onReadingChange?.({
+        offset: nextOffset,
+        focus: nextFocus,
+        ...(dates ? { layout: "WHOLE_TRIP" as const, anchoredDate } : {}),
+      });
+    }
   };
   const depth = (id: string): Depth =>
-    stream.immersive === id ? "I" : stream.focus === id ? "F" : "B";
+    sections.some(({ stream }) => stream.immersive === id)
+      ? "I"
+      : sections.some(({ stream }) => stream.focus === id)
+        ? "F"
+        : "B";
   const change = (id: string, next: Depth) => {
     if (next === "I") {
       returnOffset.current = offset.current;
@@ -205,6 +286,7 @@ export function DayFeed({
     mode: Depth,
     withinMarker?: React.ReactNode,
   ) => {
+    const ownerStream = rowSections.get(row.key)!.stream;
     const event = row.item.event;
     const flight = flightPresentation(
       event,
@@ -256,8 +338,8 @@ export function DayFeed({
         renderer={renderer}
         fallback={fallback}
         row={row}
-        container={stream.containers.find((entry) => entry.id === row.containerId)}
-        context={stream.context}
+        container={ownerStream.containers.find((entry) => entry.id === row.containerId)}
+        context={ownerStream.context}
         depth={mode}
         onDepth={(next) => (mode === "I" ? close() : change(row.focusKey, next))}
         withinMarker={withinMarker}
@@ -275,7 +357,9 @@ export function DayFeed({
   }, [directItem, selected]);
   const renderItem = (row: (typeof rows)[number]) => (
     <View key={row.key}>
-      {row.nowBefore ? <NowMarker placement={now} /> : null}
+      {row.nowBefore ? (
+        <NowMarker placement={rowSections.get(row.key)!.stream.now} />
+      ) : null}
       {row.transition ? (
         <TransitionRow
           transition={row.transition}
@@ -300,7 +384,9 @@ export function DayFeed({
       {render(
         row,
         depth(row.focusKey) === "I" ? "F" : depth(row.focusKey),
-        row.nowWithin ? <NowMarker placement={now} within /> : undefined,
+        row.nowWithin ? (
+          <NowMarker placement={rowSections.get(row.key)!.stream.now} within />
+        ) : undefined,
       )}
     </View>
   );
@@ -323,52 +409,74 @@ export function DayFeed({
             style={styles.root}
             contentContainerStyle={styles.content}
             scrollEventThrottle={16}
-            onContentSizeChange={() => {
-              if (restoredContext.current === viewContext) return;
-              restoredContext.current = viewContext;
-              offset.current = entry?.reading.offset ?? 0;
-              scroll.current?.scrollTo({ y: offset.current, animated: false });
-            }}
+            onContentSizeChange={restoreReading}
             onScroll={(e) => {
               offset.current = e.nativeEvent.contentOffset.y;
-              remember(stream.focus);
+              remember(sections.find(({ stream }) => stream.focus)?.stream.focus ?? null);
             }}
           >
-            {!stream.entries.length ? (
-              <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
+            {unplaced.length ? (
+              <View>
+                <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
+                {unplaced.map((event) => (
+                  <Text key={event.id} style={styles.meta}>
+                    {event.title}
+                  </Text>
+                ))}
+              </View>
             ) : null}
-            {stream.entries.map((entry) =>
-              entry.kind === "ITEM" ? (
-                renderItem(entry.row)
-              ) : (
-                <View key={entry.block.key}>
-                  <BlockSlot
-                    renderer={flexibleRenderer}
-                    block={entry.block}
-                    immersive={false}
-                    nestedItems={
-                      <>
-                        {rows
-                          .filter((row) => row.containerId === entry.block.id)
-                          .map(renderItem)}
-                      </>
-                    }
-                    onBlockImmersiveIntent={() => change(entry.block.id, "I")}
-                    onChoiceFocusIntent={(key) => change(key ?? "", key ? "F" : "B")}
-                    onChoiceScopeIntent={(scope) => choiceScope(entry.block.id, scope)}
-                    onClose={close}
-                    flexibleSnapshot={publication.snapshot}
-                    onReplaceFlexibleSnapshot={publication.replace}
-                  />
-                </View>
-              ),
-            )}
-            {stream.nowAfter ? <NowMarker placement={now} /> : null}
-            {query.unresolved.length ? (
-              <Text style={styles.meta}>
-                {t("dayFeed.unresolvedCount", { count: query.unresolved.length })}
-              </Text>
-            ) : null}
+            {sections.map((section) => (
+              <View
+                key={section.date}
+                onLayout={({ nativeEvent }) => {
+                  sectionOffsets.current[section.date] = nativeEvent.layout.y;
+                  restoreReading();
+                }}
+              >
+                {dates ? (
+                  <Text accessibilityRole="header" style={styles.dateHeading}>
+                    {section.date}
+                  </Text>
+                ) : null}
+                {!section.stream.entries.length ? (
+                  <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
+                ) : null}
+                {section.stream.entries.map((entry) =>
+                  entry.kind === "ITEM" ? (
+                    renderItem(entry.row)
+                  ) : (
+                    <View key={entry.block.key}>
+                      <BlockSlot
+                        renderer={flexibleRenderer}
+                        block={entry.block}
+                        immersive={false}
+                        nestedItems={
+                          <>
+                            {rows
+                              .filter((row) => row.containerId === entry.block.id)
+                              .map(renderItem)}
+                          </>
+                        }
+                        onBlockImmersiveIntent={() => change(entry.block.id, "I")}
+                        onChoiceFocusIntent={(key) => change(key ?? "", key ? "F" : "B")}
+                        onChoiceScopeIntent={(scope) =>
+                          choiceScope(entry.block.id, scope)
+                        }
+                        onClose={close}
+                        flexibleSnapshot={publication.snapshot}
+                        onReplaceFlexibleSnapshot={publication.replace}
+                      />
+                    </View>
+                  ),
+                )}
+                {section.stream.nowAfter ? (
+                  <NowMarker placement={section.stream.now} />
+                ) : null}
+                {section.stream.rows.some((row) => row.position === "TNS") ? (
+                  <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
+                ) : null}
+              </View>
+            ))}
           </ScrollView>
         </View>
       ) : null}
@@ -413,6 +521,11 @@ export function DayFeed({
 }
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
+    dateHeading: {
+      ...visual.type.section,
+      color: c.textPrimary,
+      paddingVertical: visual.space.row,
+    },
     root: { flex: 1, backgroundColor: c.background },
     content: {
       paddingHorizontal: visual.space.page,

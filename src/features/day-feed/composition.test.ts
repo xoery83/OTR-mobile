@@ -560,3 +560,22 @@ it("Rental TTR presentation requires exact owning endpoint anchors, never generi
     ).toBe(true);
   expect(JSON.stringify(transition)).toBe(bytes);
 });
+
+it("whole-Trip occurrence keys keep one Focus for a repeated canonical Item on different dates", () => {
+  const { query } = setup();
+  const first = composeDayStream(query, now, { occurrenceFocus: true });
+  const otherQuery = { ...query, date: "2027-01-16" };
+  const other = composeDayStream(otherQuery, now, { occurrenceFocus: true });
+  const key = first.rows[0].focusKey;
+  expect(key).not.toBe(other.rows[0].focusKey);
+  expect(composeDayStream(query, now, { occurrenceFocus: true, focus: key }).focus).toBe(
+    key,
+  );
+  expect(
+    composeDayStream(otherQuery, now, { occurrenceFocus: true, focus: key }).focus,
+  ).toBeNull();
+  expect(
+    composeDayStream(otherQuery, now, { occurrenceFocus: true, immersive: key })
+      .immersive,
+  ).toBeNull();
+});

@@ -34,6 +34,7 @@ import {
 import { router, Stack, useFocusEffect } from "expo-router";
 import PagerView from "react-native-pager-view";
 
+import { useTripView } from "@/features/day-feed/TripViewContext";
 import { AppIcon } from "@/components/AppIcon";
 import { visual as cv } from "@/ui/visual";
 import { GlobalMenu } from "@/components/GlobalMenu";
@@ -159,6 +160,7 @@ export function LedgerStage6Screen({
   scopedJourneyId,
 }: { scopedJourneyId?: string } = {}) {
   useUiLocale();
+  const { workingTrip, switchTrip } = useTripView();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const largeText = useWindowDimensions().fontScale > 1.5;
@@ -171,7 +173,7 @@ export function LedgerStage6Screen({
   const manualJourneyId = useRef<string | undefined>(undefined);
   useEffect(() => {
     manualJourneyId.current = undefined;
-  }, [scopedJourneyId]);
+  }, [scopedJourneyId, workingTrip?.tripId]);
   const [request] = useState(createLatestRequest);
   const [memberRequest] = useState(createLatestRequest);
   const [accountGeneration, setAccountGeneration] = useState(getAccountGeneration);
@@ -451,26 +453,31 @@ export function LedgerStage6Screen({
       repository.getSelectedJourneyId(),
     ]);
     if (generation !== getAccountGeneration()) return;
-    const entry = chooseJourneyEntry(
-      available,
-      localToday(),
-      selected,
-      scopedJourneyId,
-      manualJourneyId.current,
-    );
+    const explicitTrip = scopedJourneyId ?? workingTrip?.tripId;
+    const entry =
+      explicitTrip && !available.some((item) => item.journeyId === explicitTrip)
+        ? { kind: "MY_LEDGER" as const }
+        : chooseJourneyEntry(
+            available,
+            localToday(),
+            selected,
+            explicitTrip,
+            manualJourneyId.current,
+          );
     setJourneys(available);
     const nextJourney =
       entry.kind === "JOURNEY"
         ? (available.find((item) => item.journeyId === entry.journeyId) ?? null)
         : null;
-    if (nextJourney) await loadProjection(nextJourney, scopeRef.current);
-    else {
+    if (nextJourney) {
+      await loadProjection(nextJourney, scopeRef.current);
+    } else {
       request.cancel();
       setProjection(null);
       setMessage(null);
     }
     if (generation === getAccountGeneration()) setLoading(false);
-  }, [loadProjection, request, scopedJourneyId]);
+  }, [loadProjection, request, scopedJourneyId, workingTrip]);
 
   useEffect(
     () =>
@@ -597,6 +604,7 @@ export function LedgerStage6Screen({
       const repository = await getDefaultLedgerReportingRepository();
       await repository.selectJourney(selected.journeyId, context);
       assertAccountRequestGeneration(context);
+      switchTrip(selected.journeyId, context.generation);
       if (scopedJourneyId) router.setParams({ journeyId: selected.journeyId });
       setJourneyPickerOpen(false);
       setJourneyQuery("");
@@ -693,7 +701,7 @@ export function LedgerStage6Screen({
         />
         <Stack.Toolbar.Button
           accessibilityLabel={t("ledger.addExpense")}
-          hidden={!journey}
+          hidden={!journey || (!scopedJourneyId && Boolean(workingTrip))}
           icon="plus"
           onPress={openNewExpense}
         />

@@ -17,7 +17,12 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 export type TripView = { tripId: string; date: string; zone: string; generation: number };
-export type DayReading = { offset: number; focus: string | null };
+export type DayReading = {
+  offset: number;
+  focus: string | null;
+  layout?: "WHOLE_TRIP";
+  anchoredDate?: string;
+};
 export type DayEntryKind =
   "RESUME" | "EXPLICIT_TODAY_HEADER" | "FIRST_VALID_PAST_DAY_HEADER";
 export type DayEntry = { revision: number; kind: DayEntryKind; reading: DayReading };
@@ -76,15 +81,25 @@ export function saveTripReading(
     state.view.zone !== view.zone
   )
     return state;
+  let anchoredDate: string | undefined;
+  try {
+    if (reading.layout === "WHOLE_TRIP" && reading.anchoredDate)
+      anchoredDate = validateCalendarDate(reading.anchoredDate);
+  } catch {
+    /* Invalid layout hints never replace the known view date. */
+  }
   return {
     ...state,
     bookmarks: {
       ...state.bookmarks,
       [view.tripId]: {
-        view,
+        view: anchoredDate ? { ...view, date: anchoredDate } : view,
         reading: {
           offset: Number.isFinite(reading.offset) ? Math.max(0, reading.offset) : 0,
           focus: reading.focus,
+          ...(reading.layout === "WHOLE_TRIP"
+            ? { layout: reading.layout, ...(anchoredDate ? { anchoredDate } : {}) }
+            : {}),
         },
       },
     },

@@ -123,7 +123,7 @@ it("lists local retained photos and only saves the explicitly selected picker fi
   expect(repo.addTripPhoto).toHaveBeenCalledWith(tripId, "file:///picked.jpg");
   expect(state.picker).toHaveBeenCalledWith(
     expect.objectContaining({
-      allowsMultipleSelection: false,
+      allowsMultipleSelection: true,
       base64: false,
       exif: false,
     }),
@@ -215,4 +215,52 @@ it("clears old Account images before the same Trip finishes reloading", async ()
   const immediate = render();
   expect(immediate).not.toContain("file:///old-account.jpg");
   expect(immediate).toContain("dayFeed.loading");
+});
+
+it("multi-select saves each explicit retained file through the same owning helper", async () => {
+  const repo = {
+    listTripPhotos: vi.fn(async () => []),
+    addTripPhoto: vi.fn(async () => ({})),
+  };
+  state.repository.mockResolvedValue(repo);
+  render();
+  await flush();
+  render();
+  state.picker.mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: "file:///one.jpg" }, { uri: "file:///two.jpg" }],
+  });
+  state.buttons[0].onPress();
+  await flush();
+  expect(state.picker).toHaveBeenCalledWith(
+    expect.objectContaining({ allowsMultipleSelection: true }),
+  );
+  expect(repo.addTripPhoto.mock.calls).toEqual([
+    [tripId, "file:///one.jpg"],
+    [tripId, "file:///two.jpg"],
+  ]);
+});
+it("a partial multi-save failure reloads retained rows and reports failure rather than whole-operation success", async () => {
+  const retained: unknown[] = [];
+  const repo = {
+    listTripPhotos: vi.fn(async () => retained),
+    addTripPhoto: vi.fn(async (_id: string, uri: string) => {
+      if (uri.endsWith("two.jpg")) throw new Error("FAIL");
+      retained.push({ assetId: "one", localUri: uri });
+      return {};
+    }),
+  };
+  state.repository.mockResolvedValue(repo);
+  render();
+  await flush();
+  render();
+  state.picker.mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: "file:///one.jpg" }, { uri: "file:///two.jpg" }],
+  });
+  state.buttons[0].onPress();
+  await flush();
+  const html = render();
+  expect(html).toContain("file:///one.jpg");
+  expect(html).toContain("tripPhotos.addFailed");
 });

@@ -1,3 +1,4 @@
+import { readCaptureTripPrior } from "@/features/capture/captureTripPrior";
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,15 +27,21 @@ type Admission = {
   generation: number;
   accountId: string;
   staging: ReturnType<typeof createCaptureStaging>;
+  tripPrior: string | null;
+  tripName?: string;
+  current: () => boolean;
 };
 export default function CaptureRoute() {
-  const { jobId, origin, originGeneration } = useLocalSearchParams<{
+  const { jobId, origin, originGeneration, tripId } = useLocalSearchParams<{
+    tripId?: string;
     jobId?: string;
     origin?: string;
     originGeneration?: string;
   }>();
   const navigation = useNavigation<{
+    isFocused(): boolean;
     setParams(params: {
+      tripId?: string;
       jobId?: string;
       origin?: string;
       originGeneration?: string;
@@ -49,7 +56,7 @@ export default function CaptureRoute() {
   );
   const retained = useRef<{
     accountId: string;
-    staging: ReturnType<typeof createCaptureStaging>;
+    drafts: Map<string | null, ReturnType<typeof createCaptureStaging>>;
   } | null>(null);
   const [admission, setAdmission] = useState<Admission | null>(null);
   const [checked, setChecked] = useState<number | null>(null);
@@ -60,30 +67,43 @@ export default function CaptureRoute() {
       setAdmission(null);
       setChecked(null);
       void withAccountApplyGate(readLocalSession)
-        .then((session) => {
+        .then(async (session) => {
           if (!active || getAccountGeneration() !== generation) return;
           const accountId = session?.identity?.userId;
           if (accountId) {
             const next = { accountId, generation };
             assertAccountRequestGeneration({ ...next, tripId: "" });
-            const owner = { accountId, tripPrior: null };
+            const prior =
+              typeof tripId === "string" && tripId
+                ? await readCaptureTripPrior(tripId, next)
+                : null;
+            if (!active || generation !== getAccountGeneration()) return;
+            if (tripId && !prior) throw new Error("CAPTURE_PRIOR_UNAVAILABLE");
+            const owner = { accountId, tripPrior: prior?.id ?? null };
             const lease = () => {
               try {
                 assertAccountRequestGeneration({ ...next, tripId: "" });
-                return next.generation === getAccountGeneration();
+                return active && next.generation === getAccountGeneration();
               } catch {
                 return false;
               }
             };
-            if (retained.current?.accountId === accountId)
-              retained.current.staging.resume(owner, lease);
-            else
-              retained.current = {
-                accountId,
-                staging: createCaptureStaging(pickCaptureMaterial, lease, owner),
-              };
-            visibleStaging = retained.current.staging;
-            setAdmission({ ...next, staging: visibleStaging });
+            if (retained.current?.accountId !== accountId)
+              retained.current = { accountId, drafts: new Map() };
+            let staging = retained.current.drafts.get(owner.tripPrior);
+            if (staging) staging.resume(owner, lease);
+            else {
+              staging = createCaptureStaging(pickCaptureMaterial, lease, owner);
+              retained.current.drafts.set(owner.tripPrior, staging);
+            }
+            visibleStaging = staging;
+            setAdmission({
+              ...next,
+              staging,
+              tripPrior: owner.tripPrior,
+              tripName: prior?.name,
+              current: lease,
+            });
           }
           setChecked(generation);
         })
@@ -94,17 +114,24 @@ export default function CaptureRoute() {
         active = false;
         visibleStaging?.hide();
         setAdmission(null);
-        // Historical deep links are one invocation; the authenticated unsubmitted draft stays retained.
-        navigation.setParams({
-          jobId: undefined,
-          origin: undefined,
-          originGeneration: undefined,
-        });
+        // Dependency cleanup must not erase a newer focused invocation.
+        if (!navigation.isFocused())
+          navigation.setParams({
+            tripId: undefined,
+            jobId: undefined,
+            origin: undefined,
+            originGeneration: undefined,
+          });
       };
-    }, [generation, navigation]),
+    }, [generation, navigation, tripId]),
   );
   const isCurrent = () => {
-    if (!admission || admission.generation !== getAccountGeneration()) return false;
+    if (
+      !admission ||
+      !admission.current() ||
+      admission.generation !== getAccountGeneration()
+    )
+      return false;
     try {
       assertAccountRequestGeneration({ ...admission, tripId: "" });
       return true;
@@ -116,11 +143,20 @@ export default function CaptureRoute() {
     <SafeAreaView edges={["bottom", "left", "right"]} style={styles.body}>
       {admission?.generation === generation ? (
         <CaptureContent
-          key={`${generation}:${jobId ?? ""}`}
+          key={`${generation}:${jobId ?? ""}${admission.tripPrior ? `:${admission.tripPrior}` : ""}`}
           jobId={typeof jobId === "string" ? jobId : undefined}
           isCurrent={isCurrent}
           draftStaging={admission.staging}
           accountId={admission.accountId}
+          tripName={admission.tripName}
+          tripPrior={admission.tripPrior}
+          validateTripPrior={async () => {
+            if (!isCurrent() || !admission.tripPrior) return false;
+            return (
+              Boolean(await readCaptureTripPrior(admission.tripPrior, admission)) &&
+              isCurrent()
+            );
+          }}
           onReopenJob={(id) => navigation.setParams({ jobId: id })}
           onCancel={() => {
             const target = captureOriginPath(
@@ -128,7 +164,13 @@ export default function CaptureRoute() {
               originGeneration,
               getAccountGeneration(),
             );
+            if (!isCurrent()) return;
             if (target) router.navigate(target as never);
+            else if (admission.tripPrior)
+              router.navigate({
+                pathname: "/trip",
+                params: { tripId: admission.tripPrior, view: "home" },
+              });
             else if (router.canGoBack()) router.back();
             else router.navigate("/");
           }}
@@ -136,7 +178,13 @@ export default function CaptureRoute() {
       ) : (
         <>
           <Text style={styles.message}>
-            {t(checked === generation ? "capture.signIn" : "capture.checking")}
+            {t(
+              checked === generation
+                ? tripId
+                  ? "actionIsland.tripCaptureUnavailable"
+                  : "capture.signIn"
+                : "capture.checking",
+            )}
           </Text>
           {checked === generation ? (
             <UiButton

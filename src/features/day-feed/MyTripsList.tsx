@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { AppIcon } from "@/components/AppIcon";
 import { useState } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
@@ -96,7 +97,15 @@ export function MyTripsList({
         <View style={styles.emptyBody}>
           <Text style={styles.emptyTitle}>{t("myTrips.emptyTitle")}</Text>
           <Text style={styles.meta}>{t("myTrips.emptyHint")}</Text>
-          <UiButton label={t("myTrips.createFirst")} onPress={onCreate} />
+          <UiButton
+            label={t("actionIsland.importPlans")}
+            onPress={() => router.navigate("/capture")}
+          />
+          <UiButton
+            label={t("actionIsland.createManually")}
+            variant="secondary"
+            onPress={onCreate}
+          />
         </View>
       </View>
     );

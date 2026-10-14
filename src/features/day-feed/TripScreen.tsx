@@ -1,5 +1,6 @@
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { AppState, ScrollView, StyleSheet, Text, View } from "react-native";
+import { AppState, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   getAccountGeneration,
@@ -9,6 +10,7 @@ import {
   readTripDayFeed,
   type createTripDayFeedReader,
 } from "@/data/repositories/tripDayFeedRepository";
+import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton } from "@/ui/controls";
 import { UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
@@ -18,6 +20,7 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { boundaryZone, viewContext } from "./presentation";
 import { DayFeed } from "./DayFeed";
+import { wholeTripCalendarDates } from "./tripListPresentation";
 import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
 import { acceptedHomeHeader, useTripView } from "./TripViewContext";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
@@ -69,7 +72,7 @@ function TripContent({ today = false }: { today?: boolean }) {
     zone?: string;
     view?: string;
   }>();
-  const [key, setKey] = useState(value(params.tripId));
+  const [dayChooser, setDayChooser] = useState(false);
   const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
   const [trip, setTrip] = useState<TripRead | null>(null);
@@ -122,8 +125,6 @@ function TripContent({ today = false }: { today?: boolean }) {
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
         setTrip(result);
         if (
-          !today &&
-          home &&
           result.observed?.projection.version === 2 &&
           result.observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
         ) {
@@ -139,7 +140,7 @@ function TripContent({ today = false }: { today?: boolean }) {
           )
             setHomeSnapshot(snapshot);
           else setHomeSnapshot(null);
-        }
+        } else setHomeSnapshot(null);
         setStatus(result.observed ? "READY" : "UNAVAILABLE");
         if (!today && result.observed)
           setZone(
@@ -155,7 +156,7 @@ function TripContent({ today = false }: { today?: boolean }) {
         setStatus("UNAVAILABLE");
       }
     }
-  }, [requested, today, home]);
+  }, [requested, today]);
   useEffect(() => {
     void Promise.resolve().then(load);
     const sub = AppState.addEventListener("change", (state) => {
@@ -342,12 +343,28 @@ function TripContent({ today = false }: { today?: boolean }) {
       ? { ...homeItem, read: visibleTrip }
       : null;
   const selected = today ? view : !home && view?.tripId === requested ? view : null;
+  const calendarDates =
+    selected &&
+    homeSnapshot &&
+    visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
+    visibleTrip.observed.projection.version === 2 &&
+    homeSnapshot.scope.accountId === visibleTrip.scope.accountId &&
+    homeSnapshot.scope.generation === generation &&
+    homeSnapshot.epoch === visibleTrip.observed.projection.source.epoch
+      ? wholeTripCalendarDates(
+          homeSnapshot.trip,
+          homeSnapshot.candidateDays,
+          selected.date,
+        )
+      : undefined;
   if (visibleTrip?.observed && selected)
     return (
       <View style={styles.root}>
         <View style={styles.header}>
-          <Text style={styles.heading}>{selected.date}</Text>
           <Text style={styles.meta}>{selected.zone}</Text>
+          {!calendarDates ? (
+            <Text style={styles.meta}>{t("dayFeed.calendarUnavailable")}</Text>
+          ) : null}
           {visibleTrip.observed.sourceStatus === "HISTORICAL_ACCEPTED_PROJECTION" ? (
             <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
           ) : null}
@@ -375,6 +392,7 @@ function TripContent({ today = false }: { today?: boolean }) {
           onReadingChange={(reading) => saveReading(selected, reading)}
           projection={visibleTrip.observed.projection}
           date={selected.date}
+          dates={calendarDates ?? [selected.date]}
           zone={selected.zone}
           services={visibleTrip.services}
           renderer={
@@ -431,59 +449,48 @@ function TripContent({ today = false }: { today?: boolean }) {
           <>
             {visibleTrip?.observed ? (
               <>
-                <Text style={styles.meta}>
-                  {t("dayFeed.admitted", { id: requested })}
-                </Text>
-                {visibleTrip.observed.sourceStatus ===
-                "HISTORICAL_ACCEPTED_PROJECTION" ? (
-                  <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
-                ) : null}
-                <Text style={styles.meta}>{t("dayFeed.date")}</Text>
-                <UiTextInput
-                  accessibilityLabel={t("dayFeed.date")}
-                  value={date}
-                  onChangeText={setDate}
-                  autoCapitalize="none"
-                />
-                <Text style={styles.meta}>{t("dayFeed.zone")}</Text>
-                <UiTextInput
-                  accessibilityLabel={t("dayFeed.zone")}
-                  value={zone}
-                  onChangeText={setZone}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <Text style={styles.meta}>{t("dayFeed.contextHint")}</Text>
-                {contextError ? (
-                  <Text accessibilityRole="alert" style={styles.meta}>
-                    {t("dayFeed.contextInvalid")}
-                  </Text>
-                ) : null}
-                <UiButton label={t("dayFeed.openDay")} onPress={enterDay} />
                 <UiButton
-                  label={t("dayFeed.myTrips")}
+                  label={t("dayFeed.openDay")}
                   variant="text"
-                  onPress={backToTrips}
+                  onPress={() => setDayChooser(true)}
                 />
+                <Modal
+                  visible={dayChooser}
+                  onRequestClose={() => setDayChooser(false)}
+                  animationType="slide"
+                >
+                  <SafeAreaProvider style={styles.modal}>
+                    <SheetHeader
+                      title={t("dayFeed.openDay")}
+                      onLeft={() => setDayChooser(false)}
+                    />
+                    <ScrollView contentContainerStyle={styles.content}>
+                      <Text style={styles.meta}>{t("dayFeed.date")}</Text>
+                      <UiTextInput
+                        accessibilityLabel={t("dayFeed.date")}
+                        value={date}
+                        onChangeText={setDate}
+                        autoCapitalize="none"
+                      />
+                      <Text style={styles.meta}>{t("dayFeed.zone")}</Text>
+                      <UiTextInput
+                        accessibilityLabel={t("dayFeed.zone")}
+                        value={zone}
+                        onChangeText={setZone}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                      />
+                      {contextError ? (
+                        <Text accessibilityRole="alert" style={styles.meta}>
+                          {t("dayFeed.contextInvalid")}
+                        </Text>
+                      ) : null}
+                      <UiButton label={t("dayFeed.openDay")} onPress={enterDay} />
+                    </ScrollView>
+                  </SafeAreaProvider>
+                </Modal>
               </>
-            ) : knownWorkspaceTrip || !requested ? null : (
-              <>
-                <Text style={styles.meta}>{t("dayFeed.partial")}</Text>
-                <Text style={styles.meta}>{t("dayFeed.explicitId")}</Text>
-                <UiTextInput
-                  accessibilityLabel={t("dayFeed.explicitId")}
-                  value={key}
-                  onChangeText={setKey}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <UiButton
-                  label={t("dayFeed.lookup")}
-                  onPress={() => open(key)}
-                  disabled={!key.trim()}
-                />
-              </>
-            )}
+            ) : null}
           </>
         )}
         {showContextualActions ? (
@@ -495,31 +502,7 @@ function TripContent({ today = false }: { today?: boolean }) {
                 void load();
               }}
             />
-            <UiButton
-              label={t("navigation.capture")}
-              variant="text"
-              onPress={() => router.navigate("/capture")}
-            />
-            <UiButton
-              label={t("navigation.ledger")}
-              variant="text"
-              onPress={() => router.navigate("/expenses")}
-            />
           </>
-        ) : null}
-        {__DEV__ && showContextualActions ? (
-          <UiButton
-            label={t("dayLab.title")}
-            variant="text"
-            onPress={() => router.push("/day-feed-lab")}
-          />
-        ) : null}
-        {showContextualActions ? (
-          <UiButton
-            label={t("dayFeed.validation")}
-            variant="text"
-            onPress={() => router.push("/trip-validation")}
-          />
         ) : null}
       </ScrollView>
       {visibleOverlay?.read.observed ? (
@@ -547,6 +530,7 @@ function TripContent({ today = false }: { today?: boolean }) {
 }
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
+    modal: { flex: 1, backgroundColor: c.background },
     root: { flex: 1, backgroundColor: c.background },
     content: { padding: visual.space.page, gap: visual.space.heading },
     header: { paddingHorizontal: visual.space.page, paddingTop: visual.space.heading },

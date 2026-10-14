@@ -45,7 +45,7 @@ export default function TabsLayout() {
           headerLeft: () => <GlobalMenu module="TODAY" />,
           headerRight: () => <TripSearchEntry entry="DAY" />,
           tabBarIcon: ({ color }) => <AppIcon color={color} name="calendar" />,
-          title: t("navigation.today"),
+          title: t("shell.day"),
         }}
       />
       <Tabs.Screen

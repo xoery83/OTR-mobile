@@ -181,3 +181,28 @@ it("uses an explicit saved view zone only for a null boundary zone and only with
     ),
   ).toBeNull();
 });
+
+it("whole-Trip reading retains absolute offset and the observed civil anchor in the existing per-Trip bookmark", () => {
+  const state = enterTripDay(emptyTripNavigation, a);
+  const saved = saveTripReading(state, a, {
+    offset: 720,
+    focus: "occurrence",
+    layout: "WHOLE_TRIP",
+    anchoredDate: "2026-10-16",
+  });
+  expect(saved.bookmarks.a.view.date).toBe("2026-10-16");
+  expect(saved.bookmarks.a.reading).toEqual({
+    offset: 720,
+    focus: "occurrence",
+    layout: "WHOLE_TRIP",
+    anchoredDate: "2026-10-16",
+  });
+  expect(saved.view?.date).toBe(a.date);
+  const invalid = saveTripReading(state, a, {
+    offset: 720,
+    focus: null,
+    layout: "WHOLE_TRIP",
+    anchoredDate: "bad",
+  });
+  expect(invalid.bookmarks.a.view.date).toBe(a.date);
+});

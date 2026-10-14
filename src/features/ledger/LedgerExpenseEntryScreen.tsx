@@ -1,3 +1,5 @@
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { useTripView } from "@/features/day-feed/TripViewContext";
 import { systemMessage, categoryLabel, domainLabel } from "@/ui/domainLabels";
 import { t, type MessageKey } from "@/ui/locale";
 import {
@@ -129,6 +131,7 @@ import {
   expenseSettlementLabel,
   expenseSharingSummary,
   remainingExpenseAttachmentCapacity,
+  initialExpenseDraftDate,
 } from "./expenseEntryPresentation";
 import { ExpenseSettlementTag } from "./ExpenseSettlementTag";
 
@@ -209,15 +212,18 @@ const categoryGroups: {
 
 export function LedgerExpenseEntryScreen() {
   useUiLocale();
+  const { reportLocalOutcome } = useTripView();
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
 
   const params = useLocalSearchParams<{
     expenseId?: string;
     journeyId?: string;
+    returnTo?: string;
     mode?: "manual";
     receiptId?: string;
     focusDate?: string;
+    suggestedDate?: string;
     correctionRootId?: string;
     correctionReason?: string;
   }>();
@@ -326,6 +332,8 @@ export function LedgerExpenseEntryScreen() {
       params.journeyId,
       params.receiptId,
       Boolean(params.correctionRootId),
+      params.suggestedDate,
+      params.mode === undefined || params.mode === "manual",
     )
       .then(async (value) => {
         if (!active) return;
@@ -435,6 +443,8 @@ export function LedgerExpenseEntryScreen() {
     params.journeyId,
     params.receiptId,
     params.focusDate,
+    params.suggestedDate,
+    params.mode,
     params.correctionRootId,
     discardPendingScan,
   ]);
@@ -882,6 +892,7 @@ export function LedgerExpenseEntryScreen() {
   };
 
   const save = async () => {
+    const saveGeneration = getAccountGeneration();
     if (!context || !draft || minor === null || !effectiveSplits || savingRef.current)
       return;
     if (!draft.title.trim()) return setError(t("ui.enterATitleOrMerchant"));
@@ -1050,7 +1061,16 @@ export function LedgerExpenseEntryScreen() {
       ocrSession.clear();
       discardPendingScan();
       allowClose.current = true;
-      if (existing) router.back();
+      if (params.returnTo === "source" || params.returnTo === "home") {
+        if (saveGeneration !== getAccountGeneration()) return;
+        if (params.returnTo === "home") {
+          reportLocalOutcome(saved.journeyId, saveGeneration, saved.id);
+          router.dismissTo({
+            pathname: "/trip",
+            params: { tripId: saved.journeyId, view: "home" },
+          });
+        } else router.back();
+      } else if (existing) router.back();
       else
         router.replace({
           pathname: "/expenses/expense/[id]",
@@ -2080,6 +2100,8 @@ async function loadEntry(
   journeyId?: string,
   receiptId?: string,
   correction = false,
+  suggestedDate?: string,
+  manual = true,
 ) {
   const expenseRepository = await getDefaultLedgerExpenseRepository();
   const existing = expenseId ? await expenseRepository.getExpense(expenseId) : null;
@@ -2148,9 +2170,13 @@ async function loadEntry(
         : "",
     currency,
     title: existing?.title ?? suggestion?.title ?? "",
-    date: existing
-      ? (proposedExpenseDate(existing) ?? "")
-      : (suggestion?.occurredAt ?? dateKey(new Date())).slice(0, 10),
+    date: initialExpenseDraftDate(
+      existing ? proposedExpenseDate(existing) : undefined,
+      suggestion?.occurredAt,
+      suggestedDate,
+      manual && !receiptId,
+      dateKey(new Date()),
+    ),
     payerId: existing?.payerMemberId ?? actorMember.id,
     participantIds,
     splitMode: existing?.splits[0]?.method ?? "EQUAL_PERSON",

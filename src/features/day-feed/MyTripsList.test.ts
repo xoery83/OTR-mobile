@@ -231,3 +231,5 @@ it("lets scaled compact metadata grow intrinsically while preserving both known 
     state.fontScale = 1;
   }
 });
+
+vi.mock("expo-router", () => ({ router: { navigate: vi.fn() } }));

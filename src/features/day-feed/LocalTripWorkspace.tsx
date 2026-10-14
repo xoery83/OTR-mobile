@@ -1,5 +1,9 @@
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
+import { router } from "expo-router";
+import { SheetHeader } from "@/components/SheetHeader";
+import { useTripView } from "./TripViewContext";
 import { TripHomeFrame } from "@/features/trip/TripHomeFrame";
 import {
   useCallback,
@@ -9,7 +13,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { AppState, StyleSheet, View } from "react-native";
+import { Alert, AppState, Modal, ScrollView, StyleSheet, View } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { createUuid } from "@/domain/localId";
@@ -172,10 +176,22 @@ function LocalTripContent({
     [destination, setDestination] = useState(""),
     [start, setStart] = useState(""),
     [end, setEnd] = useState("");
+  const [coverOpen, setCoverOpen] = useState(false);
   const [family, setFamily] = useState<"P1" | "P3">("P1"),
     [itemTitle, setItemTitle] = useState(""),
     [itemStart, setItemStart] = useState(""),
     [itemEnd, setItemEnd] = useState("");
+  const { publishQuickActions, localOutcome } = useTripView();
+  const [quickActionsOwner] = useState(() => Symbol("mounted-trip-quick-actions"));
+  const [itemFormOpen, setItemFormOpen] = useState(false);
+  const [photosReady, setPhotosReady] = useState(false);
+  const [savedNotice, setSavedNotice] = useState(false);
+  const photoAdd = useRef<(() => void) | null>(null);
+  const registerPhotos = useCallback((add: (() => void) | null) => {
+    photoAdd.current = add;
+    setPhotosReady(Boolean(add));
+  }, []);
+  const photosSaved = useCallback(() => setSavedNotice(true), []);
   const [saving, setSaving] = useState(false),
     [error, setError] = useState(false);
   const request = useRef(0),
@@ -320,6 +336,10 @@ function LocalTripContent({
         setItemStart("");
         setItemEnd("");
         await load();
+        if (current()) {
+          setItemFormOpen(false);
+          setSavedNotice(true);
+        }
       } else {
         const trip = await repo.createTrip({
           ...tripOperation.current,
@@ -381,6 +401,75 @@ function LocalTripContent({
     await repo.selectBuiltInCover(trip.id, id);
     if (alive.current && generation === getAccountGeneration()) await load();
   };
+  const leaveHome = () => {
+    if (!itemTitle && !itemStart && !itemEnd) {
+      onBackToTrips();
+      return;
+    }
+    if (saving) return;
+    Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
+      { text: t("actionIsland.stay"), style: "cancel" },
+      {
+        text: t("actionIsland.discard"),
+        style: "destructive",
+        onPress: () => {
+          setItemTitle("");
+          setItemStart("");
+          setItemEnd("");
+          onBackToTrips();
+        },
+      },
+    ]);
+  };
+  const closeItemForm = () => {
+    if (saving) return;
+    if (!itemTitle && !itemStart && !itemEnd) {
+      setItemFormOpen(false);
+      return;
+    }
+    Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
+      { text: t("actionIsland.stay"), style: "cancel" },
+      {
+        text: t("actionIsland.discard"),
+        style: "destructive",
+        onPress: () => {
+          setItemTitle("");
+          setItemStart("");
+          setItemEnd("");
+          setItemFormOpen(false);
+        },
+      },
+    ]);
+  };
+  useEffect(() => {
+    if (!selected || status !== "READY") return;
+    const owner = selected.id;
+    publishQuickActions(
+      {
+        tripName: selected.name,
+        tripId: owner,
+        generation,
+        owner: quickActionsOwner,
+        itinerary: (date) => {
+          if (!alive.current || generation !== getAccountGeneration()) return;
+          if (date) setItemStart((previous) => previous || date);
+          setItemFormOpen(true);
+        },
+        ...(photosReady
+          ? {
+              photos: () => {
+                if (alive.current && generation === getAccountGeneration())
+                  photoAdd.current?.();
+              },
+            }
+          : {}),
+      },
+      owner,
+      generation,
+      quickActionsOwner,
+    );
+    return () => publishQuickActions(null, owner, generation, quickActionsOwner);
+  }, [selected, status, generation, photosReady, publishQuickActions, quickActionsOwner]);
   const remoteStart = knownDate(remoteSelected?.startDate ?? null);
   const remoteEnd = knownDate(remoteSelected?.endDate ?? null);
   const metadata = selected ?? remoteSelected;
@@ -412,7 +501,7 @@ function LocalTripContent({
           <TripHomeFrame
             widgets={pages}
             title={selected.name}
-            onBack={onBackToTrips}
+            onBack={leaveHome}
             cover={tripCoverSource(selected)}
             metadata={[
               ...(selected.destination ? [selected.destination] : []),
@@ -428,101 +517,173 @@ function LocalTripContent({
                   : selected.endDate
                     ? [t("myTrips.ends", { date: displayDate(selected.endDate) })]
                     : [t("myTrips.datesToBeDecided")]),
-              ...(["PENDING_CREATE", "SYNCED"].includes(selected.syncStatus)
-                ? [
-                    t(
-                      selected.syncStatus === "SYNCED"
-                        ? "tripCreate.acceptedTrip"
-                        : "tripCreate.pendingTrip",
-                    ),
-                  ]
-                : []),
             ]}
-            modules={<LocalTripPhotos tripId={selected.id} />}
+            modules={
+              <View style={styles.root}>
+                <UiFormRow
+                  label={t("cleanup.documents")}
+                  value={t("cleanup.unavailable")}
+                  disabled
+                  onPress={() => {}}
+                />
+                <UiFormRow
+                  label={t("actionIsland.member")}
+                  value={t("cleanup.unavailable")}
+                  disabled
+                  onPress={() => {}}
+                />
+                <LocalTripPhotos
+                  tripId={selected.id}
+                  registerAdd={registerPhotos}
+                  onSaved={photosSaved}
+                />
+                <UiFormRow
+                  label={t("tripHome.coverTools")}
+                  value=""
+                  onPress={() => setCoverOpen(true)}
+                />
+              </View>
+            }
           />
+          {savedNotice ||
+          (localOutcome?.tripId === selected.id &&
+            localOutcome.generation === generation) ? (
+            <Text style={styles.status}>{t("actionIsland.savedLocally")}</Text>
+          ) : null}
+          {localOutcome?.tripId === selected.id &&
+          localOutcome.generation === generation ? (
+            <UiButton
+              label={t("actionIsland.openSavedExpense")}
+              variant="text"
+              onPress={() =>
+                router.push({
+                  pathname: "/expenses/expense/[id]",
+                  params: { id: localOutcome.id },
+                })
+              }
+            />
+          ) : null}
           {error ? (
             <Text accessibilityRole="alert" style={styles.status}>
               {t("tripCreate.saveFailed")}
             </Text>
           ) : null}
-          <UiSection title={t("tripHome.coverTools")}>
-            <TripCoverPicker
-              selected={selected.selectedCoverAssetId}
-              onSelect={selectCover}
-            />
-          </UiSection>
-          <UiSection title={t("tripCreate.pendingItems")}>
-            <Text style={styles.status}>{t("tripCreate.pendingHint")}</Text>
-            {pending.map((p) => {
-              return (
-                <View key={p.command.operationId}>
-                  <Text style={styles.body}>{p.payload.core.title}</Text>
-                  {p.payload.schedule.start.local_date ? (
-                    <Text style={styles.body}>
-                      {displayDate(p.payload.schedule.start.local_date)}
-                    </Text>
-                  ) : null}
-                  {p.payload.schedule.end?.local_date ? (
-                    <Text style={styles.body}>
-                      {displayDate(p.payload.schedule.end.local_date)}
-                    </Text>
-                  ) : null}
-                  <Text style={styles.status}>
-                    {t(
-                      ["FAILED", "CONFLICT", "DENIED"].includes(p.state)
-                        ? "tripCreate.itemNeedsAttention"
-                        : "tripCreate.itemPending",
-                    )}
-                  </Text>
-                </View>
-              );
-            })}
-          </UiSection>
-          <UiSection title={t("tripCreate.addItem")}>
-            <UiChoiceChip
-              label={t("tripCreate.activity")}
-              selected={family === "P1"}
-              onPress={() => setFamily("P1")}
-            />
-            <UiChoiceChip
-              label={t("tripCreate.stay")}
-              selected={family === "P3"}
-              onPress={() => setFamily("P3")}
-            />
-            <UiTextInput
-              accessibilityLabel={t("tripCreate.itemTitle")}
-              placeholder={t("tripCreate.itemTitle")}
-              value={itemTitle}
-              onChangeText={setItemTitle}
-              editable={!saving}
-            />
-            <CalendarField
-              label={t(family === "P3" ? "tripCreate.checkin" : "tripCreate.itemDate")}
-              value={itemStart}
-              onChange={setItemStart}
-            />
-            {family === "P3" ? (
-              <CalendarField
-                label={t("tripCreate.checkout")}
-                value={itemEnd}
-                onChange={setItemEnd}
+          <Modal
+            visible={coverOpen}
+            onRequestClose={() => setCoverOpen(false)}
+            animationType="slide"
+          >
+            <SafeAreaProvider style={styles.modal}>
+              <SheetHeader
+                title={t("tripHome.coverTools")}
+                onLeft={() => setCoverOpen(false)}
               />
-            ) : null}
-            <UiButton
-              label={t("tripCreate.saveItem")}
-              disabled={
-                saving || !itemTitle.trim() || !itemStart || (family === "P3" && !itemEnd)
-              }
-              onPress={() => void save(true)}
-            />
-          </UiSection>
+              <ScrollView contentContainerStyle={styles.form}>
+                <TripCoverPicker
+                  selected={selected.selectedCoverAssetId}
+                  onSelect={selectCover}
+                />
+              </ScrollView>
+            </SafeAreaProvider>
+          </Modal>
+          {pending.length ? (
+            <UiSection title={t("tripCreate.pendingItems")}>
+              {pending.map((p) => {
+                return (
+                  <View key={p.command.operationId}>
+                    <Text style={styles.body}>{p.payload.core.title}</Text>
+                    {p.payload.schedule.start.local_date ? (
+                      <Text style={styles.body}>
+                        {displayDate(p.payload.schedule.start.local_date)}
+                      </Text>
+                    ) : null}
+                    {p.payload.schedule.end?.local_date ? (
+                      <Text style={styles.body}>
+                        {displayDate(p.payload.schedule.end.local_date)}
+                      </Text>
+                    ) : null}
+                    <Text style={styles.status}>
+                      {t(
+                        ["FAILED", "CONFLICT", "DENIED"].includes(p.state)
+                          ? "tripCreate.itemNeedsAttention"
+                          : "tripCreate.itemPending",
+                      )}
+                    </Text>
+                  </View>
+                );
+              })}
+            </UiSection>
+          ) : null}
+          <Modal
+            visible={itemFormOpen}
+            onRequestClose={closeItemForm}
+            animationType="slide"
+          >
+            <View style={styles.modal}>
+              <SheetHeader
+                title={t("tripCreate.addItem")}
+                leftLabel={t("common.cancel")}
+                onLeft={closeItemForm}
+              />
+              <ScrollView contentContainerStyle={styles.form}>
+                {error ? (
+                  <Text accessibilityRole="alert" style={styles.status}>
+                    {t("tripCreate.saveFailed")}
+                  </Text>
+                ) : null}
+                <UiSection title={t("tripCreate.addItem")}>
+                  <UiChoiceChip
+                    label={t("tripCreate.activity")}
+                    selected={family === "P1"}
+                    onPress={() => setFamily("P1")}
+                  />
+                  <UiChoiceChip
+                    label={t("tripCreate.stay")}
+                    selected={family === "P3"}
+                    onPress={() => setFamily("P3")}
+                  />
+                  <UiTextInput
+                    accessibilityLabel={t("tripCreate.itemTitle")}
+                    placeholder={t("tripCreate.itemTitle")}
+                    value={itemTitle}
+                    onChangeText={setItemTitle}
+                    editable={!saving}
+                  />
+                  <CalendarField
+                    label={t(
+                      family === "P3" ? "tripCreate.checkin" : "tripCreate.itemDate",
+                    )}
+                    value={itemStart}
+                    onChange={setItemStart}
+                  />
+                  {family === "P3" ? (
+                    <CalendarField
+                      label={t("tripCreate.checkout")}
+                      value={itemEnd}
+                      onChange={setItemEnd}
+                    />
+                  ) : null}
+                  <UiButton
+                    label={t("tripCreate.saveItem")}
+                    disabled={
+                      saving ||
+                      !itemTitle.trim() ||
+                      !itemStart ||
+                      (family === "P3" && !itemEnd)
+                    }
+                    onPress={() => void save(true)}
+                  />
+                </UiSection>
+              </ScrollView>
+            </View>
+          </Modal>
         </>
       ) : remoteSelected ? (
         <>
           <TripHomeFrame
             widgets={pages}
             title={remoteSelected.name}
-            onBack={onBackToTrips}
+            onBack={leaveHome}
             cover={tripCoverSource(remoteSelected)}
             notice={t("myTrips.cachedDetails")}
             metadata={[
@@ -541,6 +702,22 @@ function LocalTripContent({
                     : [t("myTrips.datesToBeDecided")]),
             ]}
           />
+          {localOutcome?.tripId === remoteSelected.id &&
+          localOutcome.generation === generation ? (
+            <>
+              <Text style={styles.status}>{t("actionIsland.savedLocally")}</Text>
+              <UiButton
+                label={t("actionIsland.openSavedExpense")}
+                variant="text"
+                onPress={() =>
+                  router.push({
+                    pathname: "/expenses/expense/[id]",
+                    params: { id: localOutcome.id },
+                  })
+                }
+              />
+            </>
+          ) : null}
         </>
       ) : mode === "LIST" ? (
         status === "READY" ? (
@@ -594,6 +771,8 @@ function LocalTripContent({
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
+    modal: { flex: 1, backgroundColor: colors.background },
+    form: { padding: visual.space.page, gap: visual.space.card },
     root: { gap: visual.space.section },
     body: { color: colors.textPrimary, ...visual.type.row },
     status: { color: colors.textSecondary, ...visual.type.meta },

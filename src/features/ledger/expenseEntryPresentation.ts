@@ -1,3 +1,4 @@
+import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { t, getFormatLocale, type MessageKey } from "@/ui/locale";
 import type {
   ExpenseSettlementParticipation,
@@ -165,4 +166,29 @@ export function applyExpenseSharing<
     percentages: staged.percentages,
     settlementParticipation: staged.settlementParticipation,
   };
+}
+
+// Weak Day suggestion applies only to a new manual draft with no source/receipt.
+export function suggestedManualExpenseDate(
+  value: unknown,
+  eligible: boolean,
+): string | null {
+  if (!eligible || typeof value !== "string") return null;
+  try {
+    return validateCalendarDate(value);
+  } catch {
+    return null;
+  }
+}
+
+export function initialExpenseDraftDate(
+  existingDate: string | null | undefined,
+  sourceDate: string | null | undefined,
+  suggestedDate: unknown,
+  eligibleManual: boolean,
+  fallback: string,
+): string {
+  if (existingDate !== undefined) return existingDate ?? "";
+  if (sourceDate) return sourceDate.slice(0, 10);
+  return suggestedManualExpenseDate(suggestedDate, eligibleManual) ?? fallback;
 }

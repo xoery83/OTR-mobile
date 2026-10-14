@@ -27,7 +27,10 @@ const ui = vi.hoisted(() => ({
   back: vi.fn(),
   canGoBack: vi.fn(),
   setParams: vi.fn(),
+  focused: true,
   jobId: undefined as string | undefined,
+  tripId: undefined as string | undefined,
+  priorRead: vi.fn(),
   reopen: vi.fn(),
   submit: vi.fn(),
   createSession: vi.fn(),
@@ -69,10 +72,10 @@ vi.mock("react", () => ({
     return (ui.slots[index] as { callback: unknown }).callback;
   },
 }));
-const navigation = { setParams: ui.setParams };
+const navigation = { setParams: ui.setParams, isFocused: () => ui.focused };
 vi.mock("expo-router", () => ({
   useNavigation: () => navigation,
-  useLocalSearchParams: () => ({ jobId: ui.jobId }),
+  useLocalSearchParams: () => ({ jobId: ui.jobId, tripId: ui.tripId }),
   router: {
     navigate: ui.navigate,
     push: vi.fn(),
@@ -134,7 +137,10 @@ beforeEach(() => {
   ui.focus = null;
   ui.focusCleanup = null;
   vi.resetAllMocks();
+  ui.focused = true;
   ui.jobId = undefined;
+  ui.tripId = undefined;
+  ui.priorRead.mockResolvedValue(null);
   ui.files.mockResolvedValue(selected);
   ui.createSession.mockResolvedValue({ submit: ui.submit, recover: async () => null });
 });
@@ -356,9 +362,11 @@ it("route blur clears historical deep-link params; next ordinary focus opens a f
   renderRoute();
   await vi.waitFor(() => expect(renderRoute().type).toBe(CaptureContent));
   expect(renderRoute().props.jobId).toBe("retained-uuid");
+  ui.focused = false;
   ui.focusCleanup!();
   expect(ui.setParams).toHaveBeenCalledWith({ jobId: undefined });
   ui.jobId = undefined;
+  ui.focused = true;
   ui.focus = null;
   renderRoute();
   await vi.waitFor(() => expect(renderRoute().type).toBe(CaptureContent));
@@ -654,4 +662,141 @@ it("same-sheet Active Imports inspection preserves the unsubmitted composer draf
   (draw().props as any).content.props.onNewImport();
   expect((draw().props as any).snapshot.editorText).toBe("Keep this original draft");
   expect(ui.createSession).not.toHaveBeenCalled();
+});
+it("fresh Trip prior is revalidated before C3 handoff and frozen retry keeps its hint", async () => {
+  const prior = "40000000-0000-4000-8000-000000000001",
+    validate = vi.fn().mockResolvedValue(true);
+  const staging = createCaptureStaging(
+    async () => [
+      {
+        source: "files" as const,
+        temporaryUri: "file://prior.pdf",
+        name: "prior.pdf",
+        typeHint: "application/pdf",
+      },
+    ],
+    () => true,
+    { accountId: "A", tripPrior: prior },
+  );
+  const draw = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      draftStaging: staging,
+      tripPrior: prior,
+      validateTripPrior: validate,
+    }).props as any;
+  };
+  draw();
+  ui.cleanup = ui.effect!() ?? null;
+  draw().onFiles();
+  await vi.waitFor(() => expect(draw().count).toBe(1));
+  ui.submit.mockRejectedValue(new Error("unknown acknowledgement"));
+  draw().onSubmit();
+  await vi.waitFor(() => expect(ui.submit).toHaveBeenCalledOnce());
+  expect(validate).toHaveBeenCalledOnce();
+  expect(ui.submit.mock.calls[0][2]).toBe(prior);
+  await vi.waitFor(() => expect(draw().submitError).toBe(true));
+  validate.mockResolvedValue(false);
+  draw().onSubmit();
+  await vi.waitFor(() => expect(ui.submit).toHaveBeenCalledTimes(2));
+  expect(validate).toHaveBeenCalledOnce();
+  expect(ui.submit.mock.calls[1][2]).toBe(prior);
+});
+it("denied fresh Trip prior keeps the unsubmitted draft and never creates a C3 session", async () => {
+  const prior = "40000000-0000-4000-8000-000000000001";
+  const staging = createCaptureStaging(
+    async () => [
+      {
+        source: "files" as const,
+        temporaryUri: "file://prior.pdf",
+        name: "prior.pdf",
+        typeHint: "application/pdf",
+      },
+    ],
+    () => true,
+    { accountId: "A", tripPrior: prior },
+  );
+  const draw = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      draftStaging: staging,
+      tripPrior: prior,
+      validateTripPrior: async () => false,
+    }).props as any;
+  };
+  draw();
+  ui.cleanup = ui.effect!() ?? null;
+  draw().onFiles();
+  await vi.waitFor(() => expect(draw().count).toBe(1));
+  draw().onSubmit();
+  await vi.waitFor(() => expect(draw().errorMessage).toBeDefined());
+  expect(ui.createSession).not.toHaveBeenCalled();
+  expect(ui.submit).not.toHaveBeenCalled();
+  expect(staging.getDraftSnapshot().items).toHaveLength(1);
+});
+
+vi.mock("@/features/capture/captureTripPrior", () => ({
+  readCaptureTripPrior: (...args: unknown[]) => ui.priorRead(...args),
+}));
+it("the existing Capture host retains separate same-account explicit-Trip drafts and invalidates the previous focus lease", async () => {
+  const a = "40000000-0000-4000-8000-000000000001",
+    b = "40000000-0000-4000-8000-000000000002";
+  ui.session.mockResolvedValue({ identity: { userId: "A" } });
+  ui.priorRead.mockImplementation(async (id: string) => ({
+    id,
+    name: id === a ? "Trip A" : "Trip B",
+  }));
+  ui.tripId = a;
+  renderRoute();
+  ui.focusCleanup = ui.focus!() ?? null;
+  await vi.waitFor(() => expect(renderRoute().type).toBe(CaptureContent));
+  const first = renderRoute();
+  expect(first.props.tripPrior).toBe(a);
+  first.props.draftStaging.setEditorText("Draft A");
+  ui.focusCleanup?.();
+  ui.focusCleanup = null;
+  expect(first.props.isCurrent()).toBe(false);
+  ui.tripId = b;
+  renderRoute();
+  ui.focusCleanup = ui.focus!() ?? null;
+  await vi.waitFor(() => expect(renderRoute().props.tripPrior).toBe(b));
+  const second = renderRoute();
+  expect(second.props.draftStaging.getDraftSnapshot().editorText).toBe("");
+  second.props.draftStaging.setEditorText("Draft B");
+  ui.focusCleanup?.();
+  ui.focusCleanup = null;
+  ui.tripId = a;
+  renderRoute();
+  ui.focusCleanup = ui.focus!() ?? null;
+  await vi.waitFor(() => expect(renderRoute().props.tripPrior).toBe(a));
+  expect(renderRoute().props.draftStaging.getDraftSnapshot().editorText).toBe("Draft A");
+  expect(second.props.isCurrent()).toBe(false);
+  expect(ui.submit).not.toHaveBeenCalled();
+});
+
+it("reviewer: changing explicit Trip prior while Capture remains focused must not have old cleanup erase the new route", async () => {
+  const a = "40000000-0000-4000-8000-000000000001",
+    b = "40000000-0000-4000-8000-000000000002";
+  ui.session.mockResolvedValue({ identity: { userId: "A" } });
+  ui.priorRead.mockImplementation(async (id: string) => ({ id, name: id }));
+  ui.tripId = a;
+  renderRoute();
+  await vi.waitFor(() => expect(renderRoute().props.tripPrior).toBe(a));
+  const old = renderRoute();
+  old.props.draftStaging.setEditorText("Keep A");
+  ui.setParams.mockImplementation((params) => {
+    if (Object.hasOwn(params, "tripId")) ui.tripId = params.tripId;
+    if (Object.hasOwn(params, "jobId")) ui.jobId = params.jobId;
+  });
+  ui.tripId = b;
+  renderRoute();
+  await vi.waitFor(() => expect(renderRoute().props.tripPrior).toBe(b));
+  expect(ui.tripId).toBe(b);
+  expect(old.props.isCurrent()).toBe(false);
+  expect(renderRoute().props.draftStaging.getDraftSnapshot().editorText).toBe("");
+  expect(ui.submit).not.toHaveBeenCalled();
 });

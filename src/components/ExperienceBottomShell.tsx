@@ -1,6 +1,19 @@
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
+import { TripQuickAddMenu } from "./TripQuickAddMenu";
+import { useLayoutEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import {
+  captureAccountScope,
+  assertAccountRequestGeneration,
+} from "@/data/auth/accountRequestContext";
+import { requireActiveUserId } from "@/data/auth/authRepository";
+import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
+import { canEditLedgerExpense } from "@/data/repositories/ledgerExpenseEditAccess";
 import { UiText as Text } from "@/ui/controls";
-import { router } from "expo-router";
-import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { router, useGlobalSearchParams } from "expo-router";
+import { Alert, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
 import { useTripView } from "@/features/day-feed/TripViewContext";
@@ -23,9 +36,105 @@ export function ExperienceBottomShell({
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 2;
-  const { view, resumeView, resume } = useTripView();
-  if (!visible) return null;
+  const { view, workingTrip, resumeView, resume, quickActions } = useTripView();
+  const params = useGlobalSearchParams<{
+    journeyId?: string;
+    view?: string;
+    tripId?: string;
+  }>();
+  const journeyId =
+    typeof params.journeyId === "string"
+      ? params.journeyId
+      : (workingTrip?.tripId ?? null);
+  const isDay = pathname === "/" || (pathname === "/trip" && params.view === "day");
+  const contextualTripId = isDay
+    ? view?.tripId
+    : pathname === "/trip" &&
+        !["trips", "create"].includes(params.view ?? "") &&
+        typeof params.tripId === "string"
+      ? params.tripId
+      : null;
+  const activeQuickActions =
+    quickActions?.tripId === contextualTripId ? quickActions : null;
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+  );
+  const targetKey = JSON.stringify([
+    pathname,
+    journeyId,
+    workingTrip?.tripId,
+    contextualTripId,
+    generation,
+  ]);
+  const renderedTarget = useMemo(() => Symbol(targetKey), [targetKey]);
+  const currentTarget = useRef<symbol | null>(null);
+  useLayoutEffect(() => {
+    currentTarget.current = renderedTarget;
+    return () => {
+      currentTarget.current = null;
+    };
+  }, [renderedTarget]);
+  const tripList =
+    pathname === "/trip" &&
+    (!params.tripId || params.view === "trips" || params.view === "create");
+  const ledger = pathname.startsWith("/expenses") && Boolean(journeyId);
+  const startTrip = () =>
+    Alert.alert(t("actionIsland.startTrip"), undefined, [
+      { text: t("actionIsland.importPlans"), onPress: () => router.navigate("/capture") },
+      {
+        text: t("actionIsland.createManually"),
+        onPress: () =>
+          router.setParams({ tripId: "", date: "", zone: "", view: "create" }),
+      },
+      { text: t("common.cancel"), style: "cancel" },
+    ]);
+  const openExpense = async (
+    targetId = journeyId,
+    suggestedDate: string | null = null,
+    fromHome = false,
+  ) => {
+    if (!targetId) return;
+    const target = renderedTarget;
+    if (target !== currentTarget.current || generation !== getAccountGeneration()) return;
+    try {
+      const scope = await captureAccountScope(requireActiveUserId);
+      const repo = await getDefaultLedgerReportingRepository();
+      const [journeys, actor] = await Promise.all([
+        repo.listJourneys(),
+        repo.getActorContext(targetId),
+      ]);
+      assertAccountRequestGeneration(scope);
+      if (!target || target !== currentTarget.current) return;
+      if (
+        !journeys.some((journey) => journey.journeyId === targetId) ||
+        !actor?.memberId ||
+        !canEditLedgerExpense(actor.role, false)
+      ) {
+        Alert.alert(t("actionIsland.expenseUnavailable"));
+        return;
+      }
+      router.push({
+        pathname: "/expenses/new",
+        params: {
+          journeyId: targetId,
+          returnTo: fromHome ? "home" : "source",
+          ...(suggestedDate ? { suggestedDate } : {}),
+        },
+      });
+    } catch {
+      /* Stale or unavailable authority cannot open a new Expense. */
+    }
+  };
+  if (!visible || params.view === "create") return null;
   const openMyTrips = () => {
+    if (workingTrip) {
+      router.navigate({
+        pathname: "/trip",
+        params: { tripId: workingTrip.tripId, view: "home" },
+      });
+      return;
+    }
     if (pathname === "/trip") router.setParams({ view: "trips" });
     else router.navigate({ pathname: "/trip", params: { view: "trips" } });
   };
@@ -35,26 +144,30 @@ export function ExperienceBottomShell({
         <View style={styles.navigationIsland}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t("dayFeed.myTrips")}
+            accessibilityLabel={t(workingTrip ? "dayFeed.tripHome" : "dayFeed.myTrips")}
             accessibilityHint={t("shell.openMyTrips")}
-            accessibilityState={{ selected: pathname === "/trip" }}
+            accessibilityState={{ selected: pathname === "/trip" && !isDay }}
             onPress={openMyTrips}
             style={[styles.destination, largeText && styles.largeDestination]}
           >
             <AppIcon
               name="suitcase"
-              color={pathname === "/trip" ? colors.accent : colors.textSecondary}
+              color={
+                pathname === "/trip" && !isDay ? colors.accent : colors.textSecondary
+              }
             />
-            <Text style={[styles.label, pathname === "/trip" && styles.activeLabel]}>
-              {t("dayFeed.myTrips")}
+            <Text
+              style={[styles.label, pathname === "/trip" && !isDay && styles.activeLabel]}
+            >
+              {t(workingTrip ? "dayFeed.tripHome" : "dayFeed.myTrips")}
             </Text>
           </Pressable>
-          {view || resumeView ? (
+          {resumeView || view ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t("shell.day")}
               accessibilityHint={t("shell.openSelectedDay")}
-              accessibilityState={{ selected: pathname === "/" }}
+              accessibilityState={{ selected: isDay }}
               onPress={() => {
                 resume();
                 router.navigate("/");
@@ -63,21 +176,105 @@ export function ExperienceBottomShell({
             >
               <AppIcon
                 name="calendar"
-                color={pathname === "/" ? colors.accent : colors.textSecondary}
+                color={isDay ? colors.accent : colors.textSecondary}
               />
-              <Text style={[styles.label, pathname === "/" && styles.activeLabel]}>
+              <Text style={[styles.label, isDay && styles.activeLabel]}>
                 {t("shell.day")}
               </Text>
             </Pressable>
           ) : null}
+          {workingTrip ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("navigation.ledger")}
+              accessibilityState={{ selected: pathname.startsWith("/expenses") }}
+              onPress={() => router.navigate("/expenses")}
+              style={[styles.destination, largeText && styles.largeDestination]}
+            >
+              <AppIcon
+                name="list.bullet.rectangle"
+                color={
+                  pathname.startsWith("/expenses") ? colors.accent : colors.textSecondary
+                }
+              />
+              <Text
+                style={[
+                  styles.label,
+                  pathname.startsWith("/expenses") && styles.activeLabel,
+                ]}
+              >
+                {t("navigation.ledger")}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
-        {pathname === "/trip" ? (
+        {contextualTripId ? (
+          <View style={styles.actionIsland}>
+            <TripQuickAddMenu
+              key={contextualTripId}
+              tripId={contextualTripId}
+              date={
+                isDay
+                  ? resumeView?.tripId === view?.tripId &&
+                    resumeView?.generation === view?.generation
+                    ? resumeView?.date
+                    : view?.date
+                  : undefined
+              }
+              showDate={isDay}
+              triggerStyle={styles.action}
+              itinerary={
+                activeQuickActions
+                  ? (date) => {
+                      router.navigate({
+                        pathname: "/trip",
+                        params: { tripId: contextualTripId, view: "home" },
+                      });
+                      activeQuickActions.itinerary(date);
+                    }
+                  : undefined
+              }
+              photos={
+                activeQuickActions?.photos
+                  ? () => {
+                      router.navigate({
+                        pathname: "/trip",
+                        params: { tripId: contextualTripId, view: "home" },
+                      });
+                      activeQuickActions.photos?.();
+                    }
+                  : undefined
+              }
+              capture={() => {
+                if (
+                  renderedTarget !== currentTarget.current ||
+                  generation !== getAccountGeneration()
+                )
+                  return;
+                router.navigate({
+                  pathname: "/capture",
+                  params: { tripId: contextualTripId },
+                });
+              }}
+              expense={(date) => {
+                void openExpense(contextualTripId, date, true);
+              }}
+            />
+          </View>
+        ) : null}
+        {tripList || ledger ? (
           <View style={styles.actionIsland}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t("myTrips.createTrip")}
-              onPress={() =>
-                router.setParams({ tripId: "", date: "", zone: "", view: "create" })
+              accessibilityLabel={t(
+                ledger ? "ledger.addExpense" : "actionIsland.startTrip",
+              )}
+              onPress={
+                ledger
+                  ? () => {
+                      void openExpense();
+                    }
+                  : startTrip
               }
               style={styles.action}
             >

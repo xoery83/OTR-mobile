@@ -21,6 +21,8 @@ import { createCaptureStaging, type CaptureStagingSnapshot } from "./captureStag
 export function CaptureContent({
   isCurrent,
   tripName,
+  tripPrior = null,
+  validateTripPrior,
   onCancel,
   jobId,
   draftStaging,
@@ -29,15 +31,18 @@ export function CaptureContent({
 }: {
   isCurrent: () => boolean;
   tripName?: string;
+  tripPrior?: string | null;
+  validateTripPrior?: () => Promise<boolean>;
   onCancel: () => void;
   jobId?: string;
   draftStaging?: ReturnType<typeof createCaptureStaging>;
   onReopenJob?: (id: string) => void;
   accountId?: string;
 }) {
-  const [{ staging, invocationTripName }] = useState(() => ({
+  const [{ staging, invocationTripName, invocationTripPrior }] = useState(() => ({
     staging: draftStaging ?? createCaptureStaging(pickCaptureMaterial, isCurrent),
     invocationTripName: tripName,
+    invocationTripPrior: tripPrior,
   }));
   const snapshot = useSyncExternalStore(
     staging.subscribe,
@@ -149,15 +154,20 @@ export function CaptureContent({
       .map((item) => ({ ...item }));
     running.current = true;
     setBusy(true);
-    setAttempted(true);
     setSubmitError(false);
-    session.current ??= import("@/data/operations/defaultCaptureSubmission")
-      .then((api) => api.createDefaultCaptureSubmissionSession())
-      .catch((error) => {
-        session.current = null;
-        throw error;
-      });
     try {
+      if (!submittedSelections && invocationTripPrior) {
+        if (!validateTripPrior || !(await validateTripPrior()))
+          throw new Error("CAPTURE_PRIOR_UNAVAILABLE");
+        if (!current()) return;
+      }
+      setAttempted(true);
+      session.current ??= import("@/data/operations/defaultCaptureSubmission")
+        .then((api) => api.createDefaultCaptureSubmissionSession())
+        .catch((error) => {
+          session.current = null;
+          throw error;
+        });
       const owner = await session.current;
       if (!current()) return;
       if (draftStaging && !submittedSelections) {
@@ -165,7 +175,9 @@ export function CaptureContent({
         setSubmittedSelections(selected);
         staging.cancel();
       }
-      await owner.submit(selected, progress);
+      if (invocationTripPrior)
+        await owner.submit(selected, progress, invocationTripPrior);
+      else await owner.submit(selected, progress);
     } catch {
       if (current()) {
         setSubmitError(true);
@@ -251,6 +263,11 @@ export function CaptureContent({
         snapshot={draft}
         count={staging.prepareSubmit()?.length ?? 0}
         tripName={invocationTripName}
+        errorMessage={
+          !attempted && submitError && invocationTripPrior
+            ? t("actionIsland.tripCaptureUnavailable")
+            : undefined
+        }
         duplicate={duplicate}
         title={
           accountId && (activity || attempted || reopening || model)

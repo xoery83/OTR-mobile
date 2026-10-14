@@ -115,10 +115,12 @@ export function UiChoiceChip({
   label,
   selected,
   onPress,
+  compact = false,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  compact?: boolean;
 }) {
   const styles = useThemedStyles(createStyles);
 
@@ -128,9 +130,18 @@ export function UiChoiceChip({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={[styles.choiceChip, selected && styles.choiceChipSelected]}
+      style={[
+        styles.choiceChip,
+        compact && styles.compactChip,
+        selected && (compact ? styles.compactSelected : styles.choiceChipSelected),
+      ]}
     >
-      <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>
+      <Text
+        style={[
+          styles.choiceChipText,
+          selected && !compact && styles.choiceChipTextSelected,
+        ]}
+      >
         {label}
       </Text>
     </Pressable>
@@ -187,6 +198,8 @@ const createStyles = (colors: UiColors) =>
       paddingHorizontal: 12,
       backgroundColor: colors.surface,
     },
+    compactChip: { borderRadius: visual.radius.control, borderWidth: 0 },
+    compactSelected: { backgroundColor: colors.elevatedSurface },
     choiceChipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
     choiceChipText: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
     choiceChipTextSelected: { color: colors.onAccent },

@@ -271,12 +271,14 @@ function SearchContent({
         <View style={styles.wrap}>
           {currentTripId ? (
             <UiChoiceChip
+              compact
               label={t("comprehensiveSearch.scopeCurrent")}
               selected={input.tripId !== null}
               onPress={() => setInput((v) => ({ ...v, tripId: currentTripId }))}
             />
           ) : null}
           <UiChoiceChip
+            compact
             label={t("comprehensiveSearch.scopeAll")}
             selected={input.tripId === null}
             onPress={() => setInput((v) => ({ ...v, tripId: null }))}
@@ -285,6 +287,7 @@ function SearchContent({
         <View style={styles.wrap}>
           {categories.map((category) => (
             <UiChoiceChip
+              compact
               key={category}
               label={
                 category === "ALL" ||
@@ -410,5 +413,5 @@ const createStyles = (colors: UiColors) =>
       gap: visual.space.heading,
     },
     meta: { color: colors.textSecondary, ...visual.type.meta },
-    note: { color: colors.textSecondary, ...visual.type.row },
+    note: { color: colors.textSecondary, ...visual.type.meta },
   });

@@ -27,6 +27,7 @@ const state = vi.hoisted(() => ({
   saveReading: vi.fn(),
   switchTrip: vi.fn(),
   params: vi.fn(),
+  routeMode: "home" as "home" | "day",
   appActive: null as (() => void) | null,
   resume: null as any,
 }));
@@ -54,6 +55,7 @@ vi.mock("react-native", () => ({
   View: "View",
   Text: "Text",
   ScrollView: "ScrollView",
+  Modal: "Modal",
   StyleSheet: { create: (s: unknown) => s },
   AppState: {
     addEventListener: (_: string, onChange: (state: string) => void) => {
@@ -67,7 +69,7 @@ vi.mock("expo-router", () => ({
     tripId: state.view.tripId,
     date: state.view.date,
     zone: state.view.zone,
-    view: "home",
+    view: state.routeMode,
   }),
   router: { setParams: (...args: any[]) => state.params(...args), navigate: vi.fn() },
 }));
@@ -135,6 +137,7 @@ async function loaded() {
 beforeEach(() => {
   vi.stubGlobal("__DEV__", true);
   state.appActive = null;
+  state.routeMode = "home";
   state.hooks = [];
   state.refs = [];
   state.cursor = state.refCursor = 0;
@@ -451,3 +454,35 @@ it.each([
     expect(find(render(), DayFeed)).toBeNull();
   },
 );
+
+it("normal Day uses the full owning calendar only for current matching actor/generation/epoch", async () => {
+  state.routeMode = "day";
+  state.snapshot.trip = { startDate: "2027-02-01", endDate: "2027-02-12" };
+  state.snapshot.candidateDays = ["2027-02-01", "2027-02-12"];
+  const feed = find(await loaded(), DayFeed);
+  expect(feed?.dates).toHaveLength(12);
+  expect(feed?.dates[0]).toBe("2027-02-01");
+  expect(feed?.dates[11]).toBe("2027-02-12");
+  expect(feed?.zone).toBe("Asia/Tokyo");
+  expect(state.saveReading).not.toHaveBeenCalled();
+  state.snapshot.scope.accountId = "foreign";
+  state.appActive!();
+  for (let i = 0; i < 12; i++) await Promise.resolve();
+  expect(find(render(), DayFeed)?.dates).toEqual([state.view.date]);
+});
+
+vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
+
+it("normal Home hides internal accepted IDs and defers date inputs to the Day action sheet", async () => {
+  const node = await loaded();
+  expect(find(node, "Modal")?.visible).toBe(false);
+  expect(JSON.stringify(node)).not.toContain("dayFeed.admitted");
+  expect(JSON.stringify(node)).not.toContain("dayFeed.explicitId");
+  const button = find(node, "Button");
+  expect(button.label).toBe("dayFeed.openDay");
+  button.onPress();
+  expect(find(render(), "Modal")?.visible).toBe(true);
+  expect(state.select).not.toHaveBeenCalled();
+});
+
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));

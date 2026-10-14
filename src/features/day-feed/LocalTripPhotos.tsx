@@ -16,17 +16,38 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 
-export function LocalTripPhotos({ tripId }: { tripId: string }) {
+export function LocalTripPhotos({
+  tripId,
+  registerAdd,
+  onSaved,
+}: {
+  tripId: string;
+  registerAdd?: (add: (() => void) | null) => void;
+  onSaved?: () => void;
+}) {
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
   );
   return (
-    <LocalTripPhotoContent key={JSON.stringify([generation, tripId])} tripId={tripId} />
+    <LocalTripPhotoContent
+      key={JSON.stringify([generation, tripId])}
+      tripId={tripId}
+      registerAdd={registerAdd}
+      onSaved={onSaved}
+    />
   );
 }
 
-function LocalTripPhotoContent({ tripId }: { tripId: string }) {
+function LocalTripPhotoContent({
+  tripId,
+  registerAdd,
+  onSaved,
+}: {
+  tripId: string;
+  registerAdd?: (add: (() => void) | null) => void;
+  onSaved?: () => void;
+}) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const generation = getAccountGeneration();
@@ -69,34 +90,50 @@ function LocalTripPhotoContent({ tripId }: { tripId: string }) {
       listener.remove();
     };
   }, [load]);
-  const add = async () => {
-    if (busy.current || !current()) return;
+  const add = useCallback(async () => {
+    if (busy.current || !current() || status !== "READY") return;
     busy.current = true;
     setAdding(true);
     setAddError(false);
     try {
       const choice = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
-        allowsMultipleSelection: false,
+        allowsMultipleSelection: true,
         quality: 1,
         base64: false,
         exif: false,
       });
       if (!current() || choice.canceled) return;
-      const uri = choice.assets[0]?.uri;
-      if (!uri?.startsWith("file://"))
-        throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
       const repo = await readLocalTripPhotoRepository();
-      if (!current()) return;
-      await repo.addTripPhoto(tripId, uri);
+      for (const asset of choice.assets) {
+        if (!current()) return;
+        const uri = asset.uri;
+        if (!uri?.startsWith("file://"))
+          throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
+        await repo.addTripPhoto(tripId, uri);
+      }
+      if (current() && choice.assets.length) onSaved?.();
       if (current()) await load();
     } catch {
-      if (current()) setAddError(true);
+      if (current()) {
+        setAddError(true);
+        await load();
+      }
     } finally {
       busy.current = false;
       if (current()) setAdding(false);
     }
-  };
+  }, [current, tripId, load, status, onSaved]);
+  useEffect(() => {
+    registerAdd?.(
+      status === "READY"
+        ? () => {
+            void add();
+          }
+        : null,
+    );
+    return () => registerAdd?.(null);
+  }, [registerAdd, status, add]);
   return (
     <UiSection title={t("tripPhotos.title")}>
       <UiButton

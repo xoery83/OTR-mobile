@@ -45,6 +45,9 @@ const state = vi.hoisted(() => ({
   repo: vi.fn(),
   discovery: vi.fn(),
   serial: 0,
+  alert: vi.fn(),
+  publish: vi.fn(),
+  forceEffects: false,
   finance: null as TripHomeWidget | null,
 }));
 vi.mock("react", async (original) => ({
@@ -52,7 +55,7 @@ vi.mock("react", async (original) => ({
   useSyncExternalStore: (_: unknown, snapshot: () => unknown) => snapshot(),
   useCallback: (callback: unknown) => callback,
   useEffect: (callback: () => void | (() => void)) => {
-    if (state.mount) state.effects.push(callback);
+    if (state.mount || state.forceEffects) state.effects.push(callback);
   },
   useLayoutEffect: (callback: () => void | (() => void)) => {
     if (state.mount) {
@@ -74,6 +77,9 @@ vi.mock("react", async (original) => ({
   useRef: (initial: unknown) => (state.refs[state.refCursor++] ??= { current: initial }),
 }));
 vi.mock("react-native", () => ({
+  Alert: { alert: (...args: any[]) => state.alert(...args) },
+  Modal: (p: any) => (p.visible ? createElement("div", null, p.children) : null),
+  ScrollView: (p: any) => createElement("div", null, p.children),
   View: (p: any) => createElement("div", null, p.children),
   Text: (p: any) => createElement("span", null, p.children),
   StyleSheet: { create: (styles: unknown) => styles },
@@ -139,7 +145,12 @@ vi.mock("./LocalTripPhotos", () => ({
   LocalTripPhotos: (p: { tripId: string }) =>
     createElement("div", { "data-trip-photos": p.tripId }),
 }));
-vi.mock("./TripCoverPicker", () => ({ TripCoverPicker: () => null }));
+vi.mock("./TripCoverPicker", () => ({
+  TripCoverPicker: (p: any) => {
+    state.nodes.push({ coverPicker: p });
+    return null;
+  },
+}));
 vi.mock("./TripCoverVisual", () => ({ TripCoverVisual: () => null }));
 vi.mock("./tripCovers", () => ({ tripCoverSource: () => 1 }));
 
@@ -226,6 +237,9 @@ beforeEach(() => {
   state.hooks = [];
   state.refs = [];
   key = null;
+  state.publish.mockReset();
+  state.alert.mockReset();
+  state.forceEffects = false;
   state.repo.mockReset();
   state.discovery.mockReset();
   state.discovery.mockResolvedValue({
@@ -299,6 +313,13 @@ it("remounts when leaving a trip, rejects its late item save, and exposes My Tri
   expect(render()).toContain("Local pending trip");
   button("dayFeed.myTrips").onPress();
   expect(props.onBackToTrips).toHaveBeenCalledOnce();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  state.publish.mock.calls
+    .find((call) => call[0]?.tripId === "local-a")![0]
+    .itinerary(null);
+  render();
   input("tripCreate.itemTitle", "Old trip draft");
   render();
   button("tripCreate.itemDate").onPress();
@@ -338,7 +359,8 @@ it("shows an accepted local Trip without calling its creation pending", async ()
   render();
   await flush();
   const html = render();
-  expect(html).toContain("tripCreate.acceptedTrip");
+  expect(html).not.toContain("tripCreate.acceptedTrip");
+  expect(html).not.toContain("tripCreate.pendingItems");
   expect(html).not.toContain("tripCreate.pendingTrip");
 });
 
@@ -446,3 +468,58 @@ it("unknown and Upcoming lifecycles do not invent a Past Snapshot or empty Finan
   }
   expect(props.widgetsForHome).not.toHaveBeenCalled();
 });
+
+vi.mock("expo-router", () => ({ router: { push: vi.fn() } }));
+vi.mock("./TripViewContext", () => ({
+  useTripView: () => ({ publishQuickActions: state.publish, localOutcome: null }),
+}));
+vi.mock("@/components/SheetHeader", () => ({
+  SheetHeader: (p: any) => {
+    state.nodes.push({ label: p.leftLabel, onPress: p.onLeft });
+    return null;
+  },
+}));
+
+it("the mounted local Quick Add callback opens the existing form with an editable weak date and real local save", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  const actions = state.publish.mock.calls.find(
+    (call) => call[0]?.tripId === "local-a",
+  )![0];
+  expect(actions.photos).toBeUndefined();
+  actions.itinerary("2027-01-02");
+  render();
+  input("tripCreate.itemTitle", "Explicit activity");
+  render();
+  button("tripCreate.saveItem").onPress();
+  await flush();
+  expect(repo.addItem).toHaveBeenCalledWith(
+    "local-a",
+    expect.objectContaining({ title: "Explicit activity", startDate: "2027-01-02" }),
+  );
+  expect(render()).toContain("actionIsland.savedLocally");
+});
+
+it("normal Home keeps cover editing behind its action and preserves the owning selection", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  const html = render();
+  expect(html).not.toContain("tripCreate.pendingItems");
+  expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
+  button("tripHome.coverTools").onPress();
+  render();
+  const picker = state.nodes.find((node) => node.coverPicker)!.coverPicker;
+  await picker.onSelect("coast");
+  expect(repo.selectBuiltInCover).toHaveBeenCalledWith("local-a", "coast");
+});
+
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));

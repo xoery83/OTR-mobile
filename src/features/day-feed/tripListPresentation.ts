@@ -1,5 +1,5 @@
 import type { Trip } from "@/domain/trip/types";
-import { validateCalendarDate } from "@/domain/trip/dayReadModel";
+import { validateCalendarDate, nextCalendarDate } from "@/domain/trip/dayReadModel";
 
 type TripListMetadata = Readonly<{
   id: string;
@@ -88,4 +88,26 @@ export function possibleTodayTrips(trips: readonly Trip[], deviceToday: string):
       trip.startDate <= latest &&
       trip.endDate >= earliest,
   );
+}
+
+export function wholeTripCalendarDates(
+  trip: { startDate: string | null; endDate: string | null } | null,
+  candidates: readonly string[],
+  selected: string,
+): string[] {
+  const dates = new Set<string>([validateCalendarDate(selected)]);
+  for (const date of candidates) {
+    if (knownDate(date)) dates.add(date);
+  }
+  if (knownDate(trip?.startDate ?? null) && knownDate(trip?.endDate ?? null)) {
+    const start = trip!.startDate!,
+      end = trip!.endDate!;
+    if (end >= start) {
+      for (let date = start; ; date = nextCalendarDate(date)) {
+        dates.add(date);
+        if (date === end) break;
+      }
+    }
+  }
+  return [...dates].sort();
 }
