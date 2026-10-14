@@ -1,3 +1,5 @@
+import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
+import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
 import { TripHomeFrame } from "@/features/trip/TripHomeFrame";
 import {
   useCallback,
@@ -124,6 +126,7 @@ function CalendarField({
 }
 
 type Props = {
+  widgetsForHome?: (tripId: string) => readonly TripHomeWidget[];
   tripId: string | null;
   mode?: "LIST" | "CREATE";
   onOpen(id: string): void;
@@ -153,6 +156,7 @@ function LocalTripContent({
   onOpenToday,
   onKnownTrip,
   onBackToTrips,
+  widgetsForHome,
   generation,
 }: Props & { generation: number }) {
   useUiLocale();
@@ -379,6 +383,22 @@ function LocalTripContent({
   };
   const remoteStart = knownDate(remoteSelected?.startDate ?? null);
   const remoteEnd = knownDate(remoteSelected?.endDate ?? null);
+  const metadata = selected ?? remoteSelected;
+  const lifecycleGroups = metadata
+    ? groupLocalTrips([metadata], calendarDate(new Date()))
+    : null;
+  const lifecycle = lifecycleGroups?.past.length
+    ? "Past"
+    : lifecycleGroups?.active.length
+      ? "Active"
+      : lifecycleGroups?.upcoming.length
+        ? "Upcoming"
+        : null;
+  const finance = useTripHomeFinanceWidget(metadata?.id ?? null, lifecycle);
+  const pages = [
+    ...(lifecycle === "Past" && metadata ? (widgetsForHome?.(metadata.id) ?? []) : []),
+    ...(finance ? [finance] : []),
+  ];
   if (tripId && !selected && !remoteSelected) return null;
   return (
     <View style={styles.root}>
@@ -390,6 +410,7 @@ function LocalTripContent({
       {selected ? (
         <>
           <TripHomeFrame
+            widgets={pages}
             title={selected.name}
             onBack={onBackToTrips}
             cover={tripCoverSource(selected)}
@@ -499,6 +520,7 @@ function LocalTripContent({
       ) : remoteSelected ? (
         <>
           <TripHomeFrame
+            widgets={pages}
             title={remoteSelected.name}
             onBack={onBackToTrips}
             cover={tripCoverSource(remoteSelected)}

@@ -1,6 +1,7 @@
 import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
+import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
 import type { Trip } from "@/domain/trip/types";
 import type { TripRepository } from "@/data/repositories/tripRepository";
 import {
@@ -11,6 +12,7 @@ import { LocalTripWorkspace } from "./LocalTripWorkspace";
 
 vi.mock("@/features/trip/TripHomeFrame", () => ({
   TripHomeFrame: (p: any) => {
+    state.nodes.push({ frameWidgets: p.widgets ?? [] });
     if (p.onBack) state.nodes.push({ label: "dayFeed.myTrips", onPress: p.onBack });
     return createElement(
       "div",
@@ -21,6 +23,9 @@ vi.mock("@/features/trip/TripHomeFrame", () => ({
       p.modules,
     );
   },
+}));
+vi.mock("@/features/ledger/TripHomeFinanceWidget", () => ({
+  useTripHomeFinanceWidget: () => state.finance,
 }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -40,6 +45,7 @@ const state = vi.hoisted(() => ({
   repo: vi.fn(),
   discovery: vi.fn(),
   serial: 0,
+  finance: null as TripHomeWidget | null,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -185,6 +191,7 @@ const props = {
   onOpenToday: vi.fn(),
   onKnownTrip: vi.fn(),
   onBackToTrips: vi.fn(),
+  widgetsForHome: vi.fn((): readonly TripHomeWidget[] => []),
 };
 function render() {
   const element = LocalTripWorkspace(props);
@@ -224,6 +231,9 @@ beforeEach(() => {
   state.discovery.mockResolvedValue({
     readMerged: async () => ({ cachedAt: null, trips: [] }),
   });
+  state.finance = null;
+  props.widgetsForHome.mockReset();
+  props.widgetsForHome.mockReturnValue([]);
   props.tripId = null;
   props.mode = "LIST";
   props.onOpen.mockClear();
@@ -387,4 +397,52 @@ it("mounts trusted Photos only for the currently selected local Trip", async () 
   const next = render();
   expect(next).toContain('data-trip-photos="local-b"');
   expect(next).not.toContain('data-trip-photos="local-a"');
+});
+
+it("appends only a qualified finance page after the Past Snapshot", async () => {
+  state.repo.mockResolvedValue(
+    repository([
+      { ...trip("past", "Past"), startDate: "2026-01-01", endDate: "2026-01-02" },
+    ]),
+  );
+  props.tripId = "past";
+  props.widgetsForHome.mockReturnValue([
+    { id: "journey-snapshot", title: "Snapshot", content: null },
+  ]);
+  state.finance = { id: "ledger-finance", title: "Spending", content: null };
+  render();
+  await flush();
+  render();
+  expect(
+    state.nodes
+      .find((node) => node.frameWidgets)
+      ?.frameWidgets.map((page: TripHomeWidget) => page.id),
+  ).toEqual(["journey-snapshot", "ledger-finance"]);
+  state.finance = null;
+  render();
+  expect(
+    state.nodes
+      .find((node) => node.frameWidgets)
+      ?.frameWidgets.map((page: TripHomeWidget) => page.id),
+  ).toEqual(["journey-snapshot"]);
+});
+
+it("unknown and Upcoming lifecycles do not invent a Past Snapshot or empty Finance page", async () => {
+  state.repo.mockResolvedValue(
+    repository([
+      { ...trip("future", "Future"), startDate: "9999-01-01", endDate: "9999-01-02" },
+      trip("undated", "Undated"),
+    ]),
+  );
+  props.widgetsForHome.mockReturnValue([
+    { id: "journey-snapshot", title: "Snapshot", content: null },
+  ]);
+  for (const id of ["future", "undated"]) {
+    props.tripId = id;
+    render();
+    await flush();
+    render();
+    expect(state.nodes.find((node) => node.frameWidgets)?.frameWidgets).toEqual([]);
+  }
+  expect(props.widgetsForHome).not.toHaveBeenCalled();
 });

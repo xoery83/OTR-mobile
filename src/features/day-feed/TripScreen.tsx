@@ -19,7 +19,7 @@ import { visual } from "@/ui/visual";
 import { boundaryZone, viewContext } from "./presentation";
 import { DayFeed } from "./DayFeed";
 import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
-import { useTripView } from "./TripViewContext";
+import { acceptedHomeHeader, useTripView } from "./TripViewContext";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import type { TodayEntry } from "./MyTripsList";
 import {
@@ -28,6 +28,14 @@ import {
   type WorkspaceKind,
   type WorkspaceResolution,
 } from "./tripWorkspaceRoute";
+import { JourneySnapshotWidget } from "./JourneySnapshotWidget";
+import {
+  readTripJourneySnapshot,
+  type createTripJourneySnapshotReader,
+} from "@/data/repositories/tripJourneySnapshotRepository";
+type SnapshotReader = ReturnType<typeof createTripJourneySnapshotReader>;
+type SnapshotItem = NonNullable<Awaited<ReturnType<SnapshotReader["resolveItem"]>>>;
+type SnapshotRead = NonNullable<Awaited<ReturnType<SnapshotReader["read"]>>>;
 type Reader = ReturnType<typeof createTripDayFeedReader>;
 type TripRead = Awaited<ReturnType<Reader["trip"]>>;
 const value = (p: string | string[] | undefined) => (typeof p === "string" ? p : "");
@@ -53,7 +61,8 @@ function TripContent({ today = false }: { today?: boolean }) {
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  const { view, select, switchTrip, entry, saveReading, enterHeader } = useTripView();
+  const { view, resumeView, select, switchTrip, entry, saveReading, enterHeader } =
+    useTripView();
   const params = useLocalSearchParams<{
     tripId?: string;
     date?: string;
@@ -66,6 +75,14 @@ function TripContent({ today = false }: { today?: boolean }) {
   const [trip, setTrip] = useState<TripRead | null>(null);
   const [status, setStatus] = useState<"LOADING" | "UNAVAILABLE" | "READY">("LOADING");
   const [contextError, setContextError] = useState(false);
+  const [homeItem, setHomeItem] = useState<{
+    read: TripRead;
+    date: string;
+    zone: string;
+    itemId: string;
+    itemRevision: number;
+  } | null>(null);
+  const [homeSnapshot, setHomeSnapshot] = useState<SnapshotRead | null>(null);
   const home = params.view !== "day";
   const request = useRef(0);
   const requested = today
@@ -104,6 +121,25 @@ function TripContent({ today = false }: { today?: boolean }) {
         const result = await reader.trip(requested);
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
         setTrip(result);
+        if (
+          !today &&
+          home &&
+          result.observed?.projection.version === 2 &&
+          result.observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
+        ) {
+          const snapshot = await readTripJourneySnapshot()
+            .then((reader) => reader.read(requested))
+            .catch(() => null);
+          if (getAccountGeneration() !== captured || ticket !== request.current) return;
+          if (
+            snapshot?.scope.accountId === result.scope.accountId &&
+            snapshot.scope.tripId === requested &&
+            snapshot.scope.generation === captured &&
+            snapshot.epoch === result.observed.projection.source.epoch
+          )
+            setHomeSnapshot(snapshot);
+          else setHomeSnapshot(null);
+        }
         setStatus(result.observed ? "READY" : "UNAVAILABLE");
         if (!today && result.observed)
           setZone(
@@ -119,7 +155,7 @@ function TripContent({ today = false }: { today?: boolean }) {
         setStatus("UNAVAILABLE");
       }
     }
-  }, [requested, today]);
+  }, [requested, today, home]);
   useEffect(() => {
     void Promise.resolve().then(load);
     const sub = AppState.addEventListener("change", (state) => {
@@ -158,6 +194,153 @@ function TripContent({ today = false }: { today?: boolean }) {
       setContextError(true);
     }
   };
+  const freshHomeRead = async (scope: SnapshotRead["scope"], epoch: string) => {
+    if (
+      scope.tripId !== requested ||
+      scope.generation !== getAccountGeneration() ||
+      scope.generation !== generation
+    )
+      throw new Error("HOME_NAV_SCOPE");
+    const ticket = request.current;
+    const result = await (await readTripDayFeed()).trip(requested);
+    if (
+      ticket !== request.current ||
+      !result.observed ||
+      result.observed.sourceStatus !== "CURRENTLY_MATCHES_SOURCE" ||
+      result.scope.accountId !== scope.accountId ||
+      result.scope.generation !== scope.generation ||
+      getAccountGeneration() !== scope.generation ||
+      result.observed.projection.version !== 2 ||
+      result.observed.projection.source.epoch !== epoch
+    )
+      throw new Error("HOME_NAV_UNAVAILABLE");
+    return result;
+  };
+  const reviewZone =
+    resumeView?.tripId === requested && resumeView.generation === generation
+      ? resumeView.zone
+      : null;
+  const reviewItinerary = reviewZone
+    ? async ({
+        scope,
+        epoch,
+        candidateDays,
+      }: Pick<SnapshotRead, "scope" | "epoch" | "candidateDays">) => {
+        await freshHomeRead(scope, epoch);
+        const date = candidateDays[0];
+        if (!date) throw new Error("HOME_HEADER_UNAVAILABLE");
+        const ticket = request.current;
+        const resolved = await (
+          await readTripJourneySnapshot()
+        ).resolveDayContext(requested, epoch, date, reviewZone);
+        if (
+          !resolved ||
+          ticket !== request.current ||
+          resolved.scope.accountId !== scope.accountId ||
+          resolved.scope.generation !== generation ||
+          generation !== getAccountGeneration()
+        )
+          throw new Error("HOME_HEADER_UNAVAILABLE");
+        enterHeader(
+          { tripId: requested, date: resolved.date, zone: resolved.zone, generation },
+          "FIRST_VALID_PAST_DAY_HEADER",
+        );
+        router.setParams({
+          tripId: requested,
+          date: resolved.date,
+          zone: resolved.zone,
+          view: "day",
+        });
+      }
+    : undefined;
+  const openHomeItem = async (value: SnapshotItem) => {
+    const itemRevision = value.item.itemRevision;
+    if (
+      typeof itemRevision !== "number" ||
+      !Number.isSafeInteger(itemRevision) ||
+      itemRevision < 1
+    )
+      throw new Error("HOME_ITEM_REVISION_UNAVAILABLE");
+    const result = await freshHomeRead(value.scope, value.certificate.epoch);
+    const projection = result.observed!.projection;
+    if (projection.version !== 2) throw new Error("HOME_ITEM_UNAVAILABLE");
+    const current = projection.items.find(
+      (item) =>
+        item.itemId === value.item.itemId &&
+        item.itemRevision === value.item.itemRevision,
+    );
+    if (!current) throw new Error("HOME_RENDERER_UNAVAILABLE");
+    const header = acceptedHomeHeader(
+      projection.events,
+      (date, zone) => projection.query(date, zone),
+      current.itemId,
+      reviewZone ?? undefined,
+    );
+    if (!header) throw new Error("HOME_ITEM_DATE_UNAVAILABLE");
+    setTrip(result);
+    setHomeItem({
+      read: result,
+      ...header,
+      itemId: current.itemId,
+      itemRevision,
+    });
+  };
+  const widgetsForHome = (id: string) => {
+    if (
+      id !== requested ||
+      visibleTrip?.observed?.projection.version !== 2 ||
+      visibleTrip.observed.sourceStatus !== "CURRENTLY_MATCHES_SOURCE" ||
+      !homeSnapshot ||
+      homeSnapshot.scope.generation !== generation ||
+      homeSnapshot.scope.tripId !== requested ||
+      homeSnapshot.epoch !== visibleTrip.observed.projection.source.epoch
+    )
+      return [];
+    return [
+      {
+        id: "journey-snapshot",
+        title: t("tripHome.snapshot.title"),
+        content: (
+          <JourneySnapshotWidget
+            key={JSON.stringify([generation, requested])}
+            tripId={requested}
+            copy={{
+              title: t("tripHome.snapshot.title"),
+              days: t("tripHome.snapshot.days"),
+              places: t("tripHome.snapshot.places"),
+              activities: t("tripHome.snapshot.activities"),
+              empty: t("tripHome.snapshot.empty"),
+              loading: t("tripHome.snapshot.loading"),
+              unavailable: t("tripHome.snapshot.unavailable"),
+              review: t("tripHome.snapshot.review"),
+            }}
+            onOpenItem={openHomeItem}
+            onReviewItinerary={reviewItinerary}
+          />
+        ),
+      },
+    ];
+  };
+  const overlayProjection = homeItem?.read.observed?.projection;
+  const visibleOverlay =
+    home &&
+    visibleTrip?.observed &&
+    homeItem?.read.scope.generation === generation &&
+    overlayProjection?.tripId === requested &&
+    overlayProjection.version === 2 &&
+    visibleTrip.observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
+    visibleTrip.scope.accountId === homeItem.read.scope.accountId &&
+    visibleTrip.observed.projection.version === 2 &&
+    visibleTrip.observed.projection.items.some(
+      (item) =>
+        item.itemId === homeItem.itemId &&
+        item.itemRevision === homeItem.itemRevision &&
+        !item.hidden &&
+        !["cancelled", "skipped"].includes(String(item.status)),
+    ) &&
+    overlayProjection.source.epoch === visibleTrip.observed.projection.source.epoch
+      ? { ...homeItem, read: visibleTrip }
+      : null;
   const selected = today ? view : !home && view?.tripId === requested ? view : null;
   if (visibleTrip?.observed && selected)
     return (
@@ -203,137 +386,163 @@ function TripContent({ today = false }: { today?: boolean }) {
       </View>
     );
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
-      {!hideHomePrelude ? (
-        <Text accessibilityRole="header" style={styles.heading}>
-          {t(
-            today
-              ? "navigation.today"
-              : visibleTrip?.observed || knownWorkspaceTrip
-                ? "dayFeed.tripHome"
-                : "dayFeed.myTrips",
-          )}
-        </Text>
-      ) : null}
-      {!hideHomePrelude && status === "LOADING" ? (
-        <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
-      ) : null}
-      {!hideHomePrelude &&
-      status === "UNAVAILABLE" &&
-      (today || (localChecked && !knownWorkspaceTrip)) ? (
-        <Text style={styles.meta}>{t("dayFeed.unavailable")}</Text>
-      ) : null}
-      {!today ? (
-        <LocalTripWorkspace
-          tripId={requested || null}
-          mode={params.view === "create" ? "CREATE" : "LIST"}
-          onOpen={open}
-          onCreate={createTrip}
-          onOpenToday={openToday}
-          onKnownTrip={knownTrip}
-          onBackToTrips={backToTrips}
-        />
-      ) : null}
-      {today ? (
-        <>
-          <Text style={styles.meta}>{t("dayFeed.todayContext")}</Text>
-          <UiButton
-            label={t("dayFeed.myTrips")}
-            onPress={() => router.navigate("/trip")}
+    <>
+      <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+        {!hideHomePrelude ? (
+          <Text accessibilityRole="header" style={styles.heading}>
+            {t(
+              today
+                ? "navigation.today"
+                : visibleTrip?.observed || knownWorkspaceTrip
+                  ? "dayFeed.tripHome"
+                  : "dayFeed.myTrips",
+            )}
+          </Text>
+        ) : null}
+        {!hideHomePrelude && status === "LOADING" ? (
+          <Text style={styles.meta}>{t("dayFeed.loading")}</Text>
+        ) : null}
+        {!hideHomePrelude &&
+        status === "UNAVAILABLE" &&
+        (today || (localChecked && !knownWorkspaceTrip)) ? (
+          <Text style={styles.meta}>{t("dayFeed.unavailable")}</Text>
+        ) : null}
+        {!today ? (
+          <LocalTripWorkspace
+            tripId={requested || null}
+            mode={params.view === "create" ? "CREATE" : "LIST"}
+            onOpen={open}
+            onCreate={createTrip}
+            onOpenToday={openToday}
+            onKnownTrip={knownTrip}
+            onBackToTrips={backToTrips}
+            widgetsForHome={widgetsForHome}
           />
-        </>
-      ) : (
-        <>
-          {visibleTrip?.observed ? (
-            <>
-              <Text style={styles.meta}>{t("dayFeed.admitted", { id: requested })}</Text>
-              {visibleTrip.observed.sourceStatus === "HISTORICAL_ACCEPTED_PROJECTION" ? (
-                <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
-              ) : null}
-              <Text style={styles.meta}>{t("dayFeed.date")}</Text>
-              <UiTextInput
-                accessibilityLabel={t("dayFeed.date")}
-                value={date}
-                onChangeText={setDate}
-                autoCapitalize="none"
-              />
-              <Text style={styles.meta}>{t("dayFeed.zone")}</Text>
-              <UiTextInput
-                accessibilityLabel={t("dayFeed.zone")}
-                value={zone}
-                onChangeText={setZone}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <Text style={styles.meta}>{t("dayFeed.contextHint")}</Text>
-              {contextError ? (
-                <Text accessibilityRole="alert" style={styles.meta}>
-                  {t("dayFeed.contextInvalid")}
+        ) : null}
+        {today ? (
+          <>
+            <Text style={styles.meta}>{t("dayFeed.todayContext")}</Text>
+            <UiButton
+              label={t("dayFeed.myTrips")}
+              onPress={() => router.navigate("/trip")}
+            />
+          </>
+        ) : (
+          <>
+            {visibleTrip?.observed ? (
+              <>
+                <Text style={styles.meta}>
+                  {t("dayFeed.admitted", { id: requested })}
                 </Text>
-              ) : null}
-              <UiButton label={t("dayFeed.openDay")} onPress={enterDay} />
-              <UiButton
-                label={t("dayFeed.myTrips")}
-                variant="text"
-                onPress={backToTrips}
-              />
-            </>
-          ) : knownWorkspaceTrip || !requested ? null : (
-            <>
-              <Text style={styles.meta}>{t("dayFeed.partial")}</Text>
-              <Text style={styles.meta}>{t("dayFeed.explicitId")}</Text>
-              <UiTextInput
-                accessibilityLabel={t("dayFeed.explicitId")}
-                value={key}
-                onChangeText={setKey}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <UiButton
-                label={t("dayFeed.lookup")}
-                onPress={() => open(key)}
-                disabled={!key.trim()}
-              />
-            </>
-          )}
-        </>
-      )}
-      {showContextualActions ? (
-        <>
+                {visibleTrip.observed.sourceStatus ===
+                "HISTORICAL_ACCEPTED_PROJECTION" ? (
+                  <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
+                ) : null}
+                <Text style={styles.meta}>{t("dayFeed.date")}</Text>
+                <UiTextInput
+                  accessibilityLabel={t("dayFeed.date")}
+                  value={date}
+                  onChangeText={setDate}
+                  autoCapitalize="none"
+                />
+                <Text style={styles.meta}>{t("dayFeed.zone")}</Text>
+                <UiTextInput
+                  accessibilityLabel={t("dayFeed.zone")}
+                  value={zone}
+                  onChangeText={setZone}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Text style={styles.meta}>{t("dayFeed.contextHint")}</Text>
+                {contextError ? (
+                  <Text accessibilityRole="alert" style={styles.meta}>
+                    {t("dayFeed.contextInvalid")}
+                  </Text>
+                ) : null}
+                <UiButton label={t("dayFeed.openDay")} onPress={enterDay} />
+                <UiButton
+                  label={t("dayFeed.myTrips")}
+                  variant="text"
+                  onPress={backToTrips}
+                />
+              </>
+            ) : knownWorkspaceTrip || !requested ? null : (
+              <>
+                <Text style={styles.meta}>{t("dayFeed.partial")}</Text>
+                <Text style={styles.meta}>{t("dayFeed.explicitId")}</Text>
+                <UiTextInput
+                  accessibilityLabel={t("dayFeed.explicitId")}
+                  value={key}
+                  onChangeText={setKey}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <UiButton
+                  label={t("dayFeed.lookup")}
+                  onPress={() => open(key)}
+                  disabled={!key.trim()}
+                />
+              </>
+            )}
+          </>
+        )}
+        {showContextualActions ? (
+          <>
+            <UiButton
+              label={t("capture.activityRefresh")}
+              variant="text"
+              onPress={() => {
+                void load();
+              }}
+            />
+            <UiButton
+              label={t("navigation.capture")}
+              variant="text"
+              onPress={() => router.navigate("/capture")}
+            />
+            <UiButton
+              label={t("navigation.ledger")}
+              variant="text"
+              onPress={() => router.navigate("/expenses")}
+            />
+          </>
+        ) : null}
+        {__DEV__ && showContextualActions ? (
           <UiButton
-            label={t("capture.activityRefresh")}
+            label={t("dayLab.title")}
             variant="text"
-            onPress={() => {
+            onPress={() => router.push("/day-feed-lab")}
+          />
+        ) : null}
+        {showContextualActions ? (
+          <UiButton
+            label={t("dayFeed.validation")}
+            variant="text"
+            onPress={() => router.push("/trip-validation")}
+          />
+        ) : null}
+      </ScrollView>
+      {visibleOverlay?.read.observed ? (
+        <DayFeed
+          projection={visibleOverlay.read.observed.projection}
+          date={visibleOverlay.date}
+          zone={visibleOverlay.zone}
+          services={visibleOverlay.read.services}
+          renderer={
+            visibleOverlay.read.observed.projection.version === 2
+              ? createCoreExperienceRenderer(visibleOverlay.read.observed.projection)
+              : undefined
+          }
+          directItem={{
+            itemId: visibleOverlay.itemId,
+            onClose: () => {
+              setHomeItem(null);
               void load();
-            }}
-          />
-          <UiButton
-            label={t("navigation.capture")}
-            variant="text"
-            onPress={() => router.navigate("/capture")}
-          />
-          <UiButton
-            label={t("navigation.ledger")}
-            variant="text"
-            onPress={() => router.navigate("/expenses")}
-          />
-        </>
-      ) : null}
-      {__DEV__ && showContextualActions ? (
-        <UiButton
-          label={t("dayLab.title")}
-          variant="text"
-          onPress={() => router.push("/day-feed-lab")}
+            },
+          }}
         />
       ) : null}
-      {showContextualActions ? (
-        <UiButton
-          label={t("dayFeed.validation")}
-          variant="text"
-          onPress={() => router.push("/trip-validation")}
-        />
-      ) : null}
-    </ScrollView>
+    </>
   );
 }
 const createStyles = (c: UiColors) =>

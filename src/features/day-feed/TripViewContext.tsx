@@ -253,6 +253,7 @@ export function acceptedHomeHeader(
   events: readonly DayEvent[],
   query: (date: string, zone: string) => DayQuery,
   itemId?: string,
+  viewZone?: string,
 ): { date: string; zone: string } | null {
   const candidates = events
     .filter(
@@ -262,23 +263,24 @@ export function acceptedHomeHeader(
     )
     .flatMap((event) =>
       event.boundaries.flatMap((boundary) => {
-        if (!boundary.zone_id || /^[+-]/.test(boundary.zone_id)) return [];
+        const zone = boundary.zone_id ?? viewZone;
+        if (!zone || /^[+-]/.test(zone)) return [];
         try {
           const date = boundary.local_date
             ? validateCalendarDate(boundary.local_date)
             : boundary.instant
-              ? localCalendarDate(boundary.instant, boundary.zone_id)
+              ? localCalendarDate(boundary.instant, zone)
               : null;
           if (!date) return [];
-          new Intl.DateTimeFormat("en", { timeZone: boundary.zone_id }).format(0);
-          const result = query(date, boundary.zone_id);
+          new Intl.DateTimeFormat("en", { timeZone: zone }).format(0);
+          const result = query(date, zone);
           if (
             ![...result.timed, ...result.nonComparable].some(
               (row) => row.event.id === event.id,
             )
           )
             return [];
-          return [{ date, zone: boundary.zone_id }];
+          return [{ date, zone }];
         } catch {
           return [];
         }

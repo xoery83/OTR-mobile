@@ -135,3 +135,49 @@ it("temporary explicit target inspection preserves the prior working Trip and Da
   expect(state.bookmarks).toBe(before);
   expect(state.bookmarks.a.reading).toEqual({ offset: 144, focus: "a-item" });
 });
+it("uses an explicit saved view zone only for a null boundary zone and only with current query membership", () => {
+  const event = {
+    id: "booking",
+    status: "planned",
+    boundaries: [{ local_date: "2027-02-07", zone_id: null }],
+  } as unknown as DayEvent;
+  const query = (date: string, zone: string) => ({
+    date,
+    zone,
+    timed: [],
+    nonComparable: [
+      { event, roles: [], occupancy: false, occupancyBasis: null, anchor: null },
+    ],
+    unresolved: [],
+  });
+  expect(acceptedHomeHeader([event], query, "booking", "Asia/Tokyo")).toEqual({
+    date: "2027-02-07",
+    zone: "Asia/Tokyo",
+  });
+  for (const zone of [undefined, "", "+09:00", "Not/AZone"])
+    expect(acceptedHomeHeader([event], query, "booking", zone)).toBeNull();
+  expect(
+    acceptedHomeHeader(
+      [event],
+      (date, zone) => ({ ...query(date, zone), nonComparable: [] }),
+      "booking",
+      "Asia/Tokyo",
+    ),
+  ).toBeNull();
+  expect(
+    acceptedHomeHeader(
+      [{ ...event, status: "cancelled" }],
+      query,
+      "booking",
+      "Asia/Tokyo",
+    ),
+  ).toBeNull();
+  expect(
+    acceptedHomeHeader(
+      [{ ...event, boundaries: [{ ...event.boundaries[0], zone_id: "+09:00" }] }],
+      query,
+      "booking",
+      "Asia/Tokyo",
+    ),
+  ).toBeNull();
+});
