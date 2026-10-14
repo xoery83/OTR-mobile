@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
+import { projectCaptureActivity } from "@/domain/capture/captureActivityProjection";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
-import { UiButton, UiSection } from "@/ui/controls";
+import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
+
+export const captureActivityTime = (at: string) =>
+  formatUiDate(new Date(at), {
+    // ui-foundation-exception: string -- Intl dateStyle, not visible copy
+    dateStyle: "medium",
+    // ui-foundation-exception: string -- Intl timeStyle includes stored seconds
+    timeStyle: "medium",
+  });
 
 export function captureJobTitle(job: CaptureJobReadModel) {
   const count = job.allInputsAccepted
@@ -31,11 +40,13 @@ export function CaptureActivity({
   onOpenJob,
   onReturn,
   onHide,
+  expectedAccountId,
 }: {
   isCurrent: () => boolean;
   onOpenJob: (jobId: string) => void;
   onReturn: () => void;
   onHide: () => void;
+  expectedAccountId?: string;
 }) {
   const [jobs, setJobs] = useState<CaptureJobReadModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,6 +99,7 @@ export function CaptureActivity({
   }, []);
   return (
     <CaptureActivityList
+      expectedAccountId={expectedAccountId}
       jobs={jobs}
       loading={loading}
       error={error}
@@ -113,6 +125,7 @@ export function CaptureActivityList({
   onOpenJob,
   onReturn,
   onHide,
+  expectedAccountId,
 }: {
   jobs: readonly CaptureJobReadModel[];
   loading: boolean;
@@ -123,13 +136,36 @@ export function CaptureActivityList({
   onOpenJob: (jobId: string) => void;
   onReturn: () => void;
   onHide: () => void;
+  expectedAccountId?: string;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const visibleJobs = expectedAccountId
+    ? jobs.filter((job) => {
+        try {
+          projectCaptureActivity(job, expectedAccountId);
+          return true;
+        } catch {
+          return false;
+        }
+      })
+    : jobs;
+  const scopedError = error || visibleJobs.length !== jobs.length;
   return (
-    <ScrollView style={styles.body} contentContainerStyle={styles.content}>
-      <UiSection title={t("capture.activity")}>
-        <Text style={styles.secondary}>{t("capture.activityHint")}</Text>
+    <ScrollView
+      style={expectedAccountId ? styles.sheetBody : styles.body}
+      contentContainerStyle={styles.content}
+    >
+      <UiSection
+        title={t(
+          expectedAccountId ? "capture.progress.activeImports" : "capture.activity",
+        )}
+      >
+        <Text style={styles.secondary}>
+          {t(
+            expectedAccountId ? "capture.progress.accountScope" : "capture.activityHint",
+          )}
+        </Text>
         <UiButton
           label={t("capture.activityRefresh")}
           variant="text"
@@ -141,36 +177,43 @@ export function CaptureActivityList({
             {t("capture.activityLoading")}
           </Text>
         ) : null}
-        {error ? (
+        {scopedError ? (
           <Text accessibilityRole="alert" style={styles.error}>
             {t("capture.activityError")}
           </Text>
         ) : null}
-        {!loading && !error && !jobs.length ? (
+        {!loading && !scopedError && !visibleJobs.length ? (
           <Text style={styles.secondary}>{t("capture.activityEmpty")}</Text>
         ) : null}
       </UiSection>
-      {jobs.map((job) => (
+      {visibleJobs.map((job) => (
         <UiSection key={job.batch.jobId}>
           <Text accessibilityRole="header" style={styles.title}>
-            {captureJobTitle(job)}
+            {expectedAccountId
+              ? t("capture.progress.batchTitle", { count: job.counts.selected })
+              : captureJobTitle(job)}
           </Text>
-          <Text style={styles.secondary}>
-            {formatUiDate(new Date(job.batch.createdAt), {
-              // ui-foundation-exception: string -- Intl dateStyle option, not user-facing copy
-              dateStyle: "medium",
-              // ui-foundation-exception: string -- Intl timeStyle option, not user-facing copy
-              timeStyle: "short",
-            })}
-          </Text>
+          <Text style={styles.secondary}>{captureActivityTime(job.batch.createdAt)}</Text>
           {!job.allInputsAccepted ? (
-            <Text style={styles.secondary}>{t("capture.counts", job.counts)}</Text>
+            <Text style={styles.secondary}>
+              {t(
+                expectedAccountId && (loading || scopedError)
+                  ? "capture.progress.recordedCounts"
+                  : "capture.counts",
+                job.counts,
+              )}
+            </Text>
           ) : null}
           {job.inputs?.some((item) => item.continuesFromJobId) ? (
             <Text style={styles.secondary}>{t("capture.continuedSelection")}</Text>
           ) : null}
           <UiButton
-            label={t("capture.jobView", { summary: captureJobTitle(job) })}
+            label={t("capture.jobView", {
+              summary:
+                expectedAccountId && (loading || scopedError)
+                  ? t("capture.progress.batchTitle", { count: job.counts.selected })
+                  : captureJobTitle(job),
+            })}
             variant="secondary"
             disabled={!job.availableActions.canReopen}
             onPress={() => onOpenJob(job.batch.jobId)}
@@ -197,6 +240,8 @@ export function CaptureActivityList({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
+    // The Composer measures intrinsic content under its existing cap; flex:1 collapses an unbounded child.
+    sheetBody: { flexGrow: 0, flexShrink: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.card },
     title: { color: colors.textPrimary, ...visual.type.row },
     secondary: { color: colors.textSecondary, ...visual.type.meta },

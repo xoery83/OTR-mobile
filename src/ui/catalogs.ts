@@ -1,4 +1,25 @@
 export const en = {
+  "capture.progress.recordedCounts":
+    "Recorded intake: {accepted} accepted · {failed} failed · {pending} pending",
+  "capture.progress.closeHint":
+    "Closing dismisses this view. Work may pause while the app is away.",
+  "capture.progress.batchTitle": "Batch · Inputs: {count}",
+  "capture.progress.title": "Activity Progress",
+  "capture.progress.activeImports": "Active Imports",
+  "capture.progress.accountScope":
+    "Account-level intake. Trip attribution is not confirmed.",
+  "capture.progress.saving": "Saving selected inputs locally…",
+  "capture.progress.localCounts":
+    "Saved on this device: {accepted} · Not saved: {failed} · Pending local intake: {pending}",
+  "capture.progress.noCloud": "Local intake does not confirm cloud sync.",
+  "capture.progress.outcomesUnavailable": "Canonical results are not available.",
+  "capture.progress.history": "Recorded local intake",
+  "capture.progress.partialHistory":
+    "Registration and acceptance records only; processing history is unavailable.",
+  "capture.progress.registered": "Submission registered",
+  "capture.progress.acceptanceRecorded": "Input acceptance recorded",
+  "capture.progress.newImport": "New Import",
+  "capture.progress.retryIntake": "Retry local intake",
   "capture.composer.title": "Capture",
   "capture.composer.capture": "Capture",
   "capture.composer.connections": "Email / AI Connections",
@@ -2100,6 +2121,24 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "capture.progress.recordedCounts":
+    "接收记录：已接收{accepted}项 · 失败{failed}项 · 待处理{pending}项",
+  "capture.progress.closeHint": "关闭仅收起此界面，离开应用后工作可能暂停。",
+  "capture.progress.batchTitle": "批次 · {count}项材料",
+  "capture.progress.title": "提交活动进度",
+  "capture.progress.activeImports": "导入活动",
+  "capture.progress.accountScope": "账户级材料接收，尚未确认旅行归属。",
+  "capture.progress.saving": "正在本机保存所选材料…",
+  "capture.progress.localCounts":
+    "已保存在本机：{accepted} · 未保存：{failed} · 待本机接收：{pending}",
+  "capture.progress.noCloud": "本机接收不代表已同步至云端。",
+  "capture.progress.outcomesUnavailable": "暂无正式业务结果。",
+  "capture.progress.history": "本机接收记录",
+  "capture.progress.partialHistory": "仅含提交登记及接收记录，暂无处理历史。",
+  "capture.progress.registered": "已登记提交",
+  "capture.progress.acceptanceRecorded": "已记录材料接收",
+  "capture.progress.newImport": "新建导入",
+  "capture.progress.retryIntake": "重试本机接收",
   "capture.composer.title": "采集",
   "capture.composer.capture": "采集",
   "capture.composer.connections": "邮件 / AI 连接",

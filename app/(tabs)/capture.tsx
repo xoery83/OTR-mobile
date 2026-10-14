@@ -104,7 +104,8 @@ export default function CaptureRoute() {
           key={`${generation}:${jobId ?? ""}`}
           jobId={typeof jobId === "string" ? jobId : undefined}
           isCurrent={isCurrent}
-          draftStaging={jobId ? undefined : admission.staging}
+          draftStaging={admission.staging}
+          accountId={admission.accountId}
           onReopenJob={(id) => navigation.setParams({ jobId: id })}
           onCancel={() => {
             if (router.canGoBack()) router.back();

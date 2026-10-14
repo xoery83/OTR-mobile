@@ -36,6 +36,7 @@ vi.mock("react-native", async () => {
   };
   return {
     Text: primitive("span"),
+    useWindowDimensions: () => ({ fontScale: 1, width: 402, height: 874 }),
     View: primitive("div"),
     ScrollView: primitive("main"),
     Pressable: primitive("button"),
@@ -129,7 +130,7 @@ it("busy source actions are disabled; content retains font scaling, wrapping and
   expect(state.buttons.filter((button) => button.disabled)).toHaveLength(3);
   const source = readFileSync("src/features/capture/CaptureContent.tsx", "utf8");
   expect(source).not.toMatch(/allowFontScaling=\{false\}|numberOfLines|height:/);
-  expect(source).not.toMatch(/tripId|accountId|Guest/);
+  expect(source).not.toMatch(/tripId|Guest|readLocalSession|requireActiveUserId/);
 });
 
 it("truthful partial and complete intake keep Hide enabled across palettes/locales without fake processing", () => {

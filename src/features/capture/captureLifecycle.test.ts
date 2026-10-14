@@ -565,3 +565,93 @@ it("retained C3 failed acknowledgement retries the same owning session, while cl
   expect(draw().count).toBe(0);
   expect(ui.createSession).toHaveBeenCalledOnce();
 });
+
+it("authenticated Submit transforms the same sheet into one Job, and explicit New Import creates a separate owning session", async () => {
+  const owner = { accountId: "A", tripPrior: null };
+  const staging = createCaptureStaging(
+    async () => [
+      {
+        source: "files" as const,
+        temporaryUri: "file://selected",
+        name: "input.pdf",
+        typeHint: "application/pdf",
+      },
+    ],
+    () => true,
+    owner,
+  );
+  const draw = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      draftStaging: staging,
+      accountId: owner.accountId,
+    });
+  };
+  const model = (id: string) => ({
+    batch: { jobId: id },
+    inputs: [],
+    counts: { selected: 1, accepted: 1, failed: 0, pending: 0 },
+    availableActions: { canAddMore: true, reacquireInputIds: [] },
+  });
+  ui.submit
+    .mockImplementationOnce(async (_selected: any, progress: any) =>
+      progress(model("one-job")),
+    )
+    .mockImplementationOnce(async (_selected: any, progress: any) =>
+      progress(model("two-job")),
+    );
+  const first = draw();
+  ui.cleanup = ui.effect!() ?? null;
+  (draw().props as any).onFiles();
+  await vi.waitFor(() => expect((draw().props as any).count).toBe(1));
+  (draw().props as any).onSubmit();
+  await vi.waitFor(() =>
+    expect((draw().props as any).content?.props.model?.batch.jobId).toBe("one-job"),
+  );
+  expect(draw().type).toBe(first.type);
+  expect((draw().props as any).content.type.name).toBe("CaptureProgress");
+  await vi.waitFor(() => expect((draw().props as any).content.props.busy).toBe(false));
+  (draw().props as any).content.props.onNewImport();
+  expect((draw().props as any).content).toBeUndefined();
+  (draw().props as any).onFiles();
+  await vi.waitFor(() => expect((draw().props as any).count).toBe(1));
+  (draw().props as any).onSubmit();
+  await vi.waitFor(() =>
+    expect((draw().props as any).content?.props.model?.batch.jobId).toBe("two-job"),
+  );
+  expect(ui.createSession).toHaveBeenCalledTimes(2);
+  expect(draw().type).toBe(first.type);
+  expect(ui.navigate).not.toHaveBeenCalled();
+});
+it("same-sheet Active Imports inspection preserves the unsubmitted composer draft", async () => {
+  const staging = createCaptureStaging(
+    async () => [],
+    () => true,
+    { accountId: "A", tripPrior: null },
+  );
+  const draw = () => {
+    ui.cursor = 0;
+    return CaptureContent({
+      isCurrent: () => true,
+      onCancel: ui.navigate,
+      draftStaging: staging,
+      accountId: "A",
+    });
+  };
+  const initial = draw();
+  ui.cleanup = ui.effect!() ?? null;
+  staging.setEditorText("Keep this original draft");
+  (draw().props as any).onActivity();
+  expect(draw().type).toBe(initial.type);
+  ui.reopen.mockResolvedValue({ batch: { jobId: "history-job" } });
+  (draw().props as any).content.props.onOpenJob("history-job");
+  await vi.waitFor(() =>
+    expect((draw().props as any).content?.props.model?.batch.jobId).toBe("history-job"),
+  );
+  expect(staging.getDraftSnapshot().editorText).toBe("Keep this original draft");
+  (draw().props as any).content.props.onNewImport();
+  expect((draw().props as any).snapshot.editorText).toBe("Keep this original draft");
+  expect(ui.createSession).not.toHaveBeenCalled();
+});

@@ -13,6 +13,7 @@ import type {
   createDefaultCaptureRecoveryAction,
 } from "@/data/operations/defaultCaptureSubmission";
 import { CaptureActivity, captureJobTitle } from "./CaptureActivity";
+import { CaptureProgress } from "./CaptureProgress";
 import { CaptureComposer } from "./CaptureComposer";
 import { createCaptureStaging, type CaptureStagingSnapshot } from "./captureStaging";
 
@@ -24,6 +25,7 @@ export function CaptureContent({
   jobId,
   draftStaging,
   onReopenJob,
+  accountId,
 }: {
   isCurrent: () => boolean;
   tripName?: string;
@@ -31,6 +33,7 @@ export function CaptureContent({
   jobId?: string;
   draftStaging?: ReturnType<typeof createCaptureStaging>;
   onReopenJob?: (id: string) => void;
+  accountId?: string;
 }) {
   const [{ staging, invocationTripName }] = useState(() => ({
     staging: draftStaging ?? createCaptureStaging(pickCaptureMaterial, isCurrent),
@@ -84,13 +87,14 @@ export function CaptureContent({
   };
   const openJob = async (id: string) => {
     if (!current() || running.current) return;
-    if (draftStaging && onReopenJob) {
+    if (draftStaging && onReopenJob && !accountId) {
       onReopenJob(id);
       return;
     }
     const request = ++readEpoch.current;
     const stillCurrent = () => current() && request === readEpoch.current;
-    staging.cancel();
+    if (!accountId) staging.cancel();
+    setSubmittedSelections(null);
     session.current = null;
     recoveryActions.current.clear();
     setActivity(false);
@@ -226,7 +230,7 @@ export function CaptureContent({
       if (current()) setBusy(false);
     }
   };
-  if (activity)
+  if (activity && !accountId)
     return (
       <CaptureActivity
         isCurrent={current}
@@ -235,7 +239,7 @@ export function CaptureContent({
         onHide={hide}
       />
     );
-  if (draftStaging && !attempted && !reopening && !model) {
+  if (accountId || (draftStaging && !attempted && !reopening && !model)) {
     const pick = async (source: "files" | "photos") => {
       if (!current() || running.current) return;
       setDuplicate(false);
@@ -248,6 +252,57 @@ export function CaptureContent({
         count={staging.prepareSubmit()?.length ?? 0}
         tripName={invocationTripName}
         duplicate={duplicate}
+        title={
+          accountId && (activity || attempted || reopening || model)
+            ? t(activity ? "capture.progress.activeImports" : "capture.progress.title")
+            : undefined
+        }
+        contextLabel={
+          accountId && (activity || attempted || reopening || model)
+            ? t("capture.progress.accountScope")
+            : undefined
+        }
+        content={
+          accountId ? (
+            activity ? (
+              <CaptureActivity
+                isCurrent={current}
+                expectedAccountId={accountId}
+                onOpenJob={(id) => void openJob(id)}
+                onReturn={() => setActivity(false)}
+                onHide={hide}
+              />
+            ) : attempted || reopening || model ? (
+              <CaptureProgress
+                model={model}
+                accountId={accountId}
+                busy={busy}
+                reading={reading}
+                error={readError || submitError}
+                canRetry={!!submittedSelections && !model}
+                onRetry={() => void submit()}
+                onRecover={(id) => void recover(id)}
+                onOpenJob={(id) => void openJob(id)}
+                onActivity={() => {
+                  if (current() && !running.current) setActivity(true);
+                }}
+                onNewImport={() => {
+                  if (!current() || running.current || reading) return;
+                  ++readEpoch.current;
+                  session.current = null;
+                  recoveryActions.current.clear();
+                  setActivity(false);
+                  setModel(null);
+                  setAttempted(false);
+                  setReopening(false);
+                  setSubmittedSelections(null);
+                  setSubmitError(false);
+                  setReadError(false);
+                }}
+              />
+            ) : undefined
+          ) : undefined
+        }
         onClose={hide}
         onFiles={() => void pick("files")}
         onPhotos={() => void pick("photos")}

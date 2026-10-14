@@ -2,6 +2,8 @@ import { createElement } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { CaptureComposer } from "./CaptureComposer";
+import { CaptureActivityList, captureJobTitle } from "./CaptureActivity";
+import { fixture } from "@/data/repositories/__fixtures__/captureBatchAssessment";
 import { t, setUiLocale } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
 import type { CaptureDraftSnapshot } from "./captureStaging";
@@ -52,6 +54,7 @@ vi.mock("@/ui/theme", () => ({
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/controls", () => ({
   UiText: (props: any) => createElement("span", {}, props.children),
+  UiSection: (props: any) => createElement("section", {}, props.children),
   UiButton: (props: any) => {
     state.buttons.push(props);
     return createElement("button", {}, props.label);
@@ -194,4 +197,64 @@ it("body scrolling cannot move the footer below the keyboard viewport", () => {
   expect(
     state.buttons.some((button) => button.label === t("capture.composer.submit")),
   ).toBe(true);
+});
+
+it("normal owning Activity stays in the existing Composer with Refresh, Job, return and Close actions in both themes", async () => {
+  const f = fixture();
+  const request = await f.submit();
+  const job = await f.submissions.reopen(request.jobId);
+  const onOpenJob = vi.fn(),
+    onReturn = vi.fn();
+  for (const scheme of ["light", "dark"] as const) {
+    state.scheme = scheme;
+    state.buttons = [];
+    state.nodes = [];
+    const props = {
+      snapshot: empty,
+      count: 0,
+      duplicate: false,
+      onClose: vi.fn(),
+      onFiles: vi.fn(),
+      onPhotos: vi.fn(),
+      onRemove: vi.fn(),
+      onText: vi.fn(),
+      onAddText: vi.fn(),
+      onClear: vi.fn(),
+      onSubmit: vi.fn(),
+      onActivity: vi.fn(),
+      title: t("capture.progress.activeImports"),
+      content: createElement(CaptureActivityList, {
+        jobs: [job],
+        expectedAccountId: await f.getAccount(),
+        loading: false,
+        error: false,
+        hasMore: false,
+        onRefresh: vi.fn(),
+        onMore: vi.fn(),
+        onOpenJob,
+        onReturn,
+        onHide: vi.fn(),
+      }),
+    };
+    const html = renderToStaticMarkup(createElement(CaptureComposer, props));
+    expect(html).toContain(t("capture.activityRefresh"));
+    expect(html).toContain(t("capture.activityReturn"));
+    expect(html).toContain(t("capture.jobView", { summary: captureJobTitle(job) }));
+    expect(state.nodes.filter((node) => node.visible === true)).toHaveLength(1);
+    expect(
+      state.buttons.some((button) => button.label === t("capture.composer.submit")),
+    ).toBe(false);
+    state.buttons
+      .find(
+        (button) =>
+          button.label === t("capture.jobView", { summary: captureJobTitle(job) }),
+      )
+      .onPress();
+    expect(onOpenJob).toHaveBeenLastCalledWith(request.jobId);
+    state.buttons
+      .find((button) => button.label === t("capture.activityReturn"))
+      .onPress();
+    expect(onReturn).toHaveBeenCalled();
+    expect(state.buttons.some((button) => button.label === t("common.close"))).toBe(true);
+  }
 });
