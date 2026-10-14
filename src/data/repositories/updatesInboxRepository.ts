@@ -280,6 +280,45 @@ export function createUpdatesInboxRepository(
         };
       });
     },
+    // COMPLETE covers the installed Capture intake source, not future unread producers.
+    async unreadActionableSignal(
+      context: AccountRequestContext,
+      currentTripId: string | null,
+    ): Promise<{
+      coverage: "COMPLETE" | "UNKNOWN";
+      unreadActionableCards: number | null;
+    }> {
+      const filter = updatesFilterSchema.parse({
+        category: "NEEDS_ATTENTION",
+        query: "",
+        unreadOnly: true,
+        currentTripId,
+      });
+      try {
+        return await scoped(context, async () => {
+          let before: { createdAt: string; notificationId: string } | undefined;
+          let count = 0,
+            unknown = false;
+          for (;;) {
+            const page = await rows(context, before);
+            for (const row of page) {
+              const { card } = await qualify(row, context);
+              if (card.unread && card.sourceState === "UNAVAILABLE") unknown = true;
+              if (matchesUpdatesFilter(card, filter)) count++;
+            }
+            if (page.length < 100) break;
+            const last = page.at(-1)!;
+            before = { createdAt: last.createdAt, notificationId: last.notificationId };
+          }
+          return unknown
+            ? { coverage: "UNKNOWN", unreadActionableCards: null }
+            : { coverage: "COMPLETE", unreadActionableCards: count };
+        });
+      } catch {
+        await assertAccountRequestContext(context, account);
+        return { coverage: "UNKNOWN", unreadActionableCards: null };
+      }
+    },
     async open(
       notificationId: string,
       observedVersion: number,

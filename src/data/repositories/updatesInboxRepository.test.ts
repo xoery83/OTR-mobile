@@ -5,7 +5,11 @@ import { updatesInboxMigration } from "@/data/db/migrations/updatesInbox";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { fixture, sha256 } from "./__fixtures__/captureBatchAssessment";
-import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
+import {
+  captureAccountRequestContext,
+  beginAccountTransition,
+  endAccountTransition,
+} from "@/data/auth/accountRequestContext";
 import { LocalCaptureError } from "@/domain/capture/localCapture";
 import type { CapturePayloadInput } from "@/data/files/capturePayloadReader";
 import type { UpdatesFilter } from "@/domain/updates/updatesInbox";
@@ -416,4 +420,158 @@ it("safe presentation text uses identical list and snapshot Mark All predicates 
       })
     ).cards,
   ).toHaveLength(0);
+});
+
+it("actionable signal reads every normal SQLite page, counts Batch aggregates and preserves read markers through cold reopen", async () => {
+  const s = setup(true);
+  await s.fail(3);
+  for (let i = 0; i < 100; i++) await s.fail();
+  const context = await s.context();
+  expect((await s.inbox.list(filter, context, { limit: 1 })).unreadAttentionInPage).toBe(
+    1,
+  );
+  const writes = vi.spyOn(s.f.db, "runAsync");
+  expect(await s.inbox.unreadActionableSignal(context, randomUUID())).toEqual({
+    coverage: "COMPLETE",
+    unreadActionableCards: 101,
+  });
+  expect(writes).not.toHaveBeenCalled();
+  const markers = await s.f.db.getAllAsync<{ read_material_version: number }>(
+    "SELECT read_material_version FROM updates_capture_intake",
+  );
+  expect(markers).toHaveLength(101);
+  expect(markers.every((row) => row.read_material_version === 0)).toBe(true);
+  s.f.reopen();
+  expect(await s.inbox.unreadActionableSignal(await s.context(), null)).toEqual({
+    coverage: "COMPLETE",
+    unreadActionableCards: 101,
+  });
+});
+it("signal excludes read, pending and normally recovered cards without resolving or attributing personal notices to Trip prior", async () => {
+  const s = setup(),
+    actionable = await s.fail(2),
+    read = await s.fail(),
+    pending = await s.fail(),
+    recovered = await s.fail(),
+    context = await s.context();
+  const readCard = (await s.inbox.list(filter, context)).cards.find(
+    (c) => c.jobId === read.jobId,
+  )!;
+  await s.inbox.open(
+    readCard.notificationId,
+    readCard.materialVersion,
+    readCard.recoveryInputs,
+    context,
+  );
+  const pendingJob = await s.submissions.reopen(pending.jobId);
+  await s.submissions.resume(
+    pending.jobId,
+    pending.inputs[0].id,
+    pendingJob.inputs[0].revision,
+  );
+  const original = await s.submissions.reopen(recovered.jobId),
+    next = s.f.request();
+  next.inputs[0].continuesFromInputId = recovered.inputs[0].id;
+  await s.submissions.submit(
+    next,
+    new Map([[next.inputs[0].id, async () => ({ text: "verified continuation" })]]),
+    undefined,
+    undefined,
+    { [recovered.inputs[0].id]: original.inputs[0].revision },
+  );
+  const before = await s.submissions.reopen(actionable.jobId);
+  expect(await s.inbox.unreadActionableSignal(context, randomUUID())).toEqual({
+    coverage: "COMPLETE",
+    unreadActionableCards: 1,
+  });
+  expect(await s.submissions.reopen(actionable.jobId)).toEqual(before);
+  expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
+    coverage: "COMPLETE",
+    unreadActionableCards: 1,
+  });
+});
+it("missing current unread Source or a later page failure is UNKNOWN rather than a complete zero or a partial total", async () => {
+  const s = setup();
+  await s.fail();
+  const context = await s.context();
+  const load = vi
+    .spyOn(s.source, "load")
+    .mockRejectedValue(new Error("source unavailable"));
+  expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
+    coverage: "UNKNOWN",
+    unreadActionableCards: null,
+  });
+  load.mockRestore();
+  for (let i = 0; i < 100; i++) await s.fail();
+  const all = s.f.db.getAllAsync.bind(s.f.db);
+  let pages = 0;
+  vi.spyOn(s.f.db, "getAllAsync").mockImplementation(
+    async <T>(q: string, ...params: unknown[]) => {
+      if (q.includes("FROM updates_capture_intake") && ++pages === 2)
+        throw new Error("second page unavailable");
+      return all<T>(q, ...(params as never[]));
+    },
+  );
+  expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
+    coverage: "UNKNOWN",
+    unreadActionableCards: null,
+  });
+});
+it("signal sees current material versions after ordinary failure changes but stale Account ABA cannot return a count", async () => {
+  const s = setup(),
+    request = await s.fail(),
+    context = await s.context();
+  const card = (await s.inbox.list(filter, context)).cards[0];
+  await s.inbox.open(
+    card.notificationId,
+    card.materialVersion,
+    card.recoveryInputs,
+    context,
+  );
+  expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
+    coverage: "COMPLETE",
+    unreadActionableCards: 0,
+  });
+  await s.submissions.submit(
+    request,
+    new Map([[request.inputs[0].id, async () => ({ bytes: new Uint8Array([255]) })]]),
+  );
+  expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
+    coverage: "COMPLETE",
+    unreadActionableCards: 1,
+  });
+  await s.f.switchTo(randomUUID());
+  expect(await s.inbox.unreadActionableSignal(await s.context(), null)).toEqual({
+    coverage: "COMPLETE",
+    unreadActionableCards: 0,
+  });
+  await s.f.switchTo(context.accountId);
+  await expect(s.inbox.unreadActionableSignal(context, null)).rejects.toThrow(
+    "Account changed",
+  );
+  expect(await s.inbox.unreadActionableSignal(await s.context(), null)).toEqual({
+    coverage: "COMPLETE",
+    unreadActionableCards: 1,
+  });
+});
+it("a pending Account transition during source qualification rejects the count instead of completing under old ownership", async () => {
+  const s = setup();
+  await s.fail();
+  const context = await s.context(),
+    load = s.source.load.bind(s.source);
+  let transition: ReturnType<typeof beginAccountTransition> | undefined;
+  vi.spyOn(s.source, "load").mockImplementation(async (...args) => {
+    transition ??= beginAccountTransition();
+    return load(...args);
+  });
+  try {
+    await expect(s.inbox.unreadActionableSignal(context, null)).rejects.toThrow(
+      "Account changed",
+    );
+  } finally {
+    if (transition) {
+      const lease = await transition;
+      if (lease) endAccountTransition(lease);
+    }
+  }
 });
