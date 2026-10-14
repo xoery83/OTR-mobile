@@ -110,11 +110,13 @@ export function CaptureComposer({
               <>
                 <View style={styles.actions}>
                   <UiChoiceChip
+                    compact
                     label={t("capture.composer.capture")}
                     selected={tab === "capture"}
                     onPress={() => setTab("capture")}
                   />
                   <UiChoiceChip
+                    compact
                     label={t("capture.composer.connections")}
                     selected={tab === "connections"}
                     onPress={() => setTab("connections")}
@@ -215,7 +217,13 @@ export function CaptureComposer({
                                       accessibilityLabel={name}
                                     />
                                   ) : null}
-                                  <UiText style={styles.name}>{name}</UiText>
+                                  <UiText
+                                    style={styles.name}
+                                    numberOfLines={3}
+                                    accessibilityLabel={name}
+                                  >
+                                    {name}
+                                  </UiText>
                                   {item.source !== "magic_input" ? (
                                     <UiText style={styles.secondary}>
                                       {t(

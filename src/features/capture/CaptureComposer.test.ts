@@ -53,7 +53,10 @@ vi.mock("@/ui/theme", () => ({
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/controls", () => ({
-  UiText: (props: any) => createElement("span", {}, props.children),
+  UiText: (props: any) => {
+    state.nodes.push(props);
+    return createElement("span", {}, props.children);
+  },
   UiSection: (props: any) => createElement("section", {}, props.children),
   UiButton: (props: any) => {
     state.buttons.push(props);
@@ -257,4 +260,41 @@ it("normal owning Activity stays in the existing Composer with Refresh, Job, ret
     expect(onReturn).toHaveBeenCalled();
     expect(state.buttons.some((button) => button.label === t("common.close"))).toBe(true);
   }
+});
+
+it("long Tray copy stays compact while its complete identity and remove target remain accessible", () => {
+  const name = "東京の旅程と旅行の確認資料·".repeat(25) + ".pdf";
+  const item = {
+    source: "files" as const,
+    temporaryUri: "file://selected",
+    name,
+    typeHint: "application/pdf",
+    stagingId: 81,
+    availability: "unverified" as const,
+  };
+  const { props } = render({ ...empty, items: [item] }, 1);
+  const title = state.nodes.find((node) => node.accessibilityLabel === name);
+  expect(title.children).toBe(name);
+  expect(title.numberOfLines).toBe(3);
+  expect(state.nodes.some((node) => node.horizontal)).toBe(true);
+  state.buttons
+    .find((button) => button.label === t("capture.remove", { name }))
+    .onPress();
+  expect(props.onRemove).toHaveBeenCalledWith(81);
+  expect(props.onSubmit).not.toHaveBeenCalled();
+});
+it("an added multiline text card keeps its complete draft content without growing the Tray indefinitely", () => {
+  const text = "First line\nSecond line\nThird line\nFourth line";
+  const item = { source: "magic_input" as const, text, stagingId: 12 };
+  render({ ...empty, items: [item] }, 1);
+  expect(state.nodes.find((node) => node.accessibilityLabel === text).children).toBe(
+    text,
+  );
+  expect(state.nodes.find((node) => node.accessibilityLabel === text).numberOfLines).toBe(
+    3,
+  );
+  expect(
+    state.buttons.find((button) => button.label === t("capture.composer.submit"))
+      .disabled,
+  ).toBe(true);
 });

@@ -83,8 +83,7 @@ export const en = {
   "capture.composer.inbox": "Connect your inbox",
   "capture.composer.chatgpt": "ChatGPT",
   "capture.composer.claude": "Claude",
-  "capture.composer.connectionUnavailable":
-    "Unavailable — this connection is not implemented.",
+  "capture.composer.connectionUnavailable": "Unavailable",
   "p4.pickup": "Pickup",
   "p4.return": "Return",
   "p4.both": "Pickup and return",
@@ -2287,7 +2286,7 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.composer.inbox": "连接邮箱",
   "capture.composer.chatgpt": "ChatGPT",
   "capture.composer.claude": "Claude",
-  "capture.composer.connectionUnavailable": "不可用：此连接尚未实现。",
+  "capture.composer.connectionUnavailable": "暂不可用",
   "p4.pickup": "取车",
   "p4.return": "还车",
   "p4.both": "取车及还车",
