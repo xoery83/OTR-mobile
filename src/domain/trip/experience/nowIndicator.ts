@@ -1,3 +1,4 @@
+import type { CoreDayRow } from "../tripCoreV2Day";
 import {
   acceptedBoundaryAnchor,
   civilBoundaryMicroseconds,
@@ -47,7 +48,7 @@ function exact(boundary: DayBoundary | undefined) {
 
 // Caller supplies whole rendered rows; NOW never sorts, chooses Focus or controls scrolling.
 export function placeNow(
-  query: DayQuery,
+  query: DayQuery & { coreRows?: readonly CoreDayRow[] },
   rows: readonly DayItem[],
   now: string,
 ): NowPlacement {
@@ -57,7 +58,27 @@ export function placeNow(
   try {
     const current = instantMicroseconds(now);
     if (localCalendarDate(now, query.zone) !== query.date) return hide("OTHER_DAY");
-    if (new Set(rows.map((r) => r.event.id)).size !== rows.length) return hide("ORDER");
+    const rentalRoles = rows.map((row) => {
+      if (row.roles.length !== 1 || !["START", "END"].includes(row.roles[0])) return null;
+      const role = row.roles[0] === "END" ? "RETURN" : "PICKUP";
+      const owning = query.coreRows?.filter(
+        (core) =>
+          core.family === "P4" &&
+          core.itemRef === row.event.id &&
+          core.rowKey.itemId === row.event.id &&
+          core.rowKey.projectionRole === role &&
+          core.rowKey.localDate === query.date,
+      );
+      return owning?.length === 1 ? row.roles[0] : null;
+    });
+    if (
+      new Set(
+        rows.map((r, i) =>
+          rentalRoles[i] ? JSON.stringify([r.event.id, rentalRoles[i]]) : r.event.id,
+        ),
+      ).size !== rows.length
+    )
+      return hide("ORDER");
     const members = [...query.timed, ...query.nonComparable];
     if (members.length !== rows.length || rows.some((r) => !members.includes(r)))
       return hide("ORDER");
@@ -66,15 +87,18 @@ export function placeNow(
       const event = row.event;
       if (["CALENDAR", "ALL_DAY", "WINDOW"].includes(event.temporal_shape)) continue;
       const transport = event.temporal_shape === "TRANSPORT";
-      const startRole = transport ? "ORIGIN" : "START";
+      const rentalRole = rentalRoles[index];
+      const startRole = rentalRole ?? (transport ? "ORIGIN" : "START");
       const endRole = transport ? "DESTINATION" : "END";
       if (
         event.boundaries.filter((b) => b.role === startRole).length !== 1 ||
-        event.boundaries.filter((b) => b.role === endRole).length > 1
+        (!rentalRole && event.boundaries.filter((b) => b.role === endRole).length > 1)
       )
         return hide("TIMING");
       const startBoundary = event.boundaries.find((b) => b.role === startRole);
-      const endBoundary = event.boundaries.find((b) => b.role === endRole);
+      const endBoundary = rentalRole
+        ? undefined
+        : event.boundaries.find((b) => b.role === endRole);
       const start = exact(startBoundary);
       if (!start || event.is_estimated_time) return hide("TIMING");
       const end = endBoundary ? exact(endBoundary) : null;

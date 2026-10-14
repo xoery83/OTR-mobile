@@ -136,8 +136,38 @@ export function composeDayStream(
   ports: DayStreamPorts = {},
 ) {
   const members = [...query.timed, ...query.nonComparable];
-  if (new Set(members.map((r) => r.event.id)).size !== members.length)
-    throw new Error("DAY_STREAM_DUPLICATE_ITEM");
+  const owningRows = members.map(
+    (item) =>
+      query.coreRows?.filter(
+        (row) =>
+          row.itemRef === item.event.id &&
+          (row.family !== "P4" ||
+            (item.roles.length === 1 &&
+              ["START", "END"].includes(item.roles[0]) &&
+              row.rowKey.itemId === item.event.id &&
+              row.rowKey.localDate === query.date &&
+              row.rowKey.projectionRole ===
+                (item.roles[0] === "END" ? "RETURN" : "PICKUP"))),
+      ) ?? [],
+  );
+  const keys = members.map((item, index) => {
+    const owningKeys = owningRows[index].map((row) => [
+      row.rowKey.itemId,
+      row.rowKey.projectionRole,
+      row.rowKey.localDate,
+    ]);
+    return owningKeys.length === 1
+      ? JSON.stringify(owningKeys[0])
+      : owningKeys.length > 1
+        ? JSON.stringify(owningKeys)
+        : dayRowKey(item.event.id, "EVENT", query.date);
+  });
+  const focusKeys = members.map((item, index) =>
+    members.filter((other) => other.event.id === item.event.id).length > 1
+      ? keys[index]
+      : item.event.id,
+  );
+  if (new Set(keys).size !== members.length) throw new Error("DAY_STREAM_DUPLICATE_ITEM");
   const now = placeNow(query, members, instant);
   let context: "FUTURE" | "TODAY" | "PAST" | "UNKNOWN" = "UNKNOWN";
   try {
@@ -189,7 +219,7 @@ export function composeDayStream(
     };
   });
   const visibleItem = (id: string | null | undefined) =>
-    members.some((r) => r.event.id === id) ? id! : null;
+    focusKeys.includes(id ?? "") ? id! : null;
   const visibleChoice = (id: string | null | undefined) =>
     containers.some(
       (b) => b.version === "g2-flexible/1" && b.choices.some((c) => c.key === id),
@@ -204,24 +234,12 @@ export function composeDayStream(
   const focus = blockImmersive ? null : (visibleItem(immersive) ?? retainedFocus);
   const suspendedFocus = blockImmersive ? retainedFocus : null;
   const rows = members.map((item, index) => {
-    const coreRowKeys =
-      query.coreRows
-        ?.filter((row) => row.itemRef === item.event.id)
-        .map((row) => row.rowKey) ?? [];
-    const owningKeys = coreRowKeys.map((row) => [
-      row.itemId,
-      row.projectionRole,
-      row.localDate,
-    ]);
-    const key =
-      owningKeys.length === 1
-        ? JSON.stringify(owningKeys[0])
-        : owningKeys.length > 1
-          ? JSON.stringify(owningKeys)
-          : dayRowKey(item.event.id, "EVENT", query.date);
+    const coreRowKeys = owningRows[index].map((row) => row.rowKey);
+    const key = keys[index];
+    const focusKey = focusKeys[index];
     const affiliations = acceptedBlocks.filter((b) => b.itemIds.includes(item.event.id));
     const nowBefore = now.mode === "BETWEEN_EVENTS" && now.beforeIndex === index;
-    // shortcut: same-day adjacent EVENT anchors only, expand after Core's role/occurrence port is accepted.
+    // Only exact owning presentation anchors qualify; visual adjacency supplies no authority.
     const candidates = (ports.transitions ?? []).filter((p) => {
       const id = p.identity,
         action = p.actions.openTtr;
@@ -245,7 +263,10 @@ export function composeDayStream(
         id.fromEventId !== members[index - 1].event.id ||
         id.toEventId !== item.event.id ||
         p.anchors.toRowKey !== key ||
-        p.anchors.fromRowKey !== dayRowKey(id.fromEventId, "EVENT", query.date) ||
+        p.anchors.fromRowKey !==
+          (owningRows[index - 1].length === 1 && owningRows[index - 1][0].family === "P4"
+            ? keys[index - 1]
+            : dayRowKey(id.fromEventId, "EVENT", query.date)) ||
         !Number.isSafeInteger(p.publicationVersion) ||
         p.publicationVersion < 0 ||
         action.publicationVersion !== p.publicationVersion ||
@@ -276,6 +297,7 @@ export function composeDayStream(
     return {
       key,
       coreRowKeys,
+      focusKey,
       item,
       position: query.coreRows
         ?.filter((r) => r.itemRef === item.event.id)
@@ -284,7 +306,7 @@ export function composeDayStream(
         : item.anchor === null
           ? ("TNS" as const)
           : ("TIMELINE" as const),
-      focused: focus === item.event.id,
+      focused: focus === focusKey,
       nowBefore,
       nowWithin: now.mode === "WITHIN_EVENT_WINDOW" && now.eventId === item.event.id,
       containerId:

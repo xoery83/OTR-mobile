@@ -90,23 +90,27 @@ export function projectCoreP4Feed(
         nonComparable = [...query.nonComparable];
       for (const event of events) {
         const rows = day.filter((row) => row.itemRef === event.id);
-        if (!rows.length) continue;
-        const roles: DayBoundary["role"][] = rows.map((row) =>
-          row.rowKey.projectionRole === "RETURN" ? "END" : "START",
-        );
-        const anchor =
-          rows.find((row) => row.position === "TIMELINE")?.displayTime?.instant ?? null;
-        const item: DayItem = {
-          event,
-          roles,
-          anchor,
-          occupancy: false,
-          occupancyBasis: null,
-        };
-        (anchor === null ? nonComparable : timed).push(item);
+        for (const row of rows) {
+          const anchor =
+            row.position === "TIMELINE" ? (row.displayTime?.instant ?? null) : null;
+          const item: DayItem = {
+            event,
+            roles: [row.rowKey.projectionRole === "RETURN" ? "END" : "START"],
+            anchor,
+            occupancy: false,
+            occupancyBasis: null,
+          };
+          (anchor === null ? nonComparable : timed).push(item);
+        }
       }
       const order = (item: DayItem) =>
-        allDay.findIndex((row) => row.itemRef === item.event.id);
+        allDay.findIndex(
+          (row) =>
+            row.itemRef === item.event.id &&
+            (row.family !== "P4" ||
+              row.rowKey.projectionRole ===
+                (item.roles[0] === "END" ? "RETURN" : "PICKUP")),
+        );
       timed.sort((a, b) => order(a) - order(b));
       nonComparable.sort((a, b) => order(a) - order(b));
       return {

@@ -11,13 +11,20 @@ import { t } from "@/ui/locale";
 import { scenario } from "./fixtureFacts";
 import type { FixtureContribution } from "./contribution";
 
-type TemporalCase = "FUTURE" | "TODAY" | "TODAY_RETURN" | "PAST";
-const ordinal = { FUTURE: "4", TODAY: "5", TODAY_RETURN: "7", PAST: "6" } as const;
+type TemporalCase = "FUTURE" | "TODAY" | "TODAY_RETURN" | "PAST" | "SAME_DAY";
+const ordinal = {
+  FUTURE: "4",
+  TODAY: "5",
+  TODAY_RETURN: "7",
+  PAST: "6",
+  SAME_DAY: "8",
+} as const;
 const instant = {
   FUTURE: "2027-01-14T12:00:00Z",
   TODAY: "2027-01-15T12:00:00Z",
   TODAY_RETURN: "2027-01-18T12:00:00Z",
   PAST: "2027-01-19T12:00:00Z",
+  SAME_DAY: "2027-01-15T12:00:00Z",
 } as const;
 const withPrefix = (date: string, prefix: "start" | "end") =>
   Object.fromEntries(
@@ -66,7 +73,27 @@ export function rentalContribution(temporalCase: TemporalCase): FixtureContribut
       participation_mode: "SELF",
       participant_scope: "ASSIGNED",
       ...withPrefix("2027-01-15", "start"),
-      ...withPrefix("2027-01-18", "end"),
+      ...withPrefix(temporalCase === "SAME_DAY" ? "2027-01-15" : "2027-01-18", "end"),
+      ...(temporalCase === "SAME_DAY"
+        ? Object.fromEntries(
+            (["start", "end"] as const).flatMap((prefix) => {
+              const hour = prefix === "start" ? "09" : "18";
+              return [
+                [`planned_${prefix}`, `2027-01-15T${hour}:00:00Z`],
+                ...Object.entries({
+                  local_time: `${hour}:00:00`,
+                  clock_precision: 0,
+                  quality: "EXACT",
+                  basis: "SOURCE_INSTANT",
+                  zone_id: "UTC",
+                  source_instant: `2027-01-15T${hour}:00:00Z`,
+                  source_instant_precision: 0,
+                  civil_resolution: null,
+                }).map(([key, value]) => [`${prefix}_${key}`, value]),
+              ];
+            }),
+          )
+        : {}),
     }),
   );
   graph.trip_rental_details = ids.map((id, index) =>
@@ -110,7 +137,11 @@ export function rentalContribution(temporalCase: TemporalCase): FixtureContribut
     },
     [],
   );
-  const base = scenario(tripId, t(`p4Lab.scenario.${temporalCase}`), projection.events);
+  const base = scenario(
+    tripId,
+    t(`p4Lab.scenario.${temporalCase === "SAME_DAY" ? "TODAY" : temporalCase}`),
+    projection.events,
+  );
   return {
     ...base,
     projection: { ...base.projection, accountId: actor.accountId },

@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { itemsForLocalDate, type DayProjection } from "@/domain/trip/dayReadModel";
 import { closedItemCapabilities, type CoreDayRow } from "@/domain/trip/tripCoreV2Day";
 import {
@@ -9,6 +9,7 @@ import {
 } from "./composition";
 import { flexibleContribution } from "../day-feed-lab/flexibleContribution";
 import { faroeNegativeFixtures, syntheticDate } from "./faroeNegative.test.fixtures";
+vi.mock("./coreRentalRenderer", () => ({ createCoreRentalRenderer: () => () => null }));
 const now = `${syntheticDate}T09:30:00Z`;
 function setup() {
   const f = faroeNegativeFixtures();
@@ -454,4 +455,108 @@ it("G2 affiliation fails to outer rows for conflicts, TNS, removed Blocks and wr
   expect(
     group.containers.find((b) => b.id === "flex-nested")?.choices.map((c) => c.id),
   ).toEqual(["cafe"]);
+});
+
+it("same-day Rental endpoints keep exact role keys, one manual Focus and point NOW placement", async () => {
+  const { rentalContribution } = await import("../day-feed-lab/rentalContribution");
+  const fixture = rentalContribution("SAME_DAY");
+  const query = fixture.query!(fixture.selectedDate, fixture.zone);
+  const bytes = JSON.stringify(query);
+  const first = composeDayStream(query, fixture.instant);
+  expect(first.rows).toHaveLength(4);
+  expect(
+    first.rows.map((row) => row.coreRowKeys.map((key) => key.projectionRole)),
+  ).toEqual([["PICKUP"], ["PICKUP"], ["RETURN"], ["RETURN"]]);
+  expect(new Set(first.rows.map((row) => row.key)).size).toBe(4);
+  expect(first.now).toMatchObject({ mode: "BETWEEN_EVENTS", beforeIndex: 2 });
+  expect(first.rows.every((row) => !row.nowWithin)).toBe(true);
+  for (const row of first.rows) {
+    expect(row.key).toBe(
+      dayRowKey(
+        row.item.event.id,
+        row.coreRowKeys[0].projectionRole,
+        fixture.selectedDate,
+      ),
+    );
+    const focused = composeDayStream(query, fixture.instant, { focus: row.focusKey });
+    expect(
+      focused.rows.filter((entry) => entry.focused).map((entry) => entry.key),
+    ).toEqual([row.key]);
+    const immersed = composeDayStream(query, fixture.instant, {
+      focus: row.focusKey,
+      immersive: row.focusKey,
+    });
+    expect(immersed.immersive).toBe(row.focusKey);
+    expect(immersed.rows.filter((entry) => entry.focused)).toHaveLength(1);
+  }
+  expect(
+    composeDayStream(query, fixture.instant, { focus: query.timed[0].event.id }).focus,
+  ).toBeNull();
+  expect(composeDayStream(query, "2027-01-15T19:00:00Z").now).toMatchObject({
+    mode: "BETWEEN_EVENTS",
+    beforeIndex: 4,
+  });
+  expect(composeDayStream(query, "2027-01-15T08:00:00Z").now).toMatchObject({
+    mode: "BETWEEN_EVENTS",
+    beforeIndex: 0,
+  });
+  expect(() =>
+    composeDayStream(
+      { ...query, timed: [...query.timed, query.timed[0]] },
+      fixture.instant,
+    ),
+  ).toThrow("DAY_STREAM_DUPLICATE_ITEM");
+  expect(JSON.stringify(query)).toBe(bytes);
+});
+
+it("Rental TTR presentation requires exact owning endpoint anchors, never generic Event aliases", async () => {
+  const { rentalContribution } = await import("../day-feed-lab/rentalContribution");
+  const fixture = rentalContribution("SAME_DAY");
+  const query = fixture.query!(fixture.selectedDate, fixture.zone);
+  const stream = composeDayStream(query, fixture.instant);
+  const identity = {
+    accountId: fixture.projection.accountId,
+    tripId: fixture.projection.tripId,
+    fromEventId: stream.rows[1].item.event.id,
+    toEventId: stream.rows[2].item.event.id,
+    occurrenceDiscriminator: "synthetic-owning-role-relation",
+  };
+  const scope = { accountId: identity.accountId, tripId: identity.tripId };
+  const transition: TransitionProjection = {
+    version: "ttr-presentation/1",
+    identity,
+    qualification: "QUALIFIED",
+    unavailableReason: null,
+    publicationVersion: 1,
+    visibility: "STRAIGHT_LINE",
+    modeOrigin: "NONE",
+    mode: null,
+    geometricDistance: { kind: "STRAIGHT_LINE", source: "LOCAL_GEOMETRY", meters: 100 },
+    anchors: { fromRowKey: stream.rows[1].key, toRowKey: stream.rows[2].key },
+    actions: { openTtr: { identity, publicationVersion: 1 } },
+  };
+  const bytes = JSON.stringify(transition);
+  expect(
+    composeDayStream(query, fixture.instant, { scope, transitions: [transition] }).rows[2]
+      .transition,
+  ).toMatchObject({ openTtr: transition.actions.openTtr, suppressConnector: true });
+  for (const anchors of [
+    {
+      ...transition.anchors!,
+      fromRowKey: dayRowKey(identity.fromEventId, "EVENT", fixture.selectedDate),
+    },
+    {
+      ...transition.anchors!,
+      toRowKey: dayRowKey(identity.toEventId, "EVENT", fixture.selectedDate),
+    },
+    { ...transition.anchors!, fromRowKey: stream.rows[3].key },
+    { ...transition.anchors!, toRowKey: stream.rows[0].key },
+  ])
+    expect(
+      composeDayStream(query, fixture.instant, {
+        scope,
+        transitions: [{ ...transition, anchors }],
+      }).rows.every((row) => row.transition === null),
+    ).toBe(true);
+  expect(JSON.stringify(transition)).toBe(bytes);
 });

@@ -5,7 +5,7 @@ import type { ObservedDayProjection } from "./tripDayReadRepository";
 import { requireActiveUserId } from "@/data/auth/authRepository";
 import { readInitializedDatabase } from "@/data/db/database";
 import { applyCoreCommand, emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
-import { coreDefaults } from "@/domain/trip/tripCoreV2";
+import { corePlaceSchema, coreDefaults } from "@/domain/trip/tripCoreV2";
 import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 const factory = vi.hoisted(() => ({
   captureContext: vi.fn(),
@@ -151,7 +151,7 @@ it("supplemental unavailability preserves admitted local facts but never hides a
   await expect(changed.trip(tripId)).rejects.toThrow("Account changed");
 });
 
-it("production local reader includes accepted Stay occurrences while keeping legacy fallback and no installation", async () => {
+it("production local reader includes accepted P1–P6 occurrences while keeping legacy fallback and no installation", async () => {
   const itemId = "30000000-0000-4000-8000-000000000001";
   const actor = {
     accountId,
@@ -206,6 +206,68 @@ it("production local reader includes accepted Stay occurrences while keeping leg
     actor,
     "2026-10-13T00:00:00Z",
   ).graph;
+  for (const [index, family] of (["P4", "P5", "P6"] as const).entries()) {
+    const id = `30000000-0000-4000-8000-00000000000${index + 2}`;
+    const dates = {
+      start: coreDateBoundary("2026-10-14"),
+      end: coreDateBoundary("2026-10-14"),
+    };
+    const payload =
+      family === "P5"
+        ? {
+            family,
+            core: { title: "Saved Segment" },
+            endpoints: {
+              origin: {
+                time: dates.start,
+                place: Object.fromEntries(
+                  Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
+                ),
+              },
+              destination: {
+                time: dates.end,
+                place: Object.fromEntries(
+                  Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
+                ),
+              },
+            },
+            service: {
+              service_key: "RAIL",
+              transport_subtype: "TRAIN",
+              attribution: "UNSPECIFIED",
+              operator_namespace: "NAME",
+              operator_issuer: "Test authority",
+              operator_value: "Test rail",
+              operator_literal: "Test rail",
+              service_literal: "Test service",
+              service_number: "T1",
+              codeshare_operating_key: null,
+            },
+            ...coreDefaults("member"),
+          }
+        : {
+            family,
+            core: { title: family === "P4" ? "Saved Rental" : "Saved Activity" },
+            schedule: dates,
+            ...coreDefaults("member"),
+          };
+    graph = applyCoreCommand(
+      graph,
+      {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId: `50000000-0000-4000-8000-00000000000${index + 2}`,
+        tripId,
+        command: "CREATE_ITEM",
+        target: { kind: "ITEM", id },
+        baseVector: [{ kind: "ITEM", id, revision: null }],
+        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        payload,
+      },
+      actor,
+      "2026-10-13T00:00:00Z",
+    ).graph;
+  }
   vi.mocked(requireActiveUserId).mockResolvedValue(accountId);
   vi.mocked(readInitializedDatabase).mockResolvedValue({} as never);
   factory.captureContext.mockReset().mockResolvedValue({ accountId, tripId });
@@ -238,9 +300,220 @@ it("production local reader includes accepted Stay occurrences while keeping leg
   expect(accepted.services).toEqual({
     [flightId]: accepted.observed.projection.flightFacts[flightId].services,
   });
+  expect(accepted.observed.projection.items.map((item) => item.family)).toEqual(
+    expect.arrayContaining(["P3", "P4", "P5", "P6", "P2"]),
+  );
+  expect(factory.acceptedSnapshot).toHaveBeenCalledTimes(1);
+  expect(
+    accepted.observed.projection
+      .query("2026-10-14", "UTC")
+      .coreRows.filter((row) => row.family === "P4")
+      .map((row) => row.rowKey.projectionRole),
+  ).toEqual(["PICKUP", "RETURN"]);
   expect(factory.legacyProjection).not.toHaveBeenCalled();
   factory.acceptedSnapshot.mockResolvedValue(null);
   expect((await reader.trip(tripId)).observed).toEqual(observed);
   expect(factory.legacyProjection).toHaveBeenCalledWith(tripId);
   expect(factory.install).not.toHaveBeenCalled();
+});
+
+it("production P4–P6 consumer reads only installed coherent certificates across SQLite cold reopen", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { createHash, randomUUID } = await import("node:crypto");
+  const { mkdtempSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { migrations } = await import("../db/migrations");
+  const { serializeDatabaseTransactions } = await import("../db/databaseConnection");
+  const { createTripCoreV2Repository } = await vi.importActual<
+    typeof import("./tripCoreV2Repository")
+  >("./tripCoreV2Repository");
+  const { buildCoreActorCollection } =
+    await import("../../../backend/src/tripCoreV2Collection");
+  const folder = mkdtempSync(join(tmpdir(), "otr-p456-consumer-"));
+  const path = join(folder, "owned.sqlite");
+  let sql = new DatabaseSync(path);
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  const actor = {
+    accountId,
+    tripId,
+    personId: "40000000-0000-4000-8000-000000000001",
+    personIds: ["40000000-0000-4000-8000-000000000001"],
+    active: true,
+    canManageShared: false,
+  };
+  const date = "2027-01-15";
+  const clock = (hour: string) => ({
+    ...coreDateBoundary(date),
+    instant: `${date}T${hour}:00:00Z`,
+    local_time: `${hour}:00:00`,
+    clock_precision: 0,
+    quality: "EXACT",
+    basis: "SOURCE_INSTANT",
+    zone_id: "UTC",
+    source_instant: `${date}T${hour}:00:00Z`,
+    source_instant_precision: 0,
+  });
+  const rentalId = randomUUID(),
+    activityId = randomUUID();
+  let graph = emptyCoreGraph();
+  for (const [family, id, schedule] of [
+    ["P4", rentalId, { start: clock("09"), end: clock("18") }],
+    ["P6", activityId, { start: coreDateBoundary(date) }],
+  ] as const) {
+    graph = applyCoreCommand(
+      graph,
+      {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId: randomUUID(),
+        tripId,
+        command: "CREATE_ITEM",
+        target: { kind: "ITEM", id },
+        baseVector: [{ kind: "ITEM", id, revision: null }],
+        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        payload: {
+          family,
+          core: { title: family === "P4" ? "Contract Rental" : "Contract Activity" },
+          schedule,
+          ...coreDefaults("member"),
+        },
+      },
+      actor,
+      "2027-01-01T00:00:00Z",
+    ).graph;
+  }
+  const segmentId = randomUUID();
+  const emptyPlace = Object.fromEntries(
+    Object.keys(corePlaceSchema.shape).map((key) => [key, null]),
+  );
+  graph = applyCoreCommand(
+    graph,
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: randomUUID(),
+      tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id: segmentId },
+      baseVector: [{ kind: "ITEM", id: segmentId, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P5",
+        core: { title: "Contract Segment" },
+        endpoints: {
+          origin: { time: clock("10"), place: emptyPlace },
+          destination: { time: clock("11"), place: emptyPlace },
+        },
+        service: {
+          service_key: "RAIL",
+          transport_subtype: "TRAIN",
+          attribution: "UNSPECIFIED",
+          operator_namespace: "NAME",
+          operator_issuer: "Test authority",
+          operator_value: "Test rail",
+          operator_literal: "Test rail",
+          service_literal: "Test service",
+          service_number: "T1",
+          codeshare_operating_key: null,
+        },
+        ...coreDefaults("member"),
+      },
+    },
+    actor,
+    "2027-01-01T00:00:00Z",
+  ).graph;
+  const database = serializeDatabaseTransactions({
+    async getFirstAsync<T>(query: string, ...params: unknown[]) {
+      return (sql.prepare(query).get(...(params as never[])) ?? null) as T | null;
+    },
+    async getAllAsync<T>(query: string, ...params: unknown[]) {
+      return sql.prepare(query).all(...(params as never[])) as T[];
+    },
+    async runAsync(query: string, ...params: unknown[]) {
+      return sql.prepare(query).run(...(params as never[])) as never;
+    },
+    async withTransactionAsync(work: () => Promise<void>) {
+      sql.exec("BEGIN");
+      try {
+        await work();
+        sql.exec("COMMIT");
+      } catch (error) {
+        sql.exec("ROLLBACK");
+        throw error;
+      }
+    },
+  });
+  try {
+    sql.exec("PRAGMA foreign_keys=ON");
+    for (const migration of migrations) sql.exec(migration.sql);
+    const repo = createTripCoreV2Repository(database, async () => account, hash);
+    vi.mocked(requireActiveUserId).mockImplementation(async () => account);
+    vi.mocked(readInitializedDatabase).mockResolvedValue(database as never);
+    factory.captureContext.mockReset().mockImplementation(repo.captureContext);
+    factory.acceptedSnapshot.mockReset().mockImplementation(repo.acceptedSnapshot);
+    factory.legacyProjection.mockReset().mockResolvedValue(null);
+    factory.install.mockClear();
+    const reader = await readTripDayFeed();
+    expect((await reader.trip(tripId)).observed).toBeNull();
+    const bundle = await buildCoreActorCollection(
+      graph,
+      actor,
+      {
+        epoch: randomUUID(),
+        revision: 1,
+        accessRevision: 1,
+        generatedAt: "2027-01-01T00:00:00Z",
+      },
+      [
+        {
+          person_id: actor.personId,
+          account_id: accountId,
+          active: true,
+          participating: true,
+          revision: 1,
+        },
+      ],
+      hash,
+    );
+    const ctx = await repo.captureContext(tripId);
+    await repo.install(await repo.beginRefresh(ctx, 1), bundle.manifest, bundle.pages);
+    sql.close();
+    sql = new DatabaseSync(path);
+    sql.exec("PRAGMA foreign_keys=ON");
+    const read = await reader.trip(tripId);
+    if (read.observed?.projection.version !== 2) throw new Error("EXPECTED_INSTALLED_V2");
+    const query = read.observed.projection.query(date, "UTC");
+    expect(
+      query.timed
+        .filter((row) => row.event.id === rentalId)
+        .map((row) => [row.roles, row.anchor]),
+    ).toEqual([
+      [["START"], `${date}T09:00:00Z`],
+      [["END"], `${date}T18:00:00Z`],
+    ]);
+    expect(query.nonComparable.map((row) => row.event.id)).toContain(activityId);
+    expect(read.observed.projection.items).toHaveLength(3);
+    expect(query.timed.some((row) => row.event.id === segmentId)).toBe(true);
+    expect(factory.install).not.toHaveBeenCalled();
+    sql
+      .prepare(
+        "UPDATE trip_core_read_certificates SET access_revision=access_revision+1 WHERE account_id=? AND trip_id=?",
+      )
+      .run(accountId, tripId);
+    await expect(reader.trip(tripId)).rejects.toThrow("CORE_READ_ACCESS_MISMATCH");
+    sql
+      .prepare(
+        "UPDATE trip_core_read_certificates SET access_revision=access_revision-1 WHERE account_id=? AND trip_id=?",
+      )
+      .run(accountId, tripId);
+    account = randomUUID();
+    expect((await reader.trip(tripId)).observed).toBeNull();
+    account = accountId;
+    expect((await reader.trip(tripId)).observed?.projection.version).toBe(2);
+  } finally {
+    sql.close();
+    rmSync(folder, { recursive: true, force: true });
+  }
 });

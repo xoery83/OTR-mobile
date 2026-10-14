@@ -201,11 +201,11 @@ export function DayFeed({
       );
   };
   const render = (
-    event: DayProjection["events"][number],
+    row: (typeof rows)[number],
     mode: Depth,
     withinMarker?: React.ReactNode,
   ) => {
-    const row = rows.find((entry) => entry.item.event.id === event.id)!;
+    const event = row.item.event;
     const flight = flightPresentation(
       event,
       services[event.id] ?? [],
@@ -215,7 +215,7 @@ export function DayFeed({
       <P1Row
         event={event}
         depth={mode}
-        onDepth={(next) => (mode === "I" ? close() : change(event.id, next))}
+        onDepth={(next) => (mode === "I" ? close() : change(row.focusKey, next))}
         withinMarker={withinMarker}
       />
     ) : (
@@ -230,7 +230,7 @@ export function DayFeed({
               ? undefined
               : t(mode === "F" ? "p1r.immersiveHint" : "p1r.focusHint")
           }
-          onPress={() => change(event.id, mode === "F" ? "I" : "F")}
+          onPress={() => change(row.focusKey, mode === "F" ? "I" : "F")}
         >
           <FlightRows
             fixture={flight}
@@ -243,7 +243,7 @@ export function DayFeed({
           <UiButton
             label={t("feed.collapse")}
             variant="text"
-            onPress={() => change(event.id, "B")}
+            onPress={() => change(row.focusKey, "B")}
           />
         ) : null}
         {mode === "I" ? (
@@ -259,14 +259,14 @@ export function DayFeed({
         container={stream.containers.find((entry) => entry.id === row.containerId)}
         context={stream.context}
         depth={mode}
-        onDepth={(next) => (mode === "I" ? close() : change(event.id, next))}
+        onDepth={(next) => (mode === "I" ? close() : change(row.focusKey, next))}
         withinMarker={withinMarker}
       />
     ) : (
       fallback
     );
   };
-  const selected = rows.find((r) => r.item.event.id === stream.immersive)?.item.event;
+  const selected = rows.find((r) => r.focusKey === stream.immersive);
   const selectedBlock = stream.containers.find(
     (block) => block.version === "g2-flexible/1" && block.id === stream.immersive,
   );
@@ -298,8 +298,8 @@ export function DayFeed({
         />
       ) : null}
       {render(
-        row.item.event,
-        depth(row.item.event.id) === "I" ? "F" : depth(row.item.event.id),
+        row,
+        depth(row.focusKey) === "I" ? "F" : depth(row.focusKey),
         row.nowWithin ? <NowMarker placement={now} within /> : undefined,
       )}
     </View>

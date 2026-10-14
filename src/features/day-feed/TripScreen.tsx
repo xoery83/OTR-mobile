@@ -18,7 +18,7 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { boundaryZone, viewContext } from "./presentation";
 import { DayFeed } from "./DayFeed";
-import { createCoreStayRenderer } from "./coreStayRenderer";
+import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
 import { useTripView } from "./TripViewContext";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import type { TodayEntry } from "./MyTripsList";
@@ -196,7 +196,7 @@ function TripContent({ today = false }: { today?: boolean }) {
           services={visibleTrip.services}
           renderer={
             visibleTrip.observed.projection.version === 2
-              ? createCoreStayRenderer(visibleTrip.observed.projection)
+              ? createCoreExperienceRenderer(visibleTrip.observed.projection)
               : undefined
           }
         />

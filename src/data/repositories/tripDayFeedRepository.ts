@@ -16,7 +16,7 @@ import { createLedgerReportingRepository } from "./ledgerReportingRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 import type { ObservedCoreFlightProjection } from "./tripCoreV2DayFeedRepository";
-import { createCoreP1P3DayFeedReader } from "./tripCoreV2P1P3DayFeedRepository";
+import { createCoreP6DayFeedReader } from "./tripCoreV2P6DayFeedRepository";
 
 type Dependencies = {
   account: () => Promise<string>;
@@ -82,7 +82,7 @@ export async function readTripDayFeed() {
   return createTripDayFeedReader({
     account: requireActiveUserId,
     projection: days.getProjection,
-    coreProjection: createCoreP1P3DayFeedReader(core),
+    coreProjection: createCoreP6DayFeedReader(core),
     candidates: ledger.listJourneys,
     services: async (scope, observed) =>
       withAccountApplyGate(async () => {

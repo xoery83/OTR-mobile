@@ -12,6 +12,7 @@ import {
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
 import { DayFeedLabScreen } from "../day-feed-lab/DayFeedLabScreen";
 import { getLabFixtures } from "../day-feed-lab/fixtureRegistration";
+import { rentalContribution } from "../day-feed-lab/rentalContribution";
 import { stayContribution, stayTripId } from "../day-feed-lab/stayContribution";
 import { flexibleContribution } from "../day-feed-lab/flexibleContribution";
 import {
@@ -26,6 +27,11 @@ import { syntheticObservation } from "@/domain/trip/__fixtures__/ttr";
 import { getFixtureCatalog } from "../day-feed-lab/fixtureCatalog";
 import { P1Row } from "./P1Row";
 import { StayRow, stayDirectionsUrl, stayMapUrl, type StayFacts } from "./StayRow";
+import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
+import { applyCoreCommand, emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
+import { coreDefaults } from "@/domain/trip/tripCoreV2";
+import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
+import { projectCoreP6Feed } from "@/domain/trip/tripCoreV2P6DayFeed";
 import { createCoreStayRenderer } from "./coreStayRenderer";
 import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 import { composeDayStream } from "./composition";
@@ -1694,6 +1700,166 @@ it("consumes host prop replacements, preserves Item Focus through My/Group and c
   expect(draw()).not.toContain('data-testid="focus-selected-region"');
   props.query = fixture.query;
   expect(draw()).not.toContain('data-testid="focus-selected-region"');
+});
+
+it("same-day Rental Return retains its own Focus/Immersive endpoint and nonzero scroll return", () => {
+  const fixture = rentalContribution("SAME_DAY");
+  const props = {
+    projection: fixture.projection,
+    date: fixture.selectedDate,
+    zone: fixture.zone,
+    instant: fixture.instant,
+    query: fixture.query,
+    renderer: fixture.renderer,
+    services: fixture.services,
+  };
+  const draw = () => render(createElement(DayFeed, props));
+  draw();
+  const title = t("p4Lab.actualA");
+  state.nodes
+    .find((node) => node.onScroll)!
+    .onScroll({ nativeEvent: { contentOffset: { y: 281 } } });
+  const vehicleRows = state.presses.filter((press) => press.accessibilityLabel === title);
+  expect(vehicleRows).toHaveLength(2);
+  vehicleRows[1].onPress();
+  draw();
+  expect(
+    state.presses.filter((press) => press.accessibilityLabel === t("p1r.richerDetails")),
+  ).toHaveLength(1);
+  state.presses
+    .find((press) => press.accessibilityLabel === t("p1r.richerDetails"))!
+    .onPress();
+  draw();
+  const immersive = state.nodes.find(
+    (node) => node.contentInsetAdjustmentBehavior === "automatic",
+  )!;
+  expect(renderToStaticMarkup(immersive.children)).toContain("18:00");
+  expect(renderToStaticMarkup(immersive.children)).toContain(t("p4Lab.returnAddress"));
+  const dismiss = state.nodes.find((node) => node.onDismiss)!.onDismiss;
+  state.presses
+    .find((press) => press.accessibilityLabel === t("common.close"))!
+    .onPress();
+  draw();
+  dismiss();
+  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 281, animated: false });
+  expect(
+    state.presses.filter((press) => press.accessibilityLabel === t("p1r.richerDetails")),
+  ).toHaveLength(1);
+});
+
+it("production renderer chain opens both same-day roles into one Rental detail without granting unavailable actions", () => {
+  const tripId = "a0000000-0000-4000-8000-000000000001",
+    accountId = "a0000000-0000-4000-8000-000000000002",
+    id = "a0000000-0000-4000-8000-000000000003";
+  const actor = {
+    tripId,
+    accountId,
+    personId: null,
+    personIds: [],
+    active: true,
+    canManageShared: false,
+  };
+  const clock = (hour: string) => ({
+    ...coreDateBoundary("2027-01-15"),
+    instant: `2027-01-15T${hour}:00:00Z`,
+    local_time: `${hour}:00:00`,
+    clock_precision: 0,
+    quality: "EXACT",
+    basis: "SOURCE_INSTANT",
+    zone_id: "UTC",
+    source_instant: `2027-01-15T${hour}:00:00Z`,
+    source_instant_precision: 0,
+  });
+  const graph = applyCoreCommand(
+    emptyCoreGraph(),
+    {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: "a0000000-0000-4000-8000-000000000004",
+      tripId,
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id },
+      baseVector: [{ kind: "ITEM", id, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        family: "P4",
+        core: { title: "Contract Rental" },
+        schedule: { start: clock("09"), end: clock("18") },
+        ...coreDefaults("member"),
+      },
+    },
+    actor,
+    "2027-01-01T00:00:00Z",
+  ).graph;
+  // Pure presentation contract input; owning SQLite certificate verification is tested in the repository suite.
+  const projection = projectCoreP6Feed(
+    graph,
+    actor,
+    {
+      generation: 1,
+      epoch: "fixture",
+      revision: "1",
+      accessRevision: 1,
+      actorPersonBindingHash: "fixture",
+      participatingRosterHash: "fixture",
+      manifestSha256: "fixture",
+    },
+    [],
+  );
+  const props = {
+    projection,
+    date: "2027-01-15",
+    zone: "UTC",
+    instant: "2027-01-15T12:00:00Z",
+    services: {},
+    renderer: createCoreExperienceRenderer(projection),
+  };
+  const draw = () => render(createElement(DayFeed, props));
+  let html = draw();
+  expect(html).toContain(t("p4.pickup"));
+  expect(html).toContain(t("p4.return"));
+  const rows = state.presses.filter(
+    (press) => press.accessibilityLabel === "Contract Rental",
+  );
+  expect(rows).toHaveLength(2);
+  for (const index of [0, 1]) {
+    draw();
+    state.presses
+      .filter((press) => press.accessibilityLabel === "Contract Rental")
+      [index].onPress();
+    draw();
+    expect(
+      state.presses.filter(
+        (press) => press.accessibilityLabel === t("p1r.richerDetails"),
+      ),
+    ).toHaveLength(1);
+    state.presses
+      .find((press) => press.accessibilityLabel === t("p1r.richerDetails"))!
+      .onPress();
+    draw();
+    html = renderToStaticMarkup(
+      state.nodes.find((node) => node.contentInsetAdjustmentBehavior === "automatic")!
+        .children,
+    );
+    expect(html).toContain("Contract Rental");
+    expect(html).toContain("09:00");
+    expect(html).toContain("18:00");
+    expect(html).not.toContain(t("p4.booking"));
+    expect(html).not.toContain(t("p4.addExpense"));
+    expect(html).not.toContain(t("p4.edit"));
+    state.presses
+      .find((press) => press.accessibilityLabel === t("common.close"))!
+      .onPress();
+    draw();
+    state.presses
+      .find(
+        (press) =>
+          press.accessibilityLabel === "Contract Rental" &&
+          press.accessibilityHint === t("p1r.collapseHint"),
+      )!
+      .onPress();
+  }
+  expect(projection.items).toHaveLength(1);
 });
 
 it("normal P1 first body tap visibly focuses, richer details opens and closes into the same focused scroll", () => {

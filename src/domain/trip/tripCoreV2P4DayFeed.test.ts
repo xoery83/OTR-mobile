@@ -3,6 +3,8 @@ import { itinerary_eventsSchema } from "./tripCoreV2";
 import { emptyCoreGraph } from "./tripCoreV2Mutation";
 import { coreDateBoundary } from "./tripCoreV2Temporal";
 import { projectCoreP4Feed } from "./tripCoreV2P4DayFeed";
+import { projectCoreP5Feed } from "./tripCoreV2P5DayFeed";
+import { projectCoreP6Feed } from "./tripCoreV2P6DayFeed";
 
 const tripId = "c0000000-0000-4000-8000-000000000004";
 const accountId = "c0000000-0000-4000-8000-000000000001";
@@ -78,4 +80,94 @@ it("projects separate rental identities on pickup and return dates only", () => 
     [second, "RETURN"],
   ]);
   expect(projection.items.filter((item) => item.family === "P4")).toHaveLength(2);
+});
+
+const timedRental = (id: string) => ({
+  ...row(id),
+  ...Object.fromEntries(
+    (["start", "end"] as const).flatMap((prefix) => {
+      const hour = prefix === "start" ? "09" : "18";
+      return [
+        [`planned_${prefix}`, `2027-01-15T${hour}:00:00Z`],
+        ...Object.entries({
+          local_date: "2027-01-15",
+          local_time: `${hour}:00:00`,
+          clock_precision: 0,
+          quality: "EXACT",
+          basis: "SOURCE_INSTANT",
+          zone_id: "UTC",
+          source_instant: `2027-01-15T${hour}:00:00Z`,
+          source_instant_precision: 0,
+          civil_resolution: null,
+        }).map(([key, value]) => [`${prefix}_${key}`, value]),
+      ];
+    }),
+  ),
+});
+
+it("retains both same-day Core endpoint roles, clocks and unchanged Rental identity", () => {
+  const graph = emptyCoreGraph();
+  const id = "c0000000-0000-4000-8000-000000000014";
+  graph.itinerary_events = [timedRental(id)];
+  const bytes = JSON.stringify(graph);
+  const projection = projectCoreP4Feed(graph, actor, certificate, []);
+  const query = projection.query("2027-01-15", "UTC");
+  expect(query.timed.map((item) => [item.event.id, item.roles, item.anchor])).toEqual([
+    [id, ["START"], "2027-01-15T09:00:00Z"],
+    [id, ["END"], "2027-01-15T18:00:00Z"],
+  ]);
+  expect(query.timed[0].event).toBe(query.timed[1].event);
+  expect(projection.items).toHaveLength(1);
+  expect(query.nonComparable).toEqual([]);
+  expect(JSON.stringify(graph)).toBe(bytes);
+});
+
+it("keeps an unknown same-day Return independent in TNS without a fabricated clock", () => {
+  const graph = emptyCoreGraph();
+  const rental = timedRental("c0000000-0000-4000-8000-000000000014");
+  Object.assign(
+    rental,
+    { planned_end: null },
+    Object.fromEntries(
+      Object.entries(coreDateBoundary("2027-01-15"))
+        .filter(([key]) => key !== "instant")
+        .map(([key, value]) => [`end_${key}`, value]),
+    ),
+  );
+  graph.itinerary_events = [rental];
+  const query = projectCoreP4Feed(graph, actor, certificate, []).query(
+    "2027-01-15",
+    "UTC",
+  );
+  expect(query.timed.map((item) => item.roles)).toEqual([["START"]]);
+  expect(query.nonComparable.map((item) => [item.roles, item.anchor])).toEqual([
+    [["END"], null],
+  ]);
+});
+
+it("preserves P4 endpoint order around an intervening Event in downstream P5/P6 projections", () => {
+  const graph = emptyCoreGraph();
+  const rental = timedRental("c0000000-0000-4000-8000-000000000014");
+  const activity = {
+    ...timedRental("c0000000-0000-4000-8000-000000000015"),
+    experience_family: "P1",
+    event_type: "activity",
+    temporal_shape: "POINT",
+    planned_start: "2027-01-15T12:00:00Z",
+    start_local_time: "12:00:00",
+    start_source_instant: "2027-01-15T12:00:00Z",
+  };
+  for (const [key, value] of Object.entries(coreDateBoundary("2027-01-15"))) {
+    if (key === "instant") activity.planned_end = null;
+    else (activity as Record<string, unknown>)[`end_${key}`] = value;
+  }
+  graph.itinerary_events = [rental, activity];
+  for (const project of [projectCoreP4Feed, projectCoreP5Feed, projectCoreP6Feed]) {
+    const query = project(graph, actor, certificate, []).query("2027-01-15", "UTC");
+    expect(query.timed.map((item) => item.anchor)).toEqual([
+      "2027-01-15T09:00:00Z",
+      "2027-01-15T12:00:00Z",
+      "2027-01-15T18:00:00Z",
+    ]);
+  }
 });

@@ -119,7 +119,13 @@ export function projectCoreP6Feed(
         (anchor === null ? nonComparable : timed).push(item);
       }
       const order = (item: DayItem) =>
-        allDay.findIndex((row) => row.itemRef === item.event.id);
+        allDay.findIndex(
+          (row) =>
+            row.itemRef === item.event.id &&
+            (row.family !== "P4" ||
+              row.rowKey.projectionRole ===
+                (item.roles[0] === "END" ? "RETURN" : "PICKUP")),
+        );
       timed.sort((a, b) => order(a) - order(b));
       nonComparable.sort((a, b) => order(a) - order(b));
       return {
