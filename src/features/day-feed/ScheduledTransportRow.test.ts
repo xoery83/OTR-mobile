@@ -228,11 +228,11 @@ it("omits unowned private capabilities and refuses imprecise clocks or direction
   expect(
     knownTransportClock({
       quality: "ESTIMATED",
-      precision: 0,
+      precision: -1,
       localTime: "09:00:00",
       comparable: false,
     }),
-  ).toBeUndefined();
+  ).toBe("09:00");
   expect(
     knownTransportClock({
       quality: "EXACT",
@@ -271,4 +271,24 @@ it("keeps known overnight civil dates beside named Browse endpoints without addi
     expect(sameDay).toContain("Destination station · 11:00");
     expect(sameDay).not.toContain(date("2027-01-15"));
   }
+});
+
+it("preserves known planned endpoint minutes and labels unresolved ordering", () => {
+  const value = {
+    ...facts,
+    origin: { ...facts.origin, time: "09:15", plannedUnresolved: true },
+  };
+  const html = render("FUTURE", "B", value);
+  expect(html).toContain("09:15");
+  expect(html).toContain(t("p6.plannedUnresolved"));
+});
+
+it("reviewer: unresolved Destination is labelled even when current Origin is comparable", () => {
+  const value = {
+    ...facts,
+    destination: { ...facts.destination, plannedUnresolved: true },
+  };
+  const html = render("FUTURE", "I", value);
+  expect(html).toContain("11:00");
+  expect(html).toContain(t("p6.plannedUnresolved"));
 });

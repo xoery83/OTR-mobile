@@ -74,9 +74,9 @@ export function eventClock(event: DayEvent) {
       .find(
         (b) =>
           ["START", "ORIGIN"].includes(b.role) &&
-          b.quality === "EXACT" &&
+          ["EXACT", "ESTIMATED"].includes(b.quality ?? "") &&
           b.clock_precision !== null &&
-          b.clock_precision >= 0,
+          b.clock_precision >= -1,
       )
       ?.local_time?.slice(0, 5) ?? null
   );
@@ -85,7 +85,8 @@ export const eventLocation = (e: DayEvent) =>
   e.accepted_address_line1 ??
   e.authored_address_line1 ??
   e.accepted_address ??
-  e.authored_address;
+  e.authored_address ??
+  e.authored_label;
 export function boundaryZone(projection: Pick<DayProjection, "events">) {
   const accepted = projection.events
     .flatMap((e) => e.boundaries)

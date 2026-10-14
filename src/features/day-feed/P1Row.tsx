@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import type { DayEvent } from "@/domain/trip/dayReadModel";
+import { acceptedBoundaryAnchor, type DayEvent } from "@/domain/trip/dayReadModel";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -33,6 +33,12 @@ export function P1Row({
   const secondaryActions = fontScale > 1.5 || wrappedTitle;
   const clock = eventClock(event),
     location = eventLocation(event);
+  const plannedClock =
+    Boolean(clock) &&
+    !event.boundaries.some(
+      (boundary) =>
+        ["START", "ORIGIN"].includes(boundary.role) && acceptedBoundaryAnchor(boundary),
+    );
   return (
     <View
       style={
@@ -47,9 +53,9 @@ export function P1Row({
           testID="focus-selected-region"
         />
       ) : null}
-      {!immersive && (clock || withinMarker) ? (
+      {!immersive && ((clock && !plannedClock) || withinMarker) ? (
         <View style={[styles.rail, { width: timeRailWidth(fontScale) }]}>
-          {clock ? (
+          {clock && !plannedClock ? (
             <Text style={styles.clock} numberOfLines={1}>
               {clock}
             </Text>
@@ -92,6 +98,12 @@ export function P1Row({
                 >
                   {event.title}
                 </Text>
+                {plannedClock ? (
+                  <View>
+                    <Text style={styles.meta}>{clock}</Text>
+                    <Text style={styles.meta}>{t("p6.plannedUnresolved")}</Text>
+                  </View>
+                ) : null}
                 {location ? (
                   <Text style={styles.meta} numberOfLines={immersive ? undefined : 1}>
                     {location}

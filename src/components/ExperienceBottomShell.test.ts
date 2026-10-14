@@ -182,6 +182,7 @@ it("uses the explicit working Trip for Home and Ledger while Day resumes its own
     "dayFeed.tripHome",
     "shell.day",
     "navigation.ledger",
+    "updates.title",
   ]);
   buttons[0].props.onPress?.();
   expect(state.navigate).toHaveBeenCalledWith({
@@ -333,4 +334,17 @@ it("explicit normal Trip Day context selects Day rather than Trip Home", () => {
     nodes.find((n) => n.props.accessibilityLabel === "dayFeed.tripHome")?.props
       .accessibilityState?.selected,
   ).toBe(false);
+});
+
+it("the qualified Updates fourth destination opens its actual route without changing Day reading", () => {
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.view = { tripId: "a", date: "2027-02-02", zone: "Asia/Tokyo", generation: 1 };
+  const node = pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/updates" }),
+  ).find((button) => button.props.accessibilityLabel === "updates.title")!;
+  expect(node.props.accessibilityState?.selected).toBe(true);
+  node.props.onPress?.();
+  expect(state.navigate).toHaveBeenCalledWith("/updates");
+  expect(state.resume).not.toHaveBeenCalled();
+  expect(state.setParams).not.toHaveBeenCalled();
 });

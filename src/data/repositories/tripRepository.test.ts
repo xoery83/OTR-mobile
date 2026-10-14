@@ -216,27 +216,27 @@ it("keeps a built-in cover choice on disk and fences reads and writes to its acc
   const path = join(folder, "trip.db");
   let f = local(path);
   const saved = await f.repo.createTrip(input());
-  await f.repo.selectBuiltInCover(saved.id, "city");
-  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
-  expect((await f.repo.listTrips())[0]?.selectedCoverAssetId).toBe("city");
-  await expect(f.repo.selectBuiltInCover(saved.id, "unknown" as "city")).rejects.toThrow(
-    "TRIP_COVER_INVALID",
-  );
+  await f.repo.selectBuiltInCover(saved.id, "cultural-oldtown");
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("cultural-oldtown");
+  expect((await f.repo.listTrips())[0]?.selectedCoverAssetId).toBe("cultural-oldtown");
+  await expect(
+    f.repo.selectBuiltInCover(saved.id, "unknown" as "cultural-oldtown"),
+  ).rejects.toThrow("TRIP_COVER_INVALID");
   f.sql.close();
   f = local(path, false);
-  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("cultural-oldtown");
   f.switchTo(accountB);
   expect(await f.repo.getTrip(saved.id)).toBeNull();
   await expect(f.repo.selectBuiltInCover(saved.id, "coast")).rejects.toThrow(
     "TRIP_LOCAL_RECORD_MISSING",
   );
   f.switchTo(accountA);
-  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("cultural-oldtown");
   f.abaNextAccept();
   await expect(f.repo.selectBuiltInCover(saved.id, "mountain")).rejects.toThrow(
     "Account changed",
   );
-  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("city");
+  expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBe("cultural-oldtown");
   await f.repo.selectBuiltInCover(saved.id, null);
   expect((await f.repo.getTrip(saved.id))?.selectedCoverAssetId).toBeNull();
 });

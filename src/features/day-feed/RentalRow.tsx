@@ -20,7 +20,12 @@ import type { DayRowRendererProps } from "./rendererContribution";
 import { timeRailWidth } from "./visualTokens";
 
 type Original = Readonly<{ id: string; title: string; onOpen: () => void }>;
-type Endpoint = Readonly<{ date: string; time?: string; place?: CorePlaceView }>;
+type Endpoint = Readonly<{
+  date: string;
+  time?: string;
+  plannedUnresolved?: boolean;
+  place?: CorePlaceView;
+}>;
 type MoneyAmount = Readonly<{ minor: number; currency: string; scale: number }>;
 export type RentalFacts = Readonly<{
   family: "P4";
@@ -180,6 +185,9 @@ export function RentalRow({
           {civil(value.date)}
           {value.time ? ` · ${value.time}` : ""}
         </Text>
+        {value.time && value.plannedUnresolved ? (
+          <Text style={styles.meta}>{t("p6.plannedUnresolved")}</Text>
+        ) : null}
         {endpointLabel(value) ? (
           <Text style={styles.meta}>{endpointLabel(value)}</Text>
         ) : null}
@@ -195,9 +203,11 @@ export function RentalRow({
   };
   return (
     <View style={[styles.row, immersive && styles.immersive]}>
-      {!immersive && (current.time || withinMarker) ? (
+      {!immersive && ((current.time && !current.plannedUnresolved) || withinMarker) ? (
         <View style={[styles.rail, { width: timeRailWidth(fontScale) }]}>
-          {current.time ? <Text style={styles.meta}>{current.time}</Text> : null}
+          {current.time && !current.plannedUnresolved ? (
+            <Text style={styles.meta}>{current.time}</Text>
+          ) : null}
           {withinMarker}
         </View>
       ) : null}
@@ -249,11 +259,22 @@ export function RentalRow({
         {context === "FUTURE" && pickup && !focused && !immersive && facts.holder ? (
           <Text style={styles.meta}>{t("p4.holder", { name: facts.holder })}</Text>
         ) : null}
+        {current.time && current.plannedUnresolved ? (
+          <View>
+            <Text style={styles.meta}>{current.time}</Text>
+            <Text style={styles.meta}>{t("p6.plannedUnresolved")}</Text>
+          </View>
+        ) : null}
         {endpointLabel(current) ? (
           <Text style={styles.meta}>{endpointLabel(current)}</Text>
         ) : null}
         {context === "FUTURE" && pickup && facts.return ? (
-          <Text style={styles.meta}>{returnSummary(facts.return)}</Text>
+          <View>
+            <Text style={styles.meta}>{returnSummary(facts.return)}</Text>
+            {facts.return.time && facts.return.plannedUnresolved ? (
+              <Text style={styles.meta}>{t("p6.plannedUnresolved")}</Text>
+            ) : null}
+          </View>
         ) : null}
         {context === "PAST" && facts.photos?.count ? (
           <Text style={styles.meta}>

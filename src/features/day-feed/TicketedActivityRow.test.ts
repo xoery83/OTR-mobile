@@ -175,7 +175,7 @@ it("keeps Future Booking-only and unresolved planned time truthful", () => {
     activityPlannedClock({
       comparable: false,
       localTime: "09:00:00",
-      precision: 0,
+      precision: -1,
       quality: "ESTIMATED",
     }),
   ).toEqual({ time: "09:00", plannedUnresolved: true });

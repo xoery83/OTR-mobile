@@ -1,6 +1,12 @@
 import { expect, it } from "vitest";
 import { itemsForLocalDate } from "@/domain/trip/dayReadModel";
-import { boundaryZone, viewContext, flightPresentation } from "./presentation";
+import {
+  boundaryZone,
+  viewContext,
+  flightPresentation,
+  eventClock,
+  eventLocation,
+} from "./presentation";
 import { placeNow } from "@/domain/trip/experience/nowIndicator";
 import { event, projection } from "./faroeNegative.test.fixtures";
 
@@ -48,4 +54,25 @@ it("keeps NOW independent from manual Focus and reports within/between without r
   expect(placeNow(query, rows, "2026-10-10T01:00:00Z").mode).toBe("BETWEEN_EVENTS");
   expect(focus).toBeNull();
   expect(JSON.stringify(rows)).toBe(bytes);
+});
+
+it("retains authored minute plans and named places without qualifying an instant", () => {
+  const e = event("plan", "POINT", null, null);
+  e.boundaries[0] = {
+    ...e.boundaries[0],
+    role: "START",
+    local_time: "09:15:00",
+    clock_precision: -1,
+    quality: "ESTIMATED",
+    civil_resolution: "PENDING",
+    instant: null,
+  };
+  e.authored_label = "Kiyomizu temple";
+  expect(eventClock(e)).toBe("09:15");
+  expect(eventLocation(e)).toBe("Kiyomizu temple");
+  expect(itemsForLocalDate(projection(e), "2026-10-10", "UTC").timed).toHaveLength(0);
+  e.boundaries[0].quality = "UNKNOWN";
+  expect(eventClock(e)).toBeNull();
+  e.authored_address_line1 = "Authorized street";
+  expect(eventLocation(e)).toBe("Authorized street");
 });

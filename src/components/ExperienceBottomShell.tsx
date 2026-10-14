@@ -148,7 +148,11 @@ export function ExperienceBottomShell({
             accessibilityHint={t("shell.openMyTrips")}
             accessibilityState={{ selected: pathname === "/trip" && !isDay }}
             onPress={openMyTrips}
-            style={[styles.destination, largeText && styles.largeDestination]}
+            style={[
+              styles.destination,
+              largeText && styles.largeDestination,
+              pathname === "/trip" && !isDay && styles.selectedDestination,
+            ]}
           >
             <AppIcon
               name="suitcase"
@@ -172,7 +176,11 @@ export function ExperienceBottomShell({
                 resume();
                 router.navigate("/");
               }}
-              style={[styles.destination, largeText && styles.largeDestination]}
+              style={[
+                styles.destination,
+                largeText && styles.largeDestination,
+                isDay && styles.selectedDestination,
+              ]}
             >
               <AppIcon
                 name="calendar"
@@ -189,7 +197,11 @@ export function ExperienceBottomShell({
               accessibilityLabel={t("navigation.ledger")}
               accessibilityState={{ selected: pathname.startsWith("/expenses") }}
               onPress={() => router.navigate("/expenses")}
-              style={[styles.destination, largeText && styles.largeDestination]}
+              style={[
+                styles.destination,
+                largeText && styles.largeDestination,
+                pathname.startsWith("/expenses") && styles.selectedDestination,
+              ]}
             >
               <AppIcon
                 name="list.bullet.rectangle"
@@ -204,6 +216,27 @@ export function ExperienceBottomShell({
                 ]}
               >
                 {t("navigation.ledger")}
+              </Text>
+            </Pressable>
+          ) : null}
+          {workingTrip ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("updates.title")}
+              accessibilityState={{ selected: pathname === "/updates" }}
+              onPress={() => router.navigate("/updates")}
+              style={[
+                styles.destination,
+                largeText && styles.largeDestination,
+                pathname === "/updates" && styles.selectedDestination,
+              ]}
+            >
+              <AppIcon
+                name="bell"
+                color={pathname === "/updates" ? colors.accent : colors.textSecondary}
+              />
+              <Text style={[styles.label, pathname === "/updates" && styles.activeLabel]}>
+                {t("updates.title")}
               </Text>
             </Pressable>
           ) : null}
@@ -289,27 +322,39 @@ export function ExperienceBottomShell({
 
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
-    safe: { backgroundColor: c.background },
+    safe: { backgroundColor: c.transparent },
     row: {
       paddingHorizontal: visual.space.page,
       paddingTop: visual.space.heading,
       paddingBottom: visual.space.heading,
       flexDirection: "row",
       justifyContent: "space-between",
+      gap: visual.space.heading,
     },
     largeRow: { paddingBottom: visual.space.section },
     navigationIsland: {
-      backgroundColor: c.elevatedSurface,
+      flex: 1,
+      padding: visual.space.heading / 2,
+      shadowColor: c.shadow,
+      shadowOpacity: 0.12,
+      shadowRadius: visual.space.heading,
+      shadowOffset: { width: 0, height: 2 },
+      backgroundColor: c.floatingSurface,
       borderColor: c.separator,
       borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: visual.radius.control,
+      borderRadius: visual.radius.pill,
       flexDirection: "row",
     },
     actionIsland: {
-      backgroundColor: c.elevatedSurface,
+      alignSelf: "center",
+      shadowColor: c.shadow,
+      shadowOpacity: 0.12,
+      shadowRadius: visual.space.heading,
+      shadowOffset: { width: 0, height: 2 },
+      backgroundColor: c.floatingSurface,
       borderColor: c.separator,
       borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: visual.radius.control,
+      borderRadius: visual.radius.pill,
     },
     action: {
       minWidth: 48,
@@ -318,10 +363,13 @@ const createStyles = (c: UiColors) =>
       justifyContent: "center",
     },
     destination: {
-      minWidth: 76,
+      flex: 1,
+      minWidth: 0,
       minHeight: 44,
       paddingHorizontal: visual.space.heading,
-      flexDirection: "row",
+      flexDirection: "column",
+      paddingVertical: visual.space.heading,
+      borderRadius: visual.radius.pill,
       alignItems: "center",
       justifyContent: "center",
       gap: visual.space.heading,
@@ -330,6 +378,12 @@ const createStyles = (c: UiColors) =>
       minHeight: 76,
       paddingVertical: visual.space.card,
     },
-    label: { ...visual.type.action, color: c.textSecondary },
+    selectedDestination: { backgroundColor: c.selected },
+    label: {
+      ...visual.type.action,
+      color: c.textSecondary,
+      textAlign: "center",
+      flexShrink: 1,
+    },
     activeLabel: { color: c.accent },
   });

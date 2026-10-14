@@ -1890,3 +1890,27 @@ it("normal P1 first body tap visibly focuses, richer details opens and closes in
   dismiss();
   expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 172, animated: false });
 });
+
+it("P1 displays known estimated minute and named place without presenting a resolved rail", () => {
+  const event = {
+    ...poi,
+    authored_label: "Named temple",
+    is_estimated_time: true,
+    boundaries: [
+      {
+        ...poi.boundaries[0],
+        quality: "ESTIMATED" as const,
+        clock_precision: -1,
+        local_time: "09:15:00",
+        instant: null,
+        source_instant: null,
+        source_instant_precision: null,
+      },
+    ],
+  };
+  const html = render(createElement(P1Row, { event, depth: "B", onDepth: () => {} }));
+  expect(html).toContain("09:15");
+  expect(html).toContain("Named temple");
+  expect(html).toContain(t("p6.plannedUnresolved"));
+  expect(html.split("09:15")).toHaveLength(2);
+});

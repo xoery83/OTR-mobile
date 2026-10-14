@@ -8,3 +8,11 @@ it("keeps a curated offline fallback stable and honors a manual built-in choice"
   expect(tripCoverId(trip)).toBe("coast");
   expect(tripCoverId({ ...trip, selectedCoverAssetId: "mountain" })).toBe("mountain");
 });
+
+it("preserves manual old-town cover without changing any initial fallback assignment", () => {
+  const trip = { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" };
+  expect(tripCoverId(trip)).toBe("coast");
+  expect(tripCoverId({ ...trip, selectedCoverAssetId: "cultural-oldtown" })).toBe(
+    "cultural-oldtown",
+  );
+});

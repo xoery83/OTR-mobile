@@ -1,6 +1,11 @@
 import type { BuiltInTripCoverId } from "@/domain/trip/types";
 export type { BuiltInTripCoverId } from "@/domain/trip/types";
-export const builtInTripCoverIds = ["city", "coast", "mountain"] as const;
+export const builtInTripCoverIds = [
+  "city",
+  "coast",
+  "mountain",
+  "cultural-oldtown",
+] as const;
 const initialFallbackIds = ["city", "coast", "mountain"] as const;
 
 export function tripCoverId(

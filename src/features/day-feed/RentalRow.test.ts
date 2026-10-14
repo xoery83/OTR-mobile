@@ -112,15 +112,15 @@ it("keeps pickup and return date-specific and shows known Future return context"
   expect(row("FUTURE", "2027-01-18").coreRowKeys[0].projectionRole).toBe("RETURN");
 });
 
-it("does not present estimated or unresolved Core clocks as firm rental times", () => {
+it("preserves authored estimated clocks while rejecting unknown clocks", () => {
   expect(
     knownRentalClock({
       comparable: false,
       quality: "ESTIMATED",
-      precision: 0,
+      precision: -1,
       localTime: "09:00:00",
     }),
-  ).toBeUndefined();
+  ).toBe("09:00");
   expect(
     knownRentalClock({
       comparable: false,
@@ -218,4 +218,21 @@ it("does not show an unpaired My Share per-day amount", () => {
   const immersive = render("PAST", "I", undefined, { ...facts, expenseSummary });
   expect(immersive).toContain("20000 NZD");
   expect(immersive).not.toContain("2500 NZD");
+});
+
+it("shows planned-unresolved rental minutes without firm time-rail qualification", () => {
+  const value = {
+    ...facts,
+    pickup: { ...facts.pickup, time: "09:15", plannedUnresolved: true },
+  };
+  const html = render("FUTURE", "B", undefined, value);
+  expect(html).toContain("09:15");
+  expect(html).toContain(t("p6.plannedUnresolved"));
+});
+
+it("reviewer: unresolved Return is labelled even when current Pickup is comparable", () => {
+  const value = { ...facts, return: { ...facts.return!, plannedUnresolved: true } };
+  const html = render("FUTURE", "I", undefined, value);
+  expect(html).toContain("11:00");
+  expect(html).toContain(t("p6.plannedUnresolved"));
 });

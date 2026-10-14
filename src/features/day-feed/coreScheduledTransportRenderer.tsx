@@ -7,11 +7,11 @@ import {
 } from "./ScheduledTransportRow";
 
 export function knownTransportClock(boundary: CoreBoundaryView | undefined) {
-  return boundary?.quality === "EXACT" &&
-    typeof boundary.precision === "number" &&
-    boundary.precision >= 0 &&
-    boundary.localTime
-    ? boundary.localTime.slice(0, 5)
+  return ["EXACT", "ESTIMATED"].includes(boundary?.quality ?? "") &&
+    typeof boundary?.precision === "number" &&
+    boundary.precision >= -1 &&
+    boundary?.localTime
+    ? boundary?.localTime.slice(0, 5)
     : undefined;
 }
 
@@ -49,14 +49,20 @@ export function createCoreScheduledTransportRenderer(
       origin: {
         date: origin.time.localDate,
         ...(knownTransportClock(origin.time)
-          ? { time: knownTransportClock(origin.time) }
+          ? {
+              time: knownTransportClock(origin.time),
+              plannedUnresolved: !origin.time.comparable,
+            }
           : {}),
         ...(origin.place ? { place: origin.place } : {}),
       },
       destination: {
         date: destination.time.localDate,
         ...(knownTransportClock(destination.time)
-          ? { time: knownTransportClock(destination.time) }
+          ? {
+              time: knownTransportClock(destination.time),
+              plannedUnresolved: !destination.time.comparable,
+            }
           : {}),
         ...(destination.place ? { place: destination.place } : {}),
       },

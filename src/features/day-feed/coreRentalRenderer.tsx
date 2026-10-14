@@ -6,11 +6,11 @@ import { RentalRow, type RentalFacts } from "./RentalRow";
 // Read-only accepted Core facts. Holder/driver, original openers, photos, Ledger
 // values, stable vehicle ordinals and mutations need their owning capabilities.
 export function knownRentalClock(boundary: CoreBoundaryView | undefined) {
-  return boundary?.quality === "EXACT" &&
-    typeof boundary.precision === "number" &&
-    boundary.precision >= 0 &&
-    boundary.localTime
-    ? boundary.localTime.slice(0, 5)
+  return ["EXACT", "ESTIMATED"].includes(boundary?.quality ?? "") &&
+    typeof boundary?.precision === "number" &&
+    boundary.precision >= -1 &&
+    boundary?.localTime
+    ? boundary?.localTime.slice(0, 5)
     : undefined;
 }
 export function createCoreRentalRenderer(projection: CoreFlightDayProjection) {
@@ -32,7 +32,9 @@ export function createCoreRentalRenderer(projection: CoreFlightDayProjection) {
       family: "P4",
       pickup: {
         date: start.localDate,
-        ...(knownRentalClock(start) ? { time: knownRentalClock(start) } : {}),
+        ...(knownRentalClock(start)
+          ? { time: knownRentalClock(start), plannedUnresolved: !start.comparable }
+          : {}),
         ...(pickupPlace ? { place: pickupPlace } : {}),
       },
       ...(schedule.end?.localDate
@@ -40,7 +42,10 @@ export function createCoreRentalRenderer(projection: CoreFlightDayProjection) {
             return: {
               date: schedule.end.localDate,
               ...(knownRentalClock(schedule.end)
-                ? { time: knownRentalClock(schedule.end) }
+                ? {
+                    time: knownRentalClock(schedule.end),
+                    plannedUnresolved: !schedule.end.comparable,
+                  }
                 : {}),
               ...(returnPlace ? { place: returnPlace } : {}),
             },

@@ -46,7 +46,10 @@ type Row = {
   selected_cover_asset_id?: string | null;
 };
 const isBuiltInCover = (value: unknown): value is BuiltInTripCoverId =>
-  value === "city" || value === "coast" || value === "mountain";
+  value === "city" ||
+  value === "coast" ||
+  value === "mountain" ||
+  value === "cultural-oldtown";
 const trip = (row: Row): Trip => ({
   id: row.id,
   serverId: row.accepted_at ? row.id : null,

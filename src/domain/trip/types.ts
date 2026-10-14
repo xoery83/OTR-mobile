@@ -1,6 +1,6 @@
 import type { SyncableRecord } from "@/domain/sync/syncStatus";
 
-export type BuiltInTripCoverId = "city" | "coast" | "mountain";
+export type BuiltInTripCoverId = "city" | "coast" | "mountain" | "cultural-oldtown";
 
 export type Trip = SyncableRecord & {
   name: string;

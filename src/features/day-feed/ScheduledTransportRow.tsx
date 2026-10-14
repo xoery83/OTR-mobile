@@ -19,7 +19,12 @@ import { visual } from "@/ui/visual";
 import type { DayRowRendererProps } from "./rendererContribution";
 import { timeRailWidth } from "./visualTokens";
 
-type Endpoint = Readonly<{ date: string; time?: string; place?: CorePlaceView }>;
+type Endpoint = Readonly<{
+  date: string;
+  time?: string;
+  plannedUnresolved?: boolean;
+  place?: CorePlaceView;
+}>;
 type Openable = Readonly<{
   id: string;
   title: string;
@@ -226,6 +231,9 @@ export function ScheduledTransportRow({
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{label}</Text>
         <Text style={styles.body}>{endpointTime(value)}</Text>
+        {value.time && value.plannedUnresolved ? (
+          <Text style={styles.meta}>{t("p6.plannedUnresolved")}</Text>
+        ) : null}
         {endpointLabel(value) ? (
           <Text style={styles.meta}>{endpointLabel(value)}</Text>
         ) : null}
@@ -241,9 +249,11 @@ export function ScheduledTransportRow({
   };
   return (
     <View style={[styles.row, immersive && styles.immersive]}>
-      {!immersive && (currentTime || withinMarker) ? (
+      {!immersive && ((currentTime && !current.plannedUnresolved) || withinMarker) ? (
         <View style={[styles.rail, { width: timeRailWidth(fontScale) }]}>
-          {currentTime ? <Text style={styles.meta}>{currentTime}</Text> : null}
+          {currentTime && !current.plannedUnresolved ? (
+            <Text style={styles.meta}>{currentTime}</Text>
+          ) : null}
           {withinMarker}
         </View>
       ) : null}
@@ -293,9 +303,15 @@ export function ScheduledTransportRow({
           </Text>
         ) : null}
         <Text style={styles.body}>{endpointSummary(facts.origin, crossDayBrowse)}</Text>
+        {facts.origin.time && facts.origin.plannedUnresolved ? (
+          <Text style={styles.meta}>{t("p6.plannedUnresolved")}</Text>
+        ) : null}
         <Text style={styles.body}>
           {endpointSummary(facts.destination, crossDayBrowse)}
         </Text>
+        {facts.destination.time && facts.destination.plannedUnresolved ? (
+          <Text style={styles.meta}>{t("p6.plannedUnresolved")}</Text>
+        ) : null}
         {context === "FUTURE" && facts.bookingMarker ? (
           <Text style={styles.meta}>
             {t("p5.bookingMarker", { name: facts.bookingMarker })}

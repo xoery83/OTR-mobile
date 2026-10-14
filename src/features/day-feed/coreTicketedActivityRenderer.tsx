@@ -11,7 +11,7 @@ const optional = (value: unknown) =>
 export function activityPlannedClock(boundary: CoreBoundaryView | undefined) {
   return boundary?.localTime &&
     typeof boundary.precision === "number" &&
-    boundary.precision >= 0 &&
+    boundary.precision >= -1 &&
     ["EXACT", "ESTIMATED"].includes(boundary.quality ?? "")
     ? { time: boundary.localTime.slice(0, 5), plannedUnresolved: !boundary.comparable }
     : undefined;
