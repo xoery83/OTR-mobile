@@ -1,9 +1,10 @@
 import { publicationFixture } from "./__fixtures__/tripCoreV2CandidatePublication";
 import { candidatePublicationRequestHash } from "../../src/domain/trip/tripCoreV2CandidatePublication";
 import { createHash, randomUUID } from "node:crypto";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { createDevBackendHandler, type DevBackendGateway } from "./app";
 import { coreHttpBoundary, type CoreHttpConnection } from "./tripCoreV2Http";
+import { coreClosedCapabilities } from "../../src/domain/trip/tripCoreV2Commands";
 import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
 const actor = randomUUID(),
   trip = randomUUID(),
@@ -61,7 +62,9 @@ describe("Core2 authenticated HTTP boundary, default CLOSED", () => {
     expect(
       (
         await handle()(
-          request("capabilities", undefined, { Authorization: "Bearer denied" }),
+          request("capabilities", undefined, {
+            Authorization: "Bearer denied",
+          }),
         )
       ).status,
     ).toBe(401);
@@ -69,7 +72,9 @@ describe("Core2 authenticated HTTP boundary, default CLOSED", () => {
     expect(
       (
         await handle()(
-          request("capabilities", undefined, { "X-OTR-Core-Contract-Version": "1" }),
+          request("capabilities", undefined, {
+            "X-OTR-Core-Contract-Version": "1",
+          }),
         )
       ).status,
     ).toBe(426);
@@ -201,4 +206,67 @@ it("bounds the publication route and verifies owning response scope/hash/roster"
   ).toBe(426);
   publication.candidates[0].accountId = randomUUID();
   expect((await post()).status).toBe(404);
+});
+
+it("capabilities use only current authenticated actor and Trip, and default CLOSED without the owning producer", async () => {
+  const capabilities = vi.fn(async () => ({
+    ...coreClosedCapabilities,
+    activationState: "ENABLED",
+    enabledCommands: ["CREATE_ITEM"],
+    enabledFamilies: ["P1", "P3"],
+    enabledAdmissionModes: ["MANUAL"],
+  }));
+  const connection = {
+    read: { capabilities },
+    hash,
+  } as unknown as CoreHttpConnection;
+  const response = await coreHttpBoundary(
+    request("capabilities"),
+    actor,
+    async () => true,
+    connection,
+  );
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({
+    activationState: "ENABLED",
+    operationalCustodyAvailable: false,
+  });
+  expect(capabilities).toHaveBeenCalledExactlyOnceWith(actor, trip);
+  expect(
+    (
+      await coreHttpBoundary(
+        request("capabilities"),
+        actor,
+        async () => false,
+        connection,
+      )
+    ).status,
+  ).toBe(404);
+  expect(capabilities).toHaveBeenCalledTimes(1);
+  expect(
+    (
+      await coreHttpBoundary(
+        new Request(
+          `http://local/v2/trips/${trip}/core/capabilities?actor=${randomUUID()}`,
+        ),
+        actor,
+        async () => true,
+        connection,
+      )
+    ).status,
+  ).toBe(400);
+  expect(capabilities).toHaveBeenCalledTimes(1);
+});
+it("expired owning capability returns CLOSED without widening its available commands", async () => {
+  const connection = {
+    read: { capabilities: async () => coreClosedCapabilities },
+    hash,
+  } as unknown as CoreHttpConnection;
+  const result = await coreHttpBoundary(
+    request("capabilities"),
+    actor,
+    async () => true,
+    connection,
+  );
+  expect(await result.json()).toEqual(coreClosedCapabilities);
 });

@@ -1,6 +1,14 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
+import {
+  coreCanRead,
+  type CoreGraph,
+  type CoreRow,
+  type CoreActor,
+  type VerifiedPrivateDocumentCustody,
+} from "../../src/domain/trip/tripCoreV2Mutation";
 import { coreHash, coreUuid } from "../../src/domain/trip/tripCoreV2";
 import type { CorePgConnection, CorePgLease } from "./tripCoreV2PgStorage";
 import {
@@ -83,6 +91,18 @@ export function createTripDocumentPrivateReferenceCustody(
   storage: SupabaseClient["storage"],
   currentAccess: OriginalReadPorts["currentAccess"],
 ) {
+  async function documentAvailable(lease: CorePgLease) {
+    const gate = (
+      await lease.query(
+        "SELECT runtime_enabled,enabled_commands FROM public.trip_core_activation_gate WHERE singleton",
+      )
+    ).rows[0];
+    return (
+      gate?.runtime_enabled === true &&
+      Array.isArray(gate.enabled_commands) &&
+      gate.enabled_commands.includes("CREATE_DOCUMENT")
+    );
+  }
   async function transaction<T>(
     actor: string,
     trip: string,
@@ -101,14 +121,7 @@ export function createTripDocumentPrivateReferenceCustody(
           [actor, trip],
         );
         await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
-        if (
-          (
-            await lease.query(
-              "SELECT runtime_enabled FROM public.trip_core_activation_gate WHERE singleton",
-            )
-          ).rows[0]?.runtime_enabled !== true
-        )
-          throw new Error("CORE_CAPABILITY_CLOSED");
+        if (!(await documentAvailable(lease))) throw new Error("CORE_CAPABILITY_CLOSED");
         const result = await work(lease);
         await lease.query("COMMIT");
         began = false;
@@ -172,6 +185,7 @@ export function createTripDocumentPrivateReferenceCustody(
     }
   }
   async function context(lease: CorePgLease, scope: OriginalCustodyScope) {
+    if (!(await documentAvailable(lease))) return null;
     const rows = (
       await lease.query(
         `SELECT d.media_type,d.source_representation_id,d.revision,c.state,c.actor_account_id,c.document_id,c.trip_id,c.sha256,c.byte_size,c.custody,c.bound_at FROM public.trip_operational_documents d JOIN public.trip_operational_document_custody c ON c.id=d.custody_receipt_id AND c.trip_id=d.trip_id WHERE d.id=$1::uuid AND d.trip_id=$2::uuid AND d.custody_receipt_id=$3::uuid AND d.content_version=$4 AND d.sha256=$5 AND d.byte_size=$6 AND d.custody='PRIVATE_SOURCE_REFERENCE' AND d.storage_object_key IS NULL AND d.hidden_at IS NULL AND c.source_representation_id=d.source_representation_id`,
@@ -255,6 +269,167 @@ export function createTripDocumentPrivateReferenceCustody(
   };
   return {
     original: createTripDocumentOriginalRead(ports),
+    async canReadDocument(
+      lease: CorePgLease,
+      actor: CoreActor,
+      graph: CoreGraph,
+      row: CoreRow,
+    ) {
+      if (
+        !actor.active ||
+        row.trip_id !== actor.tripId ||
+        row.custody !== "PRIVATE_SOURCE_REFERENCE" ||
+        row.hidden_at !== null ||
+        !coreCanRead(graph, actor, "DOCUMENT", row)
+      )
+        return false;
+      const role = (await lease.query("SELECT current_user AS role")).rows[0]?.role;
+      if (role !== "otr_trip_core_v2_gateway" && role !== "otr_trip_core_v2_writer")
+        return false;
+      if (role === "otr_trip_core_v2_gateway")
+        await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
+      try {
+        const maxBytes = row.media_type === "text/plain" ? 1048576 : 10485760;
+        if (
+          !Number.isSafeInteger(row.byte_size) ||
+          Number(row.byte_size) < 1 ||
+          Number(row.byte_size) > maxBytes
+        )
+          return false;
+        return !!(await context(lease, {
+          actorAccountId: actor.accountId,
+          tripId: actor.tripId,
+          documentId: row.id as string,
+          custodyReceiptId: row.custody_receipt_id as string,
+          contentVersion: row.content_version as number,
+          sha256: row.sha256 as string,
+          byteSize: row.byte_size as number,
+          maxBytes,
+        }));
+      } finally {
+        if (role === "otr_trip_core_v2_gateway")
+          await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+      }
+    },
+    async verifyCreateDocument(
+      lease: CorePgLease,
+      actor: CoreActor,
+      input: unknown,
+    ): Promise<VerifiedPrivateDocumentCustody> {
+      const command = validateCoreCommand(input);
+      if (!(await documentAvailable(lease))) throw new Error("CORE_CAPABILITY_CLOSED");
+      if (
+        !actor.active ||
+        command.tripId !== actor.tripId ||
+        command.command !== "CREATE_DOCUMENT" ||
+        command.admission.mode !== "MANUAL"
+      )
+        throw new Error("OWNING_CAPABILITY_REQUIRED");
+      const p = command.payload as {
+        fields: {
+          custody: string;
+          source_representation_id: string | null;
+          sha256: string;
+          byte_size: number;
+          media_type: string;
+          content_version: number;
+        };
+        acl: { visibility: string; people: string[] };
+        custodyProofId: string;
+      };
+      if (
+        p.acl.visibility !== "PRIVATE" ||
+        p.acl.people.length ||
+        p.fields.custody !== "PRIVATE_SOURCE_REFERENCE" ||
+        !p.fields.source_representation_id
+      )
+        throw new Error("OWNING_CAPABILITY_REQUIRED");
+      const role = (await lease.query("SELECT current_user AS role")).rows[0]?.role;
+      if (role !== "otr_trip_core_v2_gateway" && role !== "otr_trip_core_v2_writer")
+        throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
+      if (role === "otr_trip_core_v2_gateway")
+        await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
+      try {
+        const r = (
+          await lease.query(representationSql, [p.fields.source_representation_id])
+        ).rows[0] as unknown as Representation | undefined;
+        if (
+          !currentReference(
+            r,
+            actor.accountId,
+            actor.tripId,
+            p.fields.sha256,
+            p.fields.byte_size,
+            p.fields.media_type,
+          )
+        )
+          throw new Error("OWNING_CAPABILITY_REQUIRED");
+        await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+        if (
+          (
+            await lease.query(
+              "SELECT public.trip_core_lock_source_scope($1::uuid,$2::uuid,$3::uuid) AS allowed",
+              [actor.accountId, actor.tripId, r!.source_id],
+            )
+          ).rows[0]?.allowed !== true
+        )
+          throw new Error("OWNING_CAPABILITY_REQUIRED");
+        await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
+        const rows = (
+          await lease.query(
+            "SELECT * FROM public.trip_operational_document_custody WHERE id=$1::uuid AND trip_id=$2::uuid FOR UPDATE",
+            [p.custodyProofId, actor.tripId],
+          )
+        ).rows;
+        const proof = rows[0];
+        if (
+          rows.length !== 1 ||
+          proof.state !== "VERIFIED" ||
+          proof.custody !== "PRIVATE_SOURCE_REFERENCE" ||
+          proof.document_id !== command.target.id ||
+          proof.actor_account_id !== actor.accountId ||
+          proof.source_representation_id !== p.fields.source_representation_id ||
+          proof.sha256 !== p.fields.sha256 ||
+          Number(proof.byte_size) !== p.fields.byte_size ||
+          proof.media_type !== p.fields.media_type
+        )
+          throw new Error("OWNING_CAPABILITY_REQUIRED");
+        const locked = (
+          await lease.query(representationSql, [p.fields.source_representation_id])
+        ).rows[0] as unknown as Representation | undefined;
+        if (
+          !currentReference(
+            locked,
+            actor.accountId,
+            actor.tripId,
+            p.fields.sha256,
+            p.fields.byte_size,
+            p.fields.media_type,
+          )
+        )
+          throw new Error("OWNING_CAPABILITY_REQUIRED");
+        await bytes(
+          locked!,
+          p.fields.sha256,
+          p.fields.byte_size,
+          p.fields.media_type === "text/plain" ? 1048576 : 10485760,
+        );
+        return {
+          actorAccountId: actor.accountId,
+          tripId: actor.tripId,
+          documentId: command.target.id,
+          custodyProofId: p.custodyProofId,
+          sourceRepresentationId: p.fields.source_representation_id,
+          sha256: p.fields.sha256,
+          byteSize: p.fields.byte_size,
+          mediaType: p.fields.media_type,
+          contentVersion: p.fields.content_version,
+        };
+      } finally {
+        if (role === "otr_trip_core_v2_gateway")
+          await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+      }
+    },
     // Server custody staging, not CREATE_DOCUMENT or a client upload endpoint.
     async verifyReference(authenticatedActor: string, input: unknown) {
       const request = stageSchema.parse(input);

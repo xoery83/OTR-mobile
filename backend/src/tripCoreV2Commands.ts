@@ -4,6 +4,7 @@ import {
   type CoreActor,
   type CoreGraph,
   type CoreMutation,
+  type VerifiedPrivateDocumentCustody,
 } from "../../src/domain/trip/tripCoreV2Mutation";
 import {
   validateCoreCommand,
@@ -33,7 +34,7 @@ export type CoreCommandTransaction = {
     command: CoreCommand,
     intentSha256: string,
     graph: CoreGraph,
-  ): Promise<void>;
+  ): Promise<void | VerifiedPrivateDocumentCustody>;
   lifecycleGraphHash(command: CoreCommand, graph: CoreGraph): Promise<string | undefined>;
   admissionAudit?(): Promise<
     Pick<CoreReceipt["audit"], "evidenceRefs" | "authorizationRefs">
@@ -141,7 +142,11 @@ export async function executeCoreCommandV2(
       let mutation: CoreMutation | null = null,
         errorCode: string | null = null;
       try {
-        await tx.verifyAdmission(command, intentSha256, before);
+        const privateDocumentCustody = await tx.verifyAdmission(
+          command,
+          intentSha256,
+          before,
+        );
         mutation = applyCoreCommand(
           before,
           command,
@@ -149,6 +154,8 @@ export async function executeCoreCommandV2(
           committedAt,
           command.admission.mode !== "MANUAL",
           await tx.lifecycleGraphHash(command, before),
+          false,
+          privateDocumentCustody || undefined,
         );
       } catch (error) {
         if (error instanceof ZodError) errorCode = "INVALID_FACT";

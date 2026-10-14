@@ -173,3 +173,29 @@ it("explicit supplied ports reach existing HTTP boundaries with one authenticate
   expect(withLease).toHaveBeenCalledOnce();
   expect((await closed.json()).error.code).not.toMatch(/UNPROVISIONED/);
 });
+
+it("supplied Document reader reaches only the existing authenticated original boundary", async () => {
+  const { startDevBackend } = await import("./serverStartup");
+  const read = vi.fn(async () => ({ status: "UNAVAILABLE" as const }));
+  const url = await address(startDevBackend({ documentOriginalReader: { read } }));
+  fixtures.canReadTrip.mockResolvedValue(true);
+  const id = randomUUID();
+  const response = await fetch(
+    `${url}/v2/trips/${input.tripId}/documents/${id}/original`,
+    {
+      headers: {
+        Authorization: "Bearer valid",
+        "X-OTR-Content-Version": "1",
+        "If-Match": '"' + "a".repeat(64) + '"',
+      },
+    },
+  );
+  expect(response.status).toBe(404);
+  expect(read).toHaveBeenCalledExactlyOnceWith(actor, {
+    actorAccountId: actor,
+    tripId: input.tripId,
+    documentId: id,
+    contentVersion: 1,
+    sha256: "a".repeat(64),
+  });
+});

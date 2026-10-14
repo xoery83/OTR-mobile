@@ -2,6 +2,7 @@ import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
 import {
   coreClosedCapabilities,
+  coreCapabilitiesSchema,
   validateCoreCommand,
 } from "../../src/domain/trip/tripCoreV2Commands";
 import { parseCoreJson } from "../../src/domain/trip/tripCoreV2Json";
@@ -38,7 +39,8 @@ export type CoreHttpConnection = {
     tripId: string,
     input: unknown,
   ): Promise<CoreCandidatePublicationResult>;
-  read?: Pick<ReturnType<typeof createCorePgReader>, "collection" | "item">;
+  read?: Pick<ReturnType<typeof createCorePgReader>, "collection" | "item"> &
+    Partial<Pick<ReturnType<typeof createCorePgReader>, "capabilities">>;
   commands: CoreCommandStorage;
   source?: CoreSourcePlanStorageV2;
   hash: ImportHash;
@@ -104,7 +106,11 @@ async function receipt(
   const r = await validateCoreReceipt(result.receipt, hash);
   if (r.actorAccountId !== actor || r.tripId !== trip || r.operationId !== operation)
     throw new Error("CORE_RECEIPT_SCOPE_MISMATCH");
-  return { projection: "FULL", domainReceiptId: result.domainReceiptId, receipt: r };
+  return {
+    projection: "FULL",
+    domainReceiptId: result.domainReceiptId,
+    receipt: r,
+  };
 }
 // Existing API authenticates once; this port has no credentials, direct database or actor override.
 export async function coreHttpBoundary(
@@ -139,7 +145,12 @@ export async function coreHttpBoundary(
     }
     if (!(await canReadTrip(actor, trip))) return failure(404, "NOT_VISIBLE");
     if (path === "capabilities" && request.method === "GET")
-      return reply(200, coreClosedCapabilities);
+      return reply(
+        200,
+        connection?.read?.capabilities
+          ? coreCapabilitiesSchema.parse(await connection.read.capabilities(actor, trip))
+          : coreClosedCapabilities,
+      );
     if (path === "commands" && request.method === "POST") {
       const input = await body(request);
       if (unsupportedVersion(input, "contractVersion"))

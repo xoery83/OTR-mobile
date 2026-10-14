@@ -17,6 +17,7 @@ import {
   type CoreGraph,
   type CoreActor,
   type CoreMutation,
+  type VerifiedPrivateDocumentCustody,
   type CoreRow,
 } from "../../src/domain/trip/tripCoreV2Mutation";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
@@ -57,7 +58,7 @@ export type CorePgAdmission = {
     command: CoreCommand,
     intentSha256: string,
     graph: CoreGraph,
-  ): Promise<void>;
+  ): Promise<void | VerifiedPrivateDocumentCustody>;
   canReadSourceReceipt(
     lease: CorePgLease,
     actor: CoreActor,
@@ -259,6 +260,16 @@ export function createCorePgStorage(
             "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true)",
             [scope.actorAccountId, scope.tripId],
           );
+          const finiteScope = async () => {
+            const allowed = (
+              await lease.query(
+                "SELECT public.trip_core_finite_scope_allowed($1::uuid,$2::uuid) AS allowed",
+                [scope.actorAccountId, scope.tripId],
+              )
+            ).rows[0]?.allowed;
+            if (allowed !== true) throw new Error("CORE_CAPABILITY_CLOSED");
+          };
+          await finiteScope();
           // Join the established Source/C locks before membership rows to avoid reversed lock order.
           await lease.query("SELECT public.trip_import_scope_lock($1::uuid,$2::uuid)", [
             scope.actorAccountId,
@@ -288,7 +299,10 @@ export function createCorePgStorage(
                 )
               ).rows[0];
               return row
-                ? { domainReceiptId: row.id as string, receiptText: json(row.body) }
+                ? {
+                    domainReceiptId: row.id as string,
+                    receiptText: json(row.body),
+                  }
                 : null;
             },
             async hasLegacyOperation() {
@@ -341,6 +355,17 @@ export function createCorePgStorage(
               return locked;
             },
             async verifyAdmission(command, intent, graph) {
+              const finiteFamily = (command.payload as { family?: string }).family;
+              if (
+                String(command.command) !== "CREATE_ITEM" ||
+                String(command.admission.mode) !== "MANUAL" ||
+                (finiteFamily !== "P1" && finiteFamily !== "P3")
+              )
+                throw new Error("CORE_CAPABILITY_CLOSED");
+              await lease.query(
+                "SELECT set_config('otr.core.command',$1,true),set_config('otr.core.family',$2,true),set_config('otr.core.admission',$3,true)",
+                [command.command, finiteFamily, command.admission.mode],
+              );
               if (collision) throw new Error("REVISION_CONFLICT");
               if (command.command === "SET_ORDINARY_ORDER") {
                 const bindings = (
@@ -417,8 +442,15 @@ export function createCorePgStorage(
                     .sourceRepresentationId !== null)
               ) {
                 if (!admission) throw new Error("OWNING_CAPABILITY_REQUIRED");
-                await admission.verify(lease, actor, command, intent, graph);
+                const owning = await admission.verify(
+                  lease,
+                  actor,
+                  command,
+                  intent,
+                  graph,
+                );
                 verified = { command, intentSha256: intent };
+                return owning;
               }
             },
             async admissionAudit() {
@@ -535,6 +567,7 @@ export function createCorePgStorage(
             },
           };
           const result = await work(tx);
+          await finiteScope();
           await lease.query("COMMIT");
           began = false;
           return result;
@@ -574,7 +607,11 @@ export async function readCorePgOperation(
       )
         return null;
       return (await tx.canReadReceipt(receipt))
-        ? { projection: "FULL" as const, domainReceiptId: prior.domainReceiptId, receipt }
+        ? {
+            projection: "FULL" as const,
+            domainReceiptId: prior.domainReceiptId,
+            receipt,
+          }
         : coreReceiptStatus(prior.domainReceiptId, receipt);
     },
   );

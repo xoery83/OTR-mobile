@@ -57,11 +57,15 @@ function fixture() {
     query: vi.fn(async (sql: string) => {
       if (sql === "SELECT session_user AS principal,current_user AS role")
         return { rows: [identity] };
+      if (sql.includes("trip_core_finite_scope_allowed"))
+        return { rows: [{ allowed: gate.runtime_enabled }] };
       if (sql.includes("trip_core_lock_actor_scope")) return { rows: [{ actor }] };
       if (sql.includes("trip_core_activation_gate")) return { rows: [gate] };
       if (sql.includes("FROM public.trip_core_read_state")) return { rows: [state] };
       if (sql.includes('FROM public."trip_operational_documents"'))
-        return { rows: graph.trip_operational_documents.map((fact) => ({ fact })) };
+        return {
+          rows: graph.trip_operational_documents.map((fact) => ({ fact })),
+        };
       if (sql.includes("trip_core_read_person_bindings"))
         return { rows: [{ bindings: [] }] };
       return { rows: [] };
@@ -192,4 +196,32 @@ it("rejects malformed account scope before a lease and retires when rollback fai
     "CORE_CAPABILITY_CLOSED",
   );
   expect(f.lease.retire).toHaveBeenCalledOnce();
+});
+
+it("finite capabilities require current linked actor and owning read state, never listing alone", async () => {
+  const f = fixture();
+  expect(
+    (await f.reader.capabilities(f.actor.accountId, f.actor.tripId)).activationState,
+  ).toBe("CLOSED");
+  f.actor.personId = randomUUID();
+  const c = await f.reader.capabilities(f.actor.accountId, f.actor.tripId);
+  expect(c.activationState).toBe("ENABLED");
+  expect(c.enabledCommands).toEqual(["CREATE_ITEM"]);
+  expect(c.enabledFamilies).toEqual(["P1", "P3"]);
+  expect(c.enabledAdmissionModes).toEqual(["MANUAL"]);
+  expect(c.operationalCustodyAvailable).toBe(false);
+  f.actor.active = false;
+  expect(
+    (await f.reader.capabilities(f.actor.accountId, f.actor.tripId)).activationState,
+  ).toBe("CLOSED");
+});
+it("expired read scope rejects before graph access and leaves cached data untouched", async () => {
+  const f = fixture();
+  f.gate.runtime_enabled = false;
+  await expect(f.reader.collection(f.actor.accountId, f.actor.tripId)).rejects.toThrow(
+    "CORE_CAPABILITY_CLOSED",
+  );
+  expect(f.lease.query.mock.calls.some(([q]) => q.includes("to_jsonb(facts)"))).toBe(
+    false,
+  );
 });

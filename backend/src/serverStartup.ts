@@ -42,7 +42,10 @@ const environmentSchema = z
   });
 
 export function startDevBackend(
-  startOptions: Pick<BackendDependencies, "tripCreatePort" | "coreConnection"> = {},
+  startOptions: Pick<
+    BackendDependencies,
+    "tripCreatePort" | "coreConnection" | "documentOriginalReader"
+  > = {},
 ) {
   const environment = environmentSchema.parse(process.env);
   // Backend-private, unprovisioned and CLOSED. No HTTP route, polling or provider call.
@@ -85,6 +88,7 @@ export function startDevBackend(
     gateway,
     tripCreatePort: startOptions.tripCreatePort,
     coreConnection: startOptions.coreConnection,
+    documentOriginalReader: startOptions.documentOriginalReader,
     log(event) {
       console.info(JSON.stringify({ level: "info", event: "request", ...event }));
     },

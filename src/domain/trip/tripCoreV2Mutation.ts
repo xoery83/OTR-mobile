@@ -83,6 +83,17 @@ export function coreGraphHashText(g: CoreGraph): string {
     ) as unknown as Json,
   );
 }
+export type VerifiedPrivateDocumentCustody = Readonly<{
+  actorAccountId: string;
+  tripId: string;
+  documentId: string;
+  custodyProofId: string;
+  sourceRepresentationId: string;
+  sha256: string;
+  byteSize: number;
+  mediaType: string;
+  contentVersion: number;
+}>;
 export function applyCoreCommand(
   given: CoreGraph,
   input: unknown,
@@ -91,6 +102,7 @@ export function applyCoreCommand(
   sourceAuthorized = false,
   lifecycleGraphHash?: string,
   actorProjection = false,
+  privateDocumentCustody?: VerifiedPrivateDocumentCustody,
 ): CoreMutation {
   const q = validateCoreCommand(input);
   if (!actor.active || q.tripId !== actor.tripId) throw new Error("TRIP_NOT_AUTHORIZED");
@@ -1187,7 +1199,33 @@ export function applyCoreCommand(
       break;
     }
     // These need the owning verified custody/Source/Ledger capability, not a boolean from a caller.
-    case "CREATE_DOCUMENT":
+    case "CREATE_DOCUMENT": {
+      const proof = privateDocumentCustody;
+      if (
+        !proof ||
+        q.admission.mode !== "MANUAL" ||
+        p.acl.visibility !== "PRIVATE" ||
+        p.acl.people.length !== 0 ||
+        p.fields.custody !== "PRIVATE_SOURCE_REFERENCE" ||
+        proof.actorAccountId !== actor.accountId ||
+        proof.tripId !== actor.tripId ||
+        proof.documentId !== q.target.id ||
+        proof.custodyProofId !== p.custodyProofId ||
+        proof.sourceRepresentationId !== p.fields.source_representation_id ||
+        proof.sha256 !== p.fields.sha256 ||
+        proof.byteSize !== p.fields.byte_size ||
+        proof.mediaType !== p.fields.media_type ||
+        proof.contentVersion !== p.fields.content_version
+      )
+        throw new Error("OWNING_CAPABILITY_REQUIRED");
+      const row = create("DOCUMENT", q.target.id, {
+        ...p.fields,
+        storage_object_key: null,
+        custody_receipt_id: proof.custodyProofId,
+      });
+      setAcl("DOCUMENT", row, p.acl);
+      break;
+    }
     case "AUTHORIZE_DOCUMENT_COPY":
     case "LINK_EXPENSE":
     case "UNLINK_EXPENSE":

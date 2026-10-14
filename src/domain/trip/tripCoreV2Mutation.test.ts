@@ -401,3 +401,113 @@ describe("Core v2 finite mutation and access", () => {
     expect(() => applyCoreCommand(g, q, actor, now)).toThrow("INVALID_MONEY");
   });
 });
+
+describe("owning private Document custody", () => {
+  const documentId = randomUUID(),
+    representationId = randomUUID(),
+    proofId = randomUUID();
+  const fields = {
+    title: "Owned original",
+    media_type: "text/plain",
+    byte_size: 5,
+    sha256: "a".repeat(64),
+    custody: "PRIVATE_SOURCE_REFERENCE",
+    source_representation_id: representationId,
+    content_version: 1,
+    ticket_face_index: null,
+    qr_region: null,
+  };
+  const proof = {
+    actorAccountId: account,
+    tripId: trip,
+    documentId,
+    custodyProofId: proofId,
+    sourceRepresentationId: representationId,
+    sha256: fields.sha256,
+    byteSize: 5,
+    mediaType: "text/plain",
+    contentVersion: 1,
+  };
+  const request = () =>
+    command(
+      emptyCoreGraph(),
+      "CREATE_DOCUMENT",
+      documentId,
+      { fields, acl: { visibility: "PRIVATE", people: [] }, custodyProofId: proofId },
+      "DOCUMENT",
+    );
+  it("requires owning evidence and rejects raw wire authority fields", () => {
+    expect(() => applyCoreCommand(emptyCoreGraph(), request(), actor, now)).toThrow(
+      "OWNING_CAPABILITY_REQUIRED",
+    );
+    expect(() =>
+      applyCoreCommand(
+        emptyCoreGraph(),
+        { ...request(), privateDocumentCustody: proof },
+        actor,
+        now,
+      ),
+    ).toThrow();
+  });
+  it("creates the same immutable private Document identity from matching owning evidence", () => {
+    const result = applyCoreCommand(
+      emptyCoreGraph(),
+      request(),
+      actor,
+      now,
+      false,
+      undefined,
+      false,
+      proof,
+    );
+    expect(result.graph.trip_operational_documents[0]).toMatchObject({
+      ...fields,
+      id: documentId,
+      owner_account_id: account,
+      trip_id: trip,
+      custody_receipt_id: proofId,
+      storage_object_key: null,
+      visibility: "PRIVATE",
+      revision: 1,
+    });
+    expect(result.changed).toEqual([
+      { kind: "DOCUMENT", id: documentId, baseRevision: null, committedRevision: 1 },
+    ]);
+  });
+  it.each([
+    { actorAccountId: person },
+    { tripId: person },
+    { documentId: person },
+    { custodyProofId: person },
+    { sourceRepresentationId: person },
+    { sha256: "b".repeat(64) },
+    { byteSize: 6 },
+    { mediaType: "application/pdf" },
+    { contentVersion: 2 },
+  ])("denies mismatched custody evidence %o", (change) => {
+    expect(() =>
+      applyCoreCommand(emptyCoreGraph(), request(), actor, now, false, undefined, false, {
+        ...proof,
+        ...change,
+      }),
+    ).toThrow("OWNING_CAPABILITY_REQUIRED");
+  });
+  it("does not widen private Source bytes to group or authorized-copy custody", () => {
+    const q = request();
+    expect(() =>
+      applyCoreCommand(
+        emptyCoreGraph(),
+        {
+          ...q,
+          payload: { ...(q.payload as object), acl: { visibility: "GROUP", people: [] } },
+        },
+        actor,
+        now,
+        false,
+        undefined,
+        false,
+        proof,
+      ),
+    ).toThrow("OWNING_CAPABILITY_REQUIRED");
+  });
+});

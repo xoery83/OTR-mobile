@@ -1,16 +1,24 @@
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, expect, test, vi } from "vitest";
+import {
+  emptyCoreGraph,
+  type CoreActor,
+  type CoreRow,
+} from "../../src/domain/trip/tripCoreV2Mutation";
 import { createTripDocumentPrivateReferenceCustody } from "./tripDocumentPrivateReferenceCustody";
 import type { CorePgConnection } from "./tripCoreV2PgStorage";
-import type { CoreRow } from "../../src/domain/trip/tripCoreV2Mutation";
 const actor = "10000000-0000-4000-8000-000000000001",
   trip = "10000000-0000-4000-8000-000000000002",
   doc = "10000000-0000-4000-8000-000000000003",
   rep = "10000000-0000-4000-8000-000000000004";
 const content = Buffer.from("owned source bytes"),
   sha = createHash("sha256").update(content).digest("hex");
-function harness(change: Record<string, unknown> = {}, enabled = true) {
+function harness(
+  change: Record<string, unknown> = {},
+  enabled = true,
+  enabledCommands = ["CREATE_DOCUMENT"],
+) {
   const commands: string[] = [],
     parameters: readonly unknown[][] = [];
   const row = {
@@ -47,7 +55,7 @@ function harness(change: Record<string, unknown> = {}, enabled = true) {
               : sql.includes("current_user")
                 ? [{ role: "otr_trip_core_v2_gateway" }]
                 : sql.includes("runtime_enabled")
-                  ? [{ runtime_enabled: enabled }]
+                  ? [{ runtime_enabled: enabled, enabled_commands: enabledCommands }]
                   : sql.includes("trip_source_representations")
                     ? [row as CoreRow]
                     : [],
@@ -176,4 +184,178 @@ test("oversized streamed response is cancelled without a proof", async () => {
   ).rejects.toThrow("ORIGINAL_BYTES_UNAVAILABLE");
   expect(cancel).toHaveBeenCalled();
   expect(h.commands.some((x) => x.startsWith("INSERT"))).toBe(false);
+});
+
+function commandFixture(
+  change: Record<string, unknown> = {},
+  enabledCommands = ["CREATE_DOCUMENT"],
+) {
+  const commands: string[] = [];
+  const fields = {
+    title: "Owned source",
+    media_type: "text/plain",
+    byte_size: content.length,
+    sha256: sha,
+    custody: "PRIVATE_SOURCE_REFERENCE",
+    source_representation_id: rep,
+    content_version: 1,
+    ticket_face_index: null,
+    qr_region: null,
+  };
+  const proofId = "10000000-0000-4000-8000-000000000005";
+  const proof = {
+    id: proofId,
+    trip_id: trip,
+    actor_account_id: actor,
+    document_id: doc,
+    source_representation_id: rep,
+    custody: "PRIVATE_SOURCE_REFERENCE",
+    sha256: sha,
+    byte_size: content.length,
+    media_type: "text/plain",
+    state: "VERIFIED",
+    ...change,
+  };
+  const representation = {
+    source_id: rep,
+    source_revision: 1,
+    row_revision: 1,
+    source_trip_id: trip,
+    acquired_by: actor,
+    lifecycle: "ACTIVE",
+    source_retention: "RETAINED",
+    role: "ORIGINAL",
+    retention_state: "RETAINED",
+    material_kind: "TEXT",
+    remote_state: "NOT_APPLICABLE",
+    payload_sha256: sha,
+    byte_count: content.length,
+    mime_type: null,
+    text_content: content.toString(),
+    storage_provider: null,
+    storage_bucket: null,
+    object_key: null,
+  };
+  const lease = {
+    retire: vi.fn(),
+    query: async (sql: string) => {
+      commands.push(sql);
+      return {
+        rows: sql.includes("runtime_enabled")
+          ? [{ runtime_enabled: true, enabled_commands: enabledCommands }]
+          : sql.includes("current_user")
+            ? [{ role: "otr_trip_core_v2_gateway" }]
+            : sql.includes("trip_core_lock_source_scope")
+              ? [{ allowed: true }]
+              : sql.includes("trip_source_representations")
+                ? [representation]
+                : sql.includes("trip_operational_document_custody")
+                  ? [proof]
+                  : [],
+      };
+    },
+  };
+  const service = createTripDocumentPrivateReferenceCustody(
+    {
+      withLease: async () => {
+        throw new Error("NO_NESTED_LEASE");
+      },
+    },
+    {} as SupabaseClient["storage"],
+    async () => null,
+  );
+  const account: CoreActor = {
+    accountId: actor,
+    tripId: trip,
+    active: true,
+    canManageShared: false,
+    personId: null,
+    personIds: [],
+  };
+  const request = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: proofId,
+    tripId: trip,
+    command: "CREATE_DOCUMENT",
+    target: { kind: "DOCUMENT", id: doc },
+    baseVector: [{ kind: "DOCUMENT", id: doc, revision: null }],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: {
+      fields,
+      acl: { visibility: "PRIVATE", people: [] },
+      custodyProofId: proofId,
+    },
+  };
+  return { service, lease, account, request, commands, proofId };
+}
+test("owning command verifies current locked Source bytes/proof on the supplied transaction without a new lease", async () => {
+  const h = commandFixture();
+  const proof = await h.service.verifyCreateDocument(h.lease, h.account, h.request);
+  expect(proof).toMatchObject({
+    actorAccountId: actor,
+    tripId: trip,
+    documentId: doc,
+    custodyProofId: h.proofId,
+    sourceRepresentationId: rep,
+    sha256: sha,
+    byteSize: content.length,
+    mediaType: "text/plain",
+    contentVersion: 1,
+  });
+  expect(h.commands.some((s) => s.includes("FOR UPDATE"))).toBe(true);
+  expect(h.commands.at(-1)).toBe("SET LOCAL ROLE otr_trip_core_v2_gateway");
+  expect(h.commands.some((s) => s.startsWith("INSERT") || s === "COMMIT")).toBe(false);
+});
+test.each([
+  { state: "BOUND" },
+  { state: "REVOKED" },
+  { actor_account_id: rep },
+  { document_id: rep },
+  { sha256: "b".repeat(64) },
+  { custody: "AUTHORIZED_COPY" },
+])("command denies stale or mismatched registry proof %o", async (change) => {
+  const h = commandFixture(change);
+  await expect(
+    h.service.verifyCreateDocument(h.lease, h.account, h.request),
+  ).rejects.toThrow("OWNING_CAPABILITY_REQUIRED");
+  expect(h.commands.at(-1)).toBe("SET LOCAL ROLE otr_trip_core_v2_gateway");
+});
+
+test("P1/P3 availability denies Document custody staging before private Source or bytes", async () => {
+  const h = harness({}, true, ["CREATE_ITEM"]);
+  await expect(h.service.verifyReference(actor, h.input)).rejects.toThrow(
+    "CORE_CAPABILITY_CLOSED",
+  );
+  expect(
+    h.commands.some(
+      (s) => s.includes("trip_source_representations") || s.startsWith("INSERT"),
+    ),
+  ).toBe(false);
+  expect(h.sign).not.toHaveBeenCalled();
+});
+test("P1/P3 availability denies existing Document originals and command proof before custody access", async () => {
+  const h = commandFixture({}, ["CREATE_ITEM"]);
+  expect(
+    await h.service.canReadDocument(h.lease, h.account, emptyCoreGraph(), {
+      id: doc,
+      trip_id: trip,
+      owner_account_id: actor,
+      visibility: "PRIVATE",
+      custody: "PRIVATE_SOURCE_REFERENCE",
+      hidden_at: null,
+      media_type: "text/plain",
+      byte_size: content.length,
+    }),
+  ).toBe(false);
+  await expect(
+    h.service.verifyCreateDocument(h.lease, h.account, h.request),
+  ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+  expect(
+    h.commands.some(
+      (s) =>
+        s.includes("trip_operational_document_custody") ||
+        s.includes("trip_source_representations"),
+    ),
+  ).toBe(false);
 });

@@ -47,6 +47,8 @@ function fixture(principal = "otr_trip_core_v2_gateway", active = true) {
             },
           ],
         };
+      if (sql.includes("trip_core_finite_scope_allowed"))
+        return { rows: [{ allowed: true }] };
       if (sql.includes("SELECT runtime_enabled"))
         return { rows: [{ runtime_enabled: false, enabled_commands: [] }] };
       return { rows: [] };
@@ -109,4 +111,46 @@ it("retires a lease when rollback cannot be proved, retaining the original failu
     executeCoreCommandV2(f.storage, actor, trip, command(), hash),
   ).rejects.toThrow("CORE_PRINCIPAL_UNAVAILABLE");
   expect(f.retire).toHaveBeenCalledOnce();
+});
+
+it("expired scope denies receipt replay before any actor/receipt work", async () => {
+  const f = fixture(),
+    query = f.lease.query;
+  f.lease.query = (sql, params) =>
+    sql.includes("trip_core_finite_scope_allowed")
+      ? Promise.resolve({ rows: [{ allowed: false }] })
+      : query(sql, params);
+  await expect(
+    executeCoreCommandV2(f.storage, actor, trip, command(), hash),
+  ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+  expect(
+    f.queries.some(
+      (q) =>
+        q.sql.includes("trip_core_lock_actor_scope") || q.sql.includes("SELECT id,body"),
+    ),
+  ).toBe(false);
+  expect(f.queries.at(-1)?.sql).toBe("ROLLBACK");
+});
+it("scope expiry after receipt lookup rolls back current replay without deleting retained facts", async () => {
+  const f = fixture(),
+    query = f.lease.query;
+  let checks = 0;
+  f.lease.query = (sql, params) =>
+    sql.includes("trip_core_finite_scope_allowed")
+      ? Promise.resolve({ rows: [{ allowed: ++checks === 1 }] })
+      : query(sql, params);
+  await expect(
+    f.storage.withLockedCommand(
+      {
+        actorAccountId: actor,
+        tripId: trip,
+        operationId: operation,
+        baseVector: [],
+      },
+      async (tx) => tx.readReceipt(),
+    ),
+  ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+  expect(f.queries.some((q) => q.sql.includes("SELECT id,body"))).toBe(true);
+  expect(f.queries.at(-1)?.sql).toBe("ROLLBACK");
+  expect(f.queries.some((q) => q.sql.startsWith("DELETE"))).toBe(false);
 });

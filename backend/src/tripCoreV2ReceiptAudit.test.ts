@@ -70,3 +70,85 @@ it.each([false, true])(
     expect(response.receipt.outcome).toBe(reject ? "REJECTED" : "APPLIED");
   },
 );
+
+it.each([false, true])(
+  "consumes only the owning transaction Document evidence before ordinary receipt commit (proof=%s)",
+  async (verified) => {
+    const account = randomUUID(),
+      trip = randomUUID(),
+      documentId = randomUUID(),
+      sourceRepresentationId = randomUUID(),
+      custodyProofId = randomUUID();
+    const fields = {
+      title: "Private original",
+      media_type: "text/plain",
+      byte_size: 5,
+      sha256: "a".repeat(64),
+      custody: "PRIVATE_SOURCE_REFERENCE",
+      source_representation_id: sourceRepresentationId,
+      content_version: 1,
+      ticket_face_index: null,
+      qr_region: null,
+    };
+    const proof = {
+      actorAccountId: account,
+      tripId: trip,
+      documentId,
+      sourceRepresentationId,
+      custodyProofId,
+      sha256: fields.sha256,
+      byteSize: 5,
+      mediaType: "text/plain",
+      contentVersion: 1,
+    };
+    let saved: unknown;
+    const storage: CoreCommandStorage = {
+      withLockedCommand: async (_scope, work) =>
+        work({
+          actor: {
+            accountId: account,
+            tripId: trip,
+            active: true,
+            personId: null,
+            personIds: [],
+            canManageShared: false,
+          },
+          readReceipt: async () => null,
+          hasLegacyOperation: async () => false,
+          canReadReceipt: async () => true,
+          enabledCommands: async () => ["CREATE_DOCUMENT"],
+          readLockedGraph: async () => emptyCoreGraph(),
+          verifyAdmission: async () => (verified ? proof : undefined),
+          lifecycleGraphHash: async () => undefined,
+          commit: async (mutation) => {
+            saved = mutation;
+            return randomUUID();
+          },
+        }),
+    };
+    const result = await executeCoreCommandV2(
+      storage,
+      account,
+      trip,
+      {
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId: randomUUID(),
+        tripId: trip,
+        command: "CREATE_DOCUMENT",
+        target: { kind: "DOCUMENT", id: documentId },
+        baseVector: [{ kind: "DOCUMENT", id: documentId, revision: null }],
+        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        payload: { fields, acl: { visibility: "PRIVATE", people: [] }, custodyProofId },
+      },
+      hash,
+      () => "2026-10-14T00:00:00Z",
+    );
+    expect(result.projection).toBe("FULL");
+    if (result.projection !== "FULL") throw new Error("REDACTED");
+    expect(result.receipt.outcome).toBe(verified ? "APPLIED" : "REJECTED");
+    expect(result.receipt.errorCode).toBe(verified ? null : "OWNING_CAPABILITY_REQUIRED");
+    expect(await validateCoreReceipt(result.receipt, hash)).toEqual(result.receipt);
+    expect(saved === null).toBe(!verified);
+  },
+);
