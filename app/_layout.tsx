@@ -1,3 +1,4 @@
+import { TripViewProvider } from "@/features/day-feed/TripViewContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme } from "expo-router";
 import { useColorScheme } from "react-native";
@@ -60,49 +61,51 @@ export default function RootLayout() {
           },
         }}
       >
-        <Stack
-          screenOptions={{
-            headerBackButtonDisplayMode: "minimal",
-            headerShown: false,
-            headerTitleAlign: "center",
-            headerTitleStyle: { color: colors.textPrimary },
-            headerTintColor: colors.accent,
-            headerStyle: { backgroundColor: colors.surface },
-            contentStyle: { backgroundColor: colors.background },
-            orientation: "portrait",
-          }}
-        >
-          {__DEV__ ? (
+        <TripViewProvider>
+          <Stack
+            screenOptions={{
+              headerBackButtonDisplayMode: "minimal",
+              headerShown: false,
+              headerTitleAlign: "center",
+              headerTitleStyle: { color: colors.textPrimary },
+              headerTintColor: colors.accent,
+              headerStyle: { backgroundColor: colors.surface },
+              contentStyle: { backgroundColor: colors.background },
+              orientation: "portrait",
+            }}
+          >
+            {__DEV__ ? (
+              <Stack.Screen
+                name="day-feed-lab"
+                options={{ headerShown: true, headerTitle: t("dayLab.title") }}
+              />
+            ) : null}
             <Stack.Screen
-              name="day-feed-lab"
-              options={{ headerShown: true, headerTitle: t("dayLab.title") }}
+              name="trip-validation"
+              options={{ headerShown: true, headerTitle: t("dayFeed.validation") }}
             />
-          ) : null}
-          <Stack.Screen
-            name="trip-validation"
-            options={{ headerShown: true, headerTitle: t("dayFeed.validation") }}
-          />
-          <Stack.Screen
-            name="foundation"
-            options={{ headerShown: true, headerTitle: t("navigation.signIn") }}
-          />
-          <Stack.Screen
-            name="account"
-            options={{ headerShown: true, headerTitle: t("navigation.account") }}
-          />
-          <Stack.Screen
-            name="settings"
-            options={{ headerShown: true, headerTitle: t("navigation.settings") }}
-          />
-          <Stack.Screen
-            name="data-sync"
-            options={{ headerShown: true, headerTitle: t("navigation.dataSync") }}
-          />
-          <Stack.Screen
-            name="diagnostics"
-            options={{ headerShown: true, headerTitle: t("navigation.diagnostics") }}
-          />
-        </Stack>
+            <Stack.Screen
+              name="foundation"
+              options={{ headerShown: true, headerTitle: t("navigation.signIn") }}
+            />
+            <Stack.Screen
+              name="account"
+              options={{ headerShown: true, headerTitle: t("navigation.account") }}
+            />
+            <Stack.Screen
+              name="settings"
+              options={{ headerShown: true, headerTitle: t("navigation.settings") }}
+            />
+            <Stack.Screen
+              name="data-sync"
+              options={{ headerShown: true, headerTitle: t("navigation.dataSync") }}
+            />
+            <Stack.Screen
+              name="diagnostics"
+              options={{ headerShown: true, headerTitle: t("navigation.diagnostics") }}
+            />
+          </Stack>
+        </TripViewProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

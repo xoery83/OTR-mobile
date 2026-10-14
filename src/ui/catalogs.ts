@@ -1,4 +1,24 @@
 export const en = {
+  "comprehensiveSearch.categoryCount": "{category} ({count})",
+  "comprehensiveSearch.seeAllCategory": "See all {category}",
+  "comprehensiveSearch.partialCoverage":
+    "Results and counts cover the loaded local records. Load more to continue searching.",
+  "comprehensiveSearch.title": "Search",
+  "comprehensiveSearch.query": "Search locally available trips and itinerary",
+  "comprehensiveSearch.scopeCurrent": "Current Trip",
+  "comprehensiveSearch.scopeAll": "All Trips",
+  "comprehensiveSearch.categoryAll": "All",
+  "comprehensiveSearch.categoryTrips": "Trips",
+  "comprehensiveSearch.categoryItinerary": "Itinerary",
+  "comprehensiveSearch.coverage":
+    "Search covers locally available Trips and Itinerary. Other categories are not available yet.",
+  "comprehensiveSearch.emptyQuery": "Enter a search term.",
+  "comprehensiveSearch.noMatches": "No matches found.",
+  "comprehensiveSearch.unavailable": "Search is unavailable.",
+  "comprehensiveSearch.seeAll": "See all",
+  "comprehensiveSearch.loadMore": "Load more",
+  "comprehensiveSearch.refresh": "Refresh",
+
   "updates.title": "Updates",
   "updates.category.ALL": "All",
   "updates.category.NEEDS_ATTENTION": "Needs Attention",
@@ -2156,6 +2176,26 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "comprehensiveSearch.categoryCount": "{category}（{count}）",
+  "comprehensiveSearch.seeAllCategory": "查看全部{category}",
+  "comprehensiveSearch.partialCoverage":
+    "结果和数量仅涵盖已加载的本地记录。加载更多以继续搜索。",
+  "comprehensiveSearch.title": "搜索",
+  "comprehensiveSearch.query": "搜索本地可用的旅行和行程项目",
+  "comprehensiveSearch.scopeCurrent": "当前旅行",
+  "comprehensiveSearch.scopeAll": "所有旅行",
+  "comprehensiveSearch.categoryAll": "全部",
+  "comprehensiveSearch.categoryTrips": "旅行",
+  "comprehensiveSearch.categoryItinerary": "行程项目",
+  "comprehensiveSearch.coverage":
+    "搜索范围仅包含本地可用的旅行和行程项目，其他类别暂不可用。",
+  "comprehensiveSearch.emptyQuery": "请输入搜索词。",
+  "comprehensiveSearch.noMatches": "未找到匹配结果。",
+  "comprehensiveSearch.unavailable": "暂时无法搜索。",
+  "comprehensiveSearch.seeAll": "查看全部",
+  "comprehensiveSearch.loadMore": "加载更多",
+  "comprehensiveSearch.refresh": "刷新",
+
   "updates.title": "更新",
   "updates.category.ALL": "全部",
   "updates.category.NEEDS_ATTENTION": "需要处理",
