@@ -474,3 +474,120 @@ it("wakes an exact pending Trip receipt into Core eligibility while CLOSED Core 
     await f.core.acceptedSnapshot(await f.core.captureContext(create.tripId)),
   ).toBeNull();
 });
+
+it("Reference Trip v1 uses normal repositories and survives SQLite reopen/replay with only blocked pending work", async () => {
+  const { referenceTripV1: fixture, seedReferenceTripV1 } =
+    await import("./__fixtures__/referenceTripV1");
+  const folder = mkdtempSync(join(tmpdir(), "otr-reference-trip-v1-"));
+  folders.push(folder);
+  const path = join(folder, "owned-reference-trip.db");
+  let activeAccount = accountA;
+  const identity = async () => activeAccount;
+  const clock = () => fixture.createdAt;
+  function referenceRepository(f: ReturnType<typeof local>) {
+    // Reuse the existing migrated file/cleanup fixture; only the owning clocks differ.
+    const database: CoreDatabase = serializeDatabaseTransactions({
+      async getFirstAsync<T>(query: string, ...args: unknown[]) {
+        return (f.sql.prepare(query).get(...(args as never[])) ?? null) as T | null;
+      },
+      async getAllAsync<T>(query: string, ...args: unknown[]) {
+        return f.sql.prepare(query).all(...(args as never[])) as T[];
+      },
+      async runAsync(query: string, ...args: unknown[]) {
+        return f.sql.prepare(query).run(...(args as never[])) as never;
+      },
+      async withTransactionAsync(work: () => Promise<void>) {
+        f.sql.exec("BEGIN");
+        try {
+          await work();
+          f.sql.exec("COMMIT");
+        } catch (error) {
+          f.sql.exec("ROLLBACK");
+          throw error;
+        }
+      },
+    });
+    const core = createTripCoreV2Repository(
+      database,
+      identity,
+      async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+      clock,
+    );
+    return {
+      core,
+      repo: createTripRepository(database, identity, core, clock),
+      queue: createSyncOperationRepository(database, identity, clock),
+    };
+  }
+  let f = local(path),
+    r = referenceRepository(f);
+  const saved = await seedReferenceTripV1(r.repo);
+  expect(saved).toMatchObject({
+    id: fixture.trip.tripId,
+    createdAt: fixture.createdAt,
+    syncStatus: "PENDING_CREATE",
+    serverId: null,
+    ownerPersonId: null,
+    baseCurrency: null,
+  });
+  const pending = await r.repo.pendingItems(saved.id);
+  expect(pending).toHaveLength(5);
+  expect(pending.map((entry) => entry.command.target.id).sort()).toEqual(
+    fixture.items.map((item) => item.itemId).sort(),
+  );
+  expect(pending.every((entry) => entry.created_at === fixture.createdAt)).toBe(true);
+  expect(pending.every((entry) => entry.state === "BLOCKED")).toBe(true);
+  expect(
+    pending.every(
+      (entry) =>
+        entry.payload.schedule.start.instant === null &&
+        entry.payload.schedule.start.local_time === null &&
+        entry.payload.participation.selfPersonId === null,
+    ),
+  ).toBe(true);
+  expect(await seedReferenceTripV1(r.repo)).toEqual(saved);
+  expect(await r.repo.pendingItems(saved.id)).toEqual(pending);
+  f.sql.close();
+  f = local(path, false);
+  r = referenceRepository(f);
+  expect(await r.repo.listTrips()).toEqual([saved]);
+  expect(await r.repo.getTrip(saved.id)).toEqual(saved);
+  expect(await r.repo.pendingItems(saved.id)).toEqual(pending);
+  expect(await seedReferenceTripV1(r.repo)).toEqual(saved);
+  await expect(
+    r.repo.addItem(saved.id, { ...fixture.items[0], title: "Different intent" }),
+  ).rejects.toThrow("OPERATION_REUSE_MISMATCH");
+  const queue = f.sql
+    .prepare("SELECT operation_type,status,attempt_count,created_at FROM sync_operations")
+    .all();
+  expect(queue).toHaveLength(6);
+  expect(queue.filter((row) => row.operation_type === "CREATE_TRIP")).toHaveLength(1);
+  expect(queue.filter((row) => row.operation_type === "CORE_V2_COMMAND")).toHaveLength(5);
+  expect(
+    queue.every(
+      (row) =>
+        row.status === "DEPENDENCY_BLOCKED" &&
+        row.attempt_count === 0 &&
+        row.created_at === fixture.createdAt,
+    ),
+  ).toBe(true);
+  expect(await r.queue.listPending()).toEqual([]);
+  expect(await r.core.acceptedSnapshot(await r.core.captureContext(saved.id))).toBeNull();
+  for (const table of [
+    "trip_core_itinerary_events",
+    "trip_core_read_certificates",
+    "trip_core_person_bindings",
+    "ledger_members",
+  ])
+    expect(f.sql.prepare(`SELECT count(*) AS n FROM ${table}`).get()?.n).toBe(0);
+  activeAccount = accountB;
+  advanceAccountGeneration();
+  expect(await r.repo.listTrips()).toEqual([]);
+  expect(await r.repo.getTrip(saved.id)).toBeNull();
+  await expect(r.repo.pendingItems(saved.id)).rejects.toThrow(
+    "TRIP_LOCAL_RECORD_MISSING",
+  );
+  activeAccount = accountA;
+  advanceAccountGeneration();
+  expect(await r.repo.pendingItems(saved.id)).toEqual(pending);
+});
