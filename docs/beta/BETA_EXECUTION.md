@@ -2,13 +2,13 @@
 
 Iteration starts 2026-10-13 NZDT. [STATUS](BETA_STATUS.md) is the current evidence snapshot; [DECISIONS](BETA_DECISIONS.md) controls authority. Earlier queue sections below “Prior serial integration receipt” are historical.
 
-## Current execution queue after source Push70 — 2026-10-14 NZDT
+## Current execution queue after source Push72 — 2026-10-14 NZDT
 
 Source retains sole main/PG/SQLite/records writer. Security by Outcome and Simplicity govern ordinary work: preserve actor/Trip/private/financial outcomes, reuse owning contracts/helpers, and finish the smallest complete user path rather than adding uncalled ports.
 
 - Protected runtime: approved revised finite schema is installed and read back CLOSED/NOLOGIN/empty. No further schema query/replay is needed. Next runtime prerequisites are deployed optional provider/build evidence, a lawful dedicated principal/connection and internal TLS, plus an explicit finite activation contract. Existing role guards reject LOGIN; schema installation does not authorize provisioning, deployment or activation. Preserve original immutable SQL and successful inert prefix.
 - Documents: the normal online ITEM-current-right→verified bytes→last current-right→ephemeral system open/share slice and narrow DayFeed/catalog caller are frozen at762e, with Source bounded function peer b360 after final staged-file hash repair; UI/device and current positive runtime remain unverified. No offline lease, Doc101 activation, second store or permission inference. Current positive runtime remains NV.
-- Reference/navigation: REF-C two-file QA chain is I68; synthetic local admission retains PENDING_CREATE and proves no real Auth/three Persons/device seed. Full sixteen-Item b9d3/5a07 data QA is I70; Core is preparing a genuine localPG Trip100 receipt/actual actor-person-epoch artifact and RN-safe normal-repository importer. Normal App readiness is not yet verified. Home shared navigation586843 function PASS and Search revised function PASS stay isolated for unified QA; entry icons must use real permission-filtered targets. P45614 remains held.
+- Reference/navigation: Ref16 data QA remains I70. Actual actor-qualified LOCAL Trip100/MEMORY16 immutable artifact was normally imported once on A1A; d220 proves MyTrips/Home/selected Day/P3 inline detail/Back only, P1 full interaction partial and seven unresolved gaps. Core normalnav19 peerfb293 is PASS; next sole Visual lease applies exact currentMain1c baseline plus19 reviewed paths, uses existing data without Apply/TEMP/clock, verifies consumed modules, takes minimum targeted P1/P456/Back checks and restores currentMain. No whole16/Hosted/offline/three-role readiness.
 - Dispatch: earlier agent-thread-limit rejections occurred at full concurrency. QA reactivation subsequently succeeded; there is no current persistent dispatch block. Continue active lanes and preserve exact seals/leases for explicit resume.
 - Unified QA: latest Reference-first standing permits targeted base/defect/permission Native checks and the ready normal MyTrips→ReferenceHome→Day→Focus→Immersive smoke. Broad matrices remain deferred until normal data/navigation and Owner basic feedback. Retain old verdicts; no unQA UI intake or premature Reference READY. SQLite62/Coast/account remain preserved.
 
@@ -16,7 +16,7 @@ HOME03A trustworthy Trip-local Today producer, HOME03B actionable batch/seenack 
 
 ### Active bounded Action Island queue — WP-ACTION01..04 / 2026-10-14
 
-Owner explicitly resumed maintenance. Core repairs the saved App importer/generator and writes normal owning tests in its isolated lease; Source independently reviews its new seal before any App seed or intake. Reuse P70 Ref16/5a07 and existing schema/Docs/LOGIN proof. The pre-process rejected local runner remains preserved; use the safest qualified local fixture without bypass. No new Ops is implied.
+Maintenance is explicitly resumed. App importer06615 and actualactorc467 had Source9979/8da377 review before one normal Apply d220. Old partial5fb/rejected runner/first publishers remain preserved. Action R2 date finding979bb is resolved by affected-only1d26/baec peer; mounted Action UI remains separately held until applicable Native. Existing trusted runtime/Docs/LOGIN evidence is reused, without new Ops.
 
 - WP-ACTION01: MyTrips Start a Trip menu and first-empty Import/Create actions; use the actual unassigned Capture flow and existing Create form. No previous Trip association is required or invented.
 - WP-ACTION02: actual-capability Home/Day Import plus four Quick Adds; reliable anchored Day date is weak form context only. Add Ledger direct New Expense and remove its duplicate header plus. Qualified user-success may select one relevant Widget once without ordering or background focus theft.
@@ -24,6 +24,13 @@ Owner explicitly resumed maintenance. Core repairs the saved App importer/genera
 - WP-ACTION04: one global working-Trip identity/switcher, per-Trip bookmarks and unsaved-form fences; Search temporary target does not switch it. Immersive defaults to no floating plus or mandatory left island.
 
 The original Experience Builder is the single shared UI/catalog/navigation writer. Source owns records and serial integration; Core owns the disjoint DEV Reference importer. Independent function review then minimum targeted normal Reference smoke applies; full matrices follow Owner feedback, with no ProductUXAccepted inference. No new roles, credentials, Hosted operation or device is authorized.
+
+### Active Capture Entry/Composer queue — WP-CP-UX-01A / 01B, 2026-10-14
+
+- WP-CP-UX-01A: Owner-approved Entry through pre-submit, exact source CP-UX-01 Delta; helper319f/b814 I72. Experience single UI author owns authenticated same-instance Capture host/composer/direct Files/Photos, retained exact Account/nullableTrip drafts, immutable unadded-text-once roster and confirmation Clear. Caller/function/targeted Native remain separate. Current unassigned route uses tripPrior:null; no silent lastTrip or Guest adoption.
+- WP-CP-UX-01B: truthful Email Forward/mailbox/AI readiness only; no producer means Unavailable, never fake Connected or provider authorization.
+
+CP-UX-02 post-Submit processing/History/Review/admission/custody is excluded. CP §8 grants no migrations, sync model or ImportAuthority. Magic/Camera/Clipboard cannot be relabelled as Files/Photos to bypass current durable provenance; legal Submit remains PARTIAL. Source reviews only new helper/caller differences; no helper/UI scope count or full user-readiness claim.
 
 ### Historical maintenance pause and exact resume order — superseded by explicit Owner resume
 

@@ -12,7 +12,13 @@ Source: `/Users/xoery/Downloads/OTR_CONTEXTUAL_ACTION_ISLAND_TRIP_NAVIGATION_PRO
 
 Actions require actual owning capabilities and forms. Day dates are weak context, not source authority; explicit switching preserves per-Trip reading state and fences unsaved forms. Search target context remains temporary. Post-success Widget focus is one-shot and cannot reorder or steal focus on background changes. Immersive has no default floating action. This authorization does not manufacture unavailable Capture association, Updates/Members/Photos capabilities or runtime rights; full UX acceptance is unchanged.
 
-### Current approved amendments — source Push68 / 2026-10-14
+### Owner-approved CP Entry/Composer/Connections — 2026-10-14
+
+Source: `/Users/xoery/Downloads/OTR_CP_UX_01_CAPTURE_ENTRY_COMPOSER_CONNECTIONS_PRODUCT_DESIGN_DELTA_2026-10-14.md`, fully read. WP-CP-UX-01A covers Entry/pre-submit composer and exact Account/nullableTrip draft restoration; WP-CP-UX-01B covers truthful connection states. Close retains; confirmed Clear empties only unsubmitted tray/editor and stays open. Reliable native identity/revision may deduplicate selections; filenames do not. Valid unadded text is included once in an immutable prospective roster.
+
+Owner explicitly limits this Delta to Entry/pre-submit; §8 excludes new migrations/sync/ImportAuthority. Existing C2 Files/Photos durable Submit stays authoritative. Magic text remains draft-only; Camera/Clipboard/Guest-to-Account adoption and provider mechanisms are not invented. CP-UX-02 post-Submit flow is excluded. Partial Submit capability is an owning implementation limit, not a new Owner-only gate for ordinary pre-submit UI. Function/helper intake does not grant Native/UX/runtime acceptance.
+
+### Installed schema amendment — source Push68 / 2026-10-14
 
 Original META/B0, necessary named writer subset and DEV97 finite metadata ran; conditional fullB1/50pins did not. Original preflight failed, after which Owner explicitly approved the revised Hosted compatibility conditional package (`call_6b4c5a301e1742689680e0093b23c116`, peer owner-gate f73cc9). Revised preflight/prior compatibility passed; exact ten SQL plus OFFforward committed and fixed ten postmetadata outputs were TRUE. Original7a9b/429f and failed query receipts remain immutable evidence. Push68 reconciles exactly Core85/OFFforward source contracts with executed candidates, without rewriting historical journal or declaring runtime ready.
 
