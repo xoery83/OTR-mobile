@@ -1,7 +1,10 @@
 import { CaptureCustodyDevAction } from "./CaptureCustodyDevAction";
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
-import { projectCaptureActivity } from "@/domain/capture/captureActivityProjection";
+import {
+  captureProcessingSummary,
+  projectCaptureActivity,
+} from "@/domain/capture/captureActivityProjection";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
@@ -9,6 +12,7 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
+import { subscribeCaptureProcessingActivity } from "@/data/operations/captureProcessingActivity";
 
 export const captureActivityTime = (at: string) =>
   formatUiDate(new Date(at), {
@@ -57,18 +61,13 @@ export function CaptureActivity({
   const epoch = useRef(0);
   const active = useRef(false);
   const running = useRef(false);
+  const refresh = useRef<() => void>(() => undefined);
   const load = async (older = false) => {
-    if (
-      !active.current ||
-      !isCurrent() ||
-      running.current ||
-      jobs !== inventory.current
-    )
+    if (!active.current || !isCurrent() || running.current || jobs !== inventory.current)
       return;
     running.current = true;
     const request = ++epoch.current;
-    const current = () =>
-      active.current && request === epoch.current && isCurrent();
+    const current = () => active.current && request === epoch.current && isCurrent();
     setLoading(true);
     setError(false);
     try {
@@ -77,9 +76,7 @@ export function CaptureActivity({
       const last = older ? jobs.at(-1)?.batch : undefined;
       const page = await api.listDefaultCaptureJobs({
         limit: pageSize,
-        before: last
-          ? { createdAt: last.createdAt, batchId: last.batchId }
-          : undefined,
+        before: last ? { createdAt: last.createdAt, batchId: last.batchId } : undefined,
       });
       if (!current()) return;
       const next = older ? [...jobs, ...page] : page;
@@ -96,7 +93,13 @@ export function CaptureActivity({
     }
   };
   useEffect(() => {
+    refresh.current = () => void load();
+  });
+  useEffect(() => {
     active.current = true;
+    const unsubscribe = subscribeCaptureProcessingActivity((accountId) => {
+      if (!expectedAccountId || accountId === expectedAccountId) refresh.current();
+    });
     const requests = epoch;
     const setup = ++requests.current;
     void Promise.resolve().then(() => {
@@ -106,6 +109,7 @@ export function CaptureActivity({
       active.current = false;
       ++requests.current;
       running.current = false;
+      unsubscribe();
     };
     // Host remounts on Account/context/focus changes; locale and theme keep the list.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -174,16 +178,12 @@ export function CaptureActivityList({
     >
       <UiSection
         title={t(
-          expectedAccountId
-            ? "capture.progress.activeImports"
-            : "capture.activity",
+          expectedAccountId ? "capture.progress.activeImports" : "capture.activity",
         )}
       >
         <Text style={styles.secondary}>
           {t(
-            expectedAccountId
-              ? "capture.progress.accountScope"
-              : "capture.activityHint",
+            expectedAccountId ? "capture.progress.accountScope" : "capture.activityHint",
           )}
         </Text>
         <UiButton
@@ -213,9 +213,7 @@ export function CaptureActivityList({
               ? t("capture.progress.batchTitle", { count: job.counts.selected })
               : captureJobTitle(job)}
           </Text>
-          <Text style={styles.secondary}>
-            {captureActivityTime(job.batch.createdAt)}
-          </Text>
+          <Text style={styles.secondary}>{captureActivityTime(job.batch.createdAt)}</Text>
           {!job.allInputsAccepted ? (
             <Text style={styles.secondary}>
               {t(
@@ -227,8 +225,21 @@ export function CaptureActivityList({
             </Text>
           ) : null}
           {job.inputs?.some((item) => item.continuesFromJobId) ? (
+            <Text style={styles.secondary}>{t("capture.continuedSelection")}</Text>
+          ) : null}
+          {captureProcessingSummary(job) ? (
             <Text style={styles.secondary}>
-              {t("capture.continuedSelection")}
+              {t(`capture.processing.${captureProcessingSummary(job)!}`)}
+            </Text>
+          ) : null}
+          {job.allInputsAccepted &&
+          job.inputs?.every((item) =>
+            job.processingEvents?.some(
+              (event) => event.inputId === item.id && event.state === "INPUT_VALIDATED",
+            ),
+          ) ? (
+            <Text style={styles.secondary}>
+              {t("capture.processing.waitingInterpreter")}
             </Text>
           ) : null}
           <UiButton

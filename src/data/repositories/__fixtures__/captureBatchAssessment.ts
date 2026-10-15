@@ -31,7 +31,7 @@ export const sha256 = async (bytes: Uint8Array) =>
 export const now = () => "2026-10-08T00:00:00.000Z";
 const cleanup: (() => void)[] = [];
 afterEach(() => cleanup.splice(0).forEach((fn) => fn()));
-export function fixture(fileBacked = false) {
+export function fixture(fileBacked = false, version = 66) {
   const dir = fileBacked ? mkdtempSync(join(tmpdir(), "otr-p2c-")) : null;
   const path = dir ? join(dir, "local.db") : ":memory:";
   let sql = new DatabaseSync(path);
@@ -40,7 +40,8 @@ export function fixture(fileBacked = false) {
     if (dir) rmSync(dir, { recursive: true, force: true });
   });
   sql.exec("PRAGMA foreign_keys=ON");
-  for (const migration of migrations) sql.exec(migration.sql);
+  for (const migration of migrations.filter((item) => item.id <= version))
+    sql.exec(migration.sql);
   let account = catalogs.actor_account_id;
   const getAccount = async () => account;
   let active = false;

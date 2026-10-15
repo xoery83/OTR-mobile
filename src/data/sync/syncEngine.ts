@@ -143,6 +143,7 @@ const closedImportOperations = new Set([
   "C_ADMIT_CAPTURE_SOURCE",
   "C_REVOKE_EVENT_SLOT",
 ]);
+export const captureProcessingValidationKind = "CAPTURE_PROCESSING_VALIDATE";
 
 export function createSyncEngine(
   repository: SyncOperationRepository,
@@ -151,6 +152,7 @@ export function createSyncEngine(
   shouldProcess: (operation: SyncOperation) => boolean = (operation) =>
     operation.operationType !== "CORE_V2_COMMAND" &&
     operation.operationType !== "CREATE_TRIP",
+  localCaptureProcessing = false,
 ) {
   return {
     async run(authState: AuthState): Promise<SyncRunResult> {
@@ -169,6 +171,10 @@ export function createSyncEngine(
         const operations = (await repository.listPending()).filter(
           (operation) =>
             !closedImportOperations.has(operation.operationType) &&
+            (operation.operationType !== captureProcessingValidationKind ||
+              (localCaptureProcessing &&
+                !!repository.claimOperation &&
+                !!repository.settleOperation)) &&
             (operation.operationType !== intelligenceWakeKind ||
               (!!repository.claimOperation && !!repository.settleOperation)) &&
             shouldProcess(operation) &&

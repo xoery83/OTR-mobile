@@ -68,21 +68,45 @@ export function CaptureProgress({
             )}
           </UiText>
           <UiText style={styles.secondary}>{t("capture.progress.noCloud")}</UiText>
-          <UiText style={styles.secondary}>{t("capture.processingUnavailable")}</UiText>
+          <UiText style={styles.secondary}>
+            {t(
+              model?.processingEvents?.length
+                ? "capture.processing.localValidation"
+                : "capture.processingUnavailable",
+            )}
+          </UiText>
+          {model?.allInputsAccepted &&
+          model.inputs?.every((item) =>
+            model.processingEvents?.some(
+              (event) => event.inputId === item.id && event.state === "INPUT_VALIDATED",
+            ),
+          ) ? (
+            <UiText style={styles.secondary}>
+              {t("capture.processing.waitingInterpreter")}
+            </UiText>
+          ) : null}
           <UiText style={styles.secondary}>
             {t("capture.progress.outcomesUnavailable")}
           </UiText>
           <UiText accessibilityRole="header" style={styles.copy}>
             {t("capture.progress.history")}
           </UiText>
-          <UiText style={styles.secondary}>{t("capture.progress.partialHistory")}</UiText>
+          <UiText style={styles.secondary}>
+            {t(
+              model?.processingEvents?.length
+                ? "capture.progress.localValidationHistory"
+                : "capture.progress.partialHistory",
+            )}
+          </UiText>
           {activity.recordedFacts.map((fact) => (
             <View key={fact.id} style={styles.fact}>
               <UiText style={styles.copy}>
                 {t(
                   fact.kind === "SUBMISSION_RECORDED"
                     ? "capture.progress.registered"
-                    : "capture.progress.acceptanceRecorded",
+                    : fact.kind === "INPUT_ACCEPTANCE_RECORDED"
+                      ? "capture.progress.acceptanceRecorded"
+                      : `capture.processing.${fact.kind}`,
                 )}
               </UiText>
               <UiText style={styles.secondary}>{captureActivityTime(fact.at)}</UiText>

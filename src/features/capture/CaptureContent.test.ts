@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
   scheme: "light" as "light" | "dark",
   buttons: [] as Record<string, any>[],
 }));
+vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
 vi.mock("expo-document-picker", () => ({ getDocumentAsync: vi.fn() }));
 vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: vi.fn() }));
 vi.mock("react-native", async () => {

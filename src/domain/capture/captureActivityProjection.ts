@@ -2,10 +2,39 @@ import type { CaptureJobReadModel } from "./captureSubmission";
 
 export type CaptureActivityFact = Readonly<{
   id: string;
-  kind: "SUBMISSION_RECORDED" | "INPUT_ACCEPTANCE_RECORDED";
+  kind:
+    | "SUBMISSION_RECORDED"
+    | "INPUT_ACCEPTANCE_RECORDED"
+    | "VALIDATION_QUEUED"
+    | "VALIDATION_STARTED"
+    | "VALIDATION_RETRY"
+    | "VALIDATION_FAILED"
+    | "INPUT_VALIDATED";
   at: string;
   inputId: string | null;
 }>;
+export function captureProcessingSummary(job: CaptureJobReadModel) {
+  const latest = new Map<
+    string,
+    NonNullable<CaptureJobReadModel["processingEvents"]>[number]
+  >();
+  for (const event of job.processingEvents ?? []) {
+    const previous = latest.get(event.inputId);
+    if (!previous || event.sequence > previous.sequence) latest.set(event.inputId, event);
+  }
+  const states = [...latest.values()].map((event) => event.state);
+  if (states.includes("FAILED")) return "VALIDATION_FAILED" as const;
+  if (states.includes("RETRYABLE")) return "VALIDATION_RETRY" as const;
+  if (states.includes("PROCESSING")) return "VALIDATION_STARTED" as const;
+  if (states.includes("PENDING")) return "VALIDATION_QUEUED" as const;
+  if (
+    job.allInputsAccepted &&
+    states.length === job.inputs?.length &&
+    states.every((state) => state === "INPUT_VALIDATED")
+  )
+    return "INPUT_VALIDATED" as const;
+  return null;
+}
 const instant = (at: string) => {
   const value = Date.parse(at);
   if (!Number.isFinite(value)) throw new Error("CAPTURE_ACTIVITY_INVALID_TIME");
@@ -41,6 +70,23 @@ export function projectCaptureActivity(
         at: item.acceptedAt,
         inputId: item.id,
       });
+  }
+  const states = {
+    PENDING: "VALIDATION_QUEUED",
+    PROCESSING: "VALIDATION_STARTED",
+    RETRYABLE: "VALIDATION_RETRY",
+    FAILED: "VALIDATION_FAILED",
+    INPUT_VALIDATED: "INPUT_VALIDATED",
+  } as const;
+  for (const event of job.processingEvents ?? []) {
+    if (!job.inputs.some((item) => item.id === event.inputId))
+      throw new Error("CAPTURE_ACTIVITY_PROCESSING_SCOPE");
+    facts.push({
+      id: `${batch.jobId}:processing:${event.sequence}`,
+      kind: states[event.state],
+      at: event.recordedAt,
+      inputId: event.inputId,
+    });
   }
   facts.forEach((fact) => instant(fact.at));
   facts.sort(

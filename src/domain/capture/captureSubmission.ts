@@ -122,11 +122,18 @@ export type CaptureJobReadModel = {
   allInputsAccepted: boolean;
   intakeSettled: boolean;
   processing: {
-    capability: "NOT_INSTALLED";
+    capability: "NOT_INSTALLED" | "LOCAL_VALIDATION";
     assessedInputs: null;
     totalInputs: null;
     currentPassComplete: null;
   };
+  processingEvents?: readonly {
+    inputId: string;
+    sequence: number;
+    state: "PENDING" | "PROCESSING" | "RETRYABLE" | "FAILED" | "INPUT_VALIDATED";
+    recordedAt: string;
+    attemptCount: number;
+  }[];
   results: { admittedCreates: 0; admittedUpdates: 0; currentAttention: null };
   availableActions: {
     canHide: true;

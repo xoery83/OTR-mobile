@@ -1,13 +1,21 @@
 import { createElement } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
-import { fixture } from "@/data/repositories/__fixtures__/captureBatchAssessment";
+import {
+  fixture,
+  now,
+  sha256,
+} from "@/data/repositories/__fixtures__/captureBatchAssessment";
+import { createCaptureProcessingRepository } from "@/data/repositories/captureProcessingRepository";
+import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
+import { randomUUID } from "node:crypto";
 import { CaptureProgress } from "./CaptureProgress";
 import { CaptureActivityList, captureActivityTime } from "./CaptureActivity";
 import { t, setUiLocale } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({ buttons: [] as any[] }));
+vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
 vi.mock("react-native", () => ({
   View: "div",
   Text: "span",
@@ -29,6 +37,44 @@ vi.mock("@/ui/controls", () => ({
 beforeEach(() => {
   state.buttons = [];
   setUiLocale("en");
+});
+it("shows retained C3 validation history in normal Job detail while interpretation stays unavailable", async () => {
+  const f = fixture();
+  const request = await f.submit();
+  const context = await captureAccountRequestContext("", f.getAccount);
+  const processing = createCaptureProcessingRepository(f.db, f.getAccount, {
+    now,
+    sha256,
+    newId: randomUUID,
+  });
+  await processing.schedule(context, request.jobId);
+  await processing.run(context);
+  const stored = await f.submissions.reopen(request.jobId);
+  const model = {
+    ...stored,
+    processing: { ...stored.processing, capability: "LOCAL_VALIDATION" as const },
+    processingEvents: await processing.events(context, request.jobId),
+  };
+  const html = renderToStaticMarkup(
+    createElement(CaptureProgress, {
+      model,
+      accountId: context.accountId,
+      busy: false,
+      reading: false,
+      error: false,
+      canRetry: false,
+      onRetry: vi.fn(),
+      onRecover: vi.fn(),
+      onOpenJob: vi.fn(),
+      onActivity: vi.fn(),
+      onNewImport: vi.fn(),
+    }),
+  );
+  expect(html).toContain(t("capture.processing.INPUT_VALIDATED"));
+  expect(html).toContain(t("capture.processing.waitingInterpreter"));
+  expect(html).toContain(t("capture.progress.localValidationHistory"));
+  expect(html).not.toContain(t("capture.progress.partialHistory"));
+  expect(model.availableActions.canReviewNow).toBe(false);
 });
 it("normal owning SQLite intake renders local acceptance, stored seconds and unavailable processing/outcomes without generic Add More", async () => {
   const f = fixture();

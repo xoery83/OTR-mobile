@@ -3,7 +3,33 @@ import { expect, it, vi } from "vitest";
 import { fixture } from "@/data/repositories/__fixtures__/captureBatchAssessment";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import type { CapturePayloadInput } from "@/data/files/capturePayloadReader";
-import { projectCaptureActivity } from "./captureActivityProjection";
+import {
+  captureProcessingSummary,
+  projectCaptureActivity,
+} from "./captureActivityProjection";
+
+it("keeps an earlier failed input visible when a later input validates", async () => {
+  const f = fixture();
+  const request = await f.submit(2);
+  const job = await f.submissions.reopen(request.jobId);
+  job.processingEvents = [
+    {
+      inputId: job.inputs[0].id,
+      sequence: 1,
+      state: "FAILED",
+      recordedAt: job.batch.createdAt,
+      attemptCount: 1,
+    },
+    {
+      inputId: job.inputs[1].id,
+      sequence: 2,
+      state: "INPUT_VALIDATED",
+      recordedAt: job.batch.createdAt,
+      attemptCount: 0,
+    },
+  ];
+  expect(captureProcessingSummary(job)).toBe("VALIDATION_FAILED");
+});
 
 it("normal registered intake is not saved or processing; accepted/failed current facts retain their true times without a invented timeline", async () => {
   const f = fixture();

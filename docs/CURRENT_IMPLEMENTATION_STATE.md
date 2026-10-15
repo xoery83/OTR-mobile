@@ -1,3 +1,20 @@
+# Capture C3 source integration — 2026-10-16 / NATIVE RUNTIME PENDING
+
+- Existing sync queue now supports owning local Capture input validation,
+  immutable SQLite66 processing events, account/lease fencing, foreground retry
+  and expiry recovery; no model Task, Provider or second queue.
+- Four independent Review findings repaired and delta Review PASS. Main57 focused
+  tests/typecheck/UI guard PASS. Eleven old CP14 schema57 assertions fail identically
+  on baseline65; not reported as suite PASS.
+- Default DEV config null; Release cannot auto-admit. Native QA will temporarily
+  select original actor/Batch/job via normal Capture deep link/reopen, then read
+  true persisted events. Validation is not Interpretation/Admission/BatchComplete.
+- Original A1A schema63 and four Capture-table preservation hashes recorded before
+  installation. Native staged17 source files with exact adapters; not yet applied.
+  Evidence `/private/tmp/otr-c3-native-runtime-20261016/source-plan.json`.
+- C2 remains Runtime PASS; cloud configuration parked. No C3 Backend/network/LLM
+  activation. Next: original A1A real Batch claim+event/readback/cold recovery.
+
 # Capture C2 — Runtime PASS / 2026-10-16 06:39 NZDT
 
 - Original A1A/actor3a44420f/sameBatch e046f37a: two real originals uploaded
@@ -1302,3 +1319,9 @@ Date: 2026-10-06 (Pacific/Auckland).
 - Infrastructure acceptance complete; stop further infrastructure work. Reader/
   Runtime gates remain CLOSED; authenticated Ledger smoke DEFERRED. Old-key deletion
   Owner-confirmed, authoritative verification PENDING. Dormant utilities untouched.
+
+## Capture C3 local validation candidate — 2026-10-16 / INDEPENDENT REVIEW PENDING
+
+- Isolated candidate from canonical `329e649`: SQLite66 append-only C3 event journal, one existing `sync_operations` operation per accepted C2 input, exact local Capture/manifest/hash pins, scoped claim/settle/lease recovery, and Account-fenced Activity reads. `COMPLETED` means only `INPUT_VALIDATED`; interpretation and Review remain unavailable.
+- Normal startup has a null C3 DEV config. A temporary explicit Native QA overlay may select Batch `e046f37a-61ac-444a-b05b-0a991d59e006`; normal Activity/reopen reads then schedule it and an Account-fenced foreground timer follows persisted retry/lease deadlines. No production automatic processing, C4 profile, Backend, provider, Source, or Trip assignment is added.
+- Local focused tests and guards are recorded in the C3 candidate handoff. Independent review and Owner Native runtime acceptance remain pending; canonical main and device are unchanged by this candidate.

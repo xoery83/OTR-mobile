@@ -1,4 +1,5 @@
 import { requiredDateDecisionsMigration } from "./migrations/requiredDateDecisions";
+import { captureProcessingMigration } from "./migrations/captureProcessing";
 import { captureCameraInputsMigration } from "./migrations/captureCameraInputs";
 import { capturePdfSourceHandoffMigration } from "./migrations/capturePdfSourceHandoff";
 import { coreOrdinaryOrderMigration } from "./migrations/coreOrdinaryOrder";
@@ -1713,4 +1714,5 @@ export const migrations: Migration[] = [
   updatesInboxMigration,
   captureCameraInputsMigration,
   requiredDateDecisionsMigration,
+  captureProcessingMigration,
 ];

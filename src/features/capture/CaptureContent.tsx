@@ -16,6 +16,7 @@ import { CaptureActivity, captureJobTitle } from "./CaptureActivity";
 import { CaptureProgress } from "./CaptureProgress";
 import { CaptureComposer } from "./CaptureComposer";
 import { createCaptureStaging, type CaptureStagingSnapshot } from "./captureStaging";
+import { subscribeCaptureProcessingActivity } from "@/data/operations/captureProcessingActivity";
 
 // Hosts remount on invocation-context change. Context is a prior, never assignment.
 export function CaptureContent({
@@ -56,6 +57,10 @@ export function CaptureContent({
   );
   const [duplicate, setDuplicate] = useState(false);
   const [model, setModel] = useState<CaptureJobReadModel | null>(null);
+  const modelRef = useRef<CaptureJobReadModel | null>(null);
+  useEffect(() => {
+    modelRef.current = model;
+  }, [model]);
   const [busy, setBusy] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [attempted, setAttempted] = useState(false);
@@ -121,6 +126,30 @@ export function CaptureContent({
   };
   useEffect(() => {
     active.current = true;
+    const unsubscribe = subscribeCaptureProcessingActivity((account, job) => {
+      const currentModel = modelRef.current;
+      if (
+        !currentModel ||
+        currentModel.batch.accountId !== account ||
+        currentModel.batch.jobId !== job ||
+        !active.current ||
+        !isCurrent()
+      )
+        return;
+      const epoch = readEpoch.current;
+      void import("@/data/operations/defaultCaptureSubmission")
+        .then((api) => api.reopenDefaultCaptureJob(job))
+        .then((next) => {
+          if (
+            active.current &&
+            isCurrent() &&
+            epoch === readEpoch.current &&
+            modelRef.current?.batch.jobId === job
+          )
+            setModel(next);
+        })
+        .catch(() => undefined);
+    });
     const detach = staging.attach();
     const reads = readEpoch;
     const setup = ++reads.current;
@@ -130,6 +159,7 @@ export function CaptureContent({
     return () => {
       active.current = false;
       ++reads.current;
+      unsubscribe();
       detach();
     };
     // Invocation is fixed by the host; changing it requires remount.
