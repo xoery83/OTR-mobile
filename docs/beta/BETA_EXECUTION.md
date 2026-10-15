@@ -19,13 +19,14 @@ and [::1]:8081 listener confirmed; host-namespace read-only approvals timed out
 before execution twice. Reviewed IPv6 loopback-only delta waits Owner approval;
 no actual new endpoint access or protected C2 operation. C3 local provenance
 checks confirmed existing guards (136 PASS/1 SQL-fixture skip), no code change.
-TYPE05 local history candidate is unintegrated/unregistered; superseded-Run
-review finding is under bounded repair. C3–C6 not passed or authorized by this C2 Gate. Reuse the C1/C2 evidence paths in current
+TYPE05 local decision saving/forward65 is code-integrated after independent
+review; superseded-Run rejection/history preservation and normal64→65 bootstrap
+pass. No device/Hosted schema install or field application/Review resolution. C3–C6 not passed or authorized by this C2 Gate. Reuse the C1/C2 evidence paths in current
 implementation state; no additional screenshot matrix or ordinary UI packet.
 
 # OTR Beta — EXECUTION
 
-**Camera local owning intake / 2026-10-15:** Source SQLite registry now includes forward64, with original51 unchanged. Explicit Camera IMAGE provenance, durable intake/recovery and post-permission host/account fences passed Main71/3, typecheck, touched lint, UI guard and formatting. This accepts the non-UI owning slice only: Camera caller223c/66206 remains a separate reviewed candidate; actual Camera SDK, permissions/hardware and device schema64 are unobserved. The retained Owner visual host remains exact36 on its previous registry63; it was not rebuilt/reloaded or migrated. No new data, Native or Hosted operation. TYPE05 migration65 remains unaccepted/unregistered, with no further work started.
+**Camera local owning intake / 2026-10-15:** Source SQLite registry now includes forward64, with original51 unchanged. Explicit Camera IMAGE provenance, durable intake/recovery and post-permission host/account fences passed Main71/3, typecheck, touched lint, UI guard and formatting. This accepts the non-UI owning slice only: Camera caller223c/66206 remains a separate reviewed candidate; actual Camera SDK, permissions/hardware and device schema64 are unobserved. The retained Owner visual host remains exact36 on its previous registry63; it was not rebuilt/reloaded or migrated. No new data, Native or Hosted operation. TYPE05 forward65 is separately registered in code; no device installation is claimed.
 
 **Latest bounded handoff / 2026-10-15 01:02 UTC:** Owner returned the Simulator for one finite observation. Candidate43cf/Core6fb actually loaded: new V2 Home has short Home/Day/Ledger/Updates labels and a translucent Shell; My Trips has one Start a Trip action and its last Past card is fully visible above the action island. Last-card tap, other routes' last-item reachability, native Glass availability and large text remain unverified/HOLD. Receipt `/private/tmp/otr-beta-caf-shell-native-source61-r3/receipt.json` (ee811b4e) preserves PNG/AX evidence. Exact36 candidate remains in `/private/tmp/otr-beta-trips-shell-r2-native-61`; Metro PID3554 returned `packager-status:running` from the authorized host namespace. Its future survival is unknown. Keyboard was OFF; font remained original36%; no Apply/Submit. Current consumed UI is this candidate, not production Main91; preimages remain beside the receipt. No further Native actions are scheduled.
 

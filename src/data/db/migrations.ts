@@ -1,3 +1,4 @@
+import { requiredDateDecisionsMigration } from "./migrations/requiredDateDecisions";
 import { captureCameraInputsMigration } from "./migrations/captureCameraInputs";
 import { capturePdfSourceHandoffMigration } from "./migrations/capturePdfSourceHandoff";
 import { coreOrdinaryOrderMigration } from "./migrations/coreOrdinaryOrder";
@@ -1711,4 +1712,5 @@ export const migrations: Migration[] = [
   tripLocalPhotosMigration,
   updatesInboxMigration,
   captureCameraInputsMigration,
+  requiredDateDecisionsMigration,
 ];

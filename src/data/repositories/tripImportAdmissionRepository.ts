@@ -1,3 +1,13 @@
+import {
+  requiredDateTargetSchema,
+  requiredDatePinsSchema,
+  requiredDateDecisionSchema,
+  requiredDateDecisionState,
+  type RequiredDateTarget,
+  type RequiredDateSavedAnswer,
+} from "@/domain/trip/sourceRequiredDateReview";
+import { createCaptureSubmissionTransactionStore } from "./captureSubmissionRepository";
+import { createCaptureSourceBindingTransactionStore } from "./captureSourceAdmissionRepository";
 import type * as SQLite from "expo-sqlite";
 import { z } from "zod";
 import {
@@ -22,6 +32,7 @@ import {
   type Json,
 } from "@/domain/trip/eventIntentJson";
 import {
+  flightEndpointSchema,
   flightServicesSchema,
   parseFlightCommandEnvelope,
 } from "@/domain/trip/flightAdmission";
@@ -42,11 +53,13 @@ export type ImportAdmissionDatabase = Pick<
 > &
   Partial<Pick<SQLite.SQLiteDatabase, "isInTransactionAsync">>;
 type Row = Record<string, unknown>;
-const receiptSchema = eventOperationReceiptSchema.omit({ projection: true }).extend({
-  intended_payload: z.string().max(32768),
-  result_fields: z.record(z.string(), z.unknown()),
-  confirmations: z.record(z.string(), z.unknown()),
-});
+const receiptSchema = eventOperationReceiptSchema
+  .omit({ projection: true })
+  .extend({
+    intended_payload: z.string().max(32768),
+    result_fields: z.record(z.string(), z.unknown()),
+    confirmations: z.record(z.string(), z.unknown()),
+  });
 const json = (v: unknown) => canonicalEventJson(v as Json);
 function integrity(): never {
   throw new Error("IMPORT_ADMISSION_INTEGRITY");
@@ -79,7 +92,10 @@ export function createTripImportAdmissionRepository(
       return result;
     }, afterRelease);
   }
-  async function closureEvidence(c: AccountRequestContext, candidateId: string) {
+  async function closureEvidence(
+    c: AccountRequestContext,
+    candidateId: string,
+  ) {
     const candidate = await database.getFirstAsync<Row>(
       "SELECT p.*,r.generation,r.input_sha256,r.scope_source_ids,r.state AS run_state,r.retention_state AS run_retention FROM trip_source_candidates p JOIN trip_source_runs r ON r.cache_account_id=p.cache_account_id AND r.id=p.run_id WHERE p.cache_account_id=? AND p.id=? AND r.trip_id=? AND r.actor_account_id=?",
       c.accountId,
@@ -142,6 +158,177 @@ export function createTripImportAdmissionRepository(
         })),
     };
   }
+  // TYPE05-only; caller owns the existing Source transaction and Account gate.
+  async function requiredDate(
+    c: AccountRequestContext,
+    target: RequiredDateTarget,
+  ) {
+    const evidence = await closureEvidence(c, target.candidateId);
+    const candidate = evidence.candidate;
+    const run = await database.getFirstAsync<Row>(
+      "SELECT registration_state,superseded_by FROM trip_source_runs WHERE cache_account_id=? AND id=? AND trip_id=? AND actor_account_id=?",
+      c.accountId,
+      candidate.run_id as string,
+      c.tripId,
+      c.accountId,
+    );
+    if (
+      !run ||
+      run.registration_state !== "REGISTERED" ||
+      run.superseded_by !== null
+    )
+      throw new Error("REQUIRED_DATE_UNAVAILABLE");
+    if (
+      candidate.registration_state !== "REGISTERED" ||
+      candidate.candidate_kind !== "TRANSPORT" ||
+      candidate.proposal_version !== 1
+    )
+      throw new Error("REQUIRED_DATE_UNAVAILABLE");
+    const proposal = parseEventJson(candidate.proposal as string) as {
+      fields?: Record<string, { proposed_value: unknown; input_ids: unknown }>;
+    };
+    if (
+      (await importDigest(
+        "otr-source-candidate-v1",
+        proposal as Json,
+        sha256,
+      )) !== candidate.proposal_sha256
+    )
+      integrity();
+    const fieldInputs = z
+      .array(z.uuid())
+      .min(1)
+      .max(64)
+      .safeParse(proposal.fields?.origin?.input_ids);
+    if (
+      !fieldInputs.success ||
+      fieldInputs.data.some(
+        (id) => !evidence.inputs.some((row) => row.id === id),
+      )
+    )
+      throw new Error("REQUIRED_DATE_UNAVAILABLE");
+    const origin = flightEndpointSchema.safeParse(
+      proposal.fields?.origin?.proposed_value,
+    );
+    if (!origin.success || origin.data.time.local_date !== null)
+      throw new Error("REQUIRED_DATE_UNAVAILABLE");
+    const job = await createCaptureSubmissionTransactionStore(database, {
+      sha256,
+      now,
+      newId,
+    }).load(c, target.jobId);
+    const bindings = [];
+    const sourceStore = createCaptureSourceBindingTransactionStore(
+      database,
+      getAccountId,
+      sha256,
+    );
+    for (const input of evidence.inputs) {
+      const manifest = await database.getFirstAsync<Row>(
+        "SELECT * FROM trip_source_revisions WHERE cache_account_id=? AND source_id=? AND material_revision=?",
+        c.accountId,
+        input.source_id as string,
+        input.material_revision as number,
+      );
+      if (!manifest) throw new Error("INPUT_STALE");
+      const roots = z
+        .array(z.uuid())
+        .min(1)
+        .max(64)
+        .parse(parseEventJson(manifest.original_representation_ids as string));
+      const choices = await database.getAllAsync<Row>(
+        "SELECT * FROM local_capture_source_bindings WHERE account_id=? AND trip_id=? AND source_id=? AND state='ADMITTED'",
+        c.accountId,
+        c.tripId,
+        input.source_id as string,
+      );
+      const matched = choices.filter(
+        (b) =>
+          job.inputs.some(
+            (i) => i.state === "ACCEPTED" && i.captureId === b.capture_id,
+          ) && roots.includes(b.representation_id as string),
+      );
+      if (matched.length !== 1) throw new Error("REQUIRED_DATE_UNAVAILABLE");
+      bindings.push(
+        json({
+          acceptedInput: job.inputs.find(
+            (i) =>
+              i.state === "ACCEPTED" && i.captureId === matched[0].capture_id,
+          ),
+          sourceBinding: await sourceStore.assertCurrent(
+            c,
+            matched[0].id as string,
+            {
+              sourceId: input.source_id as string,
+              materialRevision: input.material_revision as number,
+              originalIds: roots,
+            },
+          ),
+        }),
+      );
+    }
+    if (!bindings.length) throw new Error("REQUIRED_DATE_UNAVAILABLE");
+    return requiredDatePinsSchema.parse({
+      batchId: job.batch.batchId,
+      runId: candidate.run_id,
+      runGeneration: candidate.generation,
+      candidateSha256: candidate.proposal_sha256,
+      inputSha256: candidate.input_sha256,
+      inputs: evidence.inputs.map((row) =>
+        flightInputSchema.parse(
+          Object.fromEntries(
+            Object.keys(flightInputSchema.shape).map((k) => [
+              k,
+              k === "historical_selection" ? row[k] === 1 : row[k],
+            ]),
+          ),
+        ),
+      ),
+      bindingSha256: await importDigest(
+        "otr-required-date-evidence-v1",
+        { candidate, claims: evidence.claims, bindings } as Json,
+        sha256,
+      ),
+    });
+  }
+  async function dateHistory(
+    c: AccountRequestContext,
+    target: RequiredDateTarget,
+    batchId: string,
+  ) {
+    const rows = await database.getAllAsync<Row>(
+      "SELECT * FROM source_required_date_decisions WHERE account_id=? AND trip_id=? AND batch_id=? AND job_id=? AND candidate_id=? AND field_key='ORIGIN.local_date' ORDER BY decision_version",
+      c.accountId,
+      c.tripId,
+      batchId,
+      target.jobId,
+      target.candidateId,
+    );
+    return rows.map((r, index): RequiredDateSavedAnswer => {
+      const parsed = requiredDateDecisionSchema.parse(
+        parseEventJson(r.request_json as string),
+      );
+      if (
+        r.decision_version !== index + 1 ||
+        parsed.expectedVersion !== index ||
+        r.provenance !== "USER_ENTERED" ||
+        r.decision_id !== parsed.decisionId ||
+        r.local_date !== parsed.date ||
+        json(parsed.target) !== json(target) ||
+        json(parsed.pins) !== r.pins_json ||
+        parsed.pins.batchId !== batchId
+      )
+        integrity();
+      return {
+        decisionId: parsed.decisionId,
+        version: index + 1,
+        date: parsed.date,
+        recordedAt: z.iso.datetime({ offset: true }).parse(r.recorded_at),
+        clock: "DEVICE_WALL",
+        pins: parsed.pins,
+      };
+    });
+  }
   async function trip(c: AccountRequestContext) {
     if (
       !(await database.getFirstAsync(
@@ -153,7 +340,10 @@ export function createTripImportAdmissionRepository(
       throw new Error("IMPORT_TRIP_ACCESS");
   }
   async function admitTransactionStore(c: AccountRequestContext) {
-    if (!database.isInTransactionAsync || !(await database.isInTransactionAsync()))
+    if (
+      !database.isInTransactionAsync ||
+      !(await database.isInTransactionAsync())
+    )
       throw new Error("IMPORT_TRANSACTION_REQUIRED");
     await assertAccountRequestContext(c, getAccountId);
     await trip(c);
@@ -261,12 +451,16 @@ export function createTripImportAdmissionRepository(
         .max(16)
         .parse(JSON.parse(r.parent_ids as string));
       if (parents.length === 0 && !originals.includes(id)) integrity();
-      for (const parent of parents) await ancestry(parent, new Set([...path, id]));
+      for (const parent of parents)
+        await ancestry(parent, new Set([...path, id]));
     }
     await ancestry(p.representation_id, new Set());
   }
   async function related(c: AccountRequestContext, candidate: string) {
-    const rows = await database.getAllAsync<{ id: string | null; run_id: string }>(
+    const rows = await database.getAllAsync<{
+      id: string | null;
+      run_id: string;
+    }>(
       `WITH RECURSIVE ancestors(id) AS (SELECT run_id FROM trip_source_candidates WHERE cache_account_id=? AND id=? UNION SELECT p.parent_run_id FROM trip_source_run_predecessors p JOIN ancestors a ON p.child_run_id=a.id WHERE p.cache_account_id=?), related(id) AS (SELECT id FROM ancestors UNION SELECT p.child_run_id FROM trip_source_run_predecessors p JOIN related a ON p.parent_run_id=a.id WHERE p.cache_account_id=?) SELECT c.id,r.id AS run_id FROM related r LEFT JOIN trip_source_candidates c ON r.id=c.run_id AND c.cache_account_id=?`,
       c.accountId,
       candidate,
@@ -308,7 +502,10 @@ export function createTripImportAdmissionRepository(
           slot.base_revision,
         );
         if (receipt) {
-          const cached = parseEventJson(receipt.receipt_json as string, 262144) as {
+          const cached = parseEventJson(
+            receipt.receipt_json as string,
+            262144,
+          ) as {
             confirmations: Record<string, { ref?: string }>;
           };
           ref = cached.confirmations[field]?.ref;
@@ -335,14 +532,18 @@ export function createTripImportAdmissionRepository(
           value = {
             value,
             precision:
-              row[leaf === "local_time" ? "clock_precision" : "source_instant_precision"],
+              row[
+                leaf === "local_time"
+                  ? "clock_precision"
+                  : "source_instant_precision"
+              ],
           };
         if (row)
           for (const column of ["provenance_refs", "spatial_provenance_refs"]) {
             if (typeof row[column] === "string")
-              ref ??= (parseEventJson(row[column] as string) as Record<string, Json>)[
-                leaf
-              ];
+              ref ??= (
+                parseEventJson(row[column] as string) as Record<string, Json>
+              )[leaf];
           }
       }
       if (
@@ -350,7 +551,9 @@ export function createTripImportAdmissionRepository(
         ref !== proof.ref ||
         value === null ||
         value === undefined ||
-        (typeof value === "object" && "value" in value && value.value === null) ||
+        (typeof value === "object" &&
+          "value" in value &&
+          value.value === null) ||
         json(value) !== json(actual.leaves[field])
       )
         integrity();
@@ -359,7 +562,10 @@ export function createTripImportAdmissionRepository(
   async function review(
     c: AccountRequestContext,
     intent: FlightConfirmationIntent,
-    command?: { slotId: string; envelope: ReturnType<typeof parseFlightCommandEnvelope> },
+    command?: {
+      slotId: string;
+      envelope: ReturnType<typeof parseFlightCommandEnvelope>;
+    },
   ) {
     for (const p of intent.inputs) await pin(c, p);
     for (const s of intent.slots) {
@@ -401,8 +607,11 @@ export function createTripImportAdmissionRepository(
         } else {
           const container = support.candidate_field_key!;
           const extracted = proposal.fields[container];
-          if (support.candidate_id !== s.candidate_id || !extracted) integrity();
-          const selected = intent.inputs.filter((p) => support.input_ids.includes(p.id));
+          if (support.candidate_id !== s.candidate_id || !extracted)
+            integrity();
+          const selected = intent.inputs.filter((p) =>
+            support.input_ids.includes(p.id),
+          );
           const original = await database.getAllAsync<Row>(
             "SELECT * FROM trip_source_inputs WHERE cache_account_id=? AND run_id=?",
             c.accountId,
@@ -428,7 +637,8 @@ export function createTripImportAdmissionRepository(
             integrity();
           if (
             support.origin === "EDITED_EXTRACTED" &&
-            json(support.edited_value) !== json(s.reviewed_payload.edits[container])
+            json(support.edited_value) !==
+              json(s.reviewed_payload.edits[container])
           )
             integrity();
         }
@@ -471,7 +681,9 @@ export function createTripImportAdmissionRepository(
           throw new Error("UNRESOLVED_MATCH");
       }
       for (const claim of claims.filter(
-        (p) => p.slot_id !== s.slot_id && candidates.includes(p.candidate_id as string),
+        (p) =>
+          p.slot_id !== s.slot_id &&
+          candidates.includes(p.candidate_id as string),
       )) {
         const mapping = intent.lineage_dispositions.find(
           (p) =>
@@ -479,12 +691,17 @@ export function createTripImportAdmissionRepository(
             p.ancestor_candidate_id === claim.candidate_id &&
             p.ancestor_slot_key === claim.slot_key,
         );
-        if (mapping?.relation === "DISTINCT_OUTPUT" && s.slot_key !== claim.slot_key)
+        if (
+          mapping?.relation === "DISTINCT_OUTPUT" &&
+          s.slot_key !== claim.slot_key
+        )
           continue;
         if (claim.candidate_id !== s.candidate_id && !mapping)
           throw new Error("UNRESOLVED_MATCH");
-        if (claim.receipt_sha256 === null) throw new Error("PREDECESSOR_OUTCOME_UNKNOWN");
-        if (s.disposition === "CREATE") throw new Error("KNOWN_PREDECESSOR_TARGET");
+        if (claim.receipt_sha256 === null)
+          throw new Error("PREDECESSOR_OUTCOME_UNKNOWN");
+        if (s.disposition === "CREATE")
+          throw new Error("KNOWN_PREDECESSOR_TARGET");
         if (claim.result_target_id !== s.intended_target_id)
           throw new Error("INCOMPATIBLE_MERGE_TARGETS");
       }
@@ -524,18 +741,32 @@ export function createTripImportAdmissionRepository(
         integrity();
     }
   }
-  async function insert(table: string, row: Record<string, string | number | null>) {
+  async function insert(
+    table: string,
+    row: Record<string, string | number | null>,
+  ) {
     const columns = Object.keys(row);
     await database.runAsync(
       `INSERT INTO ${table}(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`,
       ...Object.values(row),
     );
   }
-  async function applyCatalogsInTransaction(c: AccountRequestContext, raw: string) {
-    const snapshot = tripImportSnapshotSchema.parse(parseEventJson(raw, 4194304));
-    if (snapshot.trip_id !== c.tripId || snapshot.actor_account_id !== c.accountId)
+  async function applyCatalogsInTransaction(
+    c: AccountRequestContext,
+    raw: string,
+  ) {
+    const snapshot = tripImportSnapshotSchema.parse(
+      parseEventJson(raw, 4194304),
+    );
+    if (
+      snapshot.trip_id !== c.tripId ||
+      snapshot.actor_account_id !== c.accountId
+    )
       integrity();
-    const catalogs = snapshot as unknown as Record<TripImportCatalogName, Row[]>;
+    const catalogs = snapshot as unknown as Record<
+      TripImportCatalogName,
+      Row[]
+    >;
     await validateImportSnapshot(c.accountId, c.tripId, catalogs, sha256);
     await trip(c);
     // Deferred Source/manifest and C parent FKs are checked at transaction commit.
@@ -556,7 +787,9 @@ export function createTripImportAdmissionRepository(
           registered: previous.registration_state === "REGISTERED",
         });
     }
-    for (const table of Object.keys(importCatalogKeys) as TripImportCatalogName[]) {
+    for (const table of Object.keys(
+      importCatalogKeys,
+    ) as TripImportCatalogName[]) {
       for (const observed of catalogs[table]) {
         const values: Record<string, string | number | null> = {
           cache_account_id: c.accountId,
@@ -572,7 +805,9 @@ export function createTripImportAdmissionRepository(
                   ? json(value)
                   : (value as string | number);
         const keys = importCatalogKeys[table];
-        const where = ["cache_account_id", ...keys].map((k) => `${k}=?`).join(" AND ");
+        const where = ["cache_account_id", ...keys]
+          .map((k) => `${k}=?`)
+          .join(" AND ");
         const params = [c.accountId, ...keys.map((k) => values[k])];
         const old = await database.getFirstAsync<Row>(
           `SELECT * FROM ${table} WHERE ${where}`,
@@ -602,12 +837,18 @@ export function createTripImportAdmissionRepository(
           await insert(table, values);
           continue;
         }
-        if (old.retention_state !== "RETAINED" && observed.retention_state === "RETAINED")
+        if (
+          old.retention_state !== "RETAINED" &&
+          observed.retention_state === "RETAINED"
+        )
           integrity();
         if (
           table === "trip_source_candidates" &&
           old.proposal !== values.proposal &&
-          !(observed.retention_state === "IDENTITY_ONLY" && values.proposal === null)
+          !(
+            observed.retention_state === "IDENTITY_ONLY" &&
+            values.proposal === null
+          )
         )
           integrity();
         if (table === "trip_source_representations") {
@@ -644,7 +885,8 @@ export function createTripImportAdmissionRepository(
             old[key] !== value &&
             !(
               ((table === "trip_sources" && key === "acquisition_sha256") ||
-                (table === "trip_source_revisions" && key === "capture_sha256")) &&
+                (table === "trip_source_revisions" &&
+                  key === "capture_sha256")) &&
               observed.retention_state === "IDENTITY_ONLY" &&
               value === null
             )
@@ -668,7 +910,10 @@ export function createTripImportAdmissionRepository(
             (p) => p.id === observed.confirmation_id,
           )!;
           const previous = parentRevisions.get(observed.confirmation_id);
-          if (previous && Number(parent.row_revision) < Number(previous.revision))
+          if (
+            previous &&
+            Number(parent.row_revision) < Number(previous.revision)
+          )
             continue;
           if (
             previous?.registered &&
@@ -677,7 +922,8 @@ export function createTripImportAdmissionRepository(
             Object.keys(values).some((k) => old[k] !== values[k])
           )
             throw new Error("IMPORT_OBSERVATION_REVISION_CONFLICT");
-          if (old.dispatched_at !== null && values.dispatched_at === null) continue;
+          if (old.dispatched_at !== null && values.dispatched_at === null)
+            continue;
           for (const k of [
             "receipt_sha256",
             "result_target_id",
@@ -729,6 +975,70 @@ export function createTripImportAdmissionRepository(
     async applyCatalogs(c: AccountRequestContext, raw: string) {
       return scoped(c, () => applyCatalogsInTransaction(c, raw));
     },
+    async readRequiredDate(c: AccountRequestContext, raw: RequiredDateTarget) {
+      const target = requiredDateTargetSchema.parse(raw);
+      return scoped(c, async () => {
+        const pins = await requiredDate(c, target),
+          history = await dateHistory(c, target, pins.batchId);
+        return {
+          target,
+          pins,
+          history,
+          state: requiredDateDecisionState(pins, history.at(-1) ?? null),
+        };
+      });
+    },
+    async saveRequiredDate(c: AccountRequestContext, raw: unknown) {
+      const decision = requiredDateDecisionSchema.parse(raw);
+      return scoped(c, async () => {
+        const pins = await requiredDate(c, decision.target);
+        if (json(pins) !== json(decision.pins)) throw new Error("INPUT_STALE");
+        const history = await dateHistory(c, decision.target, pins.batchId);
+        const replay = await database.getFirstAsync<Row>(
+          "SELECT request_json FROM source_required_date_decisions WHERE account_id=? AND decision_id=?",
+          c.accountId,
+          decision.decisionId,
+        );
+        if (replay) {
+          if (replay.request_json !== json(decision))
+            throw new Error("IMPORT_CAS_CONFLICT");
+          const saved = history.find(
+            (h) => h.decisionId === decision.decisionId,
+          );
+          if (!saved) integrity();
+          return {
+            answer: saved!,
+            state: requiredDateDecisionState(pins, saved!),
+          };
+        }
+        if (history.length !== decision.expectedVersion)
+          throw new Error("IMPORT_CAS_CONFLICT");
+        const recordedAt = z.iso.datetime({ offset: true }).parse(now());
+        await database.runAsync(
+          "INSERT INTO source_required_date_decisions(account_id,trip_id,batch_id,job_id,candidate_id,field_key,decision_id,decision_version,provenance,local_date,pins_json,request_json,recorded_at) VALUES(?,?,?,?,?,'ORIGIN.local_date',?,?,'USER_ENTERED',?,?,?,?)",
+          c.accountId,
+          c.tripId,
+          pins.batchId,
+          decision.target.jobId,
+          decision.target.candidateId,
+          decision.decisionId,
+          history.length + 1,
+          decision.date,
+          json(pins),
+          json(decision),
+          recordedAt,
+        );
+        const answer = {
+          decisionId: decision.decisionId,
+          version: history.length + 1,
+          date: decision.date,
+          recordedAt,
+          clock: "DEVICE_WALL" as const,
+          pins,
+        };
+        return { answer, state: requiredDateDecisionState(pins, answer) };
+      });
+    },
     async readDraft(c: AccountRequestContext, draftKey: string) {
       return scoped(c, async () => {
         const row = await database.getFirstAsync<Row>(
@@ -755,7 +1065,9 @@ export function createTripImportAdmissionRepository(
           runId: row.run_id as string,
           inputHash: row.observed_input_sha256 as string,
           revision: row.row_revision as number,
-          review: flightReviewSchema.parse(parseEventJson(row.review_payload as string)),
+          review: flightReviewSchema.parse(
+            parseEventJson(row.review_payload as string),
+          ),
         };
       });
     },
@@ -845,7 +1157,11 @@ export function createTripImportAdmissionRepository(
           c.tripId,
           c.accountId,
         );
-        if (!run || run.input_sha256 !== inputHash || run.retention_state !== "RETAINED")
+        if (
+          !run ||
+          run.input_sha256 !== inputHash ||
+          run.retention_state !== "RETAINED"
+        )
           throw new Error("INPUT_STALE");
         if (expectedRevision === null)
           await database.runAsync(
@@ -935,7 +1251,9 @@ export function createTripImportAdmissionRepository(
         for (const s of intent.slots)
           await insert("trip_source_output_slots", {
             ...s,
-            reviewed_payload: s.reviewed_payload ? json(s.reviewed_payload) : null,
+            reviewed_payload: s.reviewed_payload
+              ? json(s.reviewed_payload)
+              : null,
             support_payload: json(s.support_payload),
             cache_account_id: c.accountId,
             registration_state: "PENDING",
@@ -1025,10 +1343,14 @@ export function createTripImportAdmissionRepository(
           confirmationId,
         );
         if (!prepared) throw new Error("IMPORT_REVIEW_INTENT_UNAVAILABLE");
-        await review(c, parseFlightConfirmation(prepared.payload_json as string), {
-          slotId,
-          envelope,
-        });
+        await review(
+          c,
+          parseFlightConfirmation(prepared.payload_json as string),
+          {
+            slotId,
+            envelope,
+          },
+        );
         changes(
           await database.runAsync(
             "UPDATE trip_source_confirmations SET row_revision=row_revision+1,state='PROCESSING',registration_state='PENDING' WHERE cache_account_id=? AND id=? AND row_revision=?",
@@ -1059,7 +1381,9 @@ export function createTripImportAdmissionRepository(
       const parsed = parseEventJson(raw, 262144);
       const receipt = receiptSchema.parse(parsed);
       const { receipt_sha256, ...bound } = receipt;
-      if (receipt_sha256 !== (await sha256(new TextEncoder().encode(json(bound)))))
+      if (
+        receipt_sha256 !== (await sha256(new TextEncoder().encode(json(bound))))
+      )
         integrity();
       const intent = parseEventJson(receipt.intended_payload);
       if (
@@ -1091,10 +1415,13 @@ export function createTripImportAdmissionRepository(
           receipt.target_event_id !== s.intended_target_id ||
           receipt.base_semantic_revision !== s.base_revision ||
           receipt.command !==
-            (s.disposition === "CREATE" ? "CREATE_TRANSPORT" : "UPDATE_TRANSPORT")
+            (s.disposition === "CREATE"
+              ? "CREATE_TRANSPORT"
+              : "UPDATE_TRANSPORT")
         )
           integrity();
-        const success = receipt.outcome === "APPLIED" || receipt.outcome === "NO_CHANGE";
+        const success =
+          receipt.outcome === "APPLIED" || receipt.outcome === "NO_CHANGE";
         if (
           success
             ? receipt.result_event_id !== s.intended_target_id ||
