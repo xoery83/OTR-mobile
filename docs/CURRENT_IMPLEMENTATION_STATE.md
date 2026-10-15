@@ -1,16 +1,24 @@
-# Isolated Capture C2 custody candidate — 2026-10-15
+# Capture Import checkpoint — 2026-10-15
 
-Candidate only, based on Main `326000be`; not integrated or deployed. Explicit
-Account/Input-bound binary PUT/GET reuses accepted CP11/SQLite51 identities.
-One opaque PDF/JPEG/PNG adapter preserves exact bytes in existing DEV Source
-Storage (`trip-source-material`, maximum4MiB); existing Linux anchored custody
-retains only immutable Capture association metadata. Default startup has no
-injected port. No Source/Trip admission, schema/role, scheduler or Provider change.
-Focused22 tests/typecheck/touched lint pass;14 existing Linux-only cases skip on
-macOS. An offline actual Linux anchored self-check passes replay/collision,
-Account/path isolation, cold reopen, ACK loss and association-failure recovery.
-Real Storage/Auth/Native/upload/provisioning/deployment remain unperformed.
-Independent review and Coordinator integration are next; do not activate runtime.
+- C1 PARTIAL: one real Native Batch accepted two Owner originals. Normal Activity
+  reopen, explicit App cold terminate/launch and cold persisted Input/payload
+  identities, byte counts and SHA-256 all passed. Cold Native Activity reopen
+  remains NOT OBSERVED after the DeviceHub interruption; no duplicate Submit.
+  Evidence: `/private/tmp/otr-c1-native-intake-20261015/after-cold-readonly.json`.
+  Consumed App was retained Main91/UI36, not newly integrated Main code.
+- C2 code integrated at `d96c898`: explicit Account/Input-bound original PUT/GET,
+  reusing CP11/SQLite51 identities. PDF/JPEG/PNG bytes use existing Source Storage
+  (`trip-source-material`, maximum 4 MiB); anchored Linux custody stores only
+  immutable association metadata. Default startup has no injected port.
+  Independent Review PASS; focused 22 tests and shared request-boundary 16 tests
+  PASS; author typecheck/lint/UI guard/build PASS. Fourteen Linux-only Vitest
+  cases skipped on macOS; independent offline Linux anchored self-check PASS.
+  Review: `/private/tmp/otr-c2-custody-review-20261015/independent-review.md`.
+- C2 Runtime NOT VERIFIED: no real upload/Auth/Storage/provisioning/deployment.
+  Next: qualify existing DEV composition and protected runtime authorization,
+  then same-Batch two-original upload/readback; do not replay Native Submit.
+  C3–C6 remain unverified for this Batch. No Source/Trip admission, schema/role,
+  scheduler or Provider change. Runtime stays CLOSED; Experience owns UI.
 
 # Beta Coordinator — current engineering checkpoint / 2026-10-15
 

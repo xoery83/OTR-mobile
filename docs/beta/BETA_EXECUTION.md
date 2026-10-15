@@ -1,3 +1,14 @@
+## Capture Import staged checkpoint — 2026-10-15
+
+C1 PARTIAL: same real Native Batch accepted two originals; bytes/SHA and normal
+Activity reopen passed, cold persistent identities passed; cold Native Activity
+reopen NOT OBSERVED. Preserve Batch `e046f37a-61ac-444a-b05b-0a991d59e006`;
+no new Submit. C2 code `d96c898` independently reviewed and integrated; default
+CLOSED. Real DEV Source Storage upload/readback and Runtime injection remain
+unverified. Next: bounded existing DEV composition/authorization qualification,
+then same two Inputs; C3–C6 not passed. Reuse the C1/C2 evidence paths in current
+implementation state; no additional screenshot matrix or ordinary UI packet.
+
 # OTR Beta — EXECUTION
 
 **Camera local owning intake / 2026-10-15:** Source SQLite registry now includes forward64, with original51 unchanged. Explicit Camera IMAGE provenance, durable intake/recovery and post-permission host/account fences passed Main71/3, typecheck, touched lint, UI guard and formatting. This accepts the non-UI owning slice only: Camera caller223c/66206 remains a separate reviewed candidate; actual Camera SDK, permissions/hardware and device schema64 are unobserved. The retained Owner visual host remains exact36 on its previous registry63; it was not rebuilt/reloaded or migrated. No new data, Native or Hosted operation. TYPE05 migration65 remains unaccepted/unregistered, with no further work started.
