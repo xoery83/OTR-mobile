@@ -1,3 +1,35 @@
+# C2 PDF Native readback / resumable remainder — 2026-10-16
+
+- Owner GET-only06:27: Backend PDF200 thenJPEG404, proving sequential Native
+  PDF readback/hash completed before missingJPEG. PDF2943032bytes/SHA dd8c0250…;
+  no JPEG association. Receipt `/private/tmp/otr-c2-window-20261016/pdf-native-readback.json`.
+- Minimal runner recovery independently reviewed: read/verify each Input first;
+  PUT only strictnull, then authorized readback. Existing PDF is not reuploaded.
+  Empty/hash-bad/network/permission failures stop. GET-only stays zeroPUT.
+- Nine focused tests PASS; Native remainder still pending, C2 Runtime NOT VERIFIED.
+  Existing same-target window ends2026-10-16 07:11:57NZDT; no extension.
+
+# C2 partial cloud custody — 2026-10-16 06:21 NZDT
+
+- Owner same-Batch PUT attempt: Backend200/request18fd736c,9931ms.
+  PDF association matches exact approved binding (2943032bytes/SHA dd8c0250…);
+  existing backend code publishes association only after Storage PUT/readback/hash.
+  JPEG has no association. Native returnedUNKNOWN; Native readback not verified.
+- Do not repeat whole-Batch PUT. Preserve successful PDF and diagnose Native
+  response/read stage. No C2 Runtime PASS; window still ends07:11:57NZDT.
+- Evidence `/private/tmp/otr-c2-window-20261016/partial-put-receipt.json`.
+
+# C2 Owner-approved window — 2026-10-16
+
+- Same A1A/actor/Batch/two inputs restored to `2026-10-15T18:11:57Z`
+  (2026-10-16 07:11:57 NZDT). No automatic extension.
+- Same012 image/container/three mounts/project and exact bindings verified;
+  only metadata expiry changed, same container restarted to load config, health200.
+- Original Metro3554/source hashes/public-config hash preserved. Native expiry
+  updated; original App normally restarted, Capture route opened. No agent PUT/GET.
+- Owner next action: same two-input Batch GET-only; Runtime NOT VERIFIED.
+  Evidence `/private/tmp/otr-c2-window-20261016/preparation.json`.
+
 # Experience VQA presentation checkpoint — 2026-10-15
 
 - Independent branch `experience/vqa-mt-cap-pre-01`, main baseline `1561d272`; prior MT predecessor `4282466`. Coordinator adopted both with C2 preserved.

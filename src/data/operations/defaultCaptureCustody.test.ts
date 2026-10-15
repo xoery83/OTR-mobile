@@ -55,10 +55,15 @@ beforeEach(() => {
   });
 });
 it("preflights both existing Input bindings, then uses normal put/recover and returns no payload", async () => {
+  recover
+    .mockResolvedValueOnce(null)
+    .mockResolvedValueOnce(bytes)
+    .mockResolvedValueOnce(null)
+    .mockResolvedValueOnce(bytes);
   const receipt = await runDefaultCaptureCustodyBatch(batch);
   expect(binding).toHaveBeenCalledTimes(2);
   expect(put).toHaveBeenCalledTimes(2);
-  expect(recover).toHaveBeenCalledTimes(2);
+  expect(recover).toHaveBeenCalledTimes(4);
   expect(binding.mock.invocationCallOrder[1]).toBeLessThan(
     put.mock.invocationCallOrder[0],
   );
@@ -87,12 +92,13 @@ it("changed second original blocks all writes; foreign account never constructs 
   expect(createCaptureCustodyOperation).toHaveBeenCalledTimes(1);
 });
 it("lost ACK does not invent another Input or continue a sibling", async () => {
+  recover.mockResolvedValueOnce(null);
   put.mockRejectedValueOnce(Error("synthetic unknown ACK"));
   await expect(runDefaultCaptureCustodyBatch(batch)).rejects.toThrow(
     "unknown ACK",
   );
   expect(put).toHaveBeenCalledTimes(1);
-  expect(recover).not.toHaveBeenCalled();
+  expect(recover).toHaveBeenCalledTimes(1);
 });
 
 it("cold verification uses both exact normal bindings and authorized GET only, never PUT", async () => {
@@ -119,6 +125,7 @@ it("host/expiry invalidation after preflight prevents every PUT; after first ACK
   binding.mockImplementation(async (_c, _j, id) =>
     id === one.inputId ? one : second,
   );
+  recover.mockResolvedValueOnce(null);
   put.mockImplementationOnce(async () => {
     live = false;
     return bytes;
@@ -127,7 +134,7 @@ it("host/expiry invalidation after preflight prevents every PUT; after first ACK
     "retired",
   );
   expect(put).toHaveBeenCalledTimes(1);
-  expect(recover).not.toHaveBeenCalled();
+  expect(recover).toHaveBeenCalledTimes(1);
 });
 
 it("GET-only missing original reports finite404 without PUT", async () => {
@@ -141,4 +148,41 @@ it("GET-only missing original reports finite404 without PUT", async () => {
   });
   expect(put).not.toHaveBeenCalled();
   expect(recover).toHaveBeenCalledTimes(1);
+});
+
+it("resumes a partially stored batch without repeating the first Input PUT", async () => {
+  recover
+    .mockResolvedValueOnce(bytes)
+    .mockResolvedValueOnce(null)
+    .mockResolvedValueOnce(bytes);
+  const receipt = await runDefaultCaptureCustodyBatch(batch);
+  expect(receipt.inputs).toHaveLength(2);
+  expect(put).toHaveBeenCalledTimes(1);
+  expect(put).toHaveBeenCalledWith(
+    expect.anything(),
+    batch.jobId,
+    second.inputId,
+  );
+  expect(recover).toHaveBeenCalledTimes(3);
+});
+it("empty or wrong existing bytes do not authorize PUT or skip to a sibling", async () => {
+  for (const bad of [new Uint8Array(), new Uint8Array(bytes.length)]) {
+    vi.clearAllMocks();
+    recover.mockResolvedValueOnce(bad);
+    await expect(runDefaultCaptureCustodyBatch(batch)).rejects.toThrow(
+      "CAPTURE_CUSTODY_BYTES_INVALID",
+    );
+    expect(put).not.toHaveBeenCalled();
+    expect(recover).toHaveBeenCalledTimes(1);
+  }
+});
+it("permission or network recovery errors never authorize PUT or skip Inputs", async () => {
+  for (const code of ["AUTH_REQUIRED", "NATIVE_FETCH_FAILED"]) {
+    vi.clearAllMocks();
+    const error = new Error(code);
+    recover.mockRejectedValueOnce(error);
+    await expect(runDefaultCaptureCustodyBatch(batch)).rejects.toBe(error);
+    expect(put).not.toHaveBeenCalled();
+    expect(recover).toHaveBeenCalledTimes(1);
+  }
 });

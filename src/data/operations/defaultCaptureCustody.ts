@@ -61,15 +61,16 @@ async function executeBatch(
   const receipts = [];
   for (const expected of batch.inputs) {
     check();
-    if (write) await operation.put(context, batch.jobId, expected.inputId);
+    let bytes = await operation.recover(context, batch.jobId, expected.inputId);
     check();
-    const bytes = await operation.recover(
-      context,
-      batch.jobId,
-      expected.inputId,
-    );
-    check();
-    if (!bytes) throw new Error("CAPTURE_CUSTODY_NOT_FOUND");
+    // Recover first: an ACK-lost upload must not be repeated. Only absence allows PUT.
+    if (write && bytes === null) {
+      await operation.put(context, batch.jobId, expected.inputId);
+      check();
+      bytes = await operation.recover(context, batch.jobId, expected.inputId);
+      check();
+    }
+    if (bytes === null) throw new Error("CAPTURE_CUSTODY_NOT_FOUND");
     assertCaptureCustodyBytes(expected, bytes);
     receipts.push({
       inputId: expected.inputId,
