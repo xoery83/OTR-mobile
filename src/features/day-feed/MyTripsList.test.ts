@@ -3,17 +3,36 @@ import { createRequire } from "node:module";
 import { expect, it, vi } from "vitest";
 import { MyTripsList } from "./MyTripsList";
 
+vi.mock("react-native-safe-area-context", () => ({
+  useSafeAreaInsets: () => ({ bottom: 34 }),
+}));
+
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
 };
 const state = vi.hoisted(() => ({
   fontScale: 1,
+  push: vi.fn(),
   buttons: [] as { label: string; onPress(): void }[],
   texts: [] as { children: ReactNode; numberOfLines?: number }[],
 }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("react-native", () => ({
   useWindowDimensions: () => ({ fontScale: state.fontScale }),
+  FlatList: (p: {
+    data: unknown[];
+    renderItem(p: { item: unknown }): ReactNode;
+    ListEmptyComponent: ReactNode;
+  }) =>
+    createElement(
+      "main",
+      null,
+      p.data.length
+        ? p.data.map((item, i) =>
+            createElement("div", { key: i }, p.renderItem({ item })),
+          )
+        : p.ListEmptyComponent,
+    ),
   Pressable: (p: {
     accessibilityLabel: string;
     onPress(): void;
@@ -53,17 +72,20 @@ vi.mock("@/ui/locale", () => ({
       destination?: string;
       start?: string;
       end?: string;
+      count?: number;
     },
   ) =>
-    key === "myTrips.dateRange"
-      ? `${params?.start} – ${params?.end}`
-      : key === "myTrips.compactDetails"
-        ? `${key}: ${params?.date} · ${params?.destination}`
-        : params?.name
-          ? `${key}: ${params.name}`
-          : params?.date
-            ? `${key}: ${params.date}`
-            : key,
+    key === "myTrips.seeAllPastCount"
+      ? `${key}: ${params?.count}`
+      : key === "myTrips.dateRange"
+        ? `${params?.start} – ${params?.end}`
+        : key === "myTrips.compactDetails"
+          ? `${key}: ${params?.date} · ${params?.destination}`
+          : params?.name
+            ? `${key}: ${params.name}`
+            : params?.date
+              ? `${key}: ${params.date}`
+              : key,
   formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
@@ -109,11 +131,10 @@ it("keeps a cached-only Trip visible and routes its card body to the matching su
   expect(html).toContain("myTrips.cachedDateSummary");
   expect(html).toContain("Sydney");
   const summary = state.texts.find((p) =>
-    String(p.children).includes("myTrips.compactDetails"),
+    String(p.children).includes("myTrips.cachedDateSummary"),
   );
-  expect(summary?.children).toContain("myTrips.cachedDateSummary");
-  expect(summary?.children).toContain("Sydney");
-  expect(summary?.numberOfLines).toBe(2);
+  expect(summary?.numberOfLines).toBe(1);
+  expect(state.texts.find((p) => p.children === "Sydney")?.numberOfLines).toBe(1);
   expect(html).toContain("Shared cached Trip");
   expect(html).toContain("myTrips.datesToBeDecided");
   expect(html).not.toContain("myTrips.emptyTitle");
@@ -181,7 +202,7 @@ it("groups known cached dates with local cards, preserves Past limit, and grants
   expect(html).toContain("remote-active");
   expect(html).toContain("past-4");
   expect(html).not.toContain("past-1");
-  expect(html).toContain("myTrips.seeAllPast");
+  expect(html).toContain("myTrips.seeAllPastCount: 4");
   const today = state.buttons.filter((button) => button.label === "myTrips.openToday");
   expect(today).toHaveLength(1);
   today[0].onPress();
@@ -190,7 +211,7 @@ it("groups known cached dates with local cards, preserves Past limit, and grants
   expect(onOpen).toHaveBeenCalledExactlyOnceWith("remote-active");
 });
 
-it("lets scaled compact metadata grow intrinsically while preserving both known dates and destination", () => {
+it("keeps dates and destinations in separate single lines with full accessible names at every font scale", () => {
   try {
     for (const fontScale of [1, 1.118, 2.143]) {
       state.fontScale = fontScale;
@@ -219,12 +240,16 @@ it("lets scaled compact metadata grow intrinsically while preserving both known 
         }),
       );
       const metadata = state.texts.find((p) =>
-        String(p.children).includes("myTrips.compactDetails"),
+        String(p.children).includes("myTrips.cachedDateSummary"),
       );
       expect(metadata?.children).toContain("2026-11-20");
       expect(metadata?.children).toContain("2026-11-22");
-      expect(metadata?.children).toContain("Sydney Harbour and Northern Beaches");
-      expect(metadata?.numberOfLines).toBe(fontScale > 1 ? undefined : 2);
+      expect(metadata?.numberOfLines).toBe(1);
+      const destination = state.texts.find(
+        (p) => p.children === "Sydney Harbour and Northern Beaches",
+      );
+      expect(destination?.numberOfLines).toBe(1);
+      expect(html).toContain("Sydney Harbour and Northern Beaches");
       expect(html).not.toContain("myTrips.openToday");
     }
   } finally {
@@ -232,4 +257,89 @@ it("lets scaled compact metadata grow intrinsically while preserving both known 
   }
 });
 
-vi.mock("expo-router", () => ({ router: { navigate: vi.fn() } }));
+vi.mock("expo-router", () => ({ router: { navigate: vi.fn(), push: state.push } }));
+
+const pastFixture = (id: string) => ({
+  id,
+  name: `Past ${id}`,
+  destination: "Auckland / Tokyo / Kyoto / Osaka",
+  startDate: "2026-09-01",
+  endDate: "2026-09-02",
+  createdAt: null,
+  localStatus: null,
+  selectedCoverAssetId: null,
+  remoteListed: true as const,
+});
+for (const count of [0, 1, 3, 4, 7]) {
+  it(`shows only the first three of ${count} Past trips and pushes the full list only above three`, () => {
+    state.buttons = [];
+    state.push.mockClear();
+    const props = {
+      trips: [],
+      remoteTrips: Array.from({ length: count }, (_, i) => pastFixture(String(i))),
+      today: "2026-10-15",
+      eligibleToday: {},
+      onOpen: vi.fn(),
+      onOpenToday: vi.fn(),
+      onCreate: vi.fn(),
+    };
+    renderToStaticMarkup(createElement(MyTripsList, props));
+    expect(
+      state.buttons.filter((b) => b.label.startsWith("myTrips.openTripDetails")),
+    ).toHaveLength(Math.min(count, 3));
+    const more = state.buttons.find((b) => b.label.startsWith("myTrips.seeAllPastCount"));
+    expect(Boolean(more)).toBe(count > 3);
+    if (more) {
+      expect(more.label).toContain(String(count));
+      more.onPress();
+      expect(state.push).toHaveBeenCalledWith("/past-trips");
+    }
+    state.buttons = [];
+    const all = renderToStaticMarkup(
+      createElement(MyTripsList, { ...props, pastOnly: true }),
+    );
+    expect(
+      state.buttons.filter((b) => b.label.startsWith("myTrips.openTripDetails")),
+    ).toHaveLength(count);
+    expect(all).not.toContain("myTrips.seeAllPastCount");
+    expect(all).not.toContain("myTrips.emptyTitle");
+  });
+}
+it("shows all four Upcoming and undated rows, two heroes, and full long CJK/English accessible names", () => {
+  state.buttons = [];
+  state.texts = [];
+  const longName = "与朋友的海岸山地家庭旅行 Auckland Coast and Mountain Family Journey";
+  const upcoming = Array.from({ length: 4 }, (_, i) => ({
+    ...pastFixture(`future${i}`),
+    name: `${longName}${i}`,
+    startDate: "2027-01-01",
+    endDate: "2027-01-03",
+  }));
+  const undated = Array.from({ length: 4 }, (_, i) => ({
+    ...pastFixture(`undated${i}`),
+    startDate: null,
+    endDate: null,
+  }));
+  const active = Array.from({ length: 2 }, (_, i) => ({
+    ...pastFixture(`active${i}`),
+    startDate: "2026-10-01",
+    endDate: "2026-10-30",
+  }));
+  renderToStaticMarkup(
+    createElement(MyTripsList, {
+      trips: [],
+      remoteTrips: [...upcoming, ...undated, ...active],
+      today: "2026-10-15",
+      eligibleToday: {},
+      onOpen: vi.fn(),
+      onOpenToday: vi.fn(),
+      onCreate: vi.fn(),
+    }),
+  );
+  expect(
+    state.buttons.filter((b) => b.label.startsWith("myTrips.openTripDetails")),
+  ).toHaveLength(10);
+  expect(state.buttons.some((b) => b.label.includes(longName))).toBe(true);
+  expect(state.buttons.some((b) => b.label.includes("seeAll"))).toBe(false);
+  expect(state.texts.find((p) => p.children === upcoming[0].name)?.numberOfLines).toBe(2);
+});

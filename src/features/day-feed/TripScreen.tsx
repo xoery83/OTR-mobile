@@ -1,7 +1,15 @@
+import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { AppState, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -11,7 +19,7 @@ import {
   type createTripDayFeedReader,
 } from "@/data/repositories/tripDayFeedRepository";
 import { SheetHeader } from "@/components/SheetHeader";
-import { UiButton } from "@/ui/controls";
+import { UiButton, UiText as ThemedText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -60,6 +68,10 @@ export function TripScreen({ today = false }: { today?: boolean }) {
 function TripContent({ today = false }: { today?: boolean }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const navigation = useNavigation();
+  const bottomBarHeight = useBottomShellHeight();
+  const [headingHidden, setHeadingHidden] = useState(false);
+  const headingBottom = useRef(0);
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
@@ -93,6 +105,26 @@ function TripContent({ today = false }: { today?: boolean }) {
     : params.view === "trips" || params.view === "create"
       ? ""
       : value(params.tripId);
+  const isMyTrips = !today && !requested && params.view !== "create";
+  const headerTitle = isMyTrips
+    ? t(headingHidden ? "dayFeed.myTrips" : "myTrips.appTitle")
+    : requested && home
+      ? ""
+      : t("navigation.trip");
+  useLayoutEffect(() => {
+    if (today) return;
+    navigation.setOptions({
+      headerTitle: ({
+        onLayout,
+      }: {
+        onLayout?: import("react-native").TextProps["onLayout"];
+      }) => (
+        <ThemedText onLayout={onLayout} numberOfLines={1} style={styles.navTitle}>
+          {headerTitle}
+        </ThemedText>
+      ),
+    });
+  }, [navigation, today, headerTitle, styles.navTitle]);
   const visibleTrip =
     trip?.scope.generation === generation &&
     trip.observed?.projection.tripId === requested
@@ -433,9 +465,37 @@ function TripContent({ today = false }: { today?: boolean }) {
     );
   return (
     <>
-      <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={[
+          styles.content,
+          isMyTrips && { paddingBottom: bottomBarHeight + visual.space.page },
+        ]}
+        scrollIndicatorInsets={isMyTrips ? { bottom: bottomBarHeight } : undefined}
+        scrollEventThrottle={16}
+        onScroll={
+          isMyTrips
+            ? ({ nativeEvent }) => {
+                const offset = nativeEvent.contentOffset.y;
+                if (headingBottom.current > 0)
+                  setHeadingHidden(offset >= headingBottom.current);
+              }
+            : undefined
+        }
+      >
         {!hideHomePrelude ? (
-          <Text accessibilityRole="header" style={styles.heading}>
+          <Text
+            accessibilityRole="header"
+            style={styles.heading}
+            onLayout={
+              isMyTrips
+                ? ({ nativeEvent }) => {
+                    headingBottom.current =
+                      nativeEvent.layout.y + nativeEvent.layout.height;
+                  }
+                : undefined
+            }
+          >
             {t(
               today
                 ? "navigation.today"
@@ -587,6 +647,7 @@ const createStyles = (c: UiColors) =>
     root: { flex: 1, backgroundColor: c.background },
     content: { padding: visual.space.page, gap: visual.space.heading },
     header: { paddingHorizontal: visual.space.page, paddingTop: visual.space.heading },
+    navTitle: { ...visual.type.section, color: c.textPrimary },
     heading: { ...visual.type.metric, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
   });

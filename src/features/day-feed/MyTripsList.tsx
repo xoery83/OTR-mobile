@@ -1,7 +1,7 @@
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { AppIcon } from "@/components/AppIcon";
-import { useState } from "react";
-import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import type { Trip } from "@/domain/trip/types";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import type { TripListSummary } from "@/data/repositories/tripDiscoveryRepository";
@@ -17,6 +17,7 @@ import { TripCoverVisual } from "./TripCoverVisual";
 
 export type TodayEntry = Readonly<{ date: string; zone: string }>;
 type Props = {
+  pastOnly?: boolean;
   trips: readonly Trip[];
   remoteTrips: readonly TripListSummary[];
   today: string;
@@ -68,6 +69,7 @@ const cardLabel = (trip: ListedTrip) =>
     : t("myTrips.openTripDated", { name: trip.name, date: dateLabel(trip) });
 
 export function MyTripsList({
+  pastOnly = false,
   trips,
   remoteTrips,
   today,
@@ -79,15 +81,14 @@ export function MyTripsList({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
-  const { fontScale } = useWindowDimensions();
-  const [allPast, setAllPast] = useState(false);
+  const insets = useSafeAreaInsets();
   const localIds = new Set(trips.map((trip) => trip.id));
   const groups = groupLocalTrips<ListedTrip>(
     [...trips, ...remoteTrips],
     today,
     new Set(Object.keys(eligibleToday).filter((id) => localIds.has(id))),
   );
-  if (!trips.length && !remoteTrips.length)
+  if (!pastOnly && !trips.length && !remoteTrips.length)
     return (
       <View style={styles.empty}>
         <TripCoverVisual
@@ -128,24 +129,37 @@ export function MyTripsList({
         <Text style={styles.title} numberOfLines={2}>
           {trip.name}
         </Text>
-        <Text style={styles.meta} numberOfLines={fontScale > 1 ? undefined : 2}>
-          {trip.destination
-            ? t("myTrips.compactDetails", {
-                date: localIds.has(trip.id)
-                  ? dateLabel(trip)
-                  : t("myTrips.cachedDateSummary", { date: dateLabel(trip) }),
-                destination: trip.destination,
-              })
-            : localIds.has(trip.id)
-              ? dateLabel(trip)
-              : t("myTrips.cachedDateSummary", { date: dateLabel(trip) })}
+        <Text style={styles.date} numberOfLines={1}>
+          {localIds.has(trip.id)
+            ? dateLabel(trip)
+            : t("myTrips.cachedDateSummary", { date: dateLabel(trip) })}
         </Text>
+        {trip.destination ? (
+          <Text style={styles.meta} numberOfLines={1}>
+            {trip.destination}
+          </Text>
+        ) : null}
       </View>
       <View style={styles.chevron} accessible={false}>
         <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
       </View>
     </Pressable>
   );
+  if (pastOnly)
+    return (
+      <FlatList
+        style={styles.pastRoot}
+        contentContainerStyle={[
+          styles.pastContent,
+          { paddingBottom: insets.bottom + visual.space.page },
+        ]}
+        data={groups.past}
+        keyExtractor={(trip) => trip.id}
+        renderItem={({ item }) => compact(item)}
+        ItemSeparatorComponent={() => <View style={styles.rowGap} />}
+        ListEmptyComponent={<Text style={styles.meta}>{t("myTrips.noPast")}</Text>}
+      />
+    );
   return (
     <View style={styles.list}>
       {groups.active.length ? (
@@ -169,7 +183,7 @@ export function MyTripsList({
                   <Text style={styles.heroTitle} numberOfLines={2}>
                     {trip.name}
                   </Text>
-                  <Text style={styles.heroMeta}>{dateLabel(trip)}</Text>
+                  <Text style={styles.heroDate}>{dateLabel(trip)}</Text>
                   {trip.destination ? (
                     <Text style={styles.heroMeta} numberOfLines={1}>
                       {trip.destination}
@@ -215,12 +229,12 @@ export function MyTripsList({
             {t("myTrips.past")}
           </Text>
           <View style={styles.groupContent}>
-            {(allPast ? groups.past : groups.past.slice(0, 3)).map(compact)}
-            {!allPast && groups.past.length > 3 ? (
+            {groups.past.slice(0, 3).map(compact)}
+            {groups.past.length > 3 ? (
               <UiButton
-                label={t("myTrips.seeAllPast")}
+                label={t("myTrips.seeAllPastCount", { count: groups.past.length })}
                 variant="text"
-                onPress={() => setAllPast(true)}
+                onPress={() => router.push("/past-trips")}
               />
             ) : null}
           </View>
@@ -232,9 +246,12 @@ export function MyTripsList({
 
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
+    pastRoot: { flex: 1, backgroundColor: c.background },
+    pastContent: { padding: visual.space.page },
+    rowGap: { height: visual.space.card },
     list: { gap: visual.space.section },
     section: { gap: visual.space.heading },
-    sectionHeading: { ...visual.type.eyebrow, color: c.textSecondary },
+    sectionHeading: { ...visual.type.tripSectionLabel, color: c.textSecondary },
     groupContent: { gap: visual.space.card },
     empty: {
       backgroundColor: c.surface,
@@ -245,7 +262,8 @@ const createStyles = (c: UiColors) =>
     emptyBody: { gap: visual.space.card, padding: visual.space.page },
     emptyTitle: { ...visual.type.section, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
-    title: { ...visual.type.section, color: c.textPrimary },
+    date: { ...visual.type.tripDate, color: c.textSecondary },
+    title: { ...visual.type.tripRowTitle, color: c.textPrimary },
     compact: {
       minHeight: 88,
       flexDirection: "row",
@@ -255,12 +273,12 @@ const createStyles = (c: UiColors) =>
       borderRadius: visual.radius.card,
       overflow: "hidden",
     },
-    thumbnail: { width: 104, height: 88 },
+    thumbnail: { width: 88, alignSelf: "stretch" },
     chevron: { paddingRight: visual.space.card },
     compactBody: {
       flex: 1,
       minWidth: 0,
-      gap: visual.space.heading,
+      gap: visual.space.heading / 2,
       paddingVertical: visual.space.card,
     },
     heroImage: { width: "100%", minHeight: 240, borderRadius: visual.radius.hero },
@@ -268,20 +286,25 @@ const createStyles = (c: UiColors) =>
       flexGrow: 1,
       minHeight: 240,
       justifyContent: "flex-end",
-      gap: visual.space.heading,
+      gap: visual.space.heading / 2,
       padding: visual.space.page,
       paddingTop: 96,
     },
     heroTitle: {
-      ...visual.type.metric,
+      ...visual.type.tripHeroTitle,
       color: c.mediaText,
       textShadowColor: c.mediaBackground,
       textShadowRadius: 4,
       textShadowOffset: { width: 0, height: 1 },
     },
+    heroDate: {
+      ...visual.type.tripDate,
+      color: c.mediaText,
+    },
     heroMeta: {
       ...visual.type.meta,
       color: c.mediaText,
+      opacity: 0.85,
       textShadowColor: c.mediaBackground,
       textShadowRadius: 4,
       textShadowOffset: { width: 0, height: 1 },

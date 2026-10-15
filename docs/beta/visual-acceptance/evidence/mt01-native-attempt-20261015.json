@@ -1,0 +1,30 @@
+{
+  "base": "326000be70014fac6e0bf383b7e86c256c595430",
+  "branch": "experience/correction-01",
+  "qaDevice": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "qaSource": "/private/tmp/otr-mt01-native-qa",
+  "qaMetro": "localhost:8082",
+  "method": "Device Hub AX/UI observation; isolated simulator; existing local development binary",
+  "configuredBundler": {
+    "host": "localhost",
+    "port": "8082",
+    "entry": "node_modules/expo-router/entry"
+  },
+  "observedAfterReload": [
+    "Trip native header",
+    "My Trips body heading",
+    "Saved Trips could not be opened. Sign in or refresh and try again."
+  ],
+  "candidateConsumption": "NOT_PROVEN",
+  "candidateNativeAcceptance": "NOT_VERIFIED",
+  "coldRestart": "One attempt; Device Hub remained Connecting display; no candidate observation",
+  "cleanup": {
+    "qaSimulator": "SHUTDOWN",
+    "qaMetro": "STOPPED",
+    "deviceHubSelected": "A1A21E80-9007-4D69-87A4-2A5AF927F0A3",
+    "captureKeyboard": "OFF"
+  },
+  "ownerHostChanged": false,
+  "referenceOverlayInProduction": false,
+  "screenshots": "No after screenshot accepted; no valid candidate rendering was observed"
+}
