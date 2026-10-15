@@ -1,3 +1,10 @@
+import {
+  captureCustodyBindingSchema,
+  captureCustodyBindingJson,
+  assertCaptureCustodyBytes,
+  type CaptureCustodyBinding,
+  type CaptureMaterialCustody,
+} from "../../src/domain/capture/captureCustody";
 import { constants } from "node:fs";
 import { open, statfs, link, unlink } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -43,6 +50,7 @@ const fileFlags = constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLO
 export async function createFlightPrivateCustody(
   directory: string,
   expected: FlightStoreIdentity,
+  captureStorage?: CaptureMaterialCustody,
 ) {
   if (process.platform !== "linux") throw new Error("CUSTODY_PLATFORM_CLOSED");
   if (
@@ -253,6 +261,49 @@ export async function createFlightPrivateCustody(
         throw new Error("CUSTODY_RELEASE_CLOSED");
       },
     };
+    async function captureAssociation(binding: CaptureCustodyBinding) {
+      try {
+        const raw = z
+          .strictObject({ version: z.literal(1), binding: captureCustodyBindingSchema })
+          .parse(await read(name("capture-input", binding.accountId, binding.inputId)));
+        if (captureCustodyBindingJson(raw.binding) !== captureCustodyBindingJson(binding))
+          throw new Error("CAPTURE_CUSTODY_BINDING_CONFLICT");
+        return raw;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+        throw error;
+      }
+    }
+    const captureMaterial: CaptureMaterialCustody = {
+      async put(raw, bytes) {
+        const binding = captureCustodyBindingSchema.parse(raw);
+        assertCaptureCustodyBytes(binding, bytes);
+        await captureAssociation(binding);
+        if (!captureStorage) throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
+        await captureStorage.put(binding, bytes);
+        const verified = await captureStorage.read(binding);
+        if (!verified) throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
+        assertCaptureCustodyBytes(binding, verified);
+        try {
+          await write(name("capture-input", binding.accountId, binding.inputId), {
+            version: 1,
+            binding,
+          });
+        } catch (error) {
+          await captureAssociation(binding);
+          throw error;
+        }
+      },
+      async read(raw) {
+        const binding = captureCustodyBindingSchema.parse(raw);
+        if (!(await captureAssociation(binding))) return null;
+        if (!captureStorage) throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
+        const bytes = await captureStorage.read(binding);
+        if (!bytes) throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
+        assertCaptureCustodyBytes(binding, bytes);
+        return bytes;
+      },
+    };
     const retained = {
       async put(a: Readonly<Attempt>, pin: z.infer<typeof pinSchema>) {
         await custody.read({ accountId: a.account_id, ...pinSchema.parse(pin) });
@@ -285,6 +336,7 @@ export async function createFlightPrivateCustody(
     return {
       close: () => root.close(),
       custody,
+      captureMaterial,
       retained,
       async bindAcceptance(_account: string, session: string, binding: unknown) {
         await write(name("acceptance", session, session), { version: 1, binding });

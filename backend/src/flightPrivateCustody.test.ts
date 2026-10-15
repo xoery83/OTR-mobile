@@ -1,3 +1,8 @@
+import {
+  captureCustodyBindingJson,
+  type CaptureCustodyBinding,
+  type CaptureMaterialCustody,
+} from "../../src/domain/capture/captureCustody";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { constants } from "node:fs";
@@ -22,7 +27,7 @@ afterEach(async () => {
     directories.splice(0).map((path) => fs.rm(path, { recursive: true, force: true })),
   );
 });
-async function fixture() {
+async function fixture(captureStorage?: CaptureMaterialCustody) {
   const base = await fs.mkdtemp("/custody-tests/f1-");
   directories.push(base);
   const path = join(base, "parent", "root");
@@ -40,7 +45,7 @@ async function fixture() {
     { mode: 0o600 },
   );
   const open = async (p = path, expected = identity) => {
-    const store = await createFlightPrivateCustody(p, expected);
+    const store = await createFlightPrivateCustody(p, expected, captureStorage);
     handles.push(store.close);
     return store;
   };
@@ -89,6 +94,70 @@ describe("unsupported live custody platforms", () => {
   );
 });
 describe.skipIf(process.platform !== "linux")("Linux production anchored custody", () => {
+  it("Capture association withholds raw material; exact concurrent replay, collision, restart and account isolation", async () => {
+    let remote: Uint8Array | null = null;
+    const f = await fixture({
+      put: async (_binding, bytes) => {
+        remote = bytes.slice();
+      },
+      read: async () => remote,
+    });
+    const x = input("%PDF-1.4 synthetic original");
+    const binding: CaptureCustodyBinding = {
+      version: 1,
+      accountId: x.accountId,
+      batchId: randomUUID(),
+      jobId: randomUUID(),
+      inputId: x.reservationId,
+      inputRevision: 3,
+      captureId: randomUUID(),
+      payloadId: randomUUID(),
+      captureRevision: 1,
+      sha256: x.sha256,
+      byteCount: x.byteCount,
+      mediaType: "application/pdf",
+    };
+    await f.store.custody.put(x);
+    assert.equal(await f.store.captureMaterial.read(binding), null);
+    await Promise.all([
+      f.store.captureMaterial.put(binding, x.bytes),
+      f.store.captureMaterial.put(binding, x.bytes),
+    ]);
+    assert.deepEqual(
+      await f.store.captureMaterial.read(binding),
+      new Uint8Array(x.bytes),
+    );
+    const files = await fs.readdir(f.path);
+    assert.equal(files.filter((name) => name.startsWith("material-")).length, 1); // unrelated pre-existing material only
+    assert.equal(files.filter((name) => name.startsWith("capture-input-")).length, 1);
+    const reopened = await f.open();
+    assert.deepEqual(
+      await reopened.captureMaterial.read(binding),
+      new Uint8Array(x.bytes),
+    );
+    assert.equal(
+      await reopened.captureMaterial.read({ ...binding, accountId: randomUUID() }),
+      null,
+    );
+    const changed = { ...binding, captureId: randomUUID() };
+    await assert.rejects(
+      reopened.captureMaterial.put(changed, x.bytes),
+      /BINDING_CONFLICT/,
+    );
+    await assert.rejects(reopened.captureMaterial.read(changed), /BINDING_CONFLICT/);
+    assert.deepEqual(
+      await reopened.captureMaterial.read(binding),
+      new Uint8Array(x.bytes),
+    );
+    await assert.rejects(
+      reopened.captureMaterial.read({ ...binding, inputId: "../escape" }),
+    );
+    assert.equal(
+      captureCustodyBindingJson(binding),
+      captureCustodyBindingJson({ ...binding }),
+    );
+  });
+
   it("rejects root, parent, intermediate symlinks and lexical traversal", async () => {
     const f = await fixture();
     await fs.symlink(f.path, join(f.base, "root-alias"));

@@ -94,7 +94,7 @@ export function flightModelWitness(model: unknown) {
 }
 type RecoveryState = {
   factory: ReturnType<typeof createFlightDevExecutor>;
-  stores: Awaited<ReturnType<typeof createFlightPrivateCustody>>;
+  stores: Omit<Awaited<ReturnType<typeof createFlightPrivateCustody>>, "captureMaterial">;
   provisioning: FlightLiveProvisioning;
   acceptance: FlightAcceptance;
   hash(bytes: Uint8Array): Promise<string>;

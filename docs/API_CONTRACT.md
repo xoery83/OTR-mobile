@@ -1097,3 +1097,30 @@ The repository/default adapter uses the existing captured Account request genera
 ## CP-UX-01 Camera declaration and recovery (2026-10-15)
 
 Camera acquisition is declared explicitly through the existing native Capture selection, staging and C3 repository contract. Existing IMAGE validation, byte identity, current Account/generation fences and normal recovery/retry remain owning checks. A prior schema must reject a Camera submission atomically rather than relabel it. No new endpoint, provider authority, Trip attribution or Core admission is introduced.
+
+## Account-owned Capture original custody (isolated candidate; default CLOSED)
+
+Explicit authenticated PUT/GET `/v2/capture-inputs/:inputId/material` carries
+`X-OTR-Capture-Binding`: strict version1 canonical JSON containing accountId,
+batchId, jobId, inputId, inputRevision, captureId, payloadId, captureRevision,
+sha256, byteCount and mediaType. IDs are UUIDs; revisions positive safe integers;
+bytes are 1..4MiB; media is PDF/JPEG/PNG. Backend derives actor from bearer Auth;
+actor/account and path/Input must match. Reject query, Range and Content-Encoding.
+PUT requires exact media Content-Type/Content-Length and original body bytes;
+GET has no body. Actual signature, hash and count are verified both ways.
+
+One immutable Capture association is retained in existing anchored custody after
+original bytes are put/verified in existing `trip-source-material` DEV Storage
+under deterministic `capture/<Account>/<Input>` keys. No-upsert POST follows an
+exact GET; only verified GET bytes establish success after ACK loss/conflict.
+Capture original bytes are not copied into Linux custody. GET withholds unregistered material even if an
+unrelated private object has the same reference. Identity/pin changes reject.
+Lost PUT ACK recovers exact GET/PUT using the original Input, never a new identity.
+Success200 returns exact bytes, matching binding/ETag/length/type, private/no-store
+and Vary Authorization. No filename, text, URI or credential enters metadata/logs.
+
+Normal authentication401 is unchanged; invalid request422, actor mismatch403,
+immutable binding conflict409, oversized stream413, missing association404 and
+unavailable port/store503 expose finite codes only. Optional composition remains
+absent at default startup. This is Account staging, not Trip Source/Representation
+admission, processing or canonical acceptance. No table/role/migration is added.

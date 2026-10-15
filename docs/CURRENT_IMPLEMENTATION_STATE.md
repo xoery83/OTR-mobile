@@ -1,3 +1,17 @@
+# Isolated Capture C2 custody candidate — 2026-10-15
+
+Candidate only, based on Main `326000be`; not integrated or deployed. Explicit
+Account/Input-bound binary PUT/GET reuses accepted CP11/SQLite51 identities.
+One opaque PDF/JPEG/PNG adapter preserves exact bytes in existing DEV Source
+Storage (`trip-source-material`, maximum4MiB); existing Linux anchored custody
+retains only immutable Capture association metadata. Default startup has no
+injected port. No Source/Trip admission, schema/role, scheduler or Provider change.
+Focused22 tests/typecheck/touched lint pass;14 existing Linux-only cases skip on
+macOS. An offline actual Linux anchored self-check passes replay/collision,
+Account/path isolation, cold reopen, ACK loss and association-failure recovery.
+Real Storage/Auth/Native/upload/provisioning/deployment remain unperformed.
+Independent review and Coordinator integration are next; do not activate runtime.
+
 # Beta Coordinator — current engineering checkpoint / 2026-10-15
 
 **Camera local owning intake / 2026-10-15:** Source SQLite registry now includes forward64, with original51 unchanged. Explicit Camera IMAGE provenance, durable intake/recovery and post-permission host/account fences passed Main71/3, typecheck, touched lint, UI guard and formatting. This accepts the non-UI owning slice only: Camera caller223c/66206 remains a separate reviewed candidate; actual Camera SDK, permissions/hardware and device schema64 are unobserved. The retained Owner visual host remains exact36 on its previous registry63; it was not rebuilt/reloaded or migrated. No new data, Native or Hosted operation. TYPE05 migration65 remains unaccepted/unregistered, with no further work started.

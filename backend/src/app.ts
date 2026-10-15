@@ -1,3 +1,5 @@
+import { captureCustodyBoundary } from "./captureCustodyHttp";
+import type { CaptureMaterialCustody } from "../../src/domain/capture/captureCustody";
 import { parseEventJson } from "../../src/domain/trip/eventIntentJson";
 import {
   PublicationCatalogError,
@@ -608,6 +610,7 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  captureMaterialCustody?: CaptureMaterialCustody;
   tripCreatePort?: TripCreatePort;
   documentOriginalReader?: DocumentOriginalReader;
   coreConnection?: CoreHttpConnection;
@@ -2351,6 +2354,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  captureMaterialCustody,
   tripCreatePort,
   documentOriginalReader,
   flightTextSourceConnection,
@@ -2439,7 +2443,15 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (url.pathname === "/v2/trips" && request.method === "GET") {
+      if (/^\/v2\/capture-inputs\/[^/]+\/material$/.test(url.pathname)) {
+        route = "/v2/capture-inputs/:inputId/material";
+        const actor = await authenticate(request, gateway);
+        response = await captureCustodyBoundary(
+          request,
+          actor.id,
+          captureMaterialCustody,
+        );
+      } else if (url.pathname === "/v2/trips" && request.method === "GET") {
         route = "/v2/trips:list";
         const actor = await authenticate(request, gateway);
         response = await tripDiscoveryBoundary(

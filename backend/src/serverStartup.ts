@@ -44,7 +44,10 @@ const environmentSchema = z
 export function startDevBackend(
   startOptions: Pick<
     BackendDependencies,
-    "tripCreatePort" | "coreConnection" | "documentOriginalReader"
+    | "tripCreatePort"
+    | "coreConnection"
+    | "documentOriginalReader"
+    | "captureMaterialCustody"
   > = {},
 ) {
   const environment = environmentSchema.parse(process.env);
@@ -86,6 +89,7 @@ export function startDevBackend(
   );
   const handle = createDevBackendHandler({
     gateway,
+    captureMaterialCustody: startOptions.captureMaterialCustody,
     tripCreatePort: startOptions.tripCreatePort,
     coreConnection: startOptions.coreConnection,
     documentOriginalReader: startOptions.documentOriginalReader,
@@ -110,6 +114,9 @@ export function startDevBackend(
         /^\/v2\/trips\/[^/]+\/documents\/[^/]+\/original(?:\?|$)/.test(
           incoming.url ?? "",
         );
+      const captureMaterialRoute = /^\/v2\/capture-inputs\/[^/]+\/material(?:\?|$)/.test(
+        incoming.url ?? "",
+      );
       let byteCount = 0;
       for await (const chunk of incoming) {
         byteCount += chunk.length;
@@ -132,6 +139,13 @@ export function startDevBackend(
               },
             }),
           );
+          return;
+        }
+        if (captureMaterialRoute && (byteCount > 4194304 || incoming.method !== "PUT")) {
+          outgoing.statusCode = 413;
+          outgoing.setHeader("Content-Type", "application/json");
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end(JSON.stringify({ error: { code: "CAPTURE_CUSTODY_SIZE_LIMIT" } }));
           return;
         }
         chunks.push(Buffer.from(chunk));

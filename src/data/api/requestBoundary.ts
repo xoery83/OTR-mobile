@@ -57,12 +57,11 @@ export function createRequestBoundary(
 }
 export type RequestBoundary = ReturnType<typeof createRequestBoundary>;
 
-export async function readBoundedJson(
-  response: Response,
+export async function readBoundedBytes(
+  response: Pick<Response, "body">,
   maximum: number,
   boundary: RequestBoundary,
-  parseText: (text: string) => unknown = JSON.parse,
-): Promise<unknown> {
+): Promise<Uint8Array> {
   boundary.assertCurrent();
   const reader = response.body?.getReader?.();
   if (!reader) throw new RequestBoundaryError("STREAM_UNAVAILABLE");
@@ -83,11 +82,7 @@ export async function readBoundedJson(
       offset += chunk.byteLength;
     }
     boundary.assertCurrent();
-    try {
-      return parseText(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-    } catch {
-      throw new RequestBoundaryError("INVALID_RESPONSE");
-    }
+    return bytes;
   } catch (error) {
     // Cancellation is best effort; an abort-ignoring stream cannot regain admission.
     void reader.cancel().catch(() => undefined);
@@ -98,5 +93,19 @@ export async function readBoundedJson(
     } catch {
       /* A canceled read may still be pending. */
     }
+  }
+}
+
+export async function readBoundedJson(
+  response: Response,
+  maximum: number,
+  boundary: RequestBoundary,
+  parseText: (text: string) => unknown = JSON.parse,
+): Promise<unknown> {
+  const bytes = await readBoundedBytes(response, maximum, boundary);
+  try {
+    return parseText(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    throw new RequestBoundaryError("INVALID_RESPONSE");
   }
 }
