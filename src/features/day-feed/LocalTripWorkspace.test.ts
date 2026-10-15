@@ -182,6 +182,7 @@ const repository = (list: Trip[] = []): TripRepository => ({
   pendingItems: vi.fn(async () => []),
   acceptCreate: vi.fn(async (result) => trip(result.tripId, result.name)),
   resumeCreateTrips: vi.fn(async () => {}),
+  initializeLocalLedger: vi.fn(async () => {}),
 });
 const deferred = <T>() => {
   let resolve!: (value: T) => void;

@@ -1,6 +1,5 @@
 import type * as SQLite from "expo-sqlite";
 import { createUuid } from "@/domain/localId";
-import { currencyScale } from "@/domain/ledger/currency";
 import type {
   BuiltInTripCoverId,
   CreateTripInput,
@@ -100,7 +99,8 @@ export function createTripRepository(
          AND trip.id=op.trip_id AND trip.create_operation_id=op.id
        WHERE op.owner_user_id=? AND op.trip_id=? AND op.entity_id=?
          AND op.id=op.idempotency_key AND op.entity_type='TRIP'
-         AND op.operation_type='CREATE_TRIP' AND op.status<>'COMPLETED'`,
+         AND op.operation_type='CREATE_TRIP'
+         AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE')`,
       accountId,
       row.id,
       row.id,
@@ -123,13 +123,6 @@ export function createTripRepository(
       row.id,
     );
     if (existing) throw new Error("TRIP_LEDGER_INITIALIZATION_CONFLICT");
-    const preference = await database.getFirstAsync<{ default_currency: string }>(
-      "SELECT default_currency FROM account_local_state WHERE user_id=?",
-      accountId,
-    );
-    const currency = preference?.default_currency ?? "NZD";
-    const scale = currencyScale(currency);
-    if (scale === null) throw new Error("TRIP_LEDGER_CURRENCY_INVALID");
     const personId = createUuid();
     const now = clock();
     await database.runAsync(
@@ -141,13 +134,12 @@ export function createTripRepository(
       now,
     );
     await database.runAsync(
-      "INSERT INTO ledger_journeys(journey_id,title,start_date,end_date,settlement_currency,settlement_scale,valuation_policy,updated_at) VALUES(?,?,?,?,?,?,'REFERENCE_RATE',?)",
+      // Match accepted r3-v1-ledger-init-1 fresh Journey settings, not display preferences.
+      "INSERT INTO ledger_journeys(journey_id,title,start_date,end_date,settlement_currency,settlement_scale,valuation_policy,updated_at) VALUES(?,?,?,?,'NZD',2,'REFERENCE_RATE',?)",
       row.id,
       row.name,
       row.start_date,
       row.end_date,
-      currency,
-      scale,
       now,
     );
     await database.runAsync(

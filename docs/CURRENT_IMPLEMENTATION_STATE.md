@@ -1,3 +1,16 @@
+# TCL01 local Trip Ledger candidate — 2026-10-16 / SOURCE REVIEW PENDING
+
+- Isolated TCL01 adds SQLite68 local creator binding after accepted Capture67.
+  Normal Trip creation and scoped repository repair initialize Journey/owner/actor
+  with accepted NZD/2/REFERENCE_RATE defaults; no Hosted/Core grant is fabricated.
+- Current Trip Ledger and direct New Expense use repository initialization. Local
+  Expense work remains in the existing queue behind its original CREATE_TRIP.
+- Offline/cold reopen, idempotence, account fences, rollback, old intent repair and
+  67→68 preservation are tested; independent source review is pending.
+- Nelson summer original Trip/op/actor/device state is untouched. Owner Native
+  acceptance remains pending. TCL02 Hosted identity mapping/dependency release and
+  protected Backend activation are separate; no Runtime PASS or deployment claimed.
+
 # Capture C4 — local-first Runtime PARTIAL / 2026-10-16
 
 - Owner clarified local extraction → deterministic interpretation → optional Apple

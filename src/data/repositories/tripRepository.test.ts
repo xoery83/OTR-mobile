@@ -1084,6 +1084,32 @@ it("TCL01 repairs an existing pre-initialization creator intent without replacin
     );
   const beforeTrip = f.sql.prepare("SELECT * FROM local_trip_containers").get();
   const beforeQueue = f.sql.prepare("SELECT * FROM sync_operations").get();
+  f.abaNextRead();
+  await expect(f.repo.initializeLocalLedger(create.tripId)).rejects.toThrow(
+    "Account changed",
+  );
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_trip_ledger_bindings").get()?.n,
+  ).toBe(0);
+  f.sql
+    .prepare("UPDATE sync_operations SET payload_json=?")
+    .run(JSON.stringify({ ...JSON.parse(payload), name: "Different intent" }));
+  await expect(f.repo.initializeLocalLedger(create.tripId)).rejects.toThrow(
+    "TRIP_CREATE_LOCAL_MISMATCH",
+  );
+  f.sql
+    .prepare("UPDATE sync_operations SET payload_json=?,status='COMPLETED'")
+    .run(payload);
+  await expect(f.repo.initializeLocalLedger(create.tripId)).rejects.toThrow(
+    "TRIP_CREATE_LOCAL_MISMATCH",
+  );
+  f.sql.prepare("UPDATE local_trip_containers SET accepted_at=?").run(stamp);
+  await f.repo.initializeLocalLedger(create.tripId);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_trip_ledger_bindings").get()?.n,
+  ).toBe(0);
+  f.sql.prepare("UPDATE local_trip_containers SET accepted_at=NULL").run();
+  f.sql.prepare("UPDATE sync_operations SET status='DEPENDENCY_BLOCKED'").run();
   await f.repo.initializeLocalLedger(create.tripId);
   await f.repo.initializeLocalLedger(create.tripId);
   expect(f.sql.prepare("SELECT * FROM local_trip_containers").get()).toEqual(beforeTrip);
@@ -1113,15 +1139,15 @@ it("TCL01 rolls back Trip, creator binding and Ledger together if initialization
     expect(f.sql.prepare(`SELECT count(*) AS n FROM ${table}`).get()?.n).toBe(0);
 });
 
-it("TCL01 uses only the active account's configured Ledger currency", async () => {
+it("TCL01 retains approved fresh Journey financial defaults regardless of display currency", async () => {
   const f = local();
   const reporting = createLedgerReportingRepository(f.database, async () => accountA);
   await reporting.setDefaultCurrency("JPY");
   const saved = await f.repo.createTrip(input());
   expect((await reporting.listJourneys())[0]).toMatchObject({
     journeyId: saved.id,
-    settlementCurrency: "JPY",
-    settlementScale: 0,
+    settlementCurrency: "NZD",
+    settlementScale: 2,
   });
   f.switchTo(accountB);
   const other = await f.repo.createTrip(input());

@@ -11,8 +11,10 @@ Trips only after matching their retained CREATE_TRIP operation and payload. It
 never manufactures accepted_at, a remote membership, participation revision or
 Core certificate. Existing remote actors/settings are never overwritten.
 
-Local Ledger settings use the existing account default currency and currency scale,
-with the existing REFERENCE_RATE policy. The creator's current local account name
+Local Ledger settings match the accepted fresh-Journey NZD/scale2/REFERENCE_RATE
+defaults in `supabase/dev-forward/r3-v1/202610080001_fresh_trip_ledger_initialization.sql`.
+Account display currency preferences do not authorize different financial settings.
+The creator's current local account name
 is retained as the Person display name. Local Expense operations use the existing
 queue and depend on the original CREATE_TRIP operation.
 
