@@ -1,0 +1,36 @@
+{
+  "baselineMain": "a41c78fad3d5312649e388f3612894ab7d68c3ed",
+  "branch": "codex/global-search-vqa-v1",
+  "simulator": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "simulatorName": "OTR MT Correction 01 QA",
+  "bundleId": "com.xoery.otrmobile",
+  "nativeHost": "existing installed signed Debug host reused; no new binary install",
+  "jsSource": "this worktree on isolated Metro8083; source router verified after unique cache namespace",
+  "nativePassed": [
+    "global entry",
+    "trip-scoped entry",
+    "counts13/2/11 and scoped5",
+    "deep scroll -> actual P2 Immersive -> Close -> unchanged Search content",
+    "Trip result -> actual TripScreen Home -> native Back -> original Search",
+    "recent record/remove/clear and cold persistence",
+    "online no results",
+    "one Dark readability check then restored Light"
+  ],
+  "notNativePassed": [
+    "device-wide offline",
+    "account switch",
+    "full Dynamic Type/VoiceOver matrix",
+    "Ledger/Documents global indexes",
+    "Booking-reference index"
+  ],
+  "businessWrites": false,
+  "previewConfigRestored": true,
+  "ordinaryTripRouteUnchanged": true,
+  "sourceFilesSha256": {
+    "app/search-trip.tsx": "2b9bd0cbf3554f0647b922768a3e442ac6386811d1badcc1dff5f990fece3122",
+    "src/features/trip-search/TripSearchScreen.tsx": "e20c3fb7a3844e1bd8d37d323b017549579ef9f4377cff0f647b85af7bbbe743",
+    "src/features/trip-search/searchPresentation.ts": "01a0438f023d5443a0f548c62b7bcac5da0367793e53bd43f5e427b26c61b76e",
+    "src/data/repositories/searchRecentRepository.ts": "b035348cb7b15da57d34ca2036687798734dc33cd98447cb40399fe6ff1e4cac",
+    "src/ui/catalogs.ts": "1ce20af45cd14a7957bcce723830ad22486cacfad5e6509ced8a49ff0a8d0302"
+  }
+}

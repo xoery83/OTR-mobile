@@ -6,7 +6,23 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { AppState, FlatList, StyleSheet, View } from "react-native";
+import {
+  AppState,
+  FlatList,
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type TextInput,
+} from "react-native";
+import { useNetworkState } from "expo-network";
+import { AppIcon } from "@/components/AppIcon";
+import {
+  searchRecentRepository,
+  type RecentSearch,
+} from "@/data/repositories/searchRecentRepository";
+import { searchRows, filterSearchRows } from "./searchPresentation";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import {
   getAccountGeneration,
@@ -19,7 +35,6 @@ import {
   type createTripSearchRepository,
 } from "@/data/repositories/tripSearchRepository";
 import {
-  searchGroups,
   searchPreset,
   searchDate,
   type SearchCategory,
@@ -31,10 +46,10 @@ import { DayFeed } from "@/features/day-feed/DayFeed";
 import { createCoreExperienceRenderer } from "@/features/day-feed/coreExperienceRenderer";
 import { useTripView } from "@/features/day-feed/TripViewContext";
 import { UiButton, UiText as Text } from "@/ui/controls";
-import { UiChoiceChip, UiTextInput } from "@/ui/forms";
+import { UiChoiceChip, UiFormRow, UiTextInput } from "@/ui/forms";
 import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 
@@ -82,9 +97,18 @@ function SearchContent({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
-  const [input, setInput] = useState<SearchInput>(() =>
-    searchPreset(entry, currentTripId),
-  );
+  const [input, setInput] = useState<SearchInput>(() => ({
+    ...searchPreset(entry, currentTripId),
+    category: "ALL",
+  }));
+  const colors = useUiTheme();
+  const network = useNetworkState();
+  const offline = network.isConnected === false || network.isInternetReachable === false;
+  const [recents, setRecents] = useState<RecentSearch[]>([]);
+  const [recentError, setRecentError] = useState(false);
+  const list = useRef<FlatList<SearchResult>>(null);
+  const offset = useRef(0);
+  const searchInput = useRef<TextInput>(null);
   const [page, setPage] = useState<SearchPage | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState(false),
@@ -98,9 +122,27 @@ function SearchContent({
     pageRef.current = page;
     detailRef.current = detail;
   }, [page, detail]);
+  const [historyRequest] = useState(createLatestRequest);
+  useEffect(() => {
+    const id = historyRequest.begin();
+    void searchRecentRepository
+      .list()
+      .then((rows) => {
+        if (historyRequest.isCurrent(id)) setRecents(rows);
+      })
+      .catch(() => {
+        if (historyRequest.isCurrent(id)) setRecentError(true);
+      });
+    return () => historyRequest.cancel();
+  }, [historyRequest]);
   const { resumeView } = useTripView();
   const load = useCallback(
     async (more = false) => {
+      if (!input.query.trim()) {
+        setPage(null);
+        setBusy(false);
+        return;
+      }
       const id = request.begin(),
         previous = more ? pageRef.current : null;
       setBusy(true);
@@ -115,7 +157,38 @@ function SearchContent({
         reader.current = repository;
         if (previous && !(await repository.validate(previous.proofs, previous)))
           throw new Error("SEARCH_STALE");
-        const next = await repository.page(input, previous?.cursor ?? null);
+        const queryInput = {
+          query: input.query,
+          tripId: input.tripId,
+          category: "ALL" as const,
+        };
+        let next = await repository.page(queryInput, previous?.cursor ?? null);
+        // Consume bounded provider pages together so every category counts the same revision.
+        const batch = [...next.results],
+          batchProofs = [...next.proofs];
+        const cursors = new Set<string>();
+        const inventory = next.inventory;
+        for (let n = 1; next.cursor && n < 40; n++) {
+          if (!request.isCurrent(id)) return;
+          const cursorKey = JSON.stringify(next.cursor);
+          if (cursors.has(cursorKey)) throw new Error("SEARCH_CURSOR_REPEAT");
+          cursors.add(cursorKey);
+          next = await repository.page(queryInput, next.cursor);
+          if (
+            next.inventory !== inventory ||
+            next.proofs.some((proof) =>
+              batchProofs.some(
+                (prior) =>
+                  prior.tripId === proof.tripId &&
+                  prior.fingerprint !== proof.fingerprint,
+              ),
+            )
+          )
+            throw new Error("SEARCH_STALE");
+          batch.push(...next.results);
+          batchProofs.push(...next.proofs);
+        }
+        next = { ...next, results: batch, proofs: batchProofs };
         if (!request.isCurrent(id)) return;
         const proofs = [
           ...new Map(
@@ -146,13 +219,13 @@ function SearchContent({
         if (request.isCurrent(id)) setBusy(false);
       }
     },
-    [input, request, opener],
+    [input.query, input.tripId, request, opener, setDetail],
   );
   useEffect(() => {
     request.cancel();
     const timer = setTimeout(() => {
       void load();
-    }, 200);
+    }, 250);
     return () => {
       clearTimeout(timer);
       request.cancel();
@@ -182,11 +255,12 @@ function SearchContent({
           opened &&
           reader.current &&
           !(await reader.current.validate([opened.proof])) &&
-          active
+          active &&
+          opened === detailRef.current
         )
           setDetail(null);
       } catch {
-        if (active) {
+        if (active && current === pageRef.current && opened === detailRef.current) {
           request.cancel();
           setPage(null);
           setDetail(null);
@@ -215,7 +289,7 @@ function SearchContent({
     if (
       !proof ||
       !reader.current ||
-      current?.key !== JSON.stringify([input.query, input.tripId, input.category])
+      current?.key !== JSON.stringify([input.query, input.tripId, "ALL"])
     )
       return;
     try {
@@ -230,9 +304,11 @@ function SearchContent({
         setUnavailable(true);
         return;
       }
+      Keyboard.dismiss();
+      void remember();
       if (resolved.kind === "TRIP")
         router.push({
-          pathname: "/trip",
+          pathname: "/search-trip",
           params: { tripId: resolved.tripId, view: "home" },
         });
       else setDetail(resolved);
@@ -245,142 +321,274 @@ function SearchContent({
     }
   };
   const visiblePage =
-    page?.key === JSON.stringify([input.query, input.tripId, input.category])
-      ? page
-      : null;
-  const groups = searchGroups(visiblePage?.results ?? [], input.category);
-  const rows = groups.flatMap((group) => group.rows);
-  const count = (category: Exclude<SearchCategory, "ALL">) =>
-    (visiblePage?.results ?? []).filter((r) => r.category === category).length;
+    page?.key === JSON.stringify([input.query, input.tripId, "ALL"]) ? page : null;
+  const allRows = searchRows(visiblePage?.results ?? []);
+  const rows = filterSearchRows(allRows, input.category);
   const categories: SearchCategory[] = input.tripId
-    ? ["ALL", ...(input.category === "TRIPS" ? ["TRIPS" as const] : []), "ITINERARY"]
+    ? ["ALL", "ITINERARY"]
     : ["ALL", "TRIPS", "ITINERARY"];
+  const count = (category: SearchCategory) => filterSearchRows(allRows, category).length;
+  const updateRecents = async (operation: () => Promise<RecentSearch[]>) => {
+    const id = historyRequest.begin();
+    try {
+      const next = await operation();
+      if (historyRequest.isCurrent(id)) {
+        setRecents(next);
+        setRecentError(false);
+      }
+    } catch {
+      if (historyRequest.isCurrent(id)) setRecentError(true);
+    }
+  };
+  const remember = () =>
+    updateRecents(() =>
+      searchRecentRepository.record({ query: input.query, tripId: input.tripId }),
+    );
+  const editQuery = (query: string) => {
+    request.cancel();
+    opener.cancel();
+    setDetail(null);
+    setUnavailable(false);
+    offset.current = 0;
+    list.current?.scrollToOffset({ offset: 0, animated: false });
+    setInput((value) => ({ ...value, query }));
+  };
+  const changeCategory = (category: SearchCategory) => {
+    opener.cancel();
+    offset.current = 0;
+    list.current?.scrollToOffset({ offset: 0, animated: false });
+    setInput((value) => ({ ...value, category }));
+  };
+  const restoreOffset = () =>
+    list.current?.scrollToOffset({ offset: offset.current, animated: false });
+  const scopeName = visiblePage?.results.find(
+    (row) => row.tripId === input.tripId,
+  )?.tripName;
   return (
     <View style={styles.root}>
       <Stack.Screen
         options={{ title: t("comprehensiveSearch.title"), headerShown: true }}
       />
       <View style={styles.controls}>
-        <UiTextInput
-          accessibilityLabel={t("comprehensiveSearch.query")}
-          placeholder={t("comprehensiveSearch.query")}
-          value={input.query}
-          onChangeText={(query) => setInput((v) => ({ ...v, query }))}
-          autoCorrect={false}
-        />
-        <View style={styles.wrap}>
-          {currentTripId ? (
-            <UiChoiceChip
-              compact
-              label={t("comprehensiveSearch.scopeCurrent")}
-              selected={input.tripId !== null}
-              onPress={() => setInput((v) => ({ ...v, tripId: currentTripId }))}
-            />
-          ) : null}
-          <UiChoiceChip
-            compact
-            label={t("comprehensiveSearch.scopeAll")}
-            selected={input.tripId === null}
-            onPress={() => setInput((v) => ({ ...v, tripId: null }))}
+        <View style={styles.searchField}>
+          <AppIcon name="magnifyingglass" color={colors.textSecondary} />
+          <UiTextInput
+            ref={searchInput}
+            variant="bare"
+            style={styles.input}
+            accessibilityLabel={t("comprehensiveSearch.query")}
+            placeholder={t("comprehensiveSearch.query")}
+            value={input.query}
+            onChangeText={editQuery}
+            autoCorrect={false}
+            returnKeyType="done"
+            clearButtonMode="while-editing"
+            onSubmitEditing={() => {
+              Keyboard.dismiss();
+              if (visiblePage) void remember();
+            }}
           />
         </View>
-        <View style={styles.wrap}>
-          {categories.map((category) => (
-            <UiChoiceChip
-              compact
-              key={category}
-              label={
-                category === "ALL" ||
-                (input.category !== "ALL" && input.category !== category)
-                  ? t(categoryKey[category])
-                  : t("comprehensiveSearch.categoryCount", {
-                      category: t(categoryKey[category]),
-                      count: `${formatUiNumber(count(category))}${visiblePage?.cursor ? "+" : ""}`,
-                    })
-              }
-              selected={input.category === category}
-              onPress={() => setInput((v) => ({ ...v, category }))}
-            />
-          ))}
-        </View>
-        <Text style={styles.note}>{t("comprehensiveSearch.coverage")}</Text>
-        {visiblePage?.cursor ? (
-          <Text style={styles.note}>{t("comprehensiveSearch.partialCoverage")}</Text>
+        {input.tripId ? (
+          <Text style={styles.note}>
+            {scopeName
+              ? t("comprehensiveSearch.inTrip", { trip: scopeName })
+              : t("comprehensiveSearch.scopeCurrent")}
+          </Text>
         ) : null}
-        <UiButton
-          label={t("comprehensiveSearch.refresh")}
-          variant="text"
-          disabled={busy}
-          onPress={() => {
-            void load();
-          }}
-        />
+        {input.query.trim() ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chips}
+            keyboardShouldPersistTaps="handled"
+          >
+            {categories.map((category) => (
+              <View key={category} style={!count(category) ? styles.zero : undefined}>
+                <UiChoiceChip
+                  selected={input.category === category}
+                  label={t("comprehensiveSearch.categoryCount", {
+                    category: t(categoryKey[category]),
+                    count: visiblePage
+                      ? `${formatUiNumber(count(category))}${visiblePage.cursor ? "+" : ""}`
+                      : "…",
+                  })}
+                  onPress={() => changeCategory(category)}
+                />
+              </View>
+            ))}
+          </ScrollView>
+        ) : null}
+        {offline ? (
+          <Text accessibilityLiveRegion="polite" style={styles.note}>
+            {t("comprehensiveSearch.offline")}
+          </Text>
+        ) : null}
         {unavailable ? (
           <Text accessibilityLiveRegion="polite" style={styles.note}>
             {t("comprehensiveSearch.unavailable")}
           </Text>
         ) : null}
       </View>
-      <FlatList
-        data={rows}
-        keyExtractor={(r) => `${r.category}/${r.tripId}/${r.id}`}
-        initialNumToRender={12}
-        maxToRenderPerBatch={12}
-        windowSize={5}
-        contentContainerStyle={styles.results}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Text style={styles.meta}>{t(categoryKey[item.category])}</Text>
-            <UiButton
-              label={item.title}
-              variant="text"
+      {!input.query.trim() ? (
+        <ScrollView style={styles.home} keyboardShouldPersistTaps="handled">
+          <View style={styles.recentHeading}>
+            <Text style={styles.section}>{t("comprehensiveSearch.recents")}</Text>
+            {recents.length ? (
+              <UiButton
+                label={t("comprehensiveSearch.clearRecents")}
+                variant="text"
+                onPress={() => {
+                  void updateRecents(() => searchRecentRepository.clear());
+                }}
+              />
+            ) : null}
+          </View>
+          {recentError ? (
+            <Text style={styles.note}>{t("comprehensiveSearch.recentUnavailable")}</Text>
+          ) : null}
+          {!recents.some((row) => row.tripId === input.tripId) ? (
+            <Text style={styles.note}>{t("comprehensiveSearch.noRecents")}</Text>
+          ) : null}
+          {recents
+            .filter((row) => row.tripId === input.tripId)
+            .map((row) => (
+              <View key={JSON.stringify(row)} style={styles.recentRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={row.query}
+                  style={styles.recentQuery}
+                  onPress={() => editQuery(row.query)}
+                >
+                  <AppIcon name="clock" color={colors.textSecondary} />
+                  <Text style={styles.recentText} numberOfLines={2}>
+                    {row.query}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("comprehensiveSearch.removeRecent", {
+                    query: row.query,
+                  })}
+                  style={styles.iconTarget}
+                  onPress={() => {
+                    void updateRecents(() => searchRecentRepository.remove(row));
+                  }}
+                >
+                  <AppIcon name="xmark" color={colors.textSecondary} size={16} />
+                </Pressable>
+              </View>
+            ))}
+          <Text style={styles.section}>{t("comprehensiveSearch.browse")}</Text>
+          {categories
+            .filter((category) => category !== "ALL")
+            .map((category) => (
+              <UiFormRow
+                key={category}
+                label={t(categoryKey[category])}
+                value=""
+                onPress={() => {
+                  changeCategory(category);
+                  searchInput.current?.focus();
+                }}
+              />
+            ))}
+        </ScrollView>
+      ) : (
+        <FlatList
+          ref={list}
+          data={rows}
+          keyExtractor={(row) => `${row.category}/${row.tripId}/${row.id}`}
+          initialNumToRender={12}
+          maxToRenderPerBatch={12}
+          windowSize={5}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          scrollEventThrottle={16}
+          onScroll={(event) => {
+            offset.current = event.nativeEvent.contentOffset.y;
+          }}
+          onContentSizeChange={restoreOffset}
+          contentContainerStyle={styles.results}
+          renderItem={({ item }) => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={[
+                item.title,
+                t(categoryKey[item.category]),
+                !input.tripId ? item.tripName : null,
+                item.date ? displayDate(item.date) : null,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+              style={styles.row}
               onPress={() => {
                 void open(item);
               }}
-            />
-            <Text style={styles.meta}>{item.tripName}</Text>
-            {item.date ? <Text style={styles.meta}>{displayDate(item.date)}</Text> : null}
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.note}>
-            {t(
-              !input.query.trim()
-                ? "comprehensiveSearch.emptyQuery"
-                : busy
-                  ? "common.loading"
-                  : "comprehensiveSearch.noMatches",
-            )}
-          </Text>
-        }
-        ListHeaderComponent={
-          input.category === "ALL" ? (
-            <View style={styles.wrap}>
-              {groups.map((g) => (
-                <UiButton
-                  key={g.category}
-                  label={t("comprehensiveSearch.seeAllCategory", {
-                    category: t(categoryKey[g.category]),
-                  })}
-                  variant="text"
-                  onPress={() => setInput((v) => ({ ...v, category: g.category }))}
+            >
+              <View style={styles.typeIcon}>
+                <AppIcon
+                  name={item.category === "TRIPS" ? "suitcase" : "list.bullet"}
+                  color={colors.textSecondary}
                 />
-              ))}
+              </View>
+              <View style={styles.rowBody}>
+                <Text style={styles.rowTitle} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                <Text style={styles.meta} numberOfLines={2}>
+                  {[
+                    t(categoryKey[item.category]),
+                    item.date ? displayDate(item.date) : null,
+                    !input.tripId && item.title !== item.tripName ? item.tripName : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </Text>
+              </View>
+              <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
+            </Pressable>
+          )}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              {!busy && !unavailable ? (
+                <AppIcon name="magnifyingglass" color={colors.textSecondary} size={32} />
+              ) : null}
+              <Text accessibilityLiveRegion="polite" style={styles.note}>
+                {t(
+                  unavailable
+                    ? "comprehensiveSearch.unavailable"
+                    : busy || !visiblePage
+                      ? "common.loading"
+                      : offline
+                        ? "comprehensiveSearch.noLocalMatches"
+                        : "comprehensiveSearch.noMatches",
+                )}
+              </Text>
+              {!busy && !unavailable ? (
+                <Text style={styles.note}>
+                  {t(
+                    offline
+                      ? "comprehensiveSearch.offlineCoverage"
+                      : "comprehensiveSearch.tryAnother",
+                  )}
+                </Text>
+              ) : null}
             </View>
-          ) : null
-        }
-        ListFooterComponent={
-          visiblePage?.cursor ? (
-            <UiButton
-              label={t("comprehensiveSearch.loadMore")}
-              disabled={busy}
-              onPress={() => {
-                void load(true);
-              }}
-            />
-          ) : null
-        }
-      />
+          }
+          ListFooterComponent={
+            visiblePage?.cursor ? (
+              <UiButton
+                label={t("comprehensiveSearch.loadMore")}
+                disabled={busy}
+                onPress={() => {
+                  void load(true);
+                }}
+              />
+            ) : null
+          }
+        />
+      )}
       {detail && visiblePage ? (
         <DayFeed
           projection={detail.projection}
@@ -393,6 +601,7 @@ function SearchContent({
             onClose: () => {
               opener.cancel();
               setDetail(null);
+              requestAnimationFrame(restoreOffset);
             },
           }}
         />
@@ -403,15 +612,86 @@ function SearchContent({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.background },
-    controls: { padding: visual.space.card, gap: visual.space.heading },
-    wrap: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.heading },
-    results: { padding: visual.space.card, gap: visual.space.card, flexGrow: 1 },
-    row: {
-      backgroundColor: colors.surface,
-      borderRadius: visual.radius.card,
-      padding: visual.space.card,
+    controls: {
+      paddingHorizontal: visual.space.page,
+      paddingVertical: visual.space.heading,
       gap: visual.space.heading,
     },
+    searchField: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.controlTrack,
+      borderRadius: visual.radius.control,
+      paddingHorizontal: visual.space.card,
+      minHeight: 44,
+      gap: visual.space.heading,
+    },
+    input: { flex: 1, minWidth: 0 },
+    chips: {
+      flexDirection: "row",
+      gap: visual.space.heading,
+      paddingVertical: visual.space.heading,
+    },
+    zero: { opacity: 0.6 },
+    home: { flex: 1, paddingHorizontal: visual.space.page },
+    section: {
+      ...visual.type.action,
+      color: colors.textPrimary,
+      marginVertical: visual.space.card,
+    },
+    recentHeading: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+    },
+    recentRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.separator,
+    },
+    recentQuery: {
+      flex: 1,
+      minHeight: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.card,
+      paddingVertical: visual.space.card,
+    },
+    recentText: { flex: 1, ...visual.type.meta, color: colors.textPrimary },
+    iconTarget: {
+      minWidth: 44,
+      minHeight: 44,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    results: {
+      paddingHorizontal: visual.space.page,
+      paddingBottom: visual.space.section,
+      flexGrow: 1,
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      minHeight: 68,
+      backgroundColor: colors.surface,
+      paddingVertical: visual.space.card,
+      paddingHorizontal: visual.space.heading,
+      gap: visual.space.card,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.separator,
+    },
+    typeIcon: { width: 36, alignItems: "center" },
+    rowBody: { flex: 1, gap: 4 },
+    rowTitle: { ...visual.type.tripRowTitle, color: colors.textPrimary },
     meta: { color: colors.textSecondary, ...visual.type.meta },
     note: { color: colors.textSecondary, ...visual.type.meta },
+    empty: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: visual.space.card,
+      padding: visual.space.section,
+    },
   });

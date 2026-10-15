@@ -11,6 +11,10 @@ const state = vi.hoisted(() => ({
   effects: [] as (() => void)[],
   actions: [] as any[],
   input: null as any,
+  list: null as any,
+  scroll: vi.fn(),
+  offline: false,
+  recents: { list: vi.fn(), record: vi.fn(), remove: vi.fn(), clear: vi.fn() },
   params: { entry: "HOME", tripId: "trip" },
   generation: 1,
   direct: null as any,
@@ -49,8 +53,16 @@ vi.mock("react-native", async () => {
     View: (p: any) => createElement("div", {}, p.children),
     Text: (p: any) => createElement("span", {}, p.children),
     StyleSheet: { create: (v: any) => v },
-    FlatList: (p: any) =>
-      createElement(
+    Keyboard: { dismiss: vi.fn() },
+    ScrollView: (p: any) => createElement("section", {}, p.children),
+    Pressable: (p: any) => {
+      state.actions.push({ ...p, label: p.accessibilityLabel?.split(", ")[0] });
+      return createElement("button", {}, p.children);
+    },
+    FlatList: (p: any) => {
+      state.list = p;
+      if (p.ref) p.ref.current = { scrollToOffset: state.scroll };
+      return createElement(
         "main",
         {},
         p.ListHeaderComponent,
@@ -60,10 +72,18 @@ vi.mock("react-native", async () => {
             )
           : p.ListEmptyComponent,
         p.ListFooterComponent,
-      ),
+      );
+    },
     AppState: { addEventListener: () => ({ remove: vi.fn() }) },
   };
 });
+vi.mock("expo-network", () => ({
+  useNetworkState: () => ({ isConnected: !state.offline }),
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
+vi.mock("@/data/repositories/searchRecentRepository", () => ({
+  searchRecentRepository: state.recents,
+}));
 vi.mock("expo-router", () => ({
   useLocalSearchParams: () => state.params,
   router: { push: state.push },
@@ -99,6 +119,10 @@ vi.mock("@/ui/controls", () => ({
   UiText: (p: any) => createElement("span", {}, p.children),
 }));
 vi.mock("@/ui/forms", () => ({
+  UiFormRow: (p: any) => {
+    state.actions.push(p);
+    return createElement("button", {}, p.label);
+  },
   UiChoiceChip: (p: any) => {
     state.actions.push(p);
     return createElement("button", {}, p.label);
@@ -109,7 +133,7 @@ vi.mock("@/ui/forms", () => ({
   },
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
 function render() {
   state.cursor = 0;
   state.actions = [];
@@ -150,6 +174,15 @@ beforeEach(() => {
   state.effects = [];
   state.params = { entry: "HOME", tripId: "trip" };
   state.generation = 1;
+  state.offline = false;
+  state.recents.list.mockResolvedValue([]);
+  state.recents.record.mockResolvedValue([]);
+  state.recents.clear.mockResolvedValue([]);
+  state.recents.remove.mockResolvedValue([]);
+  vi.stubGlobal("requestAnimationFrame", (fn: () => void) => {
+    fn();
+    return 0;
+  });
   state.reader.validate.mockResolvedValue(true);
   state.reader.page.mockImplementation(async (input: any) => ({
     ...page,
@@ -165,27 +198,30 @@ async function query() {
   render();
   state.input.onChangeText("Museum");
   render();
-  state.effects[0]();
-  await vi.advanceTimersByTimeAsync(200);
+  state.effects[1]();
+  await vi.advanceTimersByTimeAsync(250);
   render();
 }
-it("real screen presets keep query, omit redundant Trips category, and group All before See all", async () => {
+it("keeps entry scope fixed and filters one shared query revision without a scope selector or debug controls", async () => {
   await query();
   expect(state.input.value).toBe("Museum");
+  expect(
+    state.actions.some(
+      (p) =>
+        p.label === "All Trips" || p.label === "Current Trip" || p.label === "Refresh",
+    ),
+  ).toBe(false);
   expect(state.actions.some((p) => p.label.startsWith("Trips ("))).toBe(false);
-  state.actions.find((p) => p.label === "All Trips").onPress();
+  expect(state.actions.find((p) => p.label === "All (1)").selected).toBe(true);
+  state.actions.find((p) => p.label === "Itinerary (1)").onPress();
   render();
   expect(state.input.value).toBe("Museum");
-  expect(state.actions.some((p) => p.label.startsWith("Trips ("))).toBe(true);
-  state.effects[0]();
-  await vi.advanceTimersByTimeAsync(200);
-  render();
-  state.actions.find((p) => p.label === "See all Itinerary").onPress();
-  render();
-  expect(state.input.value).toBe("Museum");
-  expect(state.actions.find((p) => p.label.startsWith("Itinerary (")).selected).toBe(
-    true,
-  );
+  expect(state.actions.find((p) => p.label === "Itinerary (1)").selected).toBe(true);
+  expect(
+    state.reader.page.mock.calls.every(
+      ([input]) => input.tripId === "trip" && input.category === "ALL",
+    ),
+  ).toBe(true);
 });
 it("fresh normal resolution uses existing directItem overlay; close preserves query/scope/category and never selects active Trip", async () => {
   state.reader.resolve.mockResolvedValue({
@@ -239,7 +275,7 @@ it("Trip resolution uses the existing route with target scope without active-Tri
   await query();
   await state.actions.find((p) => p.label === "Museum").onPress();
   expect(state.push).toHaveBeenCalledWith({
-    pathname: "/trip",
+    pathname: "/search-trip",
     params: { tripId: "trip", view: "home" },
   });
   expect(state.select).not.toHaveBeenCalled();
@@ -288,17 +324,13 @@ it("a delayed earlier Item tap cannot replace the latest detail or reopen after 
   expect(state.input.value).toBe("Museum");
 });
 
-it("review: selected zero Trips category remains explicit after All→Current scope", async () => {
+it("keeps a selected zero-count category explicit in global scope", async () => {
+  state.params = { entry: "MY_TRIPS", tripId: "trip" };
   await query();
-  state.actions.find((p) => p.label === "All Trips").onPress();
+  state.actions.find((p) => p.label === "Trips (0)").onPress();
   render();
-  state.actions.find((p) => p.label.startsWith("Trips (")).onPress();
-  render();
-  state.actions.find((p) => p.label === "Current Trip").onPress();
-  render();
-  expect(state.actions.some((p) => p.label.startsWith("Trips (") && p.selected)).toBe(
-    true,
-  );
+  expect(state.actions.find((p) => p.label === "Trips (0)").selected).toBe(true);
+  expect(state.reader.page.mock.calls[0][0].tripId).toBeNull();
 });
 it("review: late target resolution cannot push after account-generation unmount", async () => {
   state.params = { entry: "MY_TRIPS", tripId: "trip" };
@@ -315,7 +347,7 @@ it("review: late target resolution cannot push after account-generation unmount"
   );
   await query();
   const pending = state.actions.find((p) => p.label === "Museum").onPress();
-  const cleanup = state.effects[0]() as unknown as () => void;
+  const cleanup = state.effects[1]() as unknown as () => void;
   cleanup();
   state.generation = 2;
   finish({ kind: "TRIP", tripId: "trip" });
@@ -330,4 +362,99 @@ it("review: malformed-but-schema-accepted cached Trip date must not crash Search
     results: [{ ...result, category: "TRIPS", id: "trip", date: "unknown-date" }],
   }));
   await expect(query()).resolves.toBeUndefined();
+});
+
+it("restores the exact scroll after Immersive Close while retaining query and selected category", async () => {
+  state.reader.resolve.mockResolvedValue({
+    kind: "ITEM",
+    itemId: "item",
+    proof,
+    projection: { version: 2 },
+    date: "2027-01-27",
+    zone: "Pacific/Auckland",
+    services: {},
+  });
+  await query();
+  state.actions.find((p) => p.label === "Itinerary (1)").onPress();
+  render();
+  state.list.onScroll({ nativeEvent: { contentOffset: { y: 678 } } });
+  await state.actions.find((p) => p.label === "Museum").onPress();
+  render();
+  state.direct.directItem.onClose();
+  render();
+  expect(state.scroll).toHaveBeenLastCalledWith({ offset: 678, animated: false });
+  expect(state.input.value).toBe("Museum");
+  expect(state.actions.find((p) => p.label === "Itinerary (1)").selected).toBe(true);
+});
+it("does not save typed prefixes; Return or opened results commit a scoped recent search", async () => {
+  await query();
+  expect(state.recents.record).not.toHaveBeenCalled();
+  state.input.onSubmitEditing();
+  await Promise.resolve();
+  expect(state.recents.record).toHaveBeenCalledWith({ query: "Museum", tripId: "trip" });
+});
+it("distinguishes offline local absence from no matching online results", async () => {
+  state.reader.page.mockImplementation(async (input: any) => ({
+    ...page,
+    key: JSON.stringify([input.query, input.tripId, input.category]),
+    results: [],
+  }));
+  await query();
+  expect(render()).toContain("No matches found.");
+  state.offline = true;
+  expect(render()).toContain("No local matches");
+  expect(render()).toContain("Offline · Local results");
+});
+it("a completed older query cannot overwrite a later query or its counts", async () => {
+  let finish!: (value: any) => void;
+  state.reader.page.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  render();
+  state.input.onChangeText("old");
+  render();
+  state.effects[1]();
+  await vi.advanceTimersByTimeAsync(250);
+  state.input.onChangeText("new");
+  render();
+  state.effects[1]();
+  await vi.advanceTimersByTimeAsync(250);
+  render();
+  finish({
+    ...page,
+    key: JSON.stringify(["old", "trip", "ALL"]),
+    results: [{ ...result, title: "Old stale result" }],
+  });
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(render()).not.toContain("Old stale result");
+  expect(state.input.value).toBe("new");
+  expect(state.actions.find((p) => p.label === "All (1)")).toBeDefined();
+});
+
+it("an old periodic permission check cannot clear a newer query after an async failure", async () => {
+  await query();
+  let reject!: (error: Error) => void;
+  state.reader.validate.mockImplementationOnce(
+    () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      }),
+  );
+  const dispose = state.effects[2]() as unknown as () => void;
+  await vi.advanceTimersByTimeAsync(2000);
+  state.input.onChangeText("new");
+  render();
+  state.effects[1]();
+  await vi.advanceTimersByTimeAsync(250);
+  render();
+  reject(new Error("old check failed"));
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(render()).not.toContain("Search is unavailable.");
+  expect(state.actions.find((p) => p.label === "All (1)")).toBeDefined();
+  dispose();
 });

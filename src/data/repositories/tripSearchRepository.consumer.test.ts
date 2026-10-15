@@ -14,7 +14,7 @@ vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 
 it("normal accepted Reference collection supports P4–6 temporary detail while null zones need an explicit same-generation view", async () => {
-  const f = fixture(true),
+  const f = fixture(true, 68),
     account = f.getAccount;
   const core = createTripCoreV2Repository(f.db, account, sha256);
   const trips = createTripRepository(f.db, account, core);

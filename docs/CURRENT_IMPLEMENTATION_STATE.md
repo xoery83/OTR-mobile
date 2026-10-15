@@ -1,3 +1,18 @@
+# Global Search VQA V1 — integrated / 2026-10-16
+
+- Reviewed source98c94d5 integrated onto ca4a7e9; Experience owns stable Native preview.
+- Full-screen Search, immutable entry scope, device/account-local recents, shared
+  query/count revision, compact mixed rows and localized offline/no-match states.
+- Existing Provider unchanged: only Trips/Itinerary; Ledger/Documents and safe
+  Booking-ref indexing remain owning dependencies. No Booking UI or business writes.
+- Mandatory Native Search→real Item→Close preserves query/category/scope/scroll;
+  before/after content zero pixel difference. Thin root TripScreen child also
+  returns to preserved Search; ordinary Trip route unchanged.32 targeted tests,
+  types/UIguard/scoped lint and independent source Review PASS; no full matrix.
+- Owner accepted Debug8083 preview; Experience now owns AD5 stable installation.
+  TCL01 normal cold reopen PASS; full-offline/Hosted sync remain unverified.
+  Report: docs/beta/visual-acceptance/OTR_GLOBAL_SEARCH_VQA_V1_2026-10-16.md.
+
 # Active checkpoint — 2026-10-16
 
 - Main ed9ceb2 integrates reviewed C4-L TEXT local intake and Account/Input/generation/
