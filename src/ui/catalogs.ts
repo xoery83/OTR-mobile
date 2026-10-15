@@ -1,4 +1,15 @@
 export const en = {
+  "capture.custodyDev.title": "DEV · Original custody",
+  "capture.custodyDev.put": "Upload and verify originals",
+  "capture.custodyDev.read": "Verify stored originals (GET only)",
+  "capture.custodyDev.running": "Checking original custody…",
+  "capture.custodyDev.verified": "Original bytes verified",
+  "capture.custodyDev.failed":
+    "Original custody check failed · {stage} · {code} · HTTP {status}",
+  "capture.custodyDev.receipt": "Batch {batchId} · Job {jobId}",
+  "capture.custodyDev.inputReceipt":
+    "Input {inputId} · {byteCount} bytes · SHA-256 {sha256}",
+
   "comprehensiveSearch.categoryCount": "{category} ({count})",
   "comprehensiveSearch.seeAllCategory": "See all {category}",
   "comprehensiveSearch.partialCoverage": "More local records available.",
@@ -2210,6 +2221,17 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "capture.custodyDev.title": "DEV · 原件保管",
+  "capture.custodyDev.put": "上传并验证原件",
+  "capture.custodyDev.read": "验证已保存原件（仅 GET）",
+  "capture.custodyDev.running": "正在检查原件保管…",
+  "capture.custodyDev.verified": "原件字节已验证",
+  "capture.custodyDev.failed":
+    "原件保管检查失败 · {stage} · {code} · HTTP {status}",
+  "capture.custodyDev.receipt": "批次 {batchId} · 任务 {jobId}",
+  "capture.custodyDev.inputReceipt":
+    "输入 {inputId} · {byteCount} 字节 · SHA-256 {sha256}",
+
   "comprehensiveSearch.categoryCount": "{category}（{count}）",
   "comprehensiveSearch.seeAllCategory": "查看全部{category}",
   "comprehensiveSearch.partialCoverage": "可加载更多本地记录。",

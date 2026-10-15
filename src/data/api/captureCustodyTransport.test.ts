@@ -35,7 +35,10 @@ const response = (body = bytes) =>
 async function setup(fetcher = vi.fn(async () => response())) {
   const account = async () => b.accountId;
   const context = await captureAccountRequestContext("", account);
-  const tokenProvider = vi.fn(async () => ({ userId: b.accountId, token: "synthetic" }));
+  const tokenProvider = vi.fn(async () => ({
+    userId: b.accountId,
+    token: "synthetic",
+  }));
   const t = createCaptureCustodyTransport(account, {
     baseUrl: "https://api.example",
     fetchImplementation: fetcher,
@@ -49,7 +52,9 @@ it("uses exact tuple/bytes, bounded verified readback and one401 refresh", async
   const x = await setup(fetcher);
   expect(await x.t.put(x.context, b, bytes)).toEqual(bytes);
   expect(x.tokenProvider).toHaveBeenCalledTimes(2);
-  expect((fetcher.mock.calls[1] as unknown as [string, RequestInit])[1]).toMatchObject({
+  expect(
+    (fetcher.mock.calls[1] as unknown as [string, RequestInit])[1],
+  ).toMatchObject({
     method: "PUT",
     redirect: "error",
     headers: { "X-OTR-Capture-Binding": captureCustodyBindingJson(b) },
@@ -59,7 +64,10 @@ it("404 recovery is unavailable, not new upload; malformed bytes and overflow re
   const x = await setup(vi.fn(async () => new Response(null, { status: 404 })));
   expect(await x.t.read(x.context, b)).toBeNull();
   expect(x.fetcher).toHaveBeenCalledTimes(1);
-  for (const body of [new Uint8Array(bytes.length), new Uint8Array(bytes.length + 1)]) {
+  for (const body of [
+    new Uint8Array(bytes.length),
+    new Uint8Array(bytes.length + 1),
+  ]) {
     const y = await setup(vi.fn(async () => response(body)));
     await expect(y.t.read(y.context, b)).rejects.toThrow();
   }
@@ -80,3 +88,30 @@ it("same-account new generation during credentials or response cannot disclose o
   );
   await expect(y.t.read(y.context, b)).rejects.toThrow(/Account changed/);
 });
+
+it.each(["put", "read"] as const)(
+  "retired page/expiry during auth blocks actual %s dispatch",
+  async (method) => {
+    const account = async () => b.accountId,
+      context = await captureAccountRequestContext("", account);
+    let live = true;
+    const fetcher = vi.fn(async () => response());
+    const transport = createCaptureCustodyTransport(account, {
+      baseUrl: "https://api.example",
+      fetchImplementation: fetcher,
+      tokenProvider: async () => {
+        live = false;
+        return { userId: b.accountId, token: "synthetic" };
+      },
+      assertRequestCurrent: () => {
+        if (!live) throw new Error("CAPTURE_CUSTODY_DEV_EXPIRED");
+      },
+    });
+    await expect(
+      method === "put"
+        ? transport.put(context, b, bytes)
+        : transport.read(context, b),
+    ).rejects.toThrow("DEV_EXPIRED");
+    expect(fetcher).not.toHaveBeenCalled();
+  },
+);

@@ -1,6 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
 import { beforeEach, expect, it, vi } from "vitest";
-import { runDefaultCaptureCustodyBatch } from "./defaultCaptureCustody";
+import {
+  runDefaultCaptureCustodyBatch,
+  verifyDefaultCaptureCustodyBatch,
+} from "./defaultCaptureCustody";
 import { createCaptureCustodyOperation } from "./captureCustody";
 import { requireActiveUserId } from "../auth/authRepository";
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
@@ -81,6 +84,41 @@ it("lost ACK does not invent another Input or continue a sibling", async () => {
   put.mockRejectedValueOnce(Error("synthetic unknown ACK"));
   await expect(runDefaultCaptureCustodyBatch(batch)).rejects.toThrow(
     "unknown ACK",
+  );
+  expect(put).toHaveBeenCalledTimes(1);
+  expect(recover).not.toHaveBeenCalled();
+});
+
+it("cold verification uses both exact normal bindings and authorized GET only, never PUT", async () => {
+  const receipt = await verifyDefaultCaptureCustodyBatch(batch);
+  expect(binding).toHaveBeenCalledTimes(2);
+  expect(recover).toHaveBeenCalledTimes(2);
+  expect(put).not.toHaveBeenCalled();
+  expect(receipt.inputs).toHaveLength(2);
+});
+it("host/expiry invalidation after preflight prevents every PUT; after first ACK stops siblings and readback", async () => {
+  let live = true;
+  const check = () => {
+    if (!live) throw Error("synthetic retired host");
+  };
+  binding.mockImplementationOnce(async () => {
+    live = false;
+    return one;
+  });
+  await expect(runDefaultCaptureCustodyBatch(batch, check)).rejects.toThrow(
+    "retired",
+  );
+  expect(put).not.toHaveBeenCalled();
+  live = true;
+  binding.mockImplementation(async (_c, _j, id) =>
+    id === one.inputId ? one : second,
+  );
+  put.mockImplementationOnce(async () => {
+    live = false;
+    return bytes;
+  });
+  await expect(runDefaultCaptureCustodyBatch(batch, check)).rejects.toThrow(
+    "retired",
   );
   expect(put).toHaveBeenCalledTimes(1);
   expect(recover).not.toHaveBeenCalled();

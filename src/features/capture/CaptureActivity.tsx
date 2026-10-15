@@ -1,3 +1,4 @@
+import { CaptureCustodyDevAction } from "./CaptureCustodyDevAction";
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { projectCaptureActivity } from "@/domain/capture/captureActivityProjection";
@@ -57,11 +58,17 @@ export function CaptureActivity({
   const active = useRef(false);
   const running = useRef(false);
   const load = async (older = false) => {
-    if (!active.current || !isCurrent() || running.current || jobs !== inventory.current)
+    if (
+      !active.current ||
+      !isCurrent() ||
+      running.current ||
+      jobs !== inventory.current
+    )
       return;
     running.current = true;
     const request = ++epoch.current;
-    const current = () => active.current && request === epoch.current && isCurrent();
+    const current = () =>
+      active.current && request === epoch.current && isCurrent();
     setLoading(true);
     setError(false);
     try {
@@ -70,7 +77,9 @@ export function CaptureActivity({
       const last = older ? jobs.at(-1)?.batch : undefined;
       const page = await api.listDefaultCaptureJobs({
         limit: pageSize,
-        before: last ? { createdAt: last.createdAt, batchId: last.batchId } : undefined,
+        before: last
+          ? { createdAt: last.createdAt, batchId: last.batchId }
+          : undefined,
       });
       if (!current()) return;
       const next = older ? [...jobs, ...page] : page;
@@ -103,6 +112,7 @@ export function CaptureActivity({
   }, []);
   return (
     <CaptureActivityList
+      isCurrent={() => active.current && isCurrent()}
       expectedAccountId={expectedAccountId}
       jobs={jobs}
       loading={loading}
@@ -130,7 +140,9 @@ export function CaptureActivityList({
   onReturn,
   onHide,
   expectedAccountId,
+  isCurrent = () => false,
 }: {
+  isCurrent?: () => boolean;
   jobs: readonly CaptureJobReadModel[];
   loading: boolean;
   error: boolean;
@@ -162,12 +174,16 @@ export function CaptureActivityList({
     >
       <UiSection
         title={t(
-          expectedAccountId ? "capture.progress.activeImports" : "capture.activity",
+          expectedAccountId
+            ? "capture.progress.activeImports"
+            : "capture.activity",
         )}
       >
         <Text style={styles.secondary}>
           {t(
-            expectedAccountId ? "capture.progress.accountScope" : "capture.activityHint",
+            expectedAccountId
+              ? "capture.progress.accountScope"
+              : "capture.activityHint",
           )}
         </Text>
         <UiButton
@@ -197,7 +213,9 @@ export function CaptureActivityList({
               ? t("capture.progress.batchTitle", { count: job.counts.selected })
               : captureJobTitle(job)}
           </Text>
-          <Text style={styles.secondary}>{captureActivityTime(job.batch.createdAt)}</Text>
+          <Text style={styles.secondary}>
+            {captureActivityTime(job.batch.createdAt)}
+          </Text>
           {!job.allInputsAccepted ? (
             <Text style={styles.secondary}>
               {t(
@@ -209,19 +227,24 @@ export function CaptureActivityList({
             </Text>
           ) : null}
           {job.inputs?.some((item) => item.continuesFromJobId) ? (
-            <Text style={styles.secondary}>{t("capture.continuedSelection")}</Text>
+            <Text style={styles.secondary}>
+              {t("capture.continuedSelection")}
+            </Text>
           ) : null}
           <UiButton
             label={t("capture.jobView", {
               summary:
                 expectedAccountId && (loading || scopedError)
-                  ? t("capture.progress.batchTitle", { count: job.counts.selected })
+                  ? t("capture.progress.batchTitle", {
+                      count: job.counts.selected,
+                    })
                   : captureJobTitle(job),
             })}
             variant="secondary"
             disabled={!job.availableActions.canReopen}
             onPress={() => onOpenJob(job.batch.jobId)}
           />
+          <CaptureCustodyDevAction job={job} isCurrent={isCurrent} />
         </UiSection>
       ))}
       {hasMore ? (
@@ -245,7 +268,11 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
     // The Composer measures intrinsic content under its existing cap; flex:1 collapses an unbounded child.
-    sheetBody: { flexGrow: 0, flexShrink: 1, backgroundColor: colors.background },
+    sheetBody: {
+      flexGrow: 0,
+      flexShrink: 1,
+      backgroundColor: colors.background,
+    },
     content: { padding: visual.space.page, gap: visual.space.card },
     title: { color: colors.textPrimary, ...visual.type.row },
     secondary: { color: colors.textSecondary, ...visual.type.meta },

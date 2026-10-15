@@ -1,5 +1,23 @@
 # Capture Import checkpoint — 2026-10-15
 
+- C2 current: restricted DEV Native Activity caller implemented and independently
+  reviewed; normal config=null. Exact original A1A/account/Batch/two Input pins,
+  expiry and account/page lifecycle checks apply through actual network dispatch.
+  Explicit PUT+GET and cold GET-only verification reuse existing Repo/runner/session.
+  Main integration: 7 files/34 tests, full typecheck and ui:guard PASS.
+  Native attempt BLOCKED before Activity: CUA -10005 windowNotFoundAtPosition
+  twice, including refreshed same-window binding. No PUT/GET or Storage association.
+  Ten temporary host preimages/absence restored exactly; same App normal cleanup
+  restart succeeded, schema63/DB/Auth/Metro retained. C2 Runtime NOT VERIFIED.
+  Evidence: `/private/tmp/otr-c2-native-activity-caller-761e21f/review/`:
+  independent-review.md and native-run/receipt.json, restoration.json.
+  Backend image08b1ad6f remains running/health200; unused metadata parked again,
+  no restart/expiry extension. Loaded closure keeps original08:38:49Z expiry;
+  pathname removal is not immediate in-memory revocation. Native remains blocked.
+  Next: restore normal same-A1A UI input operation, then requalify unexpired
+  metadata/target before same-Batch Native verification. No Inspector retry or
+  Backend deployment. Expired metadata requires explicit bounded renewal approval.
+  Experience pre-submit Presentation remains independently owned; no duplicate UI.
 - C1 PARTIAL: one real Native Batch accepted two Owner originals. Normal Activity
   reopen, explicit App cold terminate/launch and cold persisted Input/payload
   identities, byte counts and SHA-256 all passed. Cold Native Activity reopen
@@ -66,6 +84,19 @@
   Independent VQA-MT-CAP-PRE-01 presentation packet is registered in EXECUTION;
   await UI owner commit/Native report. E2E owns all acquisition/submit/post-submit
   business; no duplicate UI work or text/Clipboard submit capability is inferred.
+  Final bounded read-only diagnosis: original A1A App0.1.0/build1 process72910
+  and Metro3554 alive; this does not prove JS execution or current CDP context.
+  Installed RN/Hermes CDP supports Runtime.enable (HostAgent109/RuntimeAgent72;
+  Metro itself sends it). No protocol-method substitution is justified.
+  Exact-App last30m unified logs read4946 records with no Inspector/Hermes/close
+  cause or JS-fatal markers; Metro outputs are pipes, no retained filename found.
+  Close1006 cause remains NOT DETERMINED; no Discovery/WS/reload was repeated.
+  No existing UI caller invokes runDefaultCaptureCustodyBatch. Recommended narrow
+  replacement: same A1A normal Capture Activity, gated DEV-only owning callback to
+  existing runner with visible finite receipt, no Inspector/global hook/new repo/
+  Storage script/permanent QA route. Proposal only, requires explicit acceptance-
+  mechanism decision and UI-owner coordination; not implemented.
+  Evidence: `/private/tmp/otr-c2-a1a-final-diagnosis-20261015/receipt.json`.
   C3 local PDF intake provenance/assignment checks confirmed existing guards
   (136 PASS/1 explicit SQL-fixture skip), no unnecessary code change.
   TYPE05 local decision saving and forward65 are integrated in code after

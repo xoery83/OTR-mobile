@@ -1,44 +1,34 @@
 ## Capture Import staged checkpoint — 2026-10-15
 
-C1 PARTIAL: same real Native Batch accepted two originals; bytes/SHA and normal
-Activity reopen passed, cold persistent identities passed; cold Native Activity
-reopen NOT OBSERVED. Preserve Batch `e046f37a-61ac-444a-b05b-0a991d59e006`;
-no new Submit. C2 code `d96c898` independently reviewed and integrated; default
-CLOSED. Real DEV Source Storage upload/readback and Runtime injection remain
-unverified. SDK headers corrected/reviewed at `918110f` (8 PASS). Bounded
-qualification found C2 startup config/attested mount composition absent. Runtime
-code is now integrated at `83f575f`, Code PASS/conditional Gate READY.
-Owner approved Backend/Native sequencing separation and one original A1A restart.
-Latest bounded r3 recovery fixed Origin header using Node builtin WebSocketInit,
-without changing existing Metro guard/target/port. HTTP101 PASS, Runtime.enable
-sent then close1006 before reply/context; no hook call/PUT/GET. One original A1A
-restart passed, six preimages restored exact; in-memory hook cleanup UNKNOWN.
-Receipt: `/private/tmp/otr-c2-a1a-origin-recovery-r3-20261015/receipt.json`.
-No further reconnect/reload. Same Metro stdout/stderr are pipes/no retained log
-filename observed; next minimal diagnosis targets upstream JS-runtime disconnect,
-not another Origin retry/Backend deployment or broad log investigation.
-Owner approved fixed third Reader mount; reviewed checker delta integrated,51 PASS.
-Snapshot83f575f built immutable image08b1ad6f; independent Linux bundle3c873 exact
-reproduction/behavior check and original noninterpolated three-mount profile PASS.
-Prior two stopped rounds retained. Owner-approved targeted correction used original
-noninterpolated Gate proof and fixed image variable: Backend deployment checkpoint
-PASS, running08b1ad6f/server-capture, exact3 mounts, local/public health200, Reader/
-Caddy/unrelated containers/configs preserved. No rollback required, immutable23dae9
-and original full Compose retained. Same metadata was restored for deployment, then parked after latest Native failure.
-Current process retains original loaded expiry08:38:49Z/21:38NZDT and guarded
-put/read rejection thereafter; no extension. Backend kept running/health200.
-No dependent operations/Storage associations/PUT/GET. Deployment receipt:
-`/private/tmp/otr-c2-backend-runtime-20261015/targeted-deployment-receipt.json`.
-C2 Runtime NOT VERIFIED: Native WS opens but context remains BLOCKED/Coordinator-
-owned. Metadata stop receipt in same directory: `metadata-stop-receipt.json`.
-Next narrowly diagnose Runtime.enable/JS upstream disconnect, not another Backend
-rebuild/deployment, automatic reconnect or substitute App/file/Storage script.
-C3 local provenance
-checks confirmed existing guards (136 PASS/1 SQL-fixture skip), no code change.
-TYPE05 local decision saving/forward65 is code-integrated after independent
-review; superseded-Run rejection/history preservation and normal64→65 bootstrap
-pass. No device/Hosted schema install or field application/Review resolution. C3–C6 not passed or authorized by this C2 Gate. Reuse the C1/C2 evidence paths in current
-implementation state; no additional screenshot matrix or ordinary UI packet.
+C1 PARTIAL: same two-real-file Batch retained; normal Activity reopen and cold
+persisted bytes/identities passed, cold Native Activity reopen remains unobserved.
+No duplicate Submit. C2 Backend Deployment PASS remains fixed image08b1ad6f;
+no redeployment, Auth/RLS/Schema/Storage permission or Provider change.
+
+Owner-approved Inspector replacement is implemented: default-off DEV-only action
+inside existing CaptureActivity, exact original account/Batch/Input pins+expiry,
+normal Repo/session/owning runner, explicit PUT+GET and cold GET-only verification.
+Independent Code PASS; Main34tests, typecheck and ui:guard PASS. Experience owns
+pre-submit Presentation; only8 EN/ZH catalog pairs added without formatting churn.
+
+Native BLOCKED before Activity: two CUA -10005 windowNotFoundAtPosition failures,
+including refreshed original-window binding. No upload/readback/Storage association.
+Ten exact host preimages/absence restored; normal App cleanup restart succeeded;
+original A1A/Metro/schema63/Session/DB retained. No further same-path retry.
+Evidence: `/private/tmp/otr-c2-native-activity-caller-761e21f/review/` manifest,
+independent-review.md, native-run/receipt.json and restoration.json.
+
+Unused metadata parked again after failure; current Backend remains health200.
+Original loaded closure expiry08:38:49Z/21:38NZDT unchanged; removal prevents
+future startup loading, not immediate revocation. C2 stays Coordinator-owned
+BLOCKED/Runtime NOT VERIFIED. Next requires working normal same-A1A UI interaction
+and valid fixed metadata/target before PUT/GET; no Inspector fallback or desktop
+upload substitute. If original metadata expires, do not renew automatically.
+
+C3 independent local guards and TYPE05 saving/forward65 are already reviewed and
+integrated; no device migration, Processing Runtime, field application, Review
+resolution or C3–C6 end-to-end PASS. Do not repeat passed reviews or invent filler
+work while actual Native execution is blocked.
 
 # OTR Beta — EXECUTION
 

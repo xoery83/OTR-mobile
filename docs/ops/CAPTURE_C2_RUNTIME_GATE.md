@@ -4,6 +4,29 @@ Reviewed Backend snapshot83f575f; exact patch/file/bundle hashes remain in the
 review manifest. Runtime evidence is recorded separately; code approval is not PASS.
 C1 PARTIAL remains; do not resubmit the existing Batch.
 
+## Current Native execution — Owner-approved Activity caller (2026-10-15)
+
+This section supersedes the historical Inspector/CDP Hook invocation requirements
+below. Keep original A1A device A1A21E80-9007-4D69-87A4-2A5AF927F0A3,
+com.xoery.otrmobile, existing Session/SQLite/Metro, account and same Batch/Input
+bindings. No Inspector Hook qualification or retry is required.
+
+Only an explicit DEV QA configuration may expose the bounded action inside the
+existing Capture Activity. Normal startup stays disabled. Use the existing owning
+runner, Repository, Source/Custody transport and current authorized Session.
+Before network dispatch, confirm the fixed DEV target, exact original bindings
+and unexpired metadata; original expiry remains 2026-10-15T08:38:49.122940Z.
+Do not renew it automatically, deploy again, copy tokens or substitute desktop
+uploads. No new Repository, Storage API, test page or persistent QA state.
+
+Runtime PASS requires both originals uploaded from the original App, authorized
+readback matching exact bytes/SHA-256, and normal cold restart finding the same
+Activity with successful GET-only custody verification (no repeat PUT). Record
+actual stage/error on failure; code and Backend Deployment PASS remain separate.
+Preserve original file preimages for any temporary Native source/config overlay
+and restore them after verification. Historical Hook code below is evidence only,
+not an alternate execution path.
+
 ## One protected decision, existing DEV only
 
 Owner approved only reviewed Backend image/profile replacement, existing credential
