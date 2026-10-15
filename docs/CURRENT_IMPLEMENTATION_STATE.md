@@ -1,3 +1,33 @@
+# Capture C4-L / TCL02 checkpoints — 2026-10-16
+
+- Owner-approved isolated iOS26.5 real-input component Runtime: PDFKit and Vision
+  original-byte/hash/evidence checks PASS. Existing Native extractor/model code ran
+  unchanged; no Remote LLM or original upload, no Session migration, A1A/AD5 unchanged.
+- PDF first/warm Apple calls 32239/6102ms; first exceeds current JS20s deadline,
+  warm normalized NZ5069 fails exact anchor against printed NZ 5069 and is rejected.
+  JPEG process-first/warm 3047/2377ms;4 verbatim service hints pass. JPEG follows PDF
+  system use: not a model-evicted machine cold benchmark. No large performance matrix.
+- Small reviewed parser fix6ab1a73 reads explicit printed service spacing/booking
+  phrase, retains exact UTF-8 evidence and infers no leg. Real-text TS replay yields
+  PDF20 fields/JPEG8; original A1A immutable results remain18/8.75 targeted checks,
+  typecheck/lint and independent delta review PASS. Native outputs replayed through
+  real TS contracts; this is not normal App/Repository26.5 Runtime PASS.
+- C4-L remains PARTIAL: typed local observations only, no formal Candidate/Review/
+  Admission, physical offline App test or iPhone16Pro validation. Receipt:
+  docs/ops/CAPTURE_C4_IOS265_LOCAL_COMPONENT_RECEIPT.json. Stop iOS27 asset diagnosis.
+- TCL01 Owner saved original Nelson Test/NZD2500minor. Read-only proof: exactly1
+  Journey/member/Expense/command, PENDING_CREATE, Expense waits original CREATE_TRIP,
+  both attempts0. Native cold reopen/full-offline test remains pending. Receipt:
+  docs/ops/TCL01_OWNER_SAVE_RECEIPT_20261016.json.
+- TCL02 source40c0da6 integrated, default CLOSED,142 focused checks/independent
+  review PASS. Atomic identity mapping precedes dependency release; actual Nelson
+  queue unchanged. Live BLOCKED: existing client requires gateway login while
+  protected finite gate requires NOLOGIN. No credential/role/gate/deployment change.
+  Exact owning gap: docs/ops/TCL02_TRIP_LEDGER_LOCAL_CANDIDATE.md.
+- Global Search VQA registered to independent Experience; Coordinator has no Search
+  UI writer. Presentation paths disjoint from C4/TCL; shared keys/interfaces scoped
+  in docs/ops/GLOBAL_SEARCH_VQA_HANDOFF_20261016.md. No Backend Search/schema scope.
+
 # Apple local model diagnosis — 2026-10-16
 
 - A1A iOS27 API availability=available, but real App generation failed: ModelManager
