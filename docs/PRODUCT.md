@@ -324,3 +324,7 @@ scoped. Integration guide: `architecture/OTR_DAY_FEED_LAB_INTEGRATION_GUIDE.md`.
 ### UPD-UX-01 first personal Capture failure slice (Owner-approved2026-10-14; local proposal2026-10-15)
 
 The approved thirteen-case Updates Delta defines a relevant authorized inbox. The first ordinary implementation slice is an Account-personal aggregate for newly committed Capture intake failures requiring a genuine current user reacquisition action. One Batch is one card; no historical backfill, routine processing/pending/retry/completion broadcast or inferred Trip from `tripPrior`. Other domain sources, canonical outcomes, Announcement inclusion and Push remain unavailable/separate. Current category/query/unread-filter Mark All Read spans only Current Trip + Personal Inbox, never other Trips or owning Review/ACK. Product approval does not imply installed notification or read-state capability.
+
+## CP-UX-01 Camera source — bounded local implementation (2026-10-15)
+
+The approved Camera entry uses the existing native picker, retained pre-submit tray and C3 submission lifecycle. Camera is an explicit acquisition source; it is never relabelled Files or Photos. Permission denial and cancellation retain the current draft. This addition does not add a provider, uploader, review engine or new submission outcome. Actual Camera availability and device behaviour remain separately unverified.

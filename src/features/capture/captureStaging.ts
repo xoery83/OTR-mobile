@@ -1,6 +1,6 @@
 // Session-local choices only. Native references are unverified and may expire.
 export type CaptureSelection = Readonly<{
-  source: "files" | "photos";
+  source: "files" | "photos" | "camera";
   // Only a native provider may supply verified selection identity/revision.
   identity?: Readonly<{ key: string; revision: string }>;
   temporaryUri: string | null;
@@ -46,6 +46,7 @@ export const emptyCaptureStaging: CaptureStagingSnapshot = Object.freeze({
 });
 export type CapturePicker = (
   source: CaptureSelection["source"],
+  isCurrent?: () => boolean,
 ) => Promise<readonly CaptureSelection[]>;
 
 // The host owns authenticated admission; the optional owner only keys its draft.
@@ -172,8 +173,10 @@ export function createCaptureStaging(
       const request = epoch;
       publish({ ...snapshot, selecting: true, error: null });
       try {
-        const selected = await picker(source);
+        const selected = await picker(source, () => current() && request === epoch);
         if (!current() || request !== epoch) return;
+        if (selected.some((item) => item.source !== source))
+          throw new Error("CAPTURE_PICKER_SOURCE_MISMATCH");
         const items = [...snapshot.items];
         let duplicates = 0;
         for (const item of selected) {

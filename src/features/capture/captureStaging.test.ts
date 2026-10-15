@@ -13,9 +13,20 @@ import {
   endAccountTransition,
 } from "@/data/auth/accountRequestContext";
 
-const native = vi.hoisted(() => ({ files: vi.fn(), photos: vi.fn() }));
+const native = vi.hoisted(() => ({
+  files: vi.fn(),
+  photos: vi.fn(),
+  cameraPermission: vi.fn(),
+  requestCameraPermission: vi.fn(),
+  camera: vi.fn(),
+}));
 vi.mock("expo-document-picker", () => ({ getDocumentAsync: native.files }));
-vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: native.photos }));
+vi.mock("expo-image-picker", () => ({
+  launchImageLibraryAsync: native.photos,
+  getCameraPermissionsAsync: native.cameraPermission,
+  requestCameraPermissionsAsync: native.requestCameraPermission,
+  launchCameraAsync: native.camera,
+}));
 afterEach(() => vi.resetAllMocks());
 function scope() {
   const context = {
@@ -337,4 +348,74 @@ it("hiding a retained picker or clearing it cannot resurrect unsubmitted selecti
     expect(staging.getDraftSnapshot().items).toEqual([]);
     expect(staging.getDraftSnapshot().editorText).toBe(clear ? "" : "Retained");
   }
+});
+
+it("Camera stays explicit across retained draft, cancellation and stale picker ABA", async () => {
+  const camera = {
+    source: "camera" as const,
+    temporaryUri: "temporary://shot",
+    name: "shot.jpg",
+    typeHint: "image/jpeg",
+  };
+  const current = scope();
+  const staging = createCaptureStaging(async () => [camera], current, {
+    accountId: "real-account",
+    tripPrior: null,
+  });
+  await staging.pick("camera");
+  expect(staging.prepareSubmit()?.map((i) => i.source)).toEqual(["camera"]);
+  staging.hide();
+  staging.resume({ accountId: "real-account", tripPrior: null }, scope());
+  expect(staging.prepareSubmit()?.[0]).toMatchObject({
+    source: "camera",
+    availability: "unverified",
+  });
+  const canceled = createCaptureStaging(async () => [], scope());
+  await canceled.pick("camera");
+  expect(canceled.getSnapshot().items).toEqual([]);
+  let release!: (items: readonly (typeof camera)[]) => void;
+  const late = createCaptureStaging(
+    () =>
+      new Promise((done) => {
+        release = done;
+      }),
+    scope(),
+  );
+  const pending = late.pick("camera");
+  advanceAccountGeneration();
+  advanceAccountGeneration();
+  release([camera]);
+  await pending;
+  expect(late.getSnapshot().items).toEqual([]);
+});
+it("a Camera provider cannot silently substitute Photos provenance", async () => {
+  const staging = createCaptureStaging(
+    async () => [
+      {
+        source: "photos",
+        temporaryUri: "temporary://photo",
+        name: null,
+        typeHint: "image/jpeg",
+      },
+    ],
+    scope(),
+  );
+  await staging.pick("camera");
+  expect(staging.getSnapshot()).toMatchObject({ items: [], error: "picker" });
+});
+
+it("Camera permission denial keeps previously selected Files intact and never launches the camera", async () => {
+  native.files.mockResolvedValue({ canceled: false, assets: [file("plan.pdf")] });
+  native.cameraPermission.mockResolvedValue({ granted: false });
+  native.requestCameraPermission.mockResolvedValue({ granted: false });
+  const staging = createCaptureStaging(pickCaptureMaterial, scope());
+  await staging.pick("files");
+  const prior = staging.getSnapshot().items;
+  await staging.pick("camera");
+  expect(staging.getSnapshot()).toMatchObject({
+    items: prior,
+    selecting: false,
+    error: "picker",
+  });
+  expect(native.camera).not.toHaveBeenCalled();
 });

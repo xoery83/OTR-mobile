@@ -31,13 +31,16 @@ export const inputDeclarationSchema = z
     id: submissionId,
     itemKey: submissionId,
     ordinal: z.number().int().nonnegative(),
-    acquisitionSource: z.enum(["files", "photos"]),
+    acquisitionSource: z.enum(["files", "photos", "camera"]),
     kind: captureKindSchema,
     originalFilename: z.string().max(1024).nullable(),
     declaredContentType: z.string().max(255).nullable(),
     continuesFromInputId: submissionId.nullable(),
   })
-  .strict();
+  .strict()
+  .refine((input) => input.acquisitionSource !== "camera" || input.kind === "IMAGE", {
+    message: "Camera input must retain IMAGE kind",
+  });
 export const submissionRequestSchema = z
   .object({
     formatVersion: z.literal(1),

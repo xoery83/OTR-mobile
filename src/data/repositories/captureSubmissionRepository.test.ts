@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { migrations } from "@/data/db/migrations";
+import { captureCameraInputsMigration } from "@/data/db/migrations/captureCameraInputs";
 import { serializeDatabaseTransactions } from "@/data/db/databaseConnection";
 import {
   beginAccountTransition,
@@ -31,7 +32,7 @@ const cleanups: (() => void)[] = [];
 afterEach(() => {
   cleanups.splice(0).forEach((clean) => clean());
 });
-function fixture(fk = true, disk = false, version = 63) {
+function fixture(fk = true, disk = false, version = 64) {
   const dir = disk ? mkdtempSync(join(tmpdir(), "capture-c2-")) : null;
   const path = dir ? join(dir, "local.db") : ":memory:";
   let sql = new DatabaseSync(path);
@@ -1031,4 +1032,289 @@ it("C3 retained list context never recaptures Account authority across A→B→A
   await expect(f.repo.list({}, old)).rejects.toThrow("Account changed");
   await expect(f.repo.reopen(r.jobId, old)).rejects.toThrow("Account changed");
   expect((await f.repo.list())[0].batch.jobId).toBe(r.jobId);
+});
+
+it("before the forward migration Camera IMAGE fails atomically rather than becoming Files or Photos", async () => {
+  const f = fixture(true, false, 63),
+    request = f.request(1);
+  request.inputs[0].acquisitionSource = "camera";
+  request.inputs[0].kind = "IMAGE";
+  await expect(f.repo.register(request)).rejects.toThrow();
+  expect(f.count("capture_submission_batches")).toBe(0);
+  expect(f.count("capture_submission_inputs")).toBe(0);
+});
+
+it("forward64 preserves all existing rows, lineage, retention guards and Updates facts before Camera durable cold intake", async () => {
+  const f = fixture(true, true, 63);
+  const old = f.request(2);
+  await f.repo.submit(old, f.sources(old));
+  const missing = f.request(1);
+  await f.repo.register(missing);
+  const recovered = await createCaptureRecoveryAction(
+    {
+      repository: f.repo,
+      getActiveUserId: f.getUser,
+      ...deps,
+      open: async () => ({ bytes: new Uint8Array([7]) }),
+      pick: async () => [
+        { source: "files", temporaryUri: "temp://old", name: "old", typeHint: null },
+      ],
+    },
+    missing.jobId,
+    missing.inputs[0].id,
+    1,
+  ).run(vi.fn());
+  expect(recovered.inputs[0].continuesFromInputId).toBe(missing.inputs[0].id);
+  const failure = f.request(1);
+  await f.repo.submit(
+    failure,
+    new Map([[failure.inputs[0].id, async () => ({ bytes: new Uint8Array() })]]),
+  );
+  const tables = [
+    "capture_submission_batches",
+    "capture_submission_inputs",
+    "local_capture_inbox",
+    "local_capture_payloads",
+    "updates_capture_intake",
+  ];
+  const before = tables.map((table) =>
+    f.sql.prepare(`SELECT rowid,* FROM ${table} ORDER BY rowid`).all(),
+  );
+  expect(before[4]).toHaveLength(1);
+  f.sql.exec("BEGIN");
+  try {
+    f.sql.exec(captureCameraInputsMigration.sql);
+    f.sql.exec("COMMIT");
+  } catch (error) {
+    f.sql.exec("ROLLBACK");
+    throw error;
+  }
+  tables.forEach((table, index) =>
+    expect(f.sql.prepare(`SELECT rowid,* FROM ${table} ORDER BY rowid`).all()).toEqual(
+      before[index],
+    ),
+  );
+  expect(f.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  const camera = {
+    source: "camera" as const,
+    temporaryUri: "temp://shot",
+    name: "shot.jpg",
+    typeHint: "image/jpeg",
+  };
+  const session = createCaptureSubmissionSession({
+    repository: f.repo,
+    getActiveUserId: f.getUser,
+    ...deps,
+    open: async (selection) => {
+      expect(selection.source).toBe("camera");
+      return { bytes: new Uint8Array([255, 216, 255, 217]) };
+    },
+  });
+  const job = await session.submit([camera], vi.fn());
+  expect(job.inputs[0]).toMatchObject({
+    acquisitionSource: "camera",
+    kind: "IMAGE",
+    state: "ACCEPTED",
+  });
+  const capture = f.sql
+    .prepare("SELECT kind FROM local_capture_inbox WHERE id=?")
+    .get(job.inputs[0].captureId!);
+  expect(capture?.kind).toBe("IMAGE");
+  const count = f.count("capture_submission_batches");
+  expect((await session.submit([camera], vi.fn())).batch.jobId).toBe(job.batch.jobId);
+  expect(f.count("capture_submission_batches")).toBe(count);
+  f.reopen();
+  expect((await f.repo.reopen(job.batch.jobId)).inputs[0]).toMatchObject({
+    acquisitionSource: "camera",
+    state: "ACCEPTED",
+  });
+  expect((await f.repo.reopen(old.jobId)).allInputsAccepted).toBe(true);
+  expect(() =>
+    f.sql
+      .prepare("DELETE FROM capture_submission_inputs WHERE input_id=?")
+      .run(job.inputs[0].id),
+  ).toThrow("RETAINED");
+  expect(() =>
+    f.sql
+      .prepare("DELETE FROM local_capture_inbox WHERE id=?")
+      .run(job.inputs[0].captureId!),
+  ).toThrow("RETAINED");
+  expect(() =>
+    f.sql
+      .prepare(
+        "UPDATE capture_submission_inputs SET acquisition_source='photos',row_revision=row_revision+1 WHERE input_id=?",
+      )
+      .run(job.inputs[0].id),
+  ).toThrow();
+});
+
+it("Camera recovery keeps Camera provenance and cancellation/foreign provider create no Job", async () => {
+  const f = fixture(),
+    r = f.request(1);
+  r.inputs[0].acquisitionSource = "camera";
+  r.inputs[0].kind = "IMAGE";
+  await f.repo.register(r);
+  const camera = {
+    source: "camera" as const,
+    temporaryUri: "temp://retake",
+    name: "retake.jpg",
+    typeHint: "image/jpeg",
+  };
+  const open = vi.fn(async () => ({ bytes: new Uint8Array([8, 9]) }));
+  const action = (
+    pick: (
+      source: "files" | "photos" | "camera",
+    ) => Promise<
+      readonly (
+        | typeof camera
+        | { source: "photos"; temporaryUri: string; name: string; typeHint: string }
+      )[]
+    >,
+  ) =>
+    createCaptureRecoveryAction(
+      { repository: f.repo, getActiveUserId: f.getUser, ...deps, open, pick },
+      r.jobId,
+      r.inputs[0].id,
+      1,
+    ).run(vi.fn());
+  expect(
+    (
+      await action(async (source) => {
+        expect(source).toBe("camera");
+        return [];
+      })
+    ).batch.jobId,
+  ).toBe(r.jobId);
+  await expect(action(async () => [{ ...camera, source: "photos" }])).rejects.toThrow(
+    "source does not match",
+  );
+  expect(f.count("capture_submission_batches")).toBe(1);
+  expect(open).not.toHaveBeenCalled();
+  const result = await action(async (source) => {
+    expect(source).toBe("camera");
+    return [camera];
+  });
+  expect(result.inputs[0]).toMatchObject({
+    acquisitionSource: "camera",
+    kind: "IMAGE",
+    state: "ACCEPTED",
+    continuesFromInputId: r.inputs[0].id,
+  });
+  expect(f.count("capture_submission_batches")).toBe(2);
+  const wrong = f.request(1);
+  wrong.inputs[0].acquisitionSource = "camera";
+  wrong.inputs[0].kind = "FILE";
+  await expect(f.repo.register(wrong)).rejects.toThrow();
+  expect(f.count("capture_submission_batches")).toBe(2);
+  await f.switchTo(b);
+  expect(await f.repo.list()).toEqual([]);
+  await expect(f.repo.reopen(result.batch.jobId)).rejects.toThrow();
+});
+it("Camera recovery rejects A→B→A after picker before any new registration or byte read", async () => {
+  const f = fixture(),
+    r = f.request(1);
+  r.inputs[0].acquisitionSource = "camera";
+  r.inputs[0].kind = "IMAGE";
+  await f.repo.register(r);
+  const open = vi.fn(async () => ({ bytes: new Uint8Array([2]) }));
+  const pending = createCaptureRecoveryAction(
+    {
+      repository: f.repo,
+      getActiveUserId: f.getUser,
+      ...deps,
+      open,
+      pick: async (_source, acquisitionCurrent) => {
+        expect(acquisitionCurrent?.()).toBe(true);
+        await f.switchTo(b);
+        await f.switchTo(a);
+        expect(acquisitionCurrent?.()).toBe(false);
+        return [
+          {
+            source: "camera",
+            temporaryUri: "temp://late",
+            name: null,
+            typeHint: "image/jpeg",
+          },
+        ];
+      },
+    },
+    r.jobId,
+    r.inputs[0].id,
+    1,
+  ).run(vi.fn());
+  await expect(pending).rejects.toThrow("Account changed");
+  expect(open).not.toHaveBeenCalled();
+  expect(f.count("capture_submission_batches")).toBe(1);
+});
+it("forward64 failure rolls back the whole copy/swap and restores original51 guards and rows", async () => {
+  const f = fixture(true, false, 63),
+    r = f.request(2);
+  await f.repo.submit(r, f.sources(r));
+  const before = f.sql
+    .prepare("SELECT rowid,* FROM capture_submission_inputs ORDER BY rowid")
+    .all();
+  const schema = f.sql
+    .prepare(
+      "SELECT type,name,sql FROM sqlite_master WHERE name LIKE 'capture_submission_%' ORDER BY name",
+    )
+    .all();
+  f.sql.exec("BEGIN");
+  try {
+    f.sql.exec(captureCameraInputsMigration.sql);
+    f.sql.exec("SELECT intentional_missing_camera_migration_function()");
+  } catch {
+    f.sql.exec("ROLLBACK");
+  }
+  expect(
+    f.sql.prepare("SELECT rowid,* FROM capture_submission_inputs ORDER BY rowid").all(),
+  ).toEqual(before);
+  expect(
+    f.sql
+      .prepare(
+        "SELECT type,name,sql FROM sqlite_master WHERE name LIKE 'capture_submission_%' ORDER BY name",
+      )
+      .all(),
+  ).toEqual(schema);
+  expect(f.sql.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+  expect(() => f.sql.prepare("DELETE FROM capture_submission_inputs").run()).toThrow(
+    "RETAINED",
+  );
+  const camera = f.request(1);
+  camera.inputs[0].acquisitionSource = "camera";
+  camera.inputs[0].kind = "IMAGE";
+  await expect(f.repo.register(camera)).rejects.toThrow();
+  expect(f.count("capture_submission_batches")).toBe(1);
+});
+
+it("Camera recovery passes the captured host acquisition lease before a late permission launch", async () => {
+  const f = fixture(),
+    request = f.request(1);
+  request.inputs[0].acquisitionSource = "camera";
+  request.inputs[0].kind = "IMAGE";
+  await f.repo.register(request);
+  let hostEpoch = 1;
+  const acquisitionEpoch = hostEpoch;
+  const open = vi.fn(async () => ({ bytes: new Uint8Array([1]) }));
+  const action = createCaptureRecoveryAction(
+    {
+      repository: f.repo,
+      getActiveUserId: f.getUser,
+      ...deps,
+      open,
+      pick: async (_source, current) => {
+        expect(current?.()).toBe(true);
+        hostEpoch += 1;
+        expect(current?.()).toBe(false);
+        return [];
+      },
+    },
+    request.jobId,
+    request.inputs[0].id,
+    1,
+  );
+  await expect(action.run(vi.fn(), () => acquisitionEpoch === hostEpoch)).rejects.toThrow(
+    "acquisition closed",
+  );
+  expect(open).not.toHaveBeenCalled();
+  expect(f.count("capture_submission_batches")).toBe(1);
 });

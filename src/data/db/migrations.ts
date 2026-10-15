@@ -1,3 +1,4 @@
+import { captureCameraInputsMigration } from "./migrations/captureCameraInputs";
 import { capturePdfSourceHandoffMigration } from "./migrations/capturePdfSourceHandoff";
 import { coreOrdinaryOrderMigration } from "./migrations/coreOrdinaryOrder";
 import { captureFlightNativeMigration } from "./migrations/captureFlightNative";
@@ -1709,4 +1710,5 @@ export const migrations: Migration[] = [
   tripDiscoverySnapshotMigration,
   tripLocalPhotosMigration,
   updatesInboxMigration,
+  captureCameraInputsMigration,
 ];

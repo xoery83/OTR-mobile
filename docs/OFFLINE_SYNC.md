@@ -596,3 +596,7 @@ All phases retain one Account-generation fence; fresh A may reopen A's Job after
 A→B→A, while old callbacks/actions cannot regain authority. No Source/Run/queue,
 provider, upload, automatic startup/reconnect task or canonical mutation is added.
 C3 Activity discovery is still deferred.
+
+## CP-UX-01 local Camera capture (2026-10-15)
+
+Camera uses the existing local C3 byte retention and durable submission/recovery path. Native permission denial, cancellation, stale picker completion and Account changes must preserve the existing draft and cannot create a Batch. SQLite64 migration and source compatibility require isolated preservation/cold/replay validation before normal App startup is allowed to upgrade. No background upload, sync model or pre-submit process-death guarantee is added.

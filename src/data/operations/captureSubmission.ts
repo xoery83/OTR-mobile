@@ -1,6 +1,7 @@
 import {
   captureAccountRequestContext,
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
 import type { CaptureSelection } from "@/features/capture/captureStaging";
@@ -49,7 +50,7 @@ export function createCaptureSubmissionSession(dependencies: {
           itemKey: dependencies.newId(),
           ordinal,
           acquisitionSource: selection.source,
-          kind: selection.source === "photos" ? ("IMAGE" as const) : ("FILE" as const),
+          kind: selection.source === "files" ? ("FILE" as const) : ("IMAGE" as const),
           originalFilename: selection.name,
           declaredContentType: selection.typeHint,
           continuesFromInputId: ordinal === 0 ? continuesFromInputId : null,
@@ -125,7 +126,10 @@ export function createCaptureSubmissionSession(dependencies: {
 
 export function createCaptureRecoveryAction(
   dependencies: Parameters<typeof createCaptureSubmissionSession>[0] & {
-    pick(source: CaptureSelection["source"]): Promise<readonly CaptureSelection[]>;
+    pick(
+      source: CaptureSelection["source"],
+      isCurrent?: () => boolean,
+    ): Promise<readonly CaptureSelection[]>;
   },
   jobId: string,
   inputId: string,
@@ -138,10 +142,14 @@ export function createCaptureRecoveryAction(
   let retainedSelections: readonly CaptureSelection[] = [];
   let running: Promise<CaptureJobReadModel> | null = null;
   return {
-    run(onProgress: (model: CaptureJobReadModel) => void) {
+    run(
+      onProgress: (model: CaptureJobReadModel) => void,
+      acquisitionCurrent: () => boolean = () => true,
+    ) {
       if (running) return running;
       running = (async () => {
         const context = await contextPromise;
+        if (!acquisitionCurrent()) throw new Error("Capture recovery acquisition closed");
         await assertAccountRequestContext(context, dependencies.getActiveUserId);
         // A recovery submission keeps its original request even when no ACK was received.
         if (session) return session.submit(retainedSelections, onProgress, null, inputId);
@@ -150,11 +158,21 @@ export function createCaptureRecoveryAction(
         if (!item) throw new Error("Stale recovery action");
         if (item.state === "ACCEPTED") return job;
         if (item.revision !== expectedRevision) throw new Error("Stale recovery action");
-        const selections = await dependencies.pick(item.acquisitionSource);
+        const selections = await dependencies.pick(item.acquisitionSource, () => {
+          try {
+            assertAccountRequestGeneration(context);
+            return acquisitionCurrent();
+          } catch {
+            return false;
+          }
+        });
         await assertAccountRequestContext(context, dependencies.getActiveUserId);
+        if (!acquisitionCurrent()) throw new Error("Capture recovery acquisition closed");
         if (!selections.length) return job;
         if (selections.length !== 1)
           throw new Error("Recovery requires exactly one selection");
+        if (selections[0].source !== item.acquisitionSource)
+          throw new Error("Recovery source does not match original acquisition");
         const current = (
           await dependencies.repository.reopen(jobId, context)
         ).inputs.find((i) => i.id === inputId);
