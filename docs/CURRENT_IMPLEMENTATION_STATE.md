@@ -23,15 +23,20 @@
   at `83f575f`; independent Code PASS and conditional Owner Gate READY. New
   composition/runner 7 tests, profile 47 and bridge 3 tests passed; canonical
   typecheck passed. Gate: `docs/ops/CAPTURE_C2_RUNTIME_GATE.md`.
-  Owner approved independent Backend qualification/deployment sequencing and one
-  original A1A normal close/reopen plus necessary reload. Gate text is updated.
-  Native recovery used that one restart successfully, then normal Recent submissions.
-  Unique original target metadata qualified; the single staged WS session did not
-  open. Runtime.enable/context/hook checks were not sent; handshake reason remains
-  NOT OBSERVED. Stop that recovery direction: no second restart or reconnect.
-  Six source preimages/original absence states restored exact; in-memory hook
-  presence/removal NOT OBSERVED. Receipt:
-  `/private/tmp/otr-c2-a1a-runtime-recovery-r2-20261015/receipt.json`.
+  Owner approved independent Backend qualification/deployment sequencing. Latest
+  bounded Native recovery (r3) kept original PID3554/cwd/A1A/[::1]:8081 and used
+  fixed Origin http://localhost:8081 via Node's existing WebSocketInit headers.
+  Metro's existing Origin guard explained the earlier handshake rejection; no
+  Metro guard, target, port or Inspector was changed. Offline header check passed.
+  Actual unique target/WS handshake HTTP101 PASS; Runtime.enable sent, no reply or
+  executionContext event before close1006. Hook evaluate/invoke never sent, no PUT/GET.
+  One normal A1A close/reopen passed. Six source preimages restored exact;
+  in-memory hook absence remains NOT OBSERVED. No further connection/reload retry.
+  Receipt: `/private/tmp/otr-c2-a1a-origin-recovery-r3-20261015/receipt.json`.
+  Next minimal diagnosis: same Metro-to-A1A JS-runtime upstream disconnect after
+  Runtime.enable; do not retry Origin fix or Backend deployment. Exact PID3554
+  stdout/stderr descriptors are pipes, no retained log filename observed; no broad
+  log search or raw frame/session dump. Underlying close1006 cause remains unknown.
   Backend independently confirmed existing DEV Project, host-mode dev-backend,
   immutable running image23dae9, protected credential file metadata and health200.
   Owner approved the exact retained third Reader mount; the two-file checker delta
@@ -49,13 +54,18 @@
   Catalog Reader mount, original profile hashes, Caddy and unrelated containers
   preserved. Cutover plus checks11.602s (not a measured outage duration).
   No rollback required; original immutable23dae9/full Compose retained.
-  Same metadata identity/config restored without replacement, expiry
-  2026-10-15T08:38:49.122940Z (21:38 NZDT). No Storage association created.
-  Receipt: `/private/tmp/otr-c2-backend-runtime-20261015/targeted-deployment-receipt.json`.
-  Backend checkpoint PASS is not C2 Runtime PASS. A1A remains Coordinator-owned
-  BLOCKED at WS opening; no Native retry/PUT/GET under this targeted deployment.
-  Next is a bounded, explicitly scoped A1A recovery using existing stage evidence,
-  not another Backend build/deploy. Both prerequisites must PASS before upload.
+  Following latest Native failure, unused metadata config was moved back to the
+  same disabled audit path; current Backend image/service was not restarted.
+  Existing process retains its already-loaded closure until original expiry
+  2026-10-15T08:38:49.122940Z (21:38 NZDT); existing read/put assertCurrent rejects
+  thereafter. Rename prevents future loading, not immediate in-memory revocation.
+  No expiry extension/dependent operations/Storage association. Local/public health200.
+  Receipts: `/private/tmp/otr-c2-backend-runtime-20261015/targeted-deployment-receipt.json`
+  and `metadata-stop-receipt.json` in the same directory. C2 remains Coordinator-
+  owned BLOCKED/Runtime NOT VERIFIED; both real Inputs PUT/GET NOT ATTEMPTED.
+  Independent VQA-MT-CAP-PRE-01 presentation packet is registered in EXECUTION;
+  await UI owner commit/Native report. E2E owns all acquisition/submit/post-submit
+  business; no duplicate UI work or text/Clipboard submit capability is inferred.
   C3 local PDF intake provenance/assignment checks confirmed existing guards
   (136 PASS/1 explicit SQL-fixture skip), no unnecessary code change.
   TYPE05 local decision saving and forward65 are integrated in code after

@@ -160,3 +160,19 @@ A1A remains BLOCKED at WS opening. No two-file PUT/GET/Storage association or C2
 Runtime PASS. Backend success alone never authorizes bypassing Native qualification.
 Receipt: `/private/tmp/otr-c2-backend-runtime-20261015/targeted-deployment-receipt.json`.
 Historical stopped rounds: same directory `final-receipt.json`.
+
+## Latest Native r3 and metadata stop
+
+Original target metadata and HTTP101 now pass with fixed Origin
+`http://localhost:8081` using Node's existing WebSocketInit headers. This meets
+Metro's existing allowlist; it does not change the actual [::1]:8081 destination
+or relax server guards. Runtime.enable had no response/context before close1006;
+no hook invocation/PUT/GET. Six preimages restored exact; live hook absence unknown.
+No further retry in this bounded window. The next unresolved layer is the
+Metro-to-A1A JS-runtime connection after handshake, not Backend or Origin.
+Unused config was parked at the original disabled audit path without restarting
+the deployed Backend. Already-loaded process closures keep their original
+08:38:49.122940Z/21:38NZDT expiry guard; rename alone is not immediate revocation.
+No dependent operations or TTL extension. Future startup config absent; root and
+all evidence retained. Local/public health200. Receipt:
+`/private/tmp/otr-c2-backend-runtime-20261015/metadata-stop-receipt.json`.

@@ -9,12 +9,14 @@ unverified. SDK headers corrected/reviewed at `918110f` (8 PASS). Bounded
 qualification found C2 startup config/attested mount composition absent. Runtime
 code is now integrated at `83f575f`, Code PASS/conditional Gate READY.
 Owner approved Backend/Native sequencing separation and one original A1A restart.
-Gate updated. That restart passed; normal Recent submissions was reached. Single
-staged session qualifies target metadata but WS did not open; context/hook commands
-were never sent. Stop Native recovery without another restart/reconnect. Six source
-preimages restored exactly; in-memory hook cleanup NOT OBSERVED. Evidence:
-`/private/tmp/otr-c2-a1a-runtime-recovery-r2-20261015/receipt.json`.
-Backend independently matches DEV/host project/current image23dae9/health200.
+Latest bounded r3 recovery fixed Origin header using Node builtin WebSocketInit,
+without changing existing Metro guard/target/port. HTTP101 PASS, Runtime.enable
+sent then close1006 before reply/context; no hook call/PUT/GET. One original A1A
+restart passed, six preimages restored exact; in-memory hook cleanup UNKNOWN.
+Receipt: `/private/tmp/otr-c2-a1a-origin-recovery-r3-20261015/receipt.json`.
+No further reconnect/reload. Same Metro stdout/stderr are pipes/no retained log
+filename observed; next minimal diagnosis targets upstream JS-runtime disconnect,
+not another Origin retry/Backend deployment or broad log investigation.
 Owner approved fixed third Reader mount; reviewed checker delta integrated,51 PASS.
 Snapshot83f575f built immutable image08b1ad6f; independent Linux bundle3c873 exact
 reproduction/behavior check and original noninterpolated three-mount profile PASS.
@@ -22,12 +24,15 @@ Prior two stopped rounds retained. Owner-approved targeted correction used origi
 noninterpolated Gate proof and fixed image variable: Backend deployment checkpoint
 PASS, running08b1ad6f/server-capture, exact3 mounts, local/public health200, Reader/
 Caddy/unrelated containers/configs preserved. No rollback required, immutable23dae9
-and original full Compose retained. Same metadata restored; expires08:38:49Z/21:38
-NZDT. No Storage associations/PUT/GET. Receipt:
+and original full Compose retained. Same metadata was restored for deployment, then parked after latest Native failure.
+Current process retains original loaded expiry08:38:49Z/21:38NZDT and guarded
+put/read rejection thereafter; no extension. Backend kept running/health200.
+No dependent operations/Storage associations/PUT/GET. Deployment receipt:
 `/private/tmp/otr-c2-backend-runtime-20261015/targeted-deployment-receipt.json`.
-C2 Runtime NOT VERIFIED: A1A WS remains BLOCKED/Coordinator-owned. Next narrow
-Native recovery, not another Backend rebuild/deployment; no automatic retry or
-substitute App/file/Storage script. Both prerequisites must PASS before upload.
+C2 Runtime NOT VERIFIED: Native WS opens but context remains BLOCKED/Coordinator-
+owned. Metadata stop receipt in same directory: `metadata-stop-receipt.json`.
+Next narrowly diagnose Runtime.enable/JS upstream disconnect, not another Backend
+rebuild/deployment, automatic reconnect or substitute App/file/Storage script.
 C3 local provenance
 checks confirmed existing guards (136 PASS/1 SQL-fixture skip), no code change.
 TYPE05 local decision saving/forward65 is code-integrated after independent
@@ -36,6 +41,8 @@ pass. No device/Hosted schema install or field application/Review resolution. C3
 implementation state; no additional screenshot matrix or ordinary UI packet.
 
 # OTR Beta — EXECUTION
+
+**VQA-MT-CAP-PRE-01 — 2026-10-15 / independent UI owner:** My Trips, Global Menu, Start a Trip Action Sheet and Import Travel Plans pre-submit presentation only; Modification Delta, UI Blueprint V1 and Visual Reference V1 are the packet authority. Await independent UI Agent commit and Native VQA report before Coordinator interface/conflict/integration checks. No duplicate Coordinator UI implementation. File acquisition/upload, Batch/persistence, Parsing, Activity, Review, Admission and Results remain Capture E2E-owned; post-submit Activity Progress/Results UI excluded. Current C2 temporary overlay remains limited to its six owning data/API files and must preserve UI work. Current main1561d27 has no Coordinator writer on CaptureContent/CaptureComposer/capture route/TripQuickAddMenu/GlobalMenu/catalogs; only presentation may change there, preserving submit/controller semantics. Existing typed CaptureDraftSnapshot and Composer callbacks are reusable; magic_input is staging-only and submit rejects it, no sealed text/Clipboard submit candidate is confirmed. Camera owning picker exists, but the UI caller is a separately held candidate under `/private/tmp/otr-beta-cp01-camera-ui-61`; do not silently enable it or relabel provenance. No Capture Repository/native picker/business changes belong to this UI packet. A presentation-only embedded/formSheet adapter may preserve the current controller seam, but lifting the retained draft ref into a root provider changes draft lifetime/account fencing and must be separately owned/coordinated before integration; do not merge it as a purely visual hunk.
 
 **Camera local owning intake / 2026-10-15:** Source SQLite registry now includes forward64, with original51 unchanged. Explicit Camera IMAGE provenance, durable intake/recovery and post-permission host/account fences passed Main71/3, typecheck, touched lint, UI guard and formatting. This accepts the non-UI owning slice only: Camera caller223c/66206 remains a separate reviewed candidate; actual Camera SDK, permissions/hardware and device schema64 are unobserved. The retained Owner visual host remains exact36 on its previous registry63; it was not rebuilt/reloaded or migrated. No new data, Native or Hosted operation. TYPE05 forward65 is separately registered in code; no device installation is claimed.
 
