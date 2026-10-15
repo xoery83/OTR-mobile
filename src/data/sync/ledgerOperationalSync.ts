@@ -30,6 +30,11 @@ export type IntelligenceSchedulingAdapter = {
   }>;
 };
 let intelligenceScheduling: IntelligenceSchedulingAdapter | null = null;
+let tripCreateSync: (() => Promise<unknown>) | null = null;
+// No startup caller. An explicitly approved composition reuses this cycle's lifecycle.
+export function setTripCreateSyncRunner(runner: (() => Promise<unknown>) | null) {
+  tripCreateSync = runner;
+}
 // Closed injection only. No provider factory, executor activation or new lifecycle owner.
 export async function setIntelligenceSchedulingAdapter(
   adapter: IntelligenceSchedulingAdapter | null,
@@ -205,6 +210,8 @@ export function runLedgerOperationalSync(
 
 async function runOperationalCycle(origin: LedgerOperationalSyncOrigin) {
   const completion = await captureEligibleScopes();
+  // Receipt mapping commits before any dependent Expense can be selected for dispatch.
+  await tripCreateSync?.().catch(() => undefined);
   await Promise.allSettled([
     Promise.resolve().then(() => runLedgerPersonalPaymentSync()),
     runLedgerExpenseSync().then(() => runLedgerReceiptSync()),

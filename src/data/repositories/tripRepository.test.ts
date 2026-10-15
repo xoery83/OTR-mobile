@@ -24,11 +24,15 @@ import { createTripRepository } from "./tripRepository";
 import { createLedgerExpenseRepository } from "./ledgerExpenseRepository";
 import { createLedgerReportingRepository } from "./ledgerReportingRepository";
 import { createLedgerReadRepository } from "./ledgerReadRepository";
+import { createLedgerExpenseSyncWorker } from "../sync/ledgerExpenseSyncWorker";
+import { createSyncEngine } from "../sync/syncEngine";
+import { captureAccountScope } from "../auth/accountRequestContext";
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 const connections: DatabaseSync[] = [],
   folders: string[] = [];
 afterEach(() => {
+  vi.useRealTimers();
   for (const sql of connections.splice(0)) {
     try {
       sql.close();
@@ -1159,4 +1163,428 @@ it("TCL01 retains approved fresh Journey financial defaults regardless of displa
       ).listJourneys()
     )[0],
   ).toMatchObject({ journeyId: other.id, settlementCurrency: "NZD", settlementScale: 2 });
+});
+
+async function tripExpense(f: ReturnType<typeof local>) {
+  const create = input();
+  const trip = await f.repo.createTrip(create);
+  const memberId = (await createLedgerReportingRepository(
+    f.database,
+    async () => accountA,
+  ).getActorMemberId(trip.id))!.memberId!;
+  const command = {
+    journeyId: trip.id,
+    creatorMemberId: memberId,
+    payerMemberId: memberId,
+    title: memberId,
+    category: "food",
+    occurredAt: stamp,
+    economicDate: "2026-10-13",
+    original: { minor: 1200, currency: "NZD", scale: 2 },
+    participants: [
+      { memberId, displayNameSnapshot: "Traveller", householdIdSnapshot: null },
+    ],
+    splits: [
+      {
+        memberId,
+        method: "EQUAL_PERSON" as const,
+        originalMinor: 1200,
+        settlementMinor: null,
+        weightUnits: null,
+        percentageUnits: null,
+        roundingAdjustmentMinor: 0,
+      },
+    ],
+    valuation: null,
+    status: "DRAFT" as const,
+  };
+  const repository = createLedgerExpenseRepository(f.database, async () => accountA);
+  const expense = await repository.createExpense(command);
+  const receipt = {
+    operationId: create.operationId,
+    tripId: trip.id,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+    name: trip.name,
+    destination: trip.destination,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+  };
+  return { create, trip, memberId, command, repository, expense, receipt };
+}
+
+it("TCL02 receipt maps local Person atomically before existing workers release Expense CREATE→DELETE, and cold replay creates no duplicates", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-tcl02-order-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const saved = await tripExpense(f);
+  await saved.repository.tombstoneExpense(saved.expense.id, "Local correction");
+  const queueBefore = f.sql
+    .prepare("SELECT id,idempotency_key,created_at FROM sync_operations ORDER BY rowid")
+    .all();
+  const auditBefore = f.sql
+    .prepare("SELECT * FROM ledger_expense_audit_events ORDER BY id")
+    .all();
+  expect(await f.queue.listPending()).toEqual([]);
+  const transport = {
+    receipt: vi.fn(async () => saved.receipt),
+    create: vi.fn(),
+  } as unknown as TripCreateTransport;
+  const runTrip = () =>
+    createTripCreateSyncCoordinator(
+      f.queue,
+      createTripCreateSyncWorker(f.repo, transport, async () => accountA),
+      f.repo,
+      () => true,
+    ).run("AUTHENTICATED_ONLINE");
+  expect((await runTrip()).processedCount).toBe(1);
+  expect(transport.create).not.toHaveBeenCalled();
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+  expect(
+    f.sql.prepare("SELECT id,status,participation_revision FROM ledger_members").get(),
+  ).toMatchObject({
+    id: saved.receipt.ownerPersonId,
+    status: "local",
+    participation_revision: null,
+  });
+  expect(
+    f.sql.prepare("SELECT person_id,authority FROM local_trip_ledger_bindings").get(),
+  ).toMatchObject({ person_id: saved.memberId, authority: "LOCAL_CREATOR" });
+  expect(
+    f.sql.prepare("SELECT * FROM ledger_expense_audit_events ORDER BY id").all(),
+  ).toEqual(auditBefore);
+  expect(
+    f.sql
+      .prepare("SELECT id,idempotency_key,created_at FROM sync_operations ORDER BY rowid")
+      .all(),
+  ).toEqual(queueBefore);
+  const pending = await f.queue.listPending();
+  expect(pending).toHaveLength(1);
+  expect(pending[0].operationType).toBe("LEDGER_CREATE_EXPENSE");
+  const payload = JSON.parse(pending[0].payloadJson);
+  expect(payload.expense).toMatchObject({
+    title: saved.memberId,
+    payerMemberId: saved.receipt.ownerPersonId,
+    original: saved.command.original,
+    participants: [{ memberId: saved.receipt.ownerPersonId }],
+  });
+  const commands = f.sql
+    .prepare(
+      "SELECT intent_json,projection_json FROM ledger_expense_commands ORDER BY intent_sequence",
+    )
+    .all();
+  expect(JSON.parse(String(commands[0].intent_json)).expense.payerMemberId).toBe(
+    saved.receipt.ownerPersonId,
+  );
+  f.sql.close();
+  f = local(path, false);
+  const beforeReplay = f.sql
+    .prepare("SELECT * FROM ledger_expense_commands ORDER BY intent_sequence")
+    .all();
+  await f.repo.acceptCreate(saved.receipt);
+  expect(
+    f.sql.prepare("SELECT * FROM ledger_expense_commands ORDER BY intent_sequence").all(),
+  ).toEqual(beforeReplay);
+  const serverId = randomUUID();
+  const canonical = (deleted = false) => ({
+    ...saved.command,
+    creatorMemberId: saved.receipt.ownerPersonId,
+    payerMemberId: saved.receipt.ownerPersonId,
+    participants: [
+      { ...saved.command.participants[0], memberId: saved.receipt.ownerPersonId },
+    ],
+    splits: [{ ...saved.command.splits[0], memberId: saved.receipt.ownerPersonId }],
+    id: serverId,
+    description: null,
+    businessStatus: deleted ? ("DELETED" as const) : ("DRAFT" as const),
+    settlementParticipation: "INCLUDED" as const,
+    revision: deleted ? 2 : 1,
+    createdAt: stamp,
+    updatedAt: stamp,
+    deletedAt: deleted ? stamp : null,
+    paymentRecords: [],
+    auditEvents: [],
+  });
+  const createExpense = vi.fn(async () => ({
+    serverId,
+    revision: 1,
+    entity: canonical(),
+  }));
+  const deleteExpense = vi.fn(async () => ({
+    serverId,
+    revision: 2,
+    entity: canonical(true),
+  }));
+  const runExpenses = () =>
+    createSyncEngine(
+      f.queue,
+      createLedgerExpenseSyncWorker(
+        createLedgerExpenseRepository(f.database, async () => accountA),
+        { createExpense, deleteExpense } as never,
+      ),
+      undefined,
+      (op) => op.entityType === "ledger_expense",
+    ).run("AUTHENTICATED_ONLINE");
+  expect((await runExpenses()).processedCount).toBe(2);
+  expect(createExpense).toHaveBeenCalledOnce();
+  expect(deleteExpense).toHaveBeenCalledOnce();
+  expect(createExpense.mock.invocationCallOrder[0]).toBeLessThan(
+    deleteExpense.mock.invocationCallOrder[0],
+  );
+  f.sql.close();
+  f = local(path, false);
+  expect((await runTrip()).processedCount).toBe(0);
+  expect((await runExpenses()).processedCount).toBe(0);
+  expect(
+    f.sql
+      .prepare("SELECT id,idempotency_key,created_at FROM sync_operations ORDER BY rowid")
+      .all(),
+  ).toEqual(queueBefore);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_expenses").get()?.n).toBe(1);
+  expect(
+    await createLedgerReportingRepository(
+      f.database,
+      async () => accountA,
+    ).getActorMemberId(saved.trip.id),
+  ).toMatchObject({ memberId: saved.receipt.ownerPersonId });
+  expect(
+    await f.core.acceptedSnapshot(await f.core.captureContext(saved.trip.id)),
+  ).toBeNull();
+});
+
+it("TCL02 failed Person mapping rolls back current Expense references, receipt ownership and dependency release together", async () => {
+  const f = local();
+  const saved = await tripExpense(f);
+  const tables = [
+    "local_trip_containers",
+    "local_trip_ledger_bindings",
+    "ledger_members",
+    "ledger_actor_context",
+    "ledger_expenses",
+    "ledger_expense_participants",
+    "ledger_expense_splits",
+    "ledger_expense_commands",
+    "sync_operations",
+  ];
+  const snapshot = () =>
+    tables.map((table) => [table, f.sql.prepare(`SELECT * FROM ${table}`).all()]);
+  const before = snapshot();
+  f.sql.exec(
+    "CREATE TRIGGER fail_mapping BEFORE UPDATE OF member_id ON ledger_actor_context BEGIN SELECT RAISE(ABORT,'MAPPING_FAILED'); END",
+  );
+  await expect(f.repo.acceptCreate(saved.receipt)).rejects.toThrow("MAPPING_FAILED");
+  expect(snapshot()).toEqual(before);
+  expect(await f.queue.listPending()).toEqual([]);
+});
+
+it("TCL02 original Account scope fences an owning receipt after same-account ABA", async () => {
+  const f = local();
+  const saved = await tripExpense(f);
+  const scope = await captureAccountScope(async () => accountA);
+  f.switchTo(accountB);
+  f.switchTo(accountA);
+  await expect(f.repo.acceptCreate(saved.receipt, scope)).rejects.toThrow(
+    "Account changed",
+  );
+  expect((await f.repo.getTrip(saved.trip.id))?.serverId).toBeNull();
+  expect(await f.queue.listPending()).toEqual([]);
+});
+
+it("TCL02 never rewrites an attempted Expense or releases a Trip blocked for another reason", async () => {
+  const f = local();
+  const saved = await tripExpense(f);
+  await f.queue.markFailed(saved.create.operationId, new Error("Terminal rejection"));
+  await f.queue.markDependencyBlocked(saved.create.operationId);
+  await f.repo.resumeCreateTrips();
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(saved.create.operationId)?.status,
+  ).toBe("DEPENDENCY_BLOCKED");
+  await f.queue.markProcessing(saved.expense.operationResult!.operationId!);
+  await expect(f.repo.acceptCreate(saved.receipt)).rejects.toThrow(
+    "TRIP_LEDGER_MAPPING_REQUIRES_REVIEW",
+  );
+  expect((await f.repo.getTrip(saved.trip.id))?.serverId).toBeNull();
+});
+
+it("TCL02 lost Trip-create response recovers the formal receipt after cold reopen without a second create", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-10-16T00:00:00Z"));
+  const folder = mkdtempSync(join(tmpdir(), "otr-tcl02-response-loss-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const saved = await tripExpense(f);
+  let retained = false;
+  const transport = {
+    receipt: vi.fn(async () => (retained ? saved.receipt : null)),
+    create: vi.fn(async () => {
+      retained = true;
+      throw new Error("CREATE_RESPONSE_LOST");
+    }),
+  } as unknown as TripCreateTransport;
+  const run = () =>
+    createTripCreateSyncCoordinator(
+      f.queue,
+      createTripCreateSyncWorker(f.repo, transport, async () => accountA),
+      f.repo,
+      () => true,
+    ).run("AUTHENTICATED_ONLINE");
+  expect((await run()).processedCount).toBe(1);
+  expect((await f.repo.getTrip(saved.trip.id))?.serverId).toBeNull();
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(saved.create.operationId)?.status,
+  ).toBe("RETRYABLE");
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(saved.expense.operationResult!.operationId!)?.status,
+  ).toBe("DEPENDENCY_BLOCKED");
+  f.sql.close();
+  vi.setSystemTime(new Date("2026-10-16T01:00:00Z"));
+  f = local(path, false);
+  expect((await run()).processedCount).toBe(1);
+  expect(transport.create).toHaveBeenCalledOnce();
+  expect(transport.receipt).toHaveBeenCalledTimes(2);
+  expect((await f.repo.getTrip(saved.trip.id))?.ownerPersonId).toBe(
+    saved.receipt.ownerPersonId,
+  );
+  expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()?.n).toBe(1);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+  expect((await f.queue.listPending()).map((op) => op.id)).toEqual([
+    saved.expense.operationResult!.operationId!,
+  ]);
+});
+
+it("TCL02 retains an authoritative Ledger bootstrap that arrives before the Trip receipt", async () => {
+  const f = local();
+  const saved = await tripExpense(f);
+  const capabilities = {
+    canRead: true,
+    canCreateExpense: true,
+    canEditOwnExpense: true,
+    canCorrectAnyExpense: false,
+    canSuggestCorrection: false,
+    canResolveOwnExpenseConflict: true,
+    canAddOwnPaymentEvidence: false,
+    canManageExpenseValuation: false,
+    canManageLedgerValuationPolicy: false,
+  };
+  await createLedgerReadRepository(f.database, async () => accountA).applyBootstrap({
+    journey: {
+      id: saved.trip.id,
+      title: saved.trip.name,
+      startDate: saved.trip.startDate,
+      endDate: saved.trip.endDate,
+      settlementCurrency: "NZD",
+      settlementScale: 2,
+      valuationPolicy: "REFERENCE_RATE",
+      updatedAt: stamp,
+    },
+    members: [
+      {
+        id: saved.receipt.ownerPersonId,
+        displayName: "Formal owner",
+        role: "owner",
+        status: "linked",
+        capabilities,
+        updatedAt: stamp,
+      },
+    ],
+    households: [],
+    expenses: [],
+    corrections: [],
+    rateQuotes: [],
+    actor: { memberId: saved.receipt.ownerPersonId, role: "owner", capabilities },
+    cursor: "accepted",
+    serverTime: stamp,
+  });
+  const actor = f.sql.prepare("SELECT * FROM ledger_actor_context").get();
+  const official = f.sql
+    .prepare("SELECT * FROM ledger_members WHERE id=?")
+    .get(saved.receipt.ownerPersonId);
+  await f.repo.acceptCreate(saved.receipt);
+  expect(f.sql.prepare("SELECT * FROM ledger_actor_context").get()).toEqual(actor);
+  expect(
+    f.sql
+      .prepare("SELECT * FROM ledger_members WHERE id=?")
+      .get(saved.receipt.ownerPersonId),
+  ).toEqual(official);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+  expect((await saved.repository.getExpense(saved.expense.id))?.payerMemberId).toBe(
+    saved.receipt.ownerPersonId,
+  );
+  expect((await f.queue.listPending()).map((op) => op.id)).toEqual([
+    saved.expense.operationResult!.operationId!,
+  ]);
+});
+
+it("TCL02 explicit Native target leaves another pending local Reference-style Trip untouched", async () => {
+  const f = local();
+  const saved = await tripExpense(f);
+  const other = await f.repo.createTrip({
+    ...input(),
+    name: "Other local Reference-style trip",
+  });
+  const before = f.sql
+    .prepare("SELECT * FROM sync_operations WHERE trip_id=?")
+    .all(other.id);
+  const transport = {
+    receipt: vi.fn(async () => saved.receipt),
+    create: vi.fn(),
+  } as unknown as TripCreateTransport;
+  const target = {
+    accountId: accountA,
+    tripId: saved.trip.id,
+    operationId: saved.create.operationId,
+  };
+  const coordinator = createTripCreateSyncCoordinator(
+    f.queue,
+    createTripCreateSyncWorker(f.repo, transport, async () => accountA),
+    f.repo,
+    () => true,
+    target,
+  );
+  expect((await coordinator.run("AUTHENTICATED_ONLINE")).processedCount).toBe(1);
+  expect(transport.receipt).toHaveBeenCalledTimes(1);
+  expect(transport.receipt).toHaveBeenCalledWith(
+    expect.objectContaining({ accountId: accountA }),
+    target.operationId,
+  );
+  expect(
+    f.sql.prepare("SELECT * FROM sync_operations WHERE trip_id=?").all(other.id),
+  ).toEqual(before);
+  expect((await f.repo.getTrip(other.id))?.serverId).toBeNull();
+});
+
+it("TCL02 rejects a receipt Person collision with a different Journey without changing either", async () => {
+  const f = local();
+  const saved = await tripExpense(f);
+  const other = await tripExpense(f);
+  const before = f.sql.prepare("SELECT * FROM ledger_members ORDER BY id").all();
+  await expect(
+    f.repo.acceptCreate({ ...saved.receipt, ownerPersonId: other.memberId }),
+  ).rejects.toThrow("TRIP_LEDGER_PERSON_MAPPING_MISMATCH");
+  expect(f.sql.prepare("SELECT * FROM ledger_members ORDER BY id").all()).toEqual(before);
+  expect((await f.repo.getTrip(saved.trip.id))?.serverId).toBeNull();
+  expect((await f.repo.getTrip(other.trip.id))?.serverId).toBeNull();
+  expect(await f.queue.listPending()).toEqual([]);
+});
+
+it("TCL02 does not release Expenses when a newer cached actor no longer has a member", async () => {
+  const f = local();
+  const saved = await tripExpense(f);
+  f.sql.prepare("UPDATE ledger_actor_context SET member_id=NULL").run();
+  await expect(f.repo.acceptCreate(saved.receipt)).rejects.toThrow(
+    "TRIP_LEDGER_MAPPING_REQUIRES_REVIEW",
+  );
+  expect((await f.repo.getTrip(saved.trip.id))?.serverId).toBeNull();
+  expect(await f.queue.listPending()).toEqual([]);
 });

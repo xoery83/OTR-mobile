@@ -62,6 +62,7 @@ import {
   scheduleOperationalReadRetry,
   notifyLedgerReadCompletion,
   setIntelligenceSchedulingAdapter,
+  setTripCreateSyncRunner,
   kickLedgerOperationalSync,
   pauseLedgerOperationalSync,
   reactivateLongLivedLedgerFailures,
@@ -73,6 +74,7 @@ import {
 
 describe("Ledger mutation sync kick", () => {
   beforeEach(() => {
+    setTripCreateSyncRunner(null);
     vi.clearAllMocks();
     vi.mocked(runLedgerExpenseSync).mockResolvedValue({
       status: "syncing",
@@ -88,6 +90,35 @@ describe("Ledger mutation sync kick", () => {
       nextActionableAt: null,
     });
     mocks.generation = 7;
+  });
+
+  it("awaits the explicitly installed Trip receipt/mapping runner before selecting Expenses", async () => {
+    let finish!: () => void;
+    const trip = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    setTripCreateSyncRunner(trip);
+    const run = runLedgerOperationalSync();
+    await vi.waitFor(() => expect(trip).toHaveBeenCalledOnce());
+    expect(runLedgerExpenseSync).not.toHaveBeenCalled();
+    finish();
+    await run;
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    setTripCreateSyncRunner(null);
+  });
+
+  it("a closed/failing Trip runner leaves unrelated Ledger work available", async () => {
+    setTripCreateSyncRunner(
+      vi.fn(async () => {
+        throw new Error("TRIP_CREATE_CLOSED");
+      }),
+    );
+    await runLedgerOperationalSync();
+    expect(runLedgerExpenseSync).toHaveBeenCalledOnce();
+    setTripCreateSyncRunner(null);
   });
 
   it("reactivates sparse user and asset mutations on a recovery event", async () => {

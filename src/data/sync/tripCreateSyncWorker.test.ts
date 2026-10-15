@@ -63,14 +63,20 @@ it("checks a durable receipt before sending once, then applies only matched owni
   vi.mocked(f.transport.receipt).mockResolvedValueOnce(f.result);
   await f.worker.push(f.operation);
   expect(f.transport.create).not.toHaveBeenCalled();
-  expect(f.repository.acceptCreate).toHaveBeenCalledWith(f.result);
+  expect(f.repository.acceptCreate).toHaveBeenCalledWith(
+    f.result,
+    expect.objectContaining({ accountId: actor }),
+  );
   const g = fixture();
   await g.worker.push(g.operation);
   expect(g.transport.create).toHaveBeenCalledWith(
     expect.objectContaining({ accountId: actor }),
     g.request,
   );
-  expect(g.repository.acceptCreate).toHaveBeenCalledWith(g.result);
+  expect(g.repository.acceptCreate).toHaveBeenCalledWith(
+    g.result,
+    expect.objectContaining({ accountId: actor }),
+  );
 });
 it("keeps an ambiguous create unresolved until receipt lookup on retry", async () => {
   const f = fixture();

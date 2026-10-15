@@ -23,6 +23,9 @@ export const tripCreateRequestSchema = z
     (value) => !value.startDate || !value.endDate || value.endDate >= value.startDate,
   );
 export type TripCreateRequest = z.infer<typeof tripCreateRequestSchema>;
+export type TripCreateTarget = Pick<TripCreateRequest, "operationId" | "tripId"> & {
+  accountId: string;
+};
 export const tripCreateResultSchema = z.strictObject({
   operationId: coreUuid,
   tripId: coreUuid,

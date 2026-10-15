@@ -22,3 +22,9 @@ TCL02 must reconcile the retained local Person to the Hosted receipt Person and
 rewrite dependent Expense identity references atomically before releasing their
 dependency. No Hosted dispatch, Backend deployment or device acceptance is part
 of TCL01. Local binding retention is not proof of current Hosted authorization.
+
+TCL02's source-only candidate implements the existing planned receipt transaction
+and exact-target, default-CLOSED composition described in
+`docs/ops/TCL02_TRIP_LEDGER_LOCAL_CANDIDATE.md`. It preserves original local binding
+and audit lineage, leaves Core authority separate, and requires an owning decision
+on the documented PostgreSQL principal/finite-gate contradiction before activation.

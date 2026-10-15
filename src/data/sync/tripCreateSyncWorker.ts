@@ -2,7 +2,10 @@ import {
   captureAccountScope,
   assertAccountRequestContext,
 } from "../auth/accountRequestContext";
-import { tripCreateRequestSchema } from "@/domain/trip/tripCreateContract";
+import {
+  tripCreateRequestSchema,
+  type TripCreateTarget,
+} from "@/domain/trip/tripCreateContract";
 import type { TripRepository } from "../repositories/tripRepository";
 import {
   createSyncEngine,
@@ -49,7 +52,7 @@ export function createTripCreateSyncWorker(
         receipt.endDate !== request.endDate
       )
         throw new Error("TRIP_CREATE_RECEIPT_MISMATCH");
-      await repository.acceptCreate(receipt);
+      await repository.acceptCreate(receipt, scope);
     },
   };
 }
@@ -60,18 +63,25 @@ export function createTripCreateSyncCoordinator(
   worker: SyncWorker,
   repository: Pick<TripRepository, "resumeCreateTrips">,
   portEnabled: () => boolean = () => false,
+  target?: TripCreateTarget,
 ) {
   const engine = createSyncEngine(
     queue,
     worker,
     undefined,
     (operation) =>
-      operation.operationType === "CREATE_TRIP" && operation.entityType === "TRIP",
+      operation.operationType === "CREATE_TRIP" &&
+      operation.entityType === "TRIP" &&
+      (!target ||
+        (operation.id === target.operationId &&
+          operation.tripId === target.tripId &&
+          operation.ownerUserId === target.accountId)),
   );
   return {
     async run(authState: Parameters<typeof engine.run>[0]) {
       if (!portEnabled()) return { status: "closed" as const, processedCount: 0 };
-      if (authState === "AUTHENTICATED_ONLINE") await repository.resumeCreateTrips();
+      if (authState === "AUTHENTICATED_ONLINE")
+        await repository.resumeCreateTrips(target);
       return engine.run(authState);
     },
   };

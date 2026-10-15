@@ -15,16 +15,19 @@ import {
   tripCreateRequestSchema,
   tripCreateResultSchema,
   type TripCreateResult,
+  type TripCreateTarget,
 } from "@/domain/trip/tripCreateContract";
 import {
   captureAccountScope,
   assertAccountRequestContext,
   withAccountApplyGate,
+  type AccountScope,
 } from "../auth/accountRequestContext";
 import { readInitializedDatabase } from "../db/database";
 import { requireActiveUserId, readLocalSession } from "../auth/authRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
+import { mapLocalTripLedgerPerson } from "./tripLedgerAcceptance";
 
 type Database = Pick<
   SQLite.SQLiteDatabase,
@@ -351,11 +354,12 @@ export function createTripRepository(
         return [{ ...intent, payload }];
       });
     },
-    async acceptCreate(resultInput: TripCreateResult) {
+    async acceptCreate(resultInput: TripCreateResult, requestScope?: AccountScope) {
       const accepted = tripCreateResultSchema.parse(resultInput);
-      const scope = await captureAccountScope(account);
+      const scope = requestScope ?? (await captureAccountScope(account));
       if (accepted.actorAccountId !== scope.accountId)
         throw new Error("TRIP_CREATE_ACCOUNT_MISMATCH");
+      const name = await displayName(scope.accountId);
       return withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
         let applied: Trip | null = null;
@@ -402,7 +406,15 @@ export function createTripRepository(
           if (operation.status === "COMPLETED" && !row.accepted_at)
             throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
           const now = clock();
-          if (!row.accepted_at)
+          if (!row.accepted_at) {
+            await initializeLedger(scope.accountId, row, name);
+            await mapLocalTripLedgerPerson(
+              database,
+              scope.accountId,
+              accepted.tripId,
+              accepted.operationId,
+              accepted.ownerPersonId,
+            );
             await database.runAsync(
               "UPDATE local_trip_containers SET owner_person_id=?,accepted_at=?,updated_at=? WHERE account_id=? AND id=? AND create_operation_id=?",
               accepted.ownerPersonId,
@@ -412,6 +424,7 @@ export function createTripRepository(
               accepted.tripId,
               accepted.operationId,
             );
+          }
           await database.runAsync(
             "UPDATE sync_operations SET status='COMPLETED',next_attempt_at=NULL,last_error_code=NULL,updated_at=? WHERE id=? AND owner_user_id=? AND operation_type='CREATE_TRIP'",
             now,
@@ -429,15 +442,38 @@ export function createTripRepository(
         return applied!;
       });
     },
-    async resumeCreateTrips() {
+    async resumeCreateTrips(target?: TripCreateTarget) {
       const scope = await captureAccountScope(account);
+      if (target && target.accountId !== scope.accountId)
+        throw new Error("TRIP_CREATE_ACCOUNT_MISMATCH");
+      const name = await displayName(scope.accountId);
       await withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
-        await database.runAsync(
-          "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL WHERE owner_user_id=? AND operation_type='CREATE_TRIP' AND status='DEPENDENCY_BLOCKED'",
-          scope.accountId,
-        );
-        await assertAccountRequestContext(scope, account);
+        await database.withTransactionAsync(async () => {
+          const rows = await database.getAllAsync<Row & { create_operation_id: string }>(
+            `SELECT trip.* FROM local_trip_containers trip JOIN sync_operations op
+             ON op.id=trip.create_operation_id AND op.owner_user_id=trip.account_id
+             AND op.trip_id=trip.id AND op.entity_id=trip.id AND op.idempotency_key=op.id
+             WHERE trip.account_id=? AND trip.accepted_at IS NULL
+               AND op.entity_type='TRIP' AND op.operation_type='CREATE_TRIP'
+               AND op.status='DEPENDENCY_BLOCKED' AND op.last_error_code='TRIP_INITIALIZATION_REQUIRED'
+               AND (? IS NULL OR trip.id=?) AND (? IS NULL OR op.id=?)`,
+            scope.accountId,
+            target?.tripId ?? null,
+            target?.tripId ?? null,
+            target?.operationId ?? null,
+            target?.operationId ?? null,
+          );
+          for (const row of rows) {
+            await initializeLedger(scope.accountId, row, name);
+            await database.runAsync(
+              "UPDATE sync_operations SET status='PENDING',next_attempt_at=NULL,last_error_code=NULL,failure_category=NULL WHERE owner_user_id=? AND id=? AND operation_type='CREATE_TRIP' AND status='DEPENDENCY_BLOCKED' AND last_error_code='TRIP_INITIALIZATION_REQUIRED'",
+              scope.accountId,
+              row.create_operation_id,
+            );
+          }
+          await assertAccountRequestContext(scope, account);
+        });
       });
     },
   };
