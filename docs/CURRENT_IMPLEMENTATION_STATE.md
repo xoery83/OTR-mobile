@@ -1,3 +1,24 @@
+# Active checkpoint — 2026-10-16
+
+- Main ed9ceb2 integrates reviewed C4-L TEXT local intake and Account/Input/generation/
+  original+text fingerprint-bound typed read projection. Schema/immutable result JSON
+  unchanged.91 targeted checks/types/lint/format/UIguard and independent review PASS.
+  Formal Trip/Source-bound Candidate remains unavailable for unassigned Inputs.
+- Same-A1A normal App Repository typed-read QA is now proceeding without new model
+  calls, upload or work. Isolated26.5 full authenticated App Runtime and iPhone16Pro
+  remain pending; component/replay results are not those Runtime PASS outcomes.
+- TCL02 recovery proposal5e697e7 is docs-only, not SQL/deploy permission or applied
+  changes. Actual503 is missing serverCapture tripCreatePort. NOLOGIN/finite concerns
+  are source-proven dormant-contract contradictions, not observed Hosted preimages.
+- TCL01 Nelson/Test/NZD25 read-only persistence recheck PASS. Cold App reopen waits
+  the independent Search Session's AD5 handoff; no Metro/App interruption while it
+  owns Native VQA. Full network-offline acceptance not yet demonstrated.
+- Storage major scan ended. Internal available last38.4GiB;32 exact duplicate vendor
+  binary files removed after matching SHA and retained restore source. Historical
+  candidates need those exact files restored before Native rebuild; restore map:
+  /private/tmp/otr-mac-storage-phase2-vendor-verify-20261016.json. No Simulator, VM,
+  source, Session or unique QA evidence removed. No new wholesale Pods/build copies.
+
 # Capture C4-L / TCL02 checkpoints — 2026-10-16
 
 - Owner-approved isolated iOS26.5 real-input component Runtime: PDFKit and Vision
