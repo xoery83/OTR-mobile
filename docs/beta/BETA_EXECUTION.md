@@ -1,3 +1,13 @@
+## C2 Runtime PASS — 2026-10-16 06:39 NZDT
+
+Same original A1A/account/Batch, real PDF+JPEG Native upload and authorized
+readback bytes/SHA PASS; cold restart/sameActivity/GET-only both PASS. Fixed012
+Backend retained, mainc7fc5e0; resume skipped storedPDF and uploaded missingJPEG.
+No rollback/data deletion/permission expansion. Receipt:
+`/private/tmp/otr-c2-window-20261016/two-file-native-receipt.json`.
+Temporary overlays/metadata closing; C3 installed-executor/Provider next checkpoint
+under existing authority. C3–C6 Runtime not yet verified. C2 Owner clicks complete.
+
 ## Experience QA handoff / C2 finite diagnostic — 2026-10-15
 
 Owner routine QA authorization/runbook delivered to isolated ExperienceAD5;

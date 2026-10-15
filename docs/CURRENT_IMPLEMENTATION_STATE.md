@@ -1,3 +1,19 @@
+# Capture C2 — Runtime PASS / 2026-10-16 06:39 NZDT
+
+- Original A1A/actor3a44420f/sameBatch e046f37a: two real originals uploaded
+  through normal Native Repository/Source Custody; authorized readback matched
+  PDF2943032bytes/SHA dd8c0250… and JPEG226541bytes/SHA f239e149….
+- Normal cold restart, same Activity reopening and GET-only both hashes PASS;
+  Backend final two200 request3312fd2b/e6b7593c. No repeat PDF PUT after resume fix.
+- Main c7fc5e0, fixed Backend012f2d06476a retained; no rollback needed, no
+  Auth/RLS/schema changes. Existing cloud originals/associations preserved.
+- Temporary Native10preimages+guardedenvabsence restored; original App reopened.
+  Metadata parked without Backend restart; original expiry guard retained. No renewal
+  beyond07:11:57NZDT. Full receipt `/private/tmp/otr-c2-window-20261016/two-file-native-receipt.json`.
+- Next C3: resume existing Processing work; verify installed executor and Provider
+  authorization separately. C3–C6 have no real-Batch Runtime PASS yet. No further
+  Owner clicks required for C2; future protected Gate/Native needs reported once.
+
 # C2 PDF Native readback / resumable remainder — 2026-10-16
 
 - Owner GET-only06:27: Backend PDF200 thenJPEG404, proving sequential Native
