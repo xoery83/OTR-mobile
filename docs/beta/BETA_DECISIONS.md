@@ -1,5 +1,19 @@
 # OTR Beta — Unified Decisions and Scope Baseline
 
+### Owner-approved UPD-UX-02 V2 and implementation boundary — 2026-10-15
+
+**UPD-UX-02 approved 2026-10-15 — WP-UPD02A/B:** Product Delta and Blueprint V2 govern; historical Blueprint V1 is superseded where conflicting. Full-screen pushed Review hides Shell; one continuous full-width list/one inline accordion, neutral type icons, horizontal source tabs and existing OTR primary controls. No three-status tabs/universal Later/Skip/Dismiss/Exclude/TYPE06/auto-next. Durable decision saved, applying, Review resolved, canonical admitted and Batch completed remain distinct; remaining decreases only on owning resolution. Actual results/evidence/original links require current owning permissions; no fake receipt or new generic Review engine.
+
+**Current interface gap:** `captureSubmissionRepository.ts:649–650` returns canReviewNow/canOpenCurrentReview=false. C2 `captureActivityProjection.ts` has truthful stored times/state only; no accepted installed BatchReviewUnit/remaining/applying aggregate. Reuse existing `flightImportReview.ts`, `tripImportAdmissionRepository.ts` Source review-draft/confirmation transactions and `captureSourceAdmissionRepository.ts` only within their real authority. These are not an installed generic Batch Review producer; Ledger ACK/DISMISS is not repurposed. UI follows real seams, blocked canonical/outcome states stay unavailable. Approval is not runtime certification or Hosted/Auth/security activation.
+Approved source references: `/Users/xoery/Downloads/OTR_UPD_UX_02_REVIEW_FORM_RESOLUTION_PRODUCT_DESIGN_DELTA_2026-10-15.md`; `/Users/xoery/Downloads/OTR_UPD_UX_02_REVIEW_UI_INTERACTION_BLUEPRINT_V2_2026-10-15.md`; historical `/Users/xoery/Downloads/OTR_UPD_UX_02_REVIEW_UI_INTERACTION_BLUEPRINT_2026-10-15.md`. V2 VIS01–04 overrides conflicting V1 image; Review geometry stays provisional, no new global typography system.
+
+### Owner Shell proportion/material and Camera local followup — 2026-10-15
+
+MyTrips keeps only the right ActionIsland +; contextual Trip keeps lawful Home/Day/Ledger/Updates. Normal Shell target: Home shortlabel, single row fourlabels,22–24pt icons,10–11pt labels,3–4pt gap,58–64pt nav; both islands/selected surface translucent, ReduceTransparency accessibility exception. Preserve44pt targets/DynamicType/SafeArea/routes; real measured height must reserve content once. This is approved product correction, not visual acceptance.
+
+Later explicit Root/Owner scope authorizes minimum localCamera provenance/IMAGE/recovery plus forwardSQLite64, preserving sealed51 and all prior data/constraints; this finite addition does not widen CP01 to new sync/ImportAuthority/provider/Hosted scope. Camera remains disabled until complete owning/caller qualification; no pre-submit-only dead end or Photos relabel.
+
+
 Reconciled 2026-10-13 NZDT against canonical baseline `50f07d5e1a2be99a5c11f1bba3a76096e153dfb7`; reviewed code/docs local adoption `8141f8fe1efecee86c23de58d9a6d6019cf37ad4`. This is the only active Decision Register and Beta Scope Baseline. [Status](BETA_STATUS.md), [execution/intake](BETA_EXECUTION.md), [interfaces](BETA_INTERFACE_REGISTER.md). Historical contracts/ADRs and sealed candidates are not rewritten.
 
 ### Owner model-routing priority amendment — 2026-10-14
@@ -39,6 +53,11 @@ Original META/B0, necessary named writer subset and DEV97 finite metadata ran; c
 The trusted migration administrator retains ADMIN regrant/replacement capability; INHERIT/SET flags do not remove that residual. App/runtime topology, NOLOGIN attributes, CLOSED/empty gate and existing Creator73de/NZD are verified only within fixed metadata scope. No new credentials, LOGIN, deployment, Doc101 or runtime activation is authorized by this result.
 
 Owner-approved Search01–13 replaces the earlier Search deferral; implemented function review does not release UI/entry icons. Latest Owner Reference-first schedule supersedes the earlier all-module pause: targeted Native base/defect/permission checks are permitted, then an explicitly ready normal Reference smoke; broad matrices wait for normal data/navigation and Owner basic feedback. REF-C QA proves explicitly synthetic local admission, not real Trip acceptance/Auth/roles. I66 Home correction remains bounded, not UX acceptance; HOME03A/03B/04/05 keep their owning authority and single shared navigation author. Trip/Journey UUID is not Ledger permission. HOME02 WAITING_DESIGN_FILE.
+
+
+## Owner product correction — 2026-10-15
+
+MyTrips uses only the Action Island plus button, with no left navigation island. A legal selected Trip retains Home/Day/Ledger/Updates. The approved Shell correction follows the supplied App Store/Strava references: transparent material, compact height, consistent icon and label, selected accent. The later approved Updates fourth destination supersedes the older three-destination constraint. This registers Owner authority, not implementation or Native acceptance. Earlier Owner screenshots used Main88; current App-loaded code remains UNKNOWN after restoration, separately from Main91 source. No new router, business permission, installation, Hosted or schema grant.
 
 ### BD34 finite Members resolution and Push42–43 local receipts — 2026-10-14
 
