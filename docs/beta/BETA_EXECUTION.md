@@ -1,3 +1,15 @@
+## Latest C2 Owner-assisted checkpoint — 2026-10-15
+
+Caller loaded normally; Owner Upload failed local MEDIA_INVALID before either PUT.
+Real JPG has24 bytes after EOI, native decode and full original hash/count PASS.
+One shared domain signature fix preserves original bytes and permits this trailer;
+independent Review3tests and integration16tests/typecheck PASS. Backend source
+candidate is sealed83 plus only this domain delta, not all current main changes.
+No new image deployment/metadata renewal approved or executed. Original config
+parked, zero associations, health200,10host preimages restored, C2 RuntimeNV.
+Evidence `/private/tmp/otr-c2-jpeg-trailer-fix/review/`; new image/expiry delta must
+be explicitly approved before same-Batch Owner-assisted retry. No new Batch.
+
 ## Capture Import staged checkpoint — 2026-10-15
 
 C1 PARTIAL: same two-real-file Batch retained; normal Activity reopen and cold

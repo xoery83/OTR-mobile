@@ -34,8 +34,10 @@ export function captureCustodyMedia(
     bytes[0] === 255 &&
     bytes[1] === 216 &&
     bytes[2] === 255 &&
-    bytes.at(-2) === 255 &&
-    bytes.at(-1) === 217
+    // Preserve opaque bytes after EOI; identity always pins the entire original.
+    bytes.some(
+      (value, index) => index >= 2 && value === 255 && bytes[index + 1] === 217,
+    )
   )
     return "image/jpeg";
   if (

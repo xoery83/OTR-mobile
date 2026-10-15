@@ -7,6 +7,15 @@
 
 # Capture Import checkpoint — 2026-10-15
 
+- Latest Owner-assisted C2: normal Activity visibly loaded DEV caller, but Upload
+  failed at local two-Input preflight with CAPTURE_CUSTODY_MEDIA_INVALID. The exact
+  JPG has24 opaque bytes after EOI; native decoder accepts it, full SHA/count match.
+  No PUT/GET or cloud association; metadata parked without extension, all10 host
+  preimages restored and App normally restarted. Shared signature-only JPEG check
+  now preserves opaque trailing bytes/full identity; independent Review and3focused
+  tests PASS; main16related tests/typecheck PASS. New Backend image requires exact
+  delta authorization; fixed08b1ad6f service remains unchanged. No runtime retry.
+
 - C2 current: restricted DEV Native Activity caller implemented and independently
   reviewed; normal config=null. Exact original A1A/account/Batch/two Input pins,
   expiry and account/page lifecycle checks apply through actual network dispatch.
