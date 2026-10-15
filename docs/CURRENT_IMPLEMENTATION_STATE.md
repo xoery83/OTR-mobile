@@ -15,8 +15,11 @@
   cases skipped on macOS; independent offline Linux anchored self-check PASS.
   Review: `/private/tmp/otr-c2-custody-review-20261015/independent-review.md`.
 - C2 Runtime NOT VERIFIED: no real upload/Auth/Storage/provisioning/deployment.
-  Next: qualify existing DEV composition and protected runtime authorization,
-  then same-Batch two-original upload/readback; do not replay Native Submit.
+  Storage SDK header compatibility was corrected and independently retested
+  (8 PASS) in `918110f`. Bounded runtime qualification found no current C2
+  bootstrap supplying trusted Storage config plus attested metadata mount.
+  Next: prepare that explicit composition and a scoped protected DEV deployment
+  package, then same-Batch upload/readback; do not replay Native Submit.
   C3–C6 remain unverified for this Batch. No Source/Trip admission, schema/role,
   scheduler or Provider change. Runtime stays CLOSED; Experience owns UI.
 

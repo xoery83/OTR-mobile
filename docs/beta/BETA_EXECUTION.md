@@ -5,8 +5,10 @@ Activity reopen passed, cold persistent identities passed; cold Native Activity
 reopen NOT OBSERVED. Preserve Batch `e046f37a-61ac-444a-b05b-0a991d59e006`;
 no new Submit. C2 code `d96c898` independently reviewed and integrated; default
 CLOSED. Real DEV Source Storage upload/readback and Runtime injection remain
-unverified. Next: bounded existing DEV composition/authorization qualification,
-then same two Inputs; C3–C6 not passed. Reuse the C1/C2 evidence paths in current
+unverified. SDK headers corrected/reviewed at `918110f` (8 PASS). Bounded
+qualification found C2 startup config/attested mount composition absent. Next:
+prepare explicit composition and scoped protected DEV deployment package, then
+same two Inputs; C3–C6 not passed. Reuse the C1/C2 evidence paths in current
 implementation state; no additional screenshot matrix or ordinary UI packet.
 
 # OTR Beta — EXECUTION
