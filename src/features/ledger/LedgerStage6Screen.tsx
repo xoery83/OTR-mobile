@@ -19,7 +19,14 @@ import { readLastApiFailure } from "@/data/api/client";
 import { useNetworkState } from "expo-network";
 import { getDefaultLedgerFxSnapshotRepository } from "@/data/repositories/defaultLedgerFxSnapshotRepository";
 import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -172,10 +179,16 @@ export function LedgerStage6Screen({
   const [modeTransitionSeq, setModeTransitionSeq] = useState(0);
   const journeySearch = useRef<NativeTextInput>(null);
   const manualJourneyId = useRef<string | undefined>(undefined);
+  const explicitTrip = scopedJourneyId ?? workingTrip?.tripId;
+  const explicitTripRef = useRef(explicitTrip);
+  useLayoutEffect(() => {
+    explicitTripRef.current = explicitTrip;
+  }, [explicitTrip]);
   useEffect(() => {
     manualJourneyId.current = undefined;
   }, [scopedJourneyId, workingTrip?.tripId]);
   const [request] = useState(createLatestRequest);
+  const [contextRequest] = useState(createLatestRequest);
   const [memberRequest] = useState(createLatestRequest);
   const [accountGeneration, setAccountGeneration] = useState(getAccountGeneration);
   const accountGenerationRef = useRef(accountGeneration);
@@ -215,7 +228,10 @@ export function LedgerStage6Screen({
   const [selectingJourneyId, setSelectingJourneyId] = useState<string | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [ledgerChangeSeq, setLedgerChangeSeq] = useState(0);
-  const journey = projection?.journey ?? null;
+  const journey =
+    projection && (!explicitTrip || projection.journey.journeyId === explicitTrip)
+      ? projection.journey
+      : null;
   const collapseDistance = spendingHeaderHeight;
   useEffect(() => {
     if (collapseDistance > 0)
@@ -446,40 +462,69 @@ export function LedgerStage6Screen({
   };
 
   const loadContext = useCallback(async () => {
-    const context = await captureAccountScope(requireActiveUserId);
-    const generation = context.generation;
-    const explicitTrip = scopedJourneyId ?? workingTrip?.tripId;
-    if (explicitTrip)
-      await (await readLocalTripRepository()).initializeLocalLedger(explicitTrip);
-    const repository = await getDefaultLedgerReportingRepository();
-    const [available, selected] = await Promise.all([
-      repository.listJourneys(),
-      repository.getSelectedJourneyId(),
-    ]);
-    if (generation !== getAccountGeneration()) return;
-    if (explicitTrip && !available.some((item) => item.journeyId === explicitTrip))
-      throw new Error(t("entry.contextUnavailable"));
-    const entry = chooseJourneyEntry(
-      available,
-      localToday(),
-      selected,
-      explicitTrip,
-      manualJourneyId.current,
-    );
-    setJourneys(available);
-    const nextJourney =
-      entry.kind === "JOURNEY"
-        ? (available.find((item) => item.journeyId === entry.journeyId) ?? null)
-        : null;
-    if (nextJourney) {
-      await loadProjection(nextJourney, scopeRef.current);
-    } else {
+    const id = contextRequest.begin();
+    const generation = getAccountGeneration();
+    const isCurrent = () =>
+      contextRequest.isCurrent(id) &&
+      generation === getAccountGeneration() &&
+      explicitTripRef.current === explicitTrip;
+    const clear = () => {
       request.cancel();
+      memberRequest.cancel();
       setProjection(null);
+      setJourneys([]);
+      setJourneyPickerOpen(false);
+      selectedJourneyIdRef.current = null;
+      selectedMemberIdRef.current = null;
+    };
+    if (explicitTrip && explicitTrip !== selectedJourneyIdRef.current) {
+      clear();
+      setLoading(true);
       setMessage(null);
     }
-    if (generation === getAccountGeneration()) setLoading(false);
-  }, [loadProjection, request, scopedJourneyId, workingTrip]);
+    try {
+      await captureAccountScope(requireActiveUserId);
+      if (!isCurrent()) return;
+      if (explicitTrip)
+        await (await readLocalTripRepository()).initializeLocalLedger(explicitTrip);
+      const repository = await getDefaultLedgerReportingRepository();
+      const [available, selected] = await Promise.all([
+        repository.listJourneys(),
+        repository.getSelectedJourneyId(),
+      ]);
+      if (!isCurrent()) return;
+      if (explicitTrip && !available.some((item) => item.journeyId === explicitTrip))
+        throw new Error(t("entry.contextUnavailable"));
+      const entry = chooseJourneyEntry(
+        available,
+        localToday(),
+        selected,
+        explicitTrip,
+        manualJourneyId.current,
+      );
+      setJourneys(available);
+      const nextJourney =
+        entry.kind === "JOURNEY"
+          ? (available.find((item) => item.journeyId === entry.journeyId) ?? null)
+          : null;
+      if (nextJourney) {
+        const loaded = await loadProjection(nextJourney, scopeRef.current);
+        if (!loaded && explicitTrip && isCurrent())
+          throw new Error(t("entry.contextUnavailable"));
+      } else {
+        request.cancel();
+        setProjection(null);
+        setMessage(null);
+      }
+    } catch (error) {
+      if (!isCurrent()) return;
+      if (!explicitTrip) throw error;
+      clear();
+      setMessage(t("entry.contextUnavailable"));
+    } finally {
+      if (isCurrent()) setLoading(false);
+    }
+  }, [contextRequest, explicitTrip, loadProjection, memberRequest, request]);
 
   useEffect(
     () =>
@@ -582,9 +627,11 @@ export function LedgerStage6Screen({
 
   useEffect(
     () => () => {
+      contextRequest.cancel();
       request.cancel();
+      memberRequest.cancel();
     },
-    [request],
+    [contextRequest, memberRequest, request],
   );
 
   const chooseJourney = async (selected: LedgerJourneyContext) => {
@@ -678,6 +725,7 @@ export function LedgerStage6Screen({
       />
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
+          hidden={Boolean(explicitTrip) && !journey}
           accessibilityLabel={
             journey
               ? t("ledger.searchExpenses")
@@ -1277,7 +1325,7 @@ export function LedgerStage6Screen({
                       </DashboardSection>
                     </View>
                   </>
-                ) : (
+                ) : !explicitTrip ? (
                   <View style={styles.destinationList}>
                     <Pressable
                       accessibilityLabel={t("ledger.allJourneys")}
@@ -1347,7 +1395,7 @@ export function LedgerStage6Screen({
                       </Text>
                     ) : null}
                   </View>
-                )}
+                ) : null}
                 {debugMode ? (
                   <View style={styles.debugSection}>
                     <Text accessibilityRole="header" style={styles.debugTitle}>
@@ -1553,7 +1601,7 @@ export function LedgerStage6Screen({
         animationType="slide"
         onRequestClose={() => setJourneyPickerOpen(false)}
         presentationStyle="pageSheet"
-        visible={journeyPickerOpen}
+        visible={journeyPickerOpen && (!explicitTrip || Boolean(journey))}
       >
         <View style={styles.picker}>
           <SheetHeader
