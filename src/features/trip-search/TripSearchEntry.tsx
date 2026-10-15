@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -14,9 +14,11 @@ import { useUiLocale } from "@/ui/useUiLocale";
 export function TripSearchEntry({
   entry,
   tripId,
+  nativeToolbar = false,
 }: {
   entry: "MY_TRIPS" | "HOME" | "DAY";
   tripId?: string;
+  nativeToolbar?: boolean;
 }) {
   useUiLocale();
   const colors = useUiTheme();
@@ -35,18 +37,30 @@ export function TripSearchEntry({
           ? current.tripId
           : undefined;
   if (entry !== "MY_TRIPS" && !target) return null;
+  const open = () => {
+    if (generation !== getAccountGeneration()) return;
+    router.push({
+      pathname: "/search",
+      params: { entry, ...(target ? { tripId: target } : {}) },
+    });
+  };
+  if (nativeToolbar)
+    return (
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          tintColor={colors.accent}
+          icon="magnifyingglass"
+          accessibilityLabel={t("comprehensiveSearch.title")}
+          onPress={open}
+        />
+      </Stack.Toolbar>
+    );
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={t("comprehensiveSearch.title")}
       style={styles.target}
-      onPress={() => {
-        if (generation !== getAccountGeneration()) return;
-        router.push({
-          pathname: "/search",
-          params: { entry, ...(target ? { tripId: target } : {}) },
-        });
-      }}
+      onPress={open}
     >
       <AppIcon name="magnifyingglass" color={colors.accent} />
     </Pressable>

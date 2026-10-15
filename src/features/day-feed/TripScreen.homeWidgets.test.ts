@@ -487,9 +487,9 @@ it("normal Home hides internal accepted IDs and defers date inputs to the Day ac
   expect(find(node, "Modal")?.visible).toBe(false);
   expect(JSON.stringify(node)).not.toContain("dayFeed.admitted");
   expect(JSON.stringify(node)).not.toContain("dayFeed.explicitId");
-  const button = find(node, "Button");
-  expect(button.label).toBe("dayFeed.openDay");
-  button.onPress();
+  const workspace = find(node, LocalTripWorkspace);
+  expect(workspace.onChooseDay).toBeTypeOf("function");
+  workspace.onChooseDay();
   expect(find(render(), "Modal")?.visible).toBe(true);
   expect(state.select).not.toHaveBeenCalled();
 });

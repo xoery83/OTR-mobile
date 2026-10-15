@@ -1,9 +1,22 @@
+import { shellShowsUpdates } from "./bottomBarVisibility";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { chooseUiLocale } from "@/native/uiLocalePreference";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Alert } from "react-native";
-import { router } from "expo-router";
+import { router, useGlobalSearchParams, usePathname } from "expo-router";
+import { useTripView } from "@/features/day-feed/TripViewContext";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { readLocalSession } from "@/data/auth/authRepository";
@@ -14,6 +27,7 @@ import type { AccountIdentity } from "@/domain/auth/localSession";
 import { AppNavigationMenu, type AppNavigationMenuItem } from "./AppNavigationMenu";
 import {
   contextualMenuDestinations,
+  selectedTripMenuId,
   maskEmail,
   moduleReturnPath,
   type GlobalMenuModule,
@@ -22,11 +36,37 @@ import {
 export function GlobalMenu({
   journeyId,
   module,
+  nativeToolbar = false,
 }: {
   journeyId?: string | null;
   module: GlobalMenuModule;
+  nativeToolbar?: boolean;
 }) {
   const locale = useUiLocale();
+  const params = useGlobalSearchParams<{ tripId?: string; view?: string }>();
+  const pathname = usePathname();
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+  );
+  const { quickActions, workingTrip } = useTripView();
+  const returnLease = useMemo(
+    () => ({
+      quickActions,
+      tripId: params.tripId,
+      view: params.view,
+      pathname,
+      generation,
+    }),
+    [quickActions, params.tripId, params.view, pathname, generation],
+  );
+  const currentReturn = useRef<typeof returnLease | null>(returnLease);
+  useLayoutEffect(() => {
+    currentReturn.current = returnLease;
+    return () => {
+      currentReturn.current = null;
+    };
+  }, [returnLease]);
   const changeLanguage = () =>
     Alert.alert(t("navigation.language"), undefined, [
       {
@@ -116,8 +156,53 @@ export function GlobalMenu({
   const returnTo = moduleReturnPath(module);
   const sections: AppNavigationMenuItem[][] = [
     ...(contextItems.length ? [contextItems] : []),
+    ...(pathname === "/trip" &&
+    !selectedTripMenuId(pathname, params) &&
+    params.view !== "create"
+      ? []
+      : [
+          [
+            {
+              icon: "suitcase",
+              label: t("navigation.allTrips"),
+              onPress: () => {
+                const current = () =>
+                  returnLease === currentReturn.current &&
+                  generation === getAccountGeneration();
+                if (!current()) return;
+                const navigate = () => {
+                  if (!current()) return;
+                  router.navigate({
+                    pathname: "/trip",
+                    params: { view: "trips", tripId: "", date: "", zone: "" },
+                  });
+                };
+                if (pathname === "/trip" && params.view === "create") {
+                  Alert.alert(t("navigation.leaveTripSetup"), undefined, [
+                    { text: t("actionIsland.stay"), style: "cancel" },
+                    {
+                      text: t("actionIsland.discard"),
+                      style: "destructive",
+                      onPress: navigate,
+                    },
+                  ]);
+                  return;
+                }
+                const selectedTripId = selectedTripMenuId(pathname, params);
+                if (
+                  selectedTripId &&
+                  quickActions?.tripId === selectedTripId &&
+                  quickActions.generation === generation &&
+                  quickActions.backToTrips
+                )
+                  quickActions.backToTrips();
+                else navigate();
+              },
+            },
+          ] as AppNavigationMenuItem[],
+        ]),
     [
-      ...(identity?.userId
+      ...(identity?.userId && !shellShowsUpdates(pathname, params, Boolean(workingTrip))
         ? [
             {
               icon: "tray" as const,
@@ -175,6 +260,7 @@ export function GlobalMenu({
 
   return (
     <AppNavigationMenu
+      nativeToolbar={nativeToolbar}
       identity={{
         primary: displayName ?? identity?.displayName ?? t("common.currentAccount"),
         secondary: detail || null,

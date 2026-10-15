@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   contextualMenuDestinations,
+  selectedTripMenuId,
   isApprovedDevIdentity,
   journeyRoleLabel,
   maskEmail,
@@ -39,4 +40,13 @@ describe("contextual global menu", () => {
       isApprovedDevIdentity({ userId: "00000000-0000-4000-8000-000000000003" }),
     ).toBe(false);
   });
+});
+
+it("My Trips/Create and other modules cannot reuse a historical selected-Trip return guard", () => {
+  expect(selectedTripMenuId("/trip", { tripId: "a", view: "home" })).toBe("a");
+  expect(selectedTripMenuId("/trip", { tripId: "a", view: "day" })).toBe("a");
+  for (const view of ["trips", "create"])
+    expect(selectedTripMenuId("/trip", { tripId: "a", view })).toBeNull();
+  expect(selectedTripMenuId("/trip", { view: "home" })).toBeNull();
+  expect(selectedTripMenuId("/expenses", { tripId: "a", view: "home" })).toBeNull();
 });

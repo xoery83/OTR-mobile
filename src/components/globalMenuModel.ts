@@ -44,3 +44,17 @@ const APPROVED_DEV_ACCOUNT_IDS = new Set([
 export function isApprovedDevIdentity(identity: { userId: string }) {
   return APPROVED_DEV_ACCOUNT_IDS.has(identity.userId);
 }
+
+// Only explicit selected-Trip routes qualify a Workspace return guard.
+// My Trips/Create must never borrow a historical selected Trip.
+export function selectedTripMenuId(
+  pathname: string,
+  params: { tripId?: string; view?: string },
+): string | null {
+  return pathname === "/trip" &&
+    typeof params.tripId === "string" &&
+    params.tripId.length > 0 &&
+    !["trips", "create"].includes(params.view ?? "")
+    ? params.tripId
+    : null;
+}

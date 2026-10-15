@@ -90,9 +90,6 @@ export function TripHomeFrame({
       ) : null}
       {notice ? <UiText style={styles.notice}>{notice}</UiText> : null}
       <View style={styles.workspace}>
-        <UiText accessibilityRole="header" style={styles.heading}>
-          {t("tripHome.workspace")}
-        </UiText>
         <TripHomeWidgetHost widgets={widgets} />
       </View>
       {modules ? (

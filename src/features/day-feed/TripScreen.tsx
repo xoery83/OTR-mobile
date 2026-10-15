@@ -35,7 +35,6 @@ import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import type { TodayEntry } from "./MyTripsList";
 import {
   resolvedWorkspaceKind,
-  showTripContextualActions,
   type WorkspaceKind,
   type WorkspaceResolution,
 } from "./tripWorkspaceRoute";
@@ -85,6 +84,9 @@ function TripContent({ today = false }: { today?: boolean }) {
     view?: string;
   }>();
   const [dayChooser, setDayChooser] = useState(false);
+  const chooseDay = useCallback(() => {
+    if (generation === getAccountGeneration()) setDayChooser(true);
+  }, [generation]);
   const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
   const [trip, setTrip] = useState<TripRead | null>(null);
@@ -142,9 +144,6 @@ function TripContent({ today = false }: { today?: boolean }) {
   const localChecked = workspaceKind !== null;
   const knownWorkspaceTrip = workspaceKind === "LOCAL" || workspaceKind === "CACHED";
   const hideHomePrelude = !today && home && knownWorkspaceTrip;
-  const showContextualActions =
-    today ||
-    showTripContextualActions(requested, workspaceKind, Boolean(visibleTrip?.observed));
   const load = useCallback(async () => {
     const captured = getAccountGeneration(),
       ticket = ++request.current;
@@ -203,10 +202,11 @@ function TripContent({ today = false }: { today?: boolean }) {
     switchTrip(id.trim(), generation);
     router.setParams({ tripId: id.trim(), date: "", zone: "", view: "home" });
   };
-  const backToTrips = () => {
+  const backToTrips = useCallback(() => {
+    if (generation !== getAccountGeneration()) return;
     select(null);
     router.setParams({ tripId: "", date: "", zone: "", view: "" });
-  };
+  }, [select, generation]);
   const createTrip = () => {
     select(null);
     router.setParams({ tripId: "", date: "", zone: "", view: "create" });
@@ -466,12 +466,13 @@ function TripContent({ today = false }: { today?: boolean }) {
   return (
     <>
       <ScrollView
+        contentInsetAdjustmentBehavior="never"
         style={styles.root}
         contentContainerStyle={[
           styles.content,
-          isMyTrips && { paddingBottom: bottomBarHeight + visual.space.page },
+          { paddingBottom: bottomBarHeight + visual.space.page },
         ]}
-        scrollIndicatorInsets={isMyTrips ? { bottom: bottomBarHeight } : undefined}
+        scrollIndicatorInsets={{ bottom: bottomBarHeight }}
         scrollEventThrottle={16}
         onScroll={
           isMyTrips
@@ -522,6 +523,11 @@ function TripContent({ today = false }: { today?: boolean }) {
             onOpenToday={openToday}
             onKnownTrip={knownTrip}
             onBackToTrips={backToTrips}
+            onChooseDay={
+              visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
+                ? chooseDay
+                : undefined
+            }
             widgetsForHome={widgetsForHome}
           />
         ) : null}
@@ -537,11 +543,6 @@ function TripContent({ today = false }: { today?: boolean }) {
           <>
             {visibleTrip?.observed ? (
               <>
-                <UiButton
-                  label={t("dayFeed.openDay")}
-                  variant="text"
-                  onPress={() => setDayChooser(true)}
-                />
                 <Modal
                   visible={dayChooser}
                   onRequestClose={() => setDayChooser(false)}
@@ -605,17 +606,6 @@ function TripContent({ today = false }: { today?: boolean }) {
             ) : null}
           </>
         )}
-        {showContextualActions ? (
-          <>
-            <UiButton
-              label={t("capture.activityRefresh")}
-              variant="text"
-              onPress={() => {
-                void load();
-              }}
-            />
-          </>
-        ) : null}
       </ScrollView>
       {visibleOverlay?.read.observed ? (
         <DayFeed

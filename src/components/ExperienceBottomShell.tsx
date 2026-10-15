@@ -1,9 +1,23 @@
+import { shellShowsUpdates } from "./bottomBarVisibility";
+import { useUpdatesSignal } from "@/features/updates/useUpdatesSignal";
+import { requireOptionalNativeModule } from "expo-modules-core";
+import type { ComponentType } from "react";
+import type { GlassViewProps } from "expo-glass-effect";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { TripQuickAddMenu } from "./TripQuickAddMenu";
-import { useLayoutEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { BottomTabBarHeightCallbackContext } from "expo-router/js-tabs";
 import {
   captureAccountScope,
   assertAccountRequestGeneration,
@@ -13,11 +27,20 @@ import { getDefaultLedgerReportingRepository } from "@/data/repositories/default
 import { canEditLedgerExpense } from "@/data/repositories/ledgerExpenseEditAccess";
 import { UiText as Text } from "@/ui/controls";
 import { router, useGlobalSearchParams } from "expo-router";
-import { Alert, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import {
+  AccessibilityInfo,
+  Alert,
+  ActionSheetIOS,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
 import { useTripView } from "@/features/day-feed/TripViewContext";
-import { t } from "@/ui/locale";
+import { formatUiNumber, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -25,6 +48,24 @@ import { visual } from "@/ui/visual";
 
 // S1 exposes only a selected, account-generation-scoped accepted Day.
 // The Today route performs the owning read again after navigation.
+function installedGlassView(): ComponentType<GlassViewProps> | null {
+  try {
+    const module = requireOptionalNativeModule<{
+      isLiquidGlassAvailable?: boolean;
+      isGlassEffectAPIAvailable?: boolean;
+    }>("ExpoGlassEffect");
+    if (
+      module?.isLiquidGlassAvailable !== true ||
+      module.isGlassEffectAPIAvailable !== true
+    )
+      return null;
+    return (require("expo-glass-effect") as typeof import("expo-glass-effect")).GlassView;
+  } catch {
+    return null;
+  }
+}
+const Glass = installedGlassView();
+const Material = Glass ?? View;
 export function ExperienceBottomShell({
   visible,
   pathname,
@@ -35,7 +76,30 @@ export function ExperienceBottomShell({
   useUiLocale();
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
-  const largeText = useWindowDimensions().fontScale > 2;
+  const largeText = useWindowDimensions().fontScale > 1.5;
+  const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
+  const [reducedTransparency, setReducedTransparency] = useState(false);
+  useEffect(() => {
+    let active = true,
+      eventObserved = false;
+    const initial = AccessibilityInfo?.isReduceTransparencyEnabled?.();
+    void initial
+      ?.then((value) => {
+        if (active && !eventObserved) setReducedTransparency(value);
+      })
+      .catch(() => {});
+    const subscription = AccessibilityInfo?.addEventListener?.(
+      "reduceTransparencyChanged",
+      (value) => {
+        eventObserved = true;
+        if (active) setReducedTransparency(value);
+      },
+    );
+    return () => {
+      active = false;
+      subscription?.remove();
+    };
+  }, []);
   const { view, workingTrip, resumeView, resume, quickActions } = useTripView();
   const params = useGlobalSearchParams<{
     journeyId?: string;
@@ -60,6 +124,11 @@ export function ExperienceBottomShell({
     subscribeAccountGeneration,
     getAccountGeneration,
   );
+  const unreadActionable = useUpdatesSignal(
+    workingTrip?.generation === generation ? workingTrip.tripId : null,
+    pathname,
+    visible && params.view !== "create" && workingTrip?.generation === generation,
+  );
   const targetKey = JSON.stringify([
     pathname,
     journeyId,
@@ -75,20 +144,44 @@ export function ExperienceBottomShell({
       currentTarget.current = null;
     };
   }, [renderedTarget]);
+  useLayoutEffect(() => {
+    if (!visible || params.view === "create") onHeightChange?.(0);
+  }, [visible, params.view, onHeightChange]);
   const tripList =
     pathname === "/trip" &&
     (!params.tripId || params.view === "trips" || params.view === "create");
   const ledger = pathname.startsWith("/expenses") && Boolean(journeyId);
-  const startTrip = () =>
-    Alert.alert(t("actionIsland.startTrip"), undefined, [
-      { text: t("actionIsland.importPlans"), onPress: () => router.navigate("/capture") },
-      {
-        text: t("actionIsland.createManually"),
-        onPress: () =>
-          router.setParams({ tripId: "", date: "", zone: "", view: "create" }),
-      },
-      { text: t("common.cancel"), style: "cancel" },
-    ]);
+  const startTrip = () => {
+    const invoke = (index: number) => {
+      if (
+        generation !== getAccountGeneration() ||
+        renderedTarget !== currentTarget.current
+      )
+        return;
+      if (index === 0) router.navigate("/capture");
+      if (index === 1)
+        router.setParams({ tripId: "", date: "", zone: "", view: "create" });
+    };
+    if (Platform.OS === "ios")
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: t("actionIsland.startTrip"),
+          options: [
+            t("actionIsland.importPlans"),
+            t("actionIsland.createManually"),
+            t("common.cancel"),
+          ],
+          cancelButtonIndex: 2,
+        },
+        invoke,
+      );
+    else
+      Alert.alert(t("actionIsland.startTrip"), undefined, [
+        { text: t("actionIsland.importPlans"), onPress: () => invoke(0) },
+        { text: t("actionIsland.createManually"), onPress: () => invoke(1) },
+        { text: t("common.cancel"), style: "cancel" },
+      ]);
+  };
   const openExpense = async (
     targetId = journeyId,
     suggestedDate: string | null = null,
@@ -139,110 +232,179 @@ export function ExperienceBottomShell({
     else router.navigate({ pathname: "/trip", params: { view: "trips" } });
   };
   return (
-    <SafeAreaView edges={["bottom", "left", "right"]} style={styles.safe}>
-      <View style={[styles.row, largeText && styles.largeRow]}>
-        <View style={styles.navigationIsland}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t(workingTrip ? "dayFeed.tripHome" : "dayFeed.myTrips")}
-            accessibilityHint={t("shell.openMyTrips")}
-            accessibilityState={{ selected: pathname === "/trip" && !isDay }}
-            onPress={openMyTrips}
+    <SafeAreaView
+      edges={["bottom", "left", "right"]}
+      pointerEvents="box-none"
+      onLayout={({ nativeEvent }) => onHeightChange?.(nativeEvent.layout.height)}
+      style={styles.safe}
+    >
+      <View
+        pointerEvents="box-none"
+        style={[styles.row, tripList && styles.actionsOnly, largeText && styles.largeRow]}
+      >
+        {!tripList ? (
+          <Material
+            {...(Glass
+              ? { glassEffectStyle: "clear" as const, isInteractive: true }
+              : {})}
             style={[
-              styles.destination,
-              largeText && styles.largeDestination,
-              pathname === "/trip" && !isDay && styles.selectedDestination,
+              styles.navigationIsland,
+              Glass && styles.nativeMaterial,
+              reducedTransparency && styles.reducedMaterial,
+              largeText && styles.largeNavigationIsland,
             ]}
           >
-            <AppIcon
-              name="suitcase"
-              color={
-                pathname === "/trip" && !isDay ? colors.accent : colors.textSecondary
-              }
-            />
-            <Text
-              style={[styles.label, pathname === "/trip" && !isDay && styles.activeLabel]}
-            >
-              {t(workingTrip ? "dayFeed.tripHome" : "dayFeed.myTrips")}
-            </Text>
-          </Pressable>
-          {resumeView || view ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t("shell.day")}
-              accessibilityHint={t("shell.openSelectedDay")}
-              accessibilityState={{ selected: isDay }}
-              onPress={() => {
-                resume();
-                router.navigate("/");
-              }}
+              accessibilityLabel={t(workingTrip ? "shell.home" : "dayFeed.myTrips")}
+              accessibilityHint={t("shell.openMyTrips")}
+              accessibilityState={{ selected: pathname === "/trip" && !isDay }}
+              onPress={openMyTrips}
               style={[
                 styles.destination,
                 largeText && styles.largeDestination,
-                isDay && styles.selectedDestination,
+                pathname === "/trip" && !isDay && styles.selectedDestination,
               ]}
             >
               <AppIcon
-                name="calendar"
-                color={isDay ? colors.accent : colors.textSecondary}
-              />
-              <Text style={[styles.label, isDay && styles.activeLabel]}>
-                {t("shell.day")}
-              </Text>
-            </Pressable>
-          ) : null}
-          {workingTrip ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("navigation.ledger")}
-              accessibilityState={{ selected: pathname.startsWith("/expenses") }}
-              onPress={() => router.navigate("/expenses")}
-              style={[
-                styles.destination,
-                largeText && styles.largeDestination,
-                pathname.startsWith("/expenses") && styles.selectedDestination,
-              ]}
-            >
-              <AppIcon
-                name="list.bullet.rectangle"
+                size={visual.bottomShell.icon}
+                name="house"
                 color={
-                  pathname.startsWith("/expenses") ? colors.accent : colors.textSecondary
+                  pathname === "/trip" && !isDay ? colors.accent : colors.textPrimary
                 }
               />
               <Text
+                numberOfLines={largeText ? undefined : 1}
                 style={[
                   styles.label,
-                  pathname.startsWith("/expenses") && styles.activeLabel,
+                  pathname === "/trip" && !isDay && styles.activeLabel,
                 ]}
               >
-                {t("navigation.ledger")}
+                {t(workingTrip ? "shell.home" : "dayFeed.myTrips")}
               </Text>
             </Pressable>
-          ) : null}
-          {workingTrip ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("updates.title")}
-              accessibilityState={{ selected: pathname === "/updates" }}
-              onPress={() => router.navigate("/updates")}
-              style={[
-                styles.destination,
-                largeText && styles.largeDestination,
-                pathname === "/updates" && styles.selectedDestination,
-              ]}
-            >
-              <AppIcon
-                name="bell"
-                color={pathname === "/updates" ? colors.accent : colors.textSecondary}
-              />
-              <Text style={[styles.label, pathname === "/updates" && styles.activeLabel]}>
-                {t("updates.title")}
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
-        {contextualTripId ? (
-          <View style={styles.actionIsland}>
+            {resumeView || view || activeQuickActions?.chooseDay ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("shell.day")}
+                accessibilityHint={t("shell.openSelectedDay")}
+                accessibilityState={{ selected: isDay }}
+                onPress={() => {
+                  if (generation !== getAccountGeneration()) return;
+                  if (resumeView || view) {
+                    resume();
+                    router.navigate("/");
+                  } else {
+                    activeQuickActions?.chooseDay?.();
+                  }
+                }}
+                style={[
+                  styles.destination,
+                  largeText && styles.largeDestination,
+                  isDay && styles.selectedDestination,
+                ]}
+              >
+                <AppIcon
+                  size={visual.bottomShell.icon}
+                  name="calendar"
+                  color={isDay ? colors.accent : colors.textPrimary}
+                />
+                <Text
+                  numberOfLines={largeText ? undefined : 1}
+                  style={[styles.label, isDay && styles.activeLabel]}
+                >
+                  {t("shell.day")}
+                </Text>
+              </Pressable>
+            ) : null}
+            {workingTrip ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("navigation.ledger")}
+                accessibilityState={{ selected: pathname.startsWith("/expenses") }}
+                onPress={() => router.navigate("/expenses")}
+                style={[
+                  styles.destination,
+                  largeText && styles.largeDestination,
+                  pathname.startsWith("/expenses") && styles.selectedDestination,
+                ]}
+              >
+                <AppIcon
+                  size={visual.bottomShell.icon}
+                  name="list.bullet.rectangle"
+                  color={
+                    pathname.startsWith("/expenses") ? colors.accent : colors.textPrimary
+                  }
+                />
+                <Text
+                  numberOfLines={largeText ? undefined : 1}
+                  style={[
+                    styles.label,
+                    pathname.startsWith("/expenses") && styles.activeLabel,
+                  ]}
+                >
+                  {t("navigation.ledger")}
+                </Text>
+              </Pressable>
+            ) : null}
+            {shellShowsUpdates(pathname, params, Boolean(workingTrip)) ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("updates.title")}
+                accessibilityHint={
+                  unreadActionable && unreadActionable > 0
+                    ? t("updates.unreadActionableBadge", {
+                        count: formatUiNumber(unreadActionable),
+                      })
+                    : undefined
+                }
+                accessibilityState={{ selected: pathname === "/updates" }}
+                onPress={() => router.navigate("/updates")}
+                style={[
+                  styles.destination,
+                  largeText && styles.largeDestination,
+                  pathname === "/updates" && styles.selectedDestination,
+                ]}
+              >
+                <View style={styles.badgeAnchor}>
+                  <AppIcon
+                    size={visual.bottomShell.icon}
+                    name="bell"
+                    color={pathname === "/updates" ? colors.accent : colors.textPrimary}
+                  />
+                  {unreadActionable && unreadActionable > 0 ? (
+                    <View
+                      style={styles.badge}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
+                    >
+                      <Text style={styles.badgeText}>
+                        {formatUiNumber(unreadActionable)}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+                <Text
+                  numberOfLines={largeText ? undefined : 1}
+                  style={[styles.label, pathname === "/updates" && styles.activeLabel]}
+                >
+                  {t("updates.title")}
+                </Text>
+              </Pressable>
+            ) : null}
+          </Material>
+        ) : null}
+        {!tripList && !ledger && contextualTripId ? (
+          <Material
+            {...(Glass
+              ? { glassEffectStyle: "clear" as const, isInteractive: true }
+              : {})}
+            style={[
+              styles.actionIsland,
+              Glass && styles.nativeMaterial,
+              reducedTransparency && styles.reducedMaterial,
+            ]}
+          >
             <TripQuickAddMenu
               key={contextualTripId}
               tripId={contextualTripId}
@@ -293,10 +455,19 @@ export function ExperienceBottomShell({
                 void openExpense(contextualTripId, date, true);
               }}
             />
-          </View>
+          </Material>
         ) : null}
         {tripList || ledger ? (
-          <View style={styles.actionIsland}>
+          <Material
+            {...(Glass
+              ? { glassEffectStyle: "clear" as const, isInteractive: true }
+              : {})}
+            style={[
+              styles.actionIsland,
+              Glass && styles.nativeMaterial,
+              reducedTransparency && styles.reducedMaterial,
+            ]}
+          >
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t(
@@ -311,9 +482,9 @@ export function ExperienceBottomShell({
               }
               style={styles.action}
             >
-              <AppIcon name="plus" color={colors.accent} />
+              <AppIcon size={visual.bottomShell.icon} name="plus" color={colors.accent} />
             </Pressable>
-          </View>
+          </Material>
         ) : null}
       </View>
     </SafeAreaView>
@@ -322,7 +493,16 @@ export function ExperienceBottomShell({
 
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
-    safe: { backgroundColor: c.transparent },
+    safe: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: c.transparent,
+    },
+    nativeMaterial: { backgroundColor: c.transparent },
+    reducedMaterial: { backgroundColor: c.surface },
+    actionsOnly: { justifyContent: "flex-end" },
     row: {
       paddingHorizontal: visual.space.page,
       paddingTop: visual.space.heading,
@@ -334,9 +514,10 @@ const createStyles = (c: UiColors) =>
     largeRow: { paddingBottom: visual.space.section },
     navigationIsland: {
       flex: 1,
-      padding: visual.space.heading / 2,
+      padding: visual.bottomShell.gap,
+      minHeight: visual.bottomShell.height,
       shadowColor: c.shadow,
-      shadowOpacity: 0.12,
+      shadowOpacity: 0.08,
       shadowRadius: visual.space.heading,
       shadowOffset: { width: 0, height: 2 },
       backgroundColor: c.floatingSurface,
@@ -345,10 +526,15 @@ const createStyles = (c: UiColors) =>
       borderRadius: visual.radius.pill,
       flexDirection: "row",
     },
+    largeNavigationIsland: { flexWrap: "wrap" },
     actionIsland: {
       alignSelf: "center",
+      minWidth: visual.bottomShell.height,
+      minHeight: visual.bottomShell.height,
+      alignItems: "center",
+      justifyContent: "center",
       shadowColor: c.shadow,
-      shadowOpacity: 0.12,
+      shadowOpacity: 0.08,
       shadowRadius: visual.space.heading,
       shadowOffset: { width: 0, height: 2 },
       backgroundColor: c.floatingSurface,
@@ -357,8 +543,8 @@ const createStyles = (c: UiColors) =>
       borderRadius: visual.radius.pill,
     },
     action: {
-      minWidth: 48,
-      minHeight: 44,
+      minWidth: visual.bottomShell.height,
+      minHeight: visual.bottomShell.height,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -366,21 +552,34 @@ const createStyles = (c: UiColors) =>
       flex: 1,
       minWidth: 0,
       minHeight: 44,
-      paddingHorizontal: visual.space.heading,
+      paddingHorizontal: visual.bottomShell.gap,
       flexDirection: "column",
-      paddingVertical: visual.space.heading,
-      borderRadius: visual.radius.pill,
+      paddingVertical: visual.bottomShell.gap,
+      borderRadius: visual.radius.card,
       alignItems: "center",
       justifyContent: "center",
-      gap: visual.space.heading,
+      gap: visual.bottomShell.gap,
     },
     largeDestination: {
+      flexBasis: "50%",
+      flexGrow: 0,
+      flexShrink: 0,
       minHeight: 76,
       paddingVertical: visual.space.card,
     },
-    selectedDestination: { backgroundColor: c.selected },
+    badgeAnchor: { position: "relative" },
+    badge: {
+      position: "absolute",
+      top: -visual.space.heading,
+      right: -visual.space.card,
+      borderRadius: visual.radius.pill,
+      backgroundColor: c.destructiveSurface,
+      paddingHorizontal: visual.space.heading / 2,
+    },
+    badgeText: { ...visual.type.meta, color: c.destructive },
+    selectedDestination: { backgroundColor: c.floatingSelected },
     label: {
-      ...visual.type.action,
+      ...visual.type.navigation,
       color: c.textSecondary,
       textAlign: "center",
       flexShrink: 1,

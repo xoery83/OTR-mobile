@@ -1,4 +1,8 @@
 export const en = {
+  "shell.home": "Home",
+  "navigation.allTrips": "All Trips",
+  "navigation.leaveTripSetup": "Leave trip setup?",
+  "updates.unreadActionableBadge": "{count} unread updates need attention.",
   "comprehensiveSearch.categoryCount": "{category} ({count})",
   "comprehensiveSearch.seeAllCategory": "See all {category}",
   "comprehensiveSearch.partialCoverage": "More local records available.",
@@ -63,10 +67,12 @@ export const en = {
   "capture.progress.acceptanceRecorded": "Input acceptance recorded",
   "capture.progress.newImport": "New Import",
   "capture.progress.retryIntake": "Retry local intake",
-  "capture.composer.title": "Capture",
+  "capture.composer.files": "Files",
+  "capture.composer.photos": "Photos",
+  "capture.composer.title": "Import Travel Plans",
   "capture.composer.capture": "Capture",
   "capture.composer.connections": "Email / AI Connections",
-  "capture.composer.unassigned": "Not assigned yet",
+  "capture.composer.unassigned": "Not assigned to a trip",
   "capture.composer.camera": "Camera",
   "capture.composer.cameraUnavailable": "Camera capture is not available yet.",
   "capture.composer.magic": "Magic Input",
@@ -74,7 +80,7 @@ export const en = {
   "capture.composer.add": "Add",
   "capture.composer.alreadyAdded": "Already added",
   "capture.composer.submit": "Submit Batch",
-  "capture.composer.clear": "Clear All",
+  "capture.composer.clear": "Clear",
   "capture.composer.clearHint":
     "Remove this unsubmitted draft? Original files and saved submissions stay unchanged.",
   "capture.composer.textSubmitUnavailable":
@@ -2213,6 +2219,10 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "shell.home": "首页",
+  "navigation.allTrips": "全部旅行",
+  "navigation.leaveTripSetup": "离开旅行创建？",
+  "updates.unreadActionableBadge": "{count}条未读更新需要处理。",
   "comprehensiveSearch.categoryCount": "{category}（{count}）",
   "comprehensiveSearch.seeAllCategory": "查看全部{category}",
   "comprehensiveSearch.partialCoverage": "可加载更多本地记录。",
@@ -2271,7 +2281,9 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.progress.acceptanceRecorded": "已记录材料接收",
   "capture.progress.newImport": "新建导入",
   "capture.progress.retryIntake": "重试本机接收",
-  "capture.composer.title": "采集",
+  "capture.composer.files": "文件",
+  "capture.composer.photos": "照片",
+  "capture.composer.title": "导入旅行计划",
   "capture.composer.capture": "采集",
   "capture.composer.connections": "邮件 / AI 连接",
   "capture.composer.unassigned": "尚未分配旅行",

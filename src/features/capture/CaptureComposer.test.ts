@@ -7,6 +7,7 @@ import { fixture } from "@/data/repositories/__fixtures__/captureBatchAssessment
 import { t, setUiLocale } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
 import type { CaptureDraftSnapshot } from "./captureStaging";
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
   tab: "capture",
@@ -50,6 +51,7 @@ vi.mock("react-native-safe-area-context", () => ({
 }));
 vi.mock("@/ui/theme", () => ({
   useThemedStyles: (create: any) => create(uiPalette(state.scheme)),
+  useUiTheme: () => uiPalette(state.scheme),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/controls", () => ({
@@ -121,9 +123,13 @@ it("empty composer hides Tray and submission footer while exposing real sources 
       expect(html).not.toContain(t("capture.composer.submit"));
       expect(html).not.toContain(t("capture.composer.clear"));
       expect(html).toContain(t("capture.composer.unassigned"));
-      state.buttons.find((button) => button.label === t("capture.files")).onPress();
+      state.buttons
+        .find((button) => button.label === t("capture.composer.files"))
+        .onPress();
       expect(props.onFiles).toHaveBeenCalledOnce();
-      state.buttons.find((button) => button.label === t("capture.photos")).onPress();
+      state.buttons
+        .find((button) => button.label === t("capture.composer.photos"))
+        .onPress();
       expect(props.onPhotos).toHaveBeenCalledOnce();
       expect(
         state.buttons.find((button) => button.label === t("capture.composer.camera"))
@@ -275,7 +281,7 @@ it("long Tray copy stays compact while its complete identity and remove target r
   const { props } = render({ ...empty, items: [item] }, 1);
   const title = state.nodes.find((node) => node.accessibilityLabel === name);
   expect(title.children).toBe(name);
-  expect(title.numberOfLines).toBe(3);
+  expect(title.numberOfLines).toBe(2);
   expect(state.nodes.some((node) => node.horizontal)).toBe(true);
   state.buttons
     .find((button) => button.label === t("capture.remove", { name }))
@@ -291,7 +297,7 @@ it("an added multiline text card keeps its complete draft content without growin
     text,
   );
   expect(state.nodes.find((node) => node.accessibilityLabel === text).numberOfLines).toBe(
-    3,
+    2,
   );
   expect(
     state.buttons.find((button) => button.label === t("capture.composer.submit"))

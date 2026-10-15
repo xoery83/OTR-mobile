@@ -2,14 +2,28 @@ import { Children, isValidElement, type ReactElement, type ReactNode } from "rea
 import { beforeEach, expect, it, vi } from "vitest";
 import { lightPalette } from "@/ui/palette";
 import { ExperienceBottomShell } from "./ExperienceBottomShell";
+vi.mock("expo-modules-core", () => ({ requireOptionalNativeModule: () => null }));
 
 const state = vi.hoisted(() => ({
   view: null as null | { tripId: string; date: string; zone: string; generation: number },
   navigate: vi.fn(),
   setParams: vi.fn(),
   fontScale: 1,
+  reduced: false,
+  resolveReduced: null as null | ((value: boolean) => void),
+  reducedListener: null as null | ((value: boolean) => void),
+  effectCleanup: null as null | (() => void),
+  reportHeight: vi.fn(),
+  signal: null as number | null,
+  quickActions: null as null | {
+    tripId: string;
+    generation: number;
+    chooseDay: () => void;
+  },
   params: {} as Record<string, string>,
   alerts: vi.fn(),
+  platform: "android",
+  sheet: vi.fn(),
   push: vi.fn(),
   workingTrip: null as null | { tripId: string; generation: number },
   resume: vi.fn(),
@@ -19,10 +33,24 @@ const state = vi.hoisted(() => ({
   targetRef: { current: null as symbol | null },
   memo: null as null | { key: string; value: symbol },
 }));
+vi.mock("@/features/updates/useUpdatesSignal", () => ({
+  useUpdatesSignal: () => state.signal,
+}));
 vi.mock("./TripQuickAddMenu", () => ({ TripQuickAddMenu: "TripQuickAddMenu" }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useRef: () => state.targetRef,
+  useContext: () => state.reportHeight,
+  useState: () => [
+    state.reduced,
+    (value: boolean) => {
+      state.reduced = value;
+    },
+  ],
+  useEffect: (effect: () => () => void) => {
+    state.effectCleanup?.();
+    state.effectCleanup = effect();
+  },
   useMemo: (make: () => symbol, deps: string[]) => {
     if (!state.memo || state.memo.key !== deps[0])
       state.memo = { key: deps[0], value: make() };
@@ -48,8 +76,25 @@ vi.mock("expo-router", () => ({
   router: state,
   useGlobalSearchParams: () => state.params,
 }));
+vi.mock("expo-router/js-tabs", () => ({ BottomTabBarHeightCallbackContext: {} }));
 vi.mock("react-native", () => ({
+  AccessibilityInfo: {
+    isReduceTransparencyEnabled: () =>
+      new Promise<boolean>((resolve) => {
+        state.resolveReduced = resolve;
+      }),
+    addEventListener: (_: string, listener: (value: boolean) => void) => {
+      state.reducedListener = listener;
+      return { remove() {} };
+    },
+  },
   Alert: { alert: state.alerts },
+  Platform: {
+    get OS() {
+      return state.platform;
+    },
+  },
+  ActionSheetIOS: { showActionSheetWithOptions: state.sheet },
   Pressable: "Pressable",
   Text: "Text",
   View: "View",
@@ -64,10 +109,15 @@ vi.mock("@/features/day-feed/TripViewContext", () => ({
     resumeView: state.view,
     workingTrip: state.workingTrip,
     resume: state.resume,
+    quickActions: state.quickActions,
   }),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
+vi.mock("@/ui/locale", () => ({
+  t: (key: string, params?: { count?: string }) =>
+    params?.count ? `${key}: ${params.count}` : key,
+  formatUiNumber: (value: number) => String(value),
+}));
 vi.mock("@/ui/theme", () => ({
   useUiTheme: () => lightPalette,
   useThemedStyles: (create: (colors: typeof lightPalette) => unknown) =>
@@ -77,6 +127,7 @@ vi.mock("@/ui/theme", () => ({
 type ShellElement = ReactElement<{
   children?: ReactNode;
   accessibilityLabel?: string;
+  accessibilityHint?: string;
   accessibilityState?: { selected?: boolean };
   onPress?: () => void;
   style?: unknown;
@@ -92,19 +143,30 @@ function pressables(node: ReactNode): ShellElement[] {
 
 beforeEach(() => {
   state.view = null;
+  state.quickActions = null;
   state.navigate.mockReset();
   state.setParams.mockReset();
   state.fontScale = 1;
+  state.reduced = false;
+  state.resolveReduced = state.reducedListener = null;
+  state.effectCleanup?.();
+  state.effectCleanup = null;
+  state.reportHeight.mockReset();
   state.params = {};
   state.alerts.mockReset();
+  state.platform = "android";
+  state.sheet.mockReset();
   state.workingTrip = null;
   state.resume.mockReset();
   state.push.mockReset();
   state.generation = 1;
+  state.signal = null;
   state.actor.mockReset().mockResolvedValue({ memberId: "m", role: "owner" });
 });
 
 it("lets the destination grow for accessibility-large text", () => {
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.params = { tripId: "a", view: "home" };
   state.fontScale = 3;
   const buttons = pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
   expect(buttons[0].props.style).toEqual(
@@ -112,17 +174,13 @@ it("lets the destination grow for accessibility-large text", () => {
   );
 });
 
-it("keeps the real My Trips destination available without a selected accepted Day", () => {
+it("My Trips keeps only the real Start Trip action without redundant left navigation", () => {
   const buttons = pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
   expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual([
-    "dayFeed.myTrips",
     "actionIsland.startTrip",
   ]);
-  expect(buttons[0].props.accessibilityState).toEqual({ selected: true });
+  expect(buttons).toHaveLength(1);
   buttons[0].props.onPress?.();
-  expect(state.setParams).toHaveBeenCalledWith({ view: "trips" });
-  expect(state.navigate).not.toHaveBeenCalled();
-  buttons[1].props.onPress?.();
   const choices = state.alerts.mock.calls[0][2];
   expect(choices.map((choice: { text: string }) => choice.text)).toEqual([
     "actionIsland.importPlans",
@@ -179,7 +237,7 @@ it("uses the explicit working Trip for Home and Ledger while Day resumes its own
     ExperienceBottomShell({ visible: true, pathname: "/capture" }),
   );
   expect(buttons.map((b) => b.props.accessibilityLabel)).toEqual([
-    "dayFeed.tripHome",
+    "shell.home",
     "shell.day",
     "navigation.ledger",
     "updates.title",
@@ -237,7 +295,7 @@ it("Ledger + does not execute after rights denial or a generation change during 
   state.generation = 2;
   finish({ memberId: "m", role: "owner" });
   await new Promise((resolve) => setTimeout(resolve, 0));
-  expect(state.push).not.toHaveBeenCalled();
+  expect(state.navigate).not.toHaveBeenCalled();
 });
 
 it("a later module/Trip target change cancels the delayed Expense action", async () => {
@@ -257,7 +315,7 @@ it("a later module/Trip target change cancels the delayed Expense action", async
   ExperienceBottomShell({ visible: true, pathname: "/expenses/settlement" });
   finish({ memberId: "m", role: "owner" });
   await new Promise((resolve) => setTimeout(resolve, 0));
-  expect(state.push).not.toHaveBeenCalled();
+  expect(state.navigate).not.toHaveBeenCalled();
 });
 
 it("A→B→A cannot revive an older delayed Expense action", async () => {
@@ -279,7 +337,7 @@ it("A→B→A cannot revive an older delayed Expense action", async () => {
   ExperienceBottomShell({ visible: true, pathname: "/expenses/settlement" });
   finish({ memberId: "m", role: "owner" });
   await new Promise((resolve) => setTimeout(resolve, 0));
-  expect(state.push).not.toHaveBeenCalled();
+  expect(state.navigate).not.toHaveBeenCalled();
 });
 
 it("Day Expense caller passes a distinct weak suggestedDate, preserving legacy focusDate flag semantics", async () => {
@@ -318,7 +376,7 @@ it("a previously rendered Expense callback cannot adopt a newly committed target
   old.props.onPress?.();
   await new Promise((resolve) => setTimeout(resolve, 0));
   expect(state.actor).not.toHaveBeenCalled();
-  expect(state.push).not.toHaveBeenCalled();
+  expect(state.navigate).not.toHaveBeenCalled();
 });
 
 it("explicit normal Trip Day context selects Day rather than Trip Home", () => {
@@ -331,7 +389,7 @@ it("explicit normal Trip Day context selects Day rather than Trip Home", () => {
       .accessibilityState?.selected,
   ).toBe(true);
   expect(
-    nodes.find((n) => n.props.accessibilityLabel === "dayFeed.tripHome")?.props
+    nodes.find((n) => n.props.accessibilityLabel === "shell.home")?.props
       .accessibilityState?.selected,
   ).toBe(false);
 });
@@ -347,4 +405,124 @@ it("the qualified Updates fourth destination opens its actual route without chan
   expect(state.navigate).toHaveBeenCalledWith("/updates");
   expect(state.resume).not.toHaveBeenCalled();
   expect(state.setParams).not.toHaveBeenCalled();
+});
+
+it("Updates badge describes unread actionable aggregate cards without changing the owning route or bookmark", () => {
+  state.params = { tripId: "a", view: "home" };
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.signal = 3;
+  const button = pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/trip" }),
+  ).find((node) => node.props.accessibilityLabel === "updates.title")!;
+  expect(button.props.accessibilityHint).toBe("updates.unreadActionableBadge: 3");
+  button.props.onPress?.();
+  expect(state.navigate).toHaveBeenCalledWith("/updates");
+  expect(state.resume).not.toHaveBeenCalled();
+  for (const count of [0, null]) {
+    state.signal = count;
+    expect(
+      pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" })).find(
+        (node) => node.props.accessibilityLabel === "updates.title",
+      )!.props.accessibilityHint,
+    ).toBeUndefined();
+  }
+});
+
+it("all four destinations remain reachable for large text without altering Day reading", () => {
+  state.params = { tripId: "a", view: "home" };
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.view = { tripId: "a", date: "2027-02-02", zone: "Asia/Tokyo", generation: 1 };
+  state.fontScale = 3;
+  const buttons = pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  const updates = buttons.find(
+    (button) => button.props.accessibilityLabel === "updates.title",
+  )!;
+  expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual(
+    expect.arrayContaining([
+      "shell.home",
+      "shell.day",
+      "navigation.ledger",
+      "updates.title",
+    ]),
+  );
+  updates.props.onPress?.();
+  expect(state.navigate).toHaveBeenCalledWith("/updates");
+  expect(state.resume).not.toHaveBeenCalled();
+});
+
+it("Day without a bookmark opens the current owning chooser without guessing or resuming", () => {
+  state.params = { tripId: "a", view: "home" };
+  state.workingTrip = { tripId: "a", generation: 1 };
+  const chooseDay = vi.fn();
+  state.quickActions = { tripId: "a", generation: 1, chooseDay };
+  const day = pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/trip" }),
+  ).find((button) => button.props.accessibilityLabel === "shell.day")!;
+  day.props.onPress?.();
+  expect(chooseDay).toHaveBeenCalledOnce();
+  expect(state.resume).not.toHaveBeenCalled();
+  expect(state.navigate).not.toHaveBeenCalled();
+  state.generation = 2;
+  day.props.onPress?.();
+  expect(chooseDay).toHaveBeenCalledOnce();
+});
+
+it("reports actual safe-area-inclusive Shell height to the existing navigator after each layout", () => {
+  const shell = ExperienceBottomShell({ visible: true, pathname: "/trip" }) as any;
+  shell.props.onLayout({ nativeEvent: { layout: { height: 112 } } });
+  shell.props.onLayout({ nativeEvent: { layout: { height: 238 } } });
+  expect(state.reportHeight.mock.calls).toEqual([[112], [238]]);
+  expect(shell.props.pointerEvents).toBe("box-none");
+});
+it("My Trips with a stale saved Trip still renders only its single Start Trip action", () => {
+  state.view = { tripId: "a", date: "2027-02-06", zone: "Asia/Tokyo", generation: 1 };
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.params = { tripId: "a", view: "trips" };
+  expect(
+    pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" })).map(
+      (button) => button.props.accessibilityLabel,
+    ),
+  ).toEqual(["actionIsland.startTrip"]);
+});
+it("a live Reduce Transparency event wins over a delayed initial preference read", async () => {
+  state.params = { tripId: "a", view: "home" };
+  state.workingTrip = { tripId: "a", generation: 1 };
+  ExperienceBottomShell({ visible: true, pathname: "/trip" });
+  const resolveInitial = state.resolveReduced!;
+  state.reducedListener!(true);
+  resolveInitial(false);
+  await Promise.resolve();
+  expect(state.reduced).toBe(true);
+  expect(
+    pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" })).map(
+      (button) => button.props.accessibilityLabel,
+    ),
+  ).toContain("shell.home");
+});
+
+it("hidden and Create routes release the previous overlay height", () => {
+  ExperienceBottomShell({ visible: false, pathname: "/search" });
+  expect(state.reportHeight).toHaveBeenLastCalledWith(0);
+  state.params = { view: "create" };
+  ExperienceBottomShell({ visible: true, pathname: "/trip" });
+  expect(state.reportHeight).toHaveBeenCalledTimes(2);
+});
+
+it("iOS Start Trip uses the system Action Sheet and ignores a stale account callback", () => {
+  state.platform = "ios";
+  pressables(
+    ExperienceBottomShell({ visible: true, pathname: "/trip" }),
+  )[0].props.onPress?.();
+  expect(state.alerts).not.toHaveBeenCalled();
+  const [options, invoke] = state.sheet.mock.calls[0];
+  expect(options.cancelButtonIndex).toBe(2);
+  expect(options.options).toEqual([
+    "actionIsland.importPlans",
+    "actionIsland.createManually",
+    "common.cancel",
+  ]);
+  state.navigate.mockClear();
+  state.generation++;
+  invoke(0);
+  expect(state.navigate).not.toHaveBeenCalled();
 });
