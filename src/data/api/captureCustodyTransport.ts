@@ -1,3 +1,4 @@
+import { ApiClientError } from "./client";
 import { fetch as expoFetch } from "expo/fetch";
 import { sessionAccessToken } from "../auth/sessionAccessToken";
 import {
@@ -81,28 +82,43 @@ export function createCaptureCustodyTransport(
         await boundary.run(() =>
           assertAccountRequestContext(context, getAccountId),
         );
-        const response = await boundary.run(() =>
-          fetcher(
-            `${origin.origin}/v2/capture-inputs/${binding.inputId}/material`,
-            {
-              method: bytes ? "PUT" : "GET",
-              redirect: "error",
-              signal: boundary.signal,
-              headers: {
-                Authorization: `Bearer ${session.token}`,
-                "X-OTR-Capture-Binding": encoded,
-                "Accept-Encoding": "identity",
-                ...(bytes
-                  ? {
-                      "Content-Type": binding.mediaType,
-                      "Content-Length": String(binding.byteCount),
-                    }
-                  : {}),
+        const response = await boundary.run(async () => {
+          try {
+            return await fetcher(
+              `${origin.origin}/v2/capture-inputs/${binding.inputId}/material`,
+              {
+                method: bytes ? "PUT" : "GET",
+                redirect: "error",
+                signal: boundary.signal,
+                headers: {
+                  Authorization: `Bearer ${session.token}`,
+                  "X-OTR-Capture-Binding": encoded,
+                  "Accept-Encoding": "identity",
+                  ...(bytes
+                    ? {
+                        "Content-Type": binding.mediaType,
+                        "Content-Length": String(binding.byteCount),
+                      }
+                    : {}),
+                },
+                ...(bytes ? { body: Uint8Array.from(bytes).buffer } : {}),
               },
-              ...(bytes ? { body: Uint8Array.from(bytes).buffer } : {}),
-            },
-          ),
-        );
+            );
+          } catch (error) {
+            if (
+              error instanceof TypeError ||
+              (error instanceof Error &&
+                error.message.startsWith("fetch failed:"))
+            )
+              throw new ApiClientError(
+                "CAPTURE_CUSTODY_UNAVAILABLE",
+                "network",
+                undefined,
+                "NATIVE_FETCH_FAILED",
+              );
+            throw error;
+          }
+        });
         if (response.status === 401 && attempt === 0) {
           rejectedToken = session.token;
           void response.body?.cancel().catch(() => {});
@@ -115,7 +131,16 @@ export function createCaptureCustodyTransport(
           return null;
         }
         if (response.status !== 200)
-          throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
+          throw new ApiClientError(
+            "CAPTURE_CUSTODY_UNAVAILABLE",
+            "http",
+            Number.isInteger(response.status) &&
+              response.status >= 100 &&
+              response.status <= 599
+              ? response.status
+              : undefined,
+            "CAPTURE_CUSTODY_HTTP_REJECTED",
+          );
         if (
           response.headers.get("Content-Type") !== binding.mediaType ||
           response.headers.get("Content-Length") !==

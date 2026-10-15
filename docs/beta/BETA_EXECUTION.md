@@ -1,3 +1,25 @@
+## Experience QA handoff / C2 finite diagnostic — 2026-10-15
+
+Owner routine QA authorization/runbook delivered to isolated ExperienceAD5;
+Release recipe/normalSession/Reference reader reusable. Existing clock helper and
+presets handed off; AD5Debug8082/TEMPclock70 MyTrips/Home Active NativePASS,
+real dates unchanged. Day-query/AcceptedToday and owned-data setup/reset remain
+explicit gaps; no global clock/Auth/schema change. No per-packet QA permission.
+C2 actualOwner attempt UNKNOWN: zeroCapturelogs/associations; NativeAPItask cancelled,
+earlier-1004 not linked. Desktopdirect443/health200 and exactrouteunauth401 pass.
+FiniteHTTP/SDK fetch diagnostics preserve evidence, no timeout/retry/boundary change,
+reviewed24tests/typecheck PASS; missingGET explicit404/zeroPUT. Next only boundedGET, not blindPUT; RuntimeNV.
+
+## C2 Auth configuration recovery — 2026-10-15 22:09 NZDT
+
+Ordinary same-Metro bundle proves missing DEV Auth public config in retained host
+(Expo virtual/env); restored only2existing publicAuth keys, not Sync/API config.
+Fresh bundle values verified via booleans, no secrets/Session read or Metro restart.
+Original A1A normally restarted. Same012 Backend/samepins/23:00expiry/health200 and
+zero associations confirmed09:09Z. Prior failure pre-Storage; Owner single Upload
+may resume. No automated PUT/GET, RuntimeNV. Eleven temporary owned paths have
+exactpreimages or guardedabsence cleanup. Preserve all unrelated data/Session.
+
 ## C2 bounded Auth diagnostic — 2026-10-15
 
 Owner retry showedNETWORK_FAILURE; fixed012 Backend health200/no associations.

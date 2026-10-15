@@ -122,6 +122,8 @@ export function captureCustodyDevFailure(
     }
     if (error.code === "AUTH_REQUIRED" || error.code === "AUTH_CONTEXT_CHANGED")
       return result("AUTH", error.code, status);
+    if (error.kind === "network" && error.code === "NATIVE_FETCH_FAILED")
+      return result("NETWORK", "NATIVE_FETCH_FAILED", status);
     if (error.kind === "network" || error.kind === "timeout")
       return result(
         "NETWORK",
@@ -166,6 +168,7 @@ export function captureCustodyDevFailure(
     ].includes(code)
   )
     return result("LIFECYCLE", code);
+  if (code === "CAPTURE_CUSTODY_NOT_FOUND") return result("HTTP", code, 404);
   if (code === "CAPTURE_CUSTODY_RESPONSE_INVALID")
     return result("RESPONSE", code);
   return result("UNKNOWN", "CAPTURE_CUSTODY_UNAVAILABLE");

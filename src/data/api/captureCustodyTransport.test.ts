@@ -115,3 +115,75 @@ it.each(["put", "read"] as const)(
     expect(fetcher).not.toHaveBeenCalled();
   },
 );
+
+it("preserves only safe non200 status and does not expose response bodies", async () => {
+  for (const status of [400, 403, 409, 500]) {
+    const reply = new Response("synthetic private body", { status });
+    const text = vi.spyOn(reply, "text");
+    const x = await setup(vi.fn(async () => reply));
+    const error = await x.t.put(x.context, b, bytes).catch((e) => e);
+    expect(error).toMatchObject({
+      message: "CAPTURE_CUSTODY_UNAVAILABLE",
+      kind: "http",
+      status,
+      code: "CAPTURE_CUSTODY_HTTP_REJECTED",
+    });
+    expect(error.details).toBeUndefined();
+    expect(text).not.toHaveBeenCalled();
+    expect(JSON.stringify(error)).not.toContain("synthetic private");
+    expect(x.fetcher).toHaveBeenCalledTimes(1);
+  }
+});
+it("retains one401 refresh then reports the second rejection without further retry", async () => {
+  const x = await setup(
+    vi.fn(async () => new Response("private", { status: 401 })),
+  );
+  await expect(x.t.put(x.context, b, bytes)).rejects.toMatchObject({
+    kind: "http",
+    status: 401,
+    code: "CAPTURE_CUSTODY_HTTP_REJECTED",
+  });
+  expect(x.tokenProvider).toHaveBeenCalledTimes(2);
+  expect(x.fetcher).toHaveBeenCalledTimes(2);
+});
+it("classifies fetch TypeError only and preserves other thrown errors", async () => {
+  const x = await setup(
+    vi.fn(async () => {
+      throw new TypeError("private native detail");
+    }),
+  );
+  const error = await x.t.put(x.context, b, bytes).catch((e) => e);
+  expect(error).toMatchObject({
+    kind: "network",
+    code: "NATIVE_FETCH_FAILED",
+    message: "CAPTURE_CUSTODY_UNAVAILABLE",
+  });
+  expect(error.details).toBeUndefined();
+  expect(JSON.stringify(error)).not.toContain("private native");
+  const original = new Error("CAPTURE_CUSTODY_DEV_EXPIRED");
+  const y = await setup(
+    vi.fn(async () => {
+      throw original;
+    }),
+  );
+  await expect(y.t.read(y.context, b)).rejects.toBe(original);
+});
+
+it("sanitizes the installed Expo FetchError prefix without retaining private URL or token", async () => {
+  const x = await setup(
+    vi.fn(async () => {
+      throw new Error(
+        "fetch failed: https://private.example?token=synthetic-private-token",
+      );
+    }),
+  );
+  const error = await x.t.put(x.context, b, bytes).catch((e) => e);
+  expect(error).toMatchObject({
+    kind: "network",
+    code: "NATIVE_FETCH_FAILED",
+    message: "CAPTURE_CUSTODY_UNAVAILABLE",
+  });
+  expect(error.details).toBeUndefined();
+  expect(JSON.stringify(error)).not.toContain("private.example");
+  expect(JSON.stringify(error)).not.toContain("synthetic-private-token");
+});

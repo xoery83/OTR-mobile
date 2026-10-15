@@ -7,6 +7,32 @@
 
 # Capture Import checkpoint — 2026-10-15
 
+- Latest C2 Owner attempt UNKNOWN: no Backend Capture request log and no association.
+  App CFNetwork shows API-task cancellation; -1004 records belong to earlier App
+  restart and are not proven related. Same-domain desktop directTCP443/health200
+  and unauthenticated CaptureGET401/requestId pass; no proxy or endpoint changed.
+  Exact Native connection/cancellation cause remains unknown. Transport finite
+  diagnostics now preserve non200 HTTP status and installed Expo FetchError wrapper
+  class without rawmessage/cause. Existing retry/timeout/Auth unchanged; reviewed
+  24tests/typecheck PASS; missing GET now explicit NOT_FOUND/404 with zero PUT.
+  No blind repeat PUT. Next bounded Native check GET-only.
+- Experience QA standing handoff: docs/ops/EXPERIENCE_QA_RUNBOOK.md supplied to
+  Experience thread. ExistingAD5/Release recipe and normal identity/readers reusable;
+  independentDebug8082 + TEMP clock70 MyTrips/Home Active Native PASS onAD5;
+  realTrip dates unchanged. Day query/AcceptedToday still not adapted; owned-data importer/reset adapter
+  still missing. Do not change R3-A6 real dates or claim those gaps are delivered.
+
+- Auth validation cause now evidenced: original retained host lacked an actual env
+  file; Expo57 virtual/env ordinary bundle had no approved DEV URL. Restored only
+  two existing PUBLIC DEV Auth settings in host.env.local (original absence saved);
+  no Session/secret copy, Sync/API mode change or Metro restart. Fresh ordinary
+  bundle now contains correct DEV URL/Auth keys; original A1A normally restarted.
+  At09:09Z fixed012 Backend health200/samepins/expiry10:00Z/zero associations PASS.
+  Prior Auth errors occurred before Storage dispatch, so Owner may perform one
+  same-Batch Upload now; no automated calls. Runtime remains NOT VERIFIED.
+  Evidence `/private/tmp/otr-c2-auth-diagnostic-fix/review/public-env-recovery.json`
+  and Native jpeg-recovery/receipt.json; cleanup now11owned paths, hash guarded.
+
 - Latest Owner JPEG retry reached NETWORK_FAILURE. Same012 Backend health200,
   root contains onlystore marker/no association. Public DEV Auth DNS/TLS reachable
   from desktop (health401 unauthenticated), not proof of Native refresh. Source

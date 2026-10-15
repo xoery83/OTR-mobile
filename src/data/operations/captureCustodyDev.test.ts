@@ -211,3 +211,16 @@ it("retains finite refresh causes without raw details", async () => {
   });
   expect(JSON.stringify(unknown)).not.toContain("private");
 });
+
+it("passes through only the allowlisted Native fetch failure code", () => {
+  expect(
+    captureCustodyDevFailure(
+      new ApiClientError(
+        "private",
+        "network",
+        undefined,
+        "NATIVE_FETCH_FAILED",
+      ),
+    ),
+  ).toEqual({ stage: "NETWORK", code: "NATIVE_FETCH_FAILED", status: null });
+});

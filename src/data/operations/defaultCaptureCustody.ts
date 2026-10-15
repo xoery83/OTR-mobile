@@ -69,7 +69,7 @@ async function executeBatch(
       expected.inputId,
     );
     check();
-    if (!bytes) throw new Error("CAPTURE_CUSTODY_UNAVAILABLE");
+    if (!bytes) throw new Error("CAPTURE_CUSTODY_NOT_FOUND");
     assertCaptureCustodyBytes(expected, bytes);
     receipts.push({
       inputId: expected.inputId,

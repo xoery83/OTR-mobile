@@ -1,3 +1,4 @@
+import { captureCustodyDevFailure } from "./captureCustodyDev";
 import { createHash, randomUUID } from "node:crypto";
 import { beforeEach, expect, it, vi } from "vitest";
 import {
@@ -6,7 +7,12 @@ import {
 } from "./defaultCaptureCustody";
 import { createCaptureCustodyOperation } from "./captureCustody";
 import { requireActiveUserId } from "../auth/authRepository";
-vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/authRepository", () => ({
+  requireActiveUserId: vi.fn(),
+  clearLocalSession: vi.fn(),
+  readLocalSession: vi.fn(),
+  writeLocalSession: vi.fn(),
+}));
 vi.mock("./defaultCaptureSubmission", () => ({
   getDefaultCaptureSubmissionRepository: vi.fn(async () => ({})),
 }));
@@ -38,7 +44,7 @@ const binding = vi.fn(async (_c: unknown, _j: string, id: string) =>
     id === one.inputId ? one : second,
   ),
   put = vi.fn(async () => bytes),
-  recover = vi.fn(async () => bytes);
+  recover = vi.fn(async (): Promise<Uint8Array | null> => bytes);
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(requireActiveUserId).mockResolvedValue(one.accountId);
@@ -122,4 +128,17 @@ it("host/expiry invalidation after preflight prevents every PUT; after first ACK
   );
   expect(put).toHaveBeenCalledTimes(1);
   expect(recover).not.toHaveBeenCalled();
+});
+
+it("GET-only missing original reports finite404 without PUT", async () => {
+  recover.mockResolvedValueOnce(null);
+  const error = await verifyDefaultCaptureCustodyBatch(batch).catch((e) => e);
+  expect(error).toMatchObject({ message: "CAPTURE_CUSTODY_NOT_FOUND" });
+  expect(captureCustodyDevFailure(error)).toEqual({
+    stage: "HTTP",
+    code: "CAPTURE_CUSTODY_NOT_FOUND",
+    status: 404,
+  });
+  expect(put).not.toHaveBeenCalled();
+  expect(recover).toHaveBeenCalledTimes(1);
 });
