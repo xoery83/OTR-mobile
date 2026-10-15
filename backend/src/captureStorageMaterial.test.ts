@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { createCaptureStorageMaterial } from "./captureStorageMaterial";
@@ -140,3 +141,32 @@ it("rejects unsafe origin/path/media/pins before any network and bounds actual r
     createCaptureStorageMaterial(config, oversized).read(f.b),
   ).rejects.toThrow();
 });
+
+it.each(["sb_secret_synthetic_fixture_key", "synthetic-existing-service-token"])(
+  "matches installed Supabase Storage SDK auth headers for synthetic configuration %s",
+  async (serviceToken) => {
+    let sdkHeaders = new Headers();
+    const sdkFetch: typeof fetch = async (_url, init) => {
+      sdkHeaders = new Headers(init?.headers);
+      return Response.json({ signedURL: "/object/sign/synthetic" });
+    };
+    const sdk = createClient(config.origin, serviceToken, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { fetch: sdkFetch },
+    });
+    await sdk.storage.from("trip-source-material").createSignedUrl("synthetic", 60);
+    expect(sdkHeaders.get("apikey")).toBe(serviceToken);
+    expect(sdkHeaders.get("Authorization")).toBe(`Bearer ${serviceToken}`);
+    const f = setup("application/pdf", 50);
+    await createCaptureStorageMaterial({ ...config, serviceToken }, f.fetcher).put(
+      f.b,
+      f.bytes,
+    );
+    expect(f.fetcher.mock.calls.some(([, init]) => init?.method === "POST")).toBe(true);
+    for (const [, init] of f.fetcher.mock.calls) {
+      const actual = new Headers(init?.headers);
+      expect(actual.get("apikey")).toBe(sdkHeaders.get("apikey"));
+      expect(actual.get("Authorization")).toBe(sdkHeaders.get("Authorization"));
+    }
+  },
+);

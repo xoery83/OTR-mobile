@@ -43,6 +43,7 @@ export function createCaptureStorageMaterial(
         redirect: "error",
         signal: boundary.signal,
         headers: {
+          apikey: config.serviceToken,
           Authorization: `Bearer ${config.serviceToken}`,
           "Cache-Control": "no-cache, no-store",
           Pragma: "no-cache",
@@ -110,6 +111,7 @@ export function createCaptureStorageMaterial(
               redirect: "error",
               signal: boundary.signal,
               headers: {
+                apikey: config.serviceToken,
                 Authorization: `Bearer ${config.serviceToken}`,
                 "Content-Type": b.mediaType,
                 "Content-Length": String(b.byteCount),
