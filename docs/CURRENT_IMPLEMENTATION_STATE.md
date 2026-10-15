@@ -1,19 +1,20 @@
-# Capture C3 source integration — 2026-10-16 / NATIVE RUNTIME PENDING
+# Capture C3 — Runtime PASS / 2026-10-16
 
-- Existing sync queue now supports owning local Capture input validation,
-  immutable SQLite66 processing events, account/lease fencing, foreground retry
-  and expiry recovery; no model Task, Provider or second queue.
-- Four independent Review findings repaired and delta Review PASS. Main57 focused
-  tests/typecheck/UI guard PASS. Eleven old CP14 schema57 assertions fail identically
-  on baseline65; not reported as suite PASS.
-- Default DEV config null; Release cannot auto-admit. Native QA will temporarily
-  select original actor/Batch/job via normal Capture deep link/reopen, then read
-  true persisted events. Validation is not Interpretation/Admission/BatchComplete.
-- Original A1A schema63 and four Capture-table preservation hashes recorded before
-  installation. Native staged17 source files with exact adapters; not yet applied.
-  Evidence `/private/tmp/otr-c3-native-runtime-20261016/source-plan.json`.
-- C2 remains Runtime PASS; cloud configuration parked. No C3 Backend/network/LLM
-  activation. Next: original A1A real Batch claim+event/readback/cold recovery.
+- Original A1A normal Capture Job reopened; owning local executor claimed the
+  same real C2 Batch, validated two originals and persisted6 events. Cold restart
+  retained2 completed operations/6 events with0 repeat claims or work.
+- Normal Activity reads true LOCAL_VALIDATION/waiting interpretation; no canonical
+  outcomes, Review, interpretation completion or Batch completion is claimed.
+- Normal SQLite63→64→65→66; all4 Capture table digests unchanged. No data deletion.
+- Code793d500 + Native import repair859ef5e; main57 tests/type/UIguard, repair3 tests
+  and independent source/Native-evidence reviews PASS. Old CP14 schema57 assertions
+  retain11 baseline failures; no full-suite PASS. Live failure injection not run;
+  retry/lease/rollback/AccountABA covered by controlled local tests.
+- Temporary QA config restored null and App reopened; integrated code/schema66,
+  original files/session and events retained. No Provider/LLM/Backend/Auth changes.
+- Receipt: docs/ops/CAPTURE_C3_RUNTIME_RECEIPT.md and
+  `/private/tmp/otr-c3-native-runtime-20261016/runtime-receipt.json`.
+- C2 remains Runtime PASS; C4 waits for Owner real-LLM scope confirmation.
 
 # Capture C2 — Runtime PASS / 2026-10-16 06:39 NZDT
 
