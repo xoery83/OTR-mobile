@@ -18,8 +18,18 @@
   Storage SDK header compatibility was corrected and independently retested
   (8 PASS) in `918110f`. Bounded runtime qualification found no current C2
   bootstrap supplying trusted Storage config plus attested metadata mount.
-  Next: prepare that explicit composition and a scoped protected DEV deployment
-  package, then same-Batch upload/readback; do not replay Native Submit.
+  Explicit composition/strict Capture profile/same-Batch runner are now integrated
+  at `83f575f`; independent Code PASS and conditional Owner Gate READY. New
+  composition/runner 7 tests, profile 47 and bridge 3 tests passed; canonical
+  typecheck passed. Gate: `docs/ops/CAPTURE_C2_RUNTIME_GATE.md`.
+  WAITING_OWNER_DEV_C2_RUNTIME_GATE: first restore only the original A1A host/data
+  overlay and qualify its exact Inspector target/hook; two read-only discovery
+  attempts returned URLError, so no usable channel is claimed. FAIL/UNKNOWN stops
+  remote provision/deploy/upload. After qualification and approval, only reviewed
+  DEV image/profile, existing credentials, metadata mount/config and the same two
+  Input Storage PUT/GET are allowed; retain exact rollback/preimages.
+  No device/config/provision/deploy/Storage operation has occurred. Do not replay
+  Native Submit.
   C3–C6 remain unverified for this Batch. No Source/Trip admission, schema/role,
   scheduler or Provider change. Runtime stays CLOSED; Experience owns UI.
 
