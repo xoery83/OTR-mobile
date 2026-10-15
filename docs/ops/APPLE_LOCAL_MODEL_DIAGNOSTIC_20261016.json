@@ -1,0 +1,76 @@
+{
+  "status": "ROOT_CAUSE_IDENTIFIED",
+  "category": "IOS_SIMULATOR_MODEL_ASSET_CATALOG_UNAVAILABLE",
+  "device": "A1A21E80-9007-4D69-87A4-2A5AF927F0A3",
+  "simulatorRuntime": "iOS27.0",
+  "hostMacOS": "26.6.2",
+  "onDeviceModel": "SystemLanguageModel.default, no PCC/remote provider",
+  "originalAppFailure": {
+    "time": "2026-10-16 10:02:44.706083+1300",
+    "errorDomain": "com.apple.UnifiedAssetFramework",
+    "code": 5000,
+    "assetSet": "com.apple.modelcatalog",
+    "finding": "No underlying assets (neither atomic instance nor asset roots); tokenizer/base/draft resources could not resolve",
+    "source": "actual-app-window-errors.json"
+  },
+  "minimalSimulatorProbe": {
+    "availability": "available",
+    "code": -1,
+    "description": "Error Domain=FoundationModels.LanguageModelError Code=-1 \"The operation couldn\u2019t be completed. (FoundationModels.LanguageModelError error -1.)\" UserInfo={NSLocalizedDescription=The operation couldn\u2019t be completed. (FoundationModels.LanguageModelError error -1.), NSMultipleUnderlyingErrorsKey=(\n    \"Error Domain=FoundationModels.LanguageModelError Code=-1 \\\"(null)\\\" UserInfo={NSMultipleUnderlyingErrorsKey=(\\n    \\\"Error Domain=ModelManagerServices.ModelManagerError Code=1026 \\\\\\\"(null)\\\\\\\" UserInfo={NSMultipleUnderlyingErrorsKey=(\\\\n)}\\\"\\n)}\"\n)}",
+    "domain": "FoundationModels.LanguageModelError",
+    "elapsedMs": 4282,
+    "errorType": "NSError",
+    "privateDocumentUsed": false,
+    "probe": "minimal-on-device-generation",
+    "status": "FAILED"
+  },
+  "minimalMacProbe": {
+    "availability": "available",
+    "elapsedMs": 2997,
+    "privateDocumentUsed": false,
+    "probe": "minimal-on-device-generation",
+    "response": "OK.",
+    "status": "SUCCEEDED"
+  },
+  "conclusions": {
+    "simulator": "API reports available, but inference is not operational because required model catalog/assets are absent",
+    "hostMac": "minimal local generation works; not a flight-quality or iPhone Runtime PASS",
+    "permissions": "No permission/entitlement-denial observed in failing chain; resource lookup is the concrete failure. No permissions changed.",
+    "taskComplexity": "Failure reproduced without flight document or JSON schema; cannot attribute this failure to flight extraction quality",
+    "physicalIPhone": "NOT_TESTED",
+    "isolatedIOS265": "Minimal local SystemLanguageModel generation succeeded; original iOS27 model catalog/resource failure is environment-specific. Flight quality and real Batch inference on iOS26.5 NOT TESTED."
+  },
+  "actions": {
+    "systemModelAssetsChanged": false,
+    "runtimeReplaced": false,
+    "originalAppDataChanged": false,
+    "providerCalls": 0,
+    "next": "Keep original A1A and data unchanged. iOS26.5 minimal capability is verified; real iPhone/flight-quality validation remains separate."
+  },
+  "evidenceDirectory": "/private/tmp/otr-apple-model-diagnostic-20261016",
+  "references": [
+    "https://developer.apple.com/documentation/foundationmodels/systemlanguagemodel",
+    "https://developer.apple.com/documentation/foundationmodels/systemlanguagemodel/availability-swift.enum/unavailablereason/modelnotready"
+  ],
+  "isolatedIOS265Probe": {
+    "device": "418CF8AE-ED96-4E76-8D22-533EB6C08032",
+    "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+    "build": "23F77",
+    "deviceType": "iPhone 17 Pro",
+    "ownerAuthorized": true,
+    "appOrSessionMigrated": false,
+    "availability": "available",
+    "elapsedMs": 28419,
+    "privateDocumentUsed": false,
+    "probe": "minimal-on-device-generation",
+    "response": "OK.",
+    "status": "SUCCEEDED",
+    "evidenceSHA256": {
+      "Probe.swift": "63b2f84004bae49fe21025f542b2265ffaca960ec3ec867170260140bb5c8f33",
+      "probe": "23eae8ebb5ed8cc1d77b4b303a70dd7626a89ace3c84f9fecc5010111a9c40b0",
+      "minimal-ios265-probe.json": "b93752b86b345b4503ca2a266e5825dbbf17e43b8fdd06aed19024f9394bb652"
+    },
+    "cleanup": "Probe device shut down; retained, not deleted. Original A1A/AD5 untouched by probe.",
+    "logCaveat": "System background catalog warnings also occur on iOS26.5; minimal generation success is established by completed probe response, not warning-free system logs. The original iOS27 inference failure is correlated with its exact App request resource lookup errors."
+  }
+}

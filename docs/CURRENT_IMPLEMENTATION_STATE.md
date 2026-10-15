@@ -1,14 +1,32 @@
-# TCL01 local Trip Ledger candidate — 2026-10-16 / SOURCE REVIEW PENDING
+# Apple local model diagnosis — 2026-10-16
 
-- Isolated TCL01 adds SQLite68 local creator binding after accepted Capture67.
+- A1A iOS27 API availability=available, but real App generation failed: ModelManager
+  model catalog lookup reports UnifiedAssetFramework5000, no underlying assets for
+  com.apple.modelcatalog (tokenizer/base/draft). This is a concrete development
+  Runtime resource failure; no permission-denial evidence or model-quality verdict.
+- Fixed nonprivate minimal prompt also fails in A1A (ModelManagerServices1026);
+  same prompt succeeds on host Mac in2997ms. Mac success is not iPhone/C4 PASS.
+- No system model files/settings/permissions, A1A data, Provider or Backend changed.
+  Owner-approved isolated iOS26.5/23F77 iPhone17Pro probe succeeded: fixed prompt
+  returned OK. in28419ms. No OTR App/session/private data migrated; probe device
+  shut down afterward. Minimal capability PASS is not flight-quality/C4 PASS.
+- Evidence: docs/ops/APPLE_LOCAL_MODEL_DIAGNOSTIC_20261016.json.
+
+# TCL01 local Trip Ledger — 2026-10-16 / SOURCE PASS, NATIVE PENDING
+
+- Integrated main ee296a6 adds SQLite68 local creator binding after accepted Capture67.
   Normal Trip creation and scoped repository repair initialize Journey/owner/actor
   with accepted NZD/2/REFERENCE_RATE defaults; no Hosted/Core grant is fabricated.
 - Current Trip Ledger and direct New Expense use repository initialization. Local
   Expense work remains in the existing queue behind its original CREATE_TRIP.
 - Offline/cold reopen, idempotence, account fences, rollback, old intent repair and
-  67→68 preservation are tested; independent source review is pending.
-- Nelson summer original Trip/op/actor/device state is untouched. Owner Native
-  acceptance remains pending. TCL02 Hosted identity mapping/dependency release and
+  67→68 preservation are tested; 92 focused tests/type/UIguard PASS and independent
+  repository/context-failure reviews PASS. No Native journey PASS yet.
+- AD5 normal Debug build/cover-install PASS; normal repository initialized original
+  Nelson Ledger, schema65→68, original Trip/create-op hash unchanged, expense count0.
+  Owner now has New Expense open; Save/reopen/offline journey remains pending.
+  Evidence: docs/ops/TCL01_AD5_NATIVE_PREPARATION_20261016.json.
+  TCL02 Hosted identity mapping/dependency release and
   protected Backend activation are separate; no Runtime PASS or deployment claimed.
 
 # Capture C4 — local-first Runtime PARTIAL / 2026-10-16

@@ -1,0 +1,21 @@
+{
+  "source_main": "ee296a65ad072b4b3169065fcd4a1b2bc80a32d0",
+  "experience_head": "d5ff69b561a602d7248e1540ceed5cfe26b9aa88",
+  "device": "AD5CCF33-5907-4BE4-8F6C-B6FB20F32C5A",
+  "bundle": "com.xoery.otrmobile",
+  "schema_before": 65,
+  "schema_after": 68,
+  "nelson_original_row_hash_before_after": "531ec6905d77616bc9bf41f8bdf7c48e9d771e5f17d23b2e9633a7970f60bcac",
+  "files": {
+    "src/data/db/migrations.ts": "1e449a5cd3af48cb3df7796bbe947cd5163e64452683fe414cd4451587d004f4",
+    "src/data/db/migrations/captureProcessing.ts": "64b55434c61fb7bb4767f044f73b527957ebe105bfcf459965b5a64fe24826e7",
+    "src/data/db/migrations/captureLocalInterpretation.ts": "3bba81bbf6017876deac5784e8ec1c32956c044cae82223439048dadd99a4e38",
+    "src/data/db/migrations/localTripLedger.ts": "682968000352178d0478eb691d3e056e128e5b637f4647161410fad034c9f1d2",
+    "src/data/repositories/tripRepository.ts": "e15632c6c7b24c4c015a4d93fdf4d1483c287d15fc94ff42d012d4febb6cc0d5",
+    "src/data/repositories/ledgerExpenseRepository.ts": "023301905ed009fa4c0a9fa98713115797506187a43434abf5ab16429ce2917f",
+    "src/features/ledger/LedgerExpenseEntryScreen.tsx": "3674165d3e414f2632e79592bdfad7450c9968e4f672fa938b15d74be1c134c3",
+    "src/features/ledger/LedgerStage6Screen.tsx": "8c5bf0d3d7194afbf4065dc8766ddf076734474d071030a8da27ff48be38ec88",
+    "src/features/day-feed/LocalTripWorkspace.test.ts": "e5d52a2747dc2ea6c7b1533b3134f5873b86904cfa90a2e23cfecd0911d9a9d0"
+  },
+  "screenshots": ["nelson-ledger-after.png", "nelson-new-expense.png"]
+}
