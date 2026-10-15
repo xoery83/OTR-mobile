@@ -62,3 +62,20 @@ export type CaptureMaterialCustody = {
   put(binding: CaptureCustodyBinding, bytes: Uint8Array): Promise<void>;
   read(binding: CaptureCustodyBinding): Promise<Uint8Array | null>;
 };
+
+export const captureCustodyBatchSchema = z
+  .strictObject({
+    batchId: z.uuid(),
+    jobId: z.uuid(),
+    inputs: z.array(captureCustodyBindingSchema).length(2),
+  })
+  .refine(
+    (b) =>
+      b.inputs.every(
+        (i) =>
+          i.batchId === b.batchId &&
+          i.jobId === b.jobId &&
+          i.accountId === b.inputs[0].accountId,
+      ) && b.inputs[0].inputId !== b.inputs[1].inputId,
+  );
+export type CaptureCustodyBatch = z.infer<typeof captureCustodyBatchSchema>;

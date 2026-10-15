@@ -3,7 +3,9 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-const checker = fileURLToPath(new URL("./backend-host-image-check.mjs", import.meta.url));
+const checker = fileURLToPath(
+  new URL("./backend-host-image-check.mjs", import.meta.url),
+);
 const accepted = `sha256:${"a".repeat(64)}`;
 const old = `sha256:${"b".repeat(64)}`;
 const valid = {
@@ -27,10 +29,14 @@ function check(
   credential = "/opt/otr/dev-backend/env/backend.rotated.env",
   direction = "host",
 ) {
-  return spawnSync(process.execPath, [checker, reviewed, old, credential, direction], {
-    input: JSON.stringify(config),
-    encoding: "utf8",
-  }).status;
+  return spawnSync(
+    process.execPath,
+    [checker, reviewed, old, credential, direction],
+    {
+      input: JSON.stringify(config),
+      encoding: "utf8",
+    },
+  ).status;
 }
 test("accepts exact reviewed image and resolved DEV host profile", () => {
   assert.equal(check(valid), 0);
@@ -131,7 +137,9 @@ for (const [direction, baseline] of [
     [
       "exposed original",
       (c) => {
-        c.services.backend.env_file = [{ path: "/opt/otr/dev-backend/env/backend.env" }];
+        c.services.backend.env_file = [
+          { path: "/opt/otr/dev-backend/env/backend.env" },
+        ];
       },
     ],
     [
@@ -228,3 +236,120 @@ for (const [label, mutate] of [
     assert.notEqual(check(c, accepted, credential, "bridge"), 0);
   });
 }
+
+const capture = structuredClone(valid);
+capture.services.backend.command = ["node", "server-capture.mjs"];
+capture.services.backend.cap_drop = ["ALL"];
+capture.services.backend.volumes = [
+  {
+    type: "bind",
+    source: "/opt/otr/dev-backend/private/capture-custody",
+    target: "/var/lib/otr/capture-custody",
+    bind: { create_host_path: false },
+  },
+  {
+    type: "bind",
+    source: "/opt/otr/dev-backend/env/capture-custody.json",
+    target: "/run/otr/capture-custody.json",
+    read_only: true,
+    bind: { create_host_path: false },
+  },
+];
+test("Capture profile retains exact host/credential/image checks and only its command/two mounts", () => {
+  assert.equal(check(capture, accepted, credential, "capture"), 0);
+  assert.notEqual(check(valid, accepted, credential, "capture"), 0);
+});
+for (const [name, mutate] of [
+  [
+    "entrypoint override",
+    (c) => {
+      c.services.backend.entrypoint = ["node", "server.mjs"];
+    },
+  ],
+  [
+    "command",
+    (c) => {
+      c.services.backend.command = ["node", "other.mjs"];
+    },
+  ],
+  [
+    "extra mount",
+    (c) => {
+      c.services.backend.volumes.push({
+        ...c.services.backend.volumes[0],
+        target: "/elsewhere",
+      });
+    },
+  ],
+  [
+    "wrong source",
+    (c) => {
+      c.services.backend.volumes[0].source = "/somewhere";
+    },
+  ],
+  [
+    "duplicate target",
+    (c) => {
+      c.services.backend.volumes[1].target =
+        c.services.backend.volumes[0].target;
+    },
+  ],
+  [
+    "auto-created root",
+    (c) => {
+      c.services.backend.volumes[0].bind.create_host_path = true;
+    },
+  ],
+  [
+    "writable attestation",
+    (c) => {
+      c.services.backend.volumes[1].read_only = false;
+    },
+  ],
+  [
+    "readonly metadata root",
+    (c) => {
+      c.services.backend.volumes[0].read_only = true;
+    },
+  ],
+  [
+    "extra bind option",
+    (c) => {
+      c.services.backend.volumes[0].bind.propagation = "shared";
+    },
+  ],
+  [
+    "capabilities",
+    (c) => {
+      c.services.backend.cap_drop = [];
+    },
+  ],
+  [
+    "wrong environment",
+    (c) => {
+      c.services.backend.environment.OTR_DEV_BACKEND_BIND_ADDRESS = "0.0.0.0";
+    },
+  ],
+  [
+    "wrong credential",
+    (c) => {
+      c.services.backend.env_file = [];
+    },
+  ],
+])
+  test(`Capture rejects ${name}`, () => {
+    const c = structuredClone(capture);
+    mutate(c);
+    assert.notEqual(check(c, accepted, credential, "capture"), 0);
+  });
+test("Capture malformed command does not print private argument values", () => {
+  const c = structuredClone(capture);
+  c.services.backend.command.push("NONSECRET_CAPTURE_SENTINEL");
+  const result = spawnSync(
+    process.execPath,
+    [checker, accepted, old, credential, "capture"],
+    { input: JSON.stringify(c), encoding: "utf8" },
+  );
+  assert.notEqual(result.status, 0);
+  assert.ok(!result.stderr.includes("NONSECRET_CAPTURE_SENTINEL"));
+});

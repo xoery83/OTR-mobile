@@ -17,8 +17,8 @@ assert.notEqual(
   "Old wildcard image cannot run in host mode",
 );
 assert.ok(
-  ["host", "bridge"].includes(direction),
-  "Explicit host or bridge direction required",
+  ["host", "bridge", "capture"].includes(direction),
+  "Explicit host, bridge or capture direction required",
 );
 // Future rotations require an explicitly verified private selection, never the exposed original.
 assert.ok(
@@ -31,7 +31,10 @@ const config = JSON.parse(readFileSync(0, "utf8"));
 assert.equal(config.name, "dev-backend");
 assert.deepEqual(Object.keys(config.services), ["backend"]);
 const service = config.services.backend;
-assert.equal(service.image, direction === "host" ? reviewedImage : rollbackImage);
+assert.equal(
+  service.image,
+  direction !== "bridge" ? reviewedImage : rollbackImage,
+);
 // Check names/counts with booleans so unexpected credential metadata is not serialized.
 assert.ok(
   service.env_file?.length === 1 &&
@@ -39,7 +42,7 @@ assert.ok(
     service.env_file[0].required !== false,
   "Exclusive required rotated credential selection required",
 );
-if (direction === "host") {
+if (direction !== "bridge") {
   assert.equal(service.network_mode, "host");
   assert.ok(!service.build && !service.ports?.length && !service.networks);
   const httpEnvironment = {
@@ -72,6 +75,53 @@ if (direction === "host") {
       port.protocol === "tcp",
     "Exact Bridge loopback port required",
   );
+}
+if (direction === "capture") {
+  assert.ok(
+    service.entrypoint == null,
+    "Capture entrypoint override forbidden",
+  );
+  assert.ok(
+    JSON.stringify(service.command) ===
+      JSON.stringify(["node", "server-capture.mjs"]),
+    "Exact Capture command required",
+  );
+  assert.ok(
+    JSON.stringify(service.cap_drop) === JSON.stringify(["ALL"]),
+    "Capture capability drop required",
+  );
+  assert.ok(
+    service.volumes?.length === 2,
+    "Exactly two Capture mounts required",
+  );
+  const expected = [
+    [
+      "/opt/otr/dev-backend/private/capture-custody",
+      "/var/lib/otr/capture-custody",
+      false,
+    ],
+    [
+      "/opt/otr/dev-backend/env/capture-custody.json",
+      "/run/otr/capture-custody.json",
+      true,
+    ],
+  ];
+  for (const [source, target, readOnly] of expected) {
+    const matches = service.volumes.filter((v) => v.target === target);
+    assert.ok(matches.length === 1, "One exact Capture mount target required");
+    const v = matches[0];
+    assert.ok(
+      v.type === "bind" &&
+        v.source === source &&
+        Boolean(v.read_only) === readOnly &&
+        JSON.stringify(v.bind) ===
+          JSON.stringify({ create_host_path: false }) &&
+        Object.keys(v).every((k) =>
+          ["type", "source", "target", "read_only", "bind"].includes(k),
+        ),
+      "Exact pre-existing Capture bind required",
+    );
+  }
 }
 console.log(
   "PASS: immutable DEV image, exclusive rotated credential and network profile",

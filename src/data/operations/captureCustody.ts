@@ -13,7 +13,10 @@ import {
 } from "@/domain/capture/captureCustody";
 
 export function createCaptureCustodyOperation(deps: {
-  submissions: Pick<ReturnType<typeof createCaptureSubmissionRepository>, "reopen">;
+  submissions: Pick<
+    ReturnType<typeof createCaptureSubmissionRepository>,
+    "reopen"
+  >;
   inbox: Pick<
     ReturnType<typeof createLocalCaptureInboxRepository>,
     "getForSourceHandoff"
@@ -32,7 +35,9 @@ export function createCaptureCustodyOperation(deps: {
     const input = job.inputs.find((item) => item.id === inputId);
     if (!input || input.state !== "ACCEPTED" || !input.captureId)
       throw new Error("CAPTURE_CUSTODY_INPUT_UNAVAILABLE");
-    const { capture, bytes } = await deps.inbox.getForSourceHandoff(input.captureId);
+    const { capture, bytes } = await deps.inbox.getForSourceHandoff(
+      input.captureId,
+    );
     await assertAccountRequestContext(context, deps.getAccountId);
     if (
       capture.accountId !== context.accountId ||
@@ -79,6 +84,11 @@ export function createCaptureCustodyOperation(deps: {
     return bytes;
   }
   return {
+    binding: async (
+      context: AccountRequestContext,
+      jobId: string,
+      inputId: string,
+    ) => (await original(context, jobId, inputId)).binding,
     put: (context: AccountRequestContext, jobId: string, inputId: string) =>
       run(context, jobId, inputId, true),
     recover: (context: AccountRequestContext, jobId: string, inputId: string) =>

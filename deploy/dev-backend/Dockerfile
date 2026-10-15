@@ -8,7 +8,7 @@ COPY backend ./backend
 COPY src/data/api ./src/data/api
 COPY src/domain ./src/domain
 COPY src/data/auth/accountGeneration.ts src/data/auth/accountRequestContext.ts ./src/data/auth/
-RUN npm run backend:build
+RUN npm run backend:build && npm run backend:build:capture
 
 FROM node:24-bookworm-slim
 
@@ -19,6 +19,7 @@ RUN useradd --system --uid 10001 --create-home otr \
     && chmod 0755 /var/lib/otr
 
 COPY --from=build --chown=otr:otr /app/dist/server.mjs ./server.mjs
+COPY --from=build --chown=otr:otr /app/dist/server-capture.mjs ./server-capture.mjs
 
 USER otr
 EXPOSE 8787
