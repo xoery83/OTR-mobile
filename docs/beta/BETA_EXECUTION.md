@@ -1,3 +1,21 @@
+## C2 bounded Auth diagnostic — 2026-10-15
+
+Owner retry showedNETWORK_FAILURE; fixed012 Backend health200/no associations.
+Exact Native cause unknown. Finite DEV diagnostic preserves Auth refresh code/
+kind/status and neutralAUTH_VALIDATION_FAILED without secrets; review request
+satisfied,8tests/typecheck PASS. Original A1A restarted with onlyadapter updated;
+other9paths/Session/23:00expiry remain unchanged. Next Owner GET-only; no repeated
+PUT, no Inspector or Backend change. RuntimeNV, Coordinator retains recovery.
+
+## C2 JPEG recovery deployment — 2026-10-15
+
+Owner approved exact012f2 image and metadata expiry10:00Z/23NZDT. Original strict
+three-mount/checker/DEV identity checks passed; same Backend updated, local/public
+health200 and Reader/Caddy/unrelated services preserved. Rollback08b1 retained,
+not used; cutover+checks1.66s is not measured outage. No Auth/RLS/schema/credentials
+or original-file change. Same A1A Owner-assisted entry is being prepared; no PUT/GET,
+RuntimeNV. Receipt `/private/tmp/otr-c2-jpeg-trailer-fix/review/backend-deployment-receipt.json`.
+
 ## Latest C2 Owner-assisted checkpoint — 2026-10-15
 
 Caller loaded normally; Owner Upload failed local MEDIA_INVALID before either PUT.

@@ -162,3 +162,52 @@ it("finite diagnostics preserve known auth/network/identity/hash classes without
     captureCustodyDevFailure(Error("CAPTURE_CUSTODY_INPUT_STALE")).stage,
   ).toBe("IDENTITY");
 });
+
+vi.mock("../auth/authRepository", () => ({
+  clearLocalSession: vi.fn(),
+  readLocalSession: vi.fn(),
+  writeLocalSession: vi.fn(),
+}));
+it("retains finite refresh causes without raw details", async () => {
+  const { z } = await import("zod");
+  const { SupabaseDevAuthError } = await import("../auth/devSupabaseAuth");
+  const wrap = (detail: unknown) =>
+    new ApiClientError(
+      "private outer",
+      "network",
+      undefined,
+      "AUTH_REFRESH_UNAVAILABLE",
+      detail,
+    );
+  for (const kind of ["network", "temporary", "invalid_session"] as const) {
+    expect(
+      captureCustodyDevFailure(
+        wrap(new SupabaseDevAuthError("private detail", kind, 503)),
+      ),
+    ).toEqual({
+      stage: "AUTH",
+      code: `AUTH_REFRESH_UNAVAILABLE_${kind.toUpperCase()}`,
+      status: 503,
+    });
+  }
+  for (const status of [99, 600, NaN, 401.5])
+    expect(
+      captureCustodyDevFailure(
+        wrap(new SupabaseDevAuthError("private", "network", status)),
+      ).status,
+    ).toBeNull();
+  const invalid = z.string().safeParse(42);
+  if (invalid.success) throw Error("synthetic config must fail");
+  expect(captureCustodyDevFailure(wrap(invalid.error))).toEqual({
+    stage: "AUTH",
+    code: "AUTH_VALIDATION_FAILED",
+    status: null,
+  });
+  const unknown = captureCustodyDevFailure(wrap(new Error("private unknown")));
+  expect(unknown).toEqual({
+    stage: "AUTH",
+    code: "AUTH_REFRESH_UNAVAILABLE",
+    status: null,
+  });
+  expect(JSON.stringify(unknown)).not.toContain("private");
+});

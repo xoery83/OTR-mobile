@@ -1,4 +1,6 @@
 import { ApiClientError } from "../api/client";
+import { ZodError } from "zod";
+import { SupabaseDevAuthError } from "../auth/devSupabaseAuth";
 import { RequestBoundaryError } from "../api/requestBoundary";
 import { getAccountGeneration } from "../auth/accountGeneration";
 import { assertAccountRequestGeneration } from "../auth/accountRequestContext";
@@ -98,6 +100,26 @@ export function captureCustodyDevFailure(
       error.status! <= 599
         ? error.status!
         : null;
+    if (error.code === "AUTH_REFRESH_UNAVAILABLE") {
+      const detail = error.details;
+      if (detail instanceof ZodError)
+        return result("AUTH", "AUTH_VALIDATION_FAILED");
+      if (detail instanceof SupabaseDevAuthError) {
+        const detailStatus =
+          Number.isInteger(detail.status) &&
+          detail.status! >= 100 &&
+          detail.status! <= 599
+            ? detail.status!
+            : null;
+        const kind = ["network", "temporary", "invalid_session"].includes(
+          detail.kind,
+        )
+          ? detail.kind.toUpperCase()
+          : "UNKNOWN";
+        return result("AUTH", `AUTH_REFRESH_UNAVAILABLE_${kind}`, detailStatus);
+      }
+      return result("AUTH", "AUTH_REFRESH_UNAVAILABLE");
+    }
     if (error.code === "AUTH_REQUIRED" || error.code === "AUTH_CONTEXT_CHANGED")
       return result("AUTH", error.code, status);
     if (error.kind === "network" || error.kind === "timeout")

@@ -7,6 +7,24 @@
 
 # Capture Import checkpoint — 2026-10-15
 
+- Latest Owner JPEG retry reached NETWORK_FAILURE. Same012 Backend health200,
+  root contains onlystore marker/no association. Public DEV Auth DNS/TLS reachable
+  from desktop (health401 unauthenticated), not proof of Native refresh. Source
+  path suggests pre-upload Auth refresh; exact cause remains unverified. DEV-only
+  diagnostic now retains finite Auth refresh kind/status, neutral Zod validation
+  failure and no raw details. Reviewer requested neutral name; fixed and8tests/
+  typecheck PASS. Same A1A adapter updated/restarted, original10preimages retained,
+  same23:00expiry; next Owner action GET-only, never repeat Upload while unknown.
+
+- Owner approved JPEG recovery delta: fixed local-built image012f2d06476a is now
+  deployed to the same DEV Backend, exact3 mounts/Reader preserved, local/public
+  health200, Caddy/unrelated services preserved, rollback08b1 retained/not needed.
+  Only original metadata expiresAt changed once to2026-10-15T10:00:00Z/23:00NZDT.
+  Source is sealed83 plus domain17c439 JPEG signature fix; no other Backend delta.
+  Receipt `/private/tmp/otr-c2-jpeg-trailer-fix/review/backend-deployment-receipt.json`.
+  Original A1A manual Caller preparation is in progress with the same reviewed
+  domain/pins and new approved expiry. No PUT/GET yet; C2 Runtime NOT VERIFIED.
+
 - Latest Owner-assisted C2: normal Activity visibly loaded DEV caller, but Upload
   failed at local two-Input preflight with CAPTURE_CUSTODY_MEDIA_INVALID. The exact
   JPG has24 opaque bytes after EOI; native decoder accepts it, full SHA/count match.
