@@ -134,6 +134,14 @@ export type CaptureJobReadModel = {
     recordedAt: string;
     attemptCount: number;
   }[];
+  localInterpretationEvents?: readonly {
+    inputId: string;
+    sequence: number;
+    state: "PENDING" | "PROCESSING" | "RETRYABLE" | "FAILED" | "LOCAL_RESULT_RECORDED";
+    recordedAt: string;
+    attemptCount: number;
+  }[];
+  localInterpretationResults?: readonly import("./captureLocalInterpretation").CaptureLocalResult[];
   results: { admittedCreates: 0; admittedUpdates: 0; currentAttention: null };
   availableActions: {
     canHide: true;

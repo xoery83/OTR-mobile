@@ -3,7 +3,10 @@ import { createLocalId } from "@/domain/localId";
 import { z } from "zod";
 import { ApiClientError } from "@/data/api/client";
 import { syncFailureDetails, type SyncFailureCategory } from "./syncEngine";
-import { captureProcessingValidationKind } from "./syncEngine";
+import {
+  captureProcessingValidationKind,
+  captureLocalInterpretationKind,
+} from "./syncEngine";
 import { announceLedgerQueueWorkAvailable } from "./ledgerQueueActivity";
 import {
   intelligenceWakeKind,
@@ -72,7 +75,7 @@ export function createSyncOperationRepository(
           last_error_message = 'INTERRUPTED', claim_owner = NULL,
           lease_expires_at = NULL, updated_at = ? WHERE status = 'PROCESSING'
           AND owner_user_id = ?
-          AND operation_type <> ?
+          AND operation_type NOT IN (?,?)
           AND (claim_owner IS NULL OR
             (claim_owner <> ? AND NOT (operation_type=? AND substr(claim_owner,1,?)=?))
             OR lease_expires_at <= ?)`,
@@ -80,6 +83,7 @@ export function createSyncOperationRepository(
         now,
         userId,
         captureProcessingValidationKind,
+        captureLocalInterpretationKind,
         processClaimOwner,
         intelligenceWakeKind,
         processClaimOwner.length + 1,

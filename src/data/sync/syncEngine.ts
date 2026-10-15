@@ -144,6 +144,7 @@ const closedImportOperations = new Set([
   "C_REVOKE_EVENT_SLOT",
 ]);
 export const captureProcessingValidationKind = "CAPTURE_PROCESSING_VALIDATE";
+export const captureLocalInterpretationKind = "CAPTURE_LOCAL_INTERPRET";
 
 export function createSyncEngine(
   repository: SyncOperationRepository,
@@ -171,7 +172,9 @@ export function createSyncEngine(
         const operations = (await repository.listPending()).filter(
           (operation) =>
             !closedImportOperations.has(operation.operationType) &&
-            (operation.operationType !== captureProcessingValidationKind ||
+            (![captureProcessingValidationKind, captureLocalInterpretationKind].includes(
+              operation.operationType,
+            ) ||
               (localCaptureProcessing &&
                 !!repository.claimOperation &&
                 !!repository.settleOperation)) &&

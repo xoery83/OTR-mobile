@@ -4,6 +4,7 @@ import { fixture } from "@/data/repositories/__fixtures__/captureBatchAssessment
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import type { CapturePayloadInput } from "@/data/files/capturePayloadReader";
 import {
+  captureLocalInterpretationSummary,
   captureProcessingSummary,
   projectCaptureActivity,
 } from "./captureActivityProjection";
@@ -29,6 +30,35 @@ it("keeps an earlier failed input visible when a later input validates", async (
     },
   ];
   expect(captureProcessingSummary(job)).toBe("VALIDATION_FAILED");
+});
+
+it("keeps a failed local Input visible when another Input has a recorded result", async () => {
+  const f = fixture();
+  const request = await f.submit(2);
+  const job = await f.submissions.reopen(request.jobId);
+  job.localInterpretationEvents = [
+    {
+      inputId: job.inputs[0].id,
+      sequence: 1,
+      state: "FAILED",
+      recordedAt: job.batch.createdAt,
+      attemptCount: 1,
+    },
+    {
+      inputId: job.inputs[1].id,
+      sequence: 2,
+      state: "LOCAL_RESULT_RECORDED",
+      recordedAt: job.batch.createdAt,
+      attemptCount: 0,
+    },
+  ];
+  expect(captureLocalInterpretationSummary(job)).toBe("LOCAL_INTERPRETATION_FAILED");
+  const activity = projectCaptureActivity(job, await f.getAccount());
+  expect(activity.recordedFacts.map((fact) => fact.kind)).toContain(
+    "LOCAL_RESULT_RECORDED",
+  );
+  expect(activity.processingFinished).toBeNull();
+  expect(activity.currentTripAttribution).toBeNull();
 });
 
 it("normal registered intake is not saved or processing; accepted/failed current facts retain their true times without a invented timeline", async () => {

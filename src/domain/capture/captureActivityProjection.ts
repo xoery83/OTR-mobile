@@ -9,7 +9,12 @@ export type CaptureActivityFact = Readonly<{
     | "VALIDATION_STARTED"
     | "VALIDATION_RETRY"
     | "VALIDATION_FAILED"
-    | "INPUT_VALIDATED";
+    | "INPUT_VALIDATED"
+    | "LOCAL_INTERPRETATION_QUEUED"
+    | "LOCAL_INTERPRETATION_STARTED"
+    | "LOCAL_INTERPRETATION_RETRY"
+    | "LOCAL_INTERPRETATION_FAILED"
+    | "LOCAL_RESULT_RECORDED";
   at: string;
   inputId: string | null;
 }>;
@@ -33,6 +38,24 @@ export function captureProcessingSummary(job: CaptureJobReadModel) {
     states.every((state) => state === "INPUT_VALIDATED")
   )
     return "INPUT_VALIDATED" as const;
+  return null;
+}
+export function captureLocalInterpretationSummary(job: CaptureJobReadModel) {
+  const latest = new Map<
+    string,
+    NonNullable<CaptureJobReadModel["localInterpretationEvents"]>[number]
+  >();
+  for (const event of job.localInterpretationEvents ?? []) {
+    const prior = latest.get(event.inputId);
+    if (!prior || event.sequence > prior.sequence) latest.set(event.inputId, event);
+  }
+  const states = [...latest.values()].map((event) => event.state);
+  if (states.includes("FAILED")) return "LOCAL_INTERPRETATION_FAILED" as const;
+  if (states.includes("RETRYABLE")) return "LOCAL_INTERPRETATION_RETRY" as const;
+  if (states.includes("PROCESSING")) return "LOCAL_INTERPRETATION_STARTED" as const;
+  if (states.includes("PENDING")) return "LOCAL_INTERPRETATION_QUEUED" as const;
+  if (states.length && states.every((state) => state === "LOCAL_RESULT_RECORDED"))
+    return "LOCAL_RESULT_RECORDED" as const;
   return null;
 }
 const instant = (at: string) => {
@@ -84,6 +107,23 @@ export function projectCaptureActivity(
     facts.push({
       id: `${batch.jobId}:processing:${event.sequence}`,
       kind: states[event.state],
+      at: event.recordedAt,
+      inputId: event.inputId,
+    });
+  }
+  const localStates = {
+    PENDING: "LOCAL_INTERPRETATION_QUEUED",
+    PROCESSING: "LOCAL_INTERPRETATION_STARTED",
+    RETRYABLE: "LOCAL_INTERPRETATION_RETRY",
+    FAILED: "LOCAL_INTERPRETATION_FAILED",
+    LOCAL_RESULT_RECORDED: "LOCAL_RESULT_RECORDED",
+  } as const;
+  for (const event of job.localInterpretationEvents ?? []) {
+    if (!job.inputs.some((item) => item.id === event.inputId))
+      throw new Error("CAPTURE_ACTIVITY_LOCAL_SCOPE");
+    facts.push({
+      id: `${batch.jobId}:local:${event.sequence}`,
+      kind: localStates[event.state],
       at: event.recordedAt,
       inputId: event.inputId,
     });

@@ -54,7 +54,12 @@ async function ensureForeground(
         return () => subscription.remove();
       },
       subscribeAccountChange: subscribeAccountGeneration,
-      run: () => processing.run(context),
+      run: async () => {
+        const first = await processing.run(context);
+        await processing.scheduleLocal(context, jobId);
+        const second = await processing.run(context);
+        return { processedCount: first.processedCount + second.processedCount };
+      },
       nextWake: () => processing.nextWake(context),
       changed: () => announceCaptureProcessingActivity(context.accountId, jobId),
     });
@@ -89,14 +94,24 @@ async function withLocalProcessing(
     )
   ) {
     await processing.schedule(context, config.jobId);
-    const result = await processing.run(context);
-    if (result.processedCount)
+    const validated = await processing.run(context);
+    await processing.scheduleLocal(context, config.jobId);
+    const interpreted = await processing.run(context);
+    if (validated.processedCount || interpreted.processedCount)
       announceCaptureProcessingActivity(context.accountId, config.jobId);
     await ensureForeground(context, processing, config.jobId);
   }
   return Promise.all(
     jobs.map(async (job) => {
       const processingEvents = await processing.events(context, job.batch.jobId);
+      const localInterpretationEvents = await processing.localEvents(
+        context,
+        job.batch.jobId,
+      );
+      const localInterpretationResults = await processing.localResults(
+        context,
+        job.batch.jobId,
+      );
       return {
         ...job,
         processing: {
@@ -106,6 +121,8 @@ async function withLocalProcessing(
             : job.processing.capability,
         },
         processingEvents,
+        localInterpretationEvents,
+        localInterpretationResults,
       };
     }),
   );

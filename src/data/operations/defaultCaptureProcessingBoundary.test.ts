@@ -4,6 +4,7 @@ import { reopenDefaultCaptureJob } from "./defaultCaptureSubmission";
 const state = vi.hoisted(() => ({
   reopen: vi.fn(),
   schedule: vi.fn(),
+  scheduleLocal: vi.fn(),
   run: vi.fn(),
   events: vi.fn(),
   start: vi.fn(),
@@ -33,8 +34,11 @@ vi.mock("@/data/repositories/captureSubmissionRepository", () => ({
 vi.mock("@/data/repositories/captureProcessingRepository", () => ({
   createCaptureProcessingRepository: () => ({
     schedule: state.schedule,
+    scheduleLocal: state.scheduleLocal,
     run: state.run,
     events: state.events,
+    localEvents: async () => [],
+    localResults: async () => [],
     nextWake: async () => null,
   }),
 }));

@@ -1,3 +1,28 @@
+# Capture C4 — local-first Runtime PARTIAL / 2026-10-16
+
+- Owner clarified local extraction → deterministic interpretation → optional Apple
+  model → evidence assessment → authorized remote enrichment. Cloud custody is
+  selective and is not a local interpretation prerequisite; C2/C3 PASS retained.
+- Isolated candidate from cc3b3a9: SQLite67 Account/Input local evidence, existing
+  queue/foreground runner, no Source/Trip/Review/Core authority or remote dispatch.
+- Original A1A/same C2 Batch: PDFKit 2626 UTF-8 bytes/1 page/18 fields; Vision JPEG
+  645 bytes/48 boxes/8 fields. Original SHA/bytes and every field span checked.
+  Both results remain partial; no complete itinerary or candidate admission PASS.
+- Apple capability AVAILABLE; actual enrichment FAILED; deterministic evidence retained.
+  Remote DeepSeek deepseek-flash adapter exists but normal host is CLOSED/unprovisioned;
+  no remote call, new credentials or Backend deployment occurred.
+- Native FILE/JPEG dispatch repaired; explicit owning retry and interrupted lease
+  recovery completed, successful PDF not reprocessed. Four original Capture table
+  fingerprints unchanged; schema66→67 only.
+- Source/Native/delta independent reviews PASS; focused62 + parser156 reported PASS,
+  final changed-slice15 PASS. Cold normal Activity and retained-result reads with
+  scoped JS fetch denial PASS; no new work/events. Not device-wide airplane mode.
+- QA retry/network hooks removed, runner config null, Native build source restored.
+  C4-R remains BLOCKED at protected live-host/provider activation; the old LIVE1P
+  report is historical, not evidence of current migration or credential state.
+  No full C4, Apple inference, complete Candidate, or remote Runtime PASS.
+- Evidence: `/private/tmp/otr-c4-native-runtime-20261016/`.
+
 # Capture C3 — Runtime PASS / 2026-10-16
 
 - Original A1A normal Capture Job reopened; owning local executor claimed the
@@ -1326,3 +1351,7 @@ Date: 2026-10-06 (Pacific/Auckland).
 - Isolated candidate from canonical `329e649`: SQLite66 append-only C3 event journal, one existing `sync_operations` operation per accepted C2 input, exact local Capture/manifest/hash pins, scoped claim/settle/lease recovery, and Account-fenced Activity reads. `COMPLETED` means only `INPUT_VALIDATED`; interpretation and Review remain unavailable.
 - Normal startup has a null C3 DEV config. A temporary explicit Native QA overlay may select Batch `e046f37a-61ac-444a-b05b-0a991d59e006`; normal Activity/reopen reads then schedule it and an Account-fenced foreground timer follows persisted retry/lease deadlines. No production automatic processing, C4 profile, Backend, provider, Source, or Trip assignment is added.
 - Local focused tests and guards are recorded in the C3 candidate handoff. Independent review and Owner Native runtime acceptance remain pending; canonical main and device are unchanged by this candidate.
+
+## Capture C4-L local evidence candidate — 2026-10-16 / REVIEW PENDING
+
+- Schema67 extends the existing C3 Account/Input queue with immutable local PDF/Vision evidence and per-input events. The same foreground timer runs C3 then C4 after accepted originals validate. The pure Flight line grammar has an Account/Input-only projection; Import still requires real Trip/Source pins. Local-model service hints, if available, remain separate advisory evidence. No remote dispatch, Trip assignment, Source registration, Core write, or Review authority is added. See `docs/adr/2026-10-16-capture-c4-local-evidence.md`.

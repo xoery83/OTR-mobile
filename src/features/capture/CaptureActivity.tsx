@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import {
   captureProcessingSummary,
+  captureLocalInterpretationSummary,
   projectCaptureActivity,
 } from "@/domain/capture/captureActivityProjection";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
@@ -232,12 +233,18 @@ export function CaptureActivityList({
               {t(`capture.processing.${captureProcessingSummary(job)!}`)}
             </Text>
           ) : null}
+          {captureLocalInterpretationSummary(job) ? (
+            <Text style={styles.secondary}>
+              {t(`capture.processing.${captureLocalInterpretationSummary(job)!}`)}
+            </Text>
+          ) : null}
           {job.allInputsAccepted &&
           job.inputs?.every((item) =>
             job.processingEvents?.some(
               (event) => event.inputId === item.id && event.state === "INPUT_VALIDATED",
             ),
-          ) ? (
+          ) &&
+          !job.localInterpretationEvents?.length ? (
             <Text style={styles.secondary}>
               {t("capture.processing.waitingInterpreter")}
             </Text>

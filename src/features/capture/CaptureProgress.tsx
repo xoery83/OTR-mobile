@@ -75,12 +75,18 @@ export function CaptureProgress({
                 : "capture.processingUnavailable",
             )}
           </UiText>
+          {model?.localInterpretationResults?.length ? (
+            <UiText style={styles.secondary}>
+              {t("capture.processing.localPartial")}
+            </UiText>
+          ) : null}
           {model?.allInputsAccepted &&
           model.inputs?.every((item) =>
             model.processingEvents?.some(
               (event) => event.inputId === item.id && event.state === "INPUT_VALIDATED",
             ),
-          ) ? (
+          ) &&
+          !model.localInterpretationEvents?.length ? (
             <UiText style={styles.secondary}>
               {t("capture.processing.waitingInterpreter")}
             </UiText>
@@ -93,9 +99,11 @@ export function CaptureProgress({
           </UiText>
           <UiText style={styles.secondary}>
             {t(
-              model?.processingEvents?.length
-                ? "capture.progress.localValidationHistory"
-                : "capture.progress.partialHistory",
+              model?.localInterpretationEvents?.length
+                ? "capture.progress.localInterpretationHistory"
+                : model?.processingEvents?.length
+                  ? "capture.progress.localValidationHistory"
+                  : "capture.progress.partialHistory",
             )}
           </UiText>
           {activity.recordedFacts.map((fact) => (

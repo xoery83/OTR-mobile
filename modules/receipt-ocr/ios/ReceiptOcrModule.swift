@@ -23,6 +23,18 @@ public class ReceiptOcrModule: Module {
       return FlightPdfExtractor.extract(data)
     }
 
+    AsyncFunction("extractCaptureLocal") { (data: Data, mediaType: String) -> [String: Any] in
+      return CaptureLocalExtractor.extract(data, mediaType: mediaType)
+    }
+
+    AsyncFunction("captureLocalModelCapability") { () -> [String: String] in
+      return CaptureLocalExtractor.modelCapability()
+    }
+
+    AsyncFunction("enrichCaptureFlightLocal") { (text: String) -> [String: Any] in
+      return await CaptureLocalExtractor.enrich(text)
+    }
+
     Function("cancel") { (requestId: String) in
       self.lock.lock()
       let request = self.running[requestId]

@@ -7,6 +7,7 @@ import {
   sha256,
 } from "@/data/repositories/__fixtures__/captureBatchAssessment";
 import { createCaptureProcessingRepository } from "@/data/repositories/captureProcessingRepository";
+import { buildCaptureLocalResult } from "@/domain/capture/captureLocalInterpretation";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import { randomUUID } from "node:crypto";
 import { CaptureProgress } from "./CaptureProgress";
@@ -74,6 +75,57 @@ it("shows retained C3 validation history in normal Job detail while interpretati
   expect(html).toContain(t("capture.processing.waitingInterpreter"));
   expect(html).toContain(t("capture.progress.localValidationHistory"));
   expect(html).not.toContain(t("capture.progress.partialHistory"));
+  expect(model.availableActions.canReviewNow).toBe(false);
+});
+it("shows a local partial result and C4 event without granting Review", async () => {
+  const f = fixture();
+  const request = await f.submit();
+  const stored = await f.submissions.reopen(request.jobId);
+  const text = "Flight: NZ123";
+  const result = buildCaptureLocalResult(
+    stored.inputs[0].id,
+    {
+      engine: "apple-pdfkit",
+      text,
+      pages: [{ pageIndex: 0, start: 0, end: text.length }],
+      originalSha256: "a".repeat(64),
+      originalByteCount: 10,
+    },
+    { sha256: "a".repeat(64), byteCount: 10 },
+    "b".repeat(64),
+    "UNAVAILABLE",
+  );
+  const model = {
+    ...stored,
+    localInterpretationEvents: [
+      {
+        inputId: stored.inputs[0].id,
+        sequence: 1,
+        state: "LOCAL_RESULT_RECORDED" as const,
+        recordedAt: stored.batch.createdAt,
+        attemptCount: 0,
+      },
+    ],
+    localInterpretationResults: [result],
+  };
+  const html = renderToStaticMarkup(
+    createElement(CaptureProgress, {
+      model,
+      accountId: stored.batch.accountId,
+      busy: false,
+      reading: false,
+      error: false,
+      canRetry: false,
+      onRetry: vi.fn(),
+      onRecover: vi.fn(),
+      onOpenJob: vi.fn(),
+      onActivity: vi.fn(),
+      onNewImport: vi.fn(),
+    }),
+  );
+  expect(html).toContain(t("capture.processing.localPartial"));
+  expect(html).toContain(t("capture.processing.LOCAL_RESULT_RECORDED"));
+  expect(html).not.toContain(t("capture.processing.waitingInterpreter"));
   expect(model.availableActions.canReviewNow).toBe(false);
 });
 it("normal owning SQLite intake renders local acceptance, stored seconds and unavailable processing/outcomes without generic Add More", async () => {

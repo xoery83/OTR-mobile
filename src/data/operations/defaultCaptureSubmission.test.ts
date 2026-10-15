@@ -35,7 +35,11 @@ vi.mock("@/data/repositories/captureSubmissionRepository", () => ({
   createCaptureSubmissionRepository: () => ({ list: state.list, reopen: state.reopen }),
 }));
 vi.mock("@/data/repositories/captureProcessingRepository", () => ({
-  createCaptureProcessingRepository: () => ({ events: async () => [] }),
+  createCaptureProcessingRepository: () => ({
+    events: async () => [],
+    localEvents: async () => [],
+    localResults: async () => [],
+  }),
 }));
 beforeEach(() => {
   vi.resetAllMocks();

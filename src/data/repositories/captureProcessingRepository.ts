@@ -11,13 +11,21 @@ import type {
 } from "./localCaptureInboxRepository";
 import {
   captureProcessingValidationKind,
+  captureLocalInterpretationKind,
   createSyncEngine,
   nextSyncAttemptAt,
 } from "../sync/syncEngine";
 import type { SyncOperation } from "../sync/syncOperationRepository";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { LocalCaptureError } from "@/domain/capture/localCapture";
+import { ZodError } from "zod";
 import { createSyncOperationClaimOwner } from "../sync/syncOperationRepository";
+import {
+  attachCaptureLocalModelEvidence,
+  buildCaptureLocalResult,
+  needsCaptureLocalEnrichment,
+  type CaptureLocalResult,
+} from "@/domain/capture/captureLocalInterpretation";
 
 type Database = LocalCaptureDatabase;
 type Pin = {
@@ -34,12 +42,38 @@ type Pin = {
   byteCount: number;
 };
 const kind = captureProcessingValidationKind;
+const localKind = captureLocalInterpretationKind;
+const localKinds = [kind, localKind] as const;
 const select = `SELECT id,owner_user_id AS ownerUserId,trip_id AS tripId,
   entity_type AS entityType,entity_id AS entityId,operation_type AS operationType,
   idempotency_key AS idempotencyKey,base_version AS baseVersion,payload_json AS payloadJson,
   status,attempt_count AS attemptCount,next_attempt_at AS nextAttemptAt,
   claim_owner AS claimOwner,created_at AS createdAt,updated_at AS updatedAt FROM sync_operations`;
 const opId = (inputId: string) => `capture-processing:${inputId}`;
+const localOpId = (inputId: string) => `capture-local:${inputId}`;
+function localMediaType(kind: string, declared: string | null, bytes: Uint8Array) {
+  const claimed = declared?.split(";", 1)[0].trim().toLowerCase();
+  const normalized = claimed === "image/jpg" ? "image/jpeg" : claimed;
+  const actual =
+    bytes[0] === 37 &&
+    bytes[1] === 80 &&
+    bytes[2] === 68 &&
+    bytes[3] === 70 &&
+    bytes[4] === 45
+      ? "application/pdf"
+      : bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255
+        ? "image/jpeg"
+        : [137, 80, 78, 71, 13, 10, 26, 10].every((byte, index) => bytes[index] === byte)
+          ? "image/png"
+          : null;
+  if (
+    !actual ||
+    (kind === "IMAGE" && actual === "application/pdf") ||
+    (normalized && normalized !== "application/octet-stream" && normalized !== actual)
+  )
+    fail("CAPTURE_LOCAL_UNSUPPORTED_MEDIA");
+  return actual!;
+}
 const fail = (code: string): never => {
   throw new Error(code);
 };
@@ -50,6 +84,7 @@ export function createCaptureProcessingRepository(
   deps: LocalCaptureDependencies,
 ) {
   const submissions = createCaptureSubmissionTransactionStore(db, deps);
+  const staged = new Map<string, { owner: string; result: CaptureLocalResult }>();
   async function gated<T>(context: AccountRequestContext, work: () => Promise<T>) {
     return withAccountApplyGate(async () => {
       await assertAccountRequestContext(context, getAccountId);
@@ -74,11 +109,27 @@ export function createCaptureProcessingRepository(
       operation.ownerUserId !== context.accountId ||
       operation.tripId !== null ||
       operation.entityType !== "CAPTURE_SUBMISSION_INPUT" ||
-      operation.operationType !== kind ||
-      operation.id !== opId(operation.entityId) ||
+      !localKinds.includes(operation.operationType as typeof kind | typeof localKind) ||
+      operation.id !==
+        (operation.operationType === kind
+          ? opId(operation.entityId)
+          : localOpId(operation.entityId)) ||
       operation.idempotencyKey !== operation.entityId
     )
       fail("CAPTURE_PROCESSING_SCOPE");
+    if (operation.operationType === localKind) {
+      const validated = await db.getFirstAsync<SyncOperation>(
+        `${select} WHERE id=? AND owner_user_id=?`,
+        opId(operation.entityId),
+        context.accountId,
+      );
+      if (
+        !validated ||
+        validated.status !== "COMPLETED" ||
+        validated.payloadJson !== operation.payloadJson
+      )
+        fail("CAPTURE_LOCAL_PREREQUISITE");
+    }
     let pin: Pin;
     try {
       pin = JSON.parse(operation.payloadJson) as Pin;
@@ -122,8 +173,10 @@ export function createCaptureProcessingRepository(
       byteCount: number;
       bytes: Uint8Array;
       tripId: string | null;
+      kind: string;
+      declaredContentType: string | null;
     }>(
-      `SELECT c.revision,c.payload_id AS payloadId,p.sha256,p.byte_count AS byteCount,p.bytes,c.trip_id AS tripId
+      `SELECT c.revision,c.payload_id AS payloadId,p.sha256,p.byte_count AS byteCount,p.bytes,c.trip_id AS tripId,c.kind,c.declared_content_type AS declaredContentType
        FROM local_capture_inbox c JOIN local_capture_payloads p ON p.account_id=c.account_id AND p.id=c.payload_id
        WHERE c.account_id=? AND c.id=?`,
       context.accountId,
@@ -141,6 +194,12 @@ export function createCaptureProcessingRepository(
       (await hashCaptureBytes(material.bytes, deps.sha256)) !== pin.sha256
     )
       fail("CAPTURE_PROCESSING_HASH_MISMATCH");
+    return {
+      pin,
+      bytes: material!.bytes,
+      kind: material!.kind,
+      mediaType: material!.declaredContentType,
+    };
   }
   return {
     async schedule(context: AccountRequestContext, jobId: string) {
@@ -202,6 +261,113 @@ export function createCaptureProcessingRepository(
         return scheduled;
       });
     },
+    async scheduleLocal(context: AccountRequestContext, jobId: string) {
+      return gated(context, async () => {
+        const job = await submissions.load(context, jobId);
+        const scheduled: string[] = [];
+        for (const input of job.inputs) {
+          if (input.state !== "ACCEPTED") continue;
+          const validated = await db.getFirstAsync<SyncOperation>(
+            `${select} WHERE id=? AND owner_user_id=? AND status='COMPLETED' AND operation_type=?`,
+            opId(input.id),
+            context.accountId,
+            kind,
+          );
+          if (!validated) continue;
+          const id = localOpId(input.id);
+          const old = await db.getFirstAsync<SyncOperation>(`${select} WHERE id=?`, id);
+          if (old) {
+            if (
+              old.ownerUserId !== context.accountId ||
+              old.payloadJson !== validated.payloadJson ||
+              old.operationType !== localKind
+            )
+              fail("CAPTURE_LOCAL_CHANGED_PIN");
+          } else {
+            const now = deps.now();
+            await db.runAsync(
+              `INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,
+               base_version,payload_json,owner_user_id,status,attempt_count,next_attempt_at,created_at,updated_at)
+               VALUES(?,NULL,'CAPTURE_SUBMISSION_INPUT',?,?,?,CAST(? AS INTEGER),?,?,'PENDING',0,NULL,?,?)`,
+              id,
+              input.id,
+              localKind,
+              input.id,
+              input.revision,
+              validated.payloadJson,
+              context.accountId,
+              now,
+              now,
+            );
+          }
+          scheduled.push(id);
+        }
+        return scheduled;
+      });
+    },
+    async retryLocal(
+      context: AccountRequestContext,
+      jobId: string,
+      inputId: string,
+    ) {
+      return gated(context, async () => {
+        const job = await submissions.load(context, jobId);
+        if (!job.inputs.some((input) => input.id === inputId && input.state === "ACCEPTED"))
+          fail("CAPTURE_LOCAL_RETRY_SCOPE");
+        const operation = await current(context, localOpId(inputId));
+        if (operation.operationType !== localKind || operation.status !== "FAILED")
+          fail("CAPTURE_LOCAL_RETRY_NOT_FAILED");
+        const material = await pinned(context, operation);
+        if (material.pin.jobId !== jobId || material.pin.inputId !== inputId)
+          fail("CAPTURE_LOCAL_RETRY_SCOPE");
+        const updated = await db.runAsync(
+          `UPDATE sync_operations SET status='RETRYABLE',next_attempt_at=NULL,
+           claim_owner=NULL,lease_expires_at=NULL,updated_at=?
+           WHERE id=? AND owner_user_id=? AND operation_type=? AND status='FAILED'
+           AND payload_json=? AND attempt_count=?`,
+          deps.now(),
+          operation.id,
+          context.accountId,
+          localKind,
+          operation.payloadJson,
+          operation.attemptCount,
+        );
+        if (updated.changes !== 1) fail("CAPTURE_LOCAL_RETRY_CAS");
+        return operation.id;
+      });
+    },
+    async localResults(context: AccountRequestContext, jobId: string) {
+      return gated(context, async () => {
+        const job = await submissions.load(context, jobId);
+        const rows = await db.getAllAsync<{ resultJson: string }>(
+          `SELECT r.result_json AS resultJson FROM capture_local_interpretation_results r
+           JOIN capture_submission_inputs i ON i.account_id=r.account_id AND i.input_id=r.input_id
+           WHERE r.account_id=? AND i.batch_id=? ORDER BY i.ordinal`,
+          context.accountId,
+          job.batch.batchId,
+        );
+        return rows.map((row) => JSON.parse(row.resultJson) as CaptureLocalResult);
+      });
+    },
+    async localEvents(context: AccountRequestContext, jobId: string) {
+      return gated(context, async () => {
+        const job = await submissions.load(context, jobId);
+        return db.getAllAsync<{
+          inputId: string;
+          sequence: number;
+          state:
+            "PENDING" | "PROCESSING" | "RETRYABLE" | "FAILED" | "LOCAL_RESULT_RECORDED";
+          recordedAt: string;
+          attemptCount: number;
+        }>(
+          `SELECT e.input_id AS inputId,e.sequence,e.state,e.recorded_at AS recordedAt,e.attempt_count AS attemptCount
+           FROM capture_local_interpretation_events e JOIN capture_submission_inputs i ON i.account_id=e.account_id AND i.input_id=e.input_id
+           WHERE e.account_id=? AND i.batch_id=? ORDER BY e.sequence`,
+          context.accountId,
+          job.batch.batchId,
+        );
+      });
+    },
     async events(context: AccountRequestContext, jobId: string) {
       return gated(context, async () => {
         const job = await submissions.load(context, jobId);
@@ -219,10 +385,11 @@ export function createCaptureProcessingRepository(
     async listPending(context: AccountRequestContext) {
       return gated(context, () =>
         db.getAllAsync<SyncOperation>(
-          `${select} WHERE owner_user_id=? AND operation_type=? AND status IN ('PENDING','RETRYABLE')
+          `${select} WHERE owner_user_id=? AND operation_type IN (?,?) AND status IN ('PENDING','RETRYABLE')
          AND (next_attempt_at IS NULL OR next_attempt_at<=?) ORDER BY created_at,rowid`,
           context.accountId,
           kind,
+          localKind,
           deps.now(),
         ),
       );
@@ -233,12 +400,13 @@ export function createCaptureProcessingRepository(
           `SELECT MIN(CASE WHEN status IN ('PENDING','RETRYABLE')
               THEN COALESCE(next_attempt_at,?)
               WHEN status='PROCESSING' THEN COALESCE(lease_expires_at,?) END) AS due
-           FROM sync_operations WHERE owner_user_id=? AND operation_type=?
+           FROM sync_operations WHERE owner_user_id=? AND operation_type IN (?,?)
              AND status IN ('PENDING','RETRYABLE','PROCESSING')`,
           deps.now(),
           deps.now(),
           context.accountId,
           kind,
+          localKind,
         );
         return row?.due ? Date.parse(row.due) : null;
       });
@@ -248,11 +416,12 @@ export function createCaptureProcessingRepository(
         const now = deps.now();
         await db.runAsync(
           `UPDATE sync_operations SET status='RETRYABLE',next_attempt_at=NULL,claim_owner=NULL,
-             lease_expires_at=NULL,updated_at=? WHERE owner_user_id=? AND operation_type=?
+             lease_expires_at=NULL,updated_at=? WHERE owner_user_id=? AND operation_type IN (?,?)
              AND status='PROCESSING' AND (lease_expires_at IS NULL OR lease_expires_at<=?)`,
           now,
           context.accountId,
           kind,
+          localKind,
           now,
         );
       });
@@ -261,6 +430,9 @@ export function createCaptureProcessingRepository(
       return gated(context, async () => {
         const retained = await current(context, operation.id);
         if (
+          !localKinds.includes(
+            retained.operationType as typeof kind | typeof localKind,
+          ) ||
           retained.status !== operation.status ||
           retained.baseVersion !== operation.baseVersion ||
           retained.payloadJson !== operation.payloadJson ||
@@ -285,7 +457,7 @@ export function createCaptureProcessingRepository(
           now,
           operation.id,
           context.accountId,
-          kind,
+          operation.operationType,
           operation.status,
           operation.baseVersion,
           operation.payloadJson,
@@ -298,7 +470,7 @@ export function createCaptureProcessingRepository(
       });
     },
     async validate(context: AccountRequestContext, operation: SyncOperation) {
-      return gated(context, async () => {
+      const original = await gated(context, async () => {
         const retained = await current(context, operation.id);
         if (
           retained.status !== "PROCESSING" ||
@@ -307,8 +479,42 @@ export function createCaptureProcessingRepository(
           retained.payloadJson !== operation.payloadJson
         )
           fail("CAPTURE_PROCESSING_CLAIM");
-        await pinned(context, retained);
+        return pinned(context, retained);
       });
+      if (operation.operationType !== localKind) return;
+      if (original.kind !== "FILE" && original.kind !== "IMAGE")
+        fail("CAPTURE_LOCAL_UNSUPPORTED_KIND");
+      const bridge = await import("@/native/captureLocalExtraction");
+      const extracted = await bridge.extractCaptureLocal(
+        original.bytes,
+        localMediaType(original.kind, original.mediaType, original.bytes),
+      );
+      const textSha256 = await deps.sha256(new TextEncoder().encode(extracted.text));
+      const capability = await bridge.readCaptureLocalModelCapability().catch(() => ({
+        status: "UNAVAILABLE" as const,
+      }));
+      let result = buildCaptureLocalResult(
+        original.pin.inputId,
+        extracted,
+        { sha256: original.pin.sha256, byteCount: original.pin.byteCount },
+        textSha256,
+        capability.status,
+      );
+      if (capability.status === "AVAILABLE" && needsCaptureLocalEnrichment(result)) {
+        try {
+          result = attachCaptureLocalModelEvidence(
+            result,
+            await bridge.enrichCaptureFlightLocal(result.text),
+          );
+        } catch {
+          result = attachCaptureLocalModelEvidence(result, {
+            status: "FAILED",
+            reason: "LOCAL_MODEL_VALIDATION_FAILED",
+            observations: [],
+          });
+        }
+      }
+      staged.set(operation.id, { owner: operation.claimOwner!, result });
     },
     async settle(
       context: AccountRequestContext,
@@ -336,13 +542,51 @@ export function createCaptureProcessingRepository(
                 : new Error("CAPTURE_PROCESSING_VALIDATION");
           }
         }
+        const local = operation.operationType === localKind;
+        const prepared = local ? staged.get(operation.id) : undefined;
+        if (local && !failure && (!prepared || prepared.owner !== operation.claimOwner))
+          failure = new Error("CAPTURE_LOCAL_RESULT_MISSING");
         const terminal =
           failure?.message === "CAPTURE_PROCESSING_STALE_PIN" ||
           failure?.message === "CAPTURE_PROCESSING_HASH_MISMATCH" ||
           failure?.message === "CAPTURE_PROCESSING_SCOPE" ||
           failure?.message === "CAPTURE_PROCESSING_PIN" ||
+          failure?.message === "CAPTURE_LOCAL_PREREQUISITE" ||
+          failure?.message === "CAPTURE_LOCAL_UNSUPPORTED_KIND" ||
+          failure?.message === "CAPTURE_LOCAL_UNSUPPORTED_MEDIA" ||
+          failure?.message.startsWith("CAPTURE_LOCAL_ORIGINAL_") ||
+          failure?.message.startsWith("CAPTURE_LOCAL_PDF_") ||
+          failure?.message.startsWith("CAPTURE_LOCAL_OCR_") ||
+          failure?.message.startsWith("CAPTURE_LOCAL_SPAN_") ||
+          failure?.message.startsWith("CAPTURE_LOCAL_TEXT_") ||
+          failure?.message === "CAPTURE_OCR_MAPPING_INVALID" ||
+          failure?.message === "CAPTURE_ORIGINAL_MISMATCH" ||
+          failure?.message === "PDF_ORIGINAL_MISMATCH" ||
+          failure?.message === "PDF_PAGE_MAPPING_INVALID" ||
+          failure instanceof ZodError ||
           (failure instanceof LocalCaptureError && failure.code === "INTEGRITY");
         const status = failure ? (terminal ? "FAILED" : "RETRYABLE") : "COMPLETED";
+        const errorCode = failure
+          ? terminal && /^[A-Z0-9_]{1,80}$/.test(failure.message)
+            ? failure.message
+            : local
+              ? "CAPTURE_LOCAL_RETRY_OR_INVALID"
+              : "CAPTURE_PROCESSING_RETRY"
+          : null;
+        if (local && status === "COMPLETED") {
+          const result = prepared!.result;
+          await db.runAsync(
+            `INSERT INTO capture_local_interpretation_results(account_id,input_id,operation_id,original_sha256,original_byte_count,result_json,recorded_at)
+             VALUES(?,?,?,?,?,?,?)`,
+            context.accountId,
+            operation.entityId,
+            operation.id,
+            result.originalSha256,
+            result.originalByteCount,
+            JSON.stringify(result),
+            deps.now(),
+          );
+        }
         const result = await db.runAsync(
           `UPDATE sync_operations SET status=?,attempt_count=attempt_count+?,next_attempt_at=?,
            last_error_code=?,claim_owner=NULL,lease_expires_at=NULL,updated_at=?
@@ -350,15 +594,16 @@ export function createCaptureProcessingRepository(
           status,
           failure ? 1 : 0,
           status === "RETRYABLE" ? (next ?? deps.now()) : null,
-          failure ? (terminal ? failure.message : "CAPTURE_PROCESSING_RETRY") : null,
+          errorCode,
           deps.now(),
           operation.id,
           context.accountId,
-          kind,
+          operation.operationType,
           operation.claimOwner!,
           operation.payloadJson,
         );
         if (result.changes !== 1) fail("CAPTURE_PROCESSING_CAS");
+        if (local) staged.delete(operation.id);
       });
     },
     async run(context: AccountRequestContext) {
@@ -376,7 +621,8 @@ export function createCaptureProcessingRepository(
         },
         { push: (operation) => repository.validate(context, operation) },
         (attempt) => nextSyncAttemptAt(attempt, Date.parse(deps.now())),
-        (operation) => operation.operationType === kind,
+        (operation) =>
+          localKinds.includes(operation.operationType as typeof kind | typeof localKind),
         true,
       ).run("AUTHENTICATED_ONLINE");
     },
