@@ -38,7 +38,7 @@ export const UNKNOWN_FLIGHT_TIME: z.infer<typeof flightTimeInputSchema> = {
   source_instant_precision: null,
   fold_choice: null,
 };
-const designator = /^([A-Z][A-Z0-9]|[0-9][A-Z])([0-9]{1,4}[A-Z]?)$/;
+const designator = /^([A-Z][A-Z0-9]|[0-9][A-Z])[ \t\u00a0]*([0-9]{1,4}[A-Z]?)$/;
 function service(raw: string, operating = false): FlightService {
   const literal = raw.replace(/^(?:flight\s*[:=]\s*|operating\s*[:=]\s*)/i, "").trim();
   const match = designator.exec(literal);
@@ -303,7 +303,11 @@ export function parseReferenceFlightText(inputId: string, text: string) {
       );
     if (!tableLeg) tableMarker = undefined;
     const head =
-      /^\s*(?:Flight\s*[:=]\s*)?((?:[A-Z][A-Z0-9]|[0-9][A-Z])[0-9]{1,4}[A-Z]?)(?=\s|[;|]|$)/.exec(
+      /^\s*(?:Flight\s*[:=]\s*)?((?:[A-Z][A-Z0-9]|[0-9][A-Z])[ \t\u00a0]*[0-9]{1,4}[A-Z]?)(?=\s|[;|]|$)/.exec(
+        body,
+      );
+    const contextualHead =
+      /\b(?:booked to fly|Flight)\s+((?:[A-Z][A-Z0-9]|[0-9][A-Z])[ \t\u00a0]*[0-9]{1,4}[A-Z]?)(?=\s|[;|]|$)/.exec(
         body,
       );
     // Only an explicit Flight marker starts a numberless leg; route prose is not enough.
@@ -313,7 +317,7 @@ export function parseReferenceFlightText(inputId: string, text: string) {
       /^\s*(?:date|depDate|arrDate|departure|arrival|dep|arr|route|depZone|arrZone|depOffset|arrOffset|depInstant|arrInstant|passenger|pnr|seat|ticket|baggage|fare|cabin|occurrence|change)\s*[:=]/i.test(
         body,
       );
-    if (!head && !sparseHead && !tableLeg && (!current || !labelled)) {
+    if (!head && !contextualHead && !sparseHead && !tableLeg && (!current || !labelled)) {
       if (body.trim()) ignore(line.index!, line.index! + body.length);
       if (ignored.length > 64) throw new Error("LIMIT_EXCEEDED");
       current = undefined;
@@ -340,7 +344,7 @@ export function parseReferenceFlightText(inputId: string, text: string) {
         uncertainty: normalized.uncertainty,
       });
     };
-    if (head || sparseHead || tableLeg) {
+    if (head || contextualHead || sparseHead || tableLeg) {
       current = {
         token: `item:${inputId}:${line.index}`,
         schema_id: "otr.import.flight",
@@ -349,10 +353,18 @@ export function parseReferenceFlightText(inputId: string, text: string) {
       };
       localItems.push(current);
       const marker = head ?? sparseHead;
-      const raw = marker ? marker[0].trim() : tableMarker!.raw,
-        at = marker ? line.index! + marker[0].indexOf(raw) : tableMarker!.at;
+      const raw = marker
+          ? marker[0].trim()
+          : contextualHead
+            ? contextualHead[1]
+            : tableMarker!.raw,
+        at = marker
+          ? line.index! + marker[0].indexOf(raw)
+          : contextualHead
+            ? line.index! + contextualHead.index + contextualHead[0].lastIndexOf(raw)
+            : tableMarker!.at;
       add("transport_subtype", raw, at);
-      if (head) add("service", raw, at);
+      if (head || contextualHead) add("service", raw, at);
     }
     if (tableLeg && table) {
       const route = body.trim();
