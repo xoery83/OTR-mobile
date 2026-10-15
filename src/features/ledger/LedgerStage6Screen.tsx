@@ -3,6 +3,7 @@ import {
   assertAccountRequestGeneration,
 } from "@/data/auth/accountRequestContext";
 import { requireActiveUserId } from "@/data/auth/authRepository";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
 import { segmentedControlTokens } from "@/ui/segmented";
 import type { TextInput as NativeTextInput } from "react-native";
@@ -447,23 +448,24 @@ export function LedgerStage6Screen({
   const loadContext = useCallback(async () => {
     const context = await captureAccountScope(requireActiveUserId);
     const generation = context.generation;
+    const explicitTrip = scopedJourneyId ?? workingTrip?.tripId;
+    if (explicitTrip)
+      await (await readLocalTripRepository()).initializeLocalLedger(explicitTrip);
     const repository = await getDefaultLedgerReportingRepository();
     const [available, selected] = await Promise.all([
       repository.listJourneys(),
       repository.getSelectedJourneyId(),
     ]);
     if (generation !== getAccountGeneration()) return;
-    const explicitTrip = scopedJourneyId ?? workingTrip?.tripId;
-    const entry =
-      explicitTrip && !available.some((item) => item.journeyId === explicitTrip)
-        ? { kind: "MY_LEDGER" as const }
-        : chooseJourneyEntry(
-            available,
-            localToday(),
-            selected,
-            explicitTrip,
-            manualJourneyId.current,
-          );
+    if (explicitTrip && !available.some((item) => item.journeyId === explicitTrip))
+      throw new Error(t("entry.contextUnavailable"));
+    const entry = chooseJourneyEntry(
+      available,
+      localToday(),
+      selected,
+      explicitTrip,
+      manualJourneyId.current,
+    );
     setJourneys(available);
     const nextJourney =
       entry.kind === "JOURNEY"

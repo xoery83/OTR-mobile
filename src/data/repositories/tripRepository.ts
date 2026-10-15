@@ -1,4 +1,6 @@
 import type * as SQLite from "expo-sqlite";
+import { createUuid } from "@/domain/localId";
+import { currencyScale } from "@/domain/ledger/currency";
 import type {
   BuiltInTripCoverId,
   CreateTripInput,
@@ -21,7 +23,7 @@ import {
   withAccountApplyGate,
 } from "../auth/accountRequestContext";
 import { readInitializedDatabase } from "../db/database";
-import { requireActiveUserId } from "../auth/authRepository";
+import { requireActiveUserId, readLocalSession } from "../auth/authRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 
@@ -76,13 +78,94 @@ const title = (value: string) => {
 const date = (value: string | null | undefined) =>
   value ? validateCalendarDate(value) : null;
 
-// Account-local creator intent only; no member, financial setting or admission is fabricated.
+// Local creator authority is separate from Hosted receipts and certified Core reads.
 export function createTripRepository(
   database: Database,
   account: () => Promise<string>,
   core: Core,
   clock = () => new Date().toISOString(),
+  displayName = async (accountId: string) => accountId,
 ) {
+  async function initializeLedger(accountId: string, row: Row, name: string) {
+    if (row.accepted_at) return;
+    const binding = await database.getFirstAsync<{ person_id: string }>(
+      "SELECT person_id FROM local_trip_ledger_bindings WHERE account_id=? AND trip_id=?",
+      accountId,
+      row.id,
+    );
+    if (binding) return;
+    const intent = await database.getFirstAsync<{ id: string; payload_json: string }>(
+      `SELECT op.id,op.payload_json FROM sync_operations op
+       JOIN local_trip_containers trip ON trip.account_id=op.owner_user_id
+         AND trip.id=op.trip_id AND trip.create_operation_id=op.id
+       WHERE op.owner_user_id=? AND op.trip_id=? AND op.entity_id=?
+         AND op.id=op.idempotency_key AND op.entity_type='TRIP'
+         AND op.operation_type='CREATE_TRIP' AND op.status<>'COMPLETED'`,
+      accountId,
+      row.id,
+      row.id,
+    );
+    if (!intent) throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
+    const proposed = tripCreateRequestSchema.parse({
+      operationId: intent.id,
+      ...JSON.parse(intent.payload_json),
+    });
+    if (
+      proposed.tripId !== row.id ||
+      proposed.name !== row.name ||
+      proposed.destination !== row.destination ||
+      proposed.startDate !== row.start_date ||
+      proposed.endDate !== row.end_date
+    )
+      throw new Error("TRIP_CREATE_LOCAL_MISMATCH");
+    const existing = await database.getFirstAsync<{ journey_id: string }>(
+      "SELECT journey_id FROM ledger_journeys WHERE journey_id=?",
+      row.id,
+    );
+    if (existing) throw new Error("TRIP_LEDGER_INITIALIZATION_CONFLICT");
+    const preference = await database.getFirstAsync<{ default_currency: string }>(
+      "SELECT default_currency FROM account_local_state WHERE user_id=?",
+      accountId,
+    );
+    const currency = preference?.default_currency ?? "NZD";
+    const scale = currencyScale(currency);
+    if (scale === null) throw new Error("TRIP_LEDGER_CURRENCY_INVALID");
+    const personId = createUuid();
+    const now = clock();
+    await database.runAsync(
+      "INSERT INTO local_trip_ledger_bindings(account_id,trip_id,person_id,create_operation_id,initialized_at) VALUES(?,?,?,?,?)",
+      accountId,
+      row.id,
+      personId,
+      intent.id,
+      now,
+    );
+    await database.runAsync(
+      "INSERT INTO ledger_journeys(journey_id,title,start_date,end_date,settlement_currency,settlement_scale,valuation_policy,updated_at) VALUES(?,?,?,?,?,?,'REFERENCE_RATE',?)",
+      row.id,
+      row.name,
+      row.start_date,
+      row.end_date,
+      currency,
+      scale,
+      now,
+    );
+    await database.runAsync(
+      "INSERT INTO ledger_members(id,journey_id,display_name,role,status,updated_at) VALUES(?,?,?,'owner','local',?)",
+      personId,
+      row.id,
+      name,
+      now,
+    );
+    await database.runAsync(
+      "INSERT INTO ledger_actor_context(user_id,journey_id,member_id,role,capabilities_json,updated_at) VALUES(?,?,?,'owner',?,?)",
+      accountId,
+      row.id,
+      personId,
+      JSON.stringify({ authority: "LOCAL_CREATOR" }),
+      now,
+    );
+  }
   async function getTrip(id: string): Promise<Trip | null> {
     coreUuid.parse(id);
     const scope = await captureAccountScope(account);
@@ -96,6 +179,23 @@ export function createTripRepository(
   }
   return {
     getTrip,
+    async initializeLocalLedger(tripId: string) {
+      coreUuid.parse(tripId);
+      const scope = await captureAccountScope(account);
+      const name = await displayName(scope.accountId);
+      await withAccountApplyGate(async () => {
+        await assertAccountRequestContext(scope, account);
+        await database.withTransactionAsync(async () => {
+          const row = await database.getFirstAsync<Row>(
+            "SELECT * FROM local_trip_containers WHERE account_id=? AND id=?",
+            scope.accountId,
+            tripId,
+          );
+          if (row) await initializeLedger(scope.accountId, row, name);
+          await assertAccountRequestContext(scope, account);
+        });
+      });
+    },
     async listTrips(): Promise<Trip[]> {
       const scope = await captureAccountScope(account);
       const rows = await database.getAllAsync<Row>(
@@ -147,6 +247,7 @@ export function createTripRepository(
         throw new Error("TRIP_DESTINATION_INVALID");
       const text = canonicalCoreJson(payload as Json);
       const scope = await captureAccountScope(account);
+      const name = await displayName(scope.accountId);
       return withAccountApplyGate(async () => {
         await assertAccountRequestContext(scope, account);
         let result: Trip | null = null;
@@ -206,6 +307,13 @@ export function createTripRepository(
               accepted_at: null,
             });
           }
+          const row = await database.getFirstAsync<Row>(
+            "SELECT * FROM local_trip_containers WHERE account_id=? AND id=?",
+            scope.accountId,
+            input.tripId,
+          );
+          if (!row) throw new Error("TRIP_LOCAL_RECORD_MISSING");
+          await initializeLedger(scope.accountId, row, name);
           await assertAccountRequestContext(scope, account);
         });
         return result!;
@@ -350,5 +458,15 @@ export async function readLocalTripRepository(): Promise<TripRepository> {
     requireActiveUserId,
     tripCoreSha256Hex,
   );
-  return createTripRepository(database, requireActiveUserId, core);
+  return createTripRepository(
+    database,
+    requireActiveUserId,
+    core,
+    undefined,
+    async (id) => {
+      const identity = (await readLocalSession())?.identity;
+      if (identity?.userId !== id) throw new Error("TRIP_CREATE_ACCOUNT_MISMATCH");
+      return identity.displayName;
+    },
+  );
 }

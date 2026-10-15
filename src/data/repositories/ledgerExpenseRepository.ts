@@ -2223,6 +2223,13 @@ async function enqueueOperation(
 ) {
   const now = new Date().toISOString();
   const operationId = createLocalId("ledger-operation");
+  const localTrip = await database.getFirstAsync<{ create_operation_id: string }>(
+    `SELECT create_operation_id FROM local_trip_containers
+     WHERE account_id=? AND id=? AND accepted_at IS NULL`,
+    userId,
+    expense.journeyId,
+  );
+  dependencyOperationId ??= localTrip?.create_operation_id;
   await database.runAsync(
     `INSERT INTO sync_operations (
       id, trip_id, entity_type, entity_id, operation_type, idempotency_key,

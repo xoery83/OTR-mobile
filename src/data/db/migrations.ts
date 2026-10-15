@@ -1,4 +1,5 @@
 import { requiredDateDecisionsMigration } from "./migrations/requiredDateDecisions";
+import { localTripLedgerMigration } from "./migrations/localTripLedger";
 import { captureProcessingMigration } from "./migrations/captureProcessing";
 import { captureLocalInterpretationMigration } from "./migrations/captureLocalInterpretation";
 import { captureCameraInputsMigration } from "./migrations/captureCameraInputs";
@@ -1717,4 +1718,5 @@ export const migrations: Migration[] = [
   requiredDateDecisionsMigration,
   captureProcessingMigration,
   captureLocalInterpretationMigration,
+  localTripLedgerMigration,
 ];

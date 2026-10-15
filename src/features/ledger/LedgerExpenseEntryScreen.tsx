@@ -66,6 +66,7 @@ import type {
   LedgerExpenseCommand,
 } from "@/data/repositories/ledgerExpenseRepository";
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { currencyScale } from "@/domain/ledger/currency";
@@ -2109,6 +2110,7 @@ async function loadEntry(
   if (existing?.status === "DELETED") throw new Error(t("extra.copy10"));
   const id = existing?.journeyId ?? journeyId;
   if (!id) throw new Error(t("entry.chooseJourney"));
+  await (await readLocalTripRepository()).initializeLocalLedger(id);
   const reporting = await getDefaultLedgerReportingRepository();
   const reads = await getDefaultLedgerReadRepository();
   const [journeys, actor, rawMembers, households, receipt, expenses, preferences] =

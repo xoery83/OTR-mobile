@@ -21,6 +21,9 @@ import { coreClosedCapabilities } from "@/domain/trip/tripCoreV2Commands";
 import type { TripCreateTransport } from "../sync/tripCreateTransport";
 import type { CoreSyncTransport } from "../sync/tripCoreV2SyncWorker";
 import { createTripRepository } from "./tripRepository";
+import { createLedgerExpenseRepository } from "./ledgerExpenseRepository";
+import { createLedgerReportingRepository } from "./ledgerReportingRepository";
+import { createLedgerReadRepository } from "./ledgerReadRepository";
 vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 const connections: DatabaseSync[] = [],
@@ -103,6 +106,7 @@ function local(path = ":memory:", initialize = true, clock?: () => string) {
   );
   return {
     sql,
+    database,
     core,
     queue: createSyncOperationRepository(database, identity),
     repo: createTripRepository(database, identity, core, clock ?? (() => stamp)),
@@ -580,7 +584,6 @@ it("Reference Trip v1 uses normal repositories and survives SQLite reopen/replay
     "trip_core_itinerary_events",
     "trip_core_read_certificates",
     "trip_core_person_bindings",
-    "ledger_members",
   ])
     expect(f.sql.prepare(`SELECT count(*) AS n FROM ${table}`).get()?.n).toBe(0);
   activeAccount = accountB;
@@ -684,7 +687,10 @@ it("Reference-local Backend receipts and collection admit five P1/P3 through nor
   expect(
     f.sql.prepare("SELECT count(*) AS n FROM trip_core_read_certificates").get()?.n,
   ).toBe(1);
-  expect(f.sql.prepare("SELECT count(*) AS n FROM ledger_members").get()?.n).toBe(0);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM ledger_members WHERE status='local'").get()
+      ?.n,
+  ).toBe(1);
   f.sql.close();
   f = local(path, false, () => scenario.createdAt);
   observed = (await normalReader().trip(saved.id)).observed;
@@ -853,7 +859,10 @@ it("Reference full sixteen normal commands/receipts and owning cold collection p
       )
       .get()?.n,
   ).toBe(1);
-  expect(f.sql.prepare("SELECT count(*) AS n FROM ledger_members").get()?.n).toBe(0);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM ledger_members WHERE status='local'").get()
+      ?.n,
+  ).toBe(1);
   f.switchTo(accountB);
   expect(await f.repo.getTrip(saved.id)).toBeNull();
   expect(await createCoreP6DayFeedReader(f.core)(saved.id)).toBeNull();
@@ -917,4 +926,211 @@ it("Reference fixture optional bootstrap keeps supplied normal actor/person/epoc
       accessRevision: 7,
     }),
   ).rejects.toThrow("BOOTSTRAP_MISMATCH");
+});
+
+it("TCL01 offline Trip→Ledger→Expense→cold reopen retains local authority and the original queue dependency", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-tcl01-offline-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const create = input();
+  const saved = await f.repo.createTrip(create);
+  const reporting = createLedgerReportingRepository(f.database, async () => accountA);
+  const reads = createLedgerReadRepository(f.database, async () => accountA);
+  const journey = (await reporting.listJourneys())[0];
+  const actor = await reporting.getActorMemberId(saved.id);
+  const members = await reads.listMembers(saved.id);
+  expect(journey).toMatchObject({
+    journeyId: saved.id,
+    hasActor: true,
+    settlementCurrency: "NZD",
+    memberCount: 1,
+  });
+  expect(members).toHaveLength(1);
+  expect(members[0]).toMatchObject({
+    id: actor?.memberId,
+    role: "owner",
+    status: "local",
+  });
+  const memberId = members[0].id;
+  const expenses = createLedgerExpenseRepository(f.database, async () => accountA);
+  const expense = await expenses.createExpense({
+    journeyId: saved.id,
+    creatorMemberId: memberId,
+    payerMemberId: memberId,
+    title: "Summer lunch",
+    category: "food",
+    occurredAt: stamp,
+    economicDate: "2026-10-13",
+    original: { minor: 1200, currency: "NZD", scale: 2 },
+    participants: [
+      {
+        memberId,
+        displayNameSnapshot: members[0].displayName,
+        householdIdSnapshot: null,
+      },
+    ],
+    splits: [
+      {
+        memberId,
+        method: "EQUAL_PERSON",
+        originalMinor: 1200,
+        settlementMinor: null,
+        weightUnits: null,
+        percentageUnits: null,
+        roundingAdjustmentMinor: 0,
+      },
+    ],
+    valuation: null,
+    status: "DRAFT",
+  });
+  const before = f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all();
+  expect(before).toHaveLength(2);
+  expect(before.find((row) => row.entity_id === expense.id)).toMatchObject({
+    status: "DEPENDENCY_BLOCKED",
+    dependency_operation_id: create.operationId,
+    attempt_count: 0,
+    owner_user_id: accountA,
+  });
+  expect(await f.queue.listPending()).toEqual([]);
+  await f.repo.initializeLocalLedger(saved.id);
+  expect(await f.repo.createTrip(create)).toEqual(saved);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_trip_ledger_bindings").get()?.n,
+  ).toBe(1);
+  expect(await f.core.acceptedSnapshot(await f.core.captureContext(saved.id))).toBeNull();
+  expect(
+    f.sql.prepare("SELECT owner_person_id,accepted_at FROM local_trip_containers").get(),
+  ).toMatchObject({ owner_person_id: null, accepted_at: null });
+  expect(
+    f.sql
+      .prepare("SELECT participation_revision,participation_active FROM ledger_members")
+      .get(),
+  ).toMatchObject({ participation_revision: null, participation_active: null });
+  f.sql.close();
+  f = local(path, false);
+  await f.repo.initializeLocalLedger(saved.id);
+  expect(await f.repo.getTrip(saved.id)).toEqual(saved);
+  expect(
+    await createLedgerExpenseRepository(f.database, async () => accountA).getExpense(
+      expense.id,
+    ),
+  ).toMatchObject({
+    id: expense.id,
+    journeyId: saved.id,
+    creatorMemberId: memberId,
+    syncStatus: "PENDING_CREATE",
+  });
+  expect(f.sql.prepare("SELECT * FROM sync_operations ORDER BY id").all()).toEqual(
+    before,
+  );
+  f.switchTo(accountB);
+  await f.repo.initializeLocalLedger(saved.id);
+  expect(await f.repo.getTrip(saved.id)).toBeNull();
+  expect(
+    await createLedgerReportingRepository(
+      f.database,
+      async () => accountB,
+    ).listJourneys(),
+  ).toEqual([]);
+  expect(
+    await createLedgerExpenseRepository(f.database, async () => accountB).getExpense(
+      expense.id,
+    ),
+  ).toBeNull();
+});
+
+it("TCL01 repairs an existing pre-initialization creator intent without replacing Trip, operation or timestamps", async () => {
+  const f = local();
+  const create = input();
+  // Synthetic pre-TCL01 state, using the historical normal repository SQL contract.
+  const payload = JSON.stringify({
+    tripId: create.tripId,
+    name: create.name.trim(),
+    destination: create.destination,
+    startDate: create.startDate,
+    endDate: create.endDate,
+  });
+  f.sql
+    .prepare(
+      `INSERT INTO local_trip_containers(account_id,id,create_operation_id,name,destination,start_date,end_date,created_at,updated_at)
+    VALUES(?,?,?,?,?,?,?,?,?)`,
+    )
+    .run(
+      accountA,
+      create.tripId,
+      create.operationId,
+      create.name.trim(),
+      create.destination,
+      create.startDate,
+      create.endDate,
+      stamp,
+      stamp,
+    );
+  f.sql
+    .prepare(
+      `INSERT INTO sync_operations(id,trip_id,entity_type,entity_id,operation_type,idempotency_key,payload_json,owner_user_id,status,attempt_count,last_error_code,created_at,updated_at)
+    VALUES(?,?,'TRIP',?,'CREATE_TRIP',?,?,?,'DEPENDENCY_BLOCKED',0,'TRIP_INITIALIZATION_REQUIRED',?,?)`,
+    )
+    .run(
+      create.operationId,
+      create.tripId,
+      create.tripId,
+      create.operationId,
+      payload,
+      accountA,
+      stamp,
+      stamp,
+    );
+  const beforeTrip = f.sql.prepare("SELECT * FROM local_trip_containers").get();
+  const beforeQueue = f.sql.prepare("SELECT * FROM sync_operations").get();
+  await f.repo.initializeLocalLedger(create.tripId);
+  await f.repo.initializeLocalLedger(create.tripId);
+  expect(f.sql.prepare("SELECT * FROM local_trip_containers").get()).toEqual(beforeTrip);
+  expect(f.sql.prepare("SELECT * FROM sync_operations").get()).toEqual(beforeQueue);
+  expect(
+    await createLedgerReportingRepository(
+      f.database,
+      async () => accountA,
+    ).getActorMemberId(create.tripId),
+  ).toMatchObject({ memberId: expect.any(String) });
+});
+
+it("TCL01 rolls back Trip, creator binding and Ledger together if initialization fails", async () => {
+  const f = local();
+  f.sql.exec(
+    `CREATE TRIGGER fail_local_actor BEFORE INSERT ON ledger_actor_context BEGIN SELECT RAISE(ABORT,'ACTOR_WRITE_FAILED'); END;`,
+  );
+  await expect(f.repo.createTrip(input())).rejects.toThrow("ACTOR_WRITE_FAILED");
+  for (const table of [
+    "local_trip_containers",
+    "local_trip_ledger_bindings",
+    "ledger_journeys",
+    "ledger_members",
+    "ledger_actor_context",
+    "sync_operations",
+  ])
+    expect(f.sql.prepare(`SELECT count(*) AS n FROM ${table}`).get()?.n).toBe(0);
+});
+
+it("TCL01 uses only the active account's configured Ledger currency", async () => {
+  const f = local();
+  const reporting = createLedgerReportingRepository(f.database, async () => accountA);
+  await reporting.setDefaultCurrency("JPY");
+  const saved = await f.repo.createTrip(input());
+  expect((await reporting.listJourneys())[0]).toMatchObject({
+    journeyId: saved.id,
+    settlementCurrency: "JPY",
+    settlementScale: 0,
+  });
+  f.switchTo(accountB);
+  const other = await f.repo.createTrip(input());
+  expect(
+    (
+      await createLedgerReportingRepository(
+        f.database,
+        async () => accountB,
+      ).listJourneys()
+    )[0],
+  ).toMatchObject({ journeyId: other.id, settlementCurrency: "NZD", settlementScale: 2 });
 });
