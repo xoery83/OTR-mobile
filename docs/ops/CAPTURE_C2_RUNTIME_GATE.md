@@ -1,17 +1,21 @@
-# C2 bounded Runtime Gate package — NOT EXECUTED
+# C2 bounded Runtime Gate package — CONDITIONAL OWNER AUTHORIZATION
 
-Base425a102; exact patch/file/bundle hashes in review manifest. No credentials,
-private runtime directory, actual Storage, deployment or Native were accessed.
+Reviewed Backend snapshot83f575f; exact patch/file/bundle hashes remain in the
+review manifest. Runtime evidence is recorded separately; code approval is not PASS.
 C1 PARTIAL remains; do not resubmit the existing Batch.
 
 ## One protected decision, existing DEV only
 
-Approve only reviewed Backend image/profile replacement, existing credential
+Owner approved only reviewed Backend image/profile replacement, existing credential
 reuse, metadata-only root/config provisioning if absent, and the same two Input
 Storage PUT/authorized GET. No SQL/role/Provider/new Account/device/bundle. Preserve
 Caddy/network/firewall and unrelated services. Use existing runbook maintenance
 window, image/profile preflight and immutable rollback; prior approvals do not
-stand in for this Gate. No real image ID has yet been built/observed.
+stand in for this Gate. Built image (not deployed):
+`sha256:08b1ad6f11318ac52fc55e28f99b8774cf90286ad0499ca81a7bfad5d373765e`;
+Capture bundle `3c873ee300fa467186f91aeab7363d78869222ea125d4b55eb61a2f7ad1c54d5`.
+Independent exact Linux reproduction/equivalent lowering evidence:
+`/private/tmp/otr-c2-backend-runtime-20261015/independent-bundle-check.md`.
 
 Build reviewed snapshot: `docker build -f deploy/dev-backend/Dockerfile -t otr-dev-backend:capture-c2-reviewed .`.
 Record immutable ID using `docker image inspect otr-dev-backend:capture-c2-reviewed --format '{{.Id}}'`;
@@ -24,10 +28,22 @@ override; do not use base-only Compose or expose private values. Render only
 `config --no-env-resolution --no-interpolate`. Use the reviewed strict verifier capture profile:
 `node scripts/dev/backend-host-image-check.mjs "$OTR_DEV_BACKEND_REVIEWED_IMAGE_ID" "$rollback_image" "$credential_file" capture < reviewed-compose.json`.
 It preserves host/credential/image predicates and admits only the exact Capture
-command plus two non-auto-created binds. Never bypass a rejection.
+command plus the two non-auto-created Capture binds and the retained read-only
+Catalog Reader bind. Owner approved this exact third mount on 2026-10-15:
+`/run/otr-r3a5-catalog/catalog-reader.json` -> `/run/otr/catalog-reader.json`.
+Preserve `/opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml` in both forward
+and exact prior rollback selection. No fourth, substitute, writable or auto-created
+Reader bind is accepted. Backend source snapshot83f575f is unchanged.
+Never bypass a rejection. Use exactly the documented noninterpolated, non-env-
+resolved JSON for this checker; additional interpolated rendering can expand
+env-file fields and omit false bind flags. Do not relax the checker to accept it.
 
-After that qualification and approval, operate only backend:
-`docker compose -p dev-backend -f deploy/dev-backend/compose.host.yml -f "$api_key_override" -f "$forward_image_override" -f deploy/dev-backend/compose.capture-custody.closed.yml up -d --no-build --pull never backend`.
+After that qualification and approval, operate only backend. Export the fixed
+nonsecret `OTR_DEV_BACKEND_REVIEWED_IMAGE_ID` for actual Compose interpolation;
+a later literal image override does not suppress required variables in earlier
+files. Keep the exact original four-file selection, append the new image override
+last among image-setting files, then the Capture override:
+`docker compose -p dev-backend -f deploy/dev-backend/compose.host.yml -f "$api_key_override" -f "$prior_host_image_override" -f /opt/otr/dev-backend/env/r3a5-reader90-v5/forward.yml -f "$forward_image_override" -f deploy/dev-backend/compose.capture-custody.closed.yml up -d --no-build --pull never backend`.
 Check loopback/public health, unauthenticated401, and rejection outside exact2Input
 allowlist. Roll back to retained immutable image and EXACT prior full Compose
 selection without Capture override. Never delete/reset Storage or metadata.
@@ -93,12 +109,27 @@ first endpoint access. Do not change/restart Metro, select another target or por
 Two later host-namespace diagnostic requests timed out in tool automatic approval
 before command execution; those are approval availability failures, not evidence
 of DEV permission denial or host IPv4/IPv6 network failure. Sandbox URLError alone
-cannot establish actual host connect-refused. The exact A1A target remains UNKNOWN.
+cannot establish actual host connect-refused. Subsequent IPv6 discovery qualified the unique original target metadata; full
+WebSocket/context/hook qualification failed with a generic error.
 The device name is the approved A1A
 name, not evidence of a discovered Inspector target; any other/absent/ambiguous
-metadata is unqualified. Before remote provision/deploy, qualify only the A1A
-target mapping and hook presence in the approved window; FAIL/UNKNOWN stops those
-subsequent steps. This read-only bridge result does not verify repositories or Inputs.
+metadata is unqualified.
+
+Owner sequencing revision (2026-10-15): Backend qualification/deployment is
+independent of Native Inspector/hook availability. All existing DEV Project,
+fixed reviewed image, protected credential/config, exact metadata mount, permissions
+and rollback checks must PASS before the previously authorized Backend deployment.
+Native failure stops Native execution and both Input PUT/GET, not Backend qualification.
+No image, credential, Storage/Auth/RLS, Production or data-isolation scope changes.
+
+Owner permits one normal close/reopen and necessary reload of only the original
+A1A/App to load the sealed hook through the normal module. Preserve Simulator,
+bundle, database, Auth session and original Metro; no reinstall/reset/session copy.
+Unsaved temporary UI state may be lost. If recovery fails, retain finite separate
+WebSocket/context/hook evidence and stop that direction without repeated attempts.
+
+The read-only bridge does not verify repositories or Inputs. Both Backend and
+complete Native qualification must PASS before any two-file PUT/GET acceptance.
 Only after successful qualification, backend readiness and explicit Gate, run
 `node scripts/dev/capture-c2-once.mjs --execute` once. It calls only the sealed
 hook. Within that execution, the runner verifies both Inputs through normal
@@ -107,10 +138,19 @@ A failed or UNKNOWN preflight stops before Storage writes. The bridge returns
 only exact pinned IDs/count/SHA; timeout/error/unknown receipt
 is failure, never success. Do not auto-retry: inspect same identities first.
 
-Runtime remains NOT VERIFIED. Root's two bounded discovery attempts (sandbox and
-approved host namespace) both returned URLError, no targets. No debugger was
-connected, no JS executed, and this bridge has only synthetic self-checks.
-Restoring original Metro/host is an explicit protected prerequisite, not an
-observed usable channel. Do not probe alternate ports or restart anything here.
+Runtime remains NOT VERIFIED. Prior failures and exact source restoration remain
+recorded in /private/tmp/otr-c2-a1a-runtime-20261015/receipt.json. No Backend image
+or upload success may be inferred from metadata discovery or a recovered hook.
 Restore all six preimages and remove hook on every outcome; verify hashes.
 Keyboard OFF except atomic input; USER_CHANGED stops. No permanent debug route.
+
+## Latest bounded execution stop
+
+Image/build/profile qualified, but two operation rounds stopped before replacement.
+Original23dae9/container/full Compose unchanged; local/public health200. Newly
+created metadata root/marker retained for audit; the unused Capture config was
+moved to `/opt/otr/dev-backend/env/capture-c2-20261015/capture-custody.disabled.json`.
+Do not create a replacement store identity on resume; preserve and reattest this
+operation's existing root/config continuity, and validate expiry before reuse.
+Native remains stopped at WS; no two-file PUT/GET or C2 Runtime PASS.
+Receipt: `/private/tmp/otr-c2-backend-runtime-20261015/final-receipt.json`.

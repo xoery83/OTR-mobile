@@ -22,21 +22,37 @@
   at `83f575f`; independent Code PASS and conditional Owner Gate READY. New
   composition/runner 7 tests, profile 47 and bridge 3 tests passed; canonical
   typecheck passed. Gate: `docs/ops/CAPTURE_C2_RUNTIME_GATE.md`.
-  Owner approved the bounded conditional Gate; 2026-10-15 05:08 UTC preflight
-  stopped BLOCKED: fixed A1A Inspector discovery returned URLError/UNKNOWN,
-  no target observed. Per the grant, no recovery, alternate target or subsequent
-  remote step was attempted. Live DEV environment/deployment channel NOT REACHED;
-  actual image ID absent; both Inputs PUT/authorized GET NOT ATTEMPTED.
-  No host/device/config/provision/deployment/Storage mutation; rollback NOT REQUIRED.
-  Receipt: `/private/tmp/otr-c2-runtime-preflight-20261015/receipt.json`.
-  C2 remains BLOCKED BUT OWNED by Coordinator. Bounded local diagnosis confirmed
-  original Node PID3554/cwd and [::1]:8081 listener; A1A target remains UNKNOWN.
-  Two host-namespace read-only requests expired in tool approval before execution,
-  not DEV permission or host-network failures. No third identical retry.
-  Exact three-file IPv6 loopback delta independently passed (5 synthetic tests);
-  WAITING_OWNER_LOOPBACK_DELTA before actual [::1] discovery. Same port/A1A/App,
-  no fallback or alternate target; FAIL/UNKNOWN stops protected C2. No restart,
-  new endpoint access, overlay, deployment or Storage operation performed.
+  Owner approved independent Backend qualification/deployment sequencing and one
+  original A1A normal close/reopen plus necessary reload. Gate text is updated.
+  Native recovery used that one restart successfully, then normal Recent submissions.
+  Unique original target metadata qualified; the single staged WS session did not
+  open. Runtime.enable/context/hook checks were not sent; handshake reason remains
+  NOT OBSERVED. Stop that recovery direction: no second restart or reconnect.
+  Six source preimages/original absence states restored exact; in-memory hook
+  presence/removal NOT OBSERVED. Receipt:
+  `/private/tmp/otr-c2-a1a-runtime-recovery-r2-20261015/receipt.json`.
+  Backend independently confirmed existing DEV Project, host-mode dev-backend,
+  immutable running image23dae9, protected credential file metadata and health200.
+  Owner approved the exact retained third Reader mount; the two-file checker delta
+  is integrated (51 synthetic PASS). Backend snapshot83f575f built immutable image
+  `08b1ad6f11318ac52fc55e28f99b8774cf90286ad0499ca81a7bfad5d373765e`.
+  Linux Capture bundle3c873ee3 was independently reproduced: differences from old
+  macOS6b7ab3 are path metadata and equivalent strict/block-function lowering;
+  fixed source/Dockerfile unchanged. Independent bundle check and exact original
+  no-env-resolution/no-interpolate three-mount profile PASS.
+  Two bounded operation rounds stopped before container replacement: first omitted
+  required nonsecret image interpolation variable; second added an unnecessary
+  interpolated render, which expanded env-file fields/omitted false bind fields and
+  correctly failed the strict checker. No further deployment retry this turn.
+  Original image23dae9/container/full Compose retained; local/public health200.
+  Newly provisioned metadata root/marker retained for audit; Capture config moved
+  to this operation's disabled evidence path, restoring default config absence.
+  Receipt: `/private/tmp/otr-c2-backend-runtime-20261015/final-receipt.json`.
+  Next execution uses original approved noninterpolated profile proof plus fixed
+  image variable for Compose up, preserving all four original profiles then new
+  image/Capture overrides. Do not loosen checker or feed it resolved-secret JSON.
+  C2 remains BLOCKED BUT OWNED; both real Inputs PUT/GET NOT ATTEMPTED. Native
+  recovery remains stopped at WS; both prerequisites must PASS before upload.
   C3 local PDF intake provenance/assignment checks confirmed existing guards
   (136 PASS/1 explicit SQL-fixture skip), no unnecessary code change.
   TYPE05 local decision saving and forward65 are integrated in code after

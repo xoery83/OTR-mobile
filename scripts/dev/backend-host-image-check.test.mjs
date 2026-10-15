@@ -254,8 +254,15 @@ capture.services.backend.volumes = [
     read_only: true,
     bind: { create_host_path: false },
   },
+  {
+    type: "bind",
+    source: "/run/otr-r3a5-catalog/catalog-reader.json",
+    target: "/run/otr/catalog-reader.json",
+    read_only: true,
+    bind: { create_host_path: false },
+  },
 ];
-test("Capture profile retains exact host/credential/image checks and only its command/two mounts", () => {
+test("Capture profile retains exact host/credential/image checks and only its command/two Capture mounts plus retained Reader", () => {
   assert.equal(check(capture, accepted, credential, "capture"), 0);
   assert.notEqual(check(valid, accepted, credential, "capture"), 0);
 });
@@ -353,3 +360,16 @@ test("Capture malformed command does not print private argument values", () => {
   assert.notEqual(result.status, 0);
   assert.ok(!result.stderr.includes("NONSECRET_CAPTURE_SENTINEL"));
 });
+
+for (const [name, mutate] of [
+  ["missing retained Reader", c => { c.services.backend.volumes.pop(); }],
+  ["different Reader source", c => { c.services.backend.volumes[2].source = "/tmp/catalog-reader.json"; }],
+  ["writable Reader", c => { c.services.backend.volumes[2].read_only = false; }],
+  ["auto-created Reader", c => { c.services.backend.volumes[2].bind.create_host_path = true; }],
+]) {
+  test(`Capture rejects ${name}`, () => {
+    const c = structuredClone(capture);
+    mutate(c);
+    assert.notEqual(check(c, accepted, credential, "capture"), 0);
+  });
+}

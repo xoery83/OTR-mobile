@@ -8,16 +8,27 @@ CLOSED. Real DEV Source Storage upload/readback and Runtime injection remain
 unverified. SDK headers corrected/reviewed at `918110f` (8 PASS). Bounded
 qualification found C2 startup config/attested mount composition absent. Runtime
 code is now integrated at `83f575f`, Code PASS/conditional Gate READY.
-Owner approved the bounded conditional Gate. Runtime preflight at 05:08 UTC
-stopped BLOCKED on A1A Inspector URLError/UNKNOWN; no target, live DEV/deployment
-qualification or image ID. Both Inputs upload/readback NOT ATTEMPTED; zero
-host/device/config/remote mutations, rollback NOT REQUIRED. Receipt:
-`/private/tmp/otr-c2-runtime-preflight-20261015/receipt.json`. Restore the same
-original Inspector channel before a new qualification run; no recovery was
-performed after the strict stop. C2 remains Coordinator-owned: original PID/cwd
-and [::1]:8081 listener confirmed; host-namespace read-only approvals timed out
-before execution twice. Reviewed IPv6 loopback-only delta waits Owner approval;
-no actual new endpoint access or protected C2 operation. C3 local provenance
+Owner approved Backend/Native sequencing separation and one original A1A restart.
+Gate updated. That restart passed; normal Recent submissions was reached. Single
+staged session qualifies target metadata but WS did not open; context/hook commands
+were never sent. Stop Native recovery without another restart/reconnect. Six source
+preimages restored exactly; in-memory hook cleanup NOT OBSERVED. Evidence:
+`/private/tmp/otr-c2-a1a-runtime-recovery-r2-20261015/receipt.json`.
+Backend independently matches DEV/host project/current image23dae9/health200.
+Owner approved fixed third Reader mount; reviewed checker delta integrated,51 PASS.
+Snapshot83f575f built immutable image08b1ad6f; independent Linux bundle3c873 exact
+reproduction/behavior check and original noninterpolated three-mount profile PASS.
+Two bounded rounds stopped before replacement: missing nonsecret image variable,
+then an unnecessary interpolated render expanded env fields/omitted false bind
+flags and was rejected. Stop retries this turn. Original23dae9/container/Compose
+unchanged, health200 local/public. Task metadata retained; Capture config disabled
+and moved to operation evidence, no data/Storage mutation. Receipt:
+`/private/tmp/otr-c2-backend-runtime-20261015/final-receipt.json`.
+Next: original no-env-resolution/no-interpolate checker proof, pinned image variable
+for actual Compose up; preserve original four files then new image/Capture override.
+No checker weakening/new permission required. Native WS remains BLOCKED/no retry;
+both real Inputs PUT/GET NOT ATTEMPTED, C2 Runtime NOT VERIFIED/Coordinator-owned.
+C3 local provenance
 checks confirmed existing guards (136 PASS/1 SQL-fixture skip), no code change.
 TYPE05 local decision saving/forward65 is code-integrated after independent
 review; superseded-Run rejection/history preservation and normal64→65 bootstrap
@@ -30,7 +41,7 @@ implementation state; no additional screenshot matrix or ordinary UI packet.
 
 **Latest bounded handoff / 2026-10-15 01:02 UTC:** Owner returned the Simulator for one finite observation. Candidate43cf/Core6fb actually loaded: new V2 Home has short Home/Day/Ledger/Updates labels and a translucent Shell; My Trips has one Start a Trip action and its last Past card is fully visible above the action island. Last-card tap, other routes' last-item reachability, native Glass availability and large text remain unverified/HOLD. Receipt `/private/tmp/otr-beta-caf-shell-native-source61-r3/receipt.json` (ee811b4e) preserves PNG/AX evidence. Exact36 candidate remains in `/private/tmp/otr-beta-trips-shell-r2-native-61`; Metro PID3554 returned `packager-status:running` from the authorized host namespace. Its future survival is unknown. Keyboard was OFF; font remained original36%; no Apply/Submit. Current consumed UI is this candidate, not production Main91; preimages remain beside the receipt. No further Native actions are scheduled.
 
-**Owner delivery mode:** Experience is on demand, one explicitly requested correction packet at a time, isolated from Main; no automatic queue refill, new Session/worktree or automatic UI merging. Source retains Main integration, registry/schema, Auth/Sync/CoreDay boundaries and the real two-file Capture→custody→LLM→Review→CoreAccepted/AcceptedDay/Documents chain. Real two-file production completion remains0: C3 input acceptance is local durability; the normal binary-verification/source-binding→provider→Batch Review path is not qualified end to end, C3 canReview remains false, and no installed Batch Review/application aggregate or field application receipt is accepted. Existing Flight Review/admission seams are reusable only under their actual scope. Doc72 exact48 is reviewed/prepared but App72Apply0/OSOpenNV; strict72 and normal Original consumer must be consumed together in a separately available observation window. Camera owningR2 and caller reviews are accepted candidates, not Main/Native; migration64 is reserved only. TYPE05 request65 remains an unaccepted partial candidate; no new registry/DDL work is started. Existing protected runtime/operator gates remain unchanged; no activation or credential work is inferred.
+**Owner delivery mode:** Experience is on demand, one explicitly requested correction packet at a time, isolated from Main; no automatic queue refill, new Session/worktree or automatic UI merging. Source retains Main integration, registry/schema, Auth/Sync/CoreDay boundaries and the real two-file Capture→custody→LLM→Review→CoreAccepted/AcceptedDay/Documents chain. Real two-file production completion remains0: C3 input acceptance is local durability; the normal binary-verification/source-binding→provider→Batch Review path is not qualified end to end, C3 canReview remains false, and no installed Batch Review/application aggregate or field application receipt is accepted. Existing Flight Review/admission seams are reusable only under their actual scope. Doc72 exact48 is reviewed/prepared but App72Apply0/OSOpenNV; strict72 and normal Original consumer must be consumed together in a separately available observation window. Camera owningR2 and caller reviews are accepted candidates, not Main/Native; migration64 is reserved only. TYPE05 local saving/forward65 is integrated in code; no device/Hosted installation or field application is claimed. Existing protected runtime/operator gates remain unchanged; no activation or credential work is inferred.
 
 ## Current queue after Push91 — 2026-10-15 NZDT
 

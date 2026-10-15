@@ -91,8 +91,8 @@ if (direction === "capture") {
     "Capture capability drop required",
   );
   assert.ok(
-    service.volumes?.length === 2,
-    "Exactly two Capture mounts required",
+    service.volumes?.length === 3,
+    "Exactly two Capture mounts plus retained Catalog Reader required",
   );
   const expected = [
     [
@@ -103,6 +103,11 @@ if (direction === "capture") {
     [
       "/opt/otr/dev-backend/env/capture-custody.json",
       "/run/otr/capture-custody.json",
+      true,
+    ],
+    [
+      "/run/otr-r3a5-catalog/catalog-reader.json",
+      "/run/otr/catalog-reader.json",
       true,
     ],
   ];
