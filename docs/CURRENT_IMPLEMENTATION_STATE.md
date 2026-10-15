@@ -14,7 +14,8 @@
   PASS; author typecheck/lint/UI guard/build PASS. Fourteen Linux-only Vitest
   cases skipped on macOS; independent offline Linux anchored self-check PASS.
   Review: `/private/tmp/otr-c2-custody-review-20261015/independent-review.md`.
-- C2 Runtime NOT VERIFIED: no real upload/Auth/Storage/provisioning/deployment.
+- C2 Runtime NOT VERIFIED: Backend deployment now passed; real two-file Native
+  upload/authorized readback remains unattempted.
   Storage SDK header compatibility was corrected and independently retested
   (8 PASS) in `918110f`. Bounded runtime qualification found no current C2
   bootstrap supplying trusted Storage config plus attested metadata mount.
@@ -40,19 +41,21 @@
   macOS6b7ab3 are path metadata and equivalent strict/block-function lowering;
   fixed source/Dockerfile unchanged. Independent bundle check and exact original
   no-env-resolution/no-interpolate three-mount profile PASS.
-  Two bounded operation rounds stopped before container replacement: first omitted
-  required nonsecret image interpolation variable; second added an unnecessary
-  interpolated render, which expanded env-file fields/omitted false bind fields and
-  correctly failed the strict checker. No further deployment retry this turn.
-  Original image23dae9/container/full Compose retained; local/public health200.
-  Newly provisioned metadata root/marker retained for audit; Capture config moved
-  to this operation's disabled evidence path, restoring default config absence.
-  Receipt: `/private/tmp/otr-c2-backend-runtime-20261015/final-receipt.json`.
-  Next execution uses original approved noninterpolated profile proof plus fixed
-  image variable for Compose up, preserving all four original profiles then new
-  image/Capture overrides. Do not loosen checker or feed it resolved-secret JSON.
-  C2 remains BLOCKED BUT OWNED; both real Inputs PUT/GET NOT ATTEMPTED. Native
-  recovery remains stopped at WS; both prerequisites must PASS before upload.
+  Prior two stopped operation rounds are retained as history in final-receipt.json.
+  Owner authorized one targeted correction: original Gate no-env-resolution/no-
+  interpolate render, fixed nonsecret image variable, same DEV/profile/rollback.
+  Targeted deployment PASSED: running image08b1ad6f, command server-capture.mjs,
+  host/read-only root and exact three mounts verified; local/public health200.
+  Catalog Reader mount, original profile hashes, Caddy and unrelated containers
+  preserved. Cutover plus checks11.602s (not a measured outage duration).
+  No rollback required; original immutable23dae9/full Compose retained.
+  Same metadata identity/config restored without replacement, expiry
+  2026-10-15T08:38:49.122940Z (21:38 NZDT). No Storage association created.
+  Receipt: `/private/tmp/otr-c2-backend-runtime-20261015/targeted-deployment-receipt.json`.
+  Backend checkpoint PASS is not C2 Runtime PASS. A1A remains Coordinator-owned
+  BLOCKED at WS opening; no Native retry/PUT/GET under this targeted deployment.
+  Next is a bounded, explicitly scoped A1A recovery using existing stage evidence,
+  not another Backend build/deploy. Both prerequisites must PASS before upload.
   C3 local PDF intake provenance/assignment checks confirmed existing guards
   (136 PASS/1 explicit SQL-fixture skip), no unnecessary code change.
   TYPE05 local decision saving and forward65 are integrated in code after

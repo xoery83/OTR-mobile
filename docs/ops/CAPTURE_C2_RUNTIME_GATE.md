@@ -11,7 +11,8 @@ reuse, metadata-only root/config provisioning if absent, and the same two Input
 Storage PUT/authorized GET. No SQL/role/Provider/new Account/device/bundle. Preserve
 Caddy/network/firewall and unrelated services. Use existing runbook maintenance
 window, image/profile preflight and immutable rollback; prior approvals do not
-stand in for this Gate. Built image (not deployed):
+stand in for this Gate. Targeted deployment/startup/version/health PASS (C2 Runtime
+not verified), running image:
 `sha256:08b1ad6f11318ac52fc55e28f99b8774cf90286ad0499ca81a7bfad5d373765e`;
 Capture bundle `3c873ee300fa467186f91aeab7363d78869222ea125d4b55eb61a2f7ad1c54d5`.
 Independent exact Linux reproduction/equivalent lowering evidence:
@@ -144,13 +145,18 @@ or upload success may be inferred from metadata discovery or a recovered hook.
 Restore all six preimages and remove hook on every outcome; verify hashes.
 Keyboard OFF except atomic input; USER_CHANGED stops. No permanent debug route.
 
-## Latest bounded execution stop
+## Latest targeted deployment checkpoint
 
-Image/build/profile qualified, but two operation rounds stopped before replacement.
-Original23dae9/container/full Compose unchanged; local/public health200. Newly
-created metadata root/marker retained for audit; the unused Capture config was
-moved to `/opt/otr/dev-backend/env/capture-c2-20261015/capture-custody.disabled.json`.
-Do not create a replacement store identity on resume; preserve and reattest this
-operation's existing root/config continuity, and validate expiry before reuse.
-Native remains stopped at WS; no two-file PUT/GET or C2 Runtime PASS.
-Receipt: `/private/tmp/otr-c2-backend-runtime-20261015/final-receipt.json`.
+Owner authorized one targeted execution correction following the two historical
+stops. Original noninterpolated Gate/profile check and explicit pinned image
+variable passed. The same original four profiles plus approved image/Capture
+overrides deployed image08b1ad6f with server-capture command and exactly3 mounts.
+Local/public health200; Reader/Caddy/unrelated containers and original profile
+hashes preserved. No rollback required; old immutable23dae9/full Compose retained.
+Same metadata root/config identity restored; expiry2026-10-15T08:38:49.122940Z.
+Do not replace that root/identity or assume readiness after expiry. Renew/reuse only
+within the applicable bounded authorization and attested continuity.
+A1A remains BLOCKED at WS opening. No two-file PUT/GET/Storage association or C2
+Runtime PASS. Backend success alone never authorizes bypassing Native qualification.
+Receipt: `/private/tmp/otr-c2-backend-runtime-20261015/targeted-deployment-receipt.json`.
+Historical stopped rounds: same directory `final-receipt.json`.

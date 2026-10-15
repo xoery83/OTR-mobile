@@ -18,16 +18,16 @@ Backend independently matches DEV/host project/current image23dae9/health200.
 Owner approved fixed third Reader mount; reviewed checker delta integrated,51 PASS.
 Snapshot83f575f built immutable image08b1ad6f; independent Linux bundle3c873 exact
 reproduction/behavior check and original noninterpolated three-mount profile PASS.
-Two bounded rounds stopped before replacement: missing nonsecret image variable,
-then an unnecessary interpolated render expanded env fields/omitted false bind
-flags and was rejected. Stop retries this turn. Original23dae9/container/Compose
-unchanged, health200 local/public. Task metadata retained; Capture config disabled
-and moved to operation evidence, no data/Storage mutation. Receipt:
-`/private/tmp/otr-c2-backend-runtime-20261015/final-receipt.json`.
-Next: original no-env-resolution/no-interpolate checker proof, pinned image variable
-for actual Compose up; preserve original four files then new image/Capture override.
-No checker weakening/new permission required. Native WS remains BLOCKED/no retry;
-both real Inputs PUT/GET NOT ATTEMPTED, C2 Runtime NOT VERIFIED/Coordinator-owned.
+Prior two stopped rounds retained. Owner-approved targeted correction used original
+noninterpolated Gate proof and fixed image variable: Backend deployment checkpoint
+PASS, running08b1ad6f/server-capture, exact3 mounts, local/public health200, Reader/
+Caddy/unrelated containers/configs preserved. No rollback required, immutable23dae9
+and original full Compose retained. Same metadata restored; expires08:38:49Z/21:38
+NZDT. No Storage associations/PUT/GET. Receipt:
+`/private/tmp/otr-c2-backend-runtime-20261015/targeted-deployment-receipt.json`.
+C2 Runtime NOT VERIFIED: A1A WS remains BLOCKED/Coordinator-owned. Next narrow
+Native recovery, not another Backend rebuild/deployment; no automatic retry or
+substitute App/file/Storage script. Both prerequisites must PASS before upload.
 C3 local provenance
 checks confirmed existing guards (136 PASS/1 SQL-fixture skip), no code change.
 TYPE05 local decision saving/forward65 is code-integrated after independent
