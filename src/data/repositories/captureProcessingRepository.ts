@@ -24,6 +24,7 @@ import {
   attachCaptureLocalModelEvidence,
   buildCaptureLocalResult,
   needsCaptureLocalEnrichment,
+  projectCaptureLocalFlightInterpretation,
   type CaptureLocalResult,
 } from "@/domain/capture/captureLocalInterpretation";
 
@@ -305,14 +306,12 @@ export function createCaptureProcessingRepository(
         return scheduled;
       });
     },
-    async retryLocal(
-      context: AccountRequestContext,
-      jobId: string,
-      inputId: string,
-    ) {
+    async retryLocal(context: AccountRequestContext, jobId: string, inputId: string) {
       return gated(context, async () => {
         const job = await submissions.load(context, jobId);
-        if (!job.inputs.some((input) => input.id === inputId && input.state === "ACCEPTED"))
+        if (
+          !job.inputs.some((input) => input.id === inputId && input.state === "ACCEPTED")
+        )
           fail("CAPTURE_LOCAL_RETRY_SCOPE");
         const operation = await current(context, localOpId(inputId));
         if (operation.operationType !== localKind || operation.status !== "FAILED")
@@ -339,14 +338,37 @@ export function createCaptureProcessingRepository(
     async localResults(context: AccountRequestContext, jobId: string) {
       return gated(context, async () => {
         const job = await submissions.load(context, jobId);
-        const rows = await db.getAllAsync<{ resultJson: string }>(
-          `SELECT r.result_json AS resultJson FROM capture_local_interpretation_results r
+        const rows = await db.getAllAsync<{ resultJson: string; inputId: string }>(
+          `SELECT r.input_id AS inputId,r.result_json AS resultJson FROM capture_local_interpretation_results r
            JOIN capture_submission_inputs i ON i.account_id=r.account_id AND i.input_id=r.input_id
            WHERE r.account_id=? AND i.batch_id=? ORDER BY i.ordinal`,
           context.accountId,
           job.batch.batchId,
         );
-        return rows.map((row) => JSON.parse(row.resultJson) as CaptureLocalResult);
+        return Promise.all(
+          rows.map(async (row) => {
+            const result = JSON.parse(row.resultJson) as CaptureLocalResult;
+            const input = job.inputs.find((input) => input.id === result.inputId);
+            if (
+              !input ||
+              row.inputId !== result.inputId ||
+              input.contentSha256 !== result.originalSha256 ||
+              input.contentByteCount !== result.originalByteCount ||
+              (await deps.sha256(new TextEncoder().encode(result.text))) !==
+                result.textSha256
+            )
+              fail("CAPTURE_LOCAL_RESULT_PIN_MISMATCH");
+            return {
+              ...result,
+              flightInterpretation: {
+                ...projectCaptureLocalFlightInterpretation(result),
+                accountId: context.accountId,
+                generation: context.generation,
+                textSha256: result.textSha256,
+              },
+            };
+          }),
+        );
       });
     },
     async localEvents(context: AccountRequestContext, jobId: string) {
@@ -482,12 +504,14 @@ export function createCaptureProcessingRepository(
         return pinned(context, retained);
       });
       if (operation.operationType !== localKind) return;
-      if (original.kind !== "FILE" && original.kind !== "IMAGE")
+      if (!["FILE", "IMAGE", "TEXT"].includes(original.kind))
         fail("CAPTURE_LOCAL_UNSUPPORTED_KIND");
       const bridge = await import("@/native/captureLocalExtraction");
       const extracted = await bridge.extractCaptureLocal(
         original.bytes,
-        localMediaType(original.kind, original.mediaType, original.bytes),
+        original.kind === "TEXT"
+          ? "text/plain"
+          : localMediaType(original.kind, original.mediaType, original.bytes),
       );
       const textSha256 = await deps.sha256(new TextEncoder().encode(extracted.text));
       const capability = await bridge.readCaptureLocalModelCapability().catch(() => ({
@@ -557,6 +581,7 @@ export function createCaptureProcessingRepository(
           failure?.message.startsWith("CAPTURE_LOCAL_ORIGINAL_") ||
           failure?.message.startsWith("CAPTURE_LOCAL_PDF_") ||
           failure?.message.startsWith("CAPTURE_LOCAL_OCR_") ||
+          failure?.message.startsWith("CAPTURE_LOCAL_TEXT_") ||
           failure?.message.startsWith("CAPTURE_LOCAL_SPAN_") ||
           failure?.message.startsWith("CAPTURE_LOCAL_TEXT_") ||
           failure?.message === "CAPTURE_OCR_MAPPING_INVALID" ||

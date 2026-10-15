@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { interpretationResponseSchema } from "@/domain/intelligence/interpretation";
 import {
   normalizeFlightObservation,
   parseReferenceFlightText,
@@ -11,7 +12,7 @@ const box = z.strictObject({
   height: z.number().finite().min(0).max(1),
 });
 const extracted = z.strictObject({
-  engine: z.enum(["apple-pdfkit", "apple-vision"]),
+  engine: z.enum(["apple-pdfkit", "apple-vision", "utf8-text"]),
   version: z.literal(1).optional(),
   textSha256: z
     .string()
@@ -97,7 +98,7 @@ export function buildCaptureLocalResult(
       }
     }
     if (end !== bytes.length) throw new Error("CAPTURE_LOCAL_PDF_MAPPING");
-  } else {
+  } else if (value.engine === "apple-vision") {
     if (
       value.pages !== undefined ||
       !value.observations?.length ||
@@ -108,6 +109,8 @@ export function buildCaptureLocalResult(
       )
     )
       throw new Error("CAPTURE_LOCAL_OCR_MAPPING");
+  } else if (value.pages !== undefined || value.observations !== undefined) {
+    throw new Error("CAPTURE_LOCAL_TEXT_MAPPING");
   }
   let parsed: ReturnType<typeof parseReferenceFlightText>;
   let parserStatus: "SUCCEEDED" | "FAILED" = "SUCCEEDED";
@@ -275,4 +278,61 @@ export function attachCaptureLocalModelEvidence(
     modelReason: response.reason,
     supplementalServiceObservations: observations,
   };
+}
+
+// Read projection also serves retained schema67 results; no Source-bound response is fabricated.
+export function projectCaptureLocalFlightInterpretation(
+  result: Pick<CaptureLocalResult, "inputId" | "text">,
+) {
+  try {
+    const parsed = parseReferenceFlightText(result.inputId, result.text);
+    const bytes = new TextEncoder().encode(result.text);
+    const fragments = interpretationResponseSchema.shape.fragments.element
+      .pick({ id: true, locator: true })
+      .array()
+      .parse(parsed.fragments);
+    const evidence = new Map(
+      fragments.map((fragment) => {
+        const { input_id, start, end } = fragment.locator;
+        if (
+          input_id !== result.inputId ||
+          start === null ||
+          end === null ||
+          start < 0 ||
+          end <= start ||
+          end > bytes.length
+        )
+          throw new Error("CAPTURE_LOCAL_SPAN_INVALID");
+        return [
+          fragment.id,
+          new TextDecoder("utf-8", { fatal: true }).decode(bytes.slice(start, end)),
+        ];
+      }),
+    );
+    const items = interpretationResponseSchema.shape.items.parse(parsed.items);
+    for (const item of items) {
+      if (
+        item.fields.some((field) =>
+          field.fragment_ids.some((id) => evidence.get(id) !== field.raw),
+        ) ||
+        item.deferred.some((field) => !evidence.has(field.fragment_id))
+      )
+        throw new Error("CAPTURE_LOCAL_SPAN_INVALID");
+    }
+    return {
+      status: "PARTIAL" as const,
+      projectionKind: "CURRENT_PARSER_READ" as const,
+      items,
+      fragments,
+      ignored: parsed.ignored,
+    };
+  } catch {
+    return {
+      status: "FAILED" as const,
+      projectionKind: "CURRENT_PARSER_READ" as const,
+      items: [],
+      fragments: [],
+      ignored: [],
+    };
+  }
 }

@@ -160,3 +160,23 @@ it("keeps native failure diagnostics finite without returning provider text", as
       .reason,
   ).toBe("LOCAL_MODEL_OUTPUT_INVALID");
 });
+
+it("decodes exact UTF8 text without requiring a native bridge", async () => {
+  const deps = fixture();
+  const extractor = createCaptureLocalExtractor({ ...deps, platform: "android" });
+  const text = "\ufeff旅程\nFlight: NZ 5069";
+  const bytes = new TextEncoder().encode(text);
+  expect(await extractor.extract(bytes, "text/plain")).toEqual({
+    engine: "utf8-text",
+    text,
+    originalSha256: sha,
+    originalByteCount: bytes.length,
+  });
+  expect(deps.bridge.extractCaptureLocal).not.toHaveBeenCalled();
+  for (const invalid of [
+    new Uint8Array([255]),
+    new TextEncoder().encode("Flight\0NZ1"),
+    new Uint8Array(262145),
+  ])
+    await expect(extractor.extract(invalid, "text/plain")).rejects.toThrow();
+});

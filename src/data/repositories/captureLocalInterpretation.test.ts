@@ -172,9 +172,9 @@ it("accepts file-picker JPEG bytes and explicitly retries only a failed local re
   await repo.schedule(context, request.jobId);
   await repo.run(context);
   await repo.scheduleLocal(context, request.jobId);
-  await expect(repo.retryLocal(context, request.jobId, request.inputs[0].id)).rejects.toThrow(
-    "CAPTURE_LOCAL_RETRY_NOT_FAILED",
-  );
+  await expect(
+    repo.retryLocal(context, request.jobId, request.inputs[0].id),
+  ).rejects.toThrow("CAPTURE_LOCAL_RETRY_NOT_FAILED");
   native.capability.mockResolvedValue({ status: "UNAVAILABLE" });
   native.extract.mockResolvedValue({
     engine: "apple-vision",
@@ -213,10 +213,12 @@ it("accepts file-picker JPEG bytes and explicitly retries only a failed local re
     originalByteCount: jpeg.length,
   });
   expect((await repo.run(context)).processedCount).toBe(1);
-  expect((await repo.localResults(context, request.jobId)).map((result) => result.engine)).toEqual([
-    "apple-vision",
-  ]);
-  expect((await repo.localEvents(context, request.jobId)).map((event) => event.state)).toEqual([
+  expect(
+    (await repo.localResults(context, request.jobId)).map((result) => result.engine),
+  ).toEqual(["apple-vision"]);
+  expect(
+    (await repo.localEvents(context, request.jobId)).map((event) => event.state),
+  ).toEqual([
     "PENDING",
     "PROCESSING",
     "FAILED",
@@ -224,9 +226,9 @@ it("accepts file-picker JPEG bytes and explicitly retries only a failed local re
     "PROCESSING",
     "LOCAL_RESULT_RECORDED",
   ]);
-  await expect(repo.retryLocal(context, request.jobId, request.inputs[0].id)).rejects.toThrow(
-    "CAPTURE_LOCAL_RETRY_NOT_FAILED",
-  );
+  await expect(
+    repo.retryLocal(context, request.jobId, request.inputs[0].id),
+  ).rejects.toThrow("CAPTURE_LOCAL_RETRY_NOT_FAILED");
 });
 
 it("retains deterministic partial evidence when optional local-model hints fail validation", async () => {
@@ -305,4 +307,90 @@ it("generic interrupted recovery cannot seize a live C4 local claim", async () =
   expect(
     f.sql.prepare("SELECT status FROM sync_operations WHERE id=?").get(pending.id),
   ).toMatchObject({ status: "PROCESSING" });
+});
+
+it("runs accepted TEXT through the same local queue and retains typed items and deferred evidence on reopen", async () => {
+  const f = fixture(true, 67);
+  const base = f.request();
+  const request: SubmissionRequest = {
+    ...base,
+    inputs: [{ ...base.inputs[0], kind: "TEXT", declaredContentType: "text/plain" }],
+  };
+  const text = "Flight: NZ 5069 route: AKL -> WLG passenger: Example\nFlight: QF1";
+  const bytes = new TextEncoder().encode(text);
+  await f.submissions.submit(
+    request,
+    new Map([[request.inputs[0].id, async () => ({ bytes })]]),
+  );
+  const context = await captureAccountRequestContext("", f.getAccount);
+  const repo = createCaptureProcessingRepository(f.db, f.getAccount, {
+    sha256,
+    now,
+    newId: randomUUID,
+  });
+  await repo.schedule(context, request.jobId);
+  await repo.run(context);
+  await repo.scheduleLocal(context, request.jobId);
+  native.extract.mockResolvedValue({
+    engine: "utf8-text",
+    text,
+    originalSha256: await sha256(bytes),
+    originalByteCount: bytes.length,
+  });
+  native.capability.mockResolvedValue({ status: "AVAILABLE" });
+  native.enrich.mockResolvedValue({
+    status: "FAILED",
+    reason: "LOCAL_MODEL_TIMEOUT",
+    observations: [],
+  });
+  expect((await repo.run(context)).processedCount).toBe(1);
+  expect(native.extract).toHaveBeenLastCalledWith(bytes, "text/plain");
+  const [result] = await repo.localResults(context, request.jobId);
+  expect(result.modelExecution).toBe("FAILED");
+  expect(result.flightInterpretation.status).toBe("PARTIAL");
+  expect(result.flightInterpretation.items).toHaveLength(2);
+  expect(result.flightInterpretation.items[0].deferred[0]).toMatchObject({
+    dimension: "passengers",
+    reason: "UNSUPPORTED_DIMENSION",
+  });
+  const references = result.flightInterpretation.items.flatMap((item) => [
+    ...item.fields.flatMap((field) => field.fragment_ids),
+    ...item.deferred.map((field) => field.fragment_id),
+  ]);
+  expect(
+    references.every((id) =>
+      result.flightInterpretation.fragments.some(
+        (fragment) => fragment.id === id && fragment.locator.input_id === result.inputId,
+      ),
+    ),
+  ).toBe(true);
+  expect(result.sourceAuthority).toBe("NONE");
+  expect(result.reviewAvailable).toBe(false);
+  const stored = f.sql
+    .prepare("SELECT result_json FROM capture_local_interpretation_results")
+    .get() as { result_json: string };
+  expect(JSON.parse(stored.result_json)).not.toHaveProperty("flightInterpretation");
+  f.reopen();
+  expect(await repo.localResults(context, request.jobId)).toEqual([result]);
+  expect((await repo.run(context)).processedCount).toBe(0);
+  expect(result.flightInterpretation).toMatchObject({
+    accountId: context.accountId,
+    generation: context.generation,
+    textSha256: await sha256(bytes),
+    projectionKind: "CURRENT_PARSER_READ",
+  });
+  const badHashRepo = createCaptureProcessingRepository(f.db, f.getAccount, {
+    sha256: async () => "0".repeat(64),
+    now,
+    newId: randomUUID,
+  });
+  await expect(badHashRepo.localResults(context, request.jobId)).rejects.toThrow();
+  await f.switchTo(randomUUID());
+  await expect(repo.localResults(context, request.jobId)).rejects.toThrow();
+  await f.switchTo(context.accountId);
+  await expect(repo.localResults(context, request.jobId)).rejects.toThrow();
+  const fresh = await captureAccountRequestContext("", f.getAccount);
+  const [rebound] = await repo.localResults(fresh, request.jobId);
+  expect(rebound.flightInterpretation.generation).toBe(fresh.generation);
+  expect(rebound.flightInterpretation.items).toEqual(result.flightInterpretation.items);
 });

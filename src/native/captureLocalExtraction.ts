@@ -12,7 +12,7 @@ type Bridge = {
   enrichCaptureFlightLocal?(text: string): Promise<unknown>;
 };
 export type CaptureLocalExtraction = {
-  engine: "apple-pdfkit" | "apple-vision";
+  engine: "apple-pdfkit" | "apple-vision" | "utf8-text";
   text: string;
   pages?: { pageIndex: number; start: number; end: number }[];
   observations?: OcrDocument["observations"];
@@ -79,8 +79,27 @@ export function createCaptureLocalExtractor(
     async extract(bytes: Uint8Array, mediaType: string): Promise<CaptureLocalExtraction> {
       if (!bytes.length || bytes.length > 10485760)
         throw new Error("CAPTURE_EXTRACTION_LIMIT");
-      if (!["application/pdf", "image/jpeg", "image/png"].includes(mediaType))
+      if (
+        !["application/pdf", "image/jpeg", "image/png", "text/plain"].includes(mediaType)
+      )
         throw new Error("CAPTURE_EXTRACTION_MEDIA_UNSUPPORTED");
+      if (mediaType === "text/plain") {
+        if (bytes.length > 262144) throw new Error("CAPTURE_EXTRACTION_LIMIT");
+        let text: string;
+        try {
+          text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+        } catch {
+          throw new Error("CAPTURE_LOCAL_TEXT_INVALID");
+        }
+        if (!text.length || text.includes("\0"))
+          throw new Error("CAPTURE_LOCAL_TEXT_INVALID");
+        return {
+          engine: "utf8-text",
+          text,
+          originalSha256: await (dependencies.hash ?? sha256)(bytes),
+          originalByteCount: bytes.length,
+        };
+      }
       const bridge = native();
       if (typeof bridge.extractCaptureLocal !== "function")
         throw new Error("CAPTURE_LOCAL_CAPABILITY_UNAVAILABLE");
