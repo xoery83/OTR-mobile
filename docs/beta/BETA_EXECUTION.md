@@ -8,11 +8,13 @@ CLOSED. Real DEV Source Storage upload/readback and Runtime injection remain
 unverified. SDK headers corrected/reviewed at `918110f` (8 PASS). Bounded
 qualification found C2 startup config/attested mount composition absent. Runtime
 code is now integrated at `83f575f`, Code PASS/conditional Gate READY.
-WAITING_OWNER_DEV_C2_RUNTIME_GATE: exact A1A target/hook must qualify before remote
-actions; current discovery URLError is not a usable-channel claim. Gate in
-`docs/ops/CAPTURE_C2_RUNTIME_GATE.md` bounds DEV image/profile, existing credentials,
-metadata mount/config and same two Inputs. No runtime operations performed;
-C3–C6 not passed. Reuse the C1/C2 evidence paths in current
+Owner approved the bounded conditional Gate. Runtime preflight at 05:08 UTC
+stopped BLOCKED on A1A Inspector URLError/UNKNOWN; no target, live DEV/deployment
+qualification or image ID. Both Inputs upload/readback NOT ATTEMPTED; zero
+host/device/config/remote mutations, rollback NOT REQUIRED. Receipt:
+`/private/tmp/otr-c2-runtime-preflight-20261015/receipt.json`. Restore the same
+original Inspector channel before a new qualification run; no recovery was
+performed after the strict stop. C3–C6 not passed or authorized by this C2 Gate. Reuse the C1/C2 evidence paths in current
 implementation state; no additional screenshot matrix or ordinary UI packet.
 
 # OTR Beta — EXECUTION

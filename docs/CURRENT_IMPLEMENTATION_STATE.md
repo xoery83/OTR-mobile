@@ -22,14 +22,16 @@
   at `83f575f`; independent Code PASS and conditional Owner Gate READY. New
   composition/runner 7 tests, profile 47 and bridge 3 tests passed; canonical
   typecheck passed. Gate: `docs/ops/CAPTURE_C2_RUNTIME_GATE.md`.
-  WAITING_OWNER_DEV_C2_RUNTIME_GATE: first restore only the original A1A host/data
-  overlay and qualify its exact Inspector target/hook; two read-only discovery
-  attempts returned URLError, so no usable channel is claimed. FAIL/UNKNOWN stops
-  remote provision/deploy/upload. After qualification and approval, only reviewed
-  DEV image/profile, existing credentials, metadata mount/config and the same two
-  Input Storage PUT/GET are allowed; retain exact rollback/preimages.
-  No device/config/provision/deploy/Storage operation has occurred. Do not replay
-  Native Submit.
+  Owner approved the bounded conditional Gate; 2026-10-15 05:08 UTC preflight
+  stopped BLOCKED: fixed A1A Inspector discovery returned URLError/UNKNOWN,
+  no target observed. Per the grant, no recovery, alternate target or subsequent
+  remote step was attempted. Live DEV environment/deployment channel NOT REACHED;
+  actual image ID absent; both Inputs PUT/authorized GET NOT ATTEMPTED.
+  No host/device/config/provision/deployment/Storage mutation; rollback NOT REQUIRED.
+  Receipt: `/private/tmp/otr-c2-runtime-preflight-20261015/receipt.json`.
+  Minimum recovery dependency: restore the same original A1A Inspector channel,
+  then rerun qualification; the stopped run did not perform that recovery.
+  No repeat Native Submit and no C3–C6 under this C2-only authorization.
   C3–C6 remain unverified for this Batch. No Source/Trip admission, schema/role,
   scheduler or Provider change. Runtime stays CLOSED; Experience owns UI.
 
