@@ -126,6 +126,8 @@ export function switchWorkingTrip(
   };
 }
 export type TripQuickActions = {
+  backToTrips?: () => void;
+  chooseDay?: () => void;
   tripName: string;
   tripId: string;
   generation: number;
@@ -202,6 +204,20 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+  const select = useCallback((view: TripView | null) => {
+    if (view && view.generation !== getAccountGeneration()) return;
+    setState((previous) =>
+      enterTripDay(
+        view
+          ? {
+              ...previous,
+              workingTrip: { tripId: view.tripId, generation: view.generation },
+            }
+          : previous,
+        view,
+      ),
+    );
+  }, []);
   const current = state.view?.generation === generation ? state.view : null;
   const workingTrip =
     state.workingTrip?.generation === generation ? state.workingTrip : null;
@@ -228,20 +244,7 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
         view: current,
         resumeView,
         entry: state.entry,
-        select: (view) => {
-          if (view && view.generation !== getAccountGeneration()) return;
-          setState((previous) =>
-            enterTripDay(
-              view
-                ? {
-                    ...previous,
-                    workingTrip: { tripId: view.tripId, generation: view.generation },
-                  }
-                : previous,
-              view,
-            ),
-          );
-        },
+        select,
         enterHeader: (view, kind) => {
           if (view.generation !== getAccountGeneration()) return;
           setState((previous) => enterTripDay(previous, view, kind));

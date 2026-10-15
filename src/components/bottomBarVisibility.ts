@@ -9,3 +9,16 @@ export function bottomBarVisible(pathname: string) {
     /^\/expenses\/journey\/[^/]+$/.test(pathname)
   );
 }
+
+export function shellShowsUpdates(
+  pathname: string,
+  params: { tripId?: unknown; view?: unknown },
+  hasWorkingTrip: boolean,
+) {
+  const tripList =
+    pathname === "/trip" &&
+    (!params.tripId || params.view === "trips" || params.view === "create");
+  return (
+    bottomBarVisible(pathname) && hasWorkingTrip && !tripList && params.view !== "create"
+  );
+}

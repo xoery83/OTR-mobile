@@ -126,7 +126,7 @@ export function TripQuickAddMenu({
         }}
         style={triggerStyle}
       >
-        <AppIcon name="plus" color={colors.accent} />
+        <AppIcon size={visual.bottomShell.icon} name="plus" color={colors.accent} />
       </Pressable>
       <Modal visible={visible} onRequestClose={close} animationType="slide">
         <SafeAreaProvider style={styles.body}>

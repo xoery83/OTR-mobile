@@ -14,6 +14,8 @@ import {
 } from "react-native";
 
 import { AppIcon } from "./AppIcon";
+import { Stack } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 
 export type AppNavigationMenuItem = {
   icon: Parameters<typeof AppIcon>[0]["name"];
@@ -32,15 +34,18 @@ export function AppNavigationMenu({
   identity,
   onIdentityPress,
   sections,
+  nativeToolbar = false,
 }: {
   identity: AppNavigationMenuIdentity;
   onIdentityPress: () => void;
   sections: AppNavigationMenuItem[][];
+  nativeToolbar?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const trigger = useRef<View>(null);
+  const headerHeight = useHeaderHeight();
   const { height: windowHeight, width } = useWindowDimensions();
   const [anchor, setAnchor] = useState({ x: 12, y: 80, height: 44 });
   const [visible, setVisible] = useState(false);
@@ -55,16 +60,30 @@ export function AppNavigationMenu({
 
   return (
     <>
-      <View ref={trigger} collapsable={false}>
-        <Pressable
-          accessibilityLabel={t("navigation.openMenu")}
-          accessibilityRole="button"
-          onPress={open}
-          style={styles.trigger}
-        >
-          <AppIcon color={colors.accent} name="line.3.horizontal" size={20} />
-        </Pressable>
-      </View>
+      {nativeToolbar ? (
+        <Stack.Toolbar placement="left">
+          <Stack.Toolbar.Button
+            tintColor={colors.accent}
+            icon="line.3.horizontal"
+            accessibilityLabel={t("navigation.openMenu")}
+            onPress={() => {
+              setAnchor({ x: 12, y: headerHeight, height: 0 });
+              setVisible(true);
+            }}
+          />
+        </Stack.Toolbar>
+      ) : (
+        <View ref={trigger} collapsable={false}>
+          <Pressable
+            accessibilityLabel={t("navigation.openMenu")}
+            accessibilityRole="button"
+            onPress={open}
+            style={styles.trigger}
+          >
+            <AppIcon color={colors.accent} name="line.3.horizontal" size={20} />
+          </Pressable>
+        </View>
+      )}
       <Modal
         animationType="fade"
         onRequestClose={() => setVisible(false)}
@@ -106,11 +125,17 @@ export function AppNavigationMenu({
               >
                 <AppIcon color={colors.accent} name="person.crop.circle" size={24} />
                 <View style={styles.identityCopy}>
-                  <Text accessibilityRole="header" style={styles.identityPrimary}>
+                  <Text
+                    accessibilityRole="header"
+                    numberOfLines={2}
+                    style={styles.identityPrimary}
+                  >
                     {identity.primary}
                   </Text>
                   {identity.secondary ? (
-                    <Text style={styles.identitySecondary}>{identity.secondary}</Text>
+                    <Text numberOfLines={1} style={styles.identitySecondary}>
+                      {identity.secondary}
+                    </Text>
                   ) : null}
                 </View>
                 <AppIcon color={colors.textSecondary} name="chevron.right" size={14} />

@@ -9,6 +9,7 @@ const reference = "b61a0000-0061-4000-8000-000000000001";
 const actor = "3a44420f-ec2b-4d7e-9770-410a5ed5e77e";
 const state = vi.hoisted(() => ({
   hooks: [] as unknown[],
+  setOptions: vi.fn(),
   refs: [] as { current: unknown }[],
   cursor: 0,
   refCursor: 0,
@@ -35,6 +36,9 @@ vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useSyncExternalStore: () => state.renderedGeneration,
   useCallback: (callback: unknown) => callback,
+  useLayoutEffect: (callback: () => void) => {
+    if (state.mount) state.effects.push(callback);
+  },
   useEffect: (callback: () => void) => {
     if (state.mount) state.effects.push(callback);
   },
@@ -64,7 +68,9 @@ vi.mock("react-native", () => ({
     },
   },
 }));
+vi.mock("@/ui/useBottomShellHeight", () => ({ useBottomShellHeight: () => 90 }));
 vi.mock("expo-router", () => ({
+  useNavigation: () => ({ setOptions: state.setOptions }),
   useLocalSearchParams: () => ({
     tripId: state.view.tripId,
     date: state.view.date,
@@ -86,7 +92,7 @@ vi.mock("@/ui/locale", () => ({
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
-vi.mock("@/ui/controls", () => ({ UiButton: "Button" }));
+vi.mock("@/ui/controls", () => ({ UiButton: "Button", UiText: "ThemedText" }));
 vi.mock("@/ui/forms", () => ({ UiTextInput: "Input", UiChoiceChip: "Choice" }));
 vi.mock("./LocalTripWorkspace", () => ({ LocalTripWorkspace: "Workspace" }));
 vi.mock("./coreExperienceRenderer", () => ({
@@ -481,9 +487,9 @@ it("normal Home hides internal accepted IDs and defers date inputs to the Day ac
   expect(find(node, "Modal")?.visible).toBe(false);
   expect(JSON.stringify(node)).not.toContain("dayFeed.admitted");
   expect(JSON.stringify(node)).not.toContain("dayFeed.explicitId");
-  const button = find(node, "Button");
-  expect(button.label).toBe("dayFeed.openDay");
-  button.onPress();
+  const workspace = find(node, LocalTripWorkspace);
+  expect(workspace.onChooseDay).toBeTypeOf("function");
+  workspace.onChooseDay();
   expect(find(render(), "Modal")?.visible).toBe(true);
   expect(state.select).not.toHaveBeenCalled();
 });
@@ -536,4 +542,36 @@ it("explicit date and named-zone choices never move the Day bookmark before Open
   state.appActive!();
   for (let i = 0; i < 12; i++) await Promise.resolve();
   expect(choices(render()).filter((option) => option.label !== "Asia/Tokyo")).toEqual([]);
+});
+
+it("switches the My Trips native title only after the body heading leaves, reverses on return, and reserves shell space", async () => {
+  state.view.tripId = "";
+  state.setOptions.mockClear();
+  const node = await loaded();
+  const scroll = find(node, "ScrollView");
+  const heading = find(node, "Text");
+  expect(scroll.contentContainerStyle[1].paddingBottom).toBe(106);
+  expect(scroll.scrollIndicatorInsets.bottom).toBe(90);
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+    "myTrips.appTitle",
+  );
+  heading.onLayout({ nativeEvent: { layout: { y: 16, height: 32 } } });
+  scroll.onScroll({ nativeEvent: { contentOffset: { y: 47 } } });
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+    "myTrips.appTitle",
+  );
+  scroll.onScroll({ nativeEvent: { contentOffset: { y: 48 } } });
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+    "dayFeed.myTrips",
+  );
+  scroll.onScroll({ nativeEvent: { contentOffset: { y: 0 } } });
+  state.mount = true;
+  render();
+  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+    "myTrips.appTitle",
+  );
 });

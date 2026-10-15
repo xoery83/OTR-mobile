@@ -132,12 +132,13 @@ function CalendarField({
 type Props = {
   widgetsForHome?: (tripId: string) => readonly TripHomeWidget[];
   tripId: string | null;
-  mode?: "LIST" | "CREATE";
+  mode?: "LIST" | "CREATE" | "PAST";
   onOpen(id: string): void;
   onCreate(): void;
   onOpenToday(id: string, context: TodayEntry): void;
   onKnownTrip(kind: "LOCAL" | "CACHED" | "NONE"): void;
   onBackToTrips(): void;
+  onChooseDay?: () => void;
 };
 export function LocalTripWorkspace(props: Props) {
   const generation = useSyncExternalStore(
@@ -160,6 +161,7 @@ function LocalTripContent({
   onOpenToday,
   onKnownTrip,
   onBackToTrips,
+  onChooseDay,
   widgetsForHome,
   generation,
 }: Props & { generation: number }) {
@@ -401,7 +403,8 @@ function LocalTripContent({
     await repo.selectBuiltInCover(trip.id, id);
     if (alive.current && generation === getAccountGeneration()) await load();
   };
-  const leaveHome = () => {
+  const leaveHome = useCallback(() => {
+    if (!alive.current || generation !== getAccountGeneration()) return;
     if (!itemTitle && !itemStart && !itemEnd) {
       onBackToTrips();
       return;
@@ -413,6 +416,7 @@ function LocalTripContent({
         text: t("actionIsland.discard"),
         style: "destructive",
         onPress: () => {
+          if (!alive.current || generation !== getAccountGeneration()) return;
           setItemTitle("");
           setItemStart("");
           setItemEnd("");
@@ -420,7 +424,7 @@ function LocalTripContent({
         },
       },
     ]);
-  };
+  }, [generation, itemTitle, itemStart, itemEnd, saving, onBackToTrips]);
   const closeItemForm = () => {
     if (saving) return;
     if (!itemTitle && !itemStart && !itemEnd) {
@@ -450,6 +454,8 @@ function LocalTripContent({
         tripId: owner,
         generation,
         owner: quickActionsOwner,
+        backToTrips: leaveHome,
+        ...(onChooseDay ? { chooseDay: onChooseDay } : {}),
         itinerary: (date) => {
           if (!alive.current || generation !== getAccountGeneration()) return;
           if (date) setItemStart((previous) => previous || date);
@@ -469,7 +475,16 @@ function LocalTripContent({
       quickActionsOwner,
     );
     return () => publishQuickActions(null, owner, generation, quickActionsOwner);
-  }, [selected, status, generation, photosReady, publishQuickActions, quickActionsOwner]);
+  }, [
+    selected,
+    status,
+    generation,
+    photosReady,
+    publishQuickActions,
+    quickActionsOwner,
+    leaveHome,
+    onChooseDay,
+  ]);
   const remoteStart = knownDate(remoteSelected?.startDate ?? null);
   const remoteEnd = knownDate(remoteSelected?.endDate ?? null);
   const metadata = selected ?? remoteSelected;
@@ -488,6 +503,25 @@ function LocalTripContent({
     ...(lifecycle === "Past" && metadata ? (widgetsForHome?.(metadata.id) ?? []) : []),
     ...(finance ? [finance] : []),
   ];
+  if (mode === "PAST")
+    return status === "READY" ? (
+      <MyTripsList
+        pastOnly
+        trips={trips}
+        remoteTrips={remoteTrips}
+        today={calendarDate(new Date())}
+        eligibleToday={eligibleToday}
+        onOpen={onOpen}
+        onOpenToday={(id) => void openToday(id)}
+        onCreate={onCreate}
+      />
+    ) : (
+      <View style={styles.pastRoot}>
+        <Text style={styles.status}>
+          {t(status === "LOADING" ? "dayFeed.loading" : "tripCreate.unavailable")}
+        </Text>
+      </View>
+    );
   if (tripId && !selected && !remoteSelected) return null;
   return (
     <View style={styles.root}>
@@ -501,7 +535,6 @@ function LocalTripContent({
           <TripHomeFrame
             widgets={pages}
             title={selected.name}
-            onBack={leaveHome}
             cover={tripCoverSource(selected)}
             metadata={[
               ...(selected.destination ? [selected.destination] : []),
@@ -683,7 +716,6 @@ function LocalTripContent({
           <TripHomeFrame
             widgets={pages}
             title={remoteSelected.name}
-            onBack={leaveHome}
             cover={tripCoverSource(remoteSelected)}
             notice={t("myTrips.cachedDetails")}
             metadata={[
@@ -773,6 +805,7 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     modal: { flex: 1, backgroundColor: colors.background },
     form: { padding: visual.space.page, gap: visual.space.card },
+    pastRoot: { flex: 1, backgroundColor: colors.background, padding: visual.space.page },
     root: { gap: visual.space.section },
     body: { color: colors.textPrimary, ...visual.type.row },
     status: { color: colors.textSecondary, ...visual.type.meta },

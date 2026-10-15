@@ -1,3 +1,4 @@
+import { AppIcon } from "@/components/AppIcon";
 import { useState, type ReactNode } from "react";
 import {
   Alert,
@@ -16,7 +17,7 @@ import { UiButton, UiText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import type { CaptureDraftSnapshot } from "./captureStaging";
@@ -33,7 +34,6 @@ export function CaptureComposer({
   onAddText,
   onClear,
   onSubmit,
-  onActivity,
   duplicate,
   content,
   title,
@@ -59,6 +59,7 @@ export function CaptureComposer({
   onActivity: () => void;
 }) {
   useUiLocale();
+  const colors = useUiTheme();
   const styles = useThemedStyles(createStyles),
     insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
@@ -108,7 +109,7 @@ export function CaptureComposer({
               <View style={styles.contentViewport}>{content}</View>
             ) : (
               <>
-                <View style={styles.actions}>
+                <View style={styles.tabs}>
                   <UiChoiceChip
                     compact
                     label={t("capture.composer.capture")}
@@ -144,13 +145,13 @@ export function CaptureComposer({
                     <>
                       <View style={styles.actions}>
                         <UiButton
-                          label={t("capture.files")}
+                          label={t("capture.composer.files")}
                           variant="secondary"
                           disabled={snapshot.selecting}
                           onPress={onFiles}
                         />
                         <UiButton
-                          label={t("capture.photos")}
+                          label={t("capture.composer.photos")}
                           variant="secondary"
                           disabled={snapshot.selecting}
                           onPress={onPhotos}
@@ -162,9 +163,6 @@ export function CaptureComposer({
                           onPress={() => {}}
                         />
                       </View>
-                      <UiText style={styles.secondary}>
-                        {t("capture.composer.cameraUnavailable")}
-                      </UiText>
                       {snapshot.selecting ? (
                         <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
                           {t("capture.selecting")}
@@ -194,7 +192,31 @@ export function CaptureComposer({
                                   : (item.name ?? t("capture.unnamed"));
                               return (
                                 <View key={item.stagingId} style={styles.card}>
-                                  <View style={styles.cardHeading}>
+                                  {item.source === "photos" && item.temporaryUri ? (
+                                    <Image
+                                      source={{ uri: item.temporaryUri }}
+                                      style={styles.thumbnail}
+                                      resizeMode="cover"
+                                      accessibilityLabel={name}
+                                    />
+                                  ) : (
+                                    <AppIcon
+                                      name={
+                                        item.source === "magic_input"
+                                          ? "text.alignleft"
+                                          : "doc"
+                                      }
+                                      color={colors.textSecondary}
+                                    />
+                                  )}
+                                  <View style={styles.cardCopy}>
+                                    <UiText
+                                      style={styles.name}
+                                      numberOfLines={2}
+                                      accessibilityLabel={name}
+                                    >
+                                      {name}
+                                    </UiText>
                                     <UiText style={styles.secondary}>
                                       {t(
                                         item.source === "magic_input"
@@ -204,35 +226,17 @@ export function CaptureComposer({
                                             : "capture.sourcePhotos",
                                       )}
                                     </UiText>
-                                    <OverlayDismissAction
-                                      label={t("capture.remove", { name })}
-                                      onPress={() => onRemove(item.stagingId)}
-                                    />
+                                    {item.source !== "magic_input" &&
+                                    item.availability === "unavailable" ? (
+                                      <UiText style={styles.error}>
+                                        {t("capture.unavailable")}
+                                      </UiText>
+                                    ) : null}
                                   </View>
-                                  {item.source === "photos" && item.temporaryUri ? (
-                                    <Image
-                                      source={{ uri: item.temporaryUri }}
-                                      style={styles.thumbnail}
-                                      resizeMode="cover"
-                                      accessibilityLabel={name}
-                                    />
-                                  ) : null}
-                                  <UiText
-                                    style={styles.name}
-                                    numberOfLines={3}
-                                    accessibilityLabel={name}
-                                  >
-                                    {name}
-                                  </UiText>
-                                  {item.source !== "magic_input" ? (
-                                    <UiText style={styles.secondary}>
-                                      {t(
-                                        item.availability === "unavailable"
-                                          ? "capture.unavailable"
-                                          : "capture.unverified",
-                                      )}
-                                    </UiText>
-                                  ) : null}
+                                  <OverlayDismissAction
+                                    label={t("capture.remove", { name })}
+                                    onPress={() => onRemove(item.stagingId)}
+                                  />
                                 </View>
                               );
                             })}
@@ -240,6 +244,7 @@ export function CaptureComposer({
                         ) : null}
                         <View style={styles.editor}>
                           <UiTextInput
+                            variant="bare"
                             value={snapshot.editorText}
                             onChangeText={onText}
                             editable={!snapshot.selecting}
@@ -258,12 +263,6 @@ export function CaptureComposer({
                           ) : null}
                         </View>
                       </View>
-                      <UiButton
-                        label={t("capture.activity")}
-                        variant="text"
-                        disabled={snapshot.selecting}
-                        onPress={onActivity}
-                      />
                     </>
                   )}
                 </ScrollView>
@@ -280,15 +279,15 @@ export function CaptureComposer({
                       </UiText>
                     ) : null}
                     <UiButton
-                      label={t("capture.composer.submit")}
-                      disabled={snapshot.selecting || mixed}
-                      onPress={onSubmit}
-                    />
-                    <UiButton
                       label={t("capture.composer.clear")}
                       variant="text"
                       disabled={snapshot.selecting}
                       onPress={clear}
+                    />
+                    <UiButton
+                      label={t("capture.composer.submit")}
+                      disabled={snapshot.selecting || mixed}
+                      onPress={onSubmit}
                     />
                   </View>
                 ) : null}
@@ -323,7 +322,17 @@ const createStyles = (c: UiColors) =>
       color: c.textSecondary,
       paddingHorizontal: visual.space.page,
     },
+    tabs: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      backgroundColor: c.controlTrack,
+      borderRadius: visual.radius.control,
+      marginHorizontal: visual.space.card,
+      marginTop: visual.space.heading,
+    },
     actions: {
+      justifyContent: "space-between",
       flexDirection: "row",
       flexWrap: "wrap",
       gap: visual.space.heading,
@@ -341,26 +350,43 @@ const createStyles = (c: UiColors) =>
     secondary: { ...visual.type.meta, color: c.textSecondary },
     name: { ...visual.type.row, color: c.textPrimary },
     error: { ...visual.type.row, color: c.destructive },
-    composer: {
+    composer: { gap: visual.space.heading },
+    tray: { gap: visual.space.heading },
+    card: {
+      width: 230,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.heading,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.separator,
+      borderRadius: visual.radius.control,
+      padding: visual.space.heading,
+    },
+    cardCopy: { flex: 1, minWidth: 0 },
+    thumbnail: { width: 40, height: 40, borderRadius: visual.radius.control },
+    editor: {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: c.separator,
       borderRadius: visual.radius.control,
       backgroundColor: c.elevatedSurface,
-    },
-    tray: { gap: visual.space.card, padding: visual.space.card },
-    card: { width: 180, gap: visual.space.heading },
-    cardHeading: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
-    thumbnail: { width: "100%", height: 80, borderRadius: visual.radius.control },
-    editor: {
       flexDirection: "row",
       alignItems: "center",
       padding: visual.space.heading,
       gap: visual.space.heading,
     },
-    input: { flex: 1, minWidth: 0 },
-    footer: { gap: visual.space.heading, padding: visual.space.card },
+    input: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 44,
+      backgroundColor: c.elevatedSurface,
+      ...visual.type.meta,
+    },
+    footer: {
+      gap: visual.space.heading,
+      padding: visual.space.card,
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      justifyContent: "flex-end",
+    },
   });

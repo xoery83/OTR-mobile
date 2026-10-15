@@ -1,3 +1,10 @@
+# Experience VQA presentation checkpoint — 2026-10-15
+
+- Independent branch `experience/vqa-mt-cap-pre-01`, main baseline `1561d272`; prior MT predecessor `4282466`. Coordinator adopted both with C2 preserved.
+- My Trips native toolbar, contextual Menu, native Start a Trip and Capture pre-submit presentation implemented; targeted 142 tests/typecheck/UI guard PASS; independent agent Review PASS.
+- Targeted Native VQA on Experience-only Simulator passed delivered states. Packet PARTIAL: Capture-owned native host, text/Clipboard submit, Camera and conditional Active Imports interfaces remain blocked. No Capture business/Auth/Core/DB/sync modifications.
+- Delivery details: `docs/beta/visual-acceptance/OTR_VQA_MT_CAP_PRE_01_REPORT_2026-10-15.md`. Integration seam Review PASS; merged16files/113tests, typecheck (Expo route types regenerated) and ui:guard PASS. Owner acceptance remains pending.
+
 # Capture Import checkpoint — 2026-10-15
 
 - C2 current: restricted DEV Native Activity caller implemented and independently

@@ -32,6 +32,15 @@ work while actual Native execution is blocked.
 
 # OTR Beta — EXECUTION
 
+**Experience delivery adopted — 2026-10-15:** `42da495` plus predecessor4282466
+integrated by Coordinator after existing independent review/targeted Native VQA.
+Only two catalog insertion conflicts; both Experience and C2 keys retained.
+Integration seam peer PASS, combined113tests/typecheck/uiGuard PASS. Local Expo
+route declarations regenerated without starting Metro. C2 Activity/runner/config
+unchanged. Packet remains PARTIAL for native in-place Capture host, text/Clipboard,
+Camera caller and contextual Active Imports. No fresh Native/Owner UX acceptance.
+
+
 **VQA-MT-CAP-PRE-01 — 2026-10-15 / independent UI owner:** My Trips, Global Menu, Start a Trip Action Sheet and Import Travel Plans pre-submit presentation only; Modification Delta, UI Blueprint V1 and Visual Reference V1 are the packet authority. Await independent UI Agent commit and Native VQA report before Coordinator interface/conflict/integration checks. No duplicate Coordinator UI implementation. File acquisition/upload, Batch/persistence, Parsing, Activity, Review, Admission and Results remain Capture E2E-owned; post-submit Activity Progress/Results UI excluded. Current C2 temporary overlay remains limited to its six owning data/API files and must preserve UI work. Current main1561d27 has no Coordinator writer on CaptureContent/CaptureComposer/capture route/TripQuickAddMenu/GlobalMenu/catalogs; only presentation may change there, preserving submit/controller semantics. Existing typed CaptureDraftSnapshot and Composer callbacks are reusable; magic_input is staging-only and submit rejects it, no sealed text/Clipboard submit candidate is confirmed. Camera owning picker exists, but the UI caller is a separately held candidate under `/private/tmp/otr-beta-cp01-camera-ui-61`; do not silently enable it or relabel provenance. No Capture Repository/native picker/business changes belong to this UI packet. A presentation-only embedded/formSheet adapter may preserve the current controller seam, but lifting the retained draft ref into a root provider changes draft lifetime/account fencing and must be separately owned/coordinated before integration; do not merge it as a purely visual hunk.
 
 **Camera local owning intake / 2026-10-15:** Source SQLite registry now includes forward64, with original51 unchanged. Explicit Camera IMAGE provenance, durable intake/recovery and post-permission host/account fences passed Main71/3, typecheck, touched lint, UI guard and formatting. This accepts the non-UI owning slice only: Camera caller223c/66206 remains a separate reviewed candidate; actual Camera SDK, permissions/hardware and device schema64 are unobserved. The retained Owner visual host remains exact36 on its previous registry63; it was not rebuilt/reloaded or migrated. No new data, Native or Hosted operation. TYPE05 forward65 is separately registered in code; no device installation is claimed.

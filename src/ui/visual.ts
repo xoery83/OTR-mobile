@@ -1,7 +1,13 @@
 export const visual = {
   radius: { hero: 18, card: 14, control: 10, pill: 999 },
   space: { page: 16, section: 24, heading: 9, card: 12, row: 14 },
+  bottomShell: { height: 60, icon: 24, gap: 4 },
   type: {
+    navigation: { fontSize: 11, fontWeight: "600" as const },
+    tripSectionLabel: { fontSize: 13, fontWeight: "500" as const },
+    tripRowTitle: { fontSize: 16, fontWeight: "600" as const },
+    tripDate: { fontSize: 13, fontWeight: "500" as const },
+    tripHeroTitle: { fontSize: 22, fontWeight: "600" as const },
     eyebrow: { fontSize: 12, fontWeight: "700" as const, letterSpacing: 0.6 },
     section: { fontSize: 18, fontWeight: "700" as const },
     row: { fontSize: 16, fontWeight: "600" as const },
