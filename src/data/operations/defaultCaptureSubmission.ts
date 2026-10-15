@@ -1,4 +1,5 @@
 import { randomUUID } from "expo-crypto";
+import { AppState } from "react-native";
 import {
   captureAccountRequestContext,
   assertAccountRequestContext,
@@ -41,7 +42,6 @@ async function ensureForeground(
   const setup = (async () => {
     const { createCaptureProcessingForeground } =
       await import("@/data/sync/captureProcessingForeground");
-    const { AppState } = await import("react-native");
     await assertAccountRequestContext(context, requireActiveUserId);
     foreground?.stop();
     const controller = createCaptureProcessingForeground({

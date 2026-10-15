@@ -19,6 +19,9 @@ const state = vi.hoisted(() => ({
   reopen: vi.fn(),
 }));
 vi.mock("expo-crypto", () => ({ randomUUID: vi.fn() }));
+vi.mock("react-native", () => ({
+  AppState: { currentState: "active", addEventListener: () => ({ remove() {} }) },
+}));
 vi.mock("@/native/capturePicker", () => ({ pickCaptureMaterial: vi.fn() }));
 vi.mock("@/native/captureUriReader", () => ({ openCaptureUriReader: vi.fn() }));
 vi.mock("@/data/auth/authRepository", () => ({
@@ -30,6 +33,9 @@ vi.mock("@/data/repositories/defaultLocalCaptureInboxRepository", () => ({
 }));
 vi.mock("@/data/repositories/captureSubmissionRepository", () => ({
   createCaptureSubmissionRepository: () => ({ list: state.list, reopen: state.reopen }),
+}));
+vi.mock("@/data/repositories/captureProcessingRepository", () => ({
+  createCaptureProcessingRepository: () => ({ events: async () => [] }),
 }));
 beforeEach(() => {
   vi.resetAllMocks();
@@ -49,7 +55,9 @@ it.each(["list", "reopen"] as const)(
     repoAction.mockImplementation(
       async (_argument: unknown, context: AccountRequestContext) => {
         await assertAccountRequestContext(context, async () => state.account);
-        return context;
+        return action === "list"
+          ? []
+          : { batch: { jobId: "same-job" }, processing: { capability: "NOT_INSTALLED" } };
       },
     );
     const generation = getAccountGeneration();
