@@ -81,9 +81,20 @@ normal Recent submissions loads that module. The bounded Node-standard-WebSocket
 bridge is scripts/dev/capture-c2-once.mjs (no dependency or arbitrary expression).
 After separately approved original-host restoration/temporary overlay, first run:
 `node scripts/dev/capture-c2-once.mjs`.
-It only discovers fixed http://127.0.0.1:8081/json/list, requires exactly one
+It only discovers fixed http://[::1]:8081/json/list, requires exactly one
 `deviceName="OTR CP02 Native Host Recovery"` and `appId="com.xoery.otrmobile"`,
-and checks hook presence without invoking it. The device name is the approved A1A
+and checks hook presence without invoking it. This candidate changes only the
+loopback address family from IPv4 to IPv6, with no fallback; WebSocket also accepts
+only [::1]:8081. Before attempting this delta, confirm original PID3554 and cwd
+/private/tmp/otr-beta-trips-shell-r2-native-61 still own the same [::1]:8081 listener.
+A listener is not A1A target qualification. The prior IPv4 Gate does not authorize
+silent IPv6 substitution: Owner approval of this precise delta must precede its
+first endpoint access. Do not change/restart Metro, select another target or port.
+Two later host-namespace diagnostic requests timed out in tool automatic approval
+before command execution; those are approval availability failures, not evidence
+of DEV permission denial or host IPv4/IPv6 network failure. Sandbox URLError alone
+cannot establish actual host connect-refused. The exact A1A target remains UNKNOWN.
+The device name is the approved A1A
 name, not evidence of a discovered Inspector target; any other/absent/ambiguous
 metadata is unqualified. Before remote provision/deploy, qualify only the A1A
 target mapping and hook presence in the approved window; FAIL/UNKNOWN stops those

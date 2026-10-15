@@ -33,7 +33,7 @@ export function selectTarget(targets) {
   const url = new URL(matches[0].webSocketDebuggerUrl);
   if (
     url.protocol !== "ws:" ||
-    url.hostname !== "127.0.0.1" ||
+    url.hostname !== "[::1]" ||
     url.port !== "8081" ||
     url.pathname !== "/inspector/debug" ||
     url.username ||
@@ -71,7 +71,7 @@ export async function runBridge({
   fetchImpl = fetch,
   WebSocketImpl = WebSocket,
 } = {}) {
-  const response = await fetchImpl("http://127.0.0.1:8081/json/list", {
+  const response = await fetchImpl("http://[::1]:8081/json/list", {
     redirect: "error",
     signal: AbortSignal.timeout(5000),
   });

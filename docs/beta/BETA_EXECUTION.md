@@ -14,7 +14,13 @@ qualification or image ID. Both Inputs upload/readback NOT ATTEMPTED; zero
 host/device/config/remote mutations, rollback NOT REQUIRED. Receipt:
 `/private/tmp/otr-c2-runtime-preflight-20261015/receipt.json`. Restore the same
 original Inspector channel before a new qualification run; no recovery was
-performed after the strict stop. C3–C6 not passed or authorized by this C2 Gate. Reuse the C1/C2 evidence paths in current
+performed after the strict stop. C2 remains Coordinator-owned: original PID/cwd
+and [::1]:8081 listener confirmed; host-namespace read-only approvals timed out
+before execution twice. Reviewed IPv6 loopback-only delta waits Owner approval;
+no actual new endpoint access or protected C2 operation. C3 local provenance
+checks confirmed existing guards (136 PASS/1 SQL-fixture skip), no code change.
+TYPE05 local history candidate is unintegrated/unregistered; superseded-Run
+review finding is under bounded repair. C3–C6 not passed or authorized by this C2 Gate. Reuse the C1/C2 evidence paths in current
 implementation state; no additional screenshot matrix or ordinary UI packet.
 
 # OTR Beta — EXECUTION

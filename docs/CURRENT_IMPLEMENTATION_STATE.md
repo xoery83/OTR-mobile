@@ -29,8 +29,18 @@
   actual image ID absent; both Inputs PUT/authorized GET NOT ATTEMPTED.
   No host/device/config/provision/deployment/Storage mutation; rollback NOT REQUIRED.
   Receipt: `/private/tmp/otr-c2-runtime-preflight-20261015/receipt.json`.
-  Minimum recovery dependency: restore the same original A1A Inspector channel,
-  then rerun qualification; the stopped run did not perform that recovery.
+  C2 remains BLOCKED BUT OWNED by Coordinator. Bounded local diagnosis confirmed
+  original Node PID3554/cwd and [::1]:8081 listener; A1A target remains UNKNOWN.
+  Two host-namespace read-only requests expired in tool approval before execution,
+  not DEV permission or host-network failures. No third identical retry.
+  Exact three-file IPv6 loopback delta independently passed (5 synthetic tests);
+  WAITING_OWNER_LOOPBACK_DELTA before actual [::1] discovery. Same port/A1A/App,
+  no fallback or alternate target; FAIL/UNKNOWN stops protected C2. No restart,
+  new endpoint access, overlay, deployment or Storage operation performed.
+  C3 local PDF intake provenance/assignment checks confirmed existing guards
+  (136 PASS/1 explicit SQL-fixture skip), no unnecessary code change.
+  Independent TYPE05 decision-history candidate remains unregistered/unintegrated;
+  reviewer found superseded READY Run still writable; bounded fix in progress.
   No repeat Native Submit and no C3–C6 under this C2-only authorization.
   C3–C6 remain unverified for this Batch. No Source/Trip admission, schema/role,
   scheduler or Provider change. Runtime stays CLOSED; Experience owns UI.
