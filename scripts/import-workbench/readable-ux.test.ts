@@ -84,6 +84,12 @@ function descendants(e: Element): Element[] {
   return [e, ...e.children.flatMap(descendants)];
 }
 const trace = {
+  schema: "OTR_IMPORT_DIAGNOSTIC_TRACE",
+  version: 1,
+  runtime: "IOS_DIAGNOSTIC_COMPONENT",
+  admission: "NOT_AVAILABLE",
+  sourceAuthority: "NONE",
+  remote: "NOT_USED",
   job: { inputId: "00000000-0000-4000-8000-000000000001", mediaType: "image/jpeg" },
   startedAt: "2026-10-16T01:00:00Z",
   finishedAt: "2026-10-16T01:00:02Z",
@@ -117,6 +123,7 @@ const trace = {
     supplementalServiceObservations: [],
   },
   typed: {
+    projectionKind: "CURRENT_PARSER_READ",
     status: "PARTIAL",
     items: [
       {
@@ -146,7 +153,7 @@ describe("human-readable workbench presentation", () => {
     const text = allText(b.elements.get("inspection")!);
     expect(text).toContain("航班号");
     expect(text).toContain("NZ 5069");
-    expect(text).toContain("模型输出未能匹配原文证据");
+    expect(text).toContain("模型输出证据校验失败");
     expect(text).toContain("被拒绝的模型原始输出未保留");
     expect(text).toContain("本地增强条件仍缺：出发机场、到达机场");
     expect(text).toContain("不是完整 Admission");
@@ -656,6 +663,93 @@ describe("human-readable workbench presentation", () => {
     expect(b.elements.get("inspect-input")!.value).toBe("jpg");
     expect(b.elements.get("inspect-run")!.value).toBe("JPG");
     expect(allText(b.elements.get("inspection")!)).toContain("Original.jpg");
+  });
+  it("keeps actual local observations separate from inferred Bookings, Segments and expected annotations", () => {
+    const b = browser();
+    b.context.trace = {
+      ...trace,
+      typed: {
+        ...trace.typed,
+        items: [
+          ...trace.typed.items,
+          { schema_id: "otr.import.flight", token: "second", fields: [], deferred: [] },
+        ],
+      },
+    };
+    b.run(
+      'renderBusinessStructure(el("structure"),trace,"one-input");renderExpectedStructure(el("expected"))',
+    );
+    const actual = allText(b.elements.get("structure")!);
+    expect(actual).toContain("局部观察：2");
+    expect(actual).toContain("未提供／未执行");
+    expect(actual).toContain("此诊断路径未生成");
+    expect(actual).toContain("正式 Typed 组装／完整性评估未运行");
+    expect(actual).toContain("不是完整性评分");
+    expect(actual).toContain("跨 Input 预订关联、身份匹配与去重未记录");
+    expect(allText(b.elements.get("expected")!)).toContain("尚未保存人工业务结构");
+    b.run(
+      'inspectedLabels={annotation:{documentStatus:"RESULTS",results:[{type:"FLIGHT",fields:[],segments:[{id:"human-one",fields:[]},{id:"human-two",fields:[]}]}]}};renderExpectedStructure(el("expected"))',
+    );
+    expect(allText(b.elements.get("expected")!)).toContain("2 个预期分段");
+    expect(actual).not.toContain("2 个预期分段");
+  });
+  it("reports five Apple statuses without mistaking output-evidence failure for an unavailable engine", () => {
+    const b = browser();
+    b.context.trace = trace;
+    b.run('renderAppleDiagnostic(el("apple"),trace)');
+    const text = allText(b.elements.get("apple")!);
+    expect(text).toContain("能力可用性：可用");
+    expect(text).toContain("已记录 enrich 调用");
+    expect(text).toContain("推断：校验失败路径证明曾产生可解析输出");
+    expect(text).toContain("模型输出证据校验失败");
+    expect(text).toContain("具体原因未保留");
+    expect(text).toContain("实际保留贡献：0");
+    expect(text).toContain("不能据此认定模型引擎不可用");
+    expect(text).toContain("只请求航班号字面值");
+    const info = b.run("appleDiagnostic(trace)");
+    expect(info).toMatchObject({ invoked: true, invalidEvidence: true, retained: 0 });
+  });
+  it("marks model output as not recorded for a timeout and never fabricates rejected literal values", () => {
+    const b = browser();
+    b.context.trace = {
+      ...trace,
+      model: { status: "FAILED", reason: "LOCAL_MODEL_TIMEOUT", observations: [] },
+      result: { ...trace.result, modelReason: "LOCAL_MODEL_TIMEOUT" },
+    };
+    b.run('renderAppleDiagnostic(el("apple"),trace)');
+    const text = allText(b.elements.get("apple")!);
+    expect(text).toContain("调用失败本身不能证明是否产生过输出");
+    expect(text).not.toContain("校验失败路径证明");
+  });
+  it("shows model supplements as retained observations rather than complete booking interpretation", () => {
+    const b = browser();
+    b.context.trace = {
+      ...trace,
+      model: {
+        status: "SUCCEEDED",
+        observations: [{ literal: "AA 101", start: 0, end: 6 }],
+      },
+      result: {
+        ...trace.result,
+        modelExecution: "SUCCEEDED",
+        modelReason: "VERBATIM_SERVICE_EVIDENCE_ONLY",
+        supplementalServiceObservations: [{ literal: "AA 101", start: 0, end: 6 }],
+      },
+    };
+    b.run('renderAppleDiagnostic(el("apple"),trace)');
+    const text = allText(b.elements.get("apple")!);
+    expect(text).toContain("实际保留贡献：1 条补充观察");
+    expect(text).toContain("不消费这些模型补充观察");
+    expect(text).not.toContain("生成 1 个 Booking");
+  });
+  it("does not manufacture producer attribution for an incompatible imported trace", () => {
+    const b = browser();
+    b.context.trace = { result: { fields: [] }, typed: { items: [] } };
+    b.run('renderBusinessStructure(el("unknown"),trace,"input")');
+    const text = allText(b.elements.get("unknown")!);
+    expect(text).toContain("未记录");
+    expect(text).not.toContain("runImportDiagnostic →");
+    expect(b.run("appleDiagnostic(trace).invoked")).toBeNull();
   });
   it("renders hostile file names, values and trace text as literal text nodes", () => {
     const b = browser();

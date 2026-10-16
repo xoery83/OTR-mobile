@@ -7,10 +7,11 @@ let selectedRun,
   latestState,
   batchRunning = false;
 let inspectedImported = false;
+let inspectedLabels;
 let lastComparison;
 let selectedField,
   selectedFieldSource = "deterministic",
-  resultView = "result",
+  resultView = "structure",
   previewPage = 1,
   previewZoom = 100,
   previewManuallyChosen = false;
@@ -93,7 +94,7 @@ function reasonText(reason) {
   const reasons = {
     LOCAL_MODEL_EVIDENCE_INVALID: [
       "Model output did not match the original text evidence. Deterministic results are retained.",
-      "模型输出未能匹配原文证据，确定性结果已保留。",
+      "模型输出证据校验失败，确定性结果已保留。",
     ],
     LOCAL_MODEL_TIMEOUT: [
       "Local model timed out; deterministic results are retained.",
@@ -212,10 +213,12 @@ function inputName(id) {
   );
 }
 function runtimeName(runtime) {
-  return runtime === "MAC_COMPONENT"
-    ? message("Mac", "Mac 本机")
-    : message("iOS Simulator", "iOS 模拟器");
+  if (runtime === "MAC_COMPONENT") return message("Mac", "Mac 本机");
+  if (runtime === "IOS_DIAGNOSTIC_COMPONENT")
+    return message("iOS Simulator", "iOS 模拟器");
+  return message("Runner not recorded", "运行环境未记录");
 }
+
 function runName(run) {
   return (
     new Date(run.createdAt).toLocaleString(language === "zh" ? "zh-CN" : "en-NZ") +
@@ -390,6 +393,278 @@ function stageState(value, absent = "Not Recorded") {
     return message("Completed", "已完成");
   return message(absent, absent === "Not Recorded" ? "未记录" : "未运行");
 }
+function hasDiagnosticLineage(trace) {
+  return (
+    trace.schema === "OTR_IMPORT_DIAGNOSTIC_TRACE" &&
+    trace.version === 1 &&
+    trace.typed?.projectionKind === "CURRENT_PARSER_READ"
+  );
+}
+function appleDiagnostic(trace) {
+  const known = hasDiagnosticLineage(trace);
+  const reason = trace.result?.modelReason || trace.model?.reason;
+  const status = trace.model?.status || trace.result?.modelExecution;
+  const timed = Number.isFinite(trace.timings?.modelDeadlineInclusiveMs);
+  const invoked = timed ? true : known && trace.timings ? false : null;
+  const invalidEvidence = reason === "LOCAL_MODEL_EVIDENCE_INVALID";
+  return {
+    known,
+    reason,
+    status,
+    invoked,
+    invalidEvidence,
+    retained: (trace.result?.supplementalServiceObservations || []).length,
+  };
+}
+function renderAppleDiagnostic(host, trace) {
+  const d = appleDiagnostic(trace),
+    card = node("div", undefined, "lineage-note");
+  card.append(
+    node("h3", message("Apple — five separate checks", "Apple — 五项独立检查")),
+  );
+  const availability = trace.capability?.status || trace.result?.modelCapability;
+  card.append(
+    node("p", message("Availability: ", "能力可用性：") + readableState(availability)),
+  );
+  card.append(
+    node(
+      "p",
+      message("Invocation: ", "是否调用：") +
+        (d.invoked === true
+          ? message("enrich call recorded · ", "已记录 enrich 调用 · ") +
+            milliseconds(trace.timings.modelDeadlineInclusiveMs)
+          : d.invoked === false
+            ? message("Not Run in this diagnostic trace", "此诊断记录未运行")
+            : message("Not Recorded", "未记录")),
+    ),
+  );
+  card.append(
+    node(
+      "p",
+      message("Output produced: ", "是否产生输出：") +
+        (d.invalidEvidence && d.known
+          ? message(
+              "Inferred from the validator failure path: a parseable output was produced; the raw response was not retained.",
+              "推断：校验失败路径证明曾产生可解析输出；原始响应未保留。",
+            )
+          : d.status === "SUCCEEDED"
+            ? message(
+                "Validated observations recorded; the raw response is not retained.",
+                "已记录经校验的观察；原始响应未保留。",
+              )
+            : d.invoked === false
+              ? message("Not Run", "未运行")
+              : message(
+                  "Not Recorded — a failed call alone does not show whether output was produced.",
+                  "未记录 — 调用失败本身不能证明是否产生过输出。",
+                )),
+    ),
+  );
+  card.append(
+    node(
+      "p",
+      message("Evidence validation: ", "输出证据校验：") +
+        (d.invalidEvidence
+          ? message(
+              "Model-output evidence validation failed. An exact, unique original-text anchor did not pass; the rejected literal and precise cause were not retained.",
+              "模型输出证据校验失败。精确且唯一的原文锚点未通过；被拒绝的字面值与具体原因未保留。",
+            )
+          : d.status === "SUCCEEDED"
+            ? message(
+                "Recorded observations passed the literal/unique-anchor checks.",
+                "已记录观察通过字面值与唯一锚点校验。",
+              )
+            : d.invoked === false
+              ? message("Not Run", "未运行")
+              : message("Not Recorded", "未记录")),
+    ),
+  );
+  card.append(
+    node(
+      "p",
+      message("Effective retained contribution: ", "实际保留贡献：") +
+        d.retained +
+        message(" supplementary observations; ", " 条补充观察；") +
+        traceFields(trace).length +
+        message(" deterministic fields remain available.", " 个确定性字段仍保留。"),
+    ),
+  );
+  if (d.known)
+    card.append(
+      node(
+        "p",
+        message(
+          "Current local model asks only for flight-number literals, not a complete booking. The current typed read reparses text and does not consume these model supplements.",
+          "当前本地模型只请求航班号字面值，不抽取完整预订。当前 Typed 读取重新解析文本，不消费这些模型补充观察。",
+        ),
+        "muted",
+      ),
+    );
+  if (d.invalidEvidence)
+    card.append(
+      node(
+        "p",
+        message(
+          "This is an output/evidence failure, not proof that the model engine is unavailable. Whitespace, repeated occurrences or a particular rejected value cannot be guessed from this trace.",
+          "这是输出证据问题，不能据此认定模型引擎不可用。不能从本记录猜测空格、重复出现或某个具体拒绝值。",
+        ),
+        "muted",
+      ),
+    );
+  details(card, {
+    capability: trace.capability,
+    model: trace.model,
+    reason: d.reason,
+    hostSourceManifest: trace.job?.hostSourceManifest,
+    executedVersion: trace.executedVersion,
+    producers: d.known
+      ? [
+          "runImportDiagnostic",
+          "createCaptureLocalExtractorCore.enrich",
+          "validateCaptureLocalModelResponse",
+          "attachCaptureLocalModelEvidence",
+        ]
+      : "NOT_RECORDED",
+    provenance: "current host source relationship; not executed build attestation",
+  });
+  host.append(card);
+}
+function renderExpectedStructure(host) {
+  const card = node("section", undefined, "expected-structure");
+  card.append(
+    node("h3", message("Expected — human annotation only", "Expected — 仅人工标准答案")),
+    node(
+      "p",
+      message(
+        "Separate from actual parser output. These labels do not create or prove Bookings, Segments, Candidates or Admission.",
+        "与实际解析输出分隔。这些标注不创建或证明 Booking、Segment、Candidate 或 Admission。",
+      ),
+      "muted",
+    ),
+  );
+  const annotation = inspectedLabels?.annotation;
+  if (!annotation)
+    card.append(
+      node(
+        "p",
+        message(
+          "No saved expected business structure. Field-only labels do not imply a booking/segment structure.",
+          "尚未保存人工业务结构；仅有字段标注不能推导预订／分段结构。",
+        ),
+      ),
+    );
+  else {
+    card.append(
+      node(
+        "p",
+        annotation.documentStatus === "NO_RELEVANT_CONTENT"
+          ? message(
+              "Human expectation: no relevant content (zero results).",
+              "人工预期：无相关内容（零个结果）。",
+            )
+          : annotation.documentStatus === "UNREVIEWED"
+            ? message(
+                "Not reviewed — not a structural ground-truth result.",
+                "尚未人工检查 — 不属于已确认结构真值。",
+              )
+            : message("Saved diagnostic expectations: ", "已保存诊断预期：") +
+              annotation.results.length +
+              message(" result groups", " 个结果组"),
+      ),
+    );
+    for (const [index, result] of (annotation.results || []).entries()) {
+      const pair = annotationTypes[result.type],
+        label = pair ? message(...pair) : message("Unclassified", "未分类");
+      card.append(
+        node(
+          "p",
+          message("Expected result ", "预期结果 ") +
+            (index + 1) +
+            " · " +
+            label +
+            " · " +
+            result.segments.length +
+            message(" expected segments · ", " 个预期分段 · ") +
+            result.fields.length +
+            message(" expected fields", " 个预期字段"),
+        ),
+      );
+    }
+  }
+  host.append(card);
+}
+function renderBusinessStructure(host, trace, inputId) {
+  const known = hasDiagnosticLineage(trace),
+    results = businessResults(trace),
+    flow = node("div", undefined, "lineage-note");
+  flow.append(node("h3", message("Actual business structure", "Actual 实际业务结构")));
+  const steps = [
+    message("Input: one current original", "Input：当前一份原件"),
+    message("Partial observations: ", "局部观察：") + results.length,
+    message("Consolidation: ", "身份汇总／合并：") +
+      (known
+        ? message("Not available / Not Run", "未提供／未执行")
+        : message("Not Recorded", "未记录")),
+    message("Typed: ", "Typed：") +
+      (trace.typed?.projectionKind === "CURRENT_PARSER_READ"
+        ? message(
+            "current parser read; formal typed assembly and completeness assessment Not Run",
+            "当前解析器读取投影；正式 Typed 组装／完整性评估未运行",
+          )
+        : message("Not Recorded", "未记录")),
+    message("Candidate / Admission: ", "Candidate／Admission：") +
+      (known && trace.admission === "NOT_AVAILABLE"
+        ? message("Not Run", "未运行")
+        : message("Not Recorded", "未记录")),
+    message("Booking / Segment / Trip Item: ", "Booking／Segment／Trip Item：") +
+      (known
+        ? message("Not generated by this diagnostic path", "此诊断路径未生成")
+        : message("Not Recorded", "未记录")),
+  ];
+  for (const label of steps) flow.append(node("p", label));
+  if (known)
+    flow.append(
+      node(
+        "p",
+        message(
+          "The current read function always labels successful parser projections PARTIAL; this is not a completeness score. Formal typed assembly, required-field assessment and identity consolidation have not run.",
+          "当前读取函数对成功解析投影固定标记 PARTIAL，这不是完整性评分。正式 Typed 组装、必填评估与身份汇总均未运行。",
+        ),
+        "muted",
+      ),
+    );
+  flow.append(
+    node(
+      "p",
+      message(
+        "Input, parser item tokens and formal business identities are different. Cross-input booking links, identity matching and deduplication are Not Recorded; repeated observations do not prove duplicate bookings.",
+        "Input、解析器观察 token 与正式业务身份不同。跨 Input 预订关联、身份匹配与去重未记录；重复观察不能证明重复预订。",
+      ),
+      "muted",
+    ),
+  );
+  if (known)
+    flow.append(
+      node(
+        "p",
+        message(
+          "Producer lineage from current host source: runImportDiagnostic → buildCaptureLocalResult → parseReferenceFlightText; the typed projection calls parseReferenceFlightText again. This describes source relationships, not the executing Native/JS build.",
+          "当前主机源码生产关系：runImportDiagnostic → buildCaptureLocalResult → parseReferenceFlightText；Typed 投影再次调用 parseReferenceFlightText。此为源码关系，不是执行中的 Native／JS 构建证明。",
+        ),
+        "muted",
+      ),
+    );
+  details(flow, {
+    inputId,
+    projectionKind: trace.typed?.projectionKind,
+    sourceAuthority: trace.sourceAuthority,
+    admission: trace.admission,
+    executedVersion: trace.executedVersion,
+    hostSourceManifest: trace.job?.hostSourceManifest,
+  });
+  host.append(flow);
+}
+
 function resultType(item) {
   const types = { "otr.import.flight": ["Air transport observations", "航空交通观察"] };
   return types[item.schema_id]
@@ -439,6 +714,16 @@ function renderDocumentPreview(trace, inputId, field) {
   if ((evidence.pages || []).length && !previewManuallyChosen)
     previewPage = evidence.pages[0] + 1;
   if (pages.length) previewPage = Math.min(Math.max(1, previewPage), pages.length);
+  host.append(
+    node(
+      "p",
+      message("Extraction: ", "提取：") +
+        (extraction.engine || message("Not Recorded", "未记录")) +
+        " · " +
+        milliseconds(trace.timings?.extractionMs),
+      "muted",
+    ),
+  );
   const controls = node("div", undefined, "document-controls");
   if (input?.mediaType === "application/pdf" && pages.length) {
     const previous = button("←", () => {
@@ -624,6 +909,7 @@ function step(parent, title, status, output, timing, extra) {
 function renderFieldChain(trace, field, inputId, source = "deterministic") {
   const host = el("field-chain");
   host.replaceChildren(node("h3", message("Evidence & Interpretation", "证据与解释")));
+  renderAppleDiagnostic(host, trace);
   if (!field) {
     host.append(
       node(
@@ -691,7 +977,10 @@ function renderFieldChain(trace, field, inputId, source = "deterministic") {
           "Supplementary observation — not adopted into typed result",
           "补充观察 — 未自动纳入结构结果",
         )
-      : stageState(modelStatus),
+      : (trace.result?.modelReason || trace.model?.reason) ===
+          "LOCAL_MODEL_EVIDENCE_INVALID"
+        ? message("Model-output evidence validation failed", "模型输出证据校验失败")
+        : stageState(modelStatus),
     modelText,
     trace.timings?.modelDeadlineInclusiveMs,
     { capability: trace.capability, model: trace.model },
@@ -737,7 +1026,10 @@ function renderFieldChain(trace, field, inputId, source = "deterministic") {
     host,
     message("7. Typed interpretation", "7. 结构化解释"),
     typed.length
-      ? message("Present in partial typed projection", "部分结构投影中存在")
+      ? message(
+          "Present in the current parser read projection",
+          "当前解析器读取投影中存在",
+        )
       : message("Not adopted / not recorded", "未纳入／未记录"),
     typed.length
       ? fieldValue(typed[0])
@@ -836,7 +1128,8 @@ function renderParsedResults(trace, inputId) {
   host.replaceChildren(node("h3", message("Parsed Results", "解析结果")));
   const tabs = node("div", undefined, "result-tabs");
   for (const [key, en, zh] of [
-    ["result", "By Business Result", "按解释结果"],
+    ["structure", "Business Structure", "业务结构"],
+    ["result", "By Observation", "按局部观察"],
     ["field", "By Field", "按字段"],
     ["matrix", "Stage Contribution", "阶段贡献"],
   ]) {
@@ -848,6 +1141,7 @@ function renderParsedResults(trace, inputId) {
     tabs.append(b);
   }
   host.append(tabs);
+  if (resultView === "structure") renderBusinessStructure(host, trace, inputId);
   if (resultView === "matrix") {
     renderMatrix(host, trace);
     return;
@@ -879,6 +1173,27 @@ function renderParsedResults(trace, inputId) {
               " · Booking / Segment identities: Not Recorded",
               " · Booking／Segment 身份：未记录",
             ),
+        ),
+      );
+      group.append(
+        node(
+          "p",
+          message("Producer: ", "生产者：") +
+            (hasDiagnosticLineage(trace)
+              ? "parseReferenceFlightText → buildCaptureLocalResult"
+              : message("Not Recorded", "未记录")) +
+            " · " +
+            runtimeName(trace.runtime),
+        ),
+      );
+      group.append(
+        node(
+          "p",
+          message(
+            "This is a local observation group, not a Booking or Segment. Identity/consolidation/deduplication decisions: Not Recorded.",
+            "这是局部观察组，不是 Booking 或 Segment。身份、汇总、去重决策未记录。",
+          ),
+          "muted",
         ),
       );
       fieldTable(
@@ -961,6 +1276,7 @@ function renderParsedResults(trace, inputId) {
       "muted",
     ),
   );
+  if (resultView === "structure") renderExpectedStructure(host);
 }
 function renderInspection(run, imported = false) {
   const root = el("inspection");
@@ -1149,6 +1465,7 @@ async function inspect(id) {
     previewZoom = 100;
     previewManuallyChosen = false;
     inspected = run;
+    inspectedLabels = saved;
     selectedRun = run.trace ? id : undefined;
     el("inspect-input").value = run.inputId;
     populateInspectionRuns();
@@ -1183,6 +1500,7 @@ async function inspectImported(id) {
     if (sequence !== inspectionSequence) return;
     const payload = imported.payload ?? imported;
     inspectedImported = true;
+    inspectedLabels = undefined;
     selectedFieldSource = "deterministic";
     selectedField = undefined;
     previewPage = 1;
@@ -1234,7 +1552,12 @@ async function saveLabels() {
     await api("/api/run/" + runId + "/labels", { kind, fields, annotation });
     if (sequence !== inspectionSequence || selectedRun !== runId) return;
     const stats = await api("/api/run/" + runId + "/stats");
-    if (sequence === inspectionSequence && selectedRun === runId) renderStats(stats);
+    if (sequence === inspectionSequence && selectedRun === runId) {
+      inspectedLabels = { kind, fields, annotation };
+      renderStats(stats);
+      if (resultView === "structure" && inspected?.trace)
+        renderParsedResults(inspected.trace, inspected.inputId);
+    }
   } catch (error) {
     if (sequence === inspectionSequence && selectedRun === runId) throw error;
   } finally {
