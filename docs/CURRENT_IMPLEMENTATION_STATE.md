@@ -1,3 +1,59 @@
+# Workbench Remote inspection / Source local continuation — 2026-10-17
+
+- Reviewed Workbench/Validator candidate94f2f2c integrated c10679b. Inspect now
+  reads exact-original/baseline/request-pinned private Remote receipts; JSON/HTML
+  exports include them. Historical and current checks stay separate; no Provider
+  key/network dispatch added. Original2Inputs/18Runs retained; Native gate off.
+- Structured output is explicitly JSON/schema/advisory references, not fact or
+  readiness acceptance. Model rationale/conflict/Review text is unverified; real
+  PDF redundant/misleading questions are labeled. Actual input/output/cache/total
+  tokens, text-byte preflight bound and dated peak-price USD estimate are distinct;
+  unknown/image token estimates remain unknown, not zero.
+- Semantic contractv1.1 allows only same-Input, explicit Review/evidence-covered
+  reference-free grouping suggestions. Bound Booking scopes cannot be hidden or
+  merged; unbound known references require nonempty Review questions. Independent
+  review P2 omission/blank-question cases fixed and CLOSED; no remainingP1/P2.
+- Saved Delta original REJECTED/CROSS_BOOKING_MERGE retained; current offline
+  recheck ACCEPTED advisory4partial segments/UNRESOLVED group. Airport/date/time
+  evidence still missing, new fields0/grouping change0; no business completeness
+  or commercial identity claim. NZ1+2/NEEDS_REVIEW/increment0 unchanged.
+- Checks:77Workbench+46Flight targeted tests, types/scoped lint/UIguard PASS.
+  Live loopbackAPI and both exports verified; browser visual unverified. Receipts
+  /private/tmp/otr-deepseek-preflight-20261017/workbench-live-receipt.json.
+- Source local registration preparation2925d9b independently code-checked and
+  integrated37331dd: exact Source metadata/identity and independent double read,
+  stable draft digest only.37candidate tests/tsc/lint PASS. No Authority/writer/
+  Hosted/registration/realCandidate/Review/Admission/DayRuntime. Existing protected
+  trusted producer/profile/registration and Booking-purpose gaps remain owned.
+
+# C4-R DeepSeek diagnostic checkpoint — 2026-10-17
+
+- Main/origin confirmed ef8fe17 before this checkpoint. Existing DEV Backend
+  image012f2d remains healthy and unchanged; no deployment/key injection performed.
+- Owner authorized existing Web DeepSeek key reuse. Key used only in memory;
+  no key value copied into Git, report, Mobile, or diagnostic files. Existing Web
+  service/config unchanged. DEV container itself has no DeepSeek key and normal
+  protected Flight transport/provisioning remains CLOSED.
+- Authenticated models/balance read PASS: deepseek-flash reports text/image;
+  account available. No-privacy text and actual red PNG image calls HTTP200 PASS.
+- Real NZ5069 evidence-text call5.300s: existing production PartA/PartB prompt and
+  proposal schema,1group/2segments, strict Validator ACCEPTED, NEEDS_REVIEW.
+  Existing deterministic1+2/readiness not improved; no Admission authority.
+- Real original Delta JPG call6.047s: actual image sent, JSON/schema/current field
+  and evidence IDs valid, but full Validator REJECTED/CROSS_BOOKING_MERGE because
+  proposed reference-free group hits !refs.length. This is not proof of competing
+  bookings. Existing8fields/4service observations cannot express newly visible
+  airport/date facts under reference-only semantic proposal. No Validator relaxed.
+- Four remote calls total (2 synthetic+2 real), zero retries; reported usage
+  cost estimatedUSD0.002153988 off-peak, peak upperUSD0.004307976, not invoice.
+  No Storage, Candidate, Admission or Canonical write. Text/Vision API Runtime
+  PASS does not mean Vision Assembly or full Import E2E PASS.
+- Private evidence /private/tmp/otr-deepseek-preflight-20261017/; independent review
+  complete. Model Review/conflict prose is not validated fact; effective increment0.
+  Source/Candidate owning work resumed separately; R2 visuals
+  and original Simulators untouched. Remote image field-evidence mapping and
+  reference-free group contract need scoped owning reconciliation, no new engine.
+
 # Night delivery checkpoint — 2026-10-16
 
 - Reviewed Apple repair integrated main `332c67f`; origin/main remains approved
