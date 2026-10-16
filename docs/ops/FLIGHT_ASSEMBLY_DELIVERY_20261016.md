@@ -84,3 +84,15 @@ Private exact receipt and hashes:
 This verifies a Native production component invocation, not an installed App/Repo
 journey. iPhone16Pro remains unverified. Next bounded change is structured-output
 observability/output burden, never a relaxed reference/evidence validator.
+
+## 2026-10-17 — Reference-free advisory groups
+
+Owner approved reconciliation: absence of a Booking Reference does not discard
+partial Flight interpretation. A reference-free group can be retained only as an
+unresolved, same-Input grouping suggestion with explicit owning Review coverage
+and all segment evidence, never as a verified commercial relationship. Existing
+known Booking scopes cannot be omitted or merged; multi-Input identity still
+requires existing evidence contracts. This changes no Candidate/Admission proof.
+Validator reports reference-free grouping separately from cross-Booking conflict.
+Historical remote receipts retain their original request contract and rejection;
+current-code revalidation is a separate diagnostic, not another Provider call.

@@ -797,3 +797,66 @@ it("keeps model deadline, cancel, generation, transport and evidence explanation
   expect(new Set(labels).size).toBe(labels.length);
   expect(labels.every((label) => !String(label).includes("开发者详情"))).toBe(true);
 });
+
+it("separates Remote structured output, original/current validation, readiness and usage", () => {
+  const b = browser();
+  b.context.remote = {
+    records: [
+      {
+        provider: "DeepSeek",
+        model: "deepseek-flash",
+        mode: "VISION",
+        http: 200,
+        latencyMs: 6047,
+        jsonValid: true,
+        schemaValid: true,
+        recordedValidation: { status: "REJECTED", reasonCodes: ["CROSS_BOOKING_MERGE"] },
+        validation: {
+          status: "ACCEPTED",
+          reasonCodes: ["REFERENCE_FREE_BOOKING_ASSOCIATION_UNRESOLVED"],
+          unresolvedBookingGroupIds: ["pending"],
+          segments: [],
+        },
+        reviewNotes: "缺少 Reference 不等于已证明跨两个 Booking。",
+        usage: {
+          input_tokens: 3166,
+          output_tokens: 1103,
+          total_tokens: 4269,
+          cached_input_tokens: 896,
+        },
+        tokenEstimate: { textInputUpperBound: 8867, outputLimit: 2048 },
+        cost: { peakUpper: 0.0022734, priceDate: "2026-10-17" },
+        proposal: {
+          bookingGroups: [
+            {
+              id: "pending",
+              referenceFieldIds: [],
+              segmentIds: [],
+              basis: "Unconfirmed",
+            },
+          ],
+          segments: [],
+          unresolved: [],
+          conflicts: [],
+        },
+        request: { partB: { fields: [] } },
+      },
+    ],
+    rejectedRecords: 0,
+  };
+  b.run('renderRemoteDiagnostics(el("inspection"),remote)');
+  const text = allText(b.elements.get("inspection")!);
+  for (const expected of [
+    "原始收据校验",
+    "当前 Validator 复验",
+    "结构化输出指",
+    "未准入",
+    "3166 / 1103 / 4269",
+    "缓存输入",
+    "非账单",
+    "图片 Token 未预估",
+    "无 Reference 分组仅保留为待确认关联建议",
+    "缺少 Reference 不等于已证明跨两个 Booking",
+  ])
+    expect(text).toContain(expected);
+});

@@ -1584,6 +1584,299 @@ function renderParsedResults(trace, inputId) {
   );
   if (resultView === "structure") renderExpectedStructure(host);
 }
+function renderRemoteDiagnostics(parent, diagnostic) {
+  const card = section(
+    parent,
+    "remote-results",
+    message("Remote LLM — recorded diagnostics", "远端 LLM — 历史真实诊断"),
+  );
+  card.append(
+    node(
+      "p",
+      message(
+        "Same original, separate remote request. This is not part of the selected local Run; opening this page sends nothing to a model.",
+        "相同原件的独立远端请求，不属于当前本地 Run；打开页面不会调用模型。",
+      ),
+    ),
+  );
+  if (!diagnostic?.records?.length)
+    card.append(
+      node(
+        "p",
+        message(
+          "No usable remote receipt for this original. Not Run / unknown; never counted as zero usage.",
+          "此原件没有可用远端收据。未运行／未知，不计为零消耗。",
+        ),
+      ),
+    );
+  if (diagnostic?.rejectedRecords)
+    card.append(
+      node(
+        "p",
+        message(
+          "Some receipts failed identity or integrity checks and were excluded.",
+          "部分收据未通过身份或完整性核对，已排除。",
+        ),
+      ),
+    );
+  for (const r of diagnostic?.records || []) {
+    const group = node("div", undefined, "lineage-note");
+    group.append(node("h3", r.provider + " · " + r.model + " · " + r.mode));
+    const rows = [
+      [
+        message("Actual request", "实际请求"),
+        r.mode === "VISION"
+          ? message("Original image + evidence / contract", "原始图片＋证据／合同")
+          : message(
+              "Evidence text + contract; no original PDF",
+              "证据文本＋合同，未发送 PDF 原件",
+            ),
+      ],
+      [
+        message("Response / time", "响应／耗时"),
+        "HTTP " + r.http + " · " + milliseconds(r.latencyMs),
+      ],
+      [message("1. JSON readable", "1. JSON 可读取"), r.jsonValid ? "PASS" : "FAIL"],
+      [
+        message("2. Proposal schema", "2. Proposal 输出结构"),
+        r.schemaValid ? "PASS" : "FAIL",
+      ],
+      [
+        message("3. Original recorded validation", "3. 原始收据校验"),
+        r.recordedValidation.status +
+          " · " +
+          r.recordedValidation.reasonCodes.join(" / "),
+      ],
+      [
+        message("4. Current validator recheck", "4. 当前 Validator 复验"),
+        r.validation.status + " · " + r.validation.reasonCodes.join(" / "),
+      ],
+      [
+        message("5. Business readiness", "5. 业务就绪"),
+        message(
+          "Review / evidence still required; no Admission",
+          "仍需 Review／补充证据；未准入",
+        ),
+      ],
+    ];
+    for (const [label, value] of rows) group.append(node("p", label + ": " + value));
+    group.append(
+      node(
+        "p",
+        message(
+          "Structured output means a schema-shaped proposal with Booking Groups, Segments, field/evidence references and unresolved questions. It does not mean correct business facts, accepted Booking or saved Trip Items.",
+          "结构化输出指按 Schema 返回 Booking Group、Segment、字段／证据引用和未解决问题；不等于业务事实正确、Booking 已接纳或 Trip Items 已保存。",
+        ),
+      ),
+    );
+    group.append(node("p", r.reviewNotes));
+    group.append(
+      node(
+        "p",
+        message(
+          "Contribution: no new field values (reference-only proposal); changed observation groupings: ",
+          "贡献：新增字段值 0（仅引用已有字段）；观察分组变化数：",
+        ) +
+          (r.contribution?.relationshipChanges.length ??
+            message("Not assessed", "未评估")) +
+          message(
+            ". A grouping difference is not a verified improvement.",
+            "。分组差异不等于已验证改善。",
+          ),
+      ),
+    );
+    const usage = r.usage;
+    group.append(node("h4", message("Tokens and estimated cost", "Token 与估算费用")));
+    const token = (value) =>
+      value === null || value === undefined ? message("Unknown", "未知") : String(value);
+    group.append(
+      node(
+        "p",
+        message(
+          "Provider-reported input / output / total: ",
+          "Provider 实报输入／输出／合计：",
+        ) +
+          [usage.input_tokens, usage.output_tokens, usage.total_tokens]
+            .map(token)
+            .join(" / "),
+      ),
+    );
+    group.append(
+      node(
+        "p",
+        message(
+          "Cached input (included in input, not extra): ",
+          "缓存输入（包含在输入中，不额外累加）：",
+        ) + token(usage.cached_input_tokens),
+      ),
+    );
+    group.append(
+      node(
+        "p",
+        message("Before-run text estimate upper bound: ", "运行前文本保守估计上界：") +
+          r.tokenEstimate.textInputUpperBound +
+          message("; output limit: ", "；输出上限：") +
+          r.tokenEstimate.outputLimit,
+      ),
+    );
+    group.append(
+      node(
+        "p",
+        message(
+          "UTF-8 byte estimate, not a tokenizer count or actual bill. Image tokens are not estimated; observed usage includes the full multimodal request. Apple usage is unknown unless its runtime records it.",
+          "UTF-8 字节估计，非 tokenizer 计数或实际账单。图片 Token 未预估；实报用量包含完整多模态请求。Apple 未记录用量时显示未知。",
+        ),
+      ),
+    );
+    group.append(
+      node(
+        "p",
+        r.cost
+          ? message(
+              "Estimated peak-rate upper cost: USD ",
+              "按高峰费率估算费用上界：USD ",
+            ) +
+              r.cost.peakUpper.toFixed(6) +
+              message(
+                " — estimate, not invoice (price snapshot ",
+                " — 估算，非账单（费率快照 ",
+              ) +
+              r.cost.priceDate +
+              ")"
+          : message("Cost unknown; never assumed zero.", "费用未知，不视为零。"),
+      ),
+    );
+    const shape = r.schemaValid ? r.proposal : null;
+    if (shape) {
+      group.append(
+        node(
+          "h4",
+          message(
+            "Proposed business structure — model advice",
+            "提出的业务结构 — 模型建议",
+          ),
+        ),
+      );
+      group.append(
+        node(
+          "p",
+          message("Groups / segments proposed: ", "提出的 Group／Segment 数：") +
+            shape.bookingGroups.length +
+            " / " +
+            shape.segments.length,
+        ),
+      );
+      if (r.validation.unresolvedBookingGroupIds?.length)
+        group.append(
+          node(
+            "p",
+            message(
+              "Reference-free groups are unresolved relationship suggestions, not verified common Bookings.",
+              "无 Reference 分组仅保留为待确认关联建议，不代表已证明同一 Booking。",
+            ),
+          ),
+        );
+      const fields = new Map(r.request.partB.fields.map((f) => [f.id, f]));
+      for (const [index, g] of shape.bookingGroups.entries()) {
+        const references = g.referenceFieldIds
+          .map((id) => fields.get(id)?.raw)
+          .filter(Boolean);
+        group.append(
+          node(
+            "p",
+            message("Booking group suggestion ", "Booking 分组建议 ") +
+              (index + 1) +
+              ": " +
+              (references.length
+                ? references.join(" / ")
+                : message(
+                    "Reference missing; relationship unresolved",
+                    "Reference 缺失，关联待确认",
+                  )) +
+              message(" · proposed member legs: ", " · 建议包含航段：") +
+              g.segmentIds
+                .map((id) => shape.segments.findIndex((s) => s.id === id) + 1)
+                .join(", "),
+          ),
+        );
+        group.append(
+          node(
+            "p",
+            message("Model rationale — unverified: ", "模型关联说明 — 未验证：") +
+              g.basis,
+          ),
+        );
+      }
+      for (const [index, s] of shape.segments.entries()) {
+        const segment = node("div", undefined, "card");
+        segment.append(
+          node("h4", message("Proposed segment ", "建议航段 ") + (index + 1)),
+        );
+        const table = node("table", undefined, "fields");
+        for (const fid of s.fieldIds) {
+          const f = fields.get(fid),
+            row = node("tr");
+          row.append(
+            node(
+              "td",
+              f ? fieldName(f.path) : message("Unknown field reference", "未知字段引用"),
+            ),
+            node(
+              "td",
+              f ? fieldValue({ path: f.path, normalized: f.value, raw: f.raw }) : fid,
+            ),
+            node("td", f?.raw || ""),
+          );
+          table.append(row);
+        }
+        segment.append(table);
+        const accepted = r.validation.segments.find((v) => v.id === s.id);
+        segment.append(
+          node(
+            "p",
+            accepted
+              ? message(
+                  "Validator retained as partial advice; missing: ",
+                  "Validator 保留为部分建议；缺少：",
+                ) + accepted.readiness.missingFields.map(fieldName).join("、")
+              : message("Not accepted into validated result.", "未进入通过校验的结果。"),
+          ),
+        );
+        group.append(segment);
+      }
+      group.append(
+        node(
+          "h4",
+          message(
+            "Model explanations / Review questions — unverified",
+            "模型解释／Review 问题 — 未验证",
+          ),
+        ),
+      );
+      group.append(
+        node(
+          "p",
+          message(
+            "Check against the fields above: a question can repeat an existing date/time; different values on different legs are not automatically a conflict.",
+            "请与上方字段核对：问题可能重复询问已有日期／时间；不同航段的不同值不自动构成冲突。",
+          ),
+        ),
+      );
+      for (const u of shape.unresolved)
+        group.append(node("p", u.reviewQuestion + " · " + u.reason));
+      for (const c of shape.conflicts)
+        group.append(
+          node(
+            "p",
+            message("Unverified conflict claim: ", "未验证的冲突主张：") + c.reason,
+          ),
+        );
+    }
+    details(group, r);
+    card.append(group);
+  }
+}
+
 function renderInspection(run, imported = false) {
   const root = el("inspection");
   root.replaceChildren();
@@ -1712,6 +2005,7 @@ function renderInspection(run, imported = false) {
           ),
       ),
     );
+  renderRemoteDiagnostics(root, run.remoteDiagnostics);
   const columns = node("div", undefined, "inspector-columns"),
     left = node("section"),
     middle = node("section"),

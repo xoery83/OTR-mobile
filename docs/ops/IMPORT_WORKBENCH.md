@@ -222,3 +222,26 @@ LOCAL_MODEL_GENERATION_ERROR / LOCAL_MODEL_GENERATION_DECODE,
 LOCAL_MODEL_TRANSPORT_ERROR / LOCAL_MODEL_TRANSPORT_PARSE and
 LOCAL_MODEL_EVIDENCE_REJECTED. Legacy Trace reasons remain readable. No original
 text, prompt or Auth value is added to ordinary logs by this lifecycle correction.
+
+## Recorded Remote LLM inspection (2026-10-17)
+
+Inspect loads separately stored `remote-<uuid>.json` diagnostic receipts from the
+existing private store. Each receipt must match the original bytes, baseline Run,
+and exact Part A/B request digest reconstructed through production components.
+Opening Inspect never reads a Provider key or dispatches a model call. Receipts
+are not local Run results or normal Backend/Native acceptance evidence.
+
+The panel separates HTTP/output, JSON parsing, Proposal schema, original recorded
+validation, current Validator recheck, and business readiness. Revalidation does
+not erase the historical result or constitute a new Provider call. Model basis,
+conflict descriptions and Review questions remain unverified advice, including
+questions about already supplied facts. Proposed field/segment references and
+real source snippets are visible; technical request/output remains collapsible.
+
+Provider input/output/total/cache counters are reported usage, not predictions;
+cache is included in input. Unknown usage/cost is never zero. Text UTF-8 byte
+upper bounds are estimates, not tokenizer measurements; image input is not
+estimated. Output limit is a cap, not expected usage. Peak cache-miss price gives
+an estimated USD upper cost using a dated official price snapshot, not an invoice.
+Local-only runs and Apple without recorded token metrics remain separate/unknown.
+JSON and HTML exports include the archived Remote diagnostics.

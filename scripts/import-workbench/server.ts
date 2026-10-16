@@ -1,3 +1,4 @@
+import { readRemoteDiagnostics } from "./remote";
 import { transformSync } from "esbuild";
 import { createServer, type IncomingMessage } from "node:http";
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
@@ -163,6 +164,7 @@ export function createWorkbench(store = new PrivateStore()) {
             .map((v) => v.slice(7, -5)),
           remote: "NOT_USED",
           remoteCost: 0,
+          remoteScope: "LOCAL_EXECUTION_ONLY_ARCHIVED_REMOTE_RECEIPTS_SEPARATE",
         });
         return;
       }
@@ -518,6 +520,10 @@ export function createWorkbench(store = new PrivateStore()) {
           return;
         }
         if (req.method === "GET") {
+          const inspectedRun = {
+            ...run,
+            remoteDiagnostics: readRemoteDiagnostics(store, run.inputId),
+          };
           if (match[2] === "html") {
             res.setHeader("Content-Type", "text/html; charset=utf-8");
             res.setHeader(
@@ -529,7 +535,7 @@ export function createWorkbench(store = new PrivateStore()) {
               "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
             );
             res.end(
-              `<!doctype html><meta charset="utf-8"><title>OTR diagnostic trace</title><pre>${escapeHtml(JSON.stringify(run, null, 2))}</pre>`,
+              `<!doctype html><meta charset="utf-8"><title>OTR diagnostic trace</title><pre>${escapeHtml(JSON.stringify(inspectedRun, null, 2))}</pre>`,
             );
           } else {
             if (match[2] === "json")
@@ -537,7 +543,7 @@ export function createWorkbench(store = new PrivateStore()) {
                 "Content-Disposition",
                 `attachment; filename="trace-${run.id}.json"`,
               );
-            send(run);
+            send(inspectedRun);
           }
           return;
         }
@@ -596,6 +602,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     });
   }
   app.server.listen(PORT, "127.0.0.1", () =>
-    console.log(`OTR diagnostic workbench ${ORIGIN} — Remote NOT_USED; cost 0`),
+    console.log(
+      `OTR diagnostic workbench ${ORIGIN} — local execution; archived Remote receipts are view-only`,
+    ),
   );
 }

@@ -5,7 +5,7 @@ import type { InterpretationItem } from "../intelligence/interpretation";
 import { canonicalEventJson, type Json } from "./eventIntentJson";
 
 export const FLIGHT_ASSEMBLY_BUSINESS_CONTRACT = {
-  version: "otr.flight.semantic-assembly.v1",
+  version: "otr.flight.semantic-assembly.v1.1",
   basis: [
     "CP12 Intelligence Plugin Contract",
     "CP13 Flight v1",
@@ -18,6 +18,7 @@ export const FLIGHT_ASSEMBLY_BUSINESS_CONTRACT = {
     "Departure-based Flight CREATE needs evidenced or user-confirmed service, distinct resolved airports and exact supported departure. Civil date/clock/zone and independent source instant remain separate; do not infer timezone from device or destination. Arrival is expected, conditionally validated, not universally mandatory. Booking reference is optional for a Flight interpretation.",
     "One Input can contain zero or many bookings and legs. Several Inputs can support one relationship. Same file, date, route or PNR alone never proves occurrence identity. Separate different booking references and do not silently erase conflicts or duplicate a segment.",
     "Preserve partial legs and unresolved relations. Missing service/date or ambiguous associations require Review. Keep all original field evidence, conflicting alternatives and unknowns; suggest precise Review questions.",
+    "A reference-free Booking Group is only an unresolved same-Input grouping suggestion: cover every member observation in unresolved Review, include all member evidence, never omit a known Booking reference or claim verified commercial identity.",
     "Return proposal references only, not field strings, readiness authority, Candidate commands or canonical writes. OTR validator/readiness and owning Review/Admission decide what may proceed. Invalid/unavailable model output preserves deterministic assembly.",
   ],
   output:
@@ -248,6 +249,7 @@ export function validateFlightAssemblyProposal(
     used = new Set<string>();
   const normalizedKey = (value: unknown) => canonicalEventJson(value as Json);
   const output = [];
+  const unresolvedBookingGroupIds: string[] = [];
   const usedObservations = new Set<string>();
   for (const segment of p.segments) {
     if (
@@ -313,9 +315,9 @@ export function validateFlightAssemblyProposal(
   for (const group of p.bookingGroups) {
     const refs = group.referenceFieldIds.map((id) => fields.get(id)!);
     if (
-      !refs.length ||
-      refs.some((f) => f.path !== "booking.reference") ||
-      new Set(refs.map((f) => normalizedKey([f.value, f.issuer]))).size !== 1
+      refs.length > 0 &&
+      (refs.some((f) => f.path !== "booking.reference") ||
+        new Set(refs.map((f) => normalizedKey([f.value, f.issuer]))).size !== 1)
     )
       return rejected("CROSS_BOOKING_MERGE");
     if (refs.some((f) => f.evidenceIds.some((id) => !group.evidenceIds.includes(id))))
@@ -330,6 +332,39 @@ export function validateFlightAssemblyProposal(
       g.segmentIds.some((id) => groupOriginals.some((d) => d.id === id)),
     );
     if (groupScopes.length > 1) return rejected("CROSS_BOOKING_MERGE");
+    if (
+      !group.segmentIds.length ||
+      new Set(group.segmentIds).size !== group.segmentIds.length
+    )
+      return rejected("GROUP_SEGMENT_MISMATCH");
+    if (!refs.length) {
+      if (groupScopes.length) return rejected("KNOWN_BOOKING_REFERENCE_OMITTED");
+      const namespaces = new Set(
+        b.observations
+          .filter((o) => groupObservations.includes(o.id))
+          .map((o) => o.inputId),
+      );
+      const reviewUnits = p.unresolved.filter(
+        (u) => u.reviewQuestion.trim() && u.reason.trim(),
+      );
+      const referenceReviewCoverage = new Set(reviewUnits.flatMap((u) => u.fieldIds));
+      const omittedReferences = b.fields.filter(
+        (f) =>
+          f.path === "booking.reference" &&
+          f.evidenceIds.some((id) => namespaces.has(evidence.get(id)!.inputId)) &&
+          !referenceReviewCoverage.has(f.id),
+      );
+      if (omittedReferences.length) return rejected("KNOWN_BOOKING_REFERENCE_OMITTED");
+      const reviewCoverage = new Set(reviewUnits.flatMap((u) => u.observationIds));
+      const members = p.segments.filter((s) => group.segmentIds.includes(s.id));
+      if (
+        namespaces.size !== 1 ||
+        groupObservations.some((id) => !reviewCoverage.has(id)) ||
+        members.some((s) => s.evidenceIds.some((id) => !group.evidenceIds.includes(id)))
+      )
+        return rejected("BOOKING_ASSOCIATION_EVIDENCE_REQUIRED");
+      unresolvedBookingGroupIds.push(group.id);
+    }
     if (refs.some((f) => !f.issuer)) {
       const namespaces = new Set([
         ...refs.flatMap((f) => f.evidenceIds.map((id) => evidence.get(id)!.inputId)),
@@ -350,6 +385,7 @@ export function validateFlightAssemblyProposal(
         g.segmentIds.some((id) => original.some((s) => s.id === id)),
       );
       if (
+        refs.length > 0 &&
         known.some(
           (g) =>
             g.reference !== refs[0].value ||
@@ -371,7 +407,13 @@ export function validateFlightAssemblyProposal(
     return rejected("GROUP_SEGMENT_MISMATCH");
   return {
     status: "ACCEPTED" as const,
-    reasonCodes: ["PROPOSAL_REFERENCES_VALID_REVIEW_REQUIRED"],
+    reasonCodes: [
+      "PROPOSAL_REFERENCES_VALID_REVIEW_REQUIRED",
+      ...(unresolvedBookingGroupIds.length
+        ? ["REFERENCE_FREE_BOOKING_ASSOCIATION_UNRESOLVED"]
+        : []),
+    ],
+    unresolvedBookingGroupIds,
     proposal: p,
     segments: output,
     grantsAdmission: false as const,

@@ -51,7 +51,7 @@ function setup(
 }
 it("supplies stable Part A and exact current ID/evidence Part B, never a writable command", () => {
   const { request, proposal } = setup();
-  expect(request.partA.version).toBe("otr.flight.semantic-assembly.v1");
+  expect(request.partA.version).toBe("otr.flight.semantic-assembly.v1.1");
   expect(request.partB.observations).toHaveLength(2);
   expect(request.sourceIds.o0).toMatch(/^item:one:/);
   const result = validateFlightAssemblyProposal(request, proposal);
@@ -237,4 +237,88 @@ it("compacts model evidence losslessly without changing field or evidence IDs", 
       ),
     ),
   ).toEqual(request.partB.evidence);
+});
+
+it("retains reference-free same-input grouping only as unresolved Review advice", () => {
+  const { request, proposal } = setup(
+    "AB123 route=AKL -> NSN date=2030-12-14\nAB124 route=NSN -> AKL date=2030-12-22",
+  );
+  const group = {
+    id: "unresolved",
+    referenceFieldIds: [],
+    segmentIds: proposal.segments.map((s) => s.id),
+    evidenceIds: [...new Set(proposal.segments.flatMap((s) => s.evidenceIds))],
+    basis: "Unconfirmed itinerary",
+  };
+  proposal.bookingGroups.push(group);
+  proposal.segments.forEach((s) => (s.bookingGroupId = group.id));
+  expect(validateFlightAssemblyProposal(request, proposal).reasonCodes).toContain(
+    "BOOKING_ASSOCIATION_EVIDENCE_REQUIRED",
+  );
+  proposal.unresolved.push({
+    fieldIds: [],
+    observationIds: request.partB.observations.map((o) => o.id),
+    reason: "Commercial relationship unconfirmed",
+    reviewQuestion: "Do these legs belong together?",
+  } as never);
+  const v = validateFlightAssemblyProposal(request, proposal);
+  expect(v.status).toBe("ACCEPTED");
+  expect(v.reasonCodes).toContain("REFERENCE_FREE_BOOKING_ASSOCIATION_UNRESOLVED");
+  expect(v.grantsAdmission).toBe(false);
+});
+it("does not let a reference-free group hide a known Booking scope", () => {
+  const { request, proposal } = setup();
+  proposal.bookingGroups[0].referenceFieldIds = [];
+  expect(validateFlightAssemblyProposal(request, proposal).reasonCodes).toContain(
+    "KNOWN_BOOKING_REFERENCE_OMITTED",
+  );
+});
+
+it("requires orphan same-input Booking references to be explicitly retained in unresolved Review", () => {
+  const { request, proposal } = setup(
+    "AB123 route=AKL -> NSN date=2030-12-14\nAB124 route=NSN -> AKL date=2030-12-22\nBooking reference: AB12CD",
+  );
+  const refs = request.partB.fields.filter((f) => f.path === "booking.reference");
+  expect(refs.length).toBeGreaterThan(0);
+  const group = {
+    id: "pending",
+    referenceFieldIds: [],
+    segmentIds: proposal.segments.map((s) => s.id),
+    evidenceIds: [...new Set(proposal.segments.flatMap((s) => s.evidenceIds))],
+    basis: "Unconfirmed",
+  };
+  proposal.bookingGroups = [group];
+  proposal.segments.forEach((s) => (s.bookingGroupId = group.id));
+  proposal.unresolved = [
+    {
+      fieldIds: [],
+      observationIds: request.partB.observations.map((o) => o.id),
+      reason: "Unconfirmed",
+      reviewQuestion: "Do the legs belong together?",
+    },
+  ] as never;
+  expect(validateFlightAssemblyProposal(request, proposal).reasonCodes).toContain(
+    "KNOWN_BOOKING_REFERENCE_OMITTED",
+  );
+  proposal.unresolved.push({
+    fieldIds: refs.map((f) => f.id),
+    observationIds: [],
+    reason: "Reference association not established",
+    reviewQuestion: "Which segments does this reference cover?",
+  } as never);
+  const question = (
+    proposal.unresolved[proposal.unresolved.length - 1] as { reviewQuestion: string }
+  ).reviewQuestion;
+  (
+    proposal.unresolved[proposal.unresolved.length - 1] as { reviewQuestion: string }
+  ).reviewQuestion = " ";
+  expect(validateFlightAssemblyProposal(request, proposal).reasonCodes).toContain(
+    "KNOWN_BOOKING_REFERENCE_OMITTED",
+  );
+  (
+    proposal.unresolved[proposal.unresolved.length - 1] as { reviewQuestion: string }
+  ).reviewQuestion = question;
+  const v = validateFlightAssemblyProposal(request, proposal);
+  expect(v.status).toBe("ACCEPTED");
+  expect(v.grantsAdmission).toBe(false);
 });
