@@ -357,3 +357,28 @@ it.each(["accepted", "local"])(
     expect(scrolls[0].scrollIndicatorInsets).toEqual({ bottom: 94 });
   },
 );
+
+it("recalibrates an explicit date anchor after late layout growth until user scroll begins", () => {
+  const otherDate = "2027-02-04";
+  render({
+    dates: [syntheticDate, otherDate],
+    date: otherDate,
+    entry: {
+      revision: 4,
+      kind: "EXPLICIT_TODAY_HEADER",
+      reading: { offset: 0, focus: null },
+    },
+  });
+  const headers = state.nodes.filter((p) => p.onLayout);
+  const scroll = state.nodes.find((p) => p.onContentSizeChange);
+  headers[1].onLayout({ nativeEvent: { layout: { y: 500 } } });
+  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 500, animated: false });
+  headers[1].onLayout({ nativeEvent: { layout: { y: 1300 } } });
+  scroll.onContentSizeChange();
+  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 1300, animated: false });
+  scroll.onScrollBeginDrag();
+  state.scrollTo.mockClear();
+  headers[1].onLayout({ nativeEvent: { layout: { y: 1700 } } });
+  scroll.onContentSizeChange();
+  expect(state.scrollTo).not.toHaveBeenCalled();
+});

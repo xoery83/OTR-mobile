@@ -266,24 +266,22 @@ function AcceptedDayFeed({
     offset = useRef(entry?.reading.offset ?? 0),
     returnOffset = useRef(0),
     sectionOffsets = useRef<Record<string, number>>({});
-  const restoredContext = useRef<string | null>(null);
+  const interactedContext = useRef<string | null>(null);
   const readingOffset = entry?.reading.offset ?? 0;
   const wholeTripReading = entry?.reading.layout === "WHOLE_TRIP";
   const restoreReading = () => {
-    if (restoredContext.current === viewContext || !scroll.current) return;
+    if (interactedContext.current === viewContext || !scroll.current) return;
     const anchor = continuous && !wholeTripReading ? sectionOffsets.current[date] : 0;
     if (anchor === undefined) return;
-    restoredContext.current = viewContext;
     offset.current = anchor + readingOffset;
     scroll.current?.scrollTo({ y: offset.current, animated: false });
   };
   useLayoutEffect(() => {
-    restoredContext.current = null;
+    interactedContext.current = null;
     const anchor = continuous && !wholeTripReading ? sectionOffsets.current[date] : 0;
     if (anchor !== undefined && scroll.current) {
       offset.current = anchor + readingOffset;
       scroll.current.scrollTo({ y: offset.current, animated: false });
-      restoredContext.current = viewContext;
     }
   }, [viewContext, continuous, wholeTripReading, date, readingOffset]);
   const remember = (nextFocus: string | null, nextOffset = offset.current) => {
@@ -310,6 +308,7 @@ function AcceptedDayFeed({
         ? "F"
         : "B";
   const change = (id: string, next: Depth) => {
+    interactedContext.current = viewContext;
     if (next === "I") {
       returnOffset.current = offset.current;
       setImmersive(id);
@@ -461,6 +460,12 @@ function AcceptedDayFeed({
             scrollIndicatorInsets={{ bottom: bottomInset }}
             scrollEventThrottle={16}
             onContentSizeChange={restoreReading}
+            onScrollBeginDrag={() => {
+              interactedContext.current = viewContext;
+            }}
+            onTouchStart={() => {
+              interactedContext.current = viewContext;
+            }}
             onScroll={(e) => {
               offset.current = e.nativeEvent.contentOffset.y;
               remember(sections.find(({ stream }) => stream.focus)?.stream.focus ?? null);
