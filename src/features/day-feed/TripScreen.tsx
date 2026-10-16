@@ -320,38 +320,41 @@ function TripContent({ today = false }: { today?: boolean }) {
   const canChooseDay =
     !!visibleTrip?.localManual ||
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE";
-  const enterDay = async (requestedDate?: string | null, requestedZone = zone) => {
-    if (generation !== getAccountGeneration() || !canChooseDay || !visibleTrip) return;
-    try {
-      const selectedDate = requestedDate || date;
-      const dateValue = selectedDate ? validateCalendarDate(selectedDate) : "";
-      const context =
-        dateValue && requestedZone ? viewContext(dateValue, requestedZone) : null;
-      const ticket = request.current;
-      const result = await (await readTripDayFeed()).trip(requested);
-      if (
-        ticket !== request.current ||
-        generation !== getAccountGeneration() ||
-        result.scope.accountId !== visibleTrip.scope.accountId ||
-        result.scope.generation !== generation ||
-        (!result.localManual &&
-          result.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE")
-      )
-        return;
-      setTrip(result);
-      if (context) select({ tripId: requested, ...context, generation });
-      // Civil-only navigation does not create a timezone-bearing bookmark.
-      router.setParams({
-        tripId: requested,
-        date: dateValue,
-        zone: context?.zone ?? "",
-        view: "day",
-      });
-      setContextError(false);
-    } catch {
-      setContextError(true);
-    }
-  };
+  const enterDay = useCallback(
+    async (requestedDate?: string | null, requestedZone = zone) => {
+      if (generation !== getAccountGeneration() || !canChooseDay || !visibleTrip) return;
+      try {
+        const selectedDate = requestedDate || date;
+        const dateValue = selectedDate ? validateCalendarDate(selectedDate) : "";
+        const context =
+          dateValue && requestedZone ? viewContext(dateValue, requestedZone) : null;
+        const ticket = request.current;
+        const result = await (await readTripDayFeed()).trip(requested);
+        if (
+          ticket !== request.current ||
+          generation !== getAccountGeneration() ||
+          result.scope.accountId !== visibleTrip.scope.accountId ||
+          result.scope.generation !== generation ||
+          (!result.localManual &&
+            result.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE")
+        )
+          return;
+        setTrip(result);
+        if (context) select({ tripId: requested, ...context, generation });
+        // Civil-only navigation does not create a timezone-bearing bookmark.
+        router.setParams({
+          tripId: requested,
+          date: dateValue,
+          zone: context?.zone ?? "",
+          view: "day",
+        });
+        setContextError(false);
+      } catch {
+        setContextError(true);
+      }
+    },
+    [generation, canChooseDay, visibleTrip, date, zone, requested, select],
+  );
   const freshLocalRead = async (expected: Pick<LocalManualRead, "scope" | "source">) => {
     if (
       expected.scope.tripId !== requested ||
@@ -729,15 +732,20 @@ function TripContent({ today = false }: { today?: boolean }) {
             }) ?? [],
           ),
         ].sort();
-  const chooseDay = (tripStartDate?: string | null) => {
-    const bookmark = [view, resumeView].find(
-      (saved) => saved?.tripId === requested && saved.generation === generation,
-    );
-    void enterDay(
-      bookmark?.date || value(params.date) || tripStartDate || dateChoices[0],
-      bookmark?.zone ?? zone,
-    );
-  };
+  const firstItemDate = String(dateChoices[0] ?? "");
+  const routeDate = value(params.date);
+  const chooseDay = useCallback(
+    (tripStartDate?: string | null) => {
+      const bookmark = [view, resumeView].find(
+        (saved) => saved?.tripId === requested && saved.generation === generation,
+      );
+      void enterDay(
+        bookmark?.date || routeDate || tripStartDate || firstItemDate,
+        bookmark?.zone ?? zone,
+      );
+    },
+    [view, resumeView, requested, generation, routeDate, zone, firstItemDate, enterDay],
+  );
   const calendarDates =
     dayContext &&
     homeSnapshot &&

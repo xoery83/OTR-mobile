@@ -21,3 +21,10 @@ resolved timezone. There is no prerequisite start-time/timezone form before Day.
 Code tests are not Native acceptance. Coordinator must install the reviewed combined
 candidate into original AD5 and verify Day Tab, Auckland Sky City Hotel, detail
 return and cold reopen without replacing the account or Item.
+
+Native regression follow-up: the first direct-entry candidate (`b2a0cf6`) caused
+an update-depth loop after Trip entry. Its non-memoized Day callback changed the
+Workspace quick-action publication effect on every provider rerender. Memoized
+Day handlers now retain identity for unchanged navigation/read context, while a
+changed planning date updates the action. The callback-identity regression test
+checks both properties. AD5 reinstall/regression remains with Coordinator.

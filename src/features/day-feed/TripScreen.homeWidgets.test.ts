@@ -13,6 +13,8 @@ const state = vi.hoisted(() => ({
   refs: [] as { current: unknown }[],
   cursor: 0,
   refCursor: 0,
+  callbackCursor: 0,
+  callbacks: [] as { deps: readonly unknown[]; callback: unknown }[],
   mount: true,
   effects: [] as (() => void)[],
   liveGeneration: 5,
@@ -42,7 +44,17 @@ const state = vi.hoisted(() => ({
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useSyncExternalStore: () => state.renderedGeneration,
-  useCallback: (callback: unknown) => callback,
+  useCallback: (callback: unknown, deps: readonly unknown[]) => {
+    const i = state.callbackCursor++;
+    const previous = state.callbacks[i];
+    if (
+      !previous ||
+      previous.deps.length !== deps.length ||
+      deps.some((value, index) => !Object.is(value, previous.deps[index]))
+    )
+      state.callbacks[i] = { callback, deps };
+    return state.callbacks[i].callback;
+  },
   useLayoutEffect: (callback: () => void) => {
     if (state.mount) state.effects.push(callback);
   },
@@ -147,7 +159,7 @@ vi.mock("./TripViewContext", async (original) => ({
   }),
 }));
 function render() {
-  state.cursor = state.refCursor = 0;
+  state.cursor = state.refCursor = state.callbackCursor = 0;
   const outer = TripScreen({});
   const content = outer.type as (props: typeof outer.props) => ReactElement;
   const node = content(outer.props);
@@ -177,8 +189,9 @@ beforeEach(() => {
   state.routeMode = "home";
   state.routeTrip = null;
   state.hooks = [];
+  state.callbacks = [];
   state.refs = [];
-  state.cursor = state.refCursor = 0;
+  state.cursor = state.refCursor = state.callbackCursor = 0;
   state.mount = true;
   state.effects = [];
   state.liveGeneration = state.renderedGeneration = 5;
@@ -846,5 +859,20 @@ it("opens an explicitly planned local Day without inventing a timezone-bearing c
     expect.objectContaining({
       params: expect.objectContaining({ date: "2026-10-16", zone: "", view: "day" }),
     }),
+  );
+});
+
+it("keeps the Day action stable across quick-action publication rerenders", async () => {
+  const initial = find(await loaded(), LocalTripWorkspace).onChooseDay;
+  expect(initial).toBeTypeOf("function");
+  for (let i = 0; i < 8; i++)
+    expect(find(render(), LocalTripWorkspace).onChooseDay).toBe(initial);
+  state.view = { ...state.view, date: "2027-02-07" };
+  const changed = find(render(), LocalTripWorkspace).onChooseDay;
+  expect(changed).not.toBe(initial);
+  changed();
+  for (let i = 0; i < 16; i++) await Promise.resolve();
+  expect(state.params).toHaveBeenCalledWith(
+    expect.objectContaining({ date: "2027-02-07", view: "day" }),
   );
 });
