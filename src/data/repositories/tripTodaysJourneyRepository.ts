@@ -25,11 +25,8 @@ export function createTripTodaysJourneyReader(
     )
       return null;
     const projection = result.observed.projection;
-    if (
-      projection.tripId !== tripId ||
-      projection.accountId !== result.scope.accountId ||
-      projection.generation !== result.scope.generation
-    )
+    // Core certificate generation and Auth session generation are separate counters.
+    if (projection.tripId !== tripId || projection.accountId !== result.scope.accountId)
       throw new Error("TODAY_SCOPE");
     const today = selectTodaysJourney(projection, clock);
     return today

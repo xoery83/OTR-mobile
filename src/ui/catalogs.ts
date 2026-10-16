@@ -25,8 +25,7 @@ export const en = {
   "tripHome.today.multipleStays":
     "Multiple stays are recorded for tonight. Open Today to review.",
   "tripHome.today.loading": "Reading today's itinerary…",
-  "tripHome.today.unavailable":
-    "Today's accepted Day or Trip time context is not available.",
+  "tripHome.today.unavailable": "Today's itinerary is unavailable right now.",
 
   "capture.custodyDev.title": "DEV · Original custody",
   "capture.custodyDev.put": "Upload and verify originals",
@@ -2318,7 +2317,7 @@ export const zhHans: Record<MessageKey, string> = {
   "tripHome.today.tonight": "今晚住宿",
   "tripHome.today.multipleStays": "今晚有多条住宿记录，请打开今天查看。",
   "tripHome.today.loading": "正在读取今日行程…",
-  "tripHome.today.unavailable": "暂时无法取得今天的可信行程或旅行时区。",
+  "tripHome.today.unavailable": "暂时无法显示今日行程。",
 
   "capture.custodyDev.title": "DEV · 原件保管",
   "capture.custodyDev.put": "上传并验证原件",

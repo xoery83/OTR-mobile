@@ -8,14 +8,14 @@ permits Undated Preparation reuse without inference or completion scoring.
 
 ## File ownership and order
 
-| Track | Owner | Scope |
-| --- | --- | --- |
-| A / P0 | Navigation Builder | Root/tab/native Trip route, Bottom Shell, height context/helper and navigation tests. Frame only for needed inset work. |
-| B / P1 | Core/Day Builder | Existing Core local read projection, Day/Today repositories/selectors and tests. No navigation or admission writes. |
-| Shared integration | Coordinator | TripScreen, LocalTripWorkspace final wiring, catalogs, registers, main integration and integrated Native QA. Other agents supply bounded patches for these files. |
-| C / P2 | Existing Experience Session | Adaptive Host and Widget presentation after one principal Builder finishes. No Root/Shell/Core changes; shared-file changes handed to Coordinator. |
-| D / P1 | Coordinator owning module | Trip basic write capability and Editor interface; do not substitute cover-only editing for a complete metadata editor. |
-| E | Coordinator read-only | Existing cover asset/provenance inventory; no generation, download, provider or schema changes. |
+| Track              | Owner                       | Scope                                                                                                                                                             |
+| ------------------ | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A / P0             | Navigation Builder          | Root/tab/native Trip route, Bottom Shell, height context/helper and navigation tests. Frame only for needed inset work.                                           |
+| B / P1             | Core/Day Builder            | Existing Core local read projection, Day/Today repositories/selectors and tests. No navigation or admission writes.                                               |
+| Shared integration | Coordinator                 | TripScreen, LocalTripWorkspace final wiring, catalogs, registers, main integration and integrated Native QA. Other agents supply bounded patches for these files. |
+| C / P2             | Existing Experience Session | Adaptive Host and Widget presentation after one principal Builder finishes. No Root/Shell/Core changes; shared-file changes handed to Coordinator.                |
+| D / P1             | Coordinator owning module   | Trip basic write capability and Editor interface; do not substitute cover-only editing for a complete metadata editor.                                            |
+| E                  | Coordinator read-only       | Existing cover asset/provenance inventory; no generation, download, provider or schema changes.                                                                   |
 
 At most two principal Coding Builders. No parallel shared-file writes. No new
 approval framework. P0 regression runs against the integrated App, including
@@ -92,3 +92,20 @@ interface above; do not call cover-only tools a complete Trip Editor. Hero uses
 the existing Ledger square-and-pencil icon. Existing pending-item diagnostics
 remain a known presentation gap, not a second accepted Day Feed. Native testing
 uses the integrated candidate and preserves A1A/418, Workbench and DEV data.
+
+## Integrated Native checkpoint — 2026-10-16
+
+Experience reports ce811ee on AD5: ordinary Debug cold Root/My Trips, Nelson
+Home/Day/Ledger and real NZ$25 Finance scope, named-tab tap/natural height,
+Auckland date-only committed SkyCity pending item/detail/Close, Reference
+Preparation and Past Snapshot/item return observed. Past footer CTA scrolls
+above Shell and opens first itinerary day. These are bounded reported Native
+checks, not full UX acceptance or device-wide offline verification.
+
+A real Reference Today failure exposed a cross-domain generation comparison in
+Today Reader. Remove comparison of Core certificate generation to Auth session
+generation; keep owning accepted/current-source checks, account/Trip scope and
+Auth transition/tap guards. Different-counter/stale-tap regressions pass. Native
+Today remains pending this fix. Known remaining visual defect: overlay toolbar
+buttons overlap deeply scrolled body text. Experience retains Native evidence
+under /private/tmp/otr-r2-native-evidence-20261016. No product data changed.
