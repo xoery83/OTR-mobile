@@ -1,7 +1,12 @@
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import type { DayQuery } from "@/domain/trip/dayReadModel";
 
-export type DayWindowRow<T> = { key: string; date: string; value: T };
+export type DayWindowRow<T> = {
+  key: string;
+  date: string;
+  value: T;
+  isDayHeader?: boolean;
+};
 export type DayScrollAnchor = { key: string; date: string; within: number };
 export type DaySummary = {
   date: string;
@@ -52,7 +57,7 @@ export function indexDayRows<T>(rows: readonly DayWindowRow<T>[]) {
     validateCalendarDate(row.date);
     if (!row.key || keys.has(row.key)) throw new Error("DAY_ROW_KEY_DUPLICATE");
     keys.set(row.key, index);
-    if (!dates.has(row.date)) dates.set(row.date, index);
+    if (!dates.has(row.date) || row.isDayHeader) dates.set(row.date, index);
   });
   return { keys, dates };
 }

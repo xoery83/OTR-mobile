@@ -292,25 +292,27 @@ function AcceptedDayFeed({
     offset = useRef(entry?.reading.offset ?? 0),
     returnAnchor = useRef<DayScrollAnchor | null>(null);
   const interactedContext = useRef<string | null>(null);
-  const initialAnchor = entry?.reading.anchor ?? {
-    key: `day:${date}`,
-    date,
-    within: entry?.reading.offset ?? 0,
-  };
+  const initialAnchor =
+    entry?.reading.anchor ??
+    (entry &&
+    (entry.kind !== "RESUME" || entry.reading.offset > 0 || entry.reading.anchoredDate)
+      ? { key: `day:${date}`, date, within: entry.reading.offset }
+      : null);
   useLayoutEffect(() => {
     interactedContext.current = null;
-    scroll.current?.restoreAnchor(initialAnchor);
+    if (initialAnchor) scroll.current?.restoreAnchor(initialAnchor);
     // Explicit entry/date changes may reposition; ordinary scroll updates must not.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewContext]);
   const remember = (nextFocus: string | null, anchor = scroll.current?.saveAnchor()) => {
-    if ((!entry || entry.kind === "RESUME") && anchor)
+    if (!entry || entry.kind === "RESUME")
       onReadingChange?.({
         offset: offset.current,
         focus: nextFocus,
-        layout: "WHOLE_TRIP",
-        anchoredDate: anchor.date,
-        anchor,
+        ...(dates
+          ? { layout: "WHOLE_TRIP" as const, anchoredDate: anchor?.date ?? date }
+          : {}),
+        ...(anchor ? { anchor } : {}),
       });
   };
   const summaries = sections.map((section) =>
@@ -475,6 +477,7 @@ function AcceptedDayFeed({
   for (const section of sections) {
     windowRows.push({
       key: `day:${section.date}`,
+      isDayHeader: true,
       date: section.date,
       value: () => (
         <View>

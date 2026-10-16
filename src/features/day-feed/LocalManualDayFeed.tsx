@@ -53,15 +53,29 @@ export function LocalManualDayFeed({
   useLayoutEffect(() => {
     reportSummaries?.(JSON.parse(summariesKey));
   }, [summariesKey, reportSummaries]);
+  const initialAnchor =
+    entry?.reading.anchor ??
+    (entry &&
+    (entry.kind !== "RESUME" || entry.reading.offset > 0 || entry.reading.anchoredDate)
+      ? { key: `day:${date}`, date, within: entry.reading.offset }
+      : null);
+  const initialKey = initialAnchor?.key,
+    initialDate = initialAnchor?.date,
+    initialWithin = initialAnchor?.within;
   useLayoutEffect(() => {
-    if (entry?.kind !== "RESUME" || !entry.reading.anchor)
-      list.current?.jumpToDayHeader(date);
-  }, [date, entry?.revision, entry?.kind, entry?.reading.anchor]);
+    if (initialKey && initialDate)
+      list.current?.restoreAnchor({
+        key: initialKey,
+        date: initialDate,
+        within: initialWithin ?? 0,
+      });
+  }, [initialKey, initialDate, initialWithin, entry?.revision]);
   const rows: DayWindowRow<() => React.ReactNode>[] = [];
   for (const day of calendar) {
     const items = read.rows(day);
     rows.push({
       key: `day:${day}`,
+      isDayHeader: true,
       date: day,
       value: () => (
         <UiSection title={civil(day)}>
@@ -99,13 +113,7 @@ export function LocalManualDayFeed({
         read.scope.generation,
       ])}
       layoutRevision={read.source.fingerprint}
-      initialAnchor={
-        entry?.reading.anchor ?? {
-          key: `day:${date}`,
-          date,
-          within: entry?.reading.offset ?? 0,
-        }
-      }
+      initialAnchor={initialAnchor}
       topInset={presentation?.topInset ?? 0}
       bottomInset={visual.space.section + bottomInset}
       header={presentation?.header}

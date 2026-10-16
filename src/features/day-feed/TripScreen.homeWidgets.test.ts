@@ -24,6 +24,7 @@ const state = vi.hoisted(() => ({
   view: { tripId: "", date: "2027-02-06", zone: "Asia/Tokyo", generation: 5 },
   result: null as any,
   read: vi.fn(),
+  discovery: [] as any[],
   snapshot: null as any,
   snapshotRead: vi.fn(),
   resolveLocalItem: vi.fn(),
@@ -45,10 +46,14 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("@/data/repositories/tripDiscoveryRepository", () => ({
   readLocalTripDiscoveryRepository: async () => ({
-    readMerged: async () => ({ trips: [] }),
+    readMerged: async () => ({ trips: state.discovery }),
   }),
 }));
-vi.mock("./DayFeedCalendarSheet", () => ({ DayFeedCalendarSheet: () => null }));
+vi.mock("./DayFeedCalendarSheet", () => ({
+  DayFeedCalendarSheet: () => null,
+  dayFeedCalendarBounds: (start?: string, end?: string) =>
+    start && end && start <= end ? { start, end } : null,
+}));
 vi.mock("./DayFeedShell", () => ({
   DayFeedIntroduction: () => null,
   DayFeedShellTitle: () => null,
@@ -138,6 +143,7 @@ vi.mock("@/data/repositories/tripDayFeedRepository", () => ({
 }));
 vi.mock("@/ui/locale", () => ({
   t: (key: string) => key,
+  formatUiNumber: (value: number) => String(value),
   formatUiDate: (value: Date) => value.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
@@ -209,6 +215,7 @@ async function loaded() {
 beforeEach(() => {
   vi.stubGlobal("__DEV__", true);
   state.appActive = null;
+  state.discovery = [];
   state.focused = true;
   state.navigation = { setOptions: state.setOptions, isFocused: () => state.focused };
   state.routeMode = "home";
@@ -929,4 +936,34 @@ it("a blurred Trip with a late Day read cannot switch the new active Trip", asyn
   finish(state.result);
   for (let i = 0; i < 16; i++) await Promise.resolve();
   expect(state.switchTrip).not.toHaveBeenCalled();
+});
+
+it("local-only calendar range has a real empty Header target, without optimistic date acknowledgement", async () => {
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  state.routeMode = "day";
+  state.view.zone = "";
+  state.discovery = [
+    {
+      id: reference,
+      name: "Local trip",
+      startDate: "2027-02-01",
+      endDate: "2027-02-12",
+      destination: null,
+    },
+  ];
+  const tree = await loaded();
+  const feed = find(tree, DayFeed);
+  expect(feed.dates).toContain("2027-02-07");
+  expect(feed.dates.filter((date: string) => date.startsWith("2027-02-"))).toHaveLength(
+    12,
+  );
+  expect(feed.dates).toContain("2026-10-16");
+});
+it("historical accepted Day keeps the original localized disclosure", async () => {
+  state.routeMode = "day";
+  state.result.observed.sourceStatus = "HISTORICAL_ACCEPTED_PROJECTION";
+  const feed = find(await loaded(), DayFeed);
+  expect(feed.projection).toBe(state.result.observed.projection);
+  expect(JSON.stringify(feed.presentation.header)).toContain("dayFeed.historical");
 });

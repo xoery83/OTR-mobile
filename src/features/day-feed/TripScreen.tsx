@@ -4,7 +4,7 @@ import {
   formatDayFeedVisibleDates,
   useDayFeedShellState,
 } from "./DayFeedShell";
-import { DayFeedCalendarSheet } from "./DayFeedCalendarSheet";
+import { dayFeedCalendarBounds, DayFeedCalendarSheet } from "./DayFeedCalendarSheet";
 import type { DayListHandle } from "./WindowedDayList";
 import type { DaySummary } from "./dayFeedWindow";
 import {
@@ -48,7 +48,7 @@ import {
 } from "@/data/repositories/tripDayFeedRepository";
 import { UiButton, UiText as ThemedText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
-import { t, formatUiDate } from "@/ui/locale";
+import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -190,6 +190,27 @@ function TripContent({ today = false }: { today?: boolean }) {
       ? dayTripFacts.trip
       : null;
   const dayName = dayFacts?.name ?? t("navigation.trip");
+  const dayBounds = dayFeedCalendarBounds(dayFacts?.startDate, dayFacts?.endDate);
+  const dayRangeLabel = dayBounds
+    ? (() => {
+        const days =
+          Math.round(
+            (Date.parse(dayBounds.end + "T00:00:00Z") -
+              Date.parse(dayBounds.start + "T00:00:00Z")) /
+              86400000,
+          ) + 1;
+        const format = (value: string) =>
+          formatUiDate(new Date(value + "T12:00:00Z"), {
+            dateStyle: "medium",
+            timeZone: "UTC",
+          });
+        return t(days === 1 ? "dayShell.range.one" : "dayShell.range.many", {
+          start: format(dayBounds.start),
+          end: format(dayBounds.end),
+          days: formatUiNumber(days),
+        });
+      })()
+    : null;
   const dayActive = !!requested && (today || params.view === "day");
   const dayTitle =
     dayPastIntroduction && dayShell.visibleDates
@@ -850,7 +871,9 @@ function TripContent({ today = false }: { today?: boolean }) {
           homeSnapshot.candidateDays,
           dayContext.date,
         )
-      : undefined;
+      : dayContext && dayFacts
+        ? wholeTripCalendarDates(dayFacts, dateChoices, dayContext.date)
+        : undefined;
   if (visibleTrip && dayContext && (visibleTrip.localManual || visibleTrip.observed))
     return (
       <>
@@ -866,13 +889,13 @@ function TripContent({ today = false }: { today?: boolean }) {
                 <View style={{ paddingTop: headerBottom }}>
                   <DayFeedIntroduction
                     tripName={dayName}
-                    rangeLabel={
-                      dayFacts?.startDate && dayFacts.endDate
-                        ? `${formatUiDate(new Date(`${dayFacts.startDate}T12:00:00Z`), { dateStyle: "medium", timeZone: "UTC" })} – ${formatUiDate(new Date(`${dayFacts.endDate}T12:00:00Z`), { dateStyle: "medium", timeZone: "UTC" })}`
-                        : null
-                    }
+                    rangeLabel={dayRangeLabel}
                     locationSummary={dayFacts?.destination}
                   />
+                  {visibleTrip.observed?.sourceStatus ===
+                  "HISTORICAL_ACCEPTED_PROJECTION" ? (
+                    <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
+                  ) : null}
                 </View>
               ),
               onSummaries: setDaySummaries,
@@ -919,6 +942,7 @@ function TripContent({ today = false }: { today?: boolean }) {
         <DayFeedCalendarSheet
           visible={calendarVisible}
           tripName={dayName}
+          rangeLabel={dayRangeLabel ?? undefined}
           tripStart={dayFacts?.startDate}
           tripEnd={dayFacts?.endDate}
           selectedDate={dayShell.visibleDates?.first ?? dayContext.date}
@@ -935,7 +959,6 @@ function TripContent({ today = false }: { today?: boolean }) {
           onSelect={(target) => {
             setCalendarVisible(false);
             dayUserDriven.current = false;
-            dayShell.observeVisibleDates({ first: target, last: target }, true);
             dayList.current?.jumpToDayHeader(target);
           }}
         />

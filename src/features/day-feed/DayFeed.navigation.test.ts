@@ -430,3 +430,31 @@ it("explicit date entry supplies a header anchor without rendering preceding dat
   state.window.onOffsetChange(1300);
   expect(state.scrollTo).not.toHaveBeenCalled();
 });
+
+it.each(["accepted", "local"])(
+  "fresh %s RESUME preserves the initial Introduction",
+  (kind) => {
+    render({
+      ...(kind === "local" ? { projection: undefined, localManual: localManual() } : {}),
+      presentation: { header: createElement("span", {}, "introduction") },
+      entry: { revision: 1, kind: "RESUME", reading: { offset: 0, focus: null } },
+    });
+    expect(state.window.initialAnchor).toBeNull();
+  },
+);
+it("unknown-schedule prefix cannot replace the explicit first date Header index", async () => {
+  render({
+    query: (date: string, zone: string) => ({
+      date,
+      zone,
+      timed: [],
+      nonComparable: [],
+      unresolved: [fixture.before],
+    }),
+  });
+  const { indexDayRows } = await import("./dayFeedWindow");
+  const index = indexDayRows(state.window.rows);
+  expect(state.window.rows[index.dates.get(syntheticDate)!].key).toBe(
+    `day:${syntheticDate}`,
+  );
+});
