@@ -1,3 +1,4 @@
+import { isTripWorkspacePath } from "./tripShellNavigation";
 export type GlobalMenuModule = "TODAY" | "LEDGER" | "TRIP" | "CAPTURE" | "UPDATES";
 
 export type GlobalMenuDestination = {
@@ -51,7 +52,7 @@ export function selectedTripMenuId(
   pathname: string,
   params: { tripId?: string; view?: string },
 ): string | null {
-  return pathname === "/trip" &&
+  return isTripWorkspacePath(pathname) &&
     typeof params.tripId === "string" &&
     params.tripId.length > 0 &&
     !["trips", "create"].includes(params.view ?? "")

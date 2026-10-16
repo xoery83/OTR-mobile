@@ -44,6 +44,8 @@ describe("contextual global menu", () => {
 
 it("My Trips/Create and other modules cannot reuse a historical selected-Trip return guard", () => {
   expect(selectedTripMenuId("/trip", { tripId: "a", view: "home" })).toBe("a");
+  expect(selectedTripMenuId("/trip-home", { tripId: "a", view: "home" })).toBe("a");
+  expect(selectedTripMenuId("/trip-home", { tripId: "a", view: "day" })).toBe("a");
   expect(selectedTripMenuId("/trip", { tripId: "a", view: "day" })).toBe("a");
   for (const view of ["trips", "create"])
     expect(selectedTripMenuId("/trip", { tripId: "a", view })).toBeNull();

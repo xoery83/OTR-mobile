@@ -1,5 +1,9 @@
 # TIME-01A direct Day entry candidate — 2026-10-16
 
+- Hot cross-Trip candidate: Native Home All Trips now uses Workspace return;
+  retained Stack screens release Quick Actions on blur and cannot switch the
+  active working Trip after late/background reads. Combined Native rerun pending.
+
 - Owner clarified date-only Day context is legal; no prerequisite start-time/zone
   chooser. Home Day action enters its known plan directly; Undated stays honestly
   undated with date selection inside Day. Accepted Core and local pending manual

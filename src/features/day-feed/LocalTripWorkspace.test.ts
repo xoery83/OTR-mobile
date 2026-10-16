@@ -50,6 +50,7 @@ const state = vi.hoisted(() => ({
   alert: vi.fn(),
   publish: vi.fn(),
   forceEffects: false,
+  focused: true,
   finance: null as TripHomeWidget | null,
 }));
 vi.mock("react", async (original) => ({
@@ -249,6 +250,7 @@ beforeEach(() => {
   state.publish.mockReset();
   state.alert.mockReset();
   state.forceEffects = false;
+  state.focused = true;
   state.repo.mockReset();
   state.discovery.mockReset();
   state.discovery.mockResolvedValue({
@@ -480,7 +482,13 @@ it("unknown and Upcoming lifecycles do not invent a Past Snapshot or empty Finan
   expect(props.widgetsForHome).toHaveBeenLastCalledWith("undated", "Undated", null);
 });
 
-vi.mock("expo-router", () => ({ router: { push: vi.fn() } }));
+vi.mock("expo-router", () => ({
+  router: { push: vi.fn() },
+  useFocusEffect: (callback: () => void | (() => void)) => {
+    if (state.focused && (state.mount || state.forceEffects))
+      state.effects.push(callback);
+  },
+}));
 vi.mock("./TripViewContext", () => ({
   useTripView: () => ({ publishQuickActions: state.publish, localOutcome: null }),
 }));
@@ -559,5 +567,23 @@ it("normal Home Hero action opens the same Editor and saves through the owning m
       before: { name: current.name, destination: null, startDate: null, endDate: null },
       after: { name: "Updated", destination: null, startDate: null, endDate: null },
     }),
+  );
+});
+
+it("an unfocused retained Workspace cannot publish actions over another Trip", async () => {
+  props.tripId = "trip-a";
+  state.repo.mockResolvedValue(repository([trip("trip-a", "Trip A")]));
+  render();
+  await flush();
+  render();
+  state.publish.mockClear();
+  state.focused = false;
+  state.forceEffects = true;
+  render();
+  expect(state.publish).not.toHaveBeenCalled();
+  state.focused = true;
+  render();
+  expect(state.publish.mock.calls.some(([actions]) => actions?.tripId === "trip-a")).toBe(
+    true,
   );
 });

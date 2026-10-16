@@ -147,3 +147,15 @@ it("unmounted Menu cannot navigate from a delayed return callback in the same ac
   retained.onPress();
   expect(state.navigate).not.toHaveBeenCalled();
 });
+
+it("Native Home All Trips preserves the current owner guard across a hot cross-Trip sequence", () => {
+  for (const tripId of ["auckland", "nelson", "japan", "auckland"]) {
+    state.path = "/trip-home";
+    state.params = { tripId, view: "home" };
+    const backToTrips = vi.fn();
+    state.actions = { tripId, generation: 1, backToTrips };
+    back().onPress();
+    expect(backToTrips).toHaveBeenCalledOnce();
+    expect(state.navigate).not.toHaveBeenCalled();
+  }
+});

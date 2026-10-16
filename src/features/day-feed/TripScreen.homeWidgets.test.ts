@@ -16,6 +16,8 @@ const state = vi.hoisted(() => ({
   callbackCursor: 0,
   callbacks: [] as { deps: readonly unknown[]; callback: unknown }[],
   mount: true,
+  focused: true,
+  navigation: null as any,
   effects: [] as (() => void)[],
   liveGeneration: 5,
   renderedGeneration: 5,
@@ -91,7 +93,10 @@ vi.mock("expo-router/react-navigation", () => ({ useHeaderHeight: () => 103 }));
 vi.mock("@/ui/useBottomShellHeight", () => ({ useBottomShellHeight: () => 90 }));
 vi.mock("expo-router", () => ({
   usePathname: () => "/trip-home",
-  useNavigation: () => ({ setOptions: state.setOptions }),
+  useNavigation: () => state.navigation,
+  useFocusEffect: (callback: () => void) => {
+    if (state.mount && state.focused) state.effects.push(callback);
+  },
   useLocalSearchParams: () => ({
     tripId: state.routeTrip ?? state.view.tripId,
     date: state.view.date,
@@ -186,6 +191,8 @@ async function loaded() {
 beforeEach(() => {
   vi.stubGlobal("__DEV__", true);
   state.appActive = null;
+  state.focused = true;
+  state.navigation = { setOptions: state.setOptions, isFocused: () => state.focused };
   state.routeMode = "home";
   state.routeTrip = null;
   state.hooks = [];
@@ -875,4 +882,33 @@ it("keeps the Day action stable across quick-action publication rerenders", asyn
   expect(state.params).toHaveBeenCalledWith(
     expect.objectContaining({ date: "2027-02-07", view: "day" }),
   );
+});
+
+it("a retained unfocused Trip cannot replace the active working Trip", async () => {
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  state.switchTrip.mockClear();
+  state.focused = false;
+  workspace.onKnownTrip("LOCAL");
+  expect(state.switchTrip).not.toHaveBeenCalled();
+  state.focused = true;
+  find(render(), LocalTripWorkspace).onKnownTrip("LOCAL");
+  expect(state.switchTrip).toHaveBeenCalledWith(reference, 5);
+});
+it("a blurred Trip with a late Day read cannot switch the new active Trip", async () => {
+  let finish!: (value: unknown) => void;
+  state.read.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  state.switchTrip.mockClear();
+  state.view.tripId = "new-active-trip";
+  state.routeTrip = reference;
+  render();
+  for (let i = 0; i < 8; i++) await Promise.resolve();
+  state.focused = false;
+  finish(state.result);
+  for (let i = 0; i < 16; i++) await Promise.resolve();
+  expect(state.switchTrip).not.toHaveBeenCalled();
 });

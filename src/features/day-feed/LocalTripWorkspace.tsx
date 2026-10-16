@@ -2,7 +2,7 @@ import { useTripPreparationWidget } from "./useTripPreparationWidget";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { SheetHeader } from "@/components/SheetHeader";
 import { useTripView } from "./TripViewContext";
 import { TripHomeFrame } from "@/features/trip/TripHomeFrame";
@@ -387,49 +387,52 @@ function LocalTripContent({
       },
     ]);
   };
-  useEffect(() => {
-    if (!selected || status !== "READY") return;
-    const owner = selected.id;
-    publishQuickActions(
-      {
-        tripName: selected.name,
-        tripId: owner,
+  useFocusEffect(
+    useCallback(() => {
+      if (!selected || status !== "READY") return;
+      const owner = selected.id;
+      publishQuickActions(
+        {
+          tripName: selected.name,
+          tripId: owner,
+          generation,
+          owner: quickActionsOwner,
+          backToTrips: leaveHome,
+          editTrip: () => {
+            if (alive.current && generation === getAccountGeneration())
+              setCoverOpen(true);
+          },
+          ...(onChooseDay ? { chooseDay: () => onChooseDay(selected.startDate) } : {}),
+          itinerary: (date) => {
+            if (!alive.current || generation !== getAccountGeneration()) return;
+            if (date) setItemStart((previous) => previous || date);
+            setItemFormOpen(true);
+          },
+          ...(photosReady
+            ? {
+                photos: () => {
+                  if (alive.current && generation === getAccountGeneration())
+                    photoAdd.current?.();
+                },
+              }
+            : {}),
+        },
+        owner,
         generation,
-        owner: quickActionsOwner,
-        backToTrips: leaveHome,
-        editTrip: () => {
-          if (alive.current && generation === getAccountGeneration()) setCoverOpen(true);
-        },
-        ...(onChooseDay ? { chooseDay: () => onChooseDay(selected.startDate) } : {}),
-        itinerary: (date) => {
-          if (!alive.current || generation !== getAccountGeneration()) return;
-          if (date) setItemStart((previous) => previous || date);
-          setItemFormOpen(true);
-        },
-        ...(photosReady
-          ? {
-              photos: () => {
-                if (alive.current && generation === getAccountGeneration())
-                  photoAdd.current?.();
-              },
-            }
-          : {}),
-      },
-      owner,
+        quickActionsOwner,
+      );
+      return () => publishQuickActions(null, owner, generation, quickActionsOwner);
+    }, [
+      selected,
+      status,
       generation,
+      photosReady,
+      publishQuickActions,
       quickActionsOwner,
-    );
-    return () => publishQuickActions(null, owner, generation, quickActionsOwner);
-  }, [
-    selected,
-    status,
-    generation,
-    photosReady,
-    publishQuickActions,
-    quickActionsOwner,
-    leaveHome,
-    onChooseDay,
-  ]);
+      leaveHome,
+      onChooseDay,
+    ]),
+  );
   const remoteStart = knownDate(remoteSelected?.startDate ?? null);
   const remoteEnd = knownDate(remoteSelected?.endDate ?? null);
   const metadata = selected ?? remoteSelected;

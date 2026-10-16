@@ -11,14 +11,19 @@ import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
 import { AppState, ScrollView, StyleSheet, Text, View } from "react-native";
-import { router, useLocalSearchParams, useNavigation, usePathname } from "expo-router";
+import {
+  router,
+  useLocalSearchParams,
+  useNavigation,
+  usePathname,
+  useFocusEffect,
+} from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { openTripHome } from "@/components/openTripHome";
 import {
@@ -204,10 +209,10 @@ function TripContent({ today = false }: { today?: boolean }) {
     (kind: WorkspaceKind) => {
       if (generation !== getAccountGeneration()) return;
       setWorkspaceResolution({ tripId: requested, generation, kind });
-      if (requested && (kind === "LOCAL" || kind === "CACHED"))
+      if (navigation.isFocused() && requested && (kind === "LOCAL" || kind === "CACHED"))
         switchTrip(requested, generation);
     },
-    [requested, generation, switchTrip],
+    [requested, generation, switchTrip, navigation],
   );
   const workspaceKind = resolvedWorkspaceKind(workspaceResolution, requested, generation);
   const localChecked = workspaceKind !== null;
@@ -231,6 +236,7 @@ function TripContent({ today = false }: { today?: boolean }) {
         )
           knownTrip("LOCAL");
         if (
+          navigation.isFocused() &&
           result.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
           result.observed.projection.tripId === requested &&
           result.scope.generation === captured &&
@@ -269,17 +275,19 @@ function TripContent({ today = false }: { today?: boolean }) {
         setStatus("UNAVAILABLE");
       }
     }
-  }, [requested, today, view, switchTrip, knownTrip]);
-  useEffect(() => {
-    void Promise.resolve().then(load);
-    const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active") void load();
-    });
-    return () => {
-      request.current += 1;
-      sub.remove();
-    };
-  }, [load, generation]);
+  }, [requested, today, view, switchTrip, knownTrip, navigation]);
+  useFocusEffect(
+    useCallback(() => {
+      void Promise.resolve().then(load);
+      const sub = AppState.addEventListener("change", (state) => {
+        if (state === "active") void load();
+      });
+      return () => {
+        request.current += 1;
+        sub.remove();
+      };
+    }, [load]),
+  );
   const open = (id: string) => {
     if (generation !== getAccountGeneration()) return;
     switchTrip(id.trim(), generation);

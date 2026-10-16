@@ -28,3 +28,11 @@ Workspace quick-action publication effect on every provider rerender. Memoized
 Day handlers now retain identity for unchanged navigation/read context, while a
 changed planning date updates the action. The callback-identity regression test
 checks both properties. AD5 reinstall/regression remains with Coordinator.
+
+Hot cross-Trip navigation follow-up: Native `/trip-home` now uses the same
+Workspace All Trips return guard as `/trip`. Retained background Stack screens
+cannot publish Quick Actions or switch the working Trip over the focused screen.
+Existing Expo focus lifecycle releases/reinstates only the current Workspace token;
+Day read/AppState work is scoped to focus. No Trip permission is inferred from route
+identity, and no business rows or saved account state are changed by this correction.
+The full Auckland → Nelson → Japan → Auckland Native sequence remains Coordinator QA.
