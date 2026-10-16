@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assembleFlightDocuments } from "@/domain/trip/flightAssembly";
 import { interpretationResponseSchema } from "@/domain/intelligence/interpretation";
 import {
   normalizeFlightObservation,
@@ -282,7 +283,8 @@ export function attachCaptureLocalModelEvidence(
 
 // Read projection also serves retained schema67 results; no Source-bound response is fabricated.
 export function projectCaptureLocalFlightInterpretation(
-  result: Pick<CaptureLocalResult, "inputId" | "text">,
+  result: Pick<CaptureLocalResult, "inputId" | "text"> &
+    Partial<Pick<CaptureLocalResult, "originalSha256" | "originalByteCount">>,
 ) {
   try {
     const parsed = parseReferenceFlightText(result.inputId, result.text);
@@ -319,10 +321,25 @@ export function projectCaptureLocalFlightInterpretation(
       )
         throw new Error("CAPTURE_LOCAL_SPAN_INVALID");
     }
+    const assembly = assembleFlightDocuments([
+      {
+        inputId: result.inputId,
+        text: result.text,
+        originalSha256: result.originalSha256,
+        originalByteCount: result.originalByteCount,
+        parsed: { items, fragments },
+      },
+    ]);
     return {
       status: "PARTIAL" as const,
       projectionKind: "CURRENT_PARSER_READ" as const,
-      items,
+      assembly,
+      items: assembly.segments.map((segment) => ({
+        token: segment.id,
+        schema_id: "otr.import.flight",
+        fields: segment.fields,
+        deferred: segment.deferred,
+      })),
       fragments,
       ignored: parsed.ignored,
     };
