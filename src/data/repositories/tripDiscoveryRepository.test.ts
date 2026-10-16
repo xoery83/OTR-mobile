@@ -88,6 +88,20 @@ it("caches a complete actor snapshot without inventing a local CREATE, and merge
         },
       ],
     });
+    sql
+      .prepare(
+        "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
+      )
+      .run("cultural-oldtown", accountA, idA);
+    expect(
+      (await repo.readMerged()).trips.find((trip) => trip.id === idA)
+        ?.selectedCoverAssetId,
+    ).toBe("cultural-oldtown");
+    sql
+      .prepare(
+        "UPDATE local_trip_containers SET selected_cover_asset_id=? WHERE account_id=? AND id=?",
+      )
+      .run("city", accountA, idA);
     expect(sql.prepare("SELECT count(*) AS n FROM sync_operations").get()).toEqual({
       n: 0,
     });

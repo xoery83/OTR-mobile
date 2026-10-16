@@ -41,7 +41,9 @@ export type CachedTripList = {
 };
 
 const cover = (id: string | null): BuiltInTripCoverId | null =>
-  id === "city" || id === "coast" || id === "mountain" ? id : null;
+  id === "city" || id === "coast" || id === "mountain" || id === "cultural-oldtown"
+    ? id
+    : null;
 const summary = (row: SummaryRow): TripDiscoverySummary => ({
   id: row.id,
   name: row.name,

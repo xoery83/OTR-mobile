@@ -346,6 +346,10 @@ export const en = {
   "tripHome.tools": "More",
   "tripHome.coverTools": "Trip cover",
   "tripHome.edit": "Edit Trip",
+  "tripHome.editor.metadataReadOnly":
+    "Name, dates and destination are read-only while their update capability is unavailable.",
+  "tripHome.editor.coverLocalOnly":
+    "Cover changes are saved on this device immediately, including offline. They are not synced.",
   "tripHome.editUnavailable": "Edit Trip — not available yet",
   "tripHome.members": "Members",
   "tripHome.settings": "Trip Settings",
@@ -2624,6 +2628,9 @@ export const zhHans: Record<MessageKey, string> = {
   "tripHome.tools": "更多",
   "tripHome.coverTools": "旅行封面",
   "tripHome.edit": "编辑旅行",
+  "tripHome.editor.metadataReadOnly":
+    "名称、日期和目的地的更新能力尚不可用，目前仅供查看。",
+  "tripHome.editor.coverLocalOnly": "封面选择立即保存在此设备，离线也可使用，暂不同步。",
   "tripHome.editUnavailable": "编辑旅行：暂不可用",
   "tripHome.members": "成员",
   "tripHome.settings": "旅行设置",

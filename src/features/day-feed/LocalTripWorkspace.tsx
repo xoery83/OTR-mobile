@@ -41,7 +41,7 @@ import { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
 import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
-import { TripCoverPicker } from "./TripCoverPicker";
+import { TripBasicEditor } from "./TripBasicEditor";
 import { LocalTripPhotos } from "./LocalTripPhotos";
 import { tripCoverSource } from "./tripCovers";
 
@@ -646,14 +646,11 @@ function LocalTripContent({
           >
             <SafeAreaProvider style={styles.modal}>
               <SheetHeader
-                title={t("tripHome.coverTools")}
+                title={t("tripHome.edit")}
                 onLeft={() => setCoverOpen(false)}
               />
               <ScrollView contentContainerStyle={styles.form}>
-                <TripCoverPicker
-                  selected={selected.selectedCoverAssetId}
-                  onSelect={selectCover}
-                />
+                <TripBasicEditor trip={selected} onSelectCover={selectCover} />
               </ScrollView>
             </SafeAreaProvider>
           </Modal>

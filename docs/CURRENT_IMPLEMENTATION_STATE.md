@@ -12,6 +12,18 @@
   V2 is not included in that Push. Trip Metadata Update/Sync is actively owned in
   a separate worktree; full Editor remains PARTIAL until Native round-trip passes.
 
+# Trip Basic Editor field capability candidate — 2026-10-16
+
+- Bounded check: name, nullable calendar dates and the existing manual destination
+  string are readable/create-writable, but have no metadata update command,
+  repository or sync contract. They remain individually read-only in the Editor.
+- Existing Account-local bundled cover selection is independently available and
+  durable offline. The normal cover modal now hosts that bounded Editor, reusing
+  its sole owning writer; cover does not sync. Discovery preserves all four IDs.
+- Matrix and one minimal remaining-field decision packet:
+  docs/ops/TRIP_BASIC_EDITOR_CAPABILITY_20261016.md. No schema/Hosted/device change;
+  frozen R2 candidate191a557 and its Hero/Router remain separate. Native unverified.
+
 # Flight Assembly / Apple semantic checkpoint — 2026-10-16
 
 - Reviewed local candidate reuses one deterministic assembler across Capture,
