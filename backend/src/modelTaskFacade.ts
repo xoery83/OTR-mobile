@@ -1,18 +1,24 @@
 import {
   modelTaskResultSchema,
   type ModelTaskResult,
+  type ModelTaskRequest,
+  type TechnicalOutputWitness,
 } from "../../src/domain/intelligence/modelTask";
 import {
   assertAccountRequestGeneration,
   type AccountRequestContext,
 } from "../../src/data/auth/accountRequestContext";
 import type { createIntelligenceContinuationRepository } from "../../src/data/repositories/intelligenceContinuationRepository";
-import type { createFlightDevExecutor } from "./flightDevDispatch";
 
 // Explicit CLOSED read seam on the existing repository/executor; no dispatch lifecycle.
 export function createClosedModelTaskFacade(
   repo: Pick<ReturnType<typeof createIntelligenceContinuationRepository>, "snapshot">,
-  execution: Pick<ReturnType<typeof createFlightDevExecutor>, "readTechnicalOutput">,
+  execution: {
+    readTechnicalOutput(
+      context: AccountRequestContext,
+      attemptId: string,
+    ): Promise<{ witness: TechnicalOutputWitness; request: ModelTaskRequest } | null>;
+  },
 ) {
   return {
     async read(context: AccountRequestContext, taskId: string): Promise<ModelTaskResult> {

@@ -1,3 +1,7 @@
+import {
+  captureRemoteProcessingBoundary,
+  type CaptureRemoteProcessingPort,
+} from "./captureRemoteProcessingHttp";
 import { captureCustodyBoundary } from "./captureCustodyHttp";
 import type { CaptureMaterialCustody } from "../../src/domain/capture/captureCustody";
 import { parseEventJson } from "../../src/domain/trip/eventIntentJson";
@@ -611,6 +615,7 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  captureRemoteProcessing?: CaptureRemoteProcessingPort;
   captureMaterialCustody?: CaptureMaterialCustody;
   tripCreatePort?: TripCreatePort;
   tripMetadataPort?: TripMetadataPort;
@@ -2356,6 +2361,7 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  captureRemoteProcessing,
   captureMaterialCustody,
   tripCreatePort,
   tripMetadataPort,
@@ -2446,7 +2452,17 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (/^\/v2\/capture-inputs\/[^/]+\/material$/.test(url.pathname)) {
+      if (
+        /^\/v2\/capture-jobs\/[^/]+\/inputs\/[^/]+\/processing\/[^/]+$/.test(url.pathname)
+      ) {
+        route = "/v2/capture-jobs/:jobId/inputs/:inputId/processing/:taskId";
+        const actor = await authenticate(request, gateway);
+        response = await captureRemoteProcessingBoundary(
+          request,
+          actor.id,
+          captureRemoteProcessing,
+        );
+      } else if (/^\/v2\/capture-inputs\/[^/]+\/material$/.test(url.pathname)) {
         route = "/v2/capture-inputs/:inputId/material";
         const actor = await authenticate(request, gateway);
         response = await captureCustodyBoundary(

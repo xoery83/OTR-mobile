@@ -49,6 +49,7 @@ export function startDevBackend(
     | "coreConnection"
     | "documentOriginalReader"
     | "captureMaterialCustody"
+    | "captureRemoteProcessing"
   > = {},
 ) {
   const environment = environmentSchema.parse(process.env);
@@ -91,6 +92,7 @@ export function startDevBackend(
   const handle = createDevBackendHandler({
     gateway,
     captureMaterialCustody: startOptions.captureMaterialCustody,
+    captureRemoteProcessing: startOptions.captureRemoteProcessing,
     tripCreatePort: startOptions.tripCreatePort,
     tripMetadataPort: startOptions.tripMetadataPort,
     coreConnection: startOptions.coreConnection,
@@ -114,6 +116,10 @@ export function startDevBackend(
         );
       const originalRoute =
         /^\/v2\/trips\/[^/]+\/documents\/[^/]+\/original(?:\?|$)/.test(
+          incoming.url ?? "",
+        );
+      const remoteProcessingRoute =
+        /^\/v2\/capture-jobs\/[^/]+\/inputs\/[^/]+\/processing\/[^/]+(?:\?|$)/.test(
           incoming.url ?? "",
         );
       const captureMaterialRoute = /^\/v2\/capture-inputs\/[^/]+\/material(?:\?|$)/.test(
@@ -141,6 +147,13 @@ export function startDevBackend(
               },
             }),
           );
+          return;
+        }
+        if (remoteProcessingRoute && (byteCount > 524288 || incoming.method !== "POST")) {
+          outgoing.statusCode = 413;
+          outgoing.setHeader("Content-Type", "application/json");
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end(JSON.stringify({ error: { code: "CAPTURE_REMOTE_SIZE_LIMIT" } }));
           return;
         }
         if (captureMaterialRoute && (byteCount > 4194304 || incoming.method !== "PUT")) {

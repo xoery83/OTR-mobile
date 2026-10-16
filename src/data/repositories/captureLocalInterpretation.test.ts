@@ -1,3 +1,5 @@
+import { captureCustodyBindingSchema } from "../../domain/capture/captureCustody";
+import { captureRemoteFixture } from "../../domain/capture/__fixtures__/captureRemoteProcessing";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
@@ -149,6 +151,61 @@ it("upgrades a populated C3 Batch and durably records two Account-only local res
   expect(native.extract).toHaveBeenCalledTimes(2);
   f.reopen();
   expect(await repo.localResults(context, request.jobId)).toEqual(results);
+  const job = await f.submissions.reopen(request.jobId, context),
+    i = job.inputs[0];
+  const binding = captureCustodyBindingSchema.parse({
+    version: 1 as const,
+    accountId: context.accountId,
+    batchId: job.batch.batchId,
+    jobId: request.jobId,
+    inputId: i.id,
+    inputRevision: i.revision,
+    captureId: i.captureId,
+    captureRevision: i.captureRevision,
+    payloadId: i.payloadId,
+    sha256: i.contentSha256!,
+    byteCount: i.contentByteCount!,
+    mediaType: "application/pdf" as const,
+  });
+  const remoteFixture = captureRemoteFixture(binding, {
+    text: results[0].text,
+    textSha256: results[0].textSha256,
+  });
+  const remote = {
+    run: vi.fn(async () => {
+      throw new Error("remote unavailable");
+    }),
+    read: vi.fn(async () => remoteFixture.output),
+  };
+  const remoteRepo = createCaptureProcessingRepository(
+    f.db,
+    f.getAccount,
+    { sha256, now, newId: randomUUID },
+    remote,
+  );
+  await expect(remoteRepo.requestRemote(context, remoteFixture.input)).rejects.toThrow(
+    "remote unavailable",
+  );
+  expect(await remoteRepo.localResults(context, request.jobId)).toEqual(results);
+  expect(
+    await remoteRepo.readRemote(context, binding, remoteFixture.input.task.task_id),
+  ).toEqual(remoteFixture.output);
+  await expect(
+    remoteRepo.readRemote(
+      context,
+      { ...binding, sha256: "b".repeat(64) },
+      remoteFixture.input.task.task_id,
+    ),
+  ).rejects.toThrow("CAPTURE_REMOTE_SCOPE");
+  expect(remote.read).toHaveBeenCalledTimes(1);
+  const defaultClosed = createCaptureProcessingRepository(f.db, f.getAccount, {
+    sha256,
+    now,
+    newId: randomUUID,
+  });
+  await expect(
+    defaultClosed.readRemote(context, binding, remoteFixture.input.task.task_id),
+  ).rejects.toThrow("CAPTURE_REMOTE_CLOSED");
   expect(() =>
     f.sql.prepare("DELETE FROM capture_local_interpretation_results").run(),
   ).toThrow("CAPTURE_LOCAL_RESULT_RETAINED");

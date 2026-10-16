@@ -1141,3 +1141,24 @@ immutable binding conflict409, oversized stream413, missing association404 and
 unavailable port/store503 expose finite codes only. Optional composition remains
 absent at default startup. This is Account staging, not Trip Source/Representation
 admission, processing or canonical acceptance. No table/role/migration is added.
+
+
+## Capture remote Processing seam (local candidate; default CLOSED)
+
+Authenticated POST/GET `/v2/capture-jobs/:jobId/inputs/:inputId/processing/:taskId`
+uses the existing exact `X-OTR-Capture-Binding`. Path/account/input/job/task pins
+must match; actor comes from normal Backend authentication. POST carries a strict
+version1 existing ModelTask request and exact persisted extraction text/text SHA.
+The canonical binding/text material digest and byte count must equal task input.
+JSON is bounded to512KiB, text to256KiB, response to1MiB, execution to35 seconds.
+GET reads only; it must not initiate a Provider request. No query/range/encoding.
+
+The normal authenticated Native transport and existing C3 Repository recheck actual
+completed local operation, original pins and account generation before/after I/O.
+Remote errors preserve the existing local interpretation. No Provider key enters
+Mobile. No second local journal or Source authority is created by this interface.
+
+Startup accepts an optional owning port. The default is503 CLOSED: real protected
+issuer, profile/cost policy, persisted task/call/raw/metering and material authority
+must be installed separately before Runtime verification. The port interface and
+fixture tests do not establish that deployment or grant dispatch permission.

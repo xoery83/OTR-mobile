@@ -1,4 +1,13 @@
 import {
+  captureCustodyBindingJson,
+  type CaptureCustodyBinding,
+} from "../../domain/capture/captureCustody";
+import {
+  validateCaptureRemoteRequest,
+  type CaptureRemoteRequest,
+} from "../../domain/capture/captureRemoteProcessing";
+import type { CaptureRemoteProcessingTransport } from "../api/captureRemoteProcessingTransport";
+import {
   assertAccountRequestContext,
   withAccountApplyGate,
   type AccountRequestContext,
@@ -51,7 +60,11 @@ const select = `SELECT id,owner_user_id AS ownerUserId,trip_id AS tripId,
   claim_owner AS claimOwner,created_at AS createdAt,updated_at AS updatedAt FROM sync_operations`;
 const opId = (inputId: string) => `capture-processing:${inputId}`;
 const localOpId = (inputId: string) => `capture-local:${inputId}`;
-function localMediaType(kind: string, declared: string | null, bytes: Uint8Array) {
+function localMediaType(
+  kind: string,
+  declared: string | null,
+  bytes: Uint8Array,
+): CaptureCustodyBinding["mediaType"] {
   const claimed = declared?.split(";", 1)[0].trim().toLowerCase();
   const normalized = claimed === "image/jpg" ? "image/jpeg" : claimed;
   const actual =
@@ -82,6 +95,7 @@ export function createCaptureProcessingRepository(
   db: Database,
   getAccountId: () => Promise<string>,
   deps: LocalCaptureDependencies,
+  remote?: CaptureRemoteProcessingTransport,
 ) {
   const submissions = createCaptureSubmissionTransactionStore(db, deps);
   const staged = new Map<string, { owner: string; result: CaptureLocalResult }>();
@@ -201,7 +215,66 @@ export function createCaptureProcessingRepository(
       mediaType: material!.declaredContentType,
     };
   }
+  async function remoteScope(
+    context: AccountRequestContext,
+    binding: CaptureCustodyBinding,
+  ) {
+    const operation = await current(context, localOpId(binding.inputId));
+    if (operation.status !== "COMPLETED") fail("CAPTURE_REMOTE_LOCAL_RESULT_REQUIRED");
+    const material = await pinned(context, operation),
+      p = material.pin;
+    const exact = {
+      version: 1 as const,
+      accountId: context.accountId,
+      batchId: p.batchId,
+      jobId: p.jobId,
+      inputId: p.inputId,
+      inputRevision: p.inputRevision,
+      captureId: p.captureId,
+      captureRevision: p.captureRevision,
+      payloadId: p.payloadId,
+      sha256: p.sha256,
+      byteCount: p.byteCount,
+      mediaType: localMediaType(material.kind, material.mediaType, material.bytes),
+    };
+    if (captureCustodyBindingJson(binding) !== captureCustodyBindingJson(exact))
+      fail("CAPTURE_REMOTE_SCOPE");
+    await assertAccountRequestContext(context, getAccountId);
+    if (!remote) fail("CAPTURE_REMOTE_CLOSED");
+    return remote!;
+  }
   return {
+    async requestRemote(context: AccountRequestContext, raw: CaptureRemoteRequest) {
+      const request = validateCaptureRemoteRequest(raw),
+        port = await remoteScope(context, request.binding);
+      const row = await db.getFirstAsync<{ resultJson: string }>(
+        "SELECT result_json AS resultJson FROM capture_local_interpretation_results WHERE account_id=? AND input_id=?",
+        context.accountId,
+        request.binding.inputId,
+      );
+      const result = row ? (JSON.parse(row.resultJson) as CaptureLocalResult) : null;
+      if (
+        !result ||
+        result.text !== request.localEvidence.text ||
+        result.textSha256 !== request.localEvidence.textSha256
+      )
+        fail("CAPTURE_REMOTE_LOCAL_RESULT_MISMATCH");
+      await assertAccountRequestContext(context, getAccountId);
+      const resultRemote = await port.run(context, request);
+      await remoteScope(context, request.binding);
+      return resultRemote;
+    },
+    async readRemote(
+      context: AccountRequestContext,
+      binding: CaptureCustodyBinding,
+      taskId: string,
+    ) {
+      const resultRemote = await (
+        await remoteScope(context, binding)
+      ).read(context, binding, taskId);
+      await remoteScope(context, binding);
+      return resultRemote;
+    },
     async schedule(context: AccountRequestContext, jobId: string) {
       return gated(context, async () => {
         const job = await submissions.load(context, jobId);
