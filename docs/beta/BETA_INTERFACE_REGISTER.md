@@ -1,5 +1,23 @@
 # OTR Beta — Cross-Module Interface Register
 
+## C4-R visual escalation — queued / Runtime NOT VERIFIED
+
+Owner: Import Coordinator. Input: existing real Delta JPG and retained local OCR,
+parser/Apple observations. Missing proof: exact per-segment service/route/date/time
+ownership and complete visual multi-segment structure; recognized service strings
+are observations, not proof of four assembled/admissible legs. Reuse the existing
+Assembly Proposal and Evidence/Readiness Validator, with no second engine or
+supplier-layout parser.
+
+Recovery conditions: verify an already approved Provider/model truly accepts images;
+confirm existing credentials/readiness, image privacy authorization and finite call
+budget; then make one bounded diagnostic invocation. The Owner-promised new DeepSeek
+key has not established readiness or image support. No provider-specific visual
+capability has yet been verified. Status remains BLOCKED_PROVIDER_READINESS_AND_VISION_SCOPE;
+no remote request, Storage upload or canonical write performed. This queued scenario
+must not preempt NZ5069 1+2 or Trip Home R2 P0.
+
+
 ## TIME-01 V1.1 reconciliation — audit OPEN / 2026-10-16
 
 Owning baseline: [approved V1.1](../trip/contracts/OTR_TIME_01_CONTEXTUAL_TIMEZONE_FLOATING_TIME_PRODUCT_DELTA_V1_1_2026-10-16.md). Coordinator owns registration/priority handoff; independent TIME-01 audit owns read-only P1–P6/TTR/Editor/Import/Today/NOW/notifications/actual consumers/offline propagation matrix. Existing owning teams retain their files. Deliver impact/conflict/ownership/staged retrofit/test–Native gap matrices; NOT IMPLEMENTED/DEFERRED must remain explicit. No automatic TIME-01A PASS from whole-module tests; no precise instant/reminder inferred from floating data. Main Product Chat reviews implementation priorities after audit.

@@ -49,3 +49,15 @@ original occurrence-position issues. Workbench shows deterministic structure and
 validated-but-unapplied model suggestions separately; old traces remain readable.
 Source original registration and Source-backed Booking publication remain owning
 interface gaps, not permission to bypass Source or use manual canonical writes.
+
+## Subsequent complex-image acceptance case
+
+The real Delta JPG is queued for controlled C4-R multimodal escalation. Existing
+local evidence/results are retained. OCR recovers service/airport strings but has
+not proved full per-leg visual ownership, dates/times or segment associations.
+Do not infer a Booking/leg count from observation count or add Delta-only rules.
+Actual image-capable Provider readiness and finite privacy/cost authorization are
+not established; remote invocation is NOT RUN. Resume only after these conditions
+are confirmed; text-only calls cannot satisfy this acceptance case. The same strict
+Assembly Proposal validator remains authoritative. NZ5069 deterministic delivery
+continues independently.

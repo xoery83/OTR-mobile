@@ -1,5 +1,22 @@
 # OTR Beta — Unified Decisions and Scope Baseline
 
+## Complex visual documents — bounded C4-R escalation / 2026-10-16
+
+Owner approves the direction of a controlled multimodal escalation when relevant
+local OCR text cannot recover visual grouping, field ownership or multi-segment
+relations. Keep generic deterministic parsing/assembly; do not add Delta-specific
+layout rules. The existing Delta multi-flight JPG is a subsequent acceptance case,
+not a replacement for tonight’s NZ5069 deterministic 1+2 or Trip Home R2 P0 work.
+
+Preserve OCR, deterministic and Apple results. A future bounded image-capable call
+must use the real original/necessary crop, OCR layout, compact OTR contract,
+observations and unresolved relations; return the existing Assembly Proposal for
+strict deterministic evidence/readiness validation. Model advice grants no
+Candidate/Admission/Canonical authority. Text-only inference is not multimodal PASS.
+Provider image capability, existing configuration, explicit image-transfer/privacy
+and bounded cost authorization must be verified before any call. No new Provider,
+credential, billing plan or remote call is authorized by this registration.
+
 ## TIME-01 V1.1 — Owner product baseline / 2026-10-16
 
 Approved [original V1.1](../trip/contracts/OTR_TIME_01_CONTEXTUAL_TIMEZONE_FLOATING_TIME_PRODUCT_DELTA_V1_1_2026-10-16.md); SHA-256 `53d8319fb0c4a791a56cbb5a6214ec30822c092e692bcd61073477a3ea2ad150`. Replaces the initial TIME-01 draft. Preserve D1 endpoint-local single Transport Item/no automatic Arrival Continuation; D2 explicit plan order/Floating stable position; D3 trustworthy travel context/explicit planning-date fallback; D4 risk-proportionate reminders with reliable unique time for high risk. Missing Trip zone is not a lawful Item display veto. Preserve the document's distinction between approved direction and proposed implementation details.
