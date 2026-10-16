@@ -1,3 +1,10 @@
+import { LocalCoreItemPreview } from "./LocalCoreItemPreview";
+import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
+import {
+  readTripTodaysJourney,
+  type createTripTodaysJourneyReader,
+} from "@/data/repositories/tripTodaysJourneyRepository";
+import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { referenceTripHomePerspective } from "./referenceTripHomePerspective";
 import { TodaysJourneyWidget } from "./TodaysJourneyWidget";
 import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
@@ -49,9 +56,27 @@ import {
 type SnapshotReader = ReturnType<typeof createTripJourneySnapshotReader>;
 type SnapshotItem = NonNullable<Awaited<ReturnType<SnapshotReader["resolveItem"]>>>;
 type SnapshotRead = NonNullable<Awaited<ReturnType<SnapshotReader["read"]>>>;
+type LocalItem = NonNullable<
+  Awaited<
+    ReturnType<ReturnType<typeof createTripTodaysJourneyReader>["resolveLocalItem"]>
+  >
+>;
 type Reader = ReturnType<typeof createTripDayFeedReader>;
 type TripRead = Awaited<ReturnType<Reader["trip"]>>;
 const value = (p: string | string[] | undefined) => (typeof p === "string" ? p : "");
+
+function savedTripZone(
+  view: { tripId: string; zone: string; generation: number } | null,
+  tripId: string,
+  generation: number,
+) {
+  if (!view || view.tripId !== tripId || view.generation !== generation) return null;
+  try {
+    return viewContext("2000-01-01", view.zone).zone;
+  } catch {
+    return null;
+  }
+}
 
 export function TripScreen({ today = false }: { today?: boolean }) {
   const params = useLocalSearchParams();
@@ -100,6 +125,8 @@ function TripContent({ today = false }: { today?: boolean }) {
     view?: string;
     homeQaScenario?: string;
   }>();
+  const [revision, setRevision] = useState(0);
+  const [localItem, setLocalItem] = useState<LocalItem | null>(null);
   const [dayChooser, setDayChooser] = useState(false);
   const chooseDay = useCallback(() => {
     if (generation === getAccountGeneration()) setDayChooser(true);
@@ -161,7 +188,8 @@ function TripContent({ today = false }: { today?: boolean }) {
   ]);
   const visibleTrip =
     trip?.scope.generation === generation &&
-    trip.observed?.projection.tripId === requested
+    (trip.observed?.projection.tripId === requested ||
+      trip.localManual?.scope.tripId === requested)
       ? trip
       : null;
   const homePerspective = referenceTripHomePerspective(
@@ -196,6 +224,19 @@ function TripContent({ today = false }: { today?: boolean }) {
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
         setTrip(result);
         if (
+          !result.observed &&
+          result.localManual?.scope.tripId === requested &&
+          result.scope.generation === captured
+        )
+          knownTrip("LOCAL");
+        if (
+          result.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
+          result.observed.projection.tripId === requested &&
+          result.scope.generation === captured &&
+          (view?.tripId !== requested || view.generation !== captured)
+        )
+          switchTrip(requested, captured);
+        if (
           result.observed?.projection.version === 2 &&
           result.observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
         ) {
@@ -212,7 +253,7 @@ function TripContent({ today = false }: { today?: boolean }) {
             setHomeSnapshot(snapshot);
           else setHomeSnapshot(null);
         } else setHomeSnapshot(null);
-        setStatus(result.observed ? "READY" : "UNAVAILABLE");
+        setStatus(result.observed || result.localManual ? "READY" : "UNAVAILABLE");
         if (!today && result.observed)
           setZone(
             (previous) => previous || boundaryZone(result.observed!.projection) || "",
@@ -227,7 +268,7 @@ function TripContent({ today = false }: { today?: boolean }) {
         setStatus("UNAVAILABLE");
       }
     }
-  }, [requested, today]);
+  }, [requested, today, view, switchTrip, knownTrip]);
   useEffect(() => {
     void Promise.resolve().then(load);
     const sub = AppState.addEventListener("change", (state) => {
@@ -273,22 +314,88 @@ function TripContent({ today = false }: { today?: boolean }) {
       },
     });
   };
-  const enterDay = () => {
-    if (
-      generation !== getAccountGeneration() ||
-      visibleTrip?.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE"
-    )
-      return;
+  const canChooseDay =
+    !!visibleTrip?.localManual ||
+    visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE";
+  const enterDay = async () => {
+    if (generation !== getAccountGeneration() || !canChooseDay || !visibleTrip) return;
     try {
-      const context = viewContext(date, zone);
-      if (!visibleTrip?.observed) return;
-      select({ tripId: requested, ...context, generation });
-      router.setParams({ tripId: requested, ...context, view: "day" });
+      const dateValue = validateCalendarDate(date);
+      const context = zone ? viewContext(dateValue, zone) : null;
+      const ticket = request.current;
+      const result = await (await readTripDayFeed()).trip(requested);
+      if (
+        ticket !== request.current ||
+        generation !== getAccountGeneration() ||
+        result.scope.accountId !== visibleTrip.scope.accountId ||
+        result.scope.generation !== generation ||
+        (!result.localManual &&
+          result.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE") ||
+        (!context && !result.localManual)
+      )
+        return;
+      setTrip(result);
+      if (context) select({ tripId: requested, ...context, generation });
+      // A civil-only Day route never creates or overwrites a timezone-bearing bookmark.
+      router.setParams({
+        tripId: requested,
+        date: dateValue,
+        zone: context?.zone ?? "",
+        view: "day",
+      });
+      setDayChooser(false);
       setContextError(false);
     } catch {
       setContextError(true);
     }
   };
+  const freshLocalRead = async (expected: Pick<LocalManualRead, "scope" | "source">) => {
+    if (
+      expected.scope.tripId !== requested ||
+      expected.scope.generation !== generation ||
+      generation !== getAccountGeneration()
+    )
+      throw new Error("LOCAL_NAV_SCOPE");
+    const ticket = request.current;
+    const result = await (await readTripDayFeed()).trip(requested);
+    if (
+      ticket !== request.current ||
+      generation !== getAccountGeneration() ||
+      result.scope.accountId !== expected.scope.accountId ||
+      result.scope.generation !== generation ||
+      result.localManual?.source.fingerprint !== expected.source.fingerprint
+    )
+      throw new Error("LOCAL_NAV_UNAVAILABLE");
+    return result;
+  };
+  const openLocalItem = async (
+    id: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+  ) => {
+    const ticket = request.current;
+    const resolved = await (
+      await readTripTodaysJourney()
+    ).resolveLocalItem(requested, id, expected);
+    if (!resolved || ticket !== request.current || generation !== getAccountGeneration())
+      throw new Error("LOCAL_ITEM_UNAVAILABLE");
+    const current = await freshLocalRead(resolved);
+    setTrip(current);
+    setLocalItem(resolved);
+  };
+  const manualItemSaved = useCallback(
+    (tripId: string, captured: number) => {
+      if (
+        tripId !== requested ||
+        captured !== generation ||
+        captured !== getAccountGeneration()
+      )
+        return;
+      setRevision((value) => value + 1);
+      setLocalItem(null);
+      void load();
+    },
+    [requested, generation, load],
+  );
   const freshHomeRead = async (scope: SnapshotRead["scope"], epoch: string) => {
     if (
       scope.tripId !== requested ||
@@ -404,11 +511,22 @@ function TripContent({ today = false }: { today?: boolean }) {
               tripId={requested}
               zone={
                 homePerspective?.zone ??
+                savedTripZone(view, requested, generation) ??
+                savedTripZone(resumeView, requested, generation) ??
                 (visibleTrip?.observed
                   ? boundaryZone(visibleTrip.observed.projection)
                   : null)
               }
               now={homePerspective?.now}
+              refreshKey={revision}
+              onOpenDayChooser={canChooseDay ? chooseDay : undefined}
+              onOpenLocalToday={async (read) => {
+                const result = await freshLocalRead(read);
+                viewContext(read.today.date, read.today.zone);
+                setTrip(result);
+                openToday(requested, { date: read.today.date, zone: read.today.zone });
+              }}
+              onOpenLocalItem={(value) => openLocalItem(value.item.itemId, value)}
               copy={{
                 title: t("tripHome.today.title"),
                 openToday: t("tripHome.today.open"),
@@ -485,7 +603,41 @@ function TripContent({ today = false }: { today?: boolean }) {
     overlayProjection.source.epoch === visibleTrip.observed.projection.source.epoch
       ? { ...homeItem, read: visibleTrip }
       : null;
-  const selected = today ? view : !home && view?.tripId === requested ? view : null;
+  const savedDay = savedTripZone(view, requested, generation) ? view : null;
+  const routeDay = (() => {
+    if (today || home || !visibleTrip) return null;
+    try {
+      const routeDate = validateCalendarDate(value(params.date));
+      const routeZone = value(params.zone);
+      if (routeZone)
+        return { tripId: requested, ...viewContext(routeDate, routeZone), generation };
+      return visibleTrip.localManual
+        ? { tripId: requested, date: routeDate, zone: "", generation }
+        : null;
+    } catch {
+      return null;
+    }
+  })();
+  const dayContext = today ? savedDay : !home ? (routeDay ?? savedDay) : null;
+  const selected =
+    savedDay?.date === dayContext?.date && savedDay?.zone === dayContext?.zone
+      ? savedDay
+      : null;
+  const visibleLocalItem =
+    localItem &&
+    visibleTrip?.localManual &&
+    localItem.scope.tripId === requested &&
+    localItem.scope.generation === generation &&
+    localItem.scope.accountId === visibleTrip.scope.accountId &&
+    localItem.source.fingerprint === visibleTrip.localManual.source.fingerprint
+      ? localItem
+      : null;
+  const localPreview = visibleLocalItem ? (
+    <LocalCoreItemPreview
+      item={visibleLocalItem.item}
+      onClose={() => setLocalItem(null)}
+    />
+  ) : null;
   const homeContextCurrent =
     homeSnapshot &&
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
@@ -504,13 +656,25 @@ function TripContent({ today = false }: { today?: boolean }) {
           homeSnapshot!.candidateDays,
           firstKnownDate,
         )
-      : [];
+      : [
+          ...new Set(
+            visibleTrip?.localManual?.items.flatMap((item) => {
+              const schedule = item.schedule as {
+                start?: { localDate?: string };
+                end?: { localDate?: string };
+              };
+              return [schedule.start?.localDate, schedule.end?.localDate].filter(
+                (date): date is string => !!date,
+              );
+            }) ?? [],
+          ),
+        ].sort();
   const zoneChoices =
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
       ? explicitBoundaryZones(visibleTrip.observed.projection)
       : [];
   const calendarDates =
-    selected &&
+    dayContext &&
     homeSnapshot &&
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&
     visibleTrip.observed.projection.version === 2 &&
@@ -520,43 +684,59 @@ function TripContent({ today = false }: { today?: boolean }) {
       ? wholeTripCalendarDates(
           homeSnapshot.trip,
           homeSnapshot.candidateDays,
-          selected.date,
+          dayContext.date,
         )
       : undefined;
-  if (visibleTrip?.observed && selected)
+  if (
+    visibleTrip &&
+    dayContext &&
+    (visibleTrip.localManual || (visibleTrip.observed && dayContext.zone))
+  )
     return (
-      <View style={styles.root}>
-        <View style={styles.header}>
-          <Text style={styles.meta}>{selected.zone}</Text>
-          {!calendarDates ? (
-            <Text style={styles.meta}>{t("dayFeed.calendarUnavailable")}</Text>
-          ) : null}
-          {visibleTrip.observed.sourceStatus === "HISTORICAL_ACCEPTED_PROJECTION" ? (
-            <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
-          ) : null}
-          <UiButton
-            label={t("dayFeed.tripHome")}
-            variant="text"
-            onPress={() => openTripHome(selected.tripId, pathname, params.view)}
+      <>
+        <View style={styles.root}>
+          <View style={styles.header}>
+            {dayContext.zone ? <Text style={styles.meta}>{dayContext.zone}</Text> : null}
+            {!calendarDates && !visibleTrip.localManual ? (
+              <Text style={styles.meta}>{t("dayFeed.calendarUnavailable")}</Text>
+            ) : null}
+            {visibleTrip.observed?.sourceStatus === "HISTORICAL_ACCEPTED_PROJECTION" ? (
+              <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
+            ) : null}
+            <UiButton
+              label={t("dayFeed.tripHome")}
+              variant="text"
+              onPress={() => openTripHome(dayContext.tripId, pathname, params.view)}
+            />
+          </View>
+          <DayFeed
+            instant={homePerspective?.now}
+            key={`${requested}/${dayContext.date}/${dayContext.zone}/${generation}`}
+            entry={entry}
+            onReadingChange={
+              selected ? (reading) => saveReading(selected, reading) : undefined
+            }
+            projection={dayContext.zone ? visibleTrip.observed?.projection : undefined}
+            localManual={visibleTrip.localManual}
+            onOpenLocalItem={(id, expected) => {
+              void openLocalItem(id, expected).catch(() => {
+                setLocalItem(null);
+                void load();
+              });
+            }}
+            date={dayContext.date}
+            dates={calendarDates ?? [dayContext.date]}
+            zone={dayContext.zone}
+            services={visibleTrip.services}
+            renderer={
+              visibleTrip.observed?.projection.version === 2
+                ? createCoreExperienceRenderer(visibleTrip.observed.projection)
+                : undefined
+            }
           />
         </View>
-        <DayFeed
-          instant={homePerspective?.now}
-          key={`${requested}/${selected.date}/${selected.zone}/${generation}`}
-          entry={entry}
-          onReadingChange={(reading) => saveReading(selected, reading)}
-          projection={visibleTrip.observed.projection}
-          date={selected.date}
-          dates={calendarDates ?? [selected.date]}
-          zone={selected.zone}
-          services={visibleTrip.services}
-          renderer={
-            visibleTrip.observed.projection.version === 2
-              ? createCoreExperienceRenderer(visibleTrip.observed.projection)
-              : undefined
-          }
-        />
-      </View>
+        {localPreview}
+      </>
     );
   return (
     <>
@@ -627,12 +807,9 @@ function TripContent({ today = false }: { today?: boolean }) {
             onCreate={createTrip}
             onOpenToday={openToday}
             onKnownTrip={knownTrip}
+            onManualItemSaved={manualItemSaved}
             onBackToTrips={backToTrips}
-            onChooseDay={
-              visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
-                ? chooseDay
-                : undefined
-            }
+            onChooseDay={canChooseDay ? chooseDay : undefined}
             homePerspective={homePerspective}
             widgetsForHome={widgetsForHome}
             onOpenHomeItem={async (tripId, itemId, epoch) => {
@@ -655,7 +832,7 @@ function TripContent({ today = false }: { today?: boolean }) {
           </>
         ) : (
           <>
-            {visibleTrip?.observed ? (
+            {canChooseDay ? (
               <>
                 <Modal
                   visible={dayChooser}
@@ -712,7 +889,10 @@ function TripContent({ today = false }: { today?: boolean }) {
                           {t("dayFeed.contextInvalid")}
                         </Text>
                       ) : null}
-                      <UiButton label={t("dayFeed.openDay")} onPress={enterDay} />
+                      <UiButton
+                        label={t("dayFeed.openDay")}
+                        onPress={() => void enterDay()}
+                      />
                     </ScrollView>
                   </SafeAreaProvider>
                 </Modal>
@@ -721,6 +901,7 @@ function TripContent({ today = false }: { today?: boolean }) {
           </>
         )}
       </ScrollView>
+      {localPreview}
       {visibleOverlay?.read.observed ? (
         <DayFeed
           instant={homePerspective?.now}

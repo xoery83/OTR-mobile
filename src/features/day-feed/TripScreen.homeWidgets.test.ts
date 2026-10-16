@@ -22,6 +22,7 @@ const state = vi.hoisted(() => ({
   read: vi.fn(),
   snapshot: null as any,
   snapshotRead: vi.fn(),
+  resolveLocalItem: vi.fn(),
   resolveDay: vi.fn(),
   select: vi.fn(),
   enterHeader: vi.fn(),
@@ -33,6 +34,7 @@ const state = vi.hoisted(() => ({
   back: vi.fn(),
   replace: vi.fn(),
   canGoBack: true,
+  routeTrip: null as string | null,
   routeMode: "home" as "home" | "day",
   appActive: null as (() => void) | null,
   resume: null as any,
@@ -78,7 +80,7 @@ vi.mock("expo-router", () => ({
   usePathname: () => "/trip-home",
   useNavigation: () => ({ setOptions: state.setOptions }),
   useLocalSearchParams: () => ({
-    tripId: state.view.tripId,
+    tripId: state.routeTrip ?? state.view.tripId,
     date: state.view.date,
     zone: state.view.zone,
     view: state.routeMode,
@@ -122,6 +124,10 @@ vi.mock("@/data/repositories/tripJourneySnapshotRepository", () => ({
     resolveDayContext: state.resolveDay,
   }),
 }));
+vi.mock("./LocalCoreItemPreview", () => ({ LocalCoreItemPreview: "LocalItemPreview" }));
+vi.mock("@/data/repositories/tripTodaysJourneyRepository", () => ({
+  readTripTodaysJourney: async () => ({ resolveLocalItem: state.resolveLocalItem }),
+}));
 vi.mock("./DayFeed", () => ({ DayFeed: () => null }));
 vi.mock("./TripViewContext", async (original) => ({
   ...(await original<typeof import("./TripViewContext")>()),
@@ -164,6 +170,7 @@ beforeEach(() => {
   vi.stubGlobal("__DEV__", true);
   state.appActive = null;
   state.routeMode = "home";
+  state.routeTrip = null;
   state.hooks = [];
   state.refs = [];
   state.cursor = state.refCursor = 0;
@@ -213,6 +220,7 @@ beforeEach(() => {
     date: "2026-01-01",
     zone: "Asia/Tokyo",
   });
+  state.resolveLocalItem.mockReset();
   state.select.mockReset();
   state.enterHeader.mockReset();
   state.saveReading.mockReset();
@@ -578,6 +586,7 @@ it("explicit date and named-zone choices never move the Day bookmark before Open
   expect(choices(render()).filter((option) => option.selected)).toHaveLength(2);
   const opens = buttons(render()).filter((button) => button.label === "dayFeed.openDay");
   opens[opens.length - 1].onPress();
+  for (let i = 0; i < 24; i++) await Promise.resolve();
   expect(state.select).toHaveBeenCalledWith({
     tripId: reference,
     date: "2027-02-06",
@@ -654,4 +663,161 @@ it("keeps status information readable after the measured Hero scrolls away and o
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
   expect(state.select).not.toHaveBeenCalled();
   expect(state.saveReading).not.toHaveBeenCalled();
+});
+
+function localRead() {
+  return {
+    scope: { accountId: actor, tripId: reference, generation: 5 },
+    source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "pending-fingerprint" },
+    items: [
+      {
+        itemId: "manual-hotel",
+        itemRevision: 1,
+        family: "P3",
+        title: "Actual saved hotel",
+        localState: "PENDING",
+        schedule: {
+          start: { localDate: "2026-10-16" },
+          end: { localDate: "2026-10-17" },
+        },
+        details: {},
+      },
+    ],
+    rows: () => [],
+  };
+}
+it("a genuine local read enables Day chooser without accepted projection and date-only route does not create a timezone bookmark", async () => {
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  state.result.localManualStatus = "AVAILABLE";
+  state.view.zone = "";
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  expect(workspace.onChooseDay).toBeTypeOf("function");
+  workspace.onChooseDay();
+  const page = render();
+  const buttons: any[] = [];
+  function collect(node: ReactNode) {
+    if (!isValidElement(node)) return;
+    if (node.type === "Button") buttons.push(node.props);
+    Children.forEach((node.props as any).children, collect);
+  }
+  collect(page);
+  await buttons.find((button) => button.label === "dayFeed.openDay").onPress();
+  for (let i = 0; i < 16; i++) await Promise.resolve();
+  expect(state.params).toHaveBeenCalledWith({
+    tripId: reference,
+    date: "2027-02-06",
+    zone: "",
+    view: "day",
+  });
+  expect(state.select).not.toHaveBeenCalled();
+  state.routeMode = "day";
+  const feed = find(render(), DayFeed);
+  expect(feed.localManual).toBe(state.result.localManual);
+  expect(feed.projection).toBeUndefined();
+  expect(feed.zone).toBe("");
+  expect(feed.onReadingChange).toBeUndefined();
+});
+it("accepted Day passes pending increments into the original normal feed and save refreshes Today with generation fence", async () => {
+  state.result.localManual = localRead();
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  const before = workspace.widgetsForHome(reference, "Active")[0].content.props;
+  expect(before.refreshKey).toBe(0);
+  workspace.onManualItemSaved(reference, 5);
+  for (let i = 0; i < 16; i++) await Promise.resolve();
+  const after = find(render(), LocalTripWorkspace).widgetsForHome(reference, "Active")[0]
+    .content.props;
+  expect(after.refreshKey).toBe(1);
+  workspace.onManualItemSaved(reference, 4);
+  expect(
+    find(render(), LocalTripWorkspace).widgetsForHome(reference, "Active")[0].content
+      .props.refreshKey,
+  ).toBe(1);
+  state.routeMode = "day";
+  const feed = find(render(), DayFeed);
+  expect(feed.projection).toBe(state.result.observed.projection);
+  expect(feed.localManual).toBe(state.result.localManual);
+});
+it("Today reuses only same Trip/generation saved zone and rejects stale local source before navigation", async () => {
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  state.view.zone = "Asia/Tokyo";
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  const today = workspace.widgetsForHome(reference, "Active")[0].content.props;
+  expect(today.zone).toBe("Asia/Tokyo");
+  state.result = {
+    ...state.result,
+    localManual: {
+      ...state.result.localManual,
+      source: { ...state.result.localManual.source, fingerprint: "changed" },
+    },
+  };
+  await expect(
+    today.onOpenLocalToday({
+      ...localRead(),
+      today: { date: "2026-10-16", zone: "Asia/Tokyo" },
+    }),
+  ).rejects.toThrow("LOCAL_NAV_UNAVAILABLE");
+  expect(state.navigate).not.toHaveBeenCalled();
+});
+it("local Day Item opens actual readonly Core Item preview after owning reread, and refresh removes a stale preview", async () => {
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  state.routeMode = "day";
+  state.view.zone = "";
+  const resolved = { ...localRead(), item: localRead().items[0] };
+  state.resolveLocalItem.mockResolvedValue(resolved);
+  const feed = find(await loaded(), DayFeed);
+  feed.onOpenLocalItem("manual-hotel", localRead());
+  for (let i = 0; i < 24; i++) await Promise.resolve();
+  expect(state.resolveLocalItem).toHaveBeenCalledWith(
+    reference,
+    "manual-hotel",
+    expect.objectContaining({ scope: localRead().scope, source: localRead().source }),
+  );
+  expect(find(render(), "LocalItemPreview").item.title).toBe("Actual saved hotel");
+  state.result = {
+    ...state.result,
+    localManual: {
+      ...localRead(),
+      source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "changed" },
+    },
+  };
+  state.appActive!();
+  for (let i = 0; i < 24; i++) await Promise.resolve();
+  expect(find(render(), "LocalItemPreview")).toBeNull();
+});
+it("normal accepted deep-link read establishes Shell Trip scope only after repository validation", async () => {
+  state.routeTrip = reference;
+  state.view = { ...state.view, tripId: "other-trip" };
+  await loaded();
+  expect(state.switchTrip).toHaveBeenCalledWith(reference, 5);
+  expect(state.switchTrip).not.toHaveBeenCalledWith("other-trip", 5);
+});
+it("unvalidated raw Trip URL never establishes Shell context or local Day capability", async () => {
+  state.routeTrip = reference;
+  state.view = { ...state.view, tripId: "other-trip" };
+  state.result.observed = null;
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  expect(state.switchTrip).not.toHaveBeenCalled();
+  expect(workspace.onChooseDay).toBeUndefined();
+});
+
+it("Today saved-zone fallback accepts only same Trip/current generation and never raw URL timezone", async () => {
+  state.result.observed = null;
+  state.result.localManual = localRead();
+  state.routeTrip = reference;
+  state.view = { ...state.view, tripId: "other-trip", zone: "America/New_York" };
+  state.resume = { tripId: reference, generation: 5, zone: "Pacific/Auckland" };
+  let node = await loaded();
+  expect(
+    find(node, LocalTripWorkspace).widgetsForHome(reference, "Active")[0].content.props
+      .zone,
+  ).toBe("Pacific/Auckland");
+  state.resume = { ...state.resume, generation: 4 };
+  node = render();
+  expect(
+    find(node, LocalTripWorkspace).widgetsForHome(reference, "Active")[0].content.props
+      .zone,
+  ).toBeNull();
 });

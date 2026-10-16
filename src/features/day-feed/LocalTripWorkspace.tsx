@@ -146,6 +146,7 @@ type Props = {
   onBackToTrips(): void;
   onHomeHeroHeight?: (height: number) => void;
   onChooseDay?: () => void;
+  onManualItemSaved?: (tripId: string, generation: number) => void;
 };
 export function LocalTripWorkspace(props: Props) {
   const generation = useSyncExternalStore(
@@ -170,6 +171,7 @@ function LocalTripContent({
   onBackToTrips,
   onHomeHeroHeight,
   onChooseDay,
+  onManualItemSaved,
   widgetsForHome,
   onOpenHomeItem,
   homePerspective,
@@ -343,6 +345,7 @@ function LocalTripContent({
           ...(family === "P3" ? { endDate: itemEnd } : {}),
         });
         if (!current()) return;
+        onManualItemSaved?.(selected.id, captured);
         itemOperation.current = { operationId: createUuid(), itemId: createUuid() };
         setItemTitle("");
         setItemStart("");
