@@ -1,109 +1,110 @@
-# Trip Basic Editor — bounded owning capability check
+# Trip Basic Editor — owning delivery and field matrix
 
-Baseline: `c472eba` (2026-10-16). No Hosted reads/writes, device changes or schema changes.
-The frozen Trip Home R2 `191a557` is a separate candidate and is not modified here.
+Baseline `c472eba`, 2026-10-16. Owner subsequently authorized ordinary metadata
+update contract/repository/queue/Backend engineering, so the initial cover-only
+checkpoint `e621011` is a recovery point, not the completed Editor. No Hosted
+migration/deployment, device installation or R2 frozen-tree modification occurred.
 
-## Field-level result
+| Field                              | READ                                                                                                                 | EDIT                                                                                           | LOCAL SAVE                                                                 | SYNC                                                                                     | BLOCKER                                                                           |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Name                               | Real account-local Trip and discovery summary                                                                        | Implemented for original local creator provenance                                              | Atomic row + durable update intent; offline and cold-reopen tested         | Ordered update queue, authenticated transport, receipt worker and normal lifecycle wired | Hosted update receipt/functions not installed; no cloud PASS                      |
+| Start/end dates, including undated | Existing nullable calendar dates                                                                                     | Implemented with shared native date picker and Clear Date; original Create validation retained | Same atomic local transaction; no Item date or global lifecycle rewrite    | Same ordered queue                                                                       | Same finite Hosted capability gap                                                 |
+| Destination                        | Existing nullable manual string                                                                                      | Implemented; no new summary/override field or inference                                        | Same local-first path                                                      | Same queue                                                                               | Same Hosted gap; automatic summary not implemented/authorized                     |
+| Four bundled covers                | Account-local `selected_cover_asset_id`, bundled catalog and deterministic UUID fallback                             | Independently available on local Trip row                                                      | Existing account-fenced SQLite60 preference; immediate/offline/cold-reopen | Deliberately device-local; no sync claim                                                 | None for four assets; custom photos and cross-device cover remain unavailable     |
+| Hosted cover URL                   | `public.trips.cover_image_url` exists in inherited baseline; absent from current Trip/discovery transport projection | Not exposed by this Editor                                                                     | Not used                                                                   | Not used                                                                                 | Owning photo/cover transport capability, separate from current bundled preference |
 
-| Field                              | READ / actual source                                                                                                   | EDIT                                                | LOCAL SAVE                                                                                               | SYNC                                                   | BLOCKER                                                                                                               |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| Name                               | `Trip.name`; account-scoped `local_trip_containers.name`; discovery fallback `trip_discovery_summaries.name`           | Create only; existing Trip read-only                | Initial create is durable; no metadata update method                                                     | Immutable `CREATE_TRIP` request/receipt only           | Missing update command, authorization/version/conflict policy, repository and worker                                  |
-| Start/end dates, including undated | Nullable calendar strings `start_date/end_date` in the same local/discovery sources; null is not inferred              | Create only; existing Trip read-only                | Initial create is durable; no date-update method                                                         | Create only                                            | Same update gaps; date changes must refresh legitimate readers without rewriting Item temporal facts                  |
-| Destination                        | Nullable single string `destination` in local/discovery summaries                                                      | Manual initial create only; existing Trip read-only | Initial create is durable                                                                                | Create only                                            | Same update gaps; no distinct automatic-summary/manual-override fields or inference capability                        |
-| Built-in cover                     | `selected_cover_asset_id` on account-local Trip, mapped to four bundled assets; deterministic UUID fallback when unset | **Available** on an existing local Trip row         | **Available offline**, transactional and account-generation fenced; existing repository cold-reopen test | **Not applicable: explicitly device-local preference** | No owning blocker for four bundled choices; no remote-only row writer, custom photo import or cross-device cover sync |
+## Existing and new owning paths
 
-These are separate capabilities. The Editor is not collectively BLOCKED. It can
-read existing metadata and edit the device-local bundled cover now. A remote-only
-cached Trip has no `local_trip_containers` row; do not fabricate one to enable edits.
-No name/date/destination update can be unlocked solely by creating text inputs.
+- `src/domain/trip/types.ts` defines existing Trip fields. `tripCreateContract.ts`
+  retains original validation through shared metadata field definitions.
+  `tripMetadataContract.ts` adds a strict full-tuple before/after CAS update and
+  actor-bound immutable receipt. This is not Source/Core admission authority.
+- `tripRepository.createTrip` persists the initial container and immutable
+  CREATE_TRIP. Changing a create operation's payload is still rejected.
+  Existing create transport is `POST /v2/trips` plus receipt lookup. Normal
+  Backend without its owning create port still returns `TRIP_CREATE_CLOSED`.
+- `tripMetadataRepository` accepts updates only with the Account's original valid
+  local CREATE provenance. This supports its own pending Trip and its own accepted
+  creator Trip; it grants no Hosted membership. `canUpdateMetadata` withholds form
+  editing when that provenance is unavailable. Remote-only cached Trips remain
+  read-only, with no fabricated local row.
+- One existing `sync_operations` UPDATE_TRIP_METADATA intent records stable identity,
+  before/after values and preceding operation. CREATE payload stays unchanged.
+  A first pending update depends on CREATE; later updates depend on the prior
+  unfinished update. Row and queue write commit together and retain dirty values
+  on failure. Stale local before-values and changed operation replays fail closed.
+- Original local creator Ledger presentation title/dates are kept coherent while
+  the Trip is unaccepted, under the existing LOCAL_CREATOR binding. No financial
+  settings, Expenses, Item schedule, rights or lifecycle policy is changed.
+- The existing discovery merge retains local metadata over stale Hosted summaries.
+  Four cover IDs now survive its decoder, including `cultural-oldtown`.
+- `tripMetadataSyncWorker/Transport/Coordinator` perform authenticated actor-bound
+  receipt lookup, exact update replay and response validation. Earlier receipts
+  complete their queue operation without overwriting later local edits. A pending
+  metadata update on an accepted Trip reads PENDING_UPDATE rather than SYNCED.
+- `defaultBootstrapDependencies.refreshThenSync` invokes the metadata runner on
+  the existing cold-start/foreground/network/Auth recovery cycle, with queue work
+  announcements and no additional timer. Metadata failure does not stop Ledger.
+  Dispatch is CLOSED by default: no SQLite/transport work or attempt increment
+  unless DEV transport and explicit `EXPO_PUBLIC_OTR_TRIP_METADATA_UPDATE=1` are
+  installed. The flag was **not** enabled on any device by this task.
+- Backend authenticated metadata POST/receipt GET routes and a CLOSED-by-default
+  injected port are wired. `tripMetadataPgStorage` uses the existing finite lease
+  and verifies scope before/after its transaction. It references proposed owning
+  SQL functions which are **not installed**; it is not a working Hosted updater yet.
+  Generic workers explicitly exclude UPDATE_TRIP_METADATA.
 
-## Existing ownership and code evidence
+## Editor and Native handoff
 
-- `src/domain/trip/types.ts`: existing `Trip` fields and `CreateTripInput`.
-- `src/data/repositories/tripRepository.ts`: `getTrip/listTrips/createTrip`,
-  `selectBuiltInCover`, `acceptCreate/resumeCreateTrips`; no metadata update method.
-  Creation validates dates/range and bounded trimmed name/destination, persists
-  local row plus exactly one stable `CREATE_TRIP`, and initializes local Ledger.
-- `src/domain/trip/tripCreateContract.ts`: strict create/receipt schemas only.
-  `src/data/sync/tripCreateTransport.ts`: `POST /v2/trips` and actor-bound receipt
-  lookup. Reusing a create operation with different metadata is rejected.
-  `src/data/sync/tripCreateSyncWorker.ts`: existing create worker; not an update worker.
-- `backend/src/tripCreate.ts`: an absent owning port returns
-  `503 TRIP_CREATE_CLOSED`. `backend/src/serverStartup.ts` injects that port only
-  when explicitly supplied. This explains the default CLOSED implementation;
-  this audit does not claim a newly verified deployment configuration.
-- `src/domain/trip/tripCoreV2Commands.ts`: Item/Booking/Entitlement commands do not
-  supply a Trip Root metadata update. Updating an Item title or Ledger Journey
-  title is not a substitute for updating Trip metadata.
-- `src/data/repositories/tripDiscoveryRepository.ts`: a complete account-scoped
-  read snapshot; local containers win on equal UUID. Not a write/permission grant.
-- `src/features/day-feed/tripCovers.ts` and `tripCoverSelection.ts`: bundled cover
-  identity/fallback, no server cover field or automatic destination inference.
-- Existing history: cover persistence `a01ae63`; discovery cache `1a0495a`;
-  owning create port `588001f`; latest creation/person mapping `40c0da6`.
-- `docs/DATA_MODEL.md` "Trips built-in cover choice — local SQLite60" explicitly
-  defines cover selection as presentation-only, unsynced and not Core admission.
-  `docs/API_CONTRACT.md` defines only create metadata writes.
+`TripBasicEditor` is mounted in the normal existing local Trip modal. Name/manual
+Destination and shared `TripCalendarField` save through the same local repository;
+unsupported provenance keeps these fields read-only. Bundled cover retains its
+independent existing writer and explains that it is not synced. Save failures keep
+entered values. Date-only/null semantics are not converted into instants.
 
-## This candidate
+Coordinator's shared Hero commits are included in this candidate. Local workspace
+publishes one generation-fenced `editTrip` callback; native Hero Edit and the
+identity hit target open this same modal. No new Router/params or navigation shell
+is introduced. The original Trip-cover More action remains another existing entry.
 
-- Add `TripBasicEditor.tsx` to the existing cover modal. It shows real existing
-  name/destination/calendar dates as read-only, with an explicit capability message.
-  The existing `TripCoverPicker` and parent `selectCover → selectBuiltInCover`
-  remain the only update path. Cover help explicitly says local-only/no sync.
-- Correct discovery's cover decoder to retain the already-supported
-  `cultural-oldtown` choice instead of displaying a fallback in the merged list.
-- No new save endpoint, queue operation, permission assumption, migration or model.
-  The existing cover choice saves immediately, so there is no misleading whole-form
-  Save button or editable field that silently discards changes.
+**Native entry after coordinated integration only:** Menu → All Trips → original
+`Nelson summer` (`b67d35d9-f338-45b9-9344-5038f86a22d1`) → Hero Edit (or title/identity)
+→ edit a field → Save → Close → normally reopen App/Trip. To preserve the original
+regression case, use a separate ordinary QA-created Trip for destructive date/name
+experiments; do not delete/recreate Nelson or change dates solely to manufacture
+Active. For Undated, clear both dates and verify reopen on that separate QA Trip.
+Cloud update stays visibly waiting; do not label local save as Hosted success.
 
-## Shared Hero/identity entry handoff
+AD5 currently retains frozen R2 signed Release `191a557`. **Do not install this
+main-baseline worktree over it directly.** Coordinator first combines the owning
+metadata changes and R2 Root/Day/Shell regression fixes on a new integration branch,
+then performs Native acceptance. This task has not operated AD5, A1A or iOS26.5.
 
-No Router/Shell/TripScreen/WidgetHost writes are included. Current main's existing
-`LocalTripWorkspace` cover modal hosts this Editor; the frozen R2 owns different
-Hero wiring and must not be overwritten by a whole-file cherry-pick.
+## One remaining protected Hosted difference
 
-For the next coordinated R2 integration, use one local-Trip callback
-`setCoverOpen(true)` (rename state to editorOpen only if useful). Pass/register
-that same callback for both native Hero Edit and the Hero identity hit target.
-The modal's header is `tripHome.edit`; the body is
-`<TripBasicEditor trip={selected} onSelectCover={selectCover} />`.
-Only enable this bounded Editor for an actual account-local Trip row. Keep
-remote-only metadata read-only until an owning capability exists. Do not infer
-Hosted organizer rights from this device-local cover capability. The full Editor
-must not be advertised as available until the remaining fields have legal updates.
+Exact non-secret review candidate, **not a migration and not applied**:
+`/private/tmp/otr-trip-metadata-hosted-candidate-20261016/{up.sql,rollback.sql,manifest.json}`.
 
-## One minimal Owner decision packet — remaining fields only
+The candidate adds one private RLS-on receipt table, two finite creator/linked-owner
+update/receipt functions on the existing gateway principal, and no new credential
+or role. It proposes exact metadata-tuple CAS with immutable operation receipts.
+It also makes CREATE receipt metadata read its original persisted create payload:
+otherwise the existing CREATE result function rereads updated Trip metadata and
+would incorrectly fail a later exact create retry. No broader member write right,
+financial calculation, Source, Storage or Production change is included.
 
-Approve one Trip Root metadata-update contract for **name, nullable start/end
-calendar dates and the existing nullable manual destination string**. No automatic
-summary, new destination field, cover sync or photo pipeline is included.
+This requires protected Hosted schema/EXECUTE and finite Backend installation
+approval after independent review and exact target/image verification. None is
+claimed or executed here. Recovery disables Native dispatch, unbinds the new port
+and revokes new EXECUTE; it retains user edits and receipt evidence, with no bulk
+metadata undo or evidence table deletion. SQL runtime itself remains unverified.
 
-Required contract decisions, before its implementation:
+## Verification
 
-1. Local creator may queue edits to its own unaccepted Trip; accepted Trip edits
-   use actual owning Organizer/update capability. Cached membership alone does
-   not create authority. Server rechecks permission before applying.
-2. Use a distinct stable, idempotent update intent after immutable CREATE_TRIP;
-   never mutate the persisted create payload/receipt. Local-first metadata and
-   durable queued intent commit atomically, survive restart and remain account-fenced.
-3. Specify authoritative version/CAS and stale-edit conflict behavior; preserve
-   rejected/pending user edits rather than silently overwriting them on discovery.
-   Reuse the existing owning version mechanism if supported; any schema gap must
-   be reported separately before a migration is proposed or executed.
-4. Keep date-only/null semantics and existing validation; refresh Trip summaries
-   and lawful local Journey presentation. Do not rewrite Item dates, financial
-   calculations, canonical membership or global lifecycle rules.
-
-This is the missing product/interface decision, not a request for another audit
-or a new security framework. Hosted deployment, if later necessary, retains its
-existing finite authorization boundary. Once accepted, all three metadata fields
-can share one ordinary repository/command/worker implementation rather than
-three separate mechanisms.
-
-## Verification limits
-
-Focused repository tests exercise real SQLite file reopen, cover persistence,
-account isolation and rollback on account generation change. Component tests
-verify unsupported metadata stays read-only and the cover callback is forwarded.
-These are code/local persistence checks, not Native UI or cloud-sync PASS.
+Focused tests cover genuine SQLite close/reopen, Account isolation/ABA rollback,
+immutable CREATE after edits, two-update ordering, stale before-values, changed-key
+replay, failed queue writes, discovery merge, nullable/invalid calendar dates,
+older receipts versus newer dirty fields, offline worker pause, exact mock transport
+receipts, finite Backend leases, normal startup CLOSED and failure isolation.
+These are engineering checks, not Native or Hosted Runtime PASS. Exact final test
+counts are reported with the candidate handoff.

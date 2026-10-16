@@ -12,17 +12,21 @@
   V2 is not included in that Push. Trip Metadata Update/Sync is actively owned in
   a separate worktree; full Editor remains PARTIAL until Native round-trip passes.
 
-# Trip Basic Editor field capability candidate — 2026-10-16
+# Trip Basic Editor owning candidate — 2026-10-16
 
-- Bounded check: name, nullable calendar dates and the existing manual destination
-  string are readable/create-writable, but have no metadata update command,
-  repository or sync contract. They remain individually read-only in the Editor.
-- Existing Account-local bundled cover selection is independently available and
-  durable offline. The normal cover modal now hosts that bounded Editor, reusing
-  its sole owning writer; cover does not sync. Discovery preserves all four IDs.
-- Matrix and one minimal remaining-field decision packet:
-  docs/ops/TRIP_BASIC_EDITOR_CAPABILITY_20261016.md. No schema/Hosted/device change;
-  frozen R2 candidate191a557 and its Hero/Router remain separate. Native unverified.
+- Name, nullable calendar dates and existing manual destination now save through
+  an Account-local creator-provenance repository, atomic durable metadata intent,
+  unchanged CREATE proof and sequential before/after CAS. Discovery/reopen retains
+  dirty values; receipt acceptance cannot overwrite later edits. Bundled cover
+  remains a separate device-only preference, preserving all four catalog IDs.
+- Normal Editor + shared Hero Edit/identity entry wired in the isolated candidate;
+  normal operational lifecycle includes default-CLOSED metadata dispatch and
+  failure isolation. No SQLite migration or financial rule change.
+- Backend boundary/transport/finite PG adapter implemented, but new owning Hosted
+  receipt/functions remain NOT INSTALLED. Exact private SQL/rollback review
+  candidate and field matrix: docs/ops/TRIP_BASIC_EDITOR_CAPABILITY_20261016.md.
+- Native/Hosted unverified. AD5 R2 signed Release191a557 stays untouched; combine
+  owning candidate with R2 navigation fixes before any new Native installation.
 
 # Flight Assembly / Apple semantic checkpoint — 2026-10-16
 

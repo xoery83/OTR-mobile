@@ -117,6 +117,12 @@ it("normal no-options startup keeps optional ports CLOSED and health unchanged",
   expect(trip.status).toBe(503);
   expect((await trip.json()).error.code).toBe("TRIP_CREATE_CLOSED");
   const headers = { Authorization: "Bearer valid" };
+  const metadata = await fetch(`${url}/v2/trips/${input.tripId}/metadata`, {
+    method: "POST",
+    headers,
+  });
+  expect(metadata.status).toBe(503);
+  expect((await metadata.json()).error.code).toBe("TRIP_METADATA_CLOSED");
   const capabilities = await fetch(`${url}/v2/trips/${input.tripId}/core/capabilities`, {
     headers,
   });

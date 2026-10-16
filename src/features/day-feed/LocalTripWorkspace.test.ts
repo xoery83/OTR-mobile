@@ -173,6 +173,10 @@ const trip = (id: string, name: string): Trip => ({
 const repository = (list: Trip[] = []): TripRepository => ({
   listTrips: vi.fn(async () => list),
   getTrip: vi.fn(async (id) => list.find((t) => t.id === id) ?? null),
+  canUpdateMetadata: vi.fn(async () => true),
+  updateMetadata: vi.fn(async () => {}),
+  acceptMetadataUpdate: vi.fn(async () => {}),
+  resumeMetadataUpdates: vi.fn(async () => {}),
   selectBuiltInCover: vi.fn(async () => {}),
   createTrip: vi.fn(async (input) => trip(input.tripId, input.name)),
   addItem: vi.fn(async (_tripId, input) => ({
@@ -529,3 +533,30 @@ it("normal Home keeps cover editing behind its action and preserves the owning s
 });
 
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div" }));
+it("normal Home Hero action opens the same Editor and saves through the owning metadata repository", async () => {
+  const current = trip("local-a", "Original"),
+    repo = repository([current]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = current.id;
+  render();
+  await flush();
+  state.forceEffects = true;
+  render();
+  state.forceEffects = false;
+  const action = state.publish.mock.calls.find(
+    (call) => call[0]?.tripId === current.id,
+  )![0];
+  action.editTrip();
+  render();
+  input("tripCreate.name", "Updated");
+  render();
+  button("tripCreate.saveTrip").onPress();
+  await flush();
+  expect(repo.updateMetadata).toHaveBeenCalledWith(
+    expect.objectContaining({
+      tripId: current.id,
+      before: { name: current.name, destination: null, startDate: null, endDate: null },
+      after: { name: "Updated", destination: null, startDate: null, endDate: null },
+    }),
+  );
+});

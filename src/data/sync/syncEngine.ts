@@ -152,7 +152,8 @@ export function createSyncEngine(
   calculateNextAttemptAt: (attemptCount: number) => string = nextSyncAttemptAt,
   shouldProcess: (operation: SyncOperation) => boolean = (operation) =>
     operation.operationType !== "CORE_V2_COMMAND" &&
-    operation.operationType !== "CREATE_TRIP",
+    operation.operationType !== "CREATE_TRIP" &&
+    operation.operationType !== "UPDATE_TRIP_METADATA",
   localCaptureProcessing = false,
 ) {
   return {

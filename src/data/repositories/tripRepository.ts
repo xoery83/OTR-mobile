@@ -27,6 +27,7 @@ import { readInitializedDatabase } from "../db/database";
 import { requireActiveUserId, readLocalSession } from "../auth/authRepository";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
+import { createTripMetadataRepository } from "./tripMetadataRepository";
 import { mapLocalTripLedgerPerson } from "./tripLedgerAcceptance";
 
 type Database = Pick<
@@ -48,6 +49,7 @@ type Row = {
   owner_person_id: string | null;
   accepted_at: string | null;
   selected_cover_asset_id?: string | null;
+  metadata_pending?: number;
 };
 const isBuiltInCover = (value: unknown): value is BuiltInTripCoverId =>
   value === "city" ||
@@ -64,7 +66,11 @@ const trip = (row: Row): Trip => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   deletedAt: null,
-  syncStatus: row.accepted_at ? "SYNCED" : "PENDING_CREATE",
+  syncStatus: row.accepted_at
+    ? row.metadata_pending
+      ? "PENDING_UPDATE"
+      : "SYNCED"
+    : "PENDING_CREATE",
   syncVersion: 0,
   baseCurrency: null,
   ownerPersonId: row.owner_person_id,
@@ -165,7 +171,7 @@ export function createTripRepository(
     coreUuid.parse(id);
     const scope = await captureAccountScope(account);
     const row = await database.getFirstAsync<Row>(
-      "SELECT * FROM local_trip_containers WHERE account_id=? AND id=?",
+      "SELECT *,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=?",
       scope.accountId,
       id,
     );
@@ -173,6 +179,7 @@ export function createTripRepository(
     return row ? trip(row) : null;
   }
   return {
+    ...createTripMetadataRepository(database, account, clock),
     getTrip,
     async initializeLocalLedger(tripId: string) {
       coreUuid.parse(tripId);
@@ -194,7 +201,7 @@ export function createTripRepository(
     async listTrips(): Promise<Trip[]> {
       const scope = await captureAccountScope(account);
       const rows = await database.getAllAsync<Row>(
-        "SELECT * FROM local_trip_containers WHERE account_id=? ORDER BY created_at DESC,id",
+        "SELECT *,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? ORDER BY created_at DESC,id",
         scope.accountId,
       );
       await assertAccountRequestContext(scope, account);
@@ -393,7 +400,7 @@ export function createTripRepository(
           )
             throw new Error("TRIP_CREATE_RECEIPT_MISMATCH");
           const row = await database.getFirstAsync<Row>(
-            "SELECT * FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
+            "SELECT *,EXISTS(SELECT 1 FROM sync_operations op WHERE op.owner_user_id=local_trip_containers.account_id AND op.trip_id=local_trip_containers.id AND op.operation_type='UPDATE_TRIP_METADATA' AND op.status<>'COMPLETED') AS metadata_pending FROM local_trip_containers WHERE account_id=? AND id=? AND create_operation_id=?",
             scope.accountId,
             accepted.tripId,
             accepted.operationId,
