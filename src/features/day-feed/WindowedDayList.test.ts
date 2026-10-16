@@ -398,3 +398,28 @@ it("cancels late target completion after a user begins dragging", () => {
   vi.advanceTimersByTime(5000);
   expect(result).not.toHaveBeenCalled();
 });
+it("bounds temporary DEV diagnostics and records geometry without row values", () => {
+  vi.stubGlobal("__DEV__", true);
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const { rows, ref } = setup();
+    ref.current!.jumpToDayHeader(rows[74].date);
+    state.props.onScrollToIndexFailed({
+      index: 74,
+      highestMeasuredFrameIndex: 7,
+      averageItemLength: 180,
+    });
+    for (let i = 0; i < 300; i++) state.props.onContentSizeChange(300, 1000 + i);
+    expect(log).toHaveBeenCalledTimes(200);
+    const events = log.mock.calls.map(([value]) => JSON.parse(value));
+    expect(events[0]).toMatchObject({ phase: "REQUEST", index: 74 });
+    expect(events.find((event) => event.phase === "FAILED")).toMatchObject({
+      highestMeasuredFrameIndex: 7,
+      averageItemLength: 180,
+    });
+    expect(JSON.stringify(events)).not.toContain(rows[74].key);
+    expect(JSON.stringify(events)).not.toContain("account/trip");
+  } finally {
+    log.mockRestore();
+  }
+});

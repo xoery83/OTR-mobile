@@ -117,16 +117,45 @@ export function WindowedDayList<T>({
   } | null>(null);
   const deadline = useRef<ReturnType<typeof setTimeout> | null>(null);
   const visibleKeys = useRef(new Set<string>());
-  const finish = useCallback((result?: "REACHED" | "UNMEASURED") => {
-    const request = pending.current;
-    pending.current = null;
-    if (deadline.current !== null) clearTimeout(deadline.current);
-    deadline.current = null;
-    if (request && result) {
-      if (result === "REACHED") saved.current = request.anchor;
-      live.current.onJumpResult?.(result, request.anchor.date);
-    }
-  }, []);
+  const diagnostic = useRef({ request: 0, count: 0, until: 0, targetKey: "" });
+  const trace = useCallback(
+    (phase: string, values: Record<string, number | boolean | string> = {}) => {
+      const current = diagnostic.current;
+      if (
+        typeof __DEV__ !== "undefined" &&
+        __DEV__ &&
+        current.request &&
+        current.count < 200 &&
+        Date.now() < current.until
+      ) {
+        current.count++;
+        console.info(
+          JSON.stringify({
+            event: "day_window_diagnostic",
+            request: current.request,
+            phase,
+            ...values,
+          }),
+        );
+      }
+    },
+    [],
+  );
+  const finish = useCallback(
+    (result?: "REACHED" | "UNMEASURED") => {
+      const request = pending.current;
+      if (request)
+        trace("FINISH", { result: result ?? "CANCELLED", attempts: request.attempts });
+      pending.current = null;
+      if (deadline.current !== null) clearTimeout(deadline.current);
+      deadline.current = null;
+      if (request && result) {
+        if (result === "REACHED") saved.current = request.anchor;
+        live.current.onJumpResult?.(result, request.anchor.date);
+      }
+    },
+    [trace],
+  );
   const scheduled = useRef<number | null>(null);
   const resolveRequest = useCallback(() => {
     const request = pending.current;
@@ -149,6 +178,11 @@ export function WindowedDayList<T>({
       finish("UNMEASURED");
       return;
     }
+    trace("ATTEMPT", {
+      index: target.index,
+      attempt: request.attempts + 1,
+      remounted: request.remounted,
+    });
     request.attempts++;
     request.aligned = true;
     list.current?.scrollToIndex({
@@ -157,11 +191,19 @@ export function WindowedDayList<T>({
       viewOffset: live.current.topInset - target.within,
     });
     if (request.aligned && visibleKeys.current.has(request.anchor.key)) finish("REACHED");
-  }, [resolveRequest, finish]);
+  }, [resolveRequest, finish, trace]);
   const restore = useCallback(
     (anchor: DayScrollAnchor, defer = false) => {
-      if (!resolveDayAnchor(live.current.rows, anchor)) return false;
+      const target = resolveDayAnchor(live.current.rows, anchor);
+      if (!target) return false;
       finish();
+      diagnostic.current = {
+        request: diagnostic.current.request + 1,
+        count: 0,
+        until: Date.now() + 10000,
+        targetKey: live.current.rows[target.index].key,
+      };
+      trace("REQUEST", { index: target.index, within: target.within, defer });
       const request = { anchor, attempts: 0, remounted: false, aligned: false };
       pending.current = request;
       deadline.current = setTimeout(() => {
@@ -175,7 +217,7 @@ export function WindowedDayList<T>({
       } else attempt();
       return true;
     },
-    [attempt, finish],
+    [attempt, finish, trace],
   );
   const index = indexDayRows(rows);
   const rowSignature = JSON.stringify(rows.map(({ key, date }) => [key, date]));
@@ -209,6 +251,12 @@ export function WindowedDayList<T>({
           onLayout={(event) => {
             onLayout?.(event);
             layouts.current.set(item.key, event.nativeEvent.layout);
+            if (item.key === diagnostic.current.targetKey)
+              trace("TARGET_LAYOUT", {
+                index: _index,
+                y: event.nativeEvent.layout.y,
+                height: event.nativeEvent.layout.height,
+              });
             retry();
           }}
         >
@@ -216,7 +264,7 @@ export function WindowedDayList<T>({
         </View>
       );
     },
-    [retry],
+    [retry, trace],
   );
   useImperativeHandle(listRef, () => ({
     jumpToDayHeader(date) {
@@ -228,6 +276,12 @@ export function WindowedDayList<T>({
     restoreAnchor: restore,
     saveAnchor: () => saved.current,
   }));
+  useLayoutEffect(() => {
+    trace("WINDOW_COMMITTED", {
+      index: windowStart.index,
+      revision: windowStart.revision,
+    });
+  }, [windowStart, trace]);
   useLayoutEffect(() => {
     layouts.current.clear();
     saved.current = initialAnchor ?? null;
@@ -255,6 +309,14 @@ export function WindowedDayList<T>({
       const visible = viewableItems
         .filter((token) => token.isViewable && token.index !== null)
         .sort((a, b) => a.index! - b.index!);
+      trace("VISIBLE", {
+        first: visible[0]?.index ?? -1,
+        last: visible[visible.length - 1]?.index ?? -1,
+        targetPresent: visible.some(
+          ({ item }) => item.key === diagnostic.current.targetKey,
+        ),
+        offset: offset.current,
+      });
       visibleKeys.current = new Set(visible.map(({ item }) => item.key));
       visibleDates.current = [...new Set(visible.map(({ item }) => item.date))];
       live.current.onVisibleDates?.(visibleDates.current);
@@ -269,7 +331,7 @@ export function WindowedDayList<T>({
         finish("REACHED");
       else retry();
     },
-    [retry, resolveRequest, finish],
+    [retry, resolveRequest, finish, trace],
   );
   return (
     <FlatList
@@ -298,6 +360,7 @@ export function WindowedDayList<T>({
       }}
       onScroll={(event) => {
         offset.current = Math.max(0, event.nativeEvent.contentOffset.y);
+        trace("SCROLL", { offset: offset.current });
         live.current.onOffsetChange?.(offset.current);
         if (visibleDates.current.length)
           live.current.onViewportChange?.({
@@ -318,12 +381,18 @@ export function WindowedDayList<T>({
       }}
       onViewableItemsChanged={viewability}
       viewabilityConfig={{ itemVisiblePercentThreshold: 1 }}
-      onScrollToIndexFailed={({ index }) => {
+      onScrollToIndexFailed={({
+        index,
+        highestMeasuredFrameIndex,
+        averageItemLength,
+      }) => {
+        trace("FAILED", { index, highestMeasuredFrameIndex, averageItemLength });
         const request = pending.current;
         if (!request) return;
         request.aligned = false;
         if (!request.remounted) {
           // RN constrains an unmeasured tail: mount the target window once, not every earlier day.
+          trace("WINDOW_REMOUNT", { index });
           request.remounted = true;
           layouts.current.clear();
           visibleKeys.current.clear();
@@ -335,7 +404,10 @@ export function WindowedDayList<T>({
         }
         retry();
       }}
-      onContentSizeChange={retry}
+      onContentSizeChange={(_width, height) => {
+        trace("CONTENT_SIZE", { height });
+        retry();
+      }}
       debug={false}
     />
   );
