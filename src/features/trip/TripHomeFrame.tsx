@@ -55,7 +55,11 @@ export function TripHomeFrame({
           disabled={!onEdit}
           accessible={!!onEdit}
           accessibilityRole={onEdit ? "button" : undefined}
-          accessibilityLabel={onEdit ? t("tripHome.edit") : undefined}
+          accessibilityLabel={
+            onEdit
+              ? `${t("tripHome.edit")}: ${[title, ...metadata].join(", ")}`
+              : undefined
+          }
           style={[
             styles.copy,
             {
