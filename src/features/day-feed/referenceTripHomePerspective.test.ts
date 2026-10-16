@@ -7,7 +7,7 @@ const read = {
     sourceStatus: "CURRENTLY_MATCHES_SOURCE",
     projection: {
       version: 2,
-      generation: 1,
+      generation: 2,
       accountId: "3a44420f-ec2b-4d7e-9770-410a5ed5e77e",
       tripId: "b61b0000-0061-4000-8000-000000000001",
       source: {

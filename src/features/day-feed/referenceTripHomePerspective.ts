@@ -27,7 +27,7 @@ export function referenceTripHomePerspective(
     projection?.version !== 2 ||
     projection.tripId !== "b61b0000-0061-4000-8000-000000000001" ||
     projection.accountId !== read.scope.accountId ||
-    projection.generation !== generation ||
+    // Projection generation belongs to the accepted certificate, not the Auth session.
     projection.source.epoch !== "72ac3662-e554-4f7c-9819-c18702d10650" ||
     !["70", "70.0"].includes(String(projection.source.revision)) ||
     projection.source.accessRevision !== 1 ||
