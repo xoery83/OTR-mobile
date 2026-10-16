@@ -1150,6 +1150,8 @@ async function inspect(id) {
     previewManuallyChosen = false;
     inspected = run;
     selectedRun = run.trace ? id : undefined;
+    el("inspect-input").value = run.inputId;
+    populateInspectionRuns();
     renderInspection(run);
     tab("inspect");
     el("exports").replaceChildren();
@@ -1844,17 +1846,19 @@ async function refresh() {
     tr.append(td);
     el("runs").append(tr);
   }
-  const currentInput =
-    inspected?.inputId || inspected?.trace?.job?.inputId || el("inspect-input").value;
-  el("inspect-input").replaceChildren();
-  for (const input of savedInputs) {
-    const option = node("option", input.name);
-    option.value = input.id;
-    el("inspect-input").append(option);
+  if (!inspectionLoading) {
+    const currentInput =
+      inspected?.inputId || inspected?.trace?.job?.inputId || el("inspect-input").value;
+    el("inspect-input").replaceChildren();
+    for (const input of savedInputs) {
+      const option = node("option", input.name);
+      option.value = input.id;
+      el("inspect-input").append(option);
+    }
+    if (savedInputs.some((i) => i.id === currentInput))
+      el("inspect-input").value = currentInput;
+    populateInspectionRuns();
   }
-  if (savedInputs.some((i) => i.id === currentInput))
-    el("inspect-input").value = currentInput;
-  populateInspectionRuns();
   const previous = el("compare-input").value;
   el("compare-input").replaceChildren();
   for (const input of savedInputs) {

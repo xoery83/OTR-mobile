@@ -624,6 +624,39 @@ describe("human-readable workbench presentation", () => {
     );
     expect(b.elements.get("inspect-run")!.value).toBe("failed");
   });
+  it("commits the inspected file/run selectors with the matching body without a polling refresh", async () => {
+    const b = browser(),
+      pdfLabels = deferred<unknown>(),
+      jpgLabels = deferred<unknown>();
+    b.context.dispatch = async (path: string) => {
+      if (path === "/api/run/PDF/labels") return pdfLabels.promise;
+      if (path === "/api/run/JPG/labels") return jpgLabels.promise;
+      if (path.endsWith("/stats")) return { status: "N/A" };
+      return {
+        id: path.endsWith("PDF") ? "PDF" : "JPG",
+        inputId: path.endsWith("PDF") ? "pdf" : "jpg",
+        createdAt: 1,
+        trace,
+      };
+    };
+    b.run(
+      'api=dispatch;savedInputs=[{id:"jpg",name:"Original.jpg"},{id:"pdf",name:"Original.pdf"}];latestState={runs:[{id:"JPG",inputId:"jpg",createdAt:2,stage:"FINISHED"},{id:"PDF",inputId:"pdf",createdAt:1,stage:"FINISHED"}]};el("inspect-input").value="jpg";populateInspectionRuns()',
+    );
+    const pdf = b.run('inspect("PDF")');
+    await nextMicrotasks();
+    pdfLabels.resolve(null);
+    await pdf;
+    expect(b.elements.get("inspect-input")!.value).toBe("pdf");
+    expect(b.elements.get("inspect-run")!.value).toBe("PDF");
+    expect(allText(b.elements.get("inspection")!)).toContain("Original.pdf");
+    const jpg = b.run('inspect("JPG")');
+    await nextMicrotasks();
+    jpgLabels.resolve(null);
+    await jpg;
+    expect(b.elements.get("inspect-input")!.value).toBe("jpg");
+    expect(b.elements.get("inspect-run")!.value).toBe("JPG");
+    expect(allText(b.elements.get("inspection")!)).toContain("Original.jpg");
+  });
   it("renders hostile file names, values and trace text as literal text nodes", () => {
     const b = browser();
     const hostile = '<img src=x onerror="alert(1)">';
