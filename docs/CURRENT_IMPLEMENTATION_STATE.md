@@ -1,3 +1,17 @@
+# Local Source PDF V2 / Native bridge checkpoint — 2026-10-16
+
+- Source local V2 component305770b + docs7227916 independently reviewed; integrated
+  as d14ead5/be36e83. Old profile/SQL untouched. Real independent PDF component:
+  2943032 original bytes →2628 UTF8 bytes/1page; no model/upload/registration/seal.
+  Always non-authoritative; trusted production decoder/registration integration
+  remains incomplete. New numeric/security requirements were explicitly removed.
+- Flight Assembly domain/Repo/formal tests110 PASS; Workbench/Native tests65 PASS;
+  tsc and ui:guard PASS; shared Swift iOS26 simulator-target typecheck PASS.
+  This is not an installed iOS semantic-model Runtime claim.
+- Owner-approved exact27-commit Push completed at f231520. Subsequent local Source
+  V2 is not included in that Push. Trip Metadata Update/Sync is actively owned in
+  a separate worktree; full Editor remains PARTIAL until Native round-trip passes.
+
 # Flight Assembly / Apple semantic checkpoint — 2026-10-16
 
 - Reviewed local candidate reuses one deterministic assembler across Capture,

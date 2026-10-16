@@ -212,6 +212,18 @@ it("accepts only the pending pinned diagnostic job and revalidates posted Native
     bytesBase64: string;
   };
   expect(claimed.job.sha256).toBe(input.sha256);
+  for (const stage of ["ASSEMBLY", "APPLE_ASSEMBLY"]) {
+    const response = await testFetch(ORIGIN + "/native/stage", {
+      method: "POST",
+      headers: {
+        "X-OTR-Diagnostic": app.nativeToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ runId: claimed.job.runId, stage }),
+    });
+    expect(response.status).toBe(200);
+  }
+
   expect(
     await (
       await testFetch(ORIGIN + "/native/job", {

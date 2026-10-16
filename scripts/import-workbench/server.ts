@@ -293,6 +293,8 @@ export function createWorkbench(store = new PrivateStore()) {
               "EXTRACTING",
               "DETERMINISTIC",
               "APPLE_MODEL",
+              "ASSEMBLY",
+              "APPLE_ASSEMBLY",
               "TYPED_PROJECTION",
             ]),
           })
