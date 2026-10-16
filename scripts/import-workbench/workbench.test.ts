@@ -7,6 +7,8 @@ import {
   statSync,
   symlinkSync,
   readFileSync,
+  writeFileSync,
+  readdirSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -18,7 +20,14 @@ import {
 import { runImportDiagnostic } from "../../src/native/importWorkbenchRun";
 import { hash, sourceVersion } from "./mac";
 import { runSequentialInputs } from "./batch";
-import { PrivateStore, statistics, compare, escapeHtml } from "./store";
+import {
+  PrivateStore,
+  statistics,
+  compare,
+  escapeHtml,
+  labelSchema,
+  previewPage,
+} from "./store";
 import { createWorkbench, ORIGIN } from "./server";
 const root = realpathSync(mkdtempSync(join(tmpdir(), "otr-wb-test-")));
 const store = new PrivateStore(root);
@@ -422,4 +431,215 @@ it("revalidates adapted PDF traces including their derived text pins without rej
     body: JSON.stringify(trace),
   });
   expect(response.status).toBe(200);
+});
+
+function previewFixturePdf() {
+  const stream = (color: string) => {
+    const content = `q ${color} rg 0 0 200 100 re f Q`;
+    return `<< /Length ${Buffer.byteLength(content)} >>\nstream\n${content}\nendstream`;
+  };
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Count 2 /Kids [3 0 R 5 0 R] >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 100] /Resources << >> /Contents 4 0 R >>",
+    stream("1 0 0"),
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 100] /Resources << >> /Contents 6 0 R >>",
+    stream("0 0 1"),
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(Buffer.byteLength(pdf));
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xref = Buffer.byteLength(pdf);
+  pdf +=
+    `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n` +
+    offsets
+      .slice(1)
+      .map((offset) => String(offset).padStart(10, "0") + " 00000 n \n")
+      .join("") +
+    `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(pdf);
+}
+it("renders genuine bounded PDF page PNGs, retains private cache, and rejects malformed/foreign/path requests", async () => {
+  const input = store.add(previewFixturePdf(), "application/pdf", "two pages.pdf");
+  const one = await testFetch(ORIGIN + `/api/input/${input.id}/preview?page=1`);
+  const two = await testFetch(ORIGIN + `/api/input/${input.id}/preview?page=2`);
+  expect(one.status).toBe(200);
+  expect(one.headers["content-type"]).toBe("image/png");
+  expect(one.bytes().subarray(0, 8)).toEqual(
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+  );
+  expect(two.status).toBe(200);
+  expect(two.bytes()).not.toEqual(one.bytes());
+  expect(one.bytes().readUInt32BE(16)).toBeLessThanOrEqual(4000);
+  const cache = readdirSync(root).filter((p) => p.startsWith(`preview-${input.id}-`));
+  expect(cache).toHaveLength(2);
+  for (const file of cache) expect(statSync(store.path(file)).mode & 0o777).toBe(0o600);
+  const png = store.add(one.bytes(), "image/png", "original.png");
+  expect(store.preview(png, 1).bytes).toEqual(one.bytes());
+  expect(() => store.preview(png, 2)).toThrow("PREVIEW_PAGE_INVALID");
+  for (const page of ["0", "-1", "1.1", "33", "1;whoami", "../1"]) {
+    expect(() => previewPage(page)).toThrow();
+    expect(
+      (
+        await testFetch(
+          ORIGIN + `/api/input/${input.id}/preview?page=${encodeURIComponent(page)}`,
+        )
+      ).status,
+    ).toBe(400);
+  }
+  expect((await testFetch(ORIGIN + `/api/input/${input.id}/preview?page=3`)).status).toBe(
+    400,
+  );
+  expect(
+    (
+      await testFetch(ORIGIN + `/api/input/${input.id}/preview?page=1`, {
+        headers: { Origin: "http://evil.test" },
+      })
+    ).status,
+  ).toBe(400);
+  const corrupt = store.add(Buffer.from("not a pdf"), "application/pdf", "corrupt.pdf");
+  expect(
+    (await testFetch(ORIGIN + `/api/input/${corrupt.id}/preview?page=1`)).status,
+  ).toBe(400);
+  writeFileSync(store.path(`${input.id}.bytes`), Buffer.from("tampered"));
+  expect((await testFetch(ORIGIN + `/api/input/${input.id}/preview?page=1`)).status).toBe(
+    400,
+  );
+}, 30_000);
+
+it("persists diagnostic zero/many group annotations without treating unchecked or unsupported labels as accuracy", async () => {
+  const field = {
+    path: "service",
+    raw: "NZ5069",
+    status: "CONFIRMED" as const,
+    participantId: "manual-traveller",
+  };
+  const annotation = {
+    documentStatus: "RESULTS" as const,
+    results: [
+      {
+        id: "manual-a",
+        type: "FLIGHT" as const,
+        status: "CONFIRMED" as const,
+        fields: [field],
+        segments: [
+          {
+            id: "leg-a",
+            fields: [{ path: "date", raw: "", status: "NOT_PROVIDED" as const }],
+          },
+        ],
+      },
+      {
+        id: "manual-b",
+        type: "FLIGHT" as const,
+        status: "CONFIRMED" as const,
+        fields: [],
+        segments: [],
+      },
+    ],
+  };
+  const labels = labelSchema.parse({
+    kind: "HUMAN_GROUND_TRUTH",
+    fields: [],
+    annotation,
+  });
+  store.save("annotation-test.json", labels);
+  expect(labelSchema.parse(store.read("annotation-test.json"))).toEqual(labels);
+  const bytes = new TextEncoder().encode("Flight NZ5069");
+  const job = {
+    runId: randomUUID(),
+    inputId: randomUUID(),
+    mediaType: "text/plain",
+    byteCount: bytes.length,
+    sha256: await hash(bytes),
+    hostSourceManifest: {},
+  };
+  const extractor = createCaptureLocalExtractorCore({
+    hash,
+    getBridge: () => ({
+      extractCaptureLocal: async () => ({}),
+      captureLocalModelCapability: async () => ({
+        status: "UNAVAILABLE",
+        reason: "DEVICE_NOT_ELIGIBLE",
+      }),
+    }),
+  });
+  const trace = await runImportDiagnostic(job, bytes, extractor, hash, "MAC_COMPONENT");
+  const actual = trace.result.fields[0];
+  const checked = labelSchema.parse({
+    ...labels,
+    annotation: {
+      ...annotation,
+      results: [
+        {
+          ...annotation.results[0],
+          fields: [{ path: actual.path, raw: actual.raw, status: "CONFIRMED" }],
+          segments: [],
+        },
+      ],
+    },
+  });
+  expect(statistics(trace, checked)).toMatchObject({
+    precision: 1,
+    recall: 1,
+    annotationSummary: { resultCount: 1 },
+    typeAccuracy: null,
+  });
+  const unchecked = labelSchema.parse({
+    ...checked,
+    annotation: { ...checked.annotation, documentStatus: "UNREVIEWED" },
+  });
+  expect(statistics(trace, unchecked)).toMatchObject({
+    status: "N/A",
+    precision: null,
+    recall: null,
+  });
+  for (const result of [
+    { ...checked.annotation!.results[0], status: "WRONG_TYPE" },
+    { ...checked.annotation!.results[0], type: "STAY" },
+    {
+      ...checked.annotation!.results[0],
+      fields: [{ path: actual.path, raw: "", status: "UNCHECKED" }],
+    },
+  ]) {
+    const partial = labelSchema.parse({
+      ...checked,
+      annotation: { documentStatus: "RESULTS", results: [result] },
+    });
+    expect(statistics(trace, partial)).toMatchObject({
+      status: "N/A",
+      precision: null,
+      recall: null,
+    });
+  }
+  const zero = labelSchema.parse({
+    kind: "HUMAN_GROUND_TRUTH",
+    fields: [],
+    annotation: { documentStatus: "NO_RELEVANT_CONTENT", results: [] },
+  });
+  expect(statistics(trace, zero)).toMatchObject({
+    status: "N/A",
+    annotationSummary: { resultCount: 0 },
+  });
+  expect(statistics(trace, { kind: "HUMAN_GROUND_TRUTH", fields: [] }).status).toBe(
+    "N/A",
+  );
+  expect(() =>
+    labelSchema.parse({
+      ...labels,
+      annotation: { ...annotation, documentStatus: "NO_RELEVANT_CONTENT" },
+    }),
+  ).toThrow();
+  expect(() =>
+    labelSchema.parse({
+      ...labels,
+      annotation: {
+        ...annotation,
+        results: [{ ...annotation.results[0], fields: [{ ...field, raw: "" }] }],
+      },
+    }),
+  ).toThrow();
 });

@@ -12,6 +12,7 @@ import {
   compare,
   statistics,
   escapeHtml,
+  previewPage,
 } from "./store";
 import { compileNative, runMac, sourceVersion, hash } from "./mac";
 import { workbenchHtml } from "./view";
@@ -162,6 +163,25 @@ export function createWorkbench(store = new PrivateStore()) {
           remote: "NOT_USED",
           remoteCost: 0,
         });
+        return;
+      }
+      const previewMatch = /^\/api\/input\/([a-f0-9-]+)\/preview$/.exec(url.pathname);
+      if (req.method === "GET" && previewMatch) {
+        if (
+          [...url.searchParams.keys()].some((key) => key !== "page") ||
+          url.searchParams.getAll("page").length > 1
+        )
+          throw new Error("PREVIEW_QUERY_INVALID");
+        const input = store.input(idSchema.parse(previewMatch[1]));
+        const preview = store.preview(input, previewPage(url.searchParams.get("page")));
+        res.setHeader("Content-Type", preview.mediaType);
+        res.setHeader("Content-Length", preview.bytes.length);
+        res.setHeader(
+          "Content-Disposition",
+          `inline; filename="${input.id}-preview.${preview.mediaType === "image/png" ? "png" : "jpg"}"`,
+        );
+        res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+        res.end(preview.bytes);
         return;
       }
       const originalMatch = /^\/api\/input\/([a-f0-9-]+)\/original$/.exec(url.pathname);

@@ -7,8 +7,11 @@ import {
   renameSync,
   readdirSync,
   realpathSync,
+  existsSync,
+  unlinkSync,
 } from "node:fs";
 import { join } from "node:path";
+import { execFileSync } from "node:child_process";
 import { randomUUID, createHash } from "node:crypto";
 import { z } from "zod";
 import type { DiagnosticTrace } from "../../src/native/importWorkbenchRun";
@@ -29,6 +32,66 @@ export const inputSchema = z.strictObject({
   byteCount: z.number().int().min(1).max(10485760),
 });
 export type Input = z.infer<typeof inputSchema>;
+const annotationFieldSchema = z
+  .strictObject({
+    path: z.string().min(1).max(200),
+    raw: z.string().max(1000),
+    status: z.enum(["CONFIRMED", "NOT_PROVIDED", "UNCHECKED"]),
+    participantId: z.string().min(1).max(80).optional(),
+  })
+  .superRefine((field, context) => {
+    if (field.status === "CONFIRMED" && !field.raw.trim())
+      context.addIssue({ code: "custom", message: "CONFIRMED_VALUE_REQUIRED" });
+  });
+const annotationSchema = z
+  .strictObject({
+    documentStatus: z.enum(["UNREVIEWED", "NO_RELEVANT_CONTENT", "RESULTS"]),
+    results: z
+      .array(
+        z.strictObject({
+          id: z.string().min(1).max(80),
+          type: z.enum([
+            "FLIGHT",
+            "STAY",
+            "CAR_RENTAL",
+            "SCHEDULED_TRANSPORT",
+            "ACTIVITY",
+            "TICKET",
+            "UNCLASSIFIED",
+          ]),
+          status: z.enum(["UNREVIEWED", "CONFIRMED", "WRONG_TYPE"]),
+          fields: z.array(annotationFieldSchema).max(500),
+          segments: z
+            .array(
+              z.strictObject({
+                id: z.string().min(1).max(80),
+                fields: z.array(annotationFieldSchema).max(500),
+              }),
+            )
+            .max(32),
+        }),
+      )
+      .max(32),
+  })
+  .superRefine((annotation, context) => {
+    const fields = annotation.results.flatMap((result) => [
+      ...result.fields,
+      ...result.segments.flatMap((segment) => segment.fields),
+    ]);
+    if (
+      fields.length > 500 ||
+      new Set(annotation.results.map((r) => r.id)).size !== annotation.results.length ||
+      annotation.results.some(
+        (r) => new Set(r.segments.map((s) => s.id)).size !== r.segments.length,
+      )
+    )
+      context.addIssue({ code: "custom", message: "ANNOTATION_LIMIT_OR_DUPLICATE_ID" });
+    if (annotation.documentStatus === "NO_RELEVANT_CONTENT" && annotation.results.length)
+      context.addIssue({
+        code: "custom",
+        message: "NO_RELEVANT_CONTENT_REQUIRES_ZERO_RESULTS",
+      });
+  });
 export const labelSchema = z.strictObject({
   kind: z.enum(["HUMAN_GROUND_TRUTH", "HYPOTHESIS"]),
   fields: z
@@ -39,6 +102,7 @@ export const labelSchema = z.strictObject({
       }),
     )
     .max(500),
+  annotation: annotationSchema.optional(),
 });
 export function escapeHtml(text: string) {
   return text.replace(
@@ -81,24 +145,111 @@ export function compare(a: DiagnosticTrace, b: DiagnosticTrace) {
   };
 }
 export function statistics(trace: DiagnosticTrace, labels?: z.infer<typeof labelSchema>) {
+  const annotation = labels?.annotation;
+  const reviewedFields =
+    annotation?.results.flatMap((result) => [
+      ...result.fields,
+      ...result.segments.flatMap((segment) => segment.fields),
+    ]) ?? [];
+  const annotationSummary = annotation
+    ? {
+        documentStatus: annotation.documentStatus,
+        resultCount: annotation.results.length,
+        segmentCount: annotation.results.reduce((n, r) => n + r.segments.length, 0),
+        confirmedFields: reviewedFields.filter((f) => f.status === "CONFIRMED").length,
+        notProvidedFields: reviewedFields.filter((f) => f.status === "NOT_PROVIDED")
+          .length,
+        uncheckedFields: reviewedFields.filter((f) => f.status === "UNCHECKED").length,
+        wrongTypeResults: annotation.results.filter((r) => r.status === "WRONG_TYPE")
+          .length,
+      }
+    : null;
+  const unavailableMetrics = {
+    typeAccuracy: null,
+    evidenceValidity: null,
+    typedCompleteness: null,
+    localIncrementalContribution: null,
+    remoteUpgradeRate: null,
+  };
+  const notApplicable = (reason: string) => ({
+    status: "N/A",
+    labelKind: labels?.kind ?? "NONE",
+    precision: null,
+    recall: null,
+    reason,
+    annotationSummary,
+    ...unavailableMetrics,
+  });
   if (!labels || labels.kind !== "HUMAN_GROUND_TRUTH")
-    return {
-      status: "N/A",
-      labelKind: labels?.kind ?? "NONE",
-      reason: "No human ground truth; hypotheses are not accuracy labels.",
-    };
-  const actual = new Set(trace.result.fields.map((f) => JSON.stringify([f.path, f.raw])));
-  const expected = new Set(labels.fields.map((f) => JSON.stringify([f.path, f.raw])));
+    return notApplicable("No human ground truth; hypotheses are not accuracy labels.");
+  let expectedFields = labels.fields;
+  let paths: Set<string> | undefined;
+  if (annotation) {
+    if (annotation.documentStatus !== "RESULTS" || !annotation.results.length)
+      return notApplicable("No applicable reviewed business-result field ground truth.");
+    if (
+      annotation.results.some((r) => r.status !== "CONFIRMED") ||
+      reviewedFields.some((f) => f.status === "UNCHECKED")
+    )
+      return notApplicable(
+        "Annotation is incomplete or a business type is marked wrong; unchecked values are not scored.",
+      );
+    if (annotation.results.some((r) => r.type !== "FLIGHT"))
+      return notApplicable(
+        "Current production core does not support scoring these diagnostic business types.",
+      );
+    if (!reviewedFields.length) return notApplicable("No explicitly reviewed fields.");
+    expectedFields = reviewedFields
+      .filter((f) => f.status === "CONFIRMED")
+      .map((f) => ({ path: f.path, raw: f.raw }));
+    paths = new Set(reviewedFields.map((f) => f.path));
+  } else if (!labels.fields.length)
+    return notApplicable(
+      "No field ground truth; an empty form is not an accuracy label.",
+    );
+  const actual = new Set(
+    trace.result.fields
+      .filter((f) => !paths || paths.has(f.path))
+      .map((f) => JSON.stringify([f.path, f.raw])),
+  );
+  const expected = new Set(expectedFields.map((f) => JSON.stringify([f.path, f.raw])));
   const tp = [...actual].filter((v) => expected.has(v)).length;
   return {
     status: "HUMAN_LABELLED",
-    unit: "unique path/raw pairs; labels must be exhaustive",
+    unit: annotation
+      ? "unique path/raw pairs on explicitly reviewed paths only; segment/participant/result matching NOT_SCORED"
+      : "unique path/raw pairs; labels must be exhaustive",
     tp,
     fp: actual.size - tp,
     fn: expected.size - tp,
     precision: actual.size ? tp / actual.size : null,
     recall: expected.size ? tp / expected.size : null,
+    annotationSummary,
+    ...unavailableMetrics,
   };
+}
+export const PDF_PREVIEW_BINARY =
+  "/Users/xoery/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override/pdftoppm";
+const PDF_PREVIEW_MAX_SIDE = 4000;
+export function previewPage(value: string | null) {
+  if (value === null) return 1;
+  if (!/^[1-9][0-9]?$/.test(value) || Number(value) > 32)
+    throw new Error("PREVIEW_PAGE_INVALID");
+  return Number(value);
+}
+function validatePreviewPng(bytes: Buffer) {
+  if (
+    bytes.length < 24 ||
+    bytes.length > 8 * 1024 * 1024 ||
+    !bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) ||
+    bytes.toString("ascii", 12, 16) !== "IHDR" ||
+    bytes.readUInt32BE(16) < 1 ||
+    bytes.readUInt32BE(16) > PDF_PREVIEW_MAX_SIDE ||
+    bytes.readUInt32BE(20) < 1 ||
+    bytes.readUInt32BE(20) > PDF_PREVIEW_MAX_SIDE
+  )
+    throw new Error("PREVIEW_OUTPUT_INVALID");
+  return bytes;
 }
 export class PrivateStore {
   constructor(readonly root = PRIVATE_ROOT) {
@@ -108,7 +259,7 @@ export class PrivateStore {
     chmodSync(root, 0o700);
   }
   path(name: string) {
-    if (!/^(?:[a-z0-9-]+\.(?:json|bytes)|native-runner|native-build-pin)$/.test(name))
+    if (!/^(?:[a-z0-9-]+\.(?:json|bytes|png)|native-runner|native-build-pin)$/.test(name))
       throw new Error("ARTIFACT_NAME_INVALID");
     const path = join(this.root, name);
     try {
@@ -158,5 +309,61 @@ export class PrivateStore {
     )
       throw new Error("INPUT_PIN_MISMATCH");
     return data;
+  }
+  preview(input: Input, page: number) {
+    if (!Number.isInteger(page) || page < 1 || page > 32)
+      throw new Error("PREVIEW_PAGE_INVALID");
+    const original = this.bytes(input); // Check original pins even when serving a cached raster.
+    if (input.mediaType === "image/jpeg" || input.mediaType === "image/png") {
+      if (page !== 1) throw new Error("PREVIEW_PAGE_INVALID");
+      if (
+        (input.mediaType === "image/jpeg" &&
+          !original.subarray(0, 3).equals(Buffer.from([255, 216, 255]))) ||
+        (input.mediaType === "image/png" &&
+          !original.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])))
+      )
+        throw new Error("PREVIEW_IMAGE_INVALID");
+      return { mediaType: input.mediaType, bytes: original };
+    }
+    if (input.mediaType !== "application/pdf")
+      throw new Error("PREVIEW_MEDIA_UNSUPPORTED");
+    const output = this.path(
+      `preview-${input.id}-${input.sha256}-${page}-${PDF_PREVIEW_MAX_SIDE}.png`,
+    );
+    if (existsSync(output))
+      return { mediaType: "image/png", bytes: validatePreviewPng(readFileSync(output)) };
+    if (readdirSync(this.root).filter((p) => /^preview-.*\.png$/.test(p)).length >= 256)
+      throw new Error("PREVIEW_CACHE_LIMIT");
+    const temporary = this.path(`preview-${randomUUID()}.png`);
+    try {
+      execFileSync(
+        PDF_PREVIEW_BINARY,
+        [
+          "-png",
+          "-f",
+          String(page),
+          "-l",
+          String(page),
+          "-singlefile",
+          "-scale-to",
+          String(PDF_PREVIEW_MAX_SIDE),
+          this.path(`${input.id}.bytes`),
+          temporary.slice(0, -4),
+        ],
+        {
+          timeout: 15_000,
+          stdio: "ignore",
+          env: { PATH: "/usr/bin:/bin", NODE_ENV: "production" },
+        },
+      );
+      chmodSync(temporary, 0o600);
+      const bytes = validatePreviewPng(
+        readFileSync(this.path(temporary.split("/").pop()!)),
+      );
+      renameSync(temporary, output);
+      return { mediaType: "image/png", bytes };
+    } finally {
+      if (existsSync(temporary)) unlinkSync(this.path(temporary.split("/").pop()!));
+    }
   }
 }
