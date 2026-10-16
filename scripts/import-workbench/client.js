@@ -7,6 +7,13 @@ let selectedRun,
   latestState,
   batchRunning = false;
 let inspectedImported = false;
+let lastComparison;
+let selectedField,
+  selectedFieldSource = "deterministic",
+  resultView = "result",
+  previewPage = 1,
+  previewZoom = 100,
+  previewManuallyChosen = false;
 let inspectionSequence = 0,
   inspectionLoading = false,
   labelSaving = false;
@@ -116,6 +123,18 @@ function reasonText(reason) {
       "Apple model execution failed; deterministic results are retained. This alone does not identify a permission or resource cause.",
       "Apple 模型执行失败，确定性结果已保留；仅此状态不足以判定权限或资源原因。",
     ],
+    CONFIRMED_VALUE_REQUIRED: [
+      "Enter a value for every confirmed field, or mark it Not checked / Not provided.",
+      "请为每个已确认字段填写值，或改为“尚未检查／原件未提供”。",
+    ],
+    PDF_TEXT_UNAVAILABLE: [
+      "This PDF has an unreadable or text-free page. The current PDFKit runner does not OCR scanned PDF pages; image OCR is available separately.",
+      "此 PDF 包含不可读或无文本页面。当前 PDFKit Runner 不对扫描 PDF 页面执行 OCR，图片 OCR 可单独使用。",
+    ],
+    PDF_INVALID: [
+      "PDF extraction failed; this is not a no-travel-content result.",
+      "PDF 提取失败，不能当作无旅行内容。",
+    ],
     LOCAL_MODEL_INPUT_LIMIT: [
       "Text exceeds the local model input limit; extracted results remain available.",
       "文本超出本地模型输入限制，已有提取结果仍保留。",
@@ -167,7 +186,7 @@ function translate() {
   });
 }
 function tab(name) {
-  for (const key of ["test", "inspect", "compare"]) {
+  for (const key of ["test", "inspect", "compare", "ground", "runs"]) {
     el("panel-" + key).hidden = key !== name;
     el("tab-" + key).setAttribute("aria-selected", String(key === name));
   }
@@ -313,7 +332,8 @@ function fieldTable(parent, fields, trace, inputId, source = "deterministic") {
   for (const title of [
     message("Field", "字段"),
     message("Recognized value", "识别值"),
-    message("Source / evidence", "来源／证据"),
+    message("Evidence", "证据"),
+    message("Source / details", "来源／详情"),
   ])
     head.append(node("th", title));
   table.append(head);
@@ -321,13 +341,27 @@ function fieldTable(parent, fields, trace, inputId, source = "deterministic") {
     const row = node("tr"),
       value = fieldValue(field);
     row.append(node("td", fieldName(field.path || "service")), node("td", value));
+    const span = field.evidence?.[0] || field;
+    const excerpt = excerptAt(
+      trace.result?.text || trace.extraction?.text,
+      span.start,
+      span.end,
+    );
+    row.append(
+      node(
+        "td",
+        excerpt !== null && (excerpt === field.raw || excerpt === field.literal)
+          ? message("Exact text anchor", "精确原文锚点")
+          : message("Not Recorded", "未记录"),
+      ),
+    );
     const evidence = node("td");
     evidence.append(
       button(
         source === "model"
           ? message("Apple suggestion · locate evidence", "Apple 补充建议 · 定位证据")
           : message("Deterministic · locate evidence", "确定性解析 · 定位证据"),
-        () => locateEvidence(trace, field, inputId),
+        () => selectField(trace, field, inputId, source),
       ),
     );
     row.append(evidence);
@@ -346,66 +380,135 @@ function excerptAt(text, start, end) {
     return null;
   }
 }
-function locateEvidence(trace, field, inputId) {
-  const host = el("evidence-view");
-  host.hidden = false;
-  host.replaceChildren(node("h2", message("Original evidence", "原件证据")));
-  const evidence = field.evidence?.[0] || field;
+
+function stageState(value, absent = "Not Recorded") {
+  if (value === "NOT_RUN" || value === "NOT_USED" || value === "NOT_AVAILABLE")
+    return message("Not Run", "未运行");
+  if (value === "UNAVAILABLE") return message("Unavailable — Not Run", "不可用 — 未运行");
+  if (value === "FAILED") return message("Failed", "失败");
+  if (value === "SUCCEEDED" || value === "FINISHED")
+    return message("Completed", "已完成");
+  return message(absent, absent === "Not Recorded" ? "未记录" : "未运行");
+}
+function resultType(item) {
+  const types = { "otr.import.flight": ["Air transport observations", "航空交通观察"] };
+  return types[item.schema_id]
+    ? message(...types[item.schema_id])
+    : message("Unclassified interpretation", "未分类解释");
+}
+function businessResults(trace) {
+  const typed = Array.isArray(trace.typed?.items) ? trace.typed.items : [];
+  if (typed.length) return typed;
+  const groups = new Map();
+  for (const field of traceFields(trace)) {
+    const key = field.itemToken || "unclassified";
+    if (!groups.has(key)) groups.set(key, { token: key, fields: [], schema_id: null });
+    groups.get(key).fields.push(field);
+  }
+  return [...groups.values()];
+}
+function correspondingField(trace, field, item) {
+  return (
+    traceFields(trace).find(
+      (f) =>
+        f.path === field.path &&
+        f.raw === field.raw &&
+        (!item?.token || f.itemToken === item.token),
+    ) || field
+  );
+}
+function modelMatches(trace, field) {
+  return (trace.result?.supplementalServiceObservations || []).filter(
+    (s) =>
+      s.literal === field.raw &&
+      (field.evidence || []).some((e) => e.start === s.start && e.end === s.end),
+  );
+}
+function renderDocumentPreview(trace, inputId, field) {
+  const host = el("document-preview");
+  host.replaceChildren(node("h3", message("Document Preview", "原件预览")));
+  const input = savedInputs.find((i) => i.id === inputId),
+    extraction = trace.extraction || trace.result || {};
+  const evidence = field?.evidence?.[0] || field || {};
   const excerpt = excerptAt(
-    trace.result?.text || trace.extraction?.text,
+    trace.result?.text || extraction.text,
     evidence.start,
     evidence.end,
   );
-  host.append(
-    node(
-      "p",
-      fieldName(field.path || "service") + " · " + (field.raw || field.literal || ""),
-    ),
-  );
-  if (excerpt !== null) host.append(node("blockquote", excerpt));
-  else
-    host.append(
-      node(
-        "p",
-        message(
-          "No recorded text span for this field. No highlight is inferred.",
-          "此字段没有已记录的文本范围，不推测高亮位置。",
-        ),
-      ),
+  const pages = Array.isArray(extraction.pages) ? extraction.pages : [];
+  if ((evidence.pages || []).length && !previewManuallyChosen)
+    previewPage = evidence.pages[0] + 1;
+  if (pages.length) previewPage = Math.min(Math.max(1, previewPage), pages.length);
+  const controls = node("div", undefined, "document-controls");
+  if (input?.mediaType === "application/pdf" && pages.length) {
+    const previous = button("←", () => {
+      previewPage = Math.max(1, previewPage - 1);
+      previewManuallyChosen = true;
+      renderDocumentPreview(trace, inputId, field);
+    });
+    previous.disabled = previewPage <= 1;
+    const next = button("→", () => {
+      previewPage = Math.min(pages.length, previewPage + 1);
+      previewManuallyChosen = true;
+      renderDocumentPreview(trace, inputId, field);
+    });
+    next.disabled = previewPage >= pages.length;
+    controls.append(
+      previous,
+      node("span", message("Page ", "第 ") + previewPage + " / " + pages.length),
+      next,
     );
-  const input = savedInputs.find((i) => i.id === inputId);
-  if (input && /^[0-9a-f-]{36}$/.test(inputId)) {
-    const url = "/api/input/" + inputId + "/original";
-    const link = node("a", message("Open original", "打开原件"));
+  }
+  controls.append(
+    button("−", () => {
+      previewZoom = Math.max(50, previewZoom - 25);
+      renderDocumentPreview(trace, inputId, field);
+    }),
+    node("span", previewZoom + "%"),
+    button("+", () => {
+      previewZoom = Math.min(250, previewZoom + 25);
+      renderDocumentPreview(trace, inputId, field);
+    }),
+  );
+  host.append(controls);
+  if (input && /^[0-9a-f-]{36}$/.test(input.id)) {
+    const url = "/api/input/" + input.id + "/original",
+      link = node("a", message("Open original", "打开原件"));
     link.href = url;
     link.target = "_blank";
     link.rel = "noopener";
     host.append(link);
-    if (input.mediaType === "application/pdf") {
-      const pages = (evidence.pages || []).filter((p) => Number.isInteger(p) && p >= 0);
-      if (pages.length)
-        host.append(
+    if (input.mediaType === "text/plain")
+      host.append(
+        node("pre", extraction.text || message("Text not recorded", "未记录文本")),
+      );
+    else if (
+      input.mediaType.startsWith("image/") ||
+      (input.mediaType === "application/pdf" && pages.length)
+    ) {
+      const viewport = node("div", undefined, "preview-viewport"),
+        wrap = node("div", undefined, "preview"),
+        image = node("img");
+      wrap.style.width = previewZoom + "%";
+      image.src =
+        input.mediaType === "application/pdf"
+          ? "/api/input/" + input.id + "/preview?page=" + previewPage
+          : url;
+      image.alt = input.name;
+      image.onerror = () => {
+        viewport.replaceChildren(
           node(
             "p",
-            message("Page ", "第 ") +
-              pages.map((p) => p + 1).join(", ") +
-              message(
-                " — page locator, not a precise rectangle.",
-                " 页 — 仅页码定位，无精确矩形坐标。",
-              ),
+            message(
+              "Page preview unavailable. Open the original above; recorded evidence remains below.",
+              "页面预览不可用，请使用上方原件链接；下方仍保留真实证据。",
+            ),
           ),
         );
-      const frame = node("iframe");
-      frame.title = message("Original PDF", "PDF 原件");
-      frame.src = url + (pages.length ? "#page=" + (pages[0] + 1) : "");
-      host.append(frame);
-    } else if (input.mediaType.startsWith("image/")) {
-      const wrap = node("div", undefined, "preview"),
-        image = node("img");
-      image.src = url;
-      image.alt = input.name;
+      };
       wrap.append(image);
-      for (const box of evidence.boxes || []) {
+      const boxes = input.mediaType.startsWith("image/") ? evidence.boxes || [] : [];
+      for (const box of boxes) {
         if (
           ![box.x, box.y, box.width, box.height].every(Number.isFinite) ||
           box.x < 0 ||
@@ -425,298 +528,596 @@ function locateEvidence(trace, field, inputId) {
         });
         wrap.append(marker);
       }
-      host.append(wrap);
-    }
+      viewport.append(wrap);
+      host.append(viewport);
+      if (input.mediaType === "application/pdf" && pages.length) {
+        const thumbs = node("div", undefined, "thumbnails");
+        for (const page of pages) {
+          const n = page.pageIndex + 1;
+          const thumbnail = button(String(n), () => {
+            previewPage = n;
+            previewManuallyChosen = true;
+            renderDocumentPreview(trace, inputId, field);
+          });
+          thumbnail.setAttribute("aria-label", message("Page ", "第 ") + n);
+          const img = node("img");
+          img.src = "/api/input/" + input.id + "/preview?page=" + n;
+          img.alt = message("Page ", "第 ") + n;
+          thumbnail.append(img);
+          thumbs.append(thumbnail);
+        }
+        host.append(thumbs);
+      }
+    } else
+      host.append(
+        node(
+          "p",
+          message(
+            "Page count is not recorded; use the original link rather than inventing pages.",
+            "页数未记录，请打开原件；不推测页面数量。",
+          ),
+        ),
+      );
   } else
     host.append(
       node(
         "p",
         message(
-          "Imported trace has no local original attachment.",
+          "Imported trace: no saved local original is attached.",
           "导入记录未关联本地原件。",
         ),
-        "muted",
       ),
     );
-  details(host, evidence);
-  host.scrollIntoView({ behavior: "auto", block: "start" });
+  if (field) {
+    host.append(node("h3", message("Selected source evidence", "选中字段的原文证据")));
+    host.append(
+      node(
+        "blockquote",
+        excerpt ??
+          message(
+            "No exact span recorded. No highlight inferred.",
+            "未记录精确文本范围，不推测高亮。",
+          ),
+      ),
+    );
+    if ((evidence.pages || []).length)
+      host.append(
+        node(
+          "p",
+          message("Recorded pages: ", "记录页码：") +
+            evidence.pages.map((p) => p + 1).join(", "),
+        ),
+      );
+  }
+  const text = node("details"),
+    summary = node(
+      "summary",
+      message("Extracted text / OCR regions", "提取文本／OCR 区域"),
+    );
+  text.append(summary, node("pre", extraction.text || message("Not Recorded", "未记录")));
+  for (const observation of extraction.observations || [])
+    text.append(
+      button(observation.text, () =>
+        selectField(
+          trace,
+          {
+            path: "ocr_observation",
+            raw: observation.text,
+            boxes: [observation.boundingBox],
+          },
+          inputId,
+          "extraction",
+        ),
+      ),
+    );
+  host.append(text);
+}
+function step(parent, title, status, output, timing, extra) {
+  const card = node("div", undefined, "stage-step");
+  card.append(node("h3", title), node("p", status, "status"));
+  if (output) card.append(node("p", output));
+  if (timing !== undefined) card.append(node("small", milliseconds(timing)));
+  if (extra) details(card, extra);
+  parent.append(card);
+  return card;
+}
+function renderFieldChain(trace, field, inputId, source = "deterministic") {
+  const host = el("field-chain");
+  host.replaceChildren(node("h3", message("Evidence & Interpretation", "证据与解释")));
+  if (!field) {
+    host.append(
+      node(
+        "p",
+        message(
+          "Select a field or OCR observation to inspect its actual processing chain.",
+          "选择字段或 OCR 观察，查看真实处理过程。",
+        ),
+      ),
+    );
+    return;
+  }
+  host.append(node("h3", fieldName(field.path)), node("p", fieldValue(field), "status"));
+  const evidence = field.evidence?.[0] || field,
+    raw = excerptAt(
+      trace.result?.text || trace.extraction?.text,
+      evidence.start,
+      evidence.end,
+    );
+  step(
+    host,
+    message("1. Original text / OCR", "1. 原文／OCR"),
+    raw !== null ? message("Recorded exact span", "已记录精确范围") : stageState(),
+    raw ?? field.raw,
+    trace.timings?.extractionMs,
+    evidence,
+  );
+  const deterministic = traceFields(trace).filter(
+    (f) =>
+      f.path === field.path &&
+      f.raw === field.raw &&
+      (!field.itemToken || field.itemToken === f.itemToken),
+  );
+  step(
+    host,
+    message("2. Deterministic rules", "2. 确定性规则"),
+    deterministic.length
+      ? message("Field retained", "字段已保留")
+      : source === "model"
+        ? message("No matching retained rule field", "未记录对应规则字段")
+        : stageState(),
+    deterministic.length
+      ? fieldValue(deterministic[0])
+      : message("No intermediate candidate values were recorded.", "未记录中间候选值。"),
+    trace.timings?.deterministicAndCapabilityMs,
+    { timingScope: "parser and capability combined", fields: deterministic },
+  );
+  const matches = source === "model" ? [field] : modelMatches(trace, field),
+    modelStatus = trace.result?.modelExecution || trace.model?.status;
+  let modelText = matches.length
+    ? matches.map(fieldValue).join(" / ")
+    : message(
+        "No field-level model observation recorded. Run-level success is not confirmation of this field.",
+        "未记录此字段的模型观察；运行成功不代表模型确认该字段。 ",
+      );
+  if (modelStatus === "FAILED")
+    modelText =
+      reasonText(trace.result?.modelReason || trace.model?.reason) +
+      message(" Rejected raw output was not retained.", " 被拒绝的原始输出未保留。");
+  step(
+    host,
+    message("3. Apple local model", "3. Apple 本地模型"),
+    matches.length
+      ? message(
+          "Supplementary observation — not adopted into typed result",
+          "补充观察 — 未自动纳入结构结果",
+        )
+      : stageState(modelStatus),
+    modelText,
+    trace.timings?.modelDeadlineInclusiveMs,
+    { capability: trace.capability, model: trace.model },
+  );
+  step(
+    host,
+    message("4. Remote model", "4. 远端模型"),
+    stageState(trace.remote),
+    trace.remote === "NOT_USED"
+      ? message(
+          "Remote model was not called; no remote cost.",
+          "未调用远端模型，无远端费用。",
+        )
+      : message("No field-level remote trace recorded.", "未记录字段级远端结果。"),
+  );
+  const anchored = raw !== null && (field.raw === raw || field.literal === raw);
+  step(
+    host,
+    message("5. Evidence validation", "5. 证据校验"),
+    anchored ? message("Exact original-text evidence", "精确原文证据") : stageState(),
+    anchored
+      ? message(
+          "Text anchor retained; this does not imply user confirmation or Admission.",
+          "原文锚点有效，不代表用户确认或正式准入。",
+        )
+      : message(
+          "This field has no recorded validation receipt; do not infer a rejection.",
+          "此字段未记录校验回执，不推测为拒绝。",
+        ),
+    undefined,
+    { timing: "included in parser/model, not separately recorded", evidence },
+  );
+  step(
+    host,
+    message("6. Consolidation / conflict resolution", "6. 汇总／冲突解决"),
+    stageState(),
+    message("No independent consolidation step recorded.", "未记录独立汇总处理步骤。"),
+  );
+  const typed = (trace.typed?.items || [])
+    .flatMap((item) => item.fields || [])
+    .filter((f) => f.path === field.path && f.raw === field.raw);
+  step(
+    host,
+    message("7. Typed interpretation", "7. 结构化解释"),
+    typed.length
+      ? message("Present in partial typed projection", "部分结构投影中存在")
+      : message("Not adopted / not recorded", "未纳入／未记录"),
+    typed.length
+      ? fieldValue(typed[0])
+      : message("No corresponding typed field recorded.", "未记录对应结构化字段。"),
+  );
+  step(
+    host,
+    message("8. Candidate / Admission", "8. 候选／准入"),
+    stageState(trace.admission),
+    message(
+      "Interpretation observations are not formal Candidates, Bookings, Segments or Canonical Items.",
+      "解析观察不等于正式 Candidate、Booking、Segment 或 Canonical Item。",
+    ),
+  );
+  details(host, {
+    field,
+    source,
+    inputId,
+    hostSourceManifest: trace.job?.hostSourceManifest,
+    executedVersion: trace.executedVersion,
+  });
+}
+function selectField(trace, field, inputId, source = "deterministic") {
+  selectedField = field;
+  selectedFieldSource = source;
+  previewManuallyChosen = false;
+  renderDocumentPreview(trace, inputId, field);
+  renderFieldChain(trace, field, inputId, source);
+}
+function renderMatrix(host, trace) {
+  const wrap = node("div", undefined, "matrix-scroll"),
+    table = node("table"),
+    header = node("tr");
+  for (const title of [
+    message("Field", "字段"),
+    "Extraction",
+    "Rules",
+    "Apple Local",
+    "Evidence",
+    "Typed",
+  ])
+    header.append(node("th", title));
+  table.append(header);
+  for (const f of traceFields(trace)) {
+    const e = f.evidence?.[0],
+      span = e ? excerptAt(trace.result?.text, e.start, e.end) : null,
+      typed = (trace.typed?.items || []).some((item) =>
+        (item.fields || []).some((x) => x.path === f.path && x.raw === f.raw),
+      );
+    const tr = node("tr");
+    for (const value of [
+      fieldName(f.path),
+      span === null
+        ? message("Not Recorded", "未记录")
+        : message("Exact text", "精确原文"),
+      message("Retained", "保留"),
+      modelMatches(trace, f).length
+        ? message("Observation recorded", "已记录观察")
+        : message("Not Recorded", "未记录"),
+      span === f.raw
+        ? message("Exact anchor", "精确锚点")
+        : message("Not Recorded", "未记录"),
+      typed ? message("Present", "存在") : message("Not Recorded", "未记录"),
+    ])
+      tr.append(node("td", value));
+    table.append(tr);
+  }
+  for (const s of trace.result?.supplementalServiceObservations || []) {
+    const tr = node("tr");
+    for (const value of [
+      message("Model flight-number observation", "模型航班号观察"),
+      s.literal,
+      message("Not Recorded", "未记录"),
+      message("Proposed", "提出"),
+      message("Exact text anchor", "精确原文锚点"),
+      message("Not automatically adopted", "未自动纳入"),
+    ])
+      tr.append(node("td", value));
+    table.append(tr);
+  }
+  wrap.append(table);
+  host.append(wrap);
+  host.append(
+    node(
+      "p",
+      message(
+        "Rejected-field counts and complete Admission required fields are Not Recorded. The three existing local-enrichment conditions are not complete Admission validation.",
+        "拒绝字段数与完整 Admission 必填字段未记录。三个本地增强条件不是完整 Admission 校验。",
+      ),
+      "muted",
+    ),
+  );
+}
+function renderParsedResults(trace, inputId) {
+  const host = el("parsed-results");
+  host.replaceChildren(node("h3", message("Parsed Results", "解析结果")));
+  const tabs = node("div", undefined, "result-tabs");
+  for (const [key, en, zh] of [
+    ["result", "By Business Result", "按解释结果"],
+    ["field", "By Field", "按字段"],
+    ["matrix", "Stage Contribution", "阶段贡献"],
+  ]) {
+    const b = button(message(en, zh), () => {
+      resultView = key;
+      renderParsedResults(trace, inputId);
+    });
+    b.setAttribute("aria-selected", String(resultView === key));
+    tabs.append(b);
+  }
+  host.append(tabs);
+  if (resultView === "matrix") {
+    renderMatrix(host, trace);
+    return;
+  }
+  const results = businessResults(trace),
+    fields = traceFields(trace),
+    suggestions = trace.result?.supplementalServiceObservations || [];
+  if (resultView === "field") fieldTable(host, fields, trace, inputId);
+  else
+    for (const [index, item] of results.entries()) {
+      const group = node("div", undefined, "card");
+      group.append(
+        node("h3", resultType(item) + " · " + (index + 1)),
+        node(
+          "p",
+          message(
+            "Interpretation: partial observations · Candidate: Not Run · Admission: Not Run",
+            "Interpretation：部分观察 · Candidate：未运行 · Admission：未运行",
+          ),
+          "muted",
+        ),
+      );
+      group.append(
+        node(
+          "p",
+          message("Source: ", "来源：") +
+            inputName(inputId) +
+            message(
+              " · Booking / Segment identities: Not Recorded",
+              " · Booking／Segment 身份：未记录",
+            ),
+        ),
+      );
+      fieldTable(
+        group,
+        (item.fields || []).map((f) => correspondingField(trace, f, item)),
+        trace,
+        inputId,
+      );
+      if (item.schema_id === "otr.import.flight") {
+        const paths = new Set((item.fields || []).map((f) => f.path)),
+          missing = ["service", "origin.airport", "destination.airport"].filter(
+            (path) => !paths.has(path),
+          );
+        group.append(
+          node(
+            "p",
+            missing.length
+              ? message("Local-enrichment conditions missing: ", "本地增强条件仍缺：") +
+                  missing.map(fieldName).join("、")
+              : message(
+                  "Local-enrichment fields present; complete Admission requirements not assessed.",
+                  "本地增强字段已存在，完整准入要求尚未评估。",
+                ),
+          ),
+        );
+      }
+      group.append(
+        node(
+          "p",
+          message(
+            "Local-enrichment conditions are not complete Admission validation.",
+            "本地增强条件不是完整 Admission 校验。",
+          ),
+          "muted",
+        ),
+      );
+      details(group, {
+        token: item.token,
+        schema: item.schema_id,
+        fields: item.fields,
+        fragments: item.fragments,
+      });
+      host.append(group);
+    }
+  if (!results.length)
+    host.append(
+      node(
+        "p",
+        message(
+          "No usable travel booking information found within the current interpreter's scope. Extracted content remains available; this does not prove that an unsupported document has no travel content.",
+          "当前解释器范围内未发现可用的旅行预订信息。已提取内容保留；这不代表未支持的文件没有旅行内容。",
+        ),
+      ),
+    );
+  if (suggestions.length) {
+    host.append(
+      node(
+        "h3",
+        message(
+          "Additional Apple observations — not business results",
+          "Apple 补充观察 — 不是业务结果",
+        ),
+      ),
+    );
+    fieldTable(
+      host,
+      suggestions.map((s) => ({ ...s, path: "service" })),
+      trace,
+      inputId,
+      "model",
+    );
+  }
+  host.append(
+    node(
+      "p",
+      message(
+        "Current production interpreter: partial air-transport observations. Stay, rental, scheduled transport, activity and ticket interpreters are not available. No business type is inferred from document prose.",
+        "当前正式解释器：部分航空交通观察。住宿、租车、定时交通、活动、票证解释器尚不可用，不从原文猜测业务类型。",
+      ),
+      "muted",
+    ),
+  );
 }
 function renderInspection(run, imported = false) {
   const root = el("inspection");
   root.replaceChildren();
   el("evidence-view").hidden = true;
-  const trace = run.trace || (run.result ? run : null);
-  const inputId = run.inputId || trace?.job?.inputId || trace?.result?.inputId;
-  const input = savedInputs.find((i) => i.id === inputId);
-  const title = section(root, "summary", inputName(inputId));
+  const trace = run.trace || (run.result ? run : null),
+    inputId = run.inputId || trace?.job?.inputId || trace?.result?.inputId;
+  const input = savedInputs.find((i) => i.id === inputId),
+    header = section(root, "summary", inputName(inputId));
   if (!trace) {
-    title.append(node("p", readableState(run.stage)));
-    if (run.error) title.append(node("p", reasonText(run.error)));
-    details(title, run);
+    header.append(node("p", readableState(run.stage)));
+    if (run.error) header.append(node("p", reasonText(run.error)));
+    header.append(
+      node(
+        "p",
+        message(
+          "Execution failed or was interrupted; this is not a zero-result interpretation.",
+          "执行失败或中断，不属于零结果解析。",
+        ),
+      ),
+    );
+    details(header, run);
+    show(run);
     return;
   }
-  const fields = traceFields(trace),
-    suggestions = trace.result?.supplementalServiceObservations || [];
-  const pages = trace.extraction?.pages || trace.result?.pages || [];
-  const total = Date.parse(trace.finishedAt) - Date.parse(trace.startedAt);
-  title.append(
+  if (!trace.result) {
+    header.append(
+      node(
+        "p",
+        message(
+          "Imported trace schema does not record these inspection layers. Original JSON is preserved below.",
+          "导入记录未包含可展示的解析层结构，原始 JSON 保留在下方。",
+        ),
+      ),
+    );
+    details(header, run);
+    show(run);
+    return;
+  }
+  const results = businessResults(trace),
+    fields = traceFields(trace),
+    suggestions = trace.result.supplementalServiceObservations || [],
+    ocr = trace.extraction?.observations;
+  const elapsed = Date.parse(trace.finishedAt) - Date.parse(trace.startedAt);
+  header.append(
     node(
       "p",
       [
-        input?.mediaType || trace.job?.mediaType || message("Unknown format", "格式未知"),
-        pages.length
-          ? pages.length + message(" pages", " 页")
-          : message("Page count not recorded", "未记录页数"),
-        readableState(trace.result?.status),
-        milliseconds(total >= 0 ? total : undefined),
+        input?.mediaType ||
+          trace.job?.mediaType ||
+          message("Format not recorded", "格式未记录"),
+        readableState(trace.result.status),
+        milliseconds(elapsed >= 0 ? elapsed : undefined),
       ].join(" · "),
       "status",
     ),
   );
-  title.append(
+  const counts = node("div", undefined, "result-counts"),
+    types = new Map();
+  for (const item of results)
+    types.set(resultType(item), (types.get(resultType(item)) || 0) + 1);
+  for (const [type, count] of types)
+    counts.append(node("span", type + " × " + count, "badge"));
+  if (!results.length)
+    counts.append(node("span", message("Interpretations × 0", "解释结果 × 0"), "badge"));
+  header.append(counts);
+  header.append(
     node(
       "p",
       fields.length +
-        message(" deterministic fields; ", " 个确定性字段；") +
+        message(" rule fields · ", " 个规则字段 · ") +
         suggestions.length +
         message(
-          " evidence-linked model suggestions. These are observations, not admitted bookings.",
-          " 条有证据的模型补充建议。这些是识别观察，不是已接纳的预订。",
+          " evidence-linked model observations. Not admitted Bookings.",
+          " 条有证据的模型观察。不属于已接纳 Booking。",
         ),
     ),
   );
+  const stats = node("details"),
+    summary = node("summary", message("Stage counts and timings", "阶段数量与耗时"));
+  stats.append(summary);
+  for (const text of [
+    message("Extracted OCR observations: ", "OCR 观察：") +
+      (Array.isArray(ocr) ? ocr.length : message("Not Recorded", "未记录")),
+    message("Retained rule fields: ", "保留的规则字段：") + fields.length,
+    message(
+      "Proposed fields before validation: Not Recorded",
+      "校验前提出的字段数：未记录",
+    ),
+    message("Evidence-valid rule fields: ", "有原文证据的规则字段：") +
+      fields.filter((f) => (f.evidence || []).length).length,
+    message("Rejected field count: Not Recorded", "拒绝字段数：未记录"),
+    message("Typed fields: ", "结构字段：") +
+      (trace.typed?.items || []).reduce((n, item) => n + (item.fields || []).length, 0),
+    message("Required missing fields: Not Recorded", "必填缺项总数：未记录"),
+    message("Extraction: ", "提取：") + milliseconds(trace.timings?.extractionMs),
+    message("Parser + capability combined: ", "解析与模型能力检查合计：") +
+      milliseconds(trace.timings?.deterministicAndCapabilityMs),
+    message("Apple local call: ", "Apple 本地调用：") +
+      milliseconds(trace.timings?.modelDeadlineInclusiveMs),
+    message(
+      "Evidence timing is included in parser/model processing, not separately recorded.",
+      "证据校验包含在解析／模型处理中，未单独计时。",
+    ),
+  ])
+    stats.append(node("p", text));
+  header.append(stats);
   if (imported)
-    title.append(
+    header.append(
       node(
         "p",
         message(
-          "Imported trace — view only, runtime provenance unverified.",
-          "导入记录 — 仅查看，运行身份未经验证。",
+          "Imported view only; runtime and validation are unverified.",
+          "导入记录仅供查看，运行与校验未经验证。",
         ),
         "muted",
       ),
     );
-  const nav = node("nav", undefined, "stage-nav");
-  const names = [
-    ["source", "Source", "原件"],
-    ["extraction", "Extraction", "文本提取"],
-    ["deterministic", "Deterministic", "确定性解析"],
-    ["apple", "Apple Local", "Apple 本地模型"],
-    ["evidence", "Evidence", "证据校验"],
-    ["typed", "Typed", "航班结构"],
-    ["candidate", "Candidate", "候选结果"],
-  ];
-  for (const [id, en, zh] of names) {
-    const a = node("a", message(en, zh));
-    a.href = "#stage-" + id;
-    nav.append(a);
-  }
-  title.append(nav);
-  const source = section(
-    root,
-    "stage-source",
-    message("1. Source document", "1. 原件"),
-    message(
-      "Local original only. This diagnostic run does not create a formal Source or upload it.",
-      "仅使用本地原件；本次诊断不创建正式 Source，也不上传原件。",
-    ),
-  );
-  if (input) {
-    const a = node("a", message("Open original", "打开原件"));
-    a.href = "/api/input/" + input.id + "/original";
-    a.target = "_blank";
-    a.rel = "noopener";
-    source.append(a);
-  }
-  const extraction = section(
-    root,
-    "stage-extraction",
-    message("2. Extracted text / OCR", "2. 提取文本／OCR"),
-    milliseconds(trace.timings?.extractionMs),
-  );
-  extraction.append(
-    node(
-      "pre",
-      trace.extraction?.text ||
-        trace.result?.text ||
-        message("No extracted text recorded.", "未记录提取文本。"),
-    ),
-  );
-  extraction.append(
-    node(
-      "p",
-      (trace.extraction?.observations || []).length +
-        message(" OCR text regions recorded.", " 个 OCR 文本区域。"),
-      "muted",
-    ),
-  );
-  const deterministic = section(
-    root,
-    "stage-deterministic",
-    message("3. Deterministic travel fields", "3. 确定性旅行字段"),
-    message("Parser and model-capability check combined: ", "解析与模型能力检查合计：") +
-      milliseconds(trace.timings?.deterministicAndCapabilityMs),
-  );
-  fieldTable(deterministic, fields, trace, inputId);
-  const apple = section(
-    root,
-    "stage-apple",
-    message("4. Apple on-device model", "4. Apple 本地模型"),
-    readableState(trace.result?.modelExecution || trace.model?.status) +
-      " · " +
-      milliseconds(trace.timings?.modelDeadlineInclusiveMs),
-  );
-  apple.append(
-    node(
-      "p",
-      message("Availability: ", "可用性：") +
-        readableState(trace.capability?.status || trace.result?.modelCapability),
-    ),
-  );
-  if (
-    trace.result?.modelExecution !== "SUCCEEDED" &&
-    (trace.result?.modelReason || trace.model?.reason)
-  )
-    apple.append(node("p", reasonText(trace.result?.modelReason || trace.model?.reason)));
-  apple.append(
-    node(
-      "p",
-      message(
-        "Suggestions stay separate from deterministic fields. They do not overwrite fields or add admitted flights.",
-        "补充建议与确定性字段分开，不覆盖字段，也不新增已接纳的航班。",
-      ),
-      "muted",
-    ),
-  );
-  fieldTable(
-    apple,
-    suggestions.map((s) => ({ ...s, path: "service" })),
-    trace,
-    inputId,
-    "model",
-  );
-  if (
-    (trace.model?.status === "FAILED" || trace.result?.modelExecution === "FAILED") &&
-    !suggestions.length
-  )
-    apple.append(
+  if (trace.result.modelExecution === "FAILED")
+    header.append(
       node(
         "p",
-        message(
-          "Rejected raw model output was not retained. Only the recorded failure reason is available; rejected field values cannot be reconstructed.",
-          "被拒绝的模型原始输出未保留。现仅有失败原因，无法展示或还原被拒绝的字段值。",
-        ),
+        reasonText(trace.result.modelReason) +
+          message(
+            " Rejected raw output was not retained.",
+            " 被拒绝的模型原始输出未保留。",
+          ),
       ),
     );
-  const evidence = section(
-    root,
-    "stage-evidence",
-    message("5. Evidence validation", "5. 证据校验"),
-    message(
-      "Evidence validation is included in parsing / model processing; no separate timing was recorded.",
-      "证据校验包含在解析／模型处理中，未单独计时。",
-    ),
-  );
-  evidence.append(
-    node(
-      "p",
-      fields.length +
-        (imported
-          ? message(
-              " parser fields recorded in this unverified import; ",
-              " 个解析字段记录于此未经验证的导入文件；",
-            )
-          : message(
-              " retained parser fields have production-validated original-text spans; ",
-              " 个保留的解析字段具有正式校验的原文范围；",
-            )) +
-        suggestions.length +
-        message(
-          " model suggestions have exact source-text evidence.",
-          " 条模型建议具有精确原文证据。",
-        ),
-    ),
-  );
-  if (trace.result?.modelExecution === "FAILED")
-    evidence.append(node("p", reasonText(trace.result.modelReason)));
-  evidence.append(
-    node(
-      "p",
-      message(
-        "Click a field to see its actual text span, PDF page or OCR region. No coordinates are invented.",
-        "点击字段查看真实文本片段、PDF 页码或 OCR 区域，不生成不存在的坐标。",
-      ),
-    ),
-  );
-  const typed = section(
-    root,
-    "stage-typed",
-    message("6. Flight typed interpretation", "6. 航班结构化结果"),
-    readableState(trace.typed?.status) +
-      " · " +
-      message("No separate timing recorded", "未单独计时"),
-  );
-  for (const [index, item] of (trace.typed?.items || []).entries()) {
-    const group = node("div", undefined, "card");
-    group.append(node("h3", message("Travel item ", "旅行信息项 ") + (index + 1)));
-    for (const f of item.fields || [])
-      group.append(node("p", fieldName(f.path) + ": " + fieldValue(f)));
-    // Display only the three existing local-enrichment conditions, not Admission requirements.
-    const paths = new Set((item.fields || []).map((f) => f.path));
-    const missing = ["service", "origin.airport", "destination.airport"].filter(
-      (path) => !paths.has(path),
-    );
-    group.append(
-      node(
-        "p",
-        missing.length
-          ? message("Still missing for local enrichment: ", "本地增强条件仍缺：") +
-              missing.map(fieldName).join("、")
-          : message(
-              "The three local-enrichment fields are present.",
-              "三个本地增强条件字段已存在。",
-            ),
-      ),
-    );
-    for (const f of item.deferred || [])
-      group.append(
-        node("p", message("Deferred field: ", "待进一步处理字段：") + fieldName(f.path)),
-      );
-    typed.append(group);
-  }
-  if (!trace.typed?.items?.length)
-    typed.append(
-      node("p", message("No typed flight item recorded.", "尚无航班结构化信息项。")),
-    );
-  typed.append(
-    node(
-      "p",
-      message(
-        "This is a partial parser projection. The fields above are not a complete Admission required-field check; a model suggestion is not automatically included here.",
-        "这是部分解析投影。上述缺项不是完整 Admission 必填校验；模型建议不会自动进入此结构。",
-      ),
-      "muted",
-    ),
-  );
-  section(
-    root,
-    "stage-candidate",
-    message("7. Candidate / Admission", "7. 候选结果／准入"),
-    message(
-      "Not available in this diagnostic tool. No formal Source authority, Canonical write or notification is produced.",
-      "诊断工具不提供此步骤：没有正式 Source 授权，不写入 Canonical，也不发送通知。",
-    ),
-  );
+  const columns = node("div", undefined, "inspector-columns"),
+    left = node("section"),
+    middle = node("section"),
+    right = node("section", undefined, "evidence-column");
+  left.id = "document-preview";
+  middle.id = "parsed-results";
+  right.id = "field-chain";
+  columns.append(left, middle, right);
+  root.append(columns);
+  renderDocumentPreview(trace, inputId, selectedField);
+  renderParsedResults(trace, inputId);
+  renderFieldChain(trace, selectedField, inputId, selectedFieldSource);
   details(root, run);
   show(run);
 }
+
 function setLabelControls() {
   const disabled = inspectionLoading || labelSaving || !selectedRun;
+  const descendants = (element) => [
+    element,
+    ...[...element.children].flatMap(descendants),
+  ];
   const controls = [
     el("kind"),
+    el("document-status"),
     el("add-label"),
     el("save-labels"),
-    ...[...el("labels").children].flatMap((row) => [...row.children]),
+    ...descendants(el("labels")),
   ];
   for (const control of controls) control.disabled = disabled;
 }
@@ -740,6 +1141,13 @@ async function inspect(id) {
       : [null, { status: "N/A" }];
     if (sequence !== inspectionSequence) return;
     inspectedImported = false;
+    selectedFieldSource = "deterministic";
+    selectedField =
+      traceFields(run.trace).find((f) => f.path === "service") ||
+      traceFields(run.trace)[0];
+    previewPage = 1;
+    previewZoom = 100;
+    previewManuallyChosen = false;
     inspected = run;
     selectedRun = run.trace ? id : undefined;
     renderInspection(run);
@@ -753,13 +1161,7 @@ async function inspect(id) {
     }
     el("label-target").textContent = inputName(run.inputId) + " · " + runName(run);
     el("labels").replaceChildren();
-    if (saved && Array.isArray(saved.fields) && saved.fields.length) {
-      el("kind").value = saved.kind;
-      for (const field of saved.fields) addLabelRow(field.path, field.raw);
-    } else {
-      el("kind").value = "HUMAN_GROUND_TRUTH";
-      addLabelRow();
-    }
+    loadAnnotation(saved, run);
     renderStats(stats);
     el("compare-input").value = run.inputId;
     populateCompareRuns();
@@ -779,6 +1181,11 @@ async function inspectImported(id) {
     if (sequence !== inspectionSequence) return;
     const payload = imported.payload ?? imported;
     inspectedImported = true;
+    selectedFieldSource = "deterministic";
+    selectedField = undefined;
+    previewPage = 1;
+    previewZoom = 100;
+    previewManuallyChosen = false;
     inspected = payload.trace ? payload : { trace: payload };
     renderInspection(inspected, true);
     el("label-target").textContent = message(
@@ -802,25 +1209,27 @@ async function saveLabels() {
   const runId = selectedRun,
     sequence = inspectionSequence;
   if (inspectionLoading || labelSaving || !runId) return;
-  const fields = [...el("labels").children]
-    .map((row) => ({
-      path: row.querySelector("select").value,
-      raw: row.querySelector("input").value.trim(),
-    }))
-    .filter((f) => f.raw);
-  if (!fields.length) {
-    renderStats({ status: "N/A" });
-    el("notice").textContent = message(
-      "No labels entered; existing saved labels were not changed.",
-      "未输入标签，已有保存标签未修改。",
-    );
-    return;
-  }
+  const annotation = readAnnotationForm();
+  const fields = annotation.results
+    .flatMap((result) => [
+      ...result.fields,
+      ...result.segments.flatMap((segment) => segment.fields),
+    ])
+    .filter((field) => field.status === "CONFIRMED" && field.raw.trim())
+    .map(({ path, raw }) => ({ path, raw }));
+  if (
+    annotation.results.some((result) =>
+      [...result.fields, ...result.segments.flatMap((segment) => segment.fields)].some(
+        (field) => field.status === "CONFIRMED" && !field.raw.trim(),
+      ),
+    )
+  )
+    throw new Error("CONFIRMED_VALUE_REQUIRED");
   const kind = el("kind").value;
   labelSaving = true;
   setLabelControls();
   try {
-    await api("/api/run/" + runId + "/labels", { kind, fields });
+    await api("/api/run/" + runId + "/labels", { kind, fields, annotation });
     if (sequence !== inspectionSequence || selectedRun !== runId) return;
     const stats = await api("/api/run/" + runId + "/stats");
     if (sequence === inspectionSequence && selectedRun === runId) renderStats(stats);
@@ -856,12 +1265,53 @@ function pairKey(field) {
   return JSON.stringify([field.path, field.raw]);
 }
 function renderComparison(before, after, diff) {
+  lastComparison = { before, after, diff };
   const root = el("comparison");
   root.replaceChildren();
   const a = traceFields(before.trace),
     b = traceFields(after.trace);
   const added = b.filter((f) => !a.some((x) => pairKey(x) === pairKey(f)));
   const removed = a.filter((f) => !b.some((x) => pairKey(x) === pairKey(f)));
+  const unchanged = diff.sameFieldEvidence && !diff.modelChanged;
+  root.append(
+    node(
+      "p",
+      unchanged
+        ? message("Unchanged", "未变化")
+        : message(
+            "Changed — accuracy direction requires reviewed Ground Truth",
+            "有变化 — 准确率方向需要已检查的人工真值",
+          ),
+      "status",
+    ),
+  );
+  root.append(
+    node(
+      "p",
+      message("Partial interpretation groups: ", "部分解释分组：") +
+        businessResults(before.trace).length +
+        " → " +
+        businessResults(after.trace).length,
+    ),
+  );
+  root.append(
+    node(
+      "p",
+      message("Business types: ", "业务类型：") +
+        [...new Set(businessResults(before.trace).map(resultType))].join(" / ") +
+        " → " +
+        [...new Set(businessResults(after.trace).map(resultType))].join(" / "),
+    ),
+  );
+  root.append(
+    node(
+      "p",
+      message(
+        "Segment structure: Not Comparable — no formal Segment identities recorded. Typed completeness: Not Comparable — no complete required-field evaluator.",
+        "分段结构：不可比较 — 未记录正式 Segment 身份。结构完整性：不可比较 — 尚无完整必填评估器。",
+      ),
+    ),
+  );
   root.append(node("h3", message("What changed?", "改善了什么？")));
   for (const [title, list] of [
     [message("New values", "新增值"), added],
@@ -898,6 +1348,17 @@ function renderComparison(before, after, diff) {
             "Field evidence changed. Review added / removed evidence in Developer Details; a locator change alone does not prove better quality.",
             "字段证据有变化。新增／丢失证据保留在开发者详情；定位变化本身不代表质量改善。",
           ),
+    ),
+  );
+  root.append(
+    node(
+      "p",
+      message("Host source versions: ", "主机源码版本：") +
+        (diff.sameHostSourceManifest === true
+          ? message("Unchanged", "未变化")
+          : diff.sameHostSourceManifest === false
+            ? message("Changed", "有变化")
+            : message("Not Recorded / Not Comparable", "未记录／不可比较")),
     ),
   );
   const oldModel = before.trace?.result?.modelExecution,
@@ -951,33 +1412,272 @@ function renderComparison(before, after, diff) {
   details(root, { before: before.id, after: after.id, diff });
   show(diff);
 }
-function addLabelRow(path = "service", raw = "") {
-  const row = node("div", undefined, "label-row"),
-    select = node("select"),
-    input = node("input");
-  const paths = [
-    ...new Set([
-      ...Object.keys(fieldNames),
-      ...traceFields(inspected?.trace).map((f) => f.path),
-    ]),
-  ];
-  for (const p of paths) {
-    const option = node("option", fieldName(p));
-    option.value = p;
+let annotationDraft,
+  annotationCounter = 0;
+const annotationTypes = {
+  FLIGHT: ["Air transport", "航空交通"],
+  STAY: ["Stay", "住宿"],
+  CAR_RENTAL: ["Car rental", "租车"],
+  SCHEDULED_TRANSPORT: ["Scheduled transport", "定时交通"],
+  ACTIVITY: ["Activity / event", "活动／事件"],
+  TICKET: ["Ticket / pass", "票证"],
+  UNCLASSIFIED: ["Unclassified", "未分类"],
+};
+function choice(options, value) {
+  const select = node("select");
+  for (const [key, en, zh] of options) {
+    const option = node("option", message(en, zh));
+    option.value = key;
     select.append(option);
   }
-  select.value = path;
-  select.setAttribute("aria-label", message("Expected field", "预期字段"));
-  input.value = raw;
-  input.placeholder = message("Expected value from original", "原件中的预期值");
-  input.setAttribute("aria-label", input.placeholder);
+  select.value = value;
+  return select;
+}
+function emptyAnnotationField() {
+  return { path: "service", raw: "", status: "UNCHECKED" };
+}
+function annotationId(prefix) {
+  return prefix + "-" + Date.now().toString(36) + "-" + ++annotationCounter;
+}
+function newAnnotationResult() {
+  return {
+    id: annotationId("result"),
+    type: "UNCLASSIFIED",
+    status: "UNREVIEWED",
+    fields: [],
+    segments: [],
+  };
+}
+function annotationFields(host) {
+  return [...host.children]
+    .filter((row) => row.gt)
+    .map((row) => ({
+      path: row.gt.path.value,
+      raw: row.gt.raw.value,
+      status: row.gt.status.value,
+      ...(row.gt.participant.value.trim()
+        ? { participantId: row.gt.participant.value.trim() }
+        : {}),
+    }));
+}
+function readAnnotationForm() {
+  return {
+    documentStatus: el("document-status").value,
+    results: [...el("labels").children]
+      .filter((row) => row.gtResult)
+      .map((row) => {
+        const data = row.gtResult;
+        return {
+          id: data.id,
+          type: data.type.value,
+          status: data.status.value,
+          fields: annotationFields(data.fields),
+          segments: [...data.segments.children]
+            .filter((n) => n.gtSegment)
+            .map((segment) => ({
+              id: segment.gtSegment.id,
+              fields: annotationFields(segment.gtSegment.fields),
+            })),
+        };
+      }),
+  };
+}
+function mutateAnnotation(action) {
+  annotationDraft = readAnnotationForm();
+  action(annotationDraft);
+  renderAnnotationForm();
+  setLabelControls();
+}
+function annotationFieldRow(host, field) {
+  const row = node("div", undefined, "label-row"),
+    path = choice(
+      [
+        ...new Set([
+          ...traceFields(inspected?.trace).map((f) => f.path),
+          ...Object.keys(fieldNames),
+          field.path,
+        ]),
+      ].map((p) => [p, fieldName(p), fieldName(p)]),
+      field.path,
+    ),
+    raw = node("input"),
+    participant = node("input"),
+    status = choice(
+      [
+        ["UNCHECKED", "Not checked", "尚未检查"],
+        ["CONFIRMED", "Confirmed value", "已确认值"],
+        ["NOT_PROVIDED", "Not provided by original", "原件未提供"],
+      ],
+      field.status,
+    );
+  raw.value = field.raw || "";
+  raw.placeholder = message(
+    "Expected original-text value (scored)",
+    "预期原文值（用于评分）",
+  );
+  raw.setAttribute("aria-label", raw.placeholder);
+  participant.value = field.participantId || "";
+  participant.placeholder = message(
+    "Traveller / participant label (optional)",
+    "旅客／参与人标注（可选）",
+  );
+  participant.setAttribute("aria-label", participant.placeholder);
+  path.setAttribute("aria-label", message("Field", "字段"));
+  status.setAttribute("aria-label", message("Human review status", "人工检查状态"));
+  row.gt = { path, raw, status, participant };
   row.append(
-    select,
-    input,
+    path,
+    raw,
+    status,
+    participant,
     button(message("Remove", "删除"), () => row.remove()),
   );
-  el("labels").append(row);
+  host.append(row);
 }
+function renderAnnotationForm() {
+  const host = el("labels");
+  host.replaceChildren();
+  el("document-status").value = annotationDraft.documentStatus;
+  for (const [index, result] of annotationDraft.results.entries()) {
+    const card = node("div", undefined, "annotation-result"),
+      type = choice(
+        Object.entries(annotationTypes).map(([key, pair]) => [key, ...pair]),
+        result.type,
+      ),
+      status = choice(
+        [
+          ["UNREVIEWED", "Not checked", "尚未检查"],
+          ["CONFIRMED", "Type checked", "类型已检查"],
+          ["WRONG_TYPE", "Wrong business type", "业务类型识别错误"],
+        ],
+        result.status,
+      ),
+      fields = node("div"),
+      segments = node("div");
+    card.append(
+      node("h3", message("Expected business result ", "标准答案业务结果 ") + (index + 1)),
+      type,
+      status,
+      node(
+        "p",
+        message(
+          "Diagnostic annotation only. Type choices do not imply that an interpreter exists.",
+          "仅诊断标注；类型选项不代表对应解释器已实现。",
+        ),
+        "muted",
+      ),
+    );
+    card.gtResult = { id: result.id, type, status, fields, segments };
+    for (const field of result.fields) annotationFieldRow(fields, field);
+    card.append(
+      fields,
+      button(message("Add field", "添加字段"), () =>
+        mutateAnnotation((draft) =>
+          draft.results[index].fields.push(emptyAnnotationField()),
+        ),
+      ),
+    );
+    for (const [segmentIndex, segment] of result.segments.entries()) {
+      const block = node("div", undefined, "card"),
+        segmentFields = node("div");
+      block.gtSegment = { id: segment.id, fields: segmentFields };
+      block.append(
+        node("h3", message("Expected segment ", "标准答案分段 ") + (segmentIndex + 1)),
+      );
+      for (const field of segment.fields) annotationFieldRow(segmentFields, field);
+      block.append(
+        segmentFields,
+        button(message("Add segment field", "添加分段字段"), () =>
+          mutateAnnotation((draft) =>
+            draft.results[index].segments[segmentIndex].fields.push(
+              emptyAnnotationField(),
+            ),
+          ),
+        ),
+        button(message("Remove segment", "删除分段"), () =>
+          mutateAnnotation((draft) =>
+            draft.results[index].segments.splice(segmentIndex, 1),
+          ),
+        ),
+      );
+      segments.append(block);
+    }
+    card.append(
+      segments,
+      button(message("Add segment", "添加分段"), () =>
+        mutateAnnotation((draft) =>
+          draft.results[index].segments.push({
+            id: annotationId("segment"),
+            fields: [],
+          }),
+        ),
+      ),
+      button(message("Delete result", "删除结果"), () =>
+        mutateAnnotation((draft) => draft.results.splice(index, 1)),
+      ),
+      button(message("Split result", "拆分结果"), () =>
+        mutateAnnotation((draft) => {
+          const current = draft.results[index],
+            next = newAnnotationResult();
+          next.type = current.type;
+          next.fields = current.fields.splice(Math.ceil(current.fields.length / 2));
+          draft.results.splice(index + 1, 0, next);
+        }),
+      ),
+    );
+    if (index)
+      card.append(
+        button(message("Merge into previous", "合并到上一结果"), () =>
+          mutateAnnotation((draft) => {
+            const current = draft.results[index],
+              previous = draft.results[index - 1];
+            previous.fields.push(...current.fields);
+            previous.segments.push(...current.segments);
+            previous.status = "UNREVIEWED";
+            draft.results.splice(index, 1);
+          }),
+        ),
+      );
+    host.append(card);
+  }
+  if (!annotationDraft.results.length)
+    host.append(
+      node(
+        "p",
+        message(
+          "Zero expected results. Choose No relevant content only after checking the document; otherwise leave Unreviewed.",
+          "当前标准答案为零个结果。人工检查后才选择“无相关内容”，否则保留“尚未检查”。",
+        ),
+      ),
+    );
+}
+function loadAnnotation(saved, run) {
+  if (saved?.annotation) annotationDraft = JSON.parse(JSON.stringify(saved.annotation));
+  else {
+    const confirmed = Array.isArray(saved?.fields) ? saved.fields : [];
+    annotationDraft = {
+      documentStatus: confirmed.length ? "RESULTS" : "UNREVIEWED",
+      results: confirmed.length
+        ? [
+            {
+              id: "legacy-labels",
+              type: (run.trace?.typed?.items || []).some(
+                (i) => i.schema_id === "otr.import.flight",
+              )
+                ? "FLIGHT"
+                : "UNCLASSIFIED",
+              status: "CONFIRMED",
+              fields: confirmed.map((f) => ({ ...f, status: "CONFIRMED" })),
+              segments: [],
+            },
+          ]
+        : [],
+    };
+  }
+  el("kind").value = saved?.kind || "HUMAN_GROUND_TRUTH";
+  renderAnnotationForm();
+}
+
 function renderStats(stats) {
   const root = el("stats");
   root.replaceChildren();
@@ -985,10 +1685,25 @@ function renderStats(stats) {
     root.append(
       node(
         "p",
-        message(
-          "Unlabelled / hypothesis — accuracy is not scored.",
-          "未标注／仅推测 — 不计算准确率。",
-        ),
+        stats.annotationSummary
+          ? stats.annotationSummary.documentStatus === "NO_RELEVANT_CONTENT"
+            ? message(
+                "Human-marked no relevant content — field scoring is not applicable (N/A).",
+                "已人工标注无相关内容 — 字段评分不适用（N/A）。",
+              )
+            : stats.annotationSummary.wrongTypeResults
+              ? message(
+                  "Wrong business type marked — field scoring is not applicable (N/A).",
+                  "已标注业务类型识别错误 — 字段评分不适用（N/A）。",
+                )
+              : message(
+                  "This annotation is incomplete or has no supported scoring scope (N/A). Unchecked fields are not parsing errors.",
+                  "当前标注尚未完成或缺少支持的评分范围（N/A）；尚未检查不当作解析错误。",
+                )
+          : message(
+              "Unlabelled / hypothesis — accuracy is not scored.",
+              "未标注／仅推测 — 不计算准确率。",
+            ),
       ),
     );
   else {
@@ -1012,13 +1727,48 @@ function renderStats(stats) {
       node(
         "p",
         message(
-          "Exact unique field/value pairs against your complete labels; not formal booking quality.",
-          "以完整人工标签为基准，统计去重字段／值精确匹配，不代表正式预订质量。",
+          "Original-text matching on explicitly reviewed field paths only. Business-result, segment and participant identity matching is not scored; unlabelled fields are not errors.",
+          "仅对已明确检查的字段做原文值匹配；业务结果／航段／参与者身份匹配未评分。未标注字段不当作错误。",
         ),
         "muted",
       ),
     );
   }
+  for (const label of [
+    message("Type identification accuracy", "类型识别准确情况"),
+    message("Evidence validity rate", "证据有效率"),
+    message("Typed completeness", "结构完整性"),
+    message("Local-model incremental value", "本地模型增量价值"),
+    message("Remote upgrade rate", "远端升级率"),
+  ])
+    root.append(
+      node(
+        "p",
+        label +
+          ": N/A · " +
+          message("No compatible evaluation recorded", "未记录相应评估"),
+      ),
+    );
+  if (stats.annotationSummary) {
+    const summary = stats.annotationSummary;
+    root.append(
+      node(
+        "p",
+        message("Human annotations: ", "人工标注：") +
+          summary.resultCount +
+          message(" results · ", " 个结果 · ") +
+          summary.segmentCount +
+          message(" segments · ", " 个分段 · ") +
+          summary.confirmedFields +
+          message(" confirmed values · ", " 个确认值 · ") +
+          summary.notProvidedFields +
+          message(" not provided · ", " 个原件未提供 · ") +
+          summary.uncheckedFields +
+          message(" unchecked", " 个尚未检查"),
+      ),
+    );
+  }
+  if (stats.annotationSummary) details(root, stats.annotationSummary);
   details(root, stats);
 }
 async function refresh() {
@@ -1068,9 +1818,33 @@ async function refresh() {
       tr.append(node("td", value));
     const td = node("td");
     td.append(button(message("Inspect", "检查"), () => inspect(run.id)));
+    const replay = button(message("Run again", "再次运行"), () =>
+      runInputs([run.inputId], run.runtime),
+    );
+    replay.disabled =
+      batchRunning ||
+      state.busy ||
+      (run.runtime === "IOS_DIAGNOSTIC_COMPONENT" && !state.native?.ready);
+    td.append(replay);
+    for (const format of ["json", "html"]) {
+      const link = node("a", message("Export ", "导出 ") + format.toUpperCase());
+      link.href = "/api/run/" + run.id + "/" + format;
+      td.append(link);
+    }
     tr.append(td);
     el("runs").append(tr);
   }
+  const currentInput =
+    inspected?.inputId || inspected?.trace?.job?.inputId || el("inspect-input").value;
+  el("inspect-input").replaceChildren();
+  for (const input of savedInputs) {
+    const option = node("option", input.name);
+    option.value = input.id;
+    el("inspect-input").append(option);
+  }
+  if (savedInputs.some((i) => i.id === currentInput))
+    el("inspect-input").value = currentInput;
+  populateInspectionRuns();
   const previous = el("compare-input").value;
   el("compare-input").replaceChildren();
   for (const input of savedInputs) {
@@ -1096,8 +1870,20 @@ async function refresh() {
       ),
     );
 }
+function populateInspectionRuns() {
+  el("inspect-run").replaceChildren();
+  const runs = [...(latestState?.runs || [])]
+    .filter((r) => r.inputId === el("inspect-input").value)
+    .sort((a, b) => b.createdAt - a.createdAt);
+  for (const run of runs) {
+    const option = node("option", runName(run) + " · " + readableState(run.stage));
+    option.value = run.id;
+    el("inspect-run").append(option);
+  }
+  if (runs.some((r) => r.id === selectedRun)) el("inspect-run").value = selectedRun;
+}
 // Event wiring is deliberately separate so presentation can be tested without a browser runner.
-for (const name of ["test", "inspect", "compare"])
+for (const name of ["test", "inspect", "compare", "ground", "runs"])
   el("tab-" + name).onclick = () => {
     tab(name);
     if (name === "inspect" && !inspected) {
@@ -1110,10 +1896,17 @@ for (const name of ["test", "inspect", "compare"])
     }
   };
 el("language").onclick = () => {
+  if (selectedRun && !inspectionLoading) annotationDraft = readAnnotationForm();
   language = language === "en" ? "zh" : "en";
   localStorage.setItem("otr-workbench-language", language);
   translate();
   if (inspected) renderInspection(inspected, inspectedImported);
+  if (selectedRun && annotationDraft && !inspectionLoading) {
+    renderAnnotationForm();
+    setLabelControls();
+  }
+  if (lastComparison)
+    renderComparison(lastComparison.before, lastComparison.after, lastComparison.diff);
   void refresh().catch(fail);
 };
 el("files").onchange = (e) => {
@@ -1137,6 +1930,13 @@ el("run-all").onclick = () => {
   ).catch(fail);
 };
 el("runtime").onchange = updateRunControls;
+el("inspect-input").onchange = () => {
+  populateInspectionRuns();
+  if (el("inspect-run").value) void inspect(el("inspect-run").value).catch(fail);
+};
+el("inspect-run").onchange = () => {
+  if (el("inspect-run").value) void inspect(el("inspect-run").value).catch(fail);
+};
 el("compare-input").onchange = populateCompareRuns;
 el("a").onchange = updateCompareControl;
 el("b").onchange = updateCompareControl;
@@ -1166,14 +1966,29 @@ el("trace-file").onchange = async (e) => {
     fail(error);
   }
 };
-el("add-label").onclick = () => addLabelRow();
+el("add-label").onclick = () =>
+  mutateAnnotation((draft) => {
+    draft.documentStatus = "RESULTS";
+    draft.results.push(newAnnotationResult());
+  });
+el("document-status").onchange = () =>
+  mutateAnnotation((draft) => {
+    if (draft.documentStatus === "NO_RELEVANT_CONTENT") draft.results = [];
+  });
 el("save-labels").onclick = () => {
   void saveLabels().catch(fail);
 };
 translate();
 setLabelControls();
 tab("test");
-void refresh().catch(fail);
+void refresh()
+  .then(() => {
+    const latest = [...(latestState?.runs || [])].sort(
+      (a, b) => b.createdAt - a.createdAt,
+    )[0];
+    if (latest) return inspect(latest.id);
+  })
+  .catch(fail);
 setInterval(() => {
   void refresh().catch(() => undefined);
 }, 1500);

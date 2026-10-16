@@ -15,6 +15,15 @@ class Element {
   className = "";
   href = "";
   src = "";
+  private identifier = "";
+  register?: (id: string, element: Element) => void;
+  set id(value: string) {
+    this.identifier = value;
+    this.register?.(value, this);
+  }
+  get id() {
+    return this.identifier;
+  }
   constructor(tag: string) {
     this.tag = tag;
   }
@@ -40,7 +49,11 @@ function browser() {
         if (!elements.has(id)) elements.set(id, new Element("div"));
         return elements.get(id);
       },
-      createElement: (tag: string) => new Element(tag),
+      createElement: (tag: string) => {
+        const e = new Element(tag);
+        e.register = (id, n) => elements.set(id, n);
+        return e;
+      },
     },
     localStorage: { getItem: () => null },
     TextEncoder,
@@ -105,7 +118,14 @@ const trace = {
   },
   typed: {
     status: "PARTIAL",
-    items: [{ fields: [{ path: "service", raw: "NZ 5069" }], deferred: [] }],
+    items: [
+      {
+        schema_id: "otr.import.flight",
+        token: "item",
+        fields: [{ path: "service", raw: "NZ 5069" }],
+        deferred: [],
+      },
+    ],
   },
 };
 describe("human-readable workbench presentation", () => {
@@ -129,36 +149,36 @@ describe("human-readable workbench presentation", () => {
     expect(text).toContain("模型输出未能匹配原文证据");
     expect(text).toContain("被拒绝的模型原始输出未保留");
     expect(text).toContain("本地增强条件仍缺：出发机场、到达机场");
-    expect(text).toContain("不是完整 Admission 必填校验");
+    expect(text).toContain("不是完整 Admission");
     expect(text).toContain("解析与模型能力检查合计：0.20 秒");
     expect(text).toContain("证据校验包含在解析／模型处理中，未单独计时");
-    expect(text).toContain("诊断工具不提供此步骤");
+    expect(text).toContain("Admission：未运行");
   });
   it("uses UTF-8 evidence offsets and converts Vision bottom-left coordinates without inventing regions", () => {
     const b = browser();
     b.context.trace = trace;
     b.run(
-      `savedInputs = [{ id: trace.job.inputId, name: 'Original.jpg', mediaType: 'image/jpeg' }]; locateEvidence(trace, trace.result.fields[0], trace.job.inputId)`,
+      `savedInputs = [{ id: trace.job.inputId, name: 'Original.jpg', mediaType: 'image/jpeg' }]; selectField(trace, trace.result.fields[0], trace.job.inputId)`,
     );
-    const e = b.elements.get("evidence-view")!;
+    const e = b.elements.get("document-preview")!;
     expect(allText(e)).toContain("NZ 5069");
     const box = descendants(e).find((n) => n.className === "box")!;
     expect(parseFloat(box.style.top)).toBeCloseTo(60);
     expect(box.style.left).toBe("20%");
     expect(box.style.width).toBe("40%");
-    b.run("locateEvidence(trace, {path:'service',raw:'unknown'}, trace.job.inputId)");
+    b.run("selectField(trace, {path:'service',raw:'unknown'}, trace.job.inputId)");
     expect(descendants(e).filter((n) => n.className === "box")).toHaveLength(0);
-    expect(allText(e)).toContain("没有已记录的文本范围");
+    expect(allText(e)).toContain("未记录精确文本范围");
   });
   it("displays recorded zero-based PDF pages as one-based only", () => {
     const b = browser();
     b.context.trace = trace;
     b.run(
-      `savedInputs = [{ id: trace.job.inputId, name: 'Original.pdf', mediaType: 'application/pdf' }]; locateEvidence(trace, {path:'service',raw:'NZ 5069', evidence:[{start:7,end:14,pages:[0],boxes:[]}]}, trace.job.inputId)`,
+      `savedInputs = [{ id: trace.job.inputId, name: 'Original.pdf', mediaType: 'application/pdf' }]; selectField(trace, {path:'service',raw:'NZ 5069', evidence:[{start:7,end:14,pages:[0],boxes:[]}]}, trace.job.inputId)`,
     );
-    const e = b.elements.get("evidence-view")!;
-    expect(allText(e)).toContain("第 1 页");
-    expect(descendants(e).find((n) => n.tag === "iframe")!.src).toContain("#page=1");
+    const e = b.elements.get("document-preview")!;
+    expect(allText(e)).toContain("记录页码：1");
+    expect(allText(e)).toContain("页数未记录");
   });
   it("defaults comparison to two different latest finished runs for the same input", () => {
     const b = browser();
@@ -221,7 +241,9 @@ describe("human-readable workbench presentation", () => {
       'api = async (path) => path.endsWith("/labels") ? {kind:"HUMAN_GROUND_TRUTH", fields:[{path:"service",raw:"NZ 5069"}]} : path.endsWith("/stats") ? {status:"HUMAN_LABELLED",tp:1,fp:0,fn:0,precision:1,recall:1} : run',
     );
     await b.run('inspect("run")');
-    const label = b.elements.get("labels")!.children[0];
+    const label = descendants(b.elements.get("labels")!).find(
+      (n) => n.className === "label-row",
+    )!;
     expect(label.children.find((n) => n.tag === "select")!.value).toBe("service");
     expect(label.children.find((n) => n.tag === "input")!.value).toBe("NZ 5069");
   });
@@ -260,7 +282,9 @@ describe("human-readable workbench presentation", () => {
     });
     await a;
     expect(b.run("selectedRun")).toBe("B");
-    const rows = b.elements.get("labels")!.children;
+    const rows = descendants(b.elements.get("labels")!).filter(
+      (n) => n.className === "label-row",
+    );
     expect(rows).toHaveLength(1);
     expect(rows[0].children.find((n) => n.tag === "input")!.value).toBe("B_VALUE");
   });
@@ -315,15 +339,19 @@ describe("human-readable workbench presentation", () => {
     post.resolve({ saved: true });
     await saving;
     const writes = calls.filter((c) => c.value);
-    expect(writes).toEqual([
-      {
-        path: "/api/run/A/labels",
-        value: {
-          kind: "HUMAN_GROUND_TRUTH",
-          fields: [{ path: "service", raw: "A_VALUE" }],
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatchObject({
+      path: "/api/run/A/labels",
+      value: {
+        kind: "HUMAN_GROUND_TRUTH",
+        fields: [{ path: "service", raw: "A_VALUE" }],
+        annotation: {
+          results: [
+            { fields: [{ path: "service", raw: "A_VALUE", status: "CONFIRMED" }] },
+          ],
         },
       },
-    ]);
+    });
     expect(b.run("selectedRun")).toBe("B");
     expect(allText(b.elements.get("stats")!)).toContain("B_STATS");
     expect(allText(b.elements.get("stats")!)).not.toContain("A_STATS");
@@ -389,11 +417,17 @@ describe("human-readable workbench presentation", () => {
     };
     b.run("renderInspection(run)");
     const typed = descendants(b.elements.get("inspection")!).find(
-      (n) => (n as Element & { id: string }).id === "stage-typed",
+      (n) => (n as Element & { id: string }).id === "parsed-results",
     )!;
-    expect(allText(typed)).toContain("交通类型: 航班");
-    expect(allText(typed)).toContain("出发地点: Auckland");
-    expect(allText(typed)).not.toContain("Auckland to Nelson");
+    expect(allText(typed)).toContain("交通类型");
+    expect(allText(typed)).toContain("航班");
+    expect(allText(typed)).toContain("出发地点");
+    expect(allText(typed)).toContain("Auckland");
+    const displayed = descendants(typed)
+      .filter((n) => n.tag === "td")
+      .map((n) => n.textContent)
+      .join(" ");
+    expect(displayed).not.toContain("Auckland to Nelson");
   });
   it("formats existing service / airport / clock values but retains the raw evidence span", () => {
     const b = browser();
@@ -420,8 +454,8 @@ describe("human-readable workbench presentation", () => {
       normalized: { value: "13:27" },
       evidence: [{ start: 0, end: new TextEncoder().encode(raw).length }],
     };
-    b.run('locateEvidence(clockTrace,clockField,"unattached")');
-    expect(allText(b.elements.get("evidence-view")!)).toContain(raw);
+    b.run('selectField(clockTrace,clockField,"unattached")');
+    expect(allText(b.elements.get("document-preview")!)).toContain(raw);
   });
   it("does not invent a normalized value when null or unknown", () => {
     const b = browser();
@@ -436,6 +470,152 @@ describe("human-readable workbench presentation", () => {
         'fieldValue({path:"service",normalized:{unknown:"x"},raw:"Flight: unknown"})',
       ),
     ).toBe("原文：Flight: unknown");
+  });
+  it("provides all five workspaces and an actual three-column inspector", () => {
+    const html = workbenchHtml();
+    for (const key of ["test", "inspect", "compare", "ground", "runs"])
+      expect(html).toContain(`id="panel-${key}"`);
+    const b = browser();
+    b.context.run = { trace };
+    b.run("renderInspection(run)");
+    const root = b.elements.get("inspection")!;
+    expect(descendants(root).some((n) => n.className === "inspector-columns")).toBe(true);
+    for (const key of ["document-preview", "parsed-results", "field-chain"])
+      expect(b.elements.get(key)).toBeDefined();
+  });
+  it("shows zero interpretations without fabricating a Booking or diagnosing unsupported content from prose", () => {
+    const b = browser();
+    b.context.run = {
+      trace: {
+        ...trace,
+        result: { ...trace.result, fields: [], supplementalServiceObservations: [] },
+        typed: { items: [] },
+      },
+    };
+    b.run("renderInspection(run)");
+    const text = allText(b.elements.get("inspection")!);
+    expect(text).toContain("解释结果 × 0");
+    expect(text).toContain("未发现可用的旅行预订信息");
+    expect(text).toContain("不代表未支持的文件没有旅行内容");
+    expect(text).not.toContain("Booking × 1");
+  });
+  it("does not turn unknown actual schema output into a flight result", () => {
+    const b = browser();
+    b.context.run = {
+      trace: {
+        ...trace,
+        typed: {
+          items: [
+            {
+              schema_id: "unknown.real.output",
+              fields: [{ path: "property_name", raw: "Real provided value" }],
+            },
+          ],
+        },
+      },
+    };
+    b.run("renderInspection(run)");
+    expect(allText(b.elements.get("parsed-results")!)).toContain("未分类解释");
+    expect(allText(b.elements.get("parsed-results")!)).toContain("Real provided value");
+  });
+  it("distinguishes Not Run from Not Recorded and does not invent consolidation", () => {
+    const b = browser();
+    b.context.trace = {
+      ...trace,
+      remote: "NOT_USED",
+      admission: "NOT_AVAILABLE",
+      result: { ...trace.result, modelExecution: "NOT_RUN" },
+    };
+    b.run("renderFieldChain(trace,trace.result.fields[0],trace.job.inputId)");
+    const text = allText(b.elements.get("field-chain")!);
+    expect(text).toContain("未运行");
+    expect(text).toContain("未记录独立汇总处理步骤");
+    expect(text).toContain("不代表用户确认或正式准入");
+  });
+  it("uses real PDF page previews and thumbnails with no fabricated rectangles", () => {
+    const b = browser();
+    b.context.trace = {
+      ...trace,
+      extraction: {
+        text: "document",
+        pages: [
+          { pageIndex: 0, start: 0, end: 3 },
+          { pageIndex: 1, start: 4, end: 8 },
+        ],
+      },
+    };
+    b.run(
+      'savedInputs=[{id:trace.job.inputId,name:"Real.pdf",mediaType:"application/pdf"}];renderDocumentPreview(trace,trace.job.inputId,{path:"service",evidence:[{pages:[1]}]})',
+    );
+    const nodes = descendants(b.elements.get("document-preview")!);
+    expect(nodes.some((n) => n.tag === "img" && n.src.endsWith("/preview?page=2"))).toBe(
+      true,
+    );
+    expect(nodes.filter((n) => n.className === "box")).toHaveLength(0);
+    expect(nodes.filter((n) => n.tag === "img")).toHaveLength(3);
+  });
+  it("roundtrips zero / multiple annotation results, segments and participant labels without business writes", () => {
+    const b = browser();
+    b.context.annotation = {
+      documentStatus: "RESULTS",
+      results: [
+        {
+          id: "gt-a",
+          type: "FLIGHT",
+          status: "CONFIRMED",
+          fields: [
+            {
+              path: "service",
+              raw: "NZ 5069",
+              status: "CONFIRMED",
+              participantId: "Traveller A",
+            },
+          ],
+          segments: [
+            {
+              id: "leg-1",
+              fields: [{ path: "origin.airport", raw: "AKL", status: "NOT_PROVIDED" }],
+            },
+          ],
+        },
+        {
+          id: "gt-b",
+          type: "STAY",
+          status: "UNREVIEWED",
+          fields: [{ path: "property_name", raw: "", status: "UNCHECKED" }],
+          segments: [],
+        },
+      ],
+    };
+    b.run("annotationDraft=annotation;renderAnnotationForm()");
+    expect(b.run("readAnnotationForm()")).toEqual(b.context.annotation);
+    b.run(
+      'annotationDraft={documentStatus:"NO_RELEVANT_CONTENT",results:[]};renderAnnotationForm()',
+    );
+    expect(b.run("readAnnotationForm()")).toEqual({
+      documentStatus: "NO_RELEVANT_CONTENT",
+      results: [],
+    });
+  });
+  it("displays stage statistics separately without inventing rejection / required counts", () => {
+    const b = browser();
+    b.context.run = { trace };
+    b.run("renderInspection(run)");
+    const text = allText(b.elements.get("inspection")!);
+    expect(text).toContain("拒绝字段数：未记录");
+    expect(text).toContain("必填缺项总数：未记录");
+    b.run('renderMatrix(el("matrix"),run.trace)');
+    expect(allText(b.elements.get("matrix")!)).toContain("不是完整 Admission 校验");
+  });
+  it("treats a checked no-content annotation as inapplicable, not unlabelled or inaccurate", () => {
+    const b = browser();
+    b.run(
+      'renderStats({status:"N/A",annotationSummary:{documentStatus:"NO_RELEVANT_CONTENT",resultCount:0,segmentCount:0,confirmedFields:0,notProvidedFields:0,uncheckedFields:0,wrongTypeResults:0}})',
+    );
+    const text = allText(b.elements.get("stats")!);
+    expect(text).toContain("已人工标注无相关内容");
+    expect(text).not.toContain("未标注／仅推测");
+    expect(text).not.toContain("0.0%");
   });
   it("renders hostile file names, values and trace text as literal text nodes", () => {
     const b = browser();
