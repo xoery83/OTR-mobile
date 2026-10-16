@@ -105,14 +105,23 @@ export function WindowedDayList<T>({
   const saved = useRef<DayScrollAnchor | null>(null);
   const pending = useRef<{ anchor: DayScrollAnchor; attempts: number } | null>(null);
   const scheduled = useRef<number | null>(null);
-  const attempt = useCallback(() => {
+  const resolveRequest = useCallback(() => {
     const request = pending.current;
-    if (!request) return;
+    if (!request) return null;
     const target = resolveDayAnchor(live.current.rows, request.anchor);
     if (!target) {
       pending.current = null;
-      return;
+      live.current.onJumpResult?.("UNMEASURED", request.anchor.date);
+      return null;
     }
+    const row = live.current.rows[target.index];
+    request.anchor = { key: row.key, date: row.date, within: target.within };
+    return { request, target };
+  }, []);
+  const attempt = useCallback(() => {
+    const resolved = resolveRequest();
+    if (!resolved) return;
+    const { request, target } = resolved;
     if (request.attempts >= 3) {
       pending.current = null;
       live.current.onJumpResult?.("UNMEASURED", request.anchor.date);
@@ -124,7 +133,7 @@ export function WindowedDayList<T>({
       animated: false,
       viewOffset: live.current.topInset - target.within,
     });
-  }, []);
+  }, [resolveRequest]);
   const restore = useCallback(
     (anchor: DayScrollAnchor) => {
       if (!resolveDayAnchor(live.current.rows, anchor)) return false;
@@ -216,14 +225,14 @@ export function WindowedDayList<T>({
           lastVisibleDate: visibleDates.current[visibleDates.current.length - 1],
           scrollOffset: offset.current,
         });
-      const request = pending.current;
+      const request = resolveRequest()?.request;
       if (request && visible.some(({ item }) => item.key === request.anchor.key)) {
         pending.current = null;
         saved.current = request.anchor;
         live.current.onJumpResult?.("REACHED", request.anchor.date);
       } else retry();
     },
-    [retry],
+    [retry, resolveRequest],
   );
   return (
     <FlatList

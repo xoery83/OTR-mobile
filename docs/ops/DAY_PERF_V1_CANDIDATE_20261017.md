@@ -31,7 +31,7 @@ Coordinator exclusively writes DayFeed, LocalManualDayFeed integration, TripScre
 
 `npx vitest run src/features/day-feed/dayFeedWindow.test.ts src/features/day-feed/WindowedDayList.test.ts src/features/day-feed/DayFeed.navigation.test.ts`
 
-26 tests PASS (12 new + 14 unchanged navigation). Local command duration ~196 ms; this is **test-runner duration, not Native performance**.
+29 tests PASS (15 new + 14 unchanged navigation). Local command duration ~185 ms; this is **test-runner duration, not Native performance**.
 
 | Case                      | Executed evidence                                                                                                                     | Native gap                                                |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
@@ -46,3 +46,7 @@ Typecheck, scoped ESLint, UI guard and diff whitespace checks PASS. Component te
 ## Integration gate / known limit
 
 Candidate can be integrated by the single Screen Root writer. DAY-PERF PASS requires integrated Native measurements and direct-date/variable-height/offline/return tests, plus the real Japan reader. Keep Day Feed overall PARTIAL while Lab renderer/port recovery remains unresolved.
+
+## Independent Review correction
+
+Deleted-row restoration now normalizes pending key/date/offset to the actual same-date Header in both scroll attempts and viewability completion. A disappearing target date reports UNMEASURED and never chooses a different date. Directed component regressions cover deletion before restore, immutable sync snapshot deletion while pending, cleared retries after REACHED and removal of the entire target date. Independent re-review remains required for the fixed commit.
