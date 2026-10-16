@@ -43,6 +43,23 @@ const state = vi.hoisted(() => ({
   appActive: null as (() => void) | null,
   resume: null as any,
 }));
+vi.mock("@/data/repositories/tripDiscoveryRepository", () => ({
+  readLocalTripDiscoveryRepository: async () => ({
+    readMerged: async () => ({ trips: [] }),
+  }),
+}));
+vi.mock("./DayFeedCalendarSheet", () => ({ DayFeedCalendarSheet: () => null }));
+vi.mock("./DayFeedShell", () => ({
+  DayFeedIntroduction: () => null,
+  DayFeedShellTitle: () => null,
+  formatDayFeedVisibleDates: () => "visible dates",
+  useDayFeedShellState: () => ({
+    navigationVisible: true,
+    visibleDates: null,
+    observeScroll: vi.fn(),
+    observeVisibleDates: vi.fn(),
+  }),
+}));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useSyncExternalStore: () => state.renderedGeneration,
@@ -161,6 +178,7 @@ vi.mock("./TripViewContext", async (original) => ({
     entry: undefined,
     saveReading: state.saveReading,
     enterHeader: state.enterHeader,
+    publishDayShellChrome: vi.fn(),
   }),
 }));
 function render() {
@@ -185,7 +203,7 @@ function find(node: ReactNode, type: any): any {
 }
 async function loaded() {
   render();
-  for (let i = 0; i < 12; i++) await Promise.resolve();
+  await new Promise<void>((resolve) => setImmediate(resolve));
   return render();
 }
 beforeEach(() => {

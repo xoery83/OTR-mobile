@@ -14,6 +14,8 @@ const state = vi.hoisted(() => ({
   refCursor: 0,
   nodes: [] as any[],
   scrollTo: vi.fn(),
+  window: null as any,
+  anchor: null as any,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -47,6 +49,44 @@ vi.mock("react-native", () => {
     StyleSheet: { create: (s: any) => s, hairlineWidth: 1 },
   };
 });
+// Component navigation tests use an explicit list port double. Native windowing has its own tests.
+vi.mock("./WindowedDayList", () => ({
+  WindowedDayList: (p: any) => {
+    state.window = p;
+    state.anchor ??= p.initialAnchor;
+    const handle = {
+      saveAnchor: () => state.anchor,
+      restoreAnchor: (anchor: any) => {
+        state.anchor = anchor;
+        state.scrollTo(anchor);
+        return true;
+      },
+      jumpToDayHeader: (date: string) => {
+        state.anchor = { key: `day:${date}`, date, within: 0 };
+        state.scrollTo(state.anchor);
+        return true;
+      },
+    };
+    if (typeof p.listRef === "function") p.listRef(handle);
+    else if (p.listRef) p.listRef.current = handle;
+    state.nodes.push({
+      ...p,
+      isOwningList: true,
+      contentContainerStyle: [p.contentContainerStyle, { paddingBottom: p.bottomInset }],
+      scrollIndicatorInsets: { bottom: p.bottomInset },
+      onScroll: (event: any) => {
+        p.onOffsetChange?.(event.nativeEvent.contentOffset.y);
+        p.onAnchorChange?.(state.anchor);
+      },
+    });
+    return createElement(
+      "div",
+      {},
+      p.header,
+      p.rows.map((row: any) => createElement("div", { key: row.key }, p.renderRow(row))),
+    );
+  },
+}));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: (create: any) => create({}) }));
 vi.mock("@/ui/locale", () => ({
   t: (key: string) => key,
@@ -92,17 +132,19 @@ beforeEach(() => {
   state.hooks = [];
   state.refs = [];
   state.scrollTo.mockClear();
+  state.window = null;
+  state.anchor = null;
 });
-it("restores reading scroll and clears it on same-day explicit header entry", () => {
+it("passes the saved stable anchor to the owning list and resets explicit header focus", () => {
+  const anchor = { key: `day:${syntheticDate}`, date: syntheticDate, within: 385 };
   render({
     entry: {
       revision: 1,
       kind: "RESUME",
-      reading: { offset: 385, focus: fixture.before.id },
+      reading: { offset: 385, focus: fixture.before.id, anchor },
     },
   });
-  state.nodes.find((p) => p.onContentSizeChange).onContentSizeChange();
-  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 385, animated: false });
+  expect(state.window.initialAnchor).toEqual(anchor);
   render({
     entry: {
       revision: 2,
@@ -117,7 +159,11 @@ it("restores reading scroll and clears it on same-day explicit header entry", ()
       reading: { offset: 0, focus: null },
     },
   });
-  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 0, animated: false });
+  expect(state.window.initialAnchor).toEqual({
+    key: `day:${syntheticDate}`,
+    date: syntheticDate,
+    within: 0,
+  });
   expect(state.nodes.filter((p) => p.depth === "F")).toHaveLength(0);
 });
 it("direct existing Immersive has no timeline and closes without emitting a Day reading", () => {
@@ -150,7 +196,9 @@ it("first P1 intent focuses, explicit richer detail opens Immersive, Close retai
   state.nodes
     .find((p) => p.event?.id === fixture.before.id && p.depth === "B")
     .onDepth("F");
-  expect(reading).toHaveBeenLastCalledWith({ offset: 385, focus: fixture.before.id });
+  expect(reading).toHaveBeenLastCalledWith(
+    expect.objectContaining({ offset: 385, focus: fixture.before.id }),
+  );
   expect(render(props)).toContain(`${fixture.before.id}:F`);
   state.nodes
     .find((p) => p.event?.id === fixture.before.id && p.depth === "F")
@@ -194,11 +242,12 @@ it("continuous dated sections share one Focus and one scroll; legacy reading res
   };
   render(props);
   expect(state.nodes.filter((p) => p.onScroll)).toHaveLength(1);
-  const headers = state.nodes.filter((p) => p.onLayout);
-  headers[0].onLayout({ nativeEvent: { layout: { y: 0 } } });
-  headers[1].onLayout({ nativeEvent: { layout: { y: 500 } } });
-  state.nodes.find((p) => p.onContentSizeChange).onContentSizeChange();
-  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 672, animated: false });
+  expect(state.window.initialAnchor).toEqual({
+    key: `day:${otherDate}`,
+    date: otherDate,
+    within: 172,
+  });
+  state.anchor = { key: `day:${otherDate}`, date: otherDate, within: 172 };
   const occurrences = state.nodes.filter((p) => p.event?.id === fixture.before.id);
   expect(occurrences).toHaveLength(2);
   occurrences[1].onDepth("F");
@@ -293,7 +342,7 @@ it("accepted plus local keeps the normal renderer, Focus/Immersive and a single 
   expect(html).toContain(`LOCAL ${fixture.before.id}`);
   expect(html).toContain("LOCAL new-local");
   expect(state.nodes.some((p) => p.event?.id === fixture.before.id)).toBe(false);
-  expect(state.nodes.filter((p) => p.isScrollView)).toHaveLength(1);
+  expect(state.nodes.filter((p) => p.isOwningList)).toHaveLength(1);
   state.nodes
     .find((p) => p.accessibilityLabel === `LOCAL ${fixture.before.id}`)
     .onPress();
@@ -334,7 +383,7 @@ it("without accepted projection only local date-only feed owns one scroll and no
   const local = localManual();
   const html = render({ projection: undefined, localManual: local, zone: "" });
   expect(html).toContain("LOCAL new-local");
-  expect(state.nodes.filter((p) => p.isScrollView)).toHaveLength(1);
+  expect(state.nodes.filter((p) => p.isOwningList)).toHaveLength(1);
   expect(state.nodes.some((p) => p.event)).toBe(false);
 });
 
@@ -347,18 +396,18 @@ it.each(["accepted", "local"])(
         ? { projection: undefined, localManual: localManual(), zone: "" }
         : {}),
     });
-    const scrolls = state.nodes.filter((p) => p.isScrollView);
+    const scrolls = state.nodes.filter((p) => p.isOwningList);
     expect(scrolls).toHaveLength(1);
     expect(scrolls[0].contentContainerStyle).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ paddingBottom: visual.space.section + 94 }),
       ]),
     );
-    expect(scrolls[0].scrollIndicatorInsets).toEqual({ bottom: 94 });
+    expect(scrolls[0].scrollIndicatorInsets.bottom).toBeGreaterThanOrEqual(94);
   },
 );
 
-it("recalibrates an explicit date anchor after late layout growth until user scroll begins", () => {
+it("explicit date entry supplies a header anchor without rendering preceding dates to locate it", () => {
   const otherDate = "2027-02-04";
   render({
     dates: [syntheticDate, otherDate],
@@ -369,16 +418,15 @@ it("recalibrates an explicit date anchor after late layout growth until user scr
       reading: { offset: 0, focus: null },
     },
   });
-  const headers = state.nodes.filter((p) => p.onLayout);
-  const scroll = state.nodes.find((p) => p.onContentSizeChange);
-  headers[1].onLayout({ nativeEvent: { layout: { y: 500 } } });
-  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 500, animated: false });
-  headers[1].onLayout({ nativeEvent: { layout: { y: 1300 } } });
-  scroll.onContentSizeChange();
-  expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 1300, animated: false });
-  scroll.onScrollBeginDrag();
-  state.scrollTo.mockClear();
-  headers[1].onLayout({ nativeEvent: { layout: { y: 1700 } } });
-  scroll.onContentSizeChange();
+  expect(state.window.initialAnchor).toEqual({
+    key: `day:${otherDate}`,
+    date: otherDate,
+    within: 0,
+  });
+  expect(
+    state.window.rows.find((row: any) => row.key === `day:${otherDate}`),
+  ).toBeDefined();
+  state.window.onInteraction();
+  state.window.onOffsetChange(1300);
   expect(state.scrollTo).not.toHaveBeenCalled();
 });

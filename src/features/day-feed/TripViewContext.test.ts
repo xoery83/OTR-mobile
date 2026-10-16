@@ -214,3 +214,26 @@ it("confirming the same working Trip cannot reset a newly opened Today header", 
   expect(state.entry.kind).toBe("EXPLICIT_TODAY_HEADER");
   expect(switchWorkingTrip(state, "a", 2).view).toBeNull();
 });
+
+it("keeps a finite stable row anchor in its matching civil Day bookmark, without changing time facts", () => {
+  const state = enterTripDay(emptyTripNavigation, a);
+  const anchor = { key: "item:a:START", date: "2026-10-16", within: 37 };
+  const saved = saveTripReading(state, a, {
+    offset: 450,
+    focus: null,
+    layout: "WHOLE_TRIP",
+    anchoredDate: anchor.date,
+    anchor,
+  });
+  expect(saved.bookmarks.a.view.zone).toBe(a.zone);
+  expect(saved.bookmarks.a.reading.anchor).toEqual(anchor);
+  expect(
+    saveTripReading(state, a, {
+      offset: 450,
+      focus: null,
+      layout: "WHOLE_TRIP",
+      anchoredDate: anchor.date,
+      anchor: { ...anchor, date: "2026-10-17" },
+    }).bookmarks.a.reading.anchor,
+  ).toBeUndefined();
+});

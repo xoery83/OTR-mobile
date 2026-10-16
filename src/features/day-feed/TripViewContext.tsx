@@ -22,6 +22,7 @@ export type DayReading = {
   focus: string | null;
   layout?: "WHOLE_TRIP";
   anchoredDate?: string;
+  anchor?: { key: string; date: string; within: number };
 };
 export type DayEntryKind =
   "RESUME" | "EXPLICIT_TODAY_HEADER" | "FIRST_VALID_PAST_DAY_HEADER";
@@ -97,6 +98,15 @@ export function saveTripReading(
         reading: {
           offset: Number.isFinite(reading.offset) ? Math.max(0, reading.offset) : 0,
           focus: reading.focus,
+          ...(reading.anchor &&
+          typeof reading.anchor.key === "string" &&
+          reading.anchor.key.length > 0 &&
+          reading.anchor.key.length <= 512 &&
+          reading.anchor.date === anchoredDate &&
+          Number.isFinite(reading.anchor.within) &&
+          reading.anchor.within >= 0
+            ? { anchor: reading.anchor }
+            : {}),
           ...(reading.layout === "WHOLE_TRIP"
             ? { layout: reading.layout, ...(anchoredDate ? { anchoredDate } : {}) }
             : {}),
@@ -138,7 +148,15 @@ export type TripQuickActions = {
   itinerary(date: string | null): void;
   photos?: () => void;
 };
+export type DayShellChrome = {
+  tripId: string;
+  generation: number;
+  owner: symbol;
+  navigationVisible: boolean;
+};
 const Context = createContext<{
+  dayShellChrome: DayShellChrome | null;
+  publishDayShellChrome: (value: DayShellChrome | null, owner: symbol) => void;
   localOutcome: { tripId: string; generation: number; id: string } | null;
   reportLocalOutcome: (tripId: string, generation: number, id: string) => void;
   quickActions: TripQuickActions | null;
@@ -158,6 +176,8 @@ const Context = createContext<{
   resume: () => void;
   saveReading: (view: TripView, reading: DayReading) => void;
 }>({
+  dayShellChrome: null,
+  publishDayShellChrome: () => {},
   localOutcome: null,
   reportLocalOutcome: () => {},
   quickActions: null,
@@ -187,6 +207,16 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
     (tripId: string, captured: number, id: string) => {
       if (captured === getAccountGeneration())
         setLocalOutcome({ tripId, generation: captured, id });
+    },
+    [],
+  );
+  const [dayShellChrome, setDayShellChrome] = useState<DayShellChrome | null>(null);
+  const publishDayShellChrome = useCallback(
+    (value: DayShellChrome | null, owner: symbol) => {
+      if (value && value.generation !== getAccountGeneration()) return;
+      setDayShellChrome(
+        (previous) => value ?? (previous?.owner === owner ? null : previous),
+      );
     },
     [],
   );
@@ -238,6 +268,8 @@ export function TripViewProvider({ children }: { children: ReactNode }) {
   return (
     <Context.Provider
       value={{
+        dayShellChrome: dayShellChrome?.generation === generation ? dayShellChrome : null,
+        publishDayShellChrome,
         localOutcome: localOutcome?.generation === generation ? localOutcome : null,
         reportLocalOutcome,
         quickActions: quickActions?.generation === generation ? quickActions : null,

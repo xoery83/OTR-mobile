@@ -1,3 +1,16 @@
+import {
+  DayFeedIntroduction,
+  DayFeedShellTitle,
+  formatDayFeedVisibleDates,
+  useDayFeedShellState,
+} from "./DayFeedShell";
+import { DayFeedCalendarSheet } from "./DayFeedCalendarSheet";
+import type { DayListHandle } from "./WindowedDayList";
+import type { DaySummary } from "./dayFeedWindow";
+import {
+  readLocalTripDiscoveryRepository,
+  type TripListSummary,
+} from "@/data/repositories/tripDiscoveryRepository";
 import { LocalCoreItemPreview } from "./LocalCoreItemPreview";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import {
@@ -25,7 +38,6 @@ import {
   useFocusEffect,
 } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
-import { openTripHome } from "@/components/openTripHome";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -36,7 +48,7 @@ import {
 } from "@/data/repositories/tripDayFeedRepository";
 import { UiButton, UiText as ThemedText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
-import { t } from "@/ui/locale";
+import { t, formatUiDate } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -122,8 +134,16 @@ function TripContent({ today = false }: { today?: boolean }) {
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  const { view, resumeView, select, switchTrip, entry, saveReading, enterHeader } =
-    useTripView();
+  const {
+    view,
+    resumeView,
+    select,
+    switchTrip,
+    entry,
+    saveReading,
+    enterHeader,
+    publishDayShellChrome,
+  } = useTripView();
   const params = useLocalSearchParams<{
     tripId?: string;
     date?: string;
@@ -131,6 +151,17 @@ function TripContent({ today = false }: { today?: boolean }) {
     view?: string;
     homeQaScenario?: string;
   }>();
+  const [dayTripFacts, setDayTripFacts] = useState<{
+    generation: number;
+    trip: TripListSummary;
+  } | null>(null);
+  const [calendarVisible, setCalendarVisible] = useState(false);
+  const [daySummaries, setDaySummaries] = useState<DaySummary[]>([]);
+  const dayList = useRef<DayListHandle>(null);
+  const dayUserDriven = useRef(false);
+  const dayOffset = useRef(0);
+  const [dayPastIntroduction, setDayPastIntroduction] = useState(false);
+  const [dayChromeOwner] = useState(() => Symbol("day-shell"));
   const [revision, setRevision] = useState(0);
   const [localItem, setLocalItem] = useState<LocalItem | null>(null);
   const [date, setDate] = useState(value(params.date));
@@ -153,15 +184,49 @@ function TripContent({ today = false }: { today?: boolean }) {
     : params.view === "trips" || params.view === "create"
       ? ""
       : value(params.tripId);
+  const dayShell = useDayFeedShellState(JSON.stringify([requested, generation]));
+  const dayFacts =
+    dayTripFacts?.generation === generation && dayTripFacts.trip.id === requested
+      ? dayTripFacts.trip
+      : null;
+  const dayName = dayFacts?.name ?? t("navigation.trip");
+  const dayActive = !!requested && (today || params.view === "day");
+  const dayTitle =
+    dayPastIntroduction && dayShell.visibleDates
+      ? formatDayFeedVisibleDates(dayShell.visibleDates)
+      : dayName;
+  useLayoutEffect(() => {
+    if (!dayActive || !navigation.isFocused()) return;
+    publishDayShellChrome(
+      {
+        tripId: requested,
+        generation,
+        owner: dayChromeOwner,
+        navigationVisible: dayShell.navigationVisible,
+      },
+      dayChromeOwner,
+    );
+    return () => publishDayShellChrome(null, dayChromeOwner);
+  }, [
+    dayActive,
+    requested,
+    generation,
+    dayChromeOwner,
+    dayShell.navigationVisible,
+    publishDayShellChrome,
+    navigation,
+  ]);
   const isMyTrips = !today && !requested && params.view !== "create";
   const immersiveHome = !today && home && !!requested;
   const headerTitle = isMyTrips
     ? t(headingHidden ? "dayFeed.myTrips" : "myTrips.appTitle")
     : requested && home
       ? ""
-      : t("navigation.trip");
+      : dayActive
+        ? dayTitle
+        : t("navigation.trip");
   useLayoutEffect(() => {
-    if (today) return;
+    if (today && !dayActive) return;
     navigation.setOptions({
       headerTransparent: true,
       headerStyle: {
@@ -169,19 +234,29 @@ function TripContent({ today = false }: { today?: boolean }) {
           ? heroBehindStatus
             ? colors.transparent
             : colors.background
-          : colors.surface,
+          : dayActive
+            ? colors.transparent
+            : colors.surface,
       },
       headerShadowVisible: false,
+      headerBlurEffect: dayActive ? "systemUltraThinMaterial" : undefined,
       statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: ({
         onLayout,
       }: {
         onLayout?: import("react-native").TextProps["onLayout"];
-      }) => (
-        <ThemedText onLayout={onLayout} numberOfLines={1} style={styles.navTitle}>
-          {headerTitle}
-        </ThemedText>
-      ),
+      }) =>
+        dayActive ? (
+          <DayFeedShellTitle
+            label={dayTitle}
+            openCalendarLabel={t("dayShell.calendar.open")}
+            onOpenCalendar={() => setCalendarVisible(true)}
+          />
+        ) : (
+          <ThemedText onLayout={onLayout} numberOfLines={1} style={styles.navTitle}>
+            {headerTitle}
+          </ThemedText>
+        ),
     });
   }, [
     navigation,
@@ -191,6 +266,8 @@ function TripContent({ today = false }: { today?: boolean }) {
     immersiveHome,
     colors,
     heroBehindStatus,
+    dayActive,
+    dayTitle,
   ]);
   const visibleTrip =
     trip?.scope.generation === generation &&
@@ -229,6 +306,12 @@ function TripContent({ today = false }: { today?: boolean }) {
         const result = await reader.trip(requested);
         if (getAccountGeneration() !== captured || ticket !== request.current) return;
         setTrip(result);
+        const rootFacts = await readLocalTripDiscoveryRepository()
+          .then((reader) => reader.readMerged())
+          .then((read) => read.trips.find((row) => row.id === requested))
+          .catch(() => undefined);
+        if (getAccountGeneration() !== captured || ticket !== request.current) return;
+        setDayTripFacts(rootFacts ? { generation: captured, trip: rootFacts } : null);
         if (
           !result.observed &&
           result.localManual?.scope.tripId === requested &&
@@ -772,24 +855,44 @@ function TripContent({ today = false }: { today?: boolean }) {
     return (
       <>
         <View style={styles.root}>
-          <View style={styles.header}>
-            {dayContext.zone ? <Text style={styles.meta}>{dayContext.zone}</Text> : null}
-            {!calendarDates && !visibleTrip.localManual ? (
-              <Text style={styles.meta}>{t("dayFeed.calendarUnavailable")}</Text>
-            ) : null}
-            {visibleTrip.observed?.sourceStatus === "HISTORICAL_ACCEPTED_PROJECTION" ? (
-              <Text style={styles.meta}>{t("dayFeed.historical")}</Text>
-            ) : null}
-            <UiButton
-              label={t("dayFeed.tripHome")}
-              variant="text"
-              onPress={() => openTripHome(dayContext.tripId, pathname, params.view)}
-            />
-          </View>
           <DayFeed
             bottomInset={bottomBarHeight}
+            presentation={{
+              listRef: (value) => {
+                dayList.current = value;
+              },
+              topInset: headerBottom,
+              header: (
+                <View style={{ paddingTop: headerBottom }}>
+                  <DayFeedIntroduction
+                    tripName={dayName}
+                    rangeLabel={
+                      dayFacts?.startDate && dayFacts.endDate
+                        ? `${formatUiDate(new Date(`${dayFacts.startDate}T12:00:00Z`), { dateStyle: "medium", timeZone: "UTC" })} – ${formatUiDate(new Date(`${dayFacts.endDate}T12:00:00Z`), { dateStyle: "medium", timeZone: "UTC" })}`
+                        : null
+                    }
+                    locationSummary={dayFacts?.destination}
+                  />
+                </View>
+              ),
+              onSummaries: setDaySummaries,
+              onInteraction: () => {
+                dayUserDriven.current = true;
+              },
+              onOffsetChange: (value) => {
+                if (dayOffset.current > 32 !== value > 32)
+                  setDayPastIntroduction(value > 32);
+                dayOffset.current = value;
+                dayShell.observeScroll(value, dayUserDriven.current);
+              },
+              onViewportChange: (viewport) =>
+                dayShell.observeVisibleDates({
+                  first: viewport.firstVisibleDate,
+                  last: viewport.lastVisibleDate,
+                }),
+            }}
             instant={homePerspective?.now}
-            key={`${requested}/${dayContext.date}/${dayContext.zone}/${generation}`}
+            key={`${requested}/${generation}`}
             entry={entry}
             onReadingChange={
               selected ? (reading) => saveReading(selected, reading) : undefined
@@ -813,6 +916,29 @@ function TripContent({ today = false }: { today?: boolean }) {
             }
           />
         </View>
+        <DayFeedCalendarSheet
+          visible={calendarVisible}
+          tripName={dayName}
+          tripStart={dayFacts?.startDate}
+          tripEnd={dayFacts?.endDate}
+          selectedDate={dayShell.visibleDates?.first ?? dayContext.date}
+          summaries={daySummaries}
+          copy={{
+            unknownBounds: t("dayShell.calendar.unknownBounds"),
+            markers: {
+              Plans: t("dayShell.calendar.plans"),
+              Stay: t("dayShell.calendar.stay"),
+              Transport: t("dayShell.calendar.transport"),
+            },
+          }}
+          onClose={() => setCalendarVisible(false)}
+          onSelect={(target) => {
+            setCalendarVisible(false);
+            dayUserDriven.current = false;
+            dayShell.observeVisibleDates({ first: target, last: target }, true);
+            dayList.current?.jumpToDayHeader(target);
+          }}
+        />
         {localPreview}
       </>
     );

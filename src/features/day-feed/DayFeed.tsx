@@ -1,6 +1,13 @@
 import { LocalManualDayFeed, LocalManualDayRows } from "./LocalManualDayFeed";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { WindowedDayList, type DayListHandle } from "./WindowedDayList";
+import {
+  summarizeDay,
+  type DayScrollAnchor,
+  type DayWindowRow,
+  type DaySummary,
+} from "./dayFeedWindow";
 import {
   Modal,
   Platform,
@@ -59,6 +66,21 @@ function BlockSlot({
   return <Renderer {...props} />;
 }
 
+export type DayFeedPresentation = {
+  listRef?: (value: DayListHandle | null) => void;
+  header?: ReactNode;
+  topInset?: number;
+  onViewportChange?: (viewport: {
+    firstVisibleDate: string;
+    lastVisibleDate: string;
+    scrollOffset: number;
+  }) => void;
+  onInteraction?: () => void;
+  onOffsetChange?: (offset: number) => void;
+  onSummaries?: (summaries: DaySummary[]) => void;
+  onMountedRowsChange?: (count: number) => void;
+};
+
 type DayFeedProps = Omit<Parameters<typeof AcceptedDayFeed>[0], "projection"> & {
   projection?: DayProjection | CoreFlightDayProjection;
   localManual?: LocalManualRead | null;
@@ -77,6 +99,9 @@ export function DayFeed(props: DayFeedProps) {
         onOpenItem={props.onOpenLocalItem}
         emptyMessage={props.emptyMessage}
         bottomInset={props.bottomInset}
+        presentation={props.presentation}
+        entry={props.entry}
+        onReadingChange={props.onReadingChange}
       />
     );
   if (!props.projection) return null;
@@ -92,6 +117,7 @@ function AcceptedDayFeed({
   instant,
   emptyMessage,
   bottomInset = 0,
+  presentation,
   query: contributedQuery,
   renderer,
   flexibleRenderer,
@@ -118,6 +144,7 @@ function AcceptedDayFeed({
   instant?: string;
   emptyMessage?: string;
   bottomInset?: number;
+  presentation?: DayFeedPresentation;
   query?: (date: string, zone: string) => DayFeedQuery;
   renderer?: DayRowRenderer;
   flexibleRenderer?: FlexibleBlockRenderer;
@@ -198,7 +225,6 @@ function AcceptedDayFeed({
       focus: navigationContext === viewContext ? focus : null,
       immersive: navigationContext === viewContext ? immersive : null,
     });
-  // shortcut: existing ScrollView renders the owned calendar; virtualize this same stream for long-Trip scale.
   const sections = calendar.map((day) => {
     const query = queryForDate(day);
     return { date: day, query, stream: compose(query) };
@@ -262,45 +288,39 @@ function AcceptedDayFeed({
     return () => bridge.dispose();
   }, [ttrBridge]);
   const rows = allRows;
-  const scroll = useRef<ScrollView>(null),
+  const scroll = useRef<DayListHandle>(null),
     offset = useRef(entry?.reading.offset ?? 0),
-    returnOffset = useRef(0),
-    sectionOffsets = useRef<Record<string, number>>({});
+    returnAnchor = useRef<DayScrollAnchor | null>(null);
   const interactedContext = useRef<string | null>(null);
-  const readingOffset = entry?.reading.offset ?? 0;
-  const wholeTripReading = entry?.reading.layout === "WHOLE_TRIP";
-  const restoreReading = () => {
-    if (interactedContext.current === viewContext || !scroll.current) return;
-    const anchor = continuous && !wholeTripReading ? sectionOffsets.current[date] : 0;
-    if (anchor === undefined) return;
-    offset.current = anchor + readingOffset;
-    scroll.current?.scrollTo({ y: offset.current, animated: false });
+  const initialAnchor = entry?.reading.anchor ?? {
+    key: `day:${date}`,
+    date,
+    within: entry?.reading.offset ?? 0,
   };
   useLayoutEffect(() => {
     interactedContext.current = null;
-    const anchor = continuous && !wholeTripReading ? sectionOffsets.current[date] : 0;
-    if (anchor !== undefined && scroll.current) {
-      offset.current = anchor + readingOffset;
-      scroll.current.scrollTo({ y: offset.current, animated: false });
-    }
-  }, [viewContext, continuous, wholeTripReading, date, readingOffset]);
-  const remember = (nextFocus: string | null, nextOffset = offset.current) => {
-    if (!entry || entry.kind === "RESUME") {
-      const anchoredDate =
-        [...calendar]
-          .reverse()
-          .find(
-            (day) =>
-              sectionOffsets.current[day] !== undefined &&
-              sectionOffsets.current[day] <= nextOffset,
-          ) ?? date;
+    scroll.current?.restoreAnchor(initialAnchor);
+    // Explicit entry/date changes may reposition; ordinary scroll updates must not.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewContext]);
+  const remember = (nextFocus: string | null, anchor = scroll.current?.saveAnchor()) => {
+    if ((!entry || entry.kind === "RESUME") && anchor)
       onReadingChange?.({
-        offset: nextOffset,
+        offset: offset.current,
         focus: nextFocus,
-        ...(dates ? { layout: "WHOLE_TRIP" as const, anchoredDate } : {}),
+        layout: "WHOLE_TRIP",
+        anchoredDate: anchor.date,
+        anchor,
       });
-    }
   };
+  const summaries = sections.map((section) =>
+    summarizeDay(section.query, localManual?.rows(section.date)),
+  );
+  const summariesKey = JSON.stringify(summaries);
+  const reportSummaries = presentation?.onSummaries;
+  useLayoutEffect(() => {
+    reportSummaries?.(JSON.parse(summariesKey));
+  }, [summariesKey, reportSummaries]);
   const depth = (id: string): Depth =>
     sections.some(({ stream }) => stream.immersive === id)
       ? "I"
@@ -310,7 +330,7 @@ function AcceptedDayFeed({
   const change = (id: string, next: Depth) => {
     interactedContext.current = viewContext;
     if (next === "I") {
-      returnOffset.current = offset.current;
+      returnAnchor.current = scroll.current?.saveAnchor() ?? null;
       setImmersive(id);
     } else {
       setImmersive(null);
@@ -323,8 +343,8 @@ function AcceptedDayFeed({
     directItem?.onClose();
     // Android does not deliver Modal.onDismiss.
     if (Platform.OS !== "ios")
-      requestAnimationFrame(() =>
-        scroll.current?.scrollTo({ y: returnOffset.current, animated: false }),
+      requestAnimationFrame(
+        () => returnAnchor.current && scroll.current?.restoreAnchor(returnAnchor.current),
       );
   };
   const render = (
@@ -439,6 +459,96 @@ function AcceptedDayFeed({
   const choiceScope = (id: string, scope: "MY" | "GROUP") => {
     setChoiceScopes((current) => ({ ...current, [id]: scope }));
   };
+  const windowRows: DayWindowRow<() => ReactNode>[] = [];
+  if (unplaced.length)
+    windowRows.push({
+      key: "unplaced:heading",
+      date: calendar[0],
+      value: () => <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>,
+    });
+  for (const event of unplaced)
+    windowRows.push({
+      key: `unplaced:${event.id}`,
+      date: calendar[0],
+      value: () => <Text style={styles.meta}>{event.title}</Text>,
+    });
+  for (const section of sections) {
+    windowRows.push({
+      key: `day:${section.date}`,
+      date: section.date,
+      value: () => (
+        <View>
+          {dates ? (
+            <Text accessibilityRole="header" style={styles.dateHeading}>
+              {section.date}
+            </Text>
+          ) : null}
+          {!section.stream.entries.length && !localManual?.rows(section.date).length ? (
+            <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
+          ) : null}
+        </View>
+      ),
+    });
+    for (const entry of section.stream.entries)
+      windowRows.push({
+        key: entry.kind === "ITEM" ? entry.row.key : entry.block.key,
+        date: section.date,
+        value: () =>
+          entry.kind === "ITEM" ? (
+            renderItem(entry.row)
+          ) : (
+            <BlockSlot
+              renderer={flexibleRenderer}
+              block={entry.block}
+              immersive={false}
+              nestedItems={
+                <>
+                  {rows
+                    .filter((row) => row.containerId === entry.block.id)
+                    .map(renderItem)}
+                </>
+              }
+              onBlockImmersiveIntent={() => change(entry.block.id, "I")}
+              onChoiceFocusIntent={(key) => change(key ?? "", key ? "F" : "B")}
+              onChoiceScopeIntent={(scope) => choiceScope(entry.block.id, scope)}
+              onClose={close}
+              flexibleSnapshot={publication.snapshot}
+              onReplaceFlexibleSnapshot={publication.replace}
+            />
+          ),
+      });
+    for (const row of localManual?.rows(section.date) ?? [])
+      windowRows.push({
+        key: `local:${JSON.stringify(row.rowKey)}`,
+        date: section.date,
+        value: () => (
+          <LocalManualDayRows
+            read={localManual!}
+            date={section.date}
+            onlyRow={row}
+            onOpenItem={onOpenLocalItem}
+          />
+        ),
+      });
+    if (
+      section.stream.nowAfter ||
+      section.stream.rows.some((row) => row.position === "TNS")
+    )
+      windowRows.push({
+        key: `footer:${section.date}`,
+        date: section.date,
+        value: () => (
+          <View>
+            {section.stream.nowAfter ? (
+              <NowMarker placement={section.stream.now} />
+            ) : null}
+            {section.stream.rows.some((row) => row.position === "TNS") ? (
+              <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
+            ) : null}
+          </View>
+        ),
+      });
+  }
   return (
     <>
       {!directItem ? (
@@ -450,105 +560,51 @@ function AcceptedDayFeed({
             selectedBlock || ttrSession?.sheetOpen ? "no-hide-descendants" : "auto"
           }
         >
-          <ScrollView
-            ref={scroll}
+          <WindowedDayList
+            listRef={(value) => {
+              scroll.current = value;
+              presentation?.listRef?.(value);
+            }}
+            rows={windowRows}
+            renderRow={({ value }) => value()}
+            scopeKey={JSON.stringify([projection.accountId, projection.tripId])}
+            layoutRevision={JSON.stringify([
+              projection.version === 2 ? projection.source : null,
+              localManual?.source.fingerprint,
+              focus,
+              immersive,
+              choiceScopes,
+            ])}
+            initialAnchor={initialAnchor}
+            topInset={presentation?.topInset ?? 0}
+            bottomInset={visual.space.section + bottomInset}
+            header={presentation?.header}
             style={styles.root}
-            contentContainerStyle={[
-              styles.content,
-              { paddingBottom: visual.space.section + bottomInset },
-            ]}
-            scrollIndicatorInsets={{ bottom: bottomInset }}
-            scrollEventThrottle={16}
-            onContentSizeChange={restoreReading}
-            onScrollBeginDrag={() => {
+            contentContainerStyle={styles.content}
+            onViewportChange={presentation?.onViewportChange}
+            onMountedRowsChange={presentation?.onMountedRowsChange}
+            onInteraction={() => {
               interactedContext.current = viewContext;
+              presentation?.onInteraction?.();
             }}
-            onTouchStart={() => {
-              interactedContext.current = viewContext;
+            onOffsetChange={(value) => {
+              offset.current = value;
+              presentation?.onOffsetChange?.(value);
             }}
-            onScroll={(e) => {
-              offset.current = e.nativeEvent.contentOffset.y;
-              remember(sections.find(({ stream }) => stream.focus)?.stream.focus ?? null);
-            }}
-          >
-            {unplaced.length ? (
-              <View>
-                <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
-                {unplaced.map((event) => (
-                  <Text key={event.id} style={styles.meta}>
-                    {event.title}
-                  </Text>
-                ))}
-              </View>
-            ) : null}
-            {sections.map((section) => (
-              <View
-                key={section.date}
-                onLayout={({ nativeEvent }) => {
-                  sectionOffsets.current[section.date] = nativeEvent.layout.y;
-                  restoreReading();
-                }}
-              >
-                {dates ? (
-                  <Text accessibilityRole="header" style={styles.dateHeading}>
-                    {section.date}
-                  </Text>
-                ) : null}
-                {!section.stream.entries.length &&
-                !localManual?.rows(section.date).length ? (
-                  <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
-                ) : null}
-                {section.stream.entries.map((entry) =>
-                  entry.kind === "ITEM" ? (
-                    renderItem(entry.row)
-                  ) : (
-                    <View key={entry.block.key}>
-                      <BlockSlot
-                        renderer={flexibleRenderer}
-                        block={entry.block}
-                        immersive={false}
-                        nestedItems={
-                          <>
-                            {rows
-                              .filter((row) => row.containerId === entry.block.id)
-                              .map(renderItem)}
-                          </>
-                        }
-                        onBlockImmersiveIntent={() => change(entry.block.id, "I")}
-                        onChoiceFocusIntent={(key) => change(key ?? "", key ? "F" : "B")}
-                        onChoiceScopeIntent={(scope) =>
-                          choiceScope(entry.block.id, scope)
-                        }
-                        onClose={close}
-                        flexibleSnapshot={publication.snapshot}
-                        onReplaceFlexibleSnapshot={publication.replace}
-                      />
-                    </View>
-                  ),
-                )}
-                {localManual ? (
-                  <LocalManualDayRows
-                    read={localManual}
-                    date={section.date}
-                    onOpenItem={onOpenLocalItem}
-                  />
-                ) : null}
-                {section.stream.nowAfter ? (
-                  <NowMarker placement={section.stream.now} />
-                ) : null}
-                {section.stream.rows.some((row) => row.position === "TNS") ? (
-                  <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
-                ) : null}
-              </View>
-            ))}
-          </ScrollView>
+            onAnchorChange={(anchor) =>
+              remember(
+                sections.find(({ stream }) => stream.focus)?.stream.focus ?? null,
+                anchor,
+              )
+            }
+          />
         </View>
       ) : null}
       <Modal
         visible={!!selected || !!selectedBlock}
         onRequestClose={close}
         onDismiss={() =>
-          scroll.current?.scrollTo({ y: returnOffset.current, animated: false })
+          returnAnchor.current && scroll.current?.restoreAnchor(returnAnchor.current)
         }
         animationType="slide"
       >

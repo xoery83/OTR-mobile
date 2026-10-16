@@ -1,5 +1,9 @@
 import { useLayoutEffect, useRef } from "react";
-import { ScrollView, Pressable, StyleSheet, View } from "react-native";
+import type { DayFeedPresentation } from "./DayFeed";
+import type { DayEntry, DayReading } from "./TripViewContext";
+import { WindowedDayList, type DayListHandle } from "./WindowedDayList";
+import { summarizeDay, type DayWindowRow } from "./dayFeedWindow";
+import { Pressable, StyleSheet } from "react-native";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { UiSection, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
@@ -23,6 +27,9 @@ export function LocalManualDayFeed({
   onOpenItem,
   emptyMessage,
   bottomInset = 0,
+  presentation,
+  entry,
+  onReadingChange,
 }: {
   read: LocalManualRead;
   date: string;
@@ -30,64 +37,106 @@ export function LocalManualDayFeed({
   onOpenItem?: (id: string, expected: Pick<LocalManualRead, "scope" | "source">) => void;
   emptyMessage?: string;
   bottomInset?: number;
+  presentation?: DayFeedPresentation;
+  entry?: DayEntry;
+  onReadingChange?: (reading: DayReading) => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
-  const scroll = useRef<ScrollView>(null);
-  const offsets = useRef<Record<string, number>>({});
-  useLayoutEffect(() => {
-    const y = offsets.current[date];
-    if (y !== undefined) scroll.current?.scrollTo({ y, animated: false });
-  }, [date, read.source.fingerprint]);
+  const list = useRef<DayListHandle>(null);
   const calendar = dates?.length ? [...new Set([...dates, date])].sort() : [date];
+  const summaries = calendar.map((day) =>
+    summarizeDay({ date: day, timed: [], nonComparable: [] }, read.rows(day)),
+  );
+  const summariesKey = JSON.stringify(summaries);
+  const reportSummaries = presentation?.onSummaries;
+  useLayoutEffect(() => {
+    reportSummaries?.(JSON.parse(summariesKey));
+  }, [summariesKey, reportSummaries]);
+  useLayoutEffect(() => {
+    if (entry?.kind !== "RESUME" || !entry.reading.anchor)
+      list.current?.jumpToDayHeader(date);
+  }, [date, entry?.revision, entry?.kind, entry?.reading.anchor]);
+  const rows: DayWindowRow<() => React.ReactNode>[] = [];
+  for (const day of calendar) {
+    const items = read.rows(day);
+    rows.push({
+      key: `day:${day}`,
+      date: day,
+      value: () => (
+        <UiSection title={civil(day)}>
+          {!items.length ? (
+            <Text style={styles.meta}>{emptyMessage ?? t("tripHome.today.free")}</Text>
+          ) : null}
+        </UiSection>
+      ),
+    });
+    for (const row of items)
+      rows.push({
+        key: `local:${JSON.stringify(row.rowKey)}`,
+        date: day,
+        value: () => (
+          <LocalManualDayRows
+            read={read}
+            date={day}
+            onlyRow={row}
+            onOpenItem={onOpenItem}
+          />
+        ),
+      });
+  }
   return (
-    <ScrollView
-      ref={scroll}
+    <WindowedDayList
+      rows={rows}
+      renderRow={({ value }) => value()}
+      listRef={(value) => {
+        list.current = value;
+        presentation?.listRef?.(value);
+      }}
+      scopeKey={JSON.stringify([
+        read.scope.accountId,
+        read.scope.tripId,
+        read.scope.generation,
+      ])}
+      layoutRevision={read.source.fingerprint}
+      initialAnchor={
+        entry?.reading.anchor ?? {
+          key: `day:${date}`,
+          date,
+          within: entry?.reading.offset ?? 0,
+        }
+      }
+      topInset={presentation?.topInset ?? 0}
+      bottomInset={visual.space.section + bottomInset}
+      header={presentation?.header}
       style={styles.body}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: visual.space.section + bottomInset },
-      ]}
-      scrollIndicatorInsets={{ bottom: bottomInset }}
-    >
-      {calendar.map((day) => {
-        const rows = read.rows(day);
-        return (
-          <View
-            key={day}
-            onLayout={(event) => {
-              offsets.current[day] = event.nativeEvent.layout.y;
-              if (day === date)
-                scroll.current?.scrollTo({
-                  y: event.nativeEvent.layout.y,
-                  animated: false,
-                });
-            }}
-          >
-            <UiSection title={civil(day)}>
-              {rows.length ? (
-                <LocalManualDayRows read={read} date={day} onOpenItem={onOpenItem} />
-              ) : (
-                <View>
-                  <Text style={styles.meta}>
-                    {emptyMessage ?? t("tripHome.today.free")}
-                  </Text>
-                </View>
-              )}
-            </UiSection>
-          </View>
-        );
-      })}
-    </ScrollView>
+      contentContainerStyle={styles.content}
+      onViewportChange={presentation?.onViewportChange}
+      onOffsetChange={presentation?.onOffsetChange}
+      onInteraction={presentation?.onInteraction}
+      onMountedRowsChange={presentation?.onMountedRowsChange}
+      onAnchorChange={(anchor) => {
+        if (!entry || entry.kind === "RESUME")
+          onReadingChange?.({
+            offset: 0,
+            focus: null,
+            layout: "WHOLE_TRIP",
+            anchoredDate: anchor.date,
+            anchor,
+          });
+      }}
+    />
   );
 }
 // Row-only contribution for the existing Day scroll; it never renders accepted Items.
 export function LocalManualDayRows({
+  onlyRow,
   read,
   date,
   onOpenItem,
 }: {
   read: LocalManualRead;
+  onlyRow?: ReturnType<LocalManualRead["rows"]>[number];
   date: string;
   onOpenItem?: (id: string, expected: Pick<LocalManualRead, "scope" | "source">) => void;
 }) {
@@ -95,7 +144,7 @@ export function LocalManualDayRows({
   const styles = useThemedStyles(createStyles);
   return (
     <>
-      {read.rows(date).map((row) => {
+      {(onlyRow ? [onlyRow] : read.rows(date)).map((row) => {
         const item = read.items.find((item) => item.itemId === row.itemRef);
         const schedule = item?.schedule as
           { start?: { localDate?: string }; end?: { localDate?: string } } | undefined;

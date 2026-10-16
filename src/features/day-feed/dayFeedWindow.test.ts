@@ -122,3 +122,19 @@ describe("local-only summary consumes the owning date query", () => {
     });
   });
 });
+
+it("keeps a date-only Flight or scheduled transport in the Transport calendar category", () => {
+  const query = {
+    date: "2026-10-16",
+    timed: [],
+    nonComparable: [
+      { event: { id: "flight", event_type: "flight", temporal_shape: "CALENDAR" } },
+      { event: { id: "rail", event_type: "transport", temporal_shape: "CALENDAR" } },
+    ],
+  } as unknown as DayQuery;
+  expect(summarizeDay(query)).toEqual({
+    date: query.date,
+    itemCount: 2,
+    markers: ["Transport"],
+  });
+});

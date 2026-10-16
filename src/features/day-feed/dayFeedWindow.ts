@@ -22,7 +22,8 @@ export function summarizeDay(
       event.id,
       event.event_type === "hotel"
         ? "Stay"
-        : event.temporal_shape === "TRANSPORT" || event.event_type === "car"
+        : event.temporal_shape === "TRANSPORT" ||
+            ["car", "flight", "transport"].includes(event.event_type)
           ? "Transport"
           : "Plans",
     );

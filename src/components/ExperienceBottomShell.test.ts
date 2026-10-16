@@ -5,6 +5,12 @@ import { ExperienceBottomShell } from "./ExperienceBottomShell";
 vi.mock("expo-modules-core", () => ({ requireOptionalNativeModule: () => null }));
 
 const state = vi.hoisted(() => ({
+  dayShellChrome: null as null | {
+    tripId: string;
+    generation: number;
+    owner: symbol;
+    navigationVisible: boolean;
+  },
   view: null as null | { tripId: string; date: string; zone: string; generation: number },
   navigate: vi.fn(),
   setParams: vi.fn(),
@@ -110,6 +116,7 @@ vi.mock("@/features/day-feed/TripViewContext", () => ({
     workingTrip: state.workingTrip,
     resume: state.resume,
     quickActions: state.quickActions,
+    dayShellChrome: state.dayShellChrome,
   }),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
@@ -143,6 +150,7 @@ function pressables(node: ReactNode): ShellElement[] {
 
 beforeEach(() => {
   state.view = null;
+  state.dayShellChrome = null;
   state.quickActions = null;
   state.navigate.mockReset();
   state.setParams.mockReset();
@@ -588,3 +596,34 @@ it.each([0, 1])(
     expect(state.navigate).not.toHaveBeenCalled();
   },
 );
+
+it("Day chrome hides only its current navigation island while retaining Capture and layout", () => {
+  state.view = { tripId: "a", date: "2026-10-16", zone: "", generation: 1 };
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.params = { view: "day", tripId: "a" };
+  state.dayShellChrome = {
+    tripId: "a",
+    generation: 1,
+    owner: Symbol(),
+    navigationVisible: false,
+  };
+  const tree = ExperienceBottomShell({ visible: true, pathname: "/trip" });
+  const hidden: ReactElement<any>[] = [];
+  function walk(node: ReactNode) {
+    if (!isValidElement(node)) return;
+    const element = node as ReactElement<any>;
+    if (element.props.accessibilityElementsHidden) hidden.push(element);
+    Children.toArray(element.props.children).forEach(walk);
+  }
+  walk(tree);
+  expect(hidden).toHaveLength(1);
+  expect(hidden[0].props.pointerEvents).toBe("none");
+  expect(pressables(hidden[0]).map((x) => x.props.accessibilityLabel)).toContain(
+    "shell.day",
+  );
+  expect(isValidElement(tree)).toBe(true);
+  state.dayShellChrome = { ...state.dayShellChrome!, tripId: "other" };
+  hidden.length = 0;
+  walk(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  expect(hidden).toHaveLength(0);
+});

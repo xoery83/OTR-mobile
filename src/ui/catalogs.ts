@@ -1,4 +1,11 @@
 export const en = {
+  "dayShell.calendar.open": "Choose a date",
+  "dayShell.calendar.unknownBounds": "Trip dates are not set yet.",
+  "dayShell.calendar.plans": "Plans and activities",
+  "dayShell.calendar.stay": "Stays",
+  "dayShell.calendar.transport": "Transport",
+  "dayShell.range.one": "{start} – {end} · 1 day",
+  "dayShell.range.many": "{start} – {end} · {days} days",
   "tripHome.preparation.title": "Preparation",
   "tripHome.preparation.undated": "Plan your trip",
   "tripHome.preparation.empty": "Start with your travel plans or build your itinerary.",
@@ -2305,6 +2312,13 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "dayShell.calendar.open": "选择日期",
+  "dayShell.calendar.unknownBounds": "这趟旅行尚未设置日期。",
+  "dayShell.calendar.plans": "计划与活动",
+  "dayShell.calendar.stay": "住宿",
+  "dayShell.calendar.transport": "交通",
+  "dayShell.range.one": "{start} – {end} · 1 天",
+  "dayShell.range.many": "{start} – {end} · {days} 天",
   "tripHome.preparation.title": "出行准备",
   "tripHome.preparation.undated": "规划旅行",
   "tripHome.preparation.empty": "导入旅行计划，或开始编排行程。",

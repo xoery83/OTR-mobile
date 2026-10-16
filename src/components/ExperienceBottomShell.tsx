@@ -102,7 +102,8 @@ export function ExperienceBottomShell({
       subscription?.remove();
     };
   }, []);
-  const { view, workingTrip, resumeView, resume, quickActions } = useTripView();
+  const { view, workingTrip, resumeView, resume, quickActions, dayShellChrome } =
+    useTripView();
   const params = useGlobalSearchParams<{
     journeyId?: string;
     view?: string;
@@ -262,8 +263,25 @@ export function ExperienceBottomShell({
             {...(Glass
               ? { glassEffectStyle: "clear" as const, isInteractive: true }
               : {})}
+            accessibilityElementsHidden={
+              isDay &&
+              dayShellChrome?.tripId === shellTripId &&
+              dayShellChrome?.generation === generation &&
+              !dayShellChrome.navigationVisible
+            }
+            pointerEvents={
+              isDay &&
+              dayShellChrome?.tripId === shellTripId &&
+              !dayShellChrome.navigationVisible
+                ? "none"
+                : "auto"
+            }
             style={[
               styles.navigationIsland,
+              isDay &&
+                dayShellChrome?.tripId === shellTripId &&
+                dayShellChrome?.generation === generation &&
+                !dayShellChrome.navigationVisible && { opacity: 0 },
               Glass && styles.nativeMaterial,
               reducedTransparency && styles.reducedMaterial,
               largeText && styles.largeNavigationIsland,
