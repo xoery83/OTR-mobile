@@ -1,3 +1,4 @@
+import { assembleFlightDocuments } from "@/domain/trip/flightAssembly";
 import { z } from "zod";
 import { remoteFlightConfigurationPins } from "@/domain/intelligence/remoteFlightText";
 import {
@@ -797,15 +798,17 @@ async function interpretFlightBatchCore(
       const marker = /^(passenger|pnr|seat|ticket|baggage|fare|cabin)\s*[:=]/i.exec(
         literal,
       );
-      const dimension = {
-        passenger: "passengers",
-        pnr: "bookings",
-        seat: "seats",
-        ticket: "tickets",
-        baggage: "baggage",
-        fare: "fare",
-        cabin: "cabin",
-      }[marker?.[1].toLowerCase() ?? ""];
+      const dimension = /^reference[ \t]+[A-Z0-9]{5,8}$/.test(literal)
+        ? "bookings"
+        : {
+            passenger: "passengers",
+            pnr: "bookings",
+            seat: "seats",
+            ticket: "tickets",
+            baggage: "baggage",
+            fare: "fare",
+            cabin: "cabin",
+          }[marker?.[1].toLowerCase() ?? ""];
       if (dimension !== d.dimension) fail("EVIDENCE_INVALID");
     }
   }
@@ -906,20 +909,81 @@ async function interpretFlightBatchCore(
           conflictingClocks,
         ),
       );
+  const itemInputs = new Map(
+    response.items.map((item) => [
+      item.token,
+      sorted(
+        [
+          ...item.fields.flatMap((field) => field.fragment_ids),
+          ...item.deferred.map((d) => d.fragment_id),
+        ].map((id) => fragments.get(id)!.locator.input_id),
+      ),
+    ]),
+  );
+  // One raw observation spanning Inputs remains intact in the existing Candidate path.
+  const unassembledObservationTokens = response.items
+    .filter((item) => itemInputs.get(item.token)!.length !== 1)
+    .map((item) => item.token);
+  const assembled = assembleFlightDocuments(
+    request.materials.map((material) => ({
+      inputId: material.pin.id,
+      text: material.text,
+      // Selected TEXT hashes are not original-byte identity; no cross-Input byte dedup is asserted.
+      parsed: {
+        items: response.items.filter(
+          (item) =>
+            itemInputs.get(item.token)!.length === 1 &&
+            itemInputs.get(item.token)![0] === material.pin.id,
+        ),
+        fragments: response.fragments.filter(
+          (fragment) => fragment.locator.input_id === material.pin.id,
+        ),
+      },
+    })),
+  );
+  const assembly = {
+    ...assembled,
+    unassembledObservationTokens,
+    // Retained multi-Input observations are not an empty extraction.
+    emptyDecision: unassembledObservationTokens.length ? null : assembled.emptyDecision,
+  };
+  const structuralGroups = assembly.segments
+    .filter(
+      (segment) =>
+        segment.associationPending &&
+        segment.inputIds.length === 1 &&
+        segment.observationTokens.length > 1 &&
+        assembly.links.some(
+          (link) =>
+            link.requiresReview &&
+            link.reason === "BOOKED_DATE_UNIQUE_IN_FLIGHT_SECTION" &&
+            segment.observationTokens.includes(link.from) &&
+            segment.observationTokens.includes(link.to),
+        ),
+    )
+    .map((segment) =>
+      segment.observationTokens.map((token) =>
+        response.items.findIndex((item) => item.token === token),
+      ),
+    );
   const groups: number[][] = [];
   for (let i = 0; i < anchors.length; i++) {
+    if (groups.some((group) => group.includes(i))) continue;
+    const seed = structuralGroups.find((group) => group.includes(i)) ?? [i];
     const group = groups.find((g) =>
       g.every((j) =>
-        resolutions.some(
-          (r) =>
-            r.outcome === "SAME_ITEM" &&
-            ((r.left === ids[i] && r.right === ids[j]) ||
-              (r.left === ids[j] && r.right === ids[i])),
+        seed.every((k) =>
+          resolutions.some(
+            (r) =>
+              r.outcome === "SAME_ITEM" &&
+              ((r.left === ids[k] && r.right === ids[j]) ||
+                (r.left === ids[j] && r.right === ids[k])),
+          ),
         ),
       ),
     );
-    if (group) group.push(i);
-    else groups.push([i]);
+    if (group) group.push(...seed);
+    else groups.push([...seed]);
   }
   const candidates: FlightInterpretationCandidate[] = [];
   for (const group of groups) {
@@ -1031,6 +1095,11 @@ async function interpretFlightBatchCore(
       ),
       contradictions,
       ambiguity: sorted([
+        ...(structuralGroups.some((structure) =>
+          structure.every((index) => group.includes(index)),
+        )
+          ? ["STRUCTURAL_ASSOCIATION_REVIEW_REQUIRED"]
+          : []),
         ...Object.entries(occurrence)
           .filter(([, v]) => v.knowledge !== "PRESENT")
           .map(([p]) => p),
@@ -1095,6 +1164,7 @@ async function interpretFlightBatchCore(
     interpretation_response_sha256: response_sha256,
     status: response.status,
     candidates,
+    assembly,
     fragments: response.fragments,
     coverage: response.coverage,
     unprocessed_input_ids: response.unprocessed_input_ids,

@@ -1,3 +1,5 @@
+import { projectFlightClosure } from "./flightClosureProjection";
+import { assessFlightCandidateSet } from "@/domain/trip/flightImportClosure";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import catalogs from "../repositories/__fixtures__/tripImportCatalogs.json";
@@ -629,4 +631,129 @@ it("CP15B truthful REMOTE_MODEL original spans enter CP13B N→M/proposal withou
   await expect(
     interpretRemoteFlightBatch(batch, { ...deps, plugin: async () => response }),
   ).rejects.toThrow();
+});
+
+const structuralTable = (from: string, to: string, date: string) =>
+  `${from} to ${to}\nDeparture\n9:00 AM\n${date}\n${from}\n${from === "Auckland" ? "AKL" : "NSN"}\nArrival\n10:35 AM\n${date}\n${to}\n${to === "Auckland" ? "AKL" : "NSN"}`;
+const structuralDocument = `Air New Zealand\nYou're all booked to fly AB 123 on Mon\n14 Dec 2030, reference AB12CD\nYour flights\n${structuralTable("Auckland", "Nelson", "14 Dec 2030")}\n${structuralTable("Nelson", "Auckland", "22 Dec 2030")}`;
+it("accepts exact R1 reference evidence as deferred bookings, never occurrence identity", async () => {
+  const result = await run([
+    "You're all booked to fly NZ289 on Mon\n14 Dec 2030, reference AB12CD",
+  ]);
+  expect(result.candidates[0].deferred_dimensions).toEqual([
+    expect.objectContaining({ dimension: "bookings" }),
+  ]);
+  expect(result.assembly.bookingGroups[0]).toMatchObject({
+    reference: "AB12CD",
+    canonicalId: null,
+  });
+  expect(result.assembly.grantsAdmission).toBe(false);
+});
+it.each(["wrong_dimension", "extended_literal"])(
+  "rejects %s for R1 deferred reference evidence",
+  async (kind) => {
+    const batch = await fixture([
+      "You're all booked to fly NZ289 on Mon\n14 Dec 2030, reference AB12CD junk",
+    ]);
+    await expect(
+      poisoned(batch, (response) => {
+        const deferred = response.items[0].deferred[0];
+        if (kind === "wrong_dimension") deferred.dimension = "seats";
+        else {
+          const fragment = response.fragments.find((f) => f.id === deferred.fragment_id)!;
+          fragment.locator.end = new TextEncoder().encode(
+            batch.request.materials[0].text,
+          ).length;
+        }
+      }),
+    ).rejects.toThrow("EVIDENCE_INVALID");
+  },
+);
+it("same-Input explicit source structure produces two review-only proposed candidates without qualifying raw anchors", async () => {
+  const result = await run([structuralDocument]);
+  expect(result.observation_proposals).toHaveLength(3);
+  expect(result.assembly.segments).toHaveLength(2);
+  expect(result.assembly.bookingGroups).toHaveLength(1);
+  expect(result.candidates).toHaveLength(2);
+  const joined = result.candidates.find((c) => c.observation_tokens.length === 2)!;
+  expect(joined.ambiguity).toContain("STRUCTURAL_ASSOCIATION_REVIEW_REQUIRED");
+  expect(joined.anchors).toHaveLength(2);
+  expect(joined.anchors.every((anchor) => !anchor.qualified)).toBe(true);
+  expect(
+    result.resolutions.every((resolution) => resolution.outcome !== "SAME_ITEM"),
+  ).toBe(true);
+  expect(result.assembly.unassembledObservationTokens).toEqual([]);
+  const projected = projectFlightClosure(
+    result,
+    Object.fromEntries(
+      result.candidates.map((c) => [
+        c.id,
+        {
+          output_purpose: c.candidate_key,
+          continuity: null,
+          lineage: [],
+          resolution_plans: [],
+        },
+      ]),
+    ),
+  );
+  expect(
+    projected.candidates.find((c) => c.id === joined.id)!.ambiguity.map((a) => a.field),
+  ).toContain("STRUCTURAL_ASSOCIATION_REVIEW_REQUIRED");
+  const assessment = assessFlightCandidateSet(
+    projected,
+    Object.fromEntries(
+      result.candidates.map((c) => [
+        c.id,
+        {
+          scope: result.matching_scope,
+          baselines: [],
+          claims: [],
+          lineageComplete: true,
+          attention: {
+            version: "import-attention-v1",
+            horizonHours: 24,
+            now: now(),
+            clockOrigin: "SUPPLIED",
+          },
+        },
+      ]),
+    ),
+  );
+  expect(assessment.plans.every((plan) => plan.closure !== "READY")).toBe(true);
+  const returning = result.assembly.segments.find(
+    (s) => !s.fields.some((f) => f.path === "service"),
+  )!;
+  expect(returning.readiness.decision).toBe("NEEDS_REVIEW");
+  expect(returning.readiness.nextActions).toContain("ENTER_FLIGHT_NUMBER");
+});
+it("two same-date section legs cannot borrow the header service into either candidate", async () => {
+  const result = await run([structuralDocument.replaceAll("22 Dec 2030", "14 Dec 2030")]);
+  expect(result.assembly.links).toEqual([]);
+  expect(result.candidates).toHaveLength(3);
+  expect(
+    result.candidates.some((c) =>
+      c.ambiguity.includes("STRUCTURAL_ASSOCIATION_REVIEW_REQUIRED"),
+    ),
+  ).toBe(false);
+});
+it("one observation spanning Inputs remains intact in the old candidate path and is explicitly unassembled", async () => {
+  const batch = await fixture([leg, leg]);
+  const result = await poisoned(batch, (response) => {
+    const first = response.items[0],
+      second = response.items[1];
+    first.fields.push(...second.fields);
+    first.deferred.push(...second.deferred);
+    response.items = [first];
+    for (const coverage of response.coverage) coverage.item_tokens = [first.token];
+  });
+  expect(result.candidates).toHaveLength(1);
+  expect(result.candidates[0].input_ids).toHaveLength(2);
+  expect(result.candidates[0].source_ids).toHaveLength(2);
+  expect(result.candidates[0].occurrence.service.observations).toHaveLength(2);
+  expect(result.assembly.segments).toEqual([]);
+  expect(result.assembly.unassembledObservationTokens).toEqual([
+    result.observation_proposals[0].token,
+  ]);
+  expect(result.assembly.emptyDecision).toBeNull();
 });
