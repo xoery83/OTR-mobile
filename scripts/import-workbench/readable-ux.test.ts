@@ -53,6 +53,17 @@ function browser() {
   runInContext(body, context);
   return { context, elements, run: (code: string) => runInContext(code, context) };
 }
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+async function nextMicrotasks() {
+  await Promise.resolve();
+  await Promise.resolve();
+}
 function allText(e: Element): string {
   return e.textContent + " " + e.children.map(allText).join(" ");
 }
@@ -224,6 +235,127 @@ describe("human-readable workbench presentation", () => {
     expect(b.context.calls).toEqual(["/api/run/failed"]);
     expect(allText(b.elements.get("inspection")!)).toContain("未在限定时间内响应");
     expect(allText(b.elements.get("stats")!)).toContain("不计算准确率");
+  });
+  it("keeps only B labels when A labels finish after a newer inspection", async () => {
+    const b = browser(),
+      late = deferred<unknown>();
+    b.context.dispatch = async (path: string) => {
+      if (path === "/api/run/A/labels") return late.promise;
+      if (path.endsWith("/labels"))
+        return {
+          kind: "HUMAN_GROUND_TRUTH",
+          fields: [{ path: "service", raw: "B_VALUE" }],
+        };
+      if (path.endsWith("/stats")) return { status: "N/A" };
+      return { id: path.split("/").pop(), inputId: "file", createdAt: 1, trace };
+    };
+    b.run("api=dispatch");
+    const a = b.run('inspect("A")');
+    await nextMicrotasks();
+    expect(b.elements.get("save-labels")!.disabled).toBe(true);
+    await b.run('inspect("B")');
+    late.resolve({
+      kind: "HUMAN_GROUND_TRUTH",
+      fields: [{ path: "service", raw: "A_VALUE" }],
+    });
+    await a;
+    expect(b.run("selectedRun")).toBe("B");
+    const rows = b.elements.get("labels")!.children;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].children.find((n) => n.tag === "input")!.value).toBe("B_VALUE");
+  });
+  it("invalidates a pending Inspect when an imported trace is selected", async () => {
+    const b = browser(),
+      late = deferred<unknown>();
+    b.context.dispatch = async (path: string) => {
+      if (path === "/api/run/A/labels") return late.promise;
+      if (path === "/api/run/A/stats") return { status: "N/A" };
+      if (path === "/api/import/imported") return { payload: { trace } };
+      return { id: "A", inputId: "file", createdAt: 1, trace };
+    };
+    b.run("api=dispatch");
+    const a = b.run('inspect("A")');
+    await nextMicrotasks();
+    await b.run('inspectImported("imported")');
+    late.resolve({
+      kind: "HUMAN_GROUND_TRUTH",
+      fields: [{ path: "service", raw: "A_VALUE" }],
+    });
+    await a;
+    expect(b.run("selectedRun")).toBeUndefined();
+    expect(b.run("inspectedImported")).toBe(true);
+    expect(b.elements.get("labels")!.children).toHaveLength(0);
+    expect(b.elements.get("save-labels")!.disabled).toBe(true);
+    expect(b.elements.get("export-section")!.hidden).toBe(true);
+  });
+  it("binds an in-flight save to A even after selecting B and ignores old feedback", async () => {
+    const b = browser(),
+      post = deferred<unknown>(),
+      calls: { path: string; value: unknown }[] = [];
+    b.context.dispatch = async (path: string, value: unknown) => {
+      calls.push({ path, value });
+      if (value) return post.promise;
+      if (path.endsWith("/labels"))
+        return {
+          kind: "HUMAN_GROUND_TRUTH",
+          fields: [
+            { path: "service", raw: path.includes("/A/") ? "A_VALUE" : "B_VALUE" },
+          ],
+        };
+      if (path.endsWith("/stats"))
+        return { status: "N/A", marker: path.includes("/B/") ? "B_STATS" : "A_STATS" };
+      return { id: path.split("/").pop(), inputId: "file", createdAt: 1, trace };
+    };
+    b.run("api=dispatch");
+    await b.run('inspect("A")');
+    const saving = b.run("saveLabels()");
+    await nextMicrotasks();
+    await b.run('inspect("B")');
+    expect(b.elements.get("save-labels")!.disabled).toBe(true);
+    post.resolve({ saved: true });
+    await saving;
+    const writes = calls.filter((c) => c.value);
+    expect(writes).toEqual([
+      {
+        path: "/api/run/A/labels",
+        value: {
+          kind: "HUMAN_GROUND_TRUTH",
+          fields: [{ path: "service", raw: "A_VALUE" }],
+        },
+      },
+    ]);
+    expect(b.run("selectedRun")).toBe("B");
+    expect(allText(b.elements.get("stats")!)).toContain("B_STATS");
+    expect(allText(b.elements.get("stats")!)).not.toContain("A_STATS");
+    expect(b.elements.get("save-labels")!.disabled).toBe(false);
+  });
+  it("does not render a delayed save-statistics response over another run", async () => {
+    const b = browser(),
+      lateStats = deferred<unknown>();
+    let saved = false;
+    b.context.dispatch = async (path: string, value: unknown) => {
+      if (value) {
+        saved = true;
+        return { saved: true };
+      }
+      if (path === "/api/run/A/stats" && saved) return lateStats.promise;
+      if (path.endsWith("/stats")) return { status: "N/A", marker: "B_CURRENT" };
+      if (path.endsWith("/labels"))
+        return {
+          kind: "HUMAN_GROUND_TRUTH",
+          fields: [{ path: "service", raw: "VALUE" }],
+        };
+      return { id: path.split("/").pop(), inputId: "file", createdAt: 1, trace };
+    };
+    b.run("api=dispatch");
+    await b.run('inspect("A")');
+    const saving = b.run("saveLabels()");
+    await nextMicrotasks();
+    await b.run('inspect("B")');
+    lateStats.resolve({ status: "N/A", marker: "A_LATE" });
+    await saving;
+    expect(allText(b.elements.get("stats")!)).toContain("B_CURRENT");
+    expect(allText(b.elements.get("stats")!)).not.toContain("A_LATE");
   });
   it("renders hostile file names, values and trace text as literal text nodes", () => {
     const b = browser();

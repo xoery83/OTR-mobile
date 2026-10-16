@@ -7,6 +7,9 @@ let selectedRun,
   latestState,
   batchRunning = false;
 let inspectedImported = false;
+let inspectionSequence = 0,
+  inspectionLoading = false,
+  labelSaving = false;
 let savedInputs = [];
 const selectedInputs = new Set(),
   seenInputs = new Set();
@@ -687,36 +690,128 @@ function renderInspection(run, imported = false) {
   details(root, run);
   show(run);
 }
-async function inspect(id) {
-  inspectedImported = false;
-  inspected = await api("/api/run/" + id);
-  selectedRun = inspected.trace ? id : undefined;
-  renderInspection(inspected);
-  tab("inspect");
-  el("exports").replaceChildren();
-  el("export-section").hidden = false;
-  for (const format of ["json", "html"]) {
-    const a = node("a", message("Export ", "导出 ") + format.toUpperCase());
-    a.href = "/api/run/" + id + "/" + format;
-    el("exports").append(a);
-  }
-  el("label-target").textContent =
-    inputName(inspected.inputId) + " · " + runName(inspected);
-  el("labels").replaceChildren();
-  const saved = inspected.trace ? await api("/api/run/" + id + "/labels") : null;
-  if (saved && Array.isArray(saved.fields) && saved.fields.length) {
-    el("kind").value = saved.kind;
-    for (const field of saved.fields) addLabelRow(field.path, field.raw);
-  } else {
-    el("kind").value = "HUMAN_GROUND_TRUTH";
-    addLabelRow();
-  }
-  renderStats(
-    inspected.trace ? await api("/api/run/" + id + "/stats") : { status: "N/A" },
-  );
-  el("compare-input").value = inspected.inputId;
-  populateCompareRuns();
+function setLabelControls() {
+  const disabled = inspectionLoading || labelSaving || !selectedRun;
+  const controls = [
+    el("kind"),
+    el("add-label"),
+    el("save-labels"),
+    ...[...el("labels").children].flatMap((row) => [...row.children]),
+  ];
+  for (const control of controls) control.disabled = disabled;
 }
+function beginInspection() {
+  const sequence = ++inspectionSequence;
+  inspectionLoading = true;
+  selectedRun = undefined;
+  setLabelControls();
+  return sequence;
+}
+async function inspect(id) {
+  const sequence = beginInspection();
+  try {
+    const run = await api("/api/run/" + id);
+    if (sequence !== inspectionSequence) return;
+    const [saved, stats] = run.trace
+      ? await Promise.all([
+          api("/api/run/" + id + "/labels"),
+          api("/api/run/" + id + "/stats"),
+        ])
+      : [null, { status: "N/A" }];
+    if (sequence !== inspectionSequence) return;
+    inspectedImported = false;
+    inspected = run;
+    selectedRun = run.trace ? id : undefined;
+    renderInspection(run);
+    tab("inspect");
+    el("exports").replaceChildren();
+    el("export-section").hidden = false;
+    for (const format of ["json", "html"]) {
+      const a = node("a", message("Export ", "导出 ") + format.toUpperCase());
+      a.href = "/api/run/" + id + "/" + format;
+      el("exports").append(a);
+    }
+    el("label-target").textContent = inputName(run.inputId) + " · " + runName(run);
+    el("labels").replaceChildren();
+    if (saved && Array.isArray(saved.fields) && saved.fields.length) {
+      el("kind").value = saved.kind;
+      for (const field of saved.fields) addLabelRow(field.path, field.raw);
+    } else {
+      el("kind").value = "HUMAN_GROUND_TRUTH";
+      addLabelRow();
+    }
+    renderStats(stats);
+    el("compare-input").value = run.inputId;
+    populateCompareRuns();
+  } catch (error) {
+    if (sequence === inspectionSequence) throw error;
+  } finally {
+    if (sequence === inspectionSequence) {
+      inspectionLoading = false;
+      setLabelControls();
+    }
+  }
+}
+async function inspectImported(id) {
+  const sequence = beginInspection();
+  try {
+    const imported = await api("/api/import/" + id);
+    if (sequence !== inspectionSequence) return;
+    const payload = imported.payload ?? imported;
+    inspectedImported = true;
+    inspected = payload.trace ? payload : { trace: payload };
+    renderInspection(inspected, true);
+    el("label-target").textContent = message(
+      "Imported traces are view-only; select a completed local run to label it.",
+      "导入记录仅可查看，请选择本地已完成运行后标注。",
+    );
+    el("labels").replaceChildren();
+    renderStats({ status: "N/A" });
+    el("export-section").hidden = true;
+    tab("inspect");
+  } catch (error) {
+    if (sequence === inspectionSequence) throw error;
+  } finally {
+    if (sequence === inspectionSequence) {
+      inspectionLoading = false;
+      setLabelControls();
+    }
+  }
+}
+async function saveLabels() {
+  const runId = selectedRun,
+    sequence = inspectionSequence;
+  if (inspectionLoading || labelSaving || !runId) return;
+  const fields = [...el("labels").children]
+    .map((row) => ({
+      path: row.querySelector("select").value,
+      raw: row.querySelector("input").value.trim(),
+    }))
+    .filter((f) => f.raw);
+  if (!fields.length) {
+    renderStats({ status: "N/A" });
+    el("notice").textContent = message(
+      "No labels entered; existing saved labels were not changed.",
+      "未输入标签，已有保存标签未修改。",
+    );
+    return;
+  }
+  const kind = el("kind").value;
+  labelSaving = true;
+  setLabelControls();
+  try {
+    await api("/api/run/" + runId + "/labels", { kind, fields });
+    if (sequence !== inspectionSequence || selectedRun !== runId) return;
+    const stats = await api("/api/run/" + runId + "/stats");
+    if (sequence === inspectionSequence && selectedRun === runId) renderStats(stats);
+  } catch (error) {
+    if (sequence === inspectionSequence && selectedRun === runId) throw error;
+  } finally {
+    labelSaving = false;
+    setLabelControls();
+  }
+}
+
 function populateCompareRuns() {
   const runs = (latestState?.runs || [])
     .filter((r) => r.inputId === el("compare-input").value && r.stage === "FINISHED")
@@ -976,22 +1071,9 @@ async function refresh() {
   el("imports").replaceChildren();
   for (const [index, id] of (state.imports || []).entries())
     el("imports").append(
-      button(message("View imported trace ", "查看导入记录 ") + (index + 1), async () => {
-        const imported = await api("/api/import/" + id);
-        const payload = imported.payload ?? imported;
-        selectedRun = undefined;
-        inspectedImported = true;
-        inspected = payload.trace ? payload : { trace: payload };
-        renderInspection(inspected, true);
-        el("label-target").textContent = message(
-          "Imported traces are view-only; select a completed local run to label it.",
-          "导入记录仅可查看，请选择本地已完成运行后标注。",
-        );
-        el("labels").replaceChildren();
-        renderStats({ status: "N/A" });
-        el("export-section").hidden = true;
-        tab("inspect");
-      }),
+      button(message("View imported trace ", "查看导入记录 ") + (index + 1), () =>
+        inspectImported(id),
+      ),
     );
 }
 // Event wiring is deliberately separate so presentation can be tested without a browser runner.
@@ -1065,30 +1147,11 @@ el("trace-file").onchange = async (e) => {
   }
 };
 el("add-label").onclick = () => addLabelRow();
-el("save-labels").onclick = async () => {
-  try {
-    if (!selectedRun) throw new Error("SELECT_RUN");
-    const fields = [...el("labels").children]
-      .map((row) => ({
-        path: row.querySelector("select").value,
-        raw: row.querySelector("input").value.trim(),
-      }))
-      .filter((f) => f.raw);
-    if (!fields.length) {
-      renderStats({ status: "N/A" });
-      el("notice").textContent = message(
-        "No labels entered; existing saved labels were not changed.",
-        "未输入标签，已有保存标签未修改。",
-      );
-      return;
-    }
-    await api("/api/run/" + selectedRun + "/labels", { kind: el("kind").value, fields });
-    renderStats(await api("/api/run/" + selectedRun + "/stats"));
-  } catch (error) {
-    fail(error);
-  }
+el("save-labels").onclick = () => {
+  void saveLabels().catch(fail);
 };
 translate();
+setLabelControls();
 tab("test");
 void refresh().catch(fail);
 setInterval(() => {
