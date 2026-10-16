@@ -199,3 +199,25 @@ passed evidence checks, but all duplicate existing deterministic services: zero
 new model business facts. Two prompt-only failures plus two structured runs are
 retained privately. No remote call, Storage, Admission or Canonical write. Exact
 private receipts remain outside Git; iOS App/physical-device regression pending.
+
+## Model invocation lifecycle and current-evidence ID fencing
+
+Semantic Native calls now carry a unique invocation ID and absolute20s deadline;
+model cancellation is separate from Vision cancellation. The Native actor records
+cancel-before-begin, rejects expired/closed requests, permits one active model task,
+and discards late output. JS deadline/AbortSignal cancels only that invocation;
+responses must echo its ID. The Mac component closes only its own active process.
+Old installed binaries without this model-specific cancel endpoint report
+CAPABILITY_NOT_INSTALLED instead of starting an uncancellable request.
+
+The existing PartB includes an exact Field/Evidence/Observation ID allowlist.
+Native FoundationModels DynamicGenerationSchema derives enum choices and bounded
+arrays from that same request; no globally available ID is admitted implicitly.
+The unchanged deterministic Proposal Validator still decides reference/evidence
+validity and readiness. Guided structure/IDs do not grant Admission.
+
+Trace reasons distinguish LOCAL_MODEL_APP_TIMEOUT, LOCAL_MODEL_CANCELLED,
+LOCAL_MODEL_GENERATION_ERROR / LOCAL_MODEL_GENERATION_DECODE,
+LOCAL_MODEL_TRANSPORT_ERROR / LOCAL_MODEL_TRANSPORT_PARSE and
+LOCAL_MODEL_EVIDENCE_REJECTED. Legacy Trace reasons remain readable. No original
+text, prompt or Auth value is added to ordinary logs by this lifecycle correction.

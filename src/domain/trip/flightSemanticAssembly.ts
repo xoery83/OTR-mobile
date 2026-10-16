@@ -399,6 +399,11 @@ export function flightAssemblyModelPrompt(request: FlightAssemblyRequest) {
     partA: request.partA,
     partB: {
       observations: b.observations,
+      idAllowlist: {
+        fields: b.fields.map((f) => f.id),
+        evidence: b.evidence.map((e) => e.id),
+        observations: b.observations.map((o) => o.id),
+      },
       fieldColumns: [
         "id",
         "observationId",

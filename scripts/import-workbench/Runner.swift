@@ -21,7 +21,7 @@ import Foundation
         guard let requestJSON = request["requestJSON"] as? String else {
           reply(["error": "LOCAL_MODEL_INPUT_LIMIT"]); continue
         }
-        reply(await CaptureLocalExtractor.assemble(requestJSON))
+        reply(await CaptureLocalExtractor.assemble(requestJSON, requestId: request["requestId"] as? String ?? UUID().uuidString, deadlineMs: request["deadlineMs"] as? Double))
       case "enrich":
         guard let text = request["text"] as? String else {
           reply(["error": "LOCAL_MODEL_INPUT_LIMIT"]); continue

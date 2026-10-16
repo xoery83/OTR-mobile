@@ -14,7 +14,15 @@ export type CaptureLocalBridge = {
   extractCaptureLocal(bytes: Uint8Array, mediaType: string): Promise<unknown>;
   captureLocalModelCapability(): Promise<unknown>;
   enrichCaptureFlightLocal?(text: string): Promise<unknown>;
-  proposeCaptureFlightAssemblyLocal?(requestJSON: string): Promise<unknown>;
+  proposeCaptureFlightAssemblyLocal?(
+    requestJSON: string,
+    requestId: string,
+    deadlineMs: number,
+  ): Promise<unknown>;
+  cancelCaptureFlightAssemblyLocal?(
+    requestId: string,
+    deadlineMs: number,
+  ): Promise<unknown>;
 };
 export type CaptureLocalExtraction = {
   engine: "apple-pdfkit" | "apple-vision" | "utf8-text";
@@ -62,6 +70,7 @@ const imageSchema = z.object({
     .min(1)
     .max(4096),
 });
+let assemblyRequestSequence = 0;
 export function createCaptureLocalExtractorCore(dependencies: {
   getBridge: () => CaptureLocalBridge;
   hash: (bytes: Uint8Array) => Promise<string>;
@@ -174,30 +183,60 @@ export function createCaptureLocalExtractorCore(dependencies: {
         if (timer !== undefined) clearTimeout(timer);
       }
     },
-    async proposeAssembly(requestJSON: string): Promise<{
+    async proposeAssembly(
+      requestJSON: string,
+      options: { signal?: AbortSignal } = {},
+    ): Promise<{
       status: "SUCCEEDED" | "UNAVAILABLE" | "FAILED";
       reason: string;
       proposal?: unknown;
     }> {
       if (new TextEncoder().encode(requestJSON).length > 16384)
         return { status: "FAILED", reason: "LOCAL_MODEL_INPUT_LIMIT" };
+      if (options.signal?.aborted)
+        return { status: "FAILED", reason: "LOCAL_MODEL_CANCELLED" };
+      const requestId = `assembly-${Date.now()}-${++assemblyRequestSequence}`;
+      const deadlineMs = Date.now() + 20000;
       let timer: ReturnType<typeof setTimeout> | undefined;
+      let abort: (() => void) | undefined;
+      let interruption: string | undefined;
       try {
         const bridge = dependencies.getBridge();
-        if (!bridge.proposeCaptureFlightAssemblyLocal)
+        if (
+          !bridge.proposeCaptureFlightAssemblyLocal ||
+          !bridge.cancelCaptureFlightAssemblyLocal
+        )
           return { status: "UNAVAILABLE", reason: "CAPABILITY_NOT_INSTALLED" };
+        const interrupted = new Promise<never>((_, reject) => {
+          const stop = (reason: string) => {
+            if (interruption) return;
+            interruption = reason;
+            try {
+              void Promise.resolve(
+                bridge.cancelCaptureFlightAssemblyLocal!(requestId, deadlineMs),
+              ).catch(() => undefined);
+            } catch {
+              /* The deadline still resolves if cancellation transport throws. */
+            }
+            reject(new Error(reason));
+          };
+          timer = setTimeout(() => stop("LOCAL_MODEL_APP_TIMEOUT"), 20000);
+          abort = () => stop("LOCAL_MODEL_CANCELLED");
+          options.signal?.addEventListener("abort", abort, { once: true });
+        });
         const raw = await Promise.race([
-          bridge.proposeCaptureFlightAssemblyLocal(requestJSON),
-          new Promise<never>((_, reject) => {
-            timer = setTimeout(() => reject(new Error("LOCAL_MODEL_TIMEOUT")), 20000);
-          }),
+          bridge.proposeCaptureFlightAssemblyLocal(requestJSON, requestId, deadlineMs),
+          interrupted,
         ]);
+        if (interruption) return { status: "FAILED", reason: interruption };
+        const pinned = z.object({ requestId: z.literal(requestId) }).safeParse(raw);
+        if (!pinned.success)
+          return { status: "FAILED", reason: "LOCAL_MODEL_TRANSPORT_PARSE" };
         if (typeof raw === "object" && raw !== null && "error" in raw) {
           const reason = String(raw.error);
           return {
             status: "FAILED",
             reason: [
-              "LOCAL_MODEL_FAILED",
               "LOCAL_MODEL_UNAVAILABLE",
               "LOCAL_MODEL_INPUT_LIMIT",
               "LOCAL_MODEL_OUTPUT_LIMIT",
@@ -205,29 +244,39 @@ export function createCaptureLocalExtractorCore(dependencies: {
               "LOCAL_MODEL_SCHEMA_UNSUPPORTED",
               "LOCAL_MODEL_REFUSED",
               "LOCAL_MODEL_RATE_LIMITED",
-              "LOCAL_MODEL_TIMEOUT",
-              "LOCAL_MODEL_OUTPUT_INVALID",
+              "LOCAL_MODEL_APP_TIMEOUT",
+              "LOCAL_MODEL_CANCELLED",
+              "LOCAL_MODEL_BUSY",
+              "LOCAL_MODEL_GENERATION_ERROR",
+              "LOCAL_MODEL_GENERATION_DECODE",
+              "LOCAL_MODEL_TRANSPORT_PARSE",
             ].includes(reason)
               ? reason
-              : "LOCAL_MODEL_OUTPUT_INVALID",
+              : "LOCAL_MODEL_GENERATION_ERROR",
           };
         }
-        const envelope = z.strictObject({ json: z.string().max(16384) }).parse(raw);
-        return {
-          status: "SUCCEEDED",
-          reason: "ASSEMBLY_PROPOSAL_REQUIRES_VALIDATION",
-          proposal: JSON.parse(envelope.json) as unknown,
-        };
-      } catch (error) {
+        const envelope = z
+          .strictObject({ requestId: z.literal(requestId), json: z.string().max(16384) })
+          .safeParse(raw);
+        if (!envelope.success)
+          return { status: "FAILED", reason: "LOCAL_MODEL_TRANSPORT_PARSE" };
+        try {
+          return {
+            status: "SUCCEEDED",
+            reason: "ASSEMBLY_PROPOSAL_REQUIRES_VALIDATION",
+            proposal: JSON.parse(envelope.data.json) as unknown,
+          };
+        } catch {
+          return { status: "FAILED", reason: "LOCAL_MODEL_TRANSPORT_PARSE" };
+        }
+      } catch {
         return {
           status: "FAILED",
-          reason:
-            error instanceof Error && error.message === "LOCAL_MODEL_TIMEOUT"
-              ? "LOCAL_MODEL_TIMEOUT"
-              : "LOCAL_MODEL_OUTPUT_INVALID",
+          reason: interruption ?? "LOCAL_MODEL_TRANSPORT_ERROR",
         };
       } finally {
         if (timer !== undefined) clearTimeout(timer);
+        if (abort) options.signal?.removeEventListener("abort", abort);
       }
     },
     async modelCapability() {

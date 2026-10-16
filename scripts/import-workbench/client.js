@@ -100,6 +100,38 @@ function reasonText(reason) {
       "Model output did not match the original text evidence. Deterministic results are retained.",
       "模型输出证据校验失败，确定性结果已保留。",
     ],
+    LOCAL_MODEL_APP_TIMEOUT: [
+      "The app deadline was reached; Native cancellation was requested. Deterministic results are retained.",
+      "达到应用截止时间，已请求停止 Native 模型；确定性结果已保留。",
+    ],
+    LOCAL_MODEL_CANCELLED: [
+      "This model request was cancelled; deterministic results are retained.",
+      "本次模型请求已取消，确定性结果已保留。",
+    ],
+    LOCAL_MODEL_GENERATION_ERROR: [
+      "Native model generation failed; deterministic results are retained.",
+      "Native 模型生成失败，确定性结果已保留。",
+    ],
+    LOCAL_MODEL_GENERATION_DECODE: [
+      "Native guided generation could not decode its structured output; deterministic results are retained.",
+      "Native 引导式生成无法解码结构化输出，确定性结果已保留。",
+    ],
+    LOCAL_MODEL_TRANSPORT_PARSE: [
+      "The Native bridge response or request identity was invalid; no model output was applied.",
+      "Native 通道响应或请求身份校验失败，未采用模型输出。",
+    ],
+    LOCAL_MODEL_TRANSPORT_ERROR: [
+      "The Native model call could not complete through its bridge.",
+      "Native 模型调用通道未能完成请求。",
+    ],
+    LOCAL_MODEL_EVIDENCE_REJECTED: [
+      "The assembly proposal failed deterministic reference or evidence validation.",
+      "组装建议未通过确定性引用或证据校验。",
+    ],
+    LOCAL_MODEL_BUSY: [
+      "A prior Native model request is still finishing; this request was not started.",
+      "先前 Native 模型请求尚未结束，本次请求未启动。",
+    ],
     LOCAL_MODEL_TIMEOUT: [
       "Local model timed out; deterministic results are retained.",
       "本地模型超时，确定性结果已保留。",
@@ -647,11 +679,21 @@ function renderSemanticAssembly(host, d, trace) {
     node(
       "p",
       message("Invocation / output: ", "调用／输出：") +
-        (execution.reason === "LOCAL_MODEL_TIMEOUT"
+        (["LOCAL_MODEL_TIMEOUT", "LOCAL_MODEL_APP_TIMEOUT"].includes(execution.reason)
           ? message("Invoked; deadline reached", "已调用；达到截止时间")
           : execution.reason === "LOCAL_MODEL_CONTEXT_LIMIT"
             ? message("Invoked; context window exceeded", "已调用；超出上下文窗口")
-            : execution.status + " · " + execution.reason),
+            : [
+                  "LOCAL_MODEL_CANCELLED",
+                  "LOCAL_MODEL_GENERATION_ERROR",
+                  "LOCAL_MODEL_GENERATION_DECODE",
+                  "LOCAL_MODEL_TRANSPORT_PARSE",
+                  "LOCAL_MODEL_TRANSPORT_ERROR",
+                  "LOCAL_MODEL_EVIDENCE_REJECTED",
+                  "LOCAL_MODEL_BUSY",
+                ].includes(execution.reason)
+              ? reasonText(execution.reason)
+              : execution.status + " · " + execution.reason),
     ),
   );
   card.append(

@@ -71,7 +71,10 @@ export async function runCaptureFlightAssembly(
     contractVersion: FLIGHT_ASSEMBLY_BUSINESS_CONTRACT.version,
     request,
     deterministic,
-    execution,
+    execution:
+      validation?.status === "REJECTED"
+        ? { ...execution, reason: "LOCAL_MODEL_EVIDENCE_REJECTED" }
+        : execution,
     validation,
     finalBasis:
       validation?.status === "ACCEPTED" ? "VALIDATED_ADVISORY_PROPOSAL" : "DETERMINISTIC",

@@ -207,28 +207,120 @@ it.each([
   },
 );
 
-it("keeps semantic assembly errors distinct from unavailable capability and invalid output", async () => {
+it("keeps semantic generation, transport and unavailable capability distinct", async () => {
   const base = fixture();
-  const proposeCaptureFlightAssemblyLocal = vi
-    .fn()
-    .mockResolvedValue({ error: "LOCAL_MODEL_CONTEXT_LIMIT" });
+  const propose = vi.fn(
+    async (_: string, requestId: string) =>
+      ({ requestId, error: "LOCAL_MODEL_GENERATION_ERROR" }) as Record<string, unknown>,
+  );
+  const cancel = vi.fn(async () => undefined);
   const extractor = createCaptureLocalExtractor({
     hash: base.hash,
-    bridge: { ...base.bridge, proposeCaptureFlightAssemblyLocal },
+    bridge: {
+      ...base.bridge,
+      proposeCaptureFlightAssemblyLocal: propose,
+      cancelCaptureFlightAssemblyLocal: cancel,
+    },
   });
   expect(await extractor.proposeAssembly("{}")).toEqual({
     status: "FAILED",
-    reason: "LOCAL_MODEL_CONTEXT_LIMIT",
+    reason: "LOCAL_MODEL_GENERATION_ERROR",
   });
-  proposeCaptureFlightAssemblyLocal.mockResolvedValue({ json: "not-json" });
+  propose.mockImplementation(async (_, requestId) => ({ requestId, json: "not-json" }));
   expect(await extractor.proposeAssembly("{}")).toEqual({
     status: "FAILED",
-    reason: "LOCAL_MODEL_OUTPUT_INVALID",
+    reason: "LOCAL_MODEL_TRANSPORT_PARSE",
   });
-  proposeCaptureFlightAssemblyLocal.mockResolvedValue({ json: '{"segments":[]}' });
+  propose.mockImplementation(async (_, requestId) => ({
+    requestId,
+    json: '{"segments":[]}',
+  }));
   expect(await extractor.proposeAssembly("{}")).toEqual({
     status: "SUCCEEDED",
     reason: "ASSEMBLY_PROPOSAL_REQUIRES_VALIDATION",
     proposal: { segments: [] },
   });
+  propose.mockImplementation(async () => ({
+    requestId: "older-run",
+    json: '{"segments":[]}',
+  }));
+  expect(await extractor.proposeAssembly("{}")).toEqual({
+    status: "FAILED",
+    reason: "LOCAL_MODEL_TRANSPORT_PARSE",
+  });
+  const oldBinary = createCaptureLocalExtractor({
+    hash: base.hash,
+    bridge: { ...base.bridge, proposeCaptureFlightAssemblyLocal: propose },
+  });
+  expect(await oldBinary.proposeAssembly("{}")).toEqual({
+    status: "UNAVAILABLE",
+    reason: "CAPABILITY_NOT_INSTALLED",
+  });
+});
+
+it("propagates timeout to the exact Native request and ignores its late output", async () => {
+  vi.useFakeTimers();
+  try {
+    const base = fixture();
+    let late: (v: unknown) => void = () => undefined;
+    const propose = vi.fn(
+      (_json: string, requestId: string): Promise<unknown> =>
+        new Promise((resolve) => {
+          late = resolve;
+        }),
+    );
+    const cancel = vi.fn(async (_id: string) => undefined);
+    const extractor = createCaptureLocalExtractor({
+      hash: base.hash,
+      bridge: {
+        ...base.bridge,
+        proposeCaptureFlightAssemblyLocal: propose,
+        cancelCaptureFlightAssemblyLocal: cancel,
+      },
+    });
+    const first = extractor.proposeAssembly("{}");
+    const firstId = propose.mock.calls[0][1];
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(await first).toEqual({ status: "FAILED", reason: "LOCAL_MODEL_APP_TIMEOUT" });
+    expect(cancel).toHaveBeenCalledExactlyOnceWith(firstId, expect.any(Number));
+    propose.mockImplementation(async (_json, id) => ({
+      requestId: id,
+      json: '{"segments":[]}',
+    }));
+    const second = await extractor.proposeAssembly("{}");
+    expect(propose.mock.calls[1][1]).not.toBe(firstId);
+    late({ requestId: firstId, json: '{"invented":true}' });
+    await Promise.resolve();
+    expect(second.status).toBe("SUCCEEDED");
+    expect(cancel).toHaveBeenCalledTimes(1);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("cancels an aborted input without cancelling the next input", async () => {
+  const base = fixture();
+  const controller = new AbortController();
+  const propose = vi.fn(
+    (_json: string, _id: string): Promise<unknown> => new Promise(() => undefined),
+  );
+  const cancel = vi.fn(async (_id: string) => undefined);
+  const extractor = createCaptureLocalExtractor({
+    hash: base.hash,
+    bridge: {
+      ...base.bridge,
+      proposeCaptureFlightAssemblyLocal: propose,
+      cancelCaptureFlightAssemblyLocal: cancel,
+    },
+  });
+  const result = extractor.proposeAssembly("{}", { signal: controller.signal });
+  const id = propose.mock.calls[0][1];
+  controller.abort();
+  expect(await result).toEqual({ status: "FAILED", reason: "LOCAL_MODEL_CANCELLED" });
+  expect(cancel).toHaveBeenCalledExactlyOnceWith(id, expect.any(Number));
+  expect(await extractor.proposeAssembly("{}", { signal: controller.signal })).toEqual({
+    status: "FAILED",
+    reason: "LOCAL_MODEL_CANCELLED",
+  });
+  expect(propose).toHaveBeenCalledTimes(1);
 });

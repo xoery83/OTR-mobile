@@ -782,3 +782,17 @@ describe("human-readable workbench presentation", () => {
     );
   });
 });
+
+it("keeps model deadline, cancel, generation, transport and evidence explanations distinct", () => {
+  const b = browser();
+  const labels = [
+    "LOCAL_MODEL_APP_TIMEOUT",
+    "LOCAL_MODEL_CANCELLED",
+    "LOCAL_MODEL_GENERATION_ERROR",
+    "LOCAL_MODEL_GENERATION_DECODE",
+    "LOCAL_MODEL_TRANSPORT_PARSE",
+    "LOCAL_MODEL_EVIDENCE_REJECTED",
+  ].map((reason) => b.run(`reasonText(${JSON.stringify(reason)})`));
+  expect(new Set(labels).size).toBe(labels.length);
+  expect(labels.every((label) => !String(label).includes("开发者详情"))).toBe(true);
+});

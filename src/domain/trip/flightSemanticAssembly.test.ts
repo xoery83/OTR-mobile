@@ -218,6 +218,11 @@ it("compacts model evidence losslessly without changing field or evidence IDs", 
   const { request } = setup();
   const prompt = JSON.parse(flightAssemblyModelPrompt(request));
   expect(prompt.partA).toEqual(request.partA);
+  expect(prompt.partB.idAllowlist).toEqual({
+    fields: request.partB.fields.map((f) => f.id),
+    evidence: request.partB.evidence.map((e) => e.id),
+    observations: request.partB.observations.map((o) => o.id),
+  });
   expect(
     prompt.partB.fields.map((row: unknown[]) =>
       Object.fromEntries(

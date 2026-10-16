@@ -119,6 +119,7 @@ export async function runMac(
       pending = { resolve, reject, timer };
       child.stdin.write(JSON.stringify({ operation, ...payload }) + "\n");
     });
+  let assemblyRequestId: string | undefined;
   const extractor = createCaptureLocalExtractorCore({
     hash,
     getBridge: () => ({
@@ -126,8 +127,17 @@ export async function runMac(
         request("extract", { bytes: Buffer.from(v).toString("base64"), mediaType }),
       captureLocalModelCapability: () => request("capability"),
       enrichCaptureFlightLocal: (text) => request("enrich", { text }),
-      proposeCaptureFlightAssemblyLocal: (requestJSON) =>
-        request("assembly", { requestJSON }),
+      proposeCaptureFlightAssemblyLocal: (requestJSON, requestId, deadlineMs) => {
+        assemblyRequestId = requestId;
+        return request("assembly", { requestJSON, requestId, deadlineMs }).finally(() => {
+          if (assemblyRequestId === requestId) assemblyRequestId = undefined;
+        });
+      },
+      cancelCaptureFlightAssemblyLocal: async (requestId) => {
+        if (assemblyRequestId !== requestId) return;
+        fail();
+        child.kill();
+      },
     }),
   });
   try {
