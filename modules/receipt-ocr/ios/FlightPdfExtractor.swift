@@ -235,6 +235,7 @@ struct CaptureLocalExtractor {
           case .unsupportedGenerationGuide: return ["error": "LOCAL_MODEL_SCHEMA_UNSUPPORTED"]
           case .guardrailViolation, .refusal: return ["error": "LOCAL_MODEL_REFUSED"]
           case .rateLimited: return ["error": "LOCAL_MODEL_RATE_LIMITED"]
+          case .timeout: return ["error": "LOCAL_MODEL_NATIVE_TIMEOUT"]
           default: return ["error": "LOCAL_MODEL_GENERATION_ERROR"]
           }
         }

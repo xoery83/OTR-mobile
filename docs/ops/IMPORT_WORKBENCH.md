@@ -216,7 +216,8 @@ arrays from that same request; no globally available ID is admitted implicitly.
 The unchanged deterministic Proposal Validator still decides reference/evidence
 validity and readiness. Guided structure/IDs do not grant Admission.
 
-Trace reasons distinguish LOCAL_MODEL_APP_TIMEOUT, LOCAL_MODEL_CANCELLED,
+Trace reasons distinguish LOCAL_MODEL_APP_TIMEOUT, LOCAL_MODEL_NATIVE_TIMEOUT
+(framework timeout), LOCAL_MODEL_CANCELLED,
 LOCAL_MODEL_GENERATION_ERROR / LOCAL_MODEL_GENERATION_DECODE,
 LOCAL_MODEL_TRANSPORT_ERROR / LOCAL_MODEL_TRANSPORT_PARSE and
 LOCAL_MODEL_EVIDENCE_REJECTED. Legacy Trace reasons remain readable. No original

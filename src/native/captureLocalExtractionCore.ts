@@ -245,6 +245,7 @@ export function createCaptureLocalExtractorCore(dependencies: {
               "LOCAL_MODEL_REFUSED",
               "LOCAL_MODEL_RATE_LIMITED",
               "LOCAL_MODEL_APP_TIMEOUT",
+              "LOCAL_MODEL_NATIVE_TIMEOUT",
               "LOCAL_MODEL_CANCELLED",
               "LOCAL_MODEL_BUSY",
               "LOCAL_MODEL_GENERATION_ERROR",

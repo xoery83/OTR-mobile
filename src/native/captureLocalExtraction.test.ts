@@ -324,3 +324,27 @@ it("cancels an aborted input without cancelling the next input", async () => {
   });
   expect(propose).toHaveBeenCalledTimes(1);
 });
+
+it.each([
+  "LOCAL_MODEL_NATIVE_TIMEOUT",
+  "LOCAL_MODEL_APP_TIMEOUT",
+  "LOCAL_MODEL_CANCELLED",
+  "LOCAL_MODEL_GENERATION_DECODE",
+])(
+  "preserves Native finite error %s without collapsing transport and generation failures",
+  async (reason) => {
+    const base = fixture();
+    const extractor = createCaptureLocalExtractor({
+      hash: base.hash,
+      bridge: {
+        ...base.bridge,
+        proposeCaptureFlightAssemblyLocal: async (_json, requestId) => ({
+          requestId,
+          error: reason,
+        }),
+        cancelCaptureFlightAssemblyLocal: async () => undefined,
+      },
+    });
+    expect(await extractor.proposeAssembly("{}")).toEqual({ status: "FAILED", reason });
+  },
+);

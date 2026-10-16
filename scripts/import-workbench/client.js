@@ -104,6 +104,10 @@ function reasonText(reason) {
       "The app deadline was reached; Native cancellation was requested. Deterministic results are retained.",
       "达到应用截止时间，已请求停止 Native 模型；确定性结果已保留。",
     ],
+    LOCAL_MODEL_NATIVE_TIMEOUT: [
+      "The Native model framework timed out before the app deadline.",
+      "Native 模型框架报告超时；此状态与应用截止时间不同。",
+    ],
     LOCAL_MODEL_CANCELLED: [
       "This model request was cancelled; deterministic results are retained.",
       "本次模型请求已取消，确定性结果已保留。",
@@ -685,6 +689,7 @@ function renderSemanticAssembly(host, d, trace) {
             ? message("Invoked; context window exceeded", "已调用；超出上下文窗口")
             : [
                   "LOCAL_MODEL_CANCELLED",
+                  "LOCAL_MODEL_NATIVE_TIMEOUT",
                   "LOCAL_MODEL_GENERATION_ERROR",
                   "LOCAL_MODEL_GENERATION_DECODE",
                   "LOCAL_MODEL_TRANSPORT_PARSE",

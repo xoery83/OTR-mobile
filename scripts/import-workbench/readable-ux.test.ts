@@ -787,6 +787,7 @@ it("keeps model deadline, cancel, generation, transport and evidence explanation
   const b = browser();
   const labels = [
     "LOCAL_MODEL_APP_TIMEOUT",
+    "LOCAL_MODEL_NATIVE_TIMEOUT",
     "LOCAL_MODEL_CANCELLED",
     "LOCAL_MODEL_GENERATION_ERROR",
     "LOCAL_MODEL_GENERATION_DECODE",
