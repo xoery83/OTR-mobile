@@ -160,3 +160,20 @@ proof of evicted system model resources. Native generation has no cancellation;
 a late iOS response is ignored by the unchanged JS20s deadline, while a Mac
 component subprocess is closed after the result. Model failure preserves all
 valid deterministic fields. iPhone16Pro/full-device-offline remain unverified.
+
+## Observation lineage and business structure
+
+Inspect defaults to **Business Structure / 业务结构**. Each local observation lists
+its real fields, evidence, current host producer function and selected runner.
+This is not executed-build attestation. Actual Input/observation/partial typed
+projection identities remain distinct from formal Candidate, Booking, Segment
+and Canonical Item; unexecuted consolidation is not inferred by the UI. Human
+Expected Structure is displayed separately from saved diagnostic annotations.
+
+Apple diagnostics separately show availability, invocation, output production
+(recorded or explicitly inferred), evidence validation and retained contribution.
+`LOCAL_MODEL_EVIDENCE_INVALID` means **模型输出证据校验失败**, not unavailable
+hardware or engine. The existing error path proves a parseable response reached
+validation, but rejected raw output is not retained; its exact literal and
+not-found versus duplicate-match reason cannot be reconstructed. No validator
+relaxation, parser change or new raw-output logging is part of this UI packet.

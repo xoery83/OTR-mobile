@@ -1,5 +1,12 @@
 # Import Workbench V2.1 — Universal Inspect / 2026-10-16
 
+- Observation-lineage follow-up: default actual business structure and separate human
+  Expected view; producer/runner/field evidence per local observation; Apple availability,
+  invocation, output inference, evidence rejection and retained contribution separated.
+  Exact47fdb040 independent review/33 UI regressions PASS; real NZ5069 saved Run
+  browser verified. No new model run. Raw rejected response absent; exact rejection
+  literal/subreason cannot be recovered. Private diagnostic report remains outside Git.
+
 - Owner V2.1 contract replaces previous unsubmitted Flight-only UI design. W1/W2
   production components, same private originals, nine saved real runs and Native
   caller retained; no parser/Admission/Provider/Storage behavior expanded.
