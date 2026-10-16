@@ -177,7 +177,9 @@ it("uses the supplied Editor for the whole Hero identity and never invents an ed
     }),
   );
   const target = state.nodes.find(
-    (n) => n.accessibilityRole === "button" && n.accessibilityLabel === "tripHome.edit",
+    (n) =>
+      n.accessibilityRole === "button" &&
+      n.accessibilityLabel === "tripHome.edit: Trip, Auckland",
   );
   expect(target.disabled).toBe(false);
   target.onPress();
