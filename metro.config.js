@@ -11,4 +11,8 @@ if (process.env.OTR_DISABLE_LEDGER_PROTOTYPE === "1") {
   };
 }
 
+if (process.env.EXPO_PUBLIC_OTR_IMPORT_WORKBENCH === "1") {
+  config.cacheVersion = "otr-import-workbench-v1";
+}
+
 module.exports = config;

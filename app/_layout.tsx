@@ -15,6 +15,18 @@ import {
 } from "@/data/bootstrap/defaultBootstrapDependencies";
 
 export default function RootLayout() {
+  useEffect(() => {
+    if (!__DEV__ || process.env.EXPO_PUBLIC_OTR_IMPORT_WORKBENCH !== "1") return;
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    void import("@/native/importWorkbenchDevCaller").then((module) => {
+      if (!cancelled) stop = module.startImportWorkbenchDevCaller();
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, []);
   useUiLocale();
   const colors = useUiTheme();
   const scheme = useColorScheme();
