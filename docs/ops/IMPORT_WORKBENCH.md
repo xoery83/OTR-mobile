@@ -101,37 +101,49 @@ isolated preview without the enable flag if desired. Preserve App Auth/DB and
 existing normal originals/results. Never delete the App container. Source can
 stay committed: the caller is dormant without both DEV opt-in and private gate.
 
-## Limited human labels (W3)
+## V2.1 Universal Document Inspector
 
-The interface defaults to Chinese; **中文 / English** switches language.
+The [Owner V2.1 contract](IMPORT_WORKBENCH_V21_CONTRACT_20261016.md) replaces the
+previous unsubmitted Flight-only UI specification. Existing W1/W2 runners,
+production interpretation, retained originals and Trace identities are preserved.
+See [actual capability boundaries](IMPORT_WORKBENCH_V21_CAPABILITIES_20261016.md).
 
-1. **Test / 测试**: choose multiple originals and run on Mac or the connected isolated
-   iOS runner. Saved inputs can be rerun without selecting the originals again.
-2. **Inspect / 检查结果**: select a file/run. Read extracted text, deterministic
-   fields, Apple suggestions, evidence checks and partial typed flight results.
-   Click a field to see its exact UTF-8 span, recorded PDF page (one-based display)
-   or Vision region (bottom-left native coordinates mapped to browser top-left).
-   No locator is synthesized. Imported traces without a saved local input have
-   text evidence only. Raw IDs, hashes, codes, full trace and version pins remain
-   in collapsed **Developer Details**. JSON and safe HTML exports are unchanged.
-3. **Compare / 运行对比**: defaults to the current file's latest two different
-   completed runs. Added/missing/changed values and model evidence status are
-   human-readable; original comparison details remain expandable. A change in
-   locator alone is not labelled a quality improvement. The form accepts expected
-   field/value rows; enter a complete list and save confirmed ground truth to
-   calculate the existing exact-match statistics. Blank rows are ignored; empty
-   form does not erase previously saved labels. Hypotheses and unlabelled runs
-   are not scored. Saved labels are read back into the ordinary form for editing. Saving replaces
-   the complete expected list rather than appending.
+Five Chinese/English workspaces:
 
-Apple suggestions are supplementary observations, not accepted fields or flights.
-Rejected model raw output is not retained by the production trace; the UI shows
-only its recorded reason. Parser/evidence/capability timings that the trace
-combines remain combined. Typed missing-field guidance uses only the three existing
-local-enrichment checks (flight number/departure airport/arrival airport), not an
-invented complete Admission validation. Model-resource cold state stays unverified.
-Synthetic unit labels are not real-world ground truth. Diagnostic statistics do
-not establish product-level flight accuracy.
+1. **Inspect / 检查结果** opens the latest saved run by default. Choose a document
+   and run, then inspect the actual original, interpretation observations and
+   selected field's evidence chain in three columns. Text PDF pages have real
+   raster previews/thumbnails/paging/zoom; image regions and UTF-8 snippets use
+   actual recorded locators. Without geometry, page/snippet evidence is shown
+   without fabricated highlighting. By Result, By Field and Stage Contribution
+   views share the same saved Trace. Interpretation is never labelled Admission.
+2. **Test / 测试** selects multiple files or reruns saved originals on Mac or the
+   explicitly connected iOS caller. There is no silent runtime fallback.
+3. **Compare / 运行对比** defaults to two different completed runs of the same
+   original bytes. Changes in fields, evidence, partial structure, timing and
+   host version are diagnostic differences, not automatic accuracy improvements.
+4. **Ground Truth / 人工真值** stores zero/many diagnostic result groups,
+   segments and optional participant labels through ordinary forms. Confirmed,
+   not-provided and unchecked values remain distinct. Add/delete/split/merge
+   affects annotations only. Multi-result/segment/participant identity matching
+   is not implemented: precision/recall are N/A for those annotations. A single
+   confirmed flat Flight result can use reviewed-path exact original-text-pair
+   matching; this is not normalized domain accuracy. Unlabelled, incomplete,
+   unsupported-type and hypothesis annotations are not scored.
+5. **Runs / 运行历史** reopens existing runs. JSON and escaped static HTML exports
+   retain full technical diagnostics; imported Traces remain unverified views.
+
+IDs, hashes, technical errors, versions and full JSON are in Developer Details.
+Apple observations remain advisory; rejected raw responses are not retained.
+Combined parser/capability timings stay combined, unknown counts stay N/A, and
+Not Run differs from Not Recorded. Typed missing-field hints use only existing
+local-enrichment checks, not an invented full Admission-required-field list.
+
+`GET /api/input/:UUID/preview?page=1` renders existing pinned PDFs with the installed
+fixed `pdftoppm` executable; it is not an extraction engine. Page1–32, fixed argv,
+15-second timeout, 4000px maximum side, 8MiB PNG output and bounded private cache
+apply. Invalid pages, corrupt originals and mismatched fingerprints are rejected.
+No executable, command or filesystem path is accepted from the browser.
 
 ## Verification and limits
 

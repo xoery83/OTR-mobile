@@ -1,22 +1,24 @@
-# Local Import Workbench — W1/W2 functional checkpoint / 2026-10-16
+# Import Workbench V2.1 — Universal Inspect / 2026-10-16
 
-- Reviewed source a2cc709 +01ef3df +1961279 +7c9068d: loopback49184 multi-input
-  diagnostic runner, production Swift/TS core reuse, retained inputs/Trace viewer,
-  same-file compare/explicit human labels, escaped JSON/HTML export, pinned originals.
-- W1 real PDF/JPEG repeated and single-click serial batch PASS. W2 same installed
-  isolated418 iOS26.5 App completed JPEG twice(8fields/4anchors) and PDF(20fields;
-  strict Apple evidence rejection retains deterministic output). No paid/remote
-  model, Storage or diagnostic Repository write path. No C2/C3 repeat.
-- Runtime scope is DIAGNOSTIC_ONLY/SourceNONE, not original Batch Repository Runtime.
-  Host dependency manifest is not executed Native/JS build attestation; those remain
-  UNVERIFIED. DB digests, system-resource cold state and physical iPhone unverified.
-- Owner explicitly approved only8084/418 short-term Caller switch; old755 stopped,
-  current diagnostic processes and evidence are in private workbench receipts.
-  Original Auth/App installation/data retained. Raw originals/Traces stay outside Git.
-- Human-readable Test/Inspect/Compare UX is a separate in-flight presentation packet;
-  do not call the engineering baseline Owner UX Accepted. Runbook docs/ops/IMPORT_WORKBENCH.md.
-- Trip Home functional4b96259 is pushed; existing Experience Session is actively
-  implementing isolated V1.1 preview. Coordinator is not writing its UI files.
+- Owner V2.1 contract replaces previous unsubmitted Flight-only UI design. W1/W2
+  production components, same private originals, nine saved real runs and Native
+  caller retained; no parser/Admission/Provider/Storage behavior expanded.
+- Five workspaces, default latest Inspect, genuine PDF/image/text originals,
+  three-column results/evidence, stage contribution, same-byte compare and
+  diagnostic group/segment/participant forms. Unknown stages/metrics stay N/A;
+  observations are not Booking/Segment or admitted Canonical identities.
+- Independent review PASS, including GT multi-identity false-score fix. Final
+  Workbench targeted suite52 PASS, types/UIguard PASS. Browser real PDF20 fields
+  with Apple rejection fallback and JPG8 fields/4 anchored suggestions verified.
+  Runtime/view screenshot and private receipts remain outside Git.
+- Limits: current business interpreter is partial aviation only; scanned-PDF OCR,
+  full typed required-field validation, multi-identity GT scoring and executed
+  Native/JS version attestation unavailable. No remote call or new model run for
+  this UI correction. Runbook docs/ops/IMPORT_WORKBENCH.md and V21_CAPABILITIES.
+- Trip Home Owner-approved visual candidate22661d9 integrated main8e85d37, noPush
+  at that checkpoint; AD5 signed embedded Release normal cold start confirmed by
+  Experience,8083 stopped. Native Today/Past not claimed. Coordinator QA guard
+  f9ce34b corrects certificate generation vs Auth generation, scoped tests2 PASS.
 
 # Trip Home V1.1 functional integration candidate — 2026-10-16
 
