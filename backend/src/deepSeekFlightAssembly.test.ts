@@ -159,7 +159,7 @@ it("rejects natural prose, unknown model and invalid JSON independently", () => 
   ).toMatchObject({ status: "FAILED", error: "MALFORMED_OUTPUT" });
 });
 
-it("requires exact durable identity and one dispatch, retains response before exposing proposal", async () => {
+it("accepts actual Capture with null formal Source but rejects fabricated Source in dispatch", async () => {
   const { prepareDeepSeekFlightAssembly } = await import("./deepSeekFlight");
   const { remoteFixture } = await import("./__fixtures__/flightRemote");
   const { randomUUID } = await import("node:crypto");
@@ -170,7 +170,7 @@ it("requires exact durable identity and one dispatch, retains response before ex
     batchId: randomUUID(),
     jobId: randomUUID(),
     inputId: randomUUID(),
-    sourceId: randomUUID(),
+    sourceId: null,
     originalSha256: "a".repeat(64),
   };
   request.sourceIds.i0 = identity.inputId;
@@ -218,6 +218,9 @@ it("requires exact durable identity and one dispatch, retains response before ex
     rowRevision: 2,
   };
   await expect(prepared.execute({ ...ack, jobId: randomUUID() })).rejects.toThrow(
+    "POLICY_BLOCKED",
+  );
+  await expect(prepared.execute({ ...ack, sourceId: randomUUID() })).rejects.toThrow(
     "POLICY_BLOCKED",
   );
   expect(sends).toBe(0);

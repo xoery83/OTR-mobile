@@ -487,7 +487,7 @@ const assemblyIdentitySchema = z.strictObject({
   batchId: z.uuid(),
   jobId: z.uuid(),
   inputId: z.uuid(),
-  sourceId: z.uuid(),
+  sourceId: z.uuid().nullable(),
   originalSha256: z.string().regex(/^[a-f0-9]{64}$/),
 });
 export type FlightAssemblyJobIdentity = z.infer<typeof assemblyIdentitySchema>;
