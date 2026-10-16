@@ -465,10 +465,15 @@ function renderAppleDiagnostic(host, trace) {
       "p",
       message("Evidence validation: ", "输出证据校验：") +
         (d.invalidEvidence
-          ? message(
-              "Model-output evidence validation failed. An exact, unique original-text anchor did not pass; the rejected literal and precise cause were not retained.",
-              "模型输出证据校验失败。精确且唯一的原文锚点未通过；被拒绝的字面值与具体原因未保留。",
-            )
+          ? trace.model?.evidenceFailure
+            ? message(
+                "Model-output evidence validation failed; the recorded reason follows. Raw output is not retained.",
+                "模型输出证据校验失败；下方显示已记录原因。原始输出未保留。",
+              )
+            : message(
+                "Model-output evidence validation failed. An exact, unique original-text anchor did not pass; the rejected literal and precise cause were not retained.",
+                "模型输出证据校验失败。精确且唯一的原文锚点未通过；被拒绝的字面值与具体原因未保留。",
+              )
           : d.status === "SUCCEEDED"
             ? message(
                 "Recorded observations passed the literal/unique-anchor checks.",
@@ -479,6 +484,31 @@ function renderAppleDiagnostic(host, trace) {
               : message("Not Recorded", "未记录")),
     ),
   );
+  const failure = trace.model?.evidenceFailure;
+  if (d.invalidEvidence && failure) {
+    const failureLabels = {
+      INVALID_SERVICE_LITERAL: [
+        "Output is not a valid flight-number literal",
+        "输出不是合法航班号字面值",
+      ],
+      LITERAL_NOT_FOUND: [
+        "Output literal does not occur exactly in the source text",
+        "输出字面值未在原文中精确出现",
+      ],
+      MULTIPLE_LITERAL_MATCHES: [
+        "Output literal occurs more than once; its source anchor is ambiguous",
+        "输出字面值在原文多处出现，证据锚点不唯一",
+      ],
+    };
+    const label = failureLabels[failure];
+    if (label)
+      card.append(
+        node(
+          "p",
+          message("Recorded rejection: ", "已记录拒绝原因：") + message(...label),
+        ),
+      );
+  }
   card.append(
     node(
       "p",
@@ -1202,6 +1232,31 @@ function renderParsedResults(trace, inputId) {
         trace,
         inputId,
       );
+      for (const deferred of item.deferred || []) {
+        const span = (trace.typed?.fragments || []).find(
+          (f) => f.id === deferred.fragment_id,
+        )?.locator;
+        const raw = span ? excerptAt(trace.result?.text, span.start, span.end) : null;
+        if (raw !== null)
+          group.append(
+            node(
+              "p",
+              message(
+                "Retained unsupported dimension: ",
+                "已保留、尚不支持的业务维度：",
+              ) +
+                (deferred.dimension === "bookings"
+                  ? message("Booking reference", "预订关联")
+                  : deferred.dimension) +
+                " · " +
+                raw +
+                message(
+                  " — not a Booking identity or link",
+                  " — 尚未形成 Booking 身份或关联",
+                ),
+            ),
+          );
+      }
       if (item.schema_id === "otr.import.flight") {
         const paths = new Set((item.fields || []).map((f) => f.path)),
           missing = ["service", "origin.airport", "destination.airport"].filter(

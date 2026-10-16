@@ -2,6 +2,14 @@ import { normalizeFlightObservation } from "@/domain/trip/referenceFlightExtract
 import { validateFlightPdfExtraction } from "@/data/interpretation/flightPdfExtraction";
 import { z } from "zod";
 
+export type LocalModelEvidenceFailure =
+  "INVALID_SERVICE_LITERAL" | "LITERAL_NOT_FOUND" | "MULTIPLE_LITERAL_MATCHES";
+class LocalModelEvidenceError extends Error {
+  constructor(readonly evidenceFailure: LocalModelEvidenceFailure) {
+    super("LOCAL_MODEL_EVIDENCE_INVALID");
+  }
+}
+
 export type CaptureLocalBridge = {
   extractCaptureLocal(bytes: Uint8Array, mediaType: string): Promise<unknown>;
   captureLocalModelCapability(): Promise<unknown>;
@@ -110,6 +118,7 @@ export function createCaptureLocalExtractorCore(dependencies: {
       status: "SUCCEEDED" | "UNAVAILABLE" | "FAILED";
       reason: string;
       observations: { literal: string; start: number; end: number }[];
+      evidenceFailure?: LocalModelEvidenceFailure;
     }> {
       if (!text.trim() || new TextEncoder().encode(text).length > 16384)
         return { status: "FAILED", reason: "LOCAL_MODEL_INPUT_LIMIT", observations: [] };
@@ -156,6 +165,9 @@ export function createCaptureLocalExtractorCore(dependencies: {
             ? code
             : "LOCAL_MODEL_OUTPUT_INVALID",
           observations: [],
+          ...(error instanceof LocalModelEvidenceError
+            ? { evidenceFailure: error.evidenceFailure }
+            : {}),
         };
       } finally {
         if (timer !== undefined) clearTimeout(timer);
@@ -187,10 +199,15 @@ export function validateCaptureLocalModelResponse(text: string, raw: unknown) {
     .strictObject({ flightNumbers: z.array(z.string().min(2).max(16)).max(64) })
     .parse(JSON.parse(envelope.json));
   const observations = [...new Set(result.flightNumbers)].map((literal) => {
-    normalizeFlightObservation("service", literal);
+    try {
+      normalizeFlightObservation("service", literal);
+    } catch {
+      throw new LocalModelEvidenceError("INVALID_SERVICE_LITERAL");
+    }
     const startChar = text.indexOf(literal);
-    if (startChar < 0 || text.indexOf(literal, startChar + 1) !== -1)
-      throw new Error("LOCAL_MODEL_EVIDENCE_INVALID");
+    if (startChar < 0) throw new LocalModelEvidenceError("LITERAL_NOT_FOUND");
+    if (text.indexOf(literal, startChar + 1) !== -1)
+      throw new LocalModelEvidenceError("MULTIPLE_LITERAL_MATCHES");
     const start = new TextEncoder().encode(text.slice(0, startChar)).length;
     return {
       literal,

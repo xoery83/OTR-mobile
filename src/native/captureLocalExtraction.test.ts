@@ -180,3 +180,29 @@ it("decodes exact UTF8 text without requiring a native bridge", async () => {
   ])
     await expect(extractor.extract(invalid, "text/plain")).rejects.toThrow();
 });
+
+it.each([
+  ["AB 123", "AB123", "LITERAL_NOT_FOUND"],
+  ["AB123 / AB123", "AB123", "MULTIPLE_LITERAL_MATCHES"],
+  ["not a flight", "not a flight", "INVALID_SERVICE_LITERAL"],
+])(
+  "records a bounded evidence rejection reason without returning raw model text",
+  async (text, literal, evidenceFailure) => {
+    const deps = fixture();
+    const extractor = createCaptureLocalExtractor({
+      ...deps,
+      bridge: {
+        ...deps.bridge,
+        enrichCaptureFlightLocal: async () => ({
+          json: JSON.stringify({ flightNumbers: [literal] }),
+        }),
+      },
+    });
+    expect(await extractor.enrich(text)).toEqual({
+      status: "FAILED",
+      reason: "LOCAL_MODEL_EVIDENCE_INVALID",
+      observations: [],
+      evidenceFailure,
+    });
+  },
+);

@@ -177,3 +177,25 @@ hardware or engine. The existing error path proves a parseable response reached
 validation, but rejected raw output is not retained; its exact literal and
 not-found versus duplicate-match reason cannot be reconstructed. No validator
 relaxation, parser change or new raw-output logging is part of this UI packet.
+
+## Parser / Apple accuracy correction R1 — 2026-10-16
+
+Reference extractor descriptor adapter3 reads explicit uppercase airport cells only
+inside the existing validated flight table, and a booked title's explicitly printed
+date on its physical next line. Blank paragraphs/unrelated headers do not bind.
+An inline booked reference is retained as an unsupported `bookings` deferred
+fragment; it does not establish Booking identity or a service-to-table association.
+
+Shared Swift uses Foundation Models guided `@Generable` flight-number output and
+serializes the same bounded bridge JSON. Exact literal/unique-source anchors and
+JS deadline remain unchanged. Optional bounded `model.evidenceFailure` distinguishes
+invalid designators, missing literals and duplicate matches; no raw model output
+is retained, and old Traces remain readable.
+
+Two original files were rechecked through formal Mac components. PDF fields20→25
+(four printed airport fields plus explicit title date), one deferred reference;
+three partial observations remain. Final Apple response1/4 service observations
+passed evidence checks, but all duplicate existing deterministic services: zero
+new model business facts. Two prompt-only failures plus two structured runs are
+retained privately. No remote call, Storage, Admission or Canonical write. Exact
+private receipts remain outside Git; iOS App/physical-device regression pending.

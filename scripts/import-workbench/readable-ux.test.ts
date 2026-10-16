@@ -709,6 +709,17 @@ describe("human-readable workbench presentation", () => {
     const info = b.run("appleDiagnostic(trace)");
     expect(info).toMatchObject({ invoked: true, invalidEvidence: true, retained: 0 });
   });
+  it("shows a recorded exact evidence failure instead of guessing a model outage", () => {
+    const b = browser();
+    b.context.trace = {
+      ...trace,
+      model: { ...trace.model, evidenceFailure: "MULTIPLE_LITERAL_MATCHES" },
+    };
+    b.run('renderAppleDiagnostic(el("apple"),trace)');
+    const text = allText(b.elements.get("apple")!);
+    expect(text).toContain("输出字面值在原文多处出现，证据锚点不唯一");
+    expect(text).not.toContain("具体原因未保留");
+  });
   it("marks model output as not recorded for a timeout and never fabricates rejected literal values", () => {
     const b = browser();
     b.context.trace = {

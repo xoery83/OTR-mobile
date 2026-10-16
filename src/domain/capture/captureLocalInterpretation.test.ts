@@ -159,3 +159,81 @@ it("reads an explicitly booked flight without rewriting the printed locator or g
     [],
   );
 });
+
+it("retains a booked title's wrapped date and reference without assigning them to a table leg", () => {
+  const text =
+    "You're all booked to fly AB 123 on Mon\n14 Dec 2030, reference AB12CD\nYour flights";
+  const parsed = parseReferenceFlightText("synthetic", text);
+  expect(parsed.items).toHaveLength(1);
+  expect(
+    parsed.items[0].fields.find((f) => f.path === "origin.local_date")?.normalized,
+  ).toBe("2030-12-14");
+  const deferred = parsed.items[0].deferred;
+  expect(deferred).toHaveLength(1);
+  expect(deferred[0].dimension).toBe("bookings");
+  const fragment = parsed.fragments.find((f) => f.id === deferred[0].fragment_id)!;
+  expect(
+    new TextDecoder().decode(
+      new TextEncoder()
+        .encode(text)
+        .slice(fragment.locator.start!, fragment.locator.end!),
+    ),
+  ).toBe("reference AB12CD");
+  for (const span of parsed.ignored) {
+    const raw = new TextDecoder().decode(
+      new TextEncoder().encode(text).slice(span.start!, span.end!),
+    );
+    expect(raw).not.toContain("14 Dec 2030");
+    expect(raw).not.toContain("reference AB12CD");
+  }
+  const separated = parseReferenceFlightText(
+    "synthetic",
+    text.replace("Mon\n14", "Mon\n\n14"),
+  );
+  expect(separated.items[0].fields.some((f) => f.path === "origin.local_date")).toBe(
+    false,
+  );
+  const unrelated = parseReferenceFlightText(
+    "synthetic",
+    "You're all booked to fly AB 123 on Mon\nOther document\n14 Dec 2030",
+  );
+  expect(unrelated.items[0].fields.some((f) => f.path === "origin.local_date")).toBe(
+    false,
+  );
+});
+
+it("reads only explicitly printed airport cells in a validated flight table", () => {
+  const text = [
+    "Your flights",
+    "Auckland to Nelson",
+    "Departure",
+    "9:00 AM",
+    "14 Dec 2030",
+    "Auckland",
+    "AKL",
+    "Arrival",
+    "10:35 AM",
+    "14 Dec 2030",
+    "Nelson",
+    "NSN",
+  ].join("\n");
+  const parsed = parseReferenceFlightText("synthetic", text);
+  expect(
+    parsed.items[0].fields
+      .filter((f) => f.path.endsWith(".airport"))
+      .map((f) => f.normalized),
+  ).toEqual([
+    { namespace: "IATA_AIRPORT", value: "AKL" },
+    { namespace: "IATA_AIRPORT", value: "NSN" },
+  ]);
+  expect(
+    parseReferenceFlightText(
+      "synthetic",
+      text.replace("AKL", "Domestic"),
+    ).items[0].fields.some((f) => f.path === "origin.airport"),
+  ).toBe(false);
+  expect(
+    parseReferenceFlightText("synthetic", text.replace("Your flights", "Your trains"))
+      .items,
+  ).toHaveLength(0);
+});

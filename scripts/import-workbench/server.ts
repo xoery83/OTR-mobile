@@ -361,6 +361,13 @@ export function createWorkbench(store = new PrivateStore()) {
               "CAPABILITY_UNAVAILABLE",
               "CAPABILITY_NOT_INSTALLED",
             ]),
+            evidenceFailure: z
+              .enum([
+                "INVALID_SERVICE_LITERAL",
+                "LITERAL_NOT_FOUND",
+                "MULTIPLE_LITERAL_MATCHES",
+              ])
+              .optional(),
             observations: z
               .array(
                 z.strictObject({
@@ -372,6 +379,11 @@ export function createWorkbench(store = new PrivateStore()) {
               .max(64),
           })
           .parse(raw.model);
+        if (
+          model.evidenceFailure &&
+          (model.status !== "FAILED" || model.reason !== "LOCAL_MODEL_EVIDENCE_INVALID")
+        )
+          throw new Error("TRACE_MODEL_INVALID");
         if (model.status !== "SUCCEEDED" && model.observations.length)
           throw new Error("TRACE_MODEL_INVALID");
         if (model.status === "SUCCEEDED") {

@@ -14,7 +14,7 @@ import { canonicalEventJson, type Json } from "./eventIntentJson";
 export const REFERENCE_FLIGHT_DESCRIPTOR = {
   plugin_id: "otr-reference-flight",
   boundary_version: "otr-intelligence-v1",
-  adapter_version: "2",
+  adapter_version: "3",
   model_version: "NO_MODEL",
   execution_location: "DETERMINISTIC_LOCAL",
   capabilities: ["STRUCTURED_EXTRACTION", "BATCH_N_TO_M_EXTRACTION", "EVIDENCE_MAPPING"],
@@ -119,10 +119,11 @@ export function normalizeFlightObservation(
     const route = /^(?:route\s*[:=]\s*)?([A-Z]{3})\s*(?:→|->)\s*([A-Z]{3})$/i.exec(
       raw.trim(),
     );
-    if (!route) throw new Error("INPUT_INVALID");
+    const printed = /^[A-Z]{3}$/.test(raw.trim()) ? raw.trim() : null;
+    if (!route && !printed) throw new Error("INPUT_INVALID");
     value = {
       namespace: "IATA_AIRPORT",
-      value: route[path.startsWith("origin") ? 1 : 2].toUpperCase(),
+      value: printed ?? route![path.startsWith("origin") ? 1 : 2].toUpperCase(),
     };
   } else if (path.endsWith(".local_date")) {
     const english =
@@ -249,6 +250,7 @@ export function parseReferenceFlightText(inputId: string, text: string) {
   // to it until the next leg or unrelated row. No OCR/transport is performed.
   const lines = [...text.matchAll(/[^\n]+/g)];
   let current: InterpretationItem | undefined;
+  let pendingBookedDateLineEnd: number | null = null;
   let tableMarker: { raw: string; at: number } | undefined;
   const consumed = new Set<number>();
   let ignoredCharEnd = 0,
@@ -310,6 +312,20 @@ export function parseReferenceFlightText(inputId: string, text: string) {
       /\b(?:booked to fly|Flight)\s+((?:[A-Z][A-Z0-9]|[0-9][A-Z])[ \t\u00a0]*[0-9]{1,4}[A-Z]?)(?=\s|[;|]|$)/.exec(
         body,
       );
+    const continuedDate =
+      pendingBookedDateLineEnd !== null &&
+      text.slice(pendingBookedDateLineEnd, line.index!) === "\n" &&
+      current
+        ? /^(\d{1,2}[ \t]+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[ \t]+\d{4})(?=\b)/i.exec(
+            body.trimStart(),
+          )
+        : null;
+    pendingBookedDateLineEnd =
+      contextualHead &&
+      /booked to fly/i.test(contextualHead[0]) &&
+      / on (?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s*$/i.test(body)
+        ? line.index! + line[0].length
+        : null;
     // Only an explicit Flight marker starts a numberless leg; route prose is not enough.
     const sparseHead =
       /^\s*(Flight)(?=\s+(?:route\s*[:=]\s*)?[A-Z]{3}\s*(?:→|->)\s*[A-Z]{3})/i.exec(body);
@@ -317,7 +333,14 @@ export function parseReferenceFlightText(inputId: string, text: string) {
       /^\s*(?:date|depDate|arrDate|departure|arrival|dep|arr|route|depZone|arrZone|depOffset|arrOffset|depInstant|arrInstant|passenger|pnr|seat|ticket|baggage|fare|cabin|occurrence|change)\s*[:=]/i.test(
         body,
       );
-    if (!head && !contextualHead && !sparseHead && !tableLeg && (!current || !labelled)) {
+    if (
+      !head &&
+      !contextualHead &&
+      !sparseHead &&
+      !tableLeg &&
+      !continuedDate &&
+      (!current || !labelled)
+    ) {
       if (body.trim()) ignore(line.index!, line.index! + body.length);
       if (ignored.length > 64) throw new Error("LIMIT_EXCEEDED");
       current = undefined;
@@ -366,6 +389,15 @@ export function parseReferenceFlightText(inputId: string, text: string) {
       add("transport_subtype", raw, at);
       if (head || contextualHead) add("service", raw, at);
     }
+    const bookedDate = contextualHead
+      ? / on (?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+)?(\d{1,2}[ \t]+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[ \t]+\d{4})(?=\b)/i.exec(
+          body.slice(contextualHead.index + contextualHead[0].length),
+        )
+      : continuedDate;
+    if (bookedDate) {
+      const raw = bookedDate[1];
+      add("origin.local_date", raw, line.index! + body.indexOf(raw));
+    }
     if (tableLeg && table) {
       const route = body.trim();
       add("origin.place_label", route, line.index! + body.indexOf(route));
@@ -378,9 +410,21 @@ export function parseReferenceFlightText(inputId: string, text: string) {
           raw = entry[0].trim();
         add(`${role}.place_label`, raw, entry.index! + entry[0].indexOf(raw));
       }
+      for (const [role, index] of [
+        ["origin", 4],
+        ["destination", 9],
+      ] as const) {
+        const entry = table[index],
+          raw = entry[0].trim();
+        if (/^[A-Z]{3}$/.test(raw))
+          add(`${role}.airport`, raw, entry.index! + entry[0].indexOf(raw));
+      }
       for (let index = 0; index < table.length; index++) {
         consumed.add(lineNumber + 1 + index);
-        if ([0, 4, 5, 9].includes(index))
+        if (
+          [0, 5].includes(index) ||
+          ([4, 9].includes(index) && !/^[A-Z]{3}$/.test(table[index][0].trim()))
+        )
           ignore(table[index].index!, table[index].index! + table[index][0].length);
       }
       for (const [role, clockIndex, dateIndex] of [
@@ -450,6 +494,24 @@ export function parseReferenceFlightText(inputId: string, text: string) {
         fragment_id: id,
         reason: "UNSUPPORTED_DIMENSION",
       });
+    }
+    if (contextualHead || continuedDate) {
+      const reference = /\breference[ \t]+([A-Z0-9]{5,8})(?=\b)/.exec(body);
+      if (reference) {
+        const raw = reference[0],
+          at = line.index! + reference.index;
+        const id = `f:${inputId}:${new TextEncoder().encode(text.slice(0, at)).length}:${new TextEncoder().encode(raw).length}`;
+        localFragments.push({
+          id,
+          locator: localSpan(text, inputId, at, at + raw.length),
+        });
+        current!.deferred.push({
+          dimension: "bookings",
+          fragment_id: id,
+          reason: "UNSUPPORTED_DIMENSION",
+        });
+        covered.push([reference.index, reference.index + raw.length]);
+      }
     }
     for (const route of body.matchAll(
       /(?:route\s*[:=]\s*)?[A-Z]{3}(?:\s*(?:→|->)\s*[A-Z]{3})+/gi,
