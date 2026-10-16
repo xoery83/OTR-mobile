@@ -243,6 +243,38 @@ export function itemsForLocalDate(
   zone: string,
 ): DayQuery {
   validateCalendarDate(date);
+  // An unknown viewing timezone keeps endpoint-local calendar facts; it grants no instant context.
+  if (!zone) {
+    const nonComparable: DayItem[] = [];
+    for (const event of projection.events) {
+      const roles = event.boundaries
+        .filter((b) => b.local_date === date)
+        .map((b) => b.role);
+      const [start, end] = interval(event);
+      const occupancy =
+        event.temporal_shape === "STAY" &&
+        !!start?.local_date &&
+        !!end?.local_date &&
+        start.local_date <= date &&
+        date < end.local_date;
+      if (roles.length || occupancy)
+        nonComparable.push({
+          event,
+          roles: roles.sort(),
+          anchor: null,
+          occupancy,
+          occupancyBasis: occupancy ? "CALENDAR_NIGHTS" : null,
+        });
+    }
+    nonComparable.sort((a, b) => authored(a.event, b.event));
+    return {
+      date,
+      zone,
+      timed: [],
+      nonComparable,
+      unresolved: unresolvedCandidates(projection),
+    };
+  }
   const [dayStart, dayEnd] = dayInterval(date, zone);
   const namedDays = new Map<string, [bigint, bigint]>();
   const timed: DayItem[] = [],

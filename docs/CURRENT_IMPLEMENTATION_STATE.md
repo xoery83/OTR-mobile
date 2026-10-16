@@ -1,3 +1,14 @@
+# TIME-01A direct Day entry candidate — 2026-10-16
+
+- Owner clarified date-only Day context is legal; no prerequisite start-time/zone
+  chooser. Home Day action enters its known plan directly; Undated stays honestly
+  undated with date selection inside Day. Accepted Core and local pending manual
+  sources keep separate identity/authority, endpoint facts and normal renderers.
+- Unknown context creates no precise NOW/TTR clock. Today stay summary suppresses
+  contradictory empty-plan prose. See docs/ops/TIME01A_DAY_DIRECT_ENTRY_20261016.md.
+- Targeted code checks recorded at candidate commit; integrated AD5 Native regression
+  pending Coordinator. No schema, Hosted, account, Simulator or business-data changes.
+
 # Trip Basic Editor owning candidate — 2026-10-16
 
 - Name, nullable calendar dates and existing manual destination now save through

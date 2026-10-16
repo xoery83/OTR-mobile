@@ -8,7 +8,7 @@ import { validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { referenceTripHomePerspective } from "./referenceTripHomePerspective";
 import { TodaysJourneyWidget } from "./TodaysJourneyWidget";
 import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
-import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useCallback,
   useEffect,
@@ -17,7 +17,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { AppState, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
+import { AppState, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams, useNavigation, usePathname } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { openTripHome } from "@/components/openTripHome";
@@ -29,15 +29,14 @@ import {
   readTripDayFeed,
   type createTripDayFeedReader,
 } from "@/data/repositories/tripDayFeedRepository";
-import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText as ThemedText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
-import { formatUiDate, t } from "@/ui/locale";
+import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { boundaryZone, explicitBoundaryZones, viewContext } from "./presentation";
+import { boundaryZone, viewContext } from "./presentation";
 import { DayFeed } from "./DayFeed";
 import { wholeTripCalendarDates } from "./tripListPresentation";
 import { createCoreExperienceRenderer } from "./coreExperienceRenderer";
@@ -129,10 +128,6 @@ function TripContent({ today = false }: { today?: boolean }) {
   }>();
   const [revision, setRevision] = useState(0);
   const [localItem, setLocalItem] = useState<LocalItem | null>(null);
-  const [dayChooser, setDayChooser] = useState(false);
-  const chooseDay = useCallback(() => {
-    if (generation === getAccountGeneration()) setDayChooser(true);
-  }, [generation]);
   const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
   const [trip, setTrip] = useState<TripRead | null>(null);
@@ -325,11 +320,13 @@ function TripContent({ today = false }: { today?: boolean }) {
   const canChooseDay =
     !!visibleTrip?.localManual ||
     visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE";
-  const enterDay = async () => {
+  const enterDay = async (requestedDate?: string | null, requestedZone = zone) => {
     if (generation !== getAccountGeneration() || !canChooseDay || !visibleTrip) return;
     try {
-      const dateValue = validateCalendarDate(date);
-      const context = zone ? viewContext(dateValue, zone) : null;
+      const selectedDate = requestedDate || date;
+      const dateValue = selectedDate ? validateCalendarDate(selectedDate) : "";
+      const context =
+        dateValue && requestedZone ? viewContext(dateValue, requestedZone) : null;
       const ticket = request.current;
       const result = await (await readTripDayFeed()).trip(requested);
       if (
@@ -338,20 +335,18 @@ function TripContent({ today = false }: { today?: boolean }) {
         result.scope.accountId !== visibleTrip.scope.accountId ||
         result.scope.generation !== generation ||
         (!result.localManual &&
-          result.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE") ||
-        (!context && !result.localManual)
+          result.observed?.sourceStatus !== "CURRENTLY_MATCHES_SOURCE")
       )
         return;
       setTrip(result);
       if (context) select({ tripId: requested, ...context, generation });
-      // A civil-only Day route never creates or overwrites a timezone-bearing bookmark.
+      // Civil-only navigation does not create a timezone-bearing bookmark.
       router.setParams({
         tripId: requested,
         date: dateValue,
         zone: context?.zone ?? "",
         view: "day",
       });
-      setDayChooser(false);
       setContextError(false);
     } catch {
       setContextError(true);
@@ -635,17 +630,50 @@ function TripContent({ today = false }: { today?: boolean }) {
     overlayProjection.source.epoch === visibleTrip.observed.projection.source.epoch
       ? { ...homeItem, read: visibleTrip }
       : null;
-  const savedDay = savedTripZone(view, requested, generation) ? view : null;
+  const savedDay = (() => {
+    if (view?.tripId !== requested || view.generation !== generation) return null;
+    try {
+      validateCalendarDate(view.date);
+      if (view.zone) viewContext(view.date, view.zone);
+      return view;
+    } catch {
+      return null;
+    }
+  })();
+  const currentSnapshot =
+    homeSnapshot &&
+    homeSnapshot.scope.tripId === requested &&
+    homeSnapshot.scope.generation === generation &&
+    homeSnapshot.scope.accountId === visibleTrip?.scope.accountId &&
+    visibleTrip.observed?.projection.version === 2 &&
+    homeSnapshot.epoch === visibleTrip.observed.projection.source.epoch
+      ? homeSnapshot
+      : null;
   const routeDay = (() => {
     if (today || home || !visibleTrip) return null;
     try {
-      const routeDate = validateCalendarDate(value(params.date));
+      const routeDate = validateCalendarDate(
+        value(params.date) ||
+          (view?.tripId === requested && view.generation === generation
+            ? view.date
+            : "") ||
+          (resumeView?.tripId === requested && resumeView.generation === generation
+            ? resumeView.date
+            : "") ||
+          currentSnapshot?.trip?.startDate ||
+          currentSnapshot?.candidateDays[0] ||
+          visibleTrip.localManual?.items
+            .flatMap((item) => {
+              const schedule = item.schedule as { start?: { localDate?: string } };
+              return schedule.start?.localDate ? [schedule.start.localDate] : [];
+            })
+            .sort()[0] ||
+          "",
+      );
       const routeZone = value(params.zone);
       if (routeZone)
         return { tripId: requested, ...viewContext(routeDate, routeZone), generation };
-      return visibleTrip.localManual
-        ? { tripId: requested, date: routeDate, zone: "", generation }
-        : null;
+      return { tripId: requested, date: routeDate, zone: "", generation };
     } catch {
       return null;
     }
@@ -701,10 +729,15 @@ function TripContent({ today = false }: { today?: boolean }) {
             }) ?? [],
           ),
         ].sort();
-  const zoneChoices =
-    visibleTrip?.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE"
-      ? explicitBoundaryZones(visibleTrip.observed.projection)
-      : [];
+  const chooseDay = (tripStartDate?: string | null) => {
+    const bookmark = [view, resumeView].find(
+      (saved) => saved?.tripId === requested && saved.generation === generation,
+    );
+    void enterDay(
+      bookmark?.date || value(params.date) || tripStartDate || dateChoices[0],
+      bookmark?.zone ?? zone,
+    );
+  };
   const calendarDates =
     dayContext &&
     homeSnapshot &&
@@ -719,11 +752,7 @@ function TripContent({ today = false }: { today?: boolean }) {
           dayContext.date,
         )
       : undefined;
-  if (
-    visibleTrip &&
-    dayContext &&
-    (visibleTrip.localManual || (visibleTrip.observed && dayContext.zone))
-  )
+  if (visibleTrip && dayContext && (visibleTrip.localManual || visibleTrip.observed))
     return (
       <>
         <View style={styles.root}>
@@ -749,7 +778,7 @@ function TripContent({ today = false }: { today?: boolean }) {
             onReadingChange={
               selected ? (reading) => saveReading(selected, reading) : undefined
             }
-            projection={dayContext.zone ? visibleTrip.observed?.projection : undefined}
+            projection={visibleTrip.observed?.projection}
             localManual={visibleTrip.localManual}
             onOpenLocalItem={(id, expected) => {
               void openLocalItem(id, expected).catch(() => {
@@ -770,6 +799,44 @@ function TripContent({ today = false }: { today?: boolean }) {
         </View>
         {localPreview}
       </>
+    );
+  if (!home && !today && visibleTrip && canChooseDay)
+    return (
+      <View style={styles.root}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: bottomBarHeight + visual.space.page },
+          ]}
+        >
+          <Text accessibilityRole="header" style={styles.heading}>
+            {t("shell.day")}
+          </Text>
+          <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
+          <Text style={styles.meta}>{t("dayFeed.date")}</Text>
+          <UiTextInput
+            accessibilityLabel={t("dayFeed.date")}
+            value={date}
+            onChangeText={setDate}
+            autoCapitalize="none"
+          />
+          {dateChoices.map((choice) => (
+            <UiChoiceChip
+              compact
+              key={choice}
+              label={choice}
+              selected={date === choice}
+              onPress={() => void enterDay(choice)}
+            />
+          ))}
+          {contextError ? (
+            <Text accessibilityRole="alert" style={styles.meta}>
+              {t("dayFeed.contextInvalid")}
+            </Text>
+          ) : null}
+          <UiButton label={t("dayFeed.openDay")} onPress={() => void enterDay()} />
+        </ScrollView>
+      </View>
     );
   return (
     <>
@@ -864,74 +931,7 @@ function TripContent({ today = false }: { today?: boolean }) {
             />
           </>
         ) : (
-          <>
-            {canChooseDay ? (
-              <>
-                <Modal
-                  visible={dayChooser}
-                  onRequestClose={() => setDayChooser(false)}
-                  animationType="slide"
-                >
-                  <SafeAreaProvider style={styles.modal}>
-                    <SheetHeader
-                      title={t("dayFeed.openDay")}
-                      onLeft={() => setDayChooser(false)}
-                    />
-                    <ScrollView contentContainerStyle={styles.content}>
-                      <Text style={styles.meta}>{t("dayFeed.date")}</Text>
-                      {dateChoices.length ? (
-                        <ScrollView horizontal contentContainerStyle={styles.choices}>
-                          {dateChoices.map((choice) => (
-                            <UiChoiceChip
-                              compact
-                              key={choice}
-                              label={formatUiDate(new Date(`${choice}T12:00:00`))}
-                              selected={date === choice}
-                              onPress={() => setDate(choice)}
-                            />
-                          ))}
-                        </ScrollView>
-                      ) : null}
-                      <UiTextInput
-                        accessibilityLabel={t("dayFeed.date")}
-                        value={date}
-                        onChangeText={setDate}
-                        autoCapitalize="none"
-                      />
-                      <Text style={styles.meta}>{t("dayFeed.zone")}</Text>
-                      <View style={styles.choices}>
-                        {zoneChoices.map((choice) => (
-                          <UiChoiceChip
-                            compact
-                            key={choice}
-                            label={choice}
-                            selected={zone === choice}
-                            onPress={() => setZone(choice)}
-                          />
-                        ))}
-                      </View>
-                      <UiTextInput
-                        accessibilityLabel={t("dayFeed.zone")}
-                        value={zone}
-                        onChangeText={setZone}
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                      />
-                      {contextError ? (
-                        <Text accessibilityRole="alert" style={styles.meta}>
-                          {t("dayFeed.contextInvalid")}
-                        </Text>
-                      ) : null}
-                      <UiButton
-                        label={t("dayFeed.openDay")}
-                        onPress={() => void enterDay()}
-                      />
-                    </ScrollView>
-                  </SafeAreaProvider>
-                </Modal>
-              </>
-            ) : null}
-          </>
+          <></>
         )}
       </ScrollView>
       {localPreview}

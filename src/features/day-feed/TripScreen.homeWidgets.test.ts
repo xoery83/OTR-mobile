@@ -544,16 +544,20 @@ it("normal Day uses the full owning calendar only for current matching actor/gen
 
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
 
-it("normal Home hides internal accepted IDs and defers date inputs to the Day action sheet", async () => {
+it("Home Day action enters the saved plan directly without a date/zone sheet", async () => {
   const node = await loaded();
-  expect(find(node, "Modal")?.visible).toBe(false);
+  expect(find(node, "Modal")).toBeNull();
   expect(JSON.stringify(node)).not.toContain("dayFeed.admitted");
-  expect(JSON.stringify(node)).not.toContain("dayFeed.explicitId");
   const workspace = find(node, LocalTripWorkspace);
-  expect(workspace.onChooseDay).toBeTypeOf("function");
   workspace.onChooseDay();
-  expect(find(render(), "Modal")?.visible).toBe(true);
-  expect(state.select).not.toHaveBeenCalled();
+  for (let i = 0; i < 16; i++) await Promise.resolve();
+  expect(state.params).toHaveBeenCalledWith({
+    tripId: reference,
+    date: "2027-02-06",
+    zone: "Asia/Tokyo",
+    view: "day",
+  });
+  expect(find(render(), "Modal")).toBeNull();
 });
 
 vi.mock("react-native-safe-area-context", () => ({
@@ -561,53 +565,40 @@ vi.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 59, bottom: 34, left: 0, right: 0 }),
 }));
 
-function choices(node: ReactNode): any[] {
-  if (!isValidElement(node)) return [];
-  if (node.type === "Choice") return [node.props];
-  return Children.toArray((node.props as { children?: ReactNode }).children).flatMap(
-    choices,
-  );
-}
-function buttons(node: ReactNode): any[] {
-  if (!isValidElement(node)) return [];
-  if (node.type === "Button") return [node.props];
-  return Children.toArray((node.props as { children?: ReactNode }).children).flatMap(
-    buttons,
-  );
-}
-it("explicit date and named-zone choices never move the Day bookmark before Open Day", async () => {
-  state.snapshot.trip = { startDate: "2027-02-01", endDate: "2027-02-12" };
-  state.snapshot.candidateDays = ["2027-02-01", "2027-02-12"];
-  state.result.observed.projection.events = [
-    { boundaries: [{ zone_id: "Asia/Tokyo", instant: null }] },
-  ];
-  const options = choices(await loaded());
-  expect(options).toHaveLength(13);
-  options[5].onPress();
-  options.find((option) => option.label === "Asia/Tokyo").onPress();
-  expect(state.select).not.toHaveBeenCalled();
-  expect(state.params).not.toHaveBeenCalled();
-  expect(state.saveReading).not.toHaveBeenCalled();
-  expect(choices(render()).filter((option) => option.selected)).toHaveLength(2);
-  const opens = buttons(render()).filter((button) => button.label === "dayFeed.openDay");
-  opens[opens.length - 1].onPress();
-  for (let i = 0; i < 24; i++) await Promise.resolve();
-  expect(state.select).toHaveBeenCalledWith({
+it("Day entry prefers Trip start over item dates when no saved or explicit date exists", async () => {
+  state.view = { ...state.view, tripId: "other", date: "", zone: "" };
+  state.routeTrip = reference;
+  const workspace = find(await loaded(), LocalTripWorkspace);
+  workspace.onChooseDay("2026-10-16");
+  for (let i = 0; i < 16; i++) await Promise.resolve();
+  expect(state.params).toHaveBeenCalledWith({
     tripId: reference,
-    date: "2027-02-06",
-    zone: "Asia/Tokyo",
-    generation: 5,
+    date: "2026-10-16",
+    zone: "",
+    view: "day",
   });
-  expect(state.saveReading).not.toHaveBeenCalled();
+  expect(state.select).not.toHaveBeenCalled();
   state.params.mockClear();
   state.liveGeneration = 6;
-  opens[opens.length - 1].onPress();
+  workspace.onChooseDay("2026-10-16");
   expect(state.params).not.toHaveBeenCalled();
-  state.liveGeneration = 5;
-  state.snapshot.scope.accountId = "foreign";
-  state.appActive!();
-  for (let i = 0; i < 12; i++) await Promise.resolve();
-  expect(choices(render()).filter((option) => option.label !== "Asia/Tokyo")).toEqual([]);
+});
+it("unknown-zone accepted Day retains its owning projection and renderer", async () => {
+  state.routeMode = "day";
+  state.view.zone = "";
+  const feed = find(await loaded(), DayFeed);
+  expect(feed.projection).toBe(state.result.observed.projection);
+  expect(feed.zone).toBe("");
+  expect(feed.date).toBe("2027-02-06");
+});
+it("an undated Trip opens an empty Day page with date selection inside the page", async () => {
+  state.routeMode = "day";
+  state.view = { ...state.view, date: "", zone: "" };
+  state.snapshot = null;
+  const page = await loaded();
+  expect(find(page, "Modal")).toBeNull();
+  expect(find(page, LocalTripWorkspace)).toBeNull();
+  expect(find(page, "Input").accessibilityLabel).toBe("dayFeed.date");
 });
 
 it("switches the My Trips native title only after the body heading leaves, reverses on return, and reserves shell space", async () => {
@@ -708,7 +699,7 @@ function localRead() {
     rows: () => [],
   };
 }
-it("a genuine local read enables Day chooser without accepted projection and date-only route does not create a timezone bookmark", async () => {
+it("a genuine local read enters Day directly without accepted projection and date-only route does not create a timezone bookmark", async () => {
   state.result.observed = null;
   state.result.localManual = localRead();
   state.result.localManualStatus = "AVAILABLE";
@@ -716,15 +707,6 @@ it("a genuine local read enables Day chooser without accepted projection and dat
   const workspace = find(await loaded(), LocalTripWorkspace);
   expect(workspace.onChooseDay).toBeTypeOf("function");
   workspace.onChooseDay();
-  const page = render();
-  const buttons: any[] = [];
-  function collect(node: ReactNode) {
-    if (!isValidElement(node)) return;
-    if (node.type === "Button") buttons.push(node.props);
-    Children.forEach((node.props as any).children, collect);
-  }
-  collect(page);
-  await buttons.find((button) => button.label === "dayFeed.openDay").onPress();
   for (let i = 0; i < 16; i++) await Promise.resolve();
   expect(state.params).toHaveBeenCalledWith({
     tripId: reference,
@@ -739,7 +721,7 @@ it("a genuine local read enables Day chooser without accepted projection and dat
   expect(feed.localManual).toBe(state.result.localManual);
   expect(feed.projection).toBeUndefined();
   expect(feed.zone).toBe("");
-  expect(feed.onReadingChange).toBeUndefined();
+  expect(feed.onReadingChange).toBeTypeOf("function");
 });
 it("accepted Day passes pending increments into the original normal feed and save refreshes Today with generation fence", async () => {
   state.result.localManual = localRead();

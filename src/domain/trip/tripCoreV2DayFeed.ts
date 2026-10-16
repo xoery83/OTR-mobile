@@ -167,7 +167,7 @@ export function projectCoreFlightFeed(
     flightFacts,
     query(date, zone) {
       validateCalendarDate(date);
-      localCalendarDate("2000-01-01T00:00:00Z", zone);
+      if (zone) localCalendarDate("2000-01-01T00:00:00Z", zone);
       const day = projectCoreDay(graph, actor, date, certificate.generation).filter(
         (r) => r.family === "P2",
       );

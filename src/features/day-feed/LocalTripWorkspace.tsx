@@ -18,9 +18,7 @@ import { Alert, AppState, Modal, ScrollView, StyleSheet, View } from "react-nati
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import { localCalendarDate, validateCalendarDate } from "@/domain/trip/dayReadModel";
 import { createUuid } from "@/domain/localId";
-import {
-  readLocalTripRepository,
-} from "@/data/repositories/tripRepository";
+import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import {
   readLocalTripDiscoveryRepository,
   type TripListSummary,
@@ -77,7 +75,7 @@ type Props = {
   onKnownTrip(kind: "LOCAL" | "CACHED" | "NONE"): void;
   onBackToTrips(): void;
   onHomeHeroHeight?: (height: number) => void;
-  onChooseDay?: () => void;
+  onChooseDay?: (date?: string | null) => void;
   onManualItemSaved?: (tripId: string, generation: number) => void;
 };
 export function LocalTripWorkspace(props: Props) {
@@ -402,7 +400,7 @@ function LocalTripContent({
         editTrip: () => {
           if (alive.current && generation === getAccountGeneration()) setCoverOpen(true);
         },
-        ...(onChooseDay ? { chooseDay: onChooseDay } : {}),
+        ...(onChooseDay ? { chooseDay: () => onChooseDay(selected.startDate) } : {}),
         itinerary: (date) => {
           if (!alive.current || generation !== getAccountGeneration()) return;
           if (date) setItemStart((previous) => previous || date);
@@ -462,7 +460,7 @@ function LocalTripContent({
           if (generation === getAccountGeneration()) setItemFormOpen(true);
         }
       : undefined,
-    onOpenDay: onChooseDay,
+    onOpenDay: onChooseDay ? () => onChooseDay(metadata?.startDate) : undefined,
     onOpenItem: onOpenHomeItem,
   });
   const finance = useTripHomeFinanceWidget(metadata?.id ?? null, lifecycle);

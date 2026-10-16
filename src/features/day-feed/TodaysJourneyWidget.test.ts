@@ -37,7 +37,7 @@ function buttons(node: ReactNode): any[] {
     ];
   });
 }
-it("routes accepted-only unknown-zone plans to the honest date chooser, not an invalid empty-zone Day", () => {
+it("opens accepted-only unknown-zone plans directly through the normal reader", async () => {
   const choose = vi.fn(),
     open = vi.fn();
   state.cursor = 0;
@@ -57,31 +57,46 @@ it("routes accepted-only unknown-zone plans to the honest date chooser, not an i
     },
     "READY",
   ];
-  const node = TodaysJourneyWidget({
-    tripId: "trip",
-    zone: null,
-    planningDate: "2026-10-16",
-    onOpenDayChooser: choose,
-    onOpenToday: open,
-    onOpenItem: vi.fn(),
-    copy: {
-      title: "Today",
-      openToday: "Open Today",
-      upcoming: "Next",
-      plans: "Plans",
-      free: "Free",
-      later: "Later",
-      tonight: "Stay",
-      multipleStays: "Many",
-      loading: "Loading",
-      unavailable: "Unavailable",
-      chooseDay: "Choose date",
-    },
-  });
-  const actions = buttons(node);
+  const { readTripTodaysJourney } =
+    await import("@/data/repositories/tripTodaysJourneyRepository");
+  vi.mocked(readTripTodaysJourney).mockResolvedValue({
+    read: async () => state.hooks[1],
+  } as any);
+  const renderWidget = () =>
+    TodaysJourneyWidget({
+      tripId: "trip",
+      zone: null,
+      planningDate: "2026-10-16",
+      onOpenDayChooser: choose,
+      onOpenToday: open,
+      onOpenItem: vi.fn(),
+      copy: {
+        title: "Today",
+        openToday: "Open Today",
+        upcoming: "Next",
+        plans: "Plans",
+        free: "Free",
+        later: "Later",
+        tonight: "Stay",
+        multipleStays: "Many",
+        loading: "Loading",
+        unavailable: "Unavailable",
+        chooseDay: "Choose date",
+      },
+    });
+  const actions = buttons(renderWidget());
   expect(actions).toHaveLength(1);
-  expect(actions[0]).toMatchObject({ label: "Choose date", disabled: false });
-  actions[0].onPress();
-  expect(choose).toHaveBeenCalledOnce();
-  expect(open).not.toHaveBeenCalled();
+  expect(actions[0]).toMatchObject({
+    label: "tripHome.preparation.day",
+    disabled: false,
+  });
+  await actions[0].onPress();
+  for (let i = 0; i < 8; i++) await Promise.resolve();
+  expect(choose).not.toHaveBeenCalled();
+  expect(open).toHaveBeenCalledOnce();
+  (state.hooks[1] as any).today.tonight = { itemRef: "hotel", title: "Sky City Hotel" };
+  state.cursor = 0;
+  const withStay = JSON.stringify(renderWidget());
+  expect(withStay).toContain("Sky City Hotel");
+  expect(withStay).not.toContain('"Free"');
 });

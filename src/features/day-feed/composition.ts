@@ -368,7 +368,12 @@ export function composeDayStream(
   for (const row of rows.slice(query.timed.length))
     if (row.position === "TNS") entries.push({ kind: "ITEM", row });
   for (const row of rows.slice(0, query.timed.length)) {
-    const minute = positioned.length && row.item.anchor ? time(row.item.anchor) : 1440;
+    // Unknown Day context cannot position relative blocks against an absolute clock.
+    const minute = !query.zone
+      ? -1
+      : positioned.length && row.item.anchor
+        ? time(row.item.anchor)
+        : 1440;
     while (positioned.length && positioned[0].minute <= minute)
       entries.push({ kind: "BLOCK", block: positioned.shift()!.block });
     if (!row.containerId || !nestedBlockIds.has(row.containerId))

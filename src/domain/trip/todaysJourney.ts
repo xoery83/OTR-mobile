@@ -40,8 +40,7 @@ export function selectTodaysJourney(
 ): TodaysJourney | null {
   const date = journeyCalendarDate(clock);
   if (!date) return null;
-  // Core rows use authored dates; UTC satisfies the legacy query validator only.
-  const query = projection.query(date, clock.zone ?? "UTC");
+  const query = projection.query(date, clock.zone ?? "");
   return selectTodaysJourneyRows(query.coreRows, clock.now, date, clock.zone, (id) => {
     const event = projection.events.find((event) => event.id === id);
     return {
