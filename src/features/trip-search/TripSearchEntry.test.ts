@@ -5,6 +5,7 @@ const state = vi.hoisted(() => ({
   view: null as any,
   resumeView: null as any,
   push: vi.fn(),
+  quickActions: null as any,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -35,7 +36,7 @@ vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 beforeEach(() => {
   state.generation = 1;
-  state.view = state.resumeView = null;
+  state.view = state.resumeView = state.quickActions = null;
   state.push.mockReset();
 });
 it("keeps unavailable Trip Edit separate from the working scoped native Search action", () => {
@@ -102,4 +103,32 @@ it("an old entry callback cannot cross account generation", () => {
   state.generation++;
   entry.props.onPress();
   expect(state.push).not.toHaveBeenCalled();
+});
+
+it("opens only the matching generation's owning Editor action and fences stale callbacks", () => {
+  const editTrip = vi.fn();
+  state.quickActions = { tripId: "inspected", generation: 1, editTrip };
+  const entry = TripSearchEntry({
+    entry: "HOME",
+    tripId: "inspected",
+    nativeToolbar: true,
+    showUnavailableTripEdit: true,
+  })!;
+  const edit = entry.props.children[0];
+  expect(edit.props.disabled).toBe(false);
+  expect(edit.props.accessibilityLabel).toBe("tripHome.edit");
+  edit.props.onPress();
+  expect(editTrip).toHaveBeenCalledTimes(1);
+  state.generation++;
+  edit.props.onPress();
+  expect(editTrip).toHaveBeenCalledTimes(1);
+  state.quickActions.tripId = "other";
+  expect(
+    TripSearchEntry({
+      entry: "HOME",
+      tripId: "inspected",
+      nativeToolbar: true,
+      showUnavailableTripEdit: true,
+    })!.props.children[0].props.disabled,
+  ).toBe(true);
 });

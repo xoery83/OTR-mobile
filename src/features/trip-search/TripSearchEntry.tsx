@@ -28,7 +28,7 @@ export function TripSearchEntry({
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  const { view, resumeView } = useTripView();
+  const { view, resumeView, quickActions } = useTripView();
   const current = view ?? resumeView;
   const target =
     entry === "MY_TRIPS"
@@ -39,6 +39,14 @@ export function TripSearchEntry({
           ? current.tripId
           : undefined;
   if (entry !== "MY_TRIPS" && !target) return null;
+  const edit =
+    entry === "HOME" &&
+    quickActions &&
+    quickActions.tripId === target &&
+    quickActions.generation === generation
+      ? quickActions.editTrip
+      : undefined;
+
   const open = () => {
     if (generation !== getAccountGeneration()) return;
     router.push({
@@ -53,8 +61,15 @@ export function TripSearchEntry({
           <Stack.Toolbar.Button
             icon="square.and.pencil"
             separateBackground
-            disabled
-            accessibilityLabel={t("tripHome.editUnavailable")}
+            disabled={!edit}
+            accessibilityLabel={t(edit ? "tripHome.edit" : "tripHome.editUnavailable")}
+            onPress={
+              edit
+                ? () => {
+                    if (generation === getAccountGeneration()) edit();
+                  }
+                : undefined
+            }
           />
         ) : null}
         {showUnavailableTripEdit ? <Stack.Toolbar.Spacer width={8} /> : null}
