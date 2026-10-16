@@ -1,4 +1,4 @@
-import { LocalManualDayFeed } from "./LocalManualDayFeed";
+import { LocalManualDayFeed, LocalManualDayRows } from "./LocalManualDayFeed";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useLayoutEffect, useRef, useState } from "react";
 import {
@@ -68,14 +68,12 @@ type DayFeedProps = Omit<Parameters<typeof AcceptedDayFeed>[0], "projection"> & 
   ) => void;
 };
 export function DayFeed(props: DayFeedProps) {
-  if (props.localManual)
+  if (!props.projection && props.localManual)
     return (
       <LocalManualDayFeed
         read={props.localManual}
         date={props.date}
         dates={props.dates}
-        projection={props.projection}
-        zone={props.zone}
         onOpenItem={props.onOpenLocalItem}
         emptyMessage={props.emptyMessage}
       />
@@ -102,7 +100,14 @@ function AcceptedDayFeed({
   entry,
   onReadingChange,
   directItem,
+  localManual,
+  onOpenLocalItem,
 }: {
+  localManual?: LocalManualRead | null;
+  onOpenLocalItem?: (
+    itemId: string,
+    expected: Pick<LocalManualRead, "scope" | "source">,
+  ) => void;
   projection: DayProjection | CoreFlightDayProjection;
   date: string;
   dates?: readonly string[];
@@ -126,12 +131,24 @@ function AcceptedDayFeed({
 }) {
   const styles = useThemedStyles(createStyles);
   const continuous = Boolean(dates);
-  const queryForDate = (day: string) =>
-    contributedQuery
+  const pendingIds = new Set(localManual?.items.map((item) => item.itemId) ?? []);
+  const queryForDate = (day: string): DayFeedQuery => {
+    const query: DayFeedQuery = contributedQuery
       ? contributedQuery(day, zone)
       : projection.version === 2
         ? projection.query(day, zone)
         : itemsForLocalDate(projection, day, zone);
+    if (!pendingIds.size) return query;
+    return {
+      ...query,
+      timed: query.timed.filter((item) => !pendingIds.has(item.event.id)),
+      nonComparable: query.nonComparable.filter((item) => !pendingIds.has(item.event.id)),
+      unresolved: query.unresolved.filter((event) => !pendingIds.has(event.id)),
+      ...(query.coreRows
+        ? { coreRows: query.coreRows.filter((row) => !pendingIds.has(row.itemRef)) }
+        : {}),
+    };
+  };
   const calendar = dates?.length ? [...new Set([...dates, date])].sort() : [date];
   const query = queryForDate(date);
   const clock = useMinuteClock(zone);
@@ -465,7 +482,8 @@ function AcceptedDayFeed({
                     {section.date}
                   </Text>
                 ) : null}
-                {!section.stream.entries.length ? (
+                {!section.stream.entries.length &&
+                !localManual?.rows(section.date).length ? (
                   <Text style={styles.meta}>{emptyMessage ?? t("dayFeed.dayEmpty")}</Text>
                 ) : null}
                 {section.stream.entries.map((entry) =>
@@ -496,6 +514,13 @@ function AcceptedDayFeed({
                     </View>
                   ),
                 )}
+                {localManual ? (
+                  <LocalManualDayRows
+                    read={localManual}
+                    date={section.date}
+                    onOpenItem={onOpenLocalItem}
+                  />
+                ) : null}
                 {section.stream.nowAfter ? (
                   <NowMarker placement={section.stream.now} />
                 ) : null}

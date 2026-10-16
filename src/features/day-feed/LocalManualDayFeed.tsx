@@ -1,8 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import { ScrollView, Pressable, StyleSheet, View } from "react-native";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
-import type { DayProjection } from "@/domain/trip/dayReadModel";
-import type { CoreFlightDayProjection } from "@/domain/trip/tripCoreV2DayFeed";
 import { UiSection, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -22,16 +20,12 @@ export function LocalManualDayFeed({
   read,
   date,
   dates,
-  projection,
-  zone,
   onOpenItem,
   emptyMessage,
 }: {
   read: LocalManualRead;
   date: string;
   dates?: readonly string[];
-  projection?: DayProjection | CoreFlightDayProjection;
-  zone: string;
   onOpenItem?: (id: string, expected: Pick<LocalManualRead, "scope" | "source">) => void;
   emptyMessage?: string;
 }) {
@@ -47,15 +41,7 @@ export function LocalManualDayFeed({
   return (
     <ScrollView ref={scroll} style={styles.body} contentContainerStyle={styles.content}>
       {calendar.map((day) => {
-        const pending = read.rows(day);
-        const pendingIds = new Set(read.items.map((item) => item.itemId));
-        const accepted =
-          projection?.version === 2 && zone
-            ? projection
-                .query(day, zone)
-                .coreRows.filter((row) => !pendingIds.has(row.itemRef))
-            : [];
-        const rows = [...accepted, ...pending];
+        const rows = read.rows(day);
         return (
           <View
             key={day}
@@ -70,62 +56,7 @@ export function LocalManualDayFeed({
           >
             <UiSection title={civil(day)}>
               {rows.length ? (
-                rows.map((row) => {
-                  const local = pendingIds.has(row.itemRef);
-                  const item = read.items.find((item) => item.itemId === row.itemRef);
-                  const schedule = item?.schedule as
-                    | { start?: { localDate?: string }; end?: { localDate?: string } }
-                    | undefined;
-                  const role = row.rowKey.projectionRole;
-                  const roleLabel =
-                    role === "CHECKIN"
-                      ? t("p3.role.checkin")
-                      : role === "CHECKOUT"
-                        ? t("p3.role.checkout")
-                        : row.family === "P3"
-                          ? t("tripHome.today.tonight")
-                          : null;
-                  return (
-                    <Pressable
-                      key={JSON.stringify(row.rowKey)}
-                      accessibilityRole="button"
-                      accessibilityLabel={row.title}
-                      accessibilityValue={
-                        local ? { text: t("tripCreate.itemPending") } : undefined
-                      }
-                      accessibilityState={{ disabled: !onOpenItem }}
-                      disabled={!onOpenItem}
-                      style={styles.row}
-                      onPress={() => onOpenItem?.(row.itemRef, read)}
-                    >
-                      <Text style={styles.title}>{row.title}</Text>
-                      {roleLabel ? <Text style={styles.meta}>{roleLabel}</Text> : null}
-                      {row.family === "P3" &&
-                      schedule?.start?.localDate &&
-                      schedule.end?.localDate &&
-                      typeof item?.details.nights === "number" ? (
-                        <Text style={styles.meta}>
-                          {t(
-                            item.details.nights === 1
-                              ? "p3.dateRangeOne"
-                              : "p3.dateRange",
-                            {
-                              start: civil(schedule.start.localDate),
-                              end: civil(schedule.end.localDate),
-                              nights: item.details.nights,
-                            },
-                          )}
-                        </Text>
-                      ) : null}
-                      {row.displayTime?.localTime ? (
-                        <Text style={styles.meta}>{row.displayTime.localTime}</Text>
-                      ) : null}
-                      {local ? (
-                        <Text style={styles.pending}>{t("tripCreate.itemPending")}</Text>
-                      ) : null}
-                    </Pressable>
-                  );
-                })
+                <LocalManualDayRows read={read} date={day} onOpenItem={onOpenItem} />
               ) : (
                 <View>
                   <Text style={styles.meta}>
@@ -138,6 +69,68 @@ export function LocalManualDayFeed({
         );
       })}
     </ScrollView>
+  );
+}
+// Row-only contribution for the existing Day scroll; it never renders accepted Items.
+export function LocalManualDayRows({
+  read,
+  date,
+  onOpenItem,
+}: {
+  read: LocalManualRead;
+  date: string;
+  onOpenItem?: (id: string, expected: Pick<LocalManualRead, "scope" | "source">) => void;
+}) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  return (
+    <>
+      {read.rows(date).map((row) => {
+        const item = read.items.find((item) => item.itemId === row.itemRef);
+        const schedule = item?.schedule as
+          { start?: { localDate?: string }; end?: { localDate?: string } } | undefined;
+        const role = row.rowKey.projectionRole;
+        const roleLabel =
+          role === "CHECKIN"
+            ? t("p3.role.checkin")
+            : role === "CHECKOUT"
+              ? t("p3.role.checkout")
+              : row.family === "P3"
+                ? t("tripHome.today.tonight")
+                : null;
+        return (
+          <Pressable
+            key={JSON.stringify(row.rowKey)}
+            accessibilityRole="button"
+            accessibilityLabel={row.title}
+            accessibilityValue={{ text: t("tripCreate.itemPending") }}
+            accessibilityState={{ disabled: !onOpenItem }}
+            disabled={!onOpenItem}
+            style={styles.row}
+            onPress={() => onOpenItem?.(row.itemRef, read)}
+          >
+            <Text style={styles.title}>{row.title}</Text>
+            {roleLabel ? <Text style={styles.meta}>{roleLabel}</Text> : null}
+            {row.family === "P3" &&
+            schedule?.start?.localDate &&
+            schedule.end?.localDate &&
+            typeof item?.details.nights === "number" ? (
+              <Text style={styles.meta}>
+                {t(item.details.nights === 1 ? "p3.dateRangeOne" : "p3.dateRange", {
+                  start: civil(schedule.start.localDate),
+                  end: civil(schedule.end.localDate),
+                  nights: item.details.nights,
+                })}
+              </Text>
+            ) : null}
+            {row.displayTime?.localTime ? (
+              <Text style={styles.meta}>{row.displayTime.localTime}</Text>
+            ) : null}
+            <Text style={styles.pending}>{t("tripCreate.itemPending")}</Text>
+          </Pressable>
+        );
+      })}
+    </>
   );
 }
 const createStyles = (colors: UiColors) =>

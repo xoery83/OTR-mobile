@@ -282,3 +282,59 @@ it("APPLIED without a verified owning receipt cannot become read authority", asy
   );
   await expect(f.read(f.tripId)).rejects.toThrow("LOCAL_MANUAL_RECEIPT_PIN");
 });
+
+async function acceptTripBeforeFirstCertificate(f: Awaited<ReturnType<typeof fixture>>) {
+  const operation = f.sql
+    .prepare(
+      "SELECT id,payload_json FROM sync_operations WHERE operation_type='CREATE_TRIP'",
+    )
+    .get()!;
+  const request = {
+    operationId: operation.id,
+    ...JSON.parse(operation.payload_json as string),
+  };
+  const receipt = {
+    ...request,
+    actorAccountId: f.account,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+  };
+  await f.trips.acceptCreate(receipt);
+  return receipt;
+}
+it("owning Trip acceptance and mapped creator retain pending Items before first Core certificate", async () => {
+  const f = await fixture();
+  const originalPerson = f.sql
+    .prepare("SELECT person_id FROM local_trip_ledger_bindings")
+    .get()!.person_id;
+  const before = (await f.read(f.tripId))!.rows("2026-10-16");
+  const accepted = await acceptTripBeforeFirstCertificate(f);
+  expect(
+    f.sql.prepare("SELECT person_id FROM local_trip_ledger_bindings").get()!.person_id,
+  ).toBe(originalPerson);
+  expect(
+    f.sql.prepare("SELECT member_id FROM ledger_actor_context").get()!.member_id,
+  ).toBe(accepted.ownerPersonId);
+  expect(
+    f.sql.prepare("SELECT COUNT(*) AS n FROM trip_core_read_certificates").get()!.n,
+  ).toBe(0);
+  const local = (await f.read(f.tripId))!;
+  expect(local.source.kind).toBe("LOCAL_MANUAL_COMMITTED");
+  expect(local.rows("2026-10-16")).toEqual(before);
+  expect(local.items[0].participation.rosterHash).toBeUndefined();
+  // Starting the first refresh does not constitute an installed certificate.
+  await f.core.beginRefresh(await f.core.captureContext(f.tripId), 1);
+  expect((await f.read(f.tripId))!.rows("2026-10-16")).toEqual(before);
+});
+it("mapped owner mismatch and known Core revocation cannot use creator fallback", async () => {
+  const mismatched = await fixture();
+  await acceptTripBeforeFirstCertificate(mismatched);
+  mismatched.sql.prepare("UPDATE ledger_actor_context SET member_id=?").run(randomUUID());
+  expect(await mismatched.read(mismatched.tripId)).toBeNull();
+  const revoked = await fixture();
+  await acceptTripBeforeFirstCertificate(revoked);
+  await revoked.core.revoke(await revoked.core.captureContext(revoked.tripId), 2);
+  await expect(revoked.read(revoked.tripId)).rejects.toThrow("CORE_ACCESS_REVOKED");
+});

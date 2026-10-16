@@ -39,7 +39,7 @@ vi.mock("react-native", () => {
   return {
     View: primitive,
     Text: primitive,
-    ScrollView: primitive,
+    ScrollView: (p: any) => primitive({ ...p, isScrollView: true }),
     Pressable: primitive,
     Modal: (p: any) => (p.visible ? primitive(p) : null),
     Platform: { OS: "ios" },
@@ -47,8 +47,16 @@ vi.mock("react-native", () => {
   };
 });
 vi.mock("@/ui/theme", () => ({ useThemedStyles: (create: any) => create({}) }));
-vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
-vi.mock("@/ui/controls", () => ({ UiButton: () => null }));
+vi.mock("@/ui/locale", () => ({
+  t: (key: string) => key,
+  formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
+}));
+vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
+vi.mock("@/ui/controls", () => ({
+  UiButton: () => null,
+  UiText: (p: any) => createElement("span", {}, p.children),
+  UiSection: (p: any) => createElement("section", {}, p.children),
+}));
 vi.mock("./useMinuteClock", () => ({
   useMinuteClock: () => ({ instant: `${syntheticDate}T09:30:00Z` }),
 }));
@@ -247,4 +255,84 @@ it("date-only placed occurrences never reappear in the unplaced notice", () => {
   expect(html).not.toContain(item.event.title);
   expect(html).not.toContain("dayFeed.unresolvedCount");
   expect(state.nodes.some((node) => node.event?.id === item.event.id)).toBe(true);
+});
+
+function localManual(changedId = fixture.before.id) {
+  const row = (id: string) => ({
+    itemRef: id,
+    rowKey: { itemId: id, projectionRole: "START", localDate: syntheticDate },
+    itemRevision: 1,
+    projectionVersion: 2,
+    certificateGeneration: 0,
+    family: "P1",
+    title: `LOCAL ${id}`,
+    status: "planned",
+    position: "TNS",
+    localState: "PENDING",
+  });
+  return {
+    scope: { accountId: "account", tripId: "trip", generation: 0 },
+    source: { kind: "LOCAL_MANUAL_COMMITTED", fingerprint: "local-read-pin" },
+    items: [{ itemId: changedId }, { itemId: "new-local" }],
+    rows: (date: string) =>
+      date === syntheticDate ? [row(changedId), row("new-local")] : [],
+  } as any;
+}
+it("accepted plus local keeps the normal renderer, Focus/Immersive and a single owning scroll", () => {
+  const local = localManual(),
+    openLocal = vi.fn(),
+    reading = vi.fn();
+  const props = {
+    localManual: local,
+    onOpenLocalItem: openLocal,
+    onReadingChange: reading,
+  };
+  const html = render(props);
+  expect(html).toContain(`${fixture.after.id}:B`);
+  expect(html).toContain(`LOCAL ${fixture.before.id}`);
+  expect(html).toContain("LOCAL new-local");
+  expect(state.nodes.some((p) => p.event?.id === fixture.before.id)).toBe(false);
+  expect(state.nodes.filter((p) => p.isScrollView)).toHaveLength(1);
+  state.nodes
+    .find((p) => p.accessibilityLabel === `LOCAL ${fixture.before.id}`)
+    .onPress();
+  expect(openLocal).toHaveBeenLastCalledWith(fixture.before.id, local);
+  state.nodes
+    .find((p) => p.event?.id === fixture.after.id && p.depth === "B")
+    .onDepth("F");
+  expect(render(props)).toContain(`${fixture.after.id}:F`);
+  state.nodes
+    .find((p) => p.event?.id === fixture.after.id && p.depth === "F")
+    .onDepth("I");
+  expect(render(props)).toContain(`${fixture.after.id}:I`);
+  expect(openLocal).toHaveBeenCalledTimes(1);
+  expect(reading).toHaveBeenCalled();
+});
+it("pending replacements remove accepted unresolved duplicates and suppress false empty copy", () => {
+  const local = localManual();
+  const query = itemsForLocalDate(fixture.day, syntheticDate, "UTC");
+  const html = render({
+    localManual: local,
+    query: () => ({
+      ...query,
+      timed: query.timed.filter((item) => item.event.id === fixture.before.id),
+      nonComparable: query.nonComparable.filter(
+        (item) => item.event.id === fixture.before.id,
+      ),
+      unresolved: [fixture.before],
+      coreRows: [],
+    }),
+  });
+  expect(html).toContain(`LOCAL ${fixture.before.id}`);
+  expect(html).not.toContain("dayFeed.dayEmpty");
+  expect(html).not.toContain("dayFeed.timeUnspecified");
+  expect(html.split(`LOCAL ${fixture.before.id}`)).toHaveLength(2);
+  expect(state.nodes.some((p) => p.event?.id === fixture.before.id)).toBe(false);
+});
+it("without accepted projection only local date-only feed owns one scroll and no accepted callbacks", () => {
+  const local = localManual();
+  const html = render({ projection: undefined, localManual: local, zone: "" });
+  expect(html).toContain("LOCAL new-local");
+  expect(state.nodes.filter((p) => p.isScrollView)).toHaveLength(1);
+  expect(state.nodes.some((p) => p.event)).toBe(false);
 });

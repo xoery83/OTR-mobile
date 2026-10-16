@@ -53,3 +53,11 @@ Open Day action when supplied. All copy reuses existing catalog keys.
 The parent TripScreen/LocalTripWorkspace writer supplies those callbacks and
 increments `refreshKey` after successful saves. Native visual/runtime acceptance
 remains a separate integrated check.
+
+Before the first Core certificate, a completed CREATE_TRIP may retain this local
+read through the existing `acceptCreate` transaction's acceptance projection:
+original request/queue identity, accepted timestamp and mapped owner Person must
+match the retained LOCAL_CREATOR binding and Ledger actor/member. The full Trip
+creation receipt is not retained; this reader does not claim to reverify that
+missing body or grant Hosted membership. Any known Core certificate/access state
+continues to own authority; revoked access cannot fall back to creator history.

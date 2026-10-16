@@ -32,19 +32,44 @@ export function createTripLocalManualReader(
         await assertAccountRequestContext(scope, account);
         let actor: CoreActor | undefined = accepted?.actor;
         if (!actor) {
+          // Never replace known Core access/certificate authority with creator history.
+          const known = await database.getFirstAsync<{ revoked: number }>(
+            "SELECT revoked FROM trip_core_scopes WHERE account_id=? AND trip_id=?",
+            scope.accountId,
+            tripId,
+          );
+          if (known?.revoked) throw new Error("CORE_ACCESS_REVOKED");
+          if (
+            await database.getFirstAsync(
+              "SELECT 1 FROM trip_core_read_certificates WHERE account_id=? AND trip_id=?",
+              scope.accountId,
+              tripId,
+            )
+          )
+            return null;
           const local = await database.getFirstAsync<{
             person_id: string;
             create_operation_id: string;
             payload_json: string;
+            owner_person_id: string | null;
+            accepted_at: string | null;
+            capabilities_json: string;
           }>(
-            `SELECT b.person_id,b.create_operation_id,op.payload_json FROM local_trip_containers t
+            `SELECT b.person_id,b.create_operation_id,op.payload_json,t.owner_person_id,t.accepted_at,a.capabilities_json
+             FROM local_trip_containers t
              JOIN local_trip_ledger_bindings b ON b.account_id=t.account_id AND b.trip_id=t.id
-             AND b.create_operation_id=t.create_operation_id
+             AND b.create_operation_id=t.create_operation_id AND b.authority='LOCAL_CREATOR'
+             JOIN ledger_actor_context a ON a.user_id=t.account_id AND a.journey_id=t.id AND a.role='owner'
+             AND a.member_id=CASE WHEN t.accepted_at IS NULL THEN b.person_id ELSE t.owner_person_id END
+             JOIN ledger_members m ON m.id=a.member_id AND m.journey_id=t.id AND m.role='owner'
+             AND m.status IN ('local','linked')
              JOIN sync_operations op ON op.id=t.create_operation_id AND op.owner_user_id=t.account_id
              AND op.trip_id=t.id AND op.entity_id=t.id AND op.idempotency_key=op.id
              AND op.entity_type='TRIP' AND op.operation_type='CREATE_TRIP'
-             AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE')
-             WHERE t.account_id=? AND t.id=? AND t.accepted_at IS NULL`,
+             WHERE t.account_id=? AND t.id=? AND (
+               (t.accepted_at IS NULL AND t.owner_person_id IS NULL
+                AND op.status IN ('PENDING','DEPENDENCY_BLOCKED','PROCESSING','RETRYABLE'))
+               OR (t.accepted_at IS NOT NULL AND t.owner_person_id IS NOT NULL AND op.status='COMPLETED'))`,
             scope.accountId,
             tripId,
           );
@@ -55,17 +80,22 @@ export function createTripLocalManualReader(
           });
           if (
             request.tripId !== tripId ||
-            request.operationId !== local.create_operation_id
+            request.operationId !== local.create_operation_id ||
+            JSON.parse(local.capabilities_json).authority !== "LOCAL_CREATOR"
           )
             throw new Error("LOCAL_MANUAL_TRIP_PIN");
           coreUuid.parse(local.person_id);
+          // acceptCreate validates the receipt and maps these fields atomically; full receipt is not retained.
+          const personId = local.accepted_at
+            ? coreUuid.parse(local.owner_person_id)
+            : local.person_id;
           actor = {
             accountId: scope.accountId,
             tripId,
             active: true,
             canManageShared: true,
-            personId: local.person_id,
-            personIds: [local.person_id],
+            personId,
+            personIds: [personId],
           };
         }
         const snapshot = await core.manualReadSnapshot(scope, actor, !!accepted);
