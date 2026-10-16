@@ -12,7 +12,7 @@ const gateSchema = z.strictObject({
   token: z.string().regex(/^[a-f0-9]{64}$/),
   origin: z.literal(origin),
   expiresAt: z.number().int(),
-  version: z.record(z.string(), z.string().regex(/^[a-f0-9]{64}$/)),
+  hostSourceManifest: z.record(z.string(), z.string().regex(/^[a-f0-9]{64}$/)),
 });
 const jobSchema = z.strictObject({
   runId: z.string().uuid(),
@@ -20,7 +20,7 @@ const jobSchema = z.strictObject({
   mediaType: z.enum(["application/pdf", "image/jpeg", "image/png", "text/plain"]),
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
   byteCount: z.number().int().min(1).max(10485760),
-  version: z.record(z.string(), z.string()),
+  hostSourceManifest: z.record(z.string(), z.string()),
 });
 let running = false;
 // No automatic activation. Both DEV opt-in and a short-lived exact-Simulator private gate are required.
@@ -70,7 +70,8 @@ export function startImportWorkbenchDevCaller() {
       const job = jobSchema.parse(response.job);
       try {
         if (
-          JSON.stringify(job.version) !== JSON.stringify(gate.version) ||
+          JSON.stringify(job.hostSourceManifest) !==
+            JSON.stringify(gate.hostSourceManifest) ||
           typeof response.bytesBase64 !== "string" ||
           response.bytesBase64.length > 13981016
         )

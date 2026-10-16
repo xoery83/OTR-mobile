@@ -2,7 +2,8 @@ import { spawn, execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, chmodSync } from "node:fs";
 import { createInterface } from "node:readline";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { buildSync } from "esbuild";
 import { createCaptureLocalExtractorCore } from "../../src/native/captureLocalExtractionCore";
 import {
   runImportDiagnostic,
@@ -11,20 +12,38 @@ import {
 
 export const hash = async (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
-export function sourceVersion() {
+// Resolve only the actual local runtime import closure, not the entire repository.
+// External package versions/integrity are pinned by the existing dependency lock.
+export function sourceVersion(
+  read: (path: string) => Uint8Array = (p) => readFileSync(p),
+) {
+  const graph = buildSync({
+    entryPoints: [
+      "src/native/captureLocalExtraction.ts",
+      "src/native/importWorkbenchRun.ts",
+      "src/native/importWorkbenchDevCaller.ts",
+    ],
+    bundle: true,
+    write: false,
+    metafile: true,
+    packages: "external",
+    platform: "node",
+    outdir: "unused-workbench-manifest",
+    alias: { "@": resolve("src") },
+    logLevel: "silent",
+  });
   const files = [
-    "modules/receipt-ocr/ios/FlightPdfExtractor.swift",
-    "src/native/captureLocalExtractionCore.ts",
-    "src/domain/capture/captureLocalInterpretation.ts",
-    "src/domain/trip/referenceFlightExtractor.ts",
-    "src/native/importWorkbenchRun.ts",
-    "src/native/importWorkbenchDevCaller.ts",
-    "src/native/captureLocalExtraction.ts",
-    "src/data/interpretation/flightPdfExtraction.ts",
-    "scripts/import-workbench/Runner.swift",
-  ];
+    ...new Set([
+      ...Object.keys(graph.metafile!.inputs),
+      "modules/receipt-ocr/ios/FlightPdfExtractor.swift",
+      "scripts/import-workbench/Runner.swift",
+      "scripts/import-workbench/mac.ts",
+      "package.json",
+      "package-lock.json",
+    ]),
+  ].sort();
   return Object.fromEntries(
-    files.map((p) => [p, createHash("sha256").update(readFileSync(p)).digest("hex")]),
+    files.map((path) => [path, createHash("sha256").update(read(path)).digest("hex")]),
   );
 }
 export function compileNative(root: string) {

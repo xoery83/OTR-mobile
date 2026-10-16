@@ -1,6 +1,47 @@
+// eslint-disable-next-line import/no-unresolved -- Fixed loopback route transpiles batch.ts; no filesystem URL.
+import { runSequentialInputs } from "/batch.js";
 /* Local diagnostic UI. Untrusted filenames, text, Trace and errors use textContent. */
 let language = localStorage.getItem("otr-workbench-language") || "en";
 let selectedRun;
+let savedInputs = [];
+const selectedInputs = new Set();
+const seenInputs = new Set();
+let batchRunning = false;
+let latestState;
+function updateRunControls() {
+  const nativeReady = latestState?.native?.ready === true;
+  el("runtime").querySelector('option[value="IOS_DIAGNOSTIC_COMPONENT"]').disabled =
+    !nativeReady;
+  const disabled =
+    batchRunning ||
+    latestState?.busy ||
+    (el("runtime").value === "IOS_DIAGNOSTIC_COMPONENT" && !nativeReady);
+  el("run-selected").disabled = disabled || selectedInputs.size === 0;
+  el("run-all").disabled = disabled || savedInputs.length === 0;
+}
+async function runInputs(ids, runtime) {
+  if (batchRunning || !ids.length) return;
+  batchRunning = true;
+  updateRunControls();
+  try {
+    const results = await runSequentialInputs(ids, runtime, api, (current) => {
+      el("batch-status").textContent =
+        current.index +
+        "/" +
+        current.total +
+        " · " +
+        current.inputId.slice(0, 8) +
+        " · " +
+        current.stage;
+    });
+    show({ diagnosticBatch: results });
+    el("batch-status").textContent =
+      message("Batch ended: ", "批次结束：") + results.map((r) => r.stage).join(" / ");
+  } finally {
+    batchRunning = false;
+    await refresh();
+  }
+}
 const el = (id) => document.getElementById(id);
 const message = (en, zh) => (language === "zh" ? zh : en);
 function translate() {
@@ -87,25 +128,53 @@ async function refresh() {
         show(await api("/api/import/" + id)),
       ),
     );
-  el("native").textContent =
-    message("iOS caller last seen: ", "iOS caller 最近连接：") +
-    (state.lastNativeSeen || "N/A");
+  latestState = state;
+  savedInputs = state.inputs;
+  const nativeReady = state.native?.ready === true;
+  el("native").textContent = nativeReady
+    ? message(
+        "Native caller connected · executed Native/JS versions UNVERIFIED",
+        "Native caller 已连接 · 实际 Native／JS 版本未经验证",
+      )
+    : message(
+        "Native caller not connected / not armed — iOS Run disabled; executed Native/JS versions UNVERIFIED",
+        "Native caller 未连接／未启用 — iOS 运行不可用；实际 Native／JS 版本未经验证",
+      );
   el("inputs").replaceChildren();
   for (const input of state.inputs) {
+    if (!seenInputs.has(input.id)) {
+      seenInputs.add(input.id);
+      selectedInputs.add(input.id);
+    }
     const row = document.createElement("div");
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = selectedInputs.has(input.id);
+    checkbox.disabled = batchRunning;
+    checkbox.onchange = () => {
+      if (checkbox.checked) selectedInputs.add(input.id);
+      else selectedInputs.delete(input.id);
+      updateRunControls();
+    };
     const name = document.createElement("small");
     name.textContent =
       input.name + " · " + input.byteCount + " bytes · SHA256 " + input.sha256;
-    row.append(name);
-    for (const runtime of ["MAC_COMPONENT", "IOS_DIAGNOSTIC_COMPONENT"])
-      row.append(
-        button(message("Run ", "运行 ") + runtime, async () => {
-          show(await api("/api/run", { inputId: input.id, runtime }));
-          await refresh();
-        }),
+    label.append(checkbox, name);
+    row.append(label);
+    for (const runtime of ["MAC_COMPONENT", "IOS_DIAGNOSTIC_COMPONENT"]) {
+      const run = button(message("Run ", "运行 ") + runtime, () =>
+        runInputs([input.id], runtime),
       );
+      run.disabled =
+        batchRunning ||
+        state.busy ||
+        (runtime === "IOS_DIAGNOSTIC_COMPONENT" && !nativeReady);
+      row.append(run);
+    }
     el("inputs").append(row);
   }
+  updateRunControls();
   el("runs").replaceChildren();
   for (const run of state.runs) {
     const tr = document.createElement("tr");
@@ -179,6 +248,19 @@ el("save-labels").onclick = async () => {
     show({ error: error.message });
   }
 };
+el("run-selected").onclick = () => {
+  void runInputs(
+    savedInputs.filter((i) => selectedInputs.has(i.id)).map((i) => i.id),
+    el("runtime").value,
+  ).catch((e) => show({ error: e.message }));
+};
+el("run-all").onclick = () => {
+  void runInputs(
+    savedInputs.map((i) => i.id),
+    el("runtime").value,
+  ).catch((e) => show({ error: e.message }));
+};
+el("runtime").onchange = updateRunControls;
 translate();
 void refresh().catch((e) => show({ error: e.message }));
 setInterval(() => {

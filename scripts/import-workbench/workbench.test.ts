@@ -1,6 +1,13 @@
 import { request as httpRequest } from "node:http";
 import { afterAll, beforeAll, expect, it } from "vitest";
-import { mkdtempSync, realpathSync, rmSync, statSync, symlinkSync } from "node:fs";
+import {
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  readFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -9,7 +16,8 @@ import {
   validateCaptureLocalModelResponse,
 } from "../../src/native/captureLocalExtractionCore";
 import { runImportDiagnostic } from "../../src/native/importWorkbenchRun";
-import { hash } from "./mac";
+import { hash, sourceVersion } from "./mac";
+import { runSequentialInputs } from "./batch";
 import { PrivateStore, statistics, compare, escapeHtml } from "./store";
 import { createWorkbench, ORIGIN } from "./server";
 const root = realpathSync(mkdtempSync(join(tmpdir(), "otr-wb-test-")));
@@ -79,7 +87,7 @@ it("shares production evidence validation and fallback, and does not treat hypot
     mediaType: "text/plain",
     byteCount: bytes.length,
     sha256: await hash(bytes),
-    version: { parser: "a".repeat(64) },
+    hostSourceManifest: { parser: "a".repeat(64) },
   };
   const a = await runImportDiagnostic(job, bytes, extractor, hash, "MAC_COMPONENT");
   const b = await runImportDiagnostic(
@@ -91,6 +99,8 @@ it("shares production evidence validation and fallback, and does not treat hypot
   );
   expect(compare(a, b).sameFieldEvidence).toBe(true);
   expect(a.result.sourceAuthority).toBe("NONE");
+  expect(a.executedVersion).toEqual({ native: "UNVERIFIED", javascript: "UNVERIFIED" });
+  expect(compare(a, b).sameHostSourceManifest).toBe(true);
   expect(a.remoteCost).toBe(0);
   expect(statistics(a).status).toBe("N/A");
   expect(statistics(a, { kind: "HYPOTHESIS", fields: [] }).status).toBe("N/A");
@@ -167,6 +177,11 @@ it("rejects cross-origin writes, foreign Host, unarmed Native and unsupported me
 });
 it("accepts only the pending pinned diagnostic job and revalidates posted Native evidence", async () => {
   const input = store.add(Buffer.from("Flight NZ5069"), "text/plain", "unit-test.txt");
+  // Test-only transport setup, not an installed App or Native Runtime claim.
+  app.armNative(Date.now() + 60_000);
+  await testFetch(ORIGIN + "/native/job", {
+    headers: { "X-OTR-Diagnostic": app.nativeToken },
+  });
   const queuedResponse = await testFetch(ORIGIN + "/api/run", {
     method: "POST",
     headers: { Origin: ORIGIN, "Content-Type": "application/json" },
@@ -230,4 +245,75 @@ it("accepts only the pending pinned diagnostic job and revalidates posted Native
   ).toBe(400);
   expect((await sendTrace(trace)).status).toBe(200);
   expect((await sendTrace(trace)).status).toBe(400);
+});
+
+it("pins the actual core runtime closure and lock; dependency-only changes change the manifest", () => {
+  const before = sourceVersion();
+  for (const file of [
+    "src/domain/intelligence/interpretation.ts",
+    "src/domain/trip/flightAdmission.ts",
+    "src/domain/trip/flightImportReview.ts",
+    "src/domain/trip/eventIntentJson.ts",
+    "package-lock.json",
+  ])
+    expect(before[file], file).toMatch(/^[a-f0-9]{64}$/);
+  const dependency = "src/domain/trip/flightAdmission.ts";
+  const after = sourceVersion((path) =>
+    path === dependency
+      ? Buffer.concat([readFileSync(path), Buffer.from("\n// contract change")])
+      : readFileSync(path),
+  );
+  expect(after[dependency]).not.toBe(before[dependency]);
+  expect(Object.keys(after).filter((p) => after[p] !== before[p])).toEqual([dependency]);
+  const changedLock = sourceVersion((path) =>
+    path === "package-lock.json"
+      ? Buffer.concat([readFileSync(path), Buffer.from("\n")])
+      : readFileSync(path),
+  );
+  expect(changedLock["package-lock.json"]).not.toBe(before["package-lock.json"]);
+});
+it("runs one multi-input click serially and continues after a terminal input failure", async () => {
+  const calls: string[] = [];
+  let poll = 0;
+  const result = await runSequentialInputs(
+    ["a", "b"],
+    "MAC_COMPONENT",
+    async (path, value) => {
+      if (value) {
+        const id = (value as { inputId: string }).inputId;
+        calls.push("queue " + id);
+        return { id, stage: "QUEUED" };
+      }
+      calls.push(path);
+      return {
+        id: path.endsWith("a") ? "a" : "b",
+        stage: path.endsWith("a")
+          ? ++poll === 1
+            ? "APPLE_MODEL"
+            : "FAILED"
+          : "FINISHED",
+      };
+    },
+    () => undefined,
+    async () => undefined,
+  );
+  expect(calls).toEqual(["queue a", "/api/run/a", "/api/run/a", "queue b", "/api/run/b"]);
+  expect(result.map((r) => r.stage)).toEqual(["FAILED", "FINISHED"]);
+});
+it("does not launch another input after unresolved transport failure", async () => {
+  let queued = 0;
+  const result = await runSequentialInputs(
+    ["a", "b"],
+    "MAC_COMPONENT",
+    async (_path, value) => {
+      if (value) {
+        queued++;
+        return { id: "a", stage: "QUEUED" };
+      }
+      throw new Error("transport stopped");
+    },
+    () => undefined,
+  );
+  expect(queued).toBe(1);
+  expect(result[0].stage).toBe("BATCH_STOPPED_UNRESOLVED");
 });

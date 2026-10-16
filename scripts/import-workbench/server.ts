@@ -1,3 +1,4 @@
+import { transformSync } from "esbuild";
 import { createServer, type IncomingMessage } from "node:http";
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
 import { randomBytes, randomUUID } from "node:crypto";
@@ -67,6 +68,18 @@ export function createWorkbench(store = new PrivateStore()) {
   let binary: string | undefined;
   let nativeRun: Run | undefined;
   let lastNativeSeen: string | null = null;
+  let nativeArmExpiresAt = 0;
+  const nativeStatus = () => {
+    const armed = nativeArmExpiresAt > Date.now();
+    const connected = !!lastNativeSeen && Date.now() - Date.parse(lastNativeSeen) < 5000;
+    return {
+      armed,
+      connected,
+      ready: armed && connected,
+      executedNativeVersion: "UNVERIFIED",
+      executedJSVersion: "UNVERIFIED",
+    };
+  };
   const persist = (run: Run) => store.save(`run-${run.id}.json`, run);
   function expire() {
     if (nativeRun && Date.now() - nativeRun.createdAt > 120_000) {
@@ -94,7 +107,7 @@ export function createWorkbench(store = new PrivateStore()) {
       const url = new URL(req.url ?? "/", ORIGIN);
       const native = url.pathname.startsWith("/native/");
       if (native) {
-        if (req.headers["x-otr-diagnostic"] !== nativeToken)
+        if (req.headers["x-otr-diagnostic"] !== nativeToken || !nativeStatus().armed)
           throw new Error("NATIVE_GATE_REQUIRED");
       } else if (req.headers.origin && req.headers.origin !== ORIGIN)
         throw new Error("ORIGIN_REJECTED");
@@ -119,9 +132,19 @@ export function createWorkbench(store = new PrivateStore()) {
         res.end(readFileSync("scripts/import-workbench/client.js"));
         return;
       }
+      if (req.method === "GET" && url.pathname === "/batch.js") {
+        res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+        res.end(
+          transformSync(readFileSync("scripts/import-workbench/batch.ts", "utf8"), {
+            loader: "ts",
+            format: "esm",
+          }).code,
+        );
+        return;
+      }
       if (req.method === "GET" && url.pathname === "/api/state") {
         send({
-          version: loadedVersion,
+          hostSourceManifest: loadedVersion,
           inputs: store.inputs(),
           runs: [...runs.values()].map(({ trace, ...r }) => ({
             ...r,
@@ -130,6 +153,8 @@ export function createWorkbench(store = new PrivateStore()) {
             model: trace?.result.modelReason,
           })),
           lastNativeSeen,
+          native: nativeStatus(),
+          busy,
           imports: readdirSync(store.root)
             .filter((v) => /^import-[a-f0-9-]+\.json$/.test(v))
             .map((v) => v.slice(7, -5)),
@@ -154,6 +179,8 @@ export function createWorkbench(store = new PrivateStore()) {
         const request = jobRequest.parse(await json());
         if (JSON.stringify(sourceVersion()) !== JSON.stringify(loadedVersion))
           throw new Error("VERSION_CHANGED_RESTART_REQUIRED");
+        if (request.runtime === "IOS_DIAGNOSTIC_COMPONENT" && !nativeStatus().ready)
+          throw new Error("NATIVE_CALLER_NOT_CONNECTED");
         if (busy || runs.size >= 256) throw new Error("RUN_BUSY_OR_LIMIT");
         const input = store.input(request.inputId),
           bytes = store.bytes(input);
@@ -164,7 +191,7 @@ export function createWorkbench(store = new PrivateStore()) {
           mediaType: input.mediaType,
           sha256: input.sha256,
           byteCount: input.byteCount,
-          version: loadedVersion,
+          hostSourceManifest: loadedVersion,
         };
         const run: Run = {
           id,
@@ -313,6 +340,7 @@ export function createWorkbench(store = new PrivateStore()) {
         nativeRun.trace = {
           ...raw,
           sourceAuthority: "NONE",
+          executedVersion: { native: "UNVERIFIED", javascript: "UNVERIFIED" },
           admission: "NOT_AVAILABLE",
           coldModelResourceClaim: "UNVERIFIED",
           result,
@@ -417,7 +445,14 @@ export function createWorkbench(store = new PrivateStore()) {
       res.end(JSON.stringify({ error: "REQUEST_REJECTED" }));
     }
   });
-  return { server, store, nativeToken };
+  return {
+    server,
+    store,
+    nativeToken,
+    armNative: (expiresAt: number) => {
+      nativeArmExpiresAt = expiresAt;
+    },
+  };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const app = createWorkbench();
@@ -439,7 +474,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       token: app.nativeToken,
       origin: ORIGIN,
       expiresAt: Date.now() + 60 * 60 * 1000,
-      version: sourceVersion(),
+      hostSourceManifest: sourceVersion(),
     };
     mkdirSync(`${container}/Library/Caches/import-workbench`, {
       recursive: true,
@@ -450,6 +485,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       JSON.stringify(gate),
       { mode: 0o600 },
     );
+    app.armNative(gate.expiresAt);
     app.store.save("ios-gate-manifest.json", {
       device: DEVICE,
       gatePath: `${container}/Library/Caches/import-workbench/gate.json`,

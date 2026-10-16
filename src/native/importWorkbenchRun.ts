@@ -13,7 +13,7 @@ export type DiagnosticJob = {
   mediaType: string;
   sha256: string;
   byteCount: number;
-  version: Record<string, string>;
+  hostSourceManifest: Record<string, string>;
 };
 export type DiagnosticTrace = Awaited<ReturnType<typeof runImportDiagnostic>>;
 export async function runImportDiagnostic(
@@ -64,6 +64,8 @@ export async function runImportDiagnostic(
     mode: "DIAGNOSTIC_ONLY" as const,
     runtime,
     job,
+    // Host provenance is not evidence of the installed Native binary or loaded Metro bundle.
+    executedVersion: { native: "UNVERIFIED" as const, javascript: "UNVERIFIED" as const },
     startedAt,
     finishedAt: new Date().toISOString(),
     timings,

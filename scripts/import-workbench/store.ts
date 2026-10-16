@@ -66,7 +66,14 @@ export function compare(a: DiagnosticTrace, b: DiagnosticTrace) {
   return {
     sameOriginalBytes: true,
     sameTextSha256: a.textSha256 === b.textSha256,
-    sameVersion: JSON.stringify(a.job.version) === JSON.stringify(b.job.version),
+    sameHostSourceManifest:
+      a.job.hostSourceManifest && b.job.hostSourceManifest
+        ? JSON.stringify(a.job.hostSourceManifest) ===
+          JSON.stringify(b.job.hostSourceManifest)
+        : null,
+    executedVersionComparison: "UNVERIFIED",
+    legacyManifestCoverage:
+      a.job.hostSourceManifest && b.job.hostSourceManifest ? "CURRENT" : "UNVERIFIED",
     removed: x.filter((v) => !y.includes(v)),
     added: y.filter((v) => !x.includes(v)),
     sameFieldEvidence: JSON.stringify(x) === JSON.stringify(y),

@@ -13,7 +13,11 @@ node --import tsx scripts/import-workbench/server.ts
 ```
 
 Open **http://127.0.0.1:49184**. Choose/drop multiple PDF, JPEG, PNG or UTF-8 text
-files; choose `MAC_COMPONENT`. Saved inputs remain available for subsequent runs.
+files; choose the run location and click **Run selected** or **Run all**. One click
+runs the chosen inputs sequentially through the existing single-input endpoint;
+each input retains its own Trace and failure state. Terminal failure permits the
+next input; unresolved transport failure stops the batch to avoid overlapping
+model calls. Saved inputs remain available for subsequent runs.
 The first Mac run compiles the checked-in thin `Runner.swift` together with
 **modules/receipt-ocr/ios/FlightPdfExtractor.swift** using the existing Xcode SDK.
 It invokes the production PDFKit/Vision/FoundationModels implementations, not a
@@ -32,8 +36,14 @@ and forbid scripts. Do not proxy/expose the server to another interface.
 
 Compare two completed runs of the **same original SHA/bytes**. It reports text
 SHA/version differences, and added/removed field values, normalized values and
-exact evidence. Model evidence changes are reported separately. Source hashes
-are pinned at process startup; restart the workbench after core source changes.
+exact evidence. Model evidence changes are reported separately. `hostSourceManifest` pins the actual production-core local runtime import closure
+(resolved with the existing esbuild metafile) and `package.json`/`package-lock.json`,
+plus the formal Swift extractor/thin runner. Changes to transitive schemas or
+normalizers also require restart. It is **host source provenance**, not executing
+build attestation: Trace `executedVersion.native` and `.javascript` remain
+`UNVERIFIED`, especially for an already-installed iOS binary or loaded Metro bundle.
+Compare reports `sameHostSourceManifest`; legacy narrow maps have unknown coverage
+and return null rather than claiming matching versions.
 Saved C4/other JSON Trace imports are explicitly **IMPORTED_UNVERIFIED_VIEW_ONLY**;
 viewing them cannot create a new verified run or participate in accuracy scoring.
 JSON and safe static HTML exports preserve diagnostic scope.
@@ -55,7 +65,10 @@ This uses `simctl get_app_container` for that exact device/bundle, writes only
 `Library/Caches/import-workbench/gate.json` (0600 under0700) and records the exact
 path in the private `ios-gate-manifest.json`. The random loopback diagnostic token
 is not an Auth credential and never enters source, URLs, argv or logs. Gate
-expires in one hour. It pins container, device, endpoint and source version.
+expires in one hour. It pins container, device, endpoint and the declared host source manifest. It does
+not attest the installed Native binary or executing JS bundle. iOS Run is disabled
+until the server has a valid arm window and a recently connected authenticated
+caller; an unconnected caller is reported explicitly.
 
 Use the existing approved public Dev configuration (only existing public URL and
 publishable key, never a secret or Session) if required by normal App bootstrap.
@@ -72,7 +85,7 @@ xcrun simctl launch 418CF8AE-ED96-4E76-8D22-533EB6C08032 com.xoery.otrmobile \
 The Root lazily imports the caller only with DEV and this explicit flag. The
 caller also requires exact iOS26.5 and the matching private container gate. It
 polls only the fixed loopback URL, fetches one server-allowlisted diagnostic job,
-checks input SHA/bytes and source pins, calls the existing Native adapter and
+checks input SHA/bytes and matching host declarations (not runtime attestation), calls the existing Native adapter and
 shared core, then posts a Trace. The server revalidates extraction/model anchors
 through production validators. Completed diagnostic inputs can be run again with
 new diagnostic run IDs; normal Capture jobs and successful queue inputs are never
