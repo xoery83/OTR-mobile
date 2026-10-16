@@ -61,3 +61,26 @@ not established; remote invocation is NOT RUN. Resume only after these condition
 are confirmed; text-only calls cannot satisfy this acceptance case. The same strict
 Assembly Proposal validator remains authoritative. NZ5069 deterministic delivery
 continues independently.
+
+## Night B2 — actual iOS26.5 semantic component / LIMITED
+
+A single real Native component invocation on the approved isolated418CF iOS26.5
+used the production Swift extractor/assembly implementation and unchanged guided
+Proposal schema, not the Mac model or the minimal OK probe. Model AVAILABLE417ms;
+PDFKit43ms, original bytes/SHA and extracted TextSHA match the real NZ5069 trace.
+A private4,017-byte necessary PartA/B projection retained3 observations,27 fields
+and24 evidence IDs. It is diagnostic input, not an integrated production prompt.
+
+The actual generation returned LOCAL_MODEL_OUTPUT_INVALID (decodingFailure) after
+26,690ms. The existing20s production deadline therefore selects deterministic
+fallback; no proposal exists for validation, accepted contribution0. This is
+APPLE_SEMANTIC_ASSEMBLY_LIMITED / NO_VALID_INCREMENT, not an unavailable/permission
+failure or accepted model proposal. The invalid generated output is not retained
+by the production bridge, so the exact decoding mismatch remains unknown. No repeat
+invocation, App/Metro/Session/database change, Remote, Storage or Canonical write.
+
+Private exact receipt and hashes:
+`/private/tmp/otr-apple-semantic-ios265-bounded-20261016/receipt.json` and manifest.
+This verifies a Native production component invocation, not an installed App/Repo
+journey. iPhone16Pro remains unverified. Next bounded change is structured-output
+observability/output burden, never a relaxed reference/evidence validator.
