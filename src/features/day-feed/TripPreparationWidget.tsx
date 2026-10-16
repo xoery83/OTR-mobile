@@ -74,12 +74,16 @@ export function TripPreparationWidget({
           <Text style={styles.meta}>{copy.empty}</Text>
           {onImport ? (
             <View style={styles.startAction}>
-              <UiButton label={copy.importPlans} onPress={onImport} />
+              <UiButton size="large" label={copy.importPlans} onPress={onImport} />
             </View>
           ) : null}
           {onBuildItinerary ? (
             <View style={styles.startAction}>
-              <UiButton label={copy.buildItinerary} onPress={onBuildItinerary} />
+              <UiButton
+                size="large"
+                label={copy.buildItinerary}
+                onPress={onBuildItinerary}
+              />
             </View>
           ) : null}
         </View>
@@ -117,8 +121,10 @@ export function TripPreparationWidget({
                       size={22}
                     />
                     <View style={styles.itemText}>
-                      <Text style={styles.row}>{String(item.title)}</Text>
-                      <Text style={styles.meta}>
+                      <Text style={styles.row} numberOfLines={2}>
+                        {String(item.title)}
+                      </Text>
+                      <Text style={styles.meta} numberOfLines={1}>
                         {date
                           ? displayDate(date)
                           : copy.families[item.family as PreparationFamily]}
@@ -150,11 +156,8 @@ export function TripPreparationWidget({
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
     widget: {
-      backgroundColor: c.surface,
-      borderRadius: visual.radius.hero,
-      padding: visual.space.page,
-      gap: visual.space.section,
-      minHeight: visual.space.section * 16,
+      flex: 1,
+      gap: visual.space.card,
     },
     heading: { ...visual.type.section, color: c.textPrimary },
     meta: { ...visual.type.meta, color: c.textSecondary },
@@ -162,7 +165,7 @@ const createStyles = (c: UiColors) =>
     empty: { flexGrow: 1, justifyContent: "center", gap: visual.space.section },
     startAction: { minHeight: 88, justifyContent: "center" },
     counts: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.section },
-    count: { alignItems: "center", gap: visual.space.heading },
+    count: { alignItems: "center", gap: 4, flexBasis: "28%", flexGrow: 1 },
     recent: { gap: visual.space.heading },
     item: {
       minHeight: 44,

@@ -1,7 +1,7 @@
 import { referenceTripHomePerspective } from "./referenceTripHomePerspective";
 import { TodaysJourneyWidget } from "./TodaysJourneyWidget";
 import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useCallback,
   useEffect,
@@ -25,7 +25,7 @@ import { UiButton, UiText as ThemedText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { boundaryZone, explicitBoundaryZones, viewContext } from "./presentation";
@@ -69,6 +69,18 @@ export function TripScreen({ today = false }: { today?: boolean }) {
 function TripContent({ today = false }: { today?: boolean }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
+  const insets = useSafeAreaInsets();
+  const heroHeight = useRef(0);
+  const homeScrollOffset = useRef(0);
+  const [heroBehindStatus, setHeroBehindStatus] = useState(true);
+  const onHomeHeroHeight = useCallback(
+    (height: number) => {
+      heroHeight.current = height;
+      setHeroBehindStatus(homeScrollOffset.current < height - insets.top);
+    },
+    [insets.top],
+  );
   const navigation = useNavigation();
   const bottomBarHeight = useBottomShellHeight();
   const [headingHidden, setHeadingHidden] = useState(false);
@@ -111,6 +123,7 @@ function TripContent({ today = false }: { today?: boolean }) {
       ? ""
       : value(params.tripId);
   const isMyTrips = !today && !requested && params.view !== "create";
+  const immersiveHome = !today && home && !!requested;
   const headerTitle = isMyTrips
     ? t(headingHidden ? "dayFeed.myTrips" : "myTrips.appTitle")
     : requested && home
@@ -119,6 +132,12 @@ function TripContent({ today = false }: { today?: boolean }) {
   useLayoutEffect(() => {
     if (today) return;
     navigation.setOptions({
+      headerTransparent: true,
+      headerStyle: {
+        backgroundColor: immersiveHome ? colors.transparent : colors.surface,
+      },
+      headerShadowVisible: false,
+      statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
       headerTitle: ({
         onLayout,
       }: {
@@ -129,7 +148,15 @@ function TripContent({ today = false }: { today?: boolean }) {
         </ThemedText>
       ),
     });
-  }, [navigation, today, headerTitle, styles.navTitle]);
+  }, [
+    navigation,
+    today,
+    headerTitle,
+    styles.navTitle,
+    immersiveHome,
+    colors,
+    heroBehindStatus,
+  ]);
   const visibleTrip =
     trip?.scope.generation === generation &&
     trip.observed?.projection.tripId === requested
@@ -532,6 +559,7 @@ function TripContent({ today = false }: { today?: boolean }) {
         style={styles.root}
         contentContainerStyle={[
           styles.content,
+          immersiveHome && styles.homeContent,
           { paddingBottom: bottomBarHeight + visual.space.page },
         ]}
         scrollIndicatorInsets={{ bottom: bottomBarHeight }}
@@ -543,10 +571,18 @@ function TripContent({ today = false }: { today?: boolean }) {
                 if (headingBottom.current > 0)
                   setHeadingHidden(offset >= headingBottom.current);
               }
-            : undefined
+            : immersiveHome
+              ? ({ nativeEvent }) => {
+                  homeScrollOffset.current = nativeEvent.contentOffset.y;
+                  if (heroHeight.current > 0)
+                    setHeroBehindStatus(
+                      nativeEvent.contentOffset.y < heroHeight.current - insets.top,
+                    );
+                }
+              : undefined
         }
       >
-        {!hideHomePrelude ? (
+        {!hideHomePrelude && !immersiveHome ? (
           <Text
             accessibilityRole="header"
             style={styles.heading}
@@ -578,6 +614,7 @@ function TripContent({ today = false }: { today?: boolean }) {
         ) : null}
         {!today ? (
           <LocalTripWorkspace
+            onHomeHeroHeight={onHomeHeroHeight}
             tripId={requested || null}
             mode={params.view === "create" ? "CREATE" : "LIST"}
             onOpen={open}
@@ -708,6 +745,7 @@ const createStyles = (c: UiColors) =>
     choices: { flexDirection: "row", gap: visual.space.heading },
     root: { flex: 1, backgroundColor: c.background },
     content: { padding: visual.space.page, gap: visual.space.heading },
+    homeContent: { paddingHorizontal: 0, paddingTop: 0 },
     header: { paddingHorizontal: visual.space.page, paddingTop: visual.space.heading },
     navTitle: { ...visual.type.section, color: c.textPrimary },
     heading: { ...visual.type.metric, color: c.textPrimary },

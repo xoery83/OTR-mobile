@@ -133,12 +133,14 @@ export function UiChoiceChip({
       style={[
         styles.choiceChip,
         compact && styles.compactChip,
-        selected && (compact ? styles.compactSelected : styles.choiceChipSelected),
+        selected && !compact && styles.choiceChipSelected,
       ]}
     >
       <Text
         style={[
           styles.choiceChipText,
+          compact && styles.compactChipText,
+          compact && selected && styles.compactSelected,
           selected && !compact && styles.choiceChipTextSelected,
         ]}
       >
@@ -198,8 +200,24 @@ const createStyles = (colors: UiColors) =>
       paddingHorizontal: 12,
       backgroundColor: colors.surface,
     },
-    compactChip: { borderRadius: visual.radius.control, borderWidth: 0 },
-    compactSelected: { backgroundColor: colors.elevatedSurface },
+    compactChip: {
+      borderWidth: 0,
+      paddingHorizontal: 0,
+      backgroundColor: colors.transparent,
+    },
+    compactChipText: {
+      ...visual.type.tripSectionLabel,
+      fontSize: 12,
+      color: colors.textSecondary,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: visual.radius.control,
+      overflow: "hidden",
+    },
+    compactSelected: {
+      backgroundColor: colors.elevatedSurface,
+      color: colors.textPrimary,
+    },
     choiceChipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
     choiceChipText: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
     choiceChipTextSelected: { color: colors.onAccent },

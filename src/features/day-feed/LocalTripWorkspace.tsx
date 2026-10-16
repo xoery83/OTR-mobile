@@ -144,6 +144,7 @@ type Props = {
   onOpenToday(id: string, context: TodayEntry): void;
   onKnownTrip(kind: "LOCAL" | "CACHED" | "NONE"): void;
   onBackToTrips(): void;
+  onHomeHeroHeight?: (height: number) => void;
   onChooseDay?: () => void;
 };
 export function LocalTripWorkspace(props: Props) {
@@ -167,6 +168,7 @@ function LocalTripContent({
   onOpenToday,
   onKnownTrip,
   onBackToTrips,
+  onHomeHeroHeight,
   onChooseDay,
   widgetsForHome,
   onOpenHomeItem,
@@ -562,6 +564,7 @@ function LocalTripContent({
       {selected ? (
         <>
           <TripHomeFrame
+            onHeroHeight={onHomeHeroHeight}
             widgets={pages}
             title={selected.name}
             cover={tripCoverSource(selected)}
@@ -589,7 +592,7 @@ function LocalTripContent({
                   onPress={() => {}}
                 />
                 <UiFormRow
-                  label={t("actionIsland.member")}
+                  label={t("tripHome.members")}
                   value={t("cleanup.unavailable")}
                   disabled
                   onPress={() => {}}
@@ -598,6 +601,12 @@ function LocalTripContent({
                   tripId={selected.id}
                   registerAdd={registerPhotos}
                   onSaved={photosSaved}
+                />
+                <UiFormRow
+                  label={t("tripHome.settings")}
+                  value={t("cleanup.unavailable")}
+                  disabled
+                  onPress={() => {}}
                 />
                 <UiFormRow
                   label={t("tripHome.coverTools")}
@@ -743,6 +752,7 @@ function LocalTripContent({
       ) : remoteSelected ? (
         <>
           <TripHomeFrame
+            onHeroHeight={onHomeHeroHeight}
             widgets={pages}
             title={remoteSelected.name}
             cover={tripCoverSource(remoteSelected)}

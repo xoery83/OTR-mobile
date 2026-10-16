@@ -1,4 +1,6 @@
-import { router, Stack } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
+import { View } from "react-native";
+import { TripSearchEntry } from "@/features/trip-search/TripSearchEntry";
 import {
   NavigationContentFrame,
   navigationContentFrameOptions,
@@ -11,6 +13,8 @@ import { useUiLocale } from "@/ui/useUiLocale";
 export default function SearchTripRoute() {
   useUiLocale();
   const canGoBack = router.canGoBack();
+  const params = useLocalSearchParams<{ tripId?: string; view?: string }>();
+  const home = !!params.tripId && params.view !== "day";
   return (
     <>
       <Stack.Screen
@@ -31,9 +35,23 @@ export default function SearchTripRoute() {
           />
         </Stack.Toolbar>
       ) : null}
-      <NavigationContentFrame>
-        <TripScreen />
-      </NavigationContentFrame>
+      {home ? (
+        <>
+          <TripSearchEntry
+            nativeToolbar
+            entry="HOME"
+            tripId={params.tripId}
+            showUnavailableTripEdit
+          />
+          <View style={{ flex: 1 }}>
+            <TripScreen />
+          </View>
+        </>
+      ) : (
+        <NavigationContentFrame>
+          <TripScreen />
+        </NavigationContentFrame>
+      )}
     </>
   );
 }

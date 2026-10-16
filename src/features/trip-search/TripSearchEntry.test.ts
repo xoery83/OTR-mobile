@@ -10,7 +10,15 @@ vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useSyncExternalStore: (_: unknown, get: () => unknown) => get(),
 }));
-vi.mock("expo-router", () => ({ router: { push: state.push } }));
+vi.mock("expo-router", () => ({
+  router: { push: state.push },
+  Stack: {
+    Toolbar: Object.assign(() => null, {
+      Button: "NativeButton",
+      Spacer: "NativeSpacer",
+    }),
+  },
+}));
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
   subscribeAccountGeneration: () => () => {},
@@ -29,6 +37,26 @@ beforeEach(() => {
   state.generation = 1;
   state.view = state.resumeView = null;
   state.push.mockReset();
+});
+it("keeps unavailable Trip Edit separate from the working scoped native Search action", () => {
+  const entry = TripSearchEntry({
+    entry: "HOME",
+    tripId: "inspected",
+    nativeToolbar: true,
+    showUnavailableTripEdit: true,
+  })!;
+  const [edit, spacer, search] = entry.props.children;
+  expect(edit.props.disabled).toBe(true);
+  expect(edit.props.separateBackground).toBe(true);
+  expect(search.props.separateBackground).toBe(true);
+  expect(edit.props.accessibilityLabel).toBe("tripHome.editUnavailable");
+  expect(edit.props.onPress).toBeUndefined();
+  expect(spacer).toBeTruthy();
+  search.props.onPress();
+  expect(state.push).toHaveBeenCalledWith({
+    pathname: "/search",
+    params: { entry: "HOME", tripId: "inspected" },
+  });
 });
 it("opens the My Trips preset without silently binding a working Trip", () => {
   state.view = { tripId: "other", generation: 1 };

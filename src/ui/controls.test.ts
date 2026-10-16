@@ -77,6 +77,36 @@ vi.mock("react-native-safe-area-context", () => ({
   SafeAreaView: ({ children }: { children: ReactNode }) => children,
 }));
 const original = getUiLocale();
+it("keeps regular actions unchanged and prominent choices accessible when disabled", () => {
+  const regular = renderToStaticMarkup(
+    createElement(UiButton, { label: "Regular", onPress: vi.fn() }),
+  );
+  const large = renderToStaticMarkup(
+    createElement(UiButton, {
+      label: "Large",
+      size: "large",
+      disabled: true,
+      onPress: vi.fn(),
+    }),
+  );
+  expect(regular).toContain("min-height:44px");
+  expect(large).toContain("min-height:88px");
+  expect(large).toContain('aria-disabled="true"');
+});
+it("keeps compact named selection quiet without shrinking its touch target", () => {
+  const html = renderToStaticMarkup(
+    createElement(UiChoiceChip, {
+      label: "Preparation",
+      compact: true,
+      selected: true,
+      onPress: vi.fn(),
+    }),
+  );
+  expect(html).toContain("min-height:44px");
+  expect(html).toContain("font-size:12px");
+  expect(html).toContain(`background-color:${uiPalette("light").elevatedSurface}`);
+  expect(html).not.toContain(`background-color:${uiPalette("light").accent};`);
+});
 afterEach(() => {
   setUiLocale(original);
   state.scheme = "light";

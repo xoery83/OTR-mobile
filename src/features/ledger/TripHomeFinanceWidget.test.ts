@@ -207,7 +207,7 @@ it("opens real scoped Spending, Settlement, Analysis and expense detail; stale a
     pathname: "/expenses/expense/[id]",
     params: { id: "a" },
   });
-  state.buttons.find((b) => b.label === "ledger.spending")!.onPress();
+  state.buttons.find((b) => b.label === "tripHome.finance.openSpending")!.onPress();
   expect(state.push).toHaveBeenLastCalledWith({
     pathname: "/expenses/journey/[journeyId]",
     params: { journeyId: "trip" },

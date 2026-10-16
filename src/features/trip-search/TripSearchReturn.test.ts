@@ -20,6 +20,7 @@ vi.mock("expo-router", async () => {
     },
   });
   return {
+    useLocalSearchParams: () => ({ tripId: "inspected", view: "home" }),
     router: { replace: state.replace, canGoBack: () => state.canBack },
     Stack: {
       Toolbar,
@@ -30,6 +31,10 @@ vi.mock("expo-router", async () => {
     },
   };
 });
+vi.mock("react-native", () => ({ View: (p: any) => p.children }));
+vi.mock("@/features/trip-search/TripSearchEntry", () => ({
+  TripSearchEntry: () => "Scoped Search",
+}));
 vi.mock("@/features/day-feed/TripScreen", () => ({
   TripScreen: () => "Owning Trip Home",
 }));
