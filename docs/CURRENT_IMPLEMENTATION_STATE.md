@@ -8,7 +8,7 @@
   diagnostic group/segment/participant forms. Unknown stages/metrics stay N/A;
   observations are not Booking/Segment or admitted Canonical identities.
 - Independent review PASS, including GT multi-identity false-score fix. Final
-  Workbench targeted suite52 PASS, types/UIguard PASS. Browser real PDF20 fields
+  Workbench targeted suite53 PASS, types/UIguard PASS. Browser real PDF20 fields
   with Apple rejection fallback and JPG8 fields/4 anchored suggestions verified.
   Runtime/view screenshot and private receipts remain outside Git.
 - Limits: current business interpreter is partial aviation only; scanned-PDF OCR,
