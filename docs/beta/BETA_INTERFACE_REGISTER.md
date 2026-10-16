@@ -1,5 +1,13 @@
 # OTR Beta — Cross-Module Interface Register
 
+## Trip Home R2 current ownership — 2026-10-16
+
+- Baseline8ff1364; V1.2 +R2 contracts registered with attachment hashes. A owns Root/native Trip stack/Shell/insets; B owns local-manual Day/Today read projection; Coordinator alone owns shared TripScreen/LocalTripWorkspace/catalogs and integration. Existing Experience owns Host/Widget visual after bounded handoff.
+- Real Sky City is Auckland weekend, durable MANUAL pending command; it must not be reported as a Nelson accepted Item. Separate local-first read must retain pending identity and exclude imports/drafts. Missing trustworthy zone is not a free day.
+- Complete Trip metadata update/versioned reconciliation/permission port is absent; immutable CREATE payload and local creator binding cannot be rewritten to simulate an Editor. Existing cover selection alone is insufficient. No migration/Hosted expansion authorized.
+- Cover read-only discovery: six bundled images, four selectable, stable ID fallback; no destination classifier or new generation. Details and exact ownership: docs/ops/TRIP_HOME_R2_HANDOFF_20261016.md.
+
+
 ## Trip Home V1.1 active ownership — 2026-10-16
 
 - Baseline580a148; Coordinator owns Widget business readers, qualification, ordering and navigation. Preparation and Today builders have separate new-file ownership; shared LocalTripWorkspace/TripScreen/catalogs stay with Coordinator until functional handoff.

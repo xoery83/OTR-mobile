@@ -576,14 +576,15 @@ it.each([0, 1])(
     const ledger = pressables(
       ExperienceBottomShell({ visible: true, pathname: "/trip-home" }),
     ).find((button) => button.props.accessibilityLabel === "navigation.ledger")!;
-    ledger.props.onPress();
+    expect(ledger.props.onPress).toBeTypeOf("function");
+    ledger.props.onPress!();
     expect(state.navigate).toHaveBeenCalledWith({
       pathname: "/expenses",
       params: { journeyId: "current" },
     });
     state.navigate.mockClear();
     state.generation = 2;
-    ledger.props.onPress();
+    ledger.props.onPress!();
     expect(state.navigate).not.toHaveBeenCalled();
   },
 );

@@ -588,28 +588,10 @@ function LocalTripContent({
             ]}
             modules={
               <View style={styles.root}>
-                <UiFormRow
-                  label={t("cleanup.documents")}
-                  value={t("cleanup.unavailable")}
-                  disabled
-                  onPress={() => {}}
-                />
-                <UiFormRow
-                  label={t("tripHome.members")}
-                  value={t("cleanup.unavailable")}
-                  disabled
-                  onPress={() => {}}
-                />
                 <LocalTripPhotos
                   tripId={selected.id}
                   registerAdd={registerPhotos}
                   onSaved={photosSaved}
-                />
-                <UiFormRow
-                  label={t("tripHome.settings")}
-                  value={t("cleanup.unavailable")}
-                  disabled
-                  onPress={() => {}}
                 />
                 <UiFormRow
                   label={t("tripHome.coverTools")}

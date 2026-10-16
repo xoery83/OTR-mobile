@@ -51,7 +51,7 @@ export function TripSearchEntry({
       <Stack.Toolbar placement="right">
         {showUnavailableTripEdit ? (
           <Stack.Toolbar.Button
-            icon="pencil"
+            icon="square.and.pencil"
             separateBackground
             disabled
             accessibilityLabel={t("tripHome.editUnavailable")}

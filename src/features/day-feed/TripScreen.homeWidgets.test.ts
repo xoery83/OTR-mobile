@@ -713,6 +713,7 @@ it("a genuine local read enables Day chooser without accepted projection and dat
   expect(state.select).not.toHaveBeenCalled();
   state.routeMode = "day";
   const feed = find(render(), DayFeed);
+  expect(feed.bottomInset).toBe(90);
   expect(feed.localManual).toBe(state.result.localManual);
   expect(feed.projection).toBeUndefined();
   expect(feed.zone).toBe("");
@@ -736,6 +737,7 @@ it("accepted Day passes pending increments into the original normal feed and sav
   state.routeMode = "day";
   const feed = find(render(), DayFeed);
   expect(feed.projection).toBe(state.result.observed.projection);
+  expect(feed.bottomInset).toBe(90);
   expect(feed.localManual).toBe(state.result.localManual);
 });
 it("Today reuses only same Trip/generation saved zone and rejects stale local source before navigation", async () => {

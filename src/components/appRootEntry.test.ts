@@ -24,10 +24,11 @@ it("normal entry selects My Trips without reading network/session or an old Day 
   expect(RootEntry().type).toBe("Redirect");
 });
 it("preserves explicit Trip Day and complete date/zone deep links", () => {
-  for (const params of [
+  const links: Record<string, string>[] = [
     { view: "day" },
     { tripId: "a", date: "2026-10-16", zone: "Pacific/Auckland" },
-  ]) {
+  ];
+  for (const params of links) {
     state.params = params;
     const result = RootEntry();
     expect(result.type).toBe("TripScreen");

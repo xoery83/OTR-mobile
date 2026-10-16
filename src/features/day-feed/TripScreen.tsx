@@ -710,6 +710,7 @@ function TripContent({ today = false }: { today?: boolean }) {
             />
           </View>
           <DayFeed
+            bottomInset={bottomBarHeight}
             instant={homePerspective?.now}
             key={`${requested}/${dayContext.date}/${dayContext.zone}/${generation}`}
             entry={entry}
