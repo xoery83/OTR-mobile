@@ -60,3 +60,22 @@ pins with existing flightPdfExtraction validation, and returns a non-authoritati
 derivation. Optional CLI scripts/source-pdf-v2-local.ts uses the existing Swift
 runner's extract operation only. Its output directory is private; originals and
 full extraction stay outside Git. No fixture test is Runtime/Source proof.
+
+## Local registration preparation (2026-10-17)
+
+`backend/src/sourcePdfV2RegistrationLocal.ts` composes the existing independent
+local verifier with exact Source scope, retained ORIGINAL metadata, its row
+revision, and a version-2 request draft using existing Source identity fields.
+It rejects a Capture custody key, mismatched Source/representation, duplicate
+original/derived ID and unexpected metadata before reader I/O. It independently
+reads and rereads the pinned bytes, then returns the exact text/page mapping and
+a domain-separated **preparation** digest. The output is not a verification,
+registration, seal, authority or accepted Candidate; old `/1` consumers reject it.
+No receipt IDs are fabricated. Supplied metadata cannot establish authorization.
+
+This prepares a concrete registration body for review; it does not select or
+approve a trusted producer. Production composition still needs a reviewed `/2`
+producer/profile, authenticated current Source context, a real owning VERIFY
+receipt and `/2` registration/seal writers. The current preparer has no DB, upload,
+network, route, queue or writer port and cannot install itself at startup.
+The existing `/1` verification/registration/seal functions remain unchanged.
