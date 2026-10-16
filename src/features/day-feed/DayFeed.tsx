@@ -76,6 +76,7 @@ export function DayFeed(props: DayFeedProps) {
         dates={props.dates}
         onOpenItem={props.onOpenLocalItem}
         emptyMessage={props.emptyMessage}
+        bottomInset={props.bottomInset}
       />
     );
   if (!props.projection) return null;
@@ -90,6 +91,7 @@ function AcceptedDayFeed({
   services,
   instant,
   emptyMessage,
+  bottomInset = 0,
   query: contributedQuery,
   renderer,
   flexibleRenderer,
@@ -115,6 +117,7 @@ function AcceptedDayFeed({
   services: Record<string, FlightService[]>;
   instant?: string;
   emptyMessage?: string;
+  bottomInset?: number;
   query?: (date: string, zone: string) => DayFeedQuery;
   renderer?: DayRowRenderer;
   flexibleRenderer?: FlexibleBlockRenderer;
@@ -451,7 +454,11 @@ function AcceptedDayFeed({
           <ScrollView
             ref={scroll}
             style={styles.root}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: visual.space.section + bottomInset },
+            ]}
+            scrollIndicatorInsets={{ bottom: bottomInset }}
             scrollEventThrottle={16}
             onContentSizeChange={restoreReading}
             onScroll={(e) => {

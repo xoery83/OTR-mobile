@@ -22,12 +22,14 @@ export function LocalManualDayFeed({
   dates,
   onOpenItem,
   emptyMessage,
+  bottomInset = 0,
 }: {
   read: LocalManualRead;
   date: string;
   dates?: readonly string[];
   onOpenItem?: (id: string, expected: Pick<LocalManualRead, "scope" | "source">) => void;
   emptyMessage?: string;
+  bottomInset?: number;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -39,7 +41,15 @@ export function LocalManualDayFeed({
   }, [date, read.source.fingerprint]);
   const calendar = dates?.length ? [...new Set([...dates, date])].sort() : [date];
   return (
-    <ScrollView ref={scroll} style={styles.body} contentContainerStyle={styles.content}>
+    <ScrollView
+      ref={scroll}
+      style={styles.body}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: visual.space.section + bottomInset },
+      ]}
+      scrollIndicatorInsets={{ bottom: bottomInset }}
+    >
       {calendar.map((day) => {
         const rows = read.rows(day);
         return (

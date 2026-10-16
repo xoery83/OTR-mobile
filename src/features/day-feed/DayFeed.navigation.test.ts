@@ -1,3 +1,4 @@
+import { visual } from "@/ui/visual";
 import { createElement } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -336,3 +337,23 @@ it("without accepted projection only local date-only feed owns one scroll and no
   expect(state.nodes.filter((p) => p.isScrollView)).toHaveLength(1);
   expect(state.nodes.some((p) => p.event)).toBe(false);
 });
+
+it.each(["accepted", "local"])(
+  "%s Day leaves canonical Shell clearance after its last row",
+  (kind) => {
+    render({
+      bottomInset: 94,
+      ...(kind === "local"
+        ? { projection: undefined, localManual: localManual(), zone: "" }
+        : {}),
+    });
+    const scrolls = state.nodes.filter((p) => p.isScrollView);
+    expect(scrolls).toHaveLength(1);
+    expect(scrolls[0].contentContainerStyle).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ paddingBottom: visual.space.section + 94 }),
+      ]),
+    );
+    expect(scrolls[0].scrollIndicatorInsets).toEqual({ bottom: 94 });
+  },
+);
