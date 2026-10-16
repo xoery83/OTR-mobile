@@ -28,7 +28,7 @@ const operation: SyncOperation = {
 };
 
 describe("sync engine", () => {
-  it.each(["CORE_V2_COMMAND", "CREATE_TRIP"])(
+  it.each(["CORE_V2_COMMAND", "CREATE_TRIP", "UPDATE_TRIP_METADATA"])(
     "leaves %s to its explicitly scoped coordinator",
     async (kind) => {
       const push = vi.fn(),

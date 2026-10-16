@@ -1,5 +1,22 @@
 # OTR Mobile 2.0 API Contract Draft
 
+## Trip metadata update — local implementation, Hosted port CLOSED
+
+Authenticated `POST /v2/trips/:tripId/metadata` accepts strict
+`{operationId,tripId,before,after}` and an identical Idempotency-Key. Both metadata
+values contain existing `{name,destination,startDate,endDate}` only, retaining
+Create validation/null calendar semantics. The owning updater must recheck current
+creator/linked-owner authority, atomically compare the prior tuple, write the
+existing fields and save an immutable operation receipt. A mismatch is409; client
+values never confer membership or update authority.
+
+`GET /v2/trip-metadata-operations/:operationId` returns only the current actor's
+exact receipt, including actorAccountId and original before/after values; missing
+receipt is404. Default startup returns503 `TRIP_METADATA_CLOSED`. The HTTP boundary,
+transport and finite PG adapter exist, but its new owning SQL functions/receipt
+store are not installed or Runtime-verified. Production/Hosted activation is not
+implied. No cover sync or destination inference is provided.
+
 ## WP-TRIPS-DISCOVERY/INDEX — local Backend code integrated, runtime unchanged
 
 Authenticated `GET /v2/trips?cursor=<uuid>&limit=<1..25>` lists only Trip IDs

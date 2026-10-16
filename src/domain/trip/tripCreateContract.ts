@@ -10,15 +10,14 @@ const calendar = z.string().refine((value) => {
     return false;
   }
 });
+export const tripMetadataFields = {
+  name: z.string().trim().min(1).max(256),
+  destination: z.string().trim().max(256).nullable(),
+  startDate: calendar.nullable(),
+  endDate: calendar.nullable(),
+};
 export const tripCreateRequestSchema = z
-  .strictObject({
-    operationId: coreUuid,
-    tripId: coreUuid,
-    name: z.string().trim().min(1).max(256),
-    destination: z.string().trim().max(256).nullable(),
-    startDate: calendar.nullable(),
-    endDate: calendar.nullable(),
-  })
+  .strictObject({ operationId: coreUuid, tripId: coreUuid, ...tripMetadataFields })
   .refine(
     (value) => !value.startDate || !value.endDate || value.endDate >= value.startDate,
   );

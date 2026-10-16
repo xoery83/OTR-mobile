@@ -1588,3 +1588,193 @@ it("TCL02 does not release Expenses when a newer cached actor no longer has a me
   expect((await f.repo.getTrip(saved.trip.id))?.serverId).toBeNull();
   expect(await f.queue.listPending()).toEqual([]);
 });
+
+it("saves metadata offline with ordered intents, unchanged create proof and durable dirty values", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-trip-metadata-"));
+  folders.push(folder);
+  const path = join(folder, "trip.db");
+  let f = local(path);
+  const create = input(),
+    saved = await f.repo.createTrip(create);
+  const original = f.sql
+    .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+    .get(create.operationId)!.payload_json;
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const first = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "First edit", startDate: null, endDate: null },
+  };
+  expect(await f.repo.canUpdateMetadata(saved.id)).toBe(true);
+  await f.repo.updateMetadata(first);
+  await f.repo.updateMetadata(first);
+  const second = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before: first.after,
+    after: { ...first.after, name: "Second edit", destination: "Auckland" },
+  };
+  await f.repo.updateMetadata(second);
+  expect(
+    f.sql
+      .prepare("SELECT payload_json FROM sync_operations WHERE id=?")
+      .get(create.operationId)!.payload_json,
+  ).toBe(original);
+  expect(
+    f.sql
+      .prepare(
+        "SELECT id,dependency_operation_id FROM sync_operations WHERE operation_type='UPDATE_TRIP_METADATA' ORDER BY rowid",
+      )
+      .all(),
+  ).toEqual([
+    { id: first.operationId, dependency_operation_id: create.operationId },
+    { id: second.operationId, dependency_operation_id: first.operationId },
+  ]);
+  await expect(
+    f.repo.updateMetadata({ ...first, operationId: randomUUID() }),
+  ).rejects.toThrow("TRIP_METADATA_LOCAL_CONFLICT");
+  await expect(
+    f.repo.updateMetadata({ ...first, after: { ...first.after, name: "reuse" } }),
+  ).rejects.toThrow("TRIP_METADATA_OPERATION_REUSE_MISMATCH");
+  f.sql.close();
+  f = local(path, false);
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    ...second.after,
+    syncStatus: "PENDING_CREATE",
+  });
+  const { createTripDiscoveryRepository } = await import("./tripDiscoveryRepository");
+  const identity = async () => accountA;
+  const discovery = createTripDiscoveryRepository(f.database, identity);
+  await discovery.replaceSnapshot(await captureAccountScope(identity), [
+    { id: saved.id, ...before, createdAt: stamp },
+  ]);
+  expect(
+    (await discovery.readMerged()).trips.find((t) => t.id === saved.id),
+  ).toMatchObject(second.after);
+  f.failNextQueue();
+  await expect(
+    f.repo.updateMetadata({
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before: second.after,
+      after: before,
+    }),
+  ).rejects.toThrow("QUEUE_WRITE_FAILED");
+  expect(await f.repo.getTrip(saved.id)).toMatchObject(second.after);
+  f.switchTo(accountB);
+  expect(await f.repo.canUpdateMetadata(saved.id)).toBe(false);
+  await expect(
+    f.repo.updateMetadata({
+      operationId: randomUUID(),
+      tripId: saved.id,
+      before: second.after,
+      after: before,
+    }),
+  ).rejects.toThrow("TRIP_METADATA_LOCAL_CREATOR_REQUIRED");
+});
+it("metadata validates undated calendar semantics and refuses account changes atomically", async () => {
+  const f = local(),
+    saved = await f.repo.createTrip(input());
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const request = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "Changed" },
+  };
+  await expect(
+    f.repo.updateMetadata({
+      ...request,
+      after: { ...request.after, startDate: "2027-02-30" },
+    }),
+  ).rejects.toThrow();
+  await expect(
+    f.repo.updateMetadata({
+      ...request,
+      after: { ...request.after, startDate: "2027-02-01", endDate: "2027-01-01" },
+    }),
+  ).rejects.toThrow();
+  f.abaNextRead();
+  await expect(f.repo.updateMetadata(request)).rejects.toThrow("Account changed");
+  expect(await f.repo.getTrip(saved.id)).toMatchObject(before);
+});
+it("keeps later dirty edits when earlier metadata receipts arrive and resumes dependencies in order", async () => {
+  const f = local(),
+    create = input(),
+    saved = await f.repo.createTrip(create);
+  const before = {
+    name: saved.name,
+    destination: saved.destination,
+    startDate: saved.startDate,
+    endDate: saved.endDate,
+  };
+  const first = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before,
+    after: { ...before, name: "First" },
+  };
+  const second = {
+    operationId: randomUUID(),
+    tripId: saved.id,
+    before: first.after,
+    after: { ...before, name: "Second" },
+  };
+  await f.repo.updateMetadata(first);
+  await f.repo.updateMetadata(second);
+  const accepted = await f.repo.acceptCreate({
+    ...create,
+    name: saved.name,
+    actorAccountId: accountA,
+    ownerPersonId: randomUUID(),
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+  });
+  expect(accepted.syncStatus).toBe("PENDING_UPDATE");
+  expect((await f.repo.getTrip(saved.id))?.syncStatus).toBe("PENDING_UPDATE");
+  const { createTripMetadataSyncCoordinator, createTripMetadataSyncWorker } =
+    await import("../sync/tripMetadataSyncWorker");
+  const receipts = new Map<string, typeof first & { actorAccountId: string }>();
+  const transport = {
+    receipt: vi.fn(async (_: unknown, id: string) => receipts.get(id) ?? null),
+    update: vi.fn(async (_: unknown, request: typeof first) => {
+      const receipt = { ...request, actorAccountId: accountA };
+      receipts.set(request.operationId, receipt);
+      return receipt;
+    }),
+  };
+  const runner = createTripMetadataSyncCoordinator(
+    f.queue,
+    createTripMetadataSyncWorker(f.repo, transport, async () => accountA),
+    f.repo,
+    () => true,
+  );
+  expect((await runner.run("AUTHENTICATED_OFFLINE")).processedCount).toBe(0);
+  expect((await runner.run("AUTHENTICATED_ONLINE")).processedCount).toBe(2);
+  expect(transport.update.mock.calls.map((call) => call[1].operationId)).toEqual([
+    first.operationId,
+    second.operationId,
+  ]);
+  expect(await f.repo.getTrip(saved.id)).toMatchObject({
+    name: "Second",
+    syncStatus: "SYNCED",
+  });
+  await f.repo.acceptMetadataUpdate({ ...first, actorAccountId: accountA });
+  expect((await f.repo.getTrip(saved.id))?.name).toBe("Second");
+  await expect(
+    f.repo.acceptMetadataUpdate({ ...first, after: before, actorAccountId: accountA }),
+  ).rejects.toThrow("TRIP_METADATA_RECEIPT_MISMATCH");
+  expect((await runner.run("AUTHENTICATED_ONLINE")).processedCount).toBe(0);
+});

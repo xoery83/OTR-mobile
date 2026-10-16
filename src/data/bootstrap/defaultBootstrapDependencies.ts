@@ -18,6 +18,8 @@ import {
   subscribeLedgerOperationalSyncCompletion,
   type LedgerOperationalSyncCompletion,
 } from "@/data/sync/ledgerOperationalSync";
+import { runNativeTripMetadataSync } from "@/data/sync/tripMetadataCoordinator";
+import { subscribeLedgerQueueWorkAvailable } from "@/data/sync/ledgerQueueActivity";
 import { getSyncTransportMode } from "@/data/sync/transportSelection";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import {
@@ -112,6 +114,9 @@ export function subscribeOperationalSyncLifecycle() {
       void scheduleAutomaticDataHealth("CONNECTIVITY_RESTORED").catch(() => undefined);
     }
   });
+  const unsubscribeQueue = subscribeLedgerQueueWorkAvailable(() => {
+    void resumeOperationalSync().catch(() => undefined);
+  });
   const unsubscribeSync = subscribeLedgerOperationalSyncCompletion((event) => {
     void scheduleAutomaticDataHealth("SYNC_COMPLETED", event.journeyIds, event).catch(
       () => undefined,
@@ -123,6 +128,7 @@ export function subscribeOperationalSyncLifecycle() {
       appState.remove();
       network.remove();
       unsubscribeSync();
+      unsubscribeQueue();
       updateActiveTimer(false);
     },
   };
@@ -183,6 +189,8 @@ async function refreshThenSync() {
   const session = await readLocalSession();
   if (!session?.identity?.userId) return;
   const context = await captureAccountScope(requireActiveUserId);
+  await runNativeTripMetadataSync().catch(() => undefined);
+  await assertAccountRequestContext(context, requireActiveUserId);
   await runLedgerOperationalSync();
   await assertAccountRequestContext(context, requireActiveUserId);
   if (getSyncTransportMode() === "dev") await discoverAccountJourneys(context);

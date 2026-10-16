@@ -31,7 +31,7 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { UiButton, UiSection, UiText as Text } from "@/ui/controls";
-import { UiChoiceChip, UiDatePicker, UiFormRow, UiTextInput } from "@/ui/forms";
+import { UiChoiceChip, UiFormRow, UiTextInput } from "@/ui/forms";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
@@ -41,21 +41,12 @@ import { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
 import { boundaryZone } from "./presentation";
 import { groupLocalTrips, possibleTodayTrips } from "./tripListPresentation";
 import { MyTripsList, type TodayEntry } from "./MyTripsList";
+import { CalendarField, calendarDate } from "./TripCalendarField";
 import { TripBasicEditor } from "./TripBasicEditor";
 import { LocalTripPhotos } from "./LocalTripPhotos";
 import { tripCoverSource } from "./tripCovers";
 
 type Pending = Awaited<ReturnType<TripRepository["pendingItems"]>>;
-const calendarDate = (value: Date) =>
-  [
-    String(value.getFullYear()).padStart(4, "0"),
-    String(value.getMonth() + 1).padStart(2, "0"),
-    String(value.getDate()).padStart(2, "0"),
-  ].join("-");
-const pickerDate = (value: string) =>
-  value
-    ? new Date(+value.slice(0, 4), +value.slice(5, 7) - 1, +value.slice(8, 10), 12)
-    : new Date();
 const displayDate = (value: string) =>
   formatUiDate(new Date(`${value}T12:00:00Z`), {
     year: "numeric",
@@ -71,64 +62,6 @@ const knownDate = (value: string | null) => {
     return null;
   }
 };
-function CalendarField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange(value: string): void;
-}) {
-  const [open, setOpen] = useState(false),
-    [selected, setSelected] = useState(pickerDate(value));
-  return (
-    <View>
-      <UiFormRow
-        label={label}
-        value={value ? displayDate(value) : t("tripCreate.notSet")}
-        stacked
-        onPress={() => {
-          setSelected(pickerDate(value));
-          setOpen(true);
-        }}
-      />
-      {open ? (
-        <View>
-          <UiDatePicker
-            value={selected}
-            mode="date"
-            display="spinner"
-            onChange={(_, date) => {
-              if (date) setSelected(date);
-            }}
-            accessibilityLabel={label}
-          />
-          <UiButton
-            label={t("common.done")}
-            onPress={() => {
-              onChange(calendarDate(selected));
-              setOpen(false);
-            }}
-          />
-          <UiButton
-            label={t("tripCreate.clearDate")}
-            variant="text"
-            onPress={() => {
-              onChange("");
-              setOpen(false);
-            }}
-          />
-          <UiButton
-            label={t("common.cancel")}
-            variant="text"
-            onPress={() => setOpen(false)}
-          />
-        </View>
-      ) : null}
-    </View>
-  );
-}
 
 type Props = {
   widgetsForHome?: (
@@ -191,6 +124,7 @@ function LocalTripContent({
     [start, setStart] = useState(""),
     [end, setEnd] = useState("");
   const [coverOpen, setCoverOpen] = useState(false);
+  const [metadataEditable, setMetadataEditable] = useState(false);
   const [family, setFamily] = useState<"P1" | "P3">("P1"),
     [itemTitle, setItemTitle] = useState(""),
     [itemStart, setItemStart] = useState(""),
@@ -229,6 +163,7 @@ function LocalTripContent({
       const repo = await readLocalTripRepository();
       const local = tripId ? await repo.getTrip(tripId) : null;
       const list = tripId ? [] : await repo.listTrips();
+      const canEditMetadata = local ? await repo.canUpdateMetadata(local.id) : false;
       const intents = local ? await repo.pendingItems(local.id) : [];
       const discovery = await readLocalTripDiscoveryRepository()
         .then((reader) => reader.readMerged())
@@ -246,6 +181,7 @@ function LocalTripContent({
         ticket !== request.current
       )
         return;
+      setMetadataEditable(canEditMetadata);
       setTrips(list);
       setRemoteTrips(
         tripId
@@ -468,6 +404,9 @@ function LocalTripContent({
         generation,
         owner: quickActionsOwner,
         backToTrips: leaveHome,
+        editTrip: () => {
+          if (alive.current && generation === getAccountGeneration()) setCoverOpen(true);
+        },
         ...(onChooseDay ? { chooseDay: onChooseDay } : {}),
         itinerary: (date) => {
           if (!alive.current || generation !== getAccountGeneration()) return;
@@ -567,6 +506,10 @@ function LocalTripContent({
       {selected ? (
         <>
           <TripHomeFrame
+            onEdit={() => {
+              if (alive.current && generation === getAccountGeneration())
+                setCoverOpen(true);
+            }}
             onHeroHeight={onHomeHeroHeight}
             widgets={pages}
             title={selected.name}
@@ -635,7 +578,26 @@ function LocalTripContent({
                 onLeft={() => setCoverOpen(false)}
               />
               <ScrollView contentContainerStyle={styles.form}>
-                <TripBasicEditor trip={selected} onSelectCover={selectCover} />
+                <TripBasicEditor
+                  trip={selected}
+                  metadataEditable={metadataEditable}
+                  onSelectCover={selectCover}
+                  onSaveMetadata={async (before, after) => {
+                    if (!alive.current || generation !== getAccountGeneration())
+                      throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+                    const repo = await readLocalTripRepository();
+                    if (!alive.current || generation !== getAccountGeneration())
+                      throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+                    await repo.updateMetadata({
+                      operationId: createUuid(),
+                      tripId: selected.id,
+                      before,
+                      after,
+                    });
+                    if (alive.current && generation === getAccountGeneration())
+                      await load();
+                  }}
+                />
               </ScrollView>
             </SafeAreaProvider>
           </Modal>

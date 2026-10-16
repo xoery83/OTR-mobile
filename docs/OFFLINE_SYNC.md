@@ -1,5 +1,21 @@
 # OTR Mobile 2.0 Offline Sync Design
 
+## Trip metadata local-first updates
+
+An original account-local Trip creator can atomically update the existing local
+metadata row and append UPDATE_TRIP_METADATA to `sync_operations`, retaining exact
+before/after values. CREATE_TRIP payload stays immutable. Pending-create edits
+wait for that CREATE receipt; later metadata updates depend on the previous
+unfinished metadata operation. Existing dependency wake/claim/retry mechanisms
+are reused. An older update receipt completes only its operation and cannot
+replace a later local value. Account scope/generation fences apply throughout.
+
+The normal operational lifecycle reaches a default-CLOSED metadata runner; only
+explicit DEV port configuration can dispatch. No new timer or iOS background
+execution guarantee is added. Dirty local values survive restart and stale
+Discovery. Hosted errors preserve them rather than reporting sync success.
+Bundled cover selection remains an independent unsynced device preference.
+
 Offline-first is a product requirement, not an implementation detail. The local database is the mobile source of truth. Cloud is a sync target. Opening the app must also be offline-tolerant: a valid local session and cached SQLite data are enough to enter the app.
 
 ## Core Flow

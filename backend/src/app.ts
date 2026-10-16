@@ -30,6 +30,7 @@ import {
   type FlightTextSourceConnection,
 } from "./flightTextSource";
 import { coreHttpBoundary, type CoreHttpConnection } from "./tripCoreV2Http";
+import { tripMetadataBoundary, type TripMetadataPort } from "./tripMetadata";
 import { tripCreateBoundary, type TripCreatePort } from "./tripCreate";
 import { tripDiscoveryBoundary, type TripDiscoveryPort } from "./tripDiscovery";
 import {
@@ -612,6 +613,7 @@ export type SafeLogEvent = {
 export type BackendDependencies = {
   captureMaterialCustody?: CaptureMaterialCustody;
   tripCreatePort?: TripCreatePort;
+  tripMetadataPort?: TripMetadataPort;
   documentOriginalReader?: DocumentOriginalReader;
   coreConnection?: CoreHttpConnection;
   flightTextSourceConnection?: FlightTextSourceConnection;
@@ -2356,6 +2358,7 @@ function reportingFilters(url: URL): ReportingFilters {
 export function createDevBackendHandler({
   captureMaterialCustody,
   tripCreatePort,
+  tripMetadataPort,
   documentOriginalReader,
   flightTextSourceConnection,
   coreConnection,
@@ -2461,6 +2464,13 @@ export function createDevBackendHandler({
             ? { discoverTrips: gateway.discoverTrips.bind(gateway) }
             : undefined,
         );
+      } else if (
+        /^\/v2\/trips\/[^/]+\/metadata$/.test(url.pathname) ||
+        /^\/v2\/trip-metadata-operations\/[^/]+$/.test(url.pathname)
+      ) {
+        route = "/v2/trips/:tripId/metadata";
+        const actor = await authenticate(request, gateway);
+        response = await tripMetadataBoundary(request, actor.id, tripMetadataPort);
       } else if (
         url.pathname === "/v2/trips" ||
         /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname)

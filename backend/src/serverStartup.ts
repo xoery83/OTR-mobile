@@ -45,6 +45,7 @@ export function startDevBackend(
   startOptions: Pick<
     BackendDependencies,
     | "tripCreatePort"
+    | "tripMetadataPort"
     | "coreConnection"
     | "documentOriginalReader"
     | "captureMaterialCustody"
@@ -91,6 +92,7 @@ export function startDevBackend(
     gateway,
     captureMaterialCustody: startOptions.captureMaterialCustody,
     tripCreatePort: startOptions.tripCreatePort,
+    tripMetadataPort: startOptions.tripMetadataPort,
     coreConnection: startOptions.coreConnection,
     documentOriginalReader: startOptions.documentOriginalReader,
     log(event) {

@@ -346,7 +346,9 @@ export const en = {
   "tripHome.coverTools": "Trip cover",
   "tripHome.edit": "Edit Trip",
   "tripHome.editor.metadataReadOnly":
-    "Name, dates and destination are read-only while their update capability is unavailable.",
+    "These details can only be edited for a Trip created by this account on this device.",
+  "tripHome.editor.localFirst":
+    "Changes save on this device first. Cloud sync waits for the Trip update service.",
   "tripHome.editor.coverLocalOnly":
     "Cover changes are saved on this device immediately, including offline. They are not synced.",
   "tripHome.editUnavailable": "Edit Trip — not available yet",
@@ -2627,8 +2629,8 @@ export const zhHans: Record<MessageKey, string> = {
   "tripHome.tools": "更多",
   "tripHome.coverTools": "旅行封面",
   "tripHome.edit": "编辑旅行",
-  "tripHome.editor.metadataReadOnly":
-    "名称、日期和目的地的更新能力尚不可用，目前仅供查看。",
+  "tripHome.editor.metadataReadOnly": "仅可编辑此账号在本设备创建的旅行详情。",
+  "tripHome.editor.localFirst": "更改会先保存在此设备，云端同步需等待旅行更新服务可用。",
   "tripHome.editor.coverLocalOnly": "封面选择立即保存在此设备，离线也可使用，暂不同步。",
   "tripHome.editUnavailable": "编辑旅行：暂不可用",
   "tripHome.members": "成员",
