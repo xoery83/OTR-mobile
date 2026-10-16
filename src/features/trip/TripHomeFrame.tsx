@@ -1,6 +1,7 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ReactNode } from "react";
 import {
+  Pressable,
   StyleSheet,
   View,
   useWindowDimensions,
@@ -23,6 +24,7 @@ export function TripHomeFrame({
   modules,
   notice,
   onHeroHeight,
+  onEdit,
 }: {
   title: string;
   metadata: readonly string[];
@@ -31,6 +33,7 @@ export function TripHomeFrame({
   modules?: ReactNode;
   notice?: string;
   onHeroHeight?: (height: number) => void;
+  onEdit?: () => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -47,7 +50,12 @@ export function TripHomeFrame({
         source={cover}
         style={[styles.hero, { width, minHeight: height * 0.32 }]}
       >
-        <View
+        <Pressable
+          onPress={onEdit}
+          disabled={!onEdit}
+          accessible={!!onEdit}
+          accessibilityRole={onEdit ? "button" : undefined}
+          accessibilityLabel={onEdit ? t("tripHome.edit") : undefined}
           style={[
             styles.copy,
             {
@@ -68,7 +76,7 @@ export function TripHomeFrame({
               {line}
             </UiText>
           ))}
-        </View>
+        </Pressable>
       </TripCoverVisual>
       {notice ? <UiText style={styles.notice}>{notice}</UiText> : null}
       <View style={styles.workspace}>

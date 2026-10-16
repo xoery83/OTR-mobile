@@ -25,6 +25,10 @@ vi.mock("react", async (importOriginal) => ({
   useEffect: (fn: () => void) => state.effects.push(fn),
 }));
 vi.mock("react-native", () => ({
+  Pressable: (p: any) => {
+    state.nodes.push(p);
+    return createElement("button", { disabled: p.disabled }, p.children);
+  },
   View: (p: any) => {
     state.nodes.push(p);
     return createElement("div", null, p.children);
@@ -160,4 +164,22 @@ it("keeps one full-bleed identity with untruncated metadata under enlargement an
     expect(html).toContain("Actual local Photos");
     expect(html).not.toContain("tripHome.edit");
   }
+});
+
+it("uses the supplied Editor for the whole Hero identity and never invents an editing capability", () => {
+  const edit = vi.fn();
+  renderToStaticMarkup(
+    createElement(TripHomeFrame, {
+      title: "Trip",
+      metadata: ["Auckland"],
+      cover: 1,
+      onEdit: edit,
+    }),
+  );
+  const target = state.nodes.find(
+    (n) => n.accessibilityRole === "button" && n.accessibilityLabel === "tripHome.edit",
+  );
+  expect(target.disabled).toBe(false);
+  target.onPress();
+  expect(edit).toHaveBeenCalledOnce();
 });
