@@ -33,9 +33,12 @@ export function createNativeTripMetadataSyncRunner(
     ).run("AUTHENTICATED_ONLINE");
   };
 }
-export async function runNativeTripMetadataSync() {
-  if (process.env.EXPO_PUBLIC_OTR_TRIP_METADATA_UPDATE !== "1")
-    return { status: "closed" as const, processedCount: 0 };
+export async function isTripMetadataSyncEnabled() {
+  if (process.env.EXPO_PUBLIC_OTR_TRIP_METADATA_UPDATE !== "1") return false;
   const { getSyncTransportMode } = await import("./transportSelection");
-  return createNativeTripMetadataSyncRunner(() => getSyncTransportMode() === "dev")();
+  return getSyncTransportMode() === "dev";
+}
+export async function runNativeTripMetadataSync() {
+  const enabled = await isTripMetadataSyncEnabled();
+  return createNativeTripMetadataSyncRunner(() => enabled)();
 }

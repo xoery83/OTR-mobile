@@ -120,3 +120,23 @@ export async function getIntelligenceQueueActivity(
   );
   return { scope: "INTELLIGENCE" as const, ...classifyLedgerQueueActivity(rows) };
 }
+
+// Scheduler-only Trip work; never changes Ledger UI's counts or financial scope.
+export async function getTripMetadataQueueActivity(
+  db: WakeQueueDatabase,
+  accountId: string,
+) {
+  const rows = await db.getAllAsync<QueueRow>(
+    `SELECT operation.status,operation.failure_category AS failureCategory,
+     operation.next_attempt_at AS nextAttemptAt,operation.lease_expires_at AS leaseExpiresAt,
+     CASE WHEN operation.status='DEPENDENCY_BLOCKED' AND operation.dependency_operation_id IS NULL
+      THEN 'COMPLETED' ELSE dependency.status END AS dependencyStatus FROM sync_operations operation
+     LEFT JOIN sync_operations dependency ON dependency.id=operation.dependency_operation_id
+      AND dependency.owner_user_id=operation.owner_user_id
+     WHERE operation.owner_user_id=? AND operation.entity_type='TRIP'
+      AND operation.operation_type='UPDATE_TRIP_METADATA'
+      AND operation.status IN ('PENDING','RETRYABLE','PROCESSING','DEPENDENCY_BLOCKED','FAILED','CONFLICT')`,
+    accountId,
+  );
+  return classifyLedgerQueueActivity(rows);
+}

@@ -4,7 +4,6 @@ const mocks = vi.hoisted(() => ({
   readLocalSession: vi.fn(),
   refreshSession: vi.fn(),
   runSync: vi.fn(),
-  metadataSync: vi.fn(),
   generation: 0,
   userId: "user-a",
   listJourneys: vi.fn(),
@@ -23,9 +22,6 @@ const mocks = vi.hoisted(() => ({
     | null,
 }));
 
-vi.mock("@/data/sync/tripMetadataCoordinator", () => ({
-  runNativeTripMetadataSync: mocks.metadataSync,
-}));
 vi.mock("@/data/auth/authRepository", () => ({
   readLocalSession: mocks.readLocalSession,
   requireActiveUserId: async () => mocks.userId,
@@ -92,8 +88,6 @@ describe("default bootstrap sync", () => {
     vi.clearAllMocks();
     mocks.discover.mockReset();
     mocks.runSync.mockReset();
-    mocks.metadataSync.mockReset();
-    mocks.metadataSync.mockResolvedValue({ status: "closed", processedCount: 0 });
     mocks.refreshJourney.mockReset();
     mocks.selectedJourney.mockReset();
     mocks.listJourneys.mockReset();
@@ -549,14 +543,4 @@ it("F1: partial hydration then successful retry reloads the mounted My Ledger", 
   });
   expect(mounted.loads()).toBe(after);
   mocks.notify.mockReset();
-});
-
-it("metadata failure remains local to its runner and does not block the existing Ledger operational cycle", async () => {
-  vi.resetModules();
-  mocks.readLocalSession.mockResolvedValue({ identity: { userId: mocks.userId } });
-  mocks.metadataSync.mockRejectedValueOnce(new Error("metadata service closed"));
-  const { resumeOperationalSync } = await import("./defaultBootstrapDependencies");
-  await resumeOperationalSync();
-  expect(mocks.metadataSync).toHaveBeenCalled();
-  expect(mocks.runSync).toHaveBeenCalled();
 });

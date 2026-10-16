@@ -1,3 +1,4 @@
+import { DatabaseSync } from "node:sqlite";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -15,6 +16,7 @@ vi.mock("@/data/auth/authRepository", () => ({
 import {
   classifyLedgerQueueActivity,
   getLedgerQueueActivity,
+  getTripMetadataQueueActivity,
   type QueueRow,
 } from "./ledgerQueueActivity";
 
@@ -115,4 +117,53 @@ it("Ledger presentation query excludes intelligence entity counts", async () => 
   expect(sql).toContain("operation.entity_type LIKE 'ledger_%'");
   expect(sql).not.toContain("operation.entity_type = 'INTELLIGENCE_CONTINUATION'");
   expect(sql).toContain("dependency.operation_type='INTELLIGENCE_CONTINUATION_WAKE'");
+});
+
+it("keeps metadata activity scheduler-only with exact account/kind/dependency boundaries", async () => {
+  const db = {
+    getAllAsync: vi.fn().mockResolvedValue([
+      {
+        status: "RETRYABLE",
+        failureCategory: "SERVER",
+        nextAttemptAt: new Date(Date.now() + 5000).toISOString(),
+        leaseExpiresAt: null,
+        dependencyStatus: "COMPLETED",
+      },
+    ]),
+  };
+  expect(
+    (await getTripMetadataQueueActivity(db as never, "account-a")).nextActionableAt,
+  ).not.toBeNull();
+  expect(db.getAllAsync).toHaveBeenCalledWith(
+    expect.stringContaining("operation.operation_type='UPDATE_TRIP_METADATA'"),
+    "account-a",
+  );
+  expect(db.getAllAsync.mock.calls[0][0]).toContain(
+    "dependency.owner_user_id=operation.owner_user_id",
+  );
+  expect(db.getAllAsync.mock.calls[0][0]).toContain("operation.entity_type='TRIP'");
+  await getLedgerQueueActivity();
+  expect(mocks.getAllAsync.mock.calls.at(-1)?.[0]).not.toContain("UPDATE_TRIP_METADATA");
+});
+
+it("scheduler reads dependency-free metadata queued during a cycle and ignores other accounts and unresolved creates", async () => {
+  const sql = new DatabaseSync(":memory:");
+  try {
+    sql.exec(`CREATE TABLE sync_operations(id TEXT,owner_user_id TEXT,entity_type TEXT,operation_type TEXT,status TEXT,failure_category TEXT,next_attempt_at TEXT,lease_expires_at TEXT,dependency_operation_id TEXT);
+      INSERT INTO sync_operations VALUES('new','account-a','TRIP','UPDATE_TRIP_METADATA','DEPENDENCY_BLOCKED',NULL,NULL,NULL,NULL);
+      INSERT INTO sync_operations VALUES('create','account-a','TRIP','CREATE_TRIP','DEPENDENCY_BLOCKED',NULL,NULL,NULL,NULL);
+      INSERT INTO sync_operations VALUES('blocked','account-a','TRIP','UPDATE_TRIP_METADATA','DEPENDENCY_BLOCKED',NULL,NULL,NULL,'create');
+      INSERT INTO sync_operations VALUES('other','account-b','TRIP','UPDATE_TRIP_METADATA','PENDING',NULL,NULL,NULL,NULL);`);
+    const db = {
+      getAllAsync: async (query: string, ...values: unknown[]) =>
+        sql.prepare(query).all(...(values as never[])),
+    };
+    expect(await getTripMetadataQueueActivity(db as never, "account-a")).toEqual({
+      unresolvedCount: 2,
+      actionableNow: 1,
+      nextActionableAt: null,
+    });
+  } finally {
+    sql.close();
+  }
 });
